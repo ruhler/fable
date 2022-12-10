@@ -349,7 +349,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     }
 
     // Instruction logic.
-    static const char* source[] = { "s", "l" };
+    static const char* var_tag[] = { "s", "l" };
     switch (instr->tag) {
       case FBLE_DATA_TYPE_INSTR: {
         FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
@@ -359,7 +359,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "    FbleValue* fields[] = {");
         for (size_t i = 0; i < fieldc; ++i) {
           fprintf(fout, " %s[%zi],",
-              source[dt_instr->fields.xs[i].source],
+              var_tag[dt_instr->fields.xs[i].tag],
               dt_instr->fields.xs[i].index);
         };
         fprintf(fout, " };\n");
@@ -378,7 +378,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  l[%zi] = FbleNewStructValue_(heap, %zi", struct_instr->dest, argc);
         for (size_t i = 0; i < argc; ++i) {
           fprintf(fout, ", %s[%zi]",
-              source[struct_instr->args.xs[i].source],
+              var_tag[struct_instr->args.xs[i].tag],
               struct_instr->args.xs[i].index);
         };
 
@@ -390,7 +390,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
         fprintf(fout, "  l[%zi] = FbleNewUnionValue(heap, %zi, %s[%zi]);\n",
             union_instr->dest, union_instr->tag,
-            source[union_instr->arg.source],
+            var_tag[union_instr->arg.tag],
             union_instr->arg.index);
         break;
       }
@@ -398,7 +398,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-            source[access_instr->obj.source], access_instr->obj.index);
+            var_tag[access_instr->obj.tag], access_instr->obj.index);
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedStructValue", access_instr->loc);
 
@@ -411,7 +411,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-            source[access_instr->obj.source], access_instr->obj.index);
+            var_tag[access_instr->obj.tag], access_instr->obj.index);
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedUnionValue", access_instr->loc);
 
@@ -427,7 +427,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
         fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-            source[select_instr->condition.source],
+            var_tag[select_instr->condition.tag],
             select_instr->condition.index);
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedUnionSelect", select_instr->loc);
@@ -473,7 +473,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         exe_id++;
         for (size_t i = 0; i < func_instr->code->_base.num_statics; ++i) {
           fprintf(fout, ", %s[%zi]",
-              source[func_instr->scope.xs[i].source],
+              var_tag[func_instr->scope.xs[i].tag],
               func_instr->scope.xs[i].index);
         }
         fprintf(fout, ");\n");
@@ -484,7 +484,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
 
         fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-            source[call_instr->func.source],
+            var_tag[call_instr->func.tag],
             call_instr->func.index);
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
@@ -497,9 +497,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             // locals, we don't need to do a Retain on the arg the first time we
             // see the local, because we can transfer the caller's ownership of
             // the local to the callee for that arg.
-            bool retain = call_instr->args.xs[i].source != FBLE_LOCAL_VAR;
+            bool retain = call_instr->args.xs[i].tag != FBLE_LOCAL_VAR;
             for (size_t j = 0; j < i; ++j) {
-              if (call_instr->args.xs[i].source == call_instr->args.xs[j].source
+              if (call_instr->args.xs[i].tag == call_instr->args.xs[j].tag
                   && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
                 retain = true;
                 break;
@@ -508,19 +508,19 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
             if (retain) {
               fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
-                  source[call_instr->args.xs[i].source],
+                  var_tag[call_instr->args.xs[i].tag],
                   call_instr->args.xs[i].index);
             }
           }
 
-          if (call_instr->func.source == FBLE_LOCAL_VAR) {
+          if (call_instr->func.tag == FBLE_LOCAL_VAR) {
             fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
           }
 
           fprintf(fout, "  return FbleThreadTailCall_(heap, thread, x0");
           for (size_t i = 0; i < call_instr->args.size; ++i) {
             fprintf(fout, ", %s[%zi]",
-                source[call_instr->args.xs[i].source],
+                var_tag[call_instr->args.xs[i].tag],
                 call_instr->args.xs[i].index);
           }
           fprintf(fout, ");\n");
@@ -530,7 +530,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (FbleThreadCall_(heap, thread, l+%zi, x0", call_instr->dest);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, ", %s[%zi]",
-              source[call_instr->args.xs[i].source],
+              var_tag[call_instr->args.xs[i].tag],
               call_instr->args.xs[i].index);
         }
         fprintf(fout, ") == FBLE_EXEC_ABORTED) ");
@@ -542,7 +542,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
         fprintf(fout, "  l[%zi] = %s[%zi];\n",
             copy_instr->dest,
-            source[copy_instr->source.source],
+            var_tag[copy_instr->source.tag],
             copy_instr->source.index);
         fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", copy_instr->dest);
         break;
@@ -559,7 +559,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
         fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) ",
             ref_instr->ref,
-            source[ref_instr->value.source],
+            var_tag[ref_instr->value.tag],
             ref_instr->value.index);
         ReturnAbort(fout, code, label, pc, "VacuousValue", ref_instr->loc);
         break;
@@ -568,10 +568,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
 
-        switch (return_instr->result.source) {
+        switch (return_instr->result.tag) {
           case FBLE_STATIC_VAR: {
             fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
-                source[return_instr->result.source],
+                var_tag[return_instr->result.tag],
                 return_instr->result.index);
             break;
           }
@@ -580,7 +580,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         }
 
         fprintf(fout, "  return FbleThreadReturn(heap, thread, %s[%zi]);\n",
-            source[return_instr->result.source],
+            var_tag[return_instr->result.tag],
             return_instr->result.index);
         break;
       }
@@ -604,7 +604,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  l[%zi] = FbleNewListValue_(heap, %zi", list_instr->dest, argc);
         for (size_t i = 0; i < argc; ++i) {
           fprintf(fout, ", %s[%zi]",
-              source[list_instr->args.xs[i].source],
+              var_tag[list_instr->args.xs[i].tag],
               list_instr->args.xs[i].index);
         }
         fprintf(fout, ");\n");
@@ -693,13 +693,13 @@ static void EmitInstrForAbort(FILE* fout, size_t pc, FbleInstr* instr)
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       if (call_instr->exit) {
-        if (call_instr->func.source == FBLE_LOCAL_VAR) {
+        if (call_instr->func.tag == FBLE_LOCAL_VAR) {
           fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
           fprintf(fout, "  l[%zi] = NULL;\n", call_instr->func.index);
         }
 
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          if (call_instr->args.xs[i].source == FBLE_LOCAL_VAR) {
+          if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
             fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->args.xs[i].index);
             fprintf(fout, "  l[%zi] = NULL;\n", call_instr->args.xs[i].index);
           }
@@ -730,7 +730,7 @@ static void EmitInstrForAbort(FILE* fout, size_t pc, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      switch (return_instr->result.source) {
+      switch (return_instr->result.tag) {
         case FBLE_STATIC_VAR: break;
         case FBLE_LOCAL_VAR: {
           fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", return_instr->result.index);

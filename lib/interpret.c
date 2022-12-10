@@ -105,7 +105,7 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
 
         if (call_instr->exit) {
-          if (call_instr->func.source == FBLE_LOCAL_VAR) {
+          if (call_instr->func.tag == FBLE_LOCAL_VAR) {
             FbleReleaseValue(heap, locals[call_instr->func.index]);
 
             // Set function to NULL so it's safe to release it again if the function
@@ -114,7 +114,7 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
           }
 
           for (size_t i = 0; i < call_instr->args.size; ++i) {
-            if (call_instr->args.xs[i].source == FBLE_LOCAL_VAR) {
+            if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
               FbleReleaseValue(heap, locals[call_instr->args.xs[i].index]);
 
               // Set the arg to NULL so it's safe to release it again if the
@@ -153,7 +153,7 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        switch (return_instr->result.source) {
+        switch (return_instr->result.tag) {
           case FBLE_STATIC_VAR: break;
           case FBLE_LOCAL_VAR: {
             FbleReleaseValue(heap, locals[return_instr->result.index]);
@@ -211,7 +211,7 @@ FbleExecStatus FbleInterpreterRunFunction(
   FbleCode* code = (FbleCode*)executable;
   FbleInstr** instrs = code->instrs.xs;
 
-  #define GET(idx) (idx.source == FBLE_STATIC_VAR ? statics[idx.index] : locals[idx.index])
+  #define GET(idx) (idx.tag == FBLE_STATIC_VAR ? statics[idx.index] : locals[idx.index])
   #define GET_STRICT(idx) FbleStrictValue(GET(idx))
 
   size_t pc = 0;
@@ -357,13 +357,13 @@ FbleExecStatus FbleInterpreterRunFunction(
             FbleRetainValue(heap, args[i]);
           }
 
-          if (call_instr->func.source == FBLE_LOCAL_VAR) {
+          if (call_instr->func.tag == FBLE_LOCAL_VAR) {
             FbleReleaseValue(heap, locals[call_instr->func.index]);
             locals[call_instr->func.index] = NULL;
           }
 
           for (size_t i = 0; i < call_instr->args.size; ++i) {
-            if (call_instr->args.xs[i].source == FBLE_LOCAL_VAR) {
+            if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
               FbleReleaseValue(heap, locals[call_instr->args.xs[i].index]);
               locals[call_instr->args.xs[i].index] = NULL;
             }
@@ -411,7 +411,7 @@ FbleExecStatus FbleInterpreterRunFunction(
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
         FbleValue* result = NULL;
-        switch (return_instr->result.source) {
+        switch (return_instr->result.tag) {
           case FBLE_STATIC_VAR: {
             result = statics[return_instr->result.index];
             FbleRetainValue(heap, result);

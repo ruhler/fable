@@ -1,6 +1,7 @@
 /**
  * @file var.h
- * Header for FbleVarSource.
+ * 
+ * Data types for describing variables.
  */
 
 #ifndef FBLE_INTERNAL_VAR_H_
@@ -9,7 +10,7 @@
 #include <sys/types.h>    // for size_t
 
 /**
- *   Where to find a variable.
+ * Tag used to distinguish different kinds of variables.
  */
 typedef enum {
   /**
@@ -29,21 +30,21 @@ typedef enum {
    * For local variables.
    */
   FBLE_LOCAL_VAR,
-} FbleVarSource;
+} FbleVarTag;
 
 /**
  * Identifies a variable in scope.
  */
 typedef struct {
-  FbleVarSource source;
+  FbleVarTag tag;
   size_t index;
-} FbleVarIndex;
+} FbleVar;
 
-/** Vector of FbleVarIndex */
+/** Vector of FbleVar */
 typedef struct {
   size_t size;
-  FbleVarIndex* xs;
-} FbleVarIndexV;
+  FbleVar* xs;
+} FbleVarV;
 
 /** Identifies a local variable in scope.  */
 typedef size_t FbleLocalIndex;

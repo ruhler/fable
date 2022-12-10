@@ -54,7 +54,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
-static void GetFrameVar(FILE* fout, const char* rdst, FbleVarIndex index);
+static void GetFrameVar(FILE* fout, const char* rdst, FbleVar index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
 static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
 
@@ -344,14 +344,14 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 // Inputs:
 //   fout - the output stream
 //   rdst - the name of the register to read the variable into
-//   index - the variable to read.
+//   var - the variable to read.
 //
 // Side effects:
 // * Writes to the output stream.
-static void GetFrameVar(FILE* fout, const char* rdst, FbleVarIndex index)
+static void GetFrameVar(FILE* fout, const char* rdst, FbleVar var)
 {
-  static const char* sources[] = { "R_STATICS", "R_LOCALS" };
-  fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, sources[index.source], sizeof(FbleValue*) * index.index);
+  static const char* regs[] = { "R_STATICS", "R_LOCALS" };
+  fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, regs[var.tag], sizeof(FbleValue*) * var.index);
 }
 
 // SetFrameVar --
@@ -706,9 +706,9 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           // locals, we don't need to do a Retain on the arg the first time we
           // see the local, because we can transfer the caller's ownership of
           // the local to the callee for that arg.
-          bool retain = call_instr->args.xs[i].source != FBLE_LOCAL_VAR;
+          bool retain = call_instr->args.xs[i].tag != FBLE_LOCAL_VAR;
           for (size_t j = 0; j < i; ++j) {
-            if (call_instr->args.xs[i].source == call_instr->args.xs[j].source
+            if (call_instr->args.xs[i].tag == call_instr->args.xs[j].tag
                 && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
               retain = true;
               break;
@@ -722,7 +722,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           }
         }
 
-        if (call_instr->func.source == FBLE_LOCAL_VAR) {
+        if (call_instr->func.tag == FBLE_LOCAL_VAR) {
           fprintf(fout, "  mov x0, R_HEAP\n");
           fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", sizeof(FbleValue*)*call_instr->func.index);
           fprintf(fout, "  bl FbleReleaseValue\n");
@@ -776,13 +776,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-      FbleVarIndex ref_index = {
-        .source = FBLE_LOCAL_VAR,
+      FbleVar ref = {
+        .tag = FBLE_LOCAL_VAR,
         .index = ref_instr->ref
       };
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      GetFrameVar(fout, "x1", ref_index);
+      GetFrameVar(fout, "x1", ref);
       GetFrameVar(fout, "x2", ref_instr->value);
       fprintf(fout, "  bl FbleAssignRefValue\n");
       fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
@@ -795,7 +795,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
       GetFrameVar(fout, "R_SCRATCH_0", return_instr->result);
 
-      switch (return_instr->result.source) {
+      switch (return_instr->result.tag) {
         case FBLE_STATIC_VAR: {
           fprintf(fout, "  mov x0, R_HEAP\n");
           fprintf(fout, "  mov x1, R_SCRATCH_0\n");
@@ -827,11 +827,11 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
 
-      FbleVarIndex target_index = {
-        .source = FBLE_LOCAL_VAR,
+      FbleVar target = {
+        .tag = FBLE_LOCAL_VAR,
         .index = release_instr->target
       };
-      GetFrameVar(fout, "x1", target_index);
+      GetFrameVar(fout, "x1", target);
       fprintf(fout, "  bl FbleReleaseValue\n");
       return;
     }
@@ -1017,7 +1017,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       if (call_instr->exit) {
-        if (call_instr->func.source == FBLE_LOCAL_VAR) {
+        if (call_instr->func.tag == FBLE_LOCAL_VAR) {
           fprintf(fout, "  mov x0, R_HEAP\n");
           GetFrameVar(fout, "x1", call_instr->func);
           fprintf(fout, "  bl FbleReleaseValue\n");
@@ -1025,7 +1025,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
         }
 
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          if (call_instr->args.xs[i].source == FBLE_LOCAL_VAR) {
+          if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
             fprintf(fout, "  mov x0, R_HEAP\n");
             GetFrameVar(fout, "x1", call_instr->args.xs[i]);
             fprintf(fout, "  bl FbleReleaseValue\n");
@@ -1063,7 +1063,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      switch (return_instr->result.source) {
+      switch (return_instr->result.tag) {
         case FBLE_STATIC_VAR: break;
         case FBLE_LOCAL_VAR: {
           fprintf(fout, "  mov x0, R_HEAP\n");
@@ -1092,11 +1092,11 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
 
-      FbleVarIndex target_index = {
-        .source = FBLE_LOCAL_VAR,
+      FbleVar target = {
+        .tag = FBLE_LOCAL_VAR,
         .index = release_instr->target
       };
-      GetFrameVar(fout, "x1", target_index);
+      GetFrameVar(fout, "x1", target);
       fprintf(fout, "  bl FbleReleaseValue\n");
       return;
     }
@@ -1363,15 +1363,15 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
           // variable name.
           fprintf(fout, "  .string \"");
-          FblePrintName(fout, var->var);
+          FblePrintName(fout, var->name);
           fprintf(fout, "\"\n");
 
           // location.
-          static const char* sources[] = { "0x85", "0x84"};
+          static const char* var_tags[] = { "0x85", "0x84"};
           fprintf(fout, "  .byte 1f - 0f\n");   // length of block.
           fprintf(fout, "0:\n");
-          fprintf(fout, "  .byte %s\n", sources[var->index.source]);
-          fprintf(fout, "  .sleb128 %zi\n", sizeof(FbleValue*) * var->index.index);
+          fprintf(fout, "  .byte %s\n", var_tags[var->var.tag]);
+          fprintf(fout, "  .sleb128 %zi\n", sizeof(FbleValue*) * var->var.index);
           fprintf(fout, "1:\n");
 
           // start_scope

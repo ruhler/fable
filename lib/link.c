@@ -56,17 +56,14 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     call->loc.line = __LINE__ - 1;
     call->loc.col = 5;
     call->exit = false;
-    call->func.source = FBLE_STATIC_VAR;
+    call->func.tag = FBLE_STATIC_VAR;
     call->func.index = i;
     FbleVectorInit(call->args);
     for (size_t d = 0; d < module->deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
         if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[v]->path)) {
-          FbleVarIndex index = {
-            .source = FBLE_LOCAL_VAR,
-            .index = v
-          };
-          FbleVectorAppend(call->args, index);
+          FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
+          FbleVectorAppend(call->args, var);
           break;
         }
       }
@@ -84,7 +81,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   }
 
   FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
-  return_instr->result.source = FBLE_LOCAL_VAR;
+  return_instr->result.tag = FBLE_LOCAL_VAR;
   return_instr->result.index = modulec - 1;
   FbleVectorAppend(code->instrs, &return_instr->_base);
 

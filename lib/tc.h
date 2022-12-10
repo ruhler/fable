@@ -9,7 +9,7 @@
 #include <fble/fble-name.h>
 
 #include "kind.h"       // for FbleDataTypeTag
-#include "var.h"        // for FbleVarIndex
+#include "var.h"        // for FbleVar
 
 // FbleTc --
 //   An already type-checked representation of an fble syntactic expression.
@@ -82,7 +82,7 @@ typedef struct {
 // going from left to right, outer most to inner most binding.
 typedef struct {
   FbleTc _base;
-  FbleVarIndex index;
+  FbleVar var;
 } FbleVarTc;
 
 // FbleTcBinding --
@@ -112,7 +112,7 @@ typedef struct {
 //
 // The bindings are bound to variables implicitly based on the position of the
 // binding in the let expression and the position of the let expression in its
-// parent expression as specified for FbleVarIndex.
+// parent expression as specified for FbleVar.
 //
 // Fields:
 //   recursive - false if the let is a non-recursive let expression.
@@ -180,7 +180,7 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   FbleLoc body_loc;
-  FbleVarIndexV scope;
+  FbleVarV scope;
   FbleNameV args;
   FbleTc* body;
 } FbleFuncValueTc;

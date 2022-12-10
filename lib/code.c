@@ -54,7 +54,7 @@ void FbleFreeDebugInfo(FbleDebugInfo* info)
 
       case FBLE_VAR_DEBUG_INFO: {
         FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
-        FbleFreeName(var->var);
+        FbleFreeName(var->name);
         break;
       }
     }
@@ -183,7 +183,7 @@ void FbleFreeCode(FbleCode* code)
 void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
 {
   // Map from FbleFrameSection to short descriptor of the source.
-  static const char* sources[] = {"s", "l"};
+  static const char* var_tags[] = {"s", "l"};
 
   fprintf(fout, "Disassembly of module ");
   FblePrintModulePath(fout, module->path);
@@ -225,8 +225,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           case FBLE_VAR_DEBUG_INFO: {
             FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
             fprintf(fout, "    .  var ");
-            FblePrintName(fout, var->var);
-            fprintf(fout, " %s%zi\n", sources[var->index.source], var->index.index);
+            FblePrintName(fout, var->name);
+            fprintf(fout, " %s%zi\n", var_tags[var->var.tag], var->var.index);
             break;
           }
         }
@@ -267,8 +267,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
               data_type_instr->kind == FBLE_STRUCT_DATATYPE ? "*" : "+");
           const char* comma = "";
           for (size_t j = 0; j < data_type_instr->fields.size; ++j) {
-            FbleVarIndex field = data_type_instr->fields.xs[j];
-            fprintf(fout, "%s%s%zi", comma, sources[field.source], field.index);
+            FbleVar field = data_type_instr->fields.xs[j];
+            fprintf(fout, "%s%s%zi", comma, var_tags[field.tag], field.index);
             comma = ", ";
           }
           fprintf(fout, ");\n");
@@ -280,8 +280,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "l%zi = struct(", struct_value_instr->dest);
           const char* comma = "";
           for (size_t j = 0; j < struct_value_instr->args.size; ++j) {
-            FbleVarIndex arg = struct_value_instr->args.xs[j];
-            fprintf(fout, "%s%s%zi", comma, sources[arg.source], arg.index);
+            FbleVar arg = struct_value_instr->args.xs[j];
+            fprintf(fout, "%s%s%zi", comma, var_tags[arg.tag], arg.index);
             comma = ", ";
           }
           fprintf(fout, ");\n");
@@ -293,7 +293,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "l%zi = union(%zi: %s%zi);\n",
               union_value_instr->dest,
               union_value_instr->tag,
-              sources[union_value_instr->arg.source],
+              var_tags[union_value_instr->arg.tag],
               union_value_instr->arg.index);
           break;
         }
@@ -303,7 +303,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           // TODO: Include in the output whether this is struct/union
           FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
           fprintf(fout, "l%zi = %s%zi.%zi; // %s:%i:%i\n",
-              access_instr->dest, sources[access_instr->obj.source],
+              access_instr->dest, var_tags[access_instr->obj.tag],
               access_instr->obj.index,
               access_instr->tag, access_instr->loc.source->str,
               access_instr->loc.line, access_instr->loc.col);
@@ -313,7 +313,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
           fprintf(fout, "pc += %s%zi.?(",
-              sources[select_instr->condition.source],
+              var_tags[select_instr->condition.tag],
               select_instr->condition.index);
           const char* comma = "";
           for (size_t j = 0; j < select_instr->jumps.size; ++j) {
@@ -342,7 +342,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           const char* comma = "";
           for (size_t j = 0; j < func_value_instr->scope.size; ++j) {
             fprintf(fout, "%s%s%zi",
-                comma, sources[func_value_instr->scope.xs[j].source],
+                comma, var_tags[func_value_instr->scope.xs[j].tag],
                 func_value_instr->scope.xs[j].index);
             comma = ", ";
           }
@@ -360,13 +360,13 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           }
 
           fprintf(fout, "%s%zi(",
-              sources[call_instr->func.source],
+              var_tags[call_instr->func.tag],
               call_instr->func.index);
 
           const char* comma = "";
           for (size_t j = 0; j < call_instr->args.size; ++j) {
             fprintf(fout, "%s%s%zi", comma, 
-              sources[call_instr->args.xs[j].source],
+              var_tags[call_instr->args.xs[j].tag],
               call_instr->args.xs[j].index);
             comma = ", ";
           }
@@ -381,7 +381,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
           fprintf(fout, "l%zi = %s%zi;\n",
               copy_instr->dest,
-              sources[copy_instr->source.source],
+              var_tags[copy_instr->source.tag],
               copy_instr->source.index);
           break;
         }
@@ -397,7 +397,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
           fprintf(fout, "l%zi ~= %s%zi; // %s:%i:%i\n",
               ref_def_instr->ref,
-              sources[ref_def_instr->value.source],
+              var_tags[ref_def_instr->value.tag],
               ref_def_instr->value.index,
               ref_def_instr->loc.source->str, ref_def_instr->loc.line,
               ref_def_instr->loc.col);
@@ -407,7 +407,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_RETURN_INSTR: {
           FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
           fprintf(fout, "return %s%zi;\n",
-              sources[return_instr->result.source],
+              var_tags[return_instr->result.tag],
               return_instr->result.index);
           break;
         }
@@ -429,8 +429,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "l%zi = list(", list_instr->dest);
           const char* comma = "";
           for (size_t j = 0; j < list_instr->args.size; ++j) {
-            FbleVarIndex arg = list_instr->args.xs[j];
-            fprintf(fout, "%s%s%zi", comma, sources[arg.source], arg.index);
+            FbleVar arg = list_instr->args.xs[j];
+            fprintf(fout, "%s%s%zi", comma, var_tags[arg.tag], arg.index);
             comma = ", ";
           }
           fprintf(fout, ");\n");

@@ -45,7 +45,7 @@ typedef struct {
   FbleType* type;
   bool used;
   bool accessed;
-  FbleVarIndex index;
+  FbleVar var;
 } Var;
 
 // VarV --
@@ -72,7 +72,7 @@ typedef struct {
 typedef struct Scope {
   VarV statics;
   VarV vars;
-  FbleVarIndexV* captured;
+  FbleVarV* captured;
   FbleModulePath* module;
   struct Scope* parent;
 } Scope;
@@ -82,7 +82,7 @@ static Var* PushVar(Scope* scope, VarName name, FbleType* type);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom);
 
-static void InitScope(Scope* scope, FbleVarIndexV* captured, FbleModulePath* module, Scope* parent);
+static void InitScope(Scope* scope, FbleVarV* captured, FbleModulePath* module, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 
 static void ReportError(FbleLoc loc, const char* fmt, ...);
@@ -188,8 +188,8 @@ static Var* PushVar(Scope* scope, VarName name, FbleType* type)
   var->type = type;
   var->used = false;
   var->accessed = false;
-  var->index.source = FBLE_LOCAL_VAR;
-  var->index.index = scope->vars.size;
+  var->var.tag = FBLE_LOCAL_VAR;
+  var->var.index = scope->vars.size;
   FbleVectorAppend(scope->vars, var);
   return var;
 }
@@ -272,11 +272,11 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
       captured_var->type = FbleRetainType(heap, var->type);
       captured_var->used = !phantom;
       captured_var->accessed = true;
-      captured_var->index.source = FBLE_STATIC_VAR;
-      captured_var->index.index = scope->statics.size;
+      captured_var->var.tag = FBLE_STATIC_VAR;
+      captured_var->var.index = scope->statics.size;
       FbleVectorAppend(scope->statics, captured_var);
       if (scope->captured != NULL) {
-        FbleVectorAppend(*scope->captured, var->index);
+        FbleVectorAppend(*scope->captured, var->var);
       }
       return captured_var;
     }
@@ -303,7 +303,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 //   Initializes scope based on parent. FreeScope should be
 //   called to free the allocations for scope. The lifetime of the parent
 //   scope must exceed the lifetime of this scope.
-static void InitScope(Scope* scope, FbleVarIndexV* captured, FbleModulePath* module, Scope* parent)
+static void InitScope(Scope* scope, FbleVarV* captured, FbleModulePath* module, Scope* parent)
 {
   FbleVectorInit(scope->statics);
   FbleVectorInit(scope->vars);
@@ -868,7 +868,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
-      var_tc->index = var->index;
+      var_tc->var = var->var;
       return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
 
@@ -1324,7 +1324,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
 
-      FbleVarIndexV captured;
+      FbleVarV captured;
       FbleVectorInit(captured);
       Scope func_scope;
       InitScope(&func_scope, &captured, scope->module, scope);
@@ -1678,7 +1678,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       assert(var->type != NULL && "recursive module reference");
 
       FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
-      var_tc->index = var->index;
+      var_tc->var = var->var;
       return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
 
