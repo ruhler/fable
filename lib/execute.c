@@ -179,9 +179,6 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
   FbleFuncInfo info = FbleFuncValueInfo(func);
   FbleExecutable* executable = info.executable;
 
-  // The corresponding PopStackFrame to this PushStackFram is done by
-  // FbleThreadTailCall or FbleThreadReturn depending on how the called
-  // function returns.
   FbleRetainValue(heap, func);
   for (size_t i = 0; i < executable->num_args; ++i) {
     FbleRetainValue(heap, args[i]);
@@ -213,6 +210,7 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
     FbleProfileExitBlock(thread->profile);
   }
 
+  PopStackFrame(heap, thread);
   return status;
 }
 
@@ -258,8 +256,8 @@ FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, Fble
 // FbleThreadReturn -- see documentation in fble-execute.h
 FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
 {
+  (void)heap;
   *(thread->stack->result) = result;
-  PopStackFrame(heap, thread);
   return result == NULL ? FBLE_EXEC_ABORTED : FBLE_EXEC_FINISHED;
 }
 

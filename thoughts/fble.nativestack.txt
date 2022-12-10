@@ -284,3 +284,14 @@ Solution is to have PopStackFrame consume.
 To fix the stp issue, advance the stack pointer for locals before calling stp.
 Hopefully that doesn't violate any expectations as to where things are stored
 on the stack. It should be fine I think.
+
+---
+
+Cool. What's the next step, now that args and locals are separate?
+
+The goal is to get rid of FbleThreadReturn. As a first step, we could remove
+PopStackFrame from there, put it with FbleThreadCall.
+
+That works fine.
+
+
