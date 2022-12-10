@@ -23,7 +23,7 @@
 // index - the index of the value in the current stack frame.
 // refcount - the number of references to the local.
 typedef struct {
-  FbleFrameIndex index;
+  FbleVarIndex index;
   size_t refcount;
 } Local;
 
@@ -121,7 +121,7 @@ static Local* NewLocal(Scope* scope)
   }
 
   Local* local = FbleAlloc(Local);
-  local->index.section = FBLE_LOCALS_FRAME_SECTION;
+  local->index.source = FBLE_LOCAL_VAR;
   local->index.index = index;
   local->refcount = 1;
 
@@ -155,7 +155,7 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
       AppendInstr(scope, &release_instr->_base);
     }
 
-    assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
+    assert(local->index.source == FBLE_LOCAL_VAR);
     assert(scope->locals.xs[local->index.index] == local);
     scope->locals.xs[local->index.index] = NULL;
     FbleFree(local);
@@ -287,7 +287,7 @@ static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics
   FbleVectorInit(scope->statics);
   for (size_t i = 0; i < statics; ++i) {
     Local* local = FbleAlloc(Local);
-    local->index.section = FBLE_STATICS_FRAME_SECTION;
+    local->index.source = FBLE_STATIC_VAR;
     local->index.index = i;
     local->refcount = 1;
     FbleVectorAppend(scope->statics, local);

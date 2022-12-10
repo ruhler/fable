@@ -54,7 +54,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
-static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index);
+static void GetFrameVar(FILE* fout, const char* rdst, FbleVarIndex index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
 static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
 
@@ -348,10 +348,10 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 //
 // Side effects:
 // * Writes to the output stream.
-static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index)
+static void GetFrameVar(FILE* fout, const char* rdst, FbleVarIndex index)
 {
-  static const char* section[] = { "R_STATICS", "R_LOCALS" };
-  fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, section[index.section], sizeof(FbleValue*) * index.index);
+  static const char* sources[] = { "R_STATICS", "R_LOCALS" };
+  fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, sources[index.source], sizeof(FbleValue*) * index.index);
 }
 
 // SetFrameVar --
@@ -706,9 +706,9 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           // locals, we don't need to do a Retain on the arg the first time we
           // see the local, because we can transfer the caller's ownership of
           // the local to the callee for that arg.
-          bool retain = call_instr->args.xs[i].section != FBLE_LOCALS_FRAME_SECTION;
+          bool retain = call_instr->args.xs[i].source != FBLE_LOCAL_VAR;
           for (size_t j = 0; j < i; ++j) {
-            if (call_instr->args.xs[i].section == call_instr->args.xs[j].section
+            if (call_instr->args.xs[i].source == call_instr->args.xs[j].source
                 && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
               retain = true;
               break;
@@ -722,7 +722,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           }
         }
 
-        if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+        if (call_instr->func.source == FBLE_LOCAL_VAR) {
           fprintf(fout, "  mov x0, R_HEAP\n");
           fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", sizeof(FbleValue*)*call_instr->func.index);
           fprintf(fout, "  bl FbleReleaseValue\n");
@@ -776,8 +776,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-      FbleFrameIndex ref_index = {
-        .section = FBLE_LOCALS_FRAME_SECTION,
+      FbleVarIndex ref_index = {
+        .source = FBLE_LOCAL_VAR,
         .index = ref_instr->ref
       };
 
@@ -795,15 +795,15 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
       GetFrameVar(fout, "R_SCRATCH_0", return_instr->result);
 
-      switch (return_instr->result.section) {
-        case FBLE_STATICS_FRAME_SECTION: {
+      switch (return_instr->result.source) {
+        case FBLE_STATIC_VAR: {
           fprintf(fout, "  mov x0, R_HEAP\n");
           fprintf(fout, "  mov x1, R_SCRATCH_0\n");
           fprintf(fout, "  bl FbleRetainValue\n");
           break;
         }
 
-        case FBLE_LOCALS_FRAME_SECTION: break;
+        case FBLE_LOCAL_VAR: break;
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
@@ -827,8 +827,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
 
-      FbleFrameIndex target_index = {
-        .section = FBLE_LOCALS_FRAME_SECTION,
+      FbleVarIndex target_index = {
+        .source = FBLE_LOCAL_VAR,
         .index = release_instr->target
       };
       GetFrameVar(fout, "x1", target_index);
@@ -1017,7 +1017,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       if (call_instr->exit) {
-        if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+        if (call_instr->func.source == FBLE_LOCAL_VAR) {
           fprintf(fout, "  mov x0, R_HEAP\n");
           GetFrameVar(fout, "x1", call_instr->func);
           fprintf(fout, "  bl FbleReleaseValue\n");
@@ -1025,7 +1025,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
         }
 
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
+          if (call_instr->args.xs[i].source == FBLE_LOCAL_VAR) {
             fprintf(fout, "  mov x0, R_HEAP\n");
             GetFrameVar(fout, "x1", call_instr->args.xs[i]);
             fprintf(fout, "  bl FbleReleaseValue\n");
@@ -1063,9 +1063,9 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      switch (return_instr->result.section) {
-        case FBLE_STATICS_FRAME_SECTION: break;
-        case FBLE_LOCALS_FRAME_SECTION: {
+      switch (return_instr->result.source) {
+        case FBLE_STATIC_VAR: break;
+        case FBLE_LOCAL_VAR: {
           fprintf(fout, "  mov x0, R_HEAP\n");
           GetFrameVar(fout, "x1", return_instr->result);
           fprintf(fout, "  bl FbleReleaseValue\n");
@@ -1092,8 +1092,8 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
 
-      FbleFrameIndex target_index = {
-        .section = FBLE_LOCALS_FRAME_SECTION,
+      FbleVarIndex target_index = {
+        .source = FBLE_LOCAL_VAR,
         .index = release_instr->target
       };
       GetFrameVar(fout, "x1", target_index);
@@ -1367,10 +1367,10 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "\"\n");
 
           // location.
-          static const char* sections[] = { "0x85", "0x84"};
+          static const char* sources[] = { "0x85", "0x84"};
           fprintf(fout, "  .byte 1f - 0f\n");   // length of block.
           fprintf(fout, "0:\n");
-          fprintf(fout, "  .byte %s\n", sections[var->index.section]);
+          fprintf(fout, "  .byte %s\n", sources[var->index.source]);
           fprintf(fout, "  .sleb128 %zi\n", sizeof(FbleValue*) * var->index.index);
           fprintf(fout, "1:\n");
 

@@ -116,13 +116,44 @@ Okay. Let's brainstorm the list of changes to make all at once:
 * Update everywhere we refer to frame section to support this new case.
 * Make sure to fix GET and GET_STRICT macros to handle all three cases of
   section.
-* Update compiler to distinguish between args and locals.
 * Rename 'locals' variable of run function to 'args'.
 * Allocate local 'locals' variable in interpreter and generated c and aarch64
   code.
 * Add num_locals field to FbleCode.
 * Remove num_locals from FbleExecutable*.
 * Update disassembler for these changes.
+* Update compiler to distinguish between args and locals.
+* Add R_ARGS to generate aarch64.
+* Change ownership of args from callee to caller.
 
 Wish me luck.
 
+Are we still having callee take ownership of args at this point? I think let's
+say yes? But that would require we add something to ReleaseInstr to
+distinguish between args and local. If we say caller is responsible for args
+ownership, we can avoid that. In other words, treat args more like statics
+than like locals. It's pretty straight forward, right? FbleThreadCall doesn't
+need to take ownership of args anymore. FbleThreadTailCall still frees its
+args?
+
+This is important to get straight, so I know I'm converging to the right
+place:
+
+* Remove num_locals from FbleExecutable.
+* Add num_locals to FbleCode
+* Change 'locals' to 'args' in run function.
+* Callee responsible for allocating their own locals array.
+* Add 'args' frame section.
+* statics and args frame sections are read only. Function owns statics, caller
+  owns args, callee owns locals.
+* FbleThreadTailCall takes ownership of args.
+
+Looks like I have FbleVarSource, FbleVarIndex, as sort of copies of
+FbleFrameSection and FbleFrameIndex. Maybe, as a first pass, I can merge those
+into a single type. I like the name of VarSource and VarIndex better. And
+maybe call the enum FBLE_STATIC_VAR, FBLE_LOCAL_VAR, FBLE_ARG_VAR.
+
+Where should that live? tc.h is fine I think. Cool. Let's start with this CL,
+which should be a straight forward naming change.
+
+Umm... but don't introduce ARG_VAR yet, right?

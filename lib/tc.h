@@ -9,6 +9,7 @@
 #include <fble/fble-name.h>
 
 #include "kind.h"       // for FbleDataTypeTag
+#include "var.h"        // for FbleVarIndex
 
 // FbleTc --
 //   An already type-checked representation of an fble syntactic expression.
@@ -69,40 +70,16 @@ typedef struct {
   FbleTc _base;
 } FbleTypeValueTc;
 
-// FbleVarSource
-//   Where to find a variable.
-//
-// FBLE_LOCAL_VAR is a local variable.
-// FBLE_STATIC_VAR is a variable captured from the parent scope.
-typedef enum {
-  FBLE_LOCAL_VAR,
-  FBLE_STATIC_VAR,
-} FbleVarSource;
-
-// FbleVarIndex --
-//   Identifies a variable in scope.
-//
-// For local variables, index starts at 0 for the first argument to a
-// function. The index increases by one for each new variable introduced,
-// going from left to right, outer most to inner most binding.
-typedef struct {
-  FbleVarSource source;
-  size_t index;
-} FbleVarIndex;
-
-// FbleVarIndexV --
-//   A vector of FbleVarIndex.
-typedef struct {
-  size_t size;
-  FbleVarIndex* xs;
-} FbleVarIndexV;
-
 // FbleVarTc --
 //   FBLE_VAR_TC
 //
 // A variable expression.
 // * Used to represent variables refering to function arguments or local
 //   variables. 
+//
+// For local variables, index starts at 0 for the first argument to a
+// function. The index increases by one for each new variable introduced,
+// going from left to right, outer most to inner most binding.
 typedef struct {
   FbleTc _base;
   FbleVarIndex index;

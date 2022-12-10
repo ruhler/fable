@@ -10,37 +10,7 @@
 #include <fble/fble-profile.h>   // for FbleBlockId.
 
 #include "kind.h"           // for FbleDataTypeTag.
-
-// FbleFrameSection --
-//   Which section of a frame a value can be found in.
-typedef enum {
-  FBLE_STATICS_FRAME_SECTION,
-  FBLE_LOCALS_FRAME_SECTION,
-} FbleFrameSection;
-
-// FbleFrameIndex --
-//   The position of a value in a stack frame.
-typedef struct {
-  FbleFrameSection section;
-  size_t index;
-} FbleFrameIndex;
-
-// FbleFrameIndexV --
-//   A vector of FbleFrameIndex.
-typedef struct {
-  size_t size;
-  FbleFrameIndex* xs;
-} FbleFrameIndexV;
-
-// FbleLocalIndex --
-//   The position of a value in the locals section of a stack frame.
-typedef size_t FbleLocalIndex;
-
-// FbleLocalIndexV -- A vector of FbleLocalIndex.
-typedef struct {
-  size_t size;
-  FbleLocalIndex* xs;
-} FbleLocalIndexV;
+#include "var.h"            // for FbleVarIndex, FbleLocalIndex
 
 // FbleProfileOpTag --
 //   Enum used to distinguish among different kinds of FbleProfileOps.
@@ -98,7 +68,7 @@ typedef struct {
 typedef struct {
   FbleDebugInfo _base;
   FbleName var;
-  FbleFrameIndex index;
+  FbleVarIndex index;
 } FbleVarDebugInfo;
 
 // FbleFreeDebugInfo --
@@ -174,7 +144,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleDataTypeTag kind;
-  FbleFrameIndexV fields;
+  FbleVarIndexV fields;
   FbleLocalIndex dest;
 } FbleDataTypeInstr;
 
@@ -184,7 +154,7 @@ typedef struct {
 // *dest = struct(a1, a2, ..., aN)
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndexV args;
+  FbleVarIndexV args;
   FbleLocalIndex dest;
 } FbleStructValueInstr;
 
@@ -195,7 +165,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   size_t tag;
-  FbleFrameIndex arg;
+  FbleVarIndex arg;
   FbleLocalIndex dest;
 } FbleUnionValueInstr;
 
@@ -208,7 +178,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
-  FbleFrameIndex obj;
+  FbleVarIndex obj;
   size_t tag;
   FbleLocalIndex dest;
 } FbleAccessInstr;
@@ -228,7 +198,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
-  FbleFrameIndex condition;
+  FbleVarIndex condition;
   FbleOffsetV jumps;
 } FbleUnionSelectInstr;
 
@@ -264,7 +234,7 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
   FbleCode* code;
-  FbleFrameIndexV scope;
+  FbleVarIndexV scope;
 } FbleFuncValueInstr;
 
 // FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR
@@ -287,15 +257,15 @@ typedef struct {
   FbleLoc loc;
   bool exit;
   FbleLocalIndex dest;
-  FbleFrameIndex func;
-  FbleFrameIndexV args;
+  FbleVarIndex func;
+  FbleVarIndexV args;
 } FbleCallInstr;
 
 // FbleCopyInstr -- FBLE_COPY_INSTR
 //   Copy a value in the stack frame from one location to another.
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndex source;
+  FbleVarIndex source;
   FbleLocalIndex dest;
 } FbleCopyInstr;
 
@@ -316,14 +286,14 @@ typedef struct {
   FbleInstr _base;
   FbleLoc loc;
   FbleLocalIndex ref;
-  FbleFrameIndex value;
+  FbleVarIndex value;
 } FbleRefDefInstr;
 
 // FbleReturnInstr -- FBLE_RETURN_INSTR
 //   Return <result> and exit the current stack frame.
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndex result;
+  FbleVarIndex result;
 } FbleReturnInstr;
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR
@@ -344,7 +314,7 @@ typedef struct {
 // *dest = [a1, a2, ..., aN]
 typedef struct {
   FbleInstr _base;
-  FbleFrameIndexV args;
+  FbleVarIndexV args;
   FbleLocalIndex dest;
 } FbleListInstr;
 
