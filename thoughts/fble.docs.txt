@@ -1859,3 +1859,25 @@ What are some next steps? Brainstorm:
 * Remove all uses of asciidoc?
  - Tutorials, READMEs, and language specs.
 
+---
+
+Re github integration. Github has a list of markdown formats it supports.
+There's a public repo with the library for the conversion. github also has
+github pages, which can serve a site generated from the source code.
+
+That sounds like a good, general approach for documentation going forward.
+Have the source code be whatever makes most sense for me to describe the
+informational content. Have a build target that can generate a website from
+the source code. That website can nicely bundle up the language spec, man
+pages, doxygen output, tutorials, and what have you. Use github pages to
+publish the website to github, or some other mechanism to publish it somewhere
+else, or access it locally.
+
+The next question is about tutorials. I want to continue writing tutorials.
+What format should I write them in?
+
+Tutorials should be reasonably easy to read from source, but we'll also,
+eventually, want to generate a website from them. For now, let me focus on the
+content of the tutorials, not the syntax. I'll continue to use asciidoc until
+I need more structure from it the way usage text wanted.
+

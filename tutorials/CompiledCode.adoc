@@ -1,0 +1,83 @@
+Compiled Code
+=============
+
+This tutorial shows how to compile your fble programs to native machine code.
+
+== Interpreted Versus Compiled ==
+
+The fble implementation has an internal bytecode it uses to represent an fble
+program. That bytecode can be interpreted directly, or it can be compiled
+native machine code.
+
+So far in the tutorials we've always used the interpreter to run your
+`Hello.fble` program.
+
+Advantages of using the interpreter are:
+
+* You don't have to recompile after making changes to `Hello.fble`.
+* You can reuse the same main driver code with multiple different `.fble` files.
+
+Advantages of using compiled code are:
+
+* You can bundle the `Hello.fble` file with the main driver code. Users
+  don't need to have access to `Hello.fble` or pass the right path to that
+  file.
+* Compiled code runs faster than interpreted code. For example, on a Raspberry
+  Pi 3, at time of writing, compiled code runs about 30% faster than
+  interpreted code.
+* In some cases, compiled code has much better debug support than interpreted
+  code.
+
+== Fble Disassemble ==
+
+We mentioned above that the fble implementation uses an internal bytecode for
+execution. The internal bytecode is not part of the language specification and
+is subject to change without notice.
+
+For debugging purposes only, fble provides an fble-disassemble command that
+you can use to see a human readable representation of the internal bytecode it
+generates for an fble program. For example, take a look at the bytecode for
+the `Hello.fble` program we've written so far:
+
+  fble-disassemble -I . -m /Hello%
+
+Recall the `And4` function from `Hello.fble`:
+
+  (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+    Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
+  };
+
+Here's a snippet from the output of fble-disassemble with the bytecode for the
+`And4` function:
+
+  /Hello%.And4![000b] args[2] statics[2] locals[6]  @ ./Hello.fble:16:3
+      .  var a a0
+      .  var b a1
+      .  stmt;  @ ./Hello.fble:16:3
+     0.  l0 = a0.0;  @ ./Hello.fble:16:15
+     1.  l1 = a1.0;  @ ./Hello.fble:16:20
+     2.  l2 = s1(l0, l1);  @ ./Hello.fble:16:9
+     3.  release l0;
+     4.  release l1;
+     5.  l0 = a0.1;  @ ./Hello.fble:16:30
+     6.  l1 = a1.1;  @ ./Hello.fble:16:35
+     7.  l3 = s1(l0, l1);  @ ./Hello.fble:16:24
+     8.  release l0;
+     9.  release l1;
+    10.  l0 = a0.2;  @ ./Hello.fble:16:45
+    11.  l1 = a1.2;  @ ./Hello.fble:16:50
+    12.  l4 = s1(l0, l1);  @ ./Hello.fble:16:39
+    13.  release l0;
+    14.  release l1;
+    15.  l0 = a0.3;  @ ./Hello.fble:16:60
+    16.  l1 = a1.3;  @ ./Hello.fble:16:65
+    17.  l5 = s1(l0, l1);  @ ./Hello.fble:16:54
+    18.  release l0;
+    19.  release l1;
+    20.  l0 = struct(l2, l3, l4, l5);
+    21.  release l2;
+    22.  release l3;
+    23.  release l4;
+    24.  release l5;
+    25.  return l0;
+
