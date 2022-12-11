@@ -9,9 +9,6 @@
 * Stop using global variables in app.fble.c for gWindow and gTime.
  - We should be able to pass that via the executable somehow?
 
-* Improve documentation for how to write an FbleRunFunction.
- - Note: users need to FbleReleaseValue on all args before returning!
-
 * Fix timeout with gdb-test
  - Just need to increase it a little in case of heavy CPU load?
 
@@ -127,7 +124,7 @@
 * Use some way other than NULL to disable profiling?
  - To encourage all the apps to support optional profiling, including things
    like fble-md5 and fble-app?
- - Check we are passing meaningful block ids to FbleNewSimpleFuncValue.
+ - Check we are passing meaningful block ids to FbleNewFuncValue.
 
 * Add option for passing .so files to FbleLinkFromCompiledOrSource?
 
@@ -159,7 +156,7 @@
 * [tests] Add coverage for tagged_type and tagged_expr parse destructors
  - if only I could figure out how to exercise them.
 
-* [/*%] Follow style guide in fble.txt
+* [/*%] Follow style guide in fble.style.txt
   In particular, union field names should be lowercase: just, true, false, not
   Just, True, False.
 * [/*%] Clean up fble library
