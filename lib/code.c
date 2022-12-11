@@ -83,9 +83,15 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
-    case FBLE_RELEASE_INSTR:
       FbleFree(instr);
       return;
+
+    case FBLE_RELEASE_INSTR: {
+      FbleReleaseInstr* i = (FbleReleaseInstr*)instr;
+      FbleVectorFree(i->targets);
+      FbleFree(instr);
+      return;
+    }
 
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
@@ -199,9 +205,12 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "Module: ");
   FblePrintModulePath(fout, module->path);
   fprintf(fout, "\n");
-  fprintf(fout, "Source: %s\n", module->path->loc.source->str);
+  fprintf(fout, "Source: %s\n\n", module->path->loc.source->str);
 
-  fprintf(fout, "Dependencies: %s\n", module->deps.size == 0 ? "(none)" : "");
+  fprintf(fout, "Dependencies:\n");
+  if (module->deps.size == 0) {
+    fprintf(fout, "  (none)\n");
+  }
   for (size_t i = 0; i < module->deps.size; ++i) {
     fprintf(fout, "  ");
     FblePrintModulePath(fout, module->deps.xs[i]);
@@ -440,7 +449,13 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_RELEASE_INSTR: {
           FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "release l%zi;\n", release_instr->target);
+          fprintf(fout, "release ");
+          const char* comma = "";
+          for (size_t j = 0; j < release_instr->targets.size; ++j) {
+            fprintf(fout, "%sl%zi", comma, release_instr->targets.xs[j]);
+            comma = ", ";
+          }
+          fprintf(fout, ";\n");
           break;
         }
 

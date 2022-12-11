@@ -3,6 +3,8 @@
    args.
  - Draft text of tutorial.
 
+* Add var debug info for statics and locals.
+ - So we can see what each refers to in fble-disassemble output.
 
 * Switch to .fbld format for specs, readmes, and tutorials.
  - For first attempt, do something best effort. Certainly doesn't need to be

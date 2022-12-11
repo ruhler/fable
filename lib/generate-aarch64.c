@@ -822,14 +822,23 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
 
-      FbleVar target = {
-        .tag = FBLE_LOCAL_VAR,
-        .index = release_instr->target
-      };
-      GetFrameVar(fout, "x1", target);
-      fprintf(fout, "  bl FbleReleaseValue\n");
+      size_t sp_offset = StackBytesForCount(release_instr->targets.size);
+      fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
+      for (size_t i = 0; i < release_instr->targets.size; ++i) {
+        FbleVar target = {
+          .tag = FBLE_LOCAL_VAR,
+          .index = release_instr->targets.xs[i]
+        };
+        GetFrameVar(fout, "x9", target);
+        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
+      }
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, %zi\n", release_instr->targets.size);
+      fprintf(fout, "  mov x2, SP\n");
+      fprintf(fout, "  bl FbleReleaseValues\n");
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       return;
     }
 
@@ -1086,14 +1095,22 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
+      size_t sp_offset = StackBytesForCount(release_instr->targets.size);
+      fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
+      for (size_t i = 0; i < release_instr->targets.size; ++i) {
+        FbleVar target = {
+          .tag = FBLE_LOCAL_VAR,
+          .index = release_instr->targets.xs[i]
+        };
+        GetFrameVar(fout, "x9", target);
+        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
+      }
 
-      FbleVar target = {
-        .tag = FBLE_LOCAL_VAR,
-        .index = release_instr->target
-      };
-      GetFrameVar(fout, "x1", target);
-      fprintf(fout, "  bl FbleReleaseValue\n");
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, %zi\n", release_instr->targets.size);
+      fprintf(fout, "  mov x2, SP\n");
+      fprintf(fout, "  bl FbleReleaseValues\n");
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       return;
     }
 

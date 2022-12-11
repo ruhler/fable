@@ -74,11 +74,12 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     FbleVectorAppend(code->instrs, &call->_base);
   }
 
+  FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
+  FbleVectorInit(release_instr->targets);
   for (size_t i = 0; i + 1 < program->modules.size; ++i) {
-    FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-    release_instr->target = i;
-    FbleVectorAppend(code->instrs, &release_instr->_base);
+    FbleVectorAppend(release_instr->targets, i);
   }
+  FbleVectorAppend(code->instrs, &release_instr->_base);
 
   FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
   return_instr->result.tag = FBLE_LOCAL_VAR;

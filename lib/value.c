@@ -207,6 +207,26 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
   }
 }
 
+/** See documentation in fble-value.h */
+void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args)
+{
+  for (size_t i = 0; i < argc; ++i) {
+    FbleReleaseValue(heap, args[i]);
+  }
+}
+
+/** See documentation in fble-value.h */
+void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...)
+{
+  va_list ap;
+  va_start(ap, argc);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleValue* value = va_arg(ap, FbleValue*);
+    FbleReleaseValue(heap, value);
+  }
+  va_end(ap);
+}
+
 // FbleValueAddRef -- see documentation in fble-value.h
 void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {

@@ -57,27 +57,20 @@ Here's a snippet from the output of fble-disassemble with the bytecode for the
      0.  l0 = a0.0;  @ ./Hello.fble:16:15
      1.  l1 = a1.0;  @ ./Hello.fble:16:20
      2.  l2 = s1(l0, l1);  @ ./Hello.fble:16:9
-     3.  release l0;
-     4.  release l1;
-     5.  l0 = a0.1;  @ ./Hello.fble:16:30
-     6.  l1 = a1.1;  @ ./Hello.fble:16:35
-     7.  l3 = s1(l0, l1);  @ ./Hello.fble:16:24
-     8.  release l0;
-     9.  release l1;
-    10.  l0 = a0.2;  @ ./Hello.fble:16:45
-    11.  l1 = a1.2;  @ ./Hello.fble:16:50
-    12.  l4 = s1(l0, l1);  @ ./Hello.fble:16:39
-    13.  release l0;
-    14.  release l1;
-    15.  l0 = a0.3;  @ ./Hello.fble:16:60
-    16.  l1 = a1.3;  @ ./Hello.fble:16:65
-    17.  l5 = s1(l0, l1);  @ ./Hello.fble:16:54
-    18.  release l0;
-    19.  release l1;
-    20.  l0 = struct(l2, l3, l4, l5);
-    21.  release l2;
-    22.  release l3;
-    23.  release l4;
-    24.  release l5;
-    25.  return l0;
+     3.  release l0, l1;
+     4.  l0 = a0.1;  @ ./Hello.fble:16:30
+     5.  l1 = a1.1;  @ ./Hello.fble:16:35
+     6.  l3 = s1(l0, l1);  @ ./Hello.fble:16:24
+     7.  release l0, l1;
+     8.  l0 = a0.2;  @ ./Hello.fble:16:45
+     9.  l1 = a1.2;  @ ./Hello.fble:16:50
+    10.  l4 = s1(l0, l1);  @ ./Hello.fble:16:39
+    11.  release l0, l1;
+    12.  l0 = a0.3;  @ ./Hello.fble:16:60
+    13.  l1 = a1.3;  @ ./Hello.fble:16:65
+    14.  l5 = s1(l0, l1);  @ ./Hello.fble:16:54
+    15.  release l0, l1;
+    16.  l0 = struct(l2, l3, l4, l5);
+    17.  release l2, l3, l4, l5;
+    18.  return l0;
 

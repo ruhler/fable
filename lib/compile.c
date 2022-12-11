@@ -71,6 +71,7 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local);
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, size_t statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
+static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index);
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
 
@@ -157,9 +158,7 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
     assert(scope->locals.xs[local->var.index] == local);
 
     if (!exit) {
-      FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-      release_instr->target = local->var.index;
-      AppendInstr(scope, &release_instr->_base);
+      AppendReleaseInstr(scope, local->var.index);
     }
 
     scope->locals.xs[local->var.index] = NULL;
@@ -396,6 +395,36 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
   FbleVectorAppend(scope->code->instrs, instr);
 }
 
+/**
+ * Outputs an FbleReleaseInstr.
+ *
+ * Use this for release instructions to facilitate coallescing of sequential
+ * releases into a single instruction.
+ *
+ * @param scope  The scope to append the instruction to.
+ * @param index  The index of the variable to release.
+ *
+ * @sideeffects:
+ * * Appends an instruction to the code block for the given scope.
+ */
+static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index)
+{
+  if (scope->pending_debug_info == NULL
+      && scope->pending_profile_ops == NULL
+      && scope->code->instrs.size > 0) {
+    FbleReleaseInstr* instr = (FbleReleaseInstr*)scope->code->instrs.xs[scope->code->instrs.size - 1];
+    if (instr->_base.tag == FBLE_RELEASE_INSTR) {
+      FbleVectorAppend(instr->targets, index);
+      return;
+    }
+  }
+
+  FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
+  FbleVectorInit(release_instr->targets);
+  FbleVectorAppend(release_instr->targets, index);
+  AppendInstr(scope, &release_instr->_base);
+}
+
 // AppendDebugInfo --
 //   Append a single debug info entry to the code block for the given scope.
 //
@@ -606,9 +635,7 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
     for (size_t i = 0; i < scope->locals.size; ++i) {
       Local* local = scope->locals.xs[i];
       if (local != NULL && local != result) {
-        FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-        release_instr->target = local->var.index;
-        AppendInstr(scope, &release_instr->_base);
+        AppendReleaseInstr(scope, local->var.index);
       }
     }
 
@@ -901,9 +928,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
             }
 
             if (!used) {
-              FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-              release_instr->target = local->var.index;
-              AppendInstr(scope, &release_instr->_base);
+              AppendReleaseInstr(scope, local->var.index);
             }
           }
         }

@@ -594,7 +594,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-        fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", release_instr->target);
+        fprintf(fout, "  FbleReleaseValues_(heap, %zi", release_instr->targets.size);
+        for (size_t i = 0; i < release_instr->targets.size; ++i) {
+          fprintf(fout, ", l[%zi]", release_instr->targets.xs[i]);
+        }
+        fprintf(fout, ");\n");
         break;
       }
 
@@ -752,7 +756,11 @@ static void EmitInstrForAbort(FILE* fout, size_t pc, FbleInstr* instr)
 
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", release_instr->target);
+      fprintf(fout, "  FbleReleaseValues_(heap, %zi", release_instr->targets.size);
+      for (size_t i = 0; i < release_instr->targets.size; ++i) {
+        fprintf(fout, ", l[%zi]", release_instr->targets.xs[i]);
+      }
+      fprintf(fout, ");\n");
       return;
     }
 

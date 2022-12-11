@@ -305,10 +305,10 @@ typedef struct {
 } FbleTypeInstr;
 
 // FbleReleaseInstr -- FBLE_RELEASE_INSTR
-//  FbleReleaseValue(target)
+//  FbleReleaseValue(targets)
 typedef struct {
   FbleInstr _base;
-  FbleLocalIndex target;
+  FbleLocalIndexV targets;
 } FbleReleaseInstr;
 
 // FbleListInstr -- FBLE_LIST_INSTR

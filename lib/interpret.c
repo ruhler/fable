@@ -173,7 +173,9 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-        FbleReleaseValue(heap, locals[release_instr->target]);
+        for (size_t i = 0; i < release_instr->targets.size; ++i) {
+          FbleReleaseValue(heap, locals[release_instr->targets.xs[i]]);
+        }
         pc++;
         break;
       }
@@ -448,7 +450,9 @@ FbleValue* FbleInterpreterRunFunction(
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-        FbleReleaseValue(heap, locals[release_instr->target]);
+        for (size_t i = 0; i < release_instr->targets.size; ++i) {
+          FbleReleaseValue(heap, locals[release_instr->targets.xs[i]]);
+        }
         pc++;
         break;
       }

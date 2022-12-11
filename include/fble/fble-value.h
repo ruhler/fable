@@ -86,6 +86,32 @@ void FbleRetainValue(FbleValueHeap* heap, FbleValue* src);
 void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
 
 /**
+ * Releases multiple values at once.
+ *
+ * Calls FbleReleaseValue for each provide value.
+ *
+ * @param heap  The heap the values were allocated with.
+ * @param argc  The number of values to release.
+ * @param args  The values to release.
+ * @sideeffects
+ * * Calls FbleReleaseValue on all the values.
+ */
+void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+/**
+ * Releases multiple values at once using varargs.
+ *
+ * Calls FbleReleaseValue for each provide value.
+ *
+ * @param heap  The heap the values were allocated with.
+ * @param argc  The number of values to release.
+ * @param ...   The values to release.
+ * @sideeffects
+ * * Calls FbleReleaseValue on all the values.
+ */
+void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...);
+
+/**
  * Adds reference from one value to another.
  *
  * Notifies the value heap of a new reference from src to dst.
