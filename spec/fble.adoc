@@ -43,6 +43,7 @@ to make structs suitable for describing and manipulating namespaces.
 == 2. Types, Kinds, and Variables ==
 
 === 2.1 Types ===
+
 Data values and the expressions that describe them are strongly typed. A
 value's type describes the kinds of operations that can legally be performed
 on that value. Types are used to check that an fble program is well formed
@@ -74,6 +75,7 @@ fble program after it has been statically checked, though the special unit
 value for types may exist at runtime when using an fble native interface.
 
 === 2.2 Kinds ===
+
 Abstract Syntax:
 
   Kind ::= normal_kind
@@ -473,7 +475,7 @@ fields in the union.
 
 Abstract Syntax:
 
-  Expr ::= union_select (condition : Expr) (choices : [(Name, Expr)]) (default :: Expr)
+  Expr ::= union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
 
 Concrete Syntax:
 

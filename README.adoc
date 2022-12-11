@@ -68,5 +68,7 @@ desired.
   
 == Next Steps ==
 
+See link:spec/fble.adoc[] for the fble language specification.
+
 See link:tutorials/Tutorials.adoc[] for a series of tutorials about the
 fble language to get started.
