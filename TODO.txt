@@ -1,8 +1,3 @@
-* Write CompiledCode tutorial
- - Fix code to not leak memory in case of failure to provide command line
-   args.
- - Draft text of tutorial.
-
 * Add var debug info for statics and locals.
  - So we can see what each refers to in fble-disassemble output.
 

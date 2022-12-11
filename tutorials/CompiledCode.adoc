@@ -3,7 +3,7 @@ Compiled Code
 
 This tutorial shows how to compile your fble programs to native machine code.
 
-== Interpreted Versus Compiled ==
+== Interpreted versus Compiled ==
 
 The fble implementation has an internal bytecode it uses to represent an fble
 program. That bytecode can be interpreted directly, or it can be compiled
@@ -28,16 +28,16 @@ Advantages of using compiled code are:
 * In some cases, compiled code has much better debug support than interpreted
   code.
 
-== Fble Disassemble ==
+== Fble Disassembler ==
 
 We mentioned above that the fble implementation uses an internal bytecode for
 execution. The internal bytecode is not part of the language specification and
 is subject to change without notice.
 
-For debugging purposes only, fble provides an fble-disassemble command that
-you can use to see a human readable representation of the internal bytecode it
-generates for an fble program. For example, take a look at the bytecode for
-the `Hello.fble` program we've written so far:
+For curiosity and debugging purposes only, fble provides an `fble-disassemble`
+command that you can use to see a human readable representation of the
+internal bytecode it generates for an fble program. For example, take a look
+at the bytecode for the `Hello.fble` program we've written so far:
 
   fble-disassemble -I . -m /Hello%
 
@@ -73,4 +73,119 @@ Here's a snippet from the output of fble-disassemble with the bytecode for the
     16.  l0 = struct(l2, l3, l4, l5);
     17.  release l2, l3, l4, l5;
     18.  return l0;
+
+== Compiling to C ==
+
+The `fble-compile` program is used to generate C code or aarch64 assembly code
+for an fble program. You can then using `gcc` or `as` to compile that to
+native machine code.
+
+To generate C code for `Hello.fble`, run the following command:
+
+  fble-compile --target c --compile --export HelloModule -I . -m /Hello% > Hello.fble.c
+
+The `--target c` option says to generate C code. The `--compile` option says
+to generate compiled code for the program, and the `--export HelloModule`
+option says to use the symbol name `HelloModule` for the generated code.
+
+You can then compile this to an object file using `gcc`:
+
+  gcc -c -o Hello.fble.o Hello.fble.c
+
+The generated C code references the `fble/fble.h` header file. You'll need to
+add a `-I` option with the path to the header files if they are installed in a
+non-standard location.
+
+We'll show how to put this together with the `hello.c` main driver program in
+just a moment.
+
+== Compiling to Aarch64 ==
+
+The `fble-compile` program can also generate aarch64 assembly code. This is
+only useful if your computer has a 64 bit ARM processor. You can check by
+running `uname -m`:
+  
+  $ uname -m
+  aarch64
+
+If the output isn't `aarch64`, then skip ahead to the next section.
+
+Generating aarch64 code is just like generating c, exception we change the
+`--target` option:
+
+  fble-compile --target aarch64 --compile --export HelloModule -I . -m /Hello% > Hello.fble.s
+
+You can then compile this to an object file using `as`:
+
+  as -o Hello.fble.o Hello.fble.s
+
+== C versus Aarch64 ==
+
+If you have an aarch64 processor, you should use the `--target aarch64` option
+instead of `--target c` for the following reasons:
+
+* It is much faster and less memory intensive to compile the generated aarch64
+  code than it is to compile the generated c code.
+* The generated aarch64 code tends to run faster than the generated C code.
+* The generated aarch64 includes debug information that can be used with
+  `gdb`. The same debug information is not available when using generated C
+  code.
+
+If you don't have an aarch64 processor, you'll need to use the `--target c`
+option to get compiled code.
+
+== Using the Compiled Code ==
+
+To make use of the compiled code for `Hello.fble`, we need to make a change to
+the `hello.c` main driver code to pick up the compiled code.
+
+Recall from link:MainDriver-2.adoc[] the following snippet of code we used to
+load the program:
+
+  int main(int argc, const char* argv[])
+  {
+    FbleSearchPath search_path;
+    FbleVectorInit(search_path);
+    FbleVectorAppend(search_path, ".");
+
+    FbleModulePath* module_path = FbleParseModulePath("/Hello%");
+    if (module_path == NULL) {
+      fprintf(stderr, "Failed to parse module path.\n");
+      return 1;
+    }
+
+    FbleValueHeap* heap = FbleNewValueHeap();
+    FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL)
+    FbleFreeModulePath(module_path);
+    FbleVectorFree(search_path);
+
+    ...
+
+We use `FbleLinkFromCompiled` instead of `FbleLinkFromSource` to pick up the
+compiled code. Change your `hello.c` driver code to the following:
+
+  int main(int argc, const char* argv[])
+  {
+    FbleValueHeap* heap = FbleNewValueHeap();
+    FbleValue* linked = FbleLinkFromCompiled(HelloModule, heap, NULL);
+
+    ...
+
+The first argument to `FbleLinkFromCompiled` is `HelloModule`, the symbol
+we exported when generating code for `Hello.fble`.
+
+And that's it! The rest of the `hello.c` driver code stays the same. To
+compile it now:
+
+  $ gcc -o hello hello.c Hello.fble.o -lfble 
+
+And we can run it just like before:
+  
+  $ ./hello 0011 1010
+  Result: 0010
+
+== Next Steps ==
+
+Next, head over to link:IntroToModules.adoc[] to learn how to split up and
+organize fble programs into reusable modules.
 

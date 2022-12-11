@@ -70,6 +70,7 @@ int main(int argc, const char* argv[])
   if (argc < 3) {
     fprintf(stderr, "usage: hello ARG1 ARG2\n");
     fprintf(stderr, "example: hello 0011 1010\n");
+    FbleFreeValueHeap(heap);
     return 1;
   }
 
