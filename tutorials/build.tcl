@@ -61,8 +61,8 @@ namespace eval "tutorials" {
   build $::b/tutorials/Modules/hello.out [list \
     $::b/tutorials/Modules/hello \
     $::s/tutorials/Modules/Unit.fble \
-    $::s/tutorials/Modules/Bit.fble \
-    $::s/tutorials/Modules/Bit4.fble \
+    $::s/tutorials/Modules/Bits/Bit.fble \
+    $::s/tutorials/Modules/Bits/Bit4.fble \
     $::s/tutorials/Modules/Hello.fble] \
     "cd $::s/tutorials/Modules ; $hello > $hello_out"
   build $::b/tutorials/Modules/hello.wnt "" \

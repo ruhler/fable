@@ -1,7 +1,7 @@
 
-@ Bit@ = /Bit%.Bit@;
-% And1 = /Bit%.And;
-% Or1 = /Bit%.Or;
+@ Bit@ = /Bits/Bit%.Bit@;
+% And1 = /Bits/Bit%.And;
+% Or1 = /Bits/Bit%.Or;
 
 @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
 

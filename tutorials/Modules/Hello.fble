@@ -1,10 +1,10 @@
 
-% Bit = /Bit%.Bit;
+% Bit = /Bits/Bit%.Bit;
 % 0 = Bit.0;
 % 1 = Bit.1;
 
-@ Bit4@ = /Bit4%.Bit4@;
-% And4 = /Bit4%.And;
+@ Bit4@ = /Bits/Bit4%.Bit4@;
+% And4 = /Bits/Bit4%.And;
 
 Bit4@ x = Bit4@(0, 0, 1, 1);
 Bit4@ y = Bit4@(1, 0, 1, 0);
