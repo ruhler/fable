@@ -186,6 +186,6 @@ And we can run it just like before:
 
 == Next Steps ==
 
-Next, head over to link:IntroToModules.adoc[] to learn how to split up and
+Next, head over to link:Modules.adoc[] to learn how to split up and
 organize fble programs into reusable modules.
 

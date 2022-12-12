@@ -4,7 +4,6 @@ namespace eval "tutorials" {
     "$::b/test/fble-test $::s/tutorials/FirstProgram/Hello.fble" \
     "$::b/test/fble-test -I $::s/tutorials/FirstProgram -m /Hello%"
 
-
   # MainDriver-1 tests
   build $::b/tutorials/MainDriver-1/hello \
     "$::s/tutorials/MainDriver-1/hello.c $::b/lib/libfble.a" \
@@ -52,4 +51,23 @@ namespace eval "tutorials" {
   test $::b/tutorials/CompiledCode.tr \
     "$::b/tutorials/CompiledCode/hello.wnt $::b/tutorials/CompiledCode/hello.out" \
     "cmp $::b/tutorials/CompiledCode/hello.wnt $::b/tutorials/CompiledCode/hello.out"
+
+  # Modules tests
+  build $::b/tutorials/Modules/hello \
+    "$::s/tutorials/Modules/hello.c $::b/lib/libfble.a" \
+    "gcc -o $::b/tutorials/Modules/hello $::s/tutorials/Modules/hello.c -I $::s/include -L $::b/lib -lfble"
+  set hello [file normalize $::b/tutorials/Modules/hello]
+  set hello_out [file normalize $::b/tutorials/Modules/hello.out]
+  build $::b/tutorials/Modules/hello.out [list \
+    $::b/tutorials/Modules/hello \
+    $::s/tutorials/Modules/Unit.fble \
+    $::s/tutorials/Modules/Bit.fble \
+    $::s/tutorials/Modules/Bit4.fble \
+    $::s/tutorials/Modules/Hello.fble] \
+    "cd $::s/tutorials/Modules ; $hello > $hello_out"
+  build $::b/tutorials/Modules/hello.wnt "" \
+    "echo Result: 0010 > $::b/tutorials/Modules/hello.wnt"
+  test $::b/tutorials/Modules.tr \
+    "$::b/tutorials/Modules/hello.wnt $::b/tutorials/Modules/hello.out" \
+    "cmp $::b/tutorials/Modules/hello.wnt $::b/tutorials/Modules/hello.out"
 }

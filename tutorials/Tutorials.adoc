@@ -15,6 +15,6 @@ link:MainDriver-2.adoc[]::
 link:CompiledCode.adoc[]::
   Compile your fble program to native machine code.
 
-link:IntroToModules.adoc[]::
+link:Modules.adoc[]::
   Split your fble program into multiple modules.
 
