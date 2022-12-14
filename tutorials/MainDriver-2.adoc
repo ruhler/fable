@@ -14,23 +14,25 @@ main driver programs to do interesting things with your fble programs.
 We'll use the same `Hello.fble` code from before, except this time we'll
 return the function `And4` instead of the result `z`:
 
-  @ Unit@ = *();
-  @ Bit@ = +(Unit@ 0, Unit@ 1);
-  @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+----
+@ Unit@ = *();
+@ Bit@ = +(Unit@ 0, Unit@ 1);
+@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
 
-  Unit@ Unit = Unit@();
+Unit@ Unit = Unit@();
 
-  Bit@ 0 = Bit@(0: Unit);
+Bit@ 0 = Bit@(0: Unit);
 
-  (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
-    a.?(0: 0, 1: b);
-  };
+(Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+  a.?(0: 0, 1: b);
+};
 
-  (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
-    Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
-  };
+(Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+  Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
+};
 
-  And4;
+And4;
+----
 
 We've also removed definitions of variables `1`, `x`, and `y`, because they
 aren't used anywhere else in the program. We could have left them in, but then
@@ -50,8 +52,10 @@ Let's start with a function to parse a `Bit4@` specified on the command line.
 For example, we want a user to be able to pass `1010` as a command line
 argument:
 
-  FbleValue* ParseArg(FbleValueHeap* heap, const char* arg)
-  {
+----
+FbleValue* ParseArg(FbleValueHeap* heap, const char* arg)
+{
+----
 
 The `ParseArg` function will take the `FbleValueHeap*` and a single command
 line argument, such as `1010`. It will parse that argument into an
@@ -61,17 +65,19 @@ We start with some error checking to make sure the command line argument is in
 the right format. If it isn't, we'll return `NULL` to indicate an error to the
 caller:
 
-    if (strlen(arg) != 4) {
+----
+  if (strlen(arg) != 4) {
+    fprintf(stderr, "illegal arg '%s': 4 bits required\n", arg);
+    return NULL;
+  }
+
+  for (size_t i = 0; i < 4; ++i) {
+    if (arg[i] != '0' && arg[i] != '1') {
       fprintf(stderr, "illegal arg '%s': 4 bits required\n", arg);
       return NULL;
     }
-
-    for (size_t i = 0; i < 4; ++i) {
-      if (arg[i] != '0' && arg[i] != '1') {
-        fprintf(stderr, "illegal arg '%s': 4 bits required\n", arg);
-        return NULL;
-      }
-    }
+  }
+----
 
 Because we are using `strlen`, we'll also need to add `include <string.h>` to
 the top of `hello.c`.
@@ -79,14 +85,16 @@ the top of `hello.c`.
 Now that we know the command line argument is valid, we can construct the
 `Bit4@` value:
 
-    FbleValue* unit = FbleNewStructValue_(heap, 0);
+----
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
 
-    FbleValue* bit3 = FbleNewUnionValue(heap, arg[0] - '0', unit);
-    FbleValue* bit2 = FbleNewUnionValue(heap, arg[1] - '0', unit);
-    FbleValue* bit1 = FbleNewUnionValue(heap, arg[2] - '0', unit);
-    FbleValue* bit0 = FbleNewUnionValue(heap, arg[3] - '0', unit);
+  FbleValue* bit3 = FbleNewUnionValue(heap, arg[0] - '0', unit);
+  FbleValue* bit2 = FbleNewUnionValue(heap, arg[1] - '0', unit);
+  FbleValue* bit1 = FbleNewUnionValue(heap, arg[2] - '0', unit);
+  FbleValue* bit0 = FbleNewUnionValue(heap, arg[3] - '0', unit);
 
-    FbleValue* bits = FbleNewStructValue_(heap, 4, bit3, bit2, bit1, bit0);
+  FbleValue* bits = FbleNewStructValue_(heap, 4, bit3, bit2, bit1, bit0);
+----
 
 We use the two functions `FbleNewStructValue_` and `FbleNewUnionValue` to
 create the `Bit4@`. `FbleNewStructValue_` creates a new fble struct value,
@@ -107,20 +115,24 @@ character `'0'` and a tag value of 1 for character `'1'`.
 field values you pass to them, so we need to explicitly release our ownership
 of those now that we are done with them:
 
-    FbleReleaseValue(heap, unit);
+----
+  FbleReleaseValue(heap, unit);
 
-    FbleReleaseValue(heap, bit3);
-    FbleReleaseValue(heap, bit2);
-    FbleReleaseValue(heap, bit1);
-    FbleReleaseValue(heap, bit0);
+  FbleReleaseValue(heap, bit3);
+  FbleReleaseValue(heap, bit2);
+  FbleReleaseValue(heap, bit1);
+  FbleReleaseValue(heap, bit0);
+----
 
 The garbage collector will ensure those values will stay alive as long as
 needed by the `bits` value.
 
 Finally, we return the constructed `Bit4@` value:
 
-    return bits;
-  }
+----
+  return bits;
+}
+----
  
 === Evaluating The Fble Module ===
 
@@ -128,35 +140,37 @@ We use the same code as before to load and evaluation `Hello.fble`. The only
 difference here is we change the name of `result` to `and4` to better document
 that result of evaluating the module:
 
-  int main(int argc, const char* argv[])
-  {
-    FbleSearchPath search_path;
-    FbleVectorInit(search_path);
-    FbleVectorAppend(search_path, ".");
+----
+int main(int argc, const char* argv[])
+{
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  FbleVectorAppend(search_path, ".");
 
-    FbleModulePath* module_path = FbleParseModulePath("/Hello%");
-    if (module_path == NULL) {
-      fprintf(stderr, "Failed to parse module path.\n");
-      return 1;
-    }
+  FbleModulePath* module_path = FbleParseModulePath("/Hello%");
+  if (module_path == NULL) {
+    fprintf(stderr, "Failed to parse module path.\n");
+    return 1;
+  }
 
-    FbleValueHeap* heap = FbleNewValueHeap();
-    FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL);
-    FbleFreeModulePath(module_path);
-    FbleVectorFree(search_path);
+  FbleValueHeap* heap = FbleNewValueHeap();
+  FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL);
+  FbleFreeModulePath(module_path);
+  FbleVectorFree(search_path);
 
-    if (linked == NULL) {
-      FbleFreeValueHeap(heap);
-      return 1;
-    }
+  if (linked == NULL) {
+    FbleFreeValueHeap(heap);
+    return 1;
+  }
 
-    FbleValue* and4 = FbleEval(heap, linked, NULL);
-    FbleReleaseValue(heap, linked);
+  FbleValue* and4 = FbleEval(heap, linked, NULL);
+  FbleReleaseValue(heap, linked);
 
-    if (and4 == NULL) {
-      FbleFreeValueHeap(heap);
-      return 1;
-    }
+  if (and4 == NULL) {
+    FbleFreeValueHeap(heap);
+    return 1;
+  }
+----
 
 === Parsing the Command Line ===
 
@@ -164,55 +178,61 @@ We can call our `ParseArg` helper function from above to get the arguments `x`
 and `y` to pass to the `And4` function, adding some more code to sanity check
 the arguments are in the right format:
 
-    if (argc < 3) {
-      fprintf(stderr, "usage: hello ARG1 ARG2\n");
-      fprintf(stderr, "example: hello 0011 1010\n");
-      FbleFreeValueHeap(heap);
-      return 1;
-    }
+----
+  if (argc < 3) {
+    fprintf(stderr, "usage: hello ARG1 ARG2\n");
+    fprintf(stderr, "example: hello 0011 1010\n");
+    FbleFreeValueHeap(heap);
+    return 1;
+  }
 
-    FbleValue* x = ParseArg(heap, argv[1]);
-    FbleValue* y = ParseArg(heap, argv[2]);
-    if (x == NULL || y == NULL) {
-      FbleReleaseValue(heap, x);
-      FbleReleaseValue(heap, y);
-      FbleReleaseValue(heap, and4);
-      FbleFreeValueHeap(heap);
-      return 1;
-    }
+  FbleValue* x = ParseArg(heap, argv[1]);
+  FbleValue* y = ParseArg(heap, argv[2]);
+  if (x == NULL || y == NULL) {
+    FbleReleaseValue(heap, x);
+    FbleReleaseValue(heap, y);
+    FbleReleaseValue(heap, and4);
+    FbleFreeValueHeap(heap);
+    return 1;
+  }
+----
 
 === Applying the Function ===
 
 Now that we have the function `and4` and arguments `x` and `y`, we can apply
 the function using `FbleApply`:
 
-    FbleValue* args[] = { x, y };
-    FbleValue* result = FbleApply(heap, and4, args, NULL);
+----
+  FbleValue* args[] = { x, y };
+  FbleValue* result = FbleApply(heap, and4, args, NULL);
 
-    FbleReleaseValue(heap, x);
-    FbleReleaseValue(heap, y);
-    FbleReleaseValue(heap, and4);
+  FbleReleaseValue(heap, x);
+  FbleReleaseValue(heap, y);
+  FbleReleaseValue(heap, and4);
+----
 
 === Printing the Result ===
 
 We now have a result we can print just like before:
 
-    if (result == NULL) {
-      FbleFreeValueHeap(heap);
-      return 1;
-    }
-
-    printf("Result: ");
-    for (size_t i = 0; i < 4; ++i) {
-      FbleValue* bit = FbleStructValueAccess(result, i);
-      printf("%c", FbleUnionValueTag(bit) == 0 ? '0' : '1');
-    }
-    printf("\n");
-
-    FbleReleaseValue(heap, result);
+----
+  if (result == NULL) {
     FbleFreeValueHeap(heap);
-    return 0;
+    return 1;
   }
+
+  printf("Result: ");
+  for (size_t i = 0; i < 4; ++i) {
+    FbleValue* bit = FbleStructValueAccess(result, i);
+    printf("%c", FbleUnionValueTag(bit) == 0 ? '0' : '1');
+  }
+  printf("\n");
+
+  FbleReleaseValue(heap, result);
+  FbleFreeValueHeap(heap);
+  return 0;
+}
+----
 
 == Running the Code ==
 

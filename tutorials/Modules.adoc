@@ -1,0 +1,79 @@
+Modules
+=======
+
+This tutorial introduces modules as a mechanism to organize and reuse parts of
+fble programs. To demonstrate the key ideas behind modules, we'll split up the
+program from link:MainDriver-1.adoc[] into separate modules.
+
+== Organizing the Code ==
+
+`Hello.fble` from link:MainDriver-1.adoc defines a `Bit4@` type and `And4`
+operation, and uses that to compute bitwise AND of binary values `0011` with
+`1010`. We would like to reorganize the code into separate, reusable
+components we call modules.
+
+For the sake of this tutorial, we'll define the following modules:
+
+Unit::
+Defines the `Unit@` type and `Unit` value. This type is so common, it
+can be used in almost any program we write, regardless of whether bits are
+involved.
+
+Bit::
+Defines the `Bit@` type, values `0` and `1`, and basic `And` and `Or`
+operations.
+
+Bit4::
+Defines the `Bit4@` type and a corresponding `And` and `Or` operations.
+
+Hello::
+Descripts the main computation, whose result is bitwise And of `0011` and
+`1010`.
+
+The benefits of splitting up the program this way are:
+* Separate concepts can be implemented in separate `.fble` files, so that
+  working on any one file at a time is simpler.
+* Individual modules can be reused directly in multiple different programs.
+* We can reuse the same name for `And` and `Or` operations for `Bit@` and
+  `Bit4@` types without having to worry about them conflicting with each
+  other.
+
+== Using Structs to Organize Values ==
+
+Consider the bit values `0` and `1`. 
+
+----
+  Bit@ 0 = Bit@(0: Unit);
+  Bit@ 1 = Bit@(1: Unit);
+----
+
+It might be convenient to package these two values up into a single option. We
+know how to do that already using struct values. For example, we could define
+the following:
+
+----
+  @ BitValues@ = *(Bit@ 0, Bit@ 1);
+  BitValues@ BitValues = BitValues@(0, 1);
+----
+
+Now we can pass around the two bit values together by passing around
+`BitValues`, and refer to them with `BitValues.0` and `BitValues.1`.
+
+The fble language has some syntax to make it easier to define struct values
+like this. A struct value can be created with an implicit type. For example:
+
+----
+  BitValues@ BitValues = @(0: 0, 1: 1);
+----
+
+This creates a struct value with two fields, `0` and `1`, whose types are the
+types of arguments `0` and `1`. This is called an implicit type struct value.
+
+To make it even easier, fble can infer the name of the field automatically if
+the argument to the struct value is a variable. The above definition can be
+shortened to the equivalent:
+
+----
+  BitValues@ BitValues = @(0, 1);
+----
+

@@ -43,36 +43,40 @@ at the bytecode for the `Hello.fble` program we've written so far:
 
 Recall the `And4` function from `Hello.fble`:
 
-  (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
-    Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
-  };
+----
+(Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+  Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
+};
+----
 
 Here's a snippet from the output of fble-disassemble with the bytecode for the
 `And4` function:
 
-  /Hello%.And4![000b] args[2] statics[2] locals[6]  @ ./Hello.fble:16:3
-      .  var a a0
-      .  var b a1
-      .  stmt;  @ ./Hello.fble:16:3
-     0.  l0 = a0.0;  @ ./Hello.fble:16:15
-     1.  l1 = a1.0;  @ ./Hello.fble:16:20
-     2.  l2 = s1(l0, l1);  @ ./Hello.fble:16:9
-     3.  release l0, l1;
-     4.  l0 = a0.1;  @ ./Hello.fble:16:30
-     5.  l1 = a1.1;  @ ./Hello.fble:16:35
-     6.  l3 = s1(l0, l1);  @ ./Hello.fble:16:24
-     7.  release l0, l1;
-     8.  l0 = a0.2;  @ ./Hello.fble:16:45
-     9.  l1 = a1.2;  @ ./Hello.fble:16:50
-    10.  l4 = s1(l0, l1);  @ ./Hello.fble:16:39
-    11.  release l0, l1;
-    12.  l0 = a0.3;  @ ./Hello.fble:16:60
-    13.  l1 = a1.3;  @ ./Hello.fble:16:65
-    14.  l5 = s1(l0, l1);  @ ./Hello.fble:16:54
-    15.  release l0, l1;
-    16.  l0 = struct(l2, l3, l4, l5);
-    17.  release l2, l3, l4, l5;
-    18.  return l0;
+....
+/Hello%.And4![000b] args[2] statics[2] locals[6]  @ ./Hello.fble:16:3
+    .  var a a0
+    .  var b a1
+    .  stmt;  @ ./Hello.fble:16:3
+   0.  l0 = a0.0;  @ ./Hello.fble:16:15
+   1.  l1 = a1.0;  @ ./Hello.fble:16:20
+   2.  l2 = s1(l0, l1);  @ ./Hello.fble:16:9
+   3.  release l0, l1;
+   4.  l0 = a0.1;  @ ./Hello.fble:16:30
+   5.  l1 = a1.1;  @ ./Hello.fble:16:35
+   6.  l3 = s1(l0, l1);  @ ./Hello.fble:16:24
+   7.  release l0, l1;
+   8.  l0 = a0.2;  @ ./Hello.fble:16:45
+   9.  l1 = a1.2;  @ ./Hello.fble:16:50
+  10.  l4 = s1(l0, l1);  @ ./Hello.fble:16:39
+  11.  release l0, l1;
+  12.  l0 = a0.3;  @ ./Hello.fble:16:60
+  13.  l1 = a1.3;  @ ./Hello.fble:16:65
+  14.  l5 = s1(l0, l1);  @ ./Hello.fble:16:54
+  15.  release l0, l1;
+  16.  l0 = struct(l2, l3, l4, l5);
+  17.  release l2, l3, l4, l5;
+  18.  return l0;
+....
 
 == Compiling to C ==
 
@@ -142,34 +146,38 @@ the `hello.c` main driver code to pick up the compiled code.
 Recall from link:MainDriver-2.adoc[] the following snippet of code we used to
 load the program:
 
-  int main(int argc, const char* argv[])
-  {
-    FbleSearchPath search_path;
-    FbleVectorInit(search_path);
-    FbleVectorAppend(search_path, ".");
+----
+int main(int argc, const char* argv[])
+{
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  FbleVectorAppend(search_path, ".");
 
-    FbleModulePath* module_path = FbleParseModulePath("/Hello%");
-    if (module_path == NULL) {
-      fprintf(stderr, "Failed to parse module path.\n");
-      return 1;
-    }
+  FbleModulePath* module_path = FbleParseModulePath("/Hello%");
+  if (module_path == NULL) {
+    fprintf(stderr, "Failed to parse module path.\n");
+    return 1;
+  }
 
-    FbleValueHeap* heap = FbleNewValueHeap();
-    FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL)
-    FbleFreeModulePath(module_path);
-    FbleVectorFree(search_path);
+  FbleValueHeap* heap = FbleNewValueHeap();
+  FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL)
+  FbleFreeModulePath(module_path);
+  FbleVectorFree(search_path);
 
-    ...
+  ...
+----
 
 We use `FbleLinkFromCompiled` instead of `FbleLinkFromSource` to pick up the
 compiled code. Change your `hello.c` driver code to the following:
 
-  int main(int argc, const char* argv[])
-  {
-    FbleValueHeap* heap = FbleNewValueHeap();
-    FbleValue* linked = FbleLinkFromCompiled(HelloModule, heap, NULL);
+----
+int main(int argc, const char* argv[])
+{
+  FbleValueHeap* heap = FbleNewValueHeap();
+  FbleValue* linked = FbleLinkFromCompiled(HelloModule, heap, NULL);
 
-    ...
+  ...
+----
 
 The first argument to `FbleLinkFromCompiled` is `HelloModule`, the symbol
 we exported when generating code for `Hello.fble`.

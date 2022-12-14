@@ -1,13 +1,4 @@
 
-* Fix blank lines in code blocks in tutorials.
- - They are showing up as separating code blocks rather than blank lines in
-   code blocks.
-
-* Fix issues with indent in code blocks in tutorials.
- - They are aligning to the first non-whitespace character, which means is
-   not really what we want.
-
-
 * Add var debug info for statics and locals.
  - So we can see what each refers to in fble-disassemble output.
 
