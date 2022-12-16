@@ -1881,3 +1881,13 @@ eventually, want to generate a website from them. For now, let me focus on the
 content of the tutorials, not the syntax. I'll continue to use asciidoc until
 I need more structure from it the way usage text wanted.
 
+---
+
+Tags I want in tutorials:
+* @tutorial[name][body]
+* @l[text]
+* @section[name][body]
+* @code[language][body]
+* @list[body]
+ - @item[id][body]
+

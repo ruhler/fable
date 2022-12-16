@@ -3,7 +3,7 @@ Tutorials
 
 The following is a series of tutorials about the fble language:
 
-link:FirstProgram.adoc[]::
+link:FirstProgram.fbld[]::
   Write your first fble program.
 
 link:MainDriver-1.adoc[]::

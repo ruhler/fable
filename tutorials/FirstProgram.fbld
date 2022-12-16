@@ -1,58 +1,54 @@
-First Program
-=============
-
+@tutorial[First Program][
 This tutorial walks you through writing and testing your first fble program.
-You'll implement a bitwise `AND` operation on a 4 bit bit-vector. To
+You'll implement a bitwise @l[AND] operation on a 4 bit bit-vector. To
 better focus on the basics, the program is written from scratch, without
 making use of any existing libraries.
 
-In your favorite text editor, start a new file called `Hello.fble`. The
-`.fble` extension is used for fble programs, and required for the fble
+In your favorite text editor, start a new file called @l[Hello.fble]. The
+@l[.fble] extension is used for fble programs, and required for the fble
 interpreter and compiler to be able to locate your code.
 
-== Types ==
-
+@section[Types][
 We'll start by defining types for a single bit and a 4 bit bit-vector:
 
-----
+@code[fble]
 @ Unit@ = *();
 @ Bit@ = +(Unit@ 0, Unit@ 1);
 @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
-----
 
-Actually, this code defines three types, named `Unit@`, `Bit@`, and `Bit4@`.
-The language requires type names to end with the `@` character, to distinguish
-them from normal variable names.
+Actually, this code defines three types, named @l[Unit@], @l[Bit@], and
+@l[Bit4@]. The language requires type names to end with the @l[@] character, to
+distinguish them from normal variable names.
 
-The `@` at the beginning of each line says we are defining names of types.
-The syntax `*(...)` is used for struct types and `+(...)` for union types. 
+The @l[@] at the beginning of each line says we are defining names of types.
+The syntax @l[*(...)] is used for struct types and @l[+(...)] for union types. 
 
-The `Unit@` type defined here is a struct type without any fields. We call it
-`Unit@` because there's only one possible value for the type. It is a building
-block for the `Bit@` type. `Unit@` is equivalent to the `()` type in Haskell,
-or the type of a zero-element tuple `()` in Python.
+The @l[Unit@] type defined here is a struct type without any fields. We call it
+@l[Unit@] because there's only one possible value for the type. It is a building
+block for the @l[Bit@] type. @l[Unit@] is equivalent to the @l[()] type in
+Haskell, or the type of a zero-element tuple @l[()] in Python.
 
-The `Bit@` type is defined as a union of two `Unit@` types, labeled `0` and
-`1`. There are two possible values for the `Bit@` type, a `Unit@` value tagged
-with `0` and a `Unit@` value tagged with `1`. Union values implicitly keep track
-of their tag, unlike in C. You can ask a union value what its tag is and
-access the value associated with the tag. More on that later. There is nothing
-special about the names of the fields `0` and `1` that we have chosen here. We
-could just as well have named them `zero` and `one`. The fble language has no
-notion of built in numbers, which means you are free to use numbers as
-identifiers for variable names or field names.
+The @l[Bit@] type is defined as a union of two @l[Unit@] types, labeled @l[0]
+and @l[1]. There are two possible values for the @l[Bit@] type, a @l[Unit@]
+value tagged with `0` and a `Unit@` value tagged with `1`. Union values
+implicitly keep track of their tag, unlike in C. You can ask a union value
+what its tag is and access the value associated with the tag. More on that
+later. There is nothing special about the names of the fields `0` and `1` that
+we have chosen here. We could just as well have named them `zero` and `one`.
+The fble language has no notion of built in numbers, which means you are free
+to use numbers as identifiers for variable names or field names.
 
 `Bit4@` is a struct type with four fields, named `3`, `2`, `1`, and `0`.
 Each field has type `Bit@`. This represents a bit vector of 4 bits. We'll call
 bit 3 the most significant bit and put it on the left as is conventional, but
 it doesn't really matter for the bitwise operations defined in this tutorial.
+]
 
-== Values ==
-
+@section[Values][
 Now that we have the `Bit@` and `Bit4@` types defined, we can declare some
 variables of those types:
 
-----
+@code[fble][
 Unit@ Unit = Unit@();
 
 Bit@ 0 = Bit@(0: Unit);
@@ -60,7 +56,7 @@ Bit@ 1 = Bit@(1: Unit);
 
 Bit4@ x = Bit4@(0, 0, 1, 1);
 Bit4@ y = Bit4@(1, 0, 1, 0);
-----
+]
 
 This code declares 5 variables, named `Unit`, `0`, `1`, `x`, and `y`. The
 variable declarations start with the type of the variable, followed by the
@@ -74,14 +70,14 @@ value to use for that tagged field all in parenthesis.
 Union and struct values are immutable, lightweight, and passed by value. A
 decent implementation of fble will implement a value of `Bit4@` like `x` or
 `y` easily in a single machine word.
+]
 
-== Functions ==
-
+@section[Functions][
 We'll define two functions in our first program: A function `And` that
 computes the `AND` operation on individual bits, and a function `And4` to
 compute bitwise `AND` on our 4 bit bit-vectors:
 
-----
+@code[fble][
 (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
   a.?(0: 0, 1: b);
 };
@@ -89,7 +85,7 @@ compute bitwise `AND` on our 4 bit bit-vectors:
 (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
   Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
 };
-----
+]
 
 The functions `And` and `And4` are variables just like `Unit`, `0`, `1`, `x`,
 and `y`. To declare these variables, we start with the type, followed by the
@@ -122,13 +118,13 @@ fields are the result of applying the `And` function to the corresponding
 fields of the arguments `a` and `b`. For example, `And(a.3, b.3)` calls the
 `And` function with bit 3 of `a` and bit 3 of `b`, and uses the result for bit
 3 of the result of the `And4` function.
+]
 
-== Testing the Result ==
-
+@section[Testing the Result][
 Now that we've defined our bitwise `And4` operation, let's test the result of
 running it on our previously defined `Bit4@` values `x` and `y`:
 
-----
+@code[fble][
 Bit4@ z = And4(x, y);
 
 Unit@ _ = z.3.0;
@@ -137,7 +133,7 @@ Unit@ _ = z.1.1;
 Unit@ _ = z.0.0;
 
 Unit;
-----
+]
 
 We define the variable `z` as the bitwise `AND` of `x` and `y`. Because `x` is
 `0011` and `y` is `1010`, we expect `z` to be `0010`.
@@ -171,9 +167,9 @@ definitions of the value.
 We end the program with `Unit;`. An fble program describes a value. In this
 case, we only care that the program runs without getting a runtime error, so
 it doesn't matter what value we return from the program.
+]
 
-== Running the program ==
-
+@section[Running the program][
 We've finished writing our first fble program! The next step is to try running
 it. Our fble implementation comes with an executable called `fble-test` that
 can be used to run fble programs. `fble-test` runs an fble program and
@@ -182,9 +178,11 @@ encountered.
 
 Try running your program using the following:
 
-    fble-test -I . -m /Hello%
+@code[sh]
+fble-test -I . -m /Hello%
 
-NOTE: If you have built fble yourself and haven't yet installed
+@note
+If you have built fble yourself and haven't yet installed
 `fble-test`, it should be available at the path `fble/test/fble-test` in your
 build directory.
 
@@ -205,23 +203,30 @@ errors. To force an error, change one of the `Unit@ _ = ...` lines. For
 example, change `Unit@ _ = z.3.0;` to `Unit@ _ = z.3.1;`. Rerun the command
 above, and you should get an error message:
 
-  Hello.fble:29:15: error: union field access undefined: wrong tag
+@code[txt]
+Hello.fble:29:15: error: union field access undefined: wrong tag
 
 This error message means you tried to access a union field that was different
 from the tag associated with the union value. In this case, the union value
 was tagged with `0`, and you tried to access its field `0`.
+]
 
-== Exercises ==
+@section[Exercises][
+@list[
+@item[1]
+Try implementing bitwise `NOT`, `OR` and `XOR` functions.
 
-1. Try implementing bitwise `NOT`, `OR` and `XOR` functions.
-2. Try defining a `Bit8@` type and implementing a bitwise `And8` operation for
-   it. You could reuse `Bit4@` for the definition of `Bit8@` or just use
-   `Bit@` like how we defined `Bit4@`.
-3. Try implementing a 4-bit `Add` function that can add two `Bit4@`
-   interpreted as twos-complement integers.
+@item[2]
+Try defining a `Bit8@` type and implementing a bitwise `And8` operation for
+it. You could reuse `Bit4@` for the definition of `Bit8@` or just use `Bit@`
+like how we defined `Bit4@`.
 
-== Next Steps ==
+@item[3]
+Try implementing a 4-bit `Add` function that can add two `Bit4@` interpreted
+as twos-complement integers.
+]]
 
+@section[Next Steps]
 Head over to link:MainDriver-1.adoc[] to learn how to output the bit vector value
 computed by your program.
-
+]
