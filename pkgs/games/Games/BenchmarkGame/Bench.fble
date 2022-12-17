@@ -1,12 +1,13 @@
 
-<@>% List = /Core/List%.List;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
 
-<@>% Nothing = /Core/Maybe%.Nothing;
+<@>% List = /Core/List%.List;
 
 <@>@ Pure@ = /Core/Monad/Pure%.Pure@;
 % Monad = /Core/Monad/Pure%.Monad;
+<@>% Run = /Core/Monad/Pure%.Run;
 
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
@@ -19,16 +20,13 @@
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+
+% Stdio = /Core/Stdio/Stub%.Stdio<Pure@>(Monad);
 
 (Main@, String@)(Unit@) { TestResult@; }
 RunBench = (Main@ game, String@ n)(Unit@ _) {
-  Stdio@<Pure@> stdio = @(
-    in_: Nothing<String@>,
-    out: (String@ _) { Unit; },
-    err: (String@ _) { Unit; });
-  Unit@ result = game<Pure@>(Monad, stdio)(List<String@>[n]).true;
-  AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, result);
+  Bool@ got = Run(game<Pure@>(Monad, Stdio)(List<String@>[n]));
+  AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, got);
 };
 
 # Benchmark for the benchmark games that takes about 1 minute to run.

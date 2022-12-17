@@ -12,4 +12,14 @@ Monad@<Pure@> Monad = @(
   do: <@ A@>(Pure@<A@> ma)<@ B@>((A@) { Pure@<B@>; } f) { f(ma); }
 );
 
-@(Pure@, Monad);
+# Run --
+#   Run a pure monadic computation.
+#
+# Inputs:
+#   m - The computation to run.
+<@ A@>(Pure@<A@>) { A@; }
+Run = <@ A@>(Pure@<A@> m) {
+  m;
+};
+
+@(Pure@, Monad, Run);

@@ -54,43 +54,47 @@ Int@ 2 = Int|2;
   Mul(2, Exp2(Sub(x, 1)));
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-  Int@ n = args.?(cons: /Core/Int/Show%.Read(args.cons.head), nil: 0);
-  Int@ max_depth = Gt(Add(2, MinDepth), n).?(
-    true: Add(2, MinDepth),
-    false: n);
-  Int@ stretch_depth = Add(1, max_depth);
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % s = /Core/Stdio/Stdio%(m, stdio);
 
-  Int@ check = Check(Tree(stretch_depth));
-  Unit@ _ <- m.do(stdio.out(Strs[
-    Str|'stretch tree of depth ', /Core/Int/Show%.Show(stretch_depth),
-    Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]));
+  (List@<String@> args) {
+    Int@ n = args.?(cons: /Core/Int/Show%.Read(args.cons.head), nil: 0);
+    Int@ max_depth = Gt(Add(2, MinDepth), n).?(
+      true: Add(2, MinDepth),
+      false: n);
+    Int@ stretch_depth = Add(1, max_depth);
 
-  Tree@ long_lived = Tree(max_depth);
-
-  (Int@) { M@<Unit@>; } ForDepth = (Int@ depth) {
-    Gt(depth, max_depth).?(true: m.return(Unit));
-
-    Int@ iterations = Exp2(Add(Sub(max_depth, depth), MinDepth));
-
-    (Int@, Int@) { Int@; } ForIter = (Int@ check, Int@ n) {
-      Gt(n, iterations).?(true: check);
-      ForIter(Add(check, Check(Tree(depth))), Add(1, n));
-    };
-
-    Int@ check = ForIter(0, 1);
-    Unit@ _ <- m.do(stdio.out(Strs[
-      /Core/Int/Show%.Show(iterations),
-      Str|'	 trees of depth ', /Core/Int/Show%.Show(depth),
+    Int@ check = Check(Tree(stretch_depth));
+    Unit@ _ <- m.do(s.Out(Strs[
+      Str|'stretch tree of depth ', /Core/Int/Show%.Show(stretch_depth),
       Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]));
-    ForDepth(Add(2, depth));
+
+    Tree@ long_lived = Tree(max_depth);
+
+    (Int@) { M@<Unit@>; } ForDepth = (Int@ depth) {
+      Gt(depth, max_depth).?(true: m.return(Unit));
+
+      Int@ iterations = Exp2(Add(Sub(max_depth, depth), MinDepth));
+
+      (Int@, Int@) { Int@; } ForIter = (Int@ check, Int@ n) {
+        Gt(n, iterations).?(true: check);
+        ForIter(Add(check, Check(Tree(depth))), Add(1, n));
+      };
+
+      Int@ check = ForIter(0, 1);
+      Unit@ _ <- m.do(s.Out(Strs[
+        /Core/Int/Show%.Show(iterations),
+        Str|'	 trees of depth ', /Core/Int/Show%.Show(depth),
+        Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]));
+      ForDepth(Add(2, depth));
+    };
+    Unit@ _ <- m.do(ForDepth(MinDepth));
+    Unit@ _ <- m.do(s.Out(Strs[
+      Str|'long lived tree of depth ',
+      /Core/Int/Show%.Show(max_depth),
+      Str|'	 check: ', /Core/Int/Show%.Show(Check(long_lived)), Str[Chars.nl]]));
+    m.return(True);
   };
-  Unit@ _ <- m.do(ForDepth(MinDepth));
-  Unit@ _ <- m.do(stdio.out(Strs[
-    Str|'long lived tree of depth ',
-    /Core/Int/Show%.Show(max_depth),
-    Str|'	 check: ', /Core/Int/Show%.Show(Check(long_lived)), Str[Chars.nl]]));
-  m.return(True);
 };
 
 @(Main);

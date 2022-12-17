@@ -20,7 +20,8 @@
 # Result:
 #   A Stdio@ program to run the tests.
 (Test@) { Main@; } Run = (Test@ tests)<<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-  % Runners = /Core/Test/Run%(m, stdio.out);
+  % s = /Core/Stdio/Stdio%(m, stdio);
+  % Runners = /Core/Test/Run%(m, s.Out);
 
   String@ prefix = {
     args.?(nil: Str|'');

@@ -1,24 +1,18 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <@>@ List@ = /Core/List%.List@;
 
-@ String@ = /Core/String%.String@;
+% Internal = /Core/Stdio/Internal%;
+@ _@ = Internal._@;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ String@ = /Core/String%.String@;
 
 # Stdio@ --
 #   Interface for standard input and output operations.
-<<@>@>@ Stdio@ = <<@>@ M@> { *(
-    M@<Maybe@<String@>> in_,
-    (String@) { M@<Unit@>; } out,
-    (String@) { M@<Unit@>; } err
-  );
-};
+<<@>@>@ Stdio@ = <<@>@ M@> { _@<Internal.Stdio@<M@>>; };
 
 # Main@ --
 #   Type of the main function for a stdio application.

@@ -102,26 +102,30 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-  Int@ n = /Core/Int/Show%.Read(args.cons.head);
-  Int@ l = Int|10;
-  (Int@, State@) { M@<Bool@>; } PiDigits = (Int@ i, State@ s) {
-    Eq(i, n).?(true: m.return(True));
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % S = /Core/Stdio/Stdio%(m, stdio);
 
-    StreamResult@ r = Stream(s);
-    Unit@ _ <- m.do(stdio.out(/Core/Int/Show%.Show(r.output)));
+  (List@<String@> args) {
+    Int@ n = /Core/Int/Show%.Read(args.cons.head);
+    Int@ l = Int|10;
+    (Int@, State@) { M@<Bool@>; } PiDigits = (Int@ i, State@ s) {
+      Eq(i, n).?(true: m.return(True));
 
-    Int@ ni = Inc(i);
-    Unit@ _ <- m.do(Eq(Int|0, Div(ni, l).r).?(true: {
-      Unit@ _ <- m.do(stdio.out[Chars.tab, Chars.':']);
-      Unit@ _ <- m.do(stdio.out(/Core/Int/Show%.Show(ni)));
-      stdio.out[Chars.nl];
-    }, false: m.return(Unit)));
+      StreamResult@ r = Stream(s);
+      Unit@ _ <- m.do(S.Out(/Core/Int/Show%.Show(r.output)));
 
-    PiDigits(ni, r.state);
+      Int@ ni = Inc(i);
+      Unit@ _ <- m.do(Eq(Int|0, Div(ni, l).r).?(true: {
+        Unit@ _ <- m.do(S.Out[Chars.tab, Chars.':']);
+        Unit@ _ <- m.do(S.Out(/Core/Int/Show%.Show(ni)));
+        S.Out[Chars.nl];
+      }, false: m.return(Unit)));
+
+      PiDigits(ni, r.state);
+    };
+
+    PiDigits(Int|0, Initial);
   };
-
-  PiDigits(Int|0, Initial);
 };
 
 @(Main);

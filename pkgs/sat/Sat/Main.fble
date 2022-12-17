@@ -46,13 +46,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     List@<String@> lines <- m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
     parsed.?(error: {
-      Unit@ _ <- m.do(stdio.err(parsed.error));
+      Unit@ _ <- m.do(s.Err(parsed.error));
       m.return(False);
       });
 
     Result@ result = Solve(parsed.parsed, Nothing<Int@>);
-    Unit@ _ <- m.do(stdio.out(ShowResult(result)));
-    Unit@ _ <- m.do(stdio.out(Str[Chars.nl]));
+    Unit@ _ <- m.do(s.Out(ShowResult(result)));
+    Unit@ _ <- m.do(s.Out(Str[Chars.nl]));
     m.return(True);
   };
 };

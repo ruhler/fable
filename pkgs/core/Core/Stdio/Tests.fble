@@ -76,7 +76,7 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
     List@<String@> inputs = List[Str|Hello, Str|World];
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, List[Str|There], Nil<String@>), Unit);
-    PureResult@<Unit@> got = Run(Stdio.out(Str|There), inputs);
+    PureResult@<Unit@> got = Run(S.Out(Str|There), inputs);
     AssertEquals(
       PureResultEq(/Core/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
@@ -87,7 +87,7 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
     List@<String@> inputs = List[Str|Hello, Str|World];
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, Nil<String@>, List[Str|There]), Unit);
-    PureResult@<Unit@> got = Run(Stdio.err(Str|There), inputs);
+    PureResult@<Unit@> got = Run(S.Err(Str|There), inputs);
     AssertEquals(
       PureResultEq(/Core/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
@@ -101,8 +101,8 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureState@(inputs, List[Str|A, Str|B], Nil<String@>), Unit);
 
     PureResult@<Unit@> got = Run({
-      Unit@ _ <- Monad.do(Stdio.out(Str|A));
-      Unit@ _ <- Monad.do(Stdio.out(Str|B));
+      Unit@ _ <- Monad.do(S.Out(Str|A));
+      Unit@ _ <- Monad.do(S.Out(Str|B));
       Monad.return(Unit);
     }, inputs);
 
@@ -119,8 +119,8 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureState@(inputs, Nil<String@>, List[Str|A, Str|B]), Unit);
 
     PureResult@<Unit@> got = Run({
-      Unit@ _ <- Monad.do(Stdio.err(Str|A));
-      Unit@ _ <- Monad.do(Stdio.err(Str|B));
+      Unit@ _ <- Monad.do(S.Err(Str|A));
+      Unit@ _ <- Monad.do(S.Err(Str|B));
       Monad.return(Unit);
     }, inputs);
 

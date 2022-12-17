@@ -1739,3 +1739,7 @@ All we need to add is expr '.' '%' and '%'(mpath).
 
 The parse seems happy enough with this. Let's do it.
 
+---
+
+I just want to say, I tried making the Stdio@ type abstract today, and it
+worked wonderfully.

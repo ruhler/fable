@@ -24,7 +24,9 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-% RunTests = /Core/Test/Run%<Pure@>(Monad, Stdio.out).RunTests;
+% S = /Core/Stdio/Stdio%<Pure@>(Monad, Stdio);
+
+% RunTests = /Core/Test/Run%<Pure@>(Monad, S.Out).RunTests;
 
 Test@ pass = Test(Str|pass, (Unit@ _) { TestResult@(pass: Unit); });
 Test@ fail = Test(Str|fail, (Unit@ _) { TestResult@(fail: Str|Failed); });
