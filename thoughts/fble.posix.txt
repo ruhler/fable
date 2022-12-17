@@ -251,3 +251,7 @@ We can do it incrementally by starting with the native interface. Steps:
 * Implement 'In' function on top of that. Done.
 * Update IO, Pure, and Stub implementations of Stdio for new interface.
 * Update stdio.fble.c for new interface. Done.
+
+Next step:
+* Define Read@ type, export Stdin, GetChar and GetLine functions instead of In
+  function.

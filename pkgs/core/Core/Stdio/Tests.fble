@@ -8,10 +8,6 @@
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
-
 <@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
 @ PureState@ = /Core/Stdio/Pure%.PureState@;
@@ -59,26 +55,26 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       wnt, got);
   }),
 
-  Test(Str|In, (Unit@ _) {
+  Test(Str|GetLine, (Unit@ _) {
     List@<Int@> inputs = HelloWorld;
-    PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
-      PureState@(Bytes(Str|World), Nil<String@>, Nil<String@>), Just(Str|'Hello
-'));
-    PureResult@<Maybe@<String@>> got = Run(S.In, inputs);
+    PureResult@<String@> wnt = PureResult@<String@>(
+      PureState@(Bytes(Str|World), Nil<String@>, Nil<String@>), Str|'Hello
+');
+    PureResult@<String@> got = Run(S.GetLine(S.Stdin), inputs);
     AssertEquals(
-      PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
-      PureResultShow(/Core/Maybe/Show%.Show(/Core/String/Show%.Show)),
+      PureResultEq(/Core/String/Eq%.Eq),
+      PureResultShow(/Core/String/Show%.Show),
       wnt, got);
   }),
 
-  Test(Str|InEnd, (Unit@ _) {
+  Test(Str|GetLineEnd, (Unit@ _) {
     List@<Int@> inputs = Nil<Int@>;
-    PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
-      PureState@(Nil<Int@>, Nil<String@>, Nil<String@>), Nothing<String@>);
-    PureResult@<Maybe@<String@>> got = Run(S.In, inputs);
+    PureResult@<String@> wnt = PureResult@<String@>(
+      PureState@(Nil<Int@>, Nil<String@>, Nil<String@>), Str|'');
+    PureResult@<String@> got = Run(S.GetLine(S.Stdin), inputs);
     AssertEquals(
-      PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
-      PureResultShow(/Core/Maybe/Show%.Show(/Core/String/Show%.Show)),
+      PureResultEq(/Core/String/Eq%.Eq),
+      PureResultShow(/Core/String/Show%.Show),
       wnt, got);
   }),
 

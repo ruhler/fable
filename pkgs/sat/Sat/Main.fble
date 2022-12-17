@@ -32,27 +32,27 @@
 % ShowResult = /Sat/Show%.ShowResult;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
-  % s = /Core/Stdio/Stdio%(m, stdio); 
+  % S = /Core/Stdio/Stdio%(m, stdio); 
 
   M@<List@<String@>> GetLines = {
-    Maybe@<String@> next <- m.do(s.In);
-    next.?(nothing: m.return(Nil<String@>));
+    String@ next <- m.do(S.GetLine(S.Stdin));
+    next.?(nil: m.return(Nil<String@>));
 
     List@<String@> tail <- m.do(GetLines);
-    m.return(Cons<String@>(next.just, tail));
+    m.return(Cons<String@>(next, tail));
   };
 
   (List@<String@> args) {
     List@<String@> lines <- m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
     parsed.?(error: {
-      Unit@ _ <- m.do(s.Err(parsed.error));
+      Unit@ _ <- m.do(S.Err(parsed.error));
       m.return(False);
       });
 
     Result@ result = Solve(parsed.parsed, Nothing<Int@>);
-    Unit@ _ <- m.do(s.Out(ShowResult(result)));
-    Unit@ _ <- m.do(s.Out(Str[Chars.nl]));
+    Unit@ _ <- m.do(S.Out(ShowResult(result)));
+    Unit@ _ <- m.do(S.Out(Str[Chars.nl]));
     m.return(True);
   };
 };

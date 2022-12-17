@@ -103,17 +103,17 @@
 
 # Play a game of tic-tac-toe.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
-  % s = /Core/Stdio/Stdio%(m, stdio);
+  % S = /Core/Stdio/Stdio%(m, stdio);
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ <- m.do(s.Out(ShowGame(game)));
+    Unit@ _ <- m.do(S.Out(ShowGame(game)));
 
-    Maybe@<String@> line <- m.do(s.In);
-    line.?(nothing: m.return(Unit));
+    String@ line <- m.do(S.GetLine(S.Stdin));
+    line.?(nil: m.return(Unit));
 
-    Maybe@<Input@> mi = ParseInput(line.just);
+    Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ <- m.do(s.Out(Strs[
+      Unit@ _ <- m.do(S.Out(Strs[
         Str|'invalid input: ',
         Str|'expected {A,B,C}{1,2,3}, P, Q, or R',
         Str[Chars.nl]]));

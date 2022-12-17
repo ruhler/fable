@@ -4,8 +4,6 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -17,15 +15,15 @@
 
 # The 'cat' program to cat stdin.
 Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
-  % s = /Core/Stdio/Stdio%(m, stdio);
+  % S = /Core/Stdio/Stdio%(m, stdio);
   M@<Bool@> cat = {
-    Maybe@<String@> line <- m.do(s.In);
+    String@ line <- m.do(S.GetLine(S.Stdin));
     line.?(
-      just: {
-        Unit@ _ <- m.do(s.Out(line.just));
+      cons: {
+        Unit@ _ <- m.do(S.Out(line));
         cat;
       },
-      nothing: m.return(True)
+      nil: m.return(True)
     );
   };
 

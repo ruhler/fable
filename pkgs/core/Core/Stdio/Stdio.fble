@@ -21,33 +21,34 @@
 
 <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
+  # Interface for reading a sequence of bytes.
+  # Returns the next byte in the sequence, or Nothing if the end of the
+  # sequence has been reached.
+  @ IStream@ = M@<Maybe@<Int@>>;
+
+  IStream@ Stdin = stdio.%.in;
+
+  # Gets the next character from the given input stream.
   # Gets the next char from stdin, or Nothing in case of end of file.
-  M@<Maybe@<Char@>> GetChar = {
-    Maybe@<Int@> byte <- m.do(stdio.%.in);
+  (IStream@) { M@<Maybe@<Char@>>; } GetChar = (IStream@ in) {
+    Maybe@<Int@> byte <- m.do(in);
     byte.?(nothing: m.return(Nothing<Char@>));
     m.return(Just(/Core/Char/Ascii%.Chr(byte.just)));
   };
 
   # Gets everything up to and including the next newline character from stdin.
-  # Returns an empty list if this is the end of the file.
-  M@<String@> GetLine = {
-    Maybe@<Char@> c <- m.do(GetChar);
+  # Returns an empty list in case of end of input.
+  (IStream@) { M@<String@>; } GetLine = (IStream@ in) {
+    Maybe@<Char@> c <- m.do(GetChar(in));
     c.?(nothing: m.return(Str|''));
     IsNewline(c.just).?(true: m.return(Str[c.just]));
 
-    String@ tail <- m.do(GetLine);
+    String@ tail <- m.do(GetLine(in));
     m.return(Cons(c.just, tail));
-  };
-
-  # Gets the next line from stdin, including the newline char if any.
-  # Returns Nothing if this is the end of the file.
-  M@<Maybe@<String@>> In = {
-    String@ line <- m.do(GetLine);
-    m.return(line.?(cons: Just(line), nil: Nothing<String@>));
   };
 
   (String@) { M@<Unit@>; } Out = stdio.%.out;
   (String@) { M@<Unit@>; } Err = stdio.%.err;
 
-  @(In, Out, Err);
+  @(IStream@, Stdin, GetChar, GetLine, Out, Err);
 };
