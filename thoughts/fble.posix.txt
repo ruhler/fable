@@ -127,3 +127,97 @@ keep it like that for now then.
 Next I went to try changing stdin to be M@<Maybe@<Int@>>. Before we do that,
 though, we'll want a way to convert Int@ to Char@. Maybe define
 /Char/Ascii% with Ord and Chr functions?
+
+Next is about how best to organize the code. I want:
+
+* M@ parameterized monad.
+* Stdio@<M@> with the core input.
+* Some modules that take Stdio@<M@> core input and define top level functions
+  for users to use, like GetLine, Puts, etc.
+* Functions implemented that reference those top level functions. 
+
+Or... all everything top level parameterized by Stdio@<M@>?
+
+---
+
+I want main functions to be parameterized by M and Stdio@<M@> interfaces. That
+way they can be composed in pure settings. That means the modules we write are
+either functions of M and Stdio@<M@>, or they return functions of M and
+Stdio@<M@>.
+
+My worry is, if they are functions, we might often apply the same function to
+the same M and Stdio@<M@> instance. I'm not worried about the type parameter
+M@, because that gets erased. But passing around the Stdio@<M@> instance is a
+potentially problem if it means allocating a bunch of copies of function
+values.
+
+Except, function values are cheap, right? So why worry?
+
+Anyway, from the coding point of view, the question is: do we want a module to
+be a function that returns a bunch of values, or a bunch of function values?
+
+I feel like this is the first time I've tried to write library functions (like
+GetLine) that depend on a monad instance. Thus far everything has been
+restricted to small helper functions in main files.
+
+So, instead of:
+
+   Unit@ _ <- m.do(stdio.out(Strs[...]));
+
+We want either:
+
+   % Stdio = /Core/Stdio%(m, stdio);
+   Unit@ _ <- m.do(Stdio.Puts(Strs[...]));
+
+Or:
+   Unit@ _ <- m.do(Stdio.Puts(m, stdio, Strs[...]));
+
+But in the first one, if we end up calling the function a lot, we don't want
+to re-invoke /Core/Stdio% so often.
+
+Which suggests what we really want is to factor out the m, stdio arguments
+into static variables to whatever function we are defining.
+   
+Let me try that route and see how it goes, because explicitly passing m, stdio
+around everywhere doesn't sound like much fun to me.
+
+Strawman:
+* We have a type parameterized module to define Stdio@ interface and helper
+  types? No, that doesn't work nicely. Because you would have to write things
+  like:
+   <<@>@ M@> { 
+      % Stdio = /Core/Stdio%<M@>;
+      (Monad@<M@> m, Stdio.Stdio@ stdio, ...)
+
+Strawman:
+1. Have a module that defines Stdio@ interface types. Each type is
+  parameterized by M@ separately.
+2. Have a module that is a function: given instance of Stdio@, returns a bunch
+  of helper functions for GetLine, Puts, etc.
+3. Users are expected to be written as modules that are given instances of
+   Stdio@, instantiate (2) at the top level.
+
+That suggests the signature we want for Main@ is:
+
+<<@>@ M@>(Monad@<M@>, Stdio@<M@>)(List@<String@> args) { M@<Bool@>; }
+
+That makes some sense to me. What names are we going to use for these modules?
+
+* /Core/Monad% defines Monad@ type
+* /Core/Stdio% defines Stdio@ and helper types.
+  - Maybe we make Stdio@ an abstract type, to force all interaction to happen
+    via helper functions?
+* /Core/Stdio/... to define helper functions as desired.
+
+The initial helper functions I expect to want:
+* Stdio, Stdin, Stdout
+* Read, Write
+* GetChar, GetLine
+* PutChar, PutStr
+* PutLine,
+
+For now, put them all in one module called /Core/Stdio/Stdio%?
+
+In theory we can do incremental migration to this. Start with ... well, it's
+not perfect. GetLine implicitly takes from stdin? How about just 'In', 'Out',
+and 'Err', which we can factor away later.

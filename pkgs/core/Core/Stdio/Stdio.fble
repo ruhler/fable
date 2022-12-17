@@ -1,0 +1,15 @@
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+@ String@ = /Core/String%.String@;
+@ Unit@ = /Core/Unit%.Unit@;
+
+<<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+
+  M@<Maybe@<String@>> In = stdio.in;
+  (String@) { M@<Unit@>; } Out = stdio.out;
+  (String@) { M@<Unit@>; } Err = stdio.err;
+
+  @(In, Out, Err);
+};

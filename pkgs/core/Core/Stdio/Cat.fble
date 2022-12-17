@@ -16,10 +16,11 @@
 
 # The 'cat' program to cat stdin.
 Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
-  Maybe@<String@> line <- m.do(stdio.in);
+  % s = /Core/Stdio/Stdio%(m, stdio);
+  Maybe@<String@> line <- m.do(s.In);
   line.?(
     just: {
-      Unit@ _ <- m.do(stdio.out(line.just));
+      Unit@ _ <- m.do(s.Out(line.just));
       Cat(m, stdio, args);
     },
     nothing: m.return(True)
