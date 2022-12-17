@@ -106,17 +106,16 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % S = /Core/Stdio/Stdio%(m, stdio);
 
   (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
-    Unit@ _ <- m.do(S.Out(ShowGame(game)));
+    Unit@ _ <- m.do(S.PutStr(S.Stdout, ShowGame(game)));
 
     String@ line <- m.do(S.GetLine(S.Stdin));
     line.?(nil: m.return(Unit));
 
     Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ <- m.do(S.Out(Strs[
+      Unit@ _ <- m.do(S.PutLine(S.Stdout, Strs[
         Str|'invalid input: ',
-        Str|'expected {A,B,C}{1,2,3}, P, Q, or R',
-        Str[Chars.nl]]));
+        Str|'expected {A,B,C}{1,2,3}, P, Q, or R']));
       TicTacToe(game);
     });
 

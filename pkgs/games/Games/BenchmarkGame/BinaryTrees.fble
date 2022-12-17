@@ -1,8 +1,6 @@
 
 % True = /Core/Bool%.True;
 
-% Chars = /Core/Char%.Chars;
-
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
@@ -55,7 +53,10 @@ Int@ 2 = Int|2;
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
-  % s = /Core/Stdio/Stdio%(m, stdio);
+  % S = /Core/Stdio/Stdio%(m, stdio);
+  (List@<String@>) { M@<Unit@>; } PutL = (List@<String@> strs) {
+    S.PutLine(S.Stdout, Strs(strs));
+  };
 
   (List@<String@> args) {
     Int@ n = args.?(cons: /Core/Int/Show%.Read(args.cons.head), nil: 0);
@@ -65,9 +66,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Int@ stretch_depth = Add(1, max_depth);
 
     Int@ check = Check(Tree(stretch_depth));
-    Unit@ _ <- m.do(s.Out(Strs[
+    Unit@ _ <- m.do(PutL[
       Str|'stretch tree of depth ', /Core/Int/Show%.Show(stretch_depth),
-      Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]));
+      Str|'	 check: ', /Core/Int/Show%.Show(check)]);
 
     Tree@ long_lived = Tree(max_depth);
 
@@ -82,17 +83,17 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       };
 
       Int@ check = ForIter(0, 1);
-      Unit@ _ <- m.do(s.Out(Strs[
+      Unit@ _ <- m.do(PutL[
         /Core/Int/Show%.Show(iterations),
         Str|'	 trees of depth ', /Core/Int/Show%.Show(depth),
-        Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]));
+        Str|'	 check: ', /Core/Int/Show%.Show(check)]);
       ForDepth(Add(2, depth));
     };
     Unit@ _ <- m.do(ForDepth(MinDepth));
-    Unit@ _ <- m.do(s.Out(Strs[
+    Unit@ _ <- m.do(PutL[
       Str|'long lived tree of depth ',
       /Core/Int/Show%.Show(max_depth),
-      Str|'	 check: ', /Core/Int/Show%.Show(Check(long_lived)), Str[Chars.nl]]));
+      Str|'	 check: ', /Core/Int/Show%.Show(Check(long_lived))]);
     m.return(True);
   };
 };

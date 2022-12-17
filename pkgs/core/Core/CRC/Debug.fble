@@ -1,8 +1,6 @@
 
 % True = /Core/Bool%.True;
 
-% Chars = /Core/Char%.Chars;
-
 @ CRC@ = /Core/CRC%.CRC@;
 % Feed = /Core/CRC%.Feed;
 
@@ -17,7 +15,6 @@
 <@>% Cons = /Core/List%.Cons;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -28,15 +25,14 @@
 
 
 Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
-  % s = /Core/Stdio/Stdio%(m, stdio);
+  % S = /Core/Stdio/Stdio%(m, stdio);
   
   (List@<String@> args) {
     (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
       bits.?(nil: m.return(crc));
 
       CRC@ ncrc = Feed(crc, bits.cons.head);
-      Unit@ _ <- m.do(s.Out(ShowBits(ncrc.checksum)));
-      Unit@ _ <- m.do(s.Out(Str[Chars.nl]));
+      Unit@ _ <- m.do(S.PutLine(S.Stdout, ShowBits(ncrc.checksum)));
       DFeeds(ncrc, bits.cons.tail);
     };
 

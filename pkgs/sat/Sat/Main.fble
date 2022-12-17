@@ -2,8 +2,6 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-% Chars = /Core/Char%.Chars;
-
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
@@ -18,7 +16,6 @@
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -45,13 +42,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     List@<String@> lines <- m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
     parsed.?(error: {
-      Unit@ _ <- m.do(S.Err(parsed.error));
+      Unit@ _ <- m.do(S.PutStr(S.Stderr, parsed.error));
       m.return(False);
       });
 
     Result@ result = Solve(parsed.parsed, Nothing<Int@>);
-    Unit@ _ <- m.do(S.Out(ShowResult(result)));
-    Unit@ _ <- m.do(S.Out(Str[Chars.nl]));
+    Unit@ _ <- m.do(S.PutLine(S.Stdout, ShowResult(result)));
     m.return(True);
   };
 };

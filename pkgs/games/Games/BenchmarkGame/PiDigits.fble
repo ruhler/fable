@@ -105,6 +105,10 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % S = /Core/Stdio/Stdio%(m, stdio);
 
+  (String@) { M@<Unit@>; } PutS = (String@ str) {
+    S.PutStr(S.Stdout, str);
+  };
+
   (List@<String@> args) {
     Int@ n = /Core/Int/Show%.Read(args.cons.head);
     Int@ l = Int|10;
@@ -112,13 +116,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       Eq(i, n).?(true: m.return(True));
 
       StreamResult@ r = Stream(s);
-      Unit@ _ <- m.do(S.Out(/Core/Int/Show%.Show(r.output)));
+      Unit@ _ <- m.do(PutS(/Core/Int/Show%.Show(r.output)));
 
       Int@ ni = Inc(i);
       Unit@ _ <- m.do(Eq(Int|0, Div(ni, l).r).?(true: {
-        Unit@ _ <- m.do(S.Out[Chars.tab, Chars.':']);
-        Unit@ _ <- m.do(S.Out(/Core/Int/Show%.Show(ni)));
-        S.Out[Chars.nl];
+        Unit@ _ <- m.do(PutS[Chars.tab, Chars.':']);
+        Unit@ _ <- m.do(PutS(/Core/Int/Show%.Show(ni)));
+        PutS[Chars.nl];
       }, false: m.return(Unit)));
 
       PiDigits(ni, r.state);

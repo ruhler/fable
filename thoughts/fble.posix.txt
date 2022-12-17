@@ -258,3 +258,6 @@ Next step:
 
 Next step:
 * Change native interface for Out and Err functions.
+
+Next step:
+* Remove 'Out' and 'Err' functions.

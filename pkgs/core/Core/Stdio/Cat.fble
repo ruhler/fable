@@ -20,7 +20,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     String@ line <- m.do(S.GetLine(S.Stdin));
     line.?(
       cons: {
-        Unit@ _ <- m.do(S.Out(line));
+        Unit@ _ <- m.do(S.PutStr(S.Stdout, line));
         cat;
       },
       nil: m.return(True)

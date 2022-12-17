@@ -75,13 +75,8 @@
     PutChar(out, Chars.nl);
   };
 
-  # TODO: Remove these functions.
-  (String@) { M@<Unit@>; } Out = (String@ str) { PutStr(Stdout, str); };
-  (String@) { M@<Unit@>; } Err = (String@ str) { PutStr(Stderr, str); };
-
   @(IStream@, OStream@,
     Stdin, Stdout, Stderr,
     GetChar, GetLine,
-    PutChar, PutStr, PutLine,
-    Out, Err);
+    PutChar, PutStr, PutLine);
 };

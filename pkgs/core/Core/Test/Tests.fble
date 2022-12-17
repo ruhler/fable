@@ -14,6 +14,7 @@
 % Stdio = /Core/Stdio/Pure%.Stdio;
 <@>% Run = /Core/Stdio/Pure%.Run;
 
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -27,7 +28,8 @@
 
 % S = /Core/Stdio/Stdio%<Pure@>(Monad, Stdio);
 
-% RunTests = /Core/Test/Run%<Pure@>(Monad, S.Out).RunTests;
+% RunTests = /Core/Test/Run%<Pure@>(Monad,
+  (String@ str) { S.PutStr(S.Stdout, str); }).RunTests;
 
 Test@ pass = Test(Str|pass, (Unit@ _) { TestResult@(pass: Unit); });
 Test@ fail = Test(Str|fail, (Unit@ _) { TestResult@(fail: Str|Failed); });
