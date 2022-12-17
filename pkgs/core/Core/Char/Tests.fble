@@ -1,0 +1,32 @@
+
+% Chars = /Core/Char%.Chars;
+
+% Chr = /Core/Char/Ascii%.Chr;
+% Ord = /Core/Char/Ascii%.Ord;
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+Test@ Tests = TestSuite(Str|Char, List[
+  Test(Str|'Chr', (Unit@ _) {
+    AssertEquals(/Core/Char/Eq%.Eq, /Core/Char/Show%.Show,
+      Chars.'A', Chr(Int|65));
+  }),
+
+  Test(Str|'Ord', (Unit@ _) {
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show,
+      Int|65, Ord(Chars.'A'));
+  })
+]);
+
+@(Tests);

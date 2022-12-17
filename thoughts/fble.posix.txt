@@ -1,0 +1,129 @@
+Fble Posix
+==========
+Goal is to come up with a posix-like interface for fble. For first version,
+goals are:
+* Be able to use it instead of Stdio interface.
+* Be able to use it instead of md5 interface.
+* Be able to use it for all tutorials out of the box, so users don't have to
+  worry about writing their own main drivers to start; they can focus on the
+  language itself.
+* Be able to implement things like 'grep -R' that traverse directories.
+
+High level, I want an API to allow:
+* Access to command line arguments.
+* Able to return exit status.
+* Be able to read stdin, write stdout, stderr.
+* Be able to open files by name for read and/or write.
+* Be able to traverse directories.
+
+Guidelines are:
+* Stick with approach taken by posix. No fancy attempts to come up with
+  something 'better'.
+* But simplify the interface as much as I can/need for now.
+
+Strawman:
+* Byte@ - byte type. Used anywhere char is used in C as well.
+* Fd@ - abstract file descriptor type.
+  Don't use int, because I think we don't need that much generality, and that
+  way we don't have to worry about an int type in the interface.
+* (Fd@) { M@<Maybe@<Byte@>>; } Read
+  - Read next byte from file descriptor, or Nothing if end of file. 
+* (Fd@, Byte@) { M@<Unit@>; } Write
+  - Write a character to a file.
+* Fd@ stdin, Fd@ stdout, Fd@ stderr
+  - Standard file descriptors.
+* (List@<Byte@>) M@<List@<Dirent@>> readdir
+  Where Dirent@ is *(List@<Byte@> name, FileType@ type), and 
+  FileType@ is DT_REG, DT_DIR, DT_UNKNOWN, etc.
+  Hopefully it's okay to read the entire directory at once instead of one by
+  one? I really hope the directory isn't too big. But this is a simpler
+  interface than one by one.
+* (List@<Byte@> path, Mode@ mode) { M@<Maybe@<Fd@>> } Open
+  Where Mode@ is r, r+, w, w+, a, a+ as in fopen.
+* Main has type: (List@<List@<Byte@>> args) { M@<Byte@>;}
+  Except specifying M@ and the full interface above as well.
+  The return Byte@ is exit status.
+
+---
+
+Some proposed revisions:
+* Use String@ for args and file paths.
+ - It feels much more natural than lists of bytes, and it's hard for me to
+   imagine much in the way of practical use cases for bytes that don't have
+   corresponding characters.
+* Encapsulate Fd@ inside a function.
+
+Revised proposal:
+* Byte@ - byte type.
+* Read@ = M@<Maybe@<Byte@>>, for reading bytes from an (implicit) file.
+* Write@ = (Byte@) { M@<Unit@>; }, for writing to an (implicit) file.
+* File@ = *(Read@ read@, Write@ write), for a read/write file.
+* Read@ stdin, Write@ stdout, Write@ stderr
+* (List@ pathname, Mode@ mode) { M@<Maybe@<File@>>; } Open
+   Where Mode@ is r, r+, w, w+, a, a+ as in fopen.
+   Maybe eventually we want to add more in the way of error codes, but don't
+   worry about that for now.
+* (String@) M@<List@<Dirent@>> ReadDir
+  Where Dirent@ is *(String@ name, FileType@ type), and 
+  FileType@ is DT_REG, DT_DIR, DT_UNKNOWN, etc.
+* Main@ = (List@<String@> args) { M@<Byte@>;}
+  Plus M@, Monad@<M@>, and access to above interface.
+
+All of this can go into and be called /Core/Stdio%. We can update that
+incrementally and in place with the new functionality.
+
+Once everything is in place for Stdio, we can start using that for md5. I'm on
+board. I think we have enough to get started. What's the plan?
+
+1. Move definition of Byte@ to core package.
+ - Will need to decide what interface I want.
+2. Return Byte@ instead of Bool@ in Main@.
+3. Define Read@. Start using that for 'stdin'.
+4. Define Write@. Start using that for 'stdout', 'stderr'.
+5. Define File@, Open. Start using that for md5.
+
+Skip ReadDir for now, until I have a better motivating example.
+
+The biggest challenge, I think, will be coming up with a convenient way to
+define and use helper functions like getline and puts. Oh, and coming up with
+the interface for Byte@. That's hard too.
+
+Brainstorm of possible interfaces for Byte@:
+A. List of Bit@
+B. Struct with 8 Bit@ fields.
+C. Struct with Bit4@ hi, Bit4@ lo.
+
+My preference is (C), because it clearly encodes the number of bits and it has
+structure that scales to any number of bits. We could use a different name for
+this. Maybe Bit8@, or Int8@ or Uint8@?
+
+Cool. That's easy. Go with (C).
+
+I'm pretty sure I remember having some discussions about the Bit8 interface
+somewhere. Hmm... Yes. thoughts/fble.lib.bits.txt. Now I remember why I got
+stuck here before.
+
+Here's a random thought: instead of Byte@, why not use Int@? Read we just say
+reads a single byte, with value in range [0, 256). Write truncates to 8 bits.
+Or, similarly, why not just have a list of bits? It's a much nicer, more
+general interface. No need to restrict ourselves to 8 bits in the type.
+
+I like the idea of returning Int@. I see no real downside to using Int@
+instead of a Byte@ type. Except maybe it's not natural for md5 sum to operate
+on Int@.
+
+From a performance point of view, I don't see any benefit of using Bit8@ over
+Int@. Yeah. Let's kick start IO by replacing all uses of Byte@ with Int@.
+A single standard integer type is nice. No real benefit to having different
+width limited integer types. If we want modulo arithmetic or bitwise, we can
+just define different operations on Int@.
+
+---
+
+I started changing the exit code to Int@ instead of Bool@, but I don't really
+see the point of that much generality to start. I only use pass/fail. Let's
+keep it like that for now then.
+
+Next I went to try changing stdin to be M@<Maybe@<Int@>>. Before we do that,
+though, we'll want a way to convert Int@ to Char@. Maybe define
+/Char/Ascii% with Ord and Chr functions?
