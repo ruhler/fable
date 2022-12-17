@@ -40,7 +40,7 @@ GetLines = <<@>@ M@>(Monad@<M@> m, M@<Maybe@<String@>> get) {
   m.return(Cons<String@>(next.just, tail));
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   List@<String@> lines <- m.do(GetLines(m, stdio.in));
   Parse@<Formula@> parsed = ParseLines(lines);
   parsed.?(error: {

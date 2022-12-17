@@ -54,7 +54,7 @@ Int@ 2 = Int|2;
   Mul(2, Exp2(Sub(x, 1)));
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   Int@ n = args.?(cons: /Core/Int/Show%.Read(args.cons.head), nil: 0);
   Int@ max_depth = Gt(Add(2, MinDepth), n).?(
     true: Add(2, MinDepth),

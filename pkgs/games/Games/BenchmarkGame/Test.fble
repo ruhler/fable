@@ -32,7 +32,7 @@ Test = (String@ name, Main@ game, String@ n, String@ expected) {
       PureState@(Nil<String@>, List<String@>[expected], Nil<String@>), True);
 
     PureResult@<Bool@> got = Run(
-      game<Pure@>(Monad, Stdio, List<String@>[n]),
+      game<Pure@>(Monad, Stdio)(List<String@>[n]),
       Nil<String@>);
 
     # Flatten the output, because we only care about the final results, not

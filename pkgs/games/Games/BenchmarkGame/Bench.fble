@@ -27,7 +27,7 @@ RunBench = (Main@ game, String@ n)(Unit@ _) {
     in: Nothing<String@>,
     out: (String@ _) { Unit; },
     err: (String@ _) { Unit; });
-  Unit@ result = game<Pure@>(Monad, stdio, List<String@>[n]).true;
+  Unit@ result = game<Pure@>(Monad, stdio)(List<String@>[n]).true;
   AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, result);
 };
 

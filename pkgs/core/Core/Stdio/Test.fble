@@ -14,7 +14,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 
-Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   # Output a single line to test that we don't drop trailing outputs.
   Unit@ _ <- m.do(stdio.out(Str|'PASSED'));
   m.return(True);

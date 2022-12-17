@@ -27,7 +27,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 
-Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
     bits.?(nil: m.return(crc));
 

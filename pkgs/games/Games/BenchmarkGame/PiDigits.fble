@@ -102,7 +102,7 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   Int@ n = /Core/Int/Show%.Read(args.cons.head);
   Int@ l = Int|10;
   (Int@, State@) { M@<Bool@>; } PiDigits = (Int@ i, State@ s) {

@@ -33,8 +33,7 @@ Run = (/Core/Stdio%.Main@ main)(
     /Core/Stdio%.Stdio@<IO@>(
       stdin,
       (String@ s)(World@ w) { stdout(s, w); },
-      (String@ s)(World@ w) { stderr(s, w); }),
-    args);
+      (String@ s)(World@ w) { stderr(s, w); }))(args);
 };
 
 @(Run);
