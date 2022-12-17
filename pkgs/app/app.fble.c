@@ -16,7 +16,7 @@
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "char.fble.h"    // for FbleCharValueAccess
-#include "int.fble.h"     // for FbleIntValueAccess
+#include "int.fble.h"     // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"  // for FbleStringValueAccess
 
 #define EX_SUCCESS 0
@@ -32,8 +32,6 @@ Uint32 gTime;
 
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
-static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
-static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 
@@ -213,64 +211,6 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
   }
 }
 
-// MakeIntP -- 
-//   Make an FbleValue of type /Core/Int/Core/IntP%.IntP@ for the given integer.
-//
-// Inputs:
-//   heap - the heap to use for allocations.
-//   x - the integer value. Must be greater than 0.
-//
-// Results:
-//   An FbleValue for the integer.
-//
-// Side effects:
-//   Allocates a value that should be freed with FbleReleaseValue when no
-//   longer needed. Behavior is undefined if x is not positive.
-static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
-{
-  assert(x > 0);
-  if (x == 1) {
-    return FbleNewEnumValue(heap, 0);
-  }
-
-  FbleValue* p = MakeIntP(heap, x / 2);
-  FbleValue* result = FbleNewUnionValue(heap, 1 + (x % 2), p);
-  FbleReleaseValue(heap, p);
-  return result;
-}
-
-// MakeInt -- 
-//   Make an FbleValue of type /Core/Int%.Int@ for the given integer.
-//
-// Inputs:
-//   heap - the heap to use for allocations.
-//   x - the integer value.
-//
-// Results:
-//   An FbleValue for the integer.
-//
-// Side effects:
-//   Allocates a value that should be freed with FbleReleaseValue when no
-//   longer needed.
-static FbleValue* MakeInt(FbleValueHeap* heap, int x)
-{
-  if (x < 0) {
-    FbleValue* p = MakeIntP(heap, -x);
-    FbleValue* result = FbleNewUnionValue(heap, 0, p);
-    FbleReleaseValue(heap, p);
-    return result;
-  }
-
-  if (x == 0) {
-    return FbleNewEnumValue(heap, 1);
-  }
-
-  FbleValue* p = MakeIntP(heap, x);
-  FbleValue* result = FbleNewUnionValue(heap, 2, p);
-  FbleReleaseValue(heap, p);
-  return result;
-}
-
 // MakeKey -- 
 //   Make an FbleValue of type /App%.Key@ for the given scancode.
 //
@@ -388,8 +328,8 @@ static FbleValue* EventImpl(
       case SDL_MOUSEBUTTONDOWN: {
         FbleValue* button = MakeButton(heap, event.button.button);
         if (button != NULL) {
-          FbleValue* x = MakeInt(heap, event.button.x);
-          FbleValue* y = MakeInt(heap, event.button.y);
+          FbleValue* x = FbleNewIntValue(heap, event.button.x);
+          FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
           FbleReleaseValue(heap, button);
           FbleReleaseValue(heap, x);
@@ -403,8 +343,8 @@ static FbleValue* EventImpl(
       case SDL_MOUSEBUTTONUP: {
         FbleValue* button = MakeButton(heap, event.button.button);
         if (button != NULL) {
-          FbleValue* x = MakeInt(heap, event.button.x);
-          FbleValue* y = MakeInt(heap, event.button.y);
+          FbleValue* x = FbleNewIntValue(heap, event.button.x);
+          FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
           FbleReleaseValue(heap, button);
           FbleReleaseValue(heap, x);
@@ -423,8 +363,8 @@ static FbleValue* EventImpl(
           glOrtho(0, event.window.data1, event.window.data2, 0, -1, 1);
           glClear(GL_COLOR_BUFFER_BIT);
 
-          FbleValue* width = MakeInt(heap, event.window.data1);
-          FbleValue* height = MakeInt(heap, event.window.data2);
+          FbleValue* width = FbleNewIntValue(heap, event.window.data1);
+          FbleValue* height = FbleNewIntValue(heap, event.window.data2);
           FbleValue* resized = FbleNewStructValue_(heap, 2, width, height);
           FbleReleaseValue(heap, width);
           FbleReleaseValue(heap, height);
@@ -435,10 +375,10 @@ static FbleValue* EventImpl(
       }
 
       case SDL_MOUSEMOTION: {
-        FbleValue* x = MakeInt(heap, event.motion.x);
-        FbleValue* y = MakeInt(heap, event.motion.y);
-        FbleValue* dx = MakeInt(heap, event.motion.xrel);
-        FbleValue* dy = MakeInt(heap, event.motion.yrel);
+        FbleValue* x = FbleNewIntValue(heap, event.motion.x);
+        FbleValue* y = FbleNewIntValue(heap, event.motion.y);
+        FbleValue* dx = FbleNewIntValue(heap, event.motion.xrel);
+        FbleValue* dy = FbleNewIntValue(heap, event.motion.yrel);
         FbleValue* motion = FbleNewStructValue_(heap, 4, x, y, dx, dy);
         FbleReleaseValue(heap, x);
         FbleReleaseValue(heap, y);
@@ -691,8 +631,8 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   effect_exe->on_free = &FbleExecutableNothingOnFree;
   FbleValue* fble_effect = FbleNewFuncValue(heap, effect_exe, 0, NULL);
 
-  FbleValue* fble_width = MakeInt(heap, width);
-  FbleValue* fble_height = MakeInt(heap, height);
+  FbleValue* fble_width = FbleNewIntValue(heap, width);
+  FbleValue* fble_height = FbleNewIntValue(heap, height);
 
   FbleValue* args[4] = { fble_event, fble_effect, fble_width, fble_height };
   FbleValue* computation = FbleApply(heap, func, args, profile);

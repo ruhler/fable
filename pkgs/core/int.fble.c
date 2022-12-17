@@ -6,7 +6,34 @@
 
 #include <fble/fble-value.h>   // for FbleValue, etc.
 
+static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x);
 static int64_t ReadIntP(FbleValue* num);
+
+// MakeIntP -- 
+//   Make an FbleValue of type /Core/Int/Core/IntP%.IntP@ for the given integer.
+//
+// Inputs:
+//   heap - the heap to use for allocations.
+//   x - the integer value. Must be greater than 0.
+//
+// Results:
+//   An FbleValue for the integer.
+//
+// Side effects:
+//   Allocates a value that should be freed with FbleReleaseValue when no
+//   longer needed. Behavior is undefined if x is not positive.
+static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
+{
+  assert(x > 0);
+  if (x == 1) {
+    return FbleNewEnumValue(heap, 0);
+  }
+
+  FbleValue* p = MakeIntP(heap, x / 2);
+  FbleValue* result = FbleNewUnionValue(heap, 1 + (x % 2), p);
+  FbleReleaseValue(heap, p);
+  return result;
+}
 
 // ReadIntP --
 //   Read a number from an FbleValue of type /Core/Int/Core/IntP%.IntP@.
@@ -28,6 +55,26 @@ static int64_t ReadIntP(FbleValue* x)
     case 2: return 2 * ReadIntP(FbleUnionValueAccess(x)) + 1;
     default: assert(false && "Invalid IntP@ tag"); abort();
   }
+}
+
+// See documentation in int.fble.h
+FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x)
+{
+  if (x < 0) {
+    FbleValue* p = MakeIntP(heap, -x);
+    FbleValue* result = FbleNewUnionValue(heap, 0, p);
+    FbleReleaseValue(heap, p);
+    return result;
+  }
+
+  if (x == 0) {
+    return FbleNewEnumValue(heap, 1);
+  }
+
+  FbleValue* p = MakeIntP(heap, x);
+  FbleValue* result = FbleNewUnionValue(heap, 2, p);
+  FbleReleaseValue(heap, p);
+  return result;
 }
 
 // FbleIntValueAccess -- see documentation in int.fble.h

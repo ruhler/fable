@@ -2,6 +2,8 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 
+@ Int@ = /Core/Int%.Int@;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
@@ -36,11 +38,18 @@
 
 % S = /Core/Stdio/Stdio%<Pure@>(Monad, Stdio);
 
+(String@) { List@<Int@>; } Bytes = (String@ str) {
+  /Core/List%.Map(str, /Core/Char/Ascii%.Ord);
+};
+
+List@<Int@> HelloWorld = Bytes|'Hello
+World';
+
 # Tests --
 #  A test suite to test the /Stdio% module and friends.
-Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
+Test@ Tests = TestSuite(Str|Stdio, List[
   Test(Str|Return, (Unit@ _) {
-    List@<String@> inputs = List[Str|Hello, Str|World];
+    List@<Int@> inputs = HelloWorld;
     PureResult@<Bool@> wnt = PureResult@<Bool@>(
       PureState@(inputs, Nil<String@>, Nil<String@>), True);
     PureResult@<Bool@> got = Run(Monad.return(True), inputs);
@@ -51,9 +60,10 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
   }),
 
   Test(Str|In, (Unit@ _) {
-    List@<String@> inputs = List[Str|Hello, Str|World];
+    List@<Int@> inputs = HelloWorld;
     PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
-      PureState@(List[Str|World], Nil<String@>, Nil<String@>), Just(Str|Hello));
+      PureState@(Bytes(Str|World), Nil<String@>, Nil<String@>), Just(Str|'Hello
+'));
     PureResult@<Maybe@<String@>> got = Run(S.In, inputs);
     AssertEquals(
       PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
@@ -62,9 +72,9 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
   }),
 
   Test(Str|InEnd, (Unit@ _) {
-    List@<String@> inputs = Nil<String@>;
+    List@<Int@> inputs = Nil<Int@>;
     PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
-      PureState@(Nil<String@>, Nil<String@>, Nil<String@>), Nothing<String@>);
+      PureState@(Nil<Int@>, Nil<String@>, Nil<String@>), Nothing<String@>);
     PureResult@<Maybe@<String@>> got = Run(S.In, inputs);
     AssertEquals(
       PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
@@ -73,7 +83,7 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
   }),
 
   Test(Str|Out, (Unit@ _) {
-    List@<String@> inputs = List[Str|Hello, Str|World];
+    List@<Int@> inputs = HelloWorld;
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, List[Str|There], Nil<String@>), Unit);
     PureResult@<Unit@> got = Run(S.Out(Str|There), inputs);
@@ -84,7 +94,7 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
   }),
 
   Test(Str|Err, (Unit@ _) {
-    List@<String@> inputs = List[Str|Hello, Str|World];
+    List@<Int@> inputs = HelloWorld;
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, Nil<String@>, List[Str|There]), Unit);
     PureResult@<Unit@> got = Run(S.Err(Str|There), inputs);
@@ -95,7 +105,7 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
   }),
 
   Test(Str|DoOuts, (Unit@ _) {
-    List@<String@> inputs = List[Str|Hello, Str|World];
+    List@<Int@> inputs = HelloWorld;
 
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, List[Str|A, Str|B], Nil<String@>), Unit);
@@ -113,7 +123,7 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
   }),
 
   Test(Str|DoErrs, (Unit@ _) {
-    List@<String@> inputs = List[Str|Hello, Str|World];
+    List@<Int@> inputs = HelloWorld;
 
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, Nil<String@>, List[Str|A, Str|B]), Unit);

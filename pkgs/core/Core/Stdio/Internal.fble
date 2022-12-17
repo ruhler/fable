@@ -1,4 +1,6 @@
 
+@ Int@ = /Core/Int%.Int@;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
@@ -11,11 +13,11 @@
 # Stdio@ --
 #   Internal interface for standard input and output operations.
 <<@>@>@ Stdio@ = <<@>@ M@> { *(
-    M@<Maybe@<String@>> in,
+    # Reads the next byte from stdin.
+    M@<Maybe@<Int@>> in,
     (String@) { M@<Unit@>; } out,
     (String@) { M@<Unit@>; } err
   );
 };
-
 
 @(_@, Stdio@);

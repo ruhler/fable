@@ -1,8 +1,7 @@
 
+@ Int@ = /Core/Int%.Int@;
 <@>% Nothing = /Core/Maybe%.Nothing;
-
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 % Internal = /Core/Stdio/Internal%;
@@ -15,7 +14,7 @@
 # A stub implementation of the Stdio@ monad that ignores all IO.
 <<@>@ M@>(Monad@<M@>) { Stdio@<M@>; } Stdio = <<@>@ M@>(Monad@<M@> m) {
   _@(@(
-      in: m.return(Nothing<String@>),
+      in: m.return(Nothing<Int@>),
       out: (String@ _) { m.return(Unit); },
       err: (String@ _) { m.return(Unit); }));
 };

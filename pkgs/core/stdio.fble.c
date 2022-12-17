@@ -2,12 +2,9 @@
 // stdio.fble.c --
 //   Implementation of FbleStdio and FbleStdioMain functions.
 
-
-#define _GNU_SOURCE     // for getline
-
 #include "stdio.fble.h"
 
-#include <stdio.h>      // for FILE, fprintf, fflush, getline
+#include <stdio.h>      // for FILE, fprintf, fflush, fgetc
 #include <stdlib.h>     // for free
 #include <string.h>     // for strcmp
 
@@ -19,7 +16,7 @@
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "char.fble.h"        // for FbleCharValueAccess
-#include "int.fble.h"         // for FbleIntValueAccess
+#include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
 
 #define EX_TRUE 0
@@ -65,7 +62,7 @@ static void Output(FILE* stream, FbleValue* str)
 }
 
 // Stdin -- Implementation of stdin function.
-//   IO@<Maybe@<String@>>
+//   IO@<Maybe@<Int@>>
 static FbleValue* StdinImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
@@ -79,19 +76,15 @@ static FbleValue* StdinImpl(
 
   FbleValue* world = args[0];
 
-  // Read a line from stdin.
-  char* line = NULL;
-  size_t len = 0;
-  ssize_t read = getline(&line, &len, stdin);
+  int c = fgetc(stdin);
   FbleValue* ms;
-  if (read < 0) {
+  if (c == EOF) {
     ms = FbleNewEnumValue(heap, 1);
   } else {
-    FbleValue* charS = FbleNewStringValue(heap, line);
-    ms = FbleNewUnionValue(heap, 0, charS);
-    FbleReleaseValue(heap, charS);
+    FbleValue* v = FbleNewIntValue(heap, c);
+    ms = FbleNewUnionValue(heap, 0, v);
+    FbleReleaseValue(heap, v);
   }
-  free(line);
 
   FbleValue* result = FbleNewStructValue_(heap, 2, world, ms);
   FbleReleaseValue(heap, ms);

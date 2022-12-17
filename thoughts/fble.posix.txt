@@ -223,3 +223,31 @@ not perfect. GetLine implicitly takes from stdin? How about just 'In', 'Out',
 and 'Err', which we can factor away later.
 
 Yeah. This feels pretty good.
+
+---
+
+Now I have the structure I want, and Stdio@ is an abstract type. It should be
+a matter of changing the internal type and using whatever implementation for
+helper functions I want.
+
+Because Stdio@ is abstract, the only way to interact with it really is via the
+/Core/Stdio/Stdio module we set up, which is parameterized by the monad and
+stdio instances. That means we can define types like Read@ and Write@ with the
+Monad@ part built in. Let's try it.
+
+Oh. Maybe not. Because we need it for the internal definition of Stdio@ type.
+Oh well.
+
+First change I want to make:
+* Define Read@ as a M@<Maybe@<Byte@>> type.
+* Change 'in' field to be Read@ instead of a M@<Maybe@<String@>>.
+* Replace 'In' with Stdin, which is the direct 'in' field.
+* Write a GetChar function that takes a Read@ as input and returns a char.
+* Write a GetLine function that takes a Read@ as input and returns the line.
+* Switch users to the new GetLine interface.
+
+We can do it incrementally by starting with the native interface. Steps:
+* Change type of 'in' in internal impl. Done.
+* Implement 'In' function on top of that. Done.
+* Update IO, Pure, and Stub implementations of Stdio for new interface.
+* Update stdio.fble.c for new interface. Done.

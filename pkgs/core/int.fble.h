@@ -3,6 +3,18 @@
 
 #include <fble/fble-value.h>
 
+/**
+ * Creates a new /Core/Int%.Int@ value.
+ * 
+ * @param heap  The value heap.
+ * @param x  The integer value to create.
+ * @returns An newly allocated fble integer value.
+ * @sideeffects
+ *   The caller is responsible for calling FbleReleaseValue when the returned
+ *   value is no longer needed.
+ */
+FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x);
+
 // FbleIntValueAccess --
 //   Read a number from an FbleValue of type /Core/Int%.Int@.
 //

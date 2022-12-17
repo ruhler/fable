@@ -1,13 +1,51 @@
 
+% IsNewline = /Core/Char/Type%.IsNewline;
+
+@ Char@ = /Core/Char%.Char@;
+@ Int@ = /Core/Int%.Int@;
+
+<@>% Cons = /Core/List%.Cons;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
 @ Unit@ = /Core/Unit%.Unit@;
+
 
 <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
-  M@<Maybe@<String@>> In = stdio.%.in;
+  # Gets the next char from stdin, or Nothing in case of end of file.
+  M@<Maybe@<Char@>> GetChar = {
+    Maybe@<Int@> byte <- m.do(stdio.%.in);
+    byte.?(nothing: m.return(Nothing<Char@>));
+    m.return(Just(/Core/Char/Ascii%.Chr(byte.just)));
+  };
+
+  # Gets everything up to and including the next newline character from stdin.
+  # Returns an empty list if this is the end of the file.
+  M@<String@> GetLine = {
+    Maybe@<Char@> c <- m.do(GetChar);
+    c.?(nothing: m.return(Str|''));
+    IsNewline(c.just).?(true: m.return(Str[c.just]));
+
+    String@ tail <- m.do(GetLine);
+    m.return(Cons(c.just, tail));
+  };
+
+  # Gets the next line from stdin, including the newline char if any.
+  # Returns Nothing if this is the end of the file.
+  M@<Maybe@<String@>> In = {
+    String@ line <- m.do(GetLine);
+    m.return(line.?(cons: Just(line), nil: Nothing<String@>));
+  };
+
   (String@) { M@<Unit@>; } Out = stdio.%.out;
   (String@) { M@<Unit@>; } Err = stdio.%.err;
 

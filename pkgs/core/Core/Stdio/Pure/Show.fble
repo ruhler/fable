@@ -9,7 +9,7 @@
 
 Show@<PureState@> PureStateShow = (PureState@ a) {
   Strs[
-    Str|'In: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.in),
+    Str|'In: ', /Core/List/Show%.Show(/Core/Int/Show%.Show)(a.in),
     Str|', Out: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.out),
     Str|', Err: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.err)];
 };

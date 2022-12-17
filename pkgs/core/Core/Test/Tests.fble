@@ -3,6 +3,8 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+@ Int@ = /Core/Int%.Int@;
+
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 
@@ -12,7 +14,6 @@
 % Stdio = /Core/Stdio/Pure%.Stdio;
 <@>% Run = /Core/Stdio/Pure%.Run;
 
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -34,7 +35,7 @@ Test@ xfail = Test(Str|xfail, (Unit@ _) { TestResult@(xfail: Unit); });
 
 Test@ Tests = TestSuite(Str|'Test', List[
   Test(Str|'RunTest.pass_passes', (Unit@ _) {
-    PureResult@<Bool@> result = Run(RunTests(Str|'', pass), Nil<String@>);
+    PureResult@<Bool@> result = Run(RunTests(Str|'', pass), Nil<Int@>);
 
     Bool@ wnt = True;
     Bool@ got = result.x;
@@ -42,7 +43,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
     }),
 
   Test(Str|'RunTest.fail_fails', (Unit@ _) {
-    PureResult@<Bool@> result = Run(RunTests(Str|'', fail), Nil<String@>);
+    PureResult@<Bool@> result = Run(RunTests(Str|'', fail), Nil<Int@>);
 
     Bool@ wnt = False;
     Bool@ got = result.x;
@@ -50,7 +51,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
     }),
 
   Test(Str|'RunTest.xfail_passes', (Unit@ _) {
-    PureResult@<Bool@> result = Run(RunTests(Str|'', xfail), Nil<String@>);
+    PureResult@<Bool@> result = Run(RunTests(Str|'', xfail), Nil<Int@>);
 
     Bool@ wnt = True;
     Bool@ got = result.x;

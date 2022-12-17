@@ -42,4 +42,9 @@
   c.?('	': True, ' ': True, : False);
 };
 
-@(IsUpper, IsLower, IsAlpha, IsDigit, IsAlNum, IsSpace);
+(Char@) { Bool@; } IsNewline = (Char@ c) {
+  c.?('
+': True, : False);
+};
+
+@(IsUpper, IsLower, IsAlpha, IsDigit, IsAlNum, IsSpace, IsNewline);

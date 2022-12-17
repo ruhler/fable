@@ -3,6 +3,8 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 
+@ Int@ = /Core/Int%.Int@;
+
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 
@@ -29,11 +31,11 @@
 Test = (String@ name, Main@ game, String@ n, String@ expected) {
   /Core/Test%.Test(name, (Unit@ _) {
     PureResult@<Bool@> want = PureResult@<Bool@>(
-      PureState@(Nil<String@>, List<String@>[expected], Nil<String@>), True);
+      PureState@(Nil<Int@>, List<String@>[expected], Nil<String@>), True);
 
     PureResult@<Bool@> got = Run(
       game<Pure@>(Monad, Stdio)(List<String@>[n]),
-      Nil<String@>);
+      Nil<Int@>);
 
     # Flatten the output, because we only care about the final results, not
     # how it's split into different calls to Stdio.out.

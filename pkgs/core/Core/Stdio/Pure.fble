@@ -1,4 +1,6 @@
 
+@ Int@ = /Core/Int%.Int@;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
@@ -20,7 +22,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ PureState@ = *(
-  List@<String@> in,
+  List@<Int@> in,
   List@<String@> out,
   List@<String@> err
 );
@@ -33,9 +35,9 @@
 
 Monad@<Pure@> Monad = State.Monad;
 
-Pure@<Maybe@<String@>> In = {
+Pure@<Maybe@<Int@>> In = {
   PureState@ s <- Monad.do(State.Get);
-  s.in.?(nil: Monad.return(Nothing<String@>));
+  s.in.?(nil: Monad.return(Nothing<Int@>));
   Unit@ _ <- Monad.do(State.Set(PureState@(s.in.cons.tail, s.out, s.err)));
   Monad.return(Just(s.in.cons.head));
 };
@@ -61,9 +63,9 @@ Stdio@<Pure@> Stdio = _@(Internal.Stdio@<Pure@>(In, Out, Err));
 #
 # Inputs:
 #   m - The computation to run.
-#   in - The list of input strings.
-<@ A@>(Pure@<A@>, List@<String@>) { PureResult@<A@>; }
-Run = <@ A@>(Pure@<A@> m, List@<String@> in) {
+#   in - List of bytes to use for stdin.
+<@ A@>(Pure@<A@>, List@<Int@>) { PureResult@<A@>; }
+Run = <@ A@>(Pure@<A@> m, List@<Int@> in) {
   State.Run(m, PureState@(in, Nil<String@>, Nil<String@>));
 };
 

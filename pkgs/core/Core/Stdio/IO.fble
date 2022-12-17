@@ -1,5 +1,7 @@
 @ Bool@ = /Core/Bool%.Bool@;
 
+@ Int@ = /Core/Int%.Int@;
+
 <@>@ List@ = /Core/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -19,12 +21,12 @@
 # Run --
 #   A top-level IO implementation for running a Stdio Main@ program.
 (/Core/Stdio%.Main@)(
-  IO@<Maybe@<String@>>,
+  IO@<Maybe@<Int@>>,
   (String@, World@) { R@<Unit@>; },
   (String@, World@) { R@<Unit@>; },
   List@<String@>) { IO@<Bool@>; }
 Run = (/Core/Stdio%.Main@ main)(
-  IO@<Maybe@<String@>> stdin,
+  IO@<Maybe@<Int@>> stdin,
   (String@, World@) { R@<Unit@>; } stdout,
   (String@, World@) { R@<Unit@>; } stderr,
   List@<String@> args) {
