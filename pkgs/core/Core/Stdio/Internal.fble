@@ -3,8 +3,6 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-@ String@ = /Core/String%.String@;
-
 @ Unit@ = /Core/Unit%.Unit@;
 
 # Package type for access to internals of Stdio@ abstract type.
@@ -15,8 +13,12 @@
 <<@>@>@ Stdio@ = <<@>@ M@> { *(
     # Reads the next byte from stdin.
     M@<Maybe@<Int@>> in,
-    (String@) { M@<Unit@>; } out,
-    (String@) { M@<Unit@>; } err
+
+    # Writes a byte to stdout.
+    (Int@) { M@<Unit@>; } out,
+
+    # Writes a byte to stderr.
+    (Int@) { M@<Unit@>; } err
   );
 };
 

@@ -45,20 +45,19 @@ static FbleValue* StderrImpl(
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 
 // Output --
-//   Output a string to the given output stream.
+//   Output a byte to the given output stream.
 //
 // Inputs:
 //   stream - the stream to output to
-//   str - the /Core/String%.String@ to write
+//   byte - the /Core/Int%.Int@ to write
 //
 // Side effects:
-//   Outputs the string to the stream and flushes the stream.
-static void Output(FILE* stream, FbleValue* str)
+//   Outputs the byte to the stream and flushes the stream.
+static void Output(FILE* stream, FbleValue* byte)
 {
-  char* chars = FbleStringValueAccess(str);
-  fprintf(stream, "%s", chars);
+  int64_t c = FbleIntValueAccess(byte);
+  fputc(c, stream);
   fflush(stream);
-  FbleFree(chars);
 }
 
 // Stdin -- Implementation of stdin function.
@@ -92,7 +91,7 @@ static FbleValue* StdinImpl(
 }
 
 // Stdout -- Implementation of stdout function.
-//   (String@, World@) { R@<Unit@>; }
+//   (Int@, World@) { R@<Unit@>; }
 static FbleValue* StdoutImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
@@ -104,10 +103,10 @@ static FbleValue* StdoutImpl(
   (void)statics;
   (void)profile_block_offset;
 
-  FbleValue* str = args[0];
+  FbleValue* byte = args[0];
   FbleValue* world = args[1];
 
-  Output(stdout, str);
+  Output(stdout, byte);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
@@ -116,7 +115,7 @@ static FbleValue* StdoutImpl(
 }
 
 // Stderr -- Implementation of stderr function.
-//   (String@, World@) { R@<Unit@>; }
+//   (Int@, World@) { R@<Unit@>; }
 static FbleValue* StderrImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
@@ -128,10 +127,10 @@ static FbleValue* StderrImpl(
   (void)statics;
   (void)profile_block_offset;
 
-  FbleValue* str = args[0];
+  FbleValue* byte = args[0];
   FbleValue* world = args[1];
 
-  Output(stderr, str);
+  Output(stderr, byte);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);

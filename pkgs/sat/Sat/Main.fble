@@ -10,7 +10,6 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;

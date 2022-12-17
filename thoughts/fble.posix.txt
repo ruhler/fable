@@ -255,3 +255,6 @@ We can do it incrementally by starting with the native interface. Steps:
 Next step:
 * Define Read@ type, export Stdin, GetChar and GetLine functions instead of In
   function.
+
+Next step:
+* Change native interface for Out and Err functions.

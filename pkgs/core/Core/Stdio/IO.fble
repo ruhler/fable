@@ -22,13 +22,13 @@
 #   A top-level IO implementation for running a Stdio Main@ program.
 (/Core/Stdio%.Main@)(
   IO@<Maybe@<Int@>>,
-  (String@, World@) { R@<Unit@>; },
-  (String@, World@) { R@<Unit@>; },
+  (Int@, World@) { R@<Unit@>; },
+  (Int@, World@) { R@<Unit@>; },
   List@<String@>) { IO@<Bool@>; }
 Run = (/Core/Stdio%.Main@ main)(
   IO@<Maybe@<Int@>> stdin,
-  (String@, World@) { R@<Unit@>; } stdout,
-  (String@, World@) { R@<Unit@>; } stderr,
+  (Int@, World@) { R@<Unit@>; } stdout,
+  (Int@, World@) { R@<Unit@>; } stderr,
   List@<String@> args) {
   # Note: We pass stdout and stderr as functions taking the string and the
   # world rather than a function from string to IO@ just so we don't have to
@@ -37,8 +37,8 @@ Run = (/Core/Stdio%.Main@ main)(
     /Core/Monad/IO%.Monad,
     _@(Internal.Stdio@<IO@>(
       stdin,
-      (String@ s)(World@ w) { stdout(s, w); },
-      (String@ s)(World@ w) { stderr(s, w); })))(args);
+      (Int@ s)(World@ w) { stdout(s, w); },
+      (Int@ s)(World@ w) { stderr(s, w); })))(args);
 };
 
 @(Run);

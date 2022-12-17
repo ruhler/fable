@@ -2,6 +2,8 @@
 % IsNewline = /Core/Char/Type%.IsNewline;
 
 @ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
+
 @ Int@ = /Core/Int%.Int@;
 
 <@>% Cons = /Core/List%.Cons;
@@ -17,6 +19,7 @@
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 
 <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
@@ -26,7 +29,13 @@
   # sequence has been reached.
   @ IStream@ = M@<Maybe@<Int@>>;
 
+  # Interface for writing a sequence of bytes.
+  # Puts the next byte onto the sequence.
+  @ OStream@ = (Int@) { M@<Unit@>; };
+
   IStream@ Stdin = stdio.%.in;
+  OStream@ Stdout = stdio.%.out;
+  OStream@ Stderr = stdio.%.err;
 
   # Gets the next character from the given input stream.
   # Gets the next char from stdin, or Nothing in case of end of file.
@@ -47,8 +56,32 @@
     m.return(Cons(c.just, tail));
   };
 
-  (String@) { M@<Unit@>; } Out = stdio.%.out;
-  (String@) { M@<Unit@>; } Err = stdio.%.err;
+  # Outputs a single character to the given output stream.
+  (OStream@, Char@) { M@<Unit@>; } PutChar = (OStream@ out, Char@ c) {
+    out(/Core/Char/Ascii%.Ord(c));
+  };
 
-  @(IStream@, Stdin, GetChar, GetLine, Out, Err);
+  # Outputs a string to the given output stream.
+  (OStream@, String@) { M@<Unit@>; } PutStr = (OStream@ out, String@ str) {
+    str.?(nil: m.return(Unit));
+    Unit@ _ <- m.do(PutChar(out, str.cons.head));
+    PutStr(out, str.cons.tail);
+  };
+
+  # Outputs a line to the given output stream.
+  # This is like PutStr, except it adds a newline to the output.
+  (OStream@, String@) { M@<Unit@>; } PutLine = (OStream@ out, String@ str) {
+    Unit@ _ <- m.do(PutStr(out, str));
+    PutChar(out, Chars.nl);
+  };
+
+  # TODO: Remove these functions.
+  (String@) { M@<Unit@>; } Out = (String@ str) { PutStr(Stdout, str); };
+  (String@) { M@<Unit@>; } Err = (String@ str) { PutStr(Stderr, str); };
+
+  @(IStream@, OStream@,
+    Stdin, Stdout, Stderr,
+    GetChar, GetLine,
+    PutChar, PutStr, PutLine,
+    Out, Err);
 };

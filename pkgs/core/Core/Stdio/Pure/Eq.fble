@@ -11,15 +11,12 @@
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
 @ PureState@ = /Core/Stdio/Pure%.PureState@;
 
-@ String@ = /Core/String%.String@;
-
-Eq@<List@<String@>> StrsEq = /Core/List/Eq%.Eq(/Core/String/Eq%.Eq);
 Eq@<List@<Int@>> IntsEq = /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq);
 
 Eq@<PureState@> PureStateEq = (PureState@ a, PureState@ b) {
   IntsEq(a.in, b.in).?(false: False);
-  StrsEq(a.out, b.out).?(false: False);
-  StrsEq(a.err, b.err).?(false: False);
+  IntsEq(a.out, b.out).?(false: False);
+  IntsEq(a.err, b.err).?(false: False);
   True;
 };
 

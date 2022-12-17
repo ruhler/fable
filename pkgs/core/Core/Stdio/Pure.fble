@@ -17,14 +17,12 @@
 % Internal = /Core/Stdio/Internal%;
 @ _@ = Internal._@;
 
-@ String@ = /Core/String%.String@;
-
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ PureState@ = *(
   List@<Int@> in,
-  List@<String@> out,
-  List@<String@> err
+  List@<Int@> out,
+  List@<Int@> err
 );
 
 % State = /Core/Monad/State%<PureState@>;
@@ -42,18 +40,18 @@ Pure@<Maybe@<Int@>> In = {
   Monad.return(Just(s.in.cons.head));
 };
 
-(String@) { Pure@<Unit@>; } Out = (String@ str) {
+(Int@) { Pure@<Unit@>; } Out = (Int@ b) {
   # TODO: Prepend instead of append string, and fix up later for improved
   # performance?
   PureState@ s <- Monad.do(State.Get);
-  State.Set(PureState@(s.in, Append(s.out, List<String@>[str]), s.err));
+  State.Set(PureState@(s.in, Append(s.out, List[b]), s.err));
 };
 
-(String@) { Pure@<Unit@>; } Err = (String@ str) {
+(Int@) { Pure@<Unit@>; } Err = (Int@ b) {
   # TODO: Prepend instead of append string, and fix up later for improved
   # performance?
   PureState@ s <- Monad.do(State.Get);
-  State.Set(PureState@(s.in, s.out, Append(s.err, List<String@>[str])));
+  State.Set(PureState@(s.in, s.out, Append(s.err, List[b])));
 };
 
 Stdio@<Pure@> Stdio = _@(Internal.Stdio@<Pure@>(In, Out, Err));
@@ -66,7 +64,7 @@ Stdio@<Pure@> Stdio = _@(Internal.Stdio@<Pure@>(In, Out, Err));
 #   in - List of bytes to use for stdin.
 <@ A@>(Pure@<A@>, List@<Int@>) { PureResult@<A@>; }
 Run = <@ A@>(Pure@<A@> m, List@<Int@> in) {
-  State.Run(m, PureState@(in, Nil<String@>, Nil<String@>));
+  State.Run(m, PureState@(in, Nil<Int@>, Nil<Int@>));
 };
 
 @(Pure@, PureState@, PureResult@, Monad, Stdio, Run);

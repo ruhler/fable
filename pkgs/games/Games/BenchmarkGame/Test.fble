@@ -5,6 +5,7 @@
 
 @ Int@ = /Core/Int%.Int@;
 
+<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 
@@ -20,7 +21,6 @@
 <@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResultShow;
 
 @ String@ = /Core/String%.String@;
-% Strs = /Core/String%.Strs;
 
 @ Test@ = /Core/Test%.Test@;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
@@ -29,24 +29,20 @@
 
 (String@, Main@, String@, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ n, String@ expected) {
+  List@<Int@> expected_bytes = /Core/List%.Map(expected, /Core/Char/Ascii%.Ord);
+
   /Core/Test%.Test(name, (Unit@ _) {
     PureResult@<Bool@> want = PureResult@<Bool@>(
-      PureState@(Nil<Int@>, List<String@>[expected], Nil<String@>), True);
+      PureState@(Nil<Int@>, expected_bytes, Nil<Int@>), True);
 
     PureResult@<Bool@> got = Run(
       game<Pure@>(Monad, Stdio)(List<String@>[n]),
       Nil<Int@>);
 
-    # Flatten the output, because we only care about the final results, not
-    # how it's split into different calls to Stdio.out.
-    PureResult@<Bool@> merged = PureResult@<Bool@>(
-      PureState@(got.s.in, List<String@>[Strs(got.s.out)], got.s.err),
-      got.x);
-
     AssertEquals(
       PureResultEq(/Core/Bool/Eq%.Eq),
       PureResultShow(/Core/Bool/Show%.Show),
-      want, merged);
+      want, got);
   });
 };
 
