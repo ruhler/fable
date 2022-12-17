@@ -24,7 +24,7 @@
 (Main@, String@)(Unit@) { TestResult@; }
 RunBench = (Main@ game, String@ n)(Unit@ _) {
   Stdio@<Pure@> stdio = @(
-    in: Nothing<String@>,
+    in_: Nothing<String@>,
     out: (String@ _) { Unit; },
     err: (String@ _) { Unit; });
   Unit@ result = game<Pure@>(Monad, stdio)(List<String@>[n]).true;

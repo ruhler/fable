@@ -31,27 +31,30 @@
 % ParseLines = /Sat/Dimacs%.ParseLines;
 % ShowResult = /Sat/Show%.ShowResult;
 
-<<@>@ M@>(Monad@<M@>, M@<Maybe@<String@>>) { M@<List@<String@>>; }
-GetLines = <<@>@ M@>(Monad@<M@> m, M@<Maybe@<String@>> get) {
-  Maybe@<String@> next <- m.do(get);
-  next.?(nothing: m.return(Nil<String@>));
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % s = /Core/Stdio/Stdio%(m, stdio); 
 
-  List@<String@> tail <- m.do(GetLines(m, get));
-  m.return(Cons<String@>(next.just, tail));
-};
+  M@<List@<String@>> GetLines = {
+    Maybe@<String@> next <- m.do(s.In);
+    next.?(nothing: m.return(Nil<String@>));
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-  List@<String@> lines <- m.do(GetLines(m, stdio.in));
-  Parse@<Formula@> parsed = ParseLines(lines);
-  parsed.?(error: {
-    Unit@ _ <- m.do(stdio.err(parsed.error));
-    m.return(False);
-  });
+    List@<String@> tail <- m.do(GetLines);
+    m.return(Cons<String@>(next.just, tail));
+  };
 
-  Result@ result = Solve(parsed.parsed, Nothing<Int@>);
-  Unit@ _ <- m.do(stdio.out(ShowResult(result)));
-  Unit@ _ <- m.do(stdio.out(Str[Chars.nl]));
-  m.return(True);
+  (List@<String@> args) {
+    List@<String@> lines <- m.do(GetLines);
+    Parse@<Formula@> parsed = ParseLines(lines);
+    parsed.?(error: {
+      Unit@ _ <- m.do(stdio.err(parsed.error));
+      m.return(False);
+      });
+
+    Result@ result = Solve(parsed.parsed, Nothing<Int@>);
+    Unit@ _ <- m.do(stdio.out(ShowResult(result)));
+    Unit@ _ <- m.do(stdio.out(Str[Chars.nl]));
+    m.return(True);
+  };
 };
 
 /Core/Stdio/IO%.Run(Main);

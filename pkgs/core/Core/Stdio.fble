@@ -14,7 +14,7 @@
 # Stdio@ --
 #   Interface for standard input and output operations.
 <<@>@>@ Stdio@ = <<@>@ M@> { *(
-    M@<Maybe@<String@>> in,
+    M@<Maybe@<String@>> in_,
     (String@) { M@<Unit@>; } out,
     (String@) { M@<Unit@>; } err
   );

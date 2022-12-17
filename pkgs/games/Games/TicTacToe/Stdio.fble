@@ -101,32 +101,34 @@
       nil: Nothing<Input@>);
 };
 
-<<@>@ M@>(Monad@<M@>, Stdio@<M@>, Game@) { M@<Unit@>; }
-TicTacToe = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, Game@ game) {
-  Unit@ _ <- m.do(stdio.out(ShowGame(game)));
-
-  Maybe@<String@> s <- m.do(stdio.in);
-  s.?(nothing: m.return(Unit));
-
-  Maybe@<Input@> mi = ParseInput(s.just);
-  mi.?(nothing: {
-    Unit@ _ <- m.do(stdio.out(Strs[
-      Str|'invalid input: ',
-      Str|'expected {A,B,C}{1,2,3}, P, Q, or R',
-      Str[Chars.nl]]));
-    TicTacToe(m, stdio, game);
-  });
-
-  mi.just.?(quit: m.return(Unit));
-  mi.just.?(reset: TicTacToe(m, stdio, Initial));
-  TicTacToe(m, stdio, Play(mi.just.move, game));
-};
-
-
 # Play a game of tic-tac-toe.
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-  Unit@ _ <- m.do(TicTacToe(m, stdio, Initial));
-  m.return(True);
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % s = /Core/Stdio/Stdio%(m, stdio);
+
+  (Game@) { M@<Unit@>; } TicTacToe = (Game@ game) {
+    Unit@ _ <- m.do(s.Out(ShowGame(game)));
+
+    Maybe@<String@> line <- m.do(s.In);
+    line.?(nothing: m.return(Unit));
+
+    Maybe@<Input@> mi = ParseInput(line.just);
+    mi.?(nothing: {
+      Unit@ _ <- m.do(s.Out(Strs[
+        Str|'invalid input: ',
+        Str|'expected {A,B,C}{1,2,3}, P, Q, or R',
+        Str[Chars.nl]]));
+      TicTacToe(game);
+    });
+
+    mi.just.?(quit: m.return(Unit));
+    mi.just.?(reset: TicTacToe(Initial));
+    TicTacToe(Play(mi.just.move, game));
+  };
+
+  (List@<String@> args) {
+    Unit@ _ <- m.do(TicTacToe(Initial));
+    m.return(True);
+  };
 };
 
 /Core/Stdio/IO%.Run(Main);

@@ -7,7 +7,7 @@
 
 <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
-  M@<Maybe@<String@>> In = stdio.in;
+  M@<Maybe@<String@>> In = stdio.in_;
   (String@) { M@<Unit@>; } Out = stdio.out;
   (String@) { M@<Unit@>; } Err = stdio.err;
 

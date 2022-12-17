@@ -221,3 +221,5 @@ For now, put them all in one module called /Core/Stdio/Stdio%?
 In theory we can do incremental migration to this. Start with ... well, it's
 not perfect. GetLine implicitly takes from stdin? How about just 'In', 'Out',
 and 'Err', which we can factor away later.
+
+Yeah. This feels pretty good.
