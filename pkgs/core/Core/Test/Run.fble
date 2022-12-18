@@ -4,14 +4,14 @@
 % False = /Core/Bool%.False;
 
 @ Char@ = /Core/Char%.Char@;
-% Chars = /Core/Char%.Chars;
 
 <@>% List = /Core/List%.List;
-<@>% Append = /Core/List%.Append;
 <@>% Concat = /Core/List%.Concat;
 <@,@>% ForEach = /Core/List%.ForEach;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -23,12 +23,10 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-<<@>@ M@>(Monad@<M@> m, (String@) { M@<Unit@>; } out) {
-
-  # Print a string and newline to the given output stream.
-  (String@) { M@<Unit@>; } PrintLn = (String@ str) {
-    out(Append(str, Str[Chars.nl]));
-  };
+<<@>@ M@>(Monad@<M@> m, OStream@<M@> out) {
+  % O = /Core/Stream/OStream%(m);
+  % PutStr = O.PutStr;
+  % PutLine = O.PutLine;
 
   # Returns True if the tests all pass, false otherwise.
   (String@, Test@) { M@<Bool@>; } RunTests = (String@ prefix, Test@ test) {
@@ -38,19 +36,19 @@
       test.?(
         case: {
           String@ name = Strs[prefix, test.case.name];
-          Unit@ _ <- m.do(out(Strs[Str|'@[', name, Str|']: ' ]));
+          Unit@ _ <- m.do(PutStr(out, Strs[Str|'@[', name, Str|']: ' ]));
           TestResult@ tr = test.case.test(Unit);
           tr.?(
             pass: {
-              Unit@ _ <- m.do(PrintLn(Str|'@PASSED'));
+              Unit@ _ <- m.do(PutLine(out, Str|'@PASSED'));
               m.return(passing);
             },
             fail: {
-              Unit@ _ <- m.do(PrintLn(Strs[Str|'@FAILED: ', tr.fail]));
+              Unit@ _ <- m.do(PutLine(out, Strs[Str|'@FAILED: ', tr.fail]));
               m.return(False);
             },
             xfail: {
-              Unit@ _ <- m.do(PrintLn(Str|'@XFAILED'));
+              Unit@ _ <- m.do(PutLine(out, Str|'@XFAILED'));
               m.return(passing);
             });
         },

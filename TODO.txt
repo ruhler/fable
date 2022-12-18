@@ -1,8 +1,4 @@
 
-* Move IStream, OStream, GetChar, PutLine, PutStr, etc. out of Stdio and into
-  a separate, pure module?
- - Clean up /Core/Test/Run% to use this new API.
-
 * Vim syntax doesn't highlight '...' words with newline in them?
 
 * Add var debug info for statics and locals.

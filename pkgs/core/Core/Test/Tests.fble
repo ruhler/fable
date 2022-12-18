@@ -14,7 +14,6 @@
 % Stdio = /Core/Stdio/Pure%.Stdio;
 <@>% Run = /Core/Stdio/Pure%.Run;
 
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -26,14 +25,10 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-% OStream = /Core/Stream/OStream%<Pure@>(Monad);
-% PutStr = OStream.PutStr;
-
 % S = /Core/Stdio/Stdio%<Pure@>(Monad, Stdio);
 % Stdout = S.Stdout;
 
-% RunTests = /Core/Test/Run%<Pure@>(Monad,
-  (String@ str) { PutStr(Stdout, str); }).RunTests;
+% RunTests = /Core/Test/Run%<Pure@>(Monad, Stdout).RunTests;
 
 Test@ pass = Test(Str|pass, (Unit@ _) { TestResult@(pass: Unit); });
 Test@ fail = Test(Str|fail, (Unit@ _) { TestResult@(fail: Str|Failed); });
