@@ -138,3 +138,33 @@ Top of mind things now are:
   I'm working on a game in a different framework because that framework has
   cross platform support. That means it's important.
 
+The State of Fble Update
+========================
+* The language spec for type inference has been cleaned up.
+* I added support for compilation via C, so it can run compiled no different
+  platforms.
+* The interface for implementing Fble functions from C code is now much
+  cleaner, and we've simplified the internal implementation by using the
+  native stack for everything except tail calls.
+
+The language feels like it's in a solid state now. The next big thing for fble
+is to make an initial release and get it to be practically useable.
+
+This means updating documentation in code, cleaning up usage help text, adding
+man pages, and writing tutorials. Work on cleaning up API and general usage
+while I'm at it. Burn down TODOs as well.
+
+Some top of mind items:
+* All around documentation updates, including doxygen, man pages, tutorials,
+  auto-generated website.
+* Hardening the configure and build scripts.
+* Burning down TODOs.
+* Whatever else I need to feel comfortable with making a release version 0.1.
+
+In my mind, we are feature complete enough for a release. Don't worry about
+the fact that the library packages aren't well thought out. The important
+thing is that the core language spec is in great shape and we have a solid
+reference implementation of it. That's enough for release 0.1, as long as
+there is sufficient documentation and robustness for others to be able to use
+it.
+

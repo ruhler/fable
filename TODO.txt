@@ -1,5 +1,6 @@
 
 * Vim syntax doesn't highlight '...' words with newline in them?
+
 * Make it so we automatically recover from bugs in generating ninja file?
  - Rather than have to run configure again to get out of that kind of mess.
  - Happens when modifying build.tcl files, for example.

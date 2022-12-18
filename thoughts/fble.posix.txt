@@ -315,3 +315,9 @@ how that goes.
 
 Next step: implement Read function.
 
+---
+
+I've converted md5 to use the stdio interface. It works great. That kind of
+delays the immediate motivation for adding file read and write. We could, in
+theory, use the existing stdio interface for hello world tutorials for real.
+
