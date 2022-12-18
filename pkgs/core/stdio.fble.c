@@ -24,58 +24,46 @@
 #define EX_USAGE 2
 #define EX_FAILURE 3
 
-static void Output(FILE* stream, FbleValue* str);
+/**
+ * An FbleExecutable with a FILE handle.
+ */
+typedef struct {
+  FbleExecutable _base;
+  FILE* file;
+} FileExecutable;
 
-static FbleValue* StdinImpl(
+static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
-static FbleValue* StdoutImpl(
+static FbleValue* OStreamImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
-static FbleValue* StderrImpl(
-    FbleValueHeap* heap, FbleThread* thread,
-    FbleExecutable* executable,
-    FbleValue** args, FbleValue** statics,
-    FbleBlockId profile_block_offset);
+static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
+static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
 
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 
-// Output --
-//   Output a byte to the given output stream.
-//
-// Inputs:
-//   stream - the stream to output to
-//   byte - the /Core/Int%.Int@ to write
-//
-// Side effects:
-//   Outputs the byte to the stream and flushes the stream.
-static void Output(FILE* stream, FbleValue* byte)
-{
-  int64_t c = FbleIntValueAccess(byte);
-  fputc(c, stream);
-  fflush(stream);
-}
-
-// Stdin -- Implementation of stdin function.
+// IStream -- Read a byte from a file.
 //   IO@<Maybe@<Int@>>
-static FbleValue* StdinImpl(
+static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
   (void)thread;
-  (void)executable;
   (void)statics;
   (void)profile_block_offset;
 
+  FileExecutable* file = (FileExecutable*)executable;
+
   FbleValue* world = args[0];
 
-  int c = fgetc(stdin);
+  int c = fgetc(file->file);
   FbleValue* ms;
   if (c == EOF) {
     ms = FbleNewEnumValue(heap, 1);
@@ -90,23 +78,26 @@ static FbleValue* StdinImpl(
   return result;
 }
 
-// Stdout -- Implementation of stdout function.
+// OStream -- Write a byte to a file.
 //   (Int@, World@) { R@<Unit@>; }
-static FbleValue* StdoutImpl(
+static FbleValue* OStreamImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
   (void)thread;
-  (void)executable;
   (void)statics;
   (void)profile_block_offset;
+
+  FileExecutable* file = (FileExecutable*)executable;
 
   FbleValue* byte = args[0];
   FbleValue* world = args[1];
 
-  Output(stdout, byte);
+  int64_t c = FbleIntValueAccess(byte);
+  fputc(c, file->file);
+  fflush(file->file);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
@@ -114,28 +105,32 @@ static FbleValue* StdoutImpl(
   return result;
 }
 
-// Stderr -- Implementation of stderr function.
-//   (Int@, World@) { R@<Unit@>; }
-static FbleValue* StderrImpl(
-    FbleValueHeap* heap, FbleThread* thread,
-    FbleExecutable* executable,
-    FbleValue** args, FbleValue** statics,
-    FbleBlockId profile_block_offset)
+static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
 {
-  (void)thread;
-  (void)executable;
-  (void)statics;
-  (void)profile_block_offset;
-
-  FbleValue* byte = args[0];
-  FbleValue* world = args[1];
-
-  Output(stderr, byte);
-
-  FbleValue* unit = FbleNewStructValue_(heap, 0);
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
-  FbleReleaseValue(heap, unit);
-  return result;
+  FileExecutable* exe = FbleAlloc(FileExecutable);
+  exe->_base.refcount = 0;
+  exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
+  exe->_base.num_args = 1;
+  exe->_base.num_statics = 0;
+  exe->_base.profile_block_id = 0;
+  exe->_base.run = &IStreamImpl;
+  exe->_base.on_free = &FbleExecutableNothingOnFree;
+  exe->file = file;
+  return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
+}
+
+static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
+{
+  FileExecutable* exe = FbleAlloc(FileExecutable);
+  exe->_base.refcount = 0;
+  exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
+  exe->_base.num_args = 2;
+  exe->_base.num_statics = 0;
+  exe->_base.profile_block_id = 1;
+  exe->_base.run = &OStreamImpl;
+  exe->_base.on_free = &FbleExecutableNothingOnFree;
+  exe->file = file;
+  return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
 }
 
 // PrintUsage --
@@ -198,50 +193,21 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   }
 
   FbleName block_names[5];
-  block_names[0].name = FbleNewString("stdin");
+  block_names[0].name = FbleNewString("istream");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[1].name = FbleNewString("stdout");
+  block_names[1].name = FbleNewString("ostream");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[2].name = FbleNewString("stderr");
-  block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleBlockId block_id = 0;
   if (profile != NULL) {
-    FbleNameV names = { .size = 3, .xs = block_names };
+    FbleNameV names = { .size = 2, .xs = block_names };
     block_id = FbleProfileAddBlocks(profile, names);
   };
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
-  FbleFreeName(block_names[2]);
 
-  FbleExecutable* stdin_exe = FbleAlloc(FbleExecutable);
-  stdin_exe->refcount = 0;
-  stdin_exe->magic = FBLE_EXECUTABLE_MAGIC;
-  stdin_exe->num_args = 1;
-  stdin_exe->num_statics = 0;
-  stdin_exe->profile_block_id = block_id;
-  stdin_exe->run = &StdinImpl;
-  stdin_exe->on_free = &FbleExecutableNothingOnFree;
-  FbleValue* fble_stdin = FbleNewFuncValue(heap, stdin_exe, 0, NULL);
-
-  FbleExecutable* stdout_exe = FbleAlloc(FbleExecutable);
-  stdout_exe->refcount = 0;
-  stdout_exe->magic = FBLE_EXECUTABLE_MAGIC;
-  stdout_exe->num_args = 2;
-  stdout_exe->num_statics = 0;
-  stdout_exe->profile_block_id = block_id + 1;
-  stdout_exe->run = &StdoutImpl;
-  stdout_exe->on_free = &FbleExecutableNothingOnFree;
-  FbleValue* fble_stdout = FbleNewFuncValue(heap, stdout_exe, 0, NULL);
-
-  FbleExecutable* stderr_exe = FbleAlloc(FbleExecutable);
-  stderr_exe->refcount = 0;
-  stderr_exe->magic = FBLE_EXECUTABLE_MAGIC;
-  stderr_exe->num_args = 2;
-  stderr_exe->num_statics = 0;
-  stderr_exe->profile_block_id = block_id + 2;
-  stderr_exe->run = &StderrImpl;
-  stderr_exe->on_free = &FbleExecutableNothingOnFree;
-  FbleValue* fble_stderr = FbleNewFuncValue(heap, stderr_exe, 0, NULL);
+  FbleValue* fble_stdin = IStream(heap, stdin, block_id);
+  FbleValue* fble_stdout = OStream(heap, stdout, block_id);
+  FbleValue* fble_stderr = OStream(heap, stderr, block_id);
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {

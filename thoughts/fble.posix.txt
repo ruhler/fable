@@ -292,3 +292,24 @@ be abstract? We can provide Stdin, Stdout, Stderr, Read, Write, Append, all
 directly there. Because the helper functions are based on streams now rather
 than Stdio. Let's try and see.
 
+Now then, what's next?
+
+To use fble-stdio for md5, I need just the 'Read' function in theory.
+
+(String@) { M@<Maybe@<IStream@>>; } Read;
+
+But how are we going to implement this?
+* stdio.fble.c: I'd like to have a FileExecutable. Which is a function
+  associated with a FILE*. Use that to implement two different kinds of
+  functions, IStream and OStream. And I can pass a FILE* to create such a
+  function. Then it should be easy to implement Read.
+* Stub: Easy. Return a no-op IStream.
+* Pure: I guess ideally we pass as input a map from file name to list of
+  bytes, and we return as output a map from file name to list of bytes for
+  files created/written? But to start, we could just... ignore Read? Have it
+  return Nothing all the time? Well, I'm going to want to be able to read a
+  file for md5sum tests.
+
+Let's start by implementing FileExecutable internal to stdio.fble.c and see
+how that goes.
+
