@@ -5,15 +5,19 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-% Internal = /Core/Stdio/Internal%;
-@ _@ = Internal._@;
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
 
 # Stdio@ --
 #   Interface for standard input and output operations.
-<<@>@>@ Stdio@ = <<@>@ M@> { _@<Internal.Stdio@<M@>>; };
-
+<<@>@>@ Stdio@ = <<@>@ M@> { *(
+  IStream@<M@> in,
+  OStream@<M@> out,
+  OStream@<M@> err);
+};
+  
 # Main@ --
 #   Type of the main function for a stdio application.
 #

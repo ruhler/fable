@@ -17,13 +17,12 @@
 Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
-  % S = /Core/Stdio/Stdio%(m, stdio);
 
   M@<Bool@> cat = {
-    String@ line <- m.do(I.GetLine(S.Stdin));
+    String@ line <- m.do(I.GetLine(stdio.in));
     line.?(
       cons: {
-        Unit@ _ <- m.do(O.PutStr(S.Stdout, line));
+        Unit@ _ <- m.do(O.PutStr(stdio.out, line));
         cat;
       },
       nil: m.return(True)

@@ -10,9 +10,6 @@
 @ World@ = /Core/Monad/IO%.World@;
 <@>@ R@ = /Core/Monad/IO%.R@;
 
-% Internal = /Core/Stdio/Internal%;
-@ _@ = Internal._@;
-
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -35,10 +32,10 @@ Run = (/Core/Stdio%.Main@ main)(
   # implement the currying on the native C side.
   main<IO@>(
     /Core/Monad/IO%.Monad,
-    _@(Internal.Stdio@<IO@>(
-      stdin,
-      (Int@ s)(World@ w) { stdout(s, w); },
-      (Int@ s)(World@ w) { stderr(s, w); })))(args);
+    @(
+      in: stdin,
+      out: (Int@ s)(World@ w) { stdout(s, w); },
+      err: (Int@ s)(World@ w) { stderr(s, w); }))(args);
 };
 
 @(Run);

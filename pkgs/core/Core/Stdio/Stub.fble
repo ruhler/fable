@@ -4,17 +4,14 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
-% Internal = /Core/Stdio/Internal%;
-@ _@ = Internal._@;
-
 % Unit = /Core/Unit%.Unit;
 
 # A stub implementation of the Stdio@ monad that ignores all IO.
 <<@>@ M@>(Monad@<M@>) { Stdio@<M@>; } Stdio = <<@>@ M@>(Monad@<M@> m) {
-  _@(@(
-      in: m.return(Nothing<Int@>),
-      out: (Int@ _) { m.return(Unit); },
-      err: (Int@ _) { m.return(Unit); }));
+  @(
+    in: m.return(Nothing<Int@>),
+    out: (Int@ _) { m.return(Unit); },
+    err: (Int@ _) { m.return(Unit); });
 };
 
 @(Stdio);

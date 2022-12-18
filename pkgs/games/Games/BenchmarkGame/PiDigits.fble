@@ -104,10 +104,9 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 # from state 's'.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % O = /Core/Stream/OStream%(m);
-  % S = /Core/Stdio/Stdio%(m, stdio);
 
   (String@) { M@<Unit@>; } PutS = (String@ str) {
-    O.PutStr(S.Stdout, str);
+    O.PutStr(stdio.out, str);
   };
 
   (List@<String@> args) {

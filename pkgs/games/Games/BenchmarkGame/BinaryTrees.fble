@@ -54,10 +54,9 @@ Int@ 2 = Int|2;
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % O = /Core/Stream/OStream%(m);
-  % S = /Core/Stdio/Stdio%(m, stdio);
 
   (List@<String@>) { M@<Unit@>; } PutL = (List@<String@> strs) {
-    O.PutLine(S.Stdout, Strs(strs));
+    O.PutLine(stdio.out, Strs(strs));
   };
 
   (List@<String@> args) {

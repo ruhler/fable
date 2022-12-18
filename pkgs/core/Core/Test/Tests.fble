@@ -25,8 +25,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-% S = /Core/Stdio/Stdio%<Pure@>(Monad, Stdio);
-% Stdout = S.Stdout;
+% Stdout = Stdio.out;
 
 % RunTests = /Core/Test/Run%<Pure@>(Monad, Stdout).RunTests;
 

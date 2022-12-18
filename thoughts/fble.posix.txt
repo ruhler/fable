@@ -276,3 +276,19 @@ It still depends on having a monad. How do I want to organize this?
    IStream@, but this time with the monad type built in?
 /Core/Stream/OStream
  - Given a monad instance, defines Put* functions.
+
+Next step:
+* Let's implement the Open function.
+
+But I want to have two separate functions I think. I don't need read/write at
+the same time? How about thread modes: Read, Write, Append?
+
+What should I call these functions?
+
+How about: Read, Write, Append? Easy, no?
+
+Actually, take a step back. At this point, what's the value in having Stdio@
+be abstract? We can provide Stdin, Stdout, Stderr, Read, Write, Append, all
+directly there. Because the helper functions are based on streams now rather
+than Stdio. Let's try and see.
+
