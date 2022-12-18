@@ -1,5 +1,8 @@
 
 * Vim syntax doesn't highlight '...' words with newline in them?
+* Make it so we automatically recover from bugs in generating ninja file?
+ - Rather than have to run configure again to get out of that kind of mess.
+ - Happens when modifying build.tcl files, for example.
 
 * Add var debug info for statics and locals.
  - So we can see what each refers to in fble-disassemble output.

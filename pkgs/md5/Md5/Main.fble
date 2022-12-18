@@ -1,17 +1,41 @@
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+% True = /Core/Bool%.True;
 
-<@>@ IO@ = /Core/Monad/IO%.IO@;
+@ Int@ = /Core/Int%.Int@;
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+@ String@ = /Core/String%.String@;
+@ Unit@ = /Core/Unit%.Unit@;
 
 @ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
 @ Hash@ = /Md5/Hash%.Hash@;
 
+(Int@) { Bit8@; } ToBits = /Md5/Bits/Int%.ToBits(/Md5/Bits/Bit8%.Bits);
+
 # Main --
 #   Main function for fble-md5 program.
 #
-# Computes md5 hash of given file.
-(IO@<Maybe@<Bit8@>>) { IO@<Hash@>; } Main = (IO@<Maybe@<Bit8@>> file) {
-  /Md5/Md5%.Md5<IO@>(/Core/Monad/IO%.Monad, file);
+# Computes md5 hash of stdin.
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % O = /Core/Stream/OStream%(m);
+
+  M@<Maybe@<Bit8@>> in = {
+    Maybe@<Int@> b <- m.do(stdio.in);
+    m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
+  };
+
+  (List@<String@> args) {
+    Hash@ hash <- m.do(/Md5/Md5%.Md5(m, in));
+    Unit@ _ <- m.do(O.PutLine(stdio.out, /Md5/Hash%.Show(hash)));
+    m.return(True);
+  };
 };
 
-Main;
+/Core/Stdio/IO%.Run(Main);

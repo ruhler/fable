@@ -1,0 +1,26 @@
+
+% Bit = /Core/Digits%.Bit;
+
+@ Int@ = /Core/Int%.Int@;
+@ IntP@ = /Core/Int/IntP%.IntP@;
+
+<@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
+
+
+# Converts an Int@ to a fixed-width bit vector.
+# Assumes the Int@ is non-negative. Truncates if needed to fit in the bit
+# vector.
+<@ T@>(Bits@<T@>)(Int@) { T@; } ToBits = <@ T@>(Bits@<T@> b) {
+  (IntP@) { T@; } P = (IntP@ i) {
+    i.?(
+      1: b.Inc(b.0),
+      2p0: b.Shlx(P(i.2p0), Bit.0).x,
+      2p1: b.Shlx(P(i.2p1), Bit.1).x);
+  };
+
+  (Int@ i) {
+    i.?(n: /Core/Undef%.Undef<T@>.undefined, 0: b.0, p: P(i.p));
+  };
+};
+
+@(ToBits);
