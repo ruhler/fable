@@ -1,0 +1,16 @@
+
+@ Int@ = /Core/Int%.Int@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+@ Unit@ = /Core/Unit%.Unit@;
+
+# An input stream of bytes.
+# The bytes are read out of a monadic type M@.
+# The type Int@ is used for describing a byte.
+<<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
+
+# An output stream of bytes.
+# The bytes are written out to a monadic type M@.
+# The type Int@ is used for describing a byte.
+<<@>@>@ OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
+
+@(IStream@, OStream@);

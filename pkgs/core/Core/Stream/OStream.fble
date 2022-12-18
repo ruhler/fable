@@ -1,0 +1,41 @@
+
+@ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
+
+@ Int@ = /Core/Int%.Int@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+
+<<@>@ M@>(Monad@<M@> m) {
+
+  # Interface for writing a sequence of bytes.
+  # Puts the next byte onto the sequence.
+  @ OStream@ = (Int@) { M@<Unit@>; };
+
+  # Outputs a single character to the given output stream.
+  (OStream@, Char@) { M@<Unit@>; } PutChar = (OStream@ out, Char@ c) {
+    out(/Core/Char/Ascii%.Ord(c));
+  };
+
+  # Outputs a string to the given output stream.
+  (OStream@, String@) { M@<Unit@>; } PutStr = (OStream@ out, String@ str) {
+    str.?(nil: m.return(Unit));
+    Unit@ _ <- m.do(PutChar(out, str.cons.head));
+    PutStr(out, str.cons.tail);
+  };
+
+  # Outputs a line to the given output stream.
+  # This is like PutStr, except it adds a newline to the output.
+  (OStream@, String@) { M@<Unit@>; } PutLine = (OStream@ out, String@ str) {
+    Unit@ _ <- m.do(PutStr(out, str));
+    PutChar(out, Chars.nl);
+  };
+
+  @(OStream@, PutChar, PutStr, PutLine);
+};

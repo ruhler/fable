@@ -1,82 +1,16 @@
 
-% IsNewline = /Core/Char/Type%.IsNewline;
-
-@ Char@ = /Core/Char%.Char@;
-% Chars = /Core/Char%.Chars;
-
-@ Int@ = /Core/Int%.Int@;
-
-<@>% Cons = /Core/List%.Cons;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
-
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
-@ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
-
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 
 <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
-  # Interface for reading a sequence of bytes.
-  # Returns the next byte in the sequence, or Nothing if the end of the
-  # sequence has been reached.
-  @ IStream@ = M@<Maybe@<Int@>>;
+  IStream@<M@> Stdin = stdio.%.in;
+  OStream@<M@> Stdout = stdio.%.out;
+  OStream@<M@> Stderr = stdio.%.err;
 
-  # Interface for writing a sequence of bytes.
-  # Puts the next byte onto the sequence.
-  @ OStream@ = (Int@) { M@<Unit@>; };
-
-  IStream@ Stdin = stdio.%.in;
-  OStream@ Stdout = stdio.%.out;
-  OStream@ Stderr = stdio.%.err;
-
-  # Gets the next character from the given input stream.
-  # Gets the next char from stdin, or Nothing in case of end of file.
-  (IStream@) { M@<Maybe@<Char@>>; } GetChar = (IStream@ in) {
-    Maybe@<Int@> byte <- m.do(in);
-    byte.?(nothing: m.return(Nothing<Char@>));
-    m.return(Just(/Core/Char/Ascii%.Chr(byte.just)));
-  };
-
-  # Gets everything up to and including the next newline character from stdin.
-  # Returns an empty list in case of end of input.
-  (IStream@) { M@<String@>; } GetLine = (IStream@ in) {
-    Maybe@<Char@> c <- m.do(GetChar(in));
-    c.?(nothing: m.return(Str|''));
-    IsNewline(c.just).?(true: m.return(Str[c.just]));
-
-    String@ tail <- m.do(GetLine(in));
-    m.return(Cons(c.just, tail));
-  };
-
-  # Outputs a single character to the given output stream.
-  (OStream@, Char@) { M@<Unit@>; } PutChar = (OStream@ out, Char@ c) {
-    out(/Core/Char/Ascii%.Ord(c));
-  };
-
-  # Outputs a string to the given output stream.
-  (OStream@, String@) { M@<Unit@>; } PutStr = (OStream@ out, String@ str) {
-    str.?(nil: m.return(Unit));
-    Unit@ _ <- m.do(PutChar(out, str.cons.head));
-    PutStr(out, str.cons.tail);
-  };
-
-  # Outputs a line to the given output stream.
-  # This is like PutStr, except it adds a newline to the output.
-  (OStream@, String@) { M@<Unit@>; } PutLine = (OStream@ out, String@ str) {
-    Unit@ _ <- m.do(PutStr(out, str));
-    PutChar(out, Chars.nl);
-  };
-
-  @(IStream@, OStream@,
-    Stdin, Stdout, Stderr,
-    GetChar, GetLine,
-    PutChar, PutStr, PutLine);
+  @(Stdin, Stdout, Stderr);
 };

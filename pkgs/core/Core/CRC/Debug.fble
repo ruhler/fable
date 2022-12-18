@@ -25,6 +25,7 @@
 
 
 Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % O = /Core/Stream/OStream%(m);
   % S = /Core/Stdio/Stdio%(m, stdio);
   
   (List@<String@> args) {
@@ -32,7 +33,7 @@ Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       bits.?(nil: m.return(crc));
 
       CRC@ ncrc = Feed(crc, bits.cons.head);
-      Unit@ _ <- m.do(S.PutLine(S.Stdout, ShowBits(ncrc.checksum)));
+      Unit@ _ <- m.do(O.PutLine(S.Stdout, ShowBits(ncrc.checksum)));
       DFeeds(ncrc, bits.cons.tail);
     };
 

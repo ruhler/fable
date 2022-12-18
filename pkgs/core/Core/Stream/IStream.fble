@@ -1,0 +1,47 @@
+
+% IsNewline = /Core/Char/Type%.IsNewline;
+
+@ Char@ = /Core/Char%.Char@;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>% Cons = /Core/List%.Cons;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+
+<<@>@ M@>(Monad@<M@> m) {
+
+  # Interface for reading a sequence of bytes.
+  # Returns the next byte in the sequence, or Nothing if the end of the
+  # sequence has been reached.
+  @ IStream@ = M@<Maybe@<Int@>>;
+
+  # Gets the next character from the given input stream.
+  # Gets the next char from stdin, or Nothing in case of end of file.
+  (IStream@) { M@<Maybe@<Char@>>; } GetChar = (IStream@ in) {
+    Maybe@<Int@> byte <- m.do(in);
+    byte.?(nothing: m.return(Nothing<Char@>));
+    m.return(Just(/Core/Char/Ascii%.Chr(byte.just)));
+  };
+
+  # Gets everything up to and including the next newline character from stdin.
+  # Returns an empty list in case of end of input.
+  (IStream@) { M@<String@>; } GetLine = (IStream@ in) {
+    Maybe@<Char@> c <- m.do(GetChar(in));
+    c.?(nothing: m.return(Str|''));
+    IsNewline(c.just).?(true: m.return(Str[c.just]));
+
+    String@ tail <- m.do(GetLine(in));
+    m.return(Cons(c.just, tail));
+  };
+
+  @(IStream@, GetChar, GetLine);
+};

@@ -261,3 +261,18 @@ Next step:
 
 Next step:
 * Remove 'Out' and 'Err' functions.
+
+Next step:
+* Clean up IStream, OStream API. This doesn't have to be part of Stdio. Stdio
+  can use it.
+
+It still depends on having a monad. How do I want to organize this?
+
+/Core/Stream
+ - Defines IStream, OStream, and eventually, if we ever want it, IOStream.
+ - Just the types are defined.
+/Core/Stream/IStream
+ - Given a monad instance, defines Get* functions. Could also redefine
+   IStream@, but this time with the monad type built in?
+/Core/Stream/OStream
+ - Given a monad instance, defines Put* functions.

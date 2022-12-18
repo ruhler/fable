@@ -15,11 +15,12 @@
 
 
 Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % O = /Core/Stream/OStream%(m);
   % S = /Core/Stdio/Stdio%(m, stdio);
   
   (List@<String@> args) {
     # Output a single line to test that we don't drop trailing outputs.
-    Unit@ _ <- m.do(S.PutLine(S.Stdout, Str|'PASSED'));
+    Unit@ _ <- m.do(O.PutLine(S.Stdout, Str|'PASSED'));
     m.return(True);
   };
 };
