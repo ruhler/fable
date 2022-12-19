@@ -173,3 +173,163 @@ so that people don't need to be running aarch64 to try. And maybe have an
 extra optional section of the tutorial that shows how to compile via aarch64
 after that.
 
+---
+
+One of the problems with my current set of tutorials is it spends a lot of
+time writing C code instead of writing fble code. Wouldn't it be great if we
+could have tutorials start with all fble code? Learn the language that way,
+and only venture into C code when you want to do something more advanced?
+
+Now that we've made progress on the Stdio@ interface, it's not unreasonable to
+do a real hello world program in fble, and do a bunch of tutorials entirely
+within fble to learn the language. I want to revisit what the path of
+tutorials might be.
+
+It's kind of funny, but a hello world program in fble is about the most
+complicated thing you can write. See /Core/Stdio/Test%, which is basically the
+hello world program. Language features involved:
+* Modules.
+* Polymorphism.
+* Nested functions.
+* Function bind and monads.
+* Literals.
+
+What would I want to teach in order to get that far?
+* Modules
+* Polymorphism.
+* Nested functions.
+* Function bind & monads.
+* Literals
+* Implicit type struct values (for Modules)
+* Struct values (for impliict type struct values)
+* Lists (for literals)
+* Kinded let statements (for modules)
+* Basic functions (for nested functions)
+* Union values (to do anything interesting)
+* Type inference (for monads)
+
+We could as well ask what we don't need to cover:
+* typeof, abstract types 
+
+Here's a vision for how the tutorials could work:
+1. Show the hello world program. Don't explain it yet. Let people try it out.
+2. Progress through language specific features from the ground up in a series
+   of tutorials. Each tutorial hopefully gets the reader to write a small,
+   interesting, different, fun program.
+3. Explain the hello world program again, now that the reader knows the
+   language.
+4. Go on to whatever other advanced topics I want.
+
+For inspiration, let's take a look at how other language tutorials are
+structured.
+
+Java:
+* Three tracks: basics, guis, and specialized.
+* Basics track:
+  Hello world - and everything you need to write and run it.
+  Java Language
+     Object oriented programming, Bicycle example.
+     Variables, Primitive Datatypes, using bicycle example.
+     Arrays, contrived example
+  Operators
+  etc. Lots using contrived examples, and still on the bicycle example.
+
+In summary, they use few big examples (hello world, bicycle), and a lot of
+contrived mini examples.
+
+Python (w3 schools):
+* hello world, a bunch of mini contrived examples for different language
+  features.
+
+I'm not terribly inspired.
+
+Python is much easier to do mini examples for, because you can run them in the
+interpreter. Java tutorials make heavy use of println to get the equivalent.
+Fble is a little more awkward perhaps, because it's all in the monad, and we
+don't have fancy formatters for different types. I guess show would work.
+
+  (List@<String@> args) {
+    Int@ x = Int|2;
+    Unit@ _ <- m.do(O.PutLine(stdio.out, Show(x)));
+    m.return(True);
+  };
+
+Maybe I want to make some helper functions to simplify printing things?
+
+  (List@<String@> args) {
+    Int@ x = Int|2;
+    Unit@ _ <- PrintLn(Show(x));
+    Unit@ _ <- PrintLn(Str|'Hello there!');
+    m.return(True);
+  };
+
+Yeah, that's not too bad. Put args at the top so we aren't super indented.
+Then fill in everything from there?
+
+Haskell tutorials:
+* Based around ghci.
+
+How hard would it be to write a similar interpreter for fble? Would that be
+worth it?
+
+I don't know what that means. I would prefer not to.
+
+Okay, so, assume we clean up hello world as much as possible, so it's as easy
+as possible to play around with things and print things. Maybe have a special
+hello world library if that helps too. We could get rid of all the
+polymorphism maybe? Maybe not. Anyway, try to simplify it as much as possible?
+I'm not sure.
+
+What is the list of tutorials I would want?
+* Hello world - how to run. How to play around. The starting point.
+  Don't understand everything yet.
+* Basic Data types - structs, unions, functions.
+  4-bit bitwise && sounds good for this.
+  Covers:
+    var
+    let
+    struct_type
+    struct_value_explicit_type
+    struct_access
+    union_type
+    union_value
+    union_access
+    union_select (non-stmt)
+    func_type
+    func_value
+    func_apply
+* More about variables
+ - Cover the various kinds of lets.
+ - Introduce notion of a kind. Don't need to worry about polymorphism yet.
+ - Including recursive lets.
+* More about structs
+ - Cover implicit struct types.
+ - Cover type fields. Including typeof operator perhaps.
+* Modules
+ - Module paths.
+ - Should be easy to explain now that we have all the background needed.
+* More about unions.
+ - default branches, case statements.
+* More about functions.
+ - multi-arg versus curried.
+ - capturing variables from scopes.
+ - nested functions.
+ - function bind.
+* Lists and literals.
+* Polymorphism. 
+ - poly kinds, type inference.
+* Monads.
+ - As a kind of putting it all together.
+* Relevant Standard library types.
+ - Char, List, String, Stdio
+* Hello World revisited.
+
+Then have some advanced/miscellaneous topics:
+* Abstract types.
+* Compilation.
+* Foreign function interface.
+* Profiling.
+* Debugging.
+
+Cool. I think that's perfect. It makes more sense to go in that order I feel
+like.

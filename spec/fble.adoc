@@ -1381,7 +1381,7 @@ Expr ::=
  | abstract_access (package : Type) (value : Expr)
  ;
 
-Module ::= (value : Expr) (public : [Module]) (private : [Module])
+Module ::= (value : Expr) (modules : [Module])
 ....
 
 == 11. Concrete Syntax ==

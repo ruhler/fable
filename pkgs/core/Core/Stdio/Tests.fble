@@ -30,7 +30,7 @@
 
 # Import to test compilation.
 % _ = /Core/Stdio/Cat%;
-% _ = /Core/Stdio/Test%;
+% _ = /Core/Stdio/HelloWorld%;
 
 % IStream = /Core/Stream/IStream%<Pure@>(Monad);
 % GetLine = IStream.GetLine;

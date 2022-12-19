@@ -42,17 +42,17 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
     "cmp $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.adoc"
 
-  # /Core/Stdio/Test% interpreted test.
-  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/Test.fble.d" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Test% | grep PASSED"
+  # /Core/Stdio/HelloWorld% interpreted test.
+  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/HelloWorld.fble.d" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/HelloWorld% | grep hello"
 
-  # /Core/Stdio/Test% compiled test.
-  stdio $::b/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
+  # /Core/Stdio/HelloWorld% compiled test.
+  stdio $::b/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/HelloWorld%" ""
   test $::b/pkgs/core/Core/Stdio/fble-stdio-test.out \
     $::b/pkgs/core/Core/Stdio/fble-stdio-test \
     "$::b/pkgs/core/Core/Stdio/fble-stdio-test > $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
   test $::b/pkgs/core/Core/Stdio/fble-stdio-test.tr $::b/pkgs/core/Core/Stdio/fble-stdio-test.out \
-    "grep PASSED $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
+    "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
 
   # Core/Tests interpreted
   testsuite $::b/pkgs/core/Core/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Tests.fble.d" \

@@ -3,6 +3,9 @@
   Double check if we can find out why.
   Seems like if I touch any file it ends up being regenerated.
   Which leads to doxygen being redone.
+  The generated dependencies look correct. The only thing I can think is if
+  dependency on a directory means any time any file in that directory changes,
+  rather than just adding or removing a file?
 
 * Switch to .fbld format for specs, readmes, and tutorials.
  - For first attempt, do something best effort. Certainly doesn't need to be
@@ -77,7 +80,7 @@
   build.ninja file.
 
 * [spec] Should empty path be allowed in package type?
- See spec/fble.txt for more details.
+ See spec/fble.adoc for more details.
 
 * Should fble-deps be a side effect of other tools instead of a separate
   executable?
@@ -99,6 +102,7 @@
 
 * [debugger] Improve support for printing variables
  - Emit lexical scopes where appropriate.
+   But what for? What value for printing lexical scopes?
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
@@ -134,9 +138,8 @@
 
 * Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
   Their implementations may be different enough now to warrant it?
-
-* Change FbleLink to use FbleExecutable directly instead of FbleCode?
- - Does this mean making a copy of the FbleExecutableProgram? That's tedious.
+  Regardless, we shouldn't switch at runtime on something known statically.
+  The 'exit' part of the instruction should be part of the instruction tag.
 
 * [compilation] Add support for .fble.@ files and modular compilation.
 

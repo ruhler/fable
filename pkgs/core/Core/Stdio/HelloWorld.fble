@@ -14,14 +14,15 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 
-Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
-  
-  (List@<String@> args) {
-    # Output a single line to test that we don't drop trailing outputs.
-    Unit@ _ <- m.do(O.PutLine(stdio.out, Str|'PASSED'));
-    m.return(True);
+
+  (String@) { M@<Unit@>; } PutLine = (String@ str) {
+    O.PutLine(stdio.out, str);
   };
+  
+  Unit@ _ <- m.do(PutLine(Str|'hello, world'));
+  m.return(True);
 };
 
 /Core/Stdio/IO%.Run(Test);
