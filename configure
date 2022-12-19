@@ -66,6 +66,7 @@ proc subst_in { src dest } {
   exec sed \
     -e "s=@srcdir@=$::srcdir=g" \
     -e "s=@builddir@=$::builddir=g" \
+    -e "s=@prefix@=$::prefix=g" \
     -e "s=@includedir@=$::includedir=g" \
     -e "s=@libdir@=$::libdir=g" \
     -e "s=@bindir@=$::bindir=g" \
@@ -74,6 +75,7 @@ proc subst_in { src dest } {
 }
 
 subst_in $::srcdir/config.tcl.in $::builddir/config.tcl
-subst_in $::srcdir/build.ninja.in $::builddir/build.ninja
 subst_in $::srcdir/Doxyfile.in $::builddir/Doxyfile
 
+# Generate the build.ninja file.
+exec tclsh8.6 $::srcdir/build.tcl $::builddir/build.ninja

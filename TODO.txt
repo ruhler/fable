@@ -22,9 +22,6 @@
  - Print line and col number on fbld usage command errors
    Such as wrong number of args.
 
-* Fix dependency tracking for configure
-  For example, rerun configure if any of the .in files change.
-
 * Figure out how to customize usage for compiled binaries
  - for example, fble-invaders should say fble-invaders in the usage, not
    fble-app.

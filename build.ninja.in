@@ -1,7 +1,0 @@
-
-# This is a minimal ninja file to bootstrap the build.
-
-rule build_ninja
-  command = tclsh8.6 @srcdir@/build.tcl $out
-
-build @builddir@/build.ninja: build_ninja

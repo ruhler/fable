@@ -367,7 +367,9 @@ phony "install" [list $::installs]
 puts $::build_ninja "default all"
 
 # build.ninja
-build $::b/build.ninja "$::s/build.tcl" "tclsh8.6 $::s/build.tcl $::b/build.ninja" \
+build "$::b/build.ninja $::b/config.tcl $::b/Doxyfile" \
+  "$::s/configure $::s/config.tcl.in $::s/Doxyfile.in $::s/build.tcl" \
+  "$::s/configure --prefix $::prefix" \
   "depfile = $::b/build.ninja.d"
 
 # build.ninja.d implicit dependency file.

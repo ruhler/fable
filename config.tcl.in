@@ -2,6 +2,9 @@
 # The build directory
 set ::builddir @builddir@
 
+# The prefix option passed to the configure script.
+set ::prefix @prefix@
+
 # The top level directory containing the fble source code. This is the
 # directory that contains the 'configure' script.
 set ::srcdir @srcdir@
