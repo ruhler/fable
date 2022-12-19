@@ -16,7 +16,7 @@ set ::s $::srcdir
 set ::b $::builddir
 
 set ::build_ninja_filename [lindex $argv 0]
-set ::build_ninja [open "$::build_ninja_filename" "w"]
+set ::build_ninja [open "$::build_ninja_filename.tmp" "w"]
 set ::arch "[exec arch]"
 
 # build.ninja header.
@@ -374,3 +374,8 @@ build $::b/build.ninja "$::s/build.tcl" "tclsh8.6 $::s/build.tcl $::b/build.ninj
 set ::build_ninja_d [open "$::b/build.ninja.d" "w"]
 puts $::build_ninja_d "$::b/build.ninja: $::build_ninja_deps"
 
+# Now that we've completed successfully, copy over the generated ninja file.
+# We wait until the end to do this to ensure we don't generate a partial
+# malformed ninja file, which is harder to recover from.
+close $::build_ninja
+exec mv $::build_ninja_filename.tmp $::build_ninja_filename

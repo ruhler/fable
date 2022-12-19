@@ -335,3 +335,11 @@ Approach:
   install fble/test/fble-test $::bindir
 * Add support for parsing --prefix and --bindir options to configure.
 
+---
+
+How to get build dependencies right for configure?
+
+* configure generates: config.tcl, build.ninja, Doxyfile.
+* depending on: configure, config.tcl.ina, build.ninja.in, Doxyfile.in
+  And on whatever args were passed to configure.
+

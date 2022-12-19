@@ -1,9 +1,7 @@
 
-rule build_ninja_full
-  command = tclsh8.6 @srcdir@/build.tcl $out
+# This is a minimal ninja file to bootstrap the build.
 
 rule build_ninja
-  command = cp $in $out
+  command = tclsh8.6 @srcdir@/build.tcl $out
 
-build @builddir@/build.ninja: build_ninja @builddir@/build.ninja.full
-build @builddir@/build.ninja.full: build_ninja_full @srcdir@/build.tcl @builddir@/config.tcl
+build @builddir@/build.ninja: build_ninja
