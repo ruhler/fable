@@ -183,9 +183,10 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   FbleLoc body_loc;
-  FbleVarV scope;
-  FbleNameV args;
-  FbleTc* body;
+  FbleVarV scope;       /**< Sources of static variables. */
+  FbleNameV statics;    /**< Names of static variables. */
+  FbleNameV args;       /**< Names of arguments. */
+  FbleTc* body;         /**< The body of the function. */
 } FbleFuncValueTc;
 
 // FbleFuncApplyTc --

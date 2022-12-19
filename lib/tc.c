@@ -122,6 +122,12 @@ void FbleFreeTc(FbleTc* tc)
       FbleFreeLoc(func_tc->body_loc);
       FbleFreeTc(func_tc->body);
       FbleVectorFree(func_tc->scope);
+
+      for (size_t i = 0; i < func_tc->statics.size; ++i) {
+        FbleFreeName(func_tc->statics.xs[i]);
+      }
+      FbleVectorFree(func_tc->statics);
+
       for (size_t i = 0; i < func_tc->args.size; ++i) {
         FbleFreeName(func_tc->args.xs[i]);
       }

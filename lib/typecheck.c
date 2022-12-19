@@ -1406,6 +1406,19 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleFuncValueTc* func_tc = FbleNewTc(FbleFuncValueTc, FBLE_FUNC_VALUE_TC, expr->loc);
       func_tc->body_loc = FbleCopyLoc(func_value_expr->body->loc);
       func_tc->scope = captured;
+
+      FbleVectorInit(func_tc->statics);
+      for (size_t i = 0; i < func_scope.statics.size; ++i) {
+        Var* var = func_scope.statics.xs[i];
+        FbleName name;
+        if (var->name.module == NULL) {
+          name = FbleCopyName(var->name.normal);
+        } else {
+          name = FbleModulePathName(var->name.module);
+        }
+        FbleVectorAppend(func_tc->statics, name);
+      }
+
       FbleVectorInit(func_tc->args);
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(func_tc->args, FbleCopyName(func_value_expr->args.xs[i].name));

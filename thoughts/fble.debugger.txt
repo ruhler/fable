@@ -939,3 +939,67 @@ So, a few different ideas:
 
 I'd like to figure out how to single step through just .fble files. I said
 before there was a way, but I can't find that now.
+
+---
+
+I'd like to add statics and args variable info to functions. Starting with
+args. Why is this not already working? How should it work?
+
+Currently, PushVar appends var debug info to the scope for the variable. Do we
+not do that for args? We do do it for args.
+
+I expect arg names to be listed in fble-disassembled code then. Does that
+happen? Yes. It works fine. Looks like args work as expected then, which is
+consistent with what I wrote before and the code. Not sure why I thought args
+were not working.
+
+And we have var info for local variables. Just not anonymous local variables.
+That's fine.
+
+So, really the question is about static variables. For example: when some
+function references a previously defined function Foo. At the start of the
+generated code, we would like to label the statics. Is that possible? Or is it
+done in a separate pass?
+
+What we know when we construct the scope is we have a list of variables, which
+means tag + index. But at typecheck stage we have names for these variables.
+So we ought to be able to provide that information.
+
+We pass FbleVarV. But for args we have FbleNameV. What does the FbleVarV part
+mean? Can we pass FbleNameV for those too?
+
+The FbleVarV is where in the parent scope to get the variables. That's fine.
+We want to add another field, FbleNameV scope_names, with the list of variable
+names for the scope. Or define something called an FbleNamedVar, and
+FbleNamedVarV for scope variables?
+
+Next question: do we even know what the name of those variables are? Yes, in
+scope->statics. But the name could be a module name or a normal variable name,
+and I don't have good support for that?
+
+This is certainly doable. We just need to decide how to do it.
+
+Add name info to FbleFuncValueTc scope. Then we can propagate that var info.
+The only trouble is to generate the names in typecheck.c, given it could be a
+normal var or a module path. Do we have a way already to represent a module
+path as a var name? We must, right?
+
+Looks like we don't yet, but it wouldn't be hard to make. Look. We already
+have FbleModulePathName we could use as a helper function.
+
+So, this should be easy. Just have to decide what data structure we want to
+pass the FbleName of the statics in FbleFuncValueTc.
+
+Let do this:
+
+Define FbleNamedVar, FbleNameVarV. Use that for the scope field of
+FbleFuncValueTc. Populate that in typecheck.c based on VarName, by either
+copying the var name or using FbleModulePathName. In compile.c, InitScope
+should take the ...
+
+Let's just keep the names separate. Pass that to InitScope in compile.c. It
+can generate the debug info we want. Easy. If you want, we can call it
+'statics' in FbleFuncValueTc. That's a little confusing. Oh well. Just
+document well enough for the time being.
+
+Perfect. This works great.

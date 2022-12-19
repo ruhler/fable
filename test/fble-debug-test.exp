@@ -68,6 +68,7 @@ eval {
   require "(gdb) "
 
   send "info locals\n"
+  require "True"
   require "light"
   require "u"
   require "(gdb)"

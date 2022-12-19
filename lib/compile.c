@@ -68,7 +68,7 @@ static void PopVar(Scope* scope, bool exit);
 static Local* GetVar(Scope* scope, FbleVar index);
 static void SetVar(Scope* scope, size_t index, FbleName name, Local* local);
 
-static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, size_t statics, FbleBlockId block, Scope* parent);
+static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
 static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index);
@@ -280,8 +280,8 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
 // Inputs:
 //   scope - the scope to initialize.
 //   code - a pointer to store the allocated code block for this scope.
-//   args - the arguments to the function the scope is for.
-//   statics - the number of statics captured by the scope (??).
+//   args - the arguments to the function the scope is for. Borrowed.
+//   statics - static variables captured by the function. Borrowed.
 //   block - the profile block id to enter when executing this scope.
 //   parent - the parent of the scope to initialize. May be NULL.
 //
@@ -291,10 +291,10 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
 //   and the parent scope must exceed the lifetime of this scope.
 // * The caller is responsible for calling FbleFreeCode on *code when it
 //   is no longer needed.
-static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, size_t statics, FbleBlockId block, Scope* parent)
+static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent)
 {
   FbleVectorInit(scope->statics);
-  for (size_t i = 0; i < statics; ++i) {
+  for (size_t i = 0; i < statics.size; ++i) {
     Local* local = FbleAlloc(Local);
     local->var.tag = FBLE_STATIC_VAR;
     local->var.index = i;
@@ -314,12 +314,22 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, size_t stat
   FbleVectorInit(scope->vars);
   FbleVectorInit(scope->locals);
 
-  scope->code = FbleNewCode(args.size, statics, 0, block);
+  scope->code = FbleNewCode(args.size, statics.size, 0, block);
   scope->pending_debug_info = NULL;
   scope->pending_profile_ops = NULL;
   scope->parent = parent;
 
   *code = scope->code;
+
+  for (size_t i = 0; i < statics.size; ++i) {
+    FbleVarDebugInfo* info = FbleAlloc(FbleVarDebugInfo);
+    info->_base.tag = FBLE_VAR_DEBUG_INFO;
+    info->_base.next = NULL;
+    info->name = FbleCopyName(statics.xs[i]);
+    info->var.tag = FBLE_STATIC_VAR;
+    info->var.index = i;
+    AppendDebugInfo(scope, &info->_base);
+  }
 
   for (size_t i = 0; i < args.size; ++i) {
     FbleVarDebugInfo* info = FbleAlloc(FbleVarDebugInfo);
@@ -327,7 +337,7 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, size_t stat
     info->_base.next = NULL;
     info->name = FbleCopyName(args.xs[i]);
     info->var.tag = FBLE_ARG_VAR;
-    info->var.index = i;;
+    info->var.index = i;
     AppendDebugInfo(scope, &info->_base);
   }
 }
@@ -893,7 +903,8 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Scope func_scope;
       FbleBlockId scope_block = PushBodyBlock(blocks, func_tc->body_loc);
-      InitScope(&func_scope, &instr->code, func_tc->args, func_tc->scope.size, scope_block, scope);
+      assert(func_tc->scope.size == func_tc->statics.size);
+      InitScope(&func_scope, &instr->code, func_tc->args, func_tc->statics, scope_block, scope);
 
       Local* func_result = CompileExpr(blocks, true, true, &func_scope, func_tc->body);
       ExitBlock(blocks, &func_scope, true);
@@ -1025,7 +1036,8 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
   FbleCode* code;
   Scope scope;
   FbleBlockId scope_block = PushBlock(&blocks, name, name.loc);
-  InitScope(&scope, &code, args, 0, scope_block, NULL);
+  FbleNameV statics = { .size = 0, .xs = NULL };
+  InitScope(&scope, &code, args, statics, scope_block, NULL);
 
   CompileExpr(&blocks, true, true, &scope, tc);
   ExitBlock(&blocks, &scope, true);

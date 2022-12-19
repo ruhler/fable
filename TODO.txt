@@ -1,6 +1,8 @@
 
-* Add var debug info for statics and locals.
- - So we can see what each refers to in fble-disassemble output.
+* Seems like build.ninja is being regenerated more often than I expect.
+  Double check if we can find out why.
+  Seems like if I touch any file it ends up being regenerated.
+  Which leads to doxygen being redone.
 
 * Switch to .fbld format for specs, readmes, and tutorials.
  - For first attempt, do something best effort. Certainly doesn't need to be
@@ -12,6 +14,7 @@
 
 * Fix timeout with gdb-test
  - Just need to increase it a little in case of heavy CPU load?
+ - Next time it happens, try to see where it got stuck?
 
 * Fbld Cleanup
  - Come up with a more formal test suite for fbld.
@@ -95,7 +98,6 @@
  - Color, IO, etc.
 
 * [debugger] Improve support for printing variables
- - Add VarDebugInfo for function static variables.
  - Emit lexical scopes where appropriate.
 
 * Consider running some of the tests under valgrind?
