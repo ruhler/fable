@@ -1,6 +1,4 @@
 
-* Vim syntax doesn't highlight '...' words with newline in them?
-
 * Add var debug info for statics and locals.
  - So we can see what each refers to in fble-disassemble output.
 

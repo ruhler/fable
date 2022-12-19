@@ -10,7 +10,7 @@ endif
 " use lower and upper character classes for unquoted words, which support
 " multibyte characters where alnum does not according to the vim help text.
 let s:unquoted = '\([[:lower:][:upper:][:digit:]_]\+\)'
-let s:quoted = "'\\(\\([^']\\|''\\)*'\\)"
+let s:quoted = "'\\(\\(\\_[^']\\|''\\)*'\\)"
 let s:word = '\(' . s:unquoted . '\|' . s:quoted . '\)'
 
 exec 'syn match fbleQuotedWord "' . s:quoted .'"'
