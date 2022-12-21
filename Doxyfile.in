@@ -1,5 +1,5 @@
 # Add @sideeffects tag that can be used in doc comments.
-ALIASES = "sideeffects=@par Side Effects:\n"
+ALIASES = "sideeffects=@par Side Effects:^^"
 JAVADOC_AUTOBRIEF = YES
 
 INPUT = @srcdir@/include/fble
