@@ -129,7 +129,8 @@ int main(int argc, char* argv[])
 
   // Skip the first line of the form:
   //   100.00%     0.00%  <cmd>  <exe>        [.] _start
-  (void)getline(&line, &len, stdin);
+  nread = getline(&line, &len, stdin);
+  assert(nread != -1 && "Unexpected error reading first line");
 
   FbleProfile* profile = FbleNewProfile();
   FbleProfileThread* thread = FbleNewProfileThread(profile);
