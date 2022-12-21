@@ -57,5 +57,28 @@ direct README file and for generated www.
 Next steps:
 * How to turn this into a github pages www?
 * How to make links to spec and tutorials work in generated www?
+* How to turn directories into links, and where to link to?
 * Move 'next' steps section much earlier to a documentation section in README.
 
+Setting up github pages:
+* I'll need to set up an action to build fble.
+* I'll need a build target to the pages artifact.
+  A single gzip archive containing a single tar file.
+
+Actually, looks like there is an 'upload-pages-artifact' git hub action that
+will take care of doing the tar gzip. We just need to give a path to the
+generated static content. Perfect.
+
+So, next step for gethub pages is to write a github action that can build
+fble.
+
+For the workflow:
+* .github/workflows directory
+* Call it a 'build' workflow in this case. It builds fble and can have a job
+  to upload the pages site?
+* Event: push
+* Jobs: Env setup, build, upload pages
+* Runner: Ubuntu Linux
+
+Questions:
+* What directory to use for build?

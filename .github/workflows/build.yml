@@ -1,0 +1,22 @@
+name: build
+run-name: ${{github.actor}} Fble Build
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v3
+
+      - name: Env Setup
+        run: |
+          sudo apt update
+          sudo apt install asciidoc
+
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          ../configure --prefix=${{github.workspace}}/install
+          ninja check
+          ninja install
