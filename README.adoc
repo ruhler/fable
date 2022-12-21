@@ -44,6 +44,13 @@ Open GL 1.2:: For graphical fble apps.
 Simple DirectMedia Layer 2.0.9:: For graphical fble apps.
 Tcl 8.6:: For generating build ninja files.
 
+To install required dependencies on a debian based system:
+
+  $ apt install \
+      asciidoc doxygen expect binutils bison \
+      gcc gdb diffutils grep groff-base ninja-build \
+      libgl-dev libsdl2-dev tcl8.6
+
 == Build and Test ==
 
 To build:

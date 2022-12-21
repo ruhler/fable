@@ -11,7 +11,10 @@ jobs:
       - name: Env Setup
         run: |
           sudo apt update
-          sudo apt install asciidoc
+          sudo apt install \
+            asciidoc doxygen expect binutils bison \
+            gcc gdb diffutils grep groff-base ninja-build \
+            libgl-dev libsdl2-dev tcl8.6
 
       - name: Build
         run: |
