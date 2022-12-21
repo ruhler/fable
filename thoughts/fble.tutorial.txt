@@ -281,6 +281,8 @@ polymorphism maybe? Maybe not. Anyway, try to simplify it as much as possible?
 I'm not sure.
 
 What is the list of tutorials I would want?
+* Intro to fble. What it's for, why use it, how to install, where to see the
+  language spec.
 * Hello world - how to run. How to play around. The starting point.
   Don't understand everything yet.
 * Basic Data types - structs, unions, functions.
@@ -307,7 +309,10 @@ What is the list of tutorials I would want?
  - Cover type fields. Including typeof operator perhaps.
 * Modules
  - Module paths.
+ - Dependency graph versus hierarchy.
  - Should be easy to explain now that we have all the background needed.
+ - Note that module values need not be structs, they can be functions, for
+   example?
 * More about unions.
  - default branches, case statements.
 * More about functions.
@@ -330,6 +335,29 @@ Then have some advanced/miscellaneous topics:
 * Foreign function interface.
 * Profiling.
 * Debugging.
+* Vim syntax highlighting.
+* Style guide.
 
 Cool. I think that's perfect. It makes more sense to go in that order I feel
 like.
+
+---
+
+Hello world tutorial:
+* Give them the code.
+* Explain why it's complicated. List the features it relies on. That will be
+  good foreshadowing of what's to come in the tutorials.
+* Show how to run it via the interpreter.
+* Show how to add some more print statements, and print a boolean value, for
+  example. Maybe use of Strs. Just so they feel comfortable printing
+  different things.
+
+Question: how to refer to installed binaries and fble packages? That's been
+pretty tedious so far in the tutorials. For binaries we can ask them to put
+the path to them in the PATH variable? For libraries... how should we find
+those?
+
+Also, if I'm going to do these tutorials, I would like to get fbld tutorial
+structure in good enough shape to start using and evolving that. Which
+suggests generating html automatically from it that I can check if desired.
+

@@ -331,6 +331,7 @@ set build_tcls [list \
   $::s/test/build.tcl \
   $::s/test/spec-test.build.tcl \
   $::s/tutorials/build.tcl \
+  $::s/www/build.tcl \
   $::s/pkgs/core/build.tcl \
   $::s/pkgs/app/build.tcl \
   $::s/pkgs/md5/build.tcl \
@@ -362,7 +363,7 @@ build $::b/doxygen.log \
 # Phony targets.
 phony "all" $::all
 phony "doxygen" $::b/doxygen.log
-phony "check" [list $::b/summary.tr all doxygen]
+phony "check" [list $::b/summary.tr all doxygen www]
 phony "install" [list $::installs]
 puts $::build_ninja "default all"
 

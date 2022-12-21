@@ -1,0 +1,61 @@
+Fble WWW
+========
+Goal is to generate a website for fble from the source code. It should include
+all the documentation about fble, including:
+* Language spec
+* tutorials
+* doxygen for the public API (for users)
+* doxygen for the internal API (for developers)
+* doxygen(?) for the fble packages
+* Generated man pages.
+* home page.
+
+Ideally we set up a 'www' ninja target that creates build/www/... with static
+pages for the website that can be viewed locally. As extra bonus, once we have
+something there to start, we could add a github action to uploaded it to a
+github pages site.
+
+I'm not sure where to start. So much information to include...
+
+How about, start with:
+* Summary and Overview from the README file.
+* List of links to language spec, tutorials, doxygen, man pages, source code.
+
+I think I want all the generated code to be html to start. Don't generate .md
+or .adoc files, to ensure I have full control over how they are rendered, and
+to let people view them all from a local browser. We'll have to figure out
+style sheets I guess, to make it pretty. Oh well.
+
+Let me make a www directory. It can have the home page and build rules for
+generating the html content from other existing sources like doxygen, spec,
+and tutorials.
+
+---
+
+For starters, I'm going to use asciidoc for the index page. We can change that
+later. How do I link to the generated documentation from within a doc?
+
+Let's organize www as:
+www/
+  index.html
+  spec.html
+  tutorials/
+  doxygen/
+
+Assume it's all going to be generated. Let's try some random things for the
+links and see what happens.
+
+Don't worry if not everything works. Don't worry about broken links. I'm
+focusing on getting the infra to build and publish www to start.
+
+Actually, let's use the README file for the main page to start. That ought to
+have everything we want. I'm sure we can fix things up to work for it as a
+direct README file and for generated www.
+
+---
+
+Next steps:
+* How to turn this into a github pages www?
+* How to make links to spec and tutorials work in generated www?
+* Move 'next' steps section much earlier to a documentation section in README.
+
