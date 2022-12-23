@@ -354,22 +354,16 @@ build $::b/summary.tr \
   "$::s/test/log $::b/detail.tr $::s/test/tests.tcl" \
   "$::s/test/log $::b/summary.tr tclsh8.6 $::s/test/tests.tcl < $::b/detail.tr"
 
-# Doxygen
-lappend ::build_ninja_deps "$::s/include/fble"
-build $::b/doxygen.log \
-  "$::s/test/log $::b/Doxyfile [glob $::s/include/fble/*.h]" \
-  "$::s/test/log $::b/doxygen.log doxygen"
-
 # Phony targets.
 phony "all" $::all
-phony "doxygen" $::b/doxygen.log
+phony "doxygen" $::b/include/doxygen.log
 phony "check" [list $::b/summary.tr all doxygen www]
 phony "install" [list $::installs]
 puts $::build_ninja "default all"
 
 # build.ninja
-build "$::b/build.ninja $::b/config.tcl $::b/Doxyfile" \
-  "$::s/configure $::s/config.tcl.in $::s/Doxyfile.in $::s/build.tcl" \
+build "$::b/build.ninja $::b/config.tcl $::b/include/Doxyfile" \
+  "$::s/configure $::s/config.tcl.in $::s/include/Doxyfile.in $::s/build.tcl" \
   "$::s/configure --prefix $::prefix" \
   "depfile = $::b/build.ninja.d"
 

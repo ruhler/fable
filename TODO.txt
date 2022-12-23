@@ -1,11 +1,9 @@
 
-* Seems like build.ninja is being regenerated more often than I expect.
-  Double check if we can find out why.
-  Seems like if I touch any file it ends up being regenerated.
-  Which leads to doxygen being redone.
-  The generated dependencies look correct. The only thing I can think is if
-  dependency on a directory means any time any file in that directory changes,
-  rather than just adding or removing a file?
+* Write new set of tutorials.
+  See thoughts/fble.tutorials.txt.
+
+* Generate nice www/ site.
+  See thoughts/fble.www.txt.
 
 * Switch to .fbld format for specs, readmes, and tutorials.
  - For first attempt, do something best effort. Certainly doesn't need to be

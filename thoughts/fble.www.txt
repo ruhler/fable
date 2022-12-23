@@ -82,3 +82,18 @@ For the workflow:
 
 Questions:
 * What directory to use for build?
+
+---
+
+We now have github pages site setup. It takes from $::b/www directory anytime
+we push to github.
+
+Next step is to clean up the documentation however I like.
+
+How to link to spec/fble.adoc from README.adoc, but spec/fble.html from
+README.html?
+
+Use an anchor and cross ref, and figure out how to run asciidoc on both docs
+at once? Maybe need to use a 'chunked html' backend and treat them as two
+separate sections of the same document? That seems silly to me.
+

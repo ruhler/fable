@@ -63,6 +63,7 @@ puts "  mandir=$::mandir"
 
 proc subst_in { src dest } {
   puts "creating $dest"
+  exec mkdir -p [file dirname $dest]
   exec sed \
     -e "s=@srcdir@=$::srcdir=g" \
     -e "s=@builddir@=$::builddir=g" \
@@ -75,7 +76,7 @@ proc subst_in { src dest } {
 }
 
 subst_in $::srcdir/config.tcl.in $::builddir/config.tcl
-subst_in $::srcdir/Doxyfile.in $::builddir/Doxyfile
+subst_in $::srcdir/include/Doxyfile.in $::builddir/include/Doxyfile
 
 # Generate the build.ninja file.
 exec tclsh8.6 $::srcdir/build.tcl $::builddir/build.ninja
