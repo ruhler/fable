@@ -1,5 +1,7 @@
-// tc.c --
-//   This file implements routines dealing with the FbleTc type.
+/**
+ * @file tc.c
+ * FbleTc abstract syntax routines.
+ */
 
 #include "tc.h"
 

@@ -1,3 +1,7 @@
+/**
+ * @file type.c
+ * FbleType routines.
+ */
 
 #include "type.h"
 

@@ -1,3 +1,7 @@
+/**
+ * @file interpret.c
+ * Interpreter for FbleCode fble bytecode.
+ */
 
 #include <fble/fble-interpret.h>
 #include "interpret.h"

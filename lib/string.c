@@ -1,3 +1,7 @@
+/**
+ * @file string.c
+ * FbleString routines.
+ */
 
 #include <fble/fble-string.h>
 

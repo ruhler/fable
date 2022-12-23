@@ -1,5 +1,7 @@
-// alloc.c --
-//   This file implements the fble allocation routines.
+/**
+ * @file alloc.c
+ * Implementation of fble allocation routines.
+ */
 
 #define _GNU_SOURCE   // for MAP_ANONYMOUS
 

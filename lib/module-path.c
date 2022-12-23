@@ -1,3 +1,7 @@
+/**
+ * @file module-path.c
+ * FbleModulePath routines.
+ */
 
 #include <fble/fble-module-path.h>
 

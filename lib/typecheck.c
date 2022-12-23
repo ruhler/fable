@@ -1,5 +1,7 @@
-// typecheck.c --
-//   This file implements the fble type checker.
+/**
+ * @file typecheck.c
+ * Converts FbleExpr untyped abstract syntax to FbleTc typed abstract syntax.
+ */
 
 #include "typecheck.h"
 

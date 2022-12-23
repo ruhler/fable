@@ -1,5 +1,7 @@
-// profile.c --
-//   This file implements the fble profiling routines.
+/**
+ * @file profile.c
+ * Fble profiling and reporting.
+ */
 
 #include <assert.h>   // for assert
 #include <inttypes.h> // for PRIu64

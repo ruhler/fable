@@ -1,5 +1,7 @@
-// expr.c --
-//   This file implements the fble abstract syntax routines.
+/**
+ * @file expr.c
+ * FbleExpr* abstract syntax routines.
+ */
 
 #include "expr.h"
 

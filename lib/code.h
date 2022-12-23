@@ -1,6 +1,7 @@
-// code.h --
-//   Defines FbleInstr and FbleCode types, describing an internal instruction
-//   set that can be used to run fble programs.
+/**
+ * @file code.h
+ * Defines FbleCode fble bytecode.
+ */
 
 #ifndef FBLE_INTERNAL_CODE_H_
 #define FBLE_INTERNAL_CODE_H_

@@ -1,5 +1,7 @@
-// vector.c --
-//   This file implements the fble vector routines.
+/**
+ * @file vector.c
+ * Fble vector routines.
+ */
 
 #include <fble/fble-vector.h>
 

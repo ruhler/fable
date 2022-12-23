@@ -1,5 +1,7 @@
-// kind.h --
-//   Header file for FbleKind.
+/**
+ * @file kind.h
+ * Header for FbleKind.
+ */
 
 #ifndef FBLE_INTERNAL_KIND_H_
 #define FBLE_INTERNAL_KIND_H_

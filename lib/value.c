@@ -1,5 +1,7 @@
-// value.c
-//   This file implements routines associated with fble values.
+/**
+ * @file value.c
+ * FbleValue routines.
+ */
 
 #include "value.h"
 

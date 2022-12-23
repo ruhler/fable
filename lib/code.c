@@ -1,5 +1,7 @@
-// code.c --
-//   This file implements routines related to fble instructions.
+/**
+ * @file code.c
+ * FbleCode related routines.
+ */
 
 #include "code.h"
 

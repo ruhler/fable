@@ -1,5 +1,7 @@
-// heap.c --
-//   This file implements a mark-sweep based heap.
+/**
+ * @file heap.c
+ * Mark-sweep based garbage collector.
+ */
 
 #include "heap.h"
 

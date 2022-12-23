@@ -1,5 +1,7 @@
-// kind.c --
-//   This file implements routines related to FbleKind.
+/**
+ * @file kind.c
+ * FbleKind routines.
+ */
 
 #include "kind.h"
 

@@ -1,5 +1,7 @@
-// compile.c --
-//   This file describes code to compile fble values into fble instructions.
+/**
+ * @file compile.c
+ * Compile FbleTc* abstract syntax into FbleCode* bytecode.
+ */
 
 #include <fble/fble-compile.h>
 
@@ -75,14 +77,14 @@ static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index);
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
 
-// Blocks --
-//   A stack of block frames tracking the current block for profiling.
-//
-// Fields:
-//   stack - The stack of black frames representing the current location.
-//   profile - The names of profile blocks to append to.
+/**
+ *   Stack of block frames tracking the current block for profiling.
+ */
 typedef struct {
+  /** The stack of black frames representing the current location. */
   FbleBlockIdV stack;
+
+  /** The names of profile blocks to append to. */
   FbleNameV profile;
 } Blocks;
 

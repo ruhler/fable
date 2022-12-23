@@ -1,5 +1,7 @@
-// type.h --
-//   Header file for the internal fble types API.
+/**
+ * @file type.h
+ * Header for FbleType.
+ */
 
 #ifndef FBLE_INTERNAL_TYPE_H_
 #define FBLE_INTERNAL_TYPE_H_

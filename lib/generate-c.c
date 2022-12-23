@@ -1,5 +1,7 @@
-// generate-c.c --
-//   This file describes code to generate C code for fble modules.
+/**
+ * generate-c.c
+ * Converts FbleCode fble bytecode to C code.
+ */
 
 #include <assert.h>   // for assert
 #include <ctype.h>    // for isalnum

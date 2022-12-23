@@ -1,3 +1,7 @@
+/**
+ * @file arg-parse.c
+ * Implementation of arg parse routines.
+ */
 
 #include <fble/fble-arg-parse.h>
 

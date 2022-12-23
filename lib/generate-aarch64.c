@@ -1,5 +1,7 @@
-// generate-aarch64.c --
-//   This file describes code to generate 64-bit ARM code for fble modules.
+/**
+ * @file generate-aarch64.c
+ * Converts FbleCode fble bytecode to 64-bit ARM machine code.
+ */
 
 #include <assert.h>   // for assert
 #include <ctype.h>    // for isalnum

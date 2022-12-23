@@ -1,6 +1,7 @@
-// tc.h --
-//   Header file defining the FbleTc type.
-//   This is an internal library interface.
+/**
+ * @file tc.h
+ * Header for FbleTc, typed abstract syntax for fble.
+ */
 
 #ifndef FBLE_INTERNAL_TC_H_
 #define FBLE_INTERNAL_TC_H_

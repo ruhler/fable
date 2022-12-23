@@ -1,5 +1,7 @@
-// expr.h --
-//   Header file for FbleExpr, the fble abstract syntax.
+/**
+ * @file expr.h
+ * Defines FbleExpr, untyped abstract syntax for fble.
+ */
 
 #ifndef FBLE_INTERNAL_EXPR_H_
 #define FBLE_INTERNAL_EXPR_H_

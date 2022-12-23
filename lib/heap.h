@@ -1,5 +1,7 @@
-// heap.h --
-//   Header file for the internal fble heap API.
+/**
+ * @file heap.h
+ * Defines FbleHeap, the fble garbage collector API.
+ */
 
 #ifndef FBLE_INTERNAL_HEAP_H_
 #define FBLE_INTERNAL_HEAP_H_

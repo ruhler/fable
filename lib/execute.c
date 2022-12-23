@@ -1,5 +1,7 @@
-// execute.c --
-//   Code for executing fble instructions, functions, and processes.
+/**
+ * @file execute.c
+ * Execution of fble functions.
+ */
 
 #include <fble/fble-execute.h>
 
