@@ -13,77 +13,75 @@
 #include "kind.h"           // for FbleDataTypeTag.
 #include "var.h"            // for FbleVar, FbleLocalIndex
 
-// FbleProfileOpTag --
-//   Enum used to distinguish among different kinds of FbleProfileOps.
+/**
+ * Different kinds of FbleProfileOps.
+ */
 typedef enum {
   FBLE_PROFILE_ENTER_OP,
   FBLE_PROFILE_REPLACE_OP,
   FBLE_PROFILE_EXIT_OP,
 } FbleProfileOpTag;
 
-// FbleProfileOp
-//
-// A singly-linked list of profiling operations.
-//
-// ENTER: Enters a new profiling block, as given by the 'block' field.
-// EXIT: Exits the current profiling block. 'block' is ignored.
+/**
+ * Singly-linked list of profiling operations.
+ */
 typedef struct FbleProfileOp {
+  /** The profiling operation. */
   FbleProfileOpTag tag;
+
+  /** Block to enter or replace. Ignored for EXIT ops. */
   FbleBlockId block;
+
+  /** Next profile op in the list, or NULL for end of list. */
   struct FbleProfileOp* next;
 } FbleProfileOp;
 
-// FbleDebugInfoTag --
-//   Enum used to distinguish among different kinds of FbleDebugInfos.
+/**
+ * Different kinds of FbleDebugInfos.
+ */
 typedef enum {
   FBLE_STATEMENT_DEBUG_INFO,
   FBLE_VAR_DEBUG_INFO,
 } FbleDebugInfoTag;
 
-// FbleDebugInfo
-//
-// A singly-linked list of debug info.
+/** Singly-linked list of debug info. */
 typedef struct FbleDebugInfo {
-  FbleDebugInfoTag tag;
-  struct FbleDebugInfo* next;
+  FbleDebugInfoTag tag;         /**< The kind of debug info. */
+  struct FbleDebugInfo* next;   /**< The next element in the list, or NULL. */
 } FbleDebugInfo;
 
-// FbleStatementDebugInfo --
-//   FBLE_STATEMENT_DEBUG_INFO
-//
-// Indicates the instruction is the start of a new statement.
-//
-// Fields:
-//   loc - the location of the statement.
+/**
+ * Debug info indicating start of a new statement.
+ *
+ * FBLE_STATEMENT_DEBUG_INFO
+ */
 typedef struct {
-  FbleDebugInfo _base;
-  FbleLoc loc;
+  FbleDebugInfo _base;    /**< FbleDebugInfo base class. */
+  FbleLoc loc;            /**< The source code location of the statement. */
 } FbleStatementDebugInfo;
 
-// FbleVarDebugInfo --
-//   FBLE_VAR_DEBUG_INFO
-//
-// Fields:
-//   name - the name a variable that enters scope at this instruction.
-//   var - the location of the variable in the stack frame.
+/**
+ * Debug info about a variable.
+ *
+ * FBLE_VAR_DEBUG_INFO
+ */
 typedef struct {
-  FbleDebugInfo _base;
-  FbleName name;
-  FbleVar var;
+  FbleDebugInfo _base;  /**< FbleDebugInfo base class. */
+  FbleName name;        /**< Name of the variable. */
+  FbleVar var;          /**< Location of the variable in the stack frame. */
 } FbleVarDebugInfo;
 
-// FbleFreeDebugInfo --
-//   Free the given chain of debug infos.
-//
-// Inputs:
-//   info - the chain of debug infos to free. May be NULL.
-//
-// Side effect:
-//   Frees memory allocated for the given debug infos.
+/**
+ * Frees the given chain of debug infos.
+ *
+ * @param info  The chain of debug infos to free. May be NULL.
+ * @sideeffects  Frees memory allocated for the given debug infos.
+ */
 void FbleFreeDebugInfo(FbleDebugInfo* info);
 
-// FbleInstrTag --
-//   Enum used to distinguish among different kinds of instructions.
+/**
+ * Different kinds of instructions.
+ */
 typedef enum {
   FBLE_DATA_TYPE_INSTR,
   FBLE_STRUCT_VALUE_INSTR,
@@ -104,327 +102,341 @@ typedef enum {
   FBLE_LITERAL_INSTR,
 } FbleInstrTag;
 
-// FbleInstr --
-//   Common base type for all instructions.
-//
-// profile_ops are profiling operations to perform before executing the
-// instruction.
+/**
+ * Base type for all instructions.
+ */
 typedef struct {
-  FbleInstrTag tag;
-  FbleDebugInfo* debug_info;
+  FbleInstrTag tag;           /**< The kind of instruction. */
+
+  /** Debug info that applies to just before executing the instruction. */
+  FbleDebugInfo* debug_info;  
+
+  /** Profiling operations to perform before executing the instruction. */
   FbleProfileOp* profile_ops;
 } FbleInstr;
 
-// FbleInstrV --
-//   A vector of FbleInstr.
+/** Vector of FbleInstr. */
 typedef struct {
-  size_t size;
-  FbleInstr** xs;
+  size_t size;      /**< Number of elements. */
+  FbleInstr** xs;   /**< The elements. */
 } FbleInstrV;
 
-// FbleCode --
-//   A subclass of FbleExecutable that executes code by interpreting
-//   instructions.
+/**
+ * FbleExecutable subclass with instructions to execute.
+ */
 struct FbleCode {
-  FbleExecutable _base;
-  size_t num_locals;
-  FbleInstrV instrs;
+  FbleExecutable _base;   /**< FbleExecutable base class. */
+  size_t num_locals;      /**< Number of local variable slots used/required. */
+  FbleInstrV instrs;      /**< The instructions to execute. */
 };
 
-// FbleCodeV --
-//   A vector of FbleCode.
+/** Vector of FbleCode. */
 typedef struct {
-  size_t size;
-  FbleCode** xs;
+  size_t size;      /**< Number of elements. */
+  FbleCode** xs;    /**< The elements. */
 } FbleCodeV;
 
-// FbleDataTypeInstr -- FBLE_DATA_TYPE_INSTR
-//   Allocate a data type value.
-//
-// *dest = +(a1, a2, ..., aN)
-// *dest = *(a1, a2, ..., aN)
+/**
+ * FBLE_DATA_TYPE_INSTR: Allocate a data type value.
+ *
+ * *dest = +(a1, a2, ..., aN)
+ * *dest = *(a1, a2, ..., aN)
+ *
+ * Note: This was introduced to enable better packing of values into machine
+ * words, but we haven't implemented that yet, so it's currently unused.
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleDataTypeTag kind;
-  FbleVarV fields;
-  FbleLocalIndex dest;
+  FbleInstr _base;        /**< FbleInstr base class. */
+  FbleDataTypeTag kind;   /**< The kind of datatype to create. */
+  FbleVarV fields;        /**< The fields of the data type. */
+  FbleLocalIndex dest;    /**< Where to put the created type. */
 } FbleDataTypeInstr;
 
-// FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
-//   Allocate a struct value.
-//
-// *dest = struct(a1, a2, ..., aN)
+/**
+ * FBLE_STRUCT_VALUE_INSTR: Creates a struct value.
+ *
+ * *dest = struct(a1, a2, ..., aN)
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleVarV args;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleVarV args;        /**< Arguments to the struct value. */
+  FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleStructValueInstr;
 
-// FbleUnionValueInstr -- FBLE_UNION_VALUE_INSTR
-//   Allocate a union value.
-//
-// *dest = union(arg)
+/**
+ * FBLE_UNION_VALUE_INSTR: Creates a union value.
+ *
+ * *dest = union(arg)
+ */
 typedef struct {
-  FbleInstr _base;
-  size_t tag;
-  FbleVar arg;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  size_t tag;           /**< The tag of of the value to create. */
+  FbleVar arg;          /**< The argument to the value to create. */
+  FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleUnionValueInstr;
 
-// FbleAccessInstr --
-//   FBLE_STRUCT_ACCESS_INSTR
-//   FBLE_UNION_ACCESS_INSTR
-//   Access a tagged field from an object.
-//
-// *dest = obj.<tag>
+/**
+ * Accesses a tagged field from an object.
+ *
+ * Used for both FBLE_STRUCT_ACCESS_INSTR and FBLE_UNION_ACCESS_INSTR.
+ *
+ * *dest = obj.tag
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleLoc loc;
-  FbleVar obj;
-  size_t tag;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleLoc loc;          /**< Location of the access, for error reporting. */
+  FbleVar obj;          /**< The object whose field to access. */
+  size_t tag;           /**< The field to access. */
+  FbleLocalIndex dest;  /**< Where to store the result. */
 } FbleAccessInstr;
 
-// FbleOffsetV --
-//   A vector of offsets.
+/** Vector of offsets. */
 typedef struct {
-  size_t size;
-  size_t* xs;
+  size_t size;    /**< Number of elements. */
+  size_t* xs;     /**< The elements. */
 } FbleOffsetV;
 
-// FbleUnionSelectInstr -- FBLE_UNION_SELECT_INSTR
-//   Select the next thing to execute based on the tag of the value on top of
-//   the value stack.
-//
-// next_pc += ?(condition.tag; jumps[0], jumps[1], ...);
+/**
+ * FBLE_UNION_SELECT_INSTR: Branches based on object tag.
+ *
+ * next_pc += ?(condition.tag; jumps[0], jumps[1], ...);
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleLoc loc;
-  FbleVar condition;
-  FbleOffsetV jumps;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleLoc loc;          /**< Location to use for error reporting. */
+  FbleVar condition;    /**< The object to branch based on. */
+  FbleOffsetV jumps;    /**< Where to jump depending on the object tag. */
 } FbleUnionSelectInstr;
 
-// FbleJumpInstr -- FBLE_JUMP_INSTR
-//   Jump forward by the given number of instructions beyond what would
-//   otherwise have been the next instruction.
-// 
-// Jumping backwards is not supported.
-//
-// next_pc += count
+/**
+ * FBLE_JUMP_INSTR: Advances the program counter.
+ *
+ * Jumps forward by the given number of instructions beyond what would
+ * otherwise have been the next instruction.
+ * 
+ * Jumping backwards is not supported.
+ *
+ * next_pc += count
+ */
 typedef struct {
-  FbleInstr _base;
-  size_t count;
+  FbleInstr _base;    /**< FbleInstr base class. */
+  size_t count;       /**< Number of instructions to jump past. */
 } FbleJumpInstr;
 
-// FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
-//   Allocate a function, capturing the values to use for as variable values
-//   when the function is executed.
-//
-// *dest = code[v1, v2, ...](argc)
-//
-// Fields:
-//   dest - Where to store the allocated function.
-//   code - A block of instructions that will execute the body of the function
-//          in the context of its scope and arguments. The instruction should
-//          remove the context of its scope and arguments.
-//   scope - Variables from the scope to capture for the function.
-//
-// Note: FuncValues are used for both pure functions and processes at runtime,
-// so FBLE_FUNC_VALUE_INSTR is used for allocating process values as well as
-// function values.
+/**
+ * FBLE_FUNC_VALUE_INSTR: Creates a function value.
+ *
+ * *dest = code[v1, v2, ...](argc)
+ */
 typedef struct {
+  /** FbleInstr base class. */
   FbleInstr _base;
+  
+  /** Where to store the allocated function. */
   FbleLocalIndex dest;
+
+  /**
+   * A block of instructions that executes the body of the function in the
+   * context of its scope and arguments. The instruction should remove the
+   * context of its scope and arguments.
+   */
   FbleCode* code;
+
+  /** Variables from the scope to capture for the function. */
   FbleVarV scope;
 } FbleFuncValueInstr;
 
-// FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR
-//   A proc value is represented as a function that takes no arguments.
-#define FBLE_PROC_VALUE_INSTR FBLE_FUNC_VALUE_INSTR
-typedef FbleFuncValueInstr FbleProcValueInstr;
-
-// FbleCallInstr -- FBLE_CALL_INSTR
-//   Call a function.
-//
-// Also used for executing a process value, which is treated as a
-// zero-argument function.
-//
-// *dest = func(args[0], args[1], ...)
-//
-// If exit is true, this is treated as a tail call. In that case, dest is
-// ignored and the result is returned to the caller.
+/**
+ * FBLE_CALL_INSTR: Calls a function.
+ *
+ * *dest = func(args[0], args[1], ...)
+ *
+ * If exit is true, this is treated as a tail call. In that case, dest is
+ * ignored and the result is returned to the caller.
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleLoc loc;
-  bool exit;
-  FbleLocalIndex dest;
-  FbleVar func;
-  FbleVarV args;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleLoc loc;          /**< Location of the call for error reporting. */
+  bool exit;            /**< Whether this is a normal call or tail call. */
+  FbleLocalIndex dest;  /**< Where to store the result of the call. */
+  FbleVar func;         /**< The function to call. */
+  FbleVarV args;        /**< The arguments to pass to the called function. */
 } FbleCallInstr;
 
-// FbleCopyInstr -- FBLE_COPY_INSTR
-//   Copy a value in the stack frame from one location to another.
+/**
+ * FBLE_COPY_INSTR: Copies a value from one location to another.
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleVar source;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleVar source;       /**< The value to copy. */
+  FbleLocalIndex dest;  /**< Where to copy the value to. */
 } FbleCopyInstr;
 
-// FbleRefValueInstr -- FBLE_REF_VALUE_INSTR
-//   Allocate a ref value and store the result in index.
-//
-// *dest = new ref
+/**
+ * FBLE_REF_VALUE_INSTR: Creates a ref value.
+ *
+ * *dest = new ref
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleRefValueInstr;
 
-// FbleRefDefInstr -- FBLE_REF_DEF_INSTR
-//   Set the value of a reference.
-//
-// ref->value = value
+/**
+ * FBLE_REF_DEF_INSTR: Sets the value of a reference.
+ *
+ * ref->value = value
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleLoc loc;
-  FbleLocalIndex ref;
-  FbleVar value;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleLoc loc;          /**< Location to user for error reporting. */
+  FbleLocalIndex ref;   /**< The ref value to update. */
+  FbleVar value;        /**< The updated target for the ref value. */
 } FbleRefDefInstr;
 
-// FbleReturnInstr -- FBLE_RETURN_INSTR
-//   Return <result> and exit the current stack frame.
+/**
+ * FBLE_RETURN_INSTR: Returns 'result' and exits the current stack frame.
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleVar result;
+  FbleInstr _base;    /**< FbleInstr base class. */
+  FbleVar result;     /**< The value to return. */
 } FbleReturnInstr;
 
-// FbleTypeInstr -- FBLE_TYPE_INSTR
-//  *dest = @<>
+/**
+ * FBLE_TYPE_INSTR: Creates a type value.
+ *
+ * *dest = @<>
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleTypeInstr;
 
-// FbleReleaseInstr -- FBLE_RELEASE_INSTR
-//  FbleReleaseValue(targets)
+/**
+ * FBLE_RELEASE_INSTR: Releases fble values.
+ *
+ * FbleReleaseValue(targets)
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleLocalIndexV targets;
+  FbleInstr _base;          /**< FbleInstr base class. */
+  FbleLocalIndexV targets;  /**< The values to release. */
 } FbleReleaseInstr;
 
-// FbleListInstr -- FBLE_LIST_INSTR
-// *dest = [a1, a2, ..., aN]
+/**
+ * FBLE_LIST_INSTR: Creates a list value.
+ *
+ * *dest = [a1, a2, ..., aN]
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleVarV args;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleVarV args;        /**< The elements of the list to create. */
+  FbleLocalIndex dest;  /**< Where to put the created list. */
 } FbleListInstr;
 
-// FbleTagV --
-//   A vector of tags.
+/** Vector of tags. */
 typedef struct {
-  size_t size;
-  size_t* xs;
+  size_t size;    /**< Number of elements. */
+  size_t* xs;     /**< The elements of the vector. */
 } FbleTagV;
 
-// FbleLiteralInstr -- FBLE_LITERAL_INSTR
-// *dest = "xxx"
+/**
+ * FBLE_LITERAL_INSTR: Creates a literal value.
+ *
+ * *dest = "xxx"
+ */
 typedef struct {
-  FbleInstr _base;
-  FbleTagV letters;
-  FbleLocalIndex dest;
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleTagV letters;     /**< The letters to create the literal from. */
+  FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleLiteralInstr;
 
-// FbleRawAllocInstr --
-//   Allocate and partially initialize an FbleInstr. This function is not type
-//   safe. It is recommended to use the FbleAllocInstr and FbleAllocInstrExtra
-//   macros instead.
-//
-// Inputs:
-//   size - The total number of bytes to allocate for the instruction.
-//   tag - The instruction tag.
-//
-// Result:
-//   A pointer to a newly allocated size bytes of memory with FbleInstr tag,
-//   debug_info, and profile_ops initialized.
+/**
+ * Allocates and partially initialize an FbleInstr.
+ *
+ * This function is not type safe. It is recommended to use the FbleAllocInstr
+ * and FbleAllocInstrExtra macros instead.
+ *
+ * @param size  The total number of bytes to allocate for the instruction.
+ * @param tag  The instruction tag.
+ *
+ * @returns
+ *   A pointer to a newly allocated size bytes of memory with FbleInstr tag,
+ *   debug_info, and profile_ops initialized.
+ */
 void* FbleRawAllocInstr(size_t size, FbleInstrTag tag);
 
-// FbleAllocInstr --
-//   A type safe way of allocating instructions.
-//
-// Inputs:
-//   T - The type of instruction to allocate.
-//   tag - The tag of the instruction to allocate.
-//
-// Results:
-//   A pointer to a newly allocated object of the given type with the
-//   FbleInstr tag, debug_info, and profile_ops fields initialized.
-//
-// Side effects:
-// * The allocation should be freed by calling FbleFreeInstr when no longer in
-//   use.
+/**
+ * Allocates an FbleInstr in a type safe way.
+ *
+ * @param T  The type of instruction to allocate.
+ * @param tag  The tag of the instruction to allocate.
+ *
+ * @returns
+ *   A pointer to a newly allocated object of the given type with the
+ *   FbleInstr tag, debug_info, and profile_ops fields initialized.
+ *
+ * @sideeffects
+ * * The allocation should be freed by calling FbleFreeInstr when no longer in
+ *   use.
+ */
 #define FbleAllocInstr(T, tag) ((T*) FbleRawAllocInstr(sizeof(T), tag))
 
-// FbleAllocInstrExtra --
-//   Allocate an instruction with additional extra space.
-//
-// Inputs:
-//   T - The type of instruction to allocate.
-//   size - The size in bytes of extra space to include.
-//   tag - The tag of the instruction.
-//
-// Results:
-//   A pointer to a newly allocated instruction of the given type with extra
-//   size, with FbleInstr fields initialized.
-//
-// Side effects:
-// * The allocation should be freed by calling FbleFreeInstr when no longer in
-//   use.
+/**
+ * Allocate an FbleInstr with additional extra space.
+ *
+ * @param T  The type of instruction to allocate.
+ * @param size  The size in bytes of extra space to include.
+ * @param tag  The tag of the instruction.
+ *
+ * @returns
+ *   A pointer to a newly allocated instruction of the given type with extra
+ *   size, with FbleInstr fields initialized.
+ *
+ * @sideeffects
+ * * The allocation should be freed by calling FbleFreeInstr when no longer in
+ *   use.
+ */
 #define FbleAllocInstrExtra(T, size, tag) ((T*) FbleRawAllocInstr(sizeof(T) + size), tag)
 
-// FbleFreeInstr --
-//   Free the given instruction.
-//
-// Inputs:
-//   instr - the instruction to free.
-//
-// Result:
-//   none.
-//
-// Side effect:
-//   Frees memory allocated for the given instruction.
+/**
+ * Frees an FbleInstr.
+ *
+ * @param instr  The instruction to free.
+ *
+ * @sideeffects
+ *   Frees memory allocated for the given instruction.
+ */
 void FbleFreeInstr(FbleInstr* instr);
 
-// FbleNewCode --
-//   Allocate a new, empty FbleCode instance.
-//
-// Inputs:
-//   num_args - the number of arguments to the function.
-//   num_statics - the number of statics captured by the function.
-//   num_locals - the number of locals used by the function.
-//   profile_block_id - the profile block to use for this function.
-//
-// Returns:
-//   A newly allocated FbleCode object with no initial instructions.
-//
-// Side effects:
-//   Allocates a new FbleCode object that should be freed with FbleFreeCode or
-//   FbleFreeExecutable when no longer needed.
-FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, FbleBlockId profile_doc_id);
+/**
+ * Allocates a new, empty FbleCode instance.
+ *
+ * @param num_args  The number of arguments to the function.
+ * @param num_statics  The number of statics captured by the function.
+ * @param num_locals  The number of locals used by the function.
+ * @param profile_block_id  The profile block to use for this function.
+ *
+ * @returns
+ *   A newly allocated FbleCode object with no initial instructions.
+ *
+ * @sideeffects
+ *   Allocates a new FbleCode object that should be freed with FbleFreeCode or
+ *   FbleFreeExecutable when no longer needed.
+ */
+FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, FbleBlockId profile_block_id);
 
-// FbleFreeCode --
-//   Decrement the refcount on the given block of instructions and free it if
-//   appropriate.
-//
-// Inputs:
-//   code - the code to free. May be NULL.
-//
-// Result:
-//   none.
-//
-// Side effect:
-//   Frees memory allocated for the given block of instruction if the refcount
-//   has gone to 0.
+/**
+ * Frees an FbleCode.
+ *
+ * Decrements the refcount on the given block of instructions and free it if
+ * appropriate.
+ *
+ * @param code  The code to free. May be NULL.
+ *
+ * @sideeffects
+ *   Frees memory allocated for the given block of instruction if the refcount
+ *   has gone to 0.
+ */
 void FbleFreeCode(FbleCode* code);
 
 #endif // FBLE_INTERNAL_CODE_H_

@@ -112,7 +112,7 @@ typedef struct {
 // FbleStructValueImplicitTypeExpr --
 //   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR (args :: [(Name, Expr)])
 typedef struct {
-  FbleExpr _base;
+  FbleExpr _base;         /**< FbleExpr base class. */
   FbleTaggedExprV args;
 } FbleStructValueImplicitTypeExpr;
 
