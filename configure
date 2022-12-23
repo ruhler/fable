@@ -77,6 +77,7 @@ proc subst_in { src dest } {
 
 subst_in $::srcdir/config.tcl.in $::builddir/config.tcl
 subst_in $::srcdir/include/Doxyfile.in $::builddir/include/Doxyfile
+subst_in $::srcdir/lib/Doxyfile.in $::builddir/lib/Doxyfile
 
 # Generate the build.ninja file.
 exec tclsh8.6 $::srcdir/build.tcl $::builddir/build.ninja

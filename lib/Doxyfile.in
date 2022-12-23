@@ -1,0 +1,25 @@
+# Add @sideeffects tag that can be used in doc comments.
+ALIASES = "sideeffects=@par Side Effects:^^"
+JAVADOC_AUTOBRIEF = YES
+
+INPUT = @srcdir@/lib
+FILE_PATTERNS = *.h *.c
+OPTIMIZE_OUTPUT_FOR_C = YES
+
+QUIET = YES
+WARN_AS_ERROR = NO
+WARN_NO_PARAMDOC = YES
+PROJECT_NAME = "Fable (Internal)"
+OUTPUT_DIRECTORY = @builddir@
+SHOW_INCLUDE_FILES = NO
+SORT_MEMBER_DOCS = NO
+
+# Output things like "fble-value.h" in man pages instead of
+# full paths like "/home/richard/.../fble-value.h".
+FULL_PATH_NAMES = NO
+
+HTML_OUTPUT = www/lib
+
+LATEX_OUTPUT = lib/latex
+
+HAVE_DOT = NO

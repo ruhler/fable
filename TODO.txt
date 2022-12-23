@@ -1,4 +1,7 @@
 
+* Remove all warnings from lib doxygen
+  Change lib/Doxyfile.in WRAN_AS_ERROR to YES.
+
 * Write new set of tutorials.
   See thoughts/fble.tutorials.txt.
 

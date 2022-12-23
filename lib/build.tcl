@@ -44,4 +44,10 @@ namespace eval "lib" {
   install_lib $::b/lib/libfble.a
 
   set ::fble_objs_cov $objs_cov
+
+  # Doxygen
+  lappend ::build_ninja_deps "$::s/lib"
+  build $::b/lib/doxygen.log \
+    "$::s/test/log $::b/lib/Doxyfile [glob $::s/lib/*.{c,h}]" \
+    "$::s/test/log $::b/lib/doxygen.log doxygen $::b/lib/Doxyfile"
 }
