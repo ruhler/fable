@@ -11,7 +11,7 @@
 #include <fble/fble-alloc.h>
 #include <fble/fble-string.h>
 
-// FbleNewLoc -- see documentation in fble-loc.h
+// See documentation in fble-loc.h.
 FbleLoc FbleNewLoc(const char* source, int line, int col)
 {
   FbleLoc loc = {
@@ -21,8 +21,8 @@ FbleLoc FbleNewLoc(const char* source, int line, int col)
   };
   return loc;
 }
-
-// FbleCopyLoc -- see documentation in fble-loc.h
+
+// See documentation in fble-loc.h.
 FbleLoc FbleCopyLoc(FbleLoc loc)
 {
   FbleLoc copy = {
@@ -33,13 +33,13 @@ FbleLoc FbleCopyLoc(FbleLoc loc)
   return copy;
 }
 
-// FbleFreeLoc -- see documentation in fble-loc.h
+// See documentation in fble-loc.h.
 void FbleFreeLoc(FbleLoc loc)
 {
   FbleFreeString(loc.source);
 }
 
-// FbleReportWarning -- see documentation in fble-loc.h
+// See documentation in fble-loc.h.
 void FbleReportWarning(const char* format, FbleLoc loc, ...)
 {
   va_list ap;
@@ -49,7 +49,7 @@ void FbleReportWarning(const char* format, FbleLoc loc, ...)
   va_end(ap);
 }
 
-// FbleReportError -- see documentation in fble-loc.h
+// See documentation in fble-loc.h.
 void FbleReportError(const char* format, FbleLoc loc, ...)
 {
   va_list ap;
