@@ -15,18 +15,29 @@
 
 #include "heap.h"
 
+/**
+ * Marks code as unreachable.
+ *
+ * @param x  Message explaining why code is unreachable.
+ */
 #define UNREACHABLE(x) assert(false && x)
 
-// PACKED --
-//   Test whether a value is packed into an FbleValue* pointer.
-//
-// IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
-// to save space. An FbleValue* only points to an FbleValue if the least
-// significant bit of the pointer is 0.
+/**
+ *
+ * Test whether a value is packed into an FbleValue* pointer.
+ *
+ * IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
+ * to save space. An FbleValue* only points to an FbleValue if the least
+ * significant bit of the pointer is 0.
+ *
+ * @param x  The value to test.
+ *
+ * @returns
+ *   True if the value is a packaged value, false otherwise.
+ */
 #define PACKED(x) (((intptr_t)x) & 1)
 
-// ValueTag --
-//   A tag used to distinguish among different kinds of FbleValue.
+/** Different kinds of FbleValue. */
 typedef enum {
   DATA_TYPE_VALUE,
   STRUCT_VALUE,
@@ -35,138 +46,137 @@ typedef enum {
   REF_VALUE,
 } ValueTag;
 
-// FbleValue --
-//   A tagged union of value types. All values have the same initial layout as
-//   FbleValue. The tag can be used to determine what kind of value this is to
-//   get access to additional fields of the value by first casting to that
-//   specific type of value.
+/**
+ * Base class for fble values.
+ *
+ * A tagged union of value types. All values have the same initial layout as
+ * FbleValue. The tag can be used to determine what kind of value this is to
+ * get access to additional fields of the value by first casting to that
+ * specific type of value.
+ */
 struct FbleValue {
-  ValueTag tag;
+  ValueTag tag;   /**< The kind of value. */
 };
 
-// DataTypeValue --
-//   DATA_TYPE_VALUE
-//
-// Represents a struct or union type value.
-//
-// Fields:
-//   tag_size - the number of bits required for the tag, 0 if this
-//              represents a struct type instead of a union type.
-//   fieldc - the number of fields.
-//   fields - the type of each field.
+/**
+ * DATA_TYPE_VALUE: A struct or union type value.
+ */
 typedef struct {
-  FbleValue _base;
-  size_t tag_size;
-  size_t fieldc;
-  FbleValue* fields[];
+  FbleValue _base;        /**< FbleValue base class. */
+
+  /**
+   * Number of bits required for the tag.
+   * 0 if this represents a struct type instead of a union type.
+   */
+  size_t tag_size;        
+
+  size_t fieldc;          /**< Number of fields. */
+  FbleValue* fields[];    /**< The type of each field. */
 } DataTypeValue;
 
-// StructValue --
-//   STRUCT_VALUE
-//
-// Represents a struct value.
-//
-// Packings:
-//   Struct values may be packed. If so, read in order from the least
-//   significant bits:
-//   '0' - to indicate it is a struct value instead of a union value.
-//   <num_args> - unary encoded number of arguments in the struct.
-//     e.g. "0" for 0 args, "10" for 1 arg, "110" for 2 args, and so on.
-//   <args> in order of argument arg0, arg1, etc.
+/**
+ * STRUCT_VALUE: An fble struct value.
+ *
+ * Packings:
+ *   Struct values may be packed. If so, read in order from the least
+ *   significant bits:
+ *   '0' - to indicate it is a struct value instead of a union value.
+ *   'num_args' - unary encoded number of arguments in the struct.
+ *     e.g. "0" for 0 args, "10" for 1 arg, "110" for 2 args, and so on.
+ *   'args' in order of argument arg0, arg1, etc.
+ */
 typedef struct {
-  FbleValue _base;
-  size_t fieldc;
-  FbleValue* fields[];
+  FbleValue _base;        /**< FbleValue base class. */
+  size_t fieldc;          /**< Number of fields. */
+  FbleValue* fields[];    /**< Field values. */
 } StructValue;
 
-// UnionValue --
-//   UNION_VALUE
-//
-// Represents a union value.
-//
-// Packings:
-//   Union values may be packed. If so, read in order from the least
-//   significant bit:
-//   '1' - to indicate it is a union value instead of a struct value.
-//   <tag> - the tag, using a unary encoding terminated with 0.
-//     e.g. "0" for 0, "10" for 1, "110" for 2, and so on.
-//   <arg> - the argument.
+/**
+ * UNION_VALUE: An fble union value.
+ *
+ * Packings:
+ *   Union values may be packed. If so, read in order from the least
+ *   significant bit:
+ *   '1' - to indicate it is a union value instead of a struct value.
+ *   'tag' - the tag, using a unary encoding terminated with 0.
+ *     e.g. "0" for 0, "10" for 1, "110" for 2, and so on.
+ *   'arg' - the argument.
+ */
 typedef struct {
-  FbleValue _base;
-  size_t tag;
-  FbleValue* arg;
+  FbleValue _base;    /**< FbleValue base class. */
+  size_t tag;         /**< Union tag value. */
+  FbleValue* arg;     /**< Union argument value. */
 } UnionValue;
 
-// FuncValue -- FUNC_VALUE
-//
-// Fields:
-//   executable - The code for the function.
-//   profile_block_offset -
-//     An offset to use for profile blocks referenced from this function.
-//   statics - static variables captured by the function.
-//             Size is executable->statics
+/**
+ * FUNC_VALUE: An fble function value.
+ */
 typedef struct {
-  FbleValue _base;
-  FbleExecutable* executable;
-  size_t profile_block_offset;
-  FbleValue* statics[];
+  FbleValue _base;              /**< FbleValue base class. */
+  FbleExecutable* executable;   /**< The code for the function. */
+
+  /** Offset to use for profile blocks referenced from this function. */
+  size_t profile_block_offset;  
+
+  /**
+   * Static variables captured by the function.
+   * Size is executable->num_statics
+   */
+  FbleValue* statics[];         
 } FuncValue;
 
-// Values --
-//   A non-circular singly linked list of values.
+/** A non-circular singly linked list of values. */
 typedef struct Values {
-  FbleValue* value;
-  struct Values* next;
+  FbleValue* value;       /**< An element of the list. */
+  struct Values* next;    /**< The next elements in the list. */
 } Values;
 
-// RefValue --
-//   REF_VALUE
-//
-// An implementation-specific value introduced to support recursive values and
-// not yet computed values.
-//
-// A ref value holds a reference to another value. All values must be
-// dereferenced before being otherwise accessed in case they are ref
-// values.
-//
-// Fields:
-//   value - the value being referenced, or NULL if no value is referenced.
+/**
+ * REF_VALUE: A reference value.
+ *
+ * An implementation-specific value introduced to support recursive values and
+ * not yet computed values.
+ *
+ * A ref value holds a reference to another value. All values must be
+ * dereferenced before being otherwise accessed in case they are ref
+ * values.
+ */
 typedef struct {
-  FbleValue _base;
-  FbleValue* value;
+  FbleValue _base;      /**< FbleValue base class. */
+  FbleValue* value;     /**< The referenced value, or NULL. */
 } RefValue;
 
-// NewValue --
-//   Allocate a new value of the given type.
-//
-// Inputs:
-//   heap - the heap to allocate the value on
-//   T - the type of the value
-//
-// Results:
-//   The newly allocated value. The value does not have its tag initialized.
-//
-// Side effects:
-//   Allocates a value that should be released when it is no longer needed.
+/**
+ * Allocates a new value of the given type.
+ *
+ * @param heap  The heap to allocate the value on
+ * @param T  The type of the value
+ *
+ * @returns
+ *   The newly allocated value. The value does not have its tag initialized.
+ *
+ * @sideeffects
+ *   Allocates a value that should be released when it is no longer needed.
+ */
 #define NewValue(heap, T) ((T*) FbleNewHeapObject(heap, sizeof(T)))
 
-// NewValueExtra --
-//   Allocate a new value of the given type with some extra space.
-//
-// Inputs:
-//   heap - the heap to allocate the value on
-//   T - the type of the value
-//   size - the number of bytes of extra space to include in the allocated
-//   object.
-//
-// Results:
-//   The newly allocated value with extra space.
-//
-// Side effects:
-//   Allocates a value that should be released when it is no longer needed.
+/**
+ * Allocates a new value with some extra space.
+ *
+ * @param heap  The heap to allocate the value on
+ * @param T  The type of the value
+ * @param size  The number of bytes of extra space to include in the allocated
+ *   object.
+ *
+ * @returns
+ *   The newly allocated value with extra space.
+ *
+ * @sideeffects
+ *   Allocates a value that should be released when it is no longer needed.
+ */
 #define NewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
 
-// FbleGenericTypeValue -- see documentation in fble-value.h
+// See documentation in fble-value.h
 //
 // Note: the packed value for a generic type matches the packed value of a
 // zero-argument struct value, so that it can be packed along with union and
@@ -179,7 +189,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value);
 
 static size_t PackedValueLength(intptr_t data);
 
-// FbleNewValueHeap -- see documentation in fble-.h
+// See documentation in fble-value.h.
 FbleValueHeap* FbleNewValueHeap()
 {
   return FbleNewHeap(
@@ -187,13 +197,13 @@ FbleValueHeap* FbleNewValueHeap()
       (void (*)(FbleHeap*, void*))&OnFree);
 }
 
-// FbleFreeValueHeap -- see documentation in fble.h
+// See documentation in fble-value.h.
 void FbleFreeValueHeap(FbleValueHeap* heap)
 {
   FbleFreeHeap(heap);
 }
 
-// FbleRetainValue -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 void FbleRetainValue(FbleValueHeap* heap, FbleValue* value)
 {
   if (!PACKED(value)) {
@@ -201,7 +211,7 @@ void FbleRetainValue(FbleValueHeap* heap, FbleValue* value)
   }
 }
 
-// FbleReleaseValue -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
 {
   if (!PACKED(value) && value != NULL) {
@@ -209,7 +219,7 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
   }
 }
 
-/** See documentation in fble-value.h */
+// See documentation in fble-value.h.
 void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   for (size_t i = 0; i < argc; ++i) {
@@ -217,7 +227,7 @@ void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args)
   }
 }
 
-/** See documentation in fble-value.h */
+// See documentation in fble-value.h.
 void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...)
 {
   va_list ap;
@@ -229,7 +239,7 @@ void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...)
   va_end(ap);
 }
 
-// FbleValueAddRef -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
   if (!PACKED(src) && !PACKED(dst)) {
@@ -237,14 +247,16 @@ void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
   }
 }
 
-// FbleValueFullGc -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 void FbleValueFullGc(FbleValueHeap* heap)
 {
   FbleHeapFullGc(heap);
 }
 
-// OnFree --
-//   The 'on_free' function for values. See documentation in heap.h
+/**
+ * The 'on_free' function for values.
+ * See documentation of on_free in heap.h.
+ */
 static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
   (void)heap;
@@ -266,19 +278,17 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
   UNREACHABLE("Should not get here");
 }
 
-// Ref --
-//   Helper function for implementing Refs. Call the callback if the value is
-//   not null.
-//
-// Inputs:
-//   callback - the refs callback.
-//   value - the value to add.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   If value is non-null, the callback is called for it.
+/**
+ * Helper function for implementing Refs.
+ *
+ * Calls the callback if the value is not NULL.
+ *
+ * @param callback  The refs callback.
+ * @param value  The value to add.
+ *
+ * @sideeffects
+ *   If value is non-NULL, the callback is called for it.
+ */
 static void Ref(FbleHeapCallback* callback, FbleValue* value)
 {
   if (!PACKED(value) && value != NULL) {
@@ -286,8 +296,10 @@ static void Ref(FbleHeapCallback* callback, FbleValue* value)
   }
 }
 
-// Refs --
-//   The 'refs' function for values. See documentation in heap.h
+/**
+ * The 'refs' function for values.
+ * See documentation of refs in heap.h.
+ */
 static void Refs(FbleHeapCallback* callback, FbleValue* value)
 {
   switch (value->tag) {
@@ -329,15 +341,20 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
   }
 }
 
-// PackedValueLength --
-//   Compute the number of bits needed for the value packed into the least
-//   significat bits of 'data'. 'data' should not include the pack marker.
-//
-// Inputs:
-//   Raw data bits for a packed value without the pack marker.
-//
-// Output:
-//   The number of bits of the data used to describe that value.
+/**
+ * Computes bits needed for a packed value.
+ *
+ * Compute the number of bits needed for the value packed into the least
+ * significat bits of 'data'. 'data' should not include the pack marker.
+ *
+ * @param data  Raw data bits for a packed value without the pack marker.
+ *
+ * @returns
+ *   The number of bits of the data used to describe that value.
+ *
+ * @sideeffects
+ *   None.
+ */
 static size_t PackedValueLength(intptr_t data)
 {
   size_t len = 0;
@@ -367,7 +384,7 @@ static size_t PackedValueLength(intptr_t data)
   }
 }
 
-// FbleNewStructValue -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   // Try packing optimistically.
@@ -413,7 +430,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   return &value->_base;
 }
 
-// FbleNewStructValue_ -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
 {
   FbleValue* args[argc];
@@ -426,7 +443,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
   return FbleNewStructValue(heap, argc, args);
 }
 
-// FbleStructValueAccess -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 {
   object = FbleStrictValue(object);
@@ -459,7 +476,7 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
   return value->fields[field];
 }
 
-// FbleNewUnionValue -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 {
   if (PACKED(arg)) {
@@ -483,7 +500,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
   FbleValueAddRef(heap, &union_value->_base, arg);
   return &union_value->_base;
 }
-// FbleNewEnumValue -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
@@ -492,7 +509,7 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
   return result;
 }
 
-// FbleUnionValueTag -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 size_t FbleUnionValueTag(FbleValue* object)
 {
   object = FbleStrictValue(object);
@@ -517,7 +534,7 @@ size_t FbleUnionValueTag(FbleValue* object)
   return value->tag;
 }
 
-// FbleUnionValueAccess -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleUnionValueAccess(FbleValue* object)
 {
   object = FbleStrictValue(object);
@@ -544,7 +561,7 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
   return value->arg;
 }
 
-// FbleNewDataTypeValue -- see documentation in value.h
+// See documentation in value.h.
 FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_t fieldc, FbleValue** fields)
 {
   size_t tag_size = 0;
@@ -575,7 +592,7 @@ FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_
   return &value->_base;
 }
 
-// FbleNewFuncValue -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics)
 {
   FuncValue* v = NewValueExtra(heap, FuncValue, sizeof(FbleValue*) * executable->num_statics);
@@ -590,7 +607,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
   return &v->_base;
 }
 
-// FbleNewFuncValue_ -- see documentation in value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...)
 {
   size_t argc = executable->num_statics;
@@ -604,7 +621,7 @@ FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, si
   return FbleNewFuncValue(heap, executable, profile_block_offset, args);
 }
 
-// FbleFuncValueInfo -- see documentation in value.h
+// See documentation in fble-value.h.
 FbleFuncInfo FbleFuncValueInfo(FbleValue* func)
 {
   FuncValue* func_value = (FuncValue*)func;
@@ -616,7 +633,7 @@ FbleFuncInfo FbleFuncValueInfo(FbleValue* func)
   return info;
 }
 
-// FbleNewListValue -- see documentation in value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
@@ -633,7 +650,7 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
   return tail;
 }
 
-// FbleNewListValue_ -- see documentation in value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
 {
   FbleValue* args[argc];
@@ -646,7 +663,7 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
   return FbleNewListValue(heap, argc, args);
 }
 
-// FbleNewLiteralValue -- see documentation in value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
@@ -665,7 +682,7 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
   return tail;
 }
 
-// FbleNewRefValue -- see documentation in value.h
+// See documentation in fble-value.h.
 FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 {
   RefValue* rv = NewValue(heap, RefValue);
@@ -674,7 +691,7 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap)
   return &rv->_base;
 }
 
-// FbleAssignRefValue -- see documentation in value.h
+// See documentation in fble-value.h.
 bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 {
   // Unwrap any accumulated layers of references on the value and make sure we
@@ -696,7 +713,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   return true;
 }
 
-// FbleStrictValue -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleStrictValue(FbleValue* value)
 {
   while (!PACKED(value) && value != NULL && value->tag == REF_VALUE) {
