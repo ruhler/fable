@@ -12,23 +12,24 @@
 #include "kind.h"       // for FbleDataTypeTag
 #include "var.h"        // for FbleVar
 
-// FbleTc --
-//   An already type-checked representation of an fble syntactic expression.
-//
-// FbleTc is like FbleExpr, except that:
-// * Field and variable names are replaced with integer indicies.
-// * Types are eliminated.
+/**
+ * Abstract syntax for already type-checked fble expressions.//
+ *
+ * FbleTc is like FbleExpr, except that:
+ * * Field and variable names are replaced with integer indicies.
+ * * Types are eliminated.
+ */
 typedef struct FbleTc FbleTc;
 
-// FbleTcV --
-//   A vector of FbleTc.
+/** Vector of FbleTc. */
 typedef struct {
-  size_t size;
-  FbleTc** xs;
+  size_t size;  /**< Number of elements. */
+  FbleTc** xs;  /**< The elements. */
 } FbleTcV;
 
-// FbleTcTag --
-//   A tag used to distinguish among different kinds of FbleTc.
+/**
+ * Different kinds of FbleTc.
+ */
 typedef enum {
   FBLE_TYPE_VALUE_TC,
   FBLE_VAR_TC,
@@ -43,243 +44,255 @@ typedef enum {
   FBLE_LITERAL_TC,
 } FbleTcTag;
 
-// FbleTc --
-//   A tagged union of tc types. All tcs have the same initial
-//   layout as FbleTc. The tag can be used to determine what kind of
-//   tc this is to get access to additional fields of the value
-//   by first casting to that specific type of tc.
-//
-// loc is the location of the start of the expression in source code, used for
-// general purpose debug information.
-//
-// FbleTc is reference counted. Pass by pointer. Explicit copy and free
-// required. The magic field is set to FBLE_TC_MAGIC and is used to detect
-// double frees of FbleTc.
+/**
+ * Magic number used to detect double free in FbleTc.
+ */
 #define FBLE_TC_MAGIC 0x5443
+
+/**
+ * Base class for FbleTc types.
+ *
+ * A tagged union of tc types. All tcs have the same initial layout as FbleTc.
+ * The tag can be used to determine what kind of tc this is to get access to
+ * additional fields of the value by first casting to that specific type of
+ * tc.
+ *
+ * FbleTc is reference counted. Pass by pointer. Explicit copy and free
+ * required. The magic field is set to FBLE_TC_MAGIC and is used to detect
+ * double frees of FbleTc.
+ */
 struct FbleTc {
-  size_t refcount;
-  size_t magic;
-  FbleTcTag tag;
+  size_t refcount;    /**< Reference count. */
+  size_t magic;       /**< FBLE_TC_MAGIC. */
+  FbleTcTag tag;      /**< Kind of FbleTc. */
+
+  /**
+   * The location of the start of the expression in source code. Used for
+   * general purpose debug information.
+   */
   FbleLoc loc;
 };
 
-// FbleTypeValueTc --
-//   FBLE_TYPE_VALUE_TC
-//
-// An expression to compute the type value.
+/**
+ * FBLE_TYPE_VALUE_TC: Computes the type value.
+ */
 typedef struct {
-  FbleTc _base;
+  FbleTc _base;     /**< FbleTc base class */
 } FbleTypeValueTc;
 
-// FbleVarTc --
-//   FBLE_VAR_TC
-//
-// A variable expression.
-// * Used to represent variables refering to function arguments or local
-//   variables. 
-//
-// For args, index starts at 0 and increases by one for each argument going
-// from left to right.
-//
-// For local variables, index starts at 0 and increases by one for each new
-// variable introduced, going from left to right, outer most to inner most
-// binding.
+/**
+ * FBLE_VAR_TC: A variable expression.
+ *
+ * Used to represent local variables, static variables, and arguments to
+ * functions.
+ *
+ * For args, index starts at 0 and increases by one for each argument going
+ * from left to right.
+ *
+ * For local variables, index starts at 0 and increases by one for each new
+ * variable introduced, going from left to right, outer most to inner most
+ * binding.
+ */
 typedef struct {
-  FbleTc _base;
-  FbleVar var;
+  FbleTc _base;   /**< FbleTc base class. */
+  FbleVar var;    /**< Identifies the variable. */
 } FbleVarTc;
 
-// FbleTcBinding --
-//   Information for a binding. Used for let bindings, exec bindings, and case
-//   branches.
-//
-// name - The name of the variable or branch.
-// loc - The location of the value.
-// tc - The value of the binding.
+/**
+ * Information for a binding.
+ *
+ * Used for let bindings, exec bindings, and case branches.
+ */
 typedef struct {
-  FbleName name;
-  FbleLoc loc;
-  FbleTc* tc;
+  FbleName name;  /**< The name of the variable or branch. */
+  FbleLoc loc;    /**< The location of the value. */
+  FbleTc* tc;     /**< The value of the binding. */
 } FbleTcBinding;
 
-// FbleTcBindingV --
-//   A vector of FbleTcBinding.
+/** Vector of FbleTcBinding. */
 typedef struct {
-  size_t size;
-  FbleTcBinding* xs;
+  size_t size;        /**< Number of elements. */
+  FbleTcBinding* xs;  /**< The elements. */
 } FbleTcBindingV;
 
-// FbleLetTc --
-//   FBLE_LET_TC
-//
-// Represents a let expression.
-//
-// The bindings are bound to variables implicitly based on the position of the
-// binding in the let expression and the position of the let expression in its
-// parent expression as specified for FbleVar.
-//
-// Fields:
-//   recursive - false if the let is a non-recursive let expression.
-//   bindings - the variables being defined.
+/**
+ * FBLE_LET_TC: A let expression.
+ *
+ * The bindings are bound to variables implicitly based on the position of the
+ * binding in the let expression and the position of the let expression in its
+ * parent expression as specified for FbleVar.
+ */
 typedef struct {
-  FbleTc _base;
-  bool recursive;
-  FbleTcBindingV bindings;
-  FbleTc* body;
+  FbleTc _base;             /**< FbleTc base class. */
+
+  /** false if the let is a non-recursive let expression. */
+  bool recursive;           
+  FbleTcBindingV bindings;  /**< The variables being defined. */
+  FbleTc* body;             /**< The body of the let. */
 } FbleLetTc;
 
-// FbleStructValueTc --
-//   FBLE_STRUCT_VALUE_TC
-//
-// Represents a struct value expression.
+/**
+ * FBLE_STRUCT_VALUE_TC: A struct value expression.
+ */
 typedef struct {
-  FbleTc _base;
-  size_t fieldc;
-  FbleTc* fields[];
+  FbleTc _base;       /**< FbleTc base class. */
+  size_t fieldc;      /**< Number of arguments to the struct value. */
+  FbleTc* fields[];   /**< Arguments to the struct value. */
 } FbleStructValueTc;
 
-// FbleUnionValueTc --
-//   FBLE_UNION_VALUE_TC
-//
-// Represents a union value expression.
+/**
+ * FBLE_UNION_VALUE_TC: A union value expression.
+ */
 typedef struct {
-  FbleTc _base;
-  size_t tag;
-  FbleTc* arg;
+  FbleTc _base;       /**< FbleTc base class. */
+  size_t tag;         /**< Tag of the union value to create. */
+  FbleTc* arg;        /**< Argument to the union value to create. */
 } FbleUnionValueTc;
 
-// FbleUnionSelectTc --
-//   FBLE_UNION_SELECT_TC
-//
-// Represents a union select expression. There will be one element in the
-// choices vector for each possible tag of the condition.
-//
-// Because of default branches in union select, it is possible that multiple
-// choices point to the same tc. Code generation is expected to check for
-// that and avoid generating duplicate code. FbleFreeTc, FbleFreeLoc and
-// FbleFreeName should be called only once on the fields of the
-// FbleTcProfiled for each unique tc referred to by choices.
+/**
+ * FBLE_UNION_SELECT_TC: A union select expression.
+ *
+ * There will be one element in the choices vector for each possible tag of
+ * the condition.
+ *
+ * Because of default branches in union select, it is possible that multiple
+ * choices point to the same tc. Code generation is expected to check for
+ * that and avoid generating duplicate code. FbleFreeTc, FbleFreeLoc and
+ * FbleFreeName should be called only once on the fields of the
+ * FbleTcBinding for each unique tc referred to by choices.
+ */
 typedef struct {
-  FbleTc _base;
-  FbleTc* condition;
-  FbleTcBindingV choices;
+  FbleTc _base;             /**< FbleTc base class. */
+  FbleTc* condition;        /**< The condition to the union select. */
+  FbleTcBindingV choices;   /**< The branches of the union select. */
 } FbleUnionSelectTc;
 
-// FbleDataAccessTc --
-//   FBLE_DATA_ACCESS_TC
-//
-// Used to represent struct and union access expressions.
+/**
+ * FBLE_DATA_ACCESS_TC: Struct and union access expressions.
+ */
 typedef struct {
-  FbleTc _base;
-  FbleDataTypeTag datatype;
-  FbleTc* obj;
-  size_t tag;
-  FbleLoc loc;
+  FbleTc _base;               /**< FbleTc base class. */
+  FbleDataTypeTag datatype;   /**< Whether this is struct or union access. */
+  FbleTc* obj;                /**< The object to access a field of. */
+  size_t tag;                 /**< The field to access. */
+  FbleLoc loc;                /**< Location to use for error reporting. */
 } FbleDataAccessTc;
 
-// FbleFuncValueTc --
-//   FBLE_FUNC_VALUE_TC
-//
-// Represents a function or process value.
+/**
+ * FBLE_FUNC_VALUE_TC: A function value.
+ */
 typedef struct {
-  FbleTc _base;
-  FbleLoc body_loc;
+  FbleTc _base;         /**< FbleTc base class. */
+  FbleLoc body_loc;     /**< Location of the body. */
   FbleVarV scope;       /**< Sources of static variables. */
   FbleNameV statics;    /**< Names of static variables. */
   FbleNameV args;       /**< Names of arguments. */
   FbleTc* body;         /**< The body of the function. */
 } FbleFuncValueTc;
 
-// FbleFuncApplyTc --
-//   FBLE_FUNC_APPLY_TC
-//
-// Represents a function application expression.
+/**
+ * FBLE_FUNC_APPLY_TC: Function application.
+ */
 typedef struct {
-  FbleTc _base;
-  FbleTc* func;
-  FbleTcV args;
+  FbleTc _base;       /**< FbleTc base class. */
+  FbleTc* func;       /**< The function to apply. */
+  FbleTcV args;       /**< Arguments to function to apply. */
 } FbleFuncApplyTc;
 
-// FbleListTc --
-//   FBLE_LIST_TC
-//
-// An expression to construct the list value that will be passed to the
-// function as part of a list expression.
+/**
+ * FBLE_LIST_TC: List part of a list expression.
+ *
+ * An expression to construct the list value that will be passed to the
+ * function as part of a list expression.
+ */
 typedef struct {
-  FbleTc _base;
-  size_t fieldc;
-  FbleTc* fields[];
+  FbleTc _base;       /**< FbleTc base class. */
+  size_t fieldc;      /**< Number of list elements. */
+  FbleTc* fields[];   /**< List elements. */
 } FbleListTc;
 
-// FbleLiteralTc --
-//   FBLE_LITERAL_TC
-//
-// An expression to construct the list value that will be passed to the
-// function as part of a literal expression.
-//
-// letters[i] is the tag value to use for the ith letter in the literal.
+/**
+ * FBLE_LITERAL_TC: Literal part of a literal expression.
+ *
+ * An expression to construct the list value that will be passed to the
+ * function as part of a literal expression.
+ *
+ * letters[i] is the tag value to use for the ith letter in the literal.
+ */
 typedef struct {
-  FbleTc _base;
-  size_t letterc;
-  size_t letters[];
+  FbleTc _base;       /**< FbleTc base class. */
+  size_t letterc;     /**< Number of letters in the literal. */
+  size_t letters[];   /**< Tag values for letters in the literal. */
 } FbleLiteralTc;
 
-// FbleNewTc --
-//   Allocate a new tc. This function is not type safe.
-//
-// Inputs:
-//   T - the type of the tc to allocate.
-//   tag - the tag of the tc.
-//   loc - the source loc of the tc. Borrowed.
-//
-// Results:
-//   The newly allocated tc.
-//
-// Side effects:
-//   Allocates a new tc that should be freed using FbleFreeTc when no longer
-//   needed.
+/**
+ * Allocates a new tc. This function is not type safe.
+ *
+ * @param T  The type of the tc to allocate.
+ * @param tag  The tag of the tc.
+ * @param loc  The source loc of the tc. Borrowed.
+ *
+ * @returns The newly allocated tc.
+ *
+ * @sideeffects
+ *   Allocates a new tc that should be freed using FbleFreeTc when no longer
+ *   needed.
+ */
 #define FbleNewTc(T, tag, loc) ((T*) FbleNewTcRaw(sizeof(T), tag, loc))
+
+/**
+ * Allocates a new tc. This function is not type safe.
+ *
+ * @param size The number of bytes to allocate.
+ * @param tag  The tag of the tc.
+ * @param loc  The source loc of the tc. Borrowed.
+ *
+ * @returns The newly allocated tc.
+ *
+ * @sideeffects
+ *   Allocates a new tc that should be freed using FbleFreeTc when no longer
+ *   needed.
+ */
 FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc);
 
-// FbleNewTcExtra --
-//   Allocate a new tc with additional extra space.
-//
-// Inputs:
-//   T - the type of the tc to allocate.
-//   size - the size in bytes of additional extra space to include.
-//   tag - the tag of the tc.
-//   loc - the source loc of the tc. Borrowed.
-//
-// Results:
-//   The newly allocated tc.
-//
-// Side effects:
-//   Allocates a new tc that should be freed using FbleFreeTc when no longer
-//   needed.
+/**
+ * Allocates a new tc with additional extra space.
+ *
+ * @param T  The type of the tc to allocate.
+ * @param size  The size in bytes of additional extra space to include.
+ * @param tag  The tag of the tc.
+ * @param loc  The source loc of the tc. Borrowed.
+ *
+ * @returns The newly allocated tc.
+ *
+ * @sideeffects
+ *   Allocates a new tc that should be freed using FbleFreeTc when no longer
+ *   needed.
+ */
 #define FbleNewTcExtra(T, tag, size, loc) ((T*) FbleNewTcRaw(sizeof(T) + size, tag, loc))
 
-// FbleCopyTc --
-//   Make a reference counted copy of the given tc.
-//
-// Inputs:
-//   tc - the tc to copy.
-//
-// Result:
-//   The copy of the tc.
-//
-// Side effects:
-//   The user should arrange for FbleFreeTc to be called on this tc when it is
-//   no longer needed.
+/**
+ * Makes a reference counted copy of the given tc.
+ *
+ * @param tc  The tc to copy.
+ *
+ * @returns
+ *   The copy of the tc.
+ *
+ * @sideeffects
+ *   The user should arrange for FbleFreeTc to be called on this tc when it is
+ *   no longer needed.
+ */
 FbleTc* FbleCopyTc(FbleTc* tc);
 
-// FbleFreeTc --
-//   Free resources associated with an FbleTc.
-//
-// Inputs:
-//   tc - the tc to free. May be NULL.
-//
-// Side effects:
-//   Frees all resources associated with the given tc.
+/**
+ * Frees resources associated with an FbleTc.
+ *
+ * @param tc  The tc to free. May be NULL.
+ *
+ * @sideeffects
+ *   Frees all resources associated with the given tc.
+ */
 void FbleFreeTc(FbleTc* tc);
 
 #endif // FBLE_INTERNAL_TC_H_

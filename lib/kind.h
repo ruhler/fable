@@ -10,87 +10,93 @@
 
 #include <fble/fble-loc.h>     // for FbleLoc
 
-// FbleKindTag --
-//   A tag used to distinguish between the two kinds of kinds.
+/**
+ * Different kinds of fble kinds.
+ */
 typedef enum {
   FBLE_BASIC_KIND,
   FBLE_POLY_KIND
 } FbleKindTag;
 
-// FbleKind --
-//   A tagged union of kind types. All kinds have the same initial
-//   layout as FbleKind. The tag can be used to determine what kind of
-//   kind this is to get access to additional fields of the kind
-//   by first casting to that specific type of kind.
-//
-// Kinds are non-cyclcically reference counted. Use FbleCopyKind and
-// FbleFreeKind to manage the reference count and memory associated with
-// the kind.
+/**
+ * FbleKind base class.
+ *
+ * A tagged union of kind types. All kinds have the same initial layout as
+ * FbleKind. The tag can be used to determine what kind of kind this is to get
+ * access to additional fields of the kind by first casting to that specific
+ * type of kind.
+ *
+ * Kinds are non-cyclcically reference counted. Use FbleCopyKind and
+ * FbleFreeKind to manage the reference count and memory associated with
+ * the kind.
+ */
 typedef struct {
-  FbleKindTag tag;
-  FbleLoc loc;
-  int refcount;
+  FbleKindTag tag;    /**< The kind of this kind. */
+  FbleLoc loc;        /**< Location for error reporting. */
+  int refcount;       /**< Reference count. */
 } FbleKind;
 
-// FbleKindV --
-//   A vector of FbleKind.
+/** Vector of FbleKind. */
 typedef struct {
-  size_t size;
-  FbleKind** xs;
+  size_t size;      /**< Number of elements. */
+  FbleKind** xs;    /**< The elements. */
 } FbleKindV;
 
-// FbleBasicKind --
-//   FBLE_BASIC_KIND (level :: size_t)
-//
-// levels
-//   0: A normal, non-type value.
-//   1: A normal type. A type of a level 0.
-//   2: A type of a type of a value.
-//   3: A type of a type of a type of a value.
-//   etc.
+/**
+ * FBLE_BASIC_KIND: A basic kind.
+ */
 typedef struct {
-  FbleKind _base;
+  FbleKind _base;   /**< FbleKind base class. */
+
+  /**
+   * The level of the kind.
+   *
+   * 0: A normal, non-type value.
+   * 1: A normal type. A type of a level 0.
+   * 2: A type of a type of a value.
+   * 3: A type of a type of a type of a value.
+   * etc.
+   */
   size_t level;
 } FbleBasicKind;
 
-// FblePolyKind --
-//   FBLE_POLY_KIND (arg :: Kind) (return :: Kind)
+/**
+ * FBLE_POLY_KIND: A polymorphic kind.
+ */
 typedef struct {
-  FbleKind _base;
-  FbleKind* arg;
-  FbleKind* rkind;
+  FbleKind _base;     /**< FbleKind base class. */
+  FbleKind* arg;      /**< The kind argument. */
+  FbleKind* rkind;    /**< The result kind. */
 } FblePolyKind;
 
-// FbleCopyKind --
-//   Makes a (refcount) copy of a kind.
-//
-// Inputs:
-//   kind - the kind to copy.
-//
-// Results:
-//   The copied kind.
-//
-// Side effects:
-//   The returned kind must be freed using FbleFreeKind when no longer in
-//   use.
+/**
+ * Makes a (refcount) copy of a kind.
+ *
+ * @param kind  The kind to copy.
+ *
+ * @returns
+ *   The copied kind.
+ *
+ * @sideeffects
+ *   The returned kind must be freed using FbleFreeKind when no longer in
+ *   use.
+ */
 FbleKind* FbleCopyKind(FbleKind* kind);
 
-// FbleFreeKind --
-//   Frees a (refcount) copy of a compiled kind.
-//
-// Inputs:
-//   kind - the kind to free. May be NULL.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Decrements the refcount for the kind and frees it if there are no
-//   more references to it.
+/**
+ * Frees a (refcount) copy of a compiled kind.
+ *
+ * @param kind  The kind to free. May be NULL.
+ *
+ * @sideeffects
+ *   Decrements the refcount for the kind and frees it if there are no
+ *   more references to it.
+ */
 void FbleFreeKind(FbleKind* kind);
 
-// FbleDataTypeTag --
-//   Enum used to distinguish between different kinds of data types.
+/**
+ * Distinguishes between struct versus union datatype.
+ */
 typedef enum {
   FBLE_STRUCT_DATATYPE,
   FBLE_UNION_DATATYPE
