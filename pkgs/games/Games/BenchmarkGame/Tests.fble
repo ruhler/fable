@@ -11,6 +11,7 @@
 
 Test@ Tests = TestSuite(Str|BenchmarkGame, List<Test@>[
   /Games/BenchmarkGame/BinaryTrees/Tests%.Tests,
+  /Games/BenchmarkGame/FannkuchRedux/Tests%.Tests,
   /Games/BenchmarkGame/PiDigits/Tests%.Tests
 ]);
 

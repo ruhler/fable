@@ -1,0 +1,51 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+% Flip = /Games/BenchmarkGame/FannkuchRedux%.Flip;
+% Flips = /Games/BenchmarkGame/FannkuchRedux%.Flips;
+% RotateLeft = /Games/BenchmarkGame/FannkuchRedux%.RotateLeft;
+
+Test@ Tests = TestSuite(Str|FannkuchRedux, List[
+  Test(Str|Flip, (Unit@ _) {
+    List@<Int@> input = List[Int|4, Int|2, Int|1, Int|5, Int|3];
+    List@<Int@> wnt = List[Int|5, Int|1, Int|2, Int|4, Int|3];
+    List@<Int@> got = Flip(Int|4, Nil<Int@>, input);
+    AssertEquals(
+      /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/Int/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|Flips, (Unit@ _) {
+    List@<Int@> input = List[Int|4, Int|2, Int|1, Int|5, Int|3];
+    Int@ wnt = Int|5;
+    Int@ got = Flips(Int|0, input);
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|RotateLeft, (Unit@ _) {
+    List@<Int@> input = List[Int|1, Int|2, Int|3, Int|4, Int|5];
+    List@<Int@> wnt = List[Int|2, Int|3, Int|4, Int|5, Int|1];
+    List@<Int@> got = RotateLeft(input);
+    AssertEquals(
+      /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/Int/Show%.Show),
+      wnt, got);
+  })
+]);
+
+@(Tests);

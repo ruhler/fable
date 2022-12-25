@@ -1,4 +1,10 @@
 
+* Something is wrong with doxygen build dependencies.
+  It keeps remaking after all I cahnge is .../FannkuchRedux/Tests.fble
+  That makes no sense. There should be no dependency there at all.
+  Unless build.ninja depends on that, and generating build.ninja runs
+  configure, which updates Doxyfile?
+
 * Remove all warnings from lib doxygen
   Change lib/Doxyfile.in WRAN_AS_ERROR to YES.
 

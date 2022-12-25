@@ -1,0 +1,36 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Eq = /Core/Int/Eq%.Eq;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Append = /Core/List%.Append;
+
+# Reverse the first n elements of the list l.
+# @param n  The number of elements remaining to reverse.
+# @param pre  Collection of elements reversed so far.
+# @param l  The remainder of the list to reverse.
+(Int@, List@<Int@>, List@<Int@>) { List@<Int@>; }
+Flip = (Int@ n, List@<Int@> pre, List@<Int@> l) {
+  Eq(Int|0, n).?(true: Append(pre, l));
+  Flip(Sub(n, Int|1), Cons(l.cons.head, pre), l.cons.tail);
+};
+
+# Counts the number of flips needed for the given list.
+# @param n  The number of flips so far.
+# @param l  The list to flip.
+(Int@, List@<Int@>) { Int@; } Flips = (Int@ n, List@<Int@> l) {
+  Eq(Int|1, l.cons.head).?(true: n);
+  Flips(Add(n, Int|1), Flip(l.cons.head, Nil<Int@>, l));
+};
+
+(List@<Int@>) { List@<Int@>; } RotateLeft = (List@<Int@> l) {
+  Append(l.cons.tail, List[l.cons.head]);
+};
+
+@(Flip, Flips, RotateLeft);

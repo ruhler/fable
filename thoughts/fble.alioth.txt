@@ -1,0 +1,97 @@
+Alioth Benchmark Game
+=====================
+https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html
+
+For the fun of it only, because these are quite meaningless benchmarks.
+
+Good ones to do next:
+* fannkuch-redux
+* reverse-complement
+* k-nucleotide
+
+Let's start with fannkuch-redux.
+
+We can do this in two parts:
+1. Given a permutation, do and count the flips. Should be easy.
+2. Figure out how to generate a permutation from an index. We need this so we
+know which permutations come from even versus odd index. This is the hard
+part.
+
+The description of how to permute is very vague.
+
+• The predefined order in which all permutations are to be generated can
+  be described as follows: to generate n! permutations of n arbitrary
+  numbers, rotate the numbers left (from higher position to lower) n
+  times, so that each number appears in the n-th position, and for each
+  rotation recursively generate (n-1)! permutations of the first n-1
+  numbers whatever they are.
+
+Which fails to say:
+* What the initial permutation is.
+* Whether to take the permutation before or after traversing it.
+
+Perhaps the easiest thing to do would be download one of the sample programs,
+instrument it to output the permutations it reads in order. Then I can come up
+with my own approach.
+
+Funny, looks like I already did that a ways back. Here's the permutations for
+4 element lists:
+
+0: 0 1 2 3 
+1: 1 0 2 3 
+2: 1 2 0 3 
+3: 2 1 0 3 
+4: 2 0 1 3 
+5: 0 2 1 3 
+
+6: 1 2 3 0 
+7: 2 1 3 0 
+8: 2 3 1 0 
+9: 3 2 1 0 
+10: 3 1 2 0 
+11: 1 3 2 0 
+
+12: 2 3 0 1 
+13: 3 2 0 1 
+14: 3 0 2 1 
+15: 0 3 2 1 
+16: 0 2 3 1 
+17: 2 0 3 1 
+
+18: 3 0 1 2 
+19: 0 3 1 2 
+20: 0 1 3 2 
+21: 1 0 3 2 
+22: 1 3 0 2 
+23: 3 1 0 2 
+
+Okay. That makes sense. Starting with 0, 1, ..., N:
+
+We can make a list of rotations:
+0, 1, ..., (N-1)
+1, 2, ..., (N-1), 0
+2, 3, ..., (N-1), 0, 1
+
+There are N of those.
+
+Now, for each element in this list of N rotations:
+* Output the element as the next permutation.
+* Recurse on the first (N-1) elements of the list to got all those
+  permutations.
+
+The question is, do we really do 0, 1, ..., (N-1), or is it actually 1, 2,
+..., N? Yeah, it's the second. So what I really want is:
+
+For each N permutations of:
+  1, ..., N
+  2, ..., N, 1
+  3, ..., N, 1, 2
+Output the permutation and then recurse.
+
+I would kind of like to reverse these to more easily generate the
+permutations? Or, perhaps better to start, don't worry about performance.
+
+Write a function that does all permutations of a list, applying a (monadic?)
+function for each permutation. That should be pretty easy to use recursively.
+Pass the number of elements of the list as a helper.
+
