@@ -10,6 +10,14 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 <@>% Append = /Core/List%.Append;
+<@>% Last = /Core/List%.Last;
+<@>% Init = /Core/List%.Init;
+<@,@>% ForEach = /Core/List%.ForEach;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # Reverse the first n elements of the list l.
 # @param n  The number of elements remaining to reverse.
@@ -29,8 +37,27 @@ Flip = (Int@ n, List@<Int@> pre, List@<Int@> l) {
   Flips(Add(n, Int|1), Flip(l.cons.head, Nil<Int@>, l));
 };
 
-(List@<Int@>) { List@<Int@>; } RotateLeft = (List@<Int@> l) {
-  Append(l.cons.tail, List[l.cons.head]);
+# Rotates elements in a list around to the right.
+# For example: [1, 2, 3, 4] ==> [4, 1, 2, 3]
+(List@<Int@>) { List@<Int@>; } RotateRight = (List@<Int@> l) {
+  Cons(Last(l), Init(l));
 };
 
-@(Flip, Flips, RotateLeft);
+# Calls a function for each permutation of the reverse of a list in
+# permutation order.
+<<@>@ M@>(Monad@<M@>, List@<Int@>, (List@<Int@>) { M@<Unit@>; }) { M@<Unit@>; }
+Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f) {
+  l.cons.tail.?(nil: f(l));
+  List@<Int@> _ <- m.do(ForEach(l, m.return(l),
+      (Int@ _, M@<List@<Int@>> ml) {
+        List@<Int@> rotated <- m.do(ml);
+        Int@ head = rotated.cons.head;
+        Unit@ _ <- m.do(Permutes(m, rotated.cons.tail, (List@<Int@> permuted) {
+          f(Append(permuted, List[head]));
+        }));
+        m.return(RotateRight(rotated));
+      }));
+  m.return(Unit);
+};
+
+@(Flip, Flips, RotateRight, Permutes);

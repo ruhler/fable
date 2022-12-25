@@ -61,6 +61,25 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
   a.?(cons: Cons(a.cons.head, Append(a.cons.tail, b)), nil: b);
 };
 
+# Last --
+#   Returns the last element in a list.
+#
+# Type Parameters:
+#   T@ - The type of element in the list.
+#
+# Arguments:
+#   list - the list to take the last element of.
+#
+# Returns:
+#   The last element of the list.
+#
+# Side Effects:
+#   Behavior is undefined if the list is empty.
+<@ T@>(List@<T@>) { T@; } Last = <@ T@>(List@<T@> list) {
+  list.cons.tail.?(nil: list.cons.head);
+  Last(list.cons.tail);
+};
+
 # Init --
 #   Returns all but the last element in a list.
 #
@@ -148,4 +167,4 @@ ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
   ForEach(l, List<T@>[], (T@ x, List@<T@> nl) { Cons(x, nl); });
 };
 
-@(List@, List, Cons, Nil, Append, Init, Concat, Map, ForEach, Reverse);
+@(List@, List, Cons, Nil, Append, Last, Init, Concat, Map, ForEach, Reverse);
