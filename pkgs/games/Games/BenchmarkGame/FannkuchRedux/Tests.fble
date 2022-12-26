@@ -16,6 +16,8 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+@ Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
+% FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
 % Flip = /Games/BenchmarkGame/FannkuchRedux%.Flip;
 % Flips = /Games/BenchmarkGame/FannkuchRedux%.Flips;
 % RotateRight = /Games/BenchmarkGame/FannkuchRedux%.RotateRight;
@@ -71,6 +73,16 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     AssertEquals(
       /Core/List/Eq%.Eq(/Core/List/Eq%.Eq(/Core/Int/Eq%.Eq)),
       /Core/List/Show%.Show(/Core/List/Show%.Show(/Core/Int/Show%.Show)),
+      wnt, got);
+  }),
+
+  Test(Str|FannkuchRedux, (Unit@ _) {
+    Fannkuch@ result = FannkuchRedux(Int|4);
+    List@<Int@> got = List[result.checksum, result.max_flips];
+    List@<Int@> wnt = List[Int|4, Int|4];
+    AssertEquals(
+      /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/Int/Show%.Show),
       wnt, got);
   })
 ]);
