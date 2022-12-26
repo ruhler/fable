@@ -77,9 +77,9 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
   }),
 
   Test(Str|FannkuchRedux, (Unit@ _) {
-    Fannkuch@ result = FannkuchRedux(Int|4);
+    Fannkuch@ result = FannkuchRedux(Int|6);
     List@<Int@> got = List[result.checksum, result.max_flips];
-    List@<Int@> wnt = List[Int|4, Int|4];
+    List@<Int@> wnt = List[Int|49, Int|10];
     AssertEquals(
       /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq),
       /Core/List/Show%.Show(/Core/Int/Show%.Show),

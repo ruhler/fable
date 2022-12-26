@@ -1,0 +1,41 @@
+
+% True = /Core/Bool%.True;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
+% FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % O = /Core/Stream/OStream%(m);
+
+  (List@<String@>) { M@<Unit@>; } PutL = (List@<String@> strs) {
+    O.PutLine(stdio.out, Strs(strs));
+  };
+
+  (List@<String@> args) {
+    Int@ n = args.?(cons: /Core/Int/Show%.Read(args.cons.head), nil: Int|7);
+    Fannkuch@ result = FannkuchRedux(n);
+    Unit@ _ <- m.do(PutL[/Core/Int/Show%.Show(result.checksum)]);
+    Unit@ _ <- m.do(PutL[
+      Str|'Pfannkuchen(', /Core/Int/Show%.Show(n),
+      Str|') = ', /Core/Int/Show%.Show(result.max_flips)]);
+    m.return(True);
+  };
+};
+
+@(Main);

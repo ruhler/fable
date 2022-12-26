@@ -30,9 +30,10 @@ RunBench = (Main@ game, String@ n)(Unit@ _) {
 };
 
 # Benchmark for the benchmark games that takes about 1 minute to run.
-Test@ Bench = TestSuite(Str|BenchmarkGame, List<Test@>[
-  Test(Str|PiDigits, RunBench(/Games/BenchmarkGame/PiDigits%.Main, Str|22)),
-  Test(Str|BinaryTrees, RunBench(/Games/BenchmarkGame/BinaryTrees%.Main, Str|14))]
+Test@ Bench = TestSuite(Str|BenchmarkGame, List[
+  Test(Str|BinaryTrees, RunBench(/Games/BenchmarkGame/BinaryTrees%.Main, Str|14)),
+  Test(Str|FannkuchRedux, RunBench(/Games/BenchmarkGame/FannkuchRedux/Main%.Main, Str|8)),
+  Test(Str|PiDigits, RunBench(/Games/BenchmarkGame/PiDigits%.Main, Str|22))]
 );
 
 @(Bench);
