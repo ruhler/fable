@@ -14,9 +14,8 @@
 #include <fble/fble-vector.h>  // for FbleVectorInit, etc.
 
 #include "code.h"
+#include "unreachable.h"
 #include "value.h"
-
-#define UNREACHABLE(x) assert(false && x)
 
 static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** locals, size_t pc);
 
@@ -200,7 +199,7 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
     }
   }
 
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return NULL;
 }
 

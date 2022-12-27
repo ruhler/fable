@@ -21,12 +21,7 @@
 #include <fble/fble-module-path.h>
 #include <fble/fble-vector.h>
 
-/** 
- * Indicate that a peice of code is unreachable.
- *
- * @param x  Message explaining why the code is unreachable.
- */
-#define UNREACHABLE(x) assert(false && x)
+#include "unreachable.h"
 
 /** Linked list of types. */
 typedef struct TypeList {
@@ -109,7 +104,7 @@ static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
       return &adjusted->_base;
     }
   }
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return NULL;
 }
 
@@ -250,7 +245,7 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
     case FBLE_TYPE_TYPE: return;
   }
 
-  UNREACHABLE("should never get here");
+  FbleUnreachable("should never get here");
 }
 
 /**
@@ -338,7 +333,7 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normaliz
     case FBLE_TYPE_TYPE: return FbleRetainType(heap, type);
   }
 
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return NULL;
 }
 
@@ -422,7 +417,7 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
     }
   }
 
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return false;
 }
 
@@ -542,7 +537,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     }
 
     case FBLE_PACKAGE_TYPE: {
-      UNREACHABLE("package type does not have params");
+      FbleUnreachable("package type does not have params");
       return NULL;
     }
 
@@ -603,7 +598,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     }
   }
 
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return NULL;
 }
 
@@ -816,7 +811,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
     }
   }
 
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   FbleReleaseType(heap, a);
   FbleReleaseType(heap, b);
   return false;
@@ -888,7 +883,7 @@ FbleKind* FbleGetKind(FbleType* type)
     }
   }
 
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return NULL;
 }
 
@@ -906,7 +901,7 @@ size_t FbleGetKindLevel(FbleKind* kind)
       return FbleGetKindLevel(poly->rkind);
     }
   }
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return -1;
 }
 
@@ -932,7 +927,7 @@ bool FbleKindsEqual(FbleKind* a, FbleKind* b)
     }
   }
 
-  UNREACHABLE("Should never get here");
+  FbleUnreachable("Should never get here");
   return false;
 }
 
@@ -1318,5 +1313,5 @@ void FblePrintType(FbleType* type)
     }
   }
 
-  UNREACHABLE("should never get here");
+  FbleUnreachable("should never get here");
 }

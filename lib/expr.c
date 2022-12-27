@@ -5,12 +5,11 @@
 
 #include "expr.h"
 
-#include <assert.h>       // for assert
-
 #include <fble/fble-alloc.h>   // for FbleFree
 #include <fble/fble-vector.h>  // for FbleVectorFree
 
-#define UNREACHABLE(x) assert(false && x)
+#include "unreachable.h"
+
 
 // FbleFreeExpr -- see documentation in expr.h
 void FbleFreeExpr(FbleExpr* expr)
@@ -206,5 +205,5 @@ void FbleFreeExpr(FbleExpr* expr)
     }
   }
 
-  UNREACHABLE("should never get here");
+  FbleUnreachable("should never get here");
 }

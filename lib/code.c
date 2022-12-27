@@ -15,8 +15,7 @@
 
 #include "tc.h"
 #include "interpret.h"
-
-#define UNREACHABLE(x) assert(false && x)
+#include "unreachable.h"
 
 static void OnFree(FbleExecutable* executable);
 static void PrintLoc(FILE* fout, FbleLoc loc);
@@ -163,7 +162,7 @@ void FbleFreeInstr(FbleInstr* instr)
     }
   }
 
-  UNREACHABLE("invalid instruction");
+  FbleUnreachable("invalid instruction");
 }
 
 // FbleNewCode -- see documentation in code.h

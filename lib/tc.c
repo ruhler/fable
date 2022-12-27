@@ -10,7 +10,7 @@
 #include <fble/fble-alloc.h>   // for FbleFree
 #include <fble/fble-vector.h>  // for FbleVectorFree
 
-#define UNREACHABLE(x) assert(false && x)
+#include "unreachable.h"
 
 // FbleNewTcRaw -- see documentation in tc.h
 FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc)
@@ -164,6 +164,6 @@ void FbleFreeTc(FbleTc* tc)
     }
   }
 
-  UNREACHABLE("should never get here");
+  FbleUnreachable("should never get here");
 }
 

@@ -15,9 +15,8 @@
 
 #include "heap.h"
 #include "tc.h"
+#include "unreachable.h"
 #include "value.h"
-
-#define UNREACHABLE(x) assert(false && x)
 
 /**
  * Managed execution stack.

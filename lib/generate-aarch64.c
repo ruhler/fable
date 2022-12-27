@@ -16,9 +16,8 @@
 
 #include "code.h"
 #include "tc.h"
+#include "unreachable.h"
 #include "value.h"
-
-#define UNREACHABLE(x) assert(false && x)
 
 // LabelId --
 //   Type representing a name as an integer.

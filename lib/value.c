@@ -14,13 +14,7 @@
 #include <fble/fble-vector.h>  // for FbleVectorInit, etc.
 
 #include "heap.h"
-
-/**
- * Marks code as unreachable.
- *
- * @param x  Message explaining why code is unreachable.
- */
-#define UNREACHABLE(x) assert(false && x)
+#include "unreachable.h"
 
 /**
  *
@@ -275,7 +269,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case REF_VALUE: return;
   }
 
-  UNREACHABLE("Should not get here");
+  FbleUnreachable("Should not get here");
 }
 
 /**

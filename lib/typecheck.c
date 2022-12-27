@@ -16,13 +16,7 @@
 #include "expr.h"
 #include "tc.h"
 #include "type.h"
-
-/** 
- * Indicate that a peice of code is unreachable.
- *
- * @param x  Message explaining why the code is unreachable.
- */
-#define UNREACHABLE(x) assert(false && x)
+#include "unreachable.h"
 
 /**
  * Name of a variable.
@@ -463,7 +457,7 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
       }
 
       default: {
-        UNREACHABLE("Unsupported format conversion.");
+        FbleUnreachable("Unsupported format conversion.");
         break;
       }
     }
@@ -1939,7 +1933,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
     }
   }
 
-  UNREACHABLE("should already have returned");
+  FbleUnreachable("should already have returned");
   return TC_FAILED;
 }
 
@@ -2138,7 +2132,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     }
   }
 
-  UNREACHABLE("should already have returned");
+  FbleUnreachable("should already have returned");
   return NULL;
 }
 

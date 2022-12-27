@@ -15,9 +15,8 @@
 #include "code.h"
 #include "tc.h"
 #include "typecheck.h"
+#include "unreachable.h"
 #include "value.h"
-
-#define UNREACHABLE(x) assert(false && x)
 
 // Local --
 //   Information about a value available in the stack frame.
@@ -245,7 +244,7 @@ static Local* GetVar(Scope* scope, FbleVar var)
     }
   }
 
-  UNREACHABLE("should never get here");
+  FbleUnreachable("should never get here");
   return NULL;
 }
 
@@ -1008,7 +1007,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
     }
   }
 
-  UNREACHABLE("should already have returned");
+  FbleUnreachable("should already have returned");
   return NULL;
 }
 
