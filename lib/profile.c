@@ -1,6 +1,67 @@
 /**
  * @file profile.c
  * Fble profiling and reporting.
+ *
+ * Notes on profiling
+ * ------------------
+ * Consider a profile call graph entry such as:
+ *       count     time block
+ *           2       70 /b[0002]   
+ *           1       90 /a[0001]   
+ * **        3       90 /b[0002] **
+ *           2       70 /b[0002]   
+ *           1       30 /c[0003]   
+ *
+ * Focusing on the highlighted line with **, this says we spent 90 profile
+ * time in block 'b'. The blocks that 'b' called are listed below it. So in
+ * this case we spent 70 profile time calling from 'b' into itself
+ * recursively, and 30 profile time calling from 'b' into 'c'. The blocks
+ * that called 'b' are listed above it. So in this case we spent 70 profile
+ * time calling into 'b' from 'b' and 90 profile time calling into 'b' from
+ * 'a'.
+ *
+ * Note that the profile time calls for callers and callees don't add up
+ * to the total time spent in 'b' because this example involves recursive
+ * calls. The way to read it is as follows.
+ *
+ * 1. For the highlighted block with **
+ *   The time shown is how much time would be saved running the program if all
+ *   calls to the block were removed. Or equivalently, if you could perfectly
+ *   optimize the block so it ran in no time at all.
+ *
+ *   Given a call stack: a -> b1 -> b2 -> b3 -> c, this counts the time spent
+ *   doing the initial call a -> b1, and not the calls b1 -> b2 or b2 -> b3
+ *   past that. Because neither of those calls would exist if we got rid of
+ *   the call a -> b1.
+ *
+ * 2. For callees below the higlighted block.
+ *   The time shown is how much time would be saved running the program if all
+ *   calls from the highlighted block to the callee block were removed.
+ *
+ *   Given a call stack: a -> b1 -> b2 -> b3 -> c, this counts the time spent
+ *   doing the initial call b1 -> b2, but not the call from b2 -> b3 past
+ *   that, because that call would not exist if we got rid of the call from
+ *   b1 -> b2.
+ *
+ * 3. For callers above the highlighted block.
+ *   The time shown is how much time would be saved running the program if all
+ *   calls from the caller block to the highlighted block were removed.
+ *   Exactly analogous to callees.
+ *
+ * There are two interesting considerations for the implementation: how to
+ * properly account for time in the case of recursive calls and how to
+ * properly track time in case of tail calls.
+ *
+ * To properly account for time in the case of recursive calls, we keep track
+ * of which blocks and calls are currently running. For example, if b1 -> b2
+ * is currently running, then we will not count the time spent calling 
+ * b2 -> b3 for the block time of b or the call time of b -> b.
+ *
+ * To properly track time in case of tail calls, we record the set of calls
+ * that should exit when we exit the next call. Because of the above rule, we
+ * only need to keep track of one occurence of each of the calls in the set;
+ * subsequent occurences in a deeply nested stack would not have their time
+ * counted anyway.
  */
 
 #include <assert.h>   // for assert
@@ -15,129 +76,59 @@
 #include <fble/fble-profile.h>
 #include <fble/fble-vector.h>
 
-// Notes on profiling
-// ------------------
-// Consider a profile call graph entry such as:
-//       count     time block
-//           2       70 /b[0002]   
-//           1       90 /a[0001]   
-// **        3       90 /b[0002] **
-//           2       70 /b[0002]   
-//           1       30 /c[0003]   
-//
-// Focusing on the highlighted line with **, this says we spent 90 profile
-// time in block 'b'. The blocks that 'b' called are listed below it. So in
-// this case we spent 70 profile time calling from 'b' into itself
-// recursively, and 30 profile time calling from 'b' into 'c'. The blocks
-// that called 'b' are listed above it. So in this case we spent 70 profile
-// time calling into 'b' from 'b' and 90 profile time calling into 'b' from
-// 'a'.
-//
-// Note that the profile time calls for callers and callees don't add up
-// to the total time spent in 'b' because this example involves recursive
-// calls. The way to read it is as follows.
-//
-// 1. For the highlighted block with **
-//   The time shown is how much time would be saved running the program if all
-//   calls to the block were removed. Or equivalently, if you could perfectly
-//   optimize the block so it ran in no time at all.
-//
-//   Given a call stack: a -> b1 -> b2 -> b3 -> c, this counts the time spent
-//   doing the initial call a -> b1, and not the calls b1 -> b2 or b2 -> b3
-//   past that. Because neither of those calls would exist if we got rid of
-//   the call a -> b1.
-//
-// 2. For callees below the higlighted block.
-//   The time shown is how much time would be saved running the program if all
-//   calls from the highlighted block to the callee block were removed.
-//
-//   Given a call stack: a -> b1 -> b2 -> b3 -> c, this counts the time spent
-//   doing the initial call b1 -> b2, but not the call from b2 -> b3 past
-//   that, because that call would not exist if we got rid of the call from
-//   b1 -> b2.
-//
-// 3. For callers above the highlighted block.
-//   The time shown is how much time would be saved running the program if all
-//   calls from the caller block to the highlighted block were removed.
-//   Exactly analogous to callees.
-//
-// There are two interesting considerations for the implementation: how to
-// properly account for time in the case of recursive calls and how to
-// properly track time in case of tail calls.
-//
-// To properly account for time in the case of recursive calls, we keep track
-// of which blocks and calls are currently running. For example, if b1 -> b2
-// is currently running, then we will not count the time spent calling 
-// b2 -> b3 for the block time of b or the call time of b -> b.
-//
-// To properly track time in case of tail calls, we record the set of calls
-// that should exit when we exit the next call. Because of the above rule, we
-// only need to keep track of one occurence of each of the calls in the set;
-// subsequent occurences in a deeply nested stack would not have their time
-// counted anyway.
-
-// Call -- 
-//   Representation of a call in the current call stack.
-//
-// Fields:
-//   id - the id of the current block.
-//   exit - the number of elements to pop from the sample stack when exiting
-//          this call.
+/** Representation of a call in the current call stack. */
 typedef struct {
-  FbleBlockId id;
+  /** The id of the current block. */
+  FbleBlockId id;   
+
+  /** The number of elements to pop from the sample stack when exiting this call. */
   size_t exit;
 } Call;
 
-// CallStack --
-//   A stack of calls.
-//
-// The call stack is organized into a linked list of chunks.
-//
-// Fields:
-//   tail - the next chunk down in the stack.
-//   next - the next (unused) chunk up in the stack. May be NULL.
-//   top - pointer to the valid top entry on the stack.
-//   end - pointer past the last allocated data in this chunk.
-//   data - the raw data for this chunk.
+/**
+ * A stack of calls.
+ *
+ * The call stack is organized into a linked list of chunks.
+ */
 typedef struct CallStack {
-  struct CallStack* tail;
-  struct CallStack* next;
-  Call* top;
-  Call* end;
-  Call data[];
+  struct CallStack* tail; /**< The next chunk down in the stack. */
+  struct CallStack* next; /**< The next (unused) chunk up in the stack. May be NULL. */
+  Call* top;              /**< Pointer to the valid top entry on the stack. */
+  Call* end;              /**< Pointer past the last allocated data in this chunk. */
+  Call data[];            /**< The raw data for this chunk. */
 } CallStack;
 
-// Sample --
-//   Representation of a call in a sample.
-//
-// Fields:
-//   caller - the caller for this particular call
-//   callee - the callee for this particular call
-//   call - cached result of GetCallData(caller, callee)
+/** Representation of a call in a sample. */
 typedef struct {
-  FbleBlockId caller;
-  FbleBlockId callee;
-  FbleCallData* call;
+  FbleBlockId caller;   /**< The caller for this particular call. */
+  FbleBlockId callee;   /**< The callee for this particular call. */
+  FbleCallData* call;   /**< Cached result of GetCallData(caller, callee). */
 } Sample;
 
-// SampleStack --
-//   A stack of Samples. This is different from the call stack in that calls
-//   to the same caller/callee appear at most once in the sample stack, and it
-//   includes information about auto-exited calls.
+/**
+ * A stack of Samples.
+ *
+ * This is different from the call stack in that calls to the same
+ * caller/callee appear at most once in the sample stack, and it includes
+ * information about auto-exited calls.
+ */
 typedef struct {
-  size_t capacity;
-  size_t size;
-  Sample* xs;
+  size_t capacity;    /**< Number of samples stack space has been allocated for. */
+  size_t size;        /**< Number of samples actually on the stack. */
+  Sample* xs;         /**< Samples on the stack. */
 } SampleStack;
 
-// FbleProfileThread -- see documentation in fble-profile.h
+/** Profiling state for a thread of execution. */
 struct FbleProfileThread {
-  FbleProfile* profile;
+  FbleProfile* profile;   /**< The profile data. */
 
-  CallStack* calls;
-  SampleStack sample;
+  CallStack* calls;       /**< The current call stack. */
+  SampleStack sample;     /**< The current sample stack. */
 };
 
+/**
+ * A sort order.
+ */
 typedef enum {
   ASCENDING,
   DESCENDING
@@ -154,18 +145,18 @@ static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCall
 
 static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace);
 
-// CallStackPush --
-//   Push an uninitialized Call onto the call stack for the thread.
-//
-// Inputs:
-//   thread - the thread whose call stack to push a value on.
-//
-// Results:
-//   A pointer to the memory for the newly pushed value.
-//
-// Side effects:
-//   Pushes a value on the stack that should be freed using CallStackPop when
-//   no longer needed.
+/**
+ * Pushes an uninitialized Call onto the call stack for the thread.
+ *
+ * @param thread  The thread whose call stack to push a value on.
+ *
+ * @returns
+ *   A pointer to the memory for the newly pushed value.
+ *
+ * @sideeffects
+ *   Pushes a value on the stack that should be freed using CallStackPop when
+ *   no longer needed.
+ */
 static Call* CallStackPush(FbleProfileThread* thread)
 {
   if (++thread->calls->top == thread->calls->end) {
@@ -183,15 +174,15 @@ static Call* CallStackPush(FbleProfileThread* thread)
   return thread->calls->top;
 }
 
-// CallStackPop --
-//   Pop a Call off of the call stack for the thread.
-//
-// Inputs:
-//   thread - the thread whose call stack to pop.
-//
-// Side effects:
-//   Pops a value on the stack that. Potentially invalidates any pointers
-//   previously returned from CallStackPush.
+/**
+ * Pops a Call off of the call stack for the thread.
+ *
+ * @param thread  The thread whose call stack to pop.
+ *
+ * @sideeffects
+ *   Pops a value on the stack that. Potentially invalidates any pointers
+ *   previously returned from CallStackPush.
+ */
 static void CallStackPop(FbleProfileThread* thread)
 {
   if (thread->calls->top == thread->calls->data) {
@@ -204,22 +195,22 @@ static void CallStackPop(FbleProfileThread* thread)
   thread->calls->top--;
 }
 
-// GetCallData --
-//   Get the call data associated with the given caller/callee pair in the
-//   call profile. Creates new empty call data and adds it to the profile as
-//   required.
-//
-// Inputs:
-//   profile - the profile to get the data for
-//   caller - the caller of the call
-//   callee - the callee of the call
-//
-// Results:
-//   The call data associated with the caller/callee pair in the given
-//   profile.
-//
-// Side effects:
-//   Allocates new empty call data and adds it to the profile if necessary.
+/**
+ * Gets the call data associated with the given caller/callee pair in the call
+ * profile. Creates new empty call data and adds it to the profile as
+ * required.
+ *
+ * @param profile  The profile to get the data for
+ * @param caller  The caller of the call
+ * @param callee  The callee of the call
+ *
+ * @returns
+ *   The call data associated with the caller/callee pair in the given
+ *   profile.
+ *
+ * @sideeffects
+ *   Allocates new empty call data and adds it to the profile if necessary.
+ */
 static FbleCallData* GetCallData(FbleProfile* profile,
     FbleBlockId caller, FbleBlockId callee)
 {
@@ -260,25 +251,24 @@ static FbleCallData* GetCallData(FbleProfile* profile,
   return call;
 }
 
-// MergeSortCallData --
-//   Does a merge sort of call data. There are two modes for sorting:
-//   1. in_place - a is sorted in place, using b as a scratch buffer
-//   2. !in_place - a is sorted into b, then a can be used as a scratch buffer
-//
-// Inputs:
-//   order - the order to sort in.
-//   in_place - whether to use in place sort or not.
-//   a - the data to sort
-//   b - if in_place, a scratch buffer. Otherwise the destination for the
-//       sorted values
-//   size - the number of elements to sort.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Sorts the contents of data a, either in place or into b. Overwrites the
-//   contents of the non-sorted array with scratch data.
+/**
+ * Does a merge sort of call data.
+ *
+ * There are two modes for sorting:
+ * 1. in_place - a is sorted in place, using b as a scratch buffer
+ * 2. !in_place - a is sorted into b, then a can be used as a scratch buffer
+ *
+ * @param order  The order to sort in.
+ * @param in_place  Whether to use in place sort or not.
+ * @param a  The data to sort
+ * @param b  If in_place, a scratch buffer. Otherwise the destination for the
+ *    sorted values
+ * @param size  The number of elements to sort.
+ *
+ * @sideeffects
+ *   Sorts the contents of data a, either in place or into b. Overwrites the
+ *   contents of the non-sorted array with scratch data.
+ */
 static void MergeSortCallData(Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size)
 {
   if (size == 0) {
@@ -333,59 +323,49 @@ static void MergeSortCallData(Order order, bool in_place, FbleCallData** a, Fble
   }
 }
 
-// SortCallData --
-//   Sort a vector of call data by time.
-//
-// Inputs:
-//   order - the order to sort in.
-//   data - the call data to sort
-//   size - the number of elements of data.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Sorts the given array of call data in increasing order of time.
+/**
+ * Sorts a vector of call data by time.
+ *
+ * @param order  The order to sort in.
+ * @param data  The call data to sort
+ * @param size  The number of elements of data.
+ *
+ * @sideeffects
+ *   Sorts the given array of call data in increasing order of time.
+ */
 static void SortCallData(Order order, FbleCallData** data, size_t size)
 {
   FbleCallData* scratch[size];
   MergeSortCallData(order, true, data, scratch, size);
 }
 
-// PrintBlockName --
-//   Prints a block name in human readable format.
-// 
-// Inputs:
-//   fout - where to print the name
-//   profile - the profile, used for getting block names
-//   id - the id of the block
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints a human readable description of the block to the given file.
+/**
+ * Prints a block name in human readable format.
+ * 
+ * @param fout  Where to print the name
+ * @param profile  The profile, used for getting block names
+ * @param id  The id of the block
+ *
+ * @sideeffects
+ *   Prints a human readable description of the block to the given file.
+ */
 static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 {
   fprintf(fout, "%s[%04zx]", profile->blocks.xs[id]->name.name->str, id);
 }
 
-// PrintCallData --
-//   Prints a line of call data.
-//
-// Inputs:
-//   fout - the file to print to
-//   profile - the profile, used for getting block names
-//   block -
-//     if true, print the call data for a block. This adds highlights to the
-//     line and includes information about self time.
-//   call - the call data to print
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints a single line description of the call data to the given file.
+/**
+ * Prints a line of call data.
+ *
+ * @param fout  The file to print to
+ * @param profile  The profile, used for getting block names
+ * @param block  If true, print the call data for a block. This adds highlights to the
+ *   line and includes information about self time.
+ * @param call  The call data to print
+ *
+ * @sideeffects
+ *   Prints a single line description of the call data to the given file.
+ */
 static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCallData* call)
 {
   char h = block ? '*' : ' ';
@@ -401,19 +381,19 @@ static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCall
   fprintf(fout, " %c%c\n", h, h);
 }
 
-// EnterBlock --
-//   Enter a block on the given profile thread.
-//
-// Inputs:
-//   thread - the thread to do the call on.
-//   block - the block to call into.
-//   replace - if true, replace the current block with the new block being
-//             entered instead of calling into the new block.
-//
-// Side effects:
-//   A corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
-//   should be made when the call leaves, for proper accounting and resource
-//   management.
+/**
+ * Enters a block on the given profile thread.
+ *
+ * @param thread  The thread to do the call on.
+ * @param block  The block to call into.
+ * @param replace  If true, replace the current block with the new block being
+ *   entered instead of calling into the new block.
+ *
+ * @sideeffects
+ *   A corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
+ *   should be made when the call leaves, for proper accounting and resource
+ *   management.
+ */
 static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace)
 {
   Call* call = thread->calls->top;
@@ -461,7 +441,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   }
 }
 
-// FbleNewProfile -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 FbleProfile* FbleNewProfile()
 {
   FbleProfile* profile = FbleAlloc(FbleProfile);
@@ -478,7 +458,7 @@ FbleProfile* FbleNewProfile()
   return profile;
 }
 
-// FbleProfileAddBlock -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
 {
   FbleBlockId id = profile->blocks.size;
@@ -492,7 +472,7 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
   FbleVectorAppend(profile->blocks, block);
   return id;
 }
-// FbleProfileAddBlocks -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names)
 {
   size_t id = profile->blocks.size;
@@ -502,7 +482,7 @@ FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names)
   return id;
 }
 
-// FbleFreeProfile -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 void FbleFreeProfile(FbleProfile* profile)
 {
   if (profile == NULL) {
@@ -522,7 +502,7 @@ void FbleFreeProfile(FbleProfile* profile)
   FbleFree(profile);
 }
 
-// FbleNewProfileThread -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 {
   FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
@@ -544,7 +524,7 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
   return thread;
 }
 
-// FbleForkProfileThread -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent)
 {
   FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
@@ -579,7 +559,7 @@ FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent)
   return thread;
 }
 
-// FbleFreeProfileThread -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 void FbleFreeProfileThread(FbleProfileThread* thread)
 {
   if (thread == NULL) {
@@ -600,7 +580,7 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
   FbleFree(thread);
 }
 
-// FbleProfileSample -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
 {
   thread->profile->blocks.xs[thread->calls->top->id]->self += time;
@@ -621,19 +601,19 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
   thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time += time;
 }
 
-// FbleProfileEnterBlock -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block)
 {
   EnterBlock(thread, block, false);
 }
 
-// FbleProfileReplaceBlock -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block)
 {
   EnterBlock(thread, block, true);
 }
 
-// FbleProfileExitBlock -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 void FbleProfileExitBlock(FbleProfileThread* thread)
 {
   // TODO: Consider shrinking the sample stack occasionally to recover memory?
@@ -641,7 +621,7 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
   CallStackPop(thread);
 }
 
-// FbleProfileReport -- see documentation in fble-profile.h
+// See documentation in fble-profile.h.
 void FbleProfileReport(FILE* fout, FbleProfile* profile)
 {
   FbleCallData* calls[profile->blocks.size];

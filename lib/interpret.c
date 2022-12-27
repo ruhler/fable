@@ -202,6 +202,44 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
   return NULL;
 }
 
+/**
+ * Gets the value of a variable in scope.
+ *
+ * Assumes existance of a local vars variable:
+ *   FbleValue** vars[3];
+ *   vars[FBLE_STATIC_VAR] = statics;
+ *   vars[FBLE_ARG_VAR] = args;
+ *   vars[FBLE_LOCAL_VAR] = locals;
+ *
+ * @param idx  The index of the variable.
+ *
+ * @returns
+ *   The value of the variable.
+ *
+ * @sideeffects
+ *   None.
+ */
+#define GET(idx) (vars[idx.tag][idx.index])
+
+/**
+ * Gets the strict value of a variable in scope.
+ *
+ * Assumes existance of a local vars variable:
+ *   FbleValue** vars[3];
+ *   vars[FBLE_STATIC_VAR] = statics;
+ *   vars[FBLE_ARG_VAR] = args;
+ *   vars[FBLE_LOCAL_VAR] = locals;
+ *
+ * @param idx  The index of the variable.
+ *
+ * @returns
+ *   The FbleStrctValue of the variable.
+ *
+ * @sideeffects
+ *   None.
+ */
+#define GET_STRICT(idx) FbleStrictValue(GET(idx))
+
 // See documentation in interpret.h.
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
@@ -219,24 +257,6 @@ FbleValue* FbleInterpreterRunFunction(
   vars[FBLE_STATIC_VAR] = statics;
   vars[FBLE_ARG_VAR] = args;
   vars[FBLE_LOCAL_VAR] = locals;
-
-  /**
-   * Gets the value of a variable in scope.
-   * @param idx  The index of the variable.
-   * @returns  The value of the variable.
-   * @sideeffects
-   *   None.
-   */
-  #define GET(idx) (vars[idx.tag][idx.index])
-
-  /**
-   * Gets the strict value of a variable in scope.
-   * @param idx  The index of the variable.
-   * @returns  The FbleStrctValue of the variable.
-   * @sideeffects
-   *   None.
-   */
-  #define GET_STRICT(idx) FbleStrictValue(GET(idx))
 
   size_t pc = 0;
   while (true) {

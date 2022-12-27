@@ -15,42 +15,37 @@
 
 #include "expr.h"
 
-// Stack --
-//   A stack of modules in the process of being loaded.
-//
-// Fields:
-//   deps - other modules that this module immediately depends on.
-//   deps_loaded - the number of deps we have attempted to load so far.
-//   module - the value of the module.
-//   tail - the rest of the stack of modules.
+/** A stack of modules in the process of being loaded. */
 typedef struct Stack {
-  FbleLoadedModule module;
-  size_t deps_loaded;
-  struct Stack* tail;
+  FbleLoadedModule module;  /**< The value of the module. */
+  size_t deps_loaded;  /**< The number of deps we have attempted to load so far. */
+  struct Stack* tail;  /**< The rest of the stack of modules. */
 } Stack;
 
 static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* build_deps);
 static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path, FbleStringV* build_deps);
 
-// FindAt  -- 
-//  Returns the path on disk of the .fble file for the given root directory
-//  and module path.
-//  
-// Inputs:
-//   root - file path to the root of the module search path.
-//   path - the module path to find the source file for.
-//   build_deps - preinitialized output vector to store list of files searched in.
-//          May be NULL.
-//
-// Results:
-//   The file path to the source code of the module, or NULL in case no such
-//   file can be found.
-//
-// Side effects:
-// * The user should call FbleFreeString when the returned string is no
-//   longer needed.
-// * Adds strings to build_deps that should be freed with FbleFreeString when no
-//   longer needed.
+/**
+ * Gets the file path for an fble module given the root directory.
+ * 
+ * Returns the path on disk of the .fble file for the given root directory and
+ * module path.
+ *  
+ * @param root  File path to the root of the module search path.
+ * @param path  The module path to find the source file for.
+ * @param build_deps  Preinitialized output vector to store list of files searched in.
+ *    May be NULL.
+ *
+ * @returns
+ *   The file path to the source code of the module, or NULL in case no such
+ *   file can be found.
+ *
+ * @sideeffects
+ * * The user should call FbleFreeString when the returned string is no
+ *   longer needed.
+ * * Adds strings to build_deps that should be freed with FbleFreeString when no
+ *   longer needed.
+ */
 static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* build_deps)
 {
   assert(root != NULL);
@@ -95,24 +90,26 @@ static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* b
   return found;
 }
 
-// Find  -- 
-//  Returns the path on disk of the .fble file for the given search path
-//  and module path.
-//  
-// Inputs:
-//   search_path - the module search path.
-//   path - the module path to find the source file for.
-//   build_deps - preinitialized output vector to store list of files searched in.
-//          May be NULL.
-//
-// Results:
-//   The file path to the source code of the module, or NULL in case no such
-//   file can be found.
-//
-// Side effects:
-// * Prints an error message to stderr in case of error.
-// * The user should call FbleFreeString when the returned string is no
-//   longer needed.
+/**
+ * Finds the source code for a module.
+ *
+ * Returns the path on disk of the .fble file for the given search path and
+ * module path.
+ *  
+ * @param search_path  The module search path.
+ * @param path  The module path to find the source file for.
+ * @param build_deps  Preinitialized output vector to store list of files
+ *   searched in. May be NULL.
+ *
+ * @returns
+ *   The file path to the source code of the module, or NULL in case no such
+ *   file can be found.
+ *
+ * @sideeffects
+ * * Prints an error message to stderr in case of error.
+ * * The user should call FbleFreeString when the returned string is no
+ *   longer needed.
+ */
 static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path, FbleStringV* build_deps)
 {
   FbleString* found = NULL;
@@ -129,7 +126,7 @@ static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path, FbleSt
   return found;
 }
 
-// FbleLoad -- see documentation in fble-load.h
+// See documentation in fble-load.h.
 FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
   if (module_path == NULL) {
@@ -235,7 +232,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_p
   return program;
 }
 
-// FbleFreeLoadedProgram -- see documentation in fble-load.h
+// See documentation in fble-load.h.
 void FbleFreeLoadedProgram(FbleLoadedProgram* program)
 {
   if (program != NULL) {
@@ -254,7 +251,7 @@ void FbleFreeLoadedProgram(FbleLoadedProgram* program)
   }
 }
 
-// FbleSaveBuildDeps -- see documentation in fble-load.h
+// See documentation in fble-load.h.
 void FbleSaveBuildDeps(FILE* fout, const char* target, FbleStringV build_deps)
 {
   int cols = 1 + strlen(target);

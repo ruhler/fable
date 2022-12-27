@@ -19,35 +19,36 @@
 #include "unreachable.h"
 #include "value.h"
 
-// LabelId --
-//   Type representing a name as an integer.
-//
-// The number is turned into a label using printf format LABEL.
+/** Type representing a name as an integer. */
 typedef unsigned int LabelId;
+
+/** Printf format string for printing label. */
 #define LABEL ".L.%x"
 
+/** A vector of strings. */
 typedef struct {
-  size_t size;
-  const char** xs;
+  size_t size;        /**< Number of elements. */
+  const char** xs;    /**< The elements. */
 } LocV;
 
-// RunStackFrame --
-//   A type representing the stack frame layout we'll use for _Run_ functions.
-//
-// Note: The size of this struct must be a multiple of 16 bytes to avoid bus
-// errors.
+/**
+ * Stack frame layout for _Run_ functions.
+ *
+ * Note: The size of this struct must be a multiple of 16 bytes to avoid bus
+ * errors.
+ */
 typedef struct {
-  void* FP;
-  void* LR;
-  void* r_heap_save;
-  void* r_thread_save;
-  void* r_locals_save;
-  void* r_args_save;
-  void* r_statics_save;
-  void* r_profile_block_offset_save;
-  void* r_scratch_0_save;
-  void* r_scratch_1_save;
-  void* locals[];
+  void* FP;                 /**< Frame pointer. */
+  void* LR;                 /**< Link register. */
+  void* r_heap_save;        /**< Saved contents of R_HEAP reg. */
+  void* r_thread_save;      /**< Saved contents of R_THREAD reg. */
+  void* r_locals_save;      /**< Saved contents of R_LOCALS reg. */
+  void* r_args_save;        /**< Saved contents of R_ARGS reg. */
+  void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
+  void* r_profile_block_offset_save;  /**< Saved contents of R_PROFILE_BASE_ID reg. */
+  void* r_scratch_0_save;   /**< Saved contents of R_SCRATCH_0 reg. */
+  void* r_scratch_1_save;   /**< Saved contents of R_SCRATCH_1 reg. */
+  void* locals[];           /**< Local variables. */
 } RunStackFrame;
 
 static void AddLoc(const char* source, LocV* locs);
@@ -74,16 +75,16 @@ static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
 
-// AddLoc --
-//   Add a source location to the list of locations.
-//
-// Inputs:
-//   source - the source file name to add
-//   locs - the list of locs to add to.
-//
-// Side effects:
-//   Adds the source filename to the list of locations if it is not already
-//   present in the list.
+/**
+ * Adds a source location to the list of locations.
+ *
+ * @param source  The source file name to add
+ * @param locs  The list of locs to add to.
+ *
+ * @sideeffects
+ *   Adds the source filename to the list of locations if it is not already
+ *   present in the list.
+ */
 static void AddLoc(const char* source, LocV* locs)
 {
   for (size_t i = 0; i < locs->size; ++i) {
@@ -94,14 +95,19 @@ static void AddLoc(const char* source, LocV* locs)
   FbleVectorAppend(*locs, source);
 }
 
-// CollectBlocksAndLocs --
-//   Get the list of all instruction blocks and location source file names
-//   referenced from the given block of code, including the code itself.
-//
-// Inputs:
-//   blocks - the collection of blocks to add to.
-//   locs - the collection of location source names to add to.
-//   code - the code to collect the blocks from.
+/**
+ * Gets the list of blocks and locs referenced by a code block.
+ *
+ * Includes the the code block itself.
+ *
+ * @param blocks  The collection of blocks to add to.
+ * @param locs  The collection of location source names to add to.
+ * @param code  The code to collect the blocks from.
+ *
+ * @sideeffects
+ * * Appends collected blocks to 'blocks'.
+ * * Appends source file names to 'locs'.
+ */
 static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 {
   FbleVectorAppend(*blocks, code);
@@ -156,15 +162,15 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
   }
 }
 
-// StringLit --
-//   Output a string literal to fout.
-//
-// Inputs:
-//   fout - the file to write to.
-//   string - the contents of the string to write.
-//
-// Side effects:
-//   Outputs the given string as a C string literal to the given file.
+/**
+ * Outputs a string literal to fout.
+ *
+ * @param fout  The file to write to.
+ * @param string  The contents of the string to write.
+ *
+ * @sideeffects
+ *   Outputs the given string as a C string literal to the given file.
+ */
 static void StringLit(FILE* fout, const char* string)
 {
   fprintf(fout, "\"");
@@ -180,19 +186,19 @@ static void StringLit(FILE* fout, const char* string)
   fprintf(fout, "\"");
 }
 
-// StaticString --
-//   Output code to declare a static FbleString value.
-//
-// Inputs:
-//   fout - the file to write to
-//   label_id - pointer to next available label id for use.
-//   string - the value of the string.
-//
-// Returns:
-//   A label id of a local, static FbleString.
-//
-// Side effects:
-//   Writes code to fout and allocates label ids out of label_id.
+/**
+ * Outputs code to declare a static FbleString value.
+ *
+ * @param fout  The file to write to
+ * @param label_id  Pointer to next available label id for use.
+ * @param string  The value of the string.
+ *
+ * @returns
+ *   A label id of a local, static FbleString.
+ *
+ * @sideeffects
+ *   Writes code to fout and allocates label ids out of label_id.
+ */
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
 {
   LabelId id = (*label_id)++;
@@ -208,19 +214,19 @@ static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
   return id;
 }
 
-// StaticNames --
-//   Output code to declare a static FbleNameV.xs value.
-//
-// Inputs:
-//   fout - the file to write to
-//   label_id - pointer to next available label id for use.
-//   names - the value of the names.
-//
-// Returns:
-//   A label id of a local, static FbleNameV.xs.
-//
-// Side effects:
-//   Writes code to fout and allocates label ids out of label_id.
+/**
+ * Outputs code to declare a static FbleNameV.xs value.
+ *
+ * @param fout  The file to write to
+ * @param label_id  Pointer to next available label id for use.
+ * @param names  The value of the names.
+ *
+ * @returns
+ *   A label id of a local, static FbleNameV.xs.
+ *
+ * @sideeffects
+ *   Writes code to fout and allocates label ids out of label_id.
+ */
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
 {
   LabelId str_ids[names.size];
@@ -245,20 +251,20 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
   return id;
 }
 
-// StaticModulePath --
-//   Generate code to declare a static FbleModulePath value.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   label_id - pointer to next available label id for use.
-//   path - the FbleModulePath to generate code for.
-//
-// Results:
-//   The label id of a local, static FbleModulePath.
-//
-// Side effects:
-// * Outputs code to fout.
-// * Increments label_id based on the number of internal labels used.
+/**
+ * Generates code to declare a static FbleModulePath value.
+ *
+ * @param fout  The output stream to write the code to.
+ * @param label_id  Pointer to next available label id for use.
+ * @param path  The FbleModulePath to generate code for.
+ *
+ * @returns
+ *   The label id of a local, static FbleModulePath.
+ *
+ * @sideeffects
+ * * Outputs code to fout.
+ * * Increments label_id based on the number of internal labels used.
+ */
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path)
 {
   LabelId src_id = StaticString(fout, label_id, path->loc.source->str);
@@ -278,20 +284,20 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
   return path_id;
 }
 
-// StaticExecutableModule --
-//   Generate code to declare a static FbleExecutableModule value.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   label_id - pointer to next available label id for use.
-//   module - the FbleCompiledModule to generate code for.
-//
-// Results:
-//   The label id of a local, static FbleExecutableModule.
-//
-// Side effects:
-// * Outputs code to fout.
-// * Increments label_id based on the number of internal labels used.
+/**
+ * Generates code to declare a static FbleExecutableModule value.
+ *
+ * @param fout  The output stream to write the code to.
+ * @param label_id  Pointer to next available label id for use.
+ * @param module  The FbleCompiledModule to generate code for.
+ *
+ * @returns
+ *   The label id of a local, static FbleExecutableModule.
+ *
+ * @sideeffects
+ * * Outputs code to fout.
+ * * Increments label_id based on the number of internal labels used.
+ */
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
 {
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
@@ -342,49 +348,49 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   return module_id;
 }
 
-// GetFrameVar --
-//   Generate code to read a variable from the current frame into register rdst.
-//
-// Inputs:
-//   fout - the output stream
-//   rdst - the name of the register to read the variable into
-//   var - the variable to read.
-//
-// Side effects:
-// * Writes to the output stream.
+/**
+ * Generates code to read a variable from the current frame into register rdst.
+ *
+ * @param fout  The output stream
+ * @param rdst  The name of the register to read the variable into
+ * @param var  The variable to read.
+ *
+ * @sideeffects
+ * * Writes to the output stream.
+ */
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar var)
 {
   static const char* regs[] = { "R_STATICS", "R_ARGS", "R_LOCALS" };
   fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, regs[var.tag], sizeof(FbleValue*) * var.index);
 }
 
-// SetFrameVar --
-//   Generate code to write a variable to the current frame from register rsrc.
-//
-// Inputs:
-//   fout - the output stream
-//   rsrc - the name of the register with the value to write.
-//   index - the index of the value to write.
-//
-// Side effects:
-// * Writes to the output stream.
+/**
+ * Generates code to write a variable to the current frame from register rsrc.
+ *
+ * @param fout  The output stream
+ * @param rsrc  The name of the register with the value to write.
+ * @param index  The index of the value to write.
+ *
+ * @sideeffects
+ * * Writes to the output stream.
+ */
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
 {
   fprintf(fout, "  str %s, [R_LOCALS, #%zi]\n", rsrc, sizeof(FbleValue*) * index);
 }
 
-// DoAbort --
-//   Emit code to return an error from a Run function.
-//
-// Inputs:
-//   fout - the output stream.
-//   code - pointer to current code block to use for labels.
-//   pc - the program counter of the abort location.
-//   lmsg - the label of the error message to use.
-//   loc - the location to report with the error message.
-//
-// Side effects:
-//   Emit code to return the error.
+/**
+ * Emits code to return an error from a Run function.
+ *
+ * @param fout  The output stream.
+ * @param code  Pointer to current code block to use for labels.
+ * @param pc  The program counter of the abort location.
+ * @param lmsg  The label of the error message to use.
+ * @param loc  The location to report with the error message.
+ *
+ * @sideeffects
+ *   Emit code to return the error.
+ */
 static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc)
 {
   // Print error message.
@@ -405,33 +411,33 @@ static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc
   fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc);
 }
 
-// StackBytesForCount --
-//   Calculate a 16 byte aligned number of bytes sufficient to store count
-//   xwords.
-//
-// Inputs:
-//   count - the number of xwords.
-//
-// Returns:
-//   The number of bytes to allocate on the stack.
-//
-// Side effects:
-//   None.
+/**
+ * Calculates a 16 byte aligned number of bytes sufficient to store count xwords.
+ *
+ * @param count  The number of xwords.
+ *
+ * @returns
+ *   The number of bytes to allocate on the stack.
+ *
+ * @sideeffects
+ *   None.
+ */
 static size_t StackBytesForCount(size_t count)
 {
   return 16 * ((count + 1) / 2);
 }
 
-// Adr --
-//   Emit an adr instruction to load a label into a register.
-//
-// Inputs:
-//   fout - the output stream
-//   r_dst - the name of the register to load the label into
-//   fmt, ... - a printf format string for the label to load.
-//
-// Side effects:
-//   Emits a sequence of instructions to load the label into the register.
+/**
+ * Emits an adr instruction to load a label into a register.
+ *
+ * @param fout  The output stream
+ * @param r_dst  The name of the register to load the label into
+ * @param fmt  A printf format string for the label to load.
+ * @param ...  Printf format arguments. 
+ *
+ * @sideeffects
+ *   Emits a sequence of instructions to load the label into the register.
+ */
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
 {
   va_list ap;
@@ -449,18 +455,18 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
   fprintf(fout, "\n");
 }
 
-// EmitInstr --
-//   Generate code to execute an instruction.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   profile_blocks - the list of profile block names for the module.
-//   code - pointer to the current code block, for referencing labels.
-//   pc - the program counter of the instruction.
-//   instr - the instruction to execute.
-//
-// Side effects:
-// * Outputs code to fout.
+/**
+ * Generates code to execute an instruction.
+ *
+ * @param fout  The output stream to write the code to.
+ * @param profile_blocks  The list of profile block names for the module.
+ * @param code  Pointer to the current code block, for referencing labels.
+ * @param pc  The program counter of the instruction.
+ * @param instr  The instruction to execute.
+ *
+ * @sideeffects
+ * * Outputs code to fout.
+ */
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr)
 {
   // Emit dwarf location information for the instruction.
@@ -888,16 +894,16 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
   }
 }
 
-// EmitCode --
-//   Generate code to execute an FbleCode block.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   profile_blocks - the list of profile block names for the module.
-//   code - the block of code to generate a C function for.
-//
-// Side effects:
-// * Outputs code to fout with two space indent.
+/**
+ * Generates code to execute an FbleCode block.
+ *
+ * @param fout  The output stream to write the code to.
+ * @param profile_blocks  The list of profile block names for the module.
+ * @param code  The block of code to generate a C function for.
+ *
+ * @sideeffects
+ * * Outputs code to fout with two space indent.
+ */
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
   fprintf(fout, "  .text\n");
@@ -965,17 +971,17 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, ".L.%p.%s.high_pc:\n", (void*)code, function_label);
 }
 
-// EmitInstrForAbort --
-//   Generate code to execute an instruction for the purposes of abort.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   code - pointer to the current code block, for referencing labels.
-//   pc - the program counter of the instruction.
-//   instr - the instruction to execute.
-//
-// Side effects:
-// * Outputs code to fout.
+/**
+ * Generates code to execute an instruction for the purposes of abort.
+ *
+ * @param fout  The output stream to write the code to.
+ * @param code  Pointer to the current code block, for referencing labels.
+ * @param pc  The program counter of the instruction.
+ * @param instr  The instruction to execute.
+ *
+ * @sideeffects
+ * * Outputs code to fout.
+ */
 static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 {
   switch (instr->tag) {
@@ -1129,15 +1135,18 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
   }
 }
 
-// SizeofSanitizedString --
-//   Return the size of the label-sanitized version of a given string.
-//
-// Inputs:
-//   str - the string to get the sanitized size of.
-//
-// Results:
-//   The number of bytes needed for the sanitized version of the given string,
-//   including nul terminator.
+/**
+ * Returns the size of the label-sanitized version of a given string.
+ *
+ * @param str  The string to get the sanitized size of.
+ *
+ * @returns
+ *   The number of bytes needed for the sanitized version of the given string,
+ *   including nul terminator.
+ *
+ * @sideeffects
+ *   None
+ */
 static size_t SizeofSanitizedString(const char* str)
 {
   size_t size = 1;
@@ -1147,16 +1156,16 @@ static size_t SizeofSanitizedString(const char* str)
   return size;
 }
 
-// SanitizeString --
-//   Return a version of the string suitable for use in labels.
-//
-// Inputs:
-//   str - the string to sanitize.
-//   dst - a character buffer of size SizeofSanitizedString(str) to write
-//         the sanitized string to.
-//
-// Side effects:
-//   Fills in dst with the sanitized version of the string.
+/**
+ * Returns a version of the string suitable for use in labels.
+ *
+ * @param str  The string to sanitize.
+ * @param dst  A character buffer of size SizeofSanitizedString(str) to write
+ *   the sanitized string to.
+ *
+ * @sideeffects
+ *   Fills in dst with the sanitized version of the string.
+ */
 static void SanitizeString(const char* str, char* dst)
 {
   dst[0] = '\0';
@@ -1167,19 +1176,18 @@ static void SanitizeString(const char* str, char* dst)
   }
 }
 
-// LabelForPath --
-//   Returns a name suitable for use as a C function identifier to use for the
-//   give module path.
-//
-// Inputs:
-//   path - the path to get the name for.
-//
-// Results:
-//   A C function name for the module path.
-//
-// Side effects:
-//   Allocates an FbleString* that should be freed with FbleFreeString when no
-//   longer needed.
+/**
+ * Returns a C function identifier to for the give module path.
+ *
+ * @param path  The path to get the name for.
+ *
+ * @returns
+ *   A C function name for the module path.
+ *
+ * @sideeffects
+ *   Allocates an FbleString* that should be freed with FbleFreeString when no
+ *   longer needed.
+ */
 static FbleString* LabelForPath(FbleModulePath* path)
 {
   // The conversion from path to name works as followed:
@@ -1228,7 +1236,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
   return FbleNewString(name);
 }
 
-// FbleGenerateAArch64 -- see documentation in fble-compile.h
+// See documentation in fble-compile.h.
 void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 {
   FbleCodeV blocks;
@@ -1481,7 +1489,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   FbleVectorFree(locs);
 }
 
-// FbleGenerateAArch64Export -- see documentation in fble-compile.h
+// See documentation in fble-compile.h.
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path)
 {
   fprintf(fout, "  .text\n");
@@ -1499,7 +1507,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
   fprintf(fout, "  ret\n");
 }
 
-// FbleGenerateAArch64Main -- see documentation in fble-compile.h
+// See documentation in fble-compile.h.
 void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
 {
   fprintf(fout, "  .text\n");
