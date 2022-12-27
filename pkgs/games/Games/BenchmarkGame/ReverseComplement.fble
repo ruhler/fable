@@ -44,9 +44,9 @@
   c;
 };
 
-# Reverse and complement the given sequence.
-(Seq@) { Seq@; } RevComp = (Seq@ s) {
-  Seq@(s.header, Reverse(Map(s.codes, ComplementCode)));
+# Complement the given sequence.
+(Seq@) { Seq@; } Comp = (Seq@ s) {
+  Seq@(s.header, Map(s.codes, ComplementCode));
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _) {
@@ -82,13 +82,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _) {
     PrintCodes(Int|60, s.codes);
   };
 
-  # Reverses a sequence and prints the result to stdout.
+  # Complements an already-reversed sequence and prints the result to stdout.
   (Seq@) { M@<Unit@>; } DoSeq = (Seq@ s) {
-    PrintSeq(RevComp(s));
+    PrintSeq(Comp(s));
   };
 
-  # Reads in each sequence from stdin and processes it.
-  # partial is the current sequence built up so far.
+  # Reads in reversed sequences from stdin and processes it.
+  # partial is the current reversed sequence built up so far.
   (Seq@) { M@<Unit@>; } GenSeqs = (Seq@ partial) {
     String@ line <- m.do(GetLine);
     line.?(nil: DoSeq(partial));
@@ -100,7 +100,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _) {
       GenSeqs(Seq@(line, Str|''));
     });
 
-    GenSeqs(Seq@(partial.header, Append(partial.codes, line)));
+    GenSeqs(Seq@(partial.header, Append(Reverse(line), partial.codes)));
   };
 
   Unit@ _ <- m.do(GenSeqs(Seq@(Str|'', Str|'')));
