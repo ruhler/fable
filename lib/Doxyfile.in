@@ -3,7 +3,7 @@ ALIASES = "sideeffects=@par Side Effects:^^"
 JAVADOC_AUTOBRIEF = YES
 
 INPUT = @srcdir@/lib @srcdir@/include/fble
-FILE_PATTERNS = *.h *.c
+FILE_PATTERNS = *.h *.c *.y
 OPTIMIZE_OUTPUT_FOR_C = YES
 
 EXTRACT_PRIVATE = YES

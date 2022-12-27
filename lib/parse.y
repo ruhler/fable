@@ -1,5 +1,7 @@
-// parse.y --
-//   This file describes the bison grammar for parsing fble expressions.
+/**
+ * @file parse.y --
+ * The bison grammar for parsing fble expressions.
+ */
 %{
   #include <assert.h>   // for assert
   #include <ctype.h>    // for isalnum
@@ -18,22 +20,27 @@
   #include <fble/fble-vector.h>
   #include "expr.h"
 
-  // Lex --
-  //   State for the lexer.
+  /** State for the lexer. */
   //
   // Fields:
-  //   c - The next character in the input stream. EOF is used to indicate the
-  //   end of the input stream.
   //   loc - The location corresponding to the character c.
   //   fin - The input stream, if reading from a file. NULL otherwise.
   //   sin - The input stream, if reading from a string. NULL otherwise.
-  //   start_token - If not zero, a token to emit once at the start.
-  //      Used to switch between different kinds of entities to parse.
   typedef struct {
+    /**
+     * The next character in the input stream.
+     * EOF is used to indicate the end of the input stream.
+     */
     int c;
-    FbleLoc loc;
-    FILE* fin;
-    const char* sin;
+
+    FbleLoc loc;      /**< The location corresponding to the character c. */
+    FILE* fin;        /**< The input stream if reading from a file. NULL otherwise. */
+    const char* sin;  /**< The input stream if reading from a string. NULL otherwise. */
+
+    /**
+     * Token to emit at start of lexing if non-zero. 
+     * Used to switch between different kinds of entities to parse.
+     */
     int start_token;
   } Lex;
 
@@ -668,18 +675,18 @@ let_binding_p:
   ;
 
 %%
-// ToString --
-//   Convert a dynamically allocated char* to FbleString*.
-//
-// Inputs:
-//   str - the string to convert
-// 
-// Results:
-//   An FbleString version of str.
-//
-// Side effects:
-//   Frees 'str'. Allocates a new FbleString that should be freed using
-//   FbleFreeString.
+/**
+ * Converts a dynamically allocated char* to FbleString*.
+ *
+ * @param str  The string to convert
+ * 
+ * @returns
+ *   An FbleString version of str.
+ *
+ * @sideeffects
+ *   Frees 'str'. Allocates a new FbleString that should be freed using
+ *   FbleFreeString.
+ */
 static FbleString* ToString(const char* str)
 {
   FbleString* string = FbleNewString(str);
@@ -687,54 +694,54 @@ static FbleString* ToString(const char* str)
   return string;
 }
 
-// IsSpaceChar --
-//   Tests whether a character is whitespace.
-//
-// Inputs:
-//   c - The character to test. This must have a value of an unsigned char or
-//       EOF.
-//
-// Result:
-//   The value true if the character is whitespace, false otherwise.
-//
-// Side effects:
-//   None.
+/**
+ * Tests whether a character is whitespace.
+ *
+ * @param c  The character to test. This must have a value of an unsigned char
+ *   or EOF.
+ *
+ * @returns
+ *   The value true if the character is whitespace, false otherwise.
+ *
+ * @sideeffects
+ *   None.
+ */
 static bool IsSpaceChar(int c)
 {
   return isspace(c);
 }
 
-// IsPunctuationChar --
-//   Tests whether a character is one of the single-character punctuation tokens.
-//
-// Inputs:
-//   c - The character to test. This must have a value of an unsigned char or
-//       EOF.
-//
-// Result:
-//   The value true if the character is one of the fble punctuation tokens,
-//   false otherwise.
-//
-// Side effects:
-//   None.
+/**
+ * Tests whether a character is one of the single-character punctuation tokens.
+ *
+ * @param c  The character to test. This must have a value of an unsigned char
+ *   or EOF.
+ *
+ * @returns
+ *   The value true if the character is one of the fble punctuation tokens,
+ *   false otherwise.
+ *
+ * @sideeffects
+ *   None.
+ */
 static bool IsPunctuationChar(int c)
 {
   return c == EOF || strchr("(){}[];,:?=.<>+*-!$@~&|%/^", c) != NULL;
 }
 
-// IsWordChar --
-//   Tests whether a character is a normal character suitable for direct use
-//   in fble words.
-//
-// Inputs:
-//   c - The character to test. This must have a value of an unsigned char or
-//       EOF.
-//
-// Result:
-//   The value true if the character is a normal character, false otherwise.
-//
-// Side effects:
-//   None.
+/**
+ * Tests whether a character is a normal character suitable for direct use in
+ * fble words.
+ *
+ * @param c  The character to test. This must have a value of an unsigned char
+ *   or EOF.
+ *
+ * @returns
+ *   The value true if the character is a normal character, false otherwise.
+ *
+ * @sideeffects
+ *   None.
+ */
 static bool IsWordChar(int c)
 {
   if (IsSpaceChar(c) || IsPunctuationChar(c) || c == '\'' || c == '#') {
@@ -743,17 +750,14 @@ static bool IsWordChar(int c)
   return true;
 }
 
-// ReadNextChar --
-//   Advance to the next character in the input stream.
-//
-// Inputs:
-//   lex - The context of the lexer to advance.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Updates the character, location, and input stream of the lex context.
+/**
+ * Advances to the next character in the input stream.
+ *
+ * @param lex  The context of the lexer to advance.
+ *
+ * @sideeffects
+ *   Updates the character, location, and input stream of the lex context.
+ */
 static void ReadNextChar(Lex* lex)
 {
   int c = lex->c;
@@ -779,23 +783,23 @@ static void ReadNextChar(Lex* lex)
   }
 }
 
-// yylex -- 
-//   Return the next token in the input stream for the given lex context.
-//   This is the lexer for the bison generated parser.
-//
-// Inputs:
-//   lvalp - Output parameter for returned token value.
-//   llocp - Output parameter for the returned token's location.
-//   lex - The lex context to parse the next token from.
-// 
-// Results:
-//   The id of the next terminal symbol in the input stream.
-//
-// Side effects:
-//   Sets lvalp with the semantic value of the next token in the input
-//   stream, sets llocp with the location of the next token in the input
-//   stream, advances the stream to the subsequent token and updates the lex
-//   loc accordingly.
+/**
+ * Returns the next token in the input stream for the given lex context.
+ * This is the lexer for the bison generated parser.
+ *
+ * @param lvalp  Output parameter for returned token value.
+ * @param llocp  Output parameter for the returned token's location.
+ * @param lex  The lex context to parse the next token from.
+ * 
+ * @returns
+ *   The id of the next terminal symbol in the input stream.
+ *
+ * @sideeffects
+ *   Sets lvalp with the semantic value of the next token in the input
+ *   stream, sets llocp with the location of the next token in the input
+ *   stream, advances the stream to the subsequent token and updates the lex
+ *   loc accordingly.
+ */
 static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
 {
   if (lex->start_token) {
@@ -854,20 +858,17 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
   return WORD;
 }
 
-// yyerror --
-//   The error reporting function for the bison generated parser.
-// 
-// Inputs:
-//   llocp - The location of the error.
-//   lex - unused.
-//   result - unused.
-//   msg - The error message.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   An error message is printed to stderr.
+/**
+ * The error reporting function for the bison generated parser.
+ * 
+ * @param llocp  The location of the error.
+ * @param lex  Unused.
+ * @param result  Unused.
+ * @param msg  The error message.
+ *
+ * @sideeffects
+ *   An error message is printed to stderr.
+ */
 static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV* deps, const char* msg)
 {
   (void)lex;
@@ -877,7 +878,7 @@ static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV
   FbleReportError("%s\n", *llocp, msg);
 }
 
-// FbleParse -- see documentation in fble-load.h
+// See documentation in fble-load.h.
 FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps)
 {
   FILE* fin = fopen(filename->str, "r");
@@ -899,7 +900,7 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps)
   return result;
 }
 
-// FbleParseModulePath -- see documentation in fble-module-path.h
+// See documentation in fble-module-path.h.
 FbleModulePath* FbleParseModulePath(const char* string)
 {
   char source[strlen(string) + 3];
