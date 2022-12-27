@@ -10,4 +10,7 @@ namespace eval "pkgs/games" {
   stdio $::b/pkgs/games/Games/games-tests "/Games/Tests%" "games app"
   testsuite $::b/pkgs/games/Games/games-tests.tr $::b/pkgs/games/Games/games-tests \
     "$::b/pkgs/games/Games/games-tests --prefix Compiled."
+
+  stdio $::b/pkgs/games/reverse-complement \
+    "/Games/BenchmarkGame/ReverseComplement/Stdio%" "games app"
 }

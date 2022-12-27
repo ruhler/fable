@@ -44,23 +44,6 @@ List@ Nil = <@ T@> {
 #   List@<ABC@> x = List<ABC@>[A, B, A, C];
 <@ T@>(List@<T@>) { List@<T@>; } List = <@ T@>(List@<T@> l) { l; };
 
-# Append --
-#   Appends one list to another.
-#
-# Type Parameters:
-#   T@ - The type of elements in the list.
-#
-# Arguments:
-#   a - the first list
-#   b - the second list
-#
-# Returns:
-#   A list that contains the elements of 'a' followed by the elements of 'b'.
-<@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
-Append = <@ T@>(List@<T@> a, List@<T@> b) {
-  a.?(cons: Cons(a.cons.head, Append(a.cons.tail, b)), nil: b);
-};
-
 # Last --
 #   Returns the last element in a list.
 #
@@ -100,41 +83,6 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
     nil: Nil<T@>);
 };
 
-# Concat --
-#   Flattens a list of lists into a single list of all the elements.
-#
-# Type Parameters:
-#   T@ - The type of element in the resulting list.
-#
-# Arguments:
-#   x - The list to flatten.
-#
-# Returns:
-#   A list with all elements from the list of lists x, in order.
-<@ T@>(List@<List@<T@>>) { List@<T@>; } Concat = <@ T@>(List@<List@<T@>> x) {
-  x.?(cons: Append(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
-};
-
-# Map --
-#   Applies a function to every element of a list.
-#
-# Type Parameters:
-#   A@ - The type of element of the input list.
-#   B@ - The type of element of the output list.
-#
-# Arguments:
-#   a - The input list
-#   f - the function to apply
-#
-# Result:
-#   A list of elements f(a_i) for each a_i in the input list.
-<@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
-Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
-  a.?(
-    cons: Cons(f(a.cons.head), Map<A@, B@>(a.cons.tail, f)),
-    nil: Nil<B@>);
-};
-
 # ForEach --
 #   Iterate over elements of a list.
 #
@@ -163,8 +111,63 @@ ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
     nil: base);
 };
 
+# Reverses elements of a list.
 <@ T@>(List@<T@>) { List@<T@>; } Reverse = <@ T@>(List@<T@> l) {
-  ForEach(l, List<T@>[], (T@ x, List@<T@> nl) { Cons(x, nl); });
+  ForEach(l, List<T@>[], Cons<T@>);
+};
+
+# Map --
+#   Applies a function to every element of a list.
+#
+# Type Parameters:
+#   A@ - The type of element of the input list.
+#   B@ - The type of element of the output list.
+#
+# Arguments:
+#   a - The input list
+#   f - the function to apply
+#
+# Result:
+#   A list of elements f(a_i) for each a_i in the input list.
+<@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
+Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
+  # Note: Be careful not to smash the stack for long lists.
+  ForEach(Reverse(a), Nil<B@>, (A@ x, List@<B@> done) {
+    Cons(f(x), done);
+  });
+};
+
+# Append --
+#   Appends one list to another.
+#
+# Type Parameters:
+#   T@ - The type of elements in the list.
+#
+# Arguments:
+#   a - the first list
+#   b - the second list
+#
+# Returns:
+#   A list that contains the elements of 'a' followed by the elements of 'b'.
+<@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
+Append = <@ T@>(List@<T@> a, List@<T@> b) {
+  # Note: Be careful not to smash the stack for long lists.
+  ForEach(Reverse(a), b, Cons<T@>);
+};
+
+# Concat --
+#   Flattens a list of lists into a single list of all the elements.
+#
+# Type Parameters:
+#   T@ - The type of element in the resulting list.
+#
+# Arguments:
+#   x - The list to flatten.
+#
+# Returns:
+#   A list with all elements from the list of lists x, in order.
+<@ T@>(List@<List@<T@>>) { List@<T@>; } Concat = <@ T@>(List@<List@<T@>> x) {
+  x.?(cons: Append(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
 };
 
 @(List@, List, Cons, Nil, Append, Last, Init, Concat, Map, ForEach, Reverse);

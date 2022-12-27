@@ -137,3 +137,24 @@ really silly to me, so I'll leave it naive as is.
 Interesting... We smash the stack. I must have a deep non-tail recursion
 there. Debugger would be nice to see what's on the stack. That means I need to
 generate code for it though.
+
+With the debugger, it's easy to see the Append function is the problem. Do I
+expect Append to be that stack heavy? We can probably fix it. Also want to
+avoid the exponential blowup from how we build up strings in
+ReverseComplement, but separately.
+
+How can we implement Append without it smashing the stack? Maybe reverse the
+first list, and then tail call complete the Append? Any more straight forward
+approach? Reverse + ForEach is pretty straight forward. I think that should
+work fine. Let's see how it does.
+
+I'm still getting a segfault. Maybe we didn't fix it, or there is some other
+list function that is smashing the stack. It's the Map function.
+
+Do I really have to reverse the list to be able to map a function over it
+without smashing the stack? I wonder if that's not a problem in Haskell
+because it does lazy execution instead of strict.
+
+That sounds like a pretty fundamental important thing to be aware of when
+programming in fble.
+
