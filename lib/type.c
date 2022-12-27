@@ -1,6 +1,17 @@
 /**
  * @file type.c
  * FbleType routines.
+ *
+ * Design notes on types:
+ * * Instances of Type represent both unevaluated and evaluated versions of
+ *   the type. We use the unevaluated versions of the type when printing error
+ *   messages and as a stable reference to a type before and after evaluation.
+ * * Cycles are allowed in the Type data structure, to represent recursive
+ *   types. Every cycle is guaranteed to go through a Var type.
+ * * Types are evaluated as they are constructed.
+ * * FBLE_TYPE_TYPE is handled specially: we propagate FBLE_TYPE_TYPE up to the top of
+ *   the type during construction rather than save the unevaluated version of
+ *   a typeof.
  */
 
 #include "type.h"
@@ -10,47 +21,37 @@
 #include <fble/fble-module-path.h>
 #include <fble/fble-vector.h>
 
+/** 
+ * Indicate that a peice of code is unreachable.
+ *
+ * @param x  Message explaining why the code is unreachable.
+ */
 #define UNREACHABLE(x) assert(false && x)
 
-// Design notes on types:
-// * Instances of Type represent both unevaluated and evaluated versions of
-//   the type. We use the unevaluated versions of the type when printing error
-//   messages and as a stable reference to a type before and after evaluation.
-// * Cycles are allowed in the Type data structure, to represent recursive
-//   types. Every cycle is guaranteed to go through a Var type.
-// * Types are evaluated as they are constructed.
-// * FBLE_TYPE_TYPE is handled specially: we propagate FBLE_TYPE_TYPE up to the top of
-//   the type during construction rather than save the unevaluated version of
-//   a typeof.
-
-// TypeList --
-//   A linked list of types.
+/** Linked list of types. */
 typedef struct TypeList {
-  FbleType* type;
-  struct TypeList* next;
+  FbleType* type;           /**< The current element. */
+  struct TypeList* next;    /**< The rest of the elements. */
 } TypeList;
 
-// TypeList --
-//   A linked list of type ids.
+/** Linked list of type ids. */
 typedef struct TypeIdList {
-  uintptr_t id;
-  struct TypeIdList* next;
+  uintptr_t id;             /**< The current element. */
+  struct TypeIdList* next;  /**< The rest of the elements. */
 } TypeIdList;
 
-// TypePairs --
-//   A set of pairs of types.
+/** A set of pairs of types. */
 typedef struct TypePairs {
-  FbleType* a;
-  FbleType* b;
-  struct TypePairs* next;
+  FbleType* a;              /**< The first type of the current pair. */
+  FbleType* b;              /**< The second type of the current pair. */
+  struct TypePairs* next;   /**< The rest of the pairs in the set. */
 } TypePairs;
 
-// TypeIdPairs --
-//   A set of pairs of type ids.
+/** Set of pairs of type ids. */
 typedef struct TypeIdPairs {
-  uintptr_t a;
-  uintptr_t b;
-  struct TypeIdPairs* next;
+  uintptr_t a;                /**< The first id of the current pair. */
+  uintptr_t b;                /**< The second id of the current pair. */
+  struct TypeIdPairs* next;   /**< The rest of the pairs in the set. */
 } TypeIdPairs;
 
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
@@ -64,25 +65,24 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
 static FbleType* Subst(FbleTypeHeap* heap, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypeIdPairs* eq);
 
-// LevelAdjustedKind --
-//   Construct a kind that is a level adjusted version of the given kind.
-//
-// Inputs:
-//   kind - the kind to use as the basis.
-//   increment - the kind level increment amount. May be negative to decrease
-//               the kind level.
-//
-// Results:
-//   A new kind that is the same as the given kind except with level
-//   incremented by the given increment.
-//
-// Side effects:
-//   The caller is responsible for calling FbleFreeKind on the returned
-//   kind when it is no longer needed. This function does not take ownership
-//   of the given kind.
-//
-//   Behavior is undefined if the increment causes the resulting kind level
-//   to be less than 0.
+/**
+ * Constructs a level adjusted version of the given kind.
+ *
+ * @param kind  The kind to use as the basis.
+ * @param increment  The kind level increment amount. May be negative to decrease
+ *    the kind level.
+ *
+ * @returns
+ *   A new kind that is the same as the given kind except with level
+ *   incremented by the given increment.
+ *
+ * @sideeffects
+ * * The caller is responsible for calling FbleFreeKind on the returned
+ *   kind when it is no longer needed. This function does not take ownership
+ *   of the given kind.
+ * * Behavior is undefined if the increment causes the resulting kind level
+ *   to be less than 0.
+ */
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
 {
   switch (kind->tag) {
@@ -112,21 +112,16 @@ static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
   UNREACHABLE("Should never get here");
   return NULL;
 }
-
-
 
-// Ref --
-//   Helper function for traversing references.
-//
-// Inputs:
-//   callback - the refs callback.
-//   type - the type to traverse.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   If type is not null, the callback is called on it.
+/**
+ * Helper function for traversing references.
+ *
+ * @param callback  The refs callback.
+ * @param type  The type to traverse.
+ *
+ * @sideeffects
+ *   If type is not null, the callback is called on it.
+ */
 static void Ref(FbleHeapCallback* callback, FbleType* type)
 {
   if (type != NULL) {
@@ -134,8 +129,17 @@ static void Ref(FbleHeapCallback* callback, FbleType* type)
   }
 }
 
-// Refs --
-//   The refs function for types. See documentation in heap.h
+/**
+ * The 'refs' function for types.
+ *
+ * See documentation in heap.h.
+ *
+ * @param callback  Callback to call for each object referenced by obj
+ * @param type  The type whose references to traverse
+ *   
+ * @sideeffects
+ *   Calls the callback function for each type referenced by 'type'.
+ */
 static void Refs(FbleHeapCallback* callback, FbleType* type)
 {
   switch (type->tag) {
@@ -193,7 +197,17 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
   }
 }
 
-//   The on_free function for types. See documentation in heap.h
+/**
+ * The on_free function for types.
+ *
+ * See documentation in heap.h
+ *
+ * @param heap  The heap.
+ * @param type  The type being freed.
+ * 
+ * @sideeffects
+ *   Free any resources outside of the heap that this type holds on to.
+ */
 static void OnFree(FbleTypeHeap* heap, FbleType* type)
 {
   (void)heap;
@@ -239,21 +253,21 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
   UNREACHABLE("should never get here");
 }
 
-// Normal --
-//   Compute the normal form of a type.
-//
-// Inputs: 
-//   heap - heap to use for allocations.
-//   type - the type to reduce.
-//   normalizing - the set of types currently being normalized.
-//
-// Results:
-//   The type reduced to normal form, or NULL if the type cannot be reduced to
-//   normal form.
-//
-// Side effects:
-//   The caller is responsible for calling FbleReleaseType on the returned type
-//   when it is no longer needed.
+/**
+ * Computes the normal form of a type.
+ *
+ * @param heap  Heap to use for allocations.
+ * @param type  The type to reduce.
+ * @param normalizing  The set of types currently being normalized.
+ *
+ * @returns
+ *   The type reduced to normal form, or NULL if the type cannot be reduced to
+ *   normal form.
+ *
+ * @sideeffects
+ *   The caller is responsible for calling FbleReleaseType on the returned type
+ *   when it is no longer needed.
+ */
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normalizing)
 {
   for (TypeIdList* n = normalizing; n != NULL; n = n->next) {
@@ -328,19 +342,19 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normaliz
   return NULL;
 }
 
-// HasParam --
-//   Check whether a type has the given param as a free type variable.
-//
-// Inputs:
-//   type - the type to check.
-//   param - the abstract type to check for.
-//   visited - a list of types already visited to end the recursion.
-//
-// Results:
-//   True if the param occur in type, false otherwise.
-//
-// Side effects:
-//   None.
+/**
+ * Checks whether a type has the given param as a free type variable.
+ *
+ * @param type  The type to check.
+ * @param param  The abstract type to check for.
+ * @param visited  A list of types already visited to end the recursion.
+ *
+ * @returns
+ *   True if the param occur in type, false otherwise.
+ *
+ * @sideeffects
+ *   None.
+ */
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
 {
   for (TypeList* v = visited; v != NULL; v = v->next) {
@@ -412,37 +426,39 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
   return false;
 }
 
-// Subst --
-//   Substitute the given argument in place of the given parameter in the
-//   given type. This function does not attempt to evaluate the results
-//   of the substitution.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   type - the type to substitute into.
-//   param - the abstract type to substitute out.
-//   arg - the concrete type to substitute in.
-//   tps - a map of already substituted types, to avoid infinite recursion.
-//         External callers should pass NULL.
-//
-// Results:
-//   A type with all occurrences of param replaced with the arg type. The type
-//   may not be fully evaluated.
-//
-// Side effects:
-//   The caller is responsible for calling FbleReleaseType on the returned
-//   type when it is no longer needed. No new type ids are allocated by
-//   substitution.
-//
-// Design notes:
-//   The given type may have cycles. For example:
-//     <@>@ F@ = <@ T@> {
-//        @ X@ = +(T@ a, X@ b);
-//     };
-//     F@<Unit@>
-//
-//   To prevent infinite recursion, we use tps to record that we have already
-//   substituted Unit@ for T@ in X@ when traversing into field 'b' of X@.
+/**
+ * Subsititues a value for a type variable.
+ *
+ * Substitute the given argument in place of the given parameter in the given
+ * type. This function does not attempt to evaluate the results of the
+ * substitution.
+ *
+ * @param heap  Heap to use for allocations.
+ * @param type  The type to substitute into.
+ * @param param  The abstract type to substitute out.
+ * @param arg  The concrete type to substitute in.
+ * @param tps  A map of already substituted types, to avoid infinite recursion.
+ *    External callers should pass NULL.
+ *
+ * @returns
+ *   A type with all occurrences of param replaced with the arg type. The type
+ *   may not be fully evaluated.
+ *
+ * @sideeffects
+ *   The caller is responsible for calling FbleReleaseType on the returned
+ *   type when it is no longer needed. No new type ids are allocated by
+ *   substitution.
+ *
+ * Design notes:
+ *   The given type may have cycles. For example:
+ *     <@>@ F@ = <@ T@> {
+ *        @ X@ = +(T@ a, X@ b);
+ *     };
+ *     F@<Unit@>
+ *
+ *   To prevent infinite recursion, we use tps to record that we have already
+ *   substituted Unit@ for T@ in X@ when traversing into field 'b' of X@.
+ */
 static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, FbleType* arg, TypePairs* tps)
 {
   if (!HasParam(type, param, NULL)) {
@@ -591,21 +607,21 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
   return NULL;
 }
 
-// TypesEqual --
-//   Perform type inference and/or test whether the two given types are equal.
-//
-// Inputs:
-//   heap - heap to use for allocations
-//   vars - variables for type inference.
-//   a - the first type, abstract in the type variables. Borrowed.
-//   b - the second type, which should be concrete. Borrowed.
-//   eq - A set of pairs of type ids that should be assumed to be equal
-//
-// Results:
-//   True if the first type equals the second type, false otherwise.
-//
-// Side effects:
-// * Sets value of assignments to type variables to make the types equal.
+/**
+ * Infers types and checks for type equality.
+ *
+ * @param heap  Heap to use for allocations
+ * @param vars  Variables for type inference.
+ * @param a  The first type, abstract in the type variables. Borrowed.
+ * @param b  The second type, which should be concrete. Borrowed.
+ * @param eq  A set of pairs of type ids that should be assumed to be equal
+ *
+ * @returns
+ *   True if the first type equals the second type, false otherwise.
+ *
+ * @sideeffects
+ * * Sets value of assignments to type variables to make the types equal.
+ */
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypeIdPairs* eq)
 {
   a = FbleNormalType(heap, a);
@@ -806,7 +822,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
   return false;
 }
 
-// FbleGetKind -- see documentation in type.h
+// See documentation in type.h.
 FbleKind* FbleGetKind(FbleType* type)
 {
   switch (type->tag) {
@@ -876,7 +892,7 @@ FbleKind* FbleGetKind(FbleType* type)
   return NULL;
 }
 
-// FbleGetKindLevel -- see documentation in type.h
+// See documentation in type.h.
 size_t FbleGetKindLevel(FbleKind* kind)
 {
   switch (kind->tag) {
@@ -894,7 +910,7 @@ size_t FbleGetKindLevel(FbleKind* kind)
   return -1;
 }
 
-// FbleKindsEqual -- see documentation in type.h
+// See documentation in type.h.
 bool FbleKindsEqual(FbleKind* a, FbleKind* b)
 {
   if (a->tag != b->tag) {
@@ -920,7 +936,7 @@ bool FbleKindsEqual(FbleKind* a, FbleKind* b)
   return false;
 }
 
-// FblePrintKind -- see documentation in type.h
+// See documentation in type.h
 void FblePrintKind(FbleKind* kind)
 {
   switch (kind->tag) {
@@ -950,7 +966,7 @@ void FblePrintKind(FbleKind* kind)
   }
 }
 
-// FbleNewTypeHeap -- see documentation in type.h
+// See documentation in type.h.
 FbleTypeHeap* FbleNewTypeHeap()
 {
   return FbleNewHeap(
@@ -958,13 +974,13 @@ FbleTypeHeap* FbleNewTypeHeap()
       (void (*)(FbleHeap*, void*))&OnFree);
 }
 
-// FbleFreeTypeHeap -- see documentation in type.h
+// See documentation in type.h.
 void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
   FbleFreeHeap(heap);
 }
 
-// FbleNewType -- see documentation in type.h
+// See documentation in type.h.
 FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc)
 {
   FbleType* type = (FbleType*)FbleNewHeapObject(heap, size);
@@ -978,7 +994,7 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
   return type;
 }
 
-// FbleRetainType -- see documentation in type.h
+// See documentation in type.h
 FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
@@ -987,20 +1003,20 @@ FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type)
   return type;
 }
 
-// FbleReleaseType -- see documentation in type.h
+// See documentation in type.h.
 void FbleReleaseType(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
     FbleReleaseHeapObject(heap, type);
   }
 }
-// FbleTypeAddRef -- see documentation in type.h
+// See documentation in type.h.
 void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
 {
   FbleHeapObjectAddRef(heap, src, dst);
 }
 
-// FbleNewVarType -- see documentation in type.h
+// See documentation in type.h.
 FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name)
 {
   assert(name.space == FBLE_TYPE_NAME_SPACE && "bad namespace for var type");
@@ -1024,7 +1040,7 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
   return type;
 }
 
-// FbleAssignVarType -- see documentation in type.h
+// See documentation in type.h.
 void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
 {
   while (var->tag == FBLE_TYPE_TYPE) {
@@ -1039,7 +1055,7 @@ void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
   FbleTypeAddRef(heap, &var_type->_base, var_type->value);
 }
 
-// FbleNewPolyType -- see documentation in type.h
+// See documentation in type.h.
 FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleType* body)
 {
   if (body->tag == FBLE_TYPE_TYPE) {
@@ -1064,7 +1080,7 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
   return &pt->_base;
 }
 
-// FbleNewPolyApplyType -- see documentation in type.h
+// See documentation in type.h.
 FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg)
 {
   if (poly->tag == FBLE_TYPE_TYPE) {
@@ -1088,7 +1104,7 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
   return &pat->_base;
 }
 
-// FbleTypeIsVacuous -- see documentation in type.h
+// See documentation in type.h.
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
   FbleType* normal = Normal(heap, type, NULL);
@@ -1109,7 +1125,7 @@ bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
   return normal == NULL;
 }
 
-// FbleNormalType -- see documentation in type.h
+// See documentation in type.h.
 FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
 {
   FbleType* normal = Normal(heap, type, NULL);
@@ -1117,7 +1133,7 @@ FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
   return normal;
 }
 
-// FbleValueOfType -- see documentation in type.h
+// See documentation in type.h.
 FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof)
 {
   if (typeof->tag == FBLE_TYPE_TYPE) {
@@ -1128,7 +1144,7 @@ FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof)
   return NULL;
 }
 
-// FbleListElementType -- see documentation in type.h
+// See documentation in type.h.
 FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type)
 {
   FbleDataType* data_type = (FbleDataType*)FbleNormalType(heap, type);
@@ -1170,20 +1186,20 @@ FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type)
   return element_type;
 }
 
-// FbleTypesEqual -- see documentation in type.h
+// See documentation in type.h.
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 {
   FbleTypeAssignmentV vars = { .size = 0, .xs = NULL };
   return TypesEqual(heap, vars, a, b, NULL);
 }
 
-// FbleTypeInfer -- see documentation in type.h
+// See documentation in type.h.
 bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete)
 {
   return TypesEqual(heap, vars, abstract, concrete, NULL);
 }
 
-// FblePrintType -- see documentation in type.h
+// See documentation in type.h
 //
 // Notes:
 //   Human readable means we print var types using their name, without the
