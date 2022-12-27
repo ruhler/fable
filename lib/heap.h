@@ -39,7 +39,7 @@ typedef struct FbleHeapCallback {
 typedef struct FbleHeap FbleHeap;
 
 /**
- * Create a new garbage collected heap.
+ * Creates a new garbage collected heap.
  *
  * @returns
  *   The newly allocated heap.

@@ -18,47 +18,52 @@
 #include "unreachable.h"
 #include "value.h"
 
-// Local --
-//   Information about a value available in the stack frame.
-//
-// var - the variable.
-// refcount - the number of references to the local.
+/** Info about a value available in the stack frame. */
 typedef struct {
-  FbleVar var;
-  size_t refcount;
+  FbleVar var;        /**< The variable. */
+  size_t refcount;    /**< The number of references to the local. */
 } Local;
 
-// LocalV --
-//   A vector of pointers to locals.
+/** Vector of pointers to locals. */
 typedef struct {
-  size_t size;
-  Local** xs;
+  size_t size;      /**< Number of elements. */
+  Local** xs;       /**< The elements. */
 } LocalV;
 
-// Scope --
-//   Scope of variables visible during compilation.
-//
-// Fields:
-//   statics - variables captured from the parent scope.
-//     Owns the Locals.
-//   args - arguments to the function.
-//     Owns the Locals.
-//   vars - stack of local variables in scope order. Entries may be NULL.
-//     Owns the Locals.
-//   locals - local values. Entries may be NULL to indicate a free slot.
-//     Owns the Local.
-//   code - the instruction block for this scope.
-//   pending_profile_ops - profiling ops to associated with the next
-//                         instruction added.
-//   parent - the parent of this scope. May be NULL.
+/** Scope of variables visible during compilation. */
 typedef struct Scope {
+  /** Variables captured from the parent scope. Owned by the scope. */
   LocalV statics;
+
+  /** Arguments to the function. Owns the Locals. */
   LocalV args;
+
+  /**
+   * Stack of local variables in scope order.
+   * Entries may be NULL.
+   * Owns the Locals.
+   */
   LocalV vars;
+
+  /**
+   * Local values.
+   * Entries may be NULL to indicate a free slot.
+   * Owns the Locals.
+   */
   LocalV locals;
+
+  /** The instruction block for this scope. */
   FbleCode* code;
+
+  /**
+   * Debug info to apply before the next instruction to be added.
+   */
   FbleDebugInfo* pending_debug_info;
+
+  /** Profiling ops associated with the next instruction to be added. */
   FbleProfileOp* pending_profile_ops;
+
+  /** The parent of this scope. May be NULL. */
   struct Scope* parent;
 } Scope;
 
@@ -98,18 +103,18 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* profile_blocks);
 static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc);
 
-// NewLocal --
-//   Allocate space for an anonymous local variable on the stack frame.
-//
-// Inputs:
-//   scope - the scope to allocate the local on.
-//
-// Results:
-//   A newly allocated local.
-//
-// Side effects:
-//   Allocates a space on the scope's locals for the local. The local should
-//   be freed with ReleaseLocal when no longer in use.
+/**
+ * Allocates space for an anonymous local variable on the stack frame.
+ *
+ * @param scope  The scope to allocate the local on.
+ *
+ * @returns
+ *   A newly allocated local.
+ *
+ * @sideeffects
+ *   Allocates a space on the scope's locals for the local. The local should
+ *   be freed with ReleaseLocal when no longer in use.
+ */
 static Local* NewLocal(Scope* scope)
 {
   size_t index = scope->locals.size;
@@ -134,18 +139,18 @@ static Local* NewLocal(Scope* scope)
   return local;
 }
 
-// ReleaseLocal --
-//   Decrement the reference count on a local and free it if appropriate.
-//
-// Inputs:
-//   scope - the scope that the local belongs to
-//   local - the local to release. May be NULL.
-//   exit - whether the stack frame has already been exited or not.
-//
-// Side effects:
-//   Decrements the reference count on the local and frees it if the refcount
-//   drops to 0. Emits a RELEASE instruction if this is the last reference the
-//   local and the stack frame hasn't already been exited.
+/**
+ * Decrements the reference count on a local and free it if appropriate.
+ *
+ * @param scope  The scope that the local belongs to
+ * @param local  The local to release. May be NULL.
+ * @param exit  Whether the stack frame has already been exited or not.
+ *
+ * @sideeffects
+ *   Decrements the reference count on the local and frees it if the refcount
+ *   drops to 0. Emits a RELEASE instruction if this is the last reference the
+ *   local and the stack frame hasn't already been exited.
+ */
 static void ReleaseLocal(Scope* scope, Local* local, bool exit)
 {
   if (local == NULL) {
@@ -167,21 +172,18 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
   }
 }
 
-// PushVar --
-//   Push a variable onto the current scope.
-//
-// Inputs:
-//   scope - the scope to push the variable on to.
-//   name - the name of the variable. Borrowed.
-//   local - the local address of the variable. Consumed.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Pushes a new variable onto the scope. Takes ownership of the given local,
-//   which will be released when the variable is freed by a call to PopVar or
-//   FreeScope.
+/**
+ * Pushes a variable onto the current scope.
+ *
+ * @param scope  The scope to push the variable on to.
+ * @param name  The name of the variable. Borrowed.
+ * @param local  The local address of the variable. Consumed.
+ *
+ * @sideeffects
+ *   Pushes a new variable onto the scope. Takes ownership of the given local,
+ *   which will be released when the variable is freed by a call to PopVar or
+ *   FreeScope.
+ */
 static void PushVar(Scope* scope, FbleName name, Local* local)
 {
   if (local != NULL) {
@@ -196,15 +198,15 @@ static void PushVar(Scope* scope, FbleName name, Local* local)
   FbleVectorAppend(scope->vars, local);
 }
 
-// PopVar --
-//   Pops a var off the given scope.
-//
-// Inputs:
-//   scope - the scope to pop from.
-//   exit - whether the stack frame has already been exited or not.
-//
-// Side effects:
-//   Pops the top var off the scope.
+/**
+ * Pops a var off the given scope.
+ *
+ * @param scope  The scope to pop from.
+ * @param exit  Whether the stack frame has already been exited or not.
+ *
+ * @sideeffects
+ *   Pops the top var off the scope.
+ */
 static void PopVar(Scope* scope, bool exit)
 {
   scope->vars.size--;
@@ -212,19 +214,19 @@ static void PopVar(Scope* scope, bool exit)
   ReleaseLocal(scope, var, exit);
 }
 
-// GetVar --
-//   Lookup a var in the given scope.
-//
-// Inputs:
-//   scope - the scope to look in.
-//   var - the variable to look up.
-//
-// Result:
-//   The variable from the scope. The variable is owned by the scope and
-//   remains valid until either PopVar is called or the scope is finished.
-//
-// Side effects:
-//   Behavior is undefined if there is no such variable.
+/**
+ * Lookup a var in the given scope.
+ *
+ * @param scope  The scope to look in.
+ * @param var  The variable to look up.
+ *
+ * @returns
+ *   The variable from the scope. The variable is owned by the scope and
+ *   remains valid until either PopVar is called or the scope is finished.
+ *
+ * @sideeffects
+ *   Behavior is undefined if there is no such variable.
+ */
 static Local* GetVar(Scope* scope, FbleVar var)
 {
   switch (var.tag) {
@@ -248,19 +250,19 @@ static Local* GetVar(Scope* scope, FbleVar var)
   return NULL;
 }
 
-// SetVar --
-//   Change the value of a variable in scope.
-//
-// Inputs:
-//   scope - scope of variables
-//   index - the index of the local variable to change
-//   name - the name of the variable.
-//   local - the new value for the local variable
-//
-// Side effects:
-// * Frees the existing local value of the variable.
-// * Sets the value of the variable to the given local.
-// * Takes ownership of the given local.
+/**
+ * Changes the value of a variable in scope.
+ *
+ * @param scope  Scope of variables
+ * @param index  The index of the local variable to change
+ * @param name  The name of the variable.
+ * @param local  The new value for the local variable
+ *
+ * @sideeffects
+ * * Frees the existing local value of the variable.
+ * * Sets the value of the variable to the given local.
+ * * Takes ownership of the given local.
+ */
 static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
 {
   assert(index < scope->vars.size);
@@ -275,23 +277,23 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
   AppendDebugInfo(scope, &info->_base);
 }
 
-// InitScope --
-//   Initialize a new scope.
-//
-// Inputs:
-//   scope - the scope to initialize.
-//   code - a pointer to store the allocated code block for this scope.
-//   args - the arguments to the function the scope is for. Borrowed.
-//   statics - static variables captured by the function. Borrowed.
-//   block - the profile block id to enter when executing this scope.
-//   parent - the parent of the scope to initialize. May be NULL.
-//
-// Side effects:
-// * Initializes scope based on parent. FreeScope should be
-//   called to free the allocations for scope. The lifetimes of the code block
-//   and the parent scope must exceed the lifetime of this scope.
-// * The caller is responsible for calling FbleFreeCode on *code when it
-//   is no longer needed.
+/**
+ * Initializes a new scope.
+ *
+ * @param scope  The scope to initialize.
+ * @param code  A pointer to store the allocated code block for this scope.
+ * @param args  The arguments to the function the scope is for. Borrowed.
+ * @param statics  Static variables captured by the function. Borrowed.
+ * @param block  The profile block id to enter when executing this scope.
+ * @param parent  The parent of the scope to initialize. May be NULL.
+ *
+ * @sideeffects
+ * * Initializes scope based on parent. FreeScope should be
+ *   called to free the allocations for scope. The lifetimes of the code block
+ *   and the parent scope must exceed the lifetime of this scope.
+ * * The caller is responsible for calling FbleFreeCode on *code when it
+ *   is no longer needed.
+ */
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent)
 {
   FbleVectorInit(scope->statics);
@@ -343,14 +345,14 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV s
   }
 }
 
-// FreeScope --
-//   Free memory associated with a Scope.
-//
-// Inputs:
-//   scope - the scope to finish.
-//
-// Side effects:
-//   * Frees memory associated with scope.
+/**
+ * Free memory associated with a Scope.
+ *
+ * @param scope  The scope to finish.
+ *
+ * @sideeffects
+ *   * Frees memory associated with scope.
+ */
 static void FreeScope(Scope* scope)
 {
   for (size_t i = 0; i < scope->statics.size; ++i) {
@@ -383,16 +385,16 @@ static void FreeScope(Scope* scope)
   }
 }
 
-// AppendInstr --
-//   Append an instruction to the code block for the given scope.
-//
-// Inputs:
-//   scope - the scope to append the instruction to.
-//   instr - the instruction to append.
-//
-// Side effects:
-//   Appends instr to the code block for the given scope, thus taking
-//   ownership of the instr.
+/**
+ * Appends an instruction to the code block for the given scope.
+ *
+ * @param scope  The scope to append the instruction to.
+ * @param instr  The instruction to append.
+ *
+ * @sideeffects
+ *   Appends instr to the code block for the given scope, thus taking
+ *   ownership of the instr.
+ */
 static void AppendInstr(Scope* scope, FbleInstr* instr)
 {
   assert(instr->debug_info == NULL);
@@ -436,16 +438,16 @@ static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index)
   AppendInstr(scope, &release_instr->_base);
 }
 
-// AppendDebugInfo --
-//   Append a single debug info entry to the code block for the given scope.
-//
-// Inputs:
-//   scope - the scope to append the instruction to.
-//   info - the debug info entry whose next field must be NULL. Consumed.
-//
-// Side effects:
-//   Appends the debug info to the code block for the given scope, taking
-//   ownership of the allocated debug info object.
+/**
+ * Appends a single debug info entry to the code block for the given scope.
+ *
+ * @param scope  The scope to append the instruction to.
+ * @param info  The debug info entry whose next field must be NULL. Consumed.
+ *
+ * @sideeffects
+ *   Appends the debug info to the code block for the given scope, taking
+ *   ownership of the allocated debug info object.
+ */
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info)
 {
   assert(info->next == NULL);
@@ -460,16 +462,16 @@ static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info)
   } 
 }
 
-// AppendProfileOp --
-//   Append a profile op to the code block for the given scope.
-//
-// Inputs:
-//   scope - the scope to append the instruction to.
-//   tag - the tag of the profile op to insert.
-//   block - the block id if relevant.
-//
-// Side effects:
-//   Appends the profile op to the code block for the given scope.
+/**
+ * Appends a profile op to the code block for the given scope.
+ *
+ * @param scope  The scope to append the instruction to.
+ * @param tag  The tag of the profile op to insert.
+ * @param block  The block id if relevant.
+ *
+ * @sideeffects
+ *   Appends the profile op to the code block for the given scope.
+ */
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block)
 {
   FbleProfileOp* op = FbleAlloc(FbleProfileOp);
@@ -488,21 +490,21 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId bloc
   } 
 }
 
-// PushBlock --
-//   Push a new profiling block onto the block stack.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//   name - name to add to the current block path for naming the new block.
-//   loc - the location of the block.
-//
-// Results:
-//   The id of the newly pushed profiling block.
-//
-// Side effects:
-// * Pushes a new block to the blocks stack.
-// * The block should be popped from the stack using ExitBlock or one of the
-//   other functions that exit a block when no longer needed.
+/**
+ * Pushes a new profiling block onto the block stack.
+ *
+ * @param blocks  The blocks stack.
+ * @param name  Name to add to the current block path for naming the new block.
+ * @param loc  The location of the block.
+ *
+ * @returns
+ *   The id of the newly pushed profiling block.
+ *
+ * @sideeffects
+ * * Pushes a new block to the blocks stack.
+ * * The block should be popped from the stack using ExitBlock or one of the
+ *   other functions that exit a block when no longer needed.
+ */
 static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
 {
   const char* curr = NULL;
@@ -536,22 +538,23 @@ static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
   return id;
 }
 
-// PushBodyBlock --
-//   Add a new body profiling block to the block stack. This is used for the
-//   body of functions and processes that are executed when they are called,
-//   not when they are defined.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//   loc - The location of the new block.
-//
-// Returns:
-//   The id of the newly pushed block.
-//
-// Side effects:
-// * Adds a new block to the blocks stack.
-// * The block should be popped from the stack using ExitBlock or one of the
-//   other functions that exit a block when no longer needed.
+/**
+ * Adds a new body profiling block to the block stack.
+ *
+ * This is used for the body of functions and processes that are executed when
+ * they are called, not when they are defined.
+ *
+ * @param blocks  The blocks stack.
+ * @param loc  The location of the new block.
+ *
+ * @returns
+ *   The id of the newly pushed block.
+ *
+ * @sideeffects
+ * * Adds a new block to the blocks stack.
+ * * The block should be popped from the stack using ExitBlock or one of the
+ *   other functions that exit a block when no longer needed.
+ */
 static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
 {
   const char* curr = "";
@@ -575,51 +578,51 @@ static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
   return id;
 }
 
-// EnterBlock --
-//   Enter a new profiling block.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//   name - name to add to the current block path for naming the new block.
-//   loc - the location of the block.
-//   scope - where to add the ENTER_BLOCK instruction to.
-//   replace - if true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
-//
-// Side effects:
-//   Adds a new block to the blocks stack. Change the current block to the new
-//   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
-//   exited when no longer in scope using ExitBlock.
+/**
+ * Enters a new profiling block.
+ *
+ * @param blocks  The blocks stack.
+ * @param name  Name to add to the current block path for naming the new block.
+ * @param loc  The location of the block.
+ * @param scope  Where to add the ENTER_BLOCK instruction to.
+ * @param replace  If true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
+ *
+ * @sideeffects
+ *   Adds a new block to the blocks stack. Change the current block to the new
+ *   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
+ *   exited when no longer in scope using ExitBlock.
+ */
 static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace)
 {
   FbleBlockId id = PushBlock(blocks, name, loc);
   AppendProfileOp(scope, replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP, id);
 }
 
-// PopBlock --
-//   Pop the current profiling block frame.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//
-// Side effects:
-//   Pops the top block frame off the blocks stack.
+/**
+ * Pops the current profiling block frame.
+ *
+ * @param blocks  The blocks stack.
+ *
+ * @sideeffects
+ *   Pops the top block frame off the blocks stack.
+ */
 static void PopBlock(Blocks* blocks)
 {
   assert(blocks->stack.size > 0);
   blocks->stack.size--;
 }
 
-// ExitBlock --
-//   Exit the current profiling block frame.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//   scope - where to append the profile exit op.
-//   exit - whether the frame has already been exited.
-//
-// Side effects:
-//   Pops the top block frame off the blocks stack.
-//   profile exit op to the scope if exit is false.
+/**
+ * Exits the current profiling block frame.
+ *
+ * @param blocks  The blocks stack.
+ * @param scope  Where to append the profile exit op.
+ * @param exit  Whether the frame has already been exited.
+ *
+ * @sideeffects
+ *   Pops the top block frame off the blocks stack.
+ *   profile exit op to the scope if exit is false.
+ */
 static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 {
   PopBlock(blocks);
@@ -628,17 +631,16 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
   }
 }
 
-// CompileExit --
-//   If exit is true, appends a return instruction to instrs.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//   exit - whether we actually want to exit.
-//   scope - the scope to append the instructions to.
-//   result - the result to return when exiting. May be NULL.
-//
-// Side effects:
-//   If exit is true, appends a return instruction to instrs
+/**
+ * Appends a return instruction to instrs if exit is true.
+ *
+ * @param exit  Whether we actually want to exit.
+ * @param scope  The scope to append the instructions to.
+ * @param result  The result to return when exiting. May be NULL.
+ *
+ * @sideeffects
+ *   If exit is true, appends a return instruction to instrs
+ */
 static void CompileExit(bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
@@ -656,30 +658,31 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
   }
 }
 
-// CompileExpr --
-//   Compile the given expression. Returns the local variable that will hold
-//   the result of the expression and generates instructions to compute the
-//   value of that expression at runtime.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//   stmt - true if this marks the beginning of a statement, for debug
-//     purposes.
-//   exit - if true, generate instructions to exit the current scope.
-//   scope - the list of variables in scope.
-//   tc - the type checked expression to compile.
-//
-// Results:
-//   The local of the compiled expression.
-//
-// Side effects:
-// * Updates the blocks stack with with compiled block information.
-// * Appends instructions to the scope for executing the given expression.
-//   There is no gaurentee about what instructions have been appended to
-//   the scope if the expression fails to compile.
-// * The caller should call ReleaseLocal when the returned results are no
-//   longer needed. Note that FreeScope calls ReleaseLocal for all locals
-//   allocated to the scope, so that can also be used to clean up the local.
+/**
+ * Compiles the given expression.
+ *
+ * Returns the local variable that will hold the result of the expression and
+ * generates instructions to compute the value of that expression at runtime.
+ *
+ * @param blocks  The blocks stack.
+ * @param stmt  True if this marks the beginning of a statement, for debug
+ *   purposes.
+ * @param exit  If true, generate instructions to exit the current scope.
+ * @param scope  The list of variables in scope.
+ * @param v  The type checked expression to compile.
+ *
+ * @returns
+ *   The local of the compiled expression.
+ *
+ * @sideeffects
+ * * Updates the blocks stack with with compiled block information.
+ * * Appends instructions to the scope for executing the given expression.
+ *   There is no gaurentee about what instructions have been appended to
+ *   the scope if the expression fails to compile.
+ * * The caller should call ReleaseLocal when the returned results are no
+ *   longer needed. Note that FreeScope calls ReleaseLocal for all locals
+ *   allocated to the scope, so that can also be used to clean up the local.
+ */
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* v)
 {
   if (stmt) {
@@ -1050,19 +1053,19 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
   return code;
 }
 
-// CompileModule --
-//   Compile a single module.
-//
-// Inputs:
-//   module - meta info about the module and its dependencies.
-//   tc - the typechecked value of the module.
-//
-// Results:
-//   The compiled module.
-//
-// Side effects:
-//   The user should call FbleFreeCompiledModule on the resulting module when
-//   it is no longer needed.
+/**
+ * Compiles a single module.
+ *
+ * @param module  Meta info about the module and its dependencies.
+ * @param tc  The typechecked value of the module.
+ *
+ * @returns
+ *   The compiled module.
+ *
+ * @sideeffects
+ *   The user should call FbleFreeCompiledModule on the resulting module when
+ *   it is no longer needed.
+ */
 static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
 {
   FbleCompiledModule* compiled = FbleAlloc(FbleCompiledModule);
@@ -1085,7 +1088,7 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
   return compiled;
 }
 
-// FbleFreeCompiledModule -- see documentation in fble-compile.h
+// See documentation in fble-compile.h.
 void FbleFreeCompiledModule(FbleCompiledModule* module)
 {
   FbleFreeModulePath(module->path);
@@ -1102,7 +1105,7 @@ void FbleFreeCompiledModule(FbleCompiledModule* module)
   FbleFree(module);
 }
 
-// FbleFreeCompiledProgram -- see documentation in fble-compile.h
+// See documentation in fble-compile.h.
 void FbleFreeCompiledProgram(FbleCompiledProgram* program)
 {
   if (program != NULL) {
@@ -1114,7 +1117,7 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program)
   }
 }
 
-// FbleCompileModule -- see documentation in fble-compile.h
+// See documentation in fble-compile.h.
 FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program)
 {
   FbleTc* tc = FbleTypeCheckModule(program);
@@ -1130,7 +1133,7 @@ FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program)
   return compiled;
 }
 
-// FbleCompileProgram -- see documentation in fble-compile.h
+// See documentation in fble-compile.h.
 FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program)
 {
   FbleTc** typechecked = FbleTypeCheckProgram(program);

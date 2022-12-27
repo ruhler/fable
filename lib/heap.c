@@ -11,128 +11,121 @@
 
 #include <fble/fble-alloc.h>
 
-// Space --
-//   Which space the object belongs to.
-//
-// A and B are different spaces that are designated as the "to" space or the
-// "from" space depending on the phase of GC we are on. They can be used to
-// check which space an object is in, and instantly swap all objects in the
-// "to" space with all objects in the "from" space.
-//
-// Root objects in the "to" root space have already been traversed.
-// They live on heap->roots_to.
-//
-// Root objects in the "from" root space have yet to be traversed, and so far
-// are otherwise unreachable aside from being roots.
-// They live on heap->roots_from.
-//
-// Root objects in the PENDING root space have yet to be traversed, but are
-// otherwise reachable even if they weren't roots.
-// They live on heap->roots_from.
-//
-// Non-root objects in the "from" space have not yet been seen.
-// They live on heap->from.
-//
-// Non-root objects in the PENDING space are reachable, but have not yet been
-// traversed.
-// They live on heap->pending.
-//
-// Non-root objects in the "to" space are reachable and have been traversed.
-// They live on heap->to.
+/**
+ * Which space the object belongs to.
+ *
+ * A and B are different spaces that are designated as the "to" space or the
+ * "from" space depending on the phase of GC we are on. They can be used to
+ * check which space an object is in, and instantly swap all objects in the
+ * "to" space with all objects in the "from" space.
+ *
+ * Root objects in the "to" root space have already been traversed.
+ * They live on heap->roots_to.
+ *
+ * Root objects in the "from" root space have yet to be traversed, and so far
+ * are otherwise unreachable aside from being roots.
+ * They live on heap->roots_from.
+ *
+ * Root objects in the PENDING root space have yet to be traversed, but are
+ * otherwise reachable even if they weren't roots.
+ * They live on heap->roots_from.
+ *
+ * Non-root objects in the "from" space have not yet been seen.
+ * They live on heap->from.
+ *
+ * Non-root objects in the PENDING space are reachable, but have not yet been
+ * traversed.
+ * They live on heap->pending.
+ *
+ * Non-root objects in the "to" space are reachable and have been traversed.
+ * They live on heap->to.
+ */
 typedef enum {
   A,
   B,
   PENDING,
 } Space;
 
-// Obj --
-//   An object allocated on the heap.
-//
-// Fields:
-//   prev - previous entry in doubly linked list of objects.
-//   next - next entry in doubly linked list of objects.
-//   space - which space the object currently belongs to.
-//   refcount - the number of external (non-cyclic) references to this object.
-//              Objects with refcount greater than 0 are roots.
-//   obj - the obj pointer visible to the user.
+/**
+ * An object allocated on the heap.
+ */
 typedef struct Obj {
-  struct Obj* prev;
-  struct Obj* next;
-  Space space;
+  struct Obj* prev;   /**< Previous entry in doubly linked list of objects. */
+  struct Obj* next;   /**< Next entry in doubly linked list of objects. */
+  Space space;        /**< Which space the object currently belongs to. */
+
+  /**
+   * The number of external (non-cyclic) references to this object.
+   * Objects with refcount greater than 0 are roots.
+   */
   size_t refcount;
 
-  char obj[];
+  char obj[];         /**< The object pointer visible to the user. */
 } Obj;
 
-// ToObj --
-//   Get the Obj* corresponding to a void* obj pointer.
-//
-// Inputs:
-//   obj - the void* obj pointer.
-//
-// Results:
-//   The corresponding Obj* pointer.
-//
-// Side effects:
-//   None.
-//
-// Notes: defined as a macro instead of a function to improve performance.
+/**
+ * Gets the Obj* corresponding to a void* obj pointer.
+ *
+ * @param obj  The void* obj pointer.
+ *
+ * @returns
+ *   The corresponding Obj* pointer.
+ *
+ * @sideeffects
+ *   None.
+ *
+ * Notes: defined as a macro instead of a function to improve performance.
+ */
 #define ToObj(obj) (((Obj*)obj)-1)
 
-// FbleHeap -- see documentation in heap.h.
-//
-// GC traverses objects in the "from" space, moving any of those objects that
-// are reachable to the "to" space. Objects are "pending" when they have been
-// identified as reachable, but have not yet been traversed.
-//
-// The Obj fields are dummy nodes for a list of objects.
-//
-// Fields:
-//   refs - The refs callback to traverse reference from an object.
-//   on_free - The on_free callback to indicate an object has been freed.
-//
-//   to - List of non-root objects in the "to" space.
-//   from - List of non-root objects in the "from" space.
-//   pending - List of non-root objects in the PENDING space.
-//   roots_to - List of root objects in the "to" space.
-//   roots_from - List of root objects in the "from" and PENDING space.
-//   free - List of free objects.
-//
-//   to_space - Which space, A or B, is currently the "to" space.
-//   from_space - Which space, A or B, is currently the "from" space.
+/**
+ * GC managed heap of objects.
+ *
+ * See documentation in heap.h.
+ *
+ * GC traverses objects in the "from" space, moving any of those objects that
+ * are reachable to the "to" space. Objects are "pending" when they have been
+ * identified as reachable, but have not yet been traversed.
+ *
+ * The Obj fields are dummy nodes for a list of objects.
+ */
 struct FbleHeap {
+  /** The refs callback to traverse reference from an object. */
   void (*refs)(FbleHeapCallback* callback, void* obj);
+
+  /** The on_free callback to indicate an object has been freed. */
   void (*on_free)(FbleHeap* heap, void* obj);
 
-  Obj* to;
-  Obj* from;
-  Obj* pending;
-  Obj* roots_to;
-  Obj* roots_from;
-  Obj* free;
+  Obj* to;          /**< List of non-root objects in the "to" space. */
+  Obj* from;        /**< List of non-root objects in the "from" space. */
+  Obj* pending;     /**< List of non-root objects in the PENDING space. */
+  Obj* roots_to;    /**< List of root objects in the "to" space. */
+  Obj* roots_from;  /**< List of root objects in the "from" and PENDING space. */
+  Obj* free;        /**< List of free objects. */
 
-  Space to_space;
-  Space from_space;
+  Space to_space;     /**< Which space, A or B, is currently the "to" space. */
+  Space from_space;   /**< Which space, A or B, is currently the "from" space. */
 };
 
 static void MarkRefs(FbleHeap* heap, Obj* obj);
 static bool IncrGc(FbleHeap* heap);
 
-// MarkRefs --
-//   Visit the references from the given object for the purposes of marking.
-//
-// Inputs:
-//   heap - the heap
-//   obj - the object to visit.
-//
-// Side effects:
-//   Marks the visited references, moving them to the pending space if
-//   appropriate.
+/** Callback for MarkRef function. */
 typedef struct {
-  FbleHeapCallback _base;
-  FbleHeap* heap;
+  FbleHeapCallback _base;   /**< FbleHeapCallback Base class. */
+  FbleHeap* heap;           /**< The heap. */
 } MarkRefsCallback;
 
+/**
+ * Visits an object's references for the purpose of marking.
+ *
+ * @param this  The callback info.
+ * @param obj_  The object to visit.
+ *
+ * @sideeffects
+ *   Marks the visited references, moving them to the pending space if
+ *   appropriate.
+ */
 static void MarkRef(MarkRefsCallback* this, void* obj_)
 {
   Obj* obj = ToObj(obj_);
@@ -153,6 +146,16 @@ static void MarkRef(MarkRefsCallback* this, void* obj_)
   }
 }
 
+/**
+ * Visits the references from the given object for the purposes of marking.
+ *
+ * @param heap  The heap.
+ * @param obj  The object to visit.
+ *
+ * @sideeffects
+ *   Marks the visited references, moving them to the pending space if
+ *   appropriate.
+ */
 static void MarkRefs(FbleHeap* heap, Obj* obj)
 {
   MarkRefsCallback callback = {
@@ -162,18 +165,19 @@ static void MarkRefs(FbleHeap* heap, Obj* obj)
   heap->refs(&callback._base, obj->obj);
 }
 
-// IncrGc --
-//   Do an incremental amount of GC work.
-//
-// Inputs:
-//   heap - the heap to do GC on.
-//
-// Result: true if this completed a round of GC. False otherwise.
-//
-// Side effects:
-//   Does some GC work, which may involve moving objects around, traversing
-//   objects, freeing objects, etc.
-bool IncrGc(FbleHeap* heap)
+/**
+ * Does an incremental amount of GC work.
+ *
+ * @param heap - the heap to do GC on.
+ *
+ * @returns
+ *   true if this completed a round of GC. False otherwise.
+ *
+ * @sideeffects
+ *   Does some GC work, which may involve moving objects around, traversing
+ *   objects, freeing objects, etc.
+ */
+static bool IncrGc(FbleHeap* heap)
 {
   // Free a couple of objects on the free list.
   // If we free less than one object, we won't be able to keep up with
@@ -268,10 +272,10 @@ bool IncrGc(FbleHeap* heap)
   return false;
 }
 
-// FbleNewHeap -- see documentation in heap.h
+// See documentation in heap.h.
 FbleHeap* FbleNewHeap(
-    void (*refs)(FbleHeapCallback*, void*),
-    void (*on_free)(FbleHeap*, void*))
+    void (*refs)(FbleHeapCallback* callback, void* obj),
+    void (*on_free)(FbleHeap* heap, void* obj))
 {
   FbleHeap* heap = FbleAlloc(FbleHeap);
   heap->refs = refs;
@@ -301,7 +305,7 @@ FbleHeap* FbleNewHeap(
   return heap;
 }
 
-// FbleFreeHeap -- see documentation in heap.h
+// See documentation in heap.h.
 void FbleFreeHeap(FbleHeap* heap)
 {
   FbleHeapFullGc(heap);
@@ -315,7 +319,7 @@ void FbleFreeHeap(FbleHeap* heap)
   FbleFree(heap);
 }
 
-// FbleNewHeapObject -- see documentation in heap.h
+// See documentation in heap.h.
 void* FbleNewHeapObject(FbleHeap* heap, size_t size)
 {
   IncrGc(heap);
@@ -331,7 +335,7 @@ void* FbleNewHeapObject(FbleHeap* heap, size_t size)
   return obj->obj;
 }
 
-// FbleRetainHeapObject -- see documentation in heap.h
+// See documentation in heap.h.
 void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
 {
   Obj* obj = ToObj(obj_);
@@ -358,7 +362,7 @@ void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
   }
 }
 
-// FbleReleaseHeapObject -- see documentation in heap.h
+// See documentation in heap.h.
 void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
 {
   Obj* obj = ToObj(obj_);
@@ -395,7 +399,7 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
   }
 }
 
-// FbleHeapObjectAddRef -- see documentation in heap.h
+// See documentation in heap.h.
 void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
 {
   assert(dst_ != NULL);
@@ -420,7 +424,7 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
   }
 }
 
-// FbleHeapFullGc -- see documentation in heap.h
+// See documentation in heap.h.
 void FbleHeapFullGc(FbleHeap* heap)
 {
   // Finish the GC in progress.

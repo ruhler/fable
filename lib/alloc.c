@@ -15,63 +15,63 @@
 #include <unistd.h>   // for sysconf
 
 
-// gTotalBytesAllocated --
-//   The total number of bytes currently allocated via FbleAlloc routines.
+/** Total number of bytes currently allocated via FbleAlloc routines. */
 size_t gTotalBytesAllocated = 0;
 
-// gMaxTotalBytesAllocated --
-//   The maximum value of gTotalBytesAllocated since gMaxTotalBytesAllocated
-//   was last cleared.
+/**
+ * The maximum value of gTotalBytesAllocated since gMaxTotalBytesAllocated
+ * was last cleared.
+ */
 size_t gMaxTotalBytesAllocated = 0;
 
-// gInititialized --
-//   True if the exit routine has been registered.
+/** True if the exit routine has been registered. */
 bool gInitialized = false;
 
+/**
+ * An allocation.
+ */
 typedef struct {
-  size_t size;
-  char data[];
+  size_t size;      /**< Size of the allocation. */
+  char data[];      /**< Allocated memory region available to the user. */
 } Alloc;
 
-// StackChunk -- 
-//   A block of memory allocated for use in stack allocations.
-//
-// Fields:
-//   tail - The next chunk down in the stack.
-//   top - Pointer into data[] for where the next allocation should come from.
-//   end - The end boundary of the data.
-//   data - The raw data region used for allocations.
+/**
+ * Block of memory allocated for use in stack allocations.
+ */
 typedef struct StackChunk {
-  struct StackChunk* tail;
-  char* top;
-  char* end;
-  char data[];
+  /** The next chunk down in the stack. */
+  struct StackChunk* tail;    
+
+  /** Pointer into data for where next allocation should come from. */
+  char* top;        
+  char* end;      /**< The end boundary of the data. */
+  char data[];    /**< The raw data region used for allocations. */
 } StackChunk;
 
-// FbleStackAllocator --
-// 
-// Fields:
-//   current - the current chunk to use for stack allocations.
-//   next - optional cached next chunk to use for stack allocations.
+/**
+ * A stack allocator.
+ */
 struct FbleStackAllocator {
-  StackChunk* current;
-  StackChunk* next;
+  /** The current chunk to use for stack allocations. */
+  StackChunk* current;  
+
+  /** Optional cached next chunk to use for stack allocations. */
+  StackChunk* next;     
 };
 
 static void CountAlloc(size_t size);
 static void CountFree(size_t size);
 static void Exit();
 
-// CountAlloc --
-//   Update current allocation tracking based in the given new allocation
-//   size.
-//
-// Inputs:
-//   size - the size of the new allocation.
-//
-// Side effects:
-// * Initializes the allocation atExit routine if appropriate.
-// * Updates gTotalBytesAllocated and gMaxTotalBytesAllocated.
+/**
+ * Updates allocation metrics for a new allocation.
+ *
+ * @param size  The size of the new allocation.
+ *
+ * @sideeffects
+ * * Initializes the allocation atExit routine if appropriate.
+ * * Updates gTotalBytesAllocated and gMaxTotalBytesAllocated.
+ */
 static void CountAlloc(size_t size)
 {
   if (!gInitialized) {
@@ -85,25 +85,26 @@ static void CountAlloc(size_t size)
   }
 }
 
-// CountFree --
-//   Update current allocation tracking for a freed allocation.
-//
-// Inputs:
-//   size - the size of the freed allocation.
-//
-// Side effects:
-// * Updates gTotalBytesAllocated.
+/**
+ * Updates allocation tracking for a freed allocation.
+ *
+ * @param size  The size of the freed allocation.
+ *
+ * @sideeffects
+ * * Updates gTotalBytesAllocated.
+ */
 static void CountFree(size_t size)
 {
   gTotalBytesAllocated -= size;
 }
 
-// Exit --
-//   Clean up the global arena.
-//
-// Side effects:
-// * Frees resources associated with the global arena.
-// * Checks for memory leaks.
+/**
+ * Cleans up the global arena.
+ *
+ * @sideeffects
+ * * Frees resources associated with the global arena.
+ * * Checks for memory leaks.
+ */
 static void Exit()
 {
   if (gTotalBytesAllocated != 0) {
@@ -113,7 +114,7 @@ static void Exit()
   }
 }
 
-// FbleRawAlloc -- see documentation in fble-alloc.h
+// See documentation in fble-alloc.h.
 void* FbleRawAlloc(size_t size)
 {
   CountAlloc(size);
@@ -122,7 +123,7 @@ void* FbleRawAlloc(size_t size)
   return (void*)alloc->data;
 }
 
-// FbleFree -- see documentation in fble-alloc.h
+// See documentation in fble-alloc.h.
 void FbleFree(void* ptr)
 {
   if (ptr == NULL) {
@@ -135,7 +136,7 @@ void FbleFree(void* ptr)
   free(alloc);
 }
 
-// FbleNewStackAllocator -- see documentation in stack-alloc.h
+// See documentation in fble-alloc.h.
 FbleStackAllocator* FbleNewStackAllocator()
 {
   FbleStackAllocator* allocator = FbleAlloc(FbleStackAllocator);
@@ -153,7 +154,7 @@ FbleStackAllocator* FbleNewStackAllocator()
   return allocator;
 }
 
-// FbleFreeStackAllocator -- see documentation in stack-alloc.h
+// See documentation in fble-alloc.h.
 void FbleFreeStackAllocator(FbleStackAllocator* allocator)
 {
   StackChunk* chunk = allocator->current;
@@ -170,7 +171,7 @@ void FbleFreeStackAllocator(FbleStackAllocator* allocator)
   FbleFree(allocator);
 }
 
-// FbleRawStackAlloc -- see documentation in stack-alloc.h
+// See documentation in fble-alloc.h.
 void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size)
 {
   // Align size to 8 bytes, because I think that's necessary?
@@ -208,7 +209,7 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size)
   return alloc;
 }
 
-// FbleStackFree -- see documentation in stack-alloc.h
+// See documentation in fble-alloc.h.
 void FbleStackFree(FbleStackAllocator* allocator, void* ptr)
 {
   StackChunk* chunk = allocator->current;
@@ -226,13 +227,13 @@ void FbleStackFree(FbleStackAllocator* allocator, void* ptr)
   chunk->top = ptr;
 }
 
-// FbleMaxTotalBytesAllocated -- see documentation in fble-alloc.h
+// See documentation in fble-alloc.h.
 size_t FbleMaxTotalBytesAllocated()
 {
   return gMaxTotalBytesAllocated;
 }
 
-// FbleResetMaxTotalBytesAllocated -- see documentation in fble-alloc.h
+// See documentation in fble-alloc.h.
 void FbleResetMaxTotalBytesAllocated()
 {
   gMaxTotalBytesAllocated = gTotalBytesAllocated;
