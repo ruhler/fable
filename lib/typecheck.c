@@ -17,81 +17,90 @@
 #include "tc.h"
 #include "type.h"
 
+/** 
+ * Indicate that a peice of code is unreachable.
+ *
+ * @param x  Message explaining why the code is unreachable.
+ */
 #define UNREACHABLE(x) assert(false && x)
 
-// VarName --
-//   Variables can refer to normal values or module values.
-//
-// module == NULL means this is a normal value with name in 'normal'.
-// module != NULL means this is a module value with path in 'module'.
+/**
+ * Name of a variable.
+ *
+ * Variables can refer to normal values or module values.
+ *
+ * module == NULL means this is a normal value with name in 'normal'.
+ * module != NULL means this is a module value with path in 'module'.
+ */
 typedef struct {
-  FbleName normal;
-  FbleModulePath* module;
+  FbleName normal;            /**< Name for normal variables. */
+  FbleModulePath* module;     /**< Module for module variables. */
 } VarName;
 
 /** Info about an argument. */
 typedef struct {
-  VarName name;
-  FbleType* type;
+  VarName name;       /**< The name of the argument. */
+  FbleType* type;     /**< The type of the argument. */
 } Arg;
 
 /** Vector of Args. */
 typedef struct {
-  size_t size;
-  Arg* xs;
+  size_t size;      /**< Number of elements. */
+  Arg* xs;          /**< The elements. */
 } ArgV;
 
-// Var --
-//   Information about a variable visible during type checking.
-//
-// A variable that is captured from one scope to another will have a separate
-// instance of Var for each scope that it is captured in.
-//
-// name - the name of the variable.
-// type - the type of the variable.
-//   A reference to the type is owned by this Var.
-// used  - true if the variable is used anywhere at runtime, false otherwise.
-// accessed - true if the variable is referenced anywhere, false otherwise.
-// index - the index of the variable.
+/**
+ * Info about a variable visible during type checking.
+ *
+ * A variable that is captured from one scope to another will have a separate
+ * instance of Var for each scope that it is captured in.
+ */
 typedef struct {
-  VarName name;
-  FbleModulePath* path;
-  FbleType* type;
-  bool used;
-  bool accessed;
-  FbleVar var;
+  VarName name;     /**< The name of the variable. */
+
+  /**
+   * The type of the variable.
+   * A reference to the type is owned by this Var.
+   */
+  FbleType* type;         
+
+  bool used;        /**< True if the variable is used anywhere at runtime. */
+  bool accessed;    /**< True if the variable is referenced anywhere. */
+  FbleVar var;      /**< The index of the variable. */
 } Var;
 
-// VarV --
-//   A vector of pointers to vars.
+/** Vector of Var. */
 typedef struct {
-  size_t size;
-  Var** xs;
+  size_t size;    /**< Number of elements. */
+  Var** xs;       /**< The elements. */
 } VarV;
 
-// Scope --
-//   Scope of variables visible during type checking.
-//
-// Fields:
-//   statics - variables captured from the parent scope.
-//     Scope owns the Vars.
-//   args - list of args to the current scope.
-//     Scope owns the Vars.
-//   locals - stack of local variables in scope order.
-//     Variables may be NULL to indicate they are anonymous.
-//     Scope owns the Vars.
-//   captured - Collects the source of variables captured from the parent
-//              scope. May be NULL to indicate that operations on this scope
-//              should not have any side effects on the parent scope.
-//   module - the current module being compiled.
-//   parent - the parent of this scope. May be NULL.
+/**
+ * Scope of variables visible during type checking.
+ */
 typedef struct Scope {
+  /** Variables captured from the parent scope. Scope owns the Vars. */
   VarV statics;
+
+  /** List of args to the current scope. Scope owns the Vars. */
   VarV args;
+
+  /**
+   * Stack of local variables in scope order.
+   * Variables may be NULL to indicate they are anonymous.
+   * Scope owns the Vars.
+   */
   VarV locals;
+
+  /**
+   * Collects the source of variables captured from the parent scope.
+   * May be NULL to indicate that operations on this scope should not have any
+   * side effects on the parent scope.
+   */
   FbleVarV* captured;
-  FbleModulePath* module;
-  struct Scope* parent;
+
+  FbleModulePath* module;   /**< The current module being compiled. */
+  struct Scope* parent;     /**< The parent of this scope. May be NULL. */
 } Scope;
 
 static bool VarNamesEqual(VarName a, VarName b);
@@ -105,36 +114,34 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 static void ReportError(FbleLoc loc, const char* fmt, ...);
 static bool CheckNameSpace(FbleName name, FbleType* type);
 
-// Tc --
-//   A pair of returned type and type checked expression.
+/** Pair of returned type and type checked expression. */
 typedef struct {
-  FbleType* type;
-  FbleTc* tc;
+  FbleType* type;   /**< The type of the expression. */
+  FbleTc* tc;       /**< The type checked expression. */
 } Tc;
 
-// TcV -- A vector of Tc.
+/** Vector of Tc. */
 typedef struct {
-  size_t size;
-  Tc* xs;
+  size_t size;    /**< Number of elements. */
+  Tc* xs;         /**< The elements. */
 } TcV;
 
-// TC_FAILED --
-//   Tc returned to indicate that type check has failed.
+/** Tc returned to indicate that type check has failed. */
 static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
 
-// Cleaner --
-//   Tracks values to be automatically cleaned up when exiting a typecheck
-//   function.
+/**
+ * Tracks values for automatic cleanup.
+ */
 typedef struct {
-  FbleTypeV types;
-  FbleTcV tcs;
+  FbleTypeV types;      /**< List of types to clean up. */
+  FbleTcV tcs;          /**< List of tcs to clean up. */
   struct {
-    size_t size;
-    FbleTypeAssignmentV** xs;
-  } tyvars;
+    size_t size;                /**< Number of elements. */
+    FbleTypeAssignmentV** xs;   /**< The elements. */
+  } tyvars;             /**< List of type variables to clean up. */
 } Cleaner;
 
 static Cleaner* NewCleaner();
@@ -155,18 +162,18 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* 
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps);
 
 
-// VarNamesEqual --
-//   Test whether two variable names are equal.
-//
-// Inputs:
-//   a - the first variable name.
-//   b - the second variable name.
-//
-// Results:
-//   true if the names are equal, false otherwise.
-//
-// Side effects:
-//   None.
+/**
+ * Tests whether two variable names are equal.
+ *
+ * @param a  The first variable name.
+ * @param b  The second variable name.
+ *
+ * @returns
+ *   true if the names are equal, false otherwise.
+ *
+ * @sideeffects
+ *   None.
+ */
 static bool VarNamesEqual(VarName a, VarName b)
 {
   if (a.module == NULL && b.module == NULL) {
@@ -180,25 +187,25 @@ static bool VarNamesEqual(VarName a, VarName b)
   return false;
 }
 
-// PushLocalVar --
-//   Push a local variable onto the current scope.
-//
-// Inputs:
-//   scope - the scope to push the variable on to.
-//   name - the name of the variable.
-//   type - the type of the variable.
-//
-// Results:
-//   A pointer to the newly pushed variable. The pointer is owned by the
-//   scope. It remains valid until a corresponding PopLocalVar or FreeScope
-//   occurs.
-//
-// Side effects:
-// * Pushes a new variable with given name and type onto the scope.
-// * Takes ownership of the given type, which will be released when the
-//   variable is freed.
-// * Does not take ownership of name. It is the callers responsibility
-//   to ensure that 'name' outlives the returned Var.
+/**
+ * Pushes a local variable onto the current scope.
+ *
+ * @param scope  The scope to push the variable on to.
+ * @param name  The name of the variable.
+ * @param type  The type of the variable.
+ *
+ * @returns
+ *   A pointer to the newly pushed variable. The pointer is owned by the
+ *   scope. It remains valid until a corresponding PopLocalVar or FreeScope
+ *   occurs.
+ *
+ * @sideeffects
+ * * Pushes a new variable with given name and type onto the scope.
+ * * Takes ownership of the given type, which will be released when the
+ *   variable is freed.
+ * * Does not take ownership of name. It is the callers responsibility
+ *   to ensure that 'name' outlives the returned Var.
+ */
 static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
 {
   Var* var = FbleAlloc(Var);
@@ -212,19 +219,16 @@ static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
   return var;
 }
 
-// PopLocalVar --
-//   Pops a local var off the given scope.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   scope - the scope to pop from.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Pops the top var off the scope. Invalidates the pointer to the variable
-//   originally returned in PushLocalVar.
+/**
+ * Pops a local var off the given scope.
+ *
+ * @param heap  Heap to use for allocations.
+ * @param scope  The scope to pop from.
+ *
+ * @sideeffects
+ *   Pops the top var off the scope. Invalidates the pointer to the variable
+ *   originally returned in PushLocalVar.
+ */
 static void PopLocalVar(FbleTypeHeap* heap, Scope* scope)
 {
   scope->locals.size--;
@@ -235,22 +239,22 @@ static void PopLocalVar(FbleTypeHeap* heap, Scope* scope)
   }
 }
 
-// GetVar --
-//   Lookup a var in the given scope.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   scope - the scope to look in.
-//   name - the name of the variable.
-//   phantom - if true, do not consider the variable to be accessed.
-//
-// Result:
-//   The variable from the scope, or NULL if no such variable was found. The
-//   variable is owned by the scope and remains valid until either PopLocalVar
-//   is called or the scope is finished.
-//
-// Side effects:
-//   Marks variable as used and for capture if necessary and not phantom.
+/**
+ * Looks up a var in the given scope.
+ *
+ * @param heap  Heap to use for allocations.
+ * @param scope  The scope to look in.
+ * @param name  The name of the variable.
+ * @param phantom  If true, do not consider the variable to be accessed.
+ *
+ * @returns
+ *   The variable from the scope, or NULL if no such variable was found. The
+ *   variable is owned by the scope and remains valid until either PopLocalVar
+ *   is called or the scope is finished.
+ *
+ * @sideeffects
+ *   Marks variable as used and for capture if necessary and not phantom.
+ */
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 {
   for (size_t i = 0; i < scope->locals.size; ++i) {
@@ -314,26 +318,26 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
   return NULL;
 }
 
-// InitScope --
-//   Initialize a new scope.
-//
-// Inputs:
-//   scope - the scope to initialize.
-//   captured - Collects the source of variables captured from the parent
-//              scope. May be NULL to indicate that operations on this scope
-//              should not have any side effects on the parent scope.
-//   args - args to the scope.
-//   module - the current module. Borrowed.
-//   parent - the parent of the scope to initialize. May be NULL.
-//
-// Side effects:
-// * Initializes scope based on parent.
-// * FreeScope should be called to free the allocations for scope.
-// * The lifetime of the parent scope must exceed the lifetime of this scope.
-// * Takes ownership of the args types, which will be released when the
-//   scope is freed.
-// * Does not take ownership of arg names. It is the callers responsibility to
-//   ensure that arg names outlive the scope.
+/**
+ * Initialize a new scope.
+ *
+ * @param scope  The scope to initialize.
+ * @param captured  Collects the source of variables captured from the parent
+ *   scope. May be NULL to indicate that operations on this scope should not
+ *   have any side effects on the parent scope.
+ * @param args  Args to the scope.
+ * @param module  The current module. Borrowed.
+ * @param parent  The parent of the scope to initialize. May be NULL.
+ *
+ * @sideeffects
+ * * Initializes scope based on parent.
+ * * FreeScope should be called to free the allocations for scope.
+ * * The lifetime of the parent scope must exceed the lifetime of this scope.
+ * * Takes ownership of the args types, which will be released when the
+ *   scope is freed.
+ * * Does not take ownership of arg names. It is the callers responsibility to
+ *   ensure that arg names outlive the scope.
+ */
 static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePath* module, Scope* parent)
 {
   FbleVectorInit(scope->statics);
@@ -355,18 +359,15 @@ static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePat
   }
 }
 
-// FreeScope --
-//   Free memory associated with a Scope.
-//
-// Inputs:
-//   heap - heap to use for allocations
-//   scope - the scope to finish.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   * Frees memory associated with scope.
+/**
+ * Frees memory associated with a Scope.
+ *
+ * @param heap  Heap to use for allocations
+ * @param scope  The scope to finish.
+ *
+ * @sideeffects
+ * * Frees memory associated with scope.
+ */
 static void FreeScope(FbleTypeHeap* heap, Scope* scope)
 {
   for (size_t i = 0; i < scope->statics.size; ++i) {
@@ -388,30 +389,27 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
   FbleFreeModulePath(scope->module);
 }
 
-// ReportError --
-//   Report a compiler error.
-//
-//   This uses a printf-like format string. The following format specifiers
-//   are supported:
-//     %i - size_t
-//     %k - FbleKind*
-//     %n - FbleName
-//     %s - const char*
-//     %t - FbleType*
-//     %m - FbleModulePath*
-//     %% - literal '%'
-//   Please add additional format specifiers as needed.
-//
-// Inputs:
-//   loc - the location of the error.
-//   fmt - the format string.
-//   ... - The var-args for the associated conversion specifiers in fmt.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints a message to stderr as described by fmt and provided arguments.
+/**
+ * Reports a compiler error.
+ *
+ * This uses a printf-like format string. The following format specifiers
+ * are supported:
+ *   %i - size_t
+ *   %k - FbleKind*
+ *   %n - FbleName
+ *   %s - const char*
+ *   %t - FbleType*
+ *   %m - FbleModulePath*
+ *   %% - literal '%'
+ * Please add additional format specifiers as needed.
+ *
+ * @param loc  The location of the error.
+ * @param fmt  The format string.
+ * @param ...  The var-args for the associated conversion specifiers in fmt.
+ *
+ * @sideeffects
+ *   Prints a message to stderr as described by fmt and provided arguments.
+ */
 static void ReportError(FbleLoc loc, const char* fmt, ...)
 {
   FbleReportError("", loc);
@@ -475,20 +473,22 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
   va_end(ap);
 }
 
-// CheckNameSpace --
-//   Verify that the namespace of the given name is appropriate for the type
-//   of value the name refers to.
-//
-// Inputs:
-//   name - the name in question
-//   type - the type of the value refered to by the name.
-//
-// Results:
-//   true if the namespace of the name is consistent with the type. false
-//   otherwise.
-//
-// Side effects:
-//   Prints a message to stderr if the namespace and type don't match.
+/**
+ * Checks that the right namespace is used for a variable.
+ *
+ * Normal variables should use the normal name space. Type variables should
+ * use the type namespace.
+ *
+ * @param name  The name in question
+ * @param type  The type of the value refered to by the name.
+ *
+ * @returns
+ *   true if the namespace of the name is consistent with the type. false
+ *   otherwise.
+ *
+ * @sideeffects
+ *   Prints a message to stderr if the namespace and type don't match.
+ */
 static bool CheckNameSpace(FbleName name, FbleType* type)
 {
   FbleKind* kind = FbleGetKind(type);
@@ -505,48 +505,49 @@ static bool CheckNameSpace(FbleName name, FbleType* type)
   return match;
 }
 
-// MkTc --
-//   Convenience function for constructing a tc pair.
-//
-// Inputs:
-//   type - the type to put in the tc.
-//   tc - the tc to put in the tc.
-//
-// Results:
-//   A Tc with type and tc as fields.
-//
-// Side effects:
-//   None.
+/**
+ * Constructs a tc pair.
+ *
+ * @param type  The type to put in the tc.
+ * @param tc  The tc to put in the tc.
+ *
+ * @returns
+ *   A Tc with type and tc as fields.
+ *
+ * @sideeffects
+ *   None.
+ */
 static Tc MkTc(FbleType* type, FbleTc* tc)
 {
   Tc x = { .type = type, .tc = tc };
   return x;
 }
 
-// FreeTc --
-//   Convenience function to free the type and tc fields of a Tc.
-//
-// Inputs:
-//   th - heap to use for allocations
-//   tc - tc to free the fields of. May be TC_FAILED.
-//
-// Side effects:
-//   Frees resources associated with the type and tc fields of tc.
+/**
+ * Frees type and tc fields of a Tc.
+ *
+ * @param th  Heap to use for allocations
+ * @param tc  Tc to free the fields of. May be TC_FAILED.
+ *
+ * @sideeffects
+ *   Frees resources associated with the type and tc fields of tc.
+ */
 static void FreeTc(FbleTypeHeap* th, Tc tc)
 {
   FbleReleaseType(th, tc.type);
   FbleFreeTc(tc.tc);
 }
 
-// NewCleaner --
-//   Allocate and return a new cleaner object.
-//
-// Results:
-//   A newly allocated cleaner object.
-//
-// Side effects:
-//   The user should call a WithCleanup function to free resources associated
-//   with the cleaner object when no longer needed.
+/**
+ * Allocates and returns a new cleaner object.
+ *
+ * @returns
+ *   A newly allocated cleaner object.
+ *
+ * @sideeffects
+ *   The user should call a WithCleanup function to free resources associated
+ *   with the cleaner object when no longer needed.
+ */
 static Cleaner* NewCleaner()
 {
   Cleaner* cleaner = FbleAlloc(Cleaner);
@@ -556,60 +557,59 @@ static Cleaner* NewCleaner()
   return cleaner;
 }
 
-// CleanType --
-//   Add a type to the cleaner to be released when cleanup occurs.
-//
-// Inputs:
-//   cleaner - the cleaner to add the type to.
-//   type - the type to track.
-//
-// Side effects:
-//   The type will be automatically released when the cleaner is cleaned up.
+/**
+ * Adds an FbleType for automatic cleanup.
+ *
+ * @param cleaner  The cleaner to add the type to.
+ * @param type  The type to track.
+ *
+ * @sideeffects
+ *   The type will be automatically released when the cleaner is cleaned up.
+ */
 static void CleanType(Cleaner* cleaner, FbleType* type)
 {
   FbleVectorAppend(cleaner->types, type);
 }
 
-// CleanTc --
-//   Add a tc to the cleaner to be released when cleanup occurs.
-//
-// Inputs:
-//   cleaner - the cleaner to add the type to.
-//   tc - the tc to track.
-//
-// Side effects:
-//   The tc will be automatically released when the cleaner is cleaned up.
+/**
+ * Adds a Tc for automatic cleanup.
+ *
+ * @param cleaner  The cleaner to add the type to.
+ * @param tc  The tc to track.
+ *
+ * @sideeffects
+ *   The tc will be automatically released when the cleaner is cleaned up.
+ */
 static void CleanTc(Cleaner* cleaner, Tc tc)
 {
   FbleVectorAppend(cleaner->types, tc.type);
   FbleVectorAppend(cleaner->tcs, tc.tc);
 }
 
-// CleanTc --
-//   Add an FbleTypeAssignmentV to the cleaner to be released when cleanup
-//   occurs.
-//
-// Inputs:
-//   cleaner - the cleaner to add the type to.
-//   vars - the vars to track. Should be allocated with FbleAlloc.
-//
-// Side effects:
-//   The vars will be automatically released when the cleaner is cleaned up.
+/**
+ * Adds an FbleTypeAssignmentV for automatic cleanup.
+ *
+ * @param cleaner  The cleaner to add the type to.
+ * @param vars  The vars to track. Should be allocated with FbleAlloc.
+ *
+ * @sideeffects
+ *   The vars will be automatically released when the cleaner is cleaned up.
+ */
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars)
 {
   FbleVectorAppend(cleaner->tyvars, vars);
 }
 
-// Cleanup -- 
-//   Invoke cleanup.
-//
-// Inputs:
-//   th - the type heap used for cleanup.
-//   cleaner - the cleaner object to trigger cleanup on.
-//
-// Side effects:
-//   Cleans up all objects tracked by the cleaner along with the cleaner
-//   object itself.
+/**
+ * Cleans up objects marked for automatic cleanup.
+ *
+ * @param th  The type heap used for cleanup.
+ * @param cleaner  The cleaner object to trigger cleanup on.
+ *
+ * @sideeffects
+ *   Cleans up all objects tracked by the cleaner along with the cleaner
+ *   object itself.
+ */
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
 {
   for (size_t i = 0; i < cleaner->types.size; ++i) {
@@ -634,22 +634,24 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   FbleFree(cleaner);
 }
 
-// DepolyType --
-//   Normalize and remove any layers of polymorphic type variables from the
-//   given type.
-//
-// Inputs:
-//   th - the type heap
-//   type - the type to normalize and unwrap poly type vars from.
-//   vars - output variable to populate unwrapped type variables to.
-//
-// Results:
-//   The normalized and depolyed type.
-//
-// Side effects:
-// * Adds unwrapped type variables to vars.
-// * The caller should call FbleReleaseType on the returned type when no
-//   longer needed.
+/**
+ * Normalizes the given type.
+ *
+ * Normalizes and removes any layers of polymorphic type variables from the
+ * given type.
+ *
+ * @param th  The type heap
+ * @param type  The type to normalize and unwrap poly type vars from.
+ * @param vars  Output variable to populate unwrapped type variables to.
+ *
+ * @returns
+ *   The normalized and depolyed type.
+ *
+ * @sideeffects
+ * * Adds unwrapped type variables to vars.
+ * * The caller should call FbleReleaseType on the returned type when no
+ *   longer needed.
+ */
 static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars)
 {
   FbleType* pbody = FbleNormalType(th, type);
@@ -665,25 +667,25 @@ static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignment
   return pbody;
 }
 
-// PolyApply --
-//   Helper function for type checking poly application.
-//
-// Inputs:
-//   th - the type heap
-//   poly - The type and value of the poly. Borrowed.
-//   arg_type - The type of the arg type to apply the poly to. May be NULL. Borrowed.
-//   expr_loc - The location of the application expression.
-//   arg_loc - The location of the argument type.
-//
-// Returns:
-//   The Tc for the application of the poly to the argument, or TC_FAILED in
-//   case of error.
-//
-// Side effects:
-// * Reports an error in case of error.
-// * The caller should call FbleFreeTc when the returned FbleTc is no longer
-//   needed and FbleReleaseType when the returned FbleType is no longer
-//   needed.
+/**
+ * Typechecks poly application.
+ *
+ * @param th  The type heap
+ * @param poly  The type and value of the poly. Borrowed.
+ * @param arg_type  The type of the arg type to apply the poly to. May be NULL. Borrowed.
+ * @param expr_loc  The location of the application expression.
+ * @param arg_loc  The location of the argument type.
+ *
+ * @returns
+ *   The Tc for the application of the poly to the argument, or TC_FAILED in
+ *   case of error.
+ *
+ * @sideeffects
+ * * Reports an error in case of error.
+ * * The caller should call FbleFreeTc when the returned FbleTc is no longer
+ *   needed and FbleReleaseType when the returned FbleType is no longer
+ *   needed.
+ */
 static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc)
 {
   // Note: typeof(poly<arg>) = typeof(poly)<arg>
@@ -763,25 +765,27 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
   return TC_FAILED;
 }
 
-// TypeInferArgs --
-//   Common code to infer type variables of and check types of arguments to a
-//   potential polymorphic typed object.
-//
-// Inputs:
-//   th - the type heap
-//   vars - the type variables. Borrowed.
-//   expected - list of expected types to be passed to the poly. Borrowed.
-//   actual - list of actual arguments to the poly. Borrowed.
-//   poly - the poly. Borrowed.
-//
-// Results:
-//   The result of applying the poly to the inferred type variables, or
-//   TC_FAILED in case of type error.
-//
-// Side effects:
-// * Prints error message in case of failure to type check.
-// * Populates values of vars based on type inference.
-// * Allocates a Tc that should be freed with FreeTc when no longer needed.
+/**
+ * Infers and checks argument types.
+ *
+ * Common code to infer type variables of and check types of arguments to a
+ * potential polymorphic typed object.
+ *
+ * @param th  The type heap
+ * @param vars  The type variables. Borrowed.
+ * @param expected  List of expected types to be passed to the poly. Borrowed.
+ * @param actual  List of actual arguments to the poly. Borrowed.
+ * @param poly  The poly. Borrowed.
+ *
+ * @returns
+ *   The result of applying the poly to the inferred type variables, or
+ *   TC_FAILED in case of type error.
+ *
+ * @sideeffects
+ * * Prints error message in case of failure to type check.
+ * * Populates values of vars based on type inference.
+ * * Allocates a Tc that should be freed with FreeTc when no longer needed.
+ */
 static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly)
 {
   if (poly.type == NULL) {
@@ -853,23 +857,23 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
   return result;
 }
 
-// TypeCheckExpr --
-//   Type check the given expression.
-//
-// Inputs:
-//   th - heap to use for type allocations.
-//   scope - the list of variables in scope.
-//   expr - the expression to type check.
-//
-// Results:
-//   The type checked expression, or TC_FAILED if the expression is not well
-//   typed.
-//
-// Side effects:
-// * Prints a message to stderr if the expression fails to compile.
-// * The caller should call FbleFreeTc when the returned FbleTc is no longer
-//   needed and FbleReleaseType when the returned FbleType is no longer
-//   needed.
+/**
+ * Typechecks an expression.
+ *
+ * @param th  Heap to use for type allocations.
+ * @param scope  The list of variables in scope.
+ * @param expr  The expression to type check.
+ *
+ * @returns
+ *   The type checked expression, or TC_FAILED if the expression is not well
+ *   typed.
+ *
+ * @sideeffects
+ * * Prints a message to stderr if the expression fails to compile.
+ * * The caller should call FbleFreeTc when the returned FbleTc is no longer
+ *   needed and FbleReleaseType when the returned FbleType is no longer
+ *   needed.
+ */
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
   Cleaner* cleaner = NewCleaner();
@@ -878,13 +882,26 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
   return result;
 }
 
-// TypeCheckExprWithCleaner
-//   Same as TypeCheckExpr, except with a cleaner provided for convenience.
-//
-// See documentation of TypeCheckExpr.
-//
-// Objects added to the cleaner will be automatically cleaned up by the caller
-// when this function returns.
+/**
+ * Type checks an expression with automatic cleanup.
+ *
+ * @param th  Heap to use for type allocations.
+ * @param scope  The list of variables in scope.
+ * @param expr  The expression to type check.
+ * @param cleaner  The cleaner object.
+ *
+ * @returns
+ *   The type checked expression, or TC_FAILED if the expression is not well
+ *   typed.
+ *
+ * @sideeffects
+ * * Prints a message to stderr if the expression fails to compile.
+ * * The caller should call FbleFreeTc when the returned FbleTc is no longer
+ *   needed and FbleReleaseType when the returned FbleType is no longer
+ *   needed.
+ * * Adds objects to the cleaner that the caller is responsible for
+ *   automatically cleaning up when this function returns.
+ */
 static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* expr, Cleaner* cleaner)
 {
   switch (expr->tag) {
@@ -1926,28 +1943,28 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
   return TC_FAILED;
 }
 
-// TypeCheckExprForType --
-//   Type check the given expression, ignoring accesses to variables.
-//
-//   Some times an expression is only use only for its type. We don't want to
-//   mark variables referenced by the expression as used, because we don't
-//   need to know the value of the variable at runtime. This function type
-//   checks an expression without marking variables as used. The variables are
-//   marked as 'accessed' though, to avoid emitting warnings about unused
-//   variables that are actually used to get their type.
-//
-// Inputs:
-//   th - heap to use for allocations.
-//   scope - the list of variables in scope.
-//   expr - the expression to compile.
-//
-// Results:
-//   The type of the expression, or NULL if the expression is not well typed.
-//
-// Side effects:
-// * Prints a message to stderr if the expression fails to compile.
-// * Allocates an FbleType that must be freed using FbleReleaseType when it is
-//   no longer needed.
+/**
+ * Typechecks the given expression, ignoring accesses to variables.
+ *
+ * Sometimes an expression is only use only for its type. We don't want to
+ * mark variables referenced by the expression as used, because we don't need
+ * to know the value of the variable at runtime. This function typechecks an
+ * expression without marking variables as used. The variables are marked as
+ * 'accessed' though, to avoid emitting warnings about unused variables that
+ * are actually used to get their type.
+ *
+ * @param th  Heap to use for allocations.
+ * @param scope  The list of variables in scope.
+ * @param expr  The expression to compile.
+ *
+ * @returns
+ *   The type of the expression, or NULL if the expression is not well typed.
+ *
+ * @sideeffects
+ * * Prints a message to stderr if the expression fails to compile.
+ * * Allocates an FbleType that must be freed using FbleReleaseType when it is
+ *   no longer needed.
+ */
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
   ArgV args = { .size = 0, .xs = NULL };
@@ -1961,21 +1978,21 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* 
   return result.type;
 }
 
-// TypeCheckType --
-//   Type check a type, returning its value.
-//
-// Inputs:
-//   th - heap to use for allocations.
-//   scope - the value of variables in scope.
-//   type - the type to compile.
-//
-// Results:
-//   The type checked and evaluated type, or NULL in case of error.
-//
-// Side effects:
-// * Prints a message to stderr if the type fails to compile or evalute.
-// * Allocates an FbleType that must be freed using FbleReleaseType when it is
-//   no longer needed.
+/**
+ * Typechecks a type, returning its value.
+ *
+ * @param th  Heap to use for allocations.
+ * @param scope  The value of variables in scope.
+ * @param type  The type to compile.
+ *
+ * @returns
+ *   The type checked and evaluated type, or NULL in case of error.
+ *
+ * @sideeffects
+ * * Prints a message to stderr if the type fails to compile or evalute.
+ * * Allocates an FbleType that must be freed using FbleReleaseType when it is
+ *   no longer needed.
+ */
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type)
 {
   Cleaner* cleaner = NewCleaner();
@@ -1984,13 +2001,24 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
   return result;
 }
  
-// TypeCheckTypeWithCleaner --
-//   Same as TypeCheckType, except with a cleaner provided for convenience.
-//
-// See documentation of TypeCheckType.
-//
-// Objects added to the cleaner will be automatically cleaned up by the caller
-// when this function returns.
+/**
+ * Typechecks a type, with automatic cleanup.
+ *
+ * @param th  Heap to use for allocations.
+ * @param scope  The value of variables in scope.
+ * @param type  The type to compile.
+ * @param cleaner  The cleaner object.
+ *
+ * @returns
+ *   The type checked and evaluated type, or NULL in case of error.
+ *
+ * @sideeffects
+ * * Prints a message to stderr if the type fails to compile or evalute.
+ * * Allocates an FbleType that must be freed using FbleReleaseType when it is
+ *   no longer needed.
+ * * Adds objects to the cleaner that the caller is responsible for cleaning
+ *   up after the function returns.
+ */
 static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner)
 {
   switch (type->tag) {
@@ -2114,29 +2142,29 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
   return NULL;
 }
 
-// TypeCheckModule --
-//   Type check a module.
-//
-// Inputs:
-//   th - heap to use for allocations.
-//   module - the module to check.
-//   deps - the type of each module this module depends on, in the same order
-//          as module->deps. size is module->deps.size.
-//
-// Results:
-//   Returns the type, and optionally value of the module as the body of a
-//   function that takes module dependencies as arguments and computes the
-//   value of the module. TC_FAILED if the module failed to type check.
-//
-//   If module->value is not provided but module->type still type checks, this
-//   will return a Tc with non-NULL type but NULL tc.
-//
-// Side effects:
-// * Prints warning messages to stderr.
-// * Prints a message to stderr if the module fails to type check.
-// * The caller should call FbleFreeTc when the returned result is no longer
-//   needed and FbleReleaseType when the returned FbleType is no longer
-//   needed.
+/**
+ * Typechecks a module.
+ *
+ * @param th  Heap to use for allocations.
+ * @param module  The module to check.
+ * @param deps  The type of each module this module depends on, in the same order
+ *   as module->deps. size is module->deps.size.
+ *
+ * @returns
+ *   Returns the type, and optionally value of the module as the body of a
+ *   function that takes module dependencies as arguments and computes the
+ *   value of the module. TC_FAILED if the module failed to type check.
+ *
+ *   If module->value is not provided but module->type still type checks, this
+ *   will return a Tc with non-NULL type but NULL tc.
+ *
+ * @sideeffects
+ * * Prints warning messages to stderr.
+ * * Prints a message to stderr if the module fails to type check.
+ * * The caller should call FbleFreeTc when the returned result is no longer
+ *   needed and FbleReleaseType when the returned FbleType is no longer
+ *   needed.
+ */
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps)
 {
   Arg args_xs[module->deps.size];
@@ -2194,7 +2222,7 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType**
   return tc;
 }
 
-// FbleTypeCheckModule -- see documentation in typecheck.h
+// See documentation in typecheck.h.
 FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program)
 {
   FbleTc** tcs = FbleTypeCheckProgram(program);
@@ -2210,7 +2238,7 @@ FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program)
   return tc;
 }
 
-// FbleTypeCheckProgram -- see documentation in typecheck.h
+// See documentation in typecheck.h.
 FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program)
 {
   FbleTc** tcs = FbleArrayAlloc(FbleTc*, program->modules.size);
