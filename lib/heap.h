@@ -76,8 +76,7 @@ FbleHeap* FbleNewHeap(
      * param obj  The object being freed.
      * 
      * sideeffects
-     *   Intended side effects are to free any resources outside of the heap
-     *   that this obj holds on to.
+     *   Frees resources outside of the heap that this obj holds on to.
      */
     void (*on_free)(FbleHeap* heap, void* obj));
 

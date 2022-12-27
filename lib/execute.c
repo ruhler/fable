@@ -69,32 +69,30 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 
-// PushNormalCallStackFrame --
-//   Push a frame on top of the thread's stack for a normal function call.
-//
-// Inputs:
-//   thread - the thread whose stack to push to.
-//
-// Side effects:
-// * The caller should call PopStackFrame when this frame is done executing.
+/**
+ * Pushes a frame on top of the thread's tack for a normal function call.
+ *
+ * @param thread  The thread whose stack to push to.
+ *
+ * @sideeffects
+ * * The caller should call PopStackFrame when this frame is done executing.
+ */
 static void PushNormalCallStackFrame(FbleThread* thread)
 {
   thread->stack->normal_call_frames++;
 }
 
-// PushTailCallStackFrame --
-//   Push a frame on top of the thread's stack.
-//
-// Inputs:
-//   heap - the value heap
-//   func - the function to push on the stack. Consumed.
-//   args - arguments to the function. Consumed.
-//   thread - the thread whose stack to push to.
-//
-// Side effects:
-// * Pushes a frame on top of the stack.
-// * Allocates memory that should be freed with a corresponding call to
-//   PopStackFrame.
+/** Pushes a frame on top of the thread's stack for a tail call.
+ *
+ * @param func  The function to push on the stack. Consumed.
+ * @param args  Arguments to the function. Consumed.
+ * @param thread  The thread whose stack to push to.
+ *
+ * @sideeffects
+ * * Pushes a frame on top of the stack.
+ * * Allocates memory that should be freed with a corresponding call to
+ *   PopStackFrame.
+ */
 static void PushTailCallStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleFuncInfo info = FbleFuncValueInfo(func);
@@ -112,15 +110,15 @@ static void PushTailCallStackFrame(FbleValue* func, FbleValue** args, FbleThread
   thread->stack = stack;
 }
 
-// PopStackFrame --
-//   Pops the top frame off the thread's stack.
-//
-// Inputs:
-//   heap - the value heap
-//   thread - the thread whose stack to pop the top frame off of.
-//
-// Side effects:
-// * Pops the top frame off the stack.
+/**
+ * Pops the top frame off the thread's stack.
+ *
+ * @param heap  The value heap
+ * @param thread  The thread whose stack to pop the top frame off of.
+ *
+ * @sideeffects
+ * * Pops the top frame off the stack.
+ */
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 {
   if (thread->stack->normal_call_frames > 0) {
@@ -141,25 +139,25 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
   FbleStackFree(thread->allocator, stack);
 }
 
-// Eval --
-//   Evaluate the given function.
-//
-// Inputs:
-//   heap - the value heap.
-//   io - io to use for external ports.
-//   func - the function to evaluate.
-//   args - args to pass to the function. length == func->argc.
-//   profile - profile to update with execution stats. May be NULL to disable
-//             profiling.
-//
-// Results:
-//   The computed value, or NULL on error.
-//
-// Side effects:
-//   The returned value must be freed with FbleReleaseValue when no longer in
-//   use. Prints a message to stderr in case of error.
-//   Updates profile based on the execution.
-//   Does not take ownership of the function or the args.
+/**
+ * Evaluates the given function.
+ *
+ * @param heap  The value heap.
+ * @param func  The function to evaluate.
+ * @param args  Args to pass to the function. length == func->argc.
+ * @param profile  Profile to update with execution stats. May be NULL to disable
+ *    profiling.
+ *
+ * @returns
+ *   The computed value, or NULL on error.
+ *
+ * @sideeffects
+ * * The returned value must be freed with FbleReleaseValue when no longer in
+ *   use.
+ * * Prints a message to stderr in case of error.
+ * * Updates profile based on the execution.
+ * * Does not take ownership of the function or the args.
+ */
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
   Stack stack = {
@@ -180,7 +178,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   return result;
 }
 
-// FbleThreadCall -- see documentation in execute.h
+// See documentation in fble-execute.h.
 FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
   FbleFuncInfo info = FbleFuncValueInfo(func);
@@ -218,7 +216,7 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* fu
   return result;
 }
 
-// FbleThreadCall_ -- see documentation in execute.h
+// See documentation in fble-execute.h.
 FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...)
 {
   FbleExecutable* executable = FbleFuncValueInfo(func).executable;
@@ -233,7 +231,7 @@ FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* f
   return FbleThreadCall(heap, thread, func, args);
 }
 
-// FbleThreadTailCall -- see documentation in execute.h
+// See documentation in fble-execute.h.
 FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
   PopStackFrame(heap, thread);
@@ -241,7 +239,7 @@ FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
   return sTailCallSentinelValue;
 }
 
-// FbleThreadTailCall_ -- see documentation in execute.h
+// See documentation in fble-execute.h.
 FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...)
 {
   FbleExecutable* executable = FbleFuncValueInfo(func).executable;
@@ -256,19 +254,19 @@ FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValu
   return FbleThreadTailCall(heap, thread, func, args);
 }
 
-// FbleEval -- see documentation in fble-value.h
+// See documentation in fble-value.h.
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
   return FbleApply(heap, program, NULL, profile);
 }
 
-// FbleApply -- see documentation in fble.h
+// See documentation in fble-value.h.
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
   return Eval(heap, func, args, profile);
 }
 
-// FbleFreeExecutable -- see documentation in execute.h
+// See documentation in fble-execute.h.
 void FbleFreeExecutable(FbleExecutable* executable)
 {
   if (executable == NULL) {
@@ -290,13 +288,13 @@ void FbleFreeExecutable(FbleExecutable* executable)
   }
 }
 
-// FbleExecutableNothingOnFree -- see documentation in execute.h
+// See documentation in fble-execute.h.
 void FbleExecutableNothingOnFree(FbleExecutable* this)
 {
   (void)this;
 }
 
-// FbleFreeExecutableModule -- see documentation in fble-execute.h
+// See documentation in fble-execute.h.
 void FbleFreeExecutableModule(FbleExecutableModule* module)
 {
   assert(module->magic == FBLE_EXECUTABLE_MODULE_MAGIC && "corrupt FbleExecutableModule");
@@ -315,7 +313,7 @@ void FbleFreeExecutableModule(FbleExecutableModule* module)
   }
 }
 
-// FbleFreeExecutableProgram -- see documentation in fble-execute.h
+// See documentation in fble-execute.h.
 void FbleFreeExecutableProgram(FbleExecutableProgram* program)
 {
   if (program != NULL) {
@@ -327,7 +325,7 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program)
   }
 }
 
-// See documentation in fble-execute.h
+// See documentation in fble-execute.h.
 void FbleThreadSample(FbleThread* thread)
 {
   if (thread->profile && (rand() % 1024 == 0)) {
@@ -335,7 +333,7 @@ void FbleThreadSample(FbleThread* thread)
   }
 }
 
-// See documentation in fble-execute.h
+// See documentation in fble-execute.h.
 void FbleThreadEnterBlock(FbleThread* thread, FbleBlockId block)
 {
   if (thread->profile) {
@@ -343,7 +341,7 @@ void FbleThreadEnterBlock(FbleThread* thread, FbleBlockId block)
   }
 }
 
-// See documentation in fble-execute.h
+// See documentation in fble-execute.h.
 void FbleThreadReplaceBlock(FbleThread* thread, FbleBlockId block)
 {
   if (thread->profile) {
@@ -351,7 +349,7 @@ void FbleThreadReplaceBlock(FbleThread* thread, FbleBlockId block)
   }
 }
 
-// See documentation in fble-execute.h
+// See documentation in fble-execute.h.
 void FbleThreadExitBlock(FbleThread* thread)
 {
   if (thread->profile) {

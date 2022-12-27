@@ -20,8 +20,14 @@
 static void OnFree(FbleExecutable* executable);
 static void PrintLoc(FILE* fout, FbleLoc loc);
 
-// OnFree --
-//   The FbleExecutable.on_free function for FbleCode.
+/**
+ * FbleExecutable.on_free function for FbleCode.
+ *
+ * @param executable  The FbleCode to free state from.
+ *
+ * @sideeffects
+ *   Frees FbleCode specific fields.
+ */
 static void OnFree(FbleExecutable* executable)
 {
   FbleCode* code = (FbleCode*)executable;
@@ -31,7 +37,7 @@ static void OnFree(FbleExecutable* executable)
   FbleVectorFree(code->instrs);
 }
 
-// FbleRawAllocInstr -- see documentation in code.h
+// See documentation in code.h.
 void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
 {
   assert(sizeof(FbleInstr) <= size);
@@ -42,7 +48,7 @@ void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
   return instr;
 }
 
-// FbleFreeDebugInfo -- see documentation in code.h
+// See documentation in code.h.
 void FbleFreeDebugInfo(FbleDebugInfo* info)
 {
   while (info != NULL) {
@@ -65,7 +71,7 @@ void FbleFreeDebugInfo(FbleDebugInfo* info)
   }
 }
 
-// FbleFreeInstr -- see documentation in code.h
+// See documentation in code.h.
 void FbleFreeInstr(FbleInstr* instr)
 {
   assert(instr != NULL);
@@ -165,7 +171,7 @@ void FbleFreeInstr(FbleInstr* instr)
   FbleUnreachable("invalid instruction");
 }
 
-// FbleNewCode -- see documentation in code.h
+// See documentation in code.h.
 FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, FbleBlockId profile_block_id)
 {
   FbleCode* code = FbleAlloc(FbleCode);
@@ -181,7 +187,7 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
   return code;
 }
 
-// FbleFreeCode -- see documentation in code.h
+// See documentation in code.h.
 void FbleFreeCode(FbleCode* code)
 {
   FbleFreeExecutable(&code->_base);
@@ -191,13 +197,16 @@ void FbleFreeCode(FbleCode* code)
  * Prints a location.
  *
  * For use in the diassembly output.
+ *
+ * @param fout  The stream to print to.
+ * @param loc  The location to print.
  */
 static void PrintLoc(FILE* fout, FbleLoc loc)
 {
   fprintf(fout, "  @ %s:%i:%i\n", loc.source->str, loc.line, loc.col);
 }
 
-// FbleDisassmeble -- see documentation in fble-compile.h.
+// See documentation in fble-compile.h.
 void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
 {
   // Map from FbleFrameSection to short descriptor of the source.

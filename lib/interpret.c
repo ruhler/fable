@@ -31,7 +31,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
  * NULL.
  *
  * @param heap  The value heap.
- * @param thread  The thread to abort on.
  * @param code  The code for the function.
  * @param locals  The function's local variables.
  * @param pc  The pc to start aborting from.
@@ -203,7 +202,7 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
   return NULL;
 }
 
-// See documentation in interpret.h
+// See documentation in interpret.h.
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
     FbleThread* thread,
@@ -221,7 +220,22 @@ FbleValue* FbleInterpreterRunFunction(
   vars[FBLE_ARG_VAR] = args;
   vars[FBLE_LOCAL_VAR] = locals;
 
+  /**
+   * Gets the value of a variable in scope.
+   * @param idx  The index of the variable.
+   * @returns  The value of the variable.
+   * @sideeffects
+   *   None.
+   */
   #define GET(idx) (vars[idx.tag][idx.index])
+
+  /**
+   * Gets the strict value of a variable in scope.
+   * @param idx  The index of the variable.
+   * @returns  The FbleStrctValue of the variable.
+   * @sideeffects
+   *   None.
+   */
   #define GET_STRICT(idx) FbleStrictValue(GET(idx))
 
   size_t pc = 0;
@@ -483,7 +497,7 @@ FbleValue* FbleInterpreterRunFunction(
   }
 }
 
-// FbleInterpret -- see documentation in fble-interpret.h
+// See documentation in fble-interpret.h.
 FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
 {
   FbleExecutableProgram* executable = FbleAlloc(FbleExecutableProgram);

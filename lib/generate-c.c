@@ -1,5 +1,5 @@
 /**
- * generate-c.c
+ * @file generate-c.c
  * Converts FbleCode fble bytecode to C code.
  */
 

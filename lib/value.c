@@ -17,8 +17,7 @@
 #include "unreachable.h"
 
 /**
- *
- * Test whether a value is packed into an FbleValue* pointer.
+ * Tests whether a value is packed into an FbleValue* pointer.
  *
  * IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
  * to save space. An FbleValue* only points to an FbleValue if the least
@@ -249,7 +248,14 @@ void FbleValueFullGc(FbleValueHeap* heap)
 
 /**
  * The 'on_free' function for values.
+ *
  * See documentation of on_free in heap.h.
+ *
+ * @param heap  The heap.
+ * @param value  The value being freed.
+ * 
+ * @sideeffects
+ *   Frees any resources outside of the heap that this value holds on to.
  */
 static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
@@ -292,7 +298,16 @@ static void Ref(FbleHeapCallback* callback, FbleValue* value)
 
 /**
  * The 'refs' function for values.
+ *
  * See documentation of refs in heap.h.
+ *
+ * @param callback  Callback to call for each object referenced by obj
+ * @param value  The value whose references to traverse
+ *   
+ * @sideeffects
+ * * Calls the callback function for each object referenced by obj. If the
+ *   same object is referenced multiple times by obj, the callback is
+ *   called once for each time the object is referenced by obj.
  */
 static void Refs(FbleHeapCallback* callback, FbleValue* value)
 {
