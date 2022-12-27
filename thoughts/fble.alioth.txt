@@ -95,3 +95,45 @@ Write a function that does all permutations of a list, applying a (monadic?)
 function for each permutation. That should be pretty easy to use recursively.
 Pass the number of elements of the list as a helper.
 
+---
+
+Next step: reverse-complement.
+
+Goal is to read a DNA sequence line by line and output the complement
+sequence. Structure should be pretty obvious. Just slightly annoying to parse
+label versus sequence.
+
+Something like:
+* Read Line.
+* If it starts with '>', output as is.
+* Else, for each character in the line,
+  Look up its complement and output that.
+
+Very simple.
+
+Question:
+* Is it case sensitive or insensitive?
+  Lower case is acceptable and mapped to the upper case.
+
+Question:
+* Are we supposed to read a sequence at a time or a line at a time?
+
+The c++ example is perhaps the most straight forward. It's logic is:
+
+Read lines together into a sequence until you get to a line that starts with
+'>' or end of file. Then reverse complement the sequence and output it.
+
+I think best would be to have a function to read an entry with header +
+sequence. And process it one sequence at a time. And have a separate function
+for printing out a sequence 60 columns at a time.
+
+Ah. An important point I missed. Not only do we complement it, we reverse the
+characters in the sequence. So you do have to build up the entire sequence all
+at once.
+
+There's lots of opportunity for performance improvement here, but it seems
+really silly to me, so I'll leave it naive as is.
+
+Interesting... We smash the stack. I must have a deep non-tail recursion
+there. Debugger would be nice to see what's on the stack. That means I need to
+generate code for it though.

@@ -1,0 +1,110 @@
+
+% True = /Core/Bool%.True;
+
+@ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
+% IsNewline = /Core/Char/Type%.IsNewline;
+
+@ Int@ = /Core/Int%.Int@;
+% Sub = /Core/Int%.Sub;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
+<@>% Reverse = /Core/List%.Reverse;
+<@,@>% Map = /Core/List%.Map;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+# Header includes the initial '>' character, for convenience.
+@ Seq@ = *(String@ header, String@ codes);
+
+(Char@) { Char@; } ComplementCode = (Char@ c) {
+  c.?(
+    A: Chars.T, B: Chars.V, C: Chars.G, G: Chars.C,
+    H: Chars.D, K: Chars.M, M: Chars.K, N: Chars.N,
+    R: Chars.Y, S: Chars.S, T: Chars.A, U: Chars.A,
+    V: Chars.B, Y: Chars.R,
+    a: Chars.T, b: Chars.V, c: Chars.G, g: Chars.C,
+    h: Chars.D, k: Chars.M, m: Chars.K, n: Chars.N,
+    r: Chars.Y, s: Chars.S, t: Chars.A, u: Chars.A,
+    v: Chars.B, y: Chars.R);
+  c;
+};
+
+# Reverse and complement the given sequence.
+(Seq@) { Seq@; } RevComp = (Seq@ s) {
+  Seq@(s.header, Reverse(Map(s.codes, ComplementCode)));
+};
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _) {
+  % I = /Core/Stream/IStream%(m);
+  % O = /Core/Stream/OStream%(m);
+
+  # Gets a line from stdin, discarding the final newline if any.
+  M@<String@> GetLine = {
+    Maybe@<Char@> c <- m.do(I.GetChar(stdio.in));
+    c.?(nothing: m.return(Str|''));
+    IsNewline(c.just).?(true: m.return(Str|''));
+
+    String@ tail <- m.do(GetLine);
+    m.return(Cons(c.just, tail));
+  };
+
+  # Prints codes to stdout, breaking lines every 60 characters.
+  (Int@, String@) { M@<Unit@>; } PrintCodes = (Int@ n, String@ codes) {
+    codes.?(nil: O.PutChar(stdio.out, Chars.nl));
+
+    n.?(0: {
+      Unit@ _ <- m.do(O.PutChar(stdio.out, Chars.nl));
+      PrintCodes(Int|60, codes);
+    });
+
+    Unit@ _ <- m.do(O.PutChar(stdio.out, codes.cons.head));
+    PrintCodes(Sub(n, Int|1), codes.cons.tail);
+  };
+
+  # Prints a sequence to stdout.
+  (Seq@) { M@<Unit@>; } PrintSeq = (Seq@ s) {
+    Unit@ _ <- m.do(O.PutLine(stdio.out, s.header));
+    PrintCodes(Int|60, s.codes);
+  };
+
+  # Reverses a sequence and prints the result to stdout.
+  (Seq@) { M@<Unit@>; } DoSeq = (Seq@ s) {
+    PrintSeq(RevComp(s));
+  };
+
+  # Reads in each sequence from stdin and processes it.
+  # partial is the current sequence built up so far.
+  (Seq@) { M@<Unit@>; } GenSeqs = (Seq@ partial) {
+    String@ line <- m.do(GetLine);
+    line.?(nil: DoSeq(partial));
+
+    line.cons.head.?('>': {
+      Unit@ _ <- m.do(partial.codes.?(
+        cons: DoSeq(partial),
+        nil: m.return(Unit)));
+      GenSeqs(Seq@(line, Str|''));
+    });
+
+    GenSeqs(Seq@(partial.header, Append(partial.codes, line)));
+  };
+
+  Unit@ _ <- m.do(GenSeqs(Seq@(Str|'', Str|'')));
+  m.return(True);
+};
+
+@(Main);

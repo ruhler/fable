@@ -1,0 +1,33 @@
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+
+% Test = /Games/BenchmarkGame/Test%.Test;
+
+String@ input = Str|
+'>ONE
+CTTGAACCCG
+GATTC
+>TWO
+attBgtataR
+>THREE
+ccaacattac
+';
+
+String@ output = Str|
+'>ONE
+GAATCCGGGTTCAAG
+>TWO
+YTATACVAAT
+>THREE
+GTAATGTTGG
+';
+
+Test@ Tests = Test(
+  Str|PiDigits,
+  /Games/BenchmarkGame/ReverseComplement%.Main,
+  Str|'0', input, output);
+
+@(Tests);

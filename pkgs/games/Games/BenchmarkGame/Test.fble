@@ -27,8 +27,9 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-(String@, Main@, String@, String@) { Test@; }
-Test = (String@ name, Main@ game, String@ n, String@ expected) {
+(String@, Main@, String@, String@, String@) { Test@; }
+Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {
+  List@<Int@> input_bytes = /Core/List%.Map(input, /Core/Char/Ascii%.Ord);
   List@<Int@> expected_bytes = /Core/List%.Map(expected, /Core/Char/Ascii%.Ord);
 
   /Core/Test%.Test(name, (Unit@ _) {
@@ -37,7 +38,7 @@ Test = (String@ name, Main@ game, String@ n, String@ expected) {
 
     PureResult@<Bool@> got = Run(
       game<Pure@>(Monad, Stdio)(List<String@>[n]),
-      Nil<Int@>);
+      input_bytes);
 
     AssertEquals(
       PureResultEq(/Core/Bool/Eq%.Eq),
