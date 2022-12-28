@@ -361,3 +361,16 @@ Also, if I'm going to do these tutorials, I would like to get fbld tutorial
 structure in good enough shape to start using and evolving that. Which
 suggests generating html automatically from it that I can check if desired.
 
+---
+
+Let's have the first tutorial be how to install fble. The goal is to have fble
+installed, binaries added to PATH, libraries added to LD_LIBRARY_PATH as
+needed so you don't need to know where it was installed to use it. Have
+everyone set up that way in the first tutorial, double check they can run the
+existing /Core/Stdio/HelloWorld% code.
+
+There are three things we need to make running fble independent of where it is
+installed: PATH, LD_LIBRARY_PATH, and some notion of an fble package path to
+find preinstalled fble packages in. Thoughts on the package path in
+fble.packages.txt.
+

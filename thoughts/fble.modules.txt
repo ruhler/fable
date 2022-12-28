@@ -555,7 +555,7 @@ Thoughts on documentation:
 
 In practice when programming I use man pages, reference guides, wikis for
 documentation. It's only my own code where I tend to refer to comments on the
-prototypes of functions. I've never found things like Deoxygen output useful.
+prototypes of functions. I've never found things like Doxygen output useful.
 Occasionally it's useful to read comments in code, and that tends to be in the
 implementation file anyway.
 
@@ -725,7 +725,7 @@ and a subset of those that are 'public', meaning they can be accessed by
 modules that are not in a sibling package. And a package has a list of other
 packages it can depend on.
 
-By default a package can depend on any other package that any of it's modules
+By default a package can depend on any other package that any of its modules
 depends on, and a package exports all entities as public.
 
 If you want, you can specify a .fble.@ file for a module to give its public

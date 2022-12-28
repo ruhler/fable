@@ -1,0 +1,227 @@
+Fble Packages
+=============
+For the tutorials, I would like there to be a way to refer to an installed
+fble package without explicitly saying where it is installed.
+
+For example, instead of:
+
+  fble-stdio -I pkgs/core -m /Core/Stdio/HelloWorld%
+
+I would like to be able to say something like:
+
+  fble-stdio -i core -m /Core/Stdio/HelloWorld%
+
+I imagine we have some notion of a package search path that lists all the
+directories where a package may be installed. There is some standard package
+search path based on how fble was installed, and there is some environment
+variable that allows users to specify additional search paths.
+
+I think it's worth reviewing why we want to specify packages. There are a
+couple different things going on here.
+
+* I want a way to say: only look for code from these packages. So we can
+  enforce that your code isn't depending on more packages than you think. Or
+  in other words, so you can easily reproduce the required environment for
+  your code on another system.
+* There needs to be a way to refer to modules in packages 'installed' on the
+  system. That means having some way to find the source (or generated?) code
+  for the package given a module path.
+* There ought to be a way for users to write their own packages and reuse
+  those in their own code without having to install them.
+
+There's a whole other aspect to packages I'm not sure I want to get into right
+now, which is making it easy to find and install packages, managing package
+dependencies, and everything else you can do with package management systems.
+
+Let's start with a survey of existing systems.
+
+C header files in GCC:
+* -I adds directories to search.
+* Standard directories are automatically searched.
+* There's an option to not search standard directories.
+* I don't see an option for environment variables.
+
+PATH:
+* Default path is system dependent.
+* You add a colon separated list.
+
+LD_LIBRARY_PATH:
+* ld searches LD_LIBRARY_PATH in addition to a default path.
+
+tcl:
+* TCLLIBPATH, 
+
+They are all kind of similar:
+* Search default directories.
+* Search based on environment variable.
+* Search based on currently executing thing.
+
+But none of these appear to have the option to easily restrict which packages
+you depend on. Looks like Haskell has some options to explicitly expose
+packages.
+
+If we just talk about search path for packages, it's pretty straight forward.
+We have some set of default directories, some environment variable path, and
+some command line option. Take all of those together to determine the package
+search path. There's no notion of a local/relative search path in this case,
+because we find the initial fble file from the search path, not by explicitly
+specifying the path to that fble file.
+
+Let's think about what it means to list packages explicitly. My goal is: I
+want to explicitly list all the packages my program depends on. A few
+questions:
+* Does this scale to large programs? Or will there be way too many packages?
+* Does this include only direct dependencies, you have to list dependencies of
+  your dependencies, or there is some magic to get dependencies of
+  dependencies?
+
+I remember having this discussion before. Let me see if I can dig it up. Look
+at thoughts/fble.modules.txt. It gets relevant around line 750, and again
+around line 1278. In the end, a lot of interesting discussion in
+thoughts/fble.modules.txt, but no clear obvious new takeaways I had forgotten.
+
+One thing is clear: I have not reached the scale of packages yet to have
+direct experience with depending on packages that depend on other packages.
+Anything I come up with today would be speculative in that regards.
+
+Another question we could ponder: is there, or should there, be any difference
+between package names and package module paths? For example, why use the name
+'core' instead of the path '/Core%'? If we want to list things explicitly, we
+could do it as a list of package module paths, and restrict the search to
+modules belonging to one of the listed package module paths? That's enough to
+get me to a strawman proposal:
+
+* Default fble package include path is $PREFIX/share/fble
+  All packages are installed into the same directory hierarchy. So we would
+  have $PREFIX/share/fble/Core/..., $PREFIX/share/fble/Md5/..., etc.
+* FBLE_SEARCH_PATH lets you add additional paths to be searched for module
+  root directories. Colon separated.
+* -I lets you add additional paths to be searched for module root directories.
+* -p <module_path> allows you to reference modules in that package path. The
+  list of packages allowed always starts empty, and can only be expanded on
+  the command line using -p.
+* We defer to language spec on abstract types for whether /% is a legal
+  package path for the -p option.
+
+With this, we could write a tutorial using:
+
+  fble-stdio -p /Core% -m /Core/Stdio/HelloWorld%
+
+The implementation probably isn't too hard. We just export and reuse the
+function for checking if a module path belongs to a package path, and call
+that as an extra check in FbleLoad. We can give an error message saying you
+tried to load a module disallowed by -p option.
+
+The real challenge with /% as a module path is what .fble file it refers to.
+Technically it should refer to $ROOT/.fble. That's doable, but a bit odd. We
+could also special case it to say you can only use /% as a module path when
+inside a package type: %(/%), or when passed as -p. Honestly, I think better
+to be general in this case and support /% as a module path. And it's easier to
+allow it anywhere rather than disallow it for use as a module path reference.
+There's nothing hard or bad about implementing $ROOT/.fble as an fble
+module... Or is there? Then what about paths like /Foo/%? Okay. Yeah, that
+starts to get confusing. What's the difference between /Foo% and /Foo/%? And
+how about /Foo//Bar%? Is that valid?
+
+We could special case package path %(), or %(*) and -p *, or -p, or. wait, how
+about just %? %(%) -p %? No initial '/'? That would have to be a special case
+syntax wise, otherwise you can't distinguish between function application
+%(/Foo%) and package type %(/Foo%).
+
+Or, we could use different syntax for a package path that ends with a '/'
+instead of a '%'. For example, %(/Foo/Bar/), -p /Foo/Bar/. Then it's pretty
+natural to use '/' as any module path. %(/), -p /. We could implement it
+internally as a module path. I kind of like that. Makes clear the difference?
+It's just a little harder to see that -p /Foo/ refers to a module hierarchy
+instead of a directory hierarchy. Maybe -p %(/Foo/) instead? Or that's
+tediously verbose? Maybe; /Foo/% for a package path? Different from module
+path still, but clearly related to modules and packages? -p /% makes sense. -p
+/Foo/%. %(/Foo/Bar/%). I could even use different syntax highlighting for it
+in vim to make it more obvious it refers to something different.
+
+Anyway, we have our strawman proposal. Think it over.
+ 
+To be clear, the difference between a name like 'core' and a module path is:
+* A name can refer to multiple top level module paths if you want. Like
+  /Core/... /Core-1/... /Core-2/..
+* A top level module path can be split across multiple names. Like core,
+  core-data. This, in theory, only makes sense if both names are owned by the
+  same organization, or there is some other way to avoid name conflicts between
+  them.
+
+Seems like package names are much more flexible, if not more scalable. But in
+practice, all the package systems I have used, packages belong to a single
+global namespace. They aren't hierarchical. And that seems much simpler.
+
+Strawman proposal 2:
+* Default fble package path is $PREFIX/share/fble
+  Packages are installed into that directory under their package name:
+  have $PREFIX/share/fble/core/Core/..., $PREFIX/share/fble/md5/Md5/..., etc.
+* FBLE_PACKAGE_PATH lets you add additional paths to be searched for packages,
+  colon separated.
+* -I lets you add additional paths to be searched for module root directories.
+  For example: "-I .", or "-I pkgs/core". Note this takes module root
+  directories, not package directories like FBLE_PACKAGE_PATH does.
+* -p <name> adds the module root directory for the named package to the search
+  path. It looks for the package in the package path.
+* There is no way to search for modules 'all installed packages'. You must
+  explicitly list all packages you want to refer to.
+
+I don't think it's going to work well once we have lots more packages you
+could depend on. Let's imagine what that might look like.
+
+When we have lots of packages, each package will have a name in a global
+namespace. It will have a list of other packages it depends on. You'll install
+a package, which automatically brings in that packages dependencies. When
+compiling your own package, you give the list of packages your package depends
+on, and the compiler checks that to make sure your program only directly
+references modules in the packages you list as immediate dependencies. There
+is no requirement to list your dependent package's dependencies. You have the
+option of building a package, or building a one-off local thing that isn't
+going to be bundled or released as a package. If you do a one-off local thing,
+no need to list package dependencies, it will search all installed packages.
+
+The key arbitrary point made here being that you only need to worry about
+listing package dependencies when you go to distribute your own package.
+
+This kind of suggests we have a tool to compile an entire package together at
+once. That tool will take a package specification. You don't have to manually
+invoke fble-compile. The tool does it for you. But fble-compile will need to
+support package restrictions. How would fble-compile work in that case? It
+would take an explicit list of packages on the command line which are all
+packages you might depend on or need to compile your package. Regardless of
+how tediously large that list is.
+
+This is consistent with strawman proposal 2. The only tricky thing is
+understanding what -I does from a package point of view. I think we should
+refine it to say you can only add a single -I argument, which is the module
+root path for the anonymous package you are building right now. Or, perhaps,
+we can say -I is used for anonymous packages. Yeah, that sounds good to me. -I
+is used for anonymous packages, you specify the module root path, no need to
+know or care about the name of that anonymous package.
+
+Let's go with strawman proposal 2. Key ideas:
+* FBLE_PACKAGE_PATH is used to map package name to module root path for that
+  package name.
+* -p says to include the module root path for a named package in the module
+  search path.
+* -I says to include the given module root path in the module search path.
+
+I guess the questions then are:
+* What if there are multiple module root paths associated with a package name?
+  Pick the first one in the package path?
+* What if there are multiple module root paths associated with a module path?
+  Pick the first one found?
+
+Yeah, let's go with that approach. The idea being this allows us to override
+an existing package or module definition. Say we search FBLE_PACKAGE_PATH
+before the default package path. And we interleave -p and -I options together
+as ordered on the command line to specify the order of the module search path.
+
+That's great. I think this will serve well in the short term, and hopefully
+extend in a reasonable way to whatever future package management system we set
+up for fble. Remember, the idea is that, eventually, the package management
+system will be calling fble-compile for you, so it's okay for now that you
+have to know too much about packages to know what -p options are required when
+you call fble-compile.
+

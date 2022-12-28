@@ -268,3 +268,20 @@ Fble Language Thoughts
   }
   XYZ@ xyz = xyz_;
 
+* Should empty package paths be allowed?
+  For example, %(/%), to be a package type that all modules belong to.
+
+  I vote yes:
+  * For consistency of being able to further restrict users of abstract types
+    without requiring changes to how the users interact with the type.
+  * In case we want to use package paths for other things, such as package
+    include paths, where there is a justified use case for allow any module.
+
+  Proposed syntax: change the package path syntax to end in /%. For example,
+  instead of %(/Foo/Bar%), use %(/Foo/Bar/%). Hmm... Except it's less obvious
+  to me that the module /Foo/Bar% belongs to /Foo/Bar/%. Needs more thought
+  still.
+
+  Using /% is problematic, because it raises the question about module paths
+  like /Foo/%, or /Foo//Bar%. Using '%' would conflict with other syntax,
+  unless we restrict it to where package module paths are expected.
