@@ -1,3 +1,5 @@
+* Add support for FBLE_PACKAGE_PATH and -p options.
+  Update the Install tutorial to use these.
 
 * Bug in type inference / type checking?
   If I don't pass a type argument explicitly to the Permutes function in 

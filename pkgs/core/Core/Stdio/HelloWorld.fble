@@ -1,7 +1,10 @@
 
 % True = /Core/Bool%.True;
 
+@ Char@ = /Core/Char%.Char@;
+
 <@>@ List@ = /Core/List%.List@;
+<@>% Concat = /Core/List%.Concat;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -17,11 +20,11 @@
 Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
 
-  (String@) { M@<Unit@>; } PutLine = (String@ str) {
-    O.PutLine(stdio.out, str);
+  (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
+    O.PutLine(stdio.out, Concat<Char@>(strs));
   };
   
-  Unit@ _ <- m.do(PutLine(Str|'hello, world'));
+  Unit@ _ <- m.do(Puts[Str|'hello, world']);
   m.return(True);
 };
 
