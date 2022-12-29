@@ -144,8 +144,7 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
 // FbleProfilesTestMain -- see documentation in profiles-test.h
 int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module)
 {
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
+  FbleSearchPath* search_path = FbleNewSearchPath();
   const char* module_path = NULL;
   bool help = false;
   bool error = false;
@@ -155,7 +154,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
   while (!error && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (!module && FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
+    if (!module && FbleParseSearchPathArg(search_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
@@ -163,20 +162,20 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_USAGE;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_USAGE;
   }
 
@@ -184,7 +183,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleVectorFree(search_path);
+  FbleFreeSearchPath(search_path);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

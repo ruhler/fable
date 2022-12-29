@@ -66,8 +66,7 @@ static void PrintHelp(FILE* stream)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, const char* argv[])
 {
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
+  FbleSearchPath* search_path = FbleNewSearchPath();
   bool compile = false;
   const char* export = NULL;
   const char* main_ = NULL;
@@ -84,7 +83,7 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
+    if (FbleParseSearchPathArg(search_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-t", &target_string, &argc, &argv, &error)) continue;
@@ -99,19 +98,19 @@ int main(int argc, const char* argv[])
 
   if (version) {
     PrintVersion(stdout);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }
 
   if (help) {
     PrintHelp(stdout);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintHelp(stderr);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_USAGE;
   }
 
@@ -125,20 +124,20 @@ int main(int argc, const char* argv[])
   } else {
     fprintf(stderr, "unsupported target '%s'\n", target_string);
     PrintHelp(stderr);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_USAGE;
   }
 
   if (!compile && export == NULL && main_ == NULL) {
     fprintf(stderr, "one of --export NAME, --compile, or --main NAME must be specified.\n");
     PrintHelp(stderr);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_USAGE;
   }
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_FAIL;
   }
 
@@ -160,7 +159,7 @@ int main(int argc, const char* argv[])
     FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, NULL);
     if (prgm == NULL) {
       FbleFreeModulePath(mpath);
-      FbleVectorFree(search_path);
+      FbleFreeSearchPath(search_path);
       return EX_FAIL;
     }
 
@@ -169,7 +168,7 @@ int main(int argc, const char* argv[])
 
     if (module == NULL) {
       FbleFreeModulePath(mpath);
-      FbleVectorFree(search_path);
+      FbleFreeSearchPath(search_path);
       return EX_FAIL;
     }
 
@@ -184,7 +183,7 @@ int main(int argc, const char* argv[])
     FbleFreeCompiledModule(module);
   }
 
-  FbleVectorFree(search_path);
+  FbleFreeSearchPath(search_path);
   FbleFreeModulePath(mpath);
   return EX_SUCCESS;
 }

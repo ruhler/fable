@@ -74,8 +74,7 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
 // FbleTestMain -- see documentation in test.h
 int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module)
 {
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
+  FbleSearchPath* search_path = FbleNewSearchPath();
   const char* module_path = NULL;
   const char* profile_file = NULL;
   bool help = false;
@@ -89,7 +88,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (!module && FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
+    if (!module && FbleParseSearchPathArg(search_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
@@ -98,26 +97,26 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
 
   if (version) {
     printf("fble-test %s\n", FBLE_VERSION);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_USAGE_ERROR;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleVectorFree(search_path);
+    FbleFreeSearchPath(search_path);
     return EX_USAGE_ERROR;
   }
 
@@ -126,7 +125,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
     fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleVectorFree(search_path);
+      FbleFreeSearchPath(search_path);
       return EX_OTHER_ERROR;
     }
   }
@@ -135,7 +134,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleVectorFree(search_path);
+  FbleFreeSearchPath(search_path);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

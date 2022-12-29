@@ -83,17 +83,14 @@ is the paths to look for fble code. For the sake of this tutorial we will hard
 code the search path with the equivalent of a `-I .` option:
 
 ----
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
-  FbleVectorAppend(search_path, ".");
+  FbleSearchPath* search_path = FbleNewSearchPath();
+  FbleSearchPathAppend(search_path, ".");
 ----
 
-`FbleSearchPath` is a type representing an vector of strings, where we are
-using fble's own vector facilities. After initializing the vector, we append
-the single element `"."`.
+We create an empty `FbleSearchPath` and append the single element `"."`.
 
-FbleVectorInit allocates memory for the vector under the covers; we'll need
-to call `FbleVectorFree(search_path)` when we are done with the search path to
+FbleNewSearchPath allocates memory under the covers; we'll need to call
+`FbleFreeSearchPath(search_path)` when we are done with the search path to
 free up that memory.
 
 === Module Path ===
@@ -121,7 +118,7 @@ The next step is to load the fble program from source code:
   FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL);
   FbleFreeModulePath(module_path);
-  FbleVectorFree(search_path);
+  FbleFreeSearchPath(search_path);
 ----
 
 We start by calling `FbleNewValueHeap` to allocate a new garbage collected

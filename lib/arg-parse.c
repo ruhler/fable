@@ -59,7 +59,7 @@ bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv,
       return true;
     }
 
-    FbleVectorAppend(*dest, (*argv)[1]);
+    FbleSearchPathAppend(dest, (*argv)[1]);
 
     (*argc) -= 2;
     (*argv) += 2;
@@ -67,7 +67,7 @@ bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv,
   }
 
   if ((*argv)[0][0] == '-' && (*argv)[0][1] == 'I') {
-    FbleVectorAppend(*dest, (*argv[0]) + 2);
+    FbleSearchPathAppend(dest, (*argv[0]) + 2);
     (*argc)--;
     (*argv)++;
     return true;

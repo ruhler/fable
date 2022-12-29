@@ -83,14 +83,42 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
  * A list of directories to use as the root of an fble file hierarchy for
  * locating .fble files corresponding to a module path.
  *
- * The directories are search in order for the first matching module.
- *
- * Note: FbleSearchPath is a vector of const char*.
+ * The directories are searched in order for the first matching module.
  */
-typedef struct {
-  size_t size;      /**< Number of elements. */
-  const char** xs;  /**< Elements .*/
-} FbleSearchPath;
+typedef struct FbleSearchPath FbleSearchPath;
+
+/**
+ * Allocates a new, empty search path.
+ *
+ * @returns
+ *   A new empty search path.
+ *
+ * @sideeffects
+ * * The search path should be freed with FbleFreeSearchPath when it is no
+ *   longer needed.
+ */
+FbleSearchPath* FbleNewSearchPath();
+
+/**
+ * Frees resources associated with an FbleSearchPath.
+ *
+ * @param path  The path to free.
+ *
+ * @sideeffects
+ * * Frees resources associated with the search path.
+ */
+void FbleFreeSearchPath(FbleSearchPath* path);
+
+/**
+ * Appends a module root directory to the given search path.
+ *
+ * @param path  The path to append to.
+ * @param root_dir  The directory to add to the path. Borrowed.
+ *
+ * @sideeffects
+ * * Adds root_dir to the search path.
+ */
+void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir);
 
 /**
  * Loads an fble program.
@@ -110,7 +138,7 @@ typedef struct {
  * * The user should free strings added to build_deps when no longer needed,
  *   including in the case when program loading fails.
  */
-FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * Frees an FbleLoadedProgram.

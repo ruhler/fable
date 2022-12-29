@@ -15,6 +15,12 @@
 
 #include "expr.h"
 
+/** An fble search path. */
+struct FbleSearchPath {
+  size_t size;      /**< The number of elements. */
+  FbleString** xs;  /**< The elements. */
+};
+
 /** A stack of modules in the process of being loaded. */
 typedef struct Stack {
   FbleLoadedModule module;  /**< The value of the module. */
@@ -23,7 +29,31 @@ typedef struct Stack {
 } Stack;
 
 static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* build_deps);
-static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path, FbleStringV* build_deps);
+static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleStringV* build_deps);
+
+// See documentation in fble-load.h.
+FbleSearchPath* FbleNewSearchPath()
+{
+  FbleSearchPath* path = FbleAlloc(FbleSearchPath);
+  FbleVectorInit(*path);
+  return path;
+}
+
+// See documentation in fble-load.h.
+void FbleFreeSearchPath(FbleSearchPath* path)
+{
+  for (size_t i = 0; i < path->size; ++i) {
+    FbleFreeString(path->xs[i]);
+  }
+  FbleVectorFree(*path);
+  FbleFree(path);
+}
+
+// See documentation in fble-load.h.
+void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir)
+{
+  FbleVectorAppend(*path, FbleNewString(root_dir));
+}
 
 /**
  * Gets the file path for an fble module given the root directory.
@@ -110,11 +140,11 @@ static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* b
  * * The user should call FbleFreeString when the returned string is no
  *   longer needed.
  */
-static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path, FbleStringV* build_deps)
+static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleStringV* build_deps)
 {
   FbleString* found = NULL;
-  for (size_t i = 0; !found && i < search_path.size; ++i) {
-    found = FindAt(search_path.xs[i], path, build_deps);
+  for (size_t i = 0; !found && i < search_path->size; ++i) {
+    found = FindAt(search_path->xs[i]->str, path, build_deps);
   }
 
   if (found == NULL) {
@@ -127,7 +157,7 @@ static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path, FbleSt
 }
 
 // See documentation in fble-load.h.
-FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
   if (module_path == NULL) {
     fprintf(stderr, "no module path specified\n");

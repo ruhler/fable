@@ -225,3 +225,26 @@ system will be calling fble-compile for you, so it's okay for now that you
 have to know too much about packages to know what -p options are required when
 you call fble-compile.
 
+---
+
+How to implement support for -p?
+
+Because we want it to interleave with -I, the easiest approach would seem to
+be turning -p into the equivalent of -I as we parse command line options.
+
+I already have an FbleParseSearchPathArg. We can add -p directly to that. We
+will need to update usage descriptions.
+
+Package search path is currently a list of char**, but now we'll want to do
+memory management on the strings we add. We should change that to FbleString*
+instead.
+
+Proposed changes:
+
+* Change FbleSearchPath to a vector of FbleString*
+* Add FbleFindPackage to look up the package root path for an
+  named package according to FBLE_PACKAGE_PATH.
+* Call FbleFindPackage in FbleParseSearchPathArg function.
+* Update all the usage help scripts to document -p, --package in addition to
+  -I.
+

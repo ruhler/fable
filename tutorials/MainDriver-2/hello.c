@@ -39,9 +39,8 @@ FbleValue* ParseArg(FbleValueHeap* heap, const char* arg)
 
 int main(int argc, const char* argv[])
 {
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
-  FbleVectorAppend(search_path, ".");
+  FbleSearchPath* search_path = FbleNewSearchPath();
+  FbleSearchPathAppend(search_path, ".");
 
   FbleModulePath* module_path = FbleParseModulePath("/Hello%");
   if (module_path == NULL) {
@@ -52,7 +51,7 @@ int main(int argc, const char* argv[])
   FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL);
   FbleFreeModulePath(module_path);
-  FbleVectorFree(search_path);
+  FbleFreeSearchPath(search_path);
 
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
