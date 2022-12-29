@@ -1,5 +1,8 @@
-* Add support for FBLE_PACKAGE_PATH and -p options.
-  Update the Install tutorial to use these.
+* Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
+  options.
+* Update the Install tutorial to use the -p option.
+
+* Install pkgs as part of ninja install and set up default package path.
 
 * Bug in type inference / type checking?
   If I don't pass a type argument explicitly to the Permutes function in 

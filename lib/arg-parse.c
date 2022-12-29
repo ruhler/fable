@@ -8,7 +8,7 @@
 #include <stdio.h>    // for fprintf
 #include <string.h>   // for strcmp
 
-#include <fble/fble-vector.h>    // for FbleVectorAppend
+#include <fble/fble-load.h>      // for FbleSearchPath, etc.
 
 // FbleParseBoolArg -- See documentation in fble-arg-parse.h
 bool FbleParseBoolArg(const char* name, bool* dest, int* argc, const char*** argv, bool* error)
@@ -70,6 +70,22 @@ bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv,
     FbleSearchPathAppend(dest, (*argv[0]) + 2);
     (*argc)--;
     (*argv)++;
+    return true;
+  }
+
+  const char* package = NULL;
+  if (FbleParseStringArg("--package", &package, argc, argv, error)
+      || FbleParseStringArg("-p", &package, argc, argv, error)) {
+    if (!(*error)) {
+      FbleString* path = FbleFindPackage(package);
+      if (path != NULL) {
+        FbleSearchPathAppendString(dest, path);
+        FbleFreeString(path);
+      } else {
+        fprintf(stderr, "Error: package '%s' not found\n", package);
+        *error = true;
+      }
+    }
     return true;
   }
 

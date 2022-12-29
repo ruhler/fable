@@ -66,7 +66,7 @@ bool FbleParseStringArg(const char* name, const char** dest, int* argc, const ch
  * Parse an FbleSearchPath command line argument.
  *
  * Sample argument usage:
- *   -I entry1 -Ientry2
+ *   -I entry1 -Ientry2 -p package1 --package package2
  * 
  * @param dest    search path value to append to based on the flag setting.
  * @param argc    pointer to number of arguments remaining.

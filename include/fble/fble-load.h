@@ -121,6 +121,36 @@ void FbleFreeSearchPath(FbleSearchPath* path);
 void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir);
 
 /**
+ * Appends a module root directory to the given search path.
+ *
+ * @param path  The path to append to.
+ * @param root_dir  The directory to add to the path. Borrowed.
+ *
+ * @sideeffects
+ * * Adds root_dir to the search path.
+ */
+void FbleSearchPathAppendString(FbleSearchPath* path, FbleString* root_dir);
+
+/**
+ * Finds a package in the package path.
+ *
+ * Searches for the package in the directories listed in the colon-separated
+ * FBLE_PACKAGE_PATH environment variable and in the standard package path
+ * directories.
+ *
+ * @param package  The name of the package.
+ *
+ * @returns
+ *   The module root directory for the package, or NULL in case no such
+ *   package is found.
+ *
+ * @sideeffects
+ * * Allocates an FbleString that should be freed with FbleFreeString when no
+ *   longer needed.
+ */
+FbleString* FbleFindPackage(const char* package);
+
+/**
  * Loads an fble program.
  *
  * @param search_path   The search path to use for location .fble files. Borrowed.

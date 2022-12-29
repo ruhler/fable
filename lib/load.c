@@ -6,6 +6,7 @@
 #include <fble/fble-load.h>
 
 #include <assert.h>   // for assert
+#include <stdlib.h>   // for getenv
 #include <string.h>   // for strcat
 #include <unistd.h>   // for access, F_OK
 
@@ -53,6 +54,48 @@ void FbleFreeSearchPath(FbleSearchPath* path)
 void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir)
 {
   FbleVectorAppend(*path, FbleNewString(root_dir));
+}
+
+// See documentation in fble-load.h.
+void FbleSearchPathAppendString(FbleSearchPath* path, FbleString* root_dir)
+{
+  FbleVectorAppend(*path, FbleCopyString(root_dir));
+}
+
+// See documentation in fble-load.h.
+FbleString* FbleFindPackage(const char* package)
+{
+  // package plus extra space for '/' and '\0' characters.
+  size_t len = 2 + strlen(package);
+
+  // Search FBLE_PACKAGE_PATH.
+  char* package_path = getenv("FBLE_PACKAGE_PATH");
+  if (package_path != NULL) {
+    char* end = package_path + strlen(package_path);
+    char* s = package_path;
+    do {
+      char* e = strchr(s, ':');
+      if (e == NULL) {
+        e = end;
+      }
+
+      size_t n = e - s;
+      char dir[n + len];
+      strncpy(dir, s, n);
+      dir[n] = '\0';
+      strcat(dir, "/");
+      strcat(dir, package);
+
+      if (access(dir, F_OK) == 0) {
+        return FbleNewString(dir);
+      }
+
+      s = e+1;
+    } while (s < end);
+  }
+
+  // TODO: Search the default path.
+  return NULL;
 }
 
 /**
