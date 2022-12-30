@@ -374,3 +374,29 @@ installed: PATH, LD_LIBRARY_PATH, and some notion of an fble package path to
 find preinstalled fble packages in. Thoughts on the package path in
 fble.packages.txt.
 
+---
+
+Install tutorial and HelloWorld tutorials are drafted. Next is Fble Basics.
+
+I like 4-bit bitwise AND. Misc thoughts:
+* Let's define Unit@ ourselves, instead of importing it. Then let people take
+  a look at the definition of the Unit module?
+* Define Unit@, Bit@, Bit4@, Unit, 0, 1, x, y, And, And4, z.
+* Define ShowBit, ShowBit4.
+* Things to print: x, y, z, 
+* Should we write code to read Bit4@ from the command line?
+  I vote no. This is not about parsing. This is about working with the basic
+  types.
+* Where should we write the code relative to the Main function?
+  After the inputs, before the main function?
+  In a separate module?
+  I like the idea of a separate module. Import everything we need into Main.
+  Avoid dependencies. A little bit of insight into 
+
+Yeah, so lets define a module that has no dependencies on anything else. It
+exports: Unit@, Bit@, Bit4@, Unit, 0, 1, And, And4, 0011, 1010...
+
+Oh. We'll need to import String to be able to write the Show functions. I
+think that's okay.
+
+Hmm... I'm not sure. Much easier to do it all in HelloWorld, right?

@@ -4,6 +4,11 @@ namespace eval "tutorials" {
     "$::b/pkgs/core/fble-stdio $::s/tutorials/HelloWorld/HelloWorld.fble" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/HelloWorld -m /HelloWorld%"
 
+  # Basics tests
+  test $::b/tutorials/Basics.tr \
+    "$::b/pkgs/core/fble-stdio $::s/tutorials/Basics/Basics.fble" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/Basics -m /Basics%"
+
   # FirstProgram tests
   test $::b/tutorials/FirstProgram.tr \
     "$::b/test/fble-test $::s/tutorials/FirstProgram/Hello.fble" \

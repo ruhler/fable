@@ -24,20 +24,14 @@ We'll start by importing some types and functions from the core library:
 
 @code[fble][
 % True = /Core/Bool%.True;
-
 @ Char@ = /Core/Char%.Char@;
-
 <@>@ List@ = /Core/List%.List@;
 <@>% Concat = /Core/List%.Concat;
-
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
-
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-
 @ Unit@ = /Core/Unit%.Unit@;
 ]
 
