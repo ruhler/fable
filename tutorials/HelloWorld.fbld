@@ -42,8 +42,8 @@ We'll start by importing some types and functions from the core library:
 ]
 
 Names ending in the @l[\@] character are types. In this case, @l[Char@],
-@l[String@], and @l[Unit@] are basic types. @l[List@], @l[Monad@], @l[Stdio@],
-and @l[Main@] are polymorphic types.
+@l[String@], and @l[Unit@] are basic types. @l[List@] is a polymorphic type,
+and @l[Monad@], @l[Stdio@], and @l[Main@] are higher order polymorphic types.
 
 Names without @l[\@] are values. In this case we have the value @l[True],
 function @l[Str], and polymorphic function @l[Concat].
@@ -80,9 +80,9 @@ allow it to be reused as a main program that performs IO and as part of a pure
 computation. The monad @l[m] and interface @l[stdio] provide the routines for
 sequencing and performing IO computations.
 
-The @l[args] parameter is the list of command line arguments, which we'll
-ignore for the hello world program. It is separated from the @l[m] and
-@l[stdio] arguments because the @l[/Core/Stdio%] defines the @l[Main@]
+The @l[args] parameter is the list of command line arguments. We'll
+ignore those for the hello world program. @l[args] is separated from the @l[m]
+and @l[stdio] arguments because the @l[/Core/Stdio%] defines the @l[Main@]
 function as a curried function. The idea is that @l[m] and @l[stdio] are
 provided by the runtime code responsible for executing the main function, and
 the args are provided by the user.
