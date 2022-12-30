@@ -1,4 +1,9 @@
 namespace eval "tutorials" {
+  # HelloWorld tests
+  test $::b/tutorials/HelloWorld.tr \
+    "$::b/pkgs/core/fble-stdio $::s/tutorials/HelloWorld/HelloWorld.fble" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/HelloWorld -m /HelloWorld%"
+
   # FirstProgram tests
   test $::b/tutorials/FirstProgram.tr \
     "$::b/test/fble-test $::s/tutorials/FirstProgram/Hello.fble" \

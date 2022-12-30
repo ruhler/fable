@@ -1,0 +1,193 @@
+@tutorial[Hello World][
+In this tutorial you'll write and run a traditional hello world program that
+prints out the string "hello, world".
+
+Ironically, the hello world program in fble is quite advanced in terms of its
+use of language features. It makes use of modules, higher order polymorphism,
+type inference, curried functions, nested functions, modules as polymorphic
+functions, lists, literals, function bind syntax and the core libraries for
+characters, lists, monads, strings and IO.
+
+We'll only give a brief overview of how the hello world program works in this
+tutorial. Instead, think of it as a survey of advanced language features in
+fble. We'll spend the rest of the tutorials explaining these language features
+in detail and revisit the hello world program later on, after you're equipped
+to fully understand what's going on.
+
+@section[The Hello World Program][
+In your favorite text editor, start a new file called @l[HelloWorld.fble]. The
+@l[.fble] extension is used for fble programs; it is required for the fble
+interpreter and compiler to be able to locate your code.
+
+@subsection[Module Imports][
+We'll start by importing some types and functions from the core library:
+
+@code[fble][
+% True = /Core/Bool%.True;
+
+@ Char@ = /Core/Char%.Char@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Concat = /Core/List%.Concat;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+]
+
+Names ending in the @l[\@] character are types. In this case, @l[Char@],
+@l[String@], and @l[Unit@] are basic types. @l[List@], @l[Monad@], @l[Stdio@],
+and @l[Main@] are polymorphic types.
+
+Names without @l[\@] are values. In this case we have the value @l[True],
+function @l[Str], and polymorphic function @l[Concat].
+
+Names ending in @l[%] are names of modules. For example @l[/Core/Bool%] is a
+module from the core library that defines a boolean type and related
+functions.
+]
+
+@subsection[Main Function][
+Next we'll define the main function:
+
+code[fble][
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
+  % O = /Core/Stream/OStream%(m);
+
+  (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
+    O.PutLine(stdio.out, Concat<Char@>(strs));
+  };
+  
+  Unit@ _ <- m.do(Puts[Str|'hello, world']);
+  m.return(True);
+};
+]
+
+This defines a function called @l[Main] of type @l[Main@]. The @l[Main@] type
+is defined by the @l[/Core/Stdio%] module for doing standard IO. It's a
+polymorphic function that takes a single type argument @l[M@] and three
+regular arguments, @l[m], @l[stdio], and @l[args]. The function returns a
+boolean value to indicate success or failure.
+
+The @l[Main@] function is written as polymorphic in a monadic type @l[M@] to
+allow it to be reused as a main program that performs IO and as part of a pure
+computation. The monad @l[m] and interface @l[stdio] provide the routines for
+sequencing and performing IO computations.
+
+The @l[args] parameter is the list of command line arguments, which we'll
+ignore for the hello world program. It is separated from the @l[m] and
+@l[stdio] arguments because the @l[/Core/Stdio%] defines the @l[Main@]
+function as a curried function. The idea is that @l[m] and @l[stdio] are
+provided by the runtime code responsible for executing the main function, and
+the args are provided by the user.
+
+The value @l[O] is defined in the same way we import values from other
+modules. In this case, the module @l[/Core/Stream/OStream%] is a polymorphic
+function with type parameter @l[M@] and argument @l[m]. Type inference is used
+to infer the type @l[M@]. The value @l[O] is a struct value with a collection
+of types and values defined by the module in terms of monad @l[m]. In this
+case, @l[O] contains a collection of methods for outputting strings and
+characters.
+
+We define a helper function @l[Puts] that outputs a list of strings followed
+by a newline to standard output. We'll see a little later why we prefer to
+take a list of strings instead of a single string. Notice that @l[Puts] is a
+nested function which refers to @l[stdio], the argument to the @l[Main]
+function, and @l[O], a local variable defined in the @l[Main] function.
+
+Next we use function bind syntax to call the @l[Puts] function with a single
+element list with the string @l['hello, world']. This uses the three kinds of
+syntactic sugars in fble: function bind via @l[<-] to conveniently apply the
+monadic @l[do] function, a list using @l[\[] and @l[\]] to conveniently create
+a list, and the @l[Str] literal introduced with the @l[|] character.
+
+Finally we return @l[True] to indicate success.
+]
+
+@subsection[The Module Value][
+The last thing we need is to specify the @l[/HelloWorld%] module value:
+
+@code[fble]
+/Core/Stdio/IO%.Run(Main);
+
+This uses a helper function from @l[/Core/Stdio/IO%] to convert your @l[Main]
+function into something that can be run by the @l[fble-stdio] program.
+]
+]
+
+@section[Running Hello World][
+You should now have a complete @l[HelloWorld.fble] file that looks like the
+@l[$FBLE_PACKAGE_PATH/core/Core/Stdio/HelloWorld.fble] module included in the
+core library, assuming you have @l[$FBLE_PACKAGE_PATH] set from as described
+in the Install tutorial.
+
+We use the @l[fble-stdio] program to run our hello world program:
+
+@code[sh]
+fble-stdio -p core -I . -m /HelloWorld%
+
+If all goes well, this should output the string @l[hello, world].
+
+The @l[-p] option to @l[fble-stdio] says our program relies on modules from
+the @l[core] package. The @l[-I] option says to look for your
+@l[HelloWorld.fble] file in the current directory, and the @l[-m] option says
+to execute code from the @l[/HelloWorld%] module you just defined.
+]
+
+@section[Printing Different Kinds of Things][
+An important motivation for the hello world program is to show you how to
+print different things to the output, so you can see the results of trying
+different things in subsequent tutorials. Fble doesn't have a printf function
+that supports format strings. Instead, many of the types defined in the core
+library define a @l[Show] function to convert them to strings.
+
+For example, try adding the following lines to your @l[Main] function before
+returning to print booleans, characters, lists, and integers:
+
+@code[fble][
+  Unit@ _ <- m.do(Puts[Str|'A boolean: ', /Core/Bool/Show%.Show(True)]);
+  Unit@ _ <- m.do(Puts[Str|'A character: ', /Core/Char/Show%.Show(/Core/Char%.Chars.A)]);
+  Unit@ _ <- m.do(Puts[Str|'A list: ',
+    /Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, True, True]]);
+  Unit@ _ <- m.do(Puts[Str|'An integer: ',
+    /Core/Int/Show%.Show(/Core/Int/Lit%.Int|42)]);
+]
+]
+
+@section[Exercises][
+@exercise
+Try printing the @l[args] argument in your hello world program, then
+experiment with passing different command line arguments when you run
+@l[fble-stdio].
+
+@exercise
+Try importing @l[False] and returning that from your @l[Main] function. See
+how it effects the exit status of @l[fble-stdio].
+
+@exercise
+Sometimes we import values from other modules, other times we use them
+directly. It's your choice. Try removing the import for @l[True] and using the
+value directly from the @l[/Bool%] module. Try importing the
+@l[/Core/Stdio/IO%.Run] function before using it (hint: @l[Run] is a
+non-polymorphic function).
+
+@exercise
+String literals are introduced using @l[Str|], not from single quotes. If you
+have a string without spaces or other punctuation characters, you don't need
+single quotes. Try printing @l[hello] using a string literal without single
+quotes.
+]
+
+@section[Next Steps][
+Now you've seen a high level overview of the kinds of things you can do in
+fble. The next step is to do a deep dive, starting with the basics of
+fble: structs, unions, and functions. Head over to the Fble Basics tutorial to
+learn more.
+]
+]
