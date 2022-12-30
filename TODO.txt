@@ -1,8 +1,6 @@
 * Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
   options.
 
-* Add vim syntax file install to Install tutorial.
-
 * Set up default package path.
   Based on datadir configuration setting.
 

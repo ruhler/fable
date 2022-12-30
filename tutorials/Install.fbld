@@ -72,4 +72,29 @@ If all goes well, you should see "hello, world" printed to the terminal.
 You're now ready to work through the rest of the fble tutorials to learn all
 about fble.
 ]
+
+@section[Vim Syntax Highlighting][
+Fble ships with syntax files for use with the Vim text editor. If you are a
+Vim users, you can install the Vim files from the top level of the source
+directory using:
+
+@code[shell]
+mkdir -p ~/.vim/ftdetect ~/.vim/ftplugin ~/.vim/indent ~/.vim/syntax
+cp vim/ftdetect/* ~/.vim/ftdetect
+cp vim/ftplugin/* ~/.vim/ftplugin
+cp vim/indent/* ~/.vim/indent
+cp vim/syntax/* ~/.vim/syntax
+
+Now when you open up a @l[.fble] file in Vim, you'll get pretty syntax
+highlighting.
+
+It's also useful to set the path to be able to find .fble files from their
+module paths. For example, add the following to your ~/.vimrc file:
+
+@code[vim]
+autocmd BufNewFile,BufRead *.fble setlocal path=$FBLE_PACKAGE_PATH/*
+
+That way you can type @l[gf] with the cursor over a module path to jump to the
+code for that module.
+]
 ]

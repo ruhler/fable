@@ -90,5 +90,10 @@ To install:
 == Vim Files ==
 
 Vim ftplugin, syntax, and indent files for the fble language are available in
-the `spec/vim/` directory. Consult the vim documentation for how to install if
-desired.
+the `vim/` directory. You can run the following commands to install these files:
+
+  $ mkdir -p ~/.vim/ftdetect ~/.vim/ftplugin ~/.vim/indent ~/.vim/syntax
+  $ cp vim/ftdetect/* ~/.vim/ftdetect
+  $ cp vim/ftplugin/* ~/.vim/ftplugin
+  $ cp vim/indent/* ~/.vim/indent
+  $ cp vim/syntax/* ~/.vim/syntax
