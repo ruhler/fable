@@ -37,10 +37,9 @@ code.
 @code[sh]
 cd fable
 mkdir build install
-export FBLE_SOURCE=`pwd`
-export FBLE_INSTALL=$FBLE_SOURCE/install
+INSTALL=`pwd`/install
 cd build
-../configure --prefix=$FBLE_INSTALL
+../configure --prefix=$INSTALL
 ninja && ninja install
 
 If you would like to run the full test suite, you can also run:
@@ -52,18 +51,22 @@ ninja check
 @section[Environment Setup][
 Subsequent tutorials all assume the environment has been set up for easy
 access to the fble installation. If you haven't installed to a standard
-install path, you can manually set up the environment by modifying PATH and
-LD_LIBRARY_PATH environment variables.
+install path, you can manually set up the environment by modifying PATH,
+LD_LIBRARY_PATH, and FBLE_PACKAGE_PATH environment variables.
+
+The following environment setup makes use of the @l[INSTALL] variable defined
+above:
 
 @code[sh]
-export PATH=$FBLE_INSTALL/bin:$PATH
-export LD_LIBRARY_PATH=$FBLE_INSTALL/lib:$LD_LIBRARY_PATH
+export PATH=$INSTALL/bin:$PATH
+export LD_LIBRARY_PATH=$INSTALL/lib:$LD_LIBRARY_PATH
+export FBLE_PACKAGE_PATH=$INSTALL/share/fble
 
 To test your environment is properly set up, try running a hello world program
 that ships with the fble installation:
 
 @code[sh]
-fble-stdio -I $FBLE_SOURCE/pkgs/core -m /Core/Stdio/HelloWorld%
+fble-stdio -p core -m /Core/Stdio/HelloWorld%
 
 If all goes well, you should see "hello, world" printed to the terminal.
 You're now ready to work through the rest of the fble tutorials to learn all

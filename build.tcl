@@ -7,9 +7,8 @@
 #   ninja
 
 # Source configuration options.
-#   ::builddir -- top level build directory.
-#   ::srcdir -- top level source directory.
-#   ::bindir -- directory to install binaries to.
+#   ::builddir, ::prefix, ::srcdir, ::includedir, ::libdir, ::bindir,
+#   ::mandir, ::datadir
 source config.tcl
 
 set ::s $::srcdir
@@ -312,6 +311,10 @@ proc pkg {name deps objs} {
 
       fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
       lappend objs $::b/pkgs/$name/$x.o
+
+      set target $::datadir/fble/$name/$x
+      build $target $::s/pkgs/$name/$x "cp $::s/pkgs/$name/$x $target"
+      lappend ::installs $target
     }
   }
 

@@ -51,6 +51,7 @@ set ::includedir $::prefix/include
 set ::libdir $::prefix/lib
 set ::bindir $::prefix/bin
 set ::mandir $::prefix/man
+set ::datadir $::prefix/share
 
 puts "Configuration:"
 puts "  srcdir=$::srcdir"
@@ -60,6 +61,7 @@ puts "  includedir=$::includedir"
 puts "  libdir=$::libdir"
 puts "  bindir=$::bindir"
 puts "  mandir=$::mandir"
+puts "  datadir=$::datadir"
 
 proc subst_in { src dest } {
   puts "creating $dest"
@@ -72,6 +74,7 @@ proc subst_in { src dest } {
     -e "s=@libdir@=$::libdir=g" \
     -e "s=@bindir@=$::bindir=g" \
     -e "s=@mandir@=$::mandir=g" \
+    -e "s=@datadir@=$::datadir=g" \
     $src > $dest
 }
 
