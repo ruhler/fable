@@ -1,0 +1,218 @@
+@tutorial[Basics][
+This tutorial walks you through the basics of fble: structs, unions, and
+functions. You'll implement a bitwise @l[AND] operation on a 4 bit bit-vector.
+
+In your favorite text editor, start a new file called @l[Basics.fble].
+
+@section[Boiler Plate][
+We'll start by reusing the same imports from the HelloWorld tutorial, except
+without the import for the @l[Unit@] type, which we will define ourselves:
+
+@code[fble]
+% True = /Core/Bool%.True;
+@ Char@ = /Core/Char%.Char@;
+<@>@ List@ = /Core/List%.List@;
+<@>% Concat = /Core/List%.Concat;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+These are so we can write our @l[Main] function later on.
+]
+
+@section[Types][
+Now that the boiler plate is out of the way, We'll start by defining types for
+a single bit and a 4 bit bit-vector:
+
+@code[fble]
+@ Unit@ = *();
+@ Bit@ = +(Unit@ 0, Unit@ 1);
+@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+
+This code defines three types, named @l[Unit@], @l[Bit@], and
+@l[Bit4@]. The language requires type names to end with the @l[@] character, to
+distinguish them from normal variable names.
+
+The @l[@] at the beginning of each line says we are defining names of types.
+The syntax @l[*(...)] is used for struct types and @l[+(...)] for union types. 
+
+The @l[Unit@] type defined here is a struct type without any fields. We call it
+@l[Unit@] because there's only one possible value for the type. It is a building
+block for the @l[Bit@] type. @l[Unit@] is equivalent to the @l[()] type in
+Haskell, or the type of a zero-element tuple @l[()] in Python.
+
+The @l[Bit@] type is defined as a union of two @l[Unit@] types, labeled @l[0]
+and @l[1]. There are two possible values for the @l[Bit@] type, a @l[Unit@]
+value tagged with @l[0] and a @l[Unit@] value tagged with @l[1]. Union values
+implicitly keep track of their tag, unlike in C. You can ask a union value
+what its tag is and access the value associated with the tag. More on that
+later. There is nothing special about the names of the fields @l[0] and @l[1]
+that we have chosen here. We could just as well have named them @l[zero] and
+@l[one]. The fble language has no notion of built in numbers, which means you
+are free to use numbers as identifiers for variable names or field names.
+
+@l[Bit4@] is a struct type with four fields, named @l[3], @l[2], @l[1], and
+@l[0]. Each field has type @l[Bit@]. This represents a bit vector of 4 bits.
+We'll call bit 3 the most significant bit and put it on the left as is
+conventional, but it doesn't really matter for the bitwise operations defined
+in this tutorial.
+]
+
+@section[Values][
+Now that we have the @l[Bit@] and @l[Bit4@] types defined, we can declare some
+variables of those types:
+
+@code[fble][
+Unit@ Unit = Unit@();
+
+Bit@ 0 = Bit@(0: Unit);
+Bit@ 1 = Bit@(1: Unit);
+
+Bit4@ X = Bit4@(0, 0, 1, 1);
+Bit4@ Y = Bit4@(1, 0, 1, 0);
+]
+
+This code declares 5 variables, named @l[Unit], @l[0], @l[1], @l[X], and
+@l[Y]. The variable declarations start with the type of the variable, followed
+by the name of the variable, @l[=], and the value of the variable.
+
+The syntax to create a struct value is the struct type followed by the list of
+values for each field of the struct, in order, in parenthesis. The syntax to
+create a union value is the union type followed by the tag, a colon, and the
+value to use for that tagged field all in parenthesis.
+
+Union and struct values are immutable, lightweight, and passed by value. A
+decent implementation of fble will implement a value of @l[Bit4@] like @l[X] or
+@[Y] easily in a single machine word.
+]
+
+@section[Functions][
+Next we'll define a couple of functions that implement a bitwise @l[AND]
+operation: A function @l[And] that computes the @l[AND] operation on
+individual bits, and a function @l[And4] to compute bitwise @l[AND] on our 4
+bit bit-vectors:
+
+@code[fble][
+(Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+  a.?(0: 0, 1: b);
+};
+
+(Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+  Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
+};
+]
+
+The functions @l[And] and @l[And4] are variables just like @l[Unit], @l[0],
+@l[1], @l[X], and @l[Y]. To declare these variables, we start with the type,
+followed by the name, @l[=], and the their value. In this case we have function
+types and function values instead of struct or union types and struct or union
+values.
+
+The syntax for a function type is the list of argument types in parenthesis,
+followed by the return type of the function in braces. The type for the @l[And]
+function is @l[(Bit@, Bit@) { Bit@; }], which means it is a function that takes
+two arguments of type @l[Bit@] and returns a @l[Bit@] as a result.
+
+The syntax for a function value is a list of named arguments in parenthesis
+followed by the body of the function. The implementation of the @l[And] function
+uses names @l[a] and @l[b] for the arguments. The body of the function consists of
+a single expression, which will be evaluated to compute the result of the
+function.
+
+In the case of the @l[And] function, the result is computed using the
+conditional expression @l[a.?(0: 0, 1: b)]. Conditional expressions, also
+known in fble as "union select" expressions, are similar to the conditional
+operator, if statements, or case statements in C and other languages. The
+syntax for a conditional expression is the union value to switch on, followed
+by @l[.?], followed by an expression to evaluate for each possible tag of the
+union value. At runtime, the tag associated with the union value is used to
+select the expression to return. In this case, if @l[a] is tagged with @l[0],
+the result @l[0] will be returned, and if @l[a] is tagged with @l[1], the
+result @l[b] will be returned. That defines an @l[AND] operation.
+
+The @l[And4] function is similarly defined. It returns a @l[Bit4@] value whose
+fields are the result of applying the @l[And] function to the corresponding
+fields of the arguments @l[a] and @l[b]. For example, @l[And(a.3, b.3)] calls the
+@l[And] function with bit 3 of @l[a] and bit 3 of @l[b], and uses the result
+for bit 3 of the result of the @l[And4] function.
+
+We can apply our @l[And4] function to variables @l[X] and @l[Y] to get a
+result @l[Z]:
+
+@code[fble]
+Bit4@ Z = And4(X, Y);
+]
+
+@section[String Conversions][
+We'd like to write some functions to convert @l[Bit@] and @l[Bit4@] values to
+strings so we can print them out. These functions are similar to the functions
+we have already written:
+
+@code[fble][
+(Bit@) { String@; } ShowBit = (Bit@ a) {
+  a.?(0: Str|0, 1: Str|1);
+};
+
+(Bit4@) { String@; } ShowBit4 = (Bit4@ a) {
+  Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
+};
+]
+
+We'll explain in more detail about the list and string literals used here in
+future tutorials.
+]
+
+@section[The Main Function][
+All that's left is to write a main function. We'll have it print out the
+values of @l[X], @l[Y], and @l[Z]:
+
+@code[fble][
+Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
+  % O = /Core/Stream/OStream%(m);
+
+  (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
+    O.PutLine(stdio.out, Concat<Char@>(strs));
+  };
+  
+  Unit@ _ <- m.do(Puts[
+    ShowBit4(X), Str|' AND ', ShowBit4(Y), Str|' = ', ShowBit4(Z)]);
+  m.return(True);
+};
+
+/Core/Stdio/IO%.Run(Test);
+]
+]
+
+@section[Running the program][
+We can now run our program to try it out:
+
+@code[sh]
+fble-stdio -p core -I . -m /Basics%
+
+If all goes well, you should see the values of @l[X], @l[Y], and @l[Z] printed
+out:
+
+@quote
+0011 AND 1010 = 0010
+]
+
+@section[Exercises][
+@exercise
+Try implementing bitwise `NOT`, `OR` and `XOR` functions.
+
+@exercise
+Try defining a `Bit8@` type and implementing a bitwise `And8` operation for
+it. You could reuse `Bit4@` for the definition of `Bit8@` or just use `Bit@`
+like how we defined `Bit4@`.
+
+@exercise
+Try implementing a 4-bit `Add` function that can add two `Bit4@` interpreted
+as twos-complement integers.
+]
+
+@section[Next Steps]
+Head over to the Variables tutorial to learn all about variables.
+]
+
