@@ -2298,3 +2298,75 @@ it much harder to do things like smten or other different ways of running
 code, because you would have to reimplement all the builtins for different
 execution modes like that.
 
+---
+
+Revisiting fble-deps. Thought is we should generate dependencies as part of
+fble-compile. Questions are:
+* Is fble-compile enough, or we want it for fble-test, fble-stdio, etc?
+* What command line options should we use to say where to output the file and
+  what the target should be?
+
+Let's start with how I use fble-deps in practice:
+* In the pkg proc in build.tcl, where fble-compile would do just fine.
+* We use the generated .d file as the target.
+
+Would we ever want to generate deps some other way? Would we ever want to use
+a different target?
+
+What gcc does:
+-M: Outputs a rule with the .o file as the target. Instead of what it would
+    have output before.
+-MM: Same as -M, but ignores system header files.
+-MF: The file to write the output to.
+-MG: Allows missing header files.
+-MT: Change the target.
+-MD: Shortcut for -M -MF, with the name of the .d file automatically chosen.
+
+Seems rather complicated and confusing to me. I think I want two options: one
+to specify the output name, and one to specify the target name.
+
+I think depfile is a reasonable name to use for these, inspired by ninja. That
+suggests two arguments:
+
+ --depfile FILE
+ --depfile-target TARGET
+
+What if you specify --depfile-target without --depfile? That should be illegal
+I think. What if you specify --depfile without --depfile-target? Can we come
+up with a reasonable default target?
+
+Why not always use the output file as the target? Surely that file depends on
+all the headers, and anything else you want to depend on it can do so. Then we
+only need a single option: --depfile FILE.
+
+Let's try it and see how goes.
+
+I wonder: should we allow --depfile as a separate option to the compiler? No
+need for fble-deps, you can use fble-compile --depfile?
+
+Why require one of --compile, --export or --main? Probably because you almost
+certainly don't want it to do nothing. But depfile sounds like a good enough
+reason to me to run fble-compile without anything else.
+
+Trouble:
+* ninja doesn't treat the depfile as a buildable target. That means we would
+  need to explicitly list it as an output.
+* We use the .d files as dependencies for the interpreter tests, like
+  fble-stdio, to make sure those run again when things change.
+
+That sort of suggests we want fble-stdio and all the fble-* functions that
+call FbleLoad to support --depfile, and for convenience, it would be nice to
+specify a --depfile-target option to have any kind of target, be it a .o file,
+a .d file, or a .tr file, for example.
+
+That means:
+* fble-disassemble
+* fble-compile
+* fble-test
+* fble-mem-test
+* fble-profiles-test
+* fble-stdio and any derivatives thereof.
+* fble-app and any derivatives thereof.
+
+Now I'm starting to question whether it really makes sense to make this
+change. So much simpler just to have a separate fble-deps program, right?

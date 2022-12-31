@@ -96,12 +96,6 @@
 * [spec] Should empty path be allowed in package type?
  See spec/fble.adoc for more details.
 
-* Should fble-deps be a side effect of other tools instead of a separate
-  executable?
-  It seems silly and potentially incorrect to run fble-deps as a separate
-  tool. What about making it a general option for all the fble related tools
-  that load modules? Particularly once we start loading separate .@ files.
-
 * [modules]
  - Decide about .fble.@ files.
  - Split FbleLoad into FbleLoadProgram and FbleLoadModule.

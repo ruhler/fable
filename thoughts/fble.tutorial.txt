@@ -400,3 +400,59 @@ Oh. We'll need to import String to be able to write the Show functions. I
 think that's okay.
 
 Hmm... I'm not sure. Much easier to do it all in HelloWorld, right?
+
+---
+
+Next tutorial: variables. What all examples do I want to include?
+
+Topics to discuss include:
+* Two forms for lets:
+  e.g. Unit@ Unit = Unit@();
+       % Unit = /Core/Unit%.Unit;
+  Two ways to define a variable: with a type, or with a kind (type is
+  automatically inferred).
+* Kinds and kind lets (save polymorphism for later).
+  Types as values: Note we can use type values where type names are expected.
+  And define two different names for the same type.
+
+  % versus @.
+  Examples of defining type variables and normal variables using kind let:
+  @ Unit@ = /Core/Unit%.Unit@;
+  % Unit = /Core/Unit%.Unit;
+
+  Note kind form often used for imports, but can be used for regular variables
+  too:
+  @ Unit@ = *();
+  % Unit = Unit@();
+  
+  Note: polymorphic kinds too, we'll talk more about those in future tutorial.
+* Type lets.
+  e.g. Unit@ Unit = Unit@();
+  
+  Defining type variables with type lets:
+  What the type of a type is.
+  Typeof operator.
+  e.g. @<*()> Unit@ = *();
+
+  Note: This is kind of silly, because you repeat the value of the type
+  variable in the type itself. That's why we tend to use kind lets for
+  defining type variables.
+* Variable scopes
+  * A note on lifetimes of variables?
+  * Visible in the body of the let.
+  * Not visible prior to the let. Note: this means you need to define things
+    in order.
+  * Yes visible in the definition of the let, as 'undefined'.
+    Example of recursive function.
+    Example of acceptable recursive value.
+    Example of vacuous value.
+  * Note about shadowing of variables.
+  * Warnings about unused variables, and use of '_' to prevent that.
+  * Note about conventional use of '_' for unused variables.
+  * Mutually recursive lets.
+* Tell readers to read section 2 of the language spec, which they should now
+  be entirely familiar with.
+
+I think don't bother with writing a .fble file for this tutorial. Just do
+small snippets. Readers can try things out on their own, and we can use
+exercises to get them to try things out.
