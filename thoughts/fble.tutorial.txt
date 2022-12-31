@@ -456,3 +456,17 @@ Topics to discuss include:
 I think don't bother with writing a .fble file for this tutorial. Just do
 small snippets. Readers can try things out on their own, and we can use
 exercises to get them to try things out.
+
+---
+
+Next tutorial: Structs.
+* Basics: types, constructing values, accessing fields.
+* Implicit type structs.
+ - Explicit names.
+ - Implicit names.
+ - Mix of explicit and implicit names.
+* Type fields.
+ - Using explicit type struct and implicit type struct.
+* Struct as a namespace example.
+  
+So, this is pretty simple.

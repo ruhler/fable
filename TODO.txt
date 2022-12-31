@@ -17,7 +17,7 @@
   configure, which updates Doxyfile?
 
 * Write new set of tutorials.
-  See thoughts/fble.tutorials.txt.
+  See thoughts/fble.tutorial.txt.
 
 * Generate nice www/ site.
   See thoughts/fble.www.txt.
