@@ -19,6 +19,9 @@ In your favorite text editor, start a new file called @l[HelloWorld.fble]. The
 @l[.fble] extension is used for fble programs; it is required for the fble
 interpreter and compiler to be able to locate your code.
 
+Note: "fble" is pronounced as four separate letters 'f'-'b'-'l'-'e', with
+stress on the 'f'.
+
 @subsection[Module Imports][
 We'll start by importing some types and functions from the core library:
 
@@ -45,6 +48,15 @@ function @l[Str], and polymorphic function @l[Concat].
 Names ending in @l[%] are names of modules. For example @l[/Core/Bool%] is a
 module from the core library that defines a boolean type and related
 functions.
+]
+
+@subsection[Comments in Code][
+Comments in fble start with the @l[#] character end continue to the end of the
+line. For example:
+
+@code[fble]
+# Here are some comment lines you can include in your
+# hello world program if you want to.
 ]
 
 @subsection[Main Function][

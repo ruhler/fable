@@ -1,0 +1,7 @@
+# @@fble-test@@ no-error
+
+# The @ namespace character is not part of the name of a variable, so we can
+# pick funny names like the following:
+@ 'Unit'@ = *();      # The Unit@ type, using quoted words. Equivalent to Unit@.
+% 'Unit@' = Unit@();  # The unit value, with @ in the name, not the namespace.
+'Unit@';

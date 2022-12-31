@@ -111,8 +111,12 @@ It is useful to be able to recognize immediately whether a variable refers to
 a normal value, a type value, or something else. For that reason, we require
 different namespaces be used for different kinds of values. In the concrete
 syntax, names of normal variables are unadorned, while names of type variables
-must end with the character `@`. So, for example, `True` is a normal value,
-and `Bool@` is a type value.
+must be followed with the character `@`. So, for example, `True` is a normal
+value, and `Bool@` is a type value.
+
+The `@` character is not considered part of the variable, but rather is an
+indicator of the namespace of the variable. So, for example `'Foo'@` is a
+type variable named `Foo`, and `'Foo@'` is a normal variable named `Foo@`.
 
 You are not allowed to use a variable to refer to a higher kinded value, because
 then using `@` in variable names to distinguish between normal variables and

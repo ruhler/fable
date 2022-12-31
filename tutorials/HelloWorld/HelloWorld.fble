@@ -10,6 +10,9 @@
 % Str = /Core/String%.Str;
 @ Unit@ = /Core/Unit%.Unit@;
 
+# Here are some comment lines you can include in your
+# hello world program if you want to.
+
 Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
 
