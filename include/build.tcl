@@ -6,7 +6,7 @@ namespace eval "include" {
 
   # Doxygen
   lappend ::build_ninja_deps "$::s/include/fble"
-  build $::b/include/doxygen.log \
+  build "$::b/include/doxygen.log $::b/www/include $::b/include/man $::b/include/latex" \
     "$::s/test/log $::s/include/DoxygenLayout.xml $::b/include/Doxyfile [glob $::s/include/fble/*.h]" \
     "$::s/test/log $::b/include/doxygen.log doxygen $::b/include/Doxyfile"
 
