@@ -1054,7 +1054,7 @@ In practice, the value could be a polymorphic function value of abstract
 monadic type. The function is applied to a builtin instance of the monadic
 type that can have side effects. For example, the type of the value might be:
 
- <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
+ <<@>@ M@>(Monad@<M@>, Stdio@<M@>)(List@<String@>) { M@<Bool@>; };
 
 The function is provided with instances of the Monad@ and Stdio@ interface and
 a list of command line arguments. The function is executed, resulting in input

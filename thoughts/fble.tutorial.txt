@@ -336,6 +336,7 @@ Then have some advanced/miscellaneous topics:
 * Profiling.
 * Debugging.
 * Vim syntax highlighting.
+  - No longer needed, because we say how to install vim in Install tutorial.
 * Style guide.
 
 Cool. I think that's perfect. It makes more sense to go in that order I feel
@@ -470,3 +471,31 @@ Next tutorial: Structs.
 * Struct as a namespace example.
   
 So, this is pretty simple.
+
+---
+
+Next tutorial: Modules.
+
+I think better to go to Modules next, so people can really understand and
+program at scale, before going on to unions. Also, they will have just done
+the structs tutorial, so namespaces stuff is fresh in their minds.
+
+* Motivation
+  - Split programs across multiple files.
+  - Be able to reuse code in multiple programs.
+* Organization
+  - By dependency (dependency graph)
+    Recursion not allowed.
+  - By development (directory structure)
+    Independent of dependencies.
+    Implications for access controls described in future tutorial.
+* Module as a value.
+  - And how they get assembled into a program.
+  - Note: struct most common, but can be any kind of value.
+* Mapping from module path to file name.
+  - -m option
+* Module search path.
+  - -I option
+* Packages, package path.
+  - -p option
+

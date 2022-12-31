@@ -1891,3 +1891,142 @@ Tags I want in tutorials:
 * @list[body]
  - @item[id][body]
 
+---
+
+Just some quite thoughts about how to organize fbld:
+* front ends (e.g. usage, readme, spec, tutorial) convert a set of front end
+  specific tags to a set of core tags. This is a restructuring pass.
+* back ends (e.g. html, pdf, roff, txt) convert core tags to formatted
+  documents. This is a formatting pass.
+* Try to keep the same meaning for all the core tags across all the front ends
+  and back ends.
+* Hopefully we won't run into cases where backends have to be aware of
+  particular front ends or restrictions thereof, though I think this is a
+  fundamentally hard problem, so mileage may vary.
+
+Maybe we have:
+* fbld.tcl - Does tag agnostic parsing.
+* backends/
+    core.tcl - The core tags. Just does type checking of them. No output.
+    man.tcl - For outputting man pages (requires special input structure?).
+    roff.tcl - For outputting roff.
+    html.tcl - For outputting html.
+    etc.
+* frontends/
+    usage.tcl - For converting to core.
+    readme.tcl - For converting to core.
+
+I don't know. Man pages seem hard to do without very restrictive inputs.
+
+I suppose another approach is have a library of tags. Maybe backends are a
+library of converting tags to back end formatting, and front ends are what
+select which tags to use and drive the backend tag libraries to produce the
+desired output?
+
+Let's review what kinds of conversions I want:
+* usage ==> check, man, help, html, pdf
+* readme ==> check, html, pdf
+* tutorial ==> check, html, pdf
+* spec ==> check, html, pdf
+    
+To start, skip pdf. Just keep in mind that it might be a thing we want
+eventually.
+
+I think we should also think about how to bundle multiple documents together.
+For example, if generating html, we want to be able to link between documents.
+If generating pdf, maybe we want to bundle everything together into a single
+pdf and link internally, or maybe we want to generate pdfs and use URLs to
+link between them?
+
+I'm not sure. I think it's too early at this point to make informed decisions.
+Best thing to do next, I think, is hack together the following:
+* Migrate rest of .adoc files to .fbld.
+* Support for checking usage, readme, tutorial, spec
+  In particular, define the tags I want to support for all of them.
+* Implement html backends for all use cases.
+
+We can do a round of reorganization after we've sketched all those things out.
+
+I'd like to drive things with the check scripts, so I'm forced to use the
+right tags and keep a list of all the tags that I'm using.
+
+How should I structure all of this code? The components are:
+* common
+  - checking
+  - man generation
+  - roff generation
+  - html generation
+* usage specific
+  - checking
+  - man generation
+  - txt generation
+  - html generation
+* readme specific
+  - checking
+  - html generation
+* tutorial specific
+  - checking
+  - html generation
+* spec specific
+  - checking
+  - html generation
+
+How about this:
+* common checking.
+* man generation
+* roff generation
+* html generation
+* usage wrapper
+* readme wrapper
+* tutorial wrapper
+* spec wrapper
+
+I'm hoping we don't need any backend specific generation in the wrappers. We
+can just reuse generation for existing common tags. So a wrapper does some
+extra tag checking and conversion, then calls the checking/generation helpers
+to support all forms of generation.
+
+That suggests users interact with the wrapper for a given frontend, with
+options to specify what kind of output formats to generate. The backends are
+all libraries for frontends to reuse.
+
+How should we record what front end a particular doc is using? Ideas:
+* Put it in the filename: README.fbld, foo.usage.fbld, foo.spec.fbld.
+  I don't really like that.
+* Add a tag to the document. For example: @readme[Fable], @tutorial[Title],
+  @spec[Title], @usage[Title].
+* Have a generic tag to indicate. For example: @fbld[spec], @fbld[README],
+  @fbld[tutorial].
+
+I like the second option: @readme, @tutorial, @spec, @usage, etc. as the top
+level tag. The front end can give an error if you don't have the right top
+level tag. You could also imagine a future where you mix together documents of
+different tags, using the tags to specify how to dispatch them. For example,
+maybe we have a @collection front end that we use for a website, a pdf, or
+some other collection of documents that can all link between one another.
+Yeah. I like that idea.
+
+Let's do it:
+fbld/
+  fbld.tcl
+  test.tcl
+  backends/
+    check.tcl
+    man.tcl
+    roff.tcl
+    html.tcl
+  frontends/
+    usage.tcl
+    readme.tcl
+    tutorial.tcl
+    spec.tcl
+    collection.tcl
+
+Steps:
+1. Reorganize existing code to match above proposed organization.
+2. Add support for check.
+3. Add tutorial front end.
+4. Add html back end.
+5. Add readme and spec front ends.
+
+We should be in good shape then.
