@@ -2188,3 +2188,11 @@ core.tcl, for core tags? I like that a little better. And maybe don't treat it
 as a backend, because it's more like an interface between frontends and
 backends.
 
+---
+
+What next? I see two options:
+A. Reuse usage.tcl for generating help and man pages.
+B. Write a tutorial.tcl frontend and use it to check syntax of tutorials.
+
+(B) sounds like more fun. Let's start there.
+

@@ -53,6 +53,7 @@ that we have chosen here. We could just as well have named them @l[zero] and
 @l[one]. The fble language has no notion of built in numbers, which means you
 are free to use numbers as identifiers for variable names or field names.
 
+@par
 @l[Bit4@] is a struct type with four fields, named @l[3], @l[2], @l[1], and
 @l[0]. Each field has type @l[Bit@]. This represents a bit vector of 4 bits.
 We'll call bit 3 the most significant bit and put it on the left as is

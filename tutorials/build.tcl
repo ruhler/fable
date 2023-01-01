@@ -1,4 +1,11 @@
 namespace eval "tutorials" {
+  foreach {x} [glob $::s/tutorials/*.fbld] {
+    set base [file rootname [file tail $x]]
+    test $::b/tutorials/$base.fbld.tr \
+      "$::s/tutorials/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/core.tcl $::s/fbld/frontends/tutorial.tcl" \
+      "tclsh8.6 $::s/fbld/frontends/tutorial.tcl $::s/tutorials/$base.fbld"
+  }
+
   # HelloWorld tests
   test $::b/tutorials/HelloWorld.tr \
     "$::b/pkgs/core/fble-stdio $::s/tutorials/HelloWorld/HelloWorld.fble" \

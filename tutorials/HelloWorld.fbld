@@ -38,7 +38,7 @@ We'll start by importing some types and functions from the core library:
 @ Unit@ = /Core/Unit%.Unit@;
 ]
 
-Names ending in the @l[\@] character are types. In this case, @l[Char@],
+Names ending in the @l[@] character are types. In this case, @l[Char@],
 @l[String@], and @l[Unit@] are basic types. @l[List@] is a polymorphic type,
 and @l[Monad@], @l[Stdio@], and @l[Main@] are higher order polymorphic types.
 
