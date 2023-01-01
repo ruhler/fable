@@ -41,7 +41,9 @@ pkgs/:: Sample fble library and application packages.
 spec/:: Specification of the fble language, including spec tests.
 test/::  Source code for fble test binaries and other test utilities.
 thoughts/:: A collection of running discussions about fble.
-tutorials/:: Tutorials for getting started with fble.
+tutorials/:: Fble language tutorials.
+vim/:: Vim syntax files for fbld and fble.
+www/:: Source for the fble website.
 
 == Build Requirements ==
 

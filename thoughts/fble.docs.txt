@@ -2215,3 +2215,4 @@ access to line and col for each argument, to be able to pass that back.
 I suppose we could pass around arrays instead of strings? Wherever we want to
 pass text, instead pass a triple: line, col, text. Ugh. Sounds hard.
 
+Some hacks will get us by in the short term.
