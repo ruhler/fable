@@ -190,10 +190,9 @@ single quotes. Try printing @l[hello] using a string literal without single
 quotes.
 ]
 
-@section[Next Steps][
+@section[Next Steps]
 Now you've seen a high level overview of the kinds of things you can do in
 fble. The next step is to do a deep dive, starting with the basics of
-fble: structs, unions, and functions. Head over to the Fble Basics tutorial to
-learn more.
-]
+fble: structs, unions, and functions. Head over to the
+@fbld[tutorials/Basics.fbld][Basics] tutorial to learn more.
 ]

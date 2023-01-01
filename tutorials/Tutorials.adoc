@@ -18,3 +18,5 @@ link:Variables.fbld[]::
 link:Structs.fbld[]::
   Learn all about structs in fble.
 
+link:Modules.fbld[]::
+  Learn all about modules in fble.

@@ -1,4 +1,5 @@
 namespace eval "tutorials" {
+  lappend ::build_ninja_deps $::s/tutorials
   foreach {x} [glob $::s/tutorials/*.fbld] {
     set base [file rootname [file tail $x]]
     test $::b/tutorials/$base.fbld.tr \

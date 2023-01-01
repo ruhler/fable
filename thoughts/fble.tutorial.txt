@@ -498,4 +498,5 @@ the structs tutorial, so namespaces stuff is fresh in their minds.
   - -I option
 * Packages, package path.
   - -p option
+* Example: splitting up Basics code into separate modules.
 

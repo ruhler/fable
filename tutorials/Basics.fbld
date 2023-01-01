@@ -214,6 +214,7 @@ as twos-complement integers.
 ]
 
 @section[Next Steps]
-Head over to the Variables tutorial to learn all about variables.
+Head over to the @fbld[/tutorials/Variables.fbld][Variables] tutorial to learn
+all about variables.
 ]
 
