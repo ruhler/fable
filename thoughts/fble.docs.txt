@@ -2196,3 +2196,22 @@ B. Write a tutorial.tcl frontend and use it to check syntax of tutorials.
 
 (B) sounds like more fun. Let's start there.
 
+---
+
+Issue: It's to hard to see where a command fails. Ideally I can print a proper
+error message with line and column numbers relative to the .fbld file.
+
+This will need some coordination. Or will it? Maybe we can use some global
+variables to hide that?
+
+* find_inline_command needs to know starting line and col.
+* find_arg_end needs to know starting line and col.
+* inline needs to know starting line and col.
+* block needs to know starting line and col.
+
+But inline and block are called from the tag commands. Which means they need
+access to line and col for each argument, to be able to pass that back.
+
+I suppose we could pass around arrays instead of strings? Wherever we want to
+pass text, instead pass a triple: line, col, text. Ugh. Sounds hard.
+

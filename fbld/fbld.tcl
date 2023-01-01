@@ -18,14 +18,8 @@ namespace eval fbld {
     for {set i $start} {$i < $len} { incr i } {
       switch -exact [string index $text $i] {
         \\ { incr i }
-        \[ {
-          puts stderr "Unexpected '\[' at index $i"
-          exit 1 
-        }
-        \] {
-          puts stderr "Unexpected '\]' at index $i"
-          exit 1 
-        }
+        \[ { error "Unexpected '\[' at index $i in text '$text'" }
+        \] { error "Unexpected '\]' at index $i in text '$text'" }
         @ { return $i }
       }
     }
@@ -50,8 +44,7 @@ namespace eval fbld {
         }
       }
     }
-    puts stderr "Unterminated argument starting at index $start"
-    exit 1
+    error "Unterminated argument starting at index $start in text '$text'"
   }
 
   proc is_command_name_char { char } {
@@ -92,8 +85,7 @@ namespace eval fbld {
         incr name_end
       }
       if {$name_end == $i} {
-        puts stderr "Missing command name at index $i"
-        exit 1
+        error "Missing command name at index $i in text '$text'"
       }
       set cmd [string range $text $i [expr $name_end - 1]]
       set i $name_end
@@ -153,8 +145,7 @@ namespace eval fbld {
         incr name_end
       }
       if {$name_end == $i} {
-        puts stderr "Missing command name at index $i"
-        exit 1
+        error "Missing command name at index $i in text '$text'"
       }
       set cmd [string range $text $i [expr $name_end - 1]]
       set i $name_end

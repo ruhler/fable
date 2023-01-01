@@ -86,7 +86,7 @@ value to use for that tagged field all in parenthesis.
 
 Union and struct values are immutable, lightweight, and passed by value. A
 decent implementation of fble will implement a value of @l[Bit4@] like @l[X] or
-@[Y] easily in a single machine word.
+@l[Y] easily in a single machine word.
 ]
 
 @section[Functions][
@@ -195,21 +195,21 @@ fble-stdio -p core -I . -m /Basics%
 If all goes well, you should see the values of @l[X], @l[Y], and @l[Z] printed
 out:
 
-@quote
+@code[text]
 0011 AND 1010 = 0010
 ]
 
 @section[Exercises][
 @exercise
-Try implementing bitwise `NOT`, `OR` and `XOR` functions.
+Try implementing bitwise @l[NOT], @l[OR] and @l[XOR] functions.
 
 @exercise
-Try defining a `Bit8@` type and implementing a bitwise `And8` operation for
-it. You could reuse `Bit4@` for the definition of `Bit8@` or just use `Bit@`
-like how we defined `Bit4@`.
+Try defining a @l[Bit8@] type and implementing a bitwise @l[And8] operation for
+it. You could reuse @l[Bit4@] for the definition of @l[Bit8@] or just use
+@l[Bit@] like how we defined @l[Bit4@].
 
 @exercise
-Try implementing a 4-bit `Add` function that can add two `Bit4@` interpreted
+Try implementing a 4-bit @l[Add] function that can add two @l[Bit4@] interpreted
 as twos-complement integers.
 ]
 

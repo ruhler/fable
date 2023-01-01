@@ -16,11 +16,6 @@ namespace eval "tutorials" {
     "$::b/pkgs/core/fble-stdio $::s/tutorials/Basics/Basics.fble" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/Basics -m /Basics%"
 
-  # FirstProgram tests
-  test $::b/tutorials/FirstProgram.tr \
-    "$::b/test/fble-test $::s/tutorials/FirstProgram/Hello.fble" \
-    "$::b/test/fble-test -I $::s/tutorials/FirstProgram -m /Hello%"
-
   # MainDriver-1 tests
   build $::b/tutorials/MainDriver-1/hello \
     "$::s/tutorials/MainDriver-1/hello.c $::b/lib/libfble.a" \
