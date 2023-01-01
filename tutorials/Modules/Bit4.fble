@@ -1,0 +1,11 @@
+
+@ Bit@ = /Bit%.Bit@;
+% And1 = /Bit%.And;
+
+@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+
+(Bit4@, Bit4@) { Bit4@; } And = (Bit4@ a, Bit4@ b) {
+  Bit4@(And1(a.3, b.3), And1(a.2, b.2), And1(a.1, b.1), And1(a.0, b.0));
+};
+
+@(Bit4@, And);

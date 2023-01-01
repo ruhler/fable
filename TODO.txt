@@ -1,4 +1,7 @@
 
+* Fix dependencies in tutorials/build.tcl.
+  In particular, they all depend on the core library implementation.
+
 * Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
   options.
 

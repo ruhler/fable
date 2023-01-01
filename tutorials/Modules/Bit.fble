@@ -1,0 +1,14 @@
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Bit@ = +(Unit@ 0, Unit@ 1);
+
+Bit@ 0 = Bit@(0: Unit);
+Bit@ 1 = Bit@(1: Unit);
+
+(Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+  a.?(0: 0, 1: b);
+};
+
+@(Bit@, 0, 1, And);

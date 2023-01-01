@@ -1,0 +1,11 @@
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Bit@ = /Bit%.Bit@;
+
+(Bit@) { String@; } Show = (Bit@ a) {
+  a.?(0: Str|0, 1: Str|1);
+};
+
+@(Show);

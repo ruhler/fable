@@ -212,9 +212,9 @@ values, and implicit and explicit field names.
 
 @exercise
 In the Basics tutorial, group together code related to the @l[Bit4@] type
-together into a single @l[Bit4] struct value.  Rename @l[ShowBit] and
-@l[ShowBit4] both to @l[Show] now that we have the @l[Bits] and @l[Bit4]
-namespaces to distinguish between them.
+together into a single @l[Bit4] struct value. Rename @l[And4] to @l[And] and
+rename @l[ShowBit] and @l[ShowBit4] both to @l[Show] now that we have the
+@l[Bits] and @l[Bit4] namespaces to distinguish between them.
 ]
 
 @section[Next Steps]
