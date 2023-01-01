@@ -26,16 +26,17 @@ proc inline_invoke {cmd args} {
   inline_$cmd {*}$args
 }
 
-# @name[text][text]
+# @usage[text][text][content]
 # The name and brief description of the command.
-proc block_name {name brief} {
+proc block_usage {name brief content} {
   puts {.SH "NAME"}
   puts "$name \\- $brief"
+  ::fbld::block block_invoke $content
 }
 
-# @usage[inline]
+# @synopsys[inline]
 # Renders the usage text used in a synopsis.
-proc block_usage {text} {
+proc block_synopsys {text} {
   puts {.SH "SYNOPSIS"}
   ::fbld::inline inline_invoke $text
 }

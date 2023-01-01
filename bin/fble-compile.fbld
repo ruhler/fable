@@ -1,7 +1,5 @@
-@name[fble-compile]
-compiles an fble module
-
-@usage
+@usage[fble-compile][compiles an fble module][
+@synopsys
 @l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
 
 @description[
@@ -9,7 +7,6 @@ Compile the fble module identified by @a[MODULE_PATH].
 
 There are three kinds of things that can be included in the generated code:
 
-@defs[
 @definition[Compiled Module]
 Code generated for executing the given module. This will generate an
 @l[FbleCompiledModuleFunction] for the module under an internal name that
@@ -32,7 +29,7 @@ The wrapper function should have type:
 
 It will be called passing @a[argc] and @a[argv] from @l[main] and the
 compiled module generated using the Compiled Module option.
-]]]
+]]
 
 @options[
 @subsection[Generic Program Information][
@@ -69,7 +66,6 @@ At least one of @l[--compile], @l[--export], or @l[--main] must be provided.
 ]]
 
 @exitstatus
-@defs
 @def[0] Success.
 @def[1] Failure.
 @def[2] Usage error.
@@ -82,4 +78,4 @@ Compiles @l[/Foo%] to an @l[FbleCompiledModuleFunction*] called
 @ex[fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s]
 Generates a standalone program that invokes @l[FbleStdioMain] on the compiled
 code for @l[/Foo%] when run.
-]
+]]

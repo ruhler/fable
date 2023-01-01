@@ -2030,3 +2030,161 @@ Steps:
 5. Add readme and spec front ends.
 
 We should be in good shape then.
+
+What tags do I want to support?
+Common Inline:
+* @inline[text] - Default inline. 
+* @l[text] - for literal string.
+* @a[text] - for an argument.
+* @label[id] - A label for a reference.
+* @ref[id][caption] - Links to a local label.
+* @url[url][?text] - A url link, with optional text. Text defaults to the url.
+* @file[file][?text] - A file link, with optional text. Text defaults to the file.
+* @fbld[file][?text] - A link to another fbld file with optional text.
+   file should be the path to a .fbld file, relative to the root of whereever
+   you expect documents to be read from.
+   An optional #... tag can be used to reference a specific label within the
+   fbld file.
+
+Common Block:
+* @par[text]: Paragraph. Default.
+* @defs[block]: List of definitions for definition list.
+  TODO: Remove this. @definition and @def can be standalone.
+* @definition[name][value]: Long form definition.
+* @def[name][value]: Short form definition.
+* @section[title][body]: A top level section.
+* @subsection[title][body]: A second level section.
+* @code[language][text]: A code listing.
+  Languages: sh, fble, vim
+
+Usage Specific Block:
+* @name[name][brief]: TODO: change this to @usage[name][brief][content]?
+  <name> - <text> in help output.
+  NAME section in man output.
+* @usage[...]: Gives synopsys. TODO: change to @synopsys.
+  Usage: <text> in help output.
+  SYNOPSYS section in man output.
+* @description[text]: Description section.
+  <text> in help output.
+  DESCRIPTION section in man output.
+* @options[text]: Options section.
+  <text> in help output.
+  OPTIONS section in man output.
+* @opt[text]: A specific option.
+  <text> in help output.
+* @exitstatus[text]: Exit status section.
+  Exit Status: ... in help output.
+  EXIT STATUS section in man output.
+* @examples[body]: Examples section.
+  Examples: ... in help output.
+* @ex[text][desc]: A specific example.
+  EXAMPLES section in man output.
+
+Tutorial Specific Blocks:
+* @tutorial[name][content]
+* @exercise[content] An exercise list item.
+  Can be implemented as a definition list, where the names of the definitions
+  are 'Exercise N'? Or a numbered list?
+
+So the question is, can we express all of the usage specific tags
+using common tags? I think yes. It's pretty straight forward. Either add a
+section, or go to direct inline. All except for example, which maybe wants a
+newline in it? No. We can do example too, as two paragraphs: literal text for
+the example followed by a paragraph description.
+
+Questions:
+* Should we have @defs, @exercises, etc. wrapper tags for lists or not?
+  I think we need this for html and to distinguish between two adjacent
+  lists. But that only matters for numbered things right? Not definitions?
+* Should we only allow relevant items in @defs, @exercises lists?
+  Yes. @defs can only contain @def tags, nothing else. Or, if we create an
+  ordered or unordered list, it can only contain @item subtags.
+* Should we have numbered and unnumbered lists?
+  I feel like I would rather have explicit numbering in the .fbld source.
+  If so, maybe we don't need an @list tag at all, just @item[name][content]?
+* How to link to another tutorial from a tutorial?
+  Ideally it's easy to get to the source spec.
+  Maybe: @ref[tutorials/Basic.fbld]?
+  Maybe: @tutorial[Basic] (inline tag).
+  Maybe: @link[Basic][tutorials/Basic.fbld] ...
+  I think I prefer the last version, where we give a different name and
+  target. But we want to be able to distinguish between different kinds of
+  targets: urls, raw files, .fbld files that will turn into other relative
+  links.
+  Maybe: @url[www.degralder.com], @fbld[tutorials/Basic.fbld],
+         @file[tutorials/Basic/Basic.fble],
+         @link[Basic][@fbld[tutorials/Basic.fbld]] 
+  Or, @url, @file, and @fbld are the three kinds of links, with an optional
+  argument for text to display? For example:
+
+  Head over to the @fbld[tutorials/Variables.fbld][Variables] tutorial to
+  learn all about variables. Yeah. Let's go with that then.
+
+* How to link to the language spec? Ideally a specific section within a
+  language spec?
+  I know I can use @fbld to link to the spec itself. Maybe let's not worry
+  about a particular target section yet? Otherwise what we would want are
+  labels for certain points in code, and a way to refer to that anchor in the
+  @fbld filename syntax. Maybe:
+ 
+  @bookmark[types_kinds_and_variables]
+
+  @section[Types, Kinds and Variables][...]
+
+  And then: @fbld[spec/fble.fbld#types_kinds_and_variables].
+  And for local references: @fbld[#types_kinds_and_variables][Section 2]?
+  Or something different for a local reference, like:
+  @link[#types_kinds_and_variables][Section 2]?
+
+  Or perhaps:
+    @section[Types, Kinds and Variables @id[types_kinds_and_variables]][...]
+  So there is less overhead to specifying a link target?
+
+  What are common ways to define links in existing systems?
+  * Asciidoc: [[...]] for destination, <<...>> for source.
+     anchor:... for destination, xref:... for source.
+  * html: id="..." for destination, <a href="#..."> for source. id works in
+    any tag.
+  * latex: \label[...] for destination, \ref[...] for source.
+  * markdown: <a id="..." for destination, (#...) for source.
+
+  I kind of like: @label[id], @ref[id][caption]. So we could do:
+
+    @section[Types, Kinds and Variables @label[types_kinds_and_variables]][...]
+    See @ref[types_kinds_and_variables][Section 2] for more info.
+    See @fbld[spec/fble.fbld#types_kinds_and_variables][Section 2 of the fble
+    spec] for more info.
+
+  Yeah. Let's go with that.
+
+I'm happy with this initial list of tags for usage and tutorials. I'd like to
+switch to using them and be able to check code. But how do I structure the
+code to support this?
+
+Take usage.tcl. I expect it will have command line options to --check, --man,
+--help, whatever. All in that one file.
+
+It will define some of its own tags. It can implement these by invoking the
+corresponding tags from core.
+
+We want the context to be implicit. Like, if it's generating output, or
+whatever back end its calling into. Fine. So check.tcl should define all the
+individual tag functions inline_* and block_*, and that's all we need right?
+Same for all the backends, except the backends have some global state that
+needs to be set up for outputting things, right? Maybe they assume a global
+output function to be defined. Yeah.
+
+And the front ends will define their own tag functions and invoke functions.
+Then set up the output and error procs, and invoke the fbld function to parse
+the document. Easy.
+
+Maybe let's write some new code from scratch:
+* check.tcl for checking common tags.
+* usage.tcl as front end for checking usage text. I can add build rules to
+  check this. Let's start there.
+
+Do we want a better name than 'check.tcl' for checking the tags? How about
+core.tcl, for core tags? I like that a little better. And maybe don't treat it
+as a backend, because it's more like an interface between frontends and
+backends.
+

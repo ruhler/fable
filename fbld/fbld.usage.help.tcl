@@ -13,16 +13,17 @@ proc inline_a {text} { inline_ $text }
 proc inline_l {text} { inline_ $text }
 proc inline_invoke {cmd args} { inline_$cmd {*}$args }
 
-# @name[text][text]
+# @usage[text][text][body]
 # The name and brief description of the command.
-proc block_name {name brief} {
+proc block_usage {name brief body} {
   ::output "$name \\- [string trim $brief]\n"
   ::output ".br\n"
+  ::fbld::block block_invoke $body
 }
 
-# @usage[inline]
+# @synopsys[inline]
 # Renders the usage text used in a synopsis.
-proc block_usage {text} {
+proc block_synopsys {text} {
   ::output "Usage: "
   ::fbld::inline inline_invoke [string trim $text]
   ::output "\n.br\n"
@@ -39,12 +40,6 @@ proc block_par {text} {
   ::output ".sp\n"
   ::fbld::inline inline_invoke [string trim $text]
   ::output "\n.br\n"
-}
-
-# @defs[block]
-# Used for a definition list.
-proc block_defs {text} {
-  ::fbld::block block_invoke $text
 }
 
 # @definition[name][value]

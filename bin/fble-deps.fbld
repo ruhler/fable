@@ -1,7 +1,5 @@
-@name[fble-deps]
-generates depsfile for an fble module
-
-@usage
+@usage[fble-deps][generates depsfile for an fble module][
+@synopsys
 @l[fble-deps] \[@a[OPTION]...\] @l[-t] @a[TARGET] @l[-m] @a[MODULE_PATH]
 
 @description
@@ -31,7 +29,6 @@ target name to use in generated depfile
 ]
 
 @exitstatus[
-@defs
 @def[0] Success.
 @def[1] Failure.
 @def[2] Usage error.
@@ -43,4 +40,4 @@ malformed .fble file.
 
 @examples
 @ex[fble-deps -I foo -t Foo.fble.d -m /Foo% > Foo.fble.d][]
-
+]
