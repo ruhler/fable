@@ -1,4 +1,6 @@
 
+* Improve exercises for Unions tutorial.
+
 * Fix dependencies in tutorials/build.tcl.
   In particular, they all depend on the core library implementation.
 

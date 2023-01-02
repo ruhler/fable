@@ -500,3 +500,14 @@ the structs tutorial, so namespaces stuff is fresh in their minds.
   - -p option
 * Example: splitting up Basics code into separate modules.
 
+---
+
+Next step: Unions.
+* Basics: type, value, field access, union select.
+* Give an interesting example of a union that isn't an enum.
+* Invalid field access in union select.
+* Tag orders in union select.
+* Default branches in union select.
+* Default branch allowed even if all other tags present.
+* Statement version of union select.
+

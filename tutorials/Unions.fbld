@@ -1,0 +1,200 @@
+@tutorial[Unions][
+This tutorial does a deep dive into unions. By the end of this tutorial,
+you'll be fully versed in section 4 of the fble language spec on unions.
+
+@section[Basics][
+Unions represent choice. You create a union value by providing an argument
+value along with the name of the particular union field that argument value is
+associated with. You can later ask which field is active for a union and get
+its argument value.
+
+Here is an example of how we've used unions so far:
+
+@code[fble][
+@ Bit@ = +(Unit@ 0, Unit@ 1);
+
+Bit@ 0 = Bit@(0: Unit);
+Bit@ 1 = Bit@(1: Unit);
+
+(Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+  a.?(0: 0, 1: b);
+};
+]
+
+In this case, we defined a union type @l[Bit@] that represents a choice
+between @l[0] and @l[1]. This is a special case of a union where we don't care
+about the argument value, we only care about whether the union is tagged as
+@l[0] or @l[1].
+
+For a more general example, imagine we want to implement a calculator that
+supports addition, subtraction, negation, and integer literals. We can define
+a union type @l[Expr@] representing a calculator expression. The expression
+could either be addition, subtraction, negation, or an integer constant:
+
+@code[fble]
+@ Expr@ = +(
+   *(Expr@ a, Expr@ b) add,
+   *(Expr@ a, Expr@ b) sub,
+   *(Expr@ a) neg,
+   Int@ constant
+);
+
+The argument value to the union changes depending on what kind of expression
+it is. For @l[add] and @l[sub], the argument is a pair of operand expressions.
+For @l[neg] the argument is single operand expression, and @l[constant] is an
+integer value.
+
+When we construct an expression, we need to say what operation to use and
+provide the appropriate argument. You do this by providing the name of the
+field and the value for that field when constructing a union value. For
+example, to construct expressions for the constants @l[0] and @l[1]:
+
+@code[fble]
+Expr@ zero = Expr@(constant: 0);
+Expr@ one = Expr@(constant: 1);
+
+To construct an expression representing negative one using the negation
+operation:
+
+@code[fble]
+Expr@ minus_one = Expr@(neg: one);
+
+Notice that this time the argument @l[one] has type @l[Expr@] instead of
+@l[Int@] like we had when creating constants.
+
+To construct an addition operation, taking advantage of the syntax for
+implicit struct type value:
+
+@code[fble]
+Expr@ two = Expr@(add: @(a: one, a: one));
+
+In order to work with union values, we need to be able to figure out what
+field the value was constructed with and the argument. We can use the union
+select expression to do things based on the field of the union. For example,
+here's how we could print what kind of operation an expression represents:
+
+@code[fble]
+(Expr@) { String@; } OperationName = (Expr@ e) {
+  e.?(
+    add: Str|'Add',
+    sub: Str|'Subtract',
+    neg: Str|'Negate',
+    constant: Str|'Constant');
+};
+
+If the expression was created with the field @l[add], the value of the @l[add]
+branch of the union select expression is returned. If the expression was
+created with the field @l[sub], the value of the @l[sub] branch of the union
+select expression is returned, and so on.
+
+In order to access the argument value to a union, you use the same syntax you
+use to access the field of a structure. For example, to get the constant
+value: @l[e.constant]. This only makes sense if the expression @l[e] in this
+case refers to a constant value. You'll get a runtime error if you try to
+access the incorrect field of a union value.
+
+In practice you'll use a union select expression to make sure you aren't
+accessing the wrong field of a union at runtime. For example, here's how we
+could evaluate an expression:
+
+@code[fble]
+(Expr@) { Int@; } Eval = (Expr@ e) {
+  e.?(
+    add: Add(Eval(e.add.a), Eval(e.add.b)),
+    sub: Sub(Eval(e.sub.a), Eval(e.sub.b)),
+    neg: Neg(Eval(e.neg)),
+    constant: e.constant);
+};
+]
+
+@section[More About Union Select][
+@subsection[Tag Order]
+The union select expression uses the tag of a union value to select between
+different values. In the basic form of union select, you must provide a choice
+for each possible tag of the union value. What's more, you must provide
+choices in the same order as the fields are defined for the union type,
+because fble is picky that way. You'll get an error if the tags are listed out
+of order.
+
+@subsection[Default Values][
+You can specify a default value in union select expressions. To do so, add an
+extra value at the end with a colon but without a field name. For example:
+
+@code[fble]
+(Expr@) { Bool@; } IsBinary = (Expr@ e) {
+  e.?(add: True, sub: True, : False);
+};
+
+If the union value is tagged with a tag not explicitly listed in the union
+select expression, the default value will be returned.
+
+A default branch is allowed, even if it would never be taken because all the
+other tags are provided.
+]
+
+@subsection[Union Select Statement][
+There's a special syntax for union select as a statement where the default
+value is specified on the line after the union select. For example, the same
+code from above could be written equivalently as:
+
+@code[fble]
+(Expr@) { Bool@; } IsBinary = (Expr@ e) {
+  e.?(add: True, sub: True);
+  False;
+};
+
+Using the statement version of union select can produce easier to read code,
+particuarly with nested union select statements. For example, lists can be
+represented as union values. Instead of having to explicitly handle the case
+of empty and non-empty lists in a single expression, you can handle one case
+at a time.
+
+Here's an example of a function to take the first @l[n] elements of a list,
+written using the expression version of the union select expression:
+
+@code[fble][
+@ List@ = { +(*(T@ head, List@ tail) cons, Unit@ nil); };
+List@ Nil = List@(nil: Unit);
+
+(Int@, List@) { List@; } Take = (Int@ n, List@ l) {
+  Le(n, 0).?(
+    true: Nil,
+    false: l.?(
+      cons: List@(cons: @(head: l.cons.head, tail: Take(Sub(n, 1), l.cons.tail))),
+      nil: Nil));
+};
+]
+
+The function can be rewritten using the statement expression to be much easier
+to read:
+
+@code[fble][
+(Int@, List@) { List@; } Take = (Int@ n, List@ l) {
+  # See if we've already taken n elements.
+  Le(n, 0).?(true: Nil);
+
+  # Make sure the list isn't empty.
+  l.?(nil: Nil);
+
+  # Add the first element to the next (n-1) elements.
+  List@(cons: @(head: l.cons.head, tail: Take(Sub(n, 1), l.cons.tail)));
+};
+]
+]
+]
+
+@section[Unions in the Language Specification]
+You now know everything there is to know about unions in fble. To reinforce
+this, read over section 4 of the fble language specification. Everything
+there should be familiar to you now.
+
+@section[Exercises][
+@exercise
+Reimplement the @l[And] function from previous tutorials using the statement
+version of union select.
+]
+
+@section[Next Steps]
+Head over to the @fbld[tutorials/Functions.fbld][Functions] tutorial to learn
+all about functions.
+]
