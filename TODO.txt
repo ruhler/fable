@@ -1,8 +1,8 @@
 
-* Improve html generated for tutorials
- - Fix issue with links between docs.
- - Add syntax highlighting for fble code blocks.
- - Make title h1, section h2, and subsection h3
+* Add man fbld backend and use it to replace fbld.usage.man.tcl.
+* Add roff fbld backend and use it to replace fbld.usage.help.tcl.
+* Clean up specification of dependencies for fbld generated docs.
+* Add syntax highlighting for fble code blocks.
 
 * Improve exercises for Unions tutorial.
 

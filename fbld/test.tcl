@@ -1,7 +1,6 @@
 # Ad-hoc tests for fbld.tcl implementation.
 
 set fblddir [file dirname [file normalize [info script]]]
-
 source $fblddir/fbld.tcl
 
 proc invoke { cmd args } {

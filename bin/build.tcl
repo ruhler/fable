@@ -3,8 +3,8 @@ namespace eval "bin" {
     set base [file rootname [file tail $x]]
 
     test $::b/bin/$base.fbld.tr \
-      "$::s/bin/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/core.tcl $::s/fbld/frontends/usage.tcl" \
-      "tclsh8.6 $::s/fbld/frontends/usage.tcl $::s/bin/$base.fbld"
+      "$::s/bin/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/check.tcl $::s/fbld/usage.man.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/check.tcl < $::s/bin/$base.fbld"
 
     # Generated header file for help usage text.
     build $::b/bin/$base.usage.h \

@@ -1,5 +1,6 @@
 
 # Converts fbld formatted, usage structured document to a man page.
+# TODO: Use the generic runfbld.tcl infrastructure for this instead.
 #
 # Usage: tclsh8.6 fbld.usage.man.tcl title usage.fbld > usage.1
 set fblddir [file dirname [file normalize [info script]]]

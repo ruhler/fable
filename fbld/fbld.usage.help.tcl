@@ -1,5 +1,6 @@
 
 # Converts fbld formatted, usage structured document to help text.
+# TODO: Use the generic runfbld.tcl infrastructure for this instead.
 #
 # Usage: tclsh8.6 fbld.usage.help.tcl usage.fbld > usage.h
 #

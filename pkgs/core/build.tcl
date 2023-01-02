@@ -37,10 +37,10 @@ namespace eval "pkgs/core" {
   # /Core/Stdio/Cat% interpreted test.
   build $::b/pkgs/core/Core/Stdio/fble-cat.out \
     "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/Cat.fble.d" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.adoc > $::b/pkgs/core/Core/Stdio/fble-cat.out"
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.out"
   test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
-    "cmp $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.adoc"
+    "cmp $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
   # /Core/Stdio/HelloWorld% interpreted test.
   test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/HelloWorld.fble.d" \

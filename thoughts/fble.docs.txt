@@ -2266,3 +2266,70 @@ solve it cleanly right now. But let's do the following:
 * Change tutorials/Tutorials.adoc and README.adoc to be generic @document
   .fbld files. This should fix all the website links I hope.
 
+---
+
+On further thought, I'm thinking maybe fbld.tcl should be the main driver, and
+you pass a list of .tcl files as input to it. The individual .tcl files define
+tag commands, named as inline_* and block_*. And that's how you specify the
+desired backend and any front end processing?
+
+We want composition of front ends and back ends. Currently I have it designed
+as every front end lists the back ends it goes with, and you select there. Is
+that too front end specific?
+
+The issue is that I want to introduce a generic doc@ type and reuse the html
+backend for that. So I want more ways to compose things than I have had so
+far.
+
+---
+
+Some more core tags to support:
+* @note[block] for a callout note.
+* @item for a list item.
+
+---
+
+Trouble with front end composition. How can I convert @usage to @doc? I can't
+call ::block_doc directly, because I want to insert content before it parses
+things. Hmm...
+
+I guess I want:
+
+@usage[name][brief][content]
+
+To turn into: ...
+
+Well, actually that depends on whether I want help usage or man usage. In
+which case, how do we do check usage? I suppose to check we can do man usage.
+So we want to turn it into:
+
+@doc[$name][
+@section[NAME][$name - $brief]
+
+@content
+]
+
+Maybe that's not so hard? Just modify the string? I'm not convinced, but we
+can do it short term. Eventually maybe we want to make it easier to pass the
+block scripts instead of a string that needs to be processed a certain way?
+
+Yeah, this will need some work.
+
+---
+
+I switched the README to .fbld syntax. I think it will be hard for new people,
+but let's just auto-generate a .txt file from the .fbld source to include in a
+release. Easy.
+
+---
+
+How can I do syntax highlighting of code blocks? I feel like asciidoc has some
+generic syntax highlighter it uses. Can I reuse that?
+
+Looks like it uses one of:
+* http://www.gnu.org/software/src-highlite
+* http://www.andre-simon.de/doku/highlight/en/highlight.html
+* http://pygments.org
+
+In particular, I'm looking for one where I can easily add my own highlighting
+for fbld and fble.

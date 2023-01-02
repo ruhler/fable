@@ -1,16 +1,9 @@
-# Usage fbld frontend.
-#
-# Used for describing how to use a program.
-# Generates:
-#   Section 1 man pages.
-#   Program help text.
+# Usage fbld frontend for generating program help text.
 
-set fblddir [file dirname [file dirname [file normalize [info script]]]]
-source $fblddir/fbld.tcl
-source $fblddir/core.tcl
-
-namespace import fbld/core::inline_*
-namespace import fbld/core::block_*
+# The following global variables are expected to be defined, depending on the
+# users backend of choice:
+#   ::inline_<tag> - Process core inline tag @<tag>
+#   ::block_<tag> - Process core block tag @<tag>
 
 # @usage[INLINE name][INLINE brief][BLOCK content]
 # Top level tag for usage documents.
@@ -28,23 +21,22 @@ namespace import fbld/core::block_*
 #
 # Each of these are treated as separate sections of the document.
 proc block_usage {name brief content} {
-  ::fbld::inline invoke_inline $name
-  ::fbld::inline invoke_inline $brief
-  ::fbld::block invoke_block $content
+  ::block_par "$name - [string trim $brief]"
+  ::block $content
 }
 
 # @synopsys[INLINE text]
 # Synopsys for how to run a command.
 # @param text  Command synopsys.
 proc block_synopsys {text} {
-  ::fbld::inline invoke_inline $text
+  ::block_par "Usage: [string trim $text]"
 }
 
 # @description[BLOCK body]
 # A description of the command.
 # @param body  The text of the description.
 proc block_description {body} {
-  ::fbld::block invoke_block $body
+  ::block $body
 }
 
 # @options[BLOCK body]
@@ -52,7 +44,7 @@ proc block_description {body} {
 # Use the @opt tag to describe an option.
 # @param body  A description of the command line options.
 proc block_options {body} {
-  ::fbld::block invoke_block $body
+  ::block $body
 }
 
 # @opt[INLINE opt][INLINE desc]
@@ -60,15 +52,14 @@ proc block_options {body} {
 # @param opt  The option flags and arguments.
 # @param desc  A description of the option.
 proc block_opt {opt desc} {
-  ::fbld::inline invoke_inline $opt
-  ::fbld::inline invoke_inline $desc
+  ::block_def $opt $desc
 }
 
 # @exitstatus[BLOCK body]
 # A section describing the exit status of the command.
 # @param body  A description of the exit status.
 proc block_exitstatus {body} {
-  ::fbld::block invoke_block $body
+  ::block_section "Exit Status" $body
 }
 
 # @examples[BLOCK body]
@@ -76,7 +67,7 @@ proc block_exitstatus {body} {
 # Use @ex to give individual examples.
 # @param body  Example command line uses.
 proc block_examples {body} {
-  ::fbld::block invoke_block $body
+  ::block_section "Examples" $body
 }
 
 # @ex[INLINE text][BLOCK desc]
@@ -84,13 +75,6 @@ proc block_examples {body} {
 # @param text  The sample command line.
 # @param desc  A description of the command line.
 proc block_ex {text desc} {
-  ::fbld::inline invoke_inline $text
-  ::fbld::block invoke_block $desc
+  ::block_par "@l\[$text\]"
+  ::block $desc
 }
-
-proc ::invoke_inline {cmd args} { inline_$cmd {*}$args }
-proc ::invoke_block {cmd args} { block_$cmd {*}$args }
-
-set input [lindex $argv 0]
-::fbld::block invoke_block [read [open $input "r"]]
-

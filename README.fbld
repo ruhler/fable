@@ -1,0 +1,104 @@
+@doc[Fable README][
+Fable is a programming language project. It includes a specification,
+reference implementation, library, and sample applications for the fble
+programming language.
+
+@section[Overview]
+Fable is a hobby project to design my own programming language. My goal is to
+design a general purpose programming language good enough to be my preferred
+programming language.
+
+@section[Documentation][
+@definition[Fble Language Specification]
+@item Source: @file[spec/fble.adoc]
+@item Generated: @file[spec/fble.html]
+
+@definition[Fbld Document Markup Specification]
+@item @par @fbld[fbld/fbld.fbld]
+
+@definition[Tutorials]
+@item @par @fbld[tutorials/Tutorials.fbld]
+
+@definition[Fble C API]
+@item Source: @file[include/fble]
+@item Doxygen Generated: @file[include/index.html]
+
+@definition[Fble Internals]
+@item Source: @file[lib/fble]
+@item Doxygen Generated: @file[lib/index.html]
+]
+
+@section[Directory Structure]
+@def[bin/] Source code for fble compiler binaries.
+@def[book/] Drafts for a book about the design of the fble language.
+@def[fbld/] A lightweight document markup language used for documenting fble.
+@def[include/] Public header files for the fble library.
+@def[lib/] Source code for an fble interpreter and compiler implemented in C.
+@def[pkgs/] Sample fble library and application packages.
+@def[spec/] Specification of the fble language, including spec tests.
+@def[test/]  Source code for fble test binaries and other test utilities.
+@def[thoughts/] A collection of running discussions about fble.
+@def[tutorials/] Fble language tutorials.
+@def[vim/] Vim syntax files for fbld and fble.
+@def[www/] Source for the fble website.
+
+@section[Build Requirements][
+To build and run the tests for Fable, the following software is required. The
+version numbers provided are versions that are known to work:
+
+@def[AsciiDoc 8.6.10] For documentation.
+@def[Doxygen 1.8.13] For source code documentation.
+@def[Expect 5.45.4] To test fble debugging.
+@def[GNU Binutils for Debian 2.31.1] For assembling compiled fble programs.
+@def[GNU Bison 3.3.2] For generating the fble parser.
+@def[GNU Compiler Collection (Debian 8.3.0-6) 8.3.0] For compiling fble.
+@def[GNU Debugger (Debian 8.2.1-2+b3) 8.2.1] Used to test fble debugging.
+@def[GNU diffutils 3.7] For some test cases.
+@def[GNU grep 3.3] For some test cases.
+@def[GNU groff version 1.22.4] For formatting help usage text.
+@def[Ninja 1.10.1] For the build system.
+@def[Open GL 1.2] For graphical fble apps.
+@def[Simple DirectMedia Layer 2.0.9] For graphical fble apps.
+@def[Tcl 8.6] For generating build ninja files.
+
+To install required dependencies on a debian based system:
+
+@code[sh]
+apt install \
+  asciidoc doxygen expect binutils bison \
+  gcc gdb diffutils grep groff-base ninja-build \
+  libgl-dev libsdl2-dev tcl8.6
+]
+
+@section[Build and Test][
+To build:
+
+@code[sh]
+mkdir build
+cd build
+../configure --prefix=/usr/local
+ninja
+
+To run tests:
+
+@code[sh]
+ninja check
+
+To install:
+
+@code[sh]
+ninja install
+]
+
+@section[Vim Files][
+Vim ftplugin, syntax, and indent files for the fble language are available in
+the `vim/` directory. You can run the following commands to install these files:
+
+@code[sh]
+mkdir -p ~/.vim/ftdetect ~/.vim/ftplugin ~/.vim/indent ~/.vim/syntax
+cp vim/ftdetect/* ~/.vim/ftdetect
+cp vim/ftplugin/* ~/.vim/ftplugin
+cp vim/indent/* ~/.vim/indent
+cp vim/syntax/* ~/.vim/syntax
+]
+]
