@@ -150,7 +150,7 @@ proc block_def {name value} {
   ::output "<dl>\n  <dt>"
   ::inline $name
   ::output "</dt>\n  <dd>"
-  ::block $value
+  ::inline $value
   ::output "</dd>\n</dl>\n"
 }
 

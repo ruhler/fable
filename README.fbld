@@ -8,25 +8,12 @@ Fable is a hobby project to design my own programming language. My goal is to
 design a general purpose programming language good enough to be my preferred
 programming language.
 
-@section[Documentation][
-@definition[Fble Language Specification]
-@item Source: @file[spec/fble.adoc]
-@item Generated: @file[spec/fble.html]
-
-@definition[Fbld Document Markup Specification]
-@item @par @fbld[fbld/fbld.fbld]
-
-@definition[Tutorials]
-@item @par @fbld[tutorials/Tutorials.fbld]
-
-@definition[Fble C API]
-@item Source: @file[include/fble]
-@item Doxygen Generated: @file[include/index.html]
-
-@definition[Fble Internals]
-@item Source: @file[lib/fble]
-@item Doxygen Generated: @file[lib/index.html]
-]
+@section[Documentation]
+@def[Fble Language Specification] @file[spec/fble.html][spec/fble.adoc]
+@def[Fbld Document Markup Specification] @fbld[fbld/fbld.fbld]
+@def[Tutorials] @fbld[tutorials/Tutorials.fbld]
+@def[Fble C API] @file[include/index.html][include/fble/]
+@def[Fble Internals] @file[lib/index.html][lib/]
 
 @section[Directory Structure]
 @def[bin/] Source code for fble compiler binaries.
