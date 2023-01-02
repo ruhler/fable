@@ -195,6 +195,6 @@ version of union select.
 ]
 
 @section[Next Steps]
-Head over to the @fbld[tutorials/Functions.fbld][Functions] tutorial to learn
+Head over to the @fbld[Functions.fbld][Functions] tutorial to learn
 all about functions.
 ]

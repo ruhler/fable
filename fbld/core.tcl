@@ -76,7 +76,7 @@ namespace eval fbld/core {
 
   # @file[ESCAPED file][? INLINE text]
   # Reference a file on disk.
-  # @param file  The path to the file.
+  # @param file  The path to the file, relative to the source file.
   # @param text  Optional text to display. Defaults to the file.
   namespace export inline_file
   proc inline_file {file args} {
@@ -91,7 +91,8 @@ namespace eval fbld/core {
 
   # @fbld[ESCAPED file][? INLINE text]
   # Reference to another fbld based document.
-  # @param file  The path to the fbld file, optionally followed by #<id>.
+  # @param file  The path to the fbld file, relative to the source file,
+  #   optionally followed by #<id>.
   # @param text  Optional text to display. Defaults to the file.
   namespace export inline_fbld
   proc inline_fbld {file args} {

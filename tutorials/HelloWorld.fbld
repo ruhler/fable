@@ -194,5 +194,5 @@ quotes.
 Now you've seen a high level overview of the kinds of things you can do in
 fble. The next step is to do a deep dive, starting with the basics of
 fble: structs, unions, and functions. Head over to the
-@fbld[tutorials/Basics.fbld][Basics] tutorial to learn more.
+@fbld[Basics.fbld][Basics] tutorial to learn more.
 ]

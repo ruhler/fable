@@ -20,7 +20,7 @@ Fble Language Specification::
 
 Tutorials::
 * Source: link:tutorials/Tutorials.adoc[]
-* Generated: link:tutorials/Tutorials.html[]
+* Generated: link:tutorials/index.html[]
 
 Fble C API::
 * Source: link:include/fble[]

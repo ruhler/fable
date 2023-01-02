@@ -218,6 +218,6 @@ rename @l[ShowBit] and @l[ShowBit4] both to @l[Show] now that we have the
 ]
 
 @section[Next Steps]
-Head over to the @fbld[tutorials/Modules.fbld][Modules] tutorial to learn all
+Head over to the @fbld[Modules.fbld][Modules] tutorial to learn all
 about modules.
 ]

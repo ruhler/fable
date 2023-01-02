@@ -2216,3 +2216,53 @@ I suppose we could pass around arrays instead of strings? Wherever we want to
 pass text, instead pass a triple: line, col, text. Ugh. Sounds hard.
 
 Some hacks will get us by in the short term.
+
+---
+
+I'm thinking perhaps we should have front ends generate .fbld files, and have
+backends operate directly on the generated .fbld files? Not sure.
+
+How to fix links?
+
+Currently I write a link for another tutorial using tutorials/Foo.fbld. But
+html thinks tutorials/Foo.fbld is relative to the source file, which is in the
+tutorials directory, so we get tutorials/tutorials/Foo.fbld, which is a bad
+link.
+
+How about we make links relative to the source file? That's much more well
+defined, should work with generated html, is easy to fix up via tcl if needed,
+and, if we're lucky, works just as well or better in vim, because it doesn't
+depend on the current working directory. Let's give it a try.
+
+Yeah, linking relative to the source file works great.
+
+---
+
+How to switch Tutorials.adoc to a .fbld file? What kind of file should it be?
+It's certainly not a tutorial. I kind of wish I had a generic 'document'
+class, for documents that don't need any special front end or tags. Like
+README.fbld or Tutorials.fbld. That goes back to the idea of having front ends
+generate .fbld files and back ends work on .fbld files.
+
+Note that the front end is a little back end aware. For example, usage wants
+to generate a different document for man page than help usage text. If that
+wasn't the case, there would be no need for front ends.
+
+Let's be slightly more clear. Front ends serve the following purposes:
+* Provide domain specific tags. For example: @exercise, @opt. To make it nicer
+  to write certain kinds of documents.
+* Provide backend specific implementations of those domain specific tags. But
+  in terms of core document structure. Not in terms of the raw backend
+  output?
+
+I don't know. As I said before, this is going to be a hard problem. No need to
+solve it cleanly right now. But let's do the following:
+
+* Add a @document[title][content] tag to the fbld core tag set.
+* Change core.tcl to take a generic document as input and check that.
+* Change html.tcl to take a generic document as input and output html for
+  that.
+* Change tutorial.tcl to always output a generic document.
+* Change tutorials/Tutorials.adoc and README.adoc to be generic @document
+  .fbld files. This should fix all the website links I hope.
+

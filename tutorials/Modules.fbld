@@ -346,6 +346,6 @@ Move some of your modules to a different top level directory. Now run the
 ]
 
 @section[Next Steps]
-Head over to the @fbld[tutorials/Unions.fbld][Unions] tutorial to learn all
+Head over to the @fbld[Unions.fbld][Unions] tutorial to learn all
 about unions.
 ]

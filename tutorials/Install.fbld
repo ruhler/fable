@@ -99,6 +99,6 @@ code for that module.
 ]
 
 @section[Next Steps]
-Head over to the @fbld[tutorials/HelloWorld.fbld][HelloWorld] tutorial to
+Head over to the @fbld[HelloWorld.fbld][HelloWorld] tutorial to
 write your very own hello world program in fble.
 ]
