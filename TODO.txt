@@ -1,4 +1,9 @@
 
+* Improve html generated for tutorials
+ - Fix issue with links between docs.
+ - Add syntax highlighting for fble code blocks.
+ - Make title h1, section h2, and subsection h3
+
 * Improve exercises for Unions tutorial.
 
 * Fix dependencies in tutorials/build.tcl.
