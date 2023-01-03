@@ -8,12 +8,20 @@ Fable is a hobby project to design my own programming language. My goal is to
 design a general purpose programming language good enough to be my preferred
 programming language.
 
-@section[Documentation]
+@section[Source]
+The source code for fble is available from github at
+@url[https://github.com/ruhler/fable].
+
+@section[Documentation][
 @def[Fble Language Specification] @file[spec/fble.html][spec/fble.adoc]
 @def[Fbld Document Markup Specification] @fbld[fbld/fbld.fbld]
 @def[Tutorials] @fbld[tutorials/Tutorials.fbld]
 @def[Fble C API] @file[include/index.html][include/fble/]
 @def[Fble Internals] @file[lib/index.html][lib/]
+
+The latest generated documentation is also available online at
+@url[https://ruhler.github.io/fable].
+]
 
 @section[Directory Structure]
 @def[bin/] Source code for fble compiler binaries.
