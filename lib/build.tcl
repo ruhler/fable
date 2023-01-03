@@ -47,7 +47,7 @@ namespace eval "lib" {
 
   # Doxygen
   lappend ::build_ninja_deps "$::s/lib"
-  build $::b/lib/doxygen.log \
+  build "$::b/lib/doxygen.log $::b/www/lib" \
     "$::s/test/log $::b/lib/Doxyfile [glob $::s/lib/*.{c,h}]" \
     "$::s/test/log $::b/lib/doxygen.log doxygen $::b/lib/Doxyfile"
 }
