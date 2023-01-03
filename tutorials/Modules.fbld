@@ -222,7 +222,7 @@ definitions to form a full fble program.
 For example, ignoring the modules from the @l[core] package for simplicity,
 the program for the @l[/Main%] module is conceptually something like:
 
-@code[text]
+@code[txt]
 LET /Unit% = EVAL(Unit.fble)
 LET /Bit% = EVAL(Bit.fble)
 LET /Bit/Show% = EVAL(Bit/Show.fble)

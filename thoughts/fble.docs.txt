@@ -2388,3 +2388,9 @@ default? I'd rather go with defaults where possible. Let's try regexp for
 quoted. It's a pretty rare case.
 
 Looks great for fble. I would choose different colors, but whatever.
+
+Now, how can I use source-highlight in the html implementation? Should be easy
+right? exec the command in a code block. Map language name to source-highlight
+languages. Or switch all my uses to whatever language source-highlight already
+uses?
+

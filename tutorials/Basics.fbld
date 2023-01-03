@@ -195,7 +195,7 @@ fble-stdio -p core -I . -m /Basics%
 If all goes well, you should see the values of @l[X], @l[Y], and @l[Z] printed
 out:
 
-@code[text]
+@code[txt]
 0011 AND 1010 = 0010
 ]
 

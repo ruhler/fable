@@ -43,6 +43,7 @@ version numbers provided are versions that are known to work:
 @def[GNU diffutils 3.7] For some test cases.
 @def[GNU grep 3.3] For some test cases.
 @def[GNU groff version 1.22.4] For formatting help usage text.
+@def[GNU Source-highlight 3.1.8 (library: 4:1:0)] For doc syntax highlighting.
 @def[Ninja 1.10.1] For the build system.
 @def[Open GL 1.2] For graphical fble apps.
 @def[Simple DirectMedia Layer 2.0.9] For graphical fble apps.
@@ -53,8 +54,8 @@ To install required dependencies on a debian based system:
 @code[sh]
 apt install \
   asciidoc doxygen expect binutils bison \
-  gcc gdb diffutils grep groff-base ninja-build \
-  libgl-dev libsdl2-dev tcl8.6
+  gcc gdb diffutils grep groff-base source-highlight \
+  ninja-build libgl-dev libsdl2-dev tcl8.6
 ]
 
 @section[Build and Test][

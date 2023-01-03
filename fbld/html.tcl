@@ -168,9 +168,19 @@ proc block_item {text} {
 # @param language  The lanuage, e.g. c, python, sh, fble, vim, etc.
 # @param text  The source code text.
 proc block_code {language text} {
-  ::output "<pre>"
-  inline_text $text
-  ::output "</pre>"
+  # TODO: Have a better way to specify what should be used for 'language'.
+  set langopt ""
+  set fblddir [file dirname [file normalize [info script]]]
+  switch -exact $language {
+    fbld { set langopt "--src-lang fbld --lang-def $fblddir/fbld.lang" }
+    fble { set langopt "--src-lang fble --lang-def $fblddir/../spec/fble.lang" }
+    vim { set langopt "--src-lang txt" }
+    default { set langopt "--src-lang $language" }
+  }
+
+  set formatted [exec source-highlight {*}$langopt -o STDOUT << [::unescape $text]]
+
+  ::output $formatted
 }
 
 # @doc[INLINE title][BLOCK body]

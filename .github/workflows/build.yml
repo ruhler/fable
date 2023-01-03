@@ -13,8 +13,8 @@ jobs:
           sudo apt update
           sudo apt install \
             asciidoc doxygen expect binutils bison \
-            gcc gdb diffutils grep groff-base ninja-build \
-            libgl-dev libsdl2-dev tcl8.6
+            gcc gdb diffutils grep groff-base source-highlight \
+            ninja-build libgl-dev libsdl2-dev tcl8.6
 
       - name: Build and Test
         run: |

@@ -1,8 +1,12 @@
 
+* Convert spec/README.adoc and spec/fble.adoc to .fbld syntax.
+ - And drop the dependency on asciidoc entirely.
+
+* Fix missing dependency for .fbld processing on fbld.lang and fble.lang.
+
 * Add man fbld backend and use it to replace fbld.usage.man.tcl.
 * Add roff fbld backend and use it to replace fbld.usage.help.tcl.
 * Clean up specification of dependencies for fbld generated docs.
-* Add syntax highlighting for fble code blocks.
 
 * Improve exercises for Unions tutorial.
 
@@ -31,11 +35,6 @@
 
 * Generate nice www/ site.
   See thoughts/fble.www.txt.
-
-* Switch to .fbld format for specs, readmes, and tutorials.
- - For first attempt, do something best effort. Certainly doesn't need to be
-   perfect from day one. Just trying to exercise and learn more about
-   fbld.
 
 * Stop using global variables in app.fble.c for gWindow and gTime.
  - We should be able to pass that via the executable somehow?
