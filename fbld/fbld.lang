@@ -1,0 +1,4 @@
+# source-highlight syntax definition for fbld.
+usertype = '@[a-zA-Z0-9_]+'
+symbol = "[|]"
+specialchar = "\\]|\\[|\\@|\\\\"

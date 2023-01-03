@@ -1,0 +1,17 @@
+# source-highlight syntax highlighting for fble.
+
+# Approximate unquoted word characters using alnum for simplicity.
+vardef UNQUOTED = '([[:alnum:]]+)'
+vardef QUOTED = '\'(([^\']|\'\')*\')'
+vardef WORD = '(' + $UNQUOTED + '|' + $QUOTED + ')'
+
+regexp = $QUOTED                  # quoted word
+comment start "#"                 # comment
+usertype = $WORD + '@'            # type
+label = $WORD + ':'               # label
+label = ':'                       # label
+string = '\|' + $WORD             # literal
+preproc = '(/' + $WORD + ')+%'    # module-path
+normal = '<-'                     # not poly
+symbol = '[@<>%]'                 # poly
+

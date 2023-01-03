@@ -2332,4 +2332,59 @@ Looks like it uses one of:
 * http://pygments.org
 
 In particular, I'm looking for one where I can easily add my own highlighting
-for fbld and fble.
+for fbld and fble. A quick search doesn't bring any obvious leaders.
+
+Lets start with the GNU source-highlight, which looks like it supports custom
+syntax. And hey, I already have it installed.
+
+How to write my own language file? Notes from reading the user manual:
+* fbld.lang, fble.lang
+* # for comments.
+* Single line regex. That's fine.
+* "...|...|..." for keywords.
+* '...' for general regex without back references.
+
+Looks like the .lang file is of the form:
+class = '...'
+(class1, class2, ...) = '...'
+
+Questions:
+* What class names should I use? Any standard ones?
+  - Looks like just pick some language and go based on that.
+  comment, label, normal, preproc, specialchar, string, symbol, todo
+* For fble, it will be nice if we can reuse instead of copy paste regex for
+  quoted and unquoted words. Any support for that? Worse case just copy paste.
+  vardef <var> = ..., $<var> maybe? Yes. Looks like it works. Perfect.
+* comment start "#"
+* Earlier entries are matched before later entries.
+
+Let me give it a try.
+
+What's the default.style used? How do I specify that?
+* /usr/share/source-highlight/default.style
+
+Let's pick class names based on that. For fbld to start, I have tag, bracket,
+and escape char. In vim I use Identifier, Character, and Special for those.
+For source-highlight, maybe: usertype, symbol, specialchar. Let's try it.
+
+How to pass my lang file explicitly?
+
+source-highlight --lang-def=filename
+
+Let's try it out. Awesome. Works great for fbld. Now for fble.
+
+classes are:
+  quoted      ==> Identifier  ==> ??? regexp?
+  comment     ==> Comment     ==> comment
+  type        ==> Type        ==> usertype
+  label       ==> Label       ==> label
+  literal     ==> String      ==> string
+  module-path ==> Include     ==> preproc
+  poly        ==> Special     ==> symbol
+  not-poly    ==> ()          ==> normal
+
+Should I define my own fble.style file instead of trying to fit into the
+default? I'd rather go with defaults where possible. Let's try regexp for
+quoted. It's a pretty rare case.
+
+Looks great for fble. I would choose different colors, but whatever.
