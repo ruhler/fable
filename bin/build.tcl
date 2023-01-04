@@ -22,8 +22,8 @@ namespace eval "bin" {
 
     # Man page.
     build $::b/bin/$base.1 \
-      "$::s/fbld/fbld.usage.man.tcl $::s/bin/$base.fbld" \
-      "tclsh8.6 $::s/fbld/fbld.usage.man.tcl $base $::s/bin/$base.fbld > $::b/bin/$base.1"
+      "$::s/bin/$base.fbld $::s/fbld/usage.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/man.tcl < $::s/bin/$base.fbld > $::b/bin/$base.1"
     install_man1 $::b/bin/$base.1
   }
 }
