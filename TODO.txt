@@ -1,7 +1,4 @@
 
-* @l[@<@<Bit@>>] from Variables.fbld is not generating proper html code
-  It is rendering as @<@>.
-
 * Convert spec/README.adoc and spec/fble.adoc to .fbld syntax.
  - And drop the dependency on asciidoc entirely.
 

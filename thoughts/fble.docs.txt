@@ -2394,3 +2394,23 @@ right? exec the command in a code block. Map language name to source-highlight
 languages. Or switch all my uses to whatever language source-highlight already
 uses?
 
+---
+
+@l[@<@<Bit@>>] is being rendered in html as:
+
+<code>@<@<Bit@>></code>
+
+Which showing up in chrome as:
+
+@<@>
+
+Clearly we need to do some escaping in generated code segments. What
+characters need escaping?
+
+According to the internet:
+
+ & becomes &amp;
+ < becomes &lt;
+ > becomes &gt;
+
+Easy.

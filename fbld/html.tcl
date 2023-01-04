@@ -11,8 +11,7 @@
 # Fbld escape characters are converted to normal characters.
 # @param text  ESCAPED text to unescape.
 proc inline_ {text} {
-  # TODO: Do escapes needed for html.
-  ::output [::unescape $text]
+  ::output [string map { & &amp; < &lt; > &gt; } [::unescape $text]]
 }
 
 # @text[ESCAPED text]
