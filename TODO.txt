@@ -1,6 +1,16 @@
 
+* @l[@<@<Bit@>>] from Variables.fbld is not generating proper html code
+  It is rendering as @<@>.
+
 * Convert spec/README.adoc and spec/fble.adoc to .fbld syntax.
  - And drop the dependency on asciidoc entirely.
+
+* Add a style sheet for generated documentation?
+  Because it looks pretty ugly reading the html right now.
+
+* Add way to do inline code syntax highlighting in fbld?
+  Because it looks a little funny in the tutorials for things to be
+  highlighted in code blocks but not in inline text.
 
 * Fix missing dependency for .fbld processing on fbld.lang and fble.lang.
 

@@ -26,11 +26,17 @@ struct using @l[.], as in @l[a.3].
 That describes the fundamentals of what you can do with structures.
 
 Some miscellaneous details:
-* Structs can have zero or more fields.
-* Field names follow the same naming conventions as variable names (see the
-  Variables tutorial for details).
-* Struct types are equal if they have the same order, types, and names of all
-  of their fields.
+
+@item
+Structs can have zero or more fields.
+
+@item
+Field names follow the same naming conventions as variable names (see the
+Variables tutorial for details).
+
+@item
+Struct types are equal if they have the same order, types, and names of all of
+their fields.
 ]
 
 @section[Implicit Type Struct Values][

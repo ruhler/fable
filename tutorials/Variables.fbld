@@ -189,7 +189,7 @@ introduce a new scope for variables. For example:
 }
 
 Variables @l[a], @l[b], and @l[d] can be referenced between their definition
-and the end of the top most block. Variable @l[c] can be referenced only
+and the end of the outer most block. Variable @l[c] can be referenced only
 inside the block where the value of @l[b] is being defined.
 
 It's possible to capture variables from outer blocks in function bodies. We've
