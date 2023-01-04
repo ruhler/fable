@@ -2414,3 +2414,16 @@ According to the internet:
  > becomes &gt;
 
 Easy.
+
+---
+
+I converted the fble spec from asciidoc to fbld. I like it a lot. It shows a
+good example of how to easily define some custom document tags by having an
+fble.fbld.tcl file associated with the document.
+
+Ran into issues with fbld I ran into before:
+* When is it okay to use unescaped [ and ]? I relaxed the restriction in the
+  parser. I'm not sure what to do officially.
+* Tracking down errors was hard. In one case I had a space on what I thought
+  was an empty line before @code, which turned it into an inline tag which
+  wasn't supported.

@@ -1,7 +1,4 @@
 
-* Convert spec/README.adoc and spec/fble.adoc to .fbld syntax.
- - And drop the dependency on asciidoc entirely.
-
 * Add a style sheet for generated documentation?
   Because it looks pretty ugly reading the html right now.
 
@@ -111,7 +108,7 @@
   build.ninja file.
 
 * [spec] Should empty path be allowed in package type?
- See spec/fble.adoc for more details.
+ See spec/fble.fbld for more details.
 
 * [modules]
  - Decide about .fble.@ files.

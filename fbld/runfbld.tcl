@@ -10,8 +10,19 @@ foreach arg $argv {
   source $arg
 }
 
-proc ::invoke_inline {cmd args} { inline_$cmd {*}$args }
-proc ::invoke_block {cmd args} { block_$cmd {*}$args }
+proc ::invoke_inline {cmd args} {
+  if {[string equal "" [info procs inline_$cmd]]} {
+    error "Unknown inline command '@$cmd' (args: $args)"
+  }
+  inline_$cmd {*}$args
+}
+
+proc ::invoke_block {cmd args} {
+  if {[string equal "" [info procs block_$cmd]]} {
+    error "Unknown block command '@$cmd' (args: $args)"
+  }
+  block_$cmd {*}$args
+}
 
 proc ::unescape {text} { ::fbld::unescape $text }
 proc ::inline {text} { ::fbld::inline invoke_inline $text }

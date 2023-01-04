@@ -21,7 +21,7 @@ used to get all required packages for fble:
 
 @code[sh]
 apt install \
-  asciidoc doxygen expect binutils bison \
+  doxygen expect binutils bison \
   gcc gdb diffutils grep groff-base source-highlight \
   ninja-build libgl-dev libsdl2-dev tcl8.6
 ]

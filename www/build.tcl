@@ -14,8 +14,9 @@ namespace eval "www" {
   lappend wwws $::b/www/fbld/fbld.html
 
   # Fble spec
-  build "$::b/www/spec/fble.html" "$::s/spec/fble.adoc" \
-    "asciidoc -o $::b/www/spec/fble.html $::s/spec/fble.adoc"
+  build $::b/www/spec/fble.html \
+    "$::s/spec/fble.fbld $::s/spec/fble.fbld.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/html.tcl" \
+    "tclsh8.6 $::s/fbld/runfbld.tcl $::s/spec/fble.fbld.tcl $::s/fbld/html.tcl < $::s/spec/fble.fbld > $::b/www/spec/fble.html"
   lappend wwws $::b/www/spec/fble.html
 
   # Tutorial table of contents

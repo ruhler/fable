@@ -214,3 +214,14 @@ proc block_subsection {title body} {
   ::output "</h3>\n"
   ::block $body
 }
+
+# @subsubsection[INLINE title][BLOCK body]
+# A third level section.
+# @param title  The tile of the section.
+# @param body  The contents of the section.
+proc block_subsubsection {title body} {
+  ::output "<h4>"
+  ::inline $title
+  ::output "</h3>\n"
+  ::block $body
+}

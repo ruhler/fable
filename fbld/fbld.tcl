@@ -18,8 +18,6 @@ namespace eval fbld {
     for {set i $start} {$i < $len} { incr i } {
       switch -exact [string index $text $i] {
         \\ { incr i }
-        \[ { error "Unexpected '\[' at index $i in text '$text'" }
-        \] { error "Unexpected '\]' at index $i in text '$text'" }
         @ { return $i }
       }
     }
