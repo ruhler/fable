@@ -7,9 +7,14 @@ namespace eval "bin" {
       "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/check.tcl < $::s/bin/$base.fbld"
 
     # Generated header file for help usage text.
+    build $::b/bin/$base.roff \
+      "$::s/bin/$base.fbld $::s/fbld/usage.help.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/roff.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl < $::s/bin/$base.fbld > $::b/bin/$base.roff"
+    build $::b/bin/$base.txt $::b/bin/$base.roff \
+      "groff -T ascii < $::b/bin/$base.roff > $::b/bin/$base.txt"
     build $::b/bin/$base.usage.h \
-      "$::s/fbld/fbld.usage.help.tcl $::s/bin/$base.fbld" \
-      "tclsh8.6 $::s/fbld/fbld.usage.help.tcl $::s/bin/$base.fbld > $::b/bin/$base.usage.h"
+      "$::s/fbld/cdata.tcl $::b/bin/$base.txt" \
+      "tclsh8.6 $::s/fbld/cdata.tcl fbldUsageHelpText < $::b/bin/$base.txt > $::b/bin/$base.usage.h"
 
     # The binary.
     obj $::b/bin/$base.o $x "-I $::s/include -I $::b/bin" \

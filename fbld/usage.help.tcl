@@ -21,8 +21,7 @@
 #
 # Each of these are treated as separate sections of the document.
 proc block_usage {name brief content} {
-  ::block_par "$name - [string trim $brief]"
-  ::block $content
+  ::block_doc $name "$name - [string trim $brief]\n\n$content"
 }
 
 # @synopsys[INLINE text]

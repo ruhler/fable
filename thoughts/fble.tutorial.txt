@@ -511,3 +511,12 @@ Next step: Unions.
 * Default branch allowed even if all other tags present.
 * Statement version of union select.
 
+---
+
+Next step: functions.
+
+* Basics: type, value, function application.
+* Function body as same as top level
+  - you can define functions, types, etc.
+* Higher order functions (function arguments).
+* Curried functions.

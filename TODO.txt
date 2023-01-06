@@ -11,8 +11,6 @@
  - Maybe easiest to add a tcl proc for building fbld and encapsulate all the
    dependencies there.
 
-* Add roff fbld backend and use it to replace fbld.usage.help.tcl.
-
 * Improve exercises for Unions tutorial.
 
 * Fix dependencies in tutorials/build.tcl.
