@@ -9,6 +9,7 @@ set ::s [lindex $argv 0]
 set ::b [lindex $argv 1]
 
 proc require { str } {
+  set timeout 30
   expect -ex \
     $str {} \
     "(gdb) " { error "got prompt instead of \"$str\"" } \
