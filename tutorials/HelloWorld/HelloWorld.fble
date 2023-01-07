@@ -13,7 +13,7 @@
 # Here are some comment lines you can include in your
 # hello world program if you want to.
 
-Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
 
   (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
@@ -30,4 +30,4 @@ Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
   m.return(True);
 };
 
-/Core/Stdio/IO%.Run(Test);
+/Core/Stdio/IO%.Run(Main);

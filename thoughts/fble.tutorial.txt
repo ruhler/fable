@@ -518,5 +518,9 @@ Next step: functions.
 * Basics: type, value, function application.
 * Function body as same as top level
   - you can define functions, types, etc.
+* Capturing variables from scope.
+  - Example of how to pull code out of functions this way.
+* Recursive functions.
+  - And what it means for the stack. Calls versus tail calls, etc.
 * Higher order functions (function arguments).
 * Curried functions.

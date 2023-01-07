@@ -1,4 +1,10 @@
 
+* Understand size of dependencies better.
+  doxygen in particular.
+  Can we see this from the github workflow logs?
+
+* -Werror=stringop-overflow= nul termination of cdata?
+
 * Add a style sheet for generated documentation?
   Because it looks pretty ugly reading the html right now.
 
