@@ -9,8 +9,8 @@
 set name [lindex $argv 0]
 set text [read stdin]
 
-puts "const unsigned char $name\[\] = \{";
-set c 2
+puts -nonewline "const unsigned char $name\[\] = \{";
+set c 80
 set i 0
 set len [string length $text]
 while {$i < $len} {
@@ -23,4 +23,4 @@ while {$i < $len} {
   incr c [string length $code]
   incr i
 }
-puts "\n\};"
+puts "'\\0'\n\};"
