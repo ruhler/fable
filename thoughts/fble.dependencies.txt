@@ -1,0 +1,127 @@
+Fble Dependencies
+=================
+Understanding what other software fble depends on.
+
+Idea: use apt-rdepends or some other mechanism to get data about package size
+and dependencies. Combine that with fble-profile API to generate an
+fble-profile report for the dependencies.
+
+Is that doable? Does the package graph map to something the profile API could
+use? The trouble is, say packages A and B both depend on C. How much size do
+you charge to C coming from A and B? Like:
+
+A (20MB) -> C (10MB)
+B (30MB) -> C (10MB)
+
+That would double count the size of C, right? That doesn't seem to fit the
+paradigm for profiling. I thought this was supposed to work for heap dumps
+though.
+
+The only thing I can think is to do an extra processing step that counts how
+many things depend on C, say, and give them equal weight. For example,
+assuming 2 packages depend on C, and C is 10MB, assign the cost of each
+package 5MB. But that's not how it works. Removing one of those dependencies
+will not cause all 10MB to go away...
+
+We need a dominators computation, right?
+
+Anyway, how to get the data first:
+
+For the graph of dependencies:
+  apt-rdepends  doxygen expect binutils bison   gcc gdb diffutils grep groff-base source-highlight   ninja-build libgl-dev libsdl2-dev tcl8.6
+
+For installed size:
+  dpkg-query -Wf '${Installed-Size}' doxygen
+
+Or using python apt API:
+  Looks too tedious to figure out.
+
+The dependency graph is a graph, not a tree. The profile API works on trees.
+We can turn the dependency graph into a dominator tree. That will be useful
+and interesting, but it will not be sufficient.
+
+For example, if we have a package with a big dependency that is depended on by
+multiple root packages, we have no insight into which of the root packages to
+remove to get rid of that package. But at least it will be easy to see there
+is a package, know it's not a root package, and manually track down who
+depends on it.
+
+---
+
+There's also debtree, but it only takes a single package at a time and appears
+to include alternatives in ways I'm not clear on.
+
+Important differences between the dependency graph and profiling:
+* The dependency graph is directed acyclic, not a tree.
+* There is sharing between nodes, meaning the operator to join two paths is
+  not linear.
+* I don't have control over subpackage dependencies.
+
+The only actions I can take are to try and remove the root dependencies.
+
+Dominators tree would still be useful. Seeing intermediate package names would
+be useful, for example, in case llvm is taking a lot of space and I know I
+ought not to need to depend on llvm.
+
+Dominators tree is a tree, and all paths are unique, so no need for a linear
+operator between them.
+
+Note: apt show $package | grep Size shows the size in human readable form,
+which makes clear that InstalledSize unit from dpkg-query is KB.
+
+Our current list of top subpackages:
+
+519944 libgl1-mesa-dri
+61054 libllvm9
+56998 libllvm6.0
+31573 libicu63
+24410 libclang1-6.0
+22502 gcc-8
+19280 cpp-8
+16220 libc6-dev
+15528 doxygen
+14673 binutils-aarch64-linux-gnu
+13000 binutils-common
+10527 gdb
+
+doxygen is 15MB, llvm/clang is pretty big. Bit gl is even worse in this case.
+Wow.
+
+And keep in mind, different people on different systems may end up with
+different package versions, different alternative choices, which could lead to
+different dependency requirements.
+
+It will definitely be good to see this in a dominators tree format.
+
+And I can output a format consistent with perf so we can reuse
+fble-perf-profile to see it. Cool.
+
+---
+
+I wrote the script. We have dominators output. Here's what it shows:
+
+There must be a bug. It shows libgl1-mesa-dri as a root, which doesn't make
+sense.
+
+We have the following two paths:
+ libgl-dev --> libgl1-mesa-dri
+ libsdl2-dev --> ... --> libgl-dev --> libgl1-mesa-dri
+
+This shows my dominators algorithm is flawed. These two paths have no common
+prefix, but libgl1-mesa-dri's dominator should still be libgl-dev?
+
+If libsdl2-dev depends on libgl-dev, why do I have libgl-dev as an explicit
+dependency at all?
+
+Anyway, ignoring that, the profile shows:
+* libsdl2-dev is a big chunk, because it has libgl1-mesa-dir.
+  It would be nice to make this dependency optional.
+* doxygen comes next, because it depends on libclang1-6.0 which is 80MB.
+  I don't like depending on clang.
+  Either this dependency goes away if we generate all docs at release time, or
+  let's see if we can get rid of it.
+
+Other packages I wonder if we need:
+* perl-base - required for tcl apparently.
+* python3.7-minimal - required for gdb apparently.
+

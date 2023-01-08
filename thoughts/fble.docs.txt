@@ -2427,3 +2427,23 @@ Ran into issues with fbld I ran into before:
 * Tracking down errors was hard. In one case I had a space on what I thought
   was an empty line before @code, which turned it into an inline tag which
   wasn't supported.
+
+---
+
+Question: Can we replace doxygen entirely with an fbld-based documentation
+system?
+
+Pros:
+* Full control over formatting tags and generated output.
+* Can remove dependency on doxygen and clang.
+Cons:
+* Means using a custom doc format instead of more standard doxygen.
+* Extra effort required to parse C code to ensure everything is documented as
+  desired.
+
+I think it's mostly a question of how to parse out the documentation from the
+source code. If we can implement that easily enough, great. I'm not too
+worried about using a standard doc format as long as we have some checks for
+legal formatting. If it's too hard to parse out the documentation, then the
+decision is much harder.
+

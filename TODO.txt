@@ -1,9 +1,6 @@
 
-* Understand size of dependencies better.
-  doxygen in particular.
-  Can we see this from the github workflow logs?
-
-* -Werror=stringop-overflow= nul termination of cdata?
+* Write an fble-apt-profile tool that uses fble profiling to display apt
+  package dependencies for fble.
 
 * Add a style sheet for generated documentation?
   Because it looks pretty ugly reading the html right now.
