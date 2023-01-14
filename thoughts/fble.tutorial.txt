@@ -524,3 +524,10 @@ Next step: functions.
   - And what it means for the stack. Calls versus tail calls, etc.
 * Higher order functions (function arguments).
 * Curried functions.
+
+---
+
+Next step: lists.
+* Example of a list type and a function over lists.
+* 
+

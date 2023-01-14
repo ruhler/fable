@@ -1,6 +1,9 @@
 @doc[Tutorials][
 The following is a series of tutorials about the fble language:
 
+@def[@fbld[Introduction.fbld][Introduction]]
+What fble is and why bother learning it.
+
 @def[@fbld[Install.fbld][Install]]
 Install fble and set up your environment.
 
