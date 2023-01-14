@@ -21,4 +21,7 @@ Learn all about modules in fble.
 
 @def[@fbld[Unions.fbld][Unions]]
 Learn all about unions in fble.
+
+@def[@fbld[Functions.fbld][Functions]]
+Learn all about functions in fble.
 ]

@@ -1,0 +1,14 @@
+# @@fble-test@@ no-error
+# A function value that passes a type value as an argument.
+# What a crazy thing to do!
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+(@<Bool@>) { @<Bool@>; } F = (@<Bool@> x@) {
+  x@;
+};
+
+@ MyBool@ = F(Bool@);
+
+MyBool@ True = Bool@(true: Unit@());
+True.true;

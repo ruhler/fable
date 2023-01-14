@@ -2447,3 +2447,113 @@ worried about using a standard doc format as long as we have some checks for
 legal formatting. If it's too hard to parse out the documentation, then the
 decision is much harder.
 
+---
+
+There's a choice to be made. Do we want to parse the list of documented
+elements from the underlying language, or do we want doc comments to be
+essentially separate from the underlying language.
+
+If we do the former, we can get:
+* Checks that we have documented everything.
+* Names of entities and types not needed in the doc comments themselves.
+
+If we do the later, we can get:
+* Support across any language, and it's much simpler to implement.
+
+Honestly, I don't care that much if some entities are not documented or some
+arguments are not documented. The bigger question is whether I'm okay
+duplicating information in the comments that you could get from the code. Two
+things come to mind: entity names and arg/field types.
+
+Imagine. Instead of:
+
+/**
+ * Evaluates a linked program.
+ * 
+ * The program is assumed to be a zero argument function as returned by
+ * FbleLink.
+ *
+ * @param heap     The heap to use for allocating values.
+ * @param program  The program to evaluate.
+ * @param profile  The profile to update. May be NULL to disable profiling.
+ *
+ * @returns
+ *   The value of the evaluated program, or NULL in case of a runtime error in
+ *   the program.
+ *
+ * @sideeffects
+ * * The returned value must be freed with FbleReleaseValue when no longer in
+ *   use.
+ * * Prints an error message to stderr in case of a runtime error.
+ * * Updates profiling information in profile based on the execution of the
+ *   program.
+ */
+FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile);
+
+We would have something like:
+
+
+// @func[FbleEval][Evaluates a linked program.][
+// The program is assumed to be a zero argument function as returned by
+// FbleLink.
+//
+// @param[FbleValueHeap*][heap] The heap to use for allocating values.
+// @param[FbleValue*][program] The program to evaluate.
+// @param[FbleProfile*][profile]
+// The profile to update. May be NULL to disable profiling.
+//
+// @returns[FbleValue*]
+// The value of the evaluated program, or NULL in case of a runtime error in
+// the program.
+//
+// @sideeffects
+// @item
+// The returned value must be freed with FbleReleaseValue when no longer in
+// use.
+//
+// @item Prints an error message to stderr in case of a runtime error.
+// @item
+// Updates profiling information in profile based on the execution of the
+// program.
+// ]
+
+Which I don't mind.
+
+Let's say we are going to do this then. How do I want to do the man pages?
+That's the only thing I'm really worried about loosing from doxygen. But we
+don't really do them great today anyway.
+
+Options are:
+* One function per man page. The man pages will be small, not have a lot of
+  context. Can auto-generate easily enough.
+* One file per man page. The man page is big, plenty of context. In some
+  cases, perhaps too much context.
+* Manually written man pages that reference the doc comments.
+
+Honestly? I'm tempted to write the man pages by hand. In which case, the
+format of the doc comments doesn't matter at all and we are back where we
+started.
+
+If they are written by hand, it's easy and natural to group however makes
+sense. It means a duplicate source for the documentation though, which will be
+a pain. On the other hand, this is public API. It should be a pain to change
+the API.
+
+Custom man pages are nice because we can merge descriptions of common
+arguments, for example.
+
+I'm tempted. If we do this, I don't have to update any of the doc comments in
+the source code to a different syntax, because it's just for human
+consumption.
+
+Or... just do one function per man page, and take directly from the doc
+comments in source. There is sufficient info in those comments. Use an fbld
+format that we can more easily map to man pages.
+
+I want to set up install of my first man page this way. Play around.
+
+Steps might be:
+* Remove doxygen from the build.
+* Pick a function, change it to fbld docs, generate a man page and install
+  that. Play around, see how it feels. Then go from there.
+

@@ -1,0 +1,164 @@
+Fble Floating Point
+===================
+Goal: Implement IEEE compatible floating point arithmetic in fble as a
+library.
+
+Why? So we can write programs involving single and double precision floating
+point arithmetic that is "bit accurate" to the corresponding C code.
+
+How much of the spec to support?
+* single and double precision to start.
+* be able to convert to and from C code.
+* Provide all sets of values, including +-0 signaling NaN and quiet NaN.
+* All the recommended operations.
+* The normal default rounding mode.
+* As a stretch goal: all the rounding modes.
+* Conversion to/from strings.
+
+I'm thinking we have a common data type for all precisions of floating point.
+We do the computation there, but have 'truncate' operations for the relevant
+precision/rounding mode.
+
+One question is how to handle exceptions and traps. I want the normal use case
+to be like C - you don't worry about them. That way they don't clutter the
+API. Maybe we could have options: ignore, runtime error.
+
+Or, how about, you specify the trap handler when you instantiate the floating
+point module? If you want, you can specify a handler that ignores traps, that
+turns them into runtime errors, or that handles them some way. The only issue
+is the trap handler couldn't have any side effects.
+
+The only other thing I can think of is to put the floating point
+implementation in some generic monad, and let users specify a trap handler
+that way. But that's a pain. It would support a pure monad though. So, just
+some runtime overhead?
+
+Functions to support:
+* Add, Subtract, Multiply, Divide, SquareRoot, Remainder, Compare.
+
+Honestly, I think I should skip exceptions/traps in the first implementation.
+
+---
+
+In my first attempt, I was thinking of:
+
+# A normalized floating point number.
+# The value is (-1)^s * 2^E * (1 + fraction/2^(P-1))
+#  where
+#    s = sign 0 for positive, 1 for negative
+#    E = exponent
+#    P = The number of bits of precision.
+# Fraction should be in the range [0, 2^(P-1))
+@ Normal@ = *(
+  Sign@ sign,
+  Int@ exponent,
+  Int@ fraction
+);
+
+And then you could do arithmetic, let fraction go out of bounds, and have
+Round be responsible for putting fraction back in the expected range. But the
+math is pretty tedious.
+
+Now I'm thinking we start with a pure floating point implementation, however I
+would do it without thinking about IEEE, and then add an IEEE wrapper that
+knows how to round at the right points and adds the -0, infinity and nan
+options around it.
+
+A more natural representation for floating point, in my mind, is:
+ 
+ X = C * 2^E
+
+Where E is the exponent and C is an odd integer. As long as C is odd, I think
+we end up with a unique representation for X, except when C is 0 the value of
+E is meaningless. That gives us an option for the IEEE wrapper down the line
+to encode the other special values by setting C to 0 and playing with the
+value of E.
+
+Sign is represented by the sign of C.
+  
+This representation is not sufficient to represent the results of operations
+perfectly. For example, 1/7 cannot be expressed perfectly this way. Square
+root of 2 can't be expressed perfectly this way. So let's not fool ourselves.
+I think, for the underlying representation, we should do like we do for
+integer arithmetic and express the results as results with remainders. We may
+need to explicitly provide a precision argument in that case to define what
+remainder means.
+
+Let's take addition now.
+
+X = A * 2^E
+x = a * 2^e
+
+z = X + x = A * 2^E + a * 2^e
+
+Let m be Min(E, e)
+
+z = 2^m(A*2^(E-m) + a * 2^(e-m))
+
+If the difference between E and e is very large, this could be a relatively
+expensive operation because we are multiplying and integer by an exponentially
+large number. We don't have to worry about this to start, but eventually we'll
+want an option to optimize by saying if the difference is too big, approximate
+the smaller term as 0. That requires we have some notion of desired precision
+for the result. Should we build precision into all the operations from the get
+go? Sounds reasonable to me?
+
+We could define precision in terms of the maximum magnitude of C. How does
+that look here? Let's simplify. Assume e is smaller than E:
+
+z = 2^e(A*2^(E-e) + a)
+ Where a < K and A < K and (E-e) > 0.
+
+If 2^(E-e) > K^2, I think, then we know after adding a and then truncating the
+result down to something less than K, those bits of a don't matter anymore.
+
+This suggests we want to represent precision as some number P such that
+|C| < 2^P.
+
+Um, negative numbers may run into trouble? If a is -1, the overflow bit makes
+its way all the way over. We'll want to support that optimization too.
+
+How to normalize a number?
+
+X = C * 2^E
+
+While |C| > 2^P
+  C /= 2
+  E += 1
+
+More generally:
+
+While |C| > 2^P Or C is even but not 0:
+  C /= 2
+  E += 1
+
+To be able to optimize properly, we need to know the precision of the inputs.
+We can read that based on the size of the inputs. Or we could pass it as
+another input to the operations we do. I like the former slightly better,
+though it could be a more costly. Or we could define a single global precision
+that we pass around everywhere. That would make for a nicer API, because you
+don't have to pass precision anywhere.
+
+Maybe, for first pass, let's start with the later. Define the set of functions
+on floating point operations in the context of a single specification of
+precision.
+
+In summary:
+
+@ Float@ = *(Int@ c, Int@ e);
+
+(Int@ precision) {
+  (Float@, Float@) (Float@) Add = ...
+  (Float@, Float@) (Float@) Sub = ...
+  (Float@, Float@) (Float@) Div = ...
+  (Float@, Float@) (Float@) Mod = ...
+  (Float@) (Float@) Sqrt = ...
+  ...
+  @(Add, Sub, Div, Mod, ...);
+};
+  
+Cool. Next step is setting up test infra. For that, I think we want a way to
+convert to and from a decimal string description. We could use two integers C
+and E directly, but it would be nice to say things like "1.23e27", or whatever
+standard syntax is in C.
+
