@@ -27,4 +27,7 @@ Learn all about unions in fble.
 
 @def[@fbld[Functions.fbld][Functions]]
 Learn all about functions in fble.
+
+@def[@fbld[Lists.fbld][Lists]]
+Learn about fble's syntactic support for lists.
 ]

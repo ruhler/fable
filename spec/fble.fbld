@@ -732,7 +732,7 @@ List<Int@>[]
 List<Int@>[x]
 List<Int@>[x, f(y), z]
 
-A list expression describes a sequence of one or more values of the same type
+A list expression describes a sequence of zero or more values of the same type
 that are combined together according to a user supplied function. It is
 syntactic sugar for constructing a list value and passing it as a single
 argument to a function.

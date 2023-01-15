@@ -51,9 +51,20 @@ body of the function as a value directly, or write a function with a single
 unused argument.
 ]
 
-@section[Function Bodies][
-The body of a function is normal fble code describing the value to return from
-the function. There is no explicit @l[return] statement.
+@section[Function Values][
+A function value is described by listing the argument types and names followed
+by the body of the function in braces. The body of a function is normal fble
+code describing the value to return from the function. There is no explicit
+@l[return] statement. For example:
+
+@code[fble]
+(Bit@ a, Bit@ b) {
+  a.?(0: 0, 1: b);
+}
+
+This describes a function value of type @l[(Bit@, Bit@) { Bit@; }]. The
+compiler can deduce the return type of the function based on the type of the
+function body.
 
 You can do anything in a function body that you can do elsewhere in fble,
 including defining types, variables other function and referencing other
@@ -419,8 +430,7 @@ You now know everything there is to know about functions in fble. To reinforce
 this, read over section 5 of the fble language specification. Everything there
 should be familiar to you now.
 
-@section[Exercises][
-]
+@section[Exercises][]
 
 @section[Next Steps]
 Head over to the @fbld[Lists.fbld][Lists] tutorial to learn all
