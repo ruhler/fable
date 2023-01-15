@@ -338,8 +338,8 @@ Here we use the variable name @l[_] for the result of @l[m.do]. Because it's a
 
 @section[Variables in the Language Specification]
 You now know everything there is to know about variables in fble. To reinforce
-this, read over section 2 of the fble language specification. Everything
-there should be familiar to you now.
+this, read over @fbld[../spec/fble.fbld#variables][section 2 of the fble
+language specification]. Everything there should be familiar to you now.
 
 @section[Exercises][
 @exercise

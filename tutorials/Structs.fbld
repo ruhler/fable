@@ -206,8 +206,8 @@ and the name @l[Bit@] for the field.
 
 @section[Structs in the Language Specification]
 You now know everything there is to know about structs in fble. To reinforce
-this, read over section 3 of the fble language specification. Everything
-there should be familiar to you now.
+this, read over @fbld[../spec/fble.fbld#structs][section 3 of the fble
+language specification]. Everything there should be familiar to you now.
 
 @section[Exercises][
 @exercise

@@ -427,8 +427,8 @@ for more about polymorphism in fble.
 
 @section[Functions in the Language Specification]
 You now know everything there is to know about functions in fble. To reinforce
-this, read over section 5 of the fble language specification. Everything there
-should be familiar to you now.
+this, read over @fbld[../spec/fble.fbld#functions][section 5 of the fble
+language specification]. Everything there should be familiar to you now.
 
 @section[Exercises][]
 

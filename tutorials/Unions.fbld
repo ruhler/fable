@@ -185,8 +185,8 @@ to read:
 
 @section[Unions in the Language Specification]
 You now know everything there is to know about unions in fble. To reinforce
-this, read over section 4 of the fble language specification. Everything
-there should be familiar to you now.
+this, read over @fbld[../spec/fble.fbld#unions][section 4 of the fble language
+specification]. Everything there should be familiar to you now.
 
 @section[Exercises][
 @exercise

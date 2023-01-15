@@ -164,8 +164,8 @@ type), pass a list of values as one of the arguments and use a list expression
 to construct that list.
 
 @section[Lists in the Language Specification]
-The list expression is covered in section 7.1 of the fble language
-specification.
+The list expression is covered in @fbld[../spec/fble.fbld#lists][section 7.1
+of the fble language specification].
 
 @section[Exercises][]
 

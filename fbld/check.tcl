@@ -30,11 +30,15 @@ proc inline_l {text} { ::unescape $text }
 # @param text  The text to highlight.
 proc inline_a {text} { ::unescape $text }
 
-# @label[ESCAPED id]
+# @label[ESCAPED id][INLINE text]
 # Give a label to a point in the text.
-# For use as a target of local or exteranl references.
-# @param id  The id to use for the lable.
-proc inline_label {text} { ::unescape $text }
+# For use as a target of local or external references.
+# @param id  The id to use for the label.
+# @param text  The text to display for the label target.
+proc inline_label {id text} {
+  ::unescape $id
+  ::inline $text
+}
 
 # @ref[ESCAPED id][INLINE caption]
 # Refer to a locally defined label.

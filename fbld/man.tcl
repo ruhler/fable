@@ -41,12 +41,13 @@ proc inline_a {text} {
   ::output "\\fR"
 }
 
-# @label[ESCAPED id]
+# @label[ESCAPED id][INLINE text]
 # Give a label to a point in the text.
 # For use as a target of local or external references.
 # @param id  The id to use for the lable.
-proc inline_label {text} {
-  # TODO: Should we do something with the label?
+# @param text  The text to display for the label target.
+proc inline_label {id text} {
+  ::inline $text
 }
 
 # @ref[ESCAPED id][INLINE caption]

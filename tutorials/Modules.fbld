@@ -330,8 +330,8 @@ that they can describe any type of value, not just struct values.
 
 @section[Modules in the Language Specification]
 You now know everything there is to know about modules in fble. To reinforce
-this, read over section 8 of the fble language specification. Everything
-there should be familiar to you now.
+this, read over @fbld[../spec/fble.fbld#modules][section 8 of the fble
+language specification]. Everything there should be familiar to you now.
 
 @section[Exercises][
 @exercise

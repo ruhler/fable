@@ -40,7 +40,7 @@ structs for types in addition to normal values. Additional syntax is provided
 to make structs suitable for describing and manipulating namespaces.
 ]
 
-@section [2. Types, Kinds, and Variables][
+@section [@label[variables][2. Types, Kinds, and Variables]][
 @subsection[2.1 Types][
 Data values and the expressions that describe them are strongly typed. A
 value's type describes the kinds of operations that can legally be performed
@@ -256,7 +256,7 @@ the body, where N is the number of bindings and M is the number of variables
 in scope.
 ]]
 
-@section[3. Structs][
+@section[@label[structs][3. Structs]][
 A struct value is a grouping of other values. The items of a struct are
 organized into a finite number of fields. Each field has a name, used to
 identify the field, and a type, specifying the type of value for that field.
@@ -368,7 +368,7 @@ Runtime is O(log(N)) plus the runtime of the struct object, where N is the
 number of fields in the struct.
 ]]
 
-@section[4. Unions][
+@section[@label[unions][4. Unions]][
 A union value is a particular value chosen from a group of possible values.
 The possible choices are organized into a finite number of fields. Each field
 has a name, used to identify the field, and a type, specifying the type of
@@ -503,7 +503,7 @@ Is equivalent to the following statement based form:
 }
 ]]
 
-@section[5. Functions][
+@section[@label[functions][5. Functions]][
 A function is a mapping from one or more argument values to a result value.
 Each argument has a name, used to identify the argument in the body of the
 function, and a type, specifying the type of value that can be supplied for
@@ -720,7 +720,7 @@ We introduce bind syntax to facilitate calling a function with an anonymous
 function as its only argument. This is useful for using reusable glue logic to
 compose operations in a monadic style.
 
-@subsection[7.1 List][
+@subsection[@label[lists][7.1 List]][
 @AbstractSyntax
 Expr ::= list (func : Expr) (args : [Expr])
   
@@ -941,7 +941,7 @@ Struct types and package types cannot be used for the function in bind syntax,
 even though they share a similar concrete syntax to function application.
 ]]
 
-@section[8. Modules][
+@section[@label[modules][8. Modules]][
 Fble code is organized into a hierarchy of reusable modules. Each module
 describes a value that may depend on the value of other modules. A program is
 formed by combining a module with all of its direct and indirect dependencies.
