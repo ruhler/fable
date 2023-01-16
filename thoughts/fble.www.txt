@@ -97,3 +97,22 @@ Use an anchor and cross ref, and figure out how to run asciidoc on both docs
 at once? Maybe need to use a 'chunked html' backend and treat them as two
 separate sections of the same document? That seems silly to me.
 
+---
+
+The generated web pages from fbld look ugly. Can we add style sheets or
+something to make them look a little nicer? Things to consider changing:
+* Font family: Sans serif instead of serif.
+* Font size: The text seems much too small compared to the titles.
+* Maximum width: Set it at like 60 characters instead of window size?
+* Colors: maybe there's less intense black/white colors we could use?
+* Background color for code blocks maybe?
+
+There are a couple parts here:
+1. how to specify a different style.
+2. what the style should be exactly.
+
+The easiest way for (1) would be make it part of fbld html.tcl. Just emit it
+as a stylesheet in the head. No need for a separate style sheet.
+
+Let's play around a little.
+

@@ -190,10 +190,29 @@ proc block_code {language text} {
 # @param title  The title of the document.
 # @param body  The contents of the document.
 proc block_doc {title body} {
+  ::output "<head>\n"
+  ::output {
+<style>
+body {
+  color: #333333;
+  font-family: sans-serif;
+  max-width: 50em;
+}
+h1 { font-size: 2.0em; }
+h2 { font-size: 1.6em; }
+h3 { font-size: 1.4em; }
+h4 { font-size: 1.2em; }
+p { font-size: 1em; }
+</style>
+}
+  ::output "<title>$title</title>\n"
+  ::output "</head><body>"
+
   ::output "<h1>"
   ::inline $title
   ::output "</h1>\n"
   ::block $body
+  ::output "</body>"
 }
 
 # @section[INLINE title][BLOCK body]
