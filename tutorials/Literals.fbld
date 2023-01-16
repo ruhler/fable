@@ -57,7 +57,7 @@ above, rewritten using literal expressions:
 Int@ 2023 = Int|2023;
 String@ hello_world = String|'hello world';
 
-A literal expression is a function followed by @l[l] and then a single word.
+A literal expression is a function followed by @l[|] and then a single word.
 In this case, @l[Int] is a function that converts a list of letters to an
 integer and @l[2023] is a word with the list of letters to pass to the @l[Int]
 function. Similarly, @l[String] is a function that converts a list of letters
@@ -130,7 +130,7 @@ shift in bits from the literal.
 };
 ]
 
-That's it. We know can write literals for the @l[Bit4@] type. Here are some
+That's it. We now can write literals for the @l[Bit4@] type. Here are some
 examples:
 
 @code[fble]
@@ -163,13 +163,13 @@ Int@ 42 = HexInt|2a;
 In a literal expression such as @l[Int|2023], the compiler knows what the
 element type is based on the function @l[Int]. From this it can infer what the
 legal letters are to appear in the literal word. For example, if you wrote
-@l[Int|20y3], it would give an error, because there is no field named @l[y] in
-the @l[Decimal@] type.
+@l[Int|20y3], it would give a type error, because there is no field named
+@l[y] in the @l[Decimal@] type.
 
 The compiler can't do any more than that to validate the syntax of the literal
 though. For instance, maybe you want to write a negative integer literal as:
 @l[Int|'-123']. For that to work, you would need to add @l['-'] as a field to
-@l[Decimal@], and then the comnpiler will accept words like @l[Int|'12-41'],
+@l[Decimal@], and then the compiler will accept words like @l[Int|'12-41'],
 even though those aren't what we think of as legal integer literals.
 
 There are a few ways to handle syntax errors in literals that consist only of
@@ -223,7 +223,7 @@ String@ example = String|one;
 Literal functions like @l[Int], @l[Bit4], and @l[String] that we have shown
 here can be used as is for list expressions if you want. This can be
 convenient when defining values where one or more digits are derived
-programatically instead of being constant. No need to define a separate list
+programmatically instead of being constant. No need to define a separate list
 function, you can use your literal function as is!
 
 You can also reuse literal functions as normal functions in fble, passing a
