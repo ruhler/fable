@@ -30,4 +30,7 @@ Learn all about functions in fble.
 
 @def[@fbld[Lists.fbld][Lists]]
 Learn about fble's syntactic support for lists.
+
+@def[@fbld[Literals.fbld][Literals]]
+Learn about fble's syntactic support for user-defined literals.
 ]

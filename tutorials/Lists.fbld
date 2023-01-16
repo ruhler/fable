@@ -42,9 +42,8 @@ and readable.
 ]
 
 @section[The List Expression][
-Fble has special syntactic support for list expressions. A list expression is
-like a special kind of function application for functions that take a single
-list argument.
+Fble has syntax for list expressions. A list expression is a special kind of
+function application for functions that take a single list argument.
 
 Let's define a (in this case trivial) function that takes a single list as an
 argument to construct a list:

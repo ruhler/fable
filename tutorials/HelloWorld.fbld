@@ -19,9 +19,6 @@ In your favorite text editor, start a new file called @l[HelloWorld.fble]. The
 @l[.fble] extension is used for fble programs; it is required for the fble
 interpreter and compiler to be able to locate your code.
 
-Note: "fble" is pronounced as four separate letters 'f'-'b'-'l'-'e', with
-stress on the 'f'.
-
 @subsection[Module Imports][
 We'll start by importing some types and functions from the core library:
 

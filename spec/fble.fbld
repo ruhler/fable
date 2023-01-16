@@ -782,7 +782,7 @@ It is consistent with literal expressions, which require a user defined
 letter type to be supplied.
 ]
 
-@subsection[7.2 Literal][
+@subsection[@label[literals][7.2 Literal]][
 @AbstractSyntax
 Expr ::= literal (func : Expr) (letters : word)
 

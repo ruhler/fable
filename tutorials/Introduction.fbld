@@ -29,6 +29,10 @@ I decided to see if I could design my own programming language to match my
 desires, and thus the Fable project was born. I progressed through a series of
 language prototypes and rewrites: fbla, fblb, fblc, fbld, and at last, where
 we are today, fble.
+
+Note: "fble" is pronounced as four separate letters @l[f-b-l-e], with
+stress on the @l[f]: @l[/'ef.biː.el.iː/].
+
 ]
 
 @section[The fble Language][
