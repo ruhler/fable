@@ -529,5 +529,26 @@ Next step: functions.
 
 Next step: lists.
 * Example of a list type and a function over lists.
-* 
+
+---
+
+Brainstorm for polymorphism tutorial:
+* Basics: with list example.
+* Motivation: using list example.
+* poly versus function.
+* "curried" polys.
+* poly kinds.
+* poly types.
+* non-function poly values.
+* function poly values.
+  - convenient syntax.
+* higher order poly kinds.
+* poly application.
+* type inference.
+* type of a poly.
+* ad-hoc polymorphism.
+* where poly's can be used:
+ - function arguments.
+ - struct fields.
+ - variables.
 

@@ -1,0 +1,405 @@
+@tutorial[Polymorphism][
+This tutorial does a deep dive into polymorphism in fble. By the end of this
+tutorial, you'll be fully versed in section 7 of the fble language spec on
+polymorphism.
+
+@section[Basics][
+Many statically typed languages have support of one form or another for
+defining data types that work with different types. For example, you want to
+have a generic list type that can be made to work for lists of integers, lists
+of characters, lists of strings, and so on. C++ has templates for this
+purpose, Java has generics and Haskell has type parameters.
+
+The fble language has something called a polymorphic value, or poly for short.
+Polys are a class of types in fble in addition to structs, unions, and
+functions which you already know about. A poly is an fble value parameterized
+by a type.
+
+For example, here's the definition of a generic list data type and a couple
+functions to help construct lists:
+
+@code[fble][
+<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+
+List@ Nil = <@ T@> {
+  List@<T@>(nil: Unit);
+};
+
+<@ T@>(T@, List@<T@>) { List@<T@>; } Cons = <@ T@>(T@ a, List@<T@> l) {
+  List@<T@>(cons: @(head: a, tail: l));
+};
+]
+
+A poly value is described using the syntax @l[<@ T@> { ... }]. Here, @l[T@] is
+a type variable. For @l[...] you put any kind of fble value, and that
+value is allowed to depend on the abstract type @l[T@].
+
+There is only one operation you can perform on a poly value: You can provide a
+concrete type, resulting in the value of the poly with the type variable
+@l[T@] replaced with its concrete type.
+
+For example, the first poly value we see in the definition of @l[List@], which
+is a poly of a type value:
+
+@code[fble]
+<@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); }
+
+If we write @l[List@<Int@>], we'll get back the type value:
+
+@code[fble]
++(*(Int@ head, List@<Int@> tail) cons, Unit@ nil);
+
+If we write @l[List@<Bit@>], we'll get back the type value:
+
+@code[fble]
++(*(Bit@ head, List@<Bit@> tail) cons, Unit@ nil);
+
+And so on.
+
+The next place we see a poly value is in the definition of @l[Nil], which is a
+poly of a union value:
+
+@code[fble]
+<@ T@> {
+  List@<T@>(nil: Unit);
+};
+
+If we write @l[Nil<Int@>], we get back the union value:
+
+@code[fble]
+List@<Int@>(nil: Unit)
+
+If we write @l[Nil<Bit@>], we get back the union value:
+
+@code[fble]
+List@<Bit@>(nil: Unit)
+
+Finally, @l[Cons] is a poly of a function value. If we write @l[Cons<Int@>],
+we get back the function value:
+
+@code[fble]
+(Int@ a, List@<Int@> l) {
+  List@<Int@>(cons: @(head: a, tail: l));
+};
+]
+
+@section[The Type of a Poly Value][
+As with other kinds of values, poly values have types. The type of a poly is
+the poly of the type.
+
+Take @l[Nil] for example. The poly is:
+
+@code[fble]
+<@ T@> {
+  List@<T@>(nil: Unit);
+};
+
+This is a poly of a union value. The type of this poly is a poly of a union
+type. More specifically, the type is:
+
+@code[fble]
+<@ T@> { List@<T@>; }
+
+Which is the same as @l[List@].
+
+In general:
+
+@code[fble]
+@<<@ T@> { ... }> = <@ T@> { @<...> };
+]
+
+@section[The Kind of a Poly][
+So far we have been introduced to two kinds of values. Normal values,
+including struct values, union values, and function values, have the kind
+@l[%]. Type values have the kind @l[@].
+
+A polymorphic value has what is called a polymorphic kind, which includes the
+kind of the type parameter and the kind of the value. For example, the kind of
+@l[Nil] is @l[<@>%], which means it has a type parameter of kind @l[@] and
+produces a value of kind @l[%]. The kind of @l[List@] is @l[<@>@], because it
+has a type parameter of kind @l[@] and produces a type value of kind @l[@].
+
+This is why, for example, in the @fbld[HelloWorld.fbld][HelloWorld] tutorial
+we wrote things like:
+
+@code[fble]
+% True = /Core/Bool%.True;
+@ Char@ = /Core/Char%.Char@;
+<@>@ List@ = /Core/List%.List@;
+<@>% Concat = /Core/List%.Concat;
+
+The kind of @l[True] is @l[%] because it is a normal value. The kind of
+@l[Char@] is @l[@] because it is a type. The type of @l[List@] is @l[<@>@]
+because it a polymoprhic type value, and the type of @l[Concat] is @l[<@>%],
+because it is a polymorphic normal value.
+]
+
+@section[Ad-hoc Polymorphism][
+In Haskell, there's a distinction between parametric polymorphism, based on
+type parameters, and ad-hoc polymorphism, based on type classes. From a
+language point of view, fble only has parametric polymorphism. If you want to
+write ad-hoc polymorphic functions, where the structure of the code changes
+depending on the type parameter, you can pass a function representing the
+structure of your code as well as the type parameter.
+
+For example, in Haskell we might have an @l[Eq] class for comparing two
+values. You could write a list @l[Contains] function parameterized by the
+@l[Eq] typeclass that automatically selects the right implementation of @l[Eq]
+to do the equality comparison.
+
+In fble, you pass the right implementation of @l[Eq] directly as an argument
+to @l[Contains]. It would look something like this:
+
+@code[fble][
+<@>@ Eq@ = <@ T@>(T@, T@) { Bool@ };
+
+<@ T@>(Eq@<T@>, List@<T@>, T@) { Bool@; }
+Contains = <@ T@>(Eq@<T@> eq, List@<T@> l, T@ x) {
+  l.?(nil: False);
+  eq(l.cons.head, x).?(true: True);
+  Contains<T@>(eq, l.cons.tail, x);
+};
+]
+
+In this case, @l[Eq@] is like an interface for the type @l[T@] that the
+@l[Contains] function requires to work. The caller is responsible for
+providing the implementation of @l[Eq@].
+]
+
+@section[Poly of a Poly][
+It's possible for the body of a polymorphic value to itself be a polymorphic
+value. This is useful if you want to have multiple type parameters. For
+example, imagine you want to define a generic @l[Pair@] type that has a
+different type for the first and second field:
+
+@code[fble][
+<@><@>@ Pair@ = <@ A@> { <@ B@> { *(A@ first, B@ second); }; };
+
+<@ A@> { <@ B@> { (Pair@<A@, B@>) { A@; }; }; }
+First = <@ A@> { <@ B@> { (Pair@<A@, B@> pair) { pair.first; }; }; }
+]
+
+Here's an example of how to make use of the @l[Pair@] type:
+
+@code[fble]
+Pair@<Int@><Bool@> x = Pair@<Int@><Bool@>(42, True);
+Int@ value = First<Int@><Bool@>(x);
+
+In fble, nested polymorphic values like this are equivalent to multi-argument
+polymorphic values, and you can use more compact syntax to express the same
+thing:
+
+@code[fble][
+<@, @>@ Pair@ = <@ A@, @ B@> { *(A@ first, B@ second); };
+
+<@ A@, @ B@>(Pair@<A@, B@>) { A@; };
+First = <@ A@, @ B@>(Pair@<A@, B@> pair) { pair.first; };
+
+Pair@<Int@, Bool@> x = Pair@<Int@, Bool@>(42, True);
+Int@ value = First<Int@, Bool@>(x);
+]
+
+In this case the kind of @l[Pair@] can be written either as @l[<@><@>@] or as
+@l[<@,@>@]. And the kind of @l[First] can be written either as @l[<@><@>%] or
+as @l[<@, @>%], indicating that it takes two type arguments.
+
+Note that this is different from the case of multi-argument functions, where a
+multi-argument function is not the same thing is a function that returns a
+function.
+
+This means you can do partial application of multi-argument poly values. For
+example, you could write @l[Pair@<Int@>] to refer to the polymorphic type
+@l[<@ A@> { Pair@<Int@, A@>; }].
+]
+
+@section[Higher Order Polys][
+So far we've only show type parameters of kind @l[@]. It's not legal in fble
+to use a type parameter of kind @l[%], because that @l[%] doesn't represent a
+type. But you could specify a type parameter of kind @l[<@>@] if you want.
+This would be a high order polymorphic value.
+
+The classic example of a higher order polynomial value is the @l[Monad@] type,
+which describes an interface that container types such as @l[List@] can
+support:
+
+@code[fble]
+<<@>@>@ Monad@ = <<@>@ M@> {
+  *(
+    <@ A@>(A@) { M@<A@>; } return,
+    <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
+  );
+};
+
+In this case the type parameter @l[M@] has kind @l[<@>@], so we can say things
+like @l[M@<A@>] and @l[M@<B@>] in the body of the poly. Even though we don't
+know what type value will be passed for @l[M@], the compiler will make sure it
+is only called with a (polymorphic) type value of kind @l[<@>@].
+
+We'll talk more about monads in a future tutorial. For now, the important
+takeaway is that you specify the kind of the type variable in a polymorphic
+value. You can make use of this in the body of the polymorphic value, and the
+compiler will make sure you only instantiate the polymorphic value with an
+argument of appropriate kind.
+
+For example, this would be okay:
+
+@code[fble]
+Monad@<List@> ListMonad = ...;
+
+But this would give you a type error:
+
+@code[fble]
+Monad@<Int@> IntMonad = ...;
+
+Because @l[Int@] has kind @l[@] when @l[<@>@] is required.
+]
+
+@section[Polys are Values][
+Polymorphic values are values. That means you can use them wherever you could
+use any other value in fble. You can have variables of polymorphic values, you
+can pass polymorphic values to and from functions, and you can have fields of
+structs and unions that are polymorphic values.
+
+This is a bit subtle. You can pass around a polymorphic value in a struct.
+Whoever has access to that struct can instantiate that polymorphic value
+multiple times with multiple different type arguments.
+
+Another example: in theory you could have a polymorphic function value that
+returns a polymorphic function. This isn't as far fetched as you might think
+at first. The syntax for defining poly values and function values can be
+interleaved to make this easy to write. For example, here's the type of a map
+lookup function:
+
+@code[fble]
+<@ K@>((K@, K@) { Bool@; })<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup = ...
+
+To use the @l[Lookup] function, you provide the type @l[K@] of key elements in
+the map, a comparison operator of type @l[(K@, K@) { Bool@; }] used to define
+the element ordering, the type @l[V@] of value you want to look up, the map of
+type @l[Map@<K@, V@>] to do the lookup in, and the value of the key to look
+up.
+
+If you write the @l[Lookup] function this way, it's convenient to define
+different variations of @l[Lookup] depending on your key type, your comparison
+operator, and your value type. For example:
+
+@code[fble][
+<@>% LookupByName = Lookup<String@>(StringCompare);
+
+Map@<String@, Int@> ids = ...;
+Map@<String@, Grade@> grades = ...;
+
+(Map@<String@, Int@>, String@) { Int@; } LookupId = LookupByName<Int@>;
+(Map@<String@, Grade@>, String@) { Grade@; } LookupGrade = LookupByName<Grade@>;
+
+Int@ my_id = LookupId(ids, Str|Richard);
+Grade@ my_grade = LookupGrade(grades, Str|Richard);
+]
+]
+
+@section[Type Inference][
+It's fairly common to define and use polymorphic functions. For example, we
+defined the @l[Cons] function earlier to add an element to a list. The normal
+way to use a polymorphic function is to supply the type argument to get the
+function value and then apply the arguments to the function value:
+
+@code[fble]
+List@<Int@> my_list = Cons<Int@>(Int|42, Nil@<Int@>);
+
+In some situations, the fble compiler can automatically infer the value of the
+type parameter to use with the poly. In this case, the compiler knows the type
+of @l[Int|42] is @l[Int@] and that @l[Cons] is a polymorphic function with
+type parameter @l[T@] and first argument of type @l[T@]. Given that
+information, the compiler can infer that the only value for @l[T@] that makes
+sense here is @l[Int@]. If the compiler can infer the type parameters of a
+polymorphic function when you do a function application, you can leave out the
+explicit value for the type parameter; the compiler will insert it for you
+automatically:
+
+@code[fble]
+List@<Int@> my_list = Cons(Int|42, Nil@<Int@>);
+
+The fble type system is based around the idea that you can determine the type
+of an expression solely based on the types of variables in scope and the
+expression itself. The type of an expression cannot depend on how that
+expression is used. Because of this, the compiler is not able to infer the
+type parameter to @l[Nil@] in the previous example, because it would have to
+know that the expression is being passed to a function that expects a
+@l[List@<Int@>].
+
+For the most part type inference is a minor convenience. Where type inference
+becomes crucially important is when using function bind for monadic
+computations. We'll discuss function bind and monadic computations in the next
+tutorial.
+
+@subsection[Where Type Inference Happens][
+There are a few specific instances where the compiler will try to
+automatically infer and apply type arguments to polys.
+
+@item[
+When doing function application with a polymorphic function value instead of a
+normal value. For example:
+
+@code[fble]
+Cons<Int@>(Int|42, Nil@<Int@>)    # explicit
+Cons(Int|42, Nil@<Int@>)          # type inferred
+]
+
+@item[
+When constructing a struct value with a polymorphic struct type. For example:
+
+@code[fble]
+Pair@<Int@, Bool@>(Int|42, True)    # explicit
+Pair@(Int|42, True)                 # types inferred
+]
+
+@item[
+When constructing a union value with a polymorphic union type. For example:
+
+@code[fble]
+List@<Int@>(cons: @(Int|42, Nil@<Int@>));   # explicit
+List@(cons: @(Int|42, Nil@<Int@>));         # type inferred
+]
+
+@item[
+In a list expression where the list function is a polymorphic function. For
+example:
+
+@code[fble]
+List<Int@>[Int|42, Int|43];   # explicit
+List[Int|42, Int|43];         # type inferred
+]
+]
+
+@subsection[When Type Inference Fails][
+Type inference will not always succeed. This can happen because there is not
+enough information for the compiler to infer the type, or because the compiler
+isn't smart enough yet to be able to infer the types.
+
+For example:
+
+@code[fble]
+List@<Int@> empty = List[];   # Cannot infer type!
+
+In this case the compiler cannot tell that @l[List[]] should produce an
+integer list as opposed to any other kind of list. In this case you should get
+an error message from the compiler indicating that it couldn't tell what type
+to use for @l[T@] in the list expression.
+
+In some cases the compiler is simply not smart enough to infer the type. When
+in doubt, you can always provide an explicit type parameter if the compiler is
+having trouble with type inference.
+]
+]
+
+@section[Polymorphism in the Language Specification]
+You now know everything there is to know about polymorphism in fble. To
+reinforce this, read over @fbld[../spec/fble.fbld#polymorphism][section 6 of the
+fble language specification]. Everything there should be familiar to you now.
+
+@section[Exercises][]
+
+@section[Next Steps]
+Head over to the @fbld[FunctionBind.fbld][FunctionBind] tutorial to learn
+about function bind syntax and monadic computations.
+]

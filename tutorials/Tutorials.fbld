@@ -33,4 +33,7 @@ Learn about fble's syntactic support for lists.
 
 @def[@fbld[Literals.fbld][Literals]]
 Learn about fble's syntactic support for user-defined literals.
+
+@def[@fbld[Polymorphism.fbld][Polymorphism]]
+Learn all about polymorphic values in fble.
 ]

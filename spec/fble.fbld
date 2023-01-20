@@ -588,8 +588,8 @@ arguments, and the runtime of the body, where N is the number of arguments to
 the function and M is the number of variables captured by the function.
 ]]
 
-@section[6. Polymorphism][
-Polymorphism allows expressions to be parameterized by abstract types.
+@section[@label[polymorphism][6. Polymorphism]][
+Polymorphism allows expressions to be parameterized by types.
 
 @subsection[6.1 Poly Kind][
 @AbstractSyntax
