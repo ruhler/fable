@@ -39,4 +39,7 @@ Learn all about polymorphic values in fble.
 
 @def[@fbld[Bind.fbld][Bind]]
 Learn about function bind syntax and monad computations in fble.
+
+@def[@fbld[Core.fbld][Core]]
+Learn about core library types and functions used in the hello world program.
 ]

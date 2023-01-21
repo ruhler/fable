@@ -1,0 +1,185 @@
+@tutorial[Core Library][
+This tutorial goes over some of the core library types and function used in
+the hello world program.
+
+By this point you've learned about all the fble language features used in the
+hello world program. In fact, you've learned about all the fble language
+features except for relatively minor feature to support abstract values.
+
+Thus, to understand the hello world program entirely, you just need to know a
+little more about the core library modules we've used in the hello world
+program.
+
+@section[@l[/Core/Unit%]][
+The @l[/Core/Unit%] module defines type type @l[Unit@] and value @l[Unit] that
+we have seen many times in this series of tutorials:
+
+@code[fble][
+@ Unit@ = *();
+
+Unit@ Unit = Unit@();
+]
+
+By itself @l[Unit@] is not very interesting, but it's a building block used in
+all other data types.
+]
+
+@section[@l[/Core/Bool%]][
+The @l[/Core/Bool%] module defines a boolean type @l[Bool@], values @l[True]
+and @l[False], and a few functions that operate on booleans, such as @l[And],
+@l[Or], and @l[Not]:
+
+@code[fble][
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+(Bool@) { Bool@; } Not = ...;
+(Bool@, Bool@) { Bool@; } And = ...;
+(Bool@, Bool@) { Bool@; } Or = ...;
+]
+
+The @l[Bool@] type is used in the hello world program to indicate the exit
+status of the main program.
+]
+
+@section[@l[/Core/Char%]][
+The @l[/Core/Char%] module defines a @l[Char@] type representing characters.
+The @l[Char@] type is implemented as a union type with a separate field of
+type @l[Unit@] for each different character which is suitable for use as a
+letter type in a literal expression.
+
+Characters include digits, upper and lower case letters, punctuation, and some
+whitespace characters.
+
+The @l[/Core/Char%] module defines a struct @l[Chars] that holds all the
+different characters. For example, you could refer to the letter @l[A] using
+@l[/Core/Char%.Chars.A]. It provides some more convenient names @l[Chars.tab]
+and @l[Chars.nl] for tab and newline characters, which are otherwise slightly
+awkward to refer to in fble.
+
+There is also a @l[/Core/Char/Show%] module that defines a @l[Show] function
+to convert a character to a string.
+]
+
+@section[@l[/Core/Int%]][
+The @l[/Core/Int%] module defines an @l[Int@] type, representing unbounded
+integers. It's implemented on top of an @l[IntP@] type representing positive
+integers.
+
+Positive integers are described using a recursive union data type:
+
+@code[fble]
+@ IntP@ = +(
+  Unit@ 1, 
+  IntP@ 2p0,
+  IntP@ 2p1
+);
+
+The @l[Int@] type is a union with postivie, zero, and negative fields:
+
+@code[fble]
+@ Int@ = +(
+  IntP@ n,   # Negative integers
+  Unit@ 0,
+  IntP@ p    # Positive integers
+);
+
+The @l[/Core/Int%] module provides standard integer arithmetic operations: 
+@l[Inc], @l[Dec], @l[Add], @l[Sub], @l[Neg], @l[Mul], @l[Exp2], @l[Abs]. Other
+operations are defined in submodules:
+
+@definition[@l[/Core/Int/Eq%]]
+Defines comparison operations @l[IsZero], @l[Eq], @l[Lt], @l[Le], @l[Gt],
+@l[Ge], @l[Max], and @l[Min].
+
+@def[@l[/Core/Int/Lit%]]
+Defines an @l[Int] function that can be used for non-negative integer
+literals.
+
+@def[@l[/Core/Int/Div%]] Defines a @l[Div] operation for integers.
+@def[@l[/Core/Int/Sqrt%]] Defines a @l[Sqrt] operation for integers.
+@def[@l[/Core/Int/Show%]] Defines a @l[Show] function for integers.
+]
+
+@section[@l[/Core/List%]][
+The @l[/Core/List%] module defines a polymorphic list type like the one we
+have already seen in this tutorial series:
+
+@code[fble]
+<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+
+It defines a number of functions for working with lists:
+
+@def[@l[List]] For constructing lists using list expressions.
+@def[@l[Cons]] For adding a value to the front of a list.
+@def[@l[Nil]] For the empty list.
+@def[@l[Append]] For appending a list to another list.
+@def[@l[Last]] For getting the last element of a list.
+@def[@l[Init]] For getting all but the last element of a list.
+@def[@l[Concat]] For flattening a list of lists into a single list.
+@def[@l[Map]] For applying a function to each element of a list.
+@def[@l[ForEach]] For iterating over elements of a list.
+@def[@l[Reverse]] For reversing the elements of a list.
+
+There is a @l[/Core/List/Show%] module that defines a @l[Show] function for
+lists. It takes a function for showing an element of a list, and returns a
+function for showing a given list.
+]
+
+@section[@l[/Core/String%]][
+The @l[/Core/String%] module defines the type @l[String@] as list of
+characters:
+
+@code[fble]
+@ String@ = List@<Char@>;
+
+It defines a @l[Str] function that you can use for string literals:
+
+@code[fble]
+# Example Use:
+#   String@ s = Str|'hello, world'
+(List@<Char@>) { String@; } Str = List<Char@>;
+
+And a helper function @l[Strs] for concatenating a bunch of strings together:
+
+@code[fble]
+(List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
+]
+
+@section[@l[/Core/Monad%]][
+The @l[/Core/Monad%] module defines a monad interface like the one we saw in
+the @fbld[Bind.fbld][Bind] tutorial:
+
+@code[fble]
+<<@>@>@ Monad@ = <<@>@ M@> {
+  *(
+    <@ A@>(A@) { M@<A@>; } return,
+    <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
+  );
+};
+]
+
+@section[@l[/Core/Stdio%]][
+The @l[/Core/Stdio%] module defines the @l[Stdio@] interface for accessing
+standard input, output, and error streams for an arbitrary monadic type
+@l[M@].
+
+Stream types are defined in the @l[/Core/Stream%] module. They describe an
+interface for reading and writing sequence of bytes represented using the
+@l[Int@] type. You can interact with output streams most easily using the
+@l[/Core/Stream/OStream%] module, which defines @l[PutChar], @l[PutStr], and
+@l[PutLine] functions for operating on streams in terms of the @l[Char@] type.
+
+The @l[/Core/Stdio%] module defines the @l[Main@] type, as a type of a main
+function that takes a list of arguments and returns a boolean result. The
+@l[/Core/Stdio/IO%] module defines a @l[Run] function for running a @l[Main@]
+function with the @l[fble-stdio] program.
+]
+
+@section[Next Steps]
+Head over to the @fbld[HelloWorldRevisited.fbld][Hello World Revisited]
+tutorial to take look back at our hello world program with full knowledge
+about the language features and libraries used.
+]

@@ -368,6 +368,6 @@ fble language specification] for the specification of the bind syntax.
 @section[Exercises][]
 
 @section[Next Steps]
-Head over to the @fbld[StdLib.fbld][Standard Library] tutorial to learn about
-a few of the standard library types and APIs used in the hello world program.
+Head over to the @fbld[Core.fbld][Core Library] tutorial to learn about
+a few of the core library types and APIs used in the hello world program.
 ]
