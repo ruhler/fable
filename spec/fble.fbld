@@ -860,7 +860,7 @@ Int@ 6 = Binary|110;
 Int@ x = Binary[first_bit, second_bit, third_bit];
 ]]
 
-@subsection[7.3 Bind][
+@subsection[@label[bind][7.3 Bind]][
 @AbstractSyntax
 Expr ::= bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
 

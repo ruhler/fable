@@ -1,7 +1,4 @@
 
-* Add a style sheet for generated documentation?
-  Because it looks pretty ugly reading the html right now.
-
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
@@ -14,7 +11,11 @@
 * Change 'Function Bodies' section to 'Function Values' in Functions tutorial.
  - And say somewhere that a function value is described using ...
 
-* Improve exercises for Unions and Functions tutorials.
+* Rewrite polymorphism 'ad hoc' section in tutorial to be 'interface' based.
+  Because thinking about it as interfaces instead of ad-hoc polymorphism is
+  probably much simpler to understand.
+
+* Improve exercises for Unions and Functions tutorials, and others.
 
 * Fix dependencies in tutorials/build.tcl.
   In particular, they all depend on the core library implementation.

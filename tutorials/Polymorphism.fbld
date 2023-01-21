@@ -400,6 +400,6 @@ fble language specification]. Everything there should be familiar to you now.
 @section[Exercises][]
 
 @section[Next Steps]
-Head over to the @fbld[FunctionBind.fbld][FunctionBind] tutorial to learn
-about function bind syntax and monadic computations.
+Head over to the @fbld[Bind.fbld][Bind] tutorial to learn about function bind
+syntax and monadic computations.
 ]
