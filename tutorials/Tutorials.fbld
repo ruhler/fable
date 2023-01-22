@@ -7,7 +7,7 @@ What fble is and why bother learning it.
 @def[@fbld[Install.fbld][Install]]
 Install fble and set up your environment.
 
-@def[@fbld[HelloWorld.fbld][HelloWorld]]
+@def[@fbld[HelloWorld.fbld][Hello World]]
 Write and run a hello world program.
 
 @def[@fbld[Basics.fbld][Basics]]
@@ -42,4 +42,8 @@ Learn about function bind syntax and monad computations in fble.
 
 @def[@fbld[Core.fbld][Core]]
 Learn about core library types and functions used in the hello world program.
+
+@def[@fbld[HelloWorldRevisited.fbld][Hello World Revisited]]
+Review the hello world program now that you know all the language features
+used.
 ]
