@@ -552,3 +552,22 @@ Brainstorm for polymorphism tutorial:
  - struct fields.
  - variables.
 
+---
+
+Okay, first draft of the tutorials on all language features is done. I ran out
+of steam a little near the end, so there is a plenty of opportunity to improve
+the tutorials. Some things on the top of my mind:
+
+* Add more exercises. Don't have empty exercises sections.
+* Add a conclusion.
+* Try to come more from a C/C++/Java background than a functional background
+  in terms of terminology. For example, use 'interfaces' instead of 'ad-hoc
+  polymorphism', and define any functional language terminology I use.
+* Add more tutorial sequences: defining Int@, the C API, using the compiler,
+  debugger, profiler.
+* Explicitly describe the syntax rather than give an example and hope the
+  reader can infer the syntax from that.
+
+I think it's time to give the tutorials some space though. Let's move on to
+something else and come back to revisit them after a month or so.
+
