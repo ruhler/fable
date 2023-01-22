@@ -73,6 +73,6 @@ the literal function @l[Str] to create a string literal. Finally we return
 @section[Next Steps]
 Now you understand all the features of the fble language used in the hello
 world program. In the next tutorial you'll learn about the one language
-feature that hasn't been covered yet: @fbld[AbstractValues.fbld][Abstract
-Values].
+feature that hasn't been covered yet: @fbld[AbstractTypes.fbld][Abstract
+Types].
 ]

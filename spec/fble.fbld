@@ -1077,7 +1077,7 @@ StdLib_List = </StdLib/List%>;
 </StdLib/List/Tests%>;
 ]]
 
-@section[9. Abstract Types][
+@section[@label[abstract][9. Abstract Types]][
 Abstract types provide a mechanism to define types of values that can only be
 accessed by modules in the same package. This makes it possible to hide
 implementation details from users and enforce invariants on how values are
