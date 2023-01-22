@@ -597,3 +597,42 @@ theory this is done. Yay!
 
 Next step is to use the type inference features, enjoy, and see how it feels.
 That can be done organically.
+
+---
+
+Why doesn't type inference work for Concat?
+
+Arg type:
+  List@<String@>
+
+Expected type:
+  List@<List@<T@>>
+
+I could see the issue being that it doesn't look through the variable String@
+to see it's List@<Char@>?
+
+Let's make a test case.
+
+Abstract type:
+  List@<List@<T@>>
+
+Concrete type:
+  List@<String@>
+
+Record: List@<List@<T@>>, List@<String@> for recursion.
+
+Checking if the first field type matches:
+       *(List@<T@> head, List@<List@<T@>> tail)
+versus *(String@ head, List@<String@> tail)
+
+Check if the first field type matches:
+  List@<T@> versus String@
+
+It thinks we've already noted these are equal. That must be the tail field,
+right? No. It says it is head.
+
+Is there something wrong here? Will type checking thing List@<List@<Unit@>> is
+the same as List@<List@<Bool@>>?
+
+Yes. That's a real bug in type checking. Let's fix that first, then see what
+it means for type inference of Concat.

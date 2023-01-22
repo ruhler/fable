@@ -1,0 +1,32 @@
+# @@fble-test@@ xfail
+# @@fble-test@@ compile-error 32:1
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+
+List@ Nil = <@ T@> {
+  List@<T@>(nil: Unit);
+};
+
+<@ T@>(T@, List@<T@>) { List@<T@>; } Cons = <@ T@>(T@ a, List@<T@> l) {
+  List@<T@>(cons: @(head: a, tail: l));
+};
+
+<@ T@>(List@<List@<T@>>) { List@<T@>; }
+Concat = <@ T@>(List@<List@<T@>> x) {
+  x.?(nil: Nil<T@>);
+  x.cons.head.?(nil: Concat<T@>(x.cons.tail));
+  Cons<T@>(x.cons.head.cons.head,
+    Concat<T@>(Cons<List@<T@>>(x.cons.head.cons.tail, x.cons.tail)));
+};
+
+@ Char@ = +(Unit@ a, Unit@ b, Unit@ c);
+@ String@ = List@<Char@>;
+
+List@<String@> EmptyString = Nil<String@>;
+
+# Type inference should be able to infer the type arguments to Concat.
+Concat(EmptyString);

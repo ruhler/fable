@@ -1,0 +1,19 @@
+# @@fble-test@@ compile-error 17:21
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+
+List@ Nil = <@ T@> {
+  List@<T@>(nil: Unit);
+};
+
+# Regression for bug in the type checker that would consider
+# List@<List@<Unit@>> to be equal to List@<List@<Bool@>>.
+List@<List@<Unit@>> x = Nil<List@<Unit@>>;
+List@<List@<Bool@>> y = x;
+
+y;

@@ -1,4 +1,7 @@
 
+* Fix bug in type checker that things List@<List@<Unit@>> is equal to
+  List@<List@<Bool@>>.
+
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
