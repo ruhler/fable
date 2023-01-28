@@ -43,15 +43,6 @@ typedef enum {
 typedef struct FbleType {
   FbleTypeTag tag;    /**< The kind of FbleType. */
   FbleLoc loc;        /**< Source location for error reporting. */
-
-
-  /**
-   * A unique id for this type.
-   *
-   * The id is preserved across type level substitution. For internal use in
-   * type.c.
-   */
-  uintptr_t id;
 } FbleType;
 
 /** Vector of FbleType. */

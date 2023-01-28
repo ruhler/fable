@@ -1,5 +1,3 @@
-# @@fble-test@@ xfail
-# @@fble-test@@ compile-error 32:1
 # @@fble-test@@ no-error
 
 @ Unit@ = *();

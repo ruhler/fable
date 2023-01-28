@@ -1,6 +1,6 @@
 
-* Fix bug in type checker that things List@<List@<Unit@>> is equal to
-  List@<List@<Bool@>>.
+* Add test case for suspected bug in type checking with
+  L<T> = *(L<L<T>>);
 
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be

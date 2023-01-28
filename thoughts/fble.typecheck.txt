@@ -1,0 +1,152 @@
+Fble Typechecking
+=================
+There is a bug in the core type checking algorithm that tests whether two
+types are equal.
+
+Specifically, List@<List@<Unit@>> is considered equal to List@<List@<Bool@>>
+when it shouldn't be.
+
+The goal of this discussion is to rewrite the core type equality checking so
+that it works properly, and ideally understand the algorithm better as a
+result.
+
+Debugging suggests the reason the type checker considers those two types
+equal:
+
+1. List@<...> versus List@<...>
+Assumes they are equal for recursion, using the type id of each to denote
+what's equal.
+
+2. Comparing the arguments: List@<...>, List@<...>
+Thinks they are equal given the recursion from above, because substitution
+preserves type id.
+
+That's the surface explanation. The details are more tedious, because we are
+walking the types after normal substitution.
+
+The high level idea is pretty straight forward. Each type is described using a
+finite representation. You could think of it as a possibly cyclic graph. Each
+node in the graph should have an id. To avoid recursion, any time we compare
+node A.x from type A with node B.y from type B, we enter it in a list to
+assume equal for purposes of preventing recursion.
+
+I think that algorithm is okay. The challenge is in identifying the nodes of a
+graph. In particular, handling the combination of recursion and poly apply,
+where without any special handling we would end up unrolling the graph into an
+infinite graph.
+
+Let's start with List@<Bool@>:
+
+<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+
+List@<Bool@> does substitution:
+  +(*(Bool@ head, List@<Bool@> tail) cons, Unit@ nil);
+
+If we walk this, eventually we'll get back to List@<Bool@> and want to expand
+that. The important thing is to make sure we give back the original expansion,
+right?
+
+Let me see if I can dig up more notes on this from before. Nope. Looks like I
+didn't record it anywhere.
+
+The fix I am envisioning is:
+* Remove the id field from FbleType.
+* Use the FbleType* pointer as the id instead.
+* Keep a table somewhere mapping poly apply X<Y> --> Z, if we see us doing the
+  same poly apply again, make sure to return the original type we returned.
+
+The tricky part being how to record this table and pass it through the
+different layers of abstraction for type equality check and normalizing a
+type.
+
+--
+
+Two options I see:
+A. Don't do any substitution or normalization during type checking.
+B. Do substitution, but keep track of all substitutions and refer to previous
+substitution of same.
+
+I'm pretty confident (B) is doable. Minor tedium to pass around the table
+through Normalize.
+
+The real concern with (B) is it might not be enough. I'm worried about a type
+such as:
+
+<@>@ L@ = <@ T@> { *(T@ t, L@<L@<T@>> l); };
+
+Because there is no way to write this type as a cycle without poly apply.
+
+Compare to list, which can be written as:
+  <@ T@> {
+    @ L@ = *(T@ t, L@ l);
+    L@;
+  };
+
+It's like it has embedded within it an infinite number of different types.
+That means there is no way to limit the recursion.
+
+Two options again:
+1. Figure out how to do an implementation based on (A) that works.
+2. Don't worry about this funny case. Who would write something like that
+anyway? Add some heuristic to detect it and give an error.
+
+The key idea behind (A) is to take advantage of the logic:
+  F A = G B  if F = G and A = B
+
+Graph isomorphism is NP, not undecidable, which is a good sign. I'm not sure
+how adding poly apply to the works could mess things up there. Functional
+equivalence is undecidable, but I don't have a conditional operator at the
+type level, some hopefully that result doesn't apply here.
+
+I think it's worth exploring whether I could do type checking by defining a
+set of equality constraints and solving them. I am again worried about the
+poly apply case.
+
+---
+
+Thinking more about approach (A) from above, what I had in mind is actually
+more of a type inference algorithm, not type equality. I'm starting to doubt
+that's a meaningful approach to take.
+
+Let me try out (B). See if I can make some progress with it. It's going to be
+tricky.
+
+Steps:
+* Remove 'id' field from FbleType.
+* Switch to using FbleType* instead of id for recursion tracking.
+* Add an additional argument to Normalize which is a map from pairs of types
+  to result, used to store poly apply results. We only need to pass this for
+  the type equality check, not for other uses of Normalize.
+
+I'm thinking we should set up a separate branch for this work, because it will
+be finicky.
+
+Let's dive in.
+
+Concerns:
+* Normal needs a way to prevent infinite recursion. Do we handle that properly
+  without using 'id'?
+  I'm not convinced it won't work...
+
+Let's test ourselves. What do we expect to break if we don't put the extra
+table for caching poly apply results?
+
+Easy: Type equality comparing any recursive polymorphic data types. They will
+spin for ever allocating new types.
+
+I think we'll want the table to be a vector instead of a linked list done on
+the stack.
+
+---
+
+Draft of option (B) is done. Let's try and see what happens. My hope is that
+it works fine as long as we don't have that funny case of
+L<T> = *(L<L<T>> foo) mentioned above. And I don't think we have that, unless
+I ran into it before and wrote a very specific test for it, or we have some
+funny vacuous value test case like that.
+
+Good news: this fixes type inference of concat and the List<List<Unit>> versus
+List<List<Bool>> bug. And all other current tests pass!
+
+I'll check it in for now, but definitely need to write up that failing test
+case I know about.
