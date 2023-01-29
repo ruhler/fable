@@ -1,0 +1,20 @@
+
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# The following poly type is 'exploding' in the sense that it describes a type
+# that can't be represented as a poly of a non-poly recursive type.
+<@>@ L@ = <@ T@> { +(*(T@ head, L@<L@<T@>> tail) cons, Unit@ nil); };
+
+L@ Nil = <@ T@> {
+  L@<T@>(nil: Unit);
+};
+
+L@<Unit@> x = Nil<L@<Unit@>>;
+L@<Unit@> y = x;
+
+y;

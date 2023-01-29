@@ -88,8 +88,6 @@
  - Write man pages (fble.man.txt)
  See thoughts/fble.release.txt
 
-* Why doesn't type inference work for Concat function?
-
 * Add test that you can use a unicode character in a literal?
 
 * Do something with .@ module value vs. type?

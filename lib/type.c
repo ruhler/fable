@@ -668,6 +668,13 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
  */
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq, PolyApplyEntryV* poly_applies)
 {
+  // The TypesEqual algorithm will fail to terminate in a case such as:
+  // @ L@ = <@ T@> { *(L@<L@<T@>> x); }, because it just keeps expanding the
+  // type with more and more new poly applies. The following assertion is a
+  // heuristic to detect that case and crash with abort instead of going into
+  // an infinite loop and using up all the memory.
+  assert(poly_applies->size < 10000 && "Internal Error: possible exploding poly?");
+
   a = NormalType(heap, a, poly_applies);
 
   // Check for type inference.

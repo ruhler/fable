@@ -150,3 +150,41 @@ List<List<Bool>> bug. And all other current tests pass!
 
 I'll check it in for now, but definitely need to write up that failing test
 case I know about.
+
+---
+
+Idea: if the only place we allocate types in Normal is poly apply, then maybe
+we can use the table we have now to check if we are doing a poly apply P@<A@>,
+where the table already has P@<X@> => A@? Or where A@ is a result in the
+table (in case of mutual recursion)?
+
+Anyway, let's write up the test case that I expect to fail with infinite
+recursion / out of memory.
+
+It behaves as expected. I put a check for poly_applies blowing up with detects
+the case for the time being and gives an assertion failure, but that's by no
+means a perfect solution.
+
+Unfortunately, I can't turn this into an expected fail test if it fails due to
+an assertion.
+
+---
+
+In terms of a complete solution, I really feel like, for a given type, there
+should be some sufficient amount to unroll the type. If everything is equal up
+to that amount on both types, we can say the types are equal. Because if there
+was a type difference, we would have encountered it by then. Like, we want a
+proof that says if the two types are different, then you'll notice the
+difference within depth K of unrolling. And we just need to figure out what K
+is.
+
+Here's a question:
+
+<@>@ L@ = <@ T@> { +(Unit@ x, L@<L@<T@>> y); };
+
+Is L@<Bool@> equal to L@<Int@>? I think yes. Feels like we don't say clearly
+enough in the spec. Maybe I want to add a spec test for this case.
+
+I think the type equality algorithm would be much simpler if we could compute
+this 'K' value, because then I don't need caches, memo tables, cycle
+detection. I just unroll the type sufficiently and then compare.
