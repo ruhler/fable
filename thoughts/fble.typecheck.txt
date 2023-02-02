@@ -285,3 +285,22 @@ my current implementation.
 
 I think we're good now. Just need to update the tutorial on polymorphism.
 
+---
+
+Reviewing this FannkuchRedux/Tests.fble Permutes type inference issue.
+
+With P.State@ as explicit type, it's happy.
+
+With no explicit type:
+
+/home/ruhle/projects/fable/pkgs/games/Games/BenchmarkGame/FannkuchRedux/Tests.fble|71 col 41| error: expected type Monad@<M@>, but found Monad@<<@ T@> { (S@) { <@ T@> { *(S@ s, T@ x); }<T@>; }; }>
+/home/ruhle/projects/fable/pkgs/games/Games/BenchmarkGame/FannkuchRedux/Tests.fble|71 col 57| error: expected type (List@<Int@>) { M@<Unit@>; }, but found (List@<Int@>) { <@ T@> { (S@) { <@ T@> { *(S@ s, T@ x); }<T@>; }; }<Unit@>; }
+|| Inferred types:
+||   M@: ???
+
+Actually, this makes sense to me. Monad@<M@> versus Monad@<...>. You can't
+necessarily infer from that that M@ and ... are the same, because who knows
+what Monad@ is? It could completely ignore the type argument.
+
+So this, to me, seems like working as intended.
+

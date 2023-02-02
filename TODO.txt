@@ -23,11 +23,6 @@
 * Set up default package path.
   Based on datadir configuration setting.
 
-* Bug in type inference / type checking?
-  If I don't pass a type argument explicitly to the Permutes function in 
-  FannkuchRedux/Tests.fble permute test, it says there's a type error. But
-  it's fine if I give an explicit type. So something funny is up.
-
 * Something is wrong with doxygen build dependencies.
   It keeps remaking after all I change is .../FannkuchRedux/Tests.fble
   That makes no sense. There should be no dependency there at all.
