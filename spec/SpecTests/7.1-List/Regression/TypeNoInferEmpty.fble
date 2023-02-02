@@ -4,7 +4,10 @@ Unit@ Unit = Unit@();
 
 <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
-<@>@ L@ = <@ T@> { +(*(T@ head, L@<T@> tail) cons, Unit@ nil); };
+<@>@ L@ = <@ T@> {
+  @ X@ = +(*(T@ head, X@ tail) cons, Unit@ nil);
+  X@;
+};
 
 <@ T@>(L@<T@>) { Maybe@<T@>; } f = <@ T@>(L@<T@> l) {
   Maybe@<T@>(nothing: Unit);

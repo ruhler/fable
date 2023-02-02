@@ -7,7 +7,10 @@
 #
 # Type Parameters:
 #   T@ - The type of element to put on the list.
-<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+<@>@ List@ = <@ T@> {
+  @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+  L@;
+};
 
 # Cons -- 
 #   Prepends an element to a list.

@@ -7,7 +7,7 @@
 # Implementation of a state monad parameterized by state type S@.
 <@ S@> {
   # State@ -- The state monad type.
-  <@>@ R@ = <@ T@> { *(S@ s, T@ x); },
+  <@>@ R@ = <@ T@> { *(S@ s, T@ x); };
   <@>@ State@ = <@ T@>(S@) { R@<T@>; };
 
   # State -- The Monad@ instance for State@.

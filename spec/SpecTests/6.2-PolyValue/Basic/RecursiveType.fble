@@ -1,6 +1,9 @@
 # @@fble-test@@ no-error
 # It should be possible to define and use recursive polymorphic types.
-<@>@ Num@ = <@ T@> { +(T@ Z, Num@<T@> S); };
+<@>@ Num@ = <@ T@> {
+  @ N@ = +(T@ Z, N@ S);
+  N@;
+};
 @ Unit@ = *();
 Num@<Unit@> two = Num@<Unit@>(S: Num@<Unit@>(S: Num@<Unit@>(Z: Unit@())));
 two;

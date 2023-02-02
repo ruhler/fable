@@ -1,8 +1,11 @@
 # @@fble-test@@ no-error
 @ Unit@ = *();
 
-<@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },
-<@>@ S@ = <@ T@> { +(P@<T@> cons, Unit@ nil); };
+<@>@ S@ = <@ T@> {
+  @ P@ = *(T@ head, X@ tail),
+  @ X@ = +(P@ cons, Unit@ nil);
+  X@;
+};
 
 # Regression test of a poly application that results in itself.
 # There was a bug previously where this was a type error.

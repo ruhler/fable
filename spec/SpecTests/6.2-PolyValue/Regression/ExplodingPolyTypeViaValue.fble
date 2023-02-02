@@ -1,0 +1,24 @@
+
+# @@fble-test@@ compile-error 14:29
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# Regression for an implementation bug where an exploding poly type could be
+# defined via a poly value.
+# <@>@ L@ = <@ T@> { +(*(T@ head, L@<L@<T@>> tail) cons, Unit@ nil); };
+
+<@>% Nil = <@ T@> {
+  @ L@ = +(*(T@ head, @<Nil><@<Nil><T@>> tail) cons, Unit@ nil);
+  L@ nil = L@(nil: Unit);
+  nil;
+};
+
+<@>@ L@ = @<Nil>;
+
+L@<Unit@> x = Nil<Unit@>;
+L@<Unit@> y = x;
+
+y;

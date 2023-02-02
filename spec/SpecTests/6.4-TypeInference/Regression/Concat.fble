@@ -3,7 +3,10 @@
 @ Unit@ = *();
 Unit@ Unit = Unit@();
 
-<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+<@>@ List@ = <@ T@> {
+  @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+  L@;
+};
 
 List@ Nil = <@ T@> {
   List@<T@>(nil: Unit);

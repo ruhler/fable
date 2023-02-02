@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 6:33
+
+@ Unit@ = *();
+
+# The kind of L@ is @ in the definition of L@, so you can't do L@<T@> there.
+<@>@ L@ = <@ T@> { +(*(T@ head, L@<T@> tail) cons, Unit@ nil); };
+
+L@<Unit@>;
+

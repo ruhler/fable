@@ -1,0 +1,19 @@
+# @@fble-test@@ compile-error 16:35
+
+@ Unit@ = *();
+
+<@>@ List@ = <@ T@> {
+  @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+  L@;
+};
+
+# For a type let, the kind of 'N' in the body is <@>%, so we can do
+# poly apply on it.
+List@ N1 = <@ T@> { List@<T@>(nil: N1<T@>.nil); };
+  
+# For a kind let, the kind of 'N' in the body is %, so we can't do poly apply
+# on it.
+<@>% N2 = <@ T@> { List@<T@>(nil: N2<T@>.nil); };
+
+@(N1, N2);
+

@@ -1097,6 +1097,9 @@ void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
 
   assert(var->tag == FBLE_VAR_TYPE && "non-var type passed to FbleAssignVarType");
   FbleVarType* var_type = (FbleVarType*)var;
+  FbleKind* kind = FbleGetKind(value);
+  FbleFreeKind(var_type->kind);
+  var_type->kind = kind;
   var_type->value = value;
   FbleTypeAddRef(heap, &var_type->_base, var_type->value);
 }

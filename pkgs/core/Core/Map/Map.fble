@@ -73,8 +73,12 @@ Delta = (Balance@ delta, Balance@ balance) {
 # Type Parameters:
 #   K@ - the type of keys in the map.
 #   V@ - the type of values in the map.
-<@,@>@ Map@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); },
-
+<@,@>@ Map@ = <@ K@, @ V@> {
+  @ M@ = +(Unit@ empty, P@ map),
+  @ P@ = *(K@ key, V@ value, Balance@ balance, M@ left, M@ right);
+  M@;
+};
+  
 # MapP@ --
 #   A non-empty map from K@ to V@.
 #
@@ -82,12 +86,9 @@ Delta = (Balance@ delta, Balance@ balance) {
 #   K@ - the type of keys in the map.
 #   V@ - the type of values in the map.
 <@,@>@ MapP@ = <@ K@, @ V@> {
-  *(K@ key,
-    V@ value,
-    Balance@ balance,
-    Map@<K@, V@> left,
-    Map@<K@, V@> right
-  );
+  @ M@ = +(Unit@ empty, P@ map),
+  @ P@ = *(K@ key, V@ value, Balance@ balance, M@ left, M@ right);
+  P@;
 };
 
 # MapP --

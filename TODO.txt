@@ -1,4 +1,9 @@
 
+* Cleanup from change to type system
+ - Get all tests passing.
+ - Update tutorials.
+   Note that you need to use type lets for recursive function definitions.
+
 * Add test case for suspected bug in type checking with
   L<T> = *(L<L<T>>);
 

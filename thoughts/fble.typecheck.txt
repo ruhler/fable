@@ -188,3 +188,95 @@ enough in the spec. Maybe I want to add a spec test for this case.
 I think the type equality algorithm would be much simpler if we could compute
 this 'K' value, because then I don't need caches, memo tables, cycle
 detection. I just unroll the type sufficiently and then compare.
+
+---
+
+Let's be honest. Equivalence of types is almost certainly undecidable in my
+language, which is lambda calculus with recursion. So there are two
+approaches:
+
+1. Restrict the language of types so that equivalence is decidable.
+2. Have type equivalence be undecidable and hope for the best.
+
+(1) sounds reasonable, given I don't expect we really ever want to make use of
+those crazy kinds of types that lead to undecidable equivalence. (2) is rather
+unsatisfying.
+
+So go the route of (1). I already have the idea of the restriction in my mind:
+you have to write list as a recursive type with the poly factored out:
+
+<@>@ List@ = <@ T@> {
+  @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+  L@;
+};
+
+How about this: when a type variable is in its 'undefined' state because you
+are in the body of the definition, you are not allowed to do any poly apply of
+it. Is that enough? That sounds simple enough.
+
+So there are a couple of questions with this:
+A. How onerous is it to rewrite the code this way?
+B. Does this restriction make the type system decidable?
+C. Is there any way we can relax the syntactic restriction and support the
+existing definitions I have of recursive types?
+
+(A) we can figure out pretty easily. Let's just try it.
+(B) is the most important question.
+(C) doesn't matter, and I suspect we won't want to go that route, because it
+just adds confusing complexity.
+
+Let's try implementing (A). See what happens. We need some way to mark a type
+as 'undefined'?
+
+After we know the value, we call FbleAssignVarType. What happens before then?
+We have an FbleVarType with null value.
+
+The question is, can we distinguish between an 'in the process of being
+defined variable type' and a 'poly argument variable type'? I think not
+currently, but we could make it possible to. Add an option to FbleNewVarType.
+
+Perhaps better yet, use two different kinds of types?
+
+Or, set the type kind differently? Maybe let me try that as an initial hack.
+
+First hack is to set the kind to basic kind during definition. Places that
+need fixing:
+* Definition of List@, as expected.
+* Definition of IterH@. Awkward, because it's mutually recursively defined.
+* Definition of Map@. Awkward too, due to mutually recursive definition.
+* Definition of state monad type.
+   - Looks like this didn't need to be recursively written this way.
+
+Issues with my hack. Note that we have to do it by kind, not by variable,
+because you could assign to another variable and we need to track that. In
+other words, we must capture in the kind whether we are allowed to apply it or
+not. Let's see if I can hack my hack to make it passable.
+
+Looks like I had a real motiviation example for this in the past:
+
+  <@>@ Map@ = <@ T@>{ +(Unit@ empty, MapP@<T@> map); },
+  <@>@ MapP@ = <@ T@>{ *(Unit@ unit, Map@<Map@<T@>> product); };
+
+And we had a regression test for this.
+
+---
+
+* We need to apply this kind restriction for values too, in order to avoid
+  using typeof to convert a poly value to a poly type. That's better. We can
+  say in general, when using kind let, in the definition the value has basic
+  kind.
+* I'm convinced this change makes type equality decidable. Think of a type as
+  a finite graph, and poly apply operates at the graph level. If you do a poly
+  apply for some poly P, the result will not have any poly apply of P. Because
+  there are a finite number of polys, there are a finite number of poly
+  applies you can do before you've fully unrolled to a (possibly cyclic) graph
+  without poly applies.
+* My hacky approach to implement this is, I think, the right approach.
+* It's not worth trying to come up with some special way to allow L<T> in the
+  body of L. The minor syntactic inconvenience for mutually recursive types is
+  not sufficient to justify such additional complexity and confusion.
+
+Let's clean things up then.
+
+1. Write a test case to capture converting poly value to type value to bypass
+my current implementation.

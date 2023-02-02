@@ -13,6 +13,7 @@
 
 #include <fble/fble-vector.h>
 
+#include "kind.h"
 #include "expr.h"
 #include "tc.h"
 #include "type.h"
@@ -956,8 +957,17 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           // very confusing to show the type of True as True@.
           char renamed[strlen(binding->name.name->str) + 3];
           renamed[0] = '\0';
+          FbleKind* kind = NULL;
           if (FbleGetKindLevel(binding->kind) == 0) {
             strcat(renamed, "__");
+            kind = FbleCopyKind(binding->kind);
+          } else {
+            FbleBasicKind* bkind = FbleAlloc(FbleBasicKind);
+            bkind->_base.tag = FBLE_BASIC_KIND;
+            bkind->_base.loc = FbleCopyLoc(binding->kind->loc);
+            bkind->_base.refcount = 1;
+            bkind->level = FbleGetKindLevel(binding->kind);
+            kind = &bkind->_base;
           }
           strcat(renamed, binding->name.name->str);
 
@@ -967,7 +977,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             .loc = binding->name.loc,
           };
 
-          types[i] = FbleNewVarType(th, binding->name.loc, binding->kind, type_name);
+          types[i] = FbleNewVarType(th, binding->name.loc, kind, type_name);
+          FbleFreeKind(kind);
           FbleFreeString(type_name.name);
         } else {
           assert(binding->kind == NULL);
@@ -1012,7 +1023,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
               "expected type %t, but found something of type %t\n",
               types[i], defs[i].type);
         } else if (!error && binding->type == NULL) {
-          FbleKind* expected_kind = FbleGetKind(types[i]);
+          FbleKind* expected_kind = FbleCopyKind(binding->kind);
           FbleKind* actual_kind = FbleGetKind(defs[i].type);
           if (!FbleKindsEqual(expected_kind, actual_kind)) {
             ReportError(binding->expr->loc,

@@ -210,30 +210,35 @@ The value of the let expression is the value of its body. The type of the let
 expression is the type of its body.
 
 When defining a variable, ether a kind or a type can be used to specify
-the operations supported by the value of the variable. If a kind is used, the
-type of the variable is abstract in the bindings expressions. The actual type
-of the variable will be inferred from its definition for use in the body of
-the let expression. If a type is used when defining a variable, that type is
-used for the type of the variable in the binding expressions. It must match
-the type of the variable inferred from the variable's definition.
+the operations supported by the value of the variable.
+
+If a kind is used, the type of the variable is abstract in the bindings
+expressions. The actual type of the variable will be inferred from its
+definition for use in the body of the let expression. As a restriction to
+ensure type checking is possible, the kind of the variable is treated as a
+basic kind in the bindings expressions. This restricts the set of recursive
+types that can be described to ones that the type checker can handle without
+difficulty.
+
+If a type is used when defining a variable, that type is used for the type of
+the variable in the binding expressions. It must match the type of the variable
+inferred from the variable's definition.
 
 It is recommended that a type specifications be preferred over kind
 specifications for normal values whose types are relatively easy to describe,
 to better document types for readers of the code.
 
 Recursively defined values must not be vacuously recursive. For example, the
-following definitions are not allowed:
+following definition is not allowed:
 
 @code[fble]
 @ T@ = T@; ...
-<@>@ F@ = <@ T@>{ F@<T@>; }; ...
 
 But it is okay to define recursive types and values that involve a constructor
 somewhere, such as:
 
 @code[fble]
 @ T@ = +(T@ x);
-<@>@ F@ = <@ T@>{ *(F@<F@<T@>> x); }
 
 TODO: Clarify what we mean by "must not be". Is it that vacuous types are
 reported as compile errors and vacuous values reported as runtime errors?
