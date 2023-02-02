@@ -1,7 +1,6 @@
 
-* Cleanup from change to type system
- - Update tutorials.
-   Note that you need to use type lets for recursive function definitions.
+* Rewrite polymoprhism tutorial given new restriction on recursive polymorphic
+  types.
 
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be

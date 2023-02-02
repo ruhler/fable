@@ -3,6 +3,9 @@ This tutorial does a deep dive into polymorphism in fble. By the end of this
 tutorial, you'll be fully versed in section 7 of the fble language spec on
 polymorphism.
 
+TODO: Update this tutorial for recent changes in the type system related to
+recursive polymorphic types!
+
 @section[Basics][
 Many statically typed languages have support of one form or another for
 defining data types that work with different types. For example, you want to

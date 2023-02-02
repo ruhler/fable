@@ -280,3 +280,8 @@ Let's clean things up then.
 
 1. Write a test case to capture converting poly value to type value to bypass
 my current implementation.
+
+---
+
+I think we're good now. Just need to update the tutorial on polymorphism.
+

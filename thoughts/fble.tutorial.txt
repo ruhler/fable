@@ -571,3 +571,9 @@ the tutorials. Some things on the top of my mind:
 I think it's time to give the tutorials some space though. Let's move on to
 something else and come back to revisit them after a month or so.
 
+---
+
+There's been a change in the type system. I need to update the polymorphism
+tutorial to handle that. Suddenly using List as the primary example seems like
+a bad idea. Maybe switch to Maybe type instead.
+
