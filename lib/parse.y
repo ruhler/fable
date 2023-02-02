@@ -233,12 +233,7 @@ module_path:
 
 nkind:
    '%' {
-      FbleBasicKind* basic_kind = FbleAlloc(FbleBasicKind);
-      basic_kind->_base.tag = FBLE_BASIC_KIND;
-      basic_kind->_base.loc = FbleCopyLoc(@$);
-      basic_kind->_base.refcount = 1;
-      basic_kind->level = 0;
-      $$ = &basic_kind->_base;
+      $$ = FbleNewBasicKind(@$, 0);
    }
  | '<' tkind_p '>' nkind {
       FbleKind* kind = $4;
@@ -259,12 +254,7 @@ nkind:
 
 tkind:
    '@' {
-      FbleBasicKind* basic_kind = FbleAlloc(FbleBasicKind);
-      basic_kind->_base.tag = FBLE_BASIC_KIND;
-      basic_kind->_base.loc = FbleCopyLoc(@$);
-      basic_kind->_base.refcount = 1;
-      basic_kind->level = 1;
-      $$ = &basic_kind->_base;
+      $$ = FbleNewBasicKind(@$, 1);
    }
  | '<' tkind_p '>' tkind {
       FbleKind* kind = $4;

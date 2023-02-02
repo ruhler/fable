@@ -70,6 +70,18 @@ typedef struct {
 } FblePolyKind;
 
 /**
+ * Creates a basic kind of given level.
+ *
+ * @param loc  Location for the kind.
+ * @param level  The level to use for the kind.
+ * @returns  A basic kind of the given level.
+ * @sideeffects
+ *   Allocates a kind that should be freed using FbleFreeKind when no longer
+ *   needed.
+ */
+FbleKind* FbleNewBasicKind(FbleLoc loc, size_t level);
+
+/**
  * Makes a (refcount) copy of a kind.
  *
  * @param kind  The kind to copy.

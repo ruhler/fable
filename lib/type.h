@@ -359,9 +359,11 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
  *
  * @sideeffects
  * * Sets the value of the var type to the given value.
+ * * Updates the kind of the var type based on the kind of the given value.
  * * This function does not take ownership of either var or value types. 
  * * Behavior is undefined if var is not a type constructed with
- *   FbleNewVarType or the kind of value does not match the kind of var.
+ *   FbleNewVarType or the kind level of value does not match the kind level of
+ *   var.
  */
 void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value);
 

@@ -881,12 +881,7 @@ FbleKind* FbleGetKind(FbleType* type)
     case FBLE_FUNC_TYPE:
     case FBLE_PACKAGE_TYPE:
     case FBLE_ABSTRACT_TYPE: {
-      FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
-      kind->_base.tag = FBLE_BASIC_KIND;
-      kind->_base.loc = FbleCopyLoc(type->loc);
-      kind->_base.refcount = 1;
-      kind->level = 0;
-      return &kind->_base;
+      return FbleNewBasicKind(type->loc, 0);
     }
 
     case FBLE_POLY_TYPE: {
@@ -1090,7 +1085,7 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
 void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
 {
   while (var->tag == FBLE_TYPE_TYPE) {
-    assert(value->tag == FBLE_TYPE_TYPE && "Kind mismatch");
+    assert(value->tag == FBLE_TYPE_TYPE && "Kind level mismatch");
     var = ((FbleTypeType*)var)->type;
     value = ((FbleTypeType*)value)->type;
   }

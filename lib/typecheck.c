@@ -957,18 +957,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           // very confusing to show the type of True as True@.
           char renamed[strlen(binding->name.name->str) + 3];
           renamed[0] = '\0';
-          FbleKind* kind = NULL;
-          if (FbleGetKindLevel(binding->kind) == 0) {
+          size_t kind_level = FbleGetKindLevel(binding->kind);
+          if (kind_level == 0) {
             strcat(renamed, "__");
-            kind = FbleCopyKind(binding->kind);
-          } else {
-            FbleBasicKind* bkind = FbleAlloc(FbleBasicKind);
-            bkind->_base.tag = FBLE_BASIC_KIND;
-            bkind->_base.loc = FbleCopyLoc(binding->kind->loc);
-            bkind->_base.refcount = 1;
-            bkind->level = FbleGetKindLevel(binding->kind);
-            kind = &bkind->_base;
-          }
+          } 
           strcat(renamed, binding->name.name->str);
 
           FbleName type_name = {
@@ -977,6 +969,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             .loc = binding->name.loc,
           };
 
+          FbleKind* kind = FbleNewBasicKind(binding->kind->loc, kind_level);
           types[i] = FbleNewVarType(th, binding->name.loc, kind, type_name);
           FbleFreeKind(kind);
           FbleFreeString(type_name.name);
