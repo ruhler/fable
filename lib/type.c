@@ -36,33 +36,16 @@ typedef struct TypePairs {
   struct TypePairs* next;   /**< The rest of the pairs in the set. */
 } TypePairs;
 
-/**
- * Keeps track of results of poly applies that we have done, to prevent
- * infinite recursion in type equality.
- */
-typedef struct {
-  FbleType* poly;              /**< The poly in the poly apply. */
-  FbleType* arg;               /**< The argument to the poly apply. */
-  FbleType* result;            /**< The result of the poly apply. */
-} PolyApplyEntry;
-
-/** Vector of PolyApplyEntry. */
-typedef struct {
-  size_t size;                /**< Number of elements. */
-  PolyApplyEntry* xs;         /**< The elements. */
-} PolyApplyEntryV;
-
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
 
 static void Ref(FbleHeapCallback* callback, FbleType* type);
 static void Refs(FbleHeapCallback* callback, FbleType* type);
 static void OnFree(FbleTypeHeap* heap, FbleType* type);
 
-static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* poly_applies, TypeList* normalizing);
-static FbleType* NormalType(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* poly_applies);
+static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing);
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
 static FbleType* Subst(FbleTypeHeap* heap, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
-static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq, PolyApplyEntryV* poly_applies);
+static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq);
 
 /**
  * Constructs a level adjusted version of the given kind.
@@ -257,8 +240,6 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
  *
  * @param heap  Heap to use for allocations.
  * @param type  The type to reduce.
- * @param poly_applies Optional cache of previously applied poly applies. May
- *   be NULL.
  * @param normalizing  The set of types currently being normalized.
  *
  * @returns
@@ -268,10 +249,8 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
  * @sideeffects
  * * The caller is responsible for calling FbleReleaseType on the returned type
  *   when it is no longer needed.
- * * Adds entries to poly_applies that should be cleaned up by the caller when
- *   no longer needed.
  */
-static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* poly_applies, TypeList* normalizing)
+static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing)
 {
   for (TypeList* n = normalizing; n != NULL; n = n->next) {
     if (type == n->type) {
@@ -292,7 +271,7 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* pol
       FblePolyType* poly = (FblePolyType*)type;
 
       // eta-reduce (\x -> f x) ==> f
-      FblePolyApplyType* pat = (FblePolyApplyType*)Normal(heap, poly->body, poly_applies, &nn);
+      FblePolyApplyType* pat = (FblePolyApplyType*)Normal(heap, poly->body, &nn);
       if (pat == NULL) {
         return NULL;
       }
@@ -309,36 +288,16 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* pol
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-
-      // Reuse the previous result from this poly apply if we've already done
-      // it.
-      if (poly_applies != NULL) {
-        for (size_t i = 0; i < poly_applies->size; ++i) {
-          PolyApplyEntry* entry = poly_applies->xs + i;
-          if (pat->poly == entry->poly && pat->arg == entry->arg) {
-            return FbleRetainType(heap, entry->result);
-          }
-        }
-      }
-
-      FblePolyType* poly = (FblePolyType*)Normal(heap, pat->poly, poly_applies, &nn);
+      FblePolyType* poly = (FblePolyType*)Normal(heap, pat->poly, &nn);
       if (poly == NULL) {
         return NULL;
       }
 
       if (poly->_base.tag == FBLE_POLY_TYPE) {
         FbleType* subst = Subst(heap, poly->body, poly->arg, pat->arg, NULL);
-        FbleType* result = Normal(heap, subst, poly_applies, &nn);
+        FbleType* result = Normal(heap, subst, &nn);
         FbleReleaseType(heap, &poly->_base);
         FbleReleaseType(heap, subst);
-
-        if (poly_applies != NULL) {
-          PolyApplyEntry* entry = FbleVectorExtend(*poly_applies);
-          entry->poly = FbleRetainType(heap, pat->poly);
-          entry->arg = FbleRetainType(heap, pat->arg);
-          entry->result = FbleRetainType(heap, result);
-        }
-
         return result;
       }
 
@@ -355,7 +314,7 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* pol
       if (var->value == NULL) {
         return FbleRetainType(heap, type);
       }
-      return Normal(heap, var->value, poly_applies, &nn);
+      return Normal(heap, var->value, &nn);
     }
 
     case FBLE_TYPE_TYPE: return FbleRetainType(heap, type);
@@ -363,31 +322,6 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* pol
 
   FbleUnreachable("Should never get here");
   return NULL;
-}
-
-/**
- * Wrapper around Normal that checks for vacuous value.
- *
- * @param heap  Heap to use for allocations.
- * @param type  The type to reduce.
- * @param poly_applies Optional cache of previously applied poly applies. May
- *   be NULL.
- *
- * @returns
- *   The type reduced to normal form.
- *
- * @sideeffects
- * * The caller is responsible for calling FbleReleaseType on the returned type
- *   when it is no longer needed. The behavior is undefined if the type is
- *   vacuous.
- * * Adds entries to poly_applies that should be cleaned up by the caller when
- *   no longer needed.
- */
-static FbleType* NormalType(FbleTypeHeap* heap, FbleType* type, PolyApplyEntryV* poly_applies)
-{
-  FbleType* normal = Normal(heap, type, poly_applies, NULL);
-  assert(normal != NULL && "vacuous type does not have a normal form");
-  return normal;
 }
 
 /**
@@ -657,8 +591,6 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
  * @param a  The first type, abstract in the type variables. Borrowed.
  * @param b  The second type, which should be concrete. Borrowed.
  * @param eq  A set of pairs of types that should be assumed to be equal
- * @param poly_applies  Collection of previous performed poly applies, needed
- *   to prevent infinite recursion in some cases.
  *
  * @returns
  *   True if the first type equals the second type, false otherwise.
@@ -666,16 +598,9 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
  * @sideeffects
  * * Sets value of assignments to type variables to make the types equal.
  */
-static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq, PolyApplyEntryV* poly_applies)
+static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq)
 {
-  // The TypesEqual algorithm will fail to terminate in a case such as:
-  // @ L@ = <@ T@> { *(L@<L@<T@>> x); }, because it just keeps expanding the
-  // type with more and more new poly applies. The following assertion is a
-  // heuristic to detect that case and crash with abort instead of going into
-  // an infinite loop and using up all the memory.
-  assert(poly_applies->size < 10000 && "Internal Error: possible exploding poly?");
-
-  a = NormalType(heap, a, poly_applies);
+  a = FbleNormalType(heap, a);
 
   // Check for type inference.
   for (size_t i = 0; i < vars.size; ++i) {
@@ -689,12 +614,12 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
       }
 
       // We should use the previously inferred value for a.
-      a = NormalType(heap, vars.xs[i].value, poly_applies);
+      a = FbleNormalType(heap, vars.xs[i].value);
       break;
     }
   }
 
-  b = NormalType(heap, b, poly_applies);
+  b = FbleNormalType(heap, b);
 
   for (TypePairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
     if (a == pairs->a && b == pairs->b) {
@@ -715,7 +640,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
   if (a->tag == FBLE_ABSTRACT_TYPE) {
     FbleAbstractType* aa = (FbleAbstractType*)a;
     if (!aa->package->opaque) {
-      bool equal = TypesEqual(heap, vars, aa->type, b, &neq, poly_applies);
+      bool equal = TypesEqual(heap, vars, aa->type, b, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return equal;
@@ -725,7 +650,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
   if (b->tag == FBLE_ABSTRACT_TYPE) {
     FbleAbstractType* ab = (FbleAbstractType*)b;
     if (!ab->package->opaque) {
-      bool equal = TypesEqual(heap, vars, a, ab->type, &neq, poly_applies);
+      bool equal = TypesEqual(heap, vars, a, ab->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return equal;
@@ -756,7 +681,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
           return false;
         }
 
-        if (!TypesEqual(heap, vars, dta->fields.xs[i].type, dtb->fields.xs[i].type, &neq, poly_applies)) {
+        if (!TypesEqual(heap, vars, dta->fields.xs[i].type, dtb->fields.xs[i].type, &neq)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
@@ -778,14 +703,14 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
       }
 
       for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!TypesEqual(heap, vars, fta->args.xs[i], ftb->args.xs[i], &neq, poly_applies)) {
+        if (!TypesEqual(heap, vars, fta->args.xs[i], ftb->args.xs[i], &neq)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
         }
       }
 
-      bool result = TypesEqual(heap, vars, fta->rtype, ftb->rtype, &neq, poly_applies);
+      bool result = TypesEqual(heap, vars, fta->rtype, ftb->rtype, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -812,7 +737,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
         .b = ptb->arg,
         .next = &neq
       };
-      bool result = TypesEqual(heap, vars, pta->body, ptb->body, &pneq, poly_applies);
+      bool result = TypesEqual(heap, vars, pta->body, ptb->body, &pneq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -821,8 +746,8 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pa = (FblePolyApplyType*)a;
       FblePolyApplyType* pb = (FblePolyApplyType*)b;
-      bool result = TypesEqual(heap, vars, pa->poly, pb->poly, &neq, poly_applies)
-                 && TypesEqual(heap, vars, pa->arg, pb->arg, &neq, poly_applies);
+      bool result = TypesEqual(heap, vars, pa->poly, pb->poly, &neq)
+                 && TypesEqual(heap, vars, pa->arg, pb->arg, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -840,8 +765,8 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* aa = (FbleAbstractType*)a;
       FbleAbstractType* ab = (FbleAbstractType*)b;
-      bool result = TypesEqual(heap, vars, &aa->package->_base, &ab->package->_base, &neq, poly_applies)
-                 && TypesEqual(heap, vars, aa->type, ab->type, &neq, poly_applies);
+      bool result = TypesEqual(heap, vars, &aa->package->_base, &ab->package->_base, &neq)
+                 && TypesEqual(heap, vars, aa->type, ab->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -860,7 +785,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tta = (FbleTypeType*)a;
       FbleTypeType* ttb = (FbleTypeType*)b;
-      bool result = TypesEqual(heap, vars, tta->type, ttb->type, &neq, poly_applies);
+      bool result = TypesEqual(heap, vars, tta->type, ttb->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -1151,18 +1076,18 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
 // See documentation in type.h.
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
-  FbleType* normal = Normal(heap, type, NULL, NULL);
+  FbleType* normal = Normal(heap, type, NULL);
   while (normal != NULL && normal->tag == FBLE_TYPE_TYPE) {
     FbleTypeType* type_type = (FbleTypeType*)normal;
     FbleType* tmp = normal;
-    normal = Normal(heap, type_type->type, NULL, NULL);
+    normal = Normal(heap, type_type->type, NULL);
     FbleReleaseType(heap, tmp);
   }
 
   while (normal != NULL && normal->tag == FBLE_POLY_TYPE) {
     FblePolyType* poly = (FblePolyType*)normal;
     FbleType* tmp = normal;
-    normal = Normal(heap, poly->body, NULL, NULL);
+    normal = Normal(heap, poly->body, NULL);
     FbleReleaseType(heap, tmp);
   }
   FbleReleaseType(heap, normal);
@@ -1172,7 +1097,9 @@ bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 // See documentation in type.h.
 FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
 {
-  return NormalType(heap, type, NULL);
+  FbleType* normal = Normal(heap, type, NULL);
+  assert(normal != NULL && "vacuous type does not have a normal form");
+  return normal;
 }
 
 // See documentation in type.h.
@@ -1238,17 +1165,7 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 // See documentation in type.h.
 bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete)
 {
-  PolyApplyEntryV poly_applies;
-  FbleVectorInit(poly_applies);
-  bool result = TypesEqual(heap, vars, abstract, concrete, NULL, &poly_applies);
-
-  for (size_t i = 0; i < poly_applies.size; ++i) {
-    FbleReleaseType(heap, poly_applies.xs[i].poly);
-    FbleReleaseType(heap, poly_applies.xs[i].arg);
-    FbleReleaseType(heap, poly_applies.xs[i].result);
-  }
-  FbleVectorFree(poly_applies);
-  return result;
+  return TypesEqual(heap, vars, abstract, concrete, NULL);
 }
 
 // See documentation in type.h
