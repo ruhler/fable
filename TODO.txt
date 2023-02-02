@@ -1,6 +1,7 @@
 
-* Rewrite polymoprhism tutorial given new restriction on recursive polymorphic
-  types.
+* Figure out what happened to code coverage.
+ - Either resurrect it, or give up on it and clean up compiler options
+   currently in place for it.
 
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
@@ -10,10 +11,6 @@
  - Fix missing dependency for .fbld processing on fbld.lang and fble.lang.
  - Maybe easiest to add a tcl proc for building fbld and encapsulate all the
    dependencies there.
-
-* Rewrite polymorphism 'ad hoc' section in tutorial to be 'interface' based.
-  Because thinking about it as interfaces instead of ad-hoc polymorphism is
-  probably much simpler to understand.
 
 * Improve exercises for Unions and Functions tutorials, and others.
 
