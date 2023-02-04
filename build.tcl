@@ -359,14 +359,13 @@ build $::b/summary.tr \
 
 # Phony targets.
 phony "all" $::all
-phony "doxygen" [list $::b/include/doxygen.log $::b/lib/doxygen.log]
-phony "check" [list $::b/summary.tr all doxygen www]
+phony "check" [list $::b/summary.tr all www]
 phony "install" [list $::installs]
 puts $::build_ninja "default all"
 
 # build.ninja
-build "$::b/build.ninja $::b/config.tcl $::b/include/Doxyfile $::b/lib/Doxyfile" \
-  "$::s/configure $::s/config.tcl.in $::s/include/Doxyfile.in $::s/lib/Doxyfile.in $::s/build.tcl" \
+build "$::b/build.ninja $::b/config.tcl" \
+  "$::s/configure $::s/config.tcl.in $::s/build.tcl" \
   "$::s/configure --prefix $::prefix" \
   "depfile = $::b/build.ninja.d"
 

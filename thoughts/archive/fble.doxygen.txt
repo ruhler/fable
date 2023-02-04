@@ -70,3 +70,13 @@ Note: I can remove the 'AUTHOR' section of a manpage by generating a layout
 xml file with doxygen -l, then adding visible="no" to the authorsect of the
 files page.
 
+---
+
+I'm going to remove doxygen. Why?
+* It's a pretty big dependency.
+* We have fbld we can use now to generate man pages, which we'll have more
+  control over and can extend to support fble comments easily.
+* I don't feel that strongly about having the compiler check the doc comments
+  are present and match the signatures of the corresponding functions.
+
+We can always revisit if we want this back again.
