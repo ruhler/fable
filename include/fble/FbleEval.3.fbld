@@ -1,0 +1,38 @@
+@doc[FbleEval][
+@section[NAME]
+FbleEval - Evaluates a linked program.
+
+@section[SYNOPSYS][
+@par
+@l[#include <fble/fble.h>]
+
+@par
+@l[FbleValue* FbleEval(FbleValueHeap*] @a[heap]@l[, FbleValue*] @a[program]@l[, 
+FbleProfile*] @a[profile]@l[)]
+]
+
+@section[DESCRIPTION][
+Evaluates a linked program.
+
+The program is assumed to be a zero argument function as returned by
+FbleLink.
+
+@def[@l[FbleValueHeap*] @a[heap]] The heap to use for allocating values.
+@def[@l[FbleValue*] @a[program]] The program to evaluate.
+@def[@l[FbleProfile*] @a[profile]] The profile to update. May be NULL to disable profiling.
+]
+
+@section[RETURN VALUE]
+The value of the evaluated program, or @l[NULL] in case of a runtime error in
+the program.
+
+@section[SIDE EFFECTS][
+@item
+The returned value must be freed with @l[FbleReleaseValue] when no longer in
+use.
+
+@item Prints an error message to stderr in case of a runtime error.
+@item
+Updates profiling information in profile based on the execution of the
+program.
+]]

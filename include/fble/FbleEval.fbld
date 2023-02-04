@@ -1,0 +1,23 @@
+@func[FbleEval][Evaluates a linked program.][
+The program is assumed to be a zero argument function as returned by
+FbleLink.
+
+@param[FbleValueHeap*][heap] The heap to use for allocating values.
+@param[FbleValue*][program] The program to evaluate.
+@param[FbleProfile*][profile]
+The profile to update. May be NULL to disable profiling.
+
+@returns[FbleValue*]
+The value of the evaluated program, or @l[NULL] in case of a runtime error in
+the program.
+
+@sideeffects[
+@item
+The returned value must be freed with @l[FbleReleaseValue] when no longer in
+use.
+
+@item Prints an error message to stderr in case of a runtime error.
+@item
+Updates profiling information in profile based on the execution of the
+program.
+]]

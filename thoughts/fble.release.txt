@@ -325,3 +325,18 @@ system on users, much less a funny one like build.tcl. My vote is not to
 supply any build scripts for the initial release. Just make it clear to users
 how they can do things their own way.
 
+---
+
+Review of steps to release:
+* Generate man pages for library functions via fbld.
+* Remove doxygen.
+* Burn down TODOs.
+* Make SDL dependency optional.
+* Figure out how to make a release tarball.
+
+Things not to worry about this release:
+* Fbld cleanup.
+* libfble API cleanup or tutorials.
+* Packed data types.
+* Module header file support.
+* Or really any big thing.

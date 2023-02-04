@@ -2557,3 +2557,62 @@ Steps might be:
 * Pick a function, change it to fbld docs, generate a man page and install
   that. Play around, see how it feels. Then go from there.
 
+---
+
+Fbld tags for documenting library functions:
+
+@func[name][brief][description]
+@param[type][name][description]
+@returns[type][description]
+@sideeffects[content]
+
+Maybe we'll want to add @see[...] eventually, but don't worry about that for
+now, because I don't have any of that content in place.
+
+How to turn the above into a man page, assuming @param, @returns, and
+@sideeffects are all part of the @func description?
+
+Let's manually translate this to start.
+
+Here's what I'm thinking:
+* NAME - section has name + brief
+* SYNOPSYS - has #include <fble/fble.h>, then params + return.
+* DESCRIPTION - brief + body of description, minus return and side effects.
+  Turn params into defs.
+* RETURN - with return.
+* SIDE EFFECTS - with side effects.
+
+Make sure to generate to man 3, not man 1.
+
+This will be a good test of fbld, because it's more complicated than straight
+pass through. I need multiple passes. Not sure how that will work.
+
+---
+
+Thoughts on how to set this up on the build side.
+
+Conceptually, given a .h file, we want to generate multiple man pages. We don't
+know which man pages to generate until we've read the .h file. We want to have
+targets to generate the individual man pages and copy them, so we'll want to
+go: .h -> .ninja with a list of rules to generate individual man pages.
+
+Should it be:
+ .h -> .ninja, *.3.fbld
+
+Where .ninja gives rules for *.3.fbld to *.3 and installed *.3?
+
+Or:
+ .h -> .ninja,
+
+Where .ninja gives rules to extract a particular named *.3.fbld? No, that
+doesn't make sense. That means rereading the .h file over and over again. We
+should do the former.
+
+So, write a script that takes a .h file and produces a .ninja file and *.3.fbld files. The .ninja file and each *.3.fbld file depends on the .h file.
+
+In this case, I'll also want to write a script that generates a .ninja file for
+the include/fble directory. Any time that directory changes, it generates a new
+.ninja file, and for each subninja file it needs to create, if that doesn't
+already exist, generate it from scratch.
+
+Sounds like a (complicated) plan.

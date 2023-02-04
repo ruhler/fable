@@ -313,3 +313,17 @@ result in changes to build.ninja.
 
 Cool. So I can now successfully add or remove spec tests, and rename spec test
 directories, and ninja does the right thing.
+
+---
+
+Here's a way to allow incremental build of parts of ninja files.
+
+Separate different parts of different ninja files into separate .ninja files.
+Use include or subninja as desired to include those into the build.ninja file.
+Have a rule that says build.ninja depends on all those other .ninja files,
+with appropriate rules to build those other .ninja files. As long as we
+generate empty copies of the other .ninja files to start, we can boot strap
+the process. Any time one of the other .ninja files needs to be rebuilt, it
+gets rebuilt, which causes build.ninja to be out of date. build.ninja gets
+rebuilt and reloaded, and then we are good to go.
+

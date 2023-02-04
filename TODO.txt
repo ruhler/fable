@@ -1,3 +1,10 @@
+* Release
+ - Generate man pages for library functions via fbld.
+ - Remove doxygen.
+ - Burn down TODOs.
+ - Make SDL dependency optional.
+ - Figure out how to make a release tarball.
+ See thoughts/fble.release.txt
 
 * Figure out what happened to code coverage.
  - Either resurrect it, or give up on it and clean up compiler options
@@ -74,11 +81,6 @@
 * Optimize code for generate_c for low gcc memory use:
  - Use shorter labels for function names?
  - Only output labels for pc aborts that are actually jumped to.
-
-* Release
- - Clean up libfble interface.
- - Write man pages (fble.man.txt)
- See thoughts/fble.release.txt
 
 * Add test that you can use a unicode character in a literal?
 
