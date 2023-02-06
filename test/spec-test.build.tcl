@@ -26,6 +26,9 @@ namespace eval "spec-test" {
     }
   }
 
-  build $::b/cov/gcov.txt "$::fble_objs_cov $spec_tests" \
+  # Code coverage. Mark it as 'testsuite' so it gets built along with all the
+  # other test cases.
+  # TODO: There should be a better way to say when it gets built.
+  testsuite $::b/cov/gcov.txt "$::fble_objs_cov $spec_tests" \
     "gcov $::fble_objs_cov > $::b/cov/gcov.txt && mv *.gcov $::b/cov"
 }

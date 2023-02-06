@@ -1,18 +1,17 @@
 * Release
  - Generate man pages for library functions via fbld.
- - Remove doxygen.
  - Burn down TODOs.
  - Make SDL dependency optional.
  - Figure out how to make a release tarball.
  See thoughts/fble.release.txt
 
-* Figure out what happened to code coverage.
- - Either resurrect it, or give up on it and clean up compiler options
-   currently in place for it.
-
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
+
+* Clean up how we specify what gets built for which ninja targets?
+ - For example, code coverage should be built by 'ninja check', but not be
+   considered a test suite.
 
 * Clean up specification of dependencies for fbld generated docs.
  - Fix missing dependency for .fbld processing on fbld.lang and fble.lang.
