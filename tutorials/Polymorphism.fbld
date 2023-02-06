@@ -264,7 +264,7 @@ Here's how you could reuse the definitions instead of duplicating them:
 <@>@ ListP@ = <@ T@> { Types<T@>.P@; };
 ]]]
 
-@section[Interface][
+@section[Interfaces][
 Some languages have the concept of an interface. You can write a function that
 operates on any type, as long as that type implements a particular interface.
 Interfaces can be implemented in fble as a polymorphic collection of functions
@@ -303,8 +303,8 @@ different type for the first and second field:
 @code[fble][
 <@><@>@ Pair@ = <@ A@> { <@ B@> { *(A@ first, B@ second); }; };
 
-<@ A@> { <@ B@> { (Pair@<A@, B@>) { A@; }; }; }
-First = <@ A@> { <@ B@> { (Pair@<A@, B@> pair) { pair.first; }; }; }
+<@ A@> { <@ B@> { (Pair@<A@><B@>) { A@; }; }; }
+First = <@ A@> { <@ B@> { (Pair@<A@><B@> pair) { pair.first; }; }; }
 ]
 
 Here's an example of how to make use of the @l[Pair@] type:
@@ -523,8 +523,6 @@ having trouble with type inference.
 You now know everything there is to know about polymorphism in fble. To
 reinforce this, read over @fbld[../spec/fble.fbld#polymorphism][section 6 of the
 fble language specification]. Everything there should be familiar to you now.
-
-@section[Exercises][]
 
 @section[Next Steps]
 Head over to the @fbld[Bind.fbld][Bind] tutorial to learn about function bind
