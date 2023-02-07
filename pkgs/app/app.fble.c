@@ -23,12 +23,16 @@
 #define EX_FAILURE 1
 #define EX_USAGE 2
 
-// sFpsHistogram[i] is the number of samples with i frames per second.
-// Anything above 60 FPS is counted towards i = 60.
-static int sFpsHistogram[61] = {0};
+// Executable for an app.
+typedef struct {
+  FbleExecutable _base;
+  SDL_Window* window;
+  Uint32 time;
 
-SDL_Window* gWindow = NULL;
-Uint32 gTime;
+  // fpsHistogram[i] is the number of samples with i frames per second.
+  // Anything above 60 FPS is counted towards i = 60.
+  int fpsHistogram[61];
+} Executable;
 
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
@@ -405,9 +409,10 @@ static FbleValue* EffectImpl(
     FbleBlockId profile_block_offset)
 {
   (void)thread;
-  (void)executable;
   (void)statics;
   (void)profile_block_offset;
+
+  Executable* exe = (Executable*)executable;
 
   FbleValue* effect = args[0];
   FbleValue* world = args[1];
@@ -419,18 +424,18 @@ static FbleValue* EffectImpl(
       // TODO: This assumes we don't already have a tick in progress. We
       // should add proper support for multiple backed up tick requests.
       Uint32 now = SDL_GetTicks();
-      gTime += tick;
-      if (gTime < now) {
-        gTime = now;
+      exe->time += tick;
+      if (exe->time < now) {
+        exe->time = now;
       }
-      SDL_AddTimer(gTime - now, OnTimer, NULL);
+      SDL_AddTimer(exe->time - now, OnTimer, NULL);
       break;
     }
 
     case 1: {
-      SDL_Surface* surface = SDL_GetWindowSurface(gWindow);
+      SDL_Surface* surface = SDL_GetWindowSurface(exe->window);
       Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect));
-      SDL_GL_SwapWindow(gWindow);
+      SDL_GL_SwapWindow(exe->window);
 
       // Collect status on frame rate.
       static Uint32 last = 0;
@@ -443,7 +448,7 @@ static FbleValue* EffectImpl(
         if (fps > 60) {
           fps = 60;
         }
-        sFpsHistogram[fps]++;
+        exe->fpsHistogram[fps]++;
         last = now;
       }
       break;
@@ -577,16 +582,16 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     return EX_FAILURE;
   }
 
-  gWindow = SDL_CreateWindow(
+  SDL_Window* window = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
       SDL_WINDOW_OPENGL);
-  SDL_SetWindowResizable(gWindow, true);
-  SDL_GLContext glctx = SDL_GL_CreateContext(gWindow);
+  SDL_SetWindowResizable(window, true);
+  SDL_GLContext glctx = SDL_GL_CreateContext(window);
   SDL_ShowCursor(SDL_DISABLE);
 
   int width = 0;
   int height = 0;
-  SDL_GetWindowSize(gWindow, &width, &height);
+  SDL_GetWindowSize(window, &width, &height);
 
 
   glShadeModel(GL_FLAT);
@@ -594,8 +599,6 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
   glOrtho(0, width, height, 0, -1, 1);
-
-  gTime = SDL_GetTicks();
 
   FbleName block_names[2];
   block_names[0].name = FbleNewString("event!");
@@ -611,7 +614,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleFreeName(block_names[1]);
 
   FbleExecutable* event_exe = FbleAlloc(FbleExecutable);
-  event_exe->refcount = 0;
+  event_exe->refcount = 1;
   event_exe->magic = FBLE_EXECUTABLE_MAGIC;
   event_exe->num_args = 1;
   event_exe->num_statics = 0;
@@ -620,15 +623,21 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   event_exe->on_free = &FbleExecutableNothingOnFree;
   FbleValue* fble_event = FbleNewFuncValue(heap, event_exe, 0, NULL);
 
-  FbleExecutable* effect_exe = FbleAlloc(FbleExecutable);
-  effect_exe->refcount = 0;
-  effect_exe->magic = FBLE_EXECUTABLE_MAGIC;
-  effect_exe->num_args = 2;
-  effect_exe->num_statics = 0;
-  effect_exe->profile_block_id = block_id + 1;
-  effect_exe->run = &EffectImpl;
-  effect_exe->on_free = &FbleExecutableNothingOnFree;
-  FbleValue* fble_effect = FbleNewFuncValue(heap, effect_exe, 0, NULL);
+  Executable* effect_exe = FbleAlloc(Executable);
+  effect_exe->_base.refcount = 1;
+  effect_exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
+  effect_exe->_base.num_args = 2;
+  effect_exe->_base.num_statics = 0;
+  effect_exe->_base.profile_block_id = block_id + 1;
+  effect_exe->_base.run = &EffectImpl;
+  effect_exe->_base.on_free = &FbleExecutableNothingOnFree;
+  effect_exe->window = window;
+  effect_exe->time = SDL_GetTicks();
+
+  for (size_t i = 0; i < 61; ++i) {
+    effect_exe->fpsHistogram[i] = 0;
+  }
+  FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe->_base, 0, NULL);
 
   FbleValue* fble_width = FbleNewIntValue(heap, width);
   FbleValue* fble_height = FbleNewIntValue(heap, height);
@@ -644,7 +653,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   if (computation == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    SDL_DestroyWindow(gWindow);
+    SDL_DestroyWindow(window);
     SDL_Quit();
     return EX_FAILURE;
   }
@@ -652,6 +661,17 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   // computation has type IO@<Unit@>, which is (World@) { R@<Bool@>; }
   FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, &world, profile);
+
+  fprintf(stderr, "FPS Histogram:\n");
+  for (size_t i = 0; i < 61; ++i) {
+    if (effect_exe->fpsHistogram[i] > 0) {
+      printf("  % 3zi: % 12i\n", i, effect_exe->fpsHistogram[i]);
+    }
+  }
+
+  FbleFreeExecutable(event_exe);
+  FbleFreeExecutable(&effect_exe->_base);
+
   FbleReleaseValue(heap, computation);
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
@@ -662,15 +682,8 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleFreeProfile(profile);
 
   SDL_GL_DeleteContext(glctx);
-  SDL_DestroyWindow(gWindow);
+  SDL_DestroyWindow(window);
   SDL_Quit();
-
-  fprintf(stderr, "FPS Histogram:\n");
-  for (size_t i = 0; i < 61; ++i) {
-    if (sFpsHistogram[i] > 0) {
-      printf("  % 3zi: % 12i\n", i, sFpsHistogram[i]);
-    }
-  }
 
   return EX_SUCCESS;
 }

@@ -29,15 +29,6 @@
 * Set up default package path.
   Based on datadir configuration setting.
 
-* Something is wrong with doxygen build dependencies.
-  It keeps remaking after all I change is .../FannkuchRedux/Tests.fble
-  That makes no sense. There should be no dependency there at all.
-  Unless build.ninja depends on that, and generating build.ninja runs
-  configure, which updates Doxyfile?
-
-* Stop using global variables in app.fble.c for gWindow and gTime.
- - We should be able to pass that via the executable somehow?
-
 * Fix timeout with gdb-test
  - Just need to increase it a little in case of heavy CPU load?
  - Next time it happens, try to see where it got stuck?
