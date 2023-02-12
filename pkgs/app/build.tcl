@@ -1,46 +1,51 @@
 namespace eval "pkgs/app" {
   set objs [list]
 
-  # .c library files.
-  foreach {x} { app.fble } {
-    lappend objs $::b/pkgs/app/$x.o
-    obj $::b/pkgs/app/$x.o $::s/pkgs/app/$x.c \
-      "-I /usr/include/SDL2 -I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app"
+  if $::config::enable_fble_app {
+    # .c library files.
+    foreach {x} { app.fble } {
+      lappend objs $::b/pkgs/app/$x.o
+      obj $::b/pkgs/app/$x.o $::s/pkgs/app/$x.c \
+        "$::config::sdl_cflags $::config::gl_cflags -I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app"
+    }
   }
 
   pkg app [list core] $objs
-
-  # fble-app program.
-  obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
-    "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app -I/usr/include/SDL2"
-  bin $::b/pkgs/app/fble-app \
-    "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" \
-    "-lSDL2 -lGL"
-  install_bin $::b/pkgs/app/fble-app
-
-  # Build an fble-app compiled binary.
-  #
-  # Inputs:
-  #   target - the file to build.
-  #   path - the module path to use as App@ main.
-  #   libs - addition fble packages to depend on besides core and app
-  #          (without fble- prefix).
-  proc ::app { target path libs} {
-    set objs $target.o
-    foreach lib $libs {
-      append objs " $::b/pkgs/$lib/libfble-$lib.a"
-    }
-    append objs " $::b/pkgs/app/libfble-app.a"
-    append objs " $::b/pkgs/core/libfble-core.a"
-    append objs " $::b/lib/libfble.a"
-    
-    fbleobj $target.o $::b/bin/fble-compile \
-      "--main FbleAppMain -m $path"
-    bin $target $objs "-lSDL2 -lGL"
-  }
 
   # /App/Tests% interpreted
   set cflags "-I $::s/pkgs/app -I $::s/pkgs/core"
   test $::b/pkgs/app/App/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/app/App/Tests.fble.d" \
     "$::b/pkgs/core/fble-stdio $cflags -m /App/Tests%"
+
+  if $::config::enable_fble_app {
+    # fble-app program.
+    obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
+      "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app $::config::sdl_cflags"
+    bin $::b/pkgs/app/fble-app \
+      "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" \
+      "$::config::sdl_libs $::config::gl_libs"
+    install_bin $::b/pkgs/app/fble-app
+
+    # Build an fble-app compiled binary.
+    # This is only available when enable_fble_app configuration is enabled.
+    #
+    # Inputs:
+    #   target - the file to build.
+    #   path - the module path to use as App@ main.
+    #   libs - addition fble packages to depend on besides core and app
+    #          (without fble- prefix).
+    proc ::app { target path libs} {
+      set objs $target.o
+      foreach lib $libs {
+        append objs " $::b/pkgs/$lib/libfble-$lib.a"
+      }
+      append objs " $::b/pkgs/app/libfble-app.a"
+      append objs " $::b/pkgs/core/libfble-core.a"
+      append objs " $::b/lib/libfble.a"
+      
+      fbleobj $target.o $::b/bin/fble-compile \
+        "--main FbleAppMain -m $path"
+      bin $target $objs "$::config::sdl_libs $::config::gl_libs"
+    }
+  }
 }

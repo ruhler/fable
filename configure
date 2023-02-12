@@ -10,23 +10,27 @@ Usage: ../configure [OPTION]...
 Options:
   -h, --help          display this help and exit
   --prefix=PREFIX     install files in PREFIX [/usr/local]
+
+  --enable-fble-app=[yes|no]
+      enable/disable build fble-app based programs requiring SDL/GL.
+  --disable-fble-app
+      don't build fble-app based programs requiring SDL/GL.
 }
 }
 
 namespace eval "config" {
-  # ::config::srcdir
   # The top level source directory.
   # Inferred relative to the location of this configure script.
   set srcdir [file dirname [info script]]
 
-  # ::config::builddir
   # The top level build directory.
   # Inferred from the current directory.
   set builddir "."
 
-  # ::config::prefix
   # The install prefix.
   set prefix "/usr/local"
+
+  set enable_fble_app "yes"
 
   while {[llength $::argv] > 0} {
     set ::arg [lindex $::argv 0]
@@ -49,6 +53,15 @@ namespace eval "config" {
       --prefix=* {
         set prefix [string range $arg [string length "--prefix="] end]
       }
+      --enable-fble-app {
+        set enable_fble_app yes
+      }
+      --enable-fble-app=* {
+        set enable_fble_app [string range $arg [string length "--enable-fble-app="] end]
+      }
+      --disable-fble-app {
+        set enable_fble_app no
+      }
       default {
         puts stderr "configure: error: unrecognized option: `$arg'"
         usage stderr
@@ -63,13 +76,21 @@ namespace eval "config" {
   set bindir $::config::prefix/bin
   set mandir $::config::prefix/man
   set datadir $::config::prefix/share
+
+  # SDL and OpenGL specific configuration.
+  if $enable_fble_app {
+    set sdl_cflags [exec sdl2-config --cflags]
+    set sdl_libs [exec sdl2-config --libs]
+    set gl_cflags ""
+    set gl_libs "-lGL"
+  }
 }
 
 # Generate config.tcl and show the user the config settings.
 puts "Configuration:"
 set fout [open $::config::builddir/config.tcl "w"]
 puts $fout "namespace eval \"config\" {"
-foreach var [info var ::config::*] {
+foreach var [lsort [info var ::config::*]] {
   set name [string range $var [string length "::config::"] end]
   set value [subst $$var]
   puts "  $name=$value"

@@ -1,7 +1,12 @@
+* Update documentation for how to enable/disable SDL/OpenGL dependencies.
+ - Decide whether fble-app should be enable by default or not.
+
+* Define '::app' as a namespace instead?
+ - Same with ::stdio, etc?
+
 * Release
  - Generate man pages for library functions via fbld.
  - Burn down TODOs.
- - Make SDL dependency optional.
  - Figure out how to make a release tarball.
  See thoughts/fble.release.txt
 

@@ -11,6 +11,8 @@ namespace eval "pkgs/invaders" {
   test $::b/pkgs/invaders/tests-compiled.tr $::b/pkgs/invaders/invaders-tests \
     "$::b/pkgs/invaders/invaders-tests"
 
-  app $::b/pkgs/invaders/fble-invaders "/Invaders/AppIO%" "invaders"
-  install_bin $::b/pkgs/invaders/fble-invaders
+  if $::config::enable_fble_app {
+    app $::b/pkgs/invaders/fble-invaders "/Invaders/AppIO%" "invaders"
+    install_bin $::b/pkgs/invaders/fble-invaders
+  }
 }

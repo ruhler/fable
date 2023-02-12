@@ -12,6 +12,8 @@ namespace eval "pkgs/pinball" {
     $::b/pkgs/pinball/pinball-tests \
     "$::b/pkgs/pinball/pinball-tests --prefix Compiled"
 
-  app $::b/pkgs/pinball/fble-pinball "/Pinball/AppIO%" "pinball"
-  install_bin $::b/pkgs/pinball/fble-pinball
+  if $::config::enable_fble_app {
+    app $::b/pkgs/pinball/fble-pinball "/Pinball/AppIO%" "pinball"
+    install_bin $::b/pkgs/pinball/fble-pinball
+  }
 }
