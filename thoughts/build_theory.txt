@@ -1,0 +1,95 @@
+Build Theory
+============
+I'm a little frustrated with my current build system. I think it may be
+enlightening to think about builds more theoretically.
+
+Let's define a build program:
+* It takes some inputs.
+* It produces some outputs.
+
+More about inputs:
+* The build program can be considered an input to itself.
+* The list of inputs to a build program may depend on the contents of other
+  inputs to the build program.
+* Inputs could be files, environment variables, build flags, or other such
+  things.
+
+More about outputs:
+* The list of outputs to a build program may depend on the contents of inputs
+  to the build program.
+
+Build programs can be composed:
+* atomically: a primitive, atomic command.
+For example gcc.
+
+
+* sequentially: a ; b, means some inputs to b may be outputs of a.
+For example, we want lib/ built before bin/, and we want to describe each
+separately. Specifically, the build program for bin/ wants to assume lib/ has
+been built.
+
+
+* parallel: a | b, means no inputs of b are outputs of a.
+To take advantage of multicore CPUs, because in practice things can be done in
+parallel.
+
+The important feature we want for build programs is:
+* If we have already run the build program, then we modify some of the inputs,
+  we can run the build program on the new inputs, reusing results from the
+  previous run to make it significantly faster to run than if we ran it from
+  scratch.
+
+I think we'll need more structure for this to work well. Let's get to that.
+
+---
+
+I think we'll also want:
+
+* build <xxx>
+Which is some way of converting a file / input / output into a build program.
+That's what allows us to have build steps for generating more build steps. Not
+sure the exact syntax, but conceptually you have a build program that builds a
+build program, and then you execute that build program.
+
+We also want a way to specify a subset of targets to build. There are a few
+variations on this:
+1. phony rules: default, check, doc, install, all, etc.
+These tend to describe a collection of outputs that a user explicitly requests
+to build, depending on their use case.
+
+2. explicit targets.
+If you want to build only a specific thing as quickly as possible.
+Occasionally useful, though honestly I use it very rarely compared to (1).
+
+3. variations in configuration.
+For example, don't build things depending on sdl if sdl isn't installed.
+
+The classic approach is to make (2) fundamental, and use phony rules to
+support (1). I worry (2) could be hard in general in theory, because you don't
+know what parts of a build program are needed to generate a specific target
+before you've executing the entire thing the first time. That's definitely not
+ideal.
+
+Maybe we could have a way to label a build program with a target name, and say
+if that target name is specified, that part of the build program and anything
+else it depends on will be built. We could give multiple labels for a
+particular build program. That kind of separates it from individual outputs.
+For dynamic 'build', would you ignore targets from the build program?
+Otherwise there is no way to discover what the target names may be without
+running that part of the build program. Tricky.
+ 
+Maybe worry about the details later, but think about execution of a build
+program in the context of a given target.
+
+I'm not sure if we want to handle (3) specially or not. Maybe start without
+that and we can extend it later.
+
+In summary, we have:
+* atomic
+* sequential
+* parallel
+* build
+
+Figure out what it means to execute a build program for a given target, where
+we may or may not have executed some part of the build program before and may
+or may not have made changes to things since doing so.

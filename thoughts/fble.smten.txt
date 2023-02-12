@@ -1,0 +1,131 @@
+Fble Smten
+==========
+It occurs to me that it's probably pretty easy to add smten support to fble,
+given all the value operations are encapsulated in value.c. That would be
+cool.
+
+What would it look like in practice?
+
+For each kind of value, we need a way to represent it symbolically, and
+support for a p ? x : y operation, where p is a boolean formula.
+
+Wow. There are only a handful of different kinds of values. That's nice.
+
+DATA_TYPE_VALUE: 
+  No need to support symbolic representation, because we know from the type
+  what the concrete value is.
+
+STRUCT_VALUE:
+  No change.
+  p ? x : y  ==> @(p ? x.0 : y.0, p ? x.1 : y.1, ...) for fields 0, 1, etc.
+
+UNION_VALUE:
+  Add an extra tag value that says symbolic. Represent it as a vector of pairs
+  of (formula, arg) for each possible tag.
+  p ? x : y ==> 
+    if x and y have the same tag, push it in.
+    if x and y have different tags, turn into symbolic.
+    if x or y are symbolic, turn into symbolic
+       @(0: (p ? x.0.p : y.0.p, p ? x.0.v : y.0.v), 1: ...)
+
+  Case for symbolic returns x.0.p ? 0 : (x.1.p ? 1 : ...)
+  Field access for symbolic returns the value directly? It's just silently
+  undefined behavior if you access the wrong tag?
+
+FUNC_VALUE:
+  Add a symbolic option to store a function as
+  p ? x : y
+  Then p ? x : y becomes primitive constructor.
+
+  Application on symbolic is implemented as
+    p ? (x a) : (y a)
+
+  This is where things get tricky complexity wise, and users have to be aware.
+
+REF_VALUE
+  No change.
+  p ? x : y ==> @(p ? x.v : y.v)
+
+  Except maybe we say if either x or y is NULL, the result is NULL.
+  Or whichever is non-NULL, because it's like undefined behavior if you try to
+  access NULL?
+  Or maybe we don't have to worry about this case because you can't run a
+  query inside of a let definition, only at the top level.
+
+Then we add a top level interface:
+
+<<@>@>@ Smten@ = <<@>@ M@, <@>@ S@> { *(
+  Monad@<M@> m,
+  Monad@<S@> s,
+  <@ A@> { S@<A@>; } zero,
+  <@ A@>(S@<A@>, S@<A@>) { S@<A@>; } plus,
+  <@ A@>(S@<A@>) { M@<Maybe@<A@>>; } query
+); };
+
+Where s.return is like a singleton, and s.do gives you ability to do join.
+
+In terms of implementation, we need:
+* Use minisat I think.
+* FbleFormula* type, which is wrapper around minisat.
+* FbleS*, which is (FbleFormula*, FbleValue*).
+* zero is implemented as (False, NULL).
+* plus is implemented as p ? x : y, for a new free variable p.
+* s.return is implemented as (True, x).
+* s.do is implemented as: do (p, x) f
+   let (q, y) = f x
+   (p & q, y)
+* m is the same IO monad we already have.
+* query is implemented as using minisat to solve the formula, and then perform
+  substitution. So we'll also want to implement a 'subst' for values that
+  takes a value and assignment and removes any variables left.
+
+In other words, this is totally doable. Changes are limited to:
+* Updates to value.c, and some new functions in value.h related to symbolic
+  values (subst, conditional).
+* A new class for smten.c for smten specific logic.
+* A new top level fble-stmen program.
+
+There's a question about how to deliver this. Do I want to have fble support
+smten by default, or somehow make it separate?
+
+Downsides of always smten:
+* Added dependency on minisat.
+* Potential overheads of value operations given extra constructors for
+  symbolic execution. Though honestly, I think this would be pretty small. We
+  could even have separate SYMBOLIC_UNION and SYMBOLIC_FUNC values to avoid
+  memory overheads.
+* Doesn't scale well to other special execution smten-like things we might
+  want to add to fble (not that I can think of any more off the top of my
+  head.) Maybe profiling falls into this category?
+
+Upsides of always smten:
+* Much easier to maintain, and easier for people to use. Nothing special
+  needed.
+
+If we wanted to split, a couple ways we could do it:
+* Using #ifdef in the code. So, compile time option.
+* Using a separate branch of the git repo.
+
+minisat is a pretty small dependency. I'm not worried about that, as long as
+it is easy to install. Maybe we can even include it in the repo, depending on
+licensing. My vote is to add smten directly to the main branch. Don't separate
+it.
+
+You know, if we add smten to fble, this could be a big differentiator. Big
+enough, perhaps, to suggest renaming fble as a smten 2.0 kind of thing.
+
+---
+
+Another question is whether we want symbolic support for recursive functions,
+where you unroll it partially. How would that look? Sounds harder. Maybe let's
+not worry about that to start.
+
+I think we want access to the S@ to have the formula. Then we could represent
+S@ as a ... not sure. Yeah, let's worry about that later.
+
+---
+
+What's my first test case for this? Sudoku? That's probably a good one. Add a
+pkg/smten for smten-based stuff. smten/Sudoku is a Sudoku implementation that
+defines a free board, asserts all the constraints are met.
+

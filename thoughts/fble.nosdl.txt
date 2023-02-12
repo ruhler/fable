@@ -1,0 +1,201 @@
+No SDL
+======
+
+SDL doesn't work out of the box on my windows build. I'm not sure. SDL also is
+the biggest dependency left that fble has. I know I want a way to build
+without requiring SDL. Does it make sense to remove SDL and use something
+different?
+
+So this is a discussion about all of those things.
+
+Current Requirements for App:
+* Be able to fill a colored triangle and rectangle.
+* Be able forward key press, key release, and mouse up/down/motion events.
+* Be able to schedule a timer event.
+
+SDL dependencies in my PI:
+* libgl1-mesa-dri, which is 500MB.
+* libllvm9: 60MB.
+* libwayland-dev, libx11-dev: 60MB. 
+
+Brainstorm of alternatives:
+* Can we use TK?
+* directfb?
+  - No windows support.
+  - Looks like it has mouse and keyboard support, though maybe not user
+    friendly.
+* Write my own?
+
+---
+
+Let's separate out concern for windows. The problem with windows isn't sdl,
+it's that I really ought to have a separate build flow for windows. Looks like
+windows uses nmake, cmake, or visual studio.
+
+Windows is not a requirement for the initial release of fble. As long as I can
+use cygwin to do development from windows and run on an x86, I'm fine with
+that. No reason to switch away from sdl on that account.
+
+Aside from that, there's no standard way to interact with mouse, keyboard, and
+display. It depends what platform you are running on, and what windowing
+system you are running on. linux console, versus X, versus wayland, versus
+Windows all have different interfaces. The only way to support them all is
+either use an existing cross platform framework that unifies the interface, or
+essentially implement our own cross platform framework that unifies the
+interface. SDL is a good fit for that for the time being. I don't see tk
+offering anything better.
+
+To help convince myself, let's read about some more low level interfaces for
+mouse, keyboard, and display.
+
+* directfb
+  Doesn't support Windows.
+* /dev/fb0
+* /dev/mouse
+  PS/2, ImPS/2, ExplorePS/2
+  So there is a protocol for it.
+  I could make it work on linux, I'm confident. Not sure about windows.
+* /dev/tty0
+
+Honestly, I think the easiest way to figure all this out is look at the sdl
+source code. But in that case, why not use SDL directly, given they've already
+figured all this out?
+
+Yeah. So, I propose putting off nosdl until after my initial release, and
+after I figure out how to get windows support properly off the ground, and
+after I find some good reason not to use it.
+
+That leaves one last piece: providing an option to build without sdl
+installed.
+
+---
+
+How to make sdl optional? What does that mean?
+
+If you have sdl:
+* Do like we do today.
+
+If you don't have sdl:
+* Don't build fble-app or any of the fble-app based binaries.
+
+The easiest way to implement this would be uninstall sdl and opengl, try doing
+a build, hack it up until it works by disabling anything that depends on
+fble-app, and then putting those hacks behind a configuration option.
+
+Or, remove the -I and -L options for sdl and opengl and fix the errors that I
+see.
+
+To get a better sense of what goes wrong, let's pick something concrete.
+
+* pkgs/app
+A. can't build C library.
+B. can't build fble-app program.
+C. ::app won't work.
+  - We can still build the app package and run the test cases.
+
+For (A) and (B), it's pretty easy. Just add an if statement to
+pkgs/app/build.tcl to only build the objs and fble-app programs when
+requested.
+
+(C) is more interesting. Let's look at a use case.
+
+games:
+* Everything should work fine, even though we depend on app. Because we don't
+  use ::app.
+
+invaders:
+* call to app won't work. Subsequent call to install the generated binary
+  won't work. Once again, we can just put an if statement to say only do that
+  if sdl is supported.
+
+Proposal:
+* Make a flag available in build.tcl files to check if sdl is supported or
+  not. Make use of that to skip anything that depends on sdl.
+* Add a check to ::app that raises an error if you try to use it without sdl
+  support. Or, just don't define it in that case? No, better to give an error.
+* Document that app requires the flag.
+
+What should we call this flag? Brainstorm:
+* HAVE_SDL, HAVE_OPENGL
+* HAVE_SDL_AND_OPENGL
+* ENABLE_FBLE_APP
+
+The other question is how to set this flag in the first place?
+* Automatic detection might be nice, but how does user know? There should be
+  some note in config whether it found it or not.
+* There should be an option to explicitly enable or disable.
+
+How about three options at configure time: 'auto', 'enable', or 'disable'?
+
+With idea that enable requires it (build fails without it), disable skips it
+(won't build even if you have it), and auto enables it only if you have it.
+Then the default option would be auto.
+
+Alternatively, how about just have 'enable' and 'disable'. By default it is
+enable. It will tell you if you can't build things you have the option to
+disable.
+
+Then we have an additional option to try and identify if you have it at
+config time or not.
+
+That's my preference:
+* By default, enable fble app.
+* Have option to disable fble app.
+* Clearly document sdl and opengl are optional, and what that means.
+* Detect at configure time if sdl and opengl exist. If not and fble app is
+  enabled, error out early on, with clear instructions to install or disable
+  fble app.
+
+Details: flag should be '--enable-fble-app'.
+  --enable-fble-app=no to disable
+  --enable-fble-app=yes to enable
+  --disable-fble-app to disable (same as --enable-fble-app=no)
+
+Looks like autoconf just takes the last option see for this in case of
+conflict, and anything other than 'yes' is considered to mean 'no'. Though why
+not give errors in these cases?
+
+Next question: how to autodetect sdl?
+
+How about sdl2-config? If we run and it succeeds, that gives us the flags we
+need and that it exists. If we run and it fails, it isn't installed.
+
+We can use sdl2-config from pkgs/app/build.tcl to get the flags, and call it
+in configure as an early check.
+
+For gl, we could use pkg-config to get the library options. But that assumes
+people have pkg-config. What if people don't?
+
+If people don't, we need a way to for users to describe where gl is installed.
+Hmm... Or just assume -lgl and standard path? Not sure. That's a general issue
+with my configure approach.
+
+Let's abstract this out for now. Put the assumptions about where things are
+installed into configure and just read those in the build.tcl file. We can
+improve the configure checks later.
+
+That suggests we want to set the following configure variables at least:
+
+::enable_fble_app as a boolean.
+::sdl_cflags
+::sdl_libs
+::gl_cflags
+::gl_libs
+
+And while I'm at it, probably worth putting all these in a separate tcl
+"config" namespace. 
+
+Do we want to uppercase them?
+
+And why don't my namespaces work right today? It would be:
+
+::config::ENABLE_FBLE_APP
+::config::SDL_CFLAGS
+
+Yeah, I think capitalize.
+
+Cool. So we have a plan for this. Let's go in parts.
+
+
+
+

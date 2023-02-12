@@ -1,25 +1,26 @@
+namespace eval config {
+  # The build directory
+  set builddir @builddir@
 
-# The build directory
-set ::builddir @builddir@
+  # The prefix option passed to the configure script.
+  set prefix @prefix@
 
-# The prefix option passed to the configure script.
-set ::prefix @prefix@
+  # The top level directory containing the fble source code. This is the
+  # directory that contains the 'configure' script.
+  set srcdir @srcdir@
 
-# The top level directory containing the fble source code. This is the
-# directory that contains the 'configure' script.
-set ::srcdir @srcdir@
+  # The directory to install includes to.
+  set includedir @includedir@
 
-# The directory to install includes to.
-set ::includedir @includedir@
+  # The directory to install libraries to.
+  set libdir @libdir@
 
-# The directory to install libraries to.
-set ::libdir @libdir@
+  # The directory to install binaries to.
+  set bindir @bindir@
 
-# The directory to install binaries to.
-set ::bindir @bindir@
+  # The directory to install manual pages to.
+  set mandir @mandir@
 
-# The directory to install manual pages to.
-set ::mandir @mandir@
-
-# The directory to install data to.
-set ::datadir @datadir@
+  # The directory to install data to.
+  set datadir @datadir@
+}

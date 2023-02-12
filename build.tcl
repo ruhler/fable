@@ -7,12 +7,12 @@
 #   ninja
 
 # Source configuration options.
-#   ::builddir, ::prefix, ::srcdir, ::includedir, ::libdir, ::bindir,
-#   ::mandir, ::datadir
+# See config.tcl.in for what's available from this.
+# Everything defined here is in the ::config namespace.
 source config.tcl
 
-set ::s $::srcdir
-set ::b $::builddir
+set ::s $::config::srcdir
+set ::b $::config::builddir
 
 set ::build_ninja_filename [lindex $argv 0]
 set ::build_ninja [open "$::build_ninja_filename.tmp" "w"]
@@ -153,8 +153,8 @@ proc bin_cov { bin objs lflags } {
 #   binary - the binary to install.
 set ::installs [list]
 proc install_bin { binary } {
-  set target $::bindir/[file tail $binary]
-  build $target $binary "install $binary $::bindir"
+  set target $::config::bindir/[file tail $binary]
+  build $target $binary "install $binary $::config::bindir"
   lappend ::installs $target
 }
 
@@ -165,7 +165,7 @@ proc install_bin { binary } {
 # Inputs:
 #   header - the header file to install.
 proc install_header { header } {
-  set target $::includedir/fble/[file tail $header]
+  set target $::config::includedir/fble/[file tail $header]
   build $target $header "cp $header $target"
   lappend ::installs $target
 }
@@ -177,7 +177,7 @@ proc install_header { header } {
 # Inputs:
 #   lib - the header file to install.
 proc install_lib { lib } {
-  set target $::libdir/[file tail $lib]
+  set target $::config::libdir/[file tail $lib]
   build $target $lib "cp $lib $target"
   lappend ::installs $target
 }
@@ -188,7 +188,7 @@ proc install_lib { lib } {
 # Inputs:
 #   target - the man page to install.
 proc install_man1 { target } {
-  set install_target $::mandir/man1/[file tail $target]
+  set install_target $::config::mandir/man1/[file tail $target]
   build $install_target $target "cp $target $install_target"
   lappend ::installs $install_target
 }
@@ -312,7 +312,7 @@ proc pkg {name deps objs} {
       fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
       lappend objs $::b/pkgs/$name/$x.o
 
-      set target $::datadir/fble/$name/$x
+      set target $::config::datadir/fble/$name/$x
       build $target $::s/pkgs/$name/$x "cp $::s/pkgs/$name/$x $target"
       lappend ::installs $target
     }
@@ -366,7 +366,7 @@ puts $::build_ninja "default all"
 # build.ninja
 build "$::b/build.ninja $::b/config.tcl" \
   "$::s/configure $::s/config.tcl.in $::s/build.tcl" \
-  "$::s/configure --prefix $::prefix" \
+  "$::s/configure --prefix $::config::prefix" \
   "depfile = $::b/build.ninja.d"
 
 # build.ninja.d implicit dependency file.
