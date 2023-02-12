@@ -2,11 +2,6 @@
 # configure script for fable\
 exec tclsh8.6 "$0" "$@"
 
-set ::srcdir [file dirname [info script]]
-set ::builddir "."
-
-set ::prefix "/usr/local"
-
 # usage -- output usage info to the given channel.
 proc usage { channel } {
   puts $channel {
@@ -18,67 +13,70 @@ Options:
 }
 }
 
-while {[llength $::argv] > 0} {
-  set arg [lindex $::argv 0]
-  set ::argv [lrange $::argv 1 end]
-  switch -glob $arg {
-    -h -
-    --help {
-      usage stdout
-      exit 0
-    }
-    --prefix {
-      if {[llength $::argv] == 0} {
-        puts stderr "configure: error: missing argument to --prefix"
+namespace eval "config" {
+  # ::config::srcdir
+  # The top level source directory.
+  # Inferred relative to the location of this configure script.
+  set srcdir [file dirname [info script]]
+
+  # ::config::builddir
+  # The top level build directory.
+  # Inferred from the current directory.
+  set builddir "."
+
+  # ::config::prefix
+  # The install prefix.
+  set prefix "/usr/local"
+
+  while {[llength $::argv] > 0} {
+    set ::arg [lindex $::argv 0]
+    set ::argv [lrange $::argv 1 end]
+    switch -glob $::arg {
+      -h -
+      --help {
+        usage stdout
+        exit 0
+      }
+      --prefix {
+        if {[llength $::argv] == 0} {
+          puts stderr "configure: error: missing argument to --prefix"
+          exit 1
+        }
+
+        set prefix [lindex $::argv 0]
+        set ::argv [lrange $::argv 1 end]
+      }
+      --prefix=* {
+        set prefix [string range $arg [string length "--prefix="] end]
+      }
+      default {
+        puts stderr "configure: error: unrecognized option: `$arg'"
+        usage stderr
         exit 1
       }
-
-      set ::prefix [lindex $::argv 0]
-      set ::argv [lrange $::argv 1 end]
-    }
-    --prefix=* {
-      set ::prefix [string range $arg [string length "--prefix="] end]
-    }
-    default {
-      puts stderr "configure: error: unrecognized option: `$arg'"
-      usage stderr
-      exit 1
     }
   }
+
+  # Install directories based on prefix.
+  set includedir $::config::prefix/include
+  set libdir $::config::prefix/lib
+  set bindir $::config::prefix/bin
+  set mandir $::config::prefix/man
+  set datadir $::config::prefix/share
 }
 
-set ::includedir $::prefix/include
-set ::libdir $::prefix/lib
-set ::bindir $::prefix/bin
-set ::mandir $::prefix/man
-set ::datadir $::prefix/share
-
+# Generate config.tcl and show the user the config settings.
 puts "Configuration:"
-puts "  srcdir=$::srcdir"
-puts "  builddir=$::builddir"
-puts "  prefix=$::prefix"
-puts "  includedir=$::includedir"
-puts "  libdir=$::libdir"
-puts "  bindir=$::bindir"
-puts "  mandir=$::mandir"
-puts "  datadir=$::datadir"
-
-proc subst_in { src dest } {
-  puts "creating $dest"
-  exec mkdir -p [file dirname $dest]
-  exec sed \
-    -e "s=@srcdir@=$::srcdir=g" \
-    -e "s=@builddir@=$::builddir=g" \
-    -e "s=@prefix@=$::prefix=g" \
-    -e "s=@includedir@=$::includedir=g" \
-    -e "s=@libdir@=$::libdir=g" \
-    -e "s=@bindir@=$::bindir=g" \
-    -e "s=@mandir@=$::mandir=g" \
-    -e "s=@datadir@=$::datadir=g" \
-    $src > $dest
+set fout [open $::config::builddir/config.tcl "w"]
+puts $fout "namespace eval \"config\" {"
+foreach var [info var ::config::*] {
+  set name [string range $var [string length "::config::"] end]
+  set value [subst $$var]
+  puts "  $name=$value"
+  puts $fout "  set $name \{$value\}"
 }
-
-subst_in $::srcdir/config.tcl.in $::builddir/config.tcl
+puts $fout "}"
+close $fout
 
 # Generate the build.ninja file.
-exec tclsh8.6 $::srcdir/build.tcl $::builddir/build.ninja
+exec tclsh8.6 $::config::srcdir/build.tcl $::config::builddir/build.ninja

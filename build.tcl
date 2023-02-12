@@ -7,7 +7,7 @@
 #   ninja
 
 # Source configuration options.
-# See config.tcl.in for what's available from this.
+# See 'configure' for the available configuration options.
 # Everything defined here is in the ::config namespace.
 source config.tcl
 
@@ -365,7 +365,7 @@ puts $::build_ninja "default all"
 
 # build.ninja
 build "$::b/build.ninja $::b/config.tcl" \
-  "$::s/configure $::s/config.tcl.in $::s/build.tcl" \
+  "$::s/configure $::s/build.tcl" \
   "$::s/configure --prefix $::config::prefix" \
   "depfile = $::b/build.ninja.d"
 

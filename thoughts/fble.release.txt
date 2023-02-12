@@ -371,5 +371,12 @@ First place to look: standard make targets for this?
    See [15]Making Releases in GNU Coding Standards.
 
 Making Releases Documentation:
-*
+* Need a major and minor version number. Let's say "0" and "1" for example.
+* fable-0.1.tar.gz should unpack to fable-0.1
+* Can include source and non-source files.
+  - non-source files must be up to date with the source and machine
+  independent. Including outputs of Bison to reduce dependencies.
+  - Don't include non-source files that would be modified by building and
+    installing the program.
+* All files world readable (755), directories world writeable (777).
 

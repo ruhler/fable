@@ -363,3 +363,23 @@ I think I should try generating build.ninja in configure. It takes like no
 time at all. Is there anything else we need after that? Everything works great
 then, no?
 
+---
+
+Cleanup idea:
+
+Now that we use a ::config namespace for all config options, why not use that
+to iterate over all the options automatically to display the current options
+and write out config.tcl?
+
+In other words, the configure script sets up the ::config namespace, it
+reports those entries to users, writes them out to config.tcl, and then
+invokes build.tcl.
+
+No need for config.tcl.in. No need for calling sed to do substition. Document
+all the configuration options in the configure script.
+
+Note, by the way, config.tcl is a great back door for users to manually craft
+their configuration.
+
+Let's try it.
+
