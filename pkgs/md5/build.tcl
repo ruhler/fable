@@ -15,7 +15,7 @@ namespace eval "pkgs/md5" {
 
   # fble-md5 program.
   stdio $::b/pkgs/md5/fble-md5 "/Md5/Main%" "md5"
-  install_bin $::b/pkgs/md5/fble-md5
+  install $::b/pkgs/md5/fble-md5 $::config::bindir/fble-md5
 
   # fble-md5 test
   build $::b/pkgs/md5/fble-md5.in "" "echo hello > $::b/pkgs/md5/fble-md5.in"

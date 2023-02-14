@@ -20,8 +20,8 @@ namespace eval "test" {
     bin $::b/test/$base "$::b/test/$base.o $libs" ""
     bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" ""
   }
-  install_bin $::b/test/fble-test
-  install_bin $::b/test/fble-perf-profile
+  install $::b/test/fble-test $::config::bindir/fble-test
+  install $::b/test/fble-perf-profile $::config::bindir/fble-perf-profile
 
   # fble-profile-test
   test $::b/test/fble-profile-test.tr $::b/test/fble-profile-test \

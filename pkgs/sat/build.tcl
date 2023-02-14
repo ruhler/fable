@@ -16,5 +16,5 @@ namespace eval "pkgs/sat" {
 
   # fble-sat binary
   stdio $::b/pkgs/sat/fble-sat "/Sat/Main%" "sat"
-  install_bin $::b/pkgs/sat/fble-sat
+  install $::b/pkgs/sat/fble-sat $::config::bindir/fble-sat
 }

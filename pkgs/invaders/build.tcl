@@ -13,6 +13,6 @@ namespace eval "pkgs/invaders" {
 
   if $::config::enable_fble_app {
     app $::b/pkgs/invaders/fble-invaders "/Invaders/AppIO%" "invaders"
-    install_bin $::b/pkgs/invaders/fble-invaders
+    install $::b/pkgs/invaders/fble-invaders $::config::bindir/fble-invaders
   }
 }

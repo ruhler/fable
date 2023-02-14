@@ -23,7 +23,7 @@ namespace eval "bin" {
       "$::b/bin/$base.o $::b/lib/libfble.a" ""
     bin_cov $::b/bin/$base.cov \
       "$::b/bin/$base.o $::b/lib/libfble.cov.a" ""
-    install_bin $::b/bin/$base
+    install $::b/bin/$base $::config::bindir/$base
 
     # Man page.
     build $::b/bin/$base.1 \

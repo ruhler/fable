@@ -14,6 +14,6 @@ namespace eval "pkgs/pinball" {
 
   if $::config::enable_fble_app {
     app $::b/pkgs/pinball/fble-pinball "/Pinball/AppIO%" "pinball"
-    install_bin $::b/pkgs/pinball/fble-pinball
+    install $::b/pkgs/pinball/fble-pinball $::config::bindir/fble-pinball
   }
 }

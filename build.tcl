@@ -157,16 +157,6 @@ proc install { src dest } {
   build $dest $src "cp $src $dest"
 }
 
-# install_bin --
-#   Cause the given binary to be installed when the install target is invoked.
-#
-# Inputs:
-#   binary - the binary to install.
-proc install_bin { binary } {
-  set target $::config::bindir/[file tail $binary]
-  install $binary $target
-}
-
 # install_man1 --
 #   Cause the given man page to be installed when the install target is
 #   invoked.

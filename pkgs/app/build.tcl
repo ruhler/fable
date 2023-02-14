@@ -24,7 +24,7 @@ namespace eval "pkgs/app" {
     bin $::b/pkgs/app/fble-app \
       "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" \
       "$::config::sdl_libs $::config::gl_libs"
-    install_bin $::b/pkgs/app/fble-app
+    install $::b/pkgs/app/fble-app $::config::bindir/fble-app
 
     # Build an fble-app compiled binary.
     # This is only available when enable_fble_app configuration is enabled.
