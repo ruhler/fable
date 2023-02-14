@@ -380,3 +380,176 @@ Making Releases Documentation:
     installing the program.
 * All files world readable (755), directories world writeable (777).
 
+Anything ninja supports?
+* Not that I see.
+
+So, conceptually, it's clear. We want a build target that knows how to package
+everything up. 
+
+The question is what non-source files we want to include in the distribution
+and where/how that all works out.
+
+Let's go by dependency:
+  expect - can be skipped without running check target.
+  binutils - needed at build time (architecture specific).
+  bison - can generate the parser c file at distribution time.
+  gcc - needed at build time.
+  gdb - only for tests.
+  diffutils, grep - for tests.
+  groff-base - can be done at distribution time.
+  source-highlight - could be done at distribution time.
+  ninja-build - needed at runtime.
+  libgl-dev, libsdl2-dev - needed at runtime, can be skipped.
+  tcl8.6 - needed for configure.
+
+So, let's review the non-source files we may want to include in the dist:
+* Docs, including man pages and www.
+* parse.tab.c
+* *.usage.h files.
+
+That's pretty straight forward.
+
+What mechanism to use for this, given that source directory is different from
+build directory?
+
+The suggestion from the gnu docs is to generate and use those from the source
+directory. Add a 'maintainer-clean' option to remove those files.
+
+Note: we don't want to include .git/ metadata in the release tarball.
+
+I suggest the following:
+* Update those 'dist-non-source' files to be built in $::s instead of $::b.
+* Add 'clean', 'dist-clean', and 'maintainer-clean' targets.
+  clean: cleans up non-config generated files.
+  distclean: clean + remove config.tcl and build.ninja.
+  maintainer-clean: distclean + remove dist-non-source files.
+* Add a dist target that copies all source and dist-non-source files into a
+  build subdirectory and packages up a tarball for it.
+* Clearly document in README which dependencies are needed for which things.
+* Add a TAGS file to dist-non-source.
+* Add .gitignore for dist-non-source files.
+
+That all sounds straight forward, but I fear the build.tcl files aren't
+organized in a way currently to make this easily modular and correct. Some
+better cleanup and structure to those will help.
+
+Hey, this means we can add a TAGS file as part of dist-non-source. That would
+be convenient. 
+
+---
+
+How to organize build files:
+* source files: files checked into git.
+* install: files installed into the install directory.
+* dist-non-source: generated files included in release tarball.
+   - Anything generated, not installed, that doesn't depend on the
+     architecture.
+* build-non-source: generated files not included in release tarball.
+   - Anything generated that does depend on the architecture.
+
+Categories of non-source files:
+* dist: things for the dist tarball
+* www: things for the generated www
+* test: things needed for test
+
+Build targets:
+* all: all non-source files needed for install.
+  This is the default.
+* install: all install files.
+* dist: makes the release tarball
+* www: makes the website.
+* test: makes the tests.
+* cov: generated code coverage output.
+* check: everything except install, includes all, test, dist, www, cov.
+* clean/distclean/maintainer-clean, depending on what ninja supports.
+  To clean appropriate pieces.
+
+Each build.tcl file should identify it's:
+* source files: need to be copied to dist.
+* dist-non-source
+* install targets
+* install sources: what gets made by all.
+* tests.
+* www.
+
+Build files to have:
+build.tcl - top level, includes sub-build files.
+  include
+  lib
+  bin
+  fbld
+  test
+  spec
+  tutorials
+  www
+  pkgs/*
+
+Some questions around:
+* Should we have a separate www directory? Who generates the www?
+  For example, tutorials go to www. Who should be responsible for saying that?
+  I think treat www similar to install. Separate build.tcl files mark things
+  as www. Either the www/build.tcl file defines the top level and tcl procs to
+  help with that, or just move that to the top level build.tcl file.
+* spec tests rules separate from test directory?
+  I think, don't worry too much about it. Whatever is easiest. Fine to keep
+  things organized as is, but we will want to add a spec/build.tcl file.
+
+I would like to separate the top level build.tcl build target parts from the
+build infrastructure/library. But that's not too important. We can always do
+it later however feels right. I think do try to move helper functions into sub
+build.tcl files where it makes sense, such as fbleobj.
+
+In terms of implementing targets, let's have procs to identify things as
+follows:
+* dist - anything to include in the release tarball, including source and
+  dist-non-source.
+* install - marks the source of the thing to install.
+* www - anything for generated www.
+* test - tests.
+
+That should be enough for the targets:
+* all: any install source
+* install: any install target
+* dist: any dist
+* test: tests.
+* www: www.
+* check: all, dist, test, www
+
+To implement 'clean', I guess we could have:
+  clean: clean all
+  distclean: clean -g all 
+  maintainer-clean: clean -g
+
+Assuming I figure out how to mark the generator rule so config doesn't have to
+be re-run.
+
+In general, I think it's fine to have higher level abstractions responsible
+for calling test, install, dist, etc. As long as its clear you would always
+want to do that. To reduce clutter.
+
+That's the high level vision. Let's see if we can get there little by little.
+
+I feel like having a separate build/ directory with the build library, and
+maybe a readme file would help with clarity and cleanliness. Not sure. Maybe
+we just need to document build.tcl very clearly. Yeah. Let's document
+build.tcl very clearly, from the top. And then work at a single build.tcl file
+at a time with cleanup until we end up with the above proposed structure.
+
+For out directory, have:
+* Something corresponding to each build.tcl directory.
+* dist/fble-0.1/...
+  dist/fble-0.1.tar.gz
+* www/...
+
+And add a $::d directory for dist-non-source files. Which will be set to the
+same as $::s, but gives us more flexibility/documentation over what is what.
+
+---
+
+Top level build directory:
+bin/ book/ fbld/ include/ lib/ pkgs/ spec/ test/ thoughts/ tutorials/ vim/ www/
+build.tcl configure deps.tcl README.fbld TODO.txt
+
+Listing all the files explicitly, like thoughts/*, is going to be tedious I
+fear. And error prone. Hmm...
+

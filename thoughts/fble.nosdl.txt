@@ -196,6 +196,27 @@ Yeah, I think capitalize.
 
 Cool. So we have a plan for this. Let's go in parts.
 
+---
 
+Skip capitalization. I made sdl optional. Two things left are:
+* decide if it should default enabled or not.
+* update the README and other documentation.
+
+What should the default setting be? I suppose it's a question of how hard it
+is for a user to learn about the other option.
+
+default enabled:
+ - have SDL/OpenGL: Get the apps. Great.
+ - don't have SDL/OpenGL: Build fails. If we give an error message, it's
+    easy to see how to disable.
+
+default disabled:
+ - have SDL/OpenGL: Silently don't get the apps.
+ - don't have SDL/OpenGL: Build works. No extra effort.
+
+I think we should default enable to avoid the 'silently don't get the apps
+case'. Just make it clear in the error message if sdl isn't installed that
+there is an option to disable it.
+ 
 
 

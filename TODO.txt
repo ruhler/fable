@@ -1,5 +1,8 @@
 * Update documentation for how to enable/disable SDL/OpenGL dependencies.
- - Decide whether fble-app should be enable by default or not.
+ - Add nice error message if SDL not installed when fble-app is enabled saying
+   how to disable fble-app.
+
+* Update github workflow to test both with and without SDL.
 
 * Define '::app' as a namespace instead?
  - Same with ::stdio, etc?

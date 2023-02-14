@@ -146,16 +146,25 @@ proc bin_cov { bin objs lflags } {
   all $bin
 }
 
+# install --
+#   Installs a file to the given location.
+#   Marks the destination as an 'install' target and the source as an 'all'
+#   target.
+set ::installs [list]
+proc install { src dest } {
+  all $src
+  lappend ::installs $dest
+  build $dest $src "cp $src $dest"
+}
+
 # install_bin --
 #   Cause the given binary to be installed when the install target is invoked.
 #
 # Inputs:
 #   binary - the binary to install.
-set ::installs [list]
 proc install_bin { binary } {
   set target $::config::bindir/[file tail $binary]
-  build $target $binary "install $binary $::config::bindir"
-  lappend ::installs $target
+  install $binary $target
 }
 
 # install_header --
@@ -166,8 +175,7 @@ proc install_bin { binary } {
 #   header - the header file to install.
 proc install_header { header } {
   set target $::config::includedir/fble/[file tail $header]
-  build $target $header "cp $header $target"
-  lappend ::installs $target
+  install $header $target
 }
 
 # install_lib --
@@ -178,8 +186,7 @@ proc install_header { header } {
 #   lib - the header file to install.
 proc install_lib { lib } {
   set target $::config::libdir/[file tail $lib]
-  build $target $lib "cp $lib $target"
-  lappend ::installs $target
+  install $lib $target
 }
 
 # install_man1 --
@@ -189,8 +196,7 @@ proc install_lib { lib } {
 #   target - the man page to install.
 proc install_man1 { target } {
   set install_target $::config::mandir/man1/[file tail $target]
-  build $install_target $target "cp $target $install_target"
-  lappend ::installs $install_target
+  install $target $install_target
 }
 
 # test --
@@ -313,8 +319,7 @@ proc pkg {name deps objs} {
       lappend objs $::b/pkgs/$name/$x.o
 
       set target $::config::datadir/fble/$name/$x
-      build $target $::s/pkgs/$name/$x "cp $::s/pkgs/$name/$x $target"
-      lappend ::installs $target
+      install $::s/pkgs/$name/$x $target
     }
   }
 
@@ -360,7 +365,7 @@ build $::b/summary.tr \
 # Phony targets.
 phony "all" $::all
 phony "check" [list $::b/summary.tr all www]
-phony "install" [list $::installs]
+phony "install" $::installs
 puts $::build_ninja "default all"
 
 # build.ninja
