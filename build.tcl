@@ -167,17 +167,6 @@ proc install_bin { binary } {
   install $binary $target
 }
 
-# install_header --
-#   Cause the given header file to be installed when the install target is
-#   invoked.
-#
-# Inputs:
-#   header - the header file to install.
-proc install_header { header } {
-  set target $::config::includedir/fble/[file tail $header]
-  install $header $target
-}
-
 # install_man1 --
 #   Cause the given man page to be installed when the install target is
 #   invoked.
