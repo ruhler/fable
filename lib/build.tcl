@@ -41,7 +41,7 @@ namespace eval "lib" {
   lib "$::b/lib/libfble.a" $objs
   lib "$::b/lib/libfble.cov.a" $objs_cov
 
-  install_lib $::b/lib/libfble.a
+  install $::b/lib/libfble.a $::config::libdir/libfble.a
 
   set ::fble_objs_cov $objs_cov
 }

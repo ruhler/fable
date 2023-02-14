@@ -178,17 +178,6 @@ proc install_header { header } {
   install $header $target
 }
 
-# install_lib --
-#   Cause the given library file to be installed when the install target is
-#   invoked.
-#
-# Inputs:
-#   lib - the header file to install.
-proc install_lib { lib } {
-  set target $::config::libdir/[file tail $lib]
-  install $lib $target
-}
-
 # install_man1 --
 #   Cause the given man page to be installed when the install target is
 #   invoked.
