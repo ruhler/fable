@@ -313,8 +313,9 @@ build $::b/summary.tr \
 
 # Phony targets.
 phony "all" $::all
-phony "check" [list $::b/summary.tr all www]
+phony "test" $::b/summary.tr
 phony "install" $::install
+phony "check" [list test all www]
 puts $::build_ninja "default all"
 
 # build.ninja

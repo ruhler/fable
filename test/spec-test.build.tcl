@@ -3,6 +3,7 @@ namespace eval "spec-test" {
   set deps [list \
     $::s/test/spec-test.run.tcl \
     $::b/lib/libfble.a \
+    $::b/bin/fble-compile.cov \
     $::b/bin/fble-disassemble.cov \
     $::b/test/fble-test.cov \
     $::b/test/fble-mem-test.cov \
