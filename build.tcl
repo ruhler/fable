@@ -157,16 +157,6 @@ proc install { src dest } {
   build $dest $src "cp $src $dest"
 }
 
-# install_man1 --
-#   Cause the given man page to be installed when the install target is
-#   invoked.
-# Inputs:
-#   target - the man page to install.
-proc install_man1 { target } {
-  set install_target $::config::mandir/man1/[file tail $target]
-  install $target $install_target
-}
-
 # test --
 #   Build a test result.
 #
