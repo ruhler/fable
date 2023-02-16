@@ -61,13 +61,6 @@ proc phony { target dependencies } {
   puts $::build_ninja "build $target: phony [join $dependencies]"
 }
 
-# Indicate that the target should be included in the list of default targets
-# when running 'ninja all'
-set ::all [list]
-proc all { target } {
-  lappend ::all $target
-}
-
 # obj --
 #   Builds a .o file.
 #
@@ -116,7 +109,6 @@ proc asm { obj src args } {
 #   objs - the list of .o files to include in the library.
 proc lib { lib objs } {
   build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
-  all $lib
 }
 
 # bin --
@@ -129,7 +121,6 @@ proc lib { lib objs } {
 proc bin { bin objs lflags } {
   set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
-  all $bin
 }
 
 # bin_cov --
@@ -143,17 +134,17 @@ proc bin_cov { bin objs lflags } {
   #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
-  all $bin
 }
 
 # install --
 #   Installs a file to the given location.
 #   Marks the destination as an 'install' target and the source as an 'all'
 #   target.
-set ::installs [list]
+set ::all [list]
+set ::install [list]
 proc install { src dest } {
-  all $src
-  lappend ::installs $dest
+  lappend ::all $src
+  lappend ::install $dest
   build $dest $src "cp $src $dest"
 }
 
@@ -323,7 +314,7 @@ build $::b/summary.tr \
 # Phony targets.
 phony "all" $::all
 phony "check" [list $::b/summary.tr all www]
-phony "install" $::installs
+phony "install" $::install
 puts $::build_ninja "default all"
 
 # build.ninja
