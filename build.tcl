@@ -201,51 +201,6 @@ proc dirs { root dir } {
   return $l
 }
 
-# Compile a .fble file to .o via aarch64.
-#
-# Inputs:
-#   obj - the name of the .o file to generate.
-#   compile - the name of the fble-compile executable.
-#   compileargs - args to pass to the fble compiler.
-#   args - additional dependencies, typically including the .fble file.
-proc fbleobj_aarch64 { obj compile compileargs args } {
-  set s [string map {.o .s} $obj]
-  build $s "$compile $args" "$compile $compileargs > $s"
-  set cmd "as -o $obj $s"
-  build $obj "$s $args" $cmd
-}
-
-# Compile a .fble file to .o via c.
-#
-# Inputs:
-#   obj - the name of the .o file to generate.
-#   compile - the name of the fble-compile executable.
-#   compileargs - args to pass to the fble compiler.
-#   args - additional dependencies, typically including the .fble file.
-proc fbleobj_c { obj compile compileargs args } {
-  set c [string map {.o .c} $obj]
-  build $c "$compile $args" "$compile -t c $compileargs > $c"
-  set cmd "gcc -c -o $obj -I $::s/include $c"
-  build $obj "$c $args" $cmd
-}
-
-# Compile a .fble file to .o.
-#
-# Via whatever target it thinks is best.
-#
-# Inputs:
-#   obj - the name of the .o file to generate.
-#   compile - the name of the fble-compile executable.
-#   compileargs - args to pass to the fble compiler.
-#   args - additional dependencies, typically including the .fble file.
-proc fbleobj { obj compile compileargs args } {
-  if {$::arch == "aarch64"} {
-    fbleobj_aarch64 $obj $compile $compileargs {*}$args
-  } else {
-    fbleobj_c $obj $compile $compileargs {*}$args
-  }
-}
-
 # Any time we run glob over a directory, add that directory to this list.
 # We need to make sure to include these directories as a dependency on the
 # generation of build.ninja.
