@@ -19,4 +19,20 @@ namespace eval "tutorials" {
     $::s/tutorials/Modules/Bit4/Show.fble \
     $::s/tutorials/Modules/Main.fble] \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/Modules -m /Main%"
+
+  # Tutorial table of contents
+  ::html_doc $::b/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
+  www $::b/www/tutorials/Tutorials.html
+
+  # Tutorials
+  lappend ::build_ninja_deps $::s/tutorials
+  foreach {x} [glob $::s/tutorials/*.fbld] {
+    if [string equal $x $::s/tutorials/Tutorials.fbld] {
+      continue
+    }
+
+    set base [file rootname [file tail $x]]
+    ::html_tutorial $::b/www/tutorials/$base.html $::s/tutorials/$base.fbld
+    www $::b/www/tutorials/$base.html
+  }
 }

@@ -27,4 +27,8 @@ namespace eval "fbld" {
   proc ::html_tutorial { target source args } {
     html_doc $target $source [list $::s/fbld/tutorial.tcl {*}$args]
   }
+
+  # Fbld Spec www.
+  ::html_doc $::b/www/fbld/fbld.html $::s/fbld/fbld.fbld
+  www $::b/www/fbld/fbld.html
 }

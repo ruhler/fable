@@ -166,6 +166,12 @@ proc test { tr deps cmd } {
     "$::s/test/log $tr $::s/test/test $name $cmd"
 }
 
+# Mark a target as belonging to the www target.
+set ::www [list]
+proc www { target } {
+  lappend ::www $target
+}
+
 # testsuite --
 #   Build a test result from a test suite.
 #
@@ -285,10 +291,10 @@ set build_tcls [list \
   $::s/lib/build.tcl \
   $::s/bin/build.tcl \
   $::s/fbld/build.tcl \
+  $::s/spec/build.tcl \
   $::s/test/build.tcl \
   $::s/test/spec-test.build.tcl \
   $::s/tutorials/build.tcl \
-  $::s/www/build.tcl \
   $::s/pkgs/core/build.tcl \
   $::s/pkgs/app/build.tcl \
   $::s/pkgs/md5/build.tcl \
@@ -305,6 +311,10 @@ foreach build_tcl $build_tcls {
   source $build_tcl
 }
 
+# README file www
+::html_doc $::b/www/index.html $::s/README.fbld
+www $::b/www/index.html
+
 # Test summary.
 build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
 build $::b/summary.tr \
@@ -314,8 +324,9 @@ build $::b/summary.tr \
 # Phony targets.
 phony "all" $::all
 phony "test" $::b/summary.tr
-phony "install" $::install
+phony "www" $::www
 phony "check" [list test all www]
+phony "install" $::install
 puts $::build_ninja "default all"
 
 # build.ninja

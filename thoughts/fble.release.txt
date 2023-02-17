@@ -593,3 +593,14 @@ Maybe let's skip that and clean up www first.
   - Each subdirectory is responsible for its own part of www
   - top level build.tcl is responsible for putting it all together.
 
+---
+
+For www, do I want to generate directly into 'www', or do I want to generate
+into the current directory and copy to www?
+
+Seems like a waste to make copies. So I guess we go straight to www. And have
+a proc www to mark something as www? If we want, we could define a $www var to
+say where www is.
+
+Or... make www part of ::html_*?
+
