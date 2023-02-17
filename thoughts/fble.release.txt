@@ -553,3 +553,43 @@ build.tcl configure deps.tcl README.fbld TODO.txt
 Listing all the files explicitly, like thoughts/*, is going to be tedious I
 fear. And error prone. Hmm...
 
+---
+
+How to clean up organization of test target?
+
+::tests
+proc tests
+proc testsuite
+phony test
+directory test/
+
+Tests depend on the contents of the test/ directory. So we could define it
+there. But I want all phony targets in build.tcl, which suggests we define it
+there.
+
+Or maybe we have tests/detail.tr and tests/summary.tr, all described in the
+test/ directory, and put the phony in the top level build?
+
+Again, the reason to do this is to hopefully simplify the top level build.tcl
+file. I guess it's a question about our assumptions of what's defined where.
+Before it was:
+
+* Shared things go into build.tcl
+ - Except things like app, stdio, etc.
+
+This is suggesting:
+* Shared things go where their dependencies are built.
+
+It's a question about who assumes what is built where.
+
+It would at least be nice for all the phony targets to be defined in the top
+level build.tcl, so it's clear what the different targets are. How about... I
+don't know.
+
+Maybe let's skip that and clean up www first.
+
+1. Add helper functions for building fbld files.
+2. Move stuff out of www/build.tcl 
+  - Each subdirectory is responsible for its own part of www
+  - top level build.tcl is responsible for putting it all together.
+

@@ -166,7 +166,7 @@ proc test { tr deps cmd } {
     "$::s/test/log $tr $::s/test/test $name $cmd"
 }
 
-# test --
+# testsuite --
 #   Build a test result from a test suite.
 #
 # Inputs:

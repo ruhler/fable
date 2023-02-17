@@ -2,29 +2,19 @@ namespace eval "www" {
   set wwws [list]
 
   # README
-  build $::b/www/index.html \
-    "$::s/README.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/html.tcl" \
-    "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/html.tcl < $::s/README.fbld > $::b/www/index.html"
+  ::html_doc $::b/www/index.html $::s/README.fbld
   lappend wwws $::b/www/index.html
 
   # Fbld spec
-  build $::b/www/fbld/fbld.html \
-    "$::s/fbld/fbld.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/html.tcl" \
-    "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/html.tcl < $::s/fbld/fbld.fbld > $::b/www/fbld/fbld.html"
+  ::html_doc $::b/www/fbld/fbld.html $::s/fbld/fbld.fbld
   lappend wwws $::b/www/fbld/fbld.html
 
   # Fble spec
-  build $::b/www/spec/fble.html \
-    "$::s/spec/fble.fbld $::s/spec/fble.fbld.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/html.tcl" \
-    "tclsh8.6 $::s/fbld/runfbld.tcl $::s/spec/fble.fbld.tcl $::s/fbld/html.tcl < $::s/spec/fble.fbld > $::b/www/spec/fble.html"
+  ::html_doc $::b/www/spec/fble.html $::s/spec/fble.fbld $::s/spec/fble.fbld.tcl
   lappend wwws $::b/www/spec/fble.html
 
   # Tutorial table of contents
-  build "$::b/www/tutorials/index.html" "$::s/tutorials/Tutorials.adoc" \
-    "asciidoc -o $::b/www/tutorials/index.html $::s/tutorials/Tutorials.adoc"
-  build $::b/www/tutorials/Tutorials.html \
-    "$::s/tutorials/Tutorials.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/html.tcl" \
-    "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/html.tcl < $::s/tutorials/Tutorials.fbld > $::b/www/tutorials/Tutorials.html"
+  ::html_doc $::b/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
   lappend wwws $::b/www/tutorials/Tutorials.html
 
   # Tutorials
@@ -35,9 +25,7 @@ namespace eval "www" {
     }
 
     set base [file rootname [file tail $x]]
-    build $::b/www/tutorials/$base.html \
-      "$::s/tutorials/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/tutorial.tcl $::s/fbld/html.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/tutorial.tcl $::s/fbld/html.tcl < $::s/tutorials/$base.fbld > $::b/www/tutorials/$base.html"
+    ::html_tutorial $::b/www/tutorials/$base.html $::s/tutorials/$base.fbld
     lappend wwws $::b/www/tutorials/$base.html
   }
 
