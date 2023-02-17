@@ -11,7 +11,9 @@ namespace eval "spec-test" {
   ]
 
   foreach dir [dirs $::s/spec ""] {
-    foreach {fble} [lsort [build_glob $::s/spec/$dir -tails -nocomplain -type f $dir/*.fble]] {
+    foreach {x} [lsort [build_glob $::s/spec/$dir -tails -nocomplain -type f *.fble]] {
+      set fble $dir$x
+
       # Add quotes around module path words so we can name spec tests to match
       # spec section numbers, e.g. 2.2-Kinds.
       set mpath "/\\'[string map { "/" "\\'/\\'"} [file rootname $fble]]\\'%"

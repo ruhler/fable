@@ -625,3 +625,32 @@ build_glob { dir args } {
 }
 
 Cool. That sounds good.
+
+---
+
+Okay. I think the initial cleanup of build.tcl is done. Next step is to
+prepare for the 'dist' target.
+
+We want to include two things in dist. source and non-source dist. So...
+
+Either two separate procs:
+  dist_src
+  dist_non_src
+
+Or one:
+  dist
+
+Why distinguish between them?
+
+I remember. We need to figure out what directory they belong to. If we have
+dist_src, we can imply relative to the source directory.
+
+So, how about: dist_s, dist_d, and use $::d for generated source directory.
+
+For example, to mark $::s/README.fbld as source, use:
+
+dist_s README.fbld
+
+The behavior will be to copy $::s/$target to $::b/fble-0.1/$target for the
+'dist' command.
+
