@@ -14,6 +14,9 @@ source config.tcl
 set ::s $::config::srcdir
 set ::b $::config::builddir
 
+# ::d is for non-source files that should be included in the distribution
+set ::d $::config::srcdir
+
 set ::build_ninja_filename [lindex $argv 0]
 set ::build_ninja [open "$::build_ninja_filename.tmp" "w"]
 set ::arch "[exec arch]"
@@ -176,6 +179,24 @@ proc testsuite { tr deps cmd } {
     "$::s/test/log $tr $cmd"
 }
 
+set ::dist [list]
+
+# Mark a source file for distribution.
+# For example: dist_s README.fbld
+proc dist_s { file } {
+  lappend ::dist $::b/fble-0.1/$file
+  build $::b/fble-0.1/$file $::s/$file \
+    "cp $::s/$file $::b/fble-0.1/$file"
+}
+
+# Mark a non-source file for distribution.
+# For example: dist_d README.txt
+proc dist_d { file } {
+  lappend ::dist $::b/fble-0.1/$file
+  build $::b/fble-0.1/$file $::d/$file \
+    "cp $::d/$file $::b/fble-0.1/$file"
+}
+
 # Any time we run glob over a directory, add that directory to this list.
 # We need to make sure to include these directories as a dependency on the
 # generation of build.ninja.
@@ -216,6 +237,16 @@ build_tcl $::s/test/spec-test.build.tcl
 build_tcl $::s/tutorials/build.tcl
 build_tcl $::s/pkgs/build.tcl
 
+build_tcl $::s/book/build.tcl
+build_tcl $::s/thoughts/build.tcl
+build_tcl $::s/vim/build.tcl
+
+dist_s build.tcl
+dist_s configure
+dist_s deps.tcl
+dist_s README.fbld
+dist_s TODO.txt
+
 # README file www
 ::html_doc $::b/www/index.html $::s/README.fbld
 www $::b/www/index.html
@@ -225,6 +256,10 @@ build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
 build $::b/summary.tr \
   "$::s/test/log $::b/detail.tr $::s/test/tests.tcl" \
   "$::s/test/log $::b/summary.tr tclsh8.6 $::s/test/tests.tcl < $::b/detail.tr"
+
+# Release tarball
+build $::b/fble-0.1.tar.gz $::dist \
+  "tar --create --gzip --directory $::b --file fble-0.1.tar.gz fble-0.1"
 
 # Phony targets.
 # phony --
@@ -243,6 +278,7 @@ proc phony { target dependencies } {
 phony "all" $::all
 phony "test" $::b/summary.tr
 phony "www" $::www
+phony "dist" $::b/fble-0.1.tar.gz
 phony "check" [list test all www]
 phony "install" $::install
 puts $::build_ninja "default all"

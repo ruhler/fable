@@ -654,3 +654,8 @@ dist_s README.fbld
 The behavior will be to copy $::s/$target to $::b/fble-0.1/$target for the
 'dist' command.
 
+How do I feel about building dist_d in the source directory? It has to be that
+way. It's the only way it can work when using a dist. But can ninja deal with
+it properly? Something about timestamps matters? It should be okay I think, as
+long as we preserve timestamps in the tar file. If we the tar file gets
+extracted out of order, then it could be more troublesome.

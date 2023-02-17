@@ -1,3 +1,5 @@
+* Figure out a nice way to specify version number for 'dist' build target.
+
 * Update documentation for how to enable/disable SDL/OpenGL dependencies.
  - Add nice error message if SDL not installed when fble-app is enabled saying
    how to disable fble-app.
