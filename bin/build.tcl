@@ -1,6 +1,11 @@
 namespace eval "bin" {
+  dist_s bin/build.tcl
+
   foreach {x} [build_glob $::s/bin *.c] {
     set base [file rootname [file tail $x]]
+
+    dist_s bin/$base.c
+    dist_s bin/$base.fbld
 
     test $::b/bin/$base.fbld.tr \
       "$::s/bin/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/check.tcl $::s/fbld/usage.man.tcl" \
