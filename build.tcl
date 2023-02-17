@@ -48,19 +48,6 @@ proc build { targets dependencies command args } {
   }
 }
 
-# phony --
-#   Sets an phony target for building the given collection of dependencies.
-#
-# As per ninja, this should be called after the dependencies have been
-# defined.
-#
-# Inputs:
-#   target - the name of the phony target
-#   dependencies - the dependencies to build as part of the phony target.
-proc phony { target dependencies } {
-  puts $::build_ninja "build $target: phony [join $dependencies]"
-}
-
 # obj --
 #   Builds a .o file.
 #
@@ -148,6 +135,12 @@ proc install { src dest } {
   build $dest $src "cp $src $dest"
 }
 
+# Mark a target as belonging to the www target.
+set ::www [list]
+proc www { target } {
+  lappend ::www $target
+}
+
 # test --
 #   Build a test result.
 #
@@ -164,12 +157,6 @@ proc test { tr deps cmd } {
   set name [file rootname $tr]
   build $tr "$::s/test/log $::s/test/test $deps" \
     "$::s/test/log $tr $::s/test/test $name $cmd"
-}
-
-# Mark a target as belonging to the www target.
-set ::www [list]
-proc www { target } {
-  lappend ::www $target
 }
 
 # testsuite --
@@ -240,6 +227,19 @@ build $::b/summary.tr \
   "$::s/test/log $::b/summary.tr tclsh8.6 $::s/test/tests.tcl < $::b/detail.tr"
 
 # Phony targets.
+# phony --
+#   Sets an phony target for building the given collection of dependencies.
+#
+# As per ninja, this should be called after the dependencies have been
+# defined.
+#
+# Inputs:
+#   target - the name of the phony target
+#   dependencies - the dependencies to build as part of the phony target.
+proc phony { target dependencies } {
+  puts $::build_ninja "build $target: phony [join $dependencies]"
+}
+
 phony "all" $::all
 phony "test" $::b/summary.tr
 phony "www" $::www
