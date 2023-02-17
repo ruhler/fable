@@ -189,22 +189,29 @@ proc testsuite { tr deps cmd } {
     "$::s/test/log $tr $cmd"
 }
 
+# Any time we run glob over a directory, add that directory to this list.
+# We need to make sure to include these directories as a dependency on the
+# generation of build.ninja.
+set ::build_ninja_deps [list]
+
+# Perform glob on files in the given dir.
+# args are additional arguments passed to the standard tcl glob command.
+proc build_glob {dir args} {
+  lappend ::build_ninja_deps $dir 
+  glob -directory $dir {*}$args
+}
+
 # Returns the list of all subdirectories, recursively, of the given directory.
 # The 'root' directory will not be included as a prefix in the returned list
 # of directories.
 # 'dir' should be empty or end with '/'.
 proc dirs { root dir } {
   set l [list $dir]
-  foreach {x} [glob -tails -directory $root -nocomplain -type d $dir*] {
+  foreach {x} [build_glob $root -tails -nocomplain -type d $dir*] {
     set l [concat $l [dirs $root "$x/"]]
   }
   return $l
 }
-
-# Any time we run glob over a directory, add that directory to this list.
-# We need to make sure to include these directories as a dependency on the
-# generation of build.ninja.
-set ::build_ninja_deps [list]
 
 # Source a build.tcl file.
 proc build_tcl { file } {

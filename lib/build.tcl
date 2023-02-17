@@ -28,8 +28,7 @@ namespace eval "lib" {
   lappend objs_cov $::b/lib/parse.tab.cov.o
 
   # general .o files
-  lappend ::build_ninja_deps "$::s/lib"
-  foreach {x} [glob -tails -directory $::s/lib *.c] {
+  foreach {x} [build_glob $::s/lib -tails *.c] {
     set object $::b/lib/[string map {.c .o} $x]
     set object_cov $::b/lib/[string map {.c .cov.o} $x]
     obj $object $::s/lib/$x "-I $::s/include"

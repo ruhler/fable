@@ -14,8 +14,8 @@ namespace eval "pkgs" {
     }
 
     foreach dir [dirs $::s/pkgs/$name ""] {
-      lappend ::build_ninja_deps "$::s/pkgs/$name/$dir"
-      foreach {x} [glob -tails -directory $::s/pkgs/$name -nocomplain -type f $dir/*.fble] {
+      foreach {y} [build_glob $::s/pkgs/$name/$dir -tails -nocomplain -type f *.fble] {
+        set x $dir$y
         set mpath "/[file rootname $x]%"
 
         # Generate a .d file to capture dependencies.

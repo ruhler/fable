@@ -1,5 +1,5 @@
 namespace eval "bin" {
-  foreach {x} [glob $::s/bin/*.c] {
+  foreach {x} [build_glob $::s/bin *.c] {
     set base [file rootname [file tail $x]]
 
     test $::b/bin/$base.fbld.tr \

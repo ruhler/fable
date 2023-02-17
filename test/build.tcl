@@ -13,8 +13,7 @@ namespace eval "test" {
   lib $::b/test/libfbletest.a $objs
 
   # test binaries
-  lappend ::build_ninja_deps "$::s/test"
-  foreach {x} [glob $::s/test/fble-*.c] {
+  foreach {x} [build_glob $::s/test fble-*.c] {
     set base [file rootname [file tail $x]]
     obj $::b/test/$base.o $x $cflags
     bin $::b/test/$base "$::b/test/$base.o $libs" ""

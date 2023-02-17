@@ -25,8 +25,7 @@ namespace eval "tutorials" {
   www $::b/www/tutorials/Tutorials.html
 
   # Tutorials
-  lappend ::build_ninja_deps $::s/tutorials
-  foreach {x} [glob $::s/tutorials/*.fbld] {
+  foreach {x} [build_glob $::s/tutorials *.fbld] {
     if [string equal $x $::s/tutorials/Tutorials.fbld] {
       continue
     }

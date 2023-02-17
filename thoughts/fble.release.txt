@@ -604,3 +604,24 @@ say where www is.
 
 Or... make www part of ::html_*?
 
+---
+
+Clean up of globs?
+
+Uses:
+* [glob $::s/bin/*.c]
+* [glob $::s/include/fble/*.h]
+* [glob $::s/tutorials/*.fbld]
+* [glob $::s/test/fble-*.c]
+* [glob -tails -directory $::s/pkgs/$name -nocomplain -type f $dir/*.fble]
+* [glob -tails -directory $root -nocomplain -type d $dir*]
+* [glob -tails -directory $::s/lib *.c]
+* [glob -tails -directory $::s/spec -nocomplain -type f $dir/*.fble]
+
+So, two use cases. Maybe I can shift them into one. I want to be able to
+extract the directory. Something like:
+
+build_glob { dir args } {
+}
+
+Cool. That sounds good.

@@ -11,8 +11,7 @@ namespace eval "spec-test" {
   ]
 
   foreach dir [dirs $::s/spec ""] {
-    lappend ::build_ninja_deps "$::s/spec/$dir"
-    foreach {fble} [lsort [glob -tails -directory $::s/spec -nocomplain -type f $dir/*.fble]] {
+    foreach {fble} [lsort [build_glob $::s/spec/$dir -tails -nocomplain -type f $dir/*.fble]] {
       # Add quotes around module path words so we can name spec tests to match
       # spec section numbers, e.g. 2.2-Kinds.
       set mpath "/\\'[string map { "/" "\\'/\\'"} [file rootname $fble]]\\'%"
