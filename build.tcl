@@ -246,70 +246,26 @@ proc fbleobj { obj compile compileargs args } {
   }
 }
 
-# pkg --
-#   Build an fble library package.
-#
-# Inputs:
-#   name - the name of the package, such as 'app'.
-#   deps - list of fble packages (without fble- prefix) this package depends
-#          on.
-#   objs - additional object files to include in the generated library.
-proc pkg {name deps objs} {
-  set cflags "-I $::s/pkgs/$name"
-  foreach dep $deps {
-    append cflags " -I $::s/pkgs/$dep"
-  }
-
-  foreach dir [dirs $::s/pkgs/$name ""] {
-    lappend ::build_ninja_deps "$::s/pkgs/$name/$dir"
-    foreach {x} [glob -tails -directory $::s/pkgs/$name -nocomplain -type f $dir/*.fble] {
-      set mpath "/[file rootname $x]%"
-
-      # Generate a .d file to capture dependencies.
-      build $::b/pkgs/$name/$x.d "$::b/bin/fble-deps $::s/pkgs/$name/$x" \
-        "$::b/bin/fble-deps $cflags -t $::b/pkgs/$name/$x.d -m $mpath > $::b/pkgs/$name/$x.d" \
-        "depfile = $::b/pkgs/$name/$x.d"
-
-      fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
-      lappend objs $::b/pkgs/$name/$x.o
-
-      set target $::config::datadir/fble/$name/$x
-      install $::s/pkgs/$name/$x $target
-    }
-  }
-
-  lib $::b/pkgs/$name/libfble-$name.a $objs
-}
-
 # Any time we run glob over a directory, add that directory to this list.
 # We need to make sure to include these directories as a dependency on the
 # generation of build.ninja.
 set ::build_ninja_deps [list]
 
-set build_tcls [list \
-  $::s/include/build.tcl \
-  $::s/lib/build.tcl \
-  $::s/bin/build.tcl \
-  $::s/fbld/build.tcl \
-  $::s/spec/build.tcl \
-  $::s/test/build.tcl \
-  $::s/test/spec-test.build.tcl \
-  $::s/tutorials/build.tcl \
-  $::s/pkgs/core/build.tcl \
-  $::s/pkgs/app/build.tcl \
-  $::s/pkgs/md5/build.tcl \
-  $::s/pkgs/sat/build.tcl \
-  $::s/pkgs/hwdg/build.tcl \
-  $::s/pkgs/games/build.tcl \
-  $::s/pkgs/invaders/build.tcl \
-  $::s/pkgs/pinball/build.tcl \
-  $::s/pkgs/graphics/build.tcl \
-]
-
-foreach build_tcl $build_tcls {
-  lappend ::build_ninja_deps $build_tcl
-  source $build_tcl
+# Source a build.tcl file.
+proc build_tcl { file } {
+  lappend ::build_ninja_deps $file
+  source $file
 }
+
+build_tcl $::s/include/build.tcl
+build_tcl $::s/lib/build.tcl
+build_tcl $::s/bin/build.tcl
+build_tcl $::s/fbld/build.tcl
+build_tcl $::s/spec/build.tcl
+build_tcl $::s/test/build.tcl
+build_tcl $::s/test/spec-test.build.tcl
+build_tcl $::s/tutorials/build.tcl
+build_tcl $::s/pkgs/build.tcl
 
 # README file www
 ::html_doc $::b/www/index.html $::s/README.fbld
