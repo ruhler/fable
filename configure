@@ -15,6 +15,10 @@ Options:
       enable/disable build fble-app based programs requiring SDL/GL.
   --disable-fble-app
       don't build fble-app based programs requiring SDL/GL.
+
+  --build-non-src-dist
+      If present, build non-source distribution files in the build directory
+      instead of the source directory.
 }
 }
 
@@ -26,6 +30,8 @@ namespace eval "config" {
   # The top level build directory.
   # Inferred from the current directory.
   set builddir "."
+
+  set nonsrcdistdir $srcdir
 
   # The install prefix.
   set prefix "/usr/local"
@@ -61,6 +67,9 @@ namespace eval "config" {
       }
       --disable-fble-app {
         set enable_fble_app no
+      }
+      --build-non-src-dist {
+        set nonsrcdistdr $builddir
       }
       default {
         puts stderr "configure: error: unrecognized option: `$arg'"

@@ -15,7 +15,7 @@ set ::s $::config::srcdir
 set ::b $::config::builddir
 
 # ::d is for non-source files that should be included in the distribution
-set ::d $::config::srcdir
+set ::d $::config::nonsrcdistdir
 
 set ::build_ninja_filename [lindex $argv 0]
 set ::build_ninja [open "$::build_ninja_filename.tmp" "w"]
@@ -198,19 +198,29 @@ set ::version [lindex $version_def 2]
 set ::dist [list]
 
 # Mark a source file for distribution.
-# For example: dist_s README.fbld
+# The file must be under $::s directory.
+# For example: dist_s $::s/README.fbld
 proc dist_s { file } {
-  lappend ::dist $::b/$::version/$file
-  build $::b/$::version/$file $::s/$file \
-    "cp $::s/$file $::b/$::version/$file"
+  if {![string match "$::s/*" $file"]} {
+    error "dist_s argument \'$file\' not under \'$::s\'"
+  }
+  set base [string range $file [string length $::s/] end]
+  lappend ::dist $::b/$::version/$base
+  build $::b/$::version/$base $::s/$base \
+    "cp $::s/$base $::b/$::version/$base"
 }
 
 # Mark a non-source file for distribution.
-# For example: dist_d README.txt
+# The file must be under $::d directory.
+# For example: dist_d $::d/README.txt
 proc dist_d { file } {
-  lappend ::dist $::b/$::version/$file
-  build $::b/$::version/$file $::d/$file \
-    "cp $::d/$file $::b/$::version/$file"
+  if {![string match "$::d/*" $file"]} {
+    error "dist_d argument \'$file\' not under \'$::d\'"
+  }
+  set base [string range $file [string length $::d/] end]
+  lappend ::dist $::b/$::version/$base
+  build $::b/$::version/$base $::d/$base \
+    "cp $::d/$base $::b/$::version/$base"
 }
 
 # Perform glob on files in the given dir.
@@ -252,11 +262,11 @@ build_tcl $::s/book/build.tcl
 build_tcl $::s/thoughts/build.tcl
 build_tcl $::s/vim/build.tcl
 
-dist_s build.tcl
-dist_s configure
-dist_s deps.tcl
-dist_s README.fbld
-dist_s TODO.txt
+dist_s $::s/build.tcl
+dist_s $::s/configure
+dist_s $::s/deps.tcl
+dist_s $::s/README.fbld
+dist_s $::s/TODO.txt
 
 # README file www
 ::html_doc $::b/www/index.html $::s/README.fbld

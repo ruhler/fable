@@ -1033,3 +1033,64 @@ Release process will be:
   number, do so and reset the minor version number.
 
 Easy. No?
+
+---
+
+Next step: revisit the dist api. Get everything included in that that ought to
+be included in it.
+
+Here's a way to work around my unhappiness with generating files into the
+source directory:
+* Have a configure option to specify the $::d directory we use. It should
+  default to the $::s directory.
+* Dist copies things from $::d into the dist source directory.
+* When I build myself, I'll set $::d to the build directory.
+* When someone builds from a release package, they can use the default $::s
+  directory to avoid rebuilding things, or, if they want, rebuild things from
+  scratch to their own $::d directory.
+
+Nice, eh?
+
+Now, do we want general support for putting these things anywhere, or just the
+choice to get it from source or build? What should the configure command line
+option be called?
+
+nonsourcedistbuildir?
+--nsddir?
+--no-dist-src
+--builddir-for-dist
+Honestly, I feel like nsddir is a reasonable name to use.
+--nonsourcedistdir
+
+Okay, I mostly like --nonsourcedistdir for a directory option.
+
+How about for a flag? The flag should have the effect of using the build
+directory for non-source dist files.
+
+--no-non-source-dist
+
+Means don't assume you have non-source dist files in your source directory.
+Or, don't put non-source-dist files in your source directory.
+
+--build-dir-all
+
+--build-non-source-dist
+
+That's good. It says use the build directory for non-source dist. I like that.
+Let's use that.
+
+Add a config setting nonsourcedistdir which defaults to srcdir., and a flag --build-non-source-dist.
+
+--build-non-src-dist
+nonsrcdistdir 
+
+Yeah.
+
+What other cleanup do I want to do for dist?
+
+Idea:
+* have dist_s take target with source dir in prefix. Assert and strip that
+  from the prefix.
+* have dist_d take target with dist dir in prefix. Assert and strip that from
+  the prefix.
+* avoid use of build_glob? Hard to say. I'm not sold on this one.

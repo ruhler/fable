@@ -1,7 +1,7 @@
 namespace eval "fbld" {
 
-  foreach x [build_glob $::s/fbld -tails *] {
-    dist_s fbld/$x
+  foreach x [build_glob $::s/fbld *] {
+    dist_s $x
   }
 
   # Test suite for fbld implementation.
