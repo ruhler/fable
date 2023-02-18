@@ -104,17 +104,25 @@ proc lib { lib objs } {
 # bin --
 #   Build a binary.
 #
+# Generates a buildstamp that can be refered to using:
+#
+#   extern const char* BUILDSTAMP;
+#
 # Inputs:
 #   bin - the binary file to build.
 #   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 proc bin { bin objs lflags } {
   set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
-  build $bin $objs "gcc $cflags -o $bin $objs $lflags"
+  build $bin "$::s/buildstamp $objs" "$::s/buildstamp | gcc $cflags -o $bin $objs -x c - $lflags"
 }
 
 # bin_cov --
 #   Build a binary with test coverage enabled.
+#
+# Generates a buildstamp that can be refered to using:
+#
+#   extern const char* BUILDSTAMP;
 #
 # Inputs:
 #   bin - the binary file to build.
@@ -123,7 +131,7 @@ proc bin { bin objs lflags } {
 proc bin_cov { bin objs lflags } {
   #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
-  build $bin $objs "gcc $cflags -o $bin $objs $lflags"
+  build $bin "$::s/buildstamp $objs" "$::s/buildstamp | gcc $cflags -o $bin $objs -x c - $lflags"
 }
 
 # install --

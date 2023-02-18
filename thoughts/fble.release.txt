@@ -659,3 +659,306 @@ way. It's the only way it can work when using a dist. But can ninja deal with
 it properly? Something about timestamps matters? It should be okay I think, as
 long as we preserve timestamps in the tar file. If we the tar file gets
 extracted out of order, then it could be more troublesome.
+
+---
+
+Adding dist_s to dirs. Still need:
+* spec, test, tutorials, pkgs
+
+Should I move spec tests to the spec/ directory?
+
+Also, I'm concerned that using build_glob to identify dist_s could accidentally
+capture untracked files and non-source dist files. And it's annoying to strip
+the $::s/ prefix off of things when passing to dist_s. It really feels like
+there's some improvements I could make to the api for specifying these things.
+
+---
+
+How to have a single source of truth for the version?
+
+Let's put it into configure.
+
+We use version for:
+* release tarball file name. e.g. fble-0.1-dev.tar.gz
+* fble-version.h
+
+Any desire to:
+* Separate into MAJOR, MINOR, and OTHER fields?
+* Add a git sha? Or `git describe --always --dirty`?
+
+Separating into major/minor might be useful in the future for supporting
+certain kinds of backwards compatibility things or working around bugs?
+
+I think it would be good to have
+
+FBLE_VERSION_MAJOR 0
+FBLE_VERSION_MINOR 1
+FBLE_VERSION
+
+Kind of thing.
+
+But let's explore some other projects to see how they deal with version
+numbers. Particularly for intermediate git checkins, and possibly even local
+dirty modifications to the git repo.
+
+If we put the version in configure, then we should have a rule to generate
+fble-version.h?
+
+---
+
+Some thoughts:
+* Instead of having 0.1-dev mean we haven't reached 0.1 yet, we should have
+  0.1-dev mean we have just passed 0.1.
+ - If we use git commit, we wouldn't know next number. So that would let us be
+   consistent with whatever approach we use with git commits.
+ - Read it as: 0.1-dev has whatever 0.1 has and then some.
+* There's no way to ensure someone hasn't modified the release number.
+* Hard code major/minor/dev status in fble-version.h.
+* For git hash, make that part of the build id rather than version.
+ - We could have user, git sha, dirty status, date, hostname, etc.
+* We can add git tags to map release number to git commit.
+ - And have a commit where we change release number/status that we can link
+   to.
+* To have an up-to-date build id, see if we can generate it when you link an
+  executable. That way it should always be up to date without forcing
+  unnecessary rebuilds.
+
+Proposal:
+* fble-version.h defines FBLE_VERSION_MAJOR, FBLE_VERSION_MINOR, and
+  FBLE_VERSION.
+* We have a build category that's part of the version. Say:
+  r for release, rc for release candidate (if needed), d for dev.
+* Add a build info string somewhere, ideally generated whenever we link an
+  executable. That string includes git describe output and maybe other things.
+
+Let's do a survey of some other approaches.
+
+I'm not seeing anything terribly exciting. We have:
+* major/minor version numbers as part of release.
+* some have a 'patch' number.
+* some have pre-release identifiers, like alpha, beta, rc
+  for example 0.1-rc means the release candidate for 0.1. The final release
+  has 0.1. So in general, 0.1-* comes before 0.1 in time.
+* We can include whatever build metadata we want. For example:
+  0.1+f17f983e, where the last part is the git sha.
+
+Let's think about what version info is meaningful for what purposes.
+* major/minor version corresponds to what's released to, e.g. github.
+Incremented manually on release.
+* If we don't post alpha, beta, release candidate packages, then no need to
+  make that distinction.
+* If we have continuous integration that generates releases, we could have a
+  number associated with that. Number nicer than sha because then you can see
+  right away which build is older. You can only have an incrementing number if
+  you have something like a CI job to coordinate the version.
+* Having a git sha is useless unless you have access somehow to the commit. If
+  someone builds something locally and shares the resulting build without
+  sharing their local commits, that information is useless.
+  Also, we may not have git metadata if building from a release, unless we
+  explicitly put the git tag in the release.
+
+Let's imagine there is a wall between development and releases. What comes out
+on the release side is exactly major/minor version.
+
+What we have on the development side is:
+* major/minor version, reflecting what's seen on the outside.
+* rc candidacy. So the only thing we have to do is drop the rc candidacy part
+  once the release is in good shape, and not, for example, increment the
+  version number. Optional in my case I think.
+
+Separate from that is a build stamp:
+* user, host, date, git sha?
+
+Interesting. How about we consider three scenarios:
+
+1. Making an official release. specify major/minor once everything looks
+ready. This is easy.
+
+2. A user making a build from an official release.
+No git info is available. Maybe the user changed something, who knows.
+The major/minor version number corresponds to the official release
+major/minor.
+
+3. A developer doing incremental builds.
+It would be nice to have build stamp with user, host, date, git sha, etc.
+The major/minor version number corresponds to the previously released
+major/minor version number (?). But we note that it is a 'dev' build.
+
+Wait. I like thinking of a dev build as a pre-release build.
+
+0.1-dev means a development build working on development of release 0.1.
+
+When you generate a release tarball, you may not know if it's going to work or
+not. That's when it makes sense to switch to rc0, rc1, etc.
+
+Strawman proposal:
+* major/minor version.
+* lifecycle status:
+  dev - general development that will go into the major/minor release.
+  rc<N> - actively trying to get a release out for major/minor version.
+  rel - the final release candidate officially released.
+* build metadata:
+  user, hostname, date, git describe (only if available)
+
+How/when we set these things:
+* major/minor version is specified in the source code.
+  The first commit after a release does nothing but bump the version number.
+  If it turns out the change is bigger than expected, we can bump a major
+  version number sometime during development.
+* lifecycle is always 'dev' in the git branch.
+  You manually specify rc<N> or rel when launching an official release build.
+  The official release build copies the lifecycle into the release tarball.
+* build metadata is computed and injected at link time for individual
+  binaries, using an approach that supports incremental build.
+  
+Question: do we need rc<N>, or can we just use dev?
+I guess rc<N> is to avoid having multiple fble-0.1d.tar.gz files that mean
+different things.
+
+What's the tarball naming strategy? Let's try a few:
+
+fble-0.1.tar.gz (official release?)
+fble-0.1r.tar.gz
+fble-0.1-rc0.tar.gz (release candidate)
+
+Yeah, let's go with that:
+* official release: fble-<major>.<minor>.tar.gz
+* release candidate: fble-<major>.<minor>-rc<N>.tar.gz
+
+What's the version string look like?
+ 0.1
+ 0.1-rc0
+ 0.1-dev
+
+What can we access from C code?
+ MAJOR
+ MINOR
+
+What does the build metadata look like?
+
+ 0.1+user=richard,host=losaltos,date=2023-02-17T20:18:09-08:00,git=f17f983e-dirty
+
+Use:
+* for date: date -Is
+* for user: whoami, or $USER
+* for hostname: hostname or $HOSTNAME
+* for git: git describe --always --dirty
+
+Other's to try:
+ 0.1+user=richard,host=losaltos,date=2023-02-17T20:18:09-08:00,git=f17f983e-dirty
+ 0.1-rc0+ruhler@losaltos,2023-02-17T20:18:09-08:00,f17f983e-dirty
+ 0.1-rc0+ruhler,2023-02-17T20:18:09-08:00,f17f983e-dirty
+ 0.1-rc0+ruhler@2023-02-17T20:18:09-08:00,f17f983e-dirty
+ 0.1-rc0+2023-02-17T20:18:09-08:00,ruhler,f17f983e-dirty
+ 0.1-rc0+2023-02-17,ruhler,f17f983e-dirty
+ 0.1-rc0+ruhler-2023-02-17-f17f983e-dirty
+
+Maybe we can arrange for builds done on github to have the username 'github'.
+
+Yeah. I like that.
+
+ major.minor-prerelease-user-date-git
+
+No real need for hostname given it's unlikely you'll be copying around built
+libraries between hosts. The username is mostly to know if you built it or
+not. Well... I guess in this case you will always have built it. So should we
+get rid of the username in the build?
+
+ 0.1-rc0+2023-02-17-f17f983e-dirty
+
+Once we start building binaries to be distributed, we can include names in the
+buildstamp with more details. Yeah. I like that.
+
+Next question: can I sneak this string in somehow using the linker? Like, is
+there an option to overwrite a string value using linker command line
+arguments, or specify a region of memory?
+
+--build-id can be used to inject a hex string in .note.gnu.build-id?
+--insert-timestamp suggests there's already a timestamp in there by default?
+
+Those are the only two I see. How could we fetch those from code?
+
+Maybe --defsym to define a symbol that points to .note.gnu.build-id?
+
+Could we do it by writing a .o file that refers to the .note.gnu.build-id? For
+example:
+
+.note.gnu.build-id:
+  
+Or, how about, in the same build step as linking, compile an object file and
+link that?
+
+Or, define a rule to build the build metadata .o file. The dependencies are
+the same as the dependencies for ld, but we also have ld depend on the .o
+file?
+
+Like:
+  link objs
+    metadata.o: objs
+      cmd = <generate metadata.o>
+    ld objs metadata.o
+      
+That doesn't sound too bad. Don't need any crazy linker magic. Just some build
+helper functions. We can use this for bin files.
+
+Where ever we define a main program, we can refer to some extern const char*
+
+Or, make use of preprocessor?
+
+gcc -DMETADATA=... $objs metadata.c
+
+where metadata.c is defined as:
+  const char* metadata = METADATA;
+
+That sounds like the most straight-forward approach to me. Maybe we could
+avoid the .c file and write it directly?
+
+echo const char* metadata = ... | gcc ... -
+
+It totally works. Just need to add '-x c' before -, to tell it the right file
+type. I can totally add this today.
+
+Maybe best would be to write a script to generate metadata. Then we can do:
+
+./metadata | gcc ... -x c -
+
+What should I call this metadata program, string name, and where should the
+script live?
+
+BUILDSTAMP 
+buildinfo
+BUILDINFO
+BuildInfo
+
+_buildinfo.
+_buildstamp
+buildstamp_
+
+BUILDINFO
+BUILD_INFO.
+main_build_info.
+
+I prefer 'stamp' to 'info', because it's not that structured.
+
+I guess we could define a structure if we wanted to though, with build-info.h.
+
+This would be great to put in a build/ directory.
+
+Let's keep things simple.
+
+extern const char* BUILDSTAMP;
+
+./buildstamp | gcc ... -x c -
+
+Easy.
+
+Or, perhaps:
+
+tclsh8.6 buildstamp.tcl | gcc ... -x c -
+
+No. I prefer ./buildstamp | gcc ... -x c -
+
+And we can just put it at the top level and implement using shell or tcl
+script internally as we see fit.
+
+Yeah. This is going to work great for build stamps.

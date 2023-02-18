@@ -18,6 +18,8 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
+extern const char* BUILDSTAMP;
+
 static void PrintVersion(FILE* stream);
 static void PrintHelp(FILE* stream);
 
@@ -36,7 +38,7 @@ typedef enum {
 //   Outputs version information to the given stream.
 static void PrintVersion(FILE* stream)
 {
-  fprintf(stream, "fble-compile %s\n", FBLE_VERSION);
+  fprintf(stream, "fble-compile %s+%s\n", FBLE_VERSION, BUILDSTAMP);
 }
 
 // PrintHelp --

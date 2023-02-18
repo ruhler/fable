@@ -1,0 +1,11 @@
+#!/bin/sh
+# generate a build stamp\
+exec tclsh8.6 "$0" "$@"
+
+# Outputs a C program that defines BUILDSTAMP as a const char* with the
+# contents of the build stamp.
+set entries [list]
+lappend entries [exec date -I]
+catch { lappend entries [exec git describe --always --dirty] }
+set stamp [join $entries "-"]
+puts "const char* BUILDSTAMP=\"[join $entries "-"]\";"
