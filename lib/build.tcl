@@ -4,22 +4,10 @@ namespace eval "lib" {
   set objs [list]
   set objs_cov [list]
 
-  # Update local includes for lib/parse.y here.
-  # See comment in lib/parse.y.
-  set includes [list \
-    $::s/include/fble/fble-alloc.h \
-    $::s/include/fble/fble-load.h \
-    $::s/include/fble/fble-loc.h \
-    $::s/include/fble/fble-module-path.h \
-    $::s/include/fble/fble-name.h \
-    $::s/include/fble/fble-string.h \
-    $::s/include/fble/fble-vector.h \
-    $::s/lib/expr.h \
-  ]
   set report $::b/lib/parse.tab.report.txt
   set tabc $::b/lib/parse.tab.c
   set cmd "bison --report=all --report-file=$report -o $tabc $::s/lib/parse.y"
-  build "$tabc $report" "$::s/lib/parse.y $includes" $cmd
+  build "$tabc $report" "$::s/lib/parse.y" $cmd
 
   # parse.tab.o
   obj $::b/lib/parse.tab.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"

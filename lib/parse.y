@@ -9,8 +9,6 @@
   #include <stdio.h>    // for FILE, fprintf, stderr
   #include <string.h>   // for strchr, strcpy
 
-  // For any changes to this list of includes, please update the
-  // parser 'includes' variable in lib/build.tcl.
   #include <fble/fble-alloc.h>
   #include <fble/fble-load.h>
   #include <fble/fble-loc.h>

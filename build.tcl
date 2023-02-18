@@ -263,6 +263,7 @@ build_tcl $::s/thoughts/build.tcl
 build_tcl $::s/vim/build.tcl
 
 dist_s $::s/build.tcl
+dist_s $::s/buildstamp
 dist_s $::s/configure
 dist_s $::s/deps.tcl
 dist_s $::s/README.fbld
