@@ -6,13 +6,21 @@
 #define FBLE_VERSION_H_
 
 /**
- * Library version number.
+ * Major version number.
  *
- * Major version "0" means no compatibility gaurantees of any sort from release
- * to release.
- *
- * Minor version "1-dev" means development of not yet released minor version 1.
+ * Major version "0" means no compatibility gaurantees of any sort from
+ * release to release.
  */
-#define FBLE_VERSION "0.1-dev"
+#define FBLE_VERSION_MAJOR 0
+
+/**
+ * Minor version number.
+ */
+#define FBLE_VERSION_MINOR 1
+
+/**
+ * Version string.
+ */
+#define FBLE_VERSION "fble-0.1"
 
 #endif // FBLE_VERSION_H_

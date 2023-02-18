@@ -34,6 +34,9 @@ rule obj
   depfile = $out.d
 }
 
+# Files that the build.ninja file depends on.
+set ::build_ninja_deps [list]
+
 # build --
 #   Builds generic targets.
 #
@@ -187,28 +190,28 @@ proc testsuite { tr deps cmd } {
     "$::s/test/log $tr $cmd"
 }
 
+# Read the version string from fble-version.h
+lappend ::build_ninja_deps $::s/include/fble/fble-version.h
+set version_def [exec grep "#define FBLE_VERSION " $::s/include/fble/fble-version.h]
+set ::version [lindex $version_def 2]
+
 set ::dist [list]
 
 # Mark a source file for distribution.
 # For example: dist_s README.fbld
 proc dist_s { file } {
-  lappend ::dist $::b/fble-0.1/$file
-  build $::b/fble-0.1/$file $::s/$file \
-    "cp $::s/$file $::b/fble-0.1/$file"
+  lappend ::dist $::b/$::version/$file
+  build $::b/$::version/$file $::s/$file \
+    "cp $::s/$file $::b/$::version/$file"
 }
 
 # Mark a non-source file for distribution.
 # For example: dist_d README.txt
 proc dist_d { file } {
-  lappend ::dist $::b/fble-0.1/$file
-  build $::b/fble-0.1/$file $::d/$file \
-    "cp $::d/$file $::b/fble-0.1/$file"
+  lappend ::dist $::b/$::version/$file
+  build $::b/$::version/$file $::d/$file \
+    "cp $::d/$file $::b/$::version/$file"
 }
-
-# Any time we run glob over a directory, add that directory to this list.
-# We need to make sure to include these directories as a dependency on the
-# generation of build.ninja.
-set ::build_ninja_deps [list]
 
 # Perform glob on files in the given dir.
 # args are additional arguments passed to the standard tcl glob command.
@@ -266,8 +269,8 @@ build $::b/summary.tr \
   "$::s/test/log $::b/summary.tr tclsh8.6 $::s/test/tests.tcl < $::b/detail.tr"
 
 # Release tarball
-build $::b/fble-0.1.tar.gz $::dist \
-  "tar --create --gzip --directory $::b --file fble-0.1.tar.gz fble-0.1"
+build $::b/$::version.tar.gz $::dist \
+  "tar --create --gzip --directory $::b --file $::version.tar.gz $::version"
 
 # Phony targets.
 # phony --
@@ -286,7 +289,7 @@ proc phony { target dependencies } {
 phony "all" $::all
 phony "test" $::b/summary.tr
 phony "www" $::www
-phony "dist" $::b/fble-0.1.tar.gz
+phony "dist" $::b/$::version.tar.gz
 phony "check" [list test all www]
 phony "install" $::install
 puts $::build_ninja "default all"

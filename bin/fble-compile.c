@@ -38,7 +38,7 @@ typedef enum {
 //   Outputs version information to the given stream.
 static void PrintVersion(FILE* stream)
 {
-  fprintf(stream, "fble-compile %s+%s\n", FBLE_VERSION, BUILDSTAMP);
+  fprintf(stream, "fble-compile %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
 }
 
 // PrintHelp --

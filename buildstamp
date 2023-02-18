@@ -6,6 +6,5 @@ exec tclsh8.6 "$0" "$@"
 # contents of the build stamp.
 set entries [list]
 lappend entries [exec date -I]
-catch { lappend entries [exec git describe --always --dirty] }
-set stamp [join $entries "-"]
-puts "const char* BUILDSTAMP=\"[join $entries "-"]\";"
+catch { lappend entries "dev:[exec git describe --always --dirty]" }
+puts "const char* BUILDSTAMP=\"[join $entries ","]\";"
