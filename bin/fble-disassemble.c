@@ -18,6 +18,8 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
+extern const char* BUILDSTAMP;
+
 static void PrintUsage(FILE* stream);
 
 // PrintUsage --
@@ -70,7 +72,7 @@ int main(int argc, const char* argv[])
   }
 
   if (version) {
-    printf("fble-disassemble %s\n", FBLE_VERSION);
+    printf("fble-disassemble %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
     FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }

@@ -23,6 +23,8 @@
 #define EX_FAILURE 1
 #define EX_USAGE 2
 
+extern const char* BUILDSTAMP;
+
 // Executable for an app.
 typedef struct {
   FbleExecutable _base;
@@ -522,7 +524,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   }
 
   if (version) {
-    printf("fble-app %s\n", FBLE_VERSION);
+    printf("fble-app %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
     FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }

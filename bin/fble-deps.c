@@ -18,6 +18,8 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
+extern const char* BUILDSTAMP;
+
 static void PrintVersion(FILE* stream);
 static void PrintHelp(FILE* stream);
 int main(int argc, const char* argv[]);
@@ -32,7 +34,7 @@ int main(int argc, const char* argv[]);
 //   Outputs version information to the given stream.
 static void PrintVersion(FILE* stream)
 {
-  fprintf(stream, "fble-deps %s\n", FBLE_VERSION);
+  fprintf(stream, "fble-deps %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
 }
 
 // PrintHelp --

@@ -24,6 +24,8 @@
 #define EX_USAGE 2
 #define EX_FAILURE 3
 
+extern const char* BUILDSTAMP;
+
 /**
  * An FbleExecutable with a FILE handle.
  */
@@ -281,7 +283,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   }
 
   if (version) {
-    printf("fble-stdio %s\n", FBLE_VERSION);
+    printf("fble-stdio %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
     FbleFreeSearchPath(search_path);
     return EX_TRUE;
   }

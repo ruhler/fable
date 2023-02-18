@@ -1,5 +1,3 @@
-* Include BUILDSTAMP in version info for all binaries.
-
 * Double check we aren't using build_glob on source directories for dist_s
   that include non-source dist files.
 

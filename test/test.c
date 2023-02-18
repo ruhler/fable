@@ -22,6 +22,8 @@
 #define EX_USAGE_ERROR 3
 #define EX_OTHER_ERROR 4
 
+extern const char* BUILDSTAMP;
+
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 
 // PrintUsage --
@@ -96,7 +98,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   }
 
   if (version) {
-    printf("fble-test %s\n", FBLE_VERSION);
+    printf("fble-test %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
     FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }
