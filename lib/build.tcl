@@ -1,17 +1,23 @@
 # Exports:
 #   ::fble_objs_cov - list of .o files used in libfble.cov.
 namespace eval "lib" {
+  dist_s $::s/lib/build.tcl
+  dist_s $::s/lib/parse.y
+  foreach {x} [build_glob $::s/lib *.h *.c] {
+    dist_s $x
+  }
+
   set objs [list]
   set objs_cov [list]
 
   set report $::b/lib/parse.tab.report.txt
-  set tabc $::b/lib/parse.tab.c
-  set cmd "bison --report=all --report-file=$report -o $tabc $::s/lib/parse.y"
-  build "$tabc $report" "$::s/lib/parse.y" $cmd
+  set cmd "bison --report=all --report-file=$report -o $::d/lib/parse.tab.c $::s/lib/parse.y"
+  build "$::d/lib/parse.tab.c $report" "$::s/lib/parse.y" $cmd
+  dist_d $::d/lib/parse.tab.c
 
   # parse.tab.o
-  obj $::b/lib/parse.tab.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"
-  obj_cov $::b/lib/parse.tab.cov.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"
+  obj $::b/lib/parse.tab.o $::d/lib/parse.tab.c "-I $::s/include -I $::s/lib"
+  obj_cov $::b/lib/parse.tab.cov.o $::d/lib/parse.tab.c "-I $::s/include -I $::s/lib"
   lappend objs $::b/lib/parse.tab.o
   lappend objs_cov $::b/lib/parse.tab.cov.o
 

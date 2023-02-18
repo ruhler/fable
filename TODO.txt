@@ -1,3 +1,7 @@
+* Reconsider use of BUILDSTAMP in fble-test, fble-app, fble-stdio.
+ Because this requires users to define BUILDSTAMP when they do their own
+ compiles.
+
 * Double check we aren't using build_glob on source directories for dist_s
   that include non-source dist files.
 

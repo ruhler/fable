@@ -69,7 +69,7 @@ namespace eval "config" {
         set enable_fble_app no
       }
       --build-non-src-dist {
-        set nonsrcdistdr $builddir
+        set nonsrcdistdir $builddir
       }
       default {
         puts stderr "configure: error: unrecognized option: `$arg'"

@@ -1094,3 +1094,9 @@ Idea:
 * have dist_d take target with dist dir in prefix. Assert and strip that from
   the prefix.
 * avoid use of build_glob? Hard to say. I'm not sold on this one.
+
+---
+
+Directories to add dist support to:
+* pkgs, spec, test, tutorials
+
