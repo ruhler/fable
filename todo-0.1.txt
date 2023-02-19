@@ -100,6 +100,3 @@ Things to consider doing for the fble-0.1 release.
  Borrowed: no transfer of ownership.
  Consumed: ownership transferred from caller to callee.
  Outlives: caller responsible for keeping alive as long as returned result is.
-
-* [tests] Add coverage for tagged_type and tagged_expr parse destructors
- - if only I could figure out how to exercise them.

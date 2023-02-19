@@ -144,6 +144,10 @@
 } <exprs>
 
 %destructor { 
+  // Note: I believe this code is unreachable because tagged_type only ever
+  // occurs as the last item in the definition of a non-terminal. Any errors
+  // following parsing of this will result in calling the desctructor for the
+  // parent non-terminal, not the tagged_type.
   FbleFreeExpr($$.type);
   FbleFreeName($$.name);
 } <tagged_type>
@@ -157,6 +161,10 @@
 } <tagged_types>
 
 %destructor {
+  // Note: I believe this code is unreachable because tagged_expr only ever
+  // occurs as the last item in the definition of a non-terminal. Any errors
+  // following parsing of this will result in calling the desctructor for the
+  // parent non-terminal, not the tagged_expr.
   FbleFreeName($$.name);
   FbleFreeExpr($$.expr);
 } <tagged_expr>
