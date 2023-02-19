@@ -1100,3 +1100,18 @@ Idea:
 Directories to add dist support to:
 * pkgs, spec, test, tutorials
 
+Note: the reason build_glob is bad is because it can't distinguish between
+source and non-source when using the source directory for non-source dist. So
+we should not use build_glob for generating dist_s if there's any dist_d in
+that same directory.
+
+It makes me wonder. Do we need to include everything in git in the
+distribution? For example, book and thoughts? They aren't needed to build or
+run fble, or any of the targets that you can build. They are useful for
+development. But if you are doing development, git is the place to do it,
+right?
+
+Interesting. I'm really tempted to leave thoughts and book out of the
+distribution right now. And things like TODO and deps.tcl? Hmm... TODO might
+be valuable as documentation of known issues with a release.
+

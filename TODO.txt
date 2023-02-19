@@ -4,6 +4,8 @@
 
 * Double check we aren't using build_glob on source directories for dist_s
   that include non-source dist files.
+  For example: parse.tab.c could get picked up incorrectly if src dir used for
+  dist?
 
 * Update documentation for how to enable/disable SDL/OpenGL dependencies.
  - Add nice error message if SDL not installed when fble-app is enabled saying

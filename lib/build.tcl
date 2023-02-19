@@ -1,15 +1,56 @@
 # Exports:
 #   ::fble_objs_cov - list of .o files used in libfble.cov.
 namespace eval "lib" {
+  set headers {
+    code.h
+    expr.h
+    heap.h
+    interpret.h
+    kind.h
+    tc.h
+    typecheck.h
+    type.h
+    unreachable.h
+    value.h
+    var.h
+  }
+
+  set sources {
+    alloc.c
+    arg-parse.c
+    code.c
+    compile.c
+    execute.c
+    expr.c
+    generate-aarch64.c
+    generate-c.c
+    heap.c
+    interpret.c
+    kind.c
+    link.c
+    load.c
+    loc.c
+    module-path.c
+    name.c
+    profile.c
+    string.c
+    tc.c
+    type.c
+    typecheck.c
+    value.c
+    vector.c
+  }
+
+  # files for distribution
   dist_s $::s/lib/build.tcl
   dist_s $::s/lib/parse.y
-  foreach {x} [build_glob $::s/lib *.h *.c] {
-    dist_s $x
-  }
+  foreach {x} $sources { dist_s $::s/lib/$x }
+  foreach {x} $headers { dist_s $::s/lib/$x }
 
   set objs [list]
   set objs_cov [list]
 
+  # parse.tab.c
   set report $::b/lib/parse.tab.report.txt
   set cmd "bison --report=all --report-file=$report -o $::d/lib/parse.tab.c $::s/lib/parse.y"
   build "$::d/lib/parse.tab.c $report" "$::s/lib/parse.y" $cmd
@@ -22,7 +63,7 @@ namespace eval "lib" {
   lappend objs_cov $::b/lib/parse.tab.cov.o
 
   # general .o files
-  foreach {x} [build_glob $::s/lib -tails *.c] {
+  foreach {x} $sources {
     set object $::b/lib/[string map {.c .o} $x]
     set object_cov $::b/lib/[string map {.c .cov.o} $x]
     obj $object $::s/lib/$x "-I $::s/include"
@@ -31,6 +72,7 @@ namespace eval "lib" {
     lappend objs_cov $object_cov
   }
 
+  # libraries
   lib "$::b/lib/libfble.a" $objs
   lib "$::b/lib/libfble.cov.a" $objs_cov
 
