@@ -1,4 +1,7 @@
 namespace eval "pkgs/hwdg" {
+  dist_s $::s/pkgs/hwdg/build.tcl
+  dist_s $::s/pkgs/hwdg/TODO.txt
+
   pkg hwdg [list core app] ""
 
   # /Hwdg/Tests% interpreted

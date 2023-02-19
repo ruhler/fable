@@ -1,4 +1,16 @@
 namespace eval "pkgs/core" {
+
+  dist_s $::s/pkgs/core/build.tcl
+  dist_s $::s/pkgs/core/char.fble.c
+  dist_s $::s/pkgs/core/char.fble.h
+  dist_s $::s/pkgs/core/fble-stdio.c
+  dist_s $::s/pkgs/core/int.fble.c
+  dist_s $::s/pkgs/core/int.fble.h
+  dist_s $::s/pkgs/core/stdio.fble.c
+  dist_s $::s/pkgs/core/stdio.fble.h
+  dist_s $::s/pkgs/core/string.fble.c
+  dist_s $::s/pkgs/core/string.fble.h
+
   # .c library files.
   set objs [list]
   foreach {x} { char.fble int.fble stdio.fble string.fble } {

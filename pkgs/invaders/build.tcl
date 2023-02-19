@@ -1,4 +1,6 @@
 namespace eval "pkgs/invaders" {
+  dist_s $::s/pkgs/invaders/build.tcl
+
   pkg invaders [list core app] ""
 
   # /Invaders/Tests% interpreted

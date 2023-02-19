@@ -1,4 +1,10 @@
 namespace eval "pkgs/sat" {
+  dist_s $::s/pkgs/sat/bench/README.txt
+  dist_s $::s/pkgs/sat/bench/unif-c1000-v500-s1356655268.cnf
+  dist_s $::s/pkgs/sat/build.tcl
+  dist_s $::s/pkgs/sat/thoughts.txt
+  dist_s $::s/pkgs/sat/TODO.txt
+
   pkg sat [list core] ""
 
   # /Sat/Tests% interpreted

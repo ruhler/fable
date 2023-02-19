@@ -1,4 +1,16 @@
 namespace eval "pkgs" {
+  set pkgs {
+    core
+    app
+    md5
+    sat
+    hwdg
+    games
+    invaders
+    pinball
+    graphics
+  }
+
   # pkg --
   #   Build an fble library package.
   #
@@ -18,6 +30,10 @@ namespace eval "pkgs" {
         set x $dir$y
         set mpath "/[file rootname $x]%"
 
+        set target $::config::datadir/fble/$name/$x
+        install $::s/pkgs/$name/$x $target
+        dist_s $::s/pkgs/$name/$x
+
         # Generate a .d file to capture dependencies.
         build $::b/pkgs/$name/$x.d "$::b/bin/fble-deps $::s/pkgs/$name/$x" \
           "$::b/bin/fble-deps $cflags -t $::b/pkgs/$name/$x.d -m $mpath > $::b/pkgs/$name/$x.d" \
@@ -25,22 +41,14 @@ namespace eval "pkgs" {
 
         fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
         lappend objs $::b/pkgs/$name/$x.o
-
-        set target $::config::datadir/fble/$name/$x
-        install $::s/pkgs/$name/$x $target
       }
     }
 
     lib $::b/pkgs/$name/libfble-$name.a $objs
   }
 
-  build_tcl $::s/pkgs/core/build.tcl
-  build_tcl $::s/pkgs/app/build.tcl
-  build_tcl $::s/pkgs/md5/build.tcl
-  build_tcl $::s/pkgs/sat/build.tcl
-  build_tcl $::s/pkgs/hwdg/build.tcl
-  build_tcl $::s/pkgs/games/build.tcl
-  build_tcl $::s/pkgs/invaders/build.tcl
-  build_tcl $::s/pkgs/pinball/build.tcl
-  build_tcl $::s/pkgs/graphics/build.tcl
+  dist_s $::s/pkgs/build.tcl
+  foreach {x} $pkgs {
+    build_tcl $::s/pkgs/$x/build.tcl
+  }
 }

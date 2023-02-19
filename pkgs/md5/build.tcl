@@ -1,4 +1,6 @@
 namespace eval "pkgs/md5" {
+  dist_s $::s/pkgs/md5/build.tcl
+
   pkg md5 [list core] ""
 
   # Md5/Tests interpreted

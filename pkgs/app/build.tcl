@@ -1,6 +1,16 @@
 namespace eval "pkgs/app" {
-  set objs [list]
 
+  dist_s $::s/pkgs/app/app.fble.c
+  dist_s $::s/pkgs/app/app.fble.h
+  dist_s $::s/pkgs/app/build.tcl
+  dist_s $::s/pkgs/app/fble-app.c
+  dist_s $::s/pkgs/app/thoughts/images.txt
+  dist_s $::s/pkgs/app/thoughts/mouse.txt
+  dist_s $::s/pkgs/app/thoughts/png.txt
+  dist_s $::s/pkgs/app/thoughts/resize.txt
+  dist_s $::s/pkgs/app/TODO.txt
+
+  set objs [list]
   if $::config::enable_fble_app {
     # .c library files.
     foreach {x} { app.fble } {
