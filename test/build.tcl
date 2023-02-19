@@ -3,9 +3,38 @@ namespace eval "test" {
   set libs "$::b/test/libfbletest.a $::b/lib/libfble.a"
   set libs_cov "$::b/test/libfbletest.a $::b/lib/libfble.cov.a"
 
+  set lib_sources {
+    test.c
+    mem-test.c
+    profiles-test.c
+  }
+
+  set bin_sources {
+    fble-mem-test.c
+    fble-perf-profile.c
+    fble-profiles-test.c
+    fble-profile-test.c
+    fble-test.c
+  }
+
+  dist_s $::s/test/build.tcl
+  dist_s $::s/test/DebugTest.fble
+  dist_s $::s/test/fble-debug-test.exp
+  dist_s $::s/test/log
+  dist_s $::s/test/mem-test.h
+  dist_s $::s/test/ProfilesTest.fble
+  dist_s $::s/test/profiles-test.h
+  dist_s $::s/test/spec-test.build.tcl
+  dist_s $::s/test/spec-test.run.tcl
+  dist_s $::s/test/test
+  dist_s $::s/test/test.h
+  dist_s $::s/test/tests.tcl
+  foreach {x} $lib_sources { dist_s $::s/test/$x }
+  foreach {x} $bin_sources { dist_s $::s/test/$x }
+
   # libfbletest.a
   set objs [list]
-  foreach {x} [list test.c mem-test.c profiles-test.c] {
+  foreach {x} $lib_sources {
     set object $::b/test/[string map {.c .o} $x]
     obj $object $::s/test/$x $cflags
     lappend objs $object
@@ -13,9 +42,9 @@ namespace eval "test" {
   lib $::b/test/libfbletest.a $objs
 
   # test binaries
-  foreach {x} [build_glob $::s/test fble-*.c] {
+  foreach {x} $bin_sources {
     set base [file rootname [file tail $x]]
-    obj $::b/test/$base.o $x $cflags
+    obj $::b/test/$base.o $::s/test/$x $cflags
     bin $::b/test/$base "$::b/test/$base.o $libs" ""
     bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" ""
   }
