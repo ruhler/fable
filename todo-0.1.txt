@@ -35,10 +35,8 @@ Things to consider doing for the fble-0.1 release.
 * Define '::app' as a namespace instead?
  - Same with ::stdio, etc?
 
-* Release
- - Generate man pages for library functions via fbld.
- - Burn down TODOs.
- See thoughts/fble.release.txt
+* Generate man pages for library functions via fbld.
+* Make the official release.
 
 * Clean up how we specify what gets built for which ninja targets?
  - For example, code coverage should be built by 'ninja check', but not be
@@ -105,6 +103,3 @@ Things to consider doing for the fble-0.1 release.
 
 * [tests] Add coverage for tagged_type and tagged_expr parse destructors
  - if only I could figure out how to exercise them.
-
-* [profile] Check if it's okay to add new blocks to a profile in progress.
- - either way, document that clearly.

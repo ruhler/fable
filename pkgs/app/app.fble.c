@@ -53,7 +53,6 @@ static FbleValue* EffectImpl(
     FbleBlockId profile_block_offset);
 
 static Uint32 OnTimer(Uint32 interval, void* param);
-int FbleStdioMain(int argc, const char* argv[], FbleCompiledModuleFunction* module);
 
 // PrintUsage --
 //   Prints help info to the given output stream.

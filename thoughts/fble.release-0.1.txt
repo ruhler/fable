@@ -1,5 +1,5 @@
-Fble Release
-============
+Fble Release 0.1
+================
 It seems like we have made enough progress on fble to consider trying to make
 a release of it.
 
@@ -1181,3 +1181,68 @@ You could imagine eventually having a todo-1.0 and todo-0.2 simultaneously.
 The idea is, you can release once there is nothing left in todo-0.1.txt. At
 which point, you remove the todo-0.1.txt file.
 
+---
+
+Issues related to sharing code for main functions:
+* BUIDLSTAMP not available at build time for user defined main functions.
+  - FbleFooMain should not reference some BUILDSTAMP symbol.
+* name, example for executable printed in usage
+  - fble-md5 should say "fble-md5", not "fble-stdio"
+* name for executable printed in version info
+  - Ideally something like "fble-stdio /Md5%" 
+* buildstamp for executable
+  - Based on buildstamp of libfble.a? fble-compile?
+* Avoiding code/doc duplication
+  - For example, search path package path arguments.
+
+There's a lot of duplicated code for usage, version in all the binaries. It
+would be great to factor that commonality out somehow. Maybe as part of the
+arg-parse API?
+
+List of main functions I currently have implemented:
+* FbleTestMain
+  search path, module-path, help, error, version, profile
+* FbleMemTestMain
+  search path, module-path, help, error
+  growth, debug
+* FbleProfilesTestMain
+  search path, module path, help, error
+* fble-disassemble
+  search path, module path, version, help, error, fbldUsageHelpText
+* fble-deps
+  search path, module path, version, help, error, fbldUsageHelpText
+  target
+* fble-compile
+  search path, module path, help, error, version, fbldUsageHelpText
+  compile, export, main_, target
+* FbleStdioMain (fble-stdio, fble-md5, ...)
+  search path, module path, profile, help, error, version
+  end_of_options
+* FbleAppMain (fble-app, fble-invaders, ...)
+  search path, module path, profile, help, error, version
+* fble-perf-profile
+  help
+* fble-profile-test
+  (none)
+
+Categories:
+* Generic Program Information: help, version
+  Wanted for all.
+* Module Input Options: -I, --package, -p, -m
+  Includes search path and module path.
+  Wanted for anything that takes an module as input.
+* Profile Options: --profile
+  Wanted for anything that runs a program.
+* Misc
+  Lots of things have custom options.
+
+For each group of options, we want:
+* Code to parse the options.
+  Could be implemented as a library function.
+* Code to check the options.
+  Could be implemented as a library function.
+* Usage text for the options.
+  Could be a library function to print the documentation, or a fragment
+  of .fbld.
+
+So, the ideas are forming. Factor out common per-option code.

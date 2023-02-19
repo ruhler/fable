@@ -633,5 +633,87 @@ int main(int argc, char* argv[])
     FbleFreeProfile(profile);
   }
 
+  {
+    // Test adding blocks while running.
+    // <root> -> 1 -> 2 -> 3
+    //                  -> 4
+    //             -> 3
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+
+    FbleProfileAddBlock(profile, Name("_3")); 
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileExitBlock(thread); // 3
+
+    FbleProfileAddBlock(profile, Name("_4")); 
+    FbleProfileEnterBlock(thread, 4);
+    FbleProfileSample(thread, 40);
+    FbleProfileExitBlock(thread); // 4
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 31);
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileExitBlock(thread); // 1
+    FbleFreeProfileThread(thread);
+
+    ASSERT(profile->blocks.size == 5);
+    ASSERT(profile->blocks.xs[0]->self == 0);
+    ASSERT(profile->blocks.xs[0]->block.id == 0);
+    ASSERT(profile->blocks.xs[0]->block.count == 1);
+    ASSERT(profile->blocks.xs[0]->block.time == 131);
+    ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 131);
+
+    ASSERT(profile->blocks.xs[1]->self == 10);
+    ASSERT(profile->blocks.xs[1]->block.id == 1);
+    ASSERT(profile->blocks.xs[1]->block.count == 1);
+    ASSERT(profile->blocks.xs[1]->block.time == 131);
+    ASSERT(profile->blocks.xs[1]->callees.size == 2);
+    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
+    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
+    ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 3);
+    ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
+    ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 31);
+
+    ASSERT(profile->blocks.xs[2]->self == 20);
+    ASSERT(profile->blocks.xs[2]->block.id == 2);
+    ASSERT(profile->blocks.xs[2]->block.count == 1);
+    ASSERT(profile->blocks.xs[2]->block.time == 90);
+    ASSERT(profile->blocks.xs[2]->callees.size == 2);
+    ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
+    ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
+    ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 30);
+    ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 4);
+    ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
+    ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 40);
+
+    ASSERT(profile->blocks.xs[3]->self == 61);
+    ASSERT(profile->blocks.xs[3]->block.id == 3);
+    ASSERT(profile->blocks.xs[3]->block.count == 2);
+    ASSERT(profile->blocks.xs[3]->block.time == 61);
+    ASSERT(profile->blocks.xs[3]->callees.size == 0);
+
+    ASSERT(profile->blocks.xs[4]->self == 40);
+    ASSERT(profile->blocks.xs[4]->block.id == 4);
+    ASSERT(profile->blocks.xs[4]->block.count == 1);
+    ASSERT(profile->blocks.xs[4]->block.time == 40);
+    ASSERT(profile->blocks.xs[4]->callees.size == 0);
+
+    FbleProfileReport(stdout, profile);
+    FbleFreeProfile(profile);
+  }
+
   return sTestsFailed ? 1 : 0;
 }

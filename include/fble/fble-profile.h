@@ -107,6 +107,8 @@ FbleProfile* FbleNewProfile();
  * @param profile   The profile to add the block to
  * @param name      The name of the block
  *
+ * Note: It is acceptable to add blocks in the middle of a profiling run.
+ *
  * @returns
  *   The id of the newly added block.
  *
@@ -124,6 +126,8 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
  *
  * @param profile   The profile to add the blocks to
  * @param names     The names of the block to add. Borrowed.
+ *
+ * Note: It is acceptable to add blocks in the middle of a profiling run.
  *
  * @returns
  *   The id of the first added block.
