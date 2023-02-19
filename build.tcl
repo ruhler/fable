@@ -207,7 +207,7 @@ proc dist_s { file } {
   set base [string range $file [string length $::s/] end]
   lappend ::dist $::b/$::version/$base
   build $::b/$::version/$base $::s/$base \
-    "cp $::s/$base $::b/$::version/$base"
+    "cp --preserve=timestamps $::s/$base $::b/$::version/$base"
 }
 
 # Mark a non-source file for distribution.
@@ -220,7 +220,7 @@ proc dist_d { file } {
   set base [string range $file [string length $::d/] end]
   lappend ::dist $::b/$::version/$base
   build $::b/$::version/$base $::d/$base \
-    "cp $::d/$base $::b/$::version/$base"
+    "cp --preserve=timestamps $::d/$base $::b/$::version/$base"
 }
 
 # Perform glob on files in the given dir.

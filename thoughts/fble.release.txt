@@ -1115,3 +1115,7 @@ Interesting. I'm really tempted to leave thoughts and book out of the
 distribution right now. And things like TODO and deps.tcl? Hmm... TODO might
 be valuable as documentation of known issues with a release.
 
+---
+
+Now, in theory I have everything copied over to the distribution. Shall we
+test it? Maybe fix the 'cp' timestamp thing first.

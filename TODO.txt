@@ -2,10 +2,6 @@
  Because this requires users to define BUILDSTAMP when they do their own
  compiles.
 
-* Double check how to enforce dist_d files get copied to the dist directory in
-  the right order.
- - Perhaps we can have 'cp' preserve the timestamp of the original file?
-
 * Double check we aren't using build_glob on source directories for dist_s
   that include non-source dist files.
   For example: parse.tab.c could get picked up incorrectly if src dir used for
