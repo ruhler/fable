@@ -301,7 +301,7 @@ phony "all" $::all
 phony "test" $::b/summary.tr
 phony "www" $::www
 phony "dist" $::b/$::version.tar.gz
-phony "check" [list test all www]
+phony "check" [list all dist test www]
 phony "install" $::install
 puts $::build_ninja "default all"
 
