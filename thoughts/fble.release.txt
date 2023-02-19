@@ -1119,3 +1119,19 @@ be valuable as documentation of known issues with a release.
 
 Now, in theory I have everything copied over to the distribution. Shall we
 test it? Maybe fix the 'cp' timestamp thing first.
+
+Now, in theory I have everything copied over to the distribution. Shall we
+test it?
+
+The test is: 
+* build from scratch (to make sure it doesn't have things it shouldn't have).
+* extract the tarball somewhere.
+* configure, build, install in place.
+* Need to also check it didn't try to rebuild any of the dist_d files.
+
+It looks like it mostly works. Anything broken is an invisible kind of broken.
+For example, maybe it's building too much. Oh well.
+
+Note: I can build in place. We don't need a separate build directory.
+Also note: configure should enforce absolute paths for prefix, otherwise it
+seems like ninja isn't happy about creating the required directory? Not sure.

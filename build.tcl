@@ -270,8 +270,8 @@ dist_s $::s/README.fbld
 dist_s $::s/TODO.txt
 
 # README file www
-::html_doc $::b/www/index.html $::s/README.fbld
-www $::b/www/index.html
+::html_doc $::d/www/index.html $::s/README.fbld
+www $::d/www/index.html
 
 # Test summary.
 build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
