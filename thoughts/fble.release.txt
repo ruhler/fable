@@ -1135,3 +1135,49 @@ For example, maybe it's building too much. Oh well.
 Note: I can build in place. We don't need a separate build directory.
 Also note: configure should enforce absolute paths for prefix, otherwise it
 seems like ninja isn't happy about creating the required directory? Not sure.
+
+---
+
+Cool. Now we have a solid draft of a dist target. What's left? What's critical
+to fix before making the first release?
+
+Brainstorm:
+* Verify we can build with minimal dependencies from distribution tarball,
+  without having to touch original non-source-dist files.
+* Fix usage/version for compiled apps.
+  - Particularly with respect to need for BUILDSTAMP.
+  - But for name stuff too.
+* Documentation for C API
+  - man pages
+  - tutorials
+* Figure out if we should be installing libfble-*.a files.
+* Miscellaneous Documentation improvements
+  - how to build with minimal dependencies.
+  - instructions build from source dir instead of separate build dir?
+  - how to enable/disable SDL/OpenGL dependencies.
+  - improve tutorials in general.
+* Other easy miscellaneous TODO burndown.
+* Add 'clean' targets?
+
+I think we should start to make and document decisions as to what goes into
+the 0.1 release and what not. As soon as I decide something shouldn't go into
+the release, punt it and don't ask the question again.
+
+Slowly burn down the TODOs for the 0.1 release. Once that list is empty, it's
+ready to release.
+
+That suggests we have two separate TODO lists. One for 0.1 or
+to-be-categories. Another for future work. I suppose future work can be called
+0.2, right? Because the work consists of either doing it, or punting it to a
+future release.
+
+So, how about...
+
+todo-0.1.txt.
+todo-0.2.txt.
+
+You could imagine eventually having a todo-1.0 and todo-0.2 simultaneously.
+
+The idea is, you can release once there is nothing left in todo-0.1.txt. At
+which point, you remove the todo-0.1.txt file.
+

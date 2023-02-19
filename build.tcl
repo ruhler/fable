@@ -267,7 +267,8 @@ dist_s $::s/buildstamp
 dist_s $::s/configure
 dist_s $::s/deps.tcl
 dist_s $::s/README.fbld
-dist_s $::s/TODO.txt
+dist_s $::s/todo-0.1.txt
+dist_s $::s/todo-0.2.txt
 
 # README file www
 ::html_doc $::d/www/index.html $::s/README.fbld

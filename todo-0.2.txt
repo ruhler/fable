@@ -1,57 +1,10 @@
-* Reconsider use of BUILDSTAMP in fble-test, fble-app, fble-stdio.
- Because this requires users to define BUILDSTAMP when they do their own
- compiles.
-
-* Double check why ninja www from dist doesn't think everything is up to date
-  by default.
-
-* Double check we aren't using build_glob on source directories for dist_s
-  that include non-source dist files.
-  For example: parse.tab.c could get picked up incorrectly if src dir used for
-  dist?
-
-* Update documentation for how to enable/disable SDL/OpenGL dependencies.
- - Add nice error message if SDL not installed when fble-app is enabled saying
-   how to disable fble-app.
-
-* Update github workflow to test both with and without SDL.
-
-* Define '::app' as a namespace instead?
- - Same with ::stdio, etc?
-
-* Release
- - Generate man pages for library functions via fbld.
- - Burn down TODOs.
- - Figure out how to make a release tarball.
- See thoughts/fble.release.txt
+Fble 0.2 TODO
+=============
+Things to consider doing for the fble-0.2 release.
 
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
-
-* Clean up how we specify what gets built for which ninja targets?
- - For example, code coverage should be built by 'ninja check', but not be
-   considered a test suite.
-
-* Clean up specification of dependencies for fbld generated docs.
- - Fix missing dependency for .fbld processing on fbld.lang and fble.lang.
- - Maybe easiest to add a tcl proc for building fbld and encapsulate all the
-   dependencies there.
-
-* Improve exercises for Unions and Functions tutorials, and others.
-
-* Fix dependencies in tutorials/build.tcl.
-  In particular, they all depend on the core library implementation.
-
-* Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
-  options.
-
-* Set up default package path.
-  Based on datadir configuration setting.
-
-* Fix timeout with gdb-test
- - Just need to increase it a little in case of heavy CPU load?
- - Next time it happens, try to see where it got stuck?
 
 * Fbld Cleanup
  - Come up with a more formal test suite for fbld.
@@ -59,34 +12,6 @@
    Instead of 'Index' number.
  - Print line and col number on fbld usage command errors
    Such as wrong number of args.
-
-* Figure out how to customize usage for compiled binaries
- - for example, fble-invaders should say fble-invaders in the usage, not
-   fble-app.
-
-* Generate fbld based man pages for binaries.
-  fble-app
-  fble-md5
-  fble-sat
-  fble-graphics
-  fble-perf-profile
-  fble-stdio
-  fble-invaders
-  fble-pinball
-  fble-test
-
-* How to check errors from stale files in build directory?
-  For example, sat/Sat/sat-tests still existed, even though now were compiling
-  to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
-  path.
-
-* Rename FbleVectorFree and FbleVectorInit to FbleInitVector and
-  FbleFreeVector?
- - Or something that makes sense from a consistency point of view.
-
-* Error checking of arguments to configure
- - absolute path instead of relative?
- - duplicate options?
 
 * Optimize code for generate_c for low gcc memory use:
  - Use shorter labels for function names?
@@ -99,12 +24,6 @@
 
 * Do something with data type instruction?
   - There's currently unexercised code for it.
-
-* Add tests that at least the compiled apps don't crash when you run them.
-  
-* Fix dependency issue of build.ninja on moved *.fble files
-  For example, moving Md5.fble to Md5/Md5.fble didn't trigger rebuild of
-  build.ninja file.
 
 * [spec] Should empty path be allowed in package type?
  See spec/fble.fbld for more details.
@@ -169,16 +88,10 @@
  - I'm not sure if there's any performance implications.
  - It would be nice to specify explicitly and be consistent with this kind of
    thing.
-* [cleanup] Consistently document ownership of args to C functions?
- Borrowed: no transfer of ownership.
- Consumed: ownership transferred from caller to callee.
- Outlives: caller responsible for keeping alive as long as returned result is.
 
 * [tests] Any way to improve memory growth tests?
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
  too specific to the implementation of garbage collection. Anything we can do?
-* [tests] Add coverage for tagged_type and tagged_expr parse destructors
- - if only I could figure out how to exercise them.
 
 * [/*%] Follow style guide in fble.style.txt
   In particular, union field names should be lowercase: just, true, false, not
@@ -227,6 +140,3 @@
 * [typecheck] Figure out why FbleNormalType is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
  - Profiling said its all in FbleTypesEqual. Maybe something pathological?
-
-* [profile] Check if it's okay to add new blocks to a profile in progress.
- - either way, document that clearly.
