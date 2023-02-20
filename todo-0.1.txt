@@ -16,6 +16,8 @@ Things to consider doing for the fble-0.1 release.
 
 * Double check why ninja www from dist doesn't think everything is up to date
   by default.
+  Looks like ninja has to build all targets before it will avoid building
+  them. Just preserving timestamps is not enough.
 
 * Check if we are or should be installing libfble-<pkg>.a files.
 
@@ -26,8 +28,8 @@ Things to consider doing for the fble-0.1 release.
 
 * Double check we aren't using build_glob on source directories for dist_s
   that include non-source dist files.
-  For example: parse.tab.c could get picked up incorrectly if src dir used for
-  dist?
+  For example: if you build in the source directory, and then build again,
+  will that list some of the built files as sources incorrectly?
 
 * Update documentation for how to enable/disable SDL/OpenGL dependencies.
  - Add nice error message if SDL not installed when fble-app is enabled saying
@@ -35,15 +37,8 @@ Things to consider doing for the fble-0.1 release.
 
 * Update github workflow to test both with and without SDL.
 
-* Define '::app' as a namespace instead?
- - Same with ::stdio, etc?
-
 * Generate man pages for library functions via fbld.
 * Make the official release.
-
-* Clean up how we specify what gets built for which ninja targets?
- - For example, code coverage should be built by 'ninja check', but not be
-   considered a test suite.
 
 * Clean up specification of dependencies for fbld generated docs.
  - Fix missing dependency for .fbld processing on fbld.lang and fble.lang.
@@ -54,16 +49,13 @@ Things to consider doing for the fble-0.1 release.
 
 * Fix dependencies in tutorials/build.tcl.
   In particular, they all depend on the core library implementation.
+  Not sure how to do this easily. Something related to fble-deps?
 
 * Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
   options.
 
 * Set up default package path.
   Based on datadir configuration setting.
-
-* Fix timeout with gdb-test
- - Just need to increase it a little in case of heavy CPU load?
- - Next time it happens, try to see where it got stuck?
 
 * Figure out how to customize usage for compiled binaries
  - for example, fble-invaders should say fble-invaders in the usage, not
@@ -79,11 +71,6 @@ Things to consider doing for the fble-0.1 release.
   fble-invaders
   fble-pinball
   fble-test
-
-* How to check errors from stale files in build directory?
-  For example, sat/Sat/sat-tests still existed, even though now were compiling
-  to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
-  path.
 
 * Add tests that at least the compiled apps don't crash when you run them.
 

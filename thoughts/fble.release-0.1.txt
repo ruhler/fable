@@ -1289,4 +1289,9 @@ So, options are:
 
 Let's make it easy for people and just auto-normalize.
 
+---
+
+Problem: ninja doesn't avoid making targets that are already up to date if it
+hasn't run them before. How can we make non-source dist files work in that
+case?
 

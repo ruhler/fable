@@ -2,6 +2,18 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Fix timeout with gdb-test
+ - Just need to increase it a little in case of heavy CPU load?
+ - Next time it happens, try to see where it got stuck?
+
+* How to check errors from stale files in build directory?
+  For example, sat/Sat/sat-tests still existed, even though now we're compiling
+  to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
+  path.
+  Perhaps make use of ninja cleandead after generating the build.ninja file?
+  Not sure if I want to require ninja 1.10, or if this is a robust solution.
+  Maybe depend on full builds from github to catch these issues.
+
 * Review C API for consistency.
   For example: FbleVectorInit inconsistent with FbleFreeVector?
 

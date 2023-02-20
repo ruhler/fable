@@ -1,7 +1,13 @@
 namespace eval "bin" {
   dist_s $::s/bin/build.tcl
 
-  foreach {x} [build_glob $::s/bin *.c] {
+  set bin_sources {
+    fble-compile.c
+    fble-deps.c
+    fble-disassemble.c
+  }
+
+  foreach {x} $bin_sources {
     set base [file rootname [file tail $x]]
 
     dist_s $::s/bin/$base.c
@@ -22,7 +28,7 @@ namespace eval "bin" {
       "tclsh8.6 $::s/fbld/cdata.tcl fbldUsageHelpText < $::b/bin/$base.txt > $::b/bin/$base.usage.h"
 
     # The binary.
-    obj $::b/bin/$base.o $x "-I $::s/include -I $::b/bin" \
+    obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \
       $::b/bin/$base.usage.h
     bin $::b/bin/$base \
       "$::b/bin/$base.o $::b/lib/libfble.a" ""
