@@ -1246,3 +1246,47 @@ For each group of options, we want:
   of .fbld.
 
 So, the ideas are forming. Factor out common per-option code.
+
+---
+
+How should we enforce absolute paths to configure?
+* Give an error message if the path doesn't start with '/'?
+* Automatically turn it into an absolute path?
+  Using [file normalize ...] for example.
+
+Let me double check I understand why ~ doesn't work in the path.
+
+It looks like a relative path looks okay, it's specifically the ~.
+~ ends up as a literal in the build.ninja file, and ninja doesn't create that
+as a directory.
+
+But how does configure even see '~'? Why doesn't it go through shell
+expansion?
+
+It turns out this is a bashism. --foo=~/bar doesn't expand the tilde.
+
+But tcl does have it's own support for tilde expansion. For example, it will
+do expansion in file normalize.
+
+Autotools will give an error like:
+ configure: error: expected an absolute directory name for --prefix: ~/foo
+
+I don't see why the complaint. I suppose it's out of fear that the tilde ends
+up somehow in whatever is installed? And it would be bad for that to depend on
+what directory you are or which user you are?
+
+One reason I worry about using file normalize is because ~ might be a long
+path that shows up a lot in the build.ninja file. But that could be fixed
+other ways.
+
+So, options are:
+* Do like we do now. It's up to users not to do --prefix=~/foo
+  But some of the code does the expansion, so it's confusing that not all of
+  it does the expansion. I don't like this approach.
+* Automatically file normalize.
+  Any downside aside from build.ninja size?
+* Reject anything that isn't already file normalized.
+
+Let's make it easy for people and just auto-normalize.
+
+

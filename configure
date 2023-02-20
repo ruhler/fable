@@ -53,11 +53,11 @@ namespace eval "config" {
           exit 1
         }
 
-        set prefix [lindex $::argv 0]
+        set prefix [file normalize [lindex $::argv 0]]
         set ::argv [lrange $::argv 1 end]
       }
       --prefix=* {
-        set prefix [string range $arg [string length "--prefix="] end]
+        set prefix [file normalize [string range $arg [string length "--prefix="] end]]
       }
       --enable-fble-app {
         set enable_fble_app yes
