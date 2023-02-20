@@ -340,7 +340,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   for (size_t i = 0; i < stdio_args.size; ++i) {
     FbleReleaseValue(heap, stdio_args.xs[i]);
   }
-  FbleVectorFree(stdio_args);
+  FbleFreeVector(stdio_args);
 
   size_t result = EX_FAILURE;
   if (value != NULL) {

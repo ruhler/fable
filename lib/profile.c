@@ -498,7 +498,7 @@ void FbleFreeProfile(FbleProfile* profile)
     FbleFree(block->callees.xs);
     FbleFree(block);
   }
-  FbleVectorFree(profile->blocks);
+  FbleFreeVector(profile->blocks);
   FbleFree(profile);
 }
 
@@ -725,7 +725,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
     for (size_t j = 0; j < callers[id].size; ++j) {
       FbleFree(callers[id].xs[j]);
     }
-    FbleVectorFree(callers[id]);
+    FbleFreeVector(callers[id]);
   }
   fprintf(fout, "\n");
 

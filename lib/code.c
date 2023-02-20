@@ -34,7 +34,7 @@ static void OnFree(FbleExecutable* executable)
   for (size_t i = 0; i < code->instrs.size; ++i) {
     FbleFreeInstr(code->instrs.xs[i]);
   }
-  FbleVectorFree(code->instrs);
+  FbleFreeVector(code->instrs);
 }
 
 // See documentation in code.h.
@@ -95,7 +95,7 @@ void FbleFreeInstr(FbleInstr* instr)
 
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* i = (FbleReleaseInstr*)instr;
-      FbleVectorFree(i->targets);
+      FbleFreeVector(i->targets);
       FbleFree(instr);
       return;
     }
@@ -117,14 +117,14 @@ void FbleFreeInstr(FbleInstr* instr)
 
     case FBLE_DATA_TYPE_INSTR: {
       FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      FbleVectorFree(dt_instr->fields);
+      FbleFreeVector(dt_instr->fields);
       FbleFree(instr);
       return;
     }
 
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      FbleVectorFree(struct_instr->args);
+      FbleFreeVector(struct_instr->args);
       FbleFree(instr);
       return;
     }
@@ -132,7 +132,7 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
       FbleFreeLoc(select_instr->loc);
-      FbleVectorFree(select_instr->jumps);
+      FbleFreeVector(select_instr->jumps);
       FbleFree(instr);
       return;
     }
@@ -140,7 +140,7 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
       FbleFreeCode(func_value_instr->code);
-      FbleVectorFree(func_value_instr->scope);
+      FbleFreeVector(func_value_instr->scope);
       FbleFree(func_value_instr);
       return;
     }
@@ -148,21 +148,21 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       FbleFreeLoc(call_instr->loc);
-      FbleVectorFree(call_instr->args);
+      FbleFreeVector(call_instr->args);
       FbleFree(instr);
       return;
     }
 
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;
-      FbleVectorFree(list_instr->args);
+      FbleFreeVector(list_instr->args);
       FbleFree(instr);
       return;
     }
 
     case FBLE_LITERAL_INSTR: {
       FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      FbleVectorFree(literal_instr->letters);
+      FbleFreeVector(literal_instr->letters);
       FbleFree(instr);
       return;
     }
@@ -507,5 +507,5 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         name.loc.source->str, name.loc.line, name.loc.col);
   }
 
-  FbleVectorFree(blocks);
+  FbleFreeVector(blocks);
 }

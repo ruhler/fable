@@ -139,6 +139,6 @@ int main(int argc, const char* argv[])
   for (size_t i = 0; i < deps.size; ++i) {
     FbleFreeString(deps.xs[i]);
   }
-  FbleVectorFree(deps);
+  FbleFreeVector(deps);
   return EX_SUCCESS;
 }

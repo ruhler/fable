@@ -38,7 +38,7 @@ void FbleFreeModulePath(FbleModulePath* path)
     for (size_t i = 0; i < path->path.size; ++i) {
       FbleFreeName(path->path.xs[i]);
     }
-    FbleVectorFree(path->path);
+    FbleFreeVector(path->path);
     FbleFree(path);
   }
 }

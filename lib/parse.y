@@ -121,7 +121,7 @@
   for (size_t i = 0; i < $$.size; ++i) {
     FbleFreeKind($$.xs[i]);
   }
-  FbleVectorFree($$);
+  FbleFreeVector($$);
 } <kinds>
 
 %destructor { 
@@ -129,7 +129,7 @@
     FbleFreeKind($$.xs[i].kind);
     FbleFreeName($$.xs[i].name);
   }
-  FbleVectorFree($$);
+  FbleFreeVector($$);
 } <tagged_kinds>
 
 %destructor {
@@ -140,7 +140,7 @@
   for (size_t i = 0; i < $$.size; ++i) {
     FbleFreeExpr($$.xs[i]);
   }
-  FbleVectorFree($$);
+  FbleFreeVector($$);
 } <exprs>
 
 %destructor { 
@@ -157,7 +157,7 @@
     FbleFreeExpr($$.xs[i].type);
     FbleFreeName($$.xs[i].name);
   }
-  FbleVectorFree($$);
+  FbleFreeVector($$);
 } <tagged_types>
 
 %destructor {
@@ -174,7 +174,7 @@
     FbleFreeName($$.xs[i].name);
     FbleFreeExpr($$.xs[i].expr);
   }
-  FbleVectorFree($$);
+  FbleFreeVector($$);
 } <tagged_exprs>
 
 %destructor {
@@ -184,7 +184,7 @@
     FbleFreeName($$.xs[i].name);
     FbleFreeExpr($$.xs[i].expr);
   }
-  FbleVectorFree($$);
+  FbleFreeVector($$);
 } <bindings>
 
 %%
@@ -253,7 +253,7 @@ nkind:
         poly_kind->rkind = kind;
         kind = &poly_kind->_base;
       }
-      FbleVectorFree($2);
+      FbleFreeVector($2);
       $$ = kind;
    }
  ;
@@ -274,7 +274,7 @@ tkind:
         poly_kind->rkind = kind;
         kind = &poly_kind->_base;
       }
-      FbleVectorFree($2);
+      FbleFreeVector($2);
       $$ = kind;
    }
  ;
@@ -424,7 +424,7 @@ expr:
         poly_apply_expr->arg = $3.xs[i];
         $$ = &poly_apply_expr->_base;
       }
-      FbleVectorFree($3);
+      FbleFreeVector($3);
    }
  | expr '.' '%' {
      FbleAbstractAccessExpr* access_expr = FbleAlloc(FbleAbstractAccessExpr);
@@ -496,7 +496,7 @@ block:
         poly_expr->body = expr;
         expr = &poly_expr->_base;
       }
-      FbleVectorFree($2);
+      FbleFreeVector($2);
       $$ = expr;
    }
  ;
@@ -923,6 +923,6 @@ FbleModulePath* FbleParseModulePath(const char* string)
   if (path.size > 0) {
     result = path.xs[0];
   }
-  FbleVectorFree(path);
+  FbleFreeVector(path);
   return result;
 }

@@ -6,7 +6,7 @@
 #include "expr.h"
 
 #include <fble/fble-alloc.h>   // for FbleFree
-#include <fble/fble-vector.h>  // for FbleVectorFree
+#include <fble/fble-vector.h>  // for FbleFreeVector
 
 #include "unreachable.h"
 
@@ -43,7 +43,7 @@ void FbleFreeExpr(FbleExpr* expr)
         FbleFreeName(binding->name);
         FbleFreeExpr(binding->expr);
       }
-      FbleVectorFree(e->bindings);
+      FbleFreeVector(e->bindings);
       FbleFreeExpr(e->body);
       FbleFree(expr);
       return;
@@ -55,7 +55,7 @@ void FbleFreeExpr(FbleExpr* expr)
         FbleFreeExpr(e->fields.xs[i].type);
         FbleFreeName(e->fields.xs[i].name);
       }
-      FbleVectorFree(e->fields);
+      FbleFreeVector(e->fields);
       FbleFree(expr);
       return;
     }
@@ -74,7 +74,7 @@ void FbleFreeExpr(FbleExpr* expr)
         FbleFreeName(e->args.xs[i].name);
         FbleFreeExpr(e->args.xs[i].expr);
       }
-      FbleVectorFree(e->args);
+      FbleFreeVector(e->args);
       FbleFree(expr);
       return;
     }
@@ -97,7 +97,7 @@ void FbleFreeExpr(FbleExpr* expr)
           FbleFreeExpr(e->choices.xs[i].expr);
         }
       }
-      FbleVectorFree(e->choices);
+      FbleFreeVector(e->choices);
       FbleFreeExpr(e->default_);
       FbleFree(expr);
       return;
@@ -108,7 +108,7 @@ void FbleFreeExpr(FbleExpr* expr)
       for (size_t i = 0; i < e->args.size; ++i) {
         FbleFreeExpr(e->args.xs[i]);
       }
-      FbleVectorFree(e->args);
+      FbleFreeVector(e->args);
       FbleFreeExpr(e->rtype);
       FbleFree(expr);
       return;
@@ -120,7 +120,7 @@ void FbleFreeExpr(FbleExpr* expr)
         FbleFreeExpr(e->args.xs[i].type);
         FbleFreeName(e->args.xs[i].name);
       }
-      FbleVectorFree(e->args);
+      FbleFreeVector(e->args);
       FbleFreeExpr(e->body);
       FbleFree(expr);
       return;
@@ -149,7 +149,7 @@ void FbleFreeExpr(FbleExpr* expr)
       for (size_t i = 0; i < e->args.size; ++i) {
         FbleFreeExpr(e->args.xs[i]);
       }
-      FbleVectorFree(e->args);
+      FbleFreeVector(e->args);
       FbleFree(expr);
       return;
     }
@@ -199,7 +199,7 @@ void FbleFreeExpr(FbleExpr* expr)
       for (size_t i = 0; i < e->args.size; ++i) {
         FbleFreeExpr(e->args.xs[i]);
       }
-      FbleVectorFree(e->args);
+      FbleFreeVector(e->args);
       FbleFree(expr);
       return;
     }

@@ -358,24 +358,24 @@ static void FreeScope(Scope* scope)
   for (size_t i = 0; i < scope->statics.size; ++i) {
     FbleFree(scope->statics.xs[i]);
   }
-  FbleVectorFree(scope->statics);
+  FbleFreeVector(scope->statics);
 
   for (size_t i = 0; i < scope->args.size; ++i) {
     FbleFree(scope->args.xs[i]);
   }
-  FbleVectorFree(scope->args);
+  FbleFreeVector(scope->args);
 
   while (scope->vars.size > 0) {
     PopVar(scope, true);
   }
-  FbleVectorFree(scope->vars);
+  FbleFreeVector(scope->vars);
 
   for (size_t i = 0; i < scope->locals.size; ++i) {
     if (scope->locals.xs[i] != NULL) {
       FbleFree(scope->locals.xs[i]);
     }
   }
-  FbleVectorFree(scope->locals);
+  FbleFreeVector(scope->locals);
   FbleFreeDebugInfo(scope->pending_debug_info);
 
   while (scope->pending_profile_ops != NULL) {
@@ -1048,7 +1048,7 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
 
   FreeScope(&scope);
   assert(blocks.stack.size == 0);
-  FbleVectorFree(blocks.stack);
+  FbleFreeVector(blocks.stack);
   *profile_blocks = blocks.profile;
   return code;
 }
@@ -1083,7 +1083,7 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
   for (size_t i = 0; i < args.size; ++i) {
     FbleFreeName(args.xs[i]);
   }
-  FbleVectorFree(args);
+  FbleFreeVector(args);
   FbleFreeName(label);
   return compiled;
 }
@@ -1095,12 +1095,12 @@ void FbleFreeCompiledModule(FbleCompiledModule* module)
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleFreeModulePath(module->deps.xs[i]);
   }
-  FbleVectorFree(module->deps);
+  FbleFreeVector(module->deps);
   FbleFreeCode(module->code);
   for (size_t i = 0; i < module->profile_blocks.size; ++i) {
     FbleFreeName(module->profile_blocks.xs[i]);
   }
-  FbleVectorFree(module->profile_blocks);
+  FbleFreeVector(module->profile_blocks);
 
   FbleFree(module);
 }
@@ -1112,7 +1112,7 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program)
     for (size_t i = 0; i < program->modules.size; ++i) {
       FbleFreeCompiledModule(program->modules.xs[i]);
     }
-    FbleVectorFree(program->modules);
+    FbleFreeVector(program->modules);
     FbleFree(program);
   }
 }

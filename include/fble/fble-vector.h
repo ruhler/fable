@@ -57,7 +57,7 @@
  * @sideeffects
  * * Frees resources of the vector.
  */
-#define FbleVectorFree(vector) \
+#define FbleFreeVector(vector) \
   FbleFree((vector).xs)
 
 /**

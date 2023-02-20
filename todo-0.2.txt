@@ -2,6 +2,13 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Review C API for consistency.
+  For example: FbleVectorInit inconsistent with FbleFreeVector?
+
+* Optimize the generated build.ninja file to be smaller?
+  By introducing rules, and taking advantage of $in, $out, etc?
+  The build.ninja file is around 1.1M right now.
+
 * Add smten support to fble.
   see thoughts/fble.smten.txt
 

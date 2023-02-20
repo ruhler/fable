@@ -46,7 +46,7 @@ void FbleFreeSearchPath(FbleSearchPath* path)
   for (size_t i = 0; i < path->size; ++i) {
     FbleFreeString(path->xs[i]);
   }
-  FbleVectorFree(*path);
+  FbleFreeVector(*path);
   FbleFree(path);
 }
 
@@ -315,11 +315,11 @@ void FbleFreeLoadedProgram(FbleLoadedProgram* program)
       for (size_t j = 0; j < module->deps.size; ++j) {
         FbleFreeModulePath(module->deps.xs[j]);
       }
-      FbleVectorFree(module->deps);
+      FbleFreeVector(module->deps);
       FbleFreeExpr(module->type);
       FbleFreeExpr(module->value);
     }
-    FbleVectorFree(program->modules);
+    FbleFreeVector(program->modules);
     FbleFree(program);
   }
 }
