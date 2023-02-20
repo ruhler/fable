@@ -2,24 +2,21 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
+* Write release notes for release 0.1
+
 * BUILDSTAMP results in a -.gcno file for code coverage?
   Is that a problem? Do we need to handle it? How?
-
-* Write release notes for release 0.1
-* Add targets for clean, distclean, maintainer-clean.
-* Add README.txt as a dist target?
-* Add version numbers to README and generated docs?
 
 * Reconsider use of BUILDSTAMP in fble-test, fble-app, fble-stdio.
  Because this requires users to define BUILDSTAMP when they do their own
  compiles.
 
+* Add targets for clean, distclean, maintainer-clean.
+* Add version numbers to generated docs?
+
 * Check if we are or should be installing libfble-<pkg>.a files.
 
 * Document how to build with minimal dependencies?
-
-* Describe how to build in place in README file?
-  Because making a separate directory is just... more complicated?
 
 * Double check we aren't using build_glob on source directories for dist_s
   that include non-source dist files.

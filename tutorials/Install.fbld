@@ -28,18 +28,16 @@ apt install \
 
 @section[Build][
 Fble comes with a configure script to initialize the build scripts and specify
-where to install fble. A separate build directory should be used for building
-fble. You can choose whether to install fble in a standard system location,
-such as /usr/local, or in your own home directory in some location. For this
-example, we'll install fble to an 'install' directory alongside the source
-code.
+where to install fble. You can choose whether to install fble in a standard
+system location, such as /usr/local, or in your own home directory in some
+location. For this example, we'll install fble to an 'install' directory
+alongside the source code.
 
 @code[sh]
 cd fable
-mkdir build install
+mkdir install
 INSTALL=`pwd`/install
-cd build
-../configure --prefix=$INSTALL
+./configure --prefix=$INSTALL
 ninja && ninja install
 
 If you would like to run the full test suite, you can also run:
