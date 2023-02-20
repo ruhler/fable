@@ -35,11 +35,6 @@ Things to consider doing for the fble-0.1 release.
 * Generate man pages for library functions via fbld.
 * Make the official release.
 
-* Clean up specification of dependencies for fbld generated docs.
- - Fix missing dependency for .fbld processing on fbld.lang and fble.lang.
- - Maybe easiest to add a tcl proc for building fbld and encapsulate all the
-   dependencies there.
-
 * Improve exercises for Unions and Functions tutorials, and others.
 
 * Fix dependencies in tutorials/build.tcl.
