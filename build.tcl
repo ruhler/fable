@@ -294,7 +294,8 @@ puts $::build_ninja "default all"
 build "$::b/build.ninja" \
   "$::s/build.tcl $::b/config.tcl" \
   "tclsh8.6 $::s/build.tcl $::b/build.ninja" \
-  "depfile = $::b/build.ninja.d"
+  "depfile = $::b/build.ninja.d" \
+  "generator = 1"
 
 # build.ninja.d implicit dependency file.
 set ::build_ninja_d [open "$::b/build.ninja.d" "w"]
