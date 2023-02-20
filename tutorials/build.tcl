@@ -37,16 +37,14 @@ namespace eval "tutorials" {
   foreach {x} $modules_tutorial_files { dist_s $::s/tutorials/Modules/$x }
 
   # Tutorial table of contents
-  ::html_doc $::d/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
-  www $::d/www/tutorials/Tutorials.html
-  dist_d $::d/www/tutorials/Tutorials.html
+  ::html_doc $::b/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
+  www $::b/www/tutorials/Tutorials.html
 
   # Tutorials
   foreach {x} $tutorials {
     set base [file rootname [file tail $x]]
-    ::html_tutorial $::d/www/tutorials/$base.html $::s/tutorials/$base.fbld
-    www $::d/www/tutorials/$base.html
-    dist_d $::d/www/tutorials/$base.html
+    ::html_tutorial $::b/www/tutorials/$base.html $::s/tutorials/$base.fbld
+    www $::b/www/tutorials/$base.html
   }
 
   # HelloWorld tests

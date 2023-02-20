@@ -14,9 +14,6 @@ source config.tcl
 set ::s $::config::srcdir
 set ::b $::config::builddir
 
-# ::d is for non-source files that should be included in the distribution
-set ::d $::config::nonsrcdistdir
-
 set ::build_ninja_filename [lindex $argv 0]
 set ::build_ninja [open "$::build_ninja_filename.tmp" "w"]
 set ::arch "[exec arch]"
@@ -207,20 +204,7 @@ proc dist_s { file } {
   set base [string range $file [string length $::s/] end]
   lappend ::dist $::b/$::version/$base
   build $::b/$::version/$base $::s/$base \
-    "cp --preserve=timestamps $::s/$base $::b/$::version/$base"
-}
-
-# Mark a non-source file for distribution.
-# The file must be under $::d directory.
-# For example: dist_d $::d/README.txt
-proc dist_d { file } {
-  if {![string match "$::d/*" $file"]} {
-    error "dist_d argument \'$file\' not under \'$::d\'"
-  }
-  set base [string range $file [string length $::d/] end]
-  lappend ::dist $::b/$::version/$base
-  build $::b/$::version/$base $::d/$base \
-    "cp --preserve=timestamps $::d/$base $::b/$::version/$base"
+    "cp $::s/$base $::b/$::version/$base"
 }
 
 # Perform glob on files in the given dir.
@@ -271,8 +255,8 @@ dist_s $::s/todo-0.1.txt
 dist_s $::s/todo-0.2.txt
 
 # README file www
-::html_doc $::d/www/index.html $::s/README.fbld
-www $::d/www/index.html
+::html_doc $::b/www/index.html $::s/README.fbld
+www $::b/www/index.html
 
 # Test summary.
 build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"

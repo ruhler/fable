@@ -14,11 +14,6 @@ Things to consider doing for the fble-0.1 release.
  Because this requires users to define BUILDSTAMP when they do their own
  compiles.
 
-* Double check why ninja www from dist doesn't think everything is up to date
-  by default.
-  Looks like ninja has to build all targets before it will avoid building
-  them. Just preserving timestamps is not enough.
-
 * Check if we are or should be installing libfble-<pkg>.a files.
 
 * Document how to build with minimal dependencies?

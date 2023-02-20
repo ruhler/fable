@@ -1295,3 +1295,136 @@ Problem: ninja doesn't avoid making targets that are already up to date if it
 hasn't run them before. How can we make non-source dist files work in that
 case?
 
+Realistically, I don't think it makes sense to hack around ninja and try to
+trick it into thinking it has already built something. Better to be more
+explicit. Fundamentally ninja has know way of knowing how a target was
+generated if it didn't generate it itself. It doesn't know if the command line
+was changed or not.
+
+We could switch to auto-generate makefile and use that instead of ninja, but
+that has the key problem that ninja solves and that is getting in the way
+here: make won't recognize when the command to build something has changed.
+
+That means we want to be explicit. Let's have two different modes of building.
+Not sure what to call them yet. Let's say 'maintainer' mode and 'user' mode.
+Or... 'dev' mode and 'release' mode.
+
+In dev mode, we build the non-source-dist into the build directory and read
+them from the build directory. In release mode, we read the non-source-dist
+from the source directory without ever building them.
+
+It has to be two different build.ninja files. We can't just have different
+build targets. You have to run configure again to switch between them.
+
+Now let's consider all the cases:
+
+* dev mode from git:
+  Works great. Requires you to build everything.
+* release mode from git:
+  Fails to find required files.
+* dev mode from release:
+  Works great. Requires you to build everything.
+* release mode from release:
+  Works great. Reduced dependencies.
+
+In the case where source directory is the same as the build directory, you can
+mix dev mode and release mode. Like, do dev mode from a release and it will
+update your files, then you can go back to release mode if you want. Or do dev
+mode from git, now you can use release mode.
+
+In the case where source directory is different from the build directory, then
+mixing dev mode and release mode from a release will result in multiple copies
+of the non-source files in different locations. May be slightly confusing.
+
+Maybe it's worth putting a note on top of all these generated files saying
+it's auto-generated. Yeah. Probably is.
+  
+If we go this route:
+* What is the name of the flag we should use to switch between dev mode and
+  release mode?
+* What should the default value of the flag be?
+
+Options for default value:
+* always release: builds minimal by default, but leads to confusing error
+  message when building from git.
+* always dev: always builds, but requires more dependencies. May as well not
+  have any non-source dist files.
+* dev for dev, release for release, with option to override.
+  Sounds good. How do we detect dev versus release? Detect for the presence of
+  a file?
+
+What are we gaining by having non-source dist files? Honestly, in practice,
+today?
+* Bison dependency dropped for 'release'.
+* source-highlight dependency dropped for 'release'.
+* groff dependency could be dropped for 'release'.
+* pre-generated documentation available. For example, README.txt, TAGs.
+
+The final minimal dependency for fble looks nice without these:
+  gcc, binutils, ninja, tcl
+
+We have to be careful with auto-detecting, because it can be messed up if you
+modify things yourself or do in-place builds. It shouldn't be based on
+presence of absence of non-source dist files.
+
+How about this: default to release, but, in the case of release, add a check
+when generating the build.ninja file that all the required files exist. If any
+of them don't, print an error that tells people to add the 'dev' flag to
+generate the missing file. Yeah. I like that.
+
+Which brings us back to the question of what to call the flag. I'm tempted to
+have '--dev'. Maybe '--maintainer'? --enable-maintainer-mode?
+
+I like '--dev'. I think that's fair. If you are doing development, you ought
+to regenerate all those files, because they will be out of date otherwise.
+
+This starts to get scary. What if you do a --dev, then the next time around
+you forget. And you build locally. Then you change parse.y? Ugh. It's not
+safe. If you change parse.y, we really want the guarantee that parse.tab.c
+will be generated.
+
+Other ideas:
+* Can we use the restat tool for some ninja magic? No. Looks like not.
+* Can I just implement my own build system? It can't be that hard, right?
+* hack the ninja log?
+
+Let's assume the ninja log format is standard and doesn't change between ninja
+versions. Could we write our own ninja log? It makes sense, right? We are
+recording how the dist_d files got built in the first place.
+
+Looks like the ninja log has a version number at the top. Maybe it's backwards
+compatible? Or we can pick a known version to generate and require you have at
+least that version of ninja?
+
+The internet says:
+   Each line has five fields separated by a \t:
+
+    1. Start time in milliseconds since the start of the run (integer)
+    2. End time in milliseconds since the start of the run (integer)
+    3. Restat mtime (integer) (0 if there was none)
+    4. Output path (string)
+    5. In v5: The hash of the command in hexadecimal. In v4: The full command
+       as string.
+
+And these appear to be relative paths? Relative to the build directory.
+
+Here's the proposal: filter out all lines from .ninja_log that are dist_d
+files. Include those in the release tarball. Have configure copy the
+.ninja_log over the first time you build.
+
+Nope. Doesn't work. I guess it thinks the command lines changed, perhaps due
+to the change in build directory.
+
+What if I provide a 'userspace' solution?
+
+Take parse.tab.c for example, which is generated from parse.y.
+
+No. It's the fundamental problem. If you use timestamp to tell what's
+up-to-date, you can't change the command line.
+
+I think, for release 0.1, we should drop the idea of dist_d. If the set of
+dist_d files is empty, no need to worry about all this. The complexity is not
+worth the very small benefit of not requiring bison to build, having a
+reformatted README file, and not requiring source-highlight to build the html
+code.
+ 

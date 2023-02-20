@@ -52,13 +52,12 @@ namespace eval "lib" {
 
   # parse.tab.c
   set report $::b/lib/parse.tab.report.txt
-  set cmd "bison --report=all --report-file=$report -o $::d/lib/parse.tab.c $::s/lib/parse.y"
-  build "$::d/lib/parse.tab.c $report" "$::s/lib/parse.y" $cmd
-  dist_d $::d/lib/parse.tab.c
+  set cmd "bison --report=all --report-file=$report -o $::b/lib/parse.tab.c $::s/lib/parse.y"
+  build "$::b/lib/parse.tab.c $report" "$::s/lib/parse.y" $cmd
 
   # parse.tab.o
-  obj $::b/lib/parse.tab.o $::d/lib/parse.tab.c "-I $::s/include -I $::s/lib"
-  obj_cov $::b/lib/parse.tab.cov.o $::d/lib/parse.tab.c "-I $::s/include -I $::s/lib"
+  obj $::b/lib/parse.tab.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"
+  obj_cov $::b/lib/parse.tab.cov.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"
   lappend objs $::b/lib/parse.tab.o
   lappend objs_cov $::b/lib/parse.tab.cov.o
 
