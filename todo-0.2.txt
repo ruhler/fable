@@ -2,6 +2,8 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Improve exercises for Unions and Functions tutorials, and others.
+
 * Fix timeout with gdb-test
  - Just need to increase it a little in case of heavy CPU load?
  - Next time it happens, try to see where it got stuck?
@@ -162,3 +164,5 @@ Things to consider doing for the fble-0.2 release.
 * [typecheck] Figure out why FbleNormalType is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
  - Profiling said its all in FbleTypesEqual. Maybe something pathological?
+
+* Add tests that at least the compiled apps don't crash when you run them.

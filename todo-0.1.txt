@@ -2,52 +2,34 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
+Release Related:
 * Write release notes for release 0.1
+* Make the official release.
 
+Build Related:
+* Fix dependencies in tutorials/build.tcl.
+  In particular, they all depend on the core library implementation.
+  Not sure how to do this easily. Something related to fble-deps?
+* Set up default package path.
+  Based on datadir configuration setting.
+* Update github workflow to test both with and without SDL?
+* Double check we aren't using build_glob on source directories for dist_s
+  that include built files.
+  For example: if you build in the source directory, and then build again,
+  will that list some of the built files as sources incorrectly?
 * BUILDSTAMP results in a -.gcno file for code coverage?
   Is that a problem? Do we need to handle it? How?
-
 * Reconsider use of BUILDSTAMP in fble-test, fble-app, fble-stdio.
  Because this requires users to define BUILDSTAMP when they do their own
  compiles.
 
-* Add targets for clean, distclean, maintainer-clean.
-* Add version numbers to generated docs?
-
-* Check if we are or should be installing libfble-<pkg>.a files.
-
+Documentation Related:
 * Document how to build with minimal dependencies?
-
-* Double check we aren't using build_glob on source directories for dist_s
-  that include non-source dist files.
-  For example: if you build in the source directory, and then build again,
-  will that list some of the built files as sources incorrectly?
-
-* Update documentation for how to enable/disable SDL/OpenGL dependencies.
- - Add nice error message if SDL not installed when fble-app is enabled saying
-   how to disable fble-app.
-
-* Update github workflow to test both with and without SDL.
-
-* Generate man pages for library functions via fbld.
-* Make the official release.
-
-* Improve exercises for Unions and Functions tutorials, and others.
-
-* Fix dependencies in tutorials/build.tcl.
-  In particular, they all depend on the core library implementation.
-  Not sure how to do this easily. Something related to fble-deps?
-
 * Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
   options.
-
-* Set up default package path.
-  Based on datadir configuration setting.
-
 * Figure out how to customize usage for compiled binaries
  - for example, fble-invaders should say fble-invaders in the usage, not
    fble-app.
-
 * Generate fbld based man pages for binaries.
   fble-app
   fble-md5
@@ -58,10 +40,8 @@ Things to consider doing for the fble-0.1 release.
   fble-invaders
   fble-pinball
   fble-test
-
-* Add tests that at least the compiled apps don't crash when you run them.
-
-* [cleanup] Consistently document ownership of args to C functions?
- Borrowed: no transfer of ownership.
- Consumed: ownership transferred from caller to callee.
- Outlives: caller responsible for keeping alive as long as returned result is.
+* Generate man pages for library functions via fbld.
+* Update documentation for how to enable/disable SDL/OpenGL dependencies.
+ - Add nice error message if SDL not installed when fble-app is enabled saying
+   how to disable fble-app.
+* Add version numbers to generated docs?

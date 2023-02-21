@@ -1428,3 +1428,25 @@ worth the very small benefit of not requiring bison to build, having a
 reformatted README file, and not requiring source-highlight to build the html
 code.
  
+---
+
+How about clean, distclean, and maintainer clean now?
+
+That should just be:
+ clean = ninja -t clean
+ distclean = ninja -t clean -g
+ maintainer-clean same as distclean, because we have no non-source distributed
+files anymore.
+
+The trouble is, config.tcl isn't being cleaned with -g.
+
+Oh well. It's not like you can do anything with it, unless you want to
+manually run build.tcl. I wouldn't worry about this.
+
+Another issue with -t clean is we have some outputs not tracked by ninja,
+particularly for spec tests. Namely:
+* coverage files
+* spec test generated .c, .o, .s files.
+* config.tcl
+* .ninja_log, .ninja_deps
+

@@ -45,6 +45,7 @@ namespace eval "pkgs" {
     }
 
     lib $::b/pkgs/$name/libfble-$name.a $objs
+    install $::b/pkgs/$name/libfble-$name.a $::config::libdir/libfble-$name.a
   }
 
   dist_s $::s/pkgs/build.tcl
