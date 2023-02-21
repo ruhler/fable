@@ -34,11 +34,7 @@ namespace eval "pkgs" {
         install $::s/pkgs/$name/$x $target
         dist_s $::s/pkgs/$name/$x
 
-        # Generate a .d file to capture dependencies.
-        build $::b/pkgs/$name/$x.d "$::b/bin/fble-deps $::s/pkgs/$name/$x" \
-          "$::b/bin/fble-deps $cflags -t $::b/pkgs/$name/$x.d -m $mpath > $::b/pkgs/$name/$x.d" \
-          "depfile = $::b/pkgs/$name/$x.d"
-
+        fbledep $::b/pkgs/$name/$x.d $mpath $cflags
         fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
         lappend objs $::b/pkgs/$name/$x.o
       }

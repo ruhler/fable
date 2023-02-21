@@ -43,6 +43,16 @@ namespace eval "bin" {
     install $::b/bin/$base.1 $::config::mandir/man1/$base.1
   }
 
+  # Generate a .d file for a .fble file.
+  #   target - the name of the .d file to generate.
+  #   module - the module path to generate it for.
+  #   flags - search path flags for the module.
+  proc ::fbledep { target module flags } {
+    build $target "$::b/bin/fble-deps" \
+      "$::b/bin/fble-deps $flags -t $target -m $module > $target" \
+      "depfile = $target"
+  }
+
   # Compile a .fble file to .o via aarch64.
   #
   # Inputs:

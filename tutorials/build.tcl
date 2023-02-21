@@ -48,20 +48,23 @@ namespace eval "tutorials" {
   }
 
   # HelloWorld tests
+  fbledep $::b/tutorials/HelloWorld/HelloWorld.fble.d "/HelloWorld%" \
+    "-I $::s/pkgs/core -I $::s/tutorials/HelloWorld"
   test $::b/tutorials/HelloWorld.tr \
-    "$::b/pkgs/core/fble-stdio $::s/tutorials/HelloWorld/HelloWorld.fble" \
+    "$::b/pkgs/core/fble-stdio $::b/tutorials/HelloWorld/HelloWorld.fble.d" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/HelloWorld -m /HelloWorld%"
 
   # Basics tests
+  fbledep $::b/tutorials/Basics/Basics.fble.d "/Basics%" \
+    "-I $::s/pkgs/core -I $::s/tutorials/Basics"
   test $::b/tutorials/Basics.tr \
-    "$::b/pkgs/core/fble-stdio $::s/tutorials/Basics/Basics.fble" \
+    "$::b/pkgs/core/fble-stdio $::b/tutorials/Basics/Basics.fble.d" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/Basics -m /Basics%"
 
   # Modules tests
-  set modules_deps [list $::b/pkgs/core/fble-stdio]
-  foreach {x} $modules_tutorial_files {
-    lappend modules_deps $::s/tutorials/Modules/$x
-  }
-  test $::b/tutorials/Modules.tr $modules_deps \
+  fbledep $::b/tutorials/Modules/Main.fble.d "/Main%" \
+    "-I $::s/pkgs/core -I $::s/tutorials/Modules"
+  test $::b/tutorials/Modules.tr \
+    "$::b/pkgs/core/fble-stdio $::b/tutorials/Modules/Main.fble.d" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/Modules -m /Main%"
 }

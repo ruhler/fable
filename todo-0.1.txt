@@ -7,9 +7,6 @@ Release Related:
 * Make the official release.
 
 Build Related:
-* Fix dependencies in tutorials/build.tcl.
-  In particular, they all depend on the core library implementation.
-  Not sure how to do this easily. Something related to fble-deps?
 * Set up default package path.
   Based on datadir configuration setting.
 * Update github workflow to test both with and without SDL?
