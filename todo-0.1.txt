@@ -38,7 +38,4 @@ Documentation Related:
   fble-pinball
   fble-test
 * Generate man pages for library functions via fbld.
-* Update documentation for how to enable/disable SDL/OpenGL dependencies.
- - Add nice error message if SDL not installed when fble-app is enabled saying
-   how to disable fble-app.
 * Add version numbers to generated docs?

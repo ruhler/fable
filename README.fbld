@@ -38,8 +38,8 @@ The latest generated documentation is also available online at
 @def[www/] Source for the fble website.
 
 @section[Build Requirements][
-To build and run the tests for Fable, the following software is required. The
-version numbers provided are versions that are known to work:
+To build and run the tests for all of fble, the following software is
+required. The version numbers provided are versions that are known to work:
 
 @def[Expect 5.45.4] To test fble debugging.
 @def[GNU Binutils for Debian 2.31.1] For assembling compiled fble programs.
@@ -64,7 +64,7 @@ apt install \
   ninja-build libgl-dev libsdl2-dev tcl8.6
 ]
 
-@section[Build and Test][
+@section[Build][
 To build and install:
 
 @code[sh]

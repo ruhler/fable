@@ -79,8 +79,15 @@ namespace eval "config" {
 
   # SDL and OpenGL specific configuration.
   if $enable_fble_app {
-    set sdl_cflags [exec sdl2-config --cflags]
-    set sdl_libs [exec sdl2-config --libs]
+    try {
+      set sdl_cflags [exec sdl2-config --cflags]
+      set sdl_libs [exec sdl2-config --libs]
+    } on error {} {
+      puts stderr "Unable to find SDL2."
+      puts stderr "Please install libsdl2-dev or use --disable-fble-app."
+      exit 1
+    }
+
     set gl_cflags ""
     set gl_libs "-lGL"
   }
