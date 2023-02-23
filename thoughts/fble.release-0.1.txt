@@ -1450,3 +1450,16 @@ particularly for spec tests. Namely:
 * config.tcl
 * .ninja_log, .ninja_deps
 
+---
+
+How to set up the default package path? We read from FBLE_PACKAGE_PATH in
+FbleFindPackage. The default package path is known at configure time. How do I
+get it into lib/load.c? Generate a .h file from configure?
+
+Let's see what vim does, for example. Looks autoconf based. It has a makefile
+rule to generate a pathdef.c that defines the string value for the installed
+path. It defines an extern const char*, for example. Sounds doable. Let's
+define an internal symbol FbleDefaultPackagePath as part of the build. We can
+create our own load.path.c file and compile that.
+
+The value of that path should be... $::config::datadir/pkgs.

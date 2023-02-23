@@ -61,6 +61,16 @@ namespace eval "lib" {
   lappend objs $::b/lib/parse.tab.o
   lappend objs_cov $::b/lib/parse.tab.cov.o
 
+  # load.path.c
+  build "$::b/lib/load.path.c" "" \
+    "echo \"const char* FbleDefaultPackagePath = \\\"$::config::datadir/fble\\\";\" > $::b/lib/load.path.c"
+
+  # load.path.o
+  obj $::b/lib/load.path.o $::b/lib/load.path.c ""
+  obj_cov $::b/lib/load.path.cov.o $::b/lib/load.path.c ""
+  lappend objs $::b/lib/load.path.o
+  lappend objs_cov $::b/lib/load.path.cov.o
+
   # general .o files
   foreach {x} $sources {
     set object $::b/lib/[string map {.c .o} $x]

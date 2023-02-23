@@ -7,8 +7,6 @@ Release Related:
 * Make the official release.
 
 Build Related:
-* Set up default package path.
-  Based on datadir configuration setting.
 * Update github workflow to test both with and without SDL?
 * Double check we aren't using build_glob on source directories for dist_s
   that include built files.
@@ -21,7 +19,6 @@ Build Related:
  compiles.
 
 Documentation Related:
-* Document how to build with minimal dependencies?
 * Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
   options.
 * Figure out how to customize usage for compiled binaries
@@ -37,5 +34,7 @@ Documentation Related:
   fble-invaders
   fble-pinball
   fble-test
+* Document default fble package path in man pages?
+  Meaning, the exact value we end up installing.
 * Generate man pages for library functions via fbld.
 * Add version numbers to generated docs?
