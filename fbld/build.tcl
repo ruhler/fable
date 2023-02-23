@@ -1,8 +1,19 @@
 namespace eval "fbld" {
 
-  foreach x [build_glob $::s/fbld *] {
-    dist_s $x
-  }
+  dist_s $::s/fbld/build.tcl
+  dist_s $::s/fbld/cdata.tcl
+  dist_s $::s/fbld/check.tcl
+  dist_s $::s/fbld/fbld.fbld
+  dist_s $::s/fbld/fbld.lang
+  dist_s $::s/fbld/fbld.tcl
+  dist_s $::s/fbld/html.tcl
+  dist_s $::s/fbld/man.tcl
+  dist_s $::s/fbld/roff.tcl
+  dist_s $::s/fbld/runfbld.tcl
+  dist_s $::s/fbld/test.tcl
+  dist_s $::s/fbld/tutorial.tcl
+  dist_s $::s/fbld/usage.help.tcl
+  dist_s $::s/fbld/usage.man.tcl
 
   # Test suite for fbld implementation.
   test $::b/fbld/test.tr $::s/fbld/test.tcl \

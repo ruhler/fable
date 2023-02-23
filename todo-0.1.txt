@@ -7,11 +7,6 @@ Release Related:
 * Make the official release.
 
 Build Related:
-* Update github workflow to test both with and without SDL?
-* Double check we aren't using build_glob on source directories for dist_s
-  that include built files.
-  For example: if you build in the source directory, and then build again,
-  will that list some of the built files as sources incorrectly?
 * BUILDSTAMP results in a -.gcno file for code coverage?
   Is that a problem? Do we need to handle it? How?
 * Reconsider use of BUILDSTAMP in fble-test, fble-app, fble-stdio.
