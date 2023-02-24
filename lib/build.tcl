@@ -81,6 +81,18 @@ namespace eval "lib" {
     lappend objs_cov $object_cov
   }
 
+  # buildstamp.c
+  # Defines FbleBuildStamp. We have this depend on all the object files to
+  # force it to rebuild any time any thing changes.
+  build "$::b/lib/buildstamp.c" "$::s/buildstamp $objs" \
+    "$::s/buildstamp FbleBuildStamp > $::b/lib/buildstamp.c"
+
+  # buildstamp.o
+  obj $::b/lib/buildstamp.o $::b/lib/buildstamp.c ""
+  obj_cov $::b/lib/buildstamp.cov.o $::b/lib/buildstamp.c ""
+  lappend objs $::b/lib/buildstamp.o
+  lappend objs_cov $::b/lib/buildstamp.cov.o
+
   # libraries
   lib "$::b/lib/libfble.a" $objs
   lib "$::b/lib/libfble.cov.a" $objs_cov

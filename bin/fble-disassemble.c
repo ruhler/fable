@@ -72,7 +72,7 @@ int main(int argc, const char* argv[])
   }
 
   if (version) {
-    printf("fble-disassemble %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
+    printf("fble-disassemble %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
     FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }

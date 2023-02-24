@@ -23,4 +23,12 @@
  */
 #define FBLE_VERSION "fble-0.1"
 
+/**
+ * A brief description with some info about the particular build of the fble
+ * library.
+ *
+ * For debug purposes only.
+ */
+extern const char* FbleBuildStamp;
+
 #endif // FBLE_VERSION_H_

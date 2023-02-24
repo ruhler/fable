@@ -34,7 +34,7 @@ int main(int argc, const char* argv[]);
 //   Outputs version information to the given stream.
 static void PrintVersion(FILE* stream)
 {
-  fprintf(stream, "fble-deps %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
+  fprintf(stream, "fble-deps %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
 }
 
 // PrintHelp --

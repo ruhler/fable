@@ -98,7 +98,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   }
 
   if (version) {
-    printf("fble-test %s (%s)\n", FBLE_VERSION, BUILDSTAMP);
+    printf("fble-test %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
     FbleFreeSearchPath(search_path);
     return EX_SUCCESS;
   }

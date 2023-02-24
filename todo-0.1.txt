@@ -6,13 +6,6 @@ Release Related:
 * Write release notes for release 0.1
 * Make the official release.
 
-Build Related:
-* BUILDSTAMP results in a -.gcno file for code coverage?
-  Is that a problem? Do we need to handle it? How?
-* Reconsider use of BUILDSTAMP in fble-test, fble-app, fble-stdio.
- Because this requires users to define BUILDSTAMP when they do their own
- compiles.
-
 Documentation Related:
 * Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
   options.
@@ -29,6 +22,7 @@ Documentation Related:
   fble-invaders
   fble-pinball
   fble-test
+
 * Document default fble package path in man pages?
   Meaning, the exact value we end up installing.
 * Generate man pages for library functions via fbld.

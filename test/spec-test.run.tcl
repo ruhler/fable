@@ -159,7 +159,7 @@ proc compile {target main} {
 
   lappend objs $::b/test/libfbletest.a
   lappend objs $::b/lib/libfble.a
-  exec $::s/buildstamp | gcc -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs -x c -
+  exec gcc -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs
   return $exe
 }
 
