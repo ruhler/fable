@@ -5,6 +5,9 @@ Things to consider doing for the fble-0.1 release.
 * Add a way to specify package path on the command line?
 
 Documentation Related:
+* usage output does not work well when piping to less
+  It shows a bunch of [ESC like stuff in the output text.
+
 * Clean up option parsing, usage text, man pages for each of the following.
   Making sure to add FBLE_PACKAGE_PATH, -p, and --package option descriptions.
   - fble-compile

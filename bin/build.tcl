@@ -14,13 +14,13 @@ namespace eval "bin" {
     dist_s $::s/bin/$base.fbld
 
     test $::b/bin/$base.fbld.tr \
-      "$::s/bin/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/check.tcl $::s/fbld/usage.man.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/check.tcl < $::s/bin/$base.fbld"
+      "$::s/bin/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/check.tcl $::s/fbld/usage.man.tcl $::s/fbld/usage.lib.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/usage.lib.tcl $::s/fbld/check.tcl < $::s/bin/$base.fbld"
 
     # Generated header file for help usage text.
     build $::b/bin/$base.roff \
-      "$::s/bin/$base.fbld $::s/fbld/usage.help.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/roff.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl < $::s/bin/$base.fbld > $::b/bin/$base.roff"
+      "$::s/bin/$base.fbld $::s/fbld/usage.help.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl < $::s/bin/$base.fbld > $::b/bin/$base.roff"
     build $::b/bin/$base.txt $::b/bin/$base.roff \
       "groff -T ascii < $::b/bin/$base.roff > $::b/bin/$base.txt"
     build $::b/bin/$base.usage.h \
@@ -38,8 +38,8 @@ namespace eval "bin" {
 
     # Man page.
     build $::b/bin/$base.1 \
-      "$::s/bin/$base.fbld $::s/fbld/usage.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/man.tcl < $::s/bin/$base.fbld > $::b/bin/$base.1"
+      "$::s/bin/$base.fbld $::s/fbld/usage.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl < $::s/bin/$base.fbld > $::b/bin/$base.1"
     install $::b/bin/$base.1 $::config::mandir/man1/$base.1
   }
 
