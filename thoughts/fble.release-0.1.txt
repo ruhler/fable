@@ -1803,3 +1803,34 @@ Let's say we go in this order:
 * fble-graphics
 * fble-invaders
 * fble-pinball
+
+---
+
+First big challenge: how to deal with fble-test.
+
+We don't have or want separate usage or man pages for individual compiled
+apps. We want a single fble-test man page. The fble-test generic --help should
+give that same info. Easy enough. But what about the fble-test compiled
+--help?
+
+According to my above proposal, compiled doesn't support --help.
+
+I guess I removed the --expect-error argument. So maybe that's okay.
+
+Here's another idea though. What if we accept module options always, but
+consider it an error to specify --module because it's like a duplicate module
+setting? That would allow us to have the same --help output regardless of
+compiled versus generic.
+
+The other thing to change would be the name of the app though. Hmm...
+
+Could I add a single line in front of the usage output?
+
+fble-test-foo - /Foo/Bar% compiled with --main FbleTestMain
+
+fble-test - ...
+
+Usage: fble-test [OPTION...] ...
+
+I like that. We could include it in the version info too if we wanted.
+

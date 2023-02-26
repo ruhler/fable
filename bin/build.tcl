@@ -14,19 +14,8 @@ namespace eval "bin" {
     dist_s $::s/bin/$base.c
     dist_s $::s/bin/$base.fbld
 
-    test $::b/bin/$base.fbld.tr \
-      "$::s/bin/$base.fbld $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/check.tcl $::s/fbld/usage.man.tcl $::s/fbld/usage.lib.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/usage.lib.tcl $::s/fbld/check.tcl < $::s/bin/$base.fbld"
-
     # Generated header file for help usage text.
-    build $::b/bin/$base.roff \
-      "$::s/bin/$base.fbld $::s/fbld/usage.help.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl < $::s/bin/$base.fbld > $::b/bin/$base.roff"
-    build $::b/bin/$base.txt $::b/bin/$base.roff \
-      "groff -T ascii < $::b/bin/$base.roff > $::b/bin/$base.txt"
-    build $::b/bin/$base.usage.h \
-      "$::s/fbld/cdata.tcl $::b/bin/$base.txt" \
-      "tclsh8.6 $::s/fbld/cdata.tcl fbldUsageHelpText < $::b/bin/$base.txt > $::b/bin/$base.usage.h"
+    header_usage $::b/bin/$base.usage.h $::s/bin/$base.fbld fbldUsageHelpText
 
     # The binary.
     obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \
@@ -38,9 +27,7 @@ namespace eval "bin" {
     install $::b/bin/$base $::config::bindir/$base
 
     # Man page.
-    build $::b/bin/$base.1 \
-      "$::s/bin/$base.fbld $::s/fbld/usage.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl < $::s/bin/$base.fbld > $::b/bin/$base.1"
+    man_usage $::b/bin/$base.1 $::s/bin/$base.fbld
     install $::b/bin/$base.1 $::config::mandir/man1/$base.1
   }
 

@@ -18,8 +18,6 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-extern const char* BUILDSTAMP;
-
 static void PrintVersion(FILE* stream);
 static void PrintHelp(FILE* stream);
 

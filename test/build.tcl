@@ -1,5 +1,5 @@
 namespace eval "test" {
-  set cflags "-I $::s/include"
+  set cflags "-I $::s/include -I $::b/test"
   set libs "$::b/test/libfbletest.a $::b/lib/libfble.a"
   set libs_cov "$::b/test/libfbletest.a $::b/lib/libfble.cov.a"
 
@@ -31,11 +31,18 @@ namespace eval "test" {
   foreach {x} $lib_sources { dist_s $::s/test/$x }
   foreach {x} $bin_sources { dist_s $::s/test/$x }
 
+  # Usage and man page for fble-test
+  header_usage $::b/test/fble-test.usage.h $::s/test/fble-test.fbld fbldUsageHelpText
+  man_usage $::b/test/fble-test.1 $::s/test/fble-test.fbld
+  install $::b/test/fble-test.1 $::config::mandir/man1/fble-test.1
+
   # libfbletest.a
   set objs [list]
   foreach {x} $lib_sources {
+    # TODO: don't hard code dependency on fble-test.usage.h like this.
     set object $::b/test/[string map {.c .o} $x]
-    obj $object $::s/test/$x $cflags
+    obj $object $::s/test/$x $cflags \
+      $::b/test/fble-test.usage.h
     lappend objs $object
   }
   lib $::b/test/libfbletest.a $objs

@@ -16,61 +16,42 @@
 #include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
+#include "fble-test.usage.h"      // for fbldUsageHelpText
+
 #define EX_SUCCESS 0
 #define EX_COMPILE_ERROR 1
 #define EX_RUNTIME_ERROR 2
 #define EX_USAGE_ERROR 3
 #define EX_OTHER_ERROR 4
 
-extern const char* BUILDSTAMP;
-
-static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
+static void PrintVersion(FILE* stream);
+static void PrintHelp(FILE* stream);
 
-// PrintUsage --
+// PrintVersion --
+//   Prints version info to the given output stream.
+//
+// Inputs:
+//   stream - The output stream to write the version information to.
+//   module - Non-NULL if a compiled module is provided, NULL otherwise.
+//
+// Side effects:
+//   Outputs version information to the given stream.
+static void PrintVersion(FILE* stream)
+{
+  fprintf(stream, "fble-test %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
+}
+
+// PrintHelp --
 //   Prints help info for FbleTestMain the given output stream.
 //
 // Inputs:
 //   stream - The output stream to write the usage information to.
-//   module - Non-NULL if a compiled module is provided, NULL otherwise.
 //
 // Side effects:
 //   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
+static void PrintHelp(FILE* stream)
 {
-  fprintf(stream, "Usage: fble-test [OPTION...]%s\n",
-      module == NULL ? " -m MODULE_PATH" : "");
-  fprintf(stream, "%s",
-      "\n"
-      "Description:\n"
-      "  Evaluates an fble program.\n"
-      "\n"
-      "Options:\n"
-      "  -h, --help\n"
-      "     Print this help message and exit.\n"
-      "  -v, --verbose\n"
-      "     Print version information and exit.\n");
-  if (module == NULL) {
-    fprintf(stream, "%s",
-      "  -I DIR\n"
-      "     Adds DIR to the module search path.\n"
-      "  -m, --module MODULE_PATH\n"
-      "     The path of the module to get dependencies for.\n");
-  }
-  fprintf(stream, "%s",
-      "  --profile FILE\n"
-      "    Writes a profile of the test run to FILE\n"
-      "\n"
-      "Exit Status:\n"
-      "  0 on success.\n"
-      "  1 on compile error.\n"
-      "  2 on runtime error.\n"
-      "  3 on usage error.\n"
-      "  4 on other error.\n"
-      "\n"
-      "Example:\n");
-  fprintf(stream, "%s%s\n",
-      "  fble-test --profile test.prof ",
-      module == NULL ? "-I foo -m /Foo% " : "");
+  fprintf(stream, "%s", fbldUsageHelpText);
 }
 
 // FbleTestMain -- see documentation in test.h
@@ -95,26 +76,26 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   }
 
   if (version) {
-    printf("fble-test %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
+    PrintVersion(stdout);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
-    PrintUsage(stdout, module);
+    PrintHelp(stdout);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintUsage(stderr, module);
+    PrintHelp(stderr);
     FbleFreeModuleArg(module_arg);
     return EX_USAGE_ERROR;
   }
 
   if (!module && module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
-    PrintUsage(stderr, module);
+    PrintHelp(stderr);
     FbleFreeModuleArg(module_arg);
     return EX_USAGE_ERROR;
   }

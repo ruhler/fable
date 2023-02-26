@@ -9,7 +9,7 @@
 set name [lindex $argv 0]
 set text [read stdin]
 
-puts -nonewline "const unsigned char $name\[\] = \{";
+puts -nonewline "static const unsigned char $name\[\] = \{";
 set c 80
 set i 0
 set len [string length $text]

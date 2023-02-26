@@ -224,10 +224,10 @@ proc build_tcl { file } {
   source $file
 }
 
+build_tcl $::s/fbld/build.tcl
 build_tcl $::s/include/build.tcl
 build_tcl $::s/lib/build.tcl
 build_tcl $::s/bin/build.tcl
-build_tcl $::s/fbld/build.tcl
 build_tcl $::s/spec/build.tcl
 build_tcl $::s/test/build.tcl
 build_tcl $::s/test/spec-test.build.tcl
