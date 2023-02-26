@@ -40,12 +40,24 @@ display this help text and exit
 display version information and exit
 ]
 
-@subsection[Input Control][
+@subsection[Module Input][
 @opt[@l[-I] @a[DIR]]
 add @a[DIR] to the module search path
 
+@opt[@l[-p], @l[--package] @a[PACKAGE]]
+add @a[PACKAGE] to the module search path
+
 @opt[@l[-m], @l[--module] @a[MODULE_PATH]]
-the path of the module to compile
+the module path of the input module
+
+Packages are searched for in the package search path specified by the
+@l[FBLE_PACKAGE_PATH] environment variable followed by the system default
+package search path. Modules are searched for in the module search path.
+
+For example, if @l[FBLE_PACKAGE_PATH] is @l[/fble/pkgs] and you provide
+command line options @l[-p core -m /Core/Unit%], the @l[-p core] option adds
+@l[/fble/pkgs/core] to the module search path, and the @l[-m /Core/Unit%]
+option will look for the module at @l[/fble/pkgs/core/Core/Unit.fble].
 ]
 
 @subsection[Target Control]
