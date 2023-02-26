@@ -1572,5 +1572,234 @@ Tools:
 * We can add some helper .tcl scripts for defining macros describing standard
   command line options.
 
+Others: Don't need man pages or --help or anything like that.
+
 FbleXXXMain:
-* 
+
+Maybe we can have a single .fbld file for each FbleXXXMain program. Use that
+for the man page and for help usage. But add a line of output above? Hmm...
+
+Things that are variable:
+* Program name - changes based on instance.
+* Whether it's generic or compiled to know if module path options should be
+  included.
+* Description could maybe change from, e.g.
+  "Runs an fble stdio program." to "Runs the fble stdio program /Md5/Md5%."
+* The example message.
+
+One thing we could do is completely separate man pages from help usage. For
+example, the man page for fbld-md5 describes the arguments expected by md5.
+The help usage says this is fble-stdio. That still leaves open the question of
+how to enable/disable module path options without duplicating code.
+
+---
+
+Some observations:
+* The only options besides --version and --help we currently use for
+  FbleXXXMain functions is --profile. That's an fble runtime specific option.
+* --version and --help could be handled by an fble-stdio implementation if
+  they wanted.
+* fble-test and fble-app don't current pass any arguments to the fble code.
+
+An interesting model to look at for this might be haskell programs. You
+compile them. Args go to the main program. But you can also do things like
++RTS ... -RTS to specify runtime options, or using GHCRTS.
+
+Looks like there are ways to specify at compile time whether these RTS options
+are supported or not, for apps that want more control?
+
+For example, try pandoc +RTS help
+
+Note: this is undiscoverable. If you just do pandoc help or man pandoc, it
+says nothing about +RTS.
+
+---
+
+Consider four different kinds of options:
+* Runtime options: e.g. --profile.
+* Module options: e.g. -I -p -m
+* Application options: e.g. files to do md5sum or sat solving on.
+* Main options: No current examples, but imaging, for example, FbleAppMain has
+  a --dump-fps switch.
+
+The important part here is that runtime and module options are different
+categories. They could be parsed by different code. In particular, the 'main'
+function parses the module options, the FbleXXXMain function parses the
+runtime and main options.
+
+Now we can choose what '--version' and '--help' options apply to. Maybe we
+have different usage info at each level of options, which creates more
+flexibility in how we organize usage info, and less requirements for composing
+usage info all into a single big blob that one piece of code is responsible
+for.
+
+For sharing between usage and man, we really want the high level structure
+that's not expressed in the usage or man directly. .fbld is one place to
+capture that structure. We could also capture it in .c code. For example,
+maybe --help outputs help text, --man outputs troff formatted text, and we can
+generate the man page from that.
+
+Anyway, back to options parsing. The first question is what the user interface
+is to specifying these different kinds of options. From a user perspective, I
+think it makes sense to combine Runtime, Module, and Main options into
+a single category, and Application options into a single category. Because we
+can be fairly confident runtime, module, and main options will not conflict.
+But we want an application to be able to provide any options it wants without
+knowing anything about the runtime, module, or main options.
+
+Just imagine: the same application could be passed to a different
+implementation of FbleXXXMain, or to a different runtime that takes different
+runtime options, or can be compiled or passed via module options to an
+interpreter. So there's no way the application could know what other kinds of
+options there are.
+
+On the flip side, FbleXXXMain is responsible for forwarding runtime options to
+the particular runtime FbleXXXMain is implemented for. And FbleXXXMain takes a
+module as input, so it's aware that that could be compiled in or
+interpreted.
+
+Thus, from a user perspective, we have two categories of options. Maybe call
+them system and application. The same option might mean different things for
+different categories. How does the user clearly specify which option is meant
+for which category?
+
+A. Explicitly, for example by order.
+./foo [SYSTEM OPTIONS...] -- [APPLICATION OPTIONS]
+
+That's how fble-stdio is implemented today.
+The downside is that users have to know about system options. You can't just
+do:  ./fble-md5sum foo.txt. You have to do: ./fble-md5sum -- foo.txt. That's
+no fun.
+
+B. Magic system options.
+By default everything is an application option. Only if you use some magic
+option will it start interpreting things as system options. And one of the
+system options is a magic switch to force back to application options.
+
++RTS ... -RTS is an example. Where if you want to pass +RTS as an application
+option, you use something like --RTS or --.
+
+I wouldn't want the name 'RTS' in my case, because they aren't specifically
+runtime options. Having user-defined FbleXXXMain functions is something novel
+in fble compared to Haskell. But the idea is the same.
+
+The downside is the +RTS ... -RTS options may be less discoverable,
+particularly if --help is passed to the application by default.
+
+C. Implicit by order.
+Maybe put system options before application options. As soon as you run into
+an option not supported as a system option, you assume it's an application
+option. Or you have an option like '--' to explicitly switch.
+
+This will be troublesome if there are likely to be conflicts between system
+and application options.
+
+D. Uniquify options.
+Pick names for system options that are almost certainly not to conflict
+with application options. For example, instead of --profile, -I, -m:
+--Xprofile, --XI, --Xm. This is kind of like (B), just doing the magic on an
+option-by option basis.
+
+E. Hybrid.
+Maybe compiled programs use magic options, and generic programs use explicit
+options. Like, you know you'll need a -m option for a generic program. Use
+that -m option as the separator between system and application options. Though
+we probably would still want to support magic options in the application
+options section.
+
+
+What if I had a single magic option to use as a separator. We could use '--',
+but that may not be generic enough. And we say as follows:
+* If there is a '--' option, all options before the first '--' option are
+  system options, all options after the first '--' option are application
+  options.
+* If there is no '--' option, all options are application options.
+
+The idea being, if you are passing system options, you know you are doing
+something fancy and need to mark application options explicitly with something
+like --.
+
+This forces all system options to come before application options. I don't see
+any downside to that.
+
+Good. I like this approach. Something like generic fble-stdio will have to use
+system options I guess. That's fine. That's explicit and clear.
+
+What magic separator should we use? Brainstorm:
+... -- ...
+... 
+
+No. Why would we do anything other than '--'?
+
+Okay. That's decided then.
+
+Next question: who parses system options? Who parses which system options?
+We assume anyone parsing any system options knows about all the system
+options. Otherwise there could be conflict. This is a particularly important
+question for who parses the '--help' system option. Or do we even offer a
+'--help' system option?
+
+For compiled code, we know that FbleXXXMain needs to parse runtime and main
+options, because there is nowhere else it could be done. Let's assume we
+always parse runtime and main options in FbleXXXMain.
+
+For generic code, we could compile module options either in FbleXXXMain, or in
+'main'.
+
+For '--version' and '--help' options? Depends if we want to have them. If we
+want a --help system option in compiled code, then that has to go in
+FbleXXXMain. If we don't want that, then it doesn't have to go there.
+
+Honestly, I think all system options should go into FbleXXXMain, to
+consolidate parsing into one place, with helper functions for parsing standard
+options like module options and profiling options.
+
+That brings us back full circle to the original challenge: how to implement
+the '--help' system option in a way that shares code between the usage text
+and the man page while being able to dynamically print information about the
+particular application in use and system options?
+
+Straw proposal:
+* Compiled applications don't support system --help option. Only app --help
+  option.
+* Generic applications implement system --help option in 'main', not
+  'FbleXXXMain'.
+
+Does that solve things for us? For compiled applications, we could describe
+usage in a .fbld file, generate the man page from that, and generate an fble
+literal for usage from that. For generic applications, we could describe usage
+in a .fbld file, generate the man page from that, and generate the usage text
+from that. No need for dynamically changing the help text at runtime, because
+FbleXXXMain doesn't implement the help text.
+
+It's reasonable for main to detect system --help: it can just scan through all
+options looking for --help followed by --. And we agree that FbleXXXMain
+doesn't define any main options where --help is a legal value for an option.
+
+We can decide if we want to include system options in the help text for
+compiled apps.
+
+We can write C code to help share common code for parsing system options. We
+can write fbld code to help share common descriptions for system options.
+
+There. That's your proposal. It answers all the questions and doesn't require
+some complicated auto-generation of dynamic usage text.
+
+What are the steps to implement this?
+
+I think go one application at a time. Clean up its parsing code and
+documentation. Share as needed, but not prematurely.
+
+Let's say we go in this order:
+* fble-compile
+* fble-deps
+* fble-disassemble
+* fble-perf-profile
+* fble-test
+* fble-stdio
+* fble-md5
+* fble-sat
+* fble-app
+* fble-graphics
+* fble-invaders
+* fble-pinball

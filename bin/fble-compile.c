@@ -68,11 +68,10 @@ static void PrintHelp(FILE* stream)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, const char* argv[])
 {
-  FbleSearchPath* search_path = FbleNewSearchPath();
+  FbleModuleArg module_arg = FbleNewModuleArg();
   bool compile = false;
   const char* export = NULL;
   const char* main_ = NULL;
-  const char* mpath_string = NULL;
   const char* target_string = NULL;
   bool help = false;
   bool error = false;
@@ -85,9 +84,7 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (FbleParseSearchPathArg(search_path, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
+    if (FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-t", &target_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--target", &target_string, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-c", &compile, &argc, &argv, &error)) continue;
@@ -100,19 +97,19 @@ int main(int argc, const char* argv[])
 
   if (version) {
     PrintVersion(stdout);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
     PrintHelp(stdout);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintHelp(stderr);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
@@ -126,42 +123,42 @@ int main(int argc, const char* argv[])
   } else {
     fprintf(stderr, "unsupported target '%s'\n", target_string);
     PrintHelp(stderr);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
   if (!compile && export == NULL && main_ == NULL) {
     fprintf(stderr, "one of --export NAME, --compile, or --main NAME must be specified.\n");
     PrintHelp(stderr);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
-
-  FbleModulePath* mpath = FbleParseModulePath(mpath_string);
-  if (mpath == NULL) {
-    FbleFreeSearchPath(search_path);
-    return EX_FAIL;
+  
+  if (module_arg.module_path == NULL) {
+    fprintf(stderr, "missing required --module option.\n");
+    PrintHelp(stderr);
+    FbleFreeModuleArg(module_arg);
+    return EX_USAGE;
   }
 
   if (export != NULL) {
     switch (target) {
-      case TARGET_AARCH64: FbleGenerateAArch64Export(stdout, export, mpath); break;
-      case TARGET_C: FbleGenerateCExport(stdout, export, mpath); break;
+      case TARGET_AARCH64: FbleGenerateAArch64Export(stdout, export, module_arg.module_path); break;
+      case TARGET_C: FbleGenerateCExport(stdout, export, module_arg.module_path); break;
     }
   }
 
   if (main_ != NULL) {
     switch (target) {
-      case TARGET_AARCH64: FbleGenerateAArch64Main(stdout, main_, mpath); break;
-      case TARGET_C: FbleGenerateCMain(stdout, main_, mpath); break;
+      case TARGET_AARCH64: FbleGenerateAArch64Main(stdout, main_, module_arg.module_path); break;
+      case TARGET_C: FbleGenerateCMain(stdout, main_, module_arg.module_path); break;
     }
   }
 
   if (compile) {
-    FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, NULL);
+    FbleLoadedProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, NULL);
     if (prgm == NULL) {
-      FbleFreeModulePath(mpath);
-      FbleFreeSearchPath(search_path);
+      FbleFreeModuleArg(module_arg);
       return EX_FAIL;
     }
 
@@ -169,13 +166,12 @@ int main(int argc, const char* argv[])
     FbleFreeLoadedProgram(prgm);
 
     if (module == NULL) {
-      FbleFreeModulePath(mpath);
-      FbleFreeSearchPath(search_path);
+      FbleFreeModuleArg(module_arg);
       return EX_FAIL;
     }
 
     FbleFreeModulePath(module->path);
-    module->path = FbleCopyModulePath(mpath);
+    module->path = FbleCopyModulePath(module_arg.module_path);
 
     switch (target) {
       case TARGET_AARCH64: FbleGenerateAArch64(stdout, module); break;
@@ -185,7 +181,6 @@ int main(int argc, const char* argv[])
     FbleFreeCompiledModule(module);
   }
 
-  FbleFreeSearchPath(search_path);
-  FbleFreeModulePath(mpath);
+  FbleFreeModuleArg(module_arg);
   return EX_SUCCESS;
 }

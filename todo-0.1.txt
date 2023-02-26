@@ -2,28 +2,35 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-Release Related:
-* Write release notes for release 0.1
-* Make the official release.
+* Add a way to specify package path on the command line?
 
 Documentation Related:
-* Update usage help text with info about FBLE_PACKAGE_PATH, -p, and --package
-  options.
-* Figure out how to customize usage for compiled binaries
- - for example, fble-invaders should say fble-invaders in the usage, not
-   fble-app.
-* Generate fbld based man pages for binaries.
-  fble-app
-  fble-md5
-  fble-sat
-  fble-graphics
-  fble-perf-profile
-  fble-stdio
-  fble-invaders
-  fble-pinball
-  fble-test
+* Clean up option parsing, usage text, man pages for each of the following.
+  Making sure to add FBLE_PACKAGE_PATH, -p, and --package option descriptions.
+  - fble-compile
+  - fble-deps
+  - fble-disassemble
+  - fble-perf-profile
+  - fble-test
+  - fble-stdio
+  - fble-md5
+  - fble-sat
+  - fble-app
+  - fble-graphics
+  - fble-invaders
+  - fble-pinball
 
 * Document default fble package path in man pages?
   Meaning, the exact value we end up installing.
 * Generate man pages for library functions via fbld.
 * Add version numbers to generated docs?
+
+Release Related:
+* Verify the release candidate every way I can.
+  Automating as much as that verification as possible. Including:
+  - Make sure we can build, check, and install from release distribution.
+  - Walk through tutorials and make sure those work.
+  - Check if we can disable SDL properly?
+  - Proofread all tutorials?
+* Write release notes for release 0.1
+* Make the official release.

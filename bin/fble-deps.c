@@ -67,9 +67,8 @@ static void PrintHelp(FILE* stream)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, const char* argv[])
 {
-  FbleSearchPath* search_path = FbleNewSearchPath();
+  FbleModuleArg module_arg = FbleNewModuleArg();
   const char* target = NULL;
-  const char* mpath_string = NULL;
   bool version = false;
   bool help = false;
   bool error = false;
@@ -81,57 +80,48 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (FbleParseSearchPathArg(search_path, &argc, &argv, &error)) continue;
+    if (FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-t", &target, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--target", &target, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
   if (version) {
     PrintVersion(stdout);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
     PrintHelp(stdout);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintHelp(stderr);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
   if (target == NULL) {
     fprintf(stderr, "missing required --target option.\n");
     PrintHelp(stderr);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
-  if (mpath_string == NULL) {
+  if (module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintHelp(stderr);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
-  }
-
-  FbleModulePath* mpath = FbleParseModulePath(mpath_string);
-  if (mpath == NULL) {
-    FbleFreeSearchPath(search_path);
-    return EX_FAIL;
   }
 
   FbleStringV deps;
   FbleVectorInit(deps);
-  FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, &deps);
-  FbleFreeSearchPath(search_path);
-  FbleFreeModulePath(mpath);
+  FbleLoadedProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, &deps);
+  FbleFreeModuleArg(module_arg);
   FbleFreeLoadedProgram(prgm);
 
   FbleSaveBuildDeps(stdout, target, deps);

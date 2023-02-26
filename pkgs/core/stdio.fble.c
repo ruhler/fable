@@ -255,8 +255,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  FbleSearchPath* search_path = FbleNewSearchPath();
-  const char* module_path = NULL;
+  FbleModuleArg module_arg = FbleNewModuleArg();
   const char* profile_file = NULL;
   bool end_of_options = false;
   bool help = false;
@@ -270,9 +269,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (!module && FbleParseSearchPathArg(search_path, &argc, &argv, &error)) continue;
-    if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
-    if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
+    if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
 
     end_of_options = true;
@@ -284,26 +281,26 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
 
   if (version) {
     printf("fble-stdio %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_TRUE;
   }
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_TRUE;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
-  if (!module && module_path == NULL) {
+  if (!module && module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleFreeSearchPath(search_path);
+    FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
@@ -312,7 +309,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
     fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFreeSearchPath(search_path);
+      FbleFreeModuleArg(module_arg);
       return EX_FAILURE;
     }
   }
@@ -320,8 +317,8 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* stdio = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleFreeSearchPath(search_path);
+  FbleValue* stdio = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
+  FbleFreeModuleArg(module_arg);
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

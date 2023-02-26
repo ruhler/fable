@@ -48,9 +48,27 @@ bool FbleParseStringArg(const char* name, const char** dest, int* argc, const ch
   return false;
 }
 
+
+// See documentation in fble-arg-parse.h
+FbleModuleArg FbleNewModuleArg()
+{
+  FbleModuleArg arg = {
+    .search_path = FbleNewSearchPath(),
+    .module_path = NULL
+  };
+  return arg;
+}
+
+void FbleFreeModuleArg(FbleModuleArg arg)
+{
+  FbleFreeSearchPath(arg.search_path);
+  if (arg.module_path != NULL) {
+    FbleFreeModulePath(arg.module_path);
+  };
+}
 
-// FbleParseSearchPathArg -- See documentation in fble-args.h
-bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv, bool* error)
+// FbleParseModuleArg -- See documentation in fble-arg-parse.h
+bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool* error)
 {
   if (strcmp("-I", (*argv)[0]) == 0) {
     if (*argc < 2) {
@@ -59,7 +77,7 @@ bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv,
       return true;
     }
 
-    FbleSearchPathAppend(dest, (*argv)[1]);
+    FbleSearchPathAppend(dest->search_path, (*argv)[1]);
 
     (*argc) -= 2;
     (*argv) += 2;
@@ -67,7 +85,7 @@ bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv,
   }
 
   if ((*argv)[0][0] == '-' && (*argv)[0][1] == 'I') {
-    FbleSearchPathAppend(dest, (*argv[0]) + 2);
+    FbleSearchPathAppend(dest->search_path, (*argv[0]) + 2);
     (*argc)--;
     (*argv)++;
     return true;
@@ -79,10 +97,28 @@ bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv,
     if (!(*error)) {
       FbleString* path = FbleFindPackage(package);
       if (path != NULL) {
-        FbleSearchPathAppendString(dest, path);
+        FbleSearchPathAppendString(dest->search_path, path);
         FbleFreeString(path);
       } else {
         fprintf(stderr, "Error: package '%s' not found\n", package);
+        *error = true;
+      }
+    }
+    return true;
+  }
+
+  const char* module = NULL;
+  if (FbleParseStringArg("--module", &module, argc, argv, error)
+      || FbleParseStringArg("-m", &module, argc, argv, error)) {
+    if (!(*error)) {
+      if (dest->module_path != NULL) {
+        fprintf(stderr, "Error: duplicate module options\n");
+        *error = true;
+        return true;
+      }
+
+      dest->module_path = FbleParseModulePath(module);
+      if (dest->module_path == NULL) {
         *error = true;
       }
     }

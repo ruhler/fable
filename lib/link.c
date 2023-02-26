@@ -153,19 +153,13 @@ FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHea
 }
 
 // FbleLinkFromCompiledOrSource -- see documentation in fble-link.h
-FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, const char* module_path)
+FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path)
 {
   if (module != NULL) {
     return FbleLinkFromCompiled(module, heap, profile);
   }
 
   assert(module_path != NULL);
-  FbleModulePath* mpath = FbleParseModulePath(module_path);
-  if (mpath == NULL) {
-    return NULL;
-  }
-
-  FbleValue* linked = FbleLinkFromSource(heap, search_path, mpath, profile);
-  FbleFreeModulePath(mpath);
+  FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, profile);
   return linked;
 }

@@ -120,6 +120,6 @@ FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHea
  * * The user should call FbleReleaseValue on the returned value when it is no
  *   longer needed.
  */
-FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, const char* module_path);
+FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 
 #endif // FBLE_LINK_H_
