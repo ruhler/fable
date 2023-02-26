@@ -164,8 +164,9 @@ proc block_item {text} {
 # @param language  The lanuage, e.g. c, python, sh, fble, vim, etc.
 # @param text  The source code text.
 proc block_code {language text} {
-  # TODO: Do something better here?
-  inline_text $text
+  ::output ".sp\n"
+  inline_l $text
+  ::output "\n.br\n"
 }
 
 # @doc[INLINE title][BLOCK body]

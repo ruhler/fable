@@ -10,9 +10,6 @@ Documentation Related:
 
 * Clean up option parsing, usage text, man pages for each of the following.
   Making sure to add FBLE_PACKAGE_PATH, -p, and --package option descriptions.
-  - fble-compile
-  - fble-deps
-  - fble-disassemble
   - fble-perf-profile
   - fble-test
   - fble-stdio

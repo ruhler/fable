@@ -7,12 +7,21 @@
 #include <stdlib.h>     // for free
 #include <string.h>     // for strcmp, strchr
 
-#include <fble/fble-profile.h>
+#include <fble/fble-arg-parse.h> // for FbleParseBoolArg
+#include <fble/fble-profile.h>   // for FbleProfile, etc.
+#include <fble/fble-version.h>   // for FBLE_VERSION, FbleBuildStamp
+
+#include "fble-perf-profile.usage.h"   // for fbldUsageHelpText
+
+#define EX_SUCCESS 0
+#define EX_FAIL 1
+#define EX_USAGE 2
 
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
 static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s);
-static void PrintUsage(FILE* stream);
-int main(int argc, char* argv[]);
+static void PrintVersion(FILE* stream);
+static void PrintHelp(FILE* stream);
+int main(int argc, const char* argv[]);
 
 
 // GetBlockId --
@@ -77,29 +86,30 @@ static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, c
   FbleProfileExitBlock(thread);
 }
 
-// PrintUsage --
+// PrintVersion --
+//   Prints version info to the given output stream.
+//
+// Inputs:
+//   stream - The output stream to write the version information to.
+//
+// Side effects:
+//   Outputs version information to the given stream.
+static void PrintVersion(FILE* stream)
+{
+  fprintf(stream, "fble-perf-profile %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
+}
+
+// PrintHelp --
 //   Prints help info to the given output stream.
 //
 // Inputs:
 //   stream - The output stream to write the usage information to.
 //
-// Result:
-//   None.
-//
 // Side effects:
 //   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream)
+static void PrintHelp(FILE* stream)
 {
-  fprintf(stream,
-      "Usage: fble-perf-profile\n"
-      "  Produce an fble profile report for a linux perf profile passed on stdin.\n"
-      "\n"
-      "To collect perf data: $ perf record -F 997 -d -g <cmd>\n"
-      "To report perf data:  $ perf report -q -g folded,count,0 | fble-perf-profile\n"
-      "\n"
-      "The output 'count' field is mostly meaningless. It is the number of\n"
-      "different sample traces the function appeared in.\n"
-  );
+  fprintf(stream, "%s", fbldUsageHelpText);
 }
 
 // main --
@@ -114,13 +124,34 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   Prints an error to stderr and exits the program in the case of error.
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
+  bool version = false;
+  bool help = false;
+  bool error = false;
+
   argc--;
   argv++;
-  if (argc > 0 && strcmp("--help", *argv) == 0) {
-    PrintUsage(stdout);
-    return 0;
+  while (!(help || version || error) && argc > 0) {
+    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
+  }
+
+  if (version) {
+    PrintVersion(stdout);
+    return EX_SUCCESS;
+  }
+
+  if (help) {
+    PrintHelp(stdout);
+    return EX_SUCCESS;
+  }
+
+  if (error) {
+    PrintHelp(stderr);
+    return EX_USAGE;
   }
 
   char* line = NULL;
@@ -147,7 +178,7 @@ int main(int argc, char* argv[])
     int count;
     if (sscanf(line, "%i", &count) != 1) {
       fprintf(stderr, "Unable to parse profile report.\n");
-      return 1;
+      return EX_FAIL;
     }
 
     Sample(profile, thread, count, space+1);
@@ -157,5 +188,5 @@ int main(int argc, char* argv[])
   FbleFreeProfileThread(thread);
   FbleProfileReport(stdout, profile);
   FbleFreeProfile(profile);
-  return 0;
+  return EX_SUCCESS;
 }

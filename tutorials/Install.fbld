@@ -76,7 +76,7 @@ Fble ships with syntax files for use with the Vim text editor. If you are a
 Vim users, you can install the Vim files from the top level of the source
 directory using:
 
-@code[shell]
+@code[sh]
 mkdir -p ~/.vim/ftdetect ~/.vim/ftplugin ~/.vim/indent ~/.vim/syntax
 cp vim/ftdetect/* ~/.vim/ftdetect
 cp vim/ftplugin/* ~/.vim/ftplugin

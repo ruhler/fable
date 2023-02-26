@@ -11,7 +11,6 @@ namespace eval "test" {
 
   set bin_sources {
     fble-mem-test.c
-    fble-perf-profile.c
     fble-profiles-test.c
     fble-profile-test.c
     fble-test.c
@@ -49,7 +48,6 @@ namespace eval "test" {
     bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" ""
   }
   install $::b/test/fble-test $::config::bindir/fble-test
-  install $::b/test/fble-perf-profile $::config::bindir/fble-perf-profile
 
   # fble-profile-test
   test $::b/test/fble-profile-test.tr $::b/test/fble-profile-test \

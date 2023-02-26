@@ -18,8 +18,6 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-extern const char* BUILDSTAMP;
-
 static void PrintVersion(FILE* stream);
 static void PrintHelp(FILE* stream);
 int main(int argc, const char* argv[]);
@@ -42,9 +40,6 @@ static void PrintVersion(FILE* stream)
 //
 // Inputs:
 //   stream - The output stream to write the usage information to.
-//
-// Result:
-//   None.
 //
 // Side effects:
 //   Outputs usage information to the given stream.

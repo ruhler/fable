@@ -5,6 +5,7 @@ namespace eval "bin" {
     fble-compile.c
     fble-deps.c
     fble-disassemble.c
+    fble-perf-profile.c
   }
 
   foreach {x} $bin_sources {
