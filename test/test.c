@@ -24,8 +24,40 @@
 #define EX_USAGE_ERROR 3
 #define EX_OTHER_ERROR 4
 
+static void PrintHeader(FILE* stream, const char* arg0, FbleCompiledModuleFunction* module);
 static void PrintVersion(FILE* stream);
 static void PrintHelp(FILE* stream);
+
+// PrintHeader 
+//   Prints a header line to distinguish among different compiled fble-test
+//   binaries when printing version and help text.
+//
+// @param stream  The output stream to write the header to.
+// @param arg0  argv[0] of the main function, used to determine the binary name.
+// @param module  The compiled module, or NULL
+static void PrintHeader(FILE* stream, const char* arg0, FbleCompiledModuleFunction* module)
+{
+  if (module != NULL) {
+    const char* binary_name = strrchr(arg0, '/');
+    if (binary_name == NULL) {
+      binary_name = arg0;
+    } else {
+      binary_name++;
+    }
+
+    // Load the module to figure out the path to it.
+    FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
+    FbleVectorInit(program->modules);
+    module(program);
+    FbleExecutableModule* mod = program->modules.xs[program->modules.size-1];
+
+    fprintf(stream, "%s: fble-test -m ", binary_name);
+    FblePrintModulePath(stream, mod->path);
+    fprintf(stream, " (compiled)\n");
+
+    FbleFreeExecutableProgram(program);
+  }
+}
 
 // PrintVersion --
 //   Prints version info to the given output stream.
@@ -57,6 +89,8 @@ static void PrintHelp(FILE* stream)
 // FbleTestMain -- see documentation in test.h
 int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module)
 {
+  const char* arg0 = argv[0];
+
   FbleModuleArg module_arg = FbleNewModuleArg();
   const char* profile_file = NULL;
   bool help = false;
@@ -70,32 +104,42 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
+    if (FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
   if (version) {
+    PrintHeader(stdout, arg0, module);
     PrintVersion(stdout);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
+    PrintHeader(stdout, arg0, module);
     PrintHelp(stdout);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintHelp(stderr);
+    PrintHeader(stderr, arg0, module);
+    fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE_ERROR;
   }
 
-  if (!module && module_arg.module_path == NULL) {
-    fprintf(stderr, "missing required --module option.\n");
-    PrintHelp(stderr);
+  if (!module && !module_arg.module_path) {
+    fprintf(stderr, "Error: missing required --module option.\n");
+    fprintf(stderr, "Try --help for usage info.\n");
+    FbleFreeModuleArg(module_arg);
+    return EX_USAGE_ERROR;
+  }
+
+  if (module && module_arg.module_path) {
+    fprintf(stderr, "Error: --module not allowed for fble-compiled binary.\n");
+    fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE_ERROR;
   }
@@ -104,7 +148,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   if (profile_file != NULL) {
     fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
-      fprintf(stderr, "unable to open %s for writing.\n", profile_file);
+      fprintf(stderr, "Error: unable to open %s for writing.\n", profile_file);
       FbleFreeModuleArg(module_arg);
       return EX_OTHER_ERROR;
     }

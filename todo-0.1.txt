@@ -4,6 +4,7 @@ Things to consider doing for the fble-0.1 release.
 
 * Add a way to specify package path on the command line?
 * Figure out why there isn't a space before options in fble-test -h output.
+* Too many blank lines in usage generated help output?
 
 Documentation Related:
 * usage output does not work well when piping to less

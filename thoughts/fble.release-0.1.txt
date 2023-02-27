@@ -1834,3 +1834,13 @@ Usage: fble-test [OPTION...] ...
 
 I like that. We could include it in the version info too if we wanted.
 
+Okay, here's what I went with that I think is good:
+
+  fble-debug-test: fble-test -m /DebugTest% (compiled)
+
+Accept module arg options, but give an error if anything is provided. Like:
+
+  Error: --module not allowed for fble-compiled binary.
+
+Maybe there's a better error message we could come up with. If so, update that
+later. I think this will work fine for the time being.
