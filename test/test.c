@@ -16,7 +16,7 @@
 #include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
-#include "fble-test.usage.h"      // for fbldUsageHelpText
+#include "test.usage.h"            // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_COMPILE_ERROR 1

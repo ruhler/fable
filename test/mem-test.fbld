@@ -1,0 +1,39 @@
+@usage[fble-mem-test][test memory behavior of an fble program][
+@synopsys
+@l[fble-mem-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+
+@description
+Tests for memory behavior of an fble function. The function should
+take a @l[/SpecTests/Nat%.Nat@] as an argument. The function is evaluated with
+various values to see how memory use depends on the input value.
+
+By default, tests for O(1) memory use. If the @l[--growth] option is
+specified, tests for greater than O(1) memory use.
+
+@options[
+@GenericProgramInfo
+
+@ModuleInput
+
+@subsection[Test Options]
+@opt[@l[--growth]]
+Expect the function to use greater than O(1) memory.
+
+@opt[@l[--debug]]
+Output graph of memory as a function of N, to help with debugging.
+]
+
+@exitstatus[
+@def[0] If memory growth is as expected.
+@def[1] If memory growth is not as expected.
+@def[2] Usage Error.
+]
+
+@examples[
+@ex[fble-mem-test -I foo -m /Foo%]
+Test that the function defined by @l[/Foo%] uses O(1) memory.
+
+@ex[fble-mem-test -I foo -m /Foo% --growth]
+Test that the function defined by @l[/Foo%] uses greater than O(1) memory.
+]
+]

@@ -1,0 +1,22 @@
+@usage[fble-profiles-test][runs the fble-profiles-test][
+@synopsys
+@l[fble-profiles-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+
+@description
+Runs the fble-profiles-test.
+
+@options[
+@GenericProgramInfo
+
+@ModuleInput
+]
+
+@exitstatus[
+@def[0] Test Passes.
+@def[1] Test Failure.
+@def[2] Usage Error.
+]
+
+@examples
+@ex[fble-profiles-test -I test -m /ProfilesTest%][]
+]

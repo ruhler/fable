@@ -28,22 +28,20 @@ namespace eval "test" {
   dist_s $::s/test/test
   dist_s $::s/test/test.h
   dist_s $::s/test/tests.tcl
-  foreach {x} $lib_sources { dist_s $::s/test/$x }
+  foreach {x} $lib_sources {
+    dist_s $::s/test/$x
+    dist_s [file rootname $::s/test/$x].fbld
+  }
   foreach {x} $bin_sources { dist_s $::s/test/$x }
-
-  # Usage and man page for fble-test
-  header_usage $::b/test/fble-test.usage.h $::s/test/fble-test.fbld fbldUsageHelpText
-  man_usage $::b/test/fble-test.1 $::s/test/fble-test.fbld
-  install $::b/test/fble-test.1 $::config::mandir/man1/fble-test.1
 
   # libfbletest.a
   set objs [list]
   foreach {x} $lib_sources {
-    # TODO: don't hard code dependency on fble-test.usage.h like this.
-    set object $::b/test/[string map {.c .o} $x]
-    obj $object $::s/test/$x $cflags \
-      $::b/test/fble-test.usage.h
-    lappend objs $object
+    set base [file rootname [file tail $x]]
+    header_usage $::b/test/$base.usage.h $::s/test/$base.fbld fbldUsageHelpText
+    man_usage $::b/test/fble-$base.1 $::s/test/$base.fbld
+    obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/$base.usage.h
+    lappend objs $::b/test/$base.o
   }
   lib $::b/test/libfbletest.a $objs
 
@@ -54,7 +52,11 @@ namespace eval "test" {
     bin $::b/test/$base "$::b/test/$base.o $libs" ""
     bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" ""
   }
-  install $::b/test/fble-test $::config::bindir/fble-test
+
+  foreach {x} [list fble-test fble-mem-test] {
+    install $::b/test/$x.1 $::config::mandir/man1/$x.1
+    install $::b/test/$x $::config::bindir/$x
+  }
 
   # fble-profile-test
   test $::b/test/fble-profile-test.tr $::b/test/fble-profile-test \
