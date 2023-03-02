@@ -39,6 +39,7 @@ namespace eval "lib" {
     typecheck.c
     value.c
     vector.c
+    version.c
   }
 
   # files for distribution

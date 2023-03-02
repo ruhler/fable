@@ -20,68 +20,7 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static void PrintHeader(FILE* stream, const char* arg0, FbleCompiledModuleFunction* module);
-static void PrintVersion(FILE* stream);
-static void PrintHelp(FILE* stream);
 static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
-
-// PrintHeader 
-//   Prints a header line to distinguish among different compiled fble-test
-//   binaries when printing version and help text.
-//
-// @param stream  The output stream to write the header to.
-// @param arg0  argv[0] of the main function, used to determine the binary name.
-// @param module  The compiled module, or NULL
-static void PrintHeader(FILE* stream, const char* arg0, FbleCompiledModuleFunction* module)
-{
-  if (module != NULL) {
-    const char* binary_name = strrchr(arg0, '/');
-    if (binary_name == NULL) {
-      binary_name = arg0;
-    } else {
-      binary_name++;
-    }
-
-    // Load the module to figure out the path to it.
-    FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
-    FbleVectorInit(program->modules);
-    module(program);
-    FbleExecutableModule* mod = program->modules.xs[program->modules.size-1];
-
-    fprintf(stream, "%s: fble-mem-test -m ", binary_name);
-    FblePrintModulePath(stream, mod->path);
-    fprintf(stream, " (compiled)\n");
-
-    FbleFreeExecutableProgram(program);
-  }
-}
-
-// PrintVersion --
-//   Prints version info to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the version information to.
-//   module - Non-NULL if a compiled module is provided, NULL otherwise.
-//
-// Side effects:
-//   Outputs version information to the given stream.
-static void PrintVersion(FILE* stream)
-{
-  fprintf(stream, "fble-mem-test %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
-}
-
-// PrintHelp --
-//   Prints help info for FbleTestMain the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the usage information to.
-//
-// Side effects:
-//   Outputs usage information to the given stream.
-static void PrintHelp(FILE* stream)
-{
-  fprintf(stream, "%s", fbldUsageHelpText);
-}
 
 // Run --
 //   Run the program, measuring maximum memory needed to evaluate f[n].
@@ -167,21 +106,20 @@ int FbleMemTestMain(int argc, const char** argv, FbleCompiledModuleFunction* mod
   }
 
   if (version) {
-    PrintHeader(stdout, arg0, module);
-    PrintVersion(stdout);
+    FblePrintCompiledHeaderLine(stdout, "fble-mem-test", arg0, module);
+    FblePrintVersion(stdout, "fble-mem-test");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
-    PrintHeader(stdout, arg0, module);
-    PrintHelp(stdout);
+    FblePrintCompiledHeaderLine(stdout, "fble-mem-test", arg0, module);
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintHeader(stderr, arg0, module);
     fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;

@@ -122,4 +122,27 @@ FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHea
  */
 FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 
+/**
+ * Prints an information line about a compiled module.
+ *
+ * This is a convenience function for providing more information to users as
+ * part of a fble compiled main function. It prints a header line if the
+ * compiled module is not NULL, of the form something like:
+ *
+ *   fble-debug-test: fble-test -m /DebugTest% (compiled)
+ *
+ * Note, extracting the module name is a relatively expensive operation,
+ * because it involves loading the entire module and its dependencies, then
+ * throwing all of that away when it's done.
+ *
+ * @param stream  The output stream to print to.
+ * @param tool  Name of the underlying tool, e.g. "fble-test".
+ * @param arg0  argv[0] from the main function.
+ * @param module  The optionally compiled module to get the module name from.
+ *
+ * @sideeffects
+ *   Prints a header line to the given stream.
+ */
+void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleCompiledModuleFunction* module);
+
 #endif // FBLE_LINK_H_

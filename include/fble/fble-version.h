@@ -5,6 +5,8 @@
 #ifndef FBLE_VERSION_H_
 #define FBLE_VERSION_H_
 
+#include <stdio.h>    // for FILE
+
 /**
  * Major version number.
  *
@@ -30,5 +32,19 @@
  * For debug purposes only.
  */
 extern const char* FbleBuildStamp;
+
+/**
+ * Prints version info.
+ *
+ * For example, prints something like:
+ *   fble-test fble-0.1 (2023-02-26,dev:4856517f-dirty)
+ *
+ * @param stream  The output stream to print to.
+ * @param tool  The name of the tool to print version for, or NULL.
+ *
+ * @sideeffects
+ *   Outputs version info to the given stream.
+ */
+void FblePrintVersion(FILE* stream, const char* tool);
 
 #endif // FBLE_VERSION_H_

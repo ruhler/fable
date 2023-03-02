@@ -6,6 +6,7 @@
 #include <fble/fble-link.h>
 
 #include <assert.h>     // for assert
+#include <string.h>     // for strrchr
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, etc.
 #include <fble/fble-interpret.h> // for FbleInterpret
@@ -162,4 +163,28 @@ FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profil
   assert(module_path != NULL);
   FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, profile);
   return linked;
+}
+// See documentation in fble-link.h
+void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleCompiledModuleFunction* module)
+{
+  if (module != NULL) {
+    const char* binary_name = strrchr(arg0, '/');
+    if (binary_name == NULL) {
+      binary_name = arg0;
+    } else {
+      binary_name++;
+    }
+
+    // Load the module to figure out the path to it.
+    FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
+    FbleVectorInit(program->modules);
+    module(program);
+    FbleExecutableModule* mod = program->modules.xs[program->modules.size-1];
+
+    fprintf(stream, "%s: %s -m ", binary_name, tool);
+    FblePrintModulePath(stream, mod->path);
+    fprintf(stream, " (compiled)\n");
+
+    FbleFreeExecutableProgram(program);
+  }
 }
