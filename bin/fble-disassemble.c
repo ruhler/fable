@@ -18,26 +18,6 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-extern const char* BUILDSTAMP;
-
-static void PrintUsage(FILE* stream);
-
-// PrintUsage --
-//   Prints help info to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the usage information to.
-//
-// Result:
-//   None.
-//
-// Side effects:
-//   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream)
-{
-  fprintf(stream, "%s", fbldUsageHelpText);
-}
-
 // main --
 //   The main entry point for the fble-disassemble program.
 //
@@ -69,26 +49,26 @@ int main(int argc, const char* argv[])
   }
 
   if (version) {
-    printf("fble-disassemble %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
+    FblePrintVersion(stdout, "fble-disassemble");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
-    PrintUsage(stdout);
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintUsage(stderr);
+    fprintf(stderr, "Try --help for usage\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
   if (module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
-    PrintUsage(stderr);
+    fprintf(stderr, "Try --help for usage\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }

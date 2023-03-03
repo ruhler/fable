@@ -18,36 +18,7 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static void PrintVersion(FILE* stream);
-static void PrintHelp(FILE* stream);
 int main(int argc, const char* argv[]);
-
-// PrintVersion --
-//   Prints version info to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the version information to.
-//
-// Side effects:
-//   Outputs version information to the given stream.
-static void PrintVersion(FILE* stream)
-{
-  fprintf(stream, "fble-deps %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
-}
-
-// PrintHelp --
-//   Prints help info to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the usage information to.
-//
-// Side effects:
-//   Outputs usage information to the given stream.
-static void PrintHelp(FILE* stream)
-{
-  fprintf(stream, "%s", fbldUsageHelpText);
-}
-
 // main --
 //   The main entry point for the fble-deps program.
 //
@@ -82,33 +53,33 @@ int main(int argc, const char* argv[])
   }
 
   if (version) {
-    PrintVersion(stdout);
+    FblePrintVersion(stdout, "fble-deps");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
-    PrintHelp(stdout);
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintHelp(stderr);
+    fprintf(stderr, "Try --help for usage\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
   if (target == NULL) {
     fprintf(stderr, "missing required --target option.\n");
-    PrintHelp(stderr);
+    fprintf(stderr, "Try --help for usage\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
   if (module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
-    PrintHelp(stderr);
+    fprintf(stderr, "Try --help for usage\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }

@@ -19,8 +19,6 @@
 
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
 static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s);
-static void PrintVersion(FILE* stream);
-static void PrintHelp(FILE* stream);
 int main(int argc, const char* argv[]);
 
 
@@ -86,32 +84,6 @@ static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, c
   FbleProfileExitBlock(thread);
 }
 
-// PrintVersion --
-//   Prints version info to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the version information to.
-//
-// Side effects:
-//   Outputs version information to the given stream.
-static void PrintVersion(FILE* stream)
-{
-  fprintf(stream, "fble-perf-profile %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
-}
-
-// PrintHelp --
-//   Prints help info to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the usage information to.
-//
-// Side effects:
-//   Outputs usage information to the given stream.
-static void PrintHelp(FILE* stream)
-{
-  fprintf(stream, "%s", fbldUsageHelpText);
-}
-
 // main --
 //   The main entry point for the fble-perf-profile program.
 //
@@ -140,17 +112,17 @@ int main(int argc, const char* argv[])
   }
 
   if (version) {
-    PrintVersion(stdout);
+    FblePrintVersion(stdout, "fble-perf-profile");
     return EX_SUCCESS;
   }
 
   if (help) {
-    PrintHelp(stdout);
+    fprintf(stdout, "%s", fbldUsageHelpText);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintHelp(stderr);
+    fprintf(stderr, "Try --help for usage\n");
     return EX_USAGE;
   }
 
