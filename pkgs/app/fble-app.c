@@ -1,7 +1,7 @@
 // fble-app
 //   A program to run interpreted fble programs with a /App/App%.App@ interface.
 
-#include "app.fble.h"  // For FbleAppMain
+#include "app.h"  // For FbleAppMain
 
 // main --
 //   The main entry point for fble-app.

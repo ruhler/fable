@@ -1,7 +1,8 @@
 namespace eval "pkgs/app" {
 
-  dist_s $::s/pkgs/app/app.fble.c
-  dist_s $::s/pkgs/app/app.fble.h
+  dist_s $::s/pkgs/app/app.c
+  dist_s $::s/pkgs/app/app.fbld
+  dist_s $::s/pkgs/app/app.h
   dist_s $::s/pkgs/app/build.tcl
   dist_s $::s/pkgs/app/fble-app.c
   dist_s $::s/pkgs/app/thoughts/images.txt
@@ -12,12 +13,11 @@ namespace eval "pkgs/app" {
 
   set objs [list]
   if $::config::enable_fble_app {
-    # .c library files.
-    foreach {x} { app.fble } {
-      lappend objs $::b/pkgs/app/$x.o
-      obj $::b/pkgs/app/$x.o $::s/pkgs/app/$x.c \
-        "$::config::sdl_cflags $::config::gl_cflags -I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app"
-    }
+    header_usage $::b/pkgs/app/app.usage.h $::s/pkgs/app/app.fbld fbldUsageHelpText
+    obj $::b/pkgs/app/app.o $::s/pkgs/app/app.c \
+      "$::config::sdl_cflags $::config::gl_cflags -I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app -I $::b/pkgs/app" \
+      $::b/pkgs/app/app.usage.h
+    lappend objs $::b/pkgs/app/app.o
   }
 
   pkg app [list core] $objs
@@ -29,6 +29,9 @@ namespace eval "pkgs/app" {
 
   if $::config::enable_fble_app {
     # fble-app program.
+    man_usage $::b/pkgs/app/fble-app.1 $::s/pkgs/app/app.fbld
+    install $::b/pkgs/app/fble-app.1 $::config::mandir/man1/fble-app.1
+
     obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
       "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app $::config::sdl_cflags"
     bin $::b/pkgs/app/fble-app \

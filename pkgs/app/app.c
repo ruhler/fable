@@ -1,7 +1,7 @@
-// app.fble.c --
+// app.c --
 //   Implementation of FbleAppMain function.
 
-#include "app.fble.h"
+#include "app.h"
 
 #include <assert.h>       // for assert
 #include <string.h>       // for strcmp
@@ -15,15 +15,15 @@
 #include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
-#include "char.fble.h"    // for FbleCharValueAccess
-#include "int.fble.h"     // for FbleNewIntValue, FbleIntValueAccess
-#include "string.fble.h"  // for FbleStringValueAccess
+#include "char.fble.h"             // for FbleCharValueAccess
+#include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
+#include "string.fble.h"           // for FbleStringValueAccess
+
+#include "app.usage.h"             // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_FAILURE 1
 #define EX_USAGE 2
-
-extern const char* BUILDSTAMP;
 
 // Executable for an app.
 typedef struct {
@@ -36,7 +36,6 @@ typedef struct {
   int fpsHistogram[61];
 } Executable;
 
-static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
@@ -53,51 +52,6 @@ static FbleValue* EffectImpl(
     FbleBlockId profile_block_offset);
 
 static Uint32 OnTimer(Uint32 interval, void* param);
-
-// PrintUsage --
-//   Prints help info to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the usage information to.
-//   module - Non-NULL if a compiled module is provided, NULL otherwise.
-//
-// Side effects:
-//   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
-{
-  fprintf(stream, "Usage: fble-app [OPTION...]%s\n",
-      module == NULL ? " -m MODULE_PATH" : "");
-  fprintf(stream, "%s",
-      "\n"
-      "Description:\n"
-      "  Runs an fble app program.\n"
-      "\n"
-      "Options:\n"
-      "  -h, --help\n"
-      "     Print this help message and exit.\n"
-      "  -v, --version\n"
-      "     Print version information and exit.\n");
-  if (module == NULL) {
-    fprintf(stream, "%s",
-      "  -I DIR\n"
-      "     Adds DIR to the module search path.\n"
-      "  -m, --module MODULE_PATH\n"
-      "     The path of the module to get dependencies for.\n");
-  }
-  fprintf(stream, "%s",
-      "  --profile FILE\n"
-      "    Writes a profile of the app to FILE\n"
-      "\n"
-      "Exit Status:\n"
-      "  0 on success.\n"
-      "  1 on failure.\n"
-      "  2 on usage error.\n"
-      "\n"
-      "Example:\n");
-  fprintf(stream, "%s%s\n",
-      "  fble-app --profile foo.prof ",
-      module == NULL ? "-I prgms -m /Foo% " : "");
-}
 
 // Draw --
 //   Draw a drawing to the screen of type /Drawing%.Drawing@.
@@ -495,6 +449,8 @@ static Uint32 OnTimer(Uint32 interval, void* param)
 // FbleAppMain -- See documentation in app.fble.h
 int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module)
 {
+  const char* arg0 = argv[0];
+
   // To ease debugging of FbleAppMain programs, cause the following useful
   // functions to be linked in:
   (void)(FbleCharValueAccess);
@@ -520,26 +476,28 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   }
 
   if (version) {
-    printf("fble-app %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
+    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, module);
+    FblePrintVersion(stdout, "fble-app");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
-    PrintUsage(stdout, module);
+    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, module);
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintUsage(stderr, module);
+    fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
   if (!module && module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
-    PrintUsage(stderr, module);
+    fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }

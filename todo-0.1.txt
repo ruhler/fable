@@ -11,11 +11,7 @@ Documentation Related:
   It shows a bunch of [ESC like stuff in the output text.
 
 * Clean up option parsing, usage text, man pages for each of the following.
-  - Switch to using new helper functions on all existing binaries.
-    Replacing uses of PrintHelp, PrintVersion, PrintHeader.
-
   - fble-stdio
-  - fble-app
 
   - fble-md5
   - fble-sat

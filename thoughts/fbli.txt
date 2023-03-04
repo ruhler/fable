@@ -1,0 +1,92 @@
+Fbli
+----
+Imagine we had a computer generate fble code, except, it doesn't need all the
+nice stuff in fble for humans. How would that look? Let's call it fbli.
+
+  Name ::= (* A string of characters *)
+
+  Expr ::=
+   | var (name : Name)
+   | let (bindings : [(Name, Expr)]) (body : Expr)
+   | module_path (path : Path)
+   | unit
+   | struct (0 : Expr) (1 : Expr)
+   | union_0 (arg : Expr)
+   | union_1 (arg : Expr)
+   | access_0 (obj : Expr)
+   | access_1 (obj : Expr)
+   | select (obj : Expr) (0 : Expr) (1 : Expr)
+   | func (body : Expr)
+   | apply (func : Expr) (arg : Expr)
+   ;
+
+  Module ::= (value : Expr) (modules : [Module])
+
+Idea is that we don't have errors or types. Maybe anywhere we would have
+returned an error, we could return unit, or undefined, or something?
+
+Anyway, everything is pretty straight forward. Structs are pairs, Unions only
+have two choices, functions take a single argument. We still have recursive
+variables and modules for abstraction.
+
+I wonder if there's a way to get rid of variable names usefully. We could
+change to numbers, but really it's just auto-generated name. I don't see any
+value to having structure to the names. Let's stick with this to start.
+
+Or, maybe we don't need variables? Just one variable?
+
+For example:
+  x = ...
+  y = ...
+
+Could be rewritten:
+  v = (..., ...)
+
+And we can generalize that if we want to. So everything gets grouped into a
+single big definition. We would want nesting of variable declarations still
+though, to have limited scope for a variable. We still want nested functions.
+
+Maybe:
+
+ | var - Returns the current variable in scope.
+ | let (value : Expr) (body : Expr)
+
+Where we always have a concept of the current value in scope, called 'var'.
+
+The way let works is something like:
+  var = pair(old_var, value)
+
+Where the definition of 'value' has access to itself for recursion, using same
+'undefined' semantics of fble.
+
+Yeah, that's kind of nice. No names needed. Just a single variable. Still
+lexicographically scoped. And maybe, to start, don't worry about modules yet.
+We can add those as needed. Then we get something like:
+
+  Expr ::=
+   | var
+   | let (value : Expr) (body : Expr)
+   | unit
+   | struct (0 : Expr) (1 : Expr)
+   | union_0 (arg : Expr)
+   | union_1 (arg : Expr)
+   | access_0 (obj : Expr)
+   | access_1 (obj : Expr)
+   | select (obj : Expr) (0 : Expr) (1 : Expr)
+   | func (body : Expr)
+   | apply (func : Expr) (arg : Expr)
+   ;
+
+As with fble, in order for this to do anything useful we need a main driver
+that supplies some primitive functions to call that can interact with the
+world.
+
+This language should be super easy to implement in fble.
+
+---
+
+I'm worried about the case of nested 'let'. Will it be possible to properly
+distinguish between the different levels of variables being recursively
+defined? Also, I worry about effectively forcing a list for variables. Perhaps
+we should have an option to control whether the new variable goes to the left
+or to the right in the pair created by let?
