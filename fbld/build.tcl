@@ -64,7 +64,7 @@ namespace eval "fbld" {
       "$source $::s/fbld/usage.help.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl" \
       "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl < $source > $target.roff"
     build $target.txt $target.roff \
-      "groff -T ascii < $target.roff > $target.txt"
+      "GROFF_NO_SGR=1 groff -T ascii < $target.roff > $target.txt"
     build $target \
       "$::s/fbld/cdata.tcl $target.txt" \
       "tclsh8.6 $::s/fbld/cdata.tcl $id < $target.txt > $target"
