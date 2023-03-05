@@ -1,0 +1,15 @@
+@usage[fble-graphics][3D graphics in fble][
+@synopsys
+@l[fble-graphics]
+
+@description[
+An early sandbox for 3D graphics on fble.
+
+Play around with left and right arrows, and keys @l[a], @l[d], @l[j], @l[k],
+@l[s] and @l[w] to see what they do.
+]
+
+@examples
+@ex[fble-graphics]
+Launch the graphics app.
+]

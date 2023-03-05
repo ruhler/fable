@@ -11,12 +11,6 @@ Things to consider doing for the fble-0.1 release.
 Documentation Related:
 * usage output does not work well when piping to less
   It shows a bunch of [ESC like stuff in the output text.
-
-* Clean up option parsing, usage text, man pages for each of the following.
-  - fble-graphics
-  - fble-invaders
-  - fble-pinball
-
 * Document default fble package path in man pages?
   Meaning, the exact value we end up installing.
 * Generate man pages for library functions via fbld.
@@ -29,5 +23,6 @@ Release Related:
   - Walk through tutorials and make sure those work.
   - Check if we can disable SDL properly?
   - Proofread all tutorials?
+  - Review all the man pages and usage help text?
 * Write release notes for release 0.1
 * Make the official release.

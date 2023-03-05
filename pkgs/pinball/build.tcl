@@ -1,5 +1,6 @@
 namespace eval "pkgs/pinball" {
   dist_s $::s/pkgs/pinball/build.tcl
+  dist_s $::s/pkgs/pinball/pinball.fbld
   dist_s $::s/pkgs/pinball/TODO.txt
 
   pkg pinball [list core app] ""
@@ -16,6 +17,8 @@ namespace eval "pkgs/pinball" {
     "$::b/pkgs/pinball/pinball-tests --prefix Compiled"
 
   if $::config::enable_fble_app {
+    man_usage $::b/pkgs/pinball/fble-pinball.1 $::s/pkgs/pinball/pinball.fbld
+    install $::b/pkgs/pinball/fble-pinball.1 $::config::mandir/man1/fble-pinball.1
     app $::b/pkgs/pinball/fble-pinball "/Pinball/AppIO%" "pinball"
     install $::b/pkgs/pinball/fble-pinball $::config::bindir/fble-pinball
   }
