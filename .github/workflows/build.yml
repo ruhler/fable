@@ -24,6 +24,17 @@ jobs:
           ninja check
           ninja install
 
+      - name: Dist Build and Test
+        run: |
+          cd ${{github.workspace}}
+          mkdir dist
+          cd dist
+          tar xf ${{github.workspace}}/build/fble*.tar.gz
+          cd fble*
+          ./configure --prefix=../install
+          ninja check
+          ninja install
+
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v1.0.7
         with:
