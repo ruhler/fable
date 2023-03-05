@@ -2,14 +2,10 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Add a way to specify package path on the command line?
-* Figure out why there isn't a space before options in fble-test -h output.
-* Too many blank lines in usage generated help output?
 * Do we install header files needed by users of the library packages?
   Should we? For example pkgs/core/int.fble.h.
-
-Documentation Related:
-* usage output does not work well when piping to less
+* Update examples in man pages to use -p options appropriate for the package?
+* Usage output does not work well when piping to less
   It shows a bunch of [ESC like stuff in the output text.
 * Document default fble package path in man pages?
   Meaning, the exact value we end up installing.
@@ -24,5 +20,6 @@ Release Related:
   - Check if we can disable SDL properly?
   - Proofread all tutorials?
   - Review all the man pages and usage help text?
+  - Double check all links in the generated web page? And proofread?
 * Write release notes for release 0.1
 * Make the official release.

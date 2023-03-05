@@ -2,6 +2,12 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Figure out whitespace issues with fbld generated roff, man.
+  - When are things trimed versus not?
+  - How to avoid too many or too few blank lines between items?
+
+* Add a way to specify package path on the command line?
+
 * Improve exercises for Unions and Functions tutorials, and others.
 
 * Fix timeout with gdb-test

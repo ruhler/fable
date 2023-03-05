@@ -187,6 +187,7 @@ proc block_doc {title body} {
 # @param body  The contents of the section.
 proc block_section {title body} {
   # TODO: Come up with a better approach for sections
+  ::output ".sp\n"
   ::output "$title:\n.br\n.in +2\n"
   ::block $body
   ::output "\n.in -2\n"
@@ -198,6 +199,7 @@ proc block_section {title body} {
 # @param body  The contents of the section.
 proc block_subsection {title body} {
   # TODO: Come up with a better approach for subsections
+  ::output ".sp\n"
   ::output "$title:\n.br\n.in +2\n"
   ::block $body
   ::output "\n.in -2\n"
