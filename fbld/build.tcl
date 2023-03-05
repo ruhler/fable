@@ -13,6 +13,7 @@ namespace eval "fbld" {
   dist_s $::s/fbld/test.tcl
   dist_s $::s/fbld/tutorial.tcl
   dist_s $::s/fbld/usage.help.tcl
+  dist_s $::s/fbld/usage.lib.tcl
   dist_s $::s/fbld/usage.man.tcl
 
   # Test suite for fbld implementation.
