@@ -212,6 +212,19 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   bool error = false;
   bool version = false;
 
+  // If the module is compiled and '--' isn't present, skip to end of options
+  // right away. That way precompiled programs can go straight to application
+  // args if they want.
+  if (module != NULL) {
+    end_of_options = true;
+    for (int i = 0; i < argc; ++i) {
+      if (strcmp(argv[i], "--") == 0) {
+        end_of_options = false;
+        break;
+      }
+    }
+  }
+
   argc--;
   argv++;
   while (!(help || error || version) && !end_of_options && argc > 0) {

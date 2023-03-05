@@ -21,7 +21,10 @@ writes a profile of the test run to @a[FILE]
 @opt[@l[--]] indicates end of options
 
 Everything that follows @l[--] is considered @a[ARG...]. Normally the first
-unrecognized option is considered the start of @a[ARG...].
+unrecognized option is considered the start of @a[ARG...]. In the case of
+compiled fble-stdio binaries, all arguments are assumed to belong to
+@a[ARG...] unless @l[--] is present, in which case arguments before @l[--] are
+fble-stdio options and arguments after @l[--] are @a[ARG...].
 ]
 ]
 
