@@ -13,7 +13,6 @@ Documentation Related:
   It shows a bunch of [ESC like stuff in the output text.
 
 * Clean up option parsing, usage text, man pages for each of the following.
-  - fble-sat
   - fble-graphics
   - fble-invaders
   - fble-pinball

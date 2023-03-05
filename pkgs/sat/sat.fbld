@@ -1,0 +1,15 @@
+@usage[fble-sat][solves a sat problem][
+@synopsys
+@l[fble-sat]
+
+@description
+Solve the SAT problem descirbed on standard intput in DIMACS cnf format.
+
+@exitstatus
+@def[0] Success.
+@def[1] Parse error.
+
+@examples
+@ex[fble-sat < foo.cnf]
+Tests for satisfiability of the formula described in @l[foo.cnf].
+]
