@@ -1,0 +1,14 @@
+@usage[fble-md5][computes md5 hash][
+@synopsys
+@l[fble-md5]
+
+@description
+Computes the md5 hash of standard input.
+
+@exitstatus
+@def[0] Success.
+
+@examples
+@ex[fble-md5 < foo.txt]
+Computes the md5sum of the file @l[foo.txt].
+]

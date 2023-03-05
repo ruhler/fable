@@ -1,5 +1,6 @@
 namespace eval "pkgs/md5" {
   dist_s $::s/pkgs/md5/build.tcl
+  dist_s $::s/pkgs/md5/md5.fbld
 
   pkg md5 [list core] ""
 
@@ -16,6 +17,8 @@ namespace eval "pkgs/md5" {
   stdio $::b/pkgs/md5/md5-bench "/Md5/Bench%" "md5"
 
   # fble-md5 program.
+  man_usage $::b/pkgs/md5/fble-md5.1 $::s/pkgs/md5/md5.fbld
+  install $::b/pkgs/md5/fble-md5.1 $::config::mandir/man1/fble-md5.1
   stdio $::b/pkgs/md5/fble-md5 "/Md5/Main%" "md5"
   install $::b/pkgs/md5/fble-md5 $::config::bindir/fble-md5
 
