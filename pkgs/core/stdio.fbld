@@ -36,6 +36,6 @@ fble-stdio options and arguments after @l[--] are @a[ARG...].
 ]
 
 @examples
-@ex[fble-stdio --profile foo.prof -I foo -m /Foo% -- arg1 arg2]
-Runs the stdio program @l[/Foo%] passing args @l[arg1] and @l[arg2].
+@ex[fble-stdio -p core -m /Core/Stdio/HelloWorld% -- a b]
+Runs the hello world program, passing (unused) arguments @l[a] and @l[b].
 ]

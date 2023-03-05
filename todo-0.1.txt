@@ -2,13 +2,19 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Do we install header files needed by users of the library packages?
-  Should we? For example pkgs/core/int.fble.h.
-* Update examples in man pages to use -p options appropriate for the package?
-* Document default fble package path in man pages?
-  Meaning, the exact value we end up installing.
+* fble-app Demo app crashes with --profile.
+
 * Generate man pages for library functions via fbld.
+
+* Document default fble package path in man pages?
+  We can get it from $::config::datadir/fble
+  How best to pass that into the docs?
+  Auto-generate a .tcl file that defines a config tag? Like: @config[datadir]?
+  
 * Add version numbers to generated docs?
+  - For man pages, ideally we add it to 'source' of the .TH call. But what's a
+    natural way to pass that information into there? Create a @man tag for man
+    documents? Maybe hold off until we have section 3 man pages too.
 
 Release Related:
 * Verify the release candidate every way I can.

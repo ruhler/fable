@@ -24,5 +24,6 @@ writes a profile of the test run to @a[FILE]
 ]
 
 @examples
-@ex[fble-app --profile foo.prof -I pkgs -m /Foo%][]
+@ex[fble-app -p core -p app -m /App/Demo%]
+Launches the demo app.
 ]
