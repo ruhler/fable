@@ -2,8 +2,6 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* fble-app Demo app crashes with --profile.
-
 * Generate man pages for library functions via fbld.
 
 * Document default fble package path in man pages?

@@ -563,7 +563,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleBlockId block_id = 0;
   if (profile != NULL) {
-    FbleNameV names = { .size = 3, .xs = block_names };
+    FbleNameV names = { .size = 2, .xs = block_names };
     block_id = FbleProfileAddBlocks(profile, names);
   }
   FbleFreeName(block_names[0]);

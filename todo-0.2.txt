@@ -172,3 +172,4 @@ Things to consider doing for the fble-0.2 release.
  - Profiling said its all in FbleTypesEqual. Maybe something pathological?
 
 * Add tests that at least the compiled apps don't crash when you run them.
+ - Including with --profile enabled.
