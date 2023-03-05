@@ -6,20 +6,27 @@ namespace eval "pkgs/core" {
   dist_s $::s/pkgs/core/fble-stdio.c
   dist_s $::s/pkgs/core/int.fble.c
   dist_s $::s/pkgs/core/int.fble.h
+  dist_s $::s/pkgs/core/stdio.fbld
   dist_s $::s/pkgs/core/stdio.fble.c
   dist_s $::s/pkgs/core/stdio.fble.h
   dist_s $::s/pkgs/core/string.fble.c
   dist_s $::s/pkgs/core/string.fble.h
 
+  header_usage $::b/pkgs/core/stdio.usage.h $::s/pkgs/core/stdio.fbld fbldUsageHelpText
+
   # .c library files.
   set objs [list]
   foreach {x} { char.fble int.fble stdio.fble string.fble } {
     lappend objs $::b/pkgs/core/$x.o
-    obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c "-I $::s/include -I $::s/pkgs/core"
+    obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c \
+      "-I $::s/include -I $::s/pkgs/core -I $::b/pkgs/core" \
+      $::b/pkgs/core/stdio.usage.h
   }
   pkg core [list] $objs
 
   # fble-stdio program.
+  man_usage $::b/pkgs/core/fble-stdio.1 $::s/pkgs/core/stdio.fbld
+  install $::b/pkgs/core/fble-stdio.1 $::config::mandir/man1/fble-stdio.1
   obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
     "-I $::s/include -I $::s/pkgs/core"
   bin $::b/pkgs/core/fble-stdio \

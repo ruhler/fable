@@ -15,6 +15,8 @@
 #include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
+#include "stdio.usage.h"           // for fbldUsageHelpText
+
 #include "char.fble.h"        // for FbleCharValueAccess
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
@@ -23,8 +25,6 @@
 #define EX_FALSE 1
 #define EX_USAGE 2
 #define EX_FAILURE 3
-
-extern const char* BUILDSTAMP;
 
 /**
  * An FbleExecutable with a FILE handle.
@@ -47,7 +47,6 @@ static FbleValue* OStreamImpl(
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
 
-static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 
 // IStream -- Read a byte from a file.
 //   IO@<Maybe@<Int@>>
@@ -135,57 +134,6 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
 }
 
-// PrintUsage --
-//   Prints help info for FbleStdioMain to the given output stream.
-//
-// Inputs:
-//   stream - The output stream to write the usage information to.
-//   module - Non-NULL if a compiled module is provided, NULL otherwise.
-//
-// Side effects:
-//   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
-{
-  fprintf(stream, "Usage: fble-stdio [OPTION...]%s ARGS\n",
-      module == NULL ? " -m MODULE_PATH" : "");
-  fprintf(stream, "%s",
-      "\n"
-      "Description:\n"
-      "  Runs an fble stdio program.\n"
-      "\n"
-      "Options:\n"
-      "  -h, --help\n"
-      "     Print this help message and exit.\n"
-      "  -v, --version\n"
-      "     Print version information and exit.\n");
-  if (module == NULL) {
-    fprintf(stream, "%s",
-      "  -I DIR\n"
-      "     Adds DIR to the module search path.\n"
-      "  -m, --module MODULE_PATH\n"
-      "     The path of the module to get dependencies for.\n");
-  }
-  fprintf(stream, "%s",
-      "  --profile FILE\n"
-      "    Writes a profile of the test run to FILE\n"
-      "  --\n"
-      "    Indicates the end of options. Everything that follows is considered\n"
-      "    ARGS. Normally the first unrecognized option is considered the start\n"
-      "    of ARGS.\n"
-      "\n"
-      "Exit Status:\n"
-      "  0 if Stdio@ process returns true.\n"
-      "  1 if Stdio@ process returns false.\n"
-      "  2 on usage error.\n"
-      "  3 on other error.\n"
-      "\n"
-      "Example:\n");
-  fprintf(stream, "%s%s%s",
-      "  fble-stdio --profile foo.prof ",
-      module == NULL ? "-I prgms -m /Foo% " : "",
-      "arg1 arg2\n");
-}
-
 // FbleStdio -- see documentation in stdio.fble.h
 FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
 {
@@ -249,6 +197,8 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
 // FbleStdioMain -- See documentation in stdio.fble.h
 int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* module)
 {
+  const char* arg0 = argv[0];
+
   // To ease debugging of FbleStdioMain programs, cause the following useful
   // functions to be linked in:
   (void)(FbleCharValueAccess);
@@ -280,26 +230,28 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   }
 
   if (version) {
-    printf("fble-stdio %s (%s)\n", FBLE_VERSION, FbleBuildStamp);
+    FblePrintCompiledHeaderLine(stdout, "fble-stdio", arg0, module);
+    FblePrintVersion(stdout, "fble-stdio");
     FbleFreeModuleArg(module_arg);
     return EX_TRUE;
   }
 
   if (help) {
-    PrintUsage(stdout, module);
+    FblePrintCompiledHeaderLine(stdout, "fble-stdio", arg0, module);
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_TRUE;
   }
 
   if (error) {
-    PrintUsage(stderr, module);
+    fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
 
   if (!module && module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
-    PrintUsage(stderr, module);
+    fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
