@@ -62,7 +62,7 @@
      gcc gdb diffutils grep groff-base source-highlight \
      ninja-build libgl-dev libsdl2-dev tcl8.6
 
- @section[Build]
+ @section Build
   To build and install:
 
   @code[sh]
@@ -75,7 +75,7 @@
   @def[dist] Builds a release tarball.
   @def[check] Builds and tests everything without installing anything.
 
- @section[Vim Files]
+ @section Vim Files
   Vim ftplugin, syntax, and indent files for the fble language are available
   in the `vim/` directory. You can run the following commands to install these
   files:
