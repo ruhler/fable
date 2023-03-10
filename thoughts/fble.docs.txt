@@ -2906,3 +2906,8 @@ Next steps:
 * Update the fbld test cases.
 * Update the fbld implementation.
 * Convert everything over to the new spec.
+
+Notes from conversion experience:
+* set autoindent in vim. Then it will line up indent from first line.
+* I'm pretty happy with improvements to appearance of usage .fbld files from
+  this change.

@@ -1,41 +1,36 @@
-@usage[fble-stdio][runs an fble stdio program][
-@synopsys
-@l[fble-stdio] \[@a[OPTION]...\] @a[ARG...]
-
-@description
-Runs an fble stdio program.
-
-The fble program should be the result of calling @l[/Core/Stdio/IO%.Run] on
-with an argument of type @l[/Core/Stdio%.Main@].
-
-@options[
-@GenericProgramInfo
-
-@ModuleInput
-
-@subsection[Profiling Options]
-@opt[@l[--profile] @a[FILE]]
-writes a profile of the test run to @a[FILE]
-
-@subsection[Other Options][
-@opt[@l[--]] indicates end of options
-
-Everything that follows @l[--] is considered @a[ARG...]. Normally the first
-unrecognized option is considered the start of @a[ARG...]. In the case of
-compiled fble-stdio binaries, all arguments are assumed to belong to
-@a[ARG...] unless @l[--] is present, in which case arguments before @l[--] are
-fble-stdio options and arguments after @l[--] are @a[ARG...].
-]
-]
-
-@exitstatus[
-@def[0] @l[Stdio@] process returns @l[True].
-@def[1] @l[Stdio@] process returns @l[False].
-@def[2] Usage Error
-@def[3] Other Error.
-]
-
-@examples
-@ex[fble-stdio -p core -m /Core/Stdio/HelloWorld% -- a b]
-Runs the hello world program, passing (unused) arguments @l[a] and @l[b].
-]
+@usage[fble-stdio] runs an fble stdio program
+ @synopsys
+  @l[fble-stdio] \[@a[OPTION]...\] @a[ARG...]
+ 
+ @description
+  Runs an fble stdio program.
+ 
+  The fble program should be the result of calling @l[/Core/Stdio/IO%.Run] on
+  with an argument of type @l[/Core/Stdio%.Main@].
+ 
+ @options
+  @GenericProgramInfo
+  @ModuleInput
+ 
+  @subsection Profiling Options
+   @opt[@l[--profile] @a[FILE]]
+    writes a profile of the test run to @a[FILE]
+ 
+  @subsection Other Options
+   @opt[@l[--]] indicates end of options
+ 
+   Everything that follows @l[--] is considered @a[ARG...]. Normally the first
+   unrecognized option is considered the start of @a[ARG...]. In the case of
+   compiled fble-stdio binaries, all arguments are assumed to belong to
+   @a[ARG...] unless @l[--] is present, in which case arguments before @l[--]
+   are fble-stdio options and arguments after @l[--] are @a[ARG...].
+ 
+ @exitstatus
+  @def[0] @l[Stdio@] process returns @l[True].
+  @def[1] @l[Stdio@] process returns @l[False].
+  @def[2] Usage Error
+  @def[3] Other Error.
+ 
+ @examples
+  @ex[fble-stdio -p core -m /Core/Stdio/HelloWorld% -- a b]
+   Runs the hello world program, passing (unused) arguments @l[a] and @l[b].

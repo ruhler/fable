@@ -1,69 +1,65 @@
-@usage[fble-compile][compiles an fble module][
-@synopsys
-@l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
-
-@description[
-Compile the fble module identified by @a[MODULE_PATH].
-
-There are three kinds of things that can be included in the generated code:
-
-@definition[Compiled Module]
-Code generated for executing the given module. This will generate an
-@l[FbleCompiledModuleFunction] for the module under an internal name that
-users should not directly reference.
-
-@definition[Exported Module]
-A named @l[FbleCompiledModuleFunction] function to export the code generated
-for a module using the Compiled Module option. Users provide their desired
-name for the exported module function. The compiler will re-export the
-internally named @l[FbleCompiledModuleFunction] compiled module function under
-the user specified exported module name.
-
-@definition[Main Function][
-A standard @l[main] function that invokes a user provided wrapper function.
-The wrapper function should have type:
-
-@par
-@l[int] @a[NAME]@l[(]@l[int] @a[argc], @l[const char**] @a[argv],
-@l[FbleCompiledModuleFunction*] @a[module] @l[);]
-
-It will be called passing @a[argc] and @a[argv] from @l[main] and the
-compiled module generated using the Compiled Module option.
-]]
-
-@options[
-@GenericProgramInfo
-
-@ModuleInput
-
-@subsection[Target Control]
-@opt[@l[-t], @l[--target] \[@l[aarch64] | @l[c]\]]
-what to compile to, defaults to aarch64
-
-@subsection[Output Control][
-@opt[@l[-c], @l[--compile]]
-generate compiled code for the module
-
-@opt[@l[-e], @l[--export] @a[NAME]]
-generate @a[NAME] function to export the module
-
-@opt[@l[--main] @a[NAME]]
-generate main function using @a[NAME] wrapper
-
-At least one of @l[--compile], @l[--export], or @l[--main] must be provided.
-]]
-
-@exitstatus
-@def[0] Success.
-@def[1] Failure.
-@def[2] Usage error.
-
-@examples[
-@ex[fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s]
-Compiles @l[/Foo%] to an @l[FbleCompiledModuleFunction*] called
-@l[CompiledFoo.]
-
-@ex[fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s]
-Generates a standalone program that invokes @l[FbleStdioMain] on the compiled
-code for @l[/Foo%] when run.
-]]
+@usage[fble-compile] compiles an fble module
+ @synopsys
+  @l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+ 
+ @description
+  Compile the fble module identified by @a[MODULE_PATH].
+  
+  There are three kinds of things that can be included in the generated code:
+  
+  @definition Compiled Module
+   Code generated for executing the given module. This will generate an
+   @l[FbleCompiledModuleFunction] for the module under an internal name that
+   users should not directly reference.
+  
+  @definition Exported Module
+   A named @l[FbleCompiledModuleFunction] function to export the code
+   generated for a module using the Compiled Module option. Users provide
+   their desired name for the exported module function. The compiler will
+   re-export the internally named @l[FbleCompiledModuleFunction] compiled
+   module function under the user specified exported module name.
+  
+  @definition Main Function
+   A standard @l[main] function that invokes a user provided wrapper function.
+   The wrapper function should have type:
+  
+   @par
+    @l[int] @a[NAME]@l[(]@l[int] @a[argc], @l[const char**] @a[argv],
+    @l[FbleCompiledModuleFunction*] @a[module] @l[);]
+  
+   It will be called passing @a[argc] and @a[argv] from @l[main] and the
+   compiled module generated using the Compiled Module option.
+ 
+ @options
+  @GenericProgramInfo
+  @ModuleInput
+ 
+  @subsection Target Control
+   @opt[@l[-t], @l[--target] \[@l[aarch64] | @l[c]\]]
+    what to compile to, defaults to aarch64
+  
+  @subsection Output Control
+   @opt[@l[-c], @l[--compile]]
+    generate compiled code for the module
+  
+   @opt[@l[-e], @l[--export] @a[NAME]]
+    generate @a[NAME] function to export the module
+  
+   @opt[@l[--main] @a[NAME]]
+    generate main function using @a[NAME] wrapper
+  
+   At least one of @l[--compile], @l[--export], or @l[--main] must be provided.
+ 
+ @exitstatus
+  @def[0] Success.
+  @def[1] Failure.
+  @def[2] Usage error.
+ 
+ @examples
+  @ex[fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s]
+   Compiles @l[/Foo%] to an @l[FbleCompiledModuleFunction*] called
+   @l[CompiledFoo.]
+ 
+  @ex[fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s]
+   Generates a standalone program that invokes @l[FbleStdioMain] on the
+   compiled code for @l[/Foo%] when run.

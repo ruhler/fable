@@ -1,31 +1,27 @@
-@usage[fble-test][evaluates an fble program][
-@synopsys
-@l[fble-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
-
-@description
-Evaluates an fble program and discards the result. Exits with success if the
-program type checks and runs to completion.
-
-@options[
-@GenericProgramInfo
-
-@ModuleInput
-
-@subsection[Profiling Options]
-@opt[@l[--profile] @a[FILE]]
-writes a profile of the test run to @a[FILE]
-]
-
-@exitstatus[
-@def[0] Success.
-@def[1] Compile Error.
-@def[2] Runtime Error.
-@def[3] Usage Error.
-@def[4] Other Error.
-]
-
-@examples
-@ex[fble-test --profile test.prof -p core -m -m /Core/Stdio/HelloWorld%]
-Evaluates (without executing) the module @l[/Core/Stdio/HelloWorld%],
-outputting a profiling report to @l[test.prof].
-]
+@usage[fble-test] evaluates an fble program
+ @synopsys
+  @l[fble-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+ 
+ @description
+  Evaluates an fble program and discards the result. Exits with success if the
+  program type checks and runs to completion.
+ 
+ @options
+  @GenericProgramInfo
+  @ModuleInput
+ 
+  @subsection Profiling Options
+   @opt[@l[--profile] @a[FILE]]
+    writes a profile of the test run to @a[FILE]
+ 
+ @exitstatus
+  @def[0] Success.
+  @def[1] Compile Error.
+  @def[2] Runtime Error.
+  @def[3] Usage Error.
+  @def[4] Other Error.
+ 
+ @examples
+  @ex[fble-test --profile test.prof -p core -m -m /Core/Stdio/HelloWorld%]
+   Evaluates (without executing) the module @l[/Core/Stdio/HelloWorld%],
+   outputting a profiling report to @l[test.prof].

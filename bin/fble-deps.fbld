@@ -1,31 +1,27 @@
-@usage[fble-deps][generates depsfile for an fble module][
-@synopsys
-@l[fble-deps] \[@a[OPTION]...\] @l[-t] @a[TARGET] @l[-m] @a[MODULE_PATH]
+@usage[fble-deps] generates depsfile for an fble module
+ @synopsys
+  @l[fble-deps] \[@a[OPTION]...\] @l[-t] @a[TARGET] @l[-m] @a[MODULE_PATH]
+ 
+ @description
+  Outputs a depfile suitable for use with make and ninja specifying the
+  @l[.fble] files the given module depends on.
+ 
+ @options
+  @GenericProgramInfo
+  @ModuleInput
 
-@description
-Outputs a depfile suitable for use with make and ninja specifying the
-@l[.fble] files the given module depends on.
-
-@options[
-@GenericProgramInfo
-
-@ModuleInput
-
-@subsection[Output Control]
-@opt[@l[-t], @l[--target] @a[TARGET]]
-target name to use in generated depfile
-]
-
-@exitstatus[
-@def[0] Success.
-@def[1] Failure.
-@def[2] Usage error.
-
-Exit status is 0 in the case where the .fble file cannot be parsed
-successfully, to support the use case of generating dependencies for a
-malformed .fble file.
-]
-
-@examples
-@ex[fble-deps -I foo -t Foo.fble.d -m /Foo% > Foo.fble.d][]
-]
+  @subsection Output Control
+   @opt[@l[-t], @l[--target] @a[TARGET]]
+    target name to use in generated depfile
+ 
+ @exitstatus
+  @def[0] Success.
+  @def[1] Failure.
+  @def[2] Usage error.
+ 
+  Exit status is 0 in the case where the .fble file cannot be parsed
+  successfully, to support the use case of generating dependencies for a
+  malformed .fble file.
+ 
+ @examples
+  @ex[fble-deps -I foo -t Foo.fble.d -m /Foo% > Foo.fble.d][]

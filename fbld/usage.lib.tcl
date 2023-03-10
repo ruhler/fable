@@ -5,10 +5,10 @@
 proc block_GenericProgramInfo {} {
   ::block_subsection "Generic Program Information" {
 @opt[@l[-h], @l[--help]]
-display this help text and exit
+ display this help text and exit
 
 @opt[@l[-v], @l[--version]]
-display version information and exit
+ display version information and exit
 }
 }
 
@@ -17,13 +17,13 @@ display version information and exit
 proc block_ModuleInput {} {
   ::block_subsection "Module Input" {
 @opt[@l[-I] @a[DIR]]
-add @a[DIR] to the module search path
+ add @a[DIR] to the module search path
 
 @opt[@l[-p], @l[--package] @a[PACKAGE]]
-add @a[PACKAGE] to the module search path
+ add @a[PACKAGE] to the module search path
 
 @opt[@l[-m], @l[--module] @a[MODULE_PATH]]
-the module path of the input module
+ the module path of the input module
 
 Packages are searched for in the package search path specified by the
 @l[FBLE_PACKAGE_PATH] environment variable followed by the system default

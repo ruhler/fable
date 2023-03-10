@@ -1,27 +1,22 @@
-@usage[fble-disassemble][disassembles an fble module][
-@synopsys
-@l[fble-disassemble] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
-
-@description[
-Generates human readable disassembly for the given fble module.
-
-This is for debugging purposes only. The assembly format is an
-implementation-dependant internal bytecode specific to this implementation of
-fble.
-]
-
-@options[
-@GenericProgramInfo
-
-@ModuleInput
-]
-
-@exitstatus[
-@def[0] Success.
-@def[1] Failure.
-@def[2] Usage error.
-]
-
-@examples
-@ex[fble-disassemble -I prgms -m /Foo%][]
-]
+@usage[fble-disassemble] disassembles an fble module
+ @synopsys
+  @l[fble-disassemble] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+ 
+ @description
+  Generates human readable disassembly for the given fble module.
+ 
+  This is for debugging purposes only. The assembly format is an
+  implementation-dependant internal bytecode specific to this implementation
+  of fble.
+ 
+ @options
+  @GenericProgramInfo
+  @ModuleInput
+ 
+ @exitstatus
+  @def[0] Success.
+  @def[1] Failure.
+  @def[2] Usage error.
+ 
+ @examples
+  @ex[fble-disassemble -I prgms -m /Foo%][]

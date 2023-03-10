@@ -1,15 +1,13 @@
-@usage[fble-pinball][pinball game][
-@synopsys
-@l[fble-pinball]
+@usage[fble-pinball] pinball game
+ @synopsys
+  @l[fble-pinball]
 
-@description[
-Experimental pinball game implemented in fble.
+ @description
+  Experimental pinball game implemented in fble.
 
-Use left and right shift keys for the paddles, @l[q] to quit, and @l[s] to
-restart.
-]
+  Use left and right shift keys for the paddles, @l[q] to quit, and @l[s] to
+  restart.
 
-@examples
-@ex[fble-pinball]
-Launch the pinball app.
-]
+ @examples
+  @ex fble-pinball
+   Launch the pinball app.
