@@ -177,69 +177,69 @@ structured text if it so desires.
 Fbld parses block structured text into a sequence of commands using the same
 concepts as inline structure, with a few syntactic differences.
 
-The key idea behind block structure is that blocks of text tend to take a lot
-of vertical space, so we can use a little extra vertical space to make the
-syntax of passing the last command argument less cluttered.
+The idea behind block structure is that we expect it to span across multiple
+lines of text. A block command starts on a new line and can accept two
+additional arguments separated implicitly by whitespace instead of explicitly
+with brackets. The two possible implicit arguments are:
+
+@item Text following the block command on the same line.
+@item Indented text starting on the next line from the block command.
 
 For example, consider a command, @l[@block] that takes two arguments: a title
-for the block and text to use in the block. We'll always use @l[\[] and @l[\]]
-notation to supply the first argument, but there are three different ways we
-can supply the last argument.
+for the block and text to use in the block.
 
-The first approach is to use a single line for the last argument. To do this,
-start the text of the last argument on the same line as the command:
+The block command could be invoked using explicit brackets for arguments as
+follows:
 
 @code[fbld]
-@block["Example 1"] This is the first example.
-@block["Example 2"] This is the second example.
+@block[Example 1][First line of the first example.
 
-The second approach is to start the last argument on the next line. In this
-case, everything up to the next blank line is used for the last argument:
+Last line of the first example.]
+@block[Example 2][This is the second example.]
 
-@code[fbld][
-@block["Example 1"]
-This is the first example.
+Using the implicit argument form:
 
-@block["Example 2"]
-This is the second example.
-]
+@code[fbld]
+@block Example 1
+ First line of the first example.
 
-The third approach is to use square braces for the last argument, in which
-case the command must be followed by a blank line:
+ Last line of the first example.
+@block Example 2
+ This is the second example.
 
-@code[fbld][
-@block["Example 1"][This is the first example.]
+We could pass the first arguments explicitly and the second arguments
+implicitly if we wanted:
 
-@block["Example 2"][This is the second example.]
-]
+@code[fbld]
+@block[Example 1]
+ First line of the first example.
 
-Typically you would use the same-line last argument for short text, such as
-section titles or small list items. You would use the next-line last argument
-when the argument is a single paragraph. You would use square braces for the
-last argument if it needs to span multiple paragraphs.
+ Last line of the first example.
+@block[Example 2] This is the second example.
+
+Typically you would use the same-line argument for short text, such as
+section titles or small list items. You would use the next-line argument
+when the argument multi-line arguments.
 
 @subsection[A Bigger Example][
 Here's an example demonstrating use of the various approaches to the last
 argument:
 
-@code[fbld][
-@title A Bigger Example
+@code[fbld]
+ @doc A Bigger Example
+ 
+  Some introductory text here.
+ 
+  @section[First Section]
+   @paragraph
+   Here is a paragraph in the first
+   section of the doc.
+ 
+   @list
+    @item First item of a list.
+    @item Second item of a list.
 
-Some introductory text here.
-
-@section[First Section]
-[
-@paragraph
-Here is a paragraph in the first
-section of the doc.
-
-@list
-@item First item of a list.
-@item Second item of a list.
-]
-]
-
-This would be parsed into the following sequence of three commands:
+This would be parsed into the following command:
 
 @code[tcl][
 title "A Bigger Example"
@@ -270,33 +270,21 @@ item "Second item of a list."
 ]
 
 @subsection[Lexical Details][
-Whitespace is treated differently for block structured text than it is for
-inline structured test. In particular:
+@item Block commands start at the beginning of a line. Theoretically this is
+ in column zero, but there may be extra whitespace before it in the case of
+ nested block commands where that extra whitespace is stripped away before
+ processing the nested block command.
 
-@item
-A blank line is a line with a single newline character. It's not considered a
-blank line if there are other whitespace characters in the line.
+@item Default block commands take lines of text up until the next blank line.
 
-@item
-Blank lines between blocks are treated as delimiters and otherwise ignored.
+@item If there is any text on the same line after the last explicit argument
+ to a block command, that text up to but not including the next newline or end
+ of file is added as an additional argument to the block command.
 
-@item
-Block commands must start on the first character of a line. They cannot be
-indented.
-
-@item
-Spaces and tabs are allowed between @l[\]] closing an argument and @l[\[]
-starting the next argument.
-
-@item
-Spaces and tabs between @l[\]] and the start of a same-line last argument is
-treated as a delimiter and otherwise ignored.
-
-@item
-A @l[\[] can be used in for an argument starting on the next line. In this
-case the newline between the command or previous arguments @l[\]] is allowed and
-ignored. The @l[\[] must be on column 0 of the next line in this case.
-]
+@item Lines following the block command, up until there is a line with a
+ non-whitespace character not indented from the block command itself, are
+ grouped together into a single additional argument to the block command, with
+ the first space on each line removed.
 
 @subsection[Escaping Inline Commands][
 Imagine you want to emphasize the first word of a paragraph:
@@ -321,7 +309,7 @@ that's expected to be inlined structured text. For example:
 @section A Sample Section
 
 @default
-@emph[Yes!] The first word is emphasized
+ @emph[Yes!] The first word is emphasized
 ]
 
 Which will be parsed as desired:
@@ -341,43 +329,35 @@ convert to markdown:
 
 @code[fbld]
 @block[Example]
-My email address is @bold[ruhler\@degralder.com].
+ My email address is @bold[ruhler\@degralder.com].
 
 This gets parsed via block structured text as:
 
 @code[tcl]
-block "Example" {My email address is @bold[ruhler\@degralder.com].}
+ block "Example" {My email address is @bold[ruhler\@degralder.com].}
 
 The second argument gets parsed as inline structured text as:
 
 @code[tcl]
-default "My email address is "
-bold {ruhler\@degralder.com}
-default "."
+ default "My email address is "
+ bold {ruhler\@degralder.com}
+ default "."
 
 To actually display the text, the @l[@bold] command should remove the
 backslash before rendering the text.
-]
 
-@section[TODO][
+@section[TODO]
 @item
-Is the following valid? @l[hello \] \[ @there]. The square brackets are
-supposed to be special, but it's not within a command, so there shouldn't be
-any need to escape them, right? Only need to escape square brackets when
-parsing arguments? This would be a problem if it was within an argument. Maybe
-best to require escaping in all cases for consistency.
-
-@item
-The trailing newline is included in args that go to blank line. The blank line
-is not included.
+ Is the following valid? @l[hello \] \[ @there]. The square brackets are
+ supposed to be special, but it's not within a command, so there shouldn't be
+ any need to escape them, right? Only need to escape square brackets when
+ parsing arguments? This would be a problem if it was within an argument.
+ Maybe best to require escaping in all cases for consistency.
 
 @item
-Should we allow block commands to be indented?
+ The trailing newline is included in args that go to blank line. The blank
+ line is not included.
 
 @item
-Is the newline included in the arg for a same line arg? I feel like it
-shouldn't be?
-
-@item
-Clarify behavior of end of input for block commands, after @l[\]].
+ Clarify behavior of end of input for block commands, after @l[\]].
 ]]

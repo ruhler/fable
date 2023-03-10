@@ -17,7 +17,7 @@ namespace eval "fbld" {
   dist_s $::s/fbld/usage.man.tcl
 
   # Test suite for fbld implementation.
-  test $::b/fbld/test.tr $::s/fbld/test.tcl \
+  test $::b/fbld/test.tr "$::s/fbld/fbld.tcl $::s/fbld/test.tcl" \
     "tclsh8.6 $::s/fbld/test.tcl"
 
   # Processes an fbld file.

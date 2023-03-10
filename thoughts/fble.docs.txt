@@ -17,7 +17,7 @@ features for more complicated docs, and conversion to man pages.
 
 The potential downsides of asciidoc:
 * Another dependency to add to the project. Though it could be set up as a
-  dist dependency rather than a build or run dependency.
+dist dependency rather than a build or run dependency.
 * Potentially less appealing syntax? Need to double check.
 * Less standard, for example, integration with github readme.
 
@@ -30,11 +30,11 @@ Where I'm thinking about using docs:
 
 I would like to check the syntax of asciidoc too:
 * Support for '##' style headers instead of '~~~~~~~'?
-  == Title ==, === Title === looks like is what we would use.
-  Not consistent with markdown.
+== Title ==, === Title === looks like is what we would use.
+Not consistent with markdown.
 * Support for definition lists?
-  Yes. For example:
-   x:: ...
+Yes. For example:
+x:: ...
 
 See /usr/share/doc/asciidoc/userguide.html for asciidoc docs.
 
@@ -42,439 +42,439 @@ In general, it's pretty clear that asciidoc will not be compatible with
 markdown.
 
 Apparently github does support asciidoc? Yes. I just need to use '.adoc',
-'.ad', or .asciidoc extension.
+           '.ad', or .asciidoc extension.
 
-I don't see an obvious syntax checker for asciidoc yet, but maybe we could
-enable warnings and give an error if there is a warning generating some
-format for asciidoc.
+           I don't see an obvious syntax checker for asciidoc yet, but maybe we could
+           enable warnings and give an error if there is a warning generating some
+           format for asciidoc.
 
-My vote: let's give asciidoc a shot. I know how I feel about markdown. It's
-been a while since I tried asciidoc.
+           My vote: let's give asciidoc a shot. I know how I feel about markdown. It's
+           been a while since I tried asciidoc.
 
-To start:
-* Update README, tutorials
-  - Add build commands to call asciidoc or asciidoctor as seems best for
-    syntax checks.
-* Consider generating man pages for --help via asciidoc fragments instead of
-  using help2man.
+           To start:
+           * Update README, tutorials
+           - Add build commands to call asciidoc or asciidoctor as seems best for
+           syntax checks.
+           * Consider generating man pages for --help via asciidoc fragments instead of
+           using help2man.
 
-Oh, I guess one question is how a doc comment would look as an asciidoc.
+           Oh, I guess one question is how a doc comment would look as an asciidoc.
 
-// Foo --
-// Inputs::
-// * ...
-// Side effects::
-// * ...
-// Returns::
+           // Foo --
+           // Inputs::
+           // * ...
+           // Side effects::
+           // * ...
+           // Returns::
 
-I think it works via definition list just fine. Cool. Is it worth changing the
-header too?
+           I think it works via definition list just fine. Cool. Is it worth changing the
+           header too?
 
-// = Foo =
-// Inputs::
-// * ...
-// Side effects::
-// * ...
-// Returns::
+           // = Foo =
+           // Inputs::
+           // * ...
+           // Side effects::
+           // * ...
+           // Returns::
 
-That's just as easy to parse as // Foo --. I think it looks fine.
+           That's just as easy to parse as // Foo --. I think it looks fine.
 
----
+           ---
 
-Initial reactions after converting README.md to README.adoc:
-* asciidoc does give an error in some cases.
-* Reading the asciidoc.txt sample file, it's not quite as easy for me to read
-  in ascii format as I would have liked.
-* I don't like having 'XXXXXXXXXXXXXXXXXXXXXXXXXXXX' delimiters for things.
-  Seems like arbitrary length lines are asked for. Just use 4 chars to start?
-* It's nice having definition lists. I like that.
+           Initial reactions after converting README.md to README.adoc:
+           * asciidoc does give an error in some cases.
+           * Reading the asciidoc.txt sample file, it's not quite as easy for me to read
+           in ascii format as I would have liked.
+           * I don't like having 'XXXXXXXXXXXXXXXXXXXXXXXXXXXX' delimiters for things.
+           Seems like arbitrary length lines are asked for. Just use 4 chars to start?
+           * It's nice having definition lists. I like that.
 
----
+           ---
 
-I wonder if I can write help usage for programs directly in asciidoc, and
-import the rendered text to use in --help. Wouldn't that be nicer? Then we
-could read it separately, include in a bigger manual, generate man pages, all
-that from the raw source documentation?
+           I wonder if I can write help usage for programs directly in asciidoc, and
+           import the rendered text to use in --help. Wouldn't that be nicer? Then we
+           could read it separately, include in a bigger manual, generate man pages, all
+           that from the raw source documentation?
 
-Trouble is, manpage input format has special requirements different from help
-text and generic asciidoc description.
+           Trouble is, manpage input format has special requirements different from help
+           text and generic asciidoc description.
 
-Also, trying to generate text output from asciidoc is a pain. And I don't like
-the generated output style at the moment (lots of horizontal rules for no
-apparent reason?).
+           Also, trying to generate text output from asciidoc is a pain. And I don't like
+           the generated output style at the moment (lots of horizontal rules for no
+               apparent reason?).
 
-Ugh. I'm going to be honest. I feel like really all I want is:
-* title, section headers, paragraphs, unordered lists, ordered lists,
-  definition lists, code blocks, inline code blocks, comments, callouts (todo,
-  warning, note, etc.), references to other docs, links.
+           Ugh. I'm going to be honest. I feel like really all I want is:
+           * title, section headers, paragraphs, unordered lists, ordered lists,
+           definition lists, code blocks, inline code blocks, comments, callouts (todo,
+               warning, note, etc.), references to other docs, links.
 
-Markdown and asciidoc are both so close, but not quite there?
-* markdown is missing definition lists, callouts, references to other docs?
-* asciidoc is missing... none of these? But it doesn't do nested indenting
-  well. Like, definition lists can't be indented, right? No, it looks like you
-  can indent them.
+           Markdown and asciidoc are both so close, but not quite there?
+           * markdown is missing definition lists, callouts, references to other docs?
+           * asciidoc is missing... none of these? But it doesn't do nested indenting
+           well. Like, definition lists can't be indented, right? No, it looks like you
+           can indent them.
 
----
+           ---
 
-The real problem is, I don't have enough control over how things are
-generated, because I don't have my own programmatic representation of a
-document. Imagine I could parse a document and represent it abstractly. Then I
-could easily generate whatever I want in terms of man pages and checking
-proper document format.
+           The real problem is, I don't have enough control over how things are
+           generated, because I don't have my own programmatic representation of a
+           document. Imagine I could parse a document and represent it abstractly. Then I
+           could easily generate whatever I want in terms of man pages and checking
+           proper document format.
 
-But, guess what? I have a programming language that I could use for this. Why
-not write a doc package in fble? Generating man pages is not going to be
-difficult.
+           But, guess what? I have a programming language that I could use for this. Why
+           not write a doc package in fble? Generating man pages is not going to be
+           difficult.
 
-How things could work:
-* fble program to parse header files and generate man pages.
-* fble program to parse help text and generate man pages.
- - I don't think we want to generate help text from an fble program, because
-   that gives us an annoying bootstrapping problem.
+           How things could work:
+           * fble program to parse header files and generate man pages.
+           * fble program to parse help text and generate man pages.
+           - I don't think we want to generate help text from an fble program, because
+           that gives us an annoying bootstrapping problem.
 
-But that still leaves open the question: what syntax do we use? Do we keep
-README as a markdown format? What syntax do we use for tutorials, markdown?
-Asciidoc?
+           But that still leaves open the question: what syntax do we use? Do we keep
+           README as a markdown format? What syntax do we use for tutorials, markdown?
+           Asciidoc?
 
-I'll tell you the syntax I like: markdown plus definition lists. I guess
-technically we could use asciidoc for that, because I think asciidoc,
-technically, supports the '## ...' style section titles (though vim doesn't
-syntax highlight that).
+           I'll tell you the syntax I like: markdown plus definition lists. I guess
+           technically we could use asciidoc for that, because I think asciidoc,
+           technically, supports the '## ...' style section titles (though vim doesn't
+               syntax highlight that).
 
-My documentation needs are not complex. If I want to go for a standard
-approach, asciidoc is better because it supports everything I could want in a
-more standard way than markdown. For man pages, I really would prefer to
-generate them myself.
+           My documentation needs are not complex. If I want to go for a standard
+           approach, asciidoc is better because it supports everything I could want in a
+           more standard way than markdown. For man pages, I really would prefer to
+           generate them myself.
 
-So, here is what I propose: Use a strict, small, subset of asciidoc. Write an
-fble program that can parse that subset of asciidoc. Use it for the following:
-* To extract doc comments on header files and generate man pages.
-* To extract help text on main program and generate man pages.
-* To syntax check my README file and tutorials.
+           So, here is what I propose: Use a strict, small, subset of asciidoc. Write an
+           fble program that can parse that subset of asciidoc. Use it for the following:
+           * To extract doc comments on header files and generate man pages.
+           * To extract help text on main program and generate man pages.
+           * To syntax check my README file and tutorials.
 
-How about if I don't want to write my own program? If I don't want to be
-restricted to a subset of asciidoc?
-* README file and tutorials can be fullblown asciidoc.
-* Write code to extract general description and convert to custom format man
-  page for library code. As in, everything in the doc comment goes to the
-  description section of the man page. Ignore RETURN VALUE section of man
-  page. Write my own wrapper around the asciidoc.
-* Continue to use help2man for commands? Or write them in such a way that I
-  can extract asciidoc directly?
- - The hard part is separating synopsys and options? Honestly, I don't really
-   want asciidoc syntax in the output of --help.
+           How about if I don't want to write my own program? If I don't want to be
+           restricted to a subset of asciidoc?
+           * README file and tutorials can be fullblown asciidoc.
+           * Write code to extract general description and convert to custom format man
+           page for library code. As in, everything in the doc comment goes to the
+           description section of the man page. Ignore RETURN VALUE section of man
+           page. Write my own wrapper around the asciidoc.
+           * Continue to use help2man for commands? Or write them in such a way that I
+           can extract asciidoc directly?
+           - The hard part is separating synopsys and options? Honestly, I don't really
+           want asciidoc syntax in the output of --help.
 
-Perhaps another option is to write my own asciidoc backend to generate text
-to use as input to --help and for man pages? That's an idea worth exploring I
-think.
+           Perhaps another option is to write my own asciidoc backend to generate text
+           to use as input to --help and for man pages? That's an idea worth exploring I
+           think.
 
-So, here's where we stand at the moment:
-* Continue to push ahead with asciidoc approach, but explore more advanced
-  options. Don't give up on asciidoc yet.
+           So, here's where we stand at the moment:
+           * Continue to push ahead with asciidoc approach, but explore more advanced
+           options. Don't give up on asciidoc yet.
 
-Proposal:
-* README and tutorials in asciidoc.
-* --help text for commands generated automatically from fble-foo.adoc file
-  using a custom asciidoc backend.
-* man page for commands generated automatically from fble-foo.adoc file using
-  another custom asciidoc backend.
-* Use tcl to extract header file doc info and generate man pages from them via
-  asciidoc using another custom asciidoc backend.
+           Proposal:
+           * README and tutorials in asciidoc.
+           * --help text for commands generated automatically from fble-foo.adoc file
+           using a custom asciidoc backend.
+           * man page for commands generated automatically from fble-foo.adoc file using
+           another custom asciidoc backend.
+           * Use tcl to extract header file doc info and generate man pages from them via
+           asciidoc using another custom asciidoc backend.
 
 
-Let's start by seeing if we can generate useful --help from an asciidoc file.
+           Let's start by seeing if we can generate useful --help from an asciidoc file.
 
-Features to look for:
-* attribute to define brief format for man page.
-* attribute to define synopsys/usage text.
+           Features to look for:
+           * attribute to define brief format for man page.
+           * attribute to define synopsys/usage text.
 
-Ug. It's just hard. Asciidoc is so complicated. I really am tempted to just
-write my own. It can't possibly be that hard to parse basic formatting, can
-it?
+           Ug. It's just hard. Asciidoc is so complicated. I really am tempted to just
+           write my own. It can't possibly be that hard to parse basic formatting, can
+           it?
 
----
+           ---
 
-Before going down that route, let's just double check if there isn't some
-other standard document format that meets my requirements.
+           Before going down that route, let's just double check if there isn't some
+           other standard document format that meets my requirements.
 
-creole - no definition lists
-github flavored markdown - no definition lists
-mediawiki - no definition lists
-reStructuredText - no definition lists, overly verbose.
+           creole - no definition lists
+           github flavored markdown - no definition lists
+           mediawiki - no definition lists
+           reStructuredText - no definition lists, overly verbose.
 
-No, I don't see any that I like. Best bet, I feel like, is to use a subset of
-asciidoc, call it asciidoc, but implement my own parser for the subset.
-Hopefully that gets me the best of most worlds:
-* Standard doc format that can be read by things like github and vim syntax
-  highlighting.
-* Full control over generated output.
-* Can implement my own checker.
-* No need to have asciidoc installed.
+           No, I don't see any that I like. Best bet, I feel like, is to use a subset of
+           asciidoc, call it asciidoc, but implement my own parser for the subset.
+           Hopefully that gets me the best of most worlds:
+           * Standard doc format that can be read by things like github and vim syntax
+           highlighting.
+           * Full control over generated output.
+           * Can implement my own checker.
+           * No need to have asciidoc installed.
 
-With the plus of having another fble program to try to write.
+           With the plus of having another fble program to try to write.
 
-Let's be honest about what this really means:
-* For doc comments and --help text, use a subset of asciidoc.
-* For everything else, may as well use full asciidoc.
+           Let's be honest about what this really means:
+           * For doc comments and --help text, use a subset of asciidoc.
+           * For everything else, may as well use full asciidoc.
 
-Because I only need to generate man pages from doc comments and --help
-text.
+           Because I only need to generate man pages from doc comments and --help
+           text.
 
----
+           ---
 
-Every time I try to do asciidoc, it feels like a slog. I'm playing around with
-labelled lists using fairly commonly accepted syntax of:
+           Every time I try to do asciidoc, it feels like a slog. I'm playing around with
+           labelled lists using fairly commonly accepted syntax of:
 
-label
-: definition
-label
-: definition
+           label
+           : definition
+           label
+           : definition
 
-It's actually not so bad.
+           It's actually not so bad.
 
-Oh, and I should remember I probably want the language spec to be turned into
-a doc with whatever format I choose.
+           Oh, and I should remember I probably want the language spec to be turned into
+           a doc with whatever format I choose.
 
-I'm not sure if github supports definition lists in its markdown.
+           I'm not sure if github supports definition lists in its markdown.
 
-Options:
-* markdown with definition lists
- - custom parser and man page generator for a subset?
- - or use pandoc or some such for generating man pages.
-* asciidoc 
- - custom parser and man page generator for a subset?
+           Options:
+           * markdown with definition lists
+           - custom parser and man page generator for a subset?
+           - or use pandoc or some such for generating man pages.
+           * asciidoc 
+           - custom parser and man page generator for a subset?
 
----
+           ---
 
-Screw it. Let's me have some fun and do my own doc format from scratch. It can
-be whatever I want: as similar or different from markdown or asciidoc. No
-worry about standards or anything like that. How would I do it?
+           Screw it. Let's me have some fun and do my own doc format from scratch. It can
+           be whatever I want: as similar or different from markdown or asciidoc. No
+           worry about standards or anything like that. How would I do it?
 
-We have a lot of docs existing to work with. Let's start with adding minimal
-features needed for those. Starting with README:
+           We have a lot of docs existing to work with. Let's start with adding minimal
+           features needed for those. Starting with README:
 
-* Title (or section 0?)
+  * Title (or section 0?)
 * Sections (each with a title)
-* Paragraphs
-* Definition list.
-* Verbatim blocks.
-* Inline verbatim.
+  * Paragraphs
+  * Definition list.
+  * Verbatim blocks.
+  * Inline verbatim.
 
-Start with those.
+  Start with those.
 
-The syntax I'm thinking about:
-* section syntax, paragraphs, verbatim blocks, inline verbatim from markdown.
+  The syntax I'm thinking about:
+  * section syntax, paragraphs, verbatim blocks, inline verbatim from markdown.
   Ish.
-* definition list is:  '@ <label>: <definition>'.
+  * definition list is:  '@ <label>: <definition>'.
 
-Let's see how that might look.
+  Let's see how that might look.
 
-What extension should I use for my doc format? .txt perhaps? .fbld, short for
-fbledoc? Let's stick with .txt for now. README.txt looks okay to me for now.
-It would look even better with syntax highlighting.
+  What extension should I use for my doc format? .txt perhaps? .fbld, short for
+  fbledoc? Let's stick with .txt for now. README.txt looks okay to me for now.
+  It would look even better with syntax highlighting.
 
-Anyway, more important than the concrete syntax is the abstract syntax.
+  Anyway, more important than the concrete syntax is the abstract syntax.
 
-First question: is everything in a section, or can there be things not in a
-section? Explicit sections have titles. If you had something in an implicit
-section, would it be a section without a title?
+  First question: is everything in a section, or can there be things not in a
+  section? Explicit sections have titles. If you had something in an implicit
+  section, would it be a section without a title?
 
-Once you start a section, the only way out is to start a new section or end
-the document. We don't have explicit section end markers. That, to me,
-suggests a section has a title, optional (non subsection) content, followed by
-a list of subsections.
+  Once you start a section, the only way out is to start a new section or end
+  the document. We don't have explicit section end markers. That, to me,
+  suggests a section has a title, optional (non subsection) content, followed by
+  a list of subsections.
 
-Then it makes sense for a whole doc to be a top level section. The title of
-the top level section is the title of the doc?
+  Then it makes sense for a whole doc to be a top level section. The title of
+  the top level section is the title of the doc?
 
-Question: what's the difference between the 'root' section, and a top level
-section? For example, if we use:
-
-# Foo
-...
-
-To give the title of the doc, what if you say:
+  Question: what's the difference between the 'root' section, and a top level
+  section? For example, if we use:
 
 # Foo
-...
+  ...
+
+  To give the title of the doc, what if you say:
+
+# Foo
+  ...
 
 # Bar
-...
+  ...
 
-Then we don't have a document title, but rather two level 1 subsections in the
-document. Options:
-* Don't allow level 1 section anywhere in doc except at the beginning.
-* Use a separate syntax to describe the title of the doc.
+  Then we don't have a document title, but rather two level 1 subsections in the
+  document. Options:
+  * Don't allow level 1 section anywhere in doc except at the beginning.
+  * Use a separate syntax to describe the title of the doc.
 
-I'm leaning towards using separate syntax for the document title.
+  I'm leaning towards using separate syntax for the document title.
 
-Historically I've used:
+  Historically I've used:
 
-Title
-=====
-Author
+  Title
+  =====
+  Author
 
-Anyway, that's back to a concrete syntax issue. Sounds like sections are clear
-to me.
+  Anyway, that's back to a concrete syntax issue. Sounds like sections are clear
+  to me.
 
-Section:
+  Section:
   (title :: String)
   (content :: Maybe Content)
-  (subsections :: [Section])
+(subsections :: [Section])
 
-Where a top level document is of type Section.
+  Where a top level document is of type Section.
 
-Question: Can we use inline formatting in titles? I don't think I personally
-tend to do that in practice. Let's simplify and say no for now. We can add
-that back later.
+  Question: Can we use inline formatting in titles? I don't think I personally
+  tend to do that in practice. Let's simplify and say no for now. We can add
+  that back later.
 
-What is content?
+  What is content?
 
-Content is a list of (non-section) blocks.
+  Content is a list of (non-section) blocks.
 
-Content: (blocks :: [Block])
+  Content: (blocks :: [Block])
 
-Block: ParagraphBlock | CodeBlock | DefinitionListBlock
-ParagraphBlock: (spans :: [Span])
-CodeBlock: (text :: String)
-DefinitionListBlock: [(label :: String, content :: Content)]
+  Block: ParagraphBlock | CodeBlock | DefinitionListBlock
+  ParagraphBlock: (spans :: [Span])
+  CodeBlock: (text :: String)
+  DefinitionListBlock: [(label :: String, content :: Content)]
 
-Span: TextSpan | CodeSpan
-TextSpan: (text :: String)
-CodeSpan: (text :: String)
+  Span: TextSpan | CodeSpan
+  TextSpan: (text :: String)
+  CodeSpan: (text :: String)
 
-Note, in particular, the body of a labelled list element is Content, which
-could be multiple paragraphs. At minimum it is at least a single paragraph.
-I'm not sure if that's right, but it's a good place to start. It's only wrong
-if we have reason to distinguish between a paragraph and a list of spans. I
-don't see a reason to.
+  Note, in particular, the body of a labelled list element is Content, which
+  could be multiple paragraphs. At minimum it is at least a single paragraph.
+  I'm not sure if that's right, but it's a good place to start. It's only wrong
+  if we have reason to distinguish between a paragraph and a list of spans. I
+  don't see a reason to.
 
-Cool. We have a draft spec for documents. Shall I codify it? Then we can dig
-into the nitty gritty of the concrete syntax.
+  Cool. We have a draft spec for documents. Shall I codify it? Then we can dig
+  into the nitty gritty of the concrete syntax.
 
-Section:
-* '#' in left column, number of consecutive '#' is section level. Whitespace 
+  Section:
+  * '#' in left column, number of consecutive '#' is section level. Whitespace 
   after last '#'. Everything following the whitespace to the end of the line
   is the name of the title.
-* Let's say line before and after have to be blank lines. So blank lines form
+  * Let's say line before and after have to be blank lines. So blank lines form
   a kind of delimiter here.
-* Content is everything that follows up until the next section that's not at a
+  * Content is everything that follows up until the next section that's not at a
   subsection level from this one.
 
-Document title brainstorm:
+  Document title brainstorm:
 
-Foo
-===
+  Foo
+  ===
 
 # Foo
 
-% Foo
+  % Foo
 
-Honestly, I like the first one from a human reader point of view. It gives
-weight enough to make it look like a title, and leaves room for metadata
-beneath it. I think better to be entirely separate from section syntax, even
-though the whole doc is meant to be one big section.
+  Honestly, I like the first one from a human reader point of view. It gives
+  weight enough to make it look like a title, and leaves room for metadata
+  beneath it. I think better to be entirely separate from section syntax, even
+  though the whole doc is meant to be one big section.
 
-Okay, so, ignore any initial blank lines in the document.
-The first non-blank line should be followed by a line of '===...' of same
-length as previous line? Let's say it's an error not to include a title? Or
-should the title be optional? Can the title be empty?
+  Okay, so, ignore any initial blank lines in the document.
+  The first non-blank line should be followed by a line of '===...' of same
+  length as previous line? Let's say it's an error not to include a title? Or
+  should the title be optional? Can the title be empty?
 
-Food Thought
-====
+  Food Thought
+  ====
 
-Food
-=========
+  Food
+  =========
 
-I don't like having to match the number of '=' to the length of the title. I
-don't like it being mismatched. Anything better we could do instead?
+  I don't like having to match the number of '=' to the length of the title. I
+  don't like it being mismatched. Anything better we could do instead?
 
-= Foo =
-Richard Uhler <...>
+  = Foo =
+  Richard Uhler <...>
 
-Actually, I think a single '=' sign beneath looks okay.
+  Actually, I think a single '=' sign beneath looks okay.
 
-Foo
-=
-Richard Uhler <...>
+  Foo
+  =
+  Richard Uhler <...>
 
 
-Okay, let's say title is first non-blank line, and it must be followed by a
-line consisting of one or more consecutive '=' signs, of any number.
+  Okay, let's say title is first non-blank line, and it must be followed by a
+  line consisting of one or more consecutive '=' signs, of any number.
 
-To have an empty tile? A section title could be empty by just not providing
-one. How about same here: empty title by having the line of '=' be the first
-thing.
+  To have an empty tile? A section title could be empty by just not providing
+  one. How about same here: empty title by having the line of '=' be the first
+  thing.
 
-What about no title at all? Like, no '=' at all? I don't like it. I want it to
-be required.
+  What about no title at all? Like, no '=' at all? I don't like it. I want it to
+  be required.
 
-Okay, so, start of document is:
+  Okay, so, start of document is:
   <blank lines>
   non-blank line followed by '==' line
   or '==' line
 
-And content starts after a blank line, then beyond.
+  And content starts after a blank line, then beyond.
 
-That's sections for you. Next is blocks, which could be at some indent level,
-because we may want nested lists. We keep track of a current indent level and
-read blocks relative to that.
+  That's sections for you. Next is blocks, which could be at some indent level,
+  because we may want nested lists. We keep track of a current indent level and
+  read blocks relative to that.
 
-Skip blank lines. Interesting question: can we always use blank lines for
-delimiters? Is there ever a time we don't want to do that? I'm thinking of a
-code block with blank lines in it. If we treat blank line as delimiter, that
-would mean we have multiple code blocks back to back rather than a single code
-block.
+  Skip blank lines. Interesting question: can we always use blank lines for
+  delimiters? Is there ever a time we don't want to do that? I'm thinking of a
+  code block with blank lines in it. If we treat blank line as delimiter, that
+  would mean we have multiple code blocks back to back rather than a single code
+  block.
 
-I certainly have code blocks in question with blank lines in them. Potentially
-multiple blank lines. Imagine we want to highlight a code block a different
-color. I think we need to consider code blocks with blank lines inside them
-all as one code block. Don't get rid of the blank line. Especially if there
-are multiple.
+  I certainly have code blocks in question with blank lines in them. Potentially
+  multiple blank lines. Imagine we want to highlight a code block a different
+  color. I think we need to consider code blocks with blank lines inside them
+  all as one code block. Don't get rid of the blank line. Especially if there
+  are multiple.
 
-How about start and end of a code block? Strip blank lines? Then, is it not
-possible to have an initial blank line?
+  How about start and end of a code block? Strip blank lines? Then, is it not
+  possible to have an initial blank line?
 
-How about this: code blocks are always indented. That's the concrete syntax
-for them. So, if you want to continue the code block, continue the indent.
+  How about this: code blocks are always indented. That's the concrete syntax
+  for them. So, if you want to continue the code block, continue the indent.
 
-So, a single code block:
+  So, a single code block:
 
-....@ Unit@ = *();
-....@ Bit@ = +(Unit@ 0, Unit@ 1);
-....@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
-....
-....Unit@ Unit = Unit@();
-....
-....Bit@ 0 = Bit@(0: Unit);
-....Bit@ 1 = Bit@(1: Unit);
+  ....@ Unit@ = *();
+  ....@ Bit@ = +(Unit@ 0, Unit@ 1);
+  ....@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+  ....
+  ....Unit@ Unit = Unit@();
+  ....
+  ....Bit@ 0 = Bit@(0: Unit);
+  ....Bit@ 1 = Bit@(1: Unit);
 
-And three adjacent code blocks:
+  And three adjacent code blocks:
 
-....@ Unit@ = *();
-....@ Bit@ = +(Unit@ 0, Unit@ 1);
-....@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+  ....@ Unit@ = *();
+  ....@ Bit@ = +(Unit@ 0, Unit@ 1);
+  ....@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
 
-....Unit@ Unit = Unit@();
+  ....Unit@ Unit = Unit@();
 
-....Bit@ 0 = Bit@(0: Unit);
-....Bit@ 1 = Bit@(1: Unit);
+  ....Bit@ 0 = Bit@(0: Unit);
+  ....Bit@ 1 = Bit@(1: Unit);
 
-From a viewer's perspective, they look the same. No harm. The hardest part
-will be writing them and remembering to indent if you want it to be a single
-block.
+  From a viewer's perspective, they look the same. No harm. The hardest part
+  will be writing them and remembering to indent if you want it to be a single
+  block.
 
-This way you can do blank lines before and after the same way. I like that.
+  This way you can do blank lines before and after the same way. I like that.
 
-And this way, we can treat blank lines as delimiters of content.
+  And this way, we can treat blank lines as delimiters of content.
 
-In terms of blocks, taking into account the indent level to know how much of
-the stack of current elements to close:
-* '# ' starts a new section.
-* '* ' is a list element.
-* '@ ' denotes a labeled list element.
-* '  ' or other indent is a code block.
-* Anything else is a paragraph. Hopefully you don't want to start a paragraph
+  In terms of blocks, taking into account the indent level to know how much of
+  the stack of current elements to close:
+  * '# ' starts a new section.
+  * '* ' is a list element.
+  * '@ ' denotes a labeled list element.
+  * '  ' or other indent is a code block.
+  * Anything else is a paragraph. Hopefully you don't want to start a paragraph
   with '#', '*', or '@'. If you do, uh... We should have a paragraph symbol
   you can use to escape those? Or, just escape with a '\' character? But what
   if we want, for example, bold to start the paragraph, versus '*' to start
@@ -484,87 +484,87 @@ the stack of current elements to close:
   still be a bolded thing at the front a paragraph, and \* foo could be a
   literal '*' character at the start of a paragraph.
 
-* this is a list item
-$ *this* is a bolded first word of a paragraph.
-$ \*\*\* is three asterisks at the start of a paragraph.
-$ *\** is a bold asterisk at the start of a paragraph.
+  * this is a list item
+  $ *this* is a bolded first word of a paragraph.
+  $ \*\*\* is three asterisks at the start of a paragraph.
+  $ *\** is a bold asterisk at the start of a paragraph.
 
----
+  ---
 
-An important challenge is going to be allowing special characters to show up
-as regular characters in paragraphs. Here is what I propose:
-* A blank line is required after a paragraph before you consider anything a
+  An important challenge is going to be allowing special characters to show up
+  as regular characters in paragraphs. Here is what I propose:
+  * A blank line is required after a paragraph before you consider anything a
   special character. Blank line between paragraph and section, list, etc.
-* Option, or maybe always have it be, so the first line clearly denotes a
+  * Option, or maybe always have it be, so the first line clearly denotes a
   paragraph.
 
-For example, maybe paragraphs always have a single space to start? Is that
-sufficient? So we don't have to worry about what may be a special character,
-and we can add all sorts of new special characters later on like, 1, 2, 3, a,
-b, c, A, B, C, i, I, etc.
+  For example, maybe paragraphs always have a single space to start? Is that
+  sufficient? So we don't have to worry about what may be a special character,
+  and we can add all sorts of new special characters later on like, 1, 2, 3, a,
+  b, c, A, B, C, i, I, etc.
 
-I don't know. Single space to start each paragraph feels weird to me. Too
-subtle perhaps. Awkward with single line paragraphs. Maybe for now stick with
-the idea of '$' optional to start? Or, think about it more.
+  I don't know. Single space to start each paragraph feels weird to me. Too
+  subtle perhaps. Awkward with single line paragraphs. Maybe for now stick with
+  the idea of '$' optional to start? Or, think about it more.
 
-Maybe a better approach would be to make special characters more special. They
-don't show up too often. Not as much as paragraphs. For example, maybe '@' is
-in front of every special character, and we just need to escape @@?
+  Maybe a better approach would be to make special characters more special. They
+  don't show up too often. Not as much as paragraphs. For example, maybe '@' is
+  in front of every special character, and we just need to escape @@?
 
-@## Section
-@* list item 1
-@* list item 2
-   @* nested list item
-@. X: labeled.
+  @## Section
+  @* list item 1
+  @* list item 2
+  @* nested list item
+  @. X: labeled.
 
-Who puts '@' in a paragraph anyway?
+  Who puts '@' in a paragraph anyway?
 
-No. I think go with what we had before. No special '@' character. Take our
-changes with having to know what to escape. Allow '$' as an explicit paragraph
-marker to support those escapes.
+  No. I think go with what we had before. No special '@' character. Take our
+  changes with having to know what to escape. Allow '$' as an explicit paragraph
+  marker to support those escapes.
 
----
+  ---
 
-Next topic of discussion: whitespace and the vagaries thereof.
+  Next topic of discussion: whitespace and the vagaries thereof.
 
-Is it okay to align, for example, definition lists? I'm pretty sure I would
-want to. For example:
+  Is it okay to align, for example, definition lists? I'm pretty sure I would
+  want to. For example:
 
   -I DIR::                     add DIR to the module search path
   -m, --module MODULE_PATH::   the path of the module to compile
 
-The definitions are left aligned. That means there is an arbitrary amount of
-space between the label and the definition.
+  The definitions are left aligned. That means there is an arbitrary amount of
+  space between the label and the definition.
 
-According to our abstract syntax, the definition is <Content>. Content can be
-a code block, and a code block is denoted by using indent. If we support
-arbitrary whitespace between label and definition, how could we possibly code
-block content for that definition?
+  According to our abstract syntax, the definition is <Content>. Content can be
+  a code block, and a code block is denoted by using indent. If we support
+  arbitrary whitespace between label and definition, how could we possibly code
+  block content for that definition?
 
-Options:
-* Don't allow arbitrary whitespace. Always use a single space.
-* Use '> ...' as an indicator for code block instead of indent.
-* Have some sort of invisible hack, for example, where we put the verbatim
+  Options:
+  * Don't allow arbitrary whitespace. Always use a single space.
+  * Use '> ...' as an indicator for code block instead of indent.
+  * Have some sort of invisible hack, for example, where we put the verbatim
   text on the next line.
 
-That also begs the question: for definition lists:
-* What is the indent level set to for subsequent lines.
-* How to put the definition on a separate line?
+  That also begs the question: for definition lists:
+  * What is the indent level set to for subsequent lines.
+  * How to put the definition on a separate line?
 
-For example:
-   @ foo: this is a really long example text in
-          a short window
-   @ bar: here is a another example that is
-     slightly different
-   @ sludge:
-     here is a definition on a different line.
-   @ also:             left aligned definition
-     that wraps back to the beginning.
-   @ and also:         left aligned definition
-                       that wraps back to the 
-                       alignment
-  
-More examples:
+  For example:
+  @ foo: this is a really long example text in
+  a short window
+  @ bar: here is a another example that is
+  slightly different
+  @ sludge:
+  here is a definition on a different line.
+  @ also:             left aligned definition
+  that wraps back to the beginning.
+  @ and also:         left aligned definition
+  that wraps back to the 
+  alignment
+
+  More examples:
   @ -I DIR:                     add DIR to the module search path
   @ -m, --module MODULE_PATH:   the path of the module to compile
 
@@ -572,715 +572,715 @@ More examples:
   @ -m, --module MODULE_PATH: the path of the module to compile
 
   @ -I DIR:
-    add DIR to the module search path
+  add DIR to the module search path
   @ -m, --module MODULE_PATH:
-    the path of the module to compile
+  the path of the module to compile
 
   @ bin/:
-    Source code for fble compiler binaries.
+  Source code for fble compiler binaries.
   @ book/:
-    Drafts for a book about the design of the fble language.
+  Drafts for a book about the design of the fble language.
   @ include/:
-    Public header files for the fble library.
+  Public header files for the fble library.
   @ lib/:
-    Source code for an fble interpreter and compiler implemented in C.
+  Source code for an fble interpreter and compiler implemented in C.
   @ pkgs/:
-    Sample fble library and application packages.
+  Sample fble library and application packages.
   @ spec/:
-    Specification of the fble language, including spec tests.
+  Specification of the fble language, including spec tests.
   @ test/:
-    Source code for fble test binaries and other test utilities.
+  Source code for fble test binaries and other test utilities.
   @ thoughts/:
-    A collection of running discussions about fble.
+  A collection of running discussions about fble.
   @ tutorials/:
-    Tutorials for getting started with fble.
+  Tutorials for getting started with fble.
 
-Okay. That's actually growing on me. In this case, we require the label to be
-on its own line. The content starts at 2 space indent on the next line. The
-above examples are worst case examples where you might want compact definition
-lists. They aren't so bad. They are all aligned. And now, in theory, we could
-have a code block:
+  Okay. That's actually growing on me. In this case, we require the label to be
+  on its own line. The content starts at 2 space indent on the next line. The
+  above examples are worst case examples where you might want compact definition
+  lists. They aren't so bad. They are all aligned. And now, in theory, we could
+  have a code block:
 
   @ foo:
-        code block is here
+  code block is here
 
-Question: do we need the colon at all now?
+  Question: do we need the colon at all now?
 
   @ -I DIR
-    add DIR to the module search path
+  add DIR to the module search path
   @ -m, --module MODULE_PATH
-    the path of the module to compile
+  the path of the module to compile
 
 
   @ test/
-    Source code for fble test binaries and other test utilities.
+  Source code for fble test binaries and other test utilities.
   @ thoughts/
-    A collection of running discussions about fble.
+  A collection of running discussions about fble.
   @ tutorials/
-    Tutorials for getting started with fble.
+  Tutorials for getting started with fble.
 
-I feel like no, we don't.
+  I feel like no, we don't.
 
----
+  ---
 
-Next topic: how many spaces to indent?
-* always 2 spaces?
-* let the user decide?
+  Next topic: how many spaces to indent?
+  * always 2 spaces?
+  * let the user decide?
 
-It's related to the above discussion. If it's not a fixed number of spaces,
-then code blocks aren't obvious to start when entering a new indent level.
+  It's related to the above discussion. If it's not a fixed number of spaces,
+  then code blocks aren't obvious to start when entering a new indent level.
 
-I personally would always decide 2 spaces. This is for me. Let's just require
-2 space indent everywhere.
+  I personally would always decide 2 spaces. This is for me. Let's just require
+  2 space indent everywhere.
 
----
+  ---
 
-Idea: let's call this format fbld. Recycle the name. Where 'd' stands for doc.
-You could imagine having 'fblt' for my 'test' format.
+  Idea: let's call this format fbld. Recycle the name. Where 'd' stands for doc.
+  You could imagine having 'fblt' for my 'test' format.
 
----
+  ---
 
-Question: how do you have two back-to-back lists? For example:
+  Question: how do you have two back-to-back lists? For example:
 
-* l1.1
-* l1.2
+  * l1.1
+  * l1.2
 
-* l2.1
-* l2.2
+  * l2.1
+  * l2.2
 
-Is that one list or two? Now, consider instead:
+  Is that one list or two? Now, consider instead:
 
-* l1.1
+  * l1.1
 
-* l1.2
+  * l1.2
 
-* l2.1
+  * l2.1
 
-* l2.2
+  * l2.2
 
-That's clearly one list. How about:
+  That's clearly one list. How about:
 
-* l1.1
+  * l1.1
 
-* l1.2
+  * l1.2
 
 
-* l2.1
+  * l2.1
 
-* l2.2
+  * l2.2
 
-How about:
+  How about:
 
-* l1.1
+  * l1.1
 
-* l1.2 
+  * l1.2 
 
   which in this case is a multi-line list item.
 
   Which makes it much harder to keep track of the end.
 
-* l2.1
+  * l2.1
 
-* l2.2
+  * l2.2
 
-Actually, it's not too hard. If we want to support multiple lists back to
-back, put two blank lines before the list element instead of a single blank
-line. This suggests we can't coalesce blank lines together into generic
-delimiters, because we want to allow blank lines between list items, but also,
-in this case, between lists.
+  Actually, it's not too hard. If we want to support multiple lists back to
+  back, put two blank lines before the list element instead of a single blank
+  line. This suggests we can't coalesce blank lines together into generic
+  delimiters, because we want to allow blank lines between list items, but also,
+  in this case, between lists.
 
-Whitespace means so much in this language. I guess that's not surprising,
-given the goal is to have something structured and uncluttered. So we use
-whitespace for the structure without having it clutter things up.
+  Whitespace means so much in this language. I guess that's not surprising,
+  given the goal is to have something structured and uncluttered. So we use
+  whitespace for the structure without having it clutter things up.
 
----
+  ---
 
-Anyway, I think we have enough worked out to get going. I think it could be
-easier to write the spec after first writing an implementation. This spec
-sounds hard to me to write, given the effect of whitespace, indent, and
-context on the meaning of the syntax.
+  Anyway, I think we have enough worked out to get going. I think it could be
+  easier to write the spec after first writing an implementation. This spec
+  sounds hard to me to write, given the effect of whitespace, indent, and
+  context on the meaning of the syntax.
 
-Things to do:
-* Draft fbld.txt spec.
-* Start pkgs/fbld with definition of Doc@ types.
-* Implement printer for Doc@.
+  Things to do:
+  * Draft fbld.txt spec.
+  * Start pkgs/fbld with definition of Doc@ types.
+  * Implement printer for Doc@.
   - Do it right, so we can use this to see if there are any kinds of documents
-    you can't express in the concrete syntax.
-* Implement parser for Doc@.
-* Write a vim syntax file.
+  you can't express in the concrete syntax.
+  * Implement parser for Doc@.
+  * Write a vim syntax file.
 
-Summary of decisions so I don't forget:
-* title\n=== for title, where any number of '=' characters allowed.
-* '#' for section
-* '*' for unordered list
-* '@ <label>\n  <content>' for definition list.
-* '$' optionally for paragraph
-* paragraph requires blank line to end.
-* 2 space indent for code block
-* 2 space indent for continuation.
-* 2 blank lines splits lists in two.
-* `...` for code inline
+  Summary of decisions so I don't forget:
+  * title\n=== for title, where any number of '=' characters allowed.
+  * '#' for section
+  * '*' for unordered list
+  * '@ <label>\n  <content>' for definition list.
+  * '$' optionally for paragraph
+  * paragraph requires blank line to end.
+  * 2 space indent for code block
+  * 2 space indent for continuation.
+  * 2 blank lines splits lists in two.
+  * `...` for code inline
 
-Future work:
-* *...* for bold inline? italic inline? mixed bold/italic?
-* Numbered lists.
-* link to other file.
-* 'include' other file (with some handling of section levels).
+  Future work:
+  * *...* for bold inline? italic inline? mixed bold/italic?
+  * Numbered lists.
+  * link to other file.
+  * 'include' other file (with some handling of section levels).
 
----
+  ---
 
-Interesting side note: github renders markdown files nicely, and asciidoc
-files. It would be nice if links between files worked for that. Presumably
-using my own markup language will not work with github.
+  Interesting side note: github renders markdown files nicely, and asciidoc
+  files. It would be nice if links between files worked for that. Presumably
+  using my own markup language will not work with github.
 
-Looks like links in theory would be: [display](tutorials/Tutorials.md). So
-that would be, uh, [tutorials/Tutorials.md](tutorials/Tutorials.md)? Could I
-just do (tutorials/Tutorials.md) instead? In asciidoc, you can do
-link:tutorial/Tutorials.md[]. Maybe markdown can do
-[](tutorials/Tutorials.md)? Apparently not.
+  Looks like links in theory would be: [display](tutorials/Tutorials.md). So
+  that would be, uh, [tutorials/Tutorials.md](tutorials/Tutorials.md)? Could I
+  just do (tutorials/Tutorials.md) instead? In asciidoc, you can do
+  link:tutorial/Tutorials.md[]. Maybe markdown can do
+  [](tutorials/Tutorials.md)? Apparently not.
 
-In that case, maybe I want to use asciidoc primarily while in the progress of
-switching to my own format? Now because it has definition lists and more
-convenient local reference links.
+  In that case, maybe I want to use asciidoc primarily while in the progress of
+  switching to my own format? Now because it has definition lists and more
+  convenient local reference links.
 
----
+  ---
 
-Let me give asciidoc another chance. It seems to be okay for tutorials,
-readme. Can we use it reasonably for man pages is the question. I think it's
-worth having the same discussion again that we had before, in case anything
-different comes out of it.
+  Let me give asciidoc another chance. It seems to be okay for tutorials,
+  readme. Can we use it reasonably for man pages is the question. I think it's
+  worth having the same discussion again that we had before, in case anything
+  different comes out of it.
 
-First commands:
-* Writing the man page in asciidoc creates a reasonable description to read. I
+  First commands:
+  * Writing the man page in asciidoc creates a reasonable description to read. I
   have no complaints with, for example, bin/fble-compile.adoc.
-* The generated man page is not great, but it's serviceable.
+  * The generated man page is not great, but it's serviceable.
   - Examples don't render very well.
   - No bold/italics in synopsis.
   - But aside from minor things like that, it's fine.
   - I guess this is because I haven't manually done the markup. I can add
-    that.
-* Any way to get --help text from this?
+  that.
+  * Any way to get --help text from this?
   - The default generated text is not nearly concise enough. Table of
-    contents, lots of blank lines, lots of -------------- lines.
+  contents, lots of blank lines, lots of -------------- lines.
 
-The question, then, is how can I change the style of the output? Maybe now's a
-good time to read the documentation for asciidoc in detail, with an eye for
-how to do my own output formatting.
+  The question, then, is how can I change the style of the output? Maybe now's a
+  good time to read the documentation for asciidoc in detail, with an eye for
+  how to do my own output formatting.
 
-Notes from reading asciidoc docs:
-* Learn about DocBook.
-* In theory I can change the input language by changing config files.
-* DocBook is XML. XSLT is a style sheet. Looks like we could provide custom
+  Notes from reading asciidoc docs:
+  * Learn about DocBook.
+  * In theory I can change the input language by changing config files.
+  * DocBook is XML. XSLT is a style sheet. Looks like we could provide custom
   XSLT and CSS stylesheets.
-* See manpage.xsl for the manpage style sheet.
-* There is something called themes, which changes .css and .js for generated
+  * See manpage.xsl for the manpage style sheet.
+  * There is something called themes, which changes .css and .js for generated
   html?
-* It's possible to annotate a section with a template name, which appears to
+  * It's possible to annotate a section with a template name, which appears to
   get processed in a template-specific way in the backend. For example:
   'bibliography' section.
-* We can automatically set the template for a section based on its title using
+  * We can automatically set the template for a section based on its title using
   [specialsections] part of an asciidoc .conf file. But this use is not
   recommended. They say it is deprecated.
-* Looks like the .conf file contains templates for generating documents.
+  * Looks like the .conf file contains templates for generating documents.
 
-Okay, so how does the text backend work when invoking a2x? Does asciidoc
-generate docbook via docbook backend, and then use xslt to turn that into
-text? Or does it go straight asciidoc to text?
+  Okay, so how does the text backend work when invoking a2x? Does asciidoc
+  generate docbook via docbook backend, and then use xslt to turn that into
+  text? Or does it go straight asciidoc to text?
 
-It goes:
-foo.adoc =(asciidoc)=> foo.xml =(xsltproc)=> foo.text.html =(w3m)=> foo.text
+  It goes:
+  foo.adoc =(asciidoc)=> foo.xml =(xsltproc)=> foo.text.html =(w3m)=> foo.text
 
-In this case, a lot of the junk is brought in by xsltproc.
+  In this case, a lot of the junk is brought in by xsltproc.
 
-So, we have options. We could try to add special config file to go straight to
-text from foo.adoc. Or we could try to improve xsltproc.
+  So, we have options. We could try to add special config file to go straight to
+  text from foo.adoc. Or we could try to improve xsltproc.
 
-How do man pages work right now? It generates a different foo.xml file that is
-a refentry format instead of article format. Then uses xsltproc with a manpage
-xslt sytlesheet to generate the man page.
+  How do man pages work right now? It generates a different foo.xml file that is
+  a refentry format instead of article format. Then uses xsltproc with a manpage
+  xslt sytlesheet to generate the man page.
 
-Let's first understand the asciidoc conf files and how the .xml file is
-generated. For man pages:
+  Let's first understand the asciidoc conf files and how the .xml file is
+  generated. For man pages:
 
-/etc/asciidoc/asciidoc.conf
-- defines input language format.
+  /etc/asciidoc/asciidoc.conf
+  - defines input language format.
 
-/etc/asciidoc/docbook45.conf
-- generates the xml tags using templates.
+  /etc/asciidoc/docbook45.conf
+  - generates the xml tags using templates.
 
-Then a bunch of mostly irrelevant filters:
+  Then a bunch of mostly irrelevant filters:
   /etc/asciidoc/filters/graphviz/graphviz-filter.conf
   /etc/asciidoc/filters/source/source-highlight-filter.conf
   /etc/asciidoc/filters/music/music-filter.conf
   /etc/asciidoc/filters/latex/latex-filter.conf
   /etc/asciidoc/filters/code/code-filter.conf
 
-/etc/asciidoc/lang-en.conf
+  /etc/asciidoc/lang-en.conf
   English language stuff.
 
-Can I try doing my own configuration files to start? Or, are there any other
-configuration files available I could use instead? No. But I bet I could write
-my own.
+  Can I try doing my own configuration files to start? Or, are there any other
+  configuration files available I could use instead? No. But I bet I could write
+  my own.
 
-How about we start here then? How would I turn my man-page structured
-fble-compile.adoc file into help-text suitable output?
+  How about we start here then? How would I turn my man-page structured
+  fble-compile.adoc file into help-text suitable output?
 
-* <NAME> section
-* Add 'Usage:' in front of synopsys section text, same line.
-* Render description in as-is formatted text, limited to 80 cols.
+  * <NAME> section
+  * Add 'Usage:' in front of synopsys section text, same line.
+  * Render description in as-is formatted text, limited to 80 cols.
   Maybe go through roff or something to do the formatting for me?
-* Change sect2 titles to '<Title>'
-* Change sect3 titles to '<Title>:'
+  * Change sect2 titles to '<Title>'
+  * Change sect3 titles to '<Title>:'
 
-It's all the same info. I think it's reasonable to try and generate help text
-from the man page asciidoc input.
+  It's all the same info. I think it's reasonable to try and generate help text
+  from the man page asciidoc input.
 
-Shall I try?
+  Shall I try?
 
-Looks like I could use:
+  Looks like I could use:
   asciidoc -v -e -f /etc/asciidoc/asciidoc.conf -f ruhler.conf fble-compile.adoc
 
-To try and pass my own custom .conf file. I'm not sure how to use my own
-backend otherwise.
+  To try and pass my own custom .conf file. I'm not sure how to use my own
+  backend otherwise.
 
----
+  ---
 
-Working through how to make a config file that would translate
-fble-compile.adoc to a reasonable usage help text:
-* How to add Usage: as special case for SYNOPSIS section?
-* How to get rid of &#8230; for '...' in synopsis?
-* How to add blank lines between paragraphs in the description?
-* How to get list item numbers?
+  Working through how to make a config file that would translate
+  fble-compile.adoc to a reasonable usage help text:
+  * How to add Usage: as special case for SYNOPSIS section?
+  * How to get rid of &#8230; for '...' in synopsis?
+  * How to add blank lines between paragraphs in the description?
+  * How to get list item numbers?
   - {listindex} is the attribute (found by reading /usr/bin/asciidoc).
-* How to put first list line on the same line as list index?
+  * How to put first list line on the same line as list index?
   - I don't think I can.
-* Indent options. How to put definition on same line?
-* How to show 'EXIT STATUS', 'EXAMPLE' titles as special case for those
+  * Indent options. How to put definition on same line?
+  * How to show 'EXIT STATUS', 'EXAMPLE' titles as special case for those
   sections?
   - Or maybe remove NAME, SYNOPSYS, DESCRIPTION, OPTIONs as special cases?
-* Remove footer text. DONE.
-  
-The generated output from asciidoc includes raw text from the input file. That
-means I can't do direct processing on that text, like stripping newlines,
-reflowing to fit column width, etc. Things like aligning list definitions will
-be hard. This suggests I'll want to pass the output through some post
-processor that can do wrapping and alignment for me.
+  * Remove footer text. DONE.
 
-Two post-processors come to mind:
-1. Whatever is used for man pages. roff?
-2. xsltproc.
+  The generated output from asciidoc includes raw text from the input file. That
+  means I can't do direct processing on that text, like stripping newlines,
+  reflowing to fit column width, etc. Things like aligning list definitions will
+  be hard. This suggests I'll want to pass the output through some post
+  processor that can do wrapping and alignment for me.
 
-Perhaps it's worth learning about xsltproc first.
+  Two post-processors come to mind:
+  1. Whatever is used for man pages. roff?
+  2. xsltproc.
 
-Okay, I guess let's read about xslt:
-* Ugh. It's a template language in xml syntax. I'm not convinced it will be
+  Perhaps it's worth learning about xsltproc first.
+
+  Okay, I guess let's read about xslt:
+  * Ugh. It's a template language in xml syntax. I'm not convinced it will be
   sufficient to address the problem I'm having. That is, I don't think it will
   provide layout functionality. If it doesn't, then there is no value using it
   instead of using asciidoc for that part.
 
-Why is this so hard? Why can't we just have a data structure that I can write
-python code to generate output from, for example? I could probably write a raw
-xml backend to asciidoc, and then use xml libraries in python to generate
-output.
+  Why is this so hard? Why can't we just have a data structure that I can write
+  python code to generate output from, for example? I could probably write a raw
+  xml backend to asciidoc, and then use xml libraries in python to generate
+  output.
 
-Maybe now is a good time to step back and ask what I'm trying to accomplish in
-this case anyway. I want to have a single source of truth for the
-documentation of an fble binary program that can be reused in the man page and
---help text. I've said asciidoc is nice to use to describe the single source
-of truth, because it has the structure elements for lists, sections, etc. In
-that case, however, we would require asciidoc to generate the executable. Is
-that really what I want? Like, is this worth the complexity and overhead? Just
-duplicate the usage info. It's not that much.
+  Maybe now is a good time to step back and ask what I'm trying to accomplish in
+  this case anyway. I want to have a single source of truth for the
+  documentation of an fble binary program that can be reused in the man page and
+  --help text. I've said asciidoc is nice to use to describe the single source
+  of truth, because it has the structure elements for lists, sections, etc. In
+  that case, however, we would require asciidoc to generate the executable. Is
+  that really what I want? Like, is this worth the complexity and overhead? Just
+  duplicate the usage info. It's not that much.
 
-I could, of course, go the other direction, like I have now. Custom structured
-usage text that I generate asciidoc and/or man pages from. It's limited
-because I want to use the compact text form as the source of truth, which
-makes it hard to extract structure.
+  I could, of course, go the other direction, like I have now. Custom structured
+  usage text that I generate asciidoc and/or man pages from. It's limited
+  because I want to use the compact text form as the source of truth, which
+  makes it hard to extract structure.
 
-There are a few cruxes here:
-* How to capture structure in compact text?
+  There are a few cruxes here:
+  * How to capture structure in compact text?
   - For if I want --help to be source of truth.
   - For library function doc comments.
-* How to avoid bootstrap problem for fble binaries
+  * How to avoid bootstrap problem for fble binaries
   - To minimize dependencies needed to build them.
   - To have them not depend on themselves.
-* How to minimize dependencies on external tools.
+  * How to minimize dependencies on external tools.
   - Like help2man, asciidoc, xsltproc, etc.
-* How to take advantage of github / other standard processing of docs?
+  * How to take advantage of github / other standard processing of docs?
 
-If it weren't for github showing asciidoc and markdown nicely, it makes sense
-to have a custom format:
-* --help text and doc comments are source of truth.
-* So no issue with bootstrapping.
-* No extra dependencies.
-* Full control over generated code.
-* A fun example to add to fble.
+  If it weren't for github showing asciidoc and markdown nicely, it makes sense
+  to have a custom format:
+  * --help text and doc comments are source of truth.
+  * So no issue with bootstrapping.
+  * No extra dependencies.
+  * Full control over generated code.
+  * A fun example to add to fble.
 
-The downsides being:
-* Github doesn't render things in a pretty fashion.
-* Readers won't be able to google to understand the syntax of documentation.
-* It could be a fair amount of work to define my own markup language.
+  The downsides being:
+  * Github doesn't render things in a pretty fashion.
+  * Readers won't be able to google to understand the syntax of documentation.
+  * It could be a fair amount of work to define my own markup language.
 
-Perhaps fble binaries are a bad place to start, because they don't really need
-clear text source of truth. But library doc comments do need a clear text
-source of truth, because they are comments in code.
+  Perhaps fble binaries are a bad place to start, because they don't really need
+  clear text source of truth. But library doc comments do need a clear text
+  source of truth, because they are comments in code.
 
-// # FbleNewStructValue
-//
-// Create a new struct value with given arguments.
-//
-// @ Inputs
-//   @ heap
-//     The heap to allocate the value on.
-//   @ argc
-//     The number of fields in the struct value.
-//   @ args
-//     'argc' `FbleValue` arguments to the struct value. Args are borrowed,
-//     and may be `NULL`.
-//
-// @ Results
-//   A newly allocated struct value with given args.
-//
-// @ Side effects
-//   * The returned struct value must be freed using FbleReleaseValue when no
-//     longer in use.
+  // # FbleNewStructValue
+  //
+  // Create a new struct value with given arguments.
+  //
+  // @ Inputs
+  //   @ heap
+  //     The heap to allocate the value on.
+  //   @ argc
+  //     The number of fields in the struct value.
+  //   @ args
+  //     'argc' `FbleValue` arguments to the struct value. Args are borrowed,
+  //     and may be `NULL`.
+  //
+  // @ Results
+  //   A newly allocated struct value with given args.
+  //
+  // @ Side effects
+  //   * The returned struct value must be freed using FbleReleaseValue when no
+  //     longer in use.
 
-That's a little less compact than I want though. I would prefer:
+  That's a little less compact than I want though. I would prefer:
 
-// FbleNewStructValue --
-//
-// Create a new struct value with given arguments.
-//
-// Inputs:
-//   heap - The heap to allocate the value on.
-//   argc - The number of fields in the struct value.
-//   args - 'argc' `FbleValue` arguments to the struct value. Args are borrowed,
-//          and may be `NULL`.
-//
-// Results:
-//   A newly allocated struct value with given args.
-//
-// Side effects:
-// * The returned struct value must be freed using FbleReleaseValue when no
-//   longer in use.
+  // FbleNewStructValue --
+  //
+  // Create a new struct value with given arguments.
+  //
+  // Inputs:
+  //   heap - The heap to allocate the value on.
+  //   argc - The number of fields in the struct value.
+  //   args - 'argc' `FbleValue` arguments to the struct value. Args are borrowed,
+  //          and may be `NULL`.
+  //
+  // Results:
+  //   A newly allocated struct value with given args.
+  //
+  // Side effects:
+  // * The returned struct value must be freed using FbleReleaseValue when no
+  //   longer in use.
 
-That is, the '@ ' of a definition list shifts things two characters to the
-right, and the newline shifts things down an extra line.
+  That is, the '@ ' of a definition list shifts things two characters to the
+  right, and the newline shifts things down an extra line.
 
-Compare to doxygen:
+  Compare to doxygen:
 
-/**
- * \brief Create a new struct value with given arguments.
- *
- * \param heap  The heap to allocate the value on.
- * \param argc  The number of fields in the struct value.
- * \param args  'argc' `FbleValue` arguments to the struct value.
- *              Args are borrowed, and may be `NULL`.
- *
- * \return A newly allocated struct value with given args.
- *
- * @ Side effects
- *   * The returned struct value must be freed using FbleReleaseValue when no
- *     longer in use.
- */
+  /**
+   * \brief Create a new struct value with given arguments.
+   *
+   * \param heap  The heap to allocate the value on.
+   * \param argc  The number of fields in the struct value.
+   * \param args  'argc' `FbleValue` arguments to the struct value.
+   *              Args are borrowed, and may be `NULL`.
+   *
+   * \return A newly allocated struct value with given args.
+   *
+   * @ Side effects
+   *   * The returned struct value must be freed using FbleReleaseValue when no
+   *     longer in use.
+   */
 
-Which is slightly more compact, because it doesn't use extra lines for
-'Inputs', 'Results', and 'Side effects' sections or the title of the function.
+  Which is slightly more compact, because it doesn't use extra lines for
+  'Inputs', 'Results', and 'Side effects' sections or the title of the function.
 
-Maybe I come up with my own doc comment format?
+  Maybe I come up with my own doc comment format?
 
-Why not use doxygen:
-* It doesn't generate output the way I want.
-* No tag for side effects.
-* Doesn't have title of function at top of comment.
-* \brief seems not useful to me.
-* I don't like /** ... */ to denote doc comment? Though I guess I don't care
+  Why not use doxygen:
+  * It doesn't generate output the way I want.
+  * No tag for side effects.
+  * Doesn't have title of function at top of comment.
+  * \brief seems not useful to me.
+  * I don't like /** ... */ to denote doc comment? Though I guess I don't care
   that much. This could be a decent way to denote what is a doc comment versus
   general code comment.
 
-I might prefer something like:
+  I might prefer something like:
 
-/**
- * FbleNewStructValue
- * 
- * Create a new struct value with given arguments.
- *
- * \param heap  The heap to allocate the value on.
- * \param argc  The number of fields in the struct value.
- * \param args  'argc' `FbleValue` arguments to the struct value.
- *              Args are borrowed, and may be `NULL`.
- *
- * \return A newly allocated struct value with given args.
- *
- * \effect The returned struct value must be freed using FbleReleaseValue when
- *         no longer in use.
- * \effect Some other effect, just for example purposes.
- */
+  /**
+   * FbleNewStructValue
+   * 
+   * Create a new struct value with given arguments.
+   *
+   * \param heap  The heap to allocate the value on.
+   * \param argc  The number of fields in the struct value.
+   * \param args  'argc' `FbleValue` arguments to the struct value.
+   *              Args are borrowed, and may be `NULL`.
+   *
+   * \return A newly allocated struct value with given args.
+   *
+   * \effect The returned struct value must be freed using FbleReleaseValue when
+   *         no longer in use.
+   * \effect Some other effect, just for example purposes.
+   */
 
-Asciidoc would give us:
+  Asciidoc would give us:
 
-// FbleNewStructValue
-// ------------------
-// Create a new struct value with given arguments.
-//
-// Inputs::
-//   heap:: The heap to allocate the value on.
-//   argc:: The number of fields in the struct value.
-//   args:: 'argc' `FbleValue` arguments to the struct value.
-//     Args are borrowed and may be `NULL`.
-//
-// Results::
-//   A newly allocated struct value with given args.
-//
-// Side effects::
-//   * The returned struct value must be freed using FbleReleaseValue when no
-//     longer in use.
+  // FbleNewStructValue
+  // ------------------
+  // Create a new struct value with given arguments.
+  //
+  // Inputs::
+  //   heap:: The heap to allocate the value on.
+  //   argc:: The number of fields in the struct value.
+  //   args:: 'argc' `FbleValue` arguments to the struct value.
+  //     Args are borrowed and may be `NULL`.
+  //
+  // Results::
+  //   A newly allocated struct value with given args.
+  //
+  // Side effects::
+  //   * The returned struct value must be freed using FbleReleaseValue when no
+  //     longer in use.
 
-That's pretty compact.
+  That's pretty compact.
 
----
+  ---
 
-Let me take a break from this to start working on what needs to be done
-regardless: extract the doc comments from the header files. I'm thinking in
-tcl.
+  Let me take a break from this to start working on what needs to be done
+  regardless: extract the doc comments from the header files. I'm thinking in
+  tcl.
 
-Can we get everything with some regex? My goal would be: given a header file,
-extract all the doc comments into a list.
+  Can we get everything with some regex? My goal would be: given a header file,
+  extract all the doc comments into a list.
 
----
+  ---
 
-I'm going to take a detour and try the doxygen route. I'll get back to you on
-how well that works out.
+  I'm going to take a detour and try the doxygen route. I'll get back to you on
+  how well that works out.
 
----
+  ---
 
-Here's where we are currently at with documentation:
+  Here's where we are currently at with documentation:
 
-* binaries:
- - help usage as plain text in program.
- - man pages via help2text or asciidoc. Need to make a decision.
-* library functions:
- - doxygen in source code.
- - man pages via doxygen. Need to set up install.
-* tutorials, readme, spec, etc.
- - asciidoc.
+  * binaries:
+  - help usage as plain text in program.
+  - man pages via help2text or asciidoc. Need to make a decision.
+  * library functions:
+  - doxygen in source code.
+  - man pages via doxygen. Need to set up install.
+  * tutorials, readme, spec, etc.
+  - asciidoc.
 
-And general thoughts:
-* asciidoc takes a long time to convert spec to html, and syntax highlighting
+  And general thoughts:
+  * asciidoc takes a long time to convert spec to html, and syntax highlighting
   in vim doesn't work at all. Yet another case of asciidoc "ugh".
-* It would be great to have easy programmatic access to the structure of these
+  * It would be great to have easy programmatic access to the structure of these
   docs, because then I could generate whatever I want from them.
-* If I'm doing my own doc format, maybe don't rely on indentation for meaning?
+  * If I'm doing my own doc format, maybe don't rely on indentation for meaning?
   Because vim syntax highlighting sounds hard in that case. And if it's hard
   for vim, it's hard for anyone.
 
-What if I take a break by implementing a markdown library in fble? It's been
-too long since I've written fble code. Anything I write I could later adapt to
-support a custom format if I want, or asciidoc, or some subset of
-markdown/asciidoc, and get more control over generated manpages, etc. Not
-necessarily for practical purposes, but for example purposes?
+  What if I take a break by implementing a markdown library in fble? It's been
+  too long since I've written fble code. Anything I write I could later adapt to
+  support a custom format if I want, or asciidoc, or some subset of
+  markdown/asciidoc, and get more control over generated manpages, etc. Not
+  necessarily for practical purposes, but for example purposes?
 
-Start with commonmark, which is best standardized. But what do you do with it?
-Parse it? Convert it to something? Convert it to a man page?
+  Start with commonmark, which is best standardized. But what do you do with it?
+  Parse it? Convert it to something? Convert it to a man page?
 
----
+  ---
 
-Let the spiral continue.
+  Let the spiral continue.
 
-Imagine I wanted to invent my own doc format. What are the goals and use
-cases?
+  Imagine I wanted to invent my own doc format. What are the goals and use
+  cases?
 
-* vim syntax highlighting that works.
+  * vim syntax highlighting that works.
   - e.g. metadata colored differently, section titles highlighted, definition
-    terms. Just a little bit to add color here and there.
-* Be able to write code to generate whatever outputs I want based on document
+  terms. Just a little bit to add color here and there.
+  * Be able to write code to generate whatever outputs I want based on document
   structure.
-* Be able to clearly specify structure document.
-* Be able to capture all the structure I care about it my own documents.
+  * Be able to clearly specify structure document.
+  * Be able to capture all the structure I care about it my own documents.
   - e.g. definition lists, links, etc.
-* Support for document-specific custom structure
+  * Support for document-specific custom structure
   - e.g. sideeffects, synopsis, concrete/abstract/example.
-* Support for generating man pages, latex, html.
+  * Support for generating man pages, latex, html.
   - man pages for distribution. latex and html as option to share more
-    formally.
-* Content can be understood easily from reading document source.
-* Focus on structure only, not on presentation.
-* Easy to parse structure by computer or by human.
-* Would be nice if we could have a linter/error checker to detect errors in
+  formally.
+  * Content can be understood easily from reading document source.
+  * Focus on structure only, not on presentation.
+  * Easy to parse structure by computer or by human.
+  * Would be nice if we could have a linter/error checker to detect errors in
   syntax.
-* Would be nice if things like github could auto-display the formatted
+  * Would be nice if things like github could auto-display the formatted
   version, but I assume that won't happen for anything custom I do.
-* Nice concrete syntax to write (whatever that means).
+  * Nice concrete syntax to write (whatever that means).
 
-As we've said before, we can separate into two parts: abstract syntax and
-concrete syntax. The abstract syntax will be whatever is important to me. I
-can look at my existing docs to get an idea.
+  As we've said before, we can separate into two parts: abstract syntax and
+  concrete syntax. The abstract syntax will be whatever is important to me. I
+  can look at my existing docs to get an idea.
 
-What's wrong with existing formats?
-* Markdown
+  What's wrong with existing formats?
+  * Markdown
   - Lacks structure I care about, like definition lists (though I could pick
-    one of the extended formats that does have definition lists).
+      one of the extended formats that does have definition lists).
   - I don't have my own parser for it (though I could write one).
   - Structure not entirely obvious from reading. Just look at how complicated
-    the specs are.
-* asciidoc
+  the specs are.
+  * asciidoc
   - vim syntax highlighting doesn't work.
   - I don't have a parser for it.
   - Structure is not clear from text, in my opinion.
-* xml
+  * xml
   - I don't have a parser for it. But would be easy to write.
   - I would have to come up with a schema definition.
   - Having <p> around all paragraphs too annoying to write?
-    This suggests a new requirement?
-* plain text
+  This suggests a new requirement?
+  * plain text
   - No syntax highlighting.
   - I don't have a parser for it. Structure is not clear from the text.
-* tcl
+  * tcl
   - Braces and substitution within braces is awkward.
 
-Markdown and asciidoc specify the abstract and concrete syntax. xml/tcl don't
-specify an abstract syntax, which means I could make them work just fine with
-whatever abstract syntax I choose. That suggests I really do care about the
-concrete syntax. It might be nice if I can separate abstract syntax and
-concrete syntax, so that you could reuse the concrete syntax for other
-kinds of structures. But then, why not just use xml?
+  Markdown and asciidoc specify the abstract and concrete syntax. xml/tcl don't
+  specify an abstract syntax, which means I could make them work just fine with
+  whatever abstract syntax I choose. That suggests I really do care about the
+  concrete syntax. It might be nice if I can separate abstract syntax and
+  concrete syntax, so that you could reuse the concrete syntax for other
+  kinds of structures. But then, why not just use xml?
 
-It's way too verbose. Just compare:
+  It's way too verbose. Just compare:
 
-<dl>
- <dt>bin</dt>
- <dd>Source code for fble compiler binaries.</dd>
- <dt>book</dt>
- <dd>Drafts for a book about the design of the fble language.</dd>
- <dt>include</dt>
- <dd>Public header files for the fble library.</dd>
- <dt>lib</dt>
- <dd>Source code for an fble interpreter and compiler implemented in C.</dd>
-</dl>
+  <dl>
+  <dt>bin</dt>
+  <dd>Source code for fble compiler binaries.</dd>
+  <dt>book</dt>
+  <dd>Drafts for a book about the design of the fble language.</dd>
+  <dt>include</dt>
+  <dd>Public header files for the fble library.</dd>
+  <dt>lib</dt>
+  <dd>Source code for an fble interpreter and compiler implemented in C.</dd>
+  </dl>
 
-versus:
+  versus:
 
-bin/:: Source code for fble compiler binaries.
-book/:: Drafts for a book about the design of the fble language.
-include/:: Public header files for the fble library.
-lib/:: Source code for an fble interpreter and compiler implemented in C.
+  bin/:: Source code for fble compiler binaries.
+  book/:: Drafts for a book about the design of the fble language.
+  include/:: Public header files for the fble library.
+  lib/:: Source code for an fble interpreter and compiler implemented in C.
 
-Particularly with syntax highlighting on the later. It's too much tags. It
-really gets in the way of reading the document and seeing the content of the
-text.
+  Particularly with syntax highlighting on the later. It's too much tags. It
+  really gets in the way of reading the document and seeing the content of the
+  text.
 
-I'm thinking instead something like:
+  I'm thinking instead something like:
 
-[def] bin/:     Source code for fble compiler binaries.
-[def] book/:    Drafts for a book about the design of the fble language.
-[def] include/: Public header files for the fble library.
-[def] lib/:     Source code for an fble interpreter and compiler implemented in C.
+  [def] bin/:     Source code for fble compiler binaries.
+  [def] book/:    Drafts for a book about the design of the fble language.
+  [def] include/: Public header files for the fble library.
+  [def] lib/:     Source code for an fble interpreter and compiler implemented in C.
 
-So, we still give an initial tag. But there is some built in structure to say
-a list definition item is the item followed by the content. And maybe,
-somehow, it knows to use ':' as the separator?
+  So, we still give an initial tag. But there is some built in structure to say
+  a list definition item is the item followed by the content. And maybe,
+  somehow, it knows to use ':' as the separator?
 
-That's the biggest challenge here. How to clearly separate arguments to a
-structure without becoming overly cumbersome? Specify the terminator as part
-of the command?
+  That's the biggest challenge here. How to clearly separate arguments to a
+  structure without becoming overly cumbersome? Specify the terminator as part
+  of the command?
 
-[def /] bin/     Source code for fble compiler binaries.
-[def /] book/    Drafts for a book about the design of the fble language.
-[def /] include/ Public header files for the fble library.
-[def /] lib/     Source code for an fble interpreter and compiler implemented in C.
+  [def /] bin/     Source code for fble compiler binaries.
+  [def /] book/    Drafts for a book about the design of the fble language.
+  [def /] include/ Public header files for the fble library.
+  [def /] lib/     Source code for an fble interpreter and compiler implemented in C.
 
-[def :] bin/:     Source code for fble compiler binaries.
-[def :] book/:    Drafts for a book about the design of the fble language.
-[def :] include/: Public header files for the fble library.
-[def :] lib/:     Source code for an fble interpreter and compiler implemented in C.
+  [def :] bin/:     Source code for fble compiler binaries.
+  [def :] book/:    Drafts for a book about the design of the fble language.
+  [def :] include/: Public header files for the fble library.
+  [def :] lib/:     Source code for an fble interpreter and compiler implemented in C.
 
-[def  ] bin/      Source code for fble compiler binaries.
-[def  ] book/     Drafts for a book about the design of the fble language.
-[def  ] include/  Public header files for the fble library.
-[def  ] lib/      Source code for an fble interpreter and compiler implemented in C.
+  [def  ] bin/      Source code for fble compiler binaries.
+  [def  ] book/     Drafts for a book about the design of the fble language.
+  [def  ] include/  Public header files for the fble library.
+  [def  ] lib/      Source code for an fble interpreter and compiler implemented in C.
 
-[def \n] bin/
+  [def \n] bin/
   Source code for fble compiler binaries.
-[def \n] book/
+  [def \n] book/
   Drafts for a book about the design of the fble language.
-[def \n] include/
+  [def \n] include/
   Public header files for the fble library.
-[def \n] lib/
+  [def \n] lib/
   Source code for an fble interpreter and compiler implemented in C.
 
-The last one is stretching it. That's a bit hard to read.
+  The last one is stretching it. That's a bit hard to read.
 
-[def] bin/     ' Source code for fble compiler binaries.
-[def] book/    ' Drafts for a book about the design of the fble language.
-[def] include/ ' Public header files for the fble library.
-[def] lib/     ' Source code for an fble interpreter and compiler implemented in C.
+  [def] bin/     ' Source code for fble compiler binaries.
+  [def] book/    ' Drafts for a book about the design of the fble language.
+  [def] include/ ' Public header files for the fble library.
+  [def] lib/     ' Source code for an fble interpreter and compiler implemented in C.
 
-[def]{bin/}     Source code for fble compiler binaries.
-[def]{book/}    Drafts for a book about the design of the fble language.
-[def]{include/} Public header files for the fble library.
-[def]{lib/}     Source code for an fble interpreter and compiler implemented in C.
+  [def]{bin/}     Source code for fble compiler binaries.
+  [def]{book/}    Drafts for a book about the design of the fble language.
+  [def]{include/} Public header files for the fble library.
+  [def]{lib/}     Source code for an fble interpreter and compiler implemented in C.
 
-@def' bin/'     Source code for fble compiler binaries.
-@def' book/'    Drafts for a book about the design of the fble language.
-@def' include/' Public header files for the fble library.
-@def' lib/'     Source code for an fble interpreter and compiler implemented in C.
+  @def' bin/'     Source code for fble compiler binaries.
+  @def' book/'    Drafts for a book about the design of the fble language.
+  @def' include/' Public header files for the fble library.
+  @def' lib/'     Source code for an fble interpreter and compiler implemented in C.
 
-@def "bin/"     Source code for fble compiler binaries.
-@def "book/"    Drafts for a book about the design of the fble language.
-@def "include/" Public header files for the fble library.
-@def "lib/"     Source code for an fble interpreter and compiler implemented in C.
+  @def "bin/"     Source code for fble compiler binaries.
+  @def "book/"    Drafts for a book about the design of the fble language.
+  @def "include/" Public header files for the fble library.
+  @def "lib/"     Source code for an fble interpreter and compiler implemented in C.
 
-@def 'bin/'     Source code for fble compiler binaries.
-@def 'book/'    Drafts for a book about the design of the fble language.
-@def 'include/' Public header files for the fble library.
-@def 'lib/'     Source code for an fble interpreter and compiler implemented in C.
+  @def 'bin/'     Source code for fble compiler binaries.
+  @def 'book/'    Drafts for a book about the design of the fble language.
+  @def 'include/' Public header files for the fble library.
+  @def 'lib/'     Source code for an fble interpreter and compiler implemented in C.
 
-Some thoughts when playing around with things:
-* Blank lines, new lines, spaces are all natural boundaries for things.
-* @foo[text] is decent for inline items. Unclear if we can naturally nest
+  Some thoughts when playing around with things:
+  * Blank lines, new lines, spaces are all natural boundaries for things.
+  * @foo[text] is decent for inline items. Unclear if we can naturally nest
   things like that.
 
-@def bin/     @= Source code for fble compiler binaries.
-@def book/    @= Drafts for a book about the design of the fble language.
-@def include/ @= Public header files for the fble library.
-@def lib/     @= Source code for an fble interpreter and compiler implemented in C.
+  @def bin/     @= Source code for fble compiler binaries.
+  @def book/    @= Drafts for a book about the design of the fble language.
+  @def include/ @= Public header files for the fble library.
+  @def lib/     @= Source code for an fble interpreter and compiler implemented in C.
 
-@def[bin]     Source code for fble compiler binaries.
-@def[book]    Drafts for a book about the design of the fble language.
-@def[include] Public header files for the fble library.
-@def[lib]     Source code for an fble interpreter and compiler implemented in C.
+  @def[bin]     Source code for fble compiler binaries.
+  @def[book]    Drafts for a book about the design of the fble language.
+  @def[include] Public header files for the fble library.
+  @def[lib]     Source code for an fble interpreter and compiler implemented in C.
 
-Think about it more.
+  Think about it more.
 
----
+  ---
 
-Random idea: what if I use tcl for fble binary usage help? Specify the
-structure explicitly via tcl, and generate text to use for the help usage and
-for the man page directly from that? That way I can directly encode exactly
-the structure I'm interested in, right?
+  Random idea: what if I use tcl for fble binary usage help? Specify the
+  structure explicitly via tcl, and generate text to use for the help usage and
+  for the man page directly from that? That way I can directly encode exactly
+  the structure I'm interested in, right?
 
-* Paragraphs split across lines are annoying.
+  * Paragraphs split across lines are annoying.
 
----
+  ---
 
-Okay, here's my proposal for a structure-agnostic syntax for marking up text,
-that's hopefully reasonable to read.
+  Okay, here's my proposal for a structure-agnostic syntax for marking up text,
+  that's hopefully reasonable to read.
 
-A document is a sequence of commands.
+  A document is a sequence of commands.
 
-A command has syntax:
+  A command has syntax:
   @tag[arg1][arg2]... lastarg
 
-Where lastarg is treated specially as follows:
-* If the @tag is not at column 0, there is no last arg. The command ends at
+  Where lastarg is treated specially as follows:
+  * If the @tag is not at column 0, there is no last arg. The command ends at
   the first non-'[' character. This is used for inline tags. For example:
   @emph[this text is emphasized] and the following is not.
-* If the @tag is at column 0 and the first non-'[' character is on the same
+  * If the @tag is at column 0 and the first non-'[' character is on the same
   line as the last ']', the last arg goes until the end of the same line.
-* If the @tag is at column 0 and the first non-'[' character is on the line
+  * If the @tag is at column 0 and the first non-'[' character is on the line
   after the last ']', the last arg goes until the next blank line.
 
-With escape characters:
+  With escape characters:
  @@ for '@'
  @[ for '['
  @] for ']'
@@ -2616,3 +2616,293 @@ the include/fble directory. Any time that directory changes, it generates a new
 already exist, generate it from scratch.
 
 Sounds like a (complicated) plan.
+
+---
+
+Let's forge ahead. Not sure how to organize the code, but the pieces are
+clear:
+
+* Pick an example and update the doc in place in the .h file.
+* Write tcl code to extract a doc comment from a .h file along with the name
+  associated with it.
+   // @func[name] ...
+   //
+   //
+   ...
+* Write fbld tcl code to convert @func to @doc man page doc.
+* Write build rules to generate the man pages from doc.
+  For now, just hard code the mapping from .h to function in the build.tcl
+  file.
+
+I see two approaches we can take:
+1. tcl script takes .h as input and generates a bunch of individual <func>.fbld
+files as output. We process those .fbld files individually.
+2. tcl script takes .h as input, generates a single big .fbld as output. Then
+a second tcl script takes the big .fbld as input and generates a bunch of
+individual <func>.fbld or <func>.3 as output.
+
+The nice thing about (1) is fewer scripts. The nice thing about (2) is we can
+more naturally support things like @file description and more easily compose
+with different programming languages?
+
+Let's start with the simpler approach. Get something working, then decide.
+
+Okay. Starting with FbleEval function in fble-value.h.
+
+Question:
+* // style or /* style comments? I think // is easier for the script to
+  recognize. How does it look from the doc?
+
+Honestly, I find the /** ... */ easier to read. Either way, it's tough to read
+the fbld markup from a comment. We get no syntax highlighting help.
+
+Honestly, use of whitespace to highlight structure instead of braces makes a
+big difference visually. Compare:
+
+// @func[FbleEval][Evaluates a linked program.][
+// The program is assumed to be a zero argument function as returned by
+// FbleLink.
+//
+// @arg[FbleValueHeap*][heap] The heap to use for allocating values.
+// @arg[FbleValue*][program] The program to evaluate.
+// @arg[FbleProfile*][profile]
+// The profile to update. May be NULL to disable profiling.
+//
+// @returns[FbleValue*]
+// The value of the evaluated program, or @l[NULL] in case of a runtime error in
+// the program.
+//
+// @sideeffects[
+// @item
+// The returned value must be freed with @l[FbleReleaseValue] when no longer in
+// use.
+//
+// @item Prints an error message to stderr in case of a runtime error.
+// @item
+// Updates profiling information in profile based on the execution of the
+// program.
+// ]]
+
+/**
+ * @func[FbleEval]
+ * Evaluates a linked program.
+ *
+ * The program is assumed to be a zero argument function as returned by
+ * FbleLink.
+ *
+ * @arg[FbleValueHeap*][heap]     The heap to use for allocating values.
+ * @arg[FbleValue*    ][program]  The program to evaluate.
+ * @arg[FbleProfile*  ][profile]  The profile to update. May be NULL to
+ *                                disable profiling.
+ *
+ * @returns[FbleValue*]
+ *   The value of the evaluated program, or @l[NULL] in case of a runtime
+ *   error in the program.
+ *
+ * @sideeffects
+ *  @i The returned value must be freed with @l[FbleReleaseValue] when no
+ *     longer in use.
+ *  @i Prints an error message to stderr in case of a runtime error.
+ *  @i Updates profiling information in profile based on the execution of
+ *     the program.
+ */
+
+How much of this is legit fbld code already, and what isn't?
+
+* Loss of structure of @func. That is, we assume everything after @func is
+  part of the body. If we had multiple @func tags, or multiple top level tags,
+  it would be ambiguous.
+* Extra whitespace in type: is fine. We can just trim it.
+* Extra whitespace before last arg on same line is fine. We can trim it.
+* Wrapped line not legit. No way to distinguish between continuation of same
+  argument versus start of next command.
+* Indented body is legit. Just trim the whitespace (inside and out).
+
+Technically speaking, it's only the line wrapping that causes problems.
+
+First, how about structure. Can we use whitespace more generally for structure
+instead of braces?
+
+For example, maybe do a single space indent.
+
+@tag[...][...]
+ body line
+ body line
+ 
+ body line
+
+non-body line.
+
+Technically that's legit. It's not until you get to the blank line before the
+non-body line that the body of the @tag argument ends. No need for braces.
+
+That means, literally, all I have to do is figure out line wrapping to make
+the doc look way better? That's definitely worth a try.
+
+Two things I would like:
+
+Same and next line args. So, instead of
+
+@func[FbleEval][Evaluates a linked program.][
+Content
+]
+
+I would love to be able to say:
+
+@func[FbleEval] Evaluates a linked program.
+ 
+ CONTENT
+
+Next I would like to be able to say:
+
+@func[FbleEval] This is a really long brief line
+                that goes to the next line.
+
+Or:
+
+@func[FbleEval] This is a really long brief line
+  that goes to the next line.
+
+A couple ideas:
+* Use an explicit line continuation character like '\'
+* Have the tag itself accept two unbraced arguments - same line and body, and
+  concatenate them if it wants to.
+
+For example, @i always accepts both and concatenates. Something like @func
+doesn't concatenate.
+
+This needs more thought, but roughly speaking something like:
+* Indent becomes part of parsing structure to distinguish between block and
+  inline tags.
+* All block tags support both a same line arg and a next line arg. They are
+  interpreted based on the particular command tag in question.
+
+Needs thought. Needs review of concerns I had when initially creating fbld.
+
+---
+
+Thoughts: we can simplify the syntax while we are at it. Proposal is:
+
+* Allow both same line and following line args in the same command.
+* For following line arg, always use a single space indent to specify the
+  argument.
+
+So, for example:
+
+@tag[foo][bar] This is same line arg.
+ This is next line arg.
+ 
+ @tag part of arg.
+@tag not part of arg.
+
+Note: we need a single space on the otherwise apparently blank line.
+
+Two questions:
+* How nice/tedious is this for docs in practice?
+* What about prior concerns I had?
+
+Let me start with prior concerns. They were:
+* Don't rely on indentation for meaning because vim syntax highlighting is
+  hard.
+
+That's it. The only concern I found. I know vim syntax doesn't care about
+indent though. It already doesn't treat particular tags specially.
+
+I thought maybe something about it being bad to structure the document based
+on invisible spaces. For example, the following would be two different things:
+
+@tag[foo]
+ hello
+
+ there
+
+
+@tag[foo]
+ hello
+ 
+ there
+ 
+In the first case, we have:
+ @tag[foo][hello]
+ @default[there]
+
+In the second, we have:
+ @tag[foo][hello\n\nthere]
+
+No way to tell that from reading. Is that a special case for blank lines? Or
+maybe it's okay if you really care?
+
+I'm not sure. Let me reformat some docs and see how it feels to me:
+* FbleEval doc comment.
+  Looks great. The big challenge is remember to include spaces in blank lines.
+* README.fbld
+* fble.fbld
+* HelloWorld.fbld
+
+I wonder if I could highlight spaces on blank lines in vim syntax to make this
+more obvious?
+
+Or, treat blank lines specially. It's not really the blank line we care about,
+it's the line that has a non-blank character at an indent level less than the
+@tag. That would be better. Let's go with that. Then no space is required on a
+blank line.
+
+Any place this could cause problems? Not sure. I guess we'll find out.
+
+README.txt:
+* I fear it will be real easy to forget to indent content lines. Any way to
+  enforce that?
+* I have the choice now for section titles if I want them in braces or not. I
+  don't know which I prefer yet.
+* Indenting contents of sections a single space doesn't bother me. 
+* It doesn't magically make things readable without syntax highlighting.
+
+HelloWorld.fbld:
+* Would be nice to have vim indent support to easily format things to be on
+  the same indent.
+* The growing indent bothers me a little more in this case. Getting nesting
+  four deep: doc, section, subsection, code.
+* Without the [], you can no longer jump directly to the start or end of a
+  section in vim as easily.
+* It is real easy this way to see when a section ends: you get a new tag
+  that's not indented as far as the content just before it.
+* Note that default blocks go to the next blank line still, not based on
+  indent.
+* It's going to be a bit tedious to convert everything to the new format. The
+  biggest change being the extra indent.
+
+fble.fbld:
+* More compact @item lists are kind of nice.
+
+Honestly, I think header doc comment gets a big improvement from this new
+syntax. Less so for other docs, but not generally harmful. Just tedious to do
+the conversion for.
+
+The biggest fear is that I get the indent wrong and it silently groups content
+with the wrong block. I don't have to worry about that when using braces.
+Anything I can do to make that better?
+
+Anything vim folds can do to help? I'm not convinced. We could add folds
+automatically from the syntax file, and then use some columns on the left to
+show the state of the folds, but I'm not sure it adds much, and it causes even
+more space to be used up on the left side of the terminal.
+
+Could we enable warnings somehow? Like, if you indent a tag you don't expect
+to? Or you nest tags you don't expect to?
+
+What would be nice is a vim command like [{ that jumps from the current line
+to the tag where that arg applies to. So at least if you are in doubt you can
+jump right to the place where the section is.
+
+What do you think? Should we make the leap? For the sake of nicer header docs?
+I vote yes.
+
+---
+
+I updated the .fbld spec. I think it's definitely simpler now, though the spec
+itself doesn't do a great job describing it.
+
+Next steps:
+* Update the fbld test cases.
+* Update the fbld implementation.
+* Convert everything over to the new spec.

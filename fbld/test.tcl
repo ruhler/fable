@@ -51,26 +51,21 @@ test block {
 Some intro text.
 
 @section[First Section]
-With some text
-spanning over lines.
+ With some text
+ spanning over lines.
+
+ multiple lines actually.
 
 And some final text.
 } {
   invoke title "A title"
   invoke "" "Some intro text.\n"
-  invoke section "First Section" "With some text\nspanning over lines.\n"
+  invoke section "First Section" "With some text\nspanning over lines.\n\nmultiple lines actually.\n"
   invoke "" "And some final text.\n"
-}
-
-# Test end of file after the last ]
-test block {
-@foo[A]
-[
-B]} {
-  invoke foo "A" "\nB"
 }
 
 # Regression test for a default block that runs to the end of the file.
 test block "Foo" {
   invoke "" "Foo"
 }
+

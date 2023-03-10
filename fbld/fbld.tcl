@@ -148,16 +148,6 @@ namespace eval fbld {
       set cmd [string range $text $i [expr $name_end - 1]]
       set i $name_end
 
-      # Allow space and tabs before first arg.
-      while {[is_space_or_tab [string index $text $i]]} {
-        incr i
-      }
-
-      # Allow explicit args to continue on the next line.
-      if {[string equal "\n\[" [string range $text $i [expr $i + 1]]]} {
-        incr i
-      }
-
       # Parse explicit arguments to the @... command.
       set args [list]
       while {[string equal [string index $text $i] \[]} {
@@ -167,16 +157,6 @@ namespace eval fbld {
         lappend args $arg
         set i $arg_end
         incr i
-
-        # Allow space and tabs between [] args.
-        while {[is_space_or_tab [string index $text $i]]} {
-          incr i
-        }
-
-        # Allow explicit args to continue on the next line.
-        if {[string equal "\n\[" [string range $text $i [expr $i + 1]]]} {
-          incr i
-        }
       }
 
       # Check for end of file.
@@ -185,33 +165,51 @@ namespace eval fbld {
         return
       }
 
-      if {[string equal "\n" [string index $text $i]]} {
-        # next line arg.
-        incr i
-        if {$i >= $len || [string equal "\n" [string index $text $i]]} {
-          $invoke $cmd {*}$args
-          continue
-        }
-
-        set arg_end [string first "\n\n" $text $i]
-        if {$arg_end == -1} {
-          set arg_end [expr $len - 1]
-        }
-        set arg [string range $text $i $arg_end]
-        lappend args $arg
-        set i $arg_end
-        $invoke $cmd {*}$args
-        continue
-      }
-
-      # Same line arg.
+      # Extract the same line arg.
       set arg_end [string first "\n" $text $i]
       if {$arg_end == -1} {
         set arg_end $len
       }
       set arg [string range $text $i [expr $arg_end - 1]]
-      lappend args $arg
+      if {![string equal "" $arg]} {
+        lappend args [string range $arg 1 end]
+      }
       set i $arg_end
+      incr i
+
+      # Extract next line arg.
+      set arg ""
+      while {$i < $len} {
+        if {[string equal "\n" [string index $text $i]]} {
+          append arg "\n"
+          incr i
+          continue
+        }
+
+        if [string equal " " [string index $text $i]] {
+          incr i
+          set arg_end [string first "\n" $text $i]
+          if {$arg_end == -1} {
+            set arg_end $len
+          }
+          append arg [string range $text $i $arg_end]
+          set i $arg_end
+          incr i
+          continue
+        }
+
+        break;
+      }
+
+      # Remove any trailing blank lines.
+      while {[string equal "\n\n" [string range $arg end-1 end]]} {
+        set arg [string range $arg 0 end-1]
+      }
+
+      if {![string equal "" $arg] && ![string equal "\n" $arg]} {
+        lappend args $arg
+      }
+
       $invoke $cmd {*}$args
     }
   }
