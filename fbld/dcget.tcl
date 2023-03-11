@@ -27,7 +27,7 @@ while {[string first " * @func\[$id\]" [lindex $lines $i]] != 0} {
 puts [string range [lindex $lines $i] 3 end]
 incr i
 
-while {[string first " * " [lindex $lines $i]] == 0} {
+while {[string first " * " "[lindex $lines $i] "] == 0} {
   puts [string range [lindex $lines $i] 3 end]
   incr i
 }

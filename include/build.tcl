@@ -5,6 +5,9 @@ namespace eval "include" {
     install $x $::config::includedir/fble/[file tail $x]
   }
 
-  man_dc $::b/include/fble/FbleEval.3 $::s/include/fble/fble-value.h FbleEval
-  install $::b/include/fble/FbleEval.3 $::config::mandir/man3/FbleEval.3
+  # Man pages for fble-value.h
+  foreach x [list FbleNewValueHeap FbleEval] {
+    man_dc $::b/include/fble/$x.3 $::s/include/fble/fble-value.h $x
+    install $::b/include/fble/$x.3 $::config::mandir/man3/$x.3
+  }
 }

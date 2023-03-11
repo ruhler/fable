@@ -32,12 +32,12 @@ typedef struct {
 } FbleValueV;
 
 /**
- * Creates a new FbleValueHeap.
+ * @func[FbleNewValueHeap] Creates a new FbleValueHeap.
  * 
- * @returns
+ *  @returns FbleValueHeap*
  *   A heap that can be used to allocate values.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a heap that should be freed using FbleFreeValueHeap.
  */
 FbleValueHeap* FbleNewValueHeap();

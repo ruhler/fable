@@ -2976,3 +2976,9 @@ args. That should be doable I think.
 Okay, turns out extracting arg and return type isn't bad. The real problem is
 reorganizing the description. It's pretty hacky right now given limited
 support for composition in fbld implementation. Let's see what we get.
+
+---
+
+I got something. It feels very brittle, but it looks pretty good. Let's see
+how far we can take it before we have to rethink and rewrite things with a
+more solid foundation.
