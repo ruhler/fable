@@ -32,7 +32,7 @@ proc dc_get_args_and_return { name args } {
 # 4. side effects using @sideeffects command.
 proc block_func {name brief content} {
   set ::dc_man_func_args [list]
-  set ::dc_man_func_return "???"
+  set ::dc_man_func_return "void"
   ::fbld::block dc_get_args_and_return $content
 
   set body "@section\[NAME\]\[$name - $brief\]\n\n"

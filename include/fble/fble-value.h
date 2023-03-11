@@ -43,26 +43,26 @@ typedef struct {
 FbleValueHeap* FbleNewValueHeap();
 
 /**
- * Frees an FbleValueHeap.
+ * @func[FbleFreeValueHeap] Frees an FbleValueHeap.
  *
- * @param heap  The heap to free.
+ *  @arg[FbleValueHeap*][heap] The heap to free.
  *
- * @sideeffects
+ *  @sideeffects
  *   The resources associated with the given heap are freed. The heap should
  *   not be used after this call.
  */
 void FbleFreeValueHeap(FbleValueHeap* heap);
 
 /**
- * Increments refcount on an FbleValue.
+ * @func[FbleRetainValue] Increments refcount on an FbleValue.
  *
- * Keep the given value alive until a corresponding FbleReleaseValue is
- * called.
+ *  Keep the given value alive until a corresponding FbleReleaseValue is
+ *  called.
  *
- * @param heap  The value heap.
- * @param src   The value to retain.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleValue*    ][src ] The value to retain.
  *
- * @sideeffects
+ *  @sideeffects
  *   Causes the value to be retained until a corresponding FbleReleaseValue
  *   calls is made on the value. FbleReleaseValue must be called when the
  *   value is no longer needed.

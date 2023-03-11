@@ -6,6 +6,10 @@ Things to consider doing for the fble-0.2 release.
   - When are things trimed versus not?
   - How to avoid too many or too few blank lines between items?
 
+* Write test cases for doc comments extraction and conversion.
+  - For example: blank lines in doc comments should be allowed and not cause
+    the comment to be truncated.
+
 * Add a way to specify package path on the command line?
 
 * Improve exercises for Unions and Functions tutorials, and others.

@@ -6,7 +6,12 @@ namespace eval "include" {
   }
 
   # Man pages for fble-value.h
-  foreach x [list FbleNewValueHeap FbleEval] {
+  set fble_value_funcs {
+    FbleNewValueHeap FbleFreeValueHeap
+    FbleRetainValue
+    FbleEval
+  }
+  foreach x $fble_value_funcs {
     man_dc $::b/include/fble/$x.3 $::s/include/fble/fble-value.h $x
     install $::b/include/fble/$x.3 $::config::mandir/man3/$x.3
   }
