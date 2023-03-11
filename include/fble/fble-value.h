@@ -370,25 +370,25 @@ typedef struct {
 FbleFuncInfo FbleFuncValueInfo(FbleValue* func);
 
 /**
- * Evaluates a linked program.
+ * @func[FbleEval] Evaluates a linked program.
+ *  The program is assumed to be a zero argument function as returned by
+ *  FbleLink.
  * 
- * The program is assumed to be a zero argument function as returned by
- * FbleLink.
- *
- * @param heap     The heap to use for allocating values.
- * @param program  The program to evaluate.
- * @param profile  The profile to update. May be NULL to disable profiling.
- *
- * @returns
- *   The value of the evaluated program, or NULL in case of a runtime error in
- *   the program.
- *
- * @sideeffects
- * * The returned value must be freed with FbleReleaseValue when no longer in
- *   use.
- * * Prints an error message to stderr in case of a runtime error.
- * * Updates profiling information in profile based on the execution of the
- *   program.
+ *  @arg[FbleValueHeap*][heap   ] The heap to use for allocating values.
+ *  @arg[FbleValue*    ][program] The program to evaluate.
+ *  @arg[FbleProfile*  ][profile]
+ *   The profile to update. May be NULL to disable profiling.
+ * 
+ *  @returns FbleValue*
+ *   The value of the evaluated program, or @l[NULL] in case of a runtime
+ *   error in the program.
+ * 
+ *  @sideeffects
+ *   @i The returned value must be freed with @l[FbleReleaseValue] when no
+ *    longer in use.
+ *   @i Prints an error message to stderr in case of a runtime error.
+ *   @i Updates profiling information in profile based on the execution of
+ *    the program.
  */
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile);
 

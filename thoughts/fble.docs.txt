@@ -2913,3 +2913,26 @@ Notes from conversion experience:
   this change.
 * Yeah. Overall, from the point of view of how the documents look to read, I'm
   really liking this change.
+
+Cool. All transferred over to the new spec.
+
+---
+
+Back to FbleEval as a proof of concept, next step is to write a tcl script to
+extract the doc comment for it and write out an FbleEval.fbld file.
+
+We can just use a regex I bet:
+
+/**\n * @func[([a-zA-Z0-9_])].* */
+
+Iterate through, all of them, output .fbld files separately based on the @func
+part.
+
+We could also pass FbleEval the name as an argument. Then target that specific
+value, give an error if it doesn't exit. Might be cleaner from a build script
+side of things. I like that.
+
+Easy. Actually, I ended up skipping regex, but whatever. Easy, if not super
+robust at this point.
+
+Next step: write a doc comment to man page converter.
