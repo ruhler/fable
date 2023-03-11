@@ -17,7 +17,7 @@
     like there are for markdown, for example.
  
    @item
-    The main textural content should be easy to read from source by a human.
+    The main textual content should be easy to read from source by a human.
     It should not include excessive clutter from tags that overly distract
     from the contents of the text, as is the case with roff and xml, for
     example.
@@ -175,53 +175,110 @@
   Fbld parses block structured text into a sequence of commands using the same
   concepts as inline structure, with a few syntactic differences.
  
-  The idea behind block structure is that we expect it to span across multiple
-  lines of text. A block command starts on a new line and can accept two
-  additional arguments separated implicitly by whitespace instead of
-  explicitly with brackets. The two possible implicit arguments are:
- 
-  @item Text following the block command on the same line.
-  @item Indented text starting on the next line from the block command.
- 
-  For example, consider a command, @l[@block] that takes two arguments: a
-  title for the block and text to use in the block.
- 
-  The block command could be invoked using explicit brackets for arguments as
-  follows:
- 
-  @code[fbld]
-   @block[Example 1][First line of the first example.
- 
-   Last line of the first example.]
-   @block[Example 2][This is the second example.]
- 
-  Using the implicit argument form:
- 
-  @code[fbld]
-   @block Example 1
-    First line of the first example.
+  The idea behind block structure is that we expect it to span one or more
+  lines of text. Three things different about block structed text compared to
+  inline structed text:
+
+  @item Block commands start on a new line.
+  @item Text on the same line after a block command is an additional argument.
+  @item
+   Text indented on the lines following the block command is an additional
+   argument.
+
+  @subsection Same Line Args
+   Consider the following block structed text:
    
-    Last line of the first example.
-   @block Example 2
-    This is the second example.
- 
-  We could pass the first arguments explicitly and the second arguments
-  implicitly if we wanted:
- 
-  @code[fbld]
-   @block[Example 1]
-    First line of the first example.
+   @code[fbld]
+    @def[triangle] Has three sides
+    @def[square] Has four sides
+
+   This is a sequence of two commands, each with two arguments:
+
+   @code[tcl]
+    def triangle "Has three sides"
+    def square "Has four sides"
+
+   The same line argument starts after a single space following the command
+   and any explicit command arguments.
+
+   If there is no space on the same line after the command and any explicit
+   command arguments, no same line argument is passed to the command. For
+   example:
+
+   @code[fbld]
+    @item[first item]
+    @item[second item]
    
-    Last line of the first example.
-   @block[Example 2] This is the second example.
- 
-  Typically you would use the same-line argument for short text, such as
-  section titles or small list items. You would use the next-line argument
-  when the argument multi-line arguments.
- 
+   Is parsed as:
+
+   @code[tcl]
+    item "first item"
+    item "second item"
+  
+  @subsection Following Lines Arg
+   Any indented lines following a block command are grouped together and
+   passed as an additional argument to the block command. For example:
+
+   @code[fbld]
+    @section[First Section]
+     Contents of the first section.
+
+     Spanning multiple lines.
+    @section[Second Section]
+     Contents of the second section.
+
+   Is parsed as:
+   
+   @code[tcl]
+    section "First Section" "Contents of the first section.\n\nSpanning multiple lines.\n"
+    section "Second Section" "Contents of the second section.\n"
+
+   Indentation is a single space character at the beginning of each line. This
+   space character is stripped from the line before it is passed in the
+   following lines argument.
+
+   Blank lines in the middle of an indented block are treated as blank lines
+   in the following lines argument. Blank lines at the end of an indented
+   block are removed.
+
+   If there are no indented lines following the block command, no following
+   lines argument is supplied.
+
+  @subsection Default Block Commands
+   If a line starts with something other than a block command, then that line
+   and all subsequent lines up until a blank line are grouped together and
+   passed as a single argument to the default block command.
+
+   For example:
+   
+   @code[fbld]
+    This is the first paragraph
+    of a document.
+
+    Here is the second.
+
+   Parses as:
+
+   @code[tcl]
+    default "This is the first paragraph\nof a document.\n"
+    default "Here is the second.\n"
+
+  @subsection Starting a Line with an Inline Command
+   Sometimes you may want to start a paragraph with an inline command. To
+   prevent the command from being treated as a block command, either pass it
+   explicitly to the default command, or add a space before. For example:
+
+   @code[fbld]
+    @default
+     @emph{Yeah!}. Fbld is so great!
+
+   In this case, @l[@emph] is considered an inline command because the
+   @default command parses its argument as inline structed text instead of
+   block structured text.
+
+
   @subsection A Bigger Example
-   Here's an example demonstrating use of the various approaches to the last
-   argument:
+   Here's an example demonstrating various uses of block structed text.
  
    @code[fbld]
     @doc A Bigger Example
@@ -230,91 +287,41 @@
     
      @section[First Section]
       @paragraph
-      Here is a paragraph in the first
-      section of the doc.
+       Here is a paragraph in the first
+       section of the doc.
     
       @list
        @item First item of a list.
        @item Second item of a list.
  
-   This would be parsed into the following command:
- 
+   The top level parses as a single doc command:
+
    @code[tcl]
-    title "A Bigger Example"
-    default "Some introductory text here."
-    section "First Section" {
-    @paragraph
-    Here is a paragraph in the first
-    section of the doc.
-    
-    @list
-    @item First item of a list.
-    @item Second item of a list.
-    }
- 
-   The second argument to the @l[@section] command can then be parsed into its
-   own sequence of commands:
- 
+    doc "A Bigger Example" "Some introductory text here.\n\n@section..."
+
+   The doc command itself can interpet its second argument as block structed
+   text. In that case it parses into two commands:
+
    @code[tcl]
-    paragraph "Here is a paragraph in the first\nsection of the doc."
-    list "@item First item of a list.\n@item Second item of a list."
- 
-   And the argument to the @l[@list] command can be parsed into its own sequence:
- 
+    default "Some introductory text here.\n"
+    section "First Section" "@paragraph\n Here is a paragraph in..."
+
+   The section command parses its second argument as block structured text:
+
+   @code[tcl]
+    paragraph "Here is a paragraph in the first\nsectionof the doc.\n"
+    list "@item First item of a list.\n@item Second item of a list.\n"
+
+   Finally, the list command parses its argument as block structured text:
+
    @code[tcl]
     item "First item of a list."
     item "Second item of a list."
- 
-  @subsection Lexical Details
-   @item
-    Block commands start at the beginning of a line. Theoretically this is in
-    column zero, but there may be extra whitespace before it in the case of
-    nested block commands where that extra whitespace is stripped away before
-    processing the nested block command.
- 
-   @item Default block commands take lines of text up until the next blank line.
- 
-   @item
-    If there is any text on the same line after the last explicit argument to
-    a block command, that text up to but not including the next newline or end
-    of file is added as an additional argument to the block command.
- 
-   @item
-    Lines following the block command, up until there is a line with a
-    non-whitespace character not indented from the block command itself, are
-    grouped together into a single additional argument to the block command,
-    with the first space on each line removed.
- 
-  @subsection Escaping Inline Commands
-   Imagine you want to emphasize the first word of a paragraph:
- 
-   @code[fbld]
-    @section A Sample Section
-   
-    @emph[Yes!] The first word is emphasized
- 
-   In this case, the intention was to use @l[@emph] as an inline structure
-   command, but it will end up being parsed as a block structure command:
- 
-   @code[tcl]
-    section "A Sample Section"
-    emph "Yes!" "The first word is emphasized"
- 
-   To work around this, you can explicitly pass the paragraph as an argument
-   that's expected to be inlined structured text. For example:
- 
-   @code[fbld]
-    @section A Sample Section
-   
-    @default
-     @emph[Yes!] The first word is emphasized
- 
-   Which will be parsed as desired:
- 
-   @code[tcl]
-    section "A Sample Section"
-    default "@emph[Yes!] The first word is emphasized"
- 
+
+   Notice that block commands end up indented in practice, even though we said
+   they have to start at the beginning of the line. This is because the indent
+   is stripped away from the lines before the block command gets processed.
+
  @section Handling of Escape Characters
   The characters @l[@], @l[\[], @l[\]], and @l[\\] are special and need to be
   escaped using @l[\\] to avoid being processed specially. At the end of the
@@ -349,10 +356,6 @@
    be any need to escape them, right? Only need to escape square brackets when
    parsing arguments? This would be a problem if it was within an argument.
    Maybe best to require escaping in all cases for consistency.
- 
-  @item
-   The trailing newline is included in args that go to blank line. The blank
-   line is not included.
  
   @item
    Clarify behavior of end of input for block commands, after @l[\]].

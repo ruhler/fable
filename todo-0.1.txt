@@ -2,8 +2,6 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Note in fbld spec that same line arg starts after the first space.
-
 * Generate man pages for library functions via fbld.
 
 * Document default fble package path in man pages?
