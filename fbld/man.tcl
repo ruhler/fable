@@ -155,7 +155,7 @@ proc block_def {name value} {
 # @param text  The text of the item.
 proc block_item {text} {
   # TODO: Do something better here.
-  ::output "* "
+  ::output {.IP \[bu] 2}
   ::block $text
 }
 

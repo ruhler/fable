@@ -8,4 +8,6 @@ namespace eval "include" {
   build $::b/include/fble/FbleEval.fbld \
     "$::s/include/fble/fble-value.h $::s/fbld/dcget.tcl" \
     "tclsh8.6 $::s/fbld/dcget.tcl FbleEval < $::s/include/fble/fble-value.h > $::b/include/fble/FbleEval.fbld"
+  man_dc $::b/include/fble/FbleEval.3 $::b/include/fble/FbleEval.fbld
+
 }

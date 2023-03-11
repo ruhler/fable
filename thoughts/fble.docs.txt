@@ -2936,3 +2936,43 @@ Easy. Actually, I ended up skipping regex, but whatever. Easy, if not super
 robust at this point.
 
 Next step: write a doc comment to man page converter.
+
+---
+
+This will be interesting, because it's not single pass like all the other
+converters I've done so far.
+
+In particular, we want to extract argument and return info early.
+
+Maybe easiest to do it in two passes. First pass we collect a list of args as
+pairs of type, name, and a return type. That gives us enough for the header.
+Then everything else goes into a single DESCRIPTION section? Why not?
+
+Or, assume @return and @sideeffects are top level things, and have those be
+separate sections. That's fine.
+
+Thus, structure of a doc comment:
+
+@func[name] brief
+ Description
+
+ @arg...
+ @arg...
+
+ @returns
+
+ @sideeffects
+
+Nothing else. Like, no random description between returns, sideeffects, or the
+end.
+
+What do I want to write next? Let's do it like how usage does it. We read
+usage and convert direct to man page, right?
+
+The trouble is, runfbld doesn't support multiple passes, and it always outputs
+directly to stdout. So we'll need special sauce in @func to custom parse the
+args. That should be doable I think.
+ 
+Okay, turns out extracting arg and return type isn't bad. The real problem is
+reorganizing the description. It's pretty hacky right now given limited
+support for composition in fbld implementation. Let's see what we get.

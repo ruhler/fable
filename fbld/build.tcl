@@ -55,6 +55,13 @@ namespace eval "fbld" {
       "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl < $source > $target"
   }
 
+  # Builds a man page from an fbld doc comment.
+  proc ::man_dc { target source } {
+    build $target \
+      "$source $::s/fbld/dc.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/dc.man.tcl $::s/fbld/man.tcl < $source > $target"
+  }
+
   # Builds C header file defining help usage text.
   # @arg target - the name of the .h file to generate.
   # @arg source - the .fbld usage doc to generate the header from.
