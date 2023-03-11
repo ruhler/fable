@@ -56,10 +56,16 @@ namespace eval "fbld" {
   }
 
   # Builds a man page from an fbld doc comment.
-  proc ::man_dc { target source } {
+  # @arg target - the target man file to produce.
+  # @arg source - the C header file to extract the doc comment from.
+  # @arg id - the name of the function to extract the docs for.
+  proc ::man_dc { target source id } {
+    build $target.fbld \
+      "$source $::s/fbld/dcget.tcl" \
+      "tclsh8.6 $::s/fbld/dcget.tcl $id < $source > $target.fbld"
     build $target \
-      "$source $::s/fbld/dc.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/dc.man.tcl $::s/fbld/man.tcl < $source > $target"
+      "$target.fbld $::s/fbld/dc.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl" \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/dc.man.tcl $::s/fbld/man.tcl < $target.fbld > $target"
   }
 
   # Builds C header file defining help usage text.

@@ -55,7 +55,7 @@ proc block_arg {type name desc} {
 
 # @returns[INLINE type][BLOCK description]
 proc block_returns {type desc} {
-  ::block_section "RETURN VALUE" "@definition\[$type\]\[$desc\]"
+  ::block_section "RETURN VALUE" "@definition\[@l\[$type\]\]\[$desc\]"
 }
 
 # @sideeffects[BLOCK description]
