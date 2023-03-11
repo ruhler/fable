@@ -8,7 +8,10 @@ namespace eval "include" {
   # Man pages for fble-value.h
   set fble_value_funcs {
     FbleNewValueHeap FbleFreeValueHeap
-    FbleRetainValue
+    FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
+    FbleValueAddRef
+    FbleValueFullGc
+    FbleNewStructValue
     FbleEval
   }
   foreach x $fble_value_funcs {

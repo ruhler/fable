@@ -2,7 +2,7 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Generate man pages for all C api functions via fbld.
+* Convert doc comments and generate man pages for all C api functions.
 
 * Document default fble package path in man pages?
   We can get it from $::config::datadir/fble
