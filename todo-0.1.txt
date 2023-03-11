@@ -2,9 +2,6 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Be able to distinguish between man1 and man3 man pages.
-  - By making an @man tag that takes title and section as args instead of
-    using @doc.
 * Generate man pages for all C api functions via fbld.
 
 * Document default fble package path in man pages?
