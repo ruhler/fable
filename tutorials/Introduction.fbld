@@ -1,113 +1,106 @@
-@tutorial[Introduction][
-In this tutorial you'll be introduced to the fble programming language, where
-it comes from, what it's for, and why you should bother learning it.
-
-@section[Origins][
-To understand the origins of fble, you need to know a little about me, the
-author of this tutorial and the creator of the fble programming language.
-
-I love programming. I program as a hobby. One of the first questions I have
-to answer when starting a new programming project is what programming language
-to use for it.
-
-The first programming language I learned was C++, which I learned taking
-classes in college. I wrote a Javascript interpreter in C++ for the fun of it
-and started playing around with the TCL scripting language and Java. At some
-point I started programming in pure C and using Python for scripting. I was
-introduced to functional programming in graduate school via Bluespec and then
-Haskell.
-
-The trouble is, none of these languages have everything I'm looking for. I
-want the simplicity of C, the performance of C and C++, support for generics
-from C++, Java, and Haskell, automatic memory management from Java and
-Haskell, the strong type system of Haskell, and the hardware generation
-capabilities of Bluespec. I don't want the lack of generics in C, the
-complexity of C++, the verbosity of Java, the performance challenges and
-obscurity of Haskell, or the awkwardness of writing software in Bluespec.
-
-I decided to see if I could design my own programming language to match my
-desires, and thus the Fable project was born. I progressed through a series of
-language prototypes and rewrites: fbla, fblb, fblc, fbld, and at last, where
-we are today, fble.
-
-Note: "fble" is pronounced as four separate letters @l[f-b-l-e], with
-stress on the @l[f]: @l[/'ef.biː.el.iː/].
-
-]
-
-@section[The fble Language][
-Here is how I think of the fble language.
-
-Start with the simplicity of C. Redesign the foundations from the ground up
-based on a strong type system and functional programming. Use automatic memory
-management and make sure there is a clear way to reason about performance.
-Include support for generics and modularity. Remove as many hard edges, corner
-cases and redundancies in the language as possible.
-
-The result is a simple, general purpose, strongly statically typed, strict,
-pure functional programming language with automatic memory management, support
-for polymorphism and modularity, a hint of C-like syntax and complete lack of
-primitive data types.
-]
-
-@section[Why Learn fble][
-Here are some reasons why you should learn fble:
-
-@item
-The fble language represents the collected learnings and perspective gained
-from my entire experience working with and on programming languages. Learning
-the fble language is the best way I can share that experience with you.
-
-@item
-The fble language is probably one of the simplest pure functional programming
-languages out there. If you have no former experience with functional
-programming languages, fble is a great place to start.
-
-@item[
-The fble language has a number of novel language features, if you're
-interested in a different perspective on how to program or what's possible in
-a programming language:
-
-@item No builtin primitives or data types.
-@item
-A novel type system that specifies types using values instead of type
-declarations, and special syntax for struct values that allows you to reuse
-standard runtime abstractions for describing the structure of your programs.
-
-@item A novel syntax for user-defined literals.
-@item
-A simpler, more general syntax than Haskell's @l[do] notation for monadic
-computation.
-]
-
-@item
-There's a chance you may enjoy programming in fble as much as I do. You'll
-have to learn it first to know for sure.
-
-@item
-Because fble is designed to be as simple as possible and doesn't have any
-builtin primitives or data types, it is well suited for programming language
-research and alternative interpretations of programs, such as for describing
-hardware or satisfiability-based search queries.
-
-@item
-Programs written in fble are likely more secure than programs written in
-C, given the strong type system and lack of pointers, arrays, and side
-effects.
-
-The fble language is still early days. The following are not yet reasons for
-you to learn fble:
-
-@item Super fast execution performance.
-@item Extensive collection of libraries.
-@item Easy integration with other programming languages and libraries.
-@item A stable language specification with support guarantees.
-@item A mature ecosystem of tools in support of and integrated with fble.
-@item A large and vibrant community of users.
-]
-
-@section[Next Steps][
-Head over to the @fbld[Install.fbld][Install] tutorial to get your hands on
-fble and try it out.
-]
-]
+@tutorial Introduction
+ In this tutorial you'll be introduced to the fble programming language, where
+ it comes from, what it's for, and why you should bother learning it.
+ 
+ @section Origins
+  To understand the origins of fble, you need to know a little about me, the
+  author of this tutorial and the creator of the fble programming language.
+ 
+  I love programming. I program as a hobby. One of the first questions I have
+  to answer when starting a new programming project is what programming
+  language to use for it.
+ 
+  The first programming language I learned was C++, which I learned taking
+  classes in college. I wrote a Javascript interpreter in C++ for the fun of
+  it and started playing around with the TCL scripting language and Java. At
+  some point I started programming in pure C and using Python for scripting. I
+  was introduced to functional programming in graduate school via Bluespec and
+  then Haskell.
+ 
+  The trouble is, none of these languages have everything I'm looking for. I
+  want the simplicity of C, the performance of C and C++, support for generics
+  from C++, Java, and Haskell, automatic memory management from Java and
+  Haskell, the strong type system of Haskell, and the hardware generation
+  capabilities of Bluespec. I don't want the lack of generics in C, the
+  complexity of C++, the verbosity of Java, the performance challenges and
+  obscurity of Haskell, or the awkwardness of writing software in Bluespec.
+ 
+  I decided to see if I could design my own programming language to match my
+  desires, and thus the Fable project was born. I progressed through a series
+  of language prototypes and rewrites: fbla, fblb, fblc, fbld, and at last,
+  where we are today, fble.
+ 
+  Note: "fble" is pronounced as four separate letters @l[f-b-l-e], with stress
+  on the @l[f]: @l[/'ef.biː.el.iː/].
+ 
+ @section The fble Language
+  Here is how I think of the fble language.
+ 
+  Start with the simplicity of C. Redesign the foundations from the ground up
+  based on a strong type system and functional programming. Use automatic
+  memory management and make sure there is a clear way to reason about
+  performance.  Include support for generics and modularity. Remove as many
+  hard edges, corner cases and redundancies in the language as possible.
+ 
+  The result is a simple, general purpose, strongly statically typed, strict,
+  pure functional programming language with automatic memory management,
+  support for polymorphism and modularity, a hint of C-like syntax and
+  complete lack of primitive data types.
+ 
+ @section Why Learn fble
+  Here are some reasons why you should learn fble:
+ 
+  @item
+   The fble language represents the collected learnings and perspective gained
+   from my entire experience working with and on programming languages. Learning
+   the fble language is the best way I can share that experience with you.
+ 
+  @item
+   The fble language is probably one of the simplest pure functional programming
+   languages out there. If you have no former experience with functional
+   programming languages, fble is a great place to start.
+ 
+  @item
+   The fble language has a number of novel language features, if you're
+   interested in a different perspective on how to program or what's possible in
+   a programming language:
+   
+   @item No builtin primitives or data types.
+   @item
+    A novel type system that specifies types using values instead of type
+    declarations, and special syntax for struct values that allows you to
+    reuse standard runtime abstractions for describing the structure of your
+    programs.
+   
+   @item A novel syntax for user-defined literals.
+   @item
+    A simpler, more general syntax than Haskell's @l[do] notation for monadic
+    computation.
+ 
+  @item
+   There's a chance you may enjoy programming in fble as much as I do. You'll
+   have to learn it first to know for sure.
+ 
+  @item
+   Because fble is designed to be as simple as possible and doesn't have any
+   builtin primitives or data types, it is well suited for programming
+   language research and alternative interpretations of programs, such as for
+   describing hardware or satisfiability-based search queries.
+ 
+  @item
+   Programs written in fble are likely more secure than programs written in C,
+   given the strong type system and lack of pointers, arrays, and side effects.
+ 
+  The fble language is still early days. The following are not yet reasons for
+  you to learn fble:
+ 
+  @item Super fast execution performance.
+  @item Extensive collection of libraries.
+  @item Easy integration with other programming languages and libraries.
+  @item A stable language specification with support guarantees.
+  @item A mature ecosystem of tools in support of and integrated with fble.
+  @item A large and vibrant community of users.
+ 
+ @section Next Steps
+  Head over to the @fbld[Install.fbld][Install] tutorial to get your hands on
+  fble and try it out.

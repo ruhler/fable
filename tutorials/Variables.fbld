@@ -1,372 +1,363 @@
-@tutorial[Variables][
-This tutorial does a deep dive into variables, types, kinds, and let
-expressions. By the end of this tutorial, you'll be fully versed in section 2
-of the fble language spec on types, kinds, and variables.
-
-@section[Basics][
-A variable is a name for a value. Values are typed and immutable. You use a
-let expression to declare and define a variable. You can later refer to that
-value by using the variable name.
-
-We've already seen examples of this. For instance:
-
-@code[fble]
-Bit@ 0 = Bit@(0: Unit);
-Bit@ 1 = Bit@(1: Unit);
-Bit4@ X = Bit4@(0, 0, 1, 1);
-Bit4@ Y = Bit4@(1, 0, 1, 0);
-
-Here we define four variables @l[0], @l[1], @l[X], and @l[Y].
-
-Consider the variable named @l[0]. The type of the variable is @l[Bit@]. The
-value of the variable is @l[Bit@(0: Unit)]. The variable is used twice in the
-definition of @l[X] and twice in the definition of @l[Y].
-
-Fundamentally that's all that variables are. Names for values that you can
-reuse elsewhere.
-]
-
-@section[Variable Names][
-You can use any name you like for a variable. There are no keyword
-restrictions and no restrictions on what characters are in a variable name,
-except that the name needs to be in single quotes if it contains any
-whitespace or punctuation characters. Variable names are case sensitive.
-
-Here are some examples:
-
-@code[fble]
-Bit@ zero = Bit@(0: Unit);        # A typical variable name.
-Bit@ Zero = zero;                 # A capitalized variable name.
-Bit@ 0 = zero;                    # Use of digits in a variable name.
-Bit4@ 0000 = Bit4@(0, 0, 0, 0);   # Digits are treated like normal characters.
-Set@ union = Union(a, b);         # No keywords like 'union' to have to avoid.
-Float@ π = ComputePi();           # Unicode characters are allowed.
-Float@ 'π/2' = Div(π, 2);         # A variable with '/' in the name. 
-Float@ 'one plus two' = 3;        # A variable with spaces in the name.
-
-Single quotes are used as lexical syntax to write any kind of atomic word in
-fble that may contain whitespace or punctuation. You can use single quotes for
-normal words too, in which case they refer to the same variable as the name
-without single quotes. For example, @l[zero] and @l['zero'] refer to the same
-variable. 
-]
-
-@section[Implicit Variable Types][
-There's another way to define a variable that doesn't require giving the type
-of a variable. We've seen examples of this before when importing values from
-other modules. For example:
-
-@code[fble]
-% True = /Core/Bool%.True;
-
-In this case, instead of writing the type of @l[True], we write the kind of
-the variable, @l[%] (more on kinds in just a second). The compiler
-automatically infers the type of the variable from its definition.
-
-We don't need to be importing values from other modules to declare variables
-this way. For example, the following two variable declarations are equivalent:
-
-@code[fble]
-Bit@ zero = Bit@(0: Unit);   # Defining a variable with explicit type.
-% zero = Bit@(0: Unit);      # Defining a variable with implicit type.
-
-We can also import values from other modules with explicit types. For
-example, the following two variable declarations are equivalent:
-
-@code[fble]
-% True = /Core/Bool%.True;
-/Core/Bool%.Bool@ True = /Core/Bool%.True;
-]
-
-@section[Type Values][
-Variables can be used for types as well as normal values, because a type is a
-value in fble.
-
-A type is a special kind of value to be sure. The compiler knows the value of
-a type during compilation and can check whether two type values refer to the
-same type or not, which is not the case for normal values.
-
-The concept of a value's @l[kind] is used to distinguish between normal values
-and type values, and for describing the type parameters of polymorphic values.
-We'll discuss polymorphism in a future tutorial. For now you can think of
-there being two kinds: @l[%] is the kind of (non-polymorphic) normal values,
-and @l[@] is the kind of (non-polymorphic) types.
-
-To make it easier to keep track of whether a variable refers to a normal value
-or a type when reading fble programs, we require type variable names to be
-followed by the @l[@] character. In this case, @l[@] is not considered part of
-the variable name, but rather is an indicator of the namespace of the
-variable. So, for example @l['Foo'@] is a type variable named @l[Foo], and
-@l['Foo@'] is a normal variable named @l[Foo@].
-
-We've already seen examples of declaring type variables:
-
-@code[fble]
-@ Unit@ = *();
-@ Bit@ = +(Unit@ 0, Unit@ 1);
-@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
-
-Note that we use the implicit type of variable declaration, using @l[@] for
-the kind instead of @l[%] like we used for normal variables. We could
-explicitly write the type of these type variables, but we haven't told you
-what the type of a type value is yet or how to write it down.
-
-Just like normal variables are names for normal values, type variables are
-names for type values. Unlike many statically typed languages, the name of the
-type is not the definition of the type. For example, we could define the
-@l[Bit@] type without introducing a @l[Unit@] type variable:
-
-@code[fble]
-@ Bit@ = +(*() 0, *() 1);
-
-We can also define multiple different type variables for the same type:
-
-@code[fble]
-@ Unit0@ = *();
-@ Unit1@ = Unit0@;
-@ Bit@ = +(Unit0@ 0, Unit1@ 1);
-
-In this case, @l[*()], @l[Unit0@], and @l[Unit1@] are all equivalent and all
-refer to the same type.
-]
-
-@section[The Type of a Type][
-If a type is a value, and all values have types, that means a type has a type.
-In fble, the type of a type is defined to be the type of that type. If @l[A@]
-is a type and @l[B@] is some other type, the type of @l[A@] is some type that
-is different from the type of @l[B@]. More importantly, if the compiler knows
-the type of the type @l[A@], it can derive from that the value of the type
-@l[A@].
-
-It's all rather philosophical and not terribly important in practice when
-writing fble programs. 
-
-Fble provides a typeof operator you can use to get the type of any value. For
-example, @l[@<0>] gives the type of the value @l[0]. Assuming 0 is defined as
-a @l[Bit@], then @l[@<0>] is equivalent to the type @l[Bit@]. If we wanted to,
-we could define variables this way:
-
-@code[fble]
-Bit@ 0 = Bit@(0: Unit);
-@<0> 1 = Bit@(1: Unit);
-
-There's almost never a time we need to use the typeof operator. But it is the
-only way to refer to the type of a type. For example, here's how you could
-define the types @l[Unit@] and @l[Bit@] using explicit type variable
-declarations:
-
-@code[fble]
-@<*()> Unit@ = *();
-@<+(Unit@ 0, Unit@ 1)> Bit@ = +(Unit@ 0, Unit@ 1);
-
-You see now why we don't use explicit type variable declarations when defining
-type variables, because the value of the type contains the same information as
-the type of the type.
-
-And for those who are wondering, yes, a type of a type is also a value that
-has a type. For example: @l[@<@<Bit@>>] is the type of the type of the
-@l[Bit@] type. And on and on. But note, you cannot define a variable of a type
-of a type. Because you never need to and that would just be confusing.
-]
-
-@section[Variable Scopes][
-Variables in fble have lexical scoping, which means they can be referenced
-from any code in the same block that follows their definition. Fble uses
-automatic memory management to ensure values stay alive at runtime as long as
-they are needed.
-
-Anywhere an expression is expected, you can use @l[{] and @l[}] braces to
-introduce a new scope for variables. For example:
-
-@code[fble]
-{
-  Int@ a = 1;
-  Int@ b = {
-    Int@ c = 1;
-    Add(a, c);
-  };
-  Int@ d = 3;
-}
-
-Variables @l[a], @l[b], and @l[d] can be referenced between their definition
-and the end of the outer most block. Variable @l[c] can be referenced only
-inside the block where the value of @l[b] is being defined.
-
-It's possible to capture variables from outer blocks in function bodies. We've
-already seen examples of this:
-
-@code[fble][
-Bit@ 0 = Bit@(0: Unit);
-
-(Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
-  a.?(0: 0, 1: b);
-};
-]
-
-The value @l[0] used inside the @l[And] function will always refer to the
-value of the variable @l[0] when the @l[And] function was declared, regardless
-of when the @l[And] function is invoked.
-
-A variable cannot be referenced before it is declared. An implication of this
-is that a function must be defined after all other functions it makes use of.
-
-For example, the follow will result in an error, because the @l[And] function
-hasn't been declared at the time it is referenced from the @l[And4] function:
-
-@code[fble][
-(Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
-  # Error: `And' has not been declared.
-  Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
-};
-
-(Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
-  a.?(0: 0, 1: b);
-};
-]
-]
-
-@section[Recursive Declarations][
-In order to support recursive functions and types, a variable can be
-referenced in its own declaration.
-
-For example, here's how you can define a recursive function:
-
-@code[fble]
-(Int@) { Int@; } Factorial = (Int@ n) {
-  Eq(n, 0).?(true: 1, false: Mul(n, Factorial(Sub(n, 1))));
-};
-
-In this case, we refer to the variable @l[Factorial] from the definition of
-the function value.
-
-The value of a variable is undefined when evaluating the definition of the
-variable. It's only after the definition of the variable has finished being
-evaluated that the variable takes on its value. This works fine in the
-definition of @l[Factorial], because we don't invoke the @l[Factorial]
-function until after it has been defined.
-
-If you do try to use the value of a variable in its own definition, you'll get
-a runtime error. For example, the following results an "undefined value"
-runtime error:
-
-@code[fble]
-Bit@ 1 = Bit@(1.1);
-
-This is an error because we are trying to access the @l[1] field of the bit
-before it has been defined.
-
-You could define a cyclical infinite list if you wanted:
-
-@code[fble]
-List@<Bit@> ones = Cons(1, ones);
-
-This is fine because you never try to access the value of the variable in its
-definition.
-
-Recursive declarations are also useful for declaring recursive data types. For
-example, here's how you could define a (non-polymorphic) list data type:
-
-@code[fble]
-@ List@ = +(*(Bit@ head, List@ tail) cons, Unit@ nil);
-
-Don't try anything too crazy though. The following will give an error about a
-vacuous type:
-
-@code[fble]
-@ T@ = T@;
-]
-
-@section[Mutually Recursive Declarations][
-There are times you may want to define mutually recursive variables. To do
-this, you can specify multiple variable definitions in the same let
-expression separate by a comma.
-
-Here's an example of declaring multiple variables at once without them
-referring to each other:
-
-@code[fble]
-Bit@ 0 = Bit@(0: Unit), Bit@ 1 = Bit@(1: Unit);
-
-Here's a contrived example of defining mutually recursive functions:
-
-@code[fble]
-(Int@) { Int@; } f = (Int@ x) {
-  x.?(0: x, 1: g(0), 2: g(1));
-},
-(Int@) { Int@; } g = (Int@ x) {
-  x.?(0: x, 1: f(0), 2: f(1));
-};
-
-Notice the two declarations are separated by a comma instead of a semicolon.
-
-A less contrived example of mutually recursive declarations is in declaring
-recursive data types:
-
-@code[fble]
-@ ListP@ = *(Bit@ head, List@ tail),
-@ List@ = +(ListP@ cons, Unit@ nil);
-]
-
-@section[Variable Shadowing][
-In fble it's allowed to shadow previous variable declarations. For example:
-
-@code[fble]
-Int@ x = 0;
-Int@ y = x;
-Int@ x = 1;
-Int@ z = x;
-
-In this case, the value of @l[y] is @l[0], and the value of @l[z] is @l[1].
-]
-
-@section[Unused Variables][
-The fble compiler will give warnings about unused variables, to help identify
-and clean up unecessary code. It's not uncommon to have an unused variable on
-purpose. In that case, you can prefix the variable with @l[_] to avoid the
-compiler emitting a warning. By convention, the variable name @l[_] is used to
-indicate a value we don't care about.
-
-For example, we saw use of @l[_] in the hello world program:
-
-@code[fble]
-  Unit@ _ <- m.do(Puts[Str|'hello, world']);
-  m.return(True)
-
-Here we use the variable name @l[_] for the result of @l[m.do]. Because it's a
-@l[Unit@], we know and don't care about its value.
-]
-
-@section[Variables in the Language Specification]
-You now know everything there is to know about variables in fble. To reinforce
-this, read over @fbld[../spec/fble.fbld#variables][section 2 of the fble
-language specification]. Everything there should be familiar to you now.
-
-@section[Exercises][
-@exercise
-Go back to the fble program we wrote for the Basics tutorial and change all
-lets to use the implicit type form, including for all variables and function
-definitions.
-
-@exercise
-Change some of the variables in the Basics tutorial to names with punctuation
-and whitespace in them. For example, change the name of @l[X] to
-@l['A variable named X'].
-
-@exercise
-Try defining a variable with the wrong type or the wrong kind. What error
-message do you get?
-
-@exercise
-Try defining a type variable without the @l[@] at the end. Try defining a
-normal variable with @l[@] at the end. What error messages do you get in these
-cases?
-
-@exercise
-Try defining a variable for the type of the @l[Bit@] type. What error message
-do you get?
-]
-
-@section[Next Steps]
-Head over to the @fbld[Structs.fbld][Structs] tutorial to learn all
-about structs.
-]
+@tutorial Variables
+ This tutorial does a deep dive into variables, types, kinds, and let
+ expressions. By the end of this tutorial, you'll be fully versed in section 2
+ of the fble language spec on types, kinds, and variables.
+ 
+ @section Basics
+  A variable is a name for a value. Values are typed and immutable. You use a
+  let expression to declare and define a variable. You can later refer to that
+  value by using the variable name.
+ 
+  We've already seen examples of this. For instance:
+ 
+  @code[fble]
+   Bit@ 0 = Bit@(0: Unit);
+   Bit@ 1 = Bit@(1: Unit);
+   Bit4@ X = Bit4@(0, 0, 1, 1);
+   Bit4@ Y = Bit4@(1, 0, 1, 0);
+ 
+  Here we define four variables @l[0], @l[1], @l[X], and @l[Y].
+ 
+  Consider the variable named @l[0]. The type of the variable is @l[Bit@]. The
+  value of the variable is @l[Bit@(0: Unit)]. The variable is used twice in
+  the definition of @l[X] and twice in the definition of @l[Y].
+ 
+  Fundamentally that's all that variables are. Names for values that you can
+  reuse elsewhere.
+ 
+ @section Variable Names
+  You can use any name you like for a variable. There are no keyword
+  restrictions and no restrictions on what characters are in a variable name,
+  except that the name needs to be in single quotes if it contains any
+  whitespace or punctuation characters. Variable names are case sensitive.
+ 
+  Here are some examples:
+ 
+  @code[fble]
+   Bit@ zero = Bit@(0: Unit);        # A typical variable name.
+   Bit@ Zero = zero;                 # A capitalized variable name.
+   Bit@ 0 = zero;                    # Use of digits in a variable name.
+   Bit4@ 0000 = Bit4@(0, 0, 0, 0);   # Digits are treated like normal characters.
+   Set@ union = Union(a, b);         # No keywords like 'union' to have to avoid.
+   Float@ π = ComputePi();           # Unicode characters are allowed.
+   Float@ 'π/2' = Div(π, 2);         # A variable with '/' in the name. 
+   Float@ 'one plus two' = 3;        # A variable with spaces in the name.
+ 
+  Single quotes are used as lexical syntax to write any kind of atomic word in
+  fble that may contain whitespace or punctuation. You can use single quotes
+  for normal words too, in which case they refer to the same variable as the
+  name without single quotes. For example, @l[zero] and @l['zero'] refer to
+  the same variable. 
+ 
+ @section Implicit Variable Types
+  There's another way to define a variable that doesn't require giving the
+  type of a variable. We've seen examples of this before when importing values
+  from other modules. For example:
+ 
+  @code[fble]
+   % True = /Core/Bool%.True;
+ 
+  In this case, instead of writing the type of @l[True], we write the kind of
+  the variable, @l[%] (more on kinds in just a second). The compiler
+  automatically infers the type of the variable from its definition.
+ 
+  We don't need to be importing values from other modules to declare variables
+  this way. For example, the following two variable declarations are
+  equivalent:
+ 
+  @code[fble]
+   Bit@ zero = Bit@(0: Unit);   # Defining a variable with explicit type.
+   % zero = Bit@(0: Unit);      # Defining a variable with implicit type.
+ 
+  We can also import values from other modules with explicit types. For
+  example, the following two variable declarations are equivalent:
+ 
+  @code[fble]
+   % True = /Core/Bool%.True;
+   /Core/Bool%.Bool@ True = /Core/Bool%.True;
+ 
+ @section Type Values
+  Variables can be used for types as well as normal values, because a type is
+  a value in fble.
+ 
+  A type is a special kind of value to be sure. The compiler knows the value
+  of a type during compilation and can check whether two type values refer to
+  the same type or not, which is not the case for normal values.
+ 
+  The concept of a value's @l[kind] is used to distinguish between normal
+  values and type values, and for describing the type parameters of
+  polymorphic values.  We'll discuss polymorphism in a future tutorial. For
+  now you can think of there being two kinds: @l[%] is the kind of
+  (non-polymorphic) normal values, and @l[@] is the kind of (non-polymorphic)
+  types.
+ 
+  To make it easier to keep track of whether a variable refers to a normal
+  value or a type when reading fble programs, we require type variable names
+  to be followed by the @l[@] character. In this case, @l[@] is not considered
+  part of the variable name, but rather is an indicator of the namespace of
+  the variable. So, for example @l['Foo'@] is a type variable named @l[Foo],
+  and @l['Foo@'] is a normal variable named @l[Foo@].
+ 
+  We've already seen examples of declaring type variables:
+ 
+  @code[fble]
+   @ Unit@ = *();
+   @ Bit@ = +(Unit@ 0, Unit@ 1);
+   @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+ 
+  Note that we use the implicit type of variable declaration, using @l[@] for
+  the kind instead of @l[%] like we used for normal variables. We could
+  explicitly write the type of these type variables, but we haven't told you
+  what the type of a type value is yet or how to write it down.
+ 
+  Just like normal variables are names for normal values, type variables are
+  names for type values. Unlike many statically typed languages, the name of
+  the type is not the definition of the type. For example, we could define the
+  @l[Bit@] type without introducing a @l[Unit@] type variable:
+ 
+  @code[fble]
+   @ Bit@ = +(*() 0, *() 1);
+ 
+  We can also define multiple different type variables for the same type:
+ 
+  @code[fble]
+   @ Unit0@ = *();
+   @ Unit1@ = Unit0@;
+   @ Bit@ = +(Unit0@ 0, Unit1@ 1);
+ 
+  In this case, @l[*()], @l[Unit0@], and @l[Unit1@] are all equivalent and all
+  refer to the same type.
+ 
+ @section The Type of a Type
+  If a type is a value, and all values have types, that means a type has a
+  type.  In fble, the type of a type is defined to be the type of that type.
+  If @l[A@] is a type and @l[B@] is some other type, the type of @l[A@] is
+  some type that is different from the type of @l[B@]. More importantly, if
+  the compiler knows the type of the type @l[A@], it can derive from that the
+  value of the type @l[A@].
+ 
+  It's all rather philosophical and not terribly important in practice when
+  writing fble programs. 
+ 
+  Fble provides a typeof operator you can use to get the type of any value.
+  For example, @l[@<0>] gives the type of the value @l[0]. Assuming 0 is
+  defined as a @l[Bit@], then @l[@<0>] is equivalent to the type @l[Bit@]. If
+  we wanted to, we could define variables this way:
+ 
+  @code[fble]
+   Bit@ 0 = Bit@(0: Unit);
+   @<0> 1 = Bit@(1: Unit);
+ 
+  There's almost never a time we need to use the typeof operator. But it is
+  the only way to refer to the type of a type. For example, here's how you
+  could define the types @l[Unit@] and @l[Bit@] using explicit type variable
+  declarations:
+ 
+  @code[fble]
+   @<*()> Unit@ = *();
+   @<+(Unit@ 0, Unit@ 1)> Bit@ = +(Unit@ 0, Unit@ 1);
+ 
+  You see now why we don't use explicit type variable declarations when
+  defining type variables, because the value of the type contains the same
+  information as the type of the type.
+ 
+  And for those who are wondering, yes, a type of a type is also a value that
+  has a type. For example: @l[@<@<Bit@>>] is the type of the type of the
+  @l[Bit@] type. And on and on. But note, you cannot define a variable of a
+  type of a type. Because you never need to and that would just be confusing.
+ 
+ @section Variable Scopes
+  Variables in fble have lexical scoping, which means they can be referenced
+  from any code in the same block that follows their definition. Fble uses
+  automatic memory management to ensure values stay alive at runtime as long
+  as they are needed.
+ 
+  Anywhere an expression is expected, you can use @l[{] and @l[}] braces to
+  introduce a new scope for variables. For example:
+ 
+  @code[fble]
+   {
+     Int@ a = 1;
+     Int@ b = {
+       Int@ c = 1;
+       Add(a, c);
+     };
+     Int@ d = 3;
+   }
+ 
+  Variables @l[a], @l[b], and @l[d] can be referenced between their definition
+  and the end of the outer most block. Variable @l[c] can be referenced only
+  inside the block where the value of @l[b] is being defined.
+ 
+  It's possible to capture variables from outer blocks in function bodies.
+  We've already seen examples of this:
+ 
+  @code[fble]
+   Bit@ 0 = Bit@(0: Unit);
+   
+   (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+     a.?(0: 0, 1: b);
+   };
+ 
+  The value @l[0] used inside the @l[And] function will always refer to the
+  value of the variable @l[0] when the @l[And] function was declared,
+  regardless of when the @l[And] function is invoked.
+ 
+  A variable cannot be referenced before it is declared. An implication of
+  this is that a function must be defined after all other functions it makes
+  use of.
+ 
+  For example, the follow will result in an error, because the @l[And]
+  function hasn't been declared at the time it is referenced from the @l[And4]
+  function:
+ 
+  @code[fble]
+   (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+     # Error: `And' has not been declared.
+     Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
+   };
+   
+   (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+     a.?(0: 0, 1: b);
+   };
+ 
+ @section Recursive Declarations
+  In order to support recursive functions and types, a variable can be
+  referenced in its own declaration.
+ 
+  For example, here's how you can define a recursive function:
+ 
+  @code[fble]
+   (Int@) { Int@; } Factorial = (Int@ n) {
+     Eq(n, 0).?(true: 1, false: Mul(n, Factorial(Sub(n, 1))));
+   };
+ 
+  In this case, we refer to the variable @l[Factorial] from the definition of
+  the function value.
+ 
+  The value of a variable is undefined when evaluating the definition of the
+  variable. It's only after the definition of the variable has finished being
+  evaluated that the variable takes on its value. This works fine in the
+  definition of @l[Factorial], because we don't invoke the @l[Factorial]
+  function until after it has been defined.
+ 
+  If you do try to use the value of a variable in its own definition, you'll
+  get a runtime error. For example, the following results an "undefined value"
+  runtime error:
+ 
+  @code[fble]
+   Bit@ 1 = Bit@(1.1);
+ 
+  This is an error because we are trying to access the @l[1] field of the bit
+  before it has been defined.
+ 
+  You could define a cyclical infinite list if you wanted:
+ 
+  @code[fble]
+   List@<Bit@> ones = Cons(1, ones);
+ 
+  This is fine because you never try to access the value of the variable in
+  its definition.
+ 
+  Recursive declarations are also useful for declaring recursive data types.
+  For example, here's how you could define a (non-polymorphic) list data type:
+ 
+  @code[fble]
+   @ List@ = +(*(Bit@ head, List@ tail) cons, Unit@ nil);
+ 
+  Don't try anything too crazy though. The following will give an error about
+  a vacuous type:
+ 
+  @code[fble]
+   @ T@ = T@;
+ 
+ @section Mutually Recursive Declarations
+  There are times you may want to define mutually recursive variables. To do
+  this, you can specify multiple variable definitions in the same let
+  expression separate by a comma.
+ 
+  Here's an example of declaring multiple variables at once without them
+  referring to each other:
+ 
+  @code[fble]
+   Bit@ 0 = Bit@(0: Unit), Bit@ 1 = Bit@(1: Unit);
+ 
+  Here's a contrived example of defining mutually recursive functions:
+ 
+  @code[fble]
+   (Int@) { Int@; } f = (Int@ x) {
+     x.?(0: x, 1: g(0), 2: g(1));
+   },
+   (Int@) { Int@; } g = (Int@ x) {
+     x.?(0: x, 1: f(0), 2: f(1));
+   };
+ 
+  Notice the two declarations are separated by a comma instead of a semicolon.
+ 
+  A less contrived example of mutually recursive declarations is in declaring
+  recursive data types:
+ 
+  @code[fble]
+   @ ListP@ = *(Bit@ head, List@ tail),
+   @ List@ = +(ListP@ cons, Unit@ nil);
+ 
+ @section Variable Shadowing
+  In fble it's allowed to shadow previous variable declarations. For example:
+ 
+  @code[fble]
+   Int@ x = 0;
+   Int@ y = x;
+   Int@ x = 1;
+   Int@ z = x;
+ 
+  In this case, the value of @l[y] is @l[0], and the value of @l[z] is @l[1].
+ 
+ @section Unused Variables
+  The fble compiler will give warnings about unused variables, to help
+  identify and clean up unecessary code. It's not uncommon to have an unused
+  variable on purpose. In that case, you can prefix the variable with @l[_] to
+  avoid the compiler emitting a warning. By convention, the variable name
+  @l[_] is used to indicate a value we don't care about.
+ 
+  For example, we saw use of @l[_] in the hello world program:
+ 
+  @code[fble]
+     Unit@ _ <- m.do(Puts[Str|'hello, world']);
+     m.return(True)
+ 
+  Here we use the variable name @l[_] for the result of @l[m.do]. Because it's
+  a @l[Unit@], we know and don't care about its value.
+ 
+ @section Variables in the Language Specification
+  You now know everything there is to know about variables in fble. To
+  reinforce this, read over @fbld[../spec/fble.fbld#variables][section 2 of
+  the fble language specification]. Everything there should be familiar to you
+  now.
+ 
+ @section Exercises
+  @exercise
+   Go back to the fble program we wrote for the Basics tutorial and change all
+   lets to use the implicit type form, including for all variables and
+   function definitions.
+ 
+  @exercise
+   Change some of the variables in the Basics tutorial to names with
+   punctuation and whitespace in them. For example, change the name of @l[X]
+   to @l['A variable named X'].
+ 
+  @exercise
+   Try defining a variable with the wrong type or the wrong kind. What error
+   message do you get?
+ 
+  @exercise
+   Try defining a type variable without the @l[@] at the end. Try defining a
+   normal variable with @l[@] at the end. What error messages do you get in
+   these cases?
+ 
+  @exercise
+   Try defining a variable for the type of the @l[Bit@] type. What error message
+   do you get?
+ 
+ @section Next Steps
+  Head over to the @fbld[Structs.fbld][Structs] tutorial to learn all about
+  structs.

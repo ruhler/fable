@@ -1,102 +1,96 @@
-@tutorial[Install][
-This tutorial shows you how to install fble for use with subsequent tutorials.
-
-There have not been any releases of fble yet at the time of writing this
-tutorial. To install fble you'll need to check out the source and manually
-build and install.
-
-@section[Source][
-The source code for fble is available from github at
-@url[https://github.com/ruhler/fable]. Run the following to check out the
-source code:
-
-@code[sh]
-git clone https://github.com/ruhler/fable.git
-]
-
-@section[Requirements][
-The README file included with the source code has the definitive list of
-requirements for fble. On a debian-based system, the following command can be
-used to get all required packages for fble:
-
-@code[sh]
-apt install \
-  expect binutils bison \
-  gcc gdb diffutils grep groff-base source-highlight \
-  ninja-build libgl-dev libsdl2-dev tcl8.6
-]
-
-@section[Build][
-Fble comes with a configure script to initialize the build scripts and specify
-where to install fble. You can choose whether to install fble in a standard
-system location, such as /usr/local, or in your own home directory in some
-location. For this example, we'll install fble to an 'install' directory
-alongside the source code.
-
-@code[sh]
-cd fable
-mkdir install
-INSTALL=`pwd`/install
-./configure --prefix=$INSTALL
-ninja && ninja install
-
-If you would like to run the full test suite, you can also run:
-
-@code[sh]
-ninja check
-]
-
-@section[Environment Setup][
-Subsequent tutorials all assume the environment has been set up for easy
-access to the fble installation. If you haven't installed to a standard
-install path, you can manually set up the environment by modifying PATH,
-LD_LIBRARY_PATH, and FBLE_PACKAGE_PATH environment variables.
-
-The following environment setup makes use of the @l[INSTALL] variable defined
-above:
-
-@code[sh]
-export PATH=$INSTALL/bin:$PATH
-export LD_LIBRARY_PATH=$INSTALL/lib:$LD_LIBRARY_PATH
-export FBLE_PACKAGE_PATH=$INSTALL/share/fble
-
-To test your environment is properly set up, try running a hello world program
-that ships with the fble installation:
-
-@code[sh]
-fble-stdio -p core -m /Core/Stdio/HelloWorld%
-
-If all goes well, you should see "hello, world" printed to the terminal.
-You're now ready to work through the rest of the fble tutorials to learn all
-about fble.
-]
-
-@section[Vim Syntax Highlighting][
-Fble ships with syntax files for use with the Vim text editor. If you are a
-Vim users, you can install the Vim files from the top level of the source
-directory using:
-
-@code[sh]
-mkdir -p ~/.vim/ftdetect ~/.vim/ftplugin ~/.vim/indent ~/.vim/syntax
-cp vim/ftdetect/* ~/.vim/ftdetect
-cp vim/ftplugin/* ~/.vim/ftplugin
-cp vim/indent/* ~/.vim/indent
-cp vim/syntax/* ~/.vim/syntax
-
-Now when you open up a @l[.fble] file in Vim, you'll get pretty syntax
-highlighting.
-
-It's also useful to set the path to be able to find .fble files from their
-module paths. For example, add the following to your ~/.vimrc file:
-
-@code[vim]
-autocmd BufNewFile,BufRead *.fble setlocal path=$FBLE_PACKAGE_PATH/*
-
-That way you can type @l[gf] with the cursor over a module path to jump to the
-code for that module.
-]
-
-@section[Next Steps]
-Head over to the @fbld[HelloWorld.fbld][HelloWorld] tutorial to
-write your very own hello world program in fble.
-]
+@tutorial Install
+ This tutorial shows you how to install fble for use with subsequent tutorials.
+ 
+ There have not been any releases of fble yet at the time of writing this
+ tutorial. To install fble you'll need to check out the source and manually
+ build and install.
+ 
+ @section Source
+  The source code for fble is available from github at
+  @url[https://github.com/ruhler/fable]. Run the following to check out the
+  source code:
+ 
+  @code[sh]
+   git clone https://github.com/ruhler/fable.git
+ 
+ @section Requirements
+  The README file included with the source code has the definitive list of
+  requirements for fble. On a debian-based system, the following command can
+  be used to get all required packages for fble:
+ 
+  @code[sh]
+   apt install \
+     expect binutils bison \
+     gcc gdb diffutils grep groff-base source-highlight \
+     ninja-build libgl-dev libsdl2-dev tcl8.6
+ 
+ @section Build
+  Fble comes with a configure script to initialize the build scripts and
+  specify where to install fble. You can choose whether to install fble in a
+  standard system location, such as /usr/local, or in your own home directory
+  in some location. For this example, we'll install fble to an 'install'
+  directory alongside the source code.
+ 
+  @code[sh]
+   cd fable
+   mkdir install
+   INSTALL=`pwd`/install
+   ./configure --prefix=$INSTALL
+   ninja && ninja install
+ 
+  If you would like to run the full test suite, you can also run:
+ 
+  @code[sh]
+   ninja check
+ 
+ @section Environment Setup
+  Subsequent tutorials all assume the environment has been set up for easy
+  access to the fble installation. If you haven't installed to a standard
+  install path, you can manually set up the environment by modifying PATH,
+  LD_LIBRARY_PATH, and FBLE_PACKAGE_PATH environment variables.
+ 
+  The following environment setup makes use of the @l[INSTALL] variable
+  defined above:
+ 
+  @code[sh]
+   export PATH=$INSTALL/bin:$PATH
+   export LD_LIBRARY_PATH=$INSTALL/lib:$LD_LIBRARY_PATH
+   export FBLE_PACKAGE_PATH=$INSTALL/share/fble
+ 
+  To test your environment is properly set up, try running a hello world
+  program that ships with the fble installation:
+ 
+  @code[sh]
+   fble-stdio -p core -m /Core/Stdio/HelloWorld%
+ 
+  If all goes well, you should see "hello, world" printed to the terminal.
+  You're now ready to work through the rest of the fble tutorials to learn all
+  about fble.
+ 
+ @section Vim Syntax Highlighting
+  Fble ships with syntax files for use with the Vim text editor. If you are a
+  Vim users, you can install the Vim files from the top level of the source
+  directory using:
+ 
+  @code[sh]
+   mkdir -p ~/.vim/ftdetect ~/.vim/ftplugin ~/.vim/indent ~/.vim/syntax
+   cp vim/ftdetect/* ~/.vim/ftdetect
+   cp vim/ftplugin/* ~/.vim/ftplugin
+   cp vim/indent/* ~/.vim/indent
+   cp vim/syntax/* ~/.vim/syntax
+ 
+  Now when you open up a @l[.fble] file in Vim, you'll get pretty syntax
+  highlighting.
+ 
+  It's also useful to set the path to be able to find .fble files from their
+  module paths. For example, add the following to your ~/.vimrc file:
+ 
+  @code[vim]
+   autocmd BufNewFile,BufRead *.fble setlocal path=$FBLE_PACKAGE_PATH/*
+ 
+  That way you can type @l[gf] with the cursor over a module path to jump to
+  the code for that module.
+ 
+ @section Next Steps
+  Head over to the @fbld[HelloWorld.fbld][HelloWorld] tutorial to write your
+  very own hello world program in fble.

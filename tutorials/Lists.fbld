@@ -1,174 +1,164 @@
-@tutorial[Lists][
-This tutorial describes special syntax fble has for describing lists of
-values.
-
-@section[Lists in Fble][
-There is no builtin list type in fble. You can define your own list type in
-fble using a mix of structs and unions.  For example, here's a possible
-definition for a list of @l[Int@]:
-
-@code[fble]
-@ List@ = +(*(Int@ head, List@ tail) cons, Unit@ nil);
-
-This defines the list type as a union with two choices: a list constructed
-with a head element and tail of the list, or an empty list. We can define
-helper functions for constructing lists:
-
-@code[fble][
-List@ Empty = List@(nil: Unit);
-
-(Int@, List@) { List@; } Cons = (Int@ head, List@ tail) {
-  List@(cons: @(head, tail));
-};
-]
-
-We can then construct a list of integers. For example, here's a list of the
-first 8 integers in the fibonacci sequence:
-
-@code[fble]
-List@ Fibonacci = Cons(
-  Int|0, Cons(
-  Int|1, Cons(
-  Int|1, Cons(
-  Int|2, Cons(
-  Int|3, Cons(
-  Int|5, Cons(
-  Int|8, Cons(
-  Int|13, Empty))))))));
-
-It's pretty tedious to write a list this way. In most languages you could
-write something like @l[[0, 1, 1, 2, 3, 5, 8, 13]], which is much more compact
-and readable.
-]
-
-@section[The List Expression][
-Fble has syntax for list expressions. A list expression is a special kind of
-function application for functions that take a single list argument.
-
-Let's define a (in this case trivial) function that takes a single list as an
-argument to construct a list:
-
-@code[fble]
-(List@) { List@; } List = (List@ l) { l; };
-
-We can use the list expression in fble to define lists now using:
-
-@code[fble]
-List@ Fibonacci = List[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
-
-The compiler will assemble together the list elements into a collection of
-struct and union values that comprise the value of the list, and then call the
-function with the list value as its argument. In this case, the list
-expression desugars at compile time to:
-
-@code[fble]
-List@ Fibonacci = List(
-  List@(cons: @(head: Int|0, tail:
-  List@(cons: @(head: Int|1, tail:
-  List@(cons: @(head: Int|1, tail:
-  List@(cons: @(head: Int|2, tail:
-  List@(cons: @(head: Int|3, tail:
-  List@(cons: @(head: Int|5, tail:
-  List@(cons: @(head: Int|8, tail:
-  List@(cons: @(head: Int|13, tail:
-  List@(nil: Unit))))))))))))))))));
-]
-
-@section[The List Type][
-For the compiler to support the list expression, it has to know what the
-structure of a list is. It doesn't care what name you use for the list type,
-or what name you use for the list fields. As long as it has the same
-structure as the @l[List@] type we already defined.
-
-Specifically, the required structure of a list type is:
-
-@item It must be a union type with two fields.
-@item The first field must be a struct type with two fields.
-@item The struct type's first field is the list element type.
-@item The struct type's second field is the list type.
-@item The union type's second field is a struct type with no fields.
-
-If all of these are satisfied for your type, you can use a list expression to
-easily construct values of your type.
-
-For example, here's a completely different way we could define our list type
-and still use the list expression:
-
-@code[fble][
-@ MyUnit@ = *();
-@ NonEmptyIntList@ = *(Int@ element, IntList@ rest_of_list),
-@ IntList@ = +(NonEmptyList@ not_empty, MyUnit@ empty);
-
-(IntList@) { IntList@; } Elements = (IntList@ elements) {
-  elements;
-};
-
-IntList@ Fibonacci = Elements[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
-]
-
-This works because the @l[IntList@] type, even though it uses different names
-for things, matches the structure of a list type expected by the compiler for
-list expressions.
-
-We haven't covered polymorphism yet in these tutorials, but importantly, you
-can define polymorphic list types that satisfy the list type structure
-required by the list expression.
-
-The compiler knows what actual type to use for the constructed list based on
-the argument type of the list function used in the list expression.
-]
-
-@section[List Functions][
-The list expression requires a function that takes a single argument which is
-of list type. We saw an example function @l[List] that returns its value
-directly to construct a list, but you can do anything you want in the list
-function.
-
-For example, here is a list function that sums the integers in a list, using a
-helper function to ensure recursion happens in the tail position:
-
-@code[fble][
-(List@) { Int@; } Sum = {
-  (Int@, List@) { Int@; } Helper = (Int@ sum, List@ xs) {
-    xs.?(nil: sum);
-    Helper(Add(sum, xs.cons.head), xs.cons.tail);
-  };
-
-  (List@ xs) {
-    Helper(Int|0, xs);
-  };
-};
-]
-
-We can use @l[Sum] as the list function in a list expression:
-
-@code[fble]
-Int@ sum = Sum[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
-
-We saw some examples of the list expression in our
-@fbld[HelloWorld.fbld][HelloWorld] tutorial. For instance:
-
-@code[fble]
-  Unit@ _ <- m.do(Puts[Str|'A boolean: ', /Core/Bool/Show%.Show(True)]);
-
-Here the @l[Puts] function takes a list of strings as its only argument, so we
-can use the list expression to call it.
-]
-
-@section[Variable Arguments]
-The list expression can be used to provide something similar to variable
-arguments calls like they have in C, C++, and Java. If you want a function to
-take a variable number of arguments (which in fble must all have the same
-type), pass a list of values as one of the arguments and use a list expression
-to construct that list.
-
-@section[Lists in the Language Specification]
-The list expression is covered in @fbld[../spec/fble.fbld#lists][section 7.1
-of the fble language specification].
-
-@section[Exercises][]
-
-@section[Next Steps]
-Head over to the @fbld[Literals.fbld][Literals] tutorial to learn all
-about literals in fble.
-]
+@tutorial Lists
+ This tutorial describes special syntax fble has for describing lists of
+ values.
+ 
+ @section Lists in Fble
+  There is no builtin list type in fble. You can define your own list type in
+  fble using a mix of structs and unions.  For example, here's a possible
+  definition for a list of @l[Int@]:
+ 
+  @code[fble]
+   @ List@ = +(*(Int@ head, List@ tail) cons, Unit@ nil);
+ 
+  This defines the list type as a union with two choices: a list constructed
+  with a head element and tail of the list, or an empty list. We can define
+  helper functions for constructing lists:
+ 
+  @code[fble]
+   List@ Empty = List@(nil: Unit);
+   
+   (Int@, List@) { List@; } Cons = (Int@ head, List@ tail) {
+     List@(cons: @(head, tail));
+   };
+ 
+  We can then construct a list of integers. For example, here's a list of the
+  first 8 integers in the fibonacci sequence:
+ 
+  @code[fble]
+   List@ Fibonacci = Cons(
+     Int|0, Cons(
+     Int|1, Cons(
+     Int|1, Cons(
+     Int|2, Cons(
+     Int|3, Cons(
+     Int|5, Cons(
+     Int|8, Cons(
+     Int|13, Empty))))))));
+ 
+  It's pretty tedious to write a list this way. In most languages you could
+  write something like @l[[0, 1, 1, 2, 3, 5, 8, 13]], which is much more
+  compact and readable.
+ 
+ @section The List Expression
+  Fble has syntax for list expressions. A list expression is a special kind of
+  function application for functions that take a single list argument.
+ 
+  Let's define a (in this case trivial) function that takes a single list as
+  an argument to construct a list:
+ 
+  @code[fble]
+   (List@) { List@; } List = (List@ l) { l; };
+ 
+  We can use the list expression in fble to define lists now using:
+ 
+  @code[fble]
+   List@ Fibonacci = List[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
+ 
+  The compiler will assemble together the list elements into a collection of
+  struct and union values that comprise the value of the list, and then call
+  the function with the list value as its argument. In this case, the list
+  expression desugars at compile time to:
+ 
+  @code[fble]
+   List@ Fibonacci = List(
+     List@(cons: @(head: Int|0, tail:
+     List@(cons: @(head: Int|1, tail:
+     List@(cons: @(head: Int|1, tail:
+     List@(cons: @(head: Int|2, tail:
+     List@(cons: @(head: Int|3, tail:
+     List@(cons: @(head: Int|5, tail:
+     List@(cons: @(head: Int|8, tail:
+     List@(cons: @(head: Int|13, tail:
+     List@(nil: Unit))))))))))))))))));
+ 
+ @section The List Type
+  For the compiler to support the list expression, it has to know what the
+  structure of a list is. It doesn't care what name you use for the list type,
+  or what name you use for the list fields. As long as it has the same
+  structure as the @l[List@] type we already defined.
+ 
+  Specifically, the required structure of a list type is:
+ 
+  @item It must be a union type with two fields.
+  @item The first field must be a struct type with two fields.
+  @item The struct type's first field is the list element type.
+  @item The struct type's second field is the list type.
+  @item The union type's second field is a struct type with no fields.
+ 
+  If all of these are satisfied for your type, you can use a list expression
+  to easily construct values of your type.
+ 
+  For example, here's a completely different way we could define our list type
+  and still use the list expression:
+ 
+  @code[fble]
+   @ MyUnit@ = *();
+   @ NonEmptyIntList@ = *(Int@ element, IntList@ rest_of_list),
+   @ IntList@ = +(NonEmptyList@ not_empty, MyUnit@ empty);
+   
+   (IntList@) { IntList@; } Elements = (IntList@ elements) {
+     elements;
+   };
+   
+   IntList@ Fibonacci = Elements[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
+ 
+  This works because the @l[IntList@] type, even though it uses different
+  names for things, matches the structure of a list type expected by the
+  compiler for list expressions.
+ 
+  We haven't covered polymorphism yet in these tutorials, but importantly, you
+  can define polymorphic list types that satisfy the list type structure
+  required by the list expression.
+ 
+  The compiler knows what actual type to use for the constructed list based on
+  the argument type of the list function used in the list expression.
+ 
+ @section List Functions
+  The list expression requires a function that takes a single argument which
+  is of list type. We saw an example function @l[List] that returns its value
+  directly to construct a list, but you can do anything you want in the list
+  function.
+ 
+  For example, here is a list function that sums the integers in a list, using
+  a helper function to ensure recursion happens in the tail position:
+ 
+  @code[fble]
+   (List@) { Int@; } Sum = {
+     (Int@, List@) { Int@; } Helper = (Int@ sum, List@ xs) {
+       xs.?(nil: sum);
+       Helper(Add(sum, xs.cons.head), xs.cons.tail);
+     };
+   
+     (List@ xs) {
+       Helper(Int|0, xs);
+     };
+   };
+ 
+  We can use @l[Sum] as the list function in a list expression:
+ 
+  @code[fble]
+   Int@ sum = Sum[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
+ 
+  We saw some examples of the list expression in our
+  @fbld[HelloWorld.fbld][HelloWorld] tutorial. For instance:
+ 
+  @code[fble]
+   Unit@ _ <- m.do(Puts[Str|'A boolean: ', /Core/Bool/Show%.Show(True)]);
+ 
+  Here the @l[Puts] function takes a list of strings as its only argument, so
+  we can use the list expression to call it.
+ 
+ @section Variable Arguments
+  The list expression can be used to provide something similar to variable
+  arguments calls like they have in C, C++, and Java. If you want a function
+  to take a variable number of arguments (which in fble must all have the same
+  type), pass a list of values as one of the arguments and use a list
+  expression to construct that list.
+ 
+ @section Lists in the Language Specification
+  The list expression is covered in @fbld[../spec/fble.fbld#lists][section 7.1
+  of the fble language specification].
+ 
+ @section Next Steps
+  Head over to the @fbld[Literals.fbld][Literals] tutorial to learn all about
+  literals in fble.

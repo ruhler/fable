@@ -1,373 +1,360 @@
-@tutorial[Bind][
-This tutorial describes the function bind syntactic sugar in fble and the
-motivations for it.
-
-@section[The Syntax][
-Bind is syntactic sugar in fble to make the syntax a little bit nicer in the
-following very specific situation:
-
-@item You are applying a function with a single argument.
-@item That single argument is a function value.
-@item You are specifying the argument function value as an anonymous function.
-
-We'll talk later about why this case occurs. For now, let's just look at the
-syntax.
-
-@subsection[Definition][
-Bind syntax takes something of the form:
-
-@code[fble]
-T1@ a1, T2@ a2, ... <- FUNC;
-BODY;
-
-And desugars it to:
-
-@code[fble]
-FUNC((T1@ a1, T2@ a2, ...) { BODY; });
-
-Where @l[FUNC] and @l[BODY] are fble expressions and @l[BODY] can refer to the
-arguments @l[a1], @l[a2], @l[...]. Bind syntax can be used with one or more
-arguments @l[a1], @l[a2], @l[...].
-]
-
-@subsection[Example][
-In the @fbld[Functions.fbld][Functions] tutorial we gave an example of a
-function that takes a function as an argument:
-
-@code[fble]
-((Bit@, Bit@) { Bit@; }, Bit4@, Bit4@) { Bit4@; }
-BinaryBitwise = ((Bit@, Bit@) { Bit@; } op, Bit4@ a, Bit4@ b) {
-  Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
-};
-
-And we gave an example of passing an anonymous function to that:
-
-@code[fble]
-(Bit4@, Bit4@) { Bit4@; } And4 = BinaryBitwise(
-  (Bit@ a, Bit@ b) {
-    a.?(0: 0, 1: b);
-  }
-);
-
-Let's rewrite the @l[BinaryBitwise] function to something where we could apply
-the bind syntax. We need it to take a single function argument, so we'll swap
-the order of arguments and have it return a function that takes the single
-function argument:
-
-@code[fble]
-(Bit4@, Bit4@)((Bit@, Bit@) { Bit@; }) { Bit4@; }
-BinaryBitwise = (Bit4@ a, Bit4@ b)((Bit@, Bit@) { Bit@; } op) {
-  Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
-};
-
-We can define @l[And4] using our new @l[BinaryBitwise] function as follows:
-
-@code[fble]
-(Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
-  BinaryBitwise(x, y)(
-    (Bit@ a, Bit@ b) {
+@tutorial Bind
+ This tutorial describes the function bind syntactic sugar in fble and the
+ motivations for it.
+ 
+ @section The Syntax
+  Bind is syntactic sugar in fble to make the syntax a little bit nicer in the
+  following very specific situation:
+ 
+  @item You are applying a function with a single argument.
+  @item That single argument is a function value.
+  @item You are specifying the argument function value as an anonymous function.
+ 
+  We'll talk later about why this case occurs. For now, let's just look at the
+  syntax.
+ 
+  @subsection Definition
+   Bind syntax takes something of the form:
+ 
+   @code[fble]
+    T1@ a1, T2@ a2, ... <- FUNC;
+    BODY;
+ 
+   And desugars it to:
+ 
+   @code[fble]
+    FUNC((T1@ a1, T2@ a2, ...) { BODY; });
+ 
+   Where @l[FUNC] and @l[BODY] are fble expressions and @l[BODY] can refer to
+   the arguments @l[a1], @l[a2], @l[...]. Bind syntax can be used with one or
+   more arguments @l[a1], @l[a2], @l[...].
+ 
+  @subsection[Example][
+   In the @fbld[Functions.fbld][Functions] tutorial we gave an example of a
+   function that takes a function as an argument:
+ 
+   @code[fble]
+    ((Bit@, Bit@) { Bit@; }, Bit4@, Bit4@) { Bit4@; }
+    BinaryBitwise = ((Bit@, Bit@) { Bit@; } op, Bit4@ a, Bit4@ b) {
+      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
+    };
+ 
+   And we gave an example of passing an anonymous function to that:
+ 
+   @code[fble]
+    (Bit4@, Bit4@) { Bit4@; } And4 = BinaryBitwise(
+      (Bit@ a, Bit@ b) {
+        a.?(0: 0, 1: b);
+      }
+    );
+ 
+   Let's rewrite the @l[BinaryBitwise] function to something where we could
+   apply the bind syntax. We need it to take a single function argument, so
+   we'll swap the order of arguments and have it return a function that takes
+   the single function argument:
+ 
+   @code[fble]
+    (Bit4@, Bit4@)((Bit@, Bit@) { Bit@; }) { Bit4@; }
+    BinaryBitwise = (Bit4@ a, Bit4@ b)((Bit@, Bit@) { Bit@; } op) {
+      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
+    };
+ 
+   We can define @l[And4] using our new @l[BinaryBitwise] function as follows:
+ 
+   @code[fble]
+    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
+      BinaryBitwise(x, y)(
+        (Bit@ a, Bit@ b) {
+          a.?(0: 0, 1: b);
+        });
+    };
+ 
+   Now all the requirements for bind are satisfied when we call the
+   @l[BinaryBitwise(x, y)] function: it takes a single function argument which
+   we are supplying with an anonymous function.
+ 
+   Using the bind syntax, we can rewrite the code to:
+ 
+   @code[fble]
+    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
+      Bit@ a, Bit@ b <- BinaryBitwise(x, y);
       a.?(0: 0, 1: b);
-    });
-};
-
-Now all the requirements for bind are satisfied when we call the
-@l[BinaryBitwise(x, y)] function: it takes a single function argument which we
-are supplying with an anonymous function.
-
-Using the bind syntax, we can rewrite the code to:
-
-@code[fble]
-(Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
-  Bit@ a, Bit@ b <- BinaryBitwise(x, y);
-  a.?(0: 0, 1: b);
-};
-
-You can double check that if we apply the definition for bind syntax from
-above to this code, you'll get the right thing back.
-]
-]
-
-@section[A Less Contrived Example][
-The example we gave for bind syntax in the previous section was totally
-contrived, just to demonstrate the syntax. You wouldn't implement @l[And4]
-using bind syntax in practice.
-
-Let's take a look at a less contrived example. Imagine you are doing
-arithmetic with integers. Division by zero is undefined for integer
-arithmetic. One way to deal with division by zero is to change the return type
-of division to distinguish between an integer result and an undefined result.
-
-For example, let's define a type @l[MaybeInt@] that holds either an integer or
-nothing:
-
-@code[fble][
-@ MaybeInt@ = +(Int@ just, Unit@ nothing);
-
-(Int@) { MaybeInt@; } Just = (Int@ x) {
-  MaybeInt@(just: x);
-};
-
-MaybeInt@ Nothing = MaybeInt@(nothing: Unit);
-]
-
-Now we can define a @l[Div] function for integer division with the following
-type:
-
-@code[fble]
-(Int@, Int@) { MaybeInt@; } Div = (Int@ a, Int@ b) { ... };
-
-The @l[Div] function will return @l[Nothing] if it is a divide by zero and
-@l[Just(x)] otherwise.
-
-Any time you work with this division function, you'll have to check the answer
-to see if it is undefined. To propagate that case, it would be nice if we have
-variations of all our arithmetic operations to work with @l[MaybeInt@] instead
-of @l[Int@]. For example:
-
-@code[fble][
-(MaybeInt@, MaybeInt@) { MaybeInt@; }
-MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
-  ma.?(nothing: Nothing);
-  mb.?(nothing: Nothing);
-  Just(Add(ma.just, mb.just));
-};
-
-(MaybeInt@, MaybeInt@) { MaybeInt@; }
-MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
-  ma.?(nothing: Nothing);
-  mb.?(nothing: Nothing);
-  Div(ma.just, mb.just);
-};
-]
-
-We can factor out glue code for checking if a @l[MaybeInt@] value is
-@l[Nothing]:
-
-@code[fble]
-(MaybeInt@)((Int@) { MaybeInt@; }) { MaybeInt@; }
-Maybe = (MaybeInt@ mx)((Int@) { MaybeInt@ } f) {
-  mx.?(nothing: Nothing);
-  f(mx.just);
-};
-
-Now we can write:
-
-@code[fble][
-(MaybeInt@, MaybeInt@) { MaybeInt@; }
-MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
-  Maybe(ma)((Int@ a) {
-    Maybe(mb)((Int@ b) {
-      Just(Add(a, b));
-    });
-  });
-};
-  
-(MaybeInt@, MaybeInt@) { MaybeInt@; }
-MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
-  Maybe(ma)((Int@ a) {
-    Maybe(mb)((Int@ b) {
-      Div(a, b);
-    });
-  });
-};
-]
-
-Now we have code where it makes sense to use the bind syntax:
-
-@code[fble][
-(MaybeInt@, MaybeInt@) { MaybeInt@; }
-MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
-  Int@ a <- Maybe(ma);
-  Int@ b <- Maybe(mb);
-  Just(Add(a, b));
-};
-  
-(MaybeInt@, MaybeInt@) { MaybeInt@; }
-MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
-  Int@ a <- Maybe(ma);
-  Int@ b <- Maybe(mb);
-  Div(a, b);
-};
-]
-
-I would argue this is slightly better than our original definitions for
-@l[MaybeAdd] and @l[MaybeDiv] because we've factored out the logic for testing
-if a value is undefined or not. If we wanted to, we could easily change the
-definition of @l[MaybeInt@] to take an error message in the case of undefined
-and propagate that without having to change the definitions of @l[MaybeAdd] or
-@l[MaybeDiv].
-]
-
-@section[Type Inference][
-Bind is syntactic sugar for function application, which means it supports type
-inference.
-
-Let's generalize our @l[MaybeInt@] type to work for any kind of type using
-polymorphism:
-
-@code[fble][
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
-
-<@ T@>(T@) { Maybe@<T@>; } Just = (T@ x) {
-  Maybe@<T@>(just: x);
-};
-
-Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
-]
-
-Now we could propagate a divide by zero error to a boolean comparison result,
-for example. We'll start by updating our definition of the @l[Maybe] function
-for the case where the argument type and result types can be different:
-
-@code[fble]
-<@ A@>(Maybe@<A@>)<@ B@>((A@) { Maybe@<B@>; }) { Maybe@<B@>; }
-Maybe = <@ A@>(Maybe@<A@> mx)<@ B@>((A@) { Maybe@<B@> } f) {
-  mx.?(nothing: Nothing<B@>);
-  f(mx.just);
-};
-
-Take a moment to understand the interleaving of type parameters @l[A@] and
-@l[B@] and functions in that definition.
-
-Now let's write a @l[MaybeEquals] function to test whether two
-@l[Maybe@<Int@>] values are equal. First without the bind syntax:
-
-@code[fble][
-(Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
-MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
-  Maybe<Int@>(ma)<Bool@>((Int@ a) {
-    Maybe<Int@>(mb)<Bool@>((Int@ b) {
-      Just<Bool@>(Equals(a, b));
-    });
-  });
-};
-]
-
-With bind syntax:
-
-@code[fble]
-(Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
-MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
-  Int@ a <- Maybe<Int@>(ma)<Bool@>;
-  Int@ b <- Maybe<Int@>(mb)<Bool@>;
-  Just<Bool@>(Equals(a, b));
-};
-
-The problem with this is we have to repeat the @l[Bool@] type argument every
-time we call the @l[Maybe] function. If we changed the result type to
-@l[Maybe@<Int@>] instead of @l[Maybe@<Bool@>], we would have to update every
-line where @l[Bool@] is mentioned.
-
-Fortunately we can take advantage of type inference here. In fact, this
-scenario where we chain together bind syntax is the true motivation for having
-type inference in fble:
-
-@code[fble]
-(Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
-MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
-  Int@ a <- Maybe(ma);
-  Int@ b <- Maybe(mb);
-  Just(Equals(a, b));
-};
-]
-
-@section[Monadic Computations][
-This idea of factoring out common glue logic for a data type into separate
-functions is very powerful and can be applied to many more things than the
-example we showed with the @l[Maybe@] type. This is related to the term
-"Monad" from category theory, so we call this kind of thing "Monadic
-Computation".
-
-The relevant pieces for monadic computation in the @l[Maybe@] example were:
-
-@item A polymoprhic @l[Maybe@] type.
-@item The @l[Just] function to turn a value into a @l[Maybe@] value.
-@item
-The @l[Maybe] function to extract a value from a @l[Maybe@] and apply it to a
-function.
-
-We can define an interface that captures these relevant pieces. We'll have the
-interface apply to an abstract type @l[M@] in place of @l[Maybe@], rename the
-@l[Just] function to @l[return], and rename the @l[Maybe] function to @l[do]:
-
-@code[fble]
-<<@>@>@ Monad@ = <<@>@ M@> {
-  *(
-    <@ A@>(A@) { M@<A@>; } return,
-    <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
-  );
-};
-
-An example instance of this @l[Monad@] interface is what we've already seen:
-
-@code[fble]
-Monad@<Maybe@> MaybeMonad = @(return: Just, do: Maybe);
-
-We can generalize our arithmetic operations to work on any data type that
-supports this @l[Monad@] interface. In the @l[Maybe@] example we had the
-@l[Nothing] function to use in the case of @l[MaybeDiv]. @l[Nothing] is like a
-primitive function of the @l[Maybe@] monad.
-
-Here's how we could define monadic add, equality, and division functions for
-an abstract monadic type @l[M@] with a given primitive function for the case
-of divide by zero:
-
-@code[fble][
-<<@>@ M@>(Monad@<M@> m, <@ A@> { M@<A@>; } divide_by_zero) {
-  (M@<Int@>, M@<Int@>) { M@<Int@>; } AddM = (M@<Int@> ma, M@<Int@> mb) {
-    Int@ a <- m.do(ma);
-    Int@ b <- m.do(mb);
-    m.return(Add(a, b));
-  };
-
-  (M@<Int@>, M@<Int@>) { M@<Int@>; } DivM = (M@<Int@> a, M@<Int@> b) {
-    Int@ a <- m.do(ma);
-    Int@ b <- m.do(mb);
-    b.?(0: divide_by_zero<Int@>);
-    m.return(SaveDiv(a, b));
-  };
-
-  (M@<Int@>, M@<Int@>) { M@<Bool@>; } EqualsM = (M@<Int@> a, M@<Int@> b) {
-    Int@ a <- m.do(ma);
-    Int@ b <- m.do(mb);
-    m.return(Equals(a, b));
-  };
-
-  @(AddM, DivM, EqualsM);
-};
-]
-
-To get definitions for @l[MaybeAdd], @l[MaybeDiv], and @l[MaybeEquals], we
-just need to pass @l[Maybe@], @l[MaybeMonad], and @l[Nothing] to the above
-function.
-
-Here are some different things you could do with monads:
-
-@item Do computations with error messages.
-@item Do computations across all elements of a list.
-@item Do computations that read or write state.
-@item Do computations with logging, printf, or other input and output.
-
-This is how standard input output is described in fble. The main function to
-@l[HelloWorld] is a generic monadic computation that takes abstract primitive
-operations for input and output. Recall from the @fbld[HelloWorld.fbld][Hello
-World] tutorial:
-
-@code[fble]
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-  ...
-  Unit@ _ <- m.do(Puts[Str|'hello, world']);
-  m.return(True);
-};
-]
-
-@section[Bind in the Language Specification]
-See @fbld[../spec/fble.fbld#bind][section 7.3 of the
-fble language specification] for the specification of the bind syntax.
-
-@section[Exercises][]
-
-@section[Next Steps]
-Head over to the @fbld[Core.fbld][Core Library] tutorial to learn about
-a few of the core library types and APIs used in the hello world program.
-]
+    };
+ 
+   You can double check that if we apply the definition for bind syntax from
+   above to this code, you'll get the right thing back.
+ 
+ @section A Less Contrived Example
+  The example we gave for bind syntax in the previous section was totally
+  contrived, just to demonstrate the syntax. You wouldn't implement @l[And4]
+  using bind syntax in practice.
+ 
+  Let's take a look at a less contrived example. Imagine you are doing
+  arithmetic with integers. Division by zero is undefined for integer
+  arithmetic. One way to deal with division by zero is to change the return
+  type of division to distinguish between an integer result and an undefined
+  result.
+ 
+  For example, let's define a type @l[MaybeInt@] that holds either an integer
+  or nothing:
+ 
+  @code[fble]
+   @ MaybeInt@ = +(Int@ just, Unit@ nothing);
+   
+   (Int@) { MaybeInt@; } Just = (Int@ x) {
+     MaybeInt@(just: x);
+   };
+   
+   MaybeInt@ Nothing = MaybeInt@(nothing: Unit);
+ 
+  Now we can define a @l[Div] function for integer division with the following
+  type:
+ 
+  @code[fble]
+   (Int@, Int@) { MaybeInt@; } Div = (Int@ a, Int@ b) { ... };
+ 
+  The @l[Div] function will return @l[Nothing] if it is a divide by zero and
+  @l[Just(x)] otherwise.
+ 
+  Any time you work with this division function, you'll have to check the
+  answer to see if it is undefined. To propagate that case, it would be nice
+  if we have variations of all our arithmetic operations to work with
+  @l[MaybeInt@] instead of @l[Int@]. For example:
+ 
+  @code[fble]
+   (MaybeInt@, MaybeInt@) { MaybeInt@; }
+   MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
+     ma.?(nothing: Nothing);
+     mb.?(nothing: Nothing);
+     Just(Add(ma.just, mb.just));
+   };
+   
+   (MaybeInt@, MaybeInt@) { MaybeInt@; }
+   MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
+     ma.?(nothing: Nothing);
+     mb.?(nothing: Nothing);
+     Div(ma.just, mb.just);
+   };
+ 
+  We can factor out glue code for checking if a @l[MaybeInt@] value is
+  @l[Nothing]:
+ 
+  @code[fble]
+   (MaybeInt@)((Int@) { MaybeInt@; }) { MaybeInt@; }
+   Maybe = (MaybeInt@ mx)((Int@) { MaybeInt@ } f) {
+     mx.?(nothing: Nothing);
+     f(mx.just);
+   };
+ 
+  Now we can write:
+ 
+  @code[fble]
+   (MaybeInt@, MaybeInt@) { MaybeInt@; }
+   MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
+     Maybe(ma)((Int@ a) {
+       Maybe(mb)((Int@ b) {
+         Just(Add(a, b));
+       });
+     });
+   };
+     
+   (MaybeInt@, MaybeInt@) { MaybeInt@; }
+   MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
+     Maybe(ma)((Int@ a) {
+       Maybe(mb)((Int@ b) {
+         Div(a, b);
+       });
+     });
+   };
+ 
+  Now we have code where it makes sense to use the bind syntax:
+ 
+  @code[fble]
+   (MaybeInt@, MaybeInt@) { MaybeInt@; }
+   MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
+     Int@ a <- Maybe(ma);
+     Int@ b <- Maybe(mb);
+     Just(Add(a, b));
+   };
+     
+   (MaybeInt@, MaybeInt@) { MaybeInt@; }
+   MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
+     Int@ a <- Maybe(ma);
+     Int@ b <- Maybe(mb);
+     Div(a, b);
+   };
+ 
+  I would argue this is slightly better than our original definitions for
+  @l[MaybeAdd] and @l[MaybeDiv] because we've factored out the logic for
+  testing if a value is undefined or not. If we wanted to, we could easily
+  change the definition of @l[MaybeInt@] to take an error message in the case
+  of undefined and propagate that without having to change the definitions of
+  @l[MaybeAdd] or @l[MaybeDiv].
+ 
+ @section Type Inference
+  Bind is syntactic sugar for function application, which means it supports
+  type inference.
+ 
+  Let's generalize our @l[MaybeInt@] type to work for any kind of type using
+  polymorphism:
+ 
+  @code[fble]
+   <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+   
+   <@ T@>(T@) { Maybe@<T@>; } Just = (T@ x) {
+     Maybe@<T@>(just: x);
+   };
+   
+   Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
+ 
+  Now we could propagate a divide by zero error to a boolean comparison
+  result, for example. We'll start by updating our definition of the @l[Maybe]
+  function for the case where the argument type and result types can be
+  different:
+ 
+  @code[fble]
+   <@ A@>(Maybe@<A@>)<@ B@>((A@) { Maybe@<B@>; }) { Maybe@<B@>; }
+   Maybe = <@ A@>(Maybe@<A@> mx)<@ B@>((A@) { Maybe@<B@> } f) {
+     mx.?(nothing: Nothing<B@>);
+     f(mx.just);
+   };
+ 
+  Take a moment to understand the interleaving of type parameters @l[A@] and
+  @l[B@] and functions in that definition.
+ 
+  Now let's write a @l[MaybeEquals] function to test whether two
+  @l[Maybe@<Int@>] values are equal. First without the bind syntax:
+ 
+  @code[fble]
+   (Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
+   MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
+     Maybe<Int@>(ma)<Bool@>((Int@ a) {
+       Maybe<Int@>(mb)<Bool@>((Int@ b) {
+         Just<Bool@>(Equals(a, b));
+       });
+     });
+   };
+ 
+  With bind syntax:
+ 
+  @code[fble]
+   (Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
+   MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
+     Int@ a <- Maybe<Int@>(ma)<Bool@>;
+     Int@ b <- Maybe<Int@>(mb)<Bool@>;
+     Just<Bool@>(Equals(a, b));
+   };
+ 
+  The problem with this is we have to repeat the @l[Bool@] type argument every
+  time we call the @l[Maybe] function. If we changed the result type to
+  @l[Maybe@<Int@>] instead of @l[Maybe@<Bool@>], we would have to update every
+  line where @l[Bool@] is mentioned.
+ 
+  Fortunately we can take advantage of type inference here. In fact, this
+  scenario where we chain together bind syntax is the true motivation for
+  having type inference in fble:
+ 
+  @code[fble]
+   (Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
+   MaybeEquals = (Maybe@<Int@> a, Maybe@<Int@> b) {
+     Int@ a <- Maybe(ma);
+     Int@ b <- Maybe(mb);
+     Just(Equals(a, b));
+   };
+ 
+ @section Monadic Computations
+  This idea of factoring out common glue logic for a data type into separate
+  functions is very powerful and can be applied to many more things than the
+  example we showed with the @l[Maybe@] type. This is related to the term
+  "Monad" from category theory, so we call this kind of thing "Monadic
+  Computation".
+ 
+  The relevant pieces for monadic computation in the @l[Maybe@] example were:
+ 
+  @item A polymoprhic @l[Maybe@] type.
+  @item The @l[Just] function to turn a value into a @l[Maybe@] value.
+  @item
+   The @l[Maybe] function to extract a value from a @l[Maybe@] and apply it to
+   a function.
+ 
+  We can define an interface that captures these relevant pieces. We'll have
+  the interface apply to an abstract type @l[M@] in place of @l[Maybe@],
+  rename the @l[Just] function to @l[return], and rename the @l[Maybe]
+  function to @l[do]:
+ 
+  @code[fble]
+   <<@>@>@ Monad@ = <<@>@ M@> {
+     *(
+       <@ A@>(A@) { M@<A@>; } return,
+       <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; } do
+     );
+   };
+ 
+  An example instance of this @l[Monad@] interface is what we've already seen:
+ 
+  @code[fble]
+   Monad@<Maybe@> MaybeMonad = @(return: Just, do: Maybe);
+ 
+  We can generalize our arithmetic operations to work on any data type that
+  supports this @l[Monad@] interface. In the @l[Maybe@] example we had the
+  @l[Nothing] function to use in the case of @l[MaybeDiv]. @l[Nothing] is like
+  a primitive function of the @l[Maybe@] monad.
+ 
+  Here's how we could define monadic add, equality, and division functions for
+  an abstract monadic type @l[M@] with a given primitive function for the case
+  of divide by zero:
+ 
+  @code[fble]
+   <<@>@ M@>(Monad@<M@> m, <@ A@> { M@<A@>; } divide_by_zero) {
+     (M@<Int@>, M@<Int@>) { M@<Int@>; } AddM = (M@<Int@> ma, M@<Int@> mb) {
+       Int@ a <- m.do(ma);
+       Int@ b <- m.do(mb);
+       m.return(Add(a, b));
+     };
+   
+     (M@<Int@>, M@<Int@>) { M@<Int@>; } DivM = (M@<Int@> a, M@<Int@> b) {
+       Int@ a <- m.do(ma);
+       Int@ b <- m.do(mb);
+       b.?(0: divide_by_zero<Int@>);
+       m.return(SaveDiv(a, b));
+     };
+   
+     (M@<Int@>, M@<Int@>) { M@<Bool@>; } EqualsM = (M@<Int@> a, M@<Int@> b) {
+       Int@ a <- m.do(ma);
+       Int@ b <- m.do(mb);
+       m.return(Equals(a, b));
+     };
+   
+     @(AddM, DivM, EqualsM);
+   };
+ 
+  To get definitions for @l[MaybeAdd], @l[MaybeDiv], and @l[MaybeEquals], we
+  just need to pass @l[Maybe@], @l[MaybeMonad], and @l[Nothing] to the above
+  function.
+ 
+  Here are some different things you could do with monads:
+ 
+  @item Do computations with error messages.
+  @item Do computations across all elements of a list.
+  @item Do computations that read or write state.
+  @item Do computations with logging, printf, or other input and output.
+ 
+  This is how standard input output is described in fble. The main function to
+  @l[HelloWorld] is a generic monadic computation that takes abstract
+  primitive operations for input and output. Recall from the
+  @fbld[HelloWorld.fbld][Hello World] tutorial:
+ 
+  @code[fble]
+   Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
+     ...
+     Unit@ _ <- m.do(Puts[Str|'hello, world']);
+     m.return(True);
+   };
+ 
+ @section Bind in the Language Specification
+  See @fbld[../spec/fble.fbld#bind][section 7.3 of the fble language
+  specification] for the specification of the bind syntax.
+ 
+ @section Next Steps
+  Head over to the @fbld[Core.fbld][Core Library] tutorial to learn about a
+  few of the core library types and APIs used in the hello world program.

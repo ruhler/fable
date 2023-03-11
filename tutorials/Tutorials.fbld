@@ -1,52 +1,51 @@
-@doc[Tutorials][
-The following is a series of tutorials about the fble language:
-
-@def[@fbld[Introduction.fbld][Introduction]]
-What fble is and why bother learning it.
-
-@def[@fbld[Install.fbld][Install]]
-Install fble and set up your environment.
-
-@def[@fbld[HelloWorld.fbld][Hello World]]
-Write and run a hello world program.
-
-@def[@fbld[Basics.fbld][Basics]]
-Learn about the basics of structs, unions, and functions.
-
-@def[@fbld[Variables.fbld][Variables]]
-Learn all about variables in fble.
-
-@def[@fbld[Structs.fbld][Structs]]
-Learn all about structs in fble.
-
-@def[@fbld[Modules.fbld][Modules]]
-Learn all about modules in fble.
-
-@def[@fbld[Unions.fbld][Unions]]
-Learn all about unions in fble.
-
-@def[@fbld[Functions.fbld][Functions]]
-Learn all about functions in fble.
-
-@def[@fbld[Lists.fbld][Lists]]
-Learn about fble's syntactic support for lists.
-
-@def[@fbld[Literals.fbld][Literals]]
-Learn about fble's syntactic support for user-defined literals.
-
-@def[@fbld[Polymorphism.fbld][Polymorphism]]
-Learn all about polymorphic values in fble.
-
-@def[@fbld[Bind.fbld][Bind]]
-Learn about function bind syntax and monad computations in fble.
-
-@def[@fbld[Core.fbld][Core]]
-Learn about core library types and functions used in the hello world program.
-
-@def[@fbld[HelloWorldRevisited.fbld][Hello World Revisited]]
-Review the hello world program now that you know all the language features
-used.
-
-@def[@fbld[AbstractTypes.fbld][Abstract Types]]
-Learn about support for abstract types in fble.
-]
+@doc Tutorials
+ The following is a series of tutorials about the fble language:
+ 
+ @def @fbld[Introduction.fbld][Introduction]
+  What fble is and why bother learning it.
+ 
+ @def @fbld[Install.fbld][Install]
+  Install fble and set up your environment.
+ 
+ @def @fbld[HelloWorld.fbld][Hello World]
+  Write and run a hello world program.
+ 
+ @def @fbld[Basics.fbld][Basics]
+  Learn about the basics of structs, unions, and functions.
+ 
+ @def @fbld[Variables.fbld][Variables]
+  Learn all about variables in fble.
+ 
+ @def @fbld[Structs.fbld][Structs]
+  Learn all about structs in fble.
+ 
+ @def @fbld[Modules.fbld][Modules]
+  Learn all about modules in fble.
+ 
+ @def @fbld[Unions.fbld][Unions]
+  Learn all about unions in fble.
+ 
+ @def @fbld[Functions.fbld][Functions]
+  Learn all about functions in fble.
+ 
+ @def @fbld[Lists.fbld][Lists]
+  Learn about fble's syntactic support for lists.
+ 
+ @def @fbld[Literals.fbld][Literals]
+  Learn about fble's syntactic support for user-defined literals.
+ 
+ @def @fbld[Polymorphism.fbld][Polymorphism]
+  Learn all about polymorphic values in fble.
+ 
+ @def @fbld[Bind.fbld][Bind]
+  Learn about function bind syntax and monad computations in fble.
+ 
+ @def @fbld[Core.fbld][Core]
+  Learn about core library types and functions used in the hello world program.
+ 
+ @def @fbld[HelloWorldRevisited.fbld][Hello World Revisited]
+  Review the hello world program now that you know all the language features
+  used.
+ 
+ @def @fbld[AbstractTypes.fbld][Abstract Types]
+  Learn about support for abstract types in fble.

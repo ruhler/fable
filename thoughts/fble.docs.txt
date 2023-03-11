@@ -2911,3 +2911,5 @@ Notes from conversion experience:
 * set autoindent in vim. Then it will line up indent from first line.
 * I'm pretty happy with improvements to appearance of usage .fbld files from
   this change.
+* Yeah. Overall, from the point of view of how the documents look to read, I'm
+  really liking this change.

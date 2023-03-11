@@ -1,4 +1,4 @@
-@tutorial[Hello World]
+@tutorial Hello World
  In this tutorial you'll write and run a traditional hello world program that
  prints out the string "hello, world".
  
@@ -14,12 +14,12 @@
  in detail and revisit the hello world program later on, after you're equipped
  to fully understand what's going on.
  
- @section[The Hello World Program]
+ @section The Hello World Program
   In your favorite text editor, start a new file called @l[HelloWorld.fble].
   The @l[.fble] extension is used for fble programs; it is required for the
   fble interpreter and compiler to be able to locate your code.
  
-  @subsection[Module Imports]
+  @subsection Module Imports
    We'll start by importing some types and functions from the core library:
    
    @code[fble]
@@ -45,15 +45,15 @@
    module from the core library that defines a boolean type and related
    functions.
  
-  @subsection[Comments in Code]
+  @subsection Comments in Code
    Comments in fble start with the @l[#] character end continue to the end of
    the line. For example:
  
-   @code[fble]
+   @code fble
     # Here are some comment lines you can include in your
     # hello world program if you want to.
  
-  @subsection[Main Function]
+  @subsection Main Function
    Next we'll define the main function:
  
    @code[fble]
@@ -110,7 +110,7 @@
    
    Finally we return @l[True] to indicate success.
  
-  @subsection[The Module Value]
+  @subsection The Module Value
    The last thing we need is to specify the @l[/HelloWorld%] module value:
  
    @code[fble]
@@ -120,7 +120,7 @@
    @l[Main] function into something that can be run by the @l[fble-stdio]
    program.
 
- @section[Running Hello World]
+ @section Running Hello World
   You should now have a complete @l[HelloWorld.fble] file that looks like the
   @l[$FBLE_PACKAGE_PATH/core/Core/Stdio/HelloWorld.fble] module included in
   the core library, assuming you have @l[$FBLE_PACKAGE_PATH] set from as
@@ -138,7 +138,7 @@
   @l[HelloWorld.fble] file in the current directory, and the @l[-m] option says
   to execute code from the @l[/HelloWorld%] module you just defined.
  
- @section[Printing Different Kinds of Things]
+ @section Printing Different Kinds of Things
   An important motivation for the hello world program is to show you how to
   print different things to the output, so you can see the results of trying
   different things in subsequent tutorials. Fble doesn't have a printf
@@ -156,7 +156,7 @@
      Unit@ _ <- m.do(Puts[Str|'An integer: ',
        /Core/Int/Show%.Show(/Core/Int/Lit%.Int|42)]);
  
- @section[Exercises]
+ @section Exercises
   @exercise
    Try printing the @l[args] argument in your hello world program, then
    experiment with passing different command line arguments when you run
@@ -179,7 +179,7 @@
    need single quotes. Try printing @l[hello] using a string literal without
    single quotes.
  
- @section[Next Steps]
+ @section Next Steps
   Now you've seen a high level overview of the kinds of things you can do in
   fble. The next step is to do a deep dive, starting with the basics of
   fble: structs, unions, and functions. Head over to the
