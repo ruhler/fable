@@ -10,17 +10,17 @@
 #include "fble-execute.h"
 
 /**
- * Creates an interpreter-based FbleExecutableProgram.
+ * @func[FbleInterpret] Creates an interpreter-based FbleExecutableProgram.
  *
- * Turns a compiled program into an executable program based on use of an
- * interpreter to interpret the compiled code.
+ *  Turns a compiled program into an executable program based on use of an
+ *  interpreter to interpret the compiled code.
  *
- * @param program  The compiled program to interpret.
+ *  @arg[FbleCompiledProgram*][program] The compiled program to interpret.
  *
- * @returns
+ *  @returns FbleExecutableProgram*
  *   An executable program.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates an FbleExecutableProgram that should be freed using
  *   FbleFreeExecutableProgram when no longer needed.
  */

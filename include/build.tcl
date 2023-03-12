@@ -36,6 +36,18 @@ namespace eval "include" {
       FbleThreadSample
       FbleThreadEnterBlock FbleThreadReplaceBlock FbleThreadExitBlock
     }
+    fble-interpret.h {
+      FbleInterpret
+    }
+    fble-link.h {
+      FbleLink
+      FbleLinkFromSource
+      FbleCompiledModuleFunction
+      FbleLoadFromCompiled
+      FbleLinkFromCompiled
+      FbleLinkFromCompiledOrSource
+      FblePrintCompiledHeaderLine
+    }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
       FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_

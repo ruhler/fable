@@ -3,10 +3,6 @@ Fble 0.1 TODO
 Things to consider doing for the fble-0.1 release.
 
 * Convert doc comments and generate man pages for all C api functions.
-  fble-execute.h
-  fble.h
-  fble-interpret.h
-  fble-link.h
   fble-load.h
   fble-loc.h
   fble-module-path.h

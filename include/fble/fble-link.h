@@ -12,135 +12,159 @@
 #include "fble-value.h"
 
 /**
- * Links an fble program.
+ * @func[FbleLink] Links an fble program.
  *
- * Links the modules of an executable program together into a single FbleValue
- * representing a zero-argument function that can be used to compute the value
- * of the program.
+ *  Links the modules of an executable program together into a single
+ *  FbleValue representing a zero-argument function that can be used to
+ *  compute the value of the program.
  *
- * @param heap      Heap to use for allocations.
- * @param program   The executable program to link.
- * @param profile   Profile to construct for the linked program. May be NULL.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleExecutableProgram*] program
+ *   The executable program to link.
+ *  @arg[FbleProfile*] profile
+ *   Profile to construct for the linked program. May be NULL.
  *
- * @returns
+ *  @returns FbleValue*
  *   An FbleValue representing a zero-argument function that can be used to
  *   compute the value of the program.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates an FbleValue that should be freed using FbleReleaseValue when
  *   no longer needed.
  */
 FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile);
 
 /**
- * Loads an fble program from source.
+ * @func[FbleLinkFromSource] Loads an fble program from source.
  *
- * Loads, compiles, and links a full program from source.
+ *  Loads, compiles, and links a full program from source.
  *
- * @param heap          Heap to use for allocations.
- * @param search_path   The search path to use for locating .fble files.
- * @param module_path   The module path for the main module to load. Borrowed.
- * @param profile       Profile to populate with blocks. May be NULL.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for locating .fble files.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load. Borrowed.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
  *
- * @returns
+ *  @returns FbleValue*
  *   A zero-argument function that computes the value of the program when
  *   executed, or NULL in case of error.
  *
- * @sideeffects
- * * Prints an error message to stderr if the program fails to load.
- * * The user should call FbleReleaseValue on the returned value when it is no
- *   longer needed.
+ *  @sideeffects
+ *   @i Prints an error message to stderr if the program fails to load.
+ *   @i The user should call FbleReleaseValue on the returned value when it is
+ *    no longer needed.
  */
 FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile);
 
 /**
- * Compiled module function type.
+ * @func[FbleCompiledModuleFunction] Compiled module function type.
  *
- * The type of a module function generated for compiled .fble code.
+ *  The type of a module function generated for compiled .fble code.
  *
- * @param program  Modules loaded into the program so far.
+ *  @arg[FbleExecutableProgram*] program
+ *   Modules loaded into the program so far.
  *
- * @sideeffects
+ *  @sideeffects
  *   Adds this module to the given program if it is not already in the
  *   program.
  */
 typedef void FbleCompiledModuleFunction(FbleExecutableProgram* program);
 
 /**
- * Loads a precompiled fble program.
+ * @func[FbleLoadFromCompiled] Loads a precompiled fble program.
  *
- * @param program  The program to add the module and its dependencies to.
- * @param module   The compiled module to load. Borrowed.
- * @param depc     The number of other modules this module immediately depends
- *                 on.
- * @param deps     The immediate dependencies of this module.
+ *  @arg[FbleExecutableProgram*] program
+ *   The program to add the module and its dependencies to.
+ *  @arg[FbleExecutableModule*] module
+ *   The compiled module to load. Borrowed.
+ *  @arg[size_t] depc
+ *   The number of other modules this module immediately depends on.
+ *  @arg[FbleCompiledModuleFunction**] deps
+ *   The immediate dependencies of this module.
  *
- * @sideeffects
- * * Adds this module and any modules it depends on to the given program.
+ *  @sideeffects
+ *   @i Adds this module and any modules it depends on to the given program.
  */
 void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps);
 
 /**
- * Loads and links a precompield fble program.
+ * @func[FbleLinkFromCompiled] Loads and links a precompield fble program.
  *
- * @param module    The compiled main module function.
- * @param heap      Heap to use for allocations.
- * @param profile   Profile to populate with blocks. May be NULL.
+ *  @arg[FbleCompiledModuleFunction] module
+ *   The compiled main module function.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
  *
- * @returns
+ *  @returns FbleValue*
  *   A zero-argument fble function that computes the value of the program when
  *   executed.
  *
- * @sideeffects
- * * The user should call FbleReleaseValue on the returned value when it is no
- *   longer needed.
+ *  @sideeffects
+ *   @i The user should call FbleReleaseValue on the returned value when it is
+ *    no longer needed.
  */
 FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
 
 /**
- * Loads an optionally compiled program.
+ * @func[FbleLinkFromCompiledOrSource] Loads an optionally compiled program.
  *
- * This is a convenience function that attempts to load a compiled program
- * if available, and if not, attempts to load from source.
+ *  This is a convenience function that attempts to load a compiled program if
+ *  available, and if not, attempts to load from source.
  *
- * If module is non-NULL, loads from compiled. Otherwise loads from
- * module_path.
+ *  If module is non-NULL, loads from compiled. Otherwise loads from
+ *  module_path.
  *
- * @param heap          Heap to use for allocations.
- * @param profile       Profile to populate with blocks. May be NULL.
- * @param module        The compiled main module function. May be NULL.
- * @param search_path   The search path to use for locating .fble files.
- * @param module_path   The module path for the main module to load.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
+ *  @arg[FbleCompiledModuleFunction*] module
+ *   The compiled main module function. May be NULL.
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for locating .fble files.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load.
  *
- * @returns
+ *  @returns FbleValue*
  *   A zero-argument fble function that computes the value of the program when
  *   executed, or NULL in case of error.
  *
- * @sideeffects
- * * The user should call FbleReleaseValue on the returned value when it is no
- *   longer needed.
+ *  @sideeffects
+ *   @i The user should call FbleReleaseValue on the returned value when it is
+ *    no longer needed.
  */
 FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 
 /**
- * Prints an information line about a compiled module.
+ * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.
  *
- * This is a convenience function for providing more information to users as
- * part of a fble compiled main function. It prints a header line if the
- * compiled module is not NULL, of the form something like:
+ *  This is a convenience function for providing more information to users as
+ *  part of a fble compiled main function. It prints a header line if the
+ *  compiled module is not NULL, of the form something like:
  *
+ *  @code[txt]
  *   fble-debug-test: fble-test -m /DebugTest% (compiled)
  *
- * Note, extracting the module name is a relatively expensive operation,
- * because it involves loading the entire module and its dependencies, then
- * throwing all of that away when it's done.
+ *  Note, extracting the module name is a relatively expensive operation,
+ *  because it involves loading the entire module and its dependencies, then
+ *  throwing all of that away when it's done.
  *
- * @param stream  The output stream to print to.
- * @param tool  Name of the underlying tool, e.g. "fble-test".
- * @param arg0  argv[0] from the main function.
- * @param module  The optionally compiled module to get the module name from.
+ *  @arg[FILE*] stream
+ *   The output stream to print to.
+ *  @arg[const char*] tool
+ *   Name of the underlying tool, e.g. "fble-test".
+ *  @arg[const char*] arg0
+ *   argv[0] from the main function.
+ *  @arg[FbleCompiledModuleFunction*] module
+ *   The optionally compiled module to get the module name from.
  *
- * @sideeffects
+ *  @sideeffects
  *   Prints a header line to the given stream.
  */
 void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleCompiledModuleFunction* module);
