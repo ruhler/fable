@@ -40,108 +40,108 @@ typedef struct {
 } FbleModulePathV;
 
 /**
- * Allocates a new FbleModulePath.
+ * @func[FbleNewModulePath] Allocates a new FbleModulePath.
  *
- * @param loc  The location of the module path. Borrowed.
+ *  @arg[FbleLoc][loc] The location of the module path. Borrowed.
  *
- * @returns
+ *  @returns FbleModulePath*
  *   A newly allocated empty module path.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new module path that the user should free with
  *   FbleFreeModulePath when no longer needed.
  */
 FbleModulePath* FbleNewModulePath(FbleLoc loc);
 
 /**
- * Creates an FbleName for a module path.
+ * @func[FbleModulePathName] Creates an FbleName for a module path.
  *
- * @param path  The path to construct an FbleName for.
+ *  @arg[FbleModulePath*][path] The path to construct an FbleName for.
  *
- * @returns
+ *  @returns FbleName
  *   An FbleName describing the full module path. For example: "/Foo/Bar%".
  *
- * @sideeffects
+ *  @sideeffects
  *   The caller should call FbleFreeName on the returned name when no longer
  *   needed.
  */
 FbleName FbleModulePathName(FbleModulePath* path);
 
 /**
- * Prints a module path.
+ * @func[FblePrintModulePath] Prints a module path.
  *
- * @param stream  The stream to print to
- * @param path    The path to print
+ *  @arg[FILE*          ][stream] The stream to print to
+ *  @arg[FbleModulePath*][path  ] The path to print
  *
- * @sideeffects
+ *  @sideeffects
  *   Outputs the path to the given file.
  */
 void FblePrintModulePath(FILE* stream, FbleModulePath* path);
 
 /**
- * Tests if two module paths are equal.
+ * @func[FbleModulePathsEqual] Tests if two module paths are equal.
  *
- * Two paths are considered equal if they have the same sequence of module
- * names. Locations are not relevant for this check.
+ *  Two paths are considered equal if they have the same sequence of module
+ *  names. Locations are not relevant for this check.
  *
- * @param a   The first path.
- * @param b   The second path.
+ *  @arg[FbleModulePath*][a] The first path.
+ *  @arg[FbleModulePath*][b] The second path.
  *
- * @returns
+ *  @returns bool
  *   true if the first path equals the second, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b);
 
 /**
- * Checks if a module belongs to a package.
+ * @func[FbleModuleBelongsToPackage] Checks if a module belongs to a package.
  *
- * @param module    The module path.
- * @param package   The module path describing the package.
- *
- * @returns
- *   True if the module belongs to the package, false otherwise.
- *
- * @sideeffects
- *   None.
+ *  @arg[FbleModulePath*][module ] The module path.
+ *  @arg[FbleModulePath*][package] The module path describing the package.
+ *  
+ *  @returns bool
+ *    True if the module belongs to the package, false otherwise.
+ *  
+ *  @sideeffects
+ *    None.
  */
 bool FbleModuleBelongsToPackage(FbleModulePath* module, FbleModulePath* package);
 
 /**
- * Parses an FbleModulePath.
+ * @func[FbleParseModulePath] Parses an FbleModulePath.
  *
- * @param string   The string to parse the path from.
+ *  @arg[const char*][string] The string to parse the path from.
  *
- * @returns
+ *  @returns FbleModulePath*
  *   The parsed path, or NULL in case of error.
  *
- * @sideeffects
- * * Prints an error message to stderr if the path cannot be parsed.
+ *  @sideeffects
+ *   @i Prints an error message to stderr if the path cannot be parsed.
  */
 FbleModulePath* FbleParseModulePath(const char* string);
 
 /**
- * Copies an FbleModulePath.
+ * @func[FbleCopyModulePath] Copies an FbleModulePath.
  *
- * @param path  The path to copy.
+ *  @arg[FbleModulePath*][path] The path to copy.
  * 
- * @returns
+ *  @returns FbleModulePath*
  *   The new (possibly shared) copy of the path.
  *
- * @sideeffects
+ *  @sideeffects
  *   The user should arrange for FbleFreeModulePath to be called on this path
  *   copy when it is no longer needed.
  */
 FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
 
 /**
- * Frees an FbleModulePath.
+ * @func[FbleFreeModulePath] Frees an FbleModulePath.
  *
- * @param path  The path to free.
+ *  @arg[FbleModulePath*][path] The path to free.
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the path and its contents.
  */
 void FbleFreeModulePath(FbleModulePath* path);

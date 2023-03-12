@@ -34,15 +34,19 @@
 extern const char* FbleBuildStamp;
 
 /**
- * Prints version info.
+ * @func[FblePrintVersion] Prints version info.
  *
- * For example, prints something like:
+ *  For example, prints something like:
+ *
+ *  @code[txt]
  *   fble-test fble-0.1 (2023-02-26,dev:4856517f-dirty)
  *
- * @param stream  The output stream to print to.
- * @param tool  The name of the tool to print version for, or NULL.
+ *  @arg[FILE*] stream
+ *   The output stream to print to.
+ *  @arg[const char*] tool
+ *   The name of the tool to print version for, or NULL.
  *
- * @sideeffects
+ *  @sideeffects
  *   Outputs version info to the given stream.
  */
 void FblePrintVersion(FILE* stream, const char* tool);

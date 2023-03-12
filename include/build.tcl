@@ -48,6 +48,45 @@ namespace eval "include" {
       FbleLinkFromCompiledOrSource
       FblePrintCompiledHeaderLine
     }
+    fble-load.h {
+      FbleParse
+      FbleNewSearchPath FbleFreeSearchPath
+      FbleSearchPathAppend FbleSearchPathAppendString
+      FbleFindPackage
+      FbleLoad
+      FbleFreeLoadedProgram
+      FbleSaveBuildDeps
+    }
+    fble-loc.h {
+      FbleNewLoc FbleCopyLoc FbleFreeLoc
+      FbleReportWarning FbleReportError
+    }
+    fble-module-path.h {
+      FbleNewModulePath
+      FbleModulePathName
+      FblePrintModulePath
+      FbleModulePathsEqual
+      FbleModuleBelongsToPackage
+      FbleParseModulePath
+      FbleCopyModulePath
+      FbleFreeModulePath
+    }
+    fble-name.h {
+      FbleCopyName FbleFreeName FbleNamesEqual FblePrintName
+    }
+    fble-profile.h {
+      FbleNewProfile
+      FbleProfileAddBlock FbleProfileAddBlocks
+      FbleFreeProfile
+      FbleNewProfileThread FbleForkProfileThread
+      FbleFreeProfileThread
+      FbleProfileSample
+      FbleProfileEnterBlock FbleProfileReplaceBlock FbleProfileExitBlock
+      FbleProfileReport
+    }
+    fble-string.h {
+      FbleNewString FbleCopyString FbleFreeString
+    }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
       FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
@@ -61,6 +100,14 @@ namespace eval "include" {
       FbleNewFuncValue FbleNewFuncValue_
       FbleFuncValueInfo FbleEval FbleApply
       FbleNewRefValue FbleAssignRefValue FbleStrictValue
+    }
+    fble-vector.h {
+      FbleVectorInit FbleFreeVector
+      FbleVectorExtend FbleVectorAppend
+      FbleVectorIncrSize
+    }
+    fble-version.h {
+      FblePrintVersion
     }
   }
 

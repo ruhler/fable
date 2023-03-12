@@ -42,53 +42,53 @@ typedef struct {
 } FbleNameV;
 
 /**
- * Copies an FbleName.
+ * @func[FbleCopyName] Copies an FbleName.
  *
- * @param name  The name to copy.
+ *  @arg[FbleName][name] The name to copy.
  *
- * @returns
+ *  @returns FbleName
  *   A (possibly shared) copy of the name.
  *
- * @sideeffects
+ *  @sideeffects
  *   The user should call FbleFreeName on the returned name when it is no
  *   longer needed.
  */
 FbleName FbleCopyName(FbleName name);
 
 /**
- * Frees an FbleName.
+ * @func[FbleFreeName] Frees an FbleName.
  *
- * @param name  The name to free resources of.
+ *  @arg[FbleName][name] The name to free resources of.
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the name.
  */
 void FbleFreeName(FbleName name);
 
 /**
- * Tests if two names are equals.
+ * @func[FbleNamesEqual] Tests if two names are equals.
  *
- * Two names are considered equal if they have the same name and belong to the
- * same namespace. Location is not relevant for this check.
+ *  Two names are considered equal if they have the same name and belong to
+ *  the same namespace. Location is not relevant for this check.
  *
- * @param a   The first name.
- * @param b   The second name.
- *
- * @returns
+ *  @arg[FbleName][a] The first name.
+ *  @arg[FbleName][b] The second name.
+ *  
+ *  @returns bool
  *   true if the first name equals the second, false otherwise.
- *
- * @sideeffects
+ *  
+ *  @sideeffects
  *   None.
  */
 bool FbleNamesEqual(FbleName a, FbleName b);
 
 /**
- * Prints an FbleName. In human readable form.
+ * @func[FblePrintName] Prints an FbleName in human readable form.
  *
- * @param stream  The stream to print to.
- * @param name    The name to print.
+ *  @arg[FILE*   ][stream] The stream to print to.
+ *  @arg[FbleName][name  ] The name to print.
  *
- * @sideeffects
+ *  @sideeffects
  *   Outputs the name to the given file.
  */
 void FblePrintName(FILE* stream, FbleName name);

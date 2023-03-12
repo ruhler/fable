@@ -60,20 +60,22 @@ typedef struct {
 } FbleLoadedProgram;
 
 /**
- * Parses an fble module from a file.
+ * @func[FbleParse] Parses an fble module from a file.
  *
- * @param filename   The name of the file to parse the program from.
- * @param[out] deps  A list of the modules that the parsed expression
- *                   references. Modules will appear at most once in the list.
+ *  @arg[FbleString*] filename
+ *   The name of the file to parse the program from.
+ *  @arg[FbleModulePathV*] deps
+ *   A list of the modules that the parsed expression references. Modules will
+ *   appear at most once in the list.
  *
- * @returns
+ *  @returns FbleExpr*
  *   The parsed program, or NULL in case of error.
  *
- * @sideeffects
- * * Prints an error message to stderr if the program cannot be parsed.
- * * Appends module paths in the parsed expression to deps, which
- *   is assumed to be a pre-initialized vector. The caller is responsible for
- *   calling FbleFreeModulePath on each path when it is no longer needed.
+ *  @sideeffects
+ *   @i Prints an error message to stderr if the program cannot be parsed.
+ *   @i Appends module paths in the parsed expression to deps, which
+ *    is assumed to be a pre-initialized vector. The caller is responsible for
+ *    calling FbleFreeModulePath on each path when it is no longer needed.
  */
 FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 
@@ -88,115 +90,123 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 typedef struct FbleSearchPath FbleSearchPath;
 
 /**
- * Allocates a new, empty search path.
+ * @func[FbleNewSearchPath] Allocates a new, empty search path.
  *
- * @returns
+ *  @returns FbleSearchPath*
  *   A new empty search path.
  *
- * @sideeffects
- * * The search path should be freed with FbleFreeSearchPath when it is no
- *   longer needed.
+ *  @sideeffects
+ *   @i The search path should be freed with FbleFreeSearchPath when it is no
+ *    longer needed.
  */
 FbleSearchPath* FbleNewSearchPath();
 
 /**
- * Frees resources associated with an FbleSearchPath.
+ * @func[FbleFreeSearchPath] Frees resources associated with an FbleSearchPath.
  *
- * @param path  The path to free.
+ *  @arg[FbleSearchPath*][path] The path to free.
  *
- * @sideeffects
- * * Frees resources associated with the search path.
+ *  @sideeffects
+ *   @i Frees resources associated with the search path.
  */
 void FbleFreeSearchPath(FbleSearchPath* path);
 
 /**
- * Appends a module root directory to the given search path.
+ * @func[FbleSearchPathAppend] Appends a module root directory to a search path.
  *
- * @param path  The path to append to.
- * @param root_dir  The directory to add to the path. Borrowed.
+ *  @arg[FbleSearchPath*][path    ] The path to append to.
+ *  @arg[const char*    ][root_dir] The directory to add to the path. Borrowed.
  *
- * @sideeffects
- * * Adds root_dir to the search path.
+ *  @sideeffects
+ *   @i Adds root_dir to the search path.
  */
 void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir);
 
 /**
- * Appends a module root directory to the given search path.
+ * @func[FbleSearchPathAppendString] Appends a module root directory to a search path.
  *
- * @param path  The path to append to.
- * @param root_dir  The directory to add to the path. Borrowed.
+ *  @arg[FbleSearchPath*][path    ] The path to append to.
+ *  @arg[FbleString*    ][root_dir] The directory to add to the path. Borrowed.
  *
- * @sideeffects
- * * Adds root_dir to the search path.
+ *  @sideeffects
+ *   @i Adds root_dir to the search path.
  */
 void FbleSearchPathAppendString(FbleSearchPath* path, FbleString* root_dir);
 
 /**
- * Finds a package in the package path.
+ * @func[FbleFindPackage] Finds a package in the package path.
  *
- * Searches for the package in the directories listed in the colon-separated
- * FBLE_PACKAGE_PATH environment variable and in the standard package path
- * directories.
+ *  Searches for the package in the directories listed in the colon-separated
+ *  FBLE_PACKAGE_PATH environment variable and in the standard package path
+ *  directories.
  *
- * @param package  The name of the package.
+ *  @arg[const char*][package] The name of the package.
  *
- * @returns
+ *  @returns FbleString*
  *   The module root directory for the package, or NULL in case no such
  *   package is found.
  *
- * @sideeffects
- * * Allocates an FbleString that should be freed with FbleFreeString when no
- *   longer needed.
+ *  @sideeffects
+ *   @i Allocates an FbleString that should be freed with FbleFreeString when no
+ *    longer needed.
  */
 FbleString* FbleFindPackage(const char* package);
 
 /**
- * Loads an fble program.
+ * @func[FbleLoad] Loads an fble program.
  *
- * @param search_path   The search path to use for location .fble files. Borrowed.
- * @param module_path   The module path for the main module to load. Borrowed.
- * @param build_deps    Output to store list of files the load depended on.
- *                      This should be a preinitialized vector, or NULL.
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for location .fble files. Borrowed.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load. Borrowed.
+ *  @arg[FbleStringV*] build_deps
+ *   Output to store list of files the load depended on. This should be a
+ *   preinitialized vector, or NULL.
  *
- * @returns
+ *  @returns FbleLoadedProgram*
  *   The parsed program, or NULL in case of error.
  *
- * @sideeffects
- * * Prints an error message to stderr if the program cannot be parsed.
- * * The user should call FbleFreeLoadedProgram to free resources associated
- *   with the given program when it is no longer needed.
- * * The user should free strings added to build_deps when no longer needed,
- *   including in the case when program loading fails.
+ *  @sideeffects
+ *   @i Prints an error message to stderr if the program cannot be parsed.
+ *   @i The user should call FbleFreeLoadedProgram to free resources
+ *    associated with the given program when it is no longer needed.
+ *   @i The user should free strings added to build_deps when no longer
+ *    needed, including in the case when program loading fails.
  */
 FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
- * Frees an FbleLoadedProgram.
+ * @func[FbleFreeLoadedProgram] Frees an FbleLoadedProgram.
  *
- * @param program  The program to free. May be NULL.
+ *  @arg[FbleLoadedProgram*][program] The program to free. May be NULL.
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the given program.
  */
 void FbleFreeLoadedProgram(FbleLoadedProgram* program);
 
 /**
- * Saves a depfile.
+ * @func[FbleSaveBuildDeps] Saves a depfile.
  *
- * Save the list of build dependencies to a depfile suitable for use with
- * ninja or make.
+ *  Save the list of build dependencies to a depfile suitable for use with
+ *  ninja or make.
  *
- * For example, it would generate something like:
+ *  For example, it would generate something like:
+ *
+ *  @code[txt]
  *   target: build_deps1 build_deps2 build_deps3
  *     build_deps4 build_deps5 ...
  *
- * @param fout         Output stream to write the dependency file to.
- * @param target       The target of the dependencies to generate.
- * @param build_deps   The list of file dependencies.
+ *  @arg[FILE*] fout
+ *   Output stream to write the dependency file to.
+ *  @arg[const char*] target
+ *   The target of the dependencies to generate.
+ *  @arg[FbleStringV] build_deps
+ *   The list of file dependencies.
  *
- * @sideeffects
- * * Creates a build dependency file.
- * * Outputs an error message to stderr in case of error.
+ *  @sideeffects
+ *   @i Creates a build dependency file.
+ *   @i Outputs an error message to stderr in case of error.
  */
 void FbleSaveBuildDeps(FILE* fout, const char* target, FbleStringV build_deps);
 

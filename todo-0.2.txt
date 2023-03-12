@@ -9,6 +9,14 @@ Things to consider doing for the fble-0.2 release.
  - write tutorials for C api.
  - write some serious new fble code.
 
+* Why does FbleNewLoc use int for line and col instead of size_t?
+
+* Check if all the fble-module-path.h functions really need to be public API.
+* How to handle @file doc comments on header files?
+  - Should we write documentation for them somewhere?
+
+* Convert internal doc comments to fbld doc comment format?
+
 * Figure out whitespace issues with fbld generated roff, man.
   - When are things trimed versus not?
   - How to avoid too many or too few blank lines between items?

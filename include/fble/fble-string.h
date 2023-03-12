@@ -34,37 +34,38 @@ typedef struct {
 } FbleStringV;
 
 /**
- * Allocates an FbleString.
+ * @func[FbleNewString] Allocates an FbleString.
  *
- * @param str  The contents of the string. Borrowed. This function does not
- *             take ownership of str, it makes a copy internally instead.
+ *  @arg[const char*] str
+ *   The contents of the string. Borrowed. This function does not take
+ *   ownership of str, it makes a copy internally instead.
  *
- * @returns
+ *  @returns FbleString*
  *   A newly allocated string with a reference count that should be released
  *   using FbleFreeString when no longer needed.
  */
 FbleString* FbleNewString(const char* str);
 
 /**
- * Copies an FbleString.
+ * @func[FbleCopyString] Copies an FbleString.
  *
- * @param string  The string to copy.
+ *  @arg[FbleString*][string] The string to copy.
  * 
- * @returns
+ *  @returns FbleString*
  *   The new (possibly shared) copy of the string.
  *
- * @sideeffects
+ *  @sideeffects
  *   The user should arrange for FbleFreeString to be called on this string
  *   copy when it is no longer needed.
  */
 FbleString* FbleCopyString(FbleString* string);
 
 /**
- * Frees an FbleString.
+ * @func[FbleFreeString] Frees an FbleString.
  *
- * @param string  The string to free.
+ *  @arg[FbleString*][string] The string to free.
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated the string and its contents.
  */
 void FbleFreeString(FbleString* string);

@@ -2,18 +2,9 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Convert doc comments and generate man pages for all C api functions.
-  fble-load.h
-  fble-loc.h
-  fble-module-path.h
-  fble-name.h
-  fble-profile.h
-  fble-string.h
-  fble-vector.h
-  fble-version.h
-
-* Code for man pages looks like something is messed up.
+* @code for man pages looks like something is messed up.
   See FbleGenerateAArch64Main.3 for example. Looks like a newline got lost.
+
 * Any way to have SYNOPSYS for dc man pages wrap arguments more nicely?
 
 * Document default fble package path in man pages?

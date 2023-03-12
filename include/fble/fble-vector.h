@@ -28,47 +28,45 @@
 #include "fble-alloc.h"
 
 /**
- * Initializes a new vector.
+ * @func[FbleVectorInit] Initializes a new vector.
  *
- * @param vector   A reference to an uninitialized vector.
+ *  @arg[FbleVector<T>][vector] A reference to an uninitialized vector.
  *
- * @returns
- *   Nothing.
- *
- * @sideeffects
+ *  @sideeffects
  *   The vector is initialized to an array containing 0 elements.
- *
- * Implementation Note:
- *   The array initially has size 0 and capacity 1.
  */
+// Implementation Note:
+// The array initially has size 0 and capacity 1.
 #define FbleVectorInit(vector) \
   (vector).size = 0; \
   (vector).xs = FbleRawAlloc(sizeof(*((vector).xs)))
 
 /**
- * Frees an Fble vector.
+ * @func[FbleFreeVector] Frees an Fble vector.
  *
- * This function does not free individual vector elements. It is the
- * responsibility of the caller to free individual elements as they wish. This
- * function only frees internal resources allocated for the vector.
+ *  This function does not free individual vector elements. It is the
+ *  responsibility of the caller to free individual elements as they wish.
+ *  This function only frees internal resources allocated for the vector.
  *
- * @param vector  The vector whose resources to free.
+ *  @arg[FbleVector<T>] vector
+ *   The vector whose resources to free.
  *
- * @sideeffects
- * * Frees resources of the vector.
+ *  @sideeffects
+ *   @i Frees resources of the vector.
  */
 #define FbleFreeVector(vector) \
   FbleFree((vector).xs)
 
 /**
- * Appends an uninitialized element.
+ * @func[FbleVectorExtend] Appends an uninitialized element.
  *
- * @param vector   A reference to a vector that was initialized using FbleVectorInit.
+ *  @arg[FbleVector<T>] vector
+ *   A vector that was initialized using FbleVectorInit.
  *
- * @returns
+ *  @returns T*
  *   A pointer to the newly appended uninitialized element.
  *
- * @sideeffects
+ *  @sideeffects
  *   A new uninitialized element is appended to the array and the size is
  *   incremented. If necessary, the array is re-allocated to make space for
  *   the new element.
@@ -77,15 +75,14 @@
   (FbleVectorIncrSize(sizeof(*((vector).xs)), &(vector).size, (void**)&(vector).xs), (vector).xs + (vector).size - 1)
 
 /**
- * Appends an element.
+ * @func[FbleVectorAppend] Appends an element.
  *
- * @param vector  A reference to a vector that was initialized using FbleVectorInit.
- * @param elem    An element of type T to append to the array.
+ *  @arg[FbleVector<T>] vector
+ *   A vector that was initialized using FbleVectorInit.
+ *  @arg[T] elem
+ *   An element of type T to append to the array.
  *
- * @returns
- *   Nothing.
- *
- * @sideeffects
+ *  @sideeffects
  *   The given element is appended to the array and the size is incremented.
  *   If necessary, the array is re-allocated to make space for the new
  *   element.
@@ -94,22 +91,22 @@
   (*FbleVectorExtend(vector) = elem)
 
 /**
- * Increases the size of a vector.
+ * @func[FbleVectorIncrSize] Increases the size of a vector.
  *
- * Increase the size of an fble vector by a single element.
+ *  Increase the size of an fble vector by a single element.
  *
- * This is an internal function used for implementing the fble vector macros.
- * This function should not be called directly because because it does not
- * provide the same level of type safety the macros provide.
+ *  This is an internal function used for implementing the fble vector macros.
+ *  This function should not be called directly because because it does not
+ *  provide the same level of type safety the macros provide.
  *
- * @param elem_size   The sizeof the element type in bytes.
- * @param size        A pointer to the size field of the vector.
- * @param xs          A pointer to the xs field of the vector.
+ *  @arg[size_t ][elem_size] The sizeof the element type in bytes.
+ *  @arg[size_t*][size     ] A pointer to the size field of the vector.
+ *  @arg[void** ][xs       ] A pointer to the xs field of the vector.
  *
- * @sideeffects
- * * A new uninitialized element is appended to the vector and the size is
- *   incremented. If necessary, the array is re-allocated to make space for
- *   the new element.
+ *  @sideeffects
+ *   @i A new uninitialized element is appended to the vector and the size is
+ *    incremented. If necessary, the array is re-allocated to make space for
+ *    the new element.
  */
 void FbleVectorIncrSize(size_t elem_size, size_t* size, void** xs);
 
