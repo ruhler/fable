@@ -2,6 +2,13 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Big things:
+ - smten support.
+ - high score saved in invaders game.
+ - fix composition issues in fbld implementation.
+ - write tutorials for C api.
+ - write some serious new fble code.
+
 * Figure out whitespace issues with fbld generated roff, man.
   - When are things trimed versus not?
   - How to avoid too many or too few blank lines between items?

@@ -68,197 +68,221 @@ typedef struct {
 } FbleCompiledProgram;
 
 /**
- * Frees an FbleCompiledModule.
+ * @func[FbleFreeCompiledModule] Frees an FbleCompiledModule.
  *
- * @param module    The module to free. May be NULL.
+ *  @arg[FbleCopmiledModule*][module] The module to free. May be NULL.
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the given program.
  */
 void FbleFreeCompiledModule(FbleCompiledModule* module);
 
 /**
- * Frees an FbleCompiledProgram.
+ * @func[FbleFreeCompiledProgram] Frees an FbleCompiledProgram.
  *
- * @param program   The program to free. May be NULL.
+ *  @arg[FbleCompiledProgram*][program] The program to free. May be NULL.
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the given program.
  */
 void FbleFreeCompiledProgram(FbleCompiledProgram* program);
 
 /**
- * Compiles a module.
+ * @func[FbleCompileModule] Compiles a module.
  *
- * @param program   The program to compile.
+ *  @arg[FbleLoadedProgram*][program] The program to compile.
  *
- * @returns
+ *  @returns FbleCompiledModule*
  *   The compiled module, or NULL if the program is not well typed.
  *
- * @sideeffects
- * * Prints warning messages to stderr.
- * * Prints a message to stderr if the program fails to compile.
- * * The caller should call FbleFreeCompiledModule to release resources
- *   associated with the returned module when it is no longer needed.
+ *  @sideeffects
+ *   @i Prints warning messages to stderr.
+ *   @i Prints a message to stderr if the program fails to compile.
+ *   @i The caller should call FbleFreeCompiledModule to release resources
+ *    associated with the returned module when it is no longer needed.
  */
 FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
 
 /**
- * Compiles a program.
+ * @func[FbleCompileProgram] Compiles a program.
  *
- * Type check and compile all modules of the given program.
+ *  Type check and compile all modules of the given program.
  *
- * @param program   The program to compile.
+ *  @arg[FbleLoadedProgram*][program] The program to compile.
  *
- * @returns
+ *  @returns FbleCompiledProgram
  *   The compiled program, or NULL if the program is not well typed.
  *
- * @sideeffects
- * * Prints warning messages to stderr.
- * * Prints a message to stderr if the program fails to compile.
- * * The caller should call FbleFreeCompiledProgram to release resources
- *   associated with the returned program when it is no longer needed.
+ *  @sideeffects
+ *   @i Prints warning messages to stderr.
+ *   @i Prints a message to stderr if the program fails to compile.
+ *   @i The caller should call FbleFreeCompiledProgram to release resources
+ *    associated with the returned program when it is no longer needed.
  */
 FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
 
 /**
- * Dissassembles a compiled module.
+ * @func[FbleDisassemble] Dissassembles a compiled module.
  *
- * Writes a disassembled version of the given module in human readable format
- * to the given file. This is for debugging purposes only. The outupt is
- * implementation dependant and subject to change.
+ *  Writes a disassembled version of the given module in human readable format
+ *  to the given file. This is for debugging purposes only. The outupt is
+ *  implementation dependant and subject to change.
  *
- * @param fout    The file to write the disassembled program to.
- * @param module  The module to disassemble.
+ *  @arg[FILE*] fout
+ *   The file to write the disassembled program to.
+ *  @arg[FbleCompiledModule*] module
+ *   The module to disassemble.
  *
- * @sideeffects
+ *  @sideeffects
  *   A disassembled version of the module is printed to fout.
  */
 void FbleDisassemble(FILE* fout, FbleCompiledModule* module);
 
 /**
- * Generates aarch64 for a compiled module.
+ * @func[FbleGenerateAArch64] Generates aarch64 for a compiled module.
  *
- * The generated code will export a single function named based on the
- * module path with the following signature:
+ *  The generated code will export a single function named based on the module
+ *  path with the following signature:
  *  
+ *  @code[c]
  *   void _compiled_(FbleCompiledProgram* program);
  *
- * Calling this function will append this module to the given program if it
- * does not already belong to the given program.
+ *  Calling this function will append this module to the given program if it
+ *  does not already belong to the given program.
  *
- * @param fout    The output stream to write the C code to.
- * @param module  The module to generate code for.
+ *  @arg[FILE*] fout
+ *   The output stream to write the C code to.
+ *  @arg[FbleCompiledModule*] module
+ *   The module to generate code for.
  *
- * @sideeffects
- * * Generates aarch64 code for the given module.
+ *  @sideeffects
+ *   @i Generates aarch64 code for the given module.
  */
 void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
 
 /**
- * Generates aarch64 to export a compiled module.
+ * @func[FbleGenerateAArch64Export] Generates aarch64 to export a compiled module.
  *
- * The generated code will export a single function with the given name with
- * the following signature
+ *  The generated code will export a single function with the given name with
+ *  the following signature
  *  
+ *  @code[c]
  *   void _name_(FbleExecutableProgram* program);
  *
- * Calling this function add the module and any dependencies to the given
- * executable program.
+ *  Calling this function add the module and any dependencies to the given
+ *  executable program.
  *
- * @param fout   The output stream to write the C code to.
- * @param name   The name of the function to generate.
- * @param path   The path to the module to export.
+ *  @arg[FILE*] fout
+ *   The output stream to write the C code to.
+ *  @arg[const char*] name
+ *   The name of the function to generate.
+ *  @arg[FbleMOdulePath*] path
+ *   The path to the module to export.
  *
- * @sideeffects
- * * Outputs aarch64 code to the given file.
+ *  @sideeffects
+ *   @i Outputs aarch64 code to the given file.
  */
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path);
 
 /**
- * Generates aarch64 code for main.
+ * @func[FbleGenerateAArch64Main] Generates aarch64 code for main.
  *
- * Generate aarch64 code for a main function that invokes a compiled module
- * with the given wrapper function.
+ *  Generate aarch64 code for a main function that invokes a compiled module
+ *  with the given wrapper function.
  *
- * The generated code will export a main function of the following form:
- *  
+ *  The generated code will export a main function of the following form:
+ *
+ *  @code[c]
  *   int main(int argc, const char** argv) {
  *     return _main_(argc, argv, _compiled_);
  *   }
  *
- * Where _compiled_ is the FbleCompiledModuleFunction* corresponding to the
- * given module path.
+ *  Where _compiled_ is the FbleCompiledModuleFunction* corresponding to the
+ *  given module path.
  *
- * @param fout   The output stream to write the C code to.
- * @param main   The name of the wrapper function to invoke.
- * @param path   The path to the module to pass to the wrapper function.
+ *  @arg[FILE*] fout
+ *   The output stream to write the C code to.
+ *  @arg[const char*] main
+ *   The name of the wrapper function to invoke.
+ *  @arg[FbleModulePath*] path
+ *   The path to the module to pass to the wrapper function.
  *
- * @sideeffects
- * * Generates aarch64 code for the given code.
+ *  @sideeffects
+ *   @i Generates aarch64 code for the given code.
  */
 void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path);
 
 /**
- * Generates C code for a compiled module.
+ * @func[FbleGenerateC] Generates C code for a compiled module.
  *
- * The generated code will export a single function named based on the
- * module path with the following signature:
+ *  The generated code will export a single function named based on the module
+ *  path with the following signature:
  *  
+ *  @code[c]
  *   void _compiled_(FbleCompiledProgram* program);
  *
- * Calling this function will append this module to the given program if it
- * does not already belong to the given program.
+ *  Calling this function will append this module to the given program if it
+ *  does not already belong to the given program.
  *
- * @param fout    The output stream to write the C code to.
- * @param module  The module to generate code for.
+ *  @arg[FILE*] fout
+ *   The output stream to write the C code to.
+ *  @arg[FbleCompiledModule*] module
+ *   The module to generate code for.
  *
- * @sideeffects
- * * Outputs C code to the given file.
+ *  @sideeffects
+ *   @i Outputs C code to the given file.
  */
 void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
 
 /**
- * Generates C code to export a compiled module.
+ * @func[FbleGenerateCExport] Generates C code to export a compiled module.
  *
- * The generated code will export a single function with the given name with
- * the following signature
+ *  The generated code will export a single function with the given name with
+ *  the following signature
  *  
+ *  @code[c]
  *   void _name_(FbleExecutableProgram* program);
  *
- * Calling this function add the module and any dependencies to the given
- * executable program.
+ *  Calling this function add the module and any dependencies to the given
+ *  executable program.
  *
- * @param fout  The output stream to write the C code to.
- * @param name  The name of the function to generate.
- * @param path  The path to the module to export.
- *
- * @sideeffects
- * * Outputs C code to the given file.
+ *  @arg[FILE*] fout
+ *   The output stream to write the C code to.
+ *  @arg[const char*] name
+ *   The name of the function to generate.
+ *  @arg[FbleModulePath*] path
+ *   The path to the module to export.
+ *  
+ *  @sideeffects
+ *   @i Outputs C code to the given file.
  */
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
 
 /**
- * Generates C code for main.
+ * @func[FbleGenerateCMain] Generates C code for main.
  *
- * Generate C code for a main function that invokes a compiled module with the
- * given wrapper function.
+ *  Generate C code for a main function that invokes a compiled module with
+ *  the given wrapper function.
  *
- * The generated code will export a main function of the following form:
+ *  The generated code will export a main function of the following form:
  *  
+ *  @code[c]
  *   int main(int argc, const char** argv) {
  *     return _main_(argc, argv, _compiled_);
  *   }
  *
- * Where _compiled_ is the FbleCompiledModuleFunction* corresponding to
- * the given module path.
+ *  Where _compiled_ is the FbleCompiledModuleFunction* corresponding to the
+ *  given module path.
  *
- * @param fout  The output stream to write the C code to.
- * @param main  The name of the wrapper function to invoke.
- * @param path  The path to the module to pass to the wrapper function.
- *
- * @sideeffects
- * * Outputs C code to the given file.
+ *  @arg[FILE*] fout
+ *   The output stream to write the C code to.
+ *  @arg[const char*] main
+ *   The name of the wrapper function to invoke.
+ *  @arg[FbleModulePath*] path
+ *   The path to the module to pass to the wrapper function.
+ *  
+ *  @sideeffects
+ *   @i Outputs C code to the given file.
  */
 void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path);
 

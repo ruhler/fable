@@ -6,6 +6,18 @@ Things to consider doing for the fble-0.1 release.
   Currently it leads to an infinite loop somewhere during the build.
 
 * Convert doc comments and generate man pages for all C api functions.
+  fble-execute.h
+  fble.h
+  fble-interpret.h
+  fble-link.h
+  fble-load.h
+  fble-loc.h
+  fble-module-path.h
+  fble-name.h
+  fble-profile.h
+  fble-string.h
+  fble-vector.h
+  fble-version.h
 
 * Document default fble package path in man pages?
   We can get it from $::config::datadir/fble
@@ -13,9 +25,8 @@ Things to consider doing for the fble-0.1 release.
   Auto-generate a .tcl file that defines a config tag? Like: @config[datadir]?
   
 * Add version numbers to generated docs?
-  - For man pages, ideally we add it to 'source' of the .TH call. But what's a
-    natural way to pass that information into there? Create a @man tag for man
-    documents? Maybe hold off until we have section 3 man pages too.
+  - Add another argument to @man tag to pass the 'source' and read from
+    @config[version].
 
 Release Related:
 * Verify the release candidate every way I can.

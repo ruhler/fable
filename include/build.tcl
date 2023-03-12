@@ -19,6 +19,13 @@ namespace eval "include" {
       FbleNewModuleArg FbleFreeModuleArg FbleParseModuleArg
       FbleParseInvalidArg
     }
+    fble-compile.h {
+      FbleFreeCompiledModule FbleFreeCompiledProgram
+      FbleCompileModule FbleCompileProgram
+      FbleDisassemble
+      FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main
+      FbleGenerateC FbleGenerateCExport FbleGenerateCMain
+    }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
       FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
