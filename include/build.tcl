@@ -14,6 +14,11 @@ namespace eval "include" {
       FbleStackFree
       FbleMaxTotalBytesAllocated FbleResetMaxTotalBytesAllocated
     }
+    fble-arg-parse.h {
+      FbleParseBoolArg FbleParseStringArg
+      FbleNewModuleArg FbleFreeModuleArg FbleParseModuleArg
+      FbleParseInvalidArg
+    }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
       FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
