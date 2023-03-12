@@ -2,9 +2,6 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Better error detection for missing @func in doc comments.
-  Currently it leads to an infinite loop somewhere during the build.
-
 * Convert doc comments and generate man pages for all C api functions.
   fble-execute.h
   fble.h
@@ -18,6 +15,10 @@ Things to consider doing for the fble-0.1 release.
   fble-string.h
   fble-vector.h
   fble-version.h
+
+* Code for man pages looks like something is messed up.
+  See FbleGenerateAArch64Main.3 for example. Looks like a newline got lost.
+* Any way to have SYNOPSYS for dc man pages wrap arguments more nicely?
 
 * Document default fble package path in man pages?
   We can get it from $::config::datadir/fble

@@ -17,15 +17,15 @@
 # ...
 
 set id [lindex $argv 0]
-set lines [split [read stdin] "\n"]
-set i 0
+set input_text [read stdin]
 
-while {[string first " * @func\[$id\]" [lindex $lines $i]] != 0} {
-  incr i
+set start [string first " * @func\[$id\]" $input_text]
+if {$start == -1} {
+  error "@func\[$id\] not found"
 }
 
-puts [string range [lindex $lines $i] 3 end]
-incr i
+set lines [split [string range $input_text $start end] "\n"]
+set i 0
 
 while {[string first " * " "[lindex $lines $i] "] == 0} {
   puts [string range [lindex $lines $i] 3 end]

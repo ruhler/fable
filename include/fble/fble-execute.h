@@ -20,25 +20,31 @@
 typedef struct FbleThread FbleThread;
 
 /**
- * Implementation of fble function logic.
+ * @func[FbleRunFunction] Implementation of fble function logic.
  *
- * A C function to run the fble function on the top of the thread stack.
+ *  Type of a C function that implements an fble function.
  *
- * @param heap        The value heap.
- * @param thread      The thread to run.
- * @param executable  The FbleExecutable associated with the function.
- * @param args        Arguments to the function. Borrowed.
- * @param statics     The function's static variables. Borrowed.
- * @param profile_block_offset  The function profile block offset.
+ *  @arg[FbleValueHeap*] heap
+ *   The value heap.
+ *  @arg[FbleThread*] thread
+ *   The thread to run.
+ *  @arg[FbleExecutable*] executable
+ *   The FbleExecutable associated with the function.
+ *  @arg[FbleValue**] args
+ *   Arguments to the function. Borrowed.
+ *  @arg[FbleValue**] statics
+ *   The function's static variables. Borrowed.
+ *  @arg[FbleBlockId] profile_block_offset
+ *   The function profile block offset.
  *
- * @returns
- * * The result of executing the function.
- * * NULL if the function aborts.
- * * A special sentinal value to indicate a tail call is required.
+ *  @returns FbleValue*
+ *   @i The result of executing the function.
+ *   @i NULL if the function aborts.
+ *   @i A special sentinal value to indicate a tail call is required.
  *
- * @sideeffects
- * * May call FbleThreadTailCall to indicate tail call required.
- * * Executes the fble function, with whatever side effects that may have.
+ *  @sideeffects
+ *   @i May call FbleThreadTailCall to indicate tail call required.
+ *   @i Executes the fble function, with whatever side effects that may have.
  */
 typedef FbleValue* FbleRunFunction(
     FbleValueHeap* heap,
@@ -91,27 +97,27 @@ struct FbleExecutable {
 };
 
 /**
- * Frees an FbleExecutable.
+ * @func[FbleFreeExecutable] Frees an FbleExecutable.
  *
- * Decrement the refcount and, if necessary, free resources associated with
- * the given executable.
+ *  Decrements the refcount and, if necessary, frees resources associated with
+ *  the given executable.
  *
- * @param executable   The executable to free. May be NULL.
+ *  @arg[FbleExecutable*][executable] The executable to free. May be NULL.
  *
- * @sideeffects
+ *  @sideeffects
  *   Decrements the refcount and, if necessary, calls executable->on_free and
  *   free resources associated with the given executable.
  */
 void FbleFreeExecutable(FbleExecutable* executable);
 
 /**
- * No-op FbleExecutable on_free function.
+ * @func[FbleExecutableNothingOnFree] No-op FbleExecutable on_free function.
  * 
- * Implementation of a no-op FbleExecutable.on_free function.
+ *  Implementation of a no-op FbleExecutable.on_free function.
  *
- * @param this  The FbleExecutable to free.
+ *  @arg[FbleExecutable*][this] The FbleExecutable to free.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 void FbleExecutableNothingOnFree(FbleExecutable* this);
@@ -166,14 +172,14 @@ typedef struct {
 } FbleExecutableModuleV;
 
 /**
- * Frees an FbleExecutableModule.
+ * @func[FbleFreeExecutableModule] Frees an FbleExecutableModule.
  *
- * Decrement the reference count and if appropriate free resources associated
- * with the given module.
+ *  Decrements the reference count and if appropriate frees resources
+ *  associated with the given module.
  *
- * @param module  The module to free
+ *  @arg[FbleExecutableModule*][module] The module to free
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the module as appropriate.
  */
 void FbleFreeExecutableModule(FbleExecutableModule* module);
@@ -193,174 +199,187 @@ typedef struct {
 } FbleExecutableProgram;
 
 /**
- * Frees and FbleExecutableProgram.
+ * @func[FbleFreeExecutableProgram] Frees an FbleExecutableProgram.
  *
- * @param program  The program to free, may be NULL.
+ *  @arg[FbleExecutableProgram*][program] The program to free, may be NULL.
  *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the given program.
  */
 void FbleFreeExecutableProgram(FbleExecutableProgram* program);
 
 /**
- * Calls an fble function.
+ * @func[FbleThreadCall] Calls an fble function.
  *
- * @param heap    The value heap.
- * @param thread  The thread whose stack to push the frame on to.
- * @param func    The function to execute. Borrowed.
- * @param args    Arguments to pass to the function. length == func->argc.
- *                Borrowed.
+ *  @arg[FbleValueHeap*] heap
+ *   The value heap.
+ *  @arg[FbleThread*] thread
+ *   The thread whose stack to push the frame on to.
+ *  @arg[FbleValue*] func
+ *   The function to execute. Borrowed.
+ *  @arg[FbleValue**] args
+ *   Arguments to pass to the function. length == func->argc. Borrowed.
  *
- * @returns
+ *  @returns FbleValue*
  *   The result of the function call, or NULL in case of abort.
  *
- * @sideeffects
- * * Updates the threads stack.
- * * Enters a profiling block for the function being called.
- * * Executes the called function to completion, returning the result.
+ *  @sideeffects
+ *   @i Updates the threads stack.
+ *   @i Enters a profiling block for the function being called.
+ *   @i Executes the called function to completion, returning the result.
  */
 FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
 
 /**
- * Calls an fble function using varags.
+ * @func[FbleThreadCall_] Calls an fble function using varags.
  *
- * @param heap     The value heap.
- * @param thread   The thread whose stack to push the frame on to.
- * @param func     The function to execute. Borrowed.
- * @param ...      func->argc number of arguments to pass to the function.
- *                 Borrowed.
+ *  @arg[FbleValueHeap*] heap
+ *   The value heap.
+ *  @arg[FbleThread*] thread
+ *   The thread whose stack to push the frame on to.
+ *  @arg[FbleValue*] func
+ *   The function to execute. Borrowed.
+ *  @arg[...][]
+ *   func->argc number of arguments to pass to the function. Borrowed.
  *
- * @returns
+ *  @returns FbleValue*
  *   The result of the function call, or NULL in case of abort.
  *
- * @sideeffects
- * * Updates the threads stack.
- * * Enters a profiling block for the function being called.
- * * Executes the called function to completion, returning the result.
+ *  @sideeffects
+ *   @i Updates the threads stack.
+ *   @i Enters a profiling block for the function being called.
+ *   @i Executes the called function to completion, returning the result.
  */
 FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
 
 /**
- * Tail calls an fble function.
+ * @func[FbleThreadTailCall] Tail calls an fble function.
  *
- * Replaces the current frame with a new one.
+ *  Replaces the current frame with a new one.
  *
- * @param heap    The value heap.
- * @param func    The function to execute. Consumed.
- * @param thread  The thread with the stack to change.
- * @param args    Args to the function. length == func->argc.
- *                Array borrowed, elements consumed.
+ *  This function should only be called from an FbleRunFunction invoked by
+ *  FbleThreadCall.
  *
- * @returns
+ *  The run function should directly return the result of FbleThreadTailCall.
+ *  It should not execute any other thread API functions after calling
+ *  FbleThreadTailCall.
+ *
+ *  @arg[FbleValueHeap*] heap
+ *   The value heap.
+ *  @arg[FbleThread*] thread
+ *   The thread with the stack to change.
+ *  @arg[FbleValue*] func 
+ *   The function to execute. Consumed.  
+ *  @arg[FbleValue**] args
+ *   Args to the function. length == func->argc. Array borrowed, elements
+ *   consumed.
+ *
+ *  @returns FbleValue*
  *   An special sentinal value to indicate tail call is required.
  *
- * @sideeffects
- * * Exits the current frame, which potentially frees any instructions
- *   belonging to that frame.
- * * The func and all args have their ownership transferred to
- *   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
- *   doing an FbleReleaseValue call for func and args.
- * * Replaces the profiling block for the function being called.
- *
- * This function should only be called from an FbleRunFunction invoked by
- * FbleThreadCall.
- *
- * The run function should directly return the result of FbleThreadTailCall.
- * It should not execute any other thread API functions after calling
- * FbleThreadTailCall.
+ *  @sideeffects
+ *   @i Exits the current frame, which potentially frees any instructions
+ *    belonging to that frame.
+ *   @i The func and all args have their ownership transferred to
+ *    FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
+ *    doing an FbleReleaseValue call for func and args.
+ *   @i Replaces the profiling block for the function being called.
  */
 FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
 
 /**
- * Tail aclls an fble function using varargs.
+ * @func[FbleThreadTailCall_] Tail calls an fble function using varargs.
  *
- * Replaces the current frame with a new one.
+ *  Replaces the current frame with a new one.
  *
- * @param heap    The value heap.
- * @param func    The function to execute. Consumed.
- * @param thread  The thread with the stack to change.
- * @param ...     func->args number of args to the function. Args consumed.
+ *  This function should only be called from an FbleRunFunction invoked by
+ *  FbleThreadCall.
  *
- * @returns
- *   An special sentinal value to indicate tail call is required.
+ *  The run function should directly return the result of FbleThreadTailCall_.
+ *  It should not execute any other thread API functions after calling
+ *  FbleThreadTailCall_.
  *
- * @sideeffects
- * * Exits the current frame, which potentially frees any instructions
- *   belonging to that frame.
- * * The func and all args have their ownership transferred to
- *   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
- *   doing an FbleReleaseValue call for func and args.
- * * Replaces the profiling block for the function being called.
+ *  @arg[FbleValueHeap*] heap
+ *   The value heap.
+ *  @arg[FbleThread*] thread
+ *   The thread with the stack to change.
+ *  @arg[FbleValue*] func
+ *   The function to execute. Consumed.
+ *  @arg[...] 
+ *   func->args number of args to the function. Args consumed.
  *
- * This function should only be called from an FbleRunFunction invoked by
- * FbleThreadCall.
+ *  @returns FbleValue*
+ *   A special sentinal value to indicate tail call is required.
  *
- * The run function should directly return the result of FbleThreadTailCall_.
- * It should not execute any other thread API functions after calling
- * FbleThreadTailCall_.
+ *  @sideeffects
+ *   @i Exits the current frame, which potentially frees any instructions
+ *    belonging to that frame.
+ *   @i The func and all args have their ownership transferred to
+ *    FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
+ *    doing an FbleReleaseValue call for func and args.
+ *   @i Replaces the profiling block for the function being called.
  */
 FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
 
 /**
- * Takes a profiling sample on the thread.
+ * @func[FbleThreadSample] Takes a profiling sample on the thread.
  *
- * @param thread    The profile thread to sample.
+ *  @arg[FbleThread*][thread] The profile thread to sample.
  *
- * @sideeffects
- * * Charges calls on the current thread with the given time.
- * * Has no effect if profiling is currently disabled.
+ *  @sideeffects
+ *   @i Charges calls on the current thread with the given time.
+ *   @i Has no effect if profiling is currently disabled.
  */
 void FbleThreadSample(FbleThread* thread);
 
 /**
- * Enters a profiling block.
+ * @func[FbleThreadEnterBlock] Enters a profiling block.
  *
- * When calling into a function, use this function to tell the profiling logic
- * what block is being called into.
+ *  When calling into a function, use this function to tell the profiling
+ *  logic what block is being called into.
  *
- * @param thread    The thread to do the call on.
- * @param block     The block to call into.
+ *  @arg[FbleThread*][thread] The thread to do the call on.
+ *  @arg[FbleBlockId][block ] The block to call into.
  *
- * @sideeffects
- * * A corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
- *   should be made when the call leaves, for proper accounting and resource
- *   management.
- * * Has no effect if profiling is currently disabled.
+ *  @sideeffects
+ *   @i A corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
+ *    should be made when the call leaves, for proper accounting and resource
+ *    management.
+ *   @i Has no effect if profiling is currently disabled.
  */
 void FbleThreadEnterBlock(FbleThread* thread, FbleBlockId block);
 
 /**
- * Replaces a profiling block.
+ * @func[FbleThreadReplaceBlock] Replaces a profiling block.
  *
- * When tail-calling into a function, use this function to tell the profiling
- * logic what block is being called into.
+ *  When tail-calling into a function, use this function to tell the profiling
+ *  logic what block is being called into.
  *
- * @param thread    The thread to do the call on.
- * @param block     The block to tail call into.
+ *  @arg[FbleThread*][thread] The thread to do the call on.
+ *  @arg[FbleBlockId][block ] The block to tail call into.
  *
- * @sideeffects
- * * Replaces the current profiling block with the new block.
- * * Frees resources associated with the block being replaced, but a
- *   corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
- *   will still needed to free resources associated with the replacement
- *   block.
- * * Has no effect if profiling is currently disabled.
+ *  @sideeffects
+ *   @i Replaces the current profiling block with the new block.
+ *   @i Frees resources associated with the block being replaced, but a
+ *    corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
+ *    will still needed to free resources associated with the replacement
+ *    block.
+ *   @i Has no effect if profiling is currently disabled.
  */
 void FbleThreadReplaceBlock(FbleThread* thread, FbleBlockId block);
 
 /**
- * Exits a profiling block.
+ * @func[FbleThreadExitBlock] Exits a profiling block.
  *
- * When returning from a function, use this function to tell the profiling
- * logic what block is being exited.
+ *  When returning from a function, use this function to tell the profiling
+ *  logic what block is being exited.
  *
- * @param thread    The thread to exit the call on.
+ *  @arg[FbleThread*][thread] The thread to exit the call on.
  *
- * @sideeffects
- * * Updates the profile data associated with the given thread.
- * * Has no effect if profiling is currently disabled.
+ *  @sideeffects
+ *   @i Updates the profile data associated with the given thread.
+ *   @i Has no effect if profiling is currently disabled.
  */
 void FbleThreadExitBlock(FbleThread* thread);
-
 
 #endif // FBLE_EXECUTE_H_

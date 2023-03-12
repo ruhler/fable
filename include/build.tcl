@@ -26,6 +26,16 @@ namespace eval "include" {
       FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main
       FbleGenerateC FbleGenerateCExport FbleGenerateCMain
     }
+    fble-execute.h {
+      FbleRunFunction
+      FbleFreeExecutable
+      FbleExecutableNothingOnFree
+      FbleFreeExecutableModule FbleFreeExecutableProgram
+      FbleThreadCall FbleThreadCall_
+      FbleThreadTailCall FbleThreadTailCall_
+      FbleThreadSample
+      FbleThreadEnterBlock FbleThreadReplaceBlock FbleThreadExitBlock
+    }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
       FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
