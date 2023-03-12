@@ -5,23 +5,35 @@ namespace eval "include" {
     install $x $::config::includedir/fble/[file tail $x]
   }
 
-  # Man pages for fble-value.h
-  set fble_value_funcs {
-    FbleNewValueHeap FbleFreeValueHeap
-    FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
-    FbleValueAddRef
-    FbleValueFullGc
-    FbleNewStructValue FbleNewStructValue_
-    FbleStructValueAccess
-    FbleNewUnionValue FbleNewEnumValue
-    FbleUnionValueTag FbleUnionValueAccess
-    FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
-    FbleNewFuncValue FbleNewFuncValue_
-    FbleFuncValueInfo FbleEval FbleApply
-    FbleNewRefValue FbleAssignRefValue FbleStrictValue
+  set header_funcs {
+    fble-alloc.h {
+      FbleRawAlloc FbleAlloc FbleAllocExtra FbleArrayAlloc
+      FbleFree
+      FbleNewStackAllocator FbleFreeStackAllocator
+      FbleRawStackAlloc FbleStackAlloc FbleStackAllocExtra
+      FbleStackFree
+      FbleMaxTotalBytesAllocated FbleResetMaxTotalBytesAllocated
+    }
+    fble-value.h {
+      FbleNewValueHeap FbleFreeValueHeap
+      FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
+      FbleValueAddRef
+      FbleValueFullGc
+      FbleNewStructValue FbleNewStructValue_
+      FbleStructValueAccess
+      FbleNewUnionValue FbleNewEnumValue
+      FbleUnionValueTag FbleUnionValueAccess
+      FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
+      FbleNewFuncValue FbleNewFuncValue_
+      FbleFuncValueInfo FbleEval FbleApply
+      FbleNewRefValue FbleAssignRefValue FbleStrictValue
+    }
   }
-  foreach x $fble_value_funcs {
-    man_dc $::b/include/fble/$x.3 $::s/include/fble/fble-value.h $x
-    install $::b/include/fble/$x.3 $::config::mandir/man3/$x.3
+
+  foreach {header funcs} $header_funcs {
+    foreach x $funcs {
+      man_dc $::b/include/fble/$x.3 $::s/include/fble/$header $x
+      install $::b/include/fble/$x.3 $::config::mandir/man3/$x.3
+    }
   }
 }
