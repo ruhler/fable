@@ -11,8 +11,14 @@ namespace eval "include" {
     FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
     FbleValueAddRef
     FbleValueFullGc
-    FbleNewStructValue
-    FbleEval
+    FbleNewStructValue FbleNewStructValue_
+    FbleStructValueAccess
+    FbleNewUnionValue FbleNewEnumValue
+    FbleUnionValueTag FbleUnionValueAccess
+    FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
+    FbleNewFuncValue FbleNewFuncValue_
+    FbleFuncValueInfo FbleEval FbleApply
+    FbleNewRefValue FbleAssignRefValue FbleStrictValue
   }
   foreach x $fble_value_funcs {
     man_dc $::b/include/fble/$x.3 $::s/include/fble/fble-value.h $x
