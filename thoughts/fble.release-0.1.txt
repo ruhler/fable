@@ -1844,3 +1844,27 @@ Accept module arg options, but give an error if anything is provided. Like:
 
 Maybe there's a better error message we could come up with. If so, update that
 later. I think this will work fine for the time being.
+
+---
+
+I want to put version number in man pages. We have @config tag now, which
+seems perfect. Except, in order to get version number in the @config tag, we
+need to read and set it in the configure script. But then, it doesn't make
+sense for it to come from fble-version.h, because if we change fble-version.h,
+we would need to rerun configure.
+
+I can get away without having to rerun configure today for build changes
+because configure doesn't depend on anything else. It's all self contained.
+Well, except for itself I guess.
+
+Okay. Let's just write a build rule to generate version.fbld.tcl, define an
+@version tag, and use that. No big deal. Maybe call it @FbldVersion.
+
+But that doesn't work either, because we don't actually write @man anywhere,
+and who says it accepts inline commands for source? Actually, that's all we
+need: for it to accept inline commands. Then we can reuse @FbldVersion which
+is a generated tag.
+
+This is all feeling a bit sneaky. Like maybe inline_... should return a string
+instead of outputting a string? And then we can call ... anyway. Let me worry
+about this next release when we think about how to fix fbld composition.

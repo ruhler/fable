@@ -173,9 +173,12 @@ proc block_code {language text} {
 # Top level entry point for a man page.
 # @param section  The section of the man page, e.g. 1 or 3.
 # @param title  The title of the document.
+# @param source The source of the document.
 # @param body  The contents of the document.
-proc block_man {section title body} {
-  ::output ".TH \"$title\" $section\n"
+proc block_man {section title source body} {
+  ::output ".TH \"$title\" $section \"\" \""
+  ::inline $source
+  ::output "\"\n"
   ::block $body
 }
 

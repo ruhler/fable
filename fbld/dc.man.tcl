@@ -45,7 +45,7 @@ proc block_func {name brief content} {
   }
   append body "@l\[);\]\]\]\n\n"
   append body "@section\[DESCRIPTION\]\[$brief\n\n$content\]"
-  ::block_man 3 $name $body
+  ::block_man 3 $name "@FbleVersion" $body
 }
 
 # @arg[INLINE type][INLINE name][INLINE description]

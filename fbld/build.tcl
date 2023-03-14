@@ -23,6 +23,10 @@ namespace eval "fbld" {
   test $::b/fbld/test.tr "$::s/fbld/fbld.tcl $::s/fbld/test.tcl" \
     "tclsh8.6 $::s/fbld/test.tcl"
 
+  # version.fbld.tcl
+  build $::b/fbld/version.fbld.tcl "" \
+    "echo proc inline_FbleVersion {} { inline_ $::version } > $::b/fbld/version.fbld.tcl"
+
   # Processes an fbld file.
   #
   #   target - the file to generate
@@ -32,8 +36,9 @@ namespace eval "fbld" {
   proc ::fbld { target source deps args } {
     build $target \
       [list $source $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl \
-        $::s/fbld/config.fbld.tcl $::b/config.tcl {*}$args {*}$deps] \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/config.fbld.tcl [join $args] < $source > $target"
+        $::s/fbld/config.fbld.tcl $::b/fbld/version.fbld.tcl \
+        $::b/config.tcl {*}$args {*}$deps] \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/config.fbld.tcl $::b/fbld/version.fbld.tcl [join $args] < $source > $target"
   }
 
   # Builds an html file from an fbld @doc.
