@@ -178,7 +178,7 @@
   tail position by passing the running result of computation with a helper
   function:
  
-  @code[fble][
+  @code[fble]
    (Int@, Int@) { Int@; } Helper = (Int@ product, Int@ n) {
      Eq(n, 0).?(product);
      Helper(Mul(n, product), Sub(n, 1));

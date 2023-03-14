@@ -36,7 +36,7 @@ proc block_func {name brief content} {
   ::fbld::block dc_get_args_and_return $content
 
   set body "@section\[NAME\]\[$name - $brief\]\n\n"
-  append body "@section\[SYNOPSYS\]\[@par\[@l\[#include <fble/fble.h>\]\]\n@par\["
+  append body "@section\[SYNOPSIS\]\[@par\[@l\[#include <fble/fble.h>\]\]\n@par\["
   append body "@l\[$::dc_man_func_return $name\]@l\[(\]"
   set comma ""
   foreach { t n } $::dc_man_func_args {

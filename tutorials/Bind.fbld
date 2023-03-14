@@ -29,7 +29,7 @@
    the arguments @l[a1], @l[a2], @l[...]. Bind syntax can be used with one or
    more arguments @l[a1], @l[a2], @l[...].
  
-  @subsection[Example][
+  @subsection[Example]
    In the @fbld[Functions.fbld][Functions] tutorial we gave an example of a
    function that takes a function as an argument:
  

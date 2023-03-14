@@ -36,7 +36,7 @@
  @section Main Function
   Next we defined the main function:
  
-  @code[fble][
+  @code[fble]
    Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
      % O = /Core/Stream/OStream%(m);
    

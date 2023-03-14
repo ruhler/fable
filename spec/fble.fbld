@@ -12,12 +12,12 @@
     simple to understand, simple to program, powerful, and low cost to develop
     high quality tools for.
    
-   @item 
+   @item
     Fble should support high performance, low overhead computing. This is
     achieved by using a static type system and having a very clear performance
     model that a developer can optimize for.
    
-   @item 
+   @item
     Fble should be a joy to program in. It should be easy to describe the
     majority of programs we want to describe, not tediously difficult. To
     accomplish this, fble allows functions to be declared locally with access
@@ -73,8 +73,8 @@
    execution of an fble program after it has been statically checked, though
    the special unit value for types may exist at runtime when using an fble
    native interface.
-  
-  @subsection[2.2 Kinds][
+
+  @subsection 2.2 Kinds
    @AbstractSyntax
     Kind ::= normal_kind
     Kind ::= type_kind

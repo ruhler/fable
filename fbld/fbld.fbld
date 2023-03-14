@@ -50,30 +50,30 @@
    had their own issues. Some of the issues are subtle and quite subjective.
    Here are a list of alternatives I considered before deciding to develop my
    own markup language.
- 
+
    @definition Markdown
     @item Subtleties in how to parse correctly.
     @item No support for custom structure components.
- 
+
    @definition Asciidoc
     @item Complex to parse and provide custom processing of the document.
     @item Vim syntax highlighting doesn't work well, if at all.
     @item
      You have to know what particular symbols mean to understand the structure
      of a document. For example, @l[......] versus @l[////////].
- 
+
    @definition XML
     @item Tags clutter the doc too much.
- 
+
    @definition roff
     @item Tags clutter the doc too much.
- 
-   @definition doxygen
-    @item Not generally extensible to things beyond code documentation.
- 
+
    @definition tcl
     @item Too tedious to have nested inlined structure.
- 
+
+   @definition doxygen
+    @item Not generally extensible to things beyond code documentation.
+
  @section Inline Structure
   Fbld interprets text as a sequence of commands to execute. The way fbld
   converts text into a sequence of commands depends on whether the text is
@@ -273,7 +273,7 @@
      @emph{Yeah!}. Fbld is so great!
 
    In this case, @l[@emph] is considered an inline command because the
-   @default command parses its argument as inline structed text instead of
+   @l[@default] command parses its argument as inline structed text instead of
    block structured text.
 
 

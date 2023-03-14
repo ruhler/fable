@@ -33,6 +33,8 @@ For example, if @l[FBLE_PACKAGE_PATH] is @l[/fble/pkgs] and you provide
 command line options @l[-p core -m /Core/Unit%], the @l[-p core] option adds
 @l[/fble/pkgs/core] to the module search path, and the @l[-m /Core/Unit%]
 option will look for the module at @l[/fble/pkgs/core/Core/Unit.fble].
+
+The system default package search path is @config[datadir]/fble.
 }
 }
 

@@ -17,6 +17,10 @@ Things to consider doing for the fble-0.2 release.
 
 * Convert internal doc comments to fbld doc comment format?
 
+* Should @l allow inline tags?
+  - For example, I want @l[@config[...]], but it's not doing any substition. I
+    guess that makes sense for calling it a 'literal'?
+
 * Figure out whitespace issues with fbld generated roff, man.
   - When are things trimed versus not?
   - How to avoid too many or too few blank lines between items?

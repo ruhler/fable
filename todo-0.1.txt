@@ -5,12 +5,7 @@ Things to consider doing for the fble-0.1 release.
 * @code for man pages looks like something is messed up.
   See FbleGenerateAArch64Main.3 for example. Looks like a newline got lost.
 
-* Any way to have SYNOPSYS for dc man pages wrap arguments more nicely?
-
-* Document default fble package path in man pages?
-  We can get it from $::config::datadir/fble
-  How best to pass that into the docs?
-  Auto-generate a .tcl file that defines a config tag? Like: @config[datadir]?
+* Any way to have SYNOPSIS for dc man pages wrap arguments more nicely?
   
 * Add version numbers to generated docs?
   - Add another argument to @man tag to pass the 'source' and read from

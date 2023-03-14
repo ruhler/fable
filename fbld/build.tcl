@@ -3,6 +3,9 @@ namespace eval "fbld" {
   dist_s $::s/fbld/build.tcl
   dist_s $::s/fbld/cdata.tcl
   dist_s $::s/fbld/check.tcl
+  dist_s $::s/fbld/config.fbld.tcl
+  dist_s $::s/fbld/dcget.tcl
+  dist_s $::s/fbld/dc.man.tcl
   dist_s $::s/fbld/fbld.fbld
   dist_s $::s/fbld/fbld.lang
   dist_s $::s/fbld/fbld.tcl
@@ -28,8 +31,9 @@ namespace eval "fbld" {
   #   args - list of fbld processing scripts to use.
   proc ::fbld { target source deps args } {
     build $target \
-      "$source $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $args" \
-      "tclsh8.6 $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $args < $source > $target"
+      [list $source $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl \
+        $::s/fbld/config.fbld.tcl $::b/config.tcl {*}$args {*}$deps] \
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/config.fbld.tcl [join $args] < $source > $target"
   }
 
   # Builds an html file from an fbld @doc.
@@ -37,7 +41,7 @@ namespace eval "fbld" {
   # args is additional optional fbld processing scripts.
   proc ::html_doc { target source args } {
     fbld $target $source \
-      "$::s/fbld/fbld-lang $::s/spec/fble.lang" \
+      "$::s/fbld/fbld.lang $::s/spec/fble.lang" \
       [list $::s/fbld/html.tcl {*}$args]
   }
 
@@ -50,9 +54,8 @@ namespace eval "fbld" {
 
   # Builds a man page from an fbld @usage doc.
   proc ::man_usage { target source } {
-    build $target \
-      "$source $::s/fbld/usage.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.man.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl < $source > $target"
+    fbld $target $source "" \
+      [list $::s/fbld/usage.man.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl]
   }
 
   # Builds a man page from an fbld doc comment.
@@ -63,9 +66,8 @@ namespace eval "fbld" {
     build $target.fbld \
       "$source $::s/fbld/dcget.tcl" \
       "tclsh8.6 $::s/fbld/dcget.tcl $id < $source > $target.fbld"
-    build $target \
-      "$target.fbld $::s/fbld/dc.man.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/man.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/dc.man.tcl $::s/fbld/man.tcl < $target.fbld > $target"
+    fbld $target $target.fbld "" \
+      [list $::s/fbld/dc.man.tcl $::s/fbld/man.tcl]
   }
 
   # Builds C header file defining help usage text.
@@ -73,9 +75,8 @@ namespace eval "fbld" {
   # @arg source - the .fbld usage doc to generate the header from.
   # @arg id - the C identifier to declare in the generated header.
   proc ::header_usage { target source id } {
-    build $target.roff \
-      "$source $::s/fbld/usage.help.tcl $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl" \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl < $source > $target.roff"
+    fbld $target.roff $source "" \
+      [list $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl]
     build $target.txt $target.roff \
       "GROFF_NO_SGR=1 groff -T ascii < $target.roff > $target.txt"
     build $target \

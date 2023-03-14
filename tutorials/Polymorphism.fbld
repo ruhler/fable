@@ -211,7 +211,7 @@
    works to define a function @l[Last] that returns the last element in a
    list:
  
-   @code[fble] 
+   @code[fble]
     <@ T@>(List@<T@>) { T@; } Last = <@ T@>(List@<T@> list) {
       list.cons.tail.?(nil: list.cons.head);
       Last<T@>(list.cons.tail);

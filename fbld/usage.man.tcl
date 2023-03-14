@@ -28,7 +28,7 @@ proc block_usage {name brief content} {
 # Synopsys for how to run a command.
 # @param text  Command synopsys.
 proc block_synopsys {text} {
-  ::block_section "SYNOPSYS" "@par\[$text\]"
+  ::block_section "SYNOPSIS" "@par\[$text\]"
 }
 
 # @description[BLOCK body]
