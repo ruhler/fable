@@ -1,4 +1,6 @@
 @doc Fbld
+  @FbleVersion (@BuildStamp)
+
  @section Introduction
   Fbld is a lightweight markup language for structured text. It aims to
   balance the readibilty of markup languages like asciidoc and markdown with

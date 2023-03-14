@@ -86,7 +86,7 @@ namespace eval "lib" {
   # Defines FbleBuildStamp. We have this depend on all the object files to
   # force it to rebuild any time any thing changes.
   build "$::b/lib/buildstamp.c" "$::s/buildstamp $objs" \
-    "$::s/buildstamp FbleBuildStamp > $::b/lib/buildstamp.c"
+    "$::s/buildstamp -c FbleBuildStamp > $::b/lib/buildstamp.c"
 
   # buildstamp.o
   obj $::b/lib/buildstamp.o $::b/lib/buildstamp.c ""

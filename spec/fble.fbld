@@ -1,4 +1,6 @@
 @doc Fble
+  @FbleVersion (@BuildStamp)
+
  @section 1. Introduction
   Fble is a general purpose functional programming language with support for
   polymorphism and modularity.

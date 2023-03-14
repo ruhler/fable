@@ -1,9 +1,9 @@
 namespace eval "fbld" {
 
   dist_s $::s/fbld/build.tcl
+  dist_s $::s/fbld/build.lib.tcl
   dist_s $::s/fbld/cdata.tcl
   dist_s $::s/fbld/check.tcl
-  dist_s $::s/fbld/config.fbld.tcl
   dist_s $::s/fbld/dcget.tcl
   dist_s $::s/fbld/dc.man.tcl
   dist_s $::s/fbld/fbld.fbld
@@ -36,9 +36,9 @@ namespace eval "fbld" {
   proc ::fbld { target source deps args } {
     build $target \
       [list $source $::s/fbld/fbld.tcl $::s/fbld/runfbld.tcl \
-        $::s/fbld/config.fbld.tcl $::b/fbld/version.fbld.tcl \
+        $::s/fbld/build.lib.tcl $::b/fbld/version.fbld.tcl \
         $::b/config.tcl {*}$args {*}$deps] \
-      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/config.fbld.tcl $::b/fbld/version.fbld.tcl [join $args] < $source > $target"
+      "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/build.lib.tcl $::b/fbld/version.fbld.tcl [join $args] < $source > $target"
   }
 
   # Builds an html file from an fbld @doc.

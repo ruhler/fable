@@ -11,7 +11,7 @@
 # @param name  The name of the tutorial.
 # @param content  The tutorial content.
 proc block_tutorial {name content} {
-  ::block_doc $name $content
+  ::block_doc $name " @FbleVersion (@BuildStamp)\n\n$content"
 }
 
 # @exercise[BLOCK content]

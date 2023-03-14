@@ -6,9 +6,6 @@ Things to consider doing for the fble-0.1 release.
   See FbleGenerateAArch64Main.3 for example. Looks like a newline got lost.
 
 * Any way to have SYNOPSIS for dc man pages wrap arguments more nicely?
-  
-* Add version numbers to other generated docs?
- - www? readme? tutorials? language specs?
 
 Release Related:
 * Verify the release candidate every way I can.

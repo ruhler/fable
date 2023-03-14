@@ -2,10 +2,25 @@
 # generate a build stamp\
 exec tclsh8.6 "$0" "$@"
 
+# Usage: buildstamp [-c ID]
+#   -c ID outputs C code to define a const char* named ID with the contents of
+#   the build stamp.
+#
+# Otherwise it just outputs the build stamp.
+
 # Outputs a C program that defines the given identifer as a const char* with
 # the contents of the build stamp.
-set id [lindex $argv 0]
 set entries [list]
 lappend entries [exec date -I]
 catch { lappend entries "dev:[exec git describe --always --dirty]" }
-puts "const char* $id = \"[join $entries ","]\";"
+set stamp [join $entries ","]
+
+switch -exact [lindex $argv 0] {
+  -c {
+    set id [lindex $argv 1]
+    puts "const char* $id = \"$stamp\";"
+  }
+  default {
+    puts $stamp
+  }
+}
