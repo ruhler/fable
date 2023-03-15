@@ -1868,3 +1868,18 @@ is a generated tag.
 This is all feeling a bit sneaky. Like maybe inline_... should return a string
 instead of outputting a string? And then we can call ... anyway. Let me worry
 about this next release when we think about how to fix fbld composition.
+
+---
+
+How to do man page for @code? Currently I'm doing:
+
+\fBint main(int argc, const char** argv) {
+  return _main_(argc, argv, _compiled_);
+}
+\fR
+
+But it's not doing the close brace on a new line.
+
+Let's see how examples work, for example, in 'bind' man page.
+
+It wraps it in '.EX' and '.EE'.

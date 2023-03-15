@@ -165,8 +165,10 @@ proc block_item {text} {
 # @param text  The source code text.
 proc block_code {language text} {
   ::output ".P\n"
+  ::output ".EX\n"
   inline_l $text
   ::output "\n"
+  ::output ".EE\n"
 }
 
 # @man[INLINE section][INLINE title][BLOCK body]

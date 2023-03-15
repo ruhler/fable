@@ -2,9 +2,6 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* @code for man pages looks like something is messed up.
-  See FbleGenerateAArch64Main.3 for example. Looks like a newline got lost.
-
 * Any way to have SYNOPSIS for dc man pages wrap arguments more nicely?
 
 Release Related:
