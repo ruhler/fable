@@ -2,8 +2,6 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Any way to have SYNOPSIS for dc man pages wrap arguments more nicely?
-
 Release Related:
 * Verify the release candidate every way I can.
   Automating as much as that verification as possible. Including:
@@ -12,6 +10,7 @@ Release Related:
   - Check if we can disable SDL properly?
   - Proofread all tutorials?
   - Review all the man pages and usage help text?
+    I saw some typos in some man pages.
   - Double check all links in the generated web page? And proofread?
 * Write release notes for release 0.1
 * Make the official release.

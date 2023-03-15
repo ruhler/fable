@@ -1882,4 +1882,29 @@ But it's not doing the close brace on a new line.
 
 Let's see how examples work, for example, in 'bind' man page.
 
-It wraps it in '.EX' and '.EE'.
+It wraps it in '.EX' and '.EE'. Perfect.
+
+Next: nicer wrapping for synopsis args?
+
+For example, man fwrite shows:
+
+       size_t fwrite(const void *ptr, size_t size, size_t nmemb,
+                     FILE *stream);
+
+But FbleThreadCall shows:
+
+       FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, Fbl‐
+       eValue* func, FbleValue** args);
+
+Looks like it is manually formatted in the fwrite man page with that wrapping.
+
+I don't see anything fancy in the troff user manual.
+
+Sounds like best way to make it look nice would be to insert the newlines and
+whitespace explicitly.
+
+Hmm... This is hacky, because I don't know how it's going to lay things out.
+
+Could we always put each arg on a separate line?
+
+Yeah. I like that. Simple and decent enough.

@@ -38,10 +38,10 @@ proc block_func {name brief content} {
   set body "@section\[NAME\]\[$name - $brief\]\n\n"
   append body "@section\[SYNOPSIS\]\[@par\[@l\[#include <fble/fble.h>\]\]\n@par\["
   append body "@l\[$::dc_man_func_return $name\]@l\[(\]"
-  set comma ""
+  set comma "\n    "
   foreach { t n } $::dc_man_func_args {
     append body "$comma@l\[$t\] @a\[$n\]"
-    set comma "@l\[,\] "
+    set comma "@l\[,\]\n    "
   }
   append body "@l\[);\]\]\]\n\n"
   append body "@section\[DESCRIPTION\]\[$brief\n\n$content\]"
