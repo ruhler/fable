@@ -243,12 +243,17 @@ dist_s $::s/buildstamp
 dist_s $::s/configure
 dist_s $::s/deps.tcl
 dist_s $::s/README.fbld
+dist_s $::s/Release.fbld
 dist_s $::s/todo-0.1.txt
 dist_s $::s/todo-0.2.txt
 
 # README file www
 ::html_doc $::b/www/index.html $::s/README.fbld
 www $::b/www/index.html
+
+# Release file www
+::html_doc $::b/www/Release.html $::s/Release.fbld
+www $::b/www/Release.html
 
 # Test summary.
 build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"

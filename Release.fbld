@@ -1,0 +1,18 @@
+@doc Fble Release Notes
+  @FbleVersion (@BuildStamp)
+
+ @section fble-0.1 March 2023
+  Initial release of fble. Includes:
+
+  @item
+   The fble language specification, with comprehensive test suite, tutorials,
+   and vim syntax highlighting.
+  @item
+   A reference implementation, with interpreter, compilation to c and aarch64,
+   profiling and debug support and library man pages.
+  @item
+   Sample command line and graphical applications, including fble-md5,
+   fble-invaders, and others.
+  @item
+   An initial fbld markup language specification and rough implementation of it.
+

@@ -2,15 +2,22 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-Release Related:
-* Verify the release candidate every way I can.
-  Automating as much as that verification as possible. Including:
-  - Make sure we can build, check, and install from release distribution.
-  - Walk through tutorials and make sure those work.
-  - Check if we can disable SDL properly?
-  - Proofread all tutorials?
-  - Review all the man pages and usage help text?
-    I saw some typos in some man pages.
-  - Double check all links in the generated web page? And proofread?
-* Write release notes for release 0.1
+* Rewrite style guide to be in .fbld format and add to README documentation
+  section?
+
+* Proofread generated html documentation.
+ - Including language specs, readme, release notes, and tutorials.
+
+* Run through the tutorials to make sure they work as described.
+
+* Proofread man pages.
+ - Including library and application man pages.
+
+* Diff file list from git versus dist and make sure everything is there as
+  expected.
+
 * Make the official release.
+
+* Tag the git commit of the release.
+
+* Bump the version number.

@@ -1908,3 +1908,66 @@ Hmm... This is hacky, because I don't know how it's going to lay things out.
 Could we always put each arg on a separate line?
 
 Yeah. I like that. Simple and decent enough.
+
+---
+
+Question: how to do release notes? Do we include it as a file somewhere? What
+do we call that file?
+
+Let's see what other projects do:
+* gc has a 'ChangeLog' file, which is a list of commit messages included in
+  the release.
+* github also references 'changelog' when talking about release notes.
+* There's also a NEWS file for user-visible changes worth mentioning according
+  to GNU.
+* Seems like release notes tend to get published to the web. So maybe I should
+  build them as part of the 'www'?
+
+I kind of want to have a .fbld file at the top level with release notes
+accumulated for each version. Each version gets around a paragraph of release
+notes. What to call that file? Brainstorm:
+* NEWS.fbld
+* NOTES.fbld
+* Releases.fbld
+* RELEASES.fbld
+* RELEASE_NOTES.fbld
+* RELEASE.fbld
+
+I like RELEASE.fbld. We can add a link to it from README.txt. Set Release
+Notes as the title.
+
+For the release notes, we'll want the version number and date of release. Just
+put a month, like March 2023. And then, worst case, we can update that just
+before the release if we don't get the release out by March.
+
+What to include in release notes:
+* Any major new features.
+* Any major incompatibilities.
+* Any notable fixes.
+
+Basically anything someone might want to know who is familiar with the
+previous version of the release.
+
+This case will be a little special because it's the first one. I vote to
+summarize what's included in the release. Something like:
+
+* fbld language spec and basic implementation.
+* fble language spec (fairly stable), test suite, and vim syntax highlighting.
+* fble reference implementation
+  - With interpreter, compilation to c and aarch64, profiling, debug
+    support, library man pages.
+* fble language tutorials
+* Notable sample programs:
+   fble-md5, fble-invaders
+
+The downside of 'RELEASE.fbld' is tab completion will conflict between that
+and README.fbld. Though maybe that's a feature. Any better alternative? No.
+Let's start with RELEASE.fbld. We can always rename it later if desired.
+
+I already ran into this tab completion annoyance. Let me rename RELEASE.fbld
+to Release.fbld. Perfect. I love it.
+
+---
+
+We're at the home stretch now! All that's left is to do last minute
+proof-reading and checking, and then we can release.

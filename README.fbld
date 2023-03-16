@@ -18,8 +18,7 @@
   @def[Fble Language Specification] @fbld[spec/fble.fbld]
   @def[Fbld Document Markup Specification] @fbld[fbld/fbld.fbld]
   @def[Tutorials] @fbld[tutorials/Tutorials.fbld]
-  @def[Fble C API] @file[include/fble/]
-  @def[Fble Internals] @file[lib/]
+  @def[Release Notes] @fbld[Release.fbld]
 
   The latest generated documentation is also available online at
   @url[https://ruhler.github.io/fable].
@@ -36,7 +35,6 @@
   @def[thoughts/] A collection of running discussions about fble.
   @def[tutorials/] Fble language tutorials.
   @def[vim/] Vim syntax files for fbld and fble.
-  @def[www/] Source for the fble website.
 
  @section Build Requirements
   To build and run the tests for all of fble, the following software is
