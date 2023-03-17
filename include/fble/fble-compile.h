@@ -176,7 +176,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
  *   The output stream to write the C code to.
  *  @arg[const char*] name
  *   The name of the function to generate.
- *  @arg[FbleMOdulePath*] path
+ *  @arg[FbleModulePath*] path
  *   The path to the module to export.
  *
  *  @sideeffects

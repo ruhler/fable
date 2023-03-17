@@ -6,7 +6,7 @@
   Runs an fble stdio program.
  
   The fble program should be the result of calling @l[/Core/Stdio/IO%.Run] on
-  with an argument of type @l[/Core/Stdio%.Main@].
+  an argument of type @l[/Core/Stdio%.Main@].
  
  @options
   @GenericProgramInfo

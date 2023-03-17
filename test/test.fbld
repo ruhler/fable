@@ -22,6 +22,6 @@
   @def[4] Other Error.
  
  @examples
-  @ex[fble-test --profile test.prof -p core -m -m /Core/Stdio/HelloWorld%]
+  @ex[fble-test --profile test.prof -p core -m /Core/Stdio/HelloWorld%]
    Evaluates (without executing) the module @l[/Core/Stdio/HelloWorld%],
    outputting a profiling report to @l[test.prof].

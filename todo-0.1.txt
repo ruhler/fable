@@ -2,16 +2,18 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
+* Pick a working example for fble-disassemble usage info.
+  Maybe for fble-compile and fble-deps too.
+
+* double check if we set MANDIR something or other, it picks up the fble man
+  pages.
+
+* Add build stamp to man 'source' field?
+
 * Proofread generated html documentation.
  - Including language specs, readme, release notes, and tutorials.
 
 * Run through the tutorials to make sure they work as described.
-
-* Proofread man pages.
- - Including library and application man pages.
-
-* Diff file list from git versus dist and make sure everything is there as
-  expected.
 
 * Make the official release.
 

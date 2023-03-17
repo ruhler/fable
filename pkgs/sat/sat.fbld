@@ -3,7 +3,7 @@
   @l[fble-sat]
  
  @description
-  Solve the SAT problem descirbed on standard intput in DIMACS cnf format.
+  Solve the SAT problem described on standard input in DIMACS cnf format.
  
  @exitstatus
   @def[0] Success.
