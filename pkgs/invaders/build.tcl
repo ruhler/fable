@@ -1,6 +1,7 @@
 namespace eval "pkgs/invaders" {
   dist_s $::s/pkgs/invaders/build.tcl
   dist_s $::s/pkgs/invaders/invaders.fbld
+  dist_s $::s/pkgs/invaders/Invaders/speeds.txt
 
   pkg invaders [list core app] ""
 

@@ -2,8 +2,6 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Update anything in book/?
-
 * Proofread generated html documentation.
  - Including language specs, readme, release notes, and tutorials.
 
