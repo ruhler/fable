@@ -10,6 +10,8 @@ Things to consider doing for the fble-0.2 release.
  - write some serious new fble code.
    image viewer? floating point?
 
+* Add autoindent to fbld vim syntax file?
+
 * Why does FbleNewLoc use int for line and col instead of size_t?
 
 * Check if all the fble-module-path.h functions really need to be public API.

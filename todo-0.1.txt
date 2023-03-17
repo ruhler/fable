@@ -2,8 +2,7 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Rewrite style guide to be in .fbld format and add to README documentation
-  section?
+* Update anything in book/?
 
 * Proofread generated html documentation.
  - Including language specs, readme, release notes, and tutorials.

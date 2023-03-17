@@ -1,0 +1,82 @@
+@doc Fble Style Guide
+  @FbleVersion (@BuildStamp)
+
+ This document records a particular style of fble programming. It's not
+ necessarily a good one, but it can at least be used as an explicit and
+ canonical one.
+
+ @item
+  Type names are capitalized. For example: @l[Foo@], @l[FooBar@].
+
+ @item
+  Top level declarations are capitalized. For example: @l[And], @l[DrawBox].
+
+ @item
+  Argument names are lower case. For example: @l[(Foo@ x) { ... }]
+ 
+ @item
+  Struct and union fields should be lower case.
+
+ @item
+  Module names are capitalized. For example: @l[/Bool%], @l[/GameOfLife%].
+
+ @item
+  Parenthesized or braced expressions can be split across multiple lines. If
+  so, indent by 2 spaces. Put the close brace on its own line and the end
+  aligned with the entity. Closed parenthesis can go on the last line instead
+  of its own line; that's usually preferred unless the clarity of having it on
+  its own line justifies the extra line.
+
+  For example:
+
+  @code[txt]
+   ... [
+     ...,
+     ...,
+     ...]
+
+   ... (
+     ...,
+     ...,
+     ...)
+
+   ... {
+     ...;
+     ...;
+   }
+
+ @item
+  For long declarations types, break after the type when defining a variable.
+  For example:
+
+  @code[fble]
+   <@ T@>(Symbol@, T@, Array@<T@>) { Array@<T@>; }
+   Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) { ... }
+
+ @item
+  It's fine to group multiple args together on the same line if they fit when
+  breaking up a larger thing across multiple lines. For example:
+
+  @code[txt]
+   ... (
+     ..., ..., ...
+     ...,
+     ..., ...
+   )
+
+ @item
+  Put space between braces but not parenthesis. For example:
+
+  @code[fble]
+   [a, b, c]
+   Foo(a, b, c)
+   Foo { a; b; c; }
+
+ @item
+  Module imports should come first in a file, grouped by import module, sorted
+  by import module path. Within a group, import types first followed by
+  values. Sort imports by name.
+
+ @item
+  Use @l[_] as the name of unused variables.
+
