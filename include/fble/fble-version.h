@@ -18,12 +18,12 @@
 /**
  * Minor version number.
  */
-#define FBLE_VERSION_MINOR 1
+#define FBLE_VERSION_MINOR 2
 
 /**
  * Version string.
  */
-#define FBLE_VERSION "fble-0.1"
+#define FBLE_VERSION "fble-0.2"
 
 /**
  * A brief description with some info about the particular build of the fble
