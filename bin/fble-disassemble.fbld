@@ -19,4 +19,4 @@
   @def[2] Usage error.
  
  @examples
-  @ex[fble-disassemble -I prgms -m /Foo%][]
+  @ex[fble-disassemble -p core -m /Core/Stdio/HelloWorld%][]

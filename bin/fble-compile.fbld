@@ -56,10 +56,10 @@
   @def[2] Usage error.
  
  @examples
-  @ex[fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s]
-   Compiles @l[/Foo%] to an @l[FbleCompiledModuleFunction*] called
-   @l[CompiledFoo.]
+  @ex[fble-compile -c -e CompiledHelloWorld -p core -m /Core/Stdio/HelloWorld%]
+   Compiles @l[/Core/Stdio/HelloWorld%] to an @l[FbleCompiledModuleFunction*]
+   called @l[CompiledHelloWorld.]
  
-  @ex[fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s]
+  @ex[fble-compile -c --main FbleStdioMain -p core -m /Core/Stdio/HelloWorld%]
    Generates a standalone program that invokes @l[FbleStdioMain] on the
-   compiled code for @l[/Foo%] when run.
+   compiled code for @l[/Core/Stdio/HelloWorld%] when run.

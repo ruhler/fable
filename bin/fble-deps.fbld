@@ -24,4 +24,4 @@
   malformed .fble file.
  
  @examples
-  @ex[fble-deps -I foo -t Foo.fble.d -m /Foo% > Foo.fble.d][]
+  @ex[fble-deps -t HelloWorld.fbld.d -p core -m /Core/Stdio/HelloWorld%][]

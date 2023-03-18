@@ -21,7 +21,7 @@
 #
 # Each of these are treated as separate sections of the document.
 proc block_usage {name brief content} {
-  ::block_man 1 $name "@FbleVersion" "@section\[NAME\]\[$name - $brief\]\n\n$content"
+  ::block_man 1 $name "@FbleVersion (@BuildStamp)" "@section\[NAME\]\[$name - $brief\]\n\n$content"
 }
 
 # @synopsys[INLINE text]
