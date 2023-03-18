@@ -39,6 +39,7 @@ jobs:
         uses: actions/upload-pages-artifact@v1.0.7
         with:
           path: ${{github.workspace}}/build/www/
+          retention-days: 0
 
   deploy:
     needs: build

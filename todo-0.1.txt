@@ -2,12 +2,8 @@ Fble 0.1 TODO
 =============
 Things to consider doing for the fble-0.1 release.
 
-* Figure out why the github web docs aren't working.
-
-* Proofread generated html documentation.
- - Including language specs, readme, release notes, and tutorials.
-
 * Run through the tutorials to make sure they work as described.
+  - Or at least the first couple to get to working code.
 
 * Make the official release.
 
