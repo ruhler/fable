@@ -1,8 +1,4 @@
 namespace eval "pkgs/pinball" {
-  dist_s $::s/pkgs/pinball/build.tcl
-  dist_s $::s/pkgs/pinball/pinball.fbld
-  dist_s $::s/pkgs/pinball/TODO.txt
-
   pkg pinball [list core app] ""
 
   # /Pinball/Tests% interpreted

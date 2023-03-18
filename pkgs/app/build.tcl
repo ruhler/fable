@@ -1,16 +1,4 @@
 namespace eval "pkgs/app" {
-
-  dist_s $::s/pkgs/app/app.c
-  dist_s $::s/pkgs/app/app.fbld
-  dist_s $::s/pkgs/app/app.h
-  dist_s $::s/pkgs/app/build.tcl
-  dist_s $::s/pkgs/app/fble-app.c
-  dist_s $::s/pkgs/app/thoughts/images.txt
-  dist_s $::s/pkgs/app/thoughts/mouse.txt
-  dist_s $::s/pkgs/app/thoughts/png.txt
-  dist_s $::s/pkgs/app/thoughts/resize.txt
-  dist_s $::s/pkgs/app/TODO.txt
-
   set objs [list]
   if $::config::enable_fble_app {
     header_usage $::b/pkgs/app/app.usage.h $::s/pkgs/app/app.fbld fbldUsageHelpText

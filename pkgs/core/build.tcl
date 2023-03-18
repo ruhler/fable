@@ -1,17 +1,4 @@
 namespace eval "pkgs/core" {
-
-  dist_s $::s/pkgs/core/build.tcl
-  dist_s $::s/pkgs/core/char.fble.c
-  dist_s $::s/pkgs/core/char.fble.h
-  dist_s $::s/pkgs/core/fble-stdio.c
-  dist_s $::s/pkgs/core/int.fble.c
-  dist_s $::s/pkgs/core/int.fble.h
-  dist_s $::s/pkgs/core/stdio.fbld
-  dist_s $::s/pkgs/core/stdio.fble.c
-  dist_s $::s/pkgs/core/stdio.fble.h
-  dist_s $::s/pkgs/core/string.fble.c
-  dist_s $::s/pkgs/core/string.fble.h
-
   header_usage $::b/pkgs/core/stdio.usage.h $::s/pkgs/core/stdio.fbld fbldUsageHelpText
 
   # .c library files.

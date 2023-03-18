@@ -32,7 +32,6 @@ namespace eval "pkgs" {
 
         set target $::config::datadir/fble/$name/$x
         install $::s/pkgs/$name/$x $target
-        dist_s $::s/pkgs/$name/$x
 
         fbledep $::b/pkgs/$name/$x.d $mpath $cflags
         fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
@@ -44,7 +43,6 @@ namespace eval "pkgs" {
     install $::b/pkgs/$name/libfble-$name.a $::config::libdir/libfble-$name.a
   }
 
-  dist_s $::s/pkgs/build.tcl
   foreach {x} $pkgs {
     build_tcl $::s/pkgs/$x/build.tcl
   }

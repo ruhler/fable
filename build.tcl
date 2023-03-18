@@ -184,21 +184,6 @@ lappend ::build_ninja_deps $::s/include/fble/fble-version.h
 set version_def [exec grep "#define FBLE_VERSION " $::s/include/fble/fble-version.h]
 set ::version [lindex $version_def 2]
 
-set ::dist [list]
-
-# Mark a source file for distribution.
-# The file must be under $::s directory.
-# For example: dist_s $::s/README.fbld
-proc dist_s { file } {
-  if {![string match "$::s/*" $file"]} {
-    error "dist_s argument \'$file\' not under \'$::s\'"
-  }
-  set base [string range $file [string length $::s/] end]
-  lappend ::dist $::b/$::version/$base
-  build $::b/$::version/$base $::s/$base \
-    "cp $::s/$base $::b/$::version/$base"
-}
-
 # Perform glob on files in the given dir.
 # args are additional arguments passed to the standard tcl glob command.
 proc build_glob {dir args} {
@@ -234,18 +219,6 @@ build_tcl $::s/test/spec-test.build.tcl
 build_tcl $::s/tutorials/build.tcl
 build_tcl $::s/pkgs/build.tcl
 
-build_tcl $::s/book/build.tcl
-build_tcl $::s/thoughts/build.tcl
-build_tcl $::s/vim/build.tcl
-
-dist_s $::s/build.tcl
-dist_s $::s/buildstamp
-dist_s $::s/configure
-dist_s $::s/deps.tcl
-dist_s $::s/README.fbld
-dist_s $::s/Release.fbld
-dist_s $::s/todo-0.2.txt
-
 # README file www
 ::html_doc $::b/www/index.html $::s/README.fbld
 www $::b/www/index.html
@@ -259,10 +232,6 @@ build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
 build $::b/summary.tr \
   "$::s/test/log $::b/detail.tr $::s/test/tests.tcl" \
   "$::s/test/log $::b/summary.tr tclsh8.6 $::s/test/tests.tcl < $::b/detail.tr"
-
-# Release tarball
-build $::b/$::version.tar.gz $::dist \
-  "tar --create --gzip --directory $::b --file $::version.tar.gz $::version"
 
 # Phony targets.
 # phony --
@@ -281,8 +250,7 @@ proc phony { target dependencies } {
 phony "all" $::all
 phony "test" $::b/summary.tr
 phony "www" $::www
-phony "dist" $::b/$::version.tar.gz
-phony "check" [list all dist test www]
+phony "check" [list all test www]
 phony "install" $::install
 puts $::build_ninja "default all"
 

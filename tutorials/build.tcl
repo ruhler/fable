@@ -27,15 +27,6 @@ namespace eval "tutorials" {
     Main.fble
   }
 
-  dist_s $::s/tutorials/build.tcl
-  dist_s $::s/tutorials/Tutorials.fbld
-  dist_s $::s/tutorials/debug_guide.txt
-  dist_s $::s/tutorials/profile_guide.txt
-  dist_s $::s/tutorials/Basics/Basics.fble
-  dist_s $::s/tutorials/HelloWorld/HelloWorld.fble
-  foreach {x} $tutorials { dist_s $::s/tutorials/$x }
-  foreach {x} $modules_tutorial_files { dist_s $::s/tutorials/Modules/$x }
-
   # Tutorial table of contents
   ::html_doc $::b/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
   www $::b/www/tutorials/Tutorials.html

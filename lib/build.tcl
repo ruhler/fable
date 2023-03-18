@@ -42,12 +42,6 @@ namespace eval "lib" {
     version.c
   }
 
-  # files for distribution
-  dist_s $::s/lib/build.tcl
-  dist_s $::s/lib/parse.y
-  foreach {x} $sources { dist_s $::s/lib/$x }
-  foreach {x} $headers { dist_s $::s/lib/$x }
-
   set objs [list]
   set objs_cov [list]
 

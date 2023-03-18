@@ -16,24 +16,6 @@ namespace eval "test" {
     fble-test.c
   }
 
-  dist_s $::s/test/build.tcl
-  dist_s $::s/test/DebugTest.fble
-  dist_s $::s/test/fble-debug-test.exp
-  dist_s $::s/test/log
-  dist_s $::s/test/mem-test.h
-  dist_s $::s/test/ProfilesTest.fble
-  dist_s $::s/test/profiles-test.h
-  dist_s $::s/test/spec-test.build.tcl
-  dist_s $::s/test/spec-test.run.tcl
-  dist_s $::s/test/test
-  dist_s $::s/test/test.h
-  dist_s $::s/test/tests.tcl
-  foreach {x} $lib_sources {
-    dist_s $::s/test/$x
-    dist_s [file rootname $::s/test/$x].fbld
-  }
-  foreach {x} $bin_sources { dist_s $::s/test/$x }
-
   # libfbletest.a
   set objs [list]
   foreach {x} $lib_sources {

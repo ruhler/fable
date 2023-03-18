@@ -1,6 +1,4 @@
 namespace eval "bin" {
-  dist_s $::s/bin/build.tcl
-
   set bin_sources {
     fble-compile.c
     fble-deps.c
@@ -10,9 +8,6 @@ namespace eval "bin" {
 
   foreach {x} $bin_sources {
     set base [file rootname [file tail $x]]
-
-    dist_s $::s/bin/$base.c
-    dist_s $::s/bin/$base.fbld
 
     # Generated header file for help usage text.
     header_usage $::b/bin/$base.usage.h $::s/bin/$base.fbld fbldUsageHelpText

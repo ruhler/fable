@@ -1,6 +1,9 @@
 @doc Fble Release Notes
   @FbleVersion (@BuildStamp)
 
+ @section fble-0.2
+  (under development)
+
  @section fble-0.1 March 2023
   Initial release of fble. Includes:
 

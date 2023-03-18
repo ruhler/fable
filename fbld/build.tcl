@@ -1,24 +1,4 @@
 namespace eval "fbld" {
-
-  dist_s $::s/fbld/build.tcl
-  dist_s $::s/fbld/build.lib.tcl
-  dist_s $::s/fbld/cdata.tcl
-  dist_s $::s/fbld/check.tcl
-  dist_s $::s/fbld/dcget.tcl
-  dist_s $::s/fbld/dc.man.tcl
-  dist_s $::s/fbld/fbld.fbld
-  dist_s $::s/fbld/fbld.lang
-  dist_s $::s/fbld/fbld.tcl
-  dist_s $::s/fbld/html.tcl
-  dist_s $::s/fbld/man.tcl
-  dist_s $::s/fbld/roff.tcl
-  dist_s $::s/fbld/runfbld.tcl
-  dist_s $::s/fbld/test.tcl
-  dist_s $::s/fbld/tutorial.tcl
-  dist_s $::s/fbld/usage.help.tcl
-  dist_s $::s/fbld/usage.lib.tcl
-  dist_s $::s/fbld/usage.man.tcl
-
   # Test suite for fbld implementation.
   test $::b/fbld/test.tr "$::s/fbld/fbld.tcl $::s/fbld/test.tcl" \
     "tclsh8.6 $::s/fbld/test.tcl"

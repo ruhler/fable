@@ -1,6 +1,4 @@
 namespace eval "pkgs/games" {
-  dist_s $::s/pkgs/games/build.tcl
-
   pkg games [list core app] ""
 
   # /Games/Tests% interpreted

@@ -168,3 +168,15 @@ reference implementation of it. That's enough for release 0.1, as long as
 there is sufficient documentation and robustness for others to be able to use
 it.
 
+The State of Fble Update
+========================
+fble-0.1 has been released.
+
+The biggest thing next in my mind is:
+* Write lots and lots of programs in fble.
+* Figure out a better story for persistent storage, e.g. invaders high score
+  tracking.
+
+Writing lots more programs should help flush out the most important issues to
+resolve with fble.
+

@@ -73,7 +73,6 @@
 
   @def[test] Runs tests on uninstalled binaries.
   @def[www] Builds html documentation.
-  @def[dist] Builds a release tarball.
   @def[check] Builds and tests everything without installing anything.
 
  @section Vim Files
