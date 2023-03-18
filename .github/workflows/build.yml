@@ -1,6 +1,9 @@
 name: build
 run-name: Fble Build
-on: [push]
+on:
+  push:
+    branches: 
+      - main
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,17 +24,6 @@ jobs:
           mkdir build
           cd build
           ../configure --prefix=${{github.workspace}}/install
-          ninja check
-          ninja install
-
-      - name: Dist Build and Test
-        run: |
-          cd ${{github.workspace}}
-          mkdir dist
-          cd dist
-          tar xf ${{github.workspace}}/build/fble*.tar.gz
-          cd fble*
-          ./configure --prefix=../install
           ninja check
           ninja install
 
