@@ -174,9 +174,9 @@
    variable in the self-contained block.
   
    Runtime is O(log(N)), where N is the number of variables in scope. In the
-   case of delayed evaluation of functions and processes, the number of
-   variables in scope is limited by the number of variables captured by the
-   function or process when it is created.
+   case of delayed evaluation of functions, the number of variables in scope
+   is limited by the number of variables captured by the function when it is
+   created.
   
   @subsection 2.5 Let
    @AbstractSyntax
@@ -680,7 +680,7 @@
    of the arguments to the struct_value_explicit_type, union_value, or
    func_apply.
   
-   For example, assume you have a polymorphic function fromJust of type:
+   For example, assume you have a polymorphic function @l[fromJust] of type:
   
    @code[fble]
     <@ T@>(T@) { Maybe@<T@>; }
@@ -885,7 +885,7 @@
   
    Bind is particularly suited for abstracting glue logic that manipulates how
    program statements are combined. For example, it can be used to hide error
-   propagation based on a Maybe monad.
+   propagation based on a @l[Maybe@] monad.
   
    Instead of:
   
@@ -1040,7 +1040,7 @@
    With the following dependency graph:
   
    @code[txt]
-    /StdLib/List% -> StdLib/Unit%
+    /StdLib/List% -> /StdLib/Unit%
     /StdLib/List/Tests% -> /StdLib/List%, /StdLib/Unit%
     /Md5% -> /StdLib/Unit%, /StdLib/List%
     /Md5/Tests% -> /StdLib/Unit%, /Md5%

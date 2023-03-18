@@ -41,6 +41,9 @@ Things to consider doing for the fble-0.2 release.
 
 * Factor out common code for @FbleVersion (@BuildStamp)
 
+* Is there a 'bnf' @code syntax the source highlighter supports that 
+  we could use to make the syntax specification in fble.fbld prettier?
+
 * Should @l allow inline tags?
   - For example, I want @l[@config[...]], but it's not doing any substition. I
     guess that makes sense for calling it a 'literal'?
