@@ -1971,3 +1971,7 @@ to Release.fbld. Perfect. I love it.
 
 We're at the home stretch now! All that's left is to do last minute
 proof-reading and checking, and then we can release.
+
+---
+
+Last minute proof reading and checking done. I think we're all set!

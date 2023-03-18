@@ -244,7 +244,6 @@ dist_s $::s/configure
 dist_s $::s/deps.tcl
 dist_s $::s/README.fbld
 dist_s $::s/Release.fbld
-dist_s $::s/todo-0.1.txt
 dist_s $::s/todo-0.2.txt
 
 # README file www

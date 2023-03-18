@@ -12,6 +12,12 @@ Things to consider doing for the fble-0.2 release.
 
 * Add autoindent to fbld vim syntax file?
 
+* Update install tutorial to reference the release of fble on github, now that
+  we'll have published fble-0.1 release there.
+
+* Remove FBLE_PACKAGE_PATH setting from Install tutorial.
+  Now that we have the default package path to look in.
+
 * Update book/ docs?
  - Given language changes
  - And migrate to fbld?
