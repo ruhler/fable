@@ -10,8 +10,6 @@ Things to consider doing for the fble-0.2 release.
  - write some serious new fble code.
    image viewer? floating point?
 
-* Add autoindent to fbld vim syntax file?
-
 * Update install tutorial to reference the release of fble on github, now that
   we'll have published fble-0.1 release there.
 
