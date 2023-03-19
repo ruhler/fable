@@ -129,3 +129,42 @@ What's my first test case for this? Sudoku? That's probably a good one. Add a
 pkg/smten for smten-based stuff. smten/Sudoku is a Sudoku implementation that
 defines a free board, asserts all the constraints are met.
 
+---
+
+First step for implementing this is figuring out what sat solver to use and
+how to depend on it. minisat was great before. If that's still available,
+let's go with that.
+
+Is it available as a debian package, or would I need to include it manually in
+my code? What's the licensing for that?
+
+My preference would be to keep it separate, like we do for other dependencies.
+
+I have installed: minisat Version: 1:2.2.1-5+b3
+
+It has header files. Trouble is, it's all C++, not C.
+
+Options:
+* Find some sat solver other than minisat.
+* Write my own C wrapper around minisat.
+
+The second option makes sense, because that way we will be able to easily
+switch between different solvers if we wanted to. So long as they all
+implement the desired interface. My interface should be pretty simple:
+
+Var NewVar();
+Formula True();
+Formula False();
+Formula Var(Var);
+Formula Not(Formula x);
+Formula Cond(Formula p, Formula a, Formula b)
+Formula And(Formula a, Formula b)
+Solution* Solve(Formula x);
+bool GetVar(Solution* s, Var v);
+
+Hey, if I wanted to, why not write my own sat solver for the first
+implementation?
+
+I suppose the important thing is to separate the implementation of this from
+the fble code, so it's easy to swap out different solvers later on.
+

@@ -79,7 +79,7 @@ Data structure for formula:
 * Map from clause id to map of variable id to whether the variable appears
   positive or negative in that clause.
 
-For operations to support:
+Four operations to support:
 * Assign var - an update to the variable map.
 * Remove var from clause - an update to the variable map.
 * Remove clause for var - an update to the clause map.

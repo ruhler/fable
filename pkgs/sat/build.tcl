@@ -12,7 +12,8 @@ namespace eval "pkgs/sat" {
     "$::b/pkgs/sat/sat-tests --prefix Compiled."
 
   # /Sat/Bench% compiled
-  stdio $::b/pkgs/sat/sat-bench "/Sat/Bench%" "sat"
+  stdio $::b/pkgs/sat/fble-sat-bench "/Sat/Bench%" "sat"
+  install $::b/pkgs/sat/fble-sat-bench $::config::bindir/fble-sat-bench
 
   # fble-sat binary
   man_usage $::b/pkgs/sat/fble-sat.1 $::s/pkgs/sat/sat.fbld

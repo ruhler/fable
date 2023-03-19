@@ -1,0 +1,326 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% Not = /Core/Bool%.Not;
+
+@ Int@ = /Core/Int%.Int@;
+% Inc = /Core/Int%.Inc;
+% Dec = /Core/Int%.Dec;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+
+@ Id@ = Int@;
+% EqId = /Core/Int/Eq%.Eq;
+% LtId = /Core/Int/Eq%.Lt;
+
+@ VarId@ = Id@;
+@ ClauseId@ = Id@;
+
+@ Var@ = *(VarId@ id, Bool@ pos);
+
+# pos - the list of clauses this variable appears positive in.
+# neg - the list of clauses this variable appears negative in.
+@ VarS@ = *(List@<ClauseId@> pos, List@<ClauseId@> neg);
+
+@ ClauseS@ = List@<Var@>;
+
+@ Vars@ = /Core/Map%.Map@<VarId@, VarS@>;
+% EmptyVars = /Core/Map%.Empty<VarId@, VarS@>;
+% InsertVar = /Core/Map%.Insert<VarId@>(LtId)<VarS@>;
+% InsertVarWith = /Core/Map%.InsertWith<VarId@>(LtId)<VarS@>;
+% LookupVar = /Core/Map%.Lookup<VarId@>(LtId)<VarS@>;
+% DeleteVar = /Core/Map%.Delete<VarId@>(LtId)<VarS@>;
+<@>% ForEachVar = /Core/Map%.ForEach<VarId@, VarS@>;
+
+@ Clauses@ = /Core/Map%.Map@<ClauseId@, ClauseS@>;
+% EmptyClauses = /Core/Map%.Empty<ClauseId@, ClauseS@>;
+% InsertClause = /Core/Map%.Insert<ClauseId@>(LtId)<ClauseS@>;
+% LookupClause = /Core/Map%.Lookup<ClauseId@>(LtId)<ClauseS@>;
+% DeleteClause = /Core/Map%.Delete<ClauseId@>(LtId)<ClauseS@>;
+<@>% ForEachClause = /Core/Map%.ForEach<ClauseId@, ClauseS@>;
+
+@ AssignOp@ = *(Var@ var);
+@ RemoveClauseOp@ = *(ClauseId@ clause);
+@ RemoveVarFromClauseOp@ = *(ClauseId@ clause, VarId@ var);
+@ RemoveClauseFromVarOp@ = *(ClauseId@ clause, Var@ var);
+
+@ Op@ = +(
+  AssignOp@ Assign,
+  RemoveClauseOp@ RemoveClause,
+  RemoveVarFromClauseOp@ RemoveVarFromClause,
+  RemoveClauseFromVarOp@ RemoveClauseFromVar);
+
+@ S@ = *(
+  ClauseId@ next_clause,
+  Vars@ vars,
+  Clauses@ clauses,
+  List@<Var@> assigns,
+  List@<Op@> ops
+  );
+
+S@ Empty = S@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
+
+# @func[AddClause] Adds a clause to cnf state S@.
+#  This should be done in the initial phase before starting to solve the
+#  formula.
+#
+#  @arg[s] The cnf state to add the clause to.
+#  @arg[clause] The clause to add.
+#  @returns
+#   An updated cnf state with clause added.
+(S@, List@<Var@>) { S@; } AddClause = (S@ s, List@<Var@> clause) {
+  ClauseId@ id = s.next_clause;
+  Vars@ nvars = /Core/List%.ForEach(clause, s.vars,
+    (Var@ v, Vars@ vs) {
+      InsertVarWith(vs, v.id, (Maybe@<VarS@> mx) {
+          VarS@ x = mx.?(
+            just: mx.just,
+            nothing: VarS@(Nil<ClauseId@>, Nil<ClauseId@>));
+          v.pos.?(
+            true: VarS@(Cons(id, x.pos), x.neg),
+            false: VarS@(x.pos, Cons(id, x.neg)));
+        });
+    });
+  Clauses@ nclauses = InsertClause(s.clauses, id, clause);
+  S@(Inc(id), nvars, nclauses, s.assigns, s.ops);
+};
+
+# @func[SeedOps] Seed assign operations to start solving a formula.
+#  This should be called after all clauses are added to the formula, to seed
+#  the initial set of operations for processing.
+#
+#  It looks for pure literals and unit clauses, generating a list of assign
+#  operations corresponding to those.
+(S@) { List@<Op@>; } SeedOps = (S@ s) {
+  List@<Op@> pures = ForEachVar(s.vars, Nil<Op@>,
+    (VarId@ id, VarS@ vs, List@<Op@> ops) {
+      vs.pos.?(nil: Cons(Op@(Assign: @(var: Var@(id, False))), ops));
+      vs.neg.?(nil: Cons(Op@(Assign: @(var: Var@(id, True))), ops));
+      ops;
+    });
+
+  ForEachClause<List@<Op@>>(s.clauses, pures,
+    (ClauseId@ id, ClauseS@ cs, List@<Op@> ops) {
+      cs.?(nil: ops);
+      cs.cons.tail.?(nil: Cons(Op@(Assign: @(var: cs.cons.head)), ops));
+      ops;
+    });
+};
+
+# @func[DoAssign] Do an assign operation.
+#  Remove VarId from Variables map. If it's there:
+#  @i Add variable assignment.
+#  @i For each + clause, add a RemoveClause operation.
+#  @i For each - clause, add a RemoveVarFromClause operation.
+(S@, AssignOp@) { Maybe@<S@>; } DoAssign = (S@ s, AssignOp@ op) {
+  Var@ var = op.var;
+  Maybe@<VarS@> mvs = LookupVar(s.vars, var.id);
+  mvs.?(nothing: Just(s));
+
+  VarS@ vs = mvs.just;
+
+  List@<ClauseId@> match = var.pos.?(true: vs.pos, false: vs.neg);
+  List@<Op@> match_ops = /Core/List%.ForEach(match, s.ops,
+    (ClauseId@ c, List@<Op@> ops) {
+      Cons(Op@(RemoveClause: @(clause: c)), ops);
+    });
+
+  List@<ClauseId@> unmatch = var.pos.?(true: vs.neg, false: vs.pos);
+  List@<Op@> unmatch_ops = /Core/List%.ForEach(unmatch, match_ops,
+    (ClauseId@ c, List@<Op@> ops) {
+      Cons(Op@(RemoveVarFromClause: @(clause: c, var: var.id)), ops);
+    });
+
+  Just(@(
+      next_clause: s.next_clause, 
+      vars: DeleteVar(s.vars, var.id),
+      clauses: s.clauses,
+      assigns: Cons(var, s.assigns),
+      ops: unmatch_ops));
+};
+
+# @func[DoRemoveClause] Do a remove clause operation.
+#  Remove clause from clauses. If it's there:
+#  @i For each variable
+#   @i Add a RemoveClauseFromVar operation.
+(S@, RemoveClauseOp@) { Maybe@<S@>; }
+DoRemoveClause = (S@ s, RemoveClauseOp@ op) {
+  ClauseId@ c = op.clause;
+  Maybe@<ClauseS@> mcs = LookupClause(s.clauses, c);
+  mcs.?(nothing: Just(s));
+
+  ClauseS@ cs = mcs.just;
+  List@<Op@> nops = /Core/List%.ForEach(cs, s.ops,
+    (Var@ v, List@<Op@> ops) {
+      Cons(Op@(RemoveClauseFromVar: @(clause: c, var: v)), ops);
+    });
+
+  Just(@(
+      next_clause: s.next_clause,
+      vars: s.vars,
+      clauses: DeleteClause(s.clauses, c),
+      assigns: s.assigns,
+      ops: nops));
+};
+
+# @func[DoRemoveVarFromClause] Do a remove var from clause operation.
+#  Remove the var from the clause if the clause is there.
+#  @i If clause ends up with single var, add Assign operation.
+#  @i If clause ends up with no vars, mark unsat and exit.
+(S@, RemoveVarFromClauseOp@) { Maybe@<S@>; }
+DoRemoveVarFromClause = (S@ s, RemoveVarFromClauseOp@ op) {
+  ClauseId@ c = op.clause;
+  Maybe@<ClauseS@> mcs = LookupClause(s.clauses, c);
+  mcs.?(nothing: Just(s));
+
+  List@<Var@> nvars = /Core/List%.ForEach(mcs.just, Nil<Var@>,
+    (Var@ v, List@<Var@> vars) {
+      EqId(op.var, v.id).?(true: vars);
+      Cons(v, vars);
+      });
+
+  nvars.?(nil: Nothing<S@>);
+
+  List@<Op@> nops = {
+    nvars.cons.tail.?(cons: s.ops);
+    Cons(Op@(Assign: @(var: nvars.cons.head)), s.ops);
+  };
+
+  Just(@(
+      next_clause: s.next_clause,
+      vars: s.vars,
+      clauses: InsertClause(s.clauses, c, nvars),
+      assigns: s.assigns,
+      ops: nops));
+};
+
+# @func[DoRemoveClauseFromVar] Do a remove clause from var operation.
+#  Remove clause from var if the var is there.
+#  @i If the var ends up with a single polarity, add an Assign operation.
+(S@, RemoveClauseFromVarOp@) { Maybe@<S@>; }
+DoRemoveClauseFromVar = (S@ s, RemoveClauseFromVarOp@ op) {
+  Var@ var = op.var;
+  Maybe@<VarS@> mvs = LookupVar(s.vars, var.id);
+  mvs.?(nothing: Just(s));
+  VarS@ vs = mvs.just;
+
+  List@<ClauseId@> match = var.pos.?(true: vs.pos, false: vs.neg);
+  List@<ClauseId@> ncls = /Core/List%.ForEach(match, Nil<ClauseId@>,
+    (ClauseId@ c, List@<ClauseId@> cls) {
+      EqId(op.clause, c).?(true: cls);
+      Cons(c, cls);
+    });
+
+  List@<Op@> nops = {
+    ncls.?(cons: s.ops);
+    Cons(Op@(Assign: @(var: Var@(var.id, Not(var.pos)))), s.ops);
+  };
+
+  VarS@ nvs = var.pos.?(
+    true: @(pos: ncls, neg: vs.neg),
+    false: @(pos: vs.pos, neg: ncls));
+
+  Just(@(
+      next_clause: s.next_clause,
+      vars: InsertVar(s.vars, var.id, nvs),
+      clauses: s.clauses,
+      assigns: s.assigns,
+      ops: nops));
+};
+
+# @func[DoOp] Process a single op for the formula.
+#  @arg[S@][s] The formula state to process the op on.
+#  @returns[Maybe@<S@>]
+#   @i Nothing if the op shows the formula is unsatisfiable.
+#   @i @a[Just(s)] if there are no remaining ops.
+#   @i The updated state of processing the next op otherwise.
+(S@) { Maybe@<S@>; } DoOp = (S@ s) {
+  s.ops.?(nil: Just(s));
+  Op@ op = s.ops.cons.head;
+  S@ ns = S@(s.next_clause, s.vars, s.clauses, s.assigns, s.ops.cons.tail);
+  op.?(
+    Assign: DoAssign(ns, op.Assign),
+    RemoveClause: DoRemoveClause(ns, op.RemoveClause),
+    RemoveVarFromClause: DoRemoveVarFromClause(ns, op.RemoveVarFromClause),
+    RemoveClauseFromVar: DoRemoveClauseFromVar(ns, op.RemoveClauseFromVar));
+};
+
+# @func[DoOps] Process ops until no more ops remain.
+(S@) { Maybe@<S@>; } DoOps = (S@ s) {
+  s.ops.?(nil: Just(s));
+  Maybe@<S@> ms = DoOp(s);
+  ms.?(nothing: ms);
+  DoOps(ms.just);
+};
+
+# Timeout@ --
+#   A number of steps allowed to be remaining, or Nothing if there is no
+#   timeout.
+@ Timeout@ = Maybe@<Int@>;
+
+# Result@ --
+#   The result of trying to solve a sat problem.
+#
+# In the case of unsat, the remaining timeout is returned.
+@ Result@ = +(List@<Var@> sat, Timeout@ unsat, Unit@ timeout);
+
+# Countdown --
+#   Count down the timeout.
+#
+# Returns:
+#   The timeout decremented by one, Nothing if time is up.
+(Timeout@) { Maybe@<Timeout@>; } Countdown = (Timeout@ t) {
+  t.?(nothing: Just(t));
+  t.just.?(p: Just(Just(Dec(t.just))));
+  Nothing<Timeout@>;
+};
+
+(S@, Timeout@) { Result@; }
+Search = (S@ s, Timeout@ t) {
+  Maybe@<Timeout@> nt = Countdown(t);
+  nt.?(nothing: Result@(timeout: Unit));
+
+  Maybe@<S@> ms = DoOps(s);
+  ms.?(nothing: Result@(unsat: nt.just));
+  S@ s = ms.just;
+
+  # TODO: Come up with a more efficient way to pick any single existing
+  # variable.
+  Maybe@<VarId@> mvar = ForEachVar(s.vars, Nothing<VarId@>,
+    (VarId@ v, VarS@ _, Maybe@<VarId@> mv) {
+      Just(v);
+    });
+  mvar.?(nothing: Result@(sat: s.assigns));
+  VarId@ var = mvar.just;
+
+  S@ attempt = S@(s.next_clause, s.vars, s.clauses, s.assigns,
+    Cons(Op@(Assign: @(var: Var@(var, True))), s.ops));
+
+  Result@ attempted = Search(attempt, nt.just);
+  attempted.?(unsat: {
+    S@ attempt = S@(s.next_clause, s.vars, s.clauses, s.assigns,
+    Cons(Op@(Assign: @(var: Var@(var, False))), s.ops));
+    Search(attempt, attempted.unsat);
+  });
+
+  attempted;
+};
+
+(S@, Timeout@) { Result@; } Solve = (S@ s, Timeout@ t) {
+  S@ seeded = S@(s.next_clause, s.vars, s.clauses, s.assigns, SeedOps(s));
+  Search(seeded, t);
+};
+
+@(VarId@, Var@, S@, Result@, Timeout@, EqId, Empty, AddClause, Solve);

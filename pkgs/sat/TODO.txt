@@ -1,2 +1,0 @@
-* Optimize Sat simplification to avoid lots of repeated traversals?
-* [/Sat%] Optimize the solver.

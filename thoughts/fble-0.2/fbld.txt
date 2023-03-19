@@ -1,0 +1,36 @@
+Fbld Improvements
+=================
+
+I'm happy with the syntax for fbld. The implementation needs work.
+
+One idea is to try implementing fbld in fble. Partly as an excuse to write
+more real world fble programs, partly because it almost feels nicer to use
+fble than tcl given things like tracking error locations.
+
+I see two big challenges with using fble for fbld:
+1. How to make it easily extensible. Can users write their own front ends and
+back ends? Would they have to write fble? Is that too much to ask? How can we
+compose with other existing programs like groff?
+
+2. How to deal with bootstrapping dependency of fble on fbld and fbld on fble?
+It's a bit annoying, because it's just the help text for fble-stdio. Maybe
+have an option to compile fble with and without that usage text and do a mini
+bootstrap that way in the build system.
+
+Big things I want to improve for fbld (regardless of what language we use to
+implement it):
+* Location tracking, so we can point to the exact place in a file where an
+  error occurs.
+
+* Composition: so we can easily implement commands directly in terms of other
+  commands if we want to, instead of having to convert back into strings and
+  re-parsing.
+
+Both those things come down to this challenging aspect of fbld:
+
+The commands have to parse args using fbld, the fbld parser has to execute
+commands using the commands. That creates this cycle going back and forth
+between the parser and commands where we have to keep track of and pass
+location information back and forth. We can't just parse the whole thing all
+at once and then execute commands all at once.
+

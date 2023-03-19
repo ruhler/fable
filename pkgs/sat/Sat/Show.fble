@@ -20,7 +20,7 @@
 Show@<VarId@> ShowId = /Core/Int/Show%.Show;
 
 Show@<Var@> ShowVar = (Var@ v) {
-  String@ sign = v.polarity.?(true: Str|'+', false: Str|'-');
+  String@ sign = v.pos.?(true: Str|'+', false: Str|'-');
   Append<Char@>(sign, ShowId(v.id));
 };
 

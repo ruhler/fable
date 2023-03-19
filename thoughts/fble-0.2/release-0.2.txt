@@ -1,0 +1,24 @@
+Fble Release 0.2
+================
+
+Too early days to think about a release, but we can think about what to work
+on. Priority should be writing some serious fble apps. I propose the
+following:
+
+* fbld - implement it in fble. I bet some interesting things come out of this.
+* sat - improve the sat solver. Maybe from what we learn we could implement a
+  decent enough sat solver in C for smten?
+* png viewer.
+* floating point benchmark game.
+* Hardware language something or other.
+
+That is plenty to keep me busy. It won't stress the language too much. Once we
+are done with those we can think about stressing the language with things like
+persistent storage and other OS related functionality.
+
+Next question is: which of these to focus on first? Because I'll have trouble
+if I try to do them all at once.
+
+My vote is: get some work in on sat, and think about fbld in the background.
+Worry about png, floating point, and hardware language something or other
+later.

@@ -1,0 +1,192 @@
+Sat Application
+===============
+Goal is to optimize the fble-based sat solver.
+
+Ideas:
+* Avoid lots of repeated traversals somehow.
+
+Looks like there are already thoughts at pkgs/sat/thoughts.txt that we can
+start with. Or start from scratch with profiling, setting up a benchmark,
+seeing where we are, and going from there.
+
+I like the idea of starting from scratch.
+
+Step 1: Do we have a sat benchmark still?
+
+Yes. sat-bench. It's not built by default, but there are rules for.
+
+How about rename it to fble-sat-bench and install it.
+
+Current status:
+
+real    1m17.150s
+user    1m16.747s
+sys     0m0.381s
+
+This is 400 iterations on /Sat/Aim%.
+
+Remember, goal of this exercise is to improve the sat algorithm, not to
+improve the fble implementation. It could be tricky using a set number of
+iterations. I almost prefer to shrink the sat problem until we get something
+we can reasonably solve. But that could be hard too.
+
+Yeah, the challenge with the benchmark is number of iterations isn't well
+defined. If we change the algorithm, we change what goes into an iteration.
+
+A better benchmark is:
+time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/unif-c1000-v500-s1356655268.cnf
+
+real    0m47.738s
+user    0m47.143s
+sys     0m0.573s
+
+It's not limited by a timeout or number of iterations. See if we can cut the
+time in half to 25 seconds or less as a first goal.
+
+Reminder of high level algorithm in use here:
+* Simplify as much as possible with repeated unit clause and pure literal
+  substitution.
+* Try all possible variations for a particular variable and recurse.
+
+First goal is to keep that same high level approach, just use data structures
+to implement it much more efficiently. We can worry about improving the
+algorithm after.
+
+Profiling shows GetPure dominates the time. It's only called 211 times. Let's
+focus here then.
+
+It goes through each clause, for each variable tracking whether it is pure or
+not. Then it filters out which of the variables ended up pure. All the time is
+in the first part: tracking the status of each variable. And all that time is
+the cost to insert a variable into the map.
+
+There's a couple things here:
+1. It's sad that we don't have arrays we could otherwise use for constant
+update.
+
+2. We could avoid doing the traversal over and over again by only look at
+variables that may have changed since the previous traversal.
+
+(2) is the premise for what I had proposed before in pkgs/sat/thoughts.txt.
+Basically, keep track of changes as we do substitutions.
+
+Map VarId -> ([ClauseId] positive, [ClauseId] negative)
+Map ClauseId -> [(VarId, Polarity)]
+
+Now I'm back up to speed. Idea is to create an API with some internal state to
+track the state of a formula and build it up as we parse.
+
+State is:
+
+(Clauses, Vars, Assigns, Todo).
+
+We construct incrementally, where Todo is START.
+Then we run a 'process' function that processes all todos until there are none
+left.
+
+At the end, we should either have:
+* No clauses ==> unsatisfiable (?). or mark as unsat some other way.
+* No vars ==> satisfiable.
+* Stuck => copy the state, pick a var and add an assignment todo both ways.
+
+Methods:
+
+Empty - Initial empty state.
+AddClause - Adds a clause. TODO state better be START, else invalid.
+Simplify - Runs through TODOs, returning result.
+
+Operations are:
+* Start
+* Assign
+* others as needed.
+
+Things we'll want to do quickly are find pure literals - that is, literals
+with an empty polarity for clauses. And unit clauses: that is, clauses with a
+single variable. Why not maintain those as separate lists then?
+
+So, state is:
+
+Variables: VarId -> ([ClauseId], [ClauseId])
+Clauses: ClauseId -> [(VarId, Polarity)]
+Assignments: [(VarId, Polarity)]
+Operations: 
+  Assign VarId Polarity.
+  RemoveClause ClauseId
+  RemoveVarFromClause ClauseId VarId.
+  RemoveClauseFromVar ClauseId VarId Polarity.
+ 
+Initially everything is empty.
+
+Add a clause:
+* Update variables and clauses with new clause.
+
+Start Solution:
+* Iterate through all variables and clauses, collect together initial
+  assignments as assign operations.
+
+Then go through all operations as long as any remain.
+
+Assign VarId Polarity:
+* Remove VarId from Variables map. If it's there:
+ - Add variable assignment.
+ - For each + clause, add a RemoveClause operation.
+ - For each - clause, add a RemoveVarFromClause operation.
+
+RemoveClause:
+* Remove clause from clauses. If it's there:
+ - For each variable
+   - Add a RemoveClauseFromVar operation.
+
+RemoveVarFromClause:
+* Remove the var from the clause if the clause is there.
+* If the clause ends up with a single var, add an AssignVar operation.
+* If the clause ends up with no vars, mark unsat and exit.
+
+RemoveClauseFromVar:
+* Remove clause from var if the var is there.
+* If the var ends up with a single polarity, add an AssignVar operation.
+
+Keep doing the same until either it's unsat or all operations are done.
+
+At the end, if there are no variables left, it's satisfiable and we're done.
+Otherwise, pick a variable to assign, fork, and repeat.
+
+Easy, no?
+
+---
+
+Draft of code is one. I like it. Pleasant to write. One interesting thing:
+* There's no way to break out of a ForEach loop. I want to get any element of
+  a map. Maybe add a 'First' or 'Last' method to Map to be able to get just
+  the first or last?
+
+We changed the interface, so I'll need to change my test driver.
+
+Maybe, for now, it's worth wrapping the original interface so we can run our
+existing tests?
+
+Yeah. I think so.
+
+With the wrapper, just some error messages to fix, and all tests pass first
+try!
+
+Now for the benchmark... It's likely it's trying solutions in a different
+order, so I'm not sure what to expect. If it's wildly different, it could be
+as much due to the different order as to the optimization. Let's see where we
+are at.
+
+fble-sat-bench:
+@[Sat]: @PASSED
+
+real    0m2.745s
+user    0m2.697s
+sys     0m0.040s
+
+
+time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/unif-c1000-v500-s1356655268.cnf
+
+real    0m9.190s
+user    0m9.024s
+sys     0m0.141s
+
+Yeah. That's a definite improvement. Easily achieving my 25s goal.

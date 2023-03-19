@@ -1,221 +1,24 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% Not = /Core/Bool%.Not;
-
-@ Int@ = /Core/Int%.Int@;
-% Dec = /Core/Int%.Dec;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
-
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
-
-# VarId@ --
-#   A variable identifier.
-@ VarId@ = Int@;
-% EqId = /Core/Int/Eq%.Eq;
-
-# Var@ --
-#   A variable in a boolean formula.
-@ Var@ = *(VarId@ id, Bool@ polarity);
-% EqPolarity = /Core/Bool/Eq%.Eq;
-
-# Clause@ --
-#   A disjunction (OR) of variables.
+@ VarId@ = /Sat/Cnf%.VarId@;
+@ Var@ = /Sat/Cnf%.Var@;
 @ Clause@ = List@<Var@>;
-
-# Formula@ --
-#   A conjunction (AND) of clauses.
 @ Formula@ = List@<Clause@>;
-
-# Assignment@ --
-#   A sets of variables assigned the values True or False as specified by
-#   their polarity.
 @ Assignment@ = List@<Var@>;
+@ Timeout@ = /Sat/Cnf%.Timeout@;
+@ Result@ = /Sat/Cnf%.Result@;
+@ S@ = /Sat/Cnf%.S@;
+% EqId = /Sat/Cnf%.EqId;
+% AddClause = /Sat/Cnf%.AddClause;
 
-# Timeout@ --
-#   A number of steps allowed to be remaining, or Nothing if there is no
-#   timeout.
-@ Timeout@ = Maybe@<Int@>;
-
-# Result@ --
-#   The result of trying to solve a sat problem.
-#
-# In the case of unsat, the remaining timeout is returned.
-@ Result@ = +(Assignment@ sat, Timeout@ unsat, Unit@ timeout);
-
-@ Vars@ = /Core/Map%.Map@<VarId@, Bool@>;
-% Empty = /Core/Map%.Empty<VarId@, Bool@>;
-% IsEmpty = /Core/Map%.IsEmpty<VarId@, Bool@>;
-% Lookup = /Core/Map%.Lookup<VarId@>(/Core/Int/Eq%.Lt)<Bool@>;
-% Insert = /Core/Map%.Insert<VarId@>(/Core/Int/Eq%.Lt)<Bool@>;
-
-# SubstClause --
-#   Substitute a value for a variable into the given clause.
-#
-# Returns the simplified clause, or Nothing if the clause is now satisfied.
-(Clause@, Vars@) { Maybe@<Clause@>; } SubstClause = (Clause@ c, Vars@ vs) {
-  c.?(nil: Just(c));
-
-  Var@ head = c.cons.head;
-  Maybe@<Bool@> mv = Lookup(vs, head.id);
-  mv.?(just: {
-    EqPolarity(head.polarity, mv.just).?(
-      true: Nothing<Clause@>,                 # clause satisfied
-      false: SubstClause(c.cons.tail, vs));    # variable eliminated
-  });
-
-  Maybe@<Clause@> tail = SubstClause(c.cons.tail, vs);
-  tail.?(nothing: Nothing<Clause@>);
-  Just(Cons(head, tail.just));
+(S@, Formula@) { S@; } AddClauses = (S@ s, Formula@ cls) {
+  cls.?(nil: s);
+  AddClauses(AddClause(s, cls.cons.head), cls.cons.tail);
 };
 
-# Subst --
-#   Substitute a value for a variable into the formula.
-(Formula@, Vars@) { Formula@; } Subst = (Formula@ f, Vars@ vs) {
-  f.?(nil: f);
-
-  Maybe@<Clause@> c = SubstClause(f.cons.head, vs);
-  c.?(nothing: Subst(f.cons.tail, vs));
-
-  Cons(c.just, Subst(f.cons.tail, vs));
-};
-
-# GetUnit --
-#   Returns the set of variables that occur as the only variable in a clause.
-#
-# For example, if we have a clause with the single variable x, we know we can
-# set x to True. This is unit propagation.
-(Formula@) { Vars@; } GetUnit = (Formula@ f) {
-  f.?(nil: Empty);
-
-  Vars@ tail = GetUnit(f.cons.tail);
-
-  Clause@ clause = f.cons.head;
-  clause.?(nil: tail);
-  clause.cons.tail.?(cons: tail);
-
-  Var@ v = clause.cons.head;
-  Insert(tail, v.id, v.polarity);
-};
-
-# GetPure --
-#   Gets the list of variables that are pure literals.
-#
-# A pure literal is a variable that shows up with the same polarity in every
-# clause that it appears in. We can eliminate any such variable right away by
-# setting its value to the polarity that it shows up with.
-(Formula@) { Vars@; } GetPure = {
-  @ Status@ = +(Bool@ pure, Unit@ impure);
-  @ Map@ = /Core/Map%.Map@<VarId@, Status@>;
-  % E = /Core/Map%.Empty<VarId@, Status@>;
-  % InsertWith = /Core/Map%.InsertWith<VarId@>(/Core/Int/Eq%.Lt)<Status@>;
-
-  (Formula@ f) {
-    Map@ map = /Core/List%.ForEach<Clause@, Map@>(f, E,
-      (Clause@ clause, Map@ map) {
-        /Core/List%.ForEach<Var@, Map@>(clause, map, (Var@ v, Map@ map) {
-           InsertWith(map, v.id, (Maybe@<Status@> ms) {
-             ms.?(nothing: Status@(pure: v.polarity)); # starts pure
-             ms.just.?(impure: ms.just);               # stays impure
-             EqPolarity(ms.just.pure, v.polarity).?(
-               true: ms.just,                          # stays pure
-               false: Status@(impure: Unit));          # turns impure
-           });
-        });
-    });
-
-    /Core/Map%.ForEach<VarId@, Status@, Vars@>(map, Empty,
-      (VarId@ id, Status@ s, Vars@ vs) {
-        s.?(pure: Insert(vs, id, s.pure), impure: vs);
-    });
-  };
-};
-
-# Simplify --
-#   Simplify the given formula using unit propagation and pure literal
-#   elimination.
-#
-# Returns the simplified formula and any assignments that have been made
-# during the simplification process.
-(Formula@, Assignment@) { *(Formula@ simplified, Assignment@ assigns); }
-Simplify = (Formula@ f, Assignment@ a) {
-  Vars@ unit = GetUnit(f);
-  Vars@ pure = GetPure(f);
-
-  Vars@ all = /Core/Map%.ForEach<VarId@, Bool@, Vars@>(unit, pure,
-    (VarId@ id, Bool@ polarity, Vars@ vs) {
-      Insert(vs, id, polarity);
-  });
-
-  IsEmpty(all).?(true: @(simplified: f, assigns: a));
-
-  Assignment@ na = /Core/Map%.ForEach<VarId@, Bool@, Assignment@>(all, a, 
-    (VarId@ id, Bool@ polarity, Assignment@ as) {
-      Cons<Var@>(Var@(id, polarity), as);
-  });
-      
-  Simplify(Subst(f, all), na);
-};
-
-# Countdown --
-#   Count down the timeout.
-#
-# Returns:
-#   The timeout decremented by one, Nothing if time is up.
-(Timeout@) { Maybe@<Timeout@>; } Countdown = (Timeout@ t) {
-  t.?(nothing: Just(t));
-  t.just.?(p: Just(Just(Dec(t.just))));
-  Nothing<Timeout@>;
-};
-
-# Search --
-#   Searches for a solution to the given sat formula.
-#
-# Inputs:
-#   f - the formula to solve
-#   a - the assignments made so far
-#   t - a timeout.
-#
-# Returns:
-#   A satisfying assignment, unsat if the formula is unsatisfiable, or timeout
-#   if we ran out of the allowed time.
-(Formula@, Assignment@, Timeout@) { Result@; }
-Search = (Formula@ f, Assignment@ a, Timeout@ t) {
-  % fa = Simplify(f, a);
-  Formula@ f = fa.simplified;
-  Assignment@ a = fa.assigns;
-
-  Maybe@<Timeout@> nt = Countdown(t);
-  nt.?(nothing: Result@(timeout: Unit));
-  f.?(nil: Result@(sat: a));
-  f.cons.head.?(nil: Result@(unsat: nt.just));
-
-  Var@ v = f.cons.head.cons.head;
-  Vars@ vs = Insert(Empty, v.id, v.polarity);
-  Result@ attempted = Search(Subst(f, vs), Cons(v, a), nt.just);
-  attempted.?(unsat: {
-    Var@ nv = Var@(v.id, Not(v.polarity));
-    Vars@ nvs = Insert(Empty, nv.id, nv.polarity);
-    Search(Subst(f, nvs), Cons(nv, a), attempted.unsat);
-  });
-
-  attempted;
-};
-
-# Solve --
-#   Solve a SAT formula.
-#
-# Returns:
-#   The result of trying to solve the sat problem.
 (Formula@, Timeout@) { Result@; } Solve = (Formula@ f, Timeout@ t) {
-  Search(f, Nil<Var@>, t);
+  /Sat/Cnf%.Solve(AddClauses(/Sat/Cnf%.Empty, f), t);
 };
 
 @(VarId@, Var@, Clause@, Formula@, Assignment@, Result@, Timeout@,
