@@ -63,12 +63,12 @@
   RemoveClauseFromVarOp@ RemoveClauseFromVar);
 
 @ Solver@ = *(
-  ClauseId@ next_clause,
+  ClauseId@ clause_id,
   Vars@ vars,
   Clauses@ clauses,
   List@<Var@> assigns,
   List@<Op@> ops
-  );
+);
 
 Solver@ Empty = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
 
@@ -81,7 +81,7 @@ Solver@ Empty = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
 #  @returns
 #   An updated cnf state with clause added.
 (Solver@, List@<Var@>) { Solver@; } AddClause = (Solver@ s, List@<Var@> clause) {
-  ClauseId@ id = s.next_clause;
+  ClauseId@ id = s.clause_id;
   Vars@ nvars = /Core/List%.ForEach(clause, s.vars,
     (Var@ v, Vars@ vs) {
       InsertVarWith(vs, v.id, (Maybe@<VarS@> mx) {
@@ -144,7 +144,7 @@ Solver@ Empty = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
     });
 
   Just(@(
-      next_clause: s.next_clause, 
+      clause_id: s.clause_id, 
       vars: DeleteVar(s.vars, var.id),
       clauses: s.clauses,
       assigns: Cons(var, s.assigns),
@@ -168,7 +168,7 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
     });
 
   Just(@(
-      next_clause: s.next_clause,
+      clause_id: s.clause_id,
       vars: s.vars,
       clauses: DeleteClause(s.clauses, c),
       assigns: s.assigns,
@@ -199,7 +199,7 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
   };
 
   Just(@(
-      next_clause: s.next_clause,
+      clause_id: s.clause_id,
       vars: s.vars,
       clauses: InsertClause(s.clauses, c, nvars),
       assigns: s.assigns,
@@ -233,7 +233,7 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
     false: @(pos: vs.pos, neg: ncls));
 
   Just(@(
-      next_clause: s.next_clause,
+      clause_id: s.clause_id,
       vars: InsertVar(s.vars, var.id, nvs),
       clauses: s.clauses,
       assigns: s.assigns,
@@ -249,7 +249,7 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
 (Solver@) { Maybe@<Solver@>; } DoOp = (Solver@ s) {
   s.ops.?(nil: Just(s));
   Op@ op = s.ops.cons.head;
-  Solver@ ns = Solver@(s.next_clause, s.vars, s.clauses, s.assigns, s.ops.cons.tail);
+  Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.assigns, s.ops.cons.tail);
   op.?(
     Assign: DoAssign(ns, op.Assign),
     RemoveClause: DoRemoveClause(ns, op.RemoveClause),
@@ -305,12 +305,12 @@ Search = (Solver@ s, Timeout@ t) {
   mvar.?(nothing: Result@(sat: s.assigns));
   VarId@ var = mvar.just;
 
-  Solver@ attempt = Solver@(s.next_clause, s.vars, s.clauses, s.assigns,
+  Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
     Cons(Op@(Assign: @(var: Var@(var, True))), s.ops));
 
   Result@ attempted = Search(attempt, nt.just);
   attempted.?(unsat: {
-    Solver@ attempt = Solver@(s.next_clause, s.vars, s.clauses, s.assigns,
+    Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
     Cons(Op@(Assign: @(var: Var@(var, False))), s.ops));
     Search(attempt, attempted.unsat);
   });
@@ -319,7 +319,7 @@ Search = (Solver@ s, Timeout@ t) {
 };
 
 (Solver@, Timeout@) { Result@; } Solve = (Solver@ s, Timeout@ t) {
-  Solver@ seeded = Solver@(s.next_clause, s.vars, s.clauses, s.assigns, SeedOps(s));
+  Solver@ seeded = Solver@(s.clause_id, s.vars, s.clauses, s.assigns, SeedOps(s));
   Search(seeded, t);
 };
 
