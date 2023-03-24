@@ -29,12 +29,14 @@
 @ ClauseId@ = Id@;
 
 @ Var@ = *(VarId@ id, Bool@ pos);
+@ Clause@ = List@<Var@>;
+@ Cnf@ = List@<Clause@>;
 
 # pos - the list of clauses this variable appears positive in.
 # neg - the list of clauses this variable appears negative in.
 @ VarS@ = *(List@<ClauseId@> pos, List@<ClauseId@> neg);
 
-@ ClauseS@ = List@<Var@>;
+@ ClauseS@ = Clause@;
 
 @ Vars@ = /Core/Map%.Map@<VarId@, VarS@>;
 % EmptyVars = /Core/Map%.Empty<VarId@, VarS@>;
@@ -80,7 +82,7 @@ Solver@ Empty = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
 #  @arg[clause] The clause to add.
 #  @returns
 #   An updated cnf state with clause added.
-(Solver@, List@<Var@>) { Solver@; } AddClause = (Solver@ s, List@<Var@> clause) {
+(Solver@, Clause@) { Solver@; } AddClause = (Solver@ s, Clause@ clause) {
   ClauseId@ id = s.clause_id;
   Vars@ nvars = /Core/List%.ForEach(clause, s.vars,
     (Var@ v, Vars@ vs) {
@@ -270,11 +272,13 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
 #   timeout.
 @ Timeout@ = Maybe@<Int@>;
 
+@ Assignment@ = List@<Var@>;
+
 # Result@ --
 #   The result of trying to solve a sat problem.
 #
 # In the case of unsat, the remaining timeout is returned.
-@ Result@ = +(List@<Var@> sat, Timeout@ unsat, Unit@ timeout);
+@ Result@ = +(Assignment@ sat, Timeout@ unsat, Unit@ timeout);
 
 # Countdown --
 #   Count down the timeout.
@@ -323,4 +327,15 @@ Search = (Solver@ s, Timeout@ t) {
   Search(seeded, t);
 };
 
-@(VarId@, Var@, Solver@, Result@, Timeout@, EqId, Empty, AddClause, Solve);
+(Cnf@, Timeout@) { Result@; } SolveCnf = (Cnf@ cnf, Timeout@ t) {
+  Solver@ solver = /Core/List%.ForEach(cnf, Empty, 
+    (Clause@ c, Solver@ s) {
+    AddClause(s, c);
+  });
+  Solve(solver, t);
+};
+
+@(VarId@, Var@, Clause@, Cnf@,
+  Solver@, Assignment@, Result@, Timeout@,
+  EqId, Empty, AddClause,
+  Solve, SolveCnf);

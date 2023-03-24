@@ -13,11 +13,11 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Result@ = /Sat/Sat%.Result@;
-% Solve = /Sat/Sat%.Solve;
+@ Result@ = /Sat/Solver%.Result@;
+% SolveCnf = /Sat/Solver%.SolveCnf;
 
 Test@ Bench = Test(Str|Sat, (Unit@ _) {
-  Result@ solved = Solve(/Sat/Aim%, Just<Int@>(Int|10000));
+  Result@ solved = SolveCnf(/Sat/Aim%, Just<Int@>(Int|10000));
   AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, solved.timeout);
 });
 

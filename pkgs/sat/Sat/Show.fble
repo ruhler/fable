@@ -8,12 +8,12 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Formula@ = /Sat/Sat%.Formula@;
-@ Clause@ = /Sat/Sat%.Clause@;
-@ VarId@ = /Sat/Sat%.VarId@;
-@ Var@ = /Sat/Sat%.Var@;
-@ Assignment@ = /Sat/Sat%.Assignment@;
-@ Result@ = /Sat/Sat%.Result@;
+@ Cnf@ = /Sat/Solver%.Cnf@;
+@ Clause@ = /Sat/Solver%.Clause@;
+@ VarId@ = /Sat/Solver%.VarId@;
+@ Var@ = /Sat/Solver%.Var@;
+@ Assignment@ = /Sat/Solver%.Assignment@;
+@ Result@ = /Sat/Solver%.Result@;
 
 <@>@ Parse@ = /Sat/Dimacs%.Parse@;
 
@@ -25,11 +25,11 @@ Show@<Var@> ShowVar = (Var@ v) {
 };
 
 Show@<Clause@> ShowClause = /Core/List/Show%.Show<Var@>(ShowVar);
-Show@<Formula@> ShowFormula = /Core/List/Show%.Show<Clause@>(ShowClause);
+Show@<Cnf@> ShowCnf = /Core/List/Show%.Show<Clause@>(ShowClause);
 
-Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
+Show@<Parse@<Cnf@>> ShowParsedCnf = (Parse@<Cnf@> x) {
   x.?(error: x.error);
-  ShowFormula(x.parsed);
+  ShowCnf(x.parsed);
 };
 
 Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show<Var@>(ShowVar);
@@ -41,5 +41,5 @@ Show@<Result@> ShowResult = (Result@ a) {
     timeout: Str|'timeout');
 };
 
-@(ShowId, ShowVar, ShowClause, ShowFormula, ShowParsedFormula,
+@(ShowId, ShowVar, ShowClause, ShowCnf, ShowParsedCnf,
   ShowAssignment, ShowResult);

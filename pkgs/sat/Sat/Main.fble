@@ -19,9 +19,9 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-@ Formula@ = /Sat/Sat%.Formula@;
-@ Result@ = /Sat/Sat%.Result@;
-% Solve = /Sat/Sat%.Solve;
+@ Cnf@ = /Sat/Solver%.Cnf@;
+@ Result@ = /Sat/Solver%.Result@;
+% SolveCnf = /Sat/Solver%.SolveCnf;
 
 <@>@ Parse@ = /Sat/Dimacs%.Parse@;
 % ParseLines = /Sat/Dimacs%.ParseLines;
@@ -41,13 +41,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
   (List@<String@> args) {
     List@<String@> lines <- m.do(GetLines);
-    Parse@<Formula@> parsed = ParseLines(lines);
+    Parse@<Cnf@> parsed = ParseLines(lines);
     parsed.?(error: {
       Unit@ _ <- m.do(O.PutStr(stdio.err, parsed.error));
       m.return(False);
       });
 
-    Result@ result = Solve(parsed.parsed, Nothing<Int@>);
+    Result@ result = SolveCnf(parsed.parsed, Nothing<Int@>);
     Unit@ _ <- m.do(O.PutLine(stdio.out, ShowResult(result)));
     m.return(True);
   };
