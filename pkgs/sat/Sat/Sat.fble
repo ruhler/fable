@@ -1,24 +1,24 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ VarId@ = /Sat/Cnf%.VarId@;
-@ Var@ = /Sat/Cnf%.Var@;
+@ VarId@ = /Sat/Solver%.VarId@;
+@ Var@ = /Sat/Solver%.Var@;
 @ Clause@ = List@<Var@>;
 @ Formula@ = List@<Clause@>;
 @ Assignment@ = List@<Var@>;
-@ Timeout@ = /Sat/Cnf%.Timeout@;
-@ Result@ = /Sat/Cnf%.Result@;
-@ S@ = /Sat/Cnf%.S@;
-% EqId = /Sat/Cnf%.EqId;
-% AddClause = /Sat/Cnf%.AddClause;
+@ Timeout@ = /Sat/Solver%.Timeout@;
+@ Result@ = /Sat/Solver%.Result@;
+@ Solver@ = /Sat/Solver%.Solver@;
+% EqId = /Sat/Solver%.EqId;
+% AddClause = /Sat/Solver%.AddClause;
 
-(S@, Formula@) { S@; } AddClauses = (S@ s, Formula@ cls) {
+(Solver@, Formula@) { Solver@; } AddClauses = (Solver@ s, Formula@ cls) {
   cls.?(nil: s);
   AddClauses(AddClause(s, cls.cons.head), cls.cons.tail);
 };
 
 (Formula@, Timeout@) { Result@; } Solve = (Formula@ f, Timeout@ t) {
-  /Sat/Cnf%.Solve(AddClauses(/Sat/Cnf%.Empty, f), t);
+  /Sat/Solver%.Solve(AddClauses(/Sat/Solver%.Empty, f), t);
 };
 
 @(VarId@, Var@, Clause@, Formula@, Assignment@, Result@, Timeout@,

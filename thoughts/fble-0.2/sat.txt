@@ -190,3 +190,381 @@ user    0m9.024s
 sys     0m0.141s
 
 Yeah. That's a definite improvement. Easily achieving my 25s goal.
+
+---
+
+Profiling on pkgs/sat/bench/unif-c1000-v500-s1356655268.cnf says:
+
+50% showing the result.
+25% computing the result.
+25% parsing.
+
+That's pretty crazy.
+
+In terms of computing the result, 40% is adding clauses. Most of computing the
+result is the less than comparison operation for doing map lookups.
+
+For showing the result, it's all in Concat for showing the list of elements.
+
+Search was called 66 times, to give a sense of how many alternatives we tried.
+
+Let me run fble-sat-bench without any timeout, and run on all the benchmarks
+from that same package with unif-c1000-v500-s1356655268.cnf to see what kind
+of numbers we get.
+
+---
+
+I ran it over night. No luck yet. Haven't managed to solve any of the
+benchmarks in less than 5 minutes, and haven't finished fble-sat-bench yet.
+
+Some insight into time taken may be nice. Can I run perf on one of them for 5
+minutes and get anything useful out? Let's try.
+
+---
+
+Random sat algorithm idea.
+
+A 3 term clause gives us 7 combinations of those terms that are compatible
+with that clause. For 2 clauses, that's 7 + 7 nodes, which we can cross to get
+49 potential nodes representing all possible assignments that satisfy those
+two clauses. Repeat that all the way down until each original clause is
+included. Any composite node that survives with each original clause is a
+satisfying assignment. If there are none, it's unsat.
+
+The question comes down to how to efficiently factor out the ways of combining
+clauses to get to an answer or rule out all possible answers as fast as
+possible.
+
+---
+
+Anyway, I have my perf profiling data now. Here's what it shows ...
+
+It's hard to get a meaningful picture, because everything calls
+FbleThreadCall, and FbleThreadCall calls everything. It would be better if I
+could get a real fble profile I think.
+
+Let's find a decent timeout value to set on aim and use that.
+
+Again, not much of a meaningful picture. We spend a lot of time doing ops and
+searches. I think we need a better algorithm to reduce how much time we spend
+searching different possible assignments.
+
+---
+
+I forgot to turn on time logging of my sat runs. The only info I'll get is
+whether we were able to solve it or not in less than 5 minutes. Maybe that's
+still a useful number in aggregate.
+
+Anyway, two things to work on next for the sat solver:
+1. Conflict driven clause learning.
+2. Accept general format formulas, rather than forcing CNF.
+
+I don't entirely understand how (1) works yet. The idea is as soon as you get
+a conflict, you learn what caused it and add an extra clause. For example:
+
+(a + b + c)
+(a + d + 'c)
+
+After picking a, b, and d, we get the conflict for c. We go back and say, oh,
+well, you know, we also have
+
+(a + b + d)
+
+Then jump back up to where we chose a, and b, and continue, this time setting
+d to false right away.
+
+I'm not sure how far is safe and useful to jump back.
+
+For (2), the interface I want is something like:
+* True, False,
+* Var
+* Not, And, Or, Cond
+
+The idea being we allocate a new variable for each sub-formula and turn each
+of these functions into constraints.
+
+x = Not(a) - Return the negated form of the variable a. (No need for new var).
+
+x = And(a, b)
+  Constraints:
+    a, b => x
+    a' => x'
+    b' => x'
+    x => a
+    x => b
+
+x = Or(a, b)
+   a', b' => x'
+   a => x
+   b => x
+   x' => a'
+   x' => b'
+
+x = Cond(p, a, b)
+   p, a => x
+   p', b => x
+   a, b => x
+   p, a' => x'
+   p', b' => x'
+   a', b' => x'
+
+So really we just need a way to represent constraints of the form
+   a, b => c
+
+Given a bunch of those, solve the problem.
+
+Unit clause comes for free. Once we pick a, b, we get => c. Then we know c.
+
+Pure literal is saying a variable always appears one way on the left and
+another way on the right. Then it's safe to pick such that it doesn't
+constrain anything and it is never constrained. Harder to see how this happens
+in practice with the above constraints.
+
+Any way to check in our profile how often we do unit clause versus pure
+literal?
+
+PureLiteral is Cnf.fble line 228. DoRemoveClauseFromVar.nops.: 50398
+Unit clause is Cnf.fble line 198. DoRemoveVarFromClause.nops.: 66614
+
+So I guess they both happen a bunch.
+   
+---
+
+Here's my new proposal. Conceptually we have a collection of facts. A fact has
+the form ([Var], Var). For example: a, b => c. If all of the left hand side
+variables are true, that means the right hand side variable must be true.
+
+Same idea as CNF.
+* Unit clause: Any fact with nothing on the left hand side.
+* Pure literal: If a variable only shows up pos on lhs and neg on rhs. Or if a
+  variable only shows up neg on lhs and pos on rhs.
+
+  For example, if x is pos on lhs and neg on rhs, then you can safely set x to
+  false, because there is no possibility of learning otherwise and it has no
+  consequence for other variable settings.
+
+To handle true/false in sat format problems, we can define a special variable
+T from the start. Use T for true, T' for false, and the first assignment we do
+is assign T to true.
+
+To handle unsat detection, there are two ways we could do it.
+1. Define a variable X to mean 'impossible'. Anytime we assign a variable,
+replace it with X on the right hand side of any fact that says the variable
+should be different.
+
+2. A faster way: Anytime we assign a variable, in any facts that says the
+variable should be different:
+* If lhs has no vars: unsat.
+* If lhs has one var a: assign a'
+* If lhs has two or more vars a, b, ..., s
+  Replace it with the fact: a, b, ... => s'
+
+There are two forms of knowledge here: facts and assignments. Once we make an
+assignment, we can simplify the facts based on that.
+
+On assignment:
+* If the var appears positive on the lhs of a fact, remove that var from the
+  lhs of the fact.
+* If the var appears negative on the lhs of a fact, remove that fact.
+* If the var appears positive on the rhs of a fact, remove that fact.
+* If the var appears negative on the rhs of a fact, see (2) above.
+
+The API to this solver can be you add a bunch of facts (rather than clauses).
+
+Converting from CNF:
+AddClause (a + b + c) 
+Turns into adding the following facts:
+  a', b' => c
+  a', c' => b
+  b', c' => a
+
+Converting from SAT:
+
+Each formula is represented as a (possibly new) variable. And we add clauses
+based on that. To solve a formula, we assign the variable for that formula to
+true and solve. We are done when all facts have been discharged.
+
+True: true
+False: false
+Var: new var v.
+Not(true): false
+not(false): true
+Not(x): x'
+
+And(true, x): x
+And(false, x): false
+And(x, true): x
+And(x, false): false
+
+And(a, b): 
+  New var c. And the following facts:
+
+  a b | c
+  0 0 | 0
+  0 1 | 0
+  1 0 | 0
+  1 1 | 1
+
+  a,b => c
+  c => a
+  c => b
+  a' => c'
+  b' => c'
+
+Or(a, b):
+  New var c with the following facts:
+
+  a b | c
+  0 0 | 0
+  0 1 | 1
+  1 0 | 1
+  1 1 | 1
+
+  a',b' => c'
+  a => c
+  b => c
+  c' => a'
+  c' => b'
+
+Cond(p, a, b):
+  New var c with the following facts:
+
+  p a b | c
+  0 0 0 | 0
+  0 0 1 | 1
+  0 1 0 | 0
+  0 1 1 | 1
+  1 0 0 | 0
+  1 0 1 | 0
+  1 1 0 | 1
+  1 1 1 | 1
+
+  p,a => c
+  p,a' => c'
+  p',b => c
+  p',b' => c'
+  a,b => c
+  a',b' => c'
+
+Don't worry about conflict driven clause learning yet. But I bet it's easier
+to integrate with this fact based format. You keep track of the original fact
+that led to the initial assignment for a conflict, and the original fact that
+led to the conflict. Merge those facts together and add the result. It's just a
+question of when/where to add the new fact and where to back track to.
+
+I'm thinking we add yet another module to reimplement this from scratch. Call
+it Solver. So, eventually, Cnf becomes the Cnf interface to the solver. Sat
+becomes the Sat interface to the solver. And Solver is the raw fact based
+interface and implementation.
+
+wikipedia says following is terminology:
+ P -> Q, P is antecedent, Q is consequent.
+
+Let me use: Var@, Fact@, lhs, rhs.
+
+Cool. Just need to figure out all the ops to support, then should be good to
+implement this fact-based solver.
+  
+---
+
+On more thought, it's better to use clauses than facts.
+
+Consider: a, b => c
+
+From that, we also know:
+  a, c' => b'
+  b, c' => a'
+
+So it's odd that we make it asymmetric. Much easier to represent this
+directly, symmetrically, as:
+
+  a' + b' + c
+
+This says the same thing: either the left hand side has to be false, or the
+right hand side has to be true.
+
+Otherwise we would be adding a bunch of special case logic for left hand side
+versus right hand side. This way, we can use the existing solver logic.
+
+If we want to support cnf: we get that right away.
+If we want to support 'sat', we can do the same thing I was thinking above,
+just tweaked slightly:
+
+True: true
+False: false
+Var: new var v.
+Not(true): false
+not(false): true
+Not(x): x'
+
+And(true, x): x
+And(false, x): false
+And(x, true): x
+And(x, false): false
+And(a, b): 
+  New var c with the following clauses:
+  (a' + b' + c)
+  (a + c')
+  (b + c')
+
+Or(a, b):
+  New var c with the following clauses:
+  (a + b + c')
+  (a' + c)
+  (b' + c)
+
+Cond(p, a, b): (p & a) | (p' & b)
+  New var c with the following clauses:
+
+  (p' + a' + c)
+  (p' + a + c')
+  (p + b' + c)
+  (p + b + c')
+  (a' + b' + c)
+  (a + b + c')
+
+  Maybe the last two are redundant and we can learn them? Let's try:
+
+  (p' + a + c') conflicts with (p + b + c'), telling us that
+  (a + c' + b)
+ 
+  So yeah, that looks redundant. We can just use the four clauses and learn
+  the rest later:
+
+  (p' + a' + c)
+  (p' + a + c')
+  (p + b' + c)
+  (p + b + c')
+
+Next steps, then:
+* Clean up the existing Cnf solver code
+ - Rename to Solver.fble
+ - Rename S@ to Solver@
+ - If desired, split Ops into VarOp@ and ClauseOp@ subcategories to factor out
+   some common code and make the names simpler.
+ - Change the Main dimacs program to construct the formula via solver instead
+   of making a formula first and then adding all the clauses.
+* Add a Sat.fble interface that has a wrapper around the solver that adds its
+  own variables and clauses as above.
+* Work on conflict driven clause learning.
+
+Thoughts on conflict driven clause learning:
+* pure literals don't lead to conflicts.
+* otherwise, for any conflict (empty clause), you have the clause that
+  originally assigned a variable and the clause that became empty. Those are
+  the two conflicting clauses, and you know which variable they conflicted on.
+  Say the clauses are (a + b + c + ... + x), (p + q + r + ... + x'). You learn
+  the clause: (a + b + c + ... + p + q + r + ...)
+* We want to learn the clause for the entire search, not just where we are.
+  For example, maybe you pick variables m, n, o, then you run into the above
+  conflict. You don't want to run into that same conflict for each of the 8
+  variations of m, n, and o.
+* In terms of how far to backtrack when you hit a conflict:
+ - At least as far back as the last variable in the learned clause, because
+   there's no point otherwise.
+ - Presumably you don't want to go back all the way to the beginning.
+ - I'm not sure. I kind of feel like you want to go back decision by decision,
+   retry where you are given the new clause (re-apply simplification to take
+   advantage of it), and go up. But if you're going to do that, may as well
+   jump to the front right away to avoid duplicate work? Not sure.
+* How to implement adding a clause mid-search? Needs thought.
