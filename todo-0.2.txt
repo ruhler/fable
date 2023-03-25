@@ -3,9 +3,12 @@ Fble 0.2 TODO
 Things to consider doing for the fble-0.2 release.
 
 * Sat Solver:
- - Fix smashed stack seen when running on
-   sat-2002-beta/submitted/goldberg/fpga_routing/too_large_gr_rcs_w5.shuffled.cnf
  - Implement conflict driven clause learning.
+
+* Anything we can do to help detect stack smashers?
+ - Like, limit stack depth in fble and print a nice message before running
+   into a segfault? Or detect when we've smashed the stack? Or static analysis
+   to detect non-tail recursive functions?
 
 * Big things:
  - smten support.

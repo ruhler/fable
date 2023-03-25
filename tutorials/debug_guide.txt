@@ -29,3 +29,10 @@ tricks for making the most of the currently available debug support.
   To prevent the string value from being truncated by gdb, first issue:
       set print elements 0
 
+* To avoid stepping into runtime implementation code:
+  In theory:
+    skip -gfi *.c
+  But doesn't seem to work in practice?
+
+  The other option: link against a libfble without any symbols.
+

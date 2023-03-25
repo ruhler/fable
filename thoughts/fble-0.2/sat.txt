@@ -679,3 +679,29 @@ Changes to state:
 * Change assigns to a map from VarId to (value, clauseid).
 
 Pretty simple and straight forward.
+
+---
+
+Before we get to implementing the conflict driven clause learning, there's a
+stack smash bug we need to fix. Let's see if we can track it down.
+
+Core/Monad/State.fble:17
+
+It's like that all the way down, until it gets to 
+Core/Monad/State.fble:18, then Core/Stream/IStream.fble:32
+
+Could it be we have a lazy state monad implementation here, and we need to
+make it strict somehow? What would that even mean?
+
+The IStream reference is to GetChar.
+
+Looks like it's the call to GetLines in /Sat/Main%, which reads all the lines
+of the cnf into a big string.
+
+It's definitely been implemented in a non-tail recursive fashion.
+
+The easy fix should be to re-implement GetLines so it is tail recursive. The
+more general fix might be to parse the cnf and create the solver line by line
+rather than all as one big string. We should be able to stream this in.
+
+Let's do the easy fix first.
