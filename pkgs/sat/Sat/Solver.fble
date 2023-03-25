@@ -6,7 +6,6 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Inc = /Core/Int%.Inc;
-% Dec = /Core/Int%.Dec;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -267,37 +266,16 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
   DoOps(ms.just);
 };
 
-# Timeout@ --
-#   A number of steps allowed to be remaining, or Nothing if there is no
-#   timeout.
-@ Timeout@ = Maybe@<Int@>;
-
 @ Assignment@ = List@<Var@>;
 
 # Result@ --
 #   The result of trying to solve a sat problem.
-#
-# In the case of unsat, the remaining timeout is returned.
-@ Result@ = +(Assignment@ sat, Timeout@ unsat, Unit@ timeout);
+@ Result@ = +(Assignment@ sat, Unit@ unsat);
 
-# Countdown --
-#   Count down the timeout.
-#
-# Returns:
-#   The timeout decremented by one, Nothing if time is up.
-(Timeout@) { Maybe@<Timeout@>; } Countdown = (Timeout@ t) {
-  t.?(nothing: Just(t));
-  t.just.?(p: Just(Just(Dec(t.just))));
-  Nothing<Timeout@>;
-};
-
-(Solver@, Timeout@) { Result@; }
-Search = (Solver@ s, Timeout@ t) {
-  Maybe@<Timeout@> nt = Countdown(t);
-  nt.?(nothing: Result@(timeout: Unit));
-
+(Solver@) { Result@; }
+Search = (Solver@ s) {
   Maybe@<Solver@> ms = DoOps(s);
-  ms.?(nothing: Result@(unsat: nt.just));
+  ms.?(nothing: Result@(unsat: Unit));
   Solver@ s = ms.just;
 
   # TODO: Come up with a more efficient way to pick any single existing
@@ -312,30 +290,30 @@ Search = (Solver@ s, Timeout@ t) {
   Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
     Cons(Op@(Assign: @(var: Var@(var, True))), s.ops));
 
-  Result@ attempted = Search(attempt, nt.just);
+  Result@ attempted = Search(attempt);
   attempted.?(unsat: {
     Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
     Cons(Op@(Assign: @(var: Var@(var, False))), s.ops));
-    Search(attempt, attempted.unsat);
+    Search(attempt);
   });
 
   attempted;
 };
 
-(Solver@, Timeout@) { Result@; } Solve = (Solver@ s, Timeout@ t) {
+(Solver@) { Result@; } Solve = (Solver@ s) {
   Solver@ seeded = Solver@(s.clause_id, s.vars, s.clauses, s.assigns, SeedOps(s));
-  Search(seeded, t);
+  Search(seeded);
 };
 
-(Cnf@, Timeout@) { Result@; } SolveCnf = (Cnf@ cnf, Timeout@ t) {
+(Cnf@) { Result@; } SolveCnf = (Cnf@ cnf) {
   Solver@ solver = /Core/List%.ForEach(cnf, Empty, 
     (Clause@ c, Solver@ s) {
     AddClause(s, c);
   });
-  Solve(solver, t);
+  Solve(solver);
 };
 
 @(VarId@, Var@, Clause@, Cnf@,
-  Solver@, Assignment@, Result@, Timeout@,
+  Solver@, Assignment@, Result@,
   EqId, Empty, AddClause,
   Solve, SolveCnf);

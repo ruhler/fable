@@ -2,13 +2,9 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Int@ = /Core/Int%.Int@;
-
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
-
-<@>% Nothing = /Core/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -47,7 +43,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       m.return(False);
       });
 
-    Result@ result = SolveCnf(parsed.parsed, Nothing<Int@>);
+    Result@ result = SolveCnf(parsed.parsed);
     Unit@ _ <- m.do(O.PutLine(stdio.out, ShowResult(result)));
     m.return(True);
   };

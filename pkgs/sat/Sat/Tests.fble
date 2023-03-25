@@ -4,13 +4,9 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-@ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
-
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -40,9 +36,6 @@
 % Parse = /Sat/Dimacs%.Parse;
 
 
-# Import to test compilation
-% _ = /Sat/Bench%;
-
 VarId@ X = /Core/Int%.1;
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
@@ -65,8 +58,7 @@ Eq@<Assignment@> EqAssignment = /Core/List/Eq%.Eq<Var@>(EqVar);
 Eq@<Result@> EqResult = (Result@ a, Result@ b) {
   a.?(
     sat: b.?(sat: EqAssignment(a.sat, b.sat), : False),
-    unsat: b.?(unsat: True, : False),
-    timeout: b.?(timeout: True, : False));
+    unsat: b.?(unsat: True, : False));
 };
 
 (Result@, Result@) { TestResult@; }
@@ -80,7 +72,7 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
       List<Var@>[Var@(X, True)]
     ];
     Result@ want = Result@(sat: List<Var@>[Var@(X, True)]);
-    Result@ got = SolveCnf(f, Nothing<Int@>);
+    Result@ got = SolveCnf(f);
     AssertEq(want, got);
   }),
 
@@ -89,16 +81,8 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
       List<Var@>[Var@(X, True)],
       List<Var@>[Var@(X, False)]
     ];
-    Result@ want = Result@(unsat: Nothing<Int@>);
-    Result@ got = SolveCnf(f, Nothing<Int@>);
-    AssertEq(want, got);
-  }),
-
-  Test(Str|Timeout, (Unit@ _) {
-    # /Sat/Aim% is a real problem. There's no way we should be able to solve
-    # it in 10 ticks.
-    Result@ want = Result@(timeout: Unit);
-    Result@ got = SolveCnf(/Sat/Aim%, Just<Int@>(Int|10));
+    Result@ want = Result@(unsat: Unit);
+    Result@ got = SolveCnf(f);
     AssertEq(want, got);
   }),
 

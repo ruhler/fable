@@ -37,8 +37,7 @@ Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show<Var@>(ShowVar);
 Show@<Result@> ShowResult = (Result@ a) {
   a.?(
     sat: Append<Char@>(Str|'sat: ', ShowAssignment(a.sat)),
-    unsat: Str|'unsat',
-    timeout: Str|'timeout');
+    unsat: Str|'unsat');
 };
 
 @(ShowId, ShowVar, ShowClause, ShowCnf, ShowParsedCnf,
