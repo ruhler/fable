@@ -70,7 +70,7 @@
   List@<Op@> ops
 );
 
-Solver@ Empty = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
+Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
 
 # @func[AddClause] Adds a clause to cnf state Solver@.
 #  This should be done in the initial phase before starting to solve the
@@ -306,5 +306,5 @@ Search = (Solver@ s) {
 
 @(VarId@, Var@, Clause@,
   Solver@, Assignment@, Result@,
-  EqId, Empty, AddClause,
+  EqId, NewSolver, AddClause,
   Solve);

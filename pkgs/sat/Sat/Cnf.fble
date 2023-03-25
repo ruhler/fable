@@ -6,13 +6,13 @@
 @ Result@ = /Sat/Solver%.Result@;
 @ Solver@ = /Sat/Solver%.Solver@;
 % EqId = /Sat/Solver%.EqId;
-% Empty = /Sat/Solver%.Empty;
+% NewSolver = /Sat/Solver%.NewSolver;
 % AddClause = /Sat/Solver%.AddClause;
 
 @ Formula@ = /Core/List%.List@<Clause@>;
 
 (Formula@) { Result@; } Solve = (Formula@ formula) {
-  Solver@ solver = /Core/List%.ForEach(formula, Empty, 
+  Solver@ solver = /Core/List%.ForEach(formula, NewSolver, 
     (Clause@ c, Solver@ s) {
     AddClause(s, c);
   });
