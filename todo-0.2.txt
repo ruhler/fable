@@ -2,8 +2,16 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Sat Solver:
+ - Remove timeout and fble-sat-bench.
+ - Fix smashed stack seen when running on
+   sat-2002-beta/submitted/goldberg/fpga_routing/too_large_gr_rcs_w5.shuffled.cnf
+ - Move Cnf@ to separate Cnf module.
+ - Implement conflict driven clause learning.
+
 * Big things:
  - smten support.
+   And after smten, try doing smten-based mnist classification?
  - high score saved in invaders game.
  - fix composition issues in fbld implementation.
  - write tutorials for C api.

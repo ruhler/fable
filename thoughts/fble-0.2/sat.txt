@@ -568,3 +568,114 @@ Thoughts on conflict driven clause learning:
    advantage of it), and go up. But if you're going to do that, may as well
    jump to the front right away to avoid duplicate work? Not sure.
 * How to implement adding a clause mid-search? Needs thought.
+
+---
+
+Let's move on to conflict driven clause learning. The high level alrgorithm is
+clear to me.
+
+Our current search algorithm looks like this:
+ Search S:
+   S' = Simplify(S)
+   if unsat or sat: return;
+   V = some unassigned var in S'
+   A = Search(assign V=true in S')
+   if unsat:
+     return Search(assign V=false in S')
+   return A
+
+With conflict driven clause learning, we want:
+ Search S:
+  S' = Simplify(S)
+  if unsat or sat: return;
+  V = some unassigned var in S'
+  A = Search(assign V=true in S')
+  if unsat:
+    S'' = Simplify(S' with with learned clauses)
+    return Search(S'')
+  return A
+
+In other words, replace the 'assign V=false' step with 'apply learned
+clauses'. Easy.
+
+Simplify will give us a single learned class if unsat.
+Search can return multiple learned clauses. In particular, it returns learned
+clauses from both the "assign V=true in S'" case and the "S''" case which need
+to be combined together.
+
+Why this is the right place to apply learned clauses:
+  If assigning V=true led to a conflict, then whatever clause we learned
+  should prevent us from picking V=true after simplifying. So we do as good as 
+  assign V=false would, but even better because we could infer other variables
+  as well.
+
+  If we didn't hit this conflict before, then going back up another level,
+  simplification would not cause the learned clause to become a unit clause.
+  (I claim and believe. It's not a totally convincing argument here.). So no
+  value in doing that.
+
+Anyway, let's start with this proposed high level algorithm, which should give
+us many of the benefits and is conceptually simple.
+
+The harder part is deciding how to track conflict clauses. I'm thinking to
+start with the idea of describing a conflict as a pair of clause ids and a
+variable. Then we can apply a conflict to state S by concatenating the vars in
+the conflict clauses and filtering out the variable.
+
+The alternative would be describing a conflict clause as the full original
+clause. To apply that to a state S, we would need to substitute any already
+assigned variables.
+
+Note that regardless what approach we take, there's an O(N^2) thing going on
+here: each conflict clause we learn has to be applied to each state S on the
+stack. I'm proposing we start by applying the full list of learned conflict
+clauses to whatever the next state S on the stack we go back to, as we go back
+to that next state S.
+
+Ideas for tracking conflicts:
+* Any time we assign a var, we say if it was:
+  PURE, ATTEMPT, or UNIT
+  If it's PURE or ATTEMPT, there can be no conflict.
+  If it's UNIT, there's a clause id associated with it.
+  Worst case, we can pick clause id 0 associated with pure and attempt, and it
+  wouldn't do any harm to learn a clause.
+  (a + b + c) * (d + e + f) => (a + b + c + d + e)
+  Track this as part of 'assigns'. Maybe use a map for assigns for quick
+  lookup by var.
+* Simplify has a clause id and var id when a conflict is detected. We can look
+  up the clause id associated with the var, and return the two clause ids and
+  var id as the conflict.
+* Given (clause, clause, var, S), it's easy to 'AddConflict' like I said
+  above: concatenate clause lists (one of them may be empty) and filter out
+  the var. Add that as a new clause.
+  
+The next part to figure out is how to track all the conflicts, and how to
+manage clause ids for learned clauses so that we can refer to them in new
+conflicts.
+
+---
+
+Here's how we track the conflicts:
+
+Keep a map from ClauseId@ to Conflict@, which is a global map we pass through
+the entire search process.
+
+Simplify returns a Conflict@. When Search sees Simplify return unsat, it adds
+the Conflict@ to the conflicts map, incrementing the clauseid. It returns the
+updated conflict map and clause id.
+
+When Search sees unsat returned from its variable assignment attempt, there
+are new clauses for each ClauseId from whatever was the next clause id to
+whatever new clause id was returned. Add those new conflict clauses into the
+pre-attempted simplified S@, update the clause id, and pass that to search.
+
+And that's it. Easy.
+
+Changes to state:
+* Pass a conflicts map as an extra argument to Search.
+  We could put this in Solver@ if we want, or keep it separate.
+* Search Result@ for unsat should include a pair of (Conflicts map, new clause
+  id).
+* Change assigns to a map from VarId to (value, clauseid).
+
+Pretty simple and straight forward.
