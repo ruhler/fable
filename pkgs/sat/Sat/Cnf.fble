@@ -1,0 +1,22 @@
+
+@ VarId@ = /Sat/Solver%.VarId@;
+@ Var@ = /Sat/Solver%.Var@;
+@ Clause@ = /Sat/Solver%.Clause@;
+@ Assignment@ = /Sat/Solver%.Assignment@;
+@ Result@ = /Sat/Solver%.Result@;
+@ Solver@ = /Sat/Solver%.Solver@;
+% EqId = /Sat/Solver%.EqId;
+% Empty = /Sat/Solver%.Empty;
+% AddClause = /Sat/Solver%.AddClause;
+
+@ Formula@ = /Core/List%.List@<Clause@>;
+
+(Formula@) { Result@; } Solve = (Formula@ formula) {
+  Solver@ solver = /Core/List%.ForEach(formula, Empty, 
+    (Clause@ c, Solver@ s) {
+    AddClause(s, c);
+  });
+  /Sat/Solver%.Solve(solver);
+};
+
+@(VarId@, Var@, Clause@, Formula@, Assignment@, Result@, EqId, Solve);

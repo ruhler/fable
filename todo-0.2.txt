@@ -3,9 +3,9 @@ Fble 0.2 TODO
 Things to consider doing for the fble-0.2 release.
 
 * Sat Solver:
+ - Rename 'Empty' to 'NewSolver'?
  - Fix smashed stack seen when running on
    sat-2002-beta/submitted/goldberg/fpga_routing/too_large_gr_rcs_w5.shuffled.cnf
- - Move Cnf@ to separate Cnf module.
  - Implement conflict driven clause learning.
 
 * Big things:

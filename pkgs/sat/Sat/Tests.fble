@@ -20,17 +20,17 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Cnf@ = /Sat/Solver%.Cnf@;
-@ Clause@ = /Sat/Solver%.Clause@;
-@ VarId@ = /Sat/Solver%.VarId@;
-@ Var@ = /Sat/Solver%.Var@;
-@ Assignment@ = /Sat/Solver%.Assignment@;
-@ Result@ = /Sat/Solver%.Result@;
-% EqId = /Sat/Solver%.EqId;
-% SolveCnf = /Sat/Solver%.SolveCnf;
+@ Formula@ = /Sat/Cnf%.Formula@;
+@ Clause@ = /Sat/Cnf%.Clause@;
+@ VarId@ = /Sat/Cnf%.VarId@;
+@ Var@ = /Sat/Cnf%.Var@;
+@ Assignment@ = /Sat/Cnf%.Assignment@;
+@ Result@ = /Sat/Cnf%.Result@;
+% EqId = /Sat/Cnf%.EqId;
+% Solve = /Sat/Cnf%.Solve;
 
 % ShowResult = /Sat/Show%.ShowResult;
-% ShowParsedCnf = /Sat/Show%.ShowParsedCnf;
+% ShowParsedFormula = /Sat/Show%.ShowParsedFormula;
 
 <@>@ Parse@ = /Sat/Dimacs%.Parse@;
 % Parse = /Sat/Dimacs%.Parse;
@@ -44,11 +44,11 @@ Eq@<Var@> EqVar = (Var@ a, Var@ b) {
 
 Eq@<Clause@> EqClause = /Core/List/Eq%.Eq<Var@>(EqVar);
 
-Eq@<Cnf@> EqFormula = /Core/List/Eq%.Eq<Clause@>(EqClause);
+Eq@<Formula@> EqFormula = /Core/List/Eq%.Eq<Clause@>(EqClause);
 
 
-Eq@<Parse@<Cnf@>>
-EqParsedFormula = (Parse@<Cnf@> a, Parse@<Cnf@> b) {
+Eq@<Parse@<Formula@>>
+EqParsedFormula = (Parse@<Formula@> a, Parse@<Formula@> b) {
   a.?(error: b.?(error: /Core/String/Eq%.Eq(a.error, b.error), : False),
       parsed: b.?(parsed: EqFormula(a.parsed, b.parsed), : False));
 };
@@ -68,21 +68,21 @@ AssertEq = (Result@ a, Result@ b) {
 
 Test@ Tests = TestSuite(Str|Sat, List<Test@>[
   Test(Str|Sat, (Unit@ _) {
-    Cnf@ f = List<Clause@>[
+    Formula@ f = List<Clause@>[
       List<Var@>[Var@(X, True)]
     ];
     Result@ want = Result@(sat: List<Var@>[Var@(X, True)]);
-    Result@ got = SolveCnf(f);
+    Result@ got = Solve(f);
     AssertEq(want, got);
   }),
 
   Test(Str|Unsat, (Unit@ _) {
-    Cnf@ f = List<Clause@>[
+    Formula@ f = List<Clause@>[
       List<Var@>[Var@(X, True)],
       List<Var@>[Var@(X, False)]
     ];
     Result@ want = Result@(unsat: Unit);
-    Result@ got = SolveCnf(f);
+    Result@ got = Solve(f);
     AssertEq(want, got);
   }),
 
@@ -96,14 +96,14 @@ p cnf 5 3
 -1 5 3 4 0
 -3 -4 0
 ';
-    Cnf@ formula = List[
+    Formula@ formula = List[
       List[Var@(Int|1, True), Var@(Int|5, False), Var@(Int|4, True)],
       List[Var@(Int|1, False), Var@(Int|5, True), Var@(Int|3, True), Var@(Int|4, True)],
       List[Var@(Int|3, False), Var@(Int|4, False)]];
 
-    Parse@<Cnf@> want = Parse@<Cnf@>(parsed: formula);
-    Parse@<Cnf@> got = Parse(dimacs);
-    AssertEquals<Parse@<Cnf@>>(EqParsedFormula, ShowParsedCnf, want, got);
+    Parse@<Formula@> want = Parse@<Formula@>(parsed: formula);
+    Parse@<Formula@> got = Parse(dimacs);
+    AssertEquals<Parse@<Formula@>>(EqParsedFormula, ShowParsedFormula, want, got);
   })
 
 ]);

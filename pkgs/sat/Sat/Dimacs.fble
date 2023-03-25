@@ -25,9 +25,9 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Var@ = /Sat/Solver%.Var@;
-@ Clause@ = /Sat/Solver%.Clause@;
-@ Cnf@ = /Sat/Solver%.Cnf@;
+@ Var@ = /Sat/Cnf%.Var@;
+@ Clause@ = /Sat/Cnf%.Clause@;
+@ Formula@ = /Sat/Cnf%.Formula@;
 
 # DIMACS cnf parser.
 # http://www.satcompetition.org/2009/format-benchmarks2009.html
@@ -42,7 +42,7 @@
 # -3 -4 0
 
 # Parse@ monad definition.
-@ ParseState@ = *(List@<String@> lines, Cnf@ formula);
+@ ParseState@ = *(List@<String@> lines, Formula@ formula);
 <@>@ ParseResult@ = <@ T@> { *(ParseState@ state, T@ result); };
 <@>@ ParseStatus@ = <@ T@> { +(String@ error, ParseResult@<T@> parsed); };
 <@>@ ParseM@ = <@ T@> { (ParseState@) { ParseStatus@<T@>; }; };
@@ -139,13 +139,13 @@ ParseM@<Unit@> ParseFromStart = {
 
 <@>@ Parse@ = <@ T@> { +(String@ error, T@ parsed); };
 
-(List@<String@>) { Parse@<Cnf@>; } ParseLines = (List@<String@> lines) {
+(List@<String@>) { Parse@<Formula@>; } ParseLines = (List@<String@> lines) {
   ParseStatus@<Unit@> ps = ParseFromStart(ParseState@(lines, List<Clause@>[]));
-  ps.?(error: Parse@<Cnf@>(error: ps.error));
-  Parse@<Cnf@>(parsed: Reverse(ps.parsed.state.formula));
+  ps.?(error: Parse@<Formula@>(error: ps.error));
+  Parse@<Formula@>(parsed: Reverse(ps.parsed.state.formula));
 };
 
-(String@) { Parse@<Cnf@>; } Parse = (String@ dimacs) {
+(String@) { Parse@<Formula@>; } Parse = (String@ dimacs) {
   ParseLines(Split<Char@>(dimacs, (Char@ c) {
     /Core/Char/Eq%.Eq(c, Chars.nl);
   }));

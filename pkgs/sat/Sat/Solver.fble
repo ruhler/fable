@@ -29,7 +29,6 @@
 
 @ Var@ = *(VarId@ id, Bool@ pos);
 @ Clause@ = List@<Var@>;
-@ Cnf@ = List@<Clause@>;
 
 # pos - the list of clauses this variable appears positive in.
 # neg - the list of clauses this variable appears negative in.
@@ -305,15 +304,7 @@ Search = (Solver@ s) {
   Search(seeded);
 };
 
-(Cnf@) { Result@; } SolveCnf = (Cnf@ cnf) {
-  Solver@ solver = /Core/List%.ForEach(cnf, Empty, 
-    (Clause@ c, Solver@ s) {
-    AddClause(s, c);
-  });
-  Solve(solver);
-};
-
-@(VarId@, Var@, Clause@, Cnf@,
+@(VarId@, Var@, Clause@,
   Solver@, Assignment@, Result@,
   EqId, Empty, AddClause,
-  Solve, SolveCnf);
+  Solve);
