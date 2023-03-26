@@ -796,3 +796,23 @@ up filtering out variables and merging of conflict clauses.
 Quick digression: how should we detect the case when an empty clause is
 provided? We could detect that in SeedOps?
 
+---
+
+Feels like the conflict clause issue would be fixed if we got the ordering of
+things right. When I do an 'assign', process everything from that completely
+before any other operations.
+
+Same with pure literal? I think pure literal has a race condition like this
+too. What if we learn it's pure at the same time we learn it has to be it's
+value from another variable assignment? Wait, is that possible?
+
+If a is pure, unlike assign, that doesn't lead to removing vars from clauses?
+Well... it does lead to an assignment, but it shouldn't lead to removing vars
+from clauses, unlike attempted. So maybe don't need to worry about that.
+
+In summary, I'm hoping that if I process 'attempted' clause removals before
+any other, then all conflicts should be from 'inferred' things.
+
+The most natural way to do this would be use fifo instead of lifo for
+processing ops. Any easy way to implement a fifo in fble?
+

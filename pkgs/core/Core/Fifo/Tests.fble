@@ -1,0 +1,98 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>% List = /Core/List%.List;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+<@>@ Fifo@ = /Core/Fifo%.Fifo@;
+<@>% Empty = /Core/Fifo%.Empty;
+<@>% First = /Core/Fifo%.First;
+<@>% Put = /Core/Fifo%.Put;
+<@>% Next = /Core/Fifo%.Next;
+
+@ Elem@ = +(Unit@ A, Unit@ B, Unit@ C);
+Elem@ A = Elem@(A: Unit);
+Elem@ B = Elem@(A: Unit);
+Elem@ C = Elem@(A: Unit);
+
+(Elem@) { String@; } ElemShow = (Elem@ e) {
+  e.?(A: Str|A, B: Str|B, C: Str|C);
+};
+
+(Elem@, Elem@) { Bool@; } ElemEq = (Elem@ a, Elem@ b) {
+  a.?(A: b.?(A: True, : False),
+      B: b.?(B: True, : False),
+      C: b.?(C: True, : False));
+};
+
+Test@ Tests = TestSuite(Str|Fifo, List[
+  Test(Str|'EmptyFirst', (Unit@ _) {
+    Maybe@<Elem@> wnt = Nothing<Elem@>;
+    Maybe@<Elem@> got = First(Empty<Elem@>);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(ElemEq),
+      /Core/Maybe/Show%.Show(ElemShow),
+      wnt, got);
+  }),
+
+  Test(Str|'PutFirst', (Unit@ _) {
+    Fifo@<Elem@> fifo = Put(B, Empty<Elem@>);
+    Maybe@<Elem@> wnt = Just(B);
+    Maybe@<Elem@> got = First(fifo);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(ElemEq),
+      /Core/Maybe/Show%.Show(ElemShow),
+      wnt, got);
+  }),
+
+  Test(Str|'MultiPutFirst', (Unit@ _) {
+    Fifo@<Elem@> fifo = Put(A, Put(B, Empty<Elem@>));
+    Maybe@<Elem@> wnt = Just(B);
+    Maybe@<Elem@> got = First(fifo);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(ElemEq),
+      /Core/Maybe/Show%.Show(ElemShow),
+      wnt, got);
+  }),
+
+  Test(Str|'Second', (Unit@ _) {
+    Fifo@<Elem@> fifo = Put(A, Put(B, Empty<Elem@>));
+    Maybe@<Elem@> wnt = Just(A);
+    Maybe@<Elem@> got = First(Next(fifo));
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(ElemEq),
+      /Core/Maybe/Show%.Show(ElemShow),
+      wnt, got);
+  }),
+
+  Test(Str|'Flushed', (Unit@ _) {
+    Fifo@<Elem@> abc = Put(C, Put(B, Put(A, Empty<Elem@>)));
+    Fifo@<Elem@> empty = Next(Next(Next(abc)));
+    Fifo@<Elem@> bac = Put(C, Put(A, Put(B, empty)));
+
+    Maybe@<Elem@> wnt = Just(B);
+    Maybe@<Elem@> got = First(bac);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(ElemEq),
+      /Core/Maybe/Show%.Show(ElemShow),
+      wnt, got);
+  })
+]);
+
+@(Tests);

@@ -1,0 +1,62 @@
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Reverse = /Core/List%.Reverse;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+# First in first out fifo.
+#  @field[List@<T@>][front] Elements at the front of the fifo, oldest first.
+#  @field[List@<T@>][back] Elements at the back of the fifo, oldest last.
+#
+#  Invariant: if the fifo is not empty, the front field is not empty. In other
+#  words, if the front of the fifo is empty, the back of the fifo must be
+#  empty.
+<@>@ Fifo@ = <@ T@> { *(List@<T@> front, List@<T@> back); };
+
+Fifo@ Empty = <@ T@> { Fifo@(Nil<T@>, Nil<T@>); };
+
+# @func[First] Returns the first element of the fifo.
+#  @arg[Fifo@<T@>][fifo] The fifo to get the first element for.
+#  @returns[Maybe@<T@>]
+#   The oldest element on the fifo, Nothing if the fifo is empty.
+<@ T@>(Fifo@<T@>) { Maybe@<T@>; } First = <@ T@>(Fifo@<T@> fifo) {
+  fifo.front.?(nil: {
+    Unit@ _ = fifo.back.nil;  # invariant assertion.
+    Nothing<T@>;
+  });
+  Just(fifo.front.cons.head);
+};
+
+# @func[Put] Puts an element on the fifo.
+#  @arg[T@][x] The element to put on the fifo.
+#  @arg[Fifo@<T@>][fifo] The fifo to put the element onto.
+#  @returns[Fifo@<T@>] The fifo with the element on it.
+<@ T@>(T@, Fifo@<T@>) { Fifo@<T@>; } Put = <@ T@>(T@ x, Fifo@<T@> fifo) {
+  fifo.front.?(nil: {
+    Unit@ _ = fifo.back.nil;  # invariant assertion.
+    Fifo@(List<T@>[x], Nil<T@>);
+  });
+  Fifo@(fifo.front, Cons(x, fifo.back));
+};
+
+# @func[Next] Removes the oldest element from the fifo.
+#  Has no effect if the fifo is empty.
+#
+#  @arg[Fifo@<T@>][fifo] The fifo to remove the oldest element from.
+#  @returns[Fifo@<T@>] The fifo with the element removed.
+<@ T@>(Fifo@<T@>) { Fifo@<T@>; } Next = <@ T@>(Fifo@<T@> fifo) {
+  fifo.front.?(nil: fifo);
+  List@<T@> tail = fifo.front.cons.tail;
+  tail.?(nil: Fifo@(Reverse(fifo.back), Nil<T@>));
+  Fifo@(tail, fifo.back);
+};
+
+@(Fifo@, Empty, First, Put, Next);
+

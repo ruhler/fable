@@ -34,3 +34,48 @@ between the parser and commands where we have to keep track of and pass
 location information back and forth. We can't just parse the whole thing all
 at once and then execute commands all at once.
 
+---
+
+This should be pretty straight forward I think.
+
+Assume some monad for computation/side effects.
+
+We have generic commands that don't care about the monad. They can be
+parametrized by it. The monad lets you call a sequence of commands.
+
+Define fble functions that take typed (post-parsed) arguments.
+Define a generic command map that takes non-typed List@<String@> arguments,
+parses the arguments appropriately, and forwards that to the typed fble
+functions.
+
+The implementation of a command can call either the raw fble function it
+wants, or invoke a command via the generic command map.
+
+Typed fble functions for backends can work with specific monads. For example,
+maybe we have an HtmlM@ for generating html documents.
+
+We have a block parser and an inline parser that both work solely with generic
+monad via the generic command map.
+
+For composition, you create a command map that works for a particular
+specialized HtmlM@ monad. You invoke the block parser, which causes all the
+commands to be executed recursively in the monad. You can do what you want
+with the results of that. Easy.
+
+Note: instead of List@<String@>, we'll want List@<StringL@>, or some variation
+that tracks locations for strings. And the block and inline parsers should
+operate on StringL@ to maintain file location information.
+
+I think this will be nice, straight forward, very composable. The two issues
+I see are:
+
+1. How to get the filename for what we are parsing.
+Ideally we can open named files rather than just stdin. Then that's solved. We
+want that for fble-md5 too.
+
+2. How to let people write their own extensions to fbld without using fble.
+They need some programming language to be flexible enough. For ease of use, it
+would be nice to have a programming language with an interpreter. Some options
+are: tcl, python, fble, some custom new fbld language. I think, let's not
+worry about this now.
+

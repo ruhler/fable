@@ -1,7 +1,4 @@
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
-
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
@@ -12,6 +9,19 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+@ TestResult@ = /Core/Test%.TestResult@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
@@ -27,16 +37,6 @@
 <@>% Length = /Core/List/Length%.Length;
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Sort = /Core/List/Sort%.Sort;
-
-<@>@ Show@ = /Core/Show%.Show@;
-
-@ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
-
-@ Test@ = /Core/Test%.Test@;
-@ TestResult@ = /Core/Test%.TestResult@;
-% Test = /Core/Test%.Test;
-% TestSuite = /Core/Test%.TestSuite;
 
 @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 
@@ -61,7 +61,7 @@
       E: b.?(A: False, B: False, C: False, D: False, E: True));
 };
 
-(Elem@, Elem@){Bool@;} ElemEq = (Elem@ a, Elem@ b) {
+(Elem@, Elem@) { Bool@; } ElemEq = (Elem@ a, Elem@ b) {
   a.?(A: b.?(A: True, : False),
       B: b.?(B: True, : False),
       C: b.?(C: True, : False),
