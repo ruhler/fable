@@ -56,6 +56,14 @@ Map = <@ A@, @ B@>(Maybe@<A@> m, (A@) { B@; } f) {
   m.?(just: Just(f(m.just)), nothing: Nothing<B@>);
 };
 
+# Do - Monadic do operation for Maybe@.
+#  Applies the function if the argument is Just.
+<@ A@>(Maybe@<A@>)<@ B@>((A@) { Maybe@<B@>; }) { Maybe@<B@>; }
+Do = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { Maybe@<B@>; } f) {
+  m.?(nothing: Nothing<B@>);
+  f(m.just);
+};
+
 # For --
 #   Repeatedly apply the body of the loop for as long as the index value is
 #   not Nothing.
@@ -94,4 +102,4 @@ DoWhile = <@ I@, @ B@>(I@ i, (I@) { Maybe@<I@>; } next, B@ base, (I@, B@) { B@; 
   For<I@, B@>(Just(i), next, base, body);
 };
 
-@(Maybe@, Just, Nothing, Map, For, DoWhile);
+@(Maybe@, Just, Nothing, Map, Do, For, DoWhile);

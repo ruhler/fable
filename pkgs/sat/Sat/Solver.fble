@@ -218,7 +218,12 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
       Cons(v, vars);
       });
 
-  nvars.?(nil: Nothing<Solver@>);
+  nvars.?(nil: {
+    # Test the claim that clause conflicts only arise from inferred variables,
+    # not attempted assignments nor pure literals.
+    ClauseId@ _ = op.why.inferred;
+    Nothing<Solver@>;
+  });
 
   Fifo@<Op@> nops = {
     nvars.cons.tail.?(cons: s.ops);

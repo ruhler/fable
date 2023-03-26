@@ -7,7 +7,6 @@ Things to consider doing for the fble-0.2 release.
  - Parse dimacs cnf incrementally instead of all at once?
    There should be no need to have the entire text of the file in memory all
    at one time.
- - Implement Maybe monad and use it to clean up /Sat/Solver%.DoOps.
 
 * Anything we can do to help detect stack smashers?
  - Like, limit stack depth in fble and print a nice message before running
