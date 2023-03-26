@@ -705,3 +705,94 @@ more general fix might be to parse the cnf and create the solver line by line
 rather than all as one big string. We should be able to stream this in.
 
 Let's do the easy fix first.
+
+---
+
+Where do we really need to track the clause associated with a variable for the
+purposes of tracking?
+
+The conflict is generated in DoRemoveVarFromClause. We filter out the var from
+the op. So who creates that op? It comes from DoAssign.
+
+Where does DoAssign come from?
+ - Seeding pure literals. No conflict clause.
+ - Seeding unit clauses: We know the clause id there.
+ - DoRemoveVarFromClause: We know the clause id there.
+ - RemoveClauseFromVar: Pure literal. No conflict clause.
+ - Search attempt: No conflict clause.
+
+No need to save this information in a map. We just need to record it as part
+of the Assign op.
+
+My vote is to add a second arg to AssignOp@ which is 'why'. Option is:
+  +(Unit@ attempt, Unit@ pure, CluaseId@ inferred).
+
+My claim is that we will never get a conflict for 'attempt' or 'pure'. Worst
+case, if we do, we can just give ClauseId@ 0 or -1 there. But I'd like to
+learn first if we can ever get 'attempt' or 'pure'.
+
+We also want to pass that 'why' to DoRemoveVarFromClause.
+
+---
+
+My claim is apparently wrong, based on what I observe in practice. Let's see
+if we can come up with a simplified example where we get a conflict on a
+non-inferred clause.
+
+How about this:
+
+0: (a' + b)
+1: (a' + b')
+
+And we attempt a to be true.
+
+* Push: assign a=true by attempt.
+* assign a=true by attempt
+  Push: remove a from 0
+  Push: remove a from 1
+* remove a from 1 by attempt.
+  Push: assign b=false inferred from 1
+* assign b=false inferred from 1
+  Push: remove 1
+  Push: remove b from 0
+* remove b from 0
+  Push: assign a=false, inferred from 0
+* Ignore assign a = false, because we already assigned a.
+* remove 1
+* Remove a from 0 by attempt
+  CONFLICT due to attempt.
+
+Let me see if I can reproduce this in a small test case. Sounds hard, because
+of pure literals, etc.
+
+(a' + b)
+(a' + b')
+(a + b)
+
+There, nothing is pure, nothing is unit, hopefully we pick a true by default.
+
+How should this be handled? We could ignore the conflict, but that's wrong.
+There's a real conflict here we should be learning, right?
+
+I wish it went something like this:
+
+* assign a = true.
+  ==> (b)(b')
+* learn b = true from 0
+* see conflict from 1
+* conflict clause: 0, 1 on b (a' + a'). So a needs to be false?
+
+If we don't learn any clause here, then my algorithm above won't work, because
+we'll keep trying a = true.
+
+This shows another issue: when creating conflict clauses, we should remove
+duplicate variables: a' + a' ==> a', a' + a => true
+
+Maybe we should sort all of the variables in a clause by id. Could help speed
+up filtering out variables and merging of conflict clauses.
+
+---
+
+Quick digression: how should we detect the case when an empty clause is
+provided? We could detect that in SeedOps?
+
