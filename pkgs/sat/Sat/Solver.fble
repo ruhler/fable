@@ -8,6 +8,12 @@
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
 
+<@>@ Fifo@ = /Core/Fifo%.Fifo@;
+<@>% Empty = /Core/Fifo%.Empty;
+<@>% First = /Core/Fifo%.First;
+<@>% Put = /Core/Fifo%.Put;
+<@>% Next = /Core/Fifo%.Next;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
@@ -86,10 +92,10 @@ Why@ Pure = Why@(attempt: Unit);
   Vars@ vars,
   Clauses@ clauses,
   List@<Var@> assigns,
-  List@<Op@> ops
+  Fifo@<Op@> ops
 );
 
-Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>);
+Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@>);
 
 # @func[AddClause] Adds a clause to cnf state Solver@.
 #  This should be done in the initial phase before starting to solve the
@@ -122,19 +128,19 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>)
 #
 #  It looks for pure literals and unit clauses, generating a list of assign
 #  operations corresponding to those.
-(Solver@) { List@<Op@>; } SeedOps = (Solver@ s) {
-  List@<Op@> pures = ForEachVar(s.vars, Nil<Op@>,
-    (VarId@ id, VarS@ vs, List@<Op@> ops) {
-      vs.pos.?(nil: Cons(Op@(Assign: @(var: Var@(id, False), why: Pure)), ops));
-      vs.neg.?(nil: Cons(Op@(Assign: @(var: Var@(id, True), why: Pure)), ops));
+(Solver@) { Fifo@<Op@>; } SeedOps = (Solver@ s) {
+  Fifo@<Op@> pures = ForEachVar(s.vars, Empty<Op@>,
+    (VarId@ id, VarS@ vs, Fifo@<Op@> ops) {
+      vs.pos.?(nil: Put(Op@(Assign: @(var: Var@(id, False), why: Pure)), ops));
+      vs.neg.?(nil: Put(Op@(Assign: @(var: Var@(id, True), why: Pure)), ops));
       ops;
     });
 
-  ForEachClause<List@<Op@>>(s.clauses, pures,
-    (ClauseId@ id, ClauseS@ cs, List@<Op@> ops) {
-      cs.?(nil: Cons(Op@(Unsat: Unit), ops));
+  ForEachClause(s.clauses, pures,
+    (ClauseId@ id, ClauseS@ cs, Fifo@<Op@> ops) {
+      cs.?(nil: Put(Op@(Unsat: Unit), ops));
       cs.cons.tail.?(nil: {
-        Cons(Op@(Assign: @(var: cs.cons.head, why: Inferred(id))), ops);
+        Put(Op@(Assign: @(var: cs.cons.head, why: Inferred(id))), ops);
       });
       ops;
     });
@@ -153,15 +159,15 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Nil<Op@>)
   VarS@ vs = mvs.just;
 
   List@<ClauseId@> match = var.pos.?(true: vs.pos, false: vs.neg);
-  List@<Op@> match_ops = /Core/List%.ForEach(match, s.ops,
-    (ClauseId@ c, List@<Op@> ops) {
-      Cons(Op@(RemoveClause: @(clause: c)), ops);
+  Fifo@<Op@> match_ops = /Core/List%.ForEach(match, s.ops,
+    (ClauseId@ c, Fifo@<Op@> ops) {
+      Put(Op@(RemoveClause: @(clause: c)), ops);
     });
 
   List@<ClauseId@> unmatch = var.pos.?(true: vs.neg, false: vs.pos);
-  List@<Op@> unmatch_ops = /Core/List%.ForEach(unmatch, match_ops,
-    (ClauseId@ c, List@<Op@> ops) {
-      Cons(Op@(RemoveVarFromClause: @(clause: c, var: var.id, why: op.why)), ops);
+  Fifo@<Op@> unmatch_ops = /Core/List%.ForEach(unmatch, match_ops,
+    (ClauseId@ c, Fifo@<Op@> ops) {
+      Put(Op@(RemoveVarFromClause: @(clause: c, var: var.id, why: op.why)), ops);
     });
 
   Just(@(
@@ -183,9 +189,9 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
   mcs.?(nothing: Just(s));
 
   ClauseS@ cs = mcs.just;
-  List@<Op@> nops = /Core/List%.ForEach(cs, s.ops,
-    (Var@ v, List@<Op@> ops) {
-      Cons(Op@(RemoveClauseFromVar: @(clause: c, var: v)), ops);
+  Fifo@<Op@> nops = /Core/List%.ForEach(cs, s.ops,
+    (Var@ v, Fifo@<Op@> ops) {
+      Put(Op@(RemoveClauseFromVar: @(clause: c, var: v)), ops);
     });
 
   Just(@(
@@ -214,9 +220,9 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
 
   nvars.?(nil: Nothing<Solver@>);
 
-  List@<Op@> nops = {
+  Fifo@<Op@> nops = {
     nvars.cons.tail.?(cons: s.ops);
-    Cons(Op@(Assign: @(var: nvars.cons.head, why: Inferred(c))), s.ops);
+    Put(Op@(Assign: @(var: nvars.cons.head, why: Inferred(c))), s.ops);
   };
 
   Just(@(
@@ -244,9 +250,9 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
       Cons(c, cls);
     });
 
-  List@<Op@> nops = {
+  Fifo@<Op@> nops = {
     ncls.?(cons: s.ops);
-    Cons(Op@(Assign: @(var: Var@(var.id, Not(var.pos)), why: Pure)), s.ops);
+    Put(Op@(Assign: @(var: Var@(var.id, Not(var.pos)), why: Pure)), s.ops);
   };
 
   VarS@ nvs = var.pos.?(
@@ -261,28 +267,28 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
       ops: nops));
 };
 
-# @func[DoOp] Process a single op for the formula.
+# @func[DoOp] Apply an operation.
 #  @arg[Solver@][s] The formula state to process the op on.
 #  @returns[Maybe@<Solver@>]
 #   @i Nothing if the op shows the formula is unsatisfiable.
-#   @i @a[Just(s)] if there are no remaining ops.
-#   @i The updated state of processing the next op otherwise.
-(Solver@) { Maybe@<Solver@>; } DoOp = (Solver@ s) {
-  s.ops.?(nil: Just(s));
-  Op@ op = s.ops.cons.head;
-  Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.assigns, s.ops.cons.tail);
+#   @i The updated state of processing the op otherwise.
+(Op@, Solver@) { Maybe@<Solver@>; } DoOp = (Op@ op, Solver@ s) {
   op.?(
-    Assign: DoAssign(ns, op.Assign),
-    RemoveClause: DoRemoveClause(ns, op.RemoveClause),
-    RemoveVarFromClause: DoRemoveVarFromClause(ns, op.RemoveVarFromClause),
-    RemoveClauseFromVar: DoRemoveClauseFromVar(ns, op.RemoveClauseFromVar),
+    Assign: DoAssign(s, op.Assign),
+    RemoveClause: DoRemoveClause(s, op.RemoveClause),
+    RemoveVarFromClause: DoRemoveVarFromClause(s, op.RemoveVarFromClause),
+    RemoveClauseFromVar: DoRemoveClauseFromVar(s, op.RemoveClauseFromVar),
     Unsat: Nothing<Solver@>);
 };
 
-# @func[DoOps] Process ops until no more ops remain.
+# @func[DoOps] Process ops until no more ops remain or unsat.
 (Solver@) { Maybe@<Solver@>; } DoOps = (Solver@ s) {
-  s.ops.?(nil: Just(s));
-  Maybe@<Solver@> ms = DoOp(s);
+  Maybe@<Op@> mop = First(s.ops);
+  mop.?(nothing: Just(s));
+
+  Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.assigns, Next(s.ops));
+  Maybe@<Solver@> ms = DoOp(mop.just, ns);
+
   ms.?(nothing: ms);
   DoOps(ms.just);
 };
@@ -309,12 +315,12 @@ Search = (Solver@ s) {
   VarId@ var = mvar.just;
 
   Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
-    Cons(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
+    Put(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
 
   Result@ attempted = Search(attempt);
   attempted.?(unsat: {
     Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
-    Cons(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
+    Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
     Search(attempt);
   });
 
