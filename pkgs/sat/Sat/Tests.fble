@@ -115,6 +115,19 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
     AssertEq(want, got);
   }),
 
+  Test(Str|AttemptedConflict2, (Unit@ _) {
+    # Another test that attempts to cover the case where an attempted variable
+    # assignment leads to a conflict.
+    # (x' + x')(x + x)
+    Formula@ f = List[
+      List[Var@(X, False), Var@(X, False)],
+      List[Var@(X, True), Var@(X, True)]
+    ];
+    Result@ want = Result@(unsat: Unit);
+    Result@ got = Solve(f);
+    AssertEq(want, got);
+  }),
+
   Test(Str|Dimacs, (Unit@ _) {
     String@ dimacs = Str|'c
 c start with comments

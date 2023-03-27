@@ -15,6 +15,7 @@
 <@>% Next = /Core/Fifo%.Next;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
 
@@ -56,6 +57,48 @@
 % LookupClause = /Core/Map%.Lookup<ClauseId@>(LtId)<ClauseS@>;
 % DeleteClause = /Core/Map%.Delete<ClauseId@>(LtId)<ClauseS@>;
 <@>% ForEachClause = /Core/Map%.ForEach<ClauseId@, ClauseS@>;
+
+# Functions for working with clauses.
+# TODO: Move to a separate module?
+% Clause = {
+  # Adds a variable to a clause, preserving the invariant that each variable
+  # appears at most once in a clause.
+  #
+  # Returns Nothing if the clause contains both x and x' after the insertion.
+  (Var@, Clause@) { Maybe@<Clause@>; } AddVar = (Var@ v, Clause@ c) {
+    c.?(nil: Just(List[v]));
+    Var@ head = c.cons.head;
+    EqId(v.id, head.id).?(true: {
+      /Core/Bool/Eq%.Eq(v.pos, head.pos).?(true: Just(c));
+      Nothing<Clause@>;
+    });
+    Maybe@<Clause@> tail = AddVar(v, c.cons.tail);
+    tail.?(nothing: Nothing<Clause@>);
+    Just(Cons(head, tail.just));
+  };
+
+  # Adds a list of variables to a clause, preserving the invariant that each
+  # variable appears at most once in a clause.
+  #
+  # Returns Nothing if the clause contains both x and x' after the insertion.
+  (List@<Var@>, Clause@) { Maybe@<Clause@>; }
+  AddVars = (List@<Var@> vs, Clause@ c) {
+    vs.?(nil: Just(c));
+    Maybe@<Clause@> mc = AddVar(vs.cons.head, c);
+    mc.?(nothing: Nothing<Clause@>);
+    AddVars(vs.cons.tail, mc.just);
+  };
+
+  # Removes a variable from a clause.
+  (VarId@, Clause@) { Clause@; } RemoveVar = (VarId@ vid, Clause@ c) {
+    /Core/List%.ForEach(c, Nil<Var@>, (Var@ v, List@<Var@> vars) {
+      EqId(vid, v.id).?(true: vars);
+      Cons(v, vars);
+    });
+  };
+
+  @(AddVar, AddVars, RemoveVar);
+};
 
 # The reasoning behind a variable assignment.
 @ Why@ = +(
@@ -105,7 +148,11 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@
 #  @arg[clause] The clause to add.
 #  @returns
 #   An updated cnf state with clause added.
-(Solver@, Clause@) { Solver@; } AddClause = (Solver@ s, Clause@ clause) {
+(Solver@, List@<Var@>) { Solver@; } AddClause = (Solver@ s, List@<Var@> vars) {
+  Maybe@<Clause@> mc = Clause.AddVars(vars, Nil<Var@>);
+  mc.?(nothing: s);
+  Clause@ clause = mc.just;
+
   ClauseId@ id = s.clause_id;
   Vars@ nvars = /Core/List%.ForEach(clause, s.vars,
     (Var@ v, Vars@ vs) {
@@ -212,16 +259,13 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
   Maybe@<ClauseS@> mcs = LookupClause(s.clauses, c);
   mcs.?(nothing: Just(s));
 
-  List@<Var@> nvars = /Core/List%.ForEach(mcs.just, Nil<Var@>,
-    (Var@ v, List@<Var@> vars) {
-      EqId(op.var, v.id).?(true: vars);
-      Cons(v, vars);
-      });
+  List@<Var@> nvars = Clause.RemoveVar(op.var, mcs.just);
 
   nvars.?(nil: {
     # Test the claim that clause conflicts only arise from inferred variables,
     # not attempted assignments nor pure literals.
     ClauseId@ _ = op.why.inferred;
+
     Nothing<Solver@>;
   });
 

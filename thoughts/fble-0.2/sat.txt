@@ -816,3 +816,41 @@ any other, then all conflicts should be from 'inferred' things.
 The most natural way to do this would be use fifo instead of lifo for
 processing ops. Any easy way to implement a fifo in fble?
 
+---
+
+I implemented a fifo and switched ops to use it. It wasn't hard. Looks like my
+claim is holding up better now. What's the next step for conflict driven
+clause learning?
+
+* Implement a 'Normalize' function for clauses that sorts variables by id and
+  removes redundancies.
+ - Add a test cases where we add non-normal clauses.
+* Implement a 'RemoveVar' function for clauses that assumes clauses are
+  normalized.
+* Implement a Conflict function for clauses that joins them, normalizes, and
+  removes the var in question.
+* Implement a Conflict function for a solver that looks up the relevant
+  clauses and then applies the conflict function for clauses to add a new
+  clause.
+* Add a conflicts field to Solver@ that tracks and applies conflicts.
+
+
+Is normalizing clauses important or significant?
+
+Clauses are small, I assume, so we don't save much for removing variables.
+Unless we learn some pretty big clauses?
+
+What if we have a clause: (a' + a')? We will fail to learn that a is false and
+have to wait until a guess instead. Is that a big deal? Or just an
+optimization?
+
+I think it's a big deal, because it means, yet again, an attempted variable
+assignment could lead to a conflict. I bet I can write a test case for this.
+
+(a' + a')
+(a + a)
+
+Right?
+
+Yes.
+
