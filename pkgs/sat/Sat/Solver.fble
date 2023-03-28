@@ -43,7 +43,7 @@
 #
 # Conflict@ describes a pair of conflicting clauses and the variable they
 # conflicted on.
-@ Conflict@ = *(ClauseId@ a, ClauseId@ b, VarId@ v);
+@ Conflict@ = *(ClauseId@ a, ClauseId@ b, VarId@ var);
 
 # pos - the list of clauses this variable appears positive in.
 # neg - the list of clauses this variable appears negative in.
@@ -128,8 +128,7 @@ Why@ Pure = Why@(attempt: Unit);
   AssignOp@ Assign,
   RemoveClauseOp@ RemoveClause,
   RemoveVarFromClauseOp@ RemoveVarFromClause,
-  RemoveClauseFromVarOp@ RemoveClauseFromVar,
-  Unit@ Unsat
+  RemoveClauseFromVarOp@ RemoveClauseFromVar
 );
 
 @ Solver@ = *(
@@ -153,6 +152,13 @@ Solver@ NewSolver = Solver@(
 #  @returns
 #   An updated cnf state with clause added.
 (Solver@, List@<Var@>) { Solver@; } AddClause = (Solver@ s, List@<Var@> vars) {
+  vars.?(nil: {
+    # An empty clause immediately makes the formula unsatisfiable. Model that
+    # as two contradictory clauses to avoid the need to handle this case
+    # specially elsewhere.
+    AddClause(AddClause(s, List[Var@(Int|0, True)]), List[Var@(Int|0, False)]);
+  });
+
   Maybe@<Clause@> mc = Clause.AddVars(vars, Nil<Var@>);
   mc.?(nothing: s);
   Clause@ clause = mc.just;
@@ -189,23 +195,27 @@ Solver@ NewSolver = Solver@(
 
   Clauses.ForEach(s.clauses, pures,
     (ClauseId@ id, ClauseS@ cs, Fifo@<Op@> ops) {
-      cs.?(nil: Put(Op@(Unsat: Unit), ops));
+      # Assertion: There should be no empty clauses, because AddClause doesn't
+      # allow that.
       cs.cons.tail.?(nil: {
         Put(Op@(Assign: @(var: cs.cons.head, why: Inferred(id))), ops);
       });
+
       ops;
     });
 };
+
+@ OpResult@ = +(Solver@ solver, Conflict@ conflict);
 
 # @func[DoAssign] Do an assign operation.
 #  Remove VarId from Variables map. If it's there:
 #  @i Add variable assignment.
 #  @i For each + clause, add a RemoveClause operation.
 #  @i For each - clause, add a RemoveVarFromClause operation.
-(Solver@, AssignOp@) { Maybe@<Solver@>; } DoAssign = (Solver@ s, AssignOp@ op) {
+(Solver@, AssignOp@) { OpResult@; } DoAssign = (Solver@ s, AssignOp@ op) {
   Var@ var = op.var;
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
-  mvs.?(nothing: Just(s));
+  mvs.?(nothing: OpResult@(solver: s));
 
   VarS@ vs = mvs.just;
 
@@ -221,7 +231,7 @@ Solver@ NewSolver = Solver@(
       Put(Op@(RemoveVarFromClause: @(clause: c, var: var.id, why: op.why)), ops);
     });
 
-  Just(@(
+  OpResult@(solver: @(
       clause_id: s.clause_id, 
       vars: Vars.Delete(s.vars, var.id),
       clauses: s.clauses,
@@ -234,11 +244,11 @@ Solver@ NewSolver = Solver@(
 #  Remove clause from clauses. If it's there:
 #  @i For each variable
 #   @i Add a RemoveClauseFromVar operation.
-(Solver@, RemoveClauseOp@) { Maybe@<Solver@>; }
+(Solver@, RemoveClauseOp@) { OpResult@; }
 DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
   ClauseId@ c = op.clause;
   Maybe@<ClauseS@> mcs = Clauses.Lookup(s.clauses, c);
-  mcs.?(nothing: Just(s));
+  mcs.?(nothing: OpResult@(solver: s));
 
   ClauseS@ cs = mcs.just;
   Fifo@<Op@> nops = /Core/List%.ForEach(cs, s.ops,
@@ -246,7 +256,7 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
       Put(Op@(RemoveClauseFromVar: @(clause: c, var: v)), ops);
     });
 
-  Just(@(
+  OpResult@(solver: @(
       clause_id: s.clause_id,
       vars: s.vars,
       clauses: Clauses.Delete(s.clauses, c),
@@ -259,20 +269,20 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
 #  Remove the var from the clause if the clause is there.
 #  @i If clause ends up with single var, add Assign operation.
 #  @i If clause ends up with no vars, mark unsat and exit.
-(Solver@, RemoveVarFromClauseOp@) { Maybe@<Solver@>; }
+(Solver@, RemoveVarFromClauseOp@) { OpResult@; }
 DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
   ClauseId@ c = op.clause;
   Maybe@<ClauseS@> mcs = Clauses.Lookup(s.clauses, c);
-  mcs.?(nothing: Just(s));
+  mcs.?(nothing: OpResult@(solver: s));
 
   List@<Var@> nvars = Clause.RemoveVar(op.var, mcs.just);
 
   nvars.?(nil: {
-    # Test the claim that clause conflicts only arise from inferred variables,
+    # Claim: clause conflicts only arise from inferred variables,
     # not attempted assignments nor pure literals.
-    ClauseId@ _ = op.why.inferred;
+    ClauseId@ w = op.why.inferred;
 
-    Nothing<Solver@>;
+    OpResult@(conflict: @(a: c, b: w, var: op.var));
   });
 
   Fifo@<Op@> nops = {
@@ -280,7 +290,7 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
     Put(Op@(Assign: @(var: nvars.cons.head, why: Inferred(c))), s.ops);
   };
 
-  Just(@(
+  OpResult@(solver: @(
       clause_id: s.clause_id,
       vars: s.vars,
       clauses: Clauses.Insert(s.clauses, c, nvars),
@@ -292,11 +302,11 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
 # @func[DoRemoveClauseFromVar] Do a remove clause from var operation.
 #  Remove clause from var if the var is there.
 #  @i If the var ends up with a single polarity, add an Assign operation.
-(Solver@, RemoveClauseFromVarOp@) { Maybe@<Solver@>; }
+(Solver@, RemoveClauseFromVarOp@) { OpResult@; }
 DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
   Var@ var = op.var;
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
-  mvs.?(nothing: Just(s));
+  mvs.?(nothing: OpResult@(solver: s));
   VarS@ vs = mvs.just;
 
   List@<ClauseId@> match = var.pos.?(true: vs.pos, false: vs.neg);
@@ -315,7 +325,7 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
     true: @(pos: ncls, neg: vs.neg),
     false: @(pos: vs.pos, neg: ncls));
 
-  Just(@(
+  OpResult@(solver: @(
       clause_id: s.clause_id,
       vars: Vars.Insert(s.vars, var.id, nvs),
       clauses: s.clauses,
@@ -326,41 +336,45 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
 
 # @func[DoOp] Apply an operation.
 #  @arg[Solver@][s] The formula state to process the op on.
-#  @returns[Maybe@<Solver@>]
-#   @i Nothing if the op shows the formula is unsatisfiable.
+#  @returns[OpResult]
+#   @i conflict if the op shows the formula is unsatisfiable.
 #   @i The updated state of processing the op otherwise.
-(Op@, Solver@) { Maybe@<Solver@>; } DoOp = (Op@ op, Solver@ s) {
+(Op@, Solver@) { OpResult@; } DoOp = (Op@ op, Solver@ s) {
   op.?(
     Assign: DoAssign(s, op.Assign),
     RemoveClause: DoRemoveClause(s, op.RemoveClause),
     RemoveVarFromClause: DoRemoveVarFromClause(s, op.RemoveVarFromClause),
-    RemoveClauseFromVar: DoRemoveClauseFromVar(s, op.RemoveClauseFromVar),
-    Unsat: Nothing<Solver@>);
+    RemoveClauseFromVar: DoRemoveClauseFromVar(s, op.RemoveClauseFromVar));
 };
 
 # @func[DoOps] Process ops until no more ops remain or unsat.
-(Solver@) { Maybe@<Solver@>; } DoOps = (Solver@ s) {
+(Solver@) { OpResult@; } DoOps = (Solver@ s) {
   Maybe@<Op@> mop = First(s.ops);
-  mop.?(nothing: Just(s));
+  mop.?(nothing: OpResult@(solver: s));
 
   Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, Next(s.ops));
-  Maybe@<Solver@> ms = DoOp(mop.just, ns);
+  OpResult@ result = DoOp(mop.just, ns);
 
-  ms.?(nothing: ms);
-  DoOps(ms.just);
+  result.?(conflict: result);
+  DoOps(result.solver);
 };
 
 @ Assignment@ = List@<Var@>;
+@ SearchResult@ = +(
+  Assignment@ sat,
+  *(ClauseId@ clause_id, Conflicts@ conflicts) unsat
+);
 
-# Result@ --
-#   The result of trying to solve a sat problem.
-@ Result@ = +(Assignment@ sat, Unit@ unsat);
-
-(Solver@) { Result@; }
+(Solver@) { SearchResult@; }
 Search = (Solver@ s) {
-  Maybe@<Solver@> ms = DoOps(s);
-  ms.?(nothing: Result@(unsat: Unit));
-  Solver@ s = ms.just;
+  OpResult@ ms = DoOps(s);
+  ms.?(conflict: {
+    SearchResult@(unsat: @(
+        clause_id: Inc(s.clause_id),
+        conflicts: Conflicts.Insert(s.conflicts, s.clause_id, ms.conflict)));
+  });
+
+  Solver@ s = ms.solver;
 
   # TODO: Come up with a more efficient way to pick any single existing
   # variable.
@@ -368,25 +382,37 @@ Search = (Solver@ s) {
     (VarId@ v, VarS@ _, Maybe@<VarId@> mv) {
       Just(v);
     });
-  mvar.?(nothing: Result@(sat: s.assigns));
+  mvar.?(nothing: SearchResult@(sat: s.assigns));
   VarId@ var = mvar.just;
 
   Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
     Put(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
 
-  Result@ attempted = Search(attempt);
+  SearchResult@ attempted = Search(attempt);
   attempted.?(unsat: {
-    Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
-    Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
+    Solver@ attempt = Solver@(
+      attempted.unsat.clause_id,
+      s.vars,
+      s.clauses,
+      attempted.unsat.conflicts,
+      s.assigns,
+      Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
     Search(attempt);
   });
 
   attempted;
 };
 
+# Result@ --
+#   The result of trying to solve a sat problem.
+@ Result@ = +(Assignment@ sat, Unit@ unsat);
+
 (Solver@) { Result@; } Solve = (Solver@ s) {
   Solver@ seeded = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, SeedOps(s));
-  Search(seeded);
+  SearchResult@ result = Search(seeded);
+  result.?(
+    sat: Result@(sat: result.sat),
+    unsat: Result@(unsat: Unit));
 };
 
 @(VarId@, Var@, Clause@,
