@@ -34,6 +34,17 @@
 @ Var@ = *(VarId@ id, Bool@ pos);
 @ Clause@ = List@<Var@>;
 
+# Imagine two clauses:
+#   (a1 + a2 + ... + v)
+#   (b1 + b2 + ... + v')
+#
+# These conflict in the case where:
+#   (a1 + a2 + ... + b1 + b2 + ...)
+#
+# Conflict@ describes a pair of conflicting clauses and the variable they
+# conflicted on.
+@ Conflict@ = *(ClauseId@ a, ClauseId@ b, VarId@ v);
+
 # pos - the list of clauses this variable appears positive in.
 # neg - the list of clauses this variable appears negative in.
 @ VarS@ = *(List@<ClauseId@> pos, List@<ClauseId@> neg);
@@ -45,6 +56,9 @@
 
 % Clauses = /Sat/Id%.Map<ClauseS@>;
 @ Clauses@ = Clauses.Map@; 
+
+% Conflicts = /Sat/Id%.Map<Conflict@>;
+@ Conflicts@ = Conflicts.Map@;
 
 # Functions for working with clauses.
 # TODO: Move to a separate module?
@@ -122,11 +136,13 @@ Why@ Pure = Why@(attempt: Unit);
   ClauseId@ clause_id,
   Vars@ vars,
   Clauses@ clauses,
+  Conflicts@ conflicts,
   List@<Var@> assigns,
   Fifo@<Op@> ops
 );
 
-Solver@ NewSolver = Solver@(Int|0, Vars.Empty, Clauses.Empty, Nil<Var@>, Empty<Op@>);
+Solver@ NewSolver = Solver@(
+  Int|0, Vars.Empty, Clauses.Empty, Conflicts.Empty, Nil<Var@>, Empty<Op@>);
 
 # @func[AddClause] Adds a clause to cnf state Solver@.
 #  This should be done in the initial phase before starting to solve the
@@ -154,7 +170,7 @@ Solver@ NewSolver = Solver@(Int|0, Vars.Empty, Clauses.Empty, Nil<Var@>, Empty<O
         });
     });
   Clauses@ nclauses = Clauses.Insert(s.clauses, id, clause);
-  Solver@(Inc(id), nvars, nclauses, s.assigns, s.ops);
+  Solver@(Inc(id), nvars, nclauses, s.conflicts, s.assigns, s.ops);
 };
 
 # @func[SeedOps] Seed assign operations to start solving a formula.
@@ -209,6 +225,7 @@ Solver@ NewSolver = Solver@(Int|0, Vars.Empty, Clauses.Empty, Nil<Var@>, Empty<O
       clause_id: s.clause_id, 
       vars: Vars.Delete(s.vars, var.id),
       clauses: s.clauses,
+      conflicts: s.conflicts,
       assigns: Cons(var, s.assigns),
       ops: unmatch_ops));
 };
@@ -233,6 +250,7 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
       clause_id: s.clause_id,
       vars: s.vars,
       clauses: Clauses.Delete(s.clauses, c),
+      conflicts: s.conflicts,
       assigns: s.assigns,
       ops: nops));
 };
@@ -266,6 +284,7 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
       clause_id: s.clause_id,
       vars: s.vars,
       clauses: Clauses.Insert(s.clauses, c, nvars),
+      conflicts: s.conflicts,
       assigns: s.assigns,
       ops: nops));
 };
@@ -300,6 +319,7 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
       clause_id: s.clause_id,
       vars: Vars.Insert(s.vars, var.id, nvs),
       clauses: s.clauses,
+      conflicts: s.conflicts,
       assigns: s.assigns,
       ops: nops));
 };
@@ -323,7 +343,7 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
   Maybe@<Op@> mop = First(s.ops);
   mop.?(nothing: Just(s));
 
-  Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.assigns, Next(s.ops));
+  Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, Next(s.ops));
   Maybe@<Solver@> ms = DoOp(mop.just, ns);
 
   ms.?(nothing: ms);
@@ -351,12 +371,12 @@ Search = (Solver@ s) {
   mvar.?(nothing: Result@(sat: s.assigns));
   VarId@ var = mvar.just;
 
-  Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
+  Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
     Put(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
 
   Result@ attempted = Search(attempt);
   attempted.?(unsat: {
-    Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.assigns,
+    Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
     Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
     Search(attempt);
   });
@@ -365,7 +385,7 @@ Search = (Solver@ s) {
 };
 
 (Solver@) { Result@; } Solve = (Solver@ s) {
-  Solver@ seeded = Solver@(s.clause_id, s.vars, s.clauses, s.assigns, SeedOps(s));
+  Solver@ seeded = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, SeedOps(s));
   Search(seeded);
 };
 
