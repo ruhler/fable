@@ -1,0 +1,19 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+@ Id@ = Int@;
+% EqId = /Core/Int/Eq%.Eq;
+% LtId = /Core/Int/Eq%.Lt;
+
+<@>% Map = <@ T@> {
+  @ Map@ = /Core/Map%.Map@<Id@, T@>;
+  % Empty = /Core/Map%.Empty<Id@, T@>;
+  % Insert = /Core/Map%.Insert<Id@>(LtId)<T@>;
+  % InsertWith = /Core/Map%.InsertWith<Id@>(LtId)<T@>;
+  % Lookup = /Core/Map%.Lookup<Id@>(LtId)<T@>;
+  % Delete = /Core/Map%.Delete<Id@>(LtId)<T@>;
+  <@>% ForEach = /Core/Map%.ForEach<Id@, T@>;
+  @(Map@, Empty, Insert, InsertWith, Lookup, Delete, ForEach);
+};
+
+@(Id@, EqId, Map);

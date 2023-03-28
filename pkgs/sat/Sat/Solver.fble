@@ -4,7 +4,6 @@
 % False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
-@ Int@ = /Core/Int%.Int@;
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
 
@@ -26,10 +25,8 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-
-@ Id@ = Int@;
-% EqId = /Core/Int/Eq%.Eq;
-% LtId = /Core/Int/Eq%.Lt;
+@ Id@ = /Sat/Id%.Id@;
+% EqId = /Sat/Id%.EqId;
 
 @ VarId@ = Id@;
 @ ClauseId@ = Id@;
@@ -43,20 +40,11 @@
 
 @ ClauseS@ = Clause@;
 
-@ Vars@ = /Core/Map%.Map@<VarId@, VarS@>;
-% EmptyVars = /Core/Map%.Empty<VarId@, VarS@>;
-% InsertVar = /Core/Map%.Insert<VarId@>(LtId)<VarS@>;
-% InsertVarWith = /Core/Map%.InsertWith<VarId@>(LtId)<VarS@>;
-% LookupVar = /Core/Map%.Lookup<VarId@>(LtId)<VarS@>;
-% DeleteVar = /Core/Map%.Delete<VarId@>(LtId)<VarS@>;
-<@>% ForEachVar = /Core/Map%.ForEach<VarId@, VarS@>;
+% Vars = /Sat/Id%.Map<VarS@>;
+@ Vars@ = Vars.Map@;
 
-@ Clauses@ = /Core/Map%.Map@<ClauseId@, ClauseS@>;
-% EmptyClauses = /Core/Map%.Empty<ClauseId@, ClauseS@>;
-% InsertClause = /Core/Map%.Insert<ClauseId@>(LtId)<ClauseS@>;
-% LookupClause = /Core/Map%.Lookup<ClauseId@>(LtId)<ClauseS@>;
-% DeleteClause = /Core/Map%.Delete<ClauseId@>(LtId)<ClauseS@>;
-<@>% ForEachClause = /Core/Map%.ForEach<ClauseId@, ClauseS@>;
+% Clauses = /Sat/Id%.Map<ClauseS@>;
+@ Clauses@ = Clauses.Map@; 
 
 # Functions for working with clauses.
 # TODO: Move to a separate module?
@@ -138,7 +126,7 @@ Why@ Pure = Why@(attempt: Unit);
   Fifo@<Op@> ops
 );
 
-Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@>);
+Solver@ NewSolver = Solver@(Int|0, Vars.Empty, Clauses.Empty, Nil<Var@>, Empty<Op@>);
 
 # @func[AddClause] Adds a clause to cnf state Solver@.
 #  This should be done in the initial phase before starting to solve the
@@ -156,7 +144,7 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@
   ClauseId@ id = s.clause_id;
   Vars@ nvars = /Core/List%.ForEach(clause, s.vars,
     (Var@ v, Vars@ vs) {
-      InsertVarWith(vs, v.id, (Maybe@<VarS@> mx) {
+      Vars.InsertWith(vs, v.id, (Maybe@<VarS@> mx) {
           VarS@ x = mx.?(
             just: mx.just,
             nothing: VarS@(Nil<ClauseId@>, Nil<ClauseId@>));
@@ -165,7 +153,7 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@
             false: VarS@(x.pos, Cons(id, x.neg)));
         });
     });
-  Clauses@ nclauses = InsertClause(s.clauses, id, clause);
+  Clauses@ nclauses = Clauses.Insert(s.clauses, id, clause);
   Solver@(Inc(id), nvars, nclauses, s.assigns, s.ops);
 };
 
@@ -176,14 +164,14 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@
 #  It looks for pure literals and unit clauses, generating a list of assign
 #  operations corresponding to those.
 (Solver@) { Fifo@<Op@>; } SeedOps = (Solver@ s) {
-  Fifo@<Op@> pures = ForEachVar(s.vars, Empty<Op@>,
+  Fifo@<Op@> pures = Vars.ForEach(s.vars, Empty<Op@>,
     (VarId@ id, VarS@ vs, Fifo@<Op@> ops) {
       vs.pos.?(nil: Put(Op@(Assign: @(var: Var@(id, False), why: Pure)), ops));
       vs.neg.?(nil: Put(Op@(Assign: @(var: Var@(id, True), why: Pure)), ops));
       ops;
     });
 
-  ForEachClause(s.clauses, pures,
+  Clauses.ForEach(s.clauses, pures,
     (ClauseId@ id, ClauseS@ cs, Fifo@<Op@> ops) {
       cs.?(nil: Put(Op@(Unsat: Unit), ops));
       cs.cons.tail.?(nil: {
@@ -200,7 +188,7 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@
 #  @i For each - clause, add a RemoveVarFromClause operation.
 (Solver@, AssignOp@) { Maybe@<Solver@>; } DoAssign = (Solver@ s, AssignOp@ op) {
   Var@ var = op.var;
-  Maybe@<VarS@> mvs = LookupVar(s.vars, var.id);
+  Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
   mvs.?(nothing: Just(s));
 
   VarS@ vs = mvs.just;
@@ -219,7 +207,7 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@
 
   Just(@(
       clause_id: s.clause_id, 
-      vars: DeleteVar(s.vars, var.id),
+      vars: Vars.Delete(s.vars, var.id),
       clauses: s.clauses,
       assigns: Cons(var, s.assigns),
       ops: unmatch_ops));
@@ -232,7 +220,7 @@ Solver@ NewSolver = Solver@(Int|0, EmptyVars, EmptyClauses, Nil<Var@>, Empty<Op@
 (Solver@, RemoveClauseOp@) { Maybe@<Solver@>; }
 DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
   ClauseId@ c = op.clause;
-  Maybe@<ClauseS@> mcs = LookupClause(s.clauses, c);
+  Maybe@<ClauseS@> mcs = Clauses.Lookup(s.clauses, c);
   mcs.?(nothing: Just(s));
 
   ClauseS@ cs = mcs.just;
@@ -244,7 +232,7 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
   Just(@(
       clause_id: s.clause_id,
       vars: s.vars,
-      clauses: DeleteClause(s.clauses, c),
+      clauses: Clauses.Delete(s.clauses, c),
       assigns: s.assigns,
       ops: nops));
 };
@@ -256,7 +244,7 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
 (Solver@, RemoveVarFromClauseOp@) { Maybe@<Solver@>; }
 DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
   ClauseId@ c = op.clause;
-  Maybe@<ClauseS@> mcs = LookupClause(s.clauses, c);
+  Maybe@<ClauseS@> mcs = Clauses.Lookup(s.clauses, c);
   mcs.?(nothing: Just(s));
 
   List@<Var@> nvars = Clause.RemoveVar(op.var, mcs.just);
@@ -277,7 +265,7 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
   Just(@(
       clause_id: s.clause_id,
       vars: s.vars,
-      clauses: InsertClause(s.clauses, c, nvars),
+      clauses: Clauses.Insert(s.clauses, c, nvars),
       assigns: s.assigns,
       ops: nops));
 };
@@ -288,7 +276,7 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
 (Solver@, RemoveClauseFromVarOp@) { Maybe@<Solver@>; }
 DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
   Var@ var = op.var;
-  Maybe@<VarS@> mvs = LookupVar(s.vars, var.id);
+  Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
   mvs.?(nothing: Just(s));
   VarS@ vs = mvs.just;
 
@@ -310,7 +298,7 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
 
   Just(@(
       clause_id: s.clause_id,
-      vars: InsertVar(s.vars, var.id, nvs),
+      vars: Vars.Insert(s.vars, var.id, nvs),
       clauses: s.clauses,
       assigns: s.assigns,
       ops: nops));
@@ -356,7 +344,7 @@ Search = (Solver@ s) {
 
   # TODO: Come up with a more efficient way to pick any single existing
   # variable.
-  Maybe@<VarId@> mvar = ForEachVar(s.vars, Nothing<VarId@>,
+  Maybe@<VarId@> mvar = Vars.ForEach(s.vars, Nothing<VarId@>,
     (VarId@ v, VarS@ _, Maybe@<VarId@> mv) {
       Just(v);
     });

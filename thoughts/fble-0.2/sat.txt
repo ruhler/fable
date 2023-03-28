@@ -854,3 +854,16 @@ Right?
 
 Yes.
 
+---
+
+Are we at last ready to add the conflict clause stuff?
+* Add map from ClauseId to Conflict@ to solver state.
+* Add Conflicts@, ClauseId@ to Unsat return from solver.
+ - May want to distinguish between internal Result@ and external Result@.
+* Apply conflict clauses after failed assign attempts.
+
+Maybe start by factoring out code for IdMap definition?
+  /Solver/Id%
+    Id@, EqId, Map, where Map is parameterized by value type and returns a
+    struct with methods: Empty, Insert, InsertWith, Lookup, Delete, ForEach.
+
