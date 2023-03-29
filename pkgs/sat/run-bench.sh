@@ -9,5 +9,5 @@
 
 for f in `find $2 -type f -name '*.cnf'`; do
   echo $f
-  timeout 30s /usr/bin/time -f %E $1 < $f 
+  timeout 2m /usr/bin/time -f %E $1 < $f 
 done

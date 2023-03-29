@@ -2,6 +2,12 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Figure out gdb-based printf debugging?
+  - Would be nice for sat solver debugging.
+
+* Better language support for individual struct field updates?
+  - Would be much nicer for sat solver Solver@ modifications.
+
 * Sat Solver:
  - Implement conflict driven clause learning.
  - Parse dimacs cnf incrementally instead of all at once?

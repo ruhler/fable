@@ -49,12 +49,10 @@
 # neg - the list of clauses this variable appears negative in.
 @ VarS@ = *(List@<ClauseId@> pos, List@<ClauseId@> neg);
 
-@ ClauseS@ = Clause@;
-
 % Vars = /Sat/Id%.Map<VarS@>;
 @ Vars@ = Vars.Map@;
 
-% Clauses = /Sat/Id%.Map<ClauseS@>;
+% Clauses = /Sat/Id%.Map<Clause@>;
 @ Clauses@ = Clauses.Map@; 
 
 % Conflicts = /Sat/Id%.Map<Conflict@>;
@@ -143,6 +141,43 @@ Why@ Pure = Why@(attempt: Unit);
 Solver@ NewSolver = Solver@(
   Int|0, Vars.Empty, Clauses.Empty, Conflicts.Empty, Nil<Var@>, Empty<Op@>);
 
+# Adds a clause to the solver state for the given conflict.
+(ClauseId@, Conflict@, Solver@) { Solver@; }
+AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
+  Maybe@<Clause@> ma = Clauses.Lookup(s.clauses, conflict.a);
+  Clause@ a = Clause.RemoveVar(conflict.var, {
+    ma.?(nothing: Nil<Var@>);
+    ma.just;
+  });
+
+  Maybe@<Clause@> mb = Clauses.Lookup(s.clauses, conflict.b);
+  Clause@ b = Clause.RemoveVar(conflict.var, {
+    mb.?(nothing: Nil<Var@>);
+    mb.just;
+  });
+
+  Maybe@<Clause@> mc = Clause.AddVars(a, b);
+
+  # TODO: Is it possible the clause is trivially satisfiable? Presumably no?
+  Clause@ c = mc.just;
+
+  # TODO: Is it possible the clause is empty?
+  # TODO: Is it possible the clause is unit?
+  Fifo@<Op@> nops = {
+    c.cons.tail.?(nil: {
+      Put(Op@(Assign: @(var: c.cons.head, why: Inferred(id))), s.ops);
+    });
+    s.ops;
+  };
+
+  @(clause_id: s.clause_id, 
+    vars: s.vars,
+    clauses: Clauses.Insert(s.clauses, id, c),
+    conflicts: s.conflicts,
+    assigns: s.assigns,
+    ops: nops);
+};
+
 # @func[AddClause] Adds a clause to cnf state Solver@.
 #  This should be done in the initial phase before starting to solve the
 #  formula.
@@ -194,7 +229,7 @@ Solver@ NewSolver = Solver@(
     });
 
   Clauses.ForEach(s.clauses, pures,
-    (ClauseId@ id, ClauseS@ cs, Fifo@<Op@> ops) {
+    (ClauseId@ id, Clause@ cs, Fifo@<Op@> ops) {
       # Assertion: There should be no empty clauses, because AddClause doesn't
       # allow that.
       cs.cons.tail.?(nil: {
@@ -247,10 +282,10 @@ Solver@ NewSolver = Solver@(
 (Solver@, RemoveClauseOp@) { OpResult@; }
 DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
   ClauseId@ c = op.clause;
-  Maybe@<ClauseS@> mcs = Clauses.Lookup(s.clauses, c);
+  Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, c);
   mcs.?(nothing: OpResult@(solver: s));
 
-  ClauseS@ cs = mcs.just;
+  Clause@ cs = mcs.just;
   Fifo@<Op@> nops = /Core/List%.ForEach(cs, s.ops,
     (Var@ v, Fifo@<Op@> ops) {
       Put(Op@(RemoveClauseFromVar: @(clause: c, var: v)), ops);
@@ -272,7 +307,7 @@ DoRemoveClause = (Solver@ s, RemoveClauseOp@ op) {
 (Solver@, RemoveVarFromClauseOp@) { OpResult@; }
 DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
   ClauseId@ c = op.clause;
-  Maybe@<ClauseS@> mcs = Clauses.Lookup(s.clauses, c);
+  Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, c);
   mcs.?(nothing: OpResult@(solver: s));
 
   List@<Var@> nvars = Clause.RemoveVar(op.var, mcs.just);
@@ -390,14 +425,22 @@ Search = (Solver@ s) {
 
   SearchResult@ attempted = Search(attempt);
   attempted.?(unsat: {
-    Solver@ attempt = Solver@(
+    # Add conflict clauses for all conflicts encountered in our attempted
+    # search
+    Solver@ ns = Solver@(
       attempted.unsat.clause_id,
       s.vars,
       s.clauses,
       attempted.unsat.conflicts,
       s.assigns,
-      Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
-    Search(attempt);
+      s.ops);
+    Solver@ next_attempt = /Core/Iter%.For(
+      /Core/Int/Iter%.Range(s.clause_id, ns.clause_id), ns,
+      (Id@ i, Solver@ s) {
+        Maybe@<Conflict@> conflict = Conflicts.Lookup(ns.conflicts, i);
+        AddConflictClause(i, conflict.just, s);
+      });
+    Search(next_attempt);
   });
 
   attempted;

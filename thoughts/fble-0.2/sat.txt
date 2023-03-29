@@ -873,5 +873,190 @@ Some details to work out:
 * Initial 'unsat' case: I think SeedOps should return unsat right away instead
   of seeding an 'unsat' op. So that the only kind of unsat we can get from
   doing ops is a conflict.
-* 
+
+---
+
+We're real close now. I just need to convert the Conflict@ into new clauses,
+add those after our failed attempt, and search from where we added the
+conflicts.
+
+Is it possible the conflict clause we add turns out empty or unit? Empty would
+be bad, but unit should be doable by adding an Assign op?
+
+---
+
+Okay, draft of conflict driven clause learning is done. I'm not totally sure
+it's correct. Let's see if we can solve anything now that we couldn't before.
+
+---
+
+Looks like somethings wrong. A problem we could solve before we apparently can
+no longer solve:
+
+bench/sat-2002-beta/generated/gen-11/gen-11.2/okgen-c1050-v300-s1804534846-1804534846.cnf
+sat: [-17, +149, -146, -34, +158, +125, +47, +203, -152, -117, -88, +43, -175, +37, +199, -154, -222, +91, -137, -113, +153, +242, +145, -41, +64, +237, -196, +108, +53, -189, -20, -111, -65, +210, +57, -129, -74, +86, +215, +138, +44, +106, +235, -23, -9, +120, -195, -121, +105, +218, -18, -217, -85, +183, +144, -150, +206, +245, -166, -133, +93, +19, -171, -239, -226, +131, -10, -231, -172, +42, -25, +83, -240, +139, +56, -140, -241, -246, +39, -232, +219, +148, -78, -60, +251, +248, -70, +112, +238, -228, -80, +249, +244, -159, -31, -11, +193, -208, -225, -180, +82, +24, +192, -141, -67, +103, +209, +161, -22, +63, +223, +28, +102, -151, -13, +30, +1, -135, -197, +32, -48, +7, -243, +35, -122, +29, -233, -84, -116, -14, -52, -58, -134, -207, -119, -187, +96, -162, -101, -130, -68, +165, +94, +160, -247, +143, +72, -168, -115, +89, +54, +185, +181, +250, +66, +27, -21, +127, +155, +95, +252, -87, +204, -71, +163, +114, -188, -236, +169, -142, +73, +194, -76, -90, +2, -26, -253, +224, +8, -157, -99, +40, +167, -254, -201, -220, +200, -227, +118, +49, +221, -36, +33, -174, -213, +81, +229, -230, +75, +77, -110, -124, -255, -109, -256, +257, +59, +38, +177, -178, -92, +258, +259, +261, +262, -190, +263, -156, -104, -164, -12, +265, -126, -173, -198, -170, -5, +55, -205, +202, +212, +15, -3, -184, -50, +61, +51, -234, +62, -186, +266, -123, -107, +267, +268, +147, +269, -46, -6, -182, -214, +98, -179, +100, +270, -16, +216, -176, +271, +272, +273, +274, -260, +275, +276, +277, -97, +279, +280, +281, +191, -211, +282, +283, +284, -4, -69, +285, -79, +286, +287, +288, -278, +289, +290, +291, +292, -128, +293, +294, +45, +295, +296, +297, +298, +299, +300, +264, +136, -132]
+0:05.38
+
+Let's use this for debug.
+
+Maybe it's worth starting even simpler, and walking through the code on an
+example like:
+
+0: (a + b + c)
+1: (a + b + c')
+2: (a + b' + c)
+3: (a + b' + c')
+4: (a' + b + c)
+5: (a' + b + c')
+6: (a' + b' + c)
+7: (a' + b' + c')
+
+Here's what I expect to happen.
+
+1. Nothing to reduce, so attempt a = true.
+
+4: (b + c)
+5: (b + c')
+6: (b' + c)
+7: (b' + c')
+
+2. Nothing to reduce, so attempt b = true.
+6: (c)
+7: (c')
+
+3. Infer c = true from 6.
+Conflicts with 7. 
+Conflict 8: (6, 7, c)
+Attempt of b = true failed.
+
+4. Add conflict clause after (1).
+
+4: (b + c)
+5: (b + c')
+6: (b' + c)
+7: (b' + c')
+8: (b')
+
+5. Infer b = false from 8.
+
+4: (c)
+5: (c')
+
+6. Infer c = true from (4).
+Conflicts with 5.
+Conflict 9: (4, 5, c)
+Attempt of a = true failed.
+
+7. Add conflict clause at top level
+Interesting that we jump back to the top level here instead of after (4)?
+Maybe that's okay and expected? Because we already know (4) is unsat.
+
+0: (a + b + c)
+1: (a + b + c')
+2: (a + b' + c)
+3: (a + b' + c')
+4: (a' + b + c)
+5: (a' + b + c')
+6: (a' + b' + c)
+7: (a' + b' + c')
+8: (a' + b')
+9: (a' + b)
+
+8. attempt a = true
+Interesting that we try a = true again. Don't we know a is false by now?
+
+4: (b + c)
+5: (b + c')
+6: (b' + c)
+7: (b' + c')
+8: (b')
+9: (b)
+
+9. Infer b = false from 8
+Conflicts with 9.
+Conflict: 10: (8, 9, b).
+
+10. Apply the clause to the top level.
+
+0: (a + b + c)
+1: (a + b + c')
+2: (a + b' + c)
+3: (a + b' + c')
+4: (a' + b + c)
+5: (a' + b + c')
+6: (a' + b' + c)
+7: (a' + b' + c')
+8: (a' + b')
+9: (a' + b)
+10: (a')
+
+11. Infer a = false.
+At which point, in this case, everything we learned so far becomes irrelevant.
+
+0: (b + c)
+1: (b + c')
+2: (b' + c)
+3: (b' + c')
+
+12. attempt b = true
+
+2: (c)
+3: (c')
+
+Conflict 11: (2, 3, c)
+
+0: (b + c)
+1: (b + c')
+2: (b' + c)
+3: (b' + c')
+11: (b')
+
+Infer b' = false
+
+0: (c)
+1: (c')
+
+Conflict 12: (0, 1, c)
+
+0: (b + c)
+1: (b + c')
+2: (b' + c)
+3: (b' + c')
+11: (b')
+12: (b)
+
+Infer b' = false.
+Conflict 13: (11, 12, b)
+
+Done. Nothing else to try. Final set of clauses:
+
+0: (a + b + c)
+1: (a + b + c')
+2: (a + b' + c)
+3: (a + b' + c')
+4: (a' + b + c)
+5: (a' + b + c')
+6: (a' + b' + c)
+7: (a' + b' + c')
+8: (a' + b')
+9: (a' + b)
+10: (a')
+11: (a + b')
+12: (a + b)
+13: (a)
+
+And we have proven unsat by learning a must be both false and true.
+
+I think that is as designed, even though it feels slightly round about that
+we attempt a = true multiple times.
+
+I wish I had true printf debugging so we could run through and trace what
+happens. I wonder if there's a way to tell gdb to break at a specific point in
+code, and whenever it is reached, run a gdb print command and auto continue.
+Then we could write a Debug function like:
+
+(String@) { Unit@; } Debug = (String _) {
+  Unit@ u = Unit; # break here, print FbleStringValue(_), continue.
+  u;
+};
 
