@@ -6,9 +6,16 @@
  programming language.
 
  @section Overview
-  Fable is a hobby project to design my own programming language. My goal is to
-  design a general purpose programming language good enough to be my preferred
-  programming language.
+  Start with the simplicity of C. Redesign the foundations from the ground up
+  based on a strong type system and functional programming. Use automatic
+  memory management and make sure there is a clear way to reason about
+  performance. Include support for generics and modularity. Remove as many
+  hard edges, corner cases and redundancies in the language as possible.
+ 
+  The result is a simple, general purpose, strongly statically typed, strict,
+  pure functional programming language with automatic memory management,
+  support for polymorphism and modularity, user-defined primitive data types,
+  and a hint of C-like syntax.
 
  @section Source
   The source code for fble is available from github at

@@ -39,13 +39,13 @@
   Start with the simplicity of C. Redesign the foundations from the ground up
   based on a strong type system and functional programming. Use automatic
   memory management and make sure there is a clear way to reason about
-  performance.  Include support for generics and modularity. Remove as many
+  performance. Include support for generics and modularity. Remove as many
   hard edges, corner cases and redundancies in the language as possible.
  
   The result is a simple, general purpose, strongly statically typed, strict,
   pure functional programming language with automatic memory management,
-  support for polymorphism and modularity, a hint of C-like syntax and
-  complete lack of primitive data types.
+  support for polymorphism and modularity, user-defined primitive data types,
+  and a hint of C-like syntax.
  
  @section Why Learn fble
   Here are some reasons why you should learn fble:

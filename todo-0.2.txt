@@ -2,6 +2,20 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Feedback from users:
+ - Include README.txt in source repository.
+   Figure out how to generate a nicely txt or md formatted version of it first.
+ - Better explanation of "lack of primitives" and why that's a good thing.
+ - Explain how features are related to procedural programming
+   - Control Flow
+   - Loops
+   - Interfaces (?)
+ - Better explanation of what it means to say a type is a value.
+ - Better explanation of mapping from file name to module path early on.
+ - Clarify that '%' is needed for module paths in early tutorials.
+ - Better explanation of where to find existing and/or generated docs.
+ - It's not obvious that 'xfail' means expected failure.
+
 * Figure out gdb-based printf debugging?
   - Would be nice for sat solver debugging.
 
