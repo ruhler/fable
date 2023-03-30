@@ -1,0 +1,54 @@
+Fble Language Updates
+=====================
+
+Should we make it easier to modify fields of a struct value?
+
+For sat solver we do this a lot: modify one or two or three fields of the
+Solver@ state. Any time you add a new field to the Solver@ state, you have to
+touch a whole bunch of code. And the code becomes cluttered with a lot of
+stuff like:
+
+  @(clause_id: s.clause_id, 
+    vars: s.vars,
+    clauses: Clauses.Insert(s.clauses, id, c),
+    conflicts: s.conflicts,
+    assigns: s.assigns,
+    ops: nops);
+
+  Solver@(Inc(id), nvars, nclauses, s.conflicts, s.assigns, s.ops);
+
+There's an abstract syntax that would make this much nicer. Give a struct
+value and a list of field values to change, it returns a new struct value with
+the same values as the original struct value plus the changed values.
+
+An idea for a concrete syntax:
+ s.@(clauses: Clauses.Insert(s.clauses, id, c), ops: nops);
+ s.@(clause_id: Inc(id), vars: nvars, clauses: clauses);
+
+The two concerns are:
+1. Is it bad to have a simple syntax for an expensive operation?
+2. Do we actually gain much from having this syntax?
+ 
+Another, potentially related language concern was conditionally updating
+multiple variables.
+
+ x = ...
+ y = ...
+ z = ...
+ (x, y, z) = p.?(a: ..., b: ...);
+ 
+Anything those can share? Only if you use a struct I guess.
+ % vars = @(x: ..., y: ..., z: ...);
+ % vars = {
+   p.?(vars.@(x: ... ));
+
+I don't see a clear link. Let's focus on the "struct modify" syntax first,
+decide if it makes the cut for the language.
+
+Maybe try out my proposed s.@(...) syntax. See where we could apply it. Think
+more about whether there's a real cost to it or not. Maybe come up with a
+way to optimize the implementation specially over straight up new constructor
+value. Or if we already have precedent elsewhere for complex operations with
+simple syntax.
+
+
