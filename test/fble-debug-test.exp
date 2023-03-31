@@ -68,10 +68,12 @@ eval {
   require "at $::s/test/DebugTest.fble:$LINE"
   require "(gdb) "
 
+  # The values of the locals are packed values.
+  # 0x1 for Unit, 0x3 for tag 0 of a union.
   send "info locals\n"
-  require "True"
-  require "light"
-  require "u"
+  require "True = 0x3"
+  require "light = 0x3"
+  require "u = 0x1"
   require "(gdb)"
 
   # Test that it show the type of the variable as FbleValue*.

@@ -4,6 +4,8 @@
 % False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
+% Chars = /Core/Char%.Chars;
+
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
 
@@ -17,13 +19,27 @@
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
+
+(String@) { Unit@; } Trace = (String@ s) {
+  String@ prefix = Str|'P:';
+  String@ x = Append(prefix, s);
+  x.cons.head.?('A': Unit);
+  Unit;
+};
 
 @ Id@ = /Sat/Id%.Id@;
 % EqId = /Sat/Id%.EqId;
@@ -242,6 +258,13 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 
 @ OpResult@ = +(Solver@ solver, Conflict@ conflict);
 
+Show@<VarId@> ShowId = /Core/Int/Show%.Show;
+
+Show@<Var@> ShowVar = (Var@ v) {
+  String@ sign = v.pos.?(true: Str|'+', false: Str|'-');
+  Append(sign, ShowId(v.id));
+};
+
 # @func[DoAssign] Do an assign operation.
 #  Remove VarId from Variables map. If it's there:
 #  @i Add variable assignment.
@@ -249,6 +272,7 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 #  @i For each - clause, add a RemoveVarFromClause operation.
 (Solver@, AssignOp@) { OpResult@; } DoAssign = (Solver@ s, AssignOp@ op) {
   Var@ var = op.var;
+  Unit@ _ = Trace(Strs[Str|'Assign ', ShowVar(var), Str[Chars.nl]]);
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
   mvs.?(nothing: OpResult@(solver: s));
 

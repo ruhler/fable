@@ -1390,7 +1390,11 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "\"\n");
 
           // location.
-          static const char* var_tags[] = { "0x86", "0x85", "0x84"};
+          // var_tags are 0x70 + X for bregX. In this case:
+          //   statics: x23: 0x70 + 23 = 0x87
+          //   args:    x22: 0x70 + 22 = 0x86
+          //   locals:  x21: 0x70 + 21 = 0x85
+          static const char* var_tags[] = { "0x87", "0x86", "0x85"};
           fprintf(fout, "  .byte 1f - 0f\n");   // length of block.
           fprintf(fout, "0:\n");
           fprintf(fout, "  .byte %s\n", var_tags[var->var.tag]);

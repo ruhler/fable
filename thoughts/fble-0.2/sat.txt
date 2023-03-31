@@ -1060,3 +1060,107 @@ Then we could write a Debug function like:
   u;
 };
 
+According to the internet, I could do:
+
+set print elements 0
+break <...>
+commands
+print FbleStringValueAccess(_)
+end
+
+Specifically, trying:
+
+set print elements 0
+break /Sat/Solver%.Trace!
+commands
+silent
+print FbleStringValueAccess(_)
+end
+
+Looks like there's something wrong with debug info for function args?
+
+There's something very wrong here. The debugger is not showing the right
+values for these variables at all. A regression perhaps? I think I have the
+right gdb commands, just something wrong with generated dwarf for local
+variables?
+
+---
+
+(String@) { Unit@; } Trace = (String@ s) {
+  String@ prefix = Str|'P:';
+  String@ x = Append(prefix, s);
+  x.cons.head.?('A': Unit);
+  Unit;
+};
+
+Turning off optimization shows:
+  gdb 'Str' is actual 's'
+  gdb 's' is actual 'x'
+  gdb rest are bogus.
+
+Let's see what disassembly shows for this.
+
+1 arg (s)
+3 statics (Str, Append, Unit
+4 locals prefix, x,
+
+Question: why does it say there are 4 local variables? There should either be
+2 (if args not included), or 1.
+
+Anyway, the rest looks okay:
+
+Str is s0
+Append is s1
+Unit is s2
+s is a0
+prefix is l1
+x is l0
+
+That all looks right.
+
+Why is block->num_locals wrong here?
+
+In theory it's number of local variable slots used/required. It does not
+include statics or args. So that should very definitely be 2 in this case, not
+4.
+
+Comes from scope->locals.size. Okay. That makes sense. Because some local
+variables are anonymous.
+
+In this case:
+l2 is x.cons
+l3 is x.cons.head
+
+Perfect. bytecode looks good. This must be a problem with dwarf generation
+then.
+
+Expect: String name, block1 location
+
+var_tags are 0x86, 0x85, 0x84 based on var.tag.
+
+That should be:
+  ??   TAG    reg  dreg  dop     code
+  0x86 STATIC x23  23    breg23   0x87
+  0x85 ARG    x22  22    breg22   0x86
+  0x84 LOCAL  x21  21    breg21   0x85
+
+Looks like I was off by one.
+
+0x70 means reg x0. So 0x87 means reg 23.
+
+Does this explain what we saw? ARG was pointing to LOCAL, STATIC was pointing
+to ARG
+
+So, 'Str' is pointing to 's'. Yup.
+And 's' is pointing to 'x'. Yup.
+
+And the locals are bogus as expected. Perfect.
+
+How can we add a test for this case? We need to check values for them somehow.
+
+Expect:
+  unit is: struct of 0: packed as 0x1
+  True is: union tag 0 of 2: packed as 0x3
+  light = red is union tag 0 of 3: packed as 0x3
+
+
