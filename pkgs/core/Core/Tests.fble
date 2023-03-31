@@ -8,6 +8,7 @@
 
 # Import to test compilation.
 % _ = /Core/Char/Show%;
+% _ = /Core/Debug%;
 % _ = /Core/Monad/IO%;
 
 Test@ Tests = TestSuite(Str|Core, List[

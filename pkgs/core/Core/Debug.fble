@@ -1,0 +1,21 @@
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+# Trace function for printf-like debugging.
+# To automatically print strings passed to Trace from gdb, when compiling with
+# debug info, use the following gdb commands:
+#
+#  break /Core/Debug%.Trace!
+#  commands
+#  silent
+#  printf "%s", FbleStringValueAccess(_)
+#  continue
+#  end
+(String@) { Unit@; } Trace = (String@ _) {
+  Unit;
+};
+
+@(Trace);

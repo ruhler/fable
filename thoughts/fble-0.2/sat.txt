@@ -1075,6 +1075,7 @@ break /Sat/Solver%.Trace!
 commands
 silent
 print FbleStringValueAccess(_)
+continue
 end
 
 Looks like there's something wrong with debug info for function args?
@@ -1163,4 +1164,31 @@ Expect:
   True is: union tag 0 of 2: packed as 0x3
   light = red is union tag 0 of 3: packed as 0x3
 
+---
 
+Okay! Now that the debug info bug is fixed, using the following kind of thing
+works:
+
+set print elements 0
+break /Sat/Solver%.Trace!
+commands
+silent
+print FbleStringValueAccess(_)
+continue
+end
+
+Except, it looks pretty slow, and it prints stuff around the strings, like:
+
+@[Sat.EmptyClause]: $5 = 0x547988 "Assign +1\n"
+$6 = 0x547248 "Assign +2\n"
+$7 = 0x55f348 "Assign +1\n"
+$8 = 0x55f4f8 "Assign +0\n"
+$9 = 0x55f238 "Assign -0\n"
+$10 = 0x546a88 "Assign +2\n"
+
+We can use this instead:
+  printf "%s", FbleStringValueAccess(s)
+
+That looks nice.
+
+Shall we codify this and document it?

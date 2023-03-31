@@ -6,6 +6,8 @@
 
 % Chars = /Core/Char%.Chars;
 
+% Trace = /Core/Debug%.Trace;
+
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
 
@@ -33,13 +35,6 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
-
-(String@) { Unit@; } Trace = (String@ s) {
-  String@ prefix = Str|'P:';
-  String@ x = Append(prefix, s);
-  x.cons.head.?('A': Unit);
-  Unit;
-};
 
 @ Id@ = /Sat/Id%.Id@;
 % EqId = /Sat/Id%.EqId;

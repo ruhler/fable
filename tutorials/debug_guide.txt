@@ -22,12 +22,17 @@ tricks for making the most of the currently available debug support.
   break fprintf
 
 * For printf like debugging.
-  Define an unused String@ variable in your fble source code. Run your code in
-  the debugger, break at the line after the String@ variable is defined, and use 
-  print FbleStringValueAccess(string_var) to display the value of the string.
+  Use the /Debug%.Trace function for the strings to print.
 
-  To prevent the string value from being truncated by gdb, first issue:
-      set print elements 0
+  In gdb, run the following sequence of commands:
+    break /Core/Debug%.Trace!
+    commands
+    silent
+    printf "%s", FbleStringValueAccess(_)
+    continue
+    end
+
+  Now you should see Trace values printed as the program executes.
 
 * To avoid stepping into runtime implementation code:
   In theory:
