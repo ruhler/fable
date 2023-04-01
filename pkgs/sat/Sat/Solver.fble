@@ -150,6 +150,22 @@ Why@ Pure = Why@(pure: Unit);
 Solver@ NewSolver = Solver@(
   Int|0, Vars.Empty, Clauses.Empty, Conflicts.Empty, Nil<Var@>, Empty<Op@>);
 
+# Updates Vars@ state resulting from a new clause.
+(ClauseId@, Clause@, Vars@) { Vars@; }
+AddClauseToVars = (ClauseId@ id, Clause@ clause, Vars@ vars) {
+  /Core/List%.ForEach(clause, vars,
+    (Var@ v, Vars@ vs) {
+      Vars.InsertWith(vs, v.id, (Maybe@<VarS@> mx) {
+          VarS@ x = mx.?(
+            just: mx.just,
+            nothing: VarS@(Nil<ClauseId@>, Nil<ClauseId@>));
+          v.pos.?(
+            true: VarS@(Cons(id, x.pos), x.neg),
+            false: VarS@(x.pos, Cons(id, x.neg)));
+        });
+    });
+};
+
 # Adds a clause to the solver state for the given conflict.
 (ClauseId@, Conflict@, Solver@) { Solver@; }
 AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
@@ -180,7 +196,7 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
   };
 
   @(clause_id: s.clause_id, 
-    vars: s.vars,
+    vars: AddClauseToVars(id, c, s.vars),
     clauses: Clauses.Insert(s.clauses, id, c),
     conflicts: s.conflicts,
     assigns: s.assigns,
@@ -208,17 +224,7 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
   Clause@ clause = mc.just;
 
   ClauseId@ id = s.clause_id;
-  Vars@ nvars = /Core/List%.ForEach(clause, s.vars,
-    (Var@ v, Vars@ vs) {
-      Vars.InsertWith(vs, v.id, (Maybe@<VarS@> mx) {
-          VarS@ x = mx.?(
-            just: mx.just,
-            nothing: VarS@(Nil<ClauseId@>, Nil<ClauseId@>));
-          v.pos.?(
-            true: VarS@(Cons(id, x.pos), x.neg),
-            false: VarS@(x.pos, Cons(id, x.neg)));
-        });
-    });
+  Vars@ nvars = AddClauseToVars(id, clause, s.vars);
   Clauses@ nclauses = Clauses.Insert(s.clauses, id, clause);
   Solver@(Inc(id), nvars, nclauses, s.conflicts, s.assigns, s.ops);
 };

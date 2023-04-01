@@ -38,6 +38,7 @@
 
 VarId@ X = /Core/Int%.1;
 VarId@ Y = /Core/Int%.2;
+VarId@ Z = /Core/Int%.3;
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.pos, b.pos));
@@ -122,6 +123,24 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
     Formula@ f = List[
       List[Var@(X, False), Var@(X, False)],
       List[Var@(X, True), Var@(X, True)]
+    ];
+    Result@ want = Result@(unsat: Unit);
+    Result@ got = Solve(f);
+    AssertEq(want, got);
+  }),
+
+  Test(Str|Unsat3, (Unit@ _) {
+    # Regression test for a bug where we weren't properly applying learned
+    # clauses, which led to an infinite loop.
+    Formula@ f = List[
+      List[Var@(X, True), Var@(Y, True), Var@(Z, True)],
+      List[Var@(X, True), Var@(Y, True), Var@(Z, False)],
+      List[Var@(X, True), Var@(Y, False), Var@(Z, True)],
+      List[Var@(X, True), Var@(Y, False), Var@(Z, False)],
+      List[Var@(X, False), Var@(Y, True), Var@(Z, True)],
+      List[Var@(X, False), Var@(Y, True), Var@(Z, False)],
+      List[Var@(X, False), Var@(Y, False), Var@(Z, True)],
+      List[Var@(X, False), Var@(Y, False), Var@(Z, False)]
     ];
     Result@ want = Result@(unsat: Unit);
     Result@ got = Solve(f);
