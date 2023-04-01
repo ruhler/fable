@@ -1281,3 +1281,53 @@ Simple, right? Let's see.
 No. Too many different assumptions about whether the clause can be empty or
 trivially satisfied.
 
+---
+
+Next attempt, now that things should be fixed:
+
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3]; }
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3]; }
+Assign +3 (attempt)
+{ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1]; }
+Assign +2 (attempt)
+Assign -1 (inferred from 7)
+Assign +1 (inferred from 3)
+Conflict 3, 7 on 1
+{ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1]; 8 => [-2]; }
+Assign -2 (inferred from 8)
+Assign -1 (inferred from 5)
+Assign +1 (inferred from 1)
+Conflict 1, 5 on 1
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3];
+  8 => [-3, -2]; 9 => [-3, +2]; }
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3];
+  8 => [-3, -2]; 9 => [-3, +2]; }
+Assign +3 (attempt)
+Assign +2 (inferred from 9)
+Assign -2 (inferred from 8)
+Conflict 8, 9 on 2
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3];
+  8 => [-3, -2]; 9 => [-3, +2]; 10 => [-3]; }
+Assign -3 (inferred from 10)
+{ 0 => [+2, +1]; 2 => [-2, +1]; 4 => [+2, -1]; 6 => [-2, -1]; }
+Assign +2 (attempt)
+Assign +1 (inferred from 2)
+Assign -1 (inferred from 6)
+Conflict 6, 2 on 1
+{ 0 => [+2, +1]; 2 => [-2, +1]; 4 => [+2, -1]; 6 => [-2, -1]; 11 => [-2]; }
+Assign -2 (inferred from 11)
+Assign +1 (inferred from 0)
+Assign -1 (inferred from 4)
+Conflict 4, 0 on 1
+unsat
+
+Awesome. Looks good.
+
+Now we can re-run the benchmark and see what we can solve now?
+
+Let me just disable the tracing for the moment.
