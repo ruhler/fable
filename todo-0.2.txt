@@ -2,6 +2,9 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Fix memory leak issue with gdb printf debugging?
+  Need to call FbleFree after printing the result.
+
 * Feedback from users:
  - Include README.txt in source repository.
    Figure out how to generate a nicely txt or md formatted version of it first.
@@ -15,9 +18,6 @@ Things to consider doing for the fble-0.2 release.
  - Clarify that '%' is needed for module paths in early tutorials.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
-
-* Figure out gdb-based printf debugging?
-  - Would be nice for sat solver debugging.
 
 * Better language support for individual struct field updates?
   - Would be much nicer for sat solver Solver@ modifications.

@@ -1,6 +1,8 @@
 
 @ Int@ = /Core/Int%.Int@;
 
+<@>@ Show@ = /Core/Show%.Show@;
+
 @ Id@ = Int@;
 % EqId = /Core/Int/Eq%.Eq;
 % LtId = /Core/Int/Eq%.Lt;
@@ -13,7 +15,12 @@
   % Lookup = /Core/Map%.Lookup<Id@>(LtId)<T@>;
   % Delete = /Core/Map%.Delete<Id@>(LtId)<T@>;
   <@>% ForEach = /Core/Map%.ForEach<Id@, T@>;
-  @(Map@, Empty, Insert, InsertWith, Lookup, Delete, ForEach);
+
+  % Show = (Show@<T@> show) {
+    /Core/Map/Show%.Show<Id@, T@>(/Core/Int/Show%.Show, show);
+  };
+
+  @(Map@, Empty, Insert, InsertWith, Lookup, Delete, ForEach, Show);
 };
 
 @(Id@, EqId, Map);

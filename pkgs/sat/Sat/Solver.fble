@@ -4,9 +4,7 @@
 % False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
-% Chars = /Core/Char%.Chars;
-
-% Trace = /Core/Debug%.Trace;
+% TraceLn = /Core/Debug%.TraceLn;
 
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
@@ -119,7 +117,7 @@
 );
 
 Why@ Attempt = Why@(attempt: Unit);
-Why@ Pure = Why@(attempt: Unit);
+Why@ Pure = Why@(pure: Unit);
 (ClauseId@) { Why@; } Inferred = (ClauseId@ id) { Why@(inferred: id); };
 
 @ AssignOp@ = *(Var@ var, Why@ why);
@@ -253,11 +251,33 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 
 @ OpResult@ = +(Solver@ solver, Conflict@ conflict);
 
-Show@<VarId@> ShowId = /Core/Int/Show%.Show;
+% Show = {
+  Show@<Id@> Id = /Core/Int/Show%.Show;
 
-Show@<Var@> ShowVar = (Var@ v) {
-  String@ sign = v.pos.?(true: Str|'+', false: Str|'-');
-  Append(sign, ShowId(v.id));
+  Show@<Var@> Var = (Var@ v) {
+    String@ sign = v.pos.?(true: Str|'+', false: Str|'-');
+    Append(sign, Id(v.id));
+  };
+
+  Show@<Clause@> Clause = /Core/List/Show%.Show(Var);
+
+  Show@<Why@> Why = (Why@ w) {
+    w.?(
+      attempt: Str|'attempt',
+      pure: Str|'pure',
+      inferred: Strs[Str|'inferred from ', Id(w.inferred)]);
+  };
+
+  Show@<AssignOp@> Assign = (AssignOp@ op) {
+    Strs[Str|'Assign ', Var(op.var), Str|' (', Why(op.why), Str|')'];
+  };
+
+  Show@<Conflict@> Conflict = (Conflict@ c) {
+    Strs[Str|'Conflict ', Id(c.a), Str|', ', Id(c.b), Str|' on ', Id(c.var)];
+  };
+
+  @(Id, Var, Clause, Why, Assign, Conflict,
+    Clauses: Clauses.Show(Clause));
 };
 
 # @func[DoAssign] Do an assign operation.
@@ -267,7 +287,7 @@ Show@<Var@> ShowVar = (Var@ v) {
 #  @i For each - clause, add a RemoveVarFromClause operation.
 (Solver@, AssignOp@) { OpResult@; } DoAssign = (Solver@ s, AssignOp@ op) {
   Var@ var = op.var;
-  Unit@ _ = Trace(Strs[Str|'Assign ', ShowVar(var), Str[Chars.nl]]);
+  Unit@ _ = TraceLn(Show.Assign(op));
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
   mvs.?(nothing: OpResult@(solver: s));
 
@@ -336,7 +356,9 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
     # not attempted assignments nor pure literals.
     ClauseId@ w = op.why.inferred;
 
-    OpResult@(conflict: @(a: c, b: w, var: op.var));
+    Conflict@ conflict = @(a: c, b: w, var: op.var);
+    Unit@ _ = TraceLn(Show.Conflict(conflict));
+    OpResult@(conflict: conflict);
   });
 
   Fifo@<Op@> nops = {
@@ -421,6 +443,8 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
 
 (Solver@) { SearchResult@; }
 Search = (Solver@ s) {
+  Unit@ _ = TraceLn(Show.Clauses(s.clauses));
+
   OpResult@ ms = DoOps(s);
   ms.?(conflict: {
     SearchResult@(unsat: @(
@@ -479,5 +503,4 @@ Search = (Solver@ s) {
 
 @(VarId@, Var@, Clause@,
   Solver@, Assignment@, Result@,
-  EqId, NewSolver, AddClause,
-  Solve);
+  EqId, NewSolver, AddClause, Solve);

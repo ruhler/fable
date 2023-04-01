@@ -1192,3 +1192,40 @@ We can use this instead:
 That looks nice.
 
 Shall we codify this and document it?
+
+---
+
+Next question: what do we want to print to help debug what the solver is
+doing? Something like what I wrote above:
+
+* List of clauses numbered by id, in solver passed to Search.
+* Every assign op executed.
+* When we learn a new conflict.
+
+That will be good I think.
+
+Now: how do we cleanly separate the 'Show' code from the solver code?
+
+Maybe split up the code more:
+ * /Sat/Types% (VarId@, Var@, Clause@, Solver@, Assignment@, Result@)
+   Or split into /Sat/Var%, /Sat/Clause%, /Sat/Solver%?
+ * /Sat/Simplify% (DoOps renamed to Simplify)
+ * /Sat/Solver% (NewSolver, AddClause, Solve)
+   Or /Sat/Search% and /Sat/Sat% (For high level API?)?
+ * /Sat/Show% (all the show functions)
+
+Or, maybe define a Show struct in Solver% and export that?
+
+---
+
+Looking at logs...
+
+* Looks like pure literals aren't being propagated correctly?
+  Or I'm labelling it incorrectly? Yeah. Incorrect labelling.
+
+Otherwise, basic tests look good. 
+
+You know, it's really tedious to enter the printf debug commands in gdb... Is
+there no better way I can implement Debug.Trace?
+
+Let's try my 3 var unsat example from above, see if logs give any insight.
