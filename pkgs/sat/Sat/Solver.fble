@@ -150,10 +150,29 @@ Why@ Pure = Why@(pure: Unit);
 Solver@ NewSolver = Solver@(
   Int|0, Vars.Empty, Clauses.Empty, Conflicts.Empty, Nil<Var@>, Empty<Op@>);
 
-# Updates Vars@ state resulting from a new clause.
-(ClauseId@, Clause@, Vars@) { Vars@; }
-AddClauseToVars = (ClauseId@ id, Clause@ clause, Vars@ vars) {
-  /Core/List%.ForEach(clause, vars,
+# Add a new clause with the given clause id.
+(Solver@, ClauseId@, List@<Var@>) { Solver@; }
+AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
+  Maybe@<Clause@> mc = Clause.AddVars(vars, Nil<Var@>);
+
+  # Ignore trivial clauses.
+  mc.?(nothing: s);
+  Clause@ clause = mc.just;
+
+  Fifo@<Op@> nops = {
+    # Check for empty clause.
+    clause.?(nil: Put(Op@(Unsat: Unit), s.ops));
+
+    # Check for unit clause.
+    clause.cons.tail.?(nil: {
+      Put(Op@(Assign: @(var: clause.cons.head, why: Inferred(id))), s.ops);
+    });
+
+    s.ops;
+  };
+
+  # Update Vars@ data structure.
+  Vars@ nvars = /Core/List%.ForEach(clause, s.vars,
     (Var@ v, Vars@ vs) {
       Vars.InsertWith(vs, v.id, (Maybe@<VarS@> mx) {
           VarS@ x = mx.?(
@@ -164,6 +183,9 @@ AddClauseToVars = (ClauseId@ id, Clause@ clause, Vars@ vars) {
             false: VarS@(x.pos, Cons(id, x.neg)));
         });
     });
+
+  Clauses@ nclauses = Clauses.Insert(s.clauses, id, clause);
+  Solver@(s.clause_id, nvars, nclauses, s.conflicts, s.assigns, nops);
 };
 
 # Adds a clause to the solver state for the given conflict.
@@ -181,29 +203,7 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
     mb.just;
   });
 
-  Maybe@<Clause@> mc = Clause.AddVars(a, b);
-
-  # TODO: Is it possible the clause is trivially satisfiable? Presumably no?
-  Clause@ c = mc.just;
-
-  Fifo@<Op@> nops = {
-    # Empty clause. Clearly unsat.
-    c.?(nil: Put(Op@(Unsat: Unit), s.ops));
-
-    # Unit clause. Infer the variable directly.
-    c.cons.tail.?(nil: {
-      Put(Op@(Assign: @(var: c.cons.head, why: Inferred(id))), s.ops);
-    });
-
-    s.ops;
-  };
-
-  @(clause_id: s.clause_id, 
-    vars: AddClauseToVars(id, c, s.vars),
-    clauses: Clauses.Insert(s.clauses, id, c),
-    conflicts: s.conflicts,
-    assigns: s.assigns,
-    ops: nops);
+  AddClauseAt(s, id, Append(a, b));
 };
 
 # @func[AddClause] Adds a clause to cnf state Solver@.
@@ -215,28 +215,10 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 #  @returns
 #   An updated cnf state with clause added.
 (Solver@, List@<Var@>) { Solver@; } AddClause = (Solver@ s, List@<Var@> vars) {
-  vars.?(nil: {
-    # An empty clause is means the formula is obviously unsat.
-    Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, 
-      Put(Op@(Unsat: Unit), s.ops));
-  });
-
-  Maybe@<Clause@> mc = Clause.AddVars(vars, Nil<Var@>);
-  mc.?(nothing: s);
-  Clause@ clause = mc.just;
-
   ClauseId@ id = s.clause_id;
-  Fifo@<Op@> nops = {
-    # Unit clause.
-    clause.cons.tail.?(nil: {
-      Put(Op@(Assign: @(var: clause.cons.head, why: Inferred(id))), s.ops);
-    });
-    s.ops;
-  };
-
-  Vars@ nvars = AddClauseToVars(id, clause, s.vars);
-  Clauses@ nclauses = Clauses.Insert(s.clauses, id, clause);
-  Solver@(Inc(id), nvars, nclauses, s.conflicts, s.assigns, nops);
+  AddClauseAt(
+    Solver@(Inc(id), s.vars, s.clauses, s.conflicts, s.assigns, s.ops),
+    id, vars);
 };
 
 @ OpResult@ = +(
