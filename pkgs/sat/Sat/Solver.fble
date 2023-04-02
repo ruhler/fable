@@ -1,6 +1,7 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
 % TraceLn = /Core/Debug%.Enable(/Core/Bool%.False).TraceLn;
@@ -418,6 +419,9 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
   *(ClauseId@ clause_id, Conflicts@ conflicts) unsat
 );
 
+@ Algo@ = +(Unit@ dpll, Unit@ cdcl);
+Algo@ Algo = Algo@(cdcl: Unit);
+
 (Solver@) { SearchResult@; }
 Search = (Solver@ s) {
   Unit@ _ = TraceLn((Unit@ _) { Show.Clauses(s.clauses); });
@@ -451,20 +455,23 @@ Search = (Solver@ s) {
 
   SearchResult@ attempted = Search(attempt);
   attempted.?(unsat: {
-    # Add conflict clauses for all conflicts encountered in our attempted
-    # search
-    Solver@ ns = Solver@(
-      attempted.unsat.clause_id,
-      s.vars,
-      s.clauses,
-      attempted.unsat.conflicts,
-      s.assigns,
-      s.ops);
-    Solver@ next_attempt = /Core/Iter%.For(
-      /Core/Int/Iter%.Range(s.clause_id, ns.clause_id), ns,
-      (Id@ i, Solver@ s) {
-        Maybe@<Conflict@> conflict = Conflicts.Lookup(ns.conflicts, i);
-        AddConflictClause(i, conflict.just, s);
+    Solver@ next_attempt = Algo.?(
+      dpll: {
+        Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
+          Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
+      },
+      cdcl: {
+        # Add conflict clauses for all conflicts encountered in our attempted
+        # search
+        Solver@ ns = Solver@(
+          attempted.unsat.clause_id, s.vars, s.clauses,
+          attempted.unsat.conflicts, s.assigns, s.ops);
+        /Core/Iter%.For(
+          /Core/Int/Iter%.Range(s.clause_id, ns.clause_id), ns,
+          (Id@ i, Solver@ s) {
+            Maybe@<Conflict@> conflict = Conflicts.Lookup(ns.conflicts, i);
+            AddConflictClause(i, conflict.just, s);
+          });
       });
     Search(next_attempt);
   });

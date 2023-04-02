@@ -1526,3 +1526,35 @@ Here's what I did:
   correctly, great. If we attempt incorrectly... I suppose that means we
   solve a harder problem that we have to. Oh well.
 
+---
+
+Good. What's next? Let's see if we can handle all the easy problems. And then
+see if we can handle any medium problems. And then think about what
+optimizations to work on next?
+
+I suppose the first thing to do next is double check conflict driven clause
+learning is an improvement over simple dpll. How? Count how many more problems
+we can solve, and how many fewer problems we can solve, and see what that is.
+
+It would be nice to be able to easily switch back to dpll, or to clearly solve
+way more problems now than we did before.
+
+Problems dpll solves but not cdcl:
+* bench/easy/rope_0002.shuffled.cnf (unsat 7.82)
+* bench/easy/7cnf20_90000_90000_7.shuffled.cnf (sat 25.68)
+* bench/easy/6cnf20_28000_28000_3.shuffled.cnf (sat 24.17)
+
+Just those three. Not bad. Two of them a 'sat' after a while, so I don't
+really mind. We could have just gotten lucky before with dpll.
+
+The unsat one is interesting. That's worth looking at I think.
+
+Maybe, let's see if I can reproduce the fast solve with dpll. I think we can
+revert to dpll by ignoring learned conflict clauses and going to 'false' once
+'true' for a variable fails.
+
+Yes. I can repro the fast solve with dpll. Also, it's pretty easy to switch
+between dpll and conflict. The differences are:
+1. Do we learn conflict clauses or not.
+2. Do we go straight to trying var = false or not.
+
