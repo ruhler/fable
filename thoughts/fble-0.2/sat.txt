@@ -1426,4 +1426,70 @@ Says: attempt -1, get
 
 learn -2, conflicts with [2]?
 
+---
+
+Here's a minimized case of adding an empty conflict clause:
+
+@[Sat.EmptyConflict]:
+{ 0 => [-1, +2]; 1 => [+1, -2]; 2 => [-1, -2]; 3 => [+1, +2]; 4 => [+5, +3];
+  5 => [+3, -5, +4]; 6 => [-4, -3]; }
+{ 0 => [-1, +2]; 1 => [+1, -2]; 2 => [-1, -2]; 3 => [+1, +2]; 4 => [+5, +3];
+  5 => [+3, -5, +4]; 6 => [-4, -3]; }
+Assign +5 (attempt)
+{ 0 => [-1, +2]; 1 => [+1, -2]; 2 => [-1, -2]; 3 => [+1, +2];
+  5 => [+4, +3]; 6 => [-4, -3]; }
+Assign +4 (attempt)
+Assign -3 (inferred from 6)
+Assign -3 (pure) <<< WRONG? This should be inferred from 6, not pure?
+{ 0 => [-1, +2]; 1 => [+1, -2]; 2 => [-1, -2]; 3 => [+1, +2]; }
+Assign +2 (attempt)
+Assign -1 (inferred from 2)
+Assign +1 (inferred from 1) <<< WRONG? We shouldn't assign both ways?
+Conflict 7: 1, 2 on 1
+{ 0 => [-1, +2]; 1 => [+1, -2]; 2 => [-1, -2]; 3 => [+1, +2];
+  7 => [-2]; }
+Assign -2 (inferred from 7)
+Assign +1 (inferred from 3)
+Assign -1 (inferred from 0)
+Conflict 8: 0, 3 on 1
+{ 0 => [-1, +2]; 1 => [+1, -2]; 2 => [-1, -2]; 3 => [+1, +2];
+  5 => [+4, +3]; 6 => [-4, -3]; 7 => [-2]; 8 => [+2]; }
+Assign -2 (inferred from 7)
+Assign +2 (inferred from 8)
+Conflict 9: 8, 7 on 2
+
+
+Hmm... The conflicts are:
+ 7: 1, 2 on 1 ==> [-2]
+ 8: 0, 3 on 1 ==> [+2]
+
+It's pretty clear what's happening, right?
+
+We learn from two conflicts: [-2], [+2].
+When we add those clauses, each triggers an inferred value.
+
+What do we expect to happen in this case? What we want to happen is to infer
+-2, say, do the assignment, which removes +2 from the clause, and we see
+things are unsat. Why unsat? Because [-2] and [+2] conflict.
+
+I guess the point is, if you have conflicting unit clauses, the formula is
+unsat. But if you happen to be in the right branch of searching, that unsat
+gets turned into a conflict rather than giving up.
+
+It's almost like, once again, we want to add an 'Unsat' op somehow?
+
+Maybe unsat should be we learn the empty clause? Keep learning what you can
+until then?
+
+Remember how things work today:
+1. Try to reduce. If conflict, done.
+2. Attempt a variable. If unsat, learn and try again.
+
+What do I want? I think it's fair to try and learn that [-2], [+2] tells us
+[]. And to have [] as a clause to learn. But if we learn that clause, give up
+right away, right? Just like, if we encounter that in the first place, give up
+right away?
+
+Needs thought.
+
 

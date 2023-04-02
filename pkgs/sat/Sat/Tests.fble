@@ -147,6 +147,27 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
     AssertEq(want, got);
   }),
 
+  Test(Str|EmptyConflict, (Unit@ _) {
+    # Regression test for a bug where we saw an empty conflict clause.
+    VarId@ a = Int|1;
+    VarId@ b = Int|2;
+    VarId@ c = Int|3;
+    VarId@ d = Int|4;
+    VarId@ e = Int|5;
+    Formula@ f = List[
+      List[Var@(a, False), Var@(b, True)],
+      List[Var@(a, True), Var@(b, False)],
+      List[Var@(a, False), Var@(b, False)],
+      List[Var@(a, True), Var@(b, True)],
+      List[Var@(e, True), Var@(c, True)],
+      List[Var@(c, True), Var@(e, False), Var@(d, True)],
+      List[Var@(d, False), Var@(c, False)]
+    ];
+    Result@ want = Result@(unsat: Unit);
+    Result@ got = Solve(f);
+    AssertEq(want, got);
+  }),
+
   Test(Str|Dimacs, (Unit@ _) {
     String@ dimacs = Str|'c
 c start with comments

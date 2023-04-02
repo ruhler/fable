@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
-% TraceLn = /Core/Debug%.TraceLn;
+% TraceLn = /Core/Debug%.Enable(True).TraceLn;
 
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
@@ -293,7 +293,7 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 #  @i For each - clause, add a RemoveVarFromClause operation.
 (Solver@, AssignOp@) { OpResult@; } DoAssign = (Solver@ s, AssignOp@ op) {
   Var@ var = op.var;
-  Unit@ _ = TraceLn(Show.Assign(op));
+  Unit@ _ = TraceLn((Unit@ _) { Show.Assign(op); });
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
   mvs.?(nothing: OpResult@(solver: s));
 
@@ -363,7 +363,7 @@ DoRemoveVarFromClause = (Solver@ s, RemoveVarFromClauseOp@ op) {
     ClauseId@ w = op.why.inferred;
 
     Conflict@ conflict = @(a: c, b: w, var: op.var);
-    Unit@ _ = TraceLn(Show.Conflict(conflict));
+    Unit@ _ = TraceLn((Unit@ _) { Show.Conflict(conflict); });
     OpResult@(conflict: conflict);
   });
 
@@ -449,7 +449,7 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
 
 (Solver@) { SearchResult@; }
 Search = (Solver@ s) {
-  Unit@ _ = TraceLn(Show.Clauses(s.clauses));
+  Unit@ _ = TraceLn((Unit@ _) { Show.Clauses(s.clauses); });
 
   OpResult@ ms = DoOps(s);
   ms.?(conflict: {
