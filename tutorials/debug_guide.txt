@@ -34,6 +34,10 @@ tricks for making the most of the currently available debug support.
 
   Now you should see Trace values printed as the program executes.
 
+  Or, to automatically run those same commands:
+
+    gdb -x pkgs/core/trace.gdb ...
+
 * To avoid stepping into runtime implementation code:
   In theory:
     skip -gfi *.c
