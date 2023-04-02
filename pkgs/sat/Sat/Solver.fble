@@ -1,10 +1,9 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
-% TraceLn = /Core/Debug%.Enable(True).TraceLn;
+% TraceLn = /Core/Debug%.Enable(/Core/Bool%.False).TraceLn;
 
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
@@ -135,7 +134,8 @@ Why@ Pure = Why@(pure: Unit);
   AssignOp@ Assign,
   RemoveClauseOp@ RemoveClause,
   RemoveVarFromClauseOp@ RemoveVarFromClause,
-  RemoveClauseFromVarOp@ RemoveClauseFromVar
+  RemoveClauseFromVarOp@ RemoveClauseFromVar,
+  Unit@ Unsat
 );
 
 @ Solver@ = *(
@@ -186,12 +186,15 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
   # TODO: Is it possible the clause is trivially satisfiable? Presumably no?
   Clause@ c = mc.just;
 
-  # TODO: Is it possible the clause is empty?
-  # TODO: Is it possible the clause is unit?
   Fifo@<Op@> nops = {
+    # Empty clause. Clearly unsat.
+    c.?(nil: Put(Op@(Unsat: Unit), s.ops));
+
+    # Unit clause. Infer the variable directly.
     c.cons.tail.?(nil: {
       Put(Op@(Assign: @(var: c.cons.head, why: Inferred(id))), s.ops);
     });
+
     s.ops;
   };
 
@@ -213,10 +216,9 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 #   An updated cnf state with clause added.
 (Solver@, List@<Var@>) { Solver@; } AddClause = (Solver@ s, List@<Var@> vars) {
   vars.?(nil: {
-    # An empty clause immediately makes the formula unsatisfiable. Model that
-    # as two contradictory clauses to avoid the need to handle this case
-    # specially elsewhere.
-    AddClause(AddClause(s, List[Var@(Int|0, True)]), List[Var@(Int|0, False)]);
+    # An empty clause is means the formula is obviously unsat.
+    Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, 
+      Put(Op@(Unsat: Unit), s.ops));
   });
 
   Maybe@<Clause@> mc = Clause.AddVars(vars, Nil<Var@>);
@@ -224,38 +226,24 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
   Clause@ clause = mc.just;
 
   ClauseId@ id = s.clause_id;
+  Fifo@<Op@> nops = {
+    # Unit clause.
+    clause.cons.tail.?(nil: {
+      Put(Op@(Assign: @(var: clause.cons.head, why: Inferred(id))), s.ops);
+    });
+    s.ops;
+  };
+
   Vars@ nvars = AddClauseToVars(id, clause, s.vars);
   Clauses@ nclauses = Clauses.Insert(s.clauses, id, clause);
-  Solver@(Inc(id), nvars, nclauses, s.conflicts, s.assigns, s.ops);
+  Solver@(Inc(id), nvars, nclauses, s.conflicts, s.assigns, nops);
 };
 
-# @func[SeedOps] Seed assign operations to start solving a formula.
-#  This should be called after all clauses are added to the formula, to seed
-#  the initial set of operations for processing.
-#
-#  It looks for pure literals and unit clauses, generating a list of assign
-#  operations corresponding to those.
-(Solver@) { Fifo@<Op@>; } SeedOps = (Solver@ s) {
-  Fifo@<Op@> pures = Vars.ForEach(s.vars, Empty<Op@>,
-    (VarId@ id, VarS@ vs, Fifo@<Op@> ops) {
-      vs.pos.?(nil: Put(Op@(Assign: @(var: Var@(id, False), why: Pure)), ops));
-      vs.neg.?(nil: Put(Op@(Assign: @(var: Var@(id, True), why: Pure)), ops));
-      ops;
-    });
-
-  Clauses.ForEach(s.clauses, pures,
-    (ClauseId@ id, Clause@ cs, Fifo@<Op@> ops) {
-      # Assertion: There should be no empty clauses, because AddClause doesn't
-      # allow that.
-      cs.cons.tail.?(nil: {
-        Put(Op@(Assign: @(var: cs.cons.head, why: Inferred(id))), ops);
-      });
-
-      ops;
-    });
-};
-
-@ OpResult@ = +(Solver@ solver, Conflict@ conflict);
+@ OpResult@ = +(
+  Solver@ solver,     # not found to be unsat yet.
+  Conflict@ conflict, # unsat due to conflict.
+  Unit@ unsat         # trivially unsat.
+);
 
 % Show = {
   Show@<Id@> Id = /Core/Int/Show%.Show;
@@ -426,7 +414,8 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
     Assign: DoAssign(s, op.Assign),
     RemoveClause: DoRemoveClause(s, op.RemoveClause),
     RemoveVarFromClause: DoRemoveVarFromClause(s, op.RemoveVarFromClause),
-    RemoveClauseFromVar: DoRemoveClauseFromVar(s, op.RemoveClauseFromVar));
+    RemoveClauseFromVar: DoRemoveClauseFromVar(s, op.RemoveClauseFromVar),
+    Unsat: OpResult@(unsat: Unit));
 };
 
 # @func[DoOps] Process ops until no more ops remain or unsat.
@@ -437,8 +426,8 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
   Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, Next(s.ops));
   OpResult@ result = DoOp(mop.just, ns);
 
-  result.?(conflict: result);
-  DoOps(result.solver);
+  result.?(solver: DoOps(result.solver));
+  result;
 };
 
 @ Assignment@ = List@<Var@>;
@@ -452,11 +441,17 @@ Search = (Solver@ s) {
   Unit@ _ = TraceLn((Unit@ _) { Show.Clauses(s.clauses); });
 
   OpResult@ ms = DoOps(s);
-  ms.?(conflict: {
-    SearchResult@(unsat: @(
-        clause_id: Inc(s.clause_id),
-        conflicts: Conflicts.Insert(s.conflicts, s.clause_id, ms.conflict)));
-  });
+  ms.?(
+    conflict: {
+      SearchResult@(unsat: @(
+          clause_id: Inc(s.clause_id),
+          conflicts: Conflicts.Insert(s.conflicts, s.clause_id, ms.conflict)));
+    },
+    unsat: {
+      SearchResult@(unsat: @(
+          clause_id: s.clause_id,
+          conflicts: s.conflicts));
+    });
 
   Solver@ s = ms.solver;
 
@@ -500,8 +495,7 @@ Search = (Solver@ s) {
 @ Result@ = +(Assignment@ sat, Unit@ unsat);
 
 (Solver@) { Result@; } Solve = (Solver@ s) {
-  Solver@ seeded = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns, SeedOps(s));
-  SearchResult@ result = Search(seeded);
+  SearchResult@ result = Search(s);
   result.?(
     sat: Result@(sat: result.sat),
     unsat: Result@(unsat: Unit));

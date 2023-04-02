@@ -1492,4 +1492,37 @@ right away?
 
 Needs thought.
 
+---
+
+I worry about order of processing ops, but I shouldn't. As long as 'assign'
+ops are processed in order and they remove the var and future assign ops to
+the same var are ignored, it should be fine. 'pure' variable assigns after
+inferred variable assigns will be ignored.
+
+What if we allowed there to be multiple conflict clauses learned? Is that
+useful? Or would it lead to silly redundancies? The idea being, we return a
+list of conflicts, and that list could be empty for trivially unsatisfiable.
+
+Let's not confuse things. Let's say simplification can return three states:
+
+* conflict - a conflict was found.
+* unsat - trivially unsatisfiable.
+* simplified.
+
+I suppose in this case unsat could be a Maybe@<Conflict@>. If it's trivially
+unsat, return Nothing. Otherwise return a conflict.
+
+Add back an op for trivially unsat.
+
+What do you think? This way we can learn the empty clause. That's fine. We
+just generate a trivially unsat op for it, and everything is taken care of.
+
+---
+
+Here's what I did:
+* Learn empty and unit clauses in AddClause.
+* Remove seed ops entirely. We don't seed pure literals, but I don't see a big
+  cost to that. First time we see a pure literal we'll apply it. If we attempt
+  correctly, great. If we attempt incorrectly... I suppose that means we
+  solve a harder problem that we have to. Oh well.
 
