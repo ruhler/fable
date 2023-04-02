@@ -1,4 +1,6 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+
 % Chars = /Core/Char%.Chars;
 
 <@>% Append = /Core/List%.Append;
@@ -16,7 +18,7 @@
 #  break /Core/Debug%.Trace!
 #  commands
 #  silent
-#  printf "%s", FbleStringValueAccess(_)
+#  call FbleDebugTrace(_)
 #  continue
 #  end
 (String@) { Unit@; } Trace = (String@ _) {
@@ -28,4 +30,33 @@
   Trace(Append(s, Str[Chars.nl]));
 };
 
-@(Trace, TraceLn);
+((Unit@) { String@; }) { Unit@; }
+TraceEnabled = ((Unit@) { String@; } f) {
+ Trace(f(Unit));
+};
+
+((Unit@) { String@; }) { Unit@; }
+TraceDisabled = ((Unit@) { String@; } f) {
+ Unit;
+};
+
+((Unit@) { String@; }) { Unit@; }
+TraceLnEnabled = ((Unit@) { String@; } f) {
+ TraceLn(f(Unit));
+};
+
+((Unit@) { String@; }) { Unit@; }
+TraceLnDisabled = ((Unit@) { String@; } f) {
+ Unit;
+};
+
+# Variations on Trace and TraceLn that can be more easily disabled.
+# To prevent overheads of generating the trace strings when tracing is
+# disabled.
+% Enable = (Bool@ enable) {
+  enable.?(
+    true: @(Trace: TraceEnabled, TraceLn: TraceLnEnabled),
+    false: @(Trace: TraceDisabled, TraceLn: TraceLnDisabled));
+};
+
+@(Trace, TraceLn, Enable);

@@ -33,5 +33,15 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str);
 //   longer needed.
 char* FbleStringValueAccess(FbleValue* str);
 
+// FbleDebugTrace --
+//   Prints a /Core/String%.String@ FbleValue to stderr.
+//
+// Inputs:
+//   str - the /Core/String%.String@ to print.
+//
+// Side effects:
+//   Prints the string to stderr.
+void FbleDebugTrace(FbleValue* str);
+
 #endif // FBLE_STRING_FBLE_H_
 

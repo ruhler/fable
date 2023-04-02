@@ -5,13 +5,9 @@ Things to consider doing for the fble-0.2 release.
 * Sat Solver:
  - Avoid duplicate definitions of ShowVar.
    By reorganizing code better?
- - Fix conflict driven clause learning.
  - Parse dimacs cnf incrementally instead of all at once?
    There should be no need to have the entire text of the file in memory all
    at one time.
-
-* Fix memory leak issue with gdb printf debugging?
-  Need to call FbleFree after printing the result.
 
 * Come up with a nicer way to implement printf debugging?
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,

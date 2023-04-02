@@ -28,7 +28,7 @@ tricks for making the most of the currently available debug support.
     break /Core/Debug%.Trace!
     commands
     silent
-    printf "%s", FbleStringValueAccess(_)
+    call FbleDebugTrace(_)
     continue
     end
 

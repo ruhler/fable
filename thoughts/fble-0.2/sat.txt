@@ -1331,3 +1331,99 @@ Awesome. Looks good.
 Now we can re-run the benchmark and see what we can solve now?
 
 Let me just disable the tracing for the moment.
+
+---
+
+Let me categorize sat problems as follows:
+* easy: Some version of fble-sat is able to solve.
+* medium: minisat is able to solve.
+* hard: Neither fble-sat nor minisat can solve.
+
+Where we give, say, a 2 minute timeout. Then it makes sense to focus on what
+improvements we get for 'easy', and what new problems from 'medium' we can
+solve.
+
+Once I get some numbers back, might be good to enable tracing on some more
+easy unsat problems to get a feel for the kinds of clauses we learn and get
+insight, if any, into what to try to optimize next.
+
+---
+
+Looks like it's possible for our added conflict clause to be empty. I should
+figure out how to deal with that case. And add a test for it.
+
+---
+
+Two ways to deal with debug trace:
+1. Write a script to call gdb for us, and pass a function instead of a string
+value so we don't have to build the string unless tracing is enabled.
+
+2. Use normal fble code for printing the debug logs, like on a switch.
+
+(2) works for everything: interpreted, compiled, any backend. It's easy to
+use.
+
+(1) only works in special cases and is fairly hacky.
+
+So why would I do (1)? Why not do (2)? Just because it's annoying to have
+everything be in a monad all the time?
+
+(1) is tricky because we don't have easy access to a heap to call a function
+from C code. We need another way to be able to enable/disable debug from gdb.
+
+How would we do (2)? User interface would be:
+* --debug flag to fble-sat.
+* Solve takes a monad. I suppose all of /Sat/Solver% could take a monad.
+  And a function:
+   ((Unit@) { String@; }) { M@<Unit@>; } Trace
+* We have the choice to pass 'Debug' or 'NoDebug'
+  Maybe we have a helper:
+  Debug: (Trace@) { M@<A@>; } -> M@<A@>
+
+I don't know. It's tedious, you know?
+
+---
+
+Trace for 3col20_5_4.shuffled.cnf:
+
+Looks like what happens is we end up with learned clauses:
+
+a: [-19]
+b: [19]
+
+Because of that, we get two assigns: -19, 19.
+
+Assign -19: should cause 186 to go away, then conflict on 187. But the
+conflict is on 19, so then you add [-19 +19] and that ends up as [].
+
+Any easy way to reproduce this? Is it as simple as:
+
+[-1]
+[1]
+
+?
+
+But we need those to be learned conflict clauses?
+
+[1 2]
+[1 -2]
+[-1 2]
+[-1 -2]
+
+Why didn't we hit this in any of the test cases already?
+
+Maybe:
+
+[-1]
+[1]
+[-2]
+[2]
+
+Says: attempt -1, get 
+
+[-2]
+[2]
+
+learn -2, conflicts with [2]?
+
+

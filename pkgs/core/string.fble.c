@@ -40,3 +40,11 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
   }
   return charS;
 }
+
+// FbleDebugTrace -- see documentation in string.fble.h
+void FbleDebugTrace(FbleValue* str)
+{
+  char* cstr = FbleStringValueAccess(str);
+  fprintf(stderr, "%s", cstr);
+  FbleFree(cstr);
+}
