@@ -1699,3 +1699,16 @@ solver? =>
   unsat? => add conflict clauses, go back to search.
 
 Good. Let's try that.
+
+---
+
+It's tricky the way I've written things, because an attempt is implemented by
+adding an 'assign' op. When we add the conflict clause, we update the solver
+state, which might include that 'assign' op. At some point we don't need that
+assign op to be able to infer the variable, but that means we'll end up with a
+conflict if we keep that assign op.
+
+I suppose we could treat this as a trivially unsat result? Because there is
+nothing new to learn? No. We get stuck in an infinite loop in that case,
+because we never learn.
+

@@ -1,9 +1,14 @@
 
-@ Char@ = /Core/Char%.Char@;
-<@>% Append = /Core/List%.Append;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Reverse = /Core/List%.Reverse;
+
 <@,@>@ Map@ = /Core/Map%.Map@;
 <@,@,@>% ForEach = /Core/Map%.ForEach;
+
 <@>@ Show@ = /Core/Show%.Show@;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
@@ -18,11 +23,11 @@
 #
 <@ K@, @ V@>(Show@<K@>, Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@, @ V@>(Show@<K@> show_key, Show@<V@> show_value)(Map@<K@, V@> m) {
-  Append<Char@>(
-    ForEach<K@, V@, String@>(m, Str|'{ ', (K@ k, V@ v, String@ s) {
-      Strs[s, show_key(k), Str|' => ', show_value(v), Str|'; '];
-    }),
-    Str|'}');
+  List@<String@> elems = ForEach(m, List[Str|'{ '],
+    (K@ k, V@ v, List@<String@> es) {
+      Cons(Strs[show_key(k), Str|' => ', show_value(v), Str|'; '], es);
+    });
+  Strs(Reverse(Cons(Str|'}', elems)));
 };
 
 @(Show);
