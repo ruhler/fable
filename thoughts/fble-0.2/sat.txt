@@ -1558,3 +1558,144 @@ between dpll and conflict. The differences are:
 1. Do we learn conflict clauses or not.
 2. Do we go straight to trying var = false or not.
 
+---
+
+Reviewing traces of rope_0002.shuffled.cnf:
+
+dpll first:
+
+Looks straight forward. It makes 920 attempts to search the entire space.
+
+cdcl next:
+
+After trying +61 and getting a conflict, it takes another 13 attempts with +61
+before we finally learn -61.
+
+Also, it seems like each attempt just takes a lot longer to run. Presumably
+because we are adding more clauses?
+
+I wonder if this is because RemoveVar doesn't scale well for large clauses? We
+are certainly learning some large clauses in this case. I see 8 variable
+clauses, for example.
+
+Two ideas:
+1. Why can't we immediately learn -61 after getting a conflict with attempted
++61?
+2. Profile to see where all the time is being spent.
+
+Ideas for (1):
+* Maybe there are multiple conflicts, and it takes a while for us to hit
+  enough of them that we end up learning the one we want?
+* Dependencies: conflict leads to conflict leads to conflict?
+
+Another way to distinguish: is cdcl doing more search attempts, or are those
+attempts just taking longer? I bet it's very apparent if I only trace assign
+attempts.
+
+---
+
+Trying to understand why we re-attempt the same variable assignment, and what,
+if anything, we could do to avoid that.
+
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3]; }
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3]; }
+Assign +3 (attempt)
+{ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1]; }
+Assign +2 (attempt)
+Assign -1 (inferred from 7)
+Assign +1 (inferred from 3)
+Conflict 3, 7 on 1
+{ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1]; 8 => [-2]; }
+Assign -2 (inferred from 8)
+Assign -1 (inferred from 5)
+Assign +1 (inferred from 1)
+Conflict 1, 5 on 1
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3];
+  8 => [-3, -2]; 9 => [-3, +2]; }
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+  4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3];
+  8 => [-3, -2]; 9 => [-3, +2]; }
+
+Why didn't we learn [-3] at this point? We know -3, because we exhausted all
+options +2 and -2 when using +3.
+
+Seems like we could have kept going on our attempted solver after we learned
+the conflict clause, until we get 'unsat', right? Here:
+
+{ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1]; 8 => [-2]; }
+Assign -2 (inferred from 8)
+Assign -1 (inferred from 5)
+Assign +1 (inferred from 1)
+Conflict 1, 5 on 1
+
+Why didn't I add the conflict clause directly:
+{ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1];
+  8 => [-2]; 9 => [+2] }
+
+Then we could have learned:
+Assign -2 (inferred from 8)
+Assign +2 (inferred from 9)
+Conflict 8, 9 on 2
+
+{ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1];
+  8 => [-2]; 9 => [+2]; 10 => [] }
+
+Now we hit [], which is clearly unsat. We would also hit a conflict between 8
+and 9 again though, right?
+
+Idea: what if, as soon as we encounter a conflict, we add the conflict clause
+directly as part of simplification? But, by then, we already had -2, so clause
+8 was already []. No way we could have derived the conflict between 8 and 9 at
+that point.
+
+Did we skip back too far?
+
+We have input 's'.
+We have attempt: s + v=true
+
+Hmm... attempting +3, we start with:
+
+s = { 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1]; }
+Simplifies nowhere. It's fully simple.
+
+attempt +2 { 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1]; }
+Conflict 3, 7 on 1
+
+s2 = next_attempt { 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1];
+                    8 => [-2]; }
+Conflict 1, 5 on 1
+
+We don't untry our attempt, because we didn't do a second attempt. But! We
+learned something from the attempt.
+
+What if, instead of returning right away when we get a conflict, we add the
+conflict and try again?
+
+s2 = next_attempt { 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1];
+                    8 => [-2]; }
+Conflict 1, 5 on 1
+s2' = { 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1];
+        8 => [-2]; 9 => [2]}
+Conflict 8, 9 on 2
+s2'' ={ 1 => [+2, +1]; 3 => [-2, +1]; 5 => [+2, -1]; 7 => [-2, -1];
+        8 => [-2]; 9 => [2], 10 => []}
+Unsat.
+
+In other words, don't return from simplification until we get raw unsat
+result? Don't go on to do an 'attempt' until we've derived the [] clause?
+
+In other words, search would look like this:
+
+simplify.
+unsat? => return unsat.
+conflict? => add conflict clause, go back to search.
+  (adding conflict clause should add 'unsat' op if it makes things unsat.)
+solver? =>
+  attempt v.
+  sat? => return
+  unsat? => add conflict clauses, go back to search.
+
+Good. Let's try that.

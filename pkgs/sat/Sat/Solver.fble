@@ -419,11 +419,47 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
   *(ClauseId@ clause_id, Conflicts@ conflicts) unsat
 );
 
-@ Algo@ = +(Unit@ dpll, Unit@ cdcl);
-Algo@ Algo = Algo@(cdcl: Unit);
+# Pick some a variable that exists in the given vars map.
+(Vars@) { Maybe@<VarId@>; } PickSomeVar = (Vars@ vars) {
+  # TODO: Come up with a more efficient way to pick any single existing
+  # variable.
+  Vars.ForEach(vars, Nothing<VarId@>,
+    (VarId@ v, VarS@ _, Maybe@<VarId@> mv) {
+      Just(v);
+    });
+};
 
-(Solver@) { SearchResult@; }
-Search = (Solver@ s) {
+(Solver@) { SearchResult@; } UnsatDPLL = (Solver@ s) {
+  SearchResult@(unsat: @(clause_id: s.clause_id, conflicts: s.conflicts));
+};
+
+# Basic DPLL based sat solver.
+(Solver@) { SearchResult@; } SearchDPLL = (Solver@ s) {
+  OpResult@ ms = DoOps(s);
+  ms.?(conflict: UnsatDPLL(s));
+  ms.?(unsat: UnsatDPLL(s));
+
+  Solver@ s = ms.solver;
+
+  Maybe@<VarId@> mvar = PickSomeVar(s.vars);
+  mvar.?(nothing: SearchResult@(sat: s.assigns));
+  VarId@ var = mvar.just;
+
+  Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
+    Put(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
+
+  SearchResult@ attempted = SearchDPLL(attempt);
+  attempted.?(unsat: {
+    Solver@ ns = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
+      Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
+    SearchDPLL(ns);
+  });
+
+  attempted;
+};
+
+# Sat solver with conflict driven clause learning.
+(Solver@) { SearchResult@; } SearchCDCL = (Solver@ s) {
   Unit@ _ = TraceLn((Unit@ _) { Show.Clauses(s.clauses); });
 
   OpResult@ ms = DoOps(s);
@@ -441,43 +477,38 @@ Search = (Solver@ s) {
 
   Solver@ s = ms.solver;
 
-  # TODO: Come up with a more efficient way to pick any single existing
-  # variable.
-  Maybe@<VarId@> mvar = Vars.ForEach(s.vars, Nothing<VarId@>,
-    (VarId@ v, VarS@ _, Maybe@<VarId@> mv) {
-      Just(v);
-    });
+  Maybe@<VarId@> mvar = PickSomeVar(s.vars);
   mvar.?(nothing: SearchResult@(sat: s.assigns));
   VarId@ var = mvar.just;
 
   Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
     Put(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
 
-  SearchResult@ attempted = Search(attempt);
+  SearchResult@ attempted = SearchCDCL(attempt);
   attempted.?(unsat: {
-    Solver@ next_attempt = Algo.?(
-      dpll: {
-        Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
-          Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
-      },
-      cdcl: {
-        # Add conflict clauses for all conflicts encountered in our attempted
-        # search
-        Solver@ ns = Solver@(
-          attempted.unsat.clause_id, s.vars, s.clauses,
-          attempted.unsat.conflicts, s.assigns, s.ops);
-        /Core/Iter%.For(
-          /Core/Int/Iter%.Range(s.clause_id, ns.clause_id), ns,
-          (Id@ i, Solver@ s) {
-            Maybe@<Conflict@> conflict = Conflicts.Lookup(ns.conflicts, i);
-            AddConflictClause(i, conflict.just, s);
-          });
+    # Add conflict clauses for all conflicts encountered in our attempted
+    # search
+    Solver@ ns = Solver@(
+      attempted.unsat.clause_id, s.vars, s.clauses,
+      attempted.unsat.conflicts, s.assigns, s.ops);
+    Solver@ next_attempt = /Core/Iter%.For(
+      /Core/Int/Iter%.Range(s.clause_id, ns.clause_id), ns,
+      (Id@ i, Solver@ s) {
+        Maybe@<Conflict@> conflict = Conflicts.Lookup(ns.conflicts, i);
+        AddConflictClause(i, conflict.just, s);
       });
-    Search(next_attempt);
+    SearchCDCL(next_attempt);
   });
 
   attempted;
 };
+
+Bool@ UseCDCL = True;
+
+(Solver@) { SearchResult@; } Search = UseCDCL.?(
+  true: SearchCDCL,
+  false: SearchDPLL
+);
 
 # Result@ --
 #   The result of trying to solve a sat problem.
