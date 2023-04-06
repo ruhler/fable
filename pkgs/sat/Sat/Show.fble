@@ -8,13 +8,13 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Formula@ = /Sat/Cnf%.Formula@;
-@ Clause@ = /Sat/Cnf%.Clause@;
-@ VarId@ = /Sat/Cnf%.VarId@;
-@ Var@ = /Sat/Cnf%.Var@;
-@ Assignment@ = /Sat/Cnf%.Assignment@;
-@ Result@ = /Sat/Cnf%.Result@;
+@ Clause@ = /Sat/Solver%.Clause@;
+@ VarId@ = /Sat/Solver%.VarId@;
+@ Var@ = /Sat/Solver%.Var@;
+@ Assignment@ = /Sat/Solver%.Assignment@;
+@ Result@ = /Sat/Solver%.Result@;
 
+@ Formula@ = /Sat/Dimacs%.Formula@;
 <@>@ Parse@ = /Sat/Dimacs%.Parse@;
 
 Show@<VarId@> ShowId = /Core/Int/Show%.Show;

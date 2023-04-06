@@ -20,14 +20,16 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Formula@ = /Sat/Cnf%.Formula@;
-@ Clause@ = /Sat/Cnf%.Clause@;
-@ VarId@ = /Sat/Cnf%.VarId@;
-@ Var@ = /Sat/Cnf%.Var@;
-@ Assignment@ = /Sat/Cnf%.Assignment@;
-@ Result@ = /Sat/Cnf%.Result@;
-% EqId = /Sat/Cnf%.EqId;
-% Solve = /Sat/Cnf%.Solve;
+@ Clause@ = /Sat/Solver%.Clause@;
+@ VarId@ = /Sat/Solver%.VarId@;
+@ Var@ = /Sat/Solver%.Var@;
+@ Assignment@ = /Sat/Solver%.Assignment@;
+@ Result@ = /Sat/Solver%.Result@;
+% AddClauses = /Sat/Solver%.AddClauses;
+% NewSolver = /Sat/Solver%.NewSolver;
+% EqId = /Sat/Solver%.EqId;
+
+@ Formula@ = /Sat/Dimacs%.Formula@;
 
 % ShowResult = /Sat/Show%.ShowResult;
 % ShowParsedFormula = /Sat/Show%.ShowParsedFormula;
@@ -39,6 +41,10 @@
 VarId@ X = /Core/Int%.1;
 VarId@ Y = /Core/Int%.2;
 VarId@ Z = /Core/Int%.3;
+
+(Formula@) { Result@; } Solve = (Formula@ formula) {
+  /Sat/Solver%.Solve(AddClauses(NewSolver, formula));
+};
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.pos, b.pos));

@@ -222,6 +222,13 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
     id, vars);
 };
 
+(Solver@, List@<Clause@>) { Solver@; }
+AddClauses = (Solver@ solver, List@<Clause@> clauses) {
+  /Core/List%.ForEach(clauses, solver, (Clause@ c, Solver@ s) {
+    AddClause(s, c);
+  });
+};
+
 @ OpResult@ = +(
   Solver@ solver,     # not found to be unsat yet.
   Conflict@ conflict, # unsat due to conflict.
@@ -525,4 +532,4 @@ Bool@ UseCDCL = True;
 
 @(VarId@, Var@, Clause@,
   Solver@, Assignment@, Result@,
-  EqId, NewSolver, AddClause, Solve);
+  EqId, NewSolver, AddClause, AddClauses, Solve);

@@ -25,9 +25,10 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Var@ = /Sat/Cnf%.Var@;
-@ Clause@ = /Sat/Cnf%.Clause@;
-@ Formula@ = /Sat/Cnf%.Formula@;
+@ Var@ = /Sat/Solver%.Var@;
+@ Clause@ = /Sat/Solver%.Clause@;
+
+@ Formula@ = List@<Clause@>;
 
 # DIMACS cnf parser.
 # http://www.satcompetition.org/2009/format-benchmarks2009.html
@@ -151,4 +152,4 @@ ParseM@<Unit@> ParseFromStart = {
   }));
 };
 
-@(Parse@, Parse, ParseLines);
+@(Formula@, Parse@, Parse, ParseLines);
