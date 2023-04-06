@@ -1712,3 +1712,123 @@ I suppose we could treat this as a trivially unsat result? Because there is
 nothing new to learn? No. We get stuck in an infinite loop in that case,
 because we never learn.
 
+---
+
+Um, I'm not convinced I can solve anything with conflict driven clause
+learning that I couldn't already solve with dpll.
+
+Let me profile a slower running problem and see if there are any obvious code
+improvements.
+
+Profiling says:
+* Updating clauses is expensive. Basically I lot of time doing lt for ids for
+  map operations.
+
+Hmm... So what does this mean? What's the point if conflict driven clause
+learning didn't help anything? Or maybe it did help, I just need to bring
+constant times down enough before we get to hard enough problems that it would
+show that it helps?
+
+---
+
+I'm pretty sure, at this point, dpll is strictly better than cdcl. Why? Can I
+craft an example where cdcl should be better than dpll?
+
+Consider a case where you have a small, unsat core, and a bunch of other
+variables. Where dpll goes through all the possible cases for the bunch of
+other variables, having to reprove unsat each time. My expectation is that
+cdcl proves unsat once, and reuses that.
+
+Yeah. Specifically the example is:
+
+p cnf 12 11
+1 2 3 0
+1 2 -3 0
+1 -2 3 0
+1 -2 -3 0
+-1 2 3 0
+-1 2 -3 0
+-1 -2 3 0
+-1 -2 -3 0
+-4 -5 -6 0
+-7 -8 -9 0
+-10 -11 -12 0
+
+dpll does a total of 214 attempts.
+cdcl only needs 10 attempts.
+
+Now there is something a little odd:
+
+{ 0 => [+1, +2, +3]; 1 => [+1, +2, -3]; 2 => [+1, -2, +3]; 3 => [+1, -2, -3];
+4 => [-1, +2, +3]; 5 => [-1, +2, -3]; 6 => [-1, -2, +3]; 7 => [-1, -2, -3]; 8
+=> [-4, -5, -6]; 9 => [-7, -8, -9]; 11 => [-3, -2]; 12 => [-3, +2]; 13 =>
+[-3]; 14 => [+3, -2]; 15 => [+3, +2]; 16 => [+3]; 17 => []; }
+Assign -3 (inferred from 13)
+Assign +3 (inferred from 16)
+
+Why assign -3 assign +3 if we have the clause 17 => []? It's because when we
+add the conflict clauses, we add the assign directly. So we'll have 3 ops in
+the fifo: assign, assign, unsat. We do the first two first, and find unsat
+that way instead of from the 'unsat' clause.
+
+Anyway, this makes it harder to give up on cdcl.
+
+Is there a way to get a better sense of the tradeoffs between fewer attempts
+of cdcl versus higher overheads of cdcl? I feel like there should be a sweet
+spot where we learn all the conflict clauses of cdcl, without the redundancy
+in attempts we are currently seeing. Maybe add stats about total number of
+attempts made and print that somewhere? Maybe have a timeout based on number
+of attempts so we can control things that way?
+
+---
+
+Lots of ideas of things to try. The trick is focusing in on what matters.
+
+In my mind, theoretically, cdcl should be better than dpll. I have the
+concrete example showing why. I want to understand more deeply why cdcl isn't
+doing any better in practice.
+
+It could be for a number of reasons:
+A. High overhead of cdcl outweighs benefits on all sample problems.
+B. Bug in cdcl that gets it stuck in an infinite loop on harder problems? 
+C. My particular approach to cdcl doesn't actually reduce the search space?
+ - In particular, we don't learn as efficiently as dpll does, and we should be
+   able to apply those learnings in cdcl somehow.
+
+To lay the groundwork for investigation, I need to make it easier to switch
+between cdcl and dpll, and to enable and disable debugging. Do that by making
+those options first class options. That's the first step.
+
+Search space size is the same as number of attempted variables.  Collect those
+statistics, run both solvers on all the problems, see if search space size is
+improving or not. In particular, run it on the sample problem we have that
+dpll can solve but cdcl can't. Should tell us if it's stuck in an infinite
+loop, it is searching many more things, or it's just high overhead.
+
+How to organize code to support options --debug, --algo dpll --algo cdcl.
+
+Main should accept --debug, --algo options.
+
+What do we get for --debug? Maybe we want multiple levels of debug?
+level 0: no debug output. Just print the result of the problem.
+level 1: Output summary of stats at end. Or always do this anyway?
+level 2: trace the search space: attempted assigns.
+level 3: trace the problem being solved:
+   assigns, conflicts, clause state at search
+
+We can be fairly arbitrary about what gets printed at what level, just so long
+as we have a way to input and read the level. Good.
+
+Solver interface? Ideally we have the same interface for both cdcl and dpll,
+so we can easily switch.
+
+Note: we have multiple layers of interface right now.
+  Cnf: Formula@ -> Result@
+  Solver: Solver@ -> Result@
+
+How about add an 'AddClauses' API to Solver. Use that instead of Cnf? But then
+everyone has to know about NewSolver, including all the tests.
+
+Let's start there. Get rid of Cnf and Formula@. Add an AddClauses method.
+Yeah.
+

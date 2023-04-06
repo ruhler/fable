@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
-% TraceLn = /Core/Debug%.Enable(/Core/Bool%.False).TraceLn;
+% TraceLn = /Core/Debug%.Enable(/Core/Bool%.True).TraceLn;
 
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
@@ -435,6 +435,8 @@ DoRemoveClauseFromVar = (Solver@ s, RemoveClauseFromVarOp@ op) {
 
 # Basic DPLL based sat solver.
 (Solver@) { SearchResult@; } SearchDPLL = (Solver@ s) {
+  Unit@ _ = TraceLn((Unit@ _) { Show.Clauses(s.clauses); });
+
   OpResult@ ms = DoOps(s);
   ms.?(conflict: UnsatDPLL(s));
   ms.?(unsat: UnsatDPLL(s));
