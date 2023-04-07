@@ -293,7 +293,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
   #  @i For each + clause, add a RemoveClause operation.
   #  @i For each - clause, add a RemoveVarFromClause operation.
   (Solver@, AssignOp@) { M@<OpResult@>; } DoAssign = (Solver@ s, AssignOp@ op) {
-    Unit@ _ <- m.do(debug(Int|2, (OStream@<M@> dbg) {
+    Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
       O.PutLine(dbg, Show.Assign(op));
     }));
 
@@ -516,8 +516,13 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     mvar.?(nothing: m.return(SearchResult@(sat: s.assigns)));
     VarId@ var = mvar.just;
 
+    Var@ vattempt = Var@(var, True);
+    Unit@ _ <- m.do(debug(Int|2, (OStream@<M@> dbg) {
+      O.PutLine(dbg, Strs[Str|'Try ', Show.Var(vattempt)]);
+    }));
+
     Solver@ attempt = Solver@(s.clause_id, s.vars, s.clauses, s.conflicts, s.assigns,
-      Put(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
+      Put(Op@(Assign: @(var: vattempt, why: Attempt)), s.ops));
 
     SearchResult@ attempted <- m.do(SearchCDCL(attempt));
     attempted.?(unsat: {

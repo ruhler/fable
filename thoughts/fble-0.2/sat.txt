@@ -1872,8 +1872,128 @@ Yeah. That's nicer.
     
 debug: (Int@, (OStream@<M@>) { M@<Unit@>; }) { M@<Unit@>; }
 
+---
 
+Now I have --debug and --algo options to fble-sat. The codes getting a bit
+messy. I should probably clean it up. Oh well.
 
+Let's figure out what's up with rope_0002.shuffled.cnf.
 
+First reproduce the issue:
 
+dpll takes just under 10 seconds to say it is unsat. Let me run cdcl for a
+little while before giving up.
 
+6 minutes, still not finished.
+
+Does it appear to be stuck? Let's enable debug level 2 to see attempts.
+
+dpll does ~12,000 attempts. Takes 42 seconds to finish at that debug level.
+
+cdcl has now passed 12,000 attempts. It didn't take too long to get there. I
+see attempts slowing down noticeably in some cases, but only briefly. This
+suggests constant time overheads is not the problem.
+
+Now, how can we tell if it's stuck in an infinite loop?
+
+How about we let it run overnight and see how long it goes?
+
+Actually, I made a mistake. I was count assigns, not attempts.
+
+assigns: dpll is ~900. cdcl got to just over 800.
+
+I'll run overnight and see. It would be great if it finishes eventually,
+otherwise there could be a bug. Either way, probably worth figuring out how to
+avoid redundant attempts in cdcl.
+
+---
+
+Turns out it took 11 minutes for cdcl to solve. That suggests it's not a bug
+in cdcl, but rather inefficient search.
+
+Let me see if I can print just attempts rather than all assigns to see how
+much search space it goes through.
+
+While I wait for that, let's try, yet again, to understand how we can learn
+everything we should when we make an attempt. Going back to ruhler-unsat3
+case.
+
+Here's how cdcl works today:
+* Attempt +3
+* Attempt +2
+* Infer -1, 1. Conflict. We learn:
+  [-1], [+1] => []
+  [-2 -1], [-2 +1] => [-2]
+  [-3 -2 -1], [-3 -2 +1] => [-3 -2]
+* Back out +2 attempt and simplify.
+  Infer -2, -1, 1. Conflict. We learn:
+  [-1], [+1] => []
+  [+2 -1], [+2, +1] => [+2] 
+  [-3 +2 -1], [-3 +2 +1] => [-3 +2]
+* Back out +3 attempt and simplify.
+  But we haven't learned [-3] yet!
+
+I feel like I'm going in circles, but let's go around another time anyway.
+
+What we really want, I claim, is for 'simplify' not to return a single
+conflict clause, but rather return a proof of unsatisfiability, in the form of
+a sequence of conflicts that end in [].
+
+* Attempt +3, Attempt +2, simplify
+  Input: [-1], [+1]
+  Conflict: those two clauses. Result: [].
+  In this case, we can prove unsat with a single conflict.
+* Attempt +3, with [-2] learned clause added, simplify
+  Input: [-2], [+2 +1], [+2 -1], [-2 +1], [-2 -1]
+  Infer -2 ==> [-1], [+1]
+  Conflict: Those two clauses. Result (from top level): [+2]
+  Input: [-2], [+2 +1], [+2 -1], [-2 +1], [-2 -1], [+2]
+  Conflict: those two clauses, result: [].
+  So, in this case, we needed two conflicts to prove what we wanted.
+
+Note, what we did here. During the simplification process, we learned
+something, then reset back to start of simplification.
+  
+The other important thing is we prioritized the conflict [-2][+2] over the
+conflict [-2][+2 +1][+2 -1].
+
+So, skip thinking about attempts and what not. Imagine we have an input
+formula:
+
+  [-2], [+2 +1], [+2 -1], [-2 +1], [-2 -1]
+
+And figure out how simplification alone can infer, via a sequence of conflict
+clauses, [].
+  
+It's like we want to keep a stack of assigns that we can easily back out of.
+For example:
+
+  [-2], [+2 +1], [+2 -1], [-2 +1], [-2 -1]
+
+Things we can infer: [-2]
+
+Push [-2], [+2 +1], [+2 -1], [-2 +1], [-2 -1]
+
+Apply -2, and you get:
+
+   [+1][-1]
+
+Push [+1][-1]
+
+Apply +1, and you get conflict. Add the conflict, pop the stack.
+
+Now at [+1][-1][]. Has [], so keep popping.
+
+Now at [-2][+2 +1][+2 -1][-2 +1][-2 -1][+2]
+
+Doesn't have [], so try again.
+
+Apply -2, and you get conflict. Add the conflict, pop the stack.
+
+[-2][+2 +1][+2 -1][-2 +1][-2 -1][+2][]
+
+Has [], nothing left to pop, so return.
+
+One nice thing about this is that it adds the conflict clauses as we go. In
+other words, the result of 'simplify' already has the conflict clauses added
+to it in the case of unsat.

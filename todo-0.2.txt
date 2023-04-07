@@ -4,6 +4,7 @@ Things to consider doing for the fble-0.2 release.
 
 * Sat Solver:
  - Add --help command line option to fble-sat.
+ - Pull search logic out of /Sat/Solver%
  - Avoid duplicate definitions of ShowVar.
    By reorganizing code better?
  - Parse dimacs cnf incrementally instead of all at once?
