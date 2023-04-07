@@ -2,6 +2,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+@ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -15,6 +16,7 @@
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -47,6 +49,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     m.return(Reverse(reversed));
   };
 
+  (List@<String@>) { Int@; } GetDebugArg = (List@<String@> args) {
+    args.?(nil: Int|0);
+    /Core/String/Eq%.Eq(args.cons.head, Str|'--debug').?(false: {
+      GetDebugArg(args.cons.tail);
+    });
+    /Core/Int/Show%.Read(args.cons.tail.cons.head);
+  };
+
   (List@<String@> args) {
     List@<String@> lines <- m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
@@ -55,8 +65,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       m.return(False);
     });
 
+    Int@ debug = GetDebugArg(args);
     Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
-    Result@ result <- m.do(Solve(m, Debug(m, Int|4, stdio.out))(solver));
+    Result@ result <- m.do(Solve(m, Debug(m, debug, stdio.out))(solver));
     Unit@ _ <- m.do(O.PutLine(stdio.out, ShowResult(result)));
     m.return(True);
   };
