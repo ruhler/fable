@@ -1,0 +1,33 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+# Debug@ is a function to print something to a debug stream if a 
+# certain debug level is enabled. For example, to print something at debug
+# level 2 or higher:
+#
+# Unit@ _ <- m.do(debug(2, (OStream@<M@> dbg) {
+#   String@ message = ...
+#   O.PutLine(dbg, message);
+# }));
+# ...
+<<@>@>@ Debug@ = <<@>@ M@>(Int@, (OStream@<M@>) { M@<Unit@>; }) { M@<Unit@>; };
+
+# Create a Debug@ instance that prints debug messages up to the given level to
+# the given stream.
+<<@>@ M@>(Monad@<M@>, Int@, OStream@<M@>) { Debug@<M@>; }
+Debug = <<@>@ M@>(Monad@<M@> m, Int@ enabled_level, OStream@<M@> stream) {
+  (Int@ message_level, (OStream@<M@>) { M@<Unit@>; } f) {
+    /Core/Int/Eq%.Le(message_level, enabled_level).?(
+      true: f(stream),
+      false: m.return(Unit));
+  };
+};
+
+@(Debug@, Debug);

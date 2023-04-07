@@ -1832,3 +1832,48 @@ everyone has to know about NewSolver, including all the tests.
 Let's start there. Get rid of Cnf and Formula@. Add an AddClauses method.
 Yeah.
 
+Done.
+
+Now we have this interface:
+
+  Solver@ -> Result@
+
+DPLL and CDCL share the same Solver@ type. Let's assume that's the case for
+now, because it is. We want to add a debug level and debug output to the
+interface. Debug output is streaming, so this needs to be monadic.
+
+<<@>@ M@>(Monad@<M@> m, Debug@<M@> debug)(Solver@) { M@<Result@>; }
+
+Where Debug@ gives what?
+
+debug: Int@ -> OStream@<M@>
+
+Except I want a nice interface for skipping the computation unless it's
+needed. Maybe:
+
+debug: (Int@)((OStream@<M@>) { M@<Unit@>; }) { M@<Unit@>; }
+
+You give a debug level and a function from OStream. It chooses to execute that
+or not depending on the current debug level enabled.
+
+How you could use this, for example:
+  Unit@ _ <- m.do({
+    OStream@<M@> dbg <- debug(3);
+    ... code for computing nd doing dbg here ...
+  });
+
+Hmm... Wouldn't it be nicer just to write:
+
+  Unit@ _ <- debug(3, (OStream@<M@> dbg) {
+    ...
+  };
+
+Yeah. That's nicer.
+    
+debug: (Int@, (OStream@<M@>) { M@<Unit@>; }) { M@<Unit@>; }
+
+
+
+
+
+

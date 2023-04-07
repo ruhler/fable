@@ -2,6 +2,8 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+% Int = /Core/Int/Lit%.Int;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
@@ -16,11 +18,13 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+<<@>@>% Debug = /Sat/Debug%.Debug;
+
 @ Solver@ = /Sat/Solver%.Solver@;
 @ Result@ = /Sat/Solver%.Result@;
 % NewSolver = /Sat/Solver%.NewSolver;
 % AddClauses = /Sat/Solver%.AddClauses;
-% Solve = /Sat/Solver%.Solve;
+<<@>@>% Solve = /Sat/Solver%.Solve;
 
 @ Formula@ = /Sat/Dimacs%.Formula@;
 <@>@ Parse@ = /Sat/Dimacs%.Parse@;
@@ -52,7 +56,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     });
 
     Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
-    Result@ result = Solve(solver);
+    Result@ result <- m.do(Solve(m, Debug(m, Int|4, stdio.out))(solver));
     Unit@ _ <- m.do(O.PutLine(stdio.out, ShowResult(result)));
     m.return(True);
   };
