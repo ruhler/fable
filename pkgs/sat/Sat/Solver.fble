@@ -279,8 +279,12 @@ AddClauses = (Solver@ solver, List@<Clause@> clauses) {
     Clauses: Clauses.Show(Clause));
 };
 
-<<@>@ M@>(Monad@<M@>, Debug@<M@>)(Solver@) { M@<Result@>; }
-Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
+@ Algo@ = +(Unit@ dpll, Unit@ cdcl);
+Algo@ DPLL = Algo@(dpll: Unit);
+Algo@ CDCL = Algo@(cdcl: Unit);
+
+<<@>@ M@>(Monad@<M@>, Debug@<M@>, Algo@)(Solver@) { M@<Result@>; }
+Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
   % O = /Core/Stream/OStream%(m);
 
   # @func[DoAssign] Do an assign operation.
@@ -534,11 +538,9 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     m.return(attempted);
   };
 
-  Bool@ UseCDCL = True;
-
-  (Solver@) { M@<SearchResult@>; } Search = UseCDCL.?(
-    true: SearchCDCL,
-    false: SearchDPLL
+  (Solver@) { M@<SearchResult@>; } Search = algo.?(
+    dpll: SearchDPLL,
+    cdcl: SearchCDCL
   );
 
   (Solver@ s) {
@@ -551,4 +553,5 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
 
 @(VarId@, Var@, Clause@,
   Solver@, Assignment@, Result@,
+  Algo@, DPLL, CDCL,
   EqId, NewSolver, AddClause, AddClauses, Solve);

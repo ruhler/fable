@@ -24,8 +24,12 @@
 
 @ Solver@ = /Sat/Solver%.Solver@;
 @ Result@ = /Sat/Solver%.Result@;
+@ Algo@ = /Sat/Solver%.Algo@;
 % NewSolver = /Sat/Solver%.NewSolver;
 % AddClauses = /Sat/Solver%.AddClauses;
+% CDCL = /Sat/Solver%.CDCL;
+% DPLL = /Sat/Solver%.DPLL;
+
 <<@>@>% Solve = /Sat/Solver%.Solve;
 
 @ Formula@ = /Sat/Dimacs%.Formula@;
@@ -57,6 +61,17 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     /Core/Int/Show%.Read(args.cons.tail.cons.head);
   };
 
+  (List@<String@>) { Algo@; } GetAlgoArg = (List@<String@> args) {
+    args.?(nil: CDCL);
+    /Core/String/Eq%.Eq(args.cons.head, Str|'--algo').?(false: {
+      GetAlgoArg(args.cons.tail);
+    });
+    String@ algo = args.cons.tail.cons.head;
+    /Core/String/Eq%.Eq(algo, Str|'cdcl').?(true: CDCL);
+    /Core/String/Eq%.Eq(algo, Str|'dpll').?(true: DPLL);
+    CDCL;
+  };
+
   (List@<String@> args) {
     List@<String@> lines <- m.do(GetLines);
     Parse@<Formula@> parsed = ParseLines(lines);
@@ -66,8 +81,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     });
 
     Int@ debug = GetDebugArg(args);
+    Algo@ algo = GetAlgoArg(args);
     Solver@ solver = AddClauses(NewSolver, parsed.parsed); 
-    Result@ result <- m.do(Solve(m, Debug(m, debug, stdio.out))(solver));
+    Result@ result <- m.do(Solve(m, Debug(m, debug, stdio.out), algo)(solver));
     Unit@ _ <- m.do(O.PutLine(stdio.out, ShowResult(result)));
     m.return(True);
   };
