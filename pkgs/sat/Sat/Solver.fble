@@ -181,24 +181,6 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
   s.@(vars, clauses, todo);
 };
 
-# Adds a clause to the solver state for the given conflict.
-(ClauseId@, Conflict@, Solver@) { Solver@; }
-AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
-  Maybe@<Clause@> ma = Clauses.Lookup(s.clauses, conflict.a);
-  Clause@ a = Clause.RemoveVar(conflict.var, {
-    ma.?(nothing: Nil<Var@>);
-    ma.just;
-  });
-
-  Maybe@<Clause@> mb = Clauses.Lookup(s.clauses, conflict.b);
-  Clause@ b = Clause.RemoveVar(conflict.var, {
-    mb.?(nothing: Nil<Var@>);
-    mb.just;
-  });
-
-  AddClauseAt(s, id, Append(a, b));
-};
-
 # @func[AddClause] Adds a clause to cnf state Solver@.
 #  This should be done in the initial phase before starting to solve the
 #  formula.
@@ -219,10 +201,23 @@ AddClauses = (Solver@ solver, List@<Clause@> clauses) {
   });
 };
 
-@ Simplified@ = +(
-  Solver@ solver,     # simplified or trivially unsat.
-  Conflict@ conflict  # unsat due to conflict.
-);
+# Adds a clause to the solver state for the given conflict.
+(ClauseId@, Conflict@, Solver@) { Solver@; }
+AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
+  Maybe@<Clause@> ma = Clauses.Lookup(s.clauses, conflict.a);
+  Clause@ a = Clause.RemoveVar(conflict.var, {
+    ma.?(nothing: Nil<Var@>);
+    ma.just;
+  });
+
+  Maybe@<Clause@> mb = Clauses.Lookup(s.clauses, conflict.b);
+  Clause@ b = Clause.RemoveVar(conflict.var, {
+    mb.?(nothing: Nil<Var@>);
+    mb.just;
+  });
+
+  AddClauseAt(s, id, Append(a, b));
+};
 
 # Removes a clause from a Vars@ var entry.
 (ClauseId@, Var@, Solver@) { Solver@; }
@@ -264,15 +259,26 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
   ns.@(clauses: Clauses.Delete(ns.clauses, id));
 };
 
+@ Simplified@ = +(
+  Solver@ solver,     # simplified or trivially unsat.
+  Conflict@ conflict  # unsat due to conflict.
+);
+
+(Solver@) { Simplified@; } Simplified = (Solver@ s) {
+  Simplified@(solver: s);
+};
+
 (ClauseId@, VarId@, Why@, Solver@) { Simplified@; }
 RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
   Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, clause);
-  mcs.?(nothing: Simplified@(solver: s));
+  mcs.?(nothing: Simplified(s));
 
   List@<Var@> nvars = Clause.RemoveVar(var, mcs.just);
   nvars.?(nil: {
     # Assertion: clause conflicts only arise from inferred variables,
     # not attempted assignments nor pure literals.
+    # We promise to never attempt a variable that we could infer from a
+    # clause, and pure literals can't lead to conflicts.
     ClauseId@ w = why.inferred;
 
     Conflict@ conflict = @(a: clause, b: w, var: var);
@@ -284,8 +290,7 @@ RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
     Todo(nvars.cons.head, Inferred(clause), s.todo);
   };
 
-  Simplified@(solver:
-    s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo));
+  Simplified(s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo));
 };
 
 # Assign a value to a variable.
@@ -296,7 +301,7 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
 
   # If the variable doesn't exist, we must have already made an assignment for
   # it. Ignore this assignment attempt.
-  mvs.?(nothing: Simplified@(solver: s));
+  mvs.?(nothing: Simplified(s));
   VarS@ vs = mvs.just;
 
   Solver@ ns = s.@(
@@ -309,7 +314,7 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
 
   # TODO: Break out of the loop as soon as we find a conflict rather than
   # going through the entire list?
-  /Core/List%.ForEach(unmatch, Simplified@(solver: match_s),
+  /Core/List%.ForEach(unmatch, Simplified(match_s),
     (ClauseId@ c, Simplified@ r) {
       r.?(conflict: r);
       RemoveVarFromClause(c, var.id, why, r.solver);
@@ -366,8 +371,8 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
 
   # Process todos until no more remain or unsat.
   (Solver@) { M@<Simplified@>; } Simplify = (Solver@ s) {
-    s.unsat.?(true: m.return(Simplified@(solver: s)));
-    s.todo.?(nil: m.return(Simplified@(solver: s)));
+    s.unsat.?(true: m.return(Simplified(s)));
+    s.todo.?(nil: m.return(Simplified(s)));
 
     Assign@ assign = s.todo.cons.head;
     Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
