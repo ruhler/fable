@@ -79,6 +79,18 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_STRUCT_COPY_EXPR: {
+      FbleStructCopyExpr* e = (FbleStructCopyExpr*)expr;
+      FbleFreeExpr(e->src);
+      for (size_t i = 0; i < e->args.size; ++i) {
+        FbleFreeName(e->args.xs[i].name);
+        FbleFreeExpr(e->args.xs[i].expr);
+      }
+      FbleFreeVector(e->args);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* e = (FbleUnionValueExpr*)expr;
       FbleFreeExpr(e->type);

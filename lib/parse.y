@@ -372,6 +372,14 @@ expr:
       access_expr->field = $3;
       $$ = &access_expr->_base;
    }
+ | expr '.' '@' '(' implicit_tagged_expr_p ')' {
+      FbleStructCopyExpr* expr = FbleAlloc(FbleStructCopyExpr);
+      expr->_base.tag = FBLE_STRUCT_COPY_EXPR;
+      expr->_base.loc = FbleCopyLoc(@$);
+      expr->src = $1;
+      expr->args = $5;
+      $$ = &expr->_base;
+   }
  | '+' '(' tagged_type_p ')' {
       FbleDataTypeExpr* union_type = FbleAlloc(FbleDataTypeExpr);
       union_type->_base.tag = FBLE_DATA_TYPE_EXPR;

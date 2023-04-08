@@ -371,6 +371,42 @@
   
    Runtime is O(log(N)) plus the runtime of the struct object, where N is the
    number of fields in the struct.
+
+  @subsection 3.5 Struct Copy
+   @AbstractSyntax
+    Expr ::= struct_copy (src : Expr) (args : [(Name, Expr)])
+
+   @ConcreteSyntax
+    expr ::= expr '.' '@' '(' [name [':' expr] [',' ...]] ')'
+
+   @Example
+    Vector@ v = @(x: 1, y: 2, z: 3);
+    Vector@ w = v.@(x: 3);
+
+   Experimental in fble-0.2.
+
+   Allows you to construct a new struct value by copying from an existing
+   struct value. The resulting value has the same type as the source
+   expression. The contents of the new struct value come from the provided
+   arguments as in a struct value implicit type expression; any fields not
+   included in arguments take their values from the source struct value.
+
+   In the above example, the definition of @l[w] is equivalent to:
+  
+   @code[fble]
+    Vector@ w = @(x: 3, y: v.y, z: v.z);
+
+   The source value must be a struct value.
+
+   The expression is evaluated by evaluating the source and all arguments and
+   creating a struct value with the results. The arguments may be evaluated in
+   any order, sequentially or in parallel.
+  
+   Runtime is O(N) plus the runtimes of the arguments, where N is the number
+   of fields of the struct.
+
+   TODO: If all fields are supplied, is the src still evaluated? Let's say
+   yes.
  
  @section @label[unions][4. Unions]
   A union value is a particular value chosen from a group of possible values.
@@ -1309,6 +1345,7 @@
     | struct_value_explicit_type (type : Type) (args : [Expr])
     | struct_value_implicit_type (args : [(Name, Expr)])
     | struct_access (object : Expr) (field : Name)
+    | struct_copy (src : Expr) (args : [(Name, Expr)])
    
     | union_type (fields : [(Type, Name)])
     | union_value (type : Type) (field : Name) (arg : Expr)
@@ -1409,6 +1446,7 @@
      | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type *)
      | '@(' [name [':' expr] [',' ...]] ')'            (* struct_value_implicit_type *)
      | expr '.' name                                   (* struct_access *)
+     | expr '.' '@' '(' [name [':' expr] [',' ...]] ')'(* struct_copy *)
     
      | '+(' type name [',' type name [...]] ')'        (* union_type *)
      | type '(' name ':' expr ')'                      (* union_value *)

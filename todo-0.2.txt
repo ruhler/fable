@@ -11,9 +11,19 @@ Things to consider doing for the fble-0.2 release.
    There should be no need to have the entire text of the file in memory all
    at one time.
 
+* Struct copy expr
+ - Add spec tests.
+ - Use it where possible. At least in sat to start.
+ - Add to struct tutorial.
+ - Test case of no args provided -> syntax error.
+ - Test case of more than one arg provided.
+ - Test case of args out of order, or not in struct type.
+ - Add tests for full code coverage.
+
 * Come up with a nicer way to implement printf debugging?
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
     for example.
+  - Or just use stdio for that?
 
 * Feedback from users:
  - Include README.txt in source repository.

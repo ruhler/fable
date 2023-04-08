@@ -69,3 +69,24 @@ It's a bit thin of an argument. This seems like a rare case to me. Also, it
 wouldn't mean the compiler is required to update in place. That's too much
 burden on the compiler.
 
+---
+
+I want to give this a try. I think it could simplify things a lot where you
+have structs with a lot of fields that you update incrementally. Let's put it
+in as experimental for release 0.2 and make a call based on experience whether
+I want to keep it or not.
+
+It's just so painful any time I add a new field to a struct like Solver@.
+
+Steps to implement:
+* Update language spec.
+* Add language spec tests.
+* Add to parser.
+* Add to typecheck.c.
+I think desugar at the typecheck level for now. No need for bytecode or
+bytecode generation to know about it to start.
+
+What to call it? I think struct copy sounds good. That's really what it is. A
+shallow copy of a struct with option to modify.
+
+Should we allow s.@()? No. Just use s in that case.

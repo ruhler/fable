@@ -26,6 +26,7 @@ typedef enum {
 
   // FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR
   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
+  FBLE_STRUCT_COPY_EXPR,
 
   FBLE_UNION_VALUE_EXPR,
   FBLE_UNION_SELECT_EXPR,
@@ -122,6 +123,15 @@ typedef struct {
   FbleExpr _base;         /**< FbleExpr base class. */
   FbleTaggedExprV args;   /**< Arguments to the struct value. */
 } FbleStructValueImplicitTypeExpr;
+
+/**
+ * FBLE_STRUCT_COPY_EXPR.
+ */
+typedef struct {
+  FbleExpr _base;         /**< FbleExpr base class. */
+  FbleExpr* src;          /**< The struct value to copy from. */
+  FbleTaggedExprV args;   /**< Modifications to make during copy. */
+} FbleStructCopyExpr;
 
 /**
  * FBLE_UNION_VALUE_EXPR: A union value expression.
