@@ -29,7 +29,9 @@
 @ Var@ = /Sat/Solver%.Var@;
 @ Assignment@ = /Sat/Solver%.Assignment@;
 @ Result@ = /Sat/Solver%.Result@;
+@ Algo@ = /Sat/Solver%.Algo@;
 % CDCL = /Sat/Solver%.CDCL;
+% DPLL = /Sat/Solver%.DPLL;
 % AddClauses = /Sat/Solver%.AddClauses;
 % NewSolver = /Sat/Solver%.NewSolver;
 % EqId = /Sat/Solver%.EqId;
@@ -43,18 +45,6 @@
 % Parse = /Sat/Dimacs%.Parse;
 
 
-VarId@ X = /Core/Int%.1;
-VarId@ Y = /Core/Int%.2;
-VarId@ Z = /Core/Int%.3;
-
-(Formula@) { Result@; } Solve = {
-  <@>@ M@ = /Core/Monad/Pure%.Pure@;
-  Monad@<M@> m = /Core/Monad/Pure%.Monad;
-  % solve = /Sat/Solver%.Solve<M@>(m, NoDebug<M@>(m), CDCL);
-  (Formula@ formula) {
-    solve(AddClauses(NewSolver, formula));
-  };
-};
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.pos, b.pos));
@@ -84,106 +74,127 @@ AssertEq = (Result@ a, Result@ b) {
   AssertEquals<Result@>(EqResult, ShowResult, a, b);
 };
 
+(Algo@) { Test@; } TestSolve = (Algo@ algo) {
+  VarId@ X = /Core/Int%.1;
+  VarId@ Y = /Core/Int%.2;
+  VarId@ Z = /Core/Int%.3;
+
+  (Formula@) { Result@; } Solve = {
+    <@>@ M@ = /Core/Monad/Pure%.Pure@;
+    Monad@<M@> m = /Core/Monad/Pure%.Monad;
+    % solve = /Sat/Solver%.Solve<M@>(m, NoDebug<M@>(m), algo);
+    (Formula@ formula) {
+      solve(AddClauses(NewSolver, formula));
+    };
+  };
+
+  String@ name = algo.?(dpll: Str|DPLL, cdcl: Str|CDCL);
+
+  TestSuite(name, List[
+    Test(Str|Sat, (Unit@ _) {
+      Formula@ f = List[
+        List[Var@(X, True)]
+      ];
+      Result@ want = Result@(sat: List[Var@(X, True)]);
+      Result@ got = Solve(f);
+      AssertEq(want, got);
+    }),
+
+    Test(Str|Unsat, (Unit@ _) {
+      Formula@ f = List[
+        List[Var@(X, True)],
+        List[Var@(X, False)]
+      ];
+      Result@ want = Result@(unsat: Unit);
+      Result@ got = Solve(f);
+      AssertEq(want, got);
+    }),
+
+    Test(Str|EmptyClause, (Unit@ _) {
+      # Test that we properly detect an empty clause as one of the initial
+      # clauses.
+      Formula@ f = List[
+        List[Var@(X, True)],
+        List<Var@>[],
+        List[Var@(Y, True)]
+      ];
+      Result@ want = Result@(unsat: Unit);
+      Result@ got = Solve(f);
+      AssertEq(want, got);
+    }),
+
+    Test(Str|AttemptedConflict, (Unit@ _) {
+      # Test that attempts to cover the case where an attempted variable
+      # assignment leads to a conflict.
+      # (x' + y)(x' + y')(x + y)(x + y')
+      Formula@ f = List[
+        List[Var@(X, False), Var@(Y, True)],
+        List[Var@(X, False), Var@(Y, False)],
+        List[Var@(X, True), Var@(Y, True)],
+        List[Var@(X, True), Var@(Y, False)]
+      ];
+      Result@ want = Result@(unsat: Unit);
+      Result@ got = Solve(f);
+      AssertEq(want, got);
+    }),
+
+    Test(Str|AttemptedConflict2, (Unit@ _) {
+      # Another test that attempts to cover the case where an attempted variable
+      # assignment leads to a conflict.
+      # (x' + x')(x + x)
+      Formula@ f = List[
+        List[Var@(X, False), Var@(X, False)],
+        List[Var@(X, True), Var@(X, True)]
+      ];
+      Result@ want = Result@(unsat: Unit);
+      Result@ got = Solve(f);
+      AssertEq(want, got);
+    }),
+
+    Test(Str|Unsat3, (Unit@ _) {
+      # Regression test for a bug where we weren't properly applying learned
+      # clauses, which led to an infinite loop.
+      Formula@ f = List[
+        List[Var@(X, True), Var@(Y, True), Var@(Z, True)],
+        List[Var@(X, True), Var@(Y, True), Var@(Z, False)],
+        List[Var@(X, True), Var@(Y, False), Var@(Z, True)],
+        List[Var@(X, True), Var@(Y, False), Var@(Z, False)],
+        List[Var@(X, False), Var@(Y, True), Var@(Z, True)],
+        List[Var@(X, False), Var@(Y, True), Var@(Z, False)],
+        List[Var@(X, False), Var@(Y, False), Var@(Z, True)],
+        List[Var@(X, False), Var@(Y, False), Var@(Z, False)]
+      ];
+      Result@ want = Result@(unsat: Unit);
+      Result@ got = Solve(f);
+      AssertEq(want, got);
+    }),
+
+    Test(Str|EmptyConflict, (Unit@ _) {
+      # Regression test for a bug where we saw an empty conflict clause.
+      VarId@ a = Int|1;
+      VarId@ b = Int|2;
+      VarId@ c = Int|3;
+      VarId@ d = Int|4;
+      VarId@ e = Int|5;
+      Formula@ f = List[
+        List[Var@(a, False), Var@(b, True)],
+        List[Var@(a, True), Var@(b, False)],
+        List[Var@(a, False), Var@(b, False)],
+        List[Var@(a, True), Var@(b, True)],
+        List[Var@(e, True), Var@(c, True)],
+        List[Var@(c, True), Var@(e, False), Var@(d, True)],
+        List[Var@(d, False), Var@(c, False)]
+      ];
+      Result@ want = Result@(unsat: Unit);
+      Result@ got = Solve(f);
+      AssertEq(want, got);
+    })
+  ]);
+};
+
 Test@ Tests = TestSuite(Str|Sat, List<Test@>[
-  Test(Str|Sat, (Unit@ _) {
-    Formula@ f = List[
-      List[Var@(X, True)]
-    ];
-    Result@ want = Result@(sat: List[Var@(X, True)]);
-    Result@ got = Solve(f);
-    AssertEq(want, got);
-  }),
-
-  Test(Str|Unsat, (Unit@ _) {
-    Formula@ f = List[
-      List[Var@(X, True)],
-      List[Var@(X, False)]
-    ];
-    Result@ want = Result@(unsat: Unit);
-    Result@ got = Solve(f);
-    AssertEq(want, got);
-  }),
-
-  Test(Str|EmptyClause, (Unit@ _) {
-    # Test that we properly detect an empty clause as one of the initial
-    # clauses.
-    Formula@ f = List[
-      List[Var@(X, True)],
-      List<Var@>[],
-      List[Var@(Y, True)]
-    ];
-    Result@ want = Result@(unsat: Unit);
-    Result@ got = Solve(f);
-    AssertEq(want, got);
-  }),
-
-  Test(Str|AttemptedConflict, (Unit@ _) {
-    # Test that attempts to cover the case where an attempted variable
-    # assignment leads to a conflict.
-    # (x' + y)(x' + y')(x + y)(x + y')
-    Formula@ f = List[
-      List[Var@(X, False), Var@(Y, True)],
-      List[Var@(X, False), Var@(Y, False)],
-      List[Var@(X, True), Var@(Y, True)],
-      List[Var@(X, True), Var@(Y, False)]
-    ];
-    Result@ want = Result@(unsat: Unit);
-    Result@ got = Solve(f);
-    AssertEq(want, got);
-  }),
-
-  Test(Str|AttemptedConflict2, (Unit@ _) {
-    # Another test that attempts to cover the case where an attempted variable
-    # assignment leads to a conflict.
-    # (x' + x')(x + x)
-    Formula@ f = List[
-      List[Var@(X, False), Var@(X, False)],
-      List[Var@(X, True), Var@(X, True)]
-    ];
-    Result@ want = Result@(unsat: Unit);
-    Result@ got = Solve(f);
-    AssertEq(want, got);
-  }),
-
-  Test(Str|Unsat3, (Unit@ _) {
-    # Regression test for a bug where we weren't properly applying learned
-    # clauses, which led to an infinite loop.
-    Formula@ f = List[
-      List[Var@(X, True), Var@(Y, True), Var@(Z, True)],
-      List[Var@(X, True), Var@(Y, True), Var@(Z, False)],
-      List[Var@(X, True), Var@(Y, False), Var@(Z, True)],
-      List[Var@(X, True), Var@(Y, False), Var@(Z, False)],
-      List[Var@(X, False), Var@(Y, True), Var@(Z, True)],
-      List[Var@(X, False), Var@(Y, True), Var@(Z, False)],
-      List[Var@(X, False), Var@(Y, False), Var@(Z, True)],
-      List[Var@(X, False), Var@(Y, False), Var@(Z, False)]
-    ];
-    Result@ want = Result@(unsat: Unit);
-    Result@ got = Solve(f);
-    AssertEq(want, got);
-  }),
-
-  Test(Str|EmptyConflict, (Unit@ _) {
-    # Regression test for a bug where we saw an empty conflict clause.
-    VarId@ a = Int|1;
-    VarId@ b = Int|2;
-    VarId@ c = Int|3;
-    VarId@ d = Int|4;
-    VarId@ e = Int|5;
-    Formula@ f = List[
-      List[Var@(a, False), Var@(b, True)],
-      List[Var@(a, True), Var@(b, False)],
-      List[Var@(a, False), Var@(b, False)],
-      List[Var@(a, True), Var@(b, True)],
-      List[Var@(e, True), Var@(c, True)],
-      List[Var@(c, True), Var@(e, False), Var@(d, True)],
-      List[Var@(d, False), Var@(c, False)]
-    ];
-    Result@ want = Result@(unsat: Unit);
-    Result@ got = Solve(f);
-    AssertEq(want, got);
-  }),
-
+  TestSolve(DPLL),
+  TestSolve(CDCL),
   Test(Str|Dimacs, (Unit@ _) {
     String@ dimacs = Str|'c
 c start with comments
