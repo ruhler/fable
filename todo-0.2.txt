@@ -25,6 +25,8 @@ Things to consider doing for the fble-0.2 release.
     for example.
   - Or just use stdio for that?
 
+* Make a decision on struct copy expression before release.
+
 * Feedback from users:
  - Include README.txt in source repository.
    Figure out how to generate a nicely txt or md formatted version of it first.
