@@ -7,12 +7,6 @@
 % Inc = /Core/Int%.Inc;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ Fifo@ = /Core/Fifo%.Fifo@;
-<@>% Empty = /Core/Fifo%.Empty;
-<@>% First = /Core/Fifo%.First;
-<@>% Put = /Core/Fifo%.Put;
-<@>% Next = /Core/Fifo%.Next;
-
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
@@ -124,9 +118,7 @@ Why@ Attempt = Why@(attempt: Unit);
 Why@ Pure = Why@(pure: Unit);
 (ClauseId@) { Why@; } Inferred = (ClauseId@ id) { Why@(inferred: id); };
 
-@ AssignOp@ = *(Var@ var, Why@ why);
-
-@ Op@ = +(AssignOp@ Assign);
+@ Assign@ = *(Var@ var, Why@ why);
 
 @ Solver@ = *(
   Bool@ unsat,              # if true, the formula is trivially unsatisfiable.
@@ -134,8 +126,8 @@ Why@ Pure = Why@(pure: Unit);
   Vars@ vars,
   Clauses@ clauses,
   Conflicts@ conflicts,
-  List@<Var@> assigns,
-  Fifo@<Op@> ops
+  List@<Var@> assigns,        # Assignments made so far.
+  List@<Assign@> todo         # Assignments we should make.
 );
 
 Solver@ NewSolver = @(
@@ -145,7 +137,7 @@ Solver@ NewSolver = @(
   clauses: Clauses.Empty,
   conflicts: Conflicts.Empty,
   assigns: Nil<Var@>,
-  ops: Empty<Op@>
+  todo: Nil<Assign@>
 );
 
 # Add a new clause with the given clause id.
@@ -160,13 +152,13 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
   # Check for empty clause.
   clause.?(nil: s.@(unsat: True));
 
-  Fifo@<Op@> ops = {
+  List@<Assign@> todo = {
     # Check for unit clause.
     clause.cons.tail.?(nil: {
-      Put(Op@(Assign: @(var: clause.cons.head, why: Inferred(id))), s.ops);
+      Cons(@(var: clause.cons.head, why: Inferred(id)), s.todo);
     });
 
-    s.ops;
+    s.todo;
   };
 
   # Update Vars@ data structure.
@@ -183,7 +175,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
     });
 
   Clauses@ clauses = Clauses.Insert(s.clauses, id, clause);
-  s.@(vars, clauses, ops);
+  s.@(vars, clauses, todo);
 };
 
 # Adds a clause to the solver state for the given conflict.
@@ -244,16 +236,16 @@ RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
       Cons(c, cls);
     });
 
-  Fifo@<Op@> ops = {
-    ncls.?(cons: s.ops);
-    Put(Op@(Assign: @(var: Var@(var.id, Not(var.pos)), why: Pure)), s.ops);
+  List@<Assign@> todo = {
+    ncls.?(cons: s.todo);
+    Cons(@(var: Var@(var.id, Not(var.pos)), why: Pure), s.todo);
   };
 
   VarS@ nvs = var.pos.?(
     true: @(pos: ncls, neg: vs.neg),
     false: @(pos: vs.pos, neg: ncls));
 
-  s.@(vars: Vars.Insert(s.vars, var.id, nvs), ops);
+  s.@(vars: Vars.Insert(s.vars, var.id, nvs), todo);
 };
 
 # Removes a clause from the solver.
@@ -285,12 +277,13 @@ RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
     OpResult@(conflict: conflict);
   });
 
-  Fifo@<Op@> ops = {
-    nvars.cons.tail.?(cons: s.ops);
-    Put(Op@(Assign: @(var: nvars.cons.head, why: Inferred(clause))), s.ops);
+  List@<Assign@> todo = {
+    nvars.cons.tail.?(cons: s.todo);
+    Cons(@(var: nvars.cons.head, why: Inferred(clause)), s.todo);
   };
 
-  OpResult@(solver: s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), ops));
+  OpResult@(solver:
+    s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo));
 };
 
 # Assign a value to a variable.
@@ -349,7 +342,7 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
       inferred: Strs[Str|'inferred from ', Id(w.inferred)]);
   };
 
-  Show@<AssignOp@> Assign = (AssignOp@ op) {
+  Show@<Assign@> Assign = (Assign@ op) {
     Strs[Str|'Assign ', Var(op.var), Str|' (', Why(op.why), Str|')'];
   };
 
@@ -369,39 +362,20 @@ Algo@ CDCL = Algo@(cdcl: Unit);
 Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
   % O = /Core/Stream/OStream%(m);
 
-  # @func[DoAssign] Do an assign operation.
-  #  Remove VarId from Variables map. If it's there:
-  #  @i Add variable assignment.
-  #  @i For each + clause, add a RemoveClause operation.
-  #  @i For each - clause, add a RemoveVarFromClause operation.
-  (Solver@, AssignOp@) { M@<OpResult@>; } DoAssign = (Solver@ s, AssignOp@ op) {
-    Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Show.Assign(op));
-    }));
-    m.return(Assign(op.var, op.why, s));
-  };
-
-  # @func[DoOp] Apply an operation.
-  #  @arg[Solver@][s] The formula state to process the op on.
-  #  @returns[OpResult]
-  #   @i conflict if the op shows the formula is unsatisfiable.
-  #   @i The updated state of processing the op otherwise.
-  (Op@, Solver@) { M@<OpResult@>; } DoOp = (Op@ op, Solver@ s) {
-    op.?(Assign: DoAssign(s, op.Assign));
-  };
-
-  # @func[DoOps] Process ops until no more ops remain or unsat.
-  (Solver@) { M@<OpResult@>; } DoOps = (Solver@ s) {
+  # Process todos until no more remain or unsat.
+  (Solver@) { M@<OpResult@>; } Simplify = (Solver@ s) {
     s.unsat.?(true: m.return(OpResult@(unsat: Unit)));
 
-    Maybe@<Op@> mop = First(s.ops);
-    mop.?(nothing: m.return(OpResult@(solver: s)));
+    s.todo.?(nil: m.return(OpResult@(solver: s)));
+    Assign@ assign = s.todo.cons.head;
+    Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
+      O.PutLine(dbg, Show.Assign(assign));
+    }));
 
-    Solver@ ns = s.@(ops: Next(s.ops));
-    OpResult@ result <- m.do(DoOp(mop.just, ns));
-
-    result.?(solver: DoOps(result.solver));
-    m.return(result);
+    Solver@ ns = s.@(todo: s.todo.cons.tail);
+    OpResult@ result = Assign(assign.var, assign.why, ns);
+    result.?(conflict: m.return(result));
+    Simplify(result.solver);
   };
 
   # Pick some variable that exists in the given vars map.
@@ -424,7 +398,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       O.PutLine(dbg, Strs[Str|'Search: ', Show.Clauses(s.clauses)]);
     }));
 
-    OpResult@ ms <- m.do(DoOps(s));
+    OpResult@ ms <- m.do(Simplify(s));
     ms.?(conflict: m.return(Unsat(s)));
     ms.?(unsat: m.return(Unsat(s)));
 
@@ -434,13 +408,13 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     mvar.?(nothing: m.return(SearchResult@(sat: s.assigns)));
     VarId@ var = mvar.just;
 
-    Solver@ attempt = s.@(ops:
-      Put(Op@(Assign: @(var: Var@(var, True), why: Attempt)), s.ops));
+    Solver@ attempt = s.@(todo:
+      Cons(@(var: Var@(var, True), why: Attempt), s.todo));
 
     SearchResult@ attempted <- m.do(SearchDPLL(attempt));
     attempted.?(unsat: {
-      Solver@ ns = s.@(ops:
-        Put(Op@(Assign: @(var: Var@(var, False), why: Attempt)), s.ops));
+      Solver@ ns = s.@(todo:
+        Cons(@(var: Var@(var, False), why: Attempt), s.todo));
       SearchDPLL(ns);
     });
 
@@ -453,7 +427,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       O.PutLine(dbg, Show.Clauses(s.clauses));
     }));
 
-    OpResult@ ms <- m.do(DoOps(s));
+    OpResult@ ms <- m.do(Simplify(s));
     ms.?(
       conflict: {
         m.return(SearchResult@(unsat: @(
@@ -473,8 +447,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       O.PutLine(dbg, Strs[Str|'Try ', Show.Var(vattempt)]);
     }));
 
-    Solver@ attempt = s.@(ops:
-      Put(Op@(Assign: @(var: vattempt, why: Attempt)), s.ops));
+    Solver@ attempt = s.@(todo: Cons(@(var: vattempt, why: Attempt), s.todo));
 
     SearchResult@ attempted <- m.do(SearchCDCL(attempt));
     attempted.?(unsat: {
