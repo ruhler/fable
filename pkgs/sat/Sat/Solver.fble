@@ -140,6 +140,12 @@ Solver@ NewSolver = @(
   todo: Nil<Assign@>
 );
 
+# Adds a new entry to the list of todos.
+(Var@, Why@, List@<Assign@>) { List@<Assign@>; }
+Todo = (Var@ v, Why@ w, List@<Assign@> s) {
+  Cons(Assign@(v, w), s);
+};
+
 # Add a new clause with the given clause id.
 (Solver@, ClauseId@, List@<Var@>) { Solver@; }
 AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
@@ -154,10 +160,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
 
   List@<Assign@> todo = {
     # Check for unit clause.
-    clause.cons.tail.?(nil: {
-      Cons(@(var: clause.cons.head, why: Inferred(id)), s.todo);
-    });
-
+    clause.cons.tail.?(nil: Todo(clause.cons.head, Inferred(id), s.todo));
     s.todo;
   };
 
@@ -237,7 +240,7 @@ RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
 
   List@<Assign@> todo = {
     ncls.?(cons: s.todo);
-    Cons(@(var: Var@(var.id, Not(var.pos)), why: Pure), s.todo);
+    Todo(Var@(var.id, Not(var.pos)), Pure, s.todo);
   };
 
   VarS@ nvs = var.pos.?(
@@ -278,7 +281,7 @@ RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
 
   List@<Assign@> todo = {
     nvars.cons.tail.?(cons: s.todo);
-    Cons(@(var: nvars.cons.head, why: Inferred(clause)), s.todo);
+    Todo(nvars.cons.head, Inferred(clause), s.todo);
   };
 
   Simplified@(solver:
@@ -407,13 +410,10 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     mvar.?(nothing: m.return(SearchResult@(sat: s.assigns)));
     VarId@ var = mvar.just;
 
-    Solver@ attempt = s.@(todo:
-      Cons(@(var: Var@(var, True), why: Attempt), s.todo));
-
+    Solver@ attempt = s.@(todo: Todo(Var@(var, True), Attempt, s.todo));
     SearchResult@ attempted <- m.do(SearchDPLL(attempt));
     attempted.?(unsat: {
-      Solver@ ns = s.@(todo:
-        Cons(@(var: Var@(var, False), why: Attempt), s.todo));
+      Solver@ ns = s.@(todo: Todo(Var@(var, False), Attempt, s.todo));
       SearchDPLL(ns);
     });
 
@@ -445,7 +445,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       O.PutLine(dbg, Strs[Str|'Try ', Show.Var(vattempt)]);
     }));
 
-    Solver@ attempt = s.@(todo: Cons(@(var: vattempt, why: Attempt), s.todo));
+    Solver@ attempt = s.@(todo: Todo(vattempt, Attempt, s.todo));
 
     SearchResult@ attempted <- m.do(SearchCDCL(attempt));
     attempted.?(unsat: {
