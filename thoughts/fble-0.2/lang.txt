@@ -90,3 +90,12 @@ What to call it? I think struct copy sounds good. That's really what it is. A
 shallow copy of a struct with option to modify.
 
 Should we allow s.@()? No. Just use s in that case.
+
+---
+
+I implemented struct copy. Let's give it some soak time and see how it feels.
+
+Initially in /Sat/Solver%, it's looks pretty nice to me. I can add a new
+'unsat' field with minimal modifications to the code, rather than having to
+touch every single place we construct a Solver@ value.
+

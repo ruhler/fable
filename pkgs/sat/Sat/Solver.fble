@@ -139,11 +139,11 @@ Why@ Pure = Why@(pure: Unit);
   AssignOp@ Assign,
   RemoveClauseOp@ RemoveClause,
   RemoveVarFromClauseOp@ RemoveVarFromClause,
-  RemoveClauseFromVarOp@ RemoveClauseFromVar,
-  Unit@ Unsat
+  RemoveClauseFromVarOp@ RemoveClauseFromVar
 );
 
 @ Solver@ = *(
+  Bool@ unsat,              # if true, the formula is trivially unsatisfiable.
   ClauseId@ clause_id,
   Vars@ vars,
   Clauses@ clauses,
@@ -152,8 +152,15 @@ Why@ Pure = Why@(pure: Unit);
   Fifo@<Op@> ops
 );
 
-Solver@ NewSolver = Solver@(
-  Int|0, Vars.Empty, Clauses.Empty, Conflicts.Empty, Nil<Var@>, Empty<Op@>);
+Solver@ NewSolver = @(
+  unsat: False,
+  clause_id: Int|0,
+  vars: Vars.Empty,
+  clauses: Clauses.Empty,
+  conflicts: Conflicts.Empty,
+  assigns: Nil<Var@>,
+  ops: Empty<Op@>
+);
 
 # Add a new clause with the given clause id.
 (Solver@, ClauseId@, List@<Var@>) { Solver@; }
@@ -164,10 +171,10 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
   mc.?(nothing: s);
   Clause@ clause = mc.just;
 
-  Fifo@<Op@> ops = {
-    # Check for empty clause.
-    clause.?(nil: Put(Op@(Unsat: Unit), s.ops));
+  # Check for empty clause.
+  clause.?(nil: s.@(unsat: True));
 
+  Fifo@<Op@> ops = {
     # Check for unit clause.
     clause.cons.tail.?(nil: {
       Put(Op@(Assign: @(var: clause.cons.head, why: Inferred(id))), s.ops);
@@ -415,12 +422,13 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       Assign: DoAssign(s, op.Assign),
       RemoveClause: m.return(DoRemoveClause(s, op.RemoveClause)),
       RemoveVarFromClause: DoRemoveVarFromClause(s, op.RemoveVarFromClause),
-      RemoveClauseFromVar: m.return(DoRemoveClauseFromVar(s, op.RemoveClauseFromVar)),
-      Unsat: m.return(OpResult@(unsat: Unit)));
+      RemoveClauseFromVar: m.return(DoRemoveClauseFromVar(s, op.RemoveClauseFromVar)));
   };
 
   # @func[DoOps] Process ops until no more ops remain or unsat.
   (Solver@) { M@<OpResult@>; } DoOps = (Solver@ s) {
+    s.unsat.?(true: m.return(OpResult@(unsat: Unit)));
+
     Maybe@<Op@> mop = First(s.ops);
     mop.?(nothing: m.return(OpResult@(solver: s)));
 
@@ -431,7 +439,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     m.return(result);
   };
 
-  # Pick some a variable that exists in the given vars map.
+  # Pick some variable that exists in the given vars map.
   (Vars@) { Maybe@<VarId@>; } PickSomeVar = (Vars@ vars) {
     # TODO: Come up with a more efficient way to pick any single existing
     # variable.
@@ -441,7 +449,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       });
   };
 
-  (Solver@) { SearchResult@; } UnsatDPLL = (Solver@ s) {
+  (Solver@) { SearchResult@; } Unsat = (Solver@ s) {
     SearchResult@(unsat: @(clause_id: s.clause_id, conflicts: s.conflicts));
   };
 
@@ -452,8 +460,8 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     }));
 
     OpResult@ ms <- m.do(DoOps(s));
-    ms.?(conflict: m.return(UnsatDPLL(s)));
-    ms.?(unsat: m.return(UnsatDPLL(s)));
+    ms.?(conflict: m.return(Unsat(s)));
+    ms.?(unsat: m.return(Unsat(s)));
 
     Solver@ s = ms.solver;
 
@@ -487,11 +495,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
             clause_id: Inc(s.clause_id),
             conflicts: Conflicts.Insert(s.conflicts, s.clause_id, ms.conflict))));
       },
-      unsat: {
-        m.return(SearchResult@(unsat: @(
-            clause_id: s.clause_id,
-            conflicts: s.conflicts)));
-      });
+      unsat: m.return(Unsat(s)));
 
     Solver@ s = ms.solver;
 

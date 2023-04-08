@@ -27,6 +27,8 @@ Things to consider doing for the fble-0.2 release.
 
 * Make a decision on struct copy expression before release.
 
+* Can we set spell option in vim to only be for comments in fble.vim?
+
 * Feedback from users:
  - Include README.txt in source repository.
    Figure out how to generate a nicely txt or md formatted version of it first.
