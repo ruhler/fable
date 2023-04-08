@@ -2000,3 +2000,58 @@ to it in the case of unsat.
 
 Let's figure out how to code this up. It's a fairly big change in how we do
 simplification. Details need working out.
+
+---
+
+Details:
+* Implement assign as a function rather than breaking it down into ops. That
+  should be fine. The stack depth required is constant for a single assign.
+* Implement 'unsat' op as a field (I've already made this change). So we can
+  easily check and stop when we have the [] clauses added.
+
+Simplify returns an update solver with
+* unsat set to true if it turns out to be unsat.
+* conflicts added if there was some conflict.
+* assigns added if there were some assignments.
+
+Invariant: if conflicts were added, unsat is true and the conflicts required
+to justify have been added.
+
+Note: in the unsat case, the value of 'vars' and 'clauses' fields are
+meaningless. So is 'assigns'. But the 'conflicts' and 'clause_id' fields are
+relevant.
+
+Simplify is implemented as:
+  if unsat: return.
+  if no assign ops: return.
+  Apply next assign op.
+    if conflict, add conflict clause, roll back assign op, and try again to
+    simplify.
+    otherwise simplify the result of the assign op.
+
+Easy. That means the assign function can return either an updated solver, or a
+conflict.
+
+Search for conflict driven clause learning is implemented as:
+  Simplify.
+  If unsat: return with newly learned conflicts.
+  If solved: return with newly learned assignment.
+  Attempt some var. Search recursively.
+  if solved: return.
+  if unsat: roll back attempt, apply learned clauses, and try again to search.
+
+Easy. And because simplify guarantees we've learned [] in the unsat case, we
+should avoid attempting more than dpll would.
+
+Next step to implement: factor out Assign operation into a function. It should
+return AssignResult@ as Solver@ or Conflict@. For first attempt, have it
+return OpResult@. Keep Op@ as is. After that, remove and clean up the Op@
+infrastructure.
+
+One thing I expect I'll want is a way to say ForEach, but break out of the for
+each loop early. Can we do that with /Core/Iter%? Or should we implement
+ForEachWhile function that takes a predicate to be able to break out early?
+Let's start implementing Assign first and see what's most natural. We could do
+the slow version to start, then optimize it as a second step. Hopefully
+whatever approach we take can be used for optimizing picking the next var too.
+
