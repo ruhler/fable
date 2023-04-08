@@ -216,7 +216,7 @@ AddClauses = (Solver@ solver, List@<Clause@> clauses) {
   });
 };
 
-@ OpResult@ = +(
+@ Simplified@ = +(
   Solver@ solver,     # not found to be unsat yet.
   Conflict@ conflict, # unsat due to conflict.
   Unit@ unsat         # trivially unsat.
@@ -262,10 +262,10 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
   ns.@(clauses: Clauses.Delete(ns.clauses, id));
 };
 
-(ClauseId@, VarId@, Why@, Solver@) { OpResult@; }
+(ClauseId@, VarId@, Why@, Solver@) { Simplified@; }
 RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
   Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, clause);
-  mcs.?(nothing: OpResult@(solver: s));
+  mcs.?(nothing: Simplified@(solver: s));
 
   List@<Var@> nvars = Clause.RemoveVar(var, mcs.just);
   nvars.?(nil: {
@@ -274,7 +274,7 @@ RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
     ClauseId@ w = why.inferred;
 
     Conflict@ conflict = @(a: clause, b: w, var: var);
-    OpResult@(conflict: conflict);
+    Simplified@(conflict: conflict);
   });
 
   List@<Assign@> todo = {
@@ -282,19 +282,19 @@ RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
     Cons(@(var: nvars.cons.head, why: Inferred(clause)), s.todo);
   };
 
-  OpResult@(solver:
+  Simplified@(solver:
     s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo));
 };
 
 # Assign a value to a variable.
 # Returns the updated solver state, or a Conflict@ in case of a conflict.
-(Var@, Why@, Solver@) { OpResult@; }
+(Var@, Why@, Solver@) { Simplified@; }
 Assign = (Var@ var, Why@ why, Solver@ s) {
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
 
   # If the variable doesn't exist, we must have already made an assignment for
   # it. Ignore this assignment attempt.
-  mvs.?(nothing: OpResult@(solver: s));
+  mvs.?(nothing: Simplified@(solver: s));
   VarS@ vs = mvs.just;
 
   Solver@ ns = s.@(
@@ -307,8 +307,8 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
 
   # TODO: Break out of the loop as soon as we find a conflict rather than
   # going through the entire list?
-  /Core/List%.ForEach(unmatch, OpResult@(solver: match_s),
-    (ClauseId@ c, OpResult@ r) {
+  /Core/List%.ForEach(unmatch, Simplified@(solver: match_s),
+    (ClauseId@ c, Simplified@ r) {
       r.?(conflict: r);
       RemoveVarFromClause(c, var.id, why, r.solver);
     });
@@ -363,17 +363,17 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
   % O = /Core/Stream/OStream%(m);
 
   # Process todos until no more remain or unsat.
-  (Solver@) { M@<OpResult@>; } Simplify = (Solver@ s) {
-    s.unsat.?(true: m.return(OpResult@(unsat: Unit)));
+  (Solver@) { M@<Simplified@>; } Simplify = (Solver@ s) {
+    s.unsat.?(true: m.return(Simplified@(unsat: Unit)));
 
-    s.todo.?(nil: m.return(OpResult@(solver: s)));
+    s.todo.?(nil: m.return(Simplified@(solver: s)));
     Assign@ assign = s.todo.cons.head;
     Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
       O.PutLine(dbg, Show.Assign(assign));
     }));
 
     Solver@ ns = s.@(todo: s.todo.cons.tail);
-    OpResult@ result = Assign(assign.var, assign.why, ns);
+    Simplified@ result = Assign(assign.var, assign.why, ns);
     result.?(conflict: m.return(result));
     Simplify(result.solver);
   };
@@ -398,7 +398,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       O.PutLine(dbg, Strs[Str|'Search: ', Show.Clauses(s.clauses)]);
     }));
 
-    OpResult@ ms <- m.do(Simplify(s));
+    Simplified@ ms <- m.do(Simplify(s));
     ms.?(conflict: m.return(Unsat(s)));
     ms.?(unsat: m.return(Unsat(s)));
 
@@ -427,7 +427,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       O.PutLine(dbg, Show.Clauses(s.clauses));
     }));
 
-    OpResult@ ms <- m.do(Simplify(s));
+    Simplified@ ms <- m.do(Simplify(s));
     ms.?(
       conflict: {
         m.return(SearchResult@(unsat: @(
