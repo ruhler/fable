@@ -1997,3 +1997,6 @@ Has [], nothing left to pop, so return.
 One nice thing about this is that it adds the conflict clauses as we go. In
 other words, the result of 'simplify' already has the conflict clauses added
 to it in the case of unsat.
+
+Let's figure out how to code this up. It's a fairly big change in how we do
+simplification. Details need working out.

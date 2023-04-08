@@ -4,7 +4,6 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-@ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
@@ -23,7 +22,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-<<@>@>% Debug = /Sat/Debug%.Debug;
+<<@>@>% NoDebug = /Sat/Debug%.NoDebug;
 
 @ Clause@ = /Sat/Solver%.Clause@;
 @ VarId@ = /Sat/Solver%.VarId@;
@@ -51,9 +50,7 @@ VarId@ Z = /Core/Int%.3;
 (Formula@) { Result@; } Solve = {
   <@>@ M@ = /Core/Monad/Pure%.Pure@;
   Monad@<M@> m = /Core/Monad/Pure%.Monad;
-  % solve = /Sat/Solver%.Solve<M@>(m,
-    Debug<M@>(m, Int|0, (Int@ _) { m.return(Unit); }),
-    CDCL);
+  % solve = /Sat/Solver%.Solve<M@>(m, NoDebug<M@>(m), CDCL);
   (Formula@ formula) {
     solve(AddClauses(NewSolver, formula));
   };

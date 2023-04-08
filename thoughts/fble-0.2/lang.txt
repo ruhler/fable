@@ -51,4 +51,21 @@ way to optimize the implementation specially over straight up new constructor
 value. Or if we already have precedent elsewhere for complex operations with
 simple syntax.
 
+---
+
+There is potentially a justification for adding this syntax from an
+implementation point of view. If we know based on context that the value being
+modified would otherwise be unused after the modification, we could modify in
+place and avoid the allocation. For example:
+
+ Solver@ s = ...;
+ foo(s.@(...));
+
+Because 's' is defined locally, we can track all of its uses.
+Because the result goes into the tail call of foo, we know nobody else will
+refer to the original 's' again. Then we can update in place.
+
+It's a bit thin of an argument. This seems like a rare case to me. Also, it
+wouldn't mean the compiler is required to update in place. That's too much
+burden on the compiler.
 
