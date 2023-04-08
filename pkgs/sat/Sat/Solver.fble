@@ -217,9 +217,8 @@ AddClauses = (Solver@ solver, List@<Clause@> clauses) {
 };
 
 @ Simplified@ = +(
-  Solver@ solver,     # not found to be unsat yet.
-  Conflict@ conflict, # unsat due to conflict.
-  Unit@ unsat         # trivially unsat.
+  Solver@ solver,     # simplified or trivially unsat.
+  Conflict@ conflict  # unsat due to conflict.
 );
 
 # Removes a clause from a Vars@ var entry.
@@ -364,9 +363,9 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
 
   # Process todos until no more remain or unsat.
   (Solver@) { M@<Simplified@>; } Simplify = (Solver@ s) {
-    s.unsat.?(true: m.return(Simplified@(unsat: Unit)));
-
+    s.unsat.?(true: m.return(Simplified@(solver: s)));
     s.todo.?(nil: m.return(Simplified@(solver: s)));
+
     Assign@ assign = s.todo.cons.head;
     Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
       O.PutLine(dbg, Show.Assign(assign));
@@ -400,9 +399,9 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
 
     Simplified@ ms <- m.do(Simplify(s));
     ms.?(conflict: m.return(Unsat(s)));
-    ms.?(unsat: m.return(Unsat(s)));
 
     Solver@ s = ms.solver;
+    s.unsat.?(true: m.return(Unsat(s)));
 
     Maybe@<VarId@> mvar = PickSomeVar(s.vars);
     mvar.?(nothing: m.return(SearchResult@(sat: s.assigns)));
@@ -428,15 +427,14 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     }));
 
     Simplified@ ms <- m.do(Simplify(s));
-    ms.?(
-      conflict: {
+    ms.?(conflict: {
         m.return(SearchResult@(unsat: @(
             clause_id: Inc(s.clause_id),
             conflicts: Conflicts.Insert(s.conflicts, s.clause_id, ms.conflict))));
-      },
-      unsat: m.return(Unsat(s)));
+    });
 
     Solver@ s = ms.solver;
+    s.unsat.?(true: m.return(Unsat(s)));
 
     Maybe@<VarId@> mvar = PickSomeVar(s.vars);
     mvar.?(nothing: m.return(SearchResult@(sat: s.assigns)));
