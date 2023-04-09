@@ -109,12 +109,10 @@
 
 # The reasoning behind a variable assignment.
 @ Why@ = +(
-  Unit@ attempt,      # This is an attempt to rule out this variable.
   Unit@ pure,         # The variable is a pure literal, so no harm setting it.
   ClauseId@ inferred  # The value was inferred from the given clause.
 );
 
-Why@ Attempt = Why@(attempt: Unit);
 Why@ Pure = Why@(pure: Unit);
 (ClauseId@) { Why@; } Inferred = (ClauseId@ id) { Why@(inferred: id); };
 
@@ -263,8 +261,8 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
 
 # Caller is responsible for ensuring no conflict arises as a result of
 # removing the variable.
-(ClauseId@, VarId@, Why@, Solver@) { Solver@; }
-RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
+(VarId@)(ClauseId@, Solver@) { Solver@; }
+RemoveVarFromClause = (VarId@ var)(ClauseId@ clause, Solver@ s) {
   Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, clause);
   mcs.?(nothing: s);
 
@@ -283,8 +281,7 @@ RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
 # Assign a value to a variable.
 # It is the callers responsibility to ensure no conflict is encountered during
 # assignment.
-(Var@, Why@, Solver@) { Solver@; }
-Assign = (Var@ var, Why@ why, Solver@ s) {
+(Var@, Solver@) { Solver@; } Assign = (Var@ var, Solver@ s) {
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
 
   # If the variable doesn't exist, we must have already made an assignment for
@@ -298,12 +295,9 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
 
   List@<ClauseId@> match = var.pos.?(true: vs.pos, false: vs.neg);
   Solver@ match_s = /Core/List%.ForEach(match, ns, RemoveClause);
-  List@<ClauseId@> unmatch = var.pos.?(true: vs.neg, false: vs.pos);
 
-  /Core/List%.ForEach(unmatch, match_s,
-    (ClauseId@ c, Solver@ s) {
-      RemoveVarFromClause(c, var.id, why, s);
-    });
+  List@<ClauseId@> unmatch = var.pos.?(true: vs.neg, false: vs.pos);
+  /Core/List%.ForEach(unmatch, match_s, RemoveVarFromClause(var.id));
 };
 
 @ Assignment@ = List@<Var@>;
@@ -328,10 +322,7 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
   Show@<Clause@> Clause = /Core/List/Show%.Show(Var);
 
   Show@<Why@> Why = (Why@ w) {
-    w.?(
-      attempt: Str|'attempt',
-      pure: Str|'pure',
-      inferred: Strs[Str|'inferred from ', Id(w.inferred)]);
+    w.?(pure: Str|'pure', inferred: Strs[Str|'inferred from ', Id(w.inferred)]);
   };
 
   Show@<Assign@> Assign = (Assign@ op) {
@@ -436,7 +427,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
       O.PutLine(dbg, Show.Assign(assign));
     }));
     Solver@ ns = s.@(todo: s.todo.cons.tail);
-    Solver@ result = Assign(assign.var, assign.why, ns);
+    Solver@ result = Assign(assign.var, ns);
 
     # If the assignment succeeded, but further simplification failed, apply
     # what we learned to before the assignment and simplify again.
@@ -477,7 +468,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
       O.PutLine(dbg, Strs[Str|'Try: ', Show.Var(vattempt)]);
     }));
-    Solver@ attempt = Assign(vattempt, Attempt, s);
+    Solver@ attempt = Assign(vattempt, s);
       
     SearchResult@ attempted <- m.do(Search(attempt));
     attempted.?(unsat: {
