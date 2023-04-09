@@ -261,49 +261,35 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
   ns.@(clauses: Clauses.Delete(ns.clauses, id));
 };
 
-@ Simplified@ = +(
-  Solver@ solver,     # simplified or trivially unsat.
-  Conflict@ conflict  # unsat due to conflict.
-);
-
-(Solver@) { Simplified@; } Simplified = (Solver@ s) {
-  Simplified@(solver: s);
-};
-
-(ClauseId@, VarId@, Why@, Solver@) { Simplified@; }
+# Caller is responsible for ensuring no conflict arises as a result of
+# removing the variable.
+(ClauseId@, VarId@, Why@, Solver@) { Solver@; }
 RemoveVarFromClause = (ClauseId@ clause, VarId@ var, Why@ why, Solver@ s) {
   Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, clause);
-  mcs.?(nothing: Simplified(s));
+  mcs.?(nothing: s);
 
   List@<Var@> nvars = Clause.RemoveVar(var, mcs.just);
-  nvars.?(nil: {
-    # Assertion: clause conflicts only arise from inferred variables,
-    # not attempted assignments nor pure literals.
-    # We promise to never attempt a variable that we could infer from a
-    # clause, and pure literals can't lead to conflicts.
-    ClauseId@ w = why.inferred;
 
-    Conflict@ conflict = @(a: clause, b: w, var: var);
-    Simplified@(conflict: conflict);
-  });
-
+  # Assertion: nvars must not be empty, because caller ensures we won't
+  # encounter a conflict.
   List@<Assign@> todo = {
     nvars.cons.tail.?(cons: s.todo);
     Todo(nvars.cons.head, Inferred(clause), s.todo);
   };
 
-  Simplified(s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo));
+  s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo);
 };
 
 # Assign a value to a variable.
-# Returns the updated solver state, or a Conflict@ in case of a conflict.
-(Var@, Why@, Solver@) { Simplified@; }
+# It is the callers responsibility to ensure no conflict is encountered during
+# assignment.
+(Var@, Why@, Solver@) { Solver@; }
 Assign = (Var@ var, Why@ why, Solver@ s) {
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
 
   # If the variable doesn't exist, we must have already made an assignment for
   # it. Ignore this assignment attempt.
-  mvs.?(nothing: Simplified(s));
+  mvs.?(nothing: s);
   VarS@ vs = mvs.just;
 
   Solver@ ns = s.@(
@@ -314,12 +300,9 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
   Solver@ match_s = /Core/List%.ForEach(match, ns, RemoveClause);
   List@<ClauseId@> unmatch = var.pos.?(true: vs.neg, false: vs.pos);
 
-  # TODO: Break out of the loop as soon as we find a conflict rather than
-  # going through the entire list?
-  /Core/List%.ForEach(unmatch, Simplified(match_s),
-    (ClauseId@ c, Simplified@ r) {
-      r.?(conflict: r);
-      RemoveVarFromClause(c, var.id, why, r.solver);
+  /Core/List%.ForEach(unmatch, match_s,
+    (ClauseId@ c, Solver@ s) {
+      RemoveVarFromClause(c, var.id, why, s);
     });
 };
 
@@ -453,11 +436,11 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
       O.PutLine(dbg, Show.Assign(assign));
     }));
     Solver@ ns = s.@(todo: s.todo.cons.tail);
-    Simplified@ result = Assign(assign.var, assign.why, ns);
+    Solver@ result = Assign(assign.var, assign.why, ns);
 
     # If the assignment succeeded, but further simplification failed, apply
     # what we learned to before the assignment and simplify again.
-    Solver@ ss <- m.do(Simplify(result.solver));
+    Solver@ ss <- m.do(Simplify(result));
     ss.unsat.?(false: m.return(ss));
     Simplify(ApplyLearnedClauses(s, ss));
   };
@@ -494,7 +477,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
       O.PutLine(dbg, Strs[Str|'Try: ', Show.Var(vattempt)]);
     }));
-    Solver@ attempt = Assign(vattempt, Attempt, s).solver;
+    Solver@ attempt = Assign(vattempt, Attempt, s);
       
     SearchResult@ attempted <- m.do(Search(attempt));
     attempted.?(unsat: {
