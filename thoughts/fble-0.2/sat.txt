@@ -2161,3 +2161,8 @@ In summary:
 
 It's that easy.
 
+---
+
+We got rope down to 3 minutes. Still longer than I was hoping, given we can do
+it in 10 seconds with pure dpll. Let me do some cleanup of the code and see
+where we are after that.

@@ -355,11 +355,14 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
     Strs[Str|'Assign ', Var(op.var), Str|' (', Why(op.why), Str|')'];
   };
 
+  Show@<List@<Assign@>> Todo = /Core/List/Show%.Show(Assign);
+
   Show@<Conflict@> Conflict = (Conflict@ c) {
     Strs[Str|'Conflict ', Id(c.a), Str|', ', Id(c.b), Str|' on ', Id(c.var)];
   };
 
-  @(Id, Var, Clause, Why, Assign, Conflict,
+
+  @(Id, Var, Clause, Why, Assign, Todo, Conflict,
     Clauses: Clauses.Show(Clause));
 };
 
@@ -372,6 +375,44 @@ ApplyLearnedClauses = (Solver@ to, Solver@ from) {
         Maybe@<Conflict@> conflict = Conflicts.Lookup(s.conflicts, i);
         AddConflictClause(i, conflict.just, s);
       });
+};
+
+(Assign@, Assign@) { Bool@; }
+AssignsAreConflicting = (Assign@ a, Assign@ b) {
+  EqId(a.var.id, b.var.id).?(false: False);
+  /Core/Bool/Eq%.Eq(a.var.pos, b.var.pos).?(true: False);
+
+  # Don't consider 'pure' literals as conflicting to work around the case
+  # where a variable is entirely eliminated, becoming simultaneously pure
+  # positive and pure negative.
+  a.why.?(pure: False);
+
+  True;
+};
+
+# Find and return a conflicting assignment in a todo list sorted by variable
+# id.
+(List@<Assign@>) { Maybe@<Conflict@>; }
+GetConflictFromSorted = (List@<Assign@> todo)
+{
+  todo.?(nil: Nothing<Conflict@>);
+  todo.cons.tail.?(nil: Nothing<Conflict@>);
+  Assign@ a = todo.cons.head;
+  Assign@ b = todo.cons.tail.cons.head;
+  AssignsAreConflicting(a, b).?(true: {
+    Just(Conflict@(a.why.inferred, b.why.inferred, a.var.id));
+  });
+
+  GetConflictFromSorted(todo.cons.tail);
+};
+
+# Find and return a conflicting assignment in the todo list, if any.
+(List@<Assign@>) { Maybe@<Conflict@>; }
+GetConflict = (List@<Assign@> todo)
+{
+  GetConflictFromSorted(/Core/List/Sort%.Sort(
+      (Assign@ a, Assign@ b) { /Core/Int/Eq%.Le(a.var.id, b.var.id); },
+      todo));
 };
 
 <<@>@ M@>(Monad@<M@>, Debug@<M@>)(Solver@) { M@<Result@>; }
@@ -387,6 +428,25 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     s.unsat.?(true: m.return(s));
     s.todo.?(nil: m.return(s));
 
+    # Check for conflicts in the todo list.
+    Unit@ _ <- m.do(debug(Int|1, (OStream@<M@> dbg) {
+      O.PutLine(dbg, Strs[Str|'Todo: ', Show.Todo(s.todo)]);
+    }));
+
+    Maybe@<Conflict@> conflict = GetConflict(s.todo);
+    conflict.?(just: {
+      # Add the conflict and note that we are done here.
+      ClauseId@ id = s.clause_id;
+      Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
+        O.PutLine(dbg, Strs[Show.Id(id), Str|': ', Show.Conflict(conflict.just)]);
+      }));
+      Solver@ rs = s.@(
+        unsat: True,
+        clause_id: Inc(id),
+        conflicts: Conflicts.Insert(s.conflicts, id, conflict.just));
+      m.return(rs);
+    });
+
     # Apply the next assignment in the todo list.
     Assign@ assign = s.todo.cons.head;
     Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
@@ -394,19 +454,6 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     }));
     Solver@ ns = s.@(todo: s.todo.cons.tail);
     Simplified@ result = Assign(assign.var, assign.why, ns);
-
-    # If there was a conflict, apply that new conflict to before the
-    # assignment and try again.
-    result.?(conflict: {
-      ClauseId@ id = s.clause_id;
-      Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
-        O.PutLine(dbg, Strs[Show.Id(id), Str|': ', Show.Conflict(result.conflict)]);
-      }));
-      Solver@ ns = s.@(
-        clause_id: Inc(id),
-        conflicts: Conflicts.Insert(s.conflicts, id, result.conflict));
-      Simplify(AddConflictClause(id, result.conflict, ns));
-    });
 
     # If the assignment succeeded, but further simplification failed, apply
     # what we learned to before the assignment and simplify again.
@@ -444,8 +491,11 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     VarId@ var = mvar.just;
 
     Var@ vattempt = Var@(var, True);
-    Solver@ attempt = s.@(todo: Todo(vattempt, Attempt, s.todo));
-
+    Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
+      O.PutLine(dbg, Strs[Str|'Try: ', Show.Var(vattempt)]);
+    }));
+    Solver@ attempt = Assign(vattempt, Attempt, s).solver;
+      
     SearchResult@ attempted <- m.do(Search(attempt));
     attempted.?(unsat: {
       # Add conflict clauses for all conflicts encountered in our attempted

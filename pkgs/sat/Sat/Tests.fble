@@ -163,6 +163,24 @@ Test@ Tests = TestSuite(Str|Sat, List[
     AssertEq(want, got);
   }),
 
+  Test(Str|PureConflict, (Unit@ _) {
+    # Regression test for a bug where we learned both +x and -x were pure
+    # because the variable value didn't matter at all.
+    Formula@ f = List[
+      List[Var@(X, True)],
+      List[Var@(X, True), Var@(Y, True)],
+      List[Var@(X, True), Var@(Y, False)]
+    ];
+
+    # Hack to test that we got a sat result.
+    % eq = (Result@ wnt, Result@ got) {
+      got.?(sat: True);
+      False;
+    };
+    Result@ got = Solve(f);
+    AssertEquals(eq, ShowResult, got, got);
+  }),
+
   Test(Str|EmptyConflict, (Unit@ _) {
     # Regression test for a bug where we saw an empty conflict clause.
     VarId@ a = Int|1;
