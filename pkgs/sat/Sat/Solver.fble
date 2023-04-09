@@ -156,7 +156,9 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
   Clause@ clause = mc.just;
 
   # Check for empty clause.
-  clause.?(nil: s.@(unsat: True));
+  clause.?(nil: {
+    s.@(unsat: True, clauses: Clauses.Insert(s.clauses, id, Nil<Var@>));
+  });
 
   List@<Assign@> todo = {
     # Check for unit clause.
@@ -365,24 +367,56 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
 Algo@ DPLL = Algo@(dpll: Unit);
 Algo@ CDCL = Algo@(cdcl: Unit);
 
+(Solver@, Solver@) { Solver@; }
+ApplyLearnedClauses = (Solver@ to, Solver@ from) {
+  Solver@ s = to.@(clause_id: from.clause_id, conflicts: from.conflicts);
+  /Core/Iter%.For(
+      /Core/Int/Iter%.Range(to.clause_id, from.clause_id), s,
+      (Id@ i, Solver@ s) {
+        Maybe@<Conflict@> conflict = Conflicts.Lookup(s.conflicts, i);
+        AddConflictClause(i, conflict.just, s);
+      });
+};
+
 <<@>@ M@>(Monad@<M@>, Debug@<M@>, Algo@)(Solver@) { M@<Result@>; }
 Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
   % O = /Core/Stream/OStream%(m);
 
   # Process todos until no more remain or unsat.
-  (Solver@) { M@<Simplified@>; } Simplify = (Solver@ s) {
-    s.unsat.?(true: m.return(Simplified(s)));
-    s.todo.?(nil: m.return(Simplified(s)));
+  (Solver@) { M@<Solver@>; } Simplify = (Solver@ s) {
+    Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
+      O.PutLine(dbg, Strs[Str|'Simplify: ', Show.Clauses(s.clauses)]);
+    }));
 
+    s.unsat.?(true: m.return(s));
+    s.todo.?(nil: m.return(s));
+
+    # Apply the next assignment in the todo list.
     Assign@ assign = s.todo.cons.head;
     Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
       O.PutLine(dbg, Show.Assign(assign));
     }));
-
     Solver@ ns = s.@(todo: s.todo.cons.tail);
     Simplified@ result = Assign(assign.var, assign.why, ns);
-    result.?(conflict: m.return(result));
-    Simplify(result.solver);
+
+    # If there was a conflict, apply that new conflict to before the
+    # assignment and try again.
+    result.?(conflict: {
+      ClauseId@ id = s.clause_id;
+      Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
+        O.PutLine(dbg, Strs[Show.Id(id), Str|': ', Show.Conflict(result.conflict)]);
+      }));
+      Solver@ ns = s.@(
+        clause_id: Inc(id),
+        conflicts: Conflicts.Insert(s.conflicts, id, result.conflict));
+      Simplify(AddConflictClause(id, result.conflict, ns));
+    });
+
+    # If the assignment succeeded, but further simplification failed, apply
+    # what we learned to before the assignment and simplify again.
+    Solver@ ss <- m.do(Simplify(result.solver));
+    ss.unsat.?(false: m.return(ss));
+    Simplify(ApplyLearnedClauses(s, ss));
   };
 
   # Pick some variable that exists in the given vars map.
@@ -405,10 +439,8 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       O.PutLine(dbg, Strs[Str|'Search: ', Show.Clauses(s.clauses)]);
     }));
 
-    Simplified@ ms <- m.do(Simplify(s));
-    ms.?(conflict: m.return(Unsat(s)));
-
-    Solver@ s = ms.solver;
+    Solver@ ss <- m.do(Simplify(s));
+    Solver@ s = ss;
     s.unsat.?(true: m.return(Unsat(s)));
 
     Maybe@<VarId@> mvar = PickSomeVar(s.vars);
@@ -428,17 +460,11 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
   # Sat solver with conflict driven clause learning.
   (Solver@) { M@<SearchResult@>; } SearchCDCL = (Solver@ s) {
     Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Show.Clauses(s.clauses));
+      O.PutLine(dbg, Strs[Str|'Search: ', Show.Clauses(s.clauses)]);
     }));
 
-    Simplified@ ms <- m.do(Simplify(s));
-    ms.?(conflict: {
-        m.return(SearchResult@(unsat: @(
-            clause_id: Inc(s.clause_id),
-            conflicts: Conflicts.Insert(s.conflicts, s.clause_id, ms.conflict))));
-    });
-
-    Solver@ s = ms.solver;
+    Solver@ ss <- m.do(Simplify(s));
+    Solver@ s = ss;
     s.unsat.?(true: m.return(Unsat(s)));
 
     Maybe@<VarId@> mvar = PickSomeVar(s.vars);
@@ -446,10 +472,6 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     VarId@ var = mvar.just;
 
     Var@ vattempt = Var@(var, True);
-    Unit@ _ <- m.do(debug(Int|2, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Strs[Str|'Try ', Show.Var(vattempt)]);
-    }));
-
     Solver@ attempt = s.@(todo: Todo(vattempt, Attempt, s.todo));
 
     SearchResult@ attempted <- m.do(SearchCDCL(attempt));
@@ -459,13 +481,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
       Solver@ ns = s.@(
         clause_id: attempted.unsat.clause_id,
         conflicts: attempted.unsat.conflicts);
-      Solver@ next_attempt = /Core/Iter%.For(
-        /Core/Int/Iter%.Range(s.clause_id, ns.clause_id), ns,
-        (Id@ i, Solver@ s) {
-          Maybe@<Conflict@> conflict = Conflicts.Lookup(ns.conflicts, i);
-          AddConflictClause(i, conflict.just, s);
-        });
-      SearchCDCL(next_attempt);
+      SearchCDCL(ApplyLearnedClauses(s, ns));
     });
 
     m.return(attempted);

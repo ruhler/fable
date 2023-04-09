@@ -2055,3 +2055,81 @@ Let's start implementing Assign first and see what's most natural. We could do
 the slow version to start, then optimize it as a second step. Hopefully
 whatever approach we take can be used for optimizing picking the next var too.
 
+---
+
+Okay! We've got things cleaned up with Assign. Code is looking pretty clean
+now. We should be able to update the algorithm for simplification.
+
+Actually, let's first rerun the easy benchmarks. I suspect assign order has
+changed, so the numbers could be fairly different. Better to rule that out as
+a variable order change rather than an algorithm change.
+
+When we update Simplify, it should return a Solver@ instead of Simplified@,
+because we'll keep going until unsat and conflicts are added directly. Assign
+will continue to return Solver@ or Conflict@.
+
+---
+
+I implemented my proposed update. Does it help? Does it work as expected?
+
+No. Something is wrong. We aren't proving [-3] like I expect.
+
+Let me add more debug logging. What do I want to see?
+
+The issue is, I need to keep on the stack if the assignment is successful. Let
+me see if I can rework the code in a way that makes sense.
+
+So, I try an assignment.
+
+If it doesn't conflict. Then I recursively call simplify, which should result
+in unsat or simplified. If it's unsat, then I undo the assign and recursively
+simplify, now that we have the new rules. Right? Huh?
+
+Try again.
+
+Do an assignment.
+If it doesn't conflict, simplify. 
+  If it's not unsat, we're done. Simplified.
+  If it becomes unsat. Add the learned clauses to before the assignment, and
+  recursively simplify.
+If it does conflict,
+  Add the conflict clause.
+  Recursively simplify.
+
+No. It's eluding me right now. I'm sure it's there somewhere.
+
+Maybe what we want is:
+* If assign results in conflict, add the conflict clause.
+* Recursively 
+
+blah. Anyway, I think I got it worked out now.
+
+Well, we got rope down to 6 minutes from 10 minutes. dpll went up to 1m20
+seconds, which shows the overhead of this form of simplification.
+
+Shall we rerun the numbers on easy and see what we get? Or start running
+numbers on medium?
+
+Or profile rope?
+
+The profile is interesting. It shows almost all the time in
+RemoveClauseFromVar. Anything we can do to fix that? For example, change a
+Clause@ to a map from VarId to polarity so it's log to remove a variable
+rather than linear?
+
+---
+
+Claim: If doing 'Assign' results in a conflict on variable x, then there is
+some clause [+x] and some clause [-x]. One for the original assign, and one
+for the conflict. Then we would see both clauses listed in the Assign@ todo
+list. No need to do the assign to find the conflict. Sort the todo list,
+iterate over it, get the conflict right away from there.
+
+Claim: Adding the conflict clause after a conflicting 'Assign' adds [] and
+makes the formula unsat right away.
+
+Now, if Assign does not result in a conflict, but simplifying the result leads
+to unsat, then ... let me figure this out. I think we're doing much more work
+than necessary.
+
+
