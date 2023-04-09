@@ -363,10 +363,6 @@ Assign = (Var@ var, Why@ why, Solver@ s) {
     Clauses: Clauses.Show(Clause));
 };
 
-@ Algo@ = +(Unit@ dpll, Unit@ cdcl);
-Algo@ DPLL = Algo@(dpll: Unit);
-Algo@ CDCL = Algo@(cdcl: Unit);
-
 (Solver@, Solver@) { Solver@; }
 ApplyLearnedClauses = (Solver@ to, Solver@ from) {
   Solver@ s = to.@(clause_id: from.clause_id, conflicts: from.conflicts);
@@ -378,8 +374,8 @@ ApplyLearnedClauses = (Solver@ to, Solver@ from) {
       });
 };
 
-<<@>@ M@>(Monad@<M@>, Debug@<M@>, Algo@)(Solver@) { M@<Result@>; }
-Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
+<<@>@ M@>(Monad@<M@>, Debug@<M@>)(Solver@) { M@<Result@>; }
+Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
   % O = /Core/Stream/OStream%(m);
 
   # Process todos until no more remain or unsat.
@@ -433,32 +429,8 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     SearchResult@(unsat: @(clause_id: s.clause_id, conflicts: s.conflicts));
   };
 
-  # Basic DPLL based sat solver.
-  (Solver@) { M@<SearchResult@>; } SearchDPLL = (Solver@ s) {
-    Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Strs[Str|'Search: ', Show.Clauses(s.clauses)]);
-    }));
-
-    Solver@ ss <- m.do(Simplify(s));
-    Solver@ s = ss;
-    s.unsat.?(true: m.return(Unsat(s)));
-
-    Maybe@<VarId@> mvar = PickSomeVar(s.vars);
-    mvar.?(nothing: m.return(SearchResult@(sat: s.assigns)));
-    VarId@ var = mvar.just;
-
-    Solver@ attempt = s.@(todo: Todo(Var@(var, True), Attempt, s.todo));
-    SearchResult@ attempted <- m.do(SearchDPLL(attempt));
-    attempted.?(unsat: {
-      Solver@ ns = s.@(todo: Todo(Var@(var, False), Attempt, s.todo));
-      SearchDPLL(ns);
-    });
-
-    m.return(attempted);
-  };
-
   # Sat solver with conflict driven clause learning.
-  (Solver@) { M@<SearchResult@>; } SearchCDCL = (Solver@ s) {
+  (Solver@) { M@<SearchResult@>; } Search = (Solver@ s) {
     Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
       O.PutLine(dbg, Strs[Str|'Search: ', Show.Clauses(s.clauses)]);
     }));
@@ -474,23 +446,18 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
     Var@ vattempt = Var@(var, True);
     Solver@ attempt = s.@(todo: Todo(vattempt, Attempt, s.todo));
 
-    SearchResult@ attempted <- m.do(SearchCDCL(attempt));
+    SearchResult@ attempted <- m.do(Search(attempt));
     attempted.?(unsat: {
       # Add conflict clauses for all conflicts encountered in our attempted
       # search
       Solver@ ns = s.@(
         clause_id: attempted.unsat.clause_id,
         conflicts: attempted.unsat.conflicts);
-      SearchCDCL(ApplyLearnedClauses(s, ns));
+      Search(ApplyLearnedClauses(s, ns));
     });
 
     m.return(attempted);
   };
-
-  (Solver@) { M@<SearchResult@>; } Search = algo.?(
-    dpll: SearchDPLL,
-    cdcl: SearchCDCL
-  );
 
   (Solver@ s) {
     SearchResult@ result <- m.do(Search(s));
@@ -502,5 +469,4 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug, Algo@ algo) {
 
 @(VarId@, Var@, Clause@,
   Solver@, Assignment@, Result@,
-  Algo@, DPLL, CDCL,
   EqId, NewSolver, AddClause, AddClauses, Solve);

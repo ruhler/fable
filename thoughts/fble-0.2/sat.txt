@@ -2132,4 +2132,32 @@ Now, if Assign does not result in a conflict, but simplifying the result leads
 to unsat, then ... let me figure this out. I think we're doing much more work
 than necessary.
 
+If assign does not result in a conflict, but simplifying the result leads to
+unsat, then either:
+1. adding the conflict clauses to the state before the assign adds [], making
+it immediately unsat. This is the case where the assigned variable has nothing
+to do with why the formula was unsatisfiable.
+2. adding the conflict clauses to the state before the assign adds the
+opposite of the assigned variable. We want to learn the conflict from that.
+
+Thus I claim the following optimization:
+* Detect conflicts before doing assign. Only ever do assign after we know
+  there is not going to be an immediate conflict.
+
+Some nice results from this:
+* We can get rid of Simplified@ type. Assign can return Solver@ directly. Add
+  an assertion that it doesn't result in conflict.
+* We don't have to reassign the same variable multiple times to uncover all
+  the conflicts. We only assign each variable once in the simplify stack.
+
+While I'm at it, I feel like I may as well remove dpll now that it's so much
+slower than before? Or maybe don't worry about that until cdcl is in good
+enough state.
+
+In summary:
+* In simplify, before doing 'Assign', sort the todo list of assignments by var
+  id, walk over it to check if any conflicts. If so, apply the conflict right
+  there and return.
+
+It's that easy.
 
