@@ -2166,3 +2166,16 @@ It's that easy.
 We got rope down to 3 minutes. Still longer than I was hoping, given we can do
 it in 10 seconds with pure dpll. Let me do some cleanup of the code and see
 where we are after that.
+
+---
+
+Looks like cdcl is now caught up to dpll on most everything easy except rope.
+Checking out profile for cdcl on rope shows time in...
+
+Assign. Looks like iterating over so many clauses to do the assign.
+
+Assign is only called 3674 times in this case. Not bad. So, algorithmically
+speaking, I think we're in pretty good shape with cdcl.
+
+How to more quickly apply an assignment?
+

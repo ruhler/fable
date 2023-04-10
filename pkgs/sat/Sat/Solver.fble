@@ -220,8 +220,8 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 };
 
 # Removes a clause from a Vars@ var entry.
-(ClauseId@, Var@, Solver@) { Solver@; }
-RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
+(ClauseId@)(Var@, Solver@) { Solver@; }
+RemoveClauseFromVar = (ClauseId@ clause)(Var@ var, Solver@ s) {
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
   mvs.?(nothing: s);
   VarS@ vs = mvs.just;
@@ -252,10 +252,7 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
   mcs.?(nothing: s);
 
   Clause@ cs = mcs.just;
-  Solver@ ns = /Core/List%.ForEach(cs, s,
-    (Var@ v, Solver@ s) {
-      RemoveClauseFromVar(id, v, s);
-    });
+  Solver@ ns = /Core/List%.ForEach(cs, s, RemoveClauseFromVar(id));
   ns.@(clauses: Clauses.Delete(ns.clauses, id));
 };
 
