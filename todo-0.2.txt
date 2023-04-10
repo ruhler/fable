@@ -2,6 +2,8 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Add tests for /Core/Set%.
+
 * Sat Solver:
  - Add --help command line option to fble-sat.
  - Pull search logic out of /Sat/Solver%

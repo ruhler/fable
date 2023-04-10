@@ -52,9 +52,12 @@
 # conflicted on.
 @ Conflict@ = *(ClauseId@ a, ClauseId@ b, VarId@ var);
 
-# pos - the list of clauses this variable appears positive in.
-# neg - the list of clauses this variable appears negative in.
-@ VarS@ = *(List@<ClauseId@> pos, List@<ClauseId@> neg);
+% ClauseIds = /Sat/Id%.Set;
+@ ClauseIds@ = ClauseIds.Set@;
+
+# pos - the set of clauses this variable appears positive in.
+# neg - the set of clauses this variable appears negative in.
+@ VarS@ = *(ClauseIds@ pos, ClauseIds@ neg);
 
 % Vars = /Sat/Id%.Map<VarS@>;
 @ Vars@ = Vars.Map@;
@@ -64,6 +67,7 @@
 
 % Conflicts = /Sat/Id%.Map<Conflict@>;
 @ Conflicts@ = Conflicts.Map@;
+
 
 # Functions for working with clauses.
 # TODO: Move to a separate module?
@@ -170,10 +174,10 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
       Vars.InsertWith(vs, v.id, (Maybe@<VarS@> mx) {
           VarS@ x = mx.?(
             just: mx.just,
-            nothing: VarS@(Nil<ClauseId@>, Nil<ClauseId@>));
+            nothing: VarS@(ClauseIds.Empty, ClauseIds.Empty));
           v.pos.?(
-            true: VarS@(Cons(id, x.pos), x.neg),
-            false: VarS@(x.pos, Cons(id, x.neg)));
+            true: VarS@(ClauseIds.Insert(x.pos, id), x.neg),
+            false: VarS@(x.pos, ClauseIds.Insert(x.neg, id)));
         });
     });
 
@@ -226,15 +230,11 @@ RemoveClauseFromVar = (ClauseId@ clause)(Var@ var, Solver@ s) {
   mvs.?(nothing: s);
   VarS@ vs = mvs.just;
 
-  List@<ClauseId@> match = var.pos.?(true: vs.pos, false: vs.neg);
-  List@<ClauseId@> ncls = /Core/List%.ForEach(match, Nil<ClauseId@>,
-    (ClauseId@ c, List@<ClauseId@> cls) {
-      EqId(clause, c).?(true: cls);
-      Cons(c, cls);
-    });
+  ClauseIds@ match = var.pos.?(true: vs.pos, false: vs.neg);
+  ClauseIds@ ncls = ClauseIds.Delete(match, clause);
 
   List@<Assign@> todo = {
-    ncls.?(cons: s.todo);
+    ClauseIds.IsEmpty(ncls).?(false: s.todo);
     Todo(Var@(var.id, Not(var.pos)), Pure, s.todo);
   };
 
@@ -290,11 +290,11 @@ RemoveVarFromClause = (VarId@ var)(ClauseId@ clause, Solver@ s) {
     vars: Vars.Delete(s.vars, var.id),
     assigns: Cons(var, s.assigns));
 
-  List@<ClauseId@> match = var.pos.?(true: vs.pos, false: vs.neg);
-  Solver@ match_s = /Core/List%.ForEach(match, ns, RemoveClause);
+  ClauseIds@ match = var.pos.?(true: vs.pos, false: vs.neg);
+  Solver@ match_s = ClauseIds.ForEach(match, ns, RemoveClause);
 
-  List@<ClauseId@> unmatch = var.pos.?(true: vs.neg, false: vs.pos);
-  /Core/List%.ForEach(unmatch, match_s, RemoveVarFromClause(var.id));
+  ClauseIds@ unmatch = var.pos.?(true: vs.neg, false: vs.pos);
+  ClauseIds.ForEach(unmatch, match_s, RemoveVarFromClause(var.id));
 };
 
 @ Assignment@ = List@<Var@>;

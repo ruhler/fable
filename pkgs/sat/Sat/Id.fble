@@ -23,4 +23,16 @@
   @(Map@, Empty, Insert, InsertWith, Lookup, Delete, ForEach, Show);
 };
 
-@(Id@, EqId, Map);
+% Set = {
+  @ Set@ = /Core/Set%.Set@<Id@>;
+  % Empty = /Core/Set%.Empty<Id@>;
+  % IsEmpty = /Core/Set%.IsEmpty<Id@>;
+  % Insert = /Core/Set%.Insert<Id@>(LtId);
+  % Delete = /Core/Set%.Delete<Id@>(LtId);
+  <@>% ForEach = /Core/Set%.ForEach<Id@>;
+  % Show = /Core/Set/Show%.Show<Id@>(/Core/Int/Show%.Show);
+
+  @(Set@, Empty, IsEmpty, Insert, Delete, ForEach, Show);
+};
+
+@(Id@, EqId, Map, Set);

@@ -1,0 +1,33 @@
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Reverse = /Core/List%.Reverse;
+
+<@>@ Set@ = /Core/Set%.Set@;
+<@,@>% ForEach = /Core/Set%.ForEach;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+# Show --
+#   Implementation of Show@ for Set@<T@>. See documentation of
+#   /Core/Show%.Show@.
+#
+#   { }
+#   { a; }
+#   { a; b; }
+#
+<@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
+Show = <@ T@>(Show@<T@> show)(Set@<T@> s) {
+  List@<String@> elems = ForEach(s, List[Str|'{ '],
+    (T@ x, List@<String@> es) {
+      Cons(Strs[show(x), Str|';'], es);
+    });
+  Strs(Reverse(Cons(Str|'}', elems)));
+};
+
+@(Show);

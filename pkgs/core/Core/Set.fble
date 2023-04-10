@@ -74,4 +74,51 @@ Insert = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
   /Core/Map%.Insert<T@>(lt)<Unit@>(set, element, Unit);
 };
 
-@(Set@, Empty, IsEmpty, Contains, Insert);
+# Delete --
+#   Removes an element from the set.
+#
+# Has no effect if the element is not present in the set.
+#
+# Type Parameters:
+#   T@ - the type of element in the set.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing elements.
+#   set - the set to remove the element from.
+#   element - the element to remove.
+#
+# Example Use:
+#   % Delete = /Set%.Delete<String@>(/Core/String/Eq%.Lt);
+#   Delete(set, Str(Chars|foo));
+<@ T@>(Eq@<T@>)(Set@<T@>, T@) { Set@<T@>; }
+Delete = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
+  /Core/Map%.Delete<T@>(lt)<Unit@>(set, element);
+};
+
+# ForEach --
+#   Iterates over entries of a set.
+#
+# Type Parameters:
+#   T@ - the type of element in the set.
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Inputs:
+#   set - the set to iterate over.
+#   base - the initial value to update and return from the loop.
+#   body - the body of the loop.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each entry in the map.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach x in map:
+#     b = body(x, b)
+#   return b
+<@ T@, @ B@>(Set@<T@>, B@, (T@, B@) { B@; }) { B@; }
+ForEach = <@ T@, @ B@>(Set@<T@> set, B@ base, (T@, B@) { B@; } body) {
+  /Core/Map%.ForEach(set, base, (T@ x, Unit@ _, B@ b) { body(x, b); });
+};
+
+@(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach);
