@@ -5,7 +5,8 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Ord@ = /Core/Ord%.Ord@;
+@ Ordering@ = /Core/Ord%.Ordering@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
@@ -197,18 +198,20 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 #   does not contain any such value.
 #
 # Example Use:
-#   % Lookup = /Map%.Lookup<String@>(/Core/String/Eq%.Lt)<Foo@>;
+#   % Lookup = /Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Foo@>;
 #   Lookup(map, key);
 #
-#   % Lookup = /Map%.Lookup<String@>(/Core/String/Eq%.Lt);
+#   % Lookup = /Map%.Lookup<String@>(/Core/String/Ord%.Ord);
 #   Lookup<Foo@>(mapToFoo, key);
 #   Lookup<Bar@>(mapToBar, key);
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
-Lookup = <@ K@>(Eq@<K@> lt)<@ V@> {
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
+Lookup = <@ K@>(Ord@<K@> ord)<@ V@> {
   (Map@<K@, V@>, K@) { Maybe@<V@>; } L = (Map@<K@, V@> map, K@ key) {
     map.?(empty: Nothing<V@>);
-    lt(key, map.map.key).?(true: L(map.map.left, key));
-    lt(map.map.key, key).?(true: L(map.map.right, key));
+
+    Ordering@ ordering = ord(key, map.map.key);
+    ordering.?(lt: L(map.map.left, key));
+    ordering.?(gt: L(map.map.right, key));
     Just<V@>(map.map.value);
   };
   L;
@@ -431,8 +434,8 @@ RebalanceRight = <@ K@, @ V@> (K@ key, V@ value, Balance@ balance, Map@<K@, V@> 
 #   key - the value of the key to store with the map entry.
 #   with - a function that returns the value to insert given the existing
 #          value in the map, or Nothing to delete the value in the map.
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
-Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
+Modify = <@ K@>(Ord@<K@> ord)<@ V@> {
   (Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
   M = (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
     map.?(empty: {
@@ -448,7 +451,9 @@ Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
       @(delta: '0', map: Empty<K@, V@>);
     });
 
-    lt(key, map.map.key).?(true: {
+    Ordering@ ordering = ord(key, map.map.key);
+
+    ordering.?(lt: {
       # Recurse to left subtree.
       RebalanceLeft<K@, V@>(
         map.map.key,
@@ -458,7 +463,7 @@ Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
         map.map.right);
     });
 
-    lt(map.map.key, key).?(true: {
+    ordering.?(gt: {
       # Recurse to right subtree.
       RebalanceRight<K@, V@>(
         map.map.key,
@@ -519,11 +524,11 @@ Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
 #   key - the key of the value to delete from the map.
 #
 # Example Use:
-#   % Delete = /Map%.Delete<String@>(/Core/String/Eq%.Lt)<Int@>;
+#   % Delete = /Map%.Delete<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Delete(map, Str(Chars|foo));
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
-Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
-  Modify<K@>(lt)<V@>(map, key, (Maybe@<V@> _) { Nothing<V@>; }).map;
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Delete = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key) {
+  Modify<K@>(ord)<V@>(map, key, (Maybe@<V@> _) { Nothing<V@>; }).map;
 };
 
 # InsertWith --
@@ -542,13 +547,13 @@ Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
 #          value in the map.
 #
 # Example Use:
-#   % InsertWith = /Map%.InsertWith<String@>(/Core/String/Eq%.Lt)<Int@>;
+#   % InsertWith = /Map%.InsertWith<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   InsertWith(map, Str(Chars|foo), (Maybe@<Int@> mv) {
 #     mv.?(just: Add(mv, value), nothing: value);
 #   };
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
-InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
-  Modify<K@>(lt)<V@>(map, key, (Maybe@<V@> v) { Just<V@>(with(v)); }).map;
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
+InsertWith = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+  Modify<K@>(ord)<V@>(map, key, (Maybe@<V@> v) { Just<V@>(with(v)); }).map;
 };
 
 # Insert --
@@ -566,11 +571,11 @@ InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V
 #   value - the value to insert.
 #
 # Example Use:
-#   % Insert = /Map%.Insert<String@>(/Core/String/Eq%.Lt)<Int@>;
+#   % Insert = /Map%.Insert<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Insert(map, Str(Chars|foo), 4);
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
-Insert = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
-  InsertWith<K@>(lt)<V@>(map, key, (Maybe@<V@> _) { value; });
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
+Insert = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
+  InsertWith<K@>(ord)<V@>(map, key, (Maybe@<V@> _) { value; });
 };
 
 # ForEach --

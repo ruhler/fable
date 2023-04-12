@@ -5,7 +5,7 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Ord@ = /Core/Ord%.Ord@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -66,13 +66,13 @@ IsEmpty = _@.<@<IsEmpty>>(Map.IsEmpty);
 #   does not contain any such value.
 #
 # Example Use:
-#   % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Eq%.Lt)<Foo@>;
+#   % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Foo@>;
 #   Lookup(map, key);
 #
-#   % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Eq%.Lt);
+#   % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord);
 #   Lookup<Foo@>(mapToFoo, key);
 #   Lookup<Bar@>(mapToBar, key);
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
 Lookup = _@.<@<Lookup>>(Map.Lookup);
 
 # Insert --
@@ -90,9 +90,9 @@ Lookup = _@.<@<Lookup>>(Map.Lookup);
 #   value - the value to insert.
 #
 # Example Use:
-#   % Insert = /Core/Map%.Insert<String@>(/Core/String/Eq%.Lt)<Int@>;
+#   % Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Insert(map, Str(Chars|foo), 4);
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Insert = _@.<@<Insert>>(Map.Insert);
 
 # InsertWith --
@@ -111,11 +111,11 @@ Insert = _@.<@<Insert>>(Map.Insert);
 #          value in the map.
 #
 # Example Use:
-#   % InsertWith = /Core/Map%.InsertWith<String@>(/Core/String/Eq%.Lt)<Int@>;
+#   % InsertWith = /Core/Map%.InsertWith<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   InsertWith(map, Str(Chars|foo), (Maybe@<Int@> mv) {
 #     mv.?(just: Add(mv, value), nothing: value);
 #   };
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
 InsertWith = _@.<@<InsertWith>>(Map.InsertWith);
 
 # Delete --
@@ -127,9 +127,9 @@ InsertWith = _@.<@<InsertWith>>(Map.InsertWith);
 #   key - the key of the value to delete from the map.
 #
 # Example Use:
-#   % Delete = /Core/Map%.Delete<String@>(/Core/String/Eq%.Lt)<Int@>;
+#   % Delete = /Core/Map%.Delete<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Delete(map, Str(Chars|foo));
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
 Delete = _@.<@<Delete>>(Map.Delete);
 
 # ForEach --

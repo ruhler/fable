@@ -14,8 +14,12 @@
 % Lt = /Core/Int/Eq%.Lt;
 % Int = /Core/Int/Lit%.Int;
 % Range = /Core/Int/Iter%.Range;
+% Ord = /Core/Int/Ord%.Ord;
 
 <@>@ List@ = /Core/List%.List@;
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+@ Ordering@ = /Core/Ord%.Ordering@;
 
 @ String@ = /Core/String%.String@;
 % Strs = /Core/String%.Strs;
@@ -33,6 +37,11 @@
   Lt(a.x, b.x).?(true: True);
   Lt(b.x, a.x).?(true: False);
   Lt(a.y, b.y);
+};
+
+Ord@<Point@> OrdPoint = (Point@ a, Point@ b) {
+  Ordering@ r = Ord(a.x, b.x);
+  r.?(eq: Ord(a.y, b.y), : r);
 };
 
 (Point@) { String@; } ShowPoint = (Point@ x) {
@@ -57,7 +66,7 @@
 
 @ Drawn@ = /Core/Map%.Map@<Point@, Color@>;
 
-% Insert = /Core/Map%.Insert<Point@>(LtPoint)<Color@>;
+% Insert = /Core/Map%.Insert<Point@>(OrdPoint)<Color@>;
 
 @ Pixel@ = *(Int@ x, Int@ y, Color@ color);
 
@@ -128,5 +137,6 @@ AssertEquals = (Drawn@ expected, Drawn@ actual) {
     expected, actual);
 };
 
-@(Drawn@, Pixel@, Draw, Drawn, ShowColor, EqColor, LtPoint, AssertEquals);
+@(Drawn@, Pixel@,
+  Draw, Drawn, ShowColor, EqColor, LtPoint, OrdPoint, AssertEquals);
 

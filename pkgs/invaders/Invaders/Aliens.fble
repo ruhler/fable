@@ -33,6 +33,7 @@
 % Ge = /Core/Int/Eq%.Ge;
 % Gt = /Core/Int/Eq%.Gt;
 % Int = /Core/Int/Lit%.Int;
+% Ord = /Core/Int/Ord%.Ord;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
 <@>@ Shifted@ = /Core/LFSR%.Shifted@;
@@ -112,10 +113,15 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
   Le(a.col, b.col);
 };
 
+/Core/Ord%.Ord@<Alien@> AlienOrd = (Alien@ a, Alien@ b) {
+  Ord(a.row, b.row).?(lt: /Core/Ord%.Lt, gt: /Core/Ord%.Gt);
+  Ord(a.col, b.col);
+};
+
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  % Insert = /Core/Map%.Insert<Alien@>(AlienLt)<Unit@>;
+  % Insert = /Core/Map%.Insert<Alien@>(AlienOrd)<Unit@>;
   DoWhile<Alien@, Set@>(FirstAlien, Next, /Core/Map%.Empty<Alien@, Unit@>, 
     (Alien@ a, Set@ s) {
       Insert(s, a, Unit);
@@ -127,7 +133,7 @@ Set@ AllAliens = {
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
 (Set@, Alien@) { Bool@; } Contains = {
-  % Lookup = /Core/Map%.Lookup<Alien@>(AlienLt)<Unit@>;
+  % Lookup = /Core/Map%.Lookup<Alien@>(AlienOrd)<Unit@>;
   (Set@ set, Alien@ alien) {
     Lookup(set, alien).?(just: True, nothing: False);
   };
@@ -135,7 +141,7 @@ Set@ AllAliens = {
 
 # Remove --
 #   Remove an element of the set.
-(Set@, Alien@) { Set@; } Remove = /Core/Map%.Delete<Alien@>(AlienLt)<Unit@>;
+(Set@, Alien@) { Set@; } Remove = /Core/Map%.Delete<Alien@>(AlienOrd)<Unit@>;
 
 # NextAlive --
 #   Returns the next live alien in the given set, or Nothing if we have

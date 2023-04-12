@@ -2201,4 +2201,54 @@ After switching to a set, hoping for better than 3 minutes for rope...
 
 Now down to 2 minutes. Good. Let's see how the profile looks now.
 
+RemoveClauseFromVar time cut in half.
+
+Half the time is RemoveClause. Seems like Map operations are the rest. That's
+split between, say, 15% Delete, and the rest RemoveClauseFromVar still.
+RemoveClauseFromVar is 30% Lookup, 30% Insert, and the rest Delete.
+
+Everything is coming down to map performance now. Over half the total time is
+integer comparison.
+
+So what next?
+
+---
+
+I tried running perf profile on rope, but I don't have enough memory on my
+computer to convert it.
+
+I don't see any way to improve the implementation of Lt. But there is
+opportunity to cut the number of Lt calls in half in the implementation of
+Map. If we passed a general comparison operation instead of less than, and
+that returned either Lt, Eq, or Gt as a result, we don't have to call Lt
+twice at every level of the map. We can call it once.
+
+Let's see if we can find a slightly easier benchmark than rope. Run regular
+profile, see if it looks the same. Then run perf profile.
+
+The top time of the easy benchmarks is:
+
+  bench/easy/6cnf20_28000_28000_3.shuffled.cnf
+
+The fble profile looks similar to rope, so should be good to work off of.
+
+But yeah, definitely passing a compare function to Map instead of a Lt
+function should cut map lookup/insert times in half.
+
+Looking at the perf profile:
+* Nothing significantly different. Lt is still expensive.
+ 7% Lt
+ 6.6% FbleThreadTailCall - mostly from Lt.
+
+I think I can get 30% improvement on sat by changing map to take Compare
+instead of Lt. Similar improvements elsewhere. I don't really see a downside.
+
+---
+
+Switching to Ord@ for map: no complaints implementation wise. Feels like an
+improvement.
+
+Goal now is to improve on 2 minute time for rope. Let's see how well we do.
+
+Down to 1m38s. 20% improvement. Not terrible.
 

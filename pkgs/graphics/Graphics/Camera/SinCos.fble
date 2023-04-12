@@ -1,8 +1,8 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Neg = /Core/Int%.Neg;
-% Lt = /Core/Int/Eq%.Lt;
 % Int = /Core/Int/Lit%.Int;
+% Ord = /Core/Int/Ord%.Ord;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
@@ -23,7 +23,7 @@ Table@ Table = {
     Entry@(a, SinCos@(sin, cos));
   };
 
-  % Insert = /Core/Map%.Insert<Int@>(Lt)<SinCos@>;
+  % Insert = /Core/Map%.Insert<Int@>(Ord)<SinCos@>;
 
   (Table@, List@<Entry@>) { Table@; }
   Inserts = (Table@ table, List@<Entry@> entries) {
@@ -296,7 +296,7 @@ Table@ Table = {
   ]);
 };
 
-% Lookup = /Core/Map%.Lookup<Int@>(Lt)<SinCos@>;
+% Lookup = /Core/Map%.Lookup<Int@>(Ord)<SinCos@>;
 
 # SinCos --
 #   Compute the sin and cos values for a given angle.

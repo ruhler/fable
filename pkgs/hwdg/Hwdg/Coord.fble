@@ -3,6 +3,9 @@
 
 @ Int@ = /Core/Int%.Int@;
 
+<@>@ Ord@ = /Core/Ord%.Ord@;
+@ Ordering@ = /Core/Ord%.Ordering@;
+
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
@@ -39,8 +42,16 @@
   };
 };
 
+Ord@<Coord@> Ord = {
+  % OrdInt = /Core/Int/Ord%.Ord;
+  (Coord@ a, Coord@ b) {
+    Ordering@ r = OrdInt(a.x, b.x);
+    r.?(eq: OrdInt(a.y, b.y), : r);
+  };
+};
+
 /Core/Show%.Show@<Coord@> Show = (Coord@ x) {
   Strs[Str|'(', /Core/Int/Show%.Show(x.x), Str|',', /Core/Int/Show%.Show(x.y), Str|')'];
 };
 
-@(Coord@, Add, Eq, Lt, Show);
+@(Coord@, Add, Eq, Lt, Ord, Show);

@@ -1,0 +1,14 @@
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Ordering@ = +(Unit@ lt, Unit@ eq, Unit@ gt);
+
+Ordering@ Lt = Ordering@(lt: Unit);
+Ordering@ Eq = Ordering@(eq: Unit);
+Ordering@ Gt = Ordering@(gt: Unit);
+
+<@>@ Ord@ = <@ T@>(T@, T@) { Ordering@; };
+
+@(Ordering@, Ord@, Lt, Eq, Gt);
+

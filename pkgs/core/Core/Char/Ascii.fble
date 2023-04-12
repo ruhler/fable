@@ -49,8 +49,8 @@
 (Int@) { Char@; } Chr = {
   @ Map@ = /Core/Map%.Map@<Int@, Char@>;
   % Empty = /Core/Map%.Empty<Int@, Char@>;
-  % Insert = /Core/Map%.Insert<Int@>(/Core/Int/Eq%.Lt)<Char@>;
-  % Lookup = /Core/Map%.Lookup<Int@>(/Core/Int/Eq%.Lt)<Char@>;
+  % Insert = /Core/Map%.Insert<Int@>(/Core/Int/Ord%.Ord)<Char@>;
+  % Lookup = /Core/Map%.Lookup<Int@>(/Core/Int/Ord%.Ord)<Char@>;
 
   (Char@, Map@) { Map@; } Put = (Char@ c, Map@ m) {
     Insert(m, Ord(c), c);

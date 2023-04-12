@@ -169,8 +169,8 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
   # Check if a port is blocked because its memory location has already been
   # updated.
   (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } Blocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
-    pi.?(just: /Core/Set%.Contains<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c));
-    po.?(just: /Core/Set%.Contains<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c));
+    pi.?(just: /Core/Set%.Contains<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c));
+    po.?(just: /Core/Set%.Contains<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c));
     False;
   };
 
@@ -196,10 +196,10 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
   (B@, Coord@, PortSpec@, PortSpec@) { B@; } Update = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
     po.?(just: @(
       memory: /Hwdg/Memory%.Set(b.memory, c, po.just),
-      updated: /Core/Set%.Insert<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c)));
+      updated: /Core/Set%.Insert<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c)));
     pi.?(just: @(
       memory: /Hwdg/Memory%.Clear(b.memory, c),
-      updated: /Core/Set%.Insert<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c)));
+      updated: /Core/Set%.Insert<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c)));
     b;
   };
 

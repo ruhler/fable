@@ -1,0 +1,18 @@
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+% Lt = /Core/Ord%.Lt;
+% Eq = /Core/Ord%.Eq;
+% Gt = /Core/Ord%.Gt;
+
+% OrdP = /Core/Int/IntP/Ord%.Ord;
+
+@ Int@ = /Core/Int%.Int@;
+
+Ord@<Int@> Ord = (Int@ a, Int@ b) {
+  a.?(
+      n: b.?(n: OrdP(b.n, a.n), 0: Lt, p: Lt),
+      0: b.?(n: Gt, 0: Eq, p: Lt),
+      p: b.?(n: Gt, 0: Gt, p: OrdP(a.p, b.p)));
+};
+
+@(Ord);

@@ -3,24 +3,37 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
-% Or = /Core/Bool%.Or;
+
 @ Char@ = /Core/Char%.Char@;
+
 <@>@ Eq@ = /Core/Eq%.Eq@;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Append = /Core/List%.Append;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+@ Ordering@ = /Core/Ord%.Ordering@;
+% Lt = /Core/Ord%.Lt;
+% Eq = /Core/Ord%.Eq;
+% Gt = /Core/Ord%.Gt;
+
 <@>@ Show@ = /Core/Show%.Show@;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
@@ -37,8 +50,10 @@ Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
     1: b.?(0: False, 1: True));
 };
 
-Eq@<Bit1@> LtBit1 = (Bit1@ a, Bit1@ b) {
-  a.?(0: b.?(0: False, 1: True), 1: False);
+Ord@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
+  a.?(
+    0: b.?(0: Eq, 1: Lt),
+    1: b.?(0: Gt, 1: Eq));
 };
 
 Show@<Bit1@> ShowBit1 = (Bit1@ x) {
@@ -49,8 +64,9 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
   And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
 };
 
-Eq@<Bit2@> LtBit2 = (Bit2@ a, Bit2@ b) {
-  Or(LtBit1(a.h, b.h), And(EqBit1(a.h, b.h), LtBit1(a.l, b.l)));
+Ord@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
+  Ordering@ oh = OrdBit1(a.h, b.h);
+  oh.?(eq: OrdBit1(a.l, b.l), : oh);
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {
@@ -59,9 +75,9 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 
 <@>@ Map@ = /Core/Map%.Map@<Bit2@>;
 <@>% Empty = /Core/Map%.Empty<Bit2@>;
-<@>% Lookup = /Core/Map%.Lookup<Bit2@>(LtBit2);
-<@>% Insert = /Core/Map%.Insert<Bit2@>(LtBit2);
-<@>% Delete = /Core/Map%.Delete<Bit2@>(LtBit2);
+<@>% Lookup = /Core/Map%.Lookup<Bit2@>(OrdBit2);
+<@>% Insert = /Core/Map%.Insert<Bit2@>(OrdBit2);
+<@>% Delete = /Core/Map%.Delete<Bit2@>(OrdBit2);
 <@,@>% ForEach = /Core/Map%.ForEach<Bit2@>;
 
 Test@ Tests = TestSuite(Str|Map, List<Test@>[

@@ -2,6 +2,9 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Change Map to take Compare function instead of Lt.
+ - Check performance improvements on sat benchmarks.
+
 * Add tests for /Core/Set%.
 
 * Sat Solver:

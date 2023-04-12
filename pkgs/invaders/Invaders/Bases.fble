@@ -15,6 +15,7 @@
 % Lt = /Core/Int/Eq%.Lt;
 % Ge = /Core/Int/Eq%.Ge;
 % Int = /Core/Int/Lit%.Int;
+% Ord = /Core/Int/Ord%.Ord;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
@@ -46,13 +47,13 @@ Bases@ Empty = /Core/Map%.Empty<Int@, Slice@>;
 
 # Lookup --
 #   Look up a slice by X coordinate.
-(Bases@, Int@) { Maybe@<Slice@>; } Lookup = /Core/Map%.Lookup<Int@>(Lt)<Slice@>;
+(Bases@, Int@) { Maybe@<Slice@>; } Lookup = /Core/Map%.Lookup<Int@>(Ord)<Slice@>;
 
 # Delete --
 #   Remove a slice by X coordinate.
-(Bases@, Int@) { Bases@; } Delete = /Core/Map%.Delete<Int@>(Lt)<Slice@>;
+(Bases@, Int@) { Bases@; } Delete = /Core/Map%.Delete<Int@>(Ord)<Slice@>;
 
-(Bases@, Int@, Slice@) { Bases@; } Insert = /Core/Map%.Insert<Int@>(Lt)<Slice@>;
+(Bases@, Int@, Slice@) { Bases@; } Insert = /Core/Map%.Insert<Int@>(Ord)<Slice@>;
   
 
 # BaseSpec --

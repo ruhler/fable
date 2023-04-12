@@ -20,19 +20,19 @@ Memory@ Empty = /Core/Map%.Empty<Coord@, Data@>;
 # Get --
 #   Get the value of memory at a particular location.
 (Memory@, Coord@) { Maybe@<Data@>; } Get = {
-  /Core/Map%.Lookup<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+  /Core/Map%.Lookup<Coord@>(/Hwdg/Coord%.Ord)<Data@>;
 };
 
 # Put -- 
 #   Set the data value at a particular location.
 (Memory@, Coord@, Data@) { Memory@; } Set = {
-  /Core/Map%.Insert<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+  /Core/Map%.Insert<Coord@>(/Hwdg/Coord%.Ord)<Data@>;
 };
 
 # Clear --
 #   Clear the data value of a particular location, leaving the location empty.
 (Memory@, Coord@) { Memory@; } Clear = {
-  /Core/Map%.Delete<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+  /Core/Map%.Delete<Coord@>(/Hwdg/Coord%.Ord)<Data@>;
 };
 
 # Eq --

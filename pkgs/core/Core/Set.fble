@@ -3,7 +3,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Ord@ = /Core/Ord%.Ord@;
 
 <@,@>@ Map@ = /Core/Map%.Map@;
 
@@ -48,11 +48,11 @@ Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
 #   True if the element belongs to the map, false otherwise.
 #
 # Example Use:
-#   % Contains = /Set%.Contains<String@>(/Core/String/Eq%.Lt);
+#   % Contains = /Set%.Contains<String@>(/Core/String/Ord%.Ord);
 #   Contains(set, value);
-<@ T@>(Eq@<T@>)(Set@<T@>, T@) { Bool@; }
-Contains = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
-  /Core/Map%.Lookup<T@>(lt)<Unit@>(set, element).?(just: True, nothing: False);
+<@ T@>(Ord@<T@>)(Set@<T@>, T@) { Bool@; }
+Contains = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
+  /Core/Map%.Lookup<T@>(ord)<Unit@>(set, element).?(just: True, nothing: False);
 };
 
 # Insert --
@@ -67,11 +67,11 @@ Contains = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
 #   element - the element to insert.
 #
 # Example Use:
-#   % Insert = /Set%.Insert<String@>(/Core/String/Eq%.Lt);
+#   % Insert = /Set%.Insert<String@>(/Core/String/Ord%.Ord);
 #   Insert(set, Str(Chars|foo));
-<@ T@>(Eq@<T@>)(Set@<T@>, T@) { Set@<T@>; }
-Insert = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
-  /Core/Map%.Insert<T@>(lt)<Unit@>(set, element, Unit);
+<@ T@>(Ord@<T@>)(Set@<T@>, T@) { Set@<T@>; }
+Insert = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
+  /Core/Map%.Insert<T@>(ord)<Unit@>(set, element, Unit);
 };
 
 # Delete --
@@ -88,11 +88,11 @@ Insert = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
 #   element - the element to remove.
 #
 # Example Use:
-#   % Delete = /Set%.Delete<String@>(/Core/String/Eq%.Lt);
+#   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
 #   Delete(set, Str(Chars|foo));
-<@ T@>(Eq@<T@>)(Set@<T@>, T@) { Set@<T@>; }
-Delete = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
-  /Core/Map%.Delete<T@>(lt)<Unit@>(set, element);
+<@ T@>(Ord@<T@>)(Set@<T@>, T@) { Set@<T@>; }
+Delete = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
+  /Core/Map%.Delete<T@>(ord)<Unit@>(set, element);
 };
 
 # ForEach --
