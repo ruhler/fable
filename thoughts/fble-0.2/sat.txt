@@ -2252,3 +2252,47 @@ Goal now is to improve on 2 minute time for rope. Let's see how well we do.
 
 Down to 1m38s. 20% improvement. Not terrible.
 
+Looking at profile now:
+
+72 time total.
+  50 in Assign
+     9 from Search
+    40 from Simplify
+  12 in ??? state monad somewhere?
+
+So much time spent in Map code. I'm not sure what to try improving next. A
+look at the top blocks flat time, the top 20 entries are related to map
+operations. That's over 50% total runtime:
+
+15.52   112515  /Core/Int/IntP/Ord%.Ord![0221]
+ 5.81    42109  /Core/Int/IntP/Ord%.Ord!.2p0.2p1[0229]
+ 5.03    36487  /Core/Map/Map%.Modify!.M!.:.:.gt[02ef]
+ 4.56    33081  /Core/Int/IntP/Ord%.Ord!.2p1.2p1[022d]
+ 4.20    30452  /Core/Int/IntP/Ord%.Ord!.2p0.2p0[0228]
+ 3.72    26962  /Core/Int/IntP/Ord%.Ord!.2p1.2p0[022c]
+ 3.70    26782  /Core/Int/IntP/Ord%.Ord!.2p0[0226]
+ 3.27    23683  /Core/Int/IntP/Ord%.Ord!.2p1[022a]
+ 3.01    21792  /Core/Map/Map%.Modify!.M!.:.lt[02e1]
+ 2.90    21016  /Core/Int/IntP/Ord%.RoundLt![0219]
+ 2.87    20798  /Core/Map/Map%.Modify!.M!.:.ordering[02e0]
+ 2.42    17539  /Core/Map/Map%.RebalanceRight![02d4]
+ 2.34    16951  /Core/Map/Map%.MapP![0279]
+ 2.32    16829  /Core/Map/Map%.Rebalance!.0[02bc]
+ 2.11    15273  /Core/Map/Map%.RebalanceLeft![02d0]
+ 1.98    14363  /Core/Map/Map%.Lookup!.L!.:.ordering[02a0]
+ 1.95    14141  /Core/Int/Ord%.Ord![0236]
+ 1.91    13829  /Core/Int/Ord%.Ord!.p.p[0242]
+ 1.89    13676  /Core/Int/IntP/Ord%.RoundGt![021d]
+ 1.21     8789  /Core/Map/Map%.Modify!.M![02da]
+
+Hard to see how we could implement Ord for Int@ more efficiently. That alone
+is 50% of the runtime of the program.
+
+I don't think there is much I can do from .fble coding point of view to improve
+Ord. And that's 50%. If I want to improve that, I either need to go lower, try
+to optimize the implementation of fble, or go higher, try to reduce the number
+of calls to ord.
+
+Or maybe this is a good place to take a break from the sat solver
+implementation. Or at least, optimizations. There is some code cleanup to do.
+
