@@ -1,0 +1,231 @@
+Fble 0.2 Performance
+====================
+Working on optimizing the sat solver, it's showing 50% time in Lt/Ord
+operation on Int@. That .fble code looks about as straight forward as it could
+get. Anything worthwhile we can do in the fble implementation to speed things
+up here?
+
+A few ideas come to mind:
+* Remove profiling logic from generated code?
+ - Maybe put it behind a compile time flag?
+ - Because it seems silly to slow things down all the time for a rarely used
+   use case.
+ - It's probably worth at least measuring how significant this is.
+* Remove explicit error checking from generated code?
+ - Maybe we just segfault and ask users to run a debugger to see the issue?
+ - Maybe we can use signals somehow to trap and handle these cases implicitly?
+ - Probably worth at least measuring how significant this is for performance.
+* Improve value packing algorithm.
+ - Though honestly I don't think that will help at all for Lt/Ord, because I
+   don't expect any allocations there.
+* Something about function call/tail call optimization?
+
+---
+
+Reviewing perf profile for the sat problem in question:
+
+It shows only 25% time spent in Ord, and about as much time in
+FbleNewHeapObject. It could be hard to interpret the profile, given how tight
+a recursion is going on here.
+
+Self time shows 8.5% in the Ord function. Everything else is runtime code:
+
+    %     self  block
+ 8.49     4110  _Run.0x22673a48._2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_Ord_21_[0029]
+ 6.50     3145  MarkRef[0043]
+ 5.86     2838  FbleRetainHeapObject[0010]
+ 5.70     2760  FbleThreadTailCall[002e]
+ 4.86     2350  FbleStrictValue[002d]
+ 4.64     2248  FbleUnionValueTag[002c]
+ 4.54     2196  FbleThreadCall[0001]
+ 3.80     1840  FbleThreadSample[003e]
+ 3.70     1790  FbleReleaseHeapObject[003f]
+ 3.48     1682  IncrGc.part.0[001a]
+ 3.39     1639  Refs[004c]
+
+Reading through the assembly, I feel like we could inline parts of things like
+FbleReleaseValue, FbleRetainValue, FbleStrictValue, etc. Avoid the function
+call overhead and having to save/restore regs.
+
+My vote is we do some exploration. Don't worry about breaking things or
+features. Use a separate branch. Remove profiling and error checking code.
+Maybe try inlining things. Focus on aarch64 compiler target. See if we can
+flesh out what we can do in terms of generating optimized code and how big a
+different it has a potential to make.
+
+After the exploration, we can consider if we want to change anything for
+production.
+
+---
+
+First thing, establish a benchmark.
+
+$ time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+unsat
+
+real    1m37.040s
+user    1m36.508s
+sys     0m0.469s
+
+Next: Let's strip out all the profiling code. Anything that would be in the
+critical path for runtime, including stuff in execute.c and generated code.
+
+Commenting out profiling related code, all except tracking profile block
+offset stuff for functions:
+
+$ time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+unsat
+
+real    1m31.467s
+user    1m30.843s
+sys     0m0.537s
+
+Attempted again:
+
+So, Maybe 7% performance overhead from having the profiling code in when
+profiling is not enabled.
+
+time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+unsat
+
+real    1m33.136s
+user    1m32.554s
+sys     0m0.508s
+
+Next: Let's strip out all the generated error checking code.
+
+$ time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+unsat
+
+real    1m22.338s
+user    1m21.828s
+sys     0m0.476s
+
+Next: let's look at the generated assembly code for IntP@ Ord, see how it
+looks.
+
+* The jump table looks potentially more expensive than need be?
+.L._Run_0x31b06a48.0.pcs:
+  .xword .L._Run_0x31b06a48.pc.1
+  .xword .L._Run_0x31b06a48.pc.5
+  .xword .L._Run_0x31b06a48.pc.15
+  ...
+  
+  bl FbleUnionValueTag
+  lsl x0, x0, #3
+  adrp x1, .L._Run_0x31b06a48.0.pcs
+  add x1, x1, :lo12:.L._Run_0x31b06a48.0.pcs
+  add x0, x0, x1
+  ldr x0, [x0]
+  br x0
+
+  This is a load followed by a branch. Difficult for branch prediction to
+  predict anything from I would guess. Don't you think it would be much faster
+  to do a binary search based on the tag?
+
+  For example, consider a linear search on the 3 branches in this case:
+
+  bl FbleUnionValueTag
+  b.eq .L._Run_0x31b06a48.pc.1 x0 0
+  b.eq .L._Run_0x31b06a48.pc.5 x0 1
+  b .L._Run_0x31b06a48.pc.15
+
+  No memory load required. We can take full advantage of branch prediction.
+
+  And, if we use this approach, or a binary search, we can take advantage of
+  the default option the user provides. So, character equality, for example,
+  instead of being a 64*64 split branch, would be a 64 * 2 branch split. That
+  sounds like a pretty big deal.
+ 
+* Lots of calls to FbleRetainValue, inlining could help I think. In most cases
+  this is either skipped entirely for packed values, or just increment, right?
+  
+Let's explore the generate of union select first. The right way to do it, I
+think, is pass info about default branches down to the bytecode, and use
+binary search. That's tricky to do and get right. For a first pass, just to
+gauge how sensitive performance is to this, let me switch to a linear approach
+like above. It should work fine for small branch counts. Won't work great for
+this like character conversion.
+
+time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+unsat
+
+real    1m21.529s
+user    1m21.114s
+sys     0m0.398s
+
+---
+
+Another opportunity to improve performance I just saw: for union access, don't
+check the tag value. Assume it's the right value. Hard to productize this,
+but would at least be nice to gauge the cost.
+
+time ./out/pkgs/sat/fble-sat < pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+unsat
+
+real    1m19.422s
+user    1m18.999s
+sys     0m0.381s
+
+---
+
+Trouble: my numbers aren't very reliable. I see swings +- 2s in some cases
+when running the same thing, and sometimes I forgot to build in the change I
+intended.
+
+Looks like error checking code is more costly than I first thought. That
+changes things.
+
+I kind of wish I had a more extensive set of benchmarks than just the sat
+solver. Can we add md5? Is there an invaders benchmark?
+
+Anyway, I couple ideas I think are worth exploring:
+* Changing how we generate union select statements. Even if the numbers above
+  don't suggest much difference, it feels like the right thing to do.
+* Finding some alternative to error checking.
+  For the most part it's NULL checking. We could use memory protection and
+  signals to handle that?
+
+---
+
+Examples of what gcc generates for switch statements:
+
+  switch (x) {
+    case 0: printf("0\n"); break;
+    case 4: printf("4\n"); break;
+    case 5: printf("5\n"); break;
+    case 6: printf("6\n"); break;
+    case 7: printf("7\n"); break;
+    case 12: printf("12\n"); break;
+    default: printf("?\n");
+  }
+
+Turns into the equivalent of:
+  if (x == 5) {
+    printf("5\n"); break;
+  }
+
+  if (x > 5) {
+    if (x == 7) {
+      printf("7\n"); break;
+    }
+    if (x < 7) {
+      printf("6\n"); break;
+    }
+    if (x == 12) {
+      printf("12\n"); break;
+    }
+    printf("?\n"); break;
+  }
+
+  if (x == 0) {
+    printf("0\n"); break;
+  }
+  if (x == 4) {
+    printf("4\n"); break;
+  }
+  printf("?\n"); break;
+
+It uses 'beq', 'bhi', and 'bcc' for the conditional branches. That is binary
+search. 'CC' stands for 'Carry clear', same as less than. 'HI' stands for
+'unsigned higher', same as greater than.
