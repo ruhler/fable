@@ -137,12 +137,16 @@ typedef struct {
     size_t size;                /**< Number of elements. */
     FbleTypeAssignmentV** xs;   /**< The elements. */
   } tyvars;             /**< List of type variables to clean up. */
+  FbleTcBindingV bindings;      /**< List of bindings to clean up. */
 } Cleaner;
+
+static FbleTcBinding CopyTcBinding(FbleTcBinding binding);
 
 static Cleaner* NewCleaner();
 static void CleanType(Cleaner* cleaner, FbleType* type);
 static void CleanTc(Cleaner* cleaner, Tc tc);
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
+static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding vars);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
 
 static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars);
@@ -534,6 +538,24 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 }
 
 /**
+ * Copies a tc binding.
+ *
+ * @param binding  The binding to copy.
+ * @returns
+ *  The copied binding.
+ * @sideeffects
+ *  The user should free name, loc, and tc of the copied binding when no
+ *  longer needed.
+ */
+static FbleTcBinding CopyTcBinding(FbleTcBinding binding)
+{
+  FbleCopyName(binding.name);
+  FbleCopyLoc(binding.loc);
+  FbleCopyTc(binding.tc);
+  return binding;
+}
+
+/**
  * Allocates and returns a new cleaner object.
  *
  * @returns
@@ -549,6 +571,7 @@ static Cleaner* NewCleaner()
   FbleVectorInit(cleaner->types);
   FbleVectorInit(cleaner->tcs);
   FbleVectorInit(cleaner->tyvars);
+  FbleVectorInit(cleaner->bindings);
   return cleaner;
 }
 
@@ -584,7 +607,7 @@ static void CleanTc(Cleaner* cleaner, Tc tc)
 /**
  * Adds an FbleTypeAssignmentV for automatic cleanup.
  *
- * @param cleaner  The cleaner to add the type to.
+ * @param cleaner  The cleaner to add the assignment to.
  * @param vars  The vars to track. Should be allocated with FbleAlloc.
  *
  * @sideeffects
@@ -593,6 +616,20 @@ static void CleanTc(Cleaner* cleaner, Tc tc)
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars)
 {
   FbleVectorAppend(cleaner->tyvars, vars);
+}
+
+/**
+ * Adds an FbleTcBinding for automatic cleanup.
+ *
+ * @param cleaner  The cleaner to add binding to.
+ * @param binding  The binding to track.
+ *
+ * @sideeffects
+ *  The binding will be automatically freed when the cleaner is cleaned up.
+ */
+static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding binding)
+{
+  FbleVectorAppend(cleaner->bindings, binding);
 }
 
 /**
@@ -626,6 +663,14 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
     FbleFree(vars);
   }
   FbleFreeVector(cleaner->tyvars);
+
+  for (size_t i = 0; i < cleaner->bindings.size; ++i) {
+    FbleTcBinding binding = cleaner->bindings.xs[i];
+    FbleFreeName(binding.name);
+    FbleFreeLoc(binding.loc);
+    FbleFreeTc(binding.tc);
+  }
+  FbleFreeVector(cleaner->bindings);
   FbleFree(cleaner);
 }
 
@@ -1317,33 +1362,28 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
       Tc condition = TypeCheckExpr(th, scope, select_expr->condition);
+      CleanTc(cleaner, condition);
       if (condition.type == NULL) {
         return TC_FAILED;
       }
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(th, condition.type);
+      CleanType(cleaner, &union_type->_base);
       if (union_type->_base.tag != FBLE_DATA_TYPE
           || union_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
             condition.type);
-        FbleReleaseType(th, &union_type->_base);
-        FreeTc(th, condition);
         return TC_FAILED;
       }
-      FbleReleaseType(th, condition.type);
-
-      FbleUnionSelectTc* select_tc = FbleNewTcExtra(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, union_type->fields.size * sizeof(FbleTc*), expr->loc);
-      select_tc->condition = condition.tc;
-      FbleVectorInit(select_tc->choices);
 
       bool error = false;
-      FbleType* target = NULL;
-
+      FbleType* result_type = NULL;
       FbleTcBinding default_ = { .tc = NULL };
       bool default_used = false;
       if (select_expr->default_ != NULL) {
         Tc result = TypeCheckExpr(th, scope, select_expr->default_);
+        CleanTc(cleaner, result);
         error = error || (result.type == NULL);
         if (result.type != NULL) {
           FbleName label = {
@@ -1353,36 +1393,37 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           };
           default_.name = label;
           default_.loc = FbleCopyLoc(select_expr->default_->loc);
-          default_.tc = result.tc;
+          default_.tc = FbleCopyTc(result.tc);
+          CleanTcBinding(cleaner, default_);
         }
-        target = result.type;
+        result_type = result.type;
       }
 
       size_t branch = 0;
+      FbleTcBranchTarget branches[select_expr->choices.size];
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         if (branch < select_expr->choices.size && FbleNamesEqual(select_expr->choices.xs[branch].name, union_type->fields.xs[i].name)) {
           Tc result = TypeCheckExpr(th, scope, select_expr->choices.xs[branch].expr);
+          CleanTc(cleaner, result);
           error = error || (result.type == NULL);
 
           if (result.type != NULL) {
-            FbleTcBinding choice = {
-              .name = FbleCopyName(select_expr->choices.xs[branch].name),
-              .loc = FbleCopyLoc(select_expr->choices.xs[branch].expr->loc),
-              .tc = result.tc,
-            };
-            FbleVectorAppend(select_tc->choices, choice);
+            branches[branch].tag = i;
+            branches[branch].target.name = FbleCopyName(select_expr->choices.xs[branch].name);
+            branches[branch].target.loc = FbleCopyLoc(select_expr->choices.xs[branch].expr->loc);
+            branches[branch].target.tc = FbleCopyTc(result.tc);
+            CleanTcBinding(cleaner, branches[branch].target);
           }
 
-          if (target == NULL) {
-            target = result.type;
+          if (result_type == NULL) {
+            result_type = result.type;
           } else if (result.type != NULL) {
-            if (!FbleTypesEqual(th, target, result.type)) {
+            if (!FbleTypesEqual(th, result_type, result.type)) {
               ReportError(select_expr->choices.xs[branch].expr->loc,
                   "expected type %t, but found %t\n",
-                  target, result.type);
+                  result_type, result.type);
               error = true;
             }
-            FbleReleaseType(th, result.type);
           }
 
           branch++;
@@ -1400,33 +1441,39 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           }
         } else {
           // Use the default branch for this field.
-          if (default_.tc != NULL) {
-            default_used = true;
-            FbleVectorAppend(select_tc->choices, default_);
-          }
+          default_used = true;
         }
       }
 
-      if (default_.tc != NULL && !default_used) {
-        FbleFreeName(default_.name);
-        FbleFreeLoc(default_.loc);
-        FbleFreeTc(default_.tc);
-      }
-
       if (branch < select_expr->choices.size) {
+        error = true;
         ReportError(select_expr->choices.xs[branch].name.loc,
             "illegal use of tag '%n' in union select\n",
             select_expr->choices.xs[branch]);
-        error = true;
       }
 
-      FbleReleaseType(th, &union_type->_base);
-      Tc tc = MkTc(target, &select_tc->_base);
       if (error) {
-        FreeTc(th, tc);
         return TC_FAILED;
       }
-      return tc;
+
+      if (!default_used) {
+        // No default branch was used, but select_tc requires a default. Pick
+        // the last tag value to use for the default.
+        branch--;
+        default_ = branches[branch].target;
+      }
+
+      FbleUnionSelectTc* select_tc = FbleNewTcExtra(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, union_type->fields.size * sizeof(FbleTc*), expr->loc);
+      select_tc->condition = FbleCopyTc(condition.tc);
+      FbleVectorInit(select_tc->targets);
+      for (size_t i = 0; i < branch; ++i) {
+        FbleTcBranchTarget* tgt = FbleVectorExtend(select_tc->targets);
+        tgt->tag = branches[i].tag;
+        tgt->target = CopyTcBinding(branches[i].target);
+      }
+      select_tc->default_ = CopyTcBinding(default_);
+
+      return MkTc(FbleRetainType(th, result_type), &select_tc->_base);
     }
 
     case FBLE_FUNC_VALUE_EXPR: {

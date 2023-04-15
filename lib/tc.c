@@ -12,6 +12,16 @@
 
 #include "unreachable.h"
 
+static void FreeTcBinding(FbleTcBinding binding);
+
+
+static void FreeTcBinding(FbleTcBinding binding)
+{
+  FbleFreeName(binding.name);
+  FbleFreeLoc(binding.loc);
+  FbleFreeTc(binding.tc);
+}
+
 // FbleNewTcRaw -- see documentation in tc.h
 FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc)
 {
@@ -61,9 +71,7 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_LET_TC: {
       FbleLetTc* let_tc = (FbleLetTc*)tc;
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        FbleFreeName(let_tc->bindings.xs[i].name);
-        FbleFreeLoc(let_tc->bindings.xs[i].loc);
-        FbleFreeTc(let_tc->bindings.xs[i].tc);
+        FreeTcBinding(let_tc->bindings.xs[i]);
       }
       FbleFreeVector(let_tc->bindings);
       FbleFreeTc(let_tc->body);
@@ -90,23 +98,11 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* v = (FbleUnionSelectTc*)tc;
       FbleFreeTc(v->condition);
-      for (size_t i = 0; i < v->choices.size; ++i) {
-        // The default branch may appear multiple times in choices. Make sure
-        // we only free it once.
-        bool freed = false;
-        for (size_t j = 0; j < i; ++j) {
-          if (v->choices.xs[j].tc == v->choices.xs[i].tc) {
-            freed = true;
-            break;
-          }
-        }
-        if (!freed) {
-          FbleFreeName(v->choices.xs[i].name);
-          FbleFreeLoc(v->choices.xs[i].loc);
-          FbleFreeTc(v->choices.xs[i].tc);
-        }
+      for (size_t i = 0; i < v->targets.size; ++i) {
+        FreeTcBinding(v->targets.xs[i].target);
       }
-      FbleFreeVector(v->choices);
+      FbleFreeVector(v->targets);
+      FreeTcBinding(v->default_);
       FbleFree(tc);
       return;
     }

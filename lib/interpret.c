@@ -85,8 +85,7 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
         // For the purposes of abort, it doesn't matter which branch we take,
         // because all branches have to clean up memory the same way.
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        assert(select_instr->jumps.size > 0);
-        pc += 1 + select_instr->jumps.xs[0];
+        pc += 1 + select_instr->default_;
         break;
       }
 
@@ -359,7 +358,29 @@ FbleValue* FbleInterpreterRunFunction(
           FbleReportError("undefined union value select\n", select_instr->loc);
           return RunAbort(heap, code, locals, pc);
         }
-        pc += 1 + select_instr->jumps.xs[FbleUnionValueTag(uv)];
+
+        size_t tag = FbleUnionValueTag(uv);
+
+        // Binary search for the matching tag.
+        assert(select_instr->targets.size > 0);
+        size_t delta = select_instr->default_;
+        size_t lo = 0;
+        size_t hi = select_instr->targets.size;
+        while (lo < hi) {
+          size_t mid = (lo + hi)/2;
+          size_t mid_tag = select_instr->targets.xs[mid].tag;
+          if (tag == mid_tag) {
+            delta = select_instr->targets.xs[mid].delta;
+            break;
+          }
+          if (tag < mid_tag) {
+            hi = mid;
+          } else {
+            lo = mid + 1;
+          }
+        }
+
+        pc += 1 + delta;
         break;
       }
 

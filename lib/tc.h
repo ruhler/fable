@@ -149,22 +149,30 @@ typedef struct {
   FbleTc* arg;        /**< Argument to the union value to create. */
 } FbleUnionValueTc;
 
+/** Target of a union select branch. */
+typedef struct {
+  size_t tag;
+  FbleTcBinding target;
+} FbleTcBranchTarget;
+
+/** Vector of FbleTcBranchTarget. */
+typedef struct {
+  size_t size;
+  FbleTcBranchTarget* xs;
+} FbleTcBranchTargetV;
+
 /**
  * FBLE_UNION_SELECT_TC: A union select expression.
  *
- * There will be one element in the choices vector for each possible tag of
- * the condition.
- *
- * Because of default branches in union select, it is possible that multiple
- * choices point to the same tc. Code generation is expected to check for
- * that and avoid generating duplicate code. FbleFreeTc, FbleFreeLoc and
- * FbleFreeName should be called only once on the fields of the
- * FbleTcBinding for each unique tc referred to by choices.
+ * * Targets must be listed in tag order.
+ * * A default target is required.
+ * * Not all tags need be present in the list of non-default targets.
  */
 typedef struct {
   FbleTc _base;             /**< FbleTc base class. */
   FbleTc* condition;        /**< The condition to the union select. */
-  FbleTcBindingV choices;   /**< The branches of the union select. */
+  FbleTcBranchTargetV targets;
+  FbleTcBinding default_;
 } FbleUnionSelectTc;
 
 /**

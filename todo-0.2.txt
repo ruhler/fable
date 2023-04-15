@@ -2,6 +2,12 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Use absolute address for jump targets in code rather than relative?
+ - Easier to read assembly code that way.
+ - Avoids need to go absolute -> relative -> absolute all the time.
+ - I'm just not sure if we need it to be relative because we move things
+   around somewhere. Hard to believe that would be the case.
+
 * Add tests for /Core/Set%.
 
 * Sat Solver:

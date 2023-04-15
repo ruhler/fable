@@ -132,7 +132,7 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
       FbleFreeLoc(select_instr->loc);
-      FbleFreeVector(select_instr->jumps);
+      FbleFreeVector(select_instr->targets);
       FbleFree(instr);
       return;
     }
@@ -349,10 +349,13 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
               var_tags[select_instr->condition.tag],
               select_instr->condition.index);
           const char* comma = "";
-          for (size_t j = 0; j < select_instr->jumps.size; ++j) {
-            fprintf(fout, "%s%zi", comma, select_instr->jumps.xs[j]);
+          for (size_t j = 0; j < select_instr->targets.size; ++j) {
+            fprintf(fout, "%s%zi: %zi", comma,
+                select_instr->targets.xs[j].tag,
+                select_instr->targets.xs[j].delta);
             comma = ", ";
           }
+          fprintf(fout, "%s: %zi", comma, select_instr->default_);
           fprintf(fout, ");");
           PrintLoc(fout, select_instr->loc);
           break;

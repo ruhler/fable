@@ -802,63 +802,63 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleUnionSelectInstr* select_instr = FbleAllocInstr(FbleUnionSelectInstr, FBLE_UNION_SELECT_INSTR);
       select_instr->loc = FbleCopyLoc(select_tc->_base.loc);
       select_instr->condition = condition->var;
-      FbleVectorInit(select_instr->jumps);
+      FbleVectorInit(select_instr->targets);
       AppendInstr(scope, &select_instr->_base);
 
-      size_t select_instr_pc = scope->code->instrs.size;
-      size_t branch_offsets[select_tc->choices.size];
-      Local* target = exit ? NULL : NewLocal(scope);
-      FbleJumpInstr* exit_jumps[select_tc->choices.size];
+      // As a hack to avoid code duplication, pretend for the time being that
+      // the default_ branch target is like any other branch target.
+      FbleTcBranchTarget* default_ = FbleVectorExtend(select_tc->targets);
+      default_->tag = 0;
+      default_->target = select_tc->default_;
 
-      for (size_t i = 0; i < select_tc->choices.size; ++i) {
+      size_t select_instr_pc = scope->code->instrs.size;
+      Local* select_result = exit ? NULL : NewLocal(scope);
+      FbleJumpInstr* exit_jumps[select_tc->targets.size];
+
+      for (size_t i = 0; i < select_tc->targets.size; ++i) {
         exit_jumps[i] = NULL;
 
-        // Check if we have already generated the code for this branch.
-        bool already_done = false;
-        for (size_t j = 0; j < i; ++j) {
-          if (select_tc->choices.xs[i].tc == select_tc->choices.xs[j].tc) {
-            branch_offsets[i] = branch_offsets[j];
-            already_done = true;
-            break;
-          }
+        // TODO: Could we arrange for the branches to put their value in
+        // the target directly instead of in some cases allocating a new
+        // local and then copying that to target?
+        FbleBranchTarget* tgt = FbleVectorExtend(select_instr->targets);
+        tgt->tag = select_tc->targets.xs[i].tag;
+        tgt->delta = scope->code->instrs.size - select_instr_pc;
+
+        EnterBlock(blocks, select_tc->targets.xs[i].target.name, select_tc->targets.xs[i].target.loc, scope, exit);
+        Local* result = CompileExpr(blocks, true, exit, scope, select_tc->targets.xs[i].target.tc);
+
+        if (!exit) {
+          FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
+          copy->source = result->var;
+          copy->dest = select_result->var.index;
+          AppendInstr(scope, &copy->_base);
         }
+        ExitBlock(blocks, scope, exit);
 
-        if (!already_done) {
-          // TODO: Could we arrange for the branches to put their value in
-          // the target directly instead of in some cases allocating a new
-          // local and then copying that to target?
-          branch_offsets[i] = scope->code->instrs.size - select_instr_pc;
-          EnterBlock(blocks, select_tc->choices.xs[i].name, select_tc->choices.xs[i].loc, scope, exit);
-          Local* result = CompileExpr(blocks, true, exit, scope, select_tc->choices.xs[i].tc);
+        ReleaseLocal(scope, result, exit);
 
-          if (!exit) {
-            FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
-            copy->source = result->var;
-            copy->dest = target->var.index;
-            AppendInstr(scope, &copy->_base);
-          }
-          ExitBlock(blocks, scope, exit);
-
-          ReleaseLocal(scope, result, exit);
-
-          if (!exit) {
-            exit_jumps[i] = FbleAllocInstr(FbleJumpInstr, FBLE_JUMP_INSTR);
-            exit_jumps[i]->count = scope->code->instrs.size + 1;
-            AppendInstr(scope, &exit_jumps[i]->_base);
-          }
+        if (!exit) {
+          exit_jumps[i] = FbleAllocInstr(FbleJumpInstr, FBLE_JUMP_INSTR);
+          exit_jumps[i]->count = scope->code->instrs.size + 1;
+          AppendInstr(scope, &exit_jumps[i]->_base);
         }
-
-        FbleVectorAppend(select_instr->jumps, branch_offsets[i]);
       }
 
       // Fix up exit jumps now that all the branch code is generated.
       if (!exit) {
-        for (size_t i = 0; i < select_tc->choices.size; ++i) {
+        for (size_t i = 0; i < select_tc->targets.size; ++i) {
           if (exit_jumps[i] != NULL) {
             exit_jumps[i]->count = scope->code->instrs.size - exit_jumps[i]->count;
           }
         }
       }
+
+      // Restore select_tc to its original state, and fixup the default branch
+      // for the select instruction.
+      select_tc->targets.size--;
+      select_instr->targets.size--;
+      select_instr->default_ = select_instr->targets.xs[select_instr->targets.size].delta;
 
       // TODO: We ought to release the condition right after jumping into
       // a branch, otherwise we'll end up unnecessarily holding on to it
@@ -867,7 +867,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       // effects constants in runtime. But we probably ought to fix it
       // anyway.
       ReleaseLocal(scope, condition, exit);
-      return target;
+      return select_result;
     }
 
     case FBLE_DATA_ACCESS_TC: {

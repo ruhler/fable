@@ -229,3 +229,34 @@ Turns into the equivalent of:
 It uses 'beq', 'bhi', and 'bcc' for the conditional branches. That is binary
 search. 'CC' stands for 'Carry clear', same as less than. 'HI' stands for
 'unsigned higher', same as greater than.
+
+---
+
+Migrating to new union select.
+
+Benchmarks for awareness:
+
+time fble-sat < rope_0002.shuffled.cnf: 1m39s
+time fble-stdio -m /Sat/Main% < 6cnf20_28000_28000_3.shuffled.cnf: 0m42s
+time yes | head -n 40000 | fble-md5: 0m59s
+time yes | head -n 20000 | fble-stdio -m /Md5/Main%: 0m41.013s
+
+Initial draft status:
+* Need to update union_select_tc everywhere.
+* Need to update compilation from union select tc to instr.
+* Want to update aarch64 code gen to do binary instead of linear search.
+
+---
+
+First draft done. It uses binary search for interpreter, but linear search for
+aarch64 code.
+
+time fble-sat < rope_0002.shuffled.cnf: 1m39s ==> 1m36s
+time fble-stdio -m /Sat/Main% < 6cnf20_28000_28000_3.shuffled.cnf: 0m42s ==> 41s
+time yes | head -n 40000 | fble-md5: 0m59s ==> 53s
+time yes | head -n 20000 | fble-stdio -m /Md5/Main%: 0m41s ==> 0m39s
+
+So, modest improvement in performance, which is nice. Note: these benchmarks
+don't capture the pathological case of large number of tags. Probably should
+have wrote something up for that. Oh well.
+

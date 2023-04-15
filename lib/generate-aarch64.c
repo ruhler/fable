@@ -613,14 +613,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
-      // Jump table data for jumping to the right fble pc.
-      fprintf(fout, "  .section .data\n");
-      fprintf(fout, "  .align 3\n");
-      fprintf(fout, ".L._Run_%p.%zi.pcs:\n", code, pc);
-      for (size_t i = 0; i < select_instr->jumps.size; ++i) {
-        fprintf(fout, "  .xword .L._Run_%p.pc.%zi\n", (void*)code, pc + 1 + select_instr->jumps.xs[i]);
-      }
-
       // Get the union value.
       fprintf(fout, "  .text\n");
       GetFrameVar(fout, "x0", select_instr->condition);
@@ -632,11 +624,15 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  bl FbleUnionValueTag\n");
-      fprintf(fout, "  lsl x0, x0, #3\n");    // x0 = 8 * (uv->tag)
-      Adr(fout, "x1", ".L._Run_%p.%zi.pcs", code, pc); // x1 = pcs
-      fprintf(fout, "  add x0, x0, x1\n");   // x0 = &pcs[uv->tag] 
-      fprintf(fout, "  ldr x0, [x0]\n");     // x0 = pcs[uv->tag]
-      fprintf(fout, "  br x0\n");            // goto pcs[uv->tag]
+
+      // TODO: Use binary search instead of linear search.
+      for (size_t i = 0; i < select_instr->targets.size; ++i) {
+        fprintf(fout, "  cmp x0, %zi\n", select_instr->targets.xs[i].tag);
+        fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", (void*)code,
+            pc + 1 + select_instr->targets.xs[i].delta);
+      }
+      fprintf(fout, "  b .L._Run_%p.pc.%zi\n", (void*)code,
+          pc + 1 + select_instr->default_);
       return;
     }
 
@@ -1017,7 +1013,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + select_instr->jumps.xs[0]);
+      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + select_instr->default_);
       return;
     }
 

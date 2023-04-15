@@ -197,15 +197,37 @@ typedef struct {
 } FbleOffsetV;
 
 /**
- * FBLE_UNION_SELECT_INSTR: Branches based on object tag.
+ * Specifies a target for branch.
  *
- * next_pc += ?(condition.tag; jumps[0], jumps[1], ...);
+ * If object has the given tag, advance pc by given delta.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleLoc loc;          /**< Location to use for error reporting. */
-  FbleVar condition;    /**< The object to branch based on. */
-  FbleOffsetV jumps;    /**< Where to jump depending on the object tag. */
+  size_t tag;
+  size_t delta;
+} FbleBranchTarget;
+
+typedef struct {
+  size_t size;
+  FbleBranchTarget* xs;
+} FbleBranchTargetV;
+
+/**
+ * FBLE_UNION_SELECT_INSTR: Branches based on object tag.
+ *
+ * next_pc += ?(condition.tag;
+ *              targets[0].tag: targets[0].delta,
+ *              targets[1].tag: targets[1].delta,
+ *              ...
+ *              : default_);
+ *
+ * targets is sorted in increasing order of tag.
+ */
+typedef struct {
+  FbleInstr _base;        /**< FbleInstr base class. */
+  FbleLoc loc;            /**< Location to use for error reporting. */
+  FbleVar condition;      /**< The object to branch based on. */
+  FbleBranchTargetV targets;  /**< Non-default branch targets. */
+  size_t default_;        /**< Default branch target. */
 } FbleUnionSelectInstr;
 
 /**
