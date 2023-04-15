@@ -166,6 +166,11 @@ void FbleFreeInstr(FbleInstr* instr)
       FbleFree(instr);
       return;
     }
+
+    case FBLE_NOP_INSTR: {
+      FbleFree(instr);
+      return;
+    }
   }
 
   FbleUnreachable("invalid instruction");
@@ -345,7 +350,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "pc = %s%zi.?(",
+          fprintf(fout, "goto %s%zi.?(",
               var_tags[select_instr->condition.tag],
               select_instr->condition.index);
           const char* comma = "";
@@ -496,6 +501,11 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
             comma = ", ";
           }
           fprintf(fout, ");\n");
+          break;
+        }
+
+        case FBLE_NOP_INSTR: {
+          fprintf(fout, "%4zi.  nop;\n", i);
           break;
         }
       }

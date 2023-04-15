@@ -260,3 +260,5 @@ So, modest improvement in performance, which is nice. Note: these benchmarks
 don't capture the pathological case of large number of tags. Probably should
 have wrote something up for that. Oh well.
 
+Next step: binary search aarch64.
+

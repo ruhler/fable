@@ -100,6 +100,7 @@ typedef enum {
   FBLE_RELEASE_INSTR,
   FBLE_LIST_INSTR,
   FBLE_LITERAL_INSTR,
+  FBLE_NOP_INSTR,
 } FbleInstrTag;
 
 /**
@@ -366,6 +367,16 @@ typedef struct {
   FbleTagV letters;     /**< The letters to create the literal from. */
   FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleLiteralInstr;
+
+/**
+ * FBLE_NOP_INSTRUCTION: Does nothing.
+ *
+ * This is used for a particular case where we need to force profiling
+ * operations to run at a certain point in the code.
+ */
+typedef struct {
+  FbleInstr _base;
+} FbleNopInstr;
 
 /**
  * Allocates and partially initialize an FbleInstr.

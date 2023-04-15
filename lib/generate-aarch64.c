@@ -158,6 +158,7 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       case FBLE_RELEASE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
+      case FBLE_NOP_INSTR: break;
     }
   }
 }
@@ -887,6 +888,11 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       SetFrameVar(fout, "x0", literal_instr->dest);
       return;
     }
+
+    case FBLE_NOP_INSTR: {
+      // Nothing to do.
+      return;
+    }
   }
 }
 
@@ -1126,6 +1132,10 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
     case FBLE_LITERAL_INSTR: {
       FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
       SetFrameVar(fout, "XZR", literal_instr->dest);
+      return;
+    }
+
+    case FBLE_NOP_INSTR: {
       return;
     }
   }

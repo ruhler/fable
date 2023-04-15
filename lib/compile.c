@@ -805,21 +805,14 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleVectorInit(select_instr->targets);
       AppendInstr(scope, &select_instr->_base);
 
-      // As a hack to avoid code duplication, pretend for the time being that
-      // the default_ branch target is like any other branch target.
-      FbleTcBranchTarget* default_ = FbleVectorExtend(select_tc->targets);
-      default_->tag = 0;
-      default_->target = select_tc->default_;
-
+      // TODO: Could we arrange for the branches to put their value in the
+      // target directly instead of in some cases allocating a new local and
+      // then copying that to target?
       Local* select_result = exit ? NULL : NewLocal(scope);
       FbleGotoInstr* exit_gotos[select_tc->targets.size];
 
+      // Non-default branches.
       for (size_t i = 0; i < select_tc->targets.size; ++i) {
-        exit_gotos[i] = NULL;
-
-        // TODO: Could we arrange for the branches to put their value in
-        // the target directly instead of in some cases allocating a new
-        // local and then copying that to target?
         FbleBranchTarget* tgt = FbleVectorExtend(select_instr->targets);
         tgt->tag = select_tc->targets.xs[i].tag;
         tgt->target = scope->code->instrs.size;
@@ -844,27 +837,43 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         }
       }
 
-      // Fix up exit gotos now that all the branch code is generated.
-      if (!exit) {
-        for (size_t i = 0; i < select_tc->targets.size; ++i) {
-          if (exit_gotos[i] != NULL) {
-            exit_gotos[i]->target = scope->code->instrs.size;
-          }
+      // Default branch
+      {
+        select_instr->default_ = scope->code->instrs.size;
+
+        EnterBlock(blocks, select_tc->default_.name, select_tc->default_.loc, scope, exit);
+        Local* result = CompileExpr(blocks, true, exit, scope, select_tc->default_.tc);
+
+        if (!exit) {
+          FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
+          copy->source = result->var;
+          copy->dest = select_result->var.index;
+          AppendInstr(scope, &copy->_base);
+        }
+        ExitBlock(blocks, scope, exit);
+        ReleaseLocal(scope, result, exit);
+
+        if (!exit) {
+          // Emit a nop instruction to force any profile ops to be done as
+          // part of this default branch instead of for all branches.
+          FbleNopInstr* nop = FbleAllocInstr(FbleNopInstr, FBLE_NOP_INSTR);
+          AppendInstr(scope, &nop->_base);
         }
       }
 
-      // Restore select_tc to its original state, and fixup the default branch
-      // for the select instruction.
-      select_tc->targets.size--;
-      select_instr->targets.size--;
-      select_instr->default_ = select_instr->targets.xs[select_instr->targets.size].target;
+      // Fix up exit gotos now that all the branch code is generated.
+      if (!exit) {
+        for (size_t i = 0; i < select_tc->targets.size; ++i) {
+          exit_gotos[i]->target = scope->code->instrs.size;
+        }
+      }
 
       // TODO: We ought to release the condition right after jumping into
       // a branch, otherwise we'll end up unnecessarily holding on to it
       // for the full duration of the block. Technically this doesn't
       // appear to be a violation of the language spec, because it only
       // effects constants in runtime. But we probably ought to fix it
-      // anyway.
+      // anyway?
       ReleaseLocal(scope, condition, exit);
       return select_result;
     }

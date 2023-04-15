@@ -2,8 +2,6 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
-* Avoid outputting 'jump 0' instructions for end of last branch of union select.
-
 * Add tests for /Core/Set%.
 
 * Sat Solver:

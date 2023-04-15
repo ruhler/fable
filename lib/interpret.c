@@ -194,6 +194,11 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
         pc++;
         break;
       }
+
+      case FBLE_NOP_INSTR: {
+        pc++;
+        break;
+      }
     }
   }
 
@@ -531,6 +536,11 @@ FbleValue* FbleInterpreterRunFunction(
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
         locals[literal_instr->dest] = FbleNewLiteralValue(heap, literal_instr->letters.size, literal_instr->letters.xs);
+        pc++;
+        break;
+      }
+
+      case FBLE_NOP_INSTR: {
         pc++;
         break;
       }

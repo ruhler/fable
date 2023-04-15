@@ -81,6 +81,7 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_RELEASE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
+      case FBLE_NOP_INSTR: break;
     }
   }
 }
@@ -634,6 +635,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         lit_id++;
         break;
       }
+
+      case FBLE_NOP_INSTR: {
+        break;
+      }
     }
   }
   fprintf(fout, "}\n");
@@ -780,6 +785,10 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
       fprintf(fout, "  l[%zi] = NULL;\n", literal_instr->dest);
       return;
     }
+
+    case FBLE_NOP_INSTR: {
+      return;
+    };
   }
 }
 
