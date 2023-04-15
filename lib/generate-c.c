@@ -435,12 +435,12 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  switch (FbleUnionValueTag(x0)) {\n");
         for (size_t i = 0; i < select_instr->targets.size; ++i) {
           size_t tag = select_instr->targets.xs[i].tag;
-          size_t target = pc + 1 + select_instr->targets.xs[i].delta;
+          size_t target = select_instr->targets.xs[i].target;
           assert(target > pc);
           jump_target[target] = true;
           fprintf(fout, "    case %zi: goto pc_%zi;\n", tag, target);
         }
-        size_t target = pc + 1 + select_instr->default_;
+        size_t target = select_instr->default_;
         assert(target > pc);
         jump_target[target] = true;
         fprintf(fout, "    default: goto pc_%zi;\n", target);
@@ -684,7 +684,7 @@ static void EmitInstrForAbort(FILE* fout, size_t pc, FbleInstr* instr)
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  goto pc_%zi;\n", pc + 1 + select_instr->default_);
+      fprintf(fout, "  goto pc_%zi;\n", select_instr->default_);
       return;
     }
 

@@ -811,7 +811,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       default_->tag = 0;
       default_->target = select_tc->default_;
 
-      size_t select_instr_pc = scope->code->instrs.size;
       Local* select_result = exit ? NULL : NewLocal(scope);
       FbleJumpInstr* exit_jumps[select_tc->targets.size];
 
@@ -823,7 +822,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         // local and then copying that to target?
         FbleBranchTarget* tgt = FbleVectorExtend(select_instr->targets);
         tgt->tag = select_tc->targets.xs[i].tag;
-        tgt->delta = scope->code->instrs.size - select_instr_pc;
+        tgt->target = scope->code->instrs.size;
 
         EnterBlock(blocks, select_tc->targets.xs[i].target.name, select_tc->targets.xs[i].target.loc, scope, exit);
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->targets.xs[i].target.tc);
@@ -858,7 +857,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       // for the select instruction.
       select_tc->targets.size--;
       select_instr->targets.size--;
-      select_instr->default_ = select_instr->targets.xs[select_instr->targets.size].delta;
+      select_instr->default_ = select_instr->targets.xs[select_instr->targets.size].target;
 
       // TODO: We ought to release the condition right after jumping into
       // a branch, otherwise we'll end up unnecessarily holding on to it

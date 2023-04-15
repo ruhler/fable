@@ -345,14 +345,14 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "pc += %s%zi.?(",
+          fprintf(fout, "pc = %s%zi.?(",
               var_tags[select_instr->condition.tag],
               select_instr->condition.index);
           const char* comma = "";
           for (size_t j = 0; j < select_instr->targets.size; ++j) {
             fprintf(fout, "%s%zi: %zi", comma,
                 select_instr->targets.xs[j].tag,
-                select_instr->targets.xs[j].delta);
+                select_instr->targets.xs[j].target);
             comma = ", ";
           }
           fprintf(fout, "%s: %zi", comma, select_instr->default_);

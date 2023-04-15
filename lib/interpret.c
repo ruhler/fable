@@ -85,7 +85,7 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
         // For the purposes of abort, it doesn't matter which branch we take,
         // because all branches have to clean up memory the same way.
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        pc += 1 + select_instr->default_;
+        pc = select_instr->default_;
         break;
       }
 
@@ -363,14 +363,14 @@ FbleValue* FbleInterpreterRunFunction(
 
         // Binary search for the matching tag.
         assert(select_instr->targets.size > 0);
-        size_t delta = select_instr->default_;
+        size_t target = select_instr->default_;
         size_t lo = 0;
         size_t hi = select_instr->targets.size;
         while (lo < hi) {
           size_t mid = (lo + hi)/2;
           size_t mid_tag = select_instr->targets.xs[mid].tag;
           if (tag == mid_tag) {
-            delta = select_instr->targets.xs[mid].delta;
+            target = select_instr->targets.xs[mid].target;
             break;
           }
           if (tag < mid_tag) {
@@ -380,7 +380,7 @@ FbleValue* FbleInterpreterRunFunction(
           }
         }
 
-        pc += 1 + delta;
+        pc = target;
         break;
       }
 

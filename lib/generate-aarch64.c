@@ -629,10 +629,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       for (size_t i = 0; i < select_instr->targets.size; ++i) {
         fprintf(fout, "  cmp x0, %zi\n", select_instr->targets.xs[i].tag);
         fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", (void*)code,
-            pc + 1 + select_instr->targets.xs[i].delta);
+            select_instr->targets.xs[i].target);
       }
       fprintf(fout, "  b .L._Run_%p.pc.%zi\n", (void*)code,
-          pc + 1 + select_instr->default_);
+          select_instr->default_);
       return;
     }
 
@@ -1013,7 +1013,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + select_instr->default_);
+      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, select_instr->default_);
       return;
     }
 

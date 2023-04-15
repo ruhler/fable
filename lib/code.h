@@ -199,11 +199,11 @@ typedef struct {
 /**
  * Specifies a target for branch.
  *
- * If object has the given tag, advance pc by given delta.
+ * If object has the given tag, go to the absolute pc target.
  */
 typedef struct {
   size_t tag;
-  size_t delta;
+  size_t target;
 } FbleBranchTarget;
 
 typedef struct {
@@ -214,9 +214,9 @@ typedef struct {
 /**
  * FBLE_UNION_SELECT_INSTR: Branches based on object tag.
  *
- * next_pc += ?(condition.tag;
- *              targets[0].tag: targets[0].delta,
- *              targets[1].tag: targets[1].delta,
+ * next_pc = ?(condition.tag;
+ *              targets[0].tag: targets[0].target,
+ *              targets[1].tag: targets[1].target,
  *              ...
  *              : default_);
  *

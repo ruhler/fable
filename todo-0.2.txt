@@ -7,6 +7,7 @@ Things to consider doing for the fble-0.2 release.
  - Avoids need to go absolute -> relative -> absolute all the time.
  - I'm just not sure if we need it to be relative because we move things
    around somewhere. Hard to believe that would be the case.
+* Avoid outputting 'jump 0' instructions for end of last branch of union select.
 
 * Add tests for /Core/Set%.
 
