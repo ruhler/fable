@@ -70,7 +70,7 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
-static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr);
+static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
@@ -130,7 +130,7 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
         break;
       }
 
-      case FBLE_JUMP_INSTR: break;
+      case FBLE_GOTO_INSTR: break;
 
       case FBLE_FUNC_VALUE_INSTR: {
         FbleFuncValueInstr* instr = (FbleFuncValueInstr*)code->instrs.xs[i];
@@ -636,9 +636,9 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       return;
     }
 
-    case FBLE_JUMP_INSTR: {
-      FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  b .L._Run_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
+    case FBLE_GOTO_INSTR: {
+      FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
+      fprintf(fout, "  b .L._Run_%p.pc.%zi\n", code, goto_instr->target);
       return;
     }
 
@@ -947,7 +947,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Emit code for aborts:
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, ".L._Abort_%p.pc.%zi:\n", (void*)code, i);
-    EmitInstrForAbort(fout, code, i, code->instrs.xs[i]);
+    EmitInstrForAbort(fout, code, code->instrs.xs[i]);
   }
 
   // Restores stack and frame pointer and return whatever is in x0.
@@ -978,7 +978,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
  * @sideeffects
  * * Outputs code to fout.
  */
-static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr)
+static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
 {
   switch (instr->tag) {
     case FBLE_DATA_TYPE_INSTR: {
@@ -1017,9 +1017,9 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       return;
     }
 
-    case FBLE_JUMP_INSTR: {
-      FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
+    case FBLE_GOTO_INSTR: {
+      FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
+      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, goto_instr->target);
       return;
     }
 

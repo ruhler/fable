@@ -89,7 +89,7 @@ typedef enum {
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_ACCESS_INSTR,
   FBLE_UNION_SELECT_INSTR,
-  FBLE_JUMP_INSTR,
+  FBLE_GOTO_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_CALL_INSTR,
   FBLE_COPY_INSTR,
@@ -231,19 +231,14 @@ typedef struct {
 } FbleUnionSelectInstr;
 
 /**
- * FBLE_JUMP_INSTR: Advances the program counter.
+ * FBLE_GOTO_INSTR: Jump to a given address.
  *
- * Jumps forward by the given number of instructions beyond what would
- * otherwise have been the next instruction.
- * 
- * Jumping backwards is not supported.
- *
- * next_pc += count
+ * next_pc = target
  */
 typedef struct {
   FbleInstr _base;    /**< FbleInstr base class. */
-  size_t count;       /**< Number of instructions to jump past. */
-} FbleJumpInstr;
+  size_t target;      /**< Absolute pc to jump to. */
+} FbleGotoInstr;
 
 /**
  * FBLE_FUNC_VALUE_INSTR: Creates a function value.

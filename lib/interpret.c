@@ -89,9 +89,9 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
         break;
       }
 
-      case FBLE_JUMP_INSTR: {
-        FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-        pc += 1 + jump_instr->count;
+      case FBLE_GOTO_INSTR: {
+        FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
+        pc = goto_instr->target;
         break;
       }
 
@@ -384,9 +384,9 @@ FbleValue* FbleInterpreterRunFunction(
         break;
       }
 
-      case FBLE_JUMP_INSTR: {
-        FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-        pc += 1 + jump_instr->count;
+      case FBLE_GOTO_INSTR: {
+        FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
+        pc = goto_instr->target;
         break;
       }
 

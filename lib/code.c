@@ -85,7 +85,7 @@ void FbleFreeInstr(FbleInstr* instr)
 
   switch (instr->tag) {
     case FBLE_UNION_VALUE_INSTR:
-    case FBLE_JUMP_INSTR:
+    case FBLE_GOTO_INSTR:
     case FBLE_COPY_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:
@@ -361,10 +361,10 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           break;
         }
 
-        case FBLE_JUMP_INSTR: {
-          FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+        case FBLE_GOTO_INSTR: {
+          FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "jump +%zi;\n", jump_instr->count);
+          fprintf(fout, "goto %zi;\n", goto_instr->target);
           break;
         }
 

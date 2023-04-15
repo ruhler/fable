@@ -812,10 +812,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       default_->target = select_tc->default_;
 
       Local* select_result = exit ? NULL : NewLocal(scope);
-      FbleJumpInstr* exit_jumps[select_tc->targets.size];
+      FbleGotoInstr* exit_gotos[select_tc->targets.size];
 
       for (size_t i = 0; i < select_tc->targets.size; ++i) {
-        exit_jumps[i] = NULL;
+        exit_gotos[i] = NULL;
 
         // TODO: Could we arrange for the branches to put their value in
         // the target directly instead of in some cases allocating a new
@@ -838,17 +838,17 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         ReleaseLocal(scope, result, exit);
 
         if (!exit) {
-          exit_jumps[i] = FbleAllocInstr(FbleJumpInstr, FBLE_JUMP_INSTR);
-          exit_jumps[i]->count = scope->code->instrs.size + 1;
-          AppendInstr(scope, &exit_jumps[i]->_base);
+          exit_gotos[i] = FbleAllocInstr(FbleGotoInstr, FBLE_GOTO_INSTR);
+          exit_gotos[i]->target = -1; // Will be fixed up later.
+          AppendInstr(scope, &exit_gotos[i]->_base);
         }
       }
 
-      // Fix up exit jumps now that all the branch code is generated.
+      // Fix up exit gotos now that all the branch code is generated.
       if (!exit) {
         for (size_t i = 0; i < select_tc->targets.size; ++i) {
-          if (exit_jumps[i] != NULL) {
-            exit_jumps[i]->count = scope->code->instrs.size - exit_jumps[i]->count;
+          if (exit_gotos[i] != NULL) {
+            exit_gotos[i]->target = scope->code->instrs.size;
           }
         }
       }
