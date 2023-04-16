@@ -433,3 +433,22 @@ time yes | head -n 40000 | fble-md5: 53s ==> 54s
 Interesting to note that md5 actually does have a pretty big switch statement
 in it, of 25 tags at least. Anyway, no major regression, so I'm happy.
 
+---
+
+Actually, the code generated for those 24 tags doesn't look right to me. Too
+many references to the default target. May be worth walking through it to
+double check.
+
+Yeah, I'm pretty sure something is wrong. Case should be
+ [0, 20], [18:, 19:], :
+
+I expect:
+ cmp x0, 18, but getting cmp x0, 19.
+
+Found the issue. Off by one due to high interval being exclusive instead of
+inclusive. Should be fixed now. Re-running fble-md5:
+
+time yes | head -n 40000 | fble-md5: 53s ==> 54s ==> 53s.
+
+Good.
+

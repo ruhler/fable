@@ -82,7 +82,7 @@ static const size_t NONE = -1;
 // Interval info for emitting binary search instructions for union select.
 typedef struct {
   size_t lo;                    // lowest possible tag, inclusive.
-  size_t hi;                    // highest possible tag, exclusive.
+  size_t hi;                    // highest possible tag, inclusive.
   FbleBranchTarget* targets;    // branch targets in the interval.
   size_t num_targets;           // number of branch targets in the interval
   size_t default_;              // default target.
@@ -494,7 +494,7 @@ static size_t GetSingleTarget(Interval* interval)
     return interval->default_;
   }
 
-  if (interval->num_targets == 1 && (interval->lo + 1 == interval->hi)) {
+  if (interval->num_targets == 1 && interval->lo == interval->hi) {
     assert(interval->lo == interval->targets[0].tag);
     return interval->targets[0].target;
   }
@@ -530,7 +530,7 @@ static void EmitSearch(Context* context, Interval* interval)
 
   Interval low = {
     .lo = interval->lo,
-    .hi = mid_tag,
+    .hi = mid_tag - 1,
     .targets = interval->targets,
     .num_targets = mid,
     .default_ = interval->default_
@@ -550,9 +550,8 @@ static void EmitSearch(Context* context, Interval* interval)
     return;
   }
 
-  if (interval->hi == mid_tag) {
+  if (mid_tag == interval->hi) {
     // The high interval is not possible. Go straigth to the low interval.
-    // Note: I suspect this case is unreachable.
     EmitSearch(context, &low);
     return;
   }
@@ -748,7 +747,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       // Binary search for the jump target based on the tag in x0.
       Context context = { .fout = fout, .code = code, .pc = pc, .label = 0 };
       Interval interval = {
-        .lo = 0, .hi = select_instr->num_tags,
+        .lo = 0, .hi = select_instr->num_tags - 1,
         .targets = select_instr->targets.xs,
         .num_targets = select_instr->targets.size,
         .default_ = select_instr->default_
