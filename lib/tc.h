@@ -171,6 +171,7 @@ typedef struct {
 typedef struct {
   FbleTc _base;             /**< FbleTc base class. */
   FbleTc* condition;        /**< The condition to the union select. */
+  size_t num_tags;          /**< Number of possible tags for condition. */
   FbleTcBranchTargetV targets;
   FbleTcBinding default_;
 } FbleUnionSelectTc;

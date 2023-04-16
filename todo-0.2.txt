@@ -26,6 +26,7 @@ Things to consider doing for the fble-0.2 release.
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
     for example.
   - Or just use stdio for that?
+  - Or move /Sat/Debug% code to /Core/Debug%?
 
 * Make a decision on struct copy expression before release.
 
@@ -44,9 +45,6 @@ Things to consider doing for the fble-0.2 release.
  - Clarify that '%' is needed for module paths in early tutorials.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
-
-* Better language support for individual struct field updates?
-  - Would be much nicer for sat solver Solver@ modifications.
 
 * Fbld:
  - Re-implement in fble.

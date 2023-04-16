@@ -68,6 +68,30 @@ static size_t StackBytesForCount(size_t count);
 
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
+
+// Context for emitting binary search instructions for union select.
+typedef struct {
+  FILE* fout;
+  void* code;
+  size_t pc;
+  size_t label;
+} Context;
+
+static const size_t NONE = -1;
+
+// Interval info for emitting binary search instructions for union select.
+typedef struct {
+  size_t lo;                    // lowest possible tag, inclusive.
+  size_t hi;                    // highest possible tag, exclusive.
+  FbleBranchTarget* targets;    // branch targets in the interval.
+  size_t num_targets;           // number of branch targets in the interval
+  size_t default_;              // default target.
+} Interval;
+
+static size_t GetSingleTarget(Interval* interval);
+static void EmitSearch(Context* context, Interval* interval);
+
+
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr);
@@ -457,6 +481,102 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
 }
 
 /**
+ * Tests whether the given search interval has a single possible target.
+ *
+ * @param interval  The specific search interval.
+ *
+ * @returns
+ *  The target if there is a single possible target, NONE otherwise.
+ */
+static size_t GetSingleTarget(Interval* interval)
+{
+  if (interval->num_targets == 0) {
+    return interval->default_;
+  }
+
+  if (interval->num_targets == 1 && (interval->lo + 1 == interval->hi)) {
+    assert(interval->lo == interval->targets[0].tag);
+    return interval->targets[0].target;
+  }
+
+  return NONE;
+}
+
+/**
+ * Generates code to jump to a union select target.
+ *
+ * @param context  Context on what is being generated for.
+ * @param interval  The specific interval in the search to generate.
+ *
+ * @sideeffects
+ * * Outputs code to fout.
+ */
+static void EmitSearch(Context* context, Interval* interval)
+{
+  FILE* fout = context->fout;
+  void* code = context->code;
+
+  size_t target = GetSingleTarget(interval);
+  if (target != NONE) {
+    fprintf(fout, "  b .L._Run_%p.pc.%zi\n", code, target);
+    return;
+  }
+
+  size_t mid = interval->num_targets / 2;
+  size_t mid_tag = interval->targets[mid].tag;
+  size_t mid_target = interval->targets[mid].target;
+  fprintf(fout, "  cmp x0, %zi\n", mid_tag);
+  fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", code, mid_target);
+
+  Interval low = {
+    .lo = interval->lo,
+    .hi = mid_tag,
+    .targets = interval->targets,
+    .num_targets = mid,
+    .default_ = interval->default_
+  };
+
+  Interval high = {
+    .lo = mid_tag + 1,
+    .hi = interval->hi,
+    .targets = interval->targets + mid + 1,
+    .num_targets = interval->num_targets - mid - 1,
+    .default_ = interval->default_
+  };
+
+  if (interval->lo == mid_tag) {
+    // The low interval is not possible. Go straight to the high interval.
+    EmitSearch(context, &high);
+    return;
+  }
+
+  if (interval->hi == mid_tag) {
+    // The high interval is not possible. Go straigth to the low interval.
+    // Note: I suspect this case is unreachable.
+    EmitSearch(context, &low);
+    return;
+  }
+
+  // Note: b.cc is 'carry clear', means unsigned less than.
+  // See Table C1-1 on page C-195 of the aarch64 spec for details.
+  size_t low_target = GetSingleTarget(&low);
+  size_t low_label = NONE;
+  if (low_target == NONE) {
+    low_label = context->label++;
+    fprintf(fout, "  b.cc .L._Run_%p.pc.%zi.%zi\n", code, context->pc, low_label);
+  } else {
+    fprintf(fout, "  b.cc .L._Run_%p.pc.%zi\n", code, low_target);
+  }
+
+  EmitSearch(context, &high);
+
+  if (low_target == NONE) {
+    fprintf(fout, ".L._Run_%p.pc.%zi.%zi:\n", code, context->pc, low_label);
+    EmitSearch(context, &low);
+  }
+}
+
+/**
  * Generates code to execute an instruction.
  *
  * @param fout  The output stream to write the code to.
@@ -615,7 +735,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
       // Get the union value.
-      fprintf(fout, "  .text\n");
       GetFrameVar(fout, "x0", select_instr->condition);
       fprintf(fout, "  bl FbleStrictValue\n");
 
@@ -626,14 +745,16 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  bl FbleUnionValueTag\n");
 
-      // TODO: Use binary search instead of linear search.
-      for (size_t i = 0; i < select_instr->targets.size; ++i) {
-        fprintf(fout, "  cmp x0, %zi\n", select_instr->targets.xs[i].tag);
-        fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", (void*)code,
-            select_instr->targets.xs[i].target);
-      }
-      fprintf(fout, "  b .L._Run_%p.pc.%zi\n", (void*)code,
-          select_instr->default_);
+      // Binary search for the jump target based on the tag in x0.
+      Context context = { .fout = fout, .code = code, .pc = pc, .label = 0 };
+      Interval interval = {
+        .lo = 0, .hi = select_instr->num_tags,
+        .targets = select_instr->targets.xs,
+        .num_targets = select_instr->targets.size,
+        .default_ = select_instr->default_
+      };
+
+      EmitSearch(&context, &interval);
       return;
     }
 

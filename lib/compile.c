@@ -802,6 +802,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleUnionSelectInstr* select_instr = FbleAllocInstr(FbleUnionSelectInstr, FBLE_UNION_SELECT_INSTR);
       select_instr->loc = FbleCopyLoc(select_tc->_base.loc);
       select_instr->condition = condition->var;
+      select_instr->num_tags = select_tc->num_tags;
       FbleVectorInit(select_instr->targets);
       AppendInstr(scope, &select_instr->_base);
 

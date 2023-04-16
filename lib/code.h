@@ -227,6 +227,7 @@ typedef struct {
   FbleInstr _base;        /**< FbleInstr base class. */
   FbleLoc loc;            /**< Location to use for error reporting. */
   FbleVar condition;      /**< The object to branch based on. */
+  size_t num_tags;        /**< Number of possible tag values. */
   FbleBranchTargetV targets;  /**< Non-default branch targets. */
   size_t default_;        /**< Default branch target. */
 } FbleUnionSelectInstr;

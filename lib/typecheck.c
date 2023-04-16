@@ -1465,6 +1465,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleUnionSelectTc* select_tc = FbleNewTcExtra(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, union_type->fields.size * sizeof(FbleTc*), expr->loc);
       select_tc->condition = FbleCopyTc(condition.tc);
+      select_tc->num_tags = union_type->fields.size;
       FbleVectorInit(select_tc->targets);
       for (size_t i = 0; i < branch; ++i) {
         FbleTcBranchTarget* tgt = FbleVectorExtend(select_tc->targets);

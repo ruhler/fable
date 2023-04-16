@@ -262,3 +262,174 @@ have wrote something up for that. Oh well.
 
 Next step: binary search aarch64.
 
+---
+
+I made an fble-cat program. I think this should be good to check the
+pathological case of large tags, because it converts characters to and from
+ascii.
+
+Let's see, for example:
+
+time yes '!!!!!!!!!' | head -n 10000 | fble-cat > /dev/null: 6s
+time yes '~~~~~~~~~' | head -n 10000 | fble-cat > /dev/null: 8s
+
+Hmm... It's hard to know how much of this is union select as opposed to what
+characters happen to be where in the tree.
+
+---
+
+How to implement codegen aarch64 for binary search based union select. There
+are a number of puzzle pieces to put together:
+
+1. We want to know the max tag value possible.
+Imagine you have
+
+  goto x.?(1: a, 2: b, 3: c, : d);
+
+You know min tag value is 0. You don't know if tag 4 is possible or not.
+Binary search starts checking on '2', if greater than '2', there are two
+possibilities:
+ i. 3 is the max tag: jump direct to c
+ ii. 4 is the max tag: need to compare tag to 3.
+
+Thus we want to know max tag. Add that as a field to select_instr.
+
+2. Determine if a tag interval range has one or more targets.
+Inputs:
+* list of targets with tags in interval range. e.g. [1: a, 2: b, 3: c]
+* possible tag values. e.g. [0, 4]
+* default target. e.g. d
+
+Outputs:
+  Either the single possible branch target, or note that there is no single
+  possible branch target.
+
+There are two cases when there is a single possible branch target:
+ i. The list of targets with tags is empty. Default is the single possible target.
+ ii. There is a single element int targets, and that tag is the only tag in
+     the list of possible tag values.
+
+3. The top level list of explicit targets may be empty.
+
+For example:
+  @ T@ = +(Unit@ t); 
+  T@ x = ...
+  x.?(t: ...);
+
+Or:
+  Char@ c = ...
+  c.?(: ...);   
+
+I'm not sure if the language allows the second example, but it certainly
+should allow the first. We should make sure there are spec tests for these two
+interesting cases.
+
+4. You must explicitly branch to all targets. You can't assume the next target
+is the next pc.
+
+Who knows what changes we'll make to compile.c. From code.h point of view, the
+targets could be unrelated to the current pc. So, in the case of (3) for
+example, we require an explicit branch instructions to get to the target. We
+can't assume the target is the next pc.
+ 
+5. When generated code, you'll find yourself in one of two situations:
+ i. You have space for only one instruction here, any more has to be
+elsewhere.
+ ii. You have space for as many instructions as you need here.
+
+
+Putting all these things together, there are really four cases depending on
+the case for (2) and the case for (5):
+
+  * Space for one instr, need one instr: just write the instruction. Done.
+  * Space for one instr, need multiple: write a branch to some target, add
+    todo item when you have space available to do the multiple.
+  * Space for multiple instrs, need one: just write the instruction. Done.
+  * Space for multiple instrs, need multiple: write the multiple.
+
+Pseudocode starting at the top level:
+  Add info to todo.
+  While more todo:
+    F(MULTI, next todo)
+
+Where F(space, info):
+  if info needs only one instr:
+    Write the instruction and return.
+  else if space is single:
+    Alloc a new unique id.
+    Write branch to new unique id.
+    Add todo for multi.
+    Return.
+  else 
+    cmp x0 mid_tag
+    b.eq mid_target
+    b.lt F(single, low info)
+    F(multi, high info)
+
+Which brings out one more piece of the puzzle: for the 'single' case, you have
+to provide the label, the branch instruction mnemonic comes from the parent.
+    
+Maybe split into two separate functions:
+  SINGLE - outputs a label, optionally adds to todo.
+  MULTI - outputs instructions.
+    
+In terms of todo list, we need to keep track of a unique id to use for
+internal jumps.
+
+It's a lot of info to manage all at once. We're talking about having a queue
+and doing recursive function calls. Any way to do only as a queue?
+
+Queue entry has:
+ uid, info
+
+Top level:
+ Push (NONE, info)
+
+To process:
+ output label
+ if single target info
+   b.eq target; continue
+ cmp x0 mid_tag
+ b.eq mid_target
+ if single target low info
+   b.lt target
+ else
+   alloc id, push low info.
+   b.lt id
+   push (NONE, high info)
+
+Make it a stack. This should work. All we need is the helper function to find
+the single possible target, if any.
+   
+Or... instead of needing an explicit stack, use function stack?
+
+Top level:
+ F(NONE, info)
+
+F(label, info):
+ output label
+ if single target info
+   b.eq target; return;
+ cmp x0 mid_tag
+ b.eq mid_target
+ if single target low info
+   b.lt target
+   F (NONE, high info)
+ else
+   b.lt id
+   F (NONE, high info)
+   F (id, low info)
+ 
+Yeah. Let's go with that. Just need to pass some shared state about intervals,
+targets, etc.
+ 
+---
+
+The results:
+
+time fble-sat < rope_0002.shuffled.cnf: 1m36s ==> 1m36s
+time yes | head -n 40000 | fble-md5: 53s ==> 54s
+
+Interesting to note that md5 actually does have a pretty big switch statement
+in it, of 25 tags at least. Anyway, no major regression, so I'm happy.
+

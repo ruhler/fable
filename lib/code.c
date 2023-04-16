@@ -360,7 +360,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
                 select_instr->targets.xs[j].target);
             comma = ", ";
           }
-          fprintf(fout, "%s: %zi", comma, select_instr->default_);
+          fprintf(fout, "%s: %zi of %zi", comma,
+              select_instr->default_, select_instr->num_tags);
           fprintf(fout, ");");
           PrintLoc(fout, select_instr->loc);
           break;

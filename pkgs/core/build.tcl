@@ -48,6 +48,9 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
     "cmp $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
+  # /Core/Stdio/Cat% compiled.
+  stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" ""
+
   # /Core/Stdio/HelloWorld% interpreted test.
   test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/HelloWorld.fble.d" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/HelloWorld% | grep hello"
