@@ -616,3 +616,12 @@ time fble-sat < rope_0002.shuffled.cnf: 1m36s ==> 1m35s
 time yes | head -n 40000 | fble-md5: 53s ==> 51s
 
 Very modest improvement, but I'll take it.
+
+---
+
+Turns out we weren't using R_SCRATCH_1 for anything. Let's see what we get
+from removing that.
+
+time fble-sat < rope_0002.shuffled.cnf: 1m35s ==> 1m33s
+time yes | head -n 40000 | fble-md5: 51s ==> 51s
+

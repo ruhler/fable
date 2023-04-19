@@ -47,7 +47,7 @@ typedef struct {
   void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
   void* r_profile_block_offset_save;  /**< Saved contents of R_PROFILE_BASE_ID reg. */
   void* r_scratch_0_save;   /**< Saved contents of R_SCRATCH_0 reg. */
-  void* r_scratch_1_save;   /**< Saved contents of R_SCRATCH_1 reg. */
+  void* padding;            /**< To ensure 16 byte alignment. */
   void* locals[];           /**< Local variables. */
 } RunStackFrame;
 
@@ -1115,7 +1115,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  str R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  str R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  str R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
-  fprintf(fout, "  str R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
 
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
@@ -1151,7 +1150,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
-  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");
@@ -1450,7 +1448,6 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_STATICS .req x23\n");
   fprintf(fout, "  R_PROFILE_BASE_ID .req x24\n");
   fprintf(fout, "  R_SCRATCH_0 .req x25\n");
-  fprintf(fout, "  R_SCRATCH_1 .req x26\n");
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
