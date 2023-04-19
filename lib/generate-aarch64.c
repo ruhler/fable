@@ -93,6 +93,7 @@ static void EmitSearch(Context* context, Interval* interval);
 
 
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
+static void EmitInstrForErrorReporting(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr);
 static size_t SizeofSanitizedString(const char* str);
@@ -686,12 +687,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       GetFrameVar(fout, "x0", access_instr->obj);
       fprintf(fout, "  bl FbleStrictValue\n");
-
-      // Abort if the struct object is NULL.
-      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedStructValue", access_instr->loc);
-
-      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueAccess\n");
       SetFrameVar(fout, "x0", access_instr->dest);
@@ -708,19 +704,15 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
-      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedUnionValue", access_instr->loc);
+      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
 
       // Abort if the tag is wrong.
-      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");
       fprintf(fout, "  bl FbleUnionValueTag\n");
       fprintf(fout, "  cmp x0, %zi\n", access_instr->tag);
-      fprintf(fout, "  b.eq .L.%p.%zi.tagok\n", code, pc);
-      DoAbort(fout, code, pc, ".L.WrongUnionTag", access_instr->loc);
+      fprintf(fout, "  b.ne .L.%p.%zi.badtag\n", code, pc);
 
       // Access the field.
-      fprintf(fout, ".L.%p.%zi.tagok:\n", code, pc);
       fprintf(fout, "  mov x0, R_SCRATCH_0\n");
       fprintf(fout, "  bl FbleUnionValueAccess\n");
       SetFrameVar(fout, "x0", access_instr->dest);
@@ -738,13 +730,11 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
-      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedUnionSelect", select_instr->loc);
+      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
 
-      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
-      fprintf(fout, "  bl FbleUnionValueTag\n");
 
       // Binary search for the jump target based on the tag in x0.
+      fprintf(fout, "  bl FbleUnionValueTag\n");
       Context context = { .fout = fout, .code = code, .pc = pc, .label = 0 };
       Interval interval = {
         .lo = 0, .hi = select_instr->num_tags - 1,
@@ -808,10 +798,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleStrictValue\n");
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");
 
-      fprintf(fout, "  cbnz R_SCRATCH_0, .L.%p.%zi.ok\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedFunctionValue", call_instr->loc);
-
-      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, "  cbz R_SCRATCH_0, .L.%p.%zi.undef\n", code, pc);
 
       // Allocate space for the arguments array on the stack.
       size_t sp_offset = StackBytesForCount(call_instr->args.size);
@@ -872,11 +859,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       SetFrameVar(fout, "x0", call_instr->dest);
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
 
-      // If the called function finished, continue to the next instruction.
-      fprintf(fout, "  cbnz x0, .L._Run_%p.pc.%zi\n", code, pc + 1);
-
-      // The called function must have aborted.
-      DoAbort(fout, code, pc, ".L.CalleeAborted", call_instr->loc);
+      // Abort if the function didn't finish.
+      fprintf(fout, "  cbz x0, .L.%p.%zi.abort\n", code, pc);
       return;
     }
 
@@ -909,9 +893,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       GetFrameVar(fout, "x1", ref);
       GetFrameVar(fout, "x2", ref_instr->value);
       fprintf(fout, "  bl FbleAssignRefValue\n");
-      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
-      DoAbort(fout, code, pc, ".L.VacuousValue", ref_instr->loc);
-      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%p.%zi.vacuous\n", code, pc);
       return;
     }
 
@@ -1017,6 +999,85 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 }
 
 /**
+ * Generates code to do error reporting for an instruction.
+ *
+ * This code is referenced from the EmitInstr code in the unexpected case of
+ * a fatal error.
+ *
+ * @param fout  The output stream to write the code to.
+ * @param profile_blocks  The list of profile block names for the module.
+ * @param code  Pointer to the current code block, for referencing labels.
+ * @param pc  The program counter of the instruction.
+ * @param instr  The instruction to generate code for.
+ *
+ * @sideeffects
+ * * Outputs code to fout.
+ */
+static void EmitInstrForErrorReporting(FILE* fout, void* code, size_t pc, FbleInstr* instr)
+{
+  switch (instr->tag) {
+    case FBLE_DATA_TYPE_INSTR: return;
+    case FBLE_STRUCT_VALUE_INSTR: return;
+    case FBLE_UNION_VALUE_INSTR: return;
+    case FBLE_STRUCT_ACCESS_INSTR: {
+      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.UndefinedStructValue", access_instr->loc);
+      return;
+    }
+
+    case FBLE_UNION_ACCESS_INSTR: {
+      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.UndefinedUnionValue", access_instr->loc);
+
+      fprintf(fout, ".L.%p.%zi.badtag:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.WrongUnionTag", access_instr->loc);
+      return;
+    }
+
+    case FBLE_UNION_SELECT_INSTR: {
+      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+
+      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.UndefinedUnionSelect", select_instr->loc);
+      return;
+    }
+
+    case FBLE_GOTO_INSTR: return;
+    case FBLE_FUNC_VALUE_INSTR: return;
+
+    case FBLE_CALL_INSTR: {
+      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.UndefinedFunctionValue", call_instr->loc);
+
+      fprintf(fout, ".L.%p.%zi.abort:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.CalleeAborted", call_instr->loc);
+      return;
+    }
+
+    case FBLE_COPY_INSTR: return;
+    case FBLE_REF_VALUE_INSTR: return;
+
+    case FBLE_REF_DEF_INSTR: {
+      FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
+
+      fprintf(fout, ".L.%p.%zi.vacuous:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.VacuousValue", ref_instr->loc);
+      return;
+    }
+
+    case FBLE_RETURN_INSTR: return;
+    case FBLE_TYPE_INSTR: return;
+    case FBLE_RELEASE_INSTR: return;
+    case FBLE_LIST_INSTR: return;
+    case FBLE_LITERAL_INSTR: return;
+    case FBLE_NOP_INSTR: return;
+  }
+}
+
+/**
  * Generates code to execute an FbleCode block.
  *
  * @param fout  The output stream to write the code to.
@@ -1068,6 +1129,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
     EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);
+  }
+
+  // Emit code for reporting errors.
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    EmitInstrForErrorReporting(fout, code, i, code->instrs.xs[i]);
   }
 
   // Emit code for aborts:

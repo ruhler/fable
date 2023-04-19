@@ -452,3 +452,167 @@ time yes | head -n 40000 | fble-md5: 53s ==> 54s ==> 53s.
 
 Good.
 
+---
+
+For the fun of it, let me try another perf deep dive. I'm thinking next thing
+to try will be moving profiling and error code out of line of the main code,
+in the hopes it avoids spoiling the instruction cache and is easier to
+branch predict. But first, a deep dive...
+
+Flat Profile by Self Time
+-------------------------
+    %     self  block
+ 7.62     3714 _Run.0x28c3e078._2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_Ord_21_[00
+ 6.44     3138  MarkRef[002e]
+ 6.04     2944  FbleRetainHeapObject[0022]
+ 6.00     2923  FbleThreadTailCall[003d]
+ 4.76     2321  FbleStrictValue[0039]
+ 4.58     2232  FbleThreadCall[0001]
+ 4.53     2206  FbleUnionValueTag[002f]
+ 3.93     1914  FbleReleaseHeapObject[0032]
+ 3.81     1857  FbleThreadSample[0048]
+ 3.46     1688  IncrGc.part.0[001b]
+ 3.39     1654  Refs[0043]
+
+Let's see where that 7.62% is going to.s
+
+perf annotate -n _Run.0x28c3e078._2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_Ord_21_
+
+3714 samples total.
+
+* 398 of that in function preamble.
+* 344 of that in function post-amble.
+* bl to FbleThreadSample, loading from args array, checking error condition.
+
+Hey, you know what's crazy? Perf annotate is showing .fble code. That's
+awesome. Anyway...
+
+It feels like the biggest hits are those that come after long jumps. And load
+instructions. Maybe not surprising. Presumably it's all related to memory
+operations and what's in the cache or not.
+
+Is there a way to perf sample by cache miss event instead of frequency
+sampling? I wonder if I can get an annotation for that and align it.
+
+There are lots of possible events, maybe:
+  cache-misses
+  major-faults
+  minor-faults
+  page-faults
+
+Let me try page-faults to start?
+
+perf record -e page-faults -d ...
+
+Hmm... It wants a frequency. I wonder what it's counting then?
+
+Interesting. Looks like it works like I think. Instead of sampling on
+frequency, it counts events.
+
+All the page-faults are happening in malloc. That's not surprising. Let's try
+cache-misses instead.
+
+Most of those are in RetainValue and MarkRef. Not surprisingly I guess.
+
+I'm not sure what to make of that though.
+
+The frequency must be in terms of events, not time. So frequency of 500
+means sample once every, uh... ??
+
+Anyway, biggest thing in Ord is just that it's a function that's being called
+a whole lot, and there is overhead to the function call.
+
+So, either figure out a way to reduce that overhead, or call the function
+less? Like, seems like function inlining could help a bunch here? Or a calling
+convention to avoid having to save so many values to the stack?
+
+Registers we use that we need to therefore save before using:
+  heap, thread, locals, args, statics, profile_base_id, scratch_0, scratch_1
+
+Hmm... What if I turned tail recursion into a while loop? No need to save and
+restore the registers every iteration.
+
+(Ordering@) { Ordering@; } RoundLt = (Ordering@ x) {
+  x.?(eq: Lt, : x);
+};
+
+(Ordering@) { Ordering@; } RoundGt = (Ordering@ x) {
+  x.?(eq: Gt, : x);
+};
+
+Ord@<IntP@> Ord = (IntP@ a, IntP@ b) {
+  a.?(1: b.?(1: Eq, 2p0: Lt, 2p1: Lt),
+      2p0: b.?(1: Gt, 2p0: Ord(a.2p0, b.2p0), 2p1: RoundLt(Ord(a.2p0, b.2p1))),
+      2p1: b.?(1: Gt, 2p0: RoundGt(Ord(a.2p1, b.2p0)), 2p1: Ord(a.2p1, b.2p1)));
+};
+
+It's not all tail recursion. But could we write by removing function calls?
+Like, if you were to write it in C?
+
+Let's say we didn't have RoundLt or RoundGt. Then it's straight tail
+recursion.
+
+  while (true) {
+    if a == 1:
+      return b.?(1: Eq, 2p0: Lt, 2p1: Lt);
+    if b == 1:
+      return a.?(1: Eq, 2p0: Gt, 2p1: Gt);
+    a = a.2px;
+    b = b.2px;
+  }
+
+To add the rounding bit? Keep track of a function, and how things are applied.
+
+By default: Id.  RoundGt turns eq to gt. Round lt turns eq to lt. So
+composition looks like:
+
+Id . RoundGt = RoundGt
+RoundGt . Id = RoundGt
+Id . RoundLt = RoundLt
+RoundLt . Id = RoundLt
+
+RoundGt . RoundLt = RoundLt
+RoundLt . RoundGt = RoundGt
+
+So, we can keep track like that, collapse things down. In other words, yes, I
+could totally write this is a single function call that is a while loop.
+
+That's much better than function inlining, because we avoid code duplication
+and we get 'full' inlining in the sense of never having to call a function
+once we are inside.
+
+A couple bits here:
+1. Transforming it to pure tail calls via clever manipulation of RoundGt,
+RoundLt.
+2. Given a pure tail call, that is, a tail call to the same function we are
+in, you could jump past the pre-amble and skip the overhead of pre and post
+ambles.
+
+---
+
+Some things to think about more generally:
+* Replace per-instruction sampling with sampling on enter. Then bypass all of
+  profiling with a branch instruction based on value of profile pointer.
+* Move profiling and error code out of the main path.
+* Can we have a special calling convention for run functions, given
+  FbleThreadCall is the only place we ever invoke them?
+  - With the idea that we change to all registers caller saved, and avoid any
+    caller save registers in the run functions.
+
+Let me read about calling conventions. Does gcc have a way to specify an
+alternative calling convention to use? What are the options? Any thing
+equivalent to "caller save all"?
+
+Looks like intel has some different options, documented under "Function
+Attributes": fastcall, thiscall. But I don't see anything for aarch64.
+
+Oh well. Probably a bad idea to be that hacky anyway.
+
+---
+
+Moving 'DoAbort' code out of mainline path:
+
+time fble-sat < rope_0002.shuffled.cnf: 1m36s ==> 1m35s
+time yes | head -n 40000 | fble-md5: 53s ==> 51s
+
+Very modest improvement, but I'll take it.
