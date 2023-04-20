@@ -625,3 +625,148 @@ from removing that.
 time fble-sat < rope_0002.shuffled.cnf: 1m35s ==> 1m33s
 time yes | head -n 40000 | fble-md5: 51s ==> 51s
 
+---
+
+Anyway, clearly the next thing I want to do is consolidate and outline the
+profiling calls. We're spending a lot of instructions on that, even when
+profiling is disabled.
+
+Questions:
+* Can I move profiling calls out of FbleThreadCall?
+* Can I do samples per block rather than per instruction?
+ - Is there any case in which instructions belong to some specific profile
+   block aren't always going to be executed once we enter that profile block?
+
+Because if we have those, then we can move everything behind a flag. Use an
+R_PROFILE to know if we should enable profiling or not, and if so, jump to a
+separate profiling section of the code.
+
+---
+
+Let's not make this hard. First step: change profile sampling to be an
+explicit profile op instead of done for each instruction. And because it's too
+painful to me to add a sample profile op to each instruction, when I add
+explicit sampling profile ops, coalesces them into as few as possible.
+
+Let me review some code to see if I notice anything obvious about when it's
+safe to group profiling things together.
+
+* Instruction with profile enter op gets one sample.
+* Straight line code can all be coalesced.
+* We have a fair number of profile enter/exit, probably from let
+  statements. We'll have to sample these separately.
+* Note: some functions don't have any profile enter/exit, because those are
+  taken care of by FbleThreadCall. 
+* return statements shouldn't have profiling follow them.
+* Might be nice to do sample as part of:
+  - Explicit sample for function entrance.
+  - Profile Enter.
+  - Profile Replace.
+* The 'goto' instruction following a union select branch after profile exit
+  should be attributed to the block outside the branch. Assuming we care about
+  counting that as part of the profile.
+
+I think this is totally doable. We keep track of blocks. Any time we push a
+block, we have an associated profiling instruction. Any an instruction,
+increment the count of whatever the current block's profiling instruction is.
+
+I'll need to restructure things a little bit to keep whatever pointers we want
+as part of the stack, but otherwise, easy.
+
+In summary:
+* Add an FBLE_PROFILE_SAMPLE_OP.
+* Add a count field to profile ops for SAMPLE, ENTER, REPLACE.
+* Change interpretation of ENTER, REPLACE to always sample.
+* Track profile op as part of block stack.
+* Any time we append an instruction, increment the count of the top profile
+  op.
+
+Decide what I want to do in terms of sampling a block of instructions at once.
+There is some math.
+
+For example:
+
+if rand%1024 == 0 sample 1
+if rand%1024 == 0 sample 1
+if rand%1024 == 0 sample 1
+if rand%1024 == 0 sample 1
+if rand%1024 == 0 sample 1
+
+Is different from
+
+if rand%1024 == 0 sample 5
+
+Is different from
+ 
+if rand%1024 < 5 sample 1
+
+---
+
+I claim we can associate all profiling ops with one of two places:
+1. The beginning of a function.
+2. The beginning of a union select branch body.
+
+How about I switch to an explicit profile instruction, and emit one for each
+of those places. Or... make it part of FbleCode and FbleUnionSelectInstr
+directly?
+
+It may be more general and easy to work with as an explicit profile
+instruction that we emit.
+
+---
+
+In terms of 
+
+if rand%1024 == 0 sample 1
+if rand%1024 == 0 sample 1
+
+versus
+
+if rand%1024 == 0 sample 2
+
+versus
+
+if rand%1024 < 2 sample 1
+
+The property we want ideally is that
+  F(a) + F(b) = F(a + b).
+
+We'll only get that with the first case.
+
+But the expensive bit is the sampling, not the rand part. So I vote we do as
+follows:
+
+F(a):
+  s = 0
+  for (int i = 0; i < a; ++i)
+    if rand%1024 == 0
+      s++
+  if s > 0
+    sample s
+
+Nice properties:
+* Single sample per call of F.
+* F is linear, so doesn't matter how we group things.
+
+I guess the question is: can we come up with a decent appropriation of F that
+is O(1) in the size of a instead of O(N) in the size of a?
+
+---
+
+Updated thoughts:
+1. Make sampling explicit profile op.
+ - So that compiler can optimize how profiling is done and no special cases
+   are needed for that versus other profiling ops in the back ends.
+2. Coalesce profiling ops where possible.
+ - Start of function, start of branch, end of union select all we need?
+ - Maintain order of ops. Don't reorder sample ops: doesn't seem worth the
+   added effort even though sampling can be reordered in ways enter/exit
+   can't.
+3. Don't make a separate instruction for profile. There are some potential
+   benefits to it: avoid the need for nop, avoid the need to check profiling
+   at every instruction in the interpreter. But that feels too invasive to the
+   program. Like, if you want to count number of instructions, that shouldn't
+   change with profiling enabled/disabled.
+
+Let me start with (1). I think auto-add a sample op every time we add an
+instruction. That's the easiest way.

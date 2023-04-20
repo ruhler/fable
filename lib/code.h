@@ -20,6 +20,7 @@ typedef enum {
   FBLE_PROFILE_ENTER_OP,
   FBLE_PROFILE_REPLACE_OP,
   FBLE_PROFILE_EXIT_OP,
+  FBLE_PROFILE_SAMPLE_OP,
 } FbleProfileOpTag;
 
 /**
@@ -29,8 +30,8 @@ typedef struct FbleProfileOp {
   /** The profiling operation. */
   FbleProfileOpTag tag;
 
-  /** Block to enter or replace. Ignored for EXIT ops. */
-  FbleBlockId block;
+  /** Block to enter or replace. Time to sample. Unused for EXIT ops. */
+  size_t arg;
 
   /** Next profile op in the list, or NULL for end of list. */
   struct FbleProfileOp* next;

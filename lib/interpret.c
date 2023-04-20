@@ -265,20 +265,22 @@ FbleValue* FbleInterpreterRunFunction(
   size_t pc = 0;
   while (true) {
     FbleInstr* instr = instrs[pc];
-    FbleThreadSample(thread);
-
     for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP:
-          FbleThreadEnterBlock(thread, profile_block_offset + op->block);
+          FbleThreadEnterBlock(thread, profile_block_offset + op->arg);
           break;
 
         case FBLE_PROFILE_REPLACE_OP:
-          FbleThreadReplaceBlock(thread, profile_block_offset + op->block);
+          FbleThreadReplaceBlock(thread, profile_block_offset + op->arg);
           break;
 
         case FBLE_PROFILE_EXIT_OP:
           FbleThreadExitBlock(thread);
+          break;
+
+        case FBLE_PROFILE_SAMPLE_OP:
+          FbleThreadSample(thread, op->arg);
           break;
       }
     }

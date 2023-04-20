@@ -598,15 +598,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     }
   }
 
-  fprintf(fout, "  mov x0, R_THREAD\n");
-  fprintf(fout, "  bl FbleThreadSample\n");
-
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
     switch (op->tag) {
       case FBLE_PROFILE_ENTER_OP: {
         fprintf(fout, "  mov x0, R_THREAD\n");
         fprintf(fout, "  mov x1, R_PROFILE_BASE_ID\n");
-        fprintf(fout, "  add x1, x1, #%zi\n", op->block);
+        fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
         fprintf(fout, "  bl FbleThreadEnterBlock\n");
         break;
       }
@@ -614,7 +611,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       case FBLE_PROFILE_REPLACE_OP: {
         fprintf(fout, "  mov x0, R_THREAD\n");
         fprintf(fout, "  mov x1, R_PROFILE_BASE_ID\n");
-        fprintf(fout, "  add x1, x1, #%zi\n", op->block);
+        fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
         fprintf(fout, "  bl FbleThreadReplaceBlock\n");
         break;
       }
@@ -622,6 +619,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       case FBLE_PROFILE_EXIT_OP: {
         fprintf(fout, "  mov x0, R_THREAD\n");
         fprintf(fout, "  bl FbleThreadExitBlock\n");
+        break;
+      }
+
+      case FBLE_PROFILE_SAMPLE_OP: {
+        fprintf(fout, "  mov x0, R_THREAD\n");
+        fprintf(fout, "  mov x1, #%zi\n", op->arg);
+        fprintf(fout, "  bl FbleThreadSample\n");
         break;
       }
     }

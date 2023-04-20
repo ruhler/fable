@@ -271,7 +271,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP: {
-            FbleBlockId block_id = op->block;
+            FbleBlockId block_id = op->arg;
             FbleName* name = &profile_blocks.xs[block_id];
             fprintf(fout, "    .  profile enter %s[%04zx];", name->name->str, block_id);
             PrintLoc(fout, name->loc);
@@ -279,7 +279,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           }
 
           case FBLE_PROFILE_REPLACE_OP: {
-            FbleBlockId block_id = op->block;
+            FbleBlockId block_id = op->arg;
             FbleName* name = &profile_blocks.xs[block_id];
             fprintf(fout, "    .  profile replace %s[%04zx];", name->name->str, block_id);
             PrintLoc(fout, name->loc);
@@ -288,6 +288,11 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
 
           case FBLE_PROFILE_EXIT_OP: {
             fprintf(fout, "    .  profile exit;\n");
+            break;
+          }
+
+          case FBLE_PROFILE_SAMPLE_OP: {
+            fprintf(fout, "    .  profile sample %zi;\n", op->arg);
             break;
           }
         }

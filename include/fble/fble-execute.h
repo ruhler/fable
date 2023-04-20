@@ -325,12 +325,13 @@ FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValu
  * @func[FbleThreadSample] Takes a profiling sample on the thread.
  *
  *  @arg[FbleThread*][thread] The profile thread to sample.
+ *  @arg[size_t     ][count ] The number of samples to take.
  *
  *  @sideeffects
  *   @i Charges calls on the current thread with the given time.
  *   @i Has no effect if profiling is currently disabled.
  */
-void FbleThreadSample(FbleThread* thread);
+void FbleThreadSample(FbleThread* thread, size_t count);
 
 /**
  * @func[FbleThreadEnterBlock] Enters a profiling block.

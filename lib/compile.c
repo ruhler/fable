@@ -79,7 +79,7 @@ static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
 static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index);
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
-static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
+static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg);
 
 /**
  *   Stack of block frames tracking the current block for profiling.
@@ -397,6 +397,8 @@ static void FreeScope(Scope* scope)
  */
 static void AppendInstr(Scope* scope, FbleInstr* instr)
 {
+  AppendProfileOp(scope, FBLE_PROFILE_SAMPLE_OP, 1);
+
   assert(instr->debug_info == NULL);
   instr->debug_info = scope->pending_debug_info;
   scope->pending_debug_info = NULL;
@@ -467,16 +469,16 @@ static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info)
  *
  * @param scope  The scope to append the instruction to.
  * @param tag  The tag of the profile op to insert.
- * @param block  The block id if relevant.
+ * @param arg  The argument to the profiling op if relevant.
  *
  * @sideeffects
  *   Appends the profile op to the code block for the given scope.
  */
-static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block)
+static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
 {
   FbleProfileOp* op = FbleAlloc(FbleProfileOp);
   op->tag = tag;
-  op->block = block;
+  op->arg = arg;
   op->next = NULL;
 
   if (scope->pending_profile_ops == NULL) {

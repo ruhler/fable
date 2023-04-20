@@ -326,10 +326,19 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program)
 }
 
 // See documentation in fble-execute.h.
-void FbleThreadSample(FbleThread* thread)
+void FbleThreadSample(FbleThread* thread, size_t count)
 {
-  if (thread->profile && (rand() % 1024 == 0)) {
-    FbleProfileSample(thread->profile, 1);
+  if (thread->profile) {
+    size_t time = 0;
+    for (size_t i = 0; i < count; ++i) {
+      if (rand() % 1024 == 0) {
+        time++;
+      }
+    }
+
+    if (time > 0) {
+      FbleProfileSample(thread->profile, time);
+    }
   }
 }
 
