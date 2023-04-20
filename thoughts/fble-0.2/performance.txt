@@ -770,3 +770,13 @@ Updated thoughts:
 
 Let me start with (1). I think auto-add a sample op every time we add an
 instruction. That's the easiest way.
+
+Interesting note: making sample ops explicit changes where the samples are
+applied to, because the sample comes after other profile ops rather than
+before. I think it's better this way.
+
+---
+
+For coalescing, we'll need to reset after function calls, because those have
+profiling side effects.
+

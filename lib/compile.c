@@ -63,6 +63,15 @@ typedef struct Scope {
   /** Profiling ops associated with the next instruction to be added. */
   FbleProfileOp* pending_profile_ops;
 
+  /**
+   * The currently active set of profiling ops.
+   *
+   * New ops should be added to this list to be coalesced together where
+   * possible. This should be reset to point to pending_profile_ops at the
+   * start of any new basic blocks.
+   */
+  FbleProfileOp** active_profile_ops;
+
   /** The parent of this scope. May be NULL. */
   struct Scope* parent;
 } Scope;
@@ -320,6 +329,7 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV s
   scope->code = FbleNewCode(args.size, statics.size, 0, block);
   scope->pending_debug_info = NULL;
   scope->pending_profile_ops = NULL;
+  scope->active_profile_ops = &scope->pending_profile_ops;
   scope->parent = parent;
 
   *code = scope->code;
@@ -404,8 +414,11 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
   scope->pending_debug_info = NULL;
 
   assert(instr->profile_ops == NULL);
-  instr->profile_ops = scope->pending_profile_ops;
-  scope->pending_profile_ops = NULL;
+  if (scope->pending_profile_ops != NULL) {
+    instr->profile_ops = scope->pending_profile_ops;
+    scope->pending_profile_ops = NULL;
+    scope->active_profile_ops = &instr->profile_ops;
+  }
 
   FbleVectorAppend(scope->code->instrs, instr);
 }
@@ -481,10 +494,10 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
   op->arg = arg;
   op->next = NULL;
 
-  if (scope->pending_profile_ops == NULL) {
-    scope->pending_profile_ops = op;
+  if (*scope->active_profile_ops == NULL) {
+    *scope->active_profile_ops = op;
   } else {
-    FbleProfileOp* curr = scope->pending_profile_ops;
+    FbleProfileOp* curr = *scope->active_profile_ops;
     while (curr->next != NULL) {
       curr = curr->next;
     }
@@ -816,6 +829,8 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       // Non-default branches.
       for (size_t i = 0; i < select_tc->targets.size; ++i) {
+        scope->active_profile_ops = &scope->pending_profile_ops;
+
         FbleBranchTarget* tgt = FbleVectorExtend(select_instr->targets);
         tgt->tag = select_tc->targets.xs[i].tag;
         tgt->target = scope->code->instrs.size;
@@ -842,6 +857,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       // Default branch
       {
+        scope->active_profile_ops = &scope->pending_profile_ops;
         select_instr->default_ = scope->code->instrs.size;
 
         EnterBlock(blocks, select_tc->default_.name, select_tc->default_.loc, scope, exit);
@@ -863,6 +879,8 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
           AppendInstr(scope, &nop->_base);
         }
       }
+
+      scope->active_profile_ops = &scope->pending_profile_ops;
 
       // Fix up exit gotos now that all the branch code is generated.
       if (!exit) {
@@ -969,6 +987,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleVectorInit(call_instr->args);
       call_instr->dest = exit ? 0 : dest->var.index;
       AppendInstr(scope, &call_instr->_base);
+      scope->active_profile_ops = &scope->pending_profile_ops;
 
       ReleaseLocal(scope, func, exit);
       for (size_t i = 0; i < argc; ++i) {
