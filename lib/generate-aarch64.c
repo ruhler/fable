@@ -1145,17 +1145,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);
   }
 
-  // Emit code that's outside of the main execution path.
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    EmitOutlineCode(fout, code, i, code->instrs.xs[i]);
-  }
-
-  // Emit code for aborts:
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, ".L._Abort_%p.pc.%zi:\n", (void*)code, i);
-    EmitInstrForAbort(fout, code, code->instrs.xs[i]);
-  }
-
   // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
   fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
@@ -1169,6 +1158,18 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");
+
+  // Emit code that's outside of the main execution path.
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    EmitOutlineCode(fout, code, i, code->instrs.xs[i]);
+  }
+
+  // Emit code for aborts:
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    fprintf(fout, ".L._Abort_%p.pc.%zi:\n", (void*)code, i);
+    EmitInstrForAbort(fout, code, code->instrs.xs[i]);
+  }
+
 
   fprintf(fout, ".L.%p.%s.high_pc:\n", (void*)code, function_label);
 }

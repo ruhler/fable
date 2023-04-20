@@ -835,5 +835,5 @@ time fble-stdio -m /Sat/Main% < 6cnf20_28000_28000_3.shuffled.cnf: 0m41s ==> 0m3
 time fble-sat --profile -- < rope_0002.shuffled.cnf: 4m00 ==> 4m02
 
 Reviewing ideal runtime without any profiling or error related code, that was
-down to 1m22 seconds as opposed to 1m26s. Not bad.
+down to 1m19 seconds as opposed to 1m26s. Decent progress made.
 
