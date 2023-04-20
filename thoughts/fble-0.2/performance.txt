@@ -780,3 +780,23 @@ before. I think it's better this way.
 For coalescing, we'll need to reset after function calls, because those have
 profiling side effects.
 
+---
+
+Now that we coalesce profiling ops as much as I currently desire, let's take
+advantage of that for code gen. In all three backends (interpreter, c,
+aarch64), the idea is to jump over all profiling ops if profiling is disabled.
+
+I would love if I could use R_PROFILE_BASE_ID to quickly detect if profiling
+is enabled or not. We already pass that around everywhere. Normal value means
+profiling is enabled. If profiling is disabled, we don't need that value at
+all.
+
+The question is, can I use 0 as the 'disabled' value? That would be super nice
+for aarch64, because we could use cbz/cbnz to jump past, instead of needing
+a cmp followed by a branch. Or, is there some magic instruction to test for -1
+maybe?
+
+Maybe TBNZ, TBZ, which test a bit of a register?
+
+
+

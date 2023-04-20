@@ -501,7 +501,15 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
     while (curr->next != NULL) {
       curr = curr->next;
     }
-    curr->next = op;
+
+    if (tag == FBLE_PROFILE_SAMPLE_OP && curr->tag == FBLE_PROFILE_SAMPLE_OP) {
+      // No need to add a new sample op, we can merge this with the existing
+      // profile sample op.
+      curr->arg += op->arg;
+      FbleFree(op);
+    } else {
+      curr->next = op;
+    }
   } 
 }
 
