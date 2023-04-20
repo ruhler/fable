@@ -33,7 +33,8 @@ FbleValue* FbleInterpreterRunFunction(
     FbleExecutable* executable,
     FbleValue** args,
     FbleValue** statics,
-    FbleBlockId profile_block_offset);
+    FbleBlockId profile_block_offset,
+    bool profiling_enabled);
 
 #endif // FBLE_INTERNAL_INTERPRET_H_
 

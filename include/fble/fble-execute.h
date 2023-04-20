@@ -36,6 +36,8 @@ typedef struct FbleThread FbleThread;
  *   The function's static variables. Borrowed.
  *  @arg[FbleBlockId] profile_block_offset
  *   The function profile block offset.
+ *  @arg[bool] profiling_enabled
+ *   True if profiling is enabled, false otherwise.
  *
  *  @returns FbleValue*
  *   @i The result of executing the function.
@@ -52,7 +54,8 @@ typedef FbleValue* FbleRunFunction(
     FbleExecutable* executable,
     FbleValue** args,
     FbleValue** statics,
-    FbleBlockId profile_block_offset);
+    FbleBlockId profile_block_offset,
+    bool profiling_enabled);
 
 /**
  * Magic number used by FbleExecutable.

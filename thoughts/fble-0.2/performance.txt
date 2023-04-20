@@ -796,7 +796,44 @@ for aarch64, because we could use cbz/cbnz to jump past, instead of needing
 a cmp followed by a branch. Or, is there some magic instruction to test for -1
 maybe?
 
-Maybe TBNZ, TBZ, which test a bit of a register?
+Maybe TBNZ, TBZ, which test a bit of a register? Syntax is:
 
+  tbz x20, #4, foo
 
+To test bit 4 of reg x20 and jump to foo.
+
+So, we could test for -1 by testing bit 63, right? Cool.
+
+Now, what can profile_base_id be normally?
+
+Uh, profile_block_offset is the new name?
+
+I'm not sure this is okay. Because we need profile_block_offset to be non-zero
+if we want to switch between profiling enabled/disabled with the same
+allocated objects. Is that possible?
+
+Actually, -1 may be safe to use. If profiling is disabled at link time... It's
+subtle. Using -1 means any functions we allocate without profiling enabled
+would be broken if you enable profiling. That sounds dangerous.
+
+Can we just use thread->profile for the time being? Except that's internal
+state. We don't have access to that.
+
+How about: add an additional argument to the run function which is a bool to
+say if profiling is enabled or not.
+
+---
+
+Now it's time to see what benefit we got. I expect performance improvements
+across the board. I don't have all the baselines you could want, but the
+sampling of what we have should be nice.
+
+time fble-sat < rope_0002.shuffled.cnf: 1m33s ==> 1m26s
+time yes | head -n 40000 | fble-md5: 51s ==> 45s
+time yes | head -n 20000 | fble-stdio -m /Md5/Main%: 0m39s ==> 0m35s
+time fble-stdio -m /Sat/Main% < 6cnf20_28000_28000_3.shuffled.cnf: 0m41s ==> 0m38s
+time fble-sat --profile -- < rope_0002.shuffled.cnf: 4m00 ==> 4m02
+
+Reviewing ideal runtime without any profiling or error related code, that was
+down to 1m22 seconds as opposed to 1m26s. Not bad.
 

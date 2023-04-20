@@ -186,26 +186,27 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* fu
 
   PushNormalCallStackFrame(thread);
 
-  if (thread->profile != NULL) {
+  bool profiling_enabled = (thread->profile != NULL);
+  if (profiling_enabled) {
     FbleProfileEnterBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
   }
 
   FbleValue* result = executable->run(
         heap, thread, executable, args,
-        info.statics, info.profile_block_offset);
+        info.statics, info.profile_block_offset, profiling_enabled);
   while (result == sTailCallSentinelValue) {
     assert(thread->stack->normal_call_frames == 0);
     func = thread->stack->func;
     info = FbleFuncValueInfo(func);
     executable = info.executable;
 
-    if (thread->profile != NULL) {
+    if (profiling_enabled) {
       FbleProfileReplaceBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
     }
 
     result = executable->run(
         heap, thread, executable, thread->stack->args,
-        info.statics, info.profile_block_offset);
+        info.statics, info.profile_block_offset, profiling_enabled);
   }
 
   if (thread->profile != NULL) {

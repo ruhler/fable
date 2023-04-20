@@ -251,7 +251,8 @@ FbleValue* FbleInterpreterRunFunction(
     FbleExecutable* executable,
     FbleValue** args,
     FbleValue** statics,
-    FbleBlockId profile_block_offset)
+    FbleBlockId profile_block_offset,
+    bool profiling_enabled)
 {
   FbleCode* code = (FbleCode*)executable;
   FbleInstr** instrs = code->instrs.xs;
@@ -265,23 +266,26 @@ FbleValue* FbleInterpreterRunFunction(
   size_t pc = 0;
   while (true) {
     FbleInstr* instr = instrs[pc];
-    for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-      switch (op->tag) {
-        case FBLE_PROFILE_ENTER_OP:
-          FbleThreadEnterBlock(thread, profile_block_offset + op->arg);
-          break;
 
-        case FBLE_PROFILE_REPLACE_OP:
-          FbleThreadReplaceBlock(thread, profile_block_offset + op->arg);
-          break;
+    if (profiling_enabled) {
+      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+        switch (op->tag) {
+          case FBLE_PROFILE_ENTER_OP:
+            FbleThreadEnterBlock(thread, profile_block_offset + op->arg);
+            break;
 
-        case FBLE_PROFILE_EXIT_OP:
-          FbleThreadExitBlock(thread);
-          break;
+          case FBLE_PROFILE_REPLACE_OP:
+            FbleThreadReplaceBlock(thread, profile_block_offset + op->arg);
+            break;
 
-        case FBLE_PROFILE_SAMPLE_OP:
-          FbleThreadSample(thread, op->arg);
-          break;
+          case FBLE_PROFILE_EXIT_OP:
+            FbleThreadExitBlock(thread);
+            break;
+
+          case FBLE_PROFILE_SAMPLE_OP:
+            FbleThreadSample(thread, op->arg);
+            break;
+        }
       }
     }
 
