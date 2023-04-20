@@ -421,6 +421,11 @@ RebalanceRight = <@ K@, @ V@> (K@ key, V@ value, Balance@ balance, Map@<K@, V@> 
     key, value, Sum(balance, right.delta), left, right.map);
 };
 
+<@ V@>(Maybe@<V@>) { Maybe@<V@>; }
+WithRemove = <@ V@>(Maybe@<V@> _) {
+  Nothing<V@>;
+};
+
 # Modify --
 #   Insert, modify, or delete a value in the map.
 #
@@ -436,15 +441,15 @@ RebalanceRight = <@ K@, @ V@> (K@ key, V@ value, Balance@ balance, Map@<K@, V@> 
 #          value in the map, or Nothing to delete the value in the map.
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
 Modify = <@ K@>(Ord@<K@> ord)<@ V@> {
-  (Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
-  M = (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
+  (Map@<K@, V@>, K@, (Maybe@<V@>) { Maybe@<V@>; }) { Modified@<K@, V@>; } 
+  modify = (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
     map.?(empty: {
       Maybe@<V@> value = with(Nothing<V@>);
       value.?(just: {
         # Insert into empty map.
         @(
           delta: '+',
-          map: MapP<K@, V@>(key, value.just, '0', Empty<K@, V@>, Empty<K@, V@>));
+          map: MapP(key, value.just, '0', Empty<K@, V@>, Empty<K@, V@>));
       });
 
       # Remove from empty map.
@@ -455,30 +460,30 @@ Modify = <@ K@>(Ord@<K@> ord)<@ V@> {
 
     ordering.?(lt: {
       # Recurse to left subtree.
-      RebalanceLeft<K@, V@>(
+      RebalanceLeft(
         map.map.key,
         map.map.value,
         map.map.balance,
-        M(map.map.left, key, with),
+        modify(map.map.left, key, with),
         map.map.right);
     });
 
     ordering.?(gt: {
       # Recurse to right subtree.
-      RebalanceRight<K@, V@>(
+      RebalanceRight(
         map.map.key,
         map.map.value,
         map.map.balance,
         map.map.left,
-        M(map.map.right, key, with));
+        modify(map.map.right, key, with));
     });
 
-    Maybe@<V@> value = with(Just<V@>(map.map.value));
+    Maybe@<V@> value = with(Just(map.map.value));
     value.?(just: {
       # Replace root entry's value.
       @(
         delta: '0',
-        map: MapP<K@, V@>(
+        map: MapP(
           map.map.key,
           value.just,
           map.map.balance,
@@ -486,33 +491,33 @@ Modify = <@ K@>(Ord@<K@> ord)<@ V@> {
           map.map.right));
     });
 
-    Maybe@<Entry@<K@, V@>> entry = Last<K@, V@>(map.map.left);
+    Maybe@<Entry@<K@, V@>> entry = Last(map.map.left);
     entry.?(just: {
       # Delete root entry, filling in from left.
-      RebalanceLeft<K@, V@>(
+      RebalanceLeft(
         entry.just.key,
         entry.just.value,
         map.map.balance,
-        M(map.map.left, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }),
+        modify(map.map.left, entry.just.key, WithRemove<V@>),
         map.map.right);
     });
 
-    Maybe@<Entry@<K@, V@>> entry = First<K@, V@>(map.map.right);
+    Maybe@<Entry@<K@, V@>> entry = First(map.map.right);
     entry.?(just: {
       # Delete root entry, filling in from right.
-      RebalanceRight<K@, V@>(
+      RebalanceRight(
         entry.just.key,
         entry.just.value,
         map.map.balance,
         map.map.left,
-        M(map.map.right, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }));
+        modify(map.map.right, entry.just.key, WithRemove<V@>));
     });
 
     # We are deleting the only element in the map.
     @(delta: '-', map: Empty<K@, V@>);
   };
 
-  M;
+  modify;
 };
 
 # Delete --
@@ -527,8 +532,12 @@ Modify = <@ K@>(Ord@<K@> ord)<@ V@> {
 #   % Delete = /Map%.Delete<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Delete(map, Str(Chars|foo));
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
-Delete = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key) {
-  Modify<K@>(ord)<V@>(map, key, (Maybe@<V@> _) { Nothing<V@>; }).map;
+Delete = <@ K@>(Ord@<K@> ord)<@ V@> {
+  % modify = Modify<K@>(ord)<V@>;
+
+  (Map@<K@, V@> map, K@ key) {
+    modify(map, key, WithRemove<V@>).map;
+  };
 };
 
 # InsertWith --
@@ -552,8 +561,11 @@ Delete = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key) {
 #     mv.?(just: Add(mv, value), nothing: value);
 #   };
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
-InsertWith = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
-  Modify<K@>(ord)<V@>(map, key, (Maybe@<V@> v) { Just<V@>(with(v)); }).map;
+InsertWith = <@ K@>(Ord@<K@> ord)<@ V@> {
+  % modify = Modify<K@>(ord)<V@>;
+  (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+    modify(map, key, (Maybe@<V@> v) { Just<V@>(with(v)); }).map;
+  };
 };
 
 # Insert --
@@ -574,8 +586,12 @@ InsertWith = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) {
 #   % Insert = /Map%.Insert<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Insert(map, Str(Chars|foo), 4);
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
-Insert = <@ K@>(Ord@<K@> ord)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
-  InsertWith<K@>(ord)<V@>(map, key, (Maybe@<V@> _) { value; });
+Insert = <@ K@>(Ord@<K@> ord)<@ V@> {
+  % insert = InsertWith<K@>(ord)<V@>;
+
+  (Map@<K@, V@> map, K@ key, V@ value) {
+    insert(map, key, (Maybe@<V@> _) { value; });
+  };
 };
 
 # ForEach --
@@ -605,9 +621,9 @@ ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@; } bod
   map.?(empty: base);
 
   B@ b1 = base;
-  B@ b2 = ForEach<K@, V@, B@>(map.map.left, b1, body);
+  B@ b2 = ForEach(map.map.left, b1, body);
   B@ b3 = body(map.map.key, map.map.value, b2);
-  ForEach<K@, V@, B@>(map.map.right, b3, body);
+  ForEach(map.map.right, b3, body);
 };
 
 @(Map@, Entry@, Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach);

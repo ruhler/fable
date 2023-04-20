@@ -2296,3 +2296,17 @@ of calls to ord.
 Or maybe this is a good place to take a break from the sat solver
 implementation. Or at least, optimizations. There is some code cleanup to do.
 
+---
+
+Optimization ideas: get rid of unnecessary allocations by looking at perf
+profile. In particular, avoid allocating functions if we don't need to.
+
+Strategy: 
+* Use linux perf to see who calls FbleNewFuncValue.
+* Use fble prof to see why those functions are called repeatedly and fix them.
+  For example, by factoring out the function allocation outside the call.
+
+time fble-sat < rope_0002.shuffled.cnf: 1m26s ==> 1m22s
+
+But there's still more to improve, if we change InsertWith to take the
+function argument separately.

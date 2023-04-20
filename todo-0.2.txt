@@ -3,6 +3,9 @@ Fble 0.2 TODO
 Things to consider doing for the fble-0.2 release.
 
 * Add tests for /Core/Set%.
+* Make 'with' function earlier argument to InsertWith
+  Because it doesn't depend on map or key, and can be likely factored out of
+  the primary function call path?
 
 * Sat Solver:
  - Add --help command line option to fble-sat.

@@ -1,0 +1,33 @@
+Garbage Collector Improvements
+==============================
+Some random ideas for how to improve garbage collection.
+
+The goal is to improve performance without sacrificing a bunch of memory. I
+would say the garbage collector works if it is able to keep up with churny
+object allocation and eventually reclaim memory.
+
+Here's what I'm thinking. The goal is to reduce the rate at which we call
+MarkRef, because that's where a lot of time is going.
+
+Let's say we did incremental gc. Maybe each object belongs to a generation. If
+there have been no changes to objects with generation older than X, then you
+can skip marking X objects? That way you get through a round of gc faster.
+
+In theory we could track how many objects are in each generation. At the start
+of GC, we know what generations we are traversing over, so we know how many
+objects, maximum, we need to traverse. That means we know how long it will
+take to finish GC.
+
+Let's say we have a target heap threshold for starting the next gc. Like, we
+want to start GC after 10,000 allocations, to bound overhead from churn to
+10,000 ish objects. Then we want to finish our current GC in approximately
+10,000 allocations.
+
+So, if GC will take 2,000 allocations to complete, and we want it to finish
+within 10,000, then we only need to call MarkRef once every 5 allocations.
+
+That way we can get rewarded for doing GC smarter and faster, instead of just
+doing more GC.
+
+Looks like I had these thoughts before. See thoughts/fble-0.0/fble.gc.txt. In
+that case I concluded we should start by optimizing Retain/Release calls.

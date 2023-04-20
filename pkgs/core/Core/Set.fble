@@ -70,8 +70,11 @@ Contains = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
 #   % Insert = /Set%.Insert<String@>(/Core/String/Ord%.Ord);
 #   Insert(set, Str(Chars|foo));
 <@ T@>(Ord@<T@>)(Set@<T@>, T@) { Set@<T@>; }
-Insert = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
-  /Core/Map%.Insert<T@>(ord)<Unit@>(set, element, Unit);
+Insert = <@ T@>(Ord@<T@> ord) {
+  % insert = /Core/Map%.Insert<T@>(ord)<Unit@>;
+  (Set@<T@> set, T@ element) {
+    insert(set, element, Unit);
+  };
 };
 
 # Delete --
@@ -91,8 +94,11 @@ Insert = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
 #   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
 #   Delete(set, Str(Chars|foo));
 <@ T@>(Ord@<T@>)(Set@<T@>, T@) { Set@<T@>; }
-Delete = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
-  /Core/Map%.Delete<T@>(ord)<Unit@>(set, element);
+Delete = <@ T@>(Ord@<T@> ord) {
+  % delete = /Core/Map%.Delete<T@>(ord)<Unit@>;
+  (Set@<T@> set, T@ element) {
+    delete(set, element);
+  };
 };
 
 # ForEach --
