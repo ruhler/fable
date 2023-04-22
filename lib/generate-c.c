@@ -413,7 +413,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
         fprintf(fout, "  l[%zi] = FbleStructValueAccess(x0, %zi);\n",
             access_instr->dest, access_instr->tag);
-        fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
         break;
       }
 
@@ -428,7 +427,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         ReturnAbort(fout, code, label, pc, "WrongUnionTag", access_instr->loc);
 
         fprintf(fout, "  l[%zi] = FbleUnionValueAccess(x0);\n", access_instr->dest);
-        fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
         break;
       }
 

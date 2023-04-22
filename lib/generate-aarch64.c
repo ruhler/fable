@@ -668,9 +668,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueAccess\n");
       SetFrameVar(fout, "x0", access_instr->dest);
-      fprintf(fout, "  mov x1, x0\n");
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  bl FbleRetainValue\n");
       return;
     }
 
@@ -693,9 +690,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x0, R_SCRATCH_0\n");
       fprintf(fout, "  bl FbleUnionValueAccess\n");
       SetFrameVar(fout, "x0", access_instr->dest);
-      fprintf(fout, "  mov x1, x0\n");
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  bl FbleRetainValue\n");
       return;
     }
 

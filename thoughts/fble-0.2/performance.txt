@@ -929,7 +929,7 @@ Instructions not to implicitly do retain on:
 * struct access
 * union access
 * call
-* copy
+* copy - done
 * return
 
 Let's do one at a time. Start with copy, which should be simplest I think?

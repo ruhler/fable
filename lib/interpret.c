@@ -342,9 +342,7 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         }
 
-        FbleValue* v = FbleStructValueAccess(sv, access_instr->tag);
-        FbleRetainValue(heap, v);
-        locals[access_instr->dest] = v;
+        locals[access_instr->dest] = FbleStructValueAccess(sv, access_instr->tag);
         pc++;
         break;
       }
@@ -363,9 +361,7 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         }
 
-        FbleValue* v = FbleUnionValueAccess(uv);
-        FbleRetainValue(heap, v);
-        locals[access_instr->dest] = v;
+        locals[access_instr->dest] = FbleUnionValueAccess(uv);
         pc++;
         break;
       }

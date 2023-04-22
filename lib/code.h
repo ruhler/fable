@@ -184,6 +184,9 @@ typedef struct {
  * Used for both FBLE_STRUCT_ACCESS_INSTR and FBLE_UNION_ACCESS_INSTR.
  *
  * *dest = obj.tag
+ *
+ * The resulting value is not implicitly retained. Use an explicit retain
+ * instruction to keep the returned value alive if desired.
  */
 typedef struct {
   FbleInstr _base;      /**< FbleInstr base class. */

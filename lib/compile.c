@@ -935,6 +935,11 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Local* local = NewLocal(scope);
       access->dest = local->var.index;
+
+      FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
+      retain->target = local->var;
+      AppendInstr(scope, &retain->_base);
+
       CompileExit(exit, scope, local);
       ReleaseLocal(scope, obj, exit);
       return local;
