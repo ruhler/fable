@@ -235,8 +235,14 @@ FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* f
 // See documentation in fble-execute.h.
 FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
+  FbleValue* strict_func = FbleStrictValue(func);
+  if (strict_func != func) {
+    FbleRetainValue(heap, strict_func);
+    FbleReleaseValue(heap, func);
+  }
+
   PopStackFrame(heap, thread);
-  PushTailCallStackFrame(func, args, thread);
+  PushTailCallStackFrame(strict_func, args, thread);
   return sTailCallSentinelValue;
 }
 

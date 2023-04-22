@@ -989,6 +989,39 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       }
 
       if (exit) {
+        // Take ownership of func for transfer to the tail call.
+        if (func->var.tag != FBLE_LOCAL_VAR) {
+          FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
+          retain->target = func->var;
+          AppendInstr(scope, &retain->_base);
+        }
+
+        // Take ownership of args for transfer to the tail call.
+        for (size_t i = 0; i < argc; ++i) {
+          // We can trasfer ownership instead of take ownership if it's a
+          // local variable that we haven't already transferred ownership for.
+          bool transfer = args[i]->var.tag == FBLE_LOCAL_VAR;
+
+          if (func->var.tag == FBLE_LOCAL_VAR
+              && args[i]->var.index == func->var.index) {
+            transfer = false;
+          }
+
+          for (size_t j = 0; j < i; ++j) {
+            if (args[j]->var.tag == FBLE_LOCAL_VAR
+                && args[i]->var.index == args[j]->var.index) {
+              transfer = false;
+              break;
+            }
+          }
+
+          if (!transfer) {
+            FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
+            retain->target = args[i]->var;
+            AppendInstr(scope, &retain->_base);
+          }
+        }
+
         // Release any remaining unused locals before tail calling.
         for (size_t i = 0; i < scope->locals.size; ++i) {
           Local* local = scope->locals.xs[i];

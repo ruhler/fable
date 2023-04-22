@@ -766,10 +766,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       GetFrameVar(fout, "x0", call_instr->func);
-      fprintf(fout, "  bl FbleStrictValue\n");
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");
-
-      fprintf(fout, "  cbz R_SCRATCH_0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  bl FbleStrictValue\n");
+      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  mov x2, x0\n");         // func
 
       // Allocate space for the arguments array on the stack.
       size_t sp_offset = StackBytesForCount(call_instr->args.size);
@@ -779,58 +779,24 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
 
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, R_THREAD\n");
+      fprintf(fout, "  mov x3, SP\n");          // args
+
       if (call_instr->exit) {
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_SCRATCH_0\n");
-        fprintf(fout, "  bl FbleRetainValue\n");
-
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          // We need to do a Retain on every arg from statics. For args from
-          // locals, we don't need to do a Retain on the arg the first time we
-          // see the local, because we can transfer the caller's ownership of
-          // the local to the callee for that arg.
-          bool retain = call_instr->args.xs[i].tag != FBLE_LOCAL_VAR;
-          for (size_t j = 0; j < i; ++j) {
-            if (call_instr->args.xs[i].tag == call_instr->args.xs[j].tag
-                && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
-              retain = true;
-              break;
-            }
-          }
-
-          if (retain) {
-            fprintf(fout, "  mov x0, R_HEAP\n");
-            fprintf(fout, "  ldr x1, [SP, #%zi]\n", sizeof(FbleValue*)*i);
-            fprintf(fout, "  bl FbleRetainValue\n");
-          }
-        }
-
-        if (call_instr->func.tag == FBLE_LOCAL_VAR) {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", sizeof(FbleValue*)*call_instr->func.index);
-          fprintf(fout, "  bl FbleReleaseValue\n");
-        }
-
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_THREAD\n");
-        fprintf(fout, "  mov x2, R_SCRATCH_0\n");                   // func
-        fprintf(fout, "  mov x3, SP\n");                            // args
+        // Note: Pass the original func value to FbleThreadTailCall, not the
+        // strict value, so that FbleThreadTailCall can take ownership of the
+        // original value.
+        fprintf(fout, "  mov x2, R_SCRATCH_0\n"); // func
         fprintf(fout, "  bl FbleThreadTailCall\n");
         fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-
         fprintf(fout, "  b .L._Run_.%p.exit\n", code);
         return;
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_THREAD\n");
-      fprintf(fout, "  mov x2, R_SCRATCH_0\n");   // func
-      fprintf(fout, "  mov x3, SP\n");
       fprintf(fout, "  bl FbleThreadCall\n");
       SetFrameVar(fout, "x0", call_instr->dest);
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-
-      // Abort if the function didn't finish.
       fprintf(fout, "  cbz x0, .L.%p.%zi.abort\n", code, pc);
       return;
     }
@@ -1227,20 +1193,14 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       if (call_instr->exit) {
-        if (call_instr->func.tag == FBLE_LOCAL_VAR) {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          GetFrameVar(fout, "x1", call_instr->func);
-          fprintf(fout, "  bl FbleReleaseValue\n");
-          SetFrameVar(fout, "XZR", call_instr->func.index);
-        }
+        fprintf(fout, "  mov x0, R_HEAP\n");
+        GetFrameVar(fout, "x1", call_instr->func);
+        fprintf(fout, "  bl FbleReleaseValue\n");
 
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
-            fprintf(fout, "  mov x0, R_HEAP\n");
-            GetFrameVar(fout, "x1", call_instr->args.xs[i]);
-            fprintf(fout, "  bl FbleReleaseValue\n");
-            SetFrameVar(fout, "XZR", call_instr->args.xs[i].index);
-          }
+          fprintf(fout, "  mov x0, R_HEAP\n");
+          GetFrameVar(fout, "x1", call_instr->args.xs[i]);
+          fprintf(fout, "  bl FbleReleaseValue\n");
         }
 
         fprintf(fout, "  mov x0, XZR\n");

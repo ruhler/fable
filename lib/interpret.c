@@ -144,22 +144,9 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
 
         if (call_instr->exit) {
-          if (call_instr->func.tag == FBLE_LOCAL_VAR) {
-            FbleReleaseValue(heap, locals[call_instr->func.index]);
-
-            // Set function to NULL so it's safe to release it again if the function
-            // is also one of the arguments.
-            locals[call_instr->func.index] = NULL;
-          }
-
+          FbleReleaseValue(heap, GET(call_instr->func));
           for (size_t i = 0; i < call_instr->args.size; ++i) {
-            if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
-              FbleReleaseValue(heap, locals[call_instr->args.xs[i].index]);
-
-              // Set the arg to NULL so it's safe to release it again if the
-              // arg is used more than once.
-              locals[call_instr->args.xs[i].index] = NULL;
-            }
+            FbleReleaseValue(heap, GET(call_instr->args.xs[i]));
           }
 
           return NULL;
@@ -424,24 +411,9 @@ FbleValue* FbleInterpreterRunFunction(
         }
 
         if (call_instr->exit) {
-          FbleRetainValue(heap, func);
-          for (size_t i = 0; i < func_exe->num_args; ++i) {
-            FbleRetainValue(heap, call_args[i]);
-          }
-
-          if (call_instr->func.tag == FBLE_LOCAL_VAR) {
-            FbleReleaseValue(heap, locals[call_instr->func.index]);
-            locals[call_instr->func.index] = NULL;
-          }
-
-          for (size_t i = 0; i < call_instr->args.size; ++i) {
-            if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
-              FbleReleaseValue(heap, locals[call_instr->args.xs[i].index]);
-              locals[call_instr->args.xs[i].index] = NULL;
-            }
-          }
-
-          return FbleThreadTailCall(heap, thread, func, call_args);
+          // Pass the original func, not the strict func, to properly transfer
+          // ownership.
+          return FbleThreadTailCall(heap, thread, GET(call_instr->func), call_args);
         }
 
         pc++;

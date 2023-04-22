@@ -501,34 +501,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
         if (call_instr->exit) {
-          fprintf(fout, "  FbleRetainValue(heap, x0);\n");
-
-          for (size_t i = 0; i < call_instr->args.size; ++i) {
-            // We need to do a Retain on every arg from statics. For args from
-            // locals, we don't need to do a Retain on the arg the first time we
-            // see the local, because we can transfer the caller's ownership of
-            // the local to the callee for that arg.
-            bool retain = call_instr->args.xs[i].tag != FBLE_LOCAL_VAR;
-            for (size_t j = 0; j < i; ++j) {
-              if (call_instr->args.xs[i].tag == call_instr->args.xs[j].tag
-                  && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
-                retain = true;
-                break;
-              }
-            }
-
-            if (retain) {
-              fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
-                  var_tag[call_instr->args.xs[i].tag],
-                  call_instr->args.xs[i].index);
-            }
-          }
-
-          if (call_instr->func.tag == FBLE_LOCAL_VAR) {
-            fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
-          }
-
-          fprintf(fout, "  return FbleThreadTailCall_(heap, thread, x0");
+          // Pass the original func value, not the strict version, to tail
+          // call to properly track ownership.
+          fprintf(fout, "  return FbleThreadTailCall_(heap, thread, %s[%zi]",
+            var_tag[call_instr->func.tag],
+            call_instr->func.index);
           for (size_t i = 0; i < call_instr->args.size; ++i) {
             fprintf(fout, ", %s[%zi]",
                 var_tag[call_instr->args.xs[i].tag],
@@ -709,16 +686,13 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       if (call_instr->exit) {
-        if (call_instr->func.tag == FBLE_LOCAL_VAR) {
-          fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
-          fprintf(fout, "  l[%zi] = NULL;\n", call_instr->func.index);
-        }
-
+        fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
+            var_tag[call_instr->func.tag],
+            call_instr->func.index);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          if (call_instr->args.xs[i].tag == FBLE_LOCAL_VAR) {
-            fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->args.xs[i].index);
-            fprintf(fout, "  l[%zi] = NULL;\n", call_instr->args.xs[i].index);
-          }
+          fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
+              var_tag[call_instr->args.xs[i].tag],
+              call_instr->args.xs[i].index);
         }
 
         fprintf(fout, "  return NULL;\n");

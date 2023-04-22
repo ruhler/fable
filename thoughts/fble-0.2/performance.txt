@@ -928,9 +928,9 @@ time fble-stdio -m /Sat/Main% < rope_0002.shuffled.cnf: 2m01s
 Instructions not to implicitly do retain on:
 * struct access - done
 * union access - done
-* call
+* call - done
 * copy - done
-* return
+* return - done
 
 Let's do one at a time. Start with copy, which should be simplest I think?
 
@@ -941,4 +941,98 @@ But then who is supposed to release it?
 I'll need to think more about this. Is it as simple as always releasing in
 return? Yeah, that makes sense to me. We will already have explicitly retained
 it otherwise.
+
+---
+
+How to pull out 'retain' from call instruction? What gets retained today:
+
+* tail call retains func, args
+  Note: func is the 'strict' function value, not necessarily the original?
+
+Okay, this is interesting. Tail call retains things and releases things and
+then does the call. If we retain things before hand, maybe we can release
+things before hand too.
+
+Non-tail call is straight forward. No retain/release involved.
+
+Let's focus on tail call then:
+
+* retain func.
+* retain each argument.
+* if func is a local variable, release the original value.
+  - It's clear we need to release the original value.
+  - Could we have retained the original value too?
+* Release args that are local variables.
+
+The point is, FbleThreadTailCall takes ownership of func and args.
+For any non-local func and args, we need to retain.
+For local func and args, we'll transfer ownership instead.
+
+It's as easy as that.
+
+Nope. Not as easy as that. Two things that make this hard:
+1. The values for func, args might show up more than once. If so, we can only
+use 'transfer' for one instance of that ownership. We need retains for the
+rest. We need to keep track of that.
+
+2. There's potentially a difference between the original func argument and the
+strictified func argument passed to the tail call. So we can't just transfer
+ownership for func to the tail call, because tail call is taking ownership of
+the strict func value, not the original func value. We don't currently have
+access to the strict func value outside of the tail call instruction.
+
+(1) is straight forward, if slightly tedious, to support. (2) is less fun,
+because it seems like we need an extra retain/release in the common case where
+the original func value is the strict func value, just to handle the rare case
+when it isn't. Or maybe it usually is... anyway, it's no fun to have to do an
+extra retain/release in this case.
+
+Options are:
+* Keep the same retain/release calls we were. Then the tail call will have to
+  be responsible for retaining/releasing the func. In other words: tail call
+  instruction consumes the non-strict func if it's a local, transferring
+  ownership of the strict func.
+* Come up with some better way to structure tail calls that avoids this
+  problem.
+
+Let's try the first option for now, to keep things simple.
+
+Say tail call instruction consumes the original func value. It assumes args
+are properly retained. Does it check if it's a local variable though? Hmm...
+
+Cases are:
+* non-tail call: nothing to worry about.
+* tail-call, non-local func: nothing to worry about.
+  Takes ownership of strict func.
+  args will have been retained.
+* tail-call, local func: 
+  Converts ownership of non-strict func to ownership of strict func.
+  args will have been retained.
+
+What's interesting is we don't need to access the func in the call instruction
+for anything except detecting abort. In theory I could pass the non-strict
+func to FbleThread*Call and have it transfer ownership to the strict func if
+desired.
+
+We already do this for things like FbleStructValueAccess, so it makes sense.
+
+In other words, strictify the func value in the call instruction for error
+reporting, but pass the original to tail call. We duplicate the
+strictification at runtime, but the benefit is we put that logic in one place
+instead of re-implementing it for all of the backends.
+
+Under this new proposal:
+* FbleThreadTailCall takes original func value as an argument. It still
+  consumes.
+
+So we have, for the tail call case:
+* Compiler arrange for original func and args to be retained. 
+  - static/arg retained.
+  - local transferred.
+
+That's it. Easy. I like it.
+
+It would be nice if FbleThreadCall took the non-strict version too I feel
+like. Not sure.
+
 

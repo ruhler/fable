@@ -15,6 +15,11 @@ Things to consider doing for the fble-0.2 release.
 
 * convert lib/* code to fbld doc comments.
 
+* Improve documentation about expectations for strict vs. non strict values
+ - e.g. FbleThreadTailCall can take a non-strict value, but FbleFuncValueInfo
+   requires a strict value.
+   And should it be that way?
+
 * Struct copy expr
  - Add spec tests.
  - Use it where possible. At least in sat to start.
