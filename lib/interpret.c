@@ -191,15 +191,7 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        switch (return_instr->result.tag) {
-          case FBLE_STATIC_VAR: break;
-          case FBLE_ARG_VAR: break;
-          case FBLE_LOCAL_VAR: {
-            FbleReleaseValue(heap, locals[return_instr->result.index]);
-            break;
-          }
-        }
-
+        FbleReleaseValue(heap, locals[return_instr->result.index]);
         return NULL;
       }
 
@@ -489,27 +481,7 @@ FbleValue* FbleInterpreterRunFunction(
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        FbleValue* result = NULL;
-        switch (return_instr->result.tag) {
-          case FBLE_STATIC_VAR: {
-            result = statics[return_instr->result.index];
-            FbleRetainValue(heap, result);
-            break;
-          }
-
-          case FBLE_ARG_VAR: {
-            result = args[return_instr->result.index];
-            FbleRetainValue(heap, result);
-            break;
-          }
-
-          case FBLE_LOCAL_VAR: {
-            result = locals[return_instr->result.index];
-            break;
-          }
-        }
-
-        return result;
+        return GET(return_instr->result);
       }
 
       case FBLE_TYPE_INSTR: {

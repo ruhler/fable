@@ -280,7 +280,7 @@ static void ReturnAbort(FILE* fout, void* code, const char* function_label, size
 {
   fprintf(fout, "{\n");
   fprintf(fout, "    ReportAbort(%s, %d, %d);\n", lmsg, loc.line, loc.col);
-  fprintf(fout, "    return _Abort_%p_%s(heap, thread, l, %zi);\n",
+  fprintf(fout, "    return _Abort_%p_%s(heap, thread, s, a, l, %zi);\n",
       code, function_label, pc);
   fprintf(fout, "  }\n");
 }
@@ -578,19 +578,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-
-        switch (return_instr->result.tag) {
-          case FBLE_STATIC_VAR:
-          case FBLE_ARG_VAR: {
-            fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
-                var_tag[return_instr->result.tag],
-                return_instr->result.index);
-            break;
-          }
-
-          case FBLE_LOCAL_VAR: break;
-        }
-
         fprintf(fout, "  return %s[%zi];\n",
             var_tag[return_instr->result.tag],
             return_instr->result.index);
@@ -759,15 +746,7 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      switch (return_instr->result.tag) {
-        case FBLE_STATIC_VAR: break;
-        case FBLE_ARG_VAR: break;
-        case FBLE_LOCAL_VAR: {
-          fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", return_instr->result.index);
-          break;
-        }
-      }
-
+      fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", return_instr->result.index);
       fprintf(fout, "  return NULL;\n");
       return;
     }
@@ -830,7 +809,7 @@ static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* cod
   FbleName block = profile_blocks.xs[code->_base.profile_block_id];
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
-  fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** l, size_t pc)\n", (void*)code, label);
+  fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** s, FbleValue** a, FbleValue** l, size_t pc)\n", (void*)code, label);
   fprintf(fout, "{\n");
   fprintf(fout, "  switch (pc)\n");
   fprintf(fout, "  {\n");
@@ -988,7 +967,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
       "FbleValue** statics, FbleBlockId profile_block_offset, "
       "bool profiling_enabled);\n",
         (void*)code, function_label);
-    fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** locals, size_t pc);\n",
+    fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** statics, FbleValue** args, FbleValue** locals, size_t pc);\n",
         (void*)code, function_label);
   }
 

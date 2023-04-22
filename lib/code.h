@@ -323,6 +323,10 @@ typedef struct {
 
 /**
  * FBLE_RETURN_INSTR: Returns 'result' and exits the current stack frame.
+ *
+ * Does not implicitly retain the value to be returned. If the value needs to
+ * be retained before returning, use an explicit return instruction.
+ *
  */
 typedef struct {
   FbleInstr _base;    /**< FbleInstr base class. */

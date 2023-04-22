@@ -868,21 +868,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      GetFrameVar(fout, "R_SCRATCH_0", return_instr->result);
-
-      switch (return_instr->result.tag) {
-        case FBLE_STATIC_VAR:
-        case FBLE_ARG_VAR: {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          fprintf(fout, "  mov x1, R_SCRATCH_0\n");
-          fprintf(fout, "  bl FbleRetainValue\n");
-          break;
-        }
-
-        case FBLE_LOCAL_VAR: break;
-      }
-
-      fprintf(fout, "  mov x0, R_SCRATCH_0\n");
+      GetFrameVar(fout, "x0", return_instr->result);
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
@@ -1283,17 +1269,9 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      switch (return_instr->result.tag) {
-        case FBLE_STATIC_VAR: break;
-        case FBLE_ARG_VAR: break;
-        case FBLE_LOCAL_VAR: {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          GetFrameVar(fout, "x1", return_instr->result);
-          fprintf(fout, "  bl FbleReleaseValue\n");
-          break;
-        }
-      }
-
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      GetFrameVar(fout, "x1", return_instr->result);
+      fprintf(fout, "  bl FbleReleaseValue\n");
       fprintf(fout, "  mov x0, XZR\n");
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;

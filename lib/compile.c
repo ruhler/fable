@@ -675,6 +675,12 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
       }
     }
 
+    if (result->var.tag != FBLE_LOCAL_VAR) {
+      FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
+      retain->target = result->var;
+      AppendInstr(scope, &retain->_base);
+    }
+
     FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
     return_instr->result = result->var;
     AppendInstr(scope, &return_instr->_base);

@@ -926,10 +926,19 @@ time fble-stdio -m /Sat/Main% < rope_0002.shuffled.cnf: 2m01s
 ---
 
 Instructions not to implicitly do retain on:
-* struct access
-* union access
+* struct access - done
+* union access - done
 * call
 * copy - done
 * return
 
 Let's do one at a time. Start with copy, which should be simplest I think?
+
+Return is tricky, because we used to explicitly release on abort. Now it
+doesn't make sense to release on abort, because we don't know that we need to.
+But then who is supposed to release it?
+
+I'll need to think more about this. Is it as simple as always releasing in
+return? Yeah, that makes sense to me. We will already have explicitly retained
+it otherwise.
+
