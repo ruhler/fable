@@ -60,7 +60,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap);
  *  called.
  *
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*    ][src ] The value to retain.
+ *  @arg[FbleValue*    ][src ] The value to retain. May be NULL.
  *
  *  @sideeffects
  *   Causes the value to be retained until a corresponding FbleReleaseValue

@@ -98,6 +98,7 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
+  FBLE_RETAIN_INSTR,
   FBLE_RELEASE_INSTR,
   FBLE_LIST_INSTR,
   FBLE_LITERAL_INSTR,
@@ -285,6 +286,9 @@ typedef struct {
 
 /**
  * FBLE_COPY_INSTR: Copies a value from one location to another.
+ *
+ * Does not increment the ref count. If refcount increment is required, use an
+ * explicit retain instruction.
  */
 typedef struct {
   FbleInstr _base;      /**< FbleInstr base class. */
@@ -331,6 +335,16 @@ typedef struct {
   FbleInstr _base;      /**< FbleInstr base class. */
   FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleTypeInstr;
+
+/**
+ * FBLE_RETAIN_INSTR: Retains an fble value.
+ *
+ * FbleRetainValue(target)
+ */
+typedef struct {
+  FbleInstr _base;          /**< FbleInstr base class. */
+  FbleVar target;           /**< The value to reatin. */
+} FbleRetainInstr;
 
 /**
  * FBLE_RELEASE_INSTR: Releases fble values.

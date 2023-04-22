@@ -17,8 +17,45 @@
 #include "unreachable.h"
 #include "value.h"
 
-static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** locals, size_t pc);
-
+static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc);
+
+/**
+ * Gets the value of a variable in scope.
+ *
+ * Assumes existance of a local vars variable:
+ *   FbleValue** vars[3];
+ *   vars[FBLE_STATIC_VAR] = statics;
+ *   vars[FBLE_ARG_VAR] = args;
+ *   vars[FBLE_LOCAL_VAR] = locals;
+ *
+ * @param idx  The index of the variable.
+ *
+ * @returns
+ *   The value of the variable.
+ *
+ * @sideeffects
+ *   None.
+ */
+#define GET(idx) (vars[idx.tag][idx.index])
+
+/**
+ * Gets the strict value of a variable in scope.
+ *
+ * Assumes existance of a local vars variable:
+ *   FbleValue** vars[3];
+ *   vars[FBLE_STATIC_VAR] = statics;
+ *   vars[FBLE_ARG_VAR] = args;
+ *   vars[FBLE_LOCAL_VAR] = locals;
+ *
+ * @param idx  The index of the variable.
+ *
+ * @returns
+ *   The FbleStrctValue of the variable.
+ *
+ * @sideeffects
+ *   None.
+ */
+#define GET_STRICT(idx) FbleStrictValue(GET(idx))
 
 /**
  * Aborts a function.
@@ -40,8 +77,9 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
  * @sideeffects
  * Cleans up the function's local variables.
  */
-static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** locals, size_t pc)
+static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc)
 {
+  FbleValue** locals = vars[FBLE_LOCAL_VAR];
   while (true) {
     assert(pc < code->instrs.size && "Missing return instruction?");
     FbleInstr* instr = code->instrs.xs[pc];
@@ -172,6 +210,14 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
         break;
       }
 
+      case FBLE_RETAIN_INSTR: {
+        FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
+        FbleValue* target = GET(retain_instr->target);
+        FbleRetainValue(heap, target);
+        pc++;
+        break;
+      }
+
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
         for (size_t i = 0; i < release_instr->targets.size; ++i) {
@@ -206,44 +252,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** loca
   return NULL;
 }
 
-/**
- * Gets the value of a variable in scope.
- *
- * Assumes existance of a local vars variable:
- *   FbleValue** vars[3];
- *   vars[FBLE_STATIC_VAR] = statics;
- *   vars[FBLE_ARG_VAR] = args;
- *   vars[FBLE_LOCAL_VAR] = locals;
- *
- * @param idx  The index of the variable.
- *
- * @returns
- *   The value of the variable.
- *
- * @sideeffects
- *   None.
- */
-#define GET(idx) (vars[idx.tag][idx.index])
-
-/**
- * Gets the strict value of a variable in scope.
- *
- * Assumes existance of a local vars variable:
- *   FbleValue** vars[3];
- *   vars[FBLE_STATIC_VAR] = statics;
- *   vars[FBLE_ARG_VAR] = args;
- *   vars[FBLE_LOCAL_VAR] = locals;
- *
- * @param idx  The index of the variable.
- *
- * @returns
- *   The FbleStrctValue of the variable.
- *
- * @sideeffects
- *   None.
- */
-#define GET_STRICT(idx) FbleStrictValue(GET(idx))
-
 // See documentation in interpret.h.
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
@@ -331,7 +339,7 @@ FbleValue* FbleInterpreterRunFunction(
         FbleValue* sv = GET_STRICT(access_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
-          return RunAbort(heap, code, locals, pc);
+          return RunAbort(heap, code, vars, pc);
         }
 
         FbleValue* v = FbleStructValueAccess(sv, access_instr->tag);
@@ -347,12 +355,12 @@ FbleValue* FbleInterpreterRunFunction(
         FbleValue* uv = GET_STRICT(access_instr->obj);
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", access_instr->loc);
-          return RunAbort(heap, code, locals, pc);
+          return RunAbort(heap, code, vars, pc);
         }
 
         if (FbleUnionValueTag(uv) != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-          return RunAbort(heap, code, locals, pc);
+          return RunAbort(heap, code, vars, pc);
         }
 
         FbleValue* v = FbleUnionValueAccess(uv);
@@ -367,7 +375,7 @@ FbleValue* FbleInterpreterRunFunction(
         FbleValue* uv = GET_STRICT(select_instr->condition);
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", select_instr->loc);
-          return RunAbort(heap, code, locals, pc);
+          return RunAbort(heap, code, vars, pc);
         }
 
         size_t tag = FbleUnionValueTag(uv);
@@ -418,7 +426,7 @@ FbleValue* FbleInterpreterRunFunction(
         FbleValue* func = GET_STRICT(call_instr->func);
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
-          return RunAbort(heap, code, locals, pc);
+          return RunAbort(heap, code, vars, pc);
         };
 
         FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
@@ -451,16 +459,14 @@ FbleValue* FbleInterpreterRunFunction(
         pc++;
         locals[call_instr->dest] = FbleThreadCall(heap, thread, func, call_args);
         if (locals[call_instr->dest] == NULL) {
-          return RunAbort(heap, code, locals, pc);
+          return RunAbort(heap, code, vars, pc);
         }
         break;
       }
 
       case FBLE_COPY_INSTR: {
         FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-        FbleValue* value = GET(copy_instr->source);
-        FbleRetainValue(heap, value);
-        locals[copy_instr->dest] = value;
+        locals[copy_instr->dest] = GET(copy_instr->source);
         pc++;
         break;
       }
@@ -478,7 +484,7 @@ FbleValue* FbleInterpreterRunFunction(
         FbleValue* value = GET(ref_def_instr->value);
         if (!FbleAssignRefValue(heap, ref, value)) {
           FbleReportError("vacuous value\n", ref_def_instr->loc);
-          return RunAbort(heap, code, locals, pc);
+          return RunAbort(heap, code, vars, pc);
         }
 
         pc++;
@@ -513,6 +519,14 @@ FbleValue* FbleInterpreterRunFunction(
       case FBLE_TYPE_INSTR: {
         FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         locals[type_instr->dest] = FbleGenericTypeValue;
+        pc++;
+        break;
+      }
+
+      case FBLE_RETAIN_INSTR: {
+        FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
+        FbleValue* target = GET(retain_instr->target);
+        FbleRetainValue(heap, target);
         pc++;
         break;
       }

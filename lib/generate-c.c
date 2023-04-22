@@ -78,6 +78,7 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_REF_DEF_INSTR: break;
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
+      case FBLE_RETAIN_INSTR: break;
       case FBLE_RELEASE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
@@ -557,7 +558,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             copy_instr->dest,
             var_tag[copy_instr->source.tag],
             copy_instr->source.index);
-        fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", copy_instr->dest);
         break;
       }
 
@@ -602,6 +602,14 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_TYPE_INSTR: {
         FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         fprintf(fout, "  l[%zi] = FbleGenericTypeValue;\n", type_instr->dest);
+        break;
+      }
+
+      case FBLE_RETAIN_INSTR: {
+        FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
+        fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
+            var_tag[retain_instr->target.tag],
+            retain_instr->target.index);
         break;
       }
 
@@ -663,6 +671,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
  */
 static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
 {
+  static const char* var_tag[] = { "s", "a", "l" };
   switch (instr->tag) {
     case FBLE_DATA_TYPE_INSTR: {
       FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
@@ -769,6 +778,14 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
       fprintf(fout, "  l[%zi] = NULL;\n", type_instr->dest);
       return;
+    }
+
+    case FBLE_RETAIN_INSTR: {
+      FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
+      fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
+          var_tag[retain_instr->target.tag],
+          retain_instr->target.index);
+      break;
     }
 
     case FBLE_RELEASE_INSTR: {

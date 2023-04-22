@@ -180,6 +180,7 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
+      case FBLE_RETAIN_INSTR: break;
       case FBLE_RELEASE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
@@ -842,10 +843,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
       GetFrameVar(fout, "x1", copy_instr->source);
       SetFrameVar(fout, "x1", copy_instr->dest);
-      fprintf(fout, "  bl FbleRetainValue\n");
       return;
     }
 
@@ -899,6 +898,14 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       Adr(fout, "x0", "FbleGenericTypeValue");
       fprintf(fout, "  ldr x0, [x0]\n");
       SetFrameVar(fout, "x0", type_instr->dest);
+      return;
+    }
+
+    case FBLE_RETAIN_INSTR: {
+      FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      GetFrameVar(fout, "x1", retain_instr->target);
+      fprintf(fout, "  bl FbleRetainValue\n");
       return;
     }
 
@@ -1083,6 +1090,7 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: return;
     case FBLE_TYPE_INSTR: return;
+    case FBLE_RETAIN_INSTR: return;
     case FBLE_RELEASE_INSTR: return;
     case FBLE_LIST_INSTR: return;
     case FBLE_LITERAL_INSTR: return;
@@ -1300,6 +1308,14 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
     case FBLE_TYPE_INSTR: {
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
       SetFrameVar(fout, "XZR", type_instr->dest);
+      return;
+    }
+
+    case FBLE_RETAIN_INSTR: {
+      FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      GetFrameVar(fout, "x1", retain_instr->target);
+      fprintf(fout, "  bl FbleRetainValue\n");
       return;
     }
 

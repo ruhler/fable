@@ -199,7 +199,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 // See documentation in fble-value.h.
 void FbleRetainValue(FbleValueHeap* heap, FbleValue* value)
 {
-  if (!PACKED(value)) {
+  if (!PACKED(value) && value != NULL) {
     FbleRetainHeapObject(heap, value);
   }
 }

@@ -837,3 +837,99 @@ time fble-sat --profile -- < rope_0002.shuffled.cnf: 4m00 ==> 4m02
 Reviewing ideal runtime without any profiling or error related code, that was
 down to 1m19 seconds as opposed to 1m26s. Decent progress made.
 
+---
+
+Performance idea: better lifetime management.
+
+If you access field y of value x, and you know that x will live at least as
+long as y needs to, no need to do explicit release on y.
+
+That should be easy to track in the compiler. I'm hoping we have lots of cases
+where x is an argument to a function or a static, so we know it outlives y.
+
+Some questions:
+* Who retains y in the first place currently?
+ - The implementation of the ACCESS instruction after getting the field via
+   FbleStructValueAccess or FbleUnionValueAccess.
+ - Good, this should be easy to change to an explicit retain.
+* What percent of the time in programs is spent in Retain/Release and where?
+ 6.89     2831  FbleRetainHeapObject[0019]
+ 4.29     1762  FbleReleaseHeapObject[003a]
+ 3.18     1307  FbleReleaseValues[0040]
+ 2.20      904  FbleRetainValue[0044]
+ Yeah, so that's a lot of opportunity to improve.
+* How many of those Retain/Release could be avoid using the proposed rule?
+ - Apparently all of FbleRetainValue comes from FbleThreadCall?
+ - FbleRelease is much more what I was hoping. Lot's of calls from generated
+   code.
+
+Examples of generated code's calls to FbleRelease:
+ Map modify!:
+  
+    Ordering@ ordering = ord(key, map.map.key);
+
+  12.  l0 = a0.1;  @ pkgs/core/Core/Map/Map.fble:459:39
+  13.  l1 = l0.0;  @ pkgs/core/Core/Map/Map.fble:459:43
+  14.  release l0;
+  15.  l0 = s0(a1, l1);  @ pkgs/core/Core/Map/Map.fble:459:26
+  16.  release l1;
+
+ In this case, 'map' is an argument. We get map.map, then map.map.key. First
+ thing we do is release map.map. Then we call the ord function, then release
+ map.map.key.
+
+ A perfect example of unnecessary retain/release.
+
+You want another example? /Md5/Rounds%.cls function I bet has an absurd number
+of these, because it does things like a.hi.hi.hi.hi.hi.
+
+Awesome. Let's try this. First, how does it look in terms of implementation?
+1. Change ACCESS_INSTR to not retain what it accesses, add an explicit RETAIN
+   instruction for that. Same with COPY instr. And CALL, and RETURN.
+ - In other words, do all calls to RETAIN explicitly in instructions. So we
+   can give the compiler control over them.
+2. Add an OWNERSHIP field to Local
+ - This points to a Local that will stay alive at least as long as this local
+   and cause this local to be retained. The owner could be the local itself as
+   a special case.
+3. Add an OWNED field to Local.
+ - This is a list of locals that have this local as its owner (except for
+   itself).
+
+Operations are:
+* Initially, statics and args have self ownership and refcount 1.
+* Access instruction gives ownership to what was accessed from.
+* When refcount drops to zero:
+  - If owned by someone else, remove that ownership. No explicit release.
+    For each owned, transfer ownership of them to owner.
+  - If owned by self, for each owned, explicitly retain and set owned by self.
+    Then release this local.
+
+Just to be clear, at this point I'm going to try extend the life of an owner
+object beyond what it would otherwise be to avoid transfering ownership to an
+owned object. That can be a future optimization.
+
+This sounds entirely reasonable to implement, and looks promising in terms of
+potential optimization. Let's do it.
+
+Step 1: making release explicit.
+
+---
+
+Baseline:
+
+time yes | head -n 60000 | fble-md5: 1m08s
+time yes | head -n 40000 | fble-stdio -m /Md5/Main%: 1m10s
+time fble-sat < rope_0002.shuffled.cnf: 1m21s
+time fble-stdio -m /Sat/Main% < rope_0002.shuffled.cnf: 2m01s
+
+---
+
+Instructions not to implicitly do retain on:
+* struct access
+* union access
+* call
+* copy
+* return
+
+Let's do one at a time. Start with copy, which should be simplest I think?

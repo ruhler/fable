@@ -2309,4 +2309,5 @@ Strategy:
 time fble-sat < rope_0002.shuffled.cnf: 1m26s ==> 1m22s
 
 But there's still more to improve, if we change InsertWith to take the
-function argument separately.
+function argument separately. Actually, that doesn't save us, because the
+'with' function in this case depends on the value to insert.

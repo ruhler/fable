@@ -847,6 +847,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->targets.xs[i].target.tc);
 
         if (!exit) {
+          FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
+          retain->target = result->var;
+          AppendInstr(scope, &retain->_base);
+
           FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
           copy->source = result->var;
           copy->dest = select_result->var.index;
@@ -872,6 +876,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->default_.tc);
 
         if (!exit) {
+          FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
+          retain->target = result->var;
+          AppendInstr(scope, &retain->_base);
+
           FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
           copy->source = result->var;
           copy->dest = select_result->var.index;

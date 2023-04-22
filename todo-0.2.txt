@@ -3,9 +3,6 @@ Fble 0.2 TODO
 Things to consider doing for the fble-0.2 release.
 
 * Add tests for /Core/Set%.
-* Make 'with' function earlier argument to InsertWith
-  Because it doesn't depend on map or key, and can be likely factored out of
-  the primary function call path?
 
 * Sat Solver:
  - Add --help command line option to fble-sat.
@@ -15,6 +12,8 @@ Things to consider doing for the fble-0.2 release.
  - Parse dimacs cnf incrementally instead of all at once?
    There should be no need to have the entire text of the file in memory all
    at one time.
+
+* convert lib/* code to fbld doc comments.
 
 * Struct copy expr
  - Add spec tests.
