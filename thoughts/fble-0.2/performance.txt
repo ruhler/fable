@@ -1035,4 +1035,313 @@ That's it. Easy. I like it.
 It would be nice if FbleThreadCall took the non-strict version too I feel
 like. Not sure.
 
+---
+
+Cool. Retains are all explicit now. For the fun of it, let's see where we are
+at performance wise. I expect some loss of performance due to reloading local
+variables before retaining and calling FbleStrictValue in FbleThreadTailCall.
+But some gain in performance for avoiding retain/release call for tail call on
+already-strict local functions.
+
+Honestly? I bet it's a minor hit to performance.
+
+
+time yes | head -n 60000 | fble-md5: 1m08s ==> 1m15s
+time yes | head -n 40000 | fble-stdio -m /Md5/Main%: 1m10s ==> 1m16s
+time fble-sat < rope_0002.shuffled.cnf: 1m21s ==> 1m27s
+time fble-stdio -m /Sat/Main% < rope_0002.shuffled.cnf: 2m01s ==> 2m09s
+
+Hmm... Steeper than I had hoped. What could it have been again?
+ - Extra call to FbleStrictValue in FbleThreadTailCall
+ - Reloading values for FbleRetainValue instead of using what's in a reg
+ - Increased number of instructions to execute - impacts interpreter.
+
+What else could it have been?
+
+For the first one, maybe we could inline or something to avoid the extra call
+overhead?
+
+For the second one, a general solution that stores some values in regs
+directly could be quite nice.
+
+We could also coalesce retain instructions like we do release instructions.
+
+I still think it's good for retain instructions to be explicit. More
+opportunity to optimize down the line, avoids duplicating complex logic in all
+the backends.
+
+---
+
+Now that I think about it, maybe we could handle retain/release for tail calls
+differently. If func/args are static, there should be no need to
+retain/release them? Unless we are in a tail call that's going to go away...
+No. Sounds too hard right now.
+
+How about I run perf to see if it can narrow down the regression. 
+
+It's hard to tell from the perf profiles.
+
+---
+
+I remember now that we did a sequence of changes to get to these numbers, not
+just a single change. Let's break it down.
+
+     baseline  ==> copy      ==> access    ==> return    ==> (tail) call
+md5: 1m8.191s  ==> 1m8.563s  ==> 1m8.901s  ==> 1m11.641s ==> 1m15.184s
+sat: 1m20.486s ==> 1m21.778s ==> 1m20.354s ==> 1m26.533s ==> 1m27.706s
+
+The only change for 'return' was having to reload the value from memory. I bet
+that explains all the significant regression here, and it's just that return
+and call are called more often. This, in theory, could be improved by making
+better use of registers between fble instructions. Except, doesn't that
+increase the cost of saving/restoring registers between functions?
+
+Let me think about this a little. Consider all the different kinds of
+instructions we have:
+  
+DATA_TYPE, STRUCT_VALUE, UNION_VALUE, STRUCT_ACCESS, UNION_ACCESS, FUNC_VALUE,
+CALL, COPY, REF_VALUE, TYPE, LIST, LITERAL:
+  All of these leave the newly created value in a register naturally. We could
+  arrange for this to be x0.
+
+GOTO, NOP:
+  These don't effect what's in any register.
+
+UNION_SELECT, REF_DEF, RETAIN, RELEASE:
+  These clobber whatever was in the register. But they don't necessarily have
+  to. For example, RETAIN could arrange to leave the retained value in x0.
+  That doesn't make sense for union select or release, because they don't
+  produce any values that we expect to be consumed. How about ref_def? What do
+  we tend to do after that? After ref_def, looks like we almost always release
+  the original value (not the newly defined value).
+
+Here's what I'm proposing. For aarch64 codegen, we arrange for everything
+except UNION_SELECT and RELEASE to leave an interesting value in x0. While
+emitting instructions, we keep track of what var is in x0. When we do
+GetFrameVar, check if it's already in x0. If so, use that directly instead of
+reloading from memory.
+
+My claim is that this should recover all the performance lost from doing
+explicit retain, and then some. And no additional overhead, because we aren't
+using any more registers.
+
+Let me try it.
+
+One problem: if profiling is enabled, it would clobber this register. Maybe we
+need a dedicated register to use for this instead of x0? Right now have I have
+two callee saved registers to spare: x27 and x28. But I think this is worth
+the optimization. So, yeah, let's try using one.
+
+In theory I could know when we are using that register and avoid moving data
+between registers unnecessarily, but let's be honest, moving data between
+registers is probably free. Don't worry about that level of detail right now.
+
+One concern: if we are jumping to different instructions, then rvar may not
+represent the right value. Like, if we are the target of a jump, we may not
+have come from the previous instruction.
+
+That happens for branches, which are terminated by jump instructions or return
+instructions. So make sure to clear rvar any time we change flow of control.
+
+Cool. The code for this is pretty nice, and I see a fair bit of opportunity
+for reusing this cached value more places. I'm optimistic this could make a
+noticeable performance improvement.
+
+time yes | head -n 60000 | fble-md5: 1m08s ==> 1m15s ==> 1m13s
+time fble-sat < rope_0002.shuffled.cnf: 1m21s ==> 1m27s ==> 1m26s
+
+Hmm... That's unfortunate. Not nearly the savings I was hoping for. Is there a
+bug? Are we not applying it correctly or at all?
+
+Oh. We aren't saving it in the case of non-local FbleRetainValue, right? Yeah.
+Let's add that.
+
+With that:
+
+time yes | head -n 60000 | fble-md5: 1m08s ==> 1m15s ==> 1m13s ==> 1m11s
+time fble-sat < rope_0002.shuffled.cnf: 1m21s ==> 1m27s ==> 1m26s ==> 1m26s
+
+I don't understand. Where is that 6/7 seconds coming from for fble-sat?
+
+I'm getting a bunch of things like:
+
+   mov     x0, x19
+   ldr     x1, [x23, #40]
+   bl      4b0ca8 <FbleRetainValue>
+   mov     x0, x19
+   ldr     x1, [x23, #40]
+   bl      4b0cc8 <FbleReleaseValue>
+
+Where is that from? This is in the ord function. Why retain followed by
+release of the exact same value? And why don't I see similar retain followed
+by release in the fble assembly code for this module?
+
+It's in abort code. That's fine. Doesn't explain the slowdown.
+
+Could we explain the slowdown due to no longer batching calls to Retain value?
+That's hard for me to believe.
+
+I think I should reproduce the before/after 6 seconds for moving retain out of
+return. Make sure I'm looking at the right code.
+
+---
+
+I can reproduce the 6 second slowdown from 
+
+commit 36b18407487fe26e2519391c6fa2db38c4d4d00b
+Author: Richard Uhler <ruhler@degralder.com>
+Date:   Sat Apr 22 09:31:14 2023 -0700
+
+    Don't do retain as part of FBLE_RETURN_INSTR.
+
+The only thing that changed was generated code. So here's what I'm going to
+do:
+
+1. Run perf record. Figure out which generated code was effected the most.
+2. Compare the generated assembly code for that generated code before and
+after.
+
+There are two cases: local return and non-local return. So do the comparison
+for each case separately.
+
+---
+
+Here's an explanation for why saving the result from a previous instruction in
+a register doesn't help much: that result will end up being pushed to and from
+the stack anyway when we do a function call. So we don't actually save a load
+instruction. We just moving from locals to the stack. Let's ditch that
+attempted optimization.
+
+I still want to understand those 6 seconds though.
+
+From perf, we see big differences in FbleThreadTailCall and
+FbleReleaseHeapObject. Interesting, since the code for those hasn't changed at
+all and the number of times they are called surely hasn't changed at all.
+
+The top generated code by runtime is IntP Ord!.
+
+Let's compare code, just to make sure it hasn't changed.
+
+FbleThreadTailCall:
+* There's a ccmp instruction that gets 212 versus 1230 samples.
+* There's a ldp instruction that gets 497 versus 2341 samples.
+
+Looking at the ldp instruction, that's restoring register values from the
+stack in preparation for returning. In this case x21, x22 from sp #32. The
+ccmp instruction is also related to x21 it looks like, which holds the 'func'
+argument to FbleThreadTailCall.
+ 
+FbleReleaseHeapObject:
+* Biggest differences is right at the start, reading the object argument and
+  its refcount.
+
+Difference in Ord!:
+
+Pre:
+       0 :   462074: ldr     x26, [x23]
+      26 :   462078: mov     x0, x19
+      19 :   46207c: mov     x1, x26
+      19 :   462080: bl      4a3a18 <FbleRetainValue>
+      52 :   462084: mov     x0, x26
+
+Post
+       1 :   462a6c: mov     x0, x19
+      24 :   462a70: ldr     x1, [x23]
+       0 :   462a74: bl      4a5ad0 <FbleRetainValue>
+      54 :   462a78: ldr     x0, [x23]
+
+That's it. All the differences in mainline code are that. There is some extra
+outline code in post.
+
+The difference, obviously, is that we reload x0 from [x23] instead of from
+x26.
+
+This must be due to cache misses, right? Can I do some perf record based on
+cache misses and see the difference in counter values?
+
+Or, if we look at the implementation of FbleRetainValue, maybe it doesn't use
+x26, so that doesn't have to come from the stack at all. But maybe it uses
+x27, which is why my rvar approach doesn't help? No. RetainValue doesn't use
+any of those callee save registers.
+
+So, must be due to cache misses, right?
+
+And, in particular, it must be that FbleRetainValue primes the cache, the
+load of [x23] pollutes the cache, and then the subsequent instruction,
+whatever that may be, takes the hit because it has to refetch the object
+pointer. What do you want to bet that next instruction is related to
+FbleThreadTailCall or FbleReleaseHeapObject?
+
+What follows retain/release is always going to be an exit instruction. In this
+case we don't expect tail call. We call PopStackFrame, which releases 'func'.
+
+perf shows a lot of cache misses. I don't know.
+
+---
+
+'perf stat' command looks interesting. Let me try that.
+
+perf stat -d -d, there is one very interesting number that stands out:
+
+pre:     303,332,602      L1-icache-load-misses:u   #    0.59% of all L1-icache accesses  (54.55%)
+post:  1,000,996,703      L1-icache-load-misses:u   #    1.93% of all L1-icache accesses  (54.55%)
+
+That's three times the instruction cache load misses.
+
+What does that translate into in terms of seconds based on the stats?
+
+pre:
+
+    51,704,738,117      L1-icache-loads:u         #  625.275 M/sec                    (63.65%)
+
+That's 51,704,738,117 / 625.275M = 82.82365642865724. Oh. It's derived from
+math in the first place. So we don't know how much more expensive an
+icache-load-miss is.
+
+Can I perf record to see where these icache load misses are happening?
+
+Maybe we can ask the other way: how many cycles does each icache miss have to
+take to explain the increase in total cycles? Does that number look
+reasonable? I would think L1 cache miss is what, on the order of 10 cycles?
+
+Total increase in number of cycles:
+  100,577,117,296 - 93,507,923,309 = 7,069,193,987 
+
+Total increase in number of icache misses:
+  999,347,721 - 315,915,793 = 683,431,928
+
+Total number of cycles per icache miss, assuming icache miss explains all the
+cycle increases: ~10 cycles.
+
+Use perf to report where the difference happens, I see increase in icache
+lining up directly with samples in FbleThreadTailCall.
+
+I could believe the icache misses explain the 6 seconds. But why did we start
+getting more icache misses?
+
+The only place we add instructions is that Retain/Release thing in abort
+functions.
+
+For IntP Ord, check out pc 2 (retain) followed by pc 3 (release) of Ord!
+function:
+   2.  retain s0;
+   3.  return s0;
+
+This is new, because before we could optimize away the retain followed by
+release as they were in a single return instruction.
+
+Well, we can test this hypothesis pretty easily. Strip out the DoAbort code.
+See what difference that makes.
+
+No difference. I don't understand. Did we just get really unlucky and some
+random change we made to the code is leading to an icache conflict on the
+critical path that we didn't have before?
+
+But that would throw all my experimental results in question, right? Any
+improvement could have been due to the desired improvement, or we just got
+lucky?
+
+I give up. Maybe we'll get lucky again later on. Otherwise, don't worry about
+it. Forge ahead with the original goal: avoiding calls to FbleRetain and
+FbleRelease entirely.
 
