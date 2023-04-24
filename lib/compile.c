@@ -86,6 +86,7 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local);
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
+static void AppendRetainInstr(Scope* scope, FbleVar var);
 static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index);
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg);
@@ -424,6 +425,22 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
 }
 
 /**
+ * Outputs an FbleRetainInstr.
+ *
+ * @param scope  The scope to append the instruction to.
+ * @var var  The variable to retain.
+ *
+ * @sideeffects:
+ *   Appends an instruction to the code block for the given scope.
+ */
+static void AppendRetainInstr(Scope* scope, FbleVar var)
+{
+  FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
+  retain->target = var;
+  AppendInstr(scope, &retain->_base);
+}
+
+/**
  * Outputs an FbleReleaseInstr.
  *
  * Use this for release instructions to facilitate coallescing of sequential
@@ -676,9 +693,7 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
     }
 
     if (result->var.tag != FBLE_LOCAL_VAR) {
-      FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
-      retain->target = result->var;
-      AppendInstr(scope, &retain->_base);
+      AppendRetainInstr(scope, result->var);
     }
 
     FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
@@ -853,9 +868,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->targets.xs[i].target.tc);
 
         if (!exit) {
-          FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
-          retain->target = result->var;
-          AppendInstr(scope, &retain->_base);
+          AppendRetainInstr(scope, result->var);
 
           FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
           copy->source = result->var;
@@ -882,9 +895,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->default_.tc);
 
         if (!exit) {
-          FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
-          retain->target = result->var;
-          AppendInstr(scope, &retain->_base);
+          AppendRetainInstr(scope, result->var);
 
           FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
           copy->source = result->var;
@@ -942,9 +953,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope);
       access->dest = local->var.index;
 
-      FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
-      retain->target = local->var;
-      AppendInstr(scope, &retain->_base);
+      AppendRetainInstr(scope, local->var);
 
       CompileExit(exit, scope, local);
       ReleaseLocal(scope, obj, exit);
@@ -991,9 +1000,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       if (exit) {
         // Take ownership of func for transfer to the tail call.
         if (func->var.tag != FBLE_LOCAL_VAR) {
-          FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
-          retain->target = func->var;
-          AppendInstr(scope, &retain->_base);
+          AppendRetainInstr(scope, func->var);
         }
 
         // Take ownership of args for transfer to the tail call.
@@ -1016,9 +1023,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
           }
 
           if (!transfer) {
-            FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
-            retain->target = args[i]->var;
-            AppendInstr(scope, &retain->_base);
+            AppendRetainInstr(scope, args[i]->var);
           }
         }
 
