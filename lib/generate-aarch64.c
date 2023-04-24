@@ -1075,14 +1075,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  mov FP, SP\n");
 
   // Save callee saved registers for later restoration.
-  fprintf(fout, "  str R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-  fprintf(fout, "  str R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_thread_save));
-  fprintf(fout, "  str R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-  fprintf(fout, "  str R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
-  fprintf(fout, "  str R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  str R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
-  fprintf(fout, "  str R_PROFILING_ENABLED, [SP, #%zi]\n", offsetof(RunStackFrame, r_profiling_enabled_save));
-  fprintf(fout, "  str R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
+  fprintf(fout, "  stp R_HEAP, R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  stp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
+  fprintf(fout, "  stp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
+  fprintf(fout, "  stp R_PROFILING_ENABLED, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profiling_enabled_save));
 
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
@@ -1101,14 +1097,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
   // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
-  fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-  fprintf(fout, "  ldr R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_thread_save));
-  fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-  fprintf(fout, "  ldr R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
-  fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldr R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
-  fprintf(fout, "  ldr R_PROFILING_ENABLED, [SP, #%zi]\n", offsetof(RunStackFrame, r_profiling_enabled_save));
-  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
+  fprintf(fout, "  ldp R_HEAP, R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  ldp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
+  fprintf(fout, "  ldp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
+  fprintf(fout, "  ldp R_PROFILING_ENABLED, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profiling_enabled_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");

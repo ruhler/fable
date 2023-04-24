@@ -1345,3 +1345,10 @@ I give up. Maybe we'll get lucky again later on. Otherwise, don't worry about
 it. Forge ahead with the original goal: avoiding calls to FbleRetain and
 FbleRelease entirely.
 
+---
+
+Just to confuse things, without the rvar optimization, using stp and ldp
+instead of str and ldr for saving/restore registers on the stack:
+
+md5: 1m8.191s  ==> ... ==> 1m15.184s ==> 1m10s
+sat: 1m20.486s ==> ... ==> 1m27.706s ==> 1m25s
