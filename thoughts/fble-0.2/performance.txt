@@ -1352,3 +1352,58 @@ instead of str and ldr for saving/restore registers on the stack:
 
 md5: 1m8.191s  ==> ... ==> 1m15.184s ==> 1m10s
 sat: 1m20.486s ==> ... ==> 1m27.706s ==> 1m25s
+
+---
+
+Shall we finally move on to the retain/release optimization? Remember how it
+works:
+
+Operations are:
+* Initially, statics and args have self ownership and refcount 1.
+* Access instruction gives ownership to what was accessed from.
+* When refcount drops to zero:
+  - If owned by someone else, remove that ownership. No explicit release.
+    For each owned, transfer ownership of them to owner.
+  - If owned by self, for each owned, explicitly retain and set owned by self.
+    Then release this local.
+
+Is it possible we could do something like:
+  x = ...
+  y = x.a
+  release x
+  release y
+
+Where we essentially release x and y at the same time, but because we do the
+release of x first, it would generate a retain for y, then a release for x,
+then a release for y? Is there a better way for me to keep track of things so
+this naturally doesn't happen?
+
+Or, don't worry about that, because it's not any worse than what we do today.
+Today we would do the same thing:
+
+ x = ...
+ y = x.a
+ retain y
+ release x
+ release y
+
+Okay. Let's try this.
+
+Draft of code is done. Time for some debug.
+
+Too many things going wrong. I need to rethink things.
+
+The place I'm running into issues is where I used to manually release all the
+locals before exiting in CompileExit and TailCall. I need the ownership logic
+to apply to know what to release.
+
+Let's let it stew a little. Maybe we need to clean up management of locals and
+vars before we can add this optimization.
+
+Got it worked out. The important part is we can't modify state of locals in
+CompileExit or TailCall.
+
+md5: 1m8.191s  ==> ... ==> 1m15.184s ==> 1m10s ==> 57s
+sat: 1m20.486s ==> ... ==> 1m27.706s ==> 1m25s ==> 1m17s
+
+Cool. There's my victory I would say.
