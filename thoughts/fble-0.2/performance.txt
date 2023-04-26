@@ -1407,3 +1407,13 @@ md5: 1m8.191s  ==> ... ==> 1m15.184s ==> 1m10s ==> 57s
 sat: 1m20.486s ==> ... ==> 1m27.706s ==> 1m25s ==> 1m17s
 
 Cool. There's my victory I would say.
+
+---
+
+Storing original func on tail stack instead of strictified one:
+
+md5: 57s ==> 56s
+sat: 1m17s ==> 1m16s
+
+
+

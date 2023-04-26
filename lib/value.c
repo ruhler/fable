@@ -633,7 +633,7 @@ FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, si
 // See documentation in fble-value.h.
 FbleFuncInfo FbleFuncValueInfo(FbleValue* func)
 {
-  FuncValue* func_value = (FuncValue*)func;
+  FuncValue* func_value = (FuncValue*)FbleStrictValue(func);
   FbleFuncInfo info = {
     .executable = func_value->executable,
     .profile_block_offset = func_value->profile_block_offset,

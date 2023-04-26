@@ -1,0 +1,151 @@
+Tail Call
+=========
+Overall I'd like to improve the implementation of tail calls, namely in terms
+of performance.
+
+First idea: can we get rid of the managed stack, and use entirely the native
+stack for tail calls?
+
+Insight: A function knows statically how much space it needs for any tail
+calls it might do.
+
+That means the caller of a function can know that information, which means the
+caller can allocate sufficient space before a call for the callee to return
+tail call args to the caller on the stack.
+
+So, high level idea:
+* Caller is responsible for allocating sufficient space for tail call func and
+  args.
+* When doing a tail call, you put func and args in that space allocated for it
+  by the caller.
+* If callee returns a tail call to you, you clean up your args as appropriate,
+  shift over the tail call args, and call the tail call function.
+
+No need for an FbleStackAllocator. Everything stays on the native stack.
+
+Now, that's all well and good conceptually. But I fear there are some tricky
+details to work out.
+
+Let's start with how to pass func and args around, not worry about
+retain/release.
+
+ThreadCall(func, args):
+  while (1) {
+    tailfunc;
+    tailargs[func->tailargc];
+    result = func->run(func, args, &tailfunc, &tailargs);
+    if (result != TAIL_CALL) {
+      return result;
+    }
+    func = tailfunc;
+    args = ??? what if they don't fit?
+  }
+}
+
+Is there any way to pass args so that we can expand their size? Perhaps using
+vararg magic somehow? Maybe alloca?
+
+Maybe a helper function could help?
+
+ThreadCall(func, args):
+  frame[func->framesize];
+  frame.func = func;
+  frame.args = copy args;
+  result = func->run(frame);
+
+Hmm... How do we resize the frame? I suppose the resizable part is just the
+args?
+
+ThreadCall(func, args):
+  while (1) {
+    tailargs[func->tailsize];
+    myargs[func->argssize];
+  }
+  
+We need to copy tail args over to something that exists outside of the while
+loop, but that thing has to be variable size. How can we do that? How can we
+resize it?
+
+If tailargs fits in args, it's doable. No need to realloc. Maybe we could
+dynamically choose: if tailargs fits, use it. Otherwise do a normal call
+instead of a tail call. That allocates new space on the stack (doesn't take
+advantage of the old space, oh well), but now we have more space, so we can do
+more tail calls. Eventually we should have enough space we allocate for
+everything to do all the tail calls we want. That's assuming we pass around
+how much space we need to allocate as we go between calls and tail calls? Or
+does a cycle always boil down to back to back tail calls?
+    
+I'm not sure.
+
+---
+
+We can do it like this. Add an extra argument to the run function which is
+space allocated for tail calls.
+
+ThreadCall(func, args):
+  tailargs = alloca(func->tailargc);
+  result = func->run(args, tailargs);
+  if result != TAIL_CALL:
+    return result;
+
+  func = tailargs[0];
+  args = tailargs[1:];
+  tailargs = alloca(func->tailargc);
+  while 1:
+    result = func->run(args, tailargs);
+    release func
+    for each arg in args:
+      release arg
+    if result != TAIL_CALL:
+      return result
+    func = tailargs[0]
+    args = tailargs[1:]
+    nalloc = alloca(func->tailargc - sizeof(tailargs))    // if needed
+    nargs = min(args, tailargs, nalloc)
+    for i in len(args):
+      nargs[i] = args[i]
+    args = nargs
+    tailargs = args + i
+
+That's it. This is assuming that repeated calls to alloca will do adjacent
+allocations, and allowing for the fact that stack could grow up or down, and
+we don't want to assume the direction.
+
+Let me do some experiments with alloca.
+
+Yeah, looks like subsequent allocs are continuous and in my case, the stack
+grows down.
+  
+What do you think? Is it worth a try?
+
+I think benefits will be real. We can completely eliminate FbleThreadTailCall
+and Stack. No need to use StackAllocator.
+
+The overhead is cost of passing around yet another argument in the run
+function for where to store tail args.
+
+New protocol for doing a tail call:
+* Copy func, args in order to tailcall arg (instead of on the stack).
+* You are guaranteed to have enough space for all args to the function.
+* Return sTailCallSentinelValue to indicate tail call.
+
+For now, we leave same ownership requirements: tail caller retains func and
+args, ThreadCall cleans up those after the tail call is made.
+  
+Steps to implement:
+* Have the compiler track required space for tail calls: 1 + max num args of
+  any tail call in the function. Or 0 if no tail calls.
+* Update implementation of ThreadCall to use the new protocol.
+* Update implementations for interpreter, c, and aarch64 back end tail calls
+  to use the new protocol.
+* Remove ThreadTailCall function and Stack type.
+
+Maybe I can do some prep work to make this easier. For example, change
+FbleFuncValueInfo to implicitly strictify the value, and avoid storing the
+strict function on scope.
+
+Hey! If we get rid of Stack, we can get rid of FbleThread too. Pass around
+FbleProfileThread* directly instead. That's nice.
+
+
+
