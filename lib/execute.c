@@ -7,7 +7,7 @@
 
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end
-#include <stdlib.h>   // for NULL, rand
+#include <stdlib.h>   // for NULL
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-value.h>     // for FbleValue, etc.
@@ -193,7 +193,7 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* fu
 
   FbleValue* result = executable->run(
         heap, thread, executable, args,
-        info.statics, info.profile_block_offset, profiling_enabled);
+        info.statics, info.profile_block_offset, thread->profile);
   while (result == sTailCallSentinelValue) {
     assert(thread->stack->normal_call_frames == 0);
     func = thread->stack->func;
@@ -206,7 +206,7 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* fu
 
     result = executable->run(
         heap, thread, executable, thread->stack->args,
-        info.statics, info.profile_block_offset, profiling_enabled);
+        info.statics, info.profile_block_offset, thread->profile);
   }
 
   if (thread->profile != NULL) {
@@ -323,23 +323,6 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program)
     }
     FbleFreeVector(program->modules);
     FbleFree(program);
-  }
-}
-
-// See documentation in fble-execute.h.
-void FbleThreadSample(FbleThread* thread, size_t count)
-{
-  if (thread->profile) {
-    size_t time = 0;
-    for (size_t i = 0; i < count; ++i) {
-      if (rand() % 1024 == 0) {
-        time++;
-      }
-    }
-
-    if (time > 0) {
-      FbleProfileSample(thread->profile, time);
-    }
   }
 }
 

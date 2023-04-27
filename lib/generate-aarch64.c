@@ -46,7 +46,7 @@ typedef struct {
   void* r_args_save;        /**< Saved contents of R_ARGS reg. */
   void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
   void* r_profile_block_offset_save;  /**< Saved contents of R_PROFILE_BLOCK_OFFSET reg. */
-  void* r_profiling_enabled_save;     /**< Saved contents of R_PROFILING_ENABLED reg. */
+  void* r_profile_save;     /**< Saved contents of R_PROFILE reg. */
   void* r_scratch_0_save;   /**< Saved contents of R_SCRATCH_0 reg. */
   void* locals[];           /**< Local variables. */
 } RunStackFrame;
@@ -600,7 +600,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
   }
 
   if (instr->profile_ops != NULL) {
-    fprintf(fout, "  cbnz R_PROFILING_ENABLED, .L.%p.%zi.prof\n", code, pc);
+    fprintf(fout, "  cbnz R_PROFILE, .L.%p.%zi.prof\n", code, pc);
     fprintf(fout, ".L.%p.%zi.postprof:\n", code, pc);
   }
 
@@ -949,31 +949,31 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP: {
-          fprintf(fout, "  mov x0, R_THREAD\n");
+          fprintf(fout, "  mov x0, R_PROFILE\n");
           fprintf(fout, "  mov x1, R_PROFILE_BLOCK_OFFSET\n");
           fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
-          fprintf(fout, "  bl FbleThreadEnterBlock\n");
+          fprintf(fout, "  bl FbleProfileEnterBlock\n");
           break;
         }
 
         case FBLE_PROFILE_REPLACE_OP: {
-          fprintf(fout, "  mov x0, R_THREAD\n");
+          fprintf(fout, "  mov x0, R_PROFILE\n");
           fprintf(fout, "  mov x1, R_PROFILE_BLOCK_OFFSET\n");
           fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
-          fprintf(fout, "  bl FbleThreadReplaceBlock\n");
+          fprintf(fout, "  bl FbleProfileReplaceBlock\n");
           break;
         }
 
         case FBLE_PROFILE_EXIT_OP: {
-          fprintf(fout, "  mov x0, R_THREAD\n");
-          fprintf(fout, "  bl FbleThreadExitBlock\n");
+          fprintf(fout, "  mov x0, R_PROFILE\n");
+          fprintf(fout, "  bl FbleProfileExitBlock\n");
           break;
         }
 
         case FBLE_PROFILE_SAMPLE_OP: {
-          fprintf(fout, "  mov x0, R_THREAD\n");
+          fprintf(fout, "  mov x0, R_PROFILE\n");
           fprintf(fout, "  mov x1, #%zi\n", op->arg);
-          fprintf(fout, "  bl FbleThreadSample\n");
+          fprintf(fout, "  bl FbleProfileRandomSample\n");
           break;
         }
       }
@@ -1078,7 +1078,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  stp R_HEAP, R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  stp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  stp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  stp R_PROFILING_ENABLED, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profiling_enabled_save));
+  fprintf(fout, "  stp R_PROFILE, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
 
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
@@ -1086,7 +1086,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  mov R_ARGS, x3\n");
   fprintf(fout, "  mov R_STATICS, x4\n");
   fprintf(fout, "  mov R_PROFILE_BLOCK_OFFSET, x5\n");
-  fprintf(fout, "  mov R_PROFILING_ENABLED, x6\n");
+  fprintf(fout, "  mov R_PROFILE, x6\n");
   fprintf(fout, "  add R_LOCALS, SP, #%zi\n", offsetof(RunStackFrame, locals));
 
   // Emit code for each fble instruction
@@ -1100,7 +1100,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  ldp R_HEAP, R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  ldp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldp R_PROFILING_ENABLED, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profiling_enabled_save));
+  fprintf(fout, "  ldp R_PROFILE, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");
@@ -1404,7 +1404,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_ARGS .req x22\n");
   fprintf(fout, "  R_STATICS .req x23\n");
   fprintf(fout, "  R_PROFILE_BLOCK_OFFSET .req x24\n");
-  fprintf(fout, "  R_PROFILING_ENABLED .req x25\n");
+  fprintf(fout, "  R_PROFILE .req x25\n");
   fprintf(fout, "  R_SCRATCH_0 .req x26\n");
 
   // Error messages.

@@ -69,6 +69,7 @@
 #include <math.h>     // for sqrt
 #include <stdbool.h>  // for bool
 #include <string.h>   // for memset, memcpy
+#include <stdlib.h>   // for rand
 #include <sys/time.h> // for gettimeofday
 
 #include <fble/fble-alloc.h>
@@ -599,6 +600,21 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
   }
 
   thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time += time;
+}
+
+// See documentation in fble-profile.h.
+void FbleProfileRandomSample(FbleProfileThread* profile, size_t count)
+{
+  size_t time = 0;
+  for (size_t i = 0; i < count; ++i) {
+    if (rand() % 1024 == 0) {
+      time++;
+    }
+  }
+
+  if (time > 0) {
+    FbleProfileSample(profile, time);
+  }
 }
 
 // See documentation in fble-profile.h.

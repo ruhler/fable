@@ -36,8 +36,9 @@ typedef struct FbleThread FbleThread;
  *   The function's static variables. Borrowed.
  *  @arg[FbleBlockId] profile_block_offset
  *   The function profile block offset.
- *  @arg[bool] profiling_enabled
- *   True if profiling is enabled, false otherwise.
+ *  @arg[FbleProfileThread*] profile
+ *   Profile thread for recording profiling information. NULL if profiling is
+ *   disabled.
  *
  *  @returns FbleValue*
  *   @i The result of executing the function.
@@ -55,7 +56,7 @@ typedef FbleValue* FbleRunFunction(
     FbleValue** args,
     FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled);
+    FbleProfileThread* profile);
 
 /**
  * Magic number used by FbleExecutable.
@@ -323,67 +324,5 @@ FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
  *   @i Replaces the profiling block for the function being called.
  */
 FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
-
-/**
- * @func[FbleThreadSample] Takes a profiling sample on the thread.
- *
- *  @arg[FbleThread*][thread] The profile thread to sample.
- *  @arg[size_t     ][count ] The number of samples to take.
- *
- *  @sideeffects
- *   @i Charges calls on the current thread with the given time.
- *   @i Has no effect if profiling is currently disabled.
- */
-void FbleThreadSample(FbleThread* thread, size_t count);
-
-/**
- * @func[FbleThreadEnterBlock] Enters a profiling block.
- *
- *  When calling into a function, use this function to tell the profiling
- *  logic what block is being called into.
- *
- *  @arg[FbleThread*][thread] The thread to do the call on.
- *  @arg[FbleBlockId][block ] The block to call into.
- *
- *  @sideeffects
- *   @i A corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
- *    should be made when the call leaves, for proper accounting and resource
- *    management.
- *   @i Has no effect if profiling is currently disabled.
- */
-void FbleThreadEnterBlock(FbleThread* thread, FbleBlockId block);
-
-/**
- * @func[FbleThreadReplaceBlock] Replaces a profiling block.
- *
- *  When tail-calling into a function, use this function to tell the profiling
- *  logic what block is being called into.
- *
- *  @arg[FbleThread*][thread] The thread to do the call on.
- *  @arg[FbleBlockId][block ] The block to tail call into.
- *
- *  @sideeffects
- *   @i Replaces the current profiling block with the new block.
- *   @i Frees resources associated with the block being replaced, but a
- *    corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
- *    will still needed to free resources associated with the replacement
- *    block.
- *   @i Has no effect if profiling is currently disabled.
- */
-void FbleThreadReplaceBlock(FbleThread* thread, FbleBlockId block);
-
-/**
- * @func[FbleThreadExitBlock] Exits a profiling block.
- *
- *  When returning from a function, use this function to tell the profiling
- *  logic what block is being exited.
- *
- *  @arg[FbleThread*][thread] The thread to exit the call on.
- *
- *  @sideeffects
- *   @i Updates the profile data associated with the given thread.
- *   @i Has no effect if profiling is currently disabled.
- */
-void FbleThreadExitBlock(FbleThread* thread);
 
 #endif // FBLE_EXECUTE_H_

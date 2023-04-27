@@ -39,13 +39,13 @@ static FbleValue* IStreamImpl(
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled);
+    FbleProfileThread* profile);
 static FbleValue* OStreamImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled);
+    FbleProfileThread* profile);
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
 
@@ -57,12 +57,12 @@ static FbleValue* IStreamImpl(
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled)
+    FbleProfileThread* profile)
 {
   (void)thread;
   (void)statics;
   (void)profile_block_offset;
-  (void)profiling_enabled;
+  (void)profile;
 
   FileExecutable* file = (FileExecutable*)executable;
 
@@ -90,12 +90,12 @@ static FbleValue* OStreamImpl(
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled)
+    FbleProfileThread* profile)
 {
   (void)thread;
   (void)statics;
   (void)profile_block_offset;
-  (void)profiling_enabled;
+  (void)profile;
 
   FileExecutable* file = (FileExecutable*)executable;
 

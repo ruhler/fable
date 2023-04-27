@@ -17,6 +17,7 @@
  * @param args        Arguments to the function. Borrowed.
  * @param statics     The function's static variables. Borrowed.
  * @param profile_block_offset  The function profile block offset.
+ * @param profile  The profile thread, or NULL if profiling is enabled.
  *
  * @returns
  * * The result of executing the function.
@@ -34,7 +35,7 @@ FbleValue* FbleInterpreterRunFunction(
     FbleValue** args,
     FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled);
+    FbleProfileThread* profile);
 
 #endif // FBLE_INTERNAL_INTERPRET_H_
 

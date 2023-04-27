@@ -216,6 +216,20 @@ void FbleFreeProfileThread(FbleProfileThread* thread);
 void FbleProfileSample(FbleProfileThread* thread, uint64_t time);
 
 /**
+ * @func[FbleProfileRandomSample] Takes a random profiling sample.
+ *  Reduces overheads associated with profiling by randomly sampling.
+ *
+ *  @arg[FbleProfileThread*] thread
+ *   The profile thread to sample.
+ *  @arg[size_t] count
+ *   The number of random samples to take.
+ *
+ *  @sideeffects
+ *   Charges calls on the current thread with the given time.
+ */
+void FbleProfileRandomSample(FbleProfileThread* thread, size_t count);
+
+/**
  * @func[FbleProfileEnterBlock] Enters a profiling block.
  *
  *  When calling into a function, use this function to tell the profiling

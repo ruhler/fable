@@ -31,8 +31,6 @@ namespace eval "include" {
       FbleFreeExecutableModule FbleFreeExecutableProgram
       FbleThreadCall FbleThreadCall_
       FbleThreadTailCall FbleThreadTailCall_
-      FbleThreadSample
-      FbleThreadEnterBlock FbleThreadReplaceBlock FbleThreadExitBlock
     }
     fble-interpret.h {
       FbleInterpret
@@ -78,7 +76,7 @@ namespace eval "include" {
       FbleFreeProfile
       FbleNewProfileThread FbleForkProfileThread
       FbleFreeProfileThread
-      FbleProfileSample
+      FbleProfileSample FbleProfileRandomSample
       FbleProfileEnterBlock FbleProfileReplaceBlock FbleProfileExitBlock
       FbleProfileReport
     }

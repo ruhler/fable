@@ -239,7 +239,7 @@ FbleValue* FbleInterpreterRunFunction(
     FbleValue** args,
     FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled)
+    FbleProfileThread* profile)
 {
   FbleCode* code = (FbleCode*)executable;
   FbleInstr** instrs = code->instrs.xs;
@@ -254,23 +254,23 @@ FbleValue* FbleInterpreterRunFunction(
   while (true) {
     FbleInstr* instr = instrs[pc];
 
-    if (profiling_enabled) {
+    if (profile) {
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP:
-            FbleThreadEnterBlock(thread, profile_block_offset + op->arg);
+            FbleProfileEnterBlock(profile, profile_block_offset + op->arg);
             break;
 
           case FBLE_PROFILE_REPLACE_OP:
-            FbleThreadReplaceBlock(thread, profile_block_offset + op->arg);
+            FbleProfileReplaceBlock(profile, profile_block_offset + op->arg);
             break;
 
           case FBLE_PROFILE_EXIT_OP:
-            FbleThreadExitBlock(thread);
+            FbleProfileExitBlock(profile);
             break;
 
           case FBLE_PROFILE_SAMPLE_OP:
-            FbleThreadSample(thread, op->arg);
+            FbleProfileRandomSample(profile, op->arg);
             break;
         }
       }

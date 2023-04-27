@@ -304,7 +304,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       "FbleValueHeap* heap, FbleThread* thread, "
       "FbleExecutable* executable, FbleValue** args, "
       "FbleValue** statics, FbleBlockId profile_block_offset, "
-      "bool profiling_enabled)\n",
+      "FbleProfileThread* profile)\n",
       (void*)code, label);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue** a = args;\n");
@@ -331,26 +331,26 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     }
 
     // Profiling logic.
-    fprintf(fout, "  if (profiling_enabled) {\n");
+    fprintf(fout, "  if (profile) {\n");
     for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP: {
-          fprintf(fout, "    FbleThreadEnterBlock(thread, profile_block_offset + %zi);\n", op->arg);
+          fprintf(fout, "    FbleProfileEnterBlock(profile, profile_block_offset + %zi);\n", op->arg);
           break;
         }
 
         case FBLE_PROFILE_REPLACE_OP: {
-          fprintf(fout, "    FbleThreadReplaceBlock(thread, profile_block_offset + %zi);\n", op->arg);
+          fprintf(fout, "    FbleProfileReplaceBlock(profile, profile_block_offset + %zi);\n", op->arg);
           break;
         }
 
         case FBLE_PROFILE_EXIT_OP: {
-          fprintf(fout, "    FbleThreadExitBlock(thread);\n");
+          fprintf(fout, "    FbleProfileExitBlock(profile);\n");
           break;
         }
 
         case FBLE_PROFILE_SAMPLE_OP: {
-          fprintf(fout, "    FbleThreadSample(thread, %zi);\n", op->arg);
+          fprintf(fout, "    FbleProfileRandomSample(profile, %zi);\n", op->arg);
           break;
         }
       }
@@ -939,7 +939,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
       "FbleValueHeap* heap, FbleThread* thread, "
       "FbleExecutable* executable, FbleValue** locals, "
       "FbleValue** statics, FbleBlockId profile_block_offset, "
-      "bool profiling_enabled);\n",
+      "FbleProfileThread* profile);\n",
         (void*)code, function_label);
     fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** statics, FbleValue** args, FbleValue** locals, size_t pc);\n",
         (void*)code, function_label);

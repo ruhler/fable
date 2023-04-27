@@ -45,13 +45,13 @@ static FbleValue* EventImpl(
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled);
+    FbleProfileThread* profile);
 static FbleValue* EffectImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled);
+    FbleProfileThread* profile);
 
 static Uint32 OnTimer(Uint32 interval, void* param);
 
@@ -251,13 +251,13 @@ static FbleValue* EventImpl(
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled)
+    FbleProfileThread* profile)
 {
   (void)thread;
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
-  (void)profiling_enabled;
+  (void)profile;
 
   FbleValue* world = args[0];
   FbleValue* value = NULL;
@@ -366,12 +366,12 @@ static FbleValue* EffectImpl(
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
-    bool profiling_enabled)
+    FbleProfileThread* profile)
 {
   (void)thread;
   (void)statics;
   (void)profile_block_offset;
-  (void)profiling_enabled;
+  (void)profile;
 
   Executable* exe = (Executable*)executable;
 
