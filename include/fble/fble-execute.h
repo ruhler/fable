@@ -84,6 +84,18 @@ struct FbleExecutable {
   size_t num_statics;
 
   /**
+   * Number of value slots needed for the tail call buffer.
+   *
+   * The tail call buffer is used to pass function and arguments when making a
+   * tail call.
+   *
+   * This will be 0 if there are no tail calls. It will be (1 + argc) for the
+   * tail call with the most number of arguments, allowing sufficient space
+   * to pass the function and all arguments for that tail call.
+   */
+  size_t tail_call_buffer_size;
+
+  /**
    * Profiling block associated with this executable. Relative to the
    * function's profile_block_offset.
    */

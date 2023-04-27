@@ -119,6 +119,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
   exe->_base.num_args = 1;
   exe->_base.num_statics = 0;
+  exe->_base.tail_call_buffer_size = 0;
   exe->_base.profile_block_id = 0;
   exe->_base.run = &IStreamImpl;
   exe->_base.on_free = &FbleExecutableNothingOnFree;
@@ -133,6 +134,7 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
   exe->_base.num_args = 2;
   exe->_base.num_statics = 0;
+  exe->_base.tail_call_buffer_size = 0;
   exe->_base.profile_block_id = 1;
   exe->_base.run = &OStreamImpl;
   exe->_base.on_free = &FbleExecutableNothingOnFree;

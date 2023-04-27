@@ -239,6 +239,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .magic = FBLE_EXECUTABLE_MAGIC,\n");
   fprintf(fout, "  .num_args = %zi, \n", module->code->_base.num_args);
   fprintf(fout, "  .num_statics = %zi,\n", module->code->_base.num_statics);
+  fprintf(fout, "  .tail_call_buffer_size = %zi,\n", module->code->_base.tail_call_buffer_size);
   fprintf(fout, "  .profile_block_id = %zi,\n", module->code->_base.profile_block_id);
 
   FbleName function_block = module->profile_blocks.xs[module->code->_base.profile_block_id];
@@ -477,6 +478,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "    .magic = FBLE_EXECUTABLE_MAGIC,\n");
         fprintf(fout, "    .num_args = %zi,\n", func_instr->code->_base.num_args);
         fprintf(fout, "    .num_statics = %zi,\n", func_instr->code->_base.num_statics);
+        fprintf(fout, "    .tail_call_buffer_size = %zi,\n", func_instr->code->_base.tail_call_buffer_size);
         fprintf(fout, "    .profile_block_id = %zi,\n", func_instr->code->_base.profile_block_id);
         fprintf(fout, "    .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
         fprintf(fout, "    .on_free = NULL\n");

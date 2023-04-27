@@ -580,6 +580,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   event_exe->magic = FBLE_EXECUTABLE_MAGIC;
   event_exe->num_args = 1;
   event_exe->num_statics = 0;
+  event_exe->tail_call_buffer_size = 0;
   event_exe->profile_block_id = block_id;
   event_exe->run = &EventImpl;
   event_exe->on_free = &FbleExecutableNothingOnFree;
@@ -590,6 +591,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   effect_exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
   effect_exe->_base.num_args = 2;
   effect_exe->_base.num_statics = 0;
+  effect_exe->_base.tail_call_buffer_size = 0;
   effect_exe->_base.profile_block_id = block_id + 1;
   effect_exe->_base.run = &EffectImpl;
   effect_exe->_base.on_free = &FbleExecutableNothingOnFree;

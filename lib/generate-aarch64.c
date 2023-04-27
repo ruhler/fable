@@ -356,6 +356,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
   fprintf(fout, "  .xword %zi\n", module->code->_base.num_args);
   fprintf(fout, "  .xword %zi\n", module->code->_base.num_statics);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.tail_call_buffer_size);
   fprintf(fout, "  .xword %zi\n", module->code->_base.profile_block_id);
 
   FbleName function_block = module->profile_blocks.xs[module->code->_base.profile_block_id];
@@ -739,6 +740,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_args);
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_statics);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.tail_call_buffer_size);
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile_block_id);
 
       FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile_block_id];

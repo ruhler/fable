@@ -153,3 +153,37 @@ It's time now to split TAIL_CALL and CALL instructions. The main code we want
 to share is setting up arguments in the aarch64 backend, but that's all going
 to change with the new scheme. Let me do this as prep work.
 
+---
+
+Figuring out where to compute and record tail call size requirements.
+
+* Add it as a field to FbleExecutable
+* Add it to FbleFuncValueInstr
+* Add it to Scope. Maybe a pointer into the FuncValueInstr's field.
+* Update it when we emit a tail call. Easy.
+
+Actually, let's store it with FbleCode, next to num_locals. That way we can
+return it from the top level... Except that's only for interpreted code, not
+for executable. Hmm...
+
+The question is how to return that info from the Compile function, which
+returns FbleCode, not FbleExecutable? Oh. FbleCode is FbleExecutable. So we
+can store it there. Easy.
+
+Last question is... what to call this parameter. Brainstorm:
+* tail_size
+* tail_call_size
+* tailc
+* tail
+* num_tail_slots
+* max_tail_size
+* max_tail_call_size
+
+Longest sounds best.
+
+And what will we call the actual arg to the run function?
+* tail_call_buffer
+
+Yeah. Okay. Verbose. Let's go with that, see how painful it is. Future me will
+appreciate it.
+
