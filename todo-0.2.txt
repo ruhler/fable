@@ -237,11 +237,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Run fble-test-compile-error tests in compilation mode?
 
-* Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
-  Their implementations may be different enough now to warrant it?
-  Regardless, we shouldn't switch at runtime on something known statically.
-  The 'exit' part of the instruction should be part of the instruction tag.
-
 * [compilation] Add support for .fble.@ files and modular compilation.
 
 * [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?

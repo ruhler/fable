@@ -147,5 +147,9 @@ strict function on scope.
 Hey! If we get rid of Stack, we can get rid of FbleThread too. Pass around
 FbleProfileThread* directly instead. That's nice.
 
+---
 
+It's time now to split TAIL_CALL and CALL instructions. The main code we want
+to share is setting up arguments in the aarch64 backend, but that's all going
+to change with the new scheme. Let me do this as prep work.
 

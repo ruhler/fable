@@ -155,6 +155,14 @@ void FbleFreeInstr(FbleInstr* instr)
       return;
     }
 
+    case FBLE_TAIL_CALL_INSTR: {
+      FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
+      FbleFreeLoc(call_instr->loc);
+      FbleFreeVector(call_instr->args);
+      FbleFree(instr);
+      return;
+    }
+
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;
       FbleFreeVector(list_instr->args);
@@ -404,12 +412,28 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_CALL_INSTR: {
           FbleCallInstr* call_instr = (FbleCallInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          if (call_instr->exit) {
-            fprintf(fout, "return ");
-          } else {
-            fprintf(fout, "l%zi = ", call_instr->dest);
-          }
+          fprintf(fout, "l%zi = ", call_instr->dest);
+          fprintf(fout, "%s%zi(",
+              var_tags[call_instr->func.tag],
+              call_instr->func.index);
 
+          const char* comma = "";
+          for (size_t j = 0; j < call_instr->args.size; ++j) {
+            fprintf(fout, "%s%s%zi", comma, 
+              var_tags[call_instr->args.xs[j].tag],
+              call_instr->args.xs[j].index);
+            comma = ", ";
+          }
+              
+          fprintf(fout, ");");
+          PrintLoc(fout, call_instr->loc);
+          break;
+        }
+
+        case FBLE_TAIL_CALL_INSTR: {
+          FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+          fprintf(fout, "%4zi.  ", i);
+          fprintf(fout, "return ");
           fprintf(fout, "%s%zi(",
               var_tags[call_instr->func.tag],
               call_instr->func.index);

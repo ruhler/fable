@@ -73,6 +73,7 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       }
 
       case FBLE_CALL_INSTR: break;
+      case FBLE_TAIL_CALL_INSTR: break;
       case FBLE_COPY_INSTR: break;
       case FBLE_REF_VALUE_INSTR: break;
       case FBLE_REF_DEF_INSTR: break;
@@ -500,21 +501,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
-        if (call_instr->exit) {
-          // Pass the original func value, not the strict version, to tail
-          // call to properly track ownership.
-          fprintf(fout, "  return FbleThreadTailCall_(heap, thread, %s[%zi]",
-            var_tag[call_instr->func.tag],
-            call_instr->func.index);
-          for (size_t i = 0; i < call_instr->args.size; ++i) {
-            fprintf(fout, ", %s[%zi]",
-                var_tag[call_instr->args.xs[i].tag],
-                call_instr->args.xs[i].index);
-          }
-          fprintf(fout, ");\n");
-          break;
-        }
-
         fprintf(fout, "  l[%zi] = FbleThreadCall_(heap, thread, x0", call_instr->dest);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, ", %s[%zi]",
@@ -524,6 +510,29 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, ");\n");
         fprintf(fout, "  if (l[%zi] == NULL) ", call_instr->dest);
         ReturnAbort(fout, code, label, pc, "CalleeAborted", call_instr->loc);
+        break;
+      }
+
+      case FBLE_TAIL_CALL_INSTR: {
+        FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
+
+        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+            var_tag[call_instr->func.tag],
+            call_instr->func.index);
+        fprintf(fout, "  if (!x0) ");
+        ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
+
+        // Pass the original func value, not the strict version, to tail
+        // call to properly track ownership.
+        fprintf(fout, "  return FbleThreadTailCall_(heap, thread, %s[%zi]",
+          var_tag[call_instr->func.tag],
+          call_instr->func.index);
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          fprintf(fout, ", %s[%zi]",
+              var_tag[call_instr->args.xs[i].tag],
+              call_instr->args.xs[i].index);
+        }
+        fprintf(fout, ");\n");
         break;
       }
 
@@ -685,20 +694,23 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      if (call_instr->exit) {
-        fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
-            var_tag[call_instr->func.tag],
-            call_instr->func.index);
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
-              var_tag[call_instr->args.xs[i].tag],
-              call_instr->args.xs[i].index);
-        }
+      fprintf(fout, "  l[%zi] = NULL;\n", call_instr->dest);
+      return;
+    }
 
-        fprintf(fout, "  return NULL;\n");
+    case FBLE_TAIL_CALL_INSTR: {
+      FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
+
+      fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
+          var_tag[call_instr->func.tag],
+          call_instr->func.index);
+      for (size_t i = 0; i < call_instr->args.size; ++i) {
+        fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
+            var_tag[call_instr->args.xs[i].tag],
+            call_instr->args.xs[i].index);
       }
 
-      fprintf(fout, "  l[%zi] = NULL;\n", call_instr->dest);
+      fprintf(fout, "  return NULL;\n");
       return;
     }
 

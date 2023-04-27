@@ -169,6 +169,12 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
         break;
       }
 
+      case FBLE_TAIL_CALL_INSTR: {
+        FbleTailCallInstr* instr = (FbleTailCallInstr*)code->instrs.xs[i];
+        AddLoc(instr->loc.source->str, locs);
+        break;
+      }
+
       case FBLE_COPY_INSTR: break;
       case FBLE_REF_VALUE_INSTR: break;
 
@@ -783,21 +789,40 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x1, R_THREAD\n");
       fprintf(fout, "  mov x3, SP\n");          // args
 
-      if (call_instr->exit) {
-        // Note: Pass the original func value to FbleThreadTailCall, not the
-        // strict value, so that FbleThreadTailCall can take ownership of the
-        // original value.
-        fprintf(fout, "  mov x2, R_SCRATCH_0\n"); // func
-        fprintf(fout, "  bl FbleThreadTailCall\n");
-        fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-        fprintf(fout, "  b .L._Run_.%p.exit\n", code);
-        return;
-      }
-
       fprintf(fout, "  bl FbleThreadCall\n");
       SetFrameVar(fout, "x0", call_instr->dest);
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       fprintf(fout, "  cbz x0, .L.%p.%zi.abort\n", code, pc);
+      return;
+    }
+
+    case FBLE_TAIL_CALL_INSTR: {
+      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      GetFrameVar(fout, "x0", call_instr->func);
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
+      fprintf(fout, "  bl FbleStrictValue\n");
+      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  mov x2, x0\n");         // func
+
+      // Allocate space for the arguments array on the stack.
+      size_t sp_offset = StackBytesForCount(call_instr->args.size);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      for (size_t i = 0; i < call_instr->args.size; ++i) {
+        GetFrameVar(fout, "x0", call_instr->args.xs[i]);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+      }
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, R_THREAD\n");
+      fprintf(fout, "  mov x3, SP\n");          // args
+
+      // Note: Pass the original func value to FbleThreadTailCall, not the
+      // strict value, so that FbleThreadTailCall can take ownership of the
+      // original value.
+      fprintf(fout, "  mov x2, R_SCRATCH_0\n"); // func
+      fprintf(fout, "  bl FbleThreadTailCall\n");
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -1023,6 +1048,16 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
+    case FBLE_TAIL_CALL_INSTR: {
+      FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
+      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.UndefinedFunctionValue", call_instr->loc);
+
+      fprintf(fout, ".L.%p.%zi.abort:\n", code, pc);
+      DoAbort(fout, code, pc, ".L.CalleeAborted", call_instr->loc);
+      return;
+    }
+
     case FBLE_COPY_INSTR: return;
     case FBLE_REF_VALUE_INSTR: return;
 
@@ -1184,22 +1219,24 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      if (call_instr->exit) {
+      SetFrameVar(fout, "XZR", call_instr->dest);
+      return;
+    }
+
+    case FBLE_TAIL_CALL_INSTR: {
+      FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      GetFrameVar(fout, "x1", call_instr->func);
+      fprintf(fout, "  bl FbleReleaseValue\n");
+
+      for (size_t i = 0; i < call_instr->args.size; ++i) {
         fprintf(fout, "  mov x0, R_HEAP\n");
-        GetFrameVar(fout, "x1", call_instr->func);
+        GetFrameVar(fout, "x1", call_instr->args.xs[i]);
         fprintf(fout, "  bl FbleReleaseValue\n");
-
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          GetFrameVar(fout, "x1", call_instr->args.xs[i]);
-          fprintf(fout, "  bl FbleReleaseValue\n");
-        }
-
-        fprintf(fout, "  mov x0, XZR\n");
-        fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       }
 
-      SetFrameVar(fout, "XZR", call_instr->dest);
+      fprintf(fout, "  mov x0, XZR\n");
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 

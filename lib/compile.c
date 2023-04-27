@@ -1111,18 +1111,30 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Local* dest = exit ? NULL : NewLocal(scope, NULL);
 
-      FbleCallInstr* call_instr = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
-      call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);
-      call_instr->exit = exit;
-      call_instr->func = func->var;
-      FbleVectorInit(call_instr->args);
-      call_instr->dest = exit ? 0 : dest->var.index;
-      AppendInstr(scope, &call_instr->_base);
-      scope->active_profile_ops = &scope->pending_profile_ops;
+      if (exit) {
+        FbleTailCallInstr* call_instr = FbleAllocInstr(FbleTailCallInstr, FBLE_TAIL_CALL_INSTR);
+        call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);
+        call_instr->func = func->var;
+        FbleVectorInit(call_instr->args);
+        for (size_t i = 0; i < argc; ++i) {
+          FbleVectorAppend(call_instr->args, args[i]->var);
+        }
+        AppendInstr(scope, &call_instr->_base);
+      } else {
+        FbleCallInstr* call_instr = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
+        call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);
+        call_instr->func = func->var;
+        FbleVectorInit(call_instr->args);
+        call_instr->dest = dest->var.index;
+        for (size_t i = 0; i < argc; ++i) {
+          FbleVectorAppend(call_instr->args, args[i]->var);
+        }
+        AppendInstr(scope, &call_instr->_base);
+      }
 
+      scope->active_profile_ops = &scope->pending_profile_ops;
       ReleaseLocal(scope, func, exit);
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(call_instr->args, args[i]->var);
         ReleaseLocal(scope, args[i], exit);
       }
 

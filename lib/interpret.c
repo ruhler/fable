@@ -142,19 +142,20 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-
-        if (call_instr->exit) {
-          FbleReleaseValue(heap, GET(call_instr->func));
-          for (size_t i = 0; i < call_instr->args.size; ++i) {
-            FbleReleaseValue(heap, GET(call_instr->args.xs[i]));
-          }
-
-          return NULL;
-        }
-
         locals[call_instr->dest] = NULL;
         pc++;
         break;
+      }
+
+      case FBLE_TAIL_CALL_INSTR: {
+        FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
+
+        FbleReleaseValue(heap, GET(call_instr->func));
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          FbleReleaseValue(heap, GET(call_instr->args.xs[i]));
+        }
+
+        return NULL;
       }
 
       case FBLE_COPY_INSTR: {
@@ -410,18 +411,31 @@ FbleValue* FbleInterpreterRunFunction(
           call_args[i] = GET(call_instr->args.xs[i]);
         }
 
-        if (call_instr->exit) {
-          // Pass the original func, not the strict func, to properly transfer
-          // ownership.
-          return FbleThreadTailCall(heap, thread, GET(call_instr->func), call_args);
-        }
-
         pc++;
         locals[call_instr->dest] = FbleThreadCall(heap, thread, func, call_args);
         if (locals[call_instr->dest] == NULL) {
           return RunAbort(heap, code, vars, pc);
         }
         break;
+      }
+
+      case FBLE_TAIL_CALL_INSTR: {
+        FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
+        FbleValue* func = GET_STRICT(call_instr->func);
+        if (func == NULL) {
+          FbleReportError("called undefined function\n", call_instr->loc);
+          return RunAbort(heap, code, vars, pc);
+        };
+
+        FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
+        FbleValue* call_args[func_exe->num_args];
+        for (size_t i = 0; i < func_exe->num_args; ++i) {
+          call_args[i] = GET(call_instr->args.xs[i]);
+        }
+
+        // Pass the original func, not the strict func, to properly transfer
+        // ownership.
+        return FbleThreadTailCall(heap, thread, GET(call_instr->func), call_args);
       }
 
       case FBLE_COPY_INSTR: {

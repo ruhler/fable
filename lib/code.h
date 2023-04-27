@@ -93,6 +93,7 @@ typedef enum {
   FBLE_GOTO_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_CALL_INSTR,
+  FBLE_TAIL_CALL_INSTR,
   FBLE_COPY_INSTR,
   FBLE_REF_VALUE_INSTR,
   FBLE_REF_DEF_INSTR,
@@ -274,18 +275,26 @@ typedef struct {
  * FBLE_CALL_INSTR: Calls a function.
  *
  * *dest = func(args[0], args[1], ...)
- *
- * If exit is true, this is treated as a tail call. In that case, dest is
- * ignored and the result is returned to the caller.
  */
 typedef struct {
   FbleInstr _base;      /**< FbleInstr base class. */
   FbleLoc loc;          /**< Location of the call for error reporting. */
-  bool exit;            /**< Whether this is a normal call or tail call. */
-  FbleLocalIndex dest;  /**< Where to store the result of the call. */
   FbleVar func;         /**< The function to call. */
   FbleVarV args;        /**< The arguments to pass to the called function. */
+  FbleLocalIndex dest;  /**< Where to store the result of the call. */
 } FbleCallInstr;
+
+/**
+ * FBLE_TAIL_CALL_INSTR: Tail calls a function.
+ *
+ * return func(args[0], args[1], ...)
+ */
+typedef struct {
+  FbleInstr _base;      /**< FbleInstr base class. */
+  FbleLoc loc;          /**< Location of the call for error reporting. */
+  FbleVar func;         /**< The function to call. */
+  FbleVarV args;        /**< The arguments to pass to the called function. */
+} FbleTailCallInstr;
 
 /**
  * FBLE_COPY_INSTR: Copies a value from one location to another.

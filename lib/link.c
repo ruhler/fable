@@ -60,7 +60,6 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     call->loc.source = FbleNewString(__FILE__);
     call->loc.line = __LINE__ - 1;
     call->loc.col = 5;
-    call->exit = false;
     call->func.tag = FBLE_STATIC_VAR;
     call->func.index = i;
     FbleVectorInit(call->args);

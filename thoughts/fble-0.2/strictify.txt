@@ -1,0 +1,84 @@
+Strictify
+=========
+
+When we define recursive values we use a REF_VALUE that is initialized to
+NULL, and later assigned. Two things related to this:
+1. We have to add error checks for 'undefined' values.
+2. We have to add calls to FbleStrictValue to get to the underlying value.
+
+Question: Can we improve this somehow?
+
+For example, what if instead of setting ref->value to the new value, we
+completely overwrote the contents of ref? Assuming it's allocated with
+sufficient space.
+
+That way there's no need to do FbleStrictValue. Either a value is a REF_VALUE
+which means undefined, or it's the underlying value. So we can save on
+whatever overhead there is there.
+
+We still need error checking, but maybe we can limit that to only places in
+the code where you might have an undefined value. Namely, in the definitions
+of recursively defined variables.
+
+Maybe we have to enforce an invariant that you can't pass an undefined value
+as an argument to a function? Is that legal to do? I'm not sure.
+
+Anyway, two separate things I think we could maybe handle separately.
+
+Let's start with not having to call FbleStrictValue. In order for this to
+work, we need to know when we allocate a REF_VALUE how big the final value
+will be. In almost every case, we should be able to figure this out from the
+type. Where it gets tricky is FuncValue statics.
+
+Is it worth changing FuncValue.statics to a separately allocated FbleValue**
+so that FuncValue is a fixed size? FuncValue is the most common case here.
+
+It's worth measure the impact both ways: changing statics to a separate
+allocation, and removing the need for FbleStrictValue. In theory we call
+FbleStrictValue way more often than we allocate FuncValues. I bet this is a
+net win if we can do it.
+
+Note: in theory it's possible to assign a packed value to a RefValue. In that
+case, we would need to unpack the value. I see no major downside to that. It's
+a very particular case. Something like:
+
+  Int@ x = Pair@(x, 2).y;
+
+In summary:
+* Change FuncValue to allocate statics separately.
+* Remove RefValue type, but keep REF_VALUE tag. Maybe call it UNDEFINED_VALUE.
+* Check for undefined becomes test for tag REF_VALUE.
+* Check for vacuous turns into check for undefined at assign time?
+* Add allocation size parameter to FBLE_REF_VALUE_INSTR.
+  - I'm not quite sure about encapsulation here. Maybe need a helper function
+    defined in value.c to provide the right magic value as a function of type.
+* Change FbleAssignRefValue to copy relevant fields from value over top of the
+  ref.
+  - Will need to unpack values and call AddRef as appropriate for the new value.
+* Remove all instances of FbleStrictValue.
+
+I like that idea. Feels good to me.
+
+---
+
+On whether we should be allowed to pass undefined values as arguments to
+functions, I think yes. For example, if we want to define a complex kind of
+recursive data value, we want to be able to use functions. Something like:
+
+  List@ cycle = Append(List[1, 2, 3], cycle);
+
+In general that suggests we want to be able to use variables with undefined
+values. Because, for example, the function Append ought to be allowed to
+introduce local variable like:
+  List@ l = arg;
+  ...
+
+Keep that in mind for this next question: how to handle nested ref defs? For
+example:
+
+ a = ref;
+ b = ref;
+ b := a;
+ a := ... b ...;
+ 
+
