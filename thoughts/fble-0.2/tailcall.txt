@@ -199,3 +199,10 @@ Code review:
 
 Let's rule out the FbleThread alloca logic. Use malloc/free for first run.
 Iron out any details that way. Then figure out how to use alloca.
+
+Found one bug:
+* Off by one in the allocated buffer size.
+
+Let's see if that fixes the interpreter.
+* Hello world works now. Good. And so do tests.
+
