@@ -12,7 +12,7 @@
  * An FbleRunFunction for interpreting FbleCode fble bytecode.
  *
  * @param heap        The value heap.
- * @param thread      The thread to run.
+ * @param tail_call_buffer  The tail call buffer.
  * @param executable  The FbleCode to run.
  * @param args        Arguments to the function. Borrowed.
  * @param statics     The function's static variables. Borrowed.
@@ -30,7 +30,7 @@
  */
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
-    FbleThread* thread,
+    FbleValue** tail_call_buffer,
     FbleExecutable* executable,
     FbleValue** args,
     FbleValue** statics,

@@ -35,13 +35,13 @@ typedef struct {
 } FileExecutable;
 
 static FbleValue* IStreamImpl(
-    FbleValueHeap* heap, FbleThread* thread,
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
     FbleProfileThread* profile);
 static FbleValue* OStreamImpl(
-    FbleValueHeap* heap, FbleThread* thread,
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
@@ -53,13 +53,13 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_bl
 // IStream -- Read a byte from a file.
 //   IO@<Maybe@<Int@>>
 static FbleValue* IStreamImpl(
-    FbleValueHeap* heap, FbleThread* thread,
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
     FbleProfileThread* profile)
 {
-  (void)thread;
+  (void)tail_call_buffer;
   (void)statics;
   (void)profile_block_offset;
   (void)profile;
@@ -86,13 +86,13 @@ static FbleValue* IStreamImpl(
 // OStream -- Write a byte to a file.
 //   (Int@, World@) { R@<Unit@>; }
 static FbleValue* OStreamImpl(
-    FbleValueHeap* heap, FbleThread* thread,
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
     FbleProfileThread* profile)
 {
-  (void)thread;
+  (void)tail_call_buffer;
   (void)statics;
   (void)profile_block_offset;
   (void)profile;

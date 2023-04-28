@@ -235,7 +235,7 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 // See documentation in interpret.h.
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
-    FbleThread* thread,
+    FbleValue** tail_call_buffer,
     FbleExecutable* executable,
     FbleValue** args,
     FbleValue** statics,
@@ -412,7 +412,7 @@ FbleValue* FbleInterpreterRunFunction(
         }
 
         pc++;
-        locals[call_instr->dest] = FbleThreadCall(heap, thread, func, call_args);
+        locals[call_instr->dest] = FbleThreadCall(heap, profile, func, call_args);
         if (locals[call_instr->dest] == NULL) {
           return RunAbort(heap, code, vars, pc);
         }
@@ -428,14 +428,11 @@ FbleValue* FbleInterpreterRunFunction(
         };
 
         FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
-        FbleValue* call_args[func_exe->num_args];
+        tail_call_buffer[0] = GET(call_instr->func);
         for (size_t i = 0; i < func_exe->num_args; ++i) {
-          call_args[i] = GET(call_instr->args.xs[i]);
+          tail_call_buffer[1+i] = GET(call_instr->args.xs[i]);
         }
-
-        // Pass the original func, not the strict func, to properly transfer
-        // ownership.
-        return FbleThreadTailCall(heap, thread, GET(call_instr->func), call_args);
+        return FbleTailCallSentinelValue;
       }
 
       case FBLE_COPY_INSTR: {

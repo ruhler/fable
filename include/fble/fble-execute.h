@@ -12,22 +12,23 @@
 #include "fble-value.h"       // for FbleValue, FbleValueHeap
 
 /**
- * A thread of execution.
- *
- * This is an abstract handle for use with FbleThread* APIs used to implement
- * fble functions.
+ * Sentinel value to return from FbleRunFunction to indicate tail call.
  */
-typedef struct FbleThread FbleThread;
+extern FbleValue* FbleTailCallSentinelValue;
 
 /**
  * @func[FbleRunFunction] Implementation of fble function logic.
  *
  *  Type of a C function that implements an fble function.
  *
+ *  To perform a tail call, the implementation of the run function should
+ *  place the function to call followed by args in order into the
+ *  tail_call_buffer, then return FbleTailCallSentinelValue.
+ *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
- *  @arg[FbleThread*] thread
- *   The thread to run.
+ *  @arg[FbleValue**] tail_call_buffer
+ *   Pre-allocated space to store tail call func and args.
  *  @arg[FbleExecutable*] executable
  *   The FbleExecutable associated with the function.
  *  @arg[FbleValue**] args
@@ -43,15 +44,14 @@ typedef struct FbleThread FbleThread;
  *  @returns FbleValue*
  *   @i The result of executing the function.
  *   @i NULL if the function aborts.
- *   @i A special sentinal value to indicate a tail call is required.
+ *   @i FbleTailCallSentinelValue to indicate tail call.
  *
  *  @sideeffects
- *   @i May call FbleThreadTailCall to indicate tail call required.
  *   @i Executes the fble function, with whatever side effects that may have.
  */
 typedef FbleValue* FbleRunFunction(
     FbleValueHeap* heap,
-    FbleThread* thread,
+    FbleValue** tail_call_buffer,
     FbleExecutable* executable,
     FbleValue** args,
     FbleValue** statics,
@@ -229,8 +229,8 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
- *  @arg[FbleThread*] thread
- *   The thread whose stack to push the frame on to.
+ *  @arg[FbleProfileThread*] profile
+ *   The current profile thread, or NULL if profiling is disabled.
  *  @arg[FbleValue*] func
  *   The function to execute. Borrowed.
  *  @arg[FbleValue**] args
@@ -244,15 +244,15 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
+FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, FbleValue** args);
 
 /**
  * @func[FbleThreadCall_] Calls an fble function using varags.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
- *  @arg[FbleThread*] thread
- *   The thread whose stack to push the frame on to.
+ *  @arg[FbleProfileThread*] profile
+ *   The current profile thread, or NULL if profiling is disabled.
  *  @arg[FbleValue*] func
  *   The function to execute. Borrowed.
  *  @arg[...][]
@@ -266,75 +266,6 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* fu
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
-
-/**
- * @func[FbleThreadTailCall] Tail calls an fble function.
- *
- *  Replaces the current frame with a new one.
- *
- *  This function should only be called from an FbleRunFunction invoked by
- *  FbleThreadCall.
- *
- *  The run function should directly return the result of FbleThreadTailCall.
- *  It should not execute any other thread API functions after calling
- *  FbleThreadTailCall.
- *
- *  @arg[FbleValueHeap*] heap
- *   The value heap.
- *  @arg[FbleThread*] thread
- *   The thread with the stack to change.
- *  @arg[FbleValue*] func 
- *   The function to execute. Consumed.  
- *  @arg[FbleValue**] args
- *   Args to the function. length == func->argc. Array borrowed, elements
- *   consumed.
- *
- *  @returns FbleValue*
- *   An special sentinal value to indicate tail call is required.
- *
- *  @sideeffects
- *   @i Exits the current frame, which potentially frees any instructions
- *    belonging to that frame.
- *   @i The func and all args have their ownership transferred to
- *    FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
- *    doing an FbleReleaseValue call for func and args.
- *   @i Replaces the profiling block for the function being called.
- */
-FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
-
-/**
- * @func[FbleThreadTailCall_] Tail calls an fble function using varargs.
- *
- *  Replaces the current frame with a new one.
- *
- *  This function should only be called from an FbleRunFunction invoked by
- *  FbleThreadCall.
- *
- *  The run function should directly return the result of FbleThreadTailCall_.
- *  It should not execute any other thread API functions after calling
- *  FbleThreadTailCall_.
- *
- *  @arg[FbleValueHeap*] heap
- *   The value heap.
- *  @arg[FbleThread*] thread
- *   The thread with the stack to change.
- *  @arg[FbleValue*] func
- *   The function to execute. Consumed.
- *  @arg[...] 
- *   func->args number of args to the function. Args consumed.
- *
- *  @returns FbleValue*
- *   A special sentinal value to indicate tail call is required.
- *
- *  @sideeffects
- *   @i Exits the current frame, which potentially frees any instructions
- *    belonging to that frame.
- *   @i The func and all args have their ownership transferred to
- *    FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
- *    doing an FbleReleaseValue call for func and args.
- *   @i Replaces the profiling block for the function being called.
- */
-FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
+FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...);
 
 #endif // FBLE_EXECUTE_H_

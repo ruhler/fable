@@ -282,7 +282,7 @@ static void ReturnAbort(FILE* fout, void* code, const char* function_label, size
 {
   fprintf(fout, "{\n");
   fprintf(fout, "    ReportAbort(%s, %d, %d);\n", lmsg, loc.line, loc.col);
-  fprintf(fout, "    return _Abort_%p_%s(heap, thread, s, a, l, %zi);\n",
+  fprintf(fout, "    return _Abort_%p_%s(heap, s, a, l, %zi);\n",
       code, function_label, pc);
   fprintf(fout, "  }\n");
 }
@@ -303,7 +303,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
   fprintf(fout, "static FbleValue* _Run_%p_%s("
-      "FbleValueHeap* heap, FbleThread* thread, "
+      "FbleValueHeap* heap, FbleValue** tail_call_buffer, "
       "FbleExecutable* executable, FbleValue** args, "
       "FbleValue** statics, FbleBlockId profile_block_offset, "
       "FbleProfileThread* profile)\n",
@@ -503,7 +503,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
-        fprintf(fout, "  l[%zi] = FbleThreadCall_(heap, thread, x0", call_instr->dest);
+        fprintf(fout, "  l[%zi] = FbleThreadCall_(heap, profile, x0", call_instr->dest);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, ", %s[%zi]",
               var_tag[call_instr->args.xs[i].tag],
@@ -524,17 +524,15 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
-        // Pass the original func value, not the strict version, to tail
-        // call to properly track ownership.
-        fprintf(fout, "  return FbleThreadTailCall_(heap, thread, %s[%zi]",
+        fprintf(fout, "  tail_call_buffer[0] = %s[%zi];\n",
           var_tag[call_instr->func.tag],
           call_instr->func.index);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, ", %s[%zi]",
-              var_tag[call_instr->args.xs[i].tag],
+          fprintf(fout, "  tail_call_buffer[%zi] = %s[%zi];\n",
+              i + 1, var_tag[call_instr->args.xs[i].tag],
               call_instr->args.xs[i].index);
         }
-        fprintf(fout, ");\n");
+        fprintf(fout, "  return FbleTailCallSentinelValue;\n");
         break;
       }
 
@@ -797,7 +795,7 @@ static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* cod
   FbleName block = profile_blocks.xs[code->_base.profile_block_id];
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
-  fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** s, FbleValue** a, FbleValue** l, size_t pc)\n", (void*)code, label);
+  fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleValue** s, FbleValue** a, FbleValue** l, size_t pc)\n", (void*)code, label);
   fprintf(fout, "{\n");
   fprintf(fout, "  switch (pc)\n");
   fprintf(fout, "  {\n");
@@ -950,12 +948,12 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
     fprintf(fout, "static FbleValue* _Run_%p_%s("
-      "FbleValueHeap* heap, FbleThread* thread, "
+      "FbleValueHeap* heap, FbleValue** tail_call_buffer, "
       "FbleExecutable* executable, FbleValue** locals, "
       "FbleValue** statics, FbleBlockId profile_block_offset, "
       "FbleProfileThread* profile);\n",
         (void*)code, function_label);
-    fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** statics, FbleValue** args, FbleValue** locals, size_t pc);\n",
+    fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleValue** statics, FbleValue** args, FbleValue** locals, size_t pc);\n",
         (void*)code, function_label);
   }
 

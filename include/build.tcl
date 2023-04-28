@@ -30,7 +30,6 @@ namespace eval "include" {
       FbleExecutableNothingOnFree
       FbleFreeExecutableModule FbleFreeExecutableProgram
       FbleThreadCall FbleThreadCall_
-      FbleThreadTailCall FbleThreadTailCall_
     }
     fble-interpret.h {
       FbleInterpret

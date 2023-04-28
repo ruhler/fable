@@ -41,7 +41,7 @@ typedef struct {
   void* FP;                 /**< Frame pointer. */
   void* LR;                 /**< Link register. */
   void* r_heap_save;        /**< Saved contents of R_HEAP reg. */
-  void* r_thread_save;      /**< Saved contents of R_THREAD reg. */
+  void* r_tail_call_buffer_save;    /**< Saved contents of R_TAIL_CALL_BUFFER reg. */
   void* r_locals_save;      /**< Saved contents of R_LOCALS reg. */
   void* r_args_save;        /**< Saved contents of R_ARGS reg. */
   void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
@@ -788,7 +788,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_THREAD\n");
+      fprintf(fout, "  mov x1, R_PROFILE\n");
       fprintf(fout, "  mov x3, SP\n");          // args
 
       fprintf(fout, "  bl FbleThreadCall\n");
@@ -801,29 +801,17 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     case FBLE_TAIL_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       GetFrameVar(fout, "x0", call_instr->func);
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
+      fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #0]\n");
       fprintf(fout, "  bl FbleStrictValue\n");
       fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
-      fprintf(fout, "  mov x2, x0\n");         // func
 
-      // Allocate space for the arguments array on the stack.
-      size_t sp_offset = StackBytesForCount(call_instr->args.size);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
         GetFrameVar(fout, "x0", call_instr->args.xs[i]);
-        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+        fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #%zi]\n", sizeof(FbleValue*) * (i + 1));
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_THREAD\n");
-      fprintf(fout, "  mov x3, SP\n");          // args
-
-      // Note: Pass the original func value to FbleThreadTailCall, not the
-      // strict value, so that FbleThreadTailCall can take ownership of the
-      // original value.
-      fprintf(fout, "  mov x2, R_SCRATCH_0\n"); // func
-      fprintf(fout, "  bl FbleThreadTailCall\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+      fprintf(fout, "  adrp x0, FbleTailCallSentinelValue\n");
+      fprintf(fout, "  add x0, x0, :lo12:FbleTailCallSentinelValue\n");
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
@@ -1112,14 +1100,14 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  mov FP, SP\n");
 
   // Save callee saved registers for later restoration.
-  fprintf(fout, "  stp R_HEAP, R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  stp R_HEAP, R_TAIL_CALL_BUFFER, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  stp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  stp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  stp R_PROFILE, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
 
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
-  fprintf(fout, "  mov R_THREAD, x1\n");
+  fprintf(fout, "  mov R_TAIL_CALL_BUFFER, x1\n");
   fprintf(fout, "  mov R_ARGS, x3\n");
   fprintf(fout, "  mov R_STATICS, x4\n");
   fprintf(fout, "  mov R_PROFILE_BLOCK_OFFSET, x5\n");
@@ -1134,7 +1122,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
   // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
-  fprintf(fout, "  ldp R_HEAP, R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  ldp R_HEAP, R_TAIL_CALL_BUFFER, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  ldp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  ldp R_PROFILE, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
@@ -1438,7 +1426,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // Common things we hold in callee saved registers for Run and Abort
   // functions.
   fprintf(fout, "  R_HEAP .req x19\n");
-  fprintf(fout, "  R_THREAD .req x20\n");
+  fprintf(fout, "  R_TAIL_CALL_BUFFER .req x20\n");
   fprintf(fout, "  R_LOCALS .req x21\n");
   fprintf(fout, "  R_ARGS .req x22\n");
   fprintf(fout, "  R_STATICS .req x23\n");

@@ -187,3 +187,15 @@ And what will we call the actual arg to the run function?
 Yeah. Okay. Verbose. Let's go with that, see how painful it is. Future me will
 appreciate it.
 
+---
+
+Code is draft. It's crashing. I think there must be more than one thing wrong,
+because both the interpreter and aarch64 backends fail in different ways at
+different times.
+
+Code review:
+* It all looks good to me, except for potentially FbleThread alloca logic.
+  - And maybe the need to do 16 byte aligned allocations on the stack.
+
+Let's rule out the FbleThread alloca logic. Use malloc/free for first run.
+Iron out any details that way. Then figure out how to use alloca.
