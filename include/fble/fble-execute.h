@@ -13,8 +13,10 @@
 
 /**
  * Sentinel value to return from FbleRunFunction to indicate tail call.
+ *
+ * We use the value 0x2 to be distinct from NULL and packed values.
  */
-extern FbleValue* FbleTailCallSentinelValue;
+#define FbleTailCallSentinelValue ((FbleValue*) 0x2)
 
 /**
  * @func[FbleRunFunction] Implementation of fble function logic.

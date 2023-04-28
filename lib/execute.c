@@ -19,9 +19,6 @@
 #include "unreachable.h"
 #include "value.h"
 
-// See documentation in fble-execute.h
-FbleValue* FbleTailCallSentinelValue = (FbleValue*)"TAIL CALL SENTINEL VALUE";
-
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 

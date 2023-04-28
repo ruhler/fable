@@ -810,8 +810,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #%zi]\n", sizeof(FbleValue*) * (i + 1));
       }
 
-      fprintf(fout, "  adrp x0, FbleTailCallSentinelValue\n");
-      fprintf(fout, "  add x0, x0, :lo12:FbleTailCallSentinelValue\n");
+      fprintf(fout, "  mov x0, %p\n", (void*)FbleTailCallSentinelValue);
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }

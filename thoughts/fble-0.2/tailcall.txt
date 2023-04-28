@@ -206,3 +206,27 @@ Found one bug:
 Let's see if that fixes the interpreter.
 * Hello world works now. Good. And so do tests.
 
+Now for aarch64 debug.
+
+Basic Recursive test fails. Last time we had this signature, it was because we
+were trying to use FbleTailCallSentinelValue as a real value. Let's confirm.
+
+Yeah. Problem is we aren't properly returning FbleTailCallSentinelValue. I
+need to figure out the right assembly. Let's see how the interpreter does it.
+
+It uses:
+
+ 518:   90000000        adrp    x0, 0 <FbleTailCallSentinelValue>
+ 51c:   f9400000        ldr     x0, [x0]
+ 520:   f9400000        ldr     x0, [x0]
+
+Does that make sense?
+
+Raw assembly:
+
+  adrp  x0, :got:FbleTailCallSentinelValue
+  ldr x0, [x0, #:got_lo12:FbleTailCallSentinelValue]
+  ldr x0, [x0]
+
+That's more complicated than I want. Let me just define the value to be 0x2.
+Don't have to worry about got, adrp, ldr, or things like that.
