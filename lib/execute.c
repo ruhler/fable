@@ -64,7 +64,7 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
   }
 
   size_t buffer_size = executable->tail_call_buffer_size;
-  FbleValue** buffer = malloc(buffer_size * sizeof(FbleValue*));
+  FbleValue** buffer = alloca(buffer_size * sizeof(FbleValue*));
   FbleValue** tail_call_buffer = buffer;
   FbleValue* result = executable->run(
         heap, tail_call_buffer, executable, args,
@@ -72,16 +72,22 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
   while (result == FbleTailCallSentinelValue) {
     // Invariants at this point in the code:
     // * The new func and args to call are sitting in tail_call_buffer.
-    // * The start of our allocated buffer is 'buffer'.
+    // * The start of our stack allocated buffer is 'buffer'.
     func = tail_call_buffer[0];
     info = FbleFuncValueInfo(func);
     executable = info.executable;
     if (executable->tail_call_buffer_size + 1 + executable->num_args > buffer_size) {
       size_t incr = executable->tail_call_buffer_size + 1 + executable->num_args - buffer_size;
+      FbleValue** nbuffer = alloca(incr * sizeof(FbleValue*));
+
+      // We assume repeated calls to alloca result in adjacent memory
+      // allocations on the stack. We don't know if stack goes up or down. To
+      // find the start of the full allocated region, pick the smallest of the
+      // pointers we have so far.
+      if (nbuffer < buffer) {
+        buffer = nbuffer;
+      }
       buffer_size += incr;
-      FbleValue** nbuffer = realloc(buffer, buffer_size * sizeof(FbleValue*));
-      tail_call_buffer = tail_call_buffer - buffer + nbuffer;
-      buffer = nbuffer;
     }
 
     for (size_t i = 0; i < executable->num_args + 1; ++i) {
@@ -101,7 +107,6 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
       FbleReleaseValue(heap, buffer[i]);
     }
   }
-  free(buffer);
 
   if (profile != NULL) {
     FbleProfileExitBlock(profile);

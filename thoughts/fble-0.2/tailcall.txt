@@ -230,3 +230,14 @@ Raw assembly:
 
 That's more complicated than I want. Let me just define the value to be 0x2.
 Don't have to worry about got, adrp, ldr, or things like that.
+
+---
+
+Got it working. The impact:
+
+md5: 57s ==> 55s
+sat: 1m16s ==> 1m6s
+
+Not bad. I'm happy with that. The code is much cleaner too I feel like, aside
+from that alloca hack.
+
