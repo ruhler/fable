@@ -101,4 +101,6 @@ Let me see if I can dig up my old thoughts on how to support file names:
 
 Maybe it's that simple. Just need to implement it.
 
+The return value should be True if all files are found. False if any are not
+found.
 

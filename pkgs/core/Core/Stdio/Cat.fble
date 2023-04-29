@@ -54,8 +54,7 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   };
 
   (List@<String@> args) {
-    args.?(nil: cats(List[Str|'-']));
-    cats(args);
+    cats(args.?(nil: List[Str|'-'], : args));
   };
 };
 

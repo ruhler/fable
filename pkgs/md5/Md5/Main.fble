@@ -1,8 +1,13 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% And = /Core/Bool%.And;
 
 @ Int@ = /Core/Int%.Int@;
+
 <@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -11,7 +16,13 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
@@ -26,15 +37,38 @@
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % O = /Core/Stream/OStream%(m);
 
-  M@<Maybe@<Bit8@>> in = {
-    Maybe@<Int@> b <- m.do(stdio.in);
-    m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
+  (String@) { M@<Bool@>; } md5 = (String@ filename) {
+    Maybe@<IStream@<M@>> istream <- m.do({
+      /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
+      stdio.read(filename);
+    });
+
+    istream.?(nothing: {
+      String@ msg = Strs[Str|'fble-md5: Unable to open ', filename];
+      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      m.return(False);
+    });
+
+    M@<Maybe@<Bit8@>> in = {
+      Maybe@<Int@> b <- m.do(istream.just);
+      m.return(b.?(just: Just(ToBits(b.just)), nothing: Nothing<Bit8@>));
+    };
+
+    Hash@ hash <- m.do(/Md5/Md5%.Md5(m, in));
+    String@ line = Strs[/Md5/Hash%.Show(hash), Str|'  ', filename];
+    Unit@ _ <- m.do(O.PutLine(stdio.out, line));
+    m.return(True);
+  };
+
+  (Bool@, List@<String@>) { M@<Bool@>; }
+  md5s = (Bool@ all_pass, List@<String@> files) {
+    files.?(nil: m.return(all_pass));
+    Bool@ pass <- m.do(md5(files.cons.head));
+    md5s(And(all_pass, pass), files.cons.tail);
   };
 
   (List@<String@> args) {
-    Hash@ hash <- m.do(/Md5/Md5%.Md5(m, in));
-    Unit@ _ <- m.do(O.PutLine(stdio.out, /Md5/Hash%.Show(hash)));
-    m.return(True);
+    md5s(True, args.?(nil: List[Str|'-'], : args));
   };
 };
 
