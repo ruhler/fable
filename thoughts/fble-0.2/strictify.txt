@@ -81,4 +81,42 @@ example:
  b := a;
  a := ... b ...;
  
+---
+
+We could make the nested ref defs work, by keeping track of a linked list of
+nested ref defs and making sure to update them all as appropriate when doing
+an assignment.
+
+What if we don't know the type? Like, what if it is an abstract polymorphic
+type? Is that even possible?
+
+Looking at FbleStrictValue's implementation, it's pretty compact. Like 6
+instructions or some such. If we got rid of it, it would just be replaced with
+an FbleValueIsUndefined function of similar size. So do we really have
+anything to gain here?
+
+Other option would be to modify all the places that need a strict value to
+return some indicator of whether it was undefined:
+* Struct access - return NULL if obj not strict.
+* Union access - return NULL if obj not strict.
+* Union tag - return -1 (?) if obj not strict.
+* Call - return 0x4 (?) if function not strict.
+* Tail call - ?? we don't call directly in the tail call instr.
+
+That way we could avoid the overhead of FbleStrictValue call.
+
+We are already calling FbleStrictValue in these functions. Why call it twice
+when we could call it just once?
+
+So here's an idea: Switch to using an FbleValueIsUndefined function when
+executing code. Use that to decide whether to report an error.
+
+Except, honestly, that's what FbleStrictValue is. The implementation would be
+identical.
+
+Another approach would be to pull out the calls to FbleStrictValue into
+separate instructions. That would allow us to potentially optimize some of
+them away based on static analysis. Basically, we could optimize it away any
+time we know we just allocated the value. How often do we access a value we
+just allocated? I'm not sure. Feels like a rare case.
 

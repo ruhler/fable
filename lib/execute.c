@@ -76,8 +76,9 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
     func = tail_call_buffer[0];
     info = FbleFuncValueInfo(func);
     executable = info.executable;
-    if (executable->tail_call_buffer_size + 1 + executable->num_args > buffer_size) {
-      size_t incr = executable->tail_call_buffer_size + 1 + executable->num_args - buffer_size;
+    size_t num_args_plus_1 = 1 + executable->num_args;
+    if (executable->tail_call_buffer_size + num_args_plus_1 > buffer_size) {
+      size_t incr = executable->tail_call_buffer_size + num_args_plus_1 - buffer_size;
       FbleValue** nbuffer = alloca(incr * sizeof(FbleValue*));
 
       // We assume repeated calls to alloca result in adjacent memory
@@ -90,11 +91,11 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
       buffer_size += incr;
     }
 
-    for (size_t i = 0; i < executable->num_args + 1; ++i) {
+    for (size_t i = 0; i < num_args_plus_1; ++i) {
       buffer[i] = tail_call_buffer[i];
     }
     args = buffer + 1;
-    tail_call_buffer = buffer + 1 + executable->num_args;
+    tail_call_buffer = buffer + num_args_plus_1;
 
     if (profile) {
       FbleProfileReplaceBlock(profile, info.profile_block_offset + executable->profile_block_id);
@@ -103,7 +104,7 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
     result = executable->run(
         heap, tail_call_buffer, executable, args,
         info.statics, info.profile_block_offset, profile);
-    for (size_t i = 0; i < executable->num_args + 1; ++i) {
+    for (size_t i = 0; i < num_args_plus_1; ++i) {
       FbleReleaseValue(heap, buffer[i]);
     }
   }
