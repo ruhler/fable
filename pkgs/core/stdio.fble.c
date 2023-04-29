@@ -34,6 +34,7 @@ typedef struct {
   FILE* file;
 } FileExecutable;
 
+static void OnFree(FbleExecutable* this);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleValue** tail_call_buffer,
     FbleExecutable* executable,
@@ -56,6 +57,13 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset);
 
+
+// OnFree function for FileExecutable
+static void OnFree(FbleExecutable* this)
+{
+  FileExecutable* file = (FileExecutable*)this;
+  fclose(file->file);
+}
 
 // IStream -- Read a byte from a file.
 //   IO@<Maybe@<Int@>>
@@ -163,7 +171,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   exe->_base.tail_call_buffer_size = 0;
   exe->_base.profile_block_id = 0;
   exe->_base.run = &IStreamImpl;
-  exe->_base.on_free = &FbleExecutableNothingOnFree;
+  exe->_base.on_free = &OnFree;
   exe->file = file;
   return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
 }
@@ -178,7 +186,7 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   exe->_base.tail_call_buffer_size = 0;
   exe->_base.profile_block_id = 1;
   exe->_base.run = &OStreamImpl;
-  exe->_base.on_free = &FbleExecutableNothingOnFree;
+  exe->_base.on_free = &OnFree;
   exe->file = file;
   return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
 }
