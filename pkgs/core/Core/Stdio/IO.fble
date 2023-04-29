@@ -10,6 +10,8 @@
 @ World@ = /Core/Monad/IO%.World@;
 <@>@ R@ = /Core/Monad/IO%.R@;
 
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -21,11 +23,13 @@
   IO@<Maybe@<Int@>>,
   (Int@, World@) { R@<Unit@>; },
   (Int@, World@) { R@<Unit@>; },
+  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; },
   List@<String@>) { IO@<Bool@>; }
 Run = (/Core/Stdio%.Main@ main)(
   IO@<Maybe@<Int@>> stdin,
   (Int@, World@) { R@<Unit@>; } stdout,
   (Int@, World@) { R@<Unit@>; } stderr,
+  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
   List@<String@> args) {
   # Note: We pass stdout and stderr as functions taking the string and the
   # world rather than a function from string to IO@ just so we don't have to
@@ -35,7 +39,8 @@ Run = (/Core/Stdio%.Main@ main)(
     @(
       in: stdin,
       out: (Int@ s)(World@ w) { stdout(s, w); },
-      err: (Int@ s)(World@ w) { stderr(s, w); }))(args);
+      err: (Int@ s)(World@ w) { stderr(s, w); },
+      read: (String@ s)(World@ w) { read(s, w); }))(args);
 };
 
 @(Run);

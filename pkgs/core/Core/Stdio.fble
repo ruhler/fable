@@ -1,9 +1,10 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 <@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
@@ -13,10 +14,19 @@
 # Stdio@ --
 #   Interface for standard input and output operations.
 <<@>@>@ Stdio@ = <<@>@ M@> { *(
+  # stdin stream
   IStream@<M@> in,
+
+  # stdout stream
   OStream@<M@> out,
-  OStream@<M@> err);
-};
+
+  # stderr stream
+  OStream@<M@> err,
+
+  # Open the named file for reading.
+  # Returns an input stream for reading. Nothing if unable to open the file.
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read
+); };
   
 # Main@ --
 #   Type of the main function for a stdio application.

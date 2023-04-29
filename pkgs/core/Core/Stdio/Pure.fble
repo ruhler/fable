@@ -14,6 +14,10 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+@ String@ = /Core/String%.String@;
+
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ PureState@ = *(
@@ -51,7 +55,13 @@ Pure@<Maybe@<Int@>> In = {
   State.Set(PureState@(s.in, s.out, Append(s.err, List[b])));
 };
 
-Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err);
+(String@) { Pure@<Maybe@<IStream@<Pure@>>>; } Read = (String@ filename) {
+  # TODO: Add a map from file name to List@<Int@> to allow modeling of the
+  # filesystem.
+  Monad.return(Nothing<IStream@<Pure@>>);
+};
+
+Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err, Read);
 
 # Run --
 #   Run a pure stdio computation.

@@ -48,8 +48,17 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
     "cmp $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
+  # /Core/Stdio/Cat% interpreted test 2.
+  build $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
+    "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/Cat.fble.d" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.2.out"
+  test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
+    "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
+    "cmp $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
+
   # /Core/Stdio/Cat% compiled.
   stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" ""
+  install $::b/pkgs/core/fble-cat $::config::bindir/fble-cat
 
   # /Core/Stdio/HelloWorld% interpreted test.
   test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/HelloWorld.fble.d" \

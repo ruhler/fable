@@ -3,6 +3,8 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+@ String@ = /Core/String%.String@;
 
 % Unit = /Core/Unit%.Unit;
 
@@ -11,7 +13,8 @@
   @(
     in: m.return(Nothing<Int@>),
     out: (Int@ _) { m.return(Unit); },
-    err: (Int@ _) { m.return(Unit); });
+    err: (Int@ _) { m.return(Unit); },
+    read: (String@ _) { m.return(Nothing<IStream@<M@>>); });
 };
 
 @(Stdio);

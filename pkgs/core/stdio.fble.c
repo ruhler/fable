@@ -46,8 +46,15 @@ static FbleValue* OStreamImpl(
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
     FbleProfileThread* profile);
-static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
-static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId proble_block_offset);
+static FbleValue* ReadImpl(
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
+    FbleExecutable* executable,
+    FbleValue** args, FbleValue** statics,
+    FbleBlockId profile_block_offset,
+    FbleProfileThread* profile);
+static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
+static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
+static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset);
 
 
 // IStream -- Read a byte from a file.
@@ -112,6 +119,40 @@ static FbleValue* OStreamImpl(
   return result;
 }
 
+// Read -- Open a file for reading.
+//   (String@, World@) { R@<Maybe@<IStream@<R@>>>; }
+static FbleValue* ReadImpl(
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
+    FbleExecutable* executable,
+    FbleValue** args, FbleValue** statics,
+    FbleBlockId profile_block_offset,
+    FbleProfileThread* profile)
+{
+  (void)tail_call_buffer;
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+  (void)profile;
+
+  char* filename = FbleStringValueAccess(args[0]);
+  FbleValue* world = args[1];
+  FILE* fin = fopen(filename, "r");
+  FbleFree(filename);
+
+  FbleValue* mstream;
+  if (fin == NULL) {
+    mstream = FbleNewEnumValue(heap, 1); // Nothing
+  } else {
+    FbleValue* stream = IStream(heap, fin, profile_block_offset);
+    mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
+    FbleReleaseValue(heap, stream);
+  }
+
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, mstream);
+  FbleReleaseValue(heap, mstream);
+  return result;
+}
+
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
 {
   FileExecutable* exe = FbleAlloc(FileExecutable);
@@ -142,6 +183,20 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
 }
 
+static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset)
+{
+  FbleExecutable* exe = FbleAlloc(FbleExecutable);
+  exe->refcount = 0;
+  exe->magic = FBLE_EXECUTABLE_MAGIC;
+  exe->num_args = 2;
+  exe->num_statics = 0;
+  exe->tail_call_buffer_size = 0;
+  exe->profile_block_id = 2;
+  exe->run = &ReadImpl;
+  exe->on_free = &FbleExecutableNothingOnFree;
+  return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+}
+
 // FbleStdio -- see documentation in stdio.fble.h
 FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
 {
@@ -150,22 +205,26 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     return NULL;
   }
 
-  FbleName block_names[5];
+  FbleName block_names[3];
   block_names[0].name = FbleNewString("istream");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[1].name = FbleNewString("ostream");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[2].name = FbleNewString("read");
+  block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleBlockId block_id = 0;
   if (profile != NULL) {
-    FbleNameV names = { .size = 2, .xs = block_names };
+    FbleNameV names = { .size = 3, .xs = block_names };
     block_id = FbleProfileAddBlocks(profile, names);
   };
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
+  FbleFreeName(block_names[2]);
 
   FbleValue* fble_stdin = IStream(heap, stdin, block_id);
   FbleValue* fble_stdout = OStream(heap, stdout, block_id);
   FbleValue* fble_stderr = OStream(heap, stderr, block_id);
+  FbleValue* fble_read = Read(heap, block_id);
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
@@ -175,13 +234,14 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     FbleReleaseValue(heap, argP);
   }
 
-  FbleValue* args[4] = { fble_stdin, fble_stdout, fble_stderr, argS };
+  FbleValue* args[5] = { fble_stdin, fble_stdout, fble_stderr, fble_read, argS };
   FbleValue* computation = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
   FbleReleaseValue(heap, args[1]);
   FbleReleaseValue(heap, args[2]);
   FbleReleaseValue(heap, args[3]);
+  FbleReleaseValue(heap, args[4]);
 
   if (computation == NULL) {
     return NULL;

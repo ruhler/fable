@@ -79,3 +79,26 @@ would be nice to have a programming language with an interpreter. Some options
 are: tcl, python, fble, some custom new fbld language. I think, let's not
 worry about this now.
 
+---
+
+First step: add support for opening named files. Even before we start on fbld
+implementation. We can do this on md5.
+
+Goal is to change the command line interface to md5 by adding an option to
+pass one or more file names on the command line (or '-').
+
+Output format is:
+
+<sum>  <filename>
+
+Or, in case of a directory
+
+fble-md5: <name>: Is a directory
+
+Let me see if I can dig up my old thoughts on how to support file names:
+* Skip ReadDir to start.
+* (String@) { M@<Maybe@<IStream@>>; } Read;
+
+Maybe it's that simple. Just need to implement it.
+
+

@@ -1,8 +1,13 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -10,26 +15,48 @@
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
-# The 'cat' program to cat stdin.
+# The 'cat' program.
 Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 
-  M@<Bool@> cat = {
-    String@ line <- m.do(I.GetLine(stdio.in));
-    line.?(
-      cons: {
-        Unit@ _ <- m.do(O.PutStr(stdio.out, line));
-        cat;
-      },
-      nil: m.return(True)
-    );
+  (I.IStream@) { M@<Unit@>; } cat = (I.IStream@ input) {
+    String@ line <- m.do(I.GetLine(input));
+    line.?(nil: m.return(Unit));
+
+    Unit@ _ <- m.do(O.PutStr(stdio.out, line));
+    cat(input);
   };
 
-  (List@<String@> _) { cat; };
+  (List@<String@>) { M@<Bool@>; } cats = (List@<String@> inputs) {
+    inputs.?(nil: m.return(True));
+    String@ filename = inputs.cons.head;
+
+    Maybe@<I.IStream@> istream <- m.do({
+      /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
+      stdio.read(filename);
+    });
+
+    istream.?(nothing: {
+      String@ msg = Strs[Str|'fble-cat: Unable to open ', filename];
+      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      m.return(False);
+    });
+
+    Unit@ _ <- m.do(cat(istream.just));
+    cats(inputs.cons.tail);
+  };
+
+  (List@<String@> args) {
+    args.?(nil: cats(List[Str|'-']));
+    cats(args);
+  };
 };
 
 /Core/Stdio/IO%.Run(Cat);
