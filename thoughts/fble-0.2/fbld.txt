@@ -104,3 +104,66 @@ Maybe it's that simple. Just need to implement it.
 The return value should be True if all files are found. False if any are not
 found.
 
+---
+
+Getting started on fbld, the tricky part is the knot in the middle.
+* The parser needs to know how to invoke commands.
+* The invoked commands want to call back into the parser.
+* Neither parser nor individual command knows what the other commands are.
+* You could get an error message at any point while invoking a command or
+  running the parser.
+* All of parsing and command invocation takes place in some monad M@, which is
+  abstract for the parser and some commands, but may be concrete for other
+  commands.
+
+Access to the invoke function, possibility of error, and monad M@ are common
+between invocation and parser. The string to parse and the state of that is
+specific to the parser. I want some monad transformer Fbld@ that stores the
+command invocation function and error handling.
+
+Interface from within Fbld@:
+  (Loc@, String@) { Fbld@<M@><Unit@>; } error - reports an error.
+  (StringL@, List@<StringL@>) { Fbld@<M@><Unit@>; } invoke - invokes a command.
+  <@ A@>(M@<A@>) { Fbld@<M@><A@>; } lift - execute an M@.
+
+Is there anything simpler we could do? Like, commands take invoke as their
+first argument and return an M@<Maybe@<String@>>? And parser takes invoke as
+their first argument? No need for an Fbld@ transformer monad?
+
+Result@ = +(Unit@ ok, String@ err);
+Invoke@ = <<@>@ M@>(Invoke@<M@>, StringL@, List@<StringL@>){ M@<Result@>; };
+
+<<@>@ M@>(Invoke@<M@>, StringL@) { M@<Result@>; } Block;
+<<@>@ M@>(Invoke@<M@>, StringL@) { M@<Result@>; } Inline;
+
+Cool. Easy.
+
+---
+
+Ugh. Parsing with locations is tedious. Can I make a little Parser@ monad to
+help? I want to do things like:
+
+* Get the next character from the input stream, have location advance
+  automatically based on the character in question.
+* Run a Parser@ computation to get some value at the beginning of the input,
+  returning the rest of the input.
+
+(Parser@<A@>, String@) { *(A@ x, String@ tail); } Run
+
+And maybe it can do errors too. And this can be fully separate from M@, right?
+
+Might be nice if we can have a running state though. So:
+
+(Parser@<A@>, S@) { *(A@ x, S@ s); }
+
+Where S@ stores info about the string, the location, errors, etc.
+
+Things to write:
+ * Parse a character.
+ * Parse plain text before next @... command.
+ * Parse to end of matching ']' character.
+   - Could result in an error if unmatched.
+ * Parse command name.
+  
+
+

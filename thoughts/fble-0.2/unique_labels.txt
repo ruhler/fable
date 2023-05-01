@@ -1,0 +1,111 @@
+Unique Labels
+=============
+Write now, for code generation (both c and aarch64), we use %p to uniquify
+label names.
+
+This is required, because profile block names that come out of the compiler
+may not be unique. Here's an example case:
+
+% _ = ...
+% _ = ...
+% _ = ...
+
+All those '_' get the same name.
+
+The problem with using %p is we get a different label name every time we run
+the compiler, which makes it difficult, for example, to compare perf profiling
+runs.
+
+Is there anything reasonable I can do about this?
+
+Brainstorm:
+* Have the compiler uniquify names. For example _, _0, _1, _2, ...
+  This will be most stable naming: the name changes if a new block of the same
+  name is introduced before it.
+* Use the profile block id to uniquify name.
+  Less stable: the name changes if any new block is introduced before it.
+  We suffer from this in looking at fble profile reports too.
+* Have the backend uniquify label names.
+  But then, why not do it in the compiler instead?
+
+My vote is: the compiler guarantees unique names within a module. Blocks
+always start with the module name, which ought to be unique. That will
+guarantee global unique names.
+
+The next question is if label sanitization could turn two different labels
+into the same name. I think we are okay, as long as we escape '_', which is
+used as our special character marker.
+
+Proposal is:
+* Uniquify names in compile.c
+* Remove %p from labels in generate-c.c and generate-aarch64.c
+
+What will we use for local labels in the aarch64 backend? We don't use the
+full label name there to avoid taking up a bunch of space.
+
+I guess there are three kinds of labels we use:
+1. Exported top level label. e.g. _Fble_2f_Core_2f_Bool_25_
+2. Local function labels.  e.g.
+   _Run.0x2d6c5d78._2f_Core_2f_Map_2f_Map_25_
+   _Run_0x2d6c5d79__2f_Core_2f_Map_2f_Map_25_
+3. Local internal labels. e.g.
+  .L.0x2d6c5d78.0.postprof, 
+  .L._Run_0x2d6c5d78.pc.0
+
+The labels used for (1) have to be accessible from C code, but they are per
+module, not per function. No questions here. They are already unique and
+stable.
+
+The labels used for (2) can use '.' for aarch64, but not for c, I guess. They
+show up in perf profiles, so it's good if they can be stable and easy to
+read what function they refer to.
+
+The labels used for (3) only show up in the aarch64 generated assembly code.
+There's no need for them to be identifiable standalone, but it would be nice
+if there's an easy way to map it to the corresponding (2) label while looking
+at the .s code. That's one of the values of using %p for (2) and (3) right
+now.
+
+Honestly, I think we could just look for first occurrence of prefix for (3) and
+then scroll up in the file to see what function it belongs to.
+
+So, here's what I propose:
+* Uniquify names in compiler.
+* (1) labels stay as is: _Fble_2f_..._
+* (2) labels become: 
+   _r<sanitized label> - for run
+   _a<sanitized label> - for abort
+  Use same for both aarch64 and c.
+* (3) labels become:
+  .Lr<profile id>.*
+  .La<profile id>.*
+  
+Sounds like a plan. We can start by changing (3) labels.
+Uniquifying in compiler is tedious because we don't know how much space we
+need to uniquify ahead of time.
+
+---
+
+Some revisions to the idea:
+
+How about use profile id at the end of the name to dedup, instead of having to
+do it in the compiler? If it's at the end of the name, then it shouldn't mess
+up diff as much? For aarch64, if we use .<profile id> it will be easier to
+link with the function.
+
+---
+
+One issue: we need a way to look up the func_id for a function being called.
+That's tedious.
+
+---
+
+New idea: use the profile_block_id associated with the code. Looking through
+the compiler code, that should always be unique. And then I could match with
+what we get from prof dump, in case we want easy access to locations? So print
+in the same format, %04zx.
+
+Let me be a little more comprehensive in what label names to use.
+
+.Lr
+

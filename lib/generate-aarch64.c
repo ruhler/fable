@@ -62,7 +62,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
-static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
+static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, FbleLoc loc);
 
 static size_t StackBytesForCount(size_t count);
 
@@ -72,7 +72,7 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 // Context for emitting binary search instructions for union select.
 typedef struct {
   FILE* fout;
-  void* code;
+  size_t func_id;
   size_t pc;
   size_t label;
 } Context;
@@ -92,10 +92,10 @@ static size_t GetSingleTarget(Interval* interval);
 static void EmitSearch(Context* context, Interval* interval);
 
 
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
-static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr);
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr);
+static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
-static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr);
+static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
@@ -362,7 +362,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   FbleName function_block = module->profile_blocks.xs[module->code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "  .xword _Run.%p.%s\n", (void*)module->code, function_label);
+  fprintf(fout, "  .xword _Run.%zx.%s\n", module->code->_base.profile_block_id, function_label);
   fprintf(fout, "  .xword FbleExecutableNothingOnFree\n");
 
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
@@ -417,7 +417,7 @@ static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
  * Emits code to return an error from a Run function.
  *
  * @param fout  The output stream.
- * @param code  Pointer to current code block to use for labels.
+ * @param func_id  A unique id for the function to use for labels.
  * @param pc  The program counter of the abort location.
  * @param lmsg  The label of the error message to use.
  * @param loc  The location to report with the error message.
@@ -425,7 +425,7 @@ static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
  * @sideeffects
  *   Emit code to return the error.
  */
-static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc)
+static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, FbleLoc loc)
 {
   // Print error message.
   Adr(fout, "x0", "stderr");
@@ -442,7 +442,7 @@ static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc
   fprintf(fout, "  bl fprintf\n");
 
   // Go to abort cleanup code.
-  fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc);
+  fprintf(fout, "  b .L._Abort_%zx.pc.%zi\n", func_id, pc);
 }
 
 /**
@@ -523,11 +523,11 @@ static size_t GetSingleTarget(Interval* interval)
 static void EmitSearch(Context* context, Interval* interval)
 {
   FILE* fout = context->fout;
-  void* code = context->code;
+  size_t func_id = context->func_id;
 
   size_t target = GetSingleTarget(interval);
   if (target != NONE) {
-    fprintf(fout, "  b .L._Run_%p.pc.%zi\n", code, target);
+    fprintf(fout, "  b .L._Run_%zx.pc.%zi\n", func_id, target);
     return;
   }
 
@@ -535,7 +535,7 @@ static void EmitSearch(Context* context, Interval* interval)
   size_t mid_tag = interval->targets[mid].tag;
   size_t mid_target = interval->targets[mid].target;
   fprintf(fout, "  cmp x0, %zi\n", mid_tag);
-  fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", code, mid_target);
+  fprintf(fout, "  b.eq .L._Run_%zx.pc.%zi\n", func_id, mid_target);
 
   Interval low = {
     .lo = interval->lo,
@@ -571,15 +571,15 @@ static void EmitSearch(Context* context, Interval* interval)
   size_t low_label = NONE;
   if (low_target == NONE) {
     low_label = context->label++;
-    fprintf(fout, "  b.cc .L._Run_%p.pc.%zi.%zi\n", code, context->pc, low_label);
+    fprintf(fout, "  b.cc .L._Run_%zx.pc.%zi.%zi\n", func_id, context->pc, low_label);
   } else {
-    fprintf(fout, "  b.cc .L._Run_%p.pc.%zi\n", code, low_target);
+    fprintf(fout, "  b.cc .L._Run_%zx.pc.%zi\n", func_id, low_target);
   }
 
   EmitSearch(context, &high);
 
   if (low_target == NONE) {
-    fprintf(fout, ".L._Run_%p.pc.%zi.%zi:\n", code, context->pc, low_label);
+    fprintf(fout, ".L._Run_%zx.pc.%zi.%zi:\n", func_id, context->pc, low_label);
     EmitSearch(context, &low);
   }
 }
@@ -596,7 +596,7 @@ static void EmitSearch(Context* context, Interval* interval)
  * @sideeffects
  * * Outputs code to fout.
  */
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr)
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr)
 {
   // Emit dwarf location information for the instruction.
   for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
@@ -607,8 +607,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
   }
 
   if (instr->profile_ops != NULL) {
-    fprintf(fout, "  cbnz R_PROFILE, .L.%p.%zi.prof\n", code, pc);
-    fprintf(fout, ".L.%p.%zi.postprof:\n", code, pc);
+    fprintf(fout, "  cbnz R_PROFILE, .L.%zx.%zi.prof\n", func_id, pc);
+    fprintf(fout, ".L.%zx.%zi.postprof:\n", func_id, pc);
   }
 
   switch (instr->tag) {
@@ -671,7 +671,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       GetFrameVar(fout, "x0", access_instr->obj);
       fprintf(fout, "  bl FbleStrictValue\n");
-      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%zx.%zi.undef\n", func_id, pc);
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueAccess\n");
       SetFrameVar(fout, "x0", access_instr->dest);
@@ -685,13 +685,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
-      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%zx.%zi.undef\n", func_id, pc);
 
       // Abort if the tag is wrong.
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");
       fprintf(fout, "  bl FbleUnionValueTag\n");
       fprintf(fout, "  cmp x0, %zi\n", access_instr->tag);
-      fprintf(fout, "  b.ne .L.%p.%zi.badtag\n", code, pc);
+      fprintf(fout, "  b.ne .L.%zx.%zi.badtag\n", func_id, pc);
 
       // Access the field.
       fprintf(fout, "  mov x0, R_SCRATCH_0\n");
@@ -708,12 +708,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
-      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%zx.%zi.undef\n", func_id, pc);
 
 
       // Binary search for the jump target based on the tag in x0.
       fprintf(fout, "  bl FbleUnionValueTag\n");
-      Context context = { .fout = fout, .code = code, .pc = pc, .label = 0 };
+      Context context = { .fout = fout, .func_id = func_id, .pc = pc, .label = 0 };
       Interval interval = {
         .lo = 0, .hi = select_instr->num_tags - 1,
         .targets = select_instr->targets.xs,
@@ -727,7 +727,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_GOTO_INSTR: {
       FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-      fprintf(fout, "  b .L._Run_%p.pc.%zi\n", code, goto_instr->target);
+      fprintf(fout, "  b .L._Run_%zx.pc.%zi\n", func_id, goto_instr->target);
       return;
     }
 
@@ -735,7 +735,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
       fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
-      fprintf(fout, ".L._Run_%p.%zi.exe:\n", code, pc);
+      fprintf(fout, ".L._Run_%zx.%zi.exe:\n", func_id, pc);
       fprintf(fout, "  .xword 1\n");                          // .refcount
       fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_args);
@@ -746,7 +746,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile_block_id];
       char function_label[SizeofSanitizedString(function_block.name->str)];
       SanitizeString(function_block.name->str, function_label);
-      fprintf(fout, "  .xword _Run.%p.%s\n", (void*)func_instr->code, function_label);
+      fprintf(fout, "  .xword _Run.%zx.%s\n", func_instr->code->_base.profile_block_id, function_label);
       fprintf(fout, "  .xword 0\n"); // .on_free
 
       fprintf(fout, "  .text\n");
@@ -761,7 +761,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      Adr(fout, "x1", ".L._Run_%p.%zi.exe", code, pc);
+      Adr(fout, "x1", ".L._Run_%zx.%zi.exe", func_id, pc);
       fprintf(fout, "  mov x2, R_PROFILE_BLOCK_OFFSET\n");
       fprintf(fout, "  mov x3, SP\n");
       fprintf(fout, "  bl FbleNewFuncValue\n");
@@ -776,7 +776,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       GetFrameVar(fout, "x0", call_instr->func);
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");
       fprintf(fout, "  bl FbleStrictValue\n");
-      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%zx.%zi.undef\n", func_id, pc);
       fprintf(fout, "  mov x2, x0\n");         // func
 
       // Allocate space for the arguments array on the stack.
@@ -794,7 +794,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleThreadCall\n");
       SetFrameVar(fout, "x0", call_instr->dest);
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-      fprintf(fout, "  cbz x0, .L.%p.%zi.abort\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%zx.%zi.abort\n", func_id, pc);
       return;
     }
 
@@ -803,7 +803,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       GetFrameVar(fout, "x0", call_instr->func);
       fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #0]\n");
       fprintf(fout, "  bl FbleStrictValue\n");
-      fprintf(fout, "  cbz x0, .L.%p.%zi.undef\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%zx.%zi.undef\n", func_id, pc);
 
       for (size_t i = 0; i < call_instr->args.size; ++i) {
         GetFrameVar(fout, "x0", call_instr->args.xs[i]);
@@ -811,7 +811,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       }
 
       fprintf(fout, "  mov x0, %p\n", (void*)FbleTailCallSentinelValue);
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.%zx.exit\n", func_id);
       return;
     }
 
@@ -842,14 +842,14 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       GetFrameVar(fout, "x1", ref);
       GetFrameVar(fout, "x2", ref_instr->value);
       fprintf(fout, "  bl FbleAssignRefValue\n");
-      fprintf(fout, "  cbz x0, .L.%p.%zi.vacuous\n", code, pc);
+      fprintf(fout, "  cbz x0, .L.%zx.%zi.vacuous\n", func_id, pc);
       return;
     }
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
       GetFrameVar(fout, "x0", return_instr->result);
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.%zx.exit\n", func_id);
       return;
     }
 
@@ -919,7 +919,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
-      fprintf(fout, ".L._Run_%p.%zi.letters:\n", code, pc);
+      fprintf(fout, ".L._Run_%zx.%zi.letters:\n", func_id, pc);
       for (size_t i = 0; i < argc; ++i) {
         fprintf(fout, "  .xword %zi\n", literal_instr->letters.xs[i]);
       }
@@ -928,7 +928,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  .align 2\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, %zi\n", argc);
-      Adr(fout, "x2", ".L._Run_%p.%zi.letters", code, pc);
+      Adr(fout, "x2", ".L._Run_%zx.%zi.letters", func_id, pc);
       fprintf(fout, "  bl FbleNewLiteralValue\n");
       SetFrameVar(fout, "x0", literal_instr->dest);
       return;
@@ -949,17 +949,17 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
  *
  * @param fout  The output stream to write the code to.
  * @param profile_blocks  The list of profile block names for the module.
- * @param code  Pointer to the current code block, for referencing labels.
+ * @param func_id  A unique id for the function to use in labels.
  * @param pc  The program counter of the instruction.
  * @param instr  The instruction to generate code for.
  *
  * @sideeffects
  * * Outputs code to fout.
  */
-static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
+static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* instr)
 {
   if (instr->profile_ops != NULL) {
-    fprintf(fout, ".L.%p.%zi.prof:\n", code, pc);
+    fprintf(fout, ".L.%zx.%zi.prof:\n", func_id, pc);
     for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP: {
@@ -992,7 +992,7 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
         }
       }
     }
-    fprintf(fout, "  b .L.%p.%zi.postprof\n", code, pc);
+    fprintf(fout, "  b .L.%zx.%zi.postprof\n", func_id, pc);
   }
 
   switch (instr->tag) {
@@ -1001,26 +1001,26 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     case FBLE_UNION_VALUE_INSTR: return;
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedStructValue", access_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.undef:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.UndefinedStructValue", access_instr->loc);
       return;
     }
 
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedUnionValue", access_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.undef:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.UndefinedUnionValue", access_instr->loc);
 
-      fprintf(fout, ".L.%p.%zi.badtag:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.WrongUnionTag", access_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.badtag:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.WrongUnionTag", access_instr->loc);
       return;
     }
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
-      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedUnionSelect", select_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.undef:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.UndefinedUnionSelect", select_instr->loc);
       return;
     }
 
@@ -1029,21 +1029,21 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedFunctionValue", call_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.undef:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.UndefinedFunctionValue", call_instr->loc);
 
-      fprintf(fout, ".L.%p.%zi.abort:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.CalleeAborted", call_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.abort:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.CalleeAborted", call_instr->loc);
       return;
     }
 
     case FBLE_TAIL_CALL_INSTR: {
       FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-      fprintf(fout, ".L.%p.%zi.undef:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.UndefinedFunctionValue", call_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.undef:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.UndefinedFunctionValue", call_instr->loc);
 
-      fprintf(fout, ".L.%p.%zi.abort:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.CalleeAborted", call_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.abort:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.CalleeAborted", call_instr->loc);
       return;
     }
 
@@ -1053,8 +1053,8 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-      fprintf(fout, ".L.%p.%zi.vacuous:\n", code, pc);
-      DoAbort(fout, code, pc, ".L.VacuousValue", ref_instr->loc);
+      fprintf(fout, ".L.%zx.%zi.vacuous:\n", func_id, pc);
+      DoAbort(fout, func_id, pc, ".L.VacuousValue", ref_instr->loc);
       return;
     }
 
@@ -1080,12 +1080,14 @@ static void EmitOutlineCode(FILE* fout, void* code, size_t pc, FbleInstr* instr)
  */
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
+  size_t func_id = code->_base.profile_block_id;
+
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
   FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "_Run.%p.%s:\n", (void*)code, function_label);
+  fprintf(fout, "_Run.%zx.%s:\n", func_id, function_label);
 
   // Output the location of the function.
   // This is intended to match the .loc info gcc outputs on the open brace of
@@ -1115,12 +1117,12 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
-    EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);
+    fprintf(fout, ".L._Run_%zx.pc.%zi:\n", func_id, i);
+    EmitInstr(fout, profile_blocks, func_id, i, code->instrs.xs[i]);
   }
 
   // Restores stack and frame pointer and return whatever is in x0.
-  fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
+  fprintf(fout, ".L._Run_.%zx.exit:\n", func_id);
   fprintf(fout, "  ldp R_HEAP, R_TAIL_CALL_BUFFER, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  ldp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
@@ -1131,31 +1133,31 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
   // Emit code that's outside of the main execution path.
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    EmitOutlineCode(fout, code, i, code->instrs.xs[i]);
+    EmitOutlineCode(fout, func_id, i, code->instrs.xs[i]);
   }
 
   // Emit code for aborts:
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, ".L._Abort_%p.pc.%zi:\n", (void*)code, i);
-    EmitInstrForAbort(fout, code, code->instrs.xs[i]);
+    fprintf(fout, ".L._Abort_%zx.pc.%zi:\n", func_id, i);
+    EmitInstrForAbort(fout, func_id, code->instrs.xs[i]);
   }
 
 
-  fprintf(fout, ".L.%p.%s.high_pc:\n", (void*)code, function_label);
+  fprintf(fout, ".L.%zx.%s.high_pc:\n", func_id, function_label);
 }
 
 /**
  * Generates code to execute an instruction for the purposes of abort.
  *
  * @param fout  The output stream to write the code to.
- * @param code  Pointer to the current code block, for referencing labels.
+ * @param func_id  Unique id for the function to use in labels.
  * @param pc  The program counter of the instruction.
  * @param instr  The instruction to execute.
  *
  * @sideeffects
  * * Outputs code to fout.
  */
-static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
+static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
 {
   switch (instr->tag) {
     case FBLE_DATA_TYPE_INSTR: {
@@ -1190,13 +1192,13 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, select_instr->default_);
+      fprintf(fout, "  b .L._Abort_%zx.pc.%zi\n", func_id, select_instr->default_);
       return;
     }
 
     case FBLE_GOTO_INSTR: {
       FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, goto_instr->target);
+      fprintf(fout, "  b .L._Abort_%zx.pc.%zi\n", func_id, goto_instr->target);
       return;
     }
 
@@ -1225,7 +1227,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
       }
 
       fprintf(fout, "  mov x0, XZR\n");
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.%zx.exit\n", func_id);
       return;
     }
 
@@ -1251,7 +1253,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, FbleInstr* instr)
       GetFrameVar(fout, "x1", return_instr->result);
       fprintf(fout, "  bl FbleReleaseValue\n");
       fprintf(fout, "  mov x0, XZR\n");
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.%zx.exit\n", func_id);
       return;
     }
 
@@ -1537,6 +1539,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // subprogram entries
   for (size_t i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
+    size_t func_id = code->_base.profile_block_id;
 
     FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
     char function_label[SizeofSanitizedString(function_block.name->str)];
@@ -1547,8 +1550,8 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
         function_block.name->str);
 
     // low_pc and high_pc attributes.
-    fprintf(fout, "  .8byte _Run.%p.%s\n", (void*)code, function_label);
-    fprintf(fout, "  .8byte .L.%p.%s.high_pc\n", (void*)code, function_label);
+    fprintf(fout, "  .8byte _Run.%zx.%s\n", func_id, function_label);
+    fprintf(fout, "  .8byte .L.%zx.%s.high_pc\n", func_id, function_label);
 
     for (size_t j = 0; j < code->instrs.size; ++j) {
       FbleInstr* instr = code->instrs.xs[j];
@@ -1575,9 +1578,8 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "1:\n");
 
           // start_scope
-          fprintf(fout, "  .8byte .L._Run_%p.pc.%zi - _Run.%p.%s\n",
-              (void*)code, j,
-              (void*)code, function_label);
+          fprintf(fout, "  .8byte .L._Run_%zx.pc.%zi - _Run.%zx.%s\n",
+              func_id, j, func_id, function_label);
 
           // type
           fprintf(fout, "  .8byte .LFbleValuePointerType\n");
