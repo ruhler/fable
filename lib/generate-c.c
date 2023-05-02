@@ -333,31 +333,33 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     }
 
     // Profiling logic.
-    fprintf(fout, "  if (profile) {\n");
-    for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-      switch (op->tag) {
-        case FBLE_PROFILE_ENTER_OP: {
-          fprintf(fout, "    FbleProfileEnterBlock(profile, profile_block_offset + %zi);\n", op->arg);
-          break;
-        }
+    if (instr->profile_ops != NULL) {
+      fprintf(fout, "  if (profile) {\n");
+      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+        switch (op->tag) {
+          case FBLE_PROFILE_ENTER_OP: {
+            fprintf(fout, "    FbleProfileEnterBlock(profile, profile_block_offset + %zi);\n", op->arg);
+            break;
+          }
 
-        case FBLE_PROFILE_REPLACE_OP: {
-          fprintf(fout, "    FbleProfileReplaceBlock(profile, profile_block_offset + %zi);\n", op->arg);
-          break;
-        }
+          case FBLE_PROFILE_REPLACE_OP: {
+            fprintf(fout, "    FbleProfileReplaceBlock(profile, profile_block_offset + %zi);\n", op->arg);
+            break;
+          }
 
-        case FBLE_PROFILE_EXIT_OP: {
-          fprintf(fout, "    FbleProfileExitBlock(profile);\n");
-          break;
-        }
+          case FBLE_PROFILE_EXIT_OP: {
+            fprintf(fout, "    FbleProfileExitBlock(profile);\n");
+            break;
+          }
 
-        case FBLE_PROFILE_SAMPLE_OP: {
-          fprintf(fout, "    FbleProfileRandomSample(profile, %zi);\n", op->arg);
-          break;
+          case FBLE_PROFILE_SAMPLE_OP: {
+            fprintf(fout, "    FbleProfileRandomSample(profile, %zi);\n", op->arg);
+            break;
+          }
         }
       }
+      fprintf(fout, "  }\n");
     }
-    fprintf(fout, "  }\n");
 
     // Instruction logic.
     static const char* var_tag[] = { "s", "a", "l" };
