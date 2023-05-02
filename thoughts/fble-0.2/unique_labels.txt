@@ -118,3 +118,10 @@ Assume local labels should start with .L, and that we can mix alphanum, _, and
 Otherwise, I think meaningful names, like undef, vacuous, prof, etc. are better than
 cryptic names like u, v, p? Let's see.
 
+---
+
+I ended up going with cryptic names. Oh well.
+
+Next step is to update generate-c code to match. Though that should be much
+simpler.
+
