@@ -20,16 +20,12 @@ Things to consider doing for the fble-0.2 release.
 
 * convert lib/* code to fbld doc comments.
 
-* Figure out a less random naming schemed for generated function names.
-  - Don't use code pointer, because that changes from run to run.
-  - Come up with some other deterministic way to uniquify profile block names?
-
 * Improve documentation about expectations for strict vs. non strict values
  - e.g. FbleThreadTailCall can take a non-strict value, but FbleFuncValueInfo
    requires a strict value.
    And should it be that way?
 
-* In generate-aarch64.c, change GetFrameVar to take rdst as a reg num instead
+* In aarch64.c, change GetFrameVar to take rdst as a reg num instead
   of string?
  - Seems like that would be a little cleaner?
 

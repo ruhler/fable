@@ -1,5 +1,5 @@
 /**
- * @file generate-aarch64.c
+ * @file aarch64.c
  * Converts FbleCode fble bytecode to 64-bit ARM machine code.
  */
 

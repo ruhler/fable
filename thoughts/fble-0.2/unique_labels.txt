@@ -1,6 +1,6 @@
 Unique Labels
 =============
-Write now, for code generation (both c and aarch64), we use %p to uniquify
+Right now, for code generation (both c and aarch64), we use %p to uniquify
 label names.
 
 This is required, because profile block names that come out of the compiler
@@ -124,4 +124,8 @@ I ended up going with cryptic names. Oh well.
 
 Next step is to update generate-c code to match. Though that should be much
 simpler.
+
+---
+
+Done. Happy.
 

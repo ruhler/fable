@@ -165,5 +165,10 @@ Things to write:
    - Could result in an error if unmatched.
  * Parse command name.
   
+---
+
+I bet I can entirely split the parser off from M@. Write code to parse inline
+text into a sequence of commands and block text into a sequence of commands.
+No need for M@ at all there.
 
 

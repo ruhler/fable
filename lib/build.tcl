@@ -16,14 +16,14 @@ namespace eval "lib" {
   }
 
   set sources {
+    aarch64.c
     alloc.c
     arg-parse.c
+    c.c
     code.c
     compile.c
     execute.c
     expr.c
-    generate-aarch64.c
-    generate-c.c
     heap.c
     interpret.c
     kind.c
