@@ -1,0 +1,91 @@
+
+@ Char@ = /Core/Char%.Char@;
+
+% Inc = /Core/Int%.Inc;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ Str@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Loc@ = /Fbld/Types%.Loc@;
+@ String@ = /Fbld/Types%.String@;
+<@>@ Result@ = /Fbld/Types%.Result@;
+<@>% Ok = /Fbld/Types%.Ok;
+<@>% Err = /Fbld/Types%.Err;
+
+<@>@ S@ = <@ T@> { *(String@ in, T@ x); };
+
+# M@ - A parser monad.
+<@>@ M@ = <@ T@>(String@) { Result@<S@<T@>>; };
+
+# Return the given value.
+<@ T@>(T@) { M@<T@>; }
+Return = <@ T@>(T@ x)(String@ in) {
+  Ok(S@(in, x));
+};
+
+# Report a parse error.
+<@ T@>(String@) { M@<T@>; }
+Error = <@ T@>(String@ msg)(String@ _) {
+  Err<S@<T@>>(msg);
+};
+
+# Monadic Do for the parser monad.
+<@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
+Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(String@ in) {
+  Result@<S@<A@>> ra = ma(in);
+  ra.?(err: Err<S@<B@>>(ra.err));
+  f(ra.ok.x)(ra.ok.in);
+};
+
+# Returns the next character in the input stream without changing the parser
+# state.
+M@<Maybe@<Char@>> Peek = (String@ in) {
+  Maybe@<Char@> mc = {
+    in.str.?(nil: Nothing<Char@>);
+    Just(in.str.cons.head);
+  };
+  Ok(S@(in, mc));
+};
+
+# Returns the current location.
+M@<Loc@> Loc = (String@ in) {
+  Ok(S@(in, in.loc));
+};
+
+# Gets the next character in the input stream, advancing the parser state as
+# appropriate.
+M@<Maybe@<Char@>> Get = (String@ in) {
+  Str@ str = in.str;
+  str.?(nil: Ok(S@(in, Nothing<Char@>)));
+  Char@ c = str.cons.head;
+  Loc@ l = {
+    c.?('
+': in.loc.@(line: Inc(in.loc.line), col: Int|1));
+    in.loc.@(col: Inc(in.loc.col));
+  };
+  Ok(S@(String@(str.cons.tail, l), Just(c)));
+};
+  
+# Skips the next character in the input stream, advancing the parser state as
+# appropriate.
+M@<Unit@> Skip = {
+  Maybe@<Char@> _ <- Do(Get);
+  Return(Unit);
+};
+
+# Runs a parser monad on the given input string.
+<@ T@>(M@<T@>, String@) { Result@<T@>; }
+Run = <@ T@>(M@<T@> m, String@ in) {
+  Result@<S@<T@>> r = m(in);
+  r.?(err: Err<T@>(r.err));
+  Ok(r.ok.x);
+};
+
+@(M@, Return, Error, Do, Peek, Loc, Get, Skip, Run);

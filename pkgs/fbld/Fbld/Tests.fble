@@ -22,7 +22,7 @@
 <@>% Ok = /Fbld/Types%.Ok;
 @ Command@ = /Fbld/Types%.Command@;
 
-% ParseInline = /Fbld/Parse%.ParseInline;
+% Inline = /Fbld/Parse%.Inline;
 
 Test@ Tests = TestSuite(Str|Fbld, List[
   Test(Str|Unescape, (Unit@ _) {
@@ -47,7 +47,7 @@ Test@ Tests = TestSuite(Str|Fbld, List[
       Command@(s(Str|'multi', Int|38),
         List[s(Str|'abc', Int|44), s(Str|'def', Int|49)]), 
       Command@(s(Str|'', Int|53), List[s(Str|' arg commands', Int|53)])]); 
-    Result@<List@<Command@>> got = ParseInline(s(text, Int|1));
+    Result@<List@<Command@>> got = Inline(s(text, Int|1));
     AssertEquals(
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
       /Fbld/Show%.Result(/Fbld/Show%.Commands),
