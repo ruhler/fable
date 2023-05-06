@@ -1,0 +1,112 @@
+Fble Hardware
+=============
+
+Goal: Accelerate fble code by taking advantage of hardware.
+
+This is a bit vague. There are many interpretations and different ways to go
+about it, so it's important to be clear.
+
+The key idea is we want to take advantage of the fact that fble isn't based
+around primitive 32/64 bit integer operations. That suggests some hardware
+other than today's CPUs could potentially be much more effective at executing
+fble code. In particular, hardware that can take advantage of larger and
+smaller data types and circuitry/dataflow from fble code.
+
+The end goal is to improve performance and/or power over execution on a
+traditional CPU. If it doesn't do that, there's no point.
+
+The goal is not to use fble code to describe hardware. There are other more
+precise ways of describing hardware. The goal is not to restrict the kinds of
+fble programs we can run on hardware. The full language should be supported,
+with recursion, recursive data types, and potentially unbounded computation.
+For example, we should be able to run Sat on hardware just as well as Md5.
+
+The specific use case is still open to interpretation. Do we want to take a
+single fble program, load it onto hardware somehow, and be able to execute it?
+Do we want a chip that lets you dynamically load fble programs? How important
+is it to be fast to load an fble program? Do we require a long synthesize step
+to load an fble program, or we can load directly like an interpreter?
+
+I see two practical end goals worth aiming for.
+1. Proof of concept. The goal would be to demonstrate using an off-the-shelf
+fpga that we can accelerate performance of an fble program. It would be a one
+off. We can take however much time we need to synthesize a specific fble
+program, no need to support generic fble programs or reloading on the fly.
+
+2. Dream. The goal would be to design an asic specially designed for executing
+fble code. It should support dynamically loading fble programs reasonably
+quickly (like on the order of spawning a new process in linux), multiple fble
+programs running at the same time, etc. I can't afford to actually build a
+chip, but I can think about it, see how it would look. I imagine in practice
+it looks something like an fpga that's maybe a little more generic and easier
+to work with.
+
+We start with (1). From what we learn, we can come up with ideas for (2).
+Maybe emulate a design for (2) in an fpga and see how that goes.
+
+Let's focus on (1), proof of concept to start.
+
+Hardware:
+* Some existing off-the-shelf fpga.
+* It has to have access to DRAM. Either its own, or via some host CPU. Because
+  fble programs need to be able to do recursion and memory allocations that
+  take a lot of memory.
+* It has to have decent speed access to a host. My raspberry pi, my laptop, or
+  something else I can practically get my hands on. This is for top level
+  input/output, like feeding in files for md5, or sat problems to solve.
+
+I vote we focus on md5 and sat to start. Md5 should be easy to do in hardware,
+Sat harder. If we can do Sat, I'm confident we can do any fble program.
+
+We can use a small fpga for the proof of concept. It's just a one-off thing
+for md5 and sat. Worst case, if it's too expensive for a reasonably sized
+fpga, we just run spec tests to start.
+
+For approach: figure out how to compile a given fble program to register
+transfer language. Use fpga vendor tools to compile, synthesize, place and
+route for the fpga.
+
+Even before I get my hands on an fpga, I should figure out how to generate the
+RTL for an fble program.
+
+---
+
+High level concepts:
+* We have to break apart data types into finite sized chunks. They should be
+  big enough that we can directly access most of what a function wants in its
+  immediate body, but not so big it's cumbersome to pass around using wires.
+  I'm thinking like 64 - 256 bit size chunks. We'll want to do this based on
+  data type.
+* To start, have each function be it's own module. We can worry about inlining
+  or other optimizations later. Assume any function could be recursive for
+  now.
+* Note that we don't know what function is being called statically. Assume we
+  don't know what function is being called statically to start, worry about
+  optimizing other cases later.
+
+To call a function, you need the name of the function and a place to put
+arguments to it. We can group functions together by function type. For
+example, if you call a function that takes a single Int@ argument, send your
+Int@ argument on some bus attached to the inputs of all functions of that same
+type, and use an id to identify which specific function you want to call.
+We'll have some network on chip to arguments to the right function module and
+results back.
+
+I'll need to figure out how static variables will be passed to functions.
+
+To start, a recursive function shouldn't assume it's calling itself. Any
+function call we make from a function should go outside the function's module,
+even if it is to itself.
+
+So, a function is a module that has an input port for arguments, an output
+port for result, and for each function call it makes, output port for
+arguments and input port for results. It also needs input and output ports for
+memory to be able to fetch more bits of an argument, store more bits of a
+result, and store any temporary data. Again, we can organize ports and buses
+by data type. That's where we get the advantage of hardware from.
+
+---
+
+Next thing to work out is how we do automatic memory management. How do we
+keep track of who has copies of what, and when to free values?
+

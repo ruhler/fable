@@ -1,0 +1,32 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+# Location information used for error messages.
+@ Loc@ = *(/Core/String%.String@ file, Int@ line, Int@ col);
+
+# A string with location information.
+@ String@ = *(/Core/String%.String@ str, Loc@ loc);
+
+# The result of parsing or invoking a command.
+<@>@ Result@ = <@ T@> { +(T@ ok, String@ err); };
+
+<@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
+  Result@<T@>(ok: x);
+};
+
+<@ T@>(String@) { Result@<T@>; } Err = <@ T@>(String@ msg) {
+  Result@<T@>(err: msg);
+};
+
+# A single command.
+@ Command@ = *(String@ name, List@<String@> args);
+
+# The type of a function to invoke an fbld command.
+#  @arg[Invoke@<M@>][invoke] - The invoke function.
+#  @arg[Command@][command] - The command to invoke.
+#  @returns The result of invoking the command.
+# <<@>@>@ Invoke@ = <<@>@ M@>(Invoke@<M@>, Command@) { M@<Result@<Unit@>>; };
+
+@(Loc@, String@, Result@, Ok, Err, Command@);

@@ -5,6 +5,13 @@ Things to consider doing for the fble-0.2 release.
 * Consider printing args, statics, locals, location on next line in
   code dump, rather than the same line the function name is printed.
 
+* For gdb debug, it would be great to be able to access fields of structs.
+  Example: ra.ok.in is a string, ra is a struct value. Right now, if you try
+  to print ra.ok, it says 'There is no member named ok.'
+
+* Need an easier way to gdb step through fble code without cluttering it with c
+  code in between.
+
 * Add tests for /Core/Set%.
 
 * Add man page for fble-cat

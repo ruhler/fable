@@ -1,0 +1,58 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
+
+@ Str@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Loc@ = /Fbld/Types%.Loc@;
+@ String@ = /Fbld/Types%.String@;
+<@>@ Result@ = /Fbld/Types%.Result@;
+<@>% Ok = /Fbld/Types%.Ok;
+@ Command@ = /Fbld/Types%.Command@;
+
+% ParseInline = /Fbld/Parse%.ParseInline;
+
+Test@ Tests = TestSuite(Str|Fbld, List[
+  Test(Str|Unescape, (Unit@ _) {
+    Str@ text = Str|'a \\ \a\[\]bcd\@';
+    Str@ wnt = Str|'a \ \a[]bcd@';
+    Str@ got = /Fbld/Unescape%.Unescape(text);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|ParseInline, (Unit@ _) {
+    (Str@, Int@) { String@; } s = (Str@ str, Int@ col) {
+      String@(str, Loc@(Str|'file.fbld', Int|1, col));
+    };
+
+    Str@ text = Str|'Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands';
+    Result@<List@<Command@>> wnt = Ok(List[
+      Command@(s(Str|'', Int|1), List[s(Str|'Inline ', Int|1)]), 
+      Command@(s(Str|'emph', Int|9), List[s(Str|'text', Int|14)]), 
+      Command@(s(Str|'', Int|19), List[s(Str|' with ', Int|19)]), 
+      Command@(s(Str|'SINGLE', Int|26), Nil<String@>),
+      Command@(s(Str|'', Int|32), List[s(Str|' and ', Int|32)]), 
+      Command@(s(Str|'multi', Int|38),
+        List[s(Str|'abc', Int|44), s(Str|'def', Int|49)]), 
+      Command@(s(Str|'', Int|53), List[s(Str|' arg commands', Int|53)])]); 
+    Result@<List@<Command@>> got = ParseInline(s(text, Int|1));
+    AssertEquals(
+      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
+      /Fbld/Show%.Result(/Fbld/Show%.Commands),
+      wnt, got);
+  })
+]);
+
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));
