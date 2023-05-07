@@ -177,3 +177,16 @@ I need to update the parse to pass around the current indent level and allow
 parsing of indented strings. Otherwise we'll mess up column numbers when
 parsing nested block structured text.
 
+This brings up an interesting question. What should be the location for next
+line arg in terms of column number? What if it's an empty line?
+
+Loc@ needs an indent field, which defines what the column at the start of the
+next line is. That's a separate issue.
+
+Next line argument should be, for example, column 2. If it's a blank next
+line, it should be... doesn't matter I don't think.
+
+I need to come up with a test case to capture locations properly. Maybe, parse
+a command. Extract the next line argument. Parse that, verify the locations
+are set properly. Yeah.
+

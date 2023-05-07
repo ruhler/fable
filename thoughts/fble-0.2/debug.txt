@@ -1,0 +1,11 @@
+Fble Debug
+==========
+It's not working great.
+
+I just want to be able to step through fble code, without having it stop in C
+code in between.
+
+I've tried skip. I've tried not including debug symbols in libfble.a.
+
+It's too painful to navigate. I don't understand why.
+

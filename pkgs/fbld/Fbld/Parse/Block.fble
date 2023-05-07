@@ -1,6 +1,9 @@
 
 @ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
 % IsNewline = /Core/Char/Type%.IsNewline;
+
+% Inc = /Core/Int%.Inc;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -130,7 +133,14 @@ M@<Maybe@<String@>> NextLineArg = {
   Str@ s <- Do(start_of_line(Str|''));
   Str@ stripped = strip_blank_lines(s);
   stripped.?(nil: Return(Nothing<String@>));
-  Return(Just(String@(Reverse(stripped), l)));
+  /Core/String/Eq%.Eq(Str[Chars.nl], stripped).?(true: {
+    Return(Nothing<String@>);
+  });
+  Str@ reversed = Reverse(stripped);
+  Loc@ nl = l.@(
+    col: IsNewline(reversed.cons.head).?(true: l.col, false: Inc(l.col)),
+    indent: Inc(l.indent));
+  Return(Just(String@(reversed, nl)));
 };
 
 # Flattens a list of maybes into a list of justs.

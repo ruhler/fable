@@ -35,7 +35,7 @@ Test@ Tests = TestSuite(Str|Fbld, List[
 
   Test(Str|BasicInline, (Unit@ _) {
     (Str@, Int@) { String@; } s = (Str@ str, Int@ col) {
-      String@(str, Loc@(Str|'file.fbld', Int|1, col));
+      String@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
     };
 
     Str@ text = Str|'Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands';
@@ -57,7 +57,7 @@ Test@ Tests = TestSuite(Str|Fbld, List[
 
   Test(Str|NestedInline, (Unit@ _) {
     (Str@, Int@) { String@; } s = (Str@ str, Int@ col) {
-      String@(str, Loc@(Str|'file.fbld', Int|1, col));
+      String@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
     };
 
     Str@ text = Str|'Ab @c[de @f[gh] ij] kl';
@@ -73,8 +73,9 @@ Test@ Tests = TestSuite(Str|Fbld, List[
   }),
 
   Test(Str|BasicBlock, (Unit@ _) {
-    (Str@, Int@, Int@) { String@; } s = (Str@ str, Int@ line, Int@ col) {
-      String@(str, Loc@(Str|'file.fbld', line, col));
+    (Str@, Int@, Int@, Int@) { String@; }
+    s = (Str@ str, Int@ line, Int@ col, Int@ indent) {
+      String@(str, Loc@(Str|'file.fbld', line, col, indent));
     };
 
     Str@ text = Str|'
@@ -92,22 +93,22 @@ And some final text.
 ';
 
     Result@<List@<Command@>> wnt = Ok(List[
-      Command@(s(Str|'title', Int|2, Int|2), List[
-        s(Str|'A title', Int|2, Int|8)]), 
-      Command@(s(Str|'', Int|4, Int|1), List[
+      Command@(s(Str|'title', Int|2, Int|2, Int|0), List[
+        s(Str|'A title', Int|2, Int|8, Int|0)]), 
+      Command@(s(Str|'', Int|4, Int|1, Int|0), List[
         s(Str|'Some intro text.
-', Int|4, Int|1)]), 
-      Command@(s(Str|'section', Int|6, Int|2), List[
-        s(Str|'First Section', Int|6, Int|10),
+', Int|4, Int|1, Int|0)]), 
+      Command@(s(Str|'section', Int|6, Int|2, Int|0), List[
+        s(Str|'First Section', Int|6, Int|10, Int|0),
         s(Str|'With some text
 spanning over lines.
 
 multiple lines actually.
-', Int|7, Int|2)]),
-      Command@(s(Str|'', Int|12, Int|1), List[
+', Int|7, Int|2, Int|1)]),
+      Command@(s(Str|'', Int|12, Int|1, Int|0), List[
         s(Str|'And some final text.
-', Int|12, Int|1)])]); 
-    Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1));
+', Int|12, Int|1, Int|0)])]); 
+    Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1, Int|0));
     AssertEquals(
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
       /Fbld/Show%.Result(/Fbld/Show%.Commands),
@@ -117,7 +118,7 @@ multiple lines actually.
   # Regression test for a default block that runs to the end of the file.
   Test(Str|BlockToEndOfFile, (Unit@ _) {
     (Str@, Int@, Int@) { String@; } s = (Str@ str, Int@ line, Int@ col) {
-      String@(str, Loc@(Str|'file.fbld', line, col));
+      String@(str, Loc@(Str|'file.fbld', line, col, Int|0));
     };
 
     Str@ text = Str|'Foo';
@@ -129,6 +130,29 @@ multiple lines actually.
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
       /Fbld/Show%.Result(/Fbld/Show%.Commands),
       wnt, got);
+  }),
+
+  Test(Str|NestedBlockLoc, (Unit@ _) {
+    (Str@, Int@, Int@, Int@) { String@; }
+    s = (Str@ str, Int@ line, Int@ col, Int@ indent) {
+      String@(str, Loc@(Str|'file.fbld', line, col, indent));
+    };
+
+    Str@ text = Str|'
+@foo
+ @bar
+  @sludge
+';
+    List@<Command@> foo = Block(s(text, Int|1, Int|1, Int|0)).ok;
+    String@ foo_body = foo.cons.head.args.cons.head;
+
+    List@<Command@> bar = Block(foo_body).ok;
+    String@ bar_body = bar.cons.head.args.cons.head;
+
+    List@<Command@> sludge = Block(bar_body).ok;
+    Loc@ wnt = Loc@(Str|'file.fbld', Int|4, Int|4, Int|2);
+    Loc@ got = sludge.cons.head.name.loc;
+    AssertEquals(/Fbld/Eq%.Loc, /Fbld/Show%.Loc, wnt, got);
   })
 ]);
 

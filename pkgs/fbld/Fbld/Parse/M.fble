@@ -1,8 +1,8 @@
 
 @ Char@ = /Core/Char%.Char@;
+% IsNewline = /Core/Char/Type%.IsNewline;
 
 % Inc = /Core/Int%.Inc;
-% Int = /Core/Int/Lit%.Int;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -66,8 +66,9 @@ M@<Maybe@<Char@>> Get = (String@ in) {
   str.?(nil: Ok(S@(in, Nothing<Char@>)));
   Char@ c = str.cons.head;
   Loc@ l = {
-    c.?('
-': in.loc.@(line: Inc(in.loc.line), col: Int|1));
+    IsNewline(c).?(true: {
+      in.loc.@(line: Inc(in.loc.line), col: Inc(in.loc.indent));
+    });
     in.loc.@(col: Inc(in.loc.col));
   };
   Ok(S@(String@(str.cons.tail, l), Just(c)));

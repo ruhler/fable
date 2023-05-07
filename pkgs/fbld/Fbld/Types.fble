@@ -4,7 +4,7 @@
 <@>@ List@ = /Core/List%.List@;
 
 # Location information used for error messages.
-@ Loc@ = *(/Core/String%.String@ file, Int@ line, Int@ col);
+@ Loc@ = *(/Core/String%.String@ file, Int@ line, Int@ col, Int@ indent);
 
 # A string with location information.
 @ String@ = *(/Core/String%.String@ str, Loc@ loc);
