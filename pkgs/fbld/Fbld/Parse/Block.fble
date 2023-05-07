@@ -25,6 +25,7 @@
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
 <@>% Return = /Fbld/Parse/M%.Return;
+<@>% Error = /Fbld/Parse/M%.Error;
 <@>% Do = /Fbld/Parse/M%.Do;
 % Peek = /Fbld/Parse/M%.Peek;
 % Loc = /Fbld/Parse/M%.Loc;
@@ -69,15 +70,21 @@ M@<String@> Plain = {
 M@<Maybe@<String@>> SameLineArg = {
   (Str@) { M@<Str@>; } f = (Str@ rs) {
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Return(Reverse(rs)));
-    IsNewline(mc.just).?(true: Return(Reverse(rs)));
+    mc.?(nothing: Return(rs));
+    IsNewline(mc.just).?(true: Return(rs));
     f(Cons(mc.just, rs));
   };
 
   Loc@ l <- Do(Loc);
-  Str@ s <- Do(f(Str|''));
-  s.?(nil: Return(Nothing<String@>));
-  Return(Just(String@(s, l)));
+  Maybe@<Char@> mc <- Do(Get);
+  mc.?(nothing: Return(Nothing<String@>));
+  IsNewline(mc.just).?(true: Return(Nothing<String@>));
+  mc.just.?(' ': {
+    Loc@ l <- Do(Loc);
+    Str@ s <- Do(f(Str|''));
+    Return(Just(String@(Reverse(s), l)));
+  });
+  Error<Maybe@<String@>>(String@(Str|'Expected space', l));
 };
 
 M@<Maybe@<String@>> NextLineArg = {
