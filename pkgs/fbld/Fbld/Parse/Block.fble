@@ -115,17 +115,22 @@ M@<Maybe@<String@>> NextLineArg = {
     middle_of_line(Cons(mc.just, rs));
   };
 
-  (Str@) { Str@; } strip_newlines = (Str@ s) {
+  (Str@) { Str@; } strip_blank_lines = (Str@ s) {
     s.?(nil: s);
-    IsNewline(s.cons.head).?(true: strip_newlines(s.cons.tail));
+    IsNewline(s.cons.head).?(true: {
+      Str@ t = s.cons.tail;
+      t.?(nil: s);
+      IsNewline(t.cons.head).?(true: strip_blank_lines(t));
+      s;
+    });
     s;
   };
 
   Loc@ l <- Do(Loc);
-  Str@ with_newlines <- Do(start_of_line(Str|''));
-  Str@ without_newlines = strip_newlines(with_newlines);
-  without_newlines.?(nil: Return(Nothing<String@>));
-  Return(Just(String@(Reverse(without_newlines), l)));
+  Str@ s <- Do(start_of_line(Str|''));
+  Str@ stripped = strip_blank_lines(s);
+  stripped.?(nil: Return(Nothing<String@>));
+  Return(Just(String@(Reverse(stripped), l)));
 };
 
 # Flattens a list of maybes into a list of justs.
