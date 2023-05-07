@@ -1,0 +1,174 @@
+
+@ Char@ = /Core/Char%.Char@;
+% IsNewline = /Core/Char/Type%.IsNewline;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
+<@>% Reverse = /Core/List%.Reverse;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ Str@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Loc@ = /Fbld/Types%.Loc@;
+@ String@ = /Fbld/Types%.String@;
+@ Command@ = /Fbld/Types%.Command@;
+
+<@>@ M@ = /Fbld/Parse/M%.M@;
+<@>% Return = /Fbld/Parse/M%.Return;
+<@>% Do = /Fbld/Parse/M%.Do;
+% Peek = /Fbld/Parse/M%.Peek;
+% Loc = /Fbld/Parse/M%.Loc;
+% Get = /Fbld/Parse/M%.Get;
+% Skip = /Fbld/Parse/M%.Skip;
+
+% Name = /Fbld/Parse/Inline%.Name;
+% Args = /Fbld/Parse/Inline%.Args;
+
+M@<Unit@> SkipBlankLines = {
+  Maybe@<Char@> mc <- Do(Peek);
+  mc.?(nothing: Return(Unit));
+  IsNewline(mc.just).?(true: {
+    Unit@ _ <- Do(Skip);
+    SkipBlankLines;
+  });
+  Return(Unit);
+};
+
+# Returns a block of plain text if any.
+M@<String@> Plain = {
+  (Loc@, Str@) { M@<String@>; } plain = (Loc@ l, Str@ rplain) {
+    Maybe@<Char@> mc <- Do(Get);
+    mc.?(nothing: Return(String@(Reverse(rplain), l)));
+    Str@ nrplain = Cons(mc.just, rplain);
+    IsNewline(mc.just).?(true: {
+      Maybe@<Char@> mc <- Do(Peek);
+      mc.?(nothing: Return(String@(Reverse(nrplain), l)));
+      IsNewline(mc.just).?(true: Return(String@(Reverse(nrplain), l)));
+      plain(l, nrplain);
+    });
+    plain(l, nrplain);
+  };
+
+  Maybe@<Char@> mc <- Do(Peek);
+  Loc@ l <- Do(Loc);
+  mc.?(nothing: Return(String@(Str|'', l)));
+  mc.just.?('@': Return(String@(Str|'', l)));
+  plain(l, Str|'');
+};
+
+M@<Maybe@<String@>> SameLineArg = {
+  (Str@) { M@<Str@>; } f = (Str@ rs) {
+    Maybe@<Char@> mc <- Do(Get);
+    mc.?(nothing: Return(Reverse(rs)));
+    IsNewline(mc.just).?(true: Return(Reverse(rs)));
+    f(Cons(mc.just, rs));
+  };
+
+  Loc@ l <- Do(Loc);
+  Str@ s <- Do(f(Str|''));
+  s.?(nil: Return(Nothing<String@>));
+  Return(Just(String@(s, l)));
+};
+
+M@<Maybe@<String@>> NextLineArg = {
+  # Parse starting from the start of a line.
+  # Returns parsed result with characters in reverse order.
+  (Str@) { M@<Str@>; } start_of_line = (Str@ rs) {
+    Maybe@<Char@> mc <- Do(Peek);
+    mc.?(nothing: Return(rs));
+    IsNewline(mc.just).?(true: {
+      Unit@ _ <- Do(Skip);
+      start_of_line(Cons(mc.just, rs));
+    });
+
+    mc.just.?(' ': {
+      Unit@ _ <- Do(Skip);
+      middle_of_line(rs);
+    });
+
+    Return(rs);
+  },
+
+  # Parse starting from the middle of a line.
+  # Returns parsed result with characters in reverse order.
+  (Str@) { M@<Str@>; } middle_of_line = (Str@ rs) {
+    Maybe@<Char@> mc <- Do(Get);
+    mc.?(nothing: Return(rs));
+    IsNewline(mc.just).?(true: start_of_line(Cons(mc.just, rs)));
+    middle_of_line(Cons(mc.just, rs));
+  };
+
+  (Str@) { Str@; } strip_newlines = (Str@ s) {
+    s.?(nil: s);
+    IsNewline(s.cons.head).?(true: strip_newlines(s.cons.tail));
+    s;
+  };
+
+  Loc@ l <- Do(Loc);
+  Str@ with_newlines <- Do(start_of_line(Str|''));
+  Str@ without_newlines = strip_newlines(with_newlines);
+  without_newlines.?(nil: Return(Nothing<String@>));
+  Return(Just(String@(Reverse(without_newlines), l)));
+};
+
+# Flattens a list of maybes into a list of justs.
+<@ T@>(List@<Maybe@<T@>>) { List@<T@>; }
+Justs = <@ T@>(List@<Maybe@<T@>> in) {
+  (List@<Maybe@<T@>>, List@<T@>) { List@<T@>; }
+  mlist = (List@<Maybe@<T@>> l, List@<T@> r) {
+    l.?(nil: Reverse(r));
+    Maybe@<T@> head = l.cons.head;
+    head.?(just: mlist(l.cons.tail, Cons(head.just, r)));
+    mlist(l.cons.tail, r);
+  };
+  mlist(in, Nil<T@>);
+};
+
+# Parses a command starting with @...
+M@<Maybe@<Command@>> Command = {
+  Maybe@<Char@> mc <- Do(Peek);
+  mc.?(nothing: Return(Nothing<Command@>));
+  mc.just.?('@': {
+    Unit@ _ <- Do(Skip);
+    String@ name <- Do(Name);
+    List@<String@> args <- Do(Args);
+    Maybe@<String@> same_line_arg <- Do(SameLineArg);
+    Maybe@<String@> next_line_arg <- Do(NextLineArg);
+    List@<String@> extra_args = Justs[same_line_arg, next_line_arg];
+    Return(Just(Command@(name, Append(args, extra_args))));
+  });
+  Return(Nothing<Command@>);
+};
+
+M@<List@<Command@>> Block = {
+  # Parse block structured text.
+  # Returns commands in reverse order.
+  (List@<Command@>) { M@<List@<Command@>>; }
+  block = (List@<Command@> rcmds) {
+    Unit@ _ <- Do(SkipBlankLines);
+    String@ plain <- Do(Plain);
+    plain.str.?(cons: {
+      Command@ cmd = Command@(String@(Str|'', plain.loc), List[plain]);
+      block(Cons(cmd, rcmds));
+    });
+
+    Maybe@<Command@> command <- Do(Command);
+    command.?(nothing: Return(rcmds));
+    block(Cons(command.just, rcmds));
+  };
+
+  List@<Command@> rcmds <- Do(block(Nil<Command@>));
+  Return(Reverse(rcmds));
+};
+
+@(Block);

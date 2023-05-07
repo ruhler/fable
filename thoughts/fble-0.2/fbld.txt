@@ -171,4 +171,9 @@ I bet I can entirely split the parser off from M@. Write code to parse inline
 text into a sequence of commands and block text into a sequence of commands.
 No need for M@ at all there.
 
+---
+
+I need to update the parse to pass around the current indent level and allow
+parsing of indented strings. Otherwise we'll mess up column numbers when
+parsing nested block structured text.
 

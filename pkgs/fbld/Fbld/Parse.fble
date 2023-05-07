@@ -13,4 +13,10 @@ Inline = (String@ in) {
   Run(/Fbld/Parse/Inline%.Inline, in);
 };
 
-@(Inline);
+# Parse block structured text.
+(String@) { Result@<List@<Command@>>; }
+Block = (String@ in) {
+  Run(/Fbld/Parse/Block%.Block, in);
+};
+
+@(Inline, Block);
