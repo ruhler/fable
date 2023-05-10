@@ -1,0 +1,38 @@
+
+@ Str@ = /Core/String%.String@;
+
+<<@>@>% Inline = /Fbld/Invoke%.Inline;
+<<@>@>% Block = /Fbld/Invoke%.Block;
+
+# Core document interface.
+<<@>@>@ Core@ = <<@>@ M@> { *(
+  # @section[title][body]
+  #  A top level section.
+  #  @arg[title] The tile of the section.
+  #  @arg[body] The contents of the section.
+  (R@<M@>, R@<M@>) { R@<M@>; } section
+); };
+
+((R@<M@>, R@<M@>) { R@<M@>; }) { Invoke@; }
+Section = ((R@<M@>, R@<M@>) { R@<M@>; } section) {
+  (Invoke@<M@> inline, Invoke@<M@> block, Command@ command) {
+    Int@ num_args = Length(command.args);
+    /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
+      Return(Err<Unit@>(String@(Strs[
+            Str|'expected 2 args, but got ',
+            /Core/Int/Show%.Show(num_args)], command.name.loc)));
+    });
+
+    String@ title = command.args.cons.head;
+    String@ body = command.args.cons.tail.cons.head;
+    section(Inline(inline, block, title), Block(inline, block, body));
+  };
+};
+
+(Core@) { Markup@; } Markup = (Core@ core) {
+  /Fbld/Markup%.Markup[
+    Entry(Str|'section', Section(core.section))
+  ];
+};
+
+@(Core@, Markup);

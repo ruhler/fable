@@ -1,0 +1,8 @@
+
+@ Str@ = /Core/String%.String@;
+
+<<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
+
+<<@>@>@ Markup@ = <<@>@ M@> { /Core/Map%.Map@<Str@, Invoke@<M@>>; };
+
+@(Markup@);

@@ -1,0 +1,80 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% And = /Core/Bool%.And;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+@ Str@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+<<@>@>@ Markup@ = /Fbld/Markup%.Markup@;
+
+<<@>@>@ R@ = /Fbld/Types%.R@;
+@ String@ = /Fbld/Types%.String@;
+% Start = /Fbld/Types%.Start;
+
+
+# Main --
+#   Main function for fbld-html-doc program.
+#
+# Converts an fbld @doc into html format.
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % I = /Core/Stream/IStream%(m);
+  % O = /Core/Stream/OStream%(m);
+
+  Core@ core = /Fbld/Html%.Core(m)(stdio.out);
+  Markup@<M@> inline_markup = /Fbld/Core%.InlineMarkup(core);
+  Markup@<M@> block_markup = /Fbld/Core%.BlockMarkup(core);
+  Invoke@<M@> inline = /Fbld/Markup%.Invoke(inline_markup);
+  Invoke@<M@> block = /Fbld/Markup%.Invoke(block_markup);
+
+  (List@<Str@> args) {
+    args.?(nil: {
+      Str@ msg = Str|'missing input file';
+      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      m.return(False);
+    });
+
+    Str@ filename = args.cons.head;
+    
+    Maybe@<IStream@<M@>> fin <- m.do(stdio.read(filename));
+    fin.?(nothing: {
+      Str@ msg = Strs[Str|'unable to open ', filename];
+      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      m.return(False);
+    });
+
+    Str@ contents = I.GetText(fin.just);
+    R@<M@> r <- m.do(Block(inline, block, String@(contents, Start(filename))));
+    r.?(err: {
+      Str@ msg = Strs[r.err.loc.file, Str|':',
+        /Core/Int/Show%.Show(r.err.loc.line), Str|':',
+        /Core/Int/Show%.Show(r.err.loc.col), Str|': ',
+        r.err.str];
+      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      m.return(False);
+    });
+
+    m.return(True);
+  };
+};
+
+/Core/Stdio/IO%.Run(Main);

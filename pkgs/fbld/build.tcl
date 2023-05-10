@@ -9,5 +9,7 @@ namespace eval "pkgs/fbld" {
   stdio $::b/pkgs/fbld/fbld-tests "/Fbld/Tests%" "fbld"
   testsuite $::b/pkgs/fbld/fbld-tests.tr $::b/pkgs/fbld/fbld-tests \
     "$::b/pkgs/fbld/fbld-tests --prefix Compiled."
-}
 
+  # fbld-html-doc
+  stdio $::b/pkgs/fbld/fbld-html-doc "/Fbld/Main/HtmlDoc%" "fbld"
+}

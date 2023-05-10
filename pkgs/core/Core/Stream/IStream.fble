@@ -6,6 +6,7 @@
 @ Int@ = /Core/Int%.Int@;
 
 <@>% Cons = /Core/List%.Cons;
+<@>% Reverse = /Core/List%.Reverse;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -43,5 +44,15 @@
     m.return(Cons(c.just, tail));
   };
 
-  @(IStream@, GetChar, GetLine);
+  # Gets all the rest of the input stream.
+  (IStream@) { M@<String@>; } GetText = (IStream@ in) {
+    (String@) { M@<String@>; } get = (String@ rchrs) {
+      Maybe@<Char@> c <- m.do(GetChar(in));
+      c.?(nothing: m.return(Reverse(rchrs)));
+      get(Cons(c.just, rchrs));
+    };
+    get(Str|'');
+  };
+
+  @(IStream@, GetChar, GetLine, GetText);
 };

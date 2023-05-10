@@ -9,3 +9,48 @@ I've tried skip. I've tried not including debug symbols in libfble.a.
 
 It's too painful to navigate. I don't understand why.
 
+---
+
+Exploring different approaches to debugging than dwarf3 + gdb:
+
+There's something called Debug Adapter Protocol, from Microsoft. Looks like a
+language agnostic protocol for debug. Maybe I can add support to implement
+that ... somehow?
+
+The challenge is we have different backends: interpreter, c, aarch64. In any
+case, to look at the fble stack, we need to know how to traverse the native
+stack. Because the interpreter uses the native stack too.
+
+Commands we would need to support:
+* initialization of debugging / process to debug.
+* breakpoints management.
+* continue/next/step.
+* goto, break
+* get stack trace
+* variables
+* eval
+
+It's almost like a protocol for controlling the UI.
+
+Honestly, better I think to come up with my own, fble specific protocol.
+We could write a debug adapter separately to plug into Microsoft's format.
+
+I'm thinking: provide minimum support necessary in the core for accessing the
+required information, come up with my own custom protocol, and outsource the
+UI / source code management related bits to an external program.
+
+If only I could figure out how to implement those core operations.
+
+We would need to decide the scope:
+* interpreted code only?
+* generated c code too?
+* native c code too?
+* generated aarch64 code too?
+
+Seems like we should have some debug protocol that generated code and native
+code can support. Just like we have a debug protocol for profiling.
+
+In fact, I wonder, could we reuse the profiling protocol somehow? For example,
+with profiling enabled, we ... sort of know the stack trace? That's an
+interesting idea.
+

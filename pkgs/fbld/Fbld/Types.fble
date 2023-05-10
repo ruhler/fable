@@ -1,13 +1,25 @@
 
 @ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
 
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ Str@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
 # Location information used for error messages.
-@ Loc@ = *(/Core/String%.String@ file, Int@ line, Int@ col, Int@ indent);
+@ Loc@ = *(Str@ file, Int@ line, Int@ col, Int@ indent);
+
+(Str@) { Loc@; } Start = (Str@ file) {
+  Loc@(file, Int|1, Int|1, Int|0);
+};
 
 # A string with location information.
-@ String@ = *(/Core/String%.String@ str, Loc@ loc);
+@ String@ = *(Str@ str, Loc@ loc);
 
 # The result of parsing or invoking a command.
 <@>@ Result@ = <@ T@> { +(T@ ok, String@ err); };
@@ -20,13 +32,30 @@
   Result@<T@>(err: msg);
 };
 
+<<@>@ M@>(Monad@<M@>)
+<@ A@>(M@<Result@<A@>>)<@ B@>((A@) { M@<Result@<B@>>; }) { M@<Result@<B@>>; }
+DoResult = <<@>@ M@>(Monad@<M@> m) {
+  <@ A@>(M@<Result@<A@>> ma)<@ B@>((A@) { M@<Result@<B@>>; } f) {
+    Result@<A@> ra <- m.do(ma);
+    ra.?(err: m.return(Err<B@>(ra.err)));
+    f(ra.ok);
+  };
+};
+
 # A single command.
 @ Command@ = *(String@ name, List@<String@> args);
 
+# R@ -- Convenience definition for M@<Result@<Unit@>>;
+<<@>@>@ R@ = <<@>@ M@> { M@<Result@<Unit@>>; };
+
 # The type of a function to invoke an fbld command.
-#  @arg[Invoke@<M@>][invoke] - The invoke function.
+#  @arg[Invoke@<M@>][inline] - The inline invoke function.
+#  @arg[Invoke@<M@>][block] - The block invoke function.
 #  @arg[Command@][command] - The command to invoke.
 #  @returns The result of invoking the command.
-# <<@>@>@ Invoke@ = <<@>@ M@>(Invoke@<M@>, Command@) { M@<Result@<Unit@>>; };
+<<@>@>@ Invoke@ = <<@>@ M@> {
+  @ I@ = (I@, I@, Command@) { R@<M@>; };
+  I@;
+};
 
-@(Loc@, String@, Result@, Ok, Err, Command@);
+@(Loc@, Start, String@, Result@, Ok, Err, DoResult, Command@, R@, Invoke@);

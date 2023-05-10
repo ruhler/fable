@@ -190,3 +190,70 @@ I need to come up with a test case to capture locations properly. Maybe, parse
 a command. Extract the next line argument. Parse that, verify the locations
 are set properly. Yeah.
 
+---
+
+Inline and Block parsing is done. What's next?
+
+Let's review all the current use cases of fbld. I'll want to migrate them over
+one by one to fble based fbld, I would think.
+
+* build.lib.tcl - @config, @BuildStamp
+* @doc --> html
+* @tutorial --> html
+* @usage --> man (1)
+* @usage --> c header
+* doc comment --> man  (3)
+  - Extract doc comments from file.
+  - Convert doc comments to man.
+* Core tags syntax check.
+* Core tags html back end.
+* Core tags man back end.
+* Core tags roff back end.
+* @tutorial front end.
+* @usage --> help front end.
+* @usage --> man front end.
+* @usage library
+
+Let's start with Core. Core is an interface. In other words, a struct type
+parameterized by abstract monadic type M@.
+
+And we have an instance of Core@ for html, man, text, and optionally 'check'.
+
+We don't currently use 'check' anywhere. So why bother with it?
+
+* Define /Fbld/Core% with Core@, some way to convert typed functions to
+  generic fble command invocation.
+* Define /Fbld/Core/Html% instance of Core@ on an abstract monad with
+  OStream@.
+* Try and use fble fbld to generate fbld.html.
+ - Will need a solution for @FbleVersion, @BuildStamp
+
+Cool. That sounds like a good next target.
+
+What type do we use for the raw types of functions? Before we said
+'post-parsed' arguments.
+
+Anywhere we expect ESCAPED, we should accept /Core/String%.String@;
+
+Anywhere we expect INLINE...
+  List@<Command@>?
+  M@<Unit@>?
+
+Because we can go:
+  String@ --> List@<Command@> --> M@<Unit@>
+
+From fble code, M@<Unit@> is most generic.
+
+String@ --> List@<Command@> is either Inline or Block parse.
+List@<Command@> --> Core@.* is either Inline or Block invoke.
+Core@.* --> M@ comes from the back end.
+
+Where do we put the logic to know if we should inline or block parse/invoke?
+
+We'll want two different Invoke@ functions: one for inline, one for block. So
+we can distinguish between tags depending on whether it's an inline or block
+context.
+
+We'll have a function from Core@ to *(Invoke@, Invoke@) that defines how to
+sub-parse and sub-invoke each argument.
+
