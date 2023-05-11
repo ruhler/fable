@@ -1415,5 +1415,27 @@ Storing original func on tail stack instead of strictified one:
 md5: 57s ==> 56s
 sat: 1m17s ==> 1m16s
 
+---
+
+Running on windows revealed a problem with Locals lifetime management in the
+compiler. I assume because windows happens to modify memory contents on free
+whereas Raspberry Pi, for whatever reason, doesn't.
+
+The scenario is:
+* Struct access, where we return the accessed value, and 'exit' is true to
+  clean up the 'obj' value.
+
+What's happening is:
+* Because 'exit' is set, we don't modify 'owned', but we still free the owner.
+  That puts us in a state where we have an owned Local whose owner points to
+  garbage.
+
+Maybe the condition is in the wrong place? Maybe we want to skip the retain
+instruction in case of exit, but not ???
+
+Why do we skip release instructions when exit is true? According to the
+comments in the code, because we've already freed the stack frame in that
+case. So it should be safe to skip retain/release calls, but do keep
+owner/owned up to date?
 
 

@@ -208,14 +208,16 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
     assert(scope->locals.xs[local->var.index] == local);
 
     if (local->owner == NULL) {
-      if (!exit) {
-        // Explicitly retain any owned by this local, because they can no
-        // longer rely on this local to keep them alive.
-        for (size_t i = 0; i < local->owned.size; ++i) {
-          local->owned.xs[i]->owner = NULL;
+      // Explicitly retain any owned by this local, because they can no
+      // longer rely on this local to keep them alive.
+      for (size_t i = 0; i < local->owned.size; ++i) {
+        local->owned.xs[i]->owner = NULL;
+        if (!exit) {
           AppendRetainInstr(scope, local->owned.xs[i]->var);
         }
+      }
 
+      if (!exit) {
         // Release this var.
         AppendReleaseInstr(scope, local->var.index);
       }
