@@ -14,6 +14,18 @@ Things to consider doing for the fble-0.2 release.
   Example: ra.ok.in is a string, ra is a struct value. Right now, if you try
   to print ra.ok, it says 'There is no member named ok.'
 
+* Better type error message in case when two different types have the same
+  name? for example:
+
+  <@ A@> {
+     Maybe@<A@> NotA1 = Nothing<A@>;
+     <@ A@> {
+        Maybe@<A@> NotA2 = NotA1;
+     }
+  }
+        
+        
+
 * Need an easier way to gdb step through fble code without cluttering it with c
   code in between.
 

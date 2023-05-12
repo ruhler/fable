@@ -1,0 +1,8 @@
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+
+@ String@ = /Core/String%.String@;
+
+Ord@<String@> Ord = /Core/List/Ord%.Ord(/Core/Char/Ord%.Ord);
+
+@(Ord);

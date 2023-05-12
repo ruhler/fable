@@ -1,38 +1,63 @@
 
-@ Str@ = /Core/String%.String@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-<<@>@>% Inline = /Fbld/Invoke%.Inline;
-<<@>@>% Block = /Fbld/Invoke%.Block;
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
 
-# Core document interface.
-<<@>@>@ Core@ = <<@>@ M@> { *(
-  # @section[title][body]
-  #  A top level section.
-  #  @arg[title] The tile of the section.
-  #  @arg[body] The contents of the section.
-  (R@<M@>, R@<M@>) { R@<M@>; } section
-); };
+<@>% Length = /Core/List/Length%.Length;
 
-((R@<M@>, R@<M@>) { R@<M@>; }) { Invoke@; }
-Section = ((R@<M@>, R@<M@>) { R@<M@>; } section) {
-  (Invoke@<M@> inline, Invoke@<M@> block, Command@ command) {
-    Int@ num_args = Length(command.args);
-    /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
-      Return(Err<Unit@>(String@(Strs[
-            Str|'expected 2 args, but got ',
-            /Core/Int/Show%.Show(num_args)], command.name.loc)));
-    });
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
-    String@ title = command.args.cons.head;
-    String@ body = command.args.cons.tail.cons.head;
-    section(Inline(inline, block, title), Block(inline, block, body));
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Command@ = /Fbld/Types%.Command@;
+@ String@ = /Fbld/Types%.String@;
+<@>% Err = /Fbld/Types%.Err;
+
+<<@>@ M@>(Monad@<M@> m) {
+  % Invoke = /Fbld/Invoke%(m);
+
+  @ MRU@ = M@</Fbld/Types%.Result@<Unit@>>;
+  @ Invoke@ = /Fbld/Types%.Invoke@<M@>;
+
+  % MarkupModule = /Fbld/Markup%(m);
+  @ Markup@ = MarkupModule.Markup@;
+
+  # Core document interface.
+  @ Core@ = *(
+    # @section[title][body]
+    #  A top level section.
+    #  @arg[title] The tile of the section.
+    #  @arg[body] The contents of the section.
+    (MRU@, MRU@) { MRU@; } section
+  );
+
+  ((MRU@, MRU@) { MRU@; }) { Invoke@; }
+  Section = ((MRU@, MRU@) { MRU@; } section) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ title = command.args.cons.head;
+      String@ body = command.args.cons.tail.cons.head;
+      section(Invoke.Inline(inline, block, title), Invoke.Block(inline, block, body));
+    };
   };
-};
 
-(Core@) { Markup@; } Markup = (Core@ core) {
-  /Fbld/Markup%.Markup[
-    Entry(Str|'section', Section(core.section))
-  ];
-};
+  (Core@) { Markup@; } InlineMarkup = (Core@ core) {
+    MarkupModule.Markup[];
+  };
 
-@(Core@, Markup);
+  (Core@) { Markup@; } BlockMarkup = (Core@ core) {
+    MarkupModule.Markup[
+      MarkupModule.Entry(Str|'section', Section(core.section))
+    ];
+  };
+
+  @(Core@, InlineMarkup, BlockMarkup);
+};

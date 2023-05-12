@@ -257,3 +257,50 @@ context.
 We'll have a function from Core@ to *(Invoke@, Invoke@) that defines how to
 sub-parse and sub-invoke each argument.
 
+---
+
+Type inference isn't working:
+
+  <@ A@>(M@<Result@<A@>>)<@ B@>((A@) { M@<Result@<B@>>; }) { M@<Result@<B@>>; }
+  DoR = <@ A@>(M@<Result@<A@>> ma)<@ B@>((A@) { M@<Result@<B@>>; } f) {
+    Result@<A@> ra <- m.do(ma);
+    ra.?(err: m.return(Err<B@>(ra.err)));
+    f(ra.ok);
+  };
+
+      (Command@ cmd, M@<Result@<Unit@>> mx) {
+        Unit@ _ <- DoR(mx);
+        inline(inline, block, cmd);
+      });
+
+In the application of 'DoR':
+
+../pkgs/fbld/Fbld/Invoke.fble|30 col 24| error: expected type M@<Result@<A@>>, but found M@<Result@<Unit@>>
+|| Inferred types:
+||   A@: ???
+
+Even if I explicitly give the type of A@ as Unit@. Is this expected?
+
+M@ is fully abstract. There's no way to expand that. Do we know that M@<X@>
+equals M@<Y@> if X@ = Y@? Or do we not take advantage of that fact?
+
+Yes. we say poly equal and arg equal.
+
+I should be able to step through this in gdb and trace what's going wrong.
+It's just a little tedious to get to the right call in gdb.
+
+Because we should say Result@<A@> equals Result@<Unit@>
+Which then should give us A@ equals Unit@
+Which should infer things just swell, right? Or, I suppose Result isn't
+abstract, so we will say:
+
++(Unit@ ok, String@ err) versus +(A@ ok, String@ err).
+
+And that should work just fine.
+
+---
+
+Found the issue. I have two different abstract types M@ defined at different
+locations. Type error is working as intended aside from not making it clear
+the difference between two different types with the same name.
+

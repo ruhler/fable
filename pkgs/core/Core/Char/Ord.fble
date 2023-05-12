@@ -1,0 +1,14 @@
+
+@ Char@ = /Core/Char%.Char@;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+
+(Char@) { Int@; } ToAscii = /Core/Char/Ascii%.Ord;
+
+Ord@<Char@> Ord = (Char@ a, Char@ b) {
+  /Core/Int/Ord%.Ord(ToAscii(a), ToAscii(b));
+};
+
+@(Ord);

@@ -19,7 +19,7 @@
   <@>% DoR = DoResult(m);
 
   (Invoke@<M@>, Invoke@<M@>, String@) { R@<M@>; }
-  Inline = <<@>@ M@>(Invoke@<M@> inline, Invoke@<M@> block, String@ text) {
+  Inline = (Invoke@<M@> inline, Invoke@<M@> block, String@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
@@ -31,7 +31,7 @@
   };
 
   (Invoke@<M@>, Invoke@<M@>, String@) { R@<M@>; }
-  Block = <<@>@ M@>(Invoke@<M@> inline, Invoke@<M@> block, String@ text) {
+  Block = (Invoke@<M@> inline, Invoke@<M@> block, String@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 

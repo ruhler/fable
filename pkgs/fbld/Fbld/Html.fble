@@ -1,35 +1,31 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
-@ Str@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
 
 <<@>@>@ R@ = /Fbld/Types%.R@;
 <<@>@>% DoResult = /Fbld/Types%.DoResult;
 
-<<@>@>@ Core@ = /Fbld/Core%.Core@;
-
 <<@>@ M@>(Monad@<M@> m)(OStream@<M@> out) {
 
+  @ Core@ = /Fbld/Core%(m).Core@;
+
   % O = /Core/Stream/OStream%(m);
-  % DoR = DoResult(m);
+  <@>% DoR = DoResult(m);
 
-  (Str@) { R@<M@>; } Text = (Str@ text) {
-    # TODO: Escape &, <, and > characters for html.
-    O.putStr(out, text);
-  };
-
-  (Str@, R@<M@>) { R@<M@>; }
-  Section = (Str@ title, R@<M@> body) {
+  (R@<M@>, R@<M@>) { R@<M@>; }
+  Section = (R@<M@> title, R@<M@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<h2>'));
-    Unit@ _ <- rdo(Text(title));
+    Unit@ _ <- DoR(title);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</h2>'));
     body;
   };
 
-  Core@<M@> Core = @(
+  Core@ Core = @(
     section: Section
   );
 

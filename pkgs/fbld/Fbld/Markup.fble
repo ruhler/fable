@@ -1,8 +1,53 @@
 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<@>@ List@ = /Core/List%.List@;
+
 @ Str@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
-<<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
+@ Unit@ = /Core/Unit%.Unit@;
 
-<<@>@>@ Markup@ = <<@>@ M@> { /Core/Map%.Map@<Str@, Invoke@<M@>>; };
+@ String@ = /Fbld/Types%.String@;
+@ Command@ = /Fbld/Types%.Command@;
+<@>% Err = /Fbld/Types%.Err;
 
-@(Markup@);
+<<@>@ M@>(Monad@<M@> m) {
+  @ Invoke@ = /Fbld/Types%.Invoke@<M@>;
+  @ Markup@ = /Core/Map%.Map@<Str@, Invoke@>;
+
+  @ Entry@ = /Core/Map%.Entry@<Str@, Invoke@>;
+  Markup@ Empty = /Core/Map%.Empty<Str@, Invoke@>;
+
+  (Markup@, Str@, Invoke@) { Markup@; }
+  Insert = /Core/Map%.Insert<Str@>(/Core/String/Ord%.Ord)<Invoke@>;
+
+  (Markup@, Str@) { Maybe@<Invoke@>; }
+  Lookup = /Core/Map%.Lookup<Str@>(/Core/String/Ord%.Ord)<Invoke@>;
+
+  (Str@, Invoke@) { Entry@; } Entry = (Str@ s, Invoke@ i) {
+    Entry@(s, i);
+  };
+
+  (List@<Entry@>) { Markup@; } Markup = (List@<Entry@> entries) {
+    /Core/List%.ForEach(entries, Empty, (Entry@ entry, Markup@ m) {
+      Insert(m, entry.key, entry.value);
+      });
+  };
+
+  (Markup@) { Invoke@; } Invoke = (Markup@ markup) {
+    (Invoke@ i, Invoke@ b, Command@ cmd) {
+      Maybe@<Invoke@> f = Lookup(markup, cmd.name.str);
+      f.?(nothing: {
+        Str@ msg = Strs[Str|'unknown tag: ', cmd.name.str];
+        m.return(Err<Unit@>(String@(msg, cmd.name.loc)));
+      });
+      f.just(i, b, cmd);
+    };
+  };
+
+  @(Markup@, Entry@, Markup, Entry, Empty, Insert, Invoke);
+};

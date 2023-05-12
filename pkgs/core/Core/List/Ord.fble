@@ -1,0 +1,20 @@
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+@ Ordering@ = /Core/Ord%.Ordering@;
+% Lt = /Core/Ord%.Lt;
+% Eq = /Core/Ord%.Eq;
+% Gt = /Core/Ord%.Gt;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@ A@>(Ord@<A@>) { Ord@<List@<A@>>; }
+Ord = <@ A@>(Ord@<A@> ord)(List@<A@> a, List@<A@> b) {
+  a.?(nil: b.?(cons: Lt, nil: Eq));
+  b.?(nil: Gt);
+
+  Ordering@ ordering = ord(a.cons.head, b.cons.head);
+  ordering.?(eq: Ord(ord)(a.cons.tail, b.cons.tail));
+  ordering;
+};
+
+@(Ord);
