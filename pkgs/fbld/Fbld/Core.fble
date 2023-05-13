@@ -29,7 +29,7 @@
 
   # Core document interface.
   @ Core@ = *(
-    # @text[text]
+    # @text[INLINE text]
     # An explicit tag for default inline text.
     # @param text  The text to unescape.
     (String@) { MRU@; } text,
@@ -39,18 +39,34 @@
     # @param text  The body of the paragraph.
     (MRU@) { MRU@; } par,
 
-    # @section[title][body]
+    # @section[INLINE title][BLOCK body]
     #  A top level section.
     #  @arg[title] The tile of the section.
     #  @arg[body] The contents of the section.
     (MRU@, MRU@) { MRU@; } section,
 
-    # @doc[title][body]
+    # @doc[INLINE title][BLOCK body]
     # Top level entry point for a generic document.
     # @param title  The title of the document.
     # @param body  The contents of the document.
     (MRU@, MRU@) { MRU@; } doc
   );
+
+  # @<tag>[INLINE][BLOCK] helper function
+  ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ i = command.args.cons.head;
+      String@ b = command.args.cons.tail.cons.head;
+      f(Invoke.Inline(inline, block, i), Invoke.Block(inline, block, b));
+    };
+  };
 
   ((String@) { MRU@; }) { Invoke@; }
   Text = ((String@) { MRU@; } text) {
@@ -83,37 +99,8 @@
     };
   };
 
-  ((MRU@, MRU@) { MRU@; }) { Invoke@; }
-  Section = ((MRU@, MRU@) { MRU@; } section) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 2 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
-
-      String@ title = command.args.cons.head;
-      String@ body = command.args.cons.tail.cons.head;
-      section(Invoke.Inline(inline, block, title), Invoke.Block(inline, block, body));
-    };
-  };
-
-  ((MRU@, MRU@) { MRU@; }) { Invoke@; }
-  Doc = ((MRU@, MRU@) { MRU@; } doc) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 2 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
-
-      String@ title = command.args.cons.head;
-      String@ body = command.args.cons.tail.cons.head;
-      doc(Invoke.Inline(inline, block, title), Invoke.Block(inline, block, body));
-    };
-  };
+  % Section = IB;
+  % Doc = IB;
 
   (Core@) { Markup@; } InlineMarkup = (Core@ core) {
     Markup[
