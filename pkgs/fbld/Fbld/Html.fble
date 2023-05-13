@@ -54,10 +54,40 @@
     body;
   };
 
+  (R@<M@>, R@<M@>) { R@<M@>; }
+  Doc = (R@<M@> title, R@<M@> body) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|'
+<head>
+<style>
+body {
+  color: #333333;
+  font-family: sans-serif;
+  max-width: 50em;
+}
+h1 { font-size: 2.0em; }
+h2 { font-size: 1.6em; }
+h3 { font-size: 1.4em; }
+h4 { font-size: 1.2em; }
+p { font-size: 1em; }
+</style>
+'));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<title>'));
+    Unit@ _ <- DoR(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</title>'));
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</head><body>'));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<h1>'));
+    Unit@ _ <- DoR(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</h1>'));
+    Unit@ _ <- DoR(body);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</body>'));
+    m.return(Ok(Unit));
+  };
+
   Core@ Core = @(
     text: Text,
     par: Par,
-    section: Section
+    section: Section,
+    doc: Doc
   );
 
   @(Core);

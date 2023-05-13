@@ -43,7 +43,13 @@
     #  A top level section.
     #  @arg[title] The tile of the section.
     #  @arg[body] The contents of the section.
-    (MRU@, MRU@) { MRU@; } section
+    (MRU@, MRU@) { MRU@; } section,
+
+    # @doc[title][body]
+    # Top level entry point for a generic document.
+    # @param title  The title of the document.
+    # @param body  The contents of the document.
+    (MRU@, MRU@) { MRU@; } doc
   );
 
   ((String@) { MRU@; }) { Invoke@; }
@@ -77,7 +83,6 @@
     };
   };
 
-
   ((MRU@, MRU@) { MRU@; }) { Invoke@; }
   Section = ((MRU@, MRU@) { MRU@; } section) {
     (Invoke@ inline, Invoke@ block, Command@ command) {
@@ -94,6 +99,22 @@
     };
   };
 
+  ((MRU@, MRU@) { MRU@; }) { Invoke@; }
+  Doc = ((MRU@, MRU@) { MRU@; } doc) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ title = command.args.cons.head;
+      String@ body = command.args.cons.tail.cons.head;
+      doc(Invoke.Inline(inline, block, title), Invoke.Block(inline, block, body));
+    };
+  };
+
   (Core@) { Markup@; } InlineMarkup = (Core@ core) {
     Markup[
       Entry(Str|'', Text(core.text)),
@@ -105,7 +126,8 @@
     Markup[
       Entry(Str|'', Par(core.par)),
       Entry(Str|'par', Par(core.par)),
-      Entry(Str|'section', Section(core.section))
+      Entry(Str|'section', Section(core.section)),
+      Entry(Str|'doc', Doc(core.doc))
     ];
   };
 
