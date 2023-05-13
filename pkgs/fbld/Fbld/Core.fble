@@ -34,6 +34,11 @@
     # @param text  The text to unescape.
     (String@) { MRU@; } text,
 
+    # @par[INLINE text]
+    # A paragraph of text.
+    # @param text  The body of the paragraph.
+    (MRU@) { MRU@; } par,
+
     # @section[title][body]
     #  A top level section.
     #  @arg[title] The tile of the section.
@@ -56,6 +61,22 @@
       text(String@(unescaped, arg.loc));
     };
   };
+
+  ((MRU@) { MRU@; }) { Invoke@; }
+  Par = ((MRU@) { MRU@; } par) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 1 arg, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ body = command.args.cons.head;
+      par(Invoke.Inline(inline, block, body));
+    };
+  };
+
 
   ((MRU@, MRU@) { MRU@; }) { Invoke@; }
   Section = ((MRU@, MRU@) { MRU@; } section) {
@@ -82,6 +103,8 @@
 
   (Core@) { Markup@; } BlockMarkup = (Core@ core) {
     Markup[
+      Entry(Str|'', Par(core.par)),
+      Entry(Str|'par', Par(core.par)),
       Entry(Str|'section', Section(core.section))
     ];
   };

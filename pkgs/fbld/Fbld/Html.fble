@@ -38,6 +38,14 @@
     text(str.str);
   };
 
+  (R@<M@>) { R@<M@>; }
+  Par = (R@<M@> body) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<p>'));
+    Unit@ _ <- DoR(body);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</p>'));
+    m.return(Ok(Unit));
+  };
+
   (R@<M@>, R@<M@>) { R@<M@>; }
   Section = (R@<M@> title, R@<M@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<h2>'));
@@ -48,6 +56,7 @@
 
   Core@ Core = @(
     text: Text,
+    par: Par,
     section: Section
   );
 
