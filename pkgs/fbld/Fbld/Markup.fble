@@ -42,7 +42,7 @@
     (Invoke@ i, Invoke@ b, Command@ cmd) {
       Maybe@<Invoke@> f = Lookup(markup, cmd.name.str);
       f.?(nothing: {
-        Str@ msg = Strs[Str|'unknown tag: ', cmd.name.str];
+        Str@ msg = Strs[Str|'unknown tag: ''', cmd.name.str, Str|''''];
         m.return(Err<Unit@>(String@(msg, cmd.name.loc)));
       });
       f.just(i, b, cmd);

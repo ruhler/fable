@@ -1,0 +1,7 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+
+# Regression test for a bug where the escaped quote character wasn't being
+# included in the word, which would cause the following to error out with
+# duplicate field name.
++(Unit@ '''', Unit@ '');

@@ -12,4 +12,5 @@ namespace eval "pkgs/fbld" {
 
   # fbld-html-doc
   stdio $::b/pkgs/fbld/fbld-html-doc "/Fbld/Main/HtmlDoc%" "fbld"
+  install $::b/pkgs/fbld/fbld-html-doc $::config::bindir/fbld-html-doc
 }

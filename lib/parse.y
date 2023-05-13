@@ -849,6 +849,9 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
         ReadNextChar(lex);
       }
       ReadNextChar(lex);
+      if (lex->c == '\'') {
+        FbleVectorAppend(wordv, '\'');
+      }
     } while (lex->c == '\'');
   } else {
     while (IsWordChar(lex->c)) {
