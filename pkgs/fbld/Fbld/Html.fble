@@ -1,13 +1,19 @@
 
+@ Char@ = /Core/Char%.Char@;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
+@ Str@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
+@ String@ = /Fbld/Types%.String@;
 <<@>@>@ R@ = /Fbld/Types%.R@;
+<@>% Ok = /Fbld/Types%.Ok;
 <<@>@>% DoResult = /Fbld/Types%.DoResult;
 
 <<@>@ M@>(Monad@<M@> m)(OStream@<M@> out) {
@@ -16,6 +22,21 @@
 
   % O = /Core/Stream/OStream%(m);
   <@>% DoR = DoResult(m);
+
+  (String@) { R@<M@>; } Text = (String@ str) {
+    (Str@) { R@<M@>; } text = (Str@ s) {
+      s.?(nil: m.return(Ok(Unit)));
+      Char@ c = s.cons.head;
+      Unit@ _ <- m.do(c.?(
+        '&': O.PutStr(out, Str|'&amp;'),
+        '<': O.PutStr(out, Str|'&lt;'),
+        '>': O.PutStr(out, Str|'&gt;'),
+        : O.PutChar(out, c))
+      );
+      text(s.cons.tail);
+    };
+    text(str.str);
+  };
 
   (R@<M@>, R@<M@>) { R@<M@>; }
   Section = (R@<M@> title, R@<M@> body) {
@@ -26,6 +47,7 @@
   };
 
   Core@ Core = @(
+    text: Text,
     section: Section
   );
 

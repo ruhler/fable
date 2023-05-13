@@ -6,6 +6,7 @@
 
 <@>% Length = /Core/List/Length%.Length;
 
+@ Str@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
@@ -23,15 +24,38 @@
 
   % MarkupModule = /Fbld/Markup%(m);
   @ Markup@ = MarkupModule.Markup@;
+  % Markup = MarkupModule.Markup;
+  % Entry = MarkupModule.Entry;
 
   # Core document interface.
   @ Core@ = *(
+    # @text[text]
+    # An explicit tag for default inline text.
+    # @param text  The text to unescape.
+    (String@) { MRU@; } text,
+
     # @section[title][body]
     #  A top level section.
     #  @arg[title] The tile of the section.
     #  @arg[body] The contents of the section.
     (MRU@, MRU@) { MRU@; } section
   );
+
+  ((String@) { MRU@; }) { Invoke@; }
+  Text = ((String@) { MRU@; } text) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 1 arg, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ arg = command.args.cons.head;
+      Str@ unescaped = /Fbld/Unescape%.Unescape(arg.str);
+      text(String@(unescaped, arg.loc));
+    };
+  };
 
   ((MRU@, MRU@) { MRU@; }) { Invoke@; }
   Section = ((MRU@, MRU@) { MRU@; } section) {
@@ -50,12 +74,15 @@
   };
 
   (Core@) { Markup@; } InlineMarkup = (Core@ core) {
-    MarkupModule.Markup[];
+    Markup[
+      Entry(Str|'', Text(core.text)),
+      Entry(Str|'text', Text(core.text))
+    ];
   };
 
   (Core@) { Markup@; } BlockMarkup = (Core@ core) {
-    MarkupModule.Markup[
-      MarkupModule.Entry(Str|'section', Section(core.section))
+    Markup[
+      Entry(Str|'section', Section(core.section))
     ];
   };
 
