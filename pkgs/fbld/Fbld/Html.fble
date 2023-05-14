@@ -38,6 +38,20 @@
     text(str.str);
   };
 
+  (String@) { R@<M@>; } L = (String@ str) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<code>'));
+    Unit@ _ <- DoR(Text(str));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'</code>'));
+    m.return(Ok(Unit));
+  };
+
+  (String@) { R@<M@>; } A = (String@ str) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<i>'));
+    Unit@ _ <- DoR(Text(str));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'</i>'));
+    m.return(Ok(Unit));
+  };
+
   (R@<M@>) { R@<M@>; }
   Par = (R@<M@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<p>'));
@@ -46,11 +60,44 @@
     m.return(Ok(Unit));
   };
 
+  (R@<M@>) { R@<M@>; } Item = (R@<M@> body) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<ul><li>'));
+    Unit@ _ <- DoR(body);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</li></ul>'));
+    m.return(Ok(Unit));
+  };
+
+  (R@<M@>, R@<M@>) { R@<M@>; }
+  Def = (R@<M@> name, R@<M@> value) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<dl><dt>'));
+    Unit@ _ <- DoR(name);
+    Unit@ _ <- m.do(O.PutStr(out, Str|'</dt><dd>'));
+    Unit@ _ <- DoR(value);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</dd></dl>'));
+    m.return(Ok(Unit));
+  };
+
   (R@<M@>, R@<M@>) { R@<M@>; }
   Section = (R@<M@> title, R@<M@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<h2>'));
     Unit@ _ <- DoR(title);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</h2>'));
+    body;
+  };
+
+  (R@<M@>, R@<M@>) { R@<M@>; }
+  SubSection = (R@<M@> title, R@<M@> body) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<h3>'));
+    Unit@ _ <- DoR(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</h3>'));
+    body;
+  };
+
+  (R@<M@>, R@<M@>) { R@<M@>; }
+  SubSubSection = (R@<M@> title, R@<M@> body) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<h4>'));
+    Unit@ _ <- DoR(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</h4>'));
     body;
   };
 
@@ -85,8 +132,15 @@ p { font-size: 1em; }
 
   Core@ Core = @(
     text: Text,
+    l: L,
+    a: A,
     par: Par,
+    item: Item,
+    def: Def,
+    definition: Def,
     section: Section,
+    subsection: SubSection,
+    subsubsection: SubSubSection,
     doc: Doc
   );
 

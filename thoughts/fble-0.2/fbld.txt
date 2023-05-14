@@ -304,3 +304,45 @@ Found the issue. I have two different abstract types M@ defined at different
 locations. Type error is working as intended aside from not making it clear
 the difference between two different types with the same name.
 
+---
+
+How should I implement @FbleVersion and @BuildStamp tags?
+
+The way it's implemented in tcl:
+* The build script creates a version.fbld.tcl file to define
+  inline_FbleVersion, pulling $::version as the value.
+* build.lib.tcl defines inline-BuildStamp which executes the buildstamp
+  program whever it is invoked, ensuring we have the latest build stamp
+  whenever we run the program.
+
+Let's start with @FbleVersion, which seems slightly simpler.
+
+Options:
+A. Define /Fbld/FbleVersion% that hard codes the value of @FbleVersion.
+ - Remember to update it any time the version is updated.
+B. Define /Fbld/FbleVersion% that reads the raw value from
+  /Fbld/FbleVersion/Value%, or some such. Have the build script auto-generate
+  that /Fbld/FbleVersion/Value% file as, /Core/String%.Str|'...';
+C. Hard code the version, but add a test that it matches what's defined
+  elsewhere.
+
+(B) sounds easy enough to me. I can't think of any other sane options. The
+only trick with (B) will be figuring out how to add the generated code to the
+include path.
+
+Let's think about @Buildstamp next, which is trickier. The goal is to get the
+latest value of buildstamp every time you run, e.g. fbld-html-doc.
+
+Maybe that suggests we should read the buildstamp value from a file when
+fbld-html-doc starts? Or... should we add an 'exec' option to Stdio@ for
+executing other programs?
+
+How do we want generic 'fbld-html-doc' and fble build specific @FbleVersion
+and @Buildstamp to work? It's like, how do we add custom tags after the fact?
+Should I worry about that for now, or don't care and worry about it another
+day?
+
+---
+
+Another challenge: implementing the @code tag. Can we reuse source-highlight
+from within fble? How?

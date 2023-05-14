@@ -29,15 +29,44 @@
 
   # Core document interface.
   @ Core@ = *(
-    # @text[INLINE text]
+    # @text[ESCAPED text]
     # An explicit tag for default inline text.
     # @param text  The text to unescape.
     (String@) { MRU@; } text,
+
+    # @l[ESCAPED text]
+    # A literal string.
+    # The text is highlighted as bold or monospace font, for example.
+    # @param text  The text to highlith.
+    (String@) { MRU@; } l,
+
+    # @a[ESCAPED text]
+    # An argument.
+    # The text is highlighted using italics, for example.
+    # @param text  The text to highlight.
+    (String@) { MRU@; } a,
 
     # @par[INLINE text]
     # A paragraph of text.
     # @param text  The body of the paragraph.
     (MRU@) { MRU@; } par,
+
+    # @item[BLOCK text]
+    # A list item.
+    # @param text  The text of the item.
+    (MRU@) { MRU@; } item,
+
+    # @def[INLINE name][INLINE value]
+    # A short form definition of a term.
+    # @param name  The term to define.
+    # @param value  The definition of the term.
+    (MRU@, MRU@) { MRU@; } def,
+
+    # @definition[INLINE name][BLOCK value]
+    # A long form definition of a term.
+    # @param name  The term to define.
+    # @param value  The definition of the term.
+    (MRU@, MRU@) { MRU@; } definition,
 
     # @section[INLINE title][BLOCK body]
     #  A top level section.
@@ -45,12 +74,55 @@
     #  @arg[body] The contents of the section.
     (MRU@, MRU@) { MRU@; } section,
 
+    # @subsection[INLINE title][BLOCK body]
+    # A second level section.
+    # @param title  The tile of the section.
+    # @param body  The contents of the section.
+    (MRU@, MRU@) { MRU@; } subsection,
+
+    # @subsubsection[INLINE title][BLOCK body]
+    # A third level section.
+    # @param title  The tile of the section.
+    # @param body  The contents of the section.
+    (MRU@, MRU@) { MRU@; } subsubsection,
+
     # @doc[INLINE title][BLOCK body]
     # Top level entry point for a generic document.
     # @param title  The title of the document.
     # @param body  The contents of the document.
     (MRU@, MRU@) { MRU@; } doc
   );
+
+  # @<tag>[ESCAPED] helper function
+  ((String@) { MRU@; }) { Invoke@; } E = ((String@) { MRU@; } f) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 1 arg, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ arg = command.args.cons.head;
+      Str@ unescaped = /Fbld/Unescape%.Unescape(arg.str);
+      f(String@(unescaped, arg.loc));
+    };
+  };
+
+  # @<tag>[BLOCK] helper function
+  ((MRU@) { MRU@; }) { Invoke@; } B = ((MRU@) { MRU@; } f) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 1 arg, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ arg = command.args.cons.head;
+      f(Invoke.Block(inline, block, arg));
+    };
+  };
 
   # @<tag>[INLINE][BLOCK] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
@@ -68,8 +140,8 @@
     };
   };
 
-  ((String@) { MRU@; }) { Invoke@; }
-  Text = ((String@) { MRU@; } text) {
+  # @<tag>[INLINE] helper function
+  ((MRU@) { MRU@; }) { Invoke@; } I = ((MRU@) { MRU@; } f) {
     (Invoke@ inline, Invoke@ block, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
@@ -79,42 +151,30 @@
       });
 
       String@ arg = command.args.cons.head;
-      Str@ unescaped = /Fbld/Unescape%.Unescape(arg.str);
-      text(String@(unescaped, arg.loc));
+      f(Invoke.Inline(inline, block, arg));
     };
   };
-
-  ((MRU@) { MRU@; }) { Invoke@; }
-  Par = ((MRU@) { MRU@; } par) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 1 arg, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
-
-      String@ body = command.args.cons.head;
-      par(Invoke.Inline(inline, block, body));
-    };
-  };
-
-  % Section = IB;
-  % Doc = IB;
 
   (Core@) { Markup@; } InlineMarkup = (Core@ core) {
     Markup[
-      Entry(Str|'', Text(core.text)),
-      Entry(Str|'text', Text(core.text))
+      Entry(Str|'', E(core.text)),
+      Entry(Str|'text', E(core.text)),
+      Entry(Str|'l', E(core.l)),
+      Entry(Str|'a', E(core.a))
     ];
   };
 
   (Core@) { Markup@; } BlockMarkup = (Core@ core) {
     Markup[
-      Entry(Str|'', Par(core.par)),
-      Entry(Str|'par', Par(core.par)),
-      Entry(Str|'section', Section(core.section)),
-      Entry(Str|'doc', Doc(core.doc))
+      Entry(Str|'', I(core.par)),
+      Entry(Str|'par', I(core.par)),
+      Entry(Str|'item', B(core.item)),
+      Entry(Str|'def', IB(core.def)),
+      Entry(Str|'definition', IB(core.definition)),
+      Entry(Str|'section', IB(core.section)),
+      Entry(Str|'subsection', IB(core.subsection)),
+      Entry(Str|'subsubsection', IB(core.subsubsection)),
+      Entry(Str|'doc', IB(core.doc))
     ];
   };
 

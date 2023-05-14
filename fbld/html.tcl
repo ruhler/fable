@@ -244,6 +244,6 @@ proc block_subsection {title body} {
 proc block_subsubsection {title body} {
   ::output "<h4>"
   ::inline $title
-  ::output "</h3>\n"
+  ::output "</h4>\n"
   ::block $body
 }
