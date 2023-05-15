@@ -12,7 +12,7 @@
 #include <fble/fble-string.h>
 
 // See documentation in fble-loc.h.
-FbleLoc FbleNewLoc(const char* source, int line, int col)
+FbleLoc FbleNewLoc(const char* source, size_t line, size_t col)
 {
   FbleLoc loc = {
     .source = FbleNewString(source),
@@ -44,7 +44,7 @@ void FbleReportWarning(const char* format, FbleLoc loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: warning: ", loc.source->str, loc.line, loc.col);
+  fprintf(stderr, "%s:%zi:%zi: warning: ", loc.source->str, loc.line, loc.col);
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
@@ -54,7 +54,7 @@ void FbleReportError(const char* format, FbleLoc loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: error: ", loc.source->str, loc.line, loc.col);
+  fprintf(stderr, "%s:%zi:%zi: error: ", loc.source->str, loc.line, loc.col);
   vfprintf(stderr, format, ap);
   va_end(ap);
 }

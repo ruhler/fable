@@ -278,8 +278,8 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
     fprintf(fout, "  .word %i\n", names.xs[i].space);     // space
     fprintf(fout, "  .zero 4\n");                         // padding
     fprintf(fout, "  .xword " LABEL "\n", src_ids[i]);    // loc.src
-    fprintf(fout, "  .word %i\n", names.xs[i].loc.line);  // loc.line
-    fprintf(fout, "  .word %i\n", names.xs[i].loc.col);   // loc.col
+    fprintf(fout, "  .word %zi\n", names.xs[i].loc.line); // loc.line
+    fprintf(fout, "  .word %zi\n", names.xs[i].loc.col);  // loc.col
   }
   return id;
 }
@@ -310,8 +310,8 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
   fprintf(fout, "  .xword 1\n");                  // .refcount
   fprintf(fout, "  .xword 2004903300\n");         // .magic
   fprintf(fout, "  .xword " LABEL "\n", src_id);        // path->loc.src
-  fprintf(fout, "  .word %i\n", path->loc.line);
-  fprintf(fout, "  .word %i\n", path->loc.col);
+  fprintf(fout, "  .word %zi\n", path->loc.line);
+  fprintf(fout, "  .word %zi\n", path->loc.col);
   fprintf(fout, "  .xword %zi\n", path->path.size);
   fprintf(fout, "  .xword " LABEL "\n", names_id);
   return path_id;
@@ -437,8 +437,8 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
   SanitizeString(loc.source->str, label);
   Adr(fout, "x2", ".L.loc.%s", label);
 
-  fprintf(fout, "  mov x3, %i\n", loc.line);
-  fprintf(fout, "  mov x4, %i\n", loc.col);
+  fprintf(fout, "  mov x3, %zi\n", loc.line);
+  fprintf(fout, "  mov x4, %zi\n", loc.col);
   Adr(fout, "x5", "%s", lmsg);
   fprintf(fout, "  bl fprintf\n");
 
@@ -603,7 +603,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
   for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
     if (info->tag == FBLE_STATEMENT_DEBUG_INFO) {
       FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
-      fprintf(fout, "  .loc 1 %i %i\n", stmt->loc.line, stmt->loc.col);
+      fprintf(fout, "  .loc 1 %zi %zi\n", stmt->loc.line, stmt->loc.col);
     }
   }
 
@@ -1094,7 +1094,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Output the location of the function.
   // This is intended to match the .loc info gcc outputs on the open brace of
   // a function body.
-  fprintf(fout, "  .loc 1 %i %i\n", function_block.loc.line, function_block.loc.col);
+  fprintf(fout, "  .loc 1 %zi %zi\n", function_block.loc.line, function_block.loc.col);
 
   // Set up stack and frame pointer.
   size_t sp_offset = StackBytesForCount(code->num_locals);

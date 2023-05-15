@@ -125,8 +125,6 @@ Things to consider doing for the fble-0.2 release.
 * Turn off FPS histogram for fble-app by default.
  - Add a command line argument to enable it if desired.
 
-* Why does FbleNewLoc use int for line and col instead of size_t?
-
 * Check if all the fble-module-path.h functions really need to be public API.
 
 * How to handle @file doc comments on header files?

@@ -165,7 +165,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
   for (size_t i = 0; i < names.size; ++i) {
     fprintf(fout, "  { .name = &" LABEL ",\n", str_ids[i]);
     fprintf(fout, "    .space = %i,\n", names.xs[i].space);
-    fprintf(fout, "    .loc = { .source = &" LABEL ", .line = %i, .col = %i }},\n",
+    fprintf(fout, "    .loc = { .source = &" LABEL ", .line = %zi, .col = %zi }},\n",
         src_ids[i], names.xs[i].loc.line, names.xs[i].loc.col);
   }
   fprintf(fout, "};\n");
@@ -195,7 +195,7 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
   fprintf(fout, "static FbleModulePath " LABEL " = {\n", path_id);
   fprintf(fout, "  .refcount = 1,\n");
   fprintf(fout, "  .magic = FBLE_MODULE_PATH_MAGIC,\n");
-  fprintf(fout, "  .loc = { .source = &" LABEL ", .line = %i, .col = %i },\n",
+  fprintf(fout, "  .loc = { .source = &" LABEL ", .line = %zi, .col = %zi },\n",
       src_id, path->loc.line, path->loc.col);
   fprintf(fout, "  .path = { .size = %zi, .xs = " LABEL "},\n",
       path->path.size, names_id);
@@ -281,7 +281,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 static void ReturnAbort(FILE* fout, FbleCode* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc)
 {
   fprintf(fout, "{\n");
-  fprintf(fout, "    ReportAbort(%s, %d, %d);\n", lmsg, loc.line, loc.col);
+  fprintf(fout, "    ReportAbort(%s, %zi, %zi);\n", lmsg, loc.line, loc.col);
   fprintf(fout, "    return %s_%04zx_abort(heap, s, a, l, %zi);\n",
       function_label, code->_base.profile_block_id, pc);
   fprintf(fout, "  }\n");

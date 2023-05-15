@@ -25,12 +25,12 @@ typedef struct {
   /**
    * The line number.
    */
-  int line;
+  size_t line;
 
   /**
    * The column number.
    */
-  int col;
+  size_t col;
 } FbleLoc;
 
 /**
@@ -40,8 +40,8 @@ typedef struct {
  *
  *  @arg[const char*] source
  *   The name of the source file for the location. Borrowed.
- *  @arg[int][line] The line within the file.
- *  @arg[int][col ] The column within the line.
+ *  @arg[size_t][line] The line within the file.
+ *  @arg[size_t][col ] The column within the line.
  *
  *  @returns FbleLoc
  *   An FbleLoc with given source, line, and col. A copy of the source string
@@ -51,7 +51,7 @@ typedef struct {
  *   Allocates resources for an FbleLoc that should be freed using FbleFreeLoc
  *   when no longer needed.
  */
-FbleLoc FbleNewLoc(const char* source, int line, int col);
+FbleLoc FbleNewLoc(const char* source, size_t line, size_t col);
 
 /**
  * @func[FbleCopyLoc] Copies an Fble Loc

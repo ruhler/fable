@@ -751,7 +751,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleName* name = &profile->blocks.xs[i]->name;
     PrintBlockName(fout, profile, profile->blocks.xs[i]->block.id);
-    fprintf(fout, ": %s:%d:%d\n", name->loc.source->str, name->loc.line, name->loc.col);
+    fprintf(fout, ": %s:%zi:%zi\n", name->loc.source->str, name->loc.line, name->loc.col);
   }
   fprintf(fout, "\n");
 }

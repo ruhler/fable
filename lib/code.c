@@ -219,7 +219,7 @@ void FbleFreeCode(FbleCode* code)
  */
 static void PrintLoc(FILE* fout, FbleLoc loc)
 {
-  fprintf(fout, "  @ %s:%i:%i\n", loc.source->str, loc.line, loc.col);
+  fprintf(fout, "  @ %s:%zi:%zi\n", loc.source->str, loc.line, loc.col);
 }
 
 // See documentation in fble-compile.h.
@@ -559,7 +559,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "Profile Blocks:\n");
   for (size_t i = 0; i < module->profile_blocks.size; ++i) {
     FbleName name = module->profile_blocks.xs[i];
-    fprintf(fout, "  [%04zx] %s %s:%d:%d\n", i, name.name->str,
+    fprintf(fout, "  [%04zx] %s %s:%zi:%zi\n", i, name.name->str,
         name.loc.source->str, name.loc.line, name.loc.col);
   }
 
