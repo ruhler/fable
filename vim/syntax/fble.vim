@@ -14,7 +14,7 @@ let s:quoted = "'\\(\\(\\_[^']\\|''\\)*'\\)"
 let s:word = '\(' . s:unquoted . '\|' . s:quoted . '\)'
 
 exec 'syn match fbleQuotedWord "' . s:quoted .'"'
-exec 'syn match fbleComment "#.*"'
+exec 'syn match fbleComment "#.*" contains=@Spell'
 exec 'syn match fbleType "' . s:word . '@"'
 exec 'syn match fbleLabel "' . s:word . ':"'
 exec 'syn match fbleLabel ":"'
