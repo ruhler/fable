@@ -253,8 +253,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
     FbleName block_name = profile_blocks.xs[block->_base.profile_block_id];
-    fprintf(fout, "%s[%04zx] args[%zi] statics[%zi] locals[%zi] tail_call_buffer_size[%zi]",
-        block_name.name->str, block->_base.profile_block_id,
+    fprintf(fout, "%s[%04zx]\n", block_name.name->str, block->_base.profile_block_id);
+    fprintf(fout, "  args: %zi, statics: %zi, locals: %zi, tail_call_buffer_size: %zi\n",
         block->_base.num_args, block->_base.num_statics, block->num_locals,
         block->_base.tail_call_buffer_size);
     PrintLoc(fout, block_name.loc);

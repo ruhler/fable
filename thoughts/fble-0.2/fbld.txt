@@ -346,3 +346,16 @@ day?
 
 Another challenge: implementing the @code tag. Can we reuse source-highlight
 from within fble? How?
+
+I think we need exec support to be able to compose with other programs. That
+will let us reuse source-highlight (assuming we can find the path to it in some reasonable way?) and buildstamp (again, assuming we can find the path to it).
+
+I'm thinking, for exec, also have a 'fifo' function to return IStream/OStream
+pairs, then pass stdin and stdout streams as an argument to exec along with
+command line arguments. It forks off the process to execute in the background.
+Maybe we return an M@<Int@> to be able to block on and fetch the exit status of
+the process.
+
+Another approach would be to re-implement source-highlight equivalent in fble.
+Sounds like an interesting program to try and write. The trouble is, there are
+a lot of languages to have to support.

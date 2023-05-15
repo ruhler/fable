@@ -2,9 +2,6 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
-* Consider printing args, statics, locals, location on next line in
-  code dump, rather than the same line the function name is printed.
-
 * Fbld: Specify what happens if block structured text is missing a space on
   the same line arg. For example:
   @foo[a]b
