@@ -18,11 +18,11 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+@ Command@ = /Fbld/Types%.Command@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
 @ String@ = /Fbld/Types%.String@;
 % Start = /Fbld/Types%.Start;
-
 
 
 # Main --
@@ -39,8 +39,20 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   @ Core@ = Core.Core@;
 
   Core@ core = /Fbld/Html%(m)(stdio.out).Core;
-  Markup@ inline_markup = Core.InlineMarkup(core);
+
+  # TODO: Properly implement @FbleVersion, @Buildstamp
+  Markup@ inline_markup =
+    Markup.Insert(
+      Markup.Insert(Core.InlineMarkup(core),
+        Str|'FbleVersion', (Invoke@<M@> i, Invoke@<M@> b, Command@ c) {
+          core.text(String@(Str|'??FbleVersion??', c.name.loc));
+        }),
+      Str|'BuildStamp', (Invoke@<M@> i, Invoke@<M@> b, Command@ c) {
+        core.text(String@(Str|'??BuildStamp??', c.name.loc));
+      });
+
   Markup@ block_markup = Core.BlockMarkup(core);
+
   Invoke@<M@> inline = Markup.Invoke(inline_markup);
   Invoke@<M@> block = Markup.Invoke(block_markup);
   % Invoke = /Fbld/Invoke%(m);

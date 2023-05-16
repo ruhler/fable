@@ -2,6 +2,13 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Fbld:
+ - Re-implement in fble.
+ - Implement @FbleVersion and @Buildstamp properly.
+ - Implement source highlighting for @code.
+ - Replace roff backend with custom backs end to txt and markdown.
+ - Generate README.md in source directory to include with distribution.
+
 * Fbld: Specify what happens if block structured text is missing a space on
   the same line arg. For example:
   @foo[a]b
@@ -80,11 +87,6 @@ Things to consider doing for the fble-0.2 release.
  - Clarify that '%' is needed for module paths in early tutorials.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
-
-* Fbld:
- - Re-implement in fble.
- - Replace roff backend with custom backs end to txt and markdown.
- - Generate README.md in source directory to include with distribution.
 
 * Anything we can do to help detect stack smashers?
  - Like, limit stack depth in fble and print a nice message before running

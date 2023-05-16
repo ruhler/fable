@@ -67,6 +67,14 @@
     m.return(Ok(Unit));
   };
 
+  (String@, String@) { R@<M@>; }
+  Code = (String@ lang, String@ text) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<pre>'));
+    Unit@ _ <- m.do(O.PutStr(out, text.str));
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</pre>'));
+    m.return(Ok(Unit));
+  };
+
   (R@<M@>, R@<M@>) { R@<M@>; }
   Def = (R@<M@> name, R@<M@> value) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<dl><dt>'));
@@ -136,6 +144,7 @@ p { font-size: 1em; }
     a: A,
     par: Par,
     item: Item,
+    code: Code,
     def: Def,
     definition: Def,
     section: Section,

@@ -6,7 +6,6 @@
 
 <@>% Length = /Core/List/Length%.Length;
 
-@ Str@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
@@ -15,6 +14,10 @@
 @ Command@ = /Fbld/Types%.Command@;
 @ String@ = /Fbld/Types%.String@;
 <@>% Err = /Fbld/Types%.Err;
+
+(String@) { String@; } Unescape = (String@ s) {
+  String@(/Fbld/Unescape%.Unescape(s.str), s.loc);
+};
 
 <<@>@ M@>(Monad@<M@> m) {
   % Invoke = /Fbld/Invoke%(m);
@@ -55,6 +58,12 @@
     # A list item.
     # @param text  The text of the item.
     (MRU@) { MRU@; } item,
+
+    # @code[ESCAPED language][ESCAPED text]
+    # A source code listing.
+    # @param language  The lanuage, e.g. c, python, sh, fble, vim, etc.
+    # @param text  The source code text.
+    (String@, String@) { MRU@; } code,
 
     # @def[INLINE name][INLINE value]
     # A short form definition of a term.
@@ -104,8 +113,7 @@
       });
 
       String@ arg = command.args.cons.head;
-      Str@ unescaped = /Fbld/Unescape%.Unescape(arg.str);
-      f(String@(unescaped, arg.loc));
+      f(Unescape(arg));
     };
   };
 
@@ -140,6 +148,22 @@
     };
   };
 
+  # @<tag>[ESCAPED][ESCAPED] helper function
+  ((String@, String@) { MRU@; }) { Invoke@; } EE = ((String@, String@) { MRU@; } f) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ a = command.args.cons.head;
+      String@ b = command.args.cons.tail.cons.head;
+      f(Unescape(a), Unescape(b));
+    };
+  };
+
   # @<tag>[INLINE] helper function
   ((MRU@) { MRU@; }) { Invoke@; } I = ((MRU@) { MRU@; } f) {
     (Invoke@ inline, Invoke@ block, Command@ command) {
@@ -169,6 +193,7 @@
       Entry(Str|'', I(core.par)),
       Entry(Str|'par', I(core.par)),
       Entry(Str|'item', B(core.item)),
+      Entry(Str|'code', EE(core.code)),
       Entry(Str|'def', IB(core.def)),
       Entry(Str|'definition', IB(core.definition)),
       Entry(Str|'section', IB(core.section)),
