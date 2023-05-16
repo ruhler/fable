@@ -278,8 +278,8 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
     fprintf(fout, "  .word %i\n", names.xs[i].space);     // space
     fprintf(fout, "  .zero 4\n");                         // padding
     fprintf(fout, "  .xword " LABEL "\n", src_ids[i]);    // loc.src
-    fprintf(fout, "  .word %zi\n", names.xs[i].loc.line); // loc.line
-    fprintf(fout, "  .word %zi\n", names.xs[i].loc.col);  // loc.col
+    fprintf(fout, "  .xword %zi\n", names.xs[i].loc.line); // loc.line
+    fprintf(fout, "  .xword %zi\n", names.xs[i].loc.col);  // loc.col
   }
   return id;
 }
@@ -310,8 +310,8 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
   fprintf(fout, "  .xword 1\n");                  // .refcount
   fprintf(fout, "  .xword 2004903300\n");         // .magic
   fprintf(fout, "  .xword " LABEL "\n", src_id);        // path->loc.src
-  fprintf(fout, "  .word %zi\n", path->loc.line);
-  fprintf(fout, "  .word %zi\n", path->loc.col);
+  fprintf(fout, "  .xword %zi\n", path->loc.line);
+  fprintf(fout, "  .xword %zi\n", path->loc.col);
   fprintf(fout, "  .xword %zi\n", path->path.size);
   fprintf(fout, "  .xword " LABEL "\n", names_id);
   return path_id;
