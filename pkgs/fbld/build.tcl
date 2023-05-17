@@ -18,4 +18,9 @@ namespace eval "pkgs/fbld" {
   build $::b/pkgs/fbld/fbld.html \
     "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld" \
     "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld > $::b/pkgs/fbld/fbld.html"
+
+  # Fble Spec www.
+  build $::b/pkgs/fbld/fble.html \
+    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld" \
+    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld > $::b/pkgs/fbld/fbld.html"
 }

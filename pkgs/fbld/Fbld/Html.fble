@@ -52,6 +52,48 @@
     m.return(Ok(Unit));
   };
 
+  (String@, R@<M@>) { R@<M@>; } Label = (String@ id, R@<M@> text) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<a id="'));
+    Unit@ _ <- DoR(Text(id));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
+    Unit@ _ <- DoR(text);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
+    m.return(Ok(Unit));
+  };
+
+  (String@, R@<M@>) { R@<M@>; } Ref = (String@ id, R@<M@> caption) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="#'));
+    Unit@ _ <- DoR(Text(id));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
+    Unit@ _ <- DoR(caption);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
+    m.return(Ok(Unit));
+  };
+
+  (String@, R@<M@>) { R@<M@>; } Url = (String@ url, R@<M@> text) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
+    Unit@ _ <- DoR(Text(url));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
+    Unit@ _ <- DoR(text);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
+    m.return(Ok(Unit));
+  };
+
+  (String@, R@<M@>) { R@<M@>; } File = (String@ file, R@<M@> text) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
+    Unit@ _ <- DoR(Text(file));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'"><code>'));
+    Unit@ _ <- DoR(text);
+    Unit@ _ <- m.do(O.PutLine(out, Str|'</code></a>'));
+    m.return(Ok(Unit));
+  };
+
+  (String@, R@<M@>) { R@<M@>; } Fbld = (String@ file, R@<M@> text) {
+    # TODO: Convert filename from *.fbld to *.html
+    String@ fbld = file;
+    File(fbld, text);
+  };
+
   (R@<M@>) { R@<M@>; }
   Par = (R@<M@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<p>'));
@@ -140,8 +182,9 @@ p { font-size: 1em; }
 
   Core@ Core = @(
     text: Text,
-    l: L,
-    a: A,
+    l: L, a: A,
+    label: Label, ref: Ref,
+    url: Url, file: File, fbld: Fbld,
     par: Par,
     item: Item,
     code: Code,

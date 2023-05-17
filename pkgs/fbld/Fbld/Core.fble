@@ -54,31 +54,31 @@
     # For use as a target of local or external references.
     # @param id  The id to use for the lable.
     # @param text  The text to display for the label target.
-    #(String@, MRU@) { MRU@; } label,
+    (String@, MRU@) { MRU@; } label,
 
     # @ref[ESCAPED id][INLINE caption]
     # Refer to a locally defined label.
     # @param id  The id of a @label to link to.
     # @param caption  Text to display.
-    #(String@, MRU@) { MRU@; } ref,
+    (String@, MRU@) { MRU@; } ref,
 
     # @url[ESCAPED url][? INLINE text]
     # Reference a url.
     # @param url  The target url.
     # @param text  Optional text to display. Defaults to the url.
-    #(String@, MRU@) { MRU@; } url,
+    (String@, MRU@) { MRU@; } url,
 
     # @file[ESCAPED file][? INLINE text]
     # Reference a file on disk.
     # @param file  The path to the file.
     # @param text  Optional text to display. Defaults to the file.
-    #(String@, MRU@) { MRU@; } file,
+    (String@, MRU@) { MRU@; } file,
 
     # @fbld[ESCAPED file][? INLINE text]
     # Reference to another fbld based document.
     # @param file  The path to the fbld file, optionally followed by #<id>.
     # @param text  Optional text to display. Defaults to the file.
-    #(String@, MRU@) { MRU@; } fbld,
+    (String@, MRU@) { MRU@; } fbld,
 
     # @par[INLINE text]
     # A paragraph of text.
@@ -166,6 +166,29 @@
     };
   };
 
+  # @<tag>[ESCAPED][? INLINE] helper function, where the optional argument
+  # defaults to the first argument value.
+  ((String@, MRU@) { MRU@; }) { Invoke@; }
+  EmI = ((String@, MRU@) { MRU@; } f) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args).?(true: {
+        String@ a1 = command.args.cons.head;
+        f(Unescape(a1), Invoke.Inline(inline, block, a1));
+      });
+
+      /Core/Int/Eq%.Eq(Int|2, num_args).?(true: {
+        String@ a1 = command.args.cons.head;
+        String@ a2 = command.args.cons.tail.cons.head;
+        f(Unescape(a1), Invoke.Inline(inline, block, a2));
+      });
+
+      m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 1 or 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+    };
+  };
+
   # @<tag>[ESCAPED] helper function
   ((String@) { MRU@; }) { Invoke@; } E = ((String@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, String@ arg <- A1;
@@ -190,6 +213,12 @@
     f(Unescape(a1), Unescape(a2));
   };
 
+  # @<tag>[ESCAPED][INLINE] helper function
+  ((String@, MRU@) { MRU@; }) { Invoke@; } EI = ((String@, MRU@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+    f(Unescape(a1), Invoke.Inline(inline, block, a2));
+  };
+
   # @<tag>[INLINE][BLOCK] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
@@ -201,7 +230,12 @@
       Entry(Str|'', E(core.text)),
       Entry(Str|'text', E(core.text)),
       Entry(Str|'l', E(core.l)),
-      Entry(Str|'a', E(core.a))
+      Entry(Str|'a', E(core.a)),
+      Entry(Str|'label', EI(core.label)),
+      Entry(Str|'ref', EI(core.ref)),
+      Entry(Str|'url', EmI(core.url)),
+      Entry(Str|'file', EmI(core.file)),
+      Entry(Str|'fbld', EmI(core.fbld))
     ];
   };
 
