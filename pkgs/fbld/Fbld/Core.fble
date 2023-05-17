@@ -49,6 +49,37 @@
     # @param text  The text to highlight.
     (String@) { MRU@; } a,
 
+    # @label[ESCAPED id][INLINE text]
+    # Give a label to a point in the text.
+    # For use as a target of local or external references.
+    # @param id  The id to use for the lable.
+    # @param text  The text to display for the label target.
+    #(String@, MRU@) { MRU@; } label,
+
+    # @ref[ESCAPED id][INLINE caption]
+    # Refer to a locally defined label.
+    # @param id  The id of a @label to link to.
+    # @param caption  Text to display.
+    #(String@, MRU@) { MRU@; } ref,
+
+    # @url[ESCAPED url][? INLINE text]
+    # Reference a url.
+    # @param url  The target url.
+    # @param text  Optional text to display. Defaults to the url.
+    #(String@, MRU@) { MRU@; } url,
+
+    # @file[ESCAPED file][? INLINE text]
+    # Reference a file on disk.
+    # @param file  The path to the file.
+    # @param text  Optional text to display. Defaults to the file.
+    #(String@, MRU@) { MRU@; } file,
+
+    # @fbld[ESCAPED file][? INLINE text]
+    # Reference to another fbld based document.
+    # @param file  The path to the fbld file, optionally followed by #<id>.
+    # @param text  Optional text to display. Defaults to the file.
+    #(String@, MRU@) { MRU@; } fbld,
+
     # @par[INLINE text]
     # A paragraph of text.
     # @param text  The body of the paragraph.
@@ -102,81 +133,67 @@
     (MRU@, MRU@) { MRU@; } doc
   );
 
+  # Single argument helper function
+  ((Invoke@, Invoke@, String@) { MRU@; }) { Invoke@; }
+  A1 = ((Invoke@, Invoke@, String@) { MRU@; } f) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 1 arg, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ arg = command.args.cons.head;
+      f(inline, block, arg);
+    };
+  };
+
+  # Two argument helper function
+  ((Invoke@, Invoke@, String@, String@) { MRU@; }) { Invoke@; }
+  A2 = ((Invoke@, Invoke@, String@, String@) { MRU@; } f) {
+    (Invoke@ inline, Invoke@ block, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
+        m.return(Err<Unit@>(String@(Strs[
+              Str|'expected 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      String@ a1 = command.args.cons.head;
+      String@ a2 = command.args.cons.tail.cons.head;
+      f(inline, block, a1, a2);
+    };
+  };
+
   # @<tag>[ESCAPED] helper function
   ((String@) { MRU@; }) { Invoke@; } E = ((String@) { MRU@; } f) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 1 arg, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
-
-      String@ arg = command.args.cons.head;
-      f(Unescape(arg));
-    };
-  };
-
-  # @<tag>[BLOCK] helper function
-  ((MRU@) { MRU@; }) { Invoke@; } B = ((MRU@) { MRU@; } f) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 1 arg, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
-
-      String@ arg = command.args.cons.head;
-      f(Invoke.Block(inline, block, arg));
-    };
-  };
-
-  # @<tag>[INLINE][BLOCK] helper function
-  ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 2 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
-
-      String@ i = command.args.cons.head;
-      String@ b = command.args.cons.tail.cons.head;
-      f(Invoke.Inline(inline, block, i), Invoke.Block(inline, block, b));
-    };
-  };
-
-  # @<tag>[ESCAPED][ESCAPED] helper function
-  ((String@, String@) { MRU@; }) { Invoke@; } EE = ((String@, String@) { MRU@; } f) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 2 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
-
-      String@ a = command.args.cons.head;
-      String@ b = command.args.cons.tail.cons.head;
-      f(Unescape(a), Unescape(b));
-    };
+    Invoke@ inline, Invoke@ block, String@ arg <- A1;
+    f(Unescape(arg));
   };
 
   # @<tag>[INLINE] helper function
   ((MRU@) { MRU@; }) { Invoke@; } I = ((MRU@) { MRU@; } f) {
-    (Invoke@ inline, Invoke@ block, Command@ command) {
-      Int@ num_args = Length(command.args);
-      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
-              Str|'expected 1 arg, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
-      });
+    Invoke@ inline, Invoke@ block, String@ arg <- A1;
+    f(Invoke.Inline(inline, block, arg));
+  };
 
-      String@ arg = command.args.cons.head;
-      f(Invoke.Inline(inline, block, arg));
-    };
+  # @<tag>[BLOCK] helper function
+  ((MRU@) { MRU@; }) { Invoke@; } B = ((MRU@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, String@ arg <- A1;
+    f(Invoke.Block(inline, block, arg));
+  };
+
+  # @<tag>[ESCAPED][ESCAPED] helper function
+  ((String@, String@) { MRU@; }) { Invoke@; } EE = ((String@, String@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+    f(Unescape(a1), Unescape(a2));
+  };
+
+  # @<tag>[INLINE][BLOCK] helper function
+  ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+    f(Invoke.Inline(inline, block, a1), Invoke.Block(inline, block, a2));
   };
 
   (Core@) { Markup@; } InlineMarkup = (Core@ core) {
