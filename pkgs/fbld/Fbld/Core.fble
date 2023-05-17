@@ -219,6 +219,12 @@
     f(Unescape(a1), Invoke.Inline(inline, block, a2));
   };
 
+  # @<tag>[INLINE][INLINE] helper function
+  ((MRU@, MRU@) { MRU@; }) { Invoke@; } II = ((MRU@, MRU@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+    f(Invoke.Inline(inline, block, a1), Invoke.Inline(inline, block, a2));
+  };
+
   # @<tag>[INLINE][BLOCK] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
@@ -245,7 +251,7 @@
       Entry(Str|'par', I(core.par)),
       Entry(Str|'item', B(core.item)),
       Entry(Str|'code', EE(core.code)),
-      Entry(Str|'def', IB(core.def)),
+      Entry(Str|'def', II(core.def)),
       Entry(Str|'definition', IB(core.definition)),
       Entry(Str|'section', IB(core.section)),
       Entry(Str|'subsection', IB(core.subsection)),
