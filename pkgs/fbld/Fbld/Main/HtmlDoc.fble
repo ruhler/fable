@@ -57,7 +57,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
   Invoke@<M@> inline = Markup.Invoke(inline_markup);
   Invoke@<M@> block = Markup.Invoke(block_markup);
-  % Invoke = /Fbld/Invoke%(m);
+  % Run = /Fbld/Run%(m);
 
   (List@<String@> args) {
     args.?(nil: {
@@ -76,7 +76,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     });
 
     String@ contents <- m.do(I.GetText(fin.just));
-    Result@<Unit@> r <- m.do(Invoke.Block(inline, block, StringL@(contents, Start(filename))));
+    Result@<Unit@> r <- m.do(Run.Block(inline, block, StringL@(contents, Start(filename))));
     r.?(err: {
       String@ msg = Report(r.err.loc, r.err.str);
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));

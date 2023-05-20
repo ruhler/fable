@@ -20,6 +20,7 @@
   <@>@ MR@ = ResultM.MR@;
   Monad@<MR@> mr = ResultM.Monad(m);
 
+  # Interprets and executes inline structured text.
   (Invoke@<M@>, Invoke@<M@>, StringL@) { MR@<Unit@>; }
   Inline = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
@@ -32,6 +33,7 @@
       });
   };
 
+  # Interprets and executes block structured text.
   (Invoke@<M@>, Invoke@<M@>, StringL@) { MR@<Unit@>; }
   Block = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);

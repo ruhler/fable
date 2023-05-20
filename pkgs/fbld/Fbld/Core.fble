@@ -23,7 +23,7 @@
 };
 
 <<@>@ M@>(Monad@<M@> m) {
-  % Invoke = /Fbld/Invoke%(m);
+  % Run = /Fbld/Run%(m);
 
   @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
   @ Invoke@ = /Fbld/Types%.Invoke@<M@>;
@@ -177,13 +177,13 @@
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|1, num_args).?(true: {
         StringL@ a1 = command.args.cons.head;
-        f(Unescape(a1), Invoke.Inline(inline, block, a1));
+        f(Unescape(a1), Run.Inline(inline, block, a1));
       });
 
       /Core/Int/Eq%.Eq(Int|2, num_args).?(true: {
         StringL@ a1 = command.args.cons.head;
         StringL@ a2 = command.args.cons.tail.cons.head;
-        f(Unescape(a1), Invoke.Inline(inline, block, a2));
+        f(Unescape(a1), Run.Inline(inline, block, a2));
       });
 
       m.return(Err<Unit@>(StringL@(Strs[
@@ -201,13 +201,13 @@
   # @<tag>[INLINE] helper function
   ((MRU@) { MRU@; }) { Invoke@; } I = ((MRU@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, StringL@ arg <- A1;
-    f(Invoke.Inline(inline, block, arg));
+    f(Run.Inline(inline, block, arg));
   };
 
   # @<tag>[BLOCK] helper function
   ((MRU@) { MRU@; }) { Invoke@; } B = ((MRU@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, StringL@ arg <- A1;
-    f(Invoke.Block(inline, block, arg));
+    f(Run.Block(inline, block, arg));
   };
 
   # @<tag>[ESCAPED][ESCAPED] helper function
@@ -219,19 +219,19 @@
   # @<tag>[ESCAPED][INLINE] helper function
   ((StringL@, MRU@) { MRU@; }) { Invoke@; } EI = ((StringL@, MRU@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, StringL@ a1, StringL@ a2 <- A2;
-    f(Unescape(a1), Invoke.Inline(inline, block, a2));
+    f(Unescape(a1), Run.Inline(inline, block, a2));
   };
 
   # @<tag>[INLINE][INLINE] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } II = ((MRU@, MRU@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, StringL@ a1, StringL@ a2 <- A2;
-    f(Invoke.Inline(inline, block, a1), Invoke.Inline(inline, block, a2));
+    f(Run.Inline(inline, block, a1), Run.Inline(inline, block, a2));
   };
 
   # @<tag>[INLINE][BLOCK] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
     Invoke@ inline, Invoke@ block, StringL@ a1, StringL@ a2 <- A2;
-    f(Invoke.Inline(inline, block, a1), Invoke.Block(inline, block, a2));
+    f(Run.Inline(inline, block, a1), Run.Block(inline, block, a2));
   };
 
   (Core@) { Markup@; } InlineMarkup = (Core@ core) {
