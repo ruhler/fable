@@ -1,7 +1,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ StringL@ = /Fbld/Types%.StringL@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
 @ Command@ = /Fbld/Types%.Command@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 

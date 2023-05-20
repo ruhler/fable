@@ -27,7 +27,8 @@
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
-@ StringL@ = /Fbld/Types%.StringL@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
 @ Command@ = /Fbld/Types%.Command@;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;

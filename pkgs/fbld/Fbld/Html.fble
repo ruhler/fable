@@ -11,7 +11,8 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ StringL@ = /Fbld/Types%.StringL@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
 <<@>@>@ R@ = /Fbld/Types%.R@;
 <@>% Ok = /Fbld/Types%.Ok;
 <<@>@>% DoResult = /Fbld/Types%.DoResult;

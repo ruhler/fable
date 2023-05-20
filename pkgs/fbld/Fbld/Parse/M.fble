@@ -13,7 +13,8 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 % Advance = /Fbld/Loc%.Advance;
 
-@ StringL@ = /Fbld/Types%.StringL@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
 <@>@ Result@ = /Fbld/Types%.Result@;
 <@>% Ok = /Fbld/Types%.Ok;
 <@>% Err = /Fbld/Types%.Err;

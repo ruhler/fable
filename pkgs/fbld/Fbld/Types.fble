@@ -3,14 +3,9 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-@ String@ = /Core/String%.String@;
-
 @ Unit@ = /Core/Unit%.Unit@;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
-
-# A string with location information.
-@ StringL@ = *(String@ str, Loc@ loc);
+@ StringL@ = /Fbld/StringL%.StringL@;
 
 # The result of parsing or invoking a command.
 <@>@ Result@ = <@ T@> { +(T@ ok, StringL@ err); };
@@ -49,4 +44,4 @@ DoResult = <<@>@ M@>(Monad@<M@> m) {
   I@;
 };
 
-@(StringL@, Result@, Ok, Err, DoResult, Command@, R@, Invoke@);
+@(Result@, Ok, Err, DoResult, Command@, R@, Invoke@);

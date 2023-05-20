@@ -1,0 +1,9 @@
+
+@ String@ = /Core/String%.String@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+# A string with location information.
+@ StringL@ = *(String@ str, Loc@ loc);
+
+@(StringL@);

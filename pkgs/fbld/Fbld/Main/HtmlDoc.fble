@@ -21,10 +21,11 @@
 % Report = /Fbld/Loc%.Report;
 % Start = /Fbld/Loc%.Start;
 
+@ StringL@ = /Fbld/StringL%.StringL@;
+
 @ Command@ = /Fbld/Types%.Command@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
-@ StringL@ = /Fbld/Types%.StringL@;
 
 
 # Main --
