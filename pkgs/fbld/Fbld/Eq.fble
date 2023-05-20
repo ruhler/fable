@@ -10,7 +10,8 @@
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
-<@>@ Result@ = /Fbld/Types%.Result@;
+<@>@ Result@ = /Fbld/Result%.Result@;
+
 @ Command@ = /Fbld/Types%.Command@;
 
 Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {

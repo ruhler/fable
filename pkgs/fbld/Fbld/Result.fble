@@ -1,0 +1,15 @@
+
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+# A result of an operation that may fail.
+<@>@ Result@ = <@ T@> { +(T@ ok, StringL@ err); };
+
+<@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
+  Result@<T@>(ok: x);
+};
+
+<@ T@>(StringL@) { Result@<T@>; } Err = <@ T@>(StringL@ msg) {
+  Result@<T@>(err: msg);
+};
+
+@(Result@, Ok, Err);

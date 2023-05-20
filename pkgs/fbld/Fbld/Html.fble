@@ -13,8 +13,10 @@
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
+<@>% Ok = /Fbld/Result%.Ok;
+
 <<@>@>@ R@ = /Fbld/Types%.R@;
-<@>% Ok = /Fbld/Types%.Ok;
+
 <<@>@>% DoResult = /Fbld/Types%.DoResult;
 
 <<@>@ M@>(Monad@<M@> m)(OStream@<M@> out) {

@@ -13,11 +13,11 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 % Advance = /Fbld/Loc%.Advance;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+<@>% Err = /Fbld/Result%.Err;
 
-<@>@ Result@ = /Fbld/Types%.Result@;
-<@>% Ok = /Fbld/Types%.Ok;
-<@>% Err = /Fbld/Types%.Err;
+@ StringL@ = /Fbld/StringL%.StringL@;
 
 <@>@ S@ = <@ T@> { *(StringL@ in, T@ x); };
 

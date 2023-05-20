@@ -7,12 +7,13 @@
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
-<@>@ Result@ = /Fbld/Types%.Result@;
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+<@>% Err = /Fbld/Result%.Err;
+
 <<@>@>@ R@ = /Fbld/Types%.R@;
 @ Command@ = /Fbld/Types%.Command@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
-<@>% Ok = /Fbld/Types%.Ok;
-<@>% Err = /Fbld/Types%.Err;
 <<@>@>% DoResult = /Fbld/Types%.DoResult;
 
 <<@>@ M@>(Monad@<M@> m) {

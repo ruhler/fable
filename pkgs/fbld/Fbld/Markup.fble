@@ -13,8 +13,9 @@
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
+<@>% Err = /Fbld/Result%.Err;
+
 @ Command@ = /Fbld/Types%.Command@;
-<@>% Err = /Fbld/Types%.Err;
 
 <<@>@ M@>(Monad@<M@> m) {
   @ Invoke@ = /Fbld/Types%.Invoke@<M@>;

@@ -20,8 +20,9 @@
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
-<@>@ Result@ = /Fbld/Types%.Result@;
-<@>% Ok = /Fbld/Types%.Ok;
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+
 @ Command@ = /Fbld/Types%.Command@;
 
 % Inline = /Fbld/Parse%.Inline;

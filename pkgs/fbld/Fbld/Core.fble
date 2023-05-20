@@ -13,8 +13,9 @@
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
+<@>% Err = /Fbld/Result%.Err;
+
 @ Command@ = /Fbld/Types%.Command@;
-<@>% Err = /Fbld/Types%.Err;
 
 (StringL@) { StringL@; } Unescape = (StringL@ s) {
   StringL@(/Fbld/Unescape%.Unescape(s.str), s.loc);
@@ -23,7 +24,7 @@
 <<@>@ M@>(Monad@<M@> m) {
   % Invoke = /Fbld/Invoke%(m);
 
-  @ MRU@ = M@</Fbld/Types%.Result@<Unit@>>;
+  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
   @ Invoke@ = /Fbld/Types%.Invoke@<M@>;
 
   % MarkupModule = /Fbld/Markup%(m);

@@ -3,8 +3,9 @@
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
+<@>@ Result@ = /Fbld/Result%.Result@;
+
 @ Command@ = /Fbld/Types%.Command@;
-<@>@ Result@ = /Fbld/Types%.Result@;
 
 <@>% Run = /Fbld/Parse/M%.Run;
 

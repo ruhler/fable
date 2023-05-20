@@ -5,18 +5,11 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Err = /Fbld/Result%.Err;
+
 @ StringL@ = /Fbld/StringL%.StringL@;
 
-# The result of parsing or invoking a command.
-<@>@ Result@ = <@ T@> { +(T@ ok, StringL@ err); };
-
-<@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@<T@>(ok: x);
-};
-
-<@ T@>(StringL@) { Result@<T@>; } Err = <@ T@>(StringL@ msg) {
-  Result@<T@>(err: msg);
-};
 
 <<@>@ M@>(Monad@<M@>)
 <@ A@>(M@<Result@<A@>>)<@ B@>((A@) { M@<Result@<B@>>; }) { M@<Result@<B@>>; }
@@ -44,4 +37,4 @@ DoResult = <<@>@ M@>(Monad@<M@> m) {
   I@;
 };
 
-@(Result@, Ok, Err, DoResult, Command@, R@, Invoke@);
+@(DoResult, Command@, R@, Invoke@);
