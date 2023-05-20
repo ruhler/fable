@@ -13,7 +13,7 @@
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
 
-<<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
+<<@>@>@ Invoke@ = /Fbld/Invoke%.Invoke@;
 
 <<@>@ M@>(Monad@<M@> m) {
   % ResultM = /Fbld/ResultM%<M@>;

@@ -26,7 +26,7 @@
   % Run = /Fbld/Run%(m);
 
   @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
-  @ Invoke@ = /Fbld/Types%.Invoke@<M@>;
+  @ Invoke@ = /Fbld/Invoke%.Invoke@<M@>;
 
   % MarkupModule = /Fbld/Markup%(m);
   @ Markup@ = MarkupModule.Markup@;
