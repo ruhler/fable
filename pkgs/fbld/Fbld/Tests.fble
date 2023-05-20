@@ -16,7 +16,8 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-@ Loc@ = /Fbld/Types%.Loc@;
+@ Loc@ = /Fbld/Loc%.Loc@;
+
 @ StringL@ = /Fbld/Types%.StringL@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 <@>% Ok = /Fbld/Types%.Ok;

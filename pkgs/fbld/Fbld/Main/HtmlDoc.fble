@@ -18,11 +18,13 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+% Report = /Fbld/Loc%.Report;
+% Start = /Fbld/Loc%.Start;
+
 @ Command@ = /Fbld/Types%.Command@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
 @ StringL@ = /Fbld/Types%.StringL@;
-% Start = /Fbld/Types%.Start;
 
 
 # Main --
@@ -76,10 +78,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     String@ contents <- m.do(I.GetText(fin.just));
     Result@<Unit@> r <- m.do(Invoke.Block(inline, block, StringL@(contents, Start(filename))));
     r.?(err: {
-      String@ msg = Strs[r.err.loc.file, Str|':',
-        /Core/Int/Show%.Show(r.err.loc.line), Str|':',
-        /Core/Int/Show%.Show(r.err.loc.col), Str|': ',
-        r.err.str];
+      String@ msg = Report(r.err.loc, r.err.str);
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });

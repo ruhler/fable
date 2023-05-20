@@ -1,7 +1,4 @@
 
-@ Int@ = /Core/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
-
 <@>@ List@ = /Core/List%.List@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
@@ -10,13 +7,7 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-
-# Location information used for error messages.
-@ Loc@ = *(String@ file, Int@ line, Int@ col, Int@ indent);
-
-(String@) { Loc@; } Start = (String@ file) {
-  Loc@(file, Int|1, Int|1, Int|0);
-};
+@ Loc@ = /Fbld/Loc%.Loc@;
 
 # A string with location information.
 @ StringL@ = *(String@ str, Loc@ loc);
@@ -58,4 +49,4 @@ DoResult = <<@>@ M@>(Monad@<M@> m) {
   I@;
 };
 
-@(Loc@, Start, StringL@, Result@, Ok, Err, DoResult, Command@, R@, Invoke@);
+@(StringL@, Result@, Ok, Err, DoResult, Command@, R@, Invoke@);

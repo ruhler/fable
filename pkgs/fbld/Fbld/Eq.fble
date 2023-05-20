@@ -6,7 +6,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ Loc@ = /Fbld/Types%.Loc@;
+@ Loc@ = /Fbld/Loc%.Loc@;
+
 @ StringL@ = /Fbld/Types%.StringL@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 @ Command@ = /Fbld/Types%.Command@;

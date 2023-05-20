@@ -22,7 +22,8 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Loc@ = /Fbld/Types%.Loc@;
+@ Loc@ = /Fbld/Loc%.Loc@;
+
 @ StringL@ = /Fbld/Types%.StringL@;
 @ Command@ = /Fbld/Types%.Command@;
 

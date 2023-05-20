@@ -1,0 +1,37 @@
+
+@ Char@ = /Core/Char%.Char@;
+% IsNewline = /Core/Char/Type%.IsNewline;
+
+@ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Inc;
+% Int = /Core/Int/Lit%.Int;
+
+@ String@ = /Core/String%.String@;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
+# Location information used for error messages.
+@ Loc@ = *(String@ file, Int@ line, Int@ col, Int@ indent);
+
+# Location representing the start of a file.
+(String@) { Loc@; } Start = (String@ file) {
+  Loc@(file, Int|1, Int|1, Int|0);
+};
+
+# Advance a location past the given character.
+(Loc@, Char@) { Loc@; } Advance = (Loc@ l, Char@ c) {
+  IsNewline(c).?(true: {
+    l.@(line: Incr(l.line), col: Incr(l.indent));
+  });
+  l.@(col: Incr(l.col));
+};
+
+# Prefix a message with location information.
+(Loc@, String@) { String@; } Report = (Loc@ l, String@ msg) {
+  Strs[l.file, Str|':',
+    /Core/Int/Show%.Show(l.line), Str|':',
+    /Core/Int/Show%.Show(l.col), Str|': ',
+    msg];
+};
+
+@(Loc@, Start, Advance, Report);
