@@ -12,7 +12,7 @@
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
-@ Str@ = /Core/String%.String@;
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
@@ -57,26 +57,26 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   Invoke@<M@> block = Markup.Invoke(block_markup);
   % Invoke = /Fbld/Invoke%(m);
 
-  (List@<Str@> args) {
+  (List@<String@> args) {
     args.?(nil: {
-      Str@ msg = Str|'missing input file';
+      String@ msg = Str|'missing input file';
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
 
-    Str@ filename = args.cons.head;
+    String@ filename = args.cons.head;
     
     Maybe@<IStream@<M@>> fin <- m.do(stdio.read(filename));
     fin.?(nothing: {
-      Str@ msg = Strs[Str|'unable to open ', filename];
+      String@ msg = Strs[Str|'unable to open ', filename];
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
 
-    Str@ contents <- m.do(I.GetText(fin.just));
+    String@ contents <- m.do(I.GetText(fin.just));
     Result@<Unit@> r <- m.do(Invoke.Block(inline, block, StringL@(contents, Start(filename))));
     r.?(err: {
-      Str@ msg = Strs[r.err.loc.file, Str|':',
+      String@ msg = Strs[r.err.loc.file, Str|':',
         /Core/Int/Show%.Show(r.err.loc.line), Str|':',
         /Core/Int/Show%.Show(r.err.loc.col), Str|': ',
         r.err.str];

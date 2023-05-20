@@ -6,20 +6,20 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-@ Str@ = /Core/String%.String@;
+@ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
 
 # Location information used for error messages.
-@ Loc@ = *(Str@ file, Int@ line, Int@ col, Int@ indent);
+@ Loc@ = *(String@ file, Int@ line, Int@ col, Int@ indent);
 
-(Str@) { Loc@; } Start = (Str@ file) {
+(String@) { Loc@; } Start = (String@ file) {
   Loc@(file, Int|1, Int|1, Int|0);
 };
 
 # A string with location information.
-@ StringL@ = *(Str@ str, Loc@ loc);
+@ StringL@ = *(String@ str, Loc@ loc);
 
 # The result of parsing or invoking a command.
 <@>@ Result@ = <@ T@> { +(T@ ok, StringL@ err); };

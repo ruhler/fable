@@ -20,7 +20,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ Str@ = /Core/String%.String@;
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -42,14 +42,14 @@
 # Returns the empty string if there is no plain text before the next @...
 # command.
 M@<StringL@> Plain = {
-  (Loc@, Str@) { M@<StringL@>; } plain = (Loc@ l, Str@ rplain) {
+  (Loc@, String@) { M@<StringL@>; } plain = (Loc@ l, String@ rplain) {
     Maybe@<Char@> mc <- Do(Peek);
     mc.?(nothing: Return(StringL@(Reverse(rplain), l)));
     mc.just.?('\': {
       Unit@ _ <- Do(Skip);
-      Str@ rp = Cons(mc.just, rplain);
+      String@ rp = Cons(mc.just, rplain);
       Maybe@<Char@> mb <- Do(Get);
-      Str@ rp2 = mb.?(just: Cons(mb.just, rp), nothing: rp);
+      String@ rp2 = mb.?(just: Cons(mb.just, rp), nothing: rp);
       plain(l, rp2);
     });
     mc.just.?('@': Return(StringL@(Reverse(rplain), l)));
@@ -68,7 +68,7 @@ M@<StringL@> Plain = {
 
 # Parses a command name from the input, not including a leading '@'.
 M@<StringL@> Name = {
-  (Loc@, Str@) { M@<StringL@>; } name = (Loc@ l, Str@ rname) {
+  (Loc@, String@) { M@<StringL@>; } name = (Loc@ l, String@ rname) {
     Maybe@<Char@> mc <- Do(Peek);
     mc.?(nothing: Return(StringL@(Reverse(rname), l)));
     IsNameChar(mc.just).?(false: Return(StringL@(Reverse(rname), l)));
@@ -82,7 +82,7 @@ M@<StringL@> Name = {
 
 # Parses an explicit argument '[...]'.
 M@<Maybe@<StringL@>> Arg = {
-  (Loc@, Int@, Str@) { M@<StringL@>; } arg = (Loc@ l, Int@ nest, Str@ rarg) {
+  (Loc@, Int@, String@) { M@<StringL@>; } arg = (Loc@ l, Int@ nest, String@ rarg) {
     Maybe@<Char@> mc <- Do(Get);
     mc.?(nothing: Error<StringL@>(StringL@(Str|'Unterminated argument', l)));
 

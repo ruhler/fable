@@ -5,7 +5,7 @@
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
-@ Str@ = /Core/String%.String@;
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -24,7 +24,7 @@
   <@>% DoR = DoResult(m);
 
   (StringL@) { R@<M@>; } Text = (StringL@ str) {
-    (Str@) { R@<M@>; } text = (Str@ s) {
+    (String@) { R@<M@>; } text = (String@ s) {
       s.?(nil: m.return(Ok(Unit)));
       Char@ c = s.cons.head;
       Unit@ _ <- m.do(c.?(

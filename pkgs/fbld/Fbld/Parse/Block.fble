@@ -16,7 +16,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ Str@ = /Core/String%.String@;
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -50,10 +50,10 @@ M@<Unit@> SkipBlankLines = {
 
 # Returns a block of plain text if any.
 M@<StringL@> Plain = {
-  (Loc@, Str@) { M@<StringL@>; } plain = (Loc@ l, Str@ rplain) {
+  (Loc@, String@) { M@<StringL@>; } plain = (Loc@ l, String@ rplain) {
     Maybe@<Char@> mc <- Do(Get);
     mc.?(nothing: Return(StringL@(Reverse(rplain), l)));
-    Str@ nrplain = Cons(mc.just, rplain);
+    String@ nrplain = Cons(mc.just, rplain);
     IsNewline(mc.just).?(true: {
       Maybe@<Char@> mc <- Do(Peek);
       mc.?(nothing: Return(StringL@(Reverse(nrplain), l)));
@@ -71,7 +71,7 @@ M@<StringL@> Plain = {
 };
 
 M@<Maybe@<StringL@>> SameLineArg = {
-  (Str@) { M@<Str@>; } f = (Str@ rs) {
+  (String@) { M@<String@>; } f = (String@ rs) {
     Maybe@<Char@> mc <- Do(Get);
     mc.?(nothing: Return(rs));
     IsNewline(mc.just).?(true: Return(rs));
@@ -84,7 +84,7 @@ M@<Maybe@<StringL@>> SameLineArg = {
   IsNewline(mc.just).?(true: Return(Nothing<StringL@>));
   mc.just.?(' ': {
     Loc@ l <- Do(Loc);
-    Str@ s <- Do(f(Str|''));
+    String@ s <- Do(f(Str|''));
     Return(Just(StringL@(Reverse(s), l)));
   });
   Error<Maybe@<StringL@>>(StringL@(Str|'Expected space', l));
@@ -93,7 +93,7 @@ M@<Maybe@<StringL@>> SameLineArg = {
 M@<Maybe@<StringL@>> NextLineArg = {
   # Parse starting from the start of a line.
   # Returns parsed result with characters in reverse order.
-  (Str@) { M@<Str@>; } start_of_line = (Str@ rs) {
+  (String@) { M@<String@>; } start_of_line = (String@ rs) {
     Maybe@<Char@> mc <- Do(Peek);
     mc.?(nothing: Return(rs));
     IsNewline(mc.just).?(true: {
@@ -111,17 +111,17 @@ M@<Maybe@<StringL@>> NextLineArg = {
 
   # Parse starting from the middle of a line.
   # Returns parsed result with characters in reverse order.
-  (Str@) { M@<Str@>; } middle_of_line = (Str@ rs) {
+  (String@) { M@<String@>; } middle_of_line = (String@ rs) {
     Maybe@<Char@> mc <- Do(Get);
     mc.?(nothing: Return(rs));
     IsNewline(mc.just).?(true: start_of_line(Cons(mc.just, rs)));
     middle_of_line(Cons(mc.just, rs));
   };
 
-  (Str@) { Str@; } strip_blank_lines = (Str@ s) {
+  (String@) { String@; } strip_blank_lines = (String@ s) {
     s.?(nil: s);
     IsNewline(s.cons.head).?(true: {
-      Str@ t = s.cons.tail;
+      String@ t = s.cons.tail;
       t.?(nil: s);
       IsNewline(t.cons.head).?(true: strip_blank_lines(t));
       s;
@@ -130,13 +130,13 @@ M@<Maybe@<StringL@>> NextLineArg = {
   };
 
   Loc@ l <- Do(Loc);
-  Str@ s <- Do(start_of_line(Str|''));
-  Str@ stripped = strip_blank_lines(s);
+  String@ s <- Do(start_of_line(Str|''));
+  String@ stripped = strip_blank_lines(s);
   stripped.?(nil: Return(Nothing<StringL@>));
   /Core/String/Eq%.Eq(Str[Chars.nl], stripped).?(true: {
     Return(Nothing<StringL@>);
   });
-  Str@ reversed = Reverse(stripped);
+  String@ reversed = Reverse(stripped);
   Loc@ nl = l.@(
     col: IsNewline(reversed.cons.head).?(true: l.col, false: Inc(l.col)),
     indent: Inc(l.indent));

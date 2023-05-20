@@ -5,7 +5,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ Str@ = /Core/String%.String@;
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
@@ -17,18 +17,18 @@
 
 <<@>@ M@>(Monad@<M@> m) {
   @ Invoke@ = /Fbld/Types%.Invoke@<M@>;
-  @ Markup@ = /Core/Map%.Map@<Str@, Invoke@>;
+  @ Markup@ = /Core/Map%.Map@<String@, Invoke@>;
 
-  @ Entry@ = /Core/Map%.Entry@<Str@, Invoke@>;
-  Markup@ Empty = /Core/Map%.Empty<Str@, Invoke@>;
+  @ Entry@ = /Core/Map%.Entry@<String@, Invoke@>;
+  Markup@ Empty = /Core/Map%.Empty<String@, Invoke@>;
 
-  (Markup@, Str@, Invoke@) { Markup@; }
-  Insert = /Core/Map%.Insert<Str@>(/Core/String/Ord%.Ord)<Invoke@>;
+  (Markup@, String@, Invoke@) { Markup@; }
+  Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Invoke@>;
 
-  (Markup@, Str@) { Maybe@<Invoke@>; }
-  Lookup = /Core/Map%.Lookup<Str@>(/Core/String/Ord%.Ord)<Invoke@>;
+  (Markup@, String@) { Maybe@<Invoke@>; }
+  Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Invoke@>;
 
-  (Str@, Invoke@) { Entry@; } Entry = (Str@ s, Invoke@ i) {
+  (String@, Invoke@) { Entry@; } Entry = (String@ s, Invoke@ i) {
     Entry@(s, i);
   };
 
@@ -42,7 +42,7 @@
     (Invoke@ i, Invoke@ b, Command@ cmd) {
       Maybe@<Invoke@> f = Lookup(markup, cmd.name.str);
       f.?(nothing: {
-        Str@ msg = Strs[Str|'unsupported tag: ''', cmd.name.str, Str|''''];
+        String@ msg = Strs[Str|'unsupported tag: ''', cmd.name.str, Str|''''];
         m.return(Err<Unit@>(StringL@(msg, cmd.name.loc)));
       });
       f.just(i, b, cmd);
