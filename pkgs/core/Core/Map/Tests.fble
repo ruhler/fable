@@ -79,6 +79,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 <@>% Insert = /Core/Map%.Insert<Bit2@>(OrdBit2);
 <@>% Delete = /Core/Map%.Delete<Bit2@>(OrdBit2);
 <@,@>% ForEach = /Core/Map%.ForEach<Bit2@>;
+<@>% Union = /Core/Map%.Union<Bit2@>(OrdBit2);
 
 Test@ Tests = TestSuite(Str|Map, List<Test@>[
   Test(Str|'empty', (Unit@ _) {
@@ -157,6 +158,24 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
       /Core/List/Show%.Show((Entry@ e) {
         /Core/String%.Strs[ShowBit2(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
       }),
+      wnt, got);
+  }),
+
+  Test(Str|'union', (Unit@ _) {
+    Map@<Bool@> a = Insert(Insert(Empty<Bool@>,
+      A, False),
+      B, False);
+    Map@<Bool@> b = Insert(Insert(Empty<Bool@>,
+      B, True),
+      C, True);
+    Map@<Bool@> wnt = Insert(Insert(Insert(Empty<Bool@>,
+      A, False),
+      B, True),
+      C, True);
+    Map@<Bool@> got = Union(a, b);
+    AssertEquals(
+      /Core/Map/Eq%.Eq(EqBit2, /Core/Bool/Eq%.Eq),
+      /Core/Map/Show%.Show(ShowBit2, /Core/Bool/Show%.Show),
       wnt, got);
   }),
 

@@ -157,4 +157,21 @@ Delete = _@.<@<Delete>>(Map.Delete);
 <@ K@, @ V@, @ B@>(Map@<K@, V@>, B@, (K@, V@, B@) { B@; }) { B@; }
 ForEach = _@.<@<ForEach>>(Map.ForEach);
 
-@(_@, Map@, Entry@, Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach);
+# Union --
+#   Takes the union of two maps. In case of conflict the value in the second
+#   map wins.
+<@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, Map@<K@, V@>) { Map@<K@, V@>; }
+Union = <@ K@>(Ord@<K@> ord)<@ V@> {
+  % insert = Insert<K@>(ord)<V@>;
+  % foreach = ForEach<K@, V@, Map@<K@, V@>>;
+
+  (Map@<K@, V@> a, Map@<K@, V@> b) {
+    foreach(b, a, (K@ k, V@ v, Map@<K@, V@> m) {
+      insert(m, k, v);
+    });
+  };
+};
+
+@(_@, Map@, Entry@,
+  Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach,
+  Union);
