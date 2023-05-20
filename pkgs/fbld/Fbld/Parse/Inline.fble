@@ -26,7 +26,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Loc@ = /Fbld/Types%.Loc@;
-@ String@ = /Fbld/Types%.String@;
+@ StringL@ = /Fbld/Types%.StringL@;
 @ Command@ = /Fbld/Types%.Command@;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
@@ -41,10 +41,10 @@
 # Parses plain text before the next @... command if any.
 # Returns the empty string if there is no plain text before the next @...
 # command.
-M@<String@> Plain = {
-  (Loc@, Str@) { M@<String@>; } plain = (Loc@ l, Str@ rplain) {
+M@<StringL@> Plain = {
+  (Loc@, Str@) { M@<StringL@>; } plain = (Loc@ l, Str@ rplain) {
     Maybe@<Char@> mc <- Do(Peek);
-    mc.?(nothing: Return(String@(Reverse(rplain), l)));
+    mc.?(nothing: Return(StringL@(Reverse(rplain), l)));
     mc.just.?('\': {
       Unit@ _ <- Do(Skip);
       Str@ rp = Cons(mc.just, rplain);
@@ -52,7 +52,7 @@ M@<String@> Plain = {
       Str@ rp2 = mb.?(just: Cons(mb.just, rp), nothing: rp);
       plain(l, rp2);
     });
-    mc.just.?('@': Return(String@(Reverse(rplain), l)));
+    mc.just.?('@': Return(StringL@(Reverse(rplain), l)));
     Unit@ _ <- Do(Skip);
     plain(l, Cons(mc.just, rplain));
   };
@@ -67,11 +67,11 @@ M@<String@> Plain = {
 };
 
 # Parses a command name from the input, not including a leading '@'.
-M@<String@> Name = {
-  (Loc@, Str@) { M@<String@>; } name = (Loc@ l, Str@ rname) {
+M@<StringL@> Name = {
+  (Loc@, Str@) { M@<StringL@>; } name = (Loc@ l, Str@ rname) {
     Maybe@<Char@> mc <- Do(Peek);
-    mc.?(nothing: Return(String@(Reverse(rname), l)));
-    IsNameChar(mc.just).?(false: Return(String@(Reverse(rname), l)));
+    mc.?(nothing: Return(StringL@(Reverse(rname), l)));
+    IsNameChar(mc.just).?(false: Return(StringL@(Reverse(rname), l)));
     Unit@ _ <- Do(Skip);  
     name(l, Cons(mc.just, rname));
   };
@@ -81,15 +81,15 @@ M@<String@> Name = {
 };
 
 # Parses an explicit argument '[...]'.
-M@<Maybe@<String@>> Arg = {
-  (Loc@, Int@, Str@) { M@<String@>; } arg = (Loc@ l, Int@ nest, Str@ rarg) {
+M@<Maybe@<StringL@>> Arg = {
+  (Loc@, Int@, Str@) { M@<StringL@>; } arg = (Loc@ l, Int@ nest, Str@ rarg) {
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Error<String@>(String@(Str|'Unterminated argument', l)));
+    mc.?(nothing: Error<StringL@>(StringL@(Str|'Unterminated argument', l)));
 
     Char@ c = mc.just;
     c.?('\': {
       Maybe@<Char@> nc <- Do(Get);
-      nc.?(nothing: Error<String@>(String@(Str|'Unterminated argument', l)));
+      nc.?(nothing: Error<StringL@>(StringL@(Str|'Unterminated argument', l)));
       arg(l, nest, Cons(nc.just, Cons(c, rarg)));
     });
 
@@ -97,7 +97,7 @@ M@<Maybe@<String@>> Arg = {
 
     c.?(']': {
       /Core/Int/Eq%.IsZero(nest).?(true: {
-        Return(String@(Reverse(rarg), l));
+        Return(StringL@(Reverse(rarg), l));
       });
       arg(l, Dec(nest), Cons(c, rarg));
     });
@@ -106,25 +106,25 @@ M@<Maybe@<String@>> Arg = {
   };
 
   Maybe@<Char@> mc <- Do(Peek);
-  mc.?(nothing: Return(Nothing<String@>));
+  mc.?(nothing: Return(Nothing<StringL@>));
   mc.just.?('[': {
     Unit@ _ <- Do(Skip);
     Loc@ l <- Do(Loc);
-    String@ s <- Do(arg(l, Int|0, Str|''));
+    StringL@ s <- Do(arg(l, Int|0, Str|''));
     Return(Just(s));
   });
-  Return(Nothing<String@>);
+  Return(Nothing<StringL@>);
 };
 
 # Parses a sequence of arguments.
-M@<List@<String@>> Args = {
-  (List@<String@>) { M@<List@<String@>>; } args = (List@<String@> rargs) {
-    Maybe@<String@> arg <- Do(Arg);
+M@<List@<StringL@>> Args = {
+  (List@<StringL@>) { M@<List@<StringL@>>; } args = (List@<StringL@> rargs) {
+    Maybe@<StringL@> arg <- Do(Arg);
     arg.?(nothing: Return(Reverse(rargs)));
     args(Cons(arg.just, rargs));
   };
 
-  args(Nil<String@>);
+  args(Nil<StringL@>);
 };
 
 # Parse a command, starting with '@'.
@@ -133,8 +133,8 @@ M@<Maybe@<Command@>> Command = {
   mc.?(nothing: Return(Nothing<Command@>));
   mc.just.?('@': {
     Unit@ _ <- Do(Skip);
-    String@ name <- Do(Name);
-    List@<String@> args <- Do(Args);
+    StringL@ name <- Do(Name);
+    List@<StringL@> args <- Do(Args);
     Return(Just(Command@(name, args)));
   });
   Return(Nothing<Command@>);
@@ -144,10 +144,10 @@ M@<Maybe@<Command@>> Command = {
 M@<List@<Command@>> Inline = {
   (List@<Command@>) { M@<List@<Command@>>; }
   inline = (List@<Command@> rcmds) {
-    String@ plain <- Do(Plain);
+    StringL@ plain <- Do(Plain);
     List@<Command@> cmds = {
       plain.str.?(nil: rcmds);
-      Cons(Command@(String@(Str|'', plain.loc), List[plain]), rcmds);
+      Cons(Command@(StringL@(Str|'', plain.loc), List[plain]), rcmds);
     };
 
     Maybe@<Command@> command <- Do(Command);

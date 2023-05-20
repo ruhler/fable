@@ -1,21 +1,21 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ String@ = /Fbld/Types%.String@;
+@ StringL@ = /Fbld/Types%.StringL@;
 @ Command@ = /Fbld/Types%.Command@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 
 <@>% Run = /Fbld/Parse/M%.Run;
 
 # Parse inline structured text.
-(String@) { Result@<List@<Command@>>; }
-Inline = (String@ in) {
+(StringL@) { Result@<List@<Command@>>; }
+Inline = (StringL@ in) {
   Run(/Fbld/Parse/Inline%.Inline, in);
 };
 
 # Parse block structured text.
-(String@) { Result@<List@<Command@>>; }
-Block = (String@ in) {
+(StringL@) { Result@<List@<Command@>>; }
+Block = (StringL@ in) {
   Run(/Fbld/Parse/Block%.Block, in);
 };
 

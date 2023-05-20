@@ -12,11 +12,11 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Command@ = /Fbld/Types%.Command@;
-@ String@ = /Fbld/Types%.String@;
+@ StringL@ = /Fbld/Types%.StringL@;
 <@>% Err = /Fbld/Types%.Err;
 
-(String@) { String@; } Unescape = (String@ s) {
-  String@(/Fbld/Unescape%.Unescape(s.str), s.loc);
+(StringL@) { StringL@; } Unescape = (StringL@ s) {
+  StringL@(/Fbld/Unescape%.Unescape(s.str), s.loc);
 };
 
 <<@>@ M@>(Monad@<M@> m) {
@@ -35,50 +35,50 @@
     # @text[ESCAPED text]
     # An explicit tag for default inline text.
     # @param text  The text to unescape.
-    (String@) { MRU@; } text,
+    (StringL@) { MRU@; } text,
 
     # @l[ESCAPED text]
     # A literal string.
     # The text is highlighted as bold or monospace font, for example.
     # @param text  The text to highlith.
-    (String@) { MRU@; } l,
+    (StringL@) { MRU@; } l,
 
     # @a[ESCAPED text]
     # An argument.
     # The text is highlighted using italics, for example.
     # @param text  The text to highlight.
-    (String@) { MRU@; } a,
+    (StringL@) { MRU@; } a,
 
     # @label[ESCAPED id][INLINE text]
     # Give a label to a point in the text.
     # For use as a target of local or external references.
     # @param id  The id to use for the lable.
     # @param text  The text to display for the label target.
-    (String@, MRU@) { MRU@; } label,
+    (StringL@, MRU@) { MRU@; } label,
 
     # @ref[ESCAPED id][INLINE caption]
     # Refer to a locally defined label.
     # @param id  The id of a @label to link to.
     # @param caption  Text to display.
-    (String@, MRU@) { MRU@; } ref,
+    (StringL@, MRU@) { MRU@; } ref,
 
     # @url[ESCAPED url][? INLINE text]
     # Reference a url.
     # @param url  The target url.
     # @param text  Optional text to display. Defaults to the url.
-    (String@, MRU@) { MRU@; } url,
+    (StringL@, MRU@) { MRU@; } url,
 
     # @file[ESCAPED file][? INLINE text]
     # Reference a file on disk.
     # @param file  The path to the file.
     # @param text  Optional text to display. Defaults to the file.
-    (String@, MRU@) { MRU@; } file,
+    (StringL@, MRU@) { MRU@; } file,
 
     # @fbld[ESCAPED file][? INLINE text]
     # Reference to another fbld based document.
     # @param file  The path to the fbld file, optionally followed by #<id>.
     # @param text  Optional text to display. Defaults to the file.
-    (String@, MRU@) { MRU@; } fbld,
+    (StringL@, MRU@) { MRU@; } fbld,
 
     # @par[INLINE text]
     # A paragraph of text.
@@ -94,7 +94,7 @@
     # A source code listing.
     # @param language  The lanuage, e.g. c, python, sh, fble, vim, etc.
     # @param text  The source code text.
-    (String@, String@) { MRU@; } code,
+    (StringL@, StringL@) { MRU@; } code,
 
     # @def[INLINE name][INLINE value]
     # A short form definition of a term.
@@ -134,100 +134,100 @@
   );
 
   # Single argument helper function
-  ((Invoke@, Invoke@, String@) { MRU@; }) { Invoke@; }
-  A1 = ((Invoke@, Invoke@, String@) { MRU@; } f) {
+  ((Invoke@, Invoke@, StringL@) { MRU@; }) { Invoke@; }
+  A1 = ((Invoke@, Invoke@, StringL@) { MRU@; } f) {
     (Invoke@ inline, Invoke@ block, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
+        m.return(Err<Unit@>(StringL@(Strs[
               Str|'expected 1 arg, but got ',
               /Core/Int/Show%.Show(num_args)], command.name.loc)));
       });
 
-      String@ arg = command.args.cons.head;
+      StringL@ arg = command.args.cons.head;
       f(inline, block, arg);
     };
   };
 
   # Two argument helper function
-  ((Invoke@, Invoke@, String@, String@) { MRU@; }) { Invoke@; }
-  A2 = ((Invoke@, Invoke@, String@, String@) { MRU@; } f) {
+  ((Invoke@, Invoke@, StringL@, StringL@) { MRU@; }) { Invoke@; }
+  A2 = ((Invoke@, Invoke@, StringL@, StringL@) { MRU@; } f) {
     (Invoke@ inline, Invoke@ block, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
-        m.return(Err<Unit@>(String@(Strs[
+        m.return(Err<Unit@>(StringL@(Strs[
               Str|'expected 2 args, but got ',
               /Core/Int/Show%.Show(num_args)], command.name.loc)));
       });
 
-      String@ a1 = command.args.cons.head;
-      String@ a2 = command.args.cons.tail.cons.head;
+      StringL@ a1 = command.args.cons.head;
+      StringL@ a2 = command.args.cons.tail.cons.head;
       f(inline, block, a1, a2);
     };
   };
 
   # @<tag>[ESCAPED][? INLINE] helper function, where the optional argument
   # defaults to the first argument value.
-  ((String@, MRU@) { MRU@; }) { Invoke@; }
-  EmI = ((String@, MRU@) { MRU@; } f) {
+  ((StringL@, MRU@) { MRU@; }) { Invoke@; }
+  EmI = ((StringL@, MRU@) { MRU@; } f) {
     (Invoke@ inline, Invoke@ block, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|1, num_args).?(true: {
-        String@ a1 = command.args.cons.head;
+        StringL@ a1 = command.args.cons.head;
         f(Unescape(a1), Invoke.Inline(inline, block, a1));
       });
 
       /Core/Int/Eq%.Eq(Int|2, num_args).?(true: {
-        String@ a1 = command.args.cons.head;
-        String@ a2 = command.args.cons.tail.cons.head;
+        StringL@ a1 = command.args.cons.head;
+        StringL@ a2 = command.args.cons.tail.cons.head;
         f(Unescape(a1), Invoke.Inline(inline, block, a2));
       });
 
-      m.return(Err<Unit@>(String@(Strs[
+      m.return(Err<Unit@>(StringL@(Strs[
               Str|'expected 1 or 2 args, but got ',
               /Core/Int/Show%.Show(num_args)], command.name.loc)));
     };
   };
 
   # @<tag>[ESCAPED] helper function
-  ((String@) { MRU@; }) { Invoke@; } E = ((String@) { MRU@; } f) {
-    Invoke@ inline, Invoke@ block, String@ arg <- A1;
+  ((StringL@) { MRU@; }) { Invoke@; } E = ((StringL@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, StringL@ arg <- A1;
     f(Unescape(arg));
   };
 
   # @<tag>[INLINE] helper function
   ((MRU@) { MRU@; }) { Invoke@; } I = ((MRU@) { MRU@; } f) {
-    Invoke@ inline, Invoke@ block, String@ arg <- A1;
+    Invoke@ inline, Invoke@ block, StringL@ arg <- A1;
     f(Invoke.Inline(inline, block, arg));
   };
 
   # @<tag>[BLOCK] helper function
   ((MRU@) { MRU@; }) { Invoke@; } B = ((MRU@) { MRU@; } f) {
-    Invoke@ inline, Invoke@ block, String@ arg <- A1;
+    Invoke@ inline, Invoke@ block, StringL@ arg <- A1;
     f(Invoke.Block(inline, block, arg));
   };
 
   # @<tag>[ESCAPED][ESCAPED] helper function
-  ((String@, String@) { MRU@; }) { Invoke@; } EE = ((String@, String@) { MRU@; } f) {
-    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+  ((StringL@, StringL@) { MRU@; }) { Invoke@; } EE = ((StringL@, StringL@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, StringL@ a1, StringL@ a2 <- A2;
     f(Unescape(a1), Unescape(a2));
   };
 
   # @<tag>[ESCAPED][INLINE] helper function
-  ((String@, MRU@) { MRU@; }) { Invoke@; } EI = ((String@, MRU@) { MRU@; } f) {
-    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+  ((StringL@, MRU@) { MRU@; }) { Invoke@; } EI = ((StringL@, MRU@) { MRU@; } f) {
+    Invoke@ inline, Invoke@ block, StringL@ a1, StringL@ a2 <- A2;
     f(Unescape(a1), Invoke.Inline(inline, block, a2));
   };
 
   # @<tag>[INLINE][INLINE] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } II = ((MRU@, MRU@) { MRU@; } f) {
-    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+    Invoke@ inline, Invoke@ block, StringL@ a1, StringL@ a2 <- A2;
     f(Invoke.Inline(inline, block, a1), Invoke.Inline(inline, block, a2));
   };
 
   # @<tag>[INLINE][BLOCK] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
-    Invoke@ inline, Invoke@ block, String@ a1, String@ a2 <- A2;
+    Invoke@ inline, Invoke@ block, StringL@ a1, StringL@ a2 <- A2;
     f(Invoke.Inline(inline, block, a1), Invoke.Block(inline, block, a2));
   };
 

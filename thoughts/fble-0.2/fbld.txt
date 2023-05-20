@@ -359,3 +359,139 @@ the process.
 Another approach would be to re-implement source-highlight equivalent in fble.
 Sounds like an interesting program to try and write. The trouble is, there are
 a lot of languages to have to support.
+
+---
+
+I've finished fleshing out the core tags. Going to have to decide what's next
+to work on. A few options:
+
+* Add a markdown backend so we can generate README.md.
+* Implement mapping from foo.fbld to foo.html for @fbld html backend.
+* Figure out how to specify libraries like spec/fble.fbld.tcl
+  Where to put the .fble file?
+  Do we want a separate binary for this other than fbld-html-doc?
+* Figure out how to implement @FbleVersion
+* Figure out how to implement @BuildStamp
+* Figure out how to do source highlighting for @code
+
+---
+
+We want users to be able to supply their own front ends and own back ends, and
+have different front ends and back ends be combined together.
+
+I claim this cannot be done today in fble with a compiled binary.
+
+To pass a new front end or back end to an existing compiled binary, you need
+some way to convert the .fble code into its corresponding fble value at
+runtime, dynamically. Options:
+* Put the .fble code into the compiled binary, pass a name as a reference to
+  the code. But this doesn't allow new code, it only allows code in the
+  binary.
+* Come up with a different syntax for implementing tags that can be parsed
+  and loaded from fble. But then we are not using fble to implement tags.
+* Implement a parser for fble that can turn it into a value at runtime. But...
+  we would need an interpreter in fble?
+
+The point is, unless we have some magic way to take a String describing a
+module path or .fble filename and dynamically load it, we can't pass new fble
+modules on the command line as arguments.
+
+The other route is for the user to provide the main function. Then they can
+pass whatever code they want. They can run the interpreter or compile it if
+they so choose.
+
+---
+
+What is a front end? It would be nice to have a specific type for frontends so
+you can easily combine them.
+
+Front ends are built on top of Core@, and possibly other front ends. There are
+two ways we may want to use a front end:
+1. Directly.
+2. As markup.
+
+To use a front end directly requires knowing the specific type of the front
+end. To use it as markup just needs generic Markup@ for Inline and Block.
+
+Core@ is special because it is an interface, not an implementation. Other
+markups can pass around their implementation directly as functions to be
+called.
+
+So, I expect a front end is an fble module that takes Core@ as an argument and
+defines a function for each tag supported by the front end, and Inline and
+Block Markup@.
+
+Having modules be functions is starting to be problematic. Consider a front
+end B that depends on front end A, and both depend on core.
+
+B wants to access A directly. We'll end up invoking the A module function
+twice: once when defining B, and once at the top level. That does not scale
+well.
+
+An alternative is to provide A as an argument to B. But that is like exposing
+internal implementation details. Whoever is using B shouldn't have to care
+about whether B uses A internally. They do need to care that B uses Core
+internally, because the user has to provide the backend implementation of
+Core.
+
+Well, it all happens during setup, and these functions aren't called that
+much, so maybe don't worry about it for now.
+
+A related thing is having false dependencies. For example, Core module takes
+M@ and Monad@<M@>. It exports Core@, which doesn't depend on Monad@<M@>.
+That's a false dependency introduced. If the user only uses Core@, it
+shouldn't need to provide Monad@<M@>.
+
+We could address this by splitting up Core into the type and the
+implementation. Either as separate modules, or within the same module as, e.g.
+
+@(Core@, (Monad@<M@> m) { ... @(InlineMarkup, BlockMarkup); } Impl);
+
+Again, let's not worry about it for the time being.
+
+Next issue: it's slightly annoying to pass around everything as inline or
+block. Can we unify somehow? Ideas:
+
+Don't distinguish between inline and block markup. Use a single markup for
+everything. This means you can't have a tag interpreted differently for inline
+versus block markup. The only place we do this right now is the default inline
+and block tags, both called "". But we can give those separate names if we
+want, like "_inline@" and "_block@".
+
+That way you could use any markup in either context. Umm... that's a little
+concerning. What does it mean to use section@ in an inline context? And @l in
+a block context? For it to make sense, we would have to do different
+processing for tags in each. No, I prefer to type a tag based on inline or
+block context.
+
+The other idea is define a type Markups@, or some such, that has two fields,
+inline, block. Then we can more easily name, pass around, and combine things.
+We could do the same for Invoke too perhaps. invoke.inline and invoke.block.
+
+---
+
+Say we want to pass around a single invoke function instead of two. How would
+we represent that?
+
+@ Context@ = +(Unit@ inline, Unit@ block);
+@ I@ = (I@, Context@, Command@) { M@<Result@<Unit@>>; }
+
+Invoke.Inline becomes: invoke(i, Inline, cmd);
+Invoke.Block becomes: invoke(i, Block, cmd);
+
+Now markup can become an abstract type where you can insert entries as Inline
+or Block.
+
+The reason this is better than what we have today is because we can pass
+around a single Markup@ object that stores both inline and block tags. I think
+it's worth trying.
+
+Does it make sense to do other cleanup while I'm at it?
+* Separate different types out of /Fbld/Types%?
+* Make a better monad transformer for M@<Result@<T@>>?
+* Get rid of R@ helper type.
+* Use a name other than String@ for Fbld String@, so we can using String@ for
+  /Core/String%?
+  Like, StringL@. That's not bad. Let's do that.
+
+

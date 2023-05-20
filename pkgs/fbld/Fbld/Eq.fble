@@ -7,7 +7,7 @@
 <@>@ List@ = /Core/List%.List@;
 
 @ Loc@ = /Fbld/Types%.Loc@;
-@ String@ = /Fbld/Types%.String@;
+@ StringL@ = /Fbld/Types%.StringL@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 @ Command@ = /Fbld/Types%.Command@;
 
@@ -19,7 +19,7 @@ Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {
   True;
 };
 
-Eq@<String@> String = (String@ a, String@ b) {
+Eq@<StringL@> StringL = (StringL@ a, StringL@ b) {
   /Core/String/Eq%.Eq(a.str, b.str).?(false: False);
   Loc(a.loc, b.loc).?(false: False);
   True;
@@ -29,15 +29,15 @@ Eq@<String@> String = (String@ a, String@ b) {
 Result = <@ T@>(Eq@<T@> eq)(Result@<T@> a, Result@<T@> b) {
   a.?(
     ok: b.?(ok: eq(a.ok, b.ok), err: False),
-    err: b.?(ok: False, err: String(a.err, b.err)));
+    err: b.?(ok: False, err: StringL(a.err, b.err)));
 };
 
 Eq@<Command@> Command = (Command@ a, Command@ b) {
-  String(a.name, b.name).?(false: False);
-  /Core/List/Eq%.Eq(String)(a.args, b.args).?(false: False);
+  StringL(a.name, b.name).?(false: False);
+  /Core/List/Eq%.Eq(StringL)(a.args, b.args).?(false: False);
   True;
 };
 
 Eq@<List@<Command@>> Commands = /Core/List/Eq%.Eq(Command);
 
-@(Loc, String, Result, Command, Commands);
+@(Loc, StringL, Result, Command, Commands);

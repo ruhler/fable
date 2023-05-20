@@ -23,7 +23,7 @@
 % Unit = /Core/Unit%.Unit;
 
 @ Loc@ = /Fbld/Types%.Loc@;
-@ String@ = /Fbld/Types%.String@;
+@ StringL@ = /Fbld/Types%.StringL@;
 @ Command@ = /Fbld/Types%.Command@;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
@@ -49,15 +49,15 @@ M@<Unit@> SkipBlankLines = {
 };
 
 # Returns a block of plain text if any.
-M@<String@> Plain = {
-  (Loc@, Str@) { M@<String@>; } plain = (Loc@ l, Str@ rplain) {
+M@<StringL@> Plain = {
+  (Loc@, Str@) { M@<StringL@>; } plain = (Loc@ l, Str@ rplain) {
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Return(String@(Reverse(rplain), l)));
+    mc.?(nothing: Return(StringL@(Reverse(rplain), l)));
     Str@ nrplain = Cons(mc.just, rplain);
     IsNewline(mc.just).?(true: {
       Maybe@<Char@> mc <- Do(Peek);
-      mc.?(nothing: Return(String@(Reverse(nrplain), l)));
-      IsNewline(mc.just).?(true: Return(String@(Reverse(nrplain), l)));
+      mc.?(nothing: Return(StringL@(Reverse(nrplain), l)));
+      IsNewline(mc.just).?(true: Return(StringL@(Reverse(nrplain), l)));
       plain(l, nrplain);
     });
     plain(l, nrplain);
@@ -65,12 +65,12 @@ M@<String@> Plain = {
 
   Maybe@<Char@> mc <- Do(Peek);
   Loc@ l <- Do(Loc);
-  mc.?(nothing: Return(String@(Str|'', l)));
-  mc.just.?('@': Return(String@(Str|'', l)));
+  mc.?(nothing: Return(StringL@(Str|'', l)));
+  mc.just.?('@': Return(StringL@(Str|'', l)));
   plain(l, Str|'');
 };
 
-M@<Maybe@<String@>> SameLineArg = {
+M@<Maybe@<StringL@>> SameLineArg = {
   (Str@) { M@<Str@>; } f = (Str@ rs) {
     Maybe@<Char@> mc <- Do(Get);
     mc.?(nothing: Return(rs));
@@ -80,17 +80,17 @@ M@<Maybe@<String@>> SameLineArg = {
 
   Loc@ l <- Do(Loc);
   Maybe@<Char@> mc <- Do(Get);
-  mc.?(nothing: Return(Nothing<String@>));
-  IsNewline(mc.just).?(true: Return(Nothing<String@>));
+  mc.?(nothing: Return(Nothing<StringL@>));
+  IsNewline(mc.just).?(true: Return(Nothing<StringL@>));
   mc.just.?(' ': {
     Loc@ l <- Do(Loc);
     Str@ s <- Do(f(Str|''));
-    Return(Just(String@(Reverse(s), l)));
+    Return(Just(StringL@(Reverse(s), l)));
   });
-  Error<Maybe@<String@>>(String@(Str|'Expected space', l));
+  Error<Maybe@<StringL@>>(StringL@(Str|'Expected space', l));
 };
 
-M@<Maybe@<String@>> NextLineArg = {
+M@<Maybe@<StringL@>> NextLineArg = {
   # Parse starting from the start of a line.
   # Returns parsed result with characters in reverse order.
   (Str@) { M@<Str@>; } start_of_line = (Str@ rs) {
@@ -132,15 +132,15 @@ M@<Maybe@<String@>> NextLineArg = {
   Loc@ l <- Do(Loc);
   Str@ s <- Do(start_of_line(Str|''));
   Str@ stripped = strip_blank_lines(s);
-  stripped.?(nil: Return(Nothing<String@>));
+  stripped.?(nil: Return(Nothing<StringL@>));
   /Core/String/Eq%.Eq(Str[Chars.nl], stripped).?(true: {
-    Return(Nothing<String@>);
+    Return(Nothing<StringL@>);
   });
   Str@ reversed = Reverse(stripped);
   Loc@ nl = l.@(
     col: IsNewline(reversed.cons.head).?(true: l.col, false: Inc(l.col)),
     indent: Inc(l.indent));
-  Return(Just(String@(reversed, nl)));
+  Return(Just(StringL@(reversed, nl)));
 };
 
 # Flattens a list of maybes into a list of justs.
@@ -162,11 +162,11 @@ M@<Maybe@<Command@>> Command = {
   mc.?(nothing: Return(Nothing<Command@>));
   mc.just.?('@': {
     Unit@ _ <- Do(Skip);
-    String@ name <- Do(Name);
-    List@<String@> args <- Do(Args);
-    Maybe@<String@> same_line_arg <- Do(SameLineArg);
-    Maybe@<String@> next_line_arg <- Do(NextLineArg);
-    List@<String@> extra_args = Justs[same_line_arg, next_line_arg];
+    StringL@ name <- Do(Name);
+    List@<StringL@> args <- Do(Args);
+    Maybe@<StringL@> same_line_arg <- Do(SameLineArg);
+    Maybe@<StringL@> next_line_arg <- Do(NextLineArg);
+    List@<StringL@> extra_args = Justs[same_line_arg, next_line_arg];
     Return(Just(Command@(name, Append(args, extra_args))));
   });
   Return(Nothing<Command@>);
@@ -178,9 +178,9 @@ M@<List@<Command@>> Block = {
   (List@<Command@>) { M@<List@<Command@>>; }
   block = (List@<Command@> rcmds) {
     Unit@ _ <- Do(SkipBlankLines);
-    String@ plain <- Do(Plain);
+    StringL@ plain <- Do(Plain);
     plain.str.?(cons: {
-      Command@ cmd = Command@(String@(Str|'', plain.loc), List[plain]);
+      Command@ cmd = Command@(StringL@(Str|'', plain.loc), List[plain]);
       block(Cons(cmd, rcmds));
     });
 

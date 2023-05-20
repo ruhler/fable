@@ -8,7 +8,7 @@
 <@>@ Result@ = /Fbld/Types%.Result@;
 <<@>@>@ R@ = /Fbld/Types%.R@;
 @ Command@ = /Fbld/Types%.Command@;
-@ String@ = /Fbld/Types%.String@;
+@ StringL@ = /Fbld/Types%.StringL@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
 <@>% Ok = /Fbld/Types%.Ok;
 <@>% Err = /Fbld/Types%.Err;
@@ -18,8 +18,8 @@
 
   <@>% DoR = DoResult(m);
 
-  (Invoke@<M@>, Invoke@<M@>, String@) { R@<M@>; }
-  Inline = (Invoke@<M@> inline, Invoke@<M@> block, String@ text) {
+  (Invoke@<M@>, Invoke@<M@>, StringL@) { R@<M@>; }
+  Inline = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
@@ -30,8 +30,8 @@
       });
   };
 
-  (Invoke@<M@>, Invoke@<M@>, String@) { R@<M@>; }
-  Block = (Invoke@<M@> inline, Invoke@<M@> block, String@ text) {
+  (Invoke@<M@>, Invoke@<M@>, StringL@) { R@<M@>; }
+  Block = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 

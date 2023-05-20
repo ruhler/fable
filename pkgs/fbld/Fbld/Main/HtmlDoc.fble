@@ -21,7 +21,7 @@
 @ Command@ = /Fbld/Types%.Command@;
 <@>@ Result@ = /Fbld/Types%.Result@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
-@ String@ = /Fbld/Types%.String@;
+@ StringL@ = /Fbld/Types%.StringL@;
 % Start = /Fbld/Types%.Start;
 
 
@@ -45,10 +45,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Markup.Insert(
       Markup.Insert(Core.InlineMarkup(core),
         Str|'FbleVersion', (Invoke@<M@> i, Invoke@<M@> b, Command@ c) {
-          core.text(String@(Str|'??FbleVersion??', c.name.loc));
+          core.text(StringL@(Str|'??FbleVersion??', c.name.loc));
         }),
       Str|'BuildStamp', (Invoke@<M@> i, Invoke@<M@> b, Command@ c) {
-        core.text(String@(Str|'??BuildStamp??', c.name.loc));
+        core.text(StringL@(Str|'??BuildStamp??', c.name.loc));
       });
 
   Markup@ block_markup = Core.BlockMarkup(core);
@@ -74,7 +74,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     });
 
     Str@ contents <- m.do(I.GetText(fin.just));
-    Result@<Unit@> r <- m.do(Invoke.Block(inline, block, String@(contents, Start(filename))));
+    Result@<Unit@> r <- m.do(Invoke.Block(inline, block, StringL@(contents, Start(filename))));
     r.?(err: {
       Str@ msg = Strs[r.err.loc.file, Str|':',
         /Core/Int/Show%.Show(r.err.loc.line), Str|':',

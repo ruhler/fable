@@ -19,16 +19,16 @@
 };
 
 # A string with location information.
-@ String@ = *(Str@ str, Loc@ loc);
+@ StringL@ = *(Str@ str, Loc@ loc);
 
 # The result of parsing or invoking a command.
-<@>@ Result@ = <@ T@> { +(T@ ok, String@ err); };
+<@>@ Result@ = <@ T@> { +(T@ ok, StringL@ err); };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
   Result@<T@>(ok: x);
 };
 
-<@ T@>(String@) { Result@<T@>; } Err = <@ T@>(String@ msg) {
+<@ T@>(StringL@) { Result@<T@>; } Err = <@ T@>(StringL@ msg) {
   Result@<T@>(err: msg);
 };
 
@@ -43,7 +43,7 @@ DoResult = <<@>@ M@>(Monad@<M@> m) {
 };
 
 # A single command.
-@ Command@ = *(String@ name, List@<String@> args);
+@ Command@ = *(StringL@ name, List@<StringL@> args);
 
 # R@ -- Convenience definition for M@<Result@<Unit@>>;
 <<@>@>@ R@ = <<@>@ M@> { M@<Result@<Unit@>>; };
@@ -58,4 +58,4 @@ DoResult = <<@>@ M@>(Monad@<M@> m) {
   I@;
 };
 
-@(Loc@, Start, String@, Result@, Ok, Err, DoResult, Command@, R@, Invoke@);
+@(Loc@, Start, StringL@, Result@, Ok, Err, DoResult, Command@, R@, Invoke@);
