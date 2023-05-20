@@ -10,8 +10,8 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
-% Inc = /Core/Int%.Inc;
-% Dec = /Core/Int%.Dec;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 % Neg = /Core/Int%.Neg;
 % Mul = /Core/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
@@ -52,8 +52,8 @@ Int@ 2 = Int|2;
   # We will always increment y by one. We may or may not need to decrement x
   # by at most one. Don't decrement x if the new radius will drop below the
   # desired radius.
-  Int@ nx = Dec(s.x);
-  Int@ ny = Inc(s.y);
+  Int@ nx = Decr(s.x);
+  Int@ ny = Incr(s.y);
   Int@ nr2 = Add(Mul(nx, nx), Mul(ny, ny));
   Int@ x = Lt(nr2, s.r2).?(true: s.x, false: nx);
   Over(lines, CircleS(State@(x, ny, s.r2, s.color)));

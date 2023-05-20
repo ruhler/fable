@@ -5,7 +5,7 @@
 % 2 = /Core/Int%.2;
 % 3 = /Core/Int%.3;
 % 4 = /Core/Int%.4;
-% Inc = /Core/Int%.Inc;
+% Incr = /Core/Int%.Incr;
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
@@ -61,7 +61,7 @@
     });
   Int@ 2qp1 = Add(Mul(2, qr.q), 1);
   Lt(qr.r, 2qp1).?(true: qr);
-  @(q: Inc(qr.q), r: Sub(qr.r, 2qp1));
+  @(q: Incr(qr.q), r: Sub(qr.r, 2qp1));
 };
 
 @(QR@, Sqrt);

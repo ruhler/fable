@@ -17,7 +17,7 @@
 @ Int@ = /Core/Int%.Int@;
 % 1 = /Core/Int%.1;
 % 2 = /Core/Int%.2;
-% Dec = /Core/Int%.Dec;
+% Decr = /Core/Int%.Decr;
 % Neg = /Core/Int%.Neg;
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
@@ -109,7 +109,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
     x.?(quit: m.return(Unit),
         step: IsZero(s.n).?(
                 true: m.return(Unit),
-                false: StepUI(State@(Dec(s.n), s.a, s.b, Step(s.w)))),
+                false: StepUI(State@(Decr(s.n), s.a, s.b, Step(s.w)))),
         resize: {
           Point@ a = @(x: Div(x.resize.width, Width).q, y: Div(x.resize.height, Height).q);
           Point@ b = @(x: Div(x.resize.width, 2).q,     y: Div(x.resize.height, 2).q);

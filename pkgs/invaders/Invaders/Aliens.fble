@@ -23,7 +23,7 @@
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
-% Inc = /Core/Int%.Inc;
+% Incr = /Core/Int%.Incr;
 % Mul = /Core/Int%.Mul;
 @ QR@ = /Core/Int/Div%.QR@;
 % Div = /Core/Int/Div%.Div;
@@ -82,11 +82,11 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 # Next --
 #   Iteration over aliens in order.
 (Alien@) { Maybe@<Alien@>; } Next = (Alien@ a) {
-  Alien@ next = Alien@(a.row, Inc(a.col));
+  Alien@ next = Alien@(a.row, Incr(a.col));
 
   Alien@ next_ = {
     Lt(next.col, NumCols).?(true: next);
-    Alien@(Inc(a.row), Int|0);
+    Alien@(Incr(a.row), Int|0);
   };
   Alien@ next = next_;
 
@@ -313,7 +313,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
     Lt(row, NumRows).?(false: Nothing<Alien@>);
     Alien@ alien = Alien@(row, col);
     Contains(aliens.alive, alien).?(true: Just<Alien@>(alien));
-    FromRow(Inc(row));
+    FromRow(Incr(row));
   };
   FromRow(Int|0);
 };

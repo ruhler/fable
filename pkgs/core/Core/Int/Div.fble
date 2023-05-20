@@ -1,6 +1,6 @@
 
 @ Int@ = /Core/Int%.Int@;
-% Dec = /Core/Int%.Dec;
+% Decr = /Core/Int%.Decr;
 % Neg = /Core/Int%.Neg;
 % Sub = /Core/Int%.Sub;
 % 0 = /Core/Int%.0;
@@ -28,7 +28,7 @@
           P.QR@ qr = P.Div(a.n, b.p);
           Int@ q = Neg(qr.q);
           qr.r.?(0: @(q: q, r: 0));
-          @(q: Dec(q), r: Sub(b, qr.r));
+          @(q: Decr(q), r: Sub(b, qr.r));
         },
         0: @(q: 0, r: 0),
         p: P.Div(a.p, b.p));

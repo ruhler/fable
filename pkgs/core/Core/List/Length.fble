@@ -1,8 +1,8 @@
 
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;
-% Inc = /Core/Int%.Inc;
-% Dec = /Core/Int%.Dec;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 % Le = /Core/Int/Eq%.Le;
 
 <@>@ List@ = /Core/List%.List@;
@@ -14,7 +14,7 @@
 #
 # Returns an empty list if there are less than n elements on the list.
 <@ T@>(Int@, List@<T@>) { List@<T@>; } Drop = <@ T@>(Int@ n, List@<T@> l) {
-  Le(n, 0).?(true: l, false: l.?(cons: Drop(Dec(n), l.cons.tail), nil: l));
+  Le(n, 0).?(true: l, false: l.?(cons: Drop(Decr(n), l.cons.tail), nil: l));
 };
 
 # Take --
@@ -25,7 +25,7 @@
   Le(n, 0).?(
     true: Nil<T@>,
     false: l.?(
-      cons: Cons(l.cons.head, Take(Dec(n), l.cons.tail)),
+      cons: Cons(l.cons.head, Take(Decr(n), l.cons.tail)),
       nil: Nil<T@>));
 };
 
@@ -43,7 +43,7 @@
 <@ T@>(List@<T@>) { Int@; } Length = <@ T@>(List@<T@> l) {
   # TODO: This is non tail recursive? Should we implement a more memory
   # efficient version?
-  l.?(cons: Inc(Length(l.cons.tail)), nil: 0);
+  l.?(cons: Incr(Length(l.cons.tail)), nil: 0);
 };
 
 @(Take, Drop, Length);

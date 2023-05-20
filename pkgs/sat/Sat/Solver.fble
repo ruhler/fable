@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
-% Inc = /Core/Int%.Inc;
+% Incr = /Core/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -195,7 +195,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
 #   An updated cnf state with clause added.
 (Solver@, List@<Var@>) { Solver@; } AddClause = (Solver@ s, List@<Var@> vars) {
   ClauseId@ id = s.clause_id;
-  AddClauseAt(s.@(clause_id: Inc(id)), id, vars);
+  AddClauseAt(s.@(clause_id: Incr(id)), id, vars);
 };
 
 (Solver@, List@<Clause@>) { Solver@; }
@@ -413,7 +413,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
       }));
       Solver@ rs = s.@(
         unsat: True,
-        clause_id: Inc(id),
+        clause_id: Incr(id),
         conflicts: Conflicts.Insert(s.conflicts, id, conflict.just));
       m.return(rs);
     });

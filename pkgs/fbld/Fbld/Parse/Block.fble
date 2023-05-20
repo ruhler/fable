@@ -3,7 +3,7 @@
 % Chars = /Core/Char%.Chars;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
-% Inc = /Core/Int%.Inc;
+% Incr = /Core/Int%.Incr;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -139,8 +139,8 @@ M@<Maybe@<StringL@>> NextLineArg = {
   });
   String@ reversed = Reverse(stripped);
   Loc@ nl = l.@(
-    col: IsNewline(reversed.cons.head).?(true: l.col, false: Inc(l.col)),
-    indent: Inc(l.indent));
+    col: IsNewline(reversed.cons.head).?(true: l.col, false: Incr(l.col)),
+    indent: Incr(l.indent));
   Return(Just(StringL@(reversed, nl)));
 };
 

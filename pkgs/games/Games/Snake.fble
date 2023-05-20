@@ -36,8 +36,8 @@
 % 1 = /Core/Int%.1;
 % 2 = /Core/Int%.2;
 % 3 = /Core/Int%.3;
-% Inc = /Core/Int%.Inc;
-% Dec = /Core/Int%.Dec;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 % Add = /Core/Int%.Add;
 % Mul = /Core/Int%.Mul;
 % Sub = /Core/Int%.Sub;
@@ -114,7 +114,7 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 (State@) { Drawing@; } Draw = (State@ s) {
   Drawings[
-    Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color.Blue),
+    Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue),
     DrawSnakeS(s.snake),
     DrawCell(s.food, Cell@(food: Unit))
   ];
@@ -122,11 +122,11 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 State@ InitialState = {
   Int@ c0 = MinCol;
-  Int@ c1 = Inc(c0); Int@ c2 = Inc(c1);
-  Int@ c3 = Inc(c2); Int@ c4 = Inc(c3);
+  Int@ c1 = Incr(c0); Int@ c2 = Incr(c1);
+  Int@ c3 = Incr(c2); Int@ c4 = Incr(c3);
   Int@ r0 = MinRow;
-  Int@ r1 = Inc(r0); Int@ r2 = Inc(r1);
-  Int@ r3 = Inc(r2); Int@ r4 = Inc(r3);
+  Int@ r1 = Incr(r0); Int@ r2 = Incr(r1);
+  Int@ r3 = Incr(r2); Int@ r4 = Incr(r3);
   State@(
     Dir@(right: Unit),
     Pos@(r4, c1),
@@ -168,16 +168,16 @@ State@ InitialState = {
   PosM@ pm = s.dir.?(
     up: Eq(s.snake.cons.head.row, MaxRow).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(Inc(s.snake.cons.head.row), s.snake.cons.head.col))),
+      false: PosM@(pos: Pos@(Incr(s.snake.cons.head.row), s.snake.cons.head.col))),
     down: Eq(s.snake.cons.head.row, MinRow).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(Dec(s.snake.cons.head.row), s.snake.cons.head.col))),
+      false: PosM@(pos: Pos@(Decr(s.snake.cons.head.row), s.snake.cons.head.col))),
     left: Eq(s.snake.cons.head.col, MinCol).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(s.snake.cons.head.row, Dec(s.snake.cons.head.col)))),
+      false: PosM@(pos: Pos@(s.snake.cons.head.row, Decr(s.snake.cons.head.col)))),
     right: Eq(s.snake.cons.head.col, MaxCol).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(s.snake.cons.head.row, Inc(s.snake.cons.head.col)))));
+      false: PosM@(pos: Pos@(s.snake.cons.head.row, Incr(s.snake.cons.head.col)))));
 
   pm.?(
     dead: MoveResultM@(dead: Unit),
@@ -218,10 +218,10 @@ State@ InitialState = {
 
   (Dir@) { Choice@; } Choice = (Dir@ dir) {
     Pos@ pos = dir.?(
-      up: Pos@(Inc(s.snake.cons.head.row), s.snake.cons.head.col),
-      down: Pos@(Dec(s.snake.cons.head.row), s.snake.cons.head.col),
-      left: Pos@(s.snake.cons.head.row, Dec(s.snake.cons.head.col)),
-      right: Pos@(s.snake.cons.head.row, Inc(s.snake.cons.head.col)));
+      up: Pos@(Incr(s.snake.cons.head.row), s.snake.cons.head.col),
+      down: Pos@(Decr(s.snake.cons.head.row), s.snake.cons.head.col),
+      left: Pos@(s.snake.cons.head.row, Decr(s.snake.cons.head.col)),
+      right: Pos@(s.snake.cons.head.row, Incr(s.snake.cons.head.col)));
 
     Bool@ dead = {
       Lt(pos.row, MinRow).?(true: True);
@@ -301,7 +301,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
 
   State@ s = InitialState;
   
-  Unit@ _ <- m.do(Output(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color.Blue))));
+  Unit@ _ <- m.do(Output(Effect@(draw: Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue))));
   Unit@ _ <- m.do(Output(Effect@(draw: Draw(s))));
   Unit@ _ <- m.do(app.effect(Effect@(tick: Int|16)));
   Unit@ _ <- m.do(Snake(s));

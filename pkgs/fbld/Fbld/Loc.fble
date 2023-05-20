@@ -3,7 +3,7 @@
 % IsNewline = /Core/Char/Type%.IsNewline;
 
 @ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Inc;
+% Incr = /Core/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 
 @ String@ = /Core/String%.String@;

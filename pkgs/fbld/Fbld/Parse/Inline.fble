@@ -6,8 +6,8 @@
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 
 @ Int@ = /Core/Int%.Int@;
-% Inc = /Core/Int%.Inc;
-% Dec = /Core/Int%.Dec;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -94,13 +94,13 @@ M@<Maybe@<StringL@>> Arg = {
       arg(l, nest, Cons(nc.just, Cons(c, rarg)));
     });
 
-    c.?('[': arg(l, Inc(nest), Cons(c, rarg)));
+    c.?('[': arg(l, Incr(nest), Cons(c, rarg)));
 
     c.?(']': {
       /Core/Int/Eq%.IsZero(nest).?(true: {
         Return(StringL@(Reverse(rarg), l));
       });
-      arg(l, Dec(nest), Cons(c, rarg));
+      arg(l, Decr(nest), Cons(c, rarg));
     });
 
     arg(l, nest, Cons(c, rarg));

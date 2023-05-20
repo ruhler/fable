@@ -14,7 +14,7 @@
 @ Memory@ = /Hwdg/Memory%.Memory@;
 
 @ Int@ = /Core/Int%.Int@;
-% Inc = /Core/Int%.Inc;
+% Incr = /Core/Int%.Incr;
 % 0 = /Core/Int%.0;
 
 <@>@ List@ = /Core/List%.List@;
@@ -208,9 +208,9 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
       # The coordinates of each port.
       Ports@<Coord@> cs = Ports@<Coord@>(
         Coord@(c.x, c.y),
-        Coord@(Inc(c.x), c.y),
-        Coord@(c.x, Inc(c.y)),
-        Coord@(Inc(c.x), Inc(c.y)));
+        Coord@(Incr(c.x), c.y),
+        Coord@(c.x, Incr(c.y)),
+        Coord@(Incr(c.x), Incr(c.y)));
 
       # Don't do anything if the data needed for this port has been modified
       # since the start of the cycle.

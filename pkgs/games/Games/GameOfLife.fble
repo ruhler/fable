@@ -7,8 +7,8 @@
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
 @ Int@ = /Core/Int%.Int@;
-% Inc = /Core/Int%.Inc;
-% Dec = /Core/Int%.Dec;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 
 % IsZero = /Core/Int/Eq%.IsZero;
 % Eq = /Core/Int/Eq%.Eq;
@@ -88,7 +88,7 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
   # 1. Create the candidate map.
   #   For each cell in world,
   #     Set this cell alive in candidate
-  #     Inc neighbors for each neighbor cell
+  #     Incr neighbors for each neighbor cell
   Cand@ candidates = W.ForEach<Cand@>(w, C.Empty,
     (Coord@ coord, Unit@ _, Cand@ cand_in) {
       Cand@ cand_alive = C.InsertWith(cand_in, coord, (Maybe@<Status@> ms) {
@@ -97,14 +97,14 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
       });
 
       List@<Coord@> neighbors = List<Coord@>[
-        Coord@(Dec(coord.row), Dec(coord.col)),
-        Coord@(Dec(coord.row),     coord.col ),
-        Coord@(Dec(coord.row), Inc(coord.col)),
-        Coord@(    coord.row , Dec(coord.col)),
-        Coord@(    coord.row , Inc(coord.col)),
-        Coord@(Inc(coord.row), Dec(coord.col)),
-        Coord@(Inc(coord.row),     coord.col ),
-        Coord@(Inc(coord.row), Inc(coord.col))];
+        Coord@(Decr(coord.row), Decr(coord.col)),
+        Coord@(Decr(coord.row),     coord.col ),
+        Coord@(Decr(coord.row), Incr(coord.col)),
+        Coord@(    coord.row , Decr(coord.col)),
+        Coord@(    coord.row , Incr(coord.col)),
+        Coord@(Incr(coord.row), Decr(coord.col)),
+        Coord@(Incr(coord.row),     coord.col ),
+        Coord@(Incr(coord.row), Incr(coord.col))];
 
       ForEach<Coord@, Cand@>(neighbors, cand_alive, (Coord@ n, Cand@ c) {
         C.InsertWith(c, n, (Maybe@<Status@> ms) {
@@ -125,7 +125,7 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
 };
 
 (Int@, World@) { World@; } StepN = (Int@ n, World@ w) {
-  IsZero(n).?(true: w, false: StepN(Dec(n), Step(w)));
+  IsZero(n).?(true: w, false: StepN(Decr(n), Step(w)));
 };
 
 @(Coord@, World@, World, ForWorld: W.ForEach, EqWorld, Step, StepN);

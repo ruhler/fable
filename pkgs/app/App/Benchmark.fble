@@ -4,7 +4,7 @@
 @ Effect@ = /App/App%.Effect@;
 
 @ Int@ = /Core/Int%.Int@;
-% Dec = /Core/Int%.Dec;
+% Decr = /Core/Int%.Decr;
 
 % Int = /Core/Int/Lit%.Int;
 
@@ -41,7 +41,7 @@ Benchmark = (Main@ app, Int@ n, Event@ quit)(Unit@ _) {
   M@<Event@> Event = {
     Int@ n <- Monad.do(State.Get);
     n.?(n: Monad.return(quit));
-    Unit@ _ <- Monad.do(State.Set(Dec(n)));
+    Unit@ _ <- Monad.do(State.Set(Decr(n)));
     Monad.return(Event@(tick: Unit));
   };
 

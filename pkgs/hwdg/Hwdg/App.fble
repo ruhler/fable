@@ -36,8 +36,8 @@
 % 0 = /Core/Int%.0;
 % 1 = /Core/Int%.1;
 % 2 = /Core/Int%.2;
-% Inc = /Core/Int%.Inc;
-% Dec = /Core/Int%.Dec;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 % Neg = /Core/Int%.Neg;
 % Sub = /Core/Int%.Sub;
 
@@ -88,8 +88,8 @@ Memory@ Cells = {
   Drawing@ io = ForEachRule<Drawing@>(design, clear,
    (Coord@ p, Rule@ r, Drawing@ d) {
      Ports@<Coord@> coords = Ports@<Coord@>(
-       Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),
-       Coord@(p.x, Inc(p.y)), Coord@(Inc(p.x), Inc(p.y)));
+       Coord@(p.x, p.y), Coord@(Incr(p.x), p.y),
+       Coord@(p.x, Incr(p.y)), Coord@(Incr(p.x), Incr(p.y)));
 
      Ports@<Bool@> used = Ports@<Bool@>(
        { r.inputs.ul.?(just: True); r.outputs.ul.?(just: True); False; },
@@ -147,7 +147,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
     x.?(quit: m.return(Unit),
         step: IsZero(n).?(
                 true: m.return(Unit),
-                false: StepUI(Dec(n), design, Step(design, cells))));
+                false: StepUI(Decr(n), design, Step(design, cells))));
   };
 
   M@<Unit@> WaitForKeyPress = {
