@@ -16,7 +16,7 @@
 @ StringL@ = /Fbld/StringL%.StringL@;
 
 <<@>@ M@>(Monad@<M@> m) {
-  @ Invoke@ = /Fbld/Invoke%.Invoke@<M@>;
+  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
   @ Markup@ = /Core/Map%.Map@<String@, Invoke@>;
 
   @ Entry@ = /Core/Map%.Entry@<String@, Invoke@>;

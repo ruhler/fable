@@ -13,16 +13,17 @@
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
 
-<<@>@>@ Invoke@ = /Fbld/Invoke%.Invoke@;
 
 <<@>@ M@>(Monad@<M@> m) {
+  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+
   % ResultM = /Fbld/ResultM%<M@>;
   <@>@ MR@ = ResultM.MR@;
   Monad@<MR@> mr = ResultM.Monad(m);
 
   # Interprets and executes inline structured text.
-  (Invoke@<M@>, Invoke@<M@>, StringL@) { MR@<Unit@>; }
-  Inline = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
+  (Invoke@, Invoke@, StringL@) { MR@<Unit@>; }
+  Inline = (Invoke@ inline, Invoke@ block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
@@ -34,8 +35,8 @@
   };
 
   # Interprets and executes block structured text.
-  (Invoke@<M@>, Invoke@<M@>, StringL@) { MR@<Unit@>; }
-  Block = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
+  (Invoke@, Invoke@, StringL@) { MR@<Unit@>; }
+  Block = (Invoke@ inline, Invoke@ block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 

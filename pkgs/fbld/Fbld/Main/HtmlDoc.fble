@@ -24,7 +24,6 @@
 @ Command@ = /Fbld/Command%.Command@;
 <@>@ Result@ = /Fbld/Result%.Result@;
 @ StringL@ = /Fbld/StringL%.StringL@;
-<<@>@>@ Invoke@ = /Fbld/Invoke%.Invoke@;
 
 
 # Main --
@@ -34,6 +33,9 @@
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
+
+  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+
   % Markup = /Fbld/Markup%(m);
   @ Markup@ = Markup.Markup@;
 
@@ -46,17 +48,17 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   Markup@ inline_markup =
     Markup.Insert(
       Markup.Insert(Core.InlineMarkup(core),
-        Str|'FbleVersion', (Invoke@<M@> i, Invoke@<M@> b, Command@ c) {
+        Str|'FbleVersion', (Invoke@ i, Invoke@ b, Command@ c) {
           core.text(StringL@(Str|'??FbleVersion??', c.name.loc));
         }),
-      Str|'BuildStamp', (Invoke@<M@> i, Invoke@<M@> b, Command@ c) {
+      Str|'BuildStamp', (Invoke@ i, Invoke@ b, Command@ c) {
         core.text(StringL@(Str|'??BuildStamp??', c.name.loc));
       });
 
   Markup@ block_markup = Core.BlockMarkup(core);
 
-  Invoke@<M@> inline = Markup.Invoke(inline_markup);
-  Invoke@<M@> block = Markup.Invoke(block_markup);
+  Invoke@ inline = Markup.Invoke(inline_markup);
+  Invoke@ block = Markup.Invoke(block_markup);
   % Run = /Fbld/Run%(m);
 
   (List@<String@> args) {

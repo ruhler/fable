@@ -3,16 +3,15 @@
 
 @ Command@ = /Fbld/Command%.Command@;
 
-# The type of a function to invoke an fbld command.
-#  @arg[Invoke@<M@>][inline] - The inline invoke function.
-#  @arg[Invoke@<M@>][block] - The block invoke function.
-#  @arg[Command@][command] - The command to invoke.
-#  @returns The result of invoking the command.
-<<@>@>@ Invoke@ = <<@>@ M@> {
+<<@>@ M@> {
   <@>@ MR@ = /Fbld/ResultM%<M@>.MR@;
 
-  @ I@ = (I@, I@, Command@) { MR@<Unit@>; };
-  I@;
-};
+  # The type of a function to invoke an fbld command.
+  #  @arg[Invoke@<M@>][inline] - The inline invoke function.
+  #  @arg[Invoke@<M@>][block] - The block invoke function.
+  #  @arg[Command@][command] - The command to invoke.
+  #  @returns The result of invoking the command.
+  @ Invoke@ = (Invoke@, Invoke@, Command@) { MR@<Unit@>; };
 
-@(Invoke@);
+  @(Invoke@);
+};
