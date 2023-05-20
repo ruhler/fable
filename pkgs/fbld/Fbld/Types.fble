@@ -1,13 +1,7 @@
 
-<@>@ List@ = /Core/List%.List@;
-
 @ Unit@ = /Core/Unit%.Unit@;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
-
-
-# A single command.
-@ Command@ = *(StringL@ name, List@<StringL@> args);
+@ Command@ = /Fbld/Command%.Command@;
 
 # The type of a function to invoke an fbld command.
 #  @arg[Invoke@<M@>][inline] - The inline invoke function.
@@ -21,4 +15,4 @@
   I@;
 };
 
-@(Command@, Invoke@);
+@(Invoke@);

@@ -22,11 +22,9 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
+@ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
-
 @ StringL@ = /Fbld/StringL%.StringL@;
-
-@ Command@ = /Fbld/Types%.Command@;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
 <@>% Return = /Fbld/Parse/M%.Return;

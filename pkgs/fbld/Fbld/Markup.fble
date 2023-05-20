@@ -11,11 +11,9 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
-
+@ Command@ = /Fbld/Command%.Command@;
 <@>% Err = /Fbld/Result%.Err;
-
-@ Command@ = /Fbld/Types%.Command@;
+@ StringL@ = /Fbld/StringL%.StringL@;
 
 <<@>@ M@>(Monad@<M@> m) {
   @ Invoke@ = /Fbld/Types%.Invoke@<M@>;

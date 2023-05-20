@@ -6,13 +6,10 @@
 
 <@>@ List@ = /Core/List%.List@;
 
+@ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
-
-@ StringL@ = /Fbld/StringL%.StringL@;
-
 <@>@ Result@ = /Fbld/Result%.Result@;
-
-@ Command@ = /Fbld/Types%.Command@;
+@ StringL@ = /Fbld/StringL%.StringL@;
 
 Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {
   /Core/String/Eq%.Eq(a.file, b.file).?(false: False);

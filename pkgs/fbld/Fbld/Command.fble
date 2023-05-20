@@ -1,0 +1,9 @@
+
+<@>@ List@ = /Core/List%.List@;
+
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+# A single command.
+@ Command@ = *(StringL@ name, List@<StringL@> args);
+
+@(Command@);

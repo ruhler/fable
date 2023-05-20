@@ -23,7 +23,7 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
 
-@ Command@ = /Fbld/Types%.Command@;
+@ Command@ = /Fbld/Command%.Command@;
 
 % Inline = /Fbld/Parse%.Inline;
 % Block = /Fbld/Parse%.Block;

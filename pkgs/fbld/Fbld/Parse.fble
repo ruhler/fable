@@ -1,11 +1,9 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
-
+@ Command@ = /Fbld/Command%.Command@;
 <@>@ Result@ = /Fbld/Result%.Result@;
-
-@ Command@ = /Fbld/Types%.Command@;
+@ StringL@ = /Fbld/StringL%.StringL@;
 
 <@>% Run = /Fbld/Parse/M%.Run;
 

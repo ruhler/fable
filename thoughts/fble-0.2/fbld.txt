@@ -494,4 +494,40 @@ Does it make sense to do other cleanup while I'm at it?
   /Core/String%?
   Like, StringL@. That's not bad. Let's do that.
 
+---
 
+I'm thinking we want two different types. I'm not sure what to call them:
+1. A function that takes global context and a command and executes the
+command.
+2. A global context, which is a pair of invocation functions, one for inline,
+one for block.
+
+Brainstorm of names:
+* Invoke@, Context@.
+
+Anything better than Context@ for (2)?
+* Env@ is better.
+
+So, what do define where?
+* Command@
+* Invoke@, Env@
+* Invoke.Inline, Invoke.Block - that parse and execute structured text.
+* Is Markup@ the right term to use? Or would that more often refer to the text
+  itself rather than the tag definitions?
+
+My vote:
+* Command@ should be separate from Invoke@, because Parse doesn't need
+  Invoke@.
+* Invoke@ and Env@ must be defined together, because they depend on each
+  other. I think Invoke% is fine for this.
+* Maybe Interpret.Inline, Interpret.Block? Exec? Eval? Impl? Run?
+  I like Exec or Run. Let's say Run, because it is a complete word.
+* "markup" means the marked up text, not the tags. What other name could we
+  use? Markup Language? Language?
+  - This brings an interesting idea: should StringL@ be renamed to Markup@?
+    No. I don't think so.
+  How about Schema@? Tags@? Honestly, I like Markup@... Maybe think of it as
+  the definition of what markup elements can be used in the doc. Yeah. Let's
+  go with that.
+
+We have our answers. Get to work.

@@ -11,11 +11,12 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Command@ = /Fbld/Command%.Command@;
 
 <@>% Err = /Fbld/Result%.Err;
 
-@ Command@ = /Fbld/Types%.Command@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
 
 (StringL@) { StringL@; } Unescape = (StringL@ s) {
   StringL@(/Fbld/Unescape%.Unescape(s.str), s.loc);

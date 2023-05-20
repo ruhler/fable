@@ -6,13 +6,10 @@
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
+@ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
-
-@ StringL@ = /Fbld/StringL%.StringL@;
-
 <@>@ Result@ = /Fbld/Result%.Result@;
-
-@ Command@ = /Fbld/Types%.Command@;
+@ StringL@ = /Fbld/StringL%.StringL@;
 
 Show@<Loc@> Loc = (Loc@ x) {
   Strs[x.file,

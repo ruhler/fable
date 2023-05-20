@@ -5,13 +5,14 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
+@ Command@ = /Fbld/Command%.Command@;
+
 @ StringL@ = /Fbld/StringL%.StringL@;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
 
-@ Command@ = /Fbld/Types%.Command@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
 
 <<@>@ M@>(Monad@<M@> m) {
