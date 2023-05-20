@@ -1,0 +1,47 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+@ Command@ = /Fbld/Command%.Command@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+
+<<@>@ M@>(Monad@<M@> m) {
+  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
+
+  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
+
+  @ Core@ = /Fbld/Core%(m).Core@;
+
+  % MarkupModule = /Fbld/Markup%(m);
+  @ Markup@ = MarkupModule.Markup@;
+  % Inline = MarkupModule.Inline;
+  % Entry = MarkupModule.Entry;
+
+  (Core@ core) {
+    # @FbleVersion
+    # The fble version number.
+    # TODO: Implement this properly.
+    (Loc@) { MRU@; } Version = (Loc@ loc) {
+      core.text(StringL@(Str|'??FbleVersion??', loc));
+    };
+
+    Invoke@ VersionInvoke = (Env@ env, Command@ c) {
+      # TODO: Verify no arguments were provided.
+      Version(c.name.loc);
+    };
+
+    Markup@ Markup = Inline[
+      Entry(Str|'FbleVersion', VersionInvoke)
+    ];
+
+    @(Version, Markup);
+  };
+};
+

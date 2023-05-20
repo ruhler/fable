@@ -21,7 +21,6 @@
 % Report = /Fbld/Loc%.Report;
 % Start = /Fbld/Loc%.Start;
 
-@ Command@ = /Fbld/Command%.Command@;
 <@>@ Result@ = /Fbld/Result%.Result@;
 @ StringL@ = /Fbld/StringL%.StringL@;
 
@@ -39,8 +38,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % Markup = /Fbld/Markup%(m);
   @ Markup@ = Markup.Markup@;
   % Markups = Markup.Markups;
-  % Inline = Markup.Inline;
-  % Entry = Markup.Entry;
 
   % Core = /Fbld/Core%(m);
   @ Core@ = Core.Core@;
@@ -52,14 +49,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   # TODO: Properly implement @FbleVersion, @Buildstamp
   Markup@ markup = Markups[
     Core.Markup(core),
-    Inline[
-      Entry(Str|'FbleVersion', (Env@ env, Command@ c) {
-          core.text(StringL@(Str|'??FbleVersion??', c.name.loc));
-        }),
-      Entry(Str|'BuildStamp', (Env@ env, Command@ c) {
-        core.text(StringL@(Str|'??BuildStamp??', c.name.loc));
-      })
-    ]];
+    /Fbld/Fble/Build%(m)(core).Markup,
+    /Fbld/Fble/Version%(m)(core).Markup
+  ];
 
   Env@ env = Markup.Env(markup);
 

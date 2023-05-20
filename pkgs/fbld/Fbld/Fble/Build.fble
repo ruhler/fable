@@ -1,0 +1,43 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+@ Command@ = /Fbld/Command%.Command@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+<<@>@ M@>(Monad@<M@> m) {
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
+
+  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
+
+  @ Core@ = /Fbld/Core%(m).Core@;
+
+  % MarkupModule = /Fbld/Markup%(m);
+  @ Markup@ = MarkupModule.Markup@;
+  % Inline = MarkupModule.Inline;
+  % Entry = MarkupModule.Entry;
+
+  (Core@ core) {
+    # @BuildStamp
+    # The fble build stamp.
+    # TODO: Implement this properly.
+    (Loc@) { MRU@; } BuildStamp = (Loc@ loc) {
+      core.text(StringL@(Str|'??BuildStamp??', loc));
+    };
+
+    Markup@ Markup = Inline[
+      Entry(Str|'BuildStamp', (Env@ env, Command@ c) {
+        # TODO: Verify no arguments were provided.
+        BuildStamp(c.name.loc);
+      })
+    ];
+
+    @(BuildStamp, Markup);
+  };
+};
+
