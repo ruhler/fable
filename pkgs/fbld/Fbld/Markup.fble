@@ -17,6 +17,7 @@
 
 <<@>@ M@>(Monad@<M@> m) {
   @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
   @ Markup@ = /Core/Map%.Map@<String@, Invoke@>;
 
   @ Entry@ = /Core/Map%.Entry@<String@, Invoke@>;
@@ -39,13 +40,13 @@
   };
 
   (Markup@) { Invoke@; } Invoke = (Markup@ markup) {
-    (Invoke@ i, Invoke@ b, Command@ cmd) {
+    (Env@ env, Command@ cmd) {
       Maybe@<Invoke@> f = Lookup(markup, cmd.name.str);
       f.?(nothing: {
         String@ msg = Strs[Str|'unsupported tag: ''', cmd.name.str, Str|''''];
         m.return(Err<Unit@>(StringL@(msg, cmd.name.loc)));
       });
-      f.just(i, b, cmd);
+      f.just(env, cmd);
     };
   };
 

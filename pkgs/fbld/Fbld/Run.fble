@@ -15,35 +15,35 @@
 
 
 <<@>@ M@>(Monad@<M@> m) {
-  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
 
   % ResultM = /Fbld/ResultM%<M@>;
   <@>@ MR@ = ResultM.MR@;
   Monad@<MR@> mr = ResultM.Monad(m);
 
   # Interprets and executes inline structured text.
-  (Invoke@, Invoke@, StringL@) { MR@<Unit@>; }
-  Inline = (Invoke@ inline, Invoke@ block, StringL@ text) {
+  (Env@, StringL@) { MR@<Unit@>; }
+  Inline = (Env@ env, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
     /Core/List%.ForEach(parsed.ok, m.return(Ok(Unit)),
       (Command@ cmd, MR@<Unit@> mx) {
         Unit@ _ <- mr.do(mx);
-        inline(inline, block, cmd);
+        env.inline(env, cmd);
       });
   };
 
   # Interprets and executes block structured text.
-  (Invoke@, Invoke@, StringL@) { MR@<Unit@>; }
-  Block = (Invoke@ inline, Invoke@ block, StringL@ text) {
+  (Env@, StringL@) { MR@<Unit@>; }
+  Block = (Env@ env, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
     /Core/List%.ForEach(parsed.ok, m.return(Ok(Unit)),
       (Command@ cmd, MR@<Unit@> mx) {
         Unit@ _ <- mr.do(mx);
-        block(inline, block, cmd);
+        env.block(env, cmd);
       });
   };
 

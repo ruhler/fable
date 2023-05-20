@@ -35,6 +35,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % O = /Core/Stream/OStream%(m);
 
   @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
 
   % Markup = /Fbld/Markup%(m);
   @ Markup@ = Markup.Markup@;
@@ -42,16 +43,18 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % Core = /Fbld/Core%(m);
   @ Core@ = Core.Core@;
 
+  % Run = /Fbld/Run%(m);
+
   Core@ core = /Fbld/Html%(m, stdio.out).Core;
 
   # TODO: Properly implement @FbleVersion, @Buildstamp
   Markup@ inline_markup =
     Markup.Insert(
       Markup.Insert(Core.InlineMarkup(core),
-        Str|'FbleVersion', (Invoke@ i, Invoke@ b, Command@ c) {
+        Str|'FbleVersion', (Env@ env, Command@ c) {
           core.text(StringL@(Str|'??FbleVersion??', c.name.loc));
         }),
-      Str|'BuildStamp', (Invoke@ i, Invoke@ b, Command@ c) {
+      Str|'BuildStamp', (Env@ env, Command@ c) {
         core.text(StringL@(Str|'??BuildStamp??', c.name.loc));
       });
 
@@ -59,7 +62,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
   Invoke@ inline = Markup.Invoke(inline_markup);
   Invoke@ block = Markup.Invoke(block_markup);
-  % Run = /Fbld/Run%(m);
+  Env@ env = Env@(inline, block);
 
   (List@<String@> args) {
     args.?(nil: {
@@ -78,7 +81,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     });
 
     String@ contents <- m.do(I.GetText(fin.just));
-    Result@<Unit@> r <- m.do(Run.Block(inline, block, StringL@(contents, Start(filename))));
+    Result@<Unit@> r <- m.do(Run.Block(env, StringL@(contents, Start(filename))));
     r.?(err: {
       String@ msg = Report(r.err.loc, r.err.str);
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
