@@ -15,20 +15,20 @@
 
 <@>% Ok = /Fbld/Result%.Ok;
 
-<<@>@>@ R@ = /Fbld/Types%.R@;
+<<@>@ M@>(Monad@<M@> m, OStream@<M@> out) {
 
-<<@>@>% DoResult = /Fbld/Types%.DoResult;
-
-<<@>@ M@>(Monad@<M@> m)(OStream@<M@> out) {
+  % ResultM = /Fbld/ResultM%<M@>;
+  <@>@ MR@ = ResultM.MR@;
+  Monad@<MR@> mr = ResultM.Monad(m);
 
   @ Core@ = /Fbld/Core%(m).Core@;
 
   % O = /Core/Stream/OStream%(m);
-  <@>% DoR = DoResult(m);
 
-  (StringL@) { R@<M@>; } Text = (StringL@ str) {
-    (String@) { R@<M@>; } text = (String@ s) {
-      s.?(nil: m.return(Ok(Unit)));
+  (StringL@) { MR@<Unit@>; }
+  Text = (StringL@ str) {
+    (String@) { MR@<Unit@>; } text = (String@ s) {
+      s.?(nil: mr.return(Unit));
       Char@ c = s.cons.head;
       Unit@ _ <- m.do(c.?(
         '&': O.PutStr(out, Str|'&amp;'),
@@ -41,78 +41,86 @@
     text(str.str);
   };
 
-  (StringL@) { R@<M@>; } L = (StringL@ str) {
+  (StringL@) { MR@<Unit@>; }
+  L = (StringL@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<code>'));
-    Unit@ _ <- DoR(Text(str));
+    Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'</code>'));
     m.return(Ok(Unit));
   };
 
-  (StringL@) { R@<M@>; } A = (StringL@ str) {
+  (StringL@) { MR@<Unit@>; }
+  A = (StringL@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<i>'));
-    Unit@ _ <- DoR(Text(str));
+    Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'</i>'));
     m.return(Ok(Unit));
   };
 
-  (StringL@, R@<M@>) { R@<M@>; } Label = (StringL@ id, R@<M@> text) {
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Label = (StringL@ id, MR@<Unit@> text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a id="'));
-    Unit@ _ <- DoR(Text(id));
+    Unit@ _ <- mr.do(Text(id));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
-    Unit@ _ <- DoR(text);
+    Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
     m.return(Ok(Unit));
   };
 
-  (StringL@, R@<M@>) { R@<M@>; } Ref = (StringL@ id, R@<M@> caption) {
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Ref = (StringL@ id, MR@<Unit@> caption) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="#'));
-    Unit@ _ <- DoR(Text(id));
+    Unit@ _ <- mr.do(Text(id));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
-    Unit@ _ <- DoR(caption);
+    Unit@ _ <- mr.do(caption);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
     m.return(Ok(Unit));
   };
 
-  (StringL@, R@<M@>) { R@<M@>; } Url = (StringL@ url, R@<M@> text) {
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Url = (StringL@ url, MR@<Unit@> text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
-    Unit@ _ <- DoR(Text(url));
+    Unit@ _ <- mr.do(Text(url));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
-    Unit@ _ <- DoR(text);
+    Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
     m.return(Ok(Unit));
   };
 
-  (StringL@, R@<M@>) { R@<M@>; } File = (StringL@ file, R@<M@> text) {
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  File = (StringL@ file, MR@<Unit@> text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
-    Unit@ _ <- DoR(Text(file));
+    Unit@ _ <- mr.do(Text(file));
     Unit@ _ <- m.do(O.PutStr(out, Str|'"><code>'));
-    Unit@ _ <- DoR(text);
+    Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</code></a>'));
     m.return(Ok(Unit));
   };
 
-  (StringL@, R@<M@>) { R@<M@>; } Fbld = (StringL@ file, R@<M@> text) {
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Fbld = (StringL@ file, MR@<Unit@> text) {
     # TODO: Convert filename from *.fbld to *.html
     StringL@ fbld = file;
     File(fbld, text);
   };
 
-  (R@<M@>) { R@<M@>; }
-  Par = (R@<M@> body) {
+  (MR@<Unit@>) { MR@<Unit@>; }
+  Par = (MR@<Unit@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<p>'));
-    Unit@ _ <- DoR(body);
+    Unit@ _ <- mr.do(body);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</p>'));
     m.return(Ok(Unit));
   };
 
-  (R@<M@>) { R@<M@>; } Item = (R@<M@> body) {
+  (MR@<Unit@>) { MR@<Unit@>; }
+  Item = (MR@<Unit@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<ul><li>'));
-    Unit@ _ <- DoR(body);
+    Unit@ _ <- mr.do(body);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</li></ul>'));
     m.return(Ok(Unit));
   };
 
-  (StringL@, StringL@) { R@<M@>; }
+  (StringL@, StringL@) { MR@<Unit@>; }
   Code = (StringL@ lang, StringL@ text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<pre>'));
     Unit@ _ <- m.do(O.PutStr(out, text.str));
@@ -120,42 +128,42 @@
     m.return(Ok(Unit));
   };
 
-  (R@<M@>, R@<M@>) { R@<M@>; }
-  Def = (R@<M@> name, R@<M@> value) {
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Def = (MR@<Unit@> name, MR@<Unit@> value) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<dl><dt>'));
-    Unit@ _ <- DoR(name);
+    Unit@ _ <- mr.do(name);
     Unit@ _ <- m.do(O.PutStr(out, Str|'</dt><dd>'));
-    Unit@ _ <- DoR(value);
+    Unit@ _ <- mr.do(value);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</dd></dl>'));
     m.return(Ok(Unit));
   };
 
-  (R@<M@>, R@<M@>) { R@<M@>; }
-  Section = (R@<M@> title, R@<M@> body) {
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Section = (MR@<Unit@> title, MR@<Unit@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<h2>'));
-    Unit@ _ <- DoR(title);
+    Unit@ _ <- mr.do(title);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</h2>'));
     body;
   };
 
-  (R@<M@>, R@<M@>) { R@<M@>; }
-  SubSection = (R@<M@> title, R@<M@> body) {
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  SubSection = (MR@<Unit@> title, MR@<Unit@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<h3>'));
-    Unit@ _ <- DoR(title);
+    Unit@ _ <- mr.do(title);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</h3>'));
     body;
   };
 
-  (R@<M@>, R@<M@>) { R@<M@>; }
-  SubSubSection = (R@<M@> title, R@<M@> body) {
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  SubSubSection = (MR@<Unit@> title, MR@<Unit@> body) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<h4>'));
-    Unit@ _ <- DoR(title);
+    Unit@ _ <- mr.do(title);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</h4>'));
     body;
   };
 
-  (R@<M@>, R@<M@>) { R@<M@>; }
-  Doc = (R@<M@> title, R@<M@> body) {
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Doc = (MR@<Unit@> title, MR@<Unit@> body) {
     Unit@ _ <- m.do(O.PutLine(out, Str|'
 <head>
 <style>
@@ -172,13 +180,13 @@ p { font-size: 1em; }
 </style>
 '));
     Unit@ _ <- m.do(O.PutStr(out, Str|'<title>'));
-    Unit@ _ <- DoR(title);
+    Unit@ _ <- mr.do(title);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</title>'));
     Unit@ _ <- m.do(O.PutLine(out, Str|'</head><body>'));
     Unit@ _ <- m.do(O.PutStr(out, Str|'<h1>'));
-    Unit@ _ <- DoR(title);
+    Unit@ _ <- mr.do(title);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</h1>'));
-    Unit@ _ <- DoR(body);
+    Unit@ _ <- mr.do(body);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</body>'));
     m.return(Ok(Unit));
   };

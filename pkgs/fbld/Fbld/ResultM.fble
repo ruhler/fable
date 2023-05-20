@@ -1,0 +1,28 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Err = /Fbld/Result%.Err;
+<@>% Ok = /Fbld/Result%.Ok;
+
+<<@>@ M@> {
+  <@>@ MR@ = <@ T@> { M@<Result@<T@>>; };
+
+  (Monad@<M@>) { Monad@<MR@>; } Monad = (Monad@<M@> m) {
+    <@ A@>(A@) { MR@<A@>; }
+    Return = <@ A@>(A@ a) {
+      m.return(Ok(a));
+    };
+
+    <@ A@>(MR@<A@>)<@ B@>((A@) { MR@<B@>; }) { MR@<B@>; }
+    Do = <@ A@>(MR@<A@> ma)<@ B@>((A@) { MR@<B@>; } f) {
+      Result@<A@> ra <- m.do(ma);
+      ra.?(err: m.return(Err<B@>(ra.err)));
+      f(ra.ok);
+    };
+
+    Monad@<MR@>(Return, Do);
+  };
+
+  @(MR@, Monad);
+};

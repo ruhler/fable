@@ -42,7 +42,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % Core = /Fbld/Core%(m);
   @ Core@ = Core.Core@;
 
-  Core@ core = /Fbld/Html%(m)(stdio.out).Core;
+  Core@ core = /Fbld/Html%(m, stdio.out).Core;
 
   # TODO: Properly implement @FbleVersion, @Buildstamp
   Markup@ inline_markup =

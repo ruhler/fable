@@ -11,35 +11,34 @@
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
 
-<<@>@>@ R@ = /Fbld/Types%.R@;
 @ Command@ = /Fbld/Types%.Command@;
 <<@>@>@ Invoke@ = /Fbld/Types%.Invoke@;
-<<@>@>% DoResult = /Fbld/Types%.DoResult;
 
 <<@>@ M@>(Monad@<M@> m) {
+  % ResultM = /Fbld/ResultM%<M@>;
+  <@>@ MR@ = ResultM.MR@;
+  Monad@<MR@> mr = ResultM.Monad(m);
 
-  <@>% DoR = DoResult(m);
-
-  (Invoke@<M@>, Invoke@<M@>, StringL@) { R@<M@>; }
+  (Invoke@<M@>, Invoke@<M@>, StringL@) { MR@<Unit@>; }
   Inline = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
     /Core/List%.ForEach(parsed.ok, m.return(Ok(Unit)),
-      (Command@ cmd, R@<M@> mx) {
-        Unit@ _ <- DoR<Unit@>(mx);
+      (Command@ cmd, MR@<Unit@> mx) {
+        Unit@ _ <- mr.do(mx);
         inline(inline, block, cmd);
       });
   };
 
-  (Invoke@<M@>, Invoke@<M@>, StringL@) { R@<M@>; }
+  (Invoke@<M@>, Invoke@<M@>, StringL@) { MR@<Unit@>; }
   Block = (Invoke@<M@> inline, Invoke@<M@> block, StringL@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
     /Core/List%.ForEach(parsed.ok, m.return(Ok(Unit)),
-      (Command@ cmd, R@<M@> mx) {
-        Unit@ _ <- DoR(mx);
+      (Command@ cmd, MR@<Unit@> mx) {
+        Unit@ _ <- mr.do(mx);
         block(inline, block, cmd);
       });
   };

@@ -1,31 +1,13 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 @ Unit@ = /Core/Unit%.Unit@;
-
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Err = /Fbld/Result%.Err;
 
 @ StringL@ = /Fbld/StringL%.StringL@;
 
 
-<<@>@ M@>(Monad@<M@>)
-<@ A@>(M@<Result@<A@>>)<@ B@>((A@) { M@<Result@<B@>>; }) { M@<Result@<B@>>; }
-DoResult = <<@>@ M@>(Monad@<M@> m) {
-  <@ A@>(M@<Result@<A@>> ma)<@ B@>((A@) { M@<Result@<B@>>; } f) {
-    Result@<A@> ra <- m.do(ma);
-    ra.?(err: m.return(Err<B@>(ra.err)));
-    f(ra.ok);
-  };
-};
-
 # A single command.
 @ Command@ = *(StringL@ name, List@<StringL@> args);
-
-# R@ -- Convenience definition for M@<Result@<Unit@>>;
-<<@>@>@ R@ = <<@>@ M@> { M@<Result@<Unit@>>; };
 
 # The type of a function to invoke an fbld command.
 #  @arg[Invoke@<M@>][inline] - The inline invoke function.
@@ -33,8 +15,10 @@ DoResult = <<@>@ M@>(Monad@<M@> m) {
 #  @arg[Command@][command] - The command to invoke.
 #  @returns The result of invoking the command.
 <<@>@>@ Invoke@ = <<@>@ M@> {
-  @ I@ = (I@, I@, Command@) { R@<M@>; };
+  <@>@ MR@ = /Fbld/ResultM%<M@>.MR@;
+
+  @ I@ = (I@, I@, Command@) { MR@<Unit@>; };
   I@;
 };
 
-@(DoResult, Command@, R@, Invoke@);
+@(Command@, Invoke@);
