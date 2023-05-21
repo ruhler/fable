@@ -26,7 +26,7 @@
 
 
 # Main --
-#   Main function for fbld-html-doc program.
+#   Main function for fbld-md-doc program.
 #
 # Converts an fbld @doc into html format.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
@@ -44,7 +44,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
   % Run = /Fbld/Run%(m);
 
-  Core@ core = /Fbld/Html%(m, stdio.out).Core;
+  Core@ core = /Fbld/Markdown%(m, stdio.out).Core;
 
   Markup@ markup = Markups[
     Core.Markup(core),

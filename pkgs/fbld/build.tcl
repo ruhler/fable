@@ -14,6 +14,10 @@ namespace eval "pkgs/fbld" {
   stdio $::b/pkgs/fbld/fbld-html-doc "/Fbld/Main/HtmlDoc%" "fbld"
   install $::b/pkgs/fbld/fbld-html-doc $::config::bindir/fbld-html-doc
 
+  # fbld-md-doc
+  stdio $::b/pkgs/fbld/fbld-markdown-doc "/Fbld/Main/MarkdownDoc%" "fbld"
+  install $::b/pkgs/fbld/fbld-markdown-doc $::config::bindir/fbld-markdown-doc
+
   # Fbld Spec www.
   build $::b/pkgs/fbld/fbld.html \
     "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld" \
@@ -28,4 +32,9 @@ namespace eval "pkgs/fbld" {
   build $::b/pkgs/fbld/README.html \
     "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld" \
     "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld > $::b/pkgs/fbld/README.html"
+
+  # README.md
+  build $::b/pkgs/fbld/README.md \
+    "$::b/pkgs/fbld/fbld-markdown-doc $::s/README.fbld" \
+    "$::b/pkgs/fbld/fbld-markdown-doc $::s/README.fbld > $::b/pkgs/fbld/README.md"
 }

@@ -7,6 +7,7 @@ Things to consider doing for the fble-0.2 release.
  - Implement @fbld properly in html backend.
    Need to convert foo.fbld to foo.html in link target.
  - Implement @FbleVersion and @Buildstamp properly.
+ - Finish up Markdown backend.
  - Factor out common code for 'main' function?
  - Implement source highlighting for @code.
  - Replace roff backend with custom backs end to txt and markdown.
