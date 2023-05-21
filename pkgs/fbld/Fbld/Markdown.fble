@@ -137,7 +137,7 @@
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
     Unit@ _ <- m.do(O.PutStr(out, Str|'* **'));
     Unit@ _ <- mr.do(name);
-    Unit@ _ <- m.do(O.PutStr(out, Str|':** '));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'**: '));
     Unit@ _ <- mr.do(value);
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
     m.return(Ok(Unit));
