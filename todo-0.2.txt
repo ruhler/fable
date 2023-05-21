@@ -15,7 +15,6 @@ Things to consider doing for the fble-0.2 release.
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.
  - How to support labels in markdown?
- - Use indent instead of ``` for code blocks.
  - etc.
    
 

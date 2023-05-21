@@ -1,7 +1,18 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Char@ = /Core/Char%.Char@;
+% IsNewline = /Core/Char/Type%.IsNewline;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
+
+<@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
+<@>% Reverse = /Core/List%.Reverse;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -101,13 +112,23 @@
     m.return(Ok(Unit));
   };
 
+  # Indent the given text by 4 spaces.
+  (String@) { String@; } Indent = (String@ text) {
+    (Bool@, String@, String@) { String@; }
+    indent = (Bool@ nl, String@ str, String@ rchrs) {
+      str.?(nil: Reverse(rchrs));
+      nl.?(true: indent(False, str, Append(Str|'    ', rchrs)));
+      Char@ c = str.cons.head;
+      indent(IsNewline(c), str.cons.tail, Cons(c, rchrs));
+    };
+
+    indent(True, text, Str|'');
+  };
+
   (StringL@, StringL@) { MR@<Unit@>; }
   Code = (StringL@ lang, StringL@ text) {
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'```'));
-    Unit@ _ <- m.do(O.PutLine(out, lang.str));
-    Unit@ _ <- m.do(O.PutStr(out, text.str));
-    Unit@ _ <- m.do(O.PutLine(out, Str|'```'));
+    Unit@ _ <- m.do(O.PutStr(out, Indent(text.str)));
     m.return(Ok(Unit));
   };
 
