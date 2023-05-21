@@ -7,7 +7,6 @@
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
-@ Command@ = /Fbld/Command%.Command@;
 @ StringL@ = /Fbld/StringL%.StringL@;
 
 <<@>@ M@>(Monad@<M@> m) {
@@ -16,6 +15,7 @@
   @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
 
   @ Core@ = /Fbld/Core%(m).Core@;
+  % Utils = /Fbld/Invoke/Utils%(m);
 
   % MarkupModule = /Fbld/Markup%(m);
   @ Markup@ = MarkupModule.Markup@;
@@ -26,15 +26,12 @@
     # @BuildStamp
     # The fble build stamp.
     # TODO: Implement this properly.
-    (Loc@) { MRU@; } BuildStamp = (Loc@ loc) {
+    (Env@, Loc@) { MRU@; } BuildStamp = (Env@ env, Loc@ loc) {
       core.text(StringL@(Str|'??BuildStamp??', loc));
     };
 
     Markup@ Markup = Inline[
-      Entry(Str|'BuildStamp', (Env@ env, Command@ c) {
-        # TODO: Verify no arguments were provided.
-        BuildStamp(c.name.loc);
-      })
+      Entry(Str|'BuildStamp', Utils.A0(BuildStamp))
     ];
 
     @(BuildStamp, Markup);
