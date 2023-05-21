@@ -1,0 +1,134 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>% Length = /Core/List/Length%.Length;
+
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Command@ = /Fbld/Command%.Command@;
+
+<@>% Err = /Fbld/Result%.Err;
+
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+
+(StringL@) { StringL@; } Unescape = (StringL@ s) {
+  StringL@(/Fbld/Unescape%.Unescape(s.str), s.loc);
+};
+
+<<@>@ M@>(Monad@<M@> m) {
+  % Run = /Fbld/Run%(m);
+
+  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
+  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
+
+  # Check for and extract a single argument.
+  ((Env@, StringL@) { MRU@; }) { Invoke@; }
+  A1 = ((Env@, StringL@) { MRU@; } f) {
+    (Env@ env, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
+        m.return(Err<Unit@>(StringL@(Strs[
+              Str|'expected 1 arg, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      StringL@ arg = command.args.cons.head;
+      f(env, arg);
+    };
+  };
+
+  # Check for and extract a two arguments.
+  ((Env@, StringL@, StringL@) { MRU@; }) { Invoke@; }
+  A2 = ((Env@, StringL@, StringL@) { MRU@; } f) {
+    (Env@ env, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
+        m.return(Err<Unit@>(StringL@(Strs[
+              Str|'expected 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      StringL@ a1 = command.args.cons.head;
+      StringL@ a2 = command.args.cons.tail.cons.head;
+      f(env, a1, a2);
+    };
+  };
+
+  # @<tag>[ESCAPED][? INLINE] helper function, where the optional argument
+  # defaults to the first argument value.
+  ((StringL@, MRU@) { MRU@; }) { Invoke@; }
+  EmI = ((StringL@, MRU@) { MRU@; } f) {
+    (Env@ env, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|1, num_args).?(true: {
+        StringL@ a1 = command.args.cons.head;
+        f(Unescape(a1), Run.Inline(env, a1));
+      });
+
+      /Core/Int/Eq%.Eq(Int|2, num_args).?(true: {
+        StringL@ a1 = command.args.cons.head;
+        StringL@ a2 = command.args.cons.tail.cons.head;
+        f(Unescape(a1), Run.Inline(env, a2));
+      });
+
+      m.return(Err<Unit@>(StringL@(Strs[
+              Str|'expected 1 or 2 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+    };
+  };
+
+  # @<tag>[ESCAPED] helper function
+  ((StringL@) { MRU@; }) { Invoke@; } E = ((StringL@) { MRU@; } f) {
+    Env@ env, StringL@ arg <- A1;
+    f(Unescape(arg));
+  };
+
+  # @<tag>[INLINE] helper function
+  ((MRU@) { MRU@; }) { Invoke@; } I = ((MRU@) { MRU@; } f) {
+    Env@ env, StringL@ arg <- A1;
+    f(Run.Inline(env, arg));
+  };
+
+  # @<tag>[BLOCK] helper function
+  ((MRU@) { MRU@; }) { Invoke@; } B = ((MRU@) { MRU@; } f) {
+    Env@ env, StringL@ arg <- A1;
+    f(Run.Block(env, arg));
+  };
+
+  # @<tag>[ESCAPED][ESCAPED] helper function
+  ((StringL@, StringL@) { MRU@; }) { Invoke@; } EE = ((StringL@, StringL@) { MRU@; } f) {
+    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    f(Unescape(a1), Unescape(a2));
+  };
+
+  # @<tag>[ESCAPED][INLINE] helper function
+  ((StringL@, MRU@) { MRU@; }) { Invoke@; } EI = ((StringL@, MRU@) { MRU@; } f) {
+    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    f(Unescape(a1), Run.Inline(env, a2));
+  };
+
+  # @<tag>[INLINE][INLINE] helper function
+  ((MRU@, MRU@) { MRU@; }) { Invoke@; } II = ((MRU@, MRU@) { MRU@; } f) {
+    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    f(Run.Inline(env, a1), Run.Inline(env, a2));
+  };
+
+  # @<tag>[INLINE][BLOCK] helper function
+  ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
+    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    f(Run.Inline(env, a1), Run.Block(env, a2));
+  };
+
+  @(A1, A2,
+    E, I, B,
+    EE, EI, II, IB, EmI);
+};
+
