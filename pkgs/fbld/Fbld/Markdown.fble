@@ -47,6 +47,7 @@
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
   Label = (StringL@ id, MR@<Unit@> text) {
+    # TODO: How to support labels in markdown?
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a id="'));
     Unit@ _ <- mr.do(Text(id));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
@@ -67,35 +68,28 @@
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
   Url = (StringL@ url, MR@<Unit@> text) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
-    Unit@ _ <- mr.do(Text(url));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'['));
     Unit@ _ <- mr.do(text);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
+    Unit@ _ <- m.do(O.PutStr(out, Str|']('));
+    Unit@ _ <- mr.do(text);
+    Unit@ _ <- m.do(O.PutStr(out, Str|')'));
     m.return(Ok(Unit));
   };
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  File = (StringL@ file, MR@<Unit@> text) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
-    Unit@ _ <- mr.do(Text(file));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'"><code>'));
-    Unit@ _ <- mr.do(text);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</code></a>'));
-    m.return(Ok(Unit));
-  };
+  File = Url;
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
   Fbld = (StringL@ file, MR@<Unit@> text) {
-    # TODO: Convert filename from *.fbld to *.html
+    # TODO: Convert filename from *.fbld to *.md?
     StringL@ fbld = file;
     File(fbld, text);
   };
 
   (MR@<Unit@>) { MR@<Unit@>; }
   Par = (MR@<Unit@> body) {
-    Unit@ _ <- mr.do(body);
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    Unit@ _ <- mr.do(body);
     m.return(Ok(Unit));
   };
 
@@ -109,6 +103,7 @@
 
   (StringL@, StringL@) { MR@<Unit@>; }
   Code = (StringL@ lang, StringL@ text) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
     Unit@ _ <- m.do(O.PutStr(out, Str|'```'));
     Unit@ _ <- m.do(O.PutLine(out, lang.str));
     Unit@ _ <- m.do(O.PutStr(out, text.str));
@@ -118,19 +113,20 @@
 
   (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
   Def = (MR@<Unit@> name, MR@<Unit@> value) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<dl><dt>'));
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    Unit@ _ <- m.do(O.PutStr(out, Str|'* **'));
     Unit@ _ <- mr.do(name);
-    Unit@ _ <- m.do(O.PutStr(out, Str|'</dt><dd>'));
+    Unit@ _ <- m.do(O.PutStr(out, Str|':** '));
     Unit@ _ <- mr.do(value);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</dd></dl>'));
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
     m.return(Ok(Unit));
   };
 
   (String@)(MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
   Heading = (String@ hashes)(MR@<Unit@> title, MR@<Unit@> body) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
     Unit@ _ <- m.do(O.PutStr(out, hashes));
     Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|''));
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
     body;
   };
