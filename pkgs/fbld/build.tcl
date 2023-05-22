@@ -24,21 +24,21 @@ namespace eval "pkgs/fbld" {
 
   # Fbld Spec www.
   build $::b/pkgs/fbld/fbld.html \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld" \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld > $::b/pkgs/fbld/fbld.html"
+    "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld $::s/buildstamp" \
+    "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld --buildstamp `$::s/buildstamp` > $::b/pkgs/fbld/fbld.html"
 
   # Fble Spec www.
   build $::b/pkgs/fbld/fble.html \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld" \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld > $::b/pkgs/fbld/fbld.html"
+    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld $::s/buildstamp" \
+    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld --buildstamp `$::s/buildstamp` > $::b/pkgs/fbld/fbld.html"
 
   # README www
   build $::b/pkgs/fbld/README.html \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld" \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld > $::b/pkgs/fbld/README.html"
+    "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld $::s/buildstamp" \
+    "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld --buildstamp `$::s/buildstamp` > $::b/pkgs/fbld/README.html"
 
   # README.md
   build $::b/pkgs/fbld/README.md \
     "$::b/pkgs/fbld/fbld-markdown-doc $::s/README.fbld" \
-    "$::b/pkgs/fbld/fbld-markdown-doc $::s/README.fbld > $::b/pkgs/fbld/README.md"
+    "$::b/pkgs/fbld/fbld-markdown-doc --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
 }

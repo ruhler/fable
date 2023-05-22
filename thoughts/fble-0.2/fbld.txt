@@ -551,3 +551,46 @@ Actually, I should remove @BuildStamp, because we don't want it changing every
 time. I don't think @BuildStamp is so important for that. That means we just
 need to figure out @FbleVersion.
 
+---
+
+@FbleVersion is taken care of now. Let's revisit @BuildStamp.
+
+@BuildStamp is intended to capture the version of the documentation. If we
+left it in, we want it to execute buildstamp at the time the document is
+produced, not at the time we build fbld-html-doc or whatever.
+
+There are two ways to do that:
+1. Pass it as a command line argument when we run.
+2. Have fbld-html-doc be able to execute buildstamp at runtime.
+
+For README.md, I'm thinking of checking it into source code. It's pretty
+annoying if we keep modifying it for every buildstamp.
+
+The fact is, we don't expect README.md to change for every git sha.
+
+Could we update buildstamp and only check it in when README.md changes
+otherwise? That way the buildstamp would be accurate, we would have a build
+stamp.
+
+On the other hand, buildstamp of index.html kind of represents the buildstamp
+of the entire set of documentation, which certainly could have changed. And I
+like having the build stamp in the website documentation. It's really nice
+that it has the date along with the documentation.
+
+What if, instead of saying README.md is a source file and we check it against
+a generated file, instead we generate README.md from ninja directly to source?
+
+But that means the build process dirties the source, which could mess up
+buildstamp for other docs.
+
+I could be really hacky and not implement buildstamp especially for markdown
+backend. Because README.md is only expected to be read from github when you
+can easily check what the git sha is.
+
+I'm going to want to implement @BuildStamp eventually. How about this:
+* Pass @BuildStamp as an argument to the main function. We can easily call it
+  as part of the build command. For README.md we can pass "" as the build
+  stamp, or HEAD, or something like that.
+
+Sounds good.
+

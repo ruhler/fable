@@ -1,6 +1,7 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -22,12 +23,11 @@
   % Inline = MarkupModule.Inline;
   % Entry = MarkupModule.Entry;
 
-  (Core@ core) {
+  (Core@ core, String@ buildstamp) {
     # @BuildStamp
     # The fble build stamp.
-    # TODO: Implement this properly.
     (Env@, Loc@) { MRU@; } BuildStamp = (Env@ env, Loc@ loc) {
-      core.text(StringL@(Str|'??BuildStamp??', loc));
+      core.text(StringL@(buildstamp, loc));
     };
 
     Markup@ Markup = Inline[

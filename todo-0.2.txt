@@ -6,8 +6,8 @@ Things to consider doing for the fble-0.2 release.
  - Re-implement in fble.
  - Implement @fbld properly in html backend.
    Need to convert foo.fbld to foo.html in link target.
- - Implement @Buildstamp properly.
  - Factor out common code for 'main' function?
+ - Factor out common code in build.tcl for generating www doc.
  - Implement source highlighting for @code.
  - Replace roff backend with custom backs end to txt and markdown.
  - Generate README.md in source directory to include with distribution.

@@ -5,6 +5,8 @@
 <@>@ List@ = /Core/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -46,22 +48,32 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
   Core@ core = /Fbld/Html%(m, stdio.out).Core;
 
-  Markup@ markup = Markups[
-    Core.Markup(core),
-    /Fbld/Fble/Build%(m)(core).Markup,
-    /Fbld/Fble/Version%(m)(core).Markup
-  ];
+  @ Args@ = *(String@ buildstamp, Maybe@<String@> file);
 
-  Env@ env = Markup.Env(markup);
+  (List@<String@>) { Args@; } ParseArgs = (List@<String@> args) {
+    (List@<String@>, Args@) { Args@; }
+    parse = (List@<String@> args, Args@ result) {
+      args.?(nil: result);
+      String@ arg = args.cons.head;
+      /Core/String/Eq%.Eq(Str|'--buildstamp', arg).?(true: {
+        String@ buildstamp = args.cons.tail.cons.head;
+        List@<String@> nargs = args.cons.tail.cons.tail;
+        parse(nargs, result.@(buildstamp));
+      });
+      parse(args.cons.tail, result.@(file: Just(arg)));
+    };
+    parse(args, Args@(Str|'??', Nothing<String@>));
+  };
 
   (List@<String@> args) {
-    args.?(nil: {
+    Args@ parsed = ParseArgs(args);
+    parsed.file.?(nothing: {
       String@ msg = Str|'missing input file';
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
 
-    String@ filename = args.cons.head;
+    String@ filename = parsed.file.just;
     
     Maybe@<IStream@<M@>> fin <- m.do(stdio.read(filename));
     fin.?(nothing: {
@@ -69,6 +81,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
+
+    Markup@ markup = Markups[
+      Core.Markup(core),
+      /Fbld/Fble/Build%(m)(core, parsed.buildstamp).Markup,
+      /Fbld/Fble/Version%(m)(core).Markup
+    ];
+
+    Env@ env = Markup.Env(markup);
 
     String@ contents <- m.do(I.GetText(fin.just));
     Result@<Unit@> r <- m.do(Run.Block(env, StringL@(contents, Start(filename))));
