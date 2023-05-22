@@ -25,9 +25,8 @@
   (Core@ core) {
     # @FbleVersion
     # The fble version number.
-    # TODO: Implement this properly.
     (Env@, Loc@) { MRU@; } Version = (Env@ env, Loc@ loc) {
-      core.text(StringL@(Str|'??FbleVersion??', loc));
+      core.text(StringL@(/Fbld/Fble/Version/Value%, loc));
     };
 
     Markup@ Markup = Inline[

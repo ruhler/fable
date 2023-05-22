@@ -21,22 +21,24 @@ namespace eval "pkgs" {
   #          on.
   #   objs - additional object files to include in the generated library.
   proc ::pkg {name deps objs} {
-    set cflags "-I $::s/pkgs/$name"
+    set cflags "-I $::s/pkgs/$name -I $::b/pkgs/$name"
     foreach dep $deps {
-      append cflags " -I $::s/pkgs/$dep"
+      append cflags " -I $::s/pkgs/$dep -I $::b/pkgs/$dep"
     }
 
-    foreach dir [dirs $::s/pkgs/$name ""] {
-      foreach {y} [build_glob $::s/pkgs/$name/$dir -tails -nocomplain -type f *.fble] {
-        set x $dir$y
-        set mpath "/[file rootname $x]%"
+    foreach root [list $::s/pkgs/$name $::b/pkgs/$name] {
+      foreach dir [dirs $root ""] {
+        foreach {y} [build_glob $root/$dir -tails -nocomplain -type f *.fble] {
+          set x $dir$y
+          set mpath "/[file rootname $x]%"
 
-        set target $::config::datadir/fble/$name/$x
-        install $::s/pkgs/$name/$x $target
+          set target $::config::datadir/fble/$name/$x
+          install $root/$x $target
 
-        fbledep $::b/pkgs/$name/$x.d $mpath $cflags
-        fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
-        lappend objs $::b/pkgs/$name/$x.o
+          fbledep $::b/pkgs/$name/$x.d $mpath $cflags
+          fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
+          lappend objs $::b/pkgs/$name/$x.o
+        }
       }
     }
 

@@ -1,4 +1,8 @@
 namespace eval "pkgs/fbld" {
+  # /Fbld/Fble/Version/Value%
+  build $::b/pkgs/fbld/Fbld/Fble/Version/Value.fble "" \
+    "echo \"/Core/String%.Str|'$::version';\" > $::b/pkgs/fbld/Fbld/Fble/Version/Value.fble"
+
   pkg fbld [list core] ""
 
   # Fbld/Tests interpreted
@@ -14,7 +18,7 @@ namespace eval "pkgs/fbld" {
   stdio $::b/pkgs/fbld/fbld-html-doc "/Fbld/Main/HtmlDoc%" "fbld"
   install $::b/pkgs/fbld/fbld-html-doc $::config::bindir/fbld-html-doc
 
-  # fbld-md-doc
+  # fbld-markdown-doc
   stdio $::b/pkgs/fbld/fbld-markdown-doc "/Fbld/Main/MarkdownDoc%" "fbld"
   install $::b/pkgs/fbld/fbld-markdown-doc $::config::bindir/fbld-markdown-doc
 
