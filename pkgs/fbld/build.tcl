@@ -22,20 +22,15 @@ namespace eval "pkgs/fbld" {
   stdio $::b/pkgs/fbld/fbld-markdown-doc "/Fbld/Main/MarkdownDoc%" "fbld"
   install $::b/pkgs/fbld/fbld-markdown-doc $::config::bindir/fbld-markdown-doc
 
-  # Fbld Spec www.
-  build $::b/pkgs/fbld/fbld.html \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld $::s/buildstamp" \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/fbld/fbld.fbld --buildstamp `$::s/buildstamp` > $::b/pkgs/fbld/fbld.html"
+  proc fbld_html_doc { target source } {
+    build $target \
+      "$::b/pkgs/fbld/fbld-html-doc $source $::s/buildstamp" \
+      "$::b/pkgs/fbld/fbld-html-doc $source --buildstamp `$::s/buildstamp` > $target"
+  }
 
-  # Fble Spec www.
-  build $::b/pkgs/fbld/fble.html \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld $::s/buildstamp" \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/spec/fble.fbld --buildstamp `$::s/buildstamp` > $::b/pkgs/fbld/fbld.html"
-
-  # README www
-  build $::b/pkgs/fbld/README.html \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld $::s/buildstamp" \
-    "$::b/pkgs/fbld/fbld-html-doc $::s/README.fbld --buildstamp `$::s/buildstamp` > $::b/pkgs/fbld/README.html"
+  fbld_html_doc $::b/pkgs/fbld/fbld.html $::s/fbld/fbld.fbld
+  fbld_html_doc $::b/pkgs/fbld/fble.html $::s/spec/fble.fbld
+  fbld_html_doc $::b/pkgs/fbld/README.html $::s/README.fbld
 
   # README.md
   build $::b/pkgs/fbld/README.md \
