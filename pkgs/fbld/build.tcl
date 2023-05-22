@@ -36,4 +36,9 @@ namespace eval "pkgs/fbld" {
   build $::b/pkgs/fbld/README.md \
     "$::b/pkgs/fbld/fbld-markdown-doc $::s/README.fbld" \
     "$::b/pkgs/fbld/fbld-markdown-doc --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
+
+  # Make sure the version of README.md checked in matches the latest version.
+  test $::b/pkgs/fbld/README.tr \
+    "$::s/README.md $::b/pkgs/fbld/README.md" \
+    "cmp $::s/README.md $::b/pkgs/fbld/README.md"
 }
