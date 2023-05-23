@@ -19,6 +19,7 @@
 % Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 % Report = /Fbld/Loc%.Report;
 % Start = /Fbld/Loc%.Start;
@@ -28,9 +29,7 @@
 
 
 # Main --
-#   Main function for fbld-markdown-doc program.
-#
-# Converts an fbld @doc into html format.
+#   Main function for fbld program.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
@@ -46,9 +45,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
   % Run = /Fbld/Run%(m);
 
-  Core@ core = /Fbld/Markdown%(m, stdio.out).Core;
+  @ Backend@ = +(Unit@ html, Unit@ markdown);
 
-  @ Args@ = *(String@ buildstamp, String@ version, Maybe@<String@> file);
+  @ Args@ = *(
+    String@ buildstamp,
+    String@ version,
+    Backend@ backend,
+    Maybe@<String@> file
+  );
 
   (List@<String@>) { Args@; } ParseArgs = (List@<String@> args) {
     (List@<String@>, Args@) { Args@; }
@@ -65,13 +69,26 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         List@<String@> nargs = args.cons.tail.cons.tail;
         parse(nargs, result.@(version));
       });
+      /Core/String/Eq%.Eq(Str|'--html', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(backend: Backend@(html: Unit)));
+      });
+      /Core/String/Eq%.Eq(Str|'--markdown', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(backend: Backend@(markdown: Unit)));
+      });
       parse(args.cons.tail, result.@(file: Just(arg)));
     };
-    parse(args, Args@(Str|'??', Str|'??', Nothing<String@>));
+    parse(args, Args@(Str|'??', Str|'??', Backend@(html: Unit), Nothing<String@>));
   };
 
   (List@<String@> args) {
     Args@ parsed = ParseArgs(args);
+
+    Core@ core = parsed.backend.?(
+      html: /Fbld/Html%(m, stdio.out).Core,
+      markdown: /Fbld/Markdown%(m, stdio.out).Core);
+
     parsed.file.?(nothing: {
       String@ msg = Str|'missing input file';
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));

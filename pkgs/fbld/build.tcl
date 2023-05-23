@@ -14,18 +14,14 @@ namespace eval "pkgs/fbld" {
   testsuite $::b/pkgs/fbld/fbld-tests.tr $::b/pkgs/fbld/fbld-tests \
     "$::b/pkgs/fbld/fbld-tests --prefix Compiled."
 
-  # fbld-html-doc
-  stdio $::b/pkgs/fbld/fbld-html-doc "/Fbld/Main/HtmlDoc%" "fbld"
-  install $::b/pkgs/fbld/fbld-html-doc $::config::bindir/fbld-html-doc
-
-  # fbld-markdown-doc
-  stdio $::b/pkgs/fbld/fbld-markdown-doc "/Fbld/Main/MarkdownDoc%" "fbld"
-  install $::b/pkgs/fbld/fbld-markdown-doc $::config::bindir/fbld-markdown-doc
+  # fble-fbld
+  stdio $::b/pkgs/fbld/fble-fbld "/Fbld/Main%" "fbld"
+  install $::b/pkgs/fbld/fble-fbld $::config::bindir/fble-fbld
 
   proc fbld_html_doc { target source } {
     build $target \
-      "$::b/pkgs/fbld/fbld-html-doc $source $::s/buildstamp" \
-      "$::b/pkgs/fbld/fbld-html-doc $source --version $::version --buildstamp `$::s/buildstamp` > $target"
+      "$::b/pkgs/fbld/fble-fbld $source $::s/buildstamp" \
+      "$::b/pkgs/fbld/fble-fbld $source --html --version $::version --buildstamp `$::s/buildstamp` > $target"
   }
 
   fbld_html_doc $::b/pkgs/fbld/fbld.html $::s/fbld/fbld.fbld
@@ -34,8 +30,8 @@ namespace eval "pkgs/fbld" {
 
   # README.md
   build $::b/pkgs/fbld/README.md \
-    "$::b/pkgs/fbld/fbld-markdown-doc $::s/README.fbld" \
-    "$::b/pkgs/fbld/fbld-markdown-doc --version $::version --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
+    "$::b/pkgs/fbld/fble-fbld $::s/README.fbld" \
+    "$::b/pkgs/fbld/fble-fbld --markdown --version $::version --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
 
   # Make sure the version of README.md checked in matches the latest version.
   test $::b/pkgs/fbld/README.tr \
