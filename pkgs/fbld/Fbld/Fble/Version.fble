@@ -1,6 +1,7 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -22,11 +23,11 @@
   % Inline = MarkupModule.Inline;
   % Entry = MarkupModule.Entry;
 
-  (Core@ core) {
+  (Core@ core, String@ version) {
     # @FbleVersion
     # The fble version number.
     (Env@, Loc@) { MRU@; } Version = (Env@ env, Loc@ loc) {
-      core.text(StringL@(/Fbld/Fble/Version/Value%, loc));
+      core.text(StringL@(version, loc));
     };
 
     Markup@ Markup = Inline[

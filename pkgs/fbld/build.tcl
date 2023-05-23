@@ -25,7 +25,7 @@ namespace eval "pkgs/fbld" {
   proc fbld_html_doc { target source } {
     build $target \
       "$::b/pkgs/fbld/fbld-html-doc $source $::s/buildstamp" \
-      "$::b/pkgs/fbld/fbld-html-doc $source --buildstamp `$::s/buildstamp` > $target"
+      "$::b/pkgs/fbld/fbld-html-doc $source --version $::version --buildstamp `$::s/buildstamp` > $target"
   }
 
   fbld_html_doc $::b/pkgs/fbld/fbld.html $::s/fbld/fbld.fbld
@@ -35,7 +35,7 @@ namespace eval "pkgs/fbld" {
   # README.md
   build $::b/pkgs/fbld/README.md \
     "$::b/pkgs/fbld/fbld-markdown-doc $::s/README.fbld" \
-    "$::b/pkgs/fbld/fbld-markdown-doc --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
+    "$::b/pkgs/fbld/fbld-markdown-doc --version $::version --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
 
   # Make sure the version of README.md checked in matches the latest version.
   test $::b/pkgs/fbld/README.tr \

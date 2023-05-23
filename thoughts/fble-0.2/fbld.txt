@@ -594,3 +594,11 @@ I'm going to want to implement @BuildStamp eventually. How about this:
 
 Sounds good.
 
+---
+
+Looks like my @FbleVersion implementation is breaking ninja. Ninja is going
+into a loop and gives up after 100 tries. For the time being, let's use the
+same approach for @FbleVersion we use for @Buildstamp, passing it on the
+command line.
+
+

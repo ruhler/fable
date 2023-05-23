@@ -6,6 +6,7 @@ Things to consider doing for the fble-0.2 release.
  - Re-implement in fble.
  - Implement @fbld properly in html backend.
    Need to convert foo.fbld to foo.html in link target.
+ - Figure out a better approach to @FbleVersion.
  - Factor out common code for 'main' function?
  - Implement source highlighting for @code.
  - Replace roff backend with custom backs end to txt and markdown.
@@ -14,7 +15,6 @@ Things to consider doing for the fble-0.2 release.
  - Reflow paragraphs to 80 columns.
  - How to support labels in markdown?
  - etc.
-   
 
 * Fbld: Specify what happens if block structured text is missing a space on
   the same line arg. For example:
