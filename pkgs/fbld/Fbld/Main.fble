@@ -1,4 +1,5 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
@@ -51,6 +52,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     String@ buildstamp,
     String@ version,
     Backend@ backend,
+    Bool@ fble_frontend,
     Maybe@<String@> file
   );
 
@@ -77,9 +79,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(backend: Backend@(markdown: Unit)));
       });
+      /Core/String/Eq%.Eq(Str|'--fble', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(fble_frontend: True));
+      });
       parse(args.cons.tail, result.@(file: Just(arg)));
     };
-    parse(args, Args@(Str|'??', Str|'??', Backend@(html: Unit), Nothing<String@>));
+    parse(args, Args@(Str|'??', Str|'??', Backend@(html: Unit), False, Nothing<String@>));
   };
 
   (List@<String@> args) {
@@ -104,10 +110,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       m.return(False);
     });
 
+
     Markup@ markup = Markups[
       Core.Markup(core),
       /Fbld/Fble/Build%(m)(core, parsed.buildstamp).Markup,
-      /Fbld/Fble/Version%(m)(core, parsed.version).Markup
+      /Fbld/Fble/Version%(m)(core, parsed.version).Markup,
+      parsed.fble_frontend.?(
+        true: /Fbld/Fble/Fble%(m)(core).Markup,
+        false: Markup.Empty)
     ];
 
     Env@ env = Markup.Env(markup);

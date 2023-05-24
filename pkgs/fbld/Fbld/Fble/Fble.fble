@@ -1,0 +1,56 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+
+<<@>@ M@>(Monad@<M@> m) {
+  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
+
+  @ Core@ = /Fbld/Core%(m).Core@;
+  % Utils = /Fbld/Invoke/Utils%(m);
+
+  % MarkupModule = /Fbld/Markup%(m);
+  @ Markup@ = MarkupModule.Markup@;
+  % Block = MarkupModule.Block;
+  % Entry = MarkupModule.Entry;
+
+  (Core@ core) {
+    # @AbstractSyntax[ESCAPED content]
+    (StringL@) { MRU@; }
+    AbstractSyntax = (StringL@ content) {
+      MRU@ name = core.text(StringL@(Str|'Abstract Syntax', content.loc));
+      MRU@ value = core.code(StringL@(Str|'txt', content.loc), content);
+      core.definition(name, value);
+    };
+
+    # @ConcreteSyntax[ESCAPED content]
+    (StringL@) { MRU@; }
+    ConcreteSyntax = (StringL@ content) {
+      MRU@ name = core.text(StringL@(Str|'ConcreteSyntax', content.loc));
+      MRU@ value = core.code(StringL@(Str|'txt', content.loc), content);
+      core.definition(name, value);
+    };
+
+    # @Example[ESCAPED content]
+    (StringL@) { MRU@; }
+    Example = (StringL@ content) {
+      MRU@ name = core.text(StringL@(Str|'Example', content.loc));
+      MRU@ value = core.code(StringL@(Str|'fble', content.loc), content);
+      core.definition(name, value);
+    };
+
+    Markup@ Markup = Block[
+      Entry(Str|'AbstractSyntax', Utils.E(AbstractSyntax)),
+      Entry(Str|'ConcreteSyntax', Utils.E(ConcreteSyntax)),
+      Entry(Str|'Example', Utils.E(Example))
+    ];
+
+    @(AbstractSyntax, ConcreteSyntax, Example, Markup);
+  };
+};
+

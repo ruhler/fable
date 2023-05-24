@@ -7,6 +7,7 @@ Things to consider doing for the fble-0.2 release.
  - Implement @fbld properly in html backend.
    Need to convert foo.fbld to foo.html in link target.
  - Figure out a better approach to @FbleVersion.
+ - Figure out why it takes so much memory and time to run.
  - Implement source highlighting for @code.
  - Replace roff backend with custom backs end to txt and markdown.
 
@@ -81,8 +82,6 @@ Things to consider doing for the fble-0.2 release.
 * Make a decision on struct copy expression before release.
 
 * Feedback from users:
- - Include README.txt in source repository.
-   Figure out how to generate a nicely txt or md formatted version of it first.
  - Better explanation of "lack of primitives" and why that's a good thing.
  - Explain how features are related to procedural programming
    - Control Flow
