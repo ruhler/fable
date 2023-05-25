@@ -11,8 +11,6 @@
 
 
 <<@>@ M@>(Monad@<M@> m) {
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
-
   @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
 
   @ Core@ = /Fbld/Core%(m).Core@;
@@ -26,7 +24,7 @@
   (Core@ core, String@ buildstamp) {
     # @BuildStamp
     # The fble build stamp.
-    (Env@, Loc@) { MRU@; } BuildStamp = (Env@ env, Loc@ loc) {
+    (Loc@) { MRU@; } BuildStamp = (Loc@ loc) {
       core.text(StringL@(buildstamp, loc));
     };
 

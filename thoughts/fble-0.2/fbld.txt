@@ -601,4 +601,79 @@ into a loop and gives up after 100 tries. For the time being, let's use the
 same approach for @FbleVersion we use for @Buildstamp, passing it on the
 command line.
 
+---
+
+The biggest blocker for using fble based fbld right now is @code syntax
+highlighting. Specifically for 'fble' and 'fbld' languages. If I could support
+those two languages, that would be enough. Aside from that, txt, tcl, sh, not
+so important I don't think.
+
+Both fble and fbld should be pretty straight forward to do syntax highlighting
+for. How would that look?
+
+We want to separate two parts:
+1. text to highlight regions (backend independent)
+2. implementation of highlight regions (backend dependent)
+
+We can use fbld markup to annotate the highlight regions in a backend
+independent way. So the syntax highlighter could convert StringL@ to MRU@,
+where that MRU@ is inline text.
+
+We would want the following kind of markup:
+
+@comment[INLINE]
+@label[INLINE]
+@string[INLINE]
+@type[INLINE]
+@symbol[INLINE]
+@special[INLINE]
+@include[INLINE]
+@identifier[INLINE]
+
+Maybe we want an intermediate implementation that maps all those to colors,
+and then we just need:
+
+@highlight[style][INLINE text]
+
+Where style is color, or maybe we want bold, underline, italic, etc.
+
+Note: this brings up an issue that's been in the back of my mind for fbld:
+namespace control. How do we make sure people don't pick conflicting tag
+names? For example, @label means something else to Core fbld.
+
+Anyway, the part to figure out is how to convert text to marked up highlighted
+text.
+
+Start with fbld:
+* @[a-zA-Z0-9_]\+ for a tag
+* [, ] for bracket
+* \[, \], \@, \\ for escape
+
+No need for regex for that. We can code a lexer very easily. In fact, now that
+you mention it, we could code a full parser if we wanted. I'm not sure it
+makes a difference in this case. Maybe for fble.
+
+How about fble? I don't think it would be too hard.
+
+Let's start with fbld, implement it, wire it up, see how it looks.
+
+Maybe we use a single tag, like
+
+@hi[class][INLINE text]
+
+---
+
+Working on tutorial front end. I need to think more about how the helper
+functions should work and the fble functions.
+
+For example: BuildStamp function. No arguments. But it wants a Loc@ perhaps to
+form a location for whatever text it calls. But that depends on the
+implementation of BuildStamp.
+
+Consider tutorial's Tutorial function. This wants to reuse BuildStamp and
+Version. Should it take those as arguments, or take Env@ assuming those?
+
+Take A2. Some functions might want access to the command location. Most I
+would say. What about Env@? It needs that because some wrapper functions want
+to convert structured text.
 

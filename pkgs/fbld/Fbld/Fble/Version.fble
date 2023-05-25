@@ -11,8 +11,6 @@
 
 
 <<@>@ M@>(Monad@<M@> m) {
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
-
   @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
 
   @ Core@ = /Fbld/Core%(m).Core@;
@@ -26,7 +24,7 @@
   (Core@ core, String@ version) {
     # @FbleVersion
     # The fble version number.
-    (Env@, Loc@) { MRU@; } Version = (Env@ env, Loc@ loc) {
+    (Loc@) { MRU@; } Version = (Loc@ loc) {
       core.text(StringL@(version, loc));
     };
 

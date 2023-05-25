@@ -46,7 +46,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'<code>'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'</code>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (StringL@) { MR@<Unit@>; }
@@ -54,7 +54,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'<i>'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'</i>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
@@ -64,7 +64,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
     Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
@@ -74,7 +74,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
     Unit@ _ <- mr.do(caption);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
@@ -84,7 +84,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
     Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
@@ -94,7 +94,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'"><code>'));
     Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</code></a>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
@@ -109,7 +109,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'<p>'));
     Unit@ _ <- mr.do(body);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</p>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (MR@<Unit@>) { MR@<Unit@>; }
@@ -117,7 +117,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'<ul><li>'));
     Unit@ _ <- mr.do(body);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</li></ul>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (StringL@, StringL@) { MR@<Unit@>; }
@@ -135,7 +135,7 @@
     Unit@ _ <- m.do(O.PutStr(out, Str|'</dt><dd>'));
     Unit@ _ <- mr.do(value);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</dd></dl>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
@@ -188,7 +188,7 @@ p { font-size: 1em; }
     Unit@ _ <- m.do(O.PutLine(out, Str|'</h1>'));
     Unit@ _ <- mr.do(body);
     Unit@ _ <- m.do(O.PutLine(out, Str|'</body>'));
-    m.return(Ok(Unit));
+    mr.return(Unit);
   };
 
   Core@ Core = @(

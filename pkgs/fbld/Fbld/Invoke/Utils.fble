@@ -29,8 +29,8 @@
 
   # @<tag>
   # Creates an Invoke@ function expecting zero arguments.
-  ((Env@, Loc@) { MRU@; }) { Invoke@; }
-  A0 = ((Env@, Loc@) { MRU@; } f) {
+  ((Loc@) { MRU@; }) { Invoke@; }
+  A0 = ((Loc@) { MRU@; } f) {
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|0, num_args ).?(false: {
@@ -39,7 +39,7 @@
               /Core/Int/Show%.Show(num_args)], command.name.loc)));
       });
 
-      f(env, command.name.loc);
+      f(command.name.loc);
     };
   };
 
@@ -62,8 +62,8 @@
 
   # @<tag>[*][*]
   # Creates an Invoke@ function expecting two arguments.
-  ((Env@, StringL@, StringL@) { MRU@; }) { Invoke@; }
-  A2 = ((Env@, StringL@, StringL@) { MRU@; } f) {
+  ((Env@, Loc@, StringL@, StringL@) { MRU@; }) { Invoke@; }
+  A2 = ((Env@, Loc@, StringL@, StringL@) { MRU@; } f) {
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
@@ -74,7 +74,7 @@
 
       StringL@ a1 = command.args.cons.head;
       StringL@ a2 = command.args.cons.tail.cons.head;
-      f(env, a1, a2);
+      f(env, command.name.loc, a1, a2);
     };
   };
 
@@ -102,25 +102,25 @@
   # @<tag>[ESCAPED][ESCAPED] helper function
   # Creates an Invoke@ function expecting two ESCAPED arguments.
   ((StringL@, StringL@) { MRU@; }) { Invoke@; } EE = ((StringL@, StringL@) { MRU@; } f) {
-    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
     f(Unescape(a1), Unescape(a2));
   };
 
   # @<tag>[ESCAPED][INLINE] helper function
   ((StringL@, MRU@) { MRU@; }) { Invoke@; } EI = ((StringL@, MRU@) { MRU@; } f) {
-    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
     f(Unescape(a1), Run.Inline(env, a2));
   };
 
   # @<tag>[INLINE][INLINE] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } II = ((MRU@, MRU@) { MRU@; } f) {
-    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
     f(Run.Inline(env, a1), Run.Inline(env, a2));
   };
 
   # @<tag>[INLINE][BLOCK] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
-    Env@ env, StringL@ a1, StringL@ a2 <- A2;
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
     f(Run.Inline(env, a1), Run.Block(env, a2));
   };
 

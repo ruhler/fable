@@ -18,6 +18,16 @@ namespace eval "pkgs/fbld" {
   stdio $::b/pkgs/fbld/fble-fbld "/Fbld/Main%" "fbld"
   install $::b/pkgs/fbld/fble-fbld $::config::bindir/fble-fbld
 
+  # README.md
+  build $::b/pkgs/fbld/README.md \
+    "$::b/pkgs/fbld/fble-fbld $::s/README.fbld" \
+    "$::b/pkgs/fbld/fble-fbld --markdown --version $::version --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
+
+  # Make sure the version of README.md checked in matches the latest version.
+  test $::b/pkgs/fbld/README.tr \
+    "$::s/README.md $::b/pkgs/fbld/README.md" \
+    "cmp $::s/README.md $::b/pkgs/fbld/README.md"
+
   # args is additional command line options.
   proc fbld_html_doc { target source args } {
     build $target \
@@ -28,14 +38,5 @@ namespace eval "pkgs/fbld" {
   fbld_html_doc $::b/pkgs/fbld/fbld.html $::s/fbld/fbld.fbld
   fbld_html_doc $::b/pkgs/fbld/fble.html $::s/spec/fble.fbld --fble
   fbld_html_doc $::b/pkgs/fbld/README.html $::s/README.fbld
-
-  # README.md
-  build $::b/pkgs/fbld/README.md \
-    "$::b/pkgs/fbld/fble-fbld $::s/README.fbld" \
-    "$::b/pkgs/fbld/fble-fbld --markdown --version $::version --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
-
-  # Make sure the version of README.md checked in matches the latest version.
-  test $::b/pkgs/fbld/README.tr \
-    "$::s/README.md $::b/pkgs/fbld/README.md" \
-    "cmp $::s/README.md $::b/pkgs/fbld/README.md"
+  fbld_html_doc $::b/pkgs/fbld/HelloWorld.html $::s/tutorials/HelloWorld.fbld --tutorial
 }
