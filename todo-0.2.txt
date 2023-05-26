@@ -4,8 +4,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Fbld:
  - Re-implement in fble.
- - Implement @fbld properly in html backend.
-   Need to convert foo.fbld to foo.html in link target.
  - Figure out a better approach to @FbleVersion.
  - Figure out why it takes so much memory and time to run.
  - Implement source highlighting for @code.
