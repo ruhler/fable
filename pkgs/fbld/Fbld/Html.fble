@@ -1,8 +1,4 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-
 @ Char@ = /Core/Char%.Char@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
@@ -16,6 +12,7 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% StartsWith = /Core/String/Eq%.StartsWith;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -108,18 +105,11 @@
 
   (StringL@, MR@<Unit@>) { MR@<Unit@>; }
   Fbld = (StringL@ file, MR@<Unit@> text) {
-    (String@, String@) { Bool@; } starts_with = (String@ str, String@ prefix) {
-      prefix.?(nil: True);
-      str.?(nil: False);
-      /Core/Char/Eq%.Eq(str.cons.head, prefix.cons.head).?(false: False);
-      starts_with(str.cons.tail, prefix.cons.tail);
-    };
-
     # Convert filename from *.fbld to *.html
     String@ replaced = {
       String@ reversed = Reverse(file.str);
       String@ fbld = Reverse(Str|'.fbld');
-      starts_with(reversed, fbld).?(false: replaced);
+      StartsWith(reversed, fbld).?(false: replaced);
       String@ tail = Drop(Length(fbld), reversed);
       Append(Reverse(Str|'.html'), tail);
     };
