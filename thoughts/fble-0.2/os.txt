@@ -1,0 +1,75 @@
+Fble OS
+=======
+
+Work on fbld brought up the question of dynamic code loading. I've also had
+thoughts in the past about how to do an fble based operating system. Let's
+explore a little.
+
+Currently there is no way to do dynamic loading of fble code. You compile your
+program once, then you run it. That's it.
+
+We would like a way to generate new programs from within your program and run
+those as part of the same program instance.
+
+Features related to this:
+
+Dynamic code loading.
+  Given some Fble@ representation of an fble program
+  (maybe it's a String@ or IStream@), turn it into the fble value that it
+  represents.
+
+  For example: <@ A@>(Fble@) { Maybe@<A@> } Eval;
+  
+  Which says turn the fble program representation into a value of type A@. If
+  it succeeds and has type A@, return just the value. Otherwise return
+  Nothing. There's an open question about whether we can define new types this
+  way, or whether we need to be able to define new types this way.
+
+  For example: posix has execve system call for this.
+
+Exception handling.
+  If code is dynamically generated, we have less ability to trust it at
+  runtime. So we want some system level support to be able to catch and move
+  on from errors.
+
+  For example: <@ A@>((Unit@) { A@; }) { Maybe@<A@>; }
+
+  Given a function to evaluate, executes the function. If there are no runtime
+  errors (wrong tag access, undefined value, out of memory, timeout, etc.),
+  returns the computed value. Otherwise returns Nothing.
+
+Persistent Storage.
+  Real machines turn on and off. We need a way to reload state from previous
+  runs in case the machine turns off. Either that, or we arrange for
+  everything to be done in non-volatile storage from the system's perspective,
+  so when you turn a machine off and on, it resumes exactly where it left off.
+
+IO Access.
+  The OS is the top level arbiter of physical IO. It needs to provide and
+  multiplex interfaces to that IO.
+
+  Maybe memory and CPU time falls under this same category? CPU multiplexing
+  is what I would call concurrent execution.
+
+Shell.
+  Do we need a shell? This is like a top level user interface for interacting
+  with the OS.
+
+The proof would be to imagine running pure fble on some hardware, without
+Linux. With an interface to keyboard and display, access to programs to
+develop and run programs. Some initial bootstrapping is required, but after
+that, you should be able to replace the OS itself, by itself. Tie the knot
+that way.
+
+Imagine we have some interface to talk to external storage. We can read and
+write to that storage. We can write programs to that storage. When the machine
+turns on, say, by convention, we load a program from that storage at a
+predefined name. And then we run that program.
+
+---
+
+On persistent storage, here's an idea: we add a method that let's you register
+a function to call next time the program starts. That function can save state
+locally as it likes. Only that explicitly saved function state gets persisted,
+nothing else.
+

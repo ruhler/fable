@@ -1,5 +1,5 @@
 @usage[fble-perf-profile] produces fble profile report for linux perf profile
- @synopsys
+ @synopsis
   @l[fble-perf-profile] \[@a[OPTION]...\]
  
  @description

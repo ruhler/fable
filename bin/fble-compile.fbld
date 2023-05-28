@@ -1,5 +1,5 @@
 @usage[fble-compile] compiles an fble module
- @synopsys
+ @synopsis
   @l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description

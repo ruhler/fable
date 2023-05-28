@@ -1,5 +1,5 @@
 @usage[fble-disassemble] disassembles an fble module
- @synopsys
+ @synopsis
   @l[fble-disassemble] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description

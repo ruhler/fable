@@ -1,5 +1,5 @@
 @usage[fble-mem-test] test memory behavior of an fble program
- @synopsys
+ @synopsis
   @l[fble-mem-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description

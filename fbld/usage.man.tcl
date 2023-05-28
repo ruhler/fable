@@ -13,7 +13,7 @@
 #
 # The following top level blocks are recommended for use in content in this
 # order:
-#   @synopsys
+#   @synopsis
 #   @description
 #   @options
 #   @exitstatus
@@ -24,10 +24,10 @@ proc block_usage {name brief content} {
   ::block_man 1 $name "@FbleVersion (@BuildStamp)" "@section\[NAME\]\[$name - $brief\]\n\n$content"
 }
 
-# @synopsys[INLINE text]
-# Synopsys for how to run a command.
-# @param text  Command synopsys.
-proc block_synopsys {text} {
+# @synopsis[INLINE text]
+# Synopsis for how to run a command.
+# @param text  Command synopsis.
+proc block_synopsis {text} {
   ::block_section "SYNOPSIS" "@par\[$text\]"
 }
 

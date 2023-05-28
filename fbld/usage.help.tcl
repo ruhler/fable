@@ -13,7 +13,7 @@
 #
 # The following top level blocks are recommended for use in content in this
 # order:
-#   @synopsys
+#   @synopsis
 #   @description
 #   @options
 #   @exitstatus
@@ -24,10 +24,10 @@ proc block_usage {name brief content} {
   ::block_doc $name "$name - [string trim $brief]\n\n$content"
 }
 
-# @synopsys[INLINE text]
+# @synopsis[INLINE text]
 # Synopsys for how to run a command.
-# @param text  Command synopsys.
-proc block_synopsys {text} {
+# @param text  Command synopsis.
+proc block_synopsis {text} {
   ::block_par "Usage: [string trim $text]"
 }
 
@@ -69,7 +69,7 @@ proc block_examples {body} {
   ::block_section "Examples" $body
 }
 
-# @ex[INLINE text][BLOCK desc]
+# @ex[ESCAPED text][BLOCK desc]
 # Gives an example command line use.
 # @param text  The sample command line.
 # @param desc  A description of the command line.

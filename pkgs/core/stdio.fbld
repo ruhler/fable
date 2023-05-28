@@ -1,5 +1,5 @@
 @usage[fble-stdio] runs an fble stdio program
- @synopsys
+ @synopsis
   @l[fble-stdio] \[@a[OPTION]...\] @a[ARG...]
  
  @description

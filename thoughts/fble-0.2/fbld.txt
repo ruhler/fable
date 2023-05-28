@@ -677,3 +677,20 @@ Take A2. Some functions might want access to the command location. Most I
 would say. What about Env@? It needs that because some wrapper functions want
 to convert structured text.
 
+---
+
+Possible next steps:
+* Work on syntax highlighting for 'fbld' language.
+* Add usage, usage.help, and usage.man front ends.
+* Doc Comments frontend.
+* Add man backend.
+* Add txt backend.
+
+---
+
+For syntax highlighting, I vote we start simple.
+
+Interface is String@ to List@<*(Class@ class, String@ text)>. Assume to start
+that we don't have nested highlighting items. Start with fbld, then go from
+there.
+

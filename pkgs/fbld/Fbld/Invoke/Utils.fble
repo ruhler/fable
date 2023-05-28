@@ -45,8 +45,8 @@
 
   # @<tag>[*]
   # Creates an Invoke@ function expecting one argument.
-  ((Env@, StringL@) { MRU@; }) { Invoke@; }
-  A1 = ((Env@, StringL@) { MRU@; } f) {
+  ((Env@, Loc@, StringL@) { MRU@; }) { Invoke@; }
+  A1 = ((Env@, Loc@, StringL@) { MRU@; } f) {
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
@@ -56,7 +56,7 @@
       });
 
       StringL@ arg = command.args.cons.head;
-      f(env, arg);
+      f(env, command.name.loc, arg);
     };
   };
 
@@ -78,25 +78,58 @@
     };
   };
 
+  # @<tag>[*][*][*]
+  # Creates an Invoke@ function expecting three arguments.
+  ((Env@, Loc@, StringL@, StringL@, StringL@) { MRU@; }) { Invoke@; }
+  A3 = ((Env@, Loc@, StringL@, StringL@, StringL@) { MRU@; } f) {
+    (Env@ env, Command@ command) {
+      Int@ num_args = Length(command.args);
+      /Core/Int/Eq%.Eq(Int|3, num_args ).?(false: {
+        m.return(Err<Unit@>(StringL@(Strs[
+              Str|'expected 3 args, but got ',
+              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+      });
+
+      StringL@ a1 = command.args.cons.head;
+      StringL@ a2 = command.args.cons.tail.cons.head;
+      StringL@ a3 = command.args.cons.tail.cons.tail.cons.head;
+      f(env, command.name.loc, a1, a2, a3);
+    };
+  };
+
   # @<tag>[ESCAPED]
   # Creates an Invoke@ function expecting one ESCAPED argument.
   ((StringL@) { MRU@; }) { Invoke@; } E = ((StringL@) { MRU@; } f) {
-    Env@ env, StringL@ arg <- A1;
+    Env@ env, Loc@ loc, StringL@ arg <- A1;
     f(Unescape(arg));
   };
 
   # @<tag>[INLINE]
   # Creates an Invoke@ function expecting one INLINE argument.
+  ((Loc@, MRU@) { MRU@; }) { Invoke@; } LI = ((Loc@, MRU@) { MRU@; } f) {
+    Env@ env, Loc@ loc, StringL@ arg <- A1;
+    f(loc, Run.Inline(env, arg));
+  };
+
+  # @<tag>[INLINE]
+  # Creates an Invoke@ function expecting one INLINE argument.
   ((MRU@) { MRU@; }) { Invoke@; } I = ((MRU@) { MRU@; } f) {
-    Env@ env, StringL@ arg <- A1;
+    Env@ env, Loc@ loc, StringL@ arg <- A1;
     f(Run.Inline(env, arg));
   };
 
   # @<tag>[BLOCK] helper function
   # Creates an Invoke@ function expecting one BLOCK argument.
   ((MRU@) { MRU@; }) { Invoke@; } B = ((MRU@) { MRU@; } f) {
-    Env@ env, StringL@ arg <- A1;
+    Env@ env, Loc@ loc, StringL@ arg <- A1;
     f(Run.Block(env, arg));
+  };
+
+  # @<tag>[BLOCK] helper function
+  # Creates an Invoke@ function expecting one BLOCK argument.
+  ((Loc@, MRU@) { MRU@; }) { Invoke@; } LB = ((Loc@, MRU@) { MRU@; } f) {
+    Env@ env, Loc@ loc, StringL@ arg <- A1;
+    f(loc, Run.Block(env, arg));
   };
 
   # @<tag>[ESCAPED][ESCAPED] helper function
@@ -104,6 +137,13 @@
   ((StringL@, StringL@) { MRU@; }) { Invoke@; } EE = ((StringL@, StringL@) { MRU@; } f) {
     Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
     f(Unescape(a1), Unescape(a2));
+  };
+
+  # @<tag>[ESCAPED][BLOCK] helper function
+  ((Loc@, StringL@, MRU@) { MRU@; }) { Invoke@; }
+  LEB = ((Loc@, StringL@, MRU@) { MRU@; } f) {
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
+    f(loc, Unescape(a1), Run.Block(env, a2));
   };
 
   # @<tag>[ESCAPED][INLINE] helper function
@@ -118,10 +158,30 @@
     f(Run.Inline(env, a1), Run.Inline(env, a2));
   };
 
+  # @<tag>[INLINE][INLINE] helper function
+  ((Loc@, MRU@, MRU@) { MRU@; }) { Invoke@; }
+  LII = ((Loc@, MRU@, MRU@) { MRU@; } f) {
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
+    f(loc, Run.Inline(env, a1), Run.Inline(env, a2));
+  };
+
   # @<tag>[INLINE][BLOCK] helper function
   ((MRU@, MRU@) { MRU@; }) { Invoke@; } IB = ((MRU@, MRU@) { MRU@; } f) {
     Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
     f(Run.Inline(env, a1), Run.Block(env, a2));
+  };
+
+  # @<tag>[INLINE][BLOCK] helper function
+  ((Loc@, MRU@, MRU@) { MRU@; }) { Invoke@; } LIB = ((Loc@, MRU@, MRU@) { MRU@; } f) {
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2 <- A2;
+    f(loc, Run.Inline(env, a1), Run.Block(env, a2));
+  };
+
+  # @<tag>[INLINE][INLINE][BLOCK] helper function
+  ((Loc@, MRU@, MRU@, MRU@) { MRU@; }) { Invoke@; }
+  LIIB = ((Loc@, MRU@, MRU@, MRU@) { MRU@; } f) {
+    Env@ env, Loc@ loc, StringL@ a1, StringL@ a2, StringL@ a3 <- A3;
+    f(loc, Run.Inline(env, a1), Run.Inline(env, a2), Run.Block(env, a3));
   };
 
   # @<tag>[ESCAPED][? INLINE] helper function, where the optional argument
@@ -148,8 +208,9 @@
   };
 
 
-  @(A0, A1, A2,
-    E, I, B,
-    EE, EI, II, IB, EmI);
+  @(A0, A1, A2, A3,
+    E, I, LI, B, LB,
+    LEB, EE, EI, II, LII, IB, LIB, EmI,
+    LIIB);
 };
 

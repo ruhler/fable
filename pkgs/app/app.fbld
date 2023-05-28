@@ -1,5 +1,5 @@
 @usage[fble-app] runs an fble app program
- @synopsys
+ @synopsis
   @l[fble-app] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description

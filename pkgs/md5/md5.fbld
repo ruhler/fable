@@ -1,5 +1,5 @@
 @usage[fble-md5] computes md5 hash
- @synopsys
+ @synopsis
   @l[fble-md5]
  
  @description

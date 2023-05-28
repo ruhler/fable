@@ -1,5 +1,5 @@
 @usage[fble-profiles-test] runs the fble-profiles-test
- @synopsys
+ @synopsis
   @l[fble-profiles-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description

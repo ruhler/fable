@@ -1,5 +1,5 @@
 @usage[fble-sat] solves a sat problem
- @synopsys
+ @synopsis
   @l[fble-sat]
  
  @description

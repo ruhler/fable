@@ -215,7 +215,7 @@ How important is it to stick with standard man page style?
 * Do we really need to use 'RETURN VALUE' section for that info? Should we
   avoid separate sections for side effects?
 
-Because part of my wants to be, like: we extract the name and synopsys from
+Because part of my wants to be, like: we extract the name and synopsis from
 the prototype, the rest we treat as pure markdown that we format and put into
 the DESCRIPTION section. No RETURN VALUE section. Possibly no 'brief' name, or
 we could make that part of the syntax for the function description.
@@ -258,7 +258,7 @@ Thoughts:
   doxygen?). Do a manual audit at release time?
 
 Issues with doxygen, again:
-* It lists the include files from the header in the synopsys section, not the
+* It lists the include files from the header in the synopsis section, not the
   header itself. That's just silly.
   - We can disable that with SHOW_INCLUDE_FILES=NO in the config.
 * Looks like we can add an @sideeffects command if we want. Grep for

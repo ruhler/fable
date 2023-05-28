@@ -161,7 +161,7 @@ Apparently github does support asciidoc? Yes. I just need to use '.adoc',
            page. Write my own wrapper around the asciidoc.
            * Continue to use help2man for commands? Or write them in such a way that I
            can extract asciidoc directly?
-           - The hard part is separating synopsys and options? Honestly, I don't really
+           - The hard part is separating synopsis and options? Honestly, I don't really
            want asciidoc syntax in the output of --help.
 
            Perhaps another option is to write my own asciidoc backend to generate text
@@ -186,7 +186,7 @@ Apparently github does support asciidoc? Yes. I just need to use '.adoc',
 
            Features to look for:
            * attribute to define brief format for man page.
-           * attribute to define synopsys/usage text.
+           * attribute to define synopsis/usage text.
 
            Ug. It's just hard. Asciidoc is so complicated. I really am tempted to just
            write my own. It can't possibly be that hard to parse basic formatting, can
@@ -826,7 +826,7 @@ Apparently github does support asciidoc? Yes. I just need to use '.adoc',
   fble-compile.adoc file into help-text suitable output?
 
   * <NAME> section
-  * Add 'Usage:' in front of synopsys section text, same line.
+  * Add 'Usage:' in front of synopsis section text, same line.
   * Render description in as-is formatted text, limited to 80 cols.
   Maybe go through roff or something to do the formatting for me?
   * Change sect2 titles to '<Title>'
@@ -1637,7 +1637,7 @@ That will be the real test.
 
 Let's start with man page generation. What markup do I need?
 * name, brief
-* synopsys:  
+* synopsis:  
   - distinguish between bold for 'as-is', italics for args.
 * options
 * exit status
@@ -2061,7 +2061,7 @@ Usage Specific Block:
 * @name[name][brief]: TODO: change this to @usage[name][brief][content]?
   <name> - <text> in help output.
   NAME section in man output.
-* @usage[...]: Gives synopsys. TODO: change to @synopsys.
+* @usage[...]: Gives synopsis. TODO: change to @synopsis.
   Usage: <text> in help output.
   SYNOPSYS section in man output.
 * @description[text]: Description section.

@@ -1,5 +1,5 @@
 @usage[fble-test] evaluates an fble program
- @synopsys
+ @synopsis
   @l[fble-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description
