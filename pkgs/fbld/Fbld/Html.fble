@@ -17,6 +17,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
+@ Loc@ = /Fbld/Loc%.Loc@;
 @ StringL@ = /Fbld/StringL%.StringL@;
 
 <@>% Ok = /Fbld/Result%.Ok;
@@ -176,8 +177,8 @@
     body;
   };
 
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Doc = (MR@<Unit@> title, MR@<Unit@> body) {
+  (Loc@, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Doc = (Loc@ _, MR@<Unit@> title, MR@<Unit@> body) {
     Unit@ _ <- m.do(O.PutLine(out, Str|'
 <head>
 <style>

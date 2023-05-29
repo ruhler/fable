@@ -20,6 +20,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
+@ Loc@ = /Fbld/Loc%.Loc@;
 @ StringL@ = /Fbld/StringL%.StringL@;
 
 <@>% Ok = /Fbld/Result%.Ok;
@@ -161,8 +162,10 @@
   (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
   SubSubSection = Heading(Str|'#### ');
 
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Doc = Heading(Str|'# ');
+  (Loc@, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Doc = (Loc@ _, MR@<Unit@> title, MR@<Unit@> body) {
+    Heading(Str|'# ')(title, body);
+  };
 
   Core@ Core = @(
     text: Text,

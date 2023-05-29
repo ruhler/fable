@@ -22,7 +22,7 @@
     Usage@ Usage = @(
       usage:
         (Loc@ loc, MRU@ name, MRU@ brief, MRU@ contents) {
-          core.doc(name, {
+          core.doc(loc, name, {
             Unit@ _ <- mr.do(core.par({
               Unit@ _ <- mr.do(name);
               Unit@ _ <- mr.do(core.text(StringL@(Str|' - ', loc)));

@@ -5,6 +5,7 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+@ Loc@ = /Fbld/Loc%.Loc@;
 @ StringL@ = /Fbld/StringL%.StringL@;
 
 <<@>@ M@>(Monad@<M@> m) {
@@ -117,7 +118,7 @@
     # Top level entry point for a generic document.
     # @param title  The title of the document.
     # @param body  The contents of the document.
-    (MRU@, MRU@) { MRU@; } doc
+    (Loc@, MRU@, MRU@) { MRU@; } doc
   );
 
   % Utils = /Fbld/Invoke/Utils%(m);
@@ -145,7 +146,7 @@
         Entry(Str|'section', Utils.IB(core.section)),
         Entry(Str|'subsection', Utils.IB(core.subsection)),
         Entry(Str|'subsubsection', Utils.IB(core.subsubsection)),
-        Entry(Str|'doc', Utils.IB(core.doc))
+        Entry(Str|'doc', Utils.LIB(core.doc))
       ]];
   };
 

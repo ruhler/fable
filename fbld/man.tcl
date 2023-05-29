@@ -171,7 +171,7 @@ proc block_code {language text} {
   ::output ".EE\n"
 }
 
-# @man[INLINE section][INLINE title][BLOCK body]
+# @man[INLINE section][INLINE title][INLINE source][BLOCK body]
 # Top level entry point for a man page.
 # @param section  The section of the man page, e.g. 1 or 3.
 # @param title  The title of the document.

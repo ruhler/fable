@@ -694,3 +694,145 @@ Interface is String@ to List@<*(Class@ class, String@ text)>. Assume to start
 that we don't have nested highlighting items. Start with fbld, then go from
 there.
 
+---
+
+The man backend doesn't implement @doc, it replaces it with a different typed
+@man tag. How am I supposed to handle that? I takes extra 'section' and
+'source' arguments.
+
+Maybe we implement @doc, but give an error message saying man backend does not
+support @doc tag, use @man tag instead? And export both Core and Man top
+level values from the backend?
+
+The implementation of fbld in fble is feeling pretty messy right now. Things
+like that, and:
+* Having to write lots of invoke utility functions.
+* Overheads of passing M@ and m everywhere.
+* Inability to do dynamic front ends or back ends.
+* Not knowing when to pass Loc@ to functions.
+
+---
+
+Let's imagine a different world for fbld.
+
+Most front end tags could be described as simple transformations. For example:
+
+@define[AbstractSyntax][content]
+ @definition[Abstract Syntax][@code[txt][@content]]
+
+Okay, so that one doesn't work great, because we wouldn't substitute @content
+inside an @code block. Unless it's a special thing for @define.
+
+Try again:
+
+@define[tutorial][name][content]
+ @doc[@name]
+   @FbleVersion (@BuildStamp)
+
+  @content
+
+That doesn't say how we would implement @FbleVersion or @BuildStamp. Maybe
+define those with auto-generated code:
+
+@define[FbleVersion][fble-0.2]
+@define[BuildStamp][asdfasefase]
+
+Assume we come up with a reasonable approach for this, now we have an easy way
+to define new front ends dynamically. You just write @defines into your docs.
+And maybe have an @include too, to help arrange things.
+
+Imagine we have sufficient type information about each tag that we can know
+how many arguments it expects, and whether those arguments are 'RAW',
+'INLINE', or 'BLOCK' structured text. Then we could parse the entire document
+in memory as something like:
+
+@ Fble@ = +(StringL@ raw, Command@ command, List@<Fble@> list),
+@ Command@ = *(StringL@ name, List@<Fble@> args);
+
+Front end tags are reductions we can apply. Apply all possible reductions.
+
+At this point, hopefully you are left with only tags that your backend knows
+how to handle. Pass it off to the backend. We could enumerate all the tags
+left over and call that the overall 'type' of the document, and find a backend
+that supports that type. Or just have the backend fail if it sees a tag it
+doesn't expect.
+
+There are a few corner cases to double check:
+* @fbld tag and similar which can take one or two arguments.
+  Have support for optional or default arguments?
+  Or come up with different names for the different overloadings of the tags
+  like this? @i versus @ii, for example. @fbld[...] versus
+  @link[fbld][label][...]? Or @fbld[...][...] versus @fbld[...][]?
+* usage man page front end generates @man back end tag instead of @doc.
+  I don't see any problems here.
+* doc comment processor processes tags twice with different interpretation.
+  It's not a problem if it's backend, because we can do custom processing
+  there. Maybe we want a way to do more custom front end tag processing
+  though.
+
+To simplify the problem to start, let's imagine front end tags can be defined
+different ways. Via @define. Via custom fble code. Via custom tcl code. Via
+custom process. Whatever.
+
+Could we start by just revamping the current implementation of fbld in fble,
+without changing the fbld spec? Instead of passing monads around everywhere,
+pass around the 'value' of the doc?
+
+We have two ways of processing a document:
+1. Front end: apply reductions until you can't anymore.
+No monads required. Stays in Fbld@ -> Fble@ land.
+
+2. Back end: convert to backend specific types.
+Maybe we want a monad. Maybe more specific typing?
+
+Alternatively, if we think of a backend as always producing text of some form,
+and we say transformations can go Fbld@ to raw String@, then backend need not
+be special?
+
+All my current backends are straight up string translations. I've structured
+them so they don't need any intermediate state. I don't know if that's what we
+can expect for things like markdown or txt, where we want text wrapping and
+need to know state of nesting and other things like that.
+
+What I'm saying is, it would be nice to unify front end and back end
+transformations. But that gets you back, I think, towards where we are today.
+
+Let's explore more. Say a document is one of:
+
+1. Raw string: there is nothing you can do to simplify further.
+2. Command: You can convert the command to another document. 
+3. List of ???: 
+  You can keep as a list, or concatenate into a raw string?
+
+---
+
+After much thought, I've ended up pretty close to where we are today. Some
+minor differences:
+
+* Maybe we want to add implicit @[] commands for block and inline text that
+  wraps the list of comments in a sequence.
+* We should pass OStream to all parts of commands, and allow subinvocations to
+  provide alternative OStream implementation. This will allow us, for example,
+  to reflow or trim text produced by subcommands.
+* Consider defining a Markup backend that has a tag like
+  @define[command][arg1][arg2]...[body]
+  As a syntax for describing user defined commands. Not as part of the doc
+  itself, but as an input to the fbld processor to describe markup to add to
+  the processor.
+* Maybe separate OStream and CharOutputStream, rather than assume we always
+  want to write to byte streams instead of directly to char streams.
+
+This way a front end and back end are kind of the same thing. We could
+implement a backend as a direct string translation just like front end.
+
+If we had the ability for tags to modify the environment, we could potentially
+define things like @define to use within docs, but don't worry about that for
+now. Having an @define syntax for describing markup would allow us to have
+dynamic front ends and back ends. It's limited to whatever we provide for
+string manipulations in the language. You could imagine a full programming
+language, or something tcl like that lets you do full string manipulation. Or,
+for the time being, just allow simple substitutions of text.
+
+Let's keep forging ahead as is. Keep in mind the above changes, but wait until
+there's a clear use case to make those changes.
+
