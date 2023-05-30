@@ -48,7 +48,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
   % Run = /Fbld/Run%(m);
 
-  @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man);
+  @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text);
 
   @ Args@ = *(
     String@ buildstamp,
@@ -87,6 +87,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(backend: Backend@(man: Unit)));
       });
+      /Core/String/Eq%.Eq(Str|'--text', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(backend: Backend@(text: Unit)));
+      });
       /Core/String/Eq%.Eq(Str|'--fble', arg).?(true: {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(fble: True));
@@ -112,7 +116,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Core@ core = parsed.backend.?(
       html: /Fbld/Html%(m, stdio.out).Core,
       markdown: /Fbld/Markdown%(m, stdio.out).Core,
-      man: Man.Core);
+      man: Man.Core,
+      text: /Fbld/Text%(m, stdio.out).Core);
 
     parsed.file.?(nothing: {
       String@ msg = Str|'missing input file';

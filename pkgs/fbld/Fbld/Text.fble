@@ -1,0 +1,173 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Char@ = /Core/Char%.Char@;
+% IsNewline = /Core/Char/Type%.IsNewline;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
+<@>% Reverse = /Core/List%.Reverse;
+
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+<@>% Ok = /Fbld/Result%.Ok;
+
+<<@>@ M@>(Monad@<M@> m, OStream@<M@> out) {
+
+  % ResultM = /Fbld/ResultM%<M@>;
+  <@>@ MR@ = ResultM.MR@;
+  Monad@<MR@> mr = ResultM.Monad(m);
+
+  @ Core@ = /Fbld/Core%(m).Core@;
+
+  % O = /Core/Stream/OStream%(m);
+
+  (StringL@) { MR@<Unit@>; }
+  Text = (StringL@ str) {
+    Unit@ _ <- m.do(O.PutStr(out, str.str));
+    mr.return(Unit);
+  };
+
+  (StringL@) { MR@<Unit@>; }
+  L = (StringL@ str) {
+    Text(str);
+  };
+
+  (StringL@) { MR@<Unit@>; }
+  A = (StringL@ str) {
+    Text(str);
+  };
+
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Label = (StringL@ id, MR@<Unit@> text) {
+    text;
+  };
+
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Ref = (StringL@ id, MR@<Unit@> caption) {
+    caption;
+  };
+
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Url = (StringL@ url, MR@<Unit@> text) {
+    text;
+  };
+
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  File = (StringL@ file, MR@<Unit@> text) {
+    text;
+  };
+
+  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  Fbld = (StringL@ file, MR@<Unit@> text) {
+    File(file, text);
+  };
+
+  (MR@<Unit@>) { MR@<Unit@>; }
+  Par = (MR@<Unit@> body) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    Unit@ _ <- mr.do(body);
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    mr.return(Unit);
+  };
+
+  (MR@<Unit@>) { MR@<Unit@>; }
+  Item = (MR@<Unit@> body) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'* '));
+    Unit@ _ <- mr.do(body);
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    mr.return(Unit);
+  };
+
+  # Indent the given text by 2 spaces.
+  (String@) { String@; } Indent = (String@ text) {
+    (Bool@, String@, String@) { String@; }
+    indent = (Bool@ nl, String@ str, String@ rchrs) {
+      str.?(nil: Reverse(rchrs));
+      nl.?(true: indent(False, str, Append(Str|'    ', rchrs)));
+      Char@ c = str.cons.head;
+      indent(IsNewline(c), str.cons.tail, Cons(c, rchrs));
+    };
+
+    indent(True, text, Str|'');
+  };
+
+  (StringL@, StringL@) { MR@<Unit@>; }
+  Code = (StringL@ lang, StringL@ text) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    Unit@ _ <- m.do(O.PutStr(out, Indent(text.str)));
+    m.return(Ok(Unit));
+  };
+
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Def = (MR@<Unit@> name, MR@<Unit@> value) {
+    Unit@ _ <- mr.do(name);
+    Unit@ _ <- m.do(O.PutStr(out, Str|': '));
+    Unit@ _ <- mr.do(value);
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    mr.return(Unit);
+  };
+
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Section = (MR@<Unit@> title, MR@<Unit@> body) {
+    Unit@ _ <- mr.do(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    body;
+  };
+
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  SubSection = (MR@<Unit@> title, MR@<Unit@> body) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|' '));
+    Unit@ _ <- mr.do(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    body;
+  };
+
+  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  SubSubSection = (MR@<Unit@> title, MR@<Unit@> body) {
+    Unit@ _ <- m.do(O.PutStr(out, Str|'  '));
+    Unit@ _ <- mr.do(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    body;
+  };
+
+  (Loc@, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
+  Doc = (Loc@ _, MR@<Unit@> title, MR@<Unit@> body) {
+    Unit@ _ <- mr.do(title);
+    Unit@ _ <- m.do(O.PutLine(out, Str|''));
+    Unit@ _ <- m.do(O.PutLine(out, Str|'===='));
+    Unit@ _ <- mr.do(body);
+    mr.return(Unit);
+  };
+
+  Core@ Core = @(
+    text: Text,
+    l: L, a: A,
+    label: Label, ref: Ref,
+    url: Url, file: File, fbld: Fbld,
+    par: Par,
+    item: Item,
+    code: Code,
+    def: Def,
+    definition: Def,
+    section: Section,
+    subsection: SubSection,
+    subsubsection: SubSubSection,
+    doc: Doc
+  );
+
+  @(Core);
+};
