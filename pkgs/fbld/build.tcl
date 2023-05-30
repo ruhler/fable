@@ -39,4 +39,9 @@ namespace eval "pkgs/fbld" {
   fbld_html_doc $::b/pkgs/fbld/fble.html $::s/spec/fble.fbld --fble
   fbld_html_doc $::b/pkgs/fbld/README.html $::s/README.fbld
   fbld_html_doc $::b/pkgs/fbld/HelloWorld.html $::s/tutorials/HelloWorld.fbld --tutorial
+
+  # fble-comile.1
+  build $::b/pkgs/fbld/fble-compile.1 \
+    "$::b/pkgs/fbld/fble-fbld $::s/bin/fble-compile.fbld" \
+    "$::b/pkgs/fbld/fble-fbld --man --usage.man --version $::version --buildstamp `$::s/buildstamp` $::s/bin/fble-compile.fbld > $::b/pkgs/fbld/fble-compile.1"
 }

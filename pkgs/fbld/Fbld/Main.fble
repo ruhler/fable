@@ -44,9 +44,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % Core = /Fbld/Core%(m);
   @ Core@ = Core.Core@;
 
+  % Usage = /Fbld/Usage%(m);
+
   % Run = /Fbld/Run%(m);
 
-  @ Backend@ = +(Unit@ html, Unit@ markdown);
+  @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man);
 
   @ Args@ = *(
     String@ buildstamp,
@@ -54,6 +56,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Backend@ backend,
     Bool@ fble,
     Bool@ tutorial,
+    Bool@ usage_help,
     Maybe@<String@> file
   );
 
@@ -80,6 +83,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(backend: Backend@(markdown: Unit)));
       });
+      /Core/String/Eq%.Eq(Str|'--man', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(backend: Backend@(man: Unit)));
+      });
       /Core/String/Eq%.Eq(Str|'--fble', arg).?(true: {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(fble: True));
@@ -88,17 +95,24 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(tutorial: True));
       });
+      /Core/String/Eq%.Eq(Str|'--usage.help', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(usage_help: True));
+      });
       parse(args.cons.tail, result.@(file: Just(arg)));
     };
-    parse(args, Args@(Str|'??', Str|'??', Backend@(html: Unit), False, False, Nothing<String@>));
+    parse(args, Args@(Str|'??', Str|'??',
+        Backend@(html: Unit), False, False, False, Nothing<String@>));
   };
 
   (List@<String@> args) {
     Args@ parsed = ParseArgs(args);
 
+    % Man = /Fbld/Man%(m, stdio.out);
     Core@ core = parsed.backend.?(
       html: /Fbld/Html%(m, stdio.out).Core,
-      markdown: /Fbld/Markdown%(m, stdio.out).Core);
+      markdown: /Fbld/Markdown%(m, stdio.out).Core,
+      man: Man.Core);
 
     parsed.file.?(nothing: {
       String@ msg = Str|'missing input file';
@@ -127,6 +141,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         false: Markup.Empty),
       parsed.tutorial.?(
         true: /Fbld/Fble/Tutorial%(m)(core, Build.BuildStamp, Version.Version).Markup,
+        false: Markup.Empty),
+      parsed.usage_help.?(
+        true: Usage.Markup(/Fbld/Usage/Help%(m)(core).Usage),
         false: Markup.Empty)
     ];
 

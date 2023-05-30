@@ -836,3 +836,33 @@ for the time being, just allow simple substitutions of text.
 Let's keep forging ahead as is. Keep in mind the above changes, but wait until
 there's a clear use case to make those changes.
 
+---
+
+I changed Core.doc to take a Loc@, which is needed for the man backend to
+report the error message for that. This suggests every Core method should take
+a loc.
+
+If every method takes a Loc@, what is the value of having Core@ type? Why not
+just construct a command directly by name?
+
+The idea was calling directly would give better type info: number and type of
+args. But type of args is just StringL@ or MRU@. It doesn't give that much
+info.
+
+I suppose we like being able to pass a monadic computation as an MRU@
+argument.
+
+Imagine if we referenced, e.g. Core@ only from Env@. Is that better or worse?
+No need to depend on Core, but on the other hand, easier to make type errors
+in terms of typos or wrong number/type of arguments.
+
+A third option: we could provide an abstract instance of Core@ that takes from
+the environment instead of being the ultimate backend?
+
+---
+
+On further thought, we don't want front ends to be able to write strings
+directly to the output stream, right? We only want them to write things via
+Text backend tags so that backends have full control over what's being written
+to the output stream. ?
+

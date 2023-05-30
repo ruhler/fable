@@ -1,18 +1,10 @@
 
-@ Char@ = /Core/Char%.Char@;
-
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-<@>% Append = /Core/List%.Append;
-<@>% Reverse = /Core/List%.Reverse;
-<@>% Drop = /Core/List/Length%.Drop;
-<@>% Length = /Core/List/Length%.Length;
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% StartsWith = /Core/String/Eq%.StartsWith;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
