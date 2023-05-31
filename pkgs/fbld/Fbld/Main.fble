@@ -144,18 +144,18 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       m.return(False);
     });
 
-    % Build = /Fbld/Fble/Build%(m)(core, parsed.buildstamp);
-    % Version = /Fbld/Fble/Version%(m)(core, parsed.version);
+    % Build = /Fbld/Build%(m)(core, parsed.buildstamp);
+    % Version = /Fbld/Version%(m)(core, parsed.version);
 
     Markup@ markup = Markups[
       Core.Markup(core),
       Build.Markup,
       Version.Markup,
       parsed.fble.?(
-        true: /Fbld/Fble/Fble%(m)(core).Markup,
+        true: /Fbld/Fble%(m)(core).Markup,
         false: Markup.Empty),
       parsed.tutorial.?(
-        true: /Fbld/Fble/Tutorial%(m)(core, Build.BuildStamp, Version.Version).Markup,
+        true: /Fbld/Tutorial%(m)(core, Build.BuildStamp, Version.Version).Markup,
         false: Markup.Empty),
       parsed.usage_help.?(
         true: Usage.Markup(/Fbld/Usage/Help%(m)(core).Usage),
