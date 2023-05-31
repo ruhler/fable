@@ -29,8 +29,8 @@
 
   # @<tag>
   # Creates an Invoke@ function expecting zero arguments.
-  ((Loc@) { MRU@; }) { Invoke@; }
-  A0 = ((Loc@) { MRU@; } f) {
+  ((Env@, Loc@) { MRU@; }) { Invoke@; }
+  A0 = ((Env@, Loc@) { MRU@; } f) {
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|0, num_args ).?(false: {
@@ -39,7 +39,7 @@
               /Core/Int/Show%.Show(num_args)], command.name.loc)));
       });
 
-      f(command.name.loc);
+      f(env, command.name.loc);
     };
   };
 

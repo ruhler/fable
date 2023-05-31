@@ -43,5 +43,5 @@ namespace eval "pkgs/fbld" {
   # fble-comile.1
   build $::b/pkgs/fbld/fble-compile.1 \
     "$::b/pkgs/fbld/fble-fbld $::s/bin/fble-compile.fbld" \
-    "$::b/pkgs/fbld/fble-fbld --man --usage.man --version $::version --buildstamp `$::s/buildstamp` $::s/bin/fble-compile.fbld > $::b/pkgs/fbld/fble-compile.1"
+    "$::b/pkgs/fbld/fble-fbld --text --usage.lib --usage.help --version $::version --buildstamp `$::s/buildstamp` $::s/bin/fble-compile.fbld > $::b/pkgs/fbld/fble-compile.1"
 }

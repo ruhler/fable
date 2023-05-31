@@ -4,9 +4,15 @@ Things to consider doing for the fble-0.2 release.
 
 * Fbld:
  - Figure out a better approach to @FbleVersion?
+ - Figure out how to generate c header output.
  - Figure out why it takes so much memory and time to run.
+ - Remove unnecessary Fbld/Fble subdirectory.
+ - Make use of Seq for combining sequence of MRU@.
+ - Use map from front end name to Markup to simplify front end options
+   parsing.
+ - Make sure @man ends up in markup somewhere when that is requested.
+ - Add @config tag to BuildStamp.
  - Implement source highlighting for @code.
- - Replace roff backend with custom backs end to txt and markdown.
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.

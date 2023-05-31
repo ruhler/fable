@@ -1,0 +1,75 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+
+<<@>@ M@>(Monad@<M@> m) {
+  % Run = /Fbld/Run%(m);
+
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
+  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
+
+  % Utils = /Fbld/Invoke/Utils%(m);
+
+  % MarkupModule = /Fbld/Markup%(m);
+  @ Markup@ = MarkupModule.Markup@;
+  % Block = MarkupModule.Block;
+  % Entry = MarkupModule.Entry;
+
+  # @GenericProgramInfo
+  # A description of generic program information options.
+  (Env@, Loc@) { MRU@; } GenericProgramInfo = (Env@ env, Loc@ loc) {
+    String@ body = Str|'
+@subsection[Generic Program Information]
+ @opt[@l[-h], @l[--help]]
+  display this help text and exit
+
+ @opt[@l[-v], @l[--version]]
+  display version information and exit
+';
+    Run.Block(env, StringL@(body, loc));
+  };
+
+  # @ModuleInput
+  # A description of module input options.
+  (Env@, Loc@) { MRU@; } ModuleInput = (Env@ env, Loc@ loc) {
+    String@ body = Str|'
+@subsection[Module Input]
+ @opt[@l[-I] @a[DIR]]
+  add @a[DIR] to the module search path
+
+ @opt[@l[-p], @l[--package] @a[PACKAGE]]
+  add @a[PACKAGE] to the module search path
+
+ @opt[@l[-m], @l[--module] @a[MODULE_PATH]]
+  the module path of the input module
+
+ Packages are searched for in the package search path specified by the
+ @l[FBLE_PACKAGE_PATH] environment variable followed by the system default
+ package search path. Modules are searched for in the module search path.
+
+ For example, if @l[FBLE_PACKAGE_PATH] is @l[/fble/pkgs] and you provide
+ command line options @l[-p core -m /Core/Unit%], the @l[-p core] option adds
+ @l[/fble/pkgs/core] to the module search path, and the @l[-m /Core/Unit%]
+ option will look for the module at @l[/fble/pkgs/core/Core/Unit.fble].
+
+ The system default package search path is @config[datadir]/fble.
+';
+    Run.Block(env, StringL@(body, loc));
+  };
+
+  Markup@ Markup = Block[
+    Entry(Str|'GenericProgramInfo', Utils.A0(GenericProgramInfo)),
+    Entry(Str|'ModuleInput', Utils.A0(ModuleInput))
+  ];
+
+  @(GenericProgramInfo, ModuleInput, Markup);
+};
+

@@ -12,6 +12,7 @@
 
 <<@>@ M@>(Monad@<M@> m) {
   @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
 
   @ Core@ = /Fbld/Core%(m).Core@;
   % Utils = /Fbld/Invoke/Utils%(m);
@@ -29,7 +30,7 @@
     };
 
     Markup@ Markup = Inline[
-      Entry(Str|'BuildStamp', Utils.A0(BuildStamp))
+      Entry(Str|'BuildStamp', Utils.A0((Env@ _, Loc@ loc) { BuildStamp(loc); }))
     ];
 
     @(BuildStamp, Markup);

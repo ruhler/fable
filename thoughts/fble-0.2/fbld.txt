@@ -866,3 +866,14 @@ directly to the output stream, right? We only want them to write things via
 Text backend tags so that backends have full control over what's being written
 to the output stream. ?
 
+---
+
+For usage.lib front end, I implemented it as direct fbld text parsing. Some
+interesting things came out:
+* No need to depend on Core or other things within fble code, which is nice.
+* Ran into @config missing error, which is the other side of the coin for
+  that.
+* The location tracking doesn't work, because I'm giving the location for
+  where the tag is called, not the location for where the tag is being
+  defined.
+

@@ -57,6 +57,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Bool@ fble,
     Bool@ tutorial,
     Bool@ usage_help,
+    Bool@ usage_man,
+    Bool@ usage_lib,
     Maybe@<String@> file
   );
 
@@ -103,10 +105,18 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(usage_help: True));
       });
+      /Core/String/Eq%.Eq(Str|'--usage.man', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(usage_man: True));
+      });
+      /Core/String/Eq%.Eq(Str|'--usage.lib', arg).?(true: {
+        List@<String@> nargs = args.cons.tail;
+        parse(nargs, result.@(usage_lib: True));
+      });
       parse(args.cons.tail, result.@(file: Just(arg)));
     };
     parse(args, Args@(Str|'??', Str|'??',
-        Backend@(html: Unit), False, False, False, Nothing<String@>));
+        Backend@(html: Unit), False, False, False, False, False, Nothing<String@>));
   };
 
   (List@<String@> args) {
@@ -149,6 +159,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         false: Markup.Empty),
       parsed.usage_help.?(
         true: Usage.Markup(/Fbld/Usage/Help%(m)(core).Usage),
+        false: Markup.Empty),
+      parsed.usage_lib.?(
+        true: /Fbld/Usage/Lib%(m).Markup,
         false: Markup.Empty)
     ];
 
