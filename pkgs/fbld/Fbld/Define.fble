@@ -1,0 +1,107 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
+<@>% Reverse = /Core/List%.Reverse;
+<@>% Drop = /Core/List/Length%.Drop;
+<@>% Length = /Core/List/Length%.Length;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+% StartsWith = /Core/String/Eq%.StartsWith;
+
+@ Command@ = /Fbld/Command%.Command@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+% Start = /Fbld/Loc%.Start;
+
+<@>% Err = /Fbld/Result%.Err;
+@ StringL@ = /Fbld/StringL%.StringL@;
+
+@ Map@ = /Core/Map%.Map@<String@, String@>;
+% Empty = /Core/Map%.Empty<String@, String@>;
+% Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<String@>;
+% Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<String@>;
+
+(Map@, String@) { String@; }
+Subst = (Map@ map, String@ body) {
+  (String@, String@) { String@; } subst = (String@ body, String@ r) {
+    body.?(nil: r);
+    String@ tail = body.cons.tail;
+    body.cons.head.?('$': {
+      Maybe@<String@> mv = /Core/Map%.ForEach(map, Nothing<String@>,
+        (String@ key, String@ _, Maybe@<String@> mv) {
+          mv.?(just: mv);
+          StartsWith(tail, key).?(true: Just(key));
+          Nothing<String@>;
+        });
+      mv.?(nothing: subst(tail, Cons(body.cons.head, r)));
+      String@ ntail = Drop(Length(mv.just), tail);
+      subst(ntail, Append(Reverse(Lookup(map, mv.just).just), r));
+    });
+    subst(tail, Cons(body.cons.head, r));
+  };
+
+  Reverse(subst(body, Str|''));
+};
+
+<<@>@ M@>(Monad@<M@> m) {
+  % Run = /Fbld/Run%(m);
+
+  % ResultM = /Fbld/ResultM%<M@>;
+  <@>@ MR@ = ResultM.MR@;
+  Monad@<MR@> mr = ResultM.Monad(m);
+
+  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
+  @ Env@ = /Fbld/Invoke%<M@>.Env@;
+
+  (List@<String@>, List@<StringL@>, Map@) { Map@; }
+  MakeMap = (List@<String@> keys, List@<StringL@> values, Map@ m) {
+    keys.?(nil: m);
+    MakeMap(keys.cons.tail, values.cons.tail,
+      Insert(m, keys.cons.head, values.cons.head.str));
+  };
+
+  (List@<String@>, String@, Command@) { MR@<StringL@>; }
+  Define = (List@<String@> argnames, String@ body, Command@ command) {
+    Int@ wnt_args = Length(argnames);
+    Int@ got_args = Length(command.args);
+    /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
+      m.return(Err<StringL@>(StringL@(Strs[
+            Str|'expected ', /Core/Int/Show%.Show(wnt_args),
+            Str|' args, but got ', /Core/Int/Show%.Show(got_args)], command.name.loc)));
+      });
+
+    String@ nbody = Subst(MakeMap(argnames, command.args, Empty), body);
+    Loc@ unknown = Start|'???';
+    mr.return(StringL@(nbody, unknown));
+  };
+
+  (List@<String@>)(String@) { Invoke@; }
+  DefB = (List@<String@> argnames)(String@ body) {
+    (Env@ env, Command@ command) {
+      StringL@ text <- mr.do(Define(argnames, body, command));
+      Run.Block(env, text);
+    };
+  };
+
+  (List@<String@>)(String@) { Invoke@; }
+  DefI = (List@<String@> argnames)(String@ body) {
+    (Env@ env, Command@ command) {
+      StringL@ text <- mr.do(Define(argnames, body, command));
+      Run.Inline(env, text);
+    };
+  };
+
+  @(DefB, DefI);
+};
+

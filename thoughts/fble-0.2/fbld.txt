@@ -877,3 +877,512 @@ interesting things came out:
   where the tag is called, not the location for where the tag is being
   defined.
 
+---
+
+How to handle @config?
+
+Even if I had a way to read tags using @define, that doesn't give me a way to
+implement @config, which wants to switch on the argument value.
+
+It's getting a little old to pass everything like this on the command line,
+but I suppose that would be the natural continuation. Pass a config.txt or
+some such file to fble-fbld, it can read it and define the @config tag that
+way.
+
+Options are:
+A. Pass config.tcl or equivalent to fble-fbld.
+B. Figure out build issue to support generated fble source files.
+C. Come up with a sophisticated enough language for defining tags in fbld that
+we can generate and describe the @config tag that way.
+
+For the fun of it, let me spend some time thinking about (C).
+
+---
+
+Say we want a full fledged fbld based programming language. Sufficient to
+define almost any tag you would want. It would be something like tcl: string
+based arguments. What do we need to support?
+
+* Variable definitions.
+* Tag definitions.
+* Conditionals
+ - Presumably based on string comparison.
+* String operations
+ - Concatenation, search/substring to support structures.
+* Loops and/or recursion.
+ - Integer arithmetic to support loops and/or recursion?
+
+Say @foo[...] returns a string, and can modify the environment of
+tags/variables. The top level document computes the value of the top level tag
+and returns it. A sequence of tags results in a concatenation operation (maybe
+some implicit tag we can redefine).
+
+We need some primitive tags to support lets, conditions, string operations,
+etc. We probably need namespace support in practice: allow some special
+characters in tag names. An @include tag would likely be useful to organize
+code into different files.
+
+The overall vision here is to define a programming language, instead of a
+markup language. Using the syntax of fbld. You run that program to convert the
+document.
+
+It's not bad. I don't see any major downsides. I think the syntax should work
+fine for a command/string-based programming language.
+
+A variable is the same as a zero-argument command.
+
+Function definition:
+
+@define[name][arg1][arg2]...[body]
+
+Adds a tag @name to scope.
+
+Order of evaluation? Do we pass the arguments into the body first before
+evaluating, or evaluate first? Or do we just define a tag that's visible in
+the body? This matters for things like:
+
+@define[ConcreteSyntax][content]
+ @definition[Concrete Syntax]
+  @code[txt][@content]
+
+1. If we just define a tag inside the body, @content will never be expanded.
+2. If we inline the contents before evaluation, then nothing inside the
+   content will be expanded.
+3. If we evaluate the contents before inlining, then all the contents will be
+   expanded.
+
+What if we have argument types:
+* raw: arg not evaluated before inlining.
+* inline: arg parsed as inline structure before inlining.
+* block: arg parsed as block structure before inlining.
+
+If the second argument to code is raw, how can we possibly define substitution
+in there?
+
+What if the result of inline or block structured text is structured text?
+Somehow that sounds not reasonable. Like the result should always be in raw
+text form.
+
+Let's execute:
+
+    @ConcreteSyntax[@foo[bar]]
+
+Do a substitution:
+
+ @definition[Concrete Syntax]
+  @code[txt][@foo[bar]]
+
+Evaluate the body (still as part of @define/application)
+
+We cannot execute the argument before knowing how to interpret it, either as
+raw or structured text.
+
+Okay. So what trick could we use to have @foo[bar] expanded before becoming
+code?
+
+Tcl distinguishes between {...} and "...". Maybe that's the idea: when passing
+an argument, where you do application, you can specify if you want to evaluate
+the argument first as block, inline, or raw text. That probably needs a
+language syntax change, but it could be useful. For example, maybe use [] for
+raw, [[]] for inline, [[[]]] for block? Now you have full control?
+
+Or, maybe we have a separate tag for that. Like:
+
+@apply[@code[txt]][@foo[bar]]
+
+Turns into: @code[txt][expanded_foo_bar]
+
+No new syntax needed. But maybe a bit clunky to specify what we want.
+
+---
+
+What would variable scoping look like? Because if we don't interpret an
+argument until it's expand into a function, then we need the caller's scope to
+be visible from that function.
+
+We have three different expression syntax:
+1. raw string.
+2. inline structure.
+3. block structure.
+
+What we really want is a way to specify which syntax you are using when you
+pass an argument. We've already seen examples where, for the same tag, you may
+want different syntax used.
+
+In the current fble, the syntax to use is implicit, based on the command it's
+being passed to. Implicit is nice, because it doesn't clutter the source text.
+
+How do we reconcile implicit nice versus wanting more control? We saw one
+approach above: @apply. Maybe there are different variants on it we could use.
+
+In practice, do I ever put block structured text in an argument that is not
+a next line argument? Well, I put raw text in next line argument.
+
+Could we distinguish between different ways of invoking commands? For example,
+we have @foo, which passes a command, which will be interpreted wherever it
+finally lands. What if we had $foo, which says you interpret the command
+before passing it down?
+
+Let's go back to the example in question:
+
+ @ConcreteSyntax[@foo[bar]]
+
+ @definition[Concrete Syntax]
+  @code[txt][@foo[bar]]
+
+Assume second arg of @code expects raw text.
+Assume arg of @ConcreteSyntax expects raw text. Then it works fine, but we
+have a new problem.
+
+How can we pass substituted text where raw text is expected?
+
+Simplify the example:
+
+  @l[@foo]
+
+In one case, I want this to refer to the literal string "@foo". In another, I
+want this to refer to the result of interpreting @foo as inline text.
+
+  @inline[@foo][@l[$1]]
+  @let[x][@foo][@l[$x]]
+  @inline[x=@foo][@l[$x]]
+  @l[$foo]
+ 
+  @let[x][@inline[@foo]][@l[$x]]
+
+  @l[:@foo]
+  @l[[@foo]]
+
+
+  @a[...][...] ...
+   ...
+
+By default args are raw text. We want some way to override individual args
+separately. Some syntax we can sneak in there.
+
+  @a[$ ...][$ ...] $ ...
+   $
+   ...
+
+Idea here: if the text of the argument starts with $<space>, it is first
+interpreted as inline structured text. Maybe !<space> for block structured, or
+something.
+
+Now, if we do this, commands are no longer side effecting things, they are
+value returning things? Otherwise it's not clear where the side effects of
+those commands should take place.
+
+  @inline[x][@foo][@l[$x]]
+  @block[x][@foo][@l[$x]]
+
+  @inline[cfg][@config[hello]][@l[$cfg]]
+
+I feel like this kind of thing is the cleanest approach. Not very readable,
+but get's the job done, no special syntax required. Arguments continue to be
+interpreted by the command running them.
+
+If we wanted to, we could factor this out:
+
+ @define[ll][text][@inline[x][@text][@l[$x]]]
+
+And now use: @ll[@foo] or @l[@foo] depending on which we want.
+I guess, similarly, we could do:
+
+ @code[...][RAW ...]
+
+or @code_i[...][INLINE ...]
+or @code_b[...][BLOCK ...]
+
+Define wrapper functions like this. Less flexible, but entirely capable.
+
+---
+
+Taking a step back to summarize:
+* We have syntax for block and inline structured text.
+* I'm very happy with writing docs in this syntax.
+* The current question is how to implement tags.
+* Proposal is to reuse the same syntax for writing docs as defining tags.
+* We've established that arguments are not parsed before passing them to
+  commands. Commands interpret those arguments as they see fit.
+* Next step is to come up with a collection of primitives that let us define
+  the kinds of commands we want.
+* Two classes to consider: front ends, back ends.
+
+If I want to go this route, a reasonable next step would be to sketch the
+implementation of all our current front ends. That will help iron out details.
+After that, sketch the implementation of a back end like html, to see what
+that entails.
+
+Top level user flow: let's assume you pass a list of .fbld files, which are
+conceptually concatenated together in order and read as block structured text.
+That way we can mix and match back ends with documents. For example, you might
+have:
+
+  fbld html.fbld spec.lib.fbld spec.fbld
+
+We could have spec.fbld directly import spec.lib.fbld. That makes sense. But
+it doesn't make sense for spec.fbld to directly import html.fbld, because we
+may want different backends.
+
+---
+
+fble.fbld.tcl:
+
+@define[AbstractSyntax][content]
+ @definition[Abstract Syntax]
+  @code[txt][$content]
+
+@define[ConcreteSyntax][content]
+ @definition[Concrete Syntax]
+  @code[txt][$content]
+
+@define[Example][content]
+ @definition[Example]
+  @code[fble][$content]
+
+This requires our first primitive, @define.
+  
+  @define[name][arg1][arg2]...[body]
+
+Defines a new command @name that expects the given number of arguments.
+
+Execution of that new command substitutes arg values into the body based on
+$name, then executes the result as block structured text.
+
+Questions:
+* This defines a block command. How do we define an inline command? Presumably
+  have different names. Maybe @define_b, @define_i, or something weird like
+  that. It's not too important right now.
+* What if we want to use $... somewhere in the body without matching an arg?
+  - Pick a different name for the arg so it doesn't conflict.
+  - Say only matched $name are substituted, others are left as is?
+
+---
+
+tutorial.tcl:
+
+@define[tutorial][name][content]
+ @doc[$name]
+   @FbleVersion (@Buildstamp)
+
+   $content
+
+@define[exercise][content]
+ $content
+  
+Works great. Nothing more needed.
+
+---
+
+usage.lib.tcl:
+
+@define[GenericProgramInfo]
+ @subsection[Generic Program Information]
+  @opt[@l[-h], @l[--help]]
+   display this help text and exit
+
+  @opt[@l[-v], @l[--version]]
+   display version information and exit
+
+@define[ModuleInput]
+ @subsection[Module Input]
+  @opt[@l[-I] @a[DIR]]
+   add @a[DIR] to the module search path
+
+  @opt[@l[-p], @l[--package] @a[PACKAGE]]
+   add @a[PACKAGE] to the module search path
+
+  @opt[@l[-m], @l[--module] @a[MODULE_PATH]]
+   the module path of the input module
+
+  Packages are searched for in the package search path specified by the
+  @l[FBLE_PACKAGE_PATH] environment variable followed by the system default
+  package search path. Modules are searched for in the module search path.
+
+  For example, if @l[FBLE_PACKAGE_PATH] is @l[/fble/pkgs] and you provide
+  command line options @l[-p core -m /Core/Unit%], the @l[-p core] option adds
+  @l[/fble/pkgs/core] to the module search path, and the @l[-m /Core/Unit%]
+  option will look for the module at @l[/fble/pkgs/core/Core/Unit.fble].
+
+  The system default package search path is @config[datadir]/fble.
+
+
+Works great.
+
+---
+
+How to define interfaces? Don't worry about it. Programs are expected to be
+short and fast. It's fine to give an error 'tag not defined' in that case. Or
+define a null backend that supports the tags you expect to have and check the
+doc that way.
+
+---
+
+@define_i[FbleVersion]
+ fble-0.2
+
+So yes, we want different ways to define for block and inline commands.
+
+I think I want inline define to be a block tag, not an inline tag. Any better
+name ideas?
+
+@defblock[...]
+@definline[...]
+
+@defb[...]
+@defi[...]
+
+Yeah, I like that. Unlikely to conflict with a user chosen tag, explicit about
+block versus inline.
+
+---
+
+usagel.help.tcl
+
+@defb[usage][name][brief][content]
+ @doc[$name][$name - $brief]
+  $content
+
+How do we 'trim' $brief? Why is that there right now?
+
+We pass this as a same line argument to a block command. There should be no
+need to trim that. But, let's imagine. For example, imagine we want to convert
+the brief to uppercase? How would we do it? And imagine we have an inline
+command @upper.
+
+@defb[usage][name][brief][content]
+ @doc[$name][$name - @upper[$brief]]
+  $content
+
+That's not hard.
+
+---
+
+build.lib.tcl
+
+Here's an interesting one. @config[name] is supposed to return the value. How
+would we define that?
+
+@defi[config][name]
+ @if[@eq[bindir][$name]][/usr/local/bin]
+
+But that doesn't scale up to a bunch of options. It would be one, huge, long
+line? Well, we could sneak some newlines in, right?
+ @if[@eq[bindir][$name]
+   ][/usr/local/bin][
+ @if[@eq[mandir][$name]
+  ...
+
+That's a little tedious. If we use nested if like this, we have lots of braces
+to close at the end. How could we do elseif?
+
+The way tcl does it is accept multiple var args to if:
+
+ @if[a
+   ][va][
+  elseif][b
+   ][vb][
+  elseif][c
+   ][vc][
+  else
+   ][???]
+
+The important thing here is that I'm putting newlines in the conditions and
+places where we could ignore whitespace, not in the actual values themselves.
+
+Could we somehow define a list of pairs instead and implement a function to
+search that list?
+
+Or, maybe we have a command that takes block structured text, evaluates it,
+and then interprets it as inline structured text? But @defi already does that.
+So we should be able to say:
+
+ @if[a] va
+  @if[b] vb
+   @if[c] vc
+    ???
+
+No worry about braces, just a bunch of indent.
+
+Or maybe we define, like, an @concat command that turns block structured text
+into inline text?
+
+ @concat
+  @if[a]
+   va
+  @if[b]
+   vb
+  @if[c]
+   vc
+ 
+Which works if a, b, and c are mutually exclusive, but doesn't give us a final
+else branch.
+
+If we had primitives for working with dictionaries, we could do:
+  @defi[configs]
+   @dict[bindir][/usr/local/bin][mandir][...]
+  @lookup[@configs][$name]
+  
+But, again, this annoying thing of not being able to split up a single inline
+command easily across multiple lines. If we had that ability, it would be
+great.
+
+---
+
+I want to start with implementing @defb and @defi, and use it to replace all
+of the current front ends. Let's go incrementally.
+
+1. Implement a defb/defi helper functions in fble. It takes a list of argument
+names and a string body, and returns an Invoke function capable of doing the
+desired substitution. We can use this to replace the implementation of all our
+front end markup.
+
+2. Once switched over to defb/defi helper functions, we should no longer need
+to pass around interfaces like Core@, Usage@, Man@. Everything relies on the
+environment to invoke sub commands. So we can clean up the code based on that.
+
+3. I'd like to transition away from abstract monad M@, and towards concrete
+String@ result. That way we can define a concrete monadic type that allows
+state update to Env@.
+
+4. Add defb/defi markup commands.
+
+5. Move frontends from .fble to .fbld.
+
+We can worry about the rest later. That will be a good start.
+
+Remember: defi and defb are both block commands, but defi interprets the
+result as inline and defb interprets the result as block.
+
+---
+
+One thing that's tricky is keeping track of locations after substitution.
+Should we not worry about it for now? Make up a useless location?
+
+---
+
+One challenge with defb/defi: when we substitute into a block context, we may
+need to indent. For example:
+
+@code
+ $content
+
+If $content spans multiple lines, the appropriate way to substitute in would
+be to make sure all those lines are indented.
+
+How do we know when it's safe to do that though? Because if we wrote instead
+
+@code[$content]
+
+Then we shouldn't be indenting all the lines. Maybe we ask the user to provide
+that by passing '$$' for indent substitution and '$' for direct substitution?
+
+A better example might be:
+
+@code[
+ $content
+]
+
+Do we want to indent here? I actually don't know.
+
+Let's ask the user to do it for now. That's not to onerous I don't think.

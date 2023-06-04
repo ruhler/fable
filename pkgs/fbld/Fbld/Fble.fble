@@ -19,15 +19,9 @@
   % Block = MarkupModule.Block;
   % Entry = MarkupModule.Entry;
 
-  (Core@ core) {
-    # @AbstractSyntax[ESCAPED content]
-    (StringL@) { MRU@; }
-    AbstractSyntax = (StringL@ content) {
-      MRU@ name = core.text(StringL@(Str|'Abstract Syntax', content.loc));
-      MRU@ value = core.code(StringL@(Str|'txt', content.loc), content);
-      core.definition(name, value);
-    };
+  % Define = /Fbld/Define%(m);
 
+  (Core@ core) {
     # @ConcreteSyntax[ESCAPED content]
     (StringL@) { MRU@; }
     ConcreteSyntax = (StringL@ content) {
@@ -45,12 +39,13 @@
     };
 
     Markup@ Markup = Block[
-      Entry(Str|'AbstractSyntax', Utils.E(AbstractSyntax)),
+      Entry(Str|'AbstractSyntax', Define.DefB[Str|'content']
+        |'@definition[Abstract Syntax][@code[txt][$content]]'),
       Entry(Str|'ConcreteSyntax', Utils.E(ConcreteSyntax)),
       Entry(Str|'Example', Utils.E(Example))
     ];
 
-    @(AbstractSyntax, ConcreteSyntax, Example, Markup);
+    @(ConcreteSyntax, Example, Markup);
   };
 };
 
