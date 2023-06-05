@@ -3,67 +3,24 @@
 
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
-
-@ Loc@ = /Fbld/Loc%.Loc@;
-@ StringL@ = /Fbld/StringL%.StringL@;
-
 
 <<@>@ M@>(Monad@<M@> m) {
-  % Run = /Fbld/Run%(m);
-
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
-  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
-
-  % ResultM = /Fbld/ResultM%<M@>;
-  <@>@ MR@ = ResultM.MR@;
-  Monad@<MR@> mr = ResultM.Monad(m);
-
-  @ Core@ = /Fbld/Core%(m).Core@;
-  % Utils = /Fbld/Invoke/Utils%(m);
-
   % MarkupModule = /Fbld/Markup%(m);
   @ Markup@ = MarkupModule.Markup@;
   % Block = MarkupModule.Block;
   % Entry = MarkupModule.Entry;
 
-  (Core@ core, (Loc@) { MRU@; } buildstamp, (Loc@) { MRU@; } version) {
-    # @tutorial[INLINE name][BLOCK content]
-    # Top level tag for tutorials.
-    # @param name  The name of the tutorial.
-    # @param content  The tutorial content.
-    (Loc@, MRU@, MRU@) { MRU@; }
-    Tutorial = (Loc@ loc, MRU@ title, MRU@ content) {
-      core.doc(loc, title, {
-        Unit@ _ <- mr.do(core.par({
-          Unit@ _ <- mr.do(core.text(StringL@(Str|' ', loc)));
-          Unit@ _ <- mr.do(version(loc));
-          Unit@ _ <- mr.do(core.text(StringL@(Str|' (', loc)));
-          Unit@ _ <- mr.do(buildstamp(loc));
-          Unit@ _ <- mr.do(core.text(StringL@(Str|')', loc)));
-          mr.return(Unit);
-        }));
-        content;
-      });
-    };
+  % Define = /Fbld/Define%(m);
 
-    # @exercise[BLOCK content]
-    # An exercise for the reader.
-    # @param content  A description of the exercise.
-    (MRU@) { MRU@; }
-    Exercise = (MRU@ content) {
-      content;
-    };
+  Markup@ Markup = Block[
+    Entry(Str|'tutorial', Define.DefB[Str|'name', Str|'content']|'
+@doc[$name]
+  @FbleVersion (@BuildStamp)
 
-    Markup@ Markup = Block[
-      Entry(Str|'tutorial', Utils.A2((Env@ env, Loc@ loc, StringL@ a1, StringL@ a2) {
-          Tutorial(loc, Run.Inline(env, a1), Run.Block(env, a2));
-        })),
-      Entry(Str|'exercise', Utils.B(Exercise))
-    ];
+ $$content'),
+    Entry(Str|'exercise', Define.DefB[Str|'content']|'
+$$content')
+  ];
 
-    @(Tutorial, Exercise, Markup);
-  };
+  @(Markup);
 };
-

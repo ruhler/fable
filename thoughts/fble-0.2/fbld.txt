@@ -1386,3 +1386,20 @@ A better example might be:
 Do we want to indent here? I actually don't know.
 
 Let's ask the user to do it for now. That's not to onerous I don't think.
+
+---
+
+A little bit of weirdness about $ versus $$: you can't use $ if it has
+multiple lines and you have indented at all. For example:
+
+@foo
+ @code[txt][$content]
+
+Does not work, because it wraps to column 0 instead of column 1, so part of
+the content is read as the command after @foo instead of the body of @foo.
+
+I hope we don't get into situations where neither of $ nor $$ are good enough.
+Maybe we could always indent by whatever amount of whitespace is on that same
+line? Let's see what issues we run into first and consider cleaning this up
+later.
+

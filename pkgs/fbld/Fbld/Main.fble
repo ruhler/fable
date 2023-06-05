@@ -155,7 +155,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         true: /Fbld/Fble%(m).Markup,
         false: Markup.Empty),
       parsed.tutorial.?(
-        true: /Fbld/Tutorial%(m)(core, Build.BuildStamp, Version.Version).Markup,
+        true: /Fbld/Tutorial%(m).Markup,
         false: Markup.Empty),
       parsed.usage_help.?(
         true: Usage.Markup(/Fbld/Usage/Help%(m)(core).Usage),
