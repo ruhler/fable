@@ -44,8 +44,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % Core = /Fbld/Core%(m);
   @ Core@ = Core.Core@;
 
-  % Usage = /Fbld/Usage%(m);
-
   % Run = /Fbld/Run%(m);
 
   @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text);
@@ -158,7 +156,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         true: /Fbld/Tutorial%(m).Markup,
         false: Markup.Empty),
       parsed.usage_help.?(
-        true: Usage.Markup(/Fbld/Usage/Help%(m)(core).Usage),
+        true: /Fbld/Usage/Help%(m).Markup,
         false: Markup.Empty),
       parsed.usage_lib.?(
         true: /Fbld/Usage/Lib%(m).Markup,

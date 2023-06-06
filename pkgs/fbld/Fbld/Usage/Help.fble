@@ -3,75 +3,36 @@
 
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
-
-@ Loc@ = /Fbld/Loc%.Loc@;
-@ StringL@ = /Fbld/StringL%.StringL@;
-
 <<@>@ M@>(Monad@<M@> m) {
+  % MarkupModule = /Fbld/Markup%(m);
+  @ Markup@ = MarkupModule.Markup@;
+  % Block = MarkupModule.Block;
+  % Entry = MarkupModule.Entry;
 
-  % ResultM = /Fbld/ResultM%<M@>;
-  <@>@ MR@ = ResultM.MR@;
-  Monad@<MR@> mr = ResultM.Monad(m);
-  @ MRU@ = MR@<Unit@>;
+  % Define = /Fbld/Define%(m);
 
-  @ Core@ = /Fbld/Core%(m).Core@;
-  @ Usage@ = /Fbld/Usage%(m).Usage@;
+  Markup@ Markup = Block[
+    Entry(Str|'usage', Define.DefB[Str|'name', Str|'brief', Str|'content']|'
+@doc[$name][$name - $brief]
+ $$content
+'),
+    Entry(Str|'synopsis', Define.DefB[Str|'text']|'@par[Usage: $text]'),
+    Entry(Str|'description', Define.DefB[Str|'body']|'$body'),
+    Entry(Str|'options', Define.DefB[Str|'body']|'$body'),
+    Entry(Str|'opt', Define.DefB[Str|'opt', Str|'desc']|'@def[$opt][$desc]'),
+    Entry(Str|'exitstatus', Define.DefB[Str|'body']|'
+@section[Exit Status]
+ $$body
+'),
+    Entry(Str|'examples', Define.DefB[Str|'body']|'
+@section[Examples]
+ $$body
+'),
+    Entry(Str|'ex', Define.DefB[Str|'text', Str|'desc']|'
+@par[@l[$text]]
+$desc
+')
+  ];
 
-  (Core@ core) {
-    Usage@ Usage = @(
-      usage:
-        (Loc@ loc, MRU@ name, MRU@ brief, MRU@ contents) {
-          core.doc(loc, name, {
-            Unit@ _ <- mr.do(core.par({
-              Unit@ _ <- mr.do(name);
-              Unit@ _ <- mr.do(core.text(StringL@(Str|' - ', loc)));
-              brief;
-            }));
-            contents;
-          });
-        },
-
-      synopsis:
-        (Loc@ loc, MRU@ text) {
-          core.par({
-            Unit@ _ <- mr.do(core.text(StringL@(Str|'Usage: ', loc)));
-            text;
-          });
-        },
-
-      description:
-        (Loc@ loc, MRU@ body) {
-          body;
-        },
-
-      options:
-        (Loc@ loc, MRU@ body) {
-          body;
-        },
-
-      opt:
-        (Loc@ loc, MRU@ opt, MRU@ desc) {
-          core.def(opt, desc);
-        },
-
-      exitstatus:
-        (Loc@ loc, MRU@ body) {
-          core.section(core.text(StringL@(Str|'Exit Status', loc)), body);
-        },
-
-      examples:
-        (Loc@ loc, MRU@ body) {
-          core.section(core.text(StringL@(Str|'Examples', loc)), body);
-        },
-
-      ex:
-        (Loc@ loc, StringL@ text, MRU@ desc) {
-          Unit@ _ <- mr.do(core.par(core.l(text)));
-          desc;
-        }
-    );
-
-    @(Usage);
-  };
+  @(Markup);
 };
