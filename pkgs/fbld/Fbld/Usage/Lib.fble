@@ -1,46 +1,27 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-
-@ Unit@ = /Core/Unit%.Unit@;
-
-@ Loc@ = /Fbld/Loc%.Loc@;
-@ StringL@ = /Fbld/StringL%.StringL@;
 
 
 <<@>@ M@>(Monad@<M@> m) {
-  % Run = /Fbld/Run%(m);
-
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
-  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
-
-  % Utils = /Fbld/Invoke/Utils%(m);
-
   % MarkupModule = /Fbld/Markup%(m);
   @ Markup@ = MarkupModule.Markup@;
   % Block = MarkupModule.Block;
   % Entry = MarkupModule.Entry;
 
-  # @GenericProgramInfo
-  # A description of generic program information options.
-  (Env@, Loc@) { MRU@; } GenericProgramInfo = (Env@ env, Loc@ loc) {
-    String@ body = Str|'
+  % Define = /Fbld/Define%(m);
+
+  Markup@ Markup = Block[
+    Entry(Str|'GenericProgramInfo', Define.DefB[]|'
 @subsection[Generic Program Information]
  @opt[@l[-h], @l[--help]]
   display this help text and exit
 
  @opt[@l[-v], @l[--version]]
   display version information and exit
-';
-    Run.Block(env, StringL@(body, loc));
-  };
-
-  # @ModuleInput
-  # A description of module input options.
-  (Env@, Loc@) { MRU@; } ModuleInput = (Env@ env, Loc@ loc) {
-    String@ body = Str|'
+'),
+    Entry(Str|'ModuleInput', Define.DefB[]|'
 @subsection[Module Input]
  @opt[@l[-I] @a[DIR]]
   add @a[DIR] to the module search path
@@ -61,15 +42,9 @@
  option will look for the module at @l[/fble/pkgs/core/Core/Unit.fble].
 
  The system default package search path is @config[datadir]/fble.
-';
-    Run.Block(env, StringL@(body, loc));
-  };
-
-  Markup@ Markup = Block[
-    Entry(Str|'GenericProgramInfo', Utils.A0(GenericProgramInfo)),
-    Entry(Str|'ModuleInput', Utils.A0(ModuleInput))
+')
   ];
 
-  @(GenericProgramInfo, ModuleInput, Markup);
+  @(Markup);
 };
 
