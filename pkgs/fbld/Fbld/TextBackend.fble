@@ -21,7 +21,7 @@
 % Unit = /Core/Unit%.Unit;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@>% Ok = /Fbld/Result%.Ok;
 
@@ -35,44 +35,44 @@
 
   % O = /Core/Stream/OStream%(m);
 
-  (StringL@) { MR@<Unit@>; }
-  Text = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  Text = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, str.str));
     mr.return(Unit);
   };
 
-  (StringL@) { MR@<Unit@>; }
-  L = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  L = (Text@ str) {
     Text(str);
   };
 
-  (StringL@) { MR@<Unit@>; }
-  A = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  A = (Text@ str) {
     Text(str);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Label = (StringL@ id, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Label = (Text@ id, MR@<Unit@> text) {
     text;
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Ref = (StringL@ id, MR@<Unit@> caption) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Ref = (Text@ id, MR@<Unit@> caption) {
     caption;
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Url = (StringL@ url, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Url = (Text@ url, MR@<Unit@> text) {
     text;
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  File = (StringL@ file, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  File = (Text@ file, MR@<Unit@> text) {
     text;
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Fbld = (StringL@ file, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Fbld = (Text@ file, MR@<Unit@> text) {
     File(file, text);
   };
 
@@ -105,8 +105,8 @@
     indent(True, text, Str|'');
   };
 
-  (StringL@, StringL@) { MR@<Unit@>; }
-  Code = (StringL@ lang, StringL@ text) {
+  (Text@, Text@) { MR@<Unit@>; }
+  Code = (Text@ lang, Text@ text) {
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
     Unit@ _ <- m.do(O.PutStr(out, Indent(text.str)));
     m.return(Ok(Unit));

@@ -1,9 +1,9 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 # A single command.
-@ Command@ = *(StringL@ name, List@<StringL@> args);
+@ Command@ = *(Text@ name, List@<Text@> args);
 
 @(Command@);

@@ -7,7 +7,7 @@
 
 @ Command@ = /Fbld/Command%.Command@;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
@@ -22,8 +22,8 @@
   Monad@<MR@> mr = ResultM.Monad(m);
 
   # Interprets and executes inline structured text.
-  (Env@, StringL@) { MR@<Unit@>; }
-  Inline = (Env@ env, StringL@ text) {
+  (Env@, Text@) { MR@<Unit@>; }
+  Inline = (Env@ env, Text@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 
@@ -35,8 +35,8 @@
   };
 
   # Interprets and executes block structured text.
-  (Env@, StringL@) { MR@<Unit@>; }
-  Block = (Env@ env, StringL@ text) {
+  (Env@, Text@) { MR@<Unit@>; }
+  Block = (Env@ env, Text@ text) {
     Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
     parsed.?(err: m.return(Err<Unit@>(parsed.err)));
 

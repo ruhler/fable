@@ -11,7 +11,7 @@
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 <@>% Err = /Fbld/Result%.Err;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@>% Ok = /Fbld/Result%.Ok;
 
@@ -25,41 +25,41 @@
 
   % O = /Core/Stream/OStream%(m);
 
-  (StringL@) { MR@<Unit@>; }
-  Text = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  Text = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, str.str));
     mr.return(Unit);
   };
 
-  (StringL@) { MR@<Unit@>; }
-  L = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  L = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fB'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fR'));
     mr.return(Unit);
   };
 
-  (StringL@) { MR@<Unit@>; }
-  A = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  A = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fI'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fR'));
     mr.return(Unit);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Label = (StringL@ id, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Label = (Text@ id, MR@<Unit@> text) {
     text;
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Ref = (StringL@ id, MR@<Unit@> caption) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Ref = (Text@ id, MR@<Unit@> caption) {
     # TODO: Should we link somehow to the label?
     caption;
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Url = (StringL@ url, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Url = (Text@ url, MR@<Unit@> text) {
     # TODO: Can we do something better here?
     Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutStr(out, Str|'('));
@@ -68,14 +68,14 @@
     mr.return(Unit);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  File = (StringL@ file, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  File = (Text@ file, MR@<Unit@> text) {
     # TODO: Can we do something better here?
     Url(file, text);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Fbld = (StringL@ file, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Fbld = (Text@ file, MR@<Unit@> text) {
     # TODO: Can we do something better here?
     File(file, text);
   };
@@ -95,8 +95,8 @@
     body;
   };
 
-  (StringL@, StringL@) { MR@<Unit@>; }
-  Code = (StringL@ lang, StringL@ text) {
+  (Text@, Text@) { MR@<Unit@>; }
+  Code = (Text@ lang, Text@ text) {
     Unit@ _ <- m.do(O.PutLine(out, Str|'.P'));
     Unit@ _ <- m.do(O.PutLine(out, Str|'.EX'));
     Unit@ _ <- mr.do(Text(text));
@@ -151,7 +151,7 @@
   (Loc@, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
   Doc = (Loc@ loc, MR@<Unit@> title, MR@<Unit@> body) {
     String@ msg = Str|'@doc not supported by man backend. Use @man instead.';
-    m.return(Err<Unit@>(StringL@(msg, loc)));
+    m.return(Err<Unit@>(Text@(msg, loc)));
   };
 
   @ Man@ = (MR@<Unit@>, MR@<Unit@>, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; };

@@ -32,7 +32,7 @@
 % Start = /Fbld/Loc%.Start;
 
 <@>% Err = /Fbld/Result%.Err;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 @ Map@ = /Core/Map%.Map@<String@, String@>;
 % Empty = /Core/Map%.Empty<String@, String@>;
@@ -100,32 +100,32 @@ Subst = (Map@ map, String@ body) {
   @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
   @ Env@ = /Fbld/Invoke%<M@>.Env@;
 
-  (List@<String@>, List@<StringL@>, Map@) { Map@; }
-  MakeMap = (List@<String@> keys, List@<StringL@> values, Map@ m) {
+  (List@<String@>, List@<Text@>, Map@) { Map@; }
+  MakeMap = (List@<String@> keys, List@<Text@> values, Map@ m) {
     keys.?(nil: m);
     MakeMap(keys.cons.tail, values.cons.tail,
       Insert(m, keys.cons.head, values.cons.head.str));
   };
 
-  (List@<String@>, String@, Command@) { MR@<StringL@>; }
+  (List@<String@>, String@, Command@) { MR@<Text@>; }
   Define = (List@<String@> argnames, String@ body, Command@ command) {
     Int@ wnt_args = Length(argnames);
     Int@ got_args = Length(command.args);
     /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
-      m.return(Err<StringL@>(StringL@(Strs[
+      m.return(Err<Text@>(Text@(Strs[
             Str|'expected ', /Core/Int/Show%.Show(wnt_args),
             Str|' args, but got ', /Core/Int/Show%.Show(got_args)], command.name.loc)));
       });
 
     String@ nbody = Subst(MakeMap(argnames, command.args, Empty), body);
     Loc@ unknown = Start|'???';
-    mr.return(StringL@(nbody, unknown));
+    mr.return(Text@(nbody, unknown));
   };
 
   (List@<String@>)(String@) { Invoke@; }
   DefB = (List@<String@> argnames)(String@ body) {
     (Env@ env, Command@ command) {
-      StringL@ text <- mr.do(Define(argnames, body, command));
+      Text@ text <- mr.do(Define(argnames, body, command));
       Run.Block(env, text);
     };
   };
@@ -133,7 +133,7 @@ Subst = (Map@ map, String@ body) {
   (List@<String@>)(String@) { Invoke@; }
   DefI = (List@<String@> argnames)(String@ body) {
     (Env@ env, Command@ command) {
-      StringL@ text <- mr.do(Define(argnames, body, command));
+      Text@ text <- mr.do(Define(argnames, body, command));
       Run.Inline(env, text);
     };
   };

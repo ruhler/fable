@@ -1,0 +1,13 @@
+
+@ String@ = /Core/String%.String@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+# A string with location information.
+#
+# TODO:
+# * Support different locations at different points in the string.
+# * Support fast concatenation.
+@ Text@ = *(String@ str, Loc@ loc);
+
+@(Text@);

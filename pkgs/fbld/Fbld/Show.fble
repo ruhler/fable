@@ -9,7 +9,7 @@
 @ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
 <@>@ Result@ = /Fbld/Result%.Result@;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 Show@<Loc@> Loc = (Loc@ x) {
   Strs[x.file,
@@ -18,20 +18,20 @@ Show@<Loc@> Loc = (Loc@ x) {
     Str|':', /Core/Int/Show%.Show(x.indent)];
 };
 
-Show@<StringL@> StringL = (StringL@ x) {
+Show@<Text@> Text = (Text@ x) {
   Strs[Loc(x.loc), Str|':', x.str];
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
 Result = <@ T@>(Show@<T@> show)(Result@<T@> r) {
-  r.?(err: Strs[Str|'error:', StringL(r.err)]);
+  r.?(err: Strs[Str|'error:', Text(r.err)]);
   Strs[Str|'ok:', show(r.ok)];
 };
 
 Show@<Command@> Command = (Command@ c) {
-  Strs[StringL(c.name), /Core/List/Show%.Show(StringL)(c.args)];
+  Strs[Text(c.name), /Core/List/Show%.Show(Text)(c.args)];
 };
 
 Show@<List@<Command@>> Commands = /Core/List/Show%.Show(Command);
 
-@(Loc, StringL, Result, Command, Commands);
+@(Loc, Text, Result, Command, Commands);

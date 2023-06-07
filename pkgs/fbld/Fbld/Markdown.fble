@@ -21,7 +21,7 @@
 % Unit = /Core/Unit%.Unit;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@>% Ok = /Fbld/Result%.Ok;
 
@@ -35,30 +35,30 @@
 
   % O = /Core/Stream/OStream%(m);
 
-  (StringL@) { MR@<Unit@>; }
-  Text = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  Text = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, str.str));
     m.return(Ok(Unit));
   };
 
-  (StringL@) { MR@<Unit@>; }
-  L = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  L = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'`'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'`'));
     m.return(Ok(Unit));
   };
 
-  (StringL@) { MR@<Unit@>; }
-  A = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  A = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'*'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'*'));
     m.return(Ok(Unit));
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Label = (StringL@ id, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Label = (Text@ id, MR@<Unit@> text) {
     # TODO: How to support labels in markdown?
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a id="'));
     Unit@ _ <- mr.do(Text(id));
@@ -68,8 +68,8 @@
     m.return(Ok(Unit));
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Ref = (StringL@ id, MR@<Unit@> caption) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Ref = (Text@ id, MR@<Unit@> caption) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="#'));
     Unit@ _ <- mr.do(Text(id));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
@@ -78,8 +78,8 @@
     m.return(Ok(Unit));
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Url = (StringL@ url, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Url = (Text@ url, MR@<Unit@> text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'['));
     Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutStr(out, Str|']('));
@@ -88,13 +88,13 @@
     m.return(Ok(Unit));
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
   File = Url;
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Fbld = (StringL@ file, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Fbld = (Text@ file, MR@<Unit@> text) {
     # TODO: Convert filename from *.fbld to *.md?
-    StringL@ fbld = file;
+    Text@ fbld = file;
     File(fbld, text);
   };
 
@@ -126,8 +126,8 @@
     indent(True, text, Str|'');
   };
 
-  (StringL@, StringL@) { MR@<Unit@>; }
-  Code = (StringL@ lang, StringL@ text) {
+  (Text@, Text@) { MR@<Unit@>; }
+  Code = (Text@ lang, Text@ text) {
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
     Unit@ _ <- m.do(O.PutStr(out, Indent(text.str)));
     m.return(Ok(Unit));

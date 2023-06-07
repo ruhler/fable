@@ -17,28 +17,28 @@
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
-<@>@ S@ = <@ T@> { *(StringL@ in, T@ x); };
+<@>@ S@ = <@ T@> { *(Text@ in, T@ x); };
 
 # M@ - A parser monad.
-<@>@ M@ = <@ T@>(StringL@) { Result@<S@<T@>>; };
+<@>@ M@ = <@ T@>(Text@) { Result@<S@<T@>>; };
 
 # Return the given value.
 <@ T@>(T@) { M@<T@>; }
-Return = <@ T@>(T@ x)(StringL@ in) {
+Return = <@ T@>(T@ x)(Text@ in) {
   Ok(S@(in, x));
 };
 
 # Report a parse error.
-<@ T@>(StringL@) { M@<T@>; }
-Error = <@ T@>(StringL@ msg)(StringL@ _) {
+<@ T@>(Text@) { M@<T@>; }
+Error = <@ T@>(Text@ msg)(Text@ _) {
   Err<S@<T@>>(msg);
 };
 
 # Monadic Do for the parser monad.
 <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
-Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(StringL@ in) {
+Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(Text@ in) {
   Result@<S@<A@>> ra = ma(in);
   ra.?(err: Err<S@<B@>>(ra.err));
   f(ra.ok.x)(ra.ok.in);
@@ -46,7 +46,7 @@ Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(StringL@ in) {
 
 # Returns the next character in the input stream without changing the parser
 # state.
-M@<Maybe@<Char@>> Peek = (StringL@ in) {
+M@<Maybe@<Char@>> Peek = (Text@ in) {
   Maybe@<Char@> mc = {
     in.str.?(nil: Nothing<Char@>);
     Just(in.str.cons.head);
@@ -55,18 +55,18 @@ M@<Maybe@<Char@>> Peek = (StringL@ in) {
 };
 
 # Returns the current location.
-M@<Loc@> Loc = (StringL@ in) {
+M@<Loc@> Loc = (Text@ in) {
   Ok(S@(in, in.loc));
 };
 
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate.
-M@<Maybe@<Char@>> Get = (StringL@ in) {
+M@<Maybe@<Char@>> Get = (Text@ in) {
   String@ str = in.str;
   str.?(nil: Ok(S@(in, Nothing<Char@>)));
   Char@ c = str.cons.head;
   Loc@ l = Advance(in.loc, c);
-  Ok(S@(StringL@(str.cons.tail, l), Just(c)));
+  Ok(S@(Text@(str.cons.tail, l), Just(c)));
 };
   
 # Skips the next character in the input stream, advancing the parser state as
@@ -77,8 +77,8 @@ M@<Unit@> Skip = {
 };
 
 # Runs a parser monad on the given input string.
-<@ T@>(M@<T@>, StringL@) { Result@<T@>; }
-Run = <@ T@>(M@<T@> m, StringL@ in) {
+<@ T@>(M@<T@>, Text@) { Result@<T@>; }
+Run = <@ T@>(M@<T@> m, Text@ in) {
   Result@<S@<T@>> r = m(in);
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);

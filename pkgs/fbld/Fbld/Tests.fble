@@ -18,7 +18,7 @@
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
@@ -37,8 +37,8 @@ Test@ Tests = TestSuite(Str|Fbld, List[
   }),
 
   Test(Str|BasicInline, (Unit@ _) {
-    (String@, Int@) { StringL@; } s = (String@ str, Int@ col) {
-      StringL@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
+    (String@, Int@) { Text@; } s = (String@ str, Int@ col) {
+      Text@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
     };
 
     String@ text = Str|'Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands';
@@ -46,7 +46,7 @@ Test@ Tests = TestSuite(Str|Fbld, List[
       Command@(s(Str|'', Int|1), List[s(Str|'Inline ', Int|1)]), 
       Command@(s(Str|'emph', Int|9), List[s(Str|'text', Int|14)]), 
       Command@(s(Str|'', Int|19), List[s(Str|' with ', Int|19)]), 
-      Command@(s(Str|'SINGLE', Int|26), Nil<StringL@>),
+      Command@(s(Str|'SINGLE', Int|26), Nil<Text@>),
       Command@(s(Str|'', Int|32), List[s(Str|' and ', Int|32)]), 
       Command@(s(Str|'multi', Int|38),
         List[s(Str|'abc', Int|44), s(Str|'def', Int|49)]), 
@@ -59,8 +59,8 @@ Test@ Tests = TestSuite(Str|Fbld, List[
   }),
 
   Test(Str|NestedInline, (Unit@ _) {
-    (String@, Int@) { StringL@; } s = (String@ str, Int@ col) {
-      StringL@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
+    (String@, Int@) { Text@; } s = (String@ str, Int@ col) {
+      Text@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
     };
 
     String@ text = Str|'Ab @c[de @f[gh] ij] kl';
@@ -76,9 +76,9 @@ Test@ Tests = TestSuite(Str|Fbld, List[
   }),
 
   Test(Str|BasicBlock, (Unit@ _) {
-    (String@, Int@, Int@, Int@) { StringL@; }
+    (String@, Int@, Int@, Int@) { Text@; }
     s = (String@ str, Int@ line, Int@ col, Int@ indent) {
-      StringL@(str, Loc@(Str|'file.fbld', line, col, indent));
+      Text@(str, Loc@(Str|'file.fbld', line, col, indent));
     };
 
     String@ text = Str|'
@@ -120,8 +120,8 @@ multiple lines actually.
 
   # Regression test for a default block that runs to the end of the file.
   Test(Str|BlockToEndOfFile, (Unit@ _) {
-    (String@, Int@, Int@) { StringL@; } s = (String@ str, Int@ line, Int@ col) {
-      StringL@(str, Loc@(Str|'file.fbld', line, col, Int|0));
+    (String@, Int@, Int@) { Text@; } s = (String@ str, Int@ line, Int@ col) {
+      Text@(str, Loc@(Str|'file.fbld', line, col, Int|0));
     };
 
     String@ text = Str|'Foo';
@@ -136,9 +136,9 @@ multiple lines actually.
   }),
 
   Test(Str|NestedBlockLoc, (Unit@ _) {
-    (String@, Int@, Int@, Int@) { StringL@; }
+    (String@, Int@, Int@, Int@) { Text@; }
     s = (String@ str, Int@ line, Int@ col, Int@ indent) {
-      StringL@(str, Loc@(Str|'file.fbld', line, col, indent));
+      Text@(str, Loc@(Str|'file.fbld', line, col, indent));
     };
 
     String@ text = Str|'
@@ -147,10 +147,10 @@ multiple lines actually.
   @sludge
 ';
     List@<Command@> foo = Block(s(text, Int|1, Int|1, Int|0)).ok;
-    StringL@ foo_body = foo.cons.head.args.cons.head;
+    Text@ foo_body = foo.cons.head.args.cons.head;
 
     List@<Command@> bar = Block(foo_body).ok;
-    StringL@ bar_body = bar.cons.head.args.cons.head;
+    Text@ bar_body = bar.cons.head.args.cons.head;
 
     List@<Command@> sludge = Block(bar_body).ok;
     Loc@ wnt = Loc@(Str|'file.fbld', Int|4, Int|4, Int|2);

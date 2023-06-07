@@ -6,7 +6,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <<@>@ M@>(Monad@<M@> m) {
   @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
@@ -23,50 +23,50 @@
     # @text[ESCAPED text]
     # An explicit tag for default inline text.
     # @param text  The text to unescape.
-    (StringL@) { MRU@; } text,
+    (Text@) { MRU@; } text,
 
     # @l[ESCAPED text]
     # A literal string.
     # The text is highlighted as bold or monospace font, for example.
     # @param text  The text to highlith.
-    (StringL@) { MRU@; } l,
+    (Text@) { MRU@; } l,
 
     # @a[ESCAPED text]
     # An argument.
     # The text is highlighted using italics, for example.
     # @param text  The text to highlight.
-    (StringL@) { MRU@; } a,
+    (Text@) { MRU@; } a,
 
     # @label[ESCAPED id][INLINE text]
     # Give a label to a point in the text.
     # For use as a target of local or external references.
     # @param id  The id to use for the lable.
     # @param text  The text to display for the label target.
-    (StringL@, MRU@) { MRU@; } label,
+    (Text@, MRU@) { MRU@; } label,
 
     # @ref[ESCAPED id][INLINE caption]
     # Refer to a locally defined label.
     # @param id  The id of a @label to link to.
     # @param caption  Text to display.
-    (StringL@, MRU@) { MRU@; } ref,
+    (Text@, MRU@) { MRU@; } ref,
 
     # @url[ESCAPED url][? INLINE text]
     # Reference a url.
     # @param url  The target url.
     # @param text  Optional text to display. Defaults to the url.
-    (StringL@, MRU@) { MRU@; } url,
+    (Text@, MRU@) { MRU@; } url,
 
     # @file[ESCAPED file][? INLINE text]
     # Reference a file on disk.
     # @param file  The path to the file.
     # @param text  Optional text to display. Defaults to the file.
-    (StringL@, MRU@) { MRU@; } file,
+    (Text@, MRU@) { MRU@; } file,
 
     # @fbld[ESCAPED file][? INLINE text]
     # Reference to another fbld based document.
     # @param file  The path to the fbld file, optionally followed by #<id>.
     # @param text  Optional text to display. Defaults to the file.
-    (StringL@, MRU@) { MRU@; } fbld,
+    (Text@, MRU@) { MRU@; } fbld,
 
     # @par[INLINE text]
     # A paragraph of text.
@@ -82,7 +82,7 @@
     # A source code listing.
     # @param language  The lanuage, e.g. c, python, sh, fble, vim, etc.
     # @param text  The source code text.
-    (StringL@, StringL@) { MRU@; } code,
+    (Text@, Text@) { MRU@; } code,
 
     # @def[INLINE name][INLINE value]
     # A short form definition of a term.

@@ -26,7 +26,7 @@
 % Start = /Fbld/Loc%.Start;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 
 # Main --
@@ -166,7 +166,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Env@ env = Markup.Env(markup);
 
     String@ contents <- m.do(I.GetText(fin.just));
-    Result@<Unit@> r <- m.do(Run.Block(env, StringL@(contents, Start(filename))));
+    Result@<Unit@> r <- m.do(Run.Block(env, Text@(contents, Start(filename))));
     r.?(err: {
       String@ msg = Report(r.err.loc, r.err.str);
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));

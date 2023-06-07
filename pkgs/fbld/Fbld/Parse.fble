@@ -3,19 +3,19 @@
 
 @ Command@ = /Fbld/Command%.Command@;
 <@>@ Result@ = /Fbld/Result%.Result@;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@>% Run = /Fbld/Parse/M%.Run;
 
 # Parse inline structured text.
-(StringL@) { Result@<List@<Command@>>; }
-Inline = (StringL@ in) {
+(Text@) { Result@<List@<Command@>>; }
+Inline = (Text@ in) {
   Run(/Fbld/Parse/Inline%.Inline, in);
 };
 
 # Parse block structured text.
-(StringL@) { Result@<List@<Command@>>; }
-Block = (StringL@ in) {
+(Text@) { Result@<List@<Command@>>; }
+Block = (Text@ in) {
   Run(/Fbld/Parse/Block%.Block, in);
 };
 

@@ -13,7 +13,7 @@
 
 @ Command@ = /Fbld/Command%.Command@;
 <@>% Err = /Fbld/Result%.Err;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <<@>@ M@>(Monad@<M@> m) {
   @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
@@ -49,7 +49,7 @@
       Maybe@<Invoke@> f = Lookup(tags, cmd.name.str);
       f.?(nothing: {
         String@ msg = Strs[Str|'unsupported tag: ''', cmd.name.str, Str|''''];
-        m.return(Err<Unit@>(StringL@(msg, cmd.name.loc)));
+        m.return(Err<Unit@>(Text@(msg, cmd.name.loc)));
       });
       f.just(env, cmd);
     };

@@ -18,7 +18,7 @@
 % Unit = /Core/Unit%.Unit;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
-@ StringL@ = /Fbld/StringL%.StringL@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@>% Ok = /Fbld/Result%.Ok;
 
@@ -32,8 +32,8 @@
 
   % O = /Core/Stream/OStream%(m);
 
-  (StringL@) { MR@<Unit@>; }
-  Text = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  Text = (Text@ str) {
     (String@) { MR@<Unit@>; } text = (String@ s) {
       s.?(nil: mr.return(Unit));
       Char@ c = s.cons.head;
@@ -48,24 +48,24 @@
     text(str.str);
   };
 
-  (StringL@) { MR@<Unit@>; }
-  L = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  L = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<code>'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'</code>'));
     mr.return(Unit);
   };
 
-  (StringL@) { MR@<Unit@>; }
-  A = (StringL@ str) {
+  (Text@) { MR@<Unit@>; }
+  A = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<i>'));
     Unit@ _ <- mr.do(Text(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'</i>'));
     mr.return(Unit);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Label = (StringL@ id, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Label = (Text@ id, MR@<Unit@> text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a id="'));
     Unit@ _ <- mr.do(Text(id));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
@@ -74,8 +74,8 @@
     mr.return(Unit);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Ref = (StringL@ id, MR@<Unit@> caption) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Ref = (Text@ id, MR@<Unit@> caption) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="#'));
     Unit@ _ <- mr.do(Text(id));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
@@ -84,8 +84,8 @@
     mr.return(Unit);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Url = (StringL@ url, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Url = (Text@ url, MR@<Unit@> text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
     Unit@ _ <- mr.do(Text(url));
     Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
@@ -94,8 +94,8 @@
     mr.return(Unit);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  File = (StringL@ file, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  File = (Text@ file, MR@<Unit@> text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
     Unit@ _ <- mr.do(Text(file));
     Unit@ _ <- m.do(O.PutStr(out, Str|'"><code>'));
@@ -104,8 +104,8 @@
     mr.return(Unit);
   };
 
-  (StringL@, MR@<Unit@>) { MR@<Unit@>; }
-  Fbld = (StringL@ file, MR@<Unit@> text) {
+  (Text@, MR@<Unit@>) { MR@<Unit@>; }
+  Fbld = (Text@ file, MR@<Unit@> text) {
     # Convert filename from *.fbld to *.html
     String@ replaced = {
       String@ reversed = Reverse(file.str);
@@ -114,7 +114,7 @@
       String@ tail = Drop(Length(fbld), reversed);
       Append(Reverse(Str|'.html'), tail);
     };
-    StringL@ fbld = StringL@(Reverse(replaced), file.loc);
+    Text@ fbld = Text@(Reverse(replaced), file.loc);
 
     File(fbld, text);
   };
@@ -135,8 +135,8 @@
     mr.return(Unit);
   };
 
-  (StringL@, StringL@) { MR@<Unit@>; }
-  Code = (StringL@ lang, StringL@ text) {
+  (Text@, Text@) { MR@<Unit@>; }
+  Code = (Text@ lang, Text@ text) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'<pre>'));
     Unit@ _ <- m.do(O.PutStr(out, text.str));
     Unit@ _ <- m.do(O.PutLine(out, Str|'</pre>'));
