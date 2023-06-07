@@ -1403,3 +1403,27 @@ Maybe we could always indent by whatever amount of whitespace is on that same
 line? Let's see what issues we run into first and consider cleaning this up
 later.
 
+---
+
+I would really like to pull @defi and @defb out of fble into fbld directly.
+
+To do that requires we make the environment modifiable.
+
+Which means I want to define an Fbld@ monad and get off of this abstract M@
+monad.
+
+The Fbld@ monad should have the following capabilities:
+* Return error messages.
+* Return computed String@ values. Except I think we'll want some smarter
+  string type that supports fast append, concat, and location tracking.
+* Access and update the environment.
+
+Invoke@ would then become: (Command@) { Fbld@<FbldString@>; }
+
+Let me define the better string type first. We can start with a direct wrapper
+around String@ and improve efficiency later. This should replace StringL@. I
+wish I had a better name.
+
+Once we have that, do that major shift to new Fbld@ monadic type. Then we can
+implement @defi and @defb commands, and pull out all of the frontends and
+backends, hopefully.

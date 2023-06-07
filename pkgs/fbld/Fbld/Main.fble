@@ -125,7 +125,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       html: /Fbld/Html%(m, stdio.out).Core,
       markdown: /Fbld/Markdown%(m, stdio.out).Core,
       man: Man.Core,
-      text: /Fbld/Text%(m, stdio.out).Core);
+      text: /Fbld/TextBackend%(m, stdio.out).Core);
 
     parsed.file.?(nothing: {
       String@ msg = Str|'missing input file';
