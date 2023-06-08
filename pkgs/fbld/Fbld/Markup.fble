@@ -13,7 +13,10 @@
 
 @ Command@ = /Fbld/Command%.Command@;
 <@>% Err = /Fbld/Result%.Err;
-@ Text@ = /Fbld/Text%.Text@;
+
+% Text = /Fbld/Text%.Text;
+% LocOf = /Fbld/Text%.LocOf;
+% StringOf = /Fbld/Text%.StringOf;
 
 <<@>@ M@>(Monad@<M@> m) {
   @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
@@ -46,10 +49,11 @@
     };
 
     (Tags@) { Invoke@; } Invoke = (Tags@ tags)(Env@ env, Command@ cmd) {
-      Maybe@<Invoke@> f = Lookup(tags, cmd.name.str);
+      String@ name = StringOf(cmd.name);
+      Maybe@<Invoke@> f = Lookup(tags, name);
       f.?(nothing: {
-        String@ msg = Strs[Str|'unsupported tag: ''', cmd.name.str, Str|''''];
-        m.return(Err<Unit@>(Text@(msg, cmd.name.loc)));
+        String@ msg = Strs[Str|'unsupported tag: ''', name, Str|''''];
+        m.return(Err<Unit@>(Text(msg, LocOf(cmd.name))));
       });
       f.just(env, cmd);
     };

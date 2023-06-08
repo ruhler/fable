@@ -32,7 +32,11 @@
 % Start = /Fbld/Loc%.Start;
 
 <@>% Err = /Fbld/Result%.Err;
+
 @ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+% StringOf = /Fbld/Text%.StringOf;
+% LocOf = /Fbld/Text%.LocOf;
 
 @ Map@ = /Core/Map%.Map@<String@, String@>;
 % Empty = /Core/Map%.Empty<String@, String@>;
@@ -104,7 +108,7 @@ Subst = (Map@ map, String@ body) {
   MakeMap = (List@<String@> keys, List@<Text@> values, Map@ m) {
     keys.?(nil: m);
     MakeMap(keys.cons.tail, values.cons.tail,
-      Insert(m, keys.cons.head, values.cons.head.str));
+      Insert(m, keys.cons.head, StringOf(values.cons.head)));
   };
 
   (List@<String@>, String@, Command@) { MR@<Text@>; }
@@ -112,14 +116,14 @@ Subst = (Map@ map, String@ body) {
     Int@ wnt_args = Length(argnames);
     Int@ got_args = Length(command.args);
     /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
-      m.return(Err<Text@>(Text@(Strs[
+      m.return(Err<Text@>(Text(Strs[
             Str|'expected ', /Core/Int/Show%.Show(wnt_args),
-            Str|' args, but got ', /Core/Int/Show%.Show(got_args)], command.name.loc)));
+            Str|' args, but got ', /Core/Int/Show%.Show(got_args)], LocOf(command.name))));
       });
 
     String@ nbody = Subst(MakeMap(argnames, command.args, Empty), body);
     Loc@ unknown = Start|'???';
-    mr.return(Text@(nbody, unknown));
+    mr.return(Text(nbody, unknown));
   };
 
   (List@<String@>)(String@) { Invoke@; }

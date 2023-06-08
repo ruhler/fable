@@ -19,6 +19,8 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 @ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+% LocOf = /Fbld/Text%.LocOf;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
@@ -38,7 +40,7 @@ Test@ Tests = TestSuite(Str|Fbld, List[
 
   Test(Str|BasicInline, (Unit@ _) {
     (String@, Int@) { Text@; } s = (String@ str, Int@ col) {
-      Text@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
+      Text(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
     };
 
     String@ text = Str|'Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands';
@@ -60,7 +62,7 @@ Test@ Tests = TestSuite(Str|Fbld, List[
 
   Test(Str|NestedInline, (Unit@ _) {
     (String@, Int@) { Text@; } s = (String@ str, Int@ col) {
-      Text@(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
+      Text(str, Loc@(Str|'file.fbld', Int|1, col, Int|0));
     };
 
     String@ text = Str|'Ab @c[de @f[gh] ij] kl';
@@ -78,7 +80,7 @@ Test@ Tests = TestSuite(Str|Fbld, List[
   Test(Str|BasicBlock, (Unit@ _) {
     (String@, Int@, Int@, Int@) { Text@; }
     s = (String@ str, Int@ line, Int@ col, Int@ indent) {
-      Text@(str, Loc@(Str|'file.fbld', line, col, indent));
+      Text(str, Loc@(Str|'file.fbld', line, col, indent));
     };
 
     String@ text = Str|'
@@ -121,7 +123,7 @@ multiple lines actually.
   # Regression test for a default block that runs to the end of the file.
   Test(Str|BlockToEndOfFile, (Unit@ _) {
     (String@, Int@, Int@) { Text@; } s = (String@ str, Int@ line, Int@ col) {
-      Text@(str, Loc@(Str|'file.fbld', line, col, Int|0));
+      Text(str, Loc@(Str|'file.fbld', line, col, Int|0));
     };
 
     String@ text = Str|'Foo';
@@ -138,7 +140,7 @@ multiple lines actually.
   Test(Str|NestedBlockLoc, (Unit@ _) {
     (String@, Int@, Int@, Int@) { Text@; }
     s = (String@ str, Int@ line, Int@ col, Int@ indent) {
-      Text@(str, Loc@(Str|'file.fbld', line, col, indent));
+      Text(str, Loc@(Str|'file.fbld', line, col, indent));
     };
 
     String@ text = Str|'
@@ -154,7 +156,7 @@ multiple lines actually.
 
     List@<Command@> sludge = Block(bar_body).ok;
     Loc@ wnt = Loc@(Str|'file.fbld', Int|4, Int|4, Int|2);
-    Loc@ got = sludge.cons.head.name.loc;
+    Loc@ got = LocOf(sludge.cons.head.name);
     AssertEquals(/Fbld/Eq%.Loc, /Fbld/Show%.Loc, wnt, got);
   })
 ]);

@@ -14,10 +14,14 @@
 @ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
 <@>% Err = /Fbld/Result%.Err;
+
 @ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+% LocOf = /Fbld/Text%.LocOf;
+% StringOf = /Fbld/Text%.StringOf;
 
 (Text@) { Text@; } Unescape = (Text@ s) {
-  Text@(/Fbld/Unescape%.Unescape(s.str), s.loc);
+  Text(/Fbld/Unescape%.Unescape(StringOf(s)), LocOf(s));
 };
 
 <<@>@ M@>(Monad@<M@> m) {
@@ -34,12 +38,12 @@
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|0, num_args ).?(false: {
-        m.return(Err<Unit@>(Text@(Strs[
+        m.return(Err<Unit@>(Text(Strs[
               Str|'expected 0 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+              /Core/Int/Show%.Show(num_args)], LocOf(command.name))));
       });
 
-      f(env, command.name.loc);
+      f(env, LocOf(command.name));
     };
   };
 
@@ -50,13 +54,13 @@
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|1, num_args ).?(false: {
-        m.return(Err<Unit@>(Text@(Strs[
+        m.return(Err<Unit@>(Text(Strs[
               Str|'expected 1 arg, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+              /Core/Int/Show%.Show(num_args)], LocOf(command.name))));
       });
 
       Text@ arg = command.args.cons.head;
-      f(env, command.name.loc, arg);
+      f(env, LocOf(command.name), arg);
     };
   };
 
@@ -67,14 +71,14 @@
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|2, num_args ).?(false: {
-        m.return(Err<Unit@>(Text@(Strs[
+        m.return(Err<Unit@>(Text(Strs[
               Str|'expected 2 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+              /Core/Int/Show%.Show(num_args)], LocOf(command.name))));
       });
 
       Text@ a1 = command.args.cons.head;
       Text@ a2 = command.args.cons.tail.cons.head;
-      f(env, command.name.loc, a1, a2);
+      f(env, LocOf(command.name), a1, a2);
     };
   };
 
@@ -85,15 +89,15 @@
     (Env@ env, Command@ command) {
       Int@ num_args = Length(command.args);
       /Core/Int/Eq%.Eq(Int|3, num_args ).?(false: {
-        m.return(Err<Unit@>(Text@(Strs[
+        m.return(Err<Unit@>(Text(Strs[
               Str|'expected 3 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+              /Core/Int/Show%.Show(num_args)], LocOf(command.name))));
       });
 
       Text@ a1 = command.args.cons.head;
       Text@ a2 = command.args.cons.tail.cons.head;
       Text@ a3 = command.args.cons.tail.cons.tail.cons.head;
-      f(env, command.name.loc, a1, a2, a3);
+      f(env, LocOf(command.name), a1, a2, a3);
     };
   };
 
@@ -201,9 +205,9 @@
         f(Unescape(a1), Run.Inline(env, a2));
       });
 
-      m.return(Err<Unit@>(Text@(Strs[
+      m.return(Err<Unit@>(Text(Strs[
               Str|'expected 1 or 2 args, but got ',
-              /Core/Int/Show%.Show(num_args)], command.name.loc)));
+              /Core/Int/Show%.Show(num_args)], LocOf(command.name))));
     };
   };
 

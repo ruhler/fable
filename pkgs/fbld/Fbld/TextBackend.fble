@@ -21,7 +21,9 @@
 % Unit = /Core/Unit%.Unit;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
+
 @ Text@ = /Fbld/Text%.Text@;
+% StringOf = /Fbld/Text%.StringOf;
 
 <@>% Ok = /Fbld/Result%.Ok;
 
@@ -37,7 +39,7 @@
 
   (Text@) { MR@<Unit@>; }
   Text = (Text@ str) {
-    Unit@ _ <- m.do(O.PutStr(out, str.str));
+    Unit@ _ <- m.do(O.PutStr(out, StringOf(str)));
     mr.return(Unit);
   };
 
@@ -108,7 +110,7 @@
   (Text@, Text@) { MR@<Unit@>; }
   Code = (Text@ lang, Text@ text) {
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
-    Unit@ _ <- m.do(O.PutStr(out, Indent(text.str)));
+    Unit@ _ <- m.do(O.PutStr(out, Indent(StringOf(text))));
     m.return(Ok(Unit));
   };
 

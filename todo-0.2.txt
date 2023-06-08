@@ -2,6 +2,10 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Fbld Text@ rewrite:
+ - Move implement of Eq and Show internally.
+ - Update users to handle changing locations properly.
+
 * Fbld:
  - Figure out a better approach to @FbleVersion?
  - Figure out how to generate c header output.

@@ -24,7 +24,11 @@
 
 @ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
+
 @ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+% IsEmpty = /Fbld/Text%.IsEmpty;
+% LocOf = /Fbld/Text%.LocOf;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
 <@>% Return = /Fbld/Parse/M%.Return;
@@ -52,12 +56,12 @@ M@<Unit@> SkipBlankLines = {
 M@<Text@> Plain = {
   (Loc@, String@) { M@<Text@>; } plain = (Loc@ l, String@ rplain) {
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Return(Text@(Reverse(rplain), l)));
+    mc.?(nothing: Return(Text(Reverse(rplain), l)));
     String@ nrplain = Cons(mc.just, rplain);
     IsNewline(mc.just).?(true: {
       Maybe@<Char@> mc <- Do(Peek);
-      mc.?(nothing: Return(Text@(Reverse(nrplain), l)));
-      IsNewline(mc.just).?(true: Return(Text@(Reverse(nrplain), l)));
+      mc.?(nothing: Return(Text(Reverse(nrplain), l)));
+      IsNewline(mc.just).?(true: Return(Text(Reverse(nrplain), l)));
       plain(l, nrplain);
     });
     plain(l, nrplain);
@@ -65,8 +69,8 @@ M@<Text@> Plain = {
 
   Maybe@<Char@> mc <- Do(Peek);
   Loc@ l <- Do(Loc);
-  mc.?(nothing: Return(Text@(Str|'', l)));
-  mc.just.?('@': Return(Text@(Str|'', l)));
+  mc.?(nothing: Return(Text(Str|'', l)));
+  mc.just.?('@': Return(Text(Str|'', l)));
   plain(l, Str|'');
 };
 
@@ -85,9 +89,9 @@ M@<Maybe@<Text@>> SameLineArg = {
   mc.just.?(' ': {
     Loc@ l <- Do(Loc);
     String@ s <- Do(f(Str|''));
-    Return(Just(Text@(Reverse(s), l)));
+    Return(Just(Text(Reverse(s), l)));
   });
-  Error<Maybe@<Text@>>(Text@(Str|'Expected space', l));
+  Error<Maybe@<Text@>>(Text(Str|'Expected space', l));
 };
 
 M@<Maybe@<Text@>> NextLineArg = {
@@ -140,7 +144,7 @@ M@<Maybe@<Text@>> NextLineArg = {
   Loc@ nl = l.@(
     col: IsNewline(reversed.cons.head).?(true: l.col, false: Incr(l.col)),
     indent: Incr(l.indent));
-  Return(Just(Text@(reversed, nl)));
+  Return(Just(Text(reversed, nl)));
 };
 
 # Flattens a list of maybes into a list of justs.
@@ -179,8 +183,8 @@ M@<List@<Command@>> Block = {
   block = (List@<Command@> rcmds) {
     Unit@ _ <- Do(SkipBlankLines);
     Text@ plain <- Do(Plain);
-    plain.str.?(cons: {
-      Command@ cmd = Command@(Text@(Str|'', plain.loc), List[plain]);
+    IsEmpty(plain).?(false: {
+      Command@ cmd = Command@(Text(Str|'', LocOf(plain)), List[plain]);
       block(Cons(cmd, rcmds));
     });
 

@@ -9,7 +9,10 @@
 @ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
 <@>@ Result@ = /Fbld/Result%.Result@;
+
 @ Text@ = /Fbld/Text%.Text@;
+% LocOf = /Fbld/Text%.LocOf;
+% StringOf = /Fbld/Text%.StringOf;
 
 Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {
   /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
@@ -20,8 +23,10 @@ Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {
 };
 
 Eq@<Text@> Text = (Text@ a, Text@ b) {
-  /Core/String/Eq%.Eq(a.str, b.str).?(false: False);
-  Loc(a.loc, b.loc).?(false: False);
+  # TODO: Come up with a better implementation that compares locations
+  # throughout the text?
+  /Core/String/Eq%.Eq(StringOf(a), StringOf(b)).?(false: False);
+  Loc(LocOf(a), LocOf(b)).?(false: False);
   True;
 };
 

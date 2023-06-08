@@ -1,13 +1,54 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Char@ = /Core/Char%.Char@;
+
 @ String@ = /Core/String%.String@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
+% Advance = /Fbld/Loc%.Advance;
 
-# A string with location information.
+@ _@ = %(/Fbld/Text%);
+
+@ Text_@ = *(String@ str, Loc@ loc);
+
+# Abstract string type that supports location tracking and fast concatenation.
+@ Text@ = _@<Text_@>;
+
+(String@, Loc@) { Text@; } Text = _@.<@<Text>>((String@ str, Loc@ loc) {
+  Text_@(str, loc);
+});
+
+# StringOf --
+#   Extracts the contents of the text into a String@.
 #
-# TODO:
-# * Support different locations at different points in the string.
-# * Support fast concatenation.
-@ Text@ = *(String@ str, Loc@ loc);
+# Note: This may be an expensive operation. Avoid duplicate calls where
+# possible.
+(Text@) { String@; } StringOf = _@.<@<StringOf>>((Text_@ text) {
+  text.str;
+});
 
-@(Text@);
+# LocOf --
+#   Gets the location of the start of the text.
+(Text@) { Loc@; } LocOf = _@.<@<LocOf>>((Text_@ text) {
+  text.loc;
+});
+
+(Text@) { Bool@; } IsEmpty = _@.<@<IsEmpty>>((Text_@ text) {
+  text.str.?(nil: True);
+  False;
+});
+
+# Returns the first character of text.
+# Behavior is undefined if the text is empty.
+(Text@) { Char@; } Head = _@.<@<Head>>((Text_@ text) {
+  text.str.cons.head;
+});
+
+(Text@) { Text@; } Tail = _@.<@<Tail>>((Text_@ text) {
+  Text_@(text.str.cons.tail, Advance(text.loc, text.str.cons.head));
+});
+
+@(Text@, Text, StringOf, LocOf, IsEmpty, Head, Tail);

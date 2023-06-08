@@ -11,7 +11,10 @@
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 <@>% Err = /Fbld/Result%.Err;
+
 @ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+% StringOf = /Fbld/Text%.StringOf;
 
 <@>% Ok = /Fbld/Result%.Ok;
 
@@ -26,15 +29,15 @@
   % O = /Core/Stream/OStream%(m);
 
   (Text@) { MR@<Unit@>; }
-  Text = (Text@ str) {
-    Unit@ _ <- m.do(O.PutStr(out, str.str));
+  ManText = (Text@ str) {
+    Unit@ _ <- m.do(O.PutStr(out, StringOf(str)));
     mr.return(Unit);
   };
 
   (Text@) { MR@<Unit@>; }
   L = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fB'));
-    Unit@ _ <- mr.do(Text(str));
+    Unit@ _ <- mr.do(ManText(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fR'));
     mr.return(Unit);
   };
@@ -42,7 +45,7 @@
   (Text@) { MR@<Unit@>; }
   A = (Text@ str) {
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fI'));
-    Unit@ _ <- mr.do(Text(str));
+    Unit@ _ <- mr.do(ManText(str));
     Unit@ _ <- m.do(O.PutStr(out, Str|'\fR'));
     mr.return(Unit);
   };
@@ -63,7 +66,7 @@
     # TODO: Can we do something better here?
     Unit@ _ <- mr.do(text);
     Unit@ _ <- m.do(O.PutStr(out, Str|'('));
-    Unit@ _ <- mr.do(Text(url));
+    Unit@ _ <- mr.do(ManText(url));
     Unit@ _ <- m.do(O.PutStr(out, Str|')'));
     mr.return(Unit);
   };
@@ -99,7 +102,7 @@
   Code = (Text@ lang, Text@ text) {
     Unit@ _ <- m.do(O.PutLine(out, Str|'.P'));
     Unit@ _ <- m.do(O.PutLine(out, Str|'.EX'));
-    Unit@ _ <- mr.do(Text(text));
+    Unit@ _ <- mr.do(ManText(text));
     Unit@ _ <- m.do(O.PutLine(out, Str|''));
     Unit@ _ <- m.do(O.PutLine(out, Str|'.EE'));
     m.return(Ok(Unit));
@@ -151,7 +154,7 @@
   (Loc@, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
   Doc = (Loc@ loc, MR@<Unit@> title, MR@<Unit@> body) {
     String@ msg = Str|'@doc not supported by man backend. Use @man instead.';
-    m.return(Err<Unit@>(Text@(msg, loc)));
+    m.return(Err<Unit@>(Text(msg, loc)));
   };
 
   @ Man@ = (MR@<Unit@>, MR@<Unit@>, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; };
@@ -174,7 +177,7 @@
   };
 
   Core@ Core = @(
-    text: Text,
+    text: ManText,
     l: L, a: A,
     label: Label, ref: Ref,
     url: Url, file: File, fbld: Fbld,

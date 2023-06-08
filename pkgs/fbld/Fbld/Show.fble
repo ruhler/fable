@@ -9,7 +9,10 @@
 @ Command@ = /Fbld/Command%.Command@;
 @ Loc@ = /Fbld/Loc%.Loc@;
 <@>@ Result@ = /Fbld/Result%.Result@;
+
 @ Text@ = /Fbld/Text%.Text@;
+% LocOf = /Fbld/Text%.LocOf;
+% StringOf = /Fbld/Text%.StringOf;
 
 Show@<Loc@> Loc = (Loc@ x) {
   Strs[x.file,
@@ -18,8 +21,9 @@ Show@<Loc@> Loc = (Loc@ x) {
     Str|':', /Core/Int/Show%.Show(x.indent)];
 };
 
+# TODO: Re-implement to something better.
 Show@<Text@> Text = (Text@ x) {
-  Strs[Loc(x.loc), Str|':', x.str];
+  Strs[Loc(LocOf(x)), Str|':', StringOf(x)];
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }

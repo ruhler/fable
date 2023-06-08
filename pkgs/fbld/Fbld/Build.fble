@@ -7,7 +7,8 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
-@ Text@ = /Fbld/Text%.Text@;
+
+% Text = /Fbld/Text%.Text;
 
 
 <<@>@ M@>(Monad@<M@> m) {
@@ -26,7 +27,7 @@
     # @BuildStamp
     # The fble build stamp.
     (Loc@) { MRU@; } BuildStamp = (Loc@ loc) {
-      core.text(Text@(buildstamp, loc));
+      core.text(Text(buildstamp, loc));
     };
 
     Markup@ Markup = Inline[

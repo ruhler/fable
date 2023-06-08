@@ -26,7 +26,10 @@
 % Start = /Fbld/Loc%.Start;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
-@ Text@ = /Fbld/Text%.Text@;
+
+% Text = /Fbld/Text%.Text;
+% StringOf = /Fbld/Text%.StringOf;
+% LocOf = /Fbld/Text%.LocOf;
 
 
 # Main --
@@ -166,9 +169,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Env@ env = Markup.Env(markup);
 
     String@ contents <- m.do(I.GetText(fin.just));
-    Result@<Unit@> r <- m.do(Run.Block(env, Text@(contents, Start(filename))));
+    Result@<Unit@> r <- m.do(Run.Block(env, Text(contents, Start(filename))));
     r.?(err: {
-      String@ msg = Report(r.err.loc, r.err.str);
+      String@ msg = Report(LocOf(r.err), StringOf(r.err));
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
