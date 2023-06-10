@@ -20,6 +20,7 @@ Things to consider doing for the fble-0.2 release.
  - Make sure @man ends up in markup somewhere when that is requested.
  - Add @config tag to BuildStamp.
  - Implement source highlighting for @code.
+ - Change Env@ to Markup@ so we can insert new commands more reasonably?
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.

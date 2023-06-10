@@ -148,6 +148,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     % Version = /Fbld/Version%(core, parsed.version);
 
     Markup@ markup = Markups[
+      /Fbld/Define%.Markup,
       /Fbld/Core%.Markup(core),
       Build.Markup,
       Version.Markup,

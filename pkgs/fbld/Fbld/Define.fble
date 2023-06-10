@@ -7,11 +7,14 @@
 % IsNewline = /Core/Char/Type%.IsNewline;
 
 @ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
+<@>% Init = /Core/List%.Init;
+<@>% Last = /Core/List%.Last;
 <@>% Drop = /Core/List/Length%.Drop;
 <@>% Length = /Core/List/Length%.Length;
 
@@ -24,16 +27,25 @@
 % Strs = /Core/String%.Strs;
 % StartsWith = /Core/String/Eq%.StartsWith;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 @ Command@ = /Fbld/Command%.Command@;
 
 <@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
 @ Invoke@ = /Fbld/Fbld%.Invoke@;
+@ Env@ = /Fbld/Fbld%.Env@;
 <@>% Do = /Fbld/Fbld%.Do;
 <@>% Return = /Fbld/Fbld%.Return;
 <@>% Error = /Fbld/Fbld%.Error;
+% GetEnv = /Fbld/Fbld%.GetEnv;
+% SetEnv = /Fbld/Fbld%.SetEnv;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 % Start = /Fbld/Loc%.Start;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Block = /Fbld/Markup%.Block;
+% Entry = /Fbld/Markup%.Entry;
 
 % Run = /Fbld/Run%;
 
@@ -136,4 +148,49 @@ DefI = (List@<String@> argnames)(String@ body) {
   };
 };
 
-@(DefB, DefI);
+Markup@ Markup = Block[
+  Entry(Str|'defi', (Command@ cmd) {
+    Int@ num_args = Length(cmd.args);
+    /Core/Int/Eq%.Lt(num_args, Int|2).?(true: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected at least two args');
+    });
+
+    List@<String@> args = /Core/List%.Map(cmd.args, StringOf);
+    String@ name = args.cons.head;
+    List@<String@> defargs = Init(args.cons.tail);
+    String@ body = Last(args.cons.tail);
+
+    Invoke@ invoke = DefI(defargs)(body);
+    Env@ env <- Do(GetEnv);
+    Invoke@ inline = (Command@ cmd) {
+      /Core/String/Eq%.Eq(StringOf(cmd.name), name).?(
+        true: invoke(cmd),
+        false: env.inline(cmd));
+    };
+    Unit@ _ <- Do(SetEnv(env.@(inline: inline)));
+    Return(/Fbld/Text%.Empty(LocOf(cmd.name)));
+  }),
+  Entry(Str|'defb', (Command@ cmd) {
+    Int@ num_args = Length(cmd.args);
+    /Core/Int/Eq%.Lt(num_args, Int|2).?(true: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected at least two args');
+    });
+
+    List@<String@> args = /Core/List%.Map(cmd.args, StringOf);
+    String@ name = args.cons.head;
+    List@<String@> defargs = Init(args.cons.tail);
+    String@ body = Last(args.cons.tail);
+
+    Invoke@ invoke = DefB(defargs)(body);
+    Env@ env <- Do(GetEnv);
+    Invoke@ block = (Command@ cmd) {
+      /Core/String/Eq%.Eq(StringOf(cmd.name), name).?(
+        true: invoke(cmd),
+        false: env.block(cmd));
+    };
+    Unit@ _ <- Do(SetEnv(env.@(block: block)));
+    Return(/Fbld/Text%.Empty(LocOf(cmd.name)));
+  })
+];
+
+@(DefB, DefI, Markup);

@@ -1455,4 +1455,13 @@ time to compile. This should put is in a good place to define an @defi, @defb
 commands and start pulling things out of the implementation and into separate
 .fbld files.
 
+---
+
+In order to support dynamic insertion of commands into the environment, can we
+have the environment be Markup@? Is there any reason we wouldn't want to use a
+map?
+
+One reason is because that would make Fbld@ even more tied up into a knot.
+Maybe I can not worry about it for now. Just do a linear chain search.
+
 
