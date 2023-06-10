@@ -1,0 +1,53 @@
+
+% Chars = /Core/Char%.Chars;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Reverse = /Core/List%.Reverse;
+
+@ String@ = /Core/String%.String@;
+
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+<@>% Do = /Fbld/Fbld%.Do;
+<@>% Return = /Fbld/Fbld%.Return;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+@ Text@ = /Fbld/Text%.Text@;
+
+(List@<Fbld@<Text@>>) { Fbld@<List@<Text@>>; }
+Seq = {
+  (List@<Text@>, List@<Fbld@<Text@>>) { Fbld@<List@<Text@>>; }
+  seq = (List@<Text@> r, List@<Fbld@<Text@>> l) {
+    l.?(nil: Return(Reverse(r)));
+    Text@ t <- Do(l.cons.head);
+    seq(Cons(t, r), l.cons.tail);
+  };
+  
+  (List@<Fbld@<Text@>> ms) {
+    seq(Nil<Text@>, ms);
+  };
+};
+
+# Helper function for outputting a sequence of text.
+(Loc@)(List@<Fbld@<Text@>>) { Fbld@<Text@>; }
+Cat = (Loc@ loc)(List@<Fbld@<Text@>> args) {
+  List@<Text@> results <- Do(Seq(args));
+  Return(/Fbld/Text%.Concat(loc, results));
+};
+
+(Text@) { Fbld@<Text@>; } T = Return<Text@>;
+
+# Helper function for outputting a raw string.
+(Loc@)(String@) { Fbld@<Text@>; } S = (Loc@ l)(String@ s) {
+  T(/Fbld/Text%.Text(s, l));
+};
+
+# Output a newline.
+(Loc@) { Fbld@<Text@>; } NL = (Loc@ l) {
+  S(l)[Chars.nl];
+};
+
+@(Cat, S, T, NL);
+

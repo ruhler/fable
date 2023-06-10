@@ -1,154 +1,148 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
-
 @ Loc@ = /Fbld/Loc%.Loc@;
+
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Entry = /Fbld/Markup%.Entry;
+% Inline = /Fbld/Markup%.Inline;
+% Block = /Fbld/Markup%.Block;
+% Markups = /Fbld/Markup%.Markups;
+
+% Utils = /Fbld/Invoke/Utils%;
+
 @ Text@ = /Fbld/Text%.Text@;
 
-<<@>@ M@>(Monad@<M@> m) {
-  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
+# Core document interface.
+@ Core@ = *(
+  # @text[ESCAPED text]
+  # An explicit tag for default inline text.
+  # @param text  The text to unescape.
+  (Loc@, Text@) { Fbld@<Text@>; } text,
 
-  % MarkupModule = /Fbld/Markup%(m);
-  @ Markup@ = MarkupModule.Markup@;
-  % Entry = MarkupModule.Entry;
-  % Inline = MarkupModule.Inline;
-  % Block = MarkupModule.Block;
-  % Markups = MarkupModule.Markups;
+  # @l[ESCAPED text]
+  # A literal string.
+  # The text is highlighted as bold or monospace font, for example.
+  # @param text  The text to highlith.
+  (Loc@, Text@) { Fbld@<Text@>; } l,
 
-  # Core document interface.
-  @ Core@ = *(
-    # @text[ESCAPED text]
-    # An explicit tag for default inline text.
-    # @param text  The text to unescape.
-    (Text@) { MRU@; } text,
+  # @a[ESCAPED text]
+  # An argument.
+  # The text is highlighted using italics, for example.
+  # @param text  The text to highlight.
+  (Loc@, Text@) { Fbld@<Text@>; } a,
 
-    # @l[ESCAPED text]
-    # A literal string.
-    # The text is highlighted as bold or monospace font, for example.
-    # @param text  The text to highlith.
-    (Text@) { MRU@; } l,
+  # @label[ESCAPED id][INLINE text]
+  # Give a label to a point in the text.
+  # For use as a target of local or external references.
+  # @param id  The id to use for the lable.
+  # @param text  The text to display for the label target.
+  (Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } label,
 
-    # @a[ESCAPED text]
-    # An argument.
-    # The text is highlighted using italics, for example.
-    # @param text  The text to highlight.
-    (Text@) { MRU@; } a,
+  # @ref[ESCAPED id][INLINE caption]
+  # Refer to a locally defined label.
+  # @param id  The id of a @label to link to.
+  # @param caption  Text to display.
+  (Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } ref,
 
-    # @label[ESCAPED id][INLINE text]
-    # Give a label to a point in the text.
-    # For use as a target of local or external references.
-    # @param id  The id to use for the lable.
-    # @param text  The text to display for the label target.
-    (Text@, MRU@) { MRU@; } label,
+  # @url[ESCAPED url][? INLINE text]
+  # Reference a url.
+  # @param url  The target url.
+  # @param text  Optional text to display. Defaults to the url.
+  (Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } url,
 
-    # @ref[ESCAPED id][INLINE caption]
-    # Refer to a locally defined label.
-    # @param id  The id of a @label to link to.
-    # @param caption  Text to display.
-    (Text@, MRU@) { MRU@; } ref,
+  # @file[ESCAPED file][? INLINE text]
+  # Reference a file on disk.
+  # @param file  The path to the file.
+  # @param text  Optional text to display. Defaults to the file.
+  (Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } file,
 
-    # @url[ESCAPED url][? INLINE text]
-    # Reference a url.
-    # @param url  The target url.
-    # @param text  Optional text to display. Defaults to the url.
-    (Text@, MRU@) { MRU@; } url,
+  # @fbld[ESCAPED file][? INLINE text]
+  # Reference to another fbld based document.
+  # @param file  The path to the fbld file, optionally followed by #<id>.
+  # @param text  Optional text to display. Defaults to the file.
+  (Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } fbld,
 
-    # @file[ESCAPED file][? INLINE text]
-    # Reference a file on disk.
-    # @param file  The path to the file.
-    # @param text  Optional text to display. Defaults to the file.
-    (Text@, MRU@) { MRU@; } file,
+  # @par[INLINE text]
+  # A paragraph of text.
+  # @param text  The body of the paragraph.
+  (Loc@, Fbld@<Text@>) { Fbld@<Text@>; } par,
 
-    # @fbld[ESCAPED file][? INLINE text]
-    # Reference to another fbld based document.
-    # @param file  The path to the fbld file, optionally followed by #<id>.
-    # @param text  Optional text to display. Defaults to the file.
-    (Text@, MRU@) { MRU@; } fbld,
+  # @item[BLOCK text]
+  # A list item.
+  # @param text  The text of the item.
+  (Loc@, Fbld@<Text@>) { Fbld@<Text@>; } item,
 
-    # @par[INLINE text]
-    # A paragraph of text.
-    # @param text  The body of the paragraph.
-    (MRU@) { MRU@; } par,
+  # @code[ESCAPED language][ESCAPED text]
+  # A source code listing.
+  # @param language  The lanuage, e.g. c, python, sh, fble, vim, etc.
+  # @param text  The source code text.
+  (Loc@, Text@, Text@) { Fbld@<Text@>; } code,
 
-    # @item[BLOCK text]
-    # A list item.
-    # @param text  The text of the item.
-    (MRU@) { MRU@; } item,
+  # @def[INLINE name][INLINE value]
+  # A short form definition of a term.
+  # @param name  The term to define.
+  # @param value  The definition of the term.
+  (Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } def,
 
-    # @code[ESCAPED language][ESCAPED text]
-    # A source code listing.
-    # @param language  The lanuage, e.g. c, python, sh, fble, vim, etc.
-    # @param text  The source code text.
-    (Text@, Text@) { MRU@; } code,
+  # @definition[INLINE name][BLOCK value]
+  # A long form definition of a term.
+  # @param name  The term to define.
+  # @param value  The definition of the term.
+  (Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } definition,
 
-    # @def[INLINE name][INLINE value]
-    # A short form definition of a term.
-    # @param name  The term to define.
-    # @param value  The definition of the term.
-    (MRU@, MRU@) { MRU@; } def,
+  # @section[INLINE title][BLOCK body]
+  #  A top level section.
+  #  @arg[title] The tile of the section.
+  #  @arg[body] The contents of the section.
+  (Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } section,
 
-    # @definition[INLINE name][BLOCK value]
-    # A long form definition of a term.
-    # @param name  The term to define.
-    # @param value  The definition of the term.
-    (MRU@, MRU@) { MRU@; } definition,
+  # @subsection[INLINE title][BLOCK body]
+  # A second level section.
+  # @param title  The tile of the section.
+  # @param body  The contents of the section.
+  (Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } subsection,
 
-    # @section[INLINE title][BLOCK body]
-    #  A top level section.
-    #  @arg[title] The tile of the section.
-    #  @arg[body] The contents of the section.
-    (MRU@, MRU@) { MRU@; } section,
+  # @subsubsection[INLINE title][BLOCK body]
+  # A third level section.
+  # @param title  The tile of the section.
+  # @param body  The contents of the section.
+  (Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } subsubsection,
 
-    # @subsection[INLINE title][BLOCK body]
-    # A second level section.
-    # @param title  The tile of the section.
-    # @param body  The contents of the section.
-    (MRU@, MRU@) { MRU@; } subsection,
+  # @doc[INLINE title][BLOCK body]
+  # Top level entry point for a generic document.
+  # @param title  The title of the document.
+  # @param body  The contents of the document.
+  (Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } doc
+);
 
-    # @subsubsection[INLINE title][BLOCK body]
-    # A third level section.
-    # @param title  The tile of the section.
-    # @param body  The contents of the section.
-    (MRU@, MRU@) { MRU@; } subsubsection,
-
-    # @doc[INLINE title][BLOCK body]
-    # Top level entry point for a generic document.
-    # @param title  The title of the document.
-    # @param body  The contents of the document.
-    (Loc@, MRU@, MRU@) { MRU@; } doc
-  );
-
-  % Utils = /Fbld/Invoke/Utils%(m);
-
-  (Core@) { Markup@; } Markup = (Core@ core) {
-    Markups[
-      Inline[
-        Entry(Str|'', Utils.E(core.text)),
-        Entry(Str|'text', Utils.E(core.text)),
-        Entry(Str|'l', Utils.E(core.l)),
-        Entry(Str|'a', Utils.E(core.a)),
-        Entry(Str|'label', Utils.EI(core.label)),
-        Entry(Str|'ref', Utils.EI(core.ref)),
-        Entry(Str|'url', Utils.EmI(core.url)),
-        Entry(Str|'file', Utils.EmI(core.file)),
-        Entry(Str|'fbld', Utils.EmI(core.fbld))
-      ],
-      Block[
-        Entry(Str|'', Utils.I(core.par)),
-        Entry(Str|'par', Utils.I(core.par)),
-        Entry(Str|'item', Utils.B(core.item)),
-        Entry(Str|'code', Utils.EE(core.code)),
-        Entry(Str|'def', Utils.II(core.def)),
-        Entry(Str|'definition', Utils.IB(core.definition)),
-        Entry(Str|'section', Utils.IB(core.section)),
-        Entry(Str|'subsection', Utils.IB(core.subsection)),
-        Entry(Str|'subsubsection', Utils.IB(core.subsubsection)),
-        Entry(Str|'doc', Utils.LIB(core.doc))
-      ]];
-  };
-
-  @(Core@, Markup);
+(Core@) { Markup@; } Markup = (Core@ core) {
+  Markups[
+    Inline[
+      Entry(Str|'', Utils.LE(core.text)),
+      Entry(Str|'text', Utils.LE(core.text)),
+      Entry(Str|'l', Utils.LE(core.l)),
+      Entry(Str|'a', Utils.LE(core.a)),
+      Entry(Str|'label', Utils.LEI(core.label)),
+      Entry(Str|'ref', Utils.LEI(core.ref)),
+      Entry(Str|'url', Utils.LEmI(core.url)),
+      Entry(Str|'file', Utils.LEmI(core.file)),
+      Entry(Str|'fbld', Utils.LEmI(core.fbld))
+    ],
+    Block[
+      Entry(Str|'', Utils.LI(core.par)),
+      Entry(Str|'par', Utils.LI(core.par)),
+      Entry(Str|'item', Utils.LB(core.item)),
+      Entry(Str|'code', Utils.LEE(core.code)),
+      Entry(Str|'def', Utils.LII(core.def)),
+      Entry(Str|'definition', Utils.LIB(core.definition)),
+      Entry(Str|'section', Utils.LIB(core.section)),
+      Entry(Str|'subsection', Utils.LIB(core.subsection)),
+      Entry(Str|'subsubsection', Utils.LIB(core.subsubsection)),
+      Entry(Str|'doc', Utils.LIB(core.doc))
+    ]];
 };
+
+@(Core@, Markup);

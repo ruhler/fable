@@ -1,32 +1,25 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 % Str = /Core/String%.Str;
 
+% Define = /Fbld/Define%;
 
-<<@>@ M@>(Monad@<M@> m) {
-  % MarkupModule = /Fbld/Markup%(m);
-  @ Markup@ = MarkupModule.Markup@;
-  % Block = MarkupModule.Block;
-  % Entry = MarkupModule.Entry;
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Block = /Fbld/Markup%.Block;
+% Entry = /Fbld/Markup%.Entry;
 
-  % Define = /Fbld/Define%(m);
-
-  Markup@ Markup = Block[
-    Entry(Str|'AbstractSyntax', Define.DefB[Str|'content']|'
+Markup@ Markup = Block[
+  Entry(Str|'AbstractSyntax', Define.DefB[Str|'content']|'
 @definition[Abstract Syntax]
  @code[txt]
   $$content'),
-    Entry(Str|'ConcreteSyntax', Define.DefB[Str|'content']|'
+  Entry(Str|'ConcreteSyntax', Define.DefB[Str|'content']|'
 @definition[Concrete Syntax]
  @code[txt]
   $$content'),
-    Entry(Str|'Example', Define.DefB[Str|'content']|'
+  Entry(Str|'Example', Define.DefB[Str|'content']|'
 @definition[Example]
  @code[fble]
   $$content')
-  ];
+];
 
-  @(Markup);
-};
-
+@(Markup);

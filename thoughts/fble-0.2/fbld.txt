@@ -1427,3 +1427,32 @@ wish I had a better name.
 Once we have that, do that major shift to new Fbld@ monadic type. Then we can
 implement @defi and @defb commands, and pull out all of the frontends and
 backends, hopefully.
+
+---
+
+I have defined a Text@ type. There's plenty of work to do to clean that up,
+but can we move on to an Fbld@ monad?
+
+It means having all of the documents loading into memory at the same time, but
+we kind of do that currently anyway.
+
+Let's give it a try. I'm hoping this will simplify the code a lot.
+
+Fbld@ is a function from Env@ to Result@<(Env@, A@)>.
+Env@ is a pair of Invoke@.
+Invoke@ is a function from Env@, Command@ to Result@<(Env@, Text@)>
+ aka. A function from Command@ to Fbld@<Text@>;
+
+Interesting question: can we actually define this type in fble? I'm pretty
+sure yes, but we might have to start by defining Fbld@<Text@> as a separate
+type.
+
+---
+
+Okay, so made the switch to a concrete Fbld@<Text@> monad. It was a big
+change. I haven't bothered about location tracking yet. The code takes a long
+time to compile. This should put is in a good place to define an @defi, @defb
+commands and start pulling things out of the implementation and into separate
+.fbld files.
+
+

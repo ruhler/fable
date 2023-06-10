@@ -1,19 +1,14 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 % Str = /Core/String%.Str;
 
+% DefB = /Fbld/Define%.DefB;
 
-<<@>@ M@>(Monad@<M@> m) {
-  % MarkupModule = /Fbld/Markup%(m);
-  @ Markup@ = MarkupModule.Markup@;
-  % Block = MarkupModule.Block;
-  % Entry = MarkupModule.Entry;
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Block = /Fbld/Markup%.Block;
+% Entry = /Fbld/Markup%.Entry;
 
-  % Define = /Fbld/Define%(m);
-
-  Markup@ Markup = Block[
-    Entry(Str|'GenericProgramInfo', Define.DefB[]|'
+Markup@ Markup = Block[
+  Entry(Str|'GenericProgramInfo', DefB[]|'
 @subsection[Generic Program Information]
  @opt[@l[-h], @l[--help]]
   display this help text and exit
@@ -21,7 +16,7 @@
  @opt[@l[-v], @l[--version]]
   display version information and exit
 '),
-    Entry(Str|'ModuleInput', Define.DefB[]|'
+  Entry(Str|'ModuleInput', DefB[]|'
 @subsection[Module Input]
  @opt[@l[-I] @a[DIR]]
   add @a[DIR] to the module search path
@@ -43,8 +38,7 @@
 
  The system default package search path is @config[datadir]/fble.
 ')
-  ];
+];
 
-  @(Markup);
-};
+@(Markup);
 

@@ -22,11 +22,22 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
+@ Core@ = /Fbld/Core%.Core@;
+
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+@ Env@ = /Fbld/Fbld%.Env@;
+
 % Report = /Fbld/Loc%.Report;
 % Start = /Fbld/Loc%.Start;
 
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Markups = /Fbld/Markup%.Markups;
+
 <@>@ Result@ = /Fbld/Result%.Result@;
 
+% Run = /Fbld/Run%;
+
+@ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 % StringOf = /Fbld/Text%.StringOf;
 % LocOf = /Fbld/Text%.LocOf;
@@ -37,17 +48,6 @@
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
-
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
-
-  % Markup = /Fbld/Markup%(m);
-  @ Markup@ = Markup.Markup@;
-  % Markups = Markup.Markups;
-
-  % Core = /Fbld/Core%(m);
-  @ Core@ = Core.Core@;
-
-  % Run = /Fbld/Run%(m);
 
   @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text);
 
@@ -123,12 +123,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   (List@<String@> args) {
     Args@ parsed = ParseArgs(args);
 
-    % Man = /Fbld/Man%(m, stdio.out);
     Core@ core = parsed.backend.?(
-      html: /Fbld/Html%(m, stdio.out).Core,
-      markdown: /Fbld/Markdown%(m, stdio.out).Core,
-      man: Man.Core,
-      text: /Fbld/TextBackend%(m, stdio.out).Core);
+      html: /Fbld/Html%.Core,
+      markdown: /Fbld/Markdown%.Core,
+      man: /Fbld/Man%.Core,
+      text: /Fbld/TextBackend%.Core);
 
     parsed.file.?(nothing: {
       String@ msg = Str|'missing input file';
@@ -145,37 +144,39 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       m.return(False);
     });
 
-    % Build = /Fbld/Build%(m)(core, parsed.buildstamp);
-    % Version = /Fbld/Version%(m)(core, parsed.version);
+    % Build = /Fbld/Build%(core, parsed.buildstamp);
+    % Version = /Fbld/Version%(core, parsed.version);
 
     Markup@ markup = Markups[
-      Core.Markup(core),
+      /Fbld/Core%.Markup(core),
       Build.Markup,
       Version.Markup,
       parsed.fble.?(
-        true: /Fbld/Fble%(m).Markup,
-        false: Markup.Empty),
+        true: /Fbld/Fble%.Markup,
+        false: /Fbld/Markup%.Empty),
       parsed.tutorial.?(
-        true: /Fbld/Tutorial%(m).Markup,
-        false: Markup.Empty),
+        true: /Fbld/Tutorial%.Markup,
+        false: /Fbld/Markup%.Empty),
       parsed.usage_help.?(
-        true: /Fbld/Usage/Help%(m).Markup,
-        false: Markup.Empty),
+        true: /Fbld/Usage/Help%.Markup,
+        false: /Fbld/Markup%.Empty),
       parsed.usage_lib.?(
-        true: /Fbld/Usage/Lib%(m).Markup,
-        false: Markup.Empty)
+        true: /Fbld/Usage/Lib%.Markup,
+        false: /Fbld/Markup%.Empty)
     ];
 
-    Env@ env = Markup.Env(markup);
+    Env@ env = /Fbld/Markup%.Env(markup);
 
     String@ contents <- m.do(I.GetText(fin.just));
-    Result@<Unit@> r <- m.do(Run.Block(env, Text(contents, Start(filename))));
+    Fbld@<Text@> fbld = Run.Block(Text(contents, Start(filename)));
+    Result@<Text@> r = /Fbld/Fbld%.Run(fbld, env);
     r.?(err: {
       String@ msg = Report(LocOf(r.err), StringOf(r.err));
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
 
+    Unit@ _ <- m.do(O.PutStr(stdio.out, StringOf(r.ok)));
     m.return(True);
   };
 };

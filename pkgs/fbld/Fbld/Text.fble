@@ -5,7 +5,10 @@
 
 @ Char@ = /Core/Char%.Char@;
 
+<@>@ List@ = /Core/List%.List@;
+
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 % Advance = /Fbld/Loc%.Advance;
@@ -17,7 +20,8 @@
 # Abstract string type that supports location tracking and fast concatenation.
 @ Text@ = _@<Text_@>;
 
-(String@, Loc@) { Text@; } Text = _@.<@<Text>>((String@ str, Loc@ loc) {
+(String@, Loc@) { Text@; }
+Text = _@.<@<Text>>((String@ str, Loc@ loc) {
   Text_@(str, loc);
 });
 
@@ -26,29 +30,51 @@
 #
 # Note: This may be an expensive operation. Avoid duplicate calls where
 # possible.
-(Text@) { String@; } StringOf = _@.<@<StringOf>>((Text_@ text) {
+(Text@) { String@; }
+StringOf = _@.<@<StringOf>>((Text_@ text) {
   text.str;
 });
 
 # LocOf --
 #   Gets the location of the start of the text.
-(Text@) { Loc@; } LocOf = _@.<@<LocOf>>((Text_@ text) {
+(Text@) { Loc@; }
+LocOf = _@.<@<LocOf>>((Text_@ text) {
   text.loc;
 });
 
-(Text@) { Bool@; } IsEmpty = _@.<@<IsEmpty>>((Text_@ text) {
+(Text@) { Bool@; }
+IsEmpty = _@.<@<IsEmpty>>((Text_@ text) {
   text.str.?(nil: True);
   False;
 });
 
+(Loc@) { Text@; }
+Empty = (Loc@ l) {
+  Text(Str|'', l);
+};
+
 # Returns the first character of text.
 # Behavior is undefined if the text is empty.
-(Text@) { Char@; } Head = _@.<@<Head>>((Text_@ text) {
+(Text@) { Char@; }
+Head = _@.<@<Head>>((Text_@ text) {
   text.str.cons.head;
 });
 
-(Text@) { Text@; } Tail = _@.<@<Tail>>((Text_@ text) {
+(Text@) { Text@; }
+Tail = _@.<@<Tail>>((Text_@ text) {
   Text_@(text.str.cons.tail, Advance(text.loc, text.str.cons.head));
 });
 
-@(Text@, Text, StringOf, LocOf, IsEmpty, Head, Tail);
+(Text@, Text@) { Text@; }
+Append = _@.<@<Append>>((Text_@ a, Text_@ b) {
+  # TODO: Track locations properly and optimize this operation.
+  Text_@(/Core/List%.Append(a.str, b.str), a.loc);
+});
+
+(Loc@, List@<Text@>) { Text@; }
+Concat = (Loc@ l, List@<Text@> x) {
+  x.?(nil: Empty(l));
+  Append(x.cons.head, Concat(l, x.cons.tail));
+};
+
+@(Text@, Text, StringOf, LocOf, IsEmpty, Empty, Head, Tail, Append, Concat);

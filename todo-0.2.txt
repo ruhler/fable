@@ -6,11 +6,15 @@ Things to consider doing for the fble-0.2 release.
  - Move implement of Eq and Show internally.
  - Update users to handle changing locations properly.
 
+* Improve fble compile times.
+ - For example, /Fbld/Main% takes like 50 seconds to compile.
+ We'll want to purpose both modular compilation, and general improvements to
+ compile time.
+
 * Fbld:
  - Figure out a better approach to @FbleVersion?
  - Figure out how to generate c header output.
  - Figure out why it takes so much memory and time to run.
- - Make use of Seq for combining sequence of MRU@.
  - Use map from front end name to Markup to simplify front end options
    parsing.
  - Make sure @man ends up in markup somewhere when that is requested.

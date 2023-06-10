@@ -1,21 +1,24 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 <@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
 <@>% Drop = /Core/List/Length%.Drop;
 <@>% Length = /Core/List/Length%.Length;
 
-<<@>@>@ OStream@ = /Core/Stream%.OStream@;
-
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % StartsWith = /Core/String/Eq%.StartsWith;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Core@ = /Fbld/Core%.Core@;
+
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+<@>% Return = /Fbld/Fbld%.Return;
+
+% Cat = /Fbld/Fbld/Utils%.Cat;
+% NL = /Fbld/Fbld/Utils%.NL;
+% S = /Fbld/Fbld/Utils%.S;
+% T = /Fbld/Fbld/Utils%.T;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
@@ -24,172 +27,122 @@
 % LocOf = /Fbld/Text%.LocOf;
 % StringOf = /Fbld/Text%.StringOf;
 
-<@>% Ok = /Fbld/Result%.Ok;
-
-<<@>@ M@>(Monad@<M@> m, OStream@<M@> out) {
-
-  % ResultM = /Fbld/ResultM%<M@>;
-  <@>@ MR@ = ResultM.MR@;
-  Monad@<MR@> mr = ResultM.Monad(m);
-
-  @ Core@ = /Fbld/Core%(m).Core@;
-
-  % O = /Core/Stream/OStream%(m);
-
-  (Text@) { MR@<Unit@>; }
-  HtmlText = (Text@ str) {
-    (String@) { MR@<Unit@>; } text = (String@ s) {
-      s.?(nil: mr.return(Unit));
-      Char@ c = s.cons.head;
-      Unit@ _ <- m.do(c.?(
-        '&': O.PutStr(out, Str|'&amp;'),
-        '<': O.PutStr(out, Str|'&lt;'),
-        '>': O.PutStr(out, Str|'&gt;'),
-        : O.PutChar(out, c))
-      );
-      text(s.cons.tail);
-    };
-    text(StringOf(str));
+(Loc@, Text@) { Fbld@<Text@>; }
+HtmlText = (Loc@ loc, Text@ str) {
+  (Text@, String@) { Fbld@<Text@>; } text = (Text@ r, String@ s) {
+    s.?(nil: Return(r));
+    Char@ c = s.cons.head;
+    String@ nc = c.?(
+      '&': Str|'&amp;',
+      '<': Str|'&lt;',
+      '>': Str|'&gt;',
+      : Str[c]);
+    text(/Fbld/Text%.Append(r, Text(nc, loc)), s.cons.tail);
   };
+  text(/Fbld/Text%.Empty(loc), StringOf(str));
+};
 
-  (Text@) { MR@<Unit@>; }
-  L = (Text@ str) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<code>'));
-    Unit@ _ <- mr.do(HtmlText(str));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'</code>'));
-    mr.return(Unit);
+(Loc@, Text@) { Fbld@<Text@>; }
+L = (Loc@ l, Text@ str) {
+  Cat(l)[S(l)|'<code>', HtmlText(l, str), S(l)|'</code>'];
+};
+
+(Loc@, Text@) { Fbld@<Text@>; }
+A = (Loc@ l, Text@ str) {
+  Cat(l)[S(l)|'<i>', HtmlText(l, str), S(l)|'</i>'];
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Label = (Loc@ l, Text@ id, Fbld@<Text@> text) {
+  Cat(l)[
+    S(l)|'<a id="', HtmlText(l, id), S(l)|'">',
+    text, S(l)|'</a>'];
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Ref = (Loc@ l, Text@ id, Fbld@<Text@> caption) {
+  Cat(l)[
+    S(l)|'<a href="#', HtmlText(l, id), S(l)|'">',
+    caption, S(l)|'</a>'];
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Url = (Loc@ l, Text@ url, Fbld@<Text@> text) {
+  Cat(l)[
+    S(l)|'<a href="', HtmlText(l, url), S(l)|'">',
+    text, S(l)|'</a>'];
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+File = (Loc@ l, Text@ file, Fbld@<Text@> text) {
+  Cat(l)[
+    S(l)|'<a href="', HtmlText(l, file), S(l)|'"><code>',
+    text, S(l)|'</code></a>'];
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Fbld = (Loc@ l, Text@ file, Fbld@<Text@> text) {
+  # Convert filename from *.fbld to *.html
+  String@ replaced = {
+    String@ reversed = Reverse(StringOf(file));
+    String@ fbld = Reverse(Str|'.fbld');
+    StartsWith(reversed, fbld).?(false: replaced);
+    String@ tail = Drop(Length(fbld), reversed);
+    Append(Reverse(Str|'.html'), tail);
   };
+  Text@ fbld = Text(Reverse(replaced), LocOf(file));
 
-  (Text@) { MR@<Unit@>; }
-  A = (Text@ str) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<i>'));
-    Unit@ _ <- mr.do(HtmlText(str));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'</i>'));
-    mr.return(Unit);
-  };
+  File(l, fbld, text);
+};
 
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Label = (Text@ id, MR@<Unit@> text) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<a id="'));
-    Unit@ _ <- mr.do(HtmlText(id));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
-    Unit@ _ <- mr.do(text);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
-    mr.return(Unit);
-  };
+(Loc@, Fbld@<Text@>) { Fbld@<Text@>; }
+Par = (Loc@ l, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'<p>', body, S(l)|'</p>', NL(l)];
+};
 
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Ref = (Text@ id, MR@<Unit@> caption) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="#'));
-    Unit@ _ <- mr.do(HtmlText(id));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
-    Unit@ _ <- mr.do(caption);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
-    mr.return(Unit);
-  };
+(Loc@, Fbld@<Text@>) { Fbld@<Text@>; }
+Item = (Loc@ l, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'<ul><li>', body, S(l)|'</li></ul>', NL(l)];
+};
 
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Url = (Text@ url, MR@<Unit@> text) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
-    Unit@ _ <- mr.do(HtmlText(url));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
-    Unit@ _ <- mr.do(text);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</a>'));
-    mr.return(Unit);
-  };
+(Loc@, Text@, Text@) { Fbld@<Text@>; }
+Code = (Loc@ l, Text@ lang, Text@ text) {
+  Cat(l)[S(l)|'<pre>', T(text), S(l)|'</pre>', NL(l)];
+};
 
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  File = (Text@ file, MR@<Unit@> text) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<a href="'));
-    Unit@ _ <- mr.do(HtmlText(file));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'"><code>'));
-    Unit@ _ <- mr.do(text);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</code></a>'));
-    mr.return(Unit);
-  };
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+Def = (Loc@ l, Fbld@<Text@> name, Fbld@<Text@> value) {
+  Cat(l)[
+    S(l)|'<dl><dt>', name,
+    S(l)|'</dt><dd>', value,
+    S(l)|'</dd></dl>', NL(l)];
+};
 
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Fbld = (Text@ file, MR@<Unit@> text) {
-    # Convert filename from *.fbld to *.html
-    String@ replaced = {
-      String@ reversed = Reverse(StringOf(file));
-      String@ fbld = Reverse(Str|'.fbld');
-      StartsWith(reversed, fbld).?(false: replaced);
-      String@ tail = Drop(Length(fbld), reversed);
-      Append(Reverse(Str|'.html'), tail);
-    };
-    Text@ fbld = Text(Reverse(replaced), LocOf(file));
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+Section = (Loc@ l, Fbld@<Text@> title, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'<h2>', title, S(l)|'</h2>', NL(l), body];
+};
 
-    File(fbld, text);
-  };
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+SubSection = (Loc@ l, Fbld@<Text@> title, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'<h3>', title, S(l)|'</h3>', NL(l), body];
+};
 
-  (MR@<Unit@>) { MR@<Unit@>; }
-  Par = (MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<p>'));
-    Unit@ _ <- mr.do(body);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</p>'));
-    mr.return(Unit);
-  };
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+SubSubSection = (Loc@ l, Fbld@<Text@> title, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'<h4>', title, S(l)|'</h4>', NL(l), body];
+};
 
-  (MR@<Unit@>) { MR@<Unit@>; }
-  Item = (MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<ul><li>'));
-    Unit@ _ <- mr.do(body);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</li></ul>'));
-    mr.return(Unit);
-  };
-
-  (Text@, Text@) { MR@<Unit@>; }
-  Code = (Text@ lang, Text@ text) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<pre>'));
-    Unit@ _ <- m.do(O.PutStr(out, StringOf(text)));
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</pre>'));
-    m.return(Ok(Unit));
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Def = (MR@<Unit@> name, MR@<Unit@> value) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<dl><dt>'));
-    Unit@ _ <- mr.do(name);
-    Unit@ _ <- m.do(O.PutStr(out, Str|'</dt><dd>'));
-    Unit@ _ <- mr.do(value);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</dd></dl>'));
-    mr.return(Unit);
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Section = (MR@<Unit@> title, MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<h2>'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</h2>'));
-    body;
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  SubSection = (MR@<Unit@> title, MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<h3>'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</h3>'));
-    body;
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  SubSubSection = (MR@<Unit@> title, MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<h4>'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</h4>'));
-    body;
-  };
-
-  (Loc@, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Doc = (Loc@ _, MR@<Unit@> title, MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutLine(out, Str|'
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+Doc = (Loc@ l, Fbld@<Text@> title, Fbld@<Text@> body) {
+  Cat(l)[
+    S(l)|'
 <head>
 <style>
 body {
-  color: #333333;
-  font-family: sans-serif;
-  max-width: 50em;
+color: #333333;
+font-family: sans-serif;
+max-width: 50em;
 }
 h1 { font-size: 2.0em; }
 h2 { font-size: 1.6em; }
@@ -197,34 +150,27 @@ h3 { font-size: 1.4em; }
 h4 { font-size: 1.2em; }
 p { font-size: 1em; }
 </style>
-'));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<title>'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</title>'));
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</head><body>'));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'<h1>'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</h1>'));
-    Unit@ _ <- mr.do(body);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'</body>'));
-    mr.return(Unit);
-  };
-
-  Core@ Core = @(
-    text: HtmlText,
-    l: L, a: A,
-    label: Label, ref: Ref,
-    url: Url, file: File, fbld: Fbld,
-    par: Par,
-    item: Item,
-    code: Code,
-    def: Def,
-    definition: Def,
-    section: Section,
-    subsection: SubSection,
-    subsubsection: SubSubSection,
-    doc: Doc
-  );
-
-  @(Core);
+<title>', title, S(l)|'</title>', NL(l),
+  S(l)|'</head><body>', NL(l),
+  S(l)|'<h1>', title, S(l)|'</h1>', NL(l),
+  body,
+  S(l)|'</body>', NL(l)];
 };
+
+Core@ Core = @(
+  text: HtmlText,
+  l: L, a: A,
+  label: Label, ref: Ref,
+  url: Url, file: File, fbld: Fbld,
+  par: Par,
+  item: Item,
+  code: Code,
+  def: Def,
+  definition: Def,
+  section: Section,
+  subsection: SubSection,
+  subsubsection: SubSubSection,
+  doc: Doc
+);
+
+@(Core);

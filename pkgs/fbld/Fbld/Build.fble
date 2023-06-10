@@ -1,40 +1,33 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
-
 @ Loc@ = /Fbld/Loc%.Loc@;
 
+@ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 
+@ Core@ = /Fbld/Core%.Core@;
 
-<<@>@ M@>(Monad@<M@> m) {
-  @ MRU@ = M@</Fbld/Result%.Result@<Unit@>>;
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
 
-  @ Core@ = /Fbld/Core%(m).Core@;
-  % Utils = /Fbld/Invoke/Utils%(m);
+% Utils = /Fbld/Invoke/Utils%;
 
-  % MarkupModule = /Fbld/Markup%(m);
-  @ Markup@ = MarkupModule.Markup@;
-  % Inline = MarkupModule.Inline;
-  % Entry = MarkupModule.Entry;
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Inline = /Fbld/Markup%.Inline;
+% Entry = /Fbld/Markup%.Entry;
 
-  (Core@ core, String@ buildstamp) {
-    # @BuildStamp
-    # The fble build stamp.
-    (Loc@) { MRU@; } BuildStamp = (Loc@ loc) {
-      core.text(Text(buildstamp, loc));
-    };
-
-    Markup@ Markup = Inline[
-      Entry(Str|'BuildStamp', Utils.A0((Env@ _, Loc@ loc) { BuildStamp(loc); }))
-    ];
-
-    @(BuildStamp, Markup);
+(Core@ core, String@ buildstamp) {
+  # @BuildStamp
+  # The fble build stamp.
+  (Loc@) { Fbld@<Text@>; } BuildStamp = (Loc@ loc) {
+    core.text(loc, Text(buildstamp, loc));
   };
+
+  Markup@ Markup = Inline[
+    Entry(Str|'BuildStamp', Utils.A0((Loc@ loc) { BuildStamp(loc); }))
+  ];
+
+  @(BuildStamp, Markup);
 };
 

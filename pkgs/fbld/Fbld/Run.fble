@@ -1,51 +1,48 @@
 <@>@ List@ = /Core/List%.List@;
-
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+<@,@>% Map = /Core/List%.Map;
 
 @ Command@ = /Fbld/Command%.Command@;
 
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+@ Env@ = /Fbld/Fbld%.Env@;
+<@>% Do = /Fbld/Fbld%.Do;
+<@>% Error = /Fbld/Fbld%.Error;
+% GetEnv = /Fbld/Fbld%.GetEnv;
+
+% Cat = /Fbld/Fbld/Utils%.Cat;
+
 @ Text@ = /Fbld/Text%.Text@;
+% LocOf = /Fbld/Text%.LocOf;
+% StringOf = /Fbld/Text%.StringOf;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Ok = /Fbld/Result%.Ok;
-<@>% Err = /Fbld/Result%.Err;
 
-
-<<@>@ M@>(Monad@<M@> m) {
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
-
-  % ResultM = /Fbld/ResultM%<M@>;
-  <@>@ MR@ = ResultM.MR@;
-  Monad@<MR@> mr = ResultM.Monad(m);
-
-  # Interprets and executes inline structured text.
-  (Env@, Text@) { MR@<Unit@>; }
-  Inline = (Env@ env, Text@ text) {
-    Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
-    parsed.?(err: m.return(Err<Unit@>(parsed.err)));
-
-    /Core/List%.ForEach(parsed.ok, m.return(Ok(Unit)),
-      (Command@ cmd, MR@<Unit@> mx) {
-        Unit@ _ <- mr.do(mx);
-        env.inline(env, cmd);
-      });
-  };
-
-  # Interprets and executes block structured text.
-  (Env@, Text@) { MR@<Unit@>; }
-  Block = (Env@ env, Text@ text) {
-    Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
-    parsed.?(err: m.return(Err<Unit@>(parsed.err)));
-
-    /Core/List%.ForEach(parsed.ok, m.return(Ok(Unit)),
-      (Command@ cmd, MR@<Unit@> mx) {
-        Unit@ _ <- mr.do(mx);
-        env.block(env, cmd);
-      });
-  };
-
-  @(Inline, Block);
+(Command@) { Fbld@<Text@>; }
+InvokeInline = (Command@ cmd) {
+  Env@ env <- Do(GetEnv);
+  env.inline(cmd);
 };
+
+(Command@) { Fbld@<Text@>; }
+InvokeBlock = (Command@ cmd) {
+  Env@ env <- Do(GetEnv);
+  env.block(cmd);
+};
+
+# Interprets and executes inline structured text.
+(Text@) { Fbld@<Text@>; }
+Inline = (Text@ text) {
+  Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
+  parsed.?(err: Error<Text@>(LocOf(parsed.err), StringOf(parsed.err)));
+  Cat(LocOf(text))(Map(parsed.ok, InvokeInline));
+};
+
+# Interprets and executes block structured text.
+(Text@) { Fbld@<Text@>; }
+Block = (Text@ text) {
+  Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
+  parsed.?(err: Error<Text@>(LocOf(parsed.err), StringOf(parsed.err)));
+  Cat(LocOf(text))(Map(parsed.ok, InvokeBlock));
+};
+
+@(Inline, Block);

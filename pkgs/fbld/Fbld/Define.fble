@@ -6,8 +6,6 @@
 % Chars = /Core/Char%.Chars;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
@@ -28,10 +26,16 @@
 
 @ Command@ = /Fbld/Command%.Command@;
 
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+@ Invoke@ = /Fbld/Fbld%.Invoke@;
+<@>% Do = /Fbld/Fbld%.Do;
+<@>% Return = /Fbld/Fbld%.Return;
+<@>% Error = /Fbld/Fbld%.Error;
+
 @ Loc@ = /Fbld/Loc%.Loc@;
 % Start = /Fbld/Loc%.Start;
 
-<@>% Err = /Fbld/Result%.Err;
+% Run = /Fbld/Run%;
 
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
@@ -94,54 +98,42 @@ Subst = (Map@ map, String@ body) {
   Reverse(subst(Str|'', body, Str|''));
 };
 
-<<@>@ M@>(Monad@<M@> m) {
-  % Run = /Fbld/Run%(m);
-
-  % ResultM = /Fbld/ResultM%<M@>;
-  <@>@ MR@ = ResultM.MR@;
-  Monad@<MR@> mr = ResultM.Monad(m);
-
-  @ Invoke@ = /Fbld/Invoke%<M@>.Invoke@;
-  @ Env@ = /Fbld/Invoke%<M@>.Env@;
-
-  (List@<String@>, List@<Text@>, Map@) { Map@; }
-  MakeMap = (List@<String@> keys, List@<Text@> values, Map@ m) {
-    keys.?(nil: m);
-    MakeMap(keys.cons.tail, values.cons.tail,
-      Insert(m, keys.cons.head, StringOf(values.cons.head)));
-  };
-
-  (List@<String@>, String@, Command@) { MR@<Text@>; }
-  Define = (List@<String@> argnames, String@ body, Command@ command) {
-    Int@ wnt_args = Length(argnames);
-    Int@ got_args = Length(command.args);
-    /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
-      m.return(Err<Text@>(Text(Strs[
-            Str|'expected ', /Core/Int/Show%.Show(wnt_args),
-            Str|' args, but got ', /Core/Int/Show%.Show(got_args)], LocOf(command.name))));
-      });
-
-    String@ nbody = Subst(MakeMap(argnames, command.args, Empty), body);
-    Loc@ unknown = Start|'???';
-    mr.return(Text(nbody, unknown));
-  };
-
-  (List@<String@>)(String@) { Invoke@; }
-  DefB = (List@<String@> argnames)(String@ body) {
-    (Env@ env, Command@ command) {
-      Text@ text <- mr.do(Define(argnames, body, command));
-      Run.Block(env, text);
-    };
-  };
-
-  (List@<String@>)(String@) { Invoke@; }
-  DefI = (List@<String@> argnames)(String@ body) {
-    (Env@ env, Command@ command) {
-      Text@ text <- mr.do(Define(argnames, body, command));
-      Run.Inline(env, text);
-    };
-  };
-
-  @(DefB, DefI);
+(List@<String@>, List@<Text@>, Map@) { Map@; }
+MakeMap = (List@<String@> keys, List@<Text@> values, Map@ m) {
+  keys.?(nil: m);
+  MakeMap(keys.cons.tail, values.cons.tail,
+    Insert(m, keys.cons.head, StringOf(values.cons.head)));
 };
 
+(List@<String@>, String@, Command@) { Fbld@<Text@>; }
+Define = (List@<String@> argnames, String@ body, Command@ command) {
+  Int@ wnt_args = Length(argnames);
+  Int@ got_args = Length(command.args);
+  /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
+    Error<Text@>(LocOf(command.name), Strs[
+          Str|'expected ', /Core/Int/Show%.Show(wnt_args),
+          Str|' args, but got ', /Core/Int/Show%.Show(got_args)]);
+    });
+
+  String@ nbody = Subst(MakeMap(argnames, command.args, Empty), body);
+  Loc@ unknown = Start|'???';
+  Return(Text(nbody, unknown));
+};
+
+(List@<String@>)(String@) { Invoke@; }
+DefB = (List@<String@> argnames)(String@ body) {
+  (Command@ command) {
+    Text@ text <- Do(Define(argnames, body, command));
+    Run.Block(text);
+  };
+};
+
+(List@<String@>)(String@) { Invoke@; }
+DefI = (List@<String@> argnames)(String@ body) {
+  (Command@ command) {
+    Text@ text <- Do(Define(argnames, body, command));
+    Run.Inline(text);
+  };
+};
+
+@(DefB, DefI);

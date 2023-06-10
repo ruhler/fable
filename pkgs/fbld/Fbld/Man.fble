@@ -1,196 +1,152 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-<<@>@>@ OStream@ = /Core/Stream%.OStream@;
-
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Core@ = /Fbld/Core%.Core@;
+
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+<@>% Error = /Fbld/Fbld%.Error;
+
+% Cat = /Fbld/Fbld/Utils%.Cat;
+% NL = /Fbld/Fbld/Utils%.NL;
+% S = /Fbld/Fbld/Utils%.S;
+% T = /Fbld/Fbld/Utils%.T;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
-<@>% Err = /Fbld/Result%.Err;
 
 @ Text@ = /Fbld/Text%.Text@;
-% Text = /Fbld/Text%.Text;
-% StringOf = /Fbld/Text%.StringOf;
 
-<@>% Ok = /Fbld/Result%.Ok;
 
-<<@>@ M@>(Monad@<M@> m, OStream@<M@> out) {
-
-  % ResultM = /Fbld/ResultM%<M@>;
-  <@>@ MR@ = ResultM.MR@;
-  Monad@<MR@> mr = ResultM.Monad(m);
-
-  @ Core@ = /Fbld/Core%(m).Core@;
-
-  % O = /Core/Stream/OStream%(m);
-
-  (Text@) { MR@<Unit@>; }
-  ManText = (Text@ str) {
-    Unit@ _ <- m.do(O.PutStr(out, StringOf(str)));
-    mr.return(Unit);
-  };
-
-  (Text@) { MR@<Unit@>; }
-  L = (Text@ str) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'\fB'));
-    Unit@ _ <- mr.do(ManText(str));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'\fR'));
-    mr.return(Unit);
-  };
-
-  (Text@) { MR@<Unit@>; }
-  A = (Text@ str) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'\fI'));
-    Unit@ _ <- mr.do(ManText(str));
-    Unit@ _ <- m.do(O.PutStr(out, Str|'\fR'));
-    mr.return(Unit);
-  };
-
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Label = (Text@ id, MR@<Unit@> text) {
-    text;
-  };
-
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Ref = (Text@ id, MR@<Unit@> caption) {
-    # TODO: Should we link somehow to the label?
-    caption;
-  };
-
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Url = (Text@ url, MR@<Unit@> text) {
-    # TODO: Can we do something better here?
-    Unit@ _ <- mr.do(text);
-    Unit@ _ <- m.do(O.PutStr(out, Str|'('));
-    Unit@ _ <- mr.do(ManText(url));
-    Unit@ _ <- m.do(O.PutStr(out, Str|')'));
-    mr.return(Unit);
-  };
-
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  File = (Text@ file, MR@<Unit@> text) {
-    # TODO: Can we do something better here?
-    Url(file, text);
-  };
-
-  (Text@, MR@<Unit@>) { MR@<Unit@>; }
-  Fbld = (Text@ file, MR@<Unit@> text) {
-    # TODO: Can we do something better here?
-    File(file, text);
-  };
-
-  (MR@<Unit@>) { MR@<Unit@>; }
-  Par = (MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.P'));
-    Unit@ _ <- mr.do(body);
-    Unit@ _ <- m.do(O.PutLine(out, Str|''));
-    mr.return(Unit);
-  };
-
-  (MR@<Unit@>) { MR@<Unit@>; }
-  Item = (MR@<Unit@> body) {
-    # TODO: Do something better here.
-    Unit@ _ <- m.do(O.PutStr(out, Str|'.IP \[bu] 2'));
-    body;
-  };
-
-  (Text@, Text@) { MR@<Unit@>; }
-  Code = (Text@ lang, Text@ text) {
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.P'));
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.EX'));
-    Unit@ _ <- mr.do(ManText(text));
-    Unit@ _ <- m.do(O.PutLine(out, Str|''));
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.EE'));
-    m.return(Ok(Unit));
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Def = (MR@<Unit@> name, MR@<Unit@> value) {
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.TP 4'));
-    Unit@ _ <- mr.do(name);
-    Unit@ _ <- m.do(O.PutLine(out, Str|''));
-    Unit@ _ <- mr.do(value);
-    Unit@ _ <- m.do(O.PutLine(out, Str|''));
-    mr.return(Unit);
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Definition = (MR@<Unit@> name, MR@<Unit@> value) {
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.P'));
-    Unit@ _ <- mr.do(name);
-    Unit@ _ <- m.do(O.PutLine(out, Str|''));
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.RS'));
-    Unit@ _ <- mr.do(value);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'.RE'));
-    mr.return(Unit);
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Section = (MR@<Unit@> title, MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'.SH "'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'"'));
-    body;
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  SubSection = (MR@<Unit@> title, MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'.SS "'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'"'));
-    body;
-  };
-
-  (MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  SubSubSection = (MR@<Unit@> title, MR@<Unit@> body) {
-    # TODO: Do something better here?
-    Definition(title, body);
-  };
-
-  (Loc@, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; }
-  Doc = (Loc@ loc, MR@<Unit@> title, MR@<Unit@> body) {
-    String@ msg = Str|'@doc not supported by man backend. Use @man instead.';
-    m.return(Err<Unit@>(Text(msg, loc)));
-  };
-
-  @ Man@ = (MR@<Unit@>, MR@<Unit@>, MR@<Unit@>, MR@<Unit@>) { MR@<Unit@>; };
-
-  # @man[INLINE section][INLINE title][INLINE source][BLOCK body]
-  # Top level entry point for a man page.
-  # @param section  The section of the man page, e.g. 1 or 3.
-  # @param title  The title of the document.
-  # @param source The source of the document.
-  # @param body  The contents of the document.
-  Man@ Man = (MR@<Unit@> section, MR@<Unit@> title, MR@<Unit@> source, MR@<Unit@> body) {
-    Unit@ _ <- m.do(O.PutStr(out, Str|'.TH "'));
-    Unit@ _ <- mr.do(title);
-    Unit@ _ <- m.do(O.PutStr(out, Str|'" '));
-    Unit@ _ <- mr.do(section);
-    Unit@ _ <- m.do(O.PutStr(out, Str|' "" "'));
-    Unit@ _ <- mr.do(source);
-    Unit@ _ <- m.do(O.PutLine(out, Str|'"'));
-    body;
-  };
-
-  Core@ Core = @(
-    text: ManText,
-    l: L, a: A,
-    label: Label, ref: Ref,
-    url: Url, file: File, fbld: Fbld,
-    par: Par,
-    item: Item,
-    code: Code,
-    def: Def,
-    definition: Definition,
-    section: Section,
-    subsection: SubSection,
-    subsubsection: SubSubSection,
-    doc: Doc
-  );
-
-  @(Core, Man@, Man);
+(Loc@, Text@) { Fbld@<Text@>; }
+ManText = (Loc@ _, Text@ str) {
+  T(str);
 };
+
+(Loc@, Text@) { Fbld@<Text@>; }
+L = (Loc@ l, Text@ str) {
+  Cat(l)[S(l)|'\fB', ManText(l, str), S(l)|'\fR'];
+};
+
+(Loc@, Text@) { Fbld@<Text@>; }
+A = (Loc@ l, Text@ str) {
+  Cat(l)[S(l)|'\fI', ManText(l, str), S(l)|'\fR'];
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Label = (Loc@ l, Text@ id, Fbld@<Text@> text) {
+  text;
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Ref = (Loc@ l, Text@ id, Fbld@<Text@> caption) {
+  # TODO: Should we link somehow to the label?
+  caption;
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Url = (Loc@ l, Text@ url, Fbld@<Text@> text) {
+  # TODO: Can we do something better here?
+  Cat(l)[text, S(l)|'(', ManText(l, url), S(l)|')'];
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+File = (Loc@ l, Text@ file, Fbld@<Text@> text) {
+  # TODO: Can we do something better here?
+  Url(l, file, text);
+};
+
+(Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }
+Fbld = (Loc@ l, Text@ file, Fbld@<Text@> text) {
+  # TODO: Can we do something better here?
+  File(l, file, text);
+};
+
+(Loc@, Fbld@<Text@>) { Fbld@<Text@>; }
+Par = (Loc@ l, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'.P', NL(l), body, NL(l)];
+};
+
+(Loc@, Fbld@<Text@>) { Fbld@<Text@>; }
+Item = (Loc@ l, Fbld@<Text@> body) {
+  # TODO: Do something better here.
+  Cat(l)[S(l)|'.IP \[bu] 2', body];
+};
+
+(Loc@, Text@, Text@) { Fbld@<Text@>; }
+Code = (Loc@ l, Text@ lang, Text@ text) {
+  Cat(l)[
+    S(l)|'.P', NL(l),
+    S(l)|'EX', NL(l),
+    ManText(l, text), NL(l),
+    S(l)|'EE', NL(l)];
+};
+
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+Def = (Loc@ l, Fbld@<Text@> name, Fbld@<Text@> value) {
+  Cat(l)[
+    S(l)|'.TP 4', NL(l),
+    name, NL(l),
+    value, NL(l)];
+};
+
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+Definition = (Loc@ l, Fbld@<Text@> name, Fbld@<Text@> value) {
+  Cat(l)[
+    S(l)|'.P', NL(l),
+    name, NL(l),
+    S(l)|'.RS', NL(l),
+    value, S(l)|'.RE', NL(l)];
+};
+
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+Section = (Loc@ l, Fbld@<Text@> title, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'.SH "', title, S(l)|'"', NL(l), body];
+};
+
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+SubSection = (Loc@ l, Fbld@<Text@> title, Fbld@<Text@> body) {
+  Cat(l)[S(l)|'.SS "', title, S(l)|'"', NL(l), body];
+};
+
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+SubSubSection = (Loc@ l, Fbld@<Text@> title, Fbld@<Text@> body) {
+  # TODO: Do something better here?
+  Definition(l, title, body);
+};
+
+(Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }
+Doc = (Loc@ loc, Fbld@<Text@> title, Fbld@<Text@> body) {
+  Error<Text@>(loc, Str|'@doc not supported by man backend. Use @man instead.');
+};
+
+@ Man@ = (Loc@, Fbld@<Text@>, Fbld@<Text@>, Fbld@<Text@>, Fbld@<Text@>) {
+  Fbld@<Text@>; };
+
+# @man[INLINE section][INLINE title][INLINE source][BLOCK body]
+# Top level entry point for a man page.
+# @param section  The section of the man page, e.g. 1 or 3.
+# @param title  The title of the document.
+# @param source The source of the document.
+# @param body  The contents of the document.
+Man@ Man = (Loc@ l, Fbld@<Text@> section, Fbld@<Text@> title, Fbld@<Text@> source, Fbld@<Text@> body) {
+  Cat(l)[
+    S(l)|'.TH "', title, S(l)|'" ', section, S(l)|' "" "', source, NL(l),
+    body];
+};
+
+Core@ Core = @(
+  text: ManText,
+  l: L, a: A,
+  label: Label, ref: Ref,
+  url: Url, file: File, fbld: Fbld,
+  par: Par,
+  item: Item,
+  code: Code,
+  def: Def,
+  definition: Definition,
+  section: Section,
+  subsection: SubSection,
+  subsubsection: SubSubSection,
+  doc: Doc
+);
+
+@(Core, Man@, Man);

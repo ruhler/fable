@@ -1,38 +1,34 @@
 
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 % Str = /Core/String%.Str;
 
-<<@>@ M@>(Monad@<M@> m) {
-  % MarkupModule = /Fbld/Markup%(m);
-  @ Markup@ = MarkupModule.Markup@;
-  % Block = MarkupModule.Block;
-  % Entry = MarkupModule.Entry;
+% DefB = /Fbld/Define%.DefB;
 
-  % Define = /Fbld/Define%(m);
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Block = /Fbld/Markup%.Block;
+% Entry = /Fbld/Markup%.Entry;
 
-  Markup@ Markup = Block[
-    Entry(Str|'usage', Define.DefB[Str|'name', Str|'brief', Str|'content']|'
+
+Markup@ Markup = Block[
+  Entry(Str|'usage', DefB[Str|'name', Str|'brief', Str|'content']|'
 @doc[$name][$name - $brief]
  $$content
 '),
-    Entry(Str|'synopsis', Define.DefB[Str|'text']|'@par[Usage: $text]'),
-    Entry(Str|'description', Define.DefB[Str|'body']|'$body'),
-    Entry(Str|'options', Define.DefB[Str|'body']|'$body'),
-    Entry(Str|'opt', Define.DefB[Str|'opt', Str|'desc']|'@def[$opt][$desc]'),
-    Entry(Str|'exitstatus', Define.DefB[Str|'body']|'
+  Entry(Str|'synopsis', DefB[Str|'text']|'@par[Usage: $text]'),
+  Entry(Str|'description', DefB[Str|'body']|'$body'),
+  Entry(Str|'options', DefB[Str|'body']|'$body'),
+  Entry(Str|'opt', DefB[Str|'opt', Str|'desc']|'@def[$opt][$desc]'),
+  Entry(Str|'exitstatus', DefB[Str|'body']|'
 @section[Exit Status]
  $$body
 '),
-    Entry(Str|'examples', Define.DefB[Str|'body']|'
+  Entry(Str|'examples', DefB[Str|'body']|'
 @section[Examples]
  $$body
 '),
-    Entry(Str|'ex', Define.DefB[Str|'text', Str|'desc']|'
+  Entry(Str|'ex', DefB[Str|'text', Str|'desc']|'
 @par[@l[$text]]
 $desc
 ')
-  ];
+];
 
-  @(Markup);
-};
+@(Markup);
