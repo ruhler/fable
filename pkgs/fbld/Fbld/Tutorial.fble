@@ -10,7 +10,7 @@
 Markup@ Markup = Block[
   Entry(Str|'tutorial', Define.DefB[Str|'name', Str|'content']|'
 @doc[$name]
-@FbleVersion (@BuildStamp)
+  @FbleVersion (@BuildStamp)
 
 $$content'),
   Entry(Str|'exercise', Define.DefB[Str|'content']|'

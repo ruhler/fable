@@ -1464,4 +1464,12 @@ map?
 One reason is because that would make Fbld@ even more tied up into a knot.
 Maybe I can not worry about it for now. Just do a linear chain search.
 
+---
 
+Time to see if it works out. Let's remove one of the easier front ends from
+fble, port it to fbld. Let's say tutorial? Except, that doesn't seem to work
+at the moment, and I don't have any location info to help. Hmm...
+
+README works. Can we start with that? Or should I just do some manual things?
+
+With a simple manual test... it totally works. That's cool.
