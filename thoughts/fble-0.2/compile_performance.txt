@@ -1,0 +1,15 @@
+Fble Compile Performance
+=======================
+
+Compiling /Fbld/Main% takes almost a minute, which is very painful. Figure out
+why it's so slow and make it not be so slow.
+
+There are two approaches, both of which we should take.
+
+1. Profile and optimize.
+
+2. Add proper support for modular compilation, so we only have to read the
+types of included modules, not typecheck them too.
+
+Starting with (1).
+

@@ -4,10 +4,10 @@
 % False = /Core/Bool%.False;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -26,9 +26,12 @@
 
 <@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
 @ Env@ = /Fbld/Fbld%.Env@;
+<@>% Error = /Fbld/Fbld%.Error;
+% Cat = /Fbld/Fbld/Utils%.Cat;
 
 % Report = /Fbld/Loc%.Report;
 % Start = /Fbld/Loc%.Start;
+% Unknown = /Fbld/Loc%.Unknown;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 % Markups = /Fbld/Markup%.Markups;
@@ -60,7 +63,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Bool@ usage_help,
     Bool@ usage_man,
     Bool@ usage_lib,
-    Maybe@<String@> file
+    List@<String@> rfiles
   );
 
   (List@<String@>) { Args@; } ParseArgs = (List@<String@> args) {
@@ -114,10 +117,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(usage_lib: True));
       });
-      parse(args.cons.tail, result.@(file: Just(arg)));
+      parse(args.cons.tail, result.@(rfiles: Cons(arg, result.rfiles)));
     };
     parse(args, Args@(Str|'??', Str|'??',
-        Backend@(html: Unit), False, False, False, False, False, Nothing<String@>));
+        Backend@(html: Unit), False, False, False, False, False, Nil<String@>));
   };
 
   (List@<String@> args) {
@@ -128,21 +131,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       markdown: /Fbld/Markdown%.Core,
       man: /Fbld/Man%.Core,
       text: /Fbld/TextBackend%.Core);
-
-    parsed.file.?(nothing: {
-      String@ msg = Str|'missing input file';
-      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
-      m.return(False);
-    });
-
-    String@ filename = parsed.file.just;
-    
-    Maybe@<IStream@<M@>> fin <- m.do(stdio.read(filename));
-    fin.?(nothing: {
-      String@ msg = Strs[Str|'unable to open ', filename];
-      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
-      m.return(False);
-    });
 
     % Build = /Fbld/Build%(core, parsed.buildstamp);
     % Version = /Fbld/Version%(core, parsed.version);
@@ -168,8 +156,25 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
     Env@ env = /Fbld/Markup%.Env(markup);
 
-    String@ contents <- m.do(I.GetText(fin.just));
-    Fbld@<Text@> fbld = Run.Block(Text(contents, Start(filename)));
+    List@<Fbld@<Text@>> fblds <- m.do(/Core/List%.ForEach(parsed.rfiles,
+        m.return(Nil<Fbld@<Text@>>),
+        (String@ filename, M@<List@<Fbld@<Text@>>> ms) {
+          List@<Fbld@<Text@>> head <- m.do(ms);
+
+          Fbld@<Text@> fbld <- m.do({
+            Maybe@<IStream@<M@>> fin <- m.do(stdio.read(filename));
+            fin.?(nothing: {
+              String@ msg = Strs[Str|'unable to open ', filename];
+              m.return(Error<Text@>(Unknown, msg));
+            });
+
+            String@ contents <- m.do(I.GetText(fin.just));
+            m.return(Run.Block(Text(contents, Start(filename))));
+          });
+          m.return(Cons(fbld, head));
+        }));
+
+    Fbld@<Text@> fbld = Cat(Unknown)(fblds);
     Result@<Text@> r = /Fbld/Fbld%.Run(fbld, env);
     r.?(err: {
       String@ msg = Report(LocOf(r.err), StringOf(r.err));

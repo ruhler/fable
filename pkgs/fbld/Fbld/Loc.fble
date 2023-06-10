@@ -34,4 +34,6 @@
     msg];
 };
 
-@(Loc@, Start, Advance, Report);
+Loc@ Unknown = Loc@(Str|'???', Int|1, Int|1, Int|0);
+
+@(Loc@, Start, Advance, Report, Unknown);
