@@ -43,6 +43,7 @@ typedef enum {
 typedef struct FbleType {
   FbleTypeTag tag;    /**< The kind of FbleType. */
   FbleLoc loc;        /**< Source location for error reporting. */
+  bool visiting;      /**< Internal flag. Do not touch. */
 } FbleType;
 
 /** Vector of FbleType. */

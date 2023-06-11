@@ -43,7 +43,8 @@ static void Refs(FbleHeapCallback* callback, FbleType* type);
 static void OnFree(FbleTypeHeap* heap, FbleType* type);
 
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing);
-static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
+static bool HasParam(FbleType* type, FbleType* param);
+static bool HasParam_(FbleType* type, FbleType* param);
 static FbleType* Subst(FbleTypeHeap* heap, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq);
 
@@ -329,7 +330,6 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
  *
  * @param type  The type to check.
  * @param param  The abstract type to check for.
- * @param visited  A list of types already visited to end the recursion.
  *
  * @returns
  *   True if the param occur in type, false otherwise.
@@ -337,24 +337,37 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
  * @sideeffects
  *   None.
  */
-static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
+static bool HasParam(FbleType* type, FbleType* param)
 {
-  for (TypeList* v = visited; v != NULL; v = v->next) {
-    if (type == v->type) {
-      return false;
-    }
+  // To break recursion, avoid visiting the same type twice.
+  if (type->visiting) {
+    return false;
   }
+  type->visiting = true;
+  bool result = HasParam_(type, param);
+  type->visiting = false;
+  return result;
+}
 
-  TypeList nv = {
-    .type = type,
-    .next = visited
-  };
-
+/**
+ * Checks whether a type has the given param as a free type variable.
+ *
+ * @param type  The type to check.
+ * @param param  The abstract type to check for.
+ *
+ * @returns
+ *   True if the param occur in type, false otherwise.
+ *
+ * @sideeffects
+ *   None.
+ */
+static bool HasParam_(FbleType* type, FbleType* param)
+{
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
-        if (HasParam(dt->fields.xs[i].type, param, &nv)) {
+        if (HasParam(dt->fields.xs[i].type, param)) {
           return true;
         }
       }
@@ -364,22 +377,22 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        if (HasParam(ft->args.xs[i], param, &nv)) {
+        if (HasParam(ft->args.xs[i], param)) {
           return true;
         }
       }
-      return HasParam(ft->rtype, param, &nv);
+      return HasParam(ft->rtype, param);
     }
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      return pt->arg != param && HasParam(pt->body, param, &nv);
+      return pt->arg != param && HasParam(pt->body, param);
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      return HasParam(pat->arg, param, &nv)
-          || HasParam(pat->poly, param, &nv);
+      return HasParam(pat->arg, param)
+          || HasParam(pat->poly, param);
     }
 
     case FBLE_PACKAGE_TYPE: {
@@ -389,18 +402,18 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
       // TODO: Test this case. Should we be returning 'false' instead?
-      return HasParam(abs->type, param, &nv);
+      return HasParam(abs->type, param);
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       return (type == param)
-          || (var->value != NULL && HasParam(var->value, param, &nv));
+          || (var->value != NULL && HasParam(var->value, param));
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* type_type = (FbleTypeType*)type;
-      return HasParam(type_type->type, param, &nv);
+      return HasParam(type_type->type, param);
     }
   }
 
@@ -443,7 +456,7 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
  */
 static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, FbleType* arg, TypePairs* tps)
 {
-  if (!HasParam(type, param, NULL)) {
+  if (!HasParam(type, param)) {
     return FbleRetainType(heap, type);
   }
 
@@ -957,6 +970,7 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
   FbleType* type = (FbleType*)FbleNewHeapObject(heap, size);
   type->tag = tag;
   type->loc = FbleCopyLoc(loc);
+  type->visiting = false;
   return type;
 }
 

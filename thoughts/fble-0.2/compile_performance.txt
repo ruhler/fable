@@ -16,3 +16,67 @@ Starting with (1).
 From out directory:
   ./bin/fble-compile -c -I ../pkgs/fbld -I ../pkgs/core -m /Fbld/Main% > /dev/null
 
+perf profiling shows 90% of the time is in HasParam. Looks like due to the
+linear search through the list of visited types.
+
+---
+
+Linear search through the list of visited types leads to quadratic runtime,
+because we do the search for each element in the list.
+
+We can change this to constant time by adding a field to FbleType to mark if
+it is being visited currently or not. Feels slightly messy to me, because it
+means you can't do two HasParam calls in parallel. But we don't do that today
+anyway. Maybe it's not an issue unless we start to make the compiler
+multithreaded. We could worry about it then (I don't expect that to happy any
+time soon, if ever).
+
+Digging a little deeper to understand this. How deep a list are we talking
+about? I don't expect types to be that complicated. Maybe there is some
+other underlying issue going on that's worth understanding too.
+
+In my run, I see the length of that list not more than 49, spending a lot of
+time around 30 elements long. Let me see if I can find the type in question
+that goes all the way to 49. Or pick something easy, like 40.
+
+Here's a 45 chain, for example:
+
+/Core/Unit%:6:11
+/Core/Char%:2:3
+/Core/Char%:10:11
+/Core/Char%:10:3
+/Core/String%:2:3
+/Core/String%:9:13
+/Fbld/Loc%:9:3
+/Fbld/Loc%:14:10
+/Fbld/Text%:13:3
+/Fbld/Text%:18:12
+/Fbld/Text%:18:3
+/Fbld/Text%:21:11
+/Fbld/Text%:21:3
+/Fbld/Command%:4:3
+/Fbld/Command%:7:14
+...
+/Fbld/Fbld%:31:6
+
+It's strange to me that it is trying to go inside things? Unless we are doing
+something like:
+
+HasParam(Fbld@<Text@>, Foo@);
+
+Because, post substitution into Fbld@, we would have something like:
+
+Env@ -> Invoke@ -> Command@ -> Text@ -> Loc@ -> String@ -> List@ -> Char@ -> Unit@.
+
+And if each of those is two or three layers of types, I could see this getting
+up to 30 or 40 types deep reasonably enough.
+
+---
+
+Switching from linear search to a flag on the type reduces compile time from
+50 seconds down to 15 seconds. That's very good, but clearly not the only
+problem. We're stilling spending 40% of our time in HasParam.
+
+
+
+
