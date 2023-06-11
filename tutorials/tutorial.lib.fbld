@@ -1,0 +1,8 @@
+@defb[tutorial][name][content]
+ @doc[$name]
+   @FbleVersion (@BuildStamp)
+
+  $$content
+
+@defb[exercise][content]
+ $$content

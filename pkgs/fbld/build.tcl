@@ -29,16 +29,16 @@ namespace eval "pkgs/fbld" {
     "cmp $::s/README.md $::b/pkgs/fbld/README.md"
 
   # args is additional command line options.
-  proc fbld_html_doc { target source args } {
+  proc fbld_html_doc { target sources args } {
     build $target \
-      "$::b/pkgs/fbld/fble-fbld $source $::s/buildstamp" \
-      "$::b/pkgs/fbld/fble-fbld $source --html --version $::version --buildstamp `$::s/buildstamp` $args > $target"
+      "$::b/pkgs/fbld/fble-fbld $sources $::s/buildstamp" \
+      "$::b/pkgs/fbld/fble-fbld $sources --html --version $::version --buildstamp `$::s/buildstamp` $args > $target"
   }
 
   fbld_html_doc $::b/pkgs/fbld/fbld.html $::s/fbld/fbld.fbld
   fbld_html_doc $::b/pkgs/fbld/fble.html $::s/spec/fble.fbld --fble
   fbld_html_doc $::b/pkgs/fbld/README.html $::s/README.fbld
-  fbld_html_doc $::b/pkgs/fbld/HelloWorld.html $::s/tutorials/HelloWorld.fbld --tutorial
+  fbld_html_doc $::b/pkgs/fbld/HelloWorld.html "$::s/tutorials/tutorial.lib.fbld $::s/tutorials/HelloWorld.fbld"
 
   # fble-comile.1
   build $::b/pkgs/fbld/fble-compile.1 \

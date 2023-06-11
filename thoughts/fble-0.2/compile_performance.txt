@@ -13,3 +13,6 @@ types of included modules, not typecheck them too.
 
 Starting with (1).
 
+From out directory:
+  ./bin/fble-compile -c -I ../pkgs/fbld -I ../pkgs/core -m /Fbld/Main% > /dev/null
+
