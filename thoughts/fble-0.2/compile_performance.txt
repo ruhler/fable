@@ -77,6 +77,22 @@ Switching from linear search to a flag on the type reduces compile time from
 50 seconds down to 15 seconds. That's very good, but clearly not the only
 problem. We're stilling spending 40% of our time in HasParam.
 
+There's a TODO for abstract type. Should HasParam descend into the body of an
+abstract type?
+
+Well, I see we do Subst on the body of an abstract type. If we do Subst on the
+body of an abstract type, we should do HasParam on the body of an abstract
+type too.
+
+Why do we do Subst on the body of an abstract type? How about:
+
+<@ T@> {
+  @Foo = _@(List@<T@>);
+};
+
+Then sure, it makes sense to do the substitution there. Let's leave as is for
+now. In fact, I might get rid of the TODO.
+
 
 
 

@@ -401,7 +401,6 @@ static bool HasParam_(FbleType* type, FbleType* param)
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      // TODO: Test this case. Should we be returning 'false' instead?
       return HasParam(abs->type, param);
     }
 
