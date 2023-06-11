@@ -7,6 +7,7 @@
 <@>% Nil = /Core/List%.Nil;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -54,7 +55,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text);
 
   @ Args@ = *(
-    String@ buildstamp,
     String@ version,
     Backend@ backend,
     List@<String@> rfiles
@@ -65,11 +65,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     parse = (List@<String@> args, Args@ result) {
       args.?(nil: result);
       String@ arg = args.cons.head;
-      /Core/String/Eq%.Eq(Str|'--buildstamp', arg).?(true: {
-        String@ buildstamp = args.cons.tail.cons.head;
-        List@<String@> nargs = args.cons.tail.cons.tail;
-        parse(nargs, result.@(buildstamp));
-      });
       /Core/String/Eq%.Eq(Str|'--version', arg).?(true: {
         String@ version = args.cons.tail.cons.head;
         List@<String@> nargs = args.cons.tail.cons.tail;
@@ -93,7 +88,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       });
       parse(args.cons.tail, result.@(rfiles: Cons(arg, result.rfiles)));
     };
-    parse(args, Args@(Str|'??', Str|'??', Backend@(html: Unit), Nil<String@>));
+    parse(args, Args@(Str|'??', Backend@(html: Unit), Nil<String@>));
   };
 
   (List@<String@> args) {
@@ -105,12 +100,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       man: /Fbld/Man%.Core,
       text: /Fbld/TextBackend%.Core);
 
-    % Build = /Fbld/Build%(core, parsed.buildstamp);
-
     Markup@ markup = Markups[
       /Fbld/Define%.Markup,
-      /Fbld/Core%.Markup(core),
-      Build.Markup
+      /Fbld/Core%.Markup(core)
     ];
 
     Env@ env = /Fbld/Markup%.Env(markup);
@@ -121,7 +113,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
           List@<Fbld@<Text@>> head <- m.do(ms);
 
           Fbld@<Text@> fbld <- m.do({
-            Maybe@<IStream@<M@>> fin <- m.do(stdio.read(filename));
+            Maybe@<IStream@<M@>> fin <- m.do({
+              /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
+              stdio.read(filename);
+            });
+
             fin.?(nothing: {
               String@ msg = Strs[Str|'unable to open ', filename];
               m.return(Error<Text@>(Unknown, msg));

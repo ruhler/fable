@@ -14,7 +14,8 @@ Things to consider doing for the fble-0.2 release.
 * fbld vim syntax: set tabstop/shiftwidth to single space?
 
 * Fbld:
- - Move @Buildstamp out of fble into .fbld
+ - Write usage.man.fbld
+ - Generate config.fbld
  - Move backends out of fble into .fbld
  - Add test cases for @defb, @defi.
  - Document @defb, @defi in spec?

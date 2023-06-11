@@ -2,9 +2,11 @@
 # generate a build stamp\
 exec tclsh8.6 "$0" "$@"
 
-# Usage: buildstamp [-c ID]
+# Usage: buildstamp [-c ID | --fbld ID]
 #   -c ID outputs C code to define a const char* named ID with the contents of
 #   the build stamp.
+#   --fbld ID outputs .fbld defining an inline tag ID with the value of the build
+#   stamp.
 #
 # Otherwise it just outputs the build stamp.
 
@@ -19,6 +21,10 @@ switch -exact [lindex $argv 0] {
   -c {
     set id [lindex $argv 1]
     puts "const char* $id = \"$stamp\";"
+  }
+  --fbld {
+    set id [lindex $argv 1]
+    puts "@defi\[$id\]\[$stamp\]"
   }
   default {
     puts $stamp
