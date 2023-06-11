@@ -17,7 +17,6 @@ Things to consider doing for the fble-0.2 release.
  - Move rest of front ends out of fble.
  - Rename fble-fbld to fbld.
  - Document @defb, @defi in spec?
- - Figure out a better approach to @FbleVersion?
  - Figure out how to generate c header output.
  - Figure out why it takes so much memory and time to run.
  - Use map from front end name to Markup to simplify front end options

@@ -20,8 +20,8 @@ namespace eval "pkgs/fbld" {
 
   # README.md
   build $::b/pkgs/fbld/README.md \
-    "$::b/pkgs/fbld/fble-fbld $::s/README.fbld" \
-    "$::b/pkgs/fbld/fble-fbld --markdown --version $::version --buildstamp '' $::s/README.fbld > $::b/pkgs/fbld/README.md"
+    "$::b/pkgs/fbld/fble-fbld $::b/fbld/version.fbld $::s/README.fbld" \
+    "$::b/pkgs/fbld/fble-fbld --markdown --buildstamp '' $::b/fbld/version.fbld $::s/README.fbld > $::b/pkgs/fbld/README.md"
 
   # Make sure the version of README.md checked in matches the latest version.
   test $::b/pkgs/fbld/README.tr \
@@ -31,8 +31,8 @@ namespace eval "pkgs/fbld" {
   # args is additional command line options.
   proc fbld_html_doc { target sources args } {
     build $target \
-      "$::b/pkgs/fbld/fble-fbld $sources $::s/buildstamp" \
-      "$::b/pkgs/fbld/fble-fbld $sources --html --version $::version --buildstamp `$::s/buildstamp` $args > $target"
+      "$::b/pkgs/fbld/fble-fbld $::b/fbld/version.fbld $sources $::s/buildstamp" \
+      "$::b/pkgs/fbld/fble-fbld $::b/fbld/version.fbld $sources --html --buildstamp `$::s/buildstamp` $args > $target"
   }
 
   fbld_html_doc $::b/pkgs/fbld/fbld.html $::s/fbld/fbld.fbld
@@ -47,6 +47,6 @@ namespace eval "pkgs/fbld" {
 
   # fble-comile.1
   build $::b/pkgs/fbld/fble-compile.1 \
-    "$::b/pkgs/fbld/fble-fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $::s/bin/fble-compile.fbld" \
-    "$::b/pkgs/fbld/fble-fbld --text --version $::version --buildstamp `$::s/buildstamp` $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $::s/bin/fble-compile.fbld > $::b/pkgs/fbld/fble-compile.1"
+    "$::b/pkgs/fbld/fble-fbld $::b/fbld/version.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $::s/bin/fble-compile.fbld" \
+    "$::b/pkgs/fbld/fble-fbld --text $::version --buildstamp `$::s/buildstamp` $::b/fbld/version.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $::s/bin/fble-compile.fbld > $::b/pkgs/fbld/fble-compile.1"
 }

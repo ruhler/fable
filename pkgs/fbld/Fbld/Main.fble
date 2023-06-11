@@ -106,13 +106,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       text: /Fbld/TextBackend%.Core);
 
     % Build = /Fbld/Build%(core, parsed.buildstamp);
-    % Version = /Fbld/Version%(core, parsed.version);
 
     Markup@ markup = Markups[
       /Fbld/Define%.Markup,
       /Fbld/Core%.Markup(core),
-      Build.Markup,
-      Version.Markup
+      Build.Markup
     ];
 
     Env@ env = /Fbld/Markup%.Env(markup);

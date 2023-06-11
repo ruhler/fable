@@ -7,6 +7,10 @@ namespace eval "fbld" {
   build $::b/fbld/version.fbld.tcl "" \
     "echo proc inline_FbleVersion {} { inline_ $::version } > $::b/fbld/version.fbld.tcl"
 
+  # version.fbld
+  build $::b/fbld/version.fbld "" \
+    "echo @defi\[FbleVersion\]\[$::version\] > $::b/fbld/version.fbld"
+
   # Processes an fbld file.
   #
   #   target - the file to generate
