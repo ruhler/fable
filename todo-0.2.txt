@@ -11,6 +11,8 @@ Things to consider doing for the fble-0.2 release.
  We'll want to purpose both modular compilation, and general improvements to
  compile time.
 
+* fbld vim syntax: set tabstop/shiftwidth to single space?
+
 * Fbld:
  - Move rest of front ends out of fble.
  - Rename fble-fbld to fbld.

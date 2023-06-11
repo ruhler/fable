@@ -18,7 +18,6 @@
 % Cat = /Fbld/Fbld/Utils%.Cat;
 % NL = /Fbld/Fbld/Utils%.NL;
 % S = /Fbld/Fbld/Utils%.S;
-% T = /Fbld/Fbld/Utils%.T;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
@@ -107,7 +106,7 @@ Item = (Loc@ l, Fbld@<Text@> body) {
 
 (Loc@, Text@, Text@) { Fbld@<Text@>; }
 Code = (Loc@ l, Text@ lang, Text@ text) {
-  Cat(l)[S(l)|'<pre>', T(text), S(l)|'</pre>', NL(l)];
+  Cat(l)[S(l)|'<pre>', HtmlText(l, text), S(l)|'</pre>', NL(l)];
 };
 
 (Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }

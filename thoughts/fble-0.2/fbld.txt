@@ -1473,3 +1473,14 @@ at the moment, and I don't have any location info to help. Hmm...
 README works. Can we start with that? Or should I just do some manual things?
 
 With a simple manual test... it totally works. That's cool.
+
+---
+
+Indent issue with defb:
+
+@defb[synopsis][text]
+ @par[Usage: $text]
+
+Will that work? Maybe?
+
+
