@@ -7,15 +7,16 @@ Things to consider doing for the fble-0.2 release.
  - Update users to handle changing locations properly.
 
 * Improve fble compile times.
- - For example, /Fbld/Main% takes like 50 seconds to compile.
+ - For example, /Fbld/Main% takes like 15 seconds to compile.
  We'll want to purpose both modular compilation, and general improvements to
  compile time.
 
 * fbld vim syntax: set tabstop/shiftwidth to single space?
 
 * Fbld:
- - Move rest of front ends out of fble.
- - Rename fble-fbld to fbld.
+ - Move @Buildstamp out of fble into .fbld
+ - Move backends out of fble into .fbld
+ - Add test cases for @defb, @defi.
  - Document @defb, @defi in spec?
  - Figure out how to generate c header output.
  - Figure out why it takes so much memory and time to run.
