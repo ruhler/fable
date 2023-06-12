@@ -6,11 +6,6 @@ Things to consider doing for the fble-0.2 release.
  - Move implement of Eq and Show internally.
  - Update users to handle changing locations properly.
 
-* Improve fble compile times.
- - For example, /Fbld/Main% takes like 15 seconds to compile.
- We'll want to purpose both modular compilation, and general improvements to
- compile time.
-
 * fbld vim syntax: set tabstop/shiftwidth to single space?
 
 * Fbld:

@@ -1483,4 +1483,19 @@ Indent issue with defb:
 
 Will that work? Maybe?
 
+I think that's okay. It's the nested version that wouldn't work:
+
+@defb[...][text]
+ @foo
+  @par[Usage: $text]
+
+---
+
+Looking into performance of fbld. It takes a couple minutes to convert
+fble.fbld to fble.html. It should take only a couple of seconds.
+
+Profiling shows, as expected, most of the time is in Text Append. In this
+case, mostly from calling HtmlText.
+
+Let's update Text@ to support fast append.
 
