@@ -9,13 +9,12 @@ Things to consider doing for the fble-0.2 release.
 * fbld vim syntax: set tabstop/shiftwidth to single space?
 
 * Fbld:
- - Write usage.man.fbld
  - Generate config.fbld
  - Move backends out of fble into .fbld
  - Add test cases for @defb, @defi.
  - Document @defb, @defi in spec?
  - Figure out how to generate c header output.
- - Figure out why it takes so much memory and time to run.
+ - Figure out why it takes so much memory to run.
  - Use map from front end name to Markup to simplify front end options
    parsing.
  - Make sure @man ends up in markup somewhere when that is requested.
