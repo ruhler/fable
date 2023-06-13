@@ -15,10 +15,6 @@ Things to consider doing for the fble-0.2 release.
  - Document @defb, @defi in spec?
  - Figure out how to generate c header output.
  - Figure out why it takes so much memory to run.
- - Use map from front end name to Markup to simplify front end options
-   parsing.
- - Make sure @man ends up in markup somewhere when that is requested.
- - Add @config tag to BuildStamp.
  - Implement source highlighting for @code.
  - Change Env@ to Markup@ so we can insert new commands more reasonably?
 

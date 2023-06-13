@@ -25,22 +25,6 @@
 @ Invoke@ = /Fbld/Fbld%.Invoke@;
 <@>% Error = /Fbld/Fbld%.Error;
 
-# @<tag>
-# Creates an Invoke@ function expecting zero arguments.
-((Loc@) { Fbld@<Text@>; }) { Invoke@; }
-A0 = ((Loc@) { Fbld@<Text@>; } f) {
-  (Command@ command) {
-    Int@ num_args = Length(command.args);
-    /Core/Int/Eq%.Eq(Int|0, num_args ).?(false: {
-      Error<Text@>(LocOf(command.name), Strs[
-            Str|'expected 0 args, but got ',
-            /Core/Int/Show%.Show(num_args)]);
-    });
-
-    f(LocOf(command.name));
-  };
-};
-
 # @<tag>[*]
 # Creates an Invoke@ function expecting one argument.
 ((Loc@, Text@) { Fbld@<Text@>; }) { Invoke@; }
@@ -76,32 +60,6 @@ A2 = ((Loc@, Text@, Text@) { Fbld@<Text@>; } f) {
   };
 };
 
-# @<tag>[*][*][*]
-# Creates an Invoke@ function expecting three arguments.
-((Loc@, Text@, Text@, Text@) { Fbld@<Text@>; }) { Invoke@; }
-A3 = ((Loc@, Text@, Text@, Text@) { Fbld@<Text@>; } f) {
-  (Command@ command) {
-    Int@ num_args = Length(command.args);
-    /Core/Int/Eq%.Eq(Int|3, num_args ).?(false: {
-      Error<Text@>(LocOf(command.name), Strs[
-            Str|'expected 3 args, but got ',
-            /Core/Int/Show%.Show(num_args)]);
-    });
-
-    Text@ a1 = command.args.cons.head;
-    Text@ a2 = command.args.cons.tail.cons.head;
-    Text@ a3 = command.args.cons.tail.cons.tail.cons.head;
-    f(LocOf(command.name), a1, a2, a3);
-  };
-};
-
-# @<tag>[ESCAPED]
-# Creates an Invoke@ function expecting one ESCAPED argument.
-((Text@) { Fbld@<Text@>; }) { Invoke@; } E = ((Text@) { Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ arg <- A1;
-  f(Unescape(arg));
-};
-
 # @<tag>[ESCAPED]
 # Creates an Invoke@ function expecting one ESCAPED argument.
 ((Loc@, Text@) { Fbld@<Text@>; }) { Invoke@; } LE = ((Loc@, Text@) { Fbld@<Text@>; } f) {
@@ -116,22 +74,6 @@ A3 = ((Loc@, Text@, Text@, Text@) { Fbld@<Text@>; } f) {
   f(loc, Run.Inline(arg));
 };
 
-# @<tag>[INLINE]
-# Creates an Invoke@ function expecting one INLINE argument.
-((Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } I = ((Fbld@<Text@>) {
-Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ arg <- A1;
-  f(Run.Inline(arg));
-};
-
-# @<tag>[BLOCK] helper function
-# Creates an Invoke@ function expecting one BLOCK argument.
-((Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } B = ((Fbld@<Text@>) {
-Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ arg <- A1;
-  f(Run.Block(arg));
-};
-
 # @<tag>[BLOCK] helper function
 # Creates an Invoke@ function expecting one BLOCK argument.
 ((Loc@, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } LB = ((Loc@, Fbld@<Text@>) { Fbld@<Text@>; } f) {
@@ -141,41 +83,15 @@ Fbld@<Text@>; } f) {
 
 # @<tag>[ESCAPED][ESCAPED] helper function
 # Creates an Invoke@ function expecting two ESCAPED arguments.
-((Text@, Text@) { Fbld@<Text@>; }) { Invoke@; } EE = ((Text@, Text@) { Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ a1, Text@ a2 <- A2;
-  f(Unescape(a1), Unescape(a2));
-};
-
-# @<tag>[ESCAPED][ESCAPED] helper function
-# Creates an Invoke@ function expecting two ESCAPED arguments.
 ((Loc@, Text@, Text@) { Fbld@<Text@>; }) { Invoke@; } LEE = ((Loc@, Text@, Text@) { Fbld@<Text@>; } f) {
   Loc@ loc, Text@ a1, Text@ a2 <- A2;
   f(loc, Unescape(a1), Unescape(a2));
-};
-
-# @<tag>[ESCAPED][BLOCK] helper function
-((Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; }
-LEB = ((Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ a1, Text@ a2 <- A2;
-  f(loc, Unescape(a1), Run.Block(a2));
-};
-
-# @<tag>[ESCAPED][INLINE] helper function
-((Text@, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } EI = ((Text@, Fbld@<Text@>) { Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ a1, Text@ a2 <- A2;
-  f(Unescape(a1), Run.Inline(a2));
 };
 
 # @<tag>[ESCAPED][INLINE] helper function
 ((Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } LEI = ((Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } f) {
   Loc@ loc, Text@ a1, Text@ a2 <- A2;
   f(loc, Unescape(a1), Run.Inline(a2));
-};
-
-# @<tag>[INLINE][INLINE] helper function
-((Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } II = ((Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ a1, Text@ a2 <- A2;
-  f(Run.Inline(a1), Run.Inline(a2));
 };
 
 # @<tag>[INLINE][INLINE] helper function
@@ -186,22 +102,9 @@ LII = ((Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } f) {
 };
 
 # @<tag>[INLINE][BLOCK] helper function
-((Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } IB = ((Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ a1, Text@ a2 <- A2;
-  f(Run.Inline(a1), Run.Block(a2));
-};
-
-# @<tag>[INLINE][BLOCK] helper function
 ((Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; } LIB = ((Loc@, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } f) {
   Loc@ loc, Text@ a1, Text@ a2 <- A2;
   f(loc, Run.Inline(a1), Run.Block(a2));
-};
-
-# @<tag>[INLINE][INLINE][BLOCK] helper function
-((Loc@, Fbld@<Text@>, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; }) { Invoke@; }
-LIIB = ((Loc@, Fbld@<Text@>, Fbld@<Text@>, Fbld@<Text@>) { Fbld@<Text@>; } f) {
-  Loc@ loc, Text@ a1, Text@ a2, Text@ a3 <- A3;
-  f(loc, Run.Inline(a1), Run.Inline(a2), Run.Block(a3));
 };
 
 # @<tag>[ESCAPED][? INLINE] helper function, where the optional argument
@@ -228,7 +131,4 @@ LEmI = ((Loc@, Text@, Fbld@<Text@>) { Fbld@<Text@>; } f) {
 };
 
 
-@(A0, A1, A2, A3,
-  E, LE, I, LI, B, LB,
-  LEB, EE, LEE, EI, LEI, II, LII, IB, LIB, LEmI,
-  LIIB);
+@(LE, LEI, LEmI, LI, LB, LEE, LII, LIB);

@@ -1499,3 +1499,71 @@ case, mostly from calling HtmlText.
 
 Let's update Text@ to support fast append.
 
+---
+
+Next step is to figure out @config tag.
+
+I want a switch. How about something like:
+
+@defb[config][arg]
+ @switch[$arg]
+  @case[bindir] /usr/local/bin
+  @case[builddir] .
+  @case[datadir] /usr/local/share
+  ...
+  @default
+   @error Unknown Config Option: $arg
+   
+That's a very nice syntax for string switch. It suggests the body of @switch
+is interpreted as block structured text with @case and @default tags defined
+and nothing else. Anything wrong with that?
+
+It uses a different 'concat' operator. Instead of Concat, it takes the first
+nonempty string value. Importantly, the @default is only taken if no other
+branch is taken.
+
+I say we go for it.
+
+Can we do this as pure string manipulation? All except @default handling,
+where it needs some context about what happened before to know if it should be
+included or not.
+
+How about as one long @switch command?
+
+ @switch[$arg]
+  [bindir] /usr/local/bin
+  [builddir] .
+  [datadir] /usr/local/share
+  [@error Unknown Config Option: $arg]
+
+Here I'm using a new syntax that says we can start arg sequences by using [ at
+the start of the next line. Maybe we want \ character or something? Not sure.
+
+I like the version with @case much better from a read/write point of view.
+
+Imagine we had a tag @first that takes block structured text and returns the
+first non-empty element. And we had an @ifeq primitive:
+  @ifeq[a][b][body]
+
+It returns body if a and b are equal, empty otherwise. Then we could write:
+
+@defi[config][arg]
+ @first
+  @ifeq[$arg][bindir] /usr/local/bin
+  @ifeq[$arg][builddir] .
+  ...
+  @error Unknown config option: $arg
+
+That's a simpler set of primitives, don't you think? If I knew how to
+implement it under the hood.
+
+@error is easy to implement.
+@ifeq is easy to implement.
+
+@first is difficult, especially if @error has an immediate side effect instead
+of just returning text.
+
+You almost want Run.Block and Run.Invoke to return List@<Fbld@<Text@>>. Then
+we could handle things pretty easily. Go one at a time until we get non-empty
+(or error).
+
