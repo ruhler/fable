@@ -1,14 +1,14 @@
 @defb[AbstractSyntax][content]
  @definition[Abstract Syntax]
   @code[txt]
-   $$content
+   $content
 
 @defb[ConcreteSyntax][content]
  @definition[Concrete Syntax]
   @code[txt]
-   $$content
+   $content
 
 @defb[Example][content]
  @definition[Example]
   @code[fble]
-   $$content
+   $content

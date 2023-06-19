@@ -1,6 +1,6 @@
 @defb[usage][name][brief][content]
  @doc[$name][$name - $brief]
-  $$content
+  $content
 
 @defb[synopsis][text]
  @par[Usage: $text]
@@ -16,11 +16,11 @@
 
 @defb[exitstatus][body]
  @section[Exit Status]
-  $$body
+  $body
 
 @defb[examples][body]
  @section[Examples]
-  $$body
+  $body
 
 @defb[ex][text][desc]
  @par[@l[$text]]

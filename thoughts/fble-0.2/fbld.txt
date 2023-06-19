@@ -1567,3 +1567,563 @@ You almost want Run.Block and Run.Invoke to return List@<Fbld@<Text@>>. Then
 we could handle things pretty easily. Go one at a time until we get non-empty
 (or error).
 
+---
+
+Let's go back to the notion of a command having side effects.  Say it has side
+effects and returns a string value. The challenge with if/else is mainly
+syntactic. It doesn't naturally fit into 'list of commands' syntax because it
+has two separate bodies.
+
+We saw in fble how to get around that: make the next thing after the if be the
+else branch. That's if you are using more of a functional style. The other
+approach would be to allow commands to influence control flow: @return, for
+example.
+
+Because everything is a string, and I want to write the string directly
+instead of writing @return[...], let's go with the functional approach. How
+would this look? Can it be meaningfully specified?
+
+@if[p] then body
+ else body
+
+Would lead to:
+@if[p] blah
+ @if[q] blah
+  @if[z] blah
+   @blah
+
+As we've already mentioned. I don't know a way to say @if[p] blah returns
+right away, breaking out of the body of what's being executed. But what's to
+stop us from that?
+
+Then we consider:
+
+@par[foo] returns foo and continues.
+@return[foo] returns foo and does not continue.
+
+Or, @par[foo] adds foo to the current list of results and continues.
+@return[foo] adds foo to the current list of results and does not continue.
+@defb[...] does not add anything to the current list of results and continues.
+
+So, when we interpret block structured text (or inline structured text?), the
+result is a list of strings. Whichever command interprets that list of strings
+can combine them however they want. By default, they are concatenated.
+
+Any reason to do anything other than concatenate?
+
+And, again, we have the problem of not know exactly which context a command
+takes effect in.
+
+---
+
+How to move forward? I don't want to get stuck trying to design a perfect new
+programming language. I want to make progress.
+
+Question: Should we implement minimum primitives to support a general purpose
+language  and build everything else as a library, or should we implement high
+level primitives that do what I need?
+
+The fear of minimum primitives is performance will be terrible.
+
+Answer: I want support for general purpose programming in .fbld language.
+Let's start with that. If performance turns out to be a problem, we can add
+some higher level primitives built in.
+
+So, focusing on the minimum primitives to start, what I want to be able to do:
+* general purpose programming. If I can figure that out.
+* @config[...] implementation.
+* html escape implementation.
+
+Really it's the last two that matter for making forward progress. The first
+one is something to keep in mind.
+
+When coming up with primitives, there are two things to figure out:
+1. What primitives we want.
+2. The class of behaviors that a primitive can have.
+
+For (2), we currently have:
+* Return a string.
+* Add a new tag to the environment.
+* @defb/@defi do argument substitution before evaluation.
+
+The things we'll need for general purpose programming:
+* struct literal, struct access
+* union literal, union access, conditional execution
+* functions
+* recursion: types and functions.
+
+We have a single built in, recursive, struct/literal type: string. That's
+general purpose enough from the type point of view. What operations we need on
+strings:
+
+* string literal
+* string concat (provides "struct literal")
+* string head/tail (provides "struct access")
+* string switch (provides conditional execution)
+
+Maybe I also want variables, or equivalent. Like a @let tag.
+
+Arguments to primitives can be arbitrary strings interpreted in arbitrary
+ways. For consistency, it would be good not to have arbitrary different syntax
+for different primitives. Try to reuse inline and block structured syntax as
+much as we can.
+
+For @defi,@defb, we've also introduced variable syntax $... Is that necessary?
+I think it's useful to have. Distinguish between '$' substitution, which
+happens when @defi,@defb is applied, versus '@' substitution, which happens
+when the text in question is eventually, finally, evaluated.
+
+There's still the open question of dealing with indentation for $
+substitution.
+
+Let's come up with some straw proposals. Really the big ones are switch and
+head/tail.
+
+What I want to implement, in practice:
+* switch for config@.
+* map for htmlescape.
+
+The map@ command wants list argument. So list is something that would be nice
+to have.
+
+We already have a natural syntax for lists: block structured text (newline
+separated), and inline structured text (command separated). Imagine then:
+
+@list
+ First item.
+
+ Second item.
+
+ Third item.
+
+Or: 
+@list
+ @item First item.
+ @item Second item.
+ @item Third item.
+
+Or:
+@list[@item[First item.]@item[Second item]@item[Third item]]
+
+Or:
+@list[First item][Second item][Third item]
+ 
+The list we are interested in is a list of pairs. Using tcl's approach for
+mappings, it's a single flat list.
+
+@list[&][&amp;][<][&lt;][>][&gt;]
+
+@defb[htmlescape][text]
+ @let[mapping] @list[&][&amp;][<][&lt;][>][&gt;]
+  @map[$mapping][$text]
+
+Or, perhaps:
+ @split[ ][& &amp; < &lt; > &gt;]
+
+I guess @split would translate that to the string:
+ @item &
+ @item &amp;
+ @item <
+ @item &lt;
+ @item >
+ @item &gt;
+
+How to implement map@?
+
+@defb[map][mapping][body]
+ @if[@startswith[@first[$mapping]][$body]]
+  @second[$mapping]...
+
+I kind of want pattern matched based head/tail. So, either: head and tail,
+given a pattern to match as counting as the head. Or head and tail given a
+pattern to split on. I think the first is better.
+
+So, say we have a notion of a pattern.
+
+@head[pattern][string]
+ 
+Returns as much of the beginning of the given string that matches the given
+pattern.
+
+@tail[pattern][string]
+
+Returns the rest of the string not matched by @head[pattern][string].
+
+Maybe pattern can be glob:
+  ?, *, [chars], \x
+
+Glob is generally useful syntax for dealing with strings. What if we make that
+the core? Instead of ifeq, we have a glob match for if. head/tail take a glob
+pattern to try and match against.
+
+For example:
+  @head[?][$x]
+
+Returns the first character of $x.
+
+If we want to match everything up until the first space, something like:
+
+@defi[first][pattern][str]
+ @let[head] @head[$pattern][$str]
+   @if[$head] $head
+    @first[$pattern][$tail[?][$str]]
+
+Proposed primitives:
+* @let[var][def][body]
+  Returns the value of body with "$var" replaced with the value of def
+* @if[condition][then][else]
+  If condition is non-empty, returns value of then, else returns value of
+  else.
+* @head[pattern][str]
+  Returns as much of the beginning of str as matches pattern.
+* @tail[pattern][str]
+  Strips as much of the beginning of str as matches pattern.
+
+The syntax for @if nesting isn't entirely idea, but should be workable for the
+time being.
+
+Thus, we have:
+
+@config[x]
+ @if[@tail[
+
+Uh, it's harder to match an entire string this way. I want something like:
+ @if[@match[bindir][$x]] /usr/local/bin
+  @if[@match[builddir][$x]] .
+   @if[@match[datadir][$x]] /usr/local/share
+
+And so on.
+
+Why not make it much simpler? Skip the glob. All we need is:
+
+* @let[var][def][body]
+* @if[condition][then][else]
+* @head[str] - returns first character of the string, or empty.
+* @tail[str] - returns all but first character of the string.
+
+We can implement @eq or @match ourselves with this.
+
+@defi[eq][a][b]
+ @if[@head[$a]][
+  @if[@head[...
+
+No. We loose character equality test that way, which is annoying.
+
+How to match an entire string is easy: if @head matches and @tail is empty.
+
+@defi[match][pattern][str]
+ @and[@head[pattern][str]][@not[@tail[pattern][str]]]
+  
+---
+
+After some more thought:
+* Don't worry about fancy matching support.
+* Provide exact string equals (which is as simple as character equals)
+* Provide @head and @tail that return first character of a string and rest of
+  a string respectively.
+
+Another key idea: let's expand the syntax of fbld to provide better support
+for multiple block arguments. The real challenge with @if is we don't have a
+nice syntax for multiple block arguments.
+
+Proposed new syntax:
+
+A single '@' on the line following a block command extends the command. You
+can put another same line argument on the same line, and a next line argument
+on the next line.
+
+For example:
+
+@if @eq[$a][$b]
+ This is what to do if condition holds.
+@
+ This is what to do if condition doesn't hold.
+
+We could do a list of single line args:
+
+@foo
+@ Single line arg
+@ Single line arg
+@ Single line arg...
+
+We could do a list of multi line args:
+
+@foo
+@
+ First of 
+ a multi line arg.
+@
+ Yet another multi
+ line arg.
+@
+ And another.
+
+Second proposed syntax: '@@' on the line following a block command causes the
+rest of the text to be passed as another argument to the block command.
+
+For example, instead of:
+
+@if @eq[$a][$b]
+ This is what to do if condition holds.
+@
+ This is what to do if condition doesn't hold.
+
+We could write equivalent:
+
+@if @eq[$a][$b]
+ This is what to do if condition holds.
+@@
+
+This is what to do if condition doesn't hold.
+ 
+Perhaps more useful example would be @let or @defi
+
+@let[var][def][body]
+
+Instead of:
+
+@let[x][@foo]
+ The body with $x.
+
+We can write:
+
+@let[x][@foo]
+@@
+
+The body with $x.
+
+Now we have full control over glue logic, like <- in fble, conditional
+statements, let, etc.
+
+I like this idea syntax wise. No more need for crazy primitives that have
+intermediate state if we just have this more complete syntax.
+
+If we wanted, we could write a switch tag:
+
+@switch[$x]
+@ bindir
+ /usr/local/bin
+@ builddir
+ .
+@ datadir
+ /usr/local/share
+
+
+I guess it makes me want to also be able to write:
+@switch[$x]
+@[bindir] /usr/local/bin
+@[builddir] .
+@[datadir] /usr/local/share
+
+So maybe @ resets to what you could write after the initial @switch tag.
+
+If we have more widespread use of multi args like this, we'll want a decent
+way to define vararg tags. Most likely they'll want to take a list argument,
+like how tcl args works.
+
+With this syntax, no need for tags to modify a global environment. They can
+set up a local environment for their arguments. It's more functional that way.
+
+The other open question is about multi-line variable substitution. Instead of
+'$' and '$$', can we just have one that behaves exactly as you almost always
+want?
+
+@foo
+ @bar
+  Foo $x
+
+It indents to the same indent as the line it's on. So, if x is "abc\def",
+substitution becomes:
+
+Embedding in inline text:
+
+@foo
+ @bar
+  Foo abc
+  def
+
+Embedding in block text:
+
+@foo
+ @bar
+  abc
+  def
+
+The only weird thing is if you want a different indent for the start compared
+to the end.
+
+@foo
+ @bar
+   abc
+  def
+
+When would you ever want that? Let's assume you wouldn't and see if I ever run
+into such a case.
+
+In summary, updates to syntax for fbld:
+* @ on a line after block command extends the command's args.
+* @@ on a line after block command adds one last block command arg.
+* $ is only substitution supported, it indents to same indentation as current
+  line.
+
+Proposed primitives:
+* @eq[a][b] - returns "true" if equal, empty string otherwise.
+* @if[p][a][b] - returns a if p non-empty, b otherwise.
+* @head[str] - returns first char of str, empty if str is empty.
+* @tail[str] - returns all but first char of str.
+
+Question: should @let be different from @defi, @defb? Probably.
+
+* @let[var][def][body]
+
+For backends
+* @raw[str]
+  Evaluates str as block text, returns the result directly.
+
+There is still some confusion about what happens in a block context versus an
+inline context. For example, @if is a block tag, then a and b are interpreted
+as block. But maybe @if is also an inline tag, so a and b are interpreted as
+inline. For example, in block body of @defi, maybe we want an if statement in
+block form that returns inline text? Maybe we just need:
+
+* @block[str]
+  Inline tag that interprets str as block text.
+* @inline[str]
+  Block tag that interprets str as inline text.
+
+In that case, we have the following cross products to specify when defining a
+tag:
+1. Is the tag being defined as an inline tag or block tag?
+2. Does the tag interpret its arguments/result as raw, inline, block?
+
+For (2), we can just use @raw, @inline, @block to specify. Assume the body of
+a definition is always specified using block structured text.
+
+That suggests, instead of @defi, @defb, how about a single @def that takes
+inline or block as one of it's arguments.  Maybe i, b, or ib both?
+
+@def[i][FbleVersion]
+ @inline[fble-0.2]
+
+Not sure. I'm not convinced I see much advantage to that.
+
+Summary of proposed tags:
+
+Block:
+* @let[var][def][body]
+* @defi[tag][args...][body]
+* @defb[tag][args...][body]
+* @raw[str]
+* @inline[str]
+* @block[str]
+* @if[p][a][b]
+
+Inline:
+* @eq[a][b]
+* @if[p][a][b]
+* @head[str]
+* @tail[str]
+* @raw[str]
+* @inline[str]
+* @block[str]
+
+Where @let, @defi, and @defb all use $ substitution with indentation as
+described above.
+
+Now:
+
+@defi[config][x]
+ @if[@eq[$x][bindir]] /usr/local/bin
+ @@
+ @if[@eq[$x][builddir]] .
+ @@
+ @if[@eq[$x][datadir]] /usr/local/share
+ ...
+
+Alternatively, instead of @if and @eq, we could have @switch?
+
+@defi[eq][a][b]
+ @switch[$a][$b][true][]
+
+@defi[if][p][a][b]
+ @switch[$p][][$a][$b]
+
+Yeah. Even better.
+  
+Block:
+* @let[var][def][body]
+* @defi[tag][args...][body]
+* @defb[tag][args...][body]
+* @raw[str]
+* @inline[str]
+* @block[str]
+* @switch[arg][branches...][default]
+* @error[msg]
+
+Inline:
+* @head[str]
+* @tail[str]
+* @raw[str]
+* @inline[str]
+* @block[str]
+* @switch[arg][branches...][default]
+* @error[msg]
+
+
+@defi[config][x]
+ @switch[$x]
+ @[bindir] /usr/local/bin
+ @[builddir] .
+ @[datadir] /usr/local/share
+ @ @error[No such config: $x]
+
+@defi[html][str]
+ @raw
+  @let[t][@html[@tail[$str]]]
+  @@
+  @switch[@head[$str]]
+  @[][]
+  @[&] &amp;$t
+  @[<] &lt;$t
+  @[>] &gt;$t
+  @ $t
+
+Now we get into trouble again with substitution. In the above example, assume
+$t has newlines in it, which it will. $t doesn't get indented appropriately.
+Unless we put it on a separate line?
+
+@defi[html][str]
+ @raw
+  @let[t][@html[@tail[$str]]]
+  @@
+  @switch[@head[$str]]
+  @[][]
+  @[&]
+   &amp;$t
+  @[<]
+   &lt;$t
+  @[>]
+   &gt;$t
+  @
+   $t
+ 
+You almost want newlines in substituted values to not be treated as newlines
+for the sake of parsing whatever was substituted into? Like, imagine we have
+an escape for newline. \n. Then part of substitution is to change newlines
+into \n? Is that what we really want though? In some cases $t might be a
+sequence of commands we definitely want to be able to parse as such.
+
+@defi[html][str]
+ @raw
+  @let[t][@html[@tail[$str]]]
+  @@
+  @switch[@head[$str]]
+  @[][]
+  @[&][&amp;$t]
+  @[<][&lt;$t]
+  @[>][&gt;$t]
+  @[$t]
+
+That works, I think. Just needs a bit of care.
+
+Okay? We have a plan to move forward.

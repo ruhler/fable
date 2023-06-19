@@ -2,7 +2,7 @@
  @doc[$name]
    @FbleVersion (@BuildStamp)
 
-  $$content
+  $content
 
 @defb[exercise][content]
- $$content
+ $content

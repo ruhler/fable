@@ -1,31 +1,31 @@
 @defb[usage][name][brief][content]
  @man[1][$name][@FbleVersion (@BuildStamp)]
   @section[NAME][$name - $brief]
-   $$content
+   $content
 
 @defb[synopsis][text]
  @section[SYNOPSIS]
   @par
-   $$text
+   $text
 
 @defb[description][body]
  @section[DESCRIPTION]
-  $$body
+  $body
 
 @defb[options][body]
  @section[OPTIONS]
-  $$body
+  $body
 
 @defb[opt][opt][desc]
  @def[$opt][$desc]
 
 @defb[exitstatus][body]
  @section[EXIT STATUS]
-  $$body
+  $body
 
 @defb[examples][body]
  @section[EXAMPLES]
-  $$body
+  $body
 
 @defb[ex][text][desc]
  @par[@l[$text]]

@@ -84,14 +84,6 @@ Subst = (Map@ map, String@ body) {
     String@ nindent = Cons(Chars.' ', indent);
 
     body.cons.head.?('$': {
-      Bool@ do_indent = {
-        tail.?(nil: False);
-        /Core/Char/Eq%.Eq(Chars.'$', tail.cons.head);
-      };
-
-      String@ tail_ = do_indent.?(true: tail.cons.tail, false: tail);
-      String@ tail = tail_;
-
       Maybe@<String@> mv = /Core/Map%.ForEach(map, Nothing<String@>,
         (String@ key, String@ _, Maybe@<String@> mv) {
           mv.?(just: mv);
@@ -101,7 +93,7 @@ Subst = (Map@ map, String@ body) {
       mv.?(nothing: subst(nindent, tail, Cons(body.cons.head, r)));
       String@ ntail = Drop(Length(mv.just), tail);
       String@ value = Lookup(map, mv.just).just;
-      String@ indented = do_indent.?(true: Indent(indent, value), : value);
+      String@ indented = Indent(indent, value);
       subst(nindent, ntail, Append(Reverse(indented), r));
     });
     subst(nindent, tail, Cons(body.cons.head, r));
