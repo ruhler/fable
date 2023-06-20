@@ -9,14 +9,23 @@ Things to consider doing for the fble-0.2 release.
 * fbld vim syntax: set tabstop/shiftwidth to single space?
 
 * Fbld:
+ - Add examples of @, @@ to spec for syntax.
+ - Implement and test @, @@ syntax.
+ - Add @switch
+ - Add @raw, @inline, @block
+ - Add @error
+ - Add @head, @tail
+ - Update @defi, @defb to take extra argument after body.
  - Generate config.fbld
  - Move backends out of fble into .fbld
- - Add test cases for @defb, @defi.
- - Document @defb, @defi in spec?
+ - Add test cases for all builtin tags.
+ - Document all new tags in spec.
  - Figure out how to generate c header output.
  - Figure out why it takes so much memory to run.
  - Implement source highlighting for @code.
  - Change Env@ to Markup@ so we can insert new commands more reasonably?
+ - Switch to reader for Env@ instead of state now that we no longer make use
+   of state part of things.
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.

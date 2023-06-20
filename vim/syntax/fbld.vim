@@ -6,6 +6,7 @@ if exists("b:current_syntax")
   finish
 endif
 
+syn match fbldBracket "@"
 syn match fbldTag "@[a-zA-Z0-9_]\+"
 
 syn match fbldBracket "\["

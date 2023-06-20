@@ -246,6 +246,34 @@
    If there are no indented lines following the block command, no following
    lines argument is supplied.
 
+  @subsection Argument Continuation
+   If the line following a block command starts with @l[@] without a command,
+   it continues the arguments from the previous command. Commands can be
+   continued with regular, same line, and next line arguments repeatedly. For
+   example:
+
+   @code[fbld]
+    @list[first arg][second arg] third arg
+     fourth arg
+    @[fifth arg][sixth arg] seventh arg
+     eight arg
+    @ ninth arg
+     tenth arg
+
+  @subsection Final Argument
+   If the line following a block command consists of a single @l[@@], the
+   entire remainder of the document is passed as the last argument to the
+   command. For example:
+
+   @code[fbld]
+    @list[first arg] second arg
+     third arg
+    @@
+    fourth and final argument, which
+    can span multiple lines.
+
+    And beyond.
+
   @subsection Default Block Commands
    If a line starts with something other than a block command, then that line
    and all subsequent lines up until a blank line are grouped together and
