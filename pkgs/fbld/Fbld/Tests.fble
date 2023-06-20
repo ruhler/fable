@@ -158,6 +158,40 @@ multiple lines actually.
     Loc@ wnt = Loc@(Str|'file.fbld', Int|4, Int|4, Int|2);
     Loc@ got = LocOf(sludge.cons.head.name);
     AssertEquals(/Fbld/Eq%.Loc, /Fbld/Show%.Loc, wnt, got);
+  }),
+
+  Test(Str|Continuation, (Unit@ _) {
+    (String@, Int@, Int@, Int@) { Text@; }
+    s = (String@ str, Int@ line, Int@ col, Int@ indent) {
+      Text(str, Loc@(Str|'file.fbld', line, col, indent));
+    };
+
+    String@ text = Str|'
+@list[first][second]
+ third
+@[fourth] fifth
+@ sixth
+ seventh
+@ eigth
+@sludge
+';
+    Result@<List@<Command@>> wnt = Ok(List[
+      Command@(s(Str|'list', Int|2, Int|2, Int|0), List[
+        s(Str|'first', Int|2, Int|7, Int|0),
+        s(Str|'second', Int|2, Int|14, Int|0),
+        s(Str|'third
+', Int|3, Int|2, Int|1),
+        s(Str|'fourth', Int|4, Int|3, Int|0),
+        s(Str|'fifth', Int|4, Int|11, Int|0),
+        s(Str|'sixth', Int|5, Int|3, Int|0),
+        s(Str|'seventh
+', Int|6, Int|2, Int|1)]),
+      Command@(s(Str|'sludge', Int|7, Int|2, Int|0), Nil<Text@>)]);
+    Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1, Int|0));
+    AssertEquals(
+      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
+      /Fbld/Show%.Result(/Fbld/Show%.Commands),
+      wnt, got);
   })
 ]);
 
