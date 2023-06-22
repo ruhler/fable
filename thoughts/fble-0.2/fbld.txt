@@ -2127,3 +2127,21 @@ sequence of commands we definitely want to be able to parse as such.
 That works, I think. Just needs a bit of care.
 
 Okay? We have a plan to move forward.
+
+---
+
+How to parse new syntax? I think I need more than 1 character lookahead. It's
+not enough just to see '@'. I have to see what comes after '@' as well to know
+if I should keep parsing args from the same command or switch to the next
+command.
+
+Alternatively, I could parse '@' as if it was the next command, and if the
+parsed name is '', then append that to the previous command?
+
+But then, how would I parse '@@'? And how would I detect, for example, for
+inline parsed commands, that the name is empty?
+
+I could Peek2. That's not hard to implement. Peek2, check if it equals "@@" or
+"@ ". Let's go with that.
+
+

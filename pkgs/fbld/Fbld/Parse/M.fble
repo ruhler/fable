@@ -5,6 +5,9 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
@@ -55,6 +58,19 @@ M@<Maybe@<Char@>> Peek = (Text@ in) {
   Ok(S@(in, mc));
 };
 
+# Returns the next two characters in the input stream without changing the
+# parser state.
+M@<String@> Peek2 = (Text@ in) {
+  String@ s = {
+    IsEmpty(in).?(true: Str|'');
+    Char@ a = Head(in);
+    Text@ tail = Tail(in);
+    IsEmpty(tail).?(true: Str[a]);
+    Str[a, Head(tail)];
+  };
+  Ok(S@(in, s));
+};
+
 # Returns the current location.
 M@<Loc@> Loc = (Text@ in) {
   Ok(S@(in, LocOf(in)));
@@ -83,4 +99,4 @@ Run = <@ T@>(M@<T@> m, Text@ in) {
   Ok(r.ok.x);
 };
 
-@(M@, Return, Error, Do, Peek, Loc, Get, Skip, Run);
+@(M@, Return, Error, Do, Peek, Peek2, Loc, Get, Skip, Run);
