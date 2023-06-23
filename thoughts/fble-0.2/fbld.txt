@@ -2144,4 +2144,14 @@ inline parsed commands, that the name is empty?
 I could Peek2. That's not hard to implement. Peek2, check if it equals "@@" or
 "@ ". Let's go with that.
 
+---
+
+One implication of @@ is we'll want a single command to span across multiple
+input files. So we need to concatenate all input files first and process them
+in one go, rather than how we currently process them one at a time and then
+combine the results.
+
+Another note is we would need a Peek3 to match '@@\n', because it's always
+supposed to have the newline after it, right?
+
 

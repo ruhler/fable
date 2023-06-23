@@ -193,6 +193,32 @@ multiple lines actually.
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
       /Fbld/Show%.Result(/Fbld/Show%.Commands),
       wnt, got);
+  }),
+
+  Test(Str|Final, (Unit@ _) {
+    (String@, Int@, Int@, Int@) { Text@; }
+    s = (String@ str, Int@ line, Int@ col, Int@ indent) {
+      Text(str, Loc@(Str|'file.fbld', line, col, indent));
+    };
+
+    String@ text = Str|'
+@foo
+ here is some stuff.
+@@
+@bar here is the end.
+ Of all the rest.
+';
+    Result@<List@<Command@>> wnt = Ok(List[
+      Command@(s(Str|'foo', Int|2, Int|2, Int|0), List[
+        s(Str|'here is some stuff.
+', Int|2, Int|1, Int|1),
+        s(Str|'@bar here is the end.
+ Of all the rest.', Int|5, Int|1, Int|0)])]);
+    Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1, Int|0));
+    AssertEquals(
+      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
+      /Fbld/Show%.Result(/Fbld/Show%.Commands),
+      wnt, got);
   })
 ]);
 
