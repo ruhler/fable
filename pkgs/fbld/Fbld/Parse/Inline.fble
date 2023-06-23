@@ -162,4 +162,4 @@ M@<List@<Command@>> Inline = {
   inline(Nil<Command@>);
 };
 
-@(Name, Args, Inline);
+@(IsNameChar, Name, Args, Inline);

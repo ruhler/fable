@@ -1,4 +1,8 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% False = /Core/Bool%.False;
+% Not = /Core/Bool%.Not;
+
 @ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 % IsNewline = /Core/Char/Type%.IsNewline;
@@ -9,8 +13,8 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 <@>% List = /Core/List%.List;
-<@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
+<@>% Concat = /Core/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -35,12 +39,14 @@
 <@>% Error = /Fbld/Parse/M%.Error;
 <@>% Do = /Fbld/Parse/M%.Do;
 % Peek = /Fbld/Parse/M%.Peek;
+% Peek2 = /Fbld/Parse/M%.Peek2;
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
 % Skip = /Fbld/Parse/M%.Skip;
 
 % Name = /Fbld/Parse/Inline%.Name;
-% Args = /Fbld/Parse/Inline%.Args;
+% IsNameChar = /Fbld/Parse/Inline%.IsNameChar;
+% InlineArgs = /Fbld/Parse/Inline%.Args;
 
 M@<Unit@> SkipBlankLines = {
   Maybe@<Char@> mc <- Do(Peek);
@@ -160,6 +166,32 @@ Justs = <@ T@>(List@<Maybe@<T@>> in) {
   mlist(in, Nil<T@>);
 };
 
+# Parses all kinds of args for a block command.
+M@<List@<Text@>> Args = {
+  (List@<Text@>) { M@<List@<Text@>>; } parse_args = (List@<Text@> r) {
+    List@<Text@> args <- Do(InlineArgs);
+    Maybe@<Text@> same_line_arg <- Do(SameLineArg);
+    Maybe@<Text@> next_line_arg <- Do(NextLineArg);
+    List@<Text@> extra_args = Justs[same_line_arg, next_line_arg];
+    List@<Text@> nr = Concat[r, args, extra_args];
+    String@ c <- Do(Peek2);
+    Bool@ continue = { 
+      c.?(nil: False);
+      c.cons.head.?('@': {
+        c.cons.tail.?(nil: False);
+        Not(IsNameChar(c.cons.tail.cons.head));
+      });
+      False;
+    };
+    continue.?(false: Return(nr));
+
+    Unit@ _ <- Do(Skip);
+    parse_args(nr);
+  };
+
+  parse_args[];
+};
+
 # Parses a command starting with @...
 M@<Maybe@<Command@>> Command = {
   Maybe@<Char@> mc <- Do(Peek);
@@ -168,10 +200,7 @@ M@<Maybe@<Command@>> Command = {
     Unit@ _ <- Do(Skip);
     Text@ name <- Do(Name);
     List@<Text@> args <- Do(Args);
-    Maybe@<Text@> same_line_arg <- Do(SameLineArg);
-    Maybe@<Text@> next_line_arg <- Do(NextLineArg);
-    List@<Text@> extra_args = Justs[same_line_arg, next_line_arg];
-    Return(Just(Command@(name, Append(args, extra_args))));
+    Return(Just(Command@(name, args)));
   });
   Return(Nothing<Command@>);
 };
