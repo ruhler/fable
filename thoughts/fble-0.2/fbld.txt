@@ -2154,4 +2154,30 @@ combine the results.
 Another note is we would need a Peek3 to match '@@\n', because it's always
 supposed to have the newline after it, right?
 
+---
+
+Current uses of peek:
+* IsEnd
+* Is '\', if so, consume
+* Is '@', if so, consume
+* GetChar, etc.
+
+There's probably a nicer way to structure the functions I'm using. Hmm...
+
+IsEnd, Char, Is(String@)
+
+Could be factored into:
+  End, Char, String
+  Is(...), Try(...)
+
+Where End matches end of input or fails. Char matches not end of input,
+returns the character. String matches exact given string. Is returns boolean
+if parse succeeds or not, without consuming input. Try returns Maybe, if
+match, it consumes, if no match, it doesn't consume.
+
+Would we ever use Is instead of Try? More like I want a helper to try and
+consume if matched but return a boolean instead of a Maybe@<Unit@>. Call that
+Try_, with an underscore to discard the result?
+
+Maybe I should implement these, then switch over and see what I like.
 

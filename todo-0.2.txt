@@ -11,7 +11,6 @@ Things to consider doing for the fble-0.2 release.
 * Fbld:
  - Test that '@ ...' at the start of block structured text is not allowed.
  - Add examples of @, @@ to spec for syntax.
- - Implement and test @, @@ syntax.
  - Add @switch
  - Add @raw, @inline, @block
  - Add @error

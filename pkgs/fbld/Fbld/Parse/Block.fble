@@ -1,7 +1,5 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
-% False = /Core/Bool%.False;
-% Not = /Core/Bool%.Not;
 
 @ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
@@ -15,6 +13,7 @@
 <@>% List = /Core/List%.List;
 <@>% Reverse = /Core/List%.Reverse;
 <@>% Concat = /Core/List%.Concat;
+<@>% Append = /Core/List%.Append;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -39,13 +38,15 @@
 <@>% Error = /Fbld/Parse/M%.Error;
 <@>% Do = /Fbld/Parse/M%.Do;
 % Peek = /Fbld/Parse/M%.Peek;
-% Peek2 = /Fbld/Parse/M%.Peek2;
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
 % Skip = /Fbld/Parse/M%.Skip;
+% GetText = /Fbld/Parse/M%.GetText;
+<@>% Try_ = /Fbld/Parse/M%.Try_;
+<@>% Test_ = /Fbld/Parse/M%.Test_;
+% String = /Fbld/Parse/M%.String;
 
 % Name = /Fbld/Parse/Inline%.Name;
-% IsNameChar = /Fbld/Parse/Inline%.IsNameChar;
 % InlineArgs = /Fbld/Parse/Inline%.Args;
 
 M@<Unit@> SkipBlankLines = {
@@ -174,19 +175,27 @@ M@<List@<Text@>> Args = {
     Maybe@<Text@> next_line_arg <- Do(NextLineArg);
     List@<Text@> extra_args = Justs[same_line_arg, next_line_arg];
     List@<Text@> nr = Concat[r, args, extra_args];
-    String@ c <- Do(Peek2);
-    Bool@ continue = { 
-      c.?(nil: False);
-      c.cons.head.?('@': {
-        c.cons.tail.?(nil: False);
-        Not(IsNameChar(c.cons.tail.cons.head));
-      });
-      False;
-    };
-    continue.?(false: Return(nr));
 
-    Unit@ _ <- Do(Skip);
-    parse_args(nr);
+    Bool@ continue <- Do(Test_(String|'@ '));
+    continue.?(true: {
+      Unit@ _ <- Do(Skip);
+      parse_args(nr);
+    });
+
+    Bool@ continue <- Do(Test_(String|'@['));
+    continue.?(true: {
+      Unit@ _ <- Do(Skip);
+      parse_args(nr);
+    });
+
+    Bool@ final <- Do(Try_(String|'@@
+'));
+    final.?(true: {
+      Text@ last <- Do(GetText);
+      Return(Append(nr, List[last]));
+    });
+
+    Return(nr);
   };
 
   parse_args[];
