@@ -24,10 +24,7 @@
 
 @ Core@ = /Fbld/Core%.Core@;
 
-<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
 @ Env@ = /Fbld/Fbld%.Env@;
-<@>% Error = /Fbld/Fbld%.Error;
-% Cat = /Fbld/Fbld/Utils%.Cat;
 
 % Report = /Fbld/Loc%.Report;
 % Start = /Fbld/Loc%.Start;
@@ -37,6 +34,8 @@
 % Markups = /Fbld/Markup%.Markups;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+<@>% Err = /Fbld/Result%.Err;
 
 % Run = /Fbld/Run%;
 
@@ -107,12 +106,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
     Env@ env = /Fbld/Markup%.Env(markup);
 
-    List@<Fbld@<Text@>> fblds <- m.do(/Core/List%.ForEach(parsed.rfiles,
-        m.return(Nil<Fbld@<Text@>>),
-        (String@ filename, M@<List@<Fbld@<Text@>>> ms) {
-          List@<Fbld@<Text@>> head <- m.do(ms);
+    Result@<List@<Text@>> texts <- m.do(/Core/List%.ForEach(parsed.rfiles,
+        m.return(Ok(Nil<Text@>)),
+        (String@ filename, M@<Result@<List@<Text@>>> ims) {
+          Result@<List@<Text@>> rms <- m.do(ims);
+          rms.?(err: ims);
+          List@<Text@> head = rms.ok;
 
-          Fbld@<Text@> fbld <- m.do({
+          Result@<Text@> text <- m.do({
             Maybe@<IStream@<M@>> fin <- m.do({
               /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
               stdio.read(filename);
@@ -120,17 +121,24 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
             fin.?(nothing: {
               String@ msg = Strs[Str|'unable to open ', filename];
-              m.return(Error<Text@>(Unknown, msg));
+              m.return(Err<Text@>(Text(msg, Unknown)));
             });
 
             String@ contents <- m.do(I.GetText(fin.just));
-            m.return(Run.Block(Text(contents, Start(filename))));
+            m.return(Ok(Text(contents, Start(filename))));
           });
-          m.return(Cons(fbld, head));
+          text.?(err: m.return(Err<List@<Text@>>(text.err)));
+          m.return(Ok(Cons(text.ok, head)));
         }));
 
-    Fbld@<Text@> fbld = Cat(Unknown)(fblds);
-    Result@<Text@> r = /Fbld/Fbld%.Run(fbld, env);
+    texts.?(err: {
+      String@ msg = Report(LocOf(texts.err), StringOf(texts.err));
+      Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
+      m.return(False);
+    });
+
+    Text@ text = /Fbld/Text%.Concat(Unknown, texts.ok);
+    Result@<Text@> r = /Fbld/Fbld%.Run(Run.Block(text), env);
     r.?(err: {
       String@ msg = Report(LocOf(r.err), StringOf(r.err));
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));

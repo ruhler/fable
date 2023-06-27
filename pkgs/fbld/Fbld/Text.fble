@@ -83,7 +83,9 @@ Append_ = (Text_@ a, Text_@ b) {
 
 (Text_@) { Char@; }
 Head_ = (Text_@ text) {
-  text.str.str.cons.head;
+  text.?(
+    str: text.str.str.cons.head,
+    append: Head_(text.append.a));
 };
 
 # Returns the first character of text.
