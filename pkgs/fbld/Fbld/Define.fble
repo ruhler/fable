@@ -59,6 +59,16 @@
 % Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<String@>;
 % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<String@>;
 
+@ Args@ = *(String@ name, List@<String@> params, String@ body);
+
+(List@<Text@>) { Args@; } GetArgs = (List@<Text@> args) {
+  List@<String@> strs = /Core/List%.Map(args, StringOf);
+  String@ name = strs.cons.head;
+  List@<String@> params = Init(strs.cons.tail);
+  String@ body = Last(strs.cons.tail);
+  @(name, params, body);
+};
+
 # Indent all but first line with prefix.
 (String@, String@) { String@; } Indent = (String@ prefix, String@ text) {
   (Bool@, String@, String@) { String@; }
@@ -147,15 +157,11 @@ Markup@ Markup = Block[
       Error<Text@>(LocOf(cmd.name), Str|'expected at least two args');
     });
 
-    List@<String@> args = /Core/List%.Map(cmd.args, StringOf);
-    String@ name = args.cons.head;
-    List@<String@> defargs = Init(args.cons.tail);
-    String@ body = Last(args.cons.tail);
-
-    Invoke@ invoke = DefI(defargs)(body);
+    Args@ args = GetArgs(cmd.args);
+    Invoke@ invoke = DefI(args.params)(args.body);
     Env@ env <- Do(GetEnv);
     Invoke@ inline = (Command@ cmd) {
-      /Core/String/Eq%.Eq(StringOf(cmd.name), name).?(
+      /Core/String/Eq%.Eq(StringOf(cmd.name), args.name).?(
         true: invoke(cmd),
         false: env.inline(cmd));
     };
@@ -168,15 +174,11 @@ Markup@ Markup = Block[
       Error<Text@>(LocOf(cmd.name), Str|'expected at least two args');
     });
 
-    List@<String@> args = /Core/List%.Map(cmd.args, StringOf);
-    String@ name = args.cons.head;
-    List@<String@> defargs = Init(args.cons.tail);
-    String@ body = Last(args.cons.tail);
-
-    Invoke@ invoke = DefB(defargs)(body);
+    Args@ args = GetArgs(cmd.args);
+    Invoke@ invoke = DefB(args.params)(args.body);
     Env@ env <- Do(GetEnv);
     Invoke@ block = (Command@ cmd) {
-      /Core/String/Eq%.Eq(StringOf(cmd.name), name).?(
+      /Core/String/Eq%.Eq(StringOf(cmd.name), args.name).?(
         true: invoke(cmd),
         false: env.block(cmd));
     };

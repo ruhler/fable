@@ -93,6 +93,8 @@ Why do we do Subst on the body of an abstract type? How about:
 Then sure, it makes sense to do the substitution there. Let's leave as is for
 now. In fact, I might get rid of the TODO.
 
+---
 
-
+Compile times of 10 seconds feels too long. How about we set a goal for
+compile performance: able to compile any single .fble file in under 5 seconds?
 

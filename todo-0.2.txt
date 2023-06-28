@@ -10,14 +10,14 @@ Things to consider doing for the fble-0.2 release.
 
 * Fbld:
  - Test that '@ ...' at the start of block structured text is not allowed.
- - Add examples of @, @@ to spec for syntax.
- - Add @switch
- - Add @raw, @inline, @block
- - Add @error
- - Add @head, @tail
  - Update @defi, @defb to take extra argument after body.
+ - Add @switch
+ - Add @error
  - Generate config.fbld
+ - Add @raw, @inline, @block
+ - Add @head, @tail
  - Move backends out of fble into .fbld
+ - Add examples of @, @@ to spec for syntax.
  - Add test cases for all builtin tags.
  - Document all new tags in spec.
  - Figure out how to generate c header output.

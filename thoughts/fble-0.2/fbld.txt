@@ -2181,3 +2181,8 @@ Try_, with an underscore to discard the result?
 
 Maybe I should implement these, then switch over and see what I like.
 
+---
+
+In theory the syntax is now implemented as desired. Next step is to start
+implementing primitives. Or updating primitives for new syntax?
+
