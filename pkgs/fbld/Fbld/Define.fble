@@ -59,14 +59,14 @@
 % Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<String@>;
 % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<String@>;
 
-@ Args@ = *(String@ name, List@<String@> params, String@ body);
+@ Args@ = *(String@ name, List@<String@> params, String@ def);
 
 (List@<Text@>) { Args@; } GetArgs = (List@<Text@> args) {
   List@<String@> strs = /Core/List%.Map(args, StringOf);
   String@ name = strs.cons.head;
   List@<String@> params = Init(strs.cons.tail);
-  String@ body = Last(strs.cons.tail);
-  @(name, params, body);
+  String@ def = Last(strs.cons.tail);
+  @(name, params, def);
 };
 
 # Indent all but first line with prefix.
@@ -120,7 +120,7 @@ MakeMap = (List@<String@> keys, List@<Text@> values, Map@ m) {
 };
 
 (List@<String@>, String@, Command@) { Fbld@<Text@>; }
-Define = (List@<String@> argnames, String@ body, Command@ command) {
+Define = (List@<String@> argnames, String@ def, Command@ command) {
   Int@ wnt_args = Length(argnames);
   Int@ got_args = Length(command.args);
   /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
@@ -129,23 +129,23 @@ Define = (List@<String@> argnames, String@ body, Command@ command) {
           Str|' args, but got ', /Core/Int/Show%.Show(got_args)]);
     });
 
-  String@ nbody = Subst(MakeMap(argnames, command.args, Empty), body);
+  String@ subst = Subst(MakeMap(argnames, command.args, Empty), def);
   Loc@ unknown = Start|'???';
-  Return(Text(nbody, unknown));
+  Return(Text(subst, unknown));
 };
 
 (List@<String@>)(String@) { Invoke@; }
-DefB = (List@<String@> argnames)(String@ body) {
+DefB = (List@<String@> argnames)(String@ def) {
   (Command@ command) {
-    Text@ text <- Do(Define(argnames, body, command));
+    Text@ text <- Do(Define(argnames, def, command));
     Run.Block(text);
   };
 };
 
 (List@<String@>)(String@) { Invoke@; }
-DefI = (List@<String@> argnames)(String@ body) {
+DefI = (List@<String@> argnames)(String@ def) {
   (Command@ command) {
-    Text@ text <- Do(Define(argnames, body, command));
+    Text@ text <- Do(Define(argnames, def, command));
     Run.Inline(text);
   };
 };
@@ -158,7 +158,7 @@ Markup@ Markup = Block[
     });
 
     Args@ args = GetArgs(cmd.args);
-    Invoke@ invoke = DefI(args.params)(args.body);
+    Invoke@ invoke = DefI(args.params)(args.def);
     Env@ env <- Do(GetEnv);
     Invoke@ inline = (Command@ cmd) {
       /Core/String/Eq%.Eq(StringOf(cmd.name), args.name).?(
@@ -175,7 +175,7 @@ Markup@ Markup = Block[
     });
 
     Args@ args = GetArgs(cmd.args);
-    Invoke@ invoke = DefB(args.params)(args.body);
+    Invoke@ invoke = DefB(args.params)(args.def);
     Env@ env <- Do(GetEnv);
     Invoke@ block = (Command@ cmd) {
       /Core/String/Eq%.Eq(StringOf(cmd.name), args.name).?(
