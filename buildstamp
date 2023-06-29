@@ -25,6 +25,7 @@ switch -exact [lindex $argv 0] {
   --fbld {
     set id [lindex $argv 1]
     puts "@defi\[$id\]\[$stamp\]"
+    puts "@@"
   }
   default {
     puts $stamp

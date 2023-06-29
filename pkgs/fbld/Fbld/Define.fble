@@ -11,10 +11,9 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 <@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
-<@>% Init = /Core/List%.Init;
-<@>% Last = /Core/List%.Last;
 <@>% Drop = /Core/List/Length%.Drop;
 <@>% Length = /Core/List/Length%.Length;
 
@@ -59,14 +58,21 @@
 % Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<String@>;
 % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<String@>;
 
-@ Args@ = *(String@ name, List@<String@> params, String@ def);
+@ Args@ = *(String@ name, List@<String@> params, String@ def, Text@ body);
 
 (List@<Text@>) { Args@; } GetArgs = (List@<Text@> args) {
-  List@<String@> strs = /Core/List%.Map(args, StringOf);
-  String@ name = strs.cons.head;
-  List@<String@> params = Init(strs.cons.tail);
-  String@ def = Last(strs.cons.tail);
-  @(name, params, def);
+  (List@<Text@>, String@, List@<String@>) { Args@; }
+  getargs = (List@<Text@> in, String@ name, List@<String@> rparams) {
+    in.cons.tail.cons.tail.?(nil: {
+      Args@(name, Reverse(rparams), StringOf(in.cons.head),
+        in.cons.tail.cons.head);
+    });
+
+    getargs(in.cons.tail, name, Cons(StringOf(in.cons.head), rparams));
+  };
+
+  String@ name = StringOf(args.cons.head);
+  getargs(args.cons.tail, name, Nil<String@>);
 };
 
 # Indent all but first line with prefix.
@@ -151,10 +157,13 @@ DefI = (List@<String@> argnames)(String@ def) {
 };
 
 Markup@ Markup = Block[
+  # @defi[name][param1][param2]...[paramN][def][body]
+  #  Executes body as block structured text with a new inline command @name
+  #  defined that performs substitution of params into def.
   Entry(Str|'defi', (Command@ cmd) {
     Int@ num_args = Length(cmd.args);
-    /Core/Int/Eq%.Lt(num_args, Int|2).?(true: {
-      Error<Text@>(LocOf(cmd.name), Str|'expected at least two args');
+    /Core/Int/Eq%.Lt(num_args, Int|3).?(true: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected at least three args');
     });
 
     Args@ args = GetArgs(cmd.args);
@@ -166,12 +175,18 @@ Markup@ Markup = Block[
         false: env.inline(cmd));
     };
     Unit@ _ <- Do(SetEnv(env.@(inline: inline)));
-    Return(/Fbld/Text%.Empty(LocOf(cmd.name)));
+    Text@ result <- Do(Run.Block(args.body));
+    Unit@ _ <- Do(SetEnv(env));
+    Return(result);
   }),
+
+  # @defb[name][param1][param2]...[paramN][def][body]
+  #  Executes body as block structured text with a new block command @name
+  #  defined that performs substitution of params into def.
   Entry(Str|'defb', (Command@ cmd) {
     Int@ num_args = Length(cmd.args);
-    /Core/Int/Eq%.Lt(num_args, Int|2).?(true: {
-      Error<Text@>(LocOf(cmd.name), Str|'expected at least two args');
+    /Core/Int/Eq%.Lt(num_args, Int|3).?(true: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected at least three args');
     });
 
     Args@ args = GetArgs(cmd.args);
@@ -183,7 +198,9 @@ Markup@ Markup = Block[
         false: env.block(cmd));
     };
     Unit@ _ <- Do(SetEnv(env.@(block: block)));
-    Return(/Fbld/Text%.Empty(LocOf(cmd.name)));
+    Text@ result <- Do(Run.Block(args.body));
+    Unit@ _ <- Do(SetEnv(env));
+    Return(result);
   })
 ];
 
