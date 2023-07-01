@@ -2186,3 +2186,13 @@ Maybe I should implement these, then switch over and see what I like.
 In theory the syntax is now implemented as desired. Next step is to start
 implementing primitives. Or updating primitives for new syntax?
 
+---
+
+I drafted code for @config. It depends on primitives @switch and @error that I
+haven't defined yet. Let me wait until I need to define those.
+
+Next step is to start converting backends to .fbld. We have:
+* html, markdown, man, text.
+
+Let's start with the easiest?
+

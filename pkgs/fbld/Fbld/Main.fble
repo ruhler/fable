@@ -54,7 +54,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text);
 
   @ Args@ = *(
-    String@ version,
     Backend@ backend,
     List@<String@> rfiles
   );
@@ -64,11 +63,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     parse = (List@<String@> args, Args@ result) {
       args.?(nil: result);
       String@ arg = args.cons.head;
-      /Core/String/Eq%.Eq(Str|'--version', arg).?(true: {
-        String@ version = args.cons.tail.cons.head;
-        List@<String@> nargs = args.cons.tail.cons.tail;
-        parse(nargs, result.@(version));
-      });
       /Core/String/Eq%.Eq(Str|'--html', arg).?(true: {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(backend: Backend@(html: Unit)));
@@ -87,7 +81,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       });
       parse(args.cons.tail, result.@(rfiles: Cons(arg, result.rfiles)));
     };
-    parse(args, Args@(Str|'??', Backend@(html: Unit), Nil<String@>));
+    parse(args, Args@(Backend@(html: Unit), Nil<String@>));
   };
 
   (List@<String@> args) {
