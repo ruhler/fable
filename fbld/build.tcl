@@ -11,6 +11,10 @@ namespace eval "fbld" {
   build $::b/fbld/version.fbld "" \
     "echo @defi\[FbleVersion\]\[$::version\] > $::b/fbld/version.fbld ; echo @@ >> $::b/fbld/version.fbld"
 
+  # config.fbld
+  build $::b/fbld/config.fbld $::b/config.tcl \
+    "tclsh8.6 $::s/fbld/config.fbld.tcl > $::b/fbld/config.fbld"
+
   # Processes an fbld file.
   #
   #   target - the file to generate
