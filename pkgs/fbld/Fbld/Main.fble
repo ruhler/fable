@@ -93,7 +93,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       raw: /Fbld/Markup%.Empty);
 
     Markup@ markup = Markups[
-      /Fbld/Builtin/Raw%.Markup,
+      /Fbld/Builtin/Run%.Markup,
       /Fbld/Builtin/Define%.Markup,
       backend
     ];

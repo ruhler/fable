@@ -27,6 +27,16 @@ Markup@ Markup = Block[
       Error<Text@>(LocOf(cmd.name), Str|'expected 1 arg');
     });
     Return(cmd.args.cons.head);
+  }),
+
+  # @inline[text]
+  #  Interprets the text as inline text.
+  Entry(Str|'inline', (Command@ cmd) {
+    Int@ num_args = Length(cmd.args);
+    /Core/Int/Eq%.Eq(num_args, Int|1).?(false: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected 1 arg');
+    });
+    /Fbld/Run%.Inline(cmd.args.cons.head);
   })
 ];
 
