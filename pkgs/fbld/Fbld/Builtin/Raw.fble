@@ -1,0 +1,33 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>% Length = /Core/List/Length%.Length;
+
+% Str = /Core/String%.Str;
+
+@ Command@ = /Fbld/Command%.Command@;
+
+<@>% Return = /Fbld/Fbld%.Return;
+<@>% Error = /Fbld/Fbld%.Error;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Block = /Fbld/Markup%.Block;
+% Entry = /Fbld/Markup%.Entry;
+
+@ Text@ = /Fbld/Text%.Text@;
+% LocOf = /Fbld/Text%.LocOf;
+
+Markup@ Markup = Block[
+  # @raw[text]
+  #  Returns the raw text directly.
+  Entry(Str|'raw', (Command@ cmd) {
+    Int@ num_args = Length(cmd.args);
+    /Core/Int/Eq%.Eq(num_args, Int|1).?(false: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected 1 arg');
+    });
+    Return(cmd.args.cons.head);
+  })
+];
+
+@(Markup);

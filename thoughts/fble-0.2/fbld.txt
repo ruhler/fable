@@ -2196,3 +2196,71 @@ Next step is to start converting backends to .fbld. We have:
 
 Let's start with the easiest?
 
+markdown looks straight forward and is used for README.md, so it's realistic.
+The only challenge I see is implementing @indent, which can indent text by a
+certain amount. text backend is just as hard: it wants @indent too. Let's go
+with markdown then.
+
+How will this look?
+
+I need to define the following:
+ @doc, @section, 
+ @url, @def, @fbld, @code
+
+@defb[doc][title][body]
+ @raw
+  # $title
+  $body
+@@
+
+So, I want to define @raw. This is a block command that takes a single
+argument and outputs that argument directly without trying to interpret it.
+
+Actually, indent is pretty easy because we get it naturally as a side effect
+of substitution. So markdown.fbld is drafted. We just need to implement @raw.
+Let's give it a try.
+
+Oops. @raw isn't what I want, because I want to interpret the body as block
+text first. I want something like:
+
+@let[x] @block[$body]
+ @raw
+  # $title
+  $x
+  
+Using variable substitution instead of command substitution.
+
+Instead of @raw, how about generalizing it to @subst?
+
+@subst[key][value][key][value]...[body]
+
+I suppose we still want @raw so you can say things like... uh, not sure how
+this would work. We could say @subst returns text directly. Or we could decide
+if we want to interpret it as block or inline.
+
+---
+
+I propose the following:
+
+* @let[key][value]...[body]
+  Each value is interpreted as block command. The key is set to the result and
+  substituted into all subsequent values and eventually the body.
+* @inline[text]
+  Interprets text as inline structured text and returns the result.
+* @raw[text]
+  Returns the raw text.
+
+Then we would say:
+
+@defb[doc][title][body]
+ @let
+ @[t] @inline[$title]
+ @[b] $body
+  @raw
+   # $t
+   $b
+@@
+
+I also want to rename @defb and @defi to something nicer, but worry about that
+later.
+

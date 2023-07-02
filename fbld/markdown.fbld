@@ -1,0 +1,32 @@
+@defb[doc][title][body]
+ @raw[
+  # $title
+  $body
+ ]
+@@
+
+@defb[section][title][body]
+ @raw[
+  ## $title
+  $body
+ ]
+@@
+
+@defi[url][url][text]
+ @raw[\[$text\]($url)]
+@@
+
+@defi[fbld][file][text]
+ @url[$file][$text]
+@@
+
+@defb[def][name][value]
+ @raw[
+ * **$name**: $value
+ ]
+@@
+
+@defb[code][lang][text]
+ @raw
+      $text
+@@

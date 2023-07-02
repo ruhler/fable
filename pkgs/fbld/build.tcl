@@ -22,6 +22,9 @@ namespace eval "pkgs/fbld" {
   build $::b/pkgs/fbld/README.md \
     "$::b/pkgs/fbld/fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/README.fbld" \
     "$::b/pkgs/fbld/fbld --markdown $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/README.fbld > $::b/pkgs/fbld/README.md"
+  #build $::b/pkgs/fbld/README.md \
+  #  "$::b/pkgs/fbld/fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld" \
+  #  "$::b/pkgs/fbld/fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld > $::b/pkgs/fbld/README.md"
 
   # Make sure the version of README.md checked in matches the latest version.
   test $::b/pkgs/fbld/README.tr \

@@ -22,8 +22,6 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Core@ = /Fbld/Core%.Core@;
-
 @ Env@ = /Fbld/Fbld%.Env@;
 
 % Report = /Fbld/Loc%.Report;
@@ -51,7 +49,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 
-  @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text);
+  @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text, Unit@ raw);
 
   @ Args@ = *(
     Backend@ backend,
@@ -81,21 +79,23 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       });
       parse(args.cons.tail, result.@(rfiles: Cons(arg, result.rfiles)));
     };
-    parse(args, Args@(Backend@(html: Unit), Nil<String@>));
+    parse(args, Args@(Backend@(raw: Unit), Nil<String@>));
   };
 
   (List@<String@> args) {
     Args@ parsed = ParseArgs(args);
 
-    Core@ core = parsed.backend.?(
-      html: /Fbld/Html%.Core,
-      markdown: /Fbld/Markdown%.Core,
-      man: /Fbld/Man%.Core,
-      text: /Fbld/TextBackend%.Core);
+    Markup@ backend = parsed.backend.?(
+      html: /Fbld/Core%.Markup(/Fbld/Html%.Core),
+      markdown: /Fbld/Core%.Markup(/Fbld/Markdown%.Core),
+      man: /Fbld/Core%.Markup(/Fbld/Man%.Core),
+      text: /Fbld/Core%.Markup(/Fbld/TextBackend%.Core),
+      raw: /Fbld/Markup%.Empty);
 
     Markup@ markup = Markups[
+      /Fbld/Builtin/Raw%.Markup,
       /Fbld/Define%.Markup,
-      /Fbld/Core%.Markup(core)
+      backend
     ];
 
     Env@ env = /Fbld/Markup%.Env(markup);
