@@ -12,7 +12,7 @@ Things to consider doing for the fble-0.2 release.
  - Test that '@ ...' at the start of block structured text is not allowed.
  - Add @switch
  - Add @error
- - Add @raw, @inline, @block
+ - Add @block
  - Add @head, @tail
  - Move backends out of fble into .fbld
  - Add examples of @, @@ to spec for syntax.
@@ -22,8 +22,6 @@ Things to consider doing for the fble-0.2 release.
  - Figure out why it takes so much memory to run.
  - Implement source highlighting for @code.
  - Change Env@ to Markup@ so we can insert new commands more reasonably?
- - Switch to reader for Env@ instead of state now that we no longer make use
-   of state part of things.
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.

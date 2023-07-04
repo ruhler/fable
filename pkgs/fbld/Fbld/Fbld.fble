@@ -1,9 +1,6 @@
 
 @ String@ = /Core/String%.String@;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
-
 @ Command@ = /Fbld/Command%.Command@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
@@ -16,9 +13,7 @@
 % Text = /Fbld/Text%.Text;
 
 @ FbldText@ = {
-  @ S@ = *(E@ env, Text@ x),
-  @ R@ = Result@<S@>,
-  @ FT@ = (E@) { R@; },
+  @ FT@ = (E@) { Result@<Text@>; },
   @ I@ = (Command@) { FT@; },
   @ E@ = *(I@ inline, I@ block);
   FT@;
@@ -26,50 +21,38 @@
 
 @ Invoke@ = (Command@) { FbldText@; };
 @ Env@ = *(Invoke@ inline, Invoke@ block);
-<@>@ S@ = <@ A@> { *(Env@ env, A@ x); };
-<@>@ R@ = <@ A@> { Result@<S@<A@>>; };
-<@>@ Fbld@ = <@ A@>(Env@) { R@<A@>; };
+<@>@ Fbld@ = <@ A@>(Env@) { Result@<A@>; };
 
 <@ A@>(A@) { Fbld@<A@>; }
 Return = <@ A@>(A@ x)(Env@ e) {
-  Ok(S@(e, x));
+  Ok(x);
 };
 
 <@ A@>(Loc@, String@) { Fbld@<A@>; }
 Error = <@ A@>(Loc@ l, String@ msg)(Env@ _) {
-  Err<S@<A@>>(Text(msg, l));
+  Err<A@>(Text(msg, l));
 };
 
 <@ A@>(Fbld@<A@>)<@ B@>((A@) { Fbld@<B@>; }) { Fbld@<B@>; }
 Do = <@ A@>(Fbld@<A@> ma)<@ B@>((A@) { Fbld@<B@>; } f)(Env@ e) {
-  R@<A@> r = ma(e);
-  r.?(err: Err<S@<B@>>(r.err));
-  f(r.ok.x)(r.ok.env);
+  Result@<A@> r = ma(e);
+  r.?(err: Err<B@>(r.err));
+  f(r.ok)(e);
 };
 
 Fbld@<Env@> GetEnv = (Env@ env) {
-  Ok(S@(env, env));
-};
-
-(Env@) { Fbld@<Unit@>; } SetEnv = (Env@ nenv)(Env@ _) {
-  Ok(S@(nenv, Unit));
+  Ok(env);
 };
 
 <@ A@>(Env@, Fbld@<A@>) { Fbld@<A@>; }
-WithEnv = <@ A@>(Env@ nenv, Fbld@<A@> m) { 
-  Env@ e <- Do(GetEnv);
-  Unit@ _ <- Do(SetEnv(nenv));
-  A@ r <- Do(m);
-  Unit@ _ <- Do(SetEnv(e));
-  Return(r);
+WithEnv = <@ A@>(Env@ env, Fbld@<A@> m)(Env@ _) { 
+  m(env);
 };
 
 # Runs an Fbld@ computation.
 <@ A@>(Fbld@<A@>, Env@) { Result@<A@>; }
 Run = <@ A@>(Fbld@<A@> m, Env@ e) {
-  R@<A@> r = m(e);
-  r.?(ok: Ok(r.ok.x));
-  Err<A@>(r.err);
+  m(e);
 };
 
 @(Env@, Invoke@, Fbld@,
