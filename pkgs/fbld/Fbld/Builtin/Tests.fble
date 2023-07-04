@@ -1,0 +1,53 @@
+
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>% List = /Core/List%.List;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+@ Env@ = /Fbld/Fbld%.Env@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+@ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+% StringOf = /Fbld/Text%.StringOf;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+<@>% Err = /Fbld/Result%.Err;
+
+% Run = /Fbld/Run%;
+
+(String@) { Result@<String@>; } RunBlock = (String@ s) {
+  Text@ input = Text(s, Loc@(Str|'file.fbld', Int|1, Int|1, Int|0));
+  Env@ env = /Fbld/Markup%.Env(/Fbld/Builtin%.Markup);
+  Fbld@<Text@> m = Run.Block(input);
+  Result@<Text@> r = /Fbld/Fbld%.Run(m, env);
+  r.?(ok: Ok(StringOf(r.ok)));
+  Err<String@>(r.err);
+};
+
+Test@ Tests = TestSuite(Str|Builtin, List[
+  Test(Str|Raw, (Unit@ _) {
+    String@ input = Str|'@raw[ hello this is raw text! ]';
+
+    Result@<String@> wnt = Ok<String@>|' hello this is raw text! ';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  })
+]);
+
+@(Tests);
