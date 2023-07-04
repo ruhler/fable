@@ -62,6 +62,29 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     AssertEquals(
       /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|SubstIndent, (Unit@ _) {
+    # Each line of the argument should be indented by the amount of indent of
+    # the line that contains the variable in the body.
+    String@ input = Str|'
+@defb[foo][x]
+ @raw[
+      a $x]
+@@
+@foo[hello
+there
+how are you?]
+';
+
+    Result@<String@> wnt = Ok<String@>|'
+     a hello
+     there
+     how are you?';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 

@@ -1,10 +1,12 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
+% And = /Core/Bool%.And;
 
 @ Char@ = /Core/Char%.Char@;
-% Chars = /Core/Char%.Chars;
 % IsNewline = /Core/Char/Type%.IsNewline;
+% IsSpace = /Core/Char/Type%.IsSpace;
 
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
@@ -88,14 +90,19 @@
 
 (Map@, String@) { String@; }
 Subst = (Map@ map, String@ body) {
-  (String@, String@, String@) { String@; } subst = (String@ indent, String@ body, String@ r) {
+  (Bool@, String@, String@, String@) { String@; } subst = (Bool@ indenting, String@ indent, String@ body, String@ r) {
     body.?(nil: r);
 
     String@ tail = body.cons.tail;
     IsNewline(body.cons.head).?(true: {
-      subst(Str|'', tail, Cons(body.cons.head, r));
+      subst(True, Str|'', tail, Cons(body.cons.head, r));
     });
-    String@ nindent = Cons(Chars.' ', indent);
+    String@ nindent = {
+      indenting.?(false: indent);
+      IsSpace(body.cons.head).?(false: indent);
+      Cons(body.cons.head, indent);
+    };
+    Bool@ nindenting = And(indenting, IsSpace(body.cons.head));
 
     body.cons.head.?('$': {
       Maybe@<String@> mv = /Core/Map%.ForEach(map, Nothing<String@>,
@@ -104,16 +111,16 @@ Subst = (Map@ map, String@ body) {
           StartsWith(tail, key).?(true: Just(key));
           Nothing<String@>;
         });
-      mv.?(nothing: subst(nindent, tail, Cons(body.cons.head, r)));
+      mv.?(nothing: subst(nindenting, nindent, tail, Cons(body.cons.head, r)));
       String@ ntail = Drop(Length(mv.just), tail);
       String@ value = Lookup(map, mv.just).just;
-      String@ indented = Indent(indent, value);
-      subst(nindent, ntail, Append(Reverse(indented), r));
+      String@ indented = Indent(Reverse(indent), value);
+      subst(nindenting, nindent, ntail, Append(Reverse(indented), r));
     });
-    subst(nindent, tail, Cons(body.cons.head, r));
+    subst(nindenting, nindent, tail, Cons(body.cons.head, r));
   };
 
-  Reverse(subst(Str|'', body, Str|''));
+  Reverse(subst(True, Str|'', body, Str|''));
 };
 
 (List@<String@>, List@<Text@>, Map@) { Map@; }
