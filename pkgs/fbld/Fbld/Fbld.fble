@@ -55,6 +55,15 @@ Fbld@<Env@> GetEnv = (Env@ env) {
   Ok(S@(nenv, Unit));
 };
 
+<@ A@>(Env@, Fbld@<A@>) { Fbld@<A@>; }
+WithEnv = <@ A@>(Env@ nenv, Fbld@<A@> m) { 
+  Env@ e <- Do(GetEnv);
+  Unit@ _ <- Do(SetEnv(nenv));
+  A@ r <- Do(m);
+  Unit@ _ <- Do(SetEnv(e));
+  Return(r);
+};
+
 # Runs an Fbld@ computation.
 <@ A@>(Fbld@<A@>, Env@) { Result@<A@>; }
 Run = <@ A@>(Fbld@<A@> m, Env@ e) {
@@ -64,5 +73,5 @@ Run = <@ A@>(Fbld@<A@> m, Env@ e) {
 };
 
 @(Env@, Invoke@, Fbld@,
-  Return, Error, Do, GetEnv, SetEnv,
+  Return, Error, Do, GetEnv, WithEnv,
   Run);

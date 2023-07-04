@@ -26,8 +26,6 @@
 % Strs = /Core/String%.Strs;
 % StartsWith = /Core/String/Eq%.StartsWith;
 
-@ Unit@ = /Core/Unit%.Unit@;
-
 @ Command@ = /Fbld/Command%.Command@;
 
 <@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
@@ -37,7 +35,7 @@
 <@>% Return = /Fbld/Fbld%.Return;
 <@>% Error = /Fbld/Fbld%.Error;
 % GetEnv = /Fbld/Fbld%.GetEnv;
-% SetEnv = /Fbld/Fbld%.SetEnv;
+<@>% WithEnv = /Fbld/Fbld%.WithEnv;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 % Start = /Fbld/Loc%.Start;
@@ -174,10 +172,7 @@ Markup@ Markup = Block[
         true: invoke(cmd),
         false: env.inline(cmd));
     };
-    Unit@ _ <- Do(SetEnv(env.@(inline: inline)));
-    Text@ result <- Do(Run.Block(args.body));
-    Unit@ _ <- Do(SetEnv(env));
-    Return(result);
+    WithEnv(env.@(inline: inline), Run.Block(args.body));
   }),
 
   # @defb[name][param1][param2]...[paramN][def][body]
@@ -197,10 +192,7 @@ Markup@ Markup = Block[
         true: invoke(cmd),
         false: env.block(cmd));
     };
-    Unit@ _ <- Do(SetEnv(env.@(block: block)));
-    Text@ result <- Do(Run.Block(args.body));
-    Unit@ _ <- Do(SetEnv(env));
-    Return(result);
+    WithEnv(env.@(block: block), Run.Block(args.body));
   })
 ];
 
