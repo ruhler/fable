@@ -92,11 +92,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       text: /Fbld/Core%.Markup(/Fbld/TextBackend%.Core),
       raw: /Fbld/Markup%.Empty);
 
-    Markup@ markup = Markups[
-      /Fbld/Builtin/Run%.Markup,
-      /Fbld/Builtin/Define%.Markup,
-      backend
-    ];
+    Markup@ markup = Markups[/Fbld/Builtin%.Markup, backend];
 
     Env@ env = /Fbld/Markup%.Env(markup);
 

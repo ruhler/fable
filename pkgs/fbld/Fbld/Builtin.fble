@@ -1,0 +1,10 @@
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Markups = /Fbld/Markup%.Markups;
+
+Markup@ Markup = Markups[
+  /Fbld/Builtin/Run%.Markup,
+  /Fbld/Builtin/Define%.Markup
+];
+
+@(Markup);
