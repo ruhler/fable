@@ -47,6 +47,21 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     AssertEquals(
       /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|DefB, (Unit@ _) {
+    String@ input = Str|'
+@defb[foo][a][b]
+ @raw[a: $a, b: $b]
+@@
+@foo[hello][there]
+';
+
+    Result@<String@> wnt = Ok<String@>|'a: hello, b: there';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 
