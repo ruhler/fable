@@ -85,6 +85,24 @@ how are you?]
     AssertEquals(
       /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|SubstLoc, (Unit@ _) {
+    String@ input = Str|'
+@defb[foo][x]
+ @block[$x]
+@@
+@foo
+ @blah
+';
+
+    String@ msg = Str|'unsupported tag: ''blah''';
+    Loc@ loc = Loc@(Str|'file.fbld', Int|6, Int|1, Int|1);
+    Result@<String@> wnt = Err<String@>(Text(msg, loc));
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 
