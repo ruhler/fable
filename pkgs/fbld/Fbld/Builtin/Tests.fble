@@ -90,14 +90,14 @@ how are you?]
   Test(Str|SubstLoc, (Unit@ _) {
     String@ input = Str|'
 @defb[foo][x]
- @block[$x]
+ $x
 @@
 @foo
  @blah
 ';
 
     String@ msg = Str|'unsupported tag: ''blah''';
-    Loc@ loc = Loc@(Str|'file.fbld', Int|6, Int|1, Int|1);
+    Loc@ loc = Loc@(Str|'file.fbld', Int|6, Int|3, Int|1);
     Result@<String@> wnt = Err<String@>(Text(msg, loc));
     Result@<String@> got = RunBlock(input);
     AssertEquals(

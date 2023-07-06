@@ -1,32 +1,16 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-% And = /Core/Bool%.And;
-
-@ Char@ = /Core/Char%.Char@;
-% IsNewline = /Core/Char/Type%.IsNewline;
-% IsSpace = /Core/Char/Type%.IsSpace;
-
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
-<@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
-<@>% Drop = /Core/List/Length%.Drop;
 <@>% Length = /Core/List/Length%.Length;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
-% StartsWith = /Core/String/Eq%.StartsWith;
 
 @ Command@ = /Fbld/Command%.Command@;
 
@@ -39,33 +23,26 @@
 % GetEnv = /Fbld/Fbld%.GetEnv;
 <@>% WithEnv = /Fbld/Fbld%.WithEnv;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
-% Start = /Fbld/Loc%.Start;
-
 @ Markup@ = /Fbld/Markup%.Markup@;
 % Block = /Fbld/Markup%.Block;
 % Entry = /Fbld/Markup%.Entry;
 
 % Run = /Fbld/Run%;
 
+% MakeMap = /Fbld/Subst%.MakeMap;
+% Subst = /Fbld/Subst%.Subst;
+
 @ Text@ = /Fbld/Text%.Text@;
-% Text = /Fbld/Text%.Text;
 % StringOf = /Fbld/Text%.StringOf;
 % LocOf = /Fbld/Text%.LocOf;
 
-@ Map@ = /Core/Map%.Map@<String@, String@>;
-% Empty = /Core/Map%.Empty<String@, String@>;
-% Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<String@>;
-% Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<String@>;
-
-@ Args@ = *(String@ name, List@<String@> params, String@ def, Text@ body);
+@ Args@ = *(String@ name, List@<String@> params, Text@ def, Text@ body);
 
 (List@<Text@>) { Args@; } GetArgs = (List@<Text@> args) {
   (List@<Text@>, String@, List@<String@>) { Args@; }
   getargs = (List@<Text@> in, String@ name, List@<String@> rparams) {
     in.cons.tail.cons.tail.?(nil: {
-      Args@(name, Reverse(rparams), StringOf(in.cons.head),
-        in.cons.tail.cons.head);
+      Args@(name, Reverse(rparams), in.cons.head, in.cons.tail.cons.head);
     });
 
     getargs(in.cons.tail, name, Cons(StringOf(in.cons.head), rparams));
@@ -75,63 +52,8 @@
   getargs(args.cons.tail, name, Nil<String@>);
 };
 
-# Indent all but first line with prefix.
-(String@, String@) { String@; } Indent = (String@ prefix, String@ text) {
-  (Bool@, String@, String@) { String@; }
-  indent = (Bool@ nl, String@ str, String@ rchrs) {
-    str.?(nil: Reverse(rchrs));
-    nl.?(true: indent(False, str, Append(Reverse(prefix), rchrs)));
-    Char@ c = str.cons.head;
-    indent(IsNewline(c), str.cons.tail, Cons(c, rchrs));
-  };
-
-  indent(False, text, Str|'');
-};
-
-(Map@, String@) { String@; }
-Subst = (Map@ map, String@ body) {
-  (Bool@, String@, String@, String@) { String@; } subst = (Bool@ indenting, String@ indent, String@ body, String@ r) {
-    body.?(nil: r);
-
-    String@ tail = body.cons.tail;
-    IsNewline(body.cons.head).?(true: {
-      subst(True, Str|'', tail, Cons(body.cons.head, r));
-    });
-    String@ nindent = {
-      indenting.?(false: indent);
-      IsSpace(body.cons.head).?(false: indent);
-      Cons(body.cons.head, indent);
-    };
-    Bool@ nindenting = And(indenting, IsSpace(body.cons.head));
-
-    body.cons.head.?('$': {
-      Maybe@<String@> mv = /Core/Map%.ForEach(map, Nothing<String@>,
-        (String@ key, String@ _, Maybe@<String@> mv) {
-          mv.?(just: mv);
-          StartsWith(tail, key).?(true: Just(key));
-          Nothing<String@>;
-        });
-      mv.?(nothing: subst(nindenting, nindent, tail, Cons(body.cons.head, r)));
-      String@ ntail = Drop(Length(mv.just), tail);
-      String@ value = Lookup(map, mv.just).just;
-      String@ indented = Indent(Reverse(indent), value);
-      subst(nindenting, nindent, ntail, Append(Reverse(indented), r));
-    });
-    subst(nindenting, nindent, tail, Cons(body.cons.head, r));
-  };
-
-  Reverse(subst(True, Str|'', body, Str|''));
-};
-
-(List@<String@>, List@<Text@>, Map@) { Map@; }
-MakeMap = (List@<String@> keys, List@<Text@> values, Map@ m) {
-  keys.?(nil: m);
-  MakeMap(keys.cons.tail, values.cons.tail,
-    Insert(m, keys.cons.head, StringOf(values.cons.head)));
-};
-
-(List@<String@>, String@, Command@) { Fbld@<Text@>; }
-Define = (List@<String@> argnames, String@ def, Command@ command) {
+(List@<String@>, Text@, Command@) { Fbld@<Text@>; }
+Define = (List@<String@> argnames, Text@ def, Command@ command) {
   Int@ wnt_args = Length(argnames);
   Int@ got_args = Length(command.args);
   /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
@@ -140,21 +62,20 @@ Define = (List@<String@> argnames, String@ def, Command@ command) {
           Str|' args, but got ', /Core/Int/Show%.Show(got_args)]);
     });
 
-  String@ subst = Subst(MakeMap(argnames, command.args, Empty), def);
-  Loc@ unknown = Start|'???';
-  Return(Text(subst, unknown));
+  Text@ subst = Subst(MakeMap(argnames, command.args), def);
+  Return(subst);
 };
 
-(List@<String@>)(String@) { Invoke@; }
-DefB = (List@<String@> argnames)(String@ def) {
+(List@<String@>)(Text@) { Invoke@; }
+DefB = (List@<String@> argnames)(Text@ def) {
   (Command@ command) {
     Text@ text <- Do(Define(argnames, def, command));
     Run.Block(text);
   };
 };
 
-(List@<String@>)(String@) { Invoke@; }
-DefI = (List@<String@> argnames)(String@ def) {
+(List@<String@>)(Text@) { Invoke@; }
+DefI = (List@<String@> argnames)(Text@ def) {
   (Command@ command) {
     Text@ text <- Do(Define(argnames, def, command));
     Run.Inline(text);

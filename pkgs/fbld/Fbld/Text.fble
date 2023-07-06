@@ -7,6 +7,11 @@
 
 <@>@ List@ = /Core/List%.List@;
 
+@ Int@ = /Core/Int%.Int@;
+% Decr = /Core/Int%.Decr;
+% Le = /Core/Int/Eq%.Le;
+% Int = /Core/Int/Lit%.Int;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
@@ -108,4 +113,19 @@ Concat = (Loc@ l, List@<Text@> x) {
   Append(x.cons.head, Concat(l, x.cons.tail));
 };
 
-@(Text@, Text, StringOf, LocOf, IsEmpty, Empty, Head, Tail, Append, Concat);
+(Text@, String@) { Bool@; }
+StartsWith = (Text@ text, String@ sub) {
+  sub.?(nil: True);
+  IsEmpty(text).?(true: False);
+  /Core/Char/Eq%.Eq(sub.cons.head, Head(text)).?(false: False);
+  StartsWith(Tail(text), sub.cons.tail);
+};
+
+(Int@, Text@) { Text@; } Drop = (Int@ n, Text@ l) {
+  Le(n, Int|0).?(true: l);
+  IsEmpty(l).?(true: l);
+  Drop(Decr(n), Tail(l));
+};
+
+@(Text@, Text, StringOf, LocOf, IsEmpty, Empty, Head, Tail, Append, Concat,
+  StartsWith, Drop);
