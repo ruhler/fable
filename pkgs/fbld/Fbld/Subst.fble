@@ -99,4 +99,4 @@ MakeMap = {
   };
 };
 
-@(Map@, MakeMap, Subst);
+@(Map@, MakeMap, Empty, Insert, Subst);

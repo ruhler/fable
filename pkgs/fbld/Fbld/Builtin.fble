@@ -3,8 +3,9 @@
 % Markups = /Fbld/Markup%.Markups;
 
 Markup@ Markup = Markups[
-  /Fbld/Builtin/Run%.Markup,
-  /Fbld/Builtin/Define%.Markup
+  /Fbld/Builtin/Define%.Markup,
+  /Fbld/Builtin/Let%.Markup,
+  /Fbld/Builtin/Run%.Markup
 ];
 
 @(Markup);

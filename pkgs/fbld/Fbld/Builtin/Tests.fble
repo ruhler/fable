@@ -49,6 +49,21 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   }),
 
+  Test(Str|Let, (Unit@ _) {
+    String@ input = Str|'
+@let
+@[x] hello
+@[y] here $x and $x
+@ then $y
+';
+
+    Result@<String@> wnt = Ok<String@>|'then here hello and hello';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
   Test(Str|DefB, (Unit@ _) {
     String@ input = Str|'
 @defb[foo][a][b]

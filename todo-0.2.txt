@@ -19,9 +19,11 @@ Things to consider doing for the fble-0.2 release.
  - Add test cases for all builtin tags.
  - Document all new tags in spec.
  - Figure out how to generate c header output.
- - Figure out why it takes so much memory to run.
+ - Figure out why it takes so much memory and time to run.
  - Implement source highlighting for @code.
  - Change Env@ to Markup@ so we can insert new commands more reasonably?
+ - Figure out how to have subst variables where one variable name is a prefix
+   of another variable name.
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.
