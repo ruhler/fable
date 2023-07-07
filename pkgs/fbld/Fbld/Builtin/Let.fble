@@ -8,15 +8,19 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Command@ = /Fbld/Command%.Command@;
 
-<@>% Return = /Fbld/Fbld%.Return;
+<@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+<@>% Do = /Fbld/Fbld%.Do;
 <@>% Error = /Fbld/Fbld%.Error;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 % Block = /Fbld/Markup%.Block;
 % Entry = /Fbld/Markup%.Entry;
+
+% Run = /Fbld/Run%;
 
 @ Map@ = /Fbld/Subst%.Map@;
 % Subst = /Fbld/Subst%.Subst;
@@ -27,18 +31,19 @@
 % StringOf = /Fbld/Text%.StringOf;
 % LocOf = /Fbld/Text%.LocOf;
 
-(List@<Text@>, Map@) { Text@; }
+(List@<Text@>, Map@) { Fbld@<Text@>; }
 Let = (List@<Text@> args, Map@ map) {
   args.cons.tail.?(nil: {
     # This is the last argument: the body. Do the final substitution into the
     # body.
-    Subst(map, args.cons.head);
+    Run.Block(Subst(map, args.cons.head));
   });
 
   String@ key = StringOf(args.cons.head);
   Text@ value = args.cons.tail.cons.head;
   List@<Text@> tail = args.cons.tail.cons.tail;
-  Let(tail, Insert(map, key, Subst(map, value)));
+  Text@ evaluated <- Do(Run.Block(Subst(map, value)));
+  Let(tail, Insert(map, key, evaluated));
 };
 
 Markup@ Markup = Block[
@@ -53,10 +58,13 @@ Markup@ Markup = Block[
   Entry(Str|'let', (Command@ cmd) {
     Int@ num_args = Length(cmd.args);
     /Core/Int/Eq%.Eq(Div(num_args, Int|2).r, Int|1).?(false: {
-      Error<Text@>(LocOf(cmd.name), Str|'expected an odd number of arguments');
+      String@ msg = Strs[
+        Str|'expected an odd number of arguments, but got ',
+        /Core/Int/Show%.Show(num_args)];
+      Error<Text@>(LocOf(cmd.name), msg);
     });
 
-    Return(Let(cmd.args, Empty));
+    Let(cmd.args, Empty);
   })
 ];
 

@@ -52,9 +52,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
   Test(Str|Let, (Unit@ _) {
     String@ input = Str|'
 @let
-@[x] hello
-@[y] here $x and $x
-@ then $y
+@[x] @raw[hello]
+@[y] @raw[here $x and $x]
+@ @raw[then $y]
 ';
 
     Result@<String@> wnt = Ok<String@>|'then here hello and hello';
