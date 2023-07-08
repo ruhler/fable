@@ -59,7 +59,8 @@ Define = (List@<String@> argnames, Text@ def, Command@ command) {
   /Core/Int/Eq%.Eq(wnt_args, got_args ).?(false: {
     Error<Text@>(LocOf(command.name), Strs[
           Str|'expected ', /Core/Int/Show%.Show(wnt_args),
-          Str|' args, but got ', /Core/Int/Show%.Show(got_args)]);
+          Str|' args to @', StringOf(command.name),
+          Str|', but got ', /Core/Int/Show%.Show(got_args)]);
     });
 
   Text@ subst = Subst(MakeMap(argnames, command.args), def);

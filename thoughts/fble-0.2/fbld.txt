@@ -2336,3 +2336,18 @@ long runs of sequential text.
 
 (B) is clearly an optimization. Let's start with (A), and save later?
 
+---
+
+Flattening solved the issue. What used to take a minute to run now just takes
+a few seconds.
+
+Next issues:
+* Should defi 'def' be interpreted as inline text or block text?
+ - If block text, why does that add an extra newline to generated README.md?
+* Location tracking is broken somehow. My bad call to @url in README.md is
+  being reported at the wrong place.
+* How to implement @url that can optionally take a single argument?
+  Short term workaround could be define @lurl, @lfbld, @lfile for example, for
+  'labelled foo'. But in general, do we want to support varags? Seems like we
+  should given so many of the builtins use varargs.
+
