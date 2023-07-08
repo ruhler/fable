@@ -6,6 +6,9 @@
 @ Char@ = /Core/Char%.Char@;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Reverse = /Core/List%.Reverse;
 
 @ Int@ = /Core/Int%.Int@;
 % Decr = /Core/Int%.Decr;
@@ -20,26 +23,97 @@
 
 @ _@ = %(/Fbld/Text%);
 
-@ Str@ = *(String@ str, Loc@ loc);
+@ LChar@ = *(Char@ char, Loc@ loc);
 
-@ Append@ = *(Text_@ a, Text_@ b),
-@ Text_@ = +(Str@ str, Append@ append);
+@ Text_@ = +(
+  Loc@ empty,
+  *(LChar@ head, Text_@ tail) cons,
+  *(Text_@ a, Text_@ b) append    # a and b are both non-empty.
+);
+
+(Loc@) { Text_@; }
+Empty_ = (Loc@ loc) {
+  Text_@(empty: loc);
+};
+
+(String@, Loc@) { Text_@; }
+Text_ = {
+  # String@ -> reverse order list of LChar@
+  (String@, Loc@, List@<LChar@>) { List@<LChar@>; }
+  chars = (String@ str, Loc@ loc, List@<LChar@> cs) {
+    str.?(nil: cs);
+
+    LChar@ c = LChar@(str.cons.head, loc);
+    chars(str.cons.tail, Advance(loc, str.cons.head), Cons(c, cs));
+  };
+
+  # Reverse order list of LChar@ -> Text@
+  (List@<LChar@>, Text_@) { Text_@; }
+  text = (List@<LChar@> cs, Text_@ t) {
+    cs.?(nil: t);
+    Text_@ tail = Text_@(cons: @(head: cs.cons.head, tail: t));
+    text(cs.cons.tail, tail);
+  };
+  
+  (String@ str, Loc@ loc) {
+    str.?(nil: Empty_(loc));
+    List@<LChar@> cs = chars(str, loc, Nil<LChar@>);
+    text(cs, Empty_(cs.cons.head.loc));
+  };
+};
+
+(Text_@, Text_@) { Text_@; }
+Append_ = (Text_@ a, Text_@ b) {
+  a.?(empty: b);
+  b.?(empty: a);
+  Text_@(append: @(a, b));
+};
+
+(Text_@) { Bool@; }
+IsEmpty_ = (Text_@ text) {
+  text.?(empty: True);
+  False;
+};
+
+(Text_@) { Char@; }
+Head_ = (Text_@ text) {
+  text.?(cons: text.cons.head.char);
+  Head_(text.append.a);
+};
+
+(Text_@) { Text_@; }
+Tail_ = (Text_@ text) {
+  text.?(cons: text.cons.tail);
+  Append_(Tail_(text.append.a), text.append.b);
+};
+
+(Text_@) { Loc@; }
+LocOf_ = (Text_@ text) {
+  text.?(empty: text.empty);
+  text.?(cons: text.cons.head.loc);
+  LocOf_(text.append.a);
+};
 
 # Abstract string type that supports location tracking and fast concatenation.
 @ Text@ = _@<Text_@>;
 
-(String@, Loc@) { Text_@; }
-Text_ = (String@ str, Loc@ loc) {
-  Text_@(str: Str@(str, loc));
-};
-
 (String@, Loc@) { Text@; } Text = _@.<@<Text>>(Text_);
 
-(Text_@, String@) { String@; }
-StringOf_ = (Text_@ text, String@ r) {
-  text.?(str: /Core/List%.Append(text.str.str, r));
-  StringOf_(text.append.a, StringOf_(text.append.b, r));
-};
+# Returns the first character of text.
+# Behavior is undefined if the text is empty.
+(Text@) { Char@; } Head = _@.<@<Head>>(Head_);
+
+# LocOf --
+#   Gets the location of the start of the text.
+(Text@) { Loc@; } LocOf = _@.<@<LocOf>>(LocOf_);
+
+(Text@) { Bool@; } IsEmpty = _@.<@<IsEmpty>>(IsEmpty_);
+
+(Loc@) { Text@; } Empty = _@.<@<Empty>>(Empty_);
+
+(Text@, Text@) { Text@; } Append = _@.<@<Append>>(Append_);
+
+(Text@) { Text@; } Tail = _@.<@<Tail>>(Tail_);
 
 # StringOf --
 #   Extracts the contents of the text into a String@.
@@ -47,65 +121,17 @@ StringOf_ = (Text_@ text, String@ r) {
 # Note: This may be an expensive operation. Avoid duplicate calls where
 # possible.
 (Text@) { String@; }
-StringOf = _@.<@<StringOf>>((Text_@ text) {
-  StringOf_(text, Str|'');
-});
+StringOf = {
+  (Text@, String@) { String@; }
+  str = (Text@ t, String@ r) {
+    IsEmpty(t).?(true: Reverse(r));
+    str(Tail(t), Cons(Head(t), r));
+  };
 
-(Text_@) { Loc@; }
-LocOf_ = (Text_@ text) {
-  text.?(str: text.str.loc);
-  LocOf_(text.append.a);
+  (Text@ text) {
+    str(text, Str|'');
+  };
 };
-
-# LocOf --
-#   Gets the location of the start of the text.
-(Text@) { Loc@; } LocOf = _@.<@<LocOf>>(LocOf_);
-
-(Text_@) { Bool@; }
-IsEmpty_ = (Text_@ text) {
-  text.?(str: {
-    text.str.str.?(nil: True);
-    False;
-  });
-  False;
-};
-
-(Text@) { Bool@; } IsEmpty = _@.<@<IsEmpty>>(IsEmpty_);
-
-(Loc@) { Text@; }
-Empty = (Loc@ l) {
-  Text(Str|'', l);
-};
-
-(Text_@, Text_@) { Text_@; }
-Append_ = (Text_@ a, Text_@ b) {
-  IsEmpty_(a).?(true: b);
-  IsEmpty_(b).?(true: a);
-  Text_@(append: Append@(a, b));
-};
-
-(Text@, Text@) { Text@; } Append = _@.<@<Append>>(Append_);
-
-(Text_@) { Char@; }
-Head_ = (Text_@ text) {
-  text.?(
-    str: text.str.str.cons.head,
-    append: Head_(text.append.a));
-};
-
-# Returns the first character of text.
-# Behavior is undefined if the text is empty.
-(Text@) { Char@; } Head = _@.<@<Head>>(Head_);
-
-(Text_@) { Text_@; }
-Tail_ = (Text_@ text) {
-  text.?(str: {
-    Text_(text.str.str.cons.tail, Advance(text.str.loc, text.str.str.cons.head));
-  });
-  Append_(Tail_(text.append.a), text.append.b);
-};
-
-(Text@) { Text@; } Tail = _@.<@<Tail>>(Tail_);
 
 (Loc@, List@<Text@>) { Text@; }
 Concat = (Loc@ l, List@<Text@> x) {

@@ -2287,3 +2287,52 @@ There are two things Text@ adds on top of String@:
 1. Tracking locations.
 2. Fast append.
 
+---
+
+Here's what I think happens. Subst basically does Append(str, [char]) for the
+entire string. That leaves us with a text structure like:
+
+Append(Append(Append(Append(a, b), c), d), e)
+
+Then we parse that string by asking for Head and Tail over and over again.
+Let's look at tail.
+
+It traverses down O(N) to get to the string 'a' and turn that into ''.
+It asks if 'a' is empty, returns b. Then goes up the chain O(N) allocating
+nodes. That means Tail becomes O(N). No surprise it's slow.
+
+Some ideas:
+* Flatten the Text@ just before parsing. For example, in the Parser Run
+  method. Overall traversal would then drop from O(N^2) to O(N).
+* There are only a few places we need fast append:
+  - subst
+  - main function to concatenate input from different files together.
+  - Run inline and parse to concatenate command results together.
+  Maybe we arrange to handle that better.
+
+The pattern of use is fairly clear. We concatenate a bunch of strings
+together into a string, then we parse the string to separate it into a bunch
+of separate parts. We do this back and forth and back and forth. Then we want
+to force concatenation exactly at the time after full concatenation is done
+before parsing.
+
+Thus the clear answer is this: flatten the Text@ just before parsing. That
+should solve the problem.
+
+What does it mean to flatten? If it was String@ we were talking about, that's
+obvious. Remove all Appends, replace them with Cons. With Text@ locations,
+that's less obvious.
+
+What makes sense as a way to describe a sequence of characters that have, for
+the most part, sequential locations, but occasionally jump around?
+
+A. A list of (Loc@, Char@). We store the location at each place. There
+duplicate information. For example, N characters takes
+N*sizeof(Loc)*sizeof(Char) space.
+
+B. Loc@ plus a sequence of Char@ or Command@. The command is used to jump to a
+non-sequential location. May as well have that be Loc@. We save space now for
+long runs of sequential text.
+
+(B) is clearly an optimization. Let's start with (A), and save later?
+
