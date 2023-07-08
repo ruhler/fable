@@ -29,6 +29,7 @@
 % LocOf = /Fbld/Text%.LocOf;
 % Head = /Fbld/Text%.Head;
 % Tail = /Fbld/Text%.Tail;
+% Flatten = /Fbld/Text%.Flatten;
 
 <@>@ S@ = <@ T@> { *(Text@ in, T@ x); };
 
@@ -124,7 +125,7 @@ Test_ = <@ T@>(M@<T@> mx) {
 # Runs a parser monad on the given input string.
 <@ T@>(M@<T@>, Text@) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, Text@ in) {
-  Result@<S@<T@>> r = m(in);
+  Result@<S@<T@>> r = m(Flatten(in));
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);
 };
