@@ -34,7 +34,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
   Test(Str|Unescape, (Unit@ _) {
     String@ text = Str|'a \\ \a\[\]bcd\@';
     String@ wnt = Str|'a \ \a[]bcd@';
-    String@ got = /Fbld/Unescape%.Unescape(text);
+    String@ got = /Fbld/Unescape%.UnescapeS(text);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

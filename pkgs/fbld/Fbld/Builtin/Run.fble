@@ -29,6 +29,16 @@ Markup@ Markup = Block[
     Return(cmd.args.cons.head);
   }),
 
+  # @escape[text]
+  #  Interprets the text as escaped text.
+  Entry(Str|'escape', (Command@ cmd) {
+    Int@ num_args = Length(cmd.args);
+    /Core/Int/Eq%.Eq(num_args, Int|1).?(false: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected 1 arg');
+    });
+    Return(/Fbld/Unescape%.Unescape(cmd.args.cons.head));
+  }),
+
   # @inline[text]
   #  Interprets the text as inline text.
   Entry(Str|'inline', (Command@ cmd) {
@@ -37,6 +47,16 @@ Markup@ Markup = Block[
       Error<Text@>(LocOf(cmd.name), Str|'expected 1 arg');
     });
     /Fbld/Run%.Inline(cmd.args.cons.head);
+  }),
+
+  # @block[text]
+  #  Interprets the text as block text.
+  Entry(Str|'block', (Command@ cmd) {
+    Int@ num_args = Length(cmd.args);
+    /Core/Int/Eq%.Eq(num_args, Int|1).?(false: {
+      Error<Text@>(LocOf(cmd.name), Str|'expected 1 arg');
+    });
+    /Fbld/Run%.Block(cmd.args.cons.head);
   })
 ];
 

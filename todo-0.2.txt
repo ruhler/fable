@@ -9,6 +9,9 @@ Things to consider doing for the fble-0.2 release.
 * fbld vim syntax: set tabstop/shiftwidth to single space?
 
 * Fbld:
+ - Figure out why continuation args are working for @let in markdown.fbld
+ - Remove --markdown builtin backend.
+ - Improve performance.
  - Test that '@ ...' at the start of block structured text is not allowed.
  - Add @switch
  - Add @error

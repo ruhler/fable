@@ -1,19 +1,35 @@
+@defb[par][text]
+ @let[t][@inline[$text]][@raw[
+ $t
+ ]]
+@@
+
+@defi[][text]
+ @raw
+  $text
+@@
+
+@defb[][text]
+ @par
+  $text
+@@
+
 @defb[doc][title][body]
- @raw[
-  # $title
-  $body
- ]
+ @let[t][@inline[$title]][b][@block[$body]][@raw[
+ # $t
+ $b
+ ]]
 @@
 
 @defb[section][title][body]
- @raw[
-  ## $title
-  $body
- ]
+ @let[t][@inline[$title]][b][@block[$body]][@raw[
+ ## $t
+ $b
+ ]]
 @@
 
 @defi[url][url][text]
- @raw[\[$text\]($url)]
+ @let[u][@escape[$url]][t][@inline[$text]][@raw[\[$t\]($u)]]
 @@
 
 @defi[fbld][file][text]
@@ -21,12 +37,13 @@
 @@
 
 @defb[def][name][value]
- @raw[
- * **$name**: $value
- ]
+ @let[n][@inline[$name]][v][@inline[$value]][@raw[
+ * **$n**: $v
+ ]]
 @@
 
 @defb[code][lang][text]
- @raw
-      $text
+ @let[t][@escape[$text]][@raw[
+     $t
+ ]]
 @@

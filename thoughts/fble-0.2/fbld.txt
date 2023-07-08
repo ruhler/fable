@@ -2264,3 +2264,26 @@ Then we would say:
 I also want to rename @defb and @defi to something nicer, but worry about that
 later.
 
+---
+
+Performance is really bad. While I try to get markdown working, let me also
+work on performance at the same time.
+
+Profiling shows all the time is in the Parser 'Get' function. Most of it is
+calling Tail on the text. The rest calling Head.
+
+I think the key is going to be avoiding allocations in Head and Tail. But how
+can we do that?
+
+Our operations are:
+* Text, StringOf, LocOf, Empty, Head, Tail, Append, Concat, StartsWith, Drop.
+
+We want to track locations all along the way and support fast append. Key, I
+think, is for Text, Empty, Head, Tail, Append to all be really fast. But
+really, we want Head and Tail to be really fast, and Append to be constant
+time (doesn't need to be as fast).
+
+There are two things Text@ adds on top of String@:
+1. Tracking locations.
+2. Fast append.
+

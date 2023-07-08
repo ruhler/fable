@@ -11,13 +11,9 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 @ Text@ = /Fbld/Text%.Text@;
-% Text = /Fbld/Text%.Text;
 % LocOf = /Fbld/Text%.LocOf;
-% StringOf = /Fbld/Text%.StringOf;
 
-(Text@) { Text@; } Unescape = (Text@ s) {
-  Text(/Fbld/Unescape%.Unescape(StringOf(s)), LocOf(s));
-};
+% Unescape = /Fbld/Unescape%.Unescape;
 
 % Run = /Fbld/Run%;
 

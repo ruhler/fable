@@ -11,9 +11,14 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
+@ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+% LocOf = /Fbld/Text%.LocOf;
+% StringOf = /Fbld/Text%.StringOf;
+
 # Removes backslash from backslash-escaped \, @, [, and ] characters in a
 # string.
-(String@) { String@; } Unescape = {
+(String@) { String@; } UnescapeS = {
   # Returns the escaped character at the beginning of string s, if any.
   (String@) { Maybe@<Char@>; } escaped = (String@ s) {
     s.?(nil: Nothing<Char@>);
@@ -38,4 +43,11 @@
   };
 };
 
-@(Unescape);
+# Removes backslash from backslash-escaped \, @, [, and ] characters in a
+# string.
+(Text@) { Text@; } Unescape = (Text@ t) {
+  String@ s = UnescapeS(StringOf(t));
+  Text(s, LocOf(t));
+};
+
+@(UnescapeS, Unescape);
