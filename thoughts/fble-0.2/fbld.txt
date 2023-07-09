@@ -2415,3 +2415,32 @@ README.md was because it switches from using default inline to using default
 block for the unadorned version text. That's easily fixed by explicitly doing
 @inline[...] around the text.
 
+---
+
+Next question: why is location tracking not working as expected?
+
+Here's a minimized test case:
+
+@define[doc][body]
+ @let[b][@block[$body]][@raw[$b]]
+@@
+@doc
+ @url
+
+The expectation is...
+* The body argument passed to @doc has location 5:2
+* After substitution, we get:
+ @let[b][@block[@url
+ ]][@raw[$b]]
+ Where, in this case location of @url is 5:2.
+* The second argument to @let is @block[@url], where @url is still 5:2.
+* The argument to @block is 5:2.
+* We invoke @url as a command with location 5:2.
+
+Hmm... Maybe it's from the parser's choice of where command is? I'm not sure.
+I need to debug this. If only the debugger wasn't so hard to use... Seems like
+/Core/Debug%.Trace may be the best bet. Print arguments to all commands
+invoked, using a print that includes location information for the entire
+Text@, not just the start. That should make it clear at what point we lost the
+location information.
+
