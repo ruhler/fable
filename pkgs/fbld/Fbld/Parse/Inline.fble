@@ -151,7 +151,7 @@ M@<List@<Command@>> Inline = {
     Text@ plain <- Do(Plain);
     List@<Command@> cmds = {
       IsEmpty(plain).?(true: rcmds);
-      Cons(Command@(Text(Str|'', LocOf(plain)), List[plain]), rcmds);
+      Cons(Command@(Text(Str|'.inline', LocOf(plain)), List[plain]), rcmds);
     };
 
     Maybe@<Command@> command <- Do(Command);

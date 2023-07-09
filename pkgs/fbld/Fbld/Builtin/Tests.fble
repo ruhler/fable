@@ -64,9 +64,9 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   }),
 
-  Test(Str|DefB, (Unit@ _) {
+  Test(Str|Define, (Unit@ _) {
     String@ input = Str|'
-@defb[foo][a][b]
+@define[foo][a][b]
  @raw[a: $a, b: $b]
 @@
 @foo[hello][there]
@@ -83,7 +83,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     # Each line of the argument should be indented by the amount of indent of
     # the line that contains the variable in the body.
     String@ input = Str|'
-@defb[foo][x]
+@define[foo][x]
  @raw[
       a $x]
 @@
@@ -104,7 +104,7 @@ how are you?]
 
   Test(Str|SubstLoc, (Unit@ _) {
     String@ input = Str|'
-@defb[foo][x]
+@define[foo][x]
  $x
 @@
 @foo

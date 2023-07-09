@@ -7,9 +7,7 @@
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 % Entry = /Fbld/Markup%.Entry;
-% Inline = /Fbld/Markup%.Inline;
-% Block = /Fbld/Markup%.Block;
-% Markups = /Fbld/Markup%.Markups;
+% Entries = /Fbld/Markup%.Entries;
 
 % Utils = /Fbld/Invoke/Utils%;
 
@@ -119,30 +117,28 @@
 );
 
 (Core@) { Markup@; } Markup = (Core@ core) {
-  Markups[
-    Inline[
-      Entry(Str|'', Utils.LE(core.text)),
-      Entry(Str|'text', Utils.LE(core.text)),
-      Entry(Str|'l', Utils.LE(core.l)),
-      Entry(Str|'a', Utils.LE(core.a)),
-      Entry(Str|'label', Utils.LEI(core.label)),
-      Entry(Str|'ref', Utils.LEI(core.ref)),
-      Entry(Str|'url', Utils.LEmI(core.url)),
-      Entry(Str|'file', Utils.LEmI(core.file)),
-      Entry(Str|'fbld', Utils.LEmI(core.fbld))
-    ],
-    Block[
-      Entry(Str|'', Utils.LI(core.par)),
-      Entry(Str|'par', Utils.LI(core.par)),
-      Entry(Str|'item', Utils.LB(core.item)),
-      Entry(Str|'code', Utils.LEE(core.code)),
-      Entry(Str|'def', Utils.LII(core.def)),
-      Entry(Str|'definition', Utils.LIB(core.definition)),
-      Entry(Str|'section', Utils.LIB(core.section)),
-      Entry(Str|'subsection', Utils.LIB(core.subsection)),
-      Entry(Str|'subsubsection', Utils.LIB(core.subsubsection)),
-      Entry(Str|'doc', Utils.LIB(core.doc))
-    ]];
+  Entries[
+    Entry(Str|'.inline', Utils.LE(core.text)),
+    Entry(Str|'text', Utils.LE(core.text)),
+    Entry(Str|'l', Utils.LE(core.l)),
+    Entry(Str|'a', Utils.LE(core.a)),
+    Entry(Str|'label', Utils.LEI(core.label)),
+    Entry(Str|'ref', Utils.LEI(core.ref)),
+    Entry(Str|'url', Utils.LEmI(core.url)),
+    Entry(Str|'file', Utils.LEmI(core.file)),
+    Entry(Str|'fbld', Utils.LEmI(core.fbld)),
+
+    Entry(Str|'.block', Utils.LI(core.par)),
+    Entry(Str|'par', Utils.LI(core.par)),
+    Entry(Str|'item', Utils.LB(core.item)),
+    Entry(Str|'code', Utils.LEE(core.code)),
+    Entry(Str|'def', Utils.LII(core.def)),
+    Entry(Str|'definition', Utils.LIB(core.definition)),
+    Entry(Str|'section', Utils.LIB(core.section)),
+    Entry(Str|'subsection', Utils.LIB(core.subsection)),
+    Entry(Str|'subsubsection', Utils.LIB(core.subsubsection)),
+    Entry(Str|'doc', Utils.LIB(core.doc))
+  ];
 };
 
 @(Core@, Markup);

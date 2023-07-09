@@ -18,7 +18,7 @@
 % StringOf = /Fbld/Text%.StringOf;
 
 
-@ Tags@ = /Core/Map%.Map@<String@, Invoke@>;
+@ Markup@ = /Core/Map%.Map@<String@, Invoke@>;
 
 @ Entry@ = /Core/Map%.Entry@<String@, Invoke@>;
 
@@ -26,57 +26,39 @@
   Entry@(s, i);
 };
 
-% Tags = {
-  Tags@ Empty = /Core/Map%.Empty<String@, Invoke@>;
+Markup@ Empty = /Core/Map%.Empty<String@, Invoke@>;
 
-  (Tags@, String@, Invoke@) { Tags@; }
-  Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Invoke@>;
+(Markup@, String@, Invoke@) { Markup@; }
+Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Invoke@>;
 
-  (Tags@, String@) { Maybe@<Invoke@>; }
-  Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Invoke@>;
+(Markup@, String@) { Maybe@<Invoke@>; }
+Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Invoke@>;
 
-  (Tags@, Tags@) { Tags@; }
-  Union = /Core/Map%.Union<String@>(/Core/String/Ord%.Ord)<Invoke@>;
+(Markup@, Markup@) { Markup@; }
+Union = /Core/Map%.Union<String@>(/Core/String/Ord%.Ord)<Invoke@>;
 
-  (List@<Entry@>) { Tags@; } Tags = (List@<Entry@> entries) {
-    /Core/List%.ForEach(entries, Empty, (Entry@ entry, Tags@ m) {
-      Insert(m, entry.key, entry.value);
-    });
-  };
-
-  (Tags@) { Invoke@; } Invoke = (Tags@ tags)(Command@ cmd) {
-    String@ name = StringOf(cmd.name);
-    Maybe@<Invoke@> f = Lookup(tags, name);
-    f.?(nothing: {
-      String@ msg = Strs[Str|'unsupported tag: ''', name, Str|''''];
-      Error<Text@>(LocOf(cmd.name), msg);
-    });
-    f.just(cmd);
-  };
-
-  @(Empty, Insert, Lookup, Union, Tags, Invoke);
-};
-
-@ Markup@ = *(Tags@ inline, Tags@ block);
-
-Markup@ Empty = Markup@(Tags.Empty, Tags.Empty);
-
-(List@<Entry@>) { Markup@; } Inline = (List@<Entry@> entries) {
-  Markup@(Tags.Tags(entries), Tags.Empty);
-};
-
-(List@<Entry@>) { Markup@; } Block = (List@<Entry@> entries) {
-  Markup@(Tags.Empty, Tags.Tags(entries));
-};
-
-(Markup@) { Env@; } Env = (Markup@ markup) {
-  Env@(Tags.Invoke(markup.inline), Tags.Invoke(markup.block));
-};
-
-(List@<Markup@>) { Markup@; } Markups = (List@<Markup@> markups) {
-  /Core/List%.ForEach(markups, Empty, (Markup@ x, Markup@ m) {
-    Markup@(Tags.Union(m.inline, x.inline), Tags.Union(m.block, x.block));
+(List@<Entry@>) { Markup@; } Entries = (List@<Entry@> entries) {
+  /Core/List%.ForEach(entries, Empty, (Entry@ entry, Markup@ m) {
+    Insert(m, entry.key, entry.value);
   });
 };
 
-@(Markup@, Entry@, Markups, Empty, Entry, Inline, Block, Env);
+(Markup@) { Invoke@; } Invoke = (Markup@ tags)(Command@ cmd) {
+  String@ name = StringOf(cmd.name);
+  Maybe@<Invoke@> f = Lookup(tags, name);
+  f.?(nothing: {
+    String@ msg = Strs[Str|'unsupported tag: ''', name, Str|''''];
+    Error<Text@>(LocOf(cmd.name), msg);
+  });
+  f.just(cmd);
+};
+
+(Markup@) { Env@; } Env = Invoke;
+
+(List@<Markup@>) { Markup@; } Markups = (List@<Markup@> markups) {
+  /Core/List%.ForEach(markups, Empty, (Markup@ x, Markup@ m) {
+    Union(m, x);
+  });
+};
+
+@(Markup@, Entry@, Entries, Markups, Empty, Entry, Env);

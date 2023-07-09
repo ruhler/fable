@@ -12,13 +12,13 @@
 <@>% Error = /Fbld/Fbld%.Error;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-% Block = /Fbld/Markup%.Block;
+% Entries = /Fbld/Markup%.Entries;
 % Entry = /Fbld/Markup%.Entry;
 
 @ Text@ = /Fbld/Text%.Text@;
 % LocOf = /Fbld/Text%.LocOf;
 
-Markup@ Markup = Block[
+Markup@ Markup = Entries[
   # @raw[text]
   #  Returns the raw text directly.
   Entry(Str|'raw', (Command@ cmd) {

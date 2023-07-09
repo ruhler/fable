@@ -15,12 +15,12 @@
 @ FbldText@ = {
   @ FT@ = (E@) { Result@<Text@>; },
   @ I@ = (Command@) { FT@; },
-  @ E@ = *(I@ inline, I@ block);
+  @ E@ = I@;
   FT@;
 };
 
 @ Invoke@ = (Command@) { FbldText@; };
-@ Env@ = *(Invoke@ inline, Invoke@ block);
+@ Env@ = Invoke@;
 <@>@ Fbld@ = <@ A@>(Env@) { Result@<A@>; };
 
 <@ A@>(A@) { Fbld@<A@>; }

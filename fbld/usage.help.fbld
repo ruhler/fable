@@ -1,35 +1,35 @@
-@defb[usage][name][brief][content]
+@define[usage][name][brief][content]
  @doc[$name][$name - $brief]
   $content
 @@
 
-@defb[synopsis][text]
+@define[synopsis][text]
  @par[Usage: $text]
 @@
 
-@defb[description][body]
+@define[description][body]
  $body
 @@
 
-@defb[options][body]
+@define[options][body]
  $body
 @@
 
-@defb[opt][opt][desc]
+@define[opt][opt][desc]
  @def[$opt][$desc]
 @@
 
-@defb[exitstatus][body]
+@define[exitstatus][body]
  @section[Exit Status]
   $body
 @@
 
-@defb[examples][body]
+@define[examples][body]
  @section[Examples]
   $body
 @@
 
-@defb[ex][text][desc]
+@define[ex][text][desc]
  @par[@l[$text]]
 
  $desc

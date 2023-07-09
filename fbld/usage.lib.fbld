@@ -1,4 +1,4 @@
-@defb[GenericProgramInfo]
+@define[GenericProgramInfo]
  @subsection[Generic Program Information]
   @opt[@l[-h], @l[--help]]
    display this help text and exit
@@ -7,7 +7,7 @@
    display version information and exit
 @@
 
-@defb[ModuleInput]
+@define[ModuleInput]
  @subsection[Module Input]
   @opt[@l[-I] @a[DIR]]
    add @a[DIR] to the module search path

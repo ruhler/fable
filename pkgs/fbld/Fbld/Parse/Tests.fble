@@ -45,14 +45,14 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
     String@ text = Str|'Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands';
     Result@<List@<Command@>> wnt = Ok(List[
-      Command@(s(Str|'', Int|1), List[s(Str|'Inline ', Int|1)]), 
+      Command@(s(Str|'.inline', Int|1), List[s(Str|'Inline ', Int|1)]), 
       Command@(s(Str|'emph', Int|9), List[s(Str|'text', Int|14)]), 
-      Command@(s(Str|'', Int|19), List[s(Str|' with ', Int|19)]), 
+      Command@(s(Str|'.inline', Int|19), List[s(Str|' with ', Int|19)]), 
       Command@(s(Str|'SINGLE', Int|26), Nil<Text@>),
-      Command@(s(Str|'', Int|32), List[s(Str|' and ', Int|32)]), 
+      Command@(s(Str|'.inline', Int|32), List[s(Str|' and ', Int|32)]), 
       Command@(s(Str|'multi', Int|38),
         List[s(Str|'abc', Int|44), s(Str|'def', Int|49)]), 
-      Command@(s(Str|'', Int|53), List[s(Str|' arg commands', Int|53)])]); 
+      Command@(s(Str|'.inline', Int|53), List[s(Str|' arg commands', Int|53)])]); 
     Result@<List@<Command@>> got = Inline(s(text, Int|1));
     AssertEquals(
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
@@ -67,9 +67,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
     String@ text = Str|'Ab @c[de @f[gh] ij] kl';
     Result@<List@<Command@>> wnt = Ok(List[
-      Command@(s(Str|'', Int|1), List[s(Str|'Ab ', Int|1)]), 
+      Command@(s(Str|'.inline', Int|1), List[s(Str|'Ab ', Int|1)]), 
       Command@(s(Str|'c', Int|5), List[s(Str|'de @f[gh] ij', Int|7)]), 
-      Command@(s(Str|'', Int|20), List[s(Str|' kl', Int|20)])]); 
+      Command@(s(Str|'.inline', Int|20), List[s(Str|' kl', Int|20)])]); 
     Result@<List@<Command@>> got = Inline(s(text, Int|1));
     AssertEquals(
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
@@ -100,7 +100,7 @@ And some final text.
     Result@<List@<Command@>> wnt = Ok(List[
       Command@(s(Str|'title', Int|2, Int|2, Int|0), List[
         s(Str|'A title', Int|2, Int|8, Int|0)]), 
-      Command@(s(Str|'', Int|4, Int|1, Int|0), List[
+      Command@(s(Str|'.block', Int|4, Int|1, Int|0), List[
         s(Str|'Some intro text.
 ', Int|4, Int|1, Int|0)]), 
       Command@(s(Str|'section', Int|6, Int|2, Int|0), List[
@@ -110,7 +110,7 @@ spanning over lines.
 
 multiple lines actually.
 ', Int|7, Int|2, Int|1)]),
-      Command@(s(Str|'', Int|12, Int|1, Int|0), List[
+      Command@(s(Str|'.block', Int|12, Int|1, Int|0), List[
         s(Str|'And some final text.
 ', Int|12, Int|1, Int|0)])]); 
     Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1, Int|0));
@@ -128,7 +128,7 @@ multiple lines actually.
 
     String@ text = Str|'Foo';
     Result@<List@<Command@>> wnt = Ok(List[
-      Command@(s(Str|'', Int|1, Int|1), List[
+      Command@(s(Str|'.block', Int|1, Int|1), List[
         s(Str|'Foo', Int|1, Int|1)])]);
     Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1));
     AssertEquals(

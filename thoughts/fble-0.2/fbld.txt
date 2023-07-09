@@ -2351,3 +2351,67 @@ Next issues:
   'labelled foo'. But in general, do we want to support varags? Seems like we
   should given so many of the builtins use varargs.
 
+---
+
+defi def should interpreted as block text. We can always use @inline if we
+want it inline. We should figure out where that extra newline is coming from.
+
+What I expect for parsing of arguments:
+* [] args preserve all whitespace.
+* same line arg does not include initial space or terminating newline.
+* next line arg starts at next line and includes the newline on the last line
+  of the next line arg.
+
+Let's see if my test cases agree. Yes, they do.
+
+Question to consider: is there any value in distinguishing between inline and
+block commands? Wouldn't it be easier if a command can be used in either
+context?
+
+The benefits of having a command be used in either context are clear: don't
+have to define it twice, don't have to distinguish between defi and defb or
+remember to use the right one. No 'command not defined' if you are
+accidentally using it in the wrong context. Difference between inline and
+block becomes solely a parser distinction.
+
+Why might we not want a command to be available and behave the same as both
+block and inline?
+* Define block command and default inline command should behave differently.
+  Today they are both named ''. Solution is easy: give them different names.
+
+* Consider @section. It doesn't make sense to use that in an inline context.
+  That's meaningless. But it also doesn't make sense to use that in a
+  subsection context or a list context. So I claim block versus inline isn't
+  the right solution to this problem in the first place, so not a good reason
+  to distinguish between block and inline in that way.
+
+* Any issues with how we parse? Like, block command arguments for next line
+  arg would have a newline at the end, which may interfere with how you want
+  to interpret the argument. It's hard for me to believe this is a real
+  problem though. You could always use [] arguments if you need in the
+  presumably rare case this happens?
+
+* What did I say before? Let's find previous discussion about this. I think I
+  remember having it at some point. See around line 455 of this document. The
+  main concern was my second bullet point above.
+
+Let's do it. Let's say any command can be used in either inline or block
+context. The only difference is how they are parsed. It's up to the user to
+make sure (as they already have to today) that they use commands in places
+appropriate for those commands to be used.
+
+From a practical standpoint, the most important question is what to rename the
+default block and default inline commands to.
+
+How about, .inline and .block? The . making it impossible to explicitly invoke
+them, so there is no accidental. That sounds reasonable to me.
+
+Let's do this.
+
+---
+
+Note: the reason parsing the body of @defi would add an extra newline to
+README.md was because it switches from using default inline to using default
+block for the unadorned version text. That's easily fixed by explicitly doing
+@inline[...] around the text.
+

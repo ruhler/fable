@@ -222,7 +222,7 @@ M@<List@<Command@>> Block = {
     Unit@ _ <- Do(SkipBlankLines);
     Text@ plain <- Do(Plain);
     IsEmpty(plain).?(false: {
-      Command@ cmd = Command@(Text(Str|'', LocOf(plain)), List[plain]);
+      Command@ cmd = Command@(Text(Str|'.block', LocOf(plain)), List[plain]);
       block(Cons(cmd, rcmds));
     });
 

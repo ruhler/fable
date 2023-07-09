@@ -24,7 +24,7 @@
 <@>% WithEnv = /Fbld/Fbld%.WithEnv;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-% Block = /Fbld/Markup%.Block;
+% Entries = /Fbld/Markup%.Entries;
 % Entry = /Fbld/Markup%.Entry;
 
 % Run = /Fbld/Run%;
@@ -68,60 +68,32 @@ Define = (List@<String@> argnames, Text@ def, Command@ command) {
 };
 
 (List@<String@>)(Text@) { Invoke@; }
-DefB = (List@<String@> argnames)(Text@ def) {
+Def = (List@<String@> argnames)(Text@ def) {
   (Command@ command) {
     Text@ text <- Do(Define(argnames, def, command));
     Run.Block(text);
   };
 };
 
-(List@<String@>)(Text@) { Invoke@; }
-DefI = (List@<String@> argnames)(Text@ def) {
-  (Command@ command) {
-    Text@ text <- Do(Define(argnames, def, command));
-    Run.Inline(text);
-  };
-};
-
-Markup@ Markup = Block[
-  # @defi[name][param1][param2]...[paramN][def][body]
-  #  Executes body as block structured text with a new inline command @name
+Markup@ Markup = Entries[
+  # @define[name][param1][param2]...[paramN][def][body]
+  #  Executes body as block structured text with a new command @name
   #  defined that performs substitution of params into def.
-  Entry(Str|'defi', (Command@ cmd) {
+  Entry(Str|'define', (Command@ cmd) {
     Int@ num_args = Length(cmd.args);
     /Core/Int/Eq%.Lt(num_args, Int|3).?(true: {
       Error<Text@>(LocOf(cmd.name), Str|'expected at least three args');
     });
 
     Args@ args = GetArgs(cmd.args);
-    Invoke@ invoke = DefI(args.params)(args.def);
+    Invoke@ invoke = Def(args.params)(args.def);
     Env@ env <- Do(GetEnv);
-    Invoke@ inline = (Command@ cmd) {
+    Env@ nenv = (Command@ cmd) {
       /Core/String/Eq%.Eq(StringOf(cmd.name), args.name).?(
         true: invoke(cmd),
-        false: env.inline(cmd));
+        false: env(cmd));
     };
-    WithEnv(env.@(inline: inline), Run.Block(args.body));
-  }),
-
-  # @defb[name][param1][param2]...[paramN][def][body]
-  #  Executes body as block structured text with a new block command @name
-  #  defined that performs substitution of params into def.
-  Entry(Str|'defb', (Command@ cmd) {
-    Int@ num_args = Length(cmd.args);
-    /Core/Int/Eq%.Lt(num_args, Int|3).?(true: {
-      Error<Text@>(LocOf(cmd.name), Str|'expected at least three args');
-    });
-
-    Args@ args = GetArgs(cmd.args);
-    Invoke@ invoke = DefB(args.params)(args.def);
-    Env@ env <- Do(GetEnv);
-    Invoke@ block = (Command@ cmd) {
-      /Core/String/Eq%.Eq(StringOf(cmd.name), args.name).?(
-        true: invoke(cmd),
-        false: env.block(cmd));
-    };
-    WithEnv(env.@(block: block), Run.Block(args.body));
+    WithEnv(nenv, Run.Block(args.body));
   })
 ];
 

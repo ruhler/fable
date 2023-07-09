@@ -17,7 +17,7 @@
 <@>% Error = /Fbld/Fbld%.Error;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-% Block = /Fbld/Markup%.Block;
+% Entries = /Fbld/Markup%.Entries;
 % Entry = /Fbld/Markup%.Entry;
 
 % Run = /Fbld/Run%;
@@ -46,7 +46,7 @@ Let = (List@<Text@> args, Map@ map) {
   Let(tail, Insert(map, key, evaluated));
 };
 
-Markup@ Markup = Block[
+Markup@ Markup = Entries[
   # @let[k1][v1][k2][v2]...[kN][vN][body]
   #  Evaluates values v1 through vN as block structured text. Assigns the
   #  results to variable names k1 through kN which are substituted into the v2

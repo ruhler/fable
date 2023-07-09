@@ -18,15 +18,9 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 
 (Command@) { Fbld@<Text@>; }
-InvokeInline = (Command@ cmd) {
+Invoke = (Command@ cmd) {
   Env@ env <- Do(GetEnv);
-  env.inline(cmd);
-};
-
-(Command@) { Fbld@<Text@>; }
-InvokeBlock = (Command@ cmd) {
-  Env@ env <- Do(GetEnv);
-  env.block(cmd);
+  env(cmd);
 };
 
 # Interprets and executes inline structured text.
@@ -34,7 +28,7 @@ InvokeBlock = (Command@ cmd) {
 Inline = (Text@ text) {
   Result@<List@<Command@>> parsed = /Fbld/Parse%.Inline(text);
   parsed.?(err: Error<Text@>(LocOf(parsed.err), StringOf(parsed.err)));
-  Cat(LocOf(text))(Map(parsed.ok, InvokeInline));
+  Cat(LocOf(text))(Map(parsed.ok, Invoke));
 };
 
 # Interprets and executes block structured text.
@@ -42,7 +36,7 @@ Inline = (Text@ text) {
 Block = (Text@ text) {
   Result@<List@<Command@>> parsed = /Fbld/Parse%.Block(text);
   parsed.?(err: Error<Text@>(LocOf(parsed.err), StringOf(parsed.err)));
-  Cat(LocOf(text))(Map(parsed.ok, InvokeBlock));
+  Cat(LocOf(text))(Map(parsed.ok, Invoke));
 };
 
 @(Inline, Block);

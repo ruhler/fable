@@ -1,48 +1,48 @@
-@defb[par][text]
+@define[par][text]
  @let[t][@inline[$text]][@raw[
  $t
  ]]
 @@
 
-@defi[][text]
+@define[.inline][text]
  @raw
   $text
 @@
 
-@defb[][text]
+@define[.block][text]
  @par
   $text
 @@
 
-@defb[doc][title][body]
+@define[doc][title][body]
  @let[t][@inline[$title]][b][@block[$body]][@raw[
  # $t
  $b
  ]]
 @@
 
-@defb[section][title][body]
+@define[section][title][body]
  @let[t][@inline[$title]][b][@block[$body]][@raw[
  ## $t
  $b
  ]]
 @@
 
-@defi[url][url][text]
+@define[url][url][text]
  @let[u][@escape[$url]][t][@inline[$text]][@raw[\[$t\]($u)]]
 @@
 
-@defi[fbld][file][text]
+@define[fbld][file][text]
  @url[$file][$text]
 @@
 
-@defb[def][name][value]
+@define[def][name][value]
  @let[n][@inline[$name]][v][@inline[$value]][@raw[
  * **$n**: $v
  ]]
 @@
 
-@defb[code][lang][text]
+@define[code][lang][text]
  @let[t][@escape[$text]][@raw[
      $t
  ]]

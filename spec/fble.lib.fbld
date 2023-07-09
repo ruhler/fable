@@ -1,16 +1,16 @@
-@defb[AbstractSyntax][content]
+@define[AbstractSyntax][content]
  @definition[Abstract Syntax]
   @code[txt]
    $content
 @@
 
-@defb[ConcreteSyntax][content]
+@define[ConcreteSyntax][content]
  @definition[Concrete Syntax]
   @code[txt]
    $content
 @@
 
-@defb[Example][content]
+@define[Example][content]
  @definition[Example]
   @code[fble]
    $content

@@ -9,7 +9,7 @@ namespace eval "fbld" {
 
   # version.fbld
   build $::b/fbld/version.fbld "" \
-    "echo @defi\[FbleVersion\]\[$::version\] > $::b/fbld/version.fbld ; echo @@ >> $::b/fbld/version.fbld"
+    "echo @define\[FbleVersion\]\[@inline\[$::version\]\] > $::b/fbld/version.fbld ; echo @@ >> $::b/fbld/version.fbld"
 
   # config.fbld
   build $::b/fbld/config.fbld $::b/config.tcl \

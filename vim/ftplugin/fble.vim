@@ -11,7 +11,7 @@ setlocal comments=:#
 setlocal formatoptions=croqtl
 
 " Include '%', '/' in keywords so that a module path is considered a word.
-setlocal iskeyword=@,48-57,%,/,_,192-255
+setlocal iskeyword=@,@-@,48-57,%,/,_,192-255
 
 " Add support for 'gf' to jump to a file given a module path.
 setlocal isfname=@,48-57,/,.,-,_,+,,,#,$,~,=
