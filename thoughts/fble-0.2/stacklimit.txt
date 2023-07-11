@@ -1,0 +1,134 @@
+Fble Stack Limit
+================
+
+It's pretty annoying having to always worry about smashing the stack.
+
+For example, implement a list map function.
+
+A natural implementation is:
+
+(List@, (T@) { T@; }) { List@; }
+Map = (List@ l, (T@) { T@; } f) {
+  l.?(nil: Nil);
+  Cons(f(l.cons.head), l.cons.tail);
+};
+
+But we have to worry about smashing the stack. So instead we write something
+like:
+
+(List@, (T@) { T@; }) { List@; }
+Map = (List@ l, (T@) { T@; } f) {
+  (List@, List@) { List@; } map = (List@ i, List@ o) {
+    i.?(nil: Reverse(o));
+    map(i.cons.tail, Cons(f(i.cons.head), o));
+  };
+
+  map(l, Nil);
+};
+
+Why do we need to do this? What justification can there possibly be for us to
+live in a world where it makes sense to have to do this transformation?
+
+The map function allocates a new list. It requires O(N) space. In the first
+case, we use O(N) space on the stack as well as on the heap. In the second
+case, we use O(N) space on the heap. We have O(N) intermediate temporary data
+use in both cases. The only difference is in one case it's on the stack and
+the other on the heap.
+
+In practice our stack size limit is constant. I'm not sure what it is. 8KB I
+guess. But our heap is all of memory (1GB). Why might this be the case?
+
+* To catch infinite recursion sooner? Infinite recursion being a bad thing and
+  not so uncommon a mistake to make. If we have a stack limit, we catch
+  infinite recursion quickly without harm. If we don't, it will take up all
+  the memory on your computer and take quite a while before you realize it.
+  And maybe mess up other things on the system too. Same as if you have a
+  memory leak.
+
+* To make debugging nicer? Like, imagine doing a back trace on a long stack.
+  It's not nice, because, well, it's a long stack. I suppose not less nice
+  than trying to list the entire contents of temporary storage?
+
+* Is there overhead to storing things on the stack that we avoid with
+  temporary storage on the heap? Like, frame pointers and saved registers and
+  such? Yes, a little. Things we don't need to save in this particular case if
+  we know we are doing a self recursive call and we know what registers matter
+  and what don't. But some of them you want to save. That's the point.
+
+The internet has another possible point:
+
+* The stack needs to be continuous (virtual) address space. If we were to
+  allow the stack to take up all of memory, then we could at most have one
+  stack. That doesn't work for a multithreaded application.
+
+I think the last is the most valid one. The difference between heap and stack
+being the stack is continuously allocated, so it is less flexible.
+
+But I don't have multiple threads in fble right now. One stack is all we need.
+Will that always be the case? It wasn't in the past.
+
+From a language point of view, I see no good reason to limit the stack size to
+a small constant value.
+
+Note that we still want to treat tail recursion specially. That's the
+difference between O(1) and O(N) memory use. That totally matters. But the
+difference between O(N) memory on the stack and O(N) memory on the heap I
+don't buy as something the programmer should have to pay attention to. Memory
+is memory.
+
+So it all comes down to multithreading. Imagine I want to add some builtin
+multithreading monad. I can readily imagine that. We wouldn't want to limit
+the number of threads you can create. How would we allocate stacks for the
+threads?
+
+Option 1: Pick some stack size limit, like 8KB. Divide memory into that many
+units. That gives you the maximum number of threads. Even if some threads use
+less than the stack limit, or some threads want to use more than the stack
+limit.
+
+Option 2: Come up with some implementation for stacks that allows a single
+memory region to be shared. For example, allocate stack memory in chunks, and
+be able to interleave chunks of different thread's stacks. There will be
+overhead to pushing and popping from the stack. But then you can go lots of
+small threads or a few big threads automatically and adaptively based on the
+memory available.
+
+I don't know if option 2 is feasible in practice. But it certainly sounds
+nicer in theory than arbitrarily limiting both the number of threads and the
+stack size per thread.
+
+
+I want to change the fble spec to say stack size is limited only by memory.
+And to encourage programmers to not worry about smashing the stack. And to
+update the implementation correspondingly. And to rewrite all the annoying
+fble code I have for working around stack size limitations. What do you think?
+Any objections?
+
+---
+
+Another related point: if stack size can grow as big as the heap, we need to
+allocate a large continuous address space for it. We can't use that address
+space for the heap. Normally we would put the stack at one end of the address
+space and the heap at the other. If stack size can grow, potentially they'll
+stomp on each other, which could be hard to debug.
+
+I don't know what will happen in practice. I don't think this is a good excuse
+to limit the stack size though. Conceptually it wouldn't be hard to do a
+pointer comparison to check if heap and stack are overlapping and raise a
+signal in that case.
+
+Let's go ahead with this. I think it will be very worthwhile. Worst case, we
+learn a good reason not to do it.
+
+How to increase the stack limit? Where to increase the stack limit?
+
+I think in FbleEval. We can do it temporarily perhaps. At start of FbleEval,
+increase the limit. At end of FbleEval, restore the limit? Yeah, sounds good.
+
+How to do things right:
+* Add a spec test case for smashing the stack.
+* Update the fble spec about this.
+* Find places where I write awkward code to get around the stack limit and fix
+  those.
+* Actually increase the stack limit.
+

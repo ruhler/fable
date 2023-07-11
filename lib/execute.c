@@ -9,6 +9,8 @@
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
+#include <sys/time.h>       // for getrlimit, setrlimit
+#include <sys/resource.h>   // for getrlimit, setrlimit
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-value.h>     // for FbleValue, etc.
@@ -43,6 +45,19 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
  */
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
+  // The fble spec requires we don't put an arbitrarily low limit on the stack
+  // size. Fix that here.
+  struct rlimit original_stack_limit;
+  if (getrlimit(RLIMIT_STACK, &original_stack_limit) != 0) {
+    assert(false && "getrlimit failed");
+  }
+
+  struct rlimit new_stack_limit = original_stack_limit;
+  new_stack_limit.rlim_cur = new_stack_limit.rlim_max;
+  if (setrlimit(RLIMIT_STACK, &new_stack_limit) != 0) {
+    assert(false && "setrlimit failed");
+  }
+
   FbleProfileThread* profile_thread = NULL;
   if (profile) {
     profile_thread = FbleNewProfileThread(profile);
@@ -50,6 +65,11 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 
   FbleValue* result = FbleThreadCall(heap, profile_thread, func, args);
   FbleFreeProfileThread(profile_thread);
+
+  // Restore the stack limit to what it was before.
+  if (setrlimit(RLIMIT_STACK, &original_stack_limit) != 0) {
+    assert(false && "setrlimit failed");
+  }
   return result;
 }
 

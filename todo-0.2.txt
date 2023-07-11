@@ -8,6 +8,12 @@ Things to consider doing for the fble-0.2 release.
 
 * fbld vim syntax: set tabstop/shiftwidth to single space?
 
+* Update the rest of the tutorials with regards to smashing the stack. No need
+  to write stack smashing safe tutorials anymore.
+
+* Add spec tests for memory use of tail recursion and for "unlimited" stack
+  size.
+
 * Fbld:
  - Figure out why continuation args are working for @let in markdown.fbld
  - Remove --markdown builtin backend.

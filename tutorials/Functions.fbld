@@ -156,48 +156,20 @@
   In fble, function arguments are evaluated strictly, meaning the arguments to
   the function are computed before passing them to the function. When using
   recursive functions, this could result in deeply nested chains of function
-  calls that could potentially take all available stack memory.
+  calls that could take up a lot of space on the stack.
+ 
+  Fble does not arbitrarily restrict the size of stack. You can allocate as
+  much on the stack as you could on the heap. There is no need to rewrite your
+  code to do allocations on the heap instead of the stack as is the case for
+  languages like Java or C.
  
   Fble has special support for tail recursion. If the recursive call is the
   last thing in the function, the runtime will reuse the stack for the
-  recursive call instead of adding another call frame on the stack. This is
-  critical for being able to write useful recursive functions.
+  recursive call instead of adding another call frame on the stack. This makes
+  it possible to write recursive functions that use constant space.
  
   Fble does not have a while loop construct. Instead you should use recursive
-  functions for loops. Which means you need to be aware of whether a recursive
-  call is a tail call or not.
- 
-  In the implementation of @l[Factorial] shown above, the recursive call to
-  @l[Factorial] is passed as an argument to the @l[Mul] function. This is not
-  in tail position. For each recursive call we store the value @l[n] on the
-  stack to be able to pass to the @l[Mul] function once the recursive
-  @l[Factorial] call completes. If @l[n] is large, this can run out of stack
-  space and fail.
- 
-  The @l[Factorial] function can be rewritten to put the recursive call in
-  tail position by passing the running result of computation with a helper
-  function:
- 
-  @code[fble]
-   (Int@, Int@) { Int@; } Helper = (Int@ product, Int@ n) {
-     Eq(n, 0).?(product);
-     Helper(Mul(n, product), Sub(n, 1));
-   };
-   
-   (Int@) { Int@; } Factorial = (Int@ n) {
-     Helper(1, n);
-   };
- 
-  Notice now the recursion is done via the @l[Helper] function. More
-  importantly, the recursive call to @l[Helper] is the last thing the
-  @l[Helper] function does. Because it's in tail position here, the stack
-  memory for the outer call can be reclaimed and constant stack space is
-  required regardless of how large @l[n] is.
- 
-  This is an important but subtle point to be aware of when programming in
-  fble.  Because there are no while loops, you must use recursive functions.
-  Because arguments are evaluated strictly, you must be careful to put
-  recursive calls in tail position, otherwise you may run out of stack space.
+  functions for loops.
  
   Mutually recursive functions are naturally supported via mutually recursive
   variable declarations as discussed in the tutorial on

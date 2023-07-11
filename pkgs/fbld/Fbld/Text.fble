@@ -37,29 +37,11 @@ Empty_ = (Loc@ loc) {
 };
 
 (String@, Loc@) { Text_@; }
-Text_ = {
-  # String@ -> reverse order list of LChar@
-  (String@, Loc@, List@<LChar@>) { List@<LChar@>; }
-  chars = (String@ str, Loc@ loc, List@<LChar@> cs) {
-    str.?(nil: cs);
-
-    LChar@ c = LChar@(str.cons.head, loc);
-    chars(str.cons.tail, Advance(loc, str.cons.head), Cons(c, cs));
-  };
-
-  # Reverse order list of LChar@ -> Text@
-  (List@<LChar@>, Text_@) { Text_@; }
-  text = (List@<LChar@> cs, Text_@ t) {
-    cs.?(nil: t);
-    Text_@ tail = Text_@(cons: @(head: cs.cons.head, tail: t));
-    text(cs.cons.tail, tail);
-  };
-  
-  (String@ str, Loc@ loc) {
-    str.?(nil: Empty_(loc));
-    List@<LChar@> cs = chars(str, loc, Nil<LChar@>);
-    text(cs, Empty_(cs.cons.head.loc));
-  };
+Text_ = (String@ str, Loc@ loc) {
+  str.?(nil: Empty_(loc));
+  LChar@ head = LChar@(str.cons.head, loc);
+  Text_@ tail = Text_(str.cons.tail, Advance(loc, str.cons.head));
+  Text_@(cons: @(head, tail));
 };
 
 (Text_@, Text_@) { Text_@; }

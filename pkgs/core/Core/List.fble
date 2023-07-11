@@ -134,10 +134,8 @@ ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
 #   A list of elements f(a_i) for each a_i in the input list.
 <@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
 Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
-  # Note: Be careful not to smash the stack for long lists.
-  ForEach(Reverse(a), Nil<B@>, (A@ x, List@<B@> done) {
-    Cons(f(x), done);
-  });
+  a.?(nil: Nil<B@>);
+  Cons(f(a.cons.head), Map(a.cons.tail, f));
 };
 
 # Append --
@@ -154,8 +152,8 @@ Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
 #   A list that contains the elements of 'a' followed by the elements of 'b'.
 <@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
 Append = <@ T@>(List@<T@> a, List@<T@> b) {
-  # Note: Be careful not to smash the stack for long lists.
-  ForEach(Reverse(a), b, Cons<T@>);
+  a.?(nil: b);
+  Cons(a.cons.head, Append(a.cons.tail, b));
 };
 
 # Concat --
