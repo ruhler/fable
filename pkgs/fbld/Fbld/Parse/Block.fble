@@ -45,6 +45,7 @@
 <@>% Try_ = /Fbld/Parse/M%.Try_;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
 % String = /Fbld/Parse/M%.String;
+% EmptyM = /Fbld/Parse/M%.EmptyM;
 % ConsM = /Fbld/Parse/M%.ConsM;
 
 % Name = /Fbld/Parse/Inline%.Name;
@@ -64,28 +65,24 @@ M@<Unit@> SkipBlankLines = {
 M@<Text@> Plain = {
   M@<Text@> plain = {
     Loc@ l <- Do(Loc);
-
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Return(/Fbld/Text%.Empty(l)));
-
+    mc.?(nothing: EmptyM);
     Char@ c = mc.just;
 
     ConsM(c, l, {
       IsNewline(mc.just).?(true: {
         Maybe@<Char@> mc <- Do(Peek);
-        mc.?(nothing: Return(/Fbld/Text%.Empty(l)));
-        IsNewline(mc.just).?(true: Return(/Fbld/Text%.Empty(l)));
+        mc.?(nothing: EmptyM);
+        IsNewline(mc.just).?(true: EmptyM);
         plain;
       });
       plain;
     });
   };
 
-  Loc@ l <- Do(Loc);
   Maybe@<Char@> mc <- Do(Peek);
-  Text@ empty = /Fbld/Text%.Empty(l);
-  mc.?(nothing: Return(empty));
-  mc.just.?('@': Return(empty));
+  mc.?(nothing: EmptyM);
+  mc.just.?('@': EmptyM);
   plain;
 };
 

@@ -143,6 +143,12 @@ String = (String@ s) {
     false: Error<Unit@>(Text(Strs[Str|'Expected ', Str[s.cons.head]], loc)));
 };
 
+# Helper function for returnning an empty text at the current location.
+M@<Text@> EmptyM = {
+  Loc@ l <- Do(Loc);
+  Return(/Fbld/Text%.Empty(l));
+};
+
 # Helper function for adding an initial character to subsequently parsed text.
 (Char@, Loc@, M@<Text@>) { M@<Text@>; }
 ConsM = (Char@ c, Loc@ l, M@<Text@> mtail) {
@@ -151,5 +157,6 @@ ConsM = (Char@ c, Loc@ l, M@<Text@> mtail) {
 };
 
 @(M@, Return, Error, Do, Peek, Loc, Get, Skip,
-  Try, Try_, Test, Test_, String, GetText, ConsM,
+  Try, Try_, Test, Test_, String, GetText,
+  EmptyM, ConsM,
   Run);

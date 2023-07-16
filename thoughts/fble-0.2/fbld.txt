@@ -2482,3 +2482,19 @@ down. Maybe start by cleaning up all the inline parsing stuff.
 
 Next issue appears to be the text for default block commands? Or some
 combination of default block/inline text and next line argument.
+
+---
+
+It takes a long time and a lot of memory to run one of the fbld conversions.
+I think it's worth looking into to see if we can save iteration time.
+
+It's generation of pkgs/fbld/fble.html. If all the time is in the backend,
+then we actually don't want to worry too much about this. Maybe just remove it
+from the build.tcl file for the time being.
+
+Looks like it's in the final StringOf call in the main function. Let's see if
+calling Flatten for StringOf helps.
+
+Yeah, that helps a lot. There's still a lot of memory use, and it takes longer
+time than I would like, but it's a bunch faster now.
+faster now

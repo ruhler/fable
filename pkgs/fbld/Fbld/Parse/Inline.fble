@@ -33,7 +33,6 @@
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 % IsEmpty = /Fbld/Text%.IsEmpty;
-% Empty = /Fbld/Text%.Empty;
 % LocOf = /Fbld/Text%.LocOf;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
@@ -44,6 +43,7 @@
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
 % Skip = /Fbld/Parse/M%.Skip;
+% EmptyM = /Fbld/Parse/M%.EmptyM;
 % ConsM = /Fbld/Parse/M%.ConsM;
 
 # Parses plain text before the next @... command if any.
@@ -98,7 +98,7 @@ M@<Maybe@<Text@>> Arg = {
     Char@ c = mc.just;
 
     And(/Core/Int/Eq%.IsZero(nest), /Core/Char/Eq%.Eq(c, Chars.']')).?(true: {
-      Return(Empty(start));
+      EmptyM;
     });
 
     ConsM(c, l, {
