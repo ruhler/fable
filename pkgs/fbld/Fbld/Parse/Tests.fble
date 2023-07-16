@@ -21,6 +21,7 @@
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 % LocOf = /Fbld/Text%.LocOf;
+% Append = /Fbld/Text%.Append;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
@@ -45,19 +46,47 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
     String@ text = Str|'Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands';
     Result@<List@<Command@>> wnt = Ok(List[
-      Command@(s(Str|'.inline', Int|1), List[s(Str|'Inline ', Int|1)]), 
-      Command@(s(Str|'emph', Int|9), List[s(Str|'text', Int|14)]), 
-      Command@(s(Str|'.inline', Int|19), List[s(Str|' with ', Int|19)]), 
+      Command@(s(Str|'.inline', Int|1), List[s(Str|'Inline ', Int|1)]),
+      Command@(s(Str|'emph', Int|9), List[s(Str|'text', Int|14)]),
+      Command@(s(Str|'.inline', Int|19), List[s(Str|' with ', Int|19)]),
       Command@(s(Str|'SINGLE', Int|26), Nil<Text@>),
-      Command@(s(Str|'.inline', Int|32), List[s(Str|' and ', Int|32)]), 
+      Command@(s(Str|'.inline', Int|32), List[s(Str|' and ', Int|32)]),
       Command@(s(Str|'multi', Int|38),
-        List[s(Str|'abc', Int|44), s(Str|'def', Int|49)]), 
-      Command@(s(Str|'.inline', Int|53), List[s(Str|' arg commands', Int|53)])]); 
+        List[s(Str|'abc', Int|44), s(Str|'def', Int|49)]),
+      Command@(s(Str|'.inline', Int|53), List[s(Str|' arg commands', Int|53)])]);
     Result@<List@<Command@>> got = Inline(s(text, Int|1));
     AssertEquals(
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
       /Fbld/Show%.Result(/Fbld/Show%.Commands),
       wnt, got);
+  }),
+
+  Test(Str|InlineLoc, (Unit@ _) {
+    # Regression test for when we failed to preserve internal locations when
+    # parsing arguments.
+    Text@ foo = Text(Str|'foo', Loc@(Str|'a.fbld', Int|1, Int|0, Int|0));
+    Text@ hello = Text(Str|'hello', Loc@(Str|'b.fbld', Int|1, Int|0, Int|0));
+    Text@ there = Text(Str|'there', Loc@(Str|'c.fbld', Int|1, Int|0, Int|0));
+    Text@ hellothere = Append(hello, there);
+    Text@ in = /Fbld/Text%.Concat(Loc@(Str|'g.fbld', Int|1, Int|0, Int|0), List[
+      Text(Str|'@', Loc@(Str|'d.fbld', Int|1, Int|0, Int|0)),
+      foo,
+      Text(Str|'[', Loc@(Str|'e.fbld', Int|1, Int|0, Int|0)),
+      hellothere,
+      Text(Str|']', Loc@(Str|'f.fbld', Int|1, Int|0, Int|0))
+    ]);
+
+    Result@<List@<Command@>> wnt = Ok(List[
+      Command@(foo, List[hellothere])]);
+    Result@<List@<Command@>> got = Inline(in);
+
+    # TODO: Fix parsing of args to not erase location information.
+    /Core/Test%.ExpectFails(
+      AssertEquals(
+        /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
+        /Fbld/Show%.Result(/Fbld/Show%.Commands),
+        wnt, got),
+      Str|'hellothere');
   }),
 
   Test(Str|NestedInline, (Unit@ _) {
@@ -67,9 +96,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
     String@ text = Str|'Ab @c[de @f[gh] ij] kl';
     Result@<List@<Command@>> wnt = Ok(List[
-      Command@(s(Str|'.inline', Int|1), List[s(Str|'Ab ', Int|1)]), 
-      Command@(s(Str|'c', Int|5), List[s(Str|'de @f[gh] ij', Int|7)]), 
-      Command@(s(Str|'.inline', Int|20), List[s(Str|' kl', Int|20)])]); 
+      Command@(s(Str|'.inline', Int|1), List[s(Str|'Ab ', Int|1)]),
+      Command@(s(Str|'c', Int|5), List[s(Str|'de @f[gh] ij', Int|7)]),
+      Command@(s(Str|'.inline', Int|20), List[s(Str|' kl', Int|20)])]);
     Result@<List@<Command@>> got = Inline(s(text, Int|1));
     AssertEquals(
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
@@ -99,10 +128,10 @@ And some final text.
 
     Result@<List@<Command@>> wnt = Ok(List[
       Command@(s(Str|'title', Int|2, Int|2, Int|0), List[
-        s(Str|'A title', Int|2, Int|8, Int|0)]), 
+        s(Str|'A title', Int|2, Int|8, Int|0)]),
       Command@(s(Str|'.block', Int|4, Int|1, Int|0), List[
         s(Str|'Some intro text.
-', Int|4, Int|1, Int|0)]), 
+', Int|4, Int|1, Int|0)]),
       Command@(s(Str|'section', Int|6, Int|2, Int|0), List[
         s(Str|'First Section', Int|6, Int|10, Int|0),
         s(Str|'With some text
@@ -112,7 +141,7 @@ multiple lines actually.
 ', Int|7, Int|2, Int|1)]),
       Command@(s(Str|'.block', Int|12, Int|1, Int|0), List[
         s(Str|'And some final text.
-', Int|12, Int|1, Int|0)])]); 
+', Int|12, Int|1, Int|0)])]);
     Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1, Int|0));
     AssertEquals(
       /Fbld/Eq%.Result(/Fbld/Eq%.Commands),

@@ -1,8 +1,12 @@
 
+@ Char@ = /Core/Char%.Char@;
+
 <@>@ List@ = /Core/List%.List@;
+<@>% Append = /Core/List%.Append;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
@@ -11,8 +15,10 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 
 @ Text@ = /Fbld/Text%.Text@;
+% Head = /Fbld/Text%.Head;
+% Tail = /Fbld/Text%.Tail;
+% IsEmpty = /Fbld/Text%.IsEmpty;
 % LocOf = /Fbld/Text%.LocOf;
-% StringOf = /Fbld/Text%.StringOf;
 
 Show@<Loc@> Loc = (Loc@ x) {
   Strs[x.file,
@@ -21,9 +27,24 @@ Show@<Loc@> Loc = (Loc@ x) {
     Str|':', /Core/Int/Show%.Show(x.indent)];
 };
 
-# TODO: Re-implement to something better.
-Show@<Text@> Text = (Text@ x) {
-  Strs[Loc(LocOf(x)), Str|':', StringOf(x)];
+Show@<Text@> Text = {
+  (Loc@, Text@) { String@; } text = (Loc@ expected_loc, Text@ t) {
+    IsEmpty(t).?(true: Str|'');
+
+    Loc@ loc = LocOf(t);
+    String@ sloc = /Fbld/Eq%.Loc(expected_loc, loc).?(
+      true: Str|'',
+      false: Strs[Str|'{', Loc(loc), Str|'}']
+    );
+
+    Char@ h = Head(t);
+    String@ head = Strs[sloc, /Core/Char/Show%.Show(h)];
+    Append(head, text(/Fbld/Loc%.Advance(loc, h), Tail(t)));
+  };
+
+  (Text@ x) {
+    text(/Fbld/Loc%.Unknown, x);
+  };
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }

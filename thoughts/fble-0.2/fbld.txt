@@ -2444,3 +2444,33 @@ invoked, using a print that includes location information for the entire
 Text@, not just the start. That should make it clear at what point we lost the
 location information.
 
+---
+
+I took a debug trace of all the commands as they are invoked. Let's see.
+
+Initially url is r.fbld:5:3:0, $body has body at 2:18:1. It's when we
+substitute the argument [5:2:1: @url] into the body of the define, it looks
+like we loose the location associated with the body.
+
+It must be happening somewhere as part of Subst.
+
+Next steps in debug:
+* Print Subst before and after.
+* Print Indent before and after.
+
+The fble code looks okay to me. It will be interesting to see where the
+location information is getting messed up.
+
+Indent is fine and returns the correct location: r.fbld:5:3:1: u
+
+The bug is in the parser. The input has @url at the right place. The output
+has @url at the wrong location. I should be able to add a test case for this.
+Let's see if I can find the bug first?
+
+The string to parse is:
+@let[b][@block[@url]][@raw[$b]]
+
+Where @url is at a different location.
+
+Yeah, the problem is that parsing of arguments flattens the argument into a
+single location string. We need to preserve the locations.

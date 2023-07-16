@@ -11,8 +11,10 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 
 @ Text@ = /Fbld/Text%.Text@;
+% IsEmpty = /Fbld/Text%.IsEmpty;
+% Head = /Fbld/Text%.Head;
+% Tail = /Fbld/Text%.Tail;
 % LocOf = /Fbld/Text%.LocOf;
-% StringOf = /Fbld/Text%.StringOf;
 
 Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {
   /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
@@ -23,11 +25,12 @@ Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {
 };
 
 Eq@<Text@> Text = (Text@ a, Text@ b) {
-  # TODO: Come up with a better implementation that compares locations
-  # throughout the text?
-  /Core/String/Eq%.Eq(StringOf(a), StringOf(b)).?(false: False);
+  IsEmpty(a).?(true: IsEmpty(b));
+  IsEmpty(b).?(true: IsEmpty(a));
+
+  /Core/Char/Eq%.Eq(Head(a), Head(b)).?(false: False);
   Loc(LocOf(a), LocOf(b)).?(false: False);
-  True;
+  Text(Tail(a), Tail(b));
 };
 
 <@ T@>(Eq@<T@>) { Eq@<Result@<T@>>; }
