@@ -22,7 +22,6 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -76,17 +75,14 @@ M@<Text@> Plain = {
 };
 
 # Parses a command name from the input, not including a leading '@'.
+# TODO: Don't allow the parsed name to be empty.
 M@<Text@> Name = {
-  (Loc@, String@) { M@<Text@>; } name = (Loc@ l, String@ rname) {
-    Maybe@<Char@> mc <- Do(Peek);
-    mc.?(nothing: Return(Text(Reverse(rname), l)));
-    IsNameChar(mc.just).?(false: Return(Text(Reverse(rname), l)));
-    Unit@ _ <- Do(Skip);  
-    name(l, Cons(mc.just, rname));
-  };
-
   Loc@ l <- Do(Loc);
-  name(l, Str|'');
+  Maybe@<Char@> mc <- Do(Peek);
+  mc.?(nothing: EmptyM);
+  IsNameChar(mc.just).?(false: EmptyM);
+  Unit@ _ <- Do(Skip);  
+  ConsM(mc.just, l, Name);
 };
 
 # Parses an explicit argument '[...]'.
