@@ -151,7 +151,7 @@ StringOf = {
   };
 
   (Text@ text) {
-    str(text, Str|'');
+    str(Flatten(text), Str|'');
   };
 };
 
