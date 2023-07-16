@@ -135,12 +135,9 @@ how are you?]
     Result@<String@> wnt = Err<String@>(Text(msg, loc));
     Result@<String@> got = RunBlock(input);
 
-    # TODO: Fix this failing test case.
-    /Core/Test%.ExpectFails(
-      AssertEquals(
-        /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
-        /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got),
-      Str|'file.fbld:3:18');
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 

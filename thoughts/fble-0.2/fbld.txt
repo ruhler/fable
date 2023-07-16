@@ -2474,3 +2474,9 @@ Where @url is at a different location.
 
 Yeah, the problem is that parsing of arguments flattens the argument into a
 single location string. We need to preserve the locations.
+
+---
+
+I fixed parsing of args, but looks like we have more location issues to track
+down. Maybe start by cleaning up all the inline parsing stuff.
+

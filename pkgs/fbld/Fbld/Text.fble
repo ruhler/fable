@@ -6,7 +6,6 @@
 @ Char@ = /Core/Char%.Char@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 <@>% Reverse = /Core/List%.Reverse;
 
@@ -41,6 +40,12 @@ Text_ = (String@ str, Loc@ loc) {
   str.?(nil: Empty_(loc));
   LChar@ head = LChar@(str.cons.head, loc);
   Text_@ tail = Text_(str.cons.tail, Advance(loc, str.cons.head));
+  Text_@(cons: @(head, tail));
+};
+
+(Char@, Loc@, Text_@) { Text_@; }
+Cons_ = (Char@ c, Loc@ l, Text_@ tail) {
+  LChar@ head = LChar@(c, l);
   Text_@(cons: @(head, tail));
 };
 
@@ -83,7 +88,7 @@ Flatten_ = {
   chars = (Text_@ str, List@<LChar@> cs) {
     str.?(
       empty: cs,
-      cons: chars(str.cons.tail, Cons(str.cons.head, cs)),
+      cons: chars(str.cons.tail, /Core/List%.Cons(str.cons.head, cs)),
       append: chars(str.append.b, chars(str.append.a, cs)));
   };
 
@@ -120,6 +125,8 @@ Flatten_ = {
 
 (Loc@) { Text@; } Empty = _@.<@<Empty>>(Empty_);
 
+(Char@, Loc@, Text@) { Text@; } Cons = _@.<@<Cons>>(Cons_);
+
 (Text@, Text@) { Text@; } Append = _@.<@<Append>>(Append_);
 
 (Text@) { Text@; } Tail = _@.<@<Tail>>(Tail_);
@@ -140,7 +147,7 @@ StringOf = {
   (Text@, String@) { String@; }
   str = (Text@ t, String@ r) {
     IsEmpty(t).?(true: Reverse(r));
-    str(Tail(t), Cons(Head(t), r));
+    str(Tail(t), /Core/List%.Cons(Head(t), r));
   };
 
   (Text@ text) {
@@ -168,5 +175,5 @@ StartsWith = (Text@ text, String@ sub) {
   Drop(Decr(n), Tail(l));
 };
 
-@(Text@, Text, StringOf, LocOf, IsEmpty, Empty, Head, Tail, Append, Concat,
+@(Text@, Text, StringOf, LocOf, IsEmpty, Empty, Head, Tail, Cons, Append, Concat,
   StartsWith, Drop, Flatten);

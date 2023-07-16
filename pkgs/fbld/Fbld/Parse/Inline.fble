@@ -31,6 +31,7 @@
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 % IsEmpty = /Fbld/Text%.IsEmpty;
+% Empty = /Fbld/Text%.Empty;
 % LocOf = /Fbld/Text%.LocOf;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
@@ -86,27 +87,36 @@ M@<Text@> Name = {
 
 # Parses an explicit argument '[...]'.
 M@<Maybe@<Text@>> Arg = {
-  (Loc@, Int@, String@) { M@<Text@>; } arg = (Loc@ l, Int@ nest, String@ rarg) {
+  (Loc@, Int@) { M@<Text@>; } arg = (Loc@ start, Int@ nest) {
+    Loc@ l <- Do(Loc);
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Error<Text@>(Text(Str|'Unterminated argument', l)));
+    mc.?(nothing: Error<Text@>(Text(Str|'Unterminated argument', start)));
 
     Char@ c = mc.just;
     c.?('\': {
+      Loc@ nl <- Do(Loc);
       Maybe@<Char@> nc <- Do(Get);
-      nc.?(nothing: Error<Text@>(Text(Str|'Unterminated argument', l)));
-      arg(l, nest, Cons(nc.just, Cons(c, rarg)));
+      nc.?(nothing: Error<Text@>(Text(Str|'Unterminated argument', start)));
+
+      Text@ tail <- Do(arg(start, nest));
+      Return(/Fbld/Text%.Cons(c, l, /Fbld/Text%.Cons(nc.just, nl, tail)));
     });
 
-    c.?('[': arg(l, Incr(nest), Cons(c, rarg)));
+    c.?('[': {
+      Text@ tail <- Do(arg(start, Incr(nest)));
+      Return(/Fbld/Text%.Cons(c, l, tail));
+    });
 
     c.?(']': {
       /Core/Int/Eq%.IsZero(nest).?(true: {
-        Return(Text(Reverse(rarg), l));
+        Return(Empty(start));
       });
-      arg(l, Decr(nest), Cons(c, rarg));
+      Text@ tail <- Do(arg(start, Decr(nest)));
+      Return(/Fbld/Text%.Cons(c, l, tail));
     });
 
-    arg(l, nest, Cons(c, rarg));
+    Text@ tail <- Do(arg(start, nest));
+    Return(/Fbld/Text%.Cons(c, l, tail));
   };
 
   Maybe@<Char@> mc <- Do(Peek);
@@ -114,7 +124,7 @@ M@<Maybe@<Text@>> Arg = {
   mc.just.?('[': {
     Unit@ _ <- Do(Skip);
     Loc@ l <- Do(Loc);
-    Text@ s <- Do(arg(l, Int|0, Str|''));
+    Text@ s <- Do(arg(l, Int|0));
     Return(Just(s));
   });
   Return(Nothing<Text@>);

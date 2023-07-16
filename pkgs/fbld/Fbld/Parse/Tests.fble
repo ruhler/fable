@@ -80,13 +80,10 @@ Test@ Tests = TestSuite(Str|Parse, List[
       Command@(foo, List[hellothere])]);
     Result@<List@<Command@>> got = Inline(in);
 
-    # TODO: Fix parsing of args to not erase location information.
-    /Core/Test%.ExpectFails(
-      AssertEquals(
-        /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
-        /Fbld/Show%.Result(/Fbld/Show%.Commands),
-        wnt, got),
-      Str|'hellothere');
+    AssertEquals(
+      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
+      /Fbld/Show%.Result(/Fbld/Show%.Commands),
+      wnt, got);
   }),
 
   Test(Str|NestedInline, (Unit@ _) {
