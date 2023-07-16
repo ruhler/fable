@@ -138,6 +138,32 @@ how are you?]
     AssertEquals(
       /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|AnotherLocRegression, (Unit@ _) {
+    # Another regression test for a case where location was being misreported.
+    String@ input = Str|'
+@define[.inline][text]
+ @raw[$text]
+@@
+@define[.block][text]
+ @inline
+  $text
+@@
+The @url is bad.
+';
+
+    String@ msg = Str|'unsupported tag: ''url''';
+    Loc@ loc = Loc@(Str|'file.fbld', Int|9, Int|6, Int|0);
+    Result@<String@> wnt = Err<String@>(Text(msg, loc));
+    Result@<String@> got = RunBlock(input);
+
+    # TODO: Fix this failing test case.
+    /Core/Test%.ExpectFails(
+      AssertEquals(
+        /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+        /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got),
+      Str|'file.fbld:7:8:2');
   })
 ]);
 

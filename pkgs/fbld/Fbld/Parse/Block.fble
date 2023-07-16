@@ -61,24 +61,32 @@ M@<Unit@> SkipBlankLines = {
 
 # Returns a block of plain text if any.
 M@<Text@> Plain = {
-  (Loc@, String@) { M@<Text@>; } plain = (Loc@ l, String@ rplain) {
+  M@<Text@> plain = {
+    Loc@ l <- Do(Loc);
+
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Return(Text(Reverse(rplain), l)));
-    String@ nrplain = Cons(mc.just, rplain);
-    IsNewline(mc.just).?(true: {
-      Maybe@<Char@> mc <- Do(Peek);
-      mc.?(nothing: Return(Text(Reverse(nrplain), l)));
-      IsNewline(mc.just).?(true: Return(Text(Reverse(nrplain), l)));
-      plain(l, nrplain);
+    mc.?(nothing: Return(/Fbld/Text%.Empty(l)));
+
+    Char@ c = mc.just;
+
+    Text@ tail <- Do({
+      IsNewline(mc.just).?(true: {
+        Maybe@<Char@> mc <- Do(Peek);
+        mc.?(nothing: Return(/Fbld/Text%.Empty(l)));
+        IsNewline(mc.just).?(true: Return(/Fbld/Text%.Empty(l)));
+        plain;
+      });
+      plain;
     });
-    plain(l, nrplain);
+    Return(/Fbld/Text%.Cons(c, l, tail));
   };
 
-  Maybe@<Char@> mc <- Do(Peek);
   Loc@ l <- Do(Loc);
-  mc.?(nothing: Return(Text(Str|'', l)));
-  mc.just.?('@': Return(Text(Str|'', l)));
-  plain(l, Str|'');
+  Maybe@<Char@> mc <- Do(Peek);
+  Text@ empty = /Fbld/Text%.Empty(l);
+  mc.?(nothing: Return(empty));
+  mc.just.?('@': Return(empty));
+  plain;
 };
 
 M@<Maybe@<Text@>> SameLineArg = {
