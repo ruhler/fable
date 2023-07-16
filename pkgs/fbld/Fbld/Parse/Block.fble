@@ -87,11 +87,12 @@ M@<Text@> Plain = {
 };
 
 M@<Maybe@<Text@>> SameLineArg = {
-  (String@) { M@<String@>; } f = (String@ rs) {
+  M@<Text@> same_line_arg = {
+    Loc@ l <- Do(Loc);
     Maybe@<Char@> mc <- Do(Get);
-    mc.?(nothing: Return(rs));
-    IsNewline(mc.just).?(true: Return(rs));
-    f(Cons(mc.just, rs));
+    mc.?(nothing: EmptyM);
+    IsNewline(mc.just).?(true: EmptyM);
+    ConsM(mc.just, l, same_line_arg);
   };
 
   Loc@ l <- Do(Loc);
@@ -100,8 +101,8 @@ M@<Maybe@<Text@>> SameLineArg = {
   IsNewline(mc.just).?(true: Return(Nothing<Text@>));
   mc.just.?(' ': {
     Loc@ l <- Do(Loc);
-    String@ s <- Do(f(Str|''));
-    Return(Just(Text(Reverse(s), l)));
+    Text@ t <- Do(same_line_arg);
+    Return(Just(t));
   });
   Error<Maybe@<Text@>>(Text(Str|'Expected space', l));
 };

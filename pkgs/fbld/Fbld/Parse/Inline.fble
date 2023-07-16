@@ -50,23 +50,24 @@
 # Returns the empty string if there is no plain text before the next @...
 # command.
 M@<Text@> Plain = {
-  (Loc@, String@) { M@<Text@>; } plain = (Loc@ l, String@ rplain) {
-    Maybe@<Char@> mc <- Do(Peek);
-    mc.?(nothing: Return(Text(Reverse(rplain), l)));
-    mc.just.?('\': {
-      Unit@ _ <- Do(Skip);
-      String@ rp = Cons(mc.just, rplain);
-      Maybe@<Char@> mb <- Do(Get);
-      String@ rp2 = mb.?(just: Cons(mb.just, rp), nothing: rp);
-      plain(l, rp2);
-    });
-    mc.just.?('@': Return(Text(Reverse(rplain), l)));
-    Unit@ _ <- Do(Skip);
-    plain(l, Cons(mc.just, rplain));
-  };
-
   Loc@ l <- Do(Loc);
-  plain(l, Str|'');
+  Maybe@<Char@> mc <- Do(Peek);
+  mc.?(nothing: EmptyM);
+
+  mc.just.?('\': {
+    Unit@ _ <- Do(Skip);
+    ConsM(mc.just, l, {
+      Loc@ mbl <- Do(Loc);
+      Maybe@<Char@> mb <- Do(Get);
+      mb.?(nothing: EmptyM);
+      ConsM(mb.just, mbl, Plain);
+    });
+  });
+
+  mc.just.?('@': EmptyM);
+
+  Unit@ _ <- Do(Skip);
+  ConsM(mc.just, l, Plain);
 };
 
 (Char@) { Bool@; } IsNameChar = (Char@ c) {
