@@ -143,6 +143,13 @@ String = (String@ s) {
     false: Error<Unit@>(Text(Strs[Str|'Expected ', Str[s.cons.head]], loc)));
 };
 
+# Helper function for adding an initial character to subsequently parsed text.
+(Char@, Loc@, M@<Text@>) { M@<Text@>; }
+ConsM = (Char@ c, Loc@ l, M@<Text@> mtail) {
+  Text@ tail <- Do(mtail);
+  Return(/Fbld/Text%.Cons(c, l, tail));
+};
+
 @(M@, Return, Error, Do, Peek, Loc, Get, Skip,
-  Try, Try_, Test, Test_, String, GetText,
+  Try, Try_, Test, Test_, String, GetText, ConsM,
   Run);

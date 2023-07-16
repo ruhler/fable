@@ -45,6 +45,7 @@
 <@>% Try_ = /Fbld/Parse/M%.Try_;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
 % String = /Fbld/Parse/M%.String;
+% ConsM = /Fbld/Parse/M%.ConsM;
 
 % Name = /Fbld/Parse/Inline%.Name;
 % InlineArgs = /Fbld/Parse/Inline%.Args;
@@ -69,7 +70,7 @@ M@<Text@> Plain = {
 
     Char@ c = mc.just;
 
-    Text@ tail <- Do({
+    ConsM(c, l, {
       IsNewline(mc.just).?(true: {
         Maybe@<Char@> mc <- Do(Peek);
         mc.?(nothing: Return(/Fbld/Text%.Empty(l)));
@@ -78,7 +79,6 @@ M@<Text@> Plain = {
       });
       plain;
     });
-    Return(/Fbld/Text%.Cons(c, l, tail));
   };
 
   Loc@ l <- Do(Loc);

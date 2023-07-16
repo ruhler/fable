@@ -1,8 +1,10 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
+% And = /Core/Bool%.And;
 
 @ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 
 @ Int@ = /Core/Int%.Int@;
@@ -42,6 +44,7 @@
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
 % Skip = /Fbld/Parse/M%.Skip;
+% ConsM = /Fbld/Parse/M%.ConsM;
 
 # Parses plain text before the next @... command if any.
 # Returns the empty string if there is no plain text before the next @...
@@ -93,30 +96,24 @@ M@<Maybe@<Text@>> Arg = {
     mc.?(nothing: Error<Text@>(Text(Str|'Unterminated argument', start)));
 
     Char@ c = mc.just;
-    c.?('\': {
-      Loc@ nl <- Do(Loc);
-      Maybe@<Char@> nc <- Do(Get);
-      nc.?(nothing: Error<Text@>(Text(Str|'Unterminated argument', start)));
 
-      Text@ tail <- Do(arg(start, nest));
-      Return(/Fbld/Text%.Cons(c, l, /Fbld/Text%.Cons(nc.just, nl, tail)));
+    And(/Core/Int/Eq%.IsZero(nest), /Core/Char/Eq%.Eq(c, Chars.']')).?(true: {
+      Return(Empty(start));
     });
 
-    c.?('[': {
-      Text@ tail <- Do(arg(start, Incr(nest)));
-      Return(/Fbld/Text%.Cons(c, l, tail));
-    });
+    ConsM(c, l, {
+      c.?('\': {
+        Loc@ nl <- Do(Loc);
+        Maybe@<Char@> nc <- Do(Get);
+        nc.?(nothing: Error<Text@>(Text(Str|'Unterminated argument', start)));
 
-    c.?(']': {
-      /Core/Int/Eq%.IsZero(nest).?(true: {
-        Return(Empty(start));
+        ConsM(nc.just, nl, arg(start, nest));
       });
-      Text@ tail <- Do(arg(start, Decr(nest)));
-      Return(/Fbld/Text%.Cons(c, l, tail));
-    });
 
-    Text@ tail <- Do(arg(start, nest));
-    Return(/Fbld/Text%.Cons(c, l, tail));
+      c.?('[': arg(start, Incr(nest)));
+      c.?(']': arg(start, Decr(nest)));
+      arg(start, nest);
+    });
   };
 
   Maybe@<Char@> mc <- Do(Peek);
