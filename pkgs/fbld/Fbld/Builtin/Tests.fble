@@ -30,7 +30,7 @@
 % Run = /Fbld/Run%;
 
 (String@) { Result@<String@>; } RunBlock = (String@ s) {
-  Text@ input = Text(s, Loc@(Str|'file.fbld', Int|1, Int|1, Int|0));
+  Text@ input = Text(s, Loc@(Str|'file.fbld', Int|1, Int|1));
   Env@ env = /Fbld/Markup%.Env(/Fbld/Builtin%.Markup);
   Fbld@<Text@> m = Run.Block(input);
   Result@<Text@> r = /Fbld/Fbld%.Run(m, env);
@@ -112,7 +112,7 @@ how are you?]
 ';
 
     String@ msg = Str|'unsupported tag: ''blah''';
-    Loc@ loc = Loc@(Str|'file.fbld', Int|6, Int|3, Int|1);
+    Loc@ loc = Loc@(Str|'file.fbld', Int|6, Int|3);
     Result@<String@> wnt = Err<String@>(Text(msg, loc));
     Result@<String@> got = RunBlock(input);
     AssertEquals(
@@ -131,7 +131,7 @@ how are you?]
 ';
 
     String@ msg = Str|'unsupported tag: ''url''';
-    Loc@ loc = Loc@(Str|'file.fbld', Int|6, Int|3, Int|1);
+    Loc@ loc = Loc@(Str|'file.fbld', Int|6, Int|3);
     Result@<String@> wnt = Err<String@>(Text(msg, loc));
     Result@<String@> got = RunBlock(input);
 
@@ -154,16 +154,13 @@ The @url is bad.
 ';
 
     String@ msg = Str|'unsupported tag: ''url''';
-    Loc@ loc = Loc@(Str|'file.fbld', Int|9, Int|6, Int|0);
+    Loc@ loc = Loc@(Str|'file.fbld', Int|9, Int|6);
     Result@<String@> wnt = Err<String@>(Text(msg, loc));
     Result@<String@> got = RunBlock(input);
 
-    # TODO: Fix this failing test case.
-    /Core/Test%.ExpectFails(
-      AssertEquals(
-        /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
-        /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got),
-      Str|'file.fbld:7:8:2');
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 

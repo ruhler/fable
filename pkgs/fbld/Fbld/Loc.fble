@@ -11,17 +11,17 @@
 % Str = /Core/String%.Str;
 
 # Location information used for error messages.
-@ Loc@ = *(String@ file, Int@ line, Int@ col, Int@ indent);
+@ Loc@ = *(String@ file, Int@ line, Int@ col);
 
 # Location representing the start of a file.
 (String@) { Loc@; } Start = (String@ file) {
-  Loc@(file, Int|1, Int|1, Int|0);
+  Loc@(file, Int|1, Int|1);
 };
 
 # Advance a location past the given character.
 (Loc@, Char@) { Loc@; } Advance = (Loc@ l, Char@ c) {
   IsNewline(c).?(true: {
-    l.@(line: Incr(l.line), col: Incr(l.indent));
+    l.@(line: Incr(l.line), col: Int|1);
   });
   l.@(col: Incr(l.col));
 };
@@ -34,6 +34,6 @@
     msg];
 };
 
-Loc@ Unknown = Loc@(Str|'???', Int|1, Int|1, Int|0);
+Loc@ Unknown = Loc@(Str|'???', Int|1, Int|1);
 
 @(Loc@, Start, Advance, Report, Unknown);

@@ -2498,3 +2498,15 @@ calling Flatten for StringOf helps.
 Yeah, that helps a lot. There's still a lot of memory use, and it takes longer
 time than I would like, but it's a bunch faster now.
 faster now
+
+---
+
+Question: do we need to keep track of indent for Loc@ anymore? Now that we, in
+theory, properly preserve locations across parsing?
+
+The original reason we needed it was to be able to specify a location of a
+start of a substring and infer the locations of all characters in the
+substring, where the substring could be from and indented block. I feel like
+we don't need that anymore. As long as we only infer locations from the start
+of a file, column 0, we should be okay.
+

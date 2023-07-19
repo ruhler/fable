@@ -15,6 +15,9 @@ Things to consider doing for the fble-0.2 release.
   size.
 
 * Fbld:
+ - Can we get rid of 'indent' in Loc@ now that we track each char?
+ - For Parsing, figure out a better way to return head character
+   Instead of always having to get the character and the loc.
  - Figure out why continuation args are working for @let in markdown.fbld
  - Remove --markdown builtin backend.
  - Improve performance.

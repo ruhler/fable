@@ -23,8 +23,7 @@
 Show@<Loc@> Loc = (Loc@ x) {
   Strs[x.file,
     Str|':', /Core/Int/Show%.Show(x.line),
-    Str|':', /Core/Int/Show%.Show(x.col),
-    Str|':', /Core/Int/Show%.Show(x.indent)];
+    Str|':', /Core/Int/Show%.Show(x.col)];
 };
 
 Show@<Text@> Text = {

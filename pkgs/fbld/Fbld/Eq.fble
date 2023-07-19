@@ -20,7 +20,6 @@ Eq@<Loc@> Loc = (Loc@ a, Loc@ b) {
   /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
   /Core/Int/Eq%.Eq(a.line, b.line).?(false: False);
   /Core/Int/Eq%.Eq(a.col, b.col).?(false: False);
-  /Core/Int/Eq%.Eq(a.indent, b.indent).?(false: False);
   True;
 };
 
