@@ -1,39 +1,34 @@
 @define[par][text]
  @let[t][@inline[$text]][@raw[
- $t
- ]]
+ $t]]
 @@
 
 @define[.inline][text]
- @raw
-  $text
+ @raw[$text]
 @@
 
 @define[.block][text]
- @par
-  $text
+ @par[$text]
 @@
 
 @define[doc][title][body]
  @let[t][@inline[$title]][b][@block[$body]][@raw[
  # $t
- $b
- ]]
+ $b]]
 @@
 
 @define[section][title][body]
  @let[t][@inline[$title]][b][@block[$body]][@raw[
  ## $t
- $b
- ]]
+ $b]]
 @@
 
-@define[url][url][text]
- @let[u][@escape[$url]][t][@inline[$text]][@raw[\[$t\]($u)]]
+@define[url][url]
+ @let[u][@escape[$url]][t][@inline[$url]][@raw[[$t]($u)]]
 @@
 
-@define[fbld][file][text]
- @url[$file][$text]
+@define[fbld][file]
+ @url[$file]
 @@
 
 @define[def][name][value]
@@ -44,6 +39,5 @@
 
 @define[code][lang][text]
  @let[t][@escape[$text]][@raw[
-     $t
- ]]
+     $t]]
 @@

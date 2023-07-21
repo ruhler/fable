@@ -2510,3 +2510,36 @@ substring, where the substring could be from and indented block. I feel like
 we don't need that anymore. As long as we only infer locations from the start
 of a file, column 0, we should be okay.
 
+---
+
+Now that location tracking is fixed, I've temporally(?) reduced @url to take a
+single argument. We can translate README.md using the markdown.fbld backend.
+It has some issues with whitespace. Let's see if I can track them down.
+
+First issue: two blank lines before the Overview section instead of one.
+
+This is while interpreting the body of the @doc command. Between @.block and
+the next @section command. What do I expect?
+
+The @.block command outputs "\n$body".
+
+What we are doing: The @.block command adds a newline. Okay. That's what we
+see. Should be easy to fix. Done.
+
+I can't figure out why @url is adding a newline after the url label (but not
+the url link). The only difference is @escape versus @inline. Does that mean
+@inline introduces a newline somewhere? Looks like it's happening for titles
+too. @inline is adding a newline.
+
+Found it. In my definition of @.inline we were adding an extra newline. I
+guess the moral of the story is something like:
+
+@define[...]
+ @foo
+  $x
+
+Adds a newline to the $x.
+
+I still have a few extra blank lines to track down. Done. This is a little
+tricky. Something good to be aware of.
+
