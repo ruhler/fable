@@ -49,7 +49,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 
-  @ Backend@ = +(Unit@ html, Unit@ markdown, Unit@ man, Unit@ text, Unit@ raw);
+  @ Backend@ = +(Unit@ html, Unit@ man, Unit@ text, Unit@ raw);
 
   @ Args@ = *(
     Backend@ backend,
@@ -64,10 +64,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       /Core/String/Eq%.Eq(Str|'--html', arg).?(true: {
         List@<String@> nargs = args.cons.tail;
         parse(nargs, result.@(backend: Backend@(html: Unit)));
-      });
-      /Core/String/Eq%.Eq(Str|'--markdown', arg).?(true: {
-        List@<String@> nargs = args.cons.tail;
-        parse(nargs, result.@(backend: Backend@(markdown: Unit)));
       });
       /Core/String/Eq%.Eq(Str|'--man', arg).?(true: {
         List@<String@> nargs = args.cons.tail;
@@ -87,7 +83,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
     Markup@ backend = parsed.backend.?(
       html: /Fbld/Core%.Markup(/Fbld/Html%.Core),
-      markdown: /Fbld/Core%.Markup(/Fbld/Markdown%.Core),
       man: /Fbld/Core%.Markup(/Fbld/Man%.Core),
       text: /Fbld/Core%.Markup(/Fbld/TextBackend%.Core),
       raw: /Fbld/Markup%.Empty);
