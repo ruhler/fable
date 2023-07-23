@@ -2543,3 +2543,15 @@ Adds a newline to the $x.
 I still have a few extra blank lines to track down. Done. This is a little
 tricky. Something good to be aware of.
 
+---
+
+The last backend to move out of .fble into .fbld is html. The only hard part
+should be escaping html characters. The proposal had been to do that with
+Head, Tail, and Switch, right?
+
+Should be real easy. I can put them all in /Fbld/Builtin/String%. Remember:
+ @head[str] - returns first character as a string, or empty.
+ @tail[str] - returns tail of string.
+ @switch[arg][k1][v1][k2][v2]...[def]
+    Switch on arg, selects value of key equal to arg. If no match uses
+    default. A default branch is not required.

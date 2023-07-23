@@ -19,10 +19,7 @@ Things to consider doing for the fble-0.2 release.
    Instead of always having to get the character and the loc.
  - Improve performance.
  - Test that '@ ...' at the start of block structured text is not allowed.
- - Add @switch
  - Add @error
- - Add @block
- - Add @head, @tail
  - Move backends out of fble into .fbld
  - Add examples of @, @@ to spec for syntax.
  - Add test cases for all builtin tags.

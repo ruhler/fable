@@ -5,7 +5,8 @@
 Markup@ Markup = Markups[
   /Fbld/Builtin/Define%.Markup,
   /Fbld/Builtin/Let%.Markup,
-  /Fbld/Builtin/Run%.Markup
+  /Fbld/Builtin/Run%.Markup,
+  /Fbld/Builtin/String%.Markup
 ];
 
 @(Markup);

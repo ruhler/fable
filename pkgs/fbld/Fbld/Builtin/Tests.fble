@@ -161,6 +161,42 @@ The @url is bad.
     AssertEquals(
       /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Head, (Unit@ _) {
+    String@ input = Str|'@let[x][@head[hello]][@raw[$x]]';
+    Result@<String@> wnt = Ok<String@>|'h';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Tail, (Unit@ _) {
+    String@ input = Str|'@let[x][@tail[hello]][@raw[$x]]';
+    Result@<String@> wnt = Ok<String@>|'ello';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|SwitchDefault, (Unit@ _) {
+    String@ input = Str|'@switch[x][y][why][z][zed][dunno]';
+    Result@<String@> wnt = Ok<String@>|'dunno';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|SwitchMatch, (Unit@ _) {
+    String@ input = Str|'@switch[z][y][why][z][zed][dunno]';
+    Result@<String@> wnt = Ok<String@>|'zed';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 
