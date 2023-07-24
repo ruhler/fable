@@ -13,6 +13,7 @@
 @ Command@ = /Fbld/Command%.Command@;
 
 <@>@ Fbld@ = /Fbld/Fbld%.Fbld@;
+<@>% Do = /Fbld/Fbld%.Do;
 <@>% Return = /Fbld/Fbld%.Return;
 <@>% Error = /Fbld/Fbld%.Error;
 
@@ -71,7 +72,8 @@ Markup@ Markup = Entries[
   }),
 
   # @switch[arg][k1][v1][k2][v2]...[def]
-  #  Select the value whose key matches arg.
+  #  Select the value whose key matches arg and run it as block structured
+  #  text.
   Entry(Str|'switch', (Command@ cmd) {
     Int@ num_args = Length(cmd.args);
     /Core/Int/Eq%.Le(num_args, Int|1).?(true: {
@@ -79,7 +81,8 @@ Markup@ Markup = Entries[
     });
     Text@ arg = cmd.args.cons.head;
     List@<Text@> branches = cmd.args.cons.tail;
-    Switch(LocOf(cmd.name), StringOf(arg), branches);
+    Text@ result <- Do(Switch(LocOf(cmd.name), StringOf(arg), branches));
+    /Fbld/Run%.Block(result);
   })
 ];
 

@@ -182,7 +182,7 @@ The @url is bad.
   }),
 
   Test(Str|SwitchDefault, (Unit@ _) {
-    String@ input = Str|'@switch[x][y][why][z][zed][dunno]';
+    String@ input = Str|'@switch[x][y][@raw[why]][z][@raw[zed]][@raw[dunno]]';
     Result@<String@> wnt = Ok<String@>|'dunno';
     Result@<String@> got = RunBlock(input);
     AssertEquals(
@@ -191,7 +191,7 @@ The @url is bad.
   }),
 
   Test(Str|SwitchMatch, (Unit@ _) {
-    String@ input = Str|'@switch[z][y][why][z][zed][dunno]';
+    String@ input = Str|'@switch[z][y][@raw[why]][z][@raw[zed]][@raw[dunno]]';
     Result@<String@> wnt = Ok<String@>|'zed';
     Result@<String@> got = RunBlock(input);
     AssertEquals(

@@ -2555,3 +2555,11 @@ Should be real easy. I can put them all in /Fbld/Builtin/String%. Remember:
  @switch[arg][k1][v1][k2][v2]...[def]
     Switch on arg, selects value of key equal to arg. If no match uses
     default. A default branch is not required.
+
+---
+
+It's pretty annoying trying to keep track of what variables are evaluated
+versus not yet evaluated. Any way to make that nicer?
+
+I tend to automatically think of an argument value as already evaluated. But
+we can't do that, because we wouldn't have said how to evaluate it.
