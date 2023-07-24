@@ -40,6 +40,10 @@ namespace eval "pkgs/fbld" {
   fbld_html_doc $::b/pkgs/fbld/README.html $::s/README.fbld
   fbld_html_doc $::b/pkgs/fbld/HelloWorld.html "$::s/tutorials/tutorial.lib.fbld $::s/tutorials/HelloWorld.fbld"
 
+  build $::b/pkgs/fbld/README.html.x \
+    "$::b/pkgs/fbld/fbld $::b/fbld/version.fbld $::s/fbld/html.fbld $::s/README.fbld $::s/buildstamp" \
+    "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/fbld - $::b/fbld/version.fbld $::s/fbld/html.fbld $::s/README.fbld > $::b/pkgs/fbld/README.html.x"
+
   www $::b/pkgs/fbld/fbld.html
   www $::b/pkgs/fbld/fble.html
   www $::b/pkgs/fbld/README.html

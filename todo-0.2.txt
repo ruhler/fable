@@ -2,6 +2,11 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* html.fbld
+ - add html escaping
+ - @fbld highlight as code.
+ - @fbld rewrite link from .fbld to .html
+
 * Fbld Text@ rewrite:
  - Move implement of Eq and Show internally.
  - Update users to handle changing locations properly.

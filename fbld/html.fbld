@@ -1,0 +1,81 @@
+@define[par][text]
+ @let[t][@inline[$text]][@raw[<p>$t</p>
+ ]]
+@@
+
+@define[EscHtmlChar][char]
+ @switch[$char]
+ @[&][&amp;]
+ @[<][&lt;]
+ @[>][&gt;]
+ @[$char]
+@@
+
+@define[.inline][text]
+ @raw[$text]
+@@
+
+@define[.block][text]
+ @par[$text]
+@@
+
+@define[doc][title][body]
+ @let[t][@inline[$title]][b][@block[$body]][@raw[
+ <head>
+ <style>
+ body {
+ color: #333333;
+ font-family: sans-serif;
+ max-width: 50em;
+ }
+ h1 { font-size: 2.0em; }
+ h2 { font-size: 1.6em; }
+ h3 { font-size: 1.4em; }
+ h4 { font-size: 1.2em; }
+ p { font-size: 1em; }
+ </style>
+ <title>$t</title>
+ </head><body>
+ <h1>$t</h1>
+ $b</body>
+ ]]
+@@
+
+@define[section][title][body]
+ @let[t][@inline[$title]][b][@block[$body]][@raw[<h2>$t</h2>
+ $b]]
+@@
+
+@define[subsection][title][body]
+ @let[t][@inline[$title]][b][@block[$body]][@raw[<h3>$t</h3>
+ $b]]
+@@
+
+@define[subsubsection][title][body]
+ @let[t][@inline[$title]][b][@block[$body]][@raw[<h4>$t</h4>
+ $b]]
+@@
+
+@define[url][url]
+ @let
+ @[u][@escape[$url]]
+ @[t][@inline[$url]]
+ @[@raw[<a href="$u">$t</a>]]
+@@
+
+@define[fbld][file]
+ @url[$file]
+@@
+
+@define[def][name][value]
+ @let
+ @[n][@inline[$name]]
+ @[v][@inline[$value]]
+ @[@raw[<dl><dt>$n</dt><dd>$v</dd></dl>
+ ]]
+@@
+
+@define[code][lang][text]
+ @let[t][@escape[$text]][@raw[<pre>$t</pre>
+ ]]
+@@
