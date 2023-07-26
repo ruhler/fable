@@ -181,6 +181,15 @@ The @url is bad.
       /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
   }),
 
+  Test(Str|TailEmpty, (Unit@ _) {
+    String@ input = Str|'@let[x][@tail[]][@raw[$x]]';
+    Result@<String@> wnt = Ok<String@>|'';
+    Result@<String@> got = RunBlock(input);
+    AssertEquals(
+      /Fbld/Eq%.Result(/Core/String/Eq%.Eq),
+      /Fbld/Show%.Result(/Core/String/Show%.Show), wnt, got);
+  }),
+
   Test(Str|SwitchDefault, (Unit@ _) {
     String@ input = Str|'@switch[x][y][@raw[why]][z][@raw[zed]][@raw[dunno]]';
     Result@<String@> wnt = Ok<String@>|'dunno';

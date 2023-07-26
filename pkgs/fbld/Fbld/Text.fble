@@ -70,6 +70,7 @@ Head_ = (Text_@ text) {
 
 (Text_@) { Text_@; }
 Tail_ = (Text_@ text) {
+  text.?(empty: text);
   text.?(cons: text.cons.tail);
   Append_(Tail_(text.append.a), text.append.b);
 };

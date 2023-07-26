@@ -3,7 +3,8 @@ Fble 0.2 TODO
 Things to consider doing for the fble-0.2 release.
 
 * html.fbld
- - add html escaping
+ - Figure out how to support \ in html escape strings.
+ - add html escaping to @.inline, url link, file link,
 
 * Fbld Text@ rewrite:
  - Move implement of Eq and Show internally.

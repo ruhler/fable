@@ -5,10 +5,24 @@
 
 @define[EscHtmlChar][char]
  @switch[$char]
- @[&][&amp;]
- @[<][&lt;]
- @[>][&gt;]
- @[$char]
+ @[&][@raw[&amp;]]
+ @[<][@raw[&lt;]]
+ @[>][@raw[&gt;]]
+ @[@raw[$char]]
+@@
+
+@define[EscHtml][str]
+ @let
+ @[h][@head[$str]]
+ @@
+ @switch[$h]
+ @[][@raw[]]
+ @@
+ @let
+ @[nh][@EscHtmlChar[$h]]
+ @[t][@tail[$str]]
+ @[nt][@EscHtml[$t]]
+ @[@raw[$nh$nt]]
 @@
 
 @define[.inline][text]
@@ -100,6 +114,9 @@
 @@
 
 @define[code][lang][text]
- @let[t][@escape[$text]][@raw[<pre>$t</pre>
+ @let
+ @[t][@escape[$text]]
+ @[h][@EscHtml[$t]]
+ @[@raw[<pre>$h</pre>
  ]]
 @@
