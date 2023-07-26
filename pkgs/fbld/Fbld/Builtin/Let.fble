@@ -59,7 +59,7 @@ Markup@ Markup = Entries[
     Int@ num_args = Length(cmd.args);
     /Core/Int/Eq%.Eq(Div(num_args, Int|2).r, Int|1).?(false: {
       String@ msg = Strs[
-        Str|'expected an odd number of arguments, but got ',
+        Str|'expected an odd number of arguments to let, but got ',
         /Core/Int/Show%.Show(num_args)];
       Error<Text@>(LocOf(cmd.name), msg);
     });

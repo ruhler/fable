@@ -56,15 +56,39 @@
  $b]]
 @@
 
-@define[url][url]
+@define[lurl][url][text]
  @let
  @[u][@escape[$url]]
- @[t][@inline[$url]]
+ @[t][@inline[$text]]
  @[@raw[<a href="$u">$t</a>]]
 @@
 
+@define[url][url]
+ @lurl[$url][$url]
+@@
+
+@define[lfile][file][text]
+ @let
+ @[u][@escape[$file]]
+ @[t][@inline[$text]]
+ @[@raw[<a href="$u"><code>$t</code></a>]]
+@@
+
 @define[fbld][file]
- @url[$file]
+ @define[ReplaceExt][str]
+  @switch[$str]
+  @[.fbld][@raw[.html]]
+   @let
+   @[h][@head[$str]]
+   @[t][@tail[$str]]
+   @[rt][@ReplaceExt[$t]]
+   @[@raw[$h$rt]]
+ @@
+
+ @let
+ @[fbld][@raw[$file]]
+ @[html][@ReplaceExt[$file]]
+ @[@lfile[$html][$fbld]]
 @@
 
 @define[def][name][value]
