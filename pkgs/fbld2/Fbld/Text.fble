@@ -1,0 +1,14 @@
+
+<@>@ List@ = /Core/List%.List@;
+
+@ String@ = /Core/String%.String@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+@ Plain@ = *(Loc@ loc, String@ text);
+
+@ Text@ = +(Plain@ plain, Commands@ structured),
+@ Command@ = *(Loc@ loc, String@ name, List@<Text@> args),
+@ Commands@ = List@<Command@>;
+
+@(Plain@, Text@, Command@, Commands@);

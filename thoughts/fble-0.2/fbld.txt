@@ -2563,3 +2563,1172 @@ versus not yet evaluated. Any way to make that nicer?
 
 I tend to automatically think of an argument value as already evaluated. But
 we can't do that, because we wouldn't have said how to evaluate it.
+
+---
+
+Trouble: my @code has a backslash in the body. Because of how substitution
+works for html escape, eventually we substitute that single character into the
+body of a let as:
+
+@switch[\]
+@[][@raw[]]
+@@
+...
+
+That leads to an unterminated argument error. This is a problem.
+
+We have some other problems with substitution and back end descriptions too:
+* Hard to keep track of what text has been 'evaluated' or not.
+* Have to come up with variable names for each intermediate expression.
+* Bad things will happen if some variable names are a prefix of others.
+* It's hard to keep track of what commands execute their results or not before
+  returning.
+
+Let's rethink things. A key idea is to parse before substituting. But let's
+rethink from the top and see where we get.
+
+Arguments to commands should be interpreted by the command itself. @code needs
+to know it takes raw text. @section title should be inline. Different back
+ends may escape text differently. Let's run with this.
+
+The immediate consequence of this is nesting of commands has issues:
+
+  @foo[@bar[xxx]]
+
+In this case, do we want to pass the literal text '@bar[xxx]' as an argument
+to @foo, or do we want to pass the result of running @bar[xxx] to @foo? Having
+some syntax to distinguish between those from the caller might be nice.
+
+We've said commands should know how to interpret what's passed to them. But
+that doesn't mean we have to pass to them literal strings all the time. We
+could pass to them computed strings.
+
+This suggests we want some text transformation step between parsing from the
+document and passing to the argument. In between [] for an argument (or for
+same line and next line arguments). It should be intrusive syntax. By default
+the string should pass as is. Only if you add the intrusive syntax are things
+interpreted some different way.
+
+Let's brainstorm. What if we had two different kinds of ways to pass args to
+commands: @foo[...] versus @foo{...} for example. One can take a literal
+string, the other can do processing first.
+
+  @foo[@bar[xxx]]
+  @foo{@bar[xxx]}
+
+It's like "" versus {} in tcl.
+
+Because it's part of the args syntax, it's not likely to conflict with literal
+text, which is nice. But it's also not clear how to apply that to same and
+next line args.
+
+@foo[@bar[xxx]] vs @foo[$@bar[xxx]]
+@foo @bar[xxx] vs @foo $@bar[xxx]
+@foo
+ @bar[xxx]
+@foo
+ $@bar[xxx]
+
+How do we know if we want to interpret it as block or inline text?
+
+A different approach would be to always do some substitution, but have
+different syntax. Like, maybe $<name>[...] turns into a substitution
+regardless, so we could say:
+
+@foo[@bar[xxx]] vs. @foo[$bar[xxx]]
+
+Another question: when do we really want to pass pre-evaluated commands
+instead of post-evaluated commands?
+
+@code: We want to pass raw text, which is to say, there are no commands. So
+pre vs. post evaluation doesn't actually matter.
+
+@section: Honestly it doesn't matter pre or post evaluation, except we don't
+know how to interpret the commands for pre evaluation. For example:
+
+@section Title
+ @def[hello] there
+
+Could go just as well to:
+
+@section Title
+ <dl><li>hello</li><dd>there</dd>
+
+And then substitute in. We just need to know that it should be interpreted as
+block structured text.
+
+Is there any time we want to pass uninterpreted commands that are later
+interpreted? The only thing I can think is if the context of the commands
+changes. Maybe @doc for html versus markdown backend causes @section to be
+interpreted differently, for example? In practice we define @section and @doc
+differently based on what's included.
+
+It's more like, would you ever want to have, in the same document, something
+like:
+
+@htmldoc
+ @section ...
+
+@mddoc
+ @section ...
+
+Where the @section commands are interpreted differently because they are in a
+different context. I feel like, in general... that makes sense to me. The
+commands @htmldoc and @mddoc can decide how they want to interpret their
+arguments, which means they could define tags to behave differently, which
+means we want to pass that structure to them.
+
+Let's go down the path of having a new kind of preprocessing syntax. We say
+all arguments are processed uniformly in this syntax before being passed to a
+command. It's a syntax for constructing strings. We could do something like
+tcl. We'll want literal text plus some optional substitution. Substitution
+could be: $name word delimited. or ${name} to do direct variable substitution.
+And $name[...] with inline argument syntax for calling a command. We could
+handle escape sequences here for \[, \] and \$, strip those out automatically
+before passing to commands for processing? Not sure.
+
+How would this help things?
+
+@define[EscHtml][str]
+ @let
+ @[h][@head[$str]]
+ @@
+ @switch[$h]
+ @[][@raw[]]
+ @@
+ @let
+ @[nh][@EscHtmlChar[$h]]
+ @[t][@tail[$str]]
+ @[nt][@EscHtml[$t]]
+ @[@raw[$nh$nt]]
+@@
+
+Can now be:
+@define[EscHtml][str]
+ $switch[$head[$str]]
+ $[][]
+ $ $EscHtmlChar[$head[$str]]$EscHtml[$tail[$str]]
+@@
+
+Which brings an interesting twist on syntax: we want to have block structured
+command calls.
+
+It would be really nice if we could do this kind of syntax. We don't need @raw
+everywhere, because it's all done as preprocessing instead of post processing.
+
+But, in that case, why have a new syntax? We can use @ syntax for commands.
+Maybe we just need a way to say substitute in a chunk of inline structured
+text, or substitute a chunk of block structured text?
+
+But if we have to wrap everything, then the nested arguments become tedious
+again.
+
+Needs more thought.
+
+---
+
+Two directions to take:
+1. Evaluate after passing to commands.
+2. Evaluate before passing to commands.
+
+For evaluating before passing commands:
+* inline arg, same line args treat as inline structured text.
+* next line args treat as block structured text.
+* need special syntax for 'raw' text.
+
+Brainstrom special syntax for 'raw' text. For inline, we could use @[....].
+For next line?
+
+Let's think about @code, which is where we would use a next line arg literal
+text. Maybe one of the rare places?
+
+@code[fble]
+ ...
+
+We don't want it to be in brackets. We want it to be indent based. So, either
+I put something on the first line, or... no, really it should be something on
+the first line, indented.
+
+@code[fble]
+ %
+ ...
+ 
+A single % character, means the rest is raw? Kind of annoying to have to put
+that everywhere.
+
+Maybe we could indicate as some part of @code? Or, probably better would be,
+similar to @[...] for inline:
+ 
+@code[fble]
+ @
+  ...
+
+Again, kind of annoying to have the extra level of indent everywhere.
+
+I would argue we probably want a way to pass non-literal inputs to @code. Like
+as part of a substitution. That suggest the caller has to indicate somehow. It
+shouldn't be a property of the @code command itself. Unless we have multiple
+variations of the @code command?
+
+What if we had something like: where an argument is expected, you can put '%'
+to indicate it should be interpreted as a literal string?
+
+@code%[fble] %
+ ...
+
+Should there be any difference between literal text and default inline text?
+For example, in html I would expect one to do html escaping and the other not
+to.
+
+Maybe only inline args can be literal?
+
+@code[@[fble]][@[
+...
+]]
+
+That's annoying syntax...
+
+Let's push on the other direction. Say a command is responsible for parsing
+its arguments still. Can we make the hard things easier?
+
+@define[EscHtml][str]
+ @let
+ @[h][@head[$str]]
+ @@
+ @switch[$h]
+ @[][@raw[]]
+ @@
+ @let
+ @[nh][@EscHtmlChar[$h]]
+ @[t][@tail[$str]]
+ @[nt][@EscHtml[$t]]
+ @[@raw[$nh$nt]]
+@@
+
+Let's say @head evaluates its argument as inline structured text first, then
+takes the head? And say switch evaluates its argument as inline structured
+text first, then does the switch. Then, transatively, say EscHtml evaluates
+its argument as inline structured text first:
+
+@define[EscHtml][str]
+ @switch[@head[$str]]
+ @[][@raw[]]
+ @@
+ @let
+ @[nh][@EscHtmlChar[@head[$str]]]
+ @[nt][@EscHtml[@tail[$str]]]
+ @[@raw[$nh$nt]]
+@@
+
+If we assume default inline does concatenation, or we have a function for
+that:
+
+@define[EscHtml][str]
+ @switch[@head[$str]]
+ @[][@raw[]]
+ @[@EscHtmlChar[@head[$str]]@EscHtml[@tail[$str]]]
+@@
+
+That's not too bad.
+
+And, if we do this, we could turn arguments into locally defined commands:
+
+@define[EscHtml][str]
+ @switch[@head[@str]]
+ @[][@raw[]]
+ @[@EscHtmlChar[@head[@str]]@EscHtml[@tail[@str]]]
+@@
+
+This way we have full control over how things are parsed. We can always wrap
+in @raw[], @inline[], @block[], @foo[] to explicitly switch modes to any
+possibly user defined mode.
+
+And, if we use commands instead of $ substitution, we could use define instead
+of let?
+
+@define[EscHtml][str]
+ @define[h] @head[@str]
+ @@
+ @switch[@h]
+ @[][@raw[]]
+ @[@EscHtmlChar[@h]@EscHtml[@tail[@str]]]
+@@
+
+It's just a little annoying to need an extra line for @@. Any way we could
+continue with a marker at the end of the same line? Like, end a line with @@?
+
+@define[EscHtml][str]
+ @define[h] @head[@str] @@
+ @switch[@h]
+ @[][@raw[]]
+ @[@EscHtmlChar[@h]@EscHtml[@tail[@str]]]
+@@
+
+And if we do that, maybe we could phase out varargs entirely? Current use of
+varargs are for:
+* @let - but we can do as separate lines now.
+* @define - we could pass arg names as a list: @define[foo][a b c][def][body]
+* @switch - we could use ifelse chain with @@
+
+Does this solve the problem with '\'? Because we no longer do things based on
+substitution, but rather based on commands, maybe yes?
+
+What does this mean for how $ substitution is indented?
+
+More to think about, but this approach is appealing to me.
+
+---
+
+We'll still want a way to pass formatted text to @code. We can do that by
+defining a wrapper function. Actually, @code would be the wrapper passing to
+and underlying more general function:
+
+@define[code][lang][text]
+ @code_[@lang][@text]
+
+Uh... This suggests we can't pass text through in non-raw format? I don't
+know. I'm confused.
+
+I feel like I should reset, go back from scratch, and think about what would
+make sense for a string based programming language.
+
+Remember how tcl works:
+* {} for literal text, eval, subst functions, [...] to invoke a command within
+  string text, $ to do substitution within string text.
+
+There are two places transformations occur: at the caller to control what goes
+to the command, and at the callee to control how that is interpreted.
+
+Commands are a natural way to control things on the caller side. It's more
+awkward to re-interpret at the callee side, because commands would have to be
+escaped. We see this with tcl too. It's annoying to dynamically construct
+scripts, because you have to escape the square brackets.
+
+I like how my .fbld documents are described right now. Which could be
+interpreted either as evaluating arguments before or after the call, except
+for raw arguments to things like @code or @url.
+
+@define[EscHtml][str]
+ @define[h] @head[@str] @@
+ @switch[@h]
+ @[][@raw[]]
+ @[@EscHtmlChar[@h]@EscHtml[@tail[@str]]]
+@@
+
+When I look at something like this, with @head[@str], I think of this is
+replacing @str with its value and passing that to @head. I don't think of it
+as passing '@str' to @head and letting @head do whatever it wants with that.
+
+That's the dilemma here. On the one hand, I feel like @code and misc literal
+arguments to things require we pass raw text everywhere. On the other, I want
+to think about describing strings to pass to things.
+
+What if we had a magic syntax for literal strings. Would that solve
+everything? It would, wouldn't it?
+
+That magic syntax could be just escape anything that would otherwise be
+treated as a command? Or @[...]. Or @.
+
+Here's my proposed magic syntax: Single '@' at the end of the line means
+following next line arg is interpreted as literal text.
+
+@code[fble] @
+ @ Unit@ ... = ...
+
+I suppose for inline we could say "@ " at the start:
+
+@code[@ fble] @
+ ...
+
+That's a little verbose though.
+
+Would we have trouble mixing '@@' and '@'? How to say interpret everything
+that follows as literal last argument? Use "@@@" for this rare case?
+
+How does @.inline and @.block fit into all of this?
+
+Maybe we get rid of those entirely? Something like @doc or @section will get
+preprocessed text, it has to insert paragraphs itself? Or keep @.block and
+skip @.inline?
+
+Instead of thinking of inline structured text as a list of inline commands, we
+think of it as describing a string of characters, with substitution performed
+where @ appears.
+
+Maybe okay for inline text. That same line of thinking doesn't feel right to
+me for block structured text, like html text. We would get something like
+
+  Here is a paragraph
+
+  Another paragraph
+
+  <table>...</table>
+
+  Another paragraph.
+
+Some mix of already formatted html and plain text.
+
+So, proposal is to get rid of @.inline. We always convert inline text directly
+to substituted text. But keep @.block.
+
+Okay? Get the overall proposal? Let's call it a straw proposal:
+* inline args and same line args parsed as inline structured text.
+* next line args parsed as block structured text.
+* Remove all use of varargs.
+* Use @[...] for literal inline text. Or escape all the @ characters.
+* End a line with @ to say the following next line arg is passed as literal
+  text without being parsed as block structured text.
+* End a line with @@ to say the following is final arg.
+* End a line with @@@ to say the following is literal final arg.
+* Remove $ substitution. Commands define @... for arguments.
+
+The only change required for documents should be add use of @ for literal next
+line args.
+
+Trying out with html.fbld, this is actually pretty nice:
+* Next line arg is @inline by default if it doesn't start with a ....
+  Oh, wait. Maybe that's wrong. We don't want it to insert <p>.
+
+It would be nice for backends if we didn't have @.block being automatically
+inserted. Or if we could have it behave differently for different commands.
+
+Anyway, this is much nicer than dealing with substitutions and nested lets.
+
+Should we get rid of @.block? It would make sense to me. Then we have
+basically a template language for describing strings. The backend would be
+responsible for parsing those strings again (e.g. for blank lines) and
+inserting <p>, </p>. Just like it already has to parse the strings again for
+html escaping.
+
+Think about that more. That would certainly simplify fbld conceptually.
+
+---
+
+I don't like the idea of the backend having to parse its own output.
+Everywhere else the backend is only parsing input and transforming it to
+output. It makes sense for plain text to be parsed as input in the same way.
+Which means both inline and block structured text make sense to process the
+plain text.
+
+Where it gets annoying is we don't have one global kind of processing. Each
+command does its own kind of processing. The language argument to @code should
+be raw processing, for example. We shouldn't do html processing on that.
+
+We see the problem in my draft of the new html.fbld. We want to use @inline to
+do string template substitution, but we certainly don't want the html
+processing to be done to the html tags we put there.
+
+Take, for example:
+
+@define[section][title body]
+ @inline[<h2>@title</h2>
+ @body
+ ]
+@@
+
+Consider what's in @body. Some plain text. Some already transformed tags and
+inline html. But that also means some already transformed plain text, right?
+Is it, like, the first time we parse it that we process the html escapes and
+paragraphs. All the rest of the times we are dealing with raw strings, so it
+doesn't matter?
+
+We still need some way to turn off html escaping in the backend when
+outputting html tags.
+
+---
+
+Let's try again.
+
+@doc is a command. It takes as input a title and body content. The title
+should be inline structured text. The body should be block structured text.
+It's the job of the @doc command to parse the title and to parse the body as
+text, with appropriate commands provided at parse time.
+
+For example, we can say @doc can include @section, @.block, @.inline, etc. We
+parse those commands explicitly, say.
+
+After @doc has processed the title and body, the result is escaped html text.
+Now @doc performs substitution to create raw text that is the result of @doc.
+
+This suggests we want the following kinds of things:
+* @inline, possibly with explicit supported inline commands.
+* @block, possibly with explicit supported inline commands, and explicit
+  @.block command.
+* @subst, for doing substitutions in raw text.
+
+What's the difference between structured text and subsitutions?
+
+Whether the command is defined or not?
+
+@foo[@bar[@x, @y]]
+
+I'm pretty sure I know what I want to execute before as opposed to after. So
+why don't we say, anywhere you use '@' is substitution for after. Anywhere you
+use '$' is substitution for before?
+
+@define[doc][title body]
+ $inline
+  <head><title>$html[$title]</title></head><body>
+  <h1>$html[$title]</h1>
+  $html[$body]
+  </body>
+@@
+
+The trouble is nesting of things?
+
+Or, the issue is distinguishing between code (where substitution happens
+immediately) versus data (where substitution will only happen if explicitly
+asked for)?
+
+It feels like we should be able to say: substitute directly, or treat as data.
+If treated as data, it will only be substituted when explicitly asked. There
+is no mixing of immediate substitution and explicit substitution.
+
+---
+
+Say there are four kinds of things I want to do:
+1. Process structured text. Invoke inline and blocked structured @ commands.
+  e.g. @doc takes structured text as an argument and wants to invoke
+  the commands on that.
+2. Process unstructured text. 
+  e.g. @HtmlEsc wants to transform a string to another string.
+3. Substitute to construct strings.
+  e.g. @doc wants to substitute processed body and title into string
+<head>...</body>
+4. Transform structured text.
+  e.g. @tutorial defined as @doc[$name][ @FbleVersion (@BuildStamp)][$content]
+
+Say we want to use different syntax for these different kinds of things. Note
+that for the most part, docs would write structured text. All these four
+things are things done by backends.
+
+To process structured text is easy. Have some function to call on structured
+text, provide necessary information, the result is the string after
+processing. For example: $process[$arg]
+
+To process unstructured text, we want a function language where arguments are
+evaluated before being passed. For example: $foo[$bar[$sludge]], evaluates
+$sludge first, then $bar[...], then $foo[...].
+
+To substitute into strings, we could either have functions to compose strings,
+or allow processing within a string of text. For example:
+  '$concat[hello, ][$foo[...]][there]', or 'hello, $foo[...] there'.
+
+Could I do multi-line let statements with $? Inline structured text with $ is
+fine assuming no $.inline processing takes place. How about block structured
+text with $?
+
+$let[x][$foo[$bar]] $$
+...
+
+I think that's okay too, with no $.block processing taking place.
+
+Let's try this then. We say @ is deferred processing, $ is immediate
+processing. Otherwise same syntax. As soon as you get inside @, the $ is
+deferred?
+
+Let's look at some examples.
+
+@define[EscHtmlChar][char]
+ $ifeq[$char][&] &amp; @@
+ $ifeq[$char][<] &lt; @@
+ $ifeq[$char][<] &gt; @@
+ $inline[$char]
+@@
+
+@define[section][title body]
+ <h2>$HtmlEsc[$title]</h2>
+ $ProcessBody[$body]
+@@
+
+@define[tutorial][name, content]
+ @doc[$name]
+   @FbleVersion (@BuildStamp)
+
+  $content
+
+Now this last one is interesting, because we want the $content underneath the
+@doc. How do we know to process it instead of defer it?
+
+Could we have some other syntax for creating structured text? Like an explicit
+function call?
+
+@define[tutorial][name, content]
+ $block_struct[doc, $name, @FbleVersion (@BuildStamp)
+
+  $content]
+
+It seems like everything is reasonable and easy to do so far except
+transformations on structured text, where we want to produce structured text
+programattically.
+
+But wait. In this case, can't I directly call the command?
+
+
+@define[tutorial][name, content]
+ $doc[$name]
+   $FbleVersion ($BuildStamp)
+
+  $content
+
+Maybe, but once we start nesting, we run into the same problem:
+
+@define[tutorial][name, content]
+ $doc[$name]
+   $FbleVersion ($BuildStamp)
+
+   @section Hello
+    $content
+
+Here I want the @section passed to $doc, not interpreted in place.
+
+Let's tweak things slightly then. Mix @ and $. So that $ processing is done
+on arguments to commands before passing those args. And it could either be
+block structured or inline structured $?
+
+Think about how that would work.
+
+---
+
+Processing an inline or same line argument:
+* We don't know if the command will process the text as raw, inline, or block
+  structured text.
+* We want to embed $ substitutions.
+* So, scan the string, any time you see a $ sign, perform the appropriate $
+  substitution. It can work just like how $ substitution works now, but
+  generalized to support calling commands with arguments.
+* For the purposes of this, ignore '@' characters?
+
+How about processing of next line arguments? The idea is, in some cases I want
+an equivalent of block based $ substitution. Let's say next line arg and final
+args are scanned using block based $ substitution. Same syntax as block,
+except with '$' instead of '@'.
+
+Now, if you see '@' somewhere in that?
+
+@foo[$bar]
+ $ifeq[...]; $$
+ @blah[$x]
+  Blurg.
+
+To me, intuitively, that should substitute $bar, $ifeq, and $x to result in:
+
+@foo[...]
+ @blah[...]
+  Blurg.
+
+So, maybe we can have block based $ substitution in inline text too?
+
+@x[
+ @foo[...]
+  @blah[...]
+   Blurg.
+]
+
+We can detect it based on newline in the text?
+
+That sort of begs the question, is there any need to distinguish between
+inline structured text and block structured text in the first place with '@'?
+
+So here's my proposal: we have $ processing of text, which supports inline and
+block syntax simultaneously, and completely ignores '@' occurrences. And then
+we have some function that can process @ structured text explicitly.
+
+You need to use @ when you want to pass a command to a subcommand to be
+interpreted. Otherwise prefer use of $.
+
+Can $ substitution interfere with syntax of @? I want to say no if possible.
+
+For example:
+
+let x = "]@foo"
+in
+@bar[$x]
+
+This should turn into @bar[...] where the argument is literal "]@foo". It
+should not turn into the malformed syntax @bar[]@foo]. 
+
+This suggests we parse a string for '@' while doing substitution, even if
+eventually we aren't going to '@' process the string.
+
+I have a question then. If '@' is only for deferring evaluation, how about we
+instead do that based on whether or not something is defined? For example:
+
+$foo[$bar]
+ $ifeq[...]; $$
+ $blah[$x]
+  Blurg.
+
+Say $foo and $blah are undefined. Then after substitution this becomes:
+
+$foo[...]
+ $blah[...]
+  Blurg.
+
+It means it's less obvious what we are passing, and harder to catch mistakes
+about what is undefined. But conceptually we could treat $ and @ as
+interchangeable in terms of parsing.
+
+This makes me wonder: should/can we parse every string all at once up front as
+structured text? Assuming we have a way to easily enough describe literal
+(unprocessed) segments of text?
+
+---
+
+A new line of thinking. Let's lean the other direction, again, where
+everything is evaluated eagerly. The problem with that is, for example, how to
+do html escaping. The problem with that is sometimes you want implicit @.block
+and @.inline and sometimes not. Generalizing, the problem is sometimes you
+want a command to have a global definition, like @head, and sometimes you want
+it to depend on what command you are in. For example, maybe you want @item to
+mean something different inside @list compared to @definition.
+
+Could we have some form of namespacing to distinguish between things?
+
+For example, if I define an @section command with arguments title and body, I
+want implicit paragraphs to apply to the body. So maybe we define a command:
+
+@define[section.body.block][txt]
+ $par[$txt]
+
+
+Which is applicable if you are parsing the 'body' argument to the 'section'
+command.
+
+Now we can more clearly control what tags appear under which commands, and
+maybe we can always do eager evaluation, parse everything only once. What do
+you think?
+
+Maybe we could define somewhere whether an argument is supposed to be
+interpreted as raw, inline, block, or other structured text using a similar
+approach?
+
+What we really want to do, essentially, is define a type for each argument.
+The type describes how the argument is parsed (some user provided function)
+and the environment of commands available when parsing.
+
+---
+
+More on combining block and inline structured text into a single syntax:
+
+If you are in 'block' mode, it's pretty easy. Inline and same line args turn
+you to inline mode. Next line and final args keep you in block mode.
+
+The more interesting question is, if you are in inline mode, can you switch
+to block mode? When would you want to?
+
+We could say you can't. But maybe it would be nice to use block mode to define
+some substitution into inline mode?
+
+  Hello, I would like $block[
+  $let[x] abc $$
+  $x$x$x
+  ] repeated even more.
+
+I would rather pull the block mode out to the top:
+
+  $let[x] abc $$
+  Hello, I would like $x$x$x repeated even more.
+
+Let's say you can't go into block mode from inline mode. But now we have a
+single unified parsing mode. You start in block mode. Depending on what you
+are parsing, maybe you go to inline mode. Just like we already have today.
+
+---
+
+Are you ready? The image in my mind is now:
+
+In block mode, start parsing. When you get to a command, read the command
+name. For each argument to the command, look up in the environment how to
+parse it. So parsing happens in an environment. Read the command raw, apply
+the environment function for that argument to parse it in its own environment.
+After all args have been parsed this way, pass them to the body of the command
+which performs some substitution to produce a raw string. And maybe we can say
+there is a post processing step for each command as well, read from the
+environment.
+
+In other words, a command has:
+* A name.
+* A list of named arguments.
+* For each argument, a processing function.
+* A body.
+
+The body is interpreted as block structured text, where each argument is
+defined as a command that returns the arguments string value directly.
+
+Why do we need a processing function for each argument? We could define that
+locally in the body of the function. Which brings us back full circle to
+passing raw strings as arguments to functions. I can't seem to get out of this
+loop.
+
+Let me try to state very clearly here the pressure to pass raw strings:
+* We want to interpret arguments differently depending on the command they are
+  being passed to. So it makes sense to pass the argument in raw form to the
+  command and have the command process it however it likes.
+
+What's the pressure to eagerly evaluate arguments?
+
+I think it's cases where we want the caller to do substitution on the argument
+before it is passed to the callee to process. So both caller and callee have a
+chance to influence the argument.
+
+How about this then, we always perform $ substitution on arguments before
+passing them to commands. $ substitution is an inline substitution for
+arguments passed as 'inline', regardless of how they are interpreted by the
+callee, and $ substitution is a block substitution for arguments passed as
+'block', regardless of how they are interpreted by the callee.
+
+That means, all we need is to figure out what it means to do $ substitution in
+the presence of @ commands. I already know that though: ignore the @.
+
+And maybe we say $ substitution of raw strings with @, [, ] etc. automatically
+escape those characters so they will not be treated as syntax by the given
+command?
+
+Here's the key thing, I think, to avoid swinging back to everything eager:
+* In some cases, we want the caller to be able to manipulate the string. In
+  some cases we want the callee to be able to manipulate the string, and
+  differently depending on the callee. So we should support both modes.
+
+Summary of changes to make:
+* Generalize $ substitution to support commands with arguments.
+* Add block based $ substitution syntax.
+* Set it up so that $ substitution cannot impact how text would be parsed as
+  inline or block structured text. (this could be tricky?)
+* Consider removing all use of varargs.
+
+Which brings up the other point that pressures us towards eager evaluation.
+How to do $ substitution without impacting how text is parsed, when you don't
+know the syntax that will be used to parse the text at the time of $
+substitution?
+
+Let's do a deep dive of escape characters next. That's often been a point of
+fuzziness in fbld.
+
+---
+
+New proposal: pass around structured strings, not raw strings. Do parsing of a
+file once at first read, then never again.
+
+Have substitution preserve structure, avoid flattening things.
+
+Now, I claim this means we can process escapes when we first parse, and never
+have to worry about them again.
+
+What this means is:
+* We parse all args as if they were inline or block structured text, based on
+  the syntax used for the arg: inline, same line, next line, final.
+* To pass raw strings, you pass them as inline structured text with a single
+  @.inline tag.
+* @.inline and @.block are added by the parser when first parsing.
+* Functions like @head expect an @.inline tag and go inside of it.
+* We still distinguish between $ and @ commands. @ commands need to be
+  explicitly processed by the callee. $ commands are processed before passing
+  the structured text to the callee.
+
+Consider for example:
+
+$let[x] \]\@foo $$
+@bar[$x]
+
+The argument to @bar will be "]@foo", which was unescaped at parse time.
+
+First thing we do is parse the entire thing into structured text. We can
+process $ substitution as we go. The result is structured text.
+
+Then we process it as blocked structured text. The result is structured text.
+
+Last thing we do is concatenate the structured text back to raw text and
+output that.
+
+The way html escaping works is: initial parsing adds @.inline and @.block.
+Because they are @ commands and not $ commands, they are deferred until @doc
+interprets them for the body. In the body it will be replaced with
+@.inline[$HtmlEscape[...]] and @.block[$par[...]], and the final top level
+@.inline and @.block become straight concatenation.
+
+If you want to pass raw code, for example, you need to escape. Or we can use
+our 'raw string' syntax already brainstormed above. I think indent-based raw
+string syntax will make it easy to describe any kind of raw string.
+
+This sounds promising to me. How do we figure out if it will work in reality?
+
+Do I expect to have to change any of my existing .fbld docs? Maybe to add
+extra escapes where raw strings were expected. Otherwise no assuming the top
+level is implicitly processed as block structured text.
+
+Perhaps it's worth going back to the basics:
+
+1. Rewrite the .fbld spec with full details of the new proposal.
+2. Implement the new proposal with fble based test cases.
+   Don't worry about back ends right now. Expect fble based fbld translation
+   to break on existing docs.
+3. Port the back ends over, slowly bring back the fble based fbld translation
+   on existing docs.
+
+Could we do this incrementally instead? For example, something like:
+
+1. Process escapes at parse time, in both tcl and fble impls.
+...
+
+I'm not sure. Sounds complicated.
+
+
+Question: how do we support @define with this syntax? Because in theory the
+body will use '$' in it, but we don't want to process those until the function
+is called. Do we need special syntax for defining commands? Or we'll end up
+using raw string syntax for that?
+
+Maybe it's a question of when we parse something versus when we execute
+something. Maybe we should parse first and do $ substitution as a separate
+path?
+
+---
+
+Do we need $ substitution at all? Can we using @ substitution for everything,
+only this time do @ substitution on explicit tags at a time instead of all at
+once?
+
+Imagine we parse the entire document into structured text first, no
+substitution at parse time.
+
+The next step is to 'evaluate' the structured text. All we need is a clear
+evaluation strategy that works as desired.
+
+Recall our built in tags. For now let's just use the current ones:
+
+define, let, switch, head, tail, raw, escape, block, inline, @.block,
+@.inline.
+
+Top level evaluation:
+* Parse doc.
+* Evaluate each command in turn.
+* Concatenate the results as text.
+
+Evaluation of a command returns structured text.
+
+@raw - no longer needed.
+  Because we use inline structured text for these instead.
+@escape - no longer needed.
+  Because escapes are processed once at initial parse time.
+@block - no longer needed. (?)
+  Because you can't switch to block text from inline mode.
+
+@head, @tail
+ The argument should be inline structured text.
+ If @.inline, goes inside and takes the head.
+ If @<command>[...], throws an error?
+
+@switch
+ The argument should be @.inline[...]
+ Replaces with the matching body. Then continues evaluation of the
+ replacement.
+
+@define[name][args][def][body]
+ Evaluates body in the context where @name is defined.
+ Evaluation of @name evaluates def ... in the context where @args are defined?
+
+Now we need to be careful about the difference between evaluating in the
+context where something is defined versus doing a deep string replacement.
+
+What I want is:
+* Evaluate body in the context where @name is defined. Don't eagerly apply
+  things in body, because we want to be lazy in that sense.
+* When it comes time to evaluate @name, substitute args into def, then
+  evaluate the result.
+
+Ideally we don't evaluate or expand parts of def before substituting the
+arguments.
+
+let can be replaced with @define.
+ 
+I'll want an explicit eval@ kind of thing though, right? How do we say: define
+some commands to be applied to a pre-existing body?
+ 
+@define[doc][title body]
+ @define[ProcessBody][body]
+  @define[@.inline][txt][@HtmlEsc[@txt]]
+  @define[@.block][txt][@par[@txt]]
+  @define[@section][title body]
+   ...
+  @@
+  @body
+ @@
+ <head>...
+ <title>@HtmlEsc[@title]</title>
+ </head><body>
+ <h1>@HtmlEsc[@title]</title>
+ @ProcessBody[@body]</body>
+@@
+ 
+Do we need @eval, or is it automatic? If you are evaluating @eval, then you
+should have evaluated @body anyway. 
+
+I think this could work.
+
+Okay. Enough thinking. Let's make it happen for real. I have a vision in mind.
+Let's get there, hopefully incrementally. I'll learn and document here
+whatever issues come up. Ditch $ substitution for now. That will be much nicer
+if we can get away with it.
+
+Step 1:
+* Update the parser to parse the entire text into structured text.
+
+We'll want a new datatype for structured text. Change the parser to return
+that. Rewrite whatever code we need to to get things to compile now that
+commands take structured text as arguments instead of Text@.
+
+Once that compiles, run it over existing fbld docs and update them as
+necessary to meet the new syntax requirements.
+
+Maybe we only need to keep track of locations of commands and args now?
+
+Structured text is:
+* Inline, Loc@, String@
+* Or List of commands.
+
+Command is:
+* Command name, Loc@, list of args.
+
+Repurpose Text@ type for this purpose?
+
+---
+
+Starting pkgs/fbld2 for the rewrite of fbld.
+
+First steps: defined structured text, implement a parser.
+
+The parser will take as input a list of files, where each file has a path and
+string text. State will be that list of files, current location. It returns a
+value or an error message.
+
+---
+
+Now is probably a good time to clean up fbld syntax, sad as I am to defer
+implementation work even more.
+
+Specifically, there's no way currently to have a zero argument command
+followed by plain text characters. For example, @foo followed by 'bar' would
+be: @foobar, but that means something different.
+
+Let's be conventional: @foo and @{foo} can both be used. Then we have:
+
+@{foo}bar versus @foobar. Hopefully it's a rare case. But you could also use
+it for more interesting command names.
+
+I see no need to escape [ and ] in plain text. As long as [ doesn't follow @
+and they are nested, it's clear from context.
+
+Let me try an abstract syntax:
+
+command_name ::= 
+    name
+  | '{' text '}'
+
+inline_command ::= '@' command_name '[' inline ']' [...]
+
+inline_element ::=
+    plain
+  | inline_command
+
+inline ::= inline_element [...]
+
+Hmm... It's a little tedious. I feel like it's easier to describe in words and
+context.
+
+Parsing of inline text:
+  Until end of stream or closing ']':
+    if '@':
+      Parse command name as name chars or '{' ... '}',
+          where ... can be anything with nesting of '{' '}'.
+      While '['
+        Parse inline text to closing ']'
+      continue
+    Parse plain text as sequence of characters until '@', with nesting of '['
+    and ']', and character escape \x --> x.
+
+Notes:
+* Whitespace is preserved as normal characters.
+* Name chars are [a-zA-Z_0-9]
+    
+Idea: instead of {}, maybe just use string escape? @foo\bar? I kind of like
+that. It should always work since \ is not allowed? Except, it turns \ into
+both escape and syntax denotation, which is maybe a little awkward?
+
+@{foo}bar
+@foo\bar 
+
+Let's try it with \ to break up instead of introducing {}. It should be rare
+anyway.
+
+Parsing of inline text:
+  Until end of line or closing ']' depending on initiating context:
+    if '@':
+      Parse command as sequence of non-empty name chars.
+      While '['
+        Parse inline text to closing ']'
+      continue
+    Parse plain text as sequence of characters until '@' or closing, with
+    nesting of '[' and ']', and character escape \x --> x.
+
+Notes:
+* Whitespace is preserved as normal characters.
+* Name chars are [a-zA-Z_0-9]
+* \ is a delimiter for name chars, so, for example: @foo\bar is the command
+  '@foo' followed by plain text 'bar'.
+* Inline text can start at '[', which must close with ']', or it can start
+  from a same line arg, which must close with end of line.
+
+---
+
+There are three different contexts in which inline structured text can occur:
+1. Between '[' and ']',  for inline args.
+2. Between ' ' and end of line (or to ' @@\n'?), for same line args.
+3. Between '\n' and a blank line, for plain block text.
+
+It's tempting to say we should pull out the block of text first, and then
+parse it for inline text. I think that's a bad idea, because if there are a
+bunch of nested arguments, we end up with quadratic blowup of the number of
+characters parsed. For example: a[b[c[d[e[f[g[h[i[...]]]]]]]]], the characters
+in the middle end up being gone over for each level of argument.
+
+Hmm... maybe it's not such a bad idea, because when would something like that
+ever really happen in practice? Otherwise we could keep track of the expected
+end character and the current level of indent while parsing and read through
+things once.
+
+Let me try the read through things once approach and see how complicated it
+is. I think that will be better in the long run if it isn't too hard.
+
+How to parse block structured text?
+
+* Skip over blank lines.
+* If end of file, done.
+* If line doesn't start with '@'
+  - Parse as inline text to next blank line.
+* Else line starts with '@':
+* Parse '@' <name>
+* Parse inline args following starting with '['
+* If there is a space, parse same line arg as inline text to end of line.
+  Or to ' @@\n'?
+* If next line starts with '@@', parse final arg. 
+* If next line starts with a space, parse next arg as block text with indent
+  level increased.
+* etc...
+
+Summary of block structured text options:
+* @name to start.
+* [...] is inline arg.
+* text to end of line is same line arg.
+* text indented on next line is block structured next line arg.
+* @ on next line is continuation for inline arg or same line arg.
+* @@ on next line signifies final arg follows at same indent level.
+* @@ after same line arg signifies final arg follows at same indent level.
+
+So, same as what we have, but I want to at least add @@ at end of same line
+arg.
+
+Do we also want to use @@@ and @[] for raw text?
+
+
+  

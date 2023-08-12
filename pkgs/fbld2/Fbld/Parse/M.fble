@@ -1,0 +1,19 @@
+
+<@ T@>(T@) { M@<T@>; } Return = { ... }
+
+<@ T@>(Loc@, String@) { M@<T@>; } Error = { ... }
+
+# Returns the next character in the input stream.
+# Fails if it's the end of the file.
+M@<Char@> Get = { ... };
+
+# Returns the current location in the input stream.
+M@<Loc@> Loc = { ... };
+
+# Try parsing something.
+# On success, returns the parsed value.
+# On failure, returns Nothing and resets the parser state.
+<@ T@>(M@<T@>) { M@<Maybe@<T@>>; } Try = { ... }
+
+
+@(M@, Return, Error, Get, Loc, Try);

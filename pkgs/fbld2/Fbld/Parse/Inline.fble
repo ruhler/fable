@@ -1,0 +1,33 @@
+
+
+# Parses a plain text character.
+# Escape characters are unescaped.
+# Fails if the next character in the input stream is '@', '[', or ']'.
+M@<Char@> = {
+  Loc@ l <- Do(Loc);
+  Char@ c <- Do(Get);
+  c.?(
+    '@': Error<Char@>(l, Str|'@ is not plain'),
+    '[': Error<Char@>(l, Str|'[ is not plain'),
+    ']': Error<Char@>(l, Str|'] is not plain'),
+    '\': Get);
+  Return(c);
+};
+
+# Parses a sequence of plain text characters.
+# Returns the empty string if there are no plain text characters.
+M@<String@> Chars = {
+  Maybe@<Char@> mc <- Do(Try(Char));
+  mc.?(nothing: Return(Str|''));
+
+  String@ tail <- Do(Chars);
+  Return(Cons(mc.just, tail));
+};
+
+# Parses a non-empty sequence of plain text characters.
+M@<Plain@> Plain = {
+  Loc@ l <- Do(Loc);
+  String@ s <- Do(Chars);
+  s.?(nil: Error<Plain@>(l, Str|'Empty sequence of plain characters'));
+  Return(Plain@(l, s));
+};
