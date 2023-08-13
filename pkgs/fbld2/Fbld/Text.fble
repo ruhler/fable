@@ -1,14 +1,13 @@
 
-<@>@ List@ = /Core/List%.List@;
-
 @ String@ = /Core/String%.String@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
-@ Plain@ = *(Loc@ loc, String@ text);
+# Text@ is a string with location information.
+@ Text@ = *(Loc@ loc, String@ text);
 
-@ Text@ = +(Plain@ plain, Commands@ structured),
-@ Command@ = *(Loc@ loc, String@ name, List@<Text@> args),
-@ Commands@ = List@<Command@>;
+(Loc@, String@) { Text@; } Text = (Loc@ loc, String@ text) {
+  @(loc, text);
+};
 
-@(Plain@, Text@, Command@, Commands@);
+@(Text@, Text);

@@ -3,11 +3,15 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+% Chars = /Core/Char%.Chars;
+
 <@>% List = /Core/List%.List;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
 % Strs = /Core/String%.Strs;
+% Lines = /Core/String%.Lines;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -19,9 +23,25 @@
 # Tests --
 #  A test suite to test the /Core/String% module and friends.
 Test@ Tests = TestSuite(Str|String, List[
+  Test(Str|StrE, (Unit@ _) {
+    String@ wnt = List[
+      Chars.a, Chars.nl,
+      Chars.b, Chars.tab,
+      Chars.c, Chars.'\',
+      Chars.d];
+    String@ got = StrE|'a\nb\tc\\d';
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
   Test(Str|Strs, (Unit@ _) {
     String@ wnt = Str|'hellothere';
     String@ got = Strs[Str|'hello', Str|'there'];
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Lines, (Unit@ _) {
+    String@ wnt = StrE|'hello\nthere\n';
+    String@ got = Lines[Str|'hello', Str|'there'];
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

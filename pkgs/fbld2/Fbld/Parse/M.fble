@@ -1,5 +1,5 @@
 
-<@ T@>(T@) { M@<T@>; } Return = { ... }
+<@ T@>(T@) { M@<T@>; } Return = <@ T@>(T@ x) { ... }
 
 <@ T@>(Loc@, String@) { M@<T@>; } Error = { ... }
 

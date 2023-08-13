@@ -3,7 +3,7 @@
 # Parses a plain text character.
 # Escape characters are unescaped.
 # Fails if the next character in the input stream is '@', '[', or ']'.
-M@<Char@> = {
+M@<Char@> Char = {
   Loc@ l <- Do(Loc);
   Char@ c <- Do(Get);
   c.?(
@@ -31,3 +31,5 @@ M@<Plain@> Plain = {
   s.?(nil: Error<Plain@>(l, Str|'Empty sequence of plain characters'));
   Return(Plain@(l, s));
 };
+
+@();

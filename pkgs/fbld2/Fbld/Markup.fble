@@ -1,0 +1,27 @@
+
+<@>@ List@ = /Core/List%.List@;
+
+@ String@ = /Core/String%.String@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+@ Text@ = /Fbld/Text%.Text@;
+
+# Fble Marked up text.
+@ Command@ = *(Text@ name, List@<Markup@> args),
+@ Element@ = +(Text@ plain, Command@ command),
+@ Markup@ = List@<Element@>;
+
+(List@<Element@>) { Markup@; } Markup = /Core/List%.List<Element@>;
+
+(Loc@, String@) { Element@; }
+Plain = (Loc@ l, String@ str) {
+  Element@(plain: Text@(l, str));
+};
+
+(Loc@, String@)(List@<Markup@>) { Element@; }
+Command = (Loc@ l, String@ name)(List@<Markup@> args) {
+  Element@(command: Command@(Text@(l, name), args));
+};
+
+@(Markup@, Command@, Element@,
+  Markup, Command, Plain);

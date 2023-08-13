@@ -1,0 +1,14 @@
+
+<@>@ List@ = /Core/List%.List@;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+<@>@ Result@ = /Fbld/Result%.Result@;
+@ Text@ = /Fbld/Text%.Text@;
+
+# Parses fbld markup.
+(List@<Text@>) { Result@<Markup@>; } Parse = (List@<Text@> inputs) {
+  # TODO: Implement me.
+  /Core/Undef%.Undef<Result@<Markup@>>.undefined;
+};
+
+@(Parse);

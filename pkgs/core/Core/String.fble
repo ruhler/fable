@@ -1,8 +1,11 @@
 
 @ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
 
 # String@ --
 #   A character string.
@@ -15,6 +18,28 @@
 #   String@ s = Str|'hello, world'
 (List@<Char@>) { String@; } Str = List<Char@>;
 
+# StrE --
+#   A string literal that supports the following escape sequences:
+#   \\ - backslash
+#   \n - newline
+#   \t - tab
+# 
+# Any other use of \ is undefined.
+(List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
+  chars.?(nil: chars);
+  chars.cons.head.?('\': {
+    chars.cons.tail.?(nil: /Core/Undef%.Undef<String@>.undefined);
+    String@ tail = StrE(chars.cons.tail.cons.tail);
+    Char@ head = chars.cons.tail.cons.head.?(
+      '\': Chars.'\',
+      'n': Chars.nl,
+      't': Chars.tab,
+      : /Core/Undef%.Undef<Char@>.undefined);
+    Cons(head, tail);
+  });
+  Cons(chars.cons.head, StrE(chars.cons.tail));
+};
+
 # Strs --
 #   Concatenates a list of strings together.
 #
@@ -22,4 +47,13 @@
 #   String@ s = Strs[Str|'x is ', Show(x), Str|'.']
 (List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
 
-@(String@, Str, Strs);
+# Lines --
+#   Concatenates a list of strings together, adding newlines after each
+#   string.
+(List@<String@>) { String@; } Lines = (List@<String@> strs) {
+  strs.?(nil: Str|'');
+  String@ tail = Lines(strs.cons.tail);
+  Append(strs.cons.head, Cons(Chars.nl, tail));
+};
+
+@(String@, Str, StrE, Strs, Lines);

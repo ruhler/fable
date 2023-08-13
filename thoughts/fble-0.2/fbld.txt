@@ -3730,5 +3730,69 @@ arg.
 
 Do we also want to use @@@ and @[] for raw text?
 
+---
 
-  
+When we parse @foo[bar], should the argument be parsed as plain 'bar', or as
+structured @.inline with an argument as plain 'bar'?
+
+I don't like having that kind of ambiguity. Can we get rid of it?
+
+To get rid of it, we would have plain be a command instead, and use that
+instead of the implicit inline command. Then markup is always a sequence of
+commands. We no longer need a '.inline' tag. In that case, should we do the
+same for .block?
+
+Or... Markup@ is either plain, a command, or a list of Markup@? We remove
+.inline and .block tags entirely, and instead have list structure that can be
+processed as desired?
+
+In theory that would allow for arbitrary nesting of things, instead of
+two-level nesting 'block' and 'inline'. A much better tree structure I should
+think.
+
+markup ::= 
+   plain text
+ | tag [args ...]
+ | sequence [markup ...]
+
+I like it. And when we parse, never parse into a single element sequence?
+
+If we wanted to enforce that structurally, we could do:
+
+markup ::=
+   empty
+ | plain <text>
+ | tag <args>
+ | seq <markup> <markup>
+
+I don't know. That might be overly complicating things.
+
+Notes:
+* It is possible to describe an empty markup by having an empty file.
+  - Meaning we ought to have a way to represent empty markup.
+* The concrete syntax has no way to distinguish between ([a, b], [c, d]) and
+  [a,b,c,d].
+  - Meaning it probably makes sense to represent a sequence as a list instead
+    of a tree.
+* The concrete syntax has no way to distinguish between (a) and ([a]).
+
+@foo[bar] vs @foo[bar@x]. They should have parallel structure I think. Same
+kind of representation.
+
+So, that all leads us to...
+
+markup is a list of (tag or plain).
+
+So...
+
+Command@ = *(Text@ name, List@<Markup@> args),
+Element@ = +(Text@ plain, Command@ command),
+Markup@ = List@<Element@>;
+
+
+[bar] is parsed as a single plain element.
+[bar@x] is parsed as a list of a plain element followed by a command.
+
+An implicit block of text can be represented as a Command@ with name @.block.
+This is different from plain text, which uses a plain element instead of an
+@.inline command, because it's argument cannot contain structure.
