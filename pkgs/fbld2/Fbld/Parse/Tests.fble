@@ -1,15 +1,16 @@
 
-@ Int@ = /Core/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
+@ Decimal@ = /Core/Digits%.Decimal@;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
+% Lines = /Core/String%.Lines;
 
 @ Test@ = /Core/Test%.Test@;
+@ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
@@ -20,6 +21,8 @@
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Element@ = /Fbld/Markup%.Element@;
+% Command = /Fbld/Markup%.Command;
+% Plain = /Fbld/Markup%.Plain;
 % M = /Fbld/Markup%.Markup;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
@@ -28,11 +31,10 @@
 % Parse = /Fbld/Parse%.Parse;
 
 @ Text@ = /Fbld/Text%.Text@;
-% Text = /Fbld/Text%.Text;
 
 (List@<Decimal@>)(List@<Decimal@>) { Loc@; }
 L = (List@<Decimal@> line)(List@<Decimal@> col) {
-  Loc@(Str|'foo.fbld', /Core/Int/Lit%.Lit(line), /Core/Int/Lit%.Lit(col));
+  Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int(line), /Core/Int/Lit%.Int(col));
 };
 
 (List@<Decimal@>)(List@<Decimal@>)(String@)(List@<Markup@>) { Element@; }
@@ -53,18 +55,18 @@ P = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
 (Result@<Markup@>, Result@<Markup@>) { TestResult@; }
 AssertResultEquals = (Result@<Markup@> expected, Result@<Markup@> actual) {
   AssertEquals(
-    /Fbld/Result/Eq%.Eq(/Fbld/Markup/Eq%.Eq),
-    /Fbld/Result/Show%.Show(/Fbld/Markup/Show%.Show),
+    /Fbld/Result/Eq%.Eq(/Fbld/Markup/Eq%.Markup),
+    /Fbld/Result/Show%.Show(/Fbld/Markup/Show%.Markup),
     expected, actual);
 };
 
 Test@ Tests = TestSuite(Str|Parse, List[
   Test(Str|Unescape, (Unit@ _) {
     String@ text = Str|'a \\ \a\[\]bcd\@';
-    String@ wnt = Str|'a \ a[]bcd@';
+    String@ want = Str|'a \ a[]bcd@';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
-    Result@<Markup@> want = Ok(M[C|1|1|'.block'[M[P|1|1(wnt)]]]);
+    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[P|1|1(want)]]]);
     AssertResultEquals(wnt, got);
   }),
 

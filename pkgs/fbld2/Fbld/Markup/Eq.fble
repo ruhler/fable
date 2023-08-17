@@ -1,0 +1,22 @@
+
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Command@ = /Fbld/Markup%.Command@;
+@ Element@ = /Fbld/Markup%.Element@;
+@ Markup@ = /Fbld/Markup%.Markup@;
+
+Eq@<Command@> Command = (Command@ a, Command@ b) {
+  /Fbld/Text/Eq%.Eq(a.name, b.name).?(false: False);
+  /Core/List/Eq%.Eq(Markup)(a.args, b.args);
+},
+Eq@<Element@> Element = (Element@ a, Element@ b) {
+  a.?(
+    plain: b.?(plain: /Fbld/Text/Eq%.Eq(a.plain, b.plain), command: False),
+    command: b.?(plain: False, command: Command(a.command, b.command)));
+},
+Eq@<Markup@> Markup = /Core/List/Eq%.Eq(Element);
+
+@(Command, Element, Markup);
+

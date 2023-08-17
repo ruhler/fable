@@ -6,6 +6,10 @@ Things to consider doing for the fble-0.2 release.
  - Figure out how to support \ in html escape strings.
  - add html escaping to @.inline, url link, file link,
 
+* Fbld2:
+ - Implement parser.
+ - Add test for nesting of [ and ] characters in plain text.
+
 * Fbld Text@ rewrite:
  - Move implement of Eq and Show internally.
  - Update users to handle changing locations properly.

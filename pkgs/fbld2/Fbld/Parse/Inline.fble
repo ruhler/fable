@@ -1,35 +1,106 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
 
-# Parses a plain text character.
-# Escape characters are unescaped.
-# Fails if the next character in the input stream is '@', '[', or ']'.
-M@<Char@> Char = {
-  Loc@ l <- Do(Loc);
-  Char@ c <- Do(Get);
-  c.?(
-    '@': Error<Char@>(l, Str|'@ is not plain'),
-    '[': Error<Char@>(l, Str|'[ is not plain'),
-    ']': Error<Char@>(l, Str|'] is not plain'),
-    '\': Get);
-  Return(c);
+@ Char@ = /Core/Char%.Char@;
+% IsAlNum = /Core/Char/Type%.IsAlNum;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
+<@>% List = /Core/List%.List;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Element@ = /Fbld/Markup%.Element@;
+% Plain = /Fbld/Markup%.Plain;
+
+<@>@ M@ = /Fbld/Parse/M%.M@;
+<@>% Do = /Fbld/Parse/M%.Do;
+<@>% Return = /Fbld/Parse/M%.Return;
+<@>% Error = /Fbld/Parse/M%.Error;
+<@>% Try_ = /Fbld/Parse/M%.Try_;
+<@>% Test = /Fbld/Parse/M%.Test;
+% Loc = /Fbld/Parse/M%.Loc;
+% Get = /Fbld/Parse/M%.Get;
+% String = /Fbld/Parse/M%.String;
+
+(Char@) { Bool@; } IsNameChar = (Char@ c) {
+  c.?('_': True);
+  IsAlNum(c);
 };
 
-# Parses a sequence of plain text characters.
-# Returns the empty string if there are no plain text characters.
-M@<String@> Chars = {
-  Maybe@<Char@> mc <- Do(Try(Char));
+# Parses a sequence of zero or more name characters from the start of the
+# string.
+M@<String@> Name = {
+  Maybe@<Char@> mc <- Do(Test(Get));
   mc.?(nothing: Return(Str|''));
+  IsNameChar(mc.just).?(false: Return(Str|''));
 
-  String@ tail <- Do(Chars);
+  String@ tail <- Do(Name);
   Return(Cons(mc.just, tail));
 };
 
-# Parses a non-empty sequence of plain text characters.
-M@<Plain@> Plain = {
+# Parses a sequence of zero or more inline args.
+M@<List@<Markup@>> Args = {
+  Bool@ another <- Do(Try_(String|'['));
+  another.?(false: Return(Nil<Markup@>));
+
+  M@<Unit@> end = {
+    Loc@ l <- Do(Loc);
+    Char@ c <- Do(Get);
+    c.?(']': Return(Unit));
+    Error<Unit@>(l, Str|'Expected '']''');
+  };
+
+  Markup@ head <- Do(Inline(end));
+  List@<Markup@> tail <- Do(Args);
+  Return(Cons(head, tail));
+},
+
+# Parses an inline command, starting just after the '@' character.
+M@<Element@> Command = {
   Loc@ l <- Do(Loc);
-  String@ s <- Do(Chars);
-  s.?(nil: Error<Plain@>(l, Str|'Empty sequence of plain characters'));
-  Return(Plain@(l, s));
+  String@ name <- Do(Name);
+  name.?(nil: Error<Element@>(l, Str|'missing command name'));
+
+  List@<Markup@> args <- Do(Args);
+  Return(/Fbld/Markup%.Command(l, name)(args));
+},
+
+# Parses inline text.
+#
+# @arg[end] - Something that parses the end of the inline text.
+(M@<Unit@>) { M@<Markup@>; } Inline = (M@<Unit@> end) {
+  Bool@ done <- Do(Try_(end));
+  done.?(true: Return(Nil<Element@>));
+
+  Char@ c <- Do(Get);
+  c.?('@': {
+    Element@ command <- Do(Command);
+    Markup@ tail <- Do(Inline(end));
+    Return(Cons(command, tail));
+  });
+
+  Loc@ l <- Do(Loc);
+  Char@ h <- Do(c.?('\': Get, : Return(c)));
+  Markup@ tail <- Do(Inline(end));
+
+  Element@ solo = Plain(l, Str[h]);
+  tail.?(nil: Return(List[solo]));
+  tail.cons.head.?(plain: {
+    Return(Cons(Plain(l, Cons(h, tail.cons.head.plain.text)), tail.cons.tail));
+  });
+  Return(Cons(solo, tail));
 };
 
-@();
+@(Inline, Name, Args);

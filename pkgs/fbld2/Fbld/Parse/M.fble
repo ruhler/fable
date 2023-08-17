@@ -1,19 +1,161 @@
 
-<@ T@>(T@) { M@<T@>; } Return = <@ T@>(T@ x) { ... }
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 
-<@ T@>(Loc@, String@) { M@<T@>; } Error = { ... }
+@ Char@ = /Core/Char%.Char@;
 
-# Returns the next character in the input stream.
-# Fails if it's the end of the file.
-M@<Char@> Get = { ... };
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
-# Returns the current location in the input stream.
-M@<Loc@> Loc = { ... };
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
 
-# Try parsing something.
-# On success, returns the parsed value.
-# On failure, returns Nothing and resets the parser state.
-<@ T@>(M@<T@>) { M@<Maybe@<T@>>; } Try = { ... }
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
-@(M@, Return, Error, Get, Loc, Try);
+@ Loc@ = /Fbld/Loc%.Loc@;
+% Advance = /Fbld/Loc%.Advance;
+% Unknown = /Fbld/Loc%.Unknown;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+<@>% Err = /Fbld/Result%.Err;
+
+@ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+
+# S@ - State for parser monad.
+<@>@ S@ = <@ T@> { *(List@<Text@> in, T@ x); };
+
+# M@ - A parser monad.
+<@>@ M@ = <@ T@>(List@<Text@>) { Result@<S@<T@>>; };
+
+# Return the given value.
+<@ T@>(T@) { M@<T@>; }
+Return = <@ T@>(T@ x)(List@<Text@> in) {
+  Ok(S@(in, x));
+};
+
+# Report a parse error.
+<@ T@>(Loc@, String@) { M@<T@>; }
+Error = <@ T@>(Loc@ l, String@ msg)(List@<Text@> _) {
+  Err<S@<T@>>(Text(l, msg));
+};
+
+# Monadic Do for the parser monad.
+<@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
+Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(List@<Text@> in) {
+  Result@<S@<A@>> ra = ma(in);
+  ra.?(err: Err<S@<B@>>(ra.err));
+  f(ra.ok.x)(ra.ok.in);
+};
+
+# Returns the next character in the input stream without changing the parser
+# state.
+M@<Maybe@<Char@>> Peek = (List@<Text@> in) {
+  Maybe@<Char@> mc = {
+    in.?(nil: Nothing<Char@>);
+    in.cons.head.text.?(nil: Nothing<Char@>);
+    Just(in.cons.head.text.cons.head);
+  };
+  Ok(S@(in, mc));
+};
+
+# Returns the current location.
+M@<Loc@> Loc = (List@<Text@> in) {
+  Loc@ l = {
+    in.?(nil: Unknown);
+    in.cons.head.loc;
+  };
+  Ok(S@(in, l));
+};
+
+# Gets the next character in the input stream, advancing the parser state as
+# appropriate. Fails if there are no more characters in the input stream.
+M@<Char@> Get = (List@<Text@> in) {
+  in.?(nil: Err<S@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
+  in.cons.head.text.?(nil: Get(in.cons.tail));
+  Char@ c = in.cons.head.text.cons.head;
+  Text@ head = Text(Advance(in.cons.head.loc, c), in.cons.head.text.cons.tail);
+  Ok(S@(Cons(head, in.cons.tail), c));
+};
+
+# Parse end of input. Fails if we have not reached the end of the input.
+M@<Unit@> EndOfInput = {
+  Loc@ l <- Do(Loc);
+  Maybe@<Char@> mc <- Do(Peek);
+  mc.?(nothing: Return(Unit));
+  Error<Unit@>(l, Str|'expected end of input');
+};
+  
+# Try running a parser. If it succeeds, return the parsed value. If it fails,
+# return Nothing.
+<@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
+Try = <@ T@>(M@<T@> mx)(List@<Text@> in) {
+  Result@<S@<T@>> r = mx(in);
+  r.?(err: Ok(S@(in, Nothing<T@>)));
+  Ok(S@(r.ok.in, Just(r.ok.x)));
+};
+
+# Same as Try, but discards the result of a successful match.
+<@ T@>(M@<T@>) { M@<Bool@>; }
+Try_ = <@ T@>(M@<T@> mx) {
+  Maybe@<T@> r <- Do(Try(mx));
+  Return(r.?(just: True, nothing: False));
+};
+
+# Test if a parser would match at the current position, without consuming any
+# input.
+<@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
+Test = <@ T@>(M@<T@> mx)(List@<Text@> in) {
+  Result@<S@<T@>> r = mx(in);
+  r.?(err: Ok(S@(in, Nothing<T@>)));
+  Ok(S@(in, Just(r.ok.x)));
+};
+
+# Test if a parser would match at the current position, without consuming any
+# input, and ignoring the result of parsing.
+<@ T@>(M@<T@>) { M@<Bool@>; }
+Test_ = <@ T@>(M@<T@> mx) {
+  Maybe@<T@> r <- Do(Test(mx));
+  Return(r.?(just: True, nothing: False));
+};
+
+# Parses either of the given arguments, returning the result of the first to
+# pass. Fails if both parsers fails.
+<@ T@>(M@<T@>, M@<T@>) { M@<T@>; }
+Or = <@ T@>(M@<T@> ma, M@<T@> mb) {
+  Maybe@<T@> a <- Do(Try(ma));
+  a.?(just: Return(a.just));
+  mb;
+};
+
+# Runs a parser monad on the given input string.
+<@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
+Run = <@ T@>(M@<T@> m, List@<Text@> in) {
+  Result@<S@<T@>> r = m(in);
+  r.?(err: Err<T@>(r.err));
+  Ok(r.ok.x);
+};
+
+# Parse a specific string from the input stream. Fails if the input string
+# does not match that string.
+(String@) { M@<Unit@>; }
+String = (String@ s) {
+  s.?(nil: Return(Unit));
+  Loc@ loc <- Do(Loc);
+  Char@ c <- Do(Get);
+  /Core/Char/Eq%.Eq(s.cons.head, c).?(
+    true: String(s.cons.tail),
+    false: Error<Unit@>(loc, Strs[Str|'Expected ', Str[s.cons.head]]));
+};
+
+@(M@, Return, Error, Do, Peek, Loc, Get, EndOfInput,
+  Try, Try_, Test, Test_, Or, String,
+  Run);

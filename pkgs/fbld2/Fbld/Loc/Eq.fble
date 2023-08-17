@@ -1,0 +1,16 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+Eq@<Loc@> Eq = (Loc@ a, Loc@ b) {
+  /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
+  /Core/Int/Eq%.Eq(a.line, b.line).?(false: False);
+  /Core/Int/Eq%.Eq(a.col, b.col).?(false: False);
+  True;
+};
+
+@(Eq);

@@ -1,0 +1,144 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Char@ = /Core/Char%.Char@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Element@ = /Fbld/Markup%.Element@;
+
+<@>@ M@ = /Fbld/Parse/M%.M@;
+<@>% Return = /Fbld/Parse/M%.Return;
+<@>% Error = /Fbld/Parse/M%.Error;
+<@>% Do = /Fbld/Parse/M%.Do;
+% Loc = /Fbld/Parse/M%.Loc;
+% Get = /Fbld/Parse/M%.Get;
+<@>% Try = /Fbld/Parse/M%.Try;
+<@>% Try_ = /Fbld/Parse/M%.Try_;
+<@>% Test = /Fbld/Parse/M%.Test;
+<@>% Test_ = /Fbld/Parse/M%.Test_;
+% String = /Fbld/Parse/M%.String;
+
+% Inline = /Fbld/Parse/Inline%.Inline;
+% Name = /Fbld/Parse/Inline%.Name;
+% InlineArgs = /Fbld/Parse/Inline%.Args;
+
+M@<Unit@> SkipBlankLines = {
+  Bool@ blank <- Do(Try_(String(StrE|'\n')));
+  blank.?(true: SkipBlankLines);
+  Return(Unit);
+};
+
+# Parses a same line argument, up to and including the newline character.
+M@<Markup@> SameLineArg = {
+  Unit@ _ <- Do(String|' ');
+  Inline(String(StrE|'\n'));
+};
+
+# Parses a blank line.
+M@<Unit@> BlankLine = String(StrE|'\n\n');
+
+# Parse a next line arg, starting just after the newline character.
+M@<Markup@> NextLineArg = {
+  # TODO: Properly handle indent tracking.
+  Unit@ _ <- Do(String|' ');
+  Inline(BlankLine);
+};
+
+<@ T@>(Maybe@<T@>, List@<T@>) { List@<T@>; }
+MaybeCons = <@ T@>(Maybe@<T@> mx, List@<T@> l) {
+  mx.?(nothing: l);
+  Cons(mx.just, l);
+};
+
+M@<List@<Markup@>> PostNextLineArg = {
+  Bool@ continue <- Do(Test_(String|'@ '));
+  continue.?(true: {
+    Unit@ _ <- Do(String|'@');
+    Args;
+  });
+
+  Bool@ continue <- Do(Test_(String|'@['));
+  continue.?(true: {
+    Unit@ _ <- Do(String|'@');
+    Args;
+  });
+
+  Bool@ final <- Do(Try_(String(StrE|'@@\n')));
+  final.?(true: {
+    Markup@ arg <- Do(Block);
+    Return(List[arg]);
+  });
+
+  Return(Nil<Markup@>);
+},
+
+# Parses arguments after the inline arguments for block command.
+M@<List@<Markup@>> PostInlineArgs = {
+  Char@ c <- Do(Get);
+
+  Maybe@<Markup@> same_line_arg <- Do(Try({
+    Unit@ _ <- Do(String|' ');
+    Inline(String(StrE|'\n'));
+  }));
+
+  Maybe@<Markup@> same_line_arg <- Do(Try(SameLineArg));
+  Maybe@<Markup@> next_line_arg <- Do(Try(NextLineArg));
+  List@<Markup@> rest <- Do(PostNextLineArg);
+  Return(MaybeCons(same_line_arg, MaybeCons(next_line_arg, rest)));
+},
+
+# Parses all kinds of args for a block command.
+M@<List@<Markup@>> Args = {
+  List@<Markup@> inline_args <- Do(InlineArgs);
+  List@<Markup@> post_inline_args <- Do(PostInlineArgs);
+  Return(Append(inline_args, post_inline_args));
+},
+
+# Parses a command starting just after the initial '@'.
+M@<Element@> Command = {
+  Loc@ l <- Do(Loc);
+  String@ name <- Do(Name);
+  name.?(nil: Error<Element@>(l, Str|'missing command name'));
+
+  List@<Markup@> args <- Do(Args);
+  Return(/Fbld/Markup%.Command(l, name)(args));
+},
+
+# Parses block structured text.
+M@<Markup@> Block = {
+  Unit@ _ <- Do(SkipBlankLines);
+
+  Bool@ cmd <- Do(Try_(String|'@'));
+  cmd.?(true: {
+    Element@ command <- Do(Command);
+    Markup@ tail <- Do(Block);
+    Return(Cons(command, tail));
+  });
+
+  Loc@ loc <- Do(Loc);
+  Maybe@<Char@> c <- Do(Test(Get));
+  c.?(nothing: Return(Nil<Element@>));
+
+  Markup@ inline <- Do(Inline(String(StrE|'\n\n')));
+  Markup@ tail <- Do(Block);
+  Return(Cons(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
+};
+
+@(Block);

@@ -1,0 +1,25 @@
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Strs = /Core/String%.Strs;
+
+@ Command@ = /Fbld/Markup%.Command@;
+@ Element@ = /Fbld/Markup%.Element@;
+@ Markup@ = /Fbld/Markup%.Markup@;
+
+Show@<Command@> Command = (Command@ x) {
+  Strs[
+    /Fbld/Text/Show%.Show(x.name),
+    /Core/List/Show%.Show(Markup)(x.args)
+  ];
+},
+
+Show@<Element@> Element = (Element@ x) {
+  x.?(
+    plain: /Fbld/Text/Show%.Show(x.plain),
+    command: Command(x.command));
+},
+
+Show@<Markup@> Markup = /Core/List/Show%.Show(Element);
+
+@(Command, Element, Markup);

@@ -5,10 +5,12 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 @ Text@ = /Fbld/Text%.Text@;
 
+% Block = /Fbld/Parse/Block%.Block;
+<@>% Run = /Fbld/Parse/M%.Run;
+
 # Parses fbld markup.
 (List@<Text@>) { Result@<Markup@>; } Parse = (List@<Text@> inputs) {
-  # TODO: Implement me.
-  /Core/Undef%.Undef<Result@<Markup@>>.undefined;
+  Run(Block, inputs);
 };
 
 @(Parse);

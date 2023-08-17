@@ -1,0 +1,15 @@
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
+Show@<Loc@> Show = (Loc@ x) {
+  Strs[x.file,
+    Str|':', /Core/Int/Show%.Show(x.line),
+    Str|':', /Core/Int/Show%.Show(x.col)];
+};
+
+@(Show);

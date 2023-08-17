@@ -3,6 +3,7 @@ namespace eval "pkgs" {
     core
     app
     fbld
+    fbld2
     md5
     sat
     hwdg

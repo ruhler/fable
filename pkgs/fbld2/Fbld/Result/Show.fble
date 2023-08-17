@@ -1,0 +1,15 @@
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+
+<@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
+Show = <@ T@>(Show@<T@> show)(Result@<T@> r) {
+  r.?(err: Strs[Str|'error:', /Fbld/Text/Show%.Show(r.err)]);
+  Strs[Str|'ok:', show(r.ok)];
+};
+
+@(Show);

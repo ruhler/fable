@@ -1,0 +1,13 @@
+
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Text@ = /Fbld/Text%.Text@;
+
+Eq@<Text@> Eq = (Text@ a, Text@ b) {
+  /Fbld/Loc/Eq%.Eq(a.loc, b.loc).?(false: False);
+  /Core/String/Eq%.Eq(a.text, b.text);
+};
+
+@(Eq);
