@@ -84,6 +84,7 @@ M@<Element@> Command = {
   Bool@ done <- Do(Try_(end));
   done.?(true: Return(Nil<Element@>));
 
+  Loc@ l <- Do(Loc);
   Char@ c <- Do(Get);
   c.?('@': {
     Element@ command <- Do(Command);
@@ -91,7 +92,6 @@ M@<Element@> Command = {
     Return(Cons(command, tail));
   });
 
-  Loc@ l <- Do(Loc);
   Char@ h <- Do(c.?('\': Get, : Return(c)));
   Markup@ tail <- Do(Inline(end));
 

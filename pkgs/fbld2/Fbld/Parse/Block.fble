@@ -34,6 +34,8 @@
 <@>% Test = /Fbld/Parse/M%.Test;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
 % String = /Fbld/Parse/M%.String;
+<@>% Or = /Fbld/Parse/M%.Or;
+% EndOfInput = /Fbld/Parse/M%.EndOfInput;
 
 % Inline = /Fbld/Parse/Inline%.Inline;
 % Name = /Fbld/Parse/Inline%.Name;
@@ -136,7 +138,7 @@ M@<Markup@> Block = {
   Maybe@<Char@> c <- Do(Test(Get));
   c.?(nothing: Return(Nil<Element@>));
 
-  Markup@ inline <- Do(Inline(String(StrE|'\n\n')));
+  Markup@ inline <- Do(Inline(Or(EndOfInput, String(StrE|'\n\n'))));
   Markup@ tail <- Do(Block);
   Return(Cons(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
 };

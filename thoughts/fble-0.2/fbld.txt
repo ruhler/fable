@@ -3796,3 +3796,26 @@ Markup@ = List@<Element@>;
 An implicit block of text can be represented as a Command@ with name @.block.
 This is different from plain text, which uses a plain element instead of an
 @.inline command, because it's argument cannot contain structure.
+
+---
+
+Details: when parsing default block inline text, how do we know when to stop?
+
+* If start of line does not match current indent, treat it as 'end of input'
+  for the purposes of the block inline text.
+* 'match current indent' means the line is prefixed with the current indent,
+  or it contains only spaces.
+* The inline text ends at:
+ - 'end of input', with or without a newline just before.
+ - a blank line.
+
+I know I want to track current indent and [ nesting level. If we are within
+inline arg parsing [ ... ], we still need to deal with indent level and be
+aware of 'end of input' from a blank line.
+
+Is it really better to take this approach, instead of extracting the subtext
+first and then parsing that subtext as inline text stopped by 'end of input'?
+
+Let's keep going. We should be able to encapsulate 'endofinput' as a thing and
+be able to compose it.
+
