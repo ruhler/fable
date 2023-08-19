@@ -93,13 +93,6 @@ M@<List@<Markup@>> PostNextLineArg = {
 
 # Parses arguments after the inline arguments for block command.
 M@<List@<Markup@>> PostInlineArgs = {
-  Char@ c <- Do(Get);
-
-  Maybe@<Markup@> same_line_arg <- Do(Try({
-    Unit@ _ <- Do(String|' ');
-    Inline(String(StrE|'\n'));
-  }));
-
   Maybe@<Markup@> same_line_arg <- Do(Try(SameLineArg));
   Maybe@<Markup@> next_line_arg <- Do(Try(NextLineArg));
   List@<Markup@> rest <- Do(PostNextLineArg);

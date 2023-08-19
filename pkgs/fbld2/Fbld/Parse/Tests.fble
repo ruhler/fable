@@ -108,7 +108,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Ok(M[
-      C|1|2|'title'[M[P|2|8|'A title']],
+      C|2|2|'title'[M[P|2|8|'A title']],
       C|4|1|'.block'[M[P|4|1|'Some intro text.\n']],
       C|6|2|'section'[M[P|6|10|'First Section'], M[
         C|7|2|'.block'[M[P|7|2|'With some text\nspanning over lines.\n']],
