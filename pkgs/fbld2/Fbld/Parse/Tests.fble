@@ -52,6 +52,11 @@ P = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
   Plain(L(line)(col), StrE(text));
 };
 
+(List@<Decimal@>)(List@<Decimal@>)(String@) { Element@; }
+Pr = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
+  Plain(L(line)(col), Str(text));
+};
+
 (Result@<Markup@>, Result@<Markup@>) { TestResult@; }
 AssertResultEquals = (Result@<Markup@> expected, Result@<Markup@> actual) {
   AssertEquals(
@@ -66,7 +71,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
     String@ want = Str|'a \ a[]bcd@';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
-    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[P|1|1(want)]]]);
+    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[Pr|1|1(want)]]]);
     AssertResultEquals(wnt, got);
   }),
 
