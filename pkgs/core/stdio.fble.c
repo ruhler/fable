@@ -62,7 +62,12 @@ static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset);
 static void OnFree(FbleExecutable* this)
 {
   FileExecutable* file = (FileExecutable*)this;
-  fclose(file->file);
+
+  // Don't close stderr, because that could prevent us from seeing runtime
+  // errors printed to stderr.
+  if (file->file != stderr) {
+    fclose(file->file);
+  }
 }
 
 // IStream -- Read a byte from a file.
@@ -245,11 +250,11 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   FbleValue* args[5] = { fble_stdin, fble_stdout, fble_stderr, fble_read, argS };
   FbleValue* computation = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
-  FbleReleaseValue(heap, args[0]);
-  FbleReleaseValue(heap, args[1]);
-  FbleReleaseValue(heap, args[2]);
-  FbleReleaseValue(heap, args[3]);
-  FbleReleaseValue(heap, args[4]);
+  FbleReleaseValue(heap, fble_stdin);
+  FbleReleaseValue(heap, fble_stdout);
+  FbleReleaseValue(heap, fble_stderr);
+  FbleReleaseValue(heap, fble_read);
+  FbleReleaseValue(heap, argS);
 
   if (computation == NULL) {
     return NULL;

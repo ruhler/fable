@@ -1,0 +1,55 @@
+Fbld2 Bug
+=========
+
+While implementing fbld2, looks like we ran into an fble bug.
+
+Symptoms:
+* A test case prints its name, but doesn't print the result.
+* NULL is being returned from a function call without any error message
+  associated with it.
+
+It's annoying to debug at the fble level because we end up stepping inside the
+c code. I really wish there was a way to avoid that.
+
+Note: interpreted code behaves the same. This suggests a problem before code
+gen.
+
+I tried debugging without symbols in the C code, but it still stops there,
+just doesn't have any symbol info. Strange. That makes the gdb based fble
+debugger not as useful as it could be for tracing code.
+
+Looks like the place it gets stuck is:
+
+    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[P|1|1(want)]]]);
+
+The function invocation that returns NULL is:
+
+$10 = {refcount = 2, magic = 725198, num_args = 1, num_statics = 8,
+  tail_call_buffer_size = 3, profile_block_id = 43,
+  run = 0x404a24 </Fbld/Parse/Tests%.Tests!>, on_free = 0x0}
+
+Want to break at execute.c:89
+
+The generated code for that test case looks fine.
+
+I guess we should minimize the test case now then?
+
+NULL is supposed to mean the function aborts. So why would the function abort
+without outputting any error message?
+
+The interpreter hits a call to RunAbort on vacuous value. The strange this is,
+I can see the print statement just before that, but no print output. And I see
+gdb isn't hitting that print statement before the call to RunAbort.
+
+Is the call to report the error message getting optimized out for some reason?
+
+gdb now says its an undefined union access in StrE call (from the call to
+undefined in the case statement). But it still isn't
+printing the error message. What's going on here?
+
+---
+
+It seems something has put stderr in a state where it can't be written to. How
+can I track that down? Who could it be?
+
+It's the fclose call in fble-stdio.

@@ -36,7 +36,7 @@
       test.?(
         case: {
           String@ name = Strs[prefix, test.case.name];
-          Unit@ _ <- m.do(PutStr(out, Strs[Str|'@[', name, Str|']: ' ]));
+          Unit@ _ <- m.do(PutStr(out, Strs[Str|'@[', name, Str|']: ']));
           TestResult@ tr = test.case.test(Unit);
           tr.?(
             pass: {
