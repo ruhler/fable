@@ -46,6 +46,7 @@ M@<String@> Name = {
   mc.?(nothing: Return(Str|''));
   IsNameChar(mc.just).?(false: Return(Str|''));
 
+  Char@ _ <- Do(Get);
   String@ tail <- Do(Name);
   Return(Cons(mc.just, tail));
 };
