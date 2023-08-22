@@ -31,59 +31,62 @@
 % Text = /Fbld/Text%.Text;
 
 # S@ - State for parser monad.
-<@>@ S@ = <@ T@> { *(List@<Text@> in, T@ x); };
+@ S@ = *(List@<Text@> in);
+
+# State monad for parser monad.
+<@>@ SM@ = <@ T@> { *(S@ s, T@ x); };
 
 # M@ - A parser monad.
-<@>@ M@ = <@ T@>(List@<Text@>) { Result@<S@<T@>>; };
+<@>@ M@ = <@ T@>(S@) { Result@<SM@<T@>>; };
 
 # Return the given value.
 <@ T@>(T@) { M@<T@>; }
-Return = <@ T@>(T@ x)(List@<Text@> in) {
-  Ok(S@(in, x));
+Return = <@ T@>(T@ x)(S@ s) {
+  Ok(SM@(s, x));
 };
 
 # Report a parse error.
 <@ T@>(Loc@, String@) { M@<T@>; }
-Error = <@ T@>(Loc@ l, String@ msg)(List@<Text@> _) {
-  Err<S@<T@>>(Text(l, msg));
+Error = <@ T@>(Loc@ l, String@ msg)(S@ _) {
+  Err<SM@<T@>>(Text(l, msg));
 };
 
 # Monadic Do for the parser monad.
 <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
-Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(List@<Text@> in) {
-  Result@<S@<A@>> ra = ma(in);
-  ra.?(err: Err<S@<B@>>(ra.err));
-  f(ra.ok.x)(ra.ok.in);
+Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(S@ s) {
+  Result@<SM@<A@>> ra = ma(s);
+  ra.?(err: Err<SM@<B@>>(ra.err));
+  f(ra.ok.x)(ra.ok.s);
 };
 
 # Returns the next character in the input stream without changing the parser
 # state.
-M@<Maybe@<Char@>> Peek = (List@<Text@> in) {
+M@<Maybe@<Char@>> Peek = (S@ s) {
   Maybe@<Char@> mc = {
-    in.?(nil: Nothing<Char@>);
-    in.cons.head.text.?(nil: Nothing<Char@>);
-    Just(in.cons.head.text.cons.head);
+    s.in.?(nil: Nothing<Char@>);
+    s.in.cons.head.text.?(nil: Nothing<Char@>);
+    Just(s.in.cons.head.text.cons.head);
   };
-  Ok(S@(in, mc));
+  Ok(SM@(s, mc));
 };
 
 # Returns the current location.
-M@<Loc@> Loc = (List@<Text@> in) {
+M@<Loc@> Loc = (S@ s) {
   Loc@ l = {
-    in.?(nil: Unknown);
-    in.cons.head.loc;
+    s.in.?(nil: Unknown);
+    s.in.cons.head.loc;
   };
-  Ok(S@(in, l));
+  Ok(SM@(s, l));
 };
 
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
-M@<Char@> Get = (List@<Text@> in) {
-  in.?(nil: Err<S@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
-  in.cons.head.text.?(nil: Get(in.cons.tail));
-  Char@ c = in.cons.head.text.cons.head;
-  Text@ head = Text(Advance(in.cons.head.loc, c), in.cons.head.text.cons.tail);
-  Ok(S@(Cons(head, in.cons.tail), c));
+M@<Char@> Get = (S@ s) {
+  s.in.?(nil: Err<SM@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
+  s.in.cons.head.text.?(nil: Get(S@(s.in.cons.tail)));
+  Char@ c = s.in.cons.head.text.cons.head;
+  Text@ head = Text(Advance(s.in.cons.head.loc, c), s.in.cons.head.text.cons.tail);
+  Ok(SM@(S@(Cons(head, s.in.cons.tail)), c));
 };
 
 # Parse end of input. Fails if we have not reached the end of the input.
@@ -97,10 +100,10 @@ M@<Unit@> EndOfInput = {
 # Try running a parser. If it succeeds, return the parsed value. If it fails,
 # return Nothing.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
-Try = <@ T@>(M@<T@> mx)(List@<Text@> in) {
-  Result@<S@<T@>> r = mx(in);
-  r.?(err: Ok(S@(in, Nothing<T@>)));
-  Ok(S@(r.ok.in, Just(r.ok.x)));
+Try = <@ T@>(M@<T@> mx)(S@ s) {
+  Result@<SM@<T@>> r = mx(s);
+  r.?(err: Ok(SM@(s, Nothing<T@>)));
+  Ok(SM@(r.ok.s, Just(r.ok.x)));
 };
 
 # Same as Try, but discards the result of a successful match.
@@ -113,10 +116,10 @@ Try_ = <@ T@>(M@<T@> mx) {
 # Test if a parser would match at the current position, without consuming any
 # input.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
-Test = <@ T@>(M@<T@> mx)(List@<Text@> in) {
-  Result@<S@<T@>> r = mx(in);
-  r.?(err: Ok(S@(in, Nothing<T@>)));
-  Ok(S@(in, Just(r.ok.x)));
+Test = <@ T@>(M@<T@> mx)(S@ s) {
+  Result@<SM@<T@>> r = mx(s);
+  r.?(err: Ok(SM@(s, Nothing<T@>)));
+  Ok(SM@(s, Just(r.ok.x)));
 };
 
 # Test if a parser would match at the current position, without consuming any
@@ -139,7 +142,7 @@ Or = <@ T@>(M@<T@> ma, M@<T@> mb) {
 # Runs a parser monad on the given input string.
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, List@<Text@> in) {
-  Result@<S@<T@>> r = m(in);
+  Result@<SM@<T@>> r = m(S@(in));
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);
 };

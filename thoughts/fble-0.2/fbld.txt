@@ -3819,3 +3819,70 @@ first and then parsing that subtext as inline text stopped by 'end of input'?
 Let's keep going. We should be able to encapsulate 'endofinput' as a thing and
 be able to compose it.
 
+---
+
+It's not endofinput that we want to encapsulate. It's the 'Loc' and 'Get'
+functions.
+
+Conceptually I want something like:
+
+  (M@<T@>) { M@<T@>; } Indent
+
+Which runs a parser on block indented text. That parser will not see the
+indent characters and will get end of input back at the end of the indented
+text.
+
+Similarly for SameLine and InlineArg?
+
+I just need to work out the details of how to implement this.
+
+The parser monad should know its current indent level. If you call 'Get', it
+does it based on current indent level. The 'Indent' function runs a parser on
+an extra level of indent. The end of input is different depending on indent
+level. That's not too difficult, right? But it means making the syntax part of
+M@ itself?
+
+Inline Parsing:
+* [ ... ]
+* ' ' ... '\n'    (same line)
+* ... '\n\n'  (@.block)
+
+General Parsing:
+* block indented
+
+A clear first step is to be able to parse at given indent levels. Say we take
+care of that. What comes next?
+
+* Same line args should be allowed to end at end of input.
+* @.block args should be allowed to end at end of input.
+* Something about plain [ ] being nested as we parse inline input.
+
+Question: Can we have newlines and blank lines inside inline args that are in
+@.block context? I would say yes.
+
+Good. The idea is clear. First step should hopefully be one to make progress
+on the current test failure.
+
+The current test failure is, for
+
+  @title A title
+
+  Some intro text
+
+  @section[...]
+   ...
+
+The plain 'Some intro text' parsed doesn't have the terminating newline
+character. Because we look for \n\n for the end marker. I don't know a clean
+way to deal with this without storing some extra bit of state somewhere saying
+newline was the most recently gotten character.
+
+The way we parse it in fbld1 is to extract all the plain text first, where we
+have the context of newline followed by newline.
+
+Options:
+* Add a 'start of line' bool state to the parser.
+
+Yeah. That seems like the most reasonable approach. We want to parse inline
+text until we see a newline at the start of the line.
+
