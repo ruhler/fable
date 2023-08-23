@@ -3,6 +3,8 @@
 
 @ Char@ = /Core/Char%.Char@;
 
+% Int = /Core/Int/Lit%.Int; 
+
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
@@ -41,8 +43,17 @@
 % Name = /Fbld/Parse/Inline%.Name;
 % InlineArgs = /Fbld/Parse/Inline%.Args;
 
+# Parses a blank line. Fails if we aren't at a blank line.
+M@<Unit@> BlankLine = {
+  Loc@ l <- Do(Loc);
+  /Core/Int/Eq%.Eq(Int|1, l.col).?(false: {
+    Error<Unit@>(l, Str|'not a blank line');
+  });
+  String(StrE|'\n');
+};
+
 M@<Unit@> SkipBlankLines = {
-  Bool@ blank <- Do(Try_(String(StrE|'\n')));
+  Bool@ blank <- Do(Try_(BlankLine));
   blank.?(true: SkipBlankLines);
   Return(Unit);
 };
@@ -52,9 +63,6 @@ M@<Markup@> SameLineArg = {
   Unit@ _ <- Do(String|' ');
   Inline(String(StrE|'\n'));
 };
-
-# Parses a blank line.
-M@<Unit@> BlankLine = String(StrE|'\n\n');
 
 # Parse a next line arg, starting just after the newline character.
 M@<Markup@> NextLineArg = {
@@ -131,7 +139,7 @@ M@<Markup@> Block = {
   Maybe@<Char@> c <- Do(Test(Get));
   c.?(nothing: Return(Nil<Element@>));
 
-  Markup@ inline <- Do(Inline(Or(EndOfInput, String(StrE|'\n\n'))));
+  Markup@ inline <- Do(Inline(Or(EndOfInput, BlankLine)));
   Markup@ tail <- Do(Block);
   Return(Cons(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
 };

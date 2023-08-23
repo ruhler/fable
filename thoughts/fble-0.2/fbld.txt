@@ -3886,3 +3886,13 @@ Options:
 Yeah. That seems like the most reasonable approach. We want to parse inline
 text until we see a newline at the start of the line.
 
+---
+
+Easy way to detect blank line: check for the column. If it's a newline at
+column 1, it's a blank line. Cool. That fixes parsing of end of line in
+@.block text.
+
+Two issues I see next from the test:
+1. We are failing to consume the trailing newline in the case there is no same
+   line argument.
+2. Support for parsing with an indent level.

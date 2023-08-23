@@ -9,6 +9,7 @@ Things to consider doing for the fble-0.2 release.
 * Fbld2:
  - Implement parser.
  - Add test for nesting of [ and ] characters in plain text.
+ - Are blank lines allowed inside @[...] inside @.block text?
 
 * Fbld Text@ rewrite:
  - Move implement of Eq and Show internally.
