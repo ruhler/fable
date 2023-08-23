@@ -12,6 +12,8 @@
 <@>% Append = /Core/List%.Append;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -64,9 +66,19 @@ M@<Markup@> SameLineArg = {
   Inline(String(StrE|'\n'));
 };
 
+# Parses an optional SameLineArg, up to and including the newline character.
+M@<Maybe@<Markup@>> MaybeSameLineArg = {
+  Bool@ none <- Do(Try_(String(StrE|'\n')));
+  none.?(true: Return(Nothing<Markup@>));
+
+  Markup@ m <- Do(SameLineArg);
+  Return(Just(m));
+};
+
 # Parse a next line arg, starting just after the newline character.
 M@<Markup@> NextLineArg = {
   # TODO: Properly handle indent tracking.
+  # TODO: Parse this as block text, not inline text!
   Unit@ _ <- Do(String|' ');
   Inline(BlankLine);
 };
@@ -101,7 +113,7 @@ M@<List@<Markup@>> PostNextLineArg = {
 
 # Parses arguments after the inline arguments for block command.
 M@<List@<Markup@>> PostInlineArgs = {
-  Maybe@<Markup@> same_line_arg <- Do(Try(SameLineArg));
+  Maybe@<Markup@> same_line_arg <- Do(MaybeSameLineArg);
   Maybe@<Markup@> next_line_arg <- Do(Try(NextLineArg));
   List@<Markup@> rest <- Do(PostNextLineArg);
   Return(MaybeCons(same_line_arg, MaybeCons(next_line_arg, rest)));
