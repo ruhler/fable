@@ -112,8 +112,8 @@ Test@ Tests = TestSuite(Str|Parse, List[
       C|4|1|'.block'[M[P|4|1|'Some intro text.\n']],
       C|6|2|'section'[M[P|6|10|'First Section'], M[
         C|7|2|'.block'[M[P|7|2|'With some text\nspanning over lines.\n']],
-        C|9|2|'.block'[M[P|9|2|'multiple lines actually.\n']]]],
-      C|12|1|'.block'[M[P|4|1|'And some final text.\n']]]);
+        C|10|2|'.block'[M[P|10|2|'multiple lines actually.\n']]]],
+      C|12|1|'.block'[M[P|12|1|'And some final text.\n']]]);
     AssertResultEquals(wnt, got);
   })
 

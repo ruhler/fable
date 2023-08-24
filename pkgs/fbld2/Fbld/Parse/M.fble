@@ -96,6 +96,14 @@ M@<Unit@> EndOfInput = {
   mc.?(nothing: Return(Unit));
   Error<Unit@>(l, Str|'expected end of input');
 };
+
+# Parse an indented block of text.
+# Single space indent is used. The indent characters will be skipped over and
+# end of input will be returned when the indented text ends.
+# TODO: Implement me!
+<@ T@>(M@<T@>) { M@<T@>; } Indent = <@ T@>(M@<T@> mx) {
+  mx;
+};
   
 # Try running a parser. If it succeeds, return the parsed value. If it fails,
 # return Nothing.
@@ -159,6 +167,6 @@ String = (String@ s) {
     false: Error<Unit@>(loc, Strs[Str|'Expected ', Str[s.cons.head]]));
 };
 
-@(M@, Return, Error, Do, Peek, Loc, Get, EndOfInput,
+@(M@, Return, Error, Do, Peek, Loc, Get, EndOfInput, Indent,
   Try, Try_, Test, Test_, Or, String,
   Run);

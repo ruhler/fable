@@ -33,13 +33,13 @@
 <@>% Do = /Fbld/Parse/M%.Do;
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
-<@>% Try = /Fbld/Parse/M%.Try;
 <@>% Try_ = /Fbld/Parse/M%.Try_;
 <@>% Test = /Fbld/Parse/M%.Test;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
 % String = /Fbld/Parse/M%.String;
 <@>% Or = /Fbld/Parse/M%.Or;
 % EndOfInput = /Fbld/Parse/M%.EndOfInput;
+<@>% Indent = /Fbld/Parse/M%.Indent;
 
 % Inline = /Fbld/Parse/Inline%.Inline;
 % Name = /Fbld/Parse/Inline%.Name;
@@ -75,19 +75,20 @@ M@<Maybe@<Markup@>> MaybeSameLineArg = {
   Return(Just(m));
 };
 
-# Parse a next line arg, starting just after the newline character.
-M@<Markup@> NextLineArg = {
-  # TODO: Properly handle indent tracking.
-  # TODO: Parse this as block text, not inline text!
-  Unit@ _ <- Do(String|' ');
-  Inline(BlankLine);
-};
-
 <@ T@>(Maybe@<T@>, List@<T@>) { List@<T@>; }
 MaybeCons = <@ T@>(Maybe@<T@> mx, List@<T@> l) {
   mx.?(nothing: l);
   Cons(mx.just, l);
 };
+
+# Parse an optional next line arg, starting just after the newline character.
+M@<Maybe@<Markup@>> MaybeNextLineArg = {
+  Bool@ next <- Do(Try_(String|' '));
+  next.?(false: Return(Nothing<Markup@>));
+
+  Markup@ m <- Do(Indent(Block));
+  Return(Just(m));
+},
 
 M@<List@<Markup@>> PostNextLineArg = {
   Bool@ continue <- Do(Test_(String|'@ '));
@@ -114,7 +115,7 @@ M@<List@<Markup@>> PostNextLineArg = {
 # Parses arguments after the inline arguments for block command.
 M@<List@<Markup@>> PostInlineArgs = {
   Maybe@<Markup@> same_line_arg <- Do(MaybeSameLineArg);
-  Maybe@<Markup@> next_line_arg <- Do(Try(NextLineArg));
+  Maybe@<Markup@> next_line_arg <- Do(MaybeNextLineArg);
   List@<Markup@> rest <- Do(PostNextLineArg);
   Return(MaybeCons(same_line_arg, MaybeCons(next_line_arg, rest)));
 },
