@@ -5,6 +5,10 @@
 
 @ Char@ = /Core/Char%.Char@;
 
+@ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
+% Int = /Core/Int/Lit%.Int;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
@@ -31,7 +35,7 @@
 % Text = /Fbld/Text%.Text;
 
 # S@ - State for parser monad.
-@ S@ = *(List@<Text@> in);
+@ S@ = *(List@<Text@> input, Int@ indent);
 
 # State monad for parser monad.
 <@>@ SM@ = <@ T@> { *(S@ s, T@ x); };
@@ -62,8 +66,8 @@ Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(S@ s) {
 # Returns the current location.
 M@<Loc@> Loc = (S@ s) {
   Loc@ l = {
-    s.in.?(nil: Unknown);
-    s.in.cons.head.loc;
+    s.input.?(nil: Unknown);
+    s.input.cons.head.loc;
   };
   Ok(SM@(s, l));
 };
@@ -71,19 +75,18 @@ M@<Loc@> Loc = (S@ s) {
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
 M@<Char@> Get = (S@ s) {
-  s.in.?(nil: Err<SM@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
-  s.in.cons.head.text.?(nil: Get(S@(s.in.cons.tail)));
-  Char@ c = s.in.cons.head.text.cons.head;
-  Text@ head = Text(Advance(s.in.cons.head.loc, c), s.in.cons.head.text.cons.tail);
-  Ok(SM@(S@(Cons(head, s.in.cons.tail)), c));
+  s.input.?(nil: Err<SM@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
+  s.input.cons.head.text.?(nil: Get(s.@(input: s.input.cons.tail)));
+  Char@ c = s.input.cons.head.text.cons.head;
+  Text@ head = Text(Advance(s.input.cons.head.loc, c), s.input.cons.head.text.cons.tail);
+  Ok(SM@(s.@(input: Cons(head, s.input.cons.tail)), c));
 };
 
 # Parse an indented block of text.
 # Single space indent is used. The indent characters will be skipped over and
 # end of input will be returned when the indented text ends.
-# TODO: Implement me!
-<@ T@>(M@<T@>) { M@<T@>; } Indent = <@ T@>(M@<T@> mx) {
-  mx;
+<@ T@>(M@<T@>) { M@<T@>; } Indent = <@ T@>(M@<T@> mx)(S@ s) {
+  mx(s.@(indent: Incr(s.indent)));
 };
   
 # Try running a parser. If it succeeds, return the parsed value. If it fails,
@@ -106,8 +109,8 @@ Test = <@ T@>(M@<T@> mx)(S@ s) {
 
 # Runs a parser monad on the given input string.
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
-Run = <@ T@>(M@<T@> m, List@<Text@> in) {
-  Result@<SM@<T@>> r = m(S@(in));
+Run = <@ T@>(M@<T@> m, List@<Text@> input) {
+  Result@<SM@<T@>> r = m(S@(input, Int|0));
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);
 };
@@ -121,7 +124,6 @@ Or = <@ T@>(M@<T@> ma, M@<T@> mb) {
   a.?(just: Return(a.just));
   mb;
 };
-
 
 # Same as Try, but discards the result of a successful match.
 <@ T@>(M@<T@>) { M@<Bool@>; }

@@ -3917,3 +3917,35 @@ The non-core API today is:
 That's not too bad. Let's move Peek out. Then the question is would it make
 sense to merge Loc and Get, so that Get returns the location?
 
+It all depends on how we want to implement Indent.
+
+The idea is we have a current indent level. Loc and Get are the only functions
+impacted by it.
+
+Get: Should return the next character after stripping indent, or end of input.
+Loc: Should return the position of the next character to be gotten.
+
+In case of end of input, does Get advance past indent? Let's think.
+
+  ...
+ 
+ .
+
+@foo
+ @bar
+  blah
+ @end
+
+@foo
+ @bar
+  blah
+@end
+
+I think it's fine for get to advance past indent. I think it's fine for Loc to
+advance past indent.
+
+So here's my proposal. Have a helper function 'SkipIndent'. The job is to skip
+past any indent characters and go to the next real character. Use this for
+both Get and Loc functions. Then Loc can return like it does now after running
+SkipIndent. Get will need to check for indent level after calling SkipIndent
+to see if end of file. Easy, no?
