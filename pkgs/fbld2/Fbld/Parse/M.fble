@@ -59,17 +59,6 @@ Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(S@ s) {
   f(ra.ok.x)(ra.ok.s);
 };
 
-# Returns the next character in the input stream without changing the parser
-# state.
-M@<Maybe@<Char@>> Peek = (S@ s) {
-  Maybe@<Char@> mc = {
-    s.in.?(nil: Nothing<Char@>);
-    s.in.cons.head.text.?(nil: Nothing<Char@>);
-    Just(s.in.cons.head.text.cons.head);
-  };
-  Ok(SM@(s, mc));
-};
-
 # Returns the current location.
 M@<Loc@> Loc = (S@ s) {
   Loc@ l = {
@@ -89,14 +78,6 @@ M@<Char@> Get = (S@ s) {
   Ok(SM@(S@(Cons(head, s.in.cons.tail)), c));
 };
 
-# Parse end of input. Fails if we have not reached the end of the input.
-M@<Unit@> EndOfInput = {
-  Loc@ l <- Do(Loc);
-  Maybe@<Char@> mc <- Do(Peek);
-  mc.?(nothing: Return(Unit));
-  Error<Unit@>(l, Str|'expected end of input');
-};
-
 # Parse an indented block of text.
 # Single space indent is used. The indent characters will be skipped over and
 # end of input will be returned when the indented text ends.
@@ -114,13 +95,6 @@ Try = <@ T@>(M@<T@> mx)(S@ s) {
   Ok(SM@(r.ok.s, Just(r.ok.x)));
 };
 
-# Same as Try, but discards the result of a successful match.
-<@ T@>(M@<T@>) { M@<Bool@>; }
-Try_ = <@ T@>(M@<T@> mx) {
-  Maybe@<T@> r <- Do(Try(mx));
-  Return(r.?(just: True, nothing: False));
-};
-
 # Test if a parser would match at the current position, without consuming any
 # input.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
@@ -130,13 +104,14 @@ Test = <@ T@>(M@<T@> mx)(S@ s) {
   Ok(SM@(s, Just(r.ok.x)));
 };
 
-# Test if a parser would match at the current position, without consuming any
-# input, and ignoring the result of parsing.
-<@ T@>(M@<T@>) { M@<Bool@>; }
-Test_ = <@ T@>(M@<T@> mx) {
-  Maybe@<T@> r <- Do(Test(mx));
-  Return(r.?(just: True, nothing: False));
+# Runs a parser monad on the given input string.
+<@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
+Run = <@ T@>(M@<T@> m, List@<Text@> in) {
+  Result@<SM@<T@>> r = m(S@(in));
+  r.?(err: Err<T@>(r.err));
+  Ok(r.ok.x);
 };
+
 
 # Parses either of the given arguments, returning the result of the first to
 # pass. Fails if both parsers fails.
@@ -147,13 +122,30 @@ Or = <@ T@>(M@<T@> ma, M@<T@> mb) {
   mb;
 };
 
-# Runs a parser monad on the given input string.
-<@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
-Run = <@ T@>(M@<T@> m, List@<Text@> in) {
-  Result@<SM@<T@>> r = m(S@(in));
-  r.?(err: Err<T@>(r.err));
-  Ok(r.ok.x);
+
+# Same as Try, but discards the result of a successful match.
+<@ T@>(M@<T@>) { M@<Bool@>; }
+Try_ = <@ T@>(M@<T@> mx) {
+  Maybe@<T@> r <- Do(Try(mx));
+  Return(r.?(just: True, nothing: False));
 };
+
+# Test if a parser would match at the current position, without consuming any
+# input, and ignoring the result of parsing.
+<@ T@>(M@<T@>) { M@<Bool@>; }
+Test_ = <@ T@>(M@<T@> mx) {
+  Maybe@<T@> r <- Do(Test(mx));
+  Return(r.?(just: True, nothing: False));
+};
+
+# Parse end of input. Fails if we have not reached the end of the input.
+M@<Unit@> EndOfInput = {
+  Loc@ l <- Do(Loc);
+  Maybe@<Char@> mc <- Do(Test(Get));
+  mc.?(nothing: Return(Unit));
+  Error<Unit@>(l, Str|'expected end of input');
+};
+
 
 # Parse a specific string from the input stream. Fails if the input string
 # does not match that string.
@@ -167,6 +159,6 @@ String = (String@ s) {
     false: Error<Unit@>(loc, Strs[Str|'Expected ', Str[s.cons.head]]));
 };
 
-@(M@, Return, Error, Do, Peek, Loc, Get, EndOfInput, Indent,
+@(M@, Return, Error, Do, Loc, Get, EndOfInput, Indent,
   Try, Try_, Test, Test_, Or, String,
   Run);

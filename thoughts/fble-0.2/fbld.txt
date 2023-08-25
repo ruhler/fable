@@ -3896,3 +3896,24 @@ Two issues I see next from the test:
 1. We are failing to consume the trailing newline in the case there is no same
    line argument.
 2. Support for parsing with an indent level.
+
+---
+
+Can we simplify the core parser monad?
+
+The Core API today is:
+* Do, Return, Error,
+* Loc, Get
+* Peek - Could be implemented as Test(Get)?
+* Indent
+* Try, Test
+* Run
+
+The non-core API today is:
+* EndOfInput on top of Peek.
+* Try_, Test_
+* Or, String
+
+That's not too bad. Let's move Peek out. Then the question is would it make
+sense to merge Loc and Get, so that Get returns the location?
+
