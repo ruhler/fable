@@ -90,6 +90,20 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
+  Test(Str|NestedInline, (Unit@ _) {
+    String@ text = Str|'Ab @c[de @f[gh] ij] kl';
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[
+      P|1|1|'Ab ',
+      C|1|5|'c'[M[
+        P|1|7|'de ',
+        C|1|11|'f'[M[P|1|13|'gh']],
+        P|1|16|' ij']],
+      P|1|20|' kl']]]);
+    AssertResultEquals(wnt, got);
+  }),
+
   Test(Str|BasicBlock, (Unit@ _) {
     String@ text = Lines[
       Str|'',
@@ -115,151 +129,67 @@ Test@ Tests = TestSuite(Str|Parse, List[
         C|10|2|'.block'[M[P|10|2|'multiple lines actually.\n']]]],
       C|12|1|'.block'[M[P|12|1|'And some final text.\n']]]);
     AssertResultEquals(wnt, got);
-  })
+  }),
 
-#  Test(Str|InlineLoc, (Unit@ _) {
-#    # Regression test for when we failed to preserve internal locations when
-#    # parsing arguments.
-#    Text@ foo = Text(Str|'foo', Loc@(Str|'a.fbld', Int|1, Int|0));
-#    Text@ hello = Text(Str|'hello', Loc@(Str|'b.fbld', Int|1, Int|0));
-#    Text@ there = Text(Str|'there', Loc@(Str|'c.fbld', Int|1, Int|0));
-#    Text@ hellothere = Append(hello, there);
-#    Text@ in = /Fbld/Text%.Concat(Loc@(Str|'g.fbld', Int|1, Int|0), List[
-#      Text(Str|'@', Loc@(Str|'d.fbld', Int|1, Int|0)),
-#      foo,
-#      Text(Str|'[', Loc@(Str|'e.fbld', Int|1, Int|0)),
-#      hellothere,
-#      Text(Str|']', Loc@(Str|'f.fbld', Int|1, Int|0))
-#    ]);
-#
-#    Result@<List@<Command@>> wnt = Ok(List[
-#      Command@(foo, List[hellothere])]);
-#    Result@<List@<Command@>> got = Inline(in);
-#
-#    AssertEquals(
-#      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
-#      /Fbld/Show%.Result(/Fbld/Show%.Commands),
-#      wnt, got);
-#  }),
-#
-#  Test(Str|NestedInline, (Unit@ _) {
-#    (String@, Int@) { Text@; } s = (String@ str, Int@ col) {
-#      Text(str, Loc@(Str|'file.fbld', Int|1, col));
-#    };
-#
-#    String@ text = Str|'Ab @c[de @f[gh] ij] kl';
-#    Result@<List@<Command@>> wnt = Ok(List[
-#      Command@(s(Str|'.inline', Int|1), List[s(Str|'Ab ', Int|1)]),
-#      Command@(s(Str|'c', Int|5), List[s(Str|'de @f[gh] ij', Int|7)]),
-#      Command@(s(Str|'.inline', Int|20), List[s(Str|' kl', Int|20)])]);
-#    Result@<List@<Command@>> got = Inline(s(text, Int|1));
-#    AssertEquals(
-#      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
-#      /Fbld/Show%.Result(/Fbld/Show%.Commands),
-#      wnt, got);
-#  }),
-#
-#  # Regression test for a default block that runs to the end of the file.
-#  Test(Str|BlockToEndOfFile, (Unit@ _) {
-#    (String@, Int@, Int@) { Text@; } s = (String@ str, Int@ line, Int@ col) {
-#      Text(str, Loc@(Str|'file.fbld', line, col));
-#    };
-#
-#    String@ text = Str|'Foo';
-#    Result@<List@<Command@>> wnt = Ok(List[
-#      Command@(s(Str|'.block', Int|1, Int|1), List[
-#        s(Str|'Foo', Int|1, Int|1)])]);
-#    Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1));
-#    AssertEquals(
-#      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
-#      /Fbld/Show%.Result(/Fbld/Show%.Commands),
-#      wnt, got);
-#  }),
-#
-#  Test(Str|NestedBlockLoc, (Unit@ _) {
-#    (String@, Int@, Int@) { Text@; }
-#    s = (String@ str, Int@ line, Int@ col) {
-#      Text(str, Loc@(Str|'file.fbld', line, col));
-#    };
-#
-#    String@ text = Str|'
-#@foo
-# @bar
-#  @sludge
-#';
-#    List@<Command@> foo = Block(s(text, Int|1, Int|1)).ok;
-#    Text@ foo_body = foo.cons.head.args.cons.head;
-#
-#    List@<Command@> bar = Block(foo_body).ok;
-#    Text@ bar_body = bar.cons.head.args.cons.head;
-#
-#    List@<Command@> sludge = Block(bar_body).ok;
-#    Loc@ wnt = Loc@(Str|'file.fbld', Int|4, Int|4);
-#    Loc@ got = LocOf(sludge.cons.head.name);
-#    AssertEquals(/Fbld/Eq%.Loc, /Fbld/Show%.Loc, wnt, got);
-#  }),
-#
-#  Test(Str|Continuation, (Unit@ _) {
-#    (String@, Int@, Int@) { Text@; }
-#    s = (String@ str, Int@ line, Int@ col) {
-#      Text(str, Loc@(Str|'file.fbld', line, col));
-#    };
-#
-#    String@ text = Str|'
-#@list[first][second]
-# third
-#@[fourth] fifth
-#@ sixth
-# seventh
-#@ eigth
-#@sludge
-#';
-#    Result@<List@<Command@>> wnt = Ok(List[
-#      Command@(s(Str|'list', Int|2, Int|2), List[
-#        s(Str|'first', Int|2, Int|7),
-#        s(Str|'second', Int|2, Int|14),
-#        s(Str|'third
-#', Int|3, Int|2),
-#        s(Str|'fourth', Int|4, Int|3),
-#        s(Str|'fifth', Int|4, Int|11),
-#        s(Str|'sixth', Int|5, Int|3),
-#        s(Str|'seventh
-#', Int|6, Int|2),
-#        s(Str|'eigth', Int|7, Int|3)]),
-#      Command@(s(Str|'sludge', Int|8, Int|2), Nil<Text@>)]);
-#    Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1));
-#    AssertEquals(
-#      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
-#      /Fbld/Show%.Result(/Fbld/Show%.Commands),
-#      wnt, got);
-#  }),
-#
-#  Test(Str|Final, (Unit@ _) {
-#    (String@, Int@, Int@) { Text@; }
-#    s = (String@ str, Int@ line, Int@ col) {
-#      Text(str, Loc@(Str|'file.fbld', line, col));
-#    };
-#
-#    String@ text = Str|'
-#@foo
-# here is some stuff.
-#@@
-#@bar here is the end.
-# Of all the rest.
-#';
-#    Result@<List@<Command@>> wnt = Ok(List[
-#      Command@(s(Str|'foo', Int|2, Int|2), List[
-#        s(Str|'here is some stuff.
-#', Int|3, Int|2),
-#        s(Str|'@bar here is the end.
-# Of all the rest.
-#', Int|5, Int|1)])]);
-#    Result@<List@<Command@>> got = Block(s(text, Int|1, Int|1));
-#    AssertEquals(
-#      /Fbld/Eq%.Result(/Fbld/Eq%.Commands),
-#      /Fbld/Show%.Result(/Fbld/Show%.Commands),
-#      wnt, got);
-#  })
+  Test(Str|NestedBlockLoc, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@foo',
+      Str|' @bar',
+      Str|'  @sludge'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'foo'[M[
+        C|2|3|'bar'[M[
+          C|3|4|'sludge'[]]]]]]);
+    AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|Continuation, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@list[first][second]',
+      Str|' third',
+      Str|'@[fourth] fifth',
+      Str|'@ sixth',
+      Str|' seventh',
+      Str|'@ eigth',
+      Str|'@sludge'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'list'[
+        M[P|1|7|'first'],
+        M[P|1|14|'second'],
+        M[C|2|2|'.block'[M[P|2|2|'third\n']]],
+        M[P|3|3|'fourth'],
+        M[P|3|11|'fifth'],
+        M[P|4|3|'sixth'],
+        M[C|5|2|'.block'[M[P|5|2|'seventh\n']]],
+        M[P|6|3|'eigth']],
+      C|7|2|'sludge'[]]);
+    AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|Final, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@foo',
+      Str|' here is some stuff.',
+      Str|'@@',
+      Str|'@bar here is the end.',
+      Str|' Of all the rest.'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'foo'[
+        M[C|2|2|'.block'[M[P|2|2|'here is some stuff.\n']]],
+        M[C|4|2|'bar'[
+          M[P|4|6|'here is the end.'],
+          M[C|5|2|'.block'[M[P|5|2|'Of all the rest.\n']]]]]]]);
+    AssertResultEquals(wnt, got);
+  })
 ]);
 
 @(Tests);
