@@ -4,6 +4,7 @@
 % False = /Core/Bool%.False;
 
 @ Char@ = /Core/Char%.Char@;
+% IsNewline = /Core/Char/Type%.IsNewline;
 
 @ Int@ = /Core/Int%.Int@;
 % Incr = /Core/Int%.Incr;
@@ -66,14 +67,19 @@ Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
   f(ra.ok.x)(r.@(s: ra.ok.s));
 };
 
+# Returns the current indent level.
+M@<Int@> GetIndent = (R@ r) {
+  Ok(SM@(r.s, r.indent));
+};
+
 @ CharL@ = *(Char@ c, Loc@ l);
 
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
-M@<CharL@> GetL = (R@ r) {
+M@<CharL@> GetL_ = (R@ r) {
   List@<Text@> in = r.s.input;
   in.?(nil: Err<SM@<CharL@>>(Text(Unknown, Str|'unexpected end of input')));
-  in.cons.head.text.?(nil: GetL(r.@(s: S@(in.cons.tail))));
+  in.cons.head.text.?(nil: GetL_(r.@(s: S@(in.cons.tail))));
 
   Char@ c = in.cons.head.text.cons.head;
   Loc@ l = in.cons.head.loc;
@@ -112,6 +118,22 @@ Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   Result@<SM@<T@>> r = m(R@(S@(input), Int|0));
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);
+};
+
+# Gets the next character in the input stream, advancing the parser state as
+# appropriate. Fails if there are no more characters in the input stream.
+# Takes account of the current indent level.
+M@<CharL@> GetL = {
+  CharL@ cl <- Do(GetL_);
+  Int@ indent <- Do(GetIndent);
+
+  /Core/Int/Eq%.Le(cl.l.col, indent).?(true: {
+    IsNewline(cl.c).?(true: Return(cl));
+    cl.c.?(' ': GetL);
+    Error<CharL@>(cl.l, Str|'end of indented block');
+  });
+
+  Return(cl);
 };
 
 # Returns the location of the next input character.
