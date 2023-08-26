@@ -89,7 +89,7 @@ M@<Char@> Get = (R@ r) {
 # Parse an indented block of text.
 # Single space indent is used. The indent characters will be skipped over and
 # end of input will be returned when the indented text ends.
-<@ T@>(M@<T@>) { M@<T@>; } Indent = <@ T@>(M@<T@> mx)(R@ r) {
+<@ T@>(M@<T@>) { M@<T@>; } Indented = <@ T@>(M@<T@> mx)(R@ r) {
   mx(r.@(indent: Incr(r.indent)));
 };
   
@@ -163,6 +163,6 @@ String = (String@ s) {
     false: Error<Unit@>(loc, Strs[Str|'Expected ', Str[s.cons.head]]));
 };
 
-@(M@, Return, Error, Do, Loc, Get, EndOfInput, Indent,
+@(M@, Return, Error, Do, Loc, Get, EndOfInput, Indented,
   Try, Try_, Test, Test_, Or, String,
   Run);

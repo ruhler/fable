@@ -39,7 +39,7 @@
 % String = /Fbld/Parse/M%.String;
 <@>% Or = /Fbld/Parse/M%.Or;
 % EndOfInput = /Fbld/Parse/M%.EndOfInput;
-<@>% Indent = /Fbld/Parse/M%.Indent;
+<@>% Indented = /Fbld/Parse/M%.Indented;
 
 % Inline = /Fbld/Parse/Inline%.Inline;
 % Name = /Fbld/Parse/Inline%.Name;
@@ -86,7 +86,7 @@ M@<Maybe@<Markup@>> MaybeNextLineArg = {
   Bool@ next <- Do(Try_(String|' '));
   next.?(false: Return(Nothing<Markup@>));
 
-  Markup@ m <- Do(Indent(Block));
+  Markup@ m <- Do(Indented(Block));
   Return(Just(m));
 },
 
