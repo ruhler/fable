@@ -66,24 +66,19 @@ Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
   f(ra.ok.x)(r.@(s: ra.ok.s));
 };
 
-# Returns the current location.
-M@<Loc@> Loc = (R@ r) {
-  Loc@ l = {
-    r.s.input.?(nil: Unknown);
-    r.s.input.cons.head.loc;
-  };
-  Ok(SM@(r.s, l));
-};
+@ CharL@ = *(Char@ c, Loc@ l);
 
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
-M@<Char@> Get = (R@ r) {
+M@<CharL@> GetL = (R@ r) {
   List@<Text@> in = r.s.input;
-  in.?(nil: Err<SM@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
-  in.cons.head.text.?(nil: Get(r.@(s: S@(in.cons.tail))));
+  in.?(nil: Err<SM@<CharL@>>(Text(Unknown, Str|'unexpected end of input')));
+  in.cons.head.text.?(nil: GetL(r.@(s: S@(in.cons.tail))));
+
   Char@ c = in.cons.head.text.cons.head;
-  Text@ head = Text(Advance(in.cons.head.loc, c), in.cons.head.text.cons.tail);
-  Ok(SM@(S@(Cons(head, in.cons.tail)), c));
+  Loc@ l = in.cons.head.loc;
+  Text@ head = Text(Advance(l, c), in.cons.head.text.cons.tail);
+  Ok(SM@(S@(Cons(head, in.cons.tail)), @(c, l)));
 };
 
 # Parse an indented block of text.
@@ -117,6 +112,19 @@ Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   Result@<SM@<T@>> r = m(R@(S@(input), Int|0));
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);
+};
+
+# Returns the location of the next input character.
+M@<Loc@> Loc = {
+  Maybe@<CharL@> mc <- Do(Test(GetL));
+  Return(mc.?(just: mc.just.l, nothing: Unknown));
+};
+
+# Gets the next character in the input stream, advancing the parser state as
+# appropriate. Fails if there are no more characters in the input stream.
+M@<Char@> Get = {
+  CharL@ cl <- Do(GetL);
+  Return(cl.c);
 };
 
 # Parses either of the given arguments, returning the result of the first to
