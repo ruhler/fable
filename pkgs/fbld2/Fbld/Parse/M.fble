@@ -35,86 +35,89 @@
 % Text = /Fbld/Text%.Text;
 
 # S@ - State for parser monad.
-@ S@ = *(List@<Text@> input, Int@ indent);
+@ S@ = *(List@<Text@> input);
+
+# R@ - Reader for parser monad.
+@ R@ = *(S@ s, Int@ indent);
 
 # State monad for parser monad.
 <@>@ SM@ = <@ T@> { *(S@ s, T@ x); };
 
 # M@ - A parser monad.
-<@>@ M@ = <@ T@>(S@) { Result@<SM@<T@>>; };
+<@>@ M@ = <@ T@>(R@) { Result@<SM@<T@>>; };
 
 # Return the given value.
 <@ T@>(T@) { M@<T@>; }
-Return = <@ T@>(T@ x)(S@ s) {
-  Ok(SM@(s, x));
+Return = <@ T@>(T@ x)(R@ r) {
+  Ok(SM@(r.s, x));
 };
 
 # Report a parse error.
 <@ T@>(Loc@, String@) { M@<T@>; }
-Error = <@ T@>(Loc@ l, String@ msg)(S@ _) {
+Error = <@ T@>(Loc@ l, String@ msg)(R@ _) {
   Err<SM@<T@>>(Text(l, msg));
 };
 
 # Monadic Do for the parser monad.
 <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
-Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(S@ s) {
-  Result@<SM@<A@>> ra = ma(s);
+Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
+  Result@<SM@<A@>> ra = ma(r);
   ra.?(err: Err<SM@<B@>>(ra.err));
-  f(ra.ok.x)(ra.ok.s);
+  f(ra.ok.x)(r.@(s: ra.ok.s));
 };
 
 # Returns the current location.
-M@<Loc@> Loc = (S@ s) {
+M@<Loc@> Loc = (R@ r) {
   Loc@ l = {
-    s.input.?(nil: Unknown);
-    s.input.cons.head.loc;
+    r.s.input.?(nil: Unknown);
+    r.s.input.cons.head.loc;
   };
-  Ok(SM@(s, l));
+  Ok(SM@(r.s, l));
 };
 
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
-M@<Char@> Get = (S@ s) {
-  s.input.?(nil: Err<SM@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
-  s.input.cons.head.text.?(nil: Get(s.@(input: s.input.cons.tail)));
-  Char@ c = s.input.cons.head.text.cons.head;
-  Text@ head = Text(Advance(s.input.cons.head.loc, c), s.input.cons.head.text.cons.tail);
-  Ok(SM@(s.@(input: Cons(head, s.input.cons.tail)), c));
+M@<Char@> Get = (R@ r) {
+  List@<Text@> in = r.s.input;
+  in.?(nil: Err<SM@<Char@>>(Text(Unknown, Str|'unexpected end of input')));
+  in.cons.head.text.?(nil: Get(r.@(s: S@(in.cons.tail))));
+  Char@ c = in.cons.head.text.cons.head;
+  Text@ head = Text(Advance(in.cons.head.loc, c), in.cons.head.text.cons.tail);
+  Ok(SM@(S@(Cons(head, in.cons.tail)), c));
 };
 
 # Parse an indented block of text.
 # Single space indent is used. The indent characters will be skipped over and
 # end of input will be returned when the indented text ends.
-<@ T@>(M@<T@>) { M@<T@>; } Indent = <@ T@>(M@<T@> mx)(S@ s) {
-  mx(s.@(indent: Incr(s.indent)));
+<@ T@>(M@<T@>) { M@<T@>; } Indent = <@ T@>(M@<T@> mx)(R@ r) {
+  mx(r.@(indent: Incr(r.indent)));
 };
   
 # Try running a parser. If it succeeds, return the parsed value. If it fails,
 # return Nothing.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
-Try = <@ T@>(M@<T@> mx)(S@ s) {
-  Result@<SM@<T@>> r = mx(s);
-  r.?(err: Ok(SM@(s, Nothing<T@>)));
-  Ok(SM@(r.ok.s, Just(r.ok.x)));
+Try = <@ T@>(M@<T@> mx)(R@ r) {
+  Result@<SM@<T@>> rx = mx(r);
+  rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
+  Ok(SM@(rx.ok.s, Just(rx.ok.x)));
 };
 
 # Test if a parser would match at the current position, without consuming any
 # input.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
-Test = <@ T@>(M@<T@> mx)(S@ s) {
-  Result@<SM@<T@>> r = mx(s);
-  r.?(err: Ok(SM@(s, Nothing<T@>)));
-  Ok(SM@(s, Just(r.ok.x)));
+Test = <@ T@>(M@<T@> mx)(R@ r) {
+  Result@<SM@<T@>> rx = mx(r);
+  rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
+  Ok(SM@(r.s, Just(rx.ok.x)));
 };
 
 # Runs a parser monad on the given input string.
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
-  Result@<SM@<T@>> r = m(S@(input, Int|0));
+  Result@<SM@<T@>> r = m(R@(S@(input), Int|0));
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);
 };
-
 
 # Parses either of the given arguments, returning the result of the first to
 # pass. Fails if both parsers fails.
@@ -147,7 +150,6 @@ M@<Unit@> EndOfInput = {
   mc.?(nothing: Return(Unit));
   Error<Unit@>(l, Str|'expected end of input');
 };
-
 
 # Parse a specific string from the input stream. Fails if the input string
 # does not match that string.
