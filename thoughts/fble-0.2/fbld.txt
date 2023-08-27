@@ -3949,3 +3949,32 @@ past any indent characters and go to the next real character. Use this for
 both Get and Loc functions. Then Loc can return like it does now after running
 SkipIndent. Get will need to check for indent level after calling SkipIndent
 to see if end of file. Easy, no?
+
+---
+
+The basic fbld2 parser is good to go. Next step, I think, is to try parsing my
+existing documents and see how they have to change to work with fbld2 syntax.
+
+This might be a good time to write down the fbld2 syntax reference. Let me
+also write a main program that parses fbld2, succeeding on successful parse
+and failing on error.
+
+---
+
+Made a main program for fbld2. First couple issues I see:
+
+README.fbld: Parses everything without error. But some \ need escaping.
+fble.fbld: Fails to parse @l[Bool@], as I would expect.
+
+What do we want to do next?
+* Iron out all the details of how to parse corner cases.
+* Implement core evaluation.
+* Document syntax reference.
+
+Let me sketch out syntax reference, and then work on evaluation. It would be a
+shame to spend a lot of effort on syntax corner cases only to realize the
+evaluation strategy doesn't make sense.
+
+We can already parse README.fbld. That's a perfect place to start. Generate
+README.md from it.
+

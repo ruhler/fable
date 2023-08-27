@@ -1,0 +1,44 @@
+Syntax Reference
+----------------
+
+* A sequence of files are concatenated together and parsed as block structured
+  text.
+* Block structured text is a sequence of blank line delimited blocks.
+* A block is either a block command or implicit block text.
+* Implicit block text is inline structured text up to the next blank line.
+* A block command starts with '@' in the first column, followed by a command
+  name, followed by:
+  - Zero or more inline arguments.
+  - An optional same line argument.
+  - An optional next line argument.
+  - An optional continuation.
+  - An optional final argument.
+* An inline argument is inline structured text in square brackets.
+* A same line argument is inline structured text between a single space
+  character and the end of the line.
+* A next line argument is when the next line starts with a single space
+  indent. The following lines that maintain that single space indent are
+  parsed as block structured text with the single space indent removed.
+* A continuation is when the following line starts with '@' without a
+  following command name. Everything allowed after a block command name is
+  allowed after a continuation.
+* A final argument is when the next line is '@@'. The following unindented
+  text is parsed as block structured text.
+* Inline structured text is a sequence of inlines.
+* An inline is either an inline command or plain text.
+* Inline command is '@' followed by a command name followed by zero or more
+  inline arguments.
+* Plain text is everything else not inline text.
+* \\, \[, \], and \@ are escape sequences for \, [, ], and @.
+* A command name is one or more characters from [a-zA-Z0-9_].
+
+Details:
+* Lines that are blank or only contain spaces do not interrupt indented text,
+  even if they have fewer spaces than the current indent level.
+
+Questions:
+* Can you have an empty continuation? For example:
+  @foo
+  @
+  @ hello
+* Can you have unescaped nested [ ] in plain text?

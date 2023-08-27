@@ -6,10 +6,15 @@
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 
+<@ T@> { Show@<Result@<T@>>; }
+ShowError = <@ T@>(Result@<T@> r) {
+  Strs[Str|'error:', /Fbld/Text/Show%.Show(r.err)];
+};
+
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
 Show = <@ T@>(Show@<T@> show)(Result@<T@> r) {
-  r.?(err: Strs[Str|'error:', /Fbld/Text/Show%.Show(r.err)]);
+  r.?(err: ShowError(r));
   Strs[Str|'ok:', show(r.ok)];
 };
 
-@(Show);
+@(Show, ShowError);

@@ -7,7 +7,6 @@ Things to consider doing for the fble-0.2 release.
  - add html escaping to @.inline, url link, file link,
 
 * Fbld2:
- - Implement parser.
  - Add test for nesting of [ and ] characters in plain text.
  - Are blank lines allowed inside @[...] inside @.block text?
 

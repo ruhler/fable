@@ -1,0 +1,86 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+% Start = /Fbld/Loc%.Start;
+% Unknown = /Fbld/Loc%.Unknown;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+% ShowMarkup = /Fbld/Markup/Show%.Markup;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+<@>% Err = /Fbld/Result%.Err;
+<@>% ShowError = /Fbld/Result/Show%.ShowError;
+
+@ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+
+
+# Main --
+#   Main function for fbld program.
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % I = /Core/Stream/IStream%(m);
+  % O = /Core/Stream/OStream%(m);
+
+  (List@<String@>) { M@<Result@<List@<Text@>>>; }
+  ReadInputs = (List@<String@> filenames) {
+    filenames.?(nil: m.return(Ok(Nil<Text@>)));
+    Result@<List@<Text@>> tail <- m.do(ReadInputs(filenames.cons.tail));
+    tail.?(err: m.return(tail));
+
+    String@ filename = filenames.cons.head;
+    Maybe@<IStream@<M@>> fin <- m.do({
+      /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
+      stdio.read(filename);
+    });
+
+    fin.?(nothing: {
+      String@ msg = Strs[Str|'unable to open ', filename];
+      m.return(Err<List@<Text@>>(Text(Unknown, msg)));
+    });
+
+    String@ contents <- m.do(I.GetText(fin.just));
+    Text@ text = Text(Start(filename), contents);
+    m.return(Ok(Cons(text, tail.ok)));
+  };
+
+  (List@<String@> args) {
+    Result@<List@<Text@>> inputs <- m.do(ReadInputs(args));
+    inputs.?(err: {
+      Unit@ _ <- m.do(O.PutLine(stdio.err, ShowError(inputs)));
+      m.return(False);
+    });
+
+    Result@<Markup@> parsed = /Fbld/Parse%.Parse(inputs.ok);
+    parsed.?(err: {
+      Unit@ _ <- m.do(O.PutLine(stdio.err, ShowError(parsed)));
+      m.return(False);
+    });
+
+    Unit@ _ <- m.do(O.PutLine(stdio.out, ShowMarkup(parsed.ok)));
+    m.return(True);
+  };
+};
+
+/Core/Stdio/IO%.Run(Main);
