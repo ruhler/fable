@@ -67,8 +67,8 @@ AssertResultEquals = (Result@<Markup@> expected, Result@<Markup@> actual) {
 
 Test@ Tests = TestSuite(Str|Parse, List[
   Test(Str|Unescape, (Unit@ _) {
-    String@ text = Str|'a \\ \a\[\]bcd\@';
-    String@ want = Str|'a \ a[]bcd@';
+    String@ text = Str|'a \\ a\[\]b\ncd\@';
+    String@ want = StrE|'a \\ a[]b\ncd@';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[Pr|1|1(want)]]]);

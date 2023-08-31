@@ -3978,3 +3978,158 @@ evaluation strategy doesn't make sense.
 We can already parse README.fbld. That's a perfect place to start. Generate
 README.md from it.
 
+---
+
+The markdown backend for now just uses text substitution. That's a decent
+place to start focus on. We should only need the one builtin command to define
+user defined commands. Assume fixed number of arguments for now for
+simplicity.
+
+The challenge is coming up with an evaluation strategy that:
+* Allows for recursion. In other words: don't be too eager in substituting
+  things in to arguments to if statements.
+* Makes clear what commands are bound to what definitions.
+
+Let me not worry about recursion for now, because I don't need it for
+markdown backend.
+
+Example 1:
+
+  @doc Foo
+   @section ...
+    ...
+
+We use @section in the argument to @doc. We expect @doc to provide the
+definition of the command for @section.
+
+Example 2:
+
+  @def[foo][bar]
+   @bar@bar
+  @@
+  @foo[xyz]
+
+We use @bar in the argument to @def. @def provides the definition of the
+command for @bar. It changes depending on the invocation.
+
+Example 3:
+
+  @def[foo][section]
+   @doc Foo
+    @section ...
+     ...
+  @@
+  @foo[xyz]
+
+Who determines the meaning of @section here, the @def[foo] or the @doc
+command? Options:
+a. @def[foo] defines @section. Then @doc overrides @section. So @doc determines
+   the meaning. Corresponds to what would happen if we made args definitions
+   for commands that are lazily evaluated.
+b. @def[foo] substitutes for @section. @doc never sees @section. So @def[foo]
+   determines the meaning.
+
+Imagine we wanted to use @section in the argument to @foo. I feel like option
+(b) makes most sense.
+
+Example 4:
+
+  @let[section] hello @@
+  @def[foo][section]
+   @doc Foo
+    @section ...
+     ...
+  @@
+  @foo[This is my favorite @section!]
+
+Yeah, so... this is confusing.
+
+If this were a normal programming language, I would say...
+
+  @let[section_1] hello @@
+  @def[foo][section_2]
+   @doc Foo
+    @section_2 ...
+     ...
+  @@
+  @foo[This is my favorite @section_1!]
+
+But normal programming languages don't tend to let you pass free variables in
+arguments that are bound by the function they are being passed to.
+
+---
+
+To start with, I want to try lexical scoping for everything except where we
+explicitly want to pass free variables. Let's go with that mindset.
+
+For starters then, let's have section defined at the top level of
+markdown.fbld if we can, rather than as part of the @doc definition.
+
+How to write markdown.fbld?
+
+* par - add a newline in front.
+* plain text - stays as is.
+* .block - is @par
+* doc:
+  # $title
+  $body
+* section:
+  ## $title
+  $body
+* url: [$url]($url)
+* fbld: @url
+* def: * **$name**: $value
+* code: indented $text
+    
+How do we do doc, for example?
+
+I expect title to be inline markup and body to be block markup. Looks like I
+want a way to insert elements into the markup lists. Specifically: cons plain
+'# ' to title. Cons that to body. Maybe:
+
+@doc[title body]
+ # @title
+
+ @body
+@@
+
+Let's say title is "Foo @bar".
+
+Then after substitution we have:
+  ["# ", @title] ==> ["# ", ["Foo ", @bar]]
+
+Which differs from ["# ", "Foo ", @bar]. Does that matter?
+
+For inline text, no. For block text, depends on how it gets concatenated.
+Let's assume no for now, and that text is all directly concatenated for the
+final output.
+
+How do I add a newline? Should we add newline to the list of escape
+characters? I think so.
+
+How to define .block without introducing additional .block? One way is to
+describe it as inline text.
+
+Keeping track of inline versus block markup worries me. We should get rid of
+@.block and replace it with a submarkup thing. We need that anyway to support
+substitution.
+
+Now paragraphs are going to get tricky though. We lose track of where
+paragraphs go in that case.
+
+Anyway, first draft of markdown.fbld looks reasonable, with following
+exceptions:
+* Add \n as an allowed escape character.
+* Implicit .block I fear is causing problems.
+* How to describe indent for code?
+  We can't do it with direct substitution anymore like we could before.
+
+---
+
+For code indent, my draft uses:
+* ifeq[a][b][then][else]
+* let[var][def][body]
+* @head, @tail
+
+I definitely want \n as an escape sequence.
+

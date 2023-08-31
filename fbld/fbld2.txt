@@ -29,7 +29,7 @@ Syntax Reference
 * Inline command is '@' followed by a command name followed by zero or more
   inline arguments.
 * Plain text is everything else not inline text.
-* \\, \[, \], and \@ are escape sequences for \, [, ], and @.
+* \\, \[, \], \@, \n are escape sequences for \, [, ], @, and newline.
 * A command name is one or more characters from [a-zA-Z0-9_].
 
 Details:

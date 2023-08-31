@@ -3,6 +3,7 @@
 % True = /Core/Bool%.True;
 
 @ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 
 <@>@ List@ = /Core/List%.List@;
@@ -14,6 +15,7 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -93,7 +95,20 @@ M@<Element@> Command = {
     Return(Cons(command, tail));
   });
 
-  Char@ h <- Do(c.?('\': Get, : Return(c)));
+  Char@ h <- Do({
+    c.?('\': {
+      Loc@ le <- Do(Loc);
+      Char@ e <- Do(Get);
+      e.?(
+        '@': Return(Chars.'@'),
+        '[': Return(Chars.'['),
+        '\': Return(Chars.'\'),
+        ']': Return(Chars.']'),
+        'n': Return(Chars.nl));
+      Error<Char@>(le, Strs[Str|'Unsupported escape sequence: ''\', Str[e, Chars.'''']]);
+    });
+    Return(c);
+  });
   Markup@ tail <- Do(Inline(end));
 
   Element@ solo = Plain(l, Str[h]);
