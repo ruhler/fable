@@ -9,11 +9,9 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 <@>% List = /Core/List%.List;
-<@>% Append = /Core/List%.Append;
+<@>% Concat = /Core/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -60,71 +58,58 @@ M@<Unit@> SkipBlankLines = {
   Return(Unit);
 };
 
-# Parses a same line argument, up to and including the newline character.
-M@<Markup@> SameLineArg = {
-  Unit@ _ <- Do(String|' ');
-  Inline(String(StrE|'\n'));
-};
+# Parses the rest of the args for a block command.
+(Loc@, String@, List@<Markup@>) { M@<Element@>; }
+Args = (Loc@ l, String@ name, List@<Markup@> args) {
+  List@<Markup@> inline_args <- Do(InlineArgs);
 
-# Parses an optional SameLineArg, up to and including the newline character.
-M@<Maybe@<Markup@>> MaybeSameLineArg = {
-  Bool@ none <- Do(Try_(String(StrE|'\n')));
-  none.?(true: Return(Nothing<Markup@>));
+  M@<Unit@> EndOfSameLine = Or(String(StrE|'\n'), String(StrE|' @@\n'));
+  List@<Markup@> same_line <- Do({
+    Bool@ none <- Do(Test_(EndOfSameLine));
+    none.?(true: Return(Nil<Markup@>));
 
-  Markup@ m <- Do(SameLineArg);
-  Return(Just(m));
-};
-
-<@ T@>(Maybe@<T@>, List@<T@>) { List@<T@>; }
-MaybeCons = <@ T@>(Maybe@<T@> mx, List@<T@> l) {
-  mx.?(nothing: l);
-  Cons(mx.just, l);
-};
-
-# Parse an optional next line arg, starting just after the newline character.
-M@<Maybe@<Markup@>> MaybeNextLineArg = {
-  Bool@ next <- Do(Try_(String|' '));
-  next.?(false: Return(Nothing<Markup@>));
-
-  Markup@ m <- Do(Indented(Block));
-  Return(Just(m));
-},
-
-M@<List@<Markup@>> PostNextLineArg = {
-  Bool@ continue <- Do(Test_(String|'@ '));
-  continue.?(true: {
-    Unit@ _ <- Do(String|'@');
-    Args;
+    Unit@ _ <- Do(String|' ');
+    Markup@ m <- Do(Inline({
+      Bool@ end <- Do(Test_(EndOfSameLine));
+      end.?(true: Return(Unit));
+      Loc@ l <- Do(Loc);
+      Error<Unit@>(l, Str|'not end of same line');
+    }));
+    Return(List[m]);
   });
 
-  Bool@ continue <- Do(Test_(String|'@['));
-  continue.?(true: {
-    Unit@ _ <- Do(String|'@');
-    Args;
+  Bool@ final_same_line <- Do(Try_(String(StrE|' @@\n')));
+  final_same_line.?(true: {
+    Markup@ arg <- Do(Block);
+    Return(/Fbld/Markup%.Command(l, name)(Concat[
+        args, inline_args, same_line, List[arg]]));
+  });
+
+  Unit@ _ <- Do(String(StrE|'\n'));
+
+  List@<Markup@> next <- Do({
+    Bool@ present <- Do(Try_(String|' '));
+    present.?(false: Return(Nil<Markup@>));
+    Markup@ m <- Do(Indented(Block));
+    Return(List[m]);
   });
 
   Bool@ final <- Do(Try_(String(StrE|'@@\n')));
   final.?(true: {
     Markup@ arg <- Do(Block);
-    Return(List[arg]);
+    Return(/Fbld/Markup%.Command(l, name)(Concat[
+        args, inline_args, same_line, next, List[arg]]));
   });
 
-  Return(Nil<Markup@>);
-},
+  Bool@ continue <- Do(Test_(Or(String|'@ ', String|'@[')));
+  continue.?(true: {
+    Unit@ _ <- Do(String|'@');
+    Args(l, name, Concat[
+      args, inline_args, same_line, next]);
+  });
 
-# Parses arguments after the inline arguments for block command.
-M@<List@<Markup@>> PostInlineArgs = {
-  Maybe@<Markup@> same_line_arg <- Do(MaybeSameLineArg);
-  Maybe@<Markup@> next_line_arg <- Do(MaybeNextLineArg);
-  List@<Markup@> rest <- Do(PostNextLineArg);
-  Return(MaybeCons(same_line_arg, MaybeCons(next_line_arg, rest)));
-},
-
-# Parses all kinds of args for a block command.
-M@<List@<Markup@>> Args = {
-  List@<Markup@> inline_args <- Do(InlineArgs);
-  List@<Markup@> post_inline_args <- Do(PostInlineArgs);
-  Return(Append(inline_args, post_inline_args));
+  Return(/Fbld/Markup%.Command(l, name)(Concat[
+      args, inline_args, same_line, next]));
 },
 
 # Parses a command starting just after the initial '@'.
@@ -133,8 +118,7 @@ M@<Element@> Command = {
   String@ name <- Do(Name);
   name.?(nil: Error<Element@>(l, Str|'missing command name'));
 
-  List@<Markup@> args <- Do(Args);
-  Return(/Fbld/Markup%.Command(l, name)(args));
+  Args(l, name, Nil<Markup@>);
 },
 
 # Parses block structured text.

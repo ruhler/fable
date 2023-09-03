@@ -24,6 +24,9 @@ Syntax Reference
   allowed after a continuation.
 * A final argument is when the next line is '@@'. The following unindented
   text is parsed as block structured text.
+* A final argument can also be indicated by having ' @@' at the end of the
+  same line. In that case the ' @@' is not include in any same line argument
+and the following unindented text is parsed as block structured text.
 * Inline structured text is a sequence of inlines.
 * An inline is either an inline command or plain text.
 * Inline command is '@' followed by a command name followed by zero or more

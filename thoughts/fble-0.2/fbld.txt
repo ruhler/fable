@@ -4127,9 +4127,53 @@ exceptions:
 ---
 
 For code indent, my draft uses:
-* ifeq[a][b][then][else]
-* let[var][def][body]
+* @ifeq[a][b][then][else]
+* @let[var][def][body]
 * @head, @tail
+* @inline
+* @@ as end of same line arg to indicate final arg.
 
 I definitely want \n as an escape sequence.
 
+What are the next steps here?
+
+The biggest concern I have right now is how we handle and track @.block in the
+right places.
+
+Say we get rid of @.block and add a submarkup kind of markup. We parse plain
+block structured text as a submarkup. When we execute a command, it returns
+markup which we install as a submarkup.
+
+An alternative would be to flatten all submarkup. When we execute a command,
+it returns markup which we flatten immediately into the list where the
+command was executed. This suggests inline text would be flattened into block
+text, which might not be a bad thing.
+
+It doesn't change the fact that sometimes we want to introduce paragraph
+markers and sometimes not.
+
+The reason we want implicit paragraph markers is to avoid cluttering the text.
+We care about cluttering the text much more for end user docs than libraries.
+So what if we avoid all use of @.block in libraries? Use explicit tag instead?
+
+That sounds good to me. Remember, @.block is only introduced for plain block
+structured text. Not for explicit block structured text.
+
+This suggests we do want a notion of @.block: some special tag to denote plain
+text as distinct from general grouping of submarkup that would arise from
+command substitution. Think of @.block as an implicit tag added by the parser,
+not part of the fundamental structure of markup. Which is really what it is:
+syntactic convenience so we don't have to put @par tags everywhere in the docs.
+
+Now then, for substitution, do we want to flatten everything in a list after
+substitution, or do we want to maintain hierarchical structure? I vote for
+flattening to start. If we really want to maintain structure, we can do it
+with explicit commands. Otherwise I think it will be easier to deal with a
+single canonical form for markup.
+
+We have decisions made now for how to try to proceed:
+* Keep Markup@ structure as already defined.
+* Keep @.block tag as already used.
+* Add terminating ' @@' as final arg indicator to parser.
+* Implement evaluation with lexical scoping for everything. No support for
+  free/unbound variables in this first attempt.

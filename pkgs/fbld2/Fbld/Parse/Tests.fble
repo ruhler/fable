@@ -189,6 +189,23 @@ Test@ Tests = TestSuite(Str|Parse, List[
           M[P|4|6|'here is the end.'],
           M[C|5|2|'.block'[M[P|5|2|'Of all the rest.\n']]]]]]]);
     AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|SameLineFinal, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@foo here is some stuff. @@',
+      Str|'@bar here is the end.',
+      Str|' Of all the rest.'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'foo'[
+        M[P|1|6|'here is some stuff.'],
+        M[C|2|2|'bar'[
+          M[P|2|6|'here is the end.'],
+          M[C|3|2|'.block'[M[P|3|2|'Of all the rest.\n']]]]]]]);
+    AssertResultEquals(wnt, got);
   })
 ]);
 
