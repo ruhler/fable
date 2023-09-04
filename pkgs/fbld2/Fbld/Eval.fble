@@ -1,0 +1,53 @@
+
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ String@ = /Core/String%.String@;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Command@ = /Fbld/Markup%.Command@;
+@ Element@ = /Fbld/Markup%.Element@;
+
+% Text = /Fbld/Text%.Text;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Err = /Fbld/Result%.Err;
+% m = /Fbld/Result%.Monad;
+
+@ Impl@ = (Env@, Command@) { Result@<Markup@>; },
+@ Env@ = /Core/Map%.Map@<String@, Impl@>;
+
+% EmptyEnv = /Core/Map%.Empty<String@, Impl@>;
+% InsertEnv = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Impl@>;
+% LookupEnv = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Impl@>;
+
+(Env@, Command@) { Result@<Markup@>; }
+Command = (Env@ env, Command@ cmd) {
+  Maybe@<Impl@> impl = LookupEnv(env, cmd.name.text);
+  impl.?(nothing: {
+    Err<Markup@>(Text(cmd.name.loc, Strs[Str|'no such command: ', cmd.name.text]));
+  });
+  impl.just(env, cmd);
+};
+
+(Env@, Element@) { Result@<Markup@>; }
+Element = (Env@ env, Element@ element) {
+  element.?(plain: m.return(List[element]));
+  Command(env, element.command);
+};
+
+(Env@, Markup@) { Result@<Markup@>; }
+Eval = (Env@ env, Markup@ markup) {
+  markup.?(nil: m.return(markup));
+  Markup@ head <- m.do(Element(env, markup.cons.head));
+  Markup@ tail <- m.do(Eval(env, markup.cons.tail));
+  m.return(Append(head, tail));
+};
+
+@(Impl@, Env@,
+  EmptyEnv, LookupEnv, InsertEnv,
+  Eval);

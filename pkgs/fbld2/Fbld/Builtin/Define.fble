@@ -1,0 +1,76 @@
+
+% IsSpace = /Core/Char/Type%.IsSpace;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Split = /Core/List/Eq%.Split;
+<@>% Length = /Core/List/Length%.Length;
+<@>% Get = /Core/List/Length%.Get;
+
+@ String@ = /Core/String%.String@;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+
+@ Impl@ = /Fbld/Eval%.Impl@;
+@ Env@ = /Fbld/Eval%.Env@;
+% InsertEnv = /Fbld/Eval%.InsertEnv;
+% Eval = /Fbld/Eval%.Eval;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Command@ = /Fbld/Markup%.Command@;
+% Output = /Fbld/Markup/Output%.Output;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Err = /Fbld/Result%.Err;
+% r = /Fbld/Result%.Monad;
+
+% Text = /Fbld/Text%.Text;
+
+(Int@, Command@) { Result@<Unit@>; }
+VerifyArgCount = (Int@ expected, Command@ cmd) {
+  Int@ num_args = Length(cmd.args);
+  /Core/Int/Eq%.Eq(num_args, expected).?(false: {
+    Err<Unit@>(Text(cmd.name.loc, Strs[
+      Str|'Expected ', /Core/Int/Show%.Show(expected),
+      Str|'arguments to ', cmd.name.text,
+      Str|', but found ', /Core/Int/Show%.Show(num_args)]));
+  });
+  r.return(Unit);
+}; 
+
+(Markup@) { Impl@; } VarImpl = (Markup@ markup)(Env@ _, Command@ cmd) {
+  Unit@ _ <- r.do(VerifyArgCount(Int|0, cmd));
+  r.return(markup);
+};
+
+(Env@, List@<String@>, List@<Markup@>) { Env@; }
+DefArgs = (Env@ env, List@<String@> params, List@<Markup@> args) {
+  params.?(nil: env);
+  DefArgs(InsertEnv(env, params.cons.head, VarImpl(args.cons.head)),
+    params.cons.tail, args.cons.tail);
+};
+
+Impl@ Define = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(VerifyArgCount(Int|4, cmd));
+
+  String@ name = Output(Get(cmd.args, Int|0));
+  Markup@ param_list = Get(cmd.args, Int|1);
+  Markup@ def = Get(cmd.args, Int|2);
+  Markup@ body = Get(cmd.args, Int|3);
+
+  List@<String@> params = Split(Output(param_list), IsSpace);
+  Impl@ impl = (Env@ e, Command@ c) {
+    Unit@ _ <- r.do(VerifyArgCount(Length(params), c));
+    Eval(DefArgs(env, params, c.args), def);
+  };
+
+  Eval(InsertEnv(env, name, impl), body);
+};
+
+@(Define);

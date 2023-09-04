@@ -26,11 +26,11 @@
 % Unknown = /Fbld/Loc%.Unknown;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-% ShowMarkup = /Fbld/Markup/Show%.Markup;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
+% r = /Fbld/Result%.Monad;
 <@>% ShowError = /Fbld/Result/Show%.ShowError;
 
 @ Text@ = /Fbld/Text%.Text@;
@@ -72,13 +72,16 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       m.return(False);
     });
 
-    Result@<Markup@> parsed = /Fbld/Parse%.Parse(inputs.ok);
-    parsed.?(err: {
-      Unit@ _ <- m.do(O.PutLine(stdio.err, ShowError(parsed)));
+    Result@<String@> result = {
+      Markup@ parsed <- r.do(/Fbld/Parse%.Parse(inputs.ok));
+      Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
+      r.return(/Fbld/Markup/Output%.Output(evaled));
+    };
+
+    result.?(err: {
+      Unit@ _ <- m.do(O.PutLine(stdio.err, ShowError(result)));
       m.return(False);
     });
-
-    Unit@ _ <- m.do(O.PutLine(stdio.out, ShowMarkup(parsed.ok)));
     m.return(True);
   };
 };

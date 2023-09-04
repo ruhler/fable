@@ -3,6 +3,7 @@
 % 0 = /Core/Int%.0;
 % Incr = /Core/Int%.Incr;
 % Decr = /Core/Int%.Decr;
+% IsZero = /Core/Int/Eq%.IsZero;
 % Le = /Core/Int/Eq%.Le;
 
 <@>@ List@ = /Core/List%.List@;
@@ -46,4 +47,11 @@
   l.?(cons: Incr(Length(l.cons.tail)), nil: 0);
 };
 
-@(Take, Drop, Length);
+# Gets the element of the list with the given index.
+# Behavior is undefined if there is no such elemnet.
+<@ T@>(List@<T@>, Int@) { T@; } Get = <@ T@>(List@<T@> l, Int@ n) {
+  IsZero(n).?(true: l.cons.head);
+  Get(l.cons.tail, Decr(n));
+};
+
+@(Take, Drop, Length, Get);

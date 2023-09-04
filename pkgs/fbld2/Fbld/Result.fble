@@ -12,4 +12,14 @@
   Result@<T@>(err: msg);
 };
 
-@(Result@, Ok, Err);
+<@ T@>(T@) { Result@<T@>; } Return = Ok;
+
+<@ A@>(Result@<A@>)<@ B@>((A@) { Result@<B@>; }) { Result@<B@>; }
+Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
+  ra.?(err: Err<B@>(ra.err));
+  f(ra.ok);
+};
+
+/Core/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
+
+@(Result@, Ok, Err, Monad);

@@ -1,0 +1,10 @@
+
+% Str = /Core/String%.Str;
+
+@ Env@ = /Fbld/Eval%.Env@;
+% EmptyEnv = /Fbld/Eval%.EmptyEnv;
+% InsertEnv = /Fbld/Eval%.InsertEnv;
+
+Env@ Env = InsertEnv(EmptyEnv, Str|'define', /Fbld/Builtin/Define%.Define);
+
+@(Env);

@@ -1,0 +1,48 @@
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Lines = /Core/String%.Lines;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+% Start = /Fbld/Loc%.Start;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+% Output = /Fbld/Markup/Output%.Output;
+
+% Text = /Fbld/Text%.Text;
+
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Ok = /Fbld/Result%.Ok;
+% r = /Fbld/Result%.Monad;
+
+(List@<String@>) { Result@<String@>; } Run = (List@<String@> lines) {
+  String@ text = Lines(lines);
+  Markup@ parsed <- r.do(/Fbld/Parse%.Parse(List[Text(Start|'foo.fbld', text)]));
+  Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
+  r.return(Output(evaled));
+};
+
+Test@ Tests = TestSuite(Str|Builtin, List[
+  Test(Str|Define, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][a b] a: @a, b: @b @@',
+      Str|'@foo[hello][there]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'a: hello, b: there';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  })
+]);
+
+@(Tests);
