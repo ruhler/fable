@@ -24,7 +24,7 @@
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
-% Output = /Fbld/Markup/Output%.Output;
+% ToPlain = /Fbld/Markup%.ToPlain;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Err = /Fbld/Result%.Err;
@@ -59,12 +59,12 @@ DefArgs = (Env@ env, List@<String@> params, List@<Markup@> args) {
 Impl@ Define = (Env@ env, Command@ cmd) {
   Unit@ _ <- r.do(VerifyArgCount(Int|4, cmd));
 
-  String@ name = Output(Get(cmd.args, Int|0));
-  Markup@ param_list = Get(cmd.args, Int|1);
+  String@ name <- r.do(ToPlain(Get(cmd.args, Int|0)));
+  String@ param_list <- r.do(ToPlain(Get(cmd.args, Int|1)));
   Markup@ def = Get(cmd.args, Int|2);
   Markup@ body = Get(cmd.args, Int|3);
 
-  List@<String@> params = Split(Output(param_list), IsSpace);
+  List@<String@> params = Split(param_list, IsSpace);
   Impl@ impl = (Env@ e, Command@ c) {
     Unit@ _ <- r.do(VerifyArgCount(Length(params), c));
     Eval(DefArgs(env, params, c.args), def);
