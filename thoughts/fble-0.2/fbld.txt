@@ -4177,3 +4177,29 @@ We have decisions made now for how to try to proceed:
 * Add terminating ' @@' as final arg indicator to parser.
 * Implement evaluation with lexical scoping for everything. No support for
   free/unbound variables in this first attempt.
+
+---
+
+I have implemented basic evaluation with @define. Next step: get README.fbld
+markdown conversion happy under fbld2.
+
+First issue:
+* Use of \ in code. It says unsupported escape sequence, as it should.
+
+I see two approaches here:
+1. Manually escape the \ character.
+2. Add syntax for raw text.
+
+I think I'll want syntax for raw text eventually, so let's do that first. What
+did I propose before for this?
+
+* End a line with @ to say the following next line arg is passed as literal
+  text without being parsed as block structured text.
+* End a line with @@@ to say the following is literal final arg.
+
+This is going to get confusing... and definitely not intuitive in any way. You
+have to know the magic of '@' versus '@@' versus '@@@'.
+
+Start with just '@' for now I guess.
+
+The syntax feels plenty nice to me.

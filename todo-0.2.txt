@@ -9,8 +9,13 @@ Things to consider doing for the fble-0.2 release.
  - add html escaping to @.inline, url link, file link,
 
 * Fbld2:
+ - Don't use Output function for converting Markup@ to String@ in builtins
+   Switch to something that can return an error message if the markup isn't
+   plain as expected.
+ - Add @ next line literal syntax.
  - Add test for nesting of [ and ] characters in plain text.
  - Are blank lines allowed inside @[...] inside @.block text?
+ - Update list of escape chars in vim syntax highlighting.
 
 * Fbld Text@ rewrite:
  - Move implement of Eq and Show internally.

@@ -38,7 +38,7 @@ VerifyArgCount = (Int@ expected, Command@ cmd) {
   /Core/Int/Eq%.Eq(num_args, expected).?(false: {
     Err<Unit@>(Text(cmd.name.loc, Strs[
       Str|'Expected ', /Core/Int/Show%.Show(expected),
-      Str|'arguments to ', cmd.name.text,
+      Str|' arguments to ', cmd.name.text,
       Str|', but found ', /Core/Int/Show%.Show(num_args)]));
   });
   r.return(Unit);

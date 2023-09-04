@@ -11,4 +11,4 @@
  @let[suffix] @indent[@ifeq[\n][@head[@text]][    ][]][@tail[@text]] @@
  @inline[@prefix@suffix]
 @@
-@define[code][lang][text] @indent[@text] @@
+@define[code][lang text] @indent[@text] @@
