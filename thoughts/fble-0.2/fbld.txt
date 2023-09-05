@@ -4203,3 +4203,62 @@ have to know the magic of '@' versus '@@' versus '@@@'.
 Start with just '@' for now I guess.
 
 The syntax feels plenty nice to me.
+
+---
+
+Okay, basic issue with evaluation.
+
+    @define[foo][a b] @a,@b @@
+    @define[a][] AAAA @@
+    @foo[@a][there]
+
+The question is: do we substitute into args before calling commands?
+
+In the above, I expect the third argument to the first @define, which is
+'@a,@b', not to substitute into @a or @b. But the first argument to @foo,
+which is '@a', I expect to substitute into @a.
+
+How can the evaluator tell the difference between these?
+
+Maybe a better example:
+
+    @define[a][] AAAA @@
+    @define[foo][a b] @a,@b @@
+    @foo[hello][there]
+
+What should this result in? 'AAAA,there' or 'hello,there'?
+
+I know I want it to result in 'hello,there', because @a should bind to the
+parameter to @define[foo]. But again, evaluator doesn't know that. It doesn't
+know that @define interprets some args as parameters that capture variables
+used in other arguments.
+
+And thus the spiral continues.
+
+I suppose we could say it's the job of the callee to decide when substitution
+happens into its arguments. It has the environment it needs to replicate what
+the caller would have done, I think. So, in this case:
+
+@define
+ - eagerly evaluates name, param list.
+ - evaluates def symbolically in context where @a, @b are defined as @a, @b?
+ - evaluates body in context where @foo is defined.
+
+@foo
+ - eagerly evaluates all arguments?
+
+    @define[a][] AAAA @@
+    @define[c][] CCCC @@
+    @define[foo][a b] @a,@b,@c @@
+    @foo[hello][there]
+
+@define
+ name: env
+ params: env
+ def: env + @a: @a, @b: @b
+ body: env + @foo: ...
+
+@foo
+ all args: env
+
+Maybe that could work.

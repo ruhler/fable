@@ -21,6 +21,7 @@
 @ Env@ = /Fbld/Eval%.Env@;
 % InsertEnv = /Fbld/Eval%.InsertEnv;
 % Eval = /Fbld/Eval%.Eval;
+% Evals = /Fbld/Eval%.Evals;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
@@ -59,17 +60,29 @@ DefArgs = (Env@ env, List@<String@> params, List@<Markup@> args) {
 Impl@ Define = (Env@ env, Command@ cmd) {
   Unit@ _ <- r.do(VerifyArgCount(Int|4, cmd));
 
-  String@ name <- r.do(ToPlain(Get(cmd.args, Int|0)));
-  String@ param_list <- r.do(ToPlain(Get(cmd.args, Int|1)));
-  Markup@ def = Get(cmd.args, Int|2);
-  Markup@ body = Get(cmd.args, Int|3);
+  String@ name <- r.do({
+    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    ToPlain(evaled);
+  });
 
-  List@<String@> params = Split(param_list, IsSpace);
+  List@<String@> params <- r.do({
+    Markup@ arg = Get(cmd.args, Int|1);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    String@ list <- r.do(ToPlain(evaled));
+    r.return(Split(list, IsSpace));
+  });
+
+  Markup@ def = Get(cmd.args, Int|2);
+
   Impl@ impl = (Env@ e, Command@ c) {
     Unit@ _ <- r.do(VerifyArgCount(Length(params), c));
-    Eval(DefArgs(env, params, c.args), def);
+
+    List@<Markup@> args <- r.do(Evals(e, c.args));
+    Eval(DefArgs(env, params, args), def);
   };
 
+  Markup@ body = Get(cmd.args, Int|3);
   Eval(InsertEnv(env, name, impl), body);
 };
 

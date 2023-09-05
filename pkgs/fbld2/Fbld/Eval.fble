@@ -1,5 +1,7 @@
 
+<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
 <@>% Append = /Core/List%.Append;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -16,7 +18,7 @@
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Err = /Fbld/Result%.Err;
-% m = /Fbld/Result%.Monad;
+% r = /Fbld/Result%.Monad;
 
 @ Impl@ = (Env@, Command@) { Result@<Markup@>; },
 @ Env@ = /Core/Map%.Map@<String@, Impl@>;
@@ -36,18 +38,26 @@ Command = (Env@ env, Command@ cmd) {
 
 (Env@, Element@) { Result@<Markup@>; }
 Element = (Env@ env, Element@ element) {
-  element.?(plain: m.return(List[element]));
+  element.?(plain: r.return(List[element]));
   Command(env, element.command);
 };
 
 (Env@, Markup@) { Result@<Markup@>; }
 Eval = (Env@ env, Markup@ markup) {
-  markup.?(nil: m.return(markup));
-  Markup@ head <- m.do(Element(env, markup.cons.head));
-  Markup@ tail <- m.do(Eval(env, markup.cons.tail));
-  m.return(Append(head, tail));
+  markup.?(nil: r.return(markup));
+  Markup@ head <- r.do(Element(env, markup.cons.head));
+  Markup@ tail <- r.do(Eval(env, markup.cons.tail));
+  r.return(Append(head, tail));
+};
+
+(Env@, List@<Markup@>) { Result@<List@<Markup@>>; }
+Evals = (Env@ env, List@<Markup@> markups) {
+  markups.?(nil: r.return(markups));
+  Markup@ head <- r.do(Eval(env, markups.cons.head));
+  List@<Markup@> tail <- r.do(Evals(env, markups.cons.tail));
+  r.return(Cons(head, tail));
 };
 
 @(Impl@, Env@,
   EmptyEnv, LookupEnv, InsertEnv,
-  Eval);
+  Eval, Evals);
