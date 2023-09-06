@@ -1,0 +1,44 @@
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>% Get = /Core/List/Length%.Get;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+@ Impl@ = /Fbld/Eval%.Impl@;
+@ Env@ = /Fbld/Eval%.Env@;
+% Eval = /Fbld/Eval%.Eval;
+% AssertArgCount = /Fbld/Eval%.AssertArgCount;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Command@ = /Fbld/Markup%.Command@;
+% ToPlain = /Fbld/Markup%.ToPlain;
+
+% r = /Fbld/Result%.Monad;
+
+Impl@ IfEq = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(AssertArgCount(Int|4, cmd));
+
+  String@ a <- r.do({
+    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    ToPlain(evaled);
+  });
+
+  String@ b <- r.do({
+    Markup@ arg = Get(cmd.args, Int|1);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    ToPlain(evaled);
+  });
+
+  Markup@ body = /Core/String/Eq%.Eq(a, b).?(
+    true: Get(cmd.args, Int|2),
+    false: Get(cmd.args, Int|3));
+
+  Eval(env, body);
+};
+
+@(IfEq);

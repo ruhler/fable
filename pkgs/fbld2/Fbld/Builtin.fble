@@ -5,6 +5,8 @@
 % EmptyEnv = /Fbld/Eval%.EmptyEnv;
 % InsertEnv = /Fbld/Eval%.InsertEnv;
 
-Env@ Env = InsertEnv(EmptyEnv, Str|'define', /Fbld/Builtin/Define%.Define);
+Env@ Env = InsertEnv(
+           InsertEnv(EmptyEnv, Str|'ifeq', /Fbld/Builtin/If%.IfEq),
+           Str|'define', /Fbld/Builtin/Define%.Define);
 
 @(Env);
