@@ -1,7 +1,6 @@
 
 % IsSpace = /Core/Char/Type%.IsSpace;
 
-@ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -10,11 +9,8 @@
 <@>% Get = /Core/List/Length%.Get;
 
 @ String@ = /Core/String%.String@;
-% Strs = /Core/String%.Strs;
-% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 
 @ Impl@ = /Fbld/Eval%.Impl@;
@@ -22,31 +18,16 @@
 % InsertEnv = /Fbld/Eval%.InsertEnv;
 % Eval = /Fbld/Eval%.Eval;
 % Evals = /Fbld/Eval%.Evals;
+% AssertArgCount = /Fbld/Eval%.AssertArgCount;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
 % ToPlain = /Fbld/Markup%.ToPlain;
 
-<@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Err = /Fbld/Result%.Err;
 % r = /Fbld/Result%.Monad;
 
-% Text = /Fbld/Text%.Text;
-
-(Int@, Command@) { Result@<Unit@>; }
-VerifyArgCount = (Int@ expected, Command@ cmd) {
-  Int@ num_args = Length(cmd.args);
-  /Core/Int/Eq%.Eq(num_args, expected).?(false: {
-    Err<Unit@>(Text(cmd.name.loc, Strs[
-      Str|'Expected ', /Core/Int/Show%.Show(expected),
-      Str|' arguments to ', cmd.name.text,
-      Str|', but found ', /Core/Int/Show%.Show(num_args)]));
-  });
-  r.return(Unit);
-}; 
-
 (Markup@) { Impl@; } VarImpl = (Markup@ markup)(Env@ _, Command@ cmd) {
-  Unit@ _ <- r.do(VerifyArgCount(Int|0, cmd));
+  Unit@ _ <- r.do(AssertArgCount(Int|0, cmd));
   r.return(markup);
 };
 
@@ -58,7 +39,7 @@ DefArgs = (Env@ env, List@<String@> params, List@<Markup@> args) {
 };
 
 Impl@ Define = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(VerifyArgCount(Int|4, cmd));
+  Unit@ _ <- r.do(AssertArgCount(Int|4, cmd));
 
   String@ name <- r.do({
     Markup@ arg = Get(cmd.args, Int|0);
@@ -76,7 +57,7 @@ Impl@ Define = (Env@ env, Command@ cmd) {
   Markup@ def = Get(cmd.args, Int|2);
 
   Impl@ impl = (Env@ e, Command@ c) {
-    Unit@ _ <- r.do(VerifyArgCount(Length(params), c));
+    Unit@ _ <- r.do(AssertArgCount(Length(params), c));
 
     List@<Markup@> args <- r.do(Evals(e, c.args));
     Eval(DefArgs(env, params, args), def);

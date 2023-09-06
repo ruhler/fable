@@ -1,14 +1,20 @@
 
+@ Int@ = /Core/Int%.Int@;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
 <@>% Append = /Core/List%.Append;
+<@>% Length = /Core/List/Length%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
 % Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
@@ -58,6 +64,22 @@ Evals = (Env@ env, List@<Markup@> markups) {
   r.return(Cons(head, tail));
 };
 
+# Helper function to assert that a command has been provided with the given
+# number of arguments.
+(Int@, Command@) { Result@<Unit@>; }
+AssertArgCount = (Int@ expected, Command@ cmd) {
+  Int@ num_args = Length(cmd.args);
+  /Core/Int/Eq%.Eq(num_args, expected).?(false: {
+    Err<Unit@>(Text(cmd.name.loc, Strs[
+      Str|'Expected ', /Core/Int/Show%.Show(expected),
+      Str|' arguments to ', cmd.name.text,
+      Str|', but found ', /Core/Int/Show%.Show(num_args)]));
+  });
+  r.return(Unit);
+}; 
+
+
 @(Impl@, Env@,
   EmptyEnv, LookupEnv, InsertEnv,
-  Eval, Evals);
+  Eval, Evals,
+  AssertArgCount);

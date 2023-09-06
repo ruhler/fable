@@ -4262,3 +4262,18 @@ the caller would have done, I think. So, in this case:
  all args: env
 
 Maybe that could work.
+
+---
+
+Next steps:
+
+* Add '@' literal next line arg syntax.
+* Define @ifeq, @let, @head, @tail
+
+I'll also need to figure out how to transition from tcl fbld and fble fbld1
+over to fbld2, given it has slightly different syntax for the documents.
+
+Let's get README.fbld to work manually to markdown first. Then to html.
+
+At that point I think we can start migrating docs one at a time over to fbld2.
+
