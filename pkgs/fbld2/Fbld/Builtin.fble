@@ -1,12 +1,27 @@
 
+<@>@ List@ = /Core/List%.List@;
+
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Env@ = /Fbld/Eval%.Env@;
+@ Impl@ = /Fbld/Eval%.Impl@;
 % EmptyEnv = /Fbld/Eval%.EmptyEnv;
 % InsertEnv = /Fbld/Eval%.InsertEnv;
 
-Env@ Env = InsertEnv(
-           InsertEnv(EmptyEnv, Str|'ifeq', /Fbld/Builtin/If%.IfEq),
-           Str|'define', /Fbld/Builtin/Define%.Define);
+@ Builtin@ = *(String@ name, Impl@ impl);
+
+(List@<Builtin@>) { Env@; } Builtins = (List@<Builtin@> builtins) {
+  /Core/List%.ForEach(builtins, EmptyEnv, (Builtin@ x, Env@ e) {
+    InsertEnv(e, x.name, x.impl);
+  });
+};
+
+Env@ Env = Builtins[
+  @(name: Str|'ifeq',   impl: /Fbld/Builtin/If%.IfEq),
+  @(name: Str|'head',   impl: /Fbld/Builtin/String%.Head),
+  @(name: Str|'tail',   impl: /Fbld/Builtin/String%.Tail),
+  @(name: Str|'define', impl: /Fbld/Builtin/Define%.Define)
+];
 
 @(Env);

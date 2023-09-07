@@ -13,6 +13,7 @@ Things to consider doing for the fble-0.2 release.
  - Add test for nesting of [ and ] characters in plain text.
  - Are blank lines allowed inside @[...] inside @.block text?
  - Update list of escape chars in vim syntax highlighting.
+ - Test for location tracking across @head and @tail?
 
 * Fbld Text@ rewrite:
  - Move implement of Eq and Show internally.

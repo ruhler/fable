@@ -1,0 +1,55 @@
+
+@ Char@ = /Core/Char%.Char@;
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
+<@>% Get = /Core/List/Length%.Get;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+@ Impl@ = /Fbld/Eval%.Impl@;
+@ Env@ = /Fbld/Eval%.Env@;
+% Eval = /Fbld/Eval%.Eval;
+% AssertArgCount = /Fbld/Eval%.AssertArgCount;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Command@ = /Fbld/Markup%.Command@;
+% Plain = /Fbld/Markup%.Plain;
+% ToPlain = /Fbld/Markup%.ToPlain;
+
+% r = /Fbld/Result%.Monad;
+
+Impl@ Head = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
+
+  String@ str <- r.do({
+    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    ToPlain(evaled);
+  });
+
+  # TODO: What to use for the location of the result?
+  String@ head = str.?(cons: List[str.cons.head], nil: Nil<Char@>);
+  r.return(List[Plain(cmd.name.loc, head)]);
+};
+
+Impl@ Tail = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
+
+  String@ str <- r.do({
+    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    ToPlain(evaled);
+  });
+
+  # TODO: What to use for the location of the result?
+  String@ tail = str.?(cons: str.cons.tail, nil: str);
+  r.return(List[Plain(cmd.name.loc, tail)]);
+};
+
+@(Head, Tail);
