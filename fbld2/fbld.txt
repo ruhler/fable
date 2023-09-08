@@ -45,3 +45,29 @@ Questions:
   @
   @ hello
 * Can you have unescaped nested [ ] in plain text?
+
+Builtins
+========
+@head[str]
+  Returns the first character of the given string after evaluation. Returns an
+  empty string if the given string is empty.
+
+@tail[str]
+  Returns all but the first character of the given string after evaluation.
+  Returns an empty string if the given string is empty.
+
+@ifeq[a][b][then][else]
+  Compares strings 'a' and 'b' after evaluation. If they are equal, returns
+  the result of evaluating the 'then' branch. Otherwise returns the results of
+  evaluating the 'else' branch.
+
+@define[name][params][def][body]
+  Defines a new command @<name> for use in the body. Params is a space
+  separated list of parameters for the new command. 'def' defines the value of
+  the command, which will be evaluated in a context where args are bound to
+  the parameters.
+
+  For example:
+
+  @define[ShowPair][a b][The pair is: @a, @b][@ShowPair[hello][there]]
+  
