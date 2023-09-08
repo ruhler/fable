@@ -82,6 +82,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       Unit@ _ <- m.do(O.PutLine(stdio.err, ShowError(result)));
       m.return(False);
     });
+
+    Unit@ _ <- m.do(O.PutStr(stdio.out, result.ok));
     m.return(True);
   };
 };

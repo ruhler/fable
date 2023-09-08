@@ -60,11 +60,12 @@ Impl@ Define = (Env@ env, Command@ cmd) {
     Unit@ _ <- r.do(AssertArgCount(Length(params), c));
 
     List@<Markup@> args <- r.do(Evals(e, c.args));
-    Eval(DefArgs(env, params, args), def);
-  };
+    Eval(DefArgs(nenv, params, args), def);
+  },
+  Env@ nenv = InsertEnv(env, name, impl);
 
   Markup@ body = Get(cmd.args, Int|3);
-  Eval(InsertEnv(env, name, impl), body);
+  Eval(nenv, body);
 };
 
 @(Define);

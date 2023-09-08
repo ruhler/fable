@@ -4277,3 +4277,14 @@ Let's get README.fbld to work manually to markdown first. Then to html.
 
 At that point I think we can start migrating docs one at a time over to fbld2.
 
+---
+
+README.fbld -> README.md via fbld2 works!
+
+That's awesome.
+
+Issues still to be addressed:
+* Need for \\ instead of \ in code.
+* Definitions of @FbleVersion and @BuildStamp
+
+Let me work on an html.fbld for fbld2 next.
