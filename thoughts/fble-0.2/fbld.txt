@@ -4288,3 +4288,8 @@ Issues still to be addressed:
 * Definitions of @FbleVersion and @BuildStamp
 
 Let me work on an html.fbld for fbld2 next.
+
+---
+
+I tried writing html.fbld. It's so much nicer in fbld2 than it was in fbld1.
+This is looking real good to me.

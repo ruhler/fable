@@ -1,0 +1,28 @@
+@define[par][text] <p>@text</p> @@
+@define[.block][text] @par[@text] @@
+
+@define[doc][title body]
+ <head>
+ <style>
+ body {
+ color: #333333;
+ font-family: sans-serif;
+ max-width: 50em;
+ }
+ h1 { font-size: 2.0em; }
+ h2 { font-size: 1.6em; }
+ h3 { font-size: 1.4em; }
+ h4 { font-size: 1.2em; }
+ p { font-size: 1em; }
+ </style>
+ <title>@title</title>
+ </head><body>
+ <h1>@title</h1>
+ @body</body>
+@@
+
+@define[section][title body] <h2>@title</h2>\n@body @@
+@define[url][url] <a href="@url">@url</a> @@
+@define[fbld][file] @url[@file] @@
+@define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
+@define[code][lang text] <pre>@text</pre>\n @@
