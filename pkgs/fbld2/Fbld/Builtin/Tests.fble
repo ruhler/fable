@@ -68,6 +68,19 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
+  Test(Str|DefineRecursive, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][x]',
+      Str|' @ifeq[@x][a][done][@foo[a]]',
+      Str|'@@',
+      Str|'@foo[hello]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'done';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
   Test(Str|Head, (Unit@ _) {
     Result@<String@> got = Run[
       Str|'@head[foo]'
