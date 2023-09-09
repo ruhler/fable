@@ -4,10 +4,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Figure out why Chars.''' seems to break fbld-deps program.
 
-* fbld2/html.fbld
- - Get README.html to match what we previously would produce.
- - Add html escaping for code blocks.
-
 * Fbld2:
  - Are blank lines allowed at end of next line literal text?
  - Add test for nesting of [ and ] characters in plain text.

@@ -33,4 +33,18 @@
 @@
 
 @define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
-@define[code][lang text] <pre>@text</pre>\n @@
+
+@define[EscHtmlChar][char]
+ @ifeq[&][@char] &amp; @@
+ @ifeq[<][@char] &lt; @@
+ @ifeq[>][@char] &gt; @@
+ @char
+@@
+
+@define[EscHtml][str]
+ @ifeq[][@str][] @@
+ @EscHtmlChar[@head[@str]]
+ @EscHtml[@tail[@str]]
+@@
+
+@define[code][lang text] <pre>@EscHtml[@text]</pre>\n @@
