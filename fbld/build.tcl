@@ -76,8 +76,4 @@ namespace eval "fbld" {
       "$::s/fbld/cdata.tcl $target.txt" \
       "tclsh8.6 $::s/fbld/cdata.tcl $id < $target.txt > $target"
   }
-
-  # Fbld Spec www.
-  ::html_doc $::b/www/fbld/fbld.html $::s/fbld/fbld.fbld
-  www $::b/www/fbld/fbld.html
 }

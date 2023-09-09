@@ -86,30 +86,30 @@
   For example, consider the following paragraph of text annotated with fbld
   inline structure:
  
-  @code[fbld]
+  @code[fbld] @
    It's @emph[really] important to check the result of the @code[malloc]
    function in C, in case it returns @NULL. See @link[the malloc man
    page][https://manpages.org/malloc] for more details.
  
-  Explicit commands are introduced with the @l[@] character. In this example
-  we use commands @l[@emph], @l[@code], @l[@NULL], and @l[@link]. The meaning
+  Explicit commands are introduced with the @l[\@] character. In this example
+  we use commands @l[\@emph], @l[\@code], @l[\@NULL], and @l[\@link]. The meaning
   of these commands is entirely user defined. There are no commands built in
   to fbld.
  
   Arguments to commands are passed within square brackets. For example,
-  @l[really] is an argument passed to the @l[@emph] command, @l[malloc] is the
-  argument passed to the @l[@code] command. The @l[@NULL] command is given no
-  arguments and the @l[@link] command is given two arguments.
+  @l[really] is an argument passed to the @l[\@emph] command, @l[malloc] is the
+  argument passed to the @l[\@code] command. The @l[\@NULL] command is given no
+  arguments and the @l[\@link] command is given two arguments.
  
   Any text not explicitly part of a command or its arguments is grouped
   together into a single argument and passed to an implicit default inline
-  command. For example, let's say the default command was called @l[@default].
-  The first, implicit command from the above text is then @l[@default[It's ]].
+  command. For example, let's say the default command was called @l[\@default].
+  The first, implicit command from the above text is then @l[\@default\[It's \]].
  
   In summary, the above text is parsed into the following sequence of nine
   commands, using tcl syntax for clarity:
  
-  @code[tcl]
+  @code[tcl] @
    default "It's "
    emph "really"
    default " important to check the result of the "
@@ -132,20 +132,20 @@
  
    The following are special characters in fbld:
  
-   @item @par @l[@], @l[\[], @l[\]], @l[\\]
+   @item @l[\@], @l[\[], @l[\]], @l[\\]
  
    To use these characters without special processing, prefix them with a
    backslash character. For example:
  
-   @code[fbld]
+   @code[fbld] @
     My email is ruhler\@degralder.com \[I think\].
  
    Would be converted into the single command:
  
-   @code[tcl]
+   @code[tcl] @
     default {My email is ruhler\@degralder.com \[I think\].}
  
-   It is illegal to specify @l[@] without a valid command name immediately
+   It is illegal to specify @l[\@] without a valid command name immediately
    following. It is illegal to use @l[\[] or @l[\]] outside of specifying
    arguments, and braces must be properly closed.
  
@@ -158,19 +158,19 @@
    It is possible to use inline structure in arguments to commands. For
    example:
  
-   @code[fbld]
+   @code[fbld] @
     Go @link[@bold[here]][www.degralder.com] for cool stuff.
  
-   When parsing the first argument to the @l[@link] command, the text from
+   When parsing the first argument to the @l[\@link] command, the text from
    opening @l[\[] to matching @l[\]] is used. This is just like how braces
    work in tcl. In this case, the sequence of commands would be:
  
-   @code[tcl]
+   @code[tcl] @
     default "Go "
     link "@bold[here]" "www.degralder.com"
     default " for cool stuff."
  
-   It's up to the @l[@link] command to parse its first argument as inline
+   It's up to the @l[\@link] command to parse its first argument as inline
    structured text if it so desires.
  
  @section Block Structure
@@ -190,13 +190,13 @@
   @subsection Same Line Args
    Consider the following block structed text:
    
-   @code[fbld]
+   @code[fbld] @
     @def[triangle] Has three sides
     @def[square] Has four sides
 
    This is a sequence of two commands, each with two arguments:
 
-   @code[tcl]
+   @code[tcl] @
     def triangle "Has three sides"
     def square "Has four sides"
 
@@ -207,13 +207,13 @@
    command arguments, no same line argument is passed to the command. For
    example:
 
-   @code[fbld]
+   @code[fbld] @
     @item[first item]
     @item[second item]
    
    Is parsed as:
 
-   @code[tcl]
+   @code[tcl] @
     item "first item"
     item "second item"
   
@@ -221,7 +221,7 @@
    Any indented lines following a block command are grouped together and
    passed as an additional argument to the block command. For example:
 
-   @code[fbld]
+   @code[fbld] @
     @section[First Section]
      Contents of the first section.
 
@@ -231,7 +231,7 @@
 
    Is parsed as:
    
-   @code[tcl]
+   @code[tcl] @
     section "First Section" "Contents of the first section.\n\nSpanning multiple lines.\n"
     section "Second Section" "Contents of the second section.\n"
 
@@ -247,12 +247,12 @@
    lines argument is supplied.
 
   @subsection Argument Continuation
-   If the line following a block command starts with @l[@] without a command,
+   If the line following a block command starts with @l[\@] without a command,
    it continues the arguments from the previous command. Commands can be
    continued with regular, same line, and next line arguments repeatedly. For
    example:
 
-   @code[fbld]
+   @code[fbld] @
     @list[first arg][second arg] third arg
      fourth arg
     @[fifth arg][sixth arg] seventh arg
@@ -261,11 +261,11 @@
      tenth arg
 
   @subsection Final Argument
-   If the line following a block command consists of a single @l[@@], the
+   If the line following a block command consists of a single @l[\@\@], the
    entire remainder of the document is passed as the last argument to the
    command. For example:
 
-   @code[fbld]
+   @code[fbld] @
     @list[first arg] second arg
      third arg
     @@
@@ -281,7 +281,7 @@
 
    For example:
    
-   @code[fbld]
+   @code[fbld] @
     This is the first paragraph
     of a document.
 
@@ -289,7 +289,7 @@
 
    Parses as:
 
-   @code[tcl]
+   @code[tcl] @
     default "This is the first paragraph\nof a document.\n"
     default "Here is the second.\n"
 
@@ -298,19 +298,19 @@
    prevent the command from being treated as a block command, either pass it
    explicitly to the default command, or add a space before. For example:
 
-   @code[fbld]
+   @code[fbld] @
     @default
-     @emph{Yeah!}. Fbld is so great!
+     @emph[Yeah!]. Fbld is so great!
 
-   In this case, @l[@emph] is considered an inline command because the
-   @l[@default] command parses its argument as inline structed text instead of
+   In this case, @l[\@emph] is considered an inline command because the
+   @l[\@default] command parses its argument as inline structed text instead of
    block structured text.
 
 
   @subsection A Bigger Example
    Here's an example demonstrating various uses of block structed text.
  
-   @code[fbld]
+   @code[fbld] @
     @doc A Bigger Example
     
      Some introductory text here.
@@ -326,25 +326,25 @@
  
    The top level parses as a single doc command:
 
-   @code[tcl]
+   @code[tcl] @
     doc "A Bigger Example" "Some introductory text here.\n\n@section..."
 
    The doc command itself can interpet its second argument as block structed
    text. In that case it parses into two commands:
 
-   @code[tcl]
+   @code[tcl] @
     default "Some introductory text here.\n"
     section "First Section" "@paragraph\n Here is a paragraph in..."
 
    The section command parses its second argument as block structured text:
 
-   @code[tcl]
+   @code[tcl] @
     paragraph "Here is a paragraph in the first\nsectionof the doc.\n"
     list "@item First item of a list.\n@item Second item of a list.\n"
 
    Finally, the list command parses its argument as block structured text:
 
-   @code[tcl]
+   @code[tcl] @
     item "First item of a list."
     item "Second item of a list."
 
@@ -353,35 +353,35 @@
    is stripped away from the lines before the block command gets processed.
 
  @section Handling of Escape Characters
-  The characters @l[@], @l[\[], @l[\]], and @l[\\] are special and need to be
+  The characters @l[\@], @l[\[], @l[\]], and @l[\\] are special and need to be
   escaped using @l[\\] to avoid being processed specially. At the end of the
   day, users will need to manually remove the escapes.
  
   For example, imagine we want to put an email address in a document that we
   convert to markdown:
  
-  @code[fbld]
+  @code[fbld] @
    @block[Example]
     My email address is @bold[ruhler\@degralder.com].
  
   This gets parsed via block structured text as:
  
-  @code[tcl]
+  @code[tcl] @
    block "Example" {My email address is @bold[ruhler\@degralder.com].}
  
   The second argument gets parsed as inline structured text as:
  
-  @code[tcl]
+  @code[tcl] @
    default "My email address is "
    bold {ruhler\@degralder.com}
    default "."
  
-  To actually display the text, the @l[@bold] command should remove the
+  To actually display the text, the @l[\@bold] command should remove the
   backslash before rendering the text.
  
  @section TODO
   @item
-   Is the following valid? @l[hello \] \[ @there]. The square brackets are
+   Is the following valid? @l[hello \] \[ \@there]. The square brackets are
    supposed to be special, but it's not within a command, so there shouldn't
    be any need to escape them, right? Only need to escape square brackets when
    parsing arguments? This would be a problem if it was within an argument.

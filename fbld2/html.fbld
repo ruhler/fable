@@ -23,6 +23,7 @@
 @@
 
 @define[section][title body] <h2>@title</h2>\n@body @@
+@define[subsection][title body] <h3>@title</h3>\n@body @@
 @define[url][url] <a href="@url">@url</a> @@
 
 @define[fbld][file]
@@ -33,6 +34,8 @@
 @@
 
 @define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
+@define[definition][name value] @def[@name][@value] @@
+@define[item][text] <ul><li>@text</li></ul>\n @@
 
 @define[EscHtmlChar][char]
  @ifeq[&][@char] &amp; @@
@@ -48,3 +51,4 @@
 @@
 
 @define[code][lang text] <pre>@EscHtml[@text]</pre>\n @@
+@define[l][text] <code>@EscHtml[@text]</code> @@

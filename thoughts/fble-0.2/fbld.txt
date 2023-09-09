@@ -4319,3 +4319,24 @@ That should be valid, right?
 
 Then what if we want the literal text to end with blank lines? Do we need to
 look at the indent level to tell?
+
+---
+
+Next issue: how to easily have @ in inline text. Do I want to use \@
+everywhere, or have some nicer way to have literal text?
+
+For example: @l[@], @l[@emph], @l[@code], ... is used a lot in my docs.
+
+Proposal: use {} for literal inline arguments. For example:
+
+@l{@}, @l{@emph}, @l{Bool@}
+
+No need for special same line arg. We can use inline arg instead:
+
+@title{Bool@ Types}
+
+Or:
+
+@title Bool\@ Types
+
+I don't know. Think about it.
