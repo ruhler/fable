@@ -220,7 +220,7 @@ build_tcl $::s/tutorials/build.tcl
 build_tcl $::s/pkgs/build.tcl
 
 # README file www
-::html_doc $::b/www/index.html $::s/README.fbld
+fbld2_html_doc $::b/www/index.html $::s/README.fbld
 www $::b/www/index.html
 
 # Release file www

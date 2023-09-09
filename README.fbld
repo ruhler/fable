@@ -64,7 +64,7 @@
 
   To install required dependencies on a debian based system:
 
-  @code[sh]
+  @code[sh] @
    apt install \
      expect binutils bison \
      gcc gdb diffutils grep groff-base source-highlight \
@@ -73,7 +73,7 @@
  @section Build
   To build and install:
 
-  @code[sh]
+  @code[sh] @
    ./configure --prefix=/usr/local && ninja && ninja install
 
   Additional ninja targets:
@@ -87,7 +87,7 @@
   in the `vim/` directory. You can run the following commands to install these
   files:
 
-  @code[sh]
+  @code[sh] @
    mkdir -p ~/.vim/ftdetect ~/.vim/ftplugin ~/.vim/indent ~/.vim/syntax
    cp vim/ftdetect/* ~/.vim/ftdetect
    cp vim/ftplugin/* ~/.vim/ftplugin
