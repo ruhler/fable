@@ -26,6 +26,9 @@ Syntax Reference
   text is parsed as block structured text.
 * A final argument can also be indicated by having ' @@' at the end of the
   same line. In that case the ' @@' is not include in any same line argument
+* A next line literal argument is indicated by having ' @' at the end of the
+  same line. A single space indent should start on the next line. Indent text
+  is read literally without any further parsing or escape sequences.
 and the following unindented text is parsed as block structured text.
 * Inline structured text is a sequence of inlines.
 * An inline is either an inline command or plain text.
@@ -45,6 +48,7 @@ Questions:
   @
   @ hello
 * Can you have unescaped nested [ ] in plain text?
+* Can you have blank lines at the end of next line literal text?
 
 Builtins
 ========

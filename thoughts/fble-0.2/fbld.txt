@@ -4293,3 +4293,29 @@ Let me work on an html.fbld for fbld2 next.
 
 I tried writing html.fbld. It's so much nicer in fbld2 than it was in fbld1.
 This is looking real good to me.
+
+---
+
+Challenge with literal next line arg:
+
+@a
+ @b @
+  literal text here
+
+ Plain text here.
+
+The blank line between literal and plain text... does it count as literal text
+or as separator between the @b command and the plain text?
+ 
+From what I wrote, I expect the blank line not to be included in blank text.
+
+What if we don't have the blank line at all, is that valid?
+
+@foo
+bar
+@sludge
+
+That should be valid, right?
+
+Then what if we want the literal text to end with blank lines? Do we need to
+look at the indent level to tell?

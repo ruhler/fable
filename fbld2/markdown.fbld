@@ -13,4 +13,4 @@
  @head[@text]
  @suffix
 @@
-@define[code][lang text] @indent[][@text] @@
+@define[code][lang text] \n@indent[    ][@text] @@

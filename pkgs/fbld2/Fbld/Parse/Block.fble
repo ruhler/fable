@@ -61,12 +61,31 @@ M@<Unit@> SkipBlankLines = {
   Return(Unit);
 };
 
+M@<Unit@> BlankToEnd = {
+  Unit@ _ <- Do(SkipBlankLines);
+  EndOfInput;
+};
+
+# Parses raw text to end of file
+M@<String@> Raw = {
+  # TODO: For now we don't include blank lines at the end. It's not clear if
+  # this is the right behavior though.
+  Bool@ end <- Do(Try_(BlankToEnd));
+  end.?(true: Return(Str|''));
+
+  Char@ head <- Do(Get);
+  String@ tail <- Do(Raw);
+  Return(Cons(head, tail));
+};
+
 # Parses the rest of the args for a block command.
 (Loc@, String@, List@<Markup@>) { M@<Element@>; }
 Args = (Loc@ l, String@ name, List@<Markup@> args) {
   List@<Markup@> inline_args <- Do(InlineArgs);
 
-  M@<Unit@> EndOfSameLine = Or(String(StrE|'\n'), String(StrE|' @@\n'));
+  M@<Unit@> EndOfSameLine = Or(String(StrE|'\n'),
+    Or(String(StrE|' @\n'), String(StrE|' @@\n')));
+
   List@<Markup@> same_line <- Do({
     Bool@ none <- Do(Test_(EndOfSameLine));
     none.?(true: Return(Nil<Markup@>));
@@ -88,7 +107,18 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
         args, inline_args, same_line, List[arg]]));
   });
 
-  Unit@ _ <- Do(String(StrE|'\n'));
+  List@<Markup@> literal <- Do({
+    Bool@ none <- Do(Try_(String(StrE|'\n')));
+    none.?(true: Return(Nil<Markup@>));
+
+    Unit@ _ <- Do(String(StrE|' @\n'));
+    Element@ e <- Do(Indented({
+      Loc@ l <- Do(Loc);
+      String@ raw <- Do(Raw);
+      Return(/Fbld/Markup%.Plain(l, raw));
+    }));
+    Return(List[List[e]]);
+  });
 
   List@<Markup@> next <- Do({
     Bool@ present <- Do(Try_(String|' '));
@@ -101,18 +131,18 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
   final.?(true: {
     Markup@ arg <- Do(Block);
     Return(/Fbld/Markup%.Command(l, name)(Concat[
-        args, inline_args, same_line, next, List[arg]]));
+        args, inline_args, same_line, literal, next, List[arg]]));
   });
 
   Bool@ continue <- Do(Test_(Or(String|'@ ', String|'@[')));
   continue.?(true: {
     Unit@ _ <- Do(String|'@');
     Args(l, name, Concat[
-      args, inline_args, same_line, next]);
+      args, inline_args, same_line, literal, next]);
   });
 
   Return(/Fbld/Markup%.Command(l, name)(Concat[
-      args, inline_args, same_line, next]));
+      args, inline_args, same_line, literal, next]));
 },
 
 # Parses a command starting just after the initial '@'.

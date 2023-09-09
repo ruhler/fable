@@ -7,6 +7,7 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
+% Strs = /Core/String%.Strs;
 % Lines = /Core/String%.Lines;
 
 @ Test@ = /Core/Test%.Test@;
@@ -224,6 +225,21 @@ Test@ Tests = TestSuite(Str|Parse, List[
         M[C|2|2|'bar'[
           M[P|2|6|'here is the end.'],
           M[C|3|2|'.block'[M[P|3|2|'Of all the rest.\n']]]]]]]);
+    AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|Literal, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@foo @',
+      Str|' foo@bar \ blah @@ @\@\\@.',
+      Str|'@ done'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'foo'[
+        M[Pr|2|2(Strs[Str|'foo@bar \ blah @@ @\@\\@.', StrE|'\n'])],
+        M[P|3|3|'done']]]);
     AssertResultEquals(wnt, got);
   })
 ]);
