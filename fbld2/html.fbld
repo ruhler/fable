@@ -1,7 +1,8 @@
-@define[par][text] <p>@text</p> @@
+@define[par][text] <p>@text</p>\n @@
 @define[.block][text] @par[@text] @@
 
 @define[doc][title body]
+ @define[.block][text][@text] @@
  <head>
  <style>
  body {
@@ -23,6 +24,13 @@
 
 @define[section][title body] <h2>@title</h2>\n@body @@
 @define[url][url] <a href="@url">@url</a> @@
-@define[fbld][file] @url[@file] @@
+
+@define[fbld][file]
+ @define[ReplaceExt][str]
+  @ifeq[@str][.fbld] .html
+  @ @head[@str]@ReplaceExt[@tail[@str]]
+ @ <a href="@ReplaceExt[@file]"><code>@file</code></a>
+@@
+
 @define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
 @define[code][lang text] <pre>@text</pre>\n @@

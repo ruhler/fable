@@ -190,7 +190,8 @@ String = (String@ s) {
   Char@ c <- Do(Get);
   /Core/Char/Eq%.Eq(s.cons.head, c).?(
     true: String(s.cons.tail),
-    false: Error<Unit@>(loc, Strs[Str|'Expected ', Str[s.cons.head]]));
+    false: Error<Unit@>(loc, Strs[
+      Str|'Expected ''', Str[s.cons.head], Str|'''']));
 };
 
 @(M@, Return, Error, Do, Loc, Get, EndOfInput, Indented,

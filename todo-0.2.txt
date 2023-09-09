@@ -6,6 +6,8 @@ Things to consider doing for the fble-0.2 release.
 
 * fbld2/html.fbld
  - Get README.html to match what we previously would produce.
+ - Parsing of sequential plain block text in nested block not working?
+ - @code blocks are getting extra <p>.
 
 * Fbld2:
  - Add @ next line literal syntax and use it for README.md

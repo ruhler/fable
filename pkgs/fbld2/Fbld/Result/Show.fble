@@ -8,13 +8,13 @@
 
 <@ T@> { Show@<Result@<T@>>; }
 ShowError = <@ T@>(Result@<T@> r) {
-  Strs[Str|'error:', /Fbld/Text/Show%.Show(r.err)];
+  /Fbld/Loc%.Report(r.err.loc, Strs[Str|'error: ', r.err.text]);
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
 Show = <@ T@>(Show@<T@> show)(Result@<T@> r) {
   r.?(err: ShowError(r));
-  Strs[Str|'ok:', show(r.ok)];
+  Strs[Str|'ok: ', show(r.ok)];
 };
 
 @(Show, ShowError);
