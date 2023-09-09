@@ -3,7 +3,8 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-% Int = /Core/Int/Lit%.Int; 
+@ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -31,6 +32,7 @@
 <@>% Do = /Fbld/Parse/M%.Do;
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
+% GetIndent = /Fbld/Parse/M%.GetIndent;
 <@>% Try_ = /Fbld/Parse/M%.Try_;
 <@>% Test = /Fbld/Parse/M%.Test;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
@@ -46,7 +48,8 @@
 # Parses a blank line. Fails if we aren't at a blank line.
 M@<Unit@> BlankLine = {
   Loc@ l <- Do(Loc);
-  /Core/Int/Eq%.Eq(Int|1, l.col).?(false: {
+  Int@ indent <- Do(GetIndent);
+  /Core/Int/Eq%.Lt(Incr(indent), l.col).?(true: {
     Error<Unit@>(l, Str|'not a blank line');
   });
   String(StrE|'\n');

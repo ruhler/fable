@@ -146,6 +146,25 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
+  Test(Str|IndentedSequentialPlainBlocks, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@doc',
+      Str|' @section',
+      Str|'  With some text',
+      Str|'  spanning over lines.',
+      Str|' ',
+      Str|'  multiple lines actually.'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'doc'[M[
+        C|2|3|'section'[M[
+          C|3|3|'.block'[M[P|3|3|'With some text\nspanning over lines.\n']],
+          C|6|3|'.block'[M[P|6|3|'multiple lines actually.\n']]]]]]]);
+    AssertResultEquals(wnt, got);
+  }),
+
   Test(Str|Continuation, (Unit@ _) {
     String@ text = Lines[
       Str|'@list[first][second]',
