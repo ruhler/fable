@@ -24,13 +24,19 @@
 
 @define[section][title body] <h2>@title</h2>\n@body @@
 @define[subsection][title body] <h3>@title</h3>\n@body @@
-@define[url][url] <a href="@url">@url</a> @@
 
-@define[fbld][file]
+@define[url][url label]
+ @define[l][] @ifeq[][@label][@url][@label] @@
+ <a href="@url">@l</a>
+@@
+
+@define[fbld][file label]
  @define[ReplaceExt][str]
   @ifeq[@str][.fbld] .html
   @ @head[@str]@ReplaceExt[@tail[@str]]
- @ <a href="@ReplaceExt[@file]"><code>@file</code></a>
+ @@
+ @define[l][] @ifeq[][@label][@file][@label] @@
+ <a href="@ReplaceExt[@file]"><code>@label</code></a>
 @@
 
 @define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@

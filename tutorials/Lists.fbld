@@ -5,16 +5,16 @@
  @section Lists in Fble
   There is no builtin list type in fble. You can define your own list type in
   fble using a mix of structs and unions.  For example, here's a possible
-  definition for a list of @l[Int@]:
+  definition for a list of @l{Int@}:
  
-  @code[fble]
+  @code[fble] @
    @ List@ = +(*(Int@ head, List@ tail) cons, Unit@ nil);
  
   This defines the list type as a union with two choices: a list constructed
   with a head element and tail of the list, or an empty list. We can define
   helper functions for constructing lists:
  
-  @code[fble]
+  @code[fble] @
    List@ Empty = List@(nil: Unit);
    
    (Int@, List@) { List@; } Cons = (Int@ head, List@ tail) {
@@ -24,7 +24,7 @@
   We can then construct a list of integers. For example, here's a list of the
   first 8 integers in the fibonacci sequence:
  
-  @code[fble]
+  @code[fble] @
    List@ Fibonacci = Cons(
      Int|0, Cons(
      Int|1, Cons(
@@ -36,7 +36,7 @@
      Int|13, Empty))))))));
  
   It's pretty tedious to write a list this way. In most languages you could
-  write something like @l[[0, 1, 1, 2, 3, 5, 8, 13]], which is much more
+  write something like @l{[0, 1, 1, 2, 3, 5, 8, 13}], which is much more
   compact and readable.
  
  @section The List Expression
@@ -46,12 +46,12 @@
   Let's define a (in this case trivial) function that takes a single list as
   an argument to construct a list:
  
-  @code[fble]
+  @code[fble] @
    (List@) { List@; } List = (List@ l) { l; };
  
   We can use the list expression in fble to define lists now using:
  
-  @code[fble]
+  @code[fble] @
    List@ Fibonacci = List[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
  
   The compiler will assemble together the list elements into a collection of
@@ -59,7 +59,7 @@
   the function with the list value as its argument. In this case, the list
   expression desugars at compile time to:
  
-  @code[fble]
+  @code[fble] @
    List@ Fibonacci = List(
      List@(cons: @(head: Int|0, tail:
      List@(cons: @(head: Int|1, tail:
@@ -75,7 +75,7 @@
   For the compiler to support the list expression, it has to know what the
   structure of a list is. It doesn't care what name you use for the list type,
   or what name you use for the list fields. As long as it has the same
-  structure as the @l[List@] type we already defined.
+  structure as the @l{List@} type we already defined.
  
   Specifically, the required structure of a list type is:
  
@@ -91,7 +91,7 @@
   For example, here's a completely different way we could define our list type
   and still use the list expression:
  
-  @code[fble]
+  @code[fble] @
    @ MyUnit@ = *();
    @ NonEmptyIntList@ = *(Int@ element, IntList@ rest_of_list),
    @ IntList@ = +(NonEmptyList@ not_empty, MyUnit@ empty);
@@ -102,7 +102,7 @@
    
    IntList@ Fibonacci = Elements[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
  
-  This works because the @l[IntList@] type, even though it uses different
+  This works because the @l{IntList@} type, even though it uses different
   names for things, matches the structure of a list type expected by the
   compiler for list expressions.
  
@@ -115,14 +115,14 @@
  
  @section List Functions
   The list expression requires a function that takes a single argument which
-  is of list type. We saw an example function @l[List] that returns its value
+  is of list type. We saw an example function @l{List} that returns its value
   directly to construct a list, but you can do anything you want in the list
   function.
  
   For example, here is a list function that sums the integers in a list, using
   a helper function to ensure recursion happens in the tail position:
  
-  @code[fble]
+  @code[fble] @
    (List@) { Int@; } Sum = {
      (Int@, List@) { Int@; } Helper = (Int@ sum, List@ xs) {
        xs.?(nil: sum);
@@ -134,18 +134,18 @@
      };
    };
  
-  We can use @l[Sum] as the list function in a list expression:
+  We can use @l{Sum} as the list function in a list expression:
  
-  @code[fble]
+  @code[fble] @
    Int@ sum = Sum[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
  
   We saw some examples of the list expression in our
   @fbld[HelloWorld.fbld][HelloWorld] tutorial. For instance:
  
-  @code[fble]
+  @code[fble] @
    Unit@ _ <- m.do(Puts[Str|'A boolean: ', /Core/Bool/Show%.Show(True)]);
  
-  Here the @l[Puts] function takes a list of strings as its only argument, so
+  Here the @l{Puts} function takes a list of strings as its only argument, so
   we can use the list expression to call it.
  
  @section Variable Arguments

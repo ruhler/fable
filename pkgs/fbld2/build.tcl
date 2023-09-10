@@ -30,6 +30,10 @@ namespace eval "pkgs/fbld2" {
       "$::s/buildstamp --fbld2 BuildStamp | $::b/pkgs/fbld2/fbld2 - $::b/fbld2/version.fbld $::s/fbld2/html.fbld $sources > $target"
   }
 
+  proc ::fbld2_html_tutorial { target source } {
+    fbld2_html_doc $target [list $::s/tutorials/tutorial.lib.fbld $source]
+  }
+
   #fbld2_html_doc $::b/pkgs/fbld2/fble.html "$::s/spec/fble.lib.fbld $::s/spec/fble.fbld"
   #fbld2_html_doc $::b/pkgs/fbld2/HelloWorld.html "$::s/tutorials/tutorial.lib.fbld $::s/tutorials/HelloWorld.fbld"
 

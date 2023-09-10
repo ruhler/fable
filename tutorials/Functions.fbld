@@ -10,7 +10,7 @@
  
   Here are examples functions we've already seen:
  
-  @code[fble]
+  @code[fble] @
    (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
      a.?(0: 0, 1: b);
    };
@@ -27,11 +27,11 @@
   argument list and is in braces. For example, here is the type of an integer
   comparision function:
  
-  @code[fble]
+  @code[fble] @
    (Int@, Int@) { Bool@; }
  
   This describes a function of two arguments. The types of the arguments are
-  both @l[Int@]. The function returns a value of type @l[Bool@].
+  both @l{Int@}. The function returns a value of type @l{Bool@}.
  
   Notice the names of the function arguments are not part of the type.
   Function argument names have no impact on how the function is used, so they
@@ -52,14 +52,14 @@
   A function value is described by listing the argument types and names
   followed by the body of the function in braces. The body of a function is
   normal fble code describing the value to return from the function. There is
-  no explicit @l[return] statement. For example:
+  no explicit @l{return} statement. For example:
  
-  @code[fble]
+  @code[fble] @
    (Bit@ a, Bit@ b) {
      a.?(0: 0, 1: b);
    }
  
-  This describes a function value of type @l[(Bit@, Bit@) { Bit@; }]. The
+  This describes a function value of type @l{(Bit@, Bit@) { Bit@; }}. The
   compiler can deduce the return type of the function based on the type of the
   function body.
  
@@ -69,7 +69,7 @@
  
   Here's an example showing use of local variables in a function:
  
-  @code[fble]
+  @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
      Bit@ 3 = And(a.3, b.3);
      Bit@ 2 = And(a.2, b.2);
@@ -78,13 +78,13 @@
      Bit4@(3, 2, 1, 0);
    };
  
-  The return value of this function is the @l[Bit4@] value constructed in the
+  The return value of this function is the @l{Bit4@} value constructed in the
   last line of the body.
  
   Here's an example of a function that defines a local helper type and
   function:
  
-  @code[fble]
+  @code[fble] @
    (Bit2@, Bit2@) { Bit2@; } Add = (Bit2@ x, Bit2@ y) {
      @ Result@ = *(Bit@ carry, Bit@ sum);
    
@@ -103,21 +103,21 @@
      Bit2@(r1.sum, r0.sum);
    };
  
-  In this case we define a two bit @l[Add] function based on a single bit
-  @l[Add1] function that takes carry in and produces a carry out. We define a
-  local type @l[Result@] to bundle a single bit sum and carry out.
+  In this case we define a two bit @l{Add} function based on a single bit
+  @l{Add1} function that takes carry in and produces a carry out. We define a
+  local type @l{Result@} to bundle a single bit sum and carry out.
  
  @section Pulling Logic Outside a Function
-  The definition of @l[Add1] in the previous section involves creating a
-  function value and assigning it to the variable @l[Add1]. This will happen
-  every time the @l[Add] function is executed. Because @l[Add1] doesn't depend
-  on the inputs @l[x] and @l[y] to the @l[Add] function, we can pull it out of
-  the body of the @l[Add] function to avoid some extra allocations. You could
-  pull the definition of @l[Result@] and @l[Add1] out into the global scope,
+  The definition of @l{Add1} in the previous section involves creating a
+  function value and assigning it to the variable @l{Add1}. This will happen
+  every time the @l{Add} function is executed. Because @l{Add1} doesn't depend
+  on the inputs @l{x} and @l{y} to the @l{Add} function, we can pull it out of
+  the body of the @l{Add} function to avoid some extra allocations. You could
+  pull the definition of @l{Result@} and @l{Add1} out into the global scope,
   or you could keep its visibility restricted to just the definition of the
-  @l[Add] function as follows:
+  @l{Add} function as follows:
  
-  @code[fble]
+  @code[fble] @
    (Bit2@, Bit2@) { Bit2@; } Add = {
      @ Result@ = *(Bit@ carry, Bit@ sum);
    
@@ -138,8 +138,8 @@
      };
    };
  
-  This way the @l[Add1] function is only allocated once when the @l[Add]
-  function is defined, but it is still only visible to the @l[Add] function.
+  This way the @l{Add1} function is only allocated once when the @l{Add}
+  function is defined, but it is still only visible to the @l{Add} function.
   This is a common way to pull out parts of a function that don't depend on
   the function arguments to avoid repeatedly executing the same code every
   time a function is called.
@@ -148,7 +148,7 @@
   Fble supports recursive functions, via recursive variable declarations, as
   we saw in the tutorial on @fbld[Variables.fbld][Variables]. For example:
  
-  @code[fble]
+  @code[fble] @
    (Int@) { Int@; } Factorial = (Int@ n) {
      Eq(n, 0).?(true: 1, false: Mul(n, Factorial(Sub(n, 1))));
    };
@@ -181,17 +181,17 @@
   values, including as arguments or results of other functions. In other
   words, fble supports higher order functions.
  
-  For example, recall the bitwise @l[And4] function we wrote earlier:
+  For example, recall the bitwise @l{And4} function we wrote earlier:
  
-  @code[fble]
+  @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
      Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
    };
  
-  We could write bitwise @l[Or4] and @l[Xor4] functions that would look very
-  similar, assuming we have single bit @l[Or] and @l[Xor] functions defined:
+  We could write bitwise @l{Or4} and @l{Xor4} functions that would look very
+  similar, assuming we have single bit @l{Or} and @l{Xor} functions defined:
  
-  @code[fble]
+  @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } Or4 = (Bit4@ a, Bit4@ b) {
      Bit4@(Or(a.3, b.3), Or(a.2, b.2), Or(a.1, b.1), Or(a.0, b.0));
    };
@@ -204,17 +204,17 @@
   factor it out into a function that takes the single bit operation as an
   argument:
  
-  @code[fble]
+  @code[fble] @
    ((Bit@, Bit@) { Bit@; }, Bit4@, Bit4@) { Bit4@; }
    BinaryBitwise = ((Bit@, Bit@) { Bit@; } op, Bit4@ a, Bit4@ b) {
      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
    };
  
-  We've added an argument called @l[op] with function type @l[(Bit@, Bit@) {
+  We've added an argument called @l{op} with function type @l{(Bit@, Bit@) {
   Bit@; }] representing the single bit operation. We can reuse this higher
-  order function for the definitions of @l[And4], @l[Or4], and @l[Xor4]:
+  order function for the definitions of @l{And4}, @l{Or4}, and @l{Xor4}:
  
-  @code[fble]
+  @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
      BinaryBitwise(And, a, b);
    };
@@ -230,13 +230,13 @@
  @section Functions Returning Functions
   We've seen an example of passing functions as arguments to other functions.
   It's also possible to return functions from functions. In fact, that's a
-  more natural way to write our @l[BinaryBitwise] helper function. Instead of
+  more natural way to write our @l{BinaryBitwise} helper function. Instead of
   it taking three arguments, the operation and both operands, we can change it
   to take a single argument which is the operation and return a function that
-  performs the corresponding operation on a @l[Bit4@]. Here's how that would
+  performs the corresponding operation on a @l{Bit4@}. Here's how that would
   look:
  
-  @code[fble]
+  @code[fble] @
    ((Bit@, Bit@) { Bit@; }) { (Bit4@, Bit4@) { Bit4@; }; }
    BinaryBitwise = ((Bit@, Bit@) { Bit@; } op) {
      (Bit4@ a, Bit4@ b) {
@@ -244,10 +244,10 @@
      };
    };
  
-  Now we can very conveniently define our @l[And4], @l[Or4], and @l[Xor4]
+  Now we can very conveniently define our @l{And4}, @l{Or4}, and @l{Xor4}
   functions:
  
-  @code[fble]
+  @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } And4 = BinaryBitwise(And);
    (Bit4@, Bit4@) { Bit4@; } Or4 = BinaryBitwise(Or);
    (Bit4@, Bit4@) { Bit4@; } Xor4 = BinaryBitwise(Xor);
@@ -256,25 +256,25 @@
   syntax supports a slightly more compact form. Instead of having to use
   braces for every layer of function in the type and value of the function,
   you only need the braces for the inner most layer. An equivalent definition
-  of @l[BinaryBitwise] is:
+  of @l{BinaryBitwise} is:
  
-  @code[fble]
+  @code[fble] @
    ((Bit@, Bit@) { Bit@; })(Bit4@, Bit4@) { Bit4@; };
    BinaryBitwise = ((Bit@, Bit@) { Bit@; } op)(Bit4@ a, Bit4@ b) {
      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
    };
  
   Notice this is almost identical to our original three argument version of
-  @l[BinaryBitwise], except we've replaced the @l[, ] between the first and
-  second arguments with @l[)(].
+  @l{BinaryBitwise}, except we've replaced the @l{, } between the first and
+  second arguments with @l{)(}.
  
  @section Currying Functions
   What we saw in the previous section is an example of currying functions,
   where we replace a function of multiple arguments with a function that
-  returns a function. For a simpler example, consider the single bit @l[And]
+  returns a function. For a simpler example, consider the single bit @l{And}
   function:
  
-  @code[fble]
+  @code[fble] @
    (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
      a.?(0: 0, 1: b);
    };
@@ -282,7 +282,7 @@
   Function currying can be used to transform this into a function that returns
   a function:
  
-  @code[fble]
+  @code[fble] @
    (Bit@)(Bit@) { Bit@; } And = (Bit@ a)(Bit@ b) {
      a.?(0: 0, 1: b);
    };
@@ -290,7 +290,7 @@
   As a more extreme case that better highlights this as a function that
   returns a function, we could write:
  
-  @code[fble]
+  @code[fble] @
    (Bit@) { Bit@; } ConstZero = (Bit@ _) { 0; };
    (Bit@) { Bit@; } Identity = (Bit@ b) { b; };
    (Bit@) { (Bit@) { Bit@; }; } And = (Bit@ a) {
@@ -298,15 +298,15 @@
    };
  
   In some languages function currying wouldn't change how you interact with
-  the function, but in fble the curried version of @l[And] has a different
+  the function, but in fble the curried version of @l{And} has a different
   type than the original version. In fble the number of arguments to a
   function matters in the function type. This means you'll have to call our
-  second version of @l[And] slightly differently. Instead of @l[And(x, y)],
-  you would use @l[And(x)(y)].
+  second version of @l{And} slightly differently. Instead of @l{And(x, y)},
+  you would use @l{And(x)(y)}.
  
-  Fble treats these two versions of @l[And] separately because there are
-  performance implications at runtime. The first version of @l[And] computes
-  the result directly given two arguments. The second version of @l[And] takes
+  Fble treats these two versions of @l{And} separately because there are
+  performance implications at runtime. The first version of @l{And} computes
+  the result directly given two arguments. The second version of @l{And} takes
   a single argument and allocates a function value to return. Then you supply
   the second argument which computes the final result. That extra function
   value allocation may be important for performance, especially if it
@@ -315,17 +315,17 @@
   curried arguments to the function.
  
   In practice it is straight forward to convert between the two forms of the
-  function. Let's call them @l[UncurriedAnd] and @l[CurriedAnd]. Here's how
-  you could implement @l[CurriedAnd] given @l[UncurriedAnd]:
+  function. Let's call them @l{UncurriedAnd} and @l{CurriedAnd}. Here's how
+  you could implement @l{CurriedAnd} given @l{UncurriedAnd}:
  
-  @code[fble]
+  @code[fble] @
    (Bit@)(Bit@) { Bit@; } CurriedAnd = (Bit@ a)(Bit@ b) {
      UncurriedAnd(a, b);
    };
  
-  Here's how you could implement @l[UncurriedAnd] given @l[CurriedAnd]:
+  Here's how you could implement @l{UncurriedAnd} given @l{CurriedAnd}:
  
-  @code[fble]
+  @code[fble] @
    (Bit@, Bit@) { Bit@; } UncurriedAnd = (Bit@ a, Bit@ b) {
      CurriedAnd(a)(b);
    };
@@ -333,7 +333,7 @@
   When should you use functions with multiple arguments versus curried
   functions that return functions? For the most part just use functions that
   take multiple arguments. Use curried functions when it is more convenient,
-  like we did with the @l[BinaryBitwise] function above, and use curried
+  like we did with the @l{BinaryBitwise} function above, and use curried
   functions if required to match the type of a function expected expected to
   be passed to another function.
  
@@ -342,10 +342,10 @@
   called a lambda. In fble, every function value is defined using an anonymous
   function. No special syntax or construct is needed.
  
-  For example, instead of passing @l[And] to our @l[BinaryBitwise] function,
-  we could have passed an anonymous implementation of the @l[And] function:
+  For example, instead of passing @l{And} to our @l{BinaryBitwise} function,
+  we could have passed an anonymous implementation of the @l{And} function:
  
-  @code[fble]
+  @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } And4 = BinaryBitwise(
      (Bit@ a, Bit@ b) {
        a.?(0: 0, 1: b);
@@ -366,9 +366,9 @@
   For example, maybe we want to define a function that takes a type value and
   returns it as is. The first thing we need to know to define that function is
   what the type of the type value is. Let's say it's the type of the type
-  value @l[Int@]. Then we could write:
+  value @l{Int@}. Then we could write:
  
-  @code[fble]
+  @code[fble] @
    (@<Int@>) { @<Int@>; } F = (@<Int@> x@) { 
      x@;
    };
@@ -377,7 +377,7 @@
  
   But you may as well just write:
  
-  @code[fble]
+  @code[fble] @
    @ AnotherInt@ = Int@;
  
   There is support for polymorphism in fble, which allows you to write

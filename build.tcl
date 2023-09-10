@@ -216,8 +216,8 @@ build_tcl $::s/bin/build.tcl
 build_tcl $::s/spec/build.tcl
 build_tcl $::s/test/build.tcl
 build_tcl $::s/test/spec-test.build.tcl
-build_tcl $::s/tutorials/build.tcl
 build_tcl $::s/pkgs/build.tcl
+build_tcl $::s/tutorials/build.tcl
 
 # README file www
 fbld2_html_doc $::b/www/index.html $::s/README.fbld

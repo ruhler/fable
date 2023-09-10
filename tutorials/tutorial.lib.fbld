@@ -1,10 +1,10 @@
-@define[tutorial][name][content]
- @doc[$name]
+@define[tutorial][name content]
+ @doc[@name]
    @FbleVersion (@BuildStamp)
 
-  $content
+  @content
 @@
 
 @define[exercise][content]
- $content
+ @content
 @@

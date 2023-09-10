@@ -23,7 +23,7 @@ and a hint of C-like syntax.
 ## Source
 
 The source code for fble is available from github at
-[https://github.com/ruhler/fable](https://github.com/ruhler/fable).
+<https://github.com/ruhler/fable>.
 
 ## Documentation
 
@@ -38,7 +38,7 @@ The source code for fble is available from github at
 * **Release Notes**: [Release.fbld](Release.fbld)
 
 The latest generated documentation is also available online at
-[https://ruhler.github.io/fable](https://ruhler.github.io/fable).
+<https://ruhler.github.io/fable>.
 
 ## Directory Structure
 

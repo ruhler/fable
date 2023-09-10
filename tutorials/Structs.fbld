@@ -9,7 +9,7 @@
  
   Here are examples of how we've used structs so far:
  
-  @code[fble]
+  @code[fble] @
    @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
    Bit4@ X = Bit4@(0, 0, 1, 1);
    
@@ -17,10 +17,10 @@
      Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
    };
  
-  The syntax @l[*(...)] is used for a struct type, with a list of named and
+  The syntax @l{*(...)} is used for a struct type, with a list of named and
   typed fields. To create a struct value, you specify the struct type followed
   by the list of values for each field in order. You can access fields of a
-  struct using @l[.], as in @l[a.3].
+  struct using @l{.}, as in @l{a.3}.
  
   That describes the fundamentals of what you can do with structures.
  
@@ -39,48 +39,48 @@
  
  @section Implicit Type Struct Values
   So far we've always constructed struct values by providing the struct type
-  explicitly. For example: @l[Bit4@(0, 0, 1, 1)]. It's also possible to
+  explicitly. For example: @l{Bit4@(0, 0, 1, 1)}. It's also possible to
   specify a struct value where the type of the struct is implicit. In this
   case we specify the names of the fields explicitly, and rely on the compiler
   to infer the types of the fields.
  
   For example, the follow two lines are equivalent:
  
-  @code[fble]
+  @code[fble] @
    Bit4@ X = Bit4@(0, 0, 1, 1);
    Bit4@ X = @(3: 0, 2: 0, 1: 1, 0: 1);
  
-  Because the compiler knows the type of @l[0] is @l[Bit@], and the type of
-  @l[1] is @l[Bit@], it can infer from @l[@(3: 0, 2: 0, 1: 1, 0: 1)] the
-  struct type: @l[*(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0)].
+  Because the compiler knows the type of @l{0} is @l{Bit@}, and the type of
+  @l{1} is @l{Bit@}, it can infer from @l{@(3: 0, 2: 0, 1: 1, 0: 1)} the
+  struct type: @l{*(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0)}.
  
  @section Structs as Namespaces
   Aside from their normal use in programming, structs in fble play an
   important role in namespace management.
  
-  For example, the variables @l[0] and @l[1] are nice to have for the @l[Bit@]
-  type, but they are also useful for @l[Bit4@] and @l[Int@] types. We can
-  create a struct value to hold @l[0] and @l[1] for the @l[Bit@] type rather
+  For example, the variables @l{0} and @l{1} are nice to have for the @l{Bit@}
+  type, but they are also useful for @l{Bit4@} and @l{Int@} types. We can
+  create a struct value to hold @l{0} and @l{1} for the @l{Bit@} type rather
   than pollute the global namespace of variables.
  
-  For example, let's define a struct value called @l[Bits] that has two
-  fields, @l[0] and @l[1], which have the @l[Bit@] values for @l[0] and @l[1]
+  For example, let's define a struct value called @l{Bits} that has two
+  fields, @l{0} and @l{1}, which have the @l{Bit@} values for @l{0} and @l{1}
   respectively:
  
-  @code[fble]
+  @code[fble] @
    @ Bits@ = *(Bit@ 0, Bit@ 1);
    Bits@ Bits = Bits@(Bit@(0: Unit), Bit@(1: Unit));
  
-  Now we can refer to bits @l[0] and @l[1] via the @l[Bits] struct value. For
+  Now we can refer to bits @l{0} and @l{1} via the @l{Bits} struct value. For
   example:
  
-  @code[fble]
+  @code[fble] @
    Bit4@ X = Bit4@(Bits.0, Bits.0, Bits.1, Bits.1);
  
   When defining modules, it's common to define variables in scope, and export
   them by bundling them together in a struct value. For example:
  
-  @code[fble]
+  @code[fble] @
    Bits@ Bits = {
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
@@ -92,20 +92,20 @@
   out the field name; the variable name will be used for the name of the
   field.
  
-  For example, here's how we could define the @l[Bits] value using an implicit
+  For example, here's how we could define the @l{Bits} value using an implicit
   type struct value with explicit fields:
  
-  @code[fble]
+  @code[fble] @
    Bits@ Bits = {
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
      @(0: 0, 1: 1);
    };
  
-  And here's how we could define the @l[Bits] value using an implicit type
+  And here's how we could define the @l{Bits} value using an implicit type
   struct value with implicit fields:
  
-  @code[fble]
+  @code[fble] @
    Bits@ Bits = {
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
@@ -114,25 +114,25 @@
  
   You can mix implicit fields with explicit fields in implicit type struct
   values, which is occasionally useful for renaming things when you create the
-  struct value. For example, maybe we want to add @l[zero] and @l[one] as
+  struct value. For example, maybe we want to add @l{zero} and @l{one} as
   alternate ways to refer to those bits:
  
-  @code[fble]
+  @code[fble] @
    % Bits = {
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
      @(0, 1, zero: 0, one: 1);
    }
  
-  Notice we switch to using the kind @l[%] in the definitions of @l[Bits],
-  which means we don't have to define the @l[Bits@] type explicitly anywhere.
+  Notice we switch to using the kind @l{%} in the definitions of @l{Bits},
+  which means we don't have to define the @l{Bits@} type explicitly anywhere.
  
  @section Function Fields
   Functions are values, which means functions are allowed in fields of
   structures. There's nothing special about this. For example, we could add
-  our @l[And] function to the @l[Bits] struct value we've been working with:
+  our @l{And} function to the @l{Bits} struct value we've been working with:
  
-  @code[fble]
+  @code[fble] @
    % Bits = {
      Bit@ 0 = Bit@(0: Unit);
      Bit@ 1 = Bit@(1: Unit);
@@ -144,7 +144,7 @@
  
   Here's how we might call that function:
  
-  @code[fble]
+  @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
      Bit4@(Bits.And(a.3, b.3), Bits.And(a.2, b.2), Bits.And(a.1, b.1), Bits.And(a.0, b.0));
    };
@@ -155,11 +155,11 @@
  @section Type Fields
   Types are values, which means types are allowed in fields of structures. The
   same naming rule applies as for variable names: type fields must be followed
-  by @l[@].
+  by @l{@}.
  
-  For example, we could add the @l[Bit@] type to our @l[Bits] bundle:
+  For example, we could add the @l{Bit@} type to our @l{Bits} bundle:
  
-  @code[fble]
+  @code[fble] @
    % Bits = {
      @ Bit@ = +(Unit@ 0, Unit@ 1);
      Bit@ 0 = Bit@(0: Unit);
@@ -169,25 +169,25 @@
  
   And here is how we could use that type field:
  
-  @code[fble]
+  @code[fble] @
    @ Bit4@ = *(Bits.Bit@ 3, Bits.Bit@ 2, Bits.Bit@ 1, Bits.Bit@ 0);
    Bit4@ X = Bit4@(Bits.0, Bits.0, Bits.1, Bits.1);
  
-  Note that the type of the fields for @l[Bit4@] is @l[Bits.Bit@]. This is a
+  Note that the type of the fields for @l{Bit4@} is @l{Bits.Bit@}. This is a
   little strange because it's a type that depends on a value. That doesn't
   mean the compiler has to evaluate code at compile time to do proper type
-  checking though. The compiler can figure out the value of the @l[Bits.Bit@]
-  field from the type of the @l[Bits] struct, because it knows the type of the
-  @l[Bit@] field is @l[@<Bit@>], which means its value must be @l[Bit@]
-  regardless of how the @l[Bits] value was constructed.
+  checking though. The compiler can figure out the value of the @l{Bits.Bit@}
+  field from the type of the @l{Bits} struct, because it knows the type of the
+  @l{Bit@} field is @l{@<Bit@>}, which means its value must be @l{Bit@}
+  regardless of how the @l{Bits} value was constructed.
  
   This is how we use struct values to define types, functions, and values in
   modules for reuse in other modules.
  
-  For the curious, here's how we could define that same @l[Bits] struct value
+  For the curious, here's how we could define that same @l{Bits} struct value
   using explicit types:
  
-  @code[fble]
+  @code[fble] @
    % Bits = {
      @ Bit@ = +(Unit@ 0, Unit@ 1);
      Bit@ 0 = Bit@(0: Unit);
@@ -196,8 +196,8 @@
      Bits@(Bit@, 0, 1);
    };
  
-  Notice the use of the typeof operator to get the type of the @l[Bit@] type,
-  and the name @l[Bit@] for the field.
+  Notice the use of the typeof operator to get the type of the @l{Bit@} type,
+  and the name @l{Bit@} for the field.
  
  @section Structs in the Language Specification
   You now know everything there is to know about structs in fble. To reinforce
@@ -207,15 +207,15 @@
  @section Exercises
   @exercise
    Go back to the Basics tutorial code and group together the definitions of
-   @l[Bit@], @l[0], @l[1], @l[And], and @l[ShowBit] into a single struct value
-   called @l[Bits]. Experiment with both explicit and implicit type struct
+   @l{Bit@}, @l{0}, @l{1}, @l{And}, and @l{ShowBit} into a single struct value
+   called @l{Bits}. Experiment with both explicit and implicit type struct
    values, and implicit and explicit field names.
  
   @exercise
-   In the Basics tutorial, group together code related to the @l[Bit4@] type
-   together into a single @l[Bit4] struct value. Rename @l[And4] to @l[And] and
-   rename @l[ShowBit] and @l[ShowBit4] both to @l[Show] now that we have the
-   @l[Bits] and @l[Bit4] namespaces to distinguish between them.
+   In the Basics tutorial, group together code related to the @l{Bit4@} type
+   together into a single @l{Bit4} struct value. Rename @l{And4} to @l{And} and
+   rename @l{ShowBit} and @l{ShowBit4} both to @l{Show} now that we have the
+   @l{Bits} and @l{Bit4} namespaces to distinguish between them.
  
  @section Next Steps
   Head over to the @fbld[Modules.fbld][Modules] tutorial to learn all about

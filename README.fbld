@@ -19,17 +19,17 @@
 
  @section Source
   The source code for fble is available from github at
-  @url[https://github.com/ruhler/fable].
+  @url[https://github.com/ruhler/fable]{}.
 
  @section Documentation
-  @def[Fble Language Specification] @fbld[spec/fble.fbld]
-  @def[Fble Style Guide] @fbld[spec/style.fbld]
-  @def[Fbld Document Markup Specification] @fbld[fbld/fbld.fbld]
-  @def[Tutorials] @fbld[tutorials/Tutorials.fbld]
-  @def[Release Notes] @fbld[Release.fbld]
+  @def[Fble Language Specification] @fbld[spec/fble.fbld]{}
+  @def[Fble Style Guide] @fbld[spec/style.fbld]{}
+  @def[Fbld Document Markup Specification] @fbld[fbld/fbld.fbld]{}
+  @def[Tutorials] @fbld[tutorials/Tutorials.fbld]{}
+  @def[Release Notes] @fbld[Release.fbld]{}
 
   The latest generated documentation is also available online at
-  @url[https://ruhler.github.io/fable].
+  @url[https://ruhler.github.io/fable]{}.
 
  @section Directory Structure
   @def[bin/] Source code for fble compiler binaries.

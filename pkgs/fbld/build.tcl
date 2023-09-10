@@ -26,8 +26,5 @@ namespace eval "pkgs/fbld" {
   }
 
   fbld_html_doc $::b/pkgs/fbld/fble.html "$::s/spec/fble.lib.fbld $::s/spec/fble.fbld"
-  fbld_html_doc $::b/pkgs/fbld/HelloWorld.html "$::s/tutorials/tutorial.lib.fbld $::s/tutorials/HelloWorld.fbld"
-
   www $::b/pkgs/fbld/fble.html
-  www $::b/pkgs/fbld/HelloWorld.html
 }

@@ -4340,3 +4340,39 @@ Or:
 @title Bool\@ Types
 
 I don't know. Think about it.
+
+---
+
+Next question, as we convert over tutorials. How to handle 1 versus 2 arg
+@fbld?
+
+We have 6 variations to consider:
+
+{@url, @file, @fbld} x { simple, labelled }
+
+There are two reasonable approaches to take if we want to support fixed number
+of arguments.
+
+A. @url, @file, @fbld all take two arguments, where the label can be empty to
+denote use of a default label.
+
+   See the @fbld[Bind.fbld][Bind] tutorial.
+   See @fbld[spec/fble.fbld]{}
+
+   At @url[https://ruhler.github.io/fable][GitHub]
+   At @url[https://ruhler.github.io/fable]{}
+
+B. Two different names for things. For example, @lfbld.
+
+I already like A much better. Let me go with that.
+
+---
+
+Next issue with using fbld2 for tutorials: some of them seem to take forever
+to convert and run out of memory. Is this poor performance, or some kind of
+bug?
+
+I should run with perf based profiling perhaps to see? Or prof based profiling
+of a smaller example?
+
+

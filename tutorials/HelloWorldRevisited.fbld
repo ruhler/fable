@@ -6,7 +6,7 @@
   The hello world program starts by importing some types and functions from
   the core library:
  
-  @code[fble]
+  @code[fble] @
    % True = /Core/Bool%.True;
    @ Char@ = /Core/Char%.Char@;
    <@>@ List@ = /Core/List%.List@;
@@ -18,7 +18,7 @@
    % Str = /Core/String%.Str;
    @ Unit@ = /Core/Unit%.Unit@;
  
-  You now know that @l[/Core/Bool%], @l[/Core/Char%], etc. refer to modules
+  You now know that @l{/Core/Bool%}, @l{/Core/Char%}, etc. refer to modules
   from the core library. Those modules define struct values collecting
   together the types, values, and functions defined by those modules.
  
@@ -27,16 +27,16 @@
   local variable definitions use the form where you specify the kind of the
   variable rather than the type of the variable.
  
-  We are importing some normal values of kind @l[%] like @l[True] and @l[Str].
-  We are importing types @l[Char@], @l[String@], and @l[Unit@]. We are
-  importing the polymorphic type @l[List@] and polymorphic function
-  @l[Concat]. And we are importing the higher order polymorphic types
-  @l[Monad@], @l[Stdio@], and @l[Main@].
+  We are importing some normal values of kind @l{%} like @l{True} and @l{Str}.
+  We are importing types @l{Char@}, @l{String@}, and @l{Unit@}. We are
+  importing the polymorphic type @l{List@} and polymorphic function
+  @l{Concat}. And we are importing the higher order polymorphic types
+  @l{Monad@}, @l{Stdio@}, and @l{Main@}.
  
  @section Main Function
   Next we defined the main function:
  
-  @code[fble]
+  @code[fble] @
    Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
      % O = /Core/Stream/OStream%(m);
    
@@ -50,22 +50,22 @@
  
   The main function is a polymorphic function that returns a function from
   list of command line arguments to boolean value in the generic monadic type
-  @l[M@].  The function is passed a @l[Monad@] interface @l[m] for sequencing
-  operations and @l[Stdio@] interface @l[stdio] for doing standard input and
+  @l{M@}.  The function is passed a @l{Monad@} interface @l{m} for sequencing
+  operations and @l{Stdio@} interface @l{stdio} for doing standard input and
   output.
  
-  We define a local import of the @l[/Core/Stream/OStream%] module, which
-  itself is a polymorphic function of the monad interface @l[m]. Type
-  inference takes place here so that the type argument to the module @l[M@] is
+  We define a local import of the @l{/Core/Stream/OStream%} module, which
+  itself is a polymorphic function of the monad interface @l{m}. Type
+  inference takes place here so that the type argument to the module @l{M@} is
   automatically applied.
  
-  We define a helper function @l[Puts] that outputs a list of strings. The
-  @l[Puts] function takes a single list argument, which means it can be used
+  We define a helper function @l{Puts} that outputs a list of strings. The
+  @l{Puts} function takes a single list argument, which means it can be used
   with list expressions.
  
-  We use the bind syntax to perform output with the @l[Puts] function, using
-  the literal function @l[Str] to create a string literal. Finally we return
-  @l[True] using the monadic @l[return] function to indicate success.
+  We use the bind syntax to perform output with the @l{Puts} function, using
+  the literal function @l{Str} to create a string literal. Finally we return
+  @l{True} using the monadic @l{return} function to indicate success.
  
  @section Next Steps
   Now you understand all the features of the fble language used in the hello

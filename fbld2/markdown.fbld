@@ -2,8 +2,15 @@
 @define[.block][text] \n@text @@
 @define[doc][title body] \n# @title\n@body @@
 @define[section][title body] \n## @title\n@body @@
-@define[url][url] [@url](@url) @@
-@define[fbld][file] @url[@file] @@
+
+@define[url][url label]
+ @ifeq[][@label][<@url>] \[@label\](@url)
+@@
+
+@define[fbld][file label]
+ @define[l][][@ifeq[][@label][@file][@label]] \[@l\](@file)
+@@
+
 @define[def][name value] \n* **@name**: @value\n @@
 @define[inline][arg] @arg @@
 @define[indent][prefix text]

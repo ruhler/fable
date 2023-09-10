@@ -5,7 +5,7 @@
  section 8 of the fble language spec on modules.
  
  @section Basics
-  A module is an fble program written in a separate @l[.fble] file describing
+  A module is an fble program written in a separate @l{.fble} file describing
   an fble value that can reference and be reused in other modules. Modules are
   organized in a directory structure and referred to from code using module
   paths.
@@ -13,11 +13,11 @@
   It is most common for a module to describe a struct value that bundles
   together a collection of reusable types, functions, and values.
  
-  For example, we'll split up the @l[Basics.fble] program from the
+  For example, we'll split up the @l{Basics.fble} program from the
   @fbld[tutorial/Basics.fbld][Basics] tutorial into the following separate
   modules:
  
-  @code[txt]
+  @code[txt] @
    File            Module Path   Purpose
    ---------------------------------------------------
    Unit.fble       /Unit%        Defines Unit@, Unit
@@ -27,22 +27,22 @@
    Bit4/Show.fble  /Bit4/Show%   Defines Show function for Bit4@ type.
    Main.fble       /Main%        Code for the Main function.
  
-  Here is the code for @l[Unit.fble]:
+  Here is the code for @l{Unit.fble}:
  
-  @code[fble]
+  @code[fble] @
    @ Unit@ = *();
    Unit@ Unit = Unit@();
    
    @(Unit@, Unit);
  
-  We define the @l[Unit@] type and the @l[Unit] value. The value of the module
+  We define the @l{Unit@} type and the @l{Unit} value. The value of the module
   is an implicit type struct value with implicit fields. In this case, it's a
-  struct value with two fields: @l[Unit@] of type @l[@<Unit@>] and @l[Unit] of
-  type @l[Unit@].
+  struct value with two fields: @l{Unit@} of type @l{@<Unit@>} and @l{Unit} of
+  type @l{Unit@}.
  
-  Here is the code for @l[Bit.fble]:
+  Here is the code for @l{Bit.fble}:
  
-  @code[fble]
+  @code[fble] @
    @ Unit@ = /Unit%.Unit@;
    % Unit = /Unit%.Unit;
    
@@ -57,14 +57,14 @@
    
    @(Bit@, 0, 1, And);
  
-  The @l[Bit] module depends on the @l[Unit] module for the definition of
-  @l[Unit@] and @l[Unit]. The way it refers to the @l[Unit] module is using
-  the module path @l[/Unit%]. Think of @l[/Unit%] as a variable that has
-  already been defined to have the value computed in @l[Unit.fble]. @l[/Unit%]
-  has a type, in this case a struct with two fields @l[Unit@] and @l[Unit],
+  The @l{Bit} module depends on the @l{Unit} module for the definition of
+  @l{Unit@} and @l{Unit}. The way it refers to the @l{Unit} module is using
+  the module path @l{/Unit%}. Think of @l{/Unit%} as a variable that has
+  already been defined to have the value computed in @l{Unit.fble}. @l{/Unit%}
+  has a type, in this case a struct with two fields @l{Unit@} and @l{Unit},
   and it can be referenced repeatedly to refer to the same value multiple
-  times. We can access the fields of the struct using @l[.Unit@] and
-  @l[.Unit], just like any other struct value.
+  times. We can access the fields of the struct using @l{.Unit@} and
+  @l{.Unit}, just like any other struct value.
  
   Now you see that importing things from other modules is just defining local
   variables that refer to the fields of the struct values computed by those
@@ -72,9 +72,9 @@
  
   With those basics down, the rest of the modules should be straight forward.
  
-  Here's @l[Bit/Show.fble]:
+  Here's @l{Bit/Show.fble}:
  
-  @code[fble]
+  @code[fble] @
    @ String@ = /Core/String%.String@;
    % Str = /Core/String%.Str;
    
@@ -86,9 +86,9 @@
    
    @(Show);
  
-  Here's @l[Bit4.fble]:
+  Here's @l{Bit4.fble}:
  
-  @code[fble]
+  @code[fble] @
    @ Bit@ = /Bit%.Bit@;
    % And1 = /Bit%.And;
    
@@ -100,9 +100,9 @@
    
    @(Bit4@, And);
  
-  Here's @l[Bit4/Show.fble]:
+  Here's @l{Bit4/Show.fble}:
  
-  @code[fble]
+  @code[fble] @
    <@>% Concat = /Core/List%.Concat;
    
    @ String@ = /Core/String%.String@;
@@ -117,12 +117,12 @@
    
    @(Show);
  
-  Notice the module path for @l[/Bit/Show%] mirrors the directory structure
-  where the module @l[Bit/Show.fble] is defined.
+  Notice the module path for @l{/Bit/Show%} mirrors the directory structure
+  where the module @l{Bit/Show.fble} is defined.
  
-  And finally, @l[Main.fble]:
+  And finally, @l{Main.fble}:
  
-  @code[fble]
+  @code[fble] @
    % True = /Core/Bool%.True;
    @ Char@ = /Core/Char%.Char@;
    <@>@ List@ = /Core/List%.List@;
@@ -161,39 +161,39 @@
    
    /Core/Stdio/IO%.Run(Test);
  
-  We can run our new program just like before, passing @l[Main%] as the name
+  We can run our new program just like before, passing @l{Main%} as the name
   of the module to run:
  
-  @code[sh]
+  @code[sh] @
    fble-stdio -p core -I . -m /Main%
  
  @section Module Paths, Search Paths, and Package Paths
   Module paths are used to refer to the values computed by modules. Module
-  paths always start with @l[/] and end with @l[%]. Module paths mirror the
-  directory structure where the @l[.fble] file for a module is located.
+  paths always start with @l{/} and end with @l{%}. Module paths mirror the
+  directory structure where the @l{.fble} file for a module is located.
  
   When you run fble code, there is a notion of a module search path. The
   module search path is a list of directories to search for modules.
-  The @l[-I .] option to @l[fble-stdio] says to add the directory @l[.] to the
+  The @l{-I .} option to @l{fble-stdio} says to add the directory @l{.} to the
   module search path.
  
-  To find the definition of the module @l[/Bit/Show%], for example, the fble
-  runtime looks for a file named @l[Bit/Show.fble] in each of the module
+  To find the definition of the module @l{/Bit/Show%}, for example, the fble
+  runtime looks for a file named @l{Bit/Show.fble} in each of the module
   search path directories in order. In this case, it finds the module
-  @l[/Bit/Show%] in @l[./Bit/Show.fble]. The first matching @l[.fble] file
+  @l{/Bit/Show%} in @l{./Bit/Show.fble}. The first matching @l{.fble} file
   found is used for the definition of the module.
  
-  The @l[-p core] option to @l[fble-stdio] has the effect of adding
-  @l[$FBLE_PACKAGE_PATH/core] to the module search path, assuming you have set
-  up @l[$FBLE_PACKAGE_PATH] as described in the
+  The @l{-p core} option to @l{fble-stdio} has the effect of adding
+  @l{$FBLE_PACKAGE_PATH/core} to the module search path, assuming you have set
+  up @l{$FBLE_PACKAGE_PATH} as described in the
   @fbld[tutorials/Install.fbld][Install] tutorial. To find the source code for
-  the @l[/Core/String%] module, for example, the runtime will first check for
-  @l[./Core/String.fble], then @l[$FBLE_PACKAGE_PATH/core/Core/String.fble].
+  the @l{/Core/String%} module, for example, the runtime will first check for
+  @l{./Core/String.fble}, then @l{$FBLE_PACKAGE_PATH/core/Core/String.fble}.
  
   The package path is a list of directories containing packages. A package, in
   this case, is a directory with a collection of modules. For example, the
-  @l[$FBLE_PACKAGE_PATH] you set up lists a single directory with the
-  following packages in it: @l[app], @l[core], @l[games], @l[graphics], and so
+  @l{$FBLE_PACKAGE_PATH} you set up lists a single directory with the
+  following packages in it: @l{app}, @l{core}, @l{games}, @l{graphics}, and so
   on. Each of these packages is a module search path directory to use to
   search for the definition of modules.
  
@@ -211,10 +211,10 @@
   depends on. Conceptually it assembles the modules into a sequence of
   variable definitions to form a full fble program.
  
-  For example, ignoring the modules from the @l[core] package for simplicity,
-  the program for the @l[/Main%] module is conceptually something like:
+  For example, ignoring the modules from the @l{core} package for simplicity,
+  the program for the @l{/Main%} module is conceptually something like:
  
-  @code[txt]
+  @code[txt] @
    LET /Unit% = EVAL(Unit.fble)
    LET /Bit% = EVAL(Bit.fble)
    LET /Bit/Show% = EVAL(Bit/Show.fble)
@@ -232,22 +232,22 @@
   evaluated in.
  
   @par
-   @l[.fble] files for a module that the main module does not depend on
+   @l{.fble} files for a module that the main module does not depend on
    directly or indirectly are ignored by the compiler. For example, if you put
-   @l[/Bit4%] as the main module, the compiler would only read @l[Unit.fble],
-   @l[Bit.fble] and @l[Bit4.fble]. It wouldn't read @l[Bit/Show.fble],
-   @l[Bit4/Show.fble] or @l[Main.fble].
+   @l{/Bit4%} as the main module, the compiler would only read @l{Unit.fble},
+   @l{Bit.fble} and @l{Bit4.fble}. It wouldn't read @l{Bit/Show.fble},
+   @l{Bit4/Show.fble} or @l{Main.fble}.
  
-  You can use the @l[fble-deps] program to see the list of modules needed for
+  You can use the @l{fble-deps} program to see the list of modules needed for
   a program. For example:
  
-  @code[sh]
+  @code[sh] @
    fble-deps -t foo -p core -I . -m /Main%
  
   This outputs something like the following, which is a list of all the
-  modules required by the @l[/Main%] program:
+  modules required by the @l{/Main%} program:
  
-  @code[txt]
+  @code[txt] @
    foo: ./Main.fble \
     /usr/local/share/fble/core/Core/Bool.fble \
     /usr/local/share/fble/core/Core/Unit.fble \
@@ -277,11 +277,11 @@
  @section Module Organization
   Modules are organized into a directory structure. The directory structure of
   modules has no impact on the module dependency graph. For example, imagine
-  you have modules organized hierarchically as @l[/Foo%] and @l[/Foo/Bar%].
-  You might have that @l[/Foo%] depends on @l[/Foo/Bar%], for example if
-  @l[/Foo/Bar%] implements code for @l[/Foo%]. Or you might have @l[/Foo/Bar%]
-  depend on @l[/Foo%], as was the case with our @l[/Bit/Show%] and @l[/Bit%]
-  modules. Or there may be no dependency between @l[/Foo%] and @l[/Foo/Bar%].
+  you have modules organized hierarchically as @l{/Foo%} and @l{/Foo/Bar%}.
+  You might have that @l{/Foo%} depends on @l{/Foo/Bar%}, for example if
+  @l{/Foo/Bar%} implements code for @l{/Foo%}. Or you might have @l{/Foo/Bar%}
+  depend on @l{/Foo%}, as was the case with our @l{/Bit/Show%} and @l{/Bit%}
+  modules. Or there may be no dependency between @l{/Foo%} and @l{/Foo/Bar%}.
  
   The idea behind the directory structure is that modules in the same
   directory are developed by the same organization. That organization is
@@ -291,28 +291,28 @@
  
   Think of modules as dependency units. Break up code into modules to avoid
   introducing unecessary false dependencies. For example, we used a separate
-  module for @l[/Bit/Show%], which allows you to import @l[/Bit%] and use the
-  @l[Bit@] type without taking a dependency on the @l[/Core/String%] module.
-  If we implemented the @l[Show] function in the @l[/Bit%] module, you
-  couldn't use @l[Bit@] without depending on @l[/Core/String%].
+  module for @l{/Bit/Show%}, which allows you to import @l{/Bit%} and use the
+  @l{Bit@} type without taking a dependency on the @l{/Core/String%} module.
+  If we implemented the @l{Show} function in the @l{/Bit%} module, you
+  couldn't use @l{Bit@} without depending on @l{/Core/String%}.
  
  @section Different Types of Module Values
   The most common type of value defined by a module is a struct value. That's
-  what we used for @l[/Unit%], @l[/Bit%], @l[/Bit/Show%], @l[/Bit4%], and
-  @l[/Bit4/Show%]. There's nothing that requires a module to define a struct
+  what we used for @l{/Unit%}, @l{/Bit%}, @l{/Bit/Show%}, @l{/Bit4%}, and
+  @l{/Bit4/Show%}. There's nothing that requires a module to define a struct
   value though. A module can define any kind of fble value.
  
-  For example, our @l[/Main%] module defines a function value, which is the
-  main function executed by the @l[fble-stdio] program. Using the foreign
+  For example, our @l{/Main%} module defines a function value, which is the
+  main function executed by the @l{fble-stdio} program. Using the foreign
   function interface for fble, it's possible to define different runners that
   know how to execute different kinds of fble functions. For example, there's
-  also an @l[fble-app] runner that can run fble programs describing graphical
-  applications. The main functions for @l[fble-app] have a different type than
-  the main functions for @l[fble-stdio].
+  also an @l{fble-app} runner that can run fble programs describing graphical
+  applications. The main functions for @l{fble-app} have a different type than
+  the main functions for @l{fble-stdio}.
  
-  Another interesting example is the @l[/Core/Stream/OStream%] module. This
+  Another interesting example is the @l{/Core/Stream/OStream%} module. This
   module defines a function that returns a struct value. This is effectively a
-  parameterized module. In this case, the parameter is @l[Monad@<M@> m].
+  parameterized module. In this case, the parameter is @l{Monad@<M@> m}.
  
   You can do a lot of interesting things with fble modules by keeping in mind
   that they can describe any type of value, not just struct values.
@@ -324,14 +324,14 @@
  
  @section Exercises
   @exercise
-   Move the implementation of the @l[And] function for the @l[Bit@] type to
-   its own module, @l[/Bit/And%], where the value of the module is the
+   Move the implementation of the @l{And} function for the @l{Bit@} type to
+   its own module, @l{/Bit/And%}, where the value of the module is the
    function itself rather than a struct value. How does this compare to using
-   a struct value with a single @l[And] field with the value of the function?
+   a struct value with a single @l{And} field with the value of the function?
  
   @exercise
    Move some of your modules to a different top level directory. Now run the
-   @l[/Main%] module by passing the right @l[-I] flags to @l[fble-stdio].
+   @l{/Main%} module by passing the right @l{-I} flags to @l{fble-stdio}.
  
  @section Next Steps
   Head over to the @fbld[Unions.fbld][Unions] tutorial to learn all about

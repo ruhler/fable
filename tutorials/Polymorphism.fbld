@@ -15,18 +15,18 @@
   and functions which you already know about. A poly is an fble value
   parameterized by a type.
  
-  As an example, consider the @l[Maybe@] type.
+  As an example, consider the @l{Maybe@} type.
  
   @subsection The Maybe Type
    In languages like Java and C, which have pointers, it's common to use
-   @l[NULL] as a special value to distinguish between valid pointers and
+   @l{NULL} as a special value to distinguish between valid pointers and
    invalid pointers.  Some languages have an option type for describing a
    value that may be invalid.  In Haskell and fble, that type is called
    "Maybe".
  
    For example, here is how we could define an integer value that may be invalid:
  
-   @code[fble]
+   @code[fble] @
     @ MaybeInt@ = +(Int@ just, Unit@ nothing);
    
     MaybeInt@ NothingInt = MaybeInt@(nothing: Unit);
@@ -36,14 +36,14 @@
     };
  
    For example, you could implement a div function that returns the result of
-   division, or @l[NothingInt] in case of divide by zero. Or you could
+   division, or @l{NothingInt} in case of divide by zero. Or you could
    implement a function to parse an integer from a string that returns
-   @l[NothingInt] if the string doesn't have the required syntax.
+   @l{NothingInt} if the string doesn't have the required syntax.
  
    The same structure is useful for other data types. For example, we may want
    to distinguish between valid and invalid strings:
  
-   @code[fble]
+   @code[fble] @
     @ MaybeString@ = +(String@ just, Unit@ nothing);
    
     MaybeString@ NothingString = MaybeString@(nothing: Unit);
@@ -52,19 +52,19 @@
       MaybeString@(just: x);
     };
  
-   Now we could write a @l[GetLine] function, for example, that gets the next
-   line in a file or @l[NothingString] if the end of the file has been
+   Now we could write a @l{GetLine} function, for example, that gets the next
+   line in a file or @l{NothingString} if the end of the file has been
    reached.
  
-   The definitions for @l[MaybeInt@] and @l[MaybeString@] are identical aside
+   The definitions for @l{MaybeInt@} and @l{MaybeString@} are identical aside
    from replacing "Int" with "String" everywhere. With polymorphism, we can
-   define a single @l[Maybe@] type that can be reused to distinguish between
+   define a single @l{Maybe@} type that can be reused to distinguish between
    valid and invalid values of any other type.
  
-  @subsection The Polymorphic @l[Maybe@] Type
-   Here's how we can define a polymorphic @l[Maybe@] type:
+  @subsection The Polymorphic @l{Maybe@} Type
+   Here's how we can define a polymorphic @l{Maybe@} type:
  
-   @code[fble]
+   @code[fble] @
     <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
    
     Maybe@ Nothing = <@ T@> {
@@ -75,54 +75,54 @@
       Maybe@<T@>(just: x);
     };
  
-   A poly value is described using the syntax @l[<@ T@> { ... }]. Here, @l[T@]
-   is a type variable. For @l[...] you put any kind of fble value, and that
-   value is allowed to depend on the abstract type @l[T@].
+   A poly value is described using the syntax @l{<@ T@> { ... }}. Here, @l{T@}
+   is a type variable. For @l{...} you put any kind of fble value, and that
+   value is allowed to depend on the abstract type @l{T@}.
  
    There is only one operation you can perform on a poly value: You can
    provide a concrete type, resulting in the value of the poly with the type
-   variable @l[T@] replaced with its concrete type.
+   variable @l{T@} replaced with its concrete type.
  
-   For example, the first poly value we see in the definition of @l[Maybe@],
+   For example, the first poly value we see in the definition of @l{Maybe@},
    which is a poly of a type value:
  
-   @code[fble]
+   @code[fble] @
     <@ T@> { +(T@ just, Unit@ nothing); }
  
-   If we write @l[Maybe@<Int@>], we'll get back the type value:
+   If we write @l{Maybe@<Int@>}, we'll get back the type value:
  
-   @code[fble]
+   @code[fble] @
     +(Int@ just, Unit@ nothing);
  
-   If we write @l[Maybe@<String@>], we'll get back the type value:
+   If we write @l{Maybe@<String@>}, we'll get back the type value:
  
-   @code[fble]
+   @code[fble] @
     +(String@ just, Unit@ nothing);
  
    And so on.
  
-   The next place we see a poly value is in the definition of @l[Nothing],
+   The next place we see a poly value is in the definition of @l{Nothing},
    which is a poly of a union value:
  
-   @code[fble]
+   @code[fble] @
     <@ T@> {
       Maybe@<T@>(nothing: Unit);
     };
  
-   If we write @l[Nothing<Int@>], we get back the union value:
+   If we write @l{Nothing<Int@>}, we get back the union value:
  
-   @code[fble]
+   @code[fble] @
     Maybe@<Int@>(nothing: Unit)
  
-   If we write @l[Nothing<String@>], we get back the union value:
+   If we write @l{Nothing<String@>}, we get back the union value:
  
-   @code[fble]
+   @code[fble] @
     Maybe@<String@>(nothing: Unit)
    
-   Finally, @l[Just] is a poly of a function value. If we write
-   @l[Just<Int@>], we get back the function value:
+   Finally, @l{Just} is a poly of a function value. If we write
+   @l{Just<Int@>}, we get back the function value:
  
-   @code[fble]
+   @code[fble] @
     (Int@ x) {
       Maybe@<Int@>(just: x);
     };
@@ -131,9 +131,9 @@
   As with other kinds of values, poly values have types. The type of a poly is
   the poly of the type.
  
-  Take @l[Nothing] for example. The poly is:
+  Take @l{Nothing} for example. The poly is:
  
-  @code[fble]
+  @code[fble] @
    <@ T@> {
      Maybe@<T@>(nothing: Unit);
    };
@@ -141,40 +141,40 @@
   This is a poly of a union value. The type of this poly is a poly of a union
   type. More specifically, the type is:
  
-  @code[fble]
+  @code[fble] @
    <@ T@> { Maybe@<T@>; }
  
-  Which is the same as @l[Maybe@].
+  Which is the same as @l{Maybe@}.
  
   In general:
  
-  @code[fble]
+  @code[fble] @
    @<<@ T@> { ... }> = <@ T@> { @<...> };
  
  @section The Kind of a Poly
   So far we have been introduced to two kinds of values. Normal values,
   including struct values, union values, and function values, have the kind
-  @l[%]. Type values have the kind @l[@].
+  @l{%}. Type values have the kind @l{@}.
  
   A polymorphic value has what is called a polymorphic kind, which includes
   the kind of the type parameter and the kind of the value. For example, the
-  kind of @l[Nothing] is @l[<@>%], which means it has a type parameter of kind
-  @l[@] and produces a value of kind @l[%]. The kind of @l[Maybe@] is
-  @l[<@>@], because it has a type parameter of kind @l[@] and produces a type
-  value of kind @l[@].
+  kind of @l{Nothing} is @l{<@>%}, which means it has a type parameter of kind
+  @l{@} and produces a value of kind @l{%}. The kind of @l{Maybe@} is
+  @l{<@>@}, because it has a type parameter of kind @l{@} and produces a type
+  value of kind @l{@}.
  
   This is why, for example, in the @fbld[HelloWorld.fbld][HelloWorld] tutorial
   we wrote things like:
  
-  @code[fble]
+  @code[fble] @
    % True = /Core/Bool%.True;
    @ Char@ = /Core/Char%.Char@;
    <@>@ List@ = /Core/List%.List@;
    <@>% Concat = /Core/List%.Concat;
  
-  The kind of @l[True] is @l[%] because it is a normal value. The kind of
-  @l[Char@] is @l[@] because it is a type. The type of @l[List@] is @l[<@>@]
-  because it a polymoprhic type value, and the type of @l[Concat] is @l[<@>%],
+  The kind of @l{True} is @l{%} because it is a normal value. The kind of
+  @l{Char@} is @l{@} because it is a type. The type of @l{List@} is @l{<@>@}
+  because it a polymoprhic type value, and the type of @l{Concat} is @l{<@>%},
   because it is a polymorphic normal value.
  
  @section Recursive Polymorphic Types
@@ -184,17 +184,17 @@
   defining in its own definition. For example, the following natural way to
   write a recursive polymorphic list type is not allowed:
  
-  @code[fble]
+  @code[fble] @
    # Not allowed!
    <@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
  
-  The compiler will give you an error saying @l[List@] isn't polymorphic. When
+  The compiler will give you an error saying @l{List@} isn't polymorphic. When
   specifying the kind of a variable instead of the type of the variable in the
   variable definition, the variable is treated as non-polymorphic in its own
   definition. To work around this, you need to define the list type in a
   slightly different way:
  
-  @code[fble]
+  @code[fble] @
    <@>@ List@ = <@ T@> {
      @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
      L@;
@@ -208,10 +208,10 @@
    You can implement recursive polymorphic functions just fine, but you have
    to provide an explicit type in the definition of the function. You can't
    specify a kind and have the type inferred. So, for example, the following
-   works to define a function @l[Last] that returns the last element in a
+   works to define a function @l{Last} that returns the last element in a
    list:
  
-   @code[fble]
+   @code[fble] @
     <@ T@>(List@<T@>) { T@; } Last = <@ T@>(List@<T@> list) {
       list.cons.tail.?(nil: list.cons.head);
       Last<T@>(list.cons.tail);
@@ -220,7 +220,7 @@
    If you tried to write that without an explicit function type, you would get
    an error:
  
-   @code[fble]
+   @code[fble] @
     <@>% Last = <@ T@>(List@<T@> list) {
       list.cons.tail.?(nil: list.cons.head);
       # Error: Can't do Last<T@> in definition of Last.
@@ -229,13 +229,13 @@
  
   @subsection Mutually Recursive Polymorphic Types
    You can define mutually recursive polymorphic types. It's slightly awkward,
-   but doable. For example, if you wanted to define two types, @l[List@] for
-   lists and @l[ListP@] for non-empty lists in terms of each other, you can
+   but doable. For example, if you wanted to define two types, @l{List@} for
+   lists and @l{ListP@} for non-empty lists in terms of each other, you can
    either duplicate the definition, or share them.
  
    Here's how duplicated definitions would look:
  
-   @code[fble]
+   @code[fble] @
     <@>@ List@ = <@ T@> {
       @ L@ = +(P@ cons, Unit@ nil),
       @ P@ = *(T@ head, L@ tail);
@@ -250,7 +250,7 @@
  
    Here's how you could reuse the definitions instead of duplicating them:
  
-   @code[fble]
+   @code[fble] @
     <@>% Types = <@ T@> {
       @ L@ = +(P@ cons, Unit@ nil),
       @ P@ = *(T@ head, L@ tail);
@@ -264,17 +264,17 @@
   Some languages have the concept of an interface. You can write a function
   that operates on any type, as long as that type implements a particular
   interface.  Interfaces can be implemented in fble as a polymorphic
-  collection of functions parameterized by some type @l[T@].
+  collection of functions parameterized by some type @l{T@}.
  
-  For example, in another language you might define an @l[Eq] interface that
+  For example, in another language you might define an @l{Eq} interface that
   types implement if values of those types can be compared. You could write a
-  list @l[Contains] function that operates on objects with the @l[Eq]
+  list @l{Contains} function that operates on objects with the @l{Eq}
   interface to do the equality comparison.
  
-  In fble, you pass the right implementation of @l[Eq] directly as an argument
-  to @l[Contains]. It would look something like this:
+  In fble, you pass the right implementation of @l{Eq} directly as an argument
+  to @l{Contains}. It would look something like this:
  
-  @code[fble]
+  @code[fble] @
    <@>@ Eq@ = <@ T@>(T@, T@) { Bool@ };
    
    <@ T@>(Eq@<T@>, List@<T@>, T@) { Bool@; }
@@ -284,25 +284,25 @@
      Contains<T@>(eq, l.cons.tail, x);
    };
  
-  In this case, @l[Eq@] is like an interface for the type @l[T@] that the
-  @l[Contains] function requires to work. The caller is responsible for
-  providing the implementation of @l[Eq@].
+  In this case, @l{Eq@} is like an interface for the type @l{T@} that the
+  @l{Contains} function requires to work. The caller is responsible for
+  providing the implementation of @l{Eq@}.
  
  @section Poly of a Poly
   It's possible for the body of a polymorphic value to itself be a polymorphic
   value. This is useful if you want to have multiple type parameters. For
-  example, imagine you want to define a generic @l[Pair@] type that has a
+  example, imagine you want to define a generic @l{Pair@} type that has a
   different type for the first and second field:
  
-  @code[fble]
+  @code[fble] @
    <@><@>@ Pair@ = <@ A@> { <@ B@> { *(A@ first, B@ second); }; };
    
    <@ A@> { <@ B@> { (Pair@<A@><B@>) { A@; }; }; }
    First = <@ A@> { <@ B@> { (Pair@<A@><B@> pair) { pair.first; }; }; }
  
-  Here's an example of how to make use of the @l[Pair@] type:
+  Here's an example of how to make use of the @l{Pair@} type:
  
-  @code[fble]
+  @code[fble] @
    Pair@<Int@><Bool@> x = Pair@<Int@><Bool@>(42, True);
    Int@ value = First<Int@><Bool@>(x);
  
@@ -310,7 +310,7 @@
   multi-argument polymorphic values, and you can use more compact syntax to
   express the same thing:
  
-  @code[fble]
+  @code[fble] @
    <@, @>@ Pair@ = <@ A@, @ B@> { *(A@ first, B@ second); };
    
    <@ A@, @ B@>(Pair@<A@, B@>) { A@; };
@@ -319,29 +319,29 @@
    Pair@<Int@, Bool@> x = Pair@<Int@, Bool@>(42, True);
    Int@ value = First<Int@, Bool@>(x);
  
-  In this case the kind of @l[Pair@] can be written either as @l[<@><@>@] or
-  as @l[<@,@>@]. And the kind of @l[First] can be written either as
-  @l[<@><@>%] or as @l[<@, @>%], indicating that it takes two type arguments.
+  In this case the kind of @l{Pair@} can be written either as @l{<@><@>@} or
+  as @l{<@,@>@}. And the kind of @l{First} can be written either as
+  @l{<@><@>%} or as @l{<@, @>%}, indicating that it takes two type arguments.
  
   Note that this is different from the case of multi-argument functions, where
   a multi-argument function is not the same thing is a function that returns a
   function.
  
   This means you can do partial application of multi-argument poly values. For
-  example, you could write @l[Pair@<Int@>] to refer to the polymorphic type
-  @l[<@ A@> { Pair@<Int@, A@>; }].
+  example, you could write @l{Pair@<Int@>} to refer to the polymorphic type
+  @l{<@ A@> { Pair@<Int@, A@>; }}.
  
  @section Higher Order Polys
-  So far we've only show type parameters of kind @l[@]. It's not legal in fble
-  to use a type parameter of kind @l[%], because that @l[%] doesn't represent
-  a type. But you could specify a type parameter of kind @l[<@>@] if you want.
+  So far we've only show type parameters of kind @l{@}. It's not legal in fble
+  to use a type parameter of kind @l{%}, because that @l{%} doesn't represent
+  a type. But you could specify a type parameter of kind @l{<@>@} if you want.
   This would be a high order polymorphic value.
  
-  The classic example of a higher order polynomial value is the @l[Monad@]
-  type, which describes an interface that container types such as @l[List@]
+  The classic example of a higher order polynomial value is the @l{Monad@}
+  type, which describes an interface that container types such as @l{List@}
   can support:
  
-  @code[fble]
+  @code[fble] @
    <<@>@>@ Monad@ = <<@>@ M@> {
      *(
        <@ A@>(A@) { M@<A@>; } return,
@@ -349,10 +349,10 @@
      );
    };
  
-  In this case the type parameter @l[M@] has kind @l[<@>@], so we can say
-  things like @l[M@<A@>] and @l[M@<B@>] in the body of the poly. Even though
-  we don't know what type value will be passed for @l[M@], the compiler will
-  make sure it is only called with a polymorphic type value of kind @l[<@>@].
+  In this case the type parameter @l{M@} has kind @l{<@>@}, so we can say
+  things like @l{M@<A@>} and @l{M@<B@>} in the body of the poly. Even though
+  we don't know what type value will be passed for @l{M@}, the compiler will
+  make sure it is only called with a polymorphic type value of kind @l{<@>@}.
  
   We'll talk more about monads in the next tutorial. For now, the important
   takeaway is that you specify the kind of the type variable in a polymorphic
@@ -362,15 +362,15 @@
  
   For example, this would be okay:
  
-  @code[fble]
+  @code[fble] @
    Monad@<List@> ListMonad = ...;
  
   But this would give you a type error:
  
-  @code[fble]
+  @code[fble] @
    Monad@<Int@> IntMonad = ...;
  
-  Because @l[Int@] has kind @l[@] when @l[<@>@] is required.
+  Because @l{Int@} has kind @l{@} when @l{<@>@} is required.
  
  @section Polys are Values
   Polymorphic values are values. That means you can use them wherever you
@@ -388,20 +388,20 @@
   interleaved to make this easy to write. For example, here's the type of a
   map lookup function:
  
-  @code[fble]
+  @code[fble] @
    <@ K@>((K@, K@) { Bool@; })<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup = ...
  
-  To use the @l[Lookup] function, you provide the type @l[K@] of key elements
-  in the map, a comparison operator of type @l[(K@, K@) { Bool@; }] used to
-  define the element ordering, the type @l[V@] of value you want to look up,
-  the map of type @l[Map@<K@, V@>] to do the lookup in, and the value of the
+  To use the @l{Lookup} function, you provide the type @l{K@} of key elements
+  in the map, a comparison operator of type @l{(K@, K@) { Bool@; }} used to
+  define the element ordering, the type @l{V@} of value you want to look up,
+  the map of type @l{Map@<K@, V@>} to do the lookup in, and the value of the
   key to look up.
  
-  If you write the @l[Lookup] function this way, it's convenient to define
-  different variations of @l[Lookup] depending on your key type, your
+  If you write the @l{Lookup} function this way, it's convenient to define
+  different variations of @l{Lookup} depending on your key type, your
   comparison operator, and your value type. For example:
  
-  @code[fble]
+  @code[fble] @
    <@>% LookupByName = Lookup<String@>(StringCompare);
    
    Map@<String@, Int@> ids = ...;
@@ -415,31 +415,31 @@
  
  @section Type Inference
   It's fairly common to define and use polymorphic functions. For example, we
-  defined the @l[Just] function earlier to define a valid @l[Maybe] value. The
+  defined the @l{Just} function earlier to define a valid @l{Maybe} value. The
   normal way to use a polymorphic function is to supply the type argument to
   get the function value and then apply the arguments to the function value:
  
-  @code[fble]
+  @code[fble] @
    Maybe@<Int@> my_int = Just<Int@>(Int|42);
  
   In some situations, the fble compiler can automatically infer the value of
   the type parameter to use with the poly. In this case, the compiler knows
-  the type of @l[Int|42] is @l[Int@] and that @l[Just] is a polymorphic
-  function with type parameter @l[T@] and argument of type @l[T@]. Given that
-  information, the compiler can infer that the only value for @l[T@] that
-  makes sense here is @l[Int@]. If the compiler can infer the type parameters
+  the type of @l{Int|42} is @l{Int@} and that @l{Just} is a polymorphic
+  function with type parameter @l{T@} and argument of type @l{T@}. Given that
+  information, the compiler can infer that the only value for @l{T@} that
+  makes sense here is @l{Int@}. If the compiler can infer the type parameters
   of a polymorphic function when you do a function application, you can leave
   out the explicit value for the type parameter; the compiler will insert it
   for you automatically:
  
-  @code[fble]
+  @code[fble] @
    Maybe@<Int@> my_int = Just(Int|42);
  
   The fble type system is based around the idea that you can determine the
   type of an expression solely based on the types of variables in scope and
   the expression itself. The type of an expression cannot depend on how that
   expression is used. Because of this, the compiler is not able to infer the
-  type parameter to @l[Nothing@], because it would have to know how the
+  type parameter to @l{Nothing@}, because it would have to know how the
   expression is being used to know what type to pass.
  
   For the most part type inference is a minor convenience. Where type
@@ -455,21 +455,21 @@
     When doing function application with a polymorphic function value instead of a
     normal value. For example:
  
-    @code[fble]
+    @code[fble] @
      Just<Int@>(Int|42)    # explicit
      Just(Int|42)          # type inferred
  
    @item
     When constructing a struct value with a polymorphic struct type. For example:
    
-    @code[fble]
+    @code[fble] @
      Pair@<Int@, Bool@>(Int|42, True)    # explicit
      Pair@(Int|42, True)                 # types inferred
  
    @item
     When constructing a union value with a polymorphic union type. For example:
    
-    @code[fble]
+    @code[fble] @
      Maybe@<Int@>(just: Int|42);   # explicit
      Maybe@(just: Int|42);         # type inferred
  
@@ -477,7 +477,7 @@
     In a list expression where the list function is a polymorphic function.
     For example:
  
-    @code[fble]
+    @code[fble] @
      List<Int@>[Int|42, Int|43];   # explicit
      List[Int|42, Int|43];         # type inferred
  
@@ -488,13 +488,13 @@
  
    For example:
  
-   @code[fble]
+   @code[fble] @
     List@<Int@> empty = List[];   # Cannot infer type!
  
-   In this case the compiler cannot tell that @l[List[]] should produce an
+   In this case the compiler cannot tell that @l{List[}] should produce an
    integer list as opposed to any other kind of list. In this case you should
    get an error message from the compiler indicating that it couldn't tell
-   what type to use for @l[T@] in the list expression.
+   what type to use for @l{T@} in the list expression.
  
    In some cases the compiler is simply not smart enough to infer the type.
    When in doubt, you can always provide an explicit type parameter if the
