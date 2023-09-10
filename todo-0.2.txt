@@ -5,6 +5,7 @@ Things to consider doing for the fble-0.2 release.
 * Figure out why Chars.''' seems to break fbld-deps program.
 
 * Fbld2:
+ - Allow nested unescaped {} and escaped \{ \} in literal args.
  - Looks like some extra newline somewhere in html backend for @fbld or @url.
  - Are blank lines allowed at end of next line literal text?
  - Add test for nesting of [ and ] characters in plain text.
@@ -12,6 +13,8 @@ Things to consider doing for the fble-0.2 release.
  - Test for location tracking across @head and @tail?
  - Figure out how to highlight @code blocks.
  - Any way we can vim highlight next line literal as normal text?
+ - Some better way to start @.block text with an inline command?
+   Other than adding a space character in front?
 
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.

@@ -4399,4 +4399,9 @@ Now that tutorials are ported over to fbld2, what's next? Brainstorm:
 * Port rest of .html files over to fbld2. Remove fbld_html_doc and html_doc.
 * See if we can improve performance of fbld2.
 * See if we can remove fbld1 entirely and replace it with fbld2?
+* Figure out how to do syntax highlighting.
+* Carefully review generated documentation for issues.
+
+Let's hold off on converting the rest of the tcl based fbld over to fbld2 yet.
+I want to phase out fbld1 first.
 

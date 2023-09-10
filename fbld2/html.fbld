@@ -24,6 +24,7 @@
 
 @define[section][title body] <h2>@title</h2>\n@body @@
 @define[subsection][title body] <h3>@title</h3>\n@body @@
+@define[subsubsection][title body] <h4>@title</h4>\n@body @@
 
 @define[url][url label]
  @define[l][] @ifeq[][@label][@url][@label]
@@ -40,6 +41,8 @@
  @ <a href="@ReplaceExt[@file]"><code>@label</code></a>
 @@
 
+@define[label][id text] <a id="@id">@text</a> @@
+@define[ref][id caption] <a href="#@id">@caption</a> @@
 @define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
 @define[definition][name value] @def[@name][@value] @@
 @define[item][text] <ul><li>@text</li></ul>\n @@
@@ -59,3 +62,4 @@
 
 @define[code][lang text] <pre>@EscHtml[@text]</pre>\n @@
 @define[l][text] <code>@EscHtml[@text]</code> @@
+@define[a][text] <i>@EscHtml[@text]</i> @@

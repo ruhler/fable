@@ -59,13 +59,13 @@
    consequence, you can determine the value of a type if you know the type of
    that type.
   
-   For example, the boolean value @l[True] is a normal value. The type of
-   @l[True] is the type @l[Bool@], which is a union type. @l[Bool@] is a type
-   value. The type of @l[Bool@] is known only as the type of @l[Bool@],
-   expressed using the syntax: @l[@<Bool@>]. @l[@<Bool@>] is also a type
-   value, and the type of that value is @l[@<@<Bool@>>]. If you have an
-   expression of type @l[@<Bool@>], you know statically that the value of that
-   expression must be @l[Bool@], so the expression need not be evaluated at
+   For example, the boolean value @l{True} is a normal value. The type of
+   @l{True} is the type @l{Bool@}, which is a union type. @l{Bool@} is a type
+   value. The type of @l{Bool@} is known only as the type of @l{Bool@},
+   expressed using the syntax: @l{@<Bool@>}. @l{@<Bool@>} is also a type
+   value, and the type of that value is @l{@<@<Bool@>>}. If you have an
+   expression of type @l{@<Bool@>}, you know statically that the value of that
+   expression must be @l{Bool@}, so the expression need not be evaluated at
    runtime.
   
    Type information is stripped away at runtime. The value of a type at
@@ -77,25 +77,25 @@
    native interface.
 
   @subsection 2.2 Kinds
-   @AbstractSyntax
+   @AbstractSyntax @
     Kind ::= normal_kind
     Kind ::= type_kind
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     kind ::= '%'    (* normal_kind *)
     kind ::= '@'    (* type_kind *)
   
-   @Example
+   @Example @
     %
     @
   
    Kinds are used to classify whether a value is a normal value, a type value,
    or something else. Using the example in the previous section:
   
-   @item @par @l[True] is a normal value. It is of normal kind.
-   @item @par @l[Bool@] is a type value. It is of type kind.
-   @item @par @l[@<Bool@>] is a type of a type value. It is of higher kind.
-   @item @par @l[@<@<Bool@>>] is also of higher kind.
+   @item @l{True} is a normal value. It is of normal kind.
+   @item @l{Bool@} is a type value. It is of type kind.
+   @item @l{@<Bool@>} is a type of a type value. It is of higher kind.
+   @item @l{@<@<Bool@>>} is also of higher kind.
   
    Kinds are analogous to types in that they describe what operations are
    supported by a particular value, but they are much more restricted in the
@@ -109,16 +109,16 @@
    to a normal value, a type value, or something else. For that reason, we
    require different namespaces be used for different kinds of values. In the
    concrete syntax, names of normal variables are unadorned, while names of
-   type variables must be followed with the character @l[@]. So, for example,
-   @l[True] is a normal value, and @l[Bool@] is a type value.
+   type variables must be followed with the character @l{@}. So, for example,
+   @l{True} is a normal value, and @l{Bool@} is a type value.
   
-   The @l[@] character is not considered part of the variable, but rather is
-   an indicator of the namespace of the variable. So, for example @l['Foo'@]
-   is a type variable named @l[Foo], and @l['Foo@'] is a normal variable named
-   @l[Foo@].
+   The @l{@} character is not considered part of the variable, but rather is
+   an indicator of the namespace of the variable. So, for example @l{'Foo'@}
+   is a type variable named @l{Foo}, and @l{'Foo@'} is a normal variable named
+   @l{Foo@}.
   
    You are not allowed to use a variable to refer to a higher kinded value,
-   because then using @l[@] in variable names to distinguish between normal
+   because then using @l{@} in variable names to distinguish between normal
    variables and type variables would be insufficient. In practice this should
    not be a significant limitation because you should be able to use a type
    variable for the value of the type and use the typeof operator to get the
@@ -127,13 +127,13 @@
    expressions of higher kind.
   
   @subsection 2.3 Typeof
-   @AbstractSyntax
+   @AbstractSyntax @
     Type ::= typeof (expr : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     type ::= '@' '<' expr '>'
   
-   @Example
+   @Example @
     @<x>
   
    Evaluates to the type of the expression, without evaluating the expression
@@ -143,13 +143,13 @@
    Runtime is O(1).
   
   @subsection 2.4 Variables
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= var (name : Name)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= name
   
-   @Example
+   @Example @
     x
   
    Variables allow data values to be reused multiple times within a program.
@@ -179,17 +179,17 @@
    created.
   
   @subsection 2.5 Let
-   @AbstractSyntax
+   @AbstractSyntax @
     Spec ::= kind_spec (kind : Kind)
     Spec ::= type_spec (type : Type) ;
     Expr ::= let (bindings : [(Spec, Name, Expr)]) (body : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     spec ::= kind ;
     spec ::= type ;
     stmt ::= spec name '=' expr [',' spec name = expr [...]] ';' stmt
   
-   @Example
+   @Example @
     Int@ x = mul(3, 3); mul(x, x)
     @ Bool@ = +(Unit@ true, Unit@ false); ...
   
@@ -235,13 +235,13 @@
    Recursively defined values must not be vacuously recursive. For example,
    the following definition is not allowed:
   
-   @code[fble]
+   @code[fble] @
     @ T@ = T@; ...
   
    But it is okay to define recursive types and values that involve a
    constructor somewhere, such as:
   
-   @code[fble]
+   @code[fble] @
     @ T@ = +(T@ x);
   
    TODO: Clarify what we mean by "must not be". Is it that vacuous types are
@@ -257,7 +257,7 @@
   
    Implementations are encouraged to emit warnings for unused variables, with
    the convention that no warnings should be produced for variables starting
-   with @l[_] in their name. This allows the programmer to annotate a variable
+   with @l{_} in their name. This allows the programmer to annotate a variable
    as intentionally unused, which is occasionally useful in practice.
   
    Runtime is O(N log(M)) plus the runtimes of the bindings and the runtime of
@@ -277,13 +277,13 @@
   with implicit types to facilitate this use case.
   
   @subsection 3.1 Struct Type
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= struct_type (fields : [(Type, Name)])
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= '*(' [type name [',' type name [...]]] ')'
   
-   @Example
+   @Example @
     *()                 # The Unit type.
     *(Int@ x, Int@ y)   # The type of a pair of ints x, y.
   
@@ -293,13 +293,13 @@
    Runtime is O(1).
   
   @subsection 3.2 Struct Value Explicit Type
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= struct_value_explicit_type (type : Type) (args : [Expr])
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= type '(' [expr [',' expr [...]]] ')'
   
-   @Example
+   @Example @
     Coord@(3, 5)
   
    The type of the struct value is the explicit type provided, which must be a
@@ -315,13 +315,13 @@
    of arguments.
   
   @subsection 3.3 Struct Value Implicit Type
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= struct_value_implicit_type (args : [(Name, Expr)])
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= '@' '(' [name [':' expr] [',' ...]] ')'
   
-   @Example
+   @Example @
     @(x: 3, y: 5)
     @(Bool@, True, False, Not: NotInternal)
   
@@ -335,7 +335,7 @@
    assumed to be the variable with same name as the field. For example, the
    above example is equivalent to:
   
-   @code[fble]
+   @code[fble] @
     @(Bool@: Bool@, True: True, False: False, Not: NotInternal)
   
    The type of the struct value is a struct type with fields defined in the
@@ -350,13 +350,13 @@
    of arguments.
   
   @subsection 3.4 Struct Access
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= struct_access (object : Expr) (field : Name)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr '.' name
   
-   @Example
+   @Example @
     x.first
   
    Returns the value passed to the struct at the corresponding field position
@@ -373,13 +373,13 @@
    number of fields in the struct.
 
   @subsection 3.5 Struct Copy
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= struct_copy (src : Expr) (args : [(Name, Expr)])
 
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '.' '@' '(' [name [':' expr] [',' ...]] ')'
 
-   @Example
+   @Example @
     Vector@ v = @(x: 1, y: 2, z: 3);
     Vector@ w = v.@(x: 3);
 
@@ -391,9 +391,9 @@
    arguments as in a struct value implicit type expression; any fields not
    included in arguments take their values from the source struct value.
 
-   In the above example, the definition of @l[w] is equivalent to:
+   In the above example, the definition of @l{w} is equivalent to:
   
-   @code[fble]
+   @code[fble] @
     Vector@ w = @(x: 3, y: v.y, z: v.z);
 
    The source value must be a struct value.
@@ -420,13 +420,13 @@
   on the field present in the union value.
   
   @subsection 4.1 Union Type
-   @AbstractSyntax
+   @AbstractSyntax @
     Type ::= union_type (fields : [(Type, Name)])
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     type ::= '+(' type name [',' type name [...]] ')'
   
-   @Example
+   @Example @
     +(Unit@ true, Unit@ false)
   
    Union types are considered equal if their fields are equal, including field
@@ -435,13 +435,13 @@
    Runtime is O(1).
   
   @subsection 4.2 Union Value
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= union_value (type : Type) (field : Name) (arg : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= type '(' name ':' expr ')'
   
-   @Example
+   @Example @
     Maybe@(Just: 3)
   
    The type of the union value is the type provided, which must be a union
@@ -455,13 +455,13 @@
    fields in the union.
   
   @subsection 4.3 Union Access
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= union_access (object : Expr) (field : Name)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '.' name
   
-   @Example
+   @Example @
     x.just
   
    Returns the value passed to the union at the corresponding field position
@@ -480,14 +480,14 @@
    of fields in the union.
   
   @subsection 4.4 Union Select
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '.?(' name ':' expr [',' name ':' expr [...]] [',' ':' expr]')'
     stmt ::= expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt
   
-   @Example
+   @Example @
     mfoo.?(Just: mfoo.Just, Nothing: 3)
     char.?(a: True, b: True, : False)
     { char.?(a: True, b: True); False; }
@@ -521,7 +521,7 @@
   
    For example, the following union select expression:
   
-   @code[fble]
+   @code[fble] @
     x.?(
       true: y.?(
         true: A,
@@ -532,7 +532,7 @@
   
    Is equivalent to the following statement based form:
   
-   @code[fble]
+   @code[fble] @
     {
       x.?(true: { y.?(true: A); B; });
       y.?(true: C);
@@ -551,13 +551,13 @@
   return type of the function.
   
   @subsection 5.1 Function Type
-   @AbstractSyntax
+   @AbstractSyntax @
     Type ::= func_type (args : [Type]) (return : Type)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     block ::= '(' type [',' type [...]] ')' block
   
-   @Example
+   @Example @
     (Int@, Int@) { Bool@; }
   
    The function type describes the type of a function value by specifying the
@@ -571,7 +571,7 @@
    Curried function types are not considered equal. For example, the following
    two expressions describe different types:
   
-   @code[fble]
+   @code[fble] @
     (a, b) { c; }
     (a) { (b) { c; }; }
     
@@ -581,13 +581,13 @@
    Runtime is O(1).
   
   @subsection 5.2 Function Value
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= func_value (args : [(Type, Name)]) (body : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     block ::= '(' type name [',' type name [...]] ')' block
   
-   @Example
+   @Example @
     (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
   
    The function value expression is used to describe a primitive function
@@ -604,13 +604,13 @@
    function.
   
   @subsection 5.3 Function Application
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= func_apply (func : Expr) (args : [Expr])
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '(' expr [',' expr [...]] ')'
   
-   @Example
+   @Example @
     foo(x, y)
   
    The application expression is used to apply a function to some arguments.
@@ -634,13 +634,13 @@
   Polymorphism allows expressions to be parameterized by types.
   
   @subsection 6.1 Poly Kind
-   @AbstractSyntax
+   @AbstractSyntax @
     Kind ::= poly_kind (arg : Kind) (return : Kind)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     kind ::= '<' kind [',' kind [...]] '>' kind
   
-   @Example
+   @Example @
     <@>@
     <@,@>%
   
@@ -658,18 +658,18 @@
    kind.  This is syntactic sugar for nested single argument poly kinds. For
    example, the following two expressions describe the same kind:
   
-   @code[fble]
+   @code[fble] @
     <@,@,@>@
     <@><@><@>@
   
   @subsection 6.2 Poly Value
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= poly_value (arg : (Kind, TypeName)) (body : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     block ::= '<' kind type_name [',' kind type_name [...]] '>' block
    
-   @Example
+   @Example @
     <@ T@> { +(T@ just, Unit@ nothing); }
     <@ T@>(T@ x){ Maybe@<T@>(just: x); }
   
@@ -683,25 +683,25 @@
    the poly value whose body describes the type of the poly body. For example,
    the type of the poly value:
   
-   @code[fble]
+   @code[fble] @
     <@ T@> { Maybe@<T@>(nothing: Unit@); }
   
    Is the poly type:
   
-   @code[fble]
+   @code[fble] @
     <@ T@> { Maybe@<T@>; }
   
    The body of a poly is evaluated as part of evaluation of the poly value.
    The runtime is the runtime of the body.
   
   @subsection 6.3 Poly Application
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= poly_apply (poly : Expr) (arg : Type)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '<' type [',' type [...]] '>'
   
-   @Example
+   @Example @
     Maybe@<Int@>
     fromJust<Int@>(3)
   
@@ -723,13 +723,13 @@
    of the arguments to the struct_value_explicit_type, union_value, or
    func_apply.
   
-   For example, assume you have a polymorphic function @l[fromJust] of type:
+   For example, assume you have a polymorphic function @l{fromJust} of type:
   
-   @code[fble]
+   @code[fble] @
     <@ T@>(T@) { Maybe@<T@>; }
   
-   Assuming the type of @l[3] is @l[Int@], the func_apply expression
-   @l[fromJust(3)] is rewritten by the compiler to @l[fromJust<Int@>(3)].
+   Assuming the type of @l{3} is @l{Int@}, the func_apply expression
+   @l{fromJust(3)} is rewritten by the compiler to @l{fromJust<Int@>(3)}.
   
    The motivation for supporting type inference is to prevent cluttering the
    code with types that are otherwise straight forward to infer. This is
@@ -742,7 +742,7 @@
    be impossible to infer type arguments to a poly with either of the
    following types:
   
-   @code[fble]
+   @code[fble] @
     <@ T@>(Unit@) { T@; }
     <@ T@, @ M@>(M@<T@>) { M@<T@>; }
   
@@ -761,13 +761,13 @@
   to compose operations in a monadic style.
   
   @subsection @label[lists][7.1 List]
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= list (func : Expr) (args : [Expr])
     
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '['[expr [',' expr [...]]] ']'
   
-   @Example
+   @Example @
     List<Int@>[]
     List<Int@>[x]
     List<Int@>[x, f(y), z]
@@ -779,25 +779,25 @@
   
    The list expression can be used with any function that has a single
    argument of list type. A list type is any type matching the structure of
-   the following type @l[L@]:
+   the following type @l{L@}:
   
-   @code[fble]
+   @code[fble] @
     @ L@ = +(*(E@ head, L@ tail) cons, *() nil);
   
    The fields can be named anything, but the order of the fields must match
-   that shown above. Any type @l[E@] of list elements may be used.
+   that shown above. Any type @l{E@} of list elements may be used.
   
-   The list expression @l[f[a, b, c]], assuming the type of f is @l[(L@) { V@;
-   }] for some type @l[V@], is desugared to:
+   The list expression @l{f[a, b, c]}, assuming the type of f is
+   @l[(L\@) { V\@; }] for some type @l{V@}, is desugared to:
   
-   @code[fble]
+   @code[fble] @
     f(L@(cons: @(head: a, tail:
       L@(cons: @(head: b, tail:
       L@(cons: @(head: c, tail:
       L@(nil: *()()))))))));
   
-   Each argument to the list expression must have a type @l[E@] matching the
-   element type of the list type @l[L@] expected by the function f.
+   Each argument to the list expression must have a type @l{E@} matching the
+   element type of the list type @l{L@} expected by the function f.
   
    The function provided in the list expression may be a polymorphic function
    value, in which case type inference is performed as with func_apply
@@ -809,7 +809,7 @@
   
    The motivation for requiring a function to be supplied as part of the list
    expression, instead of having stand alone list expressions like
-   @l[[a, b, c]], is:
+   @l{[a, b, c]}, is:
   
    @item
     It allows the user to specify what type of list to build instead of assuming
@@ -823,13 +823,13 @@
     letter type to be supplied.
   
   @subsection @label[literals][7.2 Literal]
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= literal (func : Expr) (letters : word)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '|' word
   
-   @Example
+   @Example @
     Octal|177
     Str|'hello there!'
   
@@ -840,21 +840,21 @@
   
    As with the list expression, the literal expression is used with a function
    that has a single argument of list type. The element type of the list must
-   be a union type with fields of type @l[*()] for each letter in the word.
+   be a union type with fields of type @l{*()} for each letter in the word.
   
    For example, the element type for an octal literal might look like:
   
-   @code[fble]
+   @code[fble] @
     @OctalLetters = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
   
-   The literal expression @l[f|abc], assuming the element type for the list
-   argument to @l[f] is @l[E@], is desugared to:
+   The literal expression @l{f|abc}, assuming the element type for the list
+   argument to @l{f} is @l{E@}, is desugared to:
   
-   @code[fble]
+   @code[fble] @
     f[E@(a: *()()), E@(b: *()()), E@(c: *()())];
   
    It is a type error if the word contains a letter for which there is no
-   corresponding field in the element type @l[E@].
+   corresponding field in the element type @l{E@}.
   
    Struct types and package types cannot be used for the function in literal
    syntax, even though they share a similar concrete syntax to function
@@ -867,19 +867,19 @@
   
     The type of letter is a bit:
   
-    @code[fble]
+    @code[fble] @
      @ Unit@ = *();
      @ Bit@ = +(Unit@ 0, Unit@ 1);
   
     The literal will be formed of lists of bits:
   
-    @code[fble]
+    @code[fble] @
      @ Bits@ = +(*(Bit@ head, Bits@ tail) cons, Unit@ nil);
   
     The function specifies how to transform a list of bits into an integer,
-    assuming some int type @l[Int@]:
+    assuming some int type @l{Int@}:
   
-    @code[fble]
+    @code[fble] @
      (Int@, Bits@) { Int@; } Helper = (Int@ n, Bits@ bits) {
        bits.?(nil: n);
     
@@ -894,45 +894,45 @@
     Now we can form binary literals using list or literal expressions. For
     example:
   
-    @code[fble]
+    @code[fble] @
      Int@ 6 = Binary|110;
      Int@ x = Binary[first_bit, second_bit, third_bit];
   
   @subsection @label[bind][7.3 Bind]
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
   
-   @Example
+   @Example @
     Int@ x <- Map(l);
     f(x, y)
   
    Bind is syntactic sugar for calling a function with an anonymous function
    as its only argument. It is equivalent to:
   
-   @code[txt]
+   @code[txt] @
     func_apply func (func_value args [body])
   
    For example, the expression:
   
-   @code[fble]
+   @code[fble] @
     Int@ x <- Map(l);
     f(x, y)
   
    Desugars to:
   
-   @code[fble]
+   @code[fble] @
     Map(l)((Int@ x) { f(x, y); });
   
    Bind is particularly suited for abstracting glue logic that manipulates how
    program statements are combined. For example, it can be used to hide error
-   propagation based on a @l[Maybe@] monad.
+   propagation based on a @l{Maybe@} monad.
   
    Instead of:
   
-   @code[fble]
+   @code[fble] @
     Maybe@ a = f(x);
     a.?(
       just: {
@@ -943,7 +943,7 @@
   
    And instead of the slightly better:
   
-   @code[fble]
+   @code[fble] @
     (Maybe@, (X@) { Maybe@; }) { Maybe@; }
     Maybe = (Maybe@ m, (X@) { Maybe@; } f) {
       m.?(just: f(x.just), nothing: Nothing);
@@ -957,7 +957,7 @@
   
    You can write:
   
-   @code[fble]
+   @code[fble] @
     (Maybe@)((X@) { Maybe@; }) { Maybe@; }
     Maybe = (Maybe@ m)((X@) { Maybe@; } f) {
       m.?(just: f(x.just), nothing: Nothing);
@@ -1002,12 +1002,12 @@
    value of a module Foo is described in the file Foo.fble as an fble
    expression using the 'stmt' concrete syntactic term. The child modules of
    Foo are placed in a directory Foo/. The absence of a file Foo.fble implies
-   the value of the module Foo is @l[*()()]. The absence of a subdirectory Foo
+   the value of the module Foo is @l{*()()}. The absence of a subdirectory Foo
    implies the module Foo has no children.
   
    For example, you might have the following directory structure:
   
-   @code[txt]
+   @code[txt] @
     root/
      StdLib/
        Unit.fble
@@ -1028,15 +1028,15 @@
    A module is referred to using an absolute path, which describes a path of
    named children from the root of the module hierarchy.
   
-   @AbstractSyntax
+   @AbstractSyntax @
     Path ::= abs_path (name : [Name])
     Expr ::= module_path (ref : Path)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     path ::= '/' name ['/' name [...]] '%'
     expr ::= path ;
   
-   @Example
+   @Example @
     /StdLib/List%
     /Unit%
     /Md5/ImplA%
@@ -1050,12 +1050,12 @@
    type that can have side effects. For example, the type of the value might
    be:
   
-   @code[fble]
+   @code[fble] @
     <<@>@ M@>(Monad@<M@>, Stdio@<M@>)(List@<String@>) { M@<Bool@>; };
   
-   The function is provided with instances of the @l[Monad@] and @l[Stdio@]
+   The function is provided with instances of the @l{Monad@} and @l{Stdio@}
    interface and a list of command line arguments. The function is executed,
-   resulting in input and output operations over the @l[Stdio@] interface, and
+   resulting in input and output operations over the @l{Stdio@} interface, and
    the final result is converted to a standard exit code.
   
    Other examples of ways to execute an fble program:
@@ -1072,7 +1072,7 @@
    A program is formed of a module and all of its direct and indirect
    dependencies. For example, consider the following module hierarchy:
   
-   @code[txt]
+   @code[txt] @
     StdLib/
       Unit
       List/
@@ -1082,33 +1082,33 @@
   
    With the following dependency graph:
   
-   @code[txt]
+   @code[txt] @
     /StdLib/List% -> /StdLib/Unit%
     /StdLib/List/Tests% -> /StdLib/List%, /StdLib/Unit%
     /Md5% -> /StdLib/Unit%, /StdLib/List%
     /Md5/Tests% -> /StdLib/Unit%, /Md5%
   
-   The module @l[/Md5/Tests%] can be turned into a program to run Md5 tests
+   The module @l{/Md5/Tests%} can be turned into a program to run Md5 tests
    conceptually by forming a let expression in topological sort dependency
    order:
   
-   @code[txt]
+   @code[txt] @
     StdLib_Unit = </StdLib/Unit%>;
     StdLib_List = </StdLib/List%>;
     Md5 = </Md5%>;
     </Md5/Tests%>;
   
-   Where @l[</Foo%>] is the fble expression describing the value of module
-   @l[/Foo%] and we assume references to a module @l[/Foo/Bar%] in the
-   expression are replaced with variables named @l[Foo_Bar].
+   Where @l{</Foo%>} is the fble expression describing the value of module
+   @l{/Foo%} and we assume references to a module @l{/Foo/Bar%} in the
+   expression are replaced with variables named @l{Foo_Bar}.
   
-   Notice in this case that the value of @l[/StdLib/List/Tests%] is not used.
+   Notice in this case that the value of @l{/StdLib/List/Tests%} is not used.
   
    The modules may be combined in any order that satisfies their dependencies.
   
    The same module hierarchy can be used for a program to run List tests:
   
-   @code[txt]
+   @code[txt] @
     StdLib_Unit = </Stdlib/Unit%>;
     StdLib_List = </StdLib/List%>;
     </StdLib/List/Tests%>;
@@ -1127,20 +1127,20 @@
   using publicly available functions.
   
   @subsection 9.1 Package Type
-   @AbstractSyntax
+   @AbstractSyntax @
     Type ::= package_type (path : Path)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     type ::= '%(' path ')'
   
-   @Example
+   @Example @
     @ FooBar@ = %(/Foo/Bar%);
     ...
   
    The package type describes the set of modules whose module path prefix
-   matches the given path. For example, the type @l[%(/Foo/Bar%)] includes
-   modules @l[/Foo/Bar%], @l[/Foo/Bar/Sludge%], and @l[/Foo/Bar/A/B%], but not
-   @l[/Foo%] or @l[/Bar%].
+   matches the given path. For example, the type @l{%(/Foo/Bar%)} includes
+   modules @l{/Foo/Bar%}, @l{/Foo/Bar/Sludge%}, and @l{/Foo/Bar/A/B%}, but not
+   @l{/Foo%} or @l{/Bar%}.
   
    The path for a package type need not refer to an existing module. There
    need not be any modules that satisfy the package path. A module need not be
@@ -1151,17 +1151,17 @@
    unnecessary to make an abstract type that every module can access, but
    maybe it's useful to have for uniformity of interaction with the type?
   
-   A package type has kind @l[@]. Two package types are considered equal if
+   A package type has kind @l{@}. Two package types are considered equal if
    they have the same path.
   
   @subsection 9.2 Abstract Type
-   @AbstractSyntax
+   @AbstractSyntax @
     Type ::= abstract_type (package : Type) (type : Type)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     type ::= type '<' type '>'
   
-   @Example
+   @Example @
     @ FooBar@ = %(/Foo/Bar%);
     @ AbstractBool = FooBar@<Bool@>;
     
@@ -1170,44 +1170,44 @@
    type and underlying types are equal.
   
    The package type must be a package type. The underlying type can be any
-   type of any kind. The resulting abstract type has kind @l[@].
+   type of any kind. The resulting abstract type has kind @l{@}.
   
   @subsection 9.3 Abstract Cast
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= abstract_cast (package : Type) (target : Type) (value : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= type '.' '<' type '>' '(' expr ')'
   
-   @Example
+   @Example @
     @ FooBar@ = %(/Foo/Bar%);
     @ AbstractBool@ = FooBar@<Bool@>;
     AbstractBool@ AbstractTrue = FooBar@.<AbstractBool@>(True);
     Bool@ OriginalTrue = FooBar@.<Bool@>(AbstractTrue);
   
    Casts a value between two types that are equal under the assumption that
-   for all types @l[T@], the type @l[FooBar@<T@>] is equal to @l[T@].
+   for all types @l{T@}, the type @l{FooBar@<T@>} is equal to @l{T@}.
   
    The type of the resulting value is the target type. It is a type error if
    the current module is not a member of the package described by the package
    type.
   
   @subsection 9.4 Abstract Value
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= abstract_value (package : Type) (value : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= type '(' expr ')'
   
-   @Example
+   @Example @
     @ FooBar@ = %(/Foo/Bar%);
     @ AbstractBool@ = FooBar@<Bool@>;
     AbstractBool@ AbstractTrue = FooBar@(True);
   
-   Casts a value of type @l[T@] to type @l[FooBar@<T@>]. This is a convenience
+   Casts a value of type @l{T@} to type @l{FooBar@<T@>}. This is a convenience
    syntax equivalent to:
   
-   @code[txt]
+   @code[txt] @
     abstract_cast package (abstract_type package type) value
   
    It is a type error if the current module does not belong to the package
@@ -1219,22 +1219,22 @@
    to where the cast operation occurs.
   
   @subsection 9.5 Abstract Access
-   @AbstractSyntax
+   @AbstractSyntax @
     Expr ::= abstract_access (value : Expr)
   
-   @ConcreteSyntax
+   @ConcreteSyntax @
     expr ::= expr '.' '%'
   
-   @Example
+   @Example @
     @ FooBar@ = %(/Foo/Bar%);
     @ AbstractBool@ = FooBar@<Bool@>;
     AbstractBool@ AbstractTrue = FooBar@(True);
     Bool@ true = AbstractTrue.%;
   
-   Casts a value of type @l[FooBar@<T@>] to type @l[T@]. This is a convenience
+   Casts a value of type @l{FooBar@<T@>} to type @l{T@}. This is a convenience
    syntax equivalent to:
   
-   @code[txt]
+   @code[txt] @
     abstract_cast package type value
   
    It is a type error if the current module does not belong to the package
@@ -1249,7 +1249,7 @@
    The follow example shows how to define a three element enum type that can
    only be accessed externally using the provided methods.
   
-   @code[fble]
+   @code[fble] @
     @ Impl@ = +(Unit@ a, Unit@ b, Unit@ c);
     
     @ Pkg@ = %(/MyPackage%);
@@ -1265,17 +1265,17 @@
     
     @(Enum@, A, B, C, IsA, IsB, IsC);
   
-   The @l[Pkg@] type restricts access to the internals of the @l[Enum@] type
-   to modules starting with @l[/MyPackage] in their path. Other users are
-   unable to construct or access fields of the @l[Enum@] type directly; they
-   can only use the provided values @l[A], @l[B], @l[C] and functions @l[IsA],
-   @l[IsB], and @l[IsC].
+   The @l{Pkg@} type restricts access to the internals of the @l{Enum@} type
+   to modules starting with @l{/MyPackage} in their path. Other users are
+   unable to construct or access fields of the @l{Enum@} type directly; they
+   can only use the provided values @l{A}, @l{B}, @l{C} and functions @l{IsA},
+   @l{IsB}, and @l{IsC}.
   
   @subsection 9.7 Private Module Example
    Abstract types can be used to effectively mark modules or parts of modules
-   private. For example, consider a module @l[/Foo/Internal%]:
+   private. For example, consider a module @l{/Foo/Internal%}:
   
-   @code[fble]
+   @code[fble] @
     @ Pkg@ = %(/Foo%);
     
     @ X@ = ...;
@@ -1287,16 +1287,16 @@
   
    Users can import the module with:
   
-   @code[fble]
+   @code[fble] @
     % M = /Foo/Internal%.%;
   
    This will result in a type error if the user does not belong to the package
-   @l[/Foo%].
+   @l{/Foo%}.
   
    The same approach can be used to restrict access to individual fields of a
-   module. For example, consider a module @l[/Foo%]:
+   module. For example, consider a module @l{/Foo%}:
   
-   @code[fble]
+   @code[fble] @
     @ Pkg@ = %(/Foo%);
     
     @ X@ = ...;
@@ -1306,17 +1306,17 @@
     
     @(X@, Y@, X, Pkg@(Y));
   
-   In this case, the @l[X] field is publicly accessible. The @l[Y] field can
-   only be accessed by modules in the package @l[/Foo%]. For example:
+   In this case, the @l{X} field is publicly accessible. The @l{Y} field can
+   only be accessed by modules in the package @l{/Foo%}. For example:
   
-   @code[fble]
+   @code[fble] @
     % Y = /Foo%.Y.%;
   
    This will result in a type error if the user does not belong to the package
-   @l[/Foo%].
+   @l{/Foo%}.
  
  @section 10. Abstract Syntax Reference
-  @code[txt]
+  @code[txt] @
    NormalName ::= (* A string of characters *)
    TypeName ::= (* A string of characters *)
    
@@ -1384,8 +1384,8 @@
    We have the following categories of characters:
   
    @def[Whitespace] Any whitespace character, as traditionally classified.
-   @def[Comment] The comment character @l[#].
-   @def[Punctuation] The characters @l[(){};,:?=.<>+*-!$@~'\\\[\]%/^].
+   @def[Comment] The comment character @l{#}.
+   @def[Punctuation] The characters @l[(){};,:?=.<>+*-!$\@~'\\[]%/^].
    @def[Word] Any other character.
    
    The lexical syntax is used to interpret a string of arbitrary characters as
@@ -1400,26 +1400,26 @@
    A sequence of characters surrounded by single quotes is treated as a
    sequence of word characters, regardless of what class the characters come
    from. This makes it possible to specify words containing whitespace,
-   comment, and punctuation characters. For example, @l['Foo,Bar'] is treated
+   comment, and punctuation characters. For example, @l{'Foo,Bar'} is treated
    as a single word where the fourth character of the word is a comma.
    
    Within a single quoted word, a single quote character can be expressed by
-   using two adjacent single quote characters. For example, @l['Foo''Bar'] is
+   using two adjacent single quote characters. For example, @l{'Foo''Bar'} is
    treated as a single word where the fourth character of the word is a single
    quote.
    
    Single quotes act as word delimiters. For example,
    
-   @code[fble]
+   @code[fble] @
     Foo'.'Bar
    
-   is treated as three separate words: @l['Foo'], @l['.'], and @l['Bar'], not
-   as a single word @l['Foo.Bar'].  The only exception is when consecutive
+   is treated as three separate words: @l{'Foo'}, @l{'.'}, and @l{'Bar'}, not
+   as a single word @l{'Foo.Bar'}.  The only exception is when consecutive
    single quote characters are used to embed a single quote character in a
    word.
   
   @subsection 11.2 Concrete Syntax Reference
-   @code[txt]
+   @code[txt] @
     word ::= (* word as described in the section on lexical syntax *)
     normal_name ::= word
     type_name ::=   word '@'
@@ -1511,4 +1511,4 @@
     the argument is used to distinguish between these kinds of expressions.
 
    @item
-    The module value for module @l[/Foo/Bar%] is stored in @l[Foo/Bar.fble].
+    The module value for module @l{/Foo/Bar%} is stored in @l{Foo/Bar.fble}.

@@ -34,14 +34,12 @@ namespace eval "pkgs/fbld2" {
     fbld2_html_doc $target [list $::s/tutorials/tutorial.lib.fbld $source]
   }
 
-  #fbld2_html_doc $::b/pkgs/fbld2/fble.html "$::s/spec/fble.lib.fbld $::s/spec/fble.fbld"
-  #fbld2_html_doc $::b/pkgs/fbld2/HelloWorld.html "$::s/tutorials/tutorial.lib.fbld $::s/tutorials/HelloWorld.fbld"
-
-  #www $::b/pkgs/fbld2/fble.html
-  #www $::b/pkgs/fbld2/HelloWorld.html
-
   # Fbld Spec www.
   # TODO: Switch to fbld2 spec once that is available.
   ::fbld2_html_doc $::b/www/fbld/fbld.html $::s/fbld/fbld.fbld
   www $::b/www/fbld/fbld.html
+
+  # Fble Spec www.
+  fbld2_html_doc $::b/www/spec/fble.html "$::s/spec/fble.lib.fbld $::s/spec/fble.fbld"
+  www $::b/www/spec/fble.html
 }

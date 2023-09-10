@@ -24,7 +24,4 @@ namespace eval "pkgs/fbld" {
       "$::b/pkgs/fbld/fbld $::b/fbld/version.fbld $sources $::s/buildstamp" \
       "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/fbld - $::b/fbld/version.fbld $sources --html $args > $target"
   }
-
-  fbld_html_doc $::b/pkgs/fbld/fble.html "$::s/spec/fble.lib.fbld $::s/spec/fble.fbld"
-  www $::b/pkgs/fbld/fble.html
 }

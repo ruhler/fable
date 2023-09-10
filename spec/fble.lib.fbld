@@ -1,17 +1,14 @@
 @define[AbstractSyntax][content]
  @definition[Abstract Syntax]
-  @code[txt]
-   $content
+  @code[txt][@content]
 @@
 
 @define[ConcreteSyntax][content]
  @definition[Concrete Syntax]
-  @code[txt]
-   $content
+  @code[txt][@content]
 @@
 
 @define[Example][content]
  @definition[Example]
-  @code[fble]
-   $content
+  @code[fble][@content]
 @@
