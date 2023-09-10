@@ -491,7 +491,7 @@
    @code[fble] @
     List@<Int@> empty = List[];   # Cannot infer type!
  
-   In this case the compiler cannot tell that @l{List[}] should produce an
+   In this case the compiler cannot tell that @l{List[]} should produce an
    integer list as opposed to any other kind of list. In this case you should
    get an error message from the compiler indicating that it couldn't tell
    what type to use for @l{T@} in the list expression.

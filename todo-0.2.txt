@@ -5,18 +5,22 @@ Things to consider doing for the fble-0.2 release.
 * Figure out why Chars.''' seems to break fbld-deps program.
 
 * Fbld2:
- - What to do about @fbld[Foo.fbld][Foo] style @fbld reference?
+ - Looks like some extra newline somewhere in html backend for @fbld or @url.
  - Are blank lines allowed at end of next line literal text?
  - Add test for nesting of [ and ] characters in plain text.
  - Are blank lines allowed inside @[...] inside @.block text?
  - Test for location tracking across @head and @tail?
+ - Figure out how to highlight @code blocks.
  - Any way we can vim highlight next line literal as normal text?
 
-* Fbld Text@ rewrite:
- - Move implement of Eq and Show internally.
- - Update users to handle changing locations properly.
+* Double check @fbld[...fbld#...] generates the right thing for html. For
+  example, see the end of the Lists.fbld tutorial.
 
-* fbld vim syntax: set tabstop/shiftwidth to single space?
+* fbld vim syntax:
+ - set tabstop/shiftwidth to single space?
+ - Figure out how to make {...} only apply in argument context?
+
+* Review generated html output for all documentation after move to fbld2
 
 * Update the rest of the tutorials with regards to smashing the stack. No need
   to write stack smashing safe tutorials anymore.
@@ -25,31 +29,12 @@ Things to consider doing for the fble-0.2 release.
   size.
 
 * Fbld:
- - For Parsing, figure out a better way to return head character
-   Instead of always having to get the character and the loc.
- - Improve performance.
- - Test that '@ ...' at the start of block structured text is not allowed.
- - Add @error
- - Move backends out of fble into .fbld
- - Add examples of @, @@ to spec for syntax.
- - Add test cases for all builtin tags.
- - Document all new tags in spec.
- - Figure out how to generate c header output.
- - Figure out why it takes so much memory and time to run.
- - Implement source highlighting for @code.
- - Change Env@ to Markup@ so we can insert new commands more reasonably?
- - Figure out how to have subst variables where one variable name is a prefix
-   of another variable name.
+ - Retire tcl based and fbl1 based fbld.
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.
  - How to support labels in markdown?
  - etc.
-
-* Fbld: Specify what happens if block structured text is missing a space on
-  the same line arg. For example:
-  @foo[a]b
-   and then some
 
 * For gdb debug, it would be great to be able to access fields of structs.
   Example: ra.ok.in is a string, ra is a struct value. Right now, if you try

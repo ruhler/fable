@@ -4375,4 +4375,20 @@ bug?
 I should run with perf based profiling perhaps to see? Or prof based profiling
 of a smaller example?
 
+Let's start by minimizing the Lists.fbld tutorial.
 
+I see one place where parsing may get confused: @l{[...}]. Let's test that
+first. If that's the issue, figure out where in the parser it gets stuck and
+add a fix for that.
+
+Looks like the problem is:
+
+   @fbld[../spec/fble.fbld#lists][...]
+
+The use of #lists in the argument to @fbld. Interesting.
+
+Of course. Because we are missing the base case for @fbld where it doesn't end
+in .fbld.
+
+Not sure if there's anything useful I can do to report this error message. We
+would want an fbld debugger for that kind of thing?

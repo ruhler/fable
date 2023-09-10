@@ -231,12 +231,11 @@
   practice it shouldn't make much difference what order the modules are
   evaluated in.
  
-  @par
    @l{.fble} files for a module that the main module does not depend on
-   directly or indirectly are ignored by the compiler. For example, if you put
-   @l{/Bit4%} as the main module, the compiler would only read @l{Unit.fble},
-   @l{Bit.fble} and @l{Bit4.fble}. It wouldn't read @l{Bit/Show.fble},
-   @l{Bit4/Show.fble} or @l{Main.fble}.
+  directly or indirectly are ignored by the compiler. For example, if you put
+  @l{/Bit4%} as the main module, the compiler would only read @l{Unit.fble},
+  @l{Bit.fble} and @l{Bit4.fble}. It wouldn't read @l{Bit/Show.fble},
+  @l{Bit4/Show.fble} or @l{Main.fble}.
  
   You can use the @l{fble-deps} program to see the list of modules needed for
   a program. For example:

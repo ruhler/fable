@@ -104,7 +104,7 @@
    Next we use function bind syntax to call the @l{Puts} function with a
    single element list with the string @l{'hello, world'}. This uses the three
    kinds of syntactic sugars in fble: function bind via @l{<-} to conveniently
-   apply the monadic @l{do} function, a list using @l{\[} and @l{\}] to
+   apply the monadic @l{do} function, a list using @l{[} and @l{]} to
    conveniently create a list, and the @l{Str} literal introduced with the
    @l{|} character.
    

@@ -32,6 +32,7 @@
 
 @define[fbld][file label]
  @define[ReplaceExt][str]
+  @ifeq[@str][][] @@
   @ifeq[@str][.fbld] .html
   @ @head[@str]@ReplaceExt[@tail[@str]]
  @@

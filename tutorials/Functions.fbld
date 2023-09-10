@@ -210,9 +210,10 @@
      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
    };
  
-  We've added an argument called @l{op} with function type @l{(Bit@, Bit@) {
-  Bit@; }] representing the single bit operation. We can reuse this higher
-  order function for the definitions of @l{And4}, @l{Or4}, and @l{Xor4}:
+  We've added an argument called @l{op} with function type
+  @l[(Bit\@, Bit\@) { Bit\@; }] representing the single bit operation. We can
+  reuse this higher order function for the definitions of @l{And4}, @l{Or4},
+  and @l{Xor4}:
  
   @code[fble] @
    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {

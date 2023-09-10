@@ -36,7 +36,7 @@
      Int|13, Empty))))))));
  
   It's pretty tedious to write a list this way. In most languages you could
-  write something like @l{[0, 1, 1, 2, 3, 5, 8, 13}], which is much more
+  write something like @l{[0, 1, 1, 2, 3, 5, 8, 13]}, which is much more
   compact and readable.
  
  @section The List Expression
