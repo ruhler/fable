@@ -4392,3 +4392,11 @@ in .fbld.
 
 Not sure if there's anything useful I can do to report this error message. We
 would want an fbld debugger for that kind of thing?
+
+---
+
+Now that tutorials are ported over to fbld2, what's next? Brainstorm:
+* Port rest of .html files over to fbld2. Remove fbld_html_doc and html_doc.
+* See if we can improve performance of fbld2.
+* See if we can remove fbld1 entirely and replace it with fbld2?
+

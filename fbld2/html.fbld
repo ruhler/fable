@@ -26,8 +26,8 @@
 @define[subsection][title body] <h3>@title</h3>\n@body @@
 
 @define[url][url label]
- @define[l][] @ifeq[][@label][@url][@label] @@
- <a href="@url">@l</a>
+ @define[l][] @ifeq[][@label][@url][@label]
+ @ <a href="@url">@l</a>
 @@
 
 @define[fbld][file label]
@@ -36,8 +36,8 @@
   @ifeq[@str][.fbld] .html
   @ @head[@str]@ReplaceExt[@tail[@str]]
  @@
- @define[l][] @ifeq[][@label][@file][@label] @@
- <a href="@ReplaceExt[@file]"><code>@label</code></a>
+ @define[l][] @ifeq[][@label][@file][@label]
+ @ <a href="@ReplaceExt[@file]"><code>@label</code></a>
 @@
 
 @define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
