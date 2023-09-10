@@ -51,8 +51,8 @@ Element = (Env@ env, Element@ element) {
 (Env@, Markup@) { Result@<Markup@>; }
 Eval = (Env@ env, Markup@ markup) {
   markup.?(nil: r.return(markup));
-  Markup@ head <- r.do(Element(env, markup.cons.head));
   Markup@ tail <- r.do(Eval(env, markup.cons.tail));
+  Markup@ head <- r.do(Element(env, markup.cons.head));
   r.return(Append(head, tail));
 };
 

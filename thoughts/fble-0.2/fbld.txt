@@ -4405,3 +4405,20 @@ Now that tutorials are ported over to fbld2, what's next? Brainstorm:
 Let's hold off on converting the rest of the tcl based fbld over to fbld2 yet.
 I want to phase out fbld1 first.
 
+---
+
+fble.html runs out of memory, I think just because it wants to use a little
+more memory than I have. It works okay using 70% memory if I remove the @code
+block for concrete syntax reference.
+
+Any way to see why it's using so much memory?
+
+Let's start with fble based profiling and see if that gives any hints.
+
+It says all our time is spent in looking up commands in the environment. Odd,
+because I don't expect there to be too many entries in the environment. Maybe
+just because we are calling so many commands.
+
+I wish I could take a heap snapshot and see what that looks like, to know
+where all the memory is from.
+
