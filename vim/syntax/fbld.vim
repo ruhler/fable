@@ -12,6 +12,8 @@ syn match fbldTag "@[a-zA-Z0-9_]\+"
 syn match fbldBracket "\["
 syn match fbldBracket "\]"
 
+syn region fbldNormal matchgroup=fbldBracket start="{" end="}"
+
 syn match fbldEscape "\\\]"
 syn match fbldEscape "\\\["
 syn match fbldEscape "\\@"
@@ -22,5 +24,6 @@ syn match fbldEscape "\\n"
 hi def link fbldTag Identifier
 hi def link fbldEscape Character
 hi def link fbldBracket Special
+hi def link fbldNormal Normal
 
 let b:current_syntax = "fbld"

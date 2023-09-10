@@ -8,12 +8,14 @@ Syntax Reference
 * Implicit block text is inline structured text up to the next blank line.
 * A block command starts with '@' in the first column, followed by a command
   name, followed by:
-  - Zero or more inline arguments.
+  - Zero or more inline or literal inline arguments.
   - An optional same line argument.
+  - An optional literal next line argument.
   - An optional next line argument.
   - An optional continuation.
   - An optional final argument.
 * An inline argument is inline structured text in square brackets.
+* A literal inline argument is raw text in curly brackets.
 * A same line argument is inline structured text between a single space
   character and the end of the line.
 * A next line argument is when the next line starts with a single space
@@ -49,6 +51,8 @@ Questions:
   @ hello
 * Can you have unescaped nested [ ] in plain text?
 * Can you have blank lines at the end of next line literal text?
+* Can you have escaped '}' in inline literal args?
+* Can you have unescaped '{' '}' in inline literal args?
 
 Builtins
 ========

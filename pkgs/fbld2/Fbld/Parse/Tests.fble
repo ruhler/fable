@@ -228,7 +228,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
-  Test(Str|Literal, (Unit@ _) {
+  Test(Str|NextLineLiteral, (Unit@ _) {
     String@ text = Lines[
       Str|'@foo @',
       Str|' foo@bar \ blah @@ @\@\\@.',
@@ -240,6 +240,20 @@ Test@ Tests = TestSuite(Str|Parse, List[
       C|1|2|'foo'[
         M[Pr|2|2(Strs[Str|'foo@bar \ blah @@ @\@\\@.', StrE|'\n'])],
         M[P|3|3|'done']]]);
+    AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|InlineLiteral, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@foo{foo@bar \ blah @@ @\@\\@.}',
+      Str|'@ done'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'foo'[
+        M[Pr|1|6|'foo@bar \ blah @@ @\@\\@.'],
+        M[P|2|3|'done']]]);
     AssertResultEquals(wnt, got);
   })
 ]);

@@ -32,6 +32,7 @@
 <@>% Error = /Fbld/Parse/M%.Error;
 <@>% Try_ = /Fbld/Parse/M%.Try_;
 <@>% Test = /Fbld/Parse/M%.Test;
+<@>% Test_ = /Fbld/Parse/M%.Test_;
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
 % String = /Fbld/Parse/M%.String;
@@ -53,21 +54,50 @@ M@<String@> Name = {
   Return(Cons(mc.just, tail));
 };
 
-# Parses a sequence of zero or more inline args.
-M@<List@<Markup@>> Args = {
-  Bool@ another <- Do(Try_(String|'['));
-  another.?(false: Return(Nil<Markup@>));
+# Parses raw text up to and including '}' for literal args.
+M@<String@> Literal = {
+  Char@ head <- Do(Get);
+  head.?('}': Return(Str|''));
 
+  String@ tail <- Do(Literal);
+  Return(Cons(head, tail));
+};
+
+M@<Markup@> LiteralArg = {
+  Unit@ _ <- Do(String|'{');
+  Loc@ l <- Do(Loc);
+  String@ text <- Do(Literal);
+  Return(List[Plain(l, text)]);
+};
+
+M@<Markup@> RegularArg = {
+  Unit@ _ <- Do(String|'[');
   M@<Unit@> end = {
     Loc@ l <- Do(Loc);
     Char@ c <- Do(Get);
     c.?(']': Return(Unit));
     Error<Unit@>(l, Str|'Expected '']''');
   };
+  Inline(end);
+},
 
-  Markup@ head <- Do(Inline(end));
-  List@<Markup@> tail <- Do(Args);
-  Return(Cons(head, tail));
+# Parses a sequence of zero or more inline args.
+M@<List@<Markup@>> Args = {
+  Bool@ regular <- Do(Test_(String|'['));
+  regular.?(true: {
+    Markup@ head <- Do(RegularArg);
+    List@<Markup@> tail <- Do(Args);
+    Return(Cons(head, tail));
+  });
+
+  Bool@ literal <- Do(Test_(String|'{'));
+  literal.?(true: {
+    Markup@ head <- Do(LiteralArg);
+    List@<Markup@> tail <- Do(Args);
+    Return(Cons(head, tail));
+  });
+
+  Return(Nil<Markup@>);
 },
 
 # Parses an inline command, starting just after the '@' character.
