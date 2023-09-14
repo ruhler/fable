@@ -4526,3 +4526,4 @@ difference between empty b and non-empty b so large.
 Cool. I bet this helps performance of evaluation a bunch. We'll be back to
 limited to performance of the parser I expect.
 
+Yes. That solved the memory blowup issue.

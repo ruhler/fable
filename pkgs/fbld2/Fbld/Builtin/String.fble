@@ -1,9 +1,16 @@
 
+@ Char@ = /Core/Char%.Char@;
+
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
 <@>% Get = /Core/List/Length%.Get;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
 
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
@@ -16,8 +23,6 @@
 % Eval = /Fbld/Eval%.Eval;
 % AssertArgCount = /Fbld/Eval%.AssertArgCount;
 
-@ Loc@ = /Fbld/Loc%.Loc@;
-
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
 @ Element@ = /Fbld/Markup%.Element@;
@@ -29,30 +34,31 @@
 
 % Text = /Fbld/Text%.Text;
 
-(Loc@, Markup@) { Result@<Markup@>; } HeadOf = (Loc@ l, Markup@ markup) {
-  markup.?(nil: r.return(markup));
+(Markup@) { Result@<Maybe@<Char@>>; } HeadOf = (Markup@ markup) {
+  markup.?(nil: r.return(Nothing<Char@>));
   Element@ e = markup.cons.head;
   e.?(command: {
-    Err<Markup@>(Text(e.command.name.loc, Strs[
+    Err<Maybe@<Char@>>(Text(e.command.name.loc, Strs[
         Str|'expected plain text, but found command @',
         e.command.name.text
         ]));
   });
 
-  e.plain.text.?(nil: HeadOf(l, markup.cons.tail));
-
-  # TODO: What to use for the location of the result?
-  Element@ ehead = Plain(l, Str[e.plain.text.cons.head]);
-  r.return(List[ehead]);
+  e.plain.text.?(nil: HeadOf(markup.cons.tail));
+  r.return(Just(e.plain.text.cons.head));
 };
 
 Impl@ Head = (Env@ env, Command@ cmd) {
   Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
   Markup@ arg <- r.do(Eval(env, Get(cmd.args, Int|0)));
-  HeadOf(cmd.name.loc, arg);
+  Maybe@<Char@> mc <- r.do(HeadOf(arg));
+  mc.?(nothing: r.return(arg));
+
+  # TODO: What to use for the location of the result?
+  r.return(List[Plain(cmd.name.loc, Str[mc.just])]);
 };
 
-(Loc@, Markup@) { Result@<Markup@>; } TailOf = (Loc@ l, Markup@ markup) {
+(Markup@) { Result@<Markup@>; } TailOf = (Markup@ markup) {
   markup.?(nil: r.return(markup));
   Element@ e = markup.cons.head;
   e.?(command: {
@@ -62,18 +68,18 @@ Impl@ Head = (Env@ env, Command@ cmd) {
         ]));
   });
 
-  e.plain.text.?(nil: TailOf(l, markup.cons.tail));
+  e.plain.text.?(nil: TailOf(markup.cons.tail));
   e.plain.text.cons.tail.?(nil: r.return(markup.cons.tail));
 
   # TODO: What to use for the location of the result?
-  Element@ etail = Plain(l, e.plain.text.cons.tail);
+  Element@ etail = Plain(e.plain.loc, e.plain.text.cons.tail);
   r.return(Cons(etail, markup.cons.tail));
 };
 
 Impl@ Tail = (Env@ env, Command@ cmd) {
   Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
   Markup@ arg <- r.do(Eval(env, Get(cmd.args, Int|0)));
-  TailOf(cmd.name.loc, arg);
+  TailOf(arg);
 };
 
-@(Head, Tail);
+@(Head, Tail, HeadOf, TailOf);
