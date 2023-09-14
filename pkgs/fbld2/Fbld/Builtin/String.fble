@@ -1,13 +1,12 @@
 
-@ Char@ = /Core/Char%.Char@;
-
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
 <@>% Get = /Core/List/Length%.Get;
 
-@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -17,39 +16,64 @@
 % Eval = /Fbld/Eval%.Eval;
 % AssertArgCount = /Fbld/Eval%.AssertArgCount;
 
+@ Loc@ = /Fbld/Loc%.Loc@;
+
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
+@ Element@ = /Fbld/Markup%.Element@;
 % Plain = /Fbld/Markup%.Plain;
-% ToPlain = /Fbld/Markup%.ToPlain;
 
+<@>@ Result@ = /Fbld/Result%.Result@;
+<@>% Err = /Fbld/Result%.Err;
 % r = /Fbld/Result%.Monad;
+
+% Text = /Fbld/Text%.Text;
+
+(Loc@, Markup@) { Result@<Markup@>; } HeadOf = (Loc@ l, Markup@ markup) {
+  markup.?(nil: r.return(markup));
+  Element@ e = markup.cons.head;
+  e.?(command: {
+    Err<Markup@>(Text(e.command.name.loc, Strs[
+        Str|'expected plain text, but found command @',
+        e.command.name.text
+        ]));
+  });
+
+  e.plain.text.?(nil: HeadOf(l, markup.cons.tail));
+
+  # TODO: What to use for the location of the result?
+  Element@ ehead = Plain(l, Str[e.plain.text.cons.head]);
+  r.return(List[ehead]);
+};
 
 Impl@ Head = (Env@ env, Command@ cmd) {
   Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
+  Markup@ arg <- r.do(Eval(env, Get(cmd.args, Int|0)));
+  HeadOf(cmd.name.loc, arg);
+};
 
-  String@ str <- r.do({
-    Markup@ arg = Get(cmd.args, Int|0);
-    Markup@ evaled <- r.do(Eval(env, arg));
-    ToPlain(evaled);
+(Loc@, Markup@) { Result@<Markup@>; } TailOf = (Loc@ l, Markup@ markup) {
+  markup.?(nil: r.return(markup));
+  Element@ e = markup.cons.head;
+  e.?(command: {
+    Err<Markup@>(Text(e.command.name.loc, Strs[
+        Str|'expected plain text, but found command @',
+        e.command.name.text
+        ]));
   });
 
+  e.plain.text.?(nil: TailOf(l, markup.cons.tail));
+  e.plain.text.cons.tail.?(nil: r.return(markup.cons.tail));
+
   # TODO: What to use for the location of the result?
-  String@ head = str.?(cons: List[str.cons.head], nil: Nil<Char@>);
-  r.return(List[Plain(cmd.name.loc, head)]);
+  Element@ etail = Plain(l, e.plain.text.cons.tail);
+  r.return(Cons(etail, markup.cons.tail));
 };
 
 Impl@ Tail = (Env@ env, Command@ cmd) {
   Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
-
-  String@ str <- r.do({
-    Markup@ arg = Get(cmd.args, Int|0);
-    Markup@ evaled <- r.do(Eval(env, arg));
-    ToPlain(evaled);
-  });
-
-  # TODO: What to use for the location of the result?
-  String@ tail = str.?(cons: str.cons.tail, nil: str);
-  r.return(List[Plain(cmd.name.loc, tail)]);
+  Markup@ arg <- r.do(Eval(env, Get(cmd.args, Int|0)));
+  TailOf(cmd.name.loc, arg);
 };
 
 @(Head, Tail);

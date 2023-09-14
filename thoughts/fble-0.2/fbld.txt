@@ -4422,3 +4422,107 @@ just because we are calling so many commands.
 I wish I could take a heap snapshot and see what that looks like, to know
 where all the memory is from.
 
+---
+
+Some analysis shows it's all related to HtmlEsc. If we don't do that, then we
+are okay. And specifically it's all from HtmlEsc in @code blocks.
+
+I bet I can reproduce pretty easily by just having one big code block with
+html escaping.
+
+Yes. I can reproduce the memory blowup easily that way. It should be O(N)
+transformation, right? Are we somehow holding on to all suffixes of the
+string?
+
+perf shows a lot of time in list append and cons. That must be where the
+allocations are coming from. Let me look at fble profiling next to see where
+the calls to Append and Cons are coming from.
+
+---
+
+It feels very much like a quadratic blowup. As if it has copies of all
+suffixes of the string to escape in memory at the same time.
+
+fble profiling shows all the time in list append, fairly evenly divided
+between ToPlain and Eval.
+
+ToPlain isn't being called that often, but list append is. That suggests we
+are appending a long string on the left hand side. This could happen if I
+build up the string backwards?
+
+@EscHtml[...]
+==>
+@head[...]
+@EscHtml[@tail[...]]
+==>
+@head[...]
+@head[@tail[...]]
+@head[@head[@tail[...]]]
+...
+
+I need to trace through how this gets expanded to see what's in memory where
+and what string appends we are doing. That should make clear the problem.
+
+@define[EscHtml][str]
+ @ifeq[][@str][] @@
+ @head[@str]
+ @EscHtml[@tail[@str]]
+@@
+
+To execute the @define, we add to the environment @EscHtml. That function,
+when executed:
+* Evaluates its arguments in the calling environment.
+* Evaluates the text of the definition in the lexical environment with args
+  added to the environment.
+
+@EscHtml[abcd...]
+
+Evaluate plain text argument abcd... Nothing to do.
+Evaluate
+  @ifeq[][abcd....][] @@
+ Converts abcd... to plain text
+
+Note that conversion from abcd... to plain text appends a very long string to
+an empty string. Maybe we want to add a special case for that in Append to
+avoid the linear cost of it.
+
+ Next we eval
+  @head[abcd...]
+  @EscHtml[@tail[abcd...]]
+
+We start with the tail.
+  Evaluate the @tail first.
+   Converts abcd... to plain text (linear time).
+   Creates a new string from that. Note that it does not share memory with the
+   first string! Because we did an append to the empty string and created a
+   separate copy of the original string.
+
+  @EscHtml[bcd...]
+   Repeats.
+
+Thus we see the problem. Conversion from markup to plain text is creating a
+copy of the string. At each level we get a separate copy of a suffix of the
+string. Thus quadratic memory explosion.
+
+Easiest fix, I think, is to optimize Append to work better if the second
+argument is empty.
+
+Another option would be to avoid this 'ToPlain' approach for builtins and
+instead operate directly on markdown structured text. Like, you can take head
+and tail easily enough without having to look over all the markdown. You could
+do if comparison at the markdown level.
+
+Three options:
+
+* Add optimization to Append.
+* Add optimization to ToPlain.
+* Add optimization to builtins.
+
+The first is the most general. The third is the most significant. I think we
+should do the third. Append is already known to be slow for long first
+arguments. We shouldn't add some weird special case that makes the performance
+difference between empty b and non-empty b so large.
+
+Cool. I bet this helps performance of evaluation a bunch. We'll be back to
+limited to performance of the parser I expect.
+
