@@ -1,40 +1,8 @@
-@define[par][text]
- @let[t][@inline[$text]][@raw[<p>$t</p>
- ]]
-@@
+@define[par][text] <p>@text</p>\n @@
+@define[.block][text] @par[@text] @@
 
-@define[EscHtmlChar][char]
- @switch[$char]
- @[&][@raw[&amp;]]
- @[<][@raw[&lt;]]
- @[>][@raw[&gt;]]
- @[@raw[$char]]
-@@
-
-@define[EscHtml][str]
- @let
- @[h][@head[$str]]
- @@
- @switch[$h]
- @[][@raw[]]
- @@
- @let
- @[nh][@EscHtmlChar[$h]]
- @[t][@tail[$str]]
- @[nt][@EscHtml[$t]]
- @[@raw[$nh$nt]]
-@@
-
-@define[.inline][text]
- @raw[$text]
-@@
-
-@define[.block][text]
- @par[$text]
-@@
-
-@define[doc][title][body]
- @let[t][@inline[$title]][b][@block[$body]][@raw[
+@define[doc][title body]
+ @define[.block][text][@text] @@
  <head>
  <style>
  body {
@@ -48,75 +16,51 @@
  h4 { font-size: 1.2em; }
  p { font-size: 1em; }
  </style>
- <title>$t</title>
+ <title>@title</title>
  </head><body>
- <h1>$t</h1>
- $b</body>
- ]]
+ <h1>@title</h1>
+ @body</body>
 @@
 
-@define[section][title][body]
- @let[t][@inline[$title]][b][@block[$body]][@raw[<h2>$t</h2>
- $b]]
+@define[section][title body] <h2>@title</h2>\n@body @@
+@define[subsection][title body] <h3>@title</h3>\n@body @@
+@define[subsubsection][title body] <h4>@title</h4>\n@body @@
+
+@define[DefLabel][def label]
+ @ifeq[][@label][@def][@label]
 @@
 
-@define[subsection][title][body]
- @let[t][@inline[$title]][b][@block[$body]][@raw[<h3>$t</h3>
- $b]]
+@define[url][url label] <a href="@url">@DefLabel[@url][@label]</a> @@
+
+@define[ReplaceExt][str]
+ @ifeq[@str][][] @@
+ @ifeq[@str][.fbld] .html
+ @ @head[@str]@ReplaceExt[@tail[@str]]
 @@
 
-@define[subsubsection][title][body]
- @let[t][@inline[$title]][b][@block[$body]][@raw[<h4>$t</h4>
- $b]]
+@define[fbld][file label]
+@ <a href="@ReplaceExt[@file]"><code>@DefLabel[@file][@label]</code></a>
 @@
 
-@define[lurl][url][text]
- @let
- @[u][@escape[$url]]
- @[t][@inline[$text]]
- @[@raw[<a href="$u">$t</a>]]
+@define[label][id text] <a id="@id">@text</a> @@
+@define[ref][id caption] <a href="#@id">@caption</a> @@
+@define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
+@define[definition][name value] @def[@name][@value] @@
+@define[item][text] <ul><li>@text</li></ul>\n @@
+
+@define[EscHtmlChar][char]
+ @ifeq[&][@char] &amp; @@
+ @ifeq[<][@char] &lt; @@
+ @ifeq[>][@char] &gt; @@
+ @char
 @@
 
-@define[url][url]
- @lurl[$url][$url]
+@define[EscHtml][str]
+ @ifeq[][@str][] @@
+ @EscHtmlChar[@head[@str]]
+ @EscHtml[@tail[@str]]
 @@
 
-@define[lfile][file][text]
- @let
- @[u][@escape[$file]]
- @[t][@inline[$text]]
- @[@raw[<a href="$u"><code>$t</code></a>]]
-@@
-
-@define[fbld][file]
- @define[ReplaceExt][str]
-  @switch[$str]
-  @[.fbld][@raw[.html]]
-   @let
-   @[h][@head[$str]]
-   @[t][@tail[$str]]
-   @[rt][@ReplaceExt[$t]]
-   @[@raw[$h$rt]]
- @@
-
- @let
- @[fbld][@raw[$file]]
- @[html][@ReplaceExt[$file]]
- @[@lfile[$html][$fbld]]
-@@
-
-@define[def][name][value]
- @let
- @[n][@inline[$name]]
- @[v][@inline[$value]]
- @[@raw[<dl><dt>$n</dt><dd>$v</dd></dl>
- ]]
-@@
-
-@define[code][lang][text]
- @let
- @[t][@escape[$text]]
- @[h][@EscHtml[$t]]
- @[@raw[<pre>$h</pre>
- ]]
-@@
+@define[code][lang text] <pre>@EscHtml[@text]</pre>\n @@
+@define[l][text] <code>@EscHtml[@text]</code> @@
+@define[a][text] <i>@EscHtml[@text]</i> @@

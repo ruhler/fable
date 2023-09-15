@@ -1,43 +1,23 @@
-@define[par][text]
- @let[t][@inline[$text]][@raw[
- $t]]
+@define[par][text] \n@text @@
+@define[.block][text] \n@text @@
+@define[doc][title body] \n# @title\n@body @@
+@define[section][title body] \n## @title\n@body @@
+
+@define[url][url label]
+ @ifeq[][@label][<@url>] \[@label\](@url)
 @@
 
-@define[.inline][text]
- @raw[$text]
+@define[fbld][file label]
+ @define[l][][@ifeq[][@label][@file][@label]] \[@l\](@file)
 @@
 
-@define[.block][text]
- @par[$text]
+@define[def][name value] \n* **@name**: @value\n @@
+@define[inline][arg] @arg @@
+@define[indent][prefix text]
+ @ifeq[][@text][] @@
+ @define[suffix][] @indent[@ifeq[\n][@head[@text]][    ][]][@tail[@text]] @@
+ @prefix
+ @head[@text]
+ @suffix
 @@
-
-@define[doc][title][body]
- @let[t][@inline[$title]][b][@block[$body]][@raw[
- # $t
- $b]]
-@@
-
-@define[section][title][body]
- @let[t][@inline[$title]][b][@block[$body]][@raw[
- ## $t
- $b]]
-@@
-
-@define[url][url]
- @let[u][@escape[$url]][t][@inline[$url]][@raw[[$t]($u)]]
-@@
-
-@define[fbld][file]
- @url[$file]
-@@
-
-@define[def][name][value]
- @let[n][@inline[$name]][v][@inline[$value]][@raw[
- * **$n**: $v
- ]]
-@@
-
-@define[code][lang][text]
- @let[t][@escape[$text]][@raw[
-     $t]]
-@@
+@define[code][lang text] \n@indent[    ][@text] @@

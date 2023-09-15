@@ -7,10 +7,6 @@ namespace eval "fbld" {
   build $::b/fbld/version.fbld.tcl "" \
     "echo proc inline_FbleVersion {} { inline_ $::version } > $::b/fbld/version.fbld.tcl"
 
-  # version.fbld
-  build $::b/fbld/version.fbld "" \
-    "echo @define\[FbleVersion\]\[@inline\[$::version\]\] > $::b/fbld/version.fbld ; echo @@ >> $::b/fbld/version.fbld"
-
   # config.fbld
   build $::b/fbld/config.fbld $::b/config.tcl \
     "tclsh8.6 $::s/fbld/config.fbld.tcl > $::b/fbld/config.fbld"

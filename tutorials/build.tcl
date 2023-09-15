@@ -34,7 +34,7 @@ namespace eval "tutorials" {
   # Tutorials
   foreach {x} $tutorials {
     set base [file rootname [file tail $x]]
-    ::fbld2_html_tutorial $::b/www/tutorials/$base.html $::s/tutorials/$base.fbld
+    ::fbld_html_tutorial $::b/www/tutorials/$base.html $::s/tutorials/$base.fbld
     www $::b/www/tutorials/$base.html
   }
 

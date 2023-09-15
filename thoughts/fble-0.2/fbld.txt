@@ -4527,3 +4527,13 @@ Cool. I bet this helps performance of evaluation a bunch. We'll be back to
 limited to performance of the parser I expect.
 
 Yes. That solved the memory blowup issue.
+
+---
+
+Next step: round of performance review/improvements for fbld. I think fble.fbld
+to html is the big one. It takes a couple of minutes. Ideally it would be less
+than 15 seconds.
+
+After we do a round of performance improvements, we should look at the
+generated html in detail and fix any issues. For example, in any places
+missing required html escaping.

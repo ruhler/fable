@@ -7,8 +7,6 @@ exec tclsh8.6 "$0" "$@"
 #   the build stamp.
 #   --fbld ID outputs .fbld defining a tag ID with the value of the build
 #   stamp.
-#   --fbld2 ID outputs .fbld defining a tag ID with the value of the build
-#   stamp.
 #
 # Otherwise it just outputs the build stamp.
 
@@ -25,11 +23,6 @@ switch -exact [lindex $argv 0] {
     puts "const char* $id = \"$stamp\";"
   }
   --fbld {
-    set id [lindex $argv 1]
-    puts "@define\[$id\]\[$stamp\]"
-    puts "@@"
-  }
-  --fbld2 {
     set id [lindex $argv 1]
     puts "@define\[$id\]\[\]\[$stamp\] @@"
   }

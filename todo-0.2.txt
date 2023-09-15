@@ -32,7 +32,7 @@ Things to consider doing for the fble-0.2 release.
   size.
 
 * Fbld:
- - Retire tcl based and fbl1 based fbld.
+ - Retire tcl based
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.
