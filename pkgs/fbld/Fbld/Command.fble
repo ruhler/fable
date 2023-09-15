@@ -1,9 +1,0 @@
-
-<@>@ List@ = /Core/List%.List@;
-
-@ Text@ = /Fbld/Text%.Text@;
-
-# A single command.
-@ Command@ = *(Text@ name, List@<Text@> args);
-
-@(Command@);

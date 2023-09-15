@@ -2,7 +2,6 @@ namespace eval "pkgs" {
   set pkgs {
     core
     app
-    fbld
     fbld2
     md5
     sat
