@@ -25,22 +25,6 @@ namespace eval "fbld" {
       "tclsh8.6 $::s/fbld/runfbld.tcl $::s/fbld/build.lib.tcl $::b/fbld/version.fbld.tcl [join $args] < $source > $target"
   }
 
-  # Builds an html file from an fbld @doc.
-  #
-  # args is additional optional fbld processing scripts.
-  proc ::html_doc { target source args } {
-    fbld $target $source \
-      "$::s/fbld/fbld.lang $::s/spec/fble.lang" \
-      [list $::s/fbld/html.tcl {*}$args]
-  }
-
-  # Builds an html file from an fbld @tutorial.
-  #
-  # args is additional optional fbld processing scripts.
-  proc ::html_tutorial { target source args } {
-    html_doc $target $source [list $::s/fbld/tutorial.tcl {*}$args]
-  }
-
   # Builds a man page from an fbld @usage doc.
   proc ::man_usage { target source } {
     fbld $target $source "" \

@@ -4537,3 +4537,9 @@ than 15 seconds.
 After we do a round of performance improvements, we should look at the
 generated html in detail and fix any issues. For example, in any places
 missing required html escaping.
+
+---
+
+Profiling:
+
+./pkgs/fbld/fbld --profile fbld.prof -- ./fbld/version.fbld ../fbld/nobuildstamp.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > foo.html

@@ -6,19 +6,19 @@
  canonical one.
 
  @item
-  Type names are capitalized. For example: @l[Foo@], @l[FooBar@].
+  Type names are capitalized. For example: @l{Foo@}, @l{FooBar@}.
 
  @item
-  Top level declarations are capitalized. For example: @l[And], @l[DrawBox].
+  Top level declarations are capitalized. For example: @l{And}, @l{DrawBox}.
 
  @item
-  Argument names are lower case. For example: @l[(Foo@ x) { ... }]
+  Argument names are lower case. For example: @l[(Foo\@ x) { ... }]
  
  @item
   Struct and union fields should be lower case.
 
  @item
-  Module names are capitalized. For example: @l[/Bool%], @l[/GameOfLife%].
+  Module names are capitalized. For example: @l{/Bool%}, @l{/GameOfLife%}.
 
  @item
   Parenthesized or braced expressions can be split across multiple lines. If
@@ -29,7 +29,7 @@
 
   For example:
 
-  @code[txt]
+  @code[txt] @
    ... [
      ...,
      ...,
@@ -49,7 +49,7 @@
   For long declarations types, break after the type when defining a variable.
   For example:
 
-  @code[fble]
+  @code[fble] @
    <@ T@>(Symbol@, T@, Array@<T@>) { Array@<T@>; }
    Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) { ... }
 
@@ -57,7 +57,7 @@
   It's fine to group multiple args together on the same line if they fit when
   breaking up a larger thing across multiple lines. For example:
 
-  @code[txt]
+  @code[txt] @
    ... (
      ..., ..., ...
      ...,
@@ -67,7 +67,7 @@
  @item
   Put space between braces but not parenthesis. For example:
 
-  @code[fble]
+  @code[fble] @
    [a, b, c]
    Foo(a, b, c)
    Foo { a; b; c; }
@@ -78,5 +78,5 @@
   values. Sort imports by name.
 
  @item
-  Use @l[_] as the name of unused variables.
+  Use @l{_} as the name of unused variables.
 

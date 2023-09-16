@@ -28,7 +28,7 @@ namespace eval "tutorials" {
   }
 
   # Tutorial table of contents
-  ::html_doc $::b/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
+  ::fbld_html_doc $::b/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
   www $::b/www/tutorials/Tutorials.html
 
   # Tutorials
