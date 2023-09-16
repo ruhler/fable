@@ -10,38 +10,72 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
+# Ascii codes for each character.
+% Ascii = @(
+  nl: Int|10, tab: Int|9, '	': Int|9, ' ': Int|32,
+
+  '!': Int|33, '"': Int|34, '#': Int|35, '$': Int|36,
+  '%': Int|37, '&': Int|38, '''': Int|39, '(': Int|40,
+  ')': Int|41, '*': Int|42, '+': Int|43, ',': Int|44,
+  '-': Int|45, '.': Int|46, '/': Int|47,
+
+  '0': Int|48, '1': Int|49, '2': Int|50, '3': Int|51,
+  '4': Int|52, '5': Int|53, '6': Int|54, '7': Int|55,
+  '8': Int|56, '9': Int|57,
+
+  ':': Int|58, ';': Int|59, '<': Int|60, '=': Int|61,
+  '>': Int|62, '?': Int|63, '@': Int|64,
+
+  A: Int|65, B: Int|66, C: Int|67, D: Int|68, E: Int|69, F: Int|70,
+  G: Int|71, H: Int|72, I: Int|73, J: Int|74, K: Int|75, L: Int|76,
+  M: Int|77, N: Int|78, O: Int|79, P: Int|80, Q: Int|81, R: Int|82,
+  S: Int|83, T: Int|84, U: Int|85, V: Int|86, W: Int|87, X: Int|88,
+  Y: Int|89, Z: Int|90,
+
+  '[': Int|91, '\': Int|92, ']': Int|93,
+  '^': Int|94, '_': Int|95, '`': Int|96,
+
+  a: Int|97, b: Int|98, c: Int|99, d: Int|100, e: Int|101, f: Int|102,
+  g: Int|103, h: Int|104, i: Int|105, j: Int|106, k: Int|107, l: Int|108,
+  m: Int|109, n: Int|110, o: Int|111, p: Int|112, q: Int|113, r: Int|114,
+  s: Int|115, t: Int|116, u: Int|117, v: Int|118, w: Int|119, x: Int|120,
+  y: Int|121, z: Int|122,
+
+  '{': Int|123, '|': Int|124, '}': Int|125, '~': Int|126
+);
+
 # Converts a character to its ascii code value.
 (Char@) { Int@; } Ord = (Char@ c) {
   c.?('
-': Int|10, '	': Int|9, ' ': Int|32,
-    '!': Int|33, '"': Int|34, '#': Int|35, '$': Int|36,
-    '%': Int|37, '&': Int|38, '''': Int|39, '(': Int|40,
-    ')': Int|41, '*': Int|42, '+': Int|43, ',': Int|44,
-    '-': Int|45, '.': Int|46, '/': Int|47,
+': Ascii.nl, '	': Ascii.tab, ' ': Ascii.' ',
+    '!': Ascii.'!', '"': Ascii.'"', '#': Ascii.'#', '$': Ascii.'$',
+    '%': Ascii.'%', '&': Ascii.'&', '''': Ascii.'''', '(': Ascii.'(',
+    ')': Ascii.')', '*': Ascii.'*', '+': Ascii.'+', ',': Ascii.',',
+    '-': Ascii.'-', '.': Ascii.'.', '/': Ascii.'/',
 
-    '0': Int|48, '1': Int|49, '2': Int|50, '3': Int|51,
-    '4': Int|52, '5': Int|53, '6': Int|54, '7': Int|55,
-    '8': Int|56, '9': Int|57,
+    0: Ascii.0, 1: Ascii.1, 2: Ascii.2, 3: Ascii.3,
+    4: Ascii.4, 5: Ascii.5, 6: Ascii.6, 7: Ascii.7,
+    8: Ascii.8, 9: Ascii.9,
 
-    ':': Int|58, ';': Int|59, '<': Int|60, '=': Int|61,
-    '>': Int|62, '?': Int|63, '@': Int|64,
+    ':': Ascii.':', ';': Ascii.';', '<': Ascii.'<', '=': Ascii.'=',
+    '>': Ascii.'>', '?': Ascii.'?', '@': Ascii.'@',
 
-    A: Int|65, B: Int|66, C: Int|67, D: Int|68, E: Int|69, F: Int|70,
-    G: Int|71, H: Int|72, I: Int|73, J: Int|74, K: Int|75, L: Int|76,
-    M: Int|77, N: Int|78, O: Int|79, P: Int|80, Q: Int|81, R: Int|82,
-    S: Int|83, T: Int|84, U: Int|85, V: Int|86, W: Int|87, X: Int|88,
-    Y: Int|89, Z: Int|90, 
+    A: Ascii.A, B: Ascii.B, C: Ascii.C, D: Ascii.D, E: Ascii.E, F: Ascii.F,
+    G: Ascii.G, H: Ascii.H, I: Ascii.I, J: Ascii.J, K: Ascii.K, L: Ascii.L,
+    M: Ascii.M, N: Ascii.N, O: Ascii.O, P: Ascii.P, Q: Ascii.Q, R: Ascii.R,
+    S: Ascii.S, T: Ascii.T, U: Ascii.U, V: Ascii.V, W: Ascii.W, X: Ascii.X,
+    Y: Ascii.Y, Z: Ascii.Z,
 
-    '[': Int|91, '\': Int|92, ']': Int|93,
-    '^': Int|94, '_': Int|95, '`': Int|96,
+    '[': Ascii.'[', '\': Ascii.'\', ']': Ascii.']',
+    '^': Ascii.'^', '_': Ascii.'_', '`': Ascii.'`',
 
-    a: Int|97, b: Int|98, c: Int|99, d: Int|100, e: Int|101, f: Int|102,
-    g: Int|103, h: Int|104, i: Int|105, j: Int|106, k: Int|107, l: Int|108,
-    m: Int|109, n: Int|110, o: Int|111, p: Int|112, q: Int|113, r: Int|114,
-    s: Int|115, t: Int|116, u: Int|117, v: Int|118, w: Int|119, x: Int|120,
-    y: Int|121, z: Int|122, 
+    a: Ascii.a, b: Ascii.b, c: Ascii.c, d: Ascii.d, e: Ascii.e, f: Ascii.f,
+    g: Ascii.g, h: Ascii.h, i: Ascii.i, j: Ascii.j, k: Ascii.k, l: Ascii.l,
+    m: Ascii.m, n: Ascii.n, o: Ascii.o, p: Ascii.p, q: Ascii.q, r: Ascii.r,
+    s: Ascii.s, t: Ascii.t, u: Ascii.u, v: Ascii.v, w: Ascii.w, x: Ascii.x,
+    y: Ascii.y, z: Ascii.z,
 
-    '{': Int|123, '|': Int|124, '}': Int|125, '~': Int|126);
+    '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~');
 };
 
 # Converts an ascii value to its corresponding character.
@@ -81,8 +115,6 @@
 
     Chars.'{', Chars.'|', Chars.'}', Chars.'~'];
 
-
-
   Map@ map = /Core/List%.ForEach(chars, Empty, Put);
 
   (Int@ i) {
@@ -91,4 +123,4 @@
   };
 };
 
-@(Ord, Chr);
+@(Ascii, Ord, Chr);

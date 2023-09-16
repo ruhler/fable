@@ -4543,3 +4543,80 @@ missing required html escaping.
 Profiling:
 
 ./pkgs/fbld/fbld --profile fbld.prof -- ./fbld/version.fbld ../fbld/nobuildstamp.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > foo.html
+
+Looks like 75% of the runtime is in the list Ord function, primarily from map
+lookup calls, from looking up the 'impl' function for a command.
+
+We have about 100K lookup calls. Looks like on average each lookup requires 5
+iterations. That suggests, on average, around 32 elements in the map. That's
+consistent with the number of entries I have defined in the global scope for
+the html backend.
+
+I would guess a lot of the time is spent distinguishing between the @EscHtml
+and @EscHtmlChar functions.
+
+There are a number of different places we could try to improve:
+
+* the fble runtime implementation
+* the char ord function
+* the list ord function
+* the map lookup function
+* the fbld evaluation strategy
+* the html.fbld functions
+
+The most promising, I think, would be to change the fbld evaluation strategy
+to do the lookup when we first define a function, instead of repeatedly for
+each invocation of a function.
+
+For example:
+
+@define[EscHtml][str]
+ @ifeq[][@str][] @@
+ @EscHtmlChar[@head[@str]]
+ @EscHtml[@tail[@str]]
+@@
+
+We can do the lookups for @ifeq, @head, @tail, @EscHtmlChar and @EscHtml once
+in the body of the function when @EscHtml is defined. No need to repeat the
+lookup on every call to the function. Then we can reduce the size of the
+environment for the body of the function to just the arguments.
+
+It means traversing the definition of a function an extra time, but hopefully
+function definitions are relatively small?
+
+Practically speaking, the idea would be to update @Command with an extra
+field: Maybe@<Impl@>. On initial parse, you have Nothing. In defining a
+function, we'll do a 'Resolve' traversal that looks up as many commands as it
+can, but does not yet apply them. It can do that on the environment the define
+is from. Eval will look to see if a command has already been resolved and
+reuse that if so.
+
+This would be slightly awkward because it ties up evaluation and Markup@. I
+wonder if eval should have its own data structure ResolvedMarkup@ that it
+should use during the evaluation process instead.
+
+Or, I could make this all internal. Add a separate Resolved@ data type. Eval%
+provides methods to convert Markup@ to Resolved@, and then later evaluate
+Resolved@. No need to change the existing top level Eval interface. We can use
+this Resolved@ thing to accelerate the @define builtin specifically.
+
+One thing I notice from linux perf based profiling is a lot of list
+allocations. And from fble based prof, a lot of calls to Int| from the Ord
+function for Char@. It would be pretty easy to factor those calls out of Ord
+so we only do the Int| conversions once, not for every character comparison.
+
+Or, I suppose, we could implement Ord for Char@ precisely, instead of
+converting to Ascii to do the comparison?
+
+Looking more closely, Int| shows up as 20% of total runtime from linux perf,
+and 60% of total runtime from fble profiling.
+
+Cool. Let's start by fixing that:
+* Ascii should not call int helper every time.
+* If it makes sense, see if ordering for char can be implemented directly
+  instead of via conversion to Int@?
+
+Making that change resulted in a 25% performance improvement in this case.
+
+Now prof still shows calls to Int|, mostly from the builtins checking the
+right number of arguments. perf doesn't show this as an issue.
