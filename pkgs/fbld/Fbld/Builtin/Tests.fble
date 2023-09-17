@@ -17,7 +17,7 @@
 % Start = /Fbld/Loc%.Start;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-% ToPlain = /Fbld/Markup%.ToPlain;
+% ToString = /Fbld/Markup%.ToString;
 
 % Text = /Fbld/Text%.Text;
 
@@ -29,7 +29,7 @@
   String@ text = Lines(lines);
   Markup@ parsed <- r.do(/Fbld/Parse%.Parse(List[Text(Start|'foo.fbld', text)]));
   Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
-  ToPlain(evaled);
+  ToString(evaled);
 };
 
 Test@ Tests = TestSuite(Str|Builtin, List[

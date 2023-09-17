@@ -2,9 +2,7 @@
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
-<@>% Append = /Core/List%.Append;
 <@>% Length = /Core/List/Length%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -18,7 +16,7 @@
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
-@ Element@ = /Fbld/Markup%.Element@;
+% Append = /Fbld/Markup%.Append;
 
 % Text = /Fbld/Text%.Text;
 
@@ -42,18 +40,17 @@ Command = (Env@ env, Command@ cmd) {
   impl.just(env, cmd);
 };
 
-(Env@, Element@) { Result@<Markup@>; }
-Element = (Env@ env, Element@ element) {
-  element.?(plain: r.return(List[element]));
-  Command(env, element.command);
-};
-
 (Env@, Markup@) { Result@<Markup@>; }
 Eval = (Env@ env, Markup@ markup) {
-  markup.?(nil: r.return(markup));
-  Markup@ tail <- r.do(Eval(env, markup.cons.tail));
-  Markup@ head <- r.do(Element(env, markup.cons.head));
-  r.return(Append(head, tail));
+  markup.?(
+    empty: r.return(markup),
+    plain: r.return(markup),
+    command: Command(env, markup.command),
+    sequence: {
+      Markup@ a <- r.do(Eval(env, markup.sequence.a));
+      Markup@ b <- r.do(Eval(env, markup.sequence.b));
+      r.return(Append(a, b));
+    });
 };
 
 (Env@, List@<Markup@>) { Result@<List@<Markup@>>; }

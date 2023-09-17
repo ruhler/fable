@@ -1,10 +1,10 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
+% Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
 @ Command@ = /Fbld/Markup%.Command@;
-@ Element@ = /Fbld/Markup%.Element@;
 @ Markup@ = /Fbld/Markup%.Markup@;
 
 Show@<Command@> Command = (Command@ x) {
@@ -14,12 +14,14 @@ Show@<Command@> Command = (Command@ x) {
   ];
 },
 
-Show@<Element@> Element = (Element@ x) {
-  x.?(
-    plain: /Fbld/Text/Show%.Show(x.plain),
-    command: Command(x.command));
-},
+Show@<Markup@> Markup = (Markup@ m) {
+  # TODO: Avoid quadratic blowup from Append in case of sequence.
+  m.?(
+    empty: Str|'{}',
+    plain: /Fbld/Text/Show%.Show(m.plain),
+    command: Command(m.command),
+    sequence: /Core/List%.Append(Markup(m.sequence.a), Markup(m.sequence.b)));
 
-Show@<Markup@> Markup = /Core/List/Show%.Show(Element);
+};
 
-@(Command, Element, Markup);
+@(Command, Markup);

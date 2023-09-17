@@ -24,7 +24,8 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-@ Element@ = /Fbld/Markup%.Element@;
+% Empty = /Fbld/Markup%.Empty;
+% Append = /Fbld/Markup%.Append;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
 <@>% Return = /Fbld/Parse/M%.Return;
@@ -79,7 +80,7 @@ M@<String@> Raw = {
 };
 
 # Parses the rest of the args for a block command.
-(Loc@, String@, List@<Markup@>) { M@<Element@>; }
+(Loc@, String@, List@<Markup@>) { M@<Markup@>; }
 Args = (Loc@ l, String@ name, List@<Markup@> args) {
   List@<Markup@> inline_args <- Do(InlineArgs);
 
@@ -112,12 +113,12 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
     none.?(true: Return(Nil<Markup@>));
 
     Unit@ _ <- Do(String(StrE|' @\n'));
-    Element@ e <- Do(Indented({
+    Markup@ e <- Do(Indented({
       Loc@ l <- Do(Loc);
       String@ raw <- Do(Raw);
       Return(/Fbld/Markup%.Plain(l, raw));
     }));
-    Return(List[List[e]]);
+    Return(List[e]);
   });
 
   List@<Markup@> next <- Do({
@@ -146,10 +147,10 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 },
 
 # Parses a command starting just after the initial '@'.
-M@<Element@> Command = {
+M@<Markup@> Command = {
   Loc@ l <- Do(Loc);
   String@ name <- Do(Name);
-  name.?(nil: Error<Element@>(l, Str|'missing command name'));
+  name.?(nil: Error<Markup@>(l, Str|'missing command name'));
 
   Args(l, name, Nil<Markup@>);
 },
@@ -160,18 +161,18 @@ M@<Markup@> Block = {
 
   Bool@ cmd <- Do(Try_(String|'@'));
   cmd.?(true: {
-    Element@ command <- Do(Command);
+    Markup@ command <- Do(Command);
     Markup@ tail <- Do(Block);
-    Return(Cons(command, tail));
+    Return(Append(command, tail));
   });
 
   Loc@ loc <- Do(Loc);
   Maybe@<Char@> c <- Do(Test(Get));
-  c.?(nothing: Return(Nil<Element@>));
+  c.?(nothing: Return(Empty));
 
   Markup@ inline <- Do(Inline(Or(EndOfInput, BlankLine)));
   Markup@ tail <- Do(Block);
-  Return(Cons(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
+  Return(Append(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
 };
 
 @(Block);

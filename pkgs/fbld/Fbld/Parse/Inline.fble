@@ -9,7 +9,6 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
-<@>% List = /Core/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -23,8 +22,9 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-@ Element@ = /Fbld/Markup%.Element@;
+% Empty = /Fbld/Markup%.Empty;
 % Plain = /Fbld/Markup%.Plain;
+% Append = /Fbld/Markup%.Append;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
 <@>% Do = /Fbld/Parse/M%.Do;
@@ -67,8 +67,10 @@ M@<Markup@> LiteralArg = {
   Unit@ _ <- Do(String|'{');
   Loc@ l <- Do(Loc);
   String@ text <- Do(Literal);
-  Return(List[Plain(l, text)]);
+  Return(Plain(l, text));
 };
+
+@ Markup_@ = *(String@ plain, Markup@ markup);
 
 M@<Markup@> RegularArg = {
   Unit@ _ <- Do(String|'[');
@@ -101,28 +103,26 @@ M@<List@<Markup@>> Args = {
 },
 
 # Parses an inline command, starting just after the '@' character.
-M@<Element@> Command = {
+M@<Markup@> Command = {
   Loc@ l <- Do(Loc);
   String@ name <- Do(Name);
-  name.?(nil: Error<Element@>(l, Str|'missing command name'));
+  name.?(nil: Error<Markup@>(l, Str|'missing command name'));
 
   List@<Markup@> args <- Do(Args);
   Return(/Fbld/Markup%.Command(l, name)(args));
 },
 
-# Parses inline text.
-#
-# @arg[end] - Something that parses the end of the inline text.
-(M@<Unit@>) { M@<Markup@>; } Inline = (M@<Unit@> end) {
+# Helper function for Inline. Returns parsed markup as plain text followed by
+# the rest of the markup.
+(M@<Unit@>) { M@<Markup_@>; } Inline_ = (M@<Unit@> end) {
   Bool@ done <- Do(Try_(end));
-  done.?(true: Return(Nil<Element@>));
+  done.?(true: Return(@(plain: Str|'', markup: Empty)));
 
-  Loc@ l <- Do(Loc);
   Char@ c <- Do(Get);
   c.?('@': {
-    Element@ command <- Do(Command);
+    Markup@ command <- Do(Command);
     Markup@ tail <- Do(Inline(end));
-    Return(Cons(command, tail));
+    Return(@(plain: Str|'', markup: Append(command, tail)));
   });
 
   Char@ h <- Do({
@@ -139,14 +139,18 @@ M@<Element@> Command = {
     });
     Return(c);
   });
-  Markup@ tail <- Do(Inline(end));
+  Markup_@ tail <- Do(Inline_(end));
+  Return(@(plain: Cons(h, tail.plain), markup: tail.markup));
+},
 
-  Element@ solo = Plain(l, Str[h]);
-  tail.?(nil: Return(List[solo]));
-  tail.cons.head.?(plain: {
-    Return(Cons(Plain(l, Cons(h, tail.cons.head.plain.text)), tail.cons.tail));
-  });
-  Return(Cons(solo, tail));
+# Parses inline text.
+#
+# @arg[end] - Something that parses the end of the inline text.
+(M@<Unit@>) { M@<Markup@>; } Inline = (M@<Unit@> end) {
+  Loc@ l <- Do(Loc);
+  Markup_@ result <- Do(Inline_(end));
+  result.plain.?(nil: Return(result.markup));
+  Return(Append(Plain(l, result.plain), result.markup));
 };
 
 @(Inline, Name, Args);

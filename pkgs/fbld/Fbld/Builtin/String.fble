@@ -3,8 +3,6 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
 <@>% Get = /Core/List/Length%.Get;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -25,8 +23,8 @@
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
-@ Element@ = /Fbld/Markup%.Element@;
 % Plain = /Fbld/Markup%.Plain;
+% Append = /Fbld/Markup%.Append;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Err = /Fbld/Result%.Err;
@@ -35,17 +33,15 @@
 % Text = /Fbld/Text%.Text;
 
 (Markup@) { Result@<Maybe@<Char@>>; } HeadOf = (Markup@ markup) {
-  markup.?(nil: r.return(Nothing<Char@>));
-  Element@ e = markup.cons.head;
-  e.?(command: {
-    Err<Maybe@<Char@>>(Text(e.command.name.loc, Strs[
-        Str|'expected plain text, but found command @',
-        e.command.name.text
-        ]));
-  });
-
-  e.plain.text.?(nil: HeadOf(markup.cons.tail));
-  r.return(Just(e.plain.text.cons.head));
+  markup.?(
+    empty: r.return(Nothing<Char@>),
+    plain: r.return(Just(markup.plain.text.cons.head)),
+    command: {
+      Err<Maybe@<Char@>>(Text(markup.command.name.loc, Strs[
+          Str|'expected plain text, but found command @',
+          markup.command.name.text]));
+    },
+    sequence: HeadOf(markup.sequence.a));
 };
 
 Impl@ Head = (Env@ env, Command@ cmd) {
@@ -55,25 +51,25 @@ Impl@ Head = (Env@ env, Command@ cmd) {
   mc.?(nothing: r.return(arg));
 
   # TODO: What to use for the location of the result?
-  r.return(List[Plain(cmd.name.loc, Str[mc.just])]);
+  r.return(Plain(cmd.name.loc, Str[mc.just]));
 };
 
 (Markup@) { Result@<Markup@>; } TailOf = (Markup@ markup) {
-  markup.?(nil: r.return(markup));
-  Element@ e = markup.cons.head;
-  e.?(command: {
-    Err<Markup@>(Text(e.command.name.loc, Strs[
-        Str|'expected plain text, but found command @',
-        e.command.name.text
-        ]));
-  });
-
-  e.plain.text.?(nil: TailOf(markup.cons.tail));
-  e.plain.text.cons.tail.?(nil: r.return(markup.cons.tail));
-
-  # TODO: What to use for the location of the result?
-  Element@ etail = Plain(e.plain.loc, e.plain.text.cons.tail);
-  r.return(Cons(etail, markup.cons.tail));
+  markup.?(
+    empty: r.return(markup),
+    plain: {
+      # TODO: What to use for the location of the result?
+      r.return(Plain(markup.plain.loc, markup.plain.text.cons.tail));
+    },
+    command: {
+      Err<Markup@>(Text(markup.command.name.loc, Strs[
+          Str|'expected plain text, but found command @',
+          markup.command.name.text]));
+    },
+    sequence: {
+      Markup@ a <- r.do(TailOf(markup.sequence.a));
+      r.return(Append(a, markup.sequence.b));
+    });
 };
 
 Impl@ Tail = (Env@ env, Command@ cmd) {

@@ -1,10 +1,12 @@
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Append = /Core/List%.Append;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
@@ -15,41 +17,67 @@
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 
-# Fble Marked up text.
+# Fbld marked up text.
 @ Command@ = *(Text@ name, List@<Markup@> args),
-@ Element@ = +(Text@ plain, Command@ command),
-@ Markup@ = List@<Element@>;
+@ Sequence@ = *(Markup@ a, Markup@ b),
+@ Markup@ = +(
+  Unit@ empty,
+  Text@ plain,          # non-empty
+  Command@ command,
+  Sequence@ sequence    # both a and b are non-empty
+);
 
-(List@<Element@>) { Markup@; } Markup = /Core/List%.List<Element@>;
+Markup@ Empty = Markup@(empty: Unit);
 
-(Loc@, String@) { Element@; }
+(Loc@, String@) { Markup@; }
 Plain = (Loc@ l, String@ str) {
-  Element@(plain: Text@(l, str));
+  str.?(nil: Empty);
+  Markup@(plain: Text@(l, str));
 };
 
-(Loc@, String@)(List@<Markup@>) { Element@; }
+(Loc@, String@)(List@<Markup@>) { Markup@; }
 Command = (Loc@ l, String@ name)(List@<Markup@> args) {
-  Element@(command: Command@(Text@(l, name), args));
+  Markup@(command: Command@(Text@(l, name), args));
+};
+
+(Markup@, Markup@) { Markup@; }
+Append = (Markup@ a, Markup@ b) {
+  a.?(empty: b);
+  b.?(empty: a);
+  Markup@(sequence: @(a, b));
+};
+
+(List@<Markup@>) { Markup@; }
+Markups = (List@<Markup@> xs) {
+  xs.?(nil: Empty);
+  xs.cons.tail.?(nil: xs.cons.head);
+  Append(xs.cons.head, Markups(xs.cons.tail));
+};
+
+(Markup@, String@) { Result@<String@>; }
+ToString_ = (Markup@ m, String@ s) {
+  m.?(
+    empty: r.return(s),
+    plain: r.return(/Core/List%.Append(m.plain.text, s)),
+    command: {
+      Err<String@>(Text(m.command.name.loc, Strs[
+          Str|'expected plain text, but found command @',
+          m.command.name.text
+          ]));
+    },
+    sequence: {
+      String@ tail <- r.do(ToString_(m.sequence.b, s));
+      ToString_(m.sequence.a, tail);
+    });
 };
 
 # Interprets Markup@ as plain text.
 # Fails if the Markup isn't plain text.
 (Markup@) { Result@<String@>; }
-ToPlain = (Markup@ m) {
-  m.?(nil: r.return(Str|''));
-  Element@ e = m.cons.head;
-  e.?(command: {
-    Err<String@>(Text(e.command.name.loc, Strs[
-        Str|'expected plain text, but found command @',
-        e.command.name.text
-        ]));
-  });
-
-  String@ head = e.plain.text;
-  String@ tail <- r.do(ToPlain(m.cons.tail));
-  r.return(Append(head, tail));
+ToString = (Markup@ m) {
+  ToString_(m, Str|'');
 };
 
-@(Markup@, Command@, Element@,
-  Markup, Command, Plain,
-  ToPlain);
+@(Markup@, Command@, Sequence@,
+  Empty, Plain, Command, Append, Markups,
+  ToString);

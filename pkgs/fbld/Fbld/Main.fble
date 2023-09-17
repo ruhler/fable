@@ -75,7 +75,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Result@<String@> result = {
       Markup@ parsed <- r.do(/Fbld/Parse%.Parse(inputs.ok));
       Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
-      /Fbld/Markup%.ToPlain(evaled);
+      /Fbld/Markup%.ToString(evaled);
     };
 
     result.?(err: {

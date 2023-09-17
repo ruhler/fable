@@ -21,10 +21,9 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
-@ Element@ = /Fbld/Markup%.Element@;
 % Command = /Fbld/Markup%.Command;
 % Plain = /Fbld/Markup%.Plain;
-% M = /Fbld/Markup%.Markup;
+% M = /Fbld/Markup%.Markups;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
@@ -38,7 +37,7 @@ L = (List@<Decimal@> line)(List@<Decimal@> col) {
   Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int(line), /Core/Int/Lit%.Int(col));
 };
 
-(List@<Decimal@>)(List@<Decimal@>)(String@)(List@<Markup@>) { Element@; }
+(List@<Decimal@>)(List@<Decimal@>)(String@)(List@<Markup@>) { Markup@; }
 C = (List@<Decimal@> line)(List@<Decimal@> col)(String@ name)(List@<Markup@> args) {
   Command(L(line)(col), name)(args);
 };
@@ -48,12 +47,12 @@ T = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
   Text@(L(line)(col), text);
 };
 
-(List@<Decimal@>)(List@<Decimal@>)(String@) { Element@; }
+(List@<Decimal@>)(List@<Decimal@>)(String@) { Markup@; }
 P = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
   Plain(L(line)(col), StrE(text));
 };
 
-(List@<Decimal@>)(List@<Decimal@>)(String@) { Element@; }
+(List@<Decimal@>)(List@<Decimal@>)(String@) { Markup@; }
 Pr = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
   Plain(L(line)(col), Str(text));
 };

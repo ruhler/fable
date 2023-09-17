@@ -22,7 +22,7 @@
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
-% ToPlain = /Fbld/Markup%.ToPlain;
+% ToString = /Fbld/Markup%.ToString;
 
 % r = /Fbld/Result%.Monad;
 
@@ -44,13 +44,13 @@ Impl@ Define = (Env@ env, Command@ cmd) {
   String@ name <- r.do({
     Markup@ arg = Get(cmd.args, Int|0);
     Markup@ evaled <- r.do(Eval(env, arg));
-    ToPlain(evaled);
+    ToString(evaled);
   });
 
   List@<String@> params <- r.do({
     Markup@ arg = Get(cmd.args, Int|1);
     Markup@ evaled <- r.do(Eval(env, arg));
-    String@ list <- r.do(ToPlain(evaled));
+    String@ list <- r.do(ToString(evaled));
     r.return(Split(list, IsSpace));
   });
 

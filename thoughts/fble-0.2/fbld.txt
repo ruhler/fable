@@ -4620,3 +4620,48 @@ Making that change resulted in a 25% performance improvement in this case.
 
 Now prof still shows calls to Int|, mostly from the builtins checking the
 right number of arguments. perf doesn't show this as an issue.
+
+---
+
+I suspect two potential issues contributing to long runtimes of fbld:
+1. Cost of repeated lookups of commands in env.
+2. Quadratic blowup from appending Markup@ lists in eval.
+
+Both should be fixable. (2) we should absolutely do. (1) feels like we
+shouldn't have to do if fble was fast enough.
+
+What does profiling suggest for (1) vs. (2)?
+
+prof:
+  Lookup: 35% of runtime
+  Append: 32% of runtime
+
+perf:
+  Lookup: 10% of runtime
+  Append: 52% of runtime
+
+I trust perf more, and suspect object allocation is always the more expensive
+thing, which happens with (2). Let's start with (2).
+
+Two approaches we can take:
+* Eval takes markup to prepend to.
+* Change Markup@ from List to Tree structure.
+
+I claim we want the second approach: make it possible to embed the tree
+structure in the Markup@ representation itself. Specifically so we can deal
+with arguments to functions. We should be able to pass arguments to functions
+in pre-flattened form, and be able to append those wherever they are used in
+the function in constant time.
+
+This has the downside that there is more than one way to parse a list. Let's
+just declare our canonical approach is: (., (., (. , ...))).
+
+Change done. It's a 60% performance improvement. We're done to about 1 minute
+now to process fble.fbld.
+
+Now profiling shows:
+prof:
+  50% command lookup
+perf:
+  52% parsing
+  37% eval

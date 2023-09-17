@@ -27,16 +27,6 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 % r = /Fbld/Result%.Monad;
 
-# Removes any empty plain text from the start of markdown.
-(Markup@) { Markup@; } Normal = (Markup@ a) {
-  a.?(nil: a);
-  a.cons.head.?(plain: {
-    a.cons.head.plain.text.?(nil: Normal(a.cons.tail));
-    a;
-  });
-  a;
-};
-
 (Markup@, Markup@) { Result@<Bool@>; }
 Equals = (Markup@ a, Markup@ b) {
   Maybe@<Char@> ac <- r.do(HeadOf(a));

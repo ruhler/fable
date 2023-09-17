@@ -16,6 +16,7 @@ Things to consider doing for the fble-0.2 release.
  - Any way we can vim highlight next line literal as normal text?
  - Some better way to start @.block text with an inline command?
    Other than adding a space character in front?
+ - Allow multiple errors to be reported from a single run.
 
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.
