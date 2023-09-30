@@ -22,6 +22,7 @@ namespace eval "bin" {
     install $::b/bin/$base $::config::bindir/$base
 
     # Man page.
+    #fbld_man_usage $::b/bin/$base.1 $::s/bin/$base.fbld
     man_usage $::b/bin/$base.1 $::s/bin/$base.fbld
     install $::b/bin/$base.1 $::config::mandir/man1/$base.1
   }

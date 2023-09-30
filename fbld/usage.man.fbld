@@ -1,41 +1,35 @@
-@define[usage][name][brief][content]
- @man[1][$name][@FbleVersion (@BuildStamp)]
-  @section[NAME][$name - $brief]
-   $content
+@define[usage][name brief content]
+ @man[1][@name][@FbleVersion (@BuildStamp)]
+  @section[NAME][@name - @brief]
+   @content
 @@
 
 @define[synopsis][text]
  @section[SYNOPSIS]
   @par
-   $text
+   @text
 @@
 
 @define[description][body]
  @section[DESCRIPTION]
-  $body
+  @body
 @@
 
 @define[options][body]
  @section[OPTIONS]
-  $body
+  @body
 @@
 
-@define[opt][opt][desc]
- @def[$opt][$desc]
-@@
+@define[opt][opt desc] @def[@opt][@desc] @@
 
 @define[exitstatus][body]
  @section[EXIT STATUS]
-  $body
+  @body
 @@
 
 @define[examples][body]
  @section[EXAMPLES]
-  $body
+  @body
 @@
 
-@define[ex][text][desc]
- @par[@l[$text]]
-
- $desc
-@@
+@define[ex][text desc] @par[@l[@text]]\n@desc @@

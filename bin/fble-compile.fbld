@@ -1,6 +1,6 @@
 @usage[fble-compile] compiles an fble module
  @synopsis
-  @l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+   @l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description
   Compile the fble module identified by @a[MODULE_PATH].

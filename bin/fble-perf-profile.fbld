@@ -1,6 +1,6 @@
 @usage[fble-perf-profile] produces fble profile report for linux perf profile
  @synopsis
-  @l[fble-perf-profile] \[@a[OPTION]...\]
+   @l[fble-perf-profile] \[@a[OPTION]...\]
  
  @description
   Produces an fble profile report for a linux perf profile passed on stdin.

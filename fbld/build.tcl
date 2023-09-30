@@ -31,6 +31,13 @@ namespace eval "fbld" {
       [list $::s/fbld/usage.man.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl]
   }
 
+  # Builds a man page from an fbld @usage doc.
+  proc ::fbld_man_usage { target source } {
+    build $target \
+      "$::b/pkgs/fbld/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $source" \
+      "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/fbld - $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $source > $target"
+  }
+
   # Builds a man page from an fbld doc comment.
   # @arg target - the target man file to produce.
   # @arg source - the C header file to extract the doc comment from.

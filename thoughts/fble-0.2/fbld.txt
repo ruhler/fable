@@ -4665,3 +4665,231 @@ prof:
 perf:
   52% parsing
   37% eval
+
+---
+
+Let's talk html backend correctness. We need to escape html characters. I
+claim it's not possible to do correctly the way things are currently set up.
+
+Consider:
+
+@section The @l{Bool&} type.
+
+The argument to @section, after evaluation, assuming @l does proper html
+escaping, would be something like:
+
+  The <pre>Bool&amp;</pre> type.
+
+We can't escape this again, because it would print the <pre> tag as a literal
+string instead of a tag. We must escape this, in case "The " or " type." need
+escaping.
+
+The proposal is to do what we do for plain inline text the same as we do for
+plain inline blocks. Bring back @.inline. Use it for all plain text.
+
+For example:
+
+@section The @l{Bool&} type.
+
+Is parsed as:
+
+@section[@.inline[The ]@l[@.inline[Bool&]]@.inline[ type.]]
+ 
+In the implementation of @section and @l, we turn off @.inline.  
+ 
+@define[l][text]
+ @define[@.inline][]
+ @ <code>@EscHtml[@text]</code>
+@@
+
+But this gets tricky, because to turn off @.inline, we need to use plain text.
+
+Could we have some magic for @define where it automatically removes @.inline
+and @.block from the environment the definition is executed under?
+
+Or, could we have explicit commands to do @.inline and @.block substitution?
+Something like:
+
+  @plain[block][@par] @@
+  @plain[inline][@EscHtml] @@
+  ...
+
+Which applies the relevant commands at all points in the argument before
+evaluating the argument?
+
+Meaning we would end up with @EscHtml for things like @code language and @ref
+ids?
+
+Or: have commands like @section explicitly call @plain on their arguments
+before evaluating those arguments?
+
+...
+
+If we parsed without @.block or @.inline.
+
+  Hello @there you.
+
+  What is @up now?
+
+
+[['Hello ', @there, ' you.\n'], 'What is ', @up, ' now?\n']
+
+Plain text is very easy to identify.
+
+Paragraphs are more difficult. Consider:
+
+ Hello there now.
+
+Versus:
+ 
+ Hello 
+
+ there 
+
+ now.
+
+The only difference in how they parse is the presence of newlines
+
+  ['Hello there now.\n']
+
+versus:
+
+  ['Hello \n', 'there \n', 'now.\n']
+
+A better example:
+
+ Hello
+ there
+ now.
+
+Versus:
+
+ Hello 
+
+ there 
+
+ now.
+
+They would parse identically without @.block, when I clearly intend for them
+to parse differently.
+
+Another example to consider, say @foo is defined as a paragraph and @bar is
+not:
+
+  A
+
+  @foo
+
+  B
+ 
+  @bar
+ 
+  C
+
+How do we get paragraphs around @foo but not around @bar? Is it meaningful to
+say @bar isn't a paragraph?
+
+---
+
+Reminder of how things work in tcl-based html backend:
+ - Commands parsed their own arguments.
+ - Outputs of commands were never used as inputs again.
+
+What we have now:
+ - Arguments are parsed and evaluated before going to commands.
+ - The result of commands are used as inputs to other commands.
+
+That's what makes it harder to keep track of when something should get an
+implicit @.inline or @.block tag.
+
+The parser can track @.inline/@.block structure. The good(?) thing about that
+is it only applies to the initial text, never to evaluated text.
+
+But we would still want a mechanism for commands to choose what to do with
+that structure.
+
+So say we have the @.inline/@.block structure captured as part of the Markup@
+representation. Consider @section for example. The title argument.
+
+We know the title argument is Markup@. It's a sequence of plain text /
+commands. When we evaluate the argument, we want to say: plain text gets
+evaluated using some default command @EscHtml, explicit commands get evaluated
+as is.
+
+The order of operations is the hard part. Because we may want to do some
+evaluation of arguments before passing them to @section, which would lose the
+information about plain vs. command.
+
+Unless plain always comes from the parser, and never a command itself (or you
+need to do something differently for the result of a command to be considered
+plain).
+
+This goes back to the original vision: pass @.inline as a free command in the
+arguments to @section.
+
+@section[Hello& @l{Unit&}]
+
+==> Parse injects @.inline:
+
+@section[@.inline[Hello& ]@l{Unit&}]
+
+==> Evaluation of commands in scope of caller: @l
+
+@section[@.inline[Hello& ]<code>Unit&amp;</code>]
+
+==> Evaluation of commands in scope of callee: @.inline
+
+title = Hello&amp; <code>Unit&amp;</code>
+...
+
+
+Is it safe to partially evaluate markup? For example:
+  Evaluate X under environment E1
+  Evaluate result under environment E2
+
+The only challenge would be if there is some command available in both E1 and
+E2. Right now I require E2 be empty. If a command is in both, should it take
+from E1 or E2?
+
+It should take from the caller environment, because that's the only one
+technically reasonable? Because we may have no idea what a command is when we
+first evaluate its arguments. We would have no way of knowing if there was a
+conflict.
+
+So, would that work here? Evaluate arguments in the callers environment first,
+allow 'free' commands. Have a way to evaluate those free commands explicitly
+from the callee's point of view, perhaps with an '@eval[env][markup]' call.
+
+---
+
+Taking a step back from the question of html escaping, because it sounds hard
+and I don't want to get stuck on it right now.
+
+What else is there to work on fbld?
+
+* Syntax highlighting
+* @usage -> man page
+* @usage -> help text header
+* doc comment -> man page
+
+Let's start with @usage -> man page? To replace ::man_usage.
+
+The pieces of it:
+* @doc -> man page.
+* @usage -> (man) @doc
+  - @usage, @synopsys, @description, @options, @opt, @exitstatus, @examples, @ex
+* usage lib
+  - @GenericProgramInfo, @ModuleInput
+
+Eventually we'll call these:
+* man.fbld
+* usage.lib.fbld
+* usage.man.fbld
+
+We can do that now.
+
+I will say, defining the man.fbld backend is really nice syntax wise. This is
+a definite improvement in the fbld language over the original tcl based
+version, assuming I can figure out the html escaping issue.
+
+The other thing I need is fbld support for config.fbld. How hard is that?

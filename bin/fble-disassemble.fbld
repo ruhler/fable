@@ -1,6 +1,6 @@
 @usage[fble-disassemble] disassembles an fble module
  @synopsis
-  @l[fble-disassemble] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+   @l[fble-disassemble] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description
   Generates human readable disassembly for the given fble module.

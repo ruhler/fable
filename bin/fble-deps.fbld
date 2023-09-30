@@ -1,6 +1,6 @@
 @usage[fble-deps] generates depsfile for an fble module
  @synopsis
-  @l[fble-deps] \[@a[OPTION]...\] @l[-t] @a[TARGET] @l[-m] @a[MODULE_PATH]
+   @l[fble-deps] \[@a[OPTION]...\] @l[-t] @a[TARGET] @l[-m] @a[MODULE_PATH]
  
  @description
   Outputs a depfile suitable for use with make and ninja specifying the
