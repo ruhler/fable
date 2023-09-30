@@ -49,20 +49,6 @@ namespace eval "fbld" {
   # @arg target - the name of the .h file to generate.
   # @arg source - the .fbld usage doc to generate the header from.
   # @arg id - the C identifier to declare in the generated header.
-  proc ::header_usage { target source id } {
-    fbld $target.roff $source "" \
-      [list $::s/fbld/usage.help.tcl $::s/fbld/roff.tcl $::s/fbld/usage.lib.tcl]
-    build $target.txt $target.roff \
-      "GROFF_NO_SGR=1 groff -T ascii < $target.roff > $target.txt"
-    build $target \
-      "$::s/fbld/cdata.tcl $target.txt" \
-      "tclsh8.6 $::s/fbld/cdata.tcl $id < $target.txt > $target"
-  }
-
-  # Builds C header file defining help usage text.
-  # @arg target - the name of the .h file to generate.
-  # @arg source - the .fbld usage doc to generate the header from.
-  # @arg id - the C identifier to declare in the generated header.
   proc ::fbld_header_usage { target source id } {
     build $target.roff \
       "$::b/pkgs/fbld/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \

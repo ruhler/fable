@@ -1,7 +1,7 @@
 namespace eval "pkgs/app" {
   set objs [list]
   if $::config::enable_fble_app {
-    header_usage $::b/pkgs/app/app.usage.h $::s/pkgs/app/app.fbld fbldUsageHelpText
+    fbld_header_usage $::b/pkgs/app/app.usage.h $::s/pkgs/app/app.fbld fbldUsageHelpText
     obj $::b/pkgs/app/app.o $::s/pkgs/app/app.c \
       "$::config::sdl_cflags $::config::gl_cflags -I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app -I $::b/pkgs/app" \
       $::b/pkgs/app/app.usage.h

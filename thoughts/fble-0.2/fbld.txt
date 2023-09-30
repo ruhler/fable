@@ -4902,3 +4902,12 @@ converted to the new syntax. Let's prioritize getting everything over to the
 new syntax.
 
 Next: header_usage. I expect it to be as easy to convert as man_usage.
+
+---
+
+Annoying thing is: we have a cycle: fbld depends on fble-compile, for example,
+but fble-compile depends on fbld for -h usage text.
+
+I can break the cycle by checking in a golden copy of usage text for all the
+relevant binaries. It's a bit of a pain though. Oh well. Let's see if/how much
+of it I can automate.
