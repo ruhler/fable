@@ -17,7 +17,7 @@ namespace eval "pkgs/app" {
 
   if $::config::enable_fble_app {
     # fble-app program.
-    man_usage $::b/pkgs/app/fble-app.1 $::s/pkgs/app/app.fbld
+    fbld_man_usage $::b/pkgs/app/fble-app.1 $::s/pkgs/app/app.fbld
     install $::b/pkgs/app/fble-app.1 $::config::mandir/man1/fble-app.1
 
     obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \

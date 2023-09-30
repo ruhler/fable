@@ -4893,3 +4893,12 @@ a definite improvement in the fbld language over the original tcl based
 version, assuming I can figure out the html escaping issue.
 
 The other thing I need is fbld support for config.fbld. How hard is that?
+
+config.fbld isn't hard. I already had it all set up.
+
+@usage -> man conversion was pretty easy. The biggest hold-up is having to
+support both the old and new syntax together for things that aren't all
+converted to the new syntax. Let's prioritize getting everything over to the
+new syntax.
+
+Next: header_usage. I expect it to be as easy to convert as man_usage.

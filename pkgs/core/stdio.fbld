@@ -1,12 +1,12 @@
 @usage[fble-stdio] runs an fble stdio program
  @synopsis
-  @l[fble-stdio] \[@a[OPTION]...\] @a[ARG...]
+   @l[fble-stdio] \[@a[OPTION]...\] @a[ARG...]
  
  @description
   Runs an fble stdio program.
  
   The fble program should be the result of calling @l[/Core/Stdio/IO%.Run] on
-  an argument of type @l[/Core/Stdio%.Main@].
+  an argument of type @l[/Core/Stdio%.Main\@].
  
  @options
   @GenericProgramInfo
@@ -26,8 +26,8 @@
    are fble-stdio options and arguments after @l[--] are @a[ARG...].
  
  @exitstatus
-  @def[0] @l[Stdio@] process returns @l[True].
-  @def[1] @l[Stdio@] process returns @l[False].
+  @def[0] @l[Stdio\@] process returns @l[True].
+  @def[1] @l[Stdio\@] process returns @l[False].
   @def[2] Usage Error
   @def[3] Other Error.
  

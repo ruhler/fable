@@ -1,11 +1,11 @@
 @usage[fble-app] runs an fble app program
  @synopsis
-  @l[fble-app] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+   @l[fble-app] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description
   Runs an fble app program.
  
-  The fble program should be of type @l[/App/App%.Main@].
+  The fble program should be of type @l[/App/App%.Main\@].
  
  @options
   @GenericProgramInfo

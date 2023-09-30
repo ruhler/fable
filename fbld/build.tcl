@@ -8,7 +8,8 @@ namespace eval "fbld" {
     "echo proc inline_FbleVersion {} { inline_ $::version } > $::b/fbld/version.fbld.tcl"
 
   # config.fbld
-  build $::b/fbld/config.fbld $::b/config.tcl \
+  build $::b/fbld/config.fbld \
+    "$::s/fbld/config.fbld.tcl $::b/config.tcl" \
     "tclsh8.6 $::s/fbld/config.fbld.tcl > $::b/fbld/config.fbld"
 
   # Processes an fbld file.
@@ -26,16 +27,10 @@ namespace eval "fbld" {
   }
 
   # Builds a man page from an fbld @usage doc.
-  proc ::man_usage { target source } {
-    fbld $target $source "" \
-      [list $::s/fbld/usage.man.tcl $::s/fbld/man.tcl $::s/fbld/usage.lib.tcl]
-  }
-
-  # Builds a man page from an fbld @usage doc.
   proc ::fbld_man_usage { target source } {
     build $target \
-      "$::b/pkgs/fbld/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $source" \
-      "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/fbld - $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $source > $target"
+      "$::b/pkgs/fbld/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
+      "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $source > $target"
   }
 
   # Builds a man page from an fbld doc comment.

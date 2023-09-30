@@ -1,6 +1,6 @@
 @usage[fble-test] evaluates an fble program
  @synopsis
-  @l[fble-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+   @l[fble-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description
   Evaluates an fble program and discards the result. Exits with success if the

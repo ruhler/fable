@@ -13,7 +13,7 @@ namespace eval "pkgs/pinball" {
     "$::b/pkgs/pinball/pinball-tests --prefix Compiled"
 
   if $::config::enable_fble_app {
-    man_usage $::b/pkgs/pinball/fble-pinball.1 $::s/pkgs/pinball/pinball.fbld
+    fbld_man_usage $::b/pkgs/pinball/fble-pinball.1 $::s/pkgs/pinball/pinball.fbld
     install $::b/pkgs/pinball/fble-pinball.1 $::config::mandir/man1/fble-pinball.1
     app $::b/pkgs/pinball/fble-pinball "/Pinball/AppIO%" "pinball"
     install $::b/pkgs/pinball/fble-pinball $::config::bindir/fble-pinball

@@ -12,7 +12,7 @@ namespace eval "pkgs/core" {
   pkg core [list] $objs
 
   # fble-stdio program.
-  man_usage $::b/pkgs/core/fble-stdio.1 $::s/pkgs/core/stdio.fbld
+  fbld_man_usage $::b/pkgs/core/fble-stdio.1 $::s/pkgs/core/stdio.fbld
   install $::b/pkgs/core/fble-stdio.1 $::config::mandir/man1/fble-stdio.1
   obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
     "-I $::s/include -I $::s/pkgs/core"
