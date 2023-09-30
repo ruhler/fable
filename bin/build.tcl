@@ -10,11 +10,18 @@ namespace eval "bin" {
     set base [file rootname [file tail $x]]
 
     # Generated header file for help usage text.
-    header_usage $::b/bin/$base.usage.h $::s/bin/$base.fbld fbldUsageHelpText
+    # To avoid dependency cycles, we have golden values of the help usage text
+    # checked in. The checked in versions will need to be updated to match the
+    # generated versions if something changes. To update, run:
+    # for x in bin/*.usage.h ; do cp out/$x.gen $x; done
+    fbld_header_usage $::b/bin/$base.usage.h.gen $::s/bin/$base.fbld fbldUsageHelpText
+    test $::b/bin/$base.usage.h.tr \
+      "$::s/bin/$base.usage.h $::b/bin/$base.usage.h.gen" \
+      "cmp $::s/bin/$base.usage.h $::b/bin/$base.usage.h.gen"
 
     # The binary.
     obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \
-      $::b/bin/$base.usage.h
+      $::s/bin/$base.usage.h
     bin $::b/bin/$base \
       "$::b/bin/$base.o $::b/lib/libfble.a" ""
     bin_cov $::b/bin/$base.cov \
@@ -22,7 +29,6 @@ namespace eval "bin" {
     install $::b/bin/$base $::config::bindir/$base
 
     # Man page.
-    #fbld_man_usage $::b/bin/$base.1 $::s/bin/$base.fbld
     fbld_man_usage $::b/bin/$base.1 $::s/bin/$base.fbld
     install $::b/bin/$base.1 $::config::mandir/man1/$base.1
   }

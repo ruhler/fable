@@ -1,36 +1,11 @@
-@define[usage][name][brief][content]
- @doc[$name][$name - $brief]
-  $content
+@define[usage][name brief content]
+ @doc[@name] @name - @brief\n@content
 @@
 
-@define[synopsis][text]
- @par[Usage: $text]
-@@
-
-@define[description][body]
- $body
-@@
-
-@define[options][body]
- $body
-@@
-
-@define[opt][opt][desc]
- @def[$opt][$desc]
-@@
-
-@define[exitstatus][body]
- @section[Exit Status]
-  $body
-@@
-
-@define[examples][body]
- @section[Examples]
-  $body
-@@
-
-@define[ex][text][desc]
- @par[@l[$text]]
-
- $desc
-@@
+@define[synopsis][text] @par[Usage: @text] @@
+@define[description][body] @body @@
+@define[options][body] @body @@
+@define[opt][opt desc] @def[@opt][@desc] @@
+@define[exitstatus][body] @section[Exit Status][@body] @@
+@define[examples][body] @section[Examples][@body] @@
+@define[ex][text desc] @par[@l[@text]]\n@desc @@

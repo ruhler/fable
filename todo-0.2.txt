@@ -22,6 +22,13 @@ Things to consider doing for the fble-0.2 release.
  - Maybe wait until all the usage docs are in latest fbld syntax, then fix
    this.
 
+* For bin/*.usage.h, can we check in the .txt output instead of the .h output?
+  That way it's much easier to compare what's changed if the golden check
+  fails.
+
+* Review all the generated documentation, including usage help text.
+  Since we've changed the fbld implementation.
+
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.
 
