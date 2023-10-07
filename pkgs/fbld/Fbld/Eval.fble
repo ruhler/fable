@@ -31,19 +31,17 @@
 % InsertEnv = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Impl@>;
 % LookupEnv = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Impl@>;
 
-(Env@, Command@) { Result@<Markup@>; }
-Command = (Env@ env, Command@ cmd) {
-  Maybe@<Impl@> impl = LookupEnv(env, cmd.name.text);
-  impl.?(nothing: r.return(Markup@(command: cmd)));
-  impl.just(env, cmd);
-};
-
 (Env@, Markup@) { Result@<Markup@>; }
 Eval = (Env@ env, Markup@ markup) {
   markup.?(
     empty: r.return(markup),
     plain: r.return(markup),
-    command: Command(env, markup.command),
+    command: {
+      Command@ cmd = markup.command;
+      Maybe@<Impl@> impl = LookupEnv(env, cmd.name.text);
+      impl.?(nothing: r.return(Markup@(command: cmd)));
+      impl.just(env, cmd);
+    },
     sequence: {
       Markup@ a <- r.do(Eval(env, markup.sequence.a));
       Markup@ b <- r.do(Eval(env, markup.sequence.b));

@@ -6,6 +6,8 @@ Things to consider doing for the fble-0.2 release.
 
 * Update or remove fbld/fbld.lang
 
+* Why do spec tests depend on pkgs/fbld/fbld?
+
 * Fbld:
  - Allow nested unescaped {} and escaped \{ \} in literal args.
  - Looks like some extra newline somewhere in html backend for @fbld or @url.

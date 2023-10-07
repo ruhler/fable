@@ -5025,3 +5025,21 @@ The solution for HtmlEscape is as follows:
   free commands.
 * Evaluate the result in a context where @_html is identity function. The
   result is proper html.
+
+---
+
+@.plain is going to cause problems. If we define it using @define, the first
+thing it will try to do is evaluate its arguments in scope, which will invoke
+@.plain.
+
+Can we come up with a better way for processing plain text? Perhaps a builtin
+function specifically for transforming plain text?
+
+@plain[a]
+ ...
+@@
+...
+
+Says substitute all occurrences of plain text using the definition with @a for
+the plain text in the body. I think I like that better.
+
