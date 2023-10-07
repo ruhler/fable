@@ -21,7 +21,8 @@ Env@ Env = Builtins[
   @(name: Str|'ifeq',   impl: /Fbld/Builtin/If%.IfEq),
   @(name: Str|'head',   impl: /Fbld/Builtin/String%.Head),
   @(name: Str|'tail',   impl: /Fbld/Builtin/String%.Tail),
-  @(name: Str|'define', impl: /Fbld/Builtin/Define%.Define)
+  @(name: Str|'define', impl: /Fbld/Builtin/Define%.Define),
+  @(name: Str|'eval',   impl: /Fbld/Builtin/Eval%.Eval)
 ];
 
 @(Env);

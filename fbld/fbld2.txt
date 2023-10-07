@@ -79,3 +79,7 @@ Builtins
 
   @define[ShowPair][a b][The pair is: @a, @b][@ShowPair[hello][there]]
   
+@eval[arg]
+  Evaluates arg in the current environment. Any unevaluated commands in arg
+  that are now defined in the environment will be evaluated.
+  

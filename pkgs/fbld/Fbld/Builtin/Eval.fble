@@ -1,0 +1,24 @@
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>% Get = /Core/List/Length%.Get;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+@ Impl@ = /Fbld/Eval%.Impl@;
+@ Env@ = /Fbld/Eval%.Env@;
+% AssertArgCount = /Fbld/Eval%.AssertArgCount;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Command@ = /Fbld/Markup%.Command@;
+
+% r = /Fbld/Result%.Monad;
+
+Impl@ Eval = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
+  Markup@ arg <- r.do(/Fbld/Eval%.Eval(env, Get(cmd.args, Int|0)));
+  /Fbld/Eval%.Eval(env, arg);
+};
+
+@(Eval);

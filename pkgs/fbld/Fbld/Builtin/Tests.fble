@@ -99,6 +99,22 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Eval, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][x]',
+      Str|' @define[cmd][y] hi @y @@',
+      Str|' @eval[@x]',
+      Str|' @define[cmd][y] bye @y @@',
+      Str|' @eval[@x]',
+      Str|'@@',
+      Str|'@foo[a@cmd[b]c]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'ahi bcabye bc';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 
