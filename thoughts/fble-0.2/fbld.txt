@@ -4911,3 +4911,117 @@ but fble-compile depends on fbld for -h usage text.
 I can break the cycle by checking in a golden copy of usage text for all the
 relevant binaries. It's a bit of a pain though. Oh well. Let's see if/how much
 of it I can automate.
+
+---
+
+The last use of tcl-based fbld is dc.man.tcl. This will be an important test
+for the new fbld syntax, because it traverses the structured text twice:
+
+1. Gets a list of args and return values from $content.
+2. Generates the description from $content.
+
+We want to interpret @arg and @returns separately depending on case (1) or
+(2). That means interpreting it after passing it to the @func command.
+
+For (1), I also want a way to make plain text and other irrelevant commands go
+away.
+
+This needs thought.
+
+---
+
+Feels like there's only one obvious way to go?
+
+* Allow free commands. To evaluate them, keep them unchanged.
+* Have some way to (re)evaluate an evaluated markup in a different environment
+  where previously free commands are now defined.
+ - Either with an explicit @eval command, or just as part of @foo in a new
+   environment.
+* Have some way to define a '@plain' command that is called on all plain text.
+  Perhaps by default it acts as the identity.
+
+Now define @func as:
+
+ @man[3][@name][@FbleVersion (@BuildStamp)]
+  @section[NAME]
+   @name - @brief
+  @synopsis[@content]
+  @section[DESCRIPTION] @brief\n\n@description[@content]
+
+Where @description is defined as:
+
+  @define[arg][type name desc] @l[@type] @a[@name] @desc @@
+  @define[returns][type desc]
+   @section[RETURN VALUE]
+    @definition[@l[@type]][@desc]
+  @content
+
+And @synopsis is defined as, approximately:
+
+  @define[arg][type name desc] 
+  @define[returns][type desc]
+   @section[RETURN VALUE]
+    @definition[@l[@type]][@desc]
+  @section[SYNOPSIS]
+     @l{#include <fble/fble.h>}
+
+     @define[arg][type name desc][] @@
+     @define[returns][type desc] @l[@type] @@
+     @define[.plain][text][] @@
+     @eval[@content]
+
+      @name@l{(}
+     @tail
+      @tail
+       @define[arg][type name desc][@l[, @type] @a[@name]] @@
+       @define[returns][type desc][] @@
+       @define[.plain][text][] @@
+       @eval[@content]
+     
+      @name@l{);}
+  
+With the only awkward bit figuring out how to insert the comma between args.
+Hmm... Maybe always but the comma, just strip it out from the front. Let me
+backport that to the above code.
+
+Awesome. So, changes needed:
+1. Allow free commands, don't error out. I suppose we'll error out at some
+other place for actually not defined commands?
+2. Add an @eval command that evaluates its argument in the current
+environment.
+3. To eval plain text, check for @.plain in the environment. If there, call
+it, else leave text as plain.
+
+Now, assuming we do these things, does that solve the problem of html escape,
+or help in any way?
+
+Maybe, any command that generates html is considered free in the argument to
+@doc. The @doc command replaces all plain text with a call to html escape. All
+other commands assume the input is html sanitized?
+
+---
+
+Okay, here's everything sorted out:
+
+* Allow unknown commands in eval. If encountered, skip evaluation of them.
+* Do not evaluate arguments to unknown commands. It's up to the command itself
+  if it wants to evaluate arguments when you run it.
+* Have an explicit @eval[...] command to evaluate markup in the current
+  environment.
+* Allow a @.plain command to be defined that gets applied to plain markup
+  during evaluation. Default for @.plain is to leave the plain markup as is.
+
+The solution for HtmlEscape is as follows:
+
+* Continue to define doc commands at the top level, e.g. @section, @a, @l, @code.
+* Instead of outputting html directly, like <i>...</i>, output the html tags
+  using a free command specifically for that. For example:
+    @_html[<i>]...@_html[</i>]
+* The argument to @doc will now be a sequence of elements that are either
+  plain text, or @_html. Evaluate this in the context where @.plain is
+  @HtmlEscape. That gives you back a sequence of elements that are either
+  html-escaped plain text or @_html. Note that the arguments to @_html are not
+  processed by the @.plain, because evaluation doesn't go into arguments to
+  free commands.
+* Evaluate the result in a context where @_html is identity function. The
+  result is proper html.

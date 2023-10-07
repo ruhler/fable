@@ -37,6 +37,15 @@ namespace eval "fbld" {
   # @arg target - the target man file to produce.
   # @arg source - the C header file to extract the doc comment from.
   # @arg id - the name of the function to extract the docs for.
+  proc ::fbld_man_dc { target source id } {
+    build $target.fbld \
+      "$source $::s/fbld/dcget.tcl" \
+      "tclsh8.6 $::s/fbld/dcget.tcl $id < $source > $target.fbld"
+    build $target \
+      "$::b/pkgs/fbld/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/dc.man.fbld $::b/fbld/config.fbld $target.fbld" \
+      "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/dc.man.fbld $target.fbld > $target"
+  }
+
   proc ::man_dc { target source id } {
     build $target.fbld \
       "$source $::s/fbld/dcget.tcl" \
