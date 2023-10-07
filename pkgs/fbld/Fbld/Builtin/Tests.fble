@@ -115,6 +115,21 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Plain, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][x]',
+      Str|' @define[keep][y] @y @@',
+      Str|' @eval[@x]',
+      Str|'@@',
+      Str|'@define[ignore][x][] @@',
+      Str|'@foo[@plain[ignore][a@keep[b]c@keep[d]e]]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'bd';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   })
 ]);
 

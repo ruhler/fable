@@ -1,0 +1,46 @@
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>% Get = /Core/List/Length%.Get;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+@ Impl@ = /Fbld/Eval%.Impl@;
+@ Env@ = /Fbld/Eval%.Env@;
+% Eval = /Fbld/Eval%.Eval;
+% AssertArgCount = /Fbld/Eval%.AssertArgCount;
+
+@ Markup@ = /Fbld/Markup%.Markup@;
+@ Command@ = /Fbld/Markup%.Command@;
+% Append = /Fbld/Markup%.Append;
+% Command = /Fbld/Markup%.Command;
+% ToString = /Fbld/Markup%.ToString;
+
+% r = /Fbld/Result%.Monad;
+
+# Applies command 'f' to each plain text entry in the given markup.
+(String@, Markup@) { Markup@; } MapPlain = (String@ f, Markup@ m) {
+  m.?(
+    empty: m,
+    plain: Command(m.plain.loc, f)[m],
+    command: m,
+    sequence: Append(MapPlain(f, m.sequence.a), MapPlain(f, m.sequence.b)));
+};
+
+Impl@ Plain = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(AssertArgCount(Int|2, cmd));
+
+  String@ f <- r.do({
+    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    ToString(evaled);
+  });
+
+  Markup@ body = Get(cmd.args, Int|1);
+  Eval(env, MapPlain(f, body));
+};
+
+@(Plain);

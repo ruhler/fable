@@ -82,4 +82,10 @@ Builtins
 @eval[arg]
   Evaluates arg in the current environment. Any unevaluated commands in arg
   that are now defined in the environment will be evaluated.
+
+@plain[f][body]
+  Applies command @f[...] to each occurrence of plain text in body, then
+  evaluates the result.
+
+  The command 'f' ought to satisfy the property: @f[xy] = @f[x]@f[y]
   

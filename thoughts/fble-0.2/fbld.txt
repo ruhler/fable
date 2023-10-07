@@ -5043,3 +5043,19 @@ function specifically for transforming plain text?
 Says substitute all occurrences of plain text using the definition with @a for
 the plain text in the body. I think I like that better.
 
+Almost makes you wonder, should we make Block part of the syntax and define an
+@block[a][...][...] command too? I kind of like that idea. No need for magic
+.block appearing in the parser tests. We make Block more of a first class
+syntax component like it should be. By default we can treat it like plain text
+in the way it is concatenated, but users can convert where they want to
+otherwise.
+
+How would we modify, say, html and man backends for this? I think we get
+better control with explicit @block regardless.
+
+---
+
+I ended up changing @plain to something slightly easier to implement:
+@plain[f][body], where f is the name of a command to apply to all plain text
+in body.
+
