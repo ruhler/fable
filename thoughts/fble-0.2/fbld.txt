@@ -5059,3 +5059,16 @@ I ended up changing @plain to something slightly easier to implement:
 @plain[f][body], where f is the name of a command to apply to all plain text
 in body.
 
+---
+
+Implementing dc.man.fbld... it's so close, but pretty messy. Specifically:
+
+* The @i command can't be implemented in the new syntax. So the source will
+  need to be updated somehow.
+* For some reason putting description of an argument on the next line messes
+  things up?
+* Paragraphs in the body of the description aren't being stripped away from
+  the synopsys. I don't understand why.
+* Changing the order of man.fbld versus dc.man.fbld makes leads to errors I
+  don't expect.
+

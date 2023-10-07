@@ -1,0 +1,43 @@
+@define[synopsis][name content]
+ @define[inline][x] @x @@
+ @section[SYNOPSIS]
+  @l{#include <fble/fble.h>}
+  @inline[\n]
+  @define[.block][text][] @@
+  @define[arg][type name desc][] @@
+  @define[returns][type desc] @l[@type] @@
+  @define[sideeffects][desc][] @@
+  @define[ignore][x][] @@
+  @eval[@plain[ignore][@content]]
+
+  @inline[ @name@l{(}]
+
+  @tail
+   @tail
+    @define[.block][text][] @@
+    @define[arg][type name desc][@l[, @type] @a[@name]] @@
+    @define[returns][type desc][] @@
+    @define[sideeffects][desc][] @@
+    @define[ignore][x][] @@
+    @eval[@plain[ignore][@content]]
+  
+  @inline[@name@l{);}\n]
+@@
+@define[description][content]
+ @define[arg][type name desc] @def[@l[@type] @a[@name]][@desc] @@
+ @define[returns][type desc]
+  @section[RETURN VALUE]
+   @definition[@l[@type]][@desc]
+ @@
+ @define[sideeffects][desc]
+  @section[SIDE EFFECTS]
+   @desc
+ @@
+ @eval[@content]
+@@
+@define[func][name brief content]
+ @man[3][@name][@FbleVersion (@BuildStamp)]
+  @section[NAME] @name - @brief\n
+  @synopsis[@name][@content]
+  @section[DESCRIPTION] @brief\n\n@description[@content]
+@@
