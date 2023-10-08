@@ -5063,12 +5063,226 @@ in body.
 
 Implementing dc.man.fbld... it's so close, but pretty messy. Specifically:
 
-* The @i command can't be implemented in the new syntax. So the source will
+A. The @i command can't be implemented in the new syntax. So the source will
   need to be updated somehow.
-* For some reason putting description of an argument on the next line messes
+B. For some reason putting description of an argument on the next line messes
   things up?
-* Paragraphs in the body of the description aren't being stripped away from
+C. Paragraphs in the body of the description aren't being stripped away from
   the synopsys. I don't understand why.
-* Changing the order of man.fbld versus dc.man.fbld makes leads to errors I
+D. Changing the order of man.fbld versus dc.man.fbld makes leads to errors I
   don't expect.
+
+---
+
+E. If we don't evaluate into args, previously bound arguments can turn into
+   free arguments which is really bad?
+
+For (D):
+  This is expected. dc.man.fbld defines @func which assumes @man is defined.
+  @func is executed in the scope where it is defined. If we defined @func
+  after @man, we would get the error about @man not defined exactly like we
+  do.
+
+Let's think about (A) a little. Here's the example:
+
+  @sideeffects
+   @i The returned value must be freed with @l[FbleReleaseValue] when no
+    longer in use.
+   @i Prints an error message to stderr in case of a runtime error.
+   @i Updates profiling information in profile based on the execution of
+    the program.
+
+An alternative:
+
+  @sideeffects
+   @i
+    The returned value must be freed with @l[FbleReleaseValue] when no longer
+    in use.
+   @i
+    Prints an error message to stderr in case of a runtime error.
+   @i
+    Updates profiling information in profile based on the execution of the
+    program.
+
+An alternative:
+
+  @sideeffects
+   The returned value must be freed with @l[FbleReleaseValue] when no longer
+   in use.
+   
+   Prints an error message to stderr in case of a runtime error.
+   
+   Updates profiling information in profile based on the execution of the
+   program.
+
+An alternative:
+
+  @sideeffects
+   @i[The returned value must be freed with @l[FbleReleaseValue] when no longer
+   in use.]
+   @i[Prints an error message to stderr in case of a runtime error.]
+   @i[Updates profiling information in profile based on the execution of the
+   program.]
+
+An alternative:
+
+  @sideeffects
+   @i The returned value must be freed with @l[FbleReleaseValue] when no
+    longer in use.
+   @i[] Prints an error message to stderr in case of a runtime error.
+   @i Updates profiling information in profile based on the execution of
+    the program.
+
+An alternative:
+
+  @sideeffects
+   @i The returned value must be freed with @l[FbleReleaseValue] when no
+    longer in use.
+   @i Prints an error message to stderr in case of a runtime
+    error.
+   @i Updates profiling information in profile based on the execution of
+    the program.
+
+In general it's not great mixing same line and next line arguments for
+different invocations, because that changes assumptions about whether this is
+a trailing newline or not.
+
+An alternative:
+
+  @sideeffects
+   @i_ The returned value must be freed with @l[FbleReleaseValue] when no
+    longer in use.
+   @i Prints an error message to stderr in case of a runtime error.
+   @i_ Updates profiling information in profile based on the execution of
+    the program.
+
+It's kind of like @def versus @definition. Have @item versus @i?
+
+But we would use @item for single arg. What to use for multi-line?
+
+  @sideeffects
+   @ii The returned value must be freed with @l[FbleReleaseValue] when no
+    longer in use.
+   @i Prints an error message to stderr in case of a runtime error.
+   @ii Updates profiling information in profile based on the execution of
+    the program.
+
+Okay. Not ideal. But acceptable for now. Use @i for single argument, assumed
+to be same line. Use @ii for same line + following lines.
+
+---
+
+Interesting consequence of (E): When I was defining @i after @func, it didn't
+work as expected. Because @i is being passed as a free command to the argument
+of @func, and @i isn't defined in the scope of @func. I had to define @i way
+earlier. Not sure what I expected here.
+
+On to (B). Why does putting description on the next line mess things up?
+Simple. It's because when put on the next line, it's wrapped with @.block,
+which makes it a separate paragraph, which is exactly the 'messed up' we are
+seeing.
+
+@arg turns into @def. @def currently assumes a same line argument, not a next
+line argument. That means @arg assumes a same line argument.
+
+We could change to @definition. But then that messes up for any same line
+arguments we use.
+
+Two big differences today between same line and next line args:
+1. Next line is wrapped in @.block
+2. Next line ends in a newline.
+
+Consider these three:
+
+  @foo Hello there.
+
+  @foo
+   Hello there.
+
+  @foo
+   Hello there.
+  
+   How are you?
+
+Today that turns into:
+
+  @foo[Hello there.]
+  @foo[@.block[Hello there.\n]]
+  @foo[@.block[Hello there.\n]@.block[How are you?\n]]
+
+Keep that in mind for when I start thinking more about @.block.
+
+---
+
+Now on to (C). Why isn't the description getting disappeared by @synopsis?
+
+The third arg to @func is read as:
+
+  @.block[The program ...\n]
+  @arg ...
+  @arg ...
+  @arg ...
+  @returns ...
+  @sideeffects ...
+
+When we evaluate @func, it simplifies that based on the environment to:
+
+  .P\nThe program ...\n\n
+  @arg ...
+  @arg ...
+  @arg ...
+  @returns ...
+  @sideeffects ...
+
+Next we say to ignore plain text. That text should have been ignored. What's
+going on here? Let's see what the input to @plain looks like in this case.
+
+I see what happened. We were not evaluating the argument to @plain first. So
+we were passing @plain[@content], and @content is not plain, it gets mapped to
+@content, we then eval on that.
+
+I should add a builtin test case for this.
+
+We're so close now. The only issue left for the generated man page for
+FbleEval.3 is that extra comma in front of the first arg in the synopsis. I
+don't know of a clean way to get rid of it.
+
+Let's think about (E) too, because this one scares me.
+
+Here's what I'm thinking...
+
+  @define[f][a]
+   @g[x@a]
+  @@
+  @f[hello]
+
+If @g is free, this returns:
+  @g[x@a] to an environment where @a is not defined.
+
+The answer would be to do eval inside arguments to commands that aren't
+defined. But I fear evaluation into recursion or any other commands that don't
+normally evaluate their arguments first. Is it just @ifeq? I think that should
+be okay actually, because we know the @ifeq function and wouldn't end up
+evaluating into its arguments unnecessarily. The only recursion functions we
+have are ones defined with @define, which always evaluates alls its arguments
+first.
+
+Thus the proposal is, when an unknown command is encountered, evaluate its
+arguments in the current environment. The only things that will be left are
+free commands.
+
+Is there an alternative to free commands? They make things very confusing. For
+example, don't we really just want a way to encode lists or other structure in
+text?
+
+Imagine I had builtins for example:
+
+@list_cons[head][tail]
+@list_empty
+@list_head
+@list_tail
+
+I'm not sure. Something to think about.
+
+
 

@@ -1,8 +1,11 @@
+@define[i][text] @item[@par[@text]] @@
+@define[ii][a b] @item[@par[@a @b]] @@
 @define[synopsis][name content]
  @define[inline][x] @x @@
  @section[SYNOPSIS]
   @l{#include <fble/fble.h>}
   @inline[\n]
+  @par[]
   @define[.block][text][] @@
   @define[arg][type name desc][] @@
   @define[returns][type desc] @l[@type] @@
@@ -12,19 +15,17 @@
 
   @inline[ @name@l{(}]
 
-  @tail
-   @tail
-    @define[.block][text][] @@
-    @define[arg][type name desc][@l[, @type] @a[@name]] @@
-    @define[returns][type desc][] @@
-    @define[sideeffects][desc][] @@
-    @define[ignore][x][] @@
-    @eval[@plain[ignore][@content]]
+  @define[.block][text][] @@
+  @define[arg][type name desc][@l[,\n @type] @a[@name]] @@
+  @define[returns][type desc][] @@
+  @define[sideeffects][desc][] @@
+  @define[ignore][x][] @@
+  @eval[@plain[ignore][@content]]
   
-  @inline[@name@l{);}\n]
+  @inline[@l{);}\n]
 @@
 @define[description][content]
- @define[arg][type name desc] @def[@l[@type] @a[@name]][@desc] @@
+ @define[arg][type name desc] @definition[@l[@type] @a[@name]][@desc] @@
  @define[returns][type desc]
   @section[RETURN VALUE]
    @definition[@l[@type]][@desc]
