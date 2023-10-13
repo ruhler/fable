@@ -5284,5 +5284,71 @@ Imagine I had builtins for example:
 
 I'm not sure. Something to think about.
 
+---
 
+What I really want in this case is some way to construct and deconstruct a
+list. Arguments are passed as strings. So how do we encode lists in general as
+strings? That's just like tcl.
 
+For example, maybe we put list elements in {}. Anything outside of {} is
+considered a delimiter. For example:
+
+  {hello}{there} {how are} {you}
+
+Is the list: [hello, there, how are, you]
+
+As long as elements of the list have proper nesting of braces.
+
+I wish we could use list of commands as lists. For example:
+  hello there
+
+  how are
+
+  you
+
+Or:
+  @item[hello there]
+  @item[how are]
+  @item[you]
+
+But maybe this should be more of a library thing than a language thing. And
+really, it shouldn't matter how I encode it. We can use abstract commands for
+that?
+
+@elem[hello there]
+@elem[how are]
+@elem[you]
+
+Turns into: {hello there}{how are}{you}. And then you can say @head, @tail on
+that. The @elem function can insert escapes for braces. The @head and @tail
+functions can undo those escapes.
+
+Yes. This should work. Then we can build up args as a list. Then write a
+function that traverse the list to insert comma between elements. That would
+look something like:
+
+  isempty(l).?(true: l)
+  isempty(tail(l)).?(true: l)
+  head(l),join(tail(l)).
+
+Awesome. No language changes required. No language spec required. I just
+want to implement a list library. This will be good, too, because it gives a
+kind of way we can implement varargs. E.g.
+
+ @printf[format string here]
+  @elem[arg1]
+  @elem[arg2]
+  @elem[arg3]
+
+Same could go for definitions and item lists. And really any data structure.
+We could encode it in a string and have helper functions to construct and
+deconstruct it.
+
+With that in mind, maybe better to think about an encoding based on
+struct/union types in general.
+
+---
+
+This works great. I just implemented list as semicolon separated, @lfirst,
+@ltail, and @ljoin.
+  

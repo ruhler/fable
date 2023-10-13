@@ -1,3 +1,26 @@
+@define[ignore][x][] @@
+
+@define[lhead][list]
+ @ifeq[][@list][] @@
+ @ifeq[;][@head[@list]][] @@
+ @head[@list]
+ @lhead[@tail[@list]]
+@@
+
+@define[ltail][list]
+ @ifeq[][@list][] @@
+ @ifeq[;][@head[@list]] @tail[@list] @@
+ @ltail[@tail[@list]]
+@@
+
+@define[ljoin][list sep]
+ @ifeq[][@list][] @@
+ @ifeq[][@ltail[@list]] @lhead[@list] @@
+ @lhead[@list]
+ @sep
+ @ljoin[@ltail[@list]][@sep]
+@@
+
 @define[i][text] @item[@par[@text]] @@
 @define[ii][a b] @item[@par[@a @b]] @@
 @define[synopsis][name content]
@@ -10,17 +33,15 @@
   @define[arg][type name desc][] @@
   @define[returns][type desc] @l[@type] @@
   @define[sideeffects][desc][] @@
-  @define[ignore][x][] @@
   @eval[@plain[ignore][@content]]
 
   @inline[ @name@l{(}]
 
   @define[.block][text][] @@
-  @define[arg][type name desc][@l[,\n @type] @a[@name]] @@
+  @define[arg][type name desc][@l[@type] @a[@name];] @@
   @define[returns][type desc][] @@
   @define[sideeffects][desc][] @@
-  @define[ignore][x][] @@
-  @eval[@plain[ignore][@content]]
+  @ljoin[\n    @eval[@plain[ignore][@content]]][@l[,\n    ]]
   
   @inline[@l{);}\n]
 @@
