@@ -1,6 +1,6 @@
 /**
  * @file fble-value.h
- * API for interacting with fble values.
+ *  API for interacting with fble values.
  */
 
 #ifndef FBLE_VALUE_H_
@@ -33,7 +33,6 @@ typedef struct {
 
 /**
  * @func[FbleNewValueHeap] Creates a new FbleValueHeap.
- * 
  *  @returns FbleValueHeap*
  *   A heap that can be used to allocate values.
  *
@@ -44,7 +43,6 @@ FbleValueHeap* FbleNewValueHeap();
 
 /**
  * @func[FbleFreeValueHeap] Frees an FbleValueHeap.
- *
  *  @arg[FbleValueHeap*][heap] The heap to free.
  *
  *  @sideeffects
@@ -55,7 +53,6 @@ void FbleFreeValueHeap(FbleValueHeap* heap);
 
 /**
  * @func[FbleRetainValue] Increments refcount on an FbleValue.
- *
  *  Keep the given value alive until a corresponding FbleReleaseValue is
  *  called.
  *
@@ -71,7 +68,6 @@ void FbleRetainValue(FbleValueHeap* heap, FbleValue* src);
 
 /**
  * @func[FbleReleaseValue] Decrements refcount on an FbleValue.
- *
  *  Decrements the strong reference count of a value and free the resources
  *  associated with that value if it has no more references.
  *
@@ -88,7 +84,6 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
 
 /**
  * @func[FbleReleaseValues] Releases multiple values at once.
- *
  *  Calls FbleReleaseValue for each provide value.
  *
  *  @arg[FbleValueHeap*][heap] The heap the values were allocated with.
@@ -102,7 +97,6 @@ void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
 /**
  * @func[FbleReleaseValues_] Releases multiple values at once using varargs.
- *
  *  Calls FbleReleaseValue for each provide value.
  *
  *  @arg[FbleValueHeap*][heap] The heap the values were allocated with.
@@ -116,7 +110,6 @@ void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...);
 
 /**
  * @func[FbleValueAddRef] Adds reference from one value to another.
- *
  *  Notifies the value heap of a new reference from src to dst.
  *
  *  @arg[FbleValueHeap*][heap] The heap the values are allocated on.
@@ -131,7 +124,6 @@ void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 
 /**
  * @func[FbleValueFullGc] Performs a full garbage collection.
- *
  *  Frees any unreachable objects currently on the heap.
  *
  *  This is an expensive operation intended only for test and debug purposes.
@@ -153,7 +145,6 @@ extern FbleValue* FbleGenericTypeValue;
 
 /**
  * @func[FbleNewStructValue] Creates a new struct value.
- *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[FbleValue**   ][args]
@@ -171,11 +162,10 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
 
 /**
  * @func[FbleNewStructValue_] Creates a new struct value using varargs.
- *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[...           ][    ]
- *   @a[argc] FbleValue arguments to the struct value. Args are borrowed, and
+ *    @a[argc] FbleValue arguments to the struct value. Args are borrowed, and
  *   may be NULL.
  *
  *  @returns FbleValue*
@@ -189,7 +179,6 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
 
 /**
  * @func[FbleStructValueAccess] Gets a field of a struct value.
- *
  *  @arg[FbleValue*][object] The struct value object to get the field value of.
  *  @arg[size_t    ][field ] The field to access.
  *
@@ -207,7 +196,6 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 
 /**
  * @func[FbleNewUnionValue] Creates a new union value.
- *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][tag ] The tag of the union value.
  *  @arg[FbleValue*    ][arg ] The argument of the union value. Borrowed.
@@ -223,7 +211,6 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 
 /**
  * @func[FbleNewEnumValue] Creates a new enum value.
- *
  *  Convenience function for creating unions with value of type *().
  *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
@@ -240,7 +227,6 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
 
 /**
  * @func[FbleUnionValueTag] Gets the tag of a union value.
- *
  *  @arg[FbleValue*][object] The union value object to get the tag of.
  *
  *  @returns size_t
@@ -253,7 +239,6 @@ size_t FbleUnionValueTag(FbleValue* object);
 
 /**
  * @func[FbleUnionValueAccess] Gets the argument of a union value.
- *
  *  @arg[FbleValue*][object] The union value object to get the argument of.
  *
  *  @returns FbleValue*
@@ -266,7 +251,6 @@ FbleValue* FbleUnionValueAccess(FbleValue* object);
 
 /**
  * @func[FbleNewListValue] Creates an fble list value.
- *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of elements on the list.
  *  @arg[FbleValue**   ][args] The elements to put on the list. Borrowed.
@@ -282,11 +266,10 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
 /**
  * @func[FbleNewListValue_] Creates an fble list value using varargs.
- *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of elements on the list.
  *  @arg[...           ][    ]
- *   @a[argc] FbleValue elements to put on the list. Borrowed.
+ *    @a[argc] FbleValue elements to put on the list. Borrowed.
  *
  *  @returns FbleValue*
  *   A newly allocated list value.
@@ -299,7 +282,6 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
 
 /**
  * @func[FbleNewLiteralValue] Creates an fble literal value.
- *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of letters in the literal.
  *  @arg[size_t*       ][args] The tags of the letters in the literal.
@@ -315,7 +297,6 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 
 /**
  * @func[FbleNewFuncValue] Creates an fble function value.
- *
  *  @arg[FbleValueHeap*] heap
  *   Heap to use for allocations.
  *  @arg[FbleExecutable*] executable
@@ -337,7 +318,6 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
 
 /**
  * @func[FbleNewFuncValue_] Creates an fble function value using varargs.
- *
  *  @arg[FbleValueHeap*] heap
  *   Heap to use for allocations.
  *  @arg[FbleExecutable*] executable
@@ -377,7 +357,6 @@ typedef struct {
 
 /**
  * @func[FbleFuncValueInfo] Gets the info associated with a function.
- *
  *  The returned info is owned by the function. It is only valid for as long
  *  as the function is valid, and it will be automatically cleaned up as part
  *  of the function's cleanup.
@@ -403,17 +382,16 @@ FbleFuncInfo FbleFuncValueInfo(FbleValue* func);
  *   error in the program.
  * 
  *  @sideeffects
- *   @i The returned value must be freed with @l[FbleReleaseValue] when no
+ *   @j The returned value must be freed with @l[FbleReleaseValue] when no
  *    longer in use.
  *   @i Prints an error message to stderr in case of a runtime error.
- *   @i Updates profiling information in profile based on the execution of
+ *   @j Updates profiling information in profile based on the execution of
  *    the program.
  */
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile);
 
 /**
  * @func[FbleApply] Applies an fble function to arguments.
- *
  *  @arg[FbleValueHeap*][heap] The heap to use for allocating values.
  *  @arg[FbleValue*    ][func] The function to apply.
  *  @arg[FbleValue**] args
@@ -425,9 +403,9 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
  *   The result of applying the function to the given arguments.
  *
  *  @sideeffects
- *   @i The returned value must be freed with FbleReleaseValue when no longer in
+ *   @j The returned value must be freed with FbleReleaseValue when no longer in
  *    use.
- *   @i Does not take ownership of the func. Does not take ownership of the
+ *   @j Does not take ownership of the func. Does not take ownership of the
  *    args.
  *   @i Prints warning messages to stderr.
  *   @i Prints an error message to stderr in case of error.
@@ -437,7 +415,6 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, Fbl
 
 /**
  * @func[FbleNewRefValue] Creates a reference value.
- *
  *  Used internally for recursive let declarations. A reference value is a
  *  possibly as-of-yet undefined pointer to another value.
  *
@@ -454,7 +431,6 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap);
 
 /**
  * @func[FbleAssignRefValue] Sets the value pointed to by a ref value.
- *
  *  @arg[FbleValueHeap*][heap ] The heap to use for allocations
  *  @arg[FbleValue*    ][ref  ] The reference to assign to
  *  @arg[FbleValue*    ][value] The value to assign to the reference.
@@ -469,7 +445,6 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
 
 /**
  * @func[FbleStrictValue] Removes layers of refs from a value.
- *
  *  Gets the strict value associated with the given value, which will either
  *  be the value itself, or the dereferenced value if the value is a
  *  reference.

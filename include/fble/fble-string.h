@@ -1,6 +1,6 @@
 /**
  * @file fble-string.h
- * FbleString API.
+ *  FbleString API.
  */
 
 #ifndef FBLE_STRING_H_
@@ -35,7 +35,6 @@ typedef struct {
 
 /**
  * @func[FbleNewString] Allocates an FbleString.
- *
  *  @arg[const char*] str
  *   The contents of the string. Borrowed. This function does not take
  *   ownership of str, it makes a copy internally instead.
@@ -48,7 +47,6 @@ FbleString* FbleNewString(const char* str);
 
 /**
  * @func[FbleCopyString] Copies an FbleString.
- *
  *  @arg[FbleString*][string] The string to copy.
  * 
  *  @returns FbleString*
@@ -62,7 +60,6 @@ FbleString* FbleCopyString(FbleString* string);
 
 /**
  * @func[FbleFreeString] Frees an FbleString.
- *
  *  @arg[FbleString*][string] The string to free.
  *
  *  @sideeffects

@@ -1,6 +1,6 @@
 /**
  * @file fble-arg-parse.h
- * Command line argument parsing.
+ *  Command line argument parsing.
  */
 
 #ifndef FBLE_ARG_PARSE_H_
@@ -12,7 +12,6 @@
 
 /**
  * @func[FbleParseBoolArg] Parse a boolean flag command line argument.
- *
  *  Sample argument usage:
  *  
  *  @code[sh]
@@ -45,7 +44,6 @@ bool FbleParseBoolArg(const char* name, bool* dest, int* argc, const char*** arg
 
 /**
  * @func[FbleParseStringArg] Parse a string command line argument.
- *
  *  Sample argument usage:
  *
  *  @code[sh]
@@ -86,7 +84,6 @@ typedef struct {
 
 /**
  * @func[FbleNewModuleArg] Creates a new FbleModuleArg structure.
- *
  *  @returns FbleModuleArg
  *   A newly allocated FbleModuleArg structure.
  *
@@ -98,7 +95,6 @@ FbleModuleArg FbleNewModuleArg();
 
 /**
  * @func[FbleFreeModuleArg] Frees resources associated with an FbleModuleArg.
- *
  *  @arg[FbleModuleArg][arg] The module argument to free.
  *
  *  @sideeffects
@@ -108,7 +104,6 @@ void FbleFreeModuleArg(FbleModuleArg arg);
 
 /**
  * @func[FbleParseModuleArg] Parse command line options for an FbleModuleArg.
- *
  *  Sample argument usage:
  *
  *  @code[sh]
@@ -137,7 +132,6 @@ bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool
 
 /**
  * @func[FbleParseInvalidArg] Indicate a command line error.
- *
  *  Pretends to parse an arg, but actually just indicate error.
  *
  *  @arg[int*] argc

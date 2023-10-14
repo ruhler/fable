@@ -1,6 +1,6 @@
 /**
  * @file fble-name.h
- * FbleName API.
+ *  FbleName API.
  */
 
 #ifndef FBLE_NAME_H_
@@ -43,7 +43,6 @@ typedef struct {
 
 /**
  * @func[FbleCopyName] Copies an FbleName.
- *
  *  @arg[FbleName][name] The name to copy.
  *
  *  @returns FbleName
@@ -57,7 +56,6 @@ FbleName FbleCopyName(FbleName name);
 
 /**
  * @func[FbleFreeName] Frees an FbleName.
- *
  *  @arg[FbleName][name] The name to free resources of.
  *
  *  @sideeffects
@@ -67,7 +65,6 @@ void FbleFreeName(FbleName name);
 
 /**
  * @func[FbleNamesEqual] Tests if two names are equals.
- *
  *  Two names are considered equal if they have the same name and belong to
  *  the same namespace. Location is not relevant for this check.
  *
@@ -84,7 +81,6 @@ bool FbleNamesEqual(FbleName a, FbleName b);
 
 /**
  * @func[FblePrintName] Prints an FbleName in human readable form.
- *
  *  @arg[FILE*   ][stream] The stream to print to.
  *  @arg[FbleName][name  ] The name to print.
  *

@@ -1,6 +1,6 @@
 /**
  * @file fble-alloc.h
- * Memory allocation routines.
+ *  Memory allocation routines.
  */
 
 #ifndef FBLE_ALLOC_H_
@@ -26,7 +26,6 @@ void* FbleRawAlloc(size_t size);
 
 /**
  * @func[FbleAlloc] Type safe object allocation.
- *
  *  @arg[][T] The type of object to allocate.
  *
  *  @returns T*
@@ -39,7 +38,6 @@ void* FbleRawAlloc(size_t size);
 
 /**
  * @func[FbleAllocExtra] Allocate object with extra space.
- *
  *  For use with objects like:
  *
  *  @code[c]
@@ -61,7 +59,6 @@ void* FbleRawAlloc(size_t size);
 
 /**
  * @func[FbleArrayAlloc] Type safe array allocation.
- *
  *  @arg[      ][T    ] the type of object to allocate
  *  @arg[size_t][count] the number of objects in the array to allocate.
  *
@@ -75,14 +72,13 @@ void* FbleRawAlloc(size_t size);
 
 /**
  * @func[FbleFree] Free a memory allocation.
- *
  *  @arg[void*][ptr] The allocation to free. May be NULL.
  *
  *  @sideeffects
  *   @i Frees memory associated with the ptr.
- *   @i After this call, any accesses to the freed memory result in undefined
+ *   @j After this call, any accesses to the freed memory result in undefined
  *    behavior.
- *   @i Behavior is undefined if ptr was not previously returned by a call to
+ *   @j Behavior is undefined if ptr was not previously returned by a call to
  *    FbleAlloc or one of its variants.
  */
 void FbleFree(void* ptr);
@@ -92,7 +88,6 @@ typedef struct FbleStackAllocator FbleStackAllocator;
 
 /**
  * @func[FbleNewStackAllocator] Create a new stack allocator.
- *
  *  @returns FbleStackAllocator*
  *   A newly allocated stack allocator.
  *
@@ -104,19 +99,17 @@ FbleStackAllocator* FbleNewStackAllocator();
 
 /**
  * @func[FbleFreeStackAllocator] Free resources associated with a stack allocator.
- *
  *  @arg[FbleStackAllocator*][allocator] the allocator to free.
  *
  *  @sideeffects
  *   @i Frees resources associated with the given allocator.
- *   @i The allocator must not have any outstanding allocations at the time of
+ *   @j The allocator must not have any outstanding allocations at the time of
  *    free.
  */
 void FbleFreeStackAllocator(FbleStackAllocator* allocator);
 
 /**
  * @func[FbleRawStackAlloc] Allocate memory on stack.
- *
  *  This function is not type safe. It is recommended to use the
  *  FbleStackAlloc macros instead.
  *
@@ -127,14 +120,13 @@ void FbleFreeStackAllocator(FbleStackAllocator* allocator);
  *   A block of memory allocated.
  *
  *  @sideeffects
- *   @i Allocates memory that should be freed with FbleStackFree when no
+ *   @j Allocates memory that should be freed with FbleStackFree when no
  *    longer needed.
  */
 void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
 
 /**
  * @func[FbleStackAlloc] Type safe stack allocation.
- *
  *  @arg[FbleStackAllocator*][allocator] The allocator to allocate memory from.
  *  @arg[                   ][T        ] The type of object to allocate.
  * 
@@ -149,7 +141,6 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
 
 /**
  * @func[FbleStackAllocExtra] Allocate stack object with extra space.
- *
  *  For use with objects like:
  *
  *  @code[c]
@@ -169,14 +160,13 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
  *   A pointer to a newly allocated object of the given type with extra size.
  *
  *  @sideeffects
- *   @i The allocation should be freed by calling FbleStackFree when no longer
+ *   @j The allocation should be freed by calling FbleStackFree when no longer
  *    in use.
  */
 #define FbleStackAllocExtra(allocator, T, size) ((T*) FbleRawStackAlloc(allocator, sizeof(T) + size))
 
 /**
  * @func[FbleStackFree] Free a block of allocated memory.
- *
  *  @arg[FbleStackAllocator*] allocator
  *   the allocator to free the memory from.
  *  @arg[void*] ptr
@@ -184,14 +174,13 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
  *
  *  @sideeffects
  *   @i Frees resources associated with the given pointer.
- *   @i Behavior is undefined if 'ptr' is not the same as the pointer most
+ *   @j Behavior is undefined if 'ptr' is not the same as the pointer most
  *    recently returned from FbleStackAlloc on this same allocator.
  */
 void FbleStackFree(FbleStackAllocator* allocator, void* ptr);
 
 /**
  * @func[FbleMaxTotalBytesAllocated] Gets the max bytes allocated.
- *
  *  @returns size_t
  *   The high watermark of bytes allocated using the fble allocation routines
  *   since the most recent call to FbleResetMaxTotalBytesAllocated.
@@ -200,7 +189,6 @@ size_t FbleMaxTotalBytesAllocated();
 
 /**
  * @func[FbleResetMaxTotalBytesAllocated] Resets the max bytes allocated.
- *
  *  @sideeffects
  *   Resets the max total alloc size to the current number of bytes allocated
  *   using the fble allocation routines.

@@ -5352,3 +5352,21 @@ struct/union types in general.
 This works great. I just implemented list as semicolon separated, @lfirst,
 @ltail, and @ljoin.
   
+---
+
+Next step: Move all include file doc comments over to new syntax. I'll need
+some guidelines. Let's say focus on what should work, not what does work.
+
+* In general, single line args can be same line or next line. Assume we'll
+  handle that in the back end (by testing for newline at the end).
+* See how I feel about @i versus @ii use. Ideally I don't need @ii?
+
+Observations:
+* Before I had blank lines between @func and initial text. I can't do that
+  anymore. I guess that's fine. Just not something I expected.
+* It would be nice if @i and @ii were the same length so when we mix lists
+  with the two everything stays aligned. Any ideas?
+
+   @i, @j?
+
+Let's try using @j instead of @ii.

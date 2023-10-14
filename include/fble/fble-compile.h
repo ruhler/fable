@@ -1,6 +1,6 @@
 /**
  * @file fble-compile.h
- * Fble Compiler API.
+ *  Fble Compiler API.
  */
 
 #ifndef FBLE_COMPILE_H_
@@ -69,7 +69,6 @@ typedef struct {
 
 /**
  * @func[FbleFreeCompiledModule] Frees an FbleCompiledModule.
- *
  *  @arg[FbleCopmiledModule*][module] The module to free. May be NULL.
  *
  *  @sideeffects
@@ -79,7 +78,6 @@ void FbleFreeCompiledModule(FbleCompiledModule* module);
 
 /**
  * @func[FbleFreeCompiledProgram] Frees an FbleCompiledProgram.
- *
  *  @arg[FbleCompiledProgram*][program] The program to free. May be NULL.
  *
  *  @sideeffects
@@ -89,7 +87,6 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program);
 
 /**
  * @func[FbleCompileModule] Compiles a module.
- *
  *  @arg[FbleLoadedProgram*][program] The program to compile.
  *
  *  @returns FbleCompiledModule*
@@ -98,14 +95,13 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program);
  *  @sideeffects
  *   @i Prints warning messages to stderr.
  *   @i Prints a message to stderr if the program fails to compile.
- *   @i The caller should call FbleFreeCompiledModule to release resources
+ *   @j The caller should call FbleFreeCompiledModule to release resources
  *    associated with the returned module when it is no longer needed.
  */
 FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
 
 /**
  * @func[FbleCompileProgram] Compiles a program.
- *
  *  Type check and compile all modules of the given program.
  *
  *  @arg[FbleLoadedProgram*][program] The program to compile.
@@ -116,14 +112,13 @@ FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
  *  @sideeffects
  *   @i Prints warning messages to stderr.
  *   @i Prints a message to stderr if the program fails to compile.
- *   @i The caller should call FbleFreeCompiledProgram to release resources
+ *   @j The caller should call FbleFreeCompiledProgram to release resources
  *    associated with the returned program when it is no longer needed.
  */
 FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
 
 /**
  * @func[FbleDisassemble] Dissassembles a compiled module.
- *
  *  Writes a disassembled version of the given module in human readable format
  *  to the given file. This is for debugging purposes only. The outupt is
  *  implementation dependant and subject to change.
@@ -140,7 +135,6 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module);
 
 /**
  * @func[FbleGenerateAArch64] Generates aarch64 for a compiled module.
- *
  *  The generated code will export a single function named based on the module
  *  path with the following signature:
  *  
@@ -162,7 +156,6 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
 
 /**
  * @func[FbleGenerateAArch64Export] Generates aarch64 to export a compiled module.
- *
  *  The generated code will export a single function with the given name with
  *  the following signature
  *  
@@ -186,7 +179,6 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
 
 /**
  * @func[FbleGenerateAArch64Main] Generates aarch64 code for main.
- *
  *  Generate aarch64 code for a main function that invokes a compiled module
  *  with the given wrapper function.
  *
@@ -214,7 +206,6 @@ void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
 
 /**
  * @func[FbleGenerateC] Generates C code for a compiled module.
- *
  *  The generated code will export a single function named based on the module
  *  path with the following signature:
  *  
@@ -236,7 +227,6 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
 
 /**
  * @func[FbleGenerateCExport] Generates C code to export a compiled module.
- *
  *  The generated code will export a single function with the given name with
  *  the following signature
  *  
@@ -260,7 +250,6 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
 
 /**
  * @func[FbleGenerateCMain] Generates C code for main.
- *
  *  Generate C code for a main function that invokes a compiled module with
  *  the given wrapper function.
  *

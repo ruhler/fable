@@ -1,6 +1,6 @@
 /**
  * @file fble-version.h
- * Fble version info.
+ *  Fble version info.
  */
 #ifndef FBLE_VERSION_H_
 #define FBLE_VERSION_H_
@@ -35,7 +35,6 @@ extern const char* FbleBuildStamp;
 
 /**
  * @func[FblePrintVersion] Prints version info.
- *
  *  For example, prints something like:
  *
  *  @code[txt]

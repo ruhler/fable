@@ -1,23 +1,23 @@
 /**
  * @file fble-vector.h
- * Fble Vector APIs
+ *  Fble Vector APIs
  *
- * A common data structure in fble is an array of elements with a size. By
- * convention, fble uses the same data structure layout and naming for all of
- * these vector data structures. The type of a vector of elements T is:
- *   struct {
- *     size_t size;
- *     T* xs;
- *   };
- *
- * Often these vectors are constructed without knowing the size ahead of
- * time. The macros defined in this file are used to help construct these
- * vectors, regardless of the element type.
- *
- * @warning 
- *   If you want to pass around references to elements of a vector, use T**
- *   for the type of xs. Otherwise when the vector gets resized, any pointers
- *   into it will be invalidated, leading to hard-to-find bugs.
+ *  A common data structure in fble is an array of elements with a size. By
+ *  convention, fble uses the same data structure layout and naming for all of
+ *  these vector data structures. The type of a vector of elements T is:
+ *    struct {
+ *      size_t size;
+ *      T* xs;
+ *    };
+ *  
+ *  Often these vectors are constructed without knowing the size ahead of
+ *  time. The macros defined in this file are used to help construct these
+ *  vectors, regardless of the element type.
+ *  
+ *  @warning 
+ *    If you want to pass around references to elements of a vector, use T**
+ *    for the type of xs. Otherwise when the vector gets resized, any pointers
+ *    into it will be invalidated, leading to hard-to-find bugs.
  */
 
 #ifndef FBLE_VECTOR_H_
@@ -29,7 +29,6 @@
 
 /**
  * @func[FbleVectorInit] Initializes a new vector.
- *
  *  @arg[FbleVector<T>][vector] A reference to an uninitialized vector.
  *
  *  @sideeffects
@@ -43,7 +42,6 @@
 
 /**
  * @func[FbleFreeVector] Frees an Fble vector.
- *
  *  This function does not free individual vector elements. It is the
  *  responsibility of the caller to free individual elements as they wish.
  *  This function only frees internal resources allocated for the vector.
@@ -59,7 +57,6 @@
 
 /**
  * @func[FbleVectorExtend] Appends an uninitialized element.
- *
  *  @arg[FbleVector<T>] vector
  *   A vector that was initialized using FbleVectorInit.
  *
@@ -76,7 +73,6 @@
 
 /**
  * @func[FbleVectorAppend] Appends an element.
- *
  *  @arg[FbleVector<T>] vector
  *   A vector that was initialized using FbleVectorInit.
  *  @arg[T] elem
@@ -92,7 +88,6 @@
 
 /**
  * @func[FbleVectorIncrSize] Increases the size of a vector.
- *
  *  Increase the size of an fble vector by a single element.
  *
  *  This is an internal function used for implementing the fble vector macros.
@@ -104,7 +99,7 @@
  *  @arg[void** ][xs       ] A pointer to the xs field of the vector.
  *
  *  @sideeffects
- *   @i A new uninitialized element is appended to the vector and the size is
+ *   @j A new uninitialized element is appended to the vector and the size is
  *    incremented. If necessary, the array is re-allocated to make space for
  *    the new element.
  */

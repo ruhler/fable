@@ -20,6 +20,9 @@ Things to consider doing for the fble-0.2 release.
    Other than adding a space character in front?
  - Allow multiple errors to be reported from a single run.
 
+* Document clearly somewhere I guide for doc comments.
+ - Including difference between @i and @j.
+
 * Remove extra space in front of synopsis for binaries.
  - Maybe wait until all the usage docs are in latest fbld syntax, then fix
    this.

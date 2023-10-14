@@ -1,6 +1,6 @@
 /**
  * @file fble-profile.h
- * Fble Profiling API.
+ *  Fble Profiling API.
  */
 
 #ifndef FBLE_PROFILE_H_
@@ -91,19 +91,17 @@ typedef struct {
 
 /**
  * @func[FbleNewProfile] Creates a new profile.
- *
  *  @returns FbleProfile*
  *   A new profile with a single root block.
  *
  *  @sideeffects
- *   @i Allocates a new profile that should be freed with FbleFreeProfile()
+ *   @j Allocates a new profile that should be freed with FbleFreeProfile()
  *    when no longer in use.
  */
 FbleProfile* FbleNewProfile();
 
 /**
  * @func[FbleProfileAddBlock] Adds a block to the profile.
- *
  *  Note: It is acceptable to add blocks in the middle of a profiling run.
  *
  *  @arg[FbleProfile*] profile
@@ -115,14 +113,13 @@ FbleProfile* FbleNewProfile();
  *   The id of the newly added block.
  *
  *  @sideeffects
- *   @i Takes ownership of name, which will be freed when FbleFreeProfile() is
+ *   @j Takes ownership of name, which will be freed when FbleFreeProfile() is
  *    called.
  */
 FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
 
 /**
  * @func[FbleProfileAddBlocks] Add blocks to the profile.
- *
  *  Add multiple new block to the profile using a contiguous range of block
  *  ids.
  *
@@ -143,11 +140,10 @@ FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
 
 /**
  * @func[FbleFreeProfile] Frees a profile.
- *
  *  @arg[FbleProfile*][profile] The profile to free. May be NULL.
  *
  *  @sideeffects
- *   @i Frees the memory resources associated with the given profile,
+ *   @j Frees the memory resources associated with the given profile,
  *    including the memory for the block names supplied to FbleProfileAddBlock.
  */
 void FbleFreeProfile(FbleProfile* profile);
@@ -157,7 +153,6 @@ typedef struct FbleProfileThread FbleProfileThread;
 
 /**
  * @func[FbleNewProfileThread] Allocates a new profile thread.
- *
  *  The new thread starts in the FBLE_ROOT_BLOCK_ID block. See
  *  FbleForkProfileThread() for an alternative way to create a new profile
  *  thread.
@@ -175,7 +170,6 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile);
 
 /**
  * @func[FbleForkProfileThread] Allocates a new profile thread by forking.
- *
  *  The new thread starts with a copy of the parent thread's call stack.
  *
  *  @arg[FbleProfileThread*][parent] The parent thread to fork from.
@@ -191,7 +185,6 @@ FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent);
 
 /**
  * @func[FbleFreeProfileThread] Frees a profile thread.
- *
  *  Frees resources associated with the given profile thread. Does not free
  *  the profile associated with the given profile thread.
  *
@@ -204,7 +197,6 @@ void FbleFreeProfileThread(FbleProfileThread* thread);
 
 /**
  * @func[FbleProfileSample] Takes a profiling sample.
- *
  *  @arg[FbleProfileThread*] thread
  *   The profile thread to sample.
  *  @arg[uint64_t] time
@@ -231,7 +223,6 @@ void FbleProfileRandomSample(FbleProfileThread* thread, size_t count);
 
 /**
  * @func[FbleProfileEnterBlock] Enters a profiling block.
- *
  *  When calling into a function, use this function to tell the profiling
  *  logic what block is being called into.
  *
@@ -249,7 +240,6 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
 
 /**
  * @func[FbleProfileReplaceBlock] Replaces a profiling block.
- *
  *  When tail-calling into a function, use this function to tell the profiling
  *  logic what block is being called into.
  *
@@ -260,7 +250,7 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
  *
  *  @sideeffects
  *   @i Replaces the current profiling block with the new block.
- *   @i Frees resources associated with the block being replaced, but a
+ *   @j Frees resources associated with the block being replaced, but a
  *    corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
  *    will still needed to free resources associated with the replacement
  *    block.
@@ -269,7 +259,6 @@ void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 
 /**
  * @func[FbleProfileExitBlock] Exits a profiling block.
- *
  *  When returning from a function, use this function to tell the profiling
  *  logic what block is being exited.
  *
@@ -282,7 +271,6 @@ void FbleProfileExitBlock(FbleProfileThread* thread);
 
 /**
  * @func[FbleProfileReport] Generates a profiling report.
- *
  *  @arg[FILE*] fout
  *   The file to output the profile report to.
  *  @arg[FbleProfile*] profile

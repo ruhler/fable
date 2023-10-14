@@ -1,6 +1,6 @@
 /**
  * @file fble-execute.h
- * API for describing fble functions.
+ *  API for describing fble functions.
  */
 
 #ifndef FBLE_EXECUTE_H_
@@ -20,7 +20,6 @@
 
 /**
  * @func[FbleRunFunction] Implementation of fble function logic.
- *
  *  Type of a C function that implements an fble function.
  *
  *  To perform a tail call, the implementation of the run function should
@@ -116,7 +115,6 @@ struct FbleExecutable {
 
 /**
  * @func[FbleFreeExecutable] Frees an FbleExecutable.
- *
  *  Decrements the refcount and, if necessary, frees resources associated with
  *  the given executable.
  *
@@ -130,7 +128,6 @@ void FbleFreeExecutable(FbleExecutable* executable);
 
 /**
  * @func[FbleExecutableNothingOnFree] No-op FbleExecutable on_free function.
- * 
  *  Implementation of a no-op FbleExecutable.on_free function.
  *
  *  @arg[FbleExecutable*][this] The FbleExecutable to free.
@@ -191,7 +188,6 @@ typedef struct {
 
 /**
  * @func[FbleFreeExecutableModule] Frees an FbleExecutableModule.
- *
  *  Decrements the reference count and if appropriate frees resources
  *  associated with the given module.
  *
@@ -218,7 +214,6 @@ typedef struct {
 
 /**
  * @func[FbleFreeExecutableProgram] Frees an FbleExecutableProgram.
- *
  *  @arg[FbleExecutableProgram*][program] The program to free, may be NULL.
  *
  *  @sideeffects
@@ -228,7 +223,6 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
 
 /**
  * @func[FbleThreadCall] Calls an fble function.
- *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
@@ -250,7 +244,6 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
 
 /**
  * @func[FbleThreadCall_] Calls an fble function using varags.
- *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
  *  @arg[FbleProfileThread*] profile

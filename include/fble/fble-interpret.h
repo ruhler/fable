@@ -1,6 +1,6 @@
 /**
  * @file fble-interpret.h
- * Fble interpreter API.
+ *  Fble interpreter API.
  */
 
 #ifndef FBLE_INTERPRET_H_
@@ -11,7 +11,6 @@
 
 /**
  * @func[FbleInterpret] Creates an interpreter-based FbleExecutableProgram.
- *
  *  Turns a compiled program into an executable program based on use of an
  *  interpreter to interpret the compiled code.
  *
@@ -27,4 +26,3 @@
 FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program);
 
 #endif // FBLE_INTERPRET_H_
-

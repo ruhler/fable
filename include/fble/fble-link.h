@@ -1,6 +1,6 @@
 /**
  * @file fble-link.h
- * Routines for loading fble programs.
+ *  Routines for loading fble programs.
  */
 
 #ifndef FBLE_LINK_H_
@@ -13,7 +13,6 @@
 
 /**
  * @func[FbleLink] Links an fble program.
- *
  *  Links the modules of an executable program together into a single
  *  FbleValue representing a zero-argument function that can be used to
  *  compute the value of the program.
@@ -37,7 +36,6 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 
 /**
  * @func[FbleLinkFromSource] Loads an fble program from source.
- *
  *  Loads, compiles, and links a full program from source.
  *
  *  @arg[FbleValueHeap*] heap
@@ -55,14 +53,13 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
  *
  *  @sideeffects
  *   @i Prints an error message to stderr if the program fails to load.
- *   @i The user should call FbleReleaseValue on the returned value when it is
+ *   @j The user should call FbleReleaseValue on the returned value when it is
  *    no longer needed.
  */
 FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile);
 
 /**
  * @func[FbleCompiledModuleFunction] Compiled module function type.
- *
  *  The type of a module function generated for compiled .fble code.
  *
  *  @arg[FbleExecutableProgram*] program
@@ -76,7 +73,6 @@ typedef void FbleCompiledModuleFunction(FbleExecutableProgram* program);
 
 /**
  * @func[FbleLoadFromCompiled] Loads a precompiled fble program.
- *
  *  @arg[FbleExecutableProgram*] program
  *   The program to add the module and its dependencies to.
  *  @arg[FbleExecutableModule*] module
@@ -93,7 +89,6 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
 
 /**
  * @func[FbleLinkFromCompiled] Loads and links a precompield fble program.
- *
  *  @arg[FbleCompiledModuleFunction] module
  *   The compiled main module function.
  *  @arg[FbleValueHeap*] heap
@@ -106,14 +101,13 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
  *   executed.
  *
  *  @sideeffects
- *   @i The user should call FbleReleaseValue on the returned value when it is
+ *   @j The user should call FbleReleaseValue on the returned value when it is
  *    no longer needed.
  */
 FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
 
 /**
  * @func[FbleLinkFromCompiledOrSource] Loads an optionally compiled program.
- *
  *  This is a convenience function that attempts to load a compiled program if
  *  available, and if not, attempts to load from source.
  *
@@ -136,14 +130,13 @@ FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHea
  *   executed, or NULL in case of error.
  *
  *  @sideeffects
- *   @i The user should call FbleReleaseValue on the returned value when it is
+ *   @j The user should call FbleReleaseValue on the returned value when it is
  *    no longer needed.
  */
 FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 
 /**
  * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.
- *
  *  This is a convenience function for providing more information to users as
  *  part of a fble compiled main function. It prints a header line if the
  *  compiled module is not NULL, of the form something like:

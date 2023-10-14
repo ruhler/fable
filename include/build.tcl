@@ -108,7 +108,7 @@ namespace eval "include" {
 
   foreach {header funcs} $header_funcs {
     foreach x $funcs {
-      man_dc $::b/include/fble/$x.3 $::s/include/fble/$header $x
+      fbld_man_dc $::b/include/fble/$x.3 $::s/include/fble/$header $x
       install $::b/include/fble/$x.3 $::config::mandir/man3/$x.3
     }
   }

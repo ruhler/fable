@@ -1,6 +1,6 @@
 /**
  * @file fble-module-path.h
- * FbleModulePath API.
+ *  FbleModulePath API.
  */
 
 #ifndef FBLE_MODULE_PATH_H_
@@ -41,7 +41,6 @@ typedef struct {
 
 /**
  * @func[FbleNewModulePath] Allocates a new FbleModulePath.
- *
  *  @arg[FbleLoc][loc] The location of the module path. Borrowed.
  *
  *  @returns FbleModulePath*
@@ -55,7 +54,6 @@ FbleModulePath* FbleNewModulePath(FbleLoc loc);
 
 /**
  * @func[FbleModulePathName] Creates an FbleName for a module path.
- *
  *  @arg[FbleModulePath*][path] The path to construct an FbleName for.
  *
  *  @returns FbleName
@@ -69,7 +67,6 @@ FbleName FbleModulePathName(FbleModulePath* path);
 
 /**
  * @func[FblePrintModulePath] Prints a module path.
- *
  *  @arg[FILE*          ][stream] The stream to print to
  *  @arg[FbleModulePath*][path  ] The path to print
  *
@@ -80,7 +77,6 @@ void FblePrintModulePath(FILE* stream, FbleModulePath* path);
 
 /**
  * @func[FbleModulePathsEqual] Tests if two module paths are equal.
- *
  *  Two paths are considered equal if they have the same sequence of module
  *  names. Locations are not relevant for this check.
  *
@@ -97,7 +93,6 @@ bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b);
 
 /**
  * @func[FbleModuleBelongsToPackage] Checks if a module belongs to a package.
- *
  *  @arg[FbleModulePath*][module ] The module path.
  *  @arg[FbleModulePath*][package] The module path describing the package.
  *  
@@ -111,7 +106,6 @@ bool FbleModuleBelongsToPackage(FbleModulePath* module, FbleModulePath* package)
 
 /**
  * @func[FbleParseModulePath] Parses an FbleModulePath.
- *
  *  @arg[const char*][string] The string to parse the path from.
  *
  *  @returns FbleModulePath*
@@ -124,7 +118,6 @@ FbleModulePath* FbleParseModulePath(const char* string);
 
 /**
  * @func[FbleCopyModulePath] Copies an FbleModulePath.
- *
  *  @arg[FbleModulePath*][path] The path to copy.
  * 
  *  @returns FbleModulePath*
@@ -138,7 +131,6 @@ FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
 
 /**
  * @func[FbleFreeModulePath] Frees an FbleModulePath.
- *
  *  @arg[FbleModulePath*][path] The path to free.
  *
  *  @sideeffects

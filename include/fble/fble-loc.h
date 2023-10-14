@@ -1,6 +1,6 @@
 /**
  * @file fble-loc.h
- * Fble source locations API.
+ *  Fble source locations API.
  */
 
 #ifndef FBLE_LOC_H_
@@ -35,7 +35,6 @@ typedef struct {
 
 /**
  * @func[FbleNewLoc] Creates a new FbleLoc.
- *
  *  Convenience function for creating an FbleLoc from a char* source name.
  *
  *  @arg[const char*] source
@@ -55,7 +54,6 @@ FbleLoc FbleNewLoc(const char* source, size_t line, size_t col);
 
 /**
  * @func[FbleCopyLoc] Copies an Fble Loc
- *
  *  @arg[FbleLoc][loc] The loc to copy.
  *
  *  @returns FbleLoc
@@ -69,7 +67,6 @@ FbleLoc FbleCopyLoc(FbleLoc loc);
 
 /**
  * @func[FbleFreeLoc] Frees an FbleLoc.
- *
  *  @arg[FbleLoc][loc] The location to free resources of.
  *
  *  @sideeffects
@@ -79,7 +76,6 @@ void FbleFreeLoc(FbleLoc loc);
 
 /**
  * @func[FbleReportWarning] Outputs a compiler warning.
- *
  *  Reports a warning message associated with a location in a source file.
  *
  *  @arg[const char*] format
@@ -96,7 +92,6 @@ void FbleReportWarning(const char* format, FbleLoc loc, ...);
 
 /**
  * @func[FbleReportError] Outputs a compiler error.
- *
  *  Reports an error message associated with a location in a source file.
  *
  *  @arg[const char*] format
