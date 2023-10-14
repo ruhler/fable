@@ -33,6 +33,7 @@ Things to consider doing for the fble-0.2 release.
 
 * Review all the generated documentation, including usage help text.
   Since we've changed the fbld implementation.
+ - Don't assume single or next line args for anything in dc.man.fbld.
 
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.
@@ -41,16 +42,11 @@ Things to consider doing for the fble-0.2 release.
  - set tabstop/shiftwidth to single space?
  - Figure out how to make {...} only apply in argument context?
 
-* Review generated html output for all documentation after move to fbld2
-
 * Update the rest of the tutorials with regards to smashing the stack. No need
   to write stack smashing safe tutorials anymore.
 
 * Add spec tests for memory use of tail recursion and for "unlimited" stack
   size.
-
-* Fbld:
- - Retire tcl based
 
 * Fbld Html Backend
  - Add back syntax highlighting of @code blocks.
@@ -75,7 +71,6 @@ Things to consider doing for the fble-0.2 release.
   }
         
         
-
 * Need an easier way to gdb step through fble code without cluttering it with c
   code in between.
 
@@ -141,7 +136,6 @@ Things to consider doing for the fble-0.2 release.
  - smten support.
    And after smten, try doing smten-based mnist classification?
  - high score saved in invaders game.
- - fix composition issues in fbld implementation.
  - write tutorials for C api.
  - write some serious new fble code.
    image viewer? floating point?
@@ -183,10 +177,6 @@ Things to consider doing for the fble-0.2 release.
 * Is there a 'bnf' @code syntax the source highlighter supports that 
   we could use to make the syntax specification in fble.fbld prettier?
   - if not, consider writing one? Or switching to a syntax that does exist?
-
-* Should @l allow inline tags?
-  - For example, I want @l[@config[...]], but it's not doing any substitution.
-    I guess that makes sense for calling it a 'literal'?
 
 * Figure out whitespace issues with fbld generated roff, man.
   - When are things trimed versus not?
@@ -230,13 +220,6 @@ Things to consider doing for the fble-0.2 release.
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
-
-* Fbld Cleanup
- - Come up with a more formal test suite for fbld.
- - Print line and column number on fbld usage errors.
-   Instead of 'Index' number.
- - Print line and col number on fbld usage command errors
-   Such as wrong number of args.
 
 * Optimize code for generate_c for low gcc memory use:
  - Use shorter labels for function names?
