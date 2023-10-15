@@ -5370,3 +5370,30 @@ Observations:
    @i, @j?
 
 Let's try using @j instead of @ii.
+
+---
+
+Yay! All done converting to the new fbld syntax.
+
+I would say the fbld syntax/language is all set for fble-0.2.
+
+What's left is:
+* Syntax higlighting in html backend for fbld and fble languages.
+* Cleaning up backend implementations.
+  - Handle whatever escaping is needed.
+  - Better use of @.block if any.
+  - Support same line and next line args.
+* Another round of performance improvement.
+
+For syntax highlighting, start with fbld. How hard is that?
+
+We have keyword matches:
+* [, ], \], \[, \@, \\, \n
+* We have tags: @[a-zA-Z0-9_]+
+* We have braced regions: {...}
+
+Two approaches I could use:
+1. The general keyword/match/region approach where we define the syntax from
+the language separately from the syntax highlighter.
+2. Write a custom syntax highlighter for fbld that knows (roughly) how to
+parse it.
