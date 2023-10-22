@@ -149,20 +149,20 @@ M@<Char@> Get = {
   Return(cl.c);
 };
 
-# Parses either of the given arguments, returning the result of the first to
-# pass. Fails if both parsers fails.
-(M@<Unit@>, M@<Unit@>) { M@<Unit@>; }
-Or = (M@<Unit@> ma, M@<Unit@> mb) {
-  Maybe@<Unit@> a <- Do(Try(ma));
-  a.?(just: Return(a.just));
-  mb;
-};
-
 # Same as Try, but discards the result of a successful match.
 <@ T@>(M@<T@>) { M@<Bool@>; }
 Try_ = <@ T@>(M@<T@> mx) {
   Maybe@<T@> r <- Do(Try(mx));
   Return(r.?(just: True, nothing: False));
+};
+
+# Parses either of the given arguments, returning the result of the first to
+# pass. Fails if both parsers fails.
+(M@<Unit@>, M@<Unit@>) { M@<Unit@>; }
+Or = (M@<Unit@> ma, M@<Unit@> mb) {
+  Bool@ a <- Do(Try_(ma));
+  a.?(true: Return(Unit));
+  mb;
 };
 
 # Test if a parser would match at the current position, without consuming any
