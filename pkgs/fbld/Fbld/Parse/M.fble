@@ -16,6 +16,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -35,8 +36,10 @@
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 
+@ CharL@ = *(Char@ c, Loc@ l);
+
 # S@ - State for parser monad.
-@ S@ = *(List@<Text@> input);
+@ S@ = List@<CharL@>;
 
 # R@ - Reader for parser monad.
 @ R@ = *(S@ s, Int@ indent);
@@ -72,19 +75,12 @@ M@<Int@> GetIndent = (R@ r) {
   Ok(SM@(r.s, r.indent));
 };
 
-@ CharL@ = *(Char@ c, Loc@ l);
-
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
 M@<CharL@> GetL_ = (R@ r) {
-  List@<Text@> in = r.s.input;
+  List@<CharL@> in = r.s;
   in.?(nil: Err<SM@<CharL@>>(Text(Unknown, Str|'unexpected end of input')));
-  in.cons.head.text.?(nil: GetL_(r.@(s: S@(in.cons.tail))));
-
-  Char@ c = in.cons.head.text.cons.head;
-  Loc@ l = in.cons.head.loc;
-  Text@ head = Text(Advance(l, c), in.cons.head.text.cons.tail);
-  Ok(SM@(S@(Cons(head, in.cons.tail)), @(c, l)));
+  Ok(SM@(in.cons.tail, in.cons.head));
 };
 
 # Parse an indented block of text.
@@ -112,10 +108,25 @@ Test = <@ T@>(M@<T@> mx)(R@ r) {
   Ok(SM@(r.s, Just(rx.ok.x)));
 };
 
+(Loc@, String@, List@<CharL@>) { List@<CharL@>; }
+PreProcessInput = (Loc@ l, String@ s, List@<CharL@> tail) {
+  s.?(nil: tail);
+  Char@ c = s.cons.head;
+  Cons(CharL@(c, l), PreProcessInput(Advance(l, c), s.cons.tail, tail));
+};
+
+(List@<Text@>, List@<CharL@>) { List@<CharL@>; }
+PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
+  inputs.?(nil: tail);
+  PreProcessInput(inputs.cons.head.loc, inputs.cons.head.text,
+    PreProcessInputs(inputs.cons.tail, tail));
+};
+
 # Runs a parser monad on the given input string.
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
-  Result@<SM@<T@>> r = m(R@(S@(input), Int|0));
+  List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
+  Result@<SM@<T@>> r = m(R@(s, Int|0));
   r.?(err: Err<T@>(r.err));
   Ok(r.ok.x);
 };
