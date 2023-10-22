@@ -67,3 +67,52 @@ that return functions to work with bind syntax. What about List Ord?
 List Ord takes the ordering function separately. We should be able to factor
 that out. That's the recursive call to Ord itself.
 
+---
+
+It's like the whole monadic construct involves allocations everywhere.
+Particularly the parser one. We are allocating every time we 'try' and fail.
+For example, allocating an error message that we just ignore in the end.
+
+Is there any way to structure the parser monad so that it doesn't allocate all
+over like this?
+
+The reason results are turning into object allocations instead of being small
+enough to be packed is because of the error message that we often throw away.
+In theory we could use different variants on the function if we know we are
+going to throw away the error message.
+
+In the case of success, we need to allocate a heap object because we have to
+have space to store the 'tail' pointer with the rest of the text to parse.
+
+Could I change the parser monad to be a parser generator monad? Have it
+somehow work out all the smarts to generate an efficient function that doesn't
+do unnecessary allocation, while preserving the same kind of description?
+
+I think it might be possible. We'll presumably want some restriction that
+decisions made during parsing don't depend on the parsed result. They only
+depend on whether parsing succeeded or not.
+
+---
+
+Let's start simpler. Say we have two kinds of parser types:
+ * M@ is as today - parse and returns a value or error.
+ * Parses@ - parse, but only indicates pass/fail, does not return a value or
+   an error message.
+
+Assuming Parses@ is much faster implementation wise, we do as much as we can
+in Parses@. How much can we do there in practice?
+
+* Try: wants to ignore error message, but not value.
+* Test: Can ignore error message, but not value.
+* Or: Could probably change to take M@<Unit@> as argument, then ignore both?
+* Try_: Can ignore error message and value.
+* Test_: Can ignore error message and value.
+* EndOfInput - Can probably ignore error message and value.
+* String - Can probably ignore error message and value.
+
+I think I can do this incrementally. Slowly move things over to a Parses@ type
+and see how far it gets me.
+
+
+
+

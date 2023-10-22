@@ -38,7 +38,7 @@
 <@>% Test = /Fbld/Parse/M%.Test;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
 % String = /Fbld/Parse/M%.String;
-<@>% Or = /Fbld/Parse/M%.Or;
+% Or = /Fbld/Parse/M%.Or;
 % EndOfInput = /Fbld/Parse/M%.EndOfInput;
 <@>% Indented = /Fbld/Parse/M%.Indented;
 

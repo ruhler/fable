@@ -151,9 +151,9 @@ M@<Char@> Get = {
 
 # Parses either of the given arguments, returning the result of the first to
 # pass. Fails if both parsers fails.
-<@ T@>(M@<T@>, M@<T@>) { M@<T@>; }
-Or = <@ T@>(M@<T@> ma, M@<T@> mb) {
-  Maybe@<T@> a <- Do(Try(ma));
+(M@<Unit@>, M@<Unit@>) { M@<Unit@>; }
+Or = (M@<Unit@> ma, M@<Unit@> mb) {
+  Maybe@<Unit@> a <- Do(Try(ma));
   a.?(just: Return(a.just));
   mb;
 };
