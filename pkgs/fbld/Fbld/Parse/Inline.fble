@@ -27,14 +27,15 @@
 % Append = /Fbld/Markup%.Append;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
+@ CharL@ = /Fbld/Parse/M%.CharL@;
 <@>% Do = /Fbld/Parse/M%.Do;
 <@>% Return = /Fbld/Parse/M%.Return;
 <@>% Error = /Fbld/Parse/M%.Error;
 <@>% Try_ = /Fbld/Parse/M%.Try_;
 <@>% Test = /Fbld/Parse/M%.Test;
-<@>% Test_ = /Fbld/Parse/M%.Test_;
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
+% GetL = /Fbld/Parse/M%.GetL;
 % String = /Fbld/Parse/M%.String;
 
 (Char@) { Bool@; } IsNameChar = (Char@ c) {
@@ -63,38 +64,29 @@ M@<String@> Literal = {
   Return(Cons(head, tail));
 };
 
-M@<Markup@> LiteralArg = {
-  Unit@ _ <- Do(String|'{');
-  Loc@ l <- Do(Loc);
-  String@ text <- Do(Literal);
-  Return(Plain(l, text));
-};
-
 @ Markup_@ = *(String@ plain, Markup@ markup);
-
-M@<Markup@> RegularArg = {
-  Unit@ _ <- Do(String|'[');
-  M@<Unit@> end = {
-    Loc@ l <- Do(Loc);
-    Char@ c <- Do(Get);
-    c.?(']': Return(Unit));
-    Error<Unit@>(l, Str|'Expected '']''');
-  };
-  Inline(end);
-},
 
 # Parses a sequence of zero or more inline args.
 M@<List@<Markup@>> Args = {
-  Bool@ regular <- Do(Test_(String|'['));
+  # RegularArg: [ ... ]
+  Bool@ regular <- Do(Try_(String|'['));
   regular.?(true: {
-    Markup@ head <- Do(RegularArg);
+    M@<Unit@> end = {
+      CharL@ cl <- Do(GetL);
+      cl.c.?(']': Return(Unit));
+      Error<Unit@>(cl.l, Str|'Expected '']''');
+    };
+    Markup@ head <- Do(Inline(end));
     List@<Markup@> tail <- Do(Args);
     Return(Cons(head, tail));
   });
 
-  Bool@ literal <- Do(Test_(String|'{'));
+  # LiteralArg: { ... }
+  Bool@ literal <- Do(Try_(String|'{'));
   literal.?(true: {
-    Markup@ head <- Do(LiteralArg);
+    Loc@ l <- Do(Loc);
+    String@ text <- Do(Literal);
+    Markup@ head = Plain(l, text);
     List@<Markup@> tail <- Do(Args);
     Return(Cons(head, tail));
   });
@@ -127,15 +119,14 @@ M@<Markup@> Command = {
 
   Char@ h <- Do({
     c.?('\': {
-      Loc@ le <- Do(Loc);
-      Char@ e <- Do(Get);
-      e.?(
+      CharL@ e <- Do(GetL);
+      e.c.?(
         '@': Return(Chars.'@'),
         '[': Return(Chars.'['),
         '\': Return(Chars.'\'),
         ']': Return(Chars.']'),
         'n': Return(Chars.nl));
-      Error<Char@>(le, Strs[Str|'Unsupported escape sequence: ''\', Str[e, Chars.'''']]);
+      Error<Char@>(e.l, Strs[Str|'Unsupported escape sequence: ''\', Str[e.c, Chars.'''']]);
     });
     Return(c);
   });

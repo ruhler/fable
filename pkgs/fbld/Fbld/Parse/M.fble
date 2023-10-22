@@ -194,6 +194,7 @@ String = (String@ s) {
       Str|'Expected ''', Str[s.cons.head], Str|'''']));
 };
 
-@(M@, Return, Error, Do, Loc, Get, GetIndent, EndOfInput, Indented,
+@(M@, CharL@,
+  Return, Error, Do, Loc, Get, GetL, GetIndent, EndOfInput, Indented,
   Try, Try_, Test, Test_, Or, String,
   Run);

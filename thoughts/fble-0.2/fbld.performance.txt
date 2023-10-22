@@ -113,6 +113,24 @@ in Parses@. How much can we do there in practice?
 I think I can do this incrementally. Slowly move things over to a Parses@ type
 and see how far it gets me.
 
+---
 
+I don't know. It doesn't feel like this is going to be significant. It feels
+like micro-optimizing. Maybe better to start by inlining common operations?
 
+Let's focus on Or to start, which is only used with String matches right now.
 
+And Do(Test_(...))?
+
+It's like I want a minilanguage:
+
+String :: String@ -> P@
+Or :: P@ -> P@ -> P@
+DoTest_ :: P@ -> (Bool@ -> M@<A@>) -> M@<A@>
+
+How much time do we spend in Or? In Test_?
+
+From perf profile, best I can tell is it's the regular use of Do that is
+causing allocations which is hurting performance. Can we isolate how much of
+those calls to Do could be a simplified Do_ that doesn't return value/error
+message?
