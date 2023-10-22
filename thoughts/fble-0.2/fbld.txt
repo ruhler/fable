@@ -5397,3 +5397,46 @@ Two approaches I could use:
 the language separately from the syntax highlighter.
 2. Write a custom syntax highlighter for fbld that knows (roughly) how to
 parse it.
+
+---
+
+To start, let's use the keyword/match/region approach, but write functions
+specifically for the fbld syntax to do the matching instead of using regex or
+some more general thing. Functions are as powerful as regex and nicer
+descriptions in my opinion.
+
+Initial syntax highlighting for fbld: use what we have for vim now:
+
+'@', '[', ']' - bracket - special color
+@[a-zA-Z0-9_]+ - tag - identifier color
+{ .* } - brackets are special color, inside is normal color
+\], \[, \@, \\, \n - escape - character color.
+
+It's as easy as that.
+
+Easiest way to describe this, I think, would be a @highlight_fbld command that
+takes fbld text as input and outputs highlighted fbld text.
+
+How do we describe the highlight?
+ - By type (special, identifier, normal, character)
+ - By color?
+
+By type is more general. Different backends would want different colors. So
+let's assume some standard class of types and worry about assigning colors
+separately. Assume we have some tag @highlight[type][text].
+
+So @highligh_fbld command takes raw fbld input, and outputs using @highlight
+commands with the types 'special', 'identifier', 'normal', and 'character'.
+
+How does this interact with html escaping? Should I clean up html escaping
+first?
+
+It's time to split things off into separate discussions. Let's have:
+
+fbld.performance.txt
+fbld.highlight.txt
+fbld.escape.txt
+
+And so on.
+
+

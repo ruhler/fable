@@ -1,0 +1,69 @@
+Fbld Performance
+================
+
+Now that we've completely redesigned and implemented fbld, let's see if we
+can't make it run a little faster.
+
+Specifically, there are a lot of library man pages to generate. Each one takes
+a couple seconds. That adds up to a long wait time. I would love to cut that
+time in half if possible.
+
+$ time ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/config.fbld \
+./fbld/version.fbld ../fbld/man.fbld ../fbld/dc.man.fbld \
+./include/fble/FbleEval.3.fbld
+real    0m1.750s
+
+Fble based profiling says:
+ 44% in /Fbld/Parse%.Parse
+ 36% in /Fbld/Eval%.Eval
+ 15% in /Core/Stream/IStream%.GetChar
+
+perf based profiling says:
+ 72% in /Fbld/Parse%.Parse
+
+It's hard to get more clarity than that from the perf profile. I kind of wish
+everything didn't go through FbleThreadCall. That really muddies the picture.
+
+Let's focus on the parser. It's tough to tell from the profile, because
+everything goes through Do. Once again, it would be nice if there was some way
+to eliminate that to avoid muddying the picture.
+
+Ideas from reading the code:
+* Do we need a State monad? Can we use just a Reader monad?
+  - It's not like we are writing output.
+  - I don't think we can use a Reader monad. We need to track unconsumed
+    output.
+* Compute GetL_ up front as a list of CharL@?
+  - To avoid having to redo GetL_ over and over every time we Try_ or Test_
+    and fail?
+
+Remember that perf profiling shows most of the time due to allocations. Can we
+see who is doing those allocations? Should we increase the cost of
+instructions that allocate for prof purposes?
+
+According to perf, there are 909 allocations. They are:
+
+         63       70           FbleNewStructValue_.constprop.7[0025]
+         94      122           FbleNewLiteralValue[0005]
+        150      159           FbleNewUnionValue[0010]
+        266      292           FbleNewFuncValue[001e]
+        328      349           FbleNewStructValue[0027]
+
+This is odd. Let's focus on FbleNewFuncValue, which normally I don't expect to
+see much of.
+
+
+         17       17           _2f_Fbld_2f_Result_25__2e_Do_21_.000d[0057]
+         23       24           _2f_Fbld_2f_Parse_2f_M_25__2e_GetL_21_.0058[003f]
+         25       31           _2f_Core_2f_List_2f_Ord_25__2e_Ord_21_.0009[001d]
+         32       33           _2f_Fbld_2f_Parse_2f_M_25__2e_Do_21_.002b[0047]
+         43       46           _2f_Fbld_2f_Parse_2f_M_25__2e_Return_21_.0023[002
+         54       57           _2f_Fbld_2f_Parse_2f_M_25__2e_Do_21__21_.002d[003
+**      293      319       26  FbleNewFuncValue[001e] **
+
+Do and Return are kind of expected, because they are structured as functions
+that return functions to work with bind syntax. What about List Ord?
+
+List Ord takes the ordering function separately. We should be able to factor
+that out. That's the recursive call to Ord itself.
+
