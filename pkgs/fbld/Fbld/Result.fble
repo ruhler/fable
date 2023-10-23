@@ -1,25 +1,49 @@
 
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Loc@ = /Fbld/Loc%.Loc@;
+
 @ Text@ = /Fbld/Text%.Text@;
+% Text = /Fbld/Text%.Text;
+
+# Having an option for an 'unknown' error makes it possible to avoid extra
+# allocations at runtime in case we don't care about the error message.
+@ Error@ = +(Unit@ unknown, Text@ message);
 
 # A result of an operation that may fail.
-<@>@ Result@ = <@ T@> { +(T@ ok, Text@ err); };
+<@>@ Result@ = <@ T@> { +(T@ ok, Error@ err); };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
   Result@<T@>(ok: x);
 };
 
-<@ T@>(Text@) { Result@<T@>; } Err = <@ T@>(Text@ msg) {
-  Result@<T@>(err: msg);
+<@ T@>(Error@) { Result@<T@>; }
+Error = <@ T@>(Error@ e) {
+  Result@<T@>(err: e);
+};
+
+<@ T@>(Loc@, String@) { Result@<T@>; }
+Err = <@ T@>(Loc@ l, String@ msg) {
+  Error<T@>(Error@(message: Text(l, msg)));
+};
+
+<@ T@> { Result@<T@>; }
+UnknownErr = <@ T@> {
+  Error<T@>(Error@(unknown: Unit));
 };
 
 <@ T@>(T@) { Result@<T@>; } Return = Ok;
 
 <@ A@>(Result@<A@>)<@ B@>((A@) { Result@<B@>; }) { Result@<B@>; }
 Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
-  ra.?(err: Err<B@>(ra.err));
+  ra.?(err: Error<B@>(ra.err));
   f(ra.ok);
 };
 
 /Core/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
 
-@(Result@, Ok, Err, Monad);
+@(Result@, Error@,
+  Ok, Error, Err, UnknownErr, Monad);

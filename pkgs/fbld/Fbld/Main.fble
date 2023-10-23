@@ -57,7 +57,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
     fin.?(nothing: {
       String@ msg = Strs[Str|'unable to open ', filename];
-      m.return(Err<List@<Text@>>(Text(Unknown, msg)));
+      m.return(Err<List@<Text@>>(Unknown, msg));
     });
 
     String@ contents <- m.do(I.GetText(fin.just));

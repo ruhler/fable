@@ -30,16 +30,14 @@
 <@>% Err = /Fbld/Result%.Err;
 % r = /Fbld/Result%.Monad;
 
-% Text = /Fbld/Text%.Text;
-
 (Markup@) { Result@<Maybe@<Char@>>; } HeadOf = (Markup@ markup) {
   markup.?(
     empty: r.return(Nothing<Char@>),
     plain: r.return(Just(markup.plain.text.cons.head)),
     command: {
-      Err<Maybe@<Char@>>(Text(markup.command.name.loc, Strs[
+      Err<Maybe@<Char@>>(markup.command.name.loc, Strs[
           Str|'expected plain text, but found command @',
-          markup.command.name.text]));
+          markup.command.name.text]);
     },
     sequence: HeadOf(markup.sequence.a));
 };
@@ -62,9 +60,9 @@ Impl@ Head = (Env@ env, Command@ cmd) {
       r.return(Plain(markup.plain.loc, markup.plain.text.cons.tail));
     },
     command: {
-      Err<Markup@>(Text(markup.command.name.loc, Strs[
+      Err<Markup@>(markup.command.name.loc, Strs[
           Str|'expected plain text, but found command @',
-          markup.command.name.text]));
+          markup.command.name.text]);
     },
     sequence: {
       Markup@ a <- r.do(TailOf(markup.sequence.a));

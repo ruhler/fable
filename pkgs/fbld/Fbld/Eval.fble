@@ -18,8 +18,6 @@
 @ Command@ = /Fbld/Markup%.Command@;
 % Append = /Fbld/Markup%.Append;
 
-% Text = /Fbld/Text%.Text;
-
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Err = /Fbld/Result%.Err;
 % r = /Fbld/Result%.Monad;
@@ -63,10 +61,10 @@ Evals = (Env@ env, List@<Markup@> markups) {
 AssertArgCount = (Int@ expected, Command@ cmd) {
   Int@ num_args = Length(cmd.args);
   /Core/Int/Eq%.Eq(num_args, expected).?(false: {
-    Err<Unit@>(Text(cmd.name.loc, Strs[
+    Err<Unit@>(cmd.name.loc, Strs[
       Str|'Expected ', /Core/Int/Show%.Show(expected),
       Str|' arguments to ', cmd.name.text,
-      Str|', but found ', /Core/Int/Show%.Show(num_args)]));
+      Str|', but found ', /Core/Int/Show%.Show(num_args)]);
   });
   r.return(Unit);
 }; 

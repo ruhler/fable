@@ -34,7 +34,6 @@
 <@>% Err = /Fbld/Result%.Err;
 
 @ Text@ = /Fbld/Text%.Text@;
-% Text = /Fbld/Text%.Text;
 
 @ CharL@ = *(Char@ c, Loc@ l);
 
@@ -59,14 +58,14 @@ Return = <@ T@>(T@ x)(R@ r) {
 # Report a parse error.
 <@ T@>(Loc@, String@) { M@<T@>; }
 Error = <@ T@>(Loc@ l, String@ msg)(R@ _) {
-  Err<SM@<T@>>(Text(l, msg));
+  Err<SM@<T@>>(l, msg);
 };
 
 # Monadic Do for the parser monad.
 <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
 Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
   Result@<SM@<A@>> ra = ma(r);
-  ra.?(err: Err<SM@<B@>>(ra.err));
+  ra.?(err: /Fbld/Result%.Error<SM@<B@>>(ra.err));
   f(ra.ok.x)(r.@(s: ra.ok.s));
 };
 
@@ -79,7 +78,7 @@ M@<Int@> GetIndent = (R@ r) {
 # appropriate. Fails if there are no more characters in the input stream.
 M@<CharL@> GetL_ = (R@ r) {
   List@<CharL@> in = r.s;
-  in.?(nil: Err<SM@<CharL@>>(Text(Unknown, Str|'unexpected end of input')));
+  in.?(nil: Err<SM@<CharL@>>(Unknown, Str|'unexpected end of input'));
   Ok(SM@(in.cons.tail, in.cons.head));
 };
 
@@ -127,7 +126,7 @@ PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
   Result@<SM@<T@>> r = m(R@(s, Int|0));
-  r.?(err: Err<T@>(r.err));
+  r.?(err: /Fbld/Result%.Error<T@>(r.err));
   Ok(r.ok.x);
 };
 

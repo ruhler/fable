@@ -1,15 +1,23 @@
 
+% True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
+@ Error@ = /Fbld/Result%.Error@;
+
+Eq@<Error@> ErrorEq = (Error@ a, Error@ b) {
+  a.?(unknown: b.?(unknown: True, : False));
+  b.?(unknown: False);
+  /Fbld/Text/Eq%.Eq(a.message, b.message);
+};
 
 <@ T@>(Eq@<T@>) { Eq@<Result@<T@>>; }
 Eq = <@ T@>(Eq@<T@> eq)(Result@<T@> a, Result@<T@> b) {
   a.?(
     ok: b.?(ok: eq(a.ok, b.ok), err: False),
-    err: b.?(ok: False, err: /Fbld/Text/Eq%.Eq(a.err, b.err)));
+    err: b.?(ok: False, err: ErrorEq(a.err, b.err)));
 };
 
 @(Eq);

@@ -5,10 +5,16 @@
 % Strs = /Core/String%.Strs;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
+@ Text@ = /Fbld/Text%.Text@;
 
 <@ T@> { Show@<Result@<T@>>; }
 ShowError = <@ T@>(Result@<T@> r) {
-  /Fbld/Loc%.Report(r.err.loc, Strs[Str|'error: ', r.err.text]);
+  r.err.?(
+    unknown: Str|'unknown error',
+    message: {
+      Text@ message = r.err.message;
+      /Fbld/Loc%.Report(message.loc, Strs[Str|'error: ', message.text]);
+    });
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }

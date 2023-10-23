@@ -134,3 +134,41 @@ From perf profile, best I can tell is it's the regular use of Do that is
 causing allocations which is hurting performance. Can we isolate how much of
 those calls to Do could be a simplified Do_ that doesn't return value/error
 message?
+
+---
+
+Okay, here's what I'm thinking. We want a variant of M@, call it M_@, that
+ignores the error message but keeps the return value. For M_@<Unit@>, it
+should be able to pack without having to allocate an object.
+
+Let me work with this and see how far I get.
+
+---
+
+What we get to is:
+* Return, Do, etc. glue functions want variants for M@ and M_@.
+* Things that cannot return an error may as well use M_@. We can wrap in
+  M(...) if we ever need to convert.
+* Some functions an return errors, but in some cases we may want to ignore
+  those error messages. In those cases, provide both M@ and M_@ variants.
+
+Performance numbers: This is about 30% improvement. The number of object
+allocations is cut in half.
+
+Hmm... This feels sad. Do I want to take the change?
+
+One thing we could do is generalize Result@ to include a second kind of error:
+an unexplained error. That way we don't need two different types. That makes
+it simpler in some cases, but we get less help from the compiler in other
+cases.
+
+Could we make it part of the reader? Like, have an extra option which says if
+we want to return an error message or not. The functions Try_, Test_, etc.
+will all say: run without recording the error message. Do this in combination
+with expanding Result@ type.
+
+That way, no need to duplicate any logic. No need to deal with messy types.
+Everything can work in both contexts efficiently.
+
+I like that idea. Let me save and back out my current changes and try that
+alternative approach.
