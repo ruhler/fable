@@ -28,18 +28,28 @@
 % Append = /Fbld/Markup%.Append;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
+<@>@ M_@ = /Fbld/Parse/M%.M_@;
+<@>% M = /Fbld/Parse/M%.M;
 <@>% Return = /Fbld/Parse/M%.Return;
+<@>% Return_ = /Fbld/Parse/M%.Return_;
 <@>% Error = /Fbld/Parse/M%.Error;
+<@>% Error_ = /Fbld/Parse/M%.Error_;
 <@>% Do = /Fbld/Parse/M%.Do;
+<@>% Do_ = /Fbld/Parse/M%.Do_;
 % Loc = /Fbld/Parse/M%.Loc;
+% Loc_ = /Fbld/Parse/M%.Loc_;
 % Get = /Fbld/Parse/M%.Get;
-% GetIndent = /Fbld/Parse/M%.GetIndent;
+% Get_ = /Fbld/Parse/M%.Get_;
+% GetIndent_ = /Fbld/Parse/M%.GetIndent_;
 <@>% Try_ = /Fbld/Parse/M%.Try_;
+<@>% _Try_ = /Fbld/Parse/M%._Try_;
 <@>% Test = /Fbld/Parse/M%.Test;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
+<@>% _Test_ = /Fbld/Parse/M%._Test_;
 % String = /Fbld/Parse/M%.String;
-% Or = /Fbld/Parse/M%.Or;
-% EndOfInput = /Fbld/Parse/M%.EndOfInput;
+% String_ = /Fbld/Parse/M%.String_;
+% Or_ = /Fbld/Parse/M%.Or_;
+% EndOfInput_ = /Fbld/Parse/M%.EndOfInput_;
 <@>% Indented = /Fbld/Parse/M%.Indented;
 
 % Inline = /Fbld/Parse/Inline%.Inline;
@@ -47,24 +57,24 @@
 % InlineArgs = /Fbld/Parse/Inline%.Args;
 
 # Parses a blank line. Fails if we aren't at a blank line.
-M@<Unit@> BlankLine = {
-  Loc@ l <- Do(Loc);
-  Int@ indent <- Do(GetIndent);
+M_@<Unit@> BlankLine = {
+  Loc@ l <- Do_(Loc_);
+  Int@ indent <- Do_(GetIndent_);
   /Core/Int/Eq%.Lt(Incr(indent), l.col).?(true: {
-    Error<Unit@>(l, Str|'not a blank line');
+    Error_<Unit@>;
   });
-  String(StrE|'\n');
+  String_(StrE|'\n');
 };
 
-M@<Unit@> SkipBlankLines = {
-  Bool@ blank <- Do(Try_(BlankLine));
+M_@<Unit@> SkipBlankLines = {
+  Bool@ blank <- Do_(_Try_(BlankLine));
   blank.?(true: SkipBlankLines);
-  Return(Unit);
+  Return_(Unit);
 };
 
-M@<Unit@> BlankToEnd = {
-  Unit@ _ <- Do(SkipBlankLines);
-  EndOfInput;
+M_@<Unit@> BlankToEnd = {
+  Unit@ _ <- Do_(SkipBlankLines);
+  EndOfInput_;
 };
 
 # Parses raw text to end of file
@@ -84,8 +94,8 @@ M@<String@> Raw = {
 Args = (Loc@ l, String@ name, List@<Markup@> args) {
   List@<Markup@> inline_args <- Do(InlineArgs);
 
-  M@<Unit@> EndOfSameLine = Or(String(StrE|'\n'),
-    Or(String(StrE|' @\n'), String(StrE|' @@\n')));
+  M_@<Unit@> EndOfSameLine = Or_(String_(StrE|'\n'),
+    Or_(String_(StrE|' @\n'), String_(StrE|' @@\n')));
 
   List@<Markup@> same_line <- Do({
     Bool@ none <- Do(Test_(EndOfSameLine));
@@ -93,15 +103,14 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 
     Unit@ _ <- Do(String|' ');
     Markup@ m <- Do(Inline({
-      Bool@ end <- Do(Test_(EndOfSameLine));
-      end.?(true: Return(Unit));
-      Loc@ l <- Do(Loc);
-      Error<Unit@>(l, Str|'not end of same line');
+      Bool@ end <- Do_(_Test_(EndOfSameLine));
+      end.?(true: Return_(Unit));
+      Error_<Unit@>;
     }));
     Return(List[m]);
   });
 
-  Bool@ final_same_line <- Do(Try_(String(StrE|' @@\n')));
+  Bool@ final_same_line <- Do(Try_(String_(StrE|' @@\n')));
   final_same_line.?(true: {
     Markup@ arg <- Do(Block);
     Return(/Fbld/Markup%.Command(l, name)(Concat[
@@ -109,7 +118,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
   });
 
   List@<Markup@> literal <- Do({
-    Bool@ none <- Do(Try_(String(StrE|'\n')));
+    Bool@ none <- Do(Try_(String_(StrE|'\n')));
     none.?(true: Return(Nil<Markup@>));
 
     Unit@ _ <- Do(String(StrE|' @\n'));
@@ -122,20 +131,20 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
   });
 
   List@<Markup@> next <- Do({
-    Bool@ present <- Do(Try_(String|' '));
+    Bool@ present <- Do(Try_(String_|' '));
     present.?(false: Return(Nil<Markup@>));
     Markup@ m <- Do(Indented(Block));
     Return(List[m]);
   });
 
-  Bool@ final <- Do(Try_(String(StrE|'@@\n')));
+  Bool@ final <- Do(Try_(String_(StrE|'@@\n')));
   final.?(true: {
     Markup@ arg <- Do(Block);
     Return(/Fbld/Markup%.Command(l, name)(Concat[
         args, inline_args, same_line, literal, next, List[arg]]));
   });
 
-  Bool@ continue <- Do(Test_(Or(String|'@ ', String|'@[')));
+  Bool@ continue <- Do(Test_(Or_(String_|'@ ', String_|'@[')));
   continue.?(true: {
     Unit@ _ <- Do(String|'@');
     Args(l, name, Concat[
@@ -157,9 +166,9 @@ M@<Markup@> Command = {
 
 # Parses block structured text.
 M@<Markup@> Block = {
-  Unit@ _ <- Do(SkipBlankLines);
+  Unit@ _ <- Do(M(SkipBlankLines));
 
-  Bool@ cmd <- Do(Try_(String|'@'));
+  Bool@ cmd <- Do(Try_(String_|'@'));
   cmd.?(true: {
     Markup@ command <- Do(Command);
     Markup@ tail <- Do(Block);
@@ -167,10 +176,10 @@ M@<Markup@> Block = {
   });
 
   Loc@ loc <- Do(Loc);
-  Maybe@<Char@> c <- Do(Test(Get));
+  Maybe@<Char@> c <- Do(Test(Get_));
   c.?(nothing: Return(Empty));
 
-  Markup@ inline <- Do(Inline(Or(EndOfInput, BlankLine)));
+  Markup@ inline <- Do(Inline(Or_(EndOfInput_, BlankLine)));
   Markup@ tail <- Do(Block);
   Return(Append(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
 };
