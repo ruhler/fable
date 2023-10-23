@@ -7,8 +7,16 @@ Things to consider doing for the fble-0.2 release.
 * Update or remove fbld/fbld.lang
 
 * Why do spec tests depend on pkgs/fbld/fbld?
+ - Can we break that cycle? Because it's annoying and a little strange to have
+   to rerun all the spec tests after changes to the fbld library.
 
-* Fbld:
+* Fbld Big:
+ - Update fbld spec for new syntax.
+ - Fix issues with generated documentation.
+ - Support for syntax highlighting.
+   Which may want improvements to html escaping.
+
+* Fbld Misc:
  - Allow nested unescaped {} and escaped \{ \} in literal args.
  - Looks like some extra newline somewhere in html backend for @fbld or @url.
  - Are blank lines allowed at end of next line literal text?
@@ -126,11 +134,6 @@ Things to consider doing for the fble-0.2 release.
  - Clarify that '%' is needed for module paths in early tutorials.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
-
-* Anything we can do to help detect stack smashers?
- - Like, limit stack depth in fble and print a nice message before running
-   into a segfault? Or detect when we've smashed the stack? Or static analysis
-   to detect non-tail recursive functions?
 
 * Big things:
  - smten support.

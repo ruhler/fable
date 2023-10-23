@@ -6,11 +6,11 @@
  * ------------------
  * Consider a profile call graph entry such as:
  *       count     time block
- *           2       70 /b[0002]   
- *           1       90 /a[0001]   
- * **        3       90 /b[0002] **
- *           2       70 /b[0002]   
- *           1       30 /c[0003]   
+ *           2       70 /b[0002X]   
+ *           1       90 /a[0001X]   
+ * **        3       90 /b[0002X] **
+ *           2       70 /b[0002X]   
+ *           1       30 /c[0003X]   
  *
  * Focusing on the highlighted line with **, this says we spent 90 profile
  * time in block 'b'. The blocks that 'b' called are listed below it. So in
@@ -352,7 +352,7 @@ static void SortCallData(Order order, FbleCallData** data, size_t size)
  */
 static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 {
-  fprintf(fout, "%s[%04zx]", profile->blocks.xs[id]->name.name->str, id);
+  fprintf(fout, "%s[%04zxX]", profile->blocks.xs[id]->name.name->str, id);
 }
 
 /**

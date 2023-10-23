@@ -31,3 +31,77 @@ doing more GC.
 
 Looks like I had these thoughts before. See thoughts/fble-0.0/fble.gc.txt. In
 that case I concluded we should start by optimizing Retain/Release calls.
+
+---
+
+Simple idea for improving GC performance:
+
+Whenever we allocate an object, the first thing we do is try to free a couple
+other objects. How about, if we find a free object that is big enough (size of
+objects is tracked in FbleAlloc, we could expose that), then reuse that object
+instead of freeing it followed immediately by an allocation.
+
+Today we try to free 2 objects. The goal is to do a constant amount of work
+for each allocation. 2 objects is the minimum required by the theory. What are
+the odds we find a big enough object if we only check 2? Should we check more
+than 2?
+
+I'm curious. I kind of want to try this out and see what happens. We have a
+couple of relevant benchmarks, right? Maybe try as a one-off?
+
+For example:
+
+time ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld
+../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+real    0m32.346s
+
+After:
+
+real    0m32.955s
+
+So, doesn't really help any?
+
+I don't get it. That doesn't make sense to me. Shouldn't that have made a big
+difference? How can I measure it's effectiveness?
+
+Number of saves versus allocs:
+  4,340,176 / 6,748,217
+
+That suggests we save around a third of all allocations. That seems pretty
+good. So why doesn't it help performance any?
+
+The number of calls to FbleRawAlloc goes down when we save, but the total time
+spent there goes up.
+
+**      975     3687      140  FbleRawAlloc[001c] ** (with saves)
+**     1112     3544      209  FbleRawAlloc[001e] ** (without saves)
+
+        856     3531           malloc[0007]  (with saves)
+        939     3317           malloc[0007]  (without saves)
+
+        647     3558           _int_malloc[0008] (with saves)
+        644     3111           _int_malloc[0008] (without saves)
+
+Somehow _int_malloc is being called more often, even though there are fewer
+calls to malloc.
+
+What is _int_malloc? Can I see the source code somewhere?
+
+My guess is my optimization doesn't help because malloc does something similar
+under the covers: it reuses a recently freed memory allocation. The problem
+with my "optimization" is it has less efficient use of memory, meaning malloc
+has to do more work to find the available memory.
+
+Let me try one more thing: check for Size equals.
+
+Still doesn't help. Perhaps the time cost of malloc is related to the max
+memory use of a run.
+
+Anyway, it's pretty clear we don't want to take this optimization.
+
+Random idea: what if our allocations were smaller? Like, I don't need to keep
+track of size for example. How much can we save performance wise if all our
+allocations are smaller?
+
+Not really any difference.
+

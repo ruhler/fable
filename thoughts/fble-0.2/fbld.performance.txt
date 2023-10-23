@@ -179,3 +179,43 @@ Alternative approach works great. Very minimal changes required.
 
 Also note: avoiding return of errors was only maybe half the 30% improvement.
 The other half was using GetL for String instead of Get and Loc.
+
+Here's where we are at now:
+
+time ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/config.fbld
+./fbld/version.fbld ../fbld/man.fbld ../fbld/dc.man.fbld
+./include/fble/FbleEval.3.fbld
+real    0m1.129s
+
+
+I still see a fair bit of time going into allocations.
+
+         15       15           FbleNewLiteralValue[007a]
+        107      116           FbleNewUnionValue[0019]
+        167      183           FbleNewStructValue[001d]
+        220      246           FbleNewFuncValue[0013]
+**      516      567        7  FbleNewHeapObject[0014] **
+
+Upping the frequency of collection to max:
+
+         85      114           _2f_Fbld_2f_Parse_2f_M_25__2e_Return_21_.0026[003
+        109      129           _2f_Fbld_2f_Parse_2f_M_25__2e_Do_21__21_.0032[003
+        127      139           _2f_Fbld_2f_Parse_2f_M_25__2e_Do_21_.0030[0046]
+**      740      937       51  FbleNewFuncValue[0013] **
+
+
+Do these function allocations make sense? Any way to avoid them? Let's start
+with Return.
+
+Yeah. That makes sense. Not sure what I could do about that. M@ is a function.
+Return allocates an M@ based on the provided argument. Each time you call
+Return, you'll get a new function back.
+
+The only thing I could think is if we do, like Return(Unit) a lot, we could
+factor that out.
+
+Get is defined as GetL + Do + Return. We could inline to avoid things there?
+
+Could we improve the garbage collector? Like, manage memory ourselves to avoid
+repeated malloc/free?
+

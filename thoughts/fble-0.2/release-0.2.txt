@@ -22,3 +22,25 @@ if I try to do them all at once.
 My vote is: get some work in on sat, and think about fbld in the background.
 Worry about png, floating point, and hardware language something or other
 later.
+
+---
+
+We've come far enough now I think it's time to focus on getting the next
+release out. In particular, this release has a lot of work done on the sat
+solver and fbld applications in fble. The main fble language improvements are
+performance, struct copy, and stack size.
+
+There's a long way to go to clean up loose ends to get the release out. All
+the more reason to switch focus on release instead of thinking about new
+topics.
+
+Documentation is the biggest thing. Getting parity with what we had before we
+replaced the fbld implementation:
+
+* Rewrite the fbld spec.
+* Fix issues with generated documentation.
+* Support for syntax highlighting.
+ - Which may want improvements to html escaping.
+
+
+
