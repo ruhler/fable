@@ -30,8 +30,10 @@
 % Unknown = /Fbld/Loc%.Unknown;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
+@ Error@ = /Fbld/Result%.Error@;
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
+<@>% UnknownErr = /Fbld/Result%.UnknownErr;
 
 @ Text@ = /Fbld/Text%.Text@;
 
@@ -41,7 +43,7 @@
 @ S@ = List@<CharL@>;
 
 # R@ - Reader for parser monad.
-@ R@ = *(S@ s, Int@ indent);
+@ R@ = *(S@ s, Int@ indent, Bool@ report_errors);
 
 # State monad for parser monad.
 <@>@ SM@ = <@ T@> { *(S@ s, T@ x); };
@@ -56,9 +58,11 @@ Return = <@ T@>(T@ x)(R@ r) {
 };
 
 # Report a parse error.
-<@ T@>(Loc@, String@) { M@<T@>; }
-Error = <@ T@>(Loc@ l, String@ msg)(R@ _) {
-  Err<SM@<T@>>(l, msg);
+<@ T@>((Unit@) { Text@; }) { M@<T@>; }
+Error = <@ T@>((Unit@) { Text@; } f)(R@ r) {
+  r.report_errors.?(
+    true: /Fbld/Result%.Error<SM@<T@>>(Error@(message: f(Unit))),
+    false: UnknownErr<SM@<T@>>);
 };
 
 # Monadic Do for the parser monad.
@@ -93,7 +97,7 @@ M@<CharL@> GetL_ = (R@ r) {
 # return Nothing.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
 Try = <@ T@>(M@<T@> mx)(R@ r) {
-  Result@<SM@<T@>> rx = mx(r);
+  Result@<SM@<T@>> rx = mx(r.@(report_errors: False));
   rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
   Ok(SM@(rx.ok.s, Just(rx.ok.x)));
 };
@@ -102,7 +106,7 @@ Try = <@ T@>(M@<T@> mx)(R@ r) {
 # input.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
 Test = <@ T@>(M@<T@> mx)(R@ r) {
-  Result@<SM@<T@>> rx = mx(r);
+  Result@<SM@<T@>> rx = mx(r.@(report_errors: False));
   rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
   Ok(SM@(r.s, Just(rx.ok.x)));
 };
@@ -125,7 +129,7 @@ PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
-  Result@<SM@<T@>> r = m(R@(s, Int|0));
+  Result@<SM@<T@>> r = m(R@(s, Int|0, True));
   r.?(err: /Fbld/Result%.Error<T@>(r.err));
   Ok(r.ok.x);
 };
@@ -140,7 +144,8 @@ M@<CharL@> GetL = {
   /Core/Int/Eq%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
     cl.c.?(' ': GetL);
-    Error<CharL@>(cl.l, Str|'end of indented block');
+    Unit@ _ <- Error<CharL@>;
+    Text@(cl.l, Str|'end of indented block');
   });
 
   Return(cl);
@@ -188,7 +193,8 @@ M@<Unit@> EndOfInput = {
   Loc@ l <- Do(Loc);
   Maybe@<Char@> mc <- Do(Test(Get));
   mc.?(nothing: Return(Unit));
-  Error<Unit@>(l, Str|'expected end of input');
+  Unit@ _ <- Error<Unit@>;
+  Text@(l, Str|'expected end of input');
 };
 
 # Parse a specific string from the input stream. Fails if the input string
@@ -196,12 +202,13 @@ M@<Unit@> EndOfInput = {
 (String@) { M@<Unit@>; }
 String = (String@ s) {
   s.?(nil: Return(Unit));
-  Loc@ loc <- Do(Loc);
-  Char@ c <- Do(Get);
-  /Core/Char/Eq%.Eq(s.cons.head, c).?(
+  CharL@ c <- Do(GetL);
+  /Core/Char/Eq%.Eq(s.cons.head, c.c).?(
     true: String(s.cons.tail),
-    false: Error<Unit@>(loc, Strs[
-      Str|'Expected ''', Str[s.cons.head], Str|'''']));
+    false: {
+      Unit@ _ <- Error<Unit@>;
+      Text@(c.l, Strs[ Str|'Expected ''', Str[s.cons.head], Str|'''']);
+    });
 };
 
 @(M@, CharL@,

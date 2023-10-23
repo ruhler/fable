@@ -172,3 +172,10 @@ Everything can work in both contexts efficiently.
 
 I like that idea. Let me save and back out my current changes and try that
 alternative approach.
+
+---
+
+Alternative approach works great. Very minimal changes required.
+
+Also note: avoiding return of errors was only maybe half the 30% improvement.
+The other half was using GetL for String instead of Get and Loc.

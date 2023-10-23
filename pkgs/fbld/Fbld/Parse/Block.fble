@@ -46,12 +46,15 @@
 % Name = /Fbld/Parse/Inline%.Name;
 % InlineArgs = /Fbld/Parse/Inline%.Args;
 
+@ Text@ = /Fbld/Text%.Text@;
+
 # Parses a blank line. Fails if we aren't at a blank line.
 M@<Unit@> BlankLine = {
   Loc@ l <- Do(Loc);
   Int@ indent <- Do(GetIndent);
   /Core/Int/Eq%.Lt(Incr(indent), l.col).?(true: {
-    Error<Unit@>(l, Str|'not a blank line');
+    Unit@ _ <- Error<Unit@>;
+    Text@(l, Str|'not a blank line');
   });
   String(StrE|'\n');
 };
@@ -96,7 +99,8 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
       Bool@ end <- Do(Test_(EndOfSameLine));
       end.?(true: Return(Unit));
       Loc@ l <- Do(Loc);
-      Error<Unit@>(l, Str|'not end of same line');
+      Unit@ _ <- Error<Unit@>;
+      Text@(l, Str|'not end of same line');
     }));
     Return(List[m]);
   });
@@ -150,7 +154,10 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 M@<Markup@> Command = {
   Loc@ l <- Do(Loc);
   String@ name <- Do(Name);
-  name.?(nil: Error<Markup@>(l, Str|'missing command name'));
+  name.?(nil: {
+    Unit@ _ <- Error<Markup@>;
+    Text@(l, Str|'missing command name');
+  });
 
   Args(l, name, Nil<Markup@>);
 },
