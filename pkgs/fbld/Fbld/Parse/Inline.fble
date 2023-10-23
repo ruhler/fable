@@ -17,6 +17,7 @@
 % Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
@@ -26,7 +27,6 @@
 % Append = /Fbld/Markup%.Append;
 
 <@>@ M@ = /Fbld/Parse/M%.M@;
-<@>@ M_@ = /Fbld/Parse/M%.M_@;
 @ CharL@ = /Fbld/Parse/M%.CharL@;
 <@>% Do = /Fbld/Parse/M%.Do;
 <@>% Return = /Fbld/Parse/M%.Return;
@@ -35,9 +35,8 @@
 <@>% Test = /Fbld/Parse/M%.Test;
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
-% Get_ = /Fbld/Parse/M%.Get_;
 % GetL = /Fbld/Parse/M%.GetL;
-% String_ = /Fbld/Parse/M%.String_;
+% String = /Fbld/Parse/M%.String;
 
 (Char@) { Bool@; } IsNameChar = (Char@ c) {
   c.?('_': True);
@@ -47,7 +46,7 @@
 # Parses a sequence of zero or more name characters from the start of the
 # string.
 M@<String@> Name = {
-  Maybe@<Char@> mc <- Do(Test(Get_));
+  Maybe@<Char@> mc <- Do(Test(Get));
   mc.?(nothing: Return(Str|''));
   IsNameChar(mc.just).?(false: Return(Str|''));
 
@@ -70,15 +69,20 @@ M@<String@> Literal = {
 # Parses a sequence of zero or more inline args.
 M@<List@<Markup@>> Args = {
   # RegularArg: [ ... ]
-  Bool@ regular <- Do(Try_(String_|'['));
+  Bool@ regular <- Do(Try_(String|'['));
   regular.?(true: {
-    Markup@ head <- Do(Inline(String_|']'));
+    M@<Unit@> end = {
+      CharL@ cl <- Do(GetL);
+      cl.c.?(']': Return(Unit));
+      Error<Unit@>(cl.l, Str|'Expected '']''');
+    };
+    Markup@ head <- Do(Inline(end));
     List@<Markup@> tail <- Do(Args);
     Return(Cons(head, tail));
   });
 
   # LiteralArg: { ... }
-  Bool@ literal <- Do(Try_(String_|'{'));
+  Bool@ literal <- Do(Try_(String|'{'));
   literal.?(true: {
     Loc@ l <- Do(Loc);
     String@ text <- Do(Literal);
@@ -102,7 +106,7 @@ M@<Markup@> Command = {
 
 # Helper function for Inline. Returns parsed markup as plain text followed by
 # the rest of the markup.
-(M_@<Unit@>) { M@<Markup_@>; } Inline_ = (M_@<Unit@> end) {
+(M@<Unit@>) { M@<Markup_@>; } Inline_ = (M@<Unit@> end) {
   Bool@ done <- Do(Try_(end));
   done.?(true: Return(@(plain: Str|'', markup: Empty)));
 
@@ -133,7 +137,7 @@ M@<Markup@> Command = {
 # Parses inline text.
 #
 # @arg[end] - Something that parses the end of the inline text.
-(M_@<Unit@>) { M@<Markup@>; } Inline = (M_@<Unit@> end) {
+(M@<Unit@>) { M@<Markup@>; } Inline = (M@<Unit@> end) {
   Loc@ l <- Do(Loc);
   Markup_@ result <- Do(Inline_(end));
   result.plain.?(nil: Return(result.markup));

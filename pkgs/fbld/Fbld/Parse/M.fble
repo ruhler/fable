@@ -50,45 +50,16 @@
 # M@ - A parser monad.
 <@>@ M@ = <@ T@>(R@) { Result@<SM@<T@>>; };
 
-# M_@ - Variant on parser monad where we don't care about the error message.
-<@>@ M_@ = <@ T@>(R@) { Maybe@<SM@<T@>>; };
-
-<@ T@>(M_@<T@>) { M@<T@>; }
-M = <@ T@>(M_@<T@> m_)(R@ r) {
-  Maybe@<SM@<T@>> result = m_(r);
-  result.?(just: Ok(result.just));
-  Err<SM@<T@>>(Text(Unknown, Str|'unknown error'));
-};
-
-<@ T@>(M@<T@>) { M_@<T@>; }
-M_ = <@ T@>(M@<T@> m)(R@ r) {
-  Result@<SM@<T@>> result = m(r);
-  result.?(ok: Just(result.ok));
-  Nothing<SM@<T@>>;
-};
-
 # Return the given value.
 <@ T@>(T@) { M@<T@>; }
 Return = <@ T@>(T@ x)(R@ r) {
   Ok(SM@(r.s, x));
 };
 
-# Return the given value.
-<@ T@>(T@) { M_@<T@>; }
-Return_ = <@ T@>(T@ x)(R@ r) {
-  Just(SM@(r.s, x));
-};
-
 # Report a parse error.
 <@ T@>(Loc@, String@) { M@<T@>; }
 Error = <@ T@>(Loc@ l, String@ msg)(R@ _) {
   Err<SM@<T@>>(Text(l, msg));
-};
-
-# A parse error.
-<@ T@> { M_@<T@>; }
-Error_ = <@ T@>(R@ _) {
-  Nothing<SM@<T@>>;
 };
 
 # Monadic Do for the parser monad.
@@ -99,38 +70,17 @@ Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
   f(ra.ok.x)(r.@(s: ra.ok.s));
 };
 
-# Monadic Do for the parser monad.
-<@ A@>(M_@<A@>)<@ B@>((A@) { M_@<B@>; }) { M_@<B@>; }
-Do_ = <@ A@>(M_@<A@> ma)<@ B@>((A@) { M_@<B@>; } f)(R@ r) {
-  Maybe@<SM@<A@>> ra = ma(r);
-  ra.?(nothing: Nothing<SM@<B@>>);
-  f(ra.just.x)(r.@(s: ra.just.s));
-};
-
 # Returns the current indent level.
 M@<Int@> GetIndent = (R@ r) {
   Ok(SM@(r.s, r.indent));
 };
 
-# Returns the current indent level.
-M_@<Int@> GetIndent_ = (R@ r) {
-  Just(SM@(r.s, r.indent));
-};
-
 # Gets the next character in the input stream, advancing the parser state as
 # appropriate. Fails if there are no more characters in the input stream.
-M@<CharL@> GetLRaw = (R@ r) {
+M@<CharL@> GetL_ = (R@ r) {
   List@<CharL@> in = r.s;
   in.?(nil: Err<SM@<CharL@>>(Text(Unknown, Str|'unexpected end of input')));
   Ok(SM@(in.cons.tail, in.cons.head));
-};
-
-# Gets the next character in the input stream, advancing the parser state as
-# appropriate. Fails if there are no more characters in the input stream.
-M_@<CharL@> GetLRaw_ = (R@ r) {
-  List@<CharL@> in = r.s;
-  in.?(nil: Nothing<SM@<CharL@>>);
-  Just(SM@(in.cons.tail, in.cons.head));
 };
 
 # Parse an indented block of text.
@@ -142,36 +92,20 @@ M_@<CharL@> GetLRaw_ = (R@ r) {
   
 # Try running a parser. If it succeeds, return the parsed value. If it fails,
 # return Nothing.
-<@ T@>(M_@<T@>) { M@<Maybe@<T@>>; }
-Try = <@ T@>(M_@<T@> mx)(R@ r) {
-  Maybe@<SM@<T@>> rx = mx(r);
-  rx.?(nothing: Ok(SM@(r.s, Nothing<T@>)));
-  Ok(SM@(rx.just.s, Just(rx.just.x)));
-};
-
-# Try running a parser. If it succeeds, return the parsed value. If it fails,
-# return Nothing.
-<@ T@>(M_@<T@>) { M_@<Maybe@<T@>>; }
-_Try = <@ T@>(M_@<T@> mx)(R@ r) {
-  Maybe@<SM@<T@>> rx = mx(r);
-  rx.?(nothing: Just(SM@(r.s, Nothing<T@>)));
-  Just(SM@(rx.just.s, Just(rx.just.x)));
+<@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
+Try = <@ T@>(M@<T@> mx)(R@ r) {
+  Result@<SM@<T@>> rx = mx(r);
+  rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
+  Ok(SM@(rx.ok.s, Just(rx.ok.x)));
 };
 
 # Test if a parser would match at the current position, without consuming any
 # input.
-<@ T@>(M_@<T@>) { M@<Maybe@<T@>>; }
-Test = <@ T@>(M_@<T@> mx)(R@ r) {
-  Maybe@<SM@<T@>> rx = mx(r);
-  rx.?(nothing: Ok(SM@(r.s, Nothing<T@>)));
-  Ok(SM@(r.s, Just(rx.just.x)));
-};
-
-<@ T@>(M_@<T@>) { M_@<Maybe@<T@>>; }
-_Test = <@ T@>(M_@<T@> mx)(R@ r) {
-  Maybe@<SM@<T@>> rx = mx(r);
-  rx.?(nothing: Just(SM@(r.s, Nothing<T@>)));
-  Just(SM@(r.s, Just(rx.just.x)));
+<@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
+Test = <@ T@>(M@<T@> mx)(R@ r) {
+  Result@<SM@<T@>> rx = mx(r);
+  rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
+  Ok(SM@(r.s, Just(rx.ok.x)));
 };
 
 (Loc@, String@, List@<CharL@>) { List@<CharL@>; }
@@ -201,7 +135,7 @@ Run = <@ T@>(M@<T@> m, List@<Text@> input) {
 # appropriate. Fails if there are no more characters in the input stream.
 # Takes account of the current indent level.
 M@<CharL@> GetL = {
-  CharL@ cl <- Do(GetLRaw);
+  CharL@ cl <- Do(GetL_);
   Int@ indent <- Do(GetIndent);
 
   /Core/Int/Eq%.Le(cl.l.col, indent).?(true: {
@@ -213,32 +147,10 @@ M@<CharL@> GetL = {
   Return(cl);
 };
 
-# Gets the next character in the input stream, advancing the parser state as
-# appropriate. Fails if there are no more characters in the input stream.
-# Takes account of the current indent level.
-M_@<CharL@> GetL_ = {
-  CharL@ cl <- Do_(GetLRaw_);
-  Int@ indent <- Do_(GetIndent_);
-
-  /Core/Int/Eq%.Le(cl.l.col, indent).?(true: {
-    IsNewline(cl.c).?(true: Return_(cl));
-    cl.c.?(' ': GetL_);
-    Error_<CharL@>;
-  });
-
-  Return_(cl);
-};
-
 # Returns the location of the next input character.
 M@<Loc@> Loc = {
-  Maybe@<CharL@> mc <- Do(Test(GetL_));
+  Maybe@<CharL@> mc <- Do(Test(GetL));
   Return(mc.?(just: mc.just.l, nothing: Unknown));
-};
-
-# Returns the location of the next input character.
-M_@<Loc@> Loc_ = {
-  Maybe@<CharL@> mc <- Do_(_Test(GetL_));
-  Return_(mc.?(just: mc.just.l, nothing: Unknown));
 };
 
 # Gets the next character in the input stream, advancing the parser state as
@@ -248,72 +160,36 @@ M@<Char@> Get = {
   Return(cl.c);
 };
 
-M_@<Char@> Get_ = {
-  CharL@ cl <- Do_(GetL_);
-  Return_(cl.c);
-};
-
 # Same as Try, but discards the result of a successful match.
-<@ T@>(M_@<T@>) { M@<Bool@>; }
-Try_ = <@ T@>(M_@<T@> mx) {
+<@ T@>(M@<T@>) { M@<Bool@>; }
+Try_ = <@ T@>(M@<T@> mx) {
   Maybe@<T@> r <- Do(Try(mx));
   Return(r.?(just: True, nothing: False));
 };
 
-# Same as Try, but discards the result of a successful match.
-<@ T@>(M_@<T@>) { M_@<Bool@>; }
-_Try_ = <@ T@>(M_@<T@> mx) {
-  Maybe@<T@> r <- Do_(_Try(mx));
-  Return_(r.?(just: True, nothing: False));
-};
-
 # Parses either of the given arguments, returning the result of the first to
 # pass. Fails if both parsers fails.
-(M_@<Unit@>, M@<Unit@>) { M@<Unit@>; }
-Or = (M_@<Unit@> ma, M@<Unit@> mb) {
+(M@<Unit@>, M@<Unit@>) { M@<Unit@>; }
+Or = (M@<Unit@> ma, M@<Unit@> mb) {
   Bool@ a <- Do(Try_(ma));
   a.?(true: Return(Unit));
   mb;
 };
 
-# Parses either of the given arguments, returning the result of the first to
-# pass. Fails if both parsers fails.
-(M_@<Unit@>, M_@<Unit@>) { M_@<Unit@>; }
-Or_ = (M_@<Unit@> ma, M_@<Unit@> mb) {
-  Bool@ a <- Do_(_Try_(ma));
-  a.?(true: Return_(Unit));
-  mb;
-};
-
 # Test if a parser would match at the current position, without consuming any
 # input, and ignoring the result of parsing.
-<@ T@>(M_@<T@>) { M@<Bool@>; }
-Test_ = <@ T@>(M_@<T@> mx) {
+<@ T@>(M@<T@>) { M@<Bool@>; }
+Test_ = <@ T@>(M@<T@> mx) {
   Maybe@<T@> r <- Do(Test(mx));
   Return(r.?(just: True, nothing: False));
-};
-
-# Test if a parser would match at the current position, without consuming any
-# input, and ignoring the result of parsing.
-<@ T@>(M_@<T@>) { M_@<Bool@>; }
-_Test_ = <@ T@>(M_@<T@> mx) {
-  Maybe@<T@> r <- Do_(_Test(mx));
-  Return_(r.?(just: True, nothing: False));
 };
 
 # Parse end of input. Fails if we have not reached the end of the input.
 M@<Unit@> EndOfInput = {
   Loc@ l <- Do(Loc);
-  Maybe@<Char@> mc <- Do(Test(Get_));
+  Maybe@<Char@> mc <- Do(Test(Get));
   mc.?(nothing: Return(Unit));
   Error<Unit@>(l, Str|'expected end of input');
-};
-
-# Parse end of input. Fails if we have not reached the end of the input.
-M_@<Unit@> EndOfInput_ = {
-  Maybe@<Char@> mc <- Do_(_Test(Get_));
-  mc.?(nothing: Return_(Unit));
-  Error_<Unit@>;
 };
 
 # Parse a specific string from the input stream. Fails if the input string
@@ -321,29 +197,15 @@ M_@<Unit@> EndOfInput_ = {
 (String@) { M@<Unit@>; }
 String = (String@ s) {
   s.?(nil: Return(Unit));
-  CharL@ c <- Do(GetL);
-  /Core/Char/Eq%.Eq(s.cons.head, c.c).?(
+  Loc@ loc <- Do(Loc);
+  Char@ c <- Do(Get);
+  /Core/Char/Eq%.Eq(s.cons.head, c).?(
     true: String(s.cons.tail),
-    false: Error<Unit@>(c.l, Strs[
+    false: Error<Unit@>(loc, Strs[
       Str|'Expected ''', Str[s.cons.head], Str|'''']));
 };
 
-# Parse a specific string from the input stream. Fails if the input string
-# does not match that string.
-(String@) { M_@<Unit@>; }
-String_ = (String@ s) {
-  s.?(nil: Return_(Unit));
-  CharL@ c <- Do_(GetL_);
-  /Core/Char/Eq%.Eq(s.cons.head, c.c).?(
-    true: String_(s.cons.tail),
-    false: Error_<Unit@>);
-};
-
-@(
-  M@, CharL@,
+@(M@, CharL@,
   Return, Error, Do, Loc, Get, GetL, GetIndent, EndOfInput, Indented,
   Try, Try_, Test, Test_, Or, String,
-  Run,
-  M_@, M, M_, Error_, Do_, Return_, Or_, Get_, String_, Loc_, GetIndent_,
-  EndOfInput_, _Try_, _Test_
-);
+  Run);
