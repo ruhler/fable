@@ -105,3 +105,47 @@ allocations are smaller?
 
 Not really any difference.
 
+---
+
+Next idea: one thing I see from perf profiling is, in this case 13% time in
+MarkRef, where the most common sample is from doing this->heap->from_space. We
+could avoid the back to back load if we passed heap directly as an argument
+instead of via the call back struct.
+
+What's more, it looks like MarkRef is the only heap callback we use. In that
+case, how about we let heap->refs call it directly? We can pass FbleHeap*
+directly to refs and ask for it to call a publically exposed FbleHeapMarkRef
+function, passing the heap and object as arguments.
+
+Surely that would be simpler and cleaner and faster. Maybe not a whole lot
+faster. But if it's simpler and cleaner and faster, why not do it?
+
+I like this idea. I suspect only small performance improvements. It might be
+worth getting a couple longer benchmarks in place to see what impact it has on
+performance. Say something from md5, sat, and fbld?
+
+---
+
+time ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld
+../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+real    0m32.475s
+
+time yes | head -n 60000 | ./pkgs/md5/fble-md5
+real    0m55.782s
+
+time ./pkgs/sat/fble-sat < ../pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+real    1m7.493s
+
+
+Let's be honest here. Perf profiling shows 13% time in MarkRefs, half of that
+on the load after the load. Realistically we can't expect to improve overall
+runtime by more 7%. More likely it's not more than 3% or 4%.
+
+The results:
+
+fbld: 32s ==> 32s
+md5:  56s ==> 54s
+sat:  67s ==> 66s
+
+Oh well.
+

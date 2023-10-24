@@ -177,8 +177,8 @@ typedef struct {
 FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 
 static void OnFree(FbleValueHeap* heap, FbleValue* value);
-static void Ref(FbleHeapCallback* callback, FbleValue* value);
-static void Refs(FbleHeapCallback* callback, FbleValue* value);
+static void Ref(FbleHeap* heap, FbleValue* value);
+static void Refs(FbleHeap* heap, FbleValue* value);
 
 static size_t PackedValueLength(intptr_t data);
 
@@ -186,7 +186,7 @@ static size_t PackedValueLength(intptr_t data);
 FbleValueHeap* FbleNewValueHeap()
 {
   return FbleNewHeap(
-      (void (*)(FbleHeapCallback*, void*))&Refs,
+      (void (*)(FbleHeap*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
 }
 
@@ -281,18 +281,18 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 /**
  * Helper function for implementing Refs.
  *
- * Calls the callback if the value is not NULL.
+ * Calls FbleHeapRef if the value is not NULL.
  *
- * @param callback  The refs callback.
+ * @param heap  The heap.
  * @param value  The value to add.
  *
  * @sideeffects
- *   If value is non-NULL, the callback is called for it.
+ *   If value is non-NULL, FbleHeapRef is called for it.
  */
-static void Ref(FbleHeapCallback* callback, FbleValue* value)
+static void Ref(FbleHeap* heap, FbleValue* value)
 {
   if (!PACKED(value) && value != NULL) {
-    callback->callback(callback, value);
+    FbleHeapRef(heap, value);
   }
 }
 
@@ -301,21 +301,19 @@ static void Ref(FbleHeapCallback* callback, FbleValue* value)
  *
  * See documentation of refs in heap.h.
  *
- * @param callback  Callback to call for each object referenced by obj
+ * @param heap  The heap.
  * @param value  The value whose references to traverse
  *   
  * @sideeffects
- * * Calls the callback function for each object referenced by obj. If the
- *   same object is referenced multiple times by obj, the callback is
- *   called once for each time the object is referenced by obj.
+ * * Calls FbleHeapRef for each object referenced by obj.
  */
-static void Refs(FbleHeapCallback* callback, FbleValue* value)
+static void Refs(FbleHeap* heap, FbleValue* value)
 {
   switch (value->tag) {
     case DATA_TYPE_VALUE: {
       DataTypeValue* t = (DataTypeValue*)value;
       for (size_t i = 0; i < t->fieldc; ++i) {
-        Ref(callback, t->fields[i]);
+        Ref(heap, t->fields[i]);
       }
       break;
     }
@@ -323,28 +321,28 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
-        Ref(callback, sv->fields[i]);
+        Ref(heap, sv->fields[i]);
       }
       break;
     }
 
     case UNION_VALUE: {
       UnionValue* uv = (UnionValue*)value;
-      Ref(callback, uv->arg);
+      Ref(heap, uv->arg);
       break;
     }
 
     case FUNC_VALUE: {
       FuncValue* v = (FuncValue*)value;
       for (size_t i = 0; i < v->executable->num_statics; ++i) {
-        Ref(callback, v->statics[i]);
+        Ref(heap, v->statics[i]);
       }
       break;
     }
 
     case REF_VALUE: {
       RefValue* v = (RefValue*)value;
-      Ref(callback, v->value);
+      Ref(heap, v->value);
       break;
     }
   }

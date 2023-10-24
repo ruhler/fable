@@ -91,7 +91,7 @@ typedef struct Obj {
  */
 struct FbleHeap {
   /** The refs callback to traverse reference from an object. */
-  void (*refs)(FbleHeapCallback* callback, void* obj);
+  void (*refs)(FbleHeap* heap, void* obj);
 
   /** The on_free callback to indicate an object has been freed. */
   void (*on_free)(FbleHeap* heap, void* obj);
@@ -107,63 +107,7 @@ struct FbleHeap {
   Space from_space;   /**< Which space, A or B, is currently the "from" space. */
 };
 
-static void MarkRefs(FbleHeap* heap, Obj* obj);
 static bool IncrGc(FbleHeap* heap);
-
-/** Callback for MarkRef function. */
-typedef struct {
-  FbleHeapCallback _base;   /**< FbleHeapCallback Base class. */
-  FbleHeap* heap;           /**< The heap. */
-} MarkRefsCallback;
-
-/**
- * Visits an object's references for the purpose of marking.
- *
- * @param this  The callback info.
- * @param obj_  The object to visit.
- *
- * @sideeffects
- *   Marks the visited references, moving them to the pending space if
- *   appropriate.
- */
-static void MarkRef(MarkRefsCallback* this, void* obj_)
-{
-  Obj* obj = ToObj(obj_);
-  FbleHeap* heap = this->heap;
-
-  // Move "from" space objects to pending.
-  if (obj->space == heap->from_space) {
-    obj->space = PENDING;
-    if (obj->refcount == 0) {
-      // Non-root objects move to pending.
-      obj->prev->next = obj->next;
-      obj->next->prev = obj->prev;
-      obj->next = heap->pending->next;
-      obj->prev = heap->pending;
-      heap->pending->next->prev = obj;
-      heap->pending->next = obj;
-    }
-  }
-}
-
-/**
- * Visits the references from the given object for the purposes of marking.
- *
- * @param heap  The heap.
- * @param obj  The object to visit.
- *
- * @sideeffects
- *   Marks the visited references, moving them to the pending space if
- *   appropriate.
- */
-static void MarkRefs(FbleHeap* heap, Obj* obj)
-{
-  MarkRefsCallback callback = {
-    ._base = { .callback = (void(*)(FbleHeapCallback*, void*))&MarkRef },
-    .heap = heap
-  };
-  heap->refs(&callback._base, obj->obj);
-}
 
 /**
  * Does an incremental amount of GC work.
@@ -213,7 +157,7 @@ static bool IncrGc(FbleHeap* heap)
     obj->space = heap->to_space;
     heap->to->next->prev = obj;
     heap->to->next = obj;
-    MarkRefs(heap, obj);
+    heap->refs(heap, obj->obj);
   } else if (heap->roots_from->next != heap->roots_from) {
     Obj* obj = heap->roots_from->next;
     obj->prev->next = obj->next;
@@ -223,7 +167,7 @@ static bool IncrGc(FbleHeap* heap)
     obj->space = heap->to_space;
     heap->roots_to->next->prev = obj;
     heap->roots_to->next = obj;
-    MarkRefs(heap, obj);
+    heap->refs(heap, obj->obj);
   }
 
   // If we are done with gc, start a new GC by swapping from and to spaces.
@@ -274,7 +218,7 @@ static bool IncrGc(FbleHeap* heap)
 
 // See documentation in heap.h.
 FbleHeap* FbleNewHeap(
-    void (*refs)(FbleHeapCallback* callback, void* obj),
+    void (*refs)(FbleHeap* heap, void* obj),
     void (*on_free)(FbleHeap* heap, void* obj))
 {
   FbleHeap* heap = FbleAlloc(FbleHeap);
@@ -420,6 +364,26 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
       dst->prev = heap->pending;
       heap->pending->next->prev = dst;
       heap->pending->next = dst;
+    }
+  }
+}
+
+// See documentation in heap.h
+void FbleHeapRef(FbleHeap* heap, void* obj_)
+{
+  Obj* obj = ToObj(obj_);
+
+  // Move "from" space objects to pending.
+  if (obj->space == heap->from_space) {
+    obj->space = PENDING;
+    if (obj->refcount == 0) {
+      // Non-root objects move to pending.
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      obj->next = heap->pending->next;
+      obj->prev = heap->pending;
+      heap->pending->next->prev = obj;
+      heap->pending->next = obj;
     }
   }
 }

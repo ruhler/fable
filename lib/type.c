@@ -38,8 +38,8 @@ typedef struct TypePairs {
 
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
 
-static void Ref(FbleHeapCallback* callback, FbleType* type);
-static void Refs(FbleHeapCallback* callback, FbleType* type);
+static void Ref(FbleHeap* heap, FbleType* type);
+static void Refs(FbleHeap* heap, FbleType* type);
 static void OnFree(FbleTypeHeap* heap, FbleType* type);
 
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing);
@@ -99,16 +99,16 @@ static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
 /**
  * Helper function for traversing references.
  *
- * @param callback  The refs callback.
+ * @param heap  The heap.
  * @param type  The type to traverse.
  *
  * @sideeffects
- *   If type is not null, the callback is called on it.
+ *   If type is not null, calls FbleHeapRef on the type.
  */
-static void Ref(FbleHeapCallback* callback, FbleType* type)
+static void Ref(FbleHeap* heap, FbleType* type)
 {
   if (type != NULL) {
-    callback->callback(callback, type);
+    FbleHeapRef(heap, type);
   }
 }
 
@@ -117,19 +117,19 @@ static void Ref(FbleHeapCallback* callback, FbleType* type)
  *
  * See documentation in heap.h.
  *
- * @param callback  Callback to call for each object referenced by obj
+ * @param heap  The heap.
  * @param type  The type whose references to traverse
  *   
  * @sideeffects
- *   Calls the callback function for each type referenced by 'type'.
+ *   Calls FbleHeapRef for each type referenced by 'type'.
  */
-static void Refs(FbleHeapCallback* callback, FbleType* type)
+static void Refs(FbleHeap* heap, FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
-        Ref(callback, dt->fields.xs[i].type);
+        Ref(heap, dt->fields.xs[i].type);
       }
       break;
     }
@@ -137,23 +137,23 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        Ref(callback, ft->args.xs[i]);
+        Ref(heap, ft->args.xs[i]);
       }
-      Ref(callback, ft->rtype);
+      Ref(heap, ft->rtype);
       break;
     }
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      Ref(callback, pt->arg);
-      Ref(callback, pt->body);
+      Ref(heap, pt->arg);
+      Ref(heap, pt->body);
       break;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      Ref(callback, pat->poly);
-      Ref(callback, pat->arg);
+      Ref(heap, pat->poly);
+      Ref(heap, pat->arg);
       break;
     }
 
@@ -161,20 +161,20 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      Ref(callback, &abs->package->_base);
-      Ref(callback, abs->type);
+      Ref(heap, &abs->package->_base);
+      Ref(heap, abs->type);
       break;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      Ref(callback, var->value);
+      Ref(heap, var->value);
       break;
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* t = (FbleTypeType*)type;
-      Ref(callback, t->type);
+      Ref(heap, t->type);
       break;
     }
   }
@@ -953,7 +953,7 @@ void FblePrintKind(FbleKind* kind)
 FbleTypeHeap* FbleNewTypeHeap()
 {
   return FbleNewHeap(
-      (void (*)(FbleHeapCallback*, void*))&Refs,
+      (void (*)(FbleHeap*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
 }
 

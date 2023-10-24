@@ -9,25 +9,6 @@
 #include <sys/types.h>  // for size_t
 
 /**
- * Callback function used when traversing objects on a heap.
- *
- * This is intended to be used as a base class for custom callback functions
- * that require additional user arguments.
- */
-typedef struct FbleHeapCallback {
-  /**
-   * Generic callback function.
-   *
-   * @param this  This FbleHeapCallback instance.
-   * @param obj  The heap object being visited in the traversal.
-   *
-   * @sideeffects
-   *   Anything that will not interfere with the traversal operation.
-   */
-  void (*callback)(struct FbleHeapCallback* this, void* obj);
-} FbleHeapCallback;
-
-/**
  * Heap of objects managed by the garbage collector.
  *
  * Objects are allocated on a heap. They can have references to other objects
@@ -54,16 +35,18 @@ FbleHeap* FbleNewHeap(
      *
      * This function will be called by the garbage collector as needed to
      * traverse objects on the heap.
+     *
      *   
-     * param callback  Callback to call for each object referenced by obj
+     * param heap This heap.
      * param obj  The object whose references to traverse
      *   
      * sideeffects
-     *   Calls the callback function for each object referenced by obj. If the
-     *   same object is referenced multiple times by obj, the callback is
-     *   called once for each time the object is referenced by obj.
+     *   The implementation of this function should call FbleHeapRef on
+     *   each object referenced by obj. If the same object is referenced
+     *   multiple times by obj, the callback is called once for each time the
+     *   object is referenced by obj.
      */
-    void (*refs)(FbleHeapCallback* callback, void* obj),
+    void (*refs)(FbleHeap* heap, void* obj),
 
     /**
      * User supplied function called when an object is freed.
@@ -72,7 +55,7 @@ FbleHeap* FbleNewHeap(
      * collector has determined it is done with the object, just before
      * freeing the underlying memory for the object.
      * 
-     * param heap  The heap.
+     * param heap  This heap.
      * param obj  The object being freed.
      * 
      * sideeffects
@@ -162,6 +145,17 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj);
  *   is retained.
  */
 void FbleHeapObjectAddRef(FbleHeap* heap, void* src, void* dst);
+
+/**
+ * Notifies the heap of a reference to an object.
+ *
+ * @param heap This heap.
+ * @param obj  An object that is referenced from somewhere.
+ *
+ * @sideeffects
+ *  Does internal heap bookkeeping of the reference to the object.
+ */
+void FbleHeapRef(FbleHeap* heap, void* obj);
 
 /**
  * Does a full GC.
