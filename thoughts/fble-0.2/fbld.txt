@@ -5439,4 +5439,37 @@ fbld.escape.txt
 
 And so on.
 
+---
+
+How to organize the new fbld spec?
+
+Intro is fine as is. Things I want after that, in no particular order:
+
+* Introduction
+* Abstract syntax.
+* Concrete syntax.
+  - Escape sequences
+  - Inline: examples and details
+  - Block: examples and details
+* Evaluation.
+* Builtin commands.
+* Concrete example.
+  - Of user documentation.
+  - Of backend?
+* Todo section.
+
+What order makes sense here? How about:
+
+1. Intro.
+2. Example mixing inline and block text, to refer to through rest of doc.
+3. Abstract syntax (document representation).
+4. Concrete Syntax.
+ a. Inline examples.
+ b. Block examples.
+ c. Lexical details (including escape characters).
+5. Backends: Invocation, Evaluation & Builtin commands.
+6. Todo: Open questions and things likely to change in future language
+   versions.
+
+Sounds like a reasonable first thing to try. Let's draft if up like that.
 

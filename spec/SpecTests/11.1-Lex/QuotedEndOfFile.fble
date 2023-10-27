@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 5:1
+
+# The quoted word never terminates.
+'unit

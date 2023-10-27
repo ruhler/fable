@@ -219,3 +219,29 @@ Get is defined as GetL + Do + Return. We could inline to avoid things there?
 Could we improve the garbage collector? Like, manage memory ourselves to avoid
 repeated malloc/free?
 
+---
+
+I tried manually removing FbleThreadCall from the perf profile for fbld. The
+results are pretty interesting:
+ 
+* 48% of time is in FbleNewHeapObject. We're spending half the time of the
+  program allocating new objects.
+* 47% of time is in Eval
+  - Map Lookup is a decent chunk of this.
+  - The rest mostly looks like fbld commands?
+* 39% of time is in Parse
+
+It's still pretty hard to figure out where the bulk of the time is going
+otherwise. The way we handle recursion makes things hard to tell. I almost
+wish, for cycles in the call graph, we bunch together everything in a cycle
+into one blob.
+
+That's two different ideas for how to make profiles more useful:
+1. Lump recursive cycles into a single block. So it's easier to see how much
+is self time through the cycle versus what the leaf times are.
+2. Lump function call-throughs like FbleThreadCall or Do with their callers.
+To preserve the relationship between caller and eventual callthrough callee.
+
+I don't have enough information to do this from the profiling output info. But
+I should have enough info to do it from the input to the profiler.
+

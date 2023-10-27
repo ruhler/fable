@@ -844,7 +844,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
   if (lex->c == '\'') {
     do {
       ReadNextChar(lex);
-      while (lex->c != '\'') {
+      while (lex->c != EOF && lex->c != '\'') {
         FbleVectorAppend(wordv, lex->c);
         ReadNextChar(lex);
       }

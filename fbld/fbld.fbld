@@ -76,6 +76,41 @@
    @definition doxygen
     @item Not generally extensible to things beyond code documentation.
 
+ @section Example
+  This section provides an example of fbld markup text which will be
+  referenced through the remainder of the fbld specification. It's a contrived
+  document explaining the risks of using malloc:
+
+  @code[fbld] @
+   @title Malloc Reminder
+
+   It's @emph[really] important to check the result of the @code[malloc]
+   function in C, in case it returns @NULL. See @link[the malloc man
+   page][https://manpages.org/malloc] for more details.
+
+   @section[The Risks of Malloc]
+    It's possible that @code[malloc] is unable to allocate memory. If that's
+    the case, it will return @NULL. If you try to access the returned pointer,
+    bad things can happen.
+
+    So you should always check the result of @code[malloc] for @NULL.
+
+   We have discussed that it's important to check the result of @code[malloc]
+   for @NULL.
+
+  Fbld documents are a mix of plain text and commands introduce with the @l{@}
+  character. The syntax and interpretation of these commands are described in
+  detail in the following sections.
+
+ @section Document Structure
+  Internally, fbld documents are represented as a mix of plain text and
+  commands.
+  
+  A command has a name and zero or more arguments. For example,
+  @l{@emph[really]} is a command with name @l[emph] and single argument
+  @l{really}. Arguments to commands are fbld markup which can themselves have
+  additional commands in them.
+
  @section Inline Structure
   Fbld interprets text as a sequence of commands to execute. The way fbld
   converts text into a sequence of commands depends on whether the text is
