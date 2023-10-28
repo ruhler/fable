@@ -468,6 +468,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   bool help = false;
   bool error = false;
   bool version = false;
+  bool fps = false;
 
   argc--;
   argv++;
@@ -476,6 +477,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--fps", &fps, &argc, &argv, &error)) continue;
     if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
@@ -626,10 +628,12 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, &world, profile);
 
-  fprintf(stderr, "FPS Histogram:\n");
-  for (size_t i = 0; i < 61; ++i) {
-    if (effect_exe->fpsHistogram[i] > 0) {
-      printf("  % 3zi: % 12i\n", i, effect_exe->fpsHistogram[i]);
+  if (fps) {
+    fprintf(stderr, "FPS Histogram:\n");
+    for (size_t i = 0; i < 61; ++i) {
+      if (effect_exe->fpsHistogram[i] > 0) {
+        printf("  % 3zi: % 12i\n", i, effect_exe->fpsHistogram[i]);
+      }
     }
   }
 

@@ -1,0 +1,10 @@
+Fble 0.3 TODO
+=============
+Things to consider doing for the fble-0.3 release.
+
+* Smten, and smten-based mnist classification.
+* IEEE floating point support.
+* Implement an image viewer.
+* Make programs run twice as fast.
+ - Implement function inlining?
+ - Implement packing of data types?

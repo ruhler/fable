@@ -2,12 +2,6 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
-* Update or remove fbld/fbld.lang
-
-* Why do spec tests depend on pkgs/fbld/fbld?
- - Can we break that cycle? Because it's annoying and a little strange to have
-   to rerun all the spec tests after changes to the fbld library.
-
 * Fbld Big:
  - Update fbld spec for new syntax.
  - Fix issues with generated documentation.
@@ -26,16 +20,21 @@ Things to consider doing for the fble-0.2 release.
    Other than adding a space character in front?
  - Allow multiple errors to be reported from a single run.
 
-* Document clearly somewhere I guide for doc comments.
+* Document clearly somewhere a guide for doc comments.
  - Including difference between @i and @j.
 
 * Remove extra space in front of synopsis for binaries.
- - Maybe wait until all the usage docs are in latest fbld syntax, then fix
-   this.
 
 * For bin/*.usage.h, can we check in the .txt output instead of the .h output?
   That way it's much easier to compare what's changed if the golden check
   fails.
+
+* Why do spec tests depend on pkgs/fbld/fbld?
+ - Can we break that cycle? Because it's annoying and a little strange to have
+   to rerun all the spec tests after changes to the fbld library.
+ - It's using fbld to generate the usage header for libfbletest.a, which is
+   used by all the test binaries.
+ - Need to decide what scope of dependencies we want to break here.
 
 * Review all the generated documentation, including usage help text.
   Since we've changed the fbld implementation.
@@ -47,6 +46,9 @@ Things to consider doing for the fble-0.2 release.
 * fbld vim syntax:
  - set tabstop/shiftwidth to single space?
  - Figure out how to make {...} only apply in argument context?
+
+* Update or remove fbld/fbld.lang
+
 
 * Update the rest of the tutorials with regards to smashing the stack. No need
   to write stack smashing safe tutorials anymore.
@@ -100,10 +102,6 @@ Things to consider doing for the fble-0.2 release.
    requires a strict value.
    And should it be that way?
 
-* In aarch64.c, change GetFrameVar to take rdst as a reg num instead
-  of string?
- - Seems like that would be a little cleaner?
-
 * Struct copy expr
  - Add spec tests.
  - Use it where possible. At least in sat to start.
@@ -133,13 +131,8 @@ Things to consider doing for the fble-0.2 release.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
 
-* Big things:
- - smten support.
-   And after smten, try doing smten-based mnist classification?
- - high score saved in invaders game.
- - write tutorials for C api.
- - write some serious new fble code.
-   image viewer? floating point?
+* high score saved in invaders game.
+* write tutorials for C api.
 
 * Update install tutorial to reference the release of fble on github, now that
   we'll have published fble-0.1 release there.
@@ -154,6 +147,8 @@ Things to consider doing for the fble-0.2 release.
 * Wrapping for 'Main Function' description in fble-compile.1 is less than
   desired.
 
+* Help output for fble-deps is less compact than desired.
+
 * Would be nice to have SEE ALSO section for library man pages.
 
 * Figure out a way so that "T" arguments in generated man pages don't have an
@@ -162,9 +157,6 @@ Things to consider doing for the fble-0.2 release.
 
 * For dc generated man pages, put synopsis all on one line if there is only a
   single argument?
-
-* Turn off FPS histogram for fble-app by default.
- - Add a command line argument to enable it if desired.
 
 * Check if all the fble-module-path.h functions really need to be public API.
 

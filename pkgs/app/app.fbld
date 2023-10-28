@@ -14,6 +14,9 @@
   @subsection Profiling Options
    @opt[@l[--profile] @a[FILE]]
     writes a profile of the test run to @a[FILE]
+
+  @subsection Other Options
+   @opt[@l[--fps]] reports frames per second histogram when done
  
  @exitstatus
   @def[0] Success.
@@ -21,5 +24,5 @@
   @def[2] Usage Error.
  
  @examples
-  @ex[fble-app -p core -p app -m /App/Demo%]
-   Launches the demo app.
+  @ex[fble-app -p core -p app -m /App/Demo% --fps]
+   Launches the demo app and reports FPS histogram when done.
