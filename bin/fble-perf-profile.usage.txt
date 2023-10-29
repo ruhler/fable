@@ -1,0 +1,51 @@
+fble-perf-profile - produces fble profile report for linux perf profile
+
+Usage: .sp ffbbllee--ppeerrff--pprrooffiillee [_O_P_T_I_O_N...]
+
+
+
+Produces an fble profile report for a linux perf profile passed on stdin.
+
+
+To collect perf data:
+
+
+
+perf record -F 997 -d -g <cmd>
+
+
+
+To report perf data:
+
+
+
+perf report -q -g folded,count,0 | fble-perf-profile
+
+
+
+The  output  ccoouunntt  field is mostly meaningless. It is the number of different
+sample traces the function appeared in.
+
+
+Generic Program Information:
+  --hh, ----hheellpp
+      display this help text and exit
+  --vv, ----vveerrssiioonn
+      display version information and exit
+
+
+Exit Status:
+  0
+      Success.
+  1
+      Failure.
+  2
+      Usage error.
+
+
+Examples:
+
+  ppeerrff rreeppoorrtt --qq --gg ffoollddeedd,,ccoouunntt,,00 || ffbbllee--ppeerrff--pprrooffiillee
+
+
+

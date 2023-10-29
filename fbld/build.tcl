@@ -28,14 +28,22 @@ namespace eval "fbld" {
   # @arg target - the name of the .h file to generate.
   # @arg source - the .fbld usage doc to generate the header from.
   # @arg id - the C identifier to declare in the generated header.
-  proc ::fbld_header_usage { target source id } {
+  # @arg golden - the name of a golden reference .txt file with the usage
+  #               text to generate.
+  #
+  # To avoid cyclic build dependencies, a golden file should be specified with
+  # usage header text. The golden file will be used to generated the header,
+  # and a test will be added that it matches what would have been generated
+  # from source.
+  proc ::fbld_header_usage { target source id golden } {
     build $target.roff \
       "$::b/pkgs/fbld/bin/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
       "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/bin/fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
     build $target.txt $target.roff \
       "GROFF_NO_SGR=1 groff -T ascii < $target.roff > $target.txt"
+    test $target.txt.tr "$target.txt $golden" "cmp $target.txt $golden"
     build $target \
-      "$::s/fbld/cdata.tcl $target.txt" \
-      "tclsh8.6 $::s/fbld/cdata.tcl $id < $target.txt > $target"
+      "$::s/fbld/cdata.tcl $golden" \
+      "tclsh8.6 $::s/fbld/cdata.tcl $id < $golden > $target"
   }
 }

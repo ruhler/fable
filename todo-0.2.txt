@@ -2,6 +2,8 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Remove ".sp" from usage help text synopsis.
+
 * Fbld Big:
  - Update fbld spec for new syntax.
  - Fix issues with generated documentation.
@@ -20,17 +22,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Document clearly somewhere a guide for doc comments.
  - Including difference between @i and @j.
-
-* For bin/*.usage.h, can we check in the .txt output instead of the .h output?
-  That way it's much easier to compare what's changed if the golden check
-  fails.
-
-* Why do spec tests depend on pkgs/fbld/fbld?
- - Can we break that cycle? Because it's annoying and a little strange to have
-   to rerun all the spec tests after changes to the fbld library.
- - It's using fbld to generate the usage header for libfbletest.a, which is
-   used by all the test binaries.
- - Need to decide what scope of dependencies we want to break here.
 
 * Review all the generated documentation, including usage help text.
   Since we've changed the fbld implementation.

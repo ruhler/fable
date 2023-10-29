@@ -1,12 +1,6 @@
 namespace eval "pkgs/core" {
-  # To avoid dependency cycles, we have golden values of the help usage text
-  # checked in. The checked in versions will need to be updated to match the
-  # generated versions if something changes. To update, run:
-  # for x in pkgs/core/*.usage.h ; do cp out/$x.gen $x; done
-  fbld_header_usage $::b/pkgs/core/stdio.usage.h.gen $::s/pkgs/core/stdio.fbld fbldUsageHelpText
-  test $::b/pkgs/core/stdio.usage.h.tr \
-    "$::s/pkgs/core/stdio.usage.h $::b/pkgs/core/stdio.usage.h.gen" \
-    "cmp $::s/pkgs/core/stdio.usage.h $::b/pkgs/core/stdio.usage.h.gen"
+  fbld_header_usage $::b/pkgs/core/stdio.usage.h $::s/pkgs/core/stdio.fbld \
+    fbldUsageHelpText $::s/pkgs/core/stdio.usage.txt
 
   # .c library files.
   set objs [list]
@@ -14,7 +8,7 @@ namespace eval "pkgs/core" {
     lappend objs $::b/pkgs/core/$x.o
     obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c \
       "-I $::s/include -I $::s/pkgs/core -I $::b/pkgs/core" \
-      $::s/pkgs/core/stdio.usage.h
+      $::b/pkgs/core/stdio.usage.h
   }
   pkg core [list] $objs
 
