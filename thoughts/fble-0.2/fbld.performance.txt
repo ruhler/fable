@@ -245,3 +245,173 @@ To preserve the relationship between caller and eventual callthrough callee.
 I don't have enough information to do this from the profiling output info. But
 I should have enough info to do it from the input to the profiler.
 
+---
+
+How much faster would parsing be if we didn't use monads? What would that even
+look like?
+
+M@<String@> Name = (R@ r) {
+  SM@<Maybe@<Char@>> s = Test(Get);
+  s.x.?(nothing: OK@(SM@(s.s, Str|'')));
+  IsNameChar(s.x.just).?(false: OK@(SM@(s.s, Str|'')));
+
+It could be kind of the same, except Return takes both arguments at the same
+time instead of separately. And we have to inline Do?
+
+What does the generated code look like for this? If we had some form of
+inlining in the compiler, could we avoid these function allocations? For
+example, if you allocate a function and then immediately apply it and then
+throw away the function, can you just inline the function body directly
+instead?
+
+Some interesting observations:
+
+* Take something like: Do(Test(Get)).
+  We call that once when defining Name. We don't call it every time we invoke
+  Name, which is great.
+* Take something like: Return(Str|'').
+  We call it every time we invoke name (if that branch is taken). We could
+  factor that out if we wanted and only end up calling it once. Only
+  allocating the function once.
+* Take something like: Do(Get), Do(Name). We call these repeatedly.
+
+In other words, there are a bunch of otherwise constant functions that we keep
+re-invoking over and over again.
+
+How much faster would it be if we factored out those calls? There's no need to
+keep calling the same things over and over again when we can share it.
+
+I'm curious if we can try and see what happens for something here. Actually,
+profiling shows not much likely to improve.
+
+Here's another observation for 'Do': The call to do takes two arguments, but
+split apart. The typical use of Do is with <- syntax, where we have the second
+argument available immediately. There's no need to allocate the intermediate
+function.
+
+Is there a reasonable way to make the bind syntax smarter here?
+
+Today the bind syntax is:
+
+ x <- f;
+ ...
+
+==>
+
+  f(\x -> ...)
+
+In case of Do, it looks something like:
+
+ x <- f(c);
+ ...
+
+==>
+
+ f(c)(\x -> ...)
+  
+Could we accept functions for <- syntax where we haven't provided enough
+arguments? Like, it's shy one argument?
+
+We would have to make the <- syntax part of the function application.
+
+ x <- f(a, b, ...)
+ ...
+
+==> f(a, b, ..., \x -> ...)
+
+From the parser's point of view, we have:
+
+ x <- <expr>
+ <stmt>
+
+There are a couple cases for <expr>:
+1. It is a function application short an argument.
+2. It returns a function that takes a single function.
+
+In the case of (1), the <expr> wouldn't be well formed.
+
+Should we require the argument to <- to be function application always? Do we
+ever use it a different way? Let me do a survey. And maybe also review where
+we came from.
+
+I don't see any explicit decision about this in past notes, though there is
+mention of it. Bind is intended to be syntactic sugar for function
+application. You'll always have the last argument available. In that case, it
+makes sense to me to supply multi-arg functions.
+
+Okay, so you have the choice.
+
+F takes one argument:
+
+x <- F;
+...
+
+F takes two arguments:
+x <- F(c);
+...
+
+Doesn't that make things ambiguous? We could know which is intended if we
+looked at the type of F. Only one will make sense. But today we don't have the
+type at the time we desugar the bind syntax.
+
+Here's an idea. What if we allowed over-application of functions in general?
+Not partial application, because that's hard. But overapplication.
+
+This could be more generally useful syntax. And it makes sense to me.
+
+Say F has type a -> (b -> c)
+
+Today we have to call it F(a)(b).
+
+What if we could call it F(a, b)? That means function application looks at the
+type of F, pulls as many arguments as it needs out. If not enough, that's an
+error. Any left over arguments it turns into a separate application. If the
+type doesn't work out, then you get an error.
+
+Then we could say function bind has two cases:
+
+1. f is function application: inject \x -> ... as an additional argument.
+2. otherwise: apply \x -> ...
+
+It's like adding a special case of what we already have. The important part
+being that that special case knows how to distinguish what's expected based on
+the type of 'f'.
+
+Let me do a survey today of use of '<-'. In what cases would injecting an
+additional argument in the case of function application not work?
+
+Every case will work today. It's almost exclusively done using a 'Do' function
+or equivalent. The only time I see 'f' not being function application is for
+Error<...>, where I want it to avoid evaluating the argument if unnecessary.
+
+What are more cases where it wouldn't be a function application <expr>?
+* Do(Get) ==> DoGet. As an attempt to optimize. Could be useful.
+* Maybe the glue is passed as an argument.
+* Struct access we see a lot: m.do(...), but that's still application.
+
+What are some cases where we don't want to require multiple args?
+* If the function is designed to be used for callbacks that expect arguments
+  to be split. We want to be able to split that function.
+* Worst case, you could always do:
+  (A@ a, B@ b) { f(a)(b); }
+  But that's pretty tedious syntax.
+
+I think this is worth seriously considering.
+
+Proposal:
+* Add support for over-application to functions.
+* Add special case for <- in <expr> is a function application to overapply.
+
+The rationale: For bind syntax, which is pretty common, avoids an extra
+function allocation.
+
+Maybe I want to do a hacky experiment to gauge how much impact this has on
+performance. We already distinguish between functions to functions and multi
+arg functions for performance. That sets precedent for special casing <- as
+well.
+
+Of course, if we are going this far, the question will be, how about
+supporting partial application too?
+
+See partial_application.txt. Sounds like we should support full partial
+application as part of this. But defer to fble-0.3.

@@ -107,9 +107,29 @@
   commands.
   
   A command has a name and zero or more arguments. For example,
+  @l{@NULL} is a command with name @l[NULL] and no arguments.
   @l{@emph[really]} is a command with name @l[emph] and single argument
-  @l{really}. Arguments to commands are fbld markup which can themselves have
+  @l{really}, and @l{@link[the malloc man page][https://manpages.org/malloc]}
+  is a command with name @l{link} and two arguments.
+  
+  Arguments to commands are fbld markup which can themselves have
   additional commands in them.
+
+  @subsection Abstract Syntax
+   Here's an abstract syntax for fbld document structure:
+
+   @code[text] @
+    Text ::= (* A string of plain text characters *)
+
+    Command ::=
+        command (name : Text) (args : [Markup])
+      ;
+
+    Markup ::=
+        plain (text : Text)
+      | command (command : Command)
+      | sequence (markups : [Markup])
+      ;
 
  @section Inline Structure
   Fbld interprets text as a sequence of commands to execute. The way fbld

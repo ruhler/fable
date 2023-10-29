@@ -7,4 +7,6 @@ if exists("b:did_indent")
 endif
 let b:did_indent = 1
 
+setlocal shiftwidth=1
+setlocal tabstop=1
 setlocal autoindent

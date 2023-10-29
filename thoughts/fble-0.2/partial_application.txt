@@ -1,0 +1,111 @@
+Partial Application
+===================
+Recent discussion in fbld.performance.txt suggests it would be nice to support
+over application of functions. For example:
+
+(Bool@)(Bool@) { Bool@; } f = ...
+
+f(True, True) ==> f(True)(True).
+
+There is no ambiguity here. Given the type of 'f', we know exactly how many
+arguments it expects. Apply that many. If there are none left over, we are
+done. If there are any left over, recursively repeat the process to apply the
+rest of the args.
+
+The benefits:
+* Avoid unnecessary function allocation in <- syntax.
+* Can restructure function types without impacting callers syntax.
+
+How about the other way around? Can we entirely get rid of this distinction
+between (A@)(B@) { C@; } and (A@, B@) { C@; }? What's stopping us?
+
+When we call a function, we won't know at compile time how many arguments it
+expects. We would need to check at runtime. That's not terribly hard. Probably
+not significant performance wise, though it seems sad if in most cases we
+could know statically, but we can't take advantage of that nearly as easily
+now.
+
+The real challenge is partial application. What do you do in that case?
+Well... you have to allocate a new function. That's not too difficult, right?
+
+You have f.
+You have some number of args a, b, ...
+
+Say you have 3 args, for example, and f wants 4 before being invoked. So you
+allocate the function:
+  \a -> f(x, y, z, a)
+
+Can we easily write this function?
+* executable is?
+  num_args: n - k, where n is expected args, k is provided args.
+  num_statics: 1 + k
+  tail_call_buffer_size: this is a single tail call function.
+  profile_block_id: ???
+  run function
+* profile_block_offset is?
+* statics are: f, x, y, z.
+
+Yeah, this is totally doable. There's some vague question about how to do
+profiling. Maybe we can allocate a profile block entry when we do the function
+call and charge it there?
+
+I definitely think this is worth a try. That would make the language cleaner.
+We keep the multi-arg function syntax, but maybe do some compiler magic so
+that if you write:
+
+\a -> (\b -> ...)
+
+It reads it as:
+
+\a, b -> ...
+
+But if you write:
+
+\a -> a.?(...)
+
+Then it keeps it as is.
+
+If we have this, then no funny questions remain about function bind. And it's
+still a good idea in general to support over-application of functions.
+
+The biggest concern I have is the complexity of CALL and TAIL_CALL
+instructions now. Especially when, in most cases, we expect the number of
+required arguments to always be the same and exactly what you need. But we
+need to account for this rare case.
+
+Fortunately today we can encapsulate the complexity in FbleThreadCall and
+FbleThreadTailCall. But that could make inlinine those functions harder in the
+future.
+
+Now, the sad thing is, I think we should hold off until fble-0.3 to make
+this change. Same for the bind change.
+
+---
+
+On second thought, I'm still not convinced about partial application. It's
+nice to have the actual expected number of arguments in the function type. We
+know it's not a big burden right now.
+
+You can always manually convert if you need to:
+
+(A@ a) { f(c, a); }
+
+And if we wanted, we could write helper functions for that.
+
+App1_2(f, a) 
+
+<@ A@, @ B@, @ C@>((A@, B@) { C@; }, A@) { (B@) { C@; }; }
+App1_2 = <@ A@, @ B@, @ C@>((A@, B@) { C@; } f, A@ a) {
+  (B@ b) {
+    f(a, b);
+  };
+};
+
+I still think over-application is worth doing.
+
+The key question is:
+
+* Is the improvement to language simplicity of treating (a, b) -> c as the
+  same type as a -> (b -> c) worth the loss of compile time information about
+  how many arguments a function expects.
+

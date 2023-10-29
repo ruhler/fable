@@ -42,5 +42,35 @@ replaced the fbld implementation:
 * Support for syntax highlighting.
  - Which may want improvements to html escaping.
 
+---
+
+Question on how to set tabstop/shiftwidth for .fbld files:
+* I want shiftwidth=1 so that '>>' indents by one space.
+* I want tabstop or softtabstop=1 so that tab is one space?
+
+But you can always use space for that. And what if I want to go over faster
+than one space at a time? I think better for tab to do whatever the user
+prefers. Maybe they want it for traversing into the document, not for
+indenting level by level.
+
+It sounds like 'smarttab' is an option to have tab at the beginning of a line
+behave like shiftwidth. That suggests tabstop really should be user
+preference, but we may want to define shiftwidth.
+
+README.txt for ftplugin says it should not set shiftwidth, which is a
+personal preference. I think fbld is slightly difference in that it assumes
+single space indent. Most other languages let users pick their own indent. So
+I think it's okay to ignore the 'personal preference' part of that.
+
+"The default filetype plugin files contain settings that 95% of the users will
+want to use.".
+
+shiftwidth is clearly not syntax. So it shouldn't go into the syntax file.
+
+Is shiftwidth part of indent? It sounds like no. The job of 'indent' is to
+figure out number of spaces to indent a new line given the setting of
+shiftwidth.
+
+So, proposal is: set shiftwidth=1 in ftplugin.
 
 

@@ -44,7 +44,6 @@ Things to consider doing for the fble-0.2 release.
   example, see the end of the Lists.fbld tutorial.
 
 * fbld vim syntax:
- - set tabstop/shiftwidth to single space?
  - Figure out how to make {...} only apply in argument context?
 
 * Update or remove fbld/fbld.lang
@@ -207,9 +206,6 @@ Things to consider doing for the fble-0.2 release.
   By introducing rules, and taking advantage of $in, $out, etc?
   The build.ninja file is around 1.1M right now.
 
-* Add smten support to fble.
-  see thoughts/fble.smten.txt
-
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
@@ -219,12 +215,6 @@ Things to consider doing for the fble-0.2 release.
  - Only output labels for pc aborts that are actually jumped to.
 
 * Add test that you can use a unicode character in a literal?
-
-* Do something with .@ module value vs. type?
-  - There's currently unexercised code for it.
-
-* Do something with data type instruction?
-  - There's currently unexercised code for it.
 
 * [spec] Should empty path be allowed in package type?
  See spec/fble.fbld for more details.
@@ -247,11 +237,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
-
-* Implement support for packed data values.
- - Change the compiler to allocate FbleDataTypeValue when appropriate.
- - Pass type to struct and union construction and access functions.
- - Implement packing for struct and union values.
 
 * Improve performance with profiling enabled?
  - Now that we removed the optimization for detecting duplicate call entries
@@ -277,7 +262,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Run fble-test-compile-error tests in compilation mode?
 
-* [compilation] Add support for .fble.@ files and modular compilation.
 
 * [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
  - It would be convenient for constructing things in case of error.
@@ -313,7 +297,6 @@ Things to consider doing for the fble-0.2 release.
 
 * [libfble] Can fble-stdio check that the function has the right type?
 
-* [spec] Add some way to catch or recover from errors at runtime?
 * [spec] Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
 * [spec] Clarify spec on when (compile vs runtime) vacuous value error should be
