@@ -16,14 +16,10 @@ Things to consider doing for the fble-0.2 release.
  - Are blank lines allowed inside @[...] inside @.block text?
  - Test for location tracking across @head and @tail?
  - Any way we can vim highlight next line literal as normal text?
- - Some better way to start @.block text with an inline command?
-   Other than adding a space character in front?
  - Allow multiple errors to be reported from a single run.
 
 * Document clearly somewhere a guide for doc comments.
  - Including difference between @i and @j.
-
-* Remove extra space in front of synopsis for binaries.
 
 * For bin/*.usage.h, can we check in the .txt output instead of the .h output?
   That way it's much easier to compare what's changed if the golden check

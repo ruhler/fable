@@ -5473,3 +5473,39 @@ What order makes sense here? How about:
 
 Sounds like a reasonable first thing to try. Let's draft if up like that.
 
+---
+
+Idea for starting inline text with a command when in block mode. Currently I
+hack around the issue by starting the paragraph with a space character. How
+about we make that part of the language? If the paragraph starts with a space
+character, treat it as inline text, but don't include the initial space
+character.
+
+This is an interesting idea. Could we expand it? Somehow make use of it to
+make it really easy to add an explicit @.block command?
+
+Wow. That could be perfect actually. No need for implicit .block and the
+awkwardness of that. Have concrete syntax using single space character to
+annotate it? Like a paragraph indent.
+
+Proposal: When parsing in a block context, if the line starts with a single
+space, the following is treated as inline argument to an implicit @.block
+command up to the next blank line, not including the initial space.
+
+Question: if the line starts with plain text, do we still insert @.block? Or
+do we leave it somehow as 'submarkup'? I kind of want it to be submarkup. That
+way we don't need to use explicit @inline... in backends. And by default we
+don't insert <p> markers.
+
+Is .block the right name to use now? Maybe .p instead for paragraph?
+
+I want to try this. But it could require a lot of changes to a lot of docs.
+How do I know when to add the paragraph versus not? It seems like it's backend
+specific whether we need it?
+
+Maybe best to start with keeping @.block name and implicit for blocks that
+start with plain text. Just add the space workaround. We can reconsider in a
+future release if there is value in writing paragraphs without indent to
+indicate no @.block around it. For the time being, use @inline command
+explicitly for that.
+

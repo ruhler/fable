@@ -6,6 +6,9 @@ Syntax Reference
 * Block structured text is a sequence of blank line delimited blocks.
 * A block is either a block command or implicit block text.
 * Implicit block text is inline structured text up to the next blank line.
+* If implicit block text starts with a space character, that space character
+  is not included in the implicit block text. This makes it easier to write
+  implicit block text that starts with a command.
 * A block command starts with '@' in the first column, followed by a command
   name, followed by:
   - Zero or more inline or literal inline arguments.
