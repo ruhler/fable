@@ -11,7 +11,6 @@ Things to consider doing for the fble-0.2 release.
    Which may want improvements to html escaping.
 
 * Fbld Misc:
- - Allow nested unescaped {} and escaped \{ \} in literal args.
  - Looks like some extra newline somewhere in html backend for @fbld or @url.
  - Are blank lines allowed at end of next line literal text?
  - Add test for nesting of [ and ] characters in plain text.
@@ -32,9 +31,11 @@ Things to consider doing for the fble-0.2 release.
 
 * fbld vim syntax:
  - Figure out how to make {...} only apply in argument context?
+ - Handle nesting of {} in literal inline arg.
 
 * Update or remove fbld/fbld.lang
 
+* Update docs to take advantage of nesting of {} in inline literal args.
 
 * Update the rest of the tutorials with regards to smashing the stack. No need
   to write stack smashing safe tutorials anymore.

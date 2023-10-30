@@ -19,6 +19,8 @@ Syntax Reference
   - An optional final argument.
 * An inline argument is inline structured text in square brackets.
 * A literal inline argument is raw text in curly brackets.
+  - Curly brackets may appear in the literal if they are properly nested.
+  - No escape sequences of any kind are interpreted inside the literal.
 * A same line argument is inline structured text between a single space
   character and the end of the line.
 * A next line argument is when the next line starts with a single space

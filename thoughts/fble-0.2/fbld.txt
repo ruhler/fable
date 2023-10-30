@@ -5509,3 +5509,49 @@ future release if there is value in writing paragraphs without indent to
 indicate no @.block around it. For the time being, use @inline command
 explicitly for that.
 
+---
+
+Question about escapes in literal inline args. Should we have them?
+
+{ ... }
+
+My vote: behave similar to tcl. Which is:
+* Nest levels of {, } to find and }.
+* \{ and \} do not participate in nesting level.
+* No other escape characters supported.
+
+The interesting thing about how tcl does it:
+* \{ doesn't turn into '{', it stays \{.
+
+Is that really what I want? What's the point of that? It makes sense for tcl.
+But not necessarily for this use case.
+
+The real motivation for literal inline args is to not have to escape '@'. The
+concern with the current approach is there is no way to have '}' in literal
+inline arg text. You can always use normal inline arg, but then you have to
+escape '@'.
+
+If we use the tcl approach, you still can't have a '}' in the literal text,
+unless it follows \.
+
+If we make \} an escape character that goes to }, then we need a way to escape
+backslash too. Like \\. At that point... why not just use inline arg and
+escape '@'?
+
+Given that there is a general, fairly easy to use fallback for special things,
+I think we should avoid any escaping in literal inline args.
+
+How about nesting of braces?
+* Pro: let's us add close brace where it's likely natural to have it after
+  matching {
+* Con: doesn't let us include open brace without matching close brace.
+
+{{ hello }
+
+It's easier to read with matching braces. So I propose the following:
+
+* Braces must be nested. Matching close brace is what closes the literal.
+* No escape sequences supported in literals.
+
+This should help with my one annoying use case right now: 
+@l{(Bool@) { Bool@; }}

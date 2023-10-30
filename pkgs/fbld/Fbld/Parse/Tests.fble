@@ -244,14 +244,14 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
   Test(Str|InlineLiteral, (Unit@ _) {
     String@ text = Lines[
-      Str|'@foo{foo@bar \ blah @@ @\@\\@.}',
+      Str|'@foo{foo@bar \ blah @@{ @\@}\\@.}',
       Str|'@ done'
     ];
 
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Ok(M[
       C|1|2|'foo'[
-        M[Pr|1|6|'foo@bar \ blah @@ @\@\\@.'],
+        M[Pr|1|6|'foo@bar \ blah @@{ @\@}\\@.'],
         M[P|2|3|'done']]]);
     AssertResultEquals(wnt, got);
   }),

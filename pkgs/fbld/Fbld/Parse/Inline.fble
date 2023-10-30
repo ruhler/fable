@@ -6,6 +6,12 @@
 % Chars = /Core/Char%.Chars;
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 
+@ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
+% IsZero = /Core/Int/Eq%.IsZero;
+% Int = /Core/Int/Lit%.Int;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
@@ -58,11 +64,12 @@ M@<String@> Name = {
 };
 
 # Parses raw text up to and including '}' for literal args.
-M@<String@> Literal = {
+(Int@) { M@<String@>; } Literal = (Int@ nest) {
   Char@ head <- Do(Get);
-  head.?('}': Return(Str|''));
+  Int@ nnest = head.?('{': Incr(nest), '}': Decr(nest), : nest);
+  IsZero(nnest).?(true: Return(Str|''));
 
-  String@ tail <- Do(Literal);
+  String@ tail <- Do(Literal(nnest));
   Return(Cons(head, tail));
 };
 
@@ -88,7 +95,7 @@ M@<List@<Markup@>> Args = {
   Bool@ literal <- Do(Try_(String|'{'));
   literal.?(true: {
     Loc@ l <- Do(Loc);
-    String@ text <- Do(Literal);
+    String@ text <- Do(Literal(Int|1));
     Markup@ head = Plain(l, text);
     List@<Markup@> tail <- Do(Args);
     Return(Cons(head, tail));
