@@ -90,6 +90,15 @@ Test@ Tests = TestSuite(Str|Parse, List[
     AssertResultEquals(wnt, got);
   }),
 
+  Test(Str|InlineUnescapedBrackets, (Unit@ _) {
+    String@ text = Str|'Inline with [unescaped] brackets';
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[
+      P|1|1|'Inline with [unescaped] brackets']]]);
+    AssertResultEquals(wnt, got);
+  }),
+
   Test(Str|NestedInline, (Unit@ _) {
     String@ text = Str|'Ab @c[de @f[gh] ij] kl';
 

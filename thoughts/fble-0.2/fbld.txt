@@ -5555,3 +5555,22 @@ It's easier to read with matching braces. So I propose the following:
 
 This should help with my one annoying use case right now: 
 @l{(Bool@) { Bool@; }}
+
+---
+
+Concrete Syntax outline:
+
+Inline
+  Inline Plain Text (escape sequences)
+  Inline Args
+  Inline Literal Args
+Block
+  Implicit Block
+  Explicit Implicit Block
+  Same line Arg.
+  Next Line Arg.
+  Literal Next Line Arg.
+  Continuation.
+  Same Final Arg.
+  Next Line Final Arg.
+

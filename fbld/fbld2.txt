@@ -55,9 +55,8 @@ Questions:
   @
   @ hello
 * Can you have unescaped nested [ ] in plain text?
+  Answer should be yes.
 * Can you have blank lines at the end of next line literal text?
-* Can you have escaped '}' in inline literal args?
-* Can you have unescaped '{' '}' in inline literal args?
 
 Builtins
 ========
