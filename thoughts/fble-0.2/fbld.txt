@@ -5561,7 +5561,7 @@ This should help with my one annoying use case right now:
 Concrete Syntax outline:
 
 Inline
-  Inline Plain Text (escape sequences)
+  Plain Text (escape sequences)
   Inline Args
   Inline Literal Args
 Block

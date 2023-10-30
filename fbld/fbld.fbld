@@ -131,7 +131,50 @@
       | sequence (markups : [Markup])
       ;
 
- @section Inline Structure
+ @section Document Syntax
+  The syntax of fbld leverages whitespace and other punctuation to reduce the
+  need for brackets around command arguments everywhere. The goal of the
+  syntax is to make fbld documents easy to read while still providing clear
+  rules for forming commands and arguments to commands.
+
+  There are two main kinds of syntax in fbld: inline structured text and block
+  structured text.
+
+  @subsection Inline Structured Text
+   Inline structured text is used for marking up paragraphs or short lines of
+   text. Whitespace is preserved in inline structured text.
+
+   @subsubsection Plain Text
+    Inline structured text interleaves plain text and commands. Plain text is
+    any text that comes between commands. It can be written directly. For
+    example:
+
+    @code[fbld] @
+     Hello, how are you?
+
+    The following escape sequences are supported in plain text:
+
+    @def[@l{\\}] @l{\}
+    @def[@l{\@}] @l{@}
+    @def[@l{\[}] @l{[}
+    @def[@l{\]}] @l{]}
+    @def[@l{\n}] Newline
+
+    Any other character following a backslash is considered reserved for
+    future use and is not currently allowed. The escape sequences make it
+    possible to include @l{@} in plain text, make it possible to include @l{[}
+    and @l{]} in plain text where they may not otherwise be allowed, and make
+    it easier to write newlines. For example:
+
+    @code[fbld] @
+     My email is ruhler\@degralder.com.
+
+   @subsubsection Inline Args
+    The standard way of supplying arguments to a command is using inline args.
+    An inline arg is inline structured text in square brackets following a
+    command.
+
+ @section Old Stuff From Here on
   Fbld interprets text as a sequence of commands to execute. The way fbld
   converts text into a sequence of commands depends on whether the text is
   treated as inline structure or as block structure. This section introduces
