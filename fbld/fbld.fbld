@@ -162,9 +162,9 @@
 
     Any other character following a backslash is considered reserved for
     future use and is not currently allowed. The escape sequences make it
-    possible to include @l{@} in plain text, make it possible to include @l{[}
-    and @l{]} in plain text where they may not otherwise be allowed, and make
-    it easier to write newlines. For example:
+    possible to include @l{@} in plain text, and make it possible to include
+    @l{[}, @l{]}, and newline in plain text where they may not otherwise be
+    allowed. For example:
 
     @code[fbld] @
      My email is ruhler\@degralder.com.
@@ -172,104 +172,45 @@
    @subsubsection Inline Args
     The standard way of supplying arguments to a command is using inline args.
     An inline arg is inline structured text in square brackets following a
-    command.
+    command or other inline arguments to a command.
+    
+    For example, the following @l{@emph} command has a single inline argument:
+
+    @code[fbld] @
+     @emph[You must check for @NULL!]
+
+   @subsubsection Inline Literal Args
+    Inline literal args are used to pass literal text as an argument. A
+    literal inline arg is literal text in braces following a command or other
+    inline arguments to a command. This is primarily useful for writing plain
+    text with @l{@} characters without having to escape them. For example:
+
+    @code[fbld] @
+     @email{ruhler@degralder.com}
+
+    There is no processing of escape sequences in inline literal args. The
+    characters are read directly. Braces nest inside the literal argument, so
+    you can include close braces in the literal text as long as there is a
+    matching, properly nested open brace.
+
+    For example, the following inline literal argument specifies an fble
+    function type, which includes both @l{@} and @l[}] characters:
+
+    @code[fbld] @
+     @emph{(Bool@) { Bool@; }}
+
+    The argument to the command in the following example includes the
+    backslash characters:
+
+    @code[fbld] @
+     @emph{The escape sequences in fbld are: \\, \@, \[, \], and \n.}
 
  @section Old Stuff From Here on
-  Fbld interprets text as a sequence of commands to execute. The way fbld
-  converts text into a sequence of commands depends on whether the text is
-  treated as inline structure or as block structure. This section introduces
-  the main concepts of fbld from the point of view of parsing inline
-  structure.
- 
-  For example, consider the following paragraph of text annotated with fbld
-  inline structure:
- 
-  @code[fbld] @
-   It's @emph[really] important to check the result of the @code[malloc]
-   function in C, in case it returns @NULL. See @link[the malloc man
-   page][https://manpages.org/malloc] for more details.
- 
-  Explicit commands are introduced with the @l[\@] character. In this example
-  we use commands @l[\@emph], @l[\@code], @l[\@NULL], and @l[\@link]. The meaning
-  of these commands is entirely user defined. There are no commands built in
-  to fbld.
- 
-  Arguments to commands are passed within square brackets. For example,
-  @l[really] is an argument passed to the @l[\@emph] command, @l[malloc] is the
-  argument passed to the @l[\@code] command. The @l[\@NULL] command is given no
-  arguments and the @l[\@link] command is given two arguments.
- 
-  Any text not explicitly part of a command or its arguments is grouped
-  together into a single argument and passed to an implicit default inline
-  command. For example, let's say the default command was called @l[\@default].
-  The first, implicit command from the above text is then @l[\@default\[It's \]].
- 
-  In summary, the above text is parsed into the following sequence of nine
-  commands, using tcl syntax for clarity:
- 
-  @code[tcl] @
-   default "It's "
-   emph "really"
-   default " important to check the result of the "
-   code "malloc"
-   default "\nfunction\nin C, in case it returns "
-   NULL
-   default ". See"
-   link "the malloc man\npage" "https://manpages.org/malloc" 
-   default " for more details."
- 
-  And that's it. The core of how fbld works. Once in the form of a sequence of
-  commands, users can provide whatever implementation they like for the
-  commands to process the structure of the document the way they desire.
- 
   @subsection Lexical Details
    When parsing inline structure, all whitespace is preserved.
  
    Command names are a sequence of one or more alphanumeric or underscore
    characters. No other characters are allowed in command names.
- 
-   The following are special characters in fbld:
- 
-   @item @l[\@], @l[\[], @l[\]], @l[\\]
- 
-   To use these characters without special processing, prefix them with a
-   backslash character. For example:
- 
-   @code[fbld] @
-    My email is ruhler\@degralder.com \[I think\].
- 
-   Would be converted into the single command:
- 
-   @code[tcl] @
-    default {My email is ruhler\@degralder.com \[I think\].}
- 
-   It is illegal to specify @l[\@] without a valid command name immediately
-   following. It is illegal to use @l[\[] or @l[\]] outside of specifying
-   arguments, and braces must be properly closed.
- 
-   The fbld parser has no knowledge of how many arguments a command expects.
-   It is up to the command to report any misuse in the number of arguments
-   when it is executed. It is possible for multiple invocations of the same
-   command to be supplied a different number of arguments.
- 
-  @subsection Nested Commands
-   It is possible to use inline structure in arguments to commands. For
-   example:
- 
-   @code[fbld] @
-    Go @link[@bold[here]][www.degralder.com] for cool stuff.
- 
-   When parsing the first argument to the @l[\@link] command, the text from
-   opening @l[\[] to matching @l[\]] is used. This is just like how braces
-   work in tcl. In this case, the sequence of commands would be:
- 
-   @code[tcl] @
-    default "Go "
-    link "@bold[here]" "www.degralder.com"
-    default " for cool stuff."
- 
-   It's up to the @l[\@link] command to parse its first argument as inline
-   structured text if it so desires.
  
  @section Block Structure
   Fbld parses block structured text into a sequence of commands using the same
