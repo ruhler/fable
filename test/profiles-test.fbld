@@ -1,6 +1,6 @@
 @usage[fble-profiles-test] runs the fble-profiles-test
  @synopsis
-   @l[fble-profiles-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+ @ @l[fble-profiles-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description
   Runs the fble-profiles-test.

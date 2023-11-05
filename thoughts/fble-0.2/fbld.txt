@@ -5574,3 +5574,103 @@ Block
   Same Final Arg.
   Next Line Final Arg.
 
+---
+
+Bug: usage help text has ".sp" output in the synopsis. What's up with that,
+how do we test for it, how do we fix it?
+
+For tests: we can piggy back off of the golden usage files that are checked
+in. Easy.
+
+Take, for example, fble-deps
+
+Usage: .sp f...
+
+Generated roff is:
+
+.sp
+Usage: .sp
+\fBfble-deps...
+
+Which comes from usage.help.fbld:
+ @par[Usage: @text]
+
+And @text in this case is from:
+
+ @synopsis
+   @l[fble-deps] ...
+
+The argument to @synopsis is implicit .block, which introduces the .sp.
+
+I claim this would work fine if the argument to synopsis was same line. The
+trouble is we are making it a paragraph. Hmm...
+
+---
+
+Approach 1: Require arg to synopsis be inline text.
+
+We can put it on the next line using a continuation:
+  @synopsis
+  @ @l[fble-deps] ...
+
+Easy.
+
+What should we do if you use block structured text?
+* Attempt to detect it by looking for trailing newline?
+* Output bogus results?
+* Output an error message?
+
+I think it makes sense to give an error if the text contains a newline.
+
+Approach 2: Allow block structured text to work.
+
+If it's a single @.block command, we want that to be interpreted as id. Which,
+in particular, means we don't want it interpreted at the global level. Which
+means everyone who wants it interpreted differently will need to handle that
+explicitly. Namely: section, subsection, subsubsection, doc, definition, and
+possibly item?
+
+This also sounds like a reasonable approach to me. For example, maybe item
+needs to treat paragraphs specially based on indent. Then it should be the one
+to interpret @.block.
+
+But that means everyone who doesn't want to interpret @.block needs to
+explicitly define it as no-op? We don't set a default value of @.block, do we?
+
+Approach 3: Have explicit syntax for paragraphs.
+
+The user has some idea what a paragraph is, and probably wants to express that
+explicitly. We don't want them to use an explicit tag because it clutters
+documents too much.
+
+Something more subtle would be, like: single space indent?
+
+This is interesting. How does this interact with our implicit explicit block
+syntax? Could it replace it entirely, or does it need to be separate?
+
+Cases:
+* block command: lines starts with '@'
+* implicit paragraph: line starts with ' '.
+* inline text: line starts with plain text?
+* inline text starting with inline command.
+
+Implicit paragraph means markup command @par[...]
+
+Inline text means a nested sequence. For example: a:[...]:...
+
+They are different. I know we want implicit paragraph. Would we want inline
+text in practice? I think yes. Those places I use an explicit @inline command
+today. But would we want it enough in practice to need a special syntax?
+ 
+When do we use block structured text to describe non-paragraph text? Besides
+this case of of synopsis where we can use continuation to describe it just as
+well?
+
+I'm not sure about this.
+
+So, for now, I think just change all the uses of @synopsis to use continuation
+same line argument. That addresses the immediate concern. Eventually we should
+change the backends to define @.block only where needed. I can continue to
+think about being more explicit for paragraphs, but I'm not sold on the use
+case yet.
+

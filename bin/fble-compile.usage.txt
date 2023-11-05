@@ -1,8 +1,6 @@
 fble-compile - compiles an fble module
 
-Usage: .sp ffbbllee--ccoommppiillee [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
-
-
+Usage: ffbbllee--ccoommppiillee [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
 
 Compile the fble module identified by _M_O_D_U_L_E___P_A_T_H.
 

@@ -1,8 +1,6 @@
 fble-stdio - runs an fble stdio program
 
-Usage: .sp ffbbllee--ssttddiioo [_O_P_T_I_O_N...] _A_R_G_._._.
-
-
+Usage: ffbbllee--ssttddiioo [_O_P_T_I_O_N...] _A_R_G_._._.
 
 Runs an fble stdio program.
 

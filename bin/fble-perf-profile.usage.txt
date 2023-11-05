@@ -1,8 +1,6 @@
 fble-perf-profile - produces fble profile report for linux perf profile
 
-Usage: .sp ffbbllee--ppeerrff--pprrooffiillee [_O_P_T_I_O_N...]
-
-
+Usage: ffbbllee--ppeerrff--pprrooffiillee [_O_P_T_I_O_N...]
 
 Produces an fble profile report for a linux perf profile passed on stdin.
 

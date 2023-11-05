@@ -1,6 +1,6 @@
 @usage[fble-mem-test] test memory behavior of an fble program
  @synopsis
-   @l[fble-mem-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+ @ @l[fble-mem-test] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
  
  @description
   Tests for memory behavior of an fble function. The function should take a

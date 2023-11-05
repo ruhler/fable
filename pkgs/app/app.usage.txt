@@ -1,8 +1,6 @@
 fble-app - runs an fble app program
 
-Usage: .sp ffbbllee--aapppp [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
-
-
+Usage: ffbbllee--aapppp [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
 
 Runs an fble app program.
 

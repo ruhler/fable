@@ -2,6 +2,9 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Module compilation
+ - As a blocker for major compiler optimizations.
+
 * Support partial function application?
  - Allow over-application of functions.
  - Have <- perform over-application of functions.
