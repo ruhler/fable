@@ -205,226 +205,226 @@
     @code[fbld] @
      @emph{The escape sequences in fbld are: \\, \@, \[, \], and \n.}
 
- @section Old Stuff From Here on
-  @subsection Lexical Details
-   When parsing inline structure, all whitespace is preserved.
- 
-   Command names are a sequence of one or more alphanumeric or underscore
-   characters. No other characters are allowed in command names.
- 
- @section Block Structure
-  Fbld parses block structured text into a sequence of commands using the same
-  concepts as inline structure, with a few syntactic differences.
- 
-  The idea behind block structure is that we expect it to span one or more
-  lines of text. Three things different about block structed text compared to
-  inline structed text:
+  @subsection Block Structured Text
+   Block structured text is used for marking up larger sections of document
+   spanning multiple lines or paragraphs. It provides a variety concrete
+   syntax options for specifying arguments to commands. Documents are parsed
+   as block structured text.
 
-  @item Block commands start on a new line.
-  @item Text on the same line after a block command is an additional argument.
-  @item
-   Text indented on the lines following the block command is an additional
-   argument.
+   @subsubsection Block Commands
+    Commands are introduced in block structured text using the @l{@} symbol,
+    as in inline structured text, except the commands must start at the first
+    column of text. For example, here is a sequence of four commands in block
+    structured text:
 
-  @subsection Same Line Args
-   Consider the following block structed text:
-   
-   @code[fbld] @
-    @def[triangle] Has three sides
-    @def[square] Has four sides
+    @code[fbld] @
+     @title[My Favorite Document]
+     @author[Richard]{ruhler@degralder.com}
+     @date[November 3rd]
+     @abstract[A study of my @emph{most} favoriate document in the world]
 
-   This is a sequence of two commands, each with two arguments:
+    Block commands take inline arguments and inline literal arguments just
+    like commands in inline structured text. Blank lines between commands act
+    as delimiters.
 
-   @code[tcl] @
-    def triangle "Has three sides"
-    def square "Has four sides"
+   @subsubsection Implicit Block Command
+    If a line of block structured text starts with plain text rather than a
+    block command, it and following lines of text up to the next blank line
+    are interpreted as inline structured text and passed as a single argument
+    to an implicit command named @l{.block}.
 
-   The same line argument starts after a single space following the command
-   and any explicit command arguments.
+    From the malloc example above, we had:
 
-   If there is no space on the same line after the command and any explicit
-   command arguments, no same line argument is passed to the command. For
-   example:
+    @code[fbld] @
+     It's possible that @code[malloc] is unable to allocate memory. If that's
+     the case, it will return @NULL. If you try to access the returned pointer,
+     bad things can happen.
 
-   @code[fbld] @
-    @item[first item]
-    @item[second item]
-   
-   Is parsed as:
+     So you should always check the result of @code[malloc] for @NULL.
 
-   @code[tcl] @
-    item "first item"
-    item "second item"
-  
-  @subsection Following Lines Arg
-   Any indented lines following a block command are grouped together and
-   passed as an additional argument to the block command. For example:
+    This is parsed as if it were instead written:
 
-   @code[fbld] @
-    @section[First Section]
-     Contents of the first section.
+    @code[fbld] @
+     @.block[It's possible that @code[malloc] is unable to allocate memory. If that's
+     the case, it will return @NULL. If you try to access the returned pointer,
+     bad things can happen.\n]
+     @.block[So you should always check the result of @code[malloc] for @NULL.\n]
 
-     Spanning multiple lines.
-    @section[Second Section]
-     Contents of the second section.
+    This makes it possible to identify and format paragraphs when processing
+    fbld marked up text, without the clutter of an explicit paragraph tag for
+    each paragraph.
 
-   Is parsed as:
-   
-   @code[tcl] @
-    section "First Section" "Contents of the first section.\n\nSpanning multiple lines.\n"
-    section "Second Section" "Contents of the second section.\n"
+    The newline on the last line of inline structured text forming the
+    implicit block command is included in the argument passed to the implicit
+    block command.
 
-   Indentation is a single space character at the beginning of each line. This
-   space character is stripped from the line before it is passed in the
-   following lines argument.
+   @subsubsection Explicit Implicit Block Command
+    Occasionally it happens that you want to write an implicit block command
+    that starts with an inline command. For example:
 
-   Blank lines in the middle of an indented block are treated as blank lines
-   in the following lines argument. Blank lines at the end of an indented
-   block are removed.
+    @code[fbld] @
+     @l{malloc} is a very interesting function to call, because it could be
+     that it returns @NULL.
 
-   If there are no indented lines following the block command, no following
-   lines argument is supplied.
+    In this case, the command @l{@l} is intended as inline structured text of
+    the paragraph, not as a separate block command. To parse this as an
+    implicit block command, put a single space before the @l{@} character. The
+    space indicates the following text should be parsed as an implicit block
+    command, not including the leading space character.
 
-  @subsection Argument Continuation
-   If the line following a block command starts with @l[\@] without a command,
-   it continues the arguments from the previous command. Commands can be
-   continued with regular, same line, and next line arguments repeatedly. For
-   example:
+    In this case, for example:
 
-   @code[fbld] @
-    @list[first arg][second arg] third arg
-     fourth arg
-    @[fifth arg][sixth arg] seventh arg
-     eight arg
-    @ ninth arg
-     tenth arg
+    @code[fbld] @
+     Pay attention to the next paragraph of this document.
 
-  @subsection Final Argument
-   If the line following a block command consists of a single @l[\@\@], the
-   entire remainder of the document is passed as the last argument to the
-   command. For example:
+      @l{malloc} is a very interesting function to call, because it could be
+     that it returns @NULL.
+     
+   @subsubsection Same Line Arg
+    Text on the same line as a block command is parsed as inline structured
+    text and passed as an additional argument to the block command. For
+    example, the command:
 
-   @code[fbld] @
-    @list[first arg] second arg
-     third arg
-    @@
-    fourth and final argument, which
-    can span multiple lines.
+    @code[fbld] @
+     @title[My Favorite Document]
 
-    And beyond.
+    Could equivalently be written as:
 
-  @subsection Default Block Commands
-   If a line starts with something other than a block command, then that line
-   and all subsequent lines up until a blank line are grouped together and
-   passed as a single argument to the default block command.
+    @code[fbld] @
+     @title My Favorite Document
 
-   For example:
-   
-   @code[fbld] @
-    This is the first paragraph
-    of a document.
+    This reduces some of the clutter of brackets in block structured text.
 
-    Here is the second.
+    The same line arg can contain inline commands, and need not be the first
+    argument to the block command. For example:
 
-   Parses as:
+    @code[fbld] @
+     @callout[warning] You @emph{must} check for @NULL!
 
-   @code[tcl] @
-    default "This is the first paragraph\nof a document.\n"
-    default "Here is the second.\n"
+    Is equivalent to:
 
-  @subsection Starting a Line with an Inline Command
-   Sometimes you may want to start a paragraph with an inline command. To
-   prevent the command from being treated as a block command, either pass it
-   explicitly to the default command, or add a space before. For example:
+    @code[fbld] @
+     @callout[warning][You @emph{must} check for @NULL!]
 
-   @code[fbld] @
-    @default
-     @emph[Yeah!]. Fbld is so great!
+    The trailing newline at the end of the same line argument is not included
+    in the argument to the block command.
 
-   In this case, @l[\@emph] is considered an inline command because the
-   @l[\@default] command parses its argument as inline structed text instead of
-   block structured text.
+    If there is no space on the same line after the command and any inline
+    arguments, no same line argument is passed to the command.
 
+   @subsubsection Next Line Arg
+    If the line following a block command starts with a single space, it
+    indicates the start of a next line argument. The next line argument
+    includes all the following lines at the same level of indentation, with
+    the leading space character stripped from the argument.
 
-  @subsection A Bigger Example
-   Here's an example demonstrating various uses of block structed text.
- 
-   @code[fbld] @
-    @doc A Bigger Example
+    For example, the following block structured text has two invocations of
+    the @l{@example} command, each with a single next line argument.
+
+    @code[fbld] @
+     @example
+      This is an example of next line argument text.
+
+      That spans multiple paragraphs
+     
+     @example
+      Here is a second example block command.
+
+    The next line argument is parsed as block structured text.
+
+    Next line argument ends at the first line of text indented at the same
+    level or less than the original block command.
+
+    Notice that, because of next line arguments, block commands end up
+    indented in practice, even though we said they have to start at the
+    beginning of the line. This is because the indent is stripped away from
+    the lines before the block command gets processed.
+
+   @subsubsection Literal Next Line Arg
+    If the block command ends with a space character followed by a single
+    @l{@} character, it is assumed to have a next line argument that is
+    interpreted as literal text. This is convenient for writing large blocks
+    of literal text such as code blocks.
+
+    For example:
+
+    @code[fbld] @
+     @code @
+      Here is a bunch of text not interpreted with @ and other stuff
+      that wouldn't parse as fbld text.
+     
+   @subsubsection Continuation
+    If the line immediately following a block command starts with an @l{@}
+    character not associated with another command, it continues the arguments
+    being passed to the block command. This allows you to provide additional
+    inline arguments, same line arguments, and next line arguments.
+
+    For example:
+
+    @code[fbld] @
+     @foo[first] second
+     @[third][fourth] fifth
+      @sixth
+     @ seventh
+     @bar
+
+    Is equivalent to:
     
-     Some introductory text here.
+    @code[fbld] @
+     @foo[first][second][third][fourth][fifth][@sixth][seventh]
+     @bar
     
-     @section[First Section]
-      @paragraph
-       Here is a paragraph in the first
-       section of the doc.
+   @subsubsection Same Line Final Arg
+    If a same line argument ends with @l{ @@}, then the text following the
+    command at the same indent level is parsed as block structured text and
+    provided as the final argument to the block command.
+
+    For example:
+
+    @code[fbld] @
+     @foo First argument @@
+     @bar
+
+    Is equivalent to:
+
+    @code[fbld] @
+     @foo[First argument][@bar]
     
-      @list
-       @item First item of a list.
-       @item Second item of a list.
- 
-   The top level parses as a single doc command:
+   @subsubsection Next Line Final Arg
+    If the line following a block command is the text @l{@@}, then the text
+    following the command at the same indent level is parsed as block
+    structured text and provided as the final argument to the block command.
 
-   @code[tcl] @
-    doc "A Bigger Example" "Some introductory text here.\n\n@section..."
+    For example:
 
-   The doc command itself can interpet its second argument as block structed
-   text. In that case it parses into two commands:
+    @code[fbld] @
+     @foo First argument
+     @@
+     @bar
 
-   @code[tcl] @
-    default "Some introductory text here.\n"
-    section "First Section" "@paragraph\n Here is a paragraph in..."
+    Is equivalent to:
 
-   The section command parses its second argument as block structured text:
+    @code[fbld] @
+     @foo[First argument][@bar]
 
-   @code[tcl] @
-    paragraph "Here is a paragraph in the first\nsectionof the doc.\n"
-    list "@item First item of a list.\n@item Second item of a list.\n"
+ @section Document Processing
+  @subsection Evaluation
+   Todo
+  @subsection Builtin Commands
+   Todo
+  @subsection Invocation
+   Todo
 
-   Finally, the list command parses its argument as block structured text:
+ @section To Do
+  The fbld markup language is still being developed. The following are open
+  questions or things likely to change in future revisions of fbld.
 
-   @code[tcl] @
-    item "First item of a list."
-    item "Second item of a list."
-
-   Notice that block commands end up indented in practice, even though we said
-   they have to start at the beginning of the line. This is because the indent
-   is stripped away from the lines before the block command gets processed.
-
- @section Handling of Escape Characters
-  The characters @l[\@], @l[\[], @l[\]], and @l[\\] are special and need to be
-  escaped using @l[\\] to avoid being processed specially. At the end of the
-  day, users will need to manually remove the escapes.
- 
-  For example, imagine we want to put an email address in a document that we
-  convert to markdown:
- 
-  @code[fbld] @
-   @block[Example]
-    My email address is @bold[ruhler\@degralder.com].
- 
-  This gets parsed via block structured text as:
- 
-  @code[tcl] @
-   block "Example" {My email address is @bold[ruhler\@degralder.com].}
- 
-  The second argument gets parsed as inline structured text as:
- 
-  @code[tcl] @
-   default "My email address is "
-   bold {ruhler\@degralder.com}
-   default "."
- 
-  To actually display the text, the @l[\@bold] command should remove the
-  backslash before rendering the text.
- 
- @section TODO
   @item
-   Is the following valid? @l[hello \] \[ \@there]. The square brackets are
-   supposed to be special, but it's not within a command, so there shouldn't
-   be any need to escape them, right? Only need to escape square brackets when
-   parsing arguments? This would be a problem if it was within an argument.
-   Maybe best to require escaping in all cases for consistency.
- 
+   Having all commands belong to a single global namespace doesn't scale. Some
+   form of namespace management is desired.
+
   @item
-   Clarify behavior of end of input for block commands, after @l[\]].
+   It's not nice for the user to have to know all the right .fbld files to
+   list on the command line in the right order. It seems like we ought to have
+   some form of import to import required command definitions automatically in
+   the right order.
