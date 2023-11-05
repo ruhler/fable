@@ -12,7 +12,7 @@
 
   @subsection Output Control
    @opt[@l[-t], @l[--target] @a[TARGET]]
-    target name to use in generated depfile
+   @ target name to use in generated depfile
  
  @exitstatus
   @def[0] Success.

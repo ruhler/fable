@@ -11,7 +11,7 @@ namespace eval "bin" {
 
     # Generated header file for help usage text.
     fbld_header_usage $::b/bin/$base.usage.h $::s/bin/$base.fbld \
-      fbldUsageHelpText $::s/bin/$base.usage.txt
+      fbldUsageHelpText $::s/bin/$base.usage.h.txt
 
     # The binary.
     obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \

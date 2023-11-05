@@ -1,16 +1,14 @@
 fble-profiles-test - runs the fble-profiles-test
 
-Usage: ffbbllee--pprrooffiilleess--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
+Usage: ffbbllee--pprrooffiilleess--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H.br
 
 Runs the fble-profiles-test.
-
 
 Generic Program Information:
   --hh, ----hheellpp
       display this help text and exit
   --vv, ----vveerrssiioonn
       display version information and exit
-
 
 Module Input:
   --II _D_I_R
@@ -24,16 +22,12 @@ Module Input:
   FFBBLLEE__PPAACCKKAAGGEE__PPAATTHH environment variable followed by the system default  pack-
   age search path. Modules are searched for in the module search path.
 
-
   For example, if FFBBLLEE__PPAACCKKAAGGEE__PPAATTHH is //ffbbllee//ppkkggss and you provide command line
   options --pp ccoorree --mm //CCoorree//UUnniitt%%, the --pp ccoorree option adds  //ffbbllee//ppkkggss//ccoorree  to
   the module search path, and the --mm //CCoorree//UUnniitt%% option will look for the mod-
   ule at //ffbbllee//ppkkggss//ccoorree//CCoorree//UUnniitt..ffbbllee.
 
-
   The system default package search path is /usr/local/share/fble.
-
-
 
 Exit Status:
   0
@@ -43,10 +37,8 @@ Exit Status:
   2
       Usage Error.
 
-
 Examples:
 
-  ffbbllee--pprrooffiilleess--tteesstt --II tteesstt --mm //PPrrooffiilleessTTeesstt%%
-
+  ffbbllee--pprrooffiilleess--tteesstt --II tteesstt --mm //PPrrooffiilleessTTeesstt%%.br
 
 

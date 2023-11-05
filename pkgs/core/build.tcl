@@ -1,6 +1,6 @@
 namespace eval "pkgs/core" {
   fbld_header_usage $::b/pkgs/core/stdio.usage.h $::s/pkgs/core/stdio.fbld \
-    fbldUsageHelpText $::s/pkgs/core/stdio.usage.txt
+    fbldUsageHelpText $::s/pkgs/core/stdio.usage.h.txt
 
   # .c library files.
   set objs [list]

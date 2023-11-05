@@ -1,19 +1,16 @@
 fble-app - runs an fble app program
 
-Usage: ffbbllee--aapppp [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
+Usage: ffbbllee--aapppp [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H.br
 
 Runs an fble app program.
 
-
 The fble program should be of type //AApppp//AApppp%%..MMaaiinn@@.
-
 
 Generic Program Information:
   --hh, ----hheellpp
       display this help text and exit
   --vv, ----vveerrssiioonn
       display version information and exit
-
 
 Module Input:
   --II _D_I_R
@@ -27,16 +24,12 @@ Module Input:
   FFBBLLEE__PPAACCKKAAGGEE__PPAATTHH environment variable followed by the system default  pack-
   age search path. Modules are searched for in the module search path.
 
-
   For example, if FFBBLLEE__PPAACCKKAAGGEE__PPAATTHH is //ffbbllee//ppkkggss and you provide command line
   options --pp ccoorree --mm //CCoorree//UUnniitt%%, the --pp ccoorree option adds  //ffbbllee//ppkkggss//ccoorree  to
   the module search path, and the --mm //CCoorree//UUnniitt%% option will look for the mod-
   ule at //ffbbllee//ppkkggss//ccoorree//CCoorree//UUnniitt..ffbbllee.
 
-
   The system default package search path is /usr/local/share/fble.
-
-
 
 Profiling Options:
   ----pprrooffiillee _F_I_L_E
@@ -44,12 +37,9 @@ Profiling Options:
       writes a profile of the test run to _F_I_L_E
 
 
-
-
 Other Options:
   ----ffppss
       reports frames per second histogram when done
-
 
 Exit Status:
   0
@@ -59,13 +49,10 @@ Exit Status:
   2
       Usage Error.
 
-
 Examples:
 
-  ffbbllee--aapppp --pp ccoorree --pp aapppp --mm //AApppp//DDeemmoo%% ----ffppss
+  ffbbllee--aapppp --pp ccoorree --pp aapppp --mm //AApppp//DDeemmoo%% ----ffppss.br
 
 
   Launches the demo app and reports FPS histogram when done.
-
-
 

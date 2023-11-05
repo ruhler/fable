@@ -21,7 +21,7 @@ namespace eval "test" {
   foreach {x} $lib_sources {
     set base [file rootname [file tail $x]]
     fbld_header_usage $::b/test/$base.usage.h $::s/test/$base.fbld \
-      fbldUsageHelpText $::s/test/$base.usage.txt
+      fbldUsageHelpText $::s/test/$base.usage.h.txt
     fbld_man_usage $::b/test/fble-$base.1 $::s/test/$base.fbld
     obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/$base.usage.h
     lappend objs $::b/test/$base.o

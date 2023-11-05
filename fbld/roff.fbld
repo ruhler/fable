@@ -3,8 +3,8 @@
 @define[a][text] \\fI@text\\fR @@
 @define[label][id text] @text @@
 @define[ref][id caption] @caption @@
-@define[.block][text] .sp\n@text\n.br\n @@
-@define[par][text] .sp\n@text\n.br\n @@
+@define[.block][text] .sp\n@text.br\n @@
+@define[par][text] .sp\n@text.br\n @@
 @define[definition][name value]
 @ .sp\n@name:\n.br\n.in +2\n@value\n.in -2\n @@
 @define[def][name value]
@@ -13,6 +13,6 @@
 @define[code][language text] .sp\n@text\n.br\n @@
 @define[doc][title body]
 @ .pl 1\n.ll 78\n@body @@
-@define[section][title body] .sp\n@title:\n.br\n.in +2\n@body\n.in -2\n @@
-@define[subsection][title body] .sp\n@title:\n.br\n.in +2\n@body\n.in -2\n @@
-@define[subsubsection][title body] .sp\n@title:\n.br\n.in +2\n@body\n.in -2\n @@
+@define[section][title body] .sp\n@title:\n.br\n.in +2\n@body.in -2\n @@
+@define[subsection][title body] .sp\n@title:\n.br\n.in +2\n@body.in -2\n @@
+@define[subsubsection][title body] .sp\n@title:\n.br\n.in +2\n@body.in -2\n @@
