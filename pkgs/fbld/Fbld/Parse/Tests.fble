@@ -276,6 +276,19 @@ Test@ Tests = TestSuite(Str|Parse, List[
       P|1|8|' there!'
       ]]]);
     AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|EmptyContinuation, (Unit@ _) {
+    String@ text = Lines[
+      Str|'@foo',
+      Str|'@',
+      Str|'@ bar'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|2|'foo'[M[P|3|3|'bar']]]);
+    AssertResultEquals(wnt, got);
   })
 ]);
 

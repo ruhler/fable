@@ -140,7 +140,10 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
         args, inline_args, same_line, literal, next, List[arg]]));
   });
 
-  Bool@ continue <- Do(Test_(Or(String|'@ ', String|'@[')));
+  Bool@ continue <- Do(Test_(
+      Or(String(StrE|'@\n'),
+      Or(String|'@ ',
+         String|'@['))));
   continue.?(true: {
     Unit@ _ <- Do(String|'@');
     Args(l, name, Concat[
