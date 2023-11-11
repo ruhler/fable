@@ -1,0 +1,150 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% And = /Core/Bool%.And;
+
+@ Char@ = /Core/Char%.Char@;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+@ Ordering@ = /Core/Ord%.Ordering@;
+% Lt = /Core/Ord%.Lt;
+% Eq = /Core/Ord%.Eq;
+% Gt = /Core/Ord%.Gt;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Bit1@ = +(Unit@ 0, Unit@ 1);
+@ Bit2@ = *(Bit1@ h, Bit1@ l);
+
+Bit2@ A = Bit2@(Bit1@(0: Unit), Bit1@(0: Unit));
+Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
+Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
+
+Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
+  a.?(
+    0: b.?(0: True, 1: False),
+    1: b.?(0: False, 1: True));
+};
+
+Ord@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
+  a.?(
+    0: b.?(0: Eq, 1: Lt),
+    1: b.?(0: Gt, 1: Eq));
+};
+
+Show@<Bit1@> ShowBit1 = (Bit1@ x) {
+  x.?(0: Str|0, 1: Str|1);
+};
+
+Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
+  And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
+};
+
+Ord@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
+  Ordering@ oh = OrdBit1(a.h, b.h);
+  oh.?(eq: OrdBit1(a.l, b.l), : oh);
+};
+
+Show@<Bit2@> ShowBit2 = (Bit2@ x) {
+  Append<Char@>(ShowBit1(x.h), ShowBit1(x.l));
+};
+
+@ Set@ = /Core/Set%.Set@<Bit2@>;
+% Empty = /Core/Set%.Empty<Bit2@>;
+% Contains = /Core/Set%.Contains<Bit2@>(OrdBit2);
+% Insert = /Core/Set%.Insert<Bit2@>(OrdBit2);
+% Delete = /Core/Set%.Delete<Bit2@>(OrdBit2);
+<@>% ForEach = /Core/Set%.ForEach<Bit2@>;
+
+Test@ Tests = TestSuite(Str|Set, List<Test@>[
+  Test(Str|'empty', (Unit@ _) {
+    Bool@ wnt = False;
+    Bool@ got = Contains(Empty, B);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'not found', (Unit@ _) {
+    Set@ set = Insert(Empty, C);
+    Bool@ wnt = False;
+    Bool@ got = Contains(set, B);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'found', (Unit@ _) {
+    Set@ set = Insert(Insert(Insert(Empty, A), B), C);
+    Bool@ wnt = True;
+    Bool@ got = Contains(set, B);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'replace', (Unit@ _) {
+    Set@ set = Insert(Insert(Empty, B), B);
+    Bool@ wnt = True;
+    Bool@ got = Contains(set, B);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'delete', (Unit@ _) {
+    Set@ set = Delete(Insert(Empty, B), B);
+    Bool@ wnt = False;
+    Bool@ got = Contains(set, B);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'foreach', (Unit@ _) {
+    Set@ set = Insert(Insert(Insert(Empty, B), A), B);
+
+    # Note: A < B, we expect the ForEach to iterate in the order A, B. Because
+    # we add A to the end of the list before B, we expect the resulting list
+    # to be in the order B, A.
+    List@<Bit2@> wnt = List[B, A];
+    List@<Bit2@> got = ForEach(set, Nil<Bit2@>, Cons<Bit2@>);
+    AssertEquals<List@<Bit2@>>(
+      /Core/List/Eq%.Eq(EqBit2),
+      /Core/List/Show%.Show(ShowBit2),
+      wnt, got);
+  }),
+
+  Test(Str|'Show empty', (Unit@ _) {
+    Set@ set = Empty;
+    String@ wnt = Str|'{ }';
+    String@ got = /Core/Set/Show%.Show(ShowBit2)(set);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'Show single', (Unit@ _) {
+    Set@ set = Insert(Empty, B);
+    String@ wnt = Str|'{ 01; }';
+    String@ got = /Core/Set/Show%.Show(ShowBit2)(set);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'Show multi', (Unit@ _) {
+    Set@ set = Insert(Insert(Empty, B), C);
+    String@ wnt = Str|'{ 01; 10; }';
+    String@ got = /Core/Set/Show%.Show(ShowBit2)(set);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  })
+]);
+
+@(Tests);

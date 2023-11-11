@@ -9,7 +9,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Fbld Misc:
  - Test for location tracking across @head and @tail?
- - Any way we can vim highlight next line literal as normal text?
  - Allow multiple errors to be reported from a single run.
 
 * Document clearly somewhere a guide for doc comments.
@@ -25,6 +24,7 @@ Things to consider doing for the fble-0.2 release.
 * fbld vim syntax:
  - Figure out how to make {...} only apply in argument context?
  - Handle nesting of {} in literal inline arg.
+ - Any way we can vim highlight next line literal as normal text?
 
 * Update or remove fbld/fbld.lang
 
@@ -61,8 +61,6 @@ Things to consider doing for the fble-0.2 release.
         
 * Need an easier way to gdb step through fble code without cluttering it with c
   code in between.
-
-* Add tests for /Core/Set%.
 
 * Add man page for fble-cat
 
