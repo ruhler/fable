@@ -289,6 +289,23 @@ Test@ Tests = TestSuite(Str|Parse, List[
     Result@<Markup@> wnt = Ok(M[
       C|1|2|'foo'[M[P|3|3|'bar']]]);
     AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|BlankInlineInImplicitBlock, (Unit@ _) {
+    String@ text = Lines[
+      Str|'Here is @a[command with...',
+      Str|'',
+      Str|'a blank line in the argument.] What think you?'
+    ];
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Ok(M[
+      C|1|1|'.block'[M[
+        P|1|1|'Here is ',
+        C|1|10|'a'[P|1|12|'command with...\n\na blank line in the argument.'],
+        P|3|31|' What think you?\n'
+      ]]]);
+    AssertResultEquals(wnt, got);
   })
 ]);
 
