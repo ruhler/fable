@@ -193,7 +193,7 @@ Things to consider doing for the fble-0.2 release.
  - Use shorter labels for function names?
  - Only output labels for pc aborts that are actually jumped to.
 
-* Add test that you can use a unicode character in a literal?
+* Fix failing spec/SpecTests/7.2-Literal/Syntax/Unicode.fble test.
 
 * [spec] Should empty path be allowed in package type?
  See spec/fble.fbld for more details.

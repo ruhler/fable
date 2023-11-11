@@ -1,0 +1,23 @@
+# This test is currently failing because we don't properly support unicode
+# characters in literals.
+# @@fble-test@@ xfail
+# @@fble-test@@ compile-error 22:13
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Enum@ = +(Unit@ A, Unit@ π, Unit@ C);
+
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit@ _b = l.cons.head.π;
+  Unit@ _a = l.cons.tail.cons.head.A;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit;
+};
+
+# It should be fine to include alphanumeric unicode characters in literals.
+Unit@ _ = f|πAC;
+Unit;
