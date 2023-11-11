@@ -169,6 +169,11 @@
     @code[fbld] @
      My email is ruhler\@degralder.com.
 
+   @subsubsection Command
+    An inline command starts with the character @l{@} followed by a command
+    name made up of one or more characters from the set @l{[a-zA-Z0-9_]}.
+    Arguments to commands are provided following the command name.
+
    @subsubsection Inline Args
     The standard way of supplying arguments to a command is using inline args.
     An inline arg is inline structured text in square brackets following a
@@ -408,12 +413,74 @@
      @foo[First argument][@bar]
 
  @section Document Processing
-  @subsection Evaluation
-   Todo
+  An fbld document is a mix of plain text and commands. To process a document,
+  the commands are evaluated to plain text with the results all concatenated
+  together.
+  
+  There are a small number of builtin commands which make it possible for a
+  user to define their own commands. These user-defined commands can be
+  collected into separate files, with different implementations for different
+  target backends. For example, one implementation of the commands could be
+  used to convert the document to html when processed, another to convert the
+  document to markdown.
+
   @subsection Builtin Commands
-   Todo
+   @def @l{@head[str]}
+    Returns the first character of the given string after evaluation. Returns an
+    empty string if the given string is empty.
+
+   @definition @l{@tail[str]}
+    Returns all but the first character of the given string after evaluation.
+    Returns an empty string if the given string is empty.
+
+   @definition @l{@ifeq[a][b][then][else]}
+    Compares strings @a[a] and @a[b] after evaluation. If they are equal,
+    returns the result of evaluating the @a[then] branch. Otherwise returns
+    the results of evaluating the @a[else] branch.
+
+   @definition @l{@define[name][params][def][body]}
+    Defines a new command @l{@}@a[name] for use in the body. @a[params] is a
+    space separated list of parameters for the new command. @a[def] defines
+    the value of the command, which will be evaluated in a context where args
+    are bound to the parameters.
+
+    For example:
+
+    @code[fbld] @
+     @define[ShowPair][a b][The pair is: @a, @b][@ShowPair[hello][there]]
+     
+   @definition @l{@eval[arg]}
+    Evaluates @a[arg] in the current environment. Any unevaluated commands in
+    arg that are now defined in the environment will be evaluated.
+
+   @definition @l{@plain[f][body]}
+    Applies command @l{@}@a[f]@l{[...]} to each occurrence of plain text in
+    body, then evaluates the result.
+
+    The command @a[f] ought to satisfy the property: @l{@f[xy] = @f[x]@f[y]}
+  
+  @subsection Evaluation
+   Commands do not have any side effects. When a command is encountered in an
+   fbld document, it is substituted for the result of its evaluation according
+   to the rules described in the section on builtin commands.
+
+   If a command is encountered in an fbld document that has not been defined,
+   the command is left as is in the document, without processing any of the
+   arguments to the command.
+
   @subsection Invocation
-   Todo
+   The @l[fbld] program is used to process an fbld document, which can be
+   split across multiple files. These files are concatenated in order to form
+   the document to be processed. The file is parsed into an fbld document as
+   block structured text. The commands in the document are processed as
+   described above. The resulting text is concatenated together and output,
+   assuming there are no unprocessed commands left after evaluation.
+
+   The most common way to split a document into separate files is to put
+   related command definitions into a separate file ending with @l{@@} as a
+   final arg separator. The next file in the list of files will then be
+   interpreted as the body of the last command definition in the previous
+   file.
 
  @section To Do
   The fbld markup language is still being developed. The following are open
@@ -424,7 +491,11 @@
    form of namespace management is desired.
 
   @item
-   It's not nice for the user to have to know all the right .fbld files to
+   It's not nice for the user to have to know all the right @l{.fbld} files to
    list on the command line in the right order. It seems like we ought to have
    some form of import to import required command definitions automatically in
    the right order.
+
+  @item
+   Is it possible to have blank lines at the end of next line literal text?
+   Should it be possible?

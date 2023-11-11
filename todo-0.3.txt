@@ -8,6 +8,7 @@ Things to consider doing for the fble-0.3 release.
 * Support partial function application?
  - Allow over-application of functions.
  - Have <- perform over-application of functions.
+ - Allow partial application of functions?
  - Don't distinguish between a -> (b -> c) and (a, b) -> c ?
  - See thoughts/fble-0.2/partial_application.txt for details.
 
@@ -18,6 +19,9 @@ Things to consider doing for the fble-0.3 release.
 * Make programs run twice as fast.
  - Implement function inlining?
  - Implement packing of data types?
+ - Avoid repeated calls to FbleStrictValue in generated code?
+ - Use registers for args and locals instead of the stack?
+ - Inline calls to things like FbleStrictValue?
 
 * Do something with .@ module value vs. type?
   - There's currently unexercised code for it.

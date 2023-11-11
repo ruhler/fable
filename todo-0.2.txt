@@ -8,12 +8,15 @@ Things to consider doing for the fble-0.2 release.
    example by writing a function to append newline only if needed.
 
 * Fbld Big:
- - Update fbld spec for new syntax.
  - Fix issues with generated documentation.
  - Support for syntax highlighting.
    Which may want improvements to html escaping.
 
 * Fbld Misc:
+ - Add test for empty continuations.
+   @foo
+   @
+   @ hello
  - Looks like some extra newline somewhere in html backend for @fbld or @url.
  - Are blank lines allowed at end of next line literal text?
  - Are blank lines allowed inside @[...] inside @.block text?
