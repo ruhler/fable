@@ -1,0 +1,33 @@
+Release Notes
+=============
+To summarize the changes since e63f12b58a3e33b631ef8d012a5181879ed59faa:
+
+Fble Language
+  Allow literal letters to be more than one character.
+  Increase stack limit as part of the fble spec.
+  Add struct copy expression.
+
+Fble Bug Fixes
+  Fix bug parsing fble programs with non-terminated quoted words.
+  Fix off-by-one error in dwarf variable location info.
+
+Various Performance Improvements
+ - Includes non-backwards compatible changes to the fble function calling
+   procedure.
+
+App Changes
+  Rewrite Fbld Language and Implementation
+   - Removes old tcl version.
+   - Backends now implemented in fbld language.
+   - Much better error location tracking.
+  Md5
+   - Change Md5 to take list of files on command line.
+  Sat
+   - Switch to conflict-driven clause learning algorithm.
+  
+Core library changes
+  TODO: review these specifically.
+  Rename Inc and Dec to Incr and Decr.
+  Add 'read' operation to Stdio@.
+
+Other Miscellaneous Improvements

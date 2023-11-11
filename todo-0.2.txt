@@ -2,6 +2,8 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
+* Prepare release notes.
+
 * Fbld Big:
  - Fix issues with generated documentation.
  - Support for syntax highlighting.
@@ -16,7 +18,6 @@ Things to consider doing for the fble-0.2 release.
 
 * Review all the generated documentation, including usage help text.
   Since we've changed the fbld implementation.
- - Don't assume single or next line args for anything in dc.man.fbld.
 
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.

@@ -4,6 +4,37 @@
  @section fble-0.2
   (under development)
 
+  @subsection Fble Language
+   @item Allow literal letters to be more than one character.
+   @item Increase stack limit as part of the fble spec.
+   @item Add struct copy expression.
+
+  @subsection Fble Implementation
+   @item Fix bug parsing fble programs with non-terminated quoted words.
+   @item Fix off-by-one error in dwarf variable location info.
+   @item Performance improvements.
+
+  @subsection Applications and Library
+   @subsubsection Fbld
+    @item
+     Complete rewrite of fbld documentation language and implementation. Fbld
+     backends are now implemented in fbld directly. The tcl-based
+     implementation is removed in favor of an fble-based implementation with
+     much better error location tracking.
+
+   @subsubsection fble-md5
+    @item Specify list of files on the command line.
+    
+   @subsubsection fble-sat
+    @item Switch to a conflict driven clause learning algorithm.
+
+   @subsubsection Core Library
+    @item Add file reading capabilities to @l{Stdio}.
+    @item Change @l{Map} to take order function instead of equality function.
+    @item Rename @l{Inc} and @l{Dec} to @l{Incr} and @l{Decr}.
+    @item Add @l{/Core/Debug%} printf based debugging library.
+    @item Performance improvements.
+
  @section fble-0.1 March 2023
   Initial release of fble. Includes:
 
