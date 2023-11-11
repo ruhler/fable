@@ -2,8 +2,6 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
-* Remove trailing whitespace in fble spec?
-
 * Fbld Big:
  - Fix issues with generated documentation.
  - Support for syntax highlighting.
