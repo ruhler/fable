@@ -1,0 +1,57 @@
+Unicode
+=======
+There is a todo item to support unicode characters in literals.
+
+It's easy to come up with an example. I have a test for it now.
+
+It's harder to know the right way to support unicode in general.
+
+My first attempt to support unicode characters in literals is to use mbrtowc
+to figure out how many bytes correspond to a single character. This apparently
+requires we set the locale before it will successfully parse a unicode
+character.
+
+Part of me wishes I didn't have to have unicode specific knowledge built in to
+the language implementation. It's something special about literals that they
+have to know what a character is.
+
+You could imagine we generalize the definition of literals. Instead of
+matching characters, we could match prefixes.
+
+For example, you could have something like:
+
+@ Foo@ = +(Unit@ hello, Unit@ there);
+
+Then the string literal f|'hellothere' turns into f[hello, there].
+
+Now there could be ambiguity here. For example:
+
+@ Foo@ = +(Unit@ hello, Unit@ there, Unit@ he).
+
+Do we match 'he' or 'hello'? Better to be explicitly. We could say match the
+shortest, or match the longest. Perhaps matching the longest would be most
+useful to the programmer. They could do fancy things like:
+
+@ Num@ = (Unit@ 0, Unit@ 1, Unit@ 1001110101);
+
+Now the long bit field gets specially recognized and you get back the
+optimized version. Or you could have multi-character operators in arithmetic
+expressions like += that get parsed as the item '+=' while still allowing '+'
+and '=' to be parsed separately.
+
+Honestly, I can't think of much practical use for this beyond my perhaps lazy
+motivation of unicode.
+
+Pros:
+* No special logic for unicode/locale required, hopefully.
+* No need to build in definition of 'character' in the language spec.
+Cons:
+* Potential compile time performance overhead to search for best match? Not
+  worst case, but average case, because we have to check all. But we could
+  optimize that if we wanted to.
+
+I'm very tempted to try this. If it solves the unicode issue out of the box,
+that would be nice. It's a little strange, but because it is more general than
+'character', feels possible a little simpler and more powerful a language
+feature.
+
