@@ -10,7 +10,6 @@
 #include <stdio.h>    // for fprintf, stderr
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
-#include <wchar.h>    // for mbrtowc
 
 #include <fble/fble-vector.h>
 
@@ -1735,6 +1734,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
+      size_t argc = strlen(literal_expr->word);
+      size_t args[argc];
+
       FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       unit_type->datatype = FBLE_STRUCT_DATATYPE;
       FbleVectorInit(unit_type->fields);
@@ -1742,23 +1744,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       bool error = false;
       FbleLoc loc = literal_expr->word_loc;
-      size_t wordlen = strlen(literal_expr->word);
-      size_t args[wordlen];
-      size_t index = 0;
-      size_t argc = 0;
-
-      while (index < wordlen) {
-        // Extract the next unicode character from the word.
-        size_t wclen = mbrtowc(NULL, literal_expr->word + index, wordlen-index, NULL);
-        if (wclen == 0 || wclen == (size_t) -1 || wclen == (size_t) -2) {
-          ReportError(literal_expr->word_loc, "unicode encoding error in literal");
-          return TC_FAILED;
-        }
-        char field_str[wclen+1];
-        strncpy(field_str, literal_expr->word + index, wclen);
-        field_str[wclen] = '\0';
-        index += wclen;
-
+      for (size_t i = 0; i < argc; ++i) {
+        char field_str[2] = { literal_expr->word[i], '\0' };
         bool found = false;
         for (size_t j = 0; j < elem_data_type->fields.size; ++j) {
           if (strcmp(field_str, elem_data_type->fields.xs[j].name.name->str) == 0) {
@@ -1770,8 +1757,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
               break;
             }
 
-            args[argc] = j;
-            argc++;
+            args[i] = j;
             break;
           }
         }
@@ -1781,7 +1767,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           error = true;
         }
 
-        if (field_str[0] == '\n') {
+        if (literal_expr->word[i] == '\n') {
           loc.line++;
           loc.col = 0;
         }
