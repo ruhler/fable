@@ -41,7 +41,7 @@ namespace eval "fbld" {
       "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/bin/fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
     build $target.txt $target.roff \
       "GROFF_NO_SGR=1 groff -T ascii < $target.roff > $target.txt"
-    test $target.txt.tr "$target.txt $golden" "cmp $target.txt $golden"
+    test $target.txt.tr "$target.txt $golden" "diff $target.txt $golden"
     build $target \
       "$::s/fbld/cdata.tcl $golden" \
       "tclsh8.6 $::s/fbld/cdata.tcl $id < $golden > $target"
