@@ -1,6 +1,6 @@
 fble-profiles-test - runs the fble-profiles-test
 
-Usage: ffbbllee--pprrooffiilleess--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H.br
+Usage: ffbbllee--pprrooffiilleess--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
 
 Runs the fble-profiles-test.
 

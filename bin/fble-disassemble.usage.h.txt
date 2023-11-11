@@ -1,6 +1,6 @@
 fble-disassemble - disassembles an fble module
 
-Usage: ffbbllee--ddiissaasssseemmbbllee [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H.br
+Usage: ffbbllee--ddiissaasssseemmbbllee [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
 
 Generates human readable disassembly for the given fble module.
 

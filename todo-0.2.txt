@@ -2,11 +2,6 @@ Fble 0.2 TODO
 =============
 Things to consider doing for the fble-0.2 release.
 
-* Remove .br in output of usage help text
- - Either make consistent use of relevant tags for inline versus block
-   structured arguments, or support both seemlessly in the backend. For
-   example by writing a function to append newline only if needed.
-
 * Fbld Big:
  - Fix issues with generated documentation.
  - Support for syntax highlighting.

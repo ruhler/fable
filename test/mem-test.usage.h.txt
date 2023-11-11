@@ -1,6 +1,6 @@
 fble-mem-test - test memory behavior of an fble program
 
-Usage: ffbbllee--mmeemm--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H.br
+Usage: ffbbllee--mmeemm--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
 
 Tests  for  memory  behavior  of  an fble function. The function should take a
 //SSppeeccTTeessttss//NNaatt%%..NNaatt@@ as an argument. The function is  evaluated  with  various

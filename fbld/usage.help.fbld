@@ -2,7 +2,7 @@
  @doc[@name] @name - @brief\n@content
 @@
 
-@define[synopsis][text] @par[Usage: @text] @@
+@define[synopsis][text] @par[Usage: @text\n] @@
 @define[description][body] @body @@
 @define[options][body] @body @@
 @define[opt][opt desc] @def[@opt][@desc] @@

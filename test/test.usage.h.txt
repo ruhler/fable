@@ -1,6 +1,6 @@
 fble-test - evaluates an fble program
 
-Usage: ffbbllee--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H.br
+Usage: ffbbllee--tteesstt [_O_P_T_I_O_N...] --mm _M_O_D_U_L_E___P_A_T_H
 
 Evaluates  an  fble program and discards the result. Exits with success if the
 program type checks and runs to completion.
