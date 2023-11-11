@@ -845,17 +845,22 @@
    For example, the element type for an octal literal might look like:
   
    @code[fble] @
-    @OctalLetters = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
+    @Octal = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
   
-   The literal expression @l{f|abc}, assuming the element type for the list
-   argument to @l{f} is @l{E@}, is desugared to:
+   The literal expression @l{f|077}, assuming the element type for the list
+   argument to @l{f} is @l{Octal@}, is desugared to:
   
    @code[fble] @
-    f[E@(a: *()()), E@(b: *()()), E@(c: *()())];
-  
-   It is a type error if the word contains a letter for which there is no
-   corresponding field in the element type @l{E@}.
-  
+    f[Octal@(0: *()()), Octal@(7: *()()), Octal@(7: *()())];
+
+   In the example above, each letter corresponds to a single character. You
+   can define letters to be longer field names too. In that case, the literal
+   word is split up into letters by reading from left to right and selecting
+   the longest field name to match at each position.
+
+   It is a type error if the word cannot be decoded into a sequence of letters
+   based on the field names of the element type @l{E@}.
+   
    Struct types and package types cannot be used for the function in literal
    syntax, even though they share a similar concrete syntax to function
    application. Type inference is not supported with literals because the word

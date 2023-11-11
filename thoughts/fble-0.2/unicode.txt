@@ -55,3 +55,48 @@ that would be nice. It's a little strange, but because it is more general than
 'character', feels possible a little simpler and more powerful a language
 feature.
 
+---
+
+The implementation isn't too bad. The biggest annoyance being the error
+message won't be as nice when a field match isn't found, because it will show
+the whole rest of the literal rather than a single character.
+
+This fixes the unicode test. I am tempted.
+
+The spec is tricky, because 'letter' seems much simpler on the surface than
+'prefix'.
+
+I don't know. This feels maybe too much of a stretch. Why not just call
+setlocale and be done with it? Except setlocale suggests maybe we should be
+handling other cases differently too? Like, use strcoll instead of strcmp?
+
+I hate to have the validity of an fble program depend on its locale. Can we
+declare UTF8 as part of the fble language spec? But unicode gets pretty
+complex pretty quickly.
+
+The language syntax spec is currently based around whitespace, explicit
+punctuation, and everything else.
+* isspace is based on current local. So in practice, current locale.
+
+Makes sense, then, for characters to be based on the current locale, no? But,
+again, it doesn't make sense for a program to compile fine in one locale but
+not at all in another locale.
+
+It looks like people can make up their own locale's. I really don't like this
+idea that an fble program could work fine under UTF8, but if you set your
+locale to C, then it fails to compile.
+
+So now I'm leaning towards the prefix approach. Because we can use the default
+posix C locale always, while still supporting use of unicode characters in
+literals.
+
+There is still ambiguity about 'isspace', but, again, fble as an
+implementation always uses the same locale, so whatever it compiles will
+compile consistently, regardless of your environment variable settings. That's
+a good thing. I don't want locale environment variable settings to be part of
+the fble language spec.
+
+If I can just come up with a nice description for 'letter' in the language
+spec based on prefixes, then I think I should go that route. We should also
+add a test for the conflict case, which will exist if we want unicode support
+in C locale.

@@ -1734,9 +1734,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      size_t argc = strlen(literal_expr->word);
-      size_t args[argc];
-
       FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       unit_type->datatype = FBLE_STRUCT_DATATYPE;
       FbleVectorInit(unit_type->fields);
@@ -1744,34 +1741,44 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       bool error = false;
       FbleLoc loc = literal_expr->word_loc;
-      for (size_t i = 0; i < argc; ++i) {
-        char field_str[2] = { literal_expr->word[i], '\0' };
-        bool found = false;
+      size_t maxargc = strlen(literal_expr->word);
+      size_t args[maxargc];
+      size_t argc = 0;
+      const char* word = literal_expr->word;
+      size_t wordlen = maxargc;
+      while (wordlen > 0) {
+        size_t maxlen = 0;
         for (size_t j = 0; j < elem_data_type->fields.size; ++j) {
-          if (strcmp(field_str, elem_data_type->fields.xs[j].name.name->str) == 0) {
-            found = true;
-            if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[j].type)) {
-              ReportError(loc, "expected field type %t, but letter '%s' has field type %t\n",
-                  unit_type, field_str, elem_data_type->fields.xs[j].type);
-              error = true;
-              break;
-            }
-
-            args[i] = j;
-            break;
+          const char* fieldname = elem_data_type->fields.xs[j].name.name->str;
+          size_t fieldnamelen = strlen(fieldname);
+          if (fieldnamelen > maxlen && fieldnamelen <= wordlen &&
+              strncmp(word, fieldname, fieldnamelen) == 0) {
+            maxlen = fieldnamelen;
+            args[argc] = j;
           }
         }
 
-        if (!found) {
-          ReportError(loc, "'%s' is not a field of type %t\n", field_str, elem_type);
+        if (maxlen == 0) {
+          ReportError(loc, "next letter of literal '%s' not found in type %t\n", word, elem_type);
           error = true;
+          break;
+        } else if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[args[argc]].type)) {
+          ReportError(loc, "expected field type %t, but '%s' has field type %t\n",
+              unit_type, elem_data_type->fields.xs[args[argc]].name.name->str, elem_data_type->fields.xs[args[argc]].type);
+          error = true;
+          break;
         }
 
-        if (literal_expr->word[i] == '\n') {
-          loc.line++;
-          loc.col = 0;
+        argc++;
+        for (size_t i = 0; i < maxlen; ++i) {
+          if (word[i] == '\n') {
+            loc.line++;
+            loc.col = 0;
+          }
+          loc.col++;
         }
-        loc.col++;
+        word += maxlen;
+        wordlen -= maxlen;
       }
 
       if (error) {

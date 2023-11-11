@@ -1,0 +1,20 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Enum@ = +(Unit@ A, Unit@ AC, Unit@ C);
+
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit@ _b = l.cons.head.A;
+  Unit@ _a = l.cons.tail.cons.head.AC;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit;
+};
+
+# If multiple prefixes of the literal match, pick the 'longest' letter. In
+# this case, we expect [A, AC, C] rather than [A, A, C, C].
+Unit@ _ = f|AACC;
+Unit;

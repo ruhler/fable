@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 12:6
+# @@fble-test@@ compile-error 12:5
 @ Unit@ = *();
 Unit@ Unit = Unit@();
 
@@ -9,4 +9,4 @@ Unit@ Unit = Unit@();
 (L@) { L@; } f = (L@ l) { l; };
 
 # The letter X is not part of Enum@.
-f|BACX; 
+f|BAXC;
