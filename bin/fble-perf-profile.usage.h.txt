@@ -35,6 +35,5 @@ Exit Status:
 
 Examples:
 
-  ppeerrff rreeppoorrtt --qq --gg ffoollddeedd,,ccoouunntt,,00 || ffbbllee--ppeerrff--pprrooffiillee.br
-
+  ppeerrff rreeppoorrtt --qq --gg ffoollddeedd,,ccoouunntt,,00 || ffbbllee--ppeerrff--pprrooffiillee
 

@@ -48,6 +48,5 @@ Exit Status:
 
 Examples:
 
-  ffbbllee--ddeeppss --tt HHeellllooWWoorrlldd..ffbblldd..dd --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%.br
-
+  ffbbllee--ddeeppss --tt HHeellllooWWoorrlldd..ffbblldd..dd --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%
 

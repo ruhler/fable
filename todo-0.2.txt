@@ -1,8 +1,11 @@
 Fble 0.2 TODO
 =============
-Things to consider doing for the fble-0.2 release.
+Things to do for the fble-0.2 release.
 
-* Prepare release notes.
+* Fix issue where golden usage files depend on configure arguments.
+* Fix fbld doc build dependency cycle issue.
+
+* Finalize release notes.
 
 * Fbld Big:
  - Fix issues with generated documentation.

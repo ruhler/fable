@@ -60,8 +60,7 @@ Exit Status:
 
 Examples:
 
-  ffbbllee--ssttddiioo --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%% ---- aa bb.br
-
+  ffbbllee--ssttddiioo --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%% ---- aa bb
 
   Runs the hello world program, passing (unused) arguments aa and bb.
 

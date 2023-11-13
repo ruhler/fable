@@ -39,6 +39,5 @@ Exit Status:
 
 Examples:
 
-  ffbbllee--pprrooffiilleess--tteesstt --II tteesstt --mm //PPrrooffiilleessTTeesstt%%.br
-
+  ffbbllee--pprrooffiilleess--tteesstt --II tteesstt --mm //PPrrooffiilleessTTeesstt%%
 

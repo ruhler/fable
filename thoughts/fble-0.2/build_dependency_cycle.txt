@@ -1,0 +1,129 @@
+Build Dependency Cycle
+======================
+The fble binaries depend on the output of fbld for usage info. Running fbld
+depends on the fble binaries. This is a build dependency cycle. How do we
+break it?
+
+Originally we didn't have a problem, because there was a tcl-based fbld
+implementation we could use.
+
+I thought the problem was fixed by checking in golden values of the usage
+info. There are a few problems with that though:
+* The install path is hard coded into the golden files, but it needs to change
+  based on who is building.
+* Apparently groff is non-deterministic in its output formatting?
+* And a more minor issue: any change to fbld implementation causes us to
+  have to rebuild everything.
+
+This wouldn't be a problem if fbld wasn't implemented in fble.
+
+This wouldn't be a problem if we could assume everyone had fbld already
+installed on their computers.
+
+There is a false dependency here: we don't depend on usage info to build fbld.
+We just want to bundle that usage info together with the fble binaries so it's
+easy to access help documentation.
+
+Some approaches to consider:
+A. Create an alternate fbld implementation that does not depend on fble.
+  For example, a C implementation could be useful to fully decouple fbld from
+  fble. It would also be useful as a case study in performance and other
+  factors comparing C and fble programming languages. Another extreme version
+  of this would be to hack something up to generate usage from golden files in
+  a more reliable way.
+
+B. Decouple usage info from the fble binary. For example, have the fble
+  binaries read usage info from a file that is stored separately. Before that
+  file is available, output "help unavailable" or some such.
+
+C. Create separate fble bootstrap binaries that don't have help built in.
+  Build a separate version of fble binaries with help usage built in and
+  install that version.
+
+(A) sounds like a clean solution. Clear separation of fbld and fble. There's
+nothing about fbld that ought to depend on fble. It's just sad to think about
+what happens to the fble implementation of fbld. Would there be any point in
+it anymore? Would we use it? We would have to then maintain two different
+implementations as the fbld language continues to evolve?
+
+For (B), where would we store the usage info? It could go into datadir. Be
+defined in load.path.c using some global variable. Like datadir/fble/doc. Or
+docdir/fble/*.usage.txt. It's kind of nice to have that documentation there
+anyway.
+
+The downside being you would have to install the documentation before the
+documentation is available via the program. But maybe we can fall back to
+searching in the same directory as the binary itself to cover most cases?
+
+How do things like 'git help' work? Seems like they launch a manual page?
+Could we use that approach for (B)? Looks like it calls man directly. It can
+be configured to use info of html too. In c: execlp("man", <page>);
+
+I wish usage info was built into the app instead of depending on external
+files and tools for viewing man pages though.
+
+For (C), is there some way we could take a binary X and usage help Y, combine
+them together to get binary X' with usage info? It almost feels like
+re-running the linker? Relinking? For example, maybe initially we link to the
+raw .fbld usage help text or some generic "help unavailable". Then we link
+again to override the symbol to the actual help text.
+
+So, for example, can we say: fble-compile + fble-compile-usage.o =>
+fble-compile?
+
+Certainly we could have two different invocations:
+  ld $FBLE_COMPILE_OBJS fble-compile-no-usage.o ==> fble-compile-no-usage
+  ld $FBLE_COMPILE_OBJS fble-compile-usage.o ==> fble-compile
+
+It would just be icing to instead say something like:
+  ld $FBLE_COMPILE_OBJS fble-compile-no-usage.o ==> fble-compile-no-usage
+  ld fble-compile-no-usage fble-compile-usage.o ==> fble-compile
+
+Of course, if we used dynamic linking, it would be natural to put the usage in
+a separate .so file. Install the version with the actual usage instead of the
+initial version.
+
+ld magic to try:
+* --undefined=symbol to make the symbol undefined in the first build.
+* -r to make the output of ld possible to pass as input.
+* --unresolved-symbols=method to ignore unresolved symbols.
+* --wrap=symbol to wrap symbols?
+
+This is silly. I should just create two different binaries by calling ld
+twice. Then the question is what to call the two different binaries?
+
+And note, this is needed not just for one binary, but for multiple binaries.
+Can I get the list easily enough from ninja? It's three: fble-compile,
+fble-deps, libfble-core.a(for stdio usage). And presumably anything that depends on
+libfble-core.a result. Unless we have a special bootstrap one for fbld.
+
+So, uh... we could have... ugh. This is tedious.
+* bin/fble-*-no-usage, bin/fble-*
+* libcore-no-usage.a, libcore.a
+* fbld-no-usage, fbld
+* Have a flag to stdio to build 'no-usage' version of libcore.a.
+* Use the bin/fble-*-no-usage for building everything. Install the version
+  with usage.
+
+That's not a pleasant approach.
+
+My vote: go with (A) to start. If that becomes too painful, go to (B). Don't
+go down the path of (C).
+
+But (A) is going to be a lot of work. Having to build a functional language
+interpreter in C. Dealing with memory management, environments.
+
+Easiest approach would be to write a generic function for printing usage as
+part of the fble arg-parse library for example. It takes the path to the
+binary and looks for a usage.txt file to be found in the same directory as the
+binary or installed in a doc directory based on the name of the binary. Or
+maybe just on a given usage name searched in the same directory as the binary
+or in the doc directory. That should work pretty reliably I think.
+
+Except, decoupling the usage info from the binary itself could make it report
+the wrong version info, for example? No, version info isn't include. I think
+it will be safe enough. We could use cat, or print the contents of the file
+directly to avoid the need for exec or relying on cat being available.
+
+So maybe, go with that approach first. If we get around to (A), we can always
+switch back.

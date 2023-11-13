@@ -51,8 +51,7 @@ Exit Status:
 
 Examples:
 
-  ffbbllee--aapppp --pp ccoorree --pp aapppp --mm //AApppp//DDeemmoo%% ----ffppss.br
-
+  ffbbllee--aapppp --pp ccoorree --pp aapppp --mm //AApppp//DDeemmoo%% ----ffppss
 
   Launches the demo app and reports FPS histogram when done.
 

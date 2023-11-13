@@ -90,14 +90,12 @@ Exit Status:
 
 Examples:
 
-  ffbbllee--ccoommppiillee --cc --ee CCoommppiilleeddHHeellllooWWoorrlldd --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%.br
-
+  ffbbllee--ccoommppiillee --cc --ee CCoommppiilleeddHHeellllooWWoorrlldd --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%
 
   Compiles //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%% to  an  FFbblleeCCoommppiilleeddMMoodduulleeFFuunnccttiioonn**  called
   CCoommppiilleeddHHeellllooWWoorrlldd..
 
-  ffbbllee--ccoommppiillee --cc ----mmaaiinn FFbblleeSSttddiiooMMaaiinn --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%.br
-
+  ffbbllee--ccoommppiillee --cc ----mmaaiinn FFbblleeSSttddiiooMMaaiinn --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%
 
   Generates  a  standalone  program that invokes FFbblleeSSttddiiooMMaaiinn on the compiled
   code for //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%% when run.

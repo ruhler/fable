@@ -50,8 +50,7 @@ Exit Status:
 
 Examples:
 
-  ffbbllee--tteesstt ----pprrooffiillee tteesstt..pprrooff --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%.br
-
+  ffbbllee--tteesstt ----pprrooffiillee tteesstt..pprrooff --pp ccoorree --mm //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%
 
   Evaluates (without executing) the module //CCoorree//SSttddiioo//HHeellllooWWoorrlldd%%, outputting
   a profiling report to tteesstt..pprrooff.

@@ -54,13 +54,11 @@ Exit Status:
 
 Examples:
 
-  ffbbllee--mmeemm--tteesstt --II ffoooo --mm //FFoooo%%.br
-
+  ffbbllee--mmeemm--tteesstt --II ffoooo --mm //FFoooo%%
 
   Test that the function defined by //FFoooo%% uses O(1) memory.
 
-  ffbbllee--mmeemm--tteesstt --II ffoooo --mm //FFoooo%% ----ggrroowwtthh.br
-
+  ffbbllee--mmeemm--tteesstt --II ffoooo --mm //FFoooo%% ----ggrroowwtthh
 
   Test that the function defined by //FFoooo%% uses greater than O(1) memory.
 

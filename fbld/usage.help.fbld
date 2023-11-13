@@ -8,4 +8,4 @@
 @define[opt][opt desc] @def[@opt][@desc] @@
 @define[exitstatus][body] @section[Exit Status][@body] @@
 @define[examples][body] @section[Examples][@body] @@
-@define[ex][text desc] @par[@l[@text]]\n@desc @@
+@define[ex][text desc] @par[@l[@text]\n]@desc @@
