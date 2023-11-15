@@ -35,17 +35,17 @@
  
   @subsection Target Control
    @opt[@l[-t], @l[--target] \[@l[aarch64] | @l[c]\]]
-    what to compile to, defaults to aarch64
+   @ what to compile to, defaults to aarch64
   
   @subsection Output Control
    @opt[@l[-c], @l[--compile]]
-    generate compiled code for the module
+   @ generate compiled code for the module
   
    @opt[@l[-e], @l[--export] @a[NAME]]
-    generate @a[NAME] function to export the module
+   @ generate @a[NAME] function to export the module
   
    @opt[@l[--main] @a[NAME]]
-    generate main function using @a[NAME] wrapper
+   @ generate main function using @a[NAME] wrapper
   
    At least one of @l[--compile], @l[--export], or @l[--main] must be provided.
  

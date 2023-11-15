@@ -10,7 +10,7 @@
 @define[def][name value]
 @ @name\n.br\n.in +4\n@value\n.br\n.in -4\n @@
 @define[item][text] * @text @@
-@define[code][language text] .sp\n@text\n.br\n @@
+@define[code][language text] .in +2\n.sp\n@text.br\n.in -2\n @@
 @define[doc][title body]
 @ .pl 1\n.ll 78\n@body @@
 @define[section][title body] .sp\n@title:\n.br\n.in +2\n@body.in -2\n @@

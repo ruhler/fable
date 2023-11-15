@@ -1,7 +1,7 @@
 namespace eval "pkgs/app" {
   set objs [list]
   if $::config::enable_fble_app {
-    fbld_help_usage $::b/pkgs/app/app.usage.txt $::s/pkgs/app/app.fbld
+    fbld_help_usage $::b/pkgs/app/fble-app.usage.txt $::s/pkgs/app/app.fbld
     obj $::b/pkgs/app/app.o $::s/pkgs/app/app.c \
       "$::config::sdl_cflags $::config::gl_cflags -I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app"
     lappend objs $::b/pkgs/app/app.o
@@ -18,7 +18,7 @@ namespace eval "pkgs/app" {
     # fble-app program.
     fbld_man_usage $::b/pkgs/app/fble-app.1 $::s/pkgs/app/app.fbld
     install $::b/pkgs/app/fble-app.1 $::config::mandir/man1/fble-app.1
-    install $::b/pkgs/app/app.usage.txt $::config::docdir/fble/app.usage.txt
+    install $::b/pkgs/app/fble-app.usage.txt $::config::docdir/fble/fble-app.usage.txt
 
     obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
       "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app $::config::sdl_cflags"

@@ -7,12 +7,12 @@
  
   To collect perf data:
  
-  @code[sh]
+  @code[sh] @
    perf record -F 997 -d -g <cmd>
  
   To report perf data:
  
-  @code[sh]
+  @code[sh] @
    perf report -q -g folded,count,0 | fble-perf-profile
  
   The output @l[count] field is mostly meaningless. It is the number of
