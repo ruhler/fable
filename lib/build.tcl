@@ -1,20 +1,6 @@
 # Exports:
 #   ::fble_objs_cov - list of .o files used in libfble.cov.
 namespace eval "lib" {
-  set headers {
-    code.h
-    expr.h
-    heap.h
-    interpret.h
-    kind.h
-    tc.h
-    typecheck.h
-    type.h
-    unreachable.h
-    value.h
-    var.h
-  }
-
   set sources {
     aarch64.c
     alloc.c
