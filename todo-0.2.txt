@@ -2,6 +2,11 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* Can we make Error status show up on same line in usage help text?
+ It works fine for man pages. If not too hard, can we make it work for usage
+ help text too? As in, don't go to the next line if there's space to start it
+ on the previous line.
+
 * Finalize release notes.
 
 * Fbld Big:

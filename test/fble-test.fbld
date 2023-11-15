@@ -12,7 +12,7 @@
  
   @subsection Profiling Options
    @opt[@l[--profile] @a[FILE]]
-    writes a profile of the test run to @a[FILE]
+   @ writes a profile of the test run to @a[FILE]
  
  @exitstatus
   @def[0] Success.

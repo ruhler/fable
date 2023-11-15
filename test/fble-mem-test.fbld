@@ -16,10 +16,10 @@
  
   @subsection Test Options
    @opt[@l[--growth]]
-    Expect the function to use greater than O(1) memory.
+   @ Expect the function to use greater than O(1) memory.
  
    @opt[@l[--debug]]
-    Output graph of memory as a function of N, to help with debugging.
+   @ Output graph of memory as a function of N, to help with debugging.
  
  @exitstatus
   @def[0] If memory growth is as expected.
