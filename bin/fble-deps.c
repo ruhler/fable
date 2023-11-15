@@ -9,10 +9,9 @@
 #include <fble/fble-alloc.h>     // for FbleFree.
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg, FbleParseStringArg
 #include <fble/fble-load.h>      // for FbleLoad.
+#include <fble/fble-usage.h>     // for FblePrintUsageDoc
 #include <fble/fble-vector.h>    // for FbleVectorInit.
 #include <fble/fble-version.h>   // for FBLE_VERSION
-
-#include "fble-deps.usage.h"     // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -39,6 +38,8 @@ int main(int argc, const char* argv[])
   bool help = false;
   bool error = false;
 
+  const char* arg0 = argv[0];
+
   argc--;
   argv++;
   while (!(help || version || error) && argc > 0) {
@@ -59,7 +60,7 @@ int main(int argc, const char* argv[])
   }
 
   if (help) {
-    fprintf(stdout, "%s", fbldUsageHelpText);
+    FblePrintUsageDoc(arg0, "fble-deps.usage.txt");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }

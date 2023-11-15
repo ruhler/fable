@@ -20,10 +20,9 @@ namespace eval "test" {
   set objs [list]
   foreach {x} $lib_sources {
     set base [file rootname [file tail $x]]
-    fbld_header_usage $::b/test/$base.usage.h $::s/test/$base.fbld \
-      fbldUsageHelpText $::s/test/$base.usage.h.txt
-    fbld_man_usage $::b/test/fble-$base.1 $::s/test/$base.fbld
-    obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/$base.usage.h
+    fbld_help_usage $::b/test/fble-$base.usage.txt $::s/test/fble-$base.fbld
+    fbld_man_usage $::b/test/fble-$base.1 $::s/test/fble-$base.fbld
+    obj $::b/test/$base.o $::s/test/$base.c $cflags
     lappend objs $::b/test/$base.o
   }
   lib $::b/test/libfbletest.a $objs
@@ -37,6 +36,7 @@ namespace eval "test" {
   }
 
   foreach {x} [list fble-test fble-mem-test] {
+    install $::b/test/$x.usage.txt $::config::docdir/fble/$x.usage.txt
     install $::b/test/$x.1 $::config::mandir/man1/$x.1
     install $::b/test/$x $::config::bindir/$x
   }

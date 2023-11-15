@@ -11,6 +11,7 @@
 
 #include <fble/fble-alloc.h>       // for FbleFree.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
+#include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION
@@ -18,8 +19,6 @@
 #include "char.fble.h"             // for FbleCharValueAccess
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"           // for FbleStringValueAccess
-
-#include "app.usage.h"             // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_FAILURE 1
@@ -492,7 +491,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
 
   if (help) {
     FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, module);
-    fprintf(stdout, "%s", fbldUsageHelpText);
+    FblePrintUsageDoc(arg0, "fble-app.usage.txt");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }

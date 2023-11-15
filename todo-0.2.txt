@@ -2,10 +2,10 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* Fix issue where golden usage files depend on configure arguments.
-* Fix fbld doc build dependency cycle issue.
-
 * Finalize release notes.
+
+* Consider creating a config.h/config.c automatically with all the config
+  values for access, instead of separate {load,usage}.path.c files.
 
 * Fbld Big:
  - Fix issues with generated documentation.
@@ -18,6 +18,8 @@ Things to do for the fble-0.2 release.
 
 * Document clearly somewhere a guide for doc comments.
  - Including difference between @i and @j.
+
+* Come up with a better story for building and integrating usage help text?
 
 * Review all the generated documentation, including usage help text.
   Since we've changed the fbld implementation.

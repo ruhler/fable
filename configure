@@ -76,6 +76,7 @@ namespace eval "config" {
   set bindir $::config::prefix/bin
   set mandir $::config::prefix/man
   set datadir $::config::prefix/share
+  set docdir $::config::prefix/share/doc
 
   # SDL and OpenGL specific configuration.
   if $enable_fble_app {

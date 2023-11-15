@@ -1,4 +1,5 @@
 namespace eval "bin" {
+
   set bin_sources {
     fble-compile.c
     fble-deps.c
@@ -9,18 +10,17 @@ namespace eval "bin" {
   foreach {x} $bin_sources {
     set base [file rootname [file tail $x]]
 
-    # Generated header file for help usage text.
-    fbld_header_usage $::b/bin/$base.usage.h $::s/bin/$base.fbld \
-      fbldUsageHelpText $::s/bin/$base.usage.h.txt
-
     # The binary.
-    obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \
-      $::b/bin/$base.usage.h
+    obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include"
     bin $::b/bin/$base \
       "$::b/bin/$base.o $::b/lib/libfble.a" ""
     bin_cov $::b/bin/$base.cov \
       "$::b/bin/$base.o $::b/lib/libfble.cov.a" ""
     install $::b/bin/$base $::config::bindir/$base
+
+    # Usage help
+    fbld_help_usage $::b/bin/$base.usage.txt $::s/bin/$base.fbld
+    install $::b/bin/$base.usage.txt $::config::docdir/fble/$base.usage.txt
 
     # Man page.
     fbld_man_usage $::b/bin/$base.1 $::s/bin/$base.fbld

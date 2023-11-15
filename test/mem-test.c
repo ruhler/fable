@@ -10,11 +10,10 @@
 #include <fble/fble-alloc.h>       // for FbleFree, FbleMaxTotalBytesAllocated.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-link.h>        // for FbleLinkFromCompiledOrSource.
+#include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
-
-#include "mem-test.usage.h"        // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -114,7 +113,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleCompiledModuleFunction* mod
 
   if (help) {
     FblePrintCompiledHeaderLine(stdout, "fble-mem-test", arg0, module);
-    fprintf(stdout, "%s", fbldUsageHelpText);
+    FblePrintUsageDoc(arg0, "fble-mem-test.usage.txt");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }

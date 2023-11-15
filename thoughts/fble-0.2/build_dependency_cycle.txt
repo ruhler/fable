@@ -127,3 +127,47 @@ directly to avoid the need for exec or relying on cat being available.
 
 So maybe, go with that approach first. If we get around to (A), we can always
 switch back.
+
+---
+
+Could we build the usage info for a binary as a dynamic shared library? At
+build time use a pre-canned version with no useful help info. After install,
+or after we have built the right version, pick up that by default?
+
+Like, have a search path:
+1. Search where the real thing is generated.
+2. Use the fallback.
+
+According to the internet:
+
+  gcc foo.o -shared -fPIC -o libfoo.so
+
+Let me play around with that.
+
+This seems a little silly. Like trying to reuse the dynamic loader to do a
+file search for me instead of just coding that explicitly.
+
+The annoying thing is knowing where to look for the usage info.
+
+For fble-deps, I want to look at:
+1. Path to fble-deps with .usage.txt added.
+2. Doc dir file name fble-deps.usage.txt
+ Where doc dir in this case would be  $docdir/fble/*
+
+arg0 can give us the current path.
+We want something to give us the 'docdir'.
+
+Then we could write the code for it.
+
+---
+
+I've gone ahead with approach (B), adding an fble-usage.h API for it even
+though it doesn't really make sense to add that as an fble API. Nobody else
+will be installing things in the fble doc directory...
+
+It's a bit awkward and hacky and error prone, but seems to work okay for now.
+
+For example, we search the same directory as the program run so we can find
+usage before installing. But that doesn't work for derived programs like
+fble-md5.
+

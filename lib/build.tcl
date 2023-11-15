@@ -37,6 +37,7 @@ namespace eval "lib" {
     tc.c
     type.c
     typecheck.c
+    usage.c
     value.c
     vector.c
     version.c
@@ -65,6 +66,16 @@ namespace eval "lib" {
   obj_cov $::b/lib/load.path.cov.o $::b/lib/load.path.c ""
   lappend objs $::b/lib/load.path.o
   lappend objs_cov $::b/lib/load.path.cov.o
+
+  # usage.path.c
+  build "$::b/lib/usage.path.c" "" \
+    "echo \"const char* FbleDocDir = \\\"$::config::docdir/fble\\\";\" > $::b/lib/usage.path.c"
+
+  # usage.path.o
+  obj $::b/lib/usage.path.o $::b/lib/usage.path.c ""
+  obj_cov $::b/lib/usage.path.cov.o $::b/lib/usage.path.c ""
+  lappend objs $::b/lib/usage.path.o
+  lappend objs_cov $::b/lib/usage.path.cov.o
 
   # general .o files
   foreach {x} $sources {
