@@ -4,6 +4,8 @@ Things to do for the fble-0.2 release.
 
 * Finalize release notes.
 
+* Fix .SH "DESCRIPTION" showing up in usage man pages.
+
 * Fbld Big:
  - Fix issues with generated documentation.
  - Support for syntax highlighting.

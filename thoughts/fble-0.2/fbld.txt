@@ -5674,3 +5674,29 @@ change the backends to define @.block only where needed. I can continue to
 think about being more explicit for paragraphs, but I'm not sold on the use
 case yet.
 
+---
+
+For usage help text, how do I want to generate code for bold and italics? I
+see three options:
+
+1. Using GROFF_NO_SGR
+ - cat shows no highlighting.
+ - less shows highlighting.
+ - vim shows x^Hx for every character that's bold, which makes it hard to
+   read.
+
+2. Not using GROFF_NO_SGR
+ - cat shows highlighting.
+ - less shows highlighting with -r, otherwise ^[[1m...^[[0m, which is hard to
+   read. You can switch on the fly by typing -r in less.
+ - vim shows the escape characters, which is hard to read.
+
+3. Removing bold and italics in the backend
+ - cat shows no highlighting.
+ - less shows no highlighting.
+ - vim shows no highlighting.
+
+I kind of like the highlighting. On the other hand, we could always read the
+man page if we prefer highlighting. I kind of think we should go with (3) to
+make it easy for everyone. If you want nice highlighting, read the man page.
+

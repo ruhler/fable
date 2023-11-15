@@ -31,7 +31,8 @@ namespace eval "fbld" {
     build $target.roff \
       "$::b/pkgs/fbld/bin/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
       "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/bin/fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
+    # Pass -c, -b, -u to grotty to escape sequences and backspaces in the output.
     build $target $target.roff \
-      "GROFF_NO_SGR=1 groff -T ascii < $target.roff > $target"
+      "groff -P -c -P -b -P -u -T utf8 < $target.roff > $target"
   }
 }
