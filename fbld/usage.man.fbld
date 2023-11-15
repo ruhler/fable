@@ -4,7 +4,7 @@
   @content
 @@
 
-@define[synopsis][text] @section[SYNOPSIS][@text] @@
+@define[synopsis][text] @section[SYNOPSIS][@text\n] @@
 @define[description][body] @section[DESCRIPTION][@body] @@
 @define[options][body] @section[OPTIONS][@body] @@
 @define[opt][opt desc] @def[@opt][@desc] @@
