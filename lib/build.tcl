@@ -32,6 +32,11 @@ namespace eval "lib" {
   set objs [list]
   set objs_cov [list]
 
+  # config.h
+  build $::b/lib/config.h \
+    "$::s/lib/config.h.tcl $::b/config.tcl" \
+    "tclsh8.6 $::s/lib/config.h.tcl > $::b/lib/config.h"
+
   # parse.tab.c
   set report $::b/lib/parse.tab.report.txt
   set cmd "bison --report=all --report-file=$report -o $::b/lib/parse.tab.c $::s/lib/parse.y"
@@ -42,16 +47,6 @@ namespace eval "lib" {
   obj_cov $::b/lib/parse.tab.cov.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"
   lappend objs $::b/lib/parse.tab.o
   lappend objs_cov $::b/lib/parse.tab.cov.o
-
-  # load.path.c
-  build "$::b/lib/load.path.c" "" \
-    "echo \"const char* FbleDefaultPackagePath = \\\"$::config::datadir/fble\\\";\" > $::b/lib/load.path.c"
-
-  # load.path.o
-  obj $::b/lib/load.path.o $::b/lib/load.path.c ""
-  obj_cov $::b/lib/load.path.cov.o $::b/lib/load.path.c ""
-  lappend objs $::b/lib/load.path.o
-  lappend objs_cov $::b/lib/load.path.cov.o
 
   # usage.path.c
   build "$::b/lib/usage.path.c" "" \
@@ -67,8 +62,8 @@ namespace eval "lib" {
   foreach {x} $sources {
     set object $::b/lib/[string map {.c .o} $x]
     set object_cov $::b/lib/[string map {.c .cov.o} $x]
-    obj $object $::s/lib/$x "-I $::s/include"
-    obj_cov $object_cov $::s/lib/$x "-I $::s/include"
+    obj $object $::s/lib/$x "-I $::s/include -I $::b/lib" $::b/lib/config.h
+    obj_cov $object_cov $::s/lib/$x "-I $::s/include -I $::b/lib" $::b/lib/config.h
     lappend objs $object
     lappend objs_cov $object_cov
   }

@@ -8,7 +8,9 @@
 #include <stdio.h>    // for fopen
 #include <string.h>   // for strcpy, strrchr
 
-extern const char* FbleDocDir;
+#include "config.h"   // for FBLE_CONFIG_DOCDIR
+
+const char* FbleDocDir = FBLE_CONFIG_DOCDIR "/fble";
 
 static FILE* LocalPath(const char* arg0, const char* name);
 static FILE* DocPath(const char* name);

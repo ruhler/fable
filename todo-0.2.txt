@@ -4,9 +4,6 @@ Things to do for the fble-0.2 release.
 
 * Finalize release notes.
 
-* Consider creating a config.h/config.c automatically with all the config
-  values for access, instead of separate {load,usage}.path.c files.
-
 * Fbld Big:
  - Fix issues with generated documentation.
  - Support for syntax highlighting.
