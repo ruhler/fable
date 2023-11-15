@@ -2,17 +2,7 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* Can we make Error status show up on same line in usage help text?
- It works fine for man pages. If not too hard, can we make it work for usage
- help text too? As in, don't go to the next line if there's space to start it
- on the previous line.
-
 * Finalize release notes.
-
-* Fbld Big:
- - Fix issues with generated documentation.
- - Support for syntax highlighting.
-   Which may want improvements to html escaping.
 
 * Fbld Misc:
  - Test for location tracking across @head and @tail?
@@ -44,8 +34,8 @@ Things to do for the fble-0.2 release.
 * Add spec tests for memory use of tail recursion and for "unlimited" stack
   size.
 
-* Fbld Html Backend
- - Add back syntax highlighting of @code blocks.
+* Add back syntax highlighting of @code blocks to html backend.
+ - May want improvements to html escaping
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.

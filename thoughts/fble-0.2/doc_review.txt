@@ -11,9 +11,9 @@ Usage - check generated help and man pages
 ./bin/fble-compile.fbld         DONE
 ./bin/fble-disassemble.fbld     DONE
 
-./test/mem-test.fbld
-./test/test.fbld
-./test/profiles-test.fbld
+./test/mem-test.fbld            DONE
+./test/test.fbld                DONE
+./test/profiles-test.fbld       DONE
 
 ./pkgs/graphics/graphics.fbld
 ./pkgs/md5/md5.fbld
