@@ -15,8 +15,8 @@ Usage - check generated help and man pages
 ./test/test.fbld                DONE
 ./test/profiles-test.fbld       DONE
 
-./pkgs/graphics/graphics.fbld
-./pkgs/md5/md5.fbld
+./pkgs/graphics/graphics.fbld   DONE
+./pkgs/md5/md5.fbld             DONE
 ./pkgs/pinball/pinball.fbld
 ./pkgs/invaders/invaders.fbld
 ./pkgs/sat/sat.fbld

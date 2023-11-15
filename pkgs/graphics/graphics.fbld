@@ -1,6 +1,6 @@
 @usage[fble-graphics] 3D graphics in fble
  @synopsis
-  @l[fble-graphics]
+ @ @l[fble-graphics]
  
  @description
   An early sandbox for 3D graphics on fble.

@@ -2,6 +2,8 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* Review all the generated documentation, including usage help text.
+
 * Finalize release notes.
 
 * Fbld Misc:
@@ -12,9 +14,6 @@ Things to do for the fble-0.2 release.
  - Including difference between @i and @j.
 
 * Come up with a better story for building and integrating usage help text?
-
-* Review all the generated documentation, including usage help text.
-  Since we've changed the fbld implementation.
 
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.

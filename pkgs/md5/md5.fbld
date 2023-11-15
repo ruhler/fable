@@ -1,13 +1,16 @@
 @usage[fble-md5] computes md5 hash
  @synopsis
-  @l[fble-md5]
+ @ @l[fble-md5] \[@a[FILE]\]...
  
  @description
-  Computes the md5 hash of standard input.
+  Computes the md5 hash of the given files. The filename @l{-} may be used to
+  compute the md5 hash of stdin. If no files are provided, the md5 hash of
+  stdin is computed.
  
  @exitstatus
   @def[0] Success.
+  @def[1] One or more of the files could not be accessed.
  
  @examples
-  @ex fble-md5 < foo.txt
+  @ex fble-md5 foo.txt
    Computes the md5sum of the file @l[foo.txt].
