@@ -1,6 +1,6 @@
 @usage[fble-sat] solves a sat problem
  @synopsis
-  @l[fble-sat]
+ @ @l[fble-sat]
  
  @description
   Solve the SAT problem described on standard input in DIMACS cnf format.

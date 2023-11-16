@@ -4,6 +4,9 @@ Things to do for the fble-0.2 release.
 
 * Review all the generated documentation, including usage help text.
 
+* Add usage generated help text to fble derived programs?
+ graphics, md5, pinball, invaders, and sat?
+
 * Finalize release notes.
 
 * Fbld Misc:

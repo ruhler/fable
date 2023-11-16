@@ -17,11 +17,11 @@ Usage - check generated help and man pages
 
 ./pkgs/graphics/graphics.fbld   DONE
 ./pkgs/md5/md5.fbld             DONE
-./pkgs/pinball/pinball.fbld
-./pkgs/invaders/invaders.fbld
-./pkgs/sat/sat.fbld
-./pkgs/core/stdio.fbld
-./pkgs/app/app.fbld
+./pkgs/pinball/pinball.fbld     DONE
+./pkgs/invaders/invaders.fbld   DONE
+./pkgs/sat/sat.fbld             DONE
+./pkgs/core/stdio.fbld          DONE
+./pkgs/app/app.fbld             DONE
 
 Doc Comments - Check man pages:
 ./out/include/fble/FbleThreadCall.3.fbld

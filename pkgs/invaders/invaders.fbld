@@ -1,6 +1,6 @@
 @usage[fble-invaders] space invaders clone
  @synopsis
-  @l[fble-invaders]
+ @ @l[fble-invaders]
  
  @description
   A space invaders clone implemented in fble.

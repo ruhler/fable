@@ -1,6 +1,6 @@
 @usage[fble-pinball] pinball game
  @synopsis
-  @l[fble-pinball]
+ @ @l[fble-pinball]
 
  @description
   Experimental pinball game implemented in fble.

@@ -13,7 +13,7 @@
  
   @subsection Profiling Options
    @opt[@l[--profile] @a[FILE]]
-    writes a profile of the test run to @a[FILE]
+   @ writes a profile of the test run to @a[FILE]
 
   @subsection Other Options
    @opt[@l[--fps]] reports frames per second histogram when done

@@ -32,8 +32,6 @@
 
 # Main --
 #   Main function for fble-md5 program.
-#
-# Computes md5 hash of stdin.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % O = /Core/Stream/OStream%(m);
 

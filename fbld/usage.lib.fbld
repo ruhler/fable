@@ -27,5 +27,5 @@
   @l[/fble/pkgs/core] to the module search path, and the @l[-m /Core/Unit%]
   option will look for the module at @l[/fble/pkgs/core/Core/Unit.fble].
 
-  The system default package search path is @config[datadir]/fble.
+  The system default package search path is @l[@config[datadir]/fble].
 @@
