@@ -23,6 +23,21 @@ Usage - check generated help and man pages
 ./pkgs/core/stdio.fbld          DONE
 ./pkgs/app/app.fbld             DONE
 
+Library code - Check for fbld syntax niceness.
+./fbld/dc.man.fbld              DONE
+./fbld/usage.man.fbld           DONE
+./fbld/usage.lib.fbld           DONE
+./fbld/text.fbld                REMOVED
+./fbld/html.fbld                DONE
+./fbld/roff.fbld                DONE
+./fbld/man.fbld                 DONE
+./fbld/markdown.fbld            DONE
+./fbld/nobuildstamp.fbld        DONE
+./fbld/usage.help.fbld          DONE
+./spec/fble.lib.fbld            DONE
+./out/fbld/config.fbld          DONE
+./out/fbld/version.fbld         DONE
+
 Doc Comments - Check man pages:
 ./out/include/fble/FbleThreadCall.3.fbld
 ./out/include/fble/FbleParseModulePath.3.fbld
@@ -144,20 +159,6 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleRetainValue.3.fbld
 ./out/include/fble/FbleCopyLoc.3.fbld
 
-Library code - Check for fbld syntax niceness.
-./fbld/dc.man.fbld
-./fbld/usage.man.fbld
-./fbld/usage.lib.fbld
-./fbld/text.fbld
-./fbld/html.fbld
-./fbld/roff.fbld
-./fbld/man.fbld
-./fbld/markdown.fbld
-./fbld/nobuildstamp.fbld
-./fbld/usage.help.fbld
-./spec/fble.lib.fbld
-./out/fbld/config.fbld
-./out/fbld/version.fbld
 
 Tutorials - check for generated html
 ./tutorials/HelloWorld.fbld

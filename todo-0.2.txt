@@ -7,6 +7,8 @@ Things to do for the fble-0.2 release.
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
 
+* Implement @error builtin?
+
 * Finalize release notes.
 
 * Fbld Misc:
