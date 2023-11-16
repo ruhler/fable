@@ -2,6 +2,9 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* @j is outputting a stray .P in the generated man page.
+  See FbleNewProfile.3 for example.
+
 * Review all the generated documentation, including usage help text.
 
 * Add usage generated help text to fble derived programs?

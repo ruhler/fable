@@ -1,13 +1,20 @@
+@define[enl][x]
+ @ifeq[\n][@x][@x] @@
+ @ifeq[][@x][\n] @@
+ @head[@x]
+ @enl[@tail[@x]]
+@@
+
 @define[l][text] \\fB@text\\fR @@
 @define[a][text] \\fI@text\\fR @@
 @define[label][id text] @text @@
 @define[ref][id caption] @caption @@
 @define[.block][text] .P\n@text\n @@
 @define[par][text] .P\n@text\n @@
-@define[definition][name value] .P\n@name\n.RS\n@value.RE\n @@
+@define[definition][name value] .P\n@name\n.RS\n@enl[@value].RE\n @@
 @define[def][name value] .TP 4\n@name\n@value\n @@
 @define[item][text] .IP \\[bu] 2@text @@
-@define[code][language text] .P\n.in +4n\n.EX\n@text.EE\n.in\n @@
+@define[code][language text] .P\n.in +4n\n.EX\n@enl[@text].EE\n.in\n @@
 @define[man][section title source body]
 @ .TH "@title" @section "" "@source"\n@body @@
 @define[section][title body] .SH "@title"\n@body @@
