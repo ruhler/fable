@@ -12,7 +12,7 @@ namespace eval "pkgs/sat" {
     "$::b/pkgs/sat/sat-tests --prefix Compiled."
 
   # fble-sat binary
-  fbld_man_usage $::b/pkgs/sat/fble-sat.1 $::s/pkgs/sat/sat.fbld
+  fbld_man_usage $::b/pkgs/sat/fble-sat.1 $::s/pkgs/sat/fble-sat.fbld
   install $::b/pkgs/sat/fble-sat.1 $::config::mandir/man1/fble-sat.1
   stdio $::b/pkgs/sat/fble-sat "/Sat/Main%" "sat"
   install $::b/pkgs/sat/fble-sat $::config::bindir/fble-sat

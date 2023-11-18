@@ -11,18 +11,18 @@ Usage - check generated help and man pages
 ./bin/fble-compile.fbld         DONE
 ./bin/fble-disassemble.fbld     DONE
 
-./test/mem-test.fbld            DONE
-./test/test.fbld                DONE
-./test/profiles-test.fbld       DONE
+./test/fble-mem-test.fbld       DONE
+./test/fble-test.fbld           DONE
+./test/fble-profiles-test.fbld  DONE
 
-./pkgs/graphics/graphics.fbld   DONE
-./pkgs/md5/md5.fbld             DONE
-./pkgs/pinball/pinball.fbld     DONE
-./pkgs/invaders/invaders.fbld   DONE
-./pkgs/sat/sat.fbld             DONE
-./pkgs/core/stdio.fbld          DONE
-./pkgs/core/fble-cat.fbld       DONE
-./pkgs/app/app.fbld             DONE
+./pkgs/graphics/fble-graphics.fbld   DONE
+./pkgs/md5/fble-md5.fbld             DONE
+./pkgs/pinball/fble-pinball.fbld     DONE
+./pkgs/invaders/fble-invaders.fbld   DONE
+./pkgs/sat/fble-sat.fbld             DONE
+./pkgs/core/fble-stdio.fbld          DONE
+./pkgs/core/fble-cat.fbld            DONE
+./pkgs/app/fble-app.fbld             DONE
 
 Library code - Check for fbld syntax niceness.
 ./fbld/dc.man.fbld              DONE
