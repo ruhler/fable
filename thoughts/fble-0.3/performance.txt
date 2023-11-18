@@ -129,3 +129,33 @@ IO 1.8
 
 
 Well, there you go. First thing to focus on is memory management.
+
+In this case, it's all function allocations. Mostly from, I assume, the
+State Monad.do call for the 'do' function for /Core/Monad/IO%.
+
+There are multiple function allocations when you call do:
+1. Do function is two argument function written as a function to a function.
+Every time you call Do it allocates a function. This can be fixed by rewriting
+it as a two argument function and adding monadic bind support to take
+advantage of that.
+
+2. The second argument to Do is a function that, when called, returns a
+function which is the state monad.
+
+3. The second argument to Do is itself a function that needs to be allocated,
+and use of bind syntax causes it to be allocated every time the syntax is
+executed.
+
+Lots of function allocations coming out of monad bind syntax here. I could
+rewrite fble-cat to avoid all use of monadic code. There should be no need for
+any function allocations in the main loop. How do we reconcile that with the
+desire to do monadic style programming?
+
+The core loop is:
+
+    Unit@ _ <- m.do(O.PutStr(stdio.out, line));
+    cat(input);
+
+Note:
+* (Unit@ _) { cat(input); } is a constant function. No need to to reallocate
+  it over and over.

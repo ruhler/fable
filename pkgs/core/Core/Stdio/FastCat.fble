@@ -1,0 +1,39 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ World@ = /Core/Monad/IO%.World@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+<@>@ R@ = <@ T@> { *(World@ s, T@ x); };
+<@>@ IO@ = <@ T@> (World@) { R@<T@>; };
+<<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
+
+# Implementation of fble-cat for the purposes of experimenting with
+# fble performance.
+(
+  IO@<Maybe@<Int@>>,
+  (Int@, World@) { R@<Unit@>; },
+  (Int@, World@) { R@<Unit@>; },
+  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; },
+  List@<String@>
+) { IO@<Bool@>; }
+Main = (
+  IO@<Maybe@<Int@>> stdin,
+  (Int@, World@) { R@<Unit@>; } stdout,
+  (Int@, World@) { R@<Unit@>; } stderr,
+  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
+  List@<String@> args)(World@ w) {
+  R@(w, True);
+};
+
+Main;

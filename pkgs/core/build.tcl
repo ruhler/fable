@@ -59,6 +59,10 @@ namespace eval "pkgs/core" {
   stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" ""
   install $::b/pkgs/core/fble-cat $::config::bindir/fble-cat
 
+  # /Core/Stdio/FastCat% compiled.
+  stdio $::b/pkgs/core/fble-fast-cat "/Core/Stdio/FastCat%" ""
+  install $::b/pkgs/core/fble-fast-cat $::config::bindir/fble-fast-cat
+
   # /Core/Stdio/HelloWorld% interpreted test.
   test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/HelloWorld.fble.d" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/HelloWorld% | grep hello"
