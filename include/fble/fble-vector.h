@@ -15,9 +15,9 @@
  *  vectors, regardless of the element type.
  *  
  *  @warning 
- *    If you want to pass around references to elements of a vector, use T**
- *    for the type of xs. Otherwise when the vector gets resized, any pointers
- *    into it will be invalidated, leading to hard-to-find bugs.
+ *   If you want to pass around references to elements of a vector, use T**
+ *   for the type of xs. Otherwise when the vector gets resized, any pointers
+ *   into it will be invalidated, leading to hard-to-find bugs.
  */
 
 #ifndef FBLE_VECTOR_H_
@@ -50,7 +50,7 @@
  *   The vector whose resources to free.
  *
  *  @sideeffects
- *   @i Frees resources of the vector.
+ *   Frees resources of the vector.
  */
 #define FbleFreeVector(vector) \
   FbleFree((vector).xs)
@@ -99,9 +99,9 @@
  *  @arg[void** ][xs       ] A pointer to the xs field of the vector.
  *
  *  @sideeffects
- *   @j A new uninitialized element is appended to the vector and the size is
- *    incremented. If necessary, the array is re-allocated to make space for
- *    the new element.
+ *   A new uninitialized element is appended to the vector and the size is
+ *   incremented. If necessary, the array is re-allocated to make space for
+ *   the new element.
  */
 void FbleVectorIncrSize(size_t elem_size, size_t* size, void** xs);
 

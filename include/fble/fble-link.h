@@ -53,7 +53,8 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
  *
  *  @sideeffects
  *   @i Prints an error message to stderr if the program fails to load.
- *   @j The user should call FbleReleaseValue on the returned value when it is
+ *   @item
+ *    The user should call FbleReleaseValue on the returned value when it is
  *    no longer needed.
  */
 FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile);
@@ -83,7 +84,7 @@ typedef void FbleCompiledModuleFunction(FbleExecutableProgram* program);
  *   The immediate dependencies of this module.
  *
  *  @sideeffects
- *   @i Adds this module and any modules it depends on to the given program.
+ *   Adds this module and any modules it depends on to the given program.
  */
 void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps);
 
@@ -101,8 +102,8 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
  *   executed.
  *
  *  @sideeffects
- *   @j The user should call FbleReleaseValue on the returned value when it is
- *    no longer needed.
+ *   The user should call FbleReleaseValue on the returned value when it is no
+ *   longer needed.
  */
 FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
 
@@ -130,8 +131,8 @@ FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHea
  *   executed, or NULL in case of error.
  *
  *  @sideeffects
- *   @j The user should call FbleReleaseValue on the returned value when it is
- *    no longer needed.
+ *   The user should call FbleReleaseValue on the returned value when it is no
+ *   longer needed.
  */
 FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 

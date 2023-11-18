@@ -5700,3 +5700,72 @@ I kind of like the highlighting. On the other hand, we could always read the
 man page if we prefer highlighting. I kind of think we should go with (3) to
 make it easy for everyone. If you want nice highlighting, read the man page.
 
+---
+
+How to handle @j properly in dc generated man pages?
+
+@j foo
+ bar
+
+==> @j[foo][@.block[bar]]
+
+==> @item[@par[foo @.block[bar]]]
+
+==> ... foo .P\nbar\n
+
+Which puts a .P in the middle of the man page output.
+
+The desired behavior here is to concatenate foo and bar first, as if it was
+all one big paragraph to start.
+
+What can we do here? Without implicit .block, we loose paragraphs inside of
+bar.
+
+Brainstorm:
+* Don't use @j. Use @i with next line arg.
+* Introduce some magic syntax in fble that supports starting a next line arg
+  on the same line.
+* Explicitly remove the .P introduced in bar as part of the definition of @j.
+* Use paragraphs instead of explicit @i in @sideeffects.
+* Use continuation for the second arg of @j instead of next line arg.
+* Allow multiple @sideeffect commands and join those together.
+
+Using just @i...
+* Is pretty awkward when mixing same line and next line args.
+* Is pretty awkward when the description takes just over one line.
+* Is nice not to have to use @i versus @j.
+* Is nice to implement.
+
+Magic syntax in fble:
+* The idea would be to allow a next line arg to start on the same line.
+  Semantics are pretty clear. How about syntax?
+
+@i foo
+ bar
+
+@i@ foo
+ bar
+
+@i@ foo
+
+@i foo \
+ bar
+
+Use paragraphs
+* Awkward blank lines still exist.
+
+Use @sideffect for each individual item
+* Interestingly, when the name of the tag is longer, it feels much less
+  onerous to use a next line argument without a same line argument.
+* But then how can we explicitly say no side effects?
+
+It seems relatively rare for us to have lists of side effects that involve
+multiline list elements. What I really want to write in that case is: always
+use @i tag, sometimes with same line, some times with same line + next line.
+
+How about this:
+* Use @item for next line args. It doesn't look as awkward as @i.
+* Use @i for same line args. It's easier to read the item that way.
+
+Let's try that and see if I can live with it for now.
+

@@ -1,0 +1,29 @@
+Performance
+===========
+Goal for fble-0.3 is to make fble programs run twice as fast.
+
+Take fbld implementation for example, because that seems to go absurdly slow
+compared to what I would expect if I coded the same thing in C code.
+
+Let's start with a simpler example and see if we can really break down where
+the time is going. Because presumably making a simple program run twice as
+fast is easier than making a complex program, and anything we do to improve
+performance we expect to work on the simple program too.
+
+Starting with fble-cat, read from 'yes' and writing to /dev/null.
+
+Let's aim for 60 seconds of runtime.
+
+time yes | head -n 500000 | ./out/pkgs/core/fble-cat > /dev/null
+real    1m19.413s
+user    1m7.136s
+sys     0m3.723s
+
+time yes | head -n 500000 | cat > /dev/null  
+real    0m0.104s
+user    0m0.027s
+sys     0m0.046s
+
+That's what I'm talking about. fble is 1000x slower than I would like.
+
+

@@ -91,7 +91,7 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
  *  @arg[FbleValue**   ][args] The values to release.
  *
  *  @sideeffects
- *   @i Calls FbleReleaseValue on all the values.
+ *   Calls FbleReleaseValue on all the values.
  */
 void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
@@ -104,7 +104,7 @@ void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args);
  *  @arg[...           ][    ] The values to release.
  *
  *  @sideeffects
- *   @i Calls FbleReleaseValue on all the values.
+ *   Calls FbleReleaseValue on all the values.
  */
 void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...);
 
@@ -332,8 +332,8 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
  *   A newly allocated function value.
  *
  *  @sideeffects
- *   @i Allocates a new function value that should be freed using
- *   @i FbleReleaseValue when it is no longer needed.
+ *   Allocates a new function value that should be freed using
+ *   FbleReleaseValue when it is no longer needed.
  */
 FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...);
 
@@ -382,11 +382,13 @@ FbleFuncInfo FbleFuncValueInfo(FbleValue* func);
  *   error in the program.
  * 
  *  @sideeffects
- *   @j The returned value must be freed with @l[FbleReleaseValue] when no
+ *   @item
+ *    The returned value must be freed with @l[FbleReleaseValue] when no
  *    longer in use.
  *   @i Prints an error message to stderr in case of a runtime error.
- *   @j Updates profiling information in profile based on the execution of
- *    the program.
+ *   @item
+ *    Updates profiling information in profile based on the execution of the
+ *    program.
  */
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile);
 
@@ -403,9 +405,11 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
  *   The result of applying the function to the given arguments.
  *
  *  @sideeffects
- *   @j The returned value must be freed with FbleReleaseValue when no longer in
- *    use.
- *   @j Does not take ownership of the func. Does not take ownership of the
+ *   @item
+ *    The returned value must be freed with FbleReleaseValue when no longer
+ *    in use.
+ *   @item
+ *    Does not take ownership of the func. Does not take ownership of the
  *    args.
  *   @i Prints warning messages to stderr.
  *   @i Prints an error message to stderr in case of error.

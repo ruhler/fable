@@ -72,9 +72,10 @@ typedef struct {
  *
  *  @sideeffects
  *   @i Prints an error message to stderr if the program cannot be parsed.
- *   @j Appends module paths in the parsed expression to deps, which
- *    is assumed to be a pre-initialized vector. The caller is responsible for
- *    calling FbleFreeModulePath on each path when it is no longer needed.
+ *   @item
+ *    Appends module paths in the parsed expression to deps, which is assumed
+ *    to be a pre-initialized vector. The caller is responsible for calling
+ *    FbleFreeModulePath on each path when it is no longer needed.
  */
 FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 
@@ -94,8 +95,8 @@ typedef struct FbleSearchPath FbleSearchPath;
  *   A new empty search path.
  *
  *  @sideeffects
- *   @j The search path should be freed with FbleFreeSearchPath when it is no
- *    longer needed.
+ *   The search path should be freed with FbleFreeSearchPath when it is no
+ *   longer needed.
  */
 FbleSearchPath* FbleNewSearchPath();
 
@@ -114,7 +115,7 @@ void FbleFreeSearchPath(FbleSearchPath* path);
  *  @arg[const char*    ][root_dir] The directory to add to the path. Borrowed.
  *
  *  @sideeffects
- *   @i Adds root_dir to the search path.
+ *   Adds root_dir to the search path.
  */
 void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir);
 
@@ -124,7 +125,7 @@ void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir);
  *  @arg[FbleString*    ][root_dir] The directory to add to the path. Borrowed.
  *
  *  @sideeffects
- *   @i Adds root_dir to the search path.
+ *   Adds root_dir to the search path.
  */
 void FbleSearchPathAppendString(FbleSearchPath* path, FbleString* root_dir);
 
@@ -141,8 +142,8 @@ void FbleSearchPathAppendString(FbleSearchPath* path, FbleString* root_dir);
  *   package is found.
  *
  *  @sideeffects
- *   @j Allocates an FbleString that should be freed with FbleFreeString when no
- *    longer needed.
+ *   Allocates an FbleString that should be freed with FbleFreeString when no
+ *   longer needed.
  */
 FbleString* FbleFindPackage(const char* package);
 
@@ -161,9 +162,11 @@ FbleString* FbleFindPackage(const char* package);
  *
  *  @sideeffects
  *   @i Prints an error message to stderr if the program cannot be parsed.
- *   @j The user should call FbleFreeLoadedProgram to free resources
+ *   @item
+ *    The user should call FbleFreeLoadedProgram to free resources
  *    associated with the given program when it is no longer needed.
- *   @j The user should free strings added to build_deps when no longer
+ *   @item
+ *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
 FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);

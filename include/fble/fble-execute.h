@@ -48,7 +48,7 @@
  *   @i FbleTailCallSentinelValue to indicate tail call.
  *
  *  @sideeffects
- *   @i Executes the fble function, with whatever side effects that may have.
+ *   Executes the fble function, with whatever side effects that may have.
  */
 typedef FbleValue* FbleRunFunction(
     FbleValueHeap* heap,

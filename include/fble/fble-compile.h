@@ -95,7 +95,8 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program);
  *  @sideeffects
  *   @i Prints warning messages to stderr.
  *   @i Prints a message to stderr if the program fails to compile.
- *   @j The caller should call FbleFreeCompiledModule to release resources
+ *   @item
+ *    The caller should call FbleFreeCompiledModule to release resources
  *    associated with the returned module when it is no longer needed.
  */
 FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
@@ -112,7 +113,8 @@ FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
  *  @sideeffects
  *   @i Prints warning messages to stderr.
  *   @i Prints a message to stderr if the program fails to compile.
- *   @j The caller should call FbleFreeCompiledProgram to release resources
+ *   @item
+ *    The caller should call FbleFreeCompiledProgram to release resources
  *    associated with the returned program when it is no longer needed.
  */
 FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
@@ -150,7 +152,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module);
  *   The module to generate code for.
  *
  *  @sideeffects
- *   @i Generates aarch64 code for the given module.
+ *   Generates aarch64 code for the given module.
  */
 void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
 
@@ -173,7 +175,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
  *   The path to the module to export.
  *
  *  @sideeffects
- *   @i Outputs aarch64 code to the given file.
+ *   Outputs aarch64 code to the given file.
  */
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path);
 
@@ -200,7 +202,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
  *   The path to the module to pass to the wrapper function.
  *
  *  @sideeffects
- *   @i Generates aarch64 code for the given code.
+ *   Generates aarch64 code for the given code.
  */
 void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path);
 
@@ -221,7 +223,7 @@ void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
  *   The module to generate code for.
  *
  *  @sideeffects
- *   @i Outputs C code to the given file.
+ *   Outputs C code to the given file.
  */
 void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
 
@@ -244,7 +246,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
  *   The path to the module to export.
  *  
  *  @sideeffects
- *   @i Outputs C code to the given file.
+ *   Outputs C code to the given file.
  */
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
 
@@ -271,7 +273,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
  *   The path to the module to pass to the wrapper function.
  *  
  *  @sideeffects
- *   @i Outputs C code to the given file.
+ *   Outputs C code to the given file.
  */
 void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path);
 

@@ -95,8 +95,8 @@ typedef struct {
  *   A new profile with a single root block.
  *
  *  @sideeffects
- *   @j Allocates a new profile that should be freed with FbleFreeProfile()
- *    when no longer in use.
+ *   Allocates a new profile that should be freed with FbleFreeProfile() when
+ *   no longer in use.
  */
 FbleProfile* FbleNewProfile();
 
@@ -113,8 +113,8 @@ FbleProfile* FbleNewProfile();
  *   The id of the newly added block.
  *
  *  @sideeffects
- *   @j Takes ownership of name, which will be freed when FbleFreeProfile() is
- *    called.
+ *   Takes ownership of name, which will be freed when FbleFreeProfile() is
+ *   called.
  */
 FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
 
@@ -134,7 +134,7 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
  *   The id of the first added block.
  *
  *  @sideeffects
- *   @i Adds blocks to the profile.
+ *   Adds blocks to the profile.
  */
 FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
 
@@ -143,8 +143,8 @@ FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
  *  @arg[FbleProfile*][profile] The profile to free. May be NULL.
  *
  *  @sideeffects
- *   @j Frees the memory resources associated with the given profile,
- *    including the memory for the block names supplied to FbleProfileAddBlock.
+ *   Frees the memory resources associated with the given profile, including
+ *   the memory for the block names supplied to FbleProfileAddBlock.
  */
 void FbleFreeProfile(FbleProfile* profile);
 
@@ -250,9 +250,10 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
  *
  *  @sideeffects
  *   @i Replaces the current profiling block with the new block.
- *   @j Frees resources associated with the block being replaced, but a
+ *   @i
+ *    Frees resources associated with the block being replaced, but a
  *    corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
- *    will still needed to free resources associated with the replacement
+ *    will still be needed to free resources associated with the replacement
  *    block.
  */
 void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);

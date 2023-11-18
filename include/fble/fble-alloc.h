@@ -76,9 +76,11 @@ void* FbleRawAlloc(size_t size);
  *
  *  @sideeffects
  *   @i Frees memory associated with the ptr.
- *   @j After this call, any accesses to the freed memory result in undefined
+ *   @item
+ *    After this call, any accesses to the freed memory result in undefined
  *    behavior.
- *   @j Behavior is undefined if ptr was not previously returned by a call to
+ *   @item
+ *    Behavior is undefined if ptr was not previously returned by a call to
  *    FbleAlloc or one of its variants.
  */
 void FbleFree(void* ptr);
@@ -103,7 +105,8 @@ FbleStackAllocator* FbleNewStackAllocator();
  *
  *  @sideeffects
  *   @i Frees resources associated with the given allocator.
- *   @j The allocator must not have any outstanding allocations at the time of
+ *   @item
+ *    The allocator must not have any outstanding allocations at the time of
  *    free.
  */
 void FbleFreeStackAllocator(FbleStackAllocator* allocator);
@@ -120,8 +123,8 @@ void FbleFreeStackAllocator(FbleStackAllocator* allocator);
  *   A block of memory allocated.
  *
  *  @sideeffects
- *   @j Allocates memory that should be freed with FbleStackFree when no
- *    longer needed.
+ *   Allocates memory that should be freed with FbleStackFree when no longer
+ *   needed.
  */
 void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
 
@@ -160,8 +163,8 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
  *   A pointer to a newly allocated object of the given type with extra size.
  *
  *  @sideeffects
- *   @j The allocation should be freed by calling FbleStackFree when no longer
- *    in use.
+ *   The allocation should be freed by calling FbleStackFree when no longer in
+ *   use.
  */
 #define FbleStackAllocExtra(allocator, T, size) ((T*) FbleRawStackAlloc(allocator, sizeof(T) + size))
 
@@ -174,7 +177,8 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
  *
  *  @sideeffects
  *   @i Frees resources associated with the given pointer.
- *   @j Behavior is undefined if 'ptr' is not the same as the pointer most
+ *   @item
+ *    Behavior is undefined if 'ptr' is not the same as the pointer most
  *    recently returned from FbleStackAlloc on this same allocator.
  */
 void FbleStackFree(FbleStackAllocator* allocator, void* ptr);

@@ -144,7 +144,7 @@ bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool
  *  @returns[bool] true.
  *
  *  @sideeffects
- *   @i Prints an error message to stderr and sets error to true.
+ *   Prints an error message to stderr and sets error to true.
  */
 bool FbleParseInvalidArg(int* argc, const char*** argv, bool* error);
 

@@ -112,7 +112,7 @@ bool FbleModuleBelongsToPackage(FbleModulePath* module, FbleModulePath* package)
  *   The parsed path, or NULL in case of error.
  *
  *  @sideeffects
- *   @i Prints an error message to stderr if the path cannot be parsed.
+ *   Prints an error message to stderr if the path cannot be parsed.
  */
 FbleModulePath* FbleParseModulePath(const char* string);
 

@@ -22,7 +22,6 @@
 @@
 
 @define[i][text] @item[@par[@text]] @@
-@define[j][a b] @item[@par[@a @b]] @@
 @define[synopsis][name content]
  @define[inline][x] @x @@
  @section[SYNOPSIS]
