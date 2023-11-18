@@ -15,15 +15,15 @@ Starting with fble-cat, read from 'yes' and writing to /dev/null.
 Let's aim for 60 seconds of runtime.
 
 time yes | head -n 500000 | ./out/pkgs/core/fble-cat > /dev/null
-real    1m19.413s
-user    1m7.136s
-sys     0m3.723s
+real    0m38.297s
+user    0m36.059s
+sys     0m2.209s
 
 time yes | head -n 500000 | cat > /dev/null  
 real    0m0.104s
 user    0m0.027s
 sys     0m0.046s
 
-That's what I'm talking about. fble is 1000x slower than I would like.
-
+That's what I'm talking about. fble is over 100 times slower than I would
+like.
 

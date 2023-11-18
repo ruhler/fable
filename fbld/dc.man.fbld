@@ -34,15 +34,16 @@
   @define[sideeffects][desc][] @@
   @eval[@plain[ignore][@content]]
 
-  @inline[ @name@l{(}]
+  @inline[ @name(]
 
   @define[.block][text][] @@
   @define[arg][type name desc][@l[@type] @a[@name];] @@
   @define[returns][type desc][] @@
   @define[sideeffects][desc][] @@
-  @ljoin[\n    @eval[@plain[ignore][@content]]][@l[,\n    ]]
+  @define[args][] @eval[@plain[ignore][@content]] @@
+  @ifeq[][@args][] @ljoin[\n    @args][@l[,\n    ]]
   
-  @inline[@l{);}\n]
+  @inline[);\n]
 @@
 @define[description][content]
  @define[arg][type name desc] @definition[@l[@type] @a[@name]][@desc] @@
