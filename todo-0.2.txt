@@ -25,7 +25,6 @@ Things to do for the fble-0.2 release.
 
 * fbld vim syntax:
  - Figure out how to make {...} only apply in argument context?
- - Handle nesting of {} in literal inline arg.
  - Any way we can vim highlight next line literal as normal text?
 
 * Update or remove fbld/fbld.lang

@@ -1,0 +1,195 @@
+Monadic Performance
+===================
+The fble-cat experiment has shown large overhead for using monadic style of
+programming. Specifically in that it allocates a bunch of function objects
+that we otherwise would not need to allocate.
+
+I want to really understand why we are allocating function objects in this
+case, what it gains us, and if there's anything we can do to eliminate that
+cost of monadic style programming.
+
+Focus specifically on state monad.
+
+Monadic style would be something like:
+
+  M@<Bool@> Cat = {
+    Maybe@<Int@> byte <- Do(stdin);
+    byte.?(nothing: Return(True));
+    Unit@ _ <- Do(stdout(byte.just));
+    Cat;
+  };
+
+Equivalent non-monadic style that avoids function allocations:
+
+  (S@) { R@<Bool@>; } Cat = (S@ s) {
+    R@<Maybe@<Int@>> byte = stdin(s);
+    byte.x.?(nothing: R@(s, True));
+    R@<Unit@> out = stdout(byte.x.just, byte.s);
+    Cat(out.s);
+  };
+
+The most obvious surface difference is in the monadic style, we don't mention
+'s' at all. The non-mondic style has 's' invasive everywhere.
+
+Take function composition as a simpler example.
+
+f(x) = 2*x
+g(x) = 2 + x
+h(x) = f(g(x))
+
+==>
+
+f = \x -> 2*x
+g = \x -> 2 + x
+h = \x -> f(g(x))
+h = f . g
+  
+f = \x -> ...
+g = \x -> ...
+h = \x -> f(g(x))
+
+. = \a b x -> a(b(x))
+h = f . g
+  
+That clearly shows how use of function composition can make an explicit
+argument disappear. It does not show why we would need to allocate functions
+dynamically though. f, g, (.), h can all be statically allocated here.
+
+  M@<Bool@> Cat = {
+    Do(stdin)((Maybe@<Int@> byte) {
+      byte.?(nothing: Return(True));
+      Do(stdout(byte.just))((Unit@ _) {
+        Cat;
+      })
+    });
+  };
+
+Functions involved here:
+* Do - statically allocated.
+* Cat - statically allocated.
+* stdin - statically allocated.
+* Return - statically allocated.
+* \byte -> ... - allocated once, captured by result of Do
+* Do(stdin) - allocated once, captured by result of Do
+* Do(stdin)(...) - is Cat function (see above).
+* Return(True) - allocated once at the end of the input stream.
+* stdout - statically allocated
+
+* stdout(byte.just) - Allocated for every character
+   stdout is written as \b -> \s -> ... instead of \b s -> ... so it can be
+   used as callback to 'do'.
+* \_ -> ... - allocated for every character
+   But doesn't need to be, because it doesn't depend on 'byte'. It's just much
+   more convenient syntactically to define it where it is used than to pull it
+   outside of the function to the top level.
+* Do(stdout...) - allocated for every character.
+   Do is written as \ma -> \f -> ... instead of \ma f -> ... so it can be used
+   with monadic bind syntax.
+
+There you go. Three functions are allocated for every character. In two of
+those cases, we essentially have a multi-argument function that we are turning
+into a function that returns a function so it can be used a specific callback
+context.
+
+The 'do' function doesn't want to know about the first argument to stdout. So
+we allocate a function from stdout to hide that first argument. The bind
+syntax doesn't want to deal with multi-argument functions, so we split do into
+a function that returns a single argument function.
+
+Two of these allocations we could get rid of with some help from the language:
+* Move \_ -> ... out of the body of the \byte -> ... function. Either manually
+  or, if we can justify it from language spec, automatically.
+* Write 'do' as a multi-argument function. Add support for over application of
+  functions and make bind syntax take advantage of that.
+
+What about the last one? Seems like that could be tricky. It seems like the
+primary benefit of monadic syntax is to hide an argument, and at the same
+time, we see this results in allocating a function for the purpose of hiding
+that argument. Is there any way out of this?
+
+Think of it in terms of composition.
+
+. f g = \x -> f(g(x))
+h = f . g
+
+Now, imagine instead that f takes two arguments. We could have a special
+composition operator:
+
+.. f a g = \x -> f(a, g(x))
+h = f a . g
+
+But that function has to know about 'a' now. Just like how in the non-monadic
+implementation of cat, the code knows about byte and s at the same time.
+
+This seems like the key to me. We want to write in monadic style for this very
+reason. Is there any way we can hide the argument without incurring the
+current high cost of function allocation?
+
+How about function inlining?
+
+Here's another way to understand what's going on:
+* The caller applies the first argument.
+* The function do applies the second argument.
+
+The function 'do' encapsulates state monad. The caller encapsulate what it's
+doing. To apply both arguments in one place in the code requires knowing about
+both separate domains in one place.
+
+But maybe if we do function inlining, the compiler can take care of combining
+the otherwise separate domains. How would that look?
+
+h = f a . g
+
+Inline composition gives us:
+
+h = \x -> (f a)(g(x))
+
+h = \x -> f(a)(g(x))
+
+The compiler could rewrite this to be:
+
+h = \x -> f(a, g(x))
+
+And thus save you from the extra function allocation.
+
+It's almost like we want 'Do' to operate on the syntactic level, on symbolic
+terms rather than on fble values. 
+
+It's interesting that Do has the following:
+
+      f(ra.x)(ra.s);
+
+But in this case, the use of two separate applications does not result in an
+intermediate function allocation, because ra.x is Unit in this case, and
+f(ra.x) returns a preallocation function.
+
+Let's see what happens if we inline some of these functions:
+
+  Do(stdout(byte.just))((Unit@ _) {
+    Cat;
+  })
+
+==>
+
+  R@<Unit@> ra = stdout(byte.just)(s);
+  (Unit@ _) { Cat; }(ra.x)(ra.s)
+
+==>
+
+  R@<Unit@> ra = stdout(byte.just, s);
+  (Unit@ _) { Cat; }(ra.x)(ra.s)
+
+Another idea: could we allocate stdout(byte.just) on the stack?
+
+Say we allocate it on the stack. Then we call Do. The return value of Do is a
+function that depends on s which is then called by the outer do. So, in this
+case, stdout(byte.just) escapes the stack frame that byte lives on. Making it
+difficult to allocate on the stack.
+
+A@ a = ...
+B@ b = f(a);
+
+The function f could allocate its result b on the stack if it can assume its
+input argument a will outlive its output argument. But we would have to know
+the size of b before calling f to allocate enough space.
+
