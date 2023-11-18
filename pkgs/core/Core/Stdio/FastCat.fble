@@ -2,6 +2,8 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 
+@ Char@ = /Core/Char%.Char@;
+
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
@@ -32,8 +34,18 @@ Main = (
   (Int@, World@) { R@<Unit@>; } stdout,
   (Int@, World@) { R@<Unit@>; } stderr,
   (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
-  List@<String@> args)(World@ w) {
-  R@(w, True);
+  List@<String@> args) {
+
+  (World@) { R@<Bool@>; } Cat = (World@ w) {
+    R@<Maybe@<Int@>> byte = stdin(w);
+    byte.x.?(nothing: R@(w, True));
+
+    Char@ char = /Core/Char/Ascii%.Chr(byte.x.just);
+    R@<Unit@> out = stdout(/Core/Char/Ascii%.Ord(char), byte.s);
+    Cat(out.s);
+  };
+
+  Cat;
 };
 
 Main;

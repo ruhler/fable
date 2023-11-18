@@ -159,3 +159,103 @@ The core loop is:
 Note:
 * (Unit@ _) { cat(input); } is a constant function. No need to to reallocate
   it over and over.
+
+Re-implementing cat without monads:
+
+time yes | head -n 500000 | ./out/pkgs/core/fble-fast-cat > /dev/null
+
+real    0m20.182s
+user    0m18.387s
+sys     0m1.825s
+
+So, 38s ==> 20s. That's about our 50%.
+
+I will note: the implementation isn't that bad:
+
+  (World@) { R@<Bool@>; } Cat = (World@ w) {
+    R@<Maybe@<Int@>> byte = stdin(w);
+    byte.x.?(nothing: R@(w, True));
+
+    Char@ char = /Core/Char/Ascii%.Chr(byte.x.just);
+    R@<Unit@> out = stdout(/Core/Char/Ascii%.Ord(char), byte.s);
+    Cat(out.s);
+  };
+
+Certainly way less obscure than going through IStream, GetLine, and PutStr
+like my other version does.
+
+Summary:
+  Value Utils 29.37
+  Memory Management 25.05
+  Generated Code 23.78
+  Function Calls 18.83
+  IO 2.97
+
+Value Utils 29.37
+12.80    10803  FbleUnionValueTag[000aX]
+ 9.46     7985  FbleStrictValue[000cX]
+ 4.80     4051  FbleUnionValueAccess[000fX]
+ 1.84     1552  FbleStructValueAccess[001bX]
+ 0.47      397  FbleIntValueAccess[001eX]
+
+Memory Management 25.05
+ 5.34     4502  FbleRetainHeapObject[000eX]
+ 4.31     3634  FbleReleaseHeapObject[0013X]
+ 3.61     3048  FbleNewUnionValue[0012X]
+ 3.08     2603  FbleRetainValue[0015X]
+ 2.56     2157  FbleReleaseValue[0016X]
+ 1.49     1255  FbleNewStructValue[0018X]
+ 1.03      873  FbleReleaseValues[001fX]
+ 0.84      708  FbleNewStructValue_[0017X]
+ 0.33      279  FbleNewEnumValue[002eX]
+ 0.33      279  _int_free[0024X]
+ 0.31      264  IncrGc.part.0[0023X]
+ 0.28      233  FbleHeapRef[002fX]
+ 0.27      230  FbleNewIntValue[0011X]
+ 0.23      192  Refs[002aX]
+ 0.21      178  malloc[002dX]
+ 0.19      159  cfree@GLIBC_2.17[0032X]
+ 0.16      135  MakeIntP[0028X]
+ 0.11       92  _int_malloc[0033X]
+ 0.10       88  FbleNewHeapObject[0022X]
+ 0.07       60  FbleRawAlloc[002cX]
+ 0.07       57  OnFree[0034X]
+ 0.05       40  FbleFree[003aX]
+ 0.03       29  FbleNewStructValue_.constprop.6[003eX]
+ 0.02       18  FbleHeapObjectAddRef[003dX]
+ 0.01        9  malloc@plt[0041X]
+ 0.02       13  free@plt[0040X]
+
+Generated Code 23.78
+11.77     9931  _2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_Ord_21_.0010[000bX]
+ 3.86     3257  _2f_Core_2f_Map_2f_Map_25__2e_Lookup_21__2e_L_21_.005a[0009X]
+ 3.65     3076  _2f_Core_2f_Int_2f_Ord_25__2e_Ord_21_.0008[000dX]
+ 1.33     1121  _2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_RoundLt_21_.0008[001aX]
+ 1.18      993  _2f_Core_2f_Stdio_2f_FastCat_25__2e_Main_21__2e_Cat_21_.0013[0007X]
+ 0.92      774  _2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_RoundGt_21_.000c[0019X]
+ 0.47      399  _2f_Core_2f_Char_2f_Ascii_25__2e_Chr_21_.0075[0008X]
+ 0.38      317  _2f_Core_2f_Char_2f_Ascii_25__2e_Ord_21_.000a[0020X]
+ 0.22      185  _2f_Core_2f_Maybe_25__2e_Just_21_.0007[0021X]
+
+Function Calls 18.83
+15.17    12800  FbleThreadCall[0006X]
+ 3.66     3088  FbleFuncValueInfo[0014X]
+
+IO 2.97
+ 0.52      437  _IO_fflush[001dX]
+ 0.36      305  new_do_write[0027X]
+ 0.31      258  OStreamImpl[001cX]
+ 0.28      236  _IO_do_write@@GLIBC_2.17[0026X]
+ 0.27      229  IStreamImpl[0010X]
+ 0.23      191  __GI___libc_write[002bX]
+ 0.23      190  _IO_getc[0031X]
+ 0.22      188  _IO_file_write@@GLIBC_2.17[0029X]
+ 0.21      179  _IO_file_sync@@GLIBC_2.17[0025X]
+ 0.19      157  fputc[0030X]
+ 0.06       52  0xffffffc010027968[0039X]
+ 0.04       37  fputc@plt[003bX]
+ 0.03       24  fgetc@plt[003cX]
+ 0.02       15  fflush@plt[003fX]
+
+Seems like understanding and eliminating this overhead of monadic style is the
+first big step towards 2x performance improvement.
