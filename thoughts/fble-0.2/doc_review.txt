@@ -21,6 +21,7 @@ Usage - check generated help and man pages
 ./pkgs/invaders/invaders.fbld   DONE
 ./pkgs/sat/sat.fbld             DONE
 ./pkgs/core/stdio.fbld          DONE
+./pkgs/core/fble-cat.fbld       DONE
 ./pkgs/app/app.fbld             DONE
 
 Library code - Check for fbld syntax niceness.

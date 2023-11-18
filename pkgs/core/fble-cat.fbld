@@ -1,0 +1,16 @@
+@usage[fble-cat] concatenate files and print on the standard output
+ @synopsis
+ @ @l[fble-cat] \[@a[FILE]\]...
+
+ @description
+  Concatenate the given files to standard output. The filename @l{-} may be
+  used to read standard input. If no files are provided, standard input is
+  read.
+
+ @exitstatus
+  @def[0] Success
+  @def[1] One or more of the files could not be accessed.
+
+ @examples
+  @ex fble-cat foo.txt bar.txt
+   Outputs @l[foo.txt] and @l[bar.txt] to standard output.

@@ -58,6 +58,8 @@ namespace eval "pkgs/core" {
   # /Core/Stdio/Cat% compiled.
   stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" ""
   install $::b/pkgs/core/fble-cat $::config::bindir/fble-cat
+  fbld_man_usage $::b/pkgs/core/fble-cat.1 $::s/pkgs/core/fble-cat.fbld
+  install $::b/pkgs/core/fble-cat.1 $::config::mandir/man1/fble-cat.1
 
   # /Core/Stdio/FastCat% compiled.
   stdio $::b/pkgs/core/fble-fast-cat "/Core/Stdio/FastCat%" ""

@@ -2,6 +2,9 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* Add fble- prefix to .fbld files like graphics.fbld, etc.
+ To be more consistent.
+
 * dc.man difference between same line and single line next line arg.
   Should we add a paragraph around same line arg if it's not there?
 
@@ -62,8 +65,6 @@ Things to do for the fble-0.2 release.
         
 * Need an easier way to gdb step through fble code without cluttering it with c
   code in between.
-
-* Add man page for fble-cat
 
 * Sat Solver:
  - Add --help command line option to fble-sat.
