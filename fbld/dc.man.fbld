@@ -41,7 +41,7 @@
   @define[returns][type desc][] @@
   @define[sideeffects][desc][] @@
   @define[args][] @eval[@plain[ignore][@content]] @@
-  @ifeq[][@args][] @ljoin[\n    @args][@l[,\n    ]]
+  @ifeq[][@ltail[@args]][@lhead[@args]] @ljoin[\n    @args][@l[,\n    ]]
   
   @inline[);\n]
 @@

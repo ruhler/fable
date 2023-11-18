@@ -27,3 +27,105 @@ sys     0m0.046s
 That's what I'm talking about. fble is over 100 times slower than I would
 like.
 
+Summary from profiling:
+  Memory Management     51.07
+  Generated Code        16.99
+  Value Utils           15.78
+  Function Calls        14.33
+  IO                     1.80
+
+Memory Management 51.07
+ 5.05     8216  _int_free[0025X]
+ 4.47     7263  IncrGc.part.0[0021X]
+ 3.27     5326  malloc[0039X]
+ 3.87     6289  Refs[0028X]
+ 3.45     5610  FbleHeapRef[0022X]
+ 3.03     4929  FbleNewFuncValue[001fX]
+ 2.92     4741  cfree@GLIBC_2.17[0042X]
+ 4.11     6680  FbleReleaseHeapObject[0011X]
+ 2.96     4816  FbleRetainHeapObject[0015X]
+ 1.84     2997  FbleNewUnionValue[0010X]
+ 1.81     2951  FbleRetainValue[0016X]
+ 1.70     2765  FbleReleaseValue[0017X]
+ 1.55     2513  FbleNewStructValue[001cX]
+ 1.40     2284  OnFree[0048X]
+ 1.40     2271  _int_malloc[0040X]
+ 1.33     2157  FbleNewHeapObject[0020X]
+ 1.17     1902  FbleFreeExecutable[004fX]
+ 1.15     1867  FbleHeapObjectAddRef[0044X]
+ 1.14     1862  FbleReleaseValues[0043X]
+ 1.08     1754  FbleRawAlloc[0038X]
+ 0.57      924  FbleFree[0052X]
+ 0.44      715  FbleNewStructValue_[001bX]
+ 0.24      388  FbleNewIntValue[000fX]
+ 0.23      380  free@plt[0059X]
+ 0.20      331  malloc@plt[005aX]
+ 0.18      288  FbleNewStructValue_.constprop.7[0035X]
+ 0.13      215  FbleNewEnumValue[004cX]
+ 0.13      211  FbleNewListValue[0034X]
+ 0.08      126  FbleNewUnionValue.constprop.4[0049X]
+ 0.05       88  FbleNewStructValue_.constprop.6[0053X]
+ 0.12      203  MakeIntP[0045X]
+
+Generated Code 16.99
+ 5.86     9532  _2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_Ord_21_.0010[000bX]
+ 1.90     3088  _2f_Core_2f_Map_2f_Map_25__2e_Lookup_21__2e_L_21_.005a[000aX]
+ 1.24     2020  _2f_Core_2f_Int_2f_Ord_25__2e_Ord_21_.0008[0012X]
+ 1.05     1714  _2f_Core_2f_Monad_2f_State_25__2e_Monad_21__21__21_.0011[0007X]
+ 0.68     1112  _2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_RoundLt_21_.0008[0029X]
+ 0.54      877  _2f_Core_2f_Monad_2f_State_25__2e_Monad_21_.000e[0036X]
+ 0.51      827  _2f_Core_2f_Monad_2f_State_25__2e_Monad_21__21_.0010[0026X]
+ 0.49      805  _2f_Core_2f_Stream_2f_IStream_25__21__2e_GetLine_21__21_.0016[001dX]
+ 0.44      716  _2f_Core_2f_Stream_2f_OStream_25__21__2e_PutStr_21_.000e[0023X]
+ 0.44      714  _2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_RoundGt_21_.000c[002bX]
+ 0.39      630  _2f_Core_2f_Char_2f_Ascii_25__2e_Ord_21_.000a[002dX]
+ 0.33      538  _2f_Core_2f_Stream_2f_IStream_25__21__2e_GetChar_21__21_.0011[0008X]
+ 0.32      519  _2f_Core_2f_Monad_2f_State_25__2e_Monad_21_.000b[0024X]
+ 0.31      508  _2f_Core_2f_Char_2f_Ascii_25__2e_Chr_21_.0075[0009X]
+ 0.27      438  _2f_Core_2f_Stream_2f_IStream_25__21__2e_GetLine_21_.0015[001eX]
+ 0.23      372  _2f_Core_2f_Stdio_2f_Cat_25__2e_Cat_21__2e_cat_21__21_.0017[002eX]
+ 0.22      357  _2f_Core_2f_Stream_2f_IStream_25__21__2e_GetChar_21_.0010[0037X]
+ 0.21      349  _2f_Core_2f_Monad_2f_State_25__2e_Monad_21__21_.000c[0027X]
+ 0.21      344  _2f_Core_2f_Stdio_2f_Cat_25__2e_Cat_21__2e_cat_21_.0016[0030X]
+ 0.19      315  _2f_Core_2f_Stream_2f_OStream_25__21__2e_PutStr_21__2e__3a__21_.0011[002fX]
+ 0.19      315  _2f_Core_2f_Maybe_25__2e_Just_21_.0007[003bX]
+ 0.18      297  _2f_Core_2f_Stream_2f_OStream_25__21__2e_PutChar_21_.000c[002cX]
+ 0.17      272  _2f_Core_2f_Stdio_2f_IO_25__2e_Run_21__21__21__21_.000f[0041X]
+ 0.15      248  _2f_Core_2f_Char_2f_Type_25__2e_IsNewline_21_.005a[004aX]
+ 0.14      233  _2f_Core_2f_Stdio_2f_IO_25__2e_Run_21__21__21_.000e[003aX]
+ 0.13      206  _2f_Core_2f_Stream_2f_IStream_25__21__2e_GetLine_21__21__2e__3a__2e__3a__21_.001b[003cX]
+ 0.08      132  _2f_Core_2f_Stdio_2f_Cat_25__2e_Cat_21__2e_cat_21__21__2e__3a__21_.001a[004eX]
+ 0.08      130  _2f_Core_2f_List_25__2e_Cons_21_.0008[003dX]
+ 0.04       68  _2f_Core_2f_List_25__2e_List_21_.000d[0051X]
+
+Value Utils 15.78
+ 5.99     9741  FbleUnionValueTag[000cX]
+ 5.66     9212  FbleStrictValue[000dX]
+ 1.98     3217  FbleUnionValueAccess[0013X]
+ 1.68     2736  FbleStructValueAccess[0018X]
+ 0.24      390  FbleIntValueAccess[002aX]
+ 0.23      379  PackedValueLength[004bX]
+
+Function Calls 14.33
+11.58    18827  FbleThreadCall[0006X]
+ 2.75     4465  FbleFuncValueInfo[0014X]
+
+IO 1.8
+ 0.32      525  _IO_fflush[001aX]
+ 0.21      339  __GI___libc_write[003fX]
+ 0.20      324  new_do_write[0033X]
+ 0.16      266  _IO_file_write@@GLIBC_2.17[003eX]
+ 0.15      245  OStreamImpl[0019X]
+ 0.14      227  _IO_getc[0047X]
+ 0.13      218  _IO_do_write@@GLIBC_2.17[0032X]
+ 0.13      209  fputc[0046X]
+ 0.11      184  IStreamImpl[000eX]
+ 0.11      171  _IO_file_sync@@GLIBC_2.17[0031X]
+ 0.05       76  fputc@plt[004dX]
+ 0.03       52  fflush@plt[0050X]
+ 0.03       41  0xffffffc010027968[0058X]
+ 0.02       27  fgetc@plt[005bX]
+ 0.01       20  0xffffffc01001041c[0060X]
+
+
+Well, there you go. First thing to focus on is memory management.
