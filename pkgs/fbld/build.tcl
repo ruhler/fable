@@ -11,6 +11,8 @@ namespace eval "pkgs/fbld" {
   # directory on Windows.
   stdio $::b/pkgs/fbld/bin/fbld "/Fbld/Main%" "fbld"
   install $::b/pkgs/fbld/bin/fbld $::config::bindir/fbld
+  fbld_man_usage $::b/pkgs/fbld/fbld.1 $::s/pkgs/fbld/fbld.fbld
+  install $::b/pkgs/fbld/fbld.1 $::config::mandir/man1/fbld.1
 
   # version.fbld
   build $::b/fbld/version.fbld "" \

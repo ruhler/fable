@@ -2,8 +2,6 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* Add man page for fbld.
-
 * dc.man difference between same line and single line next line arg.
   Should we add a paragraph around same line arg if it's not there?
 
