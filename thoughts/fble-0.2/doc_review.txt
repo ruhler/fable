@@ -56,34 +56,34 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleReleaseValue.3.fbld          DONE
 ./out/include/fble/FbleNewSearchPath.3.fbld         DONE
 ./out/include/fble/FbleNewString.3.fbld             DONE
-./out/include/fble/FbleGenerateAArch64Main.3.fbld
-./out/include/fble/FbleAssignRefValue.3.fbld
-./out/include/fble/FbleNewProfileThread.3.fbld
-./out/include/fble/FbleNewFuncValue.3.fbld
-./out/include/fble/FblePrintName.3.fbld
-./out/include/fble/FbleFreeValueHeap.3.fbld
-./out/include/fble/FbleLinkFromCompiledOrSource.3.fbld
-./out/include/fble/FbleFindPackage.3.fbld
-./out/include/fble/FbleProfileAddBlocks.3.fbld
-./out/include/fble/FbleFuncValueInfo.3.fbld
-./out/include/fble/FbleNewRefValue.3.fbld
-./out/include/fble/FbleCompileProgram.3.fbld
-./out/include/fble/FbleProfileReplaceBlock.3.fbld
-./out/include/fble/FbleGenerateCMain.3.fbld
-./out/include/fble/FbleLink.3.fbld
-./out/include/fble/FbleNewStructValue_.3.fbld
-./out/include/fble/FbleLinkFromCompiled.3.fbld
-./out/include/fble/FbleCopyName.3.fbld
-./out/include/fble/FbleStructValueAccess.3.fbld
-./out/include/fble/FblePrintCompiledHeaderLine.3.fbld
-./out/include/fble/FbleFreeLoadedProgram.3.fbld
-./out/include/fble/FbleReportError.3.fbld
-./out/include/fble/FbleNewModuleArg.3.fbld
-./out/include/fble/FbleReleaseValues_.3.fbld
-./out/include/fble/FbleModulePathName.3.fbld
-./out/include/fble/FbleNewStackAllocator.3.fbld
-./out/include/fble/FbleApply.3.fbld
-./out/include/fble/FbleLinkFromSource.3.fbld
+./out/include/fble/FbleGenerateAArch64Main.3.fbld   DONE
+./out/include/fble/FbleAssignRefValue.3.fbld        DONE
+./out/include/fble/FbleNewProfileThread.3.fbld      DONE
+./out/include/fble/FbleNewFuncValue.3.fbld          DONE
+./out/include/fble/FblePrintName.3.fbld             DONE
+./out/include/fble/FbleFreeValueHeap.3.fbld         DONE
+./out/include/fble/FbleLinkFromCompiledOrSource.3.fbld DONE
+./out/include/fble/FbleFindPackage.3.fbld           DONE
+./out/include/fble/FbleProfileAddBlocks.3.fbld      DONE
+./out/include/fble/FbleFuncValueInfo.3.fbld         DONE
+./out/include/fble/FbleNewRefValue.3.fbld           DONE
+./out/include/fble/FbleCompileProgram.3.fbld        DONE
+./out/include/fble/FbleProfileReplaceBlock.3.fbld   DONE
+./out/include/fble/FbleGenerateCMain.3.fbld         DONE
+./out/include/fble/FbleLink.3.fbld                  DONE
+./out/include/fble/FbleNewStructValue_.3.fbld       DONE
+./out/include/fble/FbleLinkFromCompiled.3.fbld      DONE
+./out/include/fble/FbleCopyName.3.fbld              DONE
+./out/include/fble/FbleStructValueAccess.3.fbld     DONE
+./out/include/fble/FblePrintCompiledHeaderLine.3.fbld DONE
+./out/include/fble/FbleFreeLoadedProgram.3.fbld     DONE
+./out/include/fble/FbleReportError.3.fbld           DONE
+./out/include/fble/FbleNewModuleArg.3.fbld          DONE
+./out/include/fble/FbleReleaseValues_.3.fbld        DONE
+./out/include/fble/FbleModulePathName.3.fbld        DONE
+./out/include/fble/FbleNewStackAllocator.3.fbld     DONE
+./out/include/fble/FbleApply.3.fbld                 DONE
+./out/include/fble/FbleLinkFromSource.3.fbld        DONE
 ./out/include/fble/FbleFreeString.3.fbld
 ./out/include/fble/FbleLoad.3.fbld
 ./out/include/fble/FbleCompiledModuleFunction.3.fbld

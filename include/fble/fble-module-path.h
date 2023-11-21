@@ -57,7 +57,7 @@ FbleModulePath* FbleNewModulePath(FbleLoc loc);
  *  @arg[FbleModulePath*][path] The path to construct an FbleName for.
  *
  *  @returns FbleName
- *   An FbleName describing the full module path. For example: "/Foo/Bar%".
+ *   An FbleName describing the full module path. For example: @l{/Foo/Bar%}.
  *
  *  @sideeffects
  *   The caller should call FbleFreeName on the returned name when no longer

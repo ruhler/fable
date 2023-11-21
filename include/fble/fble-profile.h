@@ -250,7 +250,7 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
  *
  *  @sideeffects
  *   @i Replaces the current profiling block with the new block.
- *   @i
+ *   @item
  *    Frees resources associated with the block being replaced, but a
  *    corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
  *    will still be needed to free resources associated with the replacement
