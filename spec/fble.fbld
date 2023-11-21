@@ -399,6 +399,9 @@
    provided. Arguments must be provided in the same order as the fields in the
    struct type.
 
+   As with implicit type struct values, if no value for a field is provided,
+   its value is assumed to be the variable with same name as the field.
+
    The expression is evaluated by evaluating the source and all arguments and
    creating a struct value with the results. The arguments may be evaluated in
    any order, sequentially or in parallel.

@@ -34,8 +34,8 @@
    Variables tutorial for details).
  
   @item
-   Struct types are equal if they have the same order, types, and names of all of
-   their fields.
+   Struct types are equal if they have the same order, types, and names of all
+   of their fields.
  
  @section Implicit Type Struct Values
   So far we've always constructed struct values by providing the struct type
@@ -53,15 +53,47 @@
   Because the compiler knows the type of @l{0} is @l{Bit@}, and the type of
   @l{1} is @l{Bit@}, it can infer from @l{@(3: 0, 2: 0, 1: 1, 0: 1)} the
   struct type: @l{*(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0)}.
+
+ @section Copied Struct Values
+  Sometimes you want to modify the fields of a struct value. Values in fble
+  are immutable, so you can't modify struct fields directly. What you can do
+  is make a new copy of a struct value where some of the fields are modified.
+
+  You could do this with the syntax we've already presented for constructing
+  struct values. For example, to change bit 2 of our @l{Bit4@} struct @l{X}
+  above:
+
+  @code[fble] @
+   Bit4@ Y = Bit4@(X.3, 1, X.1, X.0);
+
+  For large structures, it becomes tedious to manually copy each of the
+  fields. Fble provides a short hand syntax that allows you to copy a struct
+  value without listing all of its fields. For the struct copy syntax, you
+  provide a struct value to copy, such as @l{X}, followed by syntax @l{.@},
+  followed by the list of new field values using the syntax from implicit
+  type struct values. 
+
+  The above example can be rewritten using struct copy syntax as:
+
+  @code[fble] @
+   Bit4@ Y = X.@(2: 1);
+
+  If you want, you can modify multiple fields at once and have more
+  complicated field value expressions. If modifying multiple fields, the
+  fields must be specified in the same order as they are defined in the struct
+  type. For example:
+
+  @code[fble] @
+   Bit4@ Z = X.@(2: 1, 0: And(X.3, X.0));
  
  @section Structs as Namespaces
-  Aside from their normal use in programming, structs in fble play an
-  important role in namespace management.
+  Aside from their normal use in programming, structs play an important role
+  in namespace management.
  
-  For example, the variables @l{0} and @l{1} are nice to have for the @l{Bit@}
-  type, but they are also useful for @l{Bit4@} and @l{Int@} types. We can
-  create a struct value to hold @l{0} and @l{1} for the @l{Bit@} type rather
-  than pollute the global namespace of variables.
+  For example, the variable names @l{0} and @l{1} are nice to have for the
+  @l{Bit@} type, but they are also useful names for @l{Bit4@} and @l{Int@}
+  types. We can create a struct value to hold @l{0} and @l{1} for the @l{Bit@}
+  type rather than pollute the global namespace of variables.
  
   For example, let's define a struct value called @l{Bits} that has two
   fields, @l{0} and @l{1}, which have the @l{Bit@} values for @l{0} and @l{1}
@@ -88,7 +120,7 @@
    };
  
   In these cases, we can use a special short hand supported for implicit
-  struct type values: if the argument of a field as a variable, you can leave
+  struct type values: if the argument of a field is a variable, you can leave
   out the field name; the variable name will be used for the name of the
   field.
  
