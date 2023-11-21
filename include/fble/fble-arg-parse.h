@@ -14,7 +14,7 @@
  * @func[FbleParseBoolArg] Parse a boolean flag command line argument.
  *  Sample argument usage:
  *  
- *  @code[sh]
+ *  @code[sh] @
  *   --foo
  *
  *  The flag may be specified at most once on the command line.
@@ -46,7 +46,7 @@ bool FbleParseBoolArg(const char* name, bool* dest, int* argc, const char*** arg
  * @func[FbleParseStringArg] Parse a string command line argument.
  *  Sample argument usage:
  *
- *  @code[sh]
+ *  @code[sh] @
  *   --foo value
  * 
  *  The flag may be specified at most once on the command line.
@@ -106,7 +106,7 @@ void FbleFreeModuleArg(FbleModuleArg arg);
  * @func[FbleParseModuleArg] Parse command line options for an FbleModuleArg.
  *  Sample argument usage:
  *
- *  @code[sh]
+ *  @code[sh] @
  *   -I entry1 -Ientry2 -p package1 --package package2 -m /Foo%
  * 
  *  @arg[FbleModuleArg*] dest

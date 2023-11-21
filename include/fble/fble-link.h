@@ -142,7 +142,7 @@ FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profil
  *  part of a fble compiled main function. It prints a header line if the
  *  compiled module is not NULL, of the form something like:
  *
- *  @code[txt]
+ *  @code[txt] @
  *   fble-debug-test: fble-test -m /DebugTest% (compiled)
  *
  *  Note, extracting the module name is a relatively expensive operation,

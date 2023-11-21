@@ -51,11 +51,11 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleFreeExecutableModule.3.fbld  DONE
 ./out/include/fble/FbleParseStringArg.3.fbld        DONE
 ./out/include/fble/FbleRawAlloc.3.fbld              DONE
-./out/include/fble/FbleAllocExtra.3.fbld
-./out/include/fble/FbleFreeExecutableProgram.3.fbld
-./out/include/fble/FbleReleaseValue.3.fbld
-./out/include/fble/FbleNewSearchPath.3.fbld
-./out/include/fble/FbleNewString.3.fbld
+./out/include/fble/FbleAllocExtra.3.fbld            DONE
+./out/include/fble/FbleFreeExecutableProgram.3.fbld DONE
+./out/include/fble/FbleReleaseValue.3.fbld          DONE
+./out/include/fble/FbleNewSearchPath.3.fbld         DONE
+./out/include/fble/FbleNewString.3.fbld             DONE
 ./out/include/fble/FbleGenerateAArch64Main.3.fbld
 ./out/include/fble/FbleAssignRefValue.3.fbld
 ./out/include/fble/FbleNewProfileThread.3.fbld

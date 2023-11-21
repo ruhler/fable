@@ -37,7 +37,7 @@ extern const char* FbleBuildStamp;
  * @func[FblePrintVersion] Prints version info.
  *  For example, prints something like:
  *
- *  @code[txt]
+ *  @code[txt] @
  *   fble-test fble-0.1 (2023-02-26,dev:4856517f-dirty)
  *
  *  @arg[FILE*] stream

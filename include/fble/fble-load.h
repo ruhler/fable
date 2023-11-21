@@ -187,7 +187,7 @@ void FbleFreeLoadedProgram(FbleLoadedProgram* program);
  *
  *  For example, it would generate something like:
  *
- *  @code[txt]
+ *  @code[txt] @
  *   target: build_deps1 build_deps2 build_deps3
  *     build_deps4 build_deps5 ...
  *

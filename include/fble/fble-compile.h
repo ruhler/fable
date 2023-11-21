@@ -140,7 +140,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module);
  *  The generated code will export a single function named based on the module
  *  path with the following signature:
  *  
- *  @code[c]
+ *  @code[c] @
  *   void _compiled_(FbleCompiledProgram* program);
  *
  *  Calling this function will append this module to the given program if it
@@ -161,7 +161,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
  *  The generated code will export a single function with the given name with
  *  the following signature
  *  
- *  @code[c]
+ *  @code[c] @
  *   void _name_(FbleExecutableProgram* program);
  *
  *  Calling this function add the module and any dependencies to the given
@@ -186,7 +186,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
  *
  *  The generated code will export a main function of the following form:
  *
- *  @code[c]
+ *  @code[c] @
  *   int main(int argc, const char** argv) {
  *     return _main_(argc, argv, _compiled_);
  *   }
@@ -211,7 +211,7 @@ void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
  *  The generated code will export a single function named based on the module
  *  path with the following signature:
  *  
- *  @code[c]
+ *  @code[c] @
  *   void _compiled_(FbleCompiledProgram* program);
  *
  *  Calling this function will append this module to the given program if it
@@ -232,7 +232,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
  *  The generated code will export a single function with the given name with
  *  the following signature
  *  
- *  @code[c]
+ *  @code[c] @
  *   void _name_(FbleExecutableProgram* program);
  *
  *  Calling this function add the module and any dependencies to the given
@@ -257,7 +257,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
  *
  *  The generated code will export a main function of the following form:
  *  
- *  @code[c]
+ *  @code[c] @
  *   int main(int argc, const char** argv) {
  *     return _main_(argc, argv, _compiled_);
  *   }
