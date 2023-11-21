@@ -28,11 +28,13 @@
   @l{#include <fble/fble.h>}
   @inline[\n]
   @par[]
+
   @define[.block][text][] @@
   @define[arg][type name desc][] @@
   @define[returns][type desc] @l[@type] @@
   @define[sideeffects][desc][] @@
-  @eval[@plain[ignore][@content]]
+  @define[retval][] @eval[@plain[ignore][@content]] @@
+  @ifeq[][@retval][@l[void]] @retval
 
   @inline[ @name(]
 

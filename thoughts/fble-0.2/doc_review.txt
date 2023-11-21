@@ -23,6 +23,7 @@ Usage - check generated help and man pages
 ./pkgs/core/fble-stdio.fbld          DONE
 ./pkgs/core/fble-cat.fbld            DONE
 ./pkgs/app/fble-app.fbld             DONE
+./pkgs/fbld/fbld.fbld                DONE
 
 Library code - Check for fbld syntax niceness.
 ./fbld/dc.man.fbld              DONE
