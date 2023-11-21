@@ -1248,45 +1248,42 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       size_t fieldc = struct_type->fields.size;
-      Tc fields[fieldc];
+      FbleStructCopyTc* struct_copy = FbleNewTcExtra(FbleStructCopyTc, FBLE_STRUCT_COPY_TC, fieldc * sizeof(FbleTc*), expr->loc);
+      struct_copy->source = FbleCopyTc(src.tc);
+      struct_copy->fieldc = fieldc;
 
       size_t a = 0;
       for (size_t i = 0; i < fieldc; ++i) {
         FbleTaggedExpr* arg = struct_expr->args.xs + a;
         if (a < struct_expr->args.size && FbleNamesEqual(arg->name, struct_type->fields.xs[i].name)) {
           // Take the field value from the provided argument.
-          fields[i] = args[a];
+          struct_copy->fields[i] = FbleCopyTc(args[a].tc);
+          if (!FbleTypesEqual(th, struct_type->fields.xs[i].type, args[a].type)) {
+            ReportError(args[a].tc->loc,
+                "expected type %t, but found %t\n",
+                struct_type->fields.xs[i].type, args[a].type);
+            error = true;
+          }
           a++;
         } else {
           // Take the field value from the source struct.
-          FbleDataAccessTc* access_tc = FbleNewTc(FbleDataAccessTc, FBLE_DATA_ACCESS_TC, expr->loc);
-          access_tc->datatype = FBLE_STRUCT_DATATYPE;
-          access_tc->obj = FbleCopyTc(src.tc);
-          access_tc->tag = i;
-          access_tc->loc = FbleCopyLoc(expr->loc);
-          fields[i] = MkTc(FbleRetainType(th, struct_type->fields.xs[i].type), &access_tc->_base);
-          CleanTc(cleaner, fields[i]);
+          struct_copy->fields[i] = NULL;
         }
       }
 
       if (a < struct_expr->args.size) {
         ReportError(struct_expr->args.xs[a].name.loc,
-          "unexpected next field in struct, but found '%n'\n",
+          "expected next field in struct, but found '%n'\n",
           struct_expr->args.xs[a].name);
         error = true;
       }
 
       if (error) {
+        FbleFreeTc(&struct_copy->_base);
         return TC_FAILED;
       }
 
-      FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, fieldc * sizeof(FbleTc*), expr->loc);
-      struct_tc->fieldc = fieldc;
-      for (size_t i = 0; i < fieldc; ++i) {
-        struct_tc->fields[i] = FbleCopyTc(fields[i].tc);
-      }
-
-      return MkTc(FbleRetainType(th, &struct_type->_base), &struct_tc->_base);
+      return MkTc(FbleRetainType(th, &struct_type->_base), &struct_copy->_base);
     }
 
     case FBLE_UNION_VALUE_EXPR: {

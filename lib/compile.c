@@ -893,6 +893,43 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       return local;
     }
 
+    case FBLE_STRUCT_COPY_TC: {
+      FbleStructCopyTc* struct_copy = (FbleStructCopyTc*)v;
+
+      Local* source = CompileExpr(blocks, false, false, scope, struct_copy->source);
+
+      size_t argc = struct_copy->fieldc;
+      Local* args[argc];
+      for (size_t i = 0; i < argc; ++i) {
+        if (struct_copy->fields[i]) {
+          args[i] = CompileExpr(blocks, false, false, scope, struct_copy->fields[i]);
+        } else {
+          args[i] = NewLocal(scope, source);
+          FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+          access->obj = source->var;
+          access->tag = i;
+          access->loc = FbleCopyLoc(struct_copy->_base.loc);
+          access->dest = args[i]->var.index;
+          AppendInstr(scope, &access->_base);
+        }
+      }
+
+      Local* local = NewLocal(scope, NULL);
+      FbleStructValueInstr* struct_instr = FbleAllocInstr(FbleStructValueInstr, FBLE_STRUCT_VALUE_INSTR);
+      struct_instr->dest = local->var.index;
+      FbleVectorInit(struct_instr->args);
+      AppendInstr(scope, &struct_instr->_base);
+      CompileExit(exit, scope, local);
+
+      for (size_t i = 0; i < argc; ++i) {
+        FbleVectorAppend(struct_instr->args, args[i]->var);
+        ReleaseLocal(scope, args[i], exit);
+      }
+      ReleaseLocal(scope, source, exit);
+
+      return local;
+    }
+
     case FBLE_UNION_VALUE_TC: {
       FbleUnionValueTc* union_tc = (FbleUnionValueTc*)v;
       Local* arg = CompileExpr(blocks, false, false, scope, union_tc->arg);

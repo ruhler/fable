@@ -82,10 +82,7 @@ Things to do for the fble-0.2 release.
    requires a strict value.
    And should it be that way?
 
-* Struct copy expr
- - Add to struct tutorial.
- - Make sure the source expression is only evaluated one time.
- - Fix failing SpecTests/3.5-StructCopy/Eval/AlwaysEvalSource.fble
+* Add struct copy expr to struct tutorial.
 
 * Come up with a nicer way to implement printf debugging?
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,

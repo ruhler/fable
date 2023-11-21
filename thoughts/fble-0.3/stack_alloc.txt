@@ -236,6 +236,25 @@ allocated object if the object owned by the caller was stack allocated?
 
 ---
 
+Important observation: Some things need to be allocated on the heap, even if
+their lifetime is tied to the stack. For example, say we allocate a long list.
+Because it's a long list, we can't allocate it on the stack. Then we use that
+list as a local variable from some function f. The lifetime of the list is
+clearly bounded by the call to f.
 
+This means there are cases where heap allocated objects can safely refer to
+stack allocated objects.
 
+I think it's pretty clear conceptually how things should work. It's just
+figuring out the details. Local variables should be allocated on the stack if
+they aren't captured.
 
+The details in question are:
+* Can we allocate returned variables on the stack?
+* Do we detect what's captured statically? Dynamically?
+* Do we have a way to heap allocate objects that aren't gc'd?
+* Will some combination of the above solve the fble-cat allocation case?
+
+Next step, I think, should be to walk through the code for the simplified
+fble-cat example. Understand what allocations we could stack allocate with
+what knowledge and whether all the functions could be stack allocated.

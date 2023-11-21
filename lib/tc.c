@@ -88,6 +88,16 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
+    case FBLE_STRUCT_COPY_TC: {
+      FbleStructCopyTc* s = (FbleStructCopyTc*)tc;
+      FbleFreeTc(s->source);
+      for (size_t i = 0; i < s->fieldc; ++i) {
+        FbleFreeTc(s->fields[i]);
+      }
+      FbleFree(tc);
+      return;
+    }
+
     case FBLE_UNION_VALUE_TC: {
       FbleUnionValueTc* uv = (FbleUnionValueTc*)tc;
       FbleFreeTc(uv->arg);

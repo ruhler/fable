@@ -1,0 +1,25 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+@ Function@ = (Bool@) { Bool@; };
+
+@ Triple@ = *(Function@ x, Function@ y, Function@ z);
+Triple@ a = @(
+  x: (Bool@ _) { True; },
+  y: (Bool@ _) { False; },
+  z: (Bool@ a) { a.?(true: False, false: True); }
+);
+
+# Verify we can do basic struct copy involving potentially heap allocated
+# objects. Regression test for a case where we mismatched retains and releases
+# for non-updated fields.
+Triple@ b = a.@(y: (Bool@ a) { a; });
+
+Unit@ _ = b.x(False).true;
+Unit@ _ = b.y(True).true;
+Unit@ _ = b.z(True).false;
+Unit@();

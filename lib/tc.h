@@ -35,6 +35,7 @@ typedef enum {
   FBLE_VAR_TC,
   FBLE_LET_TC,
   FBLE_STRUCT_VALUE_TC,
+  FBLE_STRUCT_COPY_TC,
   FBLE_UNION_VALUE_TC,
   FBLE_UNION_SELECT_TC,
   FBLE_DATA_ACCESS_TC,
@@ -139,6 +140,16 @@ typedef struct {
   size_t fieldc;      /**< Number of arguments to the struct value. */
   FbleTc* fields[];   /**< Arguments to the struct value. */
 } FbleStructValueTc;
+
+/**
+ * FBLE_STRUCT_COPY_TC: A struct copy expression.
+ */
+typedef struct {
+  FbleTc _base;      /**< FbleTc base class. */
+  FbleTc* source;    /**< The source object. */
+  size_t fieldc;     /**< Number of fields of the struct value. */
+  FbleTc* fields[];  /**< Arguments to the struct value, or NULL to take from source */
+} FbleStructCopyTc;
 
 /**
  * FBLE_UNION_VALUE_TC: A union value expression.
