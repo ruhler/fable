@@ -90,14 +90,13 @@ Things to do for the fble-0.2 release.
  - Test case of more than one arg provided.
  - Test case of args out of order, or not in struct type.
  - Add tests for full code coverage.
+ - Test that src is still evaluated even if all fields are provided.
 
 * Come up with a nicer way to implement printf debugging?
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
     for example.
   - Or just use stdio for that?
   - Or move /Sat/Debug% code to /Core/Debug%?
-
-* Make a decision on struct copy expression before release.
 
 * Feedback from users:
  - Better explanation of "lack of primitives" and why that's a good thing.

@@ -383,8 +383,6 @@
     Vector@ v = @(x: 1, y: 2, z: 3);
     Vector@ w = v.@(x: 3);
 
-   Experimental in fble-0.2.
-
    Allows you to construct a new struct value by copying from an existing
    struct value. The resulting value has the same type as the source
    expression. The contents of the new struct value come from the provided
@@ -405,8 +403,8 @@
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of fields of the struct.
 
-   TODO: If all fields are supplied, is the src still evaluated? Let's say
-   yes.
+   For consistency, src is still evaluated even if all fields are provided
+   explicitly.
  
  @section @label[unions][4. Unions]
   A union value is a particular value chosen from a group of possible values.
