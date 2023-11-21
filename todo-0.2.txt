@@ -2,8 +2,11 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* dc.man difference between same line and single line next line arg.
-  Should we add a paragraph around same line arg if it's not there?
+* dc.man: Treat arg and return descriptions as non-block always?
+  Normally they wouldn't be block. Setting them as block adds a blank line
+  before the descriptions in the generated man pages.
+  Means we should change man.fbld to only infer paragraphs where block text is
+  expected.
 
 * Review all the generated documentation, including usage help text.
 

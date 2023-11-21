@@ -1,0 +1,241 @@
+Stack Allocate
+==============
+Exploring whether we can do stack allocations to improve performance of fble.
+
+The idea stems from the problem of function allocation.
+
+The following allocates an intermediate function object:
+
+  foo(a)(b)
+
+The following does not:
+
+  foo(a, b)
+
+One way to think about the difference is in the second case we effectively
+allocate an intermediate function object, but we do so on the stack as a pair
+(foo, a). Thus we never need to allocate a heap object, so we don't incur the
+costs of malloc or GC.
+
+Can we somehow enable stack allocations for foo(a)(b) so we don't have to pay
+the extra cost there too? And in particular in more complicated cases such as
+monadic bind where the application of argument a is separate from the
+application of argument b in the code.
+
+Review of memory management. There are a few different categories of kinds of
+objects:
+* Packed values.
+ No need to manage, we copy everywhere.
+* Explicitly owned reference
+ There is one clear owner of an object. The memory for the object can be
+ reclaimed when the owner is done with it.
+* Reference counting
+ There is no single owner of an object. The memory for the object can be
+ reclaimed when all the owners are done with it.
+* Cycles
+ There are reference cycles in the object without a clear owner. Typically we
+ need more advanced GC to handle this case.
+
+Currently in fble we treat everything as either packed values or potentially
+having reference cycles. We don't take advantage of explicit ownership or
+reference counting opportunities.
+
+Memory management is made hard by references. Without references, everything
+would be passed by value, you make copies.
+
+References work as follows:
+* A packed value 'ref' copied around everywhere.
+* An allocated object 'obj' that stays put.
+* The lifetime of 'obj' must be at least as long as the lifetime of 'ref'.
+* The lifetime of 'obj' should not be significantly longer than all of the
+  references to it.
+
+The reference requirements are ensured by the current gc algorithm. If you
+take a new reference to an object, that causes the obj to stay alive at least
+as long as the reference. Once all the references to an object are gone, the
+object will (eventually) be freed.
+
+Consider a function. It has:
+* Input arguments, guaranteed to stay alive longer than the function.
+* Output, required to stay alive longer than the function.
+* Local variables
+ - If not captured by the output, don't need to stay alive longer than the
+   function.
+
+A key question about an object is: is it (potentially) captured by the output.
+If the answer is no, I claim it could be stack allocated and automatically
+freed when the function exits.
+
+Let's pretend we have some memory heap associated with every function call,
+and we can dynamically allocate as much memory to that heap as we want. We can
+label these heaps based on position in the stack. Say the label is the number
+of stack frames below this stack frame, so that inner calls have a higher
+number id than outer calls.
+
+If you have two heaps with ids x and y, if x > y, then the lifetime of all
+objects in y is greater than the lifetime of all objects in x.
+
+An object in heap x can freely refer to an object in frame y without
+additional tracking. An object in heap x can refer to an object in frame x,
+assuming we free everything in frame x all at once. An object in frame y
+cannot safely refer to an object in frame x, because the reference in y would
+outlive the object in x.
+
+Let's say, when a function is called, it is provided the heap where the result
+of the function should be allocated. Maybe it also needs to know the heap
+where the arguments are allocated.
+
+If there aren't reference cycles, and some object a references some other
+object b, we can say the heap id of a >= the heap id of b.
+
+In a function, when an object is allocated, we ask if there is a possibility
+of the object being captured by the output. If yes, allocate it to the heap of
+the output object. If no, allocate it to the current function's heap.
+
+When calling a function, if the result of the callee is possibly captured by
+the output of the caller, then pass the caller output heap as the callee
+output heap. Otherwise pass the caller heap as the callee output heap.
+
+We have also the case where the output of a function captures the inputs to
+the function. If we already knew this, then the inputs to the function would
+be allocated in heap that lives as long as the output to the function already.
+
+Now the question is: is this enough to avoid memory leaks? In particular, I
+worry about the 'possibility of capture' case. What if there is a small
+possibility of capture, so we end up allocating a lot of garbage to an upper
+frame?
+
+Or, could we do accurate dynamic tracking?
+
+For example, have a notion of virtual heap, still associated with a stack
+frame. Virtual to make it so we can easy move an object from one heap to
+another.
+
+An object is allocated in the current heap. If there is a reference taken from
+an object in y to an object in x, and x >= y, then the object in x is moved to
+y, along with any other x references that are in heaps >= y. When we return
+from a function, we move the return value to the caller's heap.
+
+I claim this will be too expensive. Think about the case when allocating a
+long linked list. Every time we return, we have to iterate over the entire
+list to move all the objects. We need it to be constant time to return a value
+to the caller.
+
+That suggests we need to live with "possibility of capture" to allocate
+objects to a safe heap to start with.
+
+We haven't talked about tail recursion yet.
+
+Say we are in heap 5. The result will go to heap 4. We have some local
+variables in heap 5 that are being passed to the tail call. In theory, we need
+to keep the local variables captured by the tail call and drop all the other
+variables. Otherwise we'll have a memory leak. Perhaps functions that do tail
+calls should have two heaps: the heap of objects potentially captured by the
+tail call, and the heap of objects not captured by the tail call.
+
+Can I come up with an example where potentially captured leads to a memory
+leak? Almost surely. For example:
+
+(Int@) { Int@; } F = (Int@ x) {
+  Int@ y = decr(x);
+  IsZero(y).?(true: x);
+  F(y);
+};
+
+Contrived, yes. The variable x should only be captured at the end, but it has
+the possibility of being captured every time. We end up allocating every value
+on the outer caller's heap, thus using O(N) memory instead of O(1).
+
+Can we flip the condition around and at least get some benefit? For example,
+if I'm certain that an object isn't captured by the output, then we can
+allocate it on the function heap. If that means we reduce the number of
+objects participating in gc heap, that's great, right?
+
+So, say for each object we can say: I guarantee this object will not live
+longer than 'x'. If an object x references an object y, where x >= y, then we
+don't need to track the reference?
+
+Or maybe we keep track of a range of lifetimes. The lifetime for an object is
+somewhere in the range [a, b]. It will not live longer than a. It will live
+for at least as long as b.
+
+Say an object [a, b] takes a reference to an object [m, n]. What happens? The
+lifetime of the object [a, b] does not change (assuming no cycles for the
+moment). How does the object [m, n] change?
+
+If a >= n, no change. This means the [m, n] object will always live long
+enough.
+
+I guess it would be: [min(a, m), max(b, n)], right? It will not live longer
+than both the objects. It may live as long as either of the objects. But,
+again, if you change the value on the object [m, n], you have to change the
+value of every other object it references recursively, which is too costly.
+
+If an object has a single owner, we could say the lifetime of the object is
+the lifetime of its owner. An object can only get a second owner through its
+original owner.
+
+If an object has multiple owners, and one owner is guaranteed to live longer
+than all the other owners, then the object essentially has a single owner
+still: the owner to live the longest.
+
+Perhaps owners of an object could coordinate. Say I have object A with owner
+X. Then, via X, we take a second reference to A from object Y. If X knows
+about Y, and Y knows about X, then they could coordinate. Whoever is first to
+be freed tells the other they have been freed and they are transferring
+ownership. That's basically reference counting...
+
+Makes you wonder if it's worth trying to go back to a reference counting based
+GC. The language is simpler now. No links anymore. The only cycles will be
+through RefValues.
+
+---
+
+Let me assume the high cost of memory management today is because objects are
+allocated using malloc and an associated call into the gc. That suggests
+switching to a reference count based approach will not help: we would still be
+using malloc for objects.
+
+Idea for allocating things on the stack:
+
+Assume we reorganize values so that if you know the type of a value, you know
+its shallow size. And assume we worry about polymorphic functions later or
+have a way to know concrete types when they are invoked.
+
+Have a function return its value as a copy. So the caller allocates space for
+the return value on the stack, the callee fills in that space. That space
+could contain references to other objects. Those other objects could be
+allocated on the heap by the callee, allocated on the stack by the caller, or
+allocated elsewhere with a lifetime that will outlast this function call.
+
+Assume callee allocated objects transfer a reference to the caller as part of
+this.
+
+For local variables that would have been released when the function exits, the
+function should go through and release any callee allocated parts of it. No
+need to do anything else. Then we have successfully managed to allocate the
+value on the stack and avoid malloc/free/gc for it.
+
+Otherwise the object is returned to the caller of the function. For each local
+and child allocated object referenced, heap allocate those as new objects and
+copy that all over to the caller. We've successfully managed to allocate the
+value on the stack and avoid malloc/free/gc for it, but we may have had to do
+heap allocation for some things it referenced.
+
+I claim this is good enough to allow stack allocation of the function value in
+the monadic example stdout(byte).
+
+To make this work, we need an easy way for the function to tell if an object
+is:
+a. heap allocated by a child.
+b. locally allocated.
+c. owned by the caller (either via the stack or heap).
+
+How can we take a reference to an object owned by the caller from a child heap
+allocated object if the object owned by the caller was stack allocated?
+
+---
+
+
+
+

@@ -47,10 +47,10 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleValueAddRef.3.fbld           DONE
 ./out/include/fble/FbleNewProfile.3.fbld            DONE
 ./out/include/fble/FbleVectorExtend.3.fbld          DONE
-./out/include/fble/FbleNewModulePath.3.fbld
-./out/include/fble/FbleFreeExecutableModule.3.fbld
-./out/include/fble/FbleParseStringArg.3.fbld
-./out/include/fble/FbleRawAlloc.3.fbld
+./out/include/fble/FbleNewModulePath.3.fbld         DONE
+./out/include/fble/FbleFreeExecutableModule.3.fbld  DONE
+./out/include/fble/FbleParseStringArg.3.fbld        DONE
+./out/include/fble/FbleRawAlloc.3.fbld              DONE
 ./out/include/fble/FbleAllocExtra.3.fbld
 ./out/include/fble/FbleFreeExecutableProgram.3.fbld
 ./out/include/fble/FbleReleaseValue.3.fbld

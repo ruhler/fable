@@ -21,6 +21,11 @@
  @ljoin[@ltail[@list]][@sep]
 @@
 
+@define[last][text]
+ @ifeq[][@tail[@text]][@text] @@
+ @tail[@text]
+@@
+
 @define[i][text] @item[@par[@text]] @@
 @define[synopsis][name content]
  @define[inline][x] @x @@
@@ -48,7 +53,10 @@
   @inline[);\n]
 @@
 @define[description][content]
- @define[arg][type name desc] @definition[@l[@type] @a[@name]][@desc] @@
+ @define[arg][type name desc]
+  @definition[@l[@type] @a[@name]]
+   @ifeq[\n][@last[@desc]][@desc][@par[@desc]]
+ @@
  @define[returns][type desc]
   @section[RETURN VALUE]
    @definition[@l[@type]][@desc]

@@ -9,7 +9,7 @@
 #include <sys/types.h>    // for size_t
 
 /**
- * @func[FbleRawAlloc] Allocates 'size' bytes of memory.
+ * @func[FbleRawAlloc] Allocates @a[size] bytes of memory.
  *  This function is not type safe. It is recommended to use the FbleAlloc and
  *  FbleArrayAlloc macros instead.
  *
@@ -26,7 +26,7 @@ void* FbleRawAlloc(size_t size);
 
 /**
  * @func[FbleAlloc] Type safe object allocation.
- *  @arg[][T] The type of object to allocate.
+ *  @arg[<type>][T] The type of object to allocate.
  *
  *  @returns T*
  *   A pointer to a newly allocated object of the given type.
@@ -46,7 +46,7 @@ void* FbleRawAlloc(size_t size);
  *     Foo foo[]
  *   };
  *
- *  @arg[      ][T   ] The type of object to allocate.
+ *  @arg[<type>][T] The type of object to allocate.
  *  @arg[size_t][size] The size of the extra space to include.
  *
  *  @returns T*
@@ -59,7 +59,7 @@ void* FbleRawAlloc(size_t size);
 
 /**
  * @func[FbleArrayAlloc] Type safe array allocation.
- *  @arg[      ][T    ] the type of object to allocate
+ *  @arg[<type>][T] the type of object to allocate
  *  @arg[size_t][count] the number of objects in the array to allocate.
  *
  *  @returns T*
@@ -131,7 +131,7 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
 /**
  * @func[FbleStackAlloc] Type safe stack allocation.
  *  @arg[FbleStackAllocator*][allocator] The allocator to allocate memory from.
- *  @arg[                   ][T        ] The type of object to allocate.
+ *  @arg[<type>][T] The type of object to allocate.
  * 
  *  @returns T*
  *   A pointer to a newly stack allocated object of the given type.
@@ -154,7 +154,7 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
  *
  *  @arg[FbleStackAllocator*][allocator]
  *   The stack allocator.
- *  @arg[][T]
+ *  @arg[<type>][T]
  *   The type of object to allocate.
  *  @arg[size_t][size]
  *   The size of the extra space to include.
@@ -178,7 +178,7 @@ void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
  *  @sideeffects
  *   @i Frees resources associated with the given pointer.
  *   @item
- *    Behavior is undefined if 'ptr' is not the same as the pointer most
+ *    Behavior is undefined if @a[ptr] is not the same as the pointer most
  *    recently returned from FbleStackAlloc on this same allocator.
  */
 void FbleStackFree(FbleStackAllocator* allocator, void* ptr);
