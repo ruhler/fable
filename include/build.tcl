@@ -7,9 +7,6 @@ namespace eval "include" {
     fble-alloc.h {
       FbleRawAlloc FbleAlloc FbleAllocExtra FbleArrayAlloc
       FbleFree
-      FbleNewStackAllocator FbleFreeStackAllocator
-      FbleRawStackAlloc FbleStackAlloc FbleStackAllocExtra
-      FbleStackFree
       FbleMaxTotalBytesAllocated FbleResetMaxTotalBytesAllocated
     }
     fble-arg-parse.h {

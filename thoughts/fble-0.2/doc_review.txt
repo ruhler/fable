@@ -84,31 +84,31 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleNewStackAllocator.3.fbld     DONE
 ./out/include/fble/FbleApply.3.fbld                 DONE
 ./out/include/fble/FbleLinkFromSource.3.fbld        DONE
-./out/include/fble/FbleFreeString.3.fbld
-./out/include/fble/FbleLoad.3.fbld
-./out/include/fble/FbleCompiledModuleFunction.3.fbld
-./out/include/fble/FbleNewLoc.3.fbld
-./out/include/fble/FbleInterpret.3.fbld
-./out/include/fble/FbleCompileModule.3.fbld
-./out/include/fble/FbleCopyString.3.fbld
-./out/include/fble/FbleUnionValueTag.3.fbld
-./out/include/fble/FbleProfileSample.3.fbld
-./out/include/fble/FbleReportWarning.3.fbld
-./out/include/fble/FbleFreeExecutable.3.fbld
-./out/include/fble/FbleVectorInit.3.fbld
-./out/include/fble/FbleFreeModulePath.3.fbld
-./out/include/fble/FbleParseModuleArg.3.fbld
-./out/include/fble/FbleProfileAddBlock.3.fbld
-./out/include/fble/FbleGenerateCExport.3.fbld
-./out/include/fble/FbleFreeName.3.fbld
-./out/include/fble/FbleNewUnionValue.3.fbld
-./out/include/fble/FbleCopyModulePath.3.fbld
-./out/include/fble/FbleFreeProfile.3.fbld
-./out/include/fble/FbleNewEnumValue.3.fbld
-./out/include/fble/FbleUnionValueAccess.3.fbld
-./out/include/fble/FbleResetMaxTotalBytesAllocated.3.fbld
-./out/include/fble/FblePrintModulePath.3.fbld
-./out/include/fble/FbleRawStackAlloc.3.fbld
+./out/include/fble/FbleFreeString.3.fbld            DONE
+./out/include/fble/FbleLoad.3.fbld                  DONE
+./out/include/fble/FbleCompiledModuleFunction.3.fbld DONE
+./out/include/fble/FbleNewLoc.3.fbld                DONE
+./out/include/fble/FbleInterpret.3.fbld             DONE
+./out/include/fble/FbleCompileModule.3.fbld         DONE
+./out/include/fble/FbleCopyString.3.fbld            DONE
+./out/include/fble/FbleUnionValueTag.3.fbld         DONE
+./out/include/fble/FbleProfileSample.3.fbld         DONE
+./out/include/fble/FbleReportWarning.3.fbld         DONE
+./out/include/fble/FbleFreeExecutable.3.fbld        DONE
+./out/include/fble/FbleVectorInit.3.fbld            DONE
+./out/include/fble/FbleFreeModulePath.3.fbld        DONE
+./out/include/fble/FbleParseModuleArg.3.fbld        DONE
+./out/include/fble/FbleProfileAddBlock.3.fbld       DONE
+./out/include/fble/FbleGenerateCExport.3.fbld       DONE
+./out/include/fble/FbleFreeName.3.fbld              DONE
+./out/include/fble/FbleNewUnionValue.3.fbld         DONE
+./out/include/fble/FbleCopyModulePath.3.fbld        DONE
+./out/include/fble/FbleFreeProfile.3.fbld           DONE
+./out/include/fble/FbleNewEnumValue.3.fbld          DONE
+./out/include/fble/FbleUnionValueAccess.3.fbld      DONE
+./out/include/fble/FbleResetMaxTotalBytesAllocated.3.fbld DONE
+./out/include/fble/FblePrintModulePath.3.fbld       DONE
+./out/include/fble/FbleRawStackAlloc.3.fbld         DONE
 ./out/include/fble/FbleValueFullGc.3.fbld
 ./out/include/fble/FbleNamesEqual.3.fbld
 ./out/include/fble/FbleReleaseValues.3.fbld
