@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:1
+@ Unit@ = *();
+
+# The source is not well typed.
+xxx.@(true: Unit@());

@@ -1,0 +1,15 @@
+# @@fble-test@@ xfail
+# @@fble-test@@ no-error
+# @@fble-test@@ runtime-error 13:26
+@ Unit@ = *();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+@ Triple@ = *(Bool@ x, Bool@ y, Bool@ z);
+
+@ Maybe@ = +(Triple@ just, Unit@ nothing);
+
+# The argument is evaluated even if all fields are provided.
+Maybe@(nothing: Unit@()).just.@(x: True, y: True, z: False);

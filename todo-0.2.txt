@@ -83,14 +83,9 @@ Things to do for the fble-0.2 release.
    And should it be that way?
 
 * Struct copy expr
- - Add spec tests.
- - Use it where possible. At least in sat to start.
  - Add to struct tutorial.
- - Test case of no args provided -> syntax error.
- - Test case of more than one arg provided.
- - Test case of args out of order, or not in struct type.
- - Add tests for full code coverage.
- - Test that src is still evaluated even if all fields are provided.
+ - Make sure the source expression is only evaluated one time.
+ - Fix failing SpecTests/3.5-StructCopy/Eval/AlwaysEvalSource.fble
 
 * Come up with a nicer way to implement printf debugging?
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,

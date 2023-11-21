@@ -377,11 +377,12 @@
     Expr ::= struct_copy (src : Expr) (args : [(Name, Expr)])
 
    @ConcreteSyntax @
-    expr ::= expr '.' '@' '(' [name [':' expr] [',' ...]] ')'
+    expr ::= expr '.' '@' '(' name [':' expr] [',' ...] ')'
 
    @Example @
     Vector@ v = @(x: 1, y: 2, z: 3);
     Vector@ w = v.@(x: 3);
+    Vector@ a = v.@(x: 3, z: 4);
 
    Allows you to construct a new struct value by copying from an existing
    struct value. The resulting value has the same type as the source
@@ -394,18 +395,20 @@
    @code[fble] @
     Vector@ w = @(x: 3, y: v.y, z: v.z);
 
-   The source value must be a struct value.
+   The source value must be a struct value. At least one argument must be
+   provided. Arguments must be provided in the same order as the fields in the
+   struct type.
 
    The expression is evaluated by evaluating the source and all arguments and
    creating a struct value with the results. The arguments may be evaluated in
    any order, sequentially or in parallel.
+
+   For consistency, src is still evaluated even if all fields are provided
+   explicitly.
   
    Runtime is O(N) plus the runtimes of the arguments, where N is the number
    of fields of the struct.
 
-   For consistency, src is still evaluated even if all fields are provided
-   explicitly.
- 
  @section @label[unions][4. Unions]
   A union value is a particular value chosen from a group of possible values.
   The possible choices are organized into a finite number of fields. Each

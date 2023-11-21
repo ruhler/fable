@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 9:1
+@ Unit@ = *();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+# The source is not a struct value.
+True.@(true: Unit@());
