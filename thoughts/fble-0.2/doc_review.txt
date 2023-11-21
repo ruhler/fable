@@ -109,57 +109,57 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleResetMaxTotalBytesAllocated.3.fbld DONE
 ./out/include/fble/FblePrintModulePath.3.fbld       DONE
 ./out/include/fble/FbleRawStackAlloc.3.fbld         DONE
-./out/include/fble/FbleValueFullGc.3.fbld
-./out/include/fble/FbleNamesEqual.3.fbld
-./out/include/fble/FbleReleaseValues.3.fbld
-./out/include/fble/FbleExecutableNothingOnFree.3.fbld
-./out/include/fble/FbleStrictValue.3.fbld
-./out/include/fble/FbleProfileReport.3.fbld
-./out/include/fble/FbleFreeProfileThread.3.fbld
-./out/include/fble/FbleNewStructValue.3.fbld
-./out/include/fble/FbleStackFree.3.fbld
-./out/include/fble/FbleParseBoolArg.3.fbld
-./out/include/fble/FbleNewValueHeap.3.fbld
-./out/include/fble/FbleMaxTotalBytesAllocated.3.fbld
-./out/include/fble/FbleFreeStackAllocator.3.fbld
-./out/include/fble/FbleFreeVector.3.fbld
-./out/include/fble/FbleSearchPathAppendString.3.fbld
-./out/include/fble/FbleModuleBelongsToPackage.3.fbld
-./out/include/fble/FbleProfileRandomSample.3.fbld
-./out/include/fble/FblePrintVersion.3.fbld
-./out/include/fble/FbleFree.3.fbld
-./out/include/fble/FbleSearchPathAppend.3.fbld
-./out/include/fble/FbleStackAllocExtra.3.fbld
-./out/include/fble/FbleArrayAlloc.3.fbld
-./out/include/fble/FbleGenerateAArch64Export.3.fbld
-./out/include/fble/FbleStackAlloc.3.fbld
-./out/include/fble/FbleEval.3.fbld
-./out/include/fble/FbleParse.3.fbld
-./out/include/fble/FbleGenerateAArch64.3.fbld
-./out/include/fble/FbleGenerateC.3.fbld
-./out/include/fble/FbleNewListValue.3.fbld
-./out/include/fble/FbleNewFuncValue_.3.fbld
-./out/include/fble/FbleNewLiteralValue.3.fbld
-./out/include/fble/FbleFreeModuleArg.3.fbld
-./out/include/fble/FbleProfileEnterBlock.3.fbld
-./out/include/fble/FbleVectorAppend.3.fbld
-./out/include/fble/FbleFreeCompiledProgram.3.fbld
-./out/include/fble/FbleModulePathsEqual.3.fbld
-./out/include/fble/FbleFreeLoc.3.fbld
-./out/include/fble/FbleForkProfileThread.3.fbld
-./out/include/fble/FbleVectorIncrSize.3.fbld
-./out/include/fble/FbleParseInvalidArg.3.fbld
-./out/include/fble/FbleRunFunction.3.fbld
-./out/include/fble/FbleThreadCall_.3.fbld
-./out/include/fble/FbleAlloc.3.fbld
-./out/include/fble/FbleFreeCompiledModule.3.fbld
-./out/include/fble/FbleDisassemble.3.fbld
-./out/include/fble/FbleSaveBuildDeps.3.fbld
-./out/include/fble/FbleProfileExitBlock.3.fbld
-./out/include/fble/FbleFreeSearchPath.3.fbld
-./out/include/fble/FbleLoadFromCompiled.3.fbld
-./out/include/fble/FbleRetainValue.3.fbld
-./out/include/fble/FbleCopyLoc.3.fbld
+./out/include/fble/FbleValueFullGc.3.fbld           DONE
+./out/include/fble/FbleNamesEqual.3.fbld            DONE
+./out/include/fble/FbleReleaseValues.3.fbld         DONE
+./out/include/fble/FbleExecutableNothingOnFree.3.fbld DONE
+./out/include/fble/FbleStrictValue.3.fbld           DONE
+./out/include/fble/FbleProfileReport.3.fbld         DONE
+./out/include/fble/FbleFreeProfileThread.3.fbld     DONE
+./out/include/fble/FbleNewStructValue.3.fbld        DONE
+./out/include/fble/FbleStackFree.3.fbld             DONE
+./out/include/fble/FbleParseBoolArg.3.fbld          DONE
+./out/include/fble/FbleNewValueHeap.3.fbld          DONE
+./out/include/fble/FbleMaxTotalBytesAllocated.3.fbld DONE
+./out/include/fble/FbleFreeStackAllocator.3.fbld    DONE
+./out/include/fble/FbleFreeVector.3.fbld            DONE
+./out/include/fble/FbleSearchPathAppendString.3.fbld DONE
+./out/include/fble/FbleModuleBelongsToPackage.3.fbld DONE
+./out/include/fble/FbleProfileRandomSample.3.fbld   DONE
+./out/include/fble/FblePrintVersion.3.fbld          DONE
+./out/include/fble/FbleFree.3.fbld                  DONE
+./out/include/fble/FbleSearchPathAppend.3.fbld      DONE
+./out/include/fble/FbleStackAllocExtra.3.fbld       DONE
+./out/include/fble/FbleArrayAlloc.3.fbld            DONE
+./out/include/fble/FbleGenerateAArch64Export.3.fbld DONE
+./out/include/fble/FbleStackAlloc.3.fbld            DONE
+./out/include/fble/FbleEval.3.fbld                  DONE
+./out/include/fble/FbleParse.3.fbld                 DONE
+./out/include/fble/FbleGenerateAArch64.3.fbld       DONE
+./out/include/fble/FbleGenerateC.3.fbld             DONE
+./out/include/fble/FbleNewListValue.3.fbld          DONE
+./out/include/fble/FbleNewFuncValue_.3.fbld         DONE
+./out/include/fble/FbleNewLiteralValue.3.fbld       DONE
+./out/include/fble/FbleFreeModuleArg.3.fbld         DONE
+./out/include/fble/FbleProfileEnterBlock.3.fbld     DONE
+./out/include/fble/FbleVectorAppend.3.fbld          DONE
+./out/include/fble/FbleFreeCompiledProgram.3.fbld   DONE
+./out/include/fble/FbleModulePathsEqual.3.fbld      DONE
+./out/include/fble/FbleFreeLoc.3.fbld               DONE
+./out/include/fble/FbleForkProfileThread.3.fbld     DONE
+./out/include/fble/FbleVectorIncrSize.3.fbld        DONE
+./out/include/fble/FbleParseInvalidArg.3.fbld       DONE
+./out/include/fble/FbleRunFunction.3.fbld           DONE
+./out/include/fble/FbleThreadCall_.3.fbld           DONE
+./out/include/fble/FbleAlloc.3.fbld                 DONE
+./out/include/fble/FbleFreeCompiledModule.3.fbld    DONE
+./out/include/fble/FbleDisassemble.3.fbld           DONE
+./out/include/fble/FbleSaveBuildDeps.3.fbld         DONE
+./out/include/fble/FbleProfileExitBlock.3.fbld      DONE
+./out/include/fble/FbleFreeSearchPath.3.fbld        DONE
+./out/include/fble/FbleLoadFromCompiled.3.fbld      DONE
+./out/include/fble/FbleRetainValue.3.fbld           DONE
+./out/include/fble/FbleCopyLoc.3.fbld               DONE
 
 
 Tutorials - check for generated html

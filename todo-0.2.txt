@@ -8,7 +8,7 @@ Things to do for the fble-0.2 release.
   Means we should change man.fbld to only infer paragraphs where block text is
   expected.
 
-* Review all the generated documentation, including usage help text.
+* Review all the generated documentation.
 
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
