@@ -32,9 +32,6 @@ Things to do for the fble-0.2 release.
 
 * Update or remove fbld/fbld.lang
 
-* Add spec tests for memory use of tail recursion and for "unlimited" stack
-  size.
-
 * Add back syntax highlighting of @code blocks to html backend.
  - May want improvements to html escaping
 

@@ -1,0 +1,20 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Nat@ = /SpecTests/Nat%.Nat@;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
+% Nat = /SpecTests/Nat%.Nat;
+
+@ Sum@ = +(Sum@ S, Unit@ Z);
+
+(Nat@){ Sum@; } add = (Nat@ n) {
+  S@ s = S(n);
+  s.?(Z: Sum@(Z: Unit@()));
+
+  Sum@ tail = add(s.S);
+  Sum@(S: tail);
+};
+
+# We should not smash the stack, even though we are using deep non-tail
+# recursion here.
+add(Nat|1000000000000000);
