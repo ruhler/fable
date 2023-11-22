@@ -1,6 +1,7 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 
 @ Char@ = /Core/Char%.Char@;
 
@@ -11,8 +12,10 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ World@ = /Core/Monad/IO%.World@;
+% m = /Core/Monad/IO%.Monad;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -36,6 +39,18 @@ Main = (
   (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
   List@<String@> args) {
 
+  (Int@) { IO@<Unit@>; } stdout_ = (Int@ s)(World@ w) {
+    stdout(s, w);
+  };
+
+  IO@<Bool@> MCat = {
+    Maybe@<Int@> byte <- m.do(stdin);
+    byte.?(nothing: m.return(True));
+    Char@ char = /Core/Char/Ascii%.Chr(byte.just);
+    Unit@ _ <- m.do(stdout_(/Core/Char/Ascii%.Ord(char)));
+    MCat;
+  };
+
   (World@) { R@<Bool@>; } Cat = (World@ w) {
     R@<Maybe@<Int@>> byte = stdin(w);
     byte.x.?(nothing: R@(w, True));
@@ -45,7 +60,12 @@ Main = (
     Cat(out.s);
   };
 
-  Cat;
+  Bool@ monadic = {
+    args.?(nil: False);
+    /Core/String/Eq%.Eq(Str|'--monadic', args.cons.head);
+  };
+
+  monadic.?(true: MCat, false: Cat);
 };
 
 Main;

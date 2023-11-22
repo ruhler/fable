@@ -38,7 +38,7 @@
    @l{String@}, and @l{Unit@} are basic types. @l{List@} is a polymorphic type,
    and @l{Monad@}, @l{Stdio@}, and @l{Main@} are higher order polymorphic types.
  
-   Names without @l{\@} are values. In this case we have the value @l{True},
+   Names without @l{@} are values. In this case we have the value @l{True},
    function @l{Str}, and polymorphic function @l{Concat}.
    
    Names ending in @l{%} are names of modules. For example @l{/Core/Bool%} is a

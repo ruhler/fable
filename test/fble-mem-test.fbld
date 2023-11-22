@@ -4,7 +4,7 @@
  
  @description
   Tests for memory behavior of an fble function. The function should take a
-  @l[/SpecTests/Nat%.Nat\@] as an argument. The function is evaluated with
+  @l{/SpecTests/Nat%.Nat@} as an argument. The function is evaluated with
   various values to see how memory use depends on the input value.
  
   By default, tests for O(1) memory use. If the @l[--growth] option is

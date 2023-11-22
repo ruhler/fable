@@ -792,7 +792,7 @@
    that shown above. Any type @l{E@} of list elements may be used.
   
    The list expression @l{f[a, b, c]}, assuming the type of f is
-   @l[(L\@) { V\@; }] for some type @l{V@}, is desugared to:
+   @l{(L@) { V@; }} for some type @l{V@}, is desugared to:
   
    @code[fble] @
     f(L@(cons: @(head: a, tail:
@@ -1394,7 +1394,7 @@
   
    @def[Whitespace] Any whitespace character, as traditionally classified.
    @def[Comment] The comment character @l{#}.
-   @def[Punctuation] The characters @l[(){};,:?=.<>+*-!$\@~'\\[]%/^].
+   @def[Punctuation] The characters @l{(){};,:?=.<>+*-!$@~'\[]%/^}.
    @def[Word] Any other character.
    
    The lexical syntax is used to interpret a string of arbitrary characters as

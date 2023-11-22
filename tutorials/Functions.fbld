@@ -211,7 +211,7 @@
    };
  
   We've added an argument called @l{op} with function type
-  @l[(Bit\@, Bit\@) { Bit\@; }] representing the single bit operation. We can
+  @l{(Bit@, Bit@) { Bit@; }} representing the single bit operation. We can
   reuse this higher order function for the definitions of @l{And4}, @l{Or4},
   and @l{Xor4}:
  

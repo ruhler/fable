@@ -12,7 +12,7 @@
   Top level declarations are capitalized. For example: @l{And}, @l{DrawBox}.
 
  @item
-  Argument names are lower case. For example: @l[(Foo\@ x) { ... }]
+  Argument names are lower case. For example: @l{(Foo@ x) { ... }}
  
  @item
   Struct and union fields should be lower case.
