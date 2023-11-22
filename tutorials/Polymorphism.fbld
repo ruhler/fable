@@ -24,7 +24,8 @@
    value that may be invalid.  In Haskell and fble, that type is called
    "Maybe".
  
-   For example, here is how we could define an integer value that may be invalid:
+   For example, here is how we could define an integer value that may be
+   invalid:
  
    @code[fble] @
     @ MaybeInt@ = +(Int@ just, Unit@ nothing);

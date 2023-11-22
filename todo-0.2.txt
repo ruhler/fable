@@ -32,9 +32,6 @@ Things to do for the fble-0.2 release.
 
 * Update or remove fbld/fbld.lang
 
-* Update the rest of the tutorials with regards to smashing the stack. No need
-  to write stack smashing safe tutorials anymore.
-
 * Add spec tests for memory use of tail recursion and for "unlimited" stack
   size.
 

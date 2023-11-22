@@ -38,7 +38,7 @@
   @code[fble] @
    Int@ 2023 = MakeInt[2, 0, 2, 3];
  
-  This approach may be convenient enough for small integers. But imaging using
+  This approach may be convenient enough for small integers. But imagine using
   the same approach for strings:
  
   @code[fble] @

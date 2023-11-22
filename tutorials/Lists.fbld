@@ -119,21 +119,14 @@
   directly to construct a list, but you can do anything you want in the list
   function.
  
-  For example, here is a list function that sums the integers in a list, using
-  a helper function to ensure recursion happens in the tail position:
+  For example, here is a list function that sums the integers in a list:
  
   @code[fble] @
-   (List@) { Int@; } Sum = {
-     (Int@, List@) { Int@; } Helper = (Int@ sum, List@ xs) {
-       xs.?(nil: sum);
-       Helper(Add(sum, xs.cons.head), xs.cons.tail);
-     };
-   
-     (List@ xs) {
-       Helper(Int|0, xs);
-     };
+   (List@) { Int@; } Sum = (List@ xs) {
+     xs.?(nil: Int|0);
+     Add(xs.cons.head, Sum(xs.cons.tail));
    };
- 
+
   We can use @l{Sum} as the list function in a list expression:
  
   @code[fble] @
