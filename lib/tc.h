@@ -10,6 +10,7 @@
 #include <fble/fble-name.h>
 
 #include "kind.h"       // for FbleDataTypeTag
+#include "tag.h"        // for FbleTagV
 #include "var.h"        // for FbleVar
 
 /**
@@ -240,8 +241,7 @@ typedef struct {
  */
 typedef struct {
   FbleTc _base;       /**< FbleTc base class. */
-  size_t letterc;     /**< Number of letters in the literal. */
-  size_t letters[];   /**< Tag values for letters in the literal. */
+  FbleTagV letters;   /**< Tag values for letters in the literal. */
 } FbleLiteralTc;
 
 /**

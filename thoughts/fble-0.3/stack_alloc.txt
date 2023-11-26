@@ -304,3 +304,22 @@ callers stack.
 
 The resulting function is then passed to m.do(stdin).
 
+---
+
+Lots of thoughts on this. No major breakthroughs yet. Some highlights:
+* We could allocate everything on the stack maybe, if we are willing to deep
+  copy the result from the callee to the caller.
+* Current GC is almost like copying the entire heap every time we finish a
+  round of GC.
+* How will we manage the API for external references to FbleValue* if we
+  allocate everything on the stack?
+
+It seems like the incremental improvement approach would be to try to
+conservatively allocate values on the stack. But that won't eliminate the
+function allocations in the cat example.
+
+The aggressive improvement approach would be to try to do away with GC almost
+entirely. Allocate everything on the stack. I don't have a good answer for the
+pathological case of constructing a list though.
+
+

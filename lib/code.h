@@ -11,6 +11,7 @@
 #include <fble/fble-profile.h>   // for FbleBlockId.
 
 #include "kind.h"           // for FbleDataTypeTag.
+#include "tag.h"            // for FbleTagV
 #include "var.h"            // for FbleVar, FbleLocalIndex
 
 /**
@@ -382,12 +383,6 @@ typedef struct {
   FbleVarV args;        /**< The elements of the list to create. */
   FbleLocalIndex dest;  /**< Where to put the created list. */
 } FbleListInstr;
-
-/** Vector of tags. */
-typedef struct {
-  size_t size;    /**< Number of elements. */
-  size_t* xs;     /**< The elements of the vector. */
-} FbleTagV;
 
 /**
  * FBLE_LITERAL_INSTR: Creates a literal value.

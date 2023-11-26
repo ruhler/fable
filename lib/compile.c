@@ -1219,8 +1219,8 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       AppendInstr(scope, &literal_instr->_base);
       CompileExit(exit, scope, local);
 
-      for (size_t i = 0; i < literal_tc->letterc; ++i) {
-        FbleVectorAppend(literal_instr->letters, literal_tc->letters[i]);
+      for (size_t i = 0; i < literal_tc->letters.size; ++i) {
+        FbleVectorAppend(literal_instr->letters, literal_tc->letters.xs[i]);
       }
 
       return local;

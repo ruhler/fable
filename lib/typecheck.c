@@ -1784,10 +1784,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleType* result_type = FbleRetainType(th, func_type->rtype);
 
-      FbleLiteralTc* literal_tc = FbleNewTcExtra(FbleLiteralTc, FBLE_LITERAL_TC, argc * sizeof(size_t), expr->loc);
-      literal_tc->letterc = argc;
+      FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
+      FbleVectorInit(literal_tc->letters);
       for (size_t i = 0; i < argc; ++i) {
-        literal_tc->letters[i] = args[i];
+        FbleVectorAppend(literal_tc->letters, args[i]);
       }
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
