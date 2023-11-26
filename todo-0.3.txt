@@ -5,6 +5,12 @@ Things to consider doing for the fble-0.3 release.
 * Module compilation
  - As a blocker for major compiler optimizations.
 
+* Switch to varargs for FbleRunFunction?
+ - Require callee to handle tail call (possibly with wrapper function for
+   C-implemented callees)
+ - Pass args as varargs.
+ - Pass statics, executable, profile_block_offset via FbleFuncValue*?
+
 * Support partial function application?
  - Allow over-application of functions.
  - Have <- perform over-application of functions.

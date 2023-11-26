@@ -1,0 +1,245 @@
+Library Code Review
+===================
+Goal is to do a quick review of library .fble files to update them for more
+idiomatic use: case statements, type inference, struct copy, etc.
+
+Don't worry about cleaning up the code or documenting it or making nicer APIs.
+Just catch up to how I would write fble code today.
+
+Files to review:
+pkgs/app/App/App.fble                   DONE
+pkgs/app/App/Benchmark.fble             DONE
+pkgs/app/App/Demo.fble                  DONE
+pkgs/app/App/Drawing.fble               DONE
+pkgs/app/App/Drawing/Test.fble          DONE
+pkgs/app/App/IO.fble                    DONE
+pkgs/app/App/Tests.fble                 DONE
+pkgs/core/Core/Bool/Eq.fble             DONE
+pkgs/core/Core/Bool.fble                DONE
+pkgs/core/Core/Bool/Show.fble           DONE
+pkgs/core/Core/Bool/Tests.fble          DONE
+pkgs/core/Core/Char/Ascii.fble          DONE
+pkgs/core/Core/Char/Eq.fble             DONE
+pkgs/core/Core/Char.fble                DONE
+pkgs/core/Core/Char/Ord.fble            DONE
+pkgs/core/Core/Char/Show.fble           DONE
+pkgs/core/Core/Char/Tests.fble          DONE
+pkgs/core/Core/Char/Type.fble           DONE
+pkgs/core/Core/CRC/Debug.fble           DONE
+pkgs/core/Core/CRC.fble                 DONE
+pkgs/core/Core/CRC/Tests.fble           DONE
+pkgs/core/Core/Debug.fble               DONE
+pkgs/core/Core/Digits/Eq.fble           DONE
+pkgs/core/Core/Digits.fble              DONE
+pkgs/core/Core/Digits/Show.fble         DONE
+pkgs/core/Core/Digits/String.fble       DONE
+pkgs/core/Core/Digits/Tests.fble        DONE
+pkgs/core/Core/Eq.fble                  DONE
+pkgs/core/Core/Fifo.fble                DONE
+pkgs/core/Core/Fifo/Tests.fble          DONE
+pkgs/core/Core/Int/Digits.fble
+pkgs/core/Core/Int/Div.fble
+pkgs/core/Core/Int/Eq.fble
+pkgs/core/Core/Int.fble
+pkgs/core/Core/Int/IntP/Div.fble
+pkgs/core/Core/Int/IntP/Eq.fble
+pkgs/core/Core/Int/IntP.fble
+pkgs/core/Core/Int/IntP/Ord.fble
+pkgs/core/Core/Int/IntP/Show.fble
+pkgs/core/Core/Int/Iter.fble
+pkgs/core/Core/Int/Lit.fble
+pkgs/core/Core/Int/Ord.fble
+pkgs/core/Core/Int/Show.fble
+pkgs/core/Core/Int/Sqrt.fble
+pkgs/core/Core/Int/Tests.fble
+pkgs/core/Core/Iter.fble
+pkgs/core/Core/LFSR.fble
+pkgs/core/Core/LFSR/Int.fble
+pkgs/core/Core/LFSR/Tests.fble
+pkgs/core/Core/List/Eq.fble
+pkgs/core/Core/List.fble
+pkgs/core/Core/List/Length.fble
+pkgs/core/Core/List/Ord.fble
+pkgs/core/Core/List/Show.fble
+pkgs/core/Core/List/Sort.fble
+pkgs/core/Core/List/Tests.fble
+pkgs/core/Core/Map/Eq.fble
+pkgs/core/Core/Map.fble
+pkgs/core/Core/Map/Map.fble
+pkgs/core/Core/Map/Show.fble
+pkgs/core/Core/Map/Tests.fble
+pkgs/core/Core/Maybe/Eq.fble
+pkgs/core/Core/Maybe.fble
+pkgs/core/Core/Maybe/Show.fble
+pkgs/core/Core/Maybe/Tests.fble
+pkgs/core/Core/Monad.fble
+pkgs/core/Core/Monad/IO.fble
+pkgs/core/Core/Monad/Pure.fble
+pkgs/core/Core/Monad/State.fble
+pkgs/core/Core/Ord.fble
+pkgs/core/Core/Set.fble
+pkgs/core/Core/Set/Show.fble
+pkgs/core/Core/Set/Tests.fble
+pkgs/core/Core/Show.fble
+pkgs/core/Core/Stdio/Cat.fble
+pkgs/core/Core/Stdio/FastCat.fble
+pkgs/core/Core/Stdio.fble
+pkgs/core/Core/Stdio/HelloWorld.fble
+pkgs/core/Core/Stdio/IO.fble
+pkgs/core/Core/Stdio/Pure/Eq.fble
+pkgs/core/Core/Stdio/Pure.fble
+pkgs/core/Core/Stdio/Pure/Show.fble
+pkgs/core/Core/Stdio/Stub.fble
+pkgs/core/Core/Stdio/Tests.fble
+pkgs/core/Core/Stream.fble
+pkgs/core/Core/Stream/IStream.fble
+pkgs/core/Core/Stream/OStream.fble
+pkgs/core/Core/String/Eq.fble
+pkgs/core/Core/String.fble
+pkgs/core/Core/String/Ord.fble
+pkgs/core/Core/String/Show.fble
+pkgs/core/Core/String/Tests.fble
+pkgs/core/Core/Test.fble
+pkgs/core/Core/Test/Run.fble
+pkgs/core/Core/Tests.fble
+pkgs/core/Core/Test/Stdio.fble
+pkgs/core/Core/Test/Tests.fble
+pkgs/core/Core/Undef.fble
+pkgs/core/Core/Unit/Eq.fble
+pkgs/core/Core/Unit.fble
+pkgs/core/Core/Unit/Show.fble
+pkgs/fbld/Fbld/Builtin/Define.fble
+pkgs/fbld/Fbld/Builtin/Eval.fble
+pkgs/fbld/Fbld/Builtin.fble
+pkgs/fbld/Fbld/Builtin/If.fble
+pkgs/fbld/Fbld/Builtin/Plain.fble
+pkgs/fbld/Fbld/Builtin/String.fble
+pkgs/fbld/Fbld/Builtin/Tests.fble
+pkgs/fbld/Fbld/Eval.fble
+pkgs/fbld/Fbld/Loc/Eq.fble
+pkgs/fbld/Fbld/Loc.fble
+pkgs/fbld/Fbld/Loc/Show.fble
+pkgs/fbld/Fbld/Main.fble
+pkgs/fbld/Fbld/Markup/Eq.fble
+pkgs/fbld/Fbld/Markup.fble
+pkgs/fbld/Fbld/Markup/Show.fble
+pkgs/fbld/Fbld/Parse/Block.fble
+pkgs/fbld/Fbld/Parse.fble
+pkgs/fbld/Fbld/Parse/Inline.fble
+pkgs/fbld/Fbld/Parse/M.fble
+pkgs/fbld/Fbld/Parse/Tests.fble
+pkgs/fbld/Fbld/Result/Eq.fble
+pkgs/fbld/Fbld/Result.fble
+pkgs/fbld/Fbld/Result/Show.fble
+pkgs/fbld/Fbld/Tests.fble
+pkgs/fbld/Fbld/Text/Eq.fble
+pkgs/fbld/Fbld/Text.fble
+pkgs/fbld/Fbld/Text/Show.fble
+pkgs/games/Games/BenchmarkGame/Bench.fble
+pkgs/games/Games/BenchmarkGame/BinaryTrees.fble
+pkgs/games/Games/BenchmarkGame/BinaryTrees/Stdio.fble
+pkgs/games/Games/BenchmarkGame/BinaryTrees/Tests.fble
+pkgs/games/Games/BenchmarkGame/FannkuchRedux.fble
+pkgs/games/Games/BenchmarkGame/FannkuchRedux/Main.fble
+pkgs/games/Games/BenchmarkGame/FannkuchRedux/Stdio.fble
+pkgs/games/Games/BenchmarkGame/FannkuchRedux/Tests.fble
+pkgs/games/Games/BenchmarkGame/PiDigits.fble
+pkgs/games/Games/BenchmarkGame/PiDigits/Stdio.fble
+pkgs/games/Games/BenchmarkGame/PiDigits/Tests.fble
+pkgs/games/Games/BenchmarkGame/ReverseComplement.fble
+pkgs/games/Games/BenchmarkGame/ReverseComplement/Stdio.fble
+pkgs/games/Games/BenchmarkGame/ReverseComplement/Tests.fble
+pkgs/games/Games/BenchmarkGame/Test.fble
+pkgs/games/Games/BenchmarkGame/Tests.fble
+pkgs/games/Games/GameOfLife/App.fble
+pkgs/games/Games/GameOfLife/AppIO.fble
+pkgs/games/Games/GameOfLife/Bench.fble
+pkgs/games/Games/GameOfLife.fble
+pkgs/games/Games/GameOfLife/Tests.fble
+pkgs/games/Games/Snake/AppIO.fble
+pkgs/games/Games/Snake/Bench.fble
+pkgs/games/Games/Snake.fble
+pkgs/games/Games/Sudoku.fble
+pkgs/games/Games/Sudoku/Tests.fble
+pkgs/games/Games/Tests.fble
+pkgs/games/Games/TicTacToe/AI.fble
+pkgs/games/Games/TicTacToe/Board.fble
+pkgs/games/Games/TicTacToe/Game.fble
+pkgs/games/Games/TicTacToe/Stdio.fble
+pkgs/games/Games/TicTacToe/Tests.fble
+pkgs/graphics/Graphics/2D/Tests.fble
+pkgs/graphics/Graphics/2D/Triangle.fble
+pkgs/graphics/Graphics/3D.fble
+pkgs/graphics/Graphics/App.fble
+pkgs/graphics/Graphics/AppIO.fble
+pkgs/graphics/Graphics/Bench.fble
+pkgs/graphics/Graphics/Camera.fble
+pkgs/graphics/Graphics/Camera/SinCos.fble
+pkgs/graphics/Graphics/Tests.fble
+pkgs/graphics/Graphics/Triangle.fble
+pkgs/graphics/Graphics/Triangle/Tests.fble
+pkgs/hwdg/Hwdg/Adder.fble
+pkgs/hwdg/Hwdg/App.fble
+pkgs/hwdg/Hwdg/Coord.fble
+pkgs/hwdg/Hwdg/Data.fble
+pkgs/hwdg/Hwdg/Design.fble
+pkgs/hwdg/Hwdg/Memory.fble
+pkgs/hwdg/Hwdg/Tests.fble
+pkgs/invaders/Invaders/Aliens.fble
+pkgs/invaders/Invaders/App.fble
+pkgs/invaders/Invaders/AppIO.fble
+pkgs/invaders/Invaders/Bases.fble
+pkgs/invaders/Invaders/Bench.fble
+pkgs/invaders/Invaders/Bombs.fble
+pkgs/invaders/Invaders/Bullet.fble
+pkgs/invaders/Invaders/Game.fble
+pkgs/invaders/Invaders/Graphics.fble
+pkgs/invaders/Invaders/Screenshot/App.fble
+pkgs/invaders/Invaders/Screenshot/AppIO.fble
+pkgs/invaders/Invaders/Ship.fble
+pkgs/invaders/Invaders/Tests.fble
+pkgs/invaders/Invaders/Ufo.fble
+pkgs/md5/Md5/Bench.fble
+pkgs/md5/Md5/Bits/Bit16.fble
+pkgs/md5/Md5/Bits/Bit1.fble
+pkgs/md5/Md5/Bits/Bit2.fble
+pkgs/md5/Md5/Bits/Bit32.fble
+pkgs/md5/Md5/Bits/Bit4.fble
+pkgs/md5/Md5/Bits/Bit64.fble
+pkgs/md5/Md5/Bits/Bit8.fble
+pkgs/md5/Md5/Bits/Bits.fble
+pkgs/md5/Md5/Bits/BitXY.fble
+pkgs/md5/Md5/Bits/Int.fble
+pkgs/md5/Md5/Bits/Lit.fble
+pkgs/md5/Md5/Hash.fble
+pkgs/md5/Md5/Main.fble
+pkgs/md5/Md5/Md5.fble
+pkgs/md5/Md5/Padder.fble
+pkgs/md5/Md5/Rounds.fble
+pkgs/md5/Md5/Stream.fble
+pkgs/md5/Md5/Tests.fble
+pkgs/pinball/Pinball/App.fble
+pkgs/pinball/Pinball/AppIO.fble
+pkgs/pinball/Pinball/Ball.fble
+pkgs/pinball/Pinball/Bench.fble
+pkgs/pinball/Pinball/Circle.fble
+pkgs/pinball/Pinball/Collide.fble
+pkgs/pinball/Pinball/Edge.fble
+pkgs/pinball/Pinball/Event.fble
+pkgs/pinball/Pinball/Num.fble
+pkgs/pinball/Pinball/Paddle.fble
+pkgs/pinball/Pinball/Quadratic.fble
+pkgs/pinball/Pinball/Quadratic/Show.fble
+pkgs/pinball/Pinball/Quadratic/Tests.fble
+pkgs/pinball/Pinball/Rotate.fble
+pkgs/pinball/Pinball/Rotate/Tests.fble
+pkgs/pinball/Pinball/Tests.fble
+pkgs/pinball/Pinball/Vec.fble
+pkgs/pinball/Pinball/World.fble
+pkgs/sat/Sat/Debug.fble
+pkgs/sat/Sat/Dimacs.fble
+pkgs/sat/Sat/Id.fble
+pkgs/sat/Sat/Main.fble
+pkgs/sat/Sat/Show.fble
+pkgs/sat/Sat/Solver.fble
+pkgs/sat/Sat/Tests.fble

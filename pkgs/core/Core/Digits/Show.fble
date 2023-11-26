@@ -7,7 +7,6 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 Show@<Bit@> ShowBit = (Bit@ b) {
@@ -15,7 +14,7 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
-  /Core/String%.Strs(Map<Bit@, String@>(bits, ShowBit));
+  /Core/String%.Strs(Map(bits, ShowBit));
 };
 
 Show@<Hex@> ShowHex = (Hex@ h) {

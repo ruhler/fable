@@ -41,7 +41,7 @@ Fifo@ Empty = <@ T@> { Fifo@(Nil<T@>, Nil<T@>); };
 <@ T@>(T@, Fifo@<T@>) { Fifo@<T@>; } Put = <@ T@>(T@ x, Fifo@<T@> fifo) {
   fifo.front.?(nil: {
     Unit@ _ = fifo.back.nil;  # invariant assertion.
-    Fifo@(List<T@>[x], Nil<T@>);
+    Fifo@(List[x], Nil<T@>);
   });
   Fifo@(fifo.front, Cons(x, fifo.back));
 };

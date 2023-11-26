@@ -16,7 +16,7 @@
 # HexToBits --
 #   Convert a string of hex digits to a string of binary digits.
 (List@<Hex@>) { List@<Bit@>; } HexToBits = (List@<Hex@> hex) {
-  Concat<Bit@>(Map<Hex@, List@<Bit@>>(hex, (Hex@ h) {
+  Concat(Map(hex, (Hex@ h) {
     h.?(
         0: BitStr|0000, 1: BitStr|0001, 2: BitStr|0010, 3: BitStr|0011,
         4: BitStr|0100, 5: BitStr|0101, 6: BitStr|0110, 7: BitStr|0111,

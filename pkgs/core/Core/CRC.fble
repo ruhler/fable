@@ -26,7 +26,8 @@
 
 # Xors --
 #   Bitwise XOR. Assumes the input lists both have the same length.
-(List@<Bit@>, List@<Bit@>) { List@<Bit@>; } Xors = (List@<Bit@> a, List@<Bit@> b) {
+(List@<Bit@>, List@<Bit@>) { List@<Bit@>; }
+Xors = (List@<Bit@> a, List@<Bit@> b) {
   a.?(nil: a);
   List@<Bit@> tail = Xors(a.cons.tail, b.cons.tail);
 

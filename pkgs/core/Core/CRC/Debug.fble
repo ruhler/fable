@@ -36,11 +36,6 @@ Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
       DFeeds(ncrc, bits.cons.tail);
     };
 
-    #List@<Bit@> poly = BitStr|1011;
-    #List@<Bit@> init = BitStr|000;
-    #CRC@ crc = CRC@(poly, init);
-    #CRC@ result <- m.do(DFeeds(crc, BitStr|11010011101100000));
-
     List@<Bit@> poly = Cons(Bit.1, HexToBits|04C11DB7);
     List@<Bit@> init = HexToBits|00000000;
     CRC@ crc = CRC@(poly, init);
