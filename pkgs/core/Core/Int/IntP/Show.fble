@@ -57,7 +57,7 @@ Show@<IntP@> Show = (IntP@ x) {
     qr.q.?(0: Nil<Char@>);
     Show(qr.q.p);
   };
-  Append<Char@>(head, tail);
+  Append(head, tail);
 };
 
 @(Show);

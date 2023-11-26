@@ -138,8 +138,7 @@ typedef struct {
  */
 typedef struct {
   FbleTc _base;       /**< FbleTc base class. */
-  size_t fieldc;      /**< Number of arguments to the struct value. */
-  FbleTc* fields[];   /**< Arguments to the struct value. */
+  FbleTcV fields;     /**< Arguments to the struct value. */
 } FbleStructValueTc;
 
 /**
@@ -148,8 +147,7 @@ typedef struct {
 typedef struct {
   FbleTc _base;      /**< FbleTc base class. */
   FbleTc* source;    /**< The source object. */
-  size_t fieldc;     /**< Number of fields of the struct value. */
-  FbleTc* fields[];  /**< Arguments to the struct value, or NULL to take from source */
+  FbleTcV fields;    /**< Arguments to the struct value, or NULL to take from source */
 } FbleStructCopyTc;
 
 /**
@@ -273,22 +271,6 @@ typedef struct {
  *   needed.
  */
 FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc);
-
-/**
- * Allocates a new tc with additional extra space.
- *
- * @param T  The type of the tc to allocate.
- * @param size  The size in bytes of additional extra space to include.
- * @param tag  The tag of the tc.
- * @param loc  The source loc of the tc. Borrowed.
- *
- * @returns The newly allocated tc.
- *
- * @sideeffects
- *   Allocates a new tc that should be freed using FbleFreeTc when no longer
- *   needed.
- */
-#define FbleNewTcExtra(T, tag, size, loc) ((T*) FbleNewTcRaw(sizeof(T) + size, tag, loc))
 
 /**
  * Makes a reference counted copy of the given tc.

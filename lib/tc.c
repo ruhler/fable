@@ -81,9 +81,10 @@ void FbleFreeTc(FbleTc* tc)
 
     case FBLE_STRUCT_VALUE_TC: {
       FbleStructValueTc* sv = (FbleStructValueTc*)tc;
-      for (size_t i = 0; i < sv->fieldc; ++i) {
-        FbleFreeTc(sv->fields[i]);
+      for (size_t i = 0; i < sv->fields.size; ++i) {
+        FbleFreeTc(sv->fields.xs[i]);
       }
+      FbleFreeVector(sv->fields);
       FbleFree(tc);
       return;
     }
@@ -91,9 +92,10 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_STRUCT_COPY_TC: {
       FbleStructCopyTc* s = (FbleStructCopyTc*)tc;
       FbleFreeTc(s->source);
-      for (size_t i = 0; i < s->fieldc; ++i) {
-        FbleFreeTc(s->fields[i]);
+      for (size_t i = 0; i < s->fields.size; ++i) {
+        FbleFreeTc(s->fields.xs[i]);
       }
+      FbleFreeVector(s->fields);
       FbleFree(tc);
       return;
     }

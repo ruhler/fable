@@ -1208,10 +1208,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, argc * sizeof(FbleTc*), expr->loc);
-      struct_tc->fieldc = argc;
+      FbleStructValueTc* struct_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);
+      FbleVectorInit(struct_tc->fields);
       for (size_t i = 0; i < argc; ++i) {
-        struct_tc->fields[i] = FbleCopyTc(args[i].tc);
+        FbleVectorAppend(struct_tc->fields, FbleCopyTc(args[i].tc));
       }
 
       return MkTc(FbleRetainType(th, &struct_type->_base), &struct_tc->_base);
@@ -1248,16 +1248,16 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       size_t fieldc = struct_type->fields.size;
-      FbleStructCopyTc* struct_copy = FbleNewTcExtra(FbleStructCopyTc, FBLE_STRUCT_COPY_TC, fieldc * sizeof(FbleTc*), expr->loc);
+      FbleStructCopyTc* struct_copy = FbleNewTc(FbleStructCopyTc, FBLE_STRUCT_COPY_TC, expr->loc);
       struct_copy->source = FbleCopyTc(src.tc);
-      struct_copy->fieldc = fieldc;
+      FbleVectorInit(struct_copy->fields);
 
       size_t a = 0;
       for (size_t i = 0; i < fieldc; ++i) {
         FbleTaggedExpr* arg = struct_expr->args.xs + a;
         if (a < struct_expr->args.size && FbleNamesEqual(arg->name, struct_type->fields.xs[i].name)) {
           // Take the field value from the provided argument.
-          struct_copy->fields[i] = FbleCopyTc(args[a].tc);
+          FbleVectorAppend(struct_copy->fields, FbleCopyTc(args[a].tc));
           if (!FbleTypesEqual(th, struct_type->fields.xs[i].type, args[a].type)) {
             ReportError(args[a].tc->loc,
                 "expected type %t, but found %t\n",
@@ -1267,7 +1267,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           a++;
         } else {
           // Take the field value from the source struct.
-          struct_copy->fields[i] = NULL;
+          FbleVectorAppend(struct_copy->fields, NULL);
         }
       }
 
@@ -1338,7 +1338,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       // TypeInferArgs.
       // TODO: Any cleaner way we can do this?
       FbleStructValueTc* unit_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);
-      unit_tc->fieldc = 0;
+      FbleVectorInit(unit_tc->fields);
       Tc vtc = { .type = FbleRetainType(th, type), .tc = &unit_tc->_base };
       CleanTc(cleaner, vtc);
 
@@ -1460,7 +1460,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         default_ = branches[branch].target;
       }
 
-      FbleUnionSelectTc* select_tc = FbleNewTcExtra(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, union_type->fields.size * sizeof(FbleTc*), expr->loc);
+      FbleUnionSelectTc* select_tc = FbleNewTc(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, expr->loc);
       select_tc->condition = FbleCopyTc(condition.tc);
       select_tc->num_tags = union_type->fields.size;
       FbleVectorInit(select_tc->targets);
@@ -2007,10 +2007,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             return TC_FAILED;
           }
 
-          FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, argc * sizeof(FbleTc*), expr->loc);
-          struct_tc->fieldc = argc;
+          FbleStructValueTc* struct_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);
+          FbleVectorInit(struct_tc->fields);
           for (size_t i = 0; i < argc; ++i) {
-            struct_tc->fields[i] = FbleCopyTc(args[i].tc);
+            FbleVectorAppend(struct_tc->fields, FbleCopyTc(args[i].tc));
           }
           return MkTc(FbleRetainType(th, poly.type), &struct_tc->_base);
         }

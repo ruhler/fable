@@ -37,19 +37,19 @@ pkgs/core/Core/Digits/Tests.fble        DONE
 pkgs/core/Core/Eq.fble                  DONE
 pkgs/core/Core/Fifo.fble                DONE
 pkgs/core/Core/Fifo/Tests.fble          DONE
-pkgs/core/Core/Int/Digits.fble
-pkgs/core/Core/Int/Div.fble
-pkgs/core/Core/Int/Eq.fble
-pkgs/core/Core/Int.fble
-pkgs/core/Core/Int/IntP/Div.fble
-pkgs/core/Core/Int/IntP/Eq.fble
-pkgs/core/Core/Int/IntP.fble
-pkgs/core/Core/Int/IntP/Ord.fble
-pkgs/core/Core/Int/IntP/Show.fble
+pkgs/core/Core/Int/Digits.fble          DONE
+pkgs/core/Core/Int/Div.fble             DONE
+pkgs/core/Core/Int/Eq.fble              DONE
+pkgs/core/Core/Int.fble                 DONE
+pkgs/core/Core/Int/IntP/Div.fble        DONE
+pkgs/core/Core/Int/IntP/Eq.fble         DONE
+pkgs/core/Core/Int/IntP.fble            DONE
+pkgs/core/Core/Int/IntP/Ord.fble        DONE
+pkgs/core/Core/Int/IntP/Show.fble       DONE
 pkgs/core/Core/Int/Iter.fble
 pkgs/core/Core/Int/Lit.fble
 pkgs/core/Core/Int/Ord.fble
-pkgs/core/Core/Int/Show.fble
+pkgs/core/Core/Int/Show.fble            DONE
 pkgs/core/Core/Int/Sqrt.fble
 pkgs/core/Core/Int/Tests.fble
 pkgs/core/Core/Iter.fble

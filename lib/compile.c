@@ -872,10 +872,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
     case FBLE_STRUCT_VALUE_TC: {
       FbleStructValueTc* struct_tc = (FbleStructValueTc*)v;
 
-      size_t argc = struct_tc->fieldc;
+      size_t argc = struct_tc->fields.size;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(blocks, false, false, scope, struct_tc->fields[i]);
+        args[i] = CompileExpr(blocks, false, false, scope, struct_tc->fields.xs[i]);
       }
 
       Local* local = NewLocal(scope, NULL);
@@ -898,11 +898,11 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Local* source = CompileExpr(blocks, false, false, scope, struct_copy->source);
 
-      size_t argc = struct_copy->fieldc;
+      size_t argc = struct_copy->fields.size;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        if (struct_copy->fields[i]) {
-          args[i] = CompileExpr(blocks, false, false, scope, struct_copy->fields[i]);
+        if (struct_copy->fields.xs[i]) {
+          args[i] = CompileExpr(blocks, false, false, scope, struct_copy->fields.xs[i]);
         } else {
           args[i] = NewLocal(scope, source);
           FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);

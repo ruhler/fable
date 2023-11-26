@@ -2,11 +2,6 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* [typecheck] Be more consistent in FbleTc about use of vector versus FbleTc*[].
-   - Change FbleStructValueTc to pass fields as vector.
-   - Change FbleStructCopyTc to pass fields as vector.
-   - Remove now unused FBLE_ALLOC_TC_EXTRA
-
 * Add -Wl,--stack,XXXXXXX to gcc cflags when building binaries on Windows
  - Needed for bin, bin_cov, and in run-spec-tests.
 
