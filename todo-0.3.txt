@@ -18,6 +18,8 @@ Things to consider doing for the fble-0.3 release.
  - Don't distinguish between a -> (b -> c) and (a, b) -> c ?
  - See thoughts/fble-0.2/partial_application.txt for details.
 
+* Fbld: Proper support for include/modularity
+
 * Smten, and smten-based mnist classification.
 * IEEE floating point support.
 * Implement an image viewer.

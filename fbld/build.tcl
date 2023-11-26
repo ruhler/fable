@@ -4,6 +4,10 @@ namespace eval "fbld" {
     "$::s/fbld/config.fbld.tcl $::b/config.tcl" \
     "tclsh8.6 $::s/fbld/config.fbld.tcl > $::b/fbld/config.fbld"
 
+  # version.fbld
+  build $::b/fbld/version.fbld "" \
+    "echo @define\[FbleVersion\]\[\]\[$::version\] @@ > $::b/fbld/version.fbld"
+
   # Builds a man page from an fbld @usage doc.
   proc ::fbld_man_usage { target source } {
     build $target \
@@ -35,4 +39,18 @@ namespace eval "fbld" {
     build $target $target.roff \
       "groff -P -c -P -b -P -u -T utf8 < $target.roff > $target"
   }
+
+  proc ::fbld_html_doc { target sources } {
+    build $target \
+      "$::b/pkgs/fbld/bin/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/html.fbld $sources" \
+      "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/bin/fbld - $::b/fbld/version.fbld $::s/fbld/html.fbld $sources > $target"
+  }
+
+  proc ::fbld_html_tutorial { target source } {
+    fbld_html_doc $target [list $::s/tutorials/tutorial.lib.fbld $source]
+  }
+
+  # Fbld Spec www.
+  ::fbld_html_doc $::b/www/fbld/fbld.html $::s/fbld/fbld.fbld
+  www $::b/www/fbld/fbld.html
 }

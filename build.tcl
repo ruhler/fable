@@ -213,6 +213,16 @@ build_tcl $::s/pkgs/build.tcl
 build_tcl $::s/spec/build.tcl
 build_tcl $::s/tutorials/build.tcl
 
+# README.md
+build $::b/pkgs/fbld/README.md \
+  "$::b/pkgs/fbld/bin/fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld" \
+  "$::b/pkgs/fbld/bin/fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld > $::b/pkgs/fbld/README.md"
+
+# Make sure the version of README.md checked in matches the latest version.
+test $::b/pkgs/fbld/README.tr \
+  "$::s/README.md $::b/pkgs/fbld/README.md" \
+  "cmp $::s/README.md $::b/pkgs/fbld/README.md"
+
 # README file www
 fbld_html_doc $::b/www/index.html $::s/README.fbld
 www $::b/www/index.html

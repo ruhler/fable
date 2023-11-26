@@ -137,10 +137,6 @@ Things to do for the fble-0.2 release.
   we could use to make the syntax specification in fble.fbld prettier?
   - if not, consider writing one? Or switching to a syntax that does exist?
 
-* Figure out whitespace issues with fbld generated roff, man.
-  - When are things trimed versus not?
-  - How to avoid too many or too few blank lines between items?
-
 * Be able to write doc comments for extern values and types as well as
   functions.
 
