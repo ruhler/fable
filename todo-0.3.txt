@@ -43,3 +43,20 @@ Things to consider doing for the fble-0.3 release.
 * [compilation] Add support for .fble.@ files and modular compilation.
 
 * [spec] Add some way to catch or recover from errors at runtime?
+
+* [modules]
+ - Decide about .fble.@ files.
+ - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
+ - Add support for loading .fble.@ files.
+   And presumably some way to test this and something about it in the language
+   spec?
+ - Test all combinations of .fble/.fble.@, with all combinations of type
+   errors in one or the other or both.
+
+* Add option for passing .so files to FbleLinkFromCompiledOrSource?
+
+* Improve performance with profiling enabled?
+ - Now that we removed the optimization for detecting duplicate call entries
+   in the stack?
+ - see thoughts/fble.profile.txt
+

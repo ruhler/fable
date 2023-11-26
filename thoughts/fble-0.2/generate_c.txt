@@ -1,0 +1,49 @@
+Generate C Optimization
+=======================
+Goal is to see if there's anything easy we can do to optimize C code
+generation for low gcc memory use.
+
+A couple of ideas from before:
+ - Use shorter labels for function names?
+ - Only output labels for pc aborts that are actually jumped to.
+
+Let's see what the current status of this is.
+
+Here's one that sticks out as being bad to compile:
+
+  gcc -c -o ./pkgs/md5/Md5/Rounds.fble.o -I ../include ./pkgs/md5/Md5/Rounds.fble.c
+
+Running with /usr/bin/time -v gives:
+
+  User time (seconds): 28.84
+  System time (seconds): 1.28
+  Percent of CPU this job got: 99%
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:30.21
+  Maximum resident set size (kbytes): 287428
+  Minor (reclaiming a frame) page faults: 96371
+  Voluntary context switches: 9
+  Involuntary context switches: 299
+
+So, about 30 seconds to compile, requiring 288MB. Actually, that's not bad at
+all compared to how things used to be. I can do that on the raspberry pi no
+problem.
+
+Reviewing the generated C code for opportunities:
+
+Looks like 75% of the generated code is for the lame circular shift function.
+What if we didn't have that? Yeah. Almost all of the compile time is in that
+one function. 
+
+It's a very abnormal way to write fble code. I'm not convinced there's value
+in trying to optimize this case. But let's see if there's anything we can do
+anyway.
+
+No. It's a whole bunch of struct accesses, each of which can potentially
+abort. The generated code looks fine to me. And we can still compile it with
+gcc on raspberry pi with plenty of memory overhead to spare. I don't see any
+need to try to optimize the generated C code in this case.
+
+Perhaps optimizes to fble will help, for example if we can avoid having to
+call FbleStrictValue for structs, and avoid all those potential error cases.
+
+I vote nothing to do here for now.

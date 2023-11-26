@@ -177,21 +177,8 @@ Things to do for the fble-0.2 release.
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
 
-* Optimize code for generate_c for low gcc memory use:
- - Use shorter labels for function names?
- - Only output labels for pc aborts that are actually jumped to.
-
 * [spec] Should empty path be allowed in package type?
  See spec/fble.fbld for more details.
-
-* [modules]
- - Decide about .fble.@ files.
- - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
- - Add support for loading .fble.@ files.
-   And presumably some way to test this and something about it in the language
-   spec?
- - Test all combinations of .fble/.fble.@, with all combinations of type
-   errors in one or the other or both.
 
 * [lib] Move more value conversion functions to separate object files.
  - Color, IO, etc.
@@ -202,11 +189,6 @@ Things to do for the fble-0.2 release.
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
-
-* Improve performance with profiling enabled?
- - Now that we removed the optimization for detecting duplicate call entries
-   in the stack?
- - see thoughts/fble.profile.txt
 
 * For loaded submodules, should the module profile block be the module file or
   the place where it was imported from?
@@ -220,8 +202,6 @@ Things to do for the fble-0.2 release.
  - To encourage all the apps to support optional profiling, including things
    like fble-md5 and fble-app?
  - Check we are passing meaningful block ids to FbleNewFuncValue.
-
-* Add option for passing .so files to FbleLinkFromCompiledOrSource?
 
 * Run fble-test-compile-error tests in compilation mode?
 
@@ -270,6 +250,10 @@ Things to do for the fble-0.2 release.
 * [typecheck] We don't get a warning about an unused self recursive function.
   More generally, we don't get warnings about variables that are referenced
   only by unused variables.
+  We should change TypeCheckExpr to return the set of Var* that were accessed
+  by the expression and remove the 'accessed' field of var. Then we could
+  manage this all properly.
+ 
 * [typecheck] Better error messages on types that have the same name but different values?
 * [typecheck] Quote funny names in types. For example, the field ',' should have
   quotes in type error messages.

@@ -2068,7 +2068,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 /**
  * Typechecks the given expression, ignoring accesses to variables.
  *
- * Sometimes an expression is only use only for its type. We don't want to
+ * Sometimes an expression is used only for its type. We don't want to
  * mark variables referenced by the expression as used, because we don't need
  * to know the value of the variable at runtime. This function typechecks an
  * expression without marking variables as used. The variables are marked as
