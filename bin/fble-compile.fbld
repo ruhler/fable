@@ -23,8 +23,10 @@
    A standard @l[main] function that invokes a user provided wrapper function.
    The wrapper function should have type:
   
-    @l[int] @a[NAME]@l[(]@l[int] @a[argc], @l[const char**] @a[argv],
-   @l[FbleCompiledModuleFunction*] @a[module] @l[);]
+   @code[c]
+     @l[int] @a[NAME](
+         @l[int] @a[argc], @l[const char**] @a[argv],
+         @l[FbleCompiledModuleFunction*] @a[module]);
   
    It will be called passing @a[argc] and @a[argv] from @l[main] and the
    compiled module generated using the Compiled Module option.

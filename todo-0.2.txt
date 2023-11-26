@@ -110,19 +110,7 @@ Things to do for the fble-0.2 release.
  - Given language changes
  - And migrate to fbld?
 
-* Wrapping for 'Main Function' description in fble-compile.1 is less than
-  desired.
-
-* Help output for fble-deps is less compact than desired.
-
 * Would be nice to have SEE ALSO section for library man pages.
-
-* Figure out a way so that "T" arguments in generated man pages don't have an
-  extra space in the output.
-  For example, for FbleAlloc.3.
-
-* For dc generated man pages, put synopsis all on one line if there is only a
-  single argument?
 
 * Check if all the fble-module-path.h functions really need to be public API.
 
