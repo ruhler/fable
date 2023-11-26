@@ -132,15 +132,9 @@ Things to do for the fble-0.2 release.
   - For example: blank lines in doc comments should be allowed and not cause
     the comment to be truncated.
 
-* Install man pages compressed?
-
 * Add a way to specify package path on the command line?
 
 * Improve exercises for Unions and Functions tutorials, and others.
-
-* Fix timeout with gdb-test
- - Just need to increase it a little in case of heavy CPU load?
- - Next time it happens, try to see where it got stuck?
 
 * How to check errors from stale files in build directory?
   For example, sat/Sat/sat-tests still existed, even though now we're compiling

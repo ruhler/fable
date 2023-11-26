@@ -73,4 +73,18 @@ shiftwidth.
 
 So, proposal is: set shiftwidth=1 in ftplugin.
 
+---
+
+Should we compress man pages on install?
+* Does that add a dependence on gzip we wouldn't otherwise need?
+* How much space does it save?
+  Without compression today: 582K for all man pages.
+  With compression today: 528K for all man pages.
+  So not really much improvement. I have a lot of short man pages.
+* Is there anything about it being standard to be compressed or not?
+  There's nothing in GNU standard about compressing them. The author of the
+  gnu coding standards clearly doesn't like man pages.
+
+I don't think the 54K savings is worth taking a dependency on gzip. Let's skip
+the idea of compressing man pages until some decent motivation comes along.
 

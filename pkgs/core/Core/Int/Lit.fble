@@ -27,9 +27,8 @@
 #   assuming the most significant digits have already been turned into the
 #   given integer.
 (Int@, List@<Decimal@>) { Int@; } IntHelper = (Int@ msb, List@<Decimal@> ds) {
-  ds.?(
-    cons: IntHelper(Add(Mul(10, msb), DtoI(ds.cons.head)), ds.cons.tail),
-    nil: msb);
+  ds.?(nil: msb);
+  IntHelper(Add(Mul(10, msb), DtoI(ds.cons.head)), ds.cons.tail);
 };
 
 # Int --

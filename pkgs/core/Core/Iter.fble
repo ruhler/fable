@@ -24,7 +24,7 @@
 <@>@ Iter@ = <@ T@> { Types<T@>.I@; };
 
 <@ T@>(T@, Iter@<T@>) { IterM@<T@>; } Has = <@ T@>(T@ value, Iter@<T@> next) {
-  IterM@<T@>(has: IterH@<T@>(value, next));
+  IterM@(has: IterH@(value, next));
 };
 
 IterM@ End = <@ T@> { IterM@<T@>(end: Unit); };
@@ -49,7 +49,8 @@ IterM@ End = <@ T@> { IterM@<T@>(end: Unit); };
 <@ I@, @ B@>(Iter@<I@>, B@, (I@, B@) { B@; }) { B@; }
 For = <@ I@, @ B@>(Iter@<I@> iter, B@ base, (I@, B@) { B@; } body) {
   IterM@<I@> m = iter(Unit);
-  m.?(has: For<I@, B@>(m.has.next, body(m.has.value, base), body), end: base);
+  m.?(end: base);
+  For(m.has.next, body(m.has.value, base), body);
 };
 
 @(Iter@, IterH@, IterM@, Has, End, For);

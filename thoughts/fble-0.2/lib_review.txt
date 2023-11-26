@@ -46,16 +46,16 @@ pkgs/core/Core/Int/IntP/Eq.fble         DONE
 pkgs/core/Core/Int/IntP.fble            DONE
 pkgs/core/Core/Int/IntP/Ord.fble        DONE
 pkgs/core/Core/Int/IntP/Show.fble       DONE
-pkgs/core/Core/Int/Iter.fble
-pkgs/core/Core/Int/Lit.fble
-pkgs/core/Core/Int/Ord.fble
+pkgs/core/Core/Int/Iter.fble            DONE
+pkgs/core/Core/Int/Lit.fble             DONE
+pkgs/core/Core/Int/Ord.fble             DONE
 pkgs/core/Core/Int/Show.fble            DONE
-pkgs/core/Core/Int/Sqrt.fble
-pkgs/core/Core/Int/Tests.fble
-pkgs/core/Core/Iter.fble
-pkgs/core/Core/LFSR.fble
-pkgs/core/Core/LFSR/Int.fble
-pkgs/core/Core/LFSR/Tests.fble
+pkgs/core/Core/Int/Sqrt.fble            DONE
+pkgs/core/Core/Int/Tests.fble           DONE
+pkgs/core/Core/Iter.fble                DONE
+pkgs/core/Core/LFSR.fble                DONE
+pkgs/core/Core/LFSR/Int.fble            DONE
+pkgs/core/Core/LFSR/Tests.fble          DONE
 pkgs/core/Core/List/Eq.fble
 pkgs/core/Core/List.fble
 pkgs/core/Core/List/Length.fble

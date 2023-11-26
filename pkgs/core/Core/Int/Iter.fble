@@ -18,12 +18,9 @@ Int@ 1 = Int|1;
 
 # Range --
 #   An iterator over the range of integers [lo, hi).
-(Int@, Int@) { Iter@<Int@>; } Range = (Int@ lo, Int@ hi) {
-  (Unit@ _) {
-    Lt(lo, hi).?(
-      true: Has<Int@>(lo, Range(Add(lo, 1), hi)),
-      false: End<Int@>);
-  };
+(Int@, Int@) { Iter@<Int@>; } Range = (Int@ lo, Int@ hi)(Unit@ _) {
+  Lt(lo, hi).?(false: End<Int@>);
+  Has(lo, Range(Add(lo, 1), hi));
 };
 
 # CountUpTo --
@@ -34,15 +31,10 @@ Int@ 1 = Int|1;
 
 # CountDownFrom --
 #   An iterator over the range of integers (n, 0]
-(Int@) { Iter@<Int@>; } CountDownFrom = (Int@ n) {
-  (Unit@ _) {
-    Le(n, 0).?(
-      true: End<Int@>,
-      false: {
-        Int@ first = Sub(n, 1);
-        Has<Int@>(first, CountDownFrom(first));
-      });
-  };
+(Int@) { Iter@<Int@>; } CountDownFrom = (Int@ n)(Unit@ _) {
+  Le(n, 0).?(true: End<Int@>);
+  Int@ first = Sub(n, 1);
+  Has(first, CountDownFrom(first));
 };
 
 @(Range, CountUpTo, CountDownFrom);

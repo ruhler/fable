@@ -23,7 +23,7 @@ Prod = (List@<Bit@> a, List@<Bit@> b) {
   a.?(nil: a);
 
   List@<Bit@> tail = Prod(a.cons.tail, b.cons.tail);
-  Cons<Bit@>(a.cons.head.?(0: Bit.0, 1: b.cons.head), tail);
+  Cons(a.cons.head.?(0: Bit.0, 1: b.cons.head), tail);
 };
 
 # Sum --
@@ -40,8 +40,8 @@ Prod = (List@<Bit@> a, List@<Bit@> b) {
 (List@<Bit@>, Bit@) { List@<Bit@>; }
 ShiftIn = (List@<Bit@> s, Bit@ i) {
   List@<Bit@> tail = s.cons.tail;
-  tail.?(nil: List<Bit@>[i]);
-  Cons<Bit@>(tail.cons.head, ShiftIn(tail, i));
+  tail.?(nil: List[i]);
+  Cons(tail.cons.head, ShiftIn(tail, i));
 };
 
 <@>@ Shifted@ = <@ T@> { *(LFSR@ lfsr, T@ output); };
@@ -49,7 +49,7 @@ ShiftIn = (List@<Bit@> s, Bit@ i) {
 # Shift --
 #   Shift the LFSR.
 (LFSR@) { Shifted@<Bit@>; } Shift = (LFSR@ lfsr) {
-  List@<Bit@> bits = Cons<Bit@>(Bit.1, Prod(lfsr.c, lfsr.s));
+  List@<Bit@> bits = Cons(Bit.1, Prod(lfsr.c, lfsr.s));
   @(lfsr: LFSR@(lfsr.c, ShiftIn(lfsr.s, Sum(bits))),
     output: lfsr.s.cons.head);
 };

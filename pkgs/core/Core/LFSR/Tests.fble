@@ -28,7 +28,7 @@
 ShiftN = (LFSR@ lfsr, Int@ n) {
   n.?(0: Nil<Bit@>);
   Shifted@<Bit@> shifted = Shift(lfsr);
-  Cons<Bit@>(shifted.output, ShiftN(shifted.lfsr, Sub(n, Int|1)));
+  Cons(shifted.output, ShiftN(shifted.lfsr, Sub(n, Int|1)));
 };
 
 Test@ Tests = TestSuite(Str|LFSR, List[
