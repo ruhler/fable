@@ -47,3 +47,9 @@ Perhaps optimizes to fble will help, for example if we can avoid having to
 call FbleStrictValue for structs, and avoid all those potential error cases.
 
 I vote nothing to do here for now.
+
+---
+
+I rewrote md5 cls function to be a little bit nicer. Now it takes only 5
+seconds and 64MB to compile that code.
+

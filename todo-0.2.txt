@@ -169,10 +169,6 @@ Things to do for the fble-0.2 release.
 * Review C API for consistency.
   For example: FbleVectorInit inconsistent with FbleFreeVector?
 
-* Optimize the generated build.ninja file to be smaller?
-  By introducing rules, and taking advantage of $in, $out, etc?
-  The build.ninja file is around 1.1M right now.
-
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.

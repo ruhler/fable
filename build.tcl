@@ -23,12 +23,6 @@ puts $::build_ninja {
 rule build
   description = $out
   command = $cmd
-
-cflags = -std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -O3
-rule obj
-  description = $out
-  command = gcc -MMD -MF $out.d $cflags $iflags -c -o $out $src
-  depfile = $out.d
 }
 
 # Files that the build.ninja file depends on.
@@ -60,9 +54,9 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  puts $::build_ninja "build $obj: obj $src $args"
-  puts $::build_ninja "  src=$src"
-  puts $::build_ninja "  iflags=$iflags"
+  set cflags "-std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -O3"
+  set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
+  build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
 # obj_cov --
