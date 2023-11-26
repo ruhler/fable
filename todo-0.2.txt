@@ -205,7 +205,6 @@ Things to do for the fble-0.2 release.
 
 * Run fble-test-compile-error tests in compilation mode?
 
-
 * [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
  - It would be convenient for constructing things in case of error.
  - I'm not sure if there's any performance implications.

@@ -18,7 +18,6 @@
 
 @ Hash@ = /Md5/Hash%.Hash@;
 
-@ Bit2@ = /Md5/Bits/Bit2%.Bit2@;
 @ Bit4@ = /Md5/Bits/Bit4%.Bit4@;
 @ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
 @ Bit16@ = /Md5/Bits/Bit16%.Bit16@;
@@ -31,6 +30,7 @@
 % Not = /Md5/Bits/Bit32%.Bits.Not;
 % Xor = /Md5/Bits/Bit32%.Bits.Xor;
 % Add = /Md5/Bits/Bit32%.Bits.Add;
+% Shlx = /Md5/Bits/Bit32%.Bits.Shlx;
 
 @ Block@ = *(
   Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
@@ -118,243 +118,56 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
   Unit@  8, Unit@  9, Unit@ 10, Unit@ 11, Unit@ 12, Unit@ 13, Unit@ 14, Unit@ 15,
   Unit@ 16, Unit@ 17, Unit@ 18, Unit@ 19, Unit@ 20, Unit@ 21, Unit@ 22, Unit@ 23);
 
-(Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@,
- Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@,
- Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@,
- Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@, Bit@) { Bit32@; }
-B32 =
- (Bit@ 31, Bit@ 30, Bit@ 29, Bit@ 28, Bit@ 27, Bit@ 26, Bit@ 25, Bit@ 24,
-  Bit@ 23, Bit@ 22, Bit@ 21, Bit@ 20, Bit@ 19, Bit@ 18, Bit@ 17, Bit@ 16,
-  Bit@ 15, Bit@ 14, Bit@ 13, Bit@ 12, Bit@ 11, Bit@ 10, Bit@  9, Bit@  8,
-  Bit@  7, Bit@  6, Bit@  5, Bit@  4, Bit@  3, Bit@  2, Bit@  1, Bit@  0) {
-    Bit32@(
-      Bit16@(
-        Bit8@(Bit4@(Bit2@(31, 30), Bit2@(29, 28)), Bit4@(Bit2@(27, 26), Bit2@(25, 24))),
-        Bit8@(Bit4@(Bit2@(23, 22), Bit2@(21, 20)), Bit4@(Bit2@(19, 18), Bit2@(17, 16)))),
-      Bit16@(
-        Bit8@(Bit4@(Bit2@(15, 14), Bit2@(13, 12)), Bit4@(Bit2@(11, 10), Bit2@( 9,  8))),
-        Bit8@(Bit4@(Bit2@( 7,  6), Bit2@( 5,  4)), Bit4@(Bit2@( 3,  2), Bit2@( 1,  0)))));
-};
+% S = @(
+  0: S@(0: Unit), 1: S@(1: Unit), 2: S@(2: Unit), 3: S@(3: Unit),
+  4: S@(4: Unit), 5: S@(5: Unit), 6: S@(6: Unit), 7: S@(7: Unit),
+  8: S@(8: Unit), 9: S@(9: Unit), 10: S@(10: Unit), 11: S@(11: Unit),
+  12: S@(12: Unit), 13: S@(13: Unit), 14: S@(14: Unit), 15: S@(15: Unit),
+  16: S@(16: Unit), 17: S@(17: Unit), 18: S@(18: Unit), 19: S@(19: Unit),
+  20: S@(20: Unit), 21: S@(21: Unit), 22: S@(22: Unit), 23: S@(23: Unit));
 
-# TODO: This is a pretty lame implementation of circular left shift...
 (Bit32@, S@){Bit32@;} cls = (Bit32@ a, S@ s) {
   s.?(
-    0: B32(
-      a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo,
-      a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo,
-      a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo,
-      a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo,
-      a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo,
-      a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo,
-      a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo,
-      a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo),
-    1: B32(
-      a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi,
-      a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi,
-      a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi,
-      a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi,
-      a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi,
-      a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi,
-      a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi,
-      a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi),
-    2: B32(
-      a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo,
-      a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo,
-      a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo,
-      a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo,
-      a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo,
-      a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo,
-      a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo,
-      a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo),
-    3: B32(
-      a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi,
-      a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi,
-      a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi,
-      a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi,
-      a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi,
-      a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi,
-      a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi,
-      a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi),
-    4: B32(
-      a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo,
-      a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo,
-      a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo,
-      a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo,
-      a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo,
-      a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo,
-      a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo,
-      a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo),
-    5: B32(
-      a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi,
-      a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi,
-      a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi,
-      a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi,
-      a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi,
-      a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi,
-      a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi,
-      a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi),
-    6: B32(
-      a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo,
-      a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo,
-      a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo,
-      a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo,
-      a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo,
-      a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo,
-      a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo,
-      a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo),
-    7: B32(
-      a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi,
-      a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi,
-      a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi,
-      a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi,
-      a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi,
-      a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi,
-      a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi,
-      a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi),
-    8: B32(
-      a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo,
-      a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo,
-      a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo,
-      a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo,
-      a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo,
-      a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo,
-      a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo,
-      a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo),
-    9: B32(
-      a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi,
-      a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi,
-      a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi,
-      a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi,
-      a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi,
-      a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi,
-      a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi,
-      a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi),
-   10: B32(
-      a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo,
-      a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo,
-      a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo,
-      a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo,
-      a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo,
-      a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo,
-      a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo,
-      a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo),
-   11: B32(
-      a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi,
-      a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi,
-      a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi,
-      a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi,
-      a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi,
-      a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi,
-      a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi,
-      a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi),
-   12: B32(
-      a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo,
-      a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo,
-      a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo,
-      a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo,
-      a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo,
-      a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo,
-      a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo,
-      a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo),
-   13: B32(
-      a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi,
-      a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi,
-      a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi,
-      a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi,
-      a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi,
-      a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi,
-      a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi,
-      a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi),
-   14: B32(
-      a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo,
-      a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo,
-      a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo,
-      a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo,
-      a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo,
-      a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo,
-      a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo,
-      a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo),
-   15: B32(
-      a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi,
-      a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi,
-      a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi,
-      a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi,
-      a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi,
-      a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi,
-      a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi,
-      a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi),
-   16: B32(
-      a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo,
-      a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo,
-      a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo,
-      a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo,
-      a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo,
-      a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo,
-      a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo,
-      a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo),
-   17: B32(
-      a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi,
-      a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi,
-      a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi,
-      a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi,
-      a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi,
-      a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi,
-      a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi,
-      a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi),
-   18: B32(
-      a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo,
-      a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo,
-      a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo,
-      a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo,
-      a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo,
-      a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo,
-      a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo,
-      a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo),
-   19: B32(
-      a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi,
-      a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi,
-      a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi,
-      a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi,
-      a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi,
-      a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi,
-      a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi,
-      a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi),
-   20: B32(
-      a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo,
-      a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo,
-      a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo,
-      a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo,
-      a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo,
-      a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo,
-      a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo,
-      a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo),
-   21: B32(
-      a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi,
-      a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi,
-      a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi,
-      a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi,
-      a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi,
-      a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi,
-      a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi,
-      a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi),
-   22: B32(
-      a.lo.hi.lo.lo.hi, a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo,
-      a.lo.lo.hi.lo.hi, a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo,
-      a.lo.lo.lo.lo.hi, a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo,
-      a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo,
-      a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo,
-      a.hi.lo.hi.lo.hi, a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo,
-      a.hi.lo.lo.lo.hi, a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo,
-      a.lo.hi.hi.lo.hi, a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo),
-   23: B32(
-      a.lo.hi.lo.lo.lo, a.lo.lo.hi.hi.hi, a.lo.lo.hi.hi.lo, a.lo.lo.hi.lo.hi,
-      a.lo.lo.hi.lo.lo, a.lo.lo.lo.hi.hi, a.lo.lo.lo.hi.lo, a.lo.lo.lo.lo.hi,
-      a.lo.lo.lo.lo.lo, a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi,
-      a.hi.hi.hi.lo.lo, a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi,
-      a.hi.hi.lo.lo.lo, a.hi.lo.hi.hi.hi, a.hi.lo.hi.hi.lo, a.hi.lo.hi.lo.hi,
-      a.hi.lo.hi.lo.lo, a.hi.lo.lo.hi.hi, a.hi.lo.lo.hi.lo, a.hi.lo.lo.lo.hi,
-      a.hi.lo.lo.lo.lo, a.lo.hi.hi.hi.hi, a.lo.hi.hi.hi.lo, a.lo.hi.hi.lo.hi,
-      a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi));
+    0: a,
+    1: Shlx(a, a.hi.hi.hi.hi.hi).x,
+    2: Bit32@(
+         Bit16@(
+           Bit8@(
+             Bit4@(a.hi.hi.hi.lo, a.hi.hi.lo.hi),
+             Bit4@(a.hi.hi.lo.lo, a.hi.lo.hi.hi)),
+           Bit8@(
+             Bit4@(a.hi.lo.hi.lo, a.hi.lo.lo.hi),
+             Bit4@(a.hi.lo.lo.lo, a.lo.hi.hi.hi))),
+         Bit16@(
+           Bit8@(
+             Bit4@(a.lo.hi.hi.lo, a.lo.hi.lo.hi),
+             Bit4@(a.lo.hi.lo.lo, a.lo.lo.hi.hi)),
+           Bit8@(
+             Bit4@(a.lo.lo.hi.lo, a.lo.lo.lo.hi),
+             Bit4@(a.lo.lo.lo.lo, a.hi.hi.hi.hi)))),
+    3: cls(cls(a, S.2), S.1),
+    4: Bit32@(
+         Bit16@(Bit8@(a.hi.hi.lo, a.hi.lo.hi), Bit8@(a.hi.lo.lo, a.lo.hi.hi)),
+         Bit16@(Bit8@(a.lo.hi.lo, a.lo.lo.hi), Bit8@(a.lo.lo.lo, a.hi.hi.hi))),
+    5: cls(cls(a, S.4), S.1),
+    6: cls(cls(a, S.4), S.2),
+    7: cls(cls(a, S.4), S.3),
+    8: Bit32@(Bit16@(a.hi.lo, a.lo.hi), Bit16@(a.lo.lo, a.hi.hi)),
+    9: cls(cls(a, S.8), S.1),
+   10: cls(cls(a, S.8), S.2),
+   11: cls(cls(a, S.8), S.3),
+   12: cls(cls(a, S.8), S.4),
+   13: cls(cls(a, S.8), S.5),
+   14: cls(cls(a, S.8), S.6),
+   15: cls(cls(a, S.8), S.7),
+   16: Bit32@(a.lo, a.hi),
+   17: cls(cls(a, S.16), S.1),
+   18: cls(cls(a, S.16), S.2),
+   19: cls(cls(a, S.16), S.3),
+   20: cls(cls(a, S.16), S.4),
+   21: cls(cls(a, S.16), S.5),
+   22: cls(cls(a, S.16), S.6),
+   23: cls(cls(a, S.16), S.7));
 };
 
 @ X@ = (Bit32@, Bit32@, Bit32@) { Bit32@; };
@@ -404,11 +217,11 @@ XX@ GG = XX(G);
 XX@ HH = XX(H);
 XX@ II = XX(I);
 
-Round@ Round1 = RoundX(FF, S@(7: Unit), S@(12: Unit), S@(17: Unit), S@(22: Unit), T1, (Block@ b) {
+Round@ Round1 = RoundX(FF, S.7, S.12, S.17, S.22, T1, (Block@ b) {
   b;
 });
 
-Round@ Round2 = RoundX(GG, S@(5: Unit), S@(9: Unit), S@(14: Unit), S@(20: Unit), T2, (Block@ b) {
+Round@ Round2 = RoundX(GG, S.5, S.9, S.14, S.20, T2, (Block@ b) {
   Block@(
     b.1, b.6, b.11, b.0,
     b.5, b.10, b.15, b.4,
@@ -416,7 +229,7 @@ Round@ Round2 = RoundX(GG, S@(5: Unit), S@(9: Unit), S@(14: Unit), S@(20: Unit),
     b.13, b.2, b.7, b.12);
 });
 
-Round@ Round3 = RoundX(HH, S@(4: Unit), S@(11: Unit), S@(16: Unit), S@(23: Unit), T3, (Block@ b) {
+Round@ Round3 = RoundX(HH, S.4, S.11, S.16, S.23, T3, (Block@ b) {
   Block@(
     b.5, b.8, b.11, b.14,
     b.1, b.4, b.7, b.10,
@@ -424,7 +237,7 @@ Round@ Round3 = RoundX(HH, S@(4: Unit), S@(11: Unit), S@(16: Unit), S@(23: Unit)
     b.9, b.12, b.15, b.2);
 });
 
-Round@ Round4 = RoundX(II, S@(6: Unit), S@(10: Unit), S@(15: Unit), S@(21: Unit), T4, (Block@ b) {
+Round@ Round4 = RoundX(II, S.6, S.10, S.15, S.21, T4, (Block@ b) {
   Block@(
     b.0, b.7, b.14, b.5,
     b.12, b.3, b.10, b.1,
