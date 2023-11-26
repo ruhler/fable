@@ -227,8 +227,7 @@ typedef struct {
  */
 typedef struct {
   FbleTc _base;       /**< FbleTc base class. */
-  size_t fieldc;      /**< Number of list elements. */
-  FbleTc* fields[];   /**< List elements. */
+  FbleTcV fields;     /**< The elements of the list. */
 } FbleListTc;
 
 /**

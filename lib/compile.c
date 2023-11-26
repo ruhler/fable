@@ -1188,10 +1188,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
     case FBLE_LIST_TC: {
       FbleListTc* list_tc = (FbleListTc*)v;
 
-      size_t argc = list_tc->fieldc;
+      size_t argc = list_tc->fields.size;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(blocks, false, false, scope, list_tc->fields[i]);
+        args[i] = CompileExpr(blocks, false, false, scope, list_tc->fields.xs[i]);
       }
 
       Local* local = NewLocal(scope, NULL);

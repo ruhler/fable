@@ -2,6 +2,11 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* [typecheck] Be more consistent in FbleTc about use of vector versus FbleTc*[].
+   - Change FbleStructValueTc to pass fields as vector.
+   - Change FbleStructCopyTc to pass fields as vector.
+   - Change FbleLiteralTc to pass letters as vector (?)
+
 * Add -Wl,--stack,XXXXXXX to gcc cflags when building binaries on Windows
  - Needed for bin, bin_cov, and in run-spec-tests.
 
@@ -266,8 +271,7 @@ Things to do for the fble-0.2 release.
   reported.
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
-
-* [typecheck] Be more consistent in FbleTc about use of vector versus FbleTc*[].
+ 
 * [typecheck] We don't get a warning about an unused self recursive function.
   More generally, we don't get warnings about variables that are referenced
   only by unused variables.
@@ -279,9 +283,6 @@ Things to do for the fble-0.2 release.
 * [typecheck] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
    abstract type?
-* [typecheck] Figure out why FbleNormalType is called so often
- - See if we can fix that to reduce the now annoyingly long compile times.
- - Profiling said its all in FbleTypesEqual. Maybe something pathological?
 
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.

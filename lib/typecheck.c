@@ -1688,10 +1688,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleType* result_type = FbleRetainType(th, inferred_func_type->rtype);
 
-      FbleListTc* list_tc = FbleNewTcExtra(FbleListTc, FBLE_LIST_TC, argc * sizeof(FbleTc*), expr->loc);
-      list_tc->fieldc = argc;
+      FbleListTc* list_tc = FbleNewTc(FbleListTc, FBLE_LIST_TC, expr->loc);
+      FbleVectorInit(list_tc->fields);
       for (size_t i = 0; i < argc; ++i) {
-        list_tc->fields[i] = FbleCopyTc(args[i].tc);
+        FbleVectorAppend(list_tc->fields, FbleCopyTc(args[i].tc));
       }
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);

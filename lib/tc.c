@@ -157,9 +157,10 @@ void FbleFreeTc(FbleTc* tc)
 
     case FBLE_LIST_TC: {
       FbleListTc* v = (FbleListTc*)tc;
-      for (size_t i = 0; i < v->fieldc; ++i) {
-        FbleFreeTc(v->fields[i]);
+      for (size_t i = 0; i < v->fields.size; ++i) {
+        FbleFreeTc(v->fields.xs[i]);
       }
+      FbleFreeVector(v->fields);
       FbleFree(tc);
       return;
     }
