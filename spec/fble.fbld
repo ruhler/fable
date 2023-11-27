@@ -1140,25 +1140,24 @@
     Type ::= package_type (path : Path)
   
    @ConcreteSyntax @
-    type ::= '%(' path ')'
+    type ::= '%(' [path] ')'
   
    @Example @
     @ FooBar@ = %(/Foo/Bar%);
+    @ All@ = %();
     ...
   
    The package type describes the set of modules whose module path prefix
    matches the given path. For example, the type @l{%(/Foo/Bar%)} includes
    modules @l{/Foo/Bar%}, @l{/Foo/Bar/Sludge%}, and @l{/Foo/Bar/A/B%}, but not
    @l{/Foo%} or @l{/Bar%}.
+
+   As a special case, if the module path is ommitted in the concrete syntax,
+   the package type describes the set of all modules.
   
    The path for a package type need not refer to an existing module. There
    need not be any modules that satisfy the package path. A module need not be
    a member of whatever package type it constructs.
-  
-   TODO: Can you pass an empty path, with the interpretation of the value is
-   accessible to all modules? Do we allow empty path in general? It seems
-   unnecessary to make an abstract type that every module can access, but
-   maybe it's useful to have for uniformity of interaction with the type?
   
    A package type has kind @l{@}. Two package types are considered equal if
    they have the same path.
@@ -1478,7 +1477,7 @@
      | expr '['[expr [',' expr [...]]] ']'             (* list *)
      | expr '|' word                                   (* literal *)
     
-     | '%' '(' path ')'                                (* package_type* )
+     | '%' '(' [path] ')'                              (* package_type* )
      | type '<' type '>'                               (* abstract_type *) 
      | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
      | type '(' expr ')'                               (* abstract_value *) 

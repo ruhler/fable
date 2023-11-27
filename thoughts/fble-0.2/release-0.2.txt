@@ -88,3 +88,13 @@ Should we compress man pages on install?
 I don't think the 54K savings is worth taking a dependency on gzip. Let's skip
 the idea of compressing man pages until some decent motivation comes along.
 
+---
+
+Decision on empty path for package types:
+* Have a special syntax %() for 'any module' package type.
+* Continue to require / WORD ... / %  for module path.
+
+Because you can imagine for testing purposes or uniformity, we want to have a
+package path that doesn't restrict who can access it. But it doesn't make
+sense to have module paths like /% or /foo//bar%.
+
