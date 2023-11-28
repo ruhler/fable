@@ -395,6 +395,13 @@ expr:
       package_expr->path = $3;
       $$ = &package_expr->_base;
    }
+ | '%' '(' ')' {
+      FblePackageTypeExpr* package_expr = FbleAlloc(FblePackageTypeExpr);
+      package_expr->_base.tag = FBLE_PACKAGE_TYPE_EXPR;
+      package_expr->_base.loc = FbleCopyLoc(@$);
+      package_expr->path = FbleNewModulePath(@$);
+      $$ = &package_expr->_base;
+   }
  | expr '(' name ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
