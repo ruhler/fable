@@ -15,7 +15,9 @@
 #
 # Returns an empty list if there are less than n elements on the list.
 <@ T@>(Int@, List@<T@>) { List@<T@>; } Drop = <@ T@>(Int@ n, List@<T@> l) {
-  Le(n, 0).?(true: l, false: l.?(cons: Drop(Decr(n), l.cons.tail), nil: l));
+  Le(n, 0).?(true: l);
+  l.?(nil: l);
+  Drop(Decr(n), l.cons.tail);
 };
 
 # Take --
@@ -23,11 +25,9 @@
 #
 # Returns fewer than n elements if there are less than n elements on the list.
 <@ T@>(Int@, List@<T@>) { List@<T@>; } Take = <@ T@>(Int@ n, List@<T@> l) {
-  Le(n, 0).?(
-    true: Nil<T@>,
-    false: l.?(
-      cons: Cons(l.cons.head, Take(Decr(n), l.cons.tail)),
-      nil: Nil<T@>));
+  Le(n, 0).?(true: Nil<T@>);
+  l.?(nil: Nil<T@>);
+  Cons(l.cons.head, Take(Decr(n), l.cons.tail));
 };
 
 # Length --
@@ -42,9 +42,8 @@
 # Returns:
 #   The length of the list.
 <@ T@>(List@<T@>) { Int@; } Length = <@ T@>(List@<T@> l) {
-  # TODO: This is non tail recursive? Should we implement a more memory
-  # efficient version?
-  l.?(cons: Incr(Length(l.cons.tail)), nil: 0);
+  l.?(nil: 0);
+  Incr(Length(l.cons.tail));
 };
 
 # Gets the element of the list with the given index.

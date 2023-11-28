@@ -21,11 +21,9 @@
 #   the comparison operation.
 <@ T@>((T@, T@) { Bool@; }, T@, List@<T@>) { List@<T@>; }
 Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
-  l.?(
-    cons: le(x, l.cons.head).?(
-      true: Cons(x, l),
-      false: Cons(l.cons.head, Insert(le, x, l.cons.tail))),
-    nil: Cons(x, Nil<T@>));
+  l.?(nil: Cons(x, Nil<T@>));
+  le(x, l.cons.head).?(true: Cons(x, l));
+  Cons(l.cons.head, Insert(le, x, l.cons.tail));
 };
 
 # Sort --
@@ -47,9 +45,8 @@ Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
 #   Use something more efficient than an insertion sort.
 <@ T@>((T@, T@) { Bool@; }, List@<T@>) { List@<T@>; }
 Sort = <@ T@>((T@, T@) { Bool@; } le, List@<T@> l) {
-  l.?(
-    cons: Insert(le, l.cons.head, Sort(le, l.cons.tail)),
-    nil: l);
+  l.?(nil: l);
+  Insert(le, l.cons.head, Sort(le, l.cons.tail));
 };
 
 @(Sort);

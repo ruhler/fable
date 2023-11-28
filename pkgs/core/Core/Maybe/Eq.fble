@@ -6,9 +6,9 @@
 
 <@ T@>(Eq@<T@>) { Eq@<Maybe@<T@>>; }
 Eq = <@ T@>(Eq@<T@> eq)(Maybe@<T@> a, Maybe@<T@> b) {
-  a.?(
-    just: b.?(just: eq(a.just, b.just), nothing: False),
-    nothing: b.?(just: False, nothing: True));
+  a.?(nothing: b.?(nothing: True, : False));
+  b.?(nothing: False);
+  eq(a.just, b.just);
 };
 
 @(Eq);

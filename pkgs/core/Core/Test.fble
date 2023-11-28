@@ -39,11 +39,16 @@ TestSuite = (String@ name, List@<Test@> tests) {
 
 <@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
 AssertEquals = <@ T@>(/Core/Eq%.Eq@<T@> eq, /Core/Show%.Show@<T@> show, T@ expected, T@ actual) {
-  eq(expected, actual).?(
-    true: TestResult@(pass: Unit),
-    false: TestResult@(fail: Strs[
-      Str|'expected: ', show(expected),
-      Str|', but got: ', show(actual)]));
+  eq(expected, actual).?(true: TestResult@(pass: Unit));
+  TestResult@(fail: Strs[
+    Str|'expected: ', show(expected),
+    Str|', but got: ', show(actual)]);
+};
+
+<@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
+AssertNotEquals = <@ T@>(/Core/Eq%.Eq@<T@> eq, /Core/Show%.Show@<T@> show, T@ expected, T@ actual) {
+  eq(expected, actual).?(false: TestResult@(pass: Unit));
+  TestResult@(fail: Strs[show(expected), Str|' == ', show(actual)]);
 };
 
 # ExpectFails --
@@ -62,4 +67,4 @@ ExpectFails = (TestResult@ result, String@ msg) {
 };
 
 @(TestResult@, Test@, TestSuite@, TestCase@,
-  AssertEquals, ExpectFails, Test, TestSuite);
+  AssertEquals, AssertNotEquals, ExpectFails, Test, TestSuite);

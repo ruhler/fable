@@ -13,26 +13,19 @@
 #   Implementation of Eq@ for List@. See documentation of /Eq%.Eq@.
 <@ T@>(Eq@<T@>) { Eq@<List@<T@>>; }
 Eq = <@ T@>(Eq@<T@> eq)(List@<T@> a, List@<T@> b) {
-  a.?(
-    cons: b.?(
-      cons: {
-        eq(a.cons.head, b.cons.head).?(
-          true: Eq(eq)(a.cons.tail, b.cons.tail),
-          false: False);
-      },
-      nil: False),
-    nil: b.?(cons: False, nil: True));
+  a.?(nil: b.?(nil: True, : False));
+  b.?(nil: False);
+  eq(a.cons.head, b.cons.head).?(false: False);
+  Eq(eq)(a.cons.tail, b.cons.tail);
 };
 
 # Contains --
 #   Return true if the list contains the given element, false otherwise.
 <@ T@>(Eq@<T@>)(List@<T@>, T@) { Bool@; }
 Contains = <@ T@>(Eq@<T@> eq)(List@<T@> l, T@ e) {
-  l.?(
-    cons: eq(l.cons.head, e).?(
-      true: True,
-      false: Contains(eq)(l.cons.tail, e)),
-    nil: False);
+  l.?(nil: False);
+  eq(l.cons.head, e).?(true: True);
+  Contains(eq)(l.cons.tail, e);
 };
 
 # Split --

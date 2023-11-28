@@ -25,7 +25,7 @@
 # Returns:
 #   A new list consisting of the element 'a' followed by the elements of 'l'.
 <@ T@>(T@, List@<T@>) { List@<T@>; } Cons = <@ T@>(T@ a, List@<T@> l) {
-  List@<T@>(cons: @(head: a, tail: l));
+  List@(cons: @(head: a, tail: l));
 };
 
 # Nil --
@@ -79,11 +79,9 @@ List@ Nil = <@ T@> {
 #   A new list with all the elements of 'list' except the last element of
 #   list. Returns an empty list if the input list is empty.
 <@ T@>(List@<T@>) { List@<T@>; } Init = <@ T@>(List@<T@> list) {
-  list.?(
-    cons: list.cons.tail.?(
-      cons: Cons(list.cons.head, Init(list.cons.tail)),
-      nil: Nil<T@>),
-    nil: Nil<T@>);
+  list.?(nil: Nil<T@>);
+  list.cons.tail.?(nil: Nil<T@>);
+  Cons(list.cons.head, Init(list.cons.tail));
 };
 
 # ForEach --
@@ -109,14 +107,13 @@ List@ Nil = <@ T@> {
 #   return b
 <@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@; }) { B@; }
 ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
-  list.?(
-    cons: ForEach(list.cons.tail, body(list.cons.head, base), body),
-    nil: base);
+  list.?(nil: base);
+  ForEach(list.cons.tail, body(list.cons.head, base), body);
 };
 
 # Reverses elements of a list.
 <@ T@>(List@<T@>) { List@<T@>; } Reverse = <@ T@>(List@<T@> l) {
-  ForEach(l, List<T@>[], Cons<T@>);
+  ForEach(l, Nil<T@>, Cons<T@>);
 };
 
 # Map --
@@ -168,7 +165,8 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
 # Returns:
 #   A list with all elements from the list of lists x, in order.
 <@ T@>(List@<List@<T@>>) { List@<T@>; } Concat = <@ T@>(List@<List@<T@>> x) {
-  x.?(cons: Append(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
+  x.?(nil: Nil<T@>);
+  Append(x.cons.head, Concat(x.cons.tail));
 };
 
 @(List@, List, Cons, Nil, Append, Last, Init, Concat, Map, ForEach, Reverse);

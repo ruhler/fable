@@ -84,7 +84,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 Test@ Tests = TestSuite(Str|Map, List<Test@>[
   Test(Str|'empty', (Unit@ _) {
     Maybe@<Unit@> wnt = Nothing<Unit@>;
-    Maybe@<Unit@> got = Lookup<Unit@>(Empty<Unit@>, B);
+    Maybe@<Unit@> got = Lookup(Empty<Unit@>, B);
     AssertEquals(
       /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
       /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),
@@ -94,7 +94,7 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
   Test(Str|'not found', (Unit@ _) {
     Map@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
     Maybe@<Unit@> wnt = Nothing<Unit@>;
-    Maybe@<Unit@> got = Lookup<Unit@>(map, B);
+    Maybe@<Unit@> got = Lookup(map, B);
     AssertEquals(
       /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
       /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),

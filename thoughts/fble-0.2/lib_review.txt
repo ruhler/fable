@@ -56,22 +56,22 @@ pkgs/core/Core/Iter.fble                DONE
 pkgs/core/Core/LFSR.fble                DONE
 pkgs/core/Core/LFSR/Int.fble            DONE
 pkgs/core/Core/LFSR/Tests.fble          DONE
-pkgs/core/Core/List/Eq.fble
-pkgs/core/Core/List.fble
-pkgs/core/Core/List/Length.fble
-pkgs/core/Core/List/Ord.fble
-pkgs/core/Core/List/Show.fble
-pkgs/core/Core/List/Sort.fble
-pkgs/core/Core/List/Tests.fble
-pkgs/core/Core/Map/Eq.fble
-pkgs/core/Core/Map.fble
-pkgs/core/Core/Map/Map.fble
-pkgs/core/Core/Map/Show.fble
-pkgs/core/Core/Map/Tests.fble
-pkgs/core/Core/Maybe/Eq.fble
-pkgs/core/Core/Maybe.fble
-pkgs/core/Core/Maybe/Show.fble
-pkgs/core/Core/Maybe/Tests.fble
+pkgs/core/Core/List/Eq.fble             DONE
+pkgs/core/Core/List.fble                DONE
+pkgs/core/Core/List/Length.fble         DONE
+pkgs/core/Core/List/Ord.fble            DONE
+pkgs/core/Core/List/Show.fble           DONE
+pkgs/core/Core/List/Sort.fble           DONE
+pkgs/core/Core/List/Tests.fble          DONE
+pkgs/core/Core/Map/Eq.fble              DONE
+pkgs/core/Core/Map.fble                 DONE
+pkgs/core/Core/Map/Map.fble             DONE
+pkgs/core/Core/Map/Show.fble            DONE
+pkgs/core/Core/Map/Tests.fble           DONE
+pkgs/core/Core/Maybe/Eq.fble            DONE
+pkgs/core/Core/Maybe.fble               DONE
+pkgs/core/Core/Maybe/Show.fble          DONE
+pkgs/core/Core/Maybe/Tests.fble         DONE
 pkgs/core/Core/Monad.fble
 pkgs/core/Core/Monad/IO.fble
 pkgs/core/Core/Monad/Pure.fble
