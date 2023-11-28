@@ -1,0 +1,24 @@
+@doc Fble Profiler
+ One of the main goals of the fble language is to support high performance,
+ low overhead computing. A profiler is an important tool to aid developers in
+ optimizing the performance of fble programs.
+
+ The purpose of a profiler is to help programmers identify actions they can
+ take to improve the performance of their programs. Actions, in this case,
+ refers to modifying source code. A good profiler will direct programmers to
+ particular places in their source code to consider changing to improve
+ performance.
+
+ Much of the source code for a program may contribute very little to the
+ overall runtime of a program. If a program takes 60 seconds to run, 1 second
+ of which is spent in some function Foo, the most you can possibly save by
+ optimizing the function Foo is 1 second. It's more effective to spend efforts
+ on those parts of the program that contribute most to the run time.
+
+ Let's say we look at the performance of our program at the granularity of
+ functions. Functions are called by other functions and can call other
+ functions. To improve the performance of a program with respect to some
+ function Foo, you can either reduce the number of times the function Foo is
+ called, reduce the amount of time the function spends calling other
+ functions, or optimize the function itself.
+

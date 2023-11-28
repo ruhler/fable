@@ -2,6 +2,14 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* Generate www for book/ docs.
+
+* Update book/ docs?
+ - Given language changes
+ - And migrate to fbld?
+
+* Add coreutils dependency to README given use of 'uname -o'?
+
 * Review all fble library code for idiomatic use?
 
 * dc.man: Treat arg and return descriptions as non-block always?
@@ -103,10 +111,6 @@ Things to do for the fble-0.2 release.
 * Remove FBLE_PACKAGE_PATH setting from Install tutorial.
   Now that we have the default package path to look in.
 
-* Update book/ docs?
- - Given language changes
- - And migrate to fbld?
-
 * Would be nice to have SEE ALSO section for library man pages.
 
 * Check if all the fble-module-path.h functions really need to be public API.
@@ -143,17 +147,11 @@ Things to do for the fble-0.2 release.
 
 * Review C API for consistency.
   For example: FbleVectorInit inconsistent with FbleFreeVector?
+  Maybe rename FbleVectorInit to FbleNewVector?
 
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
-
-* [lib] Move more value conversion functions to separate object files.
- - Color, IO, etc.
-
-* [debugger] Improve support for printing variables
- - Emit lexical scopes where appropriate.
-   But what for? What value for printing lexical scopes?
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?

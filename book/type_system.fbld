@@ -1,8 +1,7 @@
-Fble Type System Design
-=======================
-Guiding principles for the design of the Fble type system:
+@doc Fble Type System Design
+ Guiding principles for the design of the Fble type system:
 
-* Avoid builtin types where possible.
+ @definition Avoid builtin types where possible.
   Many languages have builtin types for integers, booleans, floating point,
   characters, strings, dictionaries. But many of these things can be
   implemented in terms of more primitive kinds of types such as struct, enum,
@@ -20,14 +19,14 @@ Guiding principles for the design of the Fble type system:
   language to a particular hardware implementation, which will make it less
   generally useful.
 
-* Static type system.
+ @definition Static type system.
   Computers are useful tools. The idea behind a type system is to allow a
   computer to find issues in a program automatically. For it to be useful, it
   should be able to find those issues without running the program, because
   otherwise you could just run the program yourself and see if it works or
   not.
 
-* Simple type rules.
+ @definition Simple type rules.
   Where simple means it's relatively straight forward to derive the types of
   an expression. If the type rules are complicated, it's going to be hard to
   implement a type checker, and it's going to be hard for a human to
@@ -41,5 +40,3 @@ Guiding principles for the design of the Fble type system:
   particular, no form of type inference that has to know how the result of an
   expression is used in order to figure out what the type of the expression
   is.
-
-

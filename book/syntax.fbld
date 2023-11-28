@@ -1,8 +1,7 @@
-Fble Concrete Syntax Design
-===========================
-Guiding principles for the design of the Fble concrete syntax:
+@doc Fble Concrete Syntax Design
+ Guiding principles for the design of the Fble concrete syntax:
 
-* No keywords.
+ @definition No keywords.
   It always bothers me in languages like Java and C when I go to use a name
   like 'class' or 'union' or 'return' for a field or variable and it doesn't
   let me. You end up writing 'cls' or 'class_' or some such. I want the user
@@ -13,7 +12,7 @@ Guiding principles for the design of the Fble concrete syntax:
   instead of keywords. There is not a single keyword in the fble concrete
   syntax.
 
-* Easy to parse.
+ @definition Easy to parse.
   Easy to parse means for both humans and computers, based on the assumption
   that anything that is hard to write a parser for is harder for humans to
   parse.
@@ -24,13 +23,13 @@ Guiding principles for the design of the Fble concrete syntax:
   conflicts. The first thing I do when considering a new syntax is see if it
   creates a conflict.
 
-* Whitespace does not convey syntax.
+ @definition Whitespace does not convey syntax.
   Languages like python or haskell layout annoy me. I want control over my own
   whitespace. In fble whitespace does not convey syntactic information. Use
   braces and other punctuation for that. Indent and put whitespace wherever
   you like.
 
-* C-like syntax.
+ @definition C-like syntax.
   In some sense the concrete syntax for a language doesn't matter to me as a
   designer of the language. Changing the concrete syntax doesn't change the
   fundamental identity of a language.
@@ -50,7 +49,7 @@ Guiding principles for the design of the Fble concrete syntax:
   very little like C code, but has some amount of consistency and purity with
   the underlying fble language that resonates with me.
 
-* Common syntactic structures.
+ @definition Common syntactic structures.
   Lists are common: lists of fields, lists of arguments, lists of statements.
   Try to use consistent syntax for lists. Two approaches are used:
   1. parenthesis, comma separated (or the variant angle brackets for type
@@ -69,7 +68,7 @@ Guiding principles for the design of the Fble concrete syntax:
   evolutions to the conditional expression, and for some reason I quite enjoy
   how it has ended up.
 
-* Syntactic sugar only if justified.
+ @definition Syntactic sugar only if justified.
   One thing that annoyed me when learning Haskell was all the different ways
   to do conditional expressions:  if, case, |, repeated function definitions.
   If they are all the same, they should use the same syntax. So I prefer to
@@ -96,14 +95,14 @@ Guiding principles for the design of the Fble concrete syntax:
   their programs. If syntax is too tedious, define a function to introduce
   your own new syntax for that operation.
 
-* Distinction between type level and value level.
+ @definition Distinction between type level and value level.
   Type variables end with '@', normal variables don't. This is somewhat
   arbitrary, but I think important so it's easy for programmers to see what is
   determined statically and what is determined at runtime. It's also nice to
   be able to define a type and a function with similar names, so Unit@ and
   Unit for example.
 
-* Syntax mirrors what runs fast.
+ @definition Syntax mirrors what runs fast.
   If there is a simple syntax for some operation, that ought to imply that
   operation is fast to run. I'm not sure how well I stick by this, but it's an
   idea at least.
@@ -120,11 +119,9 @@ Guiding principles for the design of the Fble concrete syntax:
   to the number of fields, so it seems right that the syntax to update a
   single field of a struct be proportional to the number of fields.
 
-On choice of punctuation:
- '+' for sum type, '*' for product type.
- '?' for asking questions about the tag of a union. 
- '~' for a link, because maybe it looks like a wire or pipe.
- '<-' for function bind inspired by haskell do notation.
- '!' for something that can have side effects.
- '/' for its common use as a path delimiter.
- '@' and '%' as the few remaining symbols easy to access on a US keyboard.
+ @definition On choice of punctuation.
+  @def[@l{+}] for sum type, '*' for product type.
+  @def[@l{?}] for asking questions about the tag of a union. 
+  @def[@l{<-}] for function bind inspired by haskell do notation.
+  @def[@l{/}] for its common use as a path delimiter.
+  @def[@l{@}] and '%' as the few remaining symbols easy to access on a US keyboard.
