@@ -95,6 +95,12 @@ proc lib { lib objs } {
   build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
 }
 
+# We have to reserve stack space at compile time on Windows.
+set ::stackflag ""
+if {[exec uname -o] == "Cygwin"} {
+  set ::stackflag "-Wl,--stack,1073741824"
+}
+
 # bin --
 #   Build a binary.
 #
@@ -103,7 +109,7 @@ proc lib { lib objs } {
 #   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 proc bin { bin objs lflags } {
-  set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
+  set cflags "-std=c99 $::stackflag -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
 }
 
@@ -116,7 +122,7 @@ proc bin { bin objs lflags } {
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 proc bin_cov { bin objs lflags } {
   #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
-  set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
+  set cflags "-std=c99 $::stackflag --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
 }
 

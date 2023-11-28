@@ -159,7 +159,11 @@ proc compile {target main} {
 
   lappend objs $::b/test/libfbletest.a
   lappend objs $::b/lib/libfble.a
-  exec gcc -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs
+  set stackflag ""
+  if {[exec uname -o] == "Cygwin"} {
+    set stackflag "-Wl,--stack,1073741824"
+  }
+  exec gcc {*}$stackflag --pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs
   return $exe
 }
 
