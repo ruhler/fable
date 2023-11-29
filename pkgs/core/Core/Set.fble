@@ -30,7 +30,7 @@ Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
 # Returns:
 #   True if the set is empty, false otherwise.
 <@ T@>(Set@<T@>) { Bool@; } IsEmpty = <@ T@>(Set@<T@> set) {
-  /Core/Map%.IsEmpty<T@, Unit@>(set);
+  /Core/Map%.IsEmpty(set);
 };
 
 # Contains --
@@ -52,7 +52,7 @@ Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
 #   Contains(set, value);
 <@ T@>(Ord@<T@>)(Set@<T@>, T@) { Bool@; }
 Contains = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
-  /Core/Map%.Lookup<T@>(ord)<Unit@>(set, element).?(just: True, nothing: False);
+  /Core/Map%.Lookup(ord)(set, element).?(just: True, nothing: False);
 };
 
 # Insert --

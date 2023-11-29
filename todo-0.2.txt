@@ -4,11 +4,7 @@ Things to do for the fble-0.2 release.
 
 * Generate www for book/ docs.
 
-* Update book/ docs?
- - Given language changes
- - And migrate to fbld?
-
-* Add coreutils dependency to README given use of 'uname -o'?
+* Update book/ docs for language changes?
 
 * Review all fble library code for idiomatic use?
 

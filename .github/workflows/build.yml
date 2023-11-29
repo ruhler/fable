@@ -15,7 +15,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install \
-            expect binutils bison \
+            expect binutils bison coreutils \
             gcc gdb diffutils grep groff-base source-highlight \
             ninja-build libgl-dev libsdl2-dev tcl8.6
 
@@ -56,7 +56,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install \
-            expect binutils bison \
+            expect binutils bison coreutils \
             gcc gdb diffutils grep groff-base source-highlight \
             ninja-build libgl-dev libsdl2-dev tcl8.6
 

@@ -72,28 +72,28 @@ pkgs/core/Core/Maybe/Eq.fble            DONE
 pkgs/core/Core/Maybe.fble               DONE
 pkgs/core/Core/Maybe/Show.fble          DONE
 pkgs/core/Core/Maybe/Tests.fble         DONE
-pkgs/core/Core/Monad.fble
-pkgs/core/Core/Monad/IO.fble
-pkgs/core/Core/Monad/Pure.fble
-pkgs/core/Core/Monad/State.fble
-pkgs/core/Core/Ord.fble
-pkgs/core/Core/Set.fble
-pkgs/core/Core/Set/Show.fble
-pkgs/core/Core/Set/Tests.fble
-pkgs/core/Core/Show.fble
-pkgs/core/Core/Stdio/Cat.fble
-pkgs/core/Core/Stdio/FastCat.fble
-pkgs/core/Core/Stdio.fble
-pkgs/core/Core/Stdio/HelloWorld.fble
-pkgs/core/Core/Stdio/IO.fble
-pkgs/core/Core/Stdio/Pure/Eq.fble
-pkgs/core/Core/Stdio/Pure.fble
-pkgs/core/Core/Stdio/Pure/Show.fble
-pkgs/core/Core/Stdio/Stub.fble
-pkgs/core/Core/Stdio/Tests.fble
-pkgs/core/Core/Stream.fble
-pkgs/core/Core/Stream/IStream.fble
-pkgs/core/Core/Stream/OStream.fble
+pkgs/core/Core/Monad.fble               DONE
+pkgs/core/Core/Monad/IO.fble            DONE
+pkgs/core/Core/Monad/Pure.fble          DONE
+pkgs/core/Core/Monad/State.fble         DONE
+pkgs/core/Core/Ord.fble                 DONE
+pkgs/core/Core/Set.fble                 DONE
+pkgs/core/Core/Set/Show.fble            DONE
+pkgs/core/Core/Set/Tests.fble           DONE
+pkgs/core/Core/Show.fble                DONE
+pkgs/core/Core/Stdio/Cat.fble           DONE
+pkgs/core/Core/Stdio/FastCat.fble       DONE
+pkgs/core/Core/Stdio.fble               DONE
+pkgs/core/Core/Stdio/HelloWorld.fble    DONE
+pkgs/core/Core/Stdio/IO.fble            DONE
+pkgs/core/Core/Stdio/Pure/Eq.fble       DONE
+pkgs/core/Core/Stdio/Pure.fble          DONE
+pkgs/core/Core/Stdio/Pure/Show.fble     DONE
+pkgs/core/Core/Stdio/Stub.fble          DONE
+pkgs/core/Core/Stdio/Tests.fble         Afraid to touch
+pkgs/core/Core/Stream.fble              DONE
+pkgs/core/Core/Stream/IStream.fble      DONE
+pkgs/core/Core/Stream/OStream.fble      DONE
 pkgs/core/Core/String/Eq.fble
 pkgs/core/Core/String.fble
 pkgs/core/Core/String/Ord.fble

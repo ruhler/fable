@@ -77,6 +77,8 @@ required. The version numbers provided are versions that are known to work:
 
 * **GNU Compiler Collection (Debian 8.3.0-6) 8.3.0**: For compiling fble.
 
+* **GNU coreutils 8.30**: Used in the build system.
+
 * **GNU Debugger (Debian 8.2.1-2+b3) 8.2.1**: Used to test fble debugging.
 
 * **GNU diffutils 3.7**: For some test cases.
@@ -98,7 +100,7 @@ required. The version numbers provided are versions that are known to work:
 To install required dependencies on a debian based system:
 
     apt install \
-      expect binutils bison \
+      expect binutils bison coreutils \
       gcc gdb diffutils grep groff-base source-highlight \
       ninja-build libgl-dev libsdl2-dev tcl8.6
 

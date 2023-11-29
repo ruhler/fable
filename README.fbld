@@ -52,6 +52,7 @@
   @def[GNU Binutils for Debian 2.31.1] For assembling compiled fble programs.
   @def[GNU Bison 3.3.2] For generating the fble parser.
   @def[GNU Compiler Collection (Debian 8.3.0-6) 8.3.0] For compiling fble.
+  @def[GNU coreutils 8.30] Used in the build system.
   @def[GNU Debugger (Debian 8.2.1-2+b3) 8.2.1] Used to test fble debugging.
   @def[GNU diffutils 3.7] For some test cases.
   @def[GNU grep 3.3] For some test cases.
@@ -66,7 +67,7 @@
 
   @code[sh] @
    apt install \
-     expect binutils bison \
+     expect binutils bison coreutils \
      gcc gdb diffutils grep groff-base source-highlight \
      ninja-build libgl-dev libsdl2-dev tcl8.6
 
