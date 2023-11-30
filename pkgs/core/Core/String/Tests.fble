@@ -57,7 +57,7 @@ Test@ Tests = TestSuite(Str|String, List[
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
-  TestSuite(Str|StartsWith, List<Test@>[
+  TestSuite(Str|StartsWith, List[
     Test(Str|NulNul, (Unit@ _) {
       Bool@ wnt = True;
       Bool@ got = /Core/String/Eq%.StartsWith(Str|'', Str|'');

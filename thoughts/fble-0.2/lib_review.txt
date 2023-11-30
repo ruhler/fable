@@ -94,20 +94,20 @@ pkgs/core/Core/Stdio/Tests.fble         Afraid to touch
 pkgs/core/Core/Stream.fble              DONE
 pkgs/core/Core/Stream/IStream.fble      DONE
 pkgs/core/Core/Stream/OStream.fble      DONE
-pkgs/core/Core/String/Eq.fble
-pkgs/core/Core/String.fble
-pkgs/core/Core/String/Ord.fble
-pkgs/core/Core/String/Show.fble
-pkgs/core/Core/String/Tests.fble
-pkgs/core/Core/Test.fble
-pkgs/core/Core/Test/Run.fble
-pkgs/core/Core/Tests.fble
-pkgs/core/Core/Test/Stdio.fble
-pkgs/core/Core/Test/Tests.fble
-pkgs/core/Core/Undef.fble
-pkgs/core/Core/Unit/Eq.fble
-pkgs/core/Core/Unit.fble
-pkgs/core/Core/Unit/Show.fble
+pkgs/core/Core/String/Eq.fble           DONE
+pkgs/core/Core/String.fble              DONE
+pkgs/core/Core/String/Ord.fble          DONE
+pkgs/core/Core/String/Show.fble         DONE
+pkgs/core/Core/String/Tests.fble        DONE
+pkgs/core/Core/Test.fble                DONE
+pkgs/core/Core/Test/Run.fble            DONE
+pkgs/core/Core/Tests.fble               DONE
+pkgs/core/Core/Test/Stdio.fble          DONE
+pkgs/core/Core/Test/Tests.fble          DONE
+pkgs/core/Core/Undef.fble               DONE
+pkgs/core/Core/Unit/Eq.fble             DONE
+pkgs/core/Core/Unit.fble                DONE
+pkgs/core/Core/Unit/Show.fble           DONE
 pkgs/fbld/Fbld/Builtin/Define.fble
 pkgs/fbld/Fbld/Builtin/Eval.fble
 pkgs/fbld/Fbld/Builtin.fble
