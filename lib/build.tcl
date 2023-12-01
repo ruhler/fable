@@ -23,6 +23,7 @@ namespace eval "lib" {
     tc.c
     type.c
     typecheck.c
+    unused.c
     usage.c
     value.c
     vector.c

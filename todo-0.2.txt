@@ -4,6 +4,10 @@ Things to do for the fble-0.2 release.
 
 * Generate www for book/ docs.
 
+* tutorials/Introduction phonetic rendering of fble is turning into ?? in html
+  output.
+  Maybe due to use of unicode character not supported by fble Char@?
+
 * Update book/ docs for language changes?
 
 * Review all fble library code for idiomatic use?
@@ -207,13 +211,6 @@ Things to do for the fble-0.2 release.
   reported.
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
- 
-* [typecheck] We don't get a warning about an unused self recursive function.
-  More generally, we don't get warnings about variables that are referenced
-  only by unused variables.
-  We should change TypeCheckExpr to return the set of Var* that were accessed
-  by the expression and remove the 'accessed' field of var. Then we could
-  manage this all properly.
  
 * [typecheck] Better error messages on types that have the same name but different values?
 * [typecheck] Quote funny names in types. For example, the field ',' should have

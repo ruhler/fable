@@ -9,8 +9,8 @@ Bool@ True = Bool@(true: Unit);
 # For code coverage.
 Unit@ e = True.false;
 
-(Unit@) { Unit@; } F = (Unit@ x) {
-  F(x);
+(Unit@) { Unit@; } _F = (Unit@ x) {
+  _F(x);
 };
 
 e;

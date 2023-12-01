@@ -18,6 +18,7 @@
 #include "tc.h"
 #include "type.h"
 #include "unreachable.h"
+#include "unused.h"
 
 /**
  * Name of a variable.
@@ -60,7 +61,6 @@ typedef struct {
   FbleType* type;         
 
   bool used;        /**< True if the variable is used anywhere at runtime. */
-  bool accessed;    /**< True if the variable is referenced anywhere. */
   FbleVar var;      /**< The index of the variable. */
 } Var;
 
@@ -211,7 +211,6 @@ static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
   var->name = name;
   var->type = type;
   var->used = false;
-  var->accessed = false;
   var->var.tag = FBLE_LOCAL_VAR;
   var->var.index = scope->locals.size;
   FbleVectorAppend(scope->locals, var);
@@ -260,7 +259,6 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
     size_t j = scope->locals.size - i - 1;
     Var* var = scope->locals.xs[j];
     if (var != NULL && VarNamesEqual(name, var->name)) {
-      var->accessed = true;
       if (!phantom) {
         var->used = true;
       }
@@ -271,7 +269,6 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
   for (size_t i = 0; i < scope->args.size; ++i) {
     Var* var = scope->args.xs[i];
     if (var != NULL && VarNamesEqual(name, var->name)) {
-      var->accessed = true;
       if (!phantom) {
         var->used = true;
       }
@@ -282,7 +279,6 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
     if (var != NULL && VarNamesEqual(name, var->name)) {
-      var->accessed = true;
       if (!phantom) {
         var->used = true;
       }
@@ -303,7 +299,6 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
       captured_var->name = var->name;
       captured_var->type = FbleRetainType(heap, var->type);
       captured_var->used = !phantom;
-      captured_var->accessed = true;
       captured_var->var.tag = FBLE_STATIC_VAR;
       captured_var->var.index = scope->statics.size;
       FbleVectorAppend(scope->statics, captured_var);
@@ -351,7 +346,6 @@ static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePat
     var->name = args.xs[i].name;
     var->type = args.xs[i].type;
     var->used = false;
-    var->accessed = false;
     var->var.tag = FBLE_ARG_VAR;
     var->var.index = scope->args.size;
     FbleVectorAppend(scope->args, var);
@@ -1118,18 +1112,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       if (!error) {
         body = TypeCheckExpr(th, scope, let_expr->body);
         error = (body.type == NULL);
-      }
-
-      if (body.type != NULL) {
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          if (!vars[i]->accessed
-              && vars[i]->name.module == NULL
-              && vars[i]->name.normal.name->str[0] != '_') {
-            FbleReportWarning("variable '", vars[i]->name.normal.loc);
-            FblePrintName(stderr, vars[i]->name.normal);
-            fprintf(stderr, "' defined but not used\n");
-          }
-        }
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
@@ -2071,9 +2053,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
  * Sometimes an expression is used only for its type. We don't want to
  * mark variables referenced by the expression as used, because we don't need
  * to know the value of the variable at runtime. This function typechecks an
- * expression without marking variables as used. The variables are marked as
- * 'accessed' though, to avoid emitting warnings about unused variables that
- * are actually used to get their type.
+ * expression without marking variables as used.
  *
  * @param th  Heap to use for allocations.
  * @param scope  The list of variables in scope.
@@ -2319,6 +2299,7 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType**
       FbleReleaseType(th, type);
       return TC_FAILED;
     }
+    FbleWarnAboutUnusedVars(module->value);
   }
 
   FreeScope(th, &scope);

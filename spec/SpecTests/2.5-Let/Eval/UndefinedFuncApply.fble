@@ -4,8 +4,8 @@
 
 # The value of 'f' is undefined in the let bindings. This will produce
 # undefined behavior when applying the undefined function f.
-(Bool@) { Bool@; } f = {
-   Bool@ result = f(Bool@(true: Unit@()));
+(Bool@) { Bool@; } _f = {
+   Bool@ result = _f(Bool@(true: Unit@()));
    (Bool@ b) { result; };
 };
 Unit@();
