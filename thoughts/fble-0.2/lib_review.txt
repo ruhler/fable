@@ -108,25 +108,25 @@ pkgs/core/Core/Undef.fble               DONE
 pkgs/core/Core/Unit/Eq.fble             DONE
 pkgs/core/Core/Unit.fble                DONE
 pkgs/core/Core/Unit/Show.fble           DONE
-pkgs/fbld/Fbld/Builtin/Define.fble
-pkgs/fbld/Fbld/Builtin/Eval.fble
-pkgs/fbld/Fbld/Builtin.fble
-pkgs/fbld/Fbld/Builtin/If.fble
-pkgs/fbld/Fbld/Builtin/Plain.fble
-pkgs/fbld/Fbld/Builtin/String.fble
-pkgs/fbld/Fbld/Builtin/Tests.fble
-pkgs/fbld/Fbld/Eval.fble
-pkgs/fbld/Fbld/Loc/Eq.fble
-pkgs/fbld/Fbld/Loc.fble
-pkgs/fbld/Fbld/Loc/Show.fble
-pkgs/fbld/Fbld/Main.fble
-pkgs/fbld/Fbld/Markup/Eq.fble
-pkgs/fbld/Fbld/Markup.fble
-pkgs/fbld/Fbld/Markup/Show.fble
-pkgs/fbld/Fbld/Parse/Block.fble
-pkgs/fbld/Fbld/Parse.fble
-pkgs/fbld/Fbld/Parse/Inline.fble
-pkgs/fbld/Fbld/Parse/M.fble
+pkgs/fbld/Fbld/Builtin/Define.fble      DONE
+pkgs/fbld/Fbld/Builtin/Eval.fble        DONE
+pkgs/fbld/Fbld/Builtin.fble             DONE
+pkgs/fbld/Fbld/Builtin/If.fble          DONE
+pkgs/fbld/Fbld/Builtin/Plain.fble       DONE
+pkgs/fbld/Fbld/Builtin/String.fble      DONE
+pkgs/fbld/Fbld/Builtin/Tests.fble       DONE
+pkgs/fbld/Fbld/Eval.fble                DONE
+pkgs/fbld/Fbld/Loc/Eq.fble              DONE
+pkgs/fbld/Fbld/Loc.fble                 DONE
+pkgs/fbld/Fbld/Loc/Show.fble            DONE
+pkgs/fbld/Fbld/Main.fble                DONE
+pkgs/fbld/Fbld/Markup/Eq.fble           DONE
+pkgs/fbld/Fbld/Markup.fble              DONE
+pkgs/fbld/Fbld/Markup/Show.fble         DONE
+pkgs/fbld/Fbld/Parse/Block.fble         DONE
+pkgs/fbld/Fbld/Parse.fble               DONE
+pkgs/fbld/Fbld/Parse/Inline.fble        DONE
+pkgs/fbld/Fbld/Parse/M.fble             DONE
 pkgs/fbld/Fbld/Parse/Tests.fble
 pkgs/fbld/Fbld/Result/Eq.fble
 pkgs/fbld/Fbld/Result.fble

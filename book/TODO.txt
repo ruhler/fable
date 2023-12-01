@@ -1,6 +1,0 @@
-Topics to consider writing about:
-* type system
-* garbage collection
-* profiler
-* compiler
-* testing (language tests)

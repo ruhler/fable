@@ -161,7 +161,6 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleRetainValue.3.fbld           DONE
 ./out/include/fble/FbleCopyLoc.3.fbld               DONE
 
-
 Tutorials - check for generated html
 ./tutorials/HelloWorld.fbld
 ./tutorials/HelloWorldRevisited.fbld
@@ -181,6 +180,14 @@ Tutorials - check for generated html
 ./tutorials/Polymorphism.fbld
 ./tutorials/Functions.fbld
 ./tutorials/Structs.fbld
+
+Book - check for content and generated html
+./book/Book.fbld
+./book/Origins.fbld
+./book/Performance.fbld
+./book/Profiler.fbld
+./book/Syntax.fbld
+./book/TypeSystem.fbld
 
 Other
 ./Release.fbld

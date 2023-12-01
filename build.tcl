@@ -218,6 +218,7 @@ build_tcl $::s/test/spec-test.build.tcl
 build_tcl $::s/pkgs/build.tcl
 build_tcl $::s/spec/build.tcl
 build_tcl $::s/tutorials/build.tcl
+build_tcl $::s/book/build.tcl
 
 # README.md
 build $::b/pkgs/fbld/README.md \

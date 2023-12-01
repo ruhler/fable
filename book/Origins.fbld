@@ -17,7 +17,7 @@
   For unbounded pure functional programming with support for non-determinism,
   interaction, IO, side effects, causality, time, or whatever you want to call
   it.
- @definition[@l{D}] 
+ @definition[@l{D}]
   For everything in 'C', but with features added to support programmers
   developing programs at scale.
 

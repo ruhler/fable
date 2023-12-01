@@ -96,10 +96,10 @@
   your own new syntax for that operation.
 
  @definition Distinction between type level and value level.
-  Type variables end with '@', normal variables don't. This is somewhat
+  Type variables end with @l{@}, normal variables don't. This is somewhat
   arbitrary, but I think important so it's easy for programmers to see what is
   determined statically and what is determined at runtime. It's also nice to
-  be able to define a type and a function with similar names, so Unit@ and
+  be able to define a type and a function with similar names, so @l{Unit@} and
   Unit for example.
 
  @definition Syntax mirrors what runs fast.

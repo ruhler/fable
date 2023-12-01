@@ -1,0 +1,15 @@
+@doc Fble Language Design Book
+ This document is a collection of topics on the fble language design.
+
+ @def[The Origins of Fble] @fbld[Origins.fbld]{}
+ @def[The Fble Performance Philosophy] @fbld[Performance.fbld]{}
+ @def[Fble Profiler] @fbld[Profiler.fbld]{}
+ @def[Fble Concrete Syntax Design] @fbld[Syntax.fbld]{}
+ @def[Fble Type System Design] @fbld[TypeSystem.fbld]{}
+
+ @section TODO
+  @item type system
+  @item garbage collection
+  @item profiler
+  @item compiler
+  @item testing (language tests)

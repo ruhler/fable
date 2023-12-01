@@ -2,7 +2,7 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* Generate www for book/ docs.
+* Warn about unused arguments in function values?
 
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
