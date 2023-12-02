@@ -7,6 +7,7 @@
 @ TestResult@ = /Core/Test%.TestResult@;
 % TestSuite = /Core/Test%.TestSuite;
 % Test = /Core/Test%.Test;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -18,30 +19,34 @@
 @ Player@ = /Games/TicTacToe/Board%.Player@;
 @ Square@ = /Games/TicTacToe/Board%.Square@;
 @ Status@ = /Games/TicTacToe/Board%.Status@;
+@ Position@ = /Games/TicTacToe/Board%.Position@;
 % BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
 % EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
+
+% Eq = /Games/TicTacToe/Board/Eq%;
+% Show = /Games/TicTacToe/Board/Show%;
 
 # Import to test compilation.
 % _ = /Games/TicTacToe/Stdio%;
 
 (Unit@) { TestResult@; } TestBoardStatus = (Unit@ _) {
-  Status@ status = BoardStatus(Board@(
+  Status@ want = Status@(O: Unit);
+  Status@ got = BoardStatus(Board@(
       Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
       Square@(E: Unit), Square@(O: Unit), Square@(X: Unit),
       Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
-  status.?(O: TestResult@(pass: Unit));
-  TestResult@(fail: Str|failed);
+  AssertEquals(Eq.Status, Show.Status, want, got);
 };
 
-# TODO: Use PositionEquals for test result, and report position when failed?
 (Unit@) { TestResult@; } TestChooseBestMoveWin = (Unit@ _) {
   AIR@ air = AI.Move(AI.Initial,
     Board@(Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
            Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
            Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)),
     Player@(X: Unit));
-  air.position.?(UR: TestResult@(pass: Unit));
-  TestResult@(fail: Str|failed);
+  Position@ want = Position@(UR: Unit);
+  Position@ got = air.position;
+  AssertEquals(Eq.Position, Show.Position, want, got);
 };
 
 (Unit@) { TestResult@; } TestChooseBestMoveNoLose = (Unit@ _) {
@@ -50,10 +55,10 @@
            Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
            Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)),
     Player@(X: Unit));
-  air.position.?(UR: TestResult@(pass: Unit));
-  TestResult@(fail: Str|failed);
+  Position@ want = Position@(UR: Unit);
+  Position@ got = air.position;
+  AssertEquals(Eq.Position, Show.Position, want, got);
 };
-
 
 Test@ Tests = TestSuite(Str|TicTacToe, List[
   Test(Str|TestBoardStatus, TestBoardStatus),

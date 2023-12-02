@@ -76,7 +76,15 @@ Things to do for the fble-0.2 release.
    There should be no need to have the entire text of the file in memory all
    at one time.
 
+Doc Comments
 * convert lib/* code to fbld doc comments.
+* Be able to write doc comments for extern values and types as well as
+  functions.
+* How to handle @file doc comments on header files?
+  - Should we write documentation for them somewhere?
+* Write test cases for doc comments extraction and conversion.
+  - For example: blank lines in doc comments should be allowed and not cause
+    the comment to be truncated.
 
 * Improve documentation about expectations for strict vs. non strict values
  - e.g. FbleThreadTailCall can take a non-strict value, but FbleFuncValueInfo
@@ -114,23 +122,11 @@ Things to do for the fble-0.2 release.
 
 * Check if all the fble-module-path.h functions really need to be public API.
 
-* How to handle @file doc comments on header files?
-  - Should we write documentation for them somewhere?
-
-* Convert internal doc comments to fbld doc comment format?
-
 * Factor out common code for @FbleVersion (@BuildStamp)
 
 * Is there a 'bnf' @code syntax the source highlighter supports that 
   we could use to make the syntax specification in fble.fbld prettier?
   - if not, consider writing one? Or switching to a syntax that does exist?
-
-* Be able to write doc comments for extern values and types as well as
-  functions.
-
-* Write test cases for doc comments extraction and conversion.
-  - For example: blank lines in doc comments should be allowed and not cause
-    the comment to be truncated.
 
 * Add a way to specify package path on the command line?
 
@@ -180,9 +176,6 @@ Things to do for the fble-0.2 release.
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
  too specific to the implementation of garbage collection. Anything we can do?
 
-* [/*%] Follow style guide in fble.style.txt
-  In particular, union field names should be lowercase: just, true, false, not
-  Just, True, False.
 * [/*%] Clean up fble library
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
@@ -192,7 +185,7 @@ Things to do for the fble-0.2 release.
 * [/Int%] Add test coverage for the Int routines.
 * [/Fble/Test%] Clean up fble test framework
  - Use AssertEquals for more of the tests.
-   GameOfLife, Sudoku, TicTacToe
+   GameOfLife, Sudoku
  - Add an AssertLt or similar methods? Or generalize AssertEquals?
  - Properly test the test infra.
 * [/GameOfLife%] Switch to a target 60 FPS?

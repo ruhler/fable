@@ -1,0 +1,31 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Position@ = /Games/TicTacToe/Board%.Position@;
+@ Status@ = /Games/TicTacToe/Board%.Status@;
+
+Eq@<Position@> Position = (Position@ a, Position@ b) {
+  a.?(
+    UL: b.?(UL: True, : False),
+    UC: b.?(UC: True, : False),
+    UR: b.?(UR: True, : False),
+    ML: b.?(ML: True, : False),
+    MC: b.?(MC: True, : False),
+    MR: b.?(MR: True, : False),
+    LL: b.?(LL: True, : False),
+    LC: b.?(LC: True, : False),
+    LR: b.?(LR: True, : False));
+};
+
+Eq@<Status@> Status = (Status@ a, Status@ b) {
+  a.?(
+    X: b.?(X: True, : False),
+    O: b.?(O: True, : False),
+    D: b.?(D: True, : False),
+    E: b.?(E: True, : False));
+};
+
+@(Position, Status);
