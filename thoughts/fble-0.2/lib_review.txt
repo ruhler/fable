@@ -178,13 +178,13 @@ pkgs/graphics/Graphics/Camera/SinCos.fble
 pkgs/graphics/Graphics/Tests.fble
 pkgs/graphics/Graphics/Triangle.fble
 pkgs/graphics/Graphics/Triangle/Tests.fble
-pkgs/hwdg/Hwdg/Adder.fble
-pkgs/hwdg/Hwdg/App.fble
-pkgs/hwdg/Hwdg/Coord.fble
-pkgs/hwdg/Hwdg/Data.fble
-pkgs/hwdg/Hwdg/Design.fble
-pkgs/hwdg/Hwdg/Memory.fble
-pkgs/hwdg/Hwdg/Tests.fble
+pkgs/hwdg/Hwdg/Adder.fble                     DONE
+pkgs/hwdg/Hwdg/App.fble                       DONE
+pkgs/hwdg/Hwdg/Coord.fble                     DONE
+pkgs/hwdg/Hwdg/Data.fble                      DONE
+pkgs/hwdg/Hwdg/Design.fble                    DONE
+pkgs/hwdg/Hwdg/Memory.fble                    DONE
+pkgs/hwdg/Hwdg/Tests.fble                     DONE
 pkgs/invaders/Invaders/Aliens.fble
 pkgs/invaders/Invaders/App.fble
 pkgs/invaders/Invaders/AppIO.fble

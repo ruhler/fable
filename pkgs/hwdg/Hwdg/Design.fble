@@ -126,12 +126,12 @@ ForEachRulePlaced = <@ B@>(Placed@ placed, B@ base, (Coord@, Rule@, B@) { B@; } 
   placed.design.?(
     rule: body(placed.coord, placed.design.rule, base),
     designs: {
-      /Core/List%.ForEach<Placed@, B@>(placed.design.designs, base,
+      /Core/List%.ForEach(placed.design.designs, base,
         (Placed@ p, B@ b) {
           Placed@ np = @(
             coord: /Hwdg/Coord%.Add(placed.coord, p.coord),
             design: p.design);
-          ForEachRulePlaced<B@>(np, b, body);
+          ForEachRulePlaced(np, b, body);
           });
       });
 };
@@ -146,7 +146,7 @@ ForEachRulePlaced = <@ B@>(Placed@ placed, B@ base, (Coord@, Rule@, B@) { B@; } 
 #   return b
 <@ B@>(Design@, B@, (Coord@, Rule@, B@) { B@; }) { B@; }
 ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body) {
-  ForEachRulePlaced<B@>(Placed@(Coord@(0, 0), design), base, body);
+  ForEachRulePlaced(Placed@(Coord@(0, 0), design), base, body);
 };
 
 # StepInternal --
@@ -169,8 +169,8 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
   # Check if a port is blocked because its memory location has already been
   # updated.
   (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } Blocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
-    pi.?(just: /Core/Set%.Contains<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c));
-    po.?(just: /Core/Set%.Contains<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c));
+    pi.?(just: /Core/Set%.Contains(/Hwdg/Coord%.Ord)(b.updated, c));
+    po.?(just: /Core/Set%.Contains(/Hwdg/Coord%.Ord)(b.updated, c));
     False;
   };
 
@@ -196,17 +196,17 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
   (B@, Coord@, PortSpec@, PortSpec@) { B@; } Update = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
     po.?(just: @(
       memory: /Hwdg/Memory%.Set(b.memory, c, po.just),
-      updated: /Core/Set%.Insert<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c)));
+      updated: /Core/Set%.Insert(/Hwdg/Coord%.Ord)(b.updated, c)));
     pi.?(just: @(
       memory: /Hwdg/Memory%.Clear(b.memory, c),
-      updated: /Core/Set%.Insert<Coord@>(/Hwdg/Coord%.Ord)(b.updated, c)));
+      updated: /Core/Set%.Insert(/Hwdg/Coord%.Ord)(b.updated, c)));
     b;
   };
 
   (Design@ design, Memory@ memory, Set@<Coord@> updated) {
     B@ b = ForEachRule<B@>(design, B@(memory, updated), (Coord@ c, Rule@ r, B@ b) {
       # The coordinates of each port.
-      Ports@<Coord@> cs = Ports@<Coord@>(
+      Ports@<Coord@> cs = Ports@(
         Coord@(c.x, c.y),
         Coord@(Incr(c.x), c.y),
         Coord@(c.x, Incr(c.y)),
@@ -239,8 +239,8 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
       b_lr;
     });
 
-    /Core/Set%.IsEmpty<Coord@>(b.updated).?(true: Nothing<Memory@>);
-    Just<Memory@>(b.memory);
+    /Core/Set%.IsEmpty(b.updated).?(true: Nothing<Memory@>);
+    Just(b.memory);
   };
 };
 

@@ -87,17 +87,17 @@ Memory@ Cells = {
   # 2. For each input or output port of a gate, draw a white unit square.
   Drawing@ io = ForEachRule<Drawing@>(design, clear,
    (Coord@ p, Rule@ r, Drawing@ d) {
-     Ports@<Coord@> coords = Ports@<Coord@>(
+     Ports@<Coord@> coords = Ports@(
        Coord@(p.x, p.y), Coord@(Incr(p.x), p.y),
        Coord@(p.x, Incr(p.y)), Coord@(Incr(p.x), Incr(p.y)));
 
-     Ports@<Bool@> used = Ports@<Bool@>(
+     Ports@<Bool@> used = Ports@(
        { r.inputs.ul.?(just: True); r.outputs.ul.?(just: True); False; },
        { r.inputs.ur.?(just: True); r.outputs.ur.?(just: True); False; },
        { r.inputs.ll.?(just: True); r.outputs.ll.?(just: True); False; },
        { r.inputs.lr.?(just: True); r.outputs.lr.?(just: True); False; });
 
-     Ports@<Drawing@> fills = Ports@<Drawing@>(
+     Ports@<Drawing@> fills = Ports@(
        Rect(coords.ul.x, coords.ul.y, 1, 1, Color.White),
        Rect(coords.ur.x, coords.ur.y, 1, 1, Color.White),
        Rect(coords.ll.x, coords.ll.y, 1, 1, Color.White),
@@ -111,7 +111,7 @@ Memory@ Cells = {
    });
     
   # 3. Draw a green square for 1 and a red square for 0.
-  /Hwdg/Memory%.ForEach<Drawing@>(cells, io,
+  /Hwdg/Memory%.ForEach(cells, io,
     (Coord@ p, Data@ data, Drawing@ d) {
       Color@ color = data.?(0: Color.Red, 1: Color.Green);
       Over(d, Rect(p.x, p.y, 1, 1, color));
@@ -146,8 +146,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
     Input@ x <- m.do(GetInput);
     x.?(quit: m.return(Unit),
         step: IsZero(n).?(
-                true: m.return(Unit),
-                false: StepUI(Decr(n), design, Step(design, cells))));
+          true: m.return(Unit),
+          false: StepUI(Decr(n), design, Step(design, cells))));
   };
 
   M@<Unit@> WaitForKeyPress = {

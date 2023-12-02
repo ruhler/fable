@@ -23,7 +23,7 @@ Bit4@ Y = Bit4@(1, 0, 1, 0);
 Bit4@ Z = And(X, Y);
 
 # Main
-Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
+Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _args) {
   % O = /Core/Stream/OStream%(m);
 
   (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
