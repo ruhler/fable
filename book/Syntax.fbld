@@ -124,4 +124,4 @@
   @def[@l{?}] for asking questions about the tag of a union. 
   @def[@l{<-}] for function bind inspired by haskell do notation.
   @def[@l{/}] for its common use as a path delimiter.
-  @def[@l{@}] and '%' as the few remaining symbols easy to access on a US keyboard.
+  @def[@l{@} and @l{%}] the few remaining symbols easy to access on a US keyboard.

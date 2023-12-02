@@ -9,12 +9,9 @@
 
 <@ T@> { Show@<Result@<T@>>; }
 ShowError = <@ T@>(Result@<T@> r) {
-  r.err.?(
-    unknown: Str|'unknown error',
-    message: {
-      Text@ message = r.err.message;
-      /Fbld/Loc%.Report(message.loc, Strs[Str|'error: ', message.text]);
-    });
+  r.err.?(unknown: Str|'unknown error');
+  Text@ message = r.err.message;
+  /Fbld/Loc%.Report(message.loc, Strs[Str|'error: ', message.text]);
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }

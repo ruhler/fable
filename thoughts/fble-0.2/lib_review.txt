@@ -127,14 +127,14 @@ pkgs/fbld/Fbld/Parse/Block.fble         DONE
 pkgs/fbld/Fbld/Parse.fble               DONE
 pkgs/fbld/Fbld/Parse/Inline.fble        DONE
 pkgs/fbld/Fbld/Parse/M.fble             DONE
-pkgs/fbld/Fbld/Parse/Tests.fble
-pkgs/fbld/Fbld/Result/Eq.fble
-pkgs/fbld/Fbld/Result.fble
-pkgs/fbld/Fbld/Result/Show.fble
-pkgs/fbld/Fbld/Tests.fble
-pkgs/fbld/Fbld/Text/Eq.fble
-pkgs/fbld/Fbld/Text.fble
-pkgs/fbld/Fbld/Text/Show.fble
+pkgs/fbld/Fbld/Parse/Tests.fble         DONE
+pkgs/fbld/Fbld/Result/Eq.fble           DONE
+pkgs/fbld/Fbld/Result.fble              DONE
+pkgs/fbld/Fbld/Result/Show.fble         DONE
+pkgs/fbld/Fbld/Tests.fble               DONE
+pkgs/fbld/Fbld/Text/Eq.fble             DONE
+pkgs/fbld/Fbld/Text.fble                DONE
+pkgs/fbld/Fbld/Text/Show.fble           DONE
 pkgs/games/Games/BenchmarkGame/Bench.fble
 pkgs/games/Games/BenchmarkGame/BinaryTrees.fble
 pkgs/games/Games/BenchmarkGame/BinaryTrees/Stdio.fble
