@@ -191,6 +191,7 @@ Things to do for the fble-0.2 release.
 * [/Int%] Add test coverage for the Int routines.
 * [/Fble/Test%] Clean up fble test framework
  - Use AssertEquals for more of the tests.
+   GameOfLife, Sudoku, TicTacToe
  - Add an AssertLt or similar methods? Or generalize AssertEquals?
  - Properly test the test infra.
 * [/GameOfLife%] Switch to a target 60 FPS?

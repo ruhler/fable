@@ -59,7 +59,7 @@ Board@ EmptyBoard = {
 (Board@, Position@, Player@) { Maybe@<Board@>; } Move =
   (Board@ b, Position@ p, Player@ x) {
     GetSquare(b, p).?(
-       E: Just<Board@>(SetSquare(b, p, x.?(X: Square@(X: Unit), O: Square@(O: Unit)))),
+       E: Just(SetSquare(b, p, x.?(X: Square@(X: Unit), O: Square@(O: Unit)))),
        : Nothing<Board@>);
   };
 

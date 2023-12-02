@@ -1,12 +1,9 @@
 
 % True = /Core/Bool%.True;
 
-@ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Concat = /Core/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -19,6 +16,7 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
 % Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -41,11 +39,11 @@
 
 (Board@) { String@; } ShowBoard = (Board@ b) {
   String@ _ = Str|' ';
-  Concat<Char@>(List<String@>[
-    Str|'  1 2 3', Str[Chars.nl],
-    Str|'A ', ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), Str[Chars.nl],
-    Str|'B ', ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), Str[Chars.nl],
-    Str|'C ', ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), Str[Chars.nl]]);
+  Strs[
+    StrE|'  1 2 3\n',
+    Str|'A ', ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), StrE|'\n',
+    Str|'B ', ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), StrE|'\n',
+    Str|'C ', ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), StrE|'\n'];
 };
 
 (Player@) { String@; } ShowPlayer = (Player@ p) {
@@ -54,51 +52,48 @@
 
 (GameStatus@) { String@; } ShowStatus = (GameStatus@ s) {
   s.?(
-    playing: Concat<Char@>(List<String@>[Str|'Player ', ShowPlayer(s.playing), Str|' move:']),
+    playing: Strs[Str|'Player ', ShowPlayer(s.playing), Str|' move:'],
     ended: s.ended.?(
-      win: Concat<Char@>(List<String@>[
+      win: Strs[
         Str|'GAME OVER: Player ',
         ShowPlayer(s.ended.win),
-        Str|' wins.']),
+        Str|' wins.'],
       draw: Str|'GAME OVER: Draw.'));
 };
 
 (Game@) { String@; } ShowGame = (Game@ game) {
-  Concat<Char@>(List<String@>[
-    ShowBoard(game.board),
-    Str[Chars.nl],
-    ShowStatus(game.status),
-    Str[Chars.nl]]);
+  Strs[
+    ShowBoard(game.board), Str[Chars.nl],
+    ShowStatus(game.status), Str[Chars.nl]];
 };
 
 @ Input@ = +(Unit@ quit, Unit@ reset, Move@ move);
 
 (String@) { Maybe@<Input@>; } ParseInput = (String@ in) {
-  in.?(
-      cons: in.cons.head.?(
-        'A': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
-                '1': Just(Input@(move: Move@(given: Position@(UL: Unit)))),
-                '2': Just(Input@(move: Move@(given: Position@(UC: Unit)))),
-                '3': Just(Input@(move: Move@(given: Position@(UR: Unit)))),
-                   : Nothing<Input@>),
-                nil: Nothing<Input@>),
-        'B': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
-                '1': Just(Input@(move: Move@(given: Position@(ML: Unit)))),
-                '2': Just(Input@(move: Move@(given: Position@(MC: Unit)))),
-                '3': Just(Input@(move: Move@(given: Position@(MR: Unit)))),
-                   : Nothing<Input@>),
-                nil: Nothing<Input@>),
-        'C': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
-                '1': Just(Input@(move: Move@(given: Position@(LL: Unit)))),
-                '2': Just(Input@(move: Move@(given: Position@(LC: Unit)))),
-                '3': Just(Input@(move: Move@(given: Position@(LR: Unit)))),
-                   : Nothing<Input@>),
-                nil: Nothing<Input@>),
-        'P': Just<Input@>(Input@(move: Move@(ai: Unit))),
-        'Q': Just<Input@>(Input@(quit: Unit)),
-        'R': Just<Input@>(Input@(reset: Unit)),
-           : Nothing<Input@>),
-      nil: Nothing<Input@>);
+  in.?(nil: Nothing<Input@>);
+  in.cons.head.?(
+  'A': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
+          '1': Just(Input@(move: Move@(given: Position@(UL: Unit)))),
+          '2': Just(Input@(move: Move@(given: Position@(UC: Unit)))),
+          '3': Just(Input@(move: Move@(given: Position@(UR: Unit)))),
+             : Nothing<Input@>),
+          nil: Nothing<Input@>),
+  'B': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
+          '1': Just(Input@(move: Move@(given: Position@(ML: Unit)))),
+          '2': Just(Input@(move: Move@(given: Position@(MC: Unit)))),
+          '3': Just(Input@(move: Move@(given: Position@(MR: Unit)))),
+             : Nothing<Input@>),
+          nil: Nothing<Input@>),
+  'C': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
+          '1': Just(Input@(move: Move@(given: Position@(LL: Unit)))),
+          '2': Just(Input@(move: Move@(given: Position@(LC: Unit)))),
+          '3': Just(Input@(move: Move@(given: Position@(LR: Unit)))),
+             : Nothing<Input@>),
+          nil: Nothing<Input@>),
+  'P': Just<Input@>(Input@(move: Move@(ai: Unit))),
+  'Q': Just<Input@>(Input@(quit: Unit)),
+  'R': Just<Input@>(Input@(reset: Unit)),
+     : Nothing<Input@>);
 };
 
 # Play a game of tic-tac-toe.

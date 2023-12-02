@@ -4,7 +4,6 @@
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
 
-@ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 
 <@>% List = /Core/List%.List;
@@ -18,6 +17,8 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+% StrE = /Core/String%.StrE;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
@@ -59,10 +60,10 @@
 
 <@ T@>((T@, T@) { Bool@; }, Array@<T@>, Array@<T@>) { Bool@; }
 EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
-  DoWhile<Symbol@, Bool@>(1, IterateSymbol, True,
+  DoWhile(1, IterateSymbol, True,
     (Symbol@ s, Bool@ p) {
       And(p, eq(a(s), b(s)));
-  });
+    });
 };
 
 # Print a solved board.
@@ -79,7 +80,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   String@ nl = spaced.?(true: Str[Chars.nl], false: Str|'');
 
   (Array@<Symbol@>) { String@; } ShowRow = (Array@<Symbol@> row) {
-    Concat<Char@>(List<String@>[
+    Concat(List[
       ShowCell(row(1)), ShowCell(row(2)), ShowCell(row(3)), space,
       ShowCell(row(4)), ShowCell(row(5)), ShowCell(row(6)), space,
       ShowCell(row(7)), ShowCell(row(8)), ShowCell(row(9)), nl
@@ -87,7 +88,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   };
 
   (Solved@ board) {
-    Concat<Char@>(List<String@>[
+    Concat(List[
       ShowRow(board(1)), ShowRow(board(2)), ShowRow(board(3)), nl,
       ShowRow(board(4)), ShowRow(board(5)), ShowRow(board(6)), nl,
       ShowRow(board(7)), ShowRow(board(8)), ShowRow(board(9))
@@ -111,139 +112,130 @@ Array = <@ T@>(T@ 1, T@ 2, T@ 3, T@ 4, T@ 5, T@ 6, T@ 7, T@ 8, T@ 9) {
 };
 
 Input@ SampleInput = {
-  @ S@ = Maybe@<Symbol@>;
   % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
   % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
   % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
   % _ = MS._;
-  Array<Array@<S@>>(
-    Array<S@>(8,_,_,  _,9,_,  _,_,2),
-    Array<S@>(7,2,_,  _,_,_,  _,4,9),
-    Array<S@>(_,_,_,  3,_,6,  _,_,_),
+  Array(
+    Array(8,_,_,  _,9,_,  _,_,2),
+    Array(7,2,_,  _,_,_,  _,4,9),
+    Array(_,_,_,  3,_,6,  _,_,_),
 
-    Array<S@>(_,5,_,  _,8,_,  _,1,6),
-    Array<S@>(_,_,9,  _,_,_,  3,_,_),
-    Array<S@>(6,7,_,  _,5,_,  _,9,_),
+    Array(_,5,_,  _,8,_,  _,1,6),
+    Array(_,_,9,  _,_,_,  3,_,_),
+    Array(6,7,_,  _,5,_,  _,9,_),
 
-    Array<S@>(_,_,_,  9,_,1,  _,_,_),
-    Array<S@>(9,6,_,  _,_,_,  _,5,4),
-    Array<S@>(1,_,_,  _,4,_,  _,_,7));
+    Array(_,_,_,  9,_,1,  _,_,_),
+    Array(9,6,_,  _,_,_,  _,5,4),
+    Array(1,_,_,  _,4,_,  _,_,7));
 };
 
 Solved@ SampleSolved = {
-  @ S@ = Symbol@;
-  Array<Array@<S@>>(
-    Array<S@>(8,1,6,  4,9,7,  5,3,2),
-    Array<S@>(7,2,3,  5,1,8,  6,4,9),
-    Array<S@>(4,9,5,  3,2,6,  7,8,1),
+  Array(
+    Array(8,1,6,  4,9,7,  5,3,2),
+    Array(7,2,3,  5,1,8,  6,4,9),
+    Array(4,9,5,  3,2,6,  7,8,1),
                                    
-    Array<S@>(3,5,4,  7,8,9,  2,1,6),
-    Array<S@>(2,8,9,  1,6,4,  3,7,5),
-    Array<S@>(6,7,1,  2,5,3,  4,9,8),
+    Array(3,5,4,  7,8,9,  2,1,6),
+    Array(2,8,9,  1,6,4,  3,7,5),
+    Array(6,7,1,  2,5,3,  4,9,8),
                                    
-    Array<S@>(5,4,2,  9,7,1,  8,6,3),
-    Array<S@>(9,6,7,  8,3,2,  1,5,4),
-    Array<S@>(1,3,8,  6,4,5,  9,2,7));
+    Array(5,4,2,  9,7,1,  8,6,3),
+    Array(9,6,7,  8,3,2,  1,5,4),
+    Array(1,3,8,  6,4,5,  9,2,7));
 };
 
 Input@ EasyInput = {
-  @ S@ = Maybe@<Symbol@>;
   % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
   % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
   % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
   % _ = MS._;
-  Array<Array@<S@>>(
-    Array<S@>(5,3,6,  _,_,_,  4,_,7),
-    Array<S@>(_,_,8,  _,_,5,  _,_,_),
-    Array<S@>(_,_,_,  _,8,7,  9,_,6),
+  Array(
+    Array(5,3,6,  _,_,_,  4,_,7),
+    Array(_,_,8,  _,_,5,  _,_,_),
+    Array(_,_,_,  _,8,7,  9,_,6),
 
-    Array<S@>(9,_,2,  5,7,_,  _,_,_),
-    Array<S@>(_,_,_,  4,_,_,  7,_,_),
-    Array<S@>(6,_,7,  _,_,_,  3,2,5),
+    Array(9,_,2,  5,7,_,  _,_,_),
+    Array(_,_,_,  4,_,_,  7,_,_),
+    Array(6,_,7,  _,_,_,  3,2,5),
 
-    Array<S@>(_,6,_,  _,_,4,  8,_,_),
-    Array<S@>(_,_,4,  2,_,_,  _,7,_),
-    Array<S@>(2,7,5,  8,_,1,  6,4,3));
+    Array(_,6,_,  _,_,4,  8,_,_),
+    Array(_,_,4,  2,_,_,  _,7,_),
+    Array(2,7,5,  8,_,1,  6,4,3));
 };
 
 Input@ MediumInput = {
-  @ S@ = Maybe@<Symbol@>;
   % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
   % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
   % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
   % _ = MS._;
-  Array<Array@<S@>>(
-    Array<S@>(8,_,_,  _,_,_,  _,_,9),
-    Array<S@>(9,_,2,  _,6,3,  _,_,_),
-    Array<S@>(_,_,_,  5,_,_,  3,_,_),
+  Array(
+    Array(8,_,_,  _,_,_,  _,_,9),
+    Array(9,_,2,  _,6,3,  _,_,_),
+    Array(_,_,_,  5,_,_,  3,_,_),
 
-    Array<S@>(_,4,9,  _,_,_,  _,8,3),
-    Array<S@>(3,_,_,  _,_,2,  _,_,_),
-    Array<S@>(_,_,_,  7,_,_,  5,_,_),
+    Array(_,4,9,  _,_,_,  _,8,3),
+    Array(3,_,_,  _,_,2,  _,_,_),
+    Array(_,_,_,  7,_,_,  5,_,_),
 
-    Array<S@>(5,_,_,  _,_,6,  _,_,_),
-    Array<S@>(_,_,_,  9,1,_,  8,7,_),
-    Array<S@>(_,6,_,  _,_,_,  1,_,_));
+    Array(5,_,_,  _,_,6,  _,_,_),
+    Array(_,_,_,  9,1,_,  8,7,_),
+    Array(_,6,_,  _,_,_,  1,_,_));
 };
 
 Input@ HardInput = {
-  @ S@ = Maybe@<Symbol@>;
   % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
   % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
   % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
   % _ = MS._;
-  Array<Array@<S@>>(
-    Array<S@>(_,_,_,  _,3,1,  _,_,_),
-    Array<S@>(_,_,6,  2,4,_,  7,_,_),
-    Array<S@>(8,_,_,  _,_,_,  9,_,_),
+  Array(
+    Array(_,_,_,  _,3,1,  _,_,_),
+    Array(_,_,6,  2,4,_,  7,_,_),
+    Array(8,_,_,  _,_,_,  9,_,_),
 
-    Array<S@>(_,5,_,  _,2,6,  _,4,_),
-    Array<S@>(_,_,_,  4,1,_,  _,_,_),
-    Array<S@>(_,2,_,  _,_,_,  _,_,3),
+    Array(_,5,_,  _,2,6,  _,4,_),
+    Array(_,_,_,  4,1,_,  _,_,_),
+    Array(_,2,_,  _,_,_,  _,_,3),
 
-    Array<S@>(_,9,_,  _,_,_,  2,8,_),
-    Array<S@>(_,8,4,  _,_,_,  5,_,_),
-    Array<S@>(_,_,_,  5,_,8,  _,_,_));
+    Array(_,9,_,  _,_,_,  2,8,_),
+    Array(_,8,4,  _,_,_,  5,_,_),
+    Array(_,_,_,  5,_,8,  _,_,_));
 };
 
 Input@ ExpertInput = {
-  @ S@ = Maybe@<Symbol@>;
   % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
   % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
   % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
   % _ = MS._;
-  Array<Array@<S@>>(
-    Array<S@>(_,_,_,  _,_,9,  _,2,1),
-    Array<S@>(_,8,_,  _,_,_,  _,6,_),
-    Array<S@>(_,_,4,  2,_,_,  _,_,_),
+  Array(
+    Array(_,_,_,  _,_,9,  _,2,1),
+    Array(_,8,_,  _,_,_,  _,6,_),
+    Array(_,_,4,  2,_,_,  _,_,_),
 
-    Array<S@>(_,4,2,  _,8,_,  6,_,_),
-    Array<S@>(_,_,_,  7,1,_,  _,_,_),
-    Array<S@>(6,_,_,  3,_,_,  _,5,7),
+    Array(_,4,2,  _,8,_,  6,_,_),
+    Array(_,_,_,  7,1,_,  _,_,_),
+    Array(6,_,_,  3,_,_,  _,5,7),
 
-    Array<S@>(_,_,_,  _,6,_,  _,_,9),
-    Array<S@>(_,5,6,  _,_,1,  _,_,_),
-    Array<S@>(_,9,_,  _,_,_,  _,8,_));
+    Array(_,_,_,  _,6,_,  _,_,9),
+    Array(_,5,6,  _,_,1,  _,_,_),
+    Array(_,9,_,  _,_,_,  _,8,_));
 };
 
 Test@ Tests = TestSuite(Str|Sudoku, List<Test@>[
   Test(Str|sample, (Unit@ _) {
     Maybe@<Solved@> ms = Solve(SampleInput);
-    ms.?(
-       just: {
-         EqArray<Array@<Symbol@>>(
-             (Array@<Symbol@> a, Array@<Symbol@> b) {
-               EqArray<Symbol@>(EqSymbol, a, b);
-             },
-             SampleSolved, ms.just).?(
-           true: TestResult@(pass: Unit),
-           false: TestResult@(fail: Concat<Char@>(List<String@>[
-                   Str|'incorrect solution. expected:', Str[Chars.nl],
-                   ShowBoard(False)(SampleSolved), Str[Chars.nl],
-                   Str|'but got:', Str[Chars.nl],
-                   ShowBoard(False)(ms.just)])));
-       },
-       nothing: TestResult@(fail: Str|'failed to solve board'));
+    ms.?(nothing: TestResult@(fail: Str|'failed to solve board'));
+    Bool@ equal = EqArray(
+      (Array@<Symbol@> a, Array@<Symbol@> b) {
+        EqArray<Symbol@>(EqSymbol, a, b);
+      },
+      SampleSolved, ms.just);
+    equal.?(true: TestResult@(pass: Unit));
+    TestResult@(fail: Strs[
+      StrE|'incorrect solution.\nexpected:\n',
+      ShowBoard(False)(SampleSolved),
+      StrE|'\nbut got:\n',
+      ShowBoard(False)(ms.just)]);
   })
 ]);
 
@@ -253,7 +245,7 @@ BenchTest = (Input@ input)(Unit@ _) {
   TestResult@(pass: Unit);
 };
 
-Test@ Bench = TestSuite(Str|Sudoku, List<Test@>[
+Test@ Bench = TestSuite(Str|Sudoku, List[
   Test(Str|Sample, BenchTest(SampleInput)),
   Test(Str|Easy, BenchTest(EasyInput)),
   Test(Str|Medium, BenchTest(MediumInput)),

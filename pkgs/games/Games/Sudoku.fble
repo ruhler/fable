@@ -3,7 +3,6 @@
 % False = /Core/Bool%.False;
 % True = /Core/Bool%.True;
 
-
 <@>@ List@ = /Core/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -96,7 +95,7 @@ Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) {
 
 <@ T@>(Symbol@, Symbol@, T@, Array@<Array@<T@>>) { Array@<Array@<T@>>; }
 Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
-  Set<Array@<T@>>(a, Set<T@>(b, x, array(a)), array);
+  Set(a, Set(b, x, array(a)), array);
 };
 
 # A cell is identified by its row and column.
@@ -105,14 +104,12 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 # Iterate over cell ids, going left to right and top to bottom.
 (CellId@) { Maybe@<CellId@>; } IterateCellId = (CellId@ cell) {
   Maybe@<Symbol@> mncol = IterateSymbol(cell.col);
-  mncol.?(
-    just: Just<CellId@>(CellId@(cell.row, mncol.just)),
-    nothing: {
-      Maybe@<Symbol@> mnrow = IterateSymbol(cell.row);
-      mnrow.?(
-         just: Just<CellId@>(CellId@(mnrow.just, 1)),
-         nothing: Nothing<CellId@>);
-    });
+  mncol.?(just: Just(CellId@(cell.row, mncol.just)));
+
+  Maybe@<Symbol@> mnrow = IterateSymbol(cell.row);
+  mnrow.?(nothing: Nothing<CellId@>);
+
+  Just(CellId@(mnrow.just, 1));
 };
 
 # Return the id of the box group that this cell belongs to.
@@ -147,19 +144,18 @@ Set@ FullSet = (Symbol@ _s) { True; };
 (Set@) { Maybe@<Symbol@>; } Singleton = (Set@ set) {
   @ State@ = +(Unit@ empty, Symbol@ single, Unit@ multi);
 
-  State@ state = DoWhile<Symbol@, State@>(
-    1, IterateSymbol, State@(empty: Unit),
+  State@ state = DoWhile(1, IterateSymbol, State@(empty: Unit),
     (Symbol@ symbol, State@ state) {
-      set(symbol).?(
-        true: state.?(
-          empty: State@(single: symbol),
-          single: State@(multi: Unit),
-          multi: state),
-        false: state);
+      set(symbol).?(false: state);
+      state.?(
+        empty: State@(single: symbol),
+        single: State@(multi: Unit),
+        multi: state);
     });
+
   state.?(
     empty: Nothing<Symbol@>,
-    single: Just<Symbol@>(state.single),
+    single: Just(state.single),
     multi: Nothing<Symbol@>);
 };
 
@@ -190,46 +186,45 @@ XS@ EmptyXS = XS@(empty: Unit);
 
 # CatXS --
 (List@<XS@>) { XS@; } CatXS = (List@<XS@> xs) {
-  xs.?(cons: AppendXS(xs.cons.head, CatXS(xs.cons.tail)), nil: EmptyXS);
+  xs.?(nil: EmptyXS);
+  AppendXS(xs.cons.head, CatXS(xs.cons.tail));
 };
 
 # Generate the set of constraints that result from setting the value of the
 # given cell to s.
 (CellId@, Symbol@) { XS@; } Assign = (CellId@ cell, Symbol@ s) {
   # Cell: This cell cannot be any symbol other than s.
-  Set@ isS = Set<Bool@>(s, True, (Symbol@ _) { False; });
-  XS@ xCell = DoWhile<Symbol@, XS@>(1, IterateSymbol, EmptyXS,
+  Set@ isS = Set(s, True, (Symbol@ _) { False; });
+  XS@ xCell = DoWhile(1, IterateSymbol, EmptyXS,
     (Symbol@ other, XS@ xs) {
-      isS(other).?(
-        true: xs,
-        false: AddX(X@(cell, other), xs));
+      isS(other).?(true: xs);
+      AddX(X@(cell, other), xs);
     });
 
   # Group: No other cell in this group can be the symbol s.
   # This is a helper function we'll reuse for rows, columns, and boxes.
   (Set@, (Symbol@) { CellId@; }) { XS@; }
   Group = (Set@ isThis, (Symbol@) { CellId@; } cellOf) {
-    DoWhile<Symbol@, XS@>(1, IterateSymbol, EmptyXS,
+    DoWhile(1, IterateSymbol, EmptyXS,
       (Symbol@ i, XS@ xs) {
-        isThis(i).?(
-          true: xs,
-          false: AddX(X@(cellOf(i), s), xs));
+        isThis(i).?(true: xs);
+        AddX(X@(cellOf(i), s), xs);
       });
   };
 
   # Row: No other cell in this row can be the symbol s.
-  Set@ isThisCol = Set<Bool@>(cell.col, True, (Symbol@ _) { False; });
+  Set@ isThisCol = Set(cell.col, True, (Symbol@ _) { False; });
   (Symbol@) { CellId@; } rowCellOf = (Symbol@ col) { CellId@(cell.row, col); };
   XS@ xRow = Group(isThisCol, rowCellOf);
 
   # Column: No other cell in this column can be the symbol s.
-  Set@ isThisRow = Set<Bool@>(cell.row, True, (Symbol@ _) { False; });
+  Set@ isThisRow = Set(cell.row, True, (Symbol@ _) { False; });
   (Symbol@) { CellId@; } colCellOf = (Symbol@ row) { CellId@(row, cell.col); };
   XS@ xCol = Group(isThisRow, colCellOf);
 
   # Box: No other cell in this box can be the symbol s.
   Symbol@ box = BoxGroupOf(cell);
-  Set@ isThisPos = Set<Bool@>(BoxPosOf(cell), True, (Symbol@ _) { False; });
+  Set@ isThisPos = Set(BoxPosOf(cell), True, (Symbol@ _) { False; });
   (Symbol@) { CellId@; } boxCellOf = (Symbol@ pos) { CellOfPos(box, pos); };
   XS@ xBox = Group(isThisPos, boxCellOf);
 
@@ -244,46 +239,44 @@ XS@ EmptyXS = XS@(empty: Unit);
 # Does nothing if the constraint was already known.
 (Board@, X@) { BoardX@; } ApplyX = (Board@ board, X@ x) {
   Cell@ cell = board(x.cell.row)(x.cell.col);
-  cell(x.symbol).?(
-    true: {
-      Cell@ ncell = Set<Bool@>(x.symbol, False, cell);
-      Board@ nboard = Set2D<Cell@>(x.cell.row, x.cell.col, ncell, board);
+  cell(x.symbol).?(false: BoardX@(board, EmptyXS));
 
-      # If there is now only one possible symbol value for this cell, we
-      # know this cell must take on that single possible symbol value.
-      Maybe@<Symbol@> single = Singleton(ncell);
-      XS@ xCell = single.?(
-        just: Assign(x.cell, single.just),
-        nothing: EmptyXS);
+  Cell@ ncell = Set(x.symbol, False, cell);
+  Board@ nboard = Set2D(x.cell.row, x.cell.col, ncell, board);
 
-      # If board[row].symbol has only one cell, generate the assignment.
-      Set@ cells = (Symbol@ col) { nboard(x.cell.row)(col)(x.symbol); };
-      Maybe@<Symbol@> single = Singleton(cells);
-      XS@ xRow = single.?(
-        just: Assign(CellId@(x.cell.row, single.just), x.symbol),
-        nothing: EmptyXS);
+  # If there is now only one possible symbol value for this cell, we
+  # know this cell must take on that single possible symbol value.
+  Maybe@<Symbol@> single = Singleton(ncell);
+  XS@ xCell = single.?(
+    just: Assign(x.cell, single.just),
+    nothing: EmptyXS);
 
-      # If board[col].symbol has only one cell, generate the assignment.
-      Set@ cells = (Symbol@ row) { nboard(row)(x.cell.col)(x.symbol); };
-      Maybe@<Symbol@> single = Singleton(cells);
-      XS@ xCol = single.?(
-        just: Assign(CellId@(single.just, x.cell.col), x.symbol),
-        nothing: EmptyXS);
+  # If board[row].symbol has only one cell, generate the assignment.
+  Set@ cells = (Symbol@ col) { nboard(x.cell.row)(col)(x.symbol); };
+  Maybe@<Symbol@> single = Singleton(cells);
+  XS@ xRow = single.?(
+    just: Assign(CellId@(x.cell.row, single.just), x.symbol),
+    nothing: EmptyXS);
 
-      # If board[box].symbol has only one cell, generate the assignment.
-      Symbol@ box = BoxGroupOf(x.cell);
-      Set@ cells = (Symbol@ pos) {
-        CellId@ cell = CellOfPos(box, pos);
-        nboard(cell.row)(cell.col)(x.symbol);
-      };
-      Maybe@<Symbol@> single = Singleton(cells);
-      XS@ xBox = single.?(
-        just: Assign(CellOfPos(box, single.just), x.symbol),
-        nothing: EmptyXS);
+  # If board[col].symbol has only one cell, generate the assignment.
+  Set@ cells = (Symbol@ row) { nboard(row)(x.cell.col)(x.symbol); };
+  Maybe@<Symbol@> single = Singleton(cells);
+  XS@ xCol = single.?(
+    just: Assign(CellId@(single.just, x.cell.col), x.symbol),
+    nothing: EmptyXS);
 
-      BoardX@(nboard, CatXS[xCell, xRow, xCol, xBox]);
-    },
-    false: BoardX@(board, EmptyXS));
+  # If board[box].symbol has only one cell, generate the assignment.
+  Symbol@ box = BoxGroupOf(x.cell);
+  Set@ cells = (Symbol@ pos) {
+    CellId@ cell = CellOfPos(box, pos);
+    nboard(cell.row)(cell.col)(x.symbol);
+  };
+  Maybe@<Symbol@> single = Singleton(cells);
+  XS@ xBox = single.?(
+    just: Assign(CellOfPos(box, single.just), x.symbol),
+    nothing: EmptyXS);
+
+  BoardX@(nboard, CatXS[xCell, xRow, xCol, xBox]);
 };
 
 # Apply all constraints to the board, and all resulting constraints, until
@@ -309,50 +302,44 @@ XS@ EmptyXS = XS@(empty: Unit);
 #          have been determined.
 (Board@, Maybe@<CellId@>) { Maybe@<Board@>; }
 SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
-  mfrom.?(
-    just: {
-      CellId@ from = mfrom.just;
-      Cell@ cell = board(from.row)(from.col);
-      Maybe@<CellId@> next = IterateCellId(from);
+  mfrom.?(nothing: Just(board));
 
-      Maybe@<Symbol@> single = Singleton(cell);
-      single.?(
-        just: {
-          # We already know the symbol for this cell. As an optimization,
-          # move on to the next cell right away.
-          SolveFrom(board, next);
-        },
-        nothing: {
-          # We don't know the symbol for this cell yet. Try all possible
-          # options until we've found a solution to the puzzle.
-          DoWhile<Symbol@, Maybe@<Board@>>(1, IterateSymbol, Nothing<Board@>,
-            (Symbol@ s, Maybe@<Board@> solved) {
-              solved.?(
-                # TODO: Can we break out more efficiently in this case?
-                # Rather than have to iterate through and ignore all the
-                # rest of the possible symbols?
-                just: solved,
-                nothing: {
-                  cell(s).?(
-                    true: SolveFrom(ApplyXS(board, Assign(from, s)), next),
-                    false: Nothing<Board@>);
-                });
-            });
-        });
+  CellId@ from = mfrom.just;
+  Cell@ cell = board(from.row)(from.col);
+  Maybe@<CellId@> next = IterateCellId(from);
+
+  Maybe@<Symbol@> single = Singleton(cell);
+  single.?(
+    just: {
+      # We already know the symbol for this cell. As an optimization,
+      # move on to the next cell right away.
+      SolveFrom(board, next);
     },
-    nothing: Just<Board@>(board));
+    nothing: {
+      # We don't know the symbol for this cell yet. Try all possible
+      # options until we've found a solution to the puzzle.
+      DoWhile(1, IterateSymbol, Nothing<Board@>,
+        (Symbol@ s, Maybe@<Board@> solved) {
+          # TODO: Can we break out more efficiently in the case when it's
+          # solved, rather than have to iterate through and ignore all the
+          # rest of the possible symbols?
+          solved.?(just: solved);
+          cell(s).?(
+            true: SolveFrom(ApplyXS(board, Assign(from, s)), next),
+            false: Nothing<Board@>);
+        });
+    });
 };
 
 @ Input@ = (Symbol@)(Symbol@) { Maybe@<Symbol@>; };
 
 # Generate constraints based on the given input board.
 (Input@) { XS@; } InputXS = (Input@ board) {
-  DoWhile<CellId@, XS@>(CellId@(1, 1), IterateCellId, EmptyXS,
+  DoWhile(CellId@(1, 1), IterateCellId, EmptyXS,
     (CellId@ cell, XS@ xs) {
       Maybe@<Symbol@> ms = board(cell.row)(cell.col);
-      ms.?(
-        just: AppendXS(Assign(cell, ms.just), xs),
-        nothing: xs);
+      ms.?(nothing: xs);
+      AppendXS(Assign(cell, ms.just), xs);
     });
 };
 
@@ -362,7 +349,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
 (Input@) { Maybe@<Solved@>; } Solve = (Input@ in) {
   Maybe@<Board@> solved = SolveFrom(
     ApplyXS(EmptyBoard, InputXS(in)),
-    Just<CellId@>(CellId@(1, 1)));
+    Just(CellId@(1, 1)));
   solved.?(
     just: Just<Solved@>(
       (Symbol@ row)(Symbol@ col) {

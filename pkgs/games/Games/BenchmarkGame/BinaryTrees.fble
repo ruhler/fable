@@ -33,18 +33,15 @@ Int@ 2 = Int|2;
 @ Tree@ = +(Unit@ leaf, Node@ node);
 
 (Int@) { Tree@; } Tree = (Int@ depth) {
-  Eq(0, depth).?(true: {
-    Tree@(leaf: Unit);
-  });
+  Eq(0, depth).?(true: Tree@(leaf: Unit));
 
   Int@ sdepth = Sub(depth, 1);
   Tree@(node: Node@(Tree(sdepth), Tree(sdepth)));
 };
 
 (Tree@) { Int@; } Check = (Tree@ tree) {
-  tree.?(
-    leaf: 1,
-    node: Add(Add(1, Check(tree.node.left)), Check(tree.node.right)));
+  tree.?(leaf: 1);
+  Add(Add(1, Check(tree.node.left)), Check(tree.node.right));
 };
 
 (Int@) { Int@; } Exp2 = (Int@ x) {

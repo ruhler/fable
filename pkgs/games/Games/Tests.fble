@@ -10,7 +10,7 @@
 % _ = /Games/Snake/AppIO%;
 % _ = /Games/Snake/Bench%;
 
-Test@ Tests = TestSuite(Str|Games, List<Test@>[
+Test@ Tests = TestSuite(Str|Games, List[
   /Games/BenchmarkGame/Tests%.Tests,
   /Games/GameOfLife/Tests%.Tests,
   /Games/Sudoku/Tests%.Tests,

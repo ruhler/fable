@@ -37,7 +37,7 @@ Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {
       PureState@(Nil<Int@>, expected_bytes, Nil<Int@>), True);
 
     PureResult@<Bool@> got = Run(
-      game<Pure@>(Monad, Stdio)(List<String@>[n]),
+      game<Pure@>(Monad, Stdio)(List[n]),
       input_bytes);
 
     AssertEquals(

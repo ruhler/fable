@@ -9,7 +9,7 @@
 # Import to test compilation.
 % _ = /Games/BenchmarkGame/Bench%;
 
-Test@ Tests = TestSuite(Str|BenchmarkGame, List<Test@>[
+Test@ Tests = TestSuite(Str|BenchmarkGame, List[
   /Games/BenchmarkGame/BinaryTrees/Tests%.Tests,
   /Games/BenchmarkGame/FannkuchRedux/Tests%.Tests,
   /Games/BenchmarkGame/PiDigits/Tests%.Tests,

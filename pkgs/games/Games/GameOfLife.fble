@@ -48,9 +48,8 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
 
 # Create a world from a list of coordinates of live cells.
 (List@<Coord@>){ World@; } World = (List@<Coord@> mkCells) {
-  mkCells.?(
-    cons: W.Insert(World(mkCells.cons.tail), mkCells.cons.head, Unit),
-    nil: W.Empty);
+  mkCells.?(nil: W.Empty);
+  W.Insert(World(mkCells.cons.tail), mkCells.cons.head, Unit);
 };
 
 # A count of neighboring cells. 4p stands for anything greater than or equal
@@ -71,15 +70,15 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
 # next generation.
 (Status@) { Bool@; } Lives = (Status@ status) {
   status.alive.?(
-      true: status.neighbors.?(2: True, 3: True, : False),
-      false: status.neighbors.?(3: True, : False));
+    true: status.neighbors.?(2: True, 3: True, : False),
+    false: status.neighbors.?(3: True, : False));
 };
 
 # Map from Coord to the status of the cell.
 @ Cand@ = /Core/Map%.Map@<Coord@, Status@>;
 % C = @(
   Empty: /Core/Map%.Empty<Coord@, Status@>,
-  InsertWith: /Core/Map%.InsertWith<Coord@>(OrdCoord)<Status@>,
+  InsertWith: /Core/Map%.InsertWith(OrdCoord)<Status@>,
   ForEach: /Core/Map%.ForEach<Coord@, Status@>
 );
 
@@ -118,14 +117,14 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
   # 2. Filter live cells from the map.
   C.ForEach<World@>(candidates, W.Empty,
     (Coord@ coord, Status@ status, World@ w_in) {
-    Lives(status).?(
-       true: W.Insert(w_in, coord, Unit),
-       false: w_in);
+    Lives(status).?(false: w_in);
+    W.Insert(w_in, coord, Unit);
   });
 };
 
 (Int@, World@) { World@; } StepN = (Int@ n, World@ w) {
-  IsZero(n).?(true: w, false: StepN(Decr(n), Step(w)));
+  IsZero(n).?(true: w);
+  StepN(Decr(n), Step(w));
 };
 
 @(Coord@, World@, World, ForWorld: W.ForEach, EqWorld, Step, StepN);

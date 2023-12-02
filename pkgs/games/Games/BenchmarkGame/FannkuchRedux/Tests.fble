@@ -8,6 +8,7 @@
 <@>% Append = /Core/List%.Append;
 
 % Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -90,9 +91,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     Str|IO,
     /Games/BenchmarkGame/FannkuchRedux/Main%.Main,
     Str|6, Str|'',
-    Str|'49
-Pfannkuchen(6) = 10
-')
+    StrE|'49\nPfannkuchen(6) = 10\n')
 ]);
 
 @(Tests);

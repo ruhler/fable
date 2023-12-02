@@ -3,7 +3,6 @@
 <@>% List = /Core/List%.List;
 <@,@>% ForEach = /Core/List%.ForEach;
 
-
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
@@ -44,14 +43,14 @@
 };
 
 (Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {
-  p.?(UL: Just<Position@>(Position@(UC: Unit)),
-      UC: Just<Position@>(Position@(UR: Unit)),
-      UR: Just<Position@>(Position@(ML: Unit)),
-      ML: Just<Position@>(Position@(MC: Unit)),
-      MC: Just<Position@>(Position@(MR: Unit)),
-      MR: Just<Position@>(Position@(LL: Unit)),
-      LL: Just<Position@>(Position@(LC: Unit)),
-      LC: Just<Position@>(Position@(LR: Unit)),
+  p.?(UL: Just(Position@(UC: Unit)),
+      UC: Just(Position@(UR: Unit)),
+      UR: Just(Position@(ML: Unit)),
+      ML: Just(Position@(MC: Unit)),
+      MC: Just(Position@(MR: Unit)),
+      MR: Just(Position@(LL: Unit)),
+      LL: Just(Position@(LC: Unit)),
+      LC: Just(Position@(LR: Unit)),
       LR: Nothing<Position@>);
 };
 
@@ -134,18 +133,17 @@ ChooseBestPosition = (PositionResult@ a, PositionResult@ b) {
 
 (Maybe@<PositionResult@>, Maybe@<PositionResult@>) { Maybe@<PositionResult@>; }
 ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b) {
-  a.?(just:
-        b.?(just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
-            nothing: a),
-       nothing: b);
+  a.?(nothing: b);
+  b.?(nothing: a);
+  Just(ChooseBestPosition(a.just, b.just));
 };
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
 @ MemoTable@ = /Core/Map%.Map@<Board@, PositionResult@>;
 % Empty = /Core/Map%.Empty<Board@, PositionResult@>;
-% Lookup = /Core/Map%.Lookup<Board@>(BoardOrd)<PositionResult@>;
-% Insert = /Core/Map%.Insert<Board@>(BoardOrd)<PositionResult@>;
+% Lookup = /Core/Map%.Lookup(BoardOrd)<PositionResult@>;
+% Insert = /Core/Map%.Insert(BoardOrd)<PositionResult@>;
 
 <@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 
@@ -162,7 +160,7 @@ ExpectedResult = (MemoTable@ m, Board@ b, Player@ x) {
       E: {
         Player@ o = x.?(X: Player@(O: Unit), O: Player@(X: Unit));
         MemoState@<PositionResult@> move = ChooseBestMove(m, b, o);
-        MemoState@<Result@>(move.memo, FlipResult(move.data.result));
+        MemoState@(move.memo, FlipResult(move.data.result));
       }
    );
 },
@@ -173,14 +171,10 @@ ExpectedResult = (MemoTable@ m, Board@ b, Player@ x) {
 (MemoTable@, Board@, Player@, Position@){MemoState@<Maybe@<PositionResult@>>;}
 MoveResult = (MemoTable@ m, Board@ b, Player@ x, Position@ p) {
   Maybe@<Board@> moved = Move(b, p, x);
-  moved.?(
-    just: {
-      MemoState@<Result@> result = ExpectedResult(m, moved.just, x);
-      MemoState@<Maybe@<PositionResult@>>(
-        result.memo,
-        Just<PositionResult@>(PositionResult@(p, result.data)));
-    },
-    nothing: MemoState@<Maybe@<PositionResult@>>(m, Nothing<PositionResult@>));
+  moved.?(nothing:MemoState@(m, Nothing<PositionResult@>));
+
+  MemoState@<Result@> result = ExpectedResult(m, moved.just, x);
+  MemoState@(result.memo, Just(PositionResult@(p, result.data)));
 },
 
 # Choose the best move for player 'x' on the given board.
@@ -188,30 +182,28 @@ MoveResult = (MemoTable@ m, Board@ b, Player@ x, Position@ p) {
 (MemoTable@, Board@, Player@){MemoState@<PositionResult@>;}
 ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
   Maybe@<PositionResult@> cached = Lookup(m, b);
-  cached.?(
-    just: MemoState@<PositionResult@>(m, cached.just),
-    nothing: {
-      MemoState@<Maybe@<PositionResult@>> best =
-        DoWhile<Position@, MemoState@<Maybe@<PositionResult@>>>(
-          Position@(UL: Unit), NextPosition,
-          MemoState@<Maybe@<PositionResult@>>(m, Nothing<PositionResult@>),
-          (Position@ p, MemoState@<Maybe@<PositionResult@>> best) {
-            MemoState@<Maybe@<PositionResult@>> curr = MoveResult(best.memo, b, x, p);
-            MemoState@<Maybe@<PositionResult@>>(
-              curr.memo,
-              ChooseBestMaybePosition(best.data, curr.data));
-        });
+  cached.?(just: MemoState@(m, cached.just));
 
-      MemoTable@ newMemo =
-        ForEach<BoardPositionResult@, MemoTable@>(
-          AllSymmetries(BoardPositionResult@(b, best.data.just)),
-          best.memo,
-          (BoardPositionResult@ bpr, MemoTable@ m) {
-            Insert(m, bpr.board, bpr.pr);
-        });
-
-      MemoState@<PositionResult@>(newMemo, best.data.just);
+  MemoState@<Maybe@<PositionResult@>> best =
+    DoWhile(
+      Position@(UL: Unit), NextPosition,
+      MemoState@(m, Nothing<PositionResult@>),
+      (Position@ p, MemoState@<Maybe@<PositionResult@>> best) {
+        MemoState@<Maybe@<PositionResult@>> curr = MoveResult(best.memo, b, x, p);
+        MemoState@<Maybe@<PositionResult@>>(
+          curr.memo,
+          ChooseBestMaybePosition(best.data, curr.data));
     });
+
+  MemoTable@ newMemo =
+    ForEach(
+      AllSymmetries(BoardPositionResult@(b, best.data.just)),
+      best.memo,
+      (BoardPositionResult@ bpr, MemoTable@ m) {
+        Insert(m, bpr.board, bpr.pr);
+      });
+
+  MemoState@(newMemo, best.data.just);
 };
 
 # AI@ --

@@ -135,38 +135,38 @@ pkgs/fbld/Fbld/Tests.fble               DONE
 pkgs/fbld/Fbld/Text/Eq.fble             DONE
 pkgs/fbld/Fbld/Text.fble                DONE
 pkgs/fbld/Fbld/Text/Show.fble           DONE
-pkgs/games/Games/BenchmarkGame/Bench.fble
-pkgs/games/Games/BenchmarkGame/BinaryTrees.fble
-pkgs/games/Games/BenchmarkGame/BinaryTrees/Stdio.fble
-pkgs/games/Games/BenchmarkGame/BinaryTrees/Tests.fble
-pkgs/games/Games/BenchmarkGame/FannkuchRedux.fble
-pkgs/games/Games/BenchmarkGame/FannkuchRedux/Main.fble
-pkgs/games/Games/BenchmarkGame/FannkuchRedux/Stdio.fble
-pkgs/games/Games/BenchmarkGame/FannkuchRedux/Tests.fble
-pkgs/games/Games/BenchmarkGame/PiDigits.fble
-pkgs/games/Games/BenchmarkGame/PiDigits/Stdio.fble
-pkgs/games/Games/BenchmarkGame/PiDigits/Tests.fble
-pkgs/games/Games/BenchmarkGame/ReverseComplement.fble
-pkgs/games/Games/BenchmarkGame/ReverseComplement/Stdio.fble
-pkgs/games/Games/BenchmarkGame/ReverseComplement/Tests.fble
-pkgs/games/Games/BenchmarkGame/Test.fble
-pkgs/games/Games/BenchmarkGame/Tests.fble
-pkgs/games/Games/GameOfLife/App.fble
-pkgs/games/Games/GameOfLife/AppIO.fble
-pkgs/games/Games/GameOfLife/Bench.fble
-pkgs/games/Games/GameOfLife.fble
-pkgs/games/Games/GameOfLife/Tests.fble
-pkgs/games/Games/Snake/AppIO.fble
-pkgs/games/Games/Snake/Bench.fble
-pkgs/games/Games/Snake.fble
-pkgs/games/Games/Sudoku.fble
-pkgs/games/Games/Sudoku/Tests.fble
-pkgs/games/Games/Tests.fble
-pkgs/games/Games/TicTacToe/AI.fble
-pkgs/games/Games/TicTacToe/Board.fble
-pkgs/games/Games/TicTacToe/Game.fble
-pkgs/games/Games/TicTacToe/Stdio.fble
-pkgs/games/Games/TicTacToe/Tests.fble
+pkgs/games/Games/BenchmarkGame/Bench.fble                 DONE
+pkgs/games/Games/BenchmarkGame/BinaryTrees.fble           DONE
+pkgs/games/Games/BenchmarkGame/BinaryTrees/Stdio.fble     DONE
+pkgs/games/Games/BenchmarkGame/BinaryTrees/Tests.fble     DONE
+pkgs/games/Games/BenchmarkGame/FannkuchRedux.fble         DONE
+pkgs/games/Games/BenchmarkGame/FannkuchRedux/Main.fble    DONE
+pkgs/games/Games/BenchmarkGame/FannkuchRedux/Stdio.fble   DONE
+pkgs/games/Games/BenchmarkGame/FannkuchRedux/Tests.fble   DONE
+pkgs/games/Games/BenchmarkGame/PiDigits.fble              DONE
+pkgs/games/Games/BenchmarkGame/PiDigits/Stdio.fble        DONE
+pkgs/games/Games/BenchmarkGame/PiDigits/Tests.fble        DONE
+pkgs/games/Games/BenchmarkGame/ReverseComplement.fble     DONE
+pkgs/games/Games/BenchmarkGame/ReverseComplement/Stdio.fble DONE
+pkgs/games/Games/BenchmarkGame/ReverseComplement/Tests.fble DONE
+pkgs/games/Games/BenchmarkGame/Test.fble      DONE
+pkgs/games/Games/BenchmarkGame/Tests.fble     DONE
+pkgs/games/Games/GameOfLife/App.fble          DONE
+pkgs/games/Games/GameOfLife/AppIO.fble        DONE
+pkgs/games/Games/GameOfLife/Bench.fble        DONE
+pkgs/games/Games/GameOfLife.fble              DONE
+pkgs/games/Games/GameOfLife/Tests.fble        DONE
+pkgs/games/Games/Snake/AppIO.fble             DONE
+pkgs/games/Games/Snake/Bench.fble             DONE
+pkgs/games/Games/Snake.fble                   DONE
+pkgs/games/Games/Sudoku.fble                  DONE
+pkgs/games/Games/Sudoku/Tests.fble            DONE
+pkgs/games/Games/Tests.fble                   DONE
+pkgs/games/Games/TicTacToe/AI.fble            DONE
+pkgs/games/Games/TicTacToe/Board.fble         DONE
+pkgs/games/Games/TicTacToe/Game.fble          DONE
+pkgs/games/Games/TicTacToe/Stdio.fble         DONE
+pkgs/games/Games/TicTacToe/Tests.fble         DONE
 pkgs/graphics/Graphics/2D/Tests.fble
 pkgs/graphics/Graphics/2D/Triangle.fble
 pkgs/graphics/Graphics/3D.fble

@@ -131,7 +131,7 @@ State@ InitialState = {
     Dir@(right: Unit),
     Pos@(r4, c1),
     LFSRs.8,
-    List<Pos@>[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
+    List[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
     Int|40);
 };
 
@@ -139,7 +139,7 @@ State@ InitialState = {
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
-(List@<Pos@>, Pos@) { Bool@; } InPosS = /Core/List/Eq%.Contains<Pos@>(EqPos);
+(List@<Pos@>, Pos@) { Bool@; } InPosS = /Core/List/Eq%.Contains(EqPos);
 
 # Update the random number for where the next food will be generate.
 # Takes the current direction of the snake to add some randomness to the
@@ -157,10 +157,8 @@ State@ InitialState = {
   Shifted@<Int@> row = ShiftInt(rand, MaxRow);
   Shifted@<Int@> col = ShiftInt(row.lfsr, MaxCol);
   Pos@ pos = Pos@(row.output, col.output);
-  InPosS(snake, pos).?(
-    true: GetNextFood(col.lfsr, snake),
-    false: pos
-  );
+  InPosS(snake, pos).?(false: pos);
+  GetNextFood(col.lfsr, snake);
 };
 
 (State@) { MoveResultM@; } Move = (State@ s) {
@@ -185,7 +183,7 @@ State@ InitialState = {
       true: {
         # TODO: Properly handle the case where the snake eats food at its
         # tail.
-        List@<Pos@> nsnake = Cons<Pos@>(s.food, s.snake);
+        List@<Pos@> nsnake = Cons(s.food, s.snake);
         Pos@ nfood = GetNextFood(nrand, nsnake);
         Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
         State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
@@ -196,7 +194,7 @@ State@ InitialState = {
         false: {
           # TODO: Combine calls to Init and Last so we only have to
           # iterate over the list of elements once instead of twice?
-          List@<Pos@> nsnake = Cons<Pos@>(pm.pos, Init<Pos@>(s.snake));
+          List@<Pos@> nsnake = Cons(pm.pos, Init(s.snake));
           State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
           MoveResultM@(state: ns);
          })));
