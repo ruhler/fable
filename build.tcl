@@ -234,7 +234,7 @@ test $::b/pkgs/fbld/README.tr \
 fbld_html_doc $::b/www/README.html $::s/README.fbld
 www $::b/www/README.html
 build $::b/www/index.html $::b/www/README.html \
-  "cp $::b/www/index.html $::b/www/README.html"
+  "cp $::b/www/README.html $::b/www/index.html"
 www $::b/www/index.html
 
 # Release file www

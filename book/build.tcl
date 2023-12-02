@@ -15,6 +15,6 @@ namespace eval "tutorials" {
   }
 
   build $::b/www/book/index.html $::b/www/book/Book.html \
-    "cp $::b/www/book/index.html $::b/www/book/Book.html"
+    "cp $::b/www/book/Book.html $::b/www/book/index.html"
   www $::b/www/book/index.html
 }
