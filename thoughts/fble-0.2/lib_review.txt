@@ -167,17 +167,17 @@ pkgs/games/Games/TicTacToe/Board.fble         DONE
 pkgs/games/Games/TicTacToe/Game.fble          DONE
 pkgs/games/Games/TicTacToe/Stdio.fble         DONE
 pkgs/games/Games/TicTacToe/Tests.fble         DONE
-pkgs/graphics/Graphics/2D/Tests.fble
-pkgs/graphics/Graphics/2D/Triangle.fble
-pkgs/graphics/Graphics/3D.fble
-pkgs/graphics/Graphics/App.fble
-pkgs/graphics/Graphics/AppIO.fble
-pkgs/graphics/Graphics/Bench.fble
-pkgs/graphics/Graphics/Camera.fble
-pkgs/graphics/Graphics/Camera/SinCos.fble
-pkgs/graphics/Graphics/Tests.fble
-pkgs/graphics/Graphics/Triangle.fble
-pkgs/graphics/Graphics/Triangle/Tests.fble
+pkgs/graphics/Graphics/2D/Tests.fble          DONE
+pkgs/graphics/Graphics/2D/Triangle.fble       DONE
+pkgs/graphics/Graphics/3D.fble                DONE
+pkgs/graphics/Graphics/App.fble               DONE
+pkgs/graphics/Graphics/AppIO.fble             DONE
+pkgs/graphics/Graphics/Bench.fble             DONE
+pkgs/graphics/Graphics/Camera.fble            DONE
+pkgs/graphics/Graphics/Camera/SinCos.fble     DONE
+pkgs/graphics/Graphics/Tests.fble             DONE
+pkgs/graphics/Graphics/Triangle.fble          DONE
+pkgs/graphics/Graphics/Triangle/Tests.fble    DONE
 pkgs/hwdg/Hwdg/Adder.fble                     DONE
 pkgs/hwdg/Hwdg/App.fble                       DONE
 pkgs/hwdg/Hwdg/Coord.fble                     DONE

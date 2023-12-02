@@ -39,7 +39,7 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
+Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
   Test(Str|'Focus Triangle', (Unit@ _) {
     # A triangle drawn at the focus plane should appear normal size.
     Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
@@ -309,15 +309,17 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ drawn = Draw(drawing);
 
     # Verify we don't have a hole in the lower left corner.
-    Maybe@<Color@> got = /Core/Map%.Lookup<Point@>(OrdPoint)<Color@>(
+    Maybe@<Color@> got = /Core/Map%.Lookup(OrdPoint)(
       drawn, Point@(Neg(Int|32), Neg(Int|24)));
-    Maybe@<Color@> wnt = Just<Color@>(Color.Green);
+    Maybe@<Color@> wnt = Just(Color.Green);
       
     # TODO: debug this test passing.
-    /Core/Test%.ExpectFails(/Core/Test%.ExpectFails(/Core/Test%.AssertEquals<Maybe@<Color@>>(
-      /Core/Maybe/Eq%.Eq<Color@>(EqColor),
-      /Core/Maybe/Show%.Show<Color@>(ShowColor),
-      wnt, got), Str|'Nothing'), Str|'');
+    /Core/Test%.ExpectFails(
+      /Core/Test%.ExpectFails(
+        /Core/Test%.AssertEquals(
+          /Core/Maybe/Eq%.Eq(EqColor),
+          /Core/Maybe/Show%.Show(ShowColor),
+          wnt, got), Str|'Nothing'), Str|'');
   }),
 
   Test(Str|'Poked Eye Triangle', (Unit@ _) {

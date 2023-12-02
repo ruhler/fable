@@ -10,7 +10,7 @@
 % _ = /Graphics/AppIO%;
 % _ = /Graphics/Bench%;
 
-Test@ Tests = TestSuite(Str|Graphics, List<Test@>[
+Test@ Tests = TestSuite(Str|Graphics, List[
   /Graphics/2D/Tests%.Tests,
   /Graphics/Triangle/Tests%.Tests
 ]);

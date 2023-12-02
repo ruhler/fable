@@ -23,7 +23,7 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
+Test@ Tests = TestSuite(Str|'Graphics.2D', List[
   Test(Str|'Lower Left Right Triangle', (Unit@ _) {
     Drawing@ drawing = Triangle(
       Point@(Int|0, Int|0),
