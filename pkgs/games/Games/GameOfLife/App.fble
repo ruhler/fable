@@ -71,7 +71,7 @@ World@ acorn = World(List<Coord@>[
          Sub(Width, Int|2), Sub(Height, Int|2), Color.Black));
     
   # 2. For each live cell in range, draw a green unit square.
-  ForWorld<Drawing@>(w, clear, (Coord@ coord, Unit@ _, Drawing@ d) {
+  ForWorld<Drawing@>(w, clear, (Coord@ coord, Drawing@ d) {
     Int@ r = coord.row;
     Int@ c = coord.col;
     And(And(Lt(YMin, r), Lt(XMin, c)),

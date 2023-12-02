@@ -38,18 +38,18 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
 };
 
 # The world is a set of Coord@ where there are live cells.
-@ World@ = /Core/Map%.Map@<Coord@, Unit@>;
-% EqWorld = /Core/Map/Eq%.Eq<Coord@, Unit@>(EqCoord, /Core/Unit/Eq%.Eq);
+@ World@ = /Core/Set%.Set@<Coord@>;
+% EqWorld = /Core/Set/Eq%.Eq<Coord@>(EqCoord);
 % W = @(
-  Empty: /Core/Map%.Empty<Coord@, Unit@>,
-  Insert: /Core/Map%.Insert<Coord@>(OrdCoord)<Unit@>,
-  ForEach: /Core/Map%.ForEach<Coord@, Unit@>
+  Empty: /Core/Set%.Empty<Coord@>,
+  Insert: /Core/Set%.Insert<Coord@>(OrdCoord),
+  ForEach: /Core/Set%.ForEach<Coord@>
 );
 
 # Create a world from a list of coordinates of live cells.
 (List@<Coord@>){ World@; } World = (List@<Coord@> mkCells) {
   mkCells.?(nil: W.Empty);
-  W.Insert(World(mkCells.cons.tail), mkCells.cons.head, Unit);
+  W.Insert(World(mkCells.cons.tail), mkCells.cons.head);
 };
 
 # A count of neighboring cells. 4p stands for anything greater than or equal
@@ -88,14 +88,14 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
   #   For each cell in world,
   #     Set this cell alive in candidate
   #     Incr neighbors for each neighbor cell
-  Cand@ candidates = W.ForEach<Cand@>(w, C.Empty,
-    (Coord@ coord, Unit@ _, Cand@ cand_in) {
+  Cand@ candidates = W.ForEach(w, C.Empty,
+    (Coord@ coord, Cand@ cand_in) {
       Cand@ cand_alive = C.InsertWith(cand_in, coord, (Maybe@<Status@> ms) {
         ms.?(just: Status@(True, ms.just.neighbors),
              nothing: Status@(True, Count@(0: Unit)));
       });
 
-      List@<Coord@> neighbors = List<Coord@>[
+      List@<Coord@> neighbors = List[
         Coord@(Decr(coord.row), Decr(coord.col)),
         Coord@(Decr(coord.row),     coord.col ),
         Coord@(Decr(coord.row), Incr(coord.col)),
@@ -118,7 +118,7 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
   C.ForEach<World@>(candidates, W.Empty,
     (Coord@ coord, Status@ status, World@ w_in) {
     Lives(status).?(false: w_in);
-    W.Insert(w_in, coord, Unit);
+    W.Insert(w_in, coord);
   });
 };
 

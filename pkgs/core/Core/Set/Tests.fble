@@ -29,6 +29,7 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
+<@>% AssertNotEquals = /Core/Test%.AssertNotEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -71,12 +72,12 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 
 @ Set@ = /Core/Set%.Set@<Bit2@>;
 % Empty = /Core/Set%.Empty<Bit2@>;
-% Contains = /Core/Set%.Contains<Bit2@>(OrdBit2);
-% Insert = /Core/Set%.Insert<Bit2@>(OrdBit2);
-% Delete = /Core/Set%.Delete<Bit2@>(OrdBit2);
+% Contains = /Core/Set%.Contains(OrdBit2);
+% Insert = /Core/Set%.Insert(OrdBit2);
+% Delete = /Core/Set%.Delete(OrdBit2);
 <@>% ForEach = /Core/Set%.ForEach<Bit2@>;
 
-Test@ Tests = TestSuite(Str|Set, List<Test@>[
+Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {
     Bool@ wnt = False;
     Bool@ got = Contains(Empty, B);
@@ -144,6 +145,24 @@ Test@ Tests = TestSuite(Str|Set, List<Test@>[
     String@ wnt = Str|'{ 01; 10; }';
     String@ got = /Core/Set/Show%.Show(ShowBit2)(set);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'Equals', (Unit@ _) {
+    Set@ a = Insert(Insert(Empty, B), C);
+    Set@ b = Insert(Insert(Empty, B), C);
+    AssertEquals(
+      /Core/Set/Eq%.Eq(EqBit2),
+      /Core/Set/Show%.Show(ShowBit2),
+      a, b);
+  }),
+
+  Test(Str|'Not equals', (Unit@ _) {
+    Set@ a = Insert(Insert(Empty, B), C);
+    Set@ b = Insert(Insert(Insert(Empty, A), B), C);
+    AssertNotEquals(
+      /Core/Set/Eq%.Eq(EqBit2),
+      /Core/Set/Show%.Show(ShowBit2),
+      a, b);
   })
 ]);
 
