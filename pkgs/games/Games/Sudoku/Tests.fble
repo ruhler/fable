@@ -6,9 +6,10 @@
 
 % Chars = /Core/Char%.Chars;
 
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;
-
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -17,13 +18,12 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
-% StrE = /Core/String%.StrE;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -94,6 +94,12 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
       ShowRow(board(7)), ShowRow(board(8)), ShowRow(board(9))
     ]);
   };
+};
+
+Eq@<Solved@> EqBoard = (Solved@ a, Solved@ b) {
+  EqArray((Array@<Symbol@> a, Array@<Symbol@> b) {
+    EqArray<Symbol@>(EqSymbol, a, b);
+    }, a, b);
 };
 
 % MS = {
@@ -221,21 +227,14 @@ Input@ ExpertInput = {
     Array(_,9,_,  _,_,_,  _,8,_));
 };
 
-Test@ Tests = TestSuite(Str|Sudoku, List<Test@>[
+Test@ Tests = TestSuite(Str|Sudoku, List[
   Test(Str|sample, (Unit@ _) {
-    Maybe@<Solved@> ms = Solve(SampleInput);
-    ms.?(nothing: TestResult@(fail: Str|'failed to solve board'));
-    Bool@ equal = EqArray(
-      (Array@<Symbol@> a, Array@<Symbol@> b) {
-        EqArray<Symbol@>(EqSymbol, a, b);
-      },
-      SampleSolved, ms.just);
-    equal.?(true: TestResult@(pass: Unit));
-    TestResult@(fail: Strs[
-      StrE|'incorrect solution.\nexpected:\n',
-      ShowBoard(False)(SampleSolved),
-      StrE|'\nbut got:\n',
-      ShowBoard(False)(ms.just)]);
+    Maybe@<Solved@> want = Just(SampleSolved);
+    Maybe@<Solved@> got = Solve(SampleInput);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(EqBoard),
+      /Core/Maybe/Show%.Show(ShowBoard(False)),
+      want, got);
   })
 ]);
 
