@@ -125,7 +125,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     TicTacToe(Play(mi.just.move, game));
   };
 
-  (List@<String@> args) {
+  (List@<String@> _args) {
     Unit@ _ <- m.do(TicTacToe(Initial));
     m.return(True);
   };

@@ -5,7 +5,7 @@
 
 # Show --
 #   Instance of Show@ for Unit@.
-Show@<Unit@> Show = (Unit@ a) {
+Show@<Unit@> Show = (Unit@ _a) {
   Str|Unit;
 };
 

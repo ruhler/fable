@@ -148,10 +148,18 @@ static void Expr(FbleExpr* expr, Vars* vars)
       for (size_t i = 0; i < argc; ++i) {
         Expr(func_value_expr->args.xs[i].type, vars);
         nvars[i].name = func_value_expr->args.xs[i].name;
-        nvars[i].used = false;
+        nvars[i].used = func_value_expr->args.xs[i].name.name->str[0] == '_';
         nvars[i].next = (i == 0) ? vars : (nvars + i - 1);
       }
       Expr(func_value_expr->body, nvars + argc - 1);
+
+      for (size_t i = 0; i < argc; ++i) {
+        if (!nvars[i].used) {
+          FbleReportWarning("argument '", nvars[i].name.loc);
+          FblePrintName(stderr, nvars[i].name);
+          fprintf(stderr, "' is unused\n");
+        }
+      }
       return;
     }
 

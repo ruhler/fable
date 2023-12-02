@@ -4,7 +4,7 @@
 @ Bool@ = +(Unit@ true, Unit@ false);
 Bool@ False = Bool@(false: Unit@());
 
-<@ A@, @ B@> (A@, B@) { B@; } Poly = <@ A@, @ B@> (A@ a, B@ b) { b; };
+<@ A@, @ B@> (A@, B@) { B@; } Poly = <@ A@, @ B@> (A@ _a, B@ b) { b; };
 
 # We can do inference involving multiple type arguments all at once.
 Poly(Unit@(), False).false;

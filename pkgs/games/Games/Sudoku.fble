@@ -140,7 +140,7 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 @ Set@ = Array@<Bool@>;
 
 # The set of all possible symbols.
-Set@ FullSet = (Symbol@ s) { True; };
+Set@ FullSet = (Symbol@ _s) { True; };
 
 # Return the singleton value of a set, if it is a singleton set. Return
 # Nothing if it is not a singleton set.
@@ -170,7 +170,7 @@ Set@ FullSet = (Symbol@ s) { True; };
 # 2D array of cells. The first index is the row, the second index is the
 # column.
 @ Board@ = Array@<Array@<Cell@>>;
-Board@ EmptyBoard = (Symbol@ r)(Symbol@ c) { FullSet; };
+Board@ EmptyBoard = (Symbol@ _r)(Symbol@ _c) { FullSet; };
 
 # A constraint specifying that a cell cannot be the given symbol.
 @ X@ = *(CellId@ cell, Symbol@ symbol);

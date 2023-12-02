@@ -438,7 +438,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     # TODO: Come up with a more efficient way to pick any single existing
     # variable.
     Vars.ForEach(vars, Nothing<VarId@>,
-      (VarId@ v, VarS@ _, Maybe@<VarId@> mv) {
+      (VarId@ v, VarS@ _, Maybe@<VarId@> _mv) {
         Just(v);
       });
   };

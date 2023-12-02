@@ -2,7 +2,7 @@
 @ Unit@ = *();
 @ Bool@ = +(Unit@ true, Unit@ false);
 
-<@ T@>(T@, T@) { T@; } Poly = <@ T@>(T@ a, T@ b) { a; };
+<@ T@>(T@, T@) { T@; } Poly = <@ T@>(T@ a, T@ _b) { a; };
 
 # The type of T@ can be uniquely inferred.
 Poly(Bool@(false: Unit@()), Bool@(true: Unit@())).false;

@@ -4,7 +4,7 @@
 Bool@ true = Bool@(true: Unit@());
 Bool@ false = Bool@(false: Unit@());
 
-(Bool@, Bool@) { Bool@; } Snd = (Bool@ a, Bool@ b) {
+(Bool@, Bool@) { Bool@; } Snd = (Bool@ _a, Bool@ b) {
   b;
 };
 

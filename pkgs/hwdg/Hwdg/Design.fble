@@ -176,7 +176,7 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
 
   # Check if a port is blocked because the input value is unvailable or does
   # not match the specification.
-  (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } InputBlocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
+  (B@, Coord@, PortSpec@) { Bool@; } InputBlocked = (B@ b, Coord@ c, PortSpec@ pi) {
     pi.?(nothing: False);
 
     Maybe@<Data@> data = /Hwdg/Memory%.Get(b.memory, c);
@@ -220,10 +220,10 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
       Blocked(b, cs.lr, r.inputs.lr, r.outputs.lr).?(true: b);
 
       # Don't do anything if the inputs are blocked.
-      InputBlocked(b, cs.ul, r.inputs.ul, r.outputs.ul).?(true: b);
-      InputBlocked(b, cs.ur, r.inputs.ur, r.outputs.ur).?(true: b);
-      InputBlocked(b, cs.ll, r.inputs.ll, r.outputs.ll).?(true: b);
-      InputBlocked(b, cs.lr, r.inputs.lr, r.outputs.lr).?(true: b);
+      InputBlocked(b, cs.ul, r.inputs.ul).?(true: b);
+      InputBlocked(b, cs.ur, r.inputs.ur).?(true: b);
+      InputBlocked(b, cs.ll, r.inputs.ll).?(true: b);
+      InputBlocked(b, cs.lr, r.inputs.lr).?(true: b);
 
       # Don't do anything if the outputs are blocked.
       OutputBlocked(b, cs.ul, r.inputs.ul, r.outputs.ul).?(true: b);

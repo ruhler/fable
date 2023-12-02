@@ -10,7 +10,7 @@
 
 
 # Stream module, parameterized by get monad and stream type T@.
-<<@>@ M@, @ T@>(Monad@<M@> m, M@<Maybe@<T@>> get) {
+<<@>@ M@>(Monad@<M@> m)<@ T@> {
   # Stream@ --
   #   Represents a stream of values of type T@, read sequentially.
   @ Next@ = *(T@ next, M@<Stream@> rest),

@@ -9,7 +9,7 @@
 
 <<@>@ M@>(Monad@<M@>, M@<Maybe@<Bit8@>>) { M@<Hash@>; }
 Md5 = <<@>@ M@>(Monad@<M@> m, M@<Maybe@<Bit8@>> get) {
-  % Stream = /Md5/Stream%(m, get);
+  % Stream = /Md5/Stream%(m)<Bit8@>;
   @ Stream@ = Stream.Stream@;
   <@>@ StreamM@ = Stream.StreamM@;
 

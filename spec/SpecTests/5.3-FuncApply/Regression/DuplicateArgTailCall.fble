@@ -10,7 +10,7 @@ Unit@ Unit = Unit@();
     false: b.?(true: Unit, false: Unit));
 };
 
-(Unit@) { Unit@; } Caller = (Unit@ u) {
+(Unit@) { Unit@; } Caller = (Unit@ _u) {
   # Regression test for an issue we had in the past tracking lifetimes of
   # arguments to a tail call if the same local variable was used for
   # multiple different arguments of the call.

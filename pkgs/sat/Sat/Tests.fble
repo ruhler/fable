@@ -173,7 +173,7 @@ Test@ Tests = TestSuite(Str|Sat, List[
     ];
 
     # Hack to test that we got a sat result.
-    % eq = (Result@ wnt, Result@ got) {
+    % eq = (Result@ _wnt, Result@ got) {
       got.?(sat: True);
       False;
     };

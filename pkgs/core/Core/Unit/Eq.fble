@@ -5,7 +5,7 @@
 
 # Eq --
 #   Instance of Eq@ for Unit@.
-Eq@<Unit@> Eq = (Unit@ a, Unit@ b) {
+Eq@<Unit@> Eq = (Unit@ _a, Unit@ _b) {
   True;
 };
 

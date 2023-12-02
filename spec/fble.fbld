@@ -601,6 +601,11 @@
    of the function.
   
    Arguments to multi-argument functions must have distinct names.
+
+   Implementations are encouraged to emit warnings for unused arguments, with
+   the convention that no warnings should be produced for arguments starting
+   with @l{_} in their name. This allows the programmer to annotate an
+   argument as intentionally unused, which is occasionally useful in practice.
   
    Runtime is O(N log(M)), where N is the number of variables in scope that
    are captured by the function and M is the number of variables in scope.

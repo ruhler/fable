@@ -9,7 +9,7 @@ Unit@ Unit = Unit@();
   X@;
 };
 
-<@ T@>(L@<T@>) { Maybe@<T@>; } f = <@ T@>(L@<T@> l) {
+<@ T@>(L@<T@>) { Maybe@<T@>; } f = <@ T@>(L@<T@> _l) {
   Maybe@<T@>(nothing: Unit);
 };
 

@@ -24,7 +24,7 @@ Bit64@ 3f_64 = H64|3F;
 Bit64@ 08_64 = H64|08;
 
 <<@>@ M@>(Monad@<M@> m, M@<Maybe@<T@>> get) {
-  % Stream = /Md5/Stream%(m, get);
+  % Stream = /Md5/Stream%(m)<T@>;
   @ Stream@ = Stream.Stream@;
   % Put = Stream.Put;
   % End = Stream.End;

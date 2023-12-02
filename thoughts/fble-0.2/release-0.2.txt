@@ -98,3 +98,31 @@ Because you can imagine for testing purposes or uniformity, we want to have a
 package path that doesn't restrict who can access it. But it doesn't make
 sense to have module paths like /% or /foo//bar%.
 
+---
+
+Todo burndown item: 
+* Warn about unused arguments in function values?
+
+It should be trivial to implement. I'm just not sure if it makes sense to do.
+Does it provide any value to the user? Or is it just tedious having to add _
+for every function value that's not used?
+
+Let's try it out and see what it reports and how onerous it is.
+
+The one case I can think where it would be useful is if you are refactoring
+and no longer need to pass an argument to a function. But if the function is
+self recursive, it wouldn't be able to detect that.
+
+Some observations:
+* It's really easy just to add '_' in front of the argument to silence the
+  warning.
+* In one case for spec tests, I had to think about why the argument was
+  unused. Which is probably a good thing.
+* This catches unused monadic do results, which is kind of cool.
+* It's nice having the documentation of '_' that an argument is (potentially)
+  unused I think. It conveys more info to the reader of the code.
+* I found two real unused arguments this way I would have never found otherwise.
+
+Given the low cost of this to the user, the consistent benefit to
+documentation, and the potential benefit to identifying real unused arguments,
+I vote we take this change.

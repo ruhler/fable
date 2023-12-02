@@ -35,8 +35,8 @@
 Main = (
   IO@<Maybe@<Int@>> stdin,
   (Int@, World@) { R@<Unit@>; } stdout,
-  (Int@, World@) { R@<Unit@>; } stderr,
-  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
+  (Int@, World@) { R@<Unit@>; } _stderr,
+  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } _read,
   List@<String@> args) {
 
   (Int@) { IO@<Unit@>; } stdout_ = (Int@ s)(World@ w) {

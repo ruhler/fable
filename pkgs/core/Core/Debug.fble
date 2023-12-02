@@ -36,7 +36,7 @@ TraceEnabled = ((Unit@) { String@; } f) {
 };
 
 ((Unit@) { String@; }) { Unit@; }
-TraceDisabled = ((Unit@) { String@; } f) {
+TraceDisabled = ((Unit@) { String@; } _f) {
  Unit;
 };
 
@@ -46,7 +46,7 @@ TraceLnEnabled = ((Unit@) { String@; } f) {
 };
 
 ((Unit@) { String@; }) { Unit@; }
-TraceLnDisabled = ((Unit@) { String@; } f) {
+TraceLnDisabled = ((Unit@) { String@; } _f) {
  Unit;
 };
 

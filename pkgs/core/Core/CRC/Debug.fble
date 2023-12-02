@@ -27,7 +27,7 @@
 Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   % O = /Core/Stream/OStream%(m);
   
-  (List@<String@> args) {
+  (List@<String@> _args) {
     (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
       bits.?(nil: m.return(crc));
 
@@ -39,7 +39,7 @@ Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     List@<Bit@> poly = Cons(Bit.1, HexToBits|04C11DB7);
     List@<Bit@> init = HexToBits|00000000;
     CRC@ crc = CRC@(poly, init);
-    CRC@ result <- m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
+    CRC@ _result <- m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
 
     m.return(True);
   };

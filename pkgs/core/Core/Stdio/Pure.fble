@@ -55,7 +55,7 @@ Pure@<Maybe@<Int@>> In = {
   State.Set(PureState@(s.in, s.out, Append(s.err, List[b])));
 };
 
-(String@) { Pure@<Maybe@<IStream@<Pure@>>>; } Read = (String@ filename) {
+(String@) { Pure@<Maybe@<IStream@<Pure@>>>; } Read = (String@ _filename) {
   # TODO: Add a map from file name to List@<Int@> to allow modeling of the
   # filesystem.
   Monad.return(Nothing<IStream@<Pure@>>);

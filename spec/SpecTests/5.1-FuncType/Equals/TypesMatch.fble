@@ -6,6 +6,6 @@ Bool@ true = Bool@(true: Unit@());
 # Two function types with the arguments and return types match.
 @ A@ = (Unit@) { Bool@; };
 @ B@ = (Unit@) { Bool@; };
-A@ a = (Unit@ x) { true; };
+A@ a = (Unit@ _x) { true; };
 B@ b = a;
 b;

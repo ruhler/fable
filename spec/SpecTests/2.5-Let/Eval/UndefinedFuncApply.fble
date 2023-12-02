@@ -6,6 +6,6 @@
 # undefined behavior when applying the undefined function f.
 (Bool@) { Bool@; } _f = {
    Bool@ result = _f(Bool@(true: Unit@()));
-   (Bool@ b) { result; };
+   (Bool@ _b) { result; };
 };
 Unit@();
