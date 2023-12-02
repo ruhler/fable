@@ -13,4 +13,8 @@ namespace eval "tutorials" {
     ::fbld_html_doc $::b/www/book/$base.html $::s/book/$base.fbld
     www $::b/www/book/$base.html
   }
+
+  build $::b/www/book/index.html $::b/www/book/Book.html \
+    "cp $::b/www/book/index.html $::b/www/book/Book.html"
+  www $::b/www/book/index.html
 }

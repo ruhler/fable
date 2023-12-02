@@ -231,7 +231,10 @@ test $::b/pkgs/fbld/README.tr \
   "cmp $::s/README.md $::b/pkgs/fbld/README.md"
 
 # README file www
-fbld_html_doc $::b/www/index.html $::s/README.fbld
+fbld_html_doc $::b/www/README.html $::s/README.fbld
+www $::b/www/README.html
+build $::b/www/index.html $::b/www/README.html \
+  "cp $::b/www/index.html $::b/www/README.html"
 www $::b/www/index.html
 
 # Release file www

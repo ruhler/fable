@@ -2,8 +2,6 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* Add generated www/book/index.html? From book/Book.fbld perhaps?
-
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
