@@ -21,7 +21,7 @@ Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
     Vec@ v = Vec@(Int|2, Int|3);
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
-    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+    AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   }),
 
   Test(Str|'Unrotated Q2', (Unit@ _) {
@@ -29,7 +29,7 @@ Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
     Vec@ v = Vec@(Neg(Int|2), Int|3);
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
-    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+    AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   }),
 
   Test(Str|'Unrotated Q3', (Unit@ _) {
@@ -37,7 +37,7 @@ Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
     Vec@ v = Vec@(Neg(Int|2), Neg(Int|3));
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
-    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+    AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   }),
 
   Test(Str|'Unrotated Q4', (Unit@ _) {
@@ -45,7 +45,7 @@ Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
     Vec@ v = Vec@(Int|2, Neg(Int|3));
     Vec@ want = v;
     Vec@ got = Rotate(v, Int|0);
-    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+    AssertEquals(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
   })
 ]);
 

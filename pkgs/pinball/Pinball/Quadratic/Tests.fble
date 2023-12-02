@@ -47,10 +47,10 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     # Roots of (x - 4) * (x - 2) should be 2 and 4.
     # x^2 - 6x + 8
     Quadratic@ q = Quadratic@(Int|1, Neg(Int|6), Int|8);
-    Maybe@<Roots@> want = Just<Roots@>(Roots@(Int|2, Int|4));
+    Maybe@<Roots@> want = Just(Roots@(Int|2, Int|4));
     Maybe@<Roots@> got = Roots(q);
-    AssertEquals<Maybe@<Roots@>>(
-      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(EqRoots), /Core/Maybe/Show%.Show(ShowRoots),
       want, got);
   }),
 
@@ -58,10 +58,10 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     # Roots of (x - 2) * (x - 2) should be 2 and 2.
     # x^2 - 4x + 4
     Quadratic@ q = Quadratic@(Int|1, Neg(Int|4), Int|4);
-    Maybe@<Roots@> want = Just<Roots@>(Roots@(Int|2, Int|2));
+    Maybe@<Roots@> want = Just(Roots@(Int|2, Int|2));
     Maybe@<Roots@> got = Roots(q);
-    AssertEquals<Maybe@<Roots@>>(
-      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(EqRoots), /Core/Maybe/Show%.Show(ShowRoots),
       want, got);
   }),
 
@@ -70,18 +70,18 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     Quadratic@ q = Quadratic@(Int|1, Int|0, Int|1);
     Maybe@<Roots@> want = Nothing<Roots@>;
     Maybe@<Roots@> got = Roots(q);
-    AssertEquals<Maybe@<Roots@>>(
-      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(EqRoots), /Core/Maybe/Show%.Show(ShowRoots),
       want, got);
   }),
 
   Test(Str|'Roots Linear', (Unit@ _) {
     # (x-1), we'll have two roots, 1 and 1?
     Quadratic@ q = Quadratic@(Int|0, Int|1, Neg(Int|1));
-    Maybe@<Roots@> want = Just<Roots@>(Roots@(Int|1, Int|1));
+    Maybe@<Roots@> want = Just(Roots@(Int|1, Int|1));
     Maybe@<Roots@> got = Roots(q);
-    AssertEquals<Maybe@<Roots@>>(
-      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(EqRoots), /Core/Maybe/Show%.Show(ShowRoots),
       want, got);
   }),
 
@@ -90,8 +90,8 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     Quadratic@ q = Quadratic@(Int|0, Int|0, Int|1);
     Maybe@<Roots@> want = Nothing<Roots@>;
     Maybe@<Roots@> got = Roots(q);
-    AssertEquals<Maybe@<Roots@>>(
-      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(EqRoots), /Core/Maybe/Show%.Show(ShowRoots),
       want, got);
   })
 ]);

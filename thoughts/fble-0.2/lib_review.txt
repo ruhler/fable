@@ -218,24 +218,24 @@ pkgs/md5/Md5/Padder.fble                      DONE
 pkgs/md5/Md5/Rounds.fble                      DONE
 pkgs/md5/Md5/Stream.fble                      DONE
 pkgs/md5/Md5/Tests.fble                       DONE
-pkgs/pinball/Pinball/App.fble
-pkgs/pinball/Pinball/AppIO.fble
-pkgs/pinball/Pinball/Ball.fble
-pkgs/pinball/Pinball/Bench.fble
-pkgs/pinball/Pinball/Circle.fble
-pkgs/pinball/Pinball/Collide.fble
-pkgs/pinball/Pinball/Edge.fble
-pkgs/pinball/Pinball/Event.fble
-pkgs/pinball/Pinball/Num.fble
-pkgs/pinball/Pinball/Paddle.fble
-pkgs/pinball/Pinball/Quadratic.fble
-pkgs/pinball/Pinball/Quadratic/Show.fble
-pkgs/pinball/Pinball/Quadratic/Tests.fble
-pkgs/pinball/Pinball/Rotate.fble
-pkgs/pinball/Pinball/Rotate/Tests.fble
-pkgs/pinball/Pinball/Tests.fble
-pkgs/pinball/Pinball/Vec.fble
-pkgs/pinball/Pinball/World.fble
+pkgs/pinball/Pinball/App.fble                 DONE
+pkgs/pinball/Pinball/AppIO.fble               DONE
+pkgs/pinball/Pinball/Ball.fble                DONE
+pkgs/pinball/Pinball/Bench.fble               DONE
+pkgs/pinball/Pinball/Circle.fble              DONE
+pkgs/pinball/Pinball/Collide.fble             DONE
+pkgs/pinball/Pinball/Edge.fble                DONE
+pkgs/pinball/Pinball/Event.fble               DONE
+pkgs/pinball/Pinball/Num.fble                 DONE
+pkgs/pinball/Pinball/Paddle.fble              DONE
+pkgs/pinball/Pinball/Quadratic.fble           DONE
+pkgs/pinball/Pinball/Quadratic/Show.fble      DONE
+pkgs/pinball/Pinball/Quadratic/Tests.fble     DONE
+pkgs/pinball/Pinball/Rotate.fble              DONE
+pkgs/pinball/Pinball/Rotate/Tests.fble        DONE
+pkgs/pinball/Pinball/Tests.fble               DONE
+pkgs/pinball/Pinball/Vec.fble                 DONE
+pkgs/pinball/Pinball/World.fble               DONE
 pkgs/sat/Sat/Debug.fble
 pkgs/sat/Sat/Dimacs.fble
 pkgs/sat/Sat/Id.fble

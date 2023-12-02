@@ -43,7 +43,7 @@
 # BallEvent --
 #   Create an event to change the state of the ball at the given time.
 (Num@, Ball@) { Event@; } BallEvent = (Num@ time, Ball@ ball) {
-  Event@(time, Just<Ball@>(ball));
+  Event@(time, Just(ball));
 };
 
 @(Event@, Events, TimeEvent, BallEvent);

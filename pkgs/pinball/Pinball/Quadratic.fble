@@ -71,7 +71,7 @@ MulLL = (Linear@ f, Linear@ g) {
   Eq(q.a, 0).?(true: {
     Eq(q.b, 0).?(true: Nothing<Roots@>);
     Num@ r = Div(Neg(q.c), q.b);
-    Just<Roots@>(Roots@(r, r));
+    Just(Roots@(r, r));
   });
 
   Num@ d = Sub(Mul(q.b, q.b), Mul(4, Mul(q.a, q.c)));
@@ -81,7 +81,7 @@ MulLL = (Linear@ f, Linear@ g) {
   Num@ 2a = Mul(2, q.a);
   Num@ first = Div(Sub(nb, s), 2a);
   Num@ second = Div(Add(nb, s), 2a);
-  Just<Roots@>(@(first, second));
+  Just(@(first, second));
 };
 
 @(Linear@, Quadratic@, Roots@, AddQQ, SubQQ, SubLL, MulLL, Roots);
