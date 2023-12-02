@@ -24,20 +24,19 @@ Show@<Var@> ShowVar = (Var@ v) {
   Append<Char@>(sign, ShowId(v.id));
 };
 
-Show@<Clause@> ShowClause = /Core/List/Show%.Show<Var@>(ShowVar);
-Show@<Formula@> ShowFormula = /Core/List/Show%.Show<Clause@>(ShowClause);
+Show@<Clause@> ShowClause = /Core/List/Show%.Show(ShowVar);
+Show@<Formula@> ShowFormula = /Core/List/Show%.Show(ShowClause);
 
 Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
   x.?(error: x.error);
   ShowFormula(x.parsed);
 };
 
-Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show<Var@>(ShowVar);
+Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show(ShowVar);
 
 Show@<Result@> ShowResult = (Result@ a) {
-  a.?(
-    sat: Append<Char@>(Str|'sat: ', ShowAssignment(a.sat)),
-    unsat: Str|'unsat');
+  a.?(unsat: Str|'unsat');
+  Append(Str|'sat: ', ShowAssignment(a.sat));
 };
 
 @(ShowId, ShowVar, ShowClause, ShowFormula, ShowParsedFormula,

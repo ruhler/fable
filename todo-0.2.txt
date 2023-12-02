@@ -11,8 +11,6 @@ Things to do for the fble-0.2 release.
 
 * Update book/ docs for language changes?
 
-* Review all fble library code for idiomatic use?
-
 * dc.man: Treat arg and return descriptions as non-block always?
   Normally they wouldn't be block. Setting them as block adds a blank line
   before the descriptions in the generated man pages.

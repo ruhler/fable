@@ -49,7 +49,7 @@
 <@>@ ParseM@ = <@ T@> { (ParseState@) { ParseStatus@<T@>; }; };
 
 <@ T@>(T@) { ParseM@<T@>; } Return = <@ T@>(T@ x)(ParseState@ s) {
-  ParseStatus@<T@>(parsed: ParseResult@<T@>(s, x));
+  ParseStatus@<T@>(parsed: ParseResult@(s, x));
 };
 
 <@ A@>(ParseM@<A@>)<@ B@>((A@) { ParseM@<B@>; }) { ParseM@<B@>; }
@@ -88,7 +88,7 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
 };
 
 (String@) { ParseM@<Clause@>; } ParseClause = (String@ line) {
-  ParseVars(Split<Char@>(line, IsSpace));
+  ParseVars(Split(line, IsSpace));
 };
 
 ParseM@<Unit@> ParseClauses = {
@@ -102,8 +102,8 @@ ParseM@<Unit@> ParseClauses = {
 
 # Parse starting from the 'p cnf...' header line
 (String@) { ParseM@<Unit@>; } ParseFromHeader = (String@ header) {
-  List@<String@> words = Split<Char@>(header, IsSpace);
-  Int@ num_words = Length<String@>(words);
+  List@<String@> words = Split(header, IsSpace);
+  Int@ num_words = Length(words);
   /Core/Int/Eq%.Eq(num_words, Int|4).?(false: {
     Error<Unit@>(Strs[Str|'invalid header line: ', header]);
   });
@@ -143,11 +143,11 @@ ParseM@<Unit@> ParseFromStart = {
 (List@<String@>) { Parse@<Formula@>; } ParseLines = (List@<String@> lines) {
   ParseStatus@<Unit@> ps = ParseFromStart(ParseState@(lines, List<Clause@>[]));
   ps.?(error: Parse@<Formula@>(error: ps.error));
-  Parse@<Formula@>(parsed: Reverse(ps.parsed.state.formula));
+  Parse@(parsed: Reverse(ps.parsed.state.formula));
 };
 
 (String@) { Parse@<Formula@>; } Parse = (String@ dimacs) {
-  ParseLines(Split<Char@>(dimacs, (Char@ c) {
+  ParseLines(Split(dimacs, (Char@ c) {
     /Core/Char/Eq%.Eq(c, Chars.nl);
   }));
 };

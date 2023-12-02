@@ -236,10 +236,10 @@ pkgs/pinball/Pinball/Rotate/Tests.fble        DONE
 pkgs/pinball/Pinball/Tests.fble               DONE
 pkgs/pinball/Pinball/Vec.fble                 DONE
 pkgs/pinball/Pinball/World.fble               DONE
-pkgs/sat/Sat/Debug.fble
-pkgs/sat/Sat/Dimacs.fble
-pkgs/sat/Sat/Id.fble
-pkgs/sat/Sat/Main.fble
-pkgs/sat/Sat/Show.fble
-pkgs/sat/Sat/Solver.fble
-pkgs/sat/Sat/Tests.fble
+pkgs/sat/Sat/Debug.fble                       DONE
+pkgs/sat/Sat/Dimacs.fble                      DONE
+pkgs/sat/Sat/Id.fble                          DONE
+pkgs/sat/Sat/Main.fble                        DONE
+pkgs/sat/Sat/Show.fble                        DONE
+pkgs/sat/Sat/Solver.fble                      DONE
+pkgs/sat/Sat/Tests.fble                       DONE
