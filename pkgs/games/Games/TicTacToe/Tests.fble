@@ -29,41 +29,37 @@
 # Import to test compilation.
 % _ = /Games/TicTacToe/Stdio%;
 
-(Unit@) { TestResult@; } TestBoardStatus = (Unit@ _) {
-  Status@ want = Status@(O: Unit);
-  Status@ got = BoardStatus(Board@(
-      Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
-      Square@(E: Unit), Square@(O: Unit), Square@(X: Unit),
-      Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
-  AssertEquals(Eq.Status, Show.Status, want, got);
-};
-
-(Unit@) { TestResult@; } TestChooseBestMoveWin = (Unit@ _) {
-  AIR@ air = AI.Move(AI.Initial,
-    Board@(Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
-           Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
-           Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)),
-    Player@(X: Unit));
-  Position@ want = Position@(UR: Unit);
-  Position@ got = air.position;
-  AssertEquals(Eq.Position, Show.Position, want, got);
-};
-
-(Unit@) { TestResult@; } TestChooseBestMoveNoLose = (Unit@ _) {
-  AIR@ air = AI.Move(AI.Initial,
-    Board@(Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
-           Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
-           Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)),
-    Player@(X: Unit));
-  Position@ want = Position@(UR: Unit);
-  Position@ got = air.position;
-  AssertEquals(Eq.Position, Show.Position, want, got);
-};
-
 Test@ Tests = TestSuite(Str|TicTacToe, List[
-  Test(Str|TestBoardStatus, TestBoardStatus),
-  Test(Str|TestChooseBestMoveWin, TestChooseBestMoveWin),
-  Test(Str|TestChooseBestMoveNoLose, TestChooseBestMoveNoLose)
+  Test(Str|TestBoardStatus, (Unit@ _) {
+    Status@ want = Status@(O: Unit);
+    Status@ got = BoardStatus(Board@(
+        Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
+        Square@(E: Unit), Square@(O: Unit), Square@(X: Unit),
+        Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
+    AssertEquals(Eq.Status, Show.Status, want, got);
+  }),
+
+  Test(Str|TestChooseBestMoveWin, (Unit@ _) {
+    AIR@ air = AI.Move(AI.Initial,
+      Board@(Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
+             Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
+             Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)),
+      Player@(X: Unit));
+    Position@ want = Position@(UR: Unit);
+    Position@ got = air.position;
+    AssertEquals(Eq.Position, Show.Position, want, got);
+  }),
+
+  Test(Str|TestChooseBestMoveNoLose, (Unit@ _) {
+    AIR@ air = AI.Move(AI.Initial,
+      Board@(Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
+             Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
+             Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)),
+      Player@(X: Unit));
+    Position@ want = Position@(UR: Unit);
+    Position@ got = air.position;
+    AssertEquals(Eq.Position, Show.Position, want, got);
+  })
 ]);
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
