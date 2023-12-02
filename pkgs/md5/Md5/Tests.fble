@@ -96,7 +96,7 @@ M@<Maybe@<Bit8@>> Get = {
 
 (List@<Hex@>) { List@<Bit8@>; } Hex2Bytes = (List@<Hex@> hex) {
   hex.?(
-    cons: Cons<Bit8@>(
+    cons: Cons(
       H8[hex.cons.head, hex.cons.tail.cons.head],
       Hex2Bytes(hex.cons.tail.cons.tail)),
     nil: Nil<Bit8@>);
@@ -105,7 +105,7 @@ M@<Maybe@<Bit8@>> Get = {
 (String@, Hash@, List@<Hex@>) { Test@; } TestStr = (String@ name, Hash@ wnt, List@<Hex@> bytes) {
   Test(name, (Unit@ _) {
     Hash@ got = Md5Str(Hex2Bytes(bytes));
-    AssertEquals<Hash@>(Eq, Show, wnt, got);
+    AssertEquals(Eq, Show, wnt, got);
   });
 };
 

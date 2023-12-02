@@ -245,16 +245,13 @@ Round@ Round4 = RoundX(II, S.6, S.10, S.15, S.21, T4, (Block@ b) {
     b.4, b.11, b.2, b.9);
 });
 
-(ABCD@, Block@) { ABCD@; } DoBlockImpl = (ABCD@ abcd, Block@ block) {
+(ABCD@, Block@) { ABCD@; } DoBlock = (ABCD@ abcd, Block@ block) {
   ABCD@ r1 = Round1(abcd.a, abcd.b, abcd.c, abcd.d, block);
   ABCD@ r2 = Round2(r1.a, r1.b, r1.c, r1.d, block);
   ABCD@ r3 = Round3(r2.a, r2.b, r2.c, r2.d, block);
   ABCD@ r4 = Round4(r3.a, r3.b, r3.c, r3.d, block);
   ABCD@(Add(abcd.a, r4.a), Add(abcd.b, r4.b), Add(abcd.c, r4.c), Add(abcd.d, r4.d));
 };
-
-#(ABCD@, Block@) { ABCD@; } DoBlock = $(DoBlockImpl);
-(ABCD@, Block@) { ABCD@; } DoBlock = DoBlockImpl;
 
 @ T@ = Bit8@;
 

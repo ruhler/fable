@@ -45,7 +45,7 @@
   StreamM@<Maybe@<T@>> Get = (M@<Stream@> ms) {
     Stream@ s <- m.do(ms); 
     s.?(nothing: m.return(Result@<Maybe@<T@>>(ms, Nothing<T@>)));
-    m.return(Result@<Maybe@<T@>>(s.just.rest, Just(s.just.next)));
+    m.return(Result@(s.just.rest, Just(s.just.next)));
   };
 
   # Run --
