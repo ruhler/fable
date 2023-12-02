@@ -133,7 +133,7 @@ Set@ AllAliens = {
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
 (Set@, Alien@) { Bool@; } Contains = {
-  % Lookup = /Core/Map%.Lookup<Alien@>(AlienOrd)<Unit@>;
+  % Lookup = /Core/Map%.Lookup(AlienOrd)<Unit@>;
   (Set@ set, Alien@ alien) {
     Lookup(set, alien).?(just: True, nothing: False);
   };
@@ -141,7 +141,7 @@ Set@ AllAliens = {
 
 # Remove --
 #   Remove an element of the set.
-(Set@, Alien@) { Set@; } Remove = /Core/Map%.Delete<Alien@>(AlienOrd)<Unit@>;
+(Set@, Alien@) { Set@; } Remove = /Core/Map%.Delete(AlienOrd)<Unit@>;
 
 # NextAlive --
 #   Returns the next live alien in the given set, or Nothing if we have
@@ -152,7 +152,7 @@ Set@ AllAliens = {
     just: {
       Alien@ next = mnext.just;
       Contains(alive, next).?(
-        true: Just<Alien@>(next),
+        true: Just(next),
         false: NextAlive(alive, next));
     },
     nothing: Nothing<Alien@>);
@@ -163,7 +163,7 @@ Set@ AllAliens = {
 #   live aliens.
 (Set@) { Maybe@<Alien@>; } FirstAlive = (Set@ alive) {
   Contains(alive, FirstAlien).?(
-    true: Just<Alien@>(FirstAlien),
+    true: Just(FirstAlien),
     false: NextAlive(alive, FirstAlien));
 };
 
@@ -286,7 +286,7 @@ Int@ DyingTime = Int|10;
     alive: AllAliens,
     dir: Dir@(right: Unit),
     phase: Phase@(b: Unit),
-    next: Just<Alien@>(FirstAlien),
+    next: Just(FirstAlien),
     turn: False,
     dying: Nil<Dying@>,
     lfsr: /Core/LFSR%.LFSRs.8);
@@ -302,7 +302,7 @@ Int@ DyingTime = Int|10;
 
   Int@ nwait = Sub(head.wait, Int|1);
   Eq(Int|0, nwait).?(true: tail);
-  Cons<Dying@>(Dying@(head.x, head.y, nwait), tail);
+  Cons(Dying@(head.x, head.y, nwait), tail);
 };
 
 # Vanguard --
@@ -312,7 +312,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
   (Int@) { Maybe@<Alien@>; } FromRow = (Int@ row) {
     Lt(row, NumRows).?(false: Nothing<Alien@>);
     Alien@ alien = Alien@(row, col);
-    Contains(aliens.alive, alien).?(true: Just<Alien@>(alien));
+    Contains(aliens.alive, alien).?(true: Just(alien));
     FromRow(Incr(row));
   };
   FromRow(Int|0);
@@ -325,7 +325,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
   aliens.next.?(just: bombs);
 
   @ State@ = *(LFSR@ lfsr, Bombs@ bombs);
-  /Core/Iter%.For<Int@, State@>(/Core/Int/Iter%.Range(Int|0, NumCols),
+  /Core/Iter%.For(/Core/Int/Iter%.Range(Int|0, NumCols),
     State@(aliens.lfsr, bombs),
     (Int@ col, State@ s) {
       Maybe@<Alien@> alien = Vanguard(aliens, col);
@@ -345,6 +345,8 @@ Vanguard = (Aliens@ aliens, Int@ col) {
 # Tick --
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
+  List@<Dying@> dying = TickDying(a.dying);
+  LFSR@ lfsr = Shift(a.lfsr).lfsr;
   a.next.?(
     just: {
       Int@ left = Add(a.dst_x, Mul(StrideX, a.next.just.col));
@@ -352,23 +354,22 @@ Vanguard = (Aliens@ aliens, Int@ col) {
         left: Lt(left, LeftEdge),
         right: Gt(left, RightEdge)));
       Maybe@<Alien@> next = NextAlive(a.alive, a.next.just);
-      Aliens@(a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
-        a.dir, a.phase, next, turn, TickDying(a.dying), Shift(a.lfsr).lfsr);
+      a.@(next, turn, dying, lfsr);
     },
     nothing: {
-      *(Int@ x, Int@ y, Dir@ dir) updates = a.turn.?(
-        true: @(
-          x: a.dst_x,
-          y: Sub(a.dst_y, MoveY),
-          dir: FlipDir(a.dir)),
-        false: @(
-          x: a.dir.?(left: Sub(a.dst_x, MoveX), right: Add(a.dst_x, MoveX)),
-          y: a.dst_y,
-          dir: a.dir));
+      Int@ src_x = a.dst_x;
+      Int@ src_y = a.dst_y;
+      Phase@ phase = FlipPhase(a.phase);
       Maybe@<Alien@> next = FirstAlive(a.alive);
-      Aliens@(a.dst_x, a.dst_y, updates.x, updates.y,
-        a.alive, updates.dir, FlipPhase(a.phase),
-        next, False, TickDying(a.dying), Shift(a.lfsr).lfsr);
+      Bool@ turn = False;
+      a.turn.?(
+        true: a.@(src_x, src_y,
+          dst_y: Sub(a.dst_y, MoveY),
+          dir: FlipDir(a.dir),
+          phase, next, turn, dying, lfsr),
+        false: a.@(src_x, src_y,
+          dst_x: a.dir.?(left: Sub(a.dst_x, MoveX), right: Add(a.dst_x, MoveX)),
+          phase, next, turn, dying, lfsr));
     });
 };
 
@@ -396,7 +397,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     Alien@ alien = Alien@(qry.q, qrx.q);
     Contains(aliens.alive, alien).?(false: Nothing<Alien@>);
 
-    Just<Alien@>(alien);
+    Just(alien);
   };
 
   Maybe@<Alien@> src_candidate = Candidate(aliens.src_x, aliens.src_y);
@@ -431,17 +432,9 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     Dying@(alien_x, alien_y, DyingTime);
   };
 
-  @(src_x: aliens.src_x,
-    src_y: aliens.src_y,
-    dst_x: aliens.dst_x,
-    dst_y: aliens.dst_y,
+  aliens.@(
     alive: Remove(aliens.alive, alien),
-    dir: aliens.dir,
-    phase: aliens.phase,
-    next: aliens.next,
-    turn: aliens.turn,
-    dying: Cons<Dying@>(dying, aliens.dying),
-    lfsr: aliens.lfsr);
+    dying: Cons(dying, aliens.dying));
 };
 
 # Points --
@@ -469,7 +462,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
   Maybe@<Alien@> kill = Collision(x, y, aliens);
   kill.?(nothing: Nothing<Kill@>);
-  Just<Kill@>(Kill@(Points(kill.just), Kill(aliens, kill.just)));
+  Just(Kill@(Points(kill.just), Kill(aliens, kill.just)));
 };
 
 # AllDead --

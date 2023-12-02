@@ -39,7 +39,8 @@
 DirState@ InitialDirState = DirState@(0: Unit);
 
 (DirState@) { DirState@; } Next = (DirState@ ds) {
-  ds.?(0: DirState@(1: Unit), 1: DirState@(2: Unit), 2: DirState@(3: Unit),
+  ds.?(
+    0: DirState@(1: Unit), 1: DirState@(2: Unit), 2: DirState@(3: Unit),
     3: DirState@(4: Unit), 4: DirState@(5: Unit), 5: DirState@(0: Unit));
 };
 
@@ -147,19 +148,15 @@ Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
             v: ufo.state.flying.v)), ufo.dir);
     },
     dying: {
-      Eq(Int|0, ufo.state.dying.time).?(
-        true: Hide(ufo),
-        false: Ufo@(State@(dying: @(
-              time: Sub(ufo.state.dying.time, Int|1),
-              x: ufo.state.dying.x,
-              points: ufo.state.dying.points)), ufo.dir));
+      Eq(Int|0, ufo.state.dying.time).?(true: Hide(ufo));
+      Ufo@(State@(dying: @(
+        time: Sub(ufo.state.dying.time, Int|1),
+        x: ufo.state.dying.x,
+        points: ufo.state.dying.points)), ufo.dir);
     },
     hiding: {
-      Eq(Int|0, ufo.state.hiding.time).?(
-        true: Fly(ufo),
-        false: Ufo@(
-          State@(hiding: Hiding@(Sub(ufo.state.hiding.time, Int|1))),
-          ufo.dir));
+      Eq(Int|0, ufo.state.hiding.time).?(true: Fly(ufo));
+      Ufo@(State@(hiding: Hiding@(Sub(ufo.state.hiding.time, Int|1))), ufo.dir);
     });
 };
 
@@ -196,7 +193,7 @@ Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
 
   Points@ points = Points(flying.x);
   Dying@ dying = Dying@(DyingTime, flying.x, points);
-  Just<Kill@>(Kill@(PointsValue(points), Ufo@(State@(dying: dying), ufo.dir)));
+  Just(Kill@(PointsValue(points), Ufo@(State@(dying: dying), ufo.dir)));
 };
 
 (Ufo@) { Drawing@; } Draw = (Ufo@ ufo) {

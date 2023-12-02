@@ -45,16 +45,14 @@ Bullet@ Initial = Bullet@(Int|0, Int|0, False);
 #   The updated bullet state.
 (Bullet@, Ship@) { Bullet@; }
 Fire = (Bullet@ bullet, Ship@ ship) {
-  bullet.live.?(
-    true: bullet,
-    false: Bullet@(Add(ship.x, Int|7), Int|24, True));
+  bullet.live.?(true: bullet);
+  Bullet@(Add(ship.x, Int|7), Int|24, True);
 };
 
 # Advance the bullet one unit of game time.
 (Bullet@) { Bullet@; } Tick = (Bullet@ bullet) {
-  bullet.live.?(
-    true: Bullet@(bullet.x, Add(bullet.y, BulletV), Lt(bullet.y, Int|210)),
-    false: bullet);
+  bullet.live.?(false: bullet);
+  Bullet@(bullet.x, Add(bullet.y, BulletV), Lt(bullet.y, Int|210));
 };
 
 # Make a drawing of the bullet in its current location.

@@ -47,13 +47,13 @@ Bases@ Empty = /Core/Map%.Empty<Int@, Slice@>;
 
 # Lookup --
 #   Look up a slice by X coordinate.
-(Bases@, Int@) { Maybe@<Slice@>; } Lookup = /Core/Map%.Lookup<Int@>(Ord)<Slice@>;
+(Bases@, Int@) { Maybe@<Slice@>; } Lookup = /Core/Map%.Lookup(Ord)<Slice@>;
 
 # Delete --
 #   Remove a slice by X coordinate.
-(Bases@, Int@) { Bases@; } Delete = /Core/Map%.Delete<Int@>(Ord)<Slice@>;
+(Bases@, Int@) { Bases@; } Delete = /Core/Map%.Delete(Ord)<Slice@>;
 
-(Bases@, Int@, Slice@) { Bases@; } Insert = /Core/Map%.Insert<Int@>(Ord)<Slice@>;
+(Bases@, Int@, Slice@) { Bases@; } Insert = /Core/Map%.Insert(Ord)<Slice@>;
   
 
 # BaseSpec --

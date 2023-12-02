@@ -43,8 +43,8 @@ Bombs@ Initial = Nil<Bomb@>;
 
 (Int@, Int@, Kind@, Bombs@) { Bombs@; }
 Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
-  Lt(Length<Bomb@>(bombs), MaxBombs).?(false: bombs);
-  Cons<Bomb@>(Bomb@(x, y, kind), bombs);
+  Lt(Length(bombs), MaxBombs).?(false: bombs);
+  Cons(Bomb@(x, y, kind), bombs);
 };
 
 # HitResult@ --
@@ -65,7 +65,7 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
 
   HitResult@ tail_hit = HitShip(bombs.cons.tail, ship_x);
   tail_hit.hit.?(true: {
-    @(hit: True, bombs: Cons<Bomb@>(bombs.cons.head, tail_hit.bombs));
+    @(hit: True, bombs: Cons(bombs.cons.head, tail_hit.bombs));
   });
 
   Bomb@ bomb = bombs.cons.head;
@@ -90,21 +90,21 @@ HitBases = (Bombs@ bombs, Bases@ bases) {
   Bases.HitResult@ hit = Bases.BombHit(bomb.x, bomb.y, tail_hit.bases);
   Bombs@ nbombs = hit.hit.?(
     true: tail_hit.bombs,
-    false: Cons<Bomb@>(bomb, tail_hit.bombs));
+    false: Cons(bomb, tail_hit.bombs));
   @(bombs: nbombs, bases: hit.bases);
 };
 
 (Bombs@) { Bombs@; } Tick = (Bombs@ bombs) {
-  ForEach<Bomb@, Bombs@>(bombs, Nil<Bomb@>, (Bomb@ b, Bombs@ bs) {
+  ForEach(bombs, Nil<Bomb@>, (Bomb@ b, Bombs@ bs) {
     Int@ v = b.kind.?(bomb: BombVelocity, squiggle: SquiggleVelocity);
     Bomb@ nb = Bomb@(b.x, Sub(b.y, v), b.kind);
     Lt(nb.y, MinY).?(true: bs);
-    Cons<Bomb@>(nb, bs);
+    Cons(nb, bs);
   });
 };
 
 (Bombs@) { Drawing@; } Draw = (Bombs@ bombs) {
-  ForEach<Bomb@, Drawing@>(bombs, Blank, (Bomb@ b, Drawing@ d) {
+  ForEach(bombs, Blank, (Bomb@ b, Drawing@ d) {
     Drawing@ sprite = b.kind.?(bomb: Graphics.Bomb, squiggle: Graphics.Squiggle);
     Over(d, Translate(b.x, b.y, sprite));
   });
