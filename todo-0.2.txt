@@ -184,7 +184,6 @@ Doc Comments
  - Consider pulling ForEach and Map out into their own class?
 * [/Int%] Add test coverage for the Int routines.
 * [/Fble/Test%] Clean up fble test framework
- - Use AssertEquals for GameOfLife
  - Add an AssertLt or similar methods? Or generalize AssertEquals?
  - Properly test the test infra.
 * [/GameOfLife%] Switch to a target 60 FPS?

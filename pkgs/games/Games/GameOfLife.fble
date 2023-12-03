@@ -23,6 +23,11 @@
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;
 
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
@@ -37,12 +42,20 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
   o.?(eq: Ord(a.col, b.col), : o);
 };
 
+Show@<Coord@> ShowCoord = (Coord@ a) {
+  Strs[
+    Str|'(', /Core/Int/Show%.Show(a.row),
+    Str|', ', /Core/Int/Show%.Show(a.col),
+    Str|')'];
+};
+
 # The world is a set of Coord@ where there are live cells.
 @ World@ = /Core/Set%.Set@<Coord@>;
-% EqWorld = /Core/Set/Eq%.Eq<Coord@>(EqCoord);
+% EqWorld = /Core/Set/Eq%.Eq(EqCoord);
+% ShowWorld = /Core/Set/Show%.Show(ShowCoord);
 % W = @(
   Empty: /Core/Set%.Empty<Coord@>,
-  Insert: /Core/Set%.Insert<Coord@>(OrdCoord),
+  Insert: /Core/Set%.Insert(OrdCoord),
   ForEach: /Core/Set%.ForEach<Coord@>
 );
 
@@ -127,4 +140,4 @@ Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
   StepN(Decr(n), Step(w));
 };
 
-@(Coord@, World@, World, ForWorld: W.ForEach, EqWorld, Step, StepN);
+@(Coord@, World@, World, ForWorld: W.ForEach, EqWorld, ShowWorld, Step, StepN);
