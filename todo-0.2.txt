@@ -198,8 +198,6 @@ Doc Comments
 
 * [spec] Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
-* [spec] Clarify spec on when (compile vs runtime) vacuous value error should be
-  reported.
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
  
@@ -208,9 +206,6 @@ Doc Comments
   quotes in type error messages.
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
-* [typecheck] Test and fix error message for type of anonymous type let values.
- - The type should be the computed type for the value, not the introduced
-   abstract type?
 
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.
