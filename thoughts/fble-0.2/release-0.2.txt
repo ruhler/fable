@@ -126,3 +126,87 @@ Some observations:
 Given the low cost of this to the user, the consistent benefit to
 documentation, and the potential benefit to identifying real unused arguments,
 I vote we take this change.
+
+---
+
+Todo burndown item:
+* For loaded submodules, should the module profile block be the module file or
+  the place where it was imported from?
+
+Currently it's the module file. There's no indication of what caused it to be
+loaded in the first place.
+
+Technically the cause for the module to be loaded could be multiple blocks.
+
+Another option would be pick one of the references that loaded a module. Maybe
+the first? Because there could also be multiple references to the same module.
+It seems kind of arbitrary to pick one out of all of them.
+
+For compiled code, there's not much we can do. We generate the profiling info
+at compile time of the module before knowing what caused it to be linked in.
+
+Let's compare compiled and interpreted profiles and see.
+
+Compiled code shows the first line of a module file as the location for a
+module. Interpreted code shows where the module file was loaded from.
+
+Honestly I think it's more useful to show where it was loaded from, the way
+the interpreter does. The question is: is it worth going out of the way to
+support that? And how would that look?
+
+We would need to change FbleLoadFromCompiled to take an FbleLoc saying who was
+loading it. Then add FbleLoc to FbleCompiledModuleFunction...
+
+We would need to add FbleLoc for each FbleCompiledModuleFunction deps passed
+to FbleLoadFromCompiled. Currently the module path is hard coded into to the
+static FbleExecutable value we generate. It would be tedious to allocate
+separate FbleExecutable instances every time we load the module and update the
+location.
+
+So the question is: is it worth it?
+
+Right now compiled code doesn't say who brings in a module. But you can grep
+for it easily enough in the source code. You can use fble-deps. And I would
+argue it's unfair to pick an arbitrary module reference as being the cause of
+a module being loaded.
+
+And you can always run profiling with the interpreter if you want.
+
+In summary, I don't think it's worth making any changes here. Fine to keep as
+is.
+
+---
+
+Todo burndown item:
+* [typecheck] Quote funny names in types. For example, the field ',' should
+  have quotes in type error messages.
+
+There are a few different use cases for printing names:
+* error messages, where we want single quotes around them regardless to make
+  the name stand out.
+* types, where we don't want single quotes around them unless needed.
+* Debug info, where we want to use the raw characters of the name without any
+  quoting.
+
+It's awkward, because I want to print names like 'Foo@'. But technically in
+fble the syntax for this should be 'Foo'@. That just looks awkward to me.
+
+What syntax do I want to use for printing names then?
+
+What if I have a name 'hello there', with the space. Then say it's a type.
+Would I want to print it as: 'hello there@', or 'hello there'@? And what if
+the name has an @ sign in it? Like: variable 'Foo@' instead of type 'Foo'@?
+
+General approaches possible:
+* Use fble syntax. Can handle all kinds of names. Consistent and general. Not
+  as intuitive as I would like it, especially when we want to make clear in
+  the context it is a name we are showing.
+* Something else...
+
+Here's what I suggest:
+* For debug info, use the raw string, no quoting or escaping of any kind.
+* For error messages involving names, we already use single quotes around
+  everything, so nothing needs to change. Print using the form 'Foo@'.
+* For names in types, only if some quoting is needed, quote using fble syntax.
+
+Make that minor improvement and call this done.

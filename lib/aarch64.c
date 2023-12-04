@@ -196,17 +196,17 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 }
 
 /**
- * Outputs a string literal to fout.
+ * Declares a string literal.
  *
  * @param fout  The file to write to.
  * @param string  The contents of the string to write.
  *
  * @sideeffects
- *   Outputs the given string as a C string literal to the given file.
+ *   Adds a .string statement to the output file.
  */
 static void StringLit(FILE* fout, const char* string)
 {
-  fprintf(fout, "\"");
+  fprintf(fout, "  .string \"");
   for (const char* p = string; *p; p++) {
     // TODO: Handle other special characters too.
     switch (*p) {
@@ -216,7 +216,7 @@ static void StringLit(FILE* fout, const char* string)
       default: fprintf(fout, "%c", *p); break;
     }
   }
-  fprintf(fout, "\"");
+  fprintf(fout, "\"\n");
 }
 
 /**
@@ -241,9 +241,7 @@ static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
   fprintf(fout, LABEL ":\n", id);
   fprintf(fout, "  .xword 1\n");                       // .refcount = 1
   fprintf(fout, "  .xword %i\n", FBLE_STRING_MAGIC);   // .magic
-  fprintf(fout, "  .string ");                         // .str
-  StringLit(fout, string);
-  fprintf(fout, "\n");
+  StringLit(fout, string);                             // .str
   return id;
 }
 
@@ -1563,9 +1561,12 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "  .uleb128 3\n");  // abbrev code for var.
 
           // variable name.
-          fprintf(fout, "  .string \"");
-          FblePrintName(fout, var->name);
-          fprintf(fout, "\"\n");
+          char name[strlen(var->name.name->str) + 2];
+          strcpy(name, var->name.name->str);
+          if (var->name.space == FBLE_TYPE_NAME_SPACE) {
+            strcat(name, "@");
+          }
+          StringLit(fout, name);
 
           // location.
           // var_tags are 0x70 + X for bregX. In this case:

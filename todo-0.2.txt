@@ -2,6 +2,9 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* Double check what all funny characters could mess up .string literal in
+  aarch64.c
+
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
@@ -151,11 +154,6 @@ Doc Comments
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
 
-* For loaded submodules, should the module profile block be the module file or
-  the place where it was imported from?
- - Seems like it should be the module file, because it could be imported from
-   multiple places?
-
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense?
 
@@ -163,8 +161,6 @@ Doc Comments
  - To encourage all the apps to support optional profiling, including things
    like fble-md5 and fble-app?
  - Check we are passing meaningful block ids to FbleNewFuncValue.
-
-* Run fble-test-compile-error tests in compilation mode?
 
 * [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
  - It would be convenient for constructing things in case of error.
@@ -180,8 +176,6 @@ Doc Comments
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
  - Add tests for full code coverage of all functions.
- - Rename Str to String? Or to S?
- - Consider pulling ForEach and Map out into their own class?
 * [/Int%] Add test coverage for the Int routines.
 * [/Fble/Test%] Clean up fble test framework
  - Add an AssertLt or similar methods? Or generalize AssertEquals?
@@ -202,8 +196,8 @@ Doc Comments
   - Including that tail recursive functions should not smash the stack.
  
 * [typecheck] Better error messages on types that have the same name but different values?
-* [typecheck] Quote funny names in types. For example, the field ',' should have
-  quotes in type error messages.
+* [typecheck] Quote funny names in types. For example, the field ',' should
+  have quotes in type error messages.
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
 
