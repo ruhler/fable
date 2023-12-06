@@ -4,6 +4,7 @@ Things to do for the fble-0.2 release.
 
 * Double check what all funny characters could mess up .string literal in
   aarch64.c
+  - Test for '\' character at end of variable name.
 
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.

@@ -7,6 +7,8 @@
 
 #include <string.h>   // for strcmp
 
+#include "parse.h"    // for FbleIsPlainWord
+
 // FbleCopyName -- see documentation in fble-name.h
 FbleName FbleCopyName(FbleName name)
 {
@@ -34,7 +36,22 @@ bool FbleNamesEqual(FbleName a, FbleName b)
 // FblePrintName -- see documentation in fble-name.h
 void FblePrintName(FILE* stream, FbleName name)
 {
-  fprintf(stream, "%s", name.name->str);
+  bool quoted = !FbleIsPlainWord(name.name->str);
+  if (quoted) {
+    fprintf(stream, "'");
+  }
+
+  for (const char* c = name.name->str; *c != '\0'; ++c) {
+    if (*c == '\'') {
+      fprintf(stream, "'");
+    }
+    fprintf(stream, "%c", *c);
+  }
+
+  if (quoted) {
+    fprintf(stream, "'");
+  }
+
   switch (name.space) {
     case FBLE_NORMAL_NAME_SPACE:
       // Nothing to add here

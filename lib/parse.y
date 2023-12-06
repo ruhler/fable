@@ -892,6 +892,17 @@ static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV
   FbleReportError("%s\n", *llocp, msg);
 }
 
+// See documentation in parse.h
+bool FbleIsPlainWord(const char* word)
+{
+  for (const char* c = word; *c != '\0'; c++) {
+    if (!IsWordChar(*c)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // See documentation in fble-load.h.
 FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps)
 {
