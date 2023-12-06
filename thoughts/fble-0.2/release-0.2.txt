@@ -210,3 +210,11 @@ Here's what I suggest:
 * For names in types, only if some quoting is needed, quote using fble syntax.
 
 Make that minor improvement and call this done.
+
+Here's what I decided to do in the end:
+* Debug info uses raw string, no quoting.
+* FblePrintName adds quotes only if needed.
+* Type errors add single quotes around all names.
+
+This means we'll get double single quotes around funny names. I'm fine with
+that.

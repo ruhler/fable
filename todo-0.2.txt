@@ -2,10 +2,6 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* Double check what all funny characters could mess up .string literal in
-  aarch64.c
-  - Test for '\' character at end of variable name.
-
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
@@ -197,8 +193,6 @@ Doc Comments
   - Including that tail recursive functions should not smash the stack.
  
 * [typecheck] Better error messages on types that have the same name but different values?
-* [typecheck] Quote funny names in types. For example, the field ',' should
-  have quotes in type error messages.
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
 
