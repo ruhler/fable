@@ -1,0 +1,9 @@
+@define[l][text][] @@
+@define[a][text][] @@
+@define[item][text][] @@
+@define[i][text][] @@
+@define[func][name brief content][] @@
+@define[.block][text][] @@
+@define[arg][type name desc][] @@
+@define[returns][type desc][] @@
+@define[sideeffects][desc][] @@

@@ -8,13 +8,15 @@
 
 #include <stdbool.h>    // for bool
 
-// FbleIsPlainWord --
-//   Tests whether a sequence of characters can be expressed as a plain,
-//   unquoted, word in the fble syntax.
-//
-// @param word  the characters to test.
-// @returns  true if all characters are normal 'word' characters.
-// @sideeffects None
+/**
+ * @func[FbleIsPlainWord] Checks if @a[word] is a plain word.
+ *  Tests whether a sequence of characters can be expressed as a plain,
+ *  unquoted, word in the fble syntax.
+ *
+ *  @arg[const char*][word] the characters to test.
+ *  @returns[bool] true if all characters are normal 'word' characters.
+ *  @sideeffects None
+ */
 bool FbleIsPlainWord(const char* word);
 
 #endif // FBLE_INTERNAL_PARSE_H_

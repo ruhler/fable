@@ -28,6 +28,18 @@ namespace eval "fbld" {
       "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/bin/fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/dc.man.fbld $target.fbld > $target"
   }
 
+  # Check syntax of doc comments in the given file.
+  # @arg target - the test to generate.
+  # @arg source - the C header file to test doc comments in.
+  proc ::fbld_check_dc { target source } {
+    build $target.fbld \
+      "$source $::s/fbld/dcget.tcl" \
+      "tclsh8.6 $::s/fbld/dcget.tcl < $source > $target.fbld"
+    test $target \
+      "$::b/pkgs/fbld/bin/fbld $::s/fbld/dc.check.fbld $target.fbld" \
+      "$::b/pkgs/fbld/bin/fbld $::s/fbld/dc.check.fbld $target.fbld"
+  }
+
   # Builds usage help text.
   # @arg target - the name of the help text file to generate.
   # @arg source - the .fbld usage doc to generate the header from.

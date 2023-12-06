@@ -1,35 +1,6 @@
 # Exports:
 #   ::fble_objs_cov - list of .o files used in libfble.cov.
 namespace eval "lib" {
-  set sources {
-    aarch64.c
-    alloc.c
-    arg-parse.c
-    c.c
-    code.c
-    compile.c
-    execute.c
-    expr.c
-    heap.c
-    interpret.c
-    kind.c
-    link.c
-    load.c
-    loc.c
-    module-path.c
-    name.c
-    profile.c
-    string.c
-    tc.c
-    type.c
-    typecheck.c
-    unused.c
-    usage.c
-    value.c
-    vector.c
-    version.c
-  }
-
   set objs [list]
   set objs_cov [list]
 
@@ -60,7 +31,7 @@ namespace eval "lib" {
   lappend objs_cov $::b/lib/usage.path.cov.o
 
   # general .o files
-  foreach {x} $sources {
+  foreach {x} [build_glob $::s/lib -tails "*.c"] {
     set object $::b/lib/[string map {.c .o} $x]
     set object_cov $::b/lib/[string map {.c .cov.o} $x]
     obj $object $::s/lib/$x "-I $::s/include -I $::b/lib" $::b/lib/config.h
@@ -84,6 +55,10 @@ namespace eval "lib" {
   # libraries
   lib "$::b/lib/libfble.a" $objs
   lib "$::b/lib/libfble.cov.a" $objs_cov
+
+  foreach {x} [build_glob $::s/lib -tails "*.*"] {
+    fbld_check_dc $::b/lib/$x.dc $::s/lib/$x
+  }
 
   install $::b/lib/libfble.a $::config::libdir/libfble.a
 
