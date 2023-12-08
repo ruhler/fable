@@ -632,6 +632,7 @@ FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, si
 FbleFuncInfo FbleFuncValueInfo(FbleValue* func)
 {
   FuncValue* func_value = (FuncValue*)FbleStrictValue(func);
+  assert(func_value != NULL && func_value->_base.tag == FUNC_VALUE);
   FbleFuncInfo info = {
     .executable = func_value->executable,
     .profile_block_offset = func_value->profile_block_offset,

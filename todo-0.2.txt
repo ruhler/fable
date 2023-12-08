@@ -186,15 +186,17 @@ Doc Comments
 * [/Snake%] Figure out why the background box gets lost some times.
 
 * [libfble] Can fble-stdio check that the function has the right type?
+ - Right now, the only info we have at runtime is num_args. We could at least
+   check for that. Also that it's a function.
 
 * [spec] Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
  
-* [typecheck] Better error messages on types that have the same name but different values?
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
+* [typecheck] Better error messages on types that have the same name but different values?
 
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.

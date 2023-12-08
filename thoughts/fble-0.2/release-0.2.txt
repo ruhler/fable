@@ -218,3 +218,39 @@ Here's what I decided to do in the end:
 
 This means we'll get double single quotes around funny names. I'm fine with
 that.
+
+---
+
+Todo burndown item: Can 
+* [libfble] Can fble-stdio check that the function has the right type?
+
+With the info available to us at runtime, in theory we could verify the
+argument is a function with the right number of args. But we don't currently
+have an API to test if an FbleValue is a function value to know if it's safe
+to get the func value info.
+
+I feel like it's too much of a hack right now to add this check.
+
+One idea is to add an option when loading a module like -t /...%, where you
+specify the path to a module which is a type value. The type checker could
+verify the module has the right type. We could do a similar thing in
+fble-compile. But the user has to remember that. It's just as likely for them
+to mess up that as it is to pass the wrong type value today.
+
+Maybe things will be different after we change how we pack values, because
+we'll have more API for describing types at the C level. Maybe things will be
+different after we do modular compilation, because we'll want a way to enforce
+a pre-compiled type of a module. Or maybe it's C, things crash if you don't
+handle types right yourself.
+
+Where does it currently crash if you pass the wrong type? I suppose it would
+depend if you are passing a function and what args that function takes.
+
+FbleApply ==> FbleEval ==> FbleThreadCall ==> FbleFuncInfo returns a bogus
+FbleExecutable.
+
+What we really want here is:
+* FbleStdioMain knows what type it wants internally and checks that when
+  loading code from source.
+* At compile time, somehow FbleStdioMain can give type info to fble-compile to
+  check against the expected type.

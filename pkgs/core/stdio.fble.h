@@ -6,7 +6,7 @@
 #include <fble/fble-value.h>
 
 // FbleStdio -- 
-//   Execute a /Core/Stdio/IO%.IOStdio process.
+//   Execute a /Core/Stdio/IO%.Run(/Core/Stdio%.Main@) function.
 //
 // Inputs:
 //   heap - The value heap.
