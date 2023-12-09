@@ -1,6 +1,8 @@
 
 @ Decimal@ = /Core/Digits%.Decimal@;
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 
@@ -14,7 +16,6 @@
 @ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

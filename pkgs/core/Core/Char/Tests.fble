@@ -4,6 +4,8 @@
 % Chr = /Core/Char/Ascii%.Chr;
 % Ord = /Core/Char/Ascii%.Ord;
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
@@ -13,7 +15,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

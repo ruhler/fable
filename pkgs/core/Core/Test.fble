@@ -1,6 +1,4 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-
 <@>@ List@ = /Core/List%.List@;
 
 @ String@ = /Core/String%.String@;
@@ -14,6 +12,17 @@
 @ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
 @ TestSuite@ = *(String@ name, List@<Test@> tests),
 @ Test@ = +(TestCase@ case, TestSuite@ suite);
+
+# A passing test result.
+TestResult@ Pass = TestResult@(pass: Unit);
+
+# A failing test result.
+(String@) { TestResult@; } Fail = (String@ msg) {
+  TestResult@(fail: msg);
+};
+
+# An expected failing test result.
+TestResult@ ExpectedFail = TestResult@(xfail: Unit);
 
 # Test --
 #   Creates an individual test.
@@ -37,34 +46,21 @@ TestSuite = (String@ name, List@<Test@> tests) {
   Test@(suite: TestSuite@(name, tests));
 };
 
-<@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
-AssertEquals = <@ T@>(/Core/Eq%.Eq@<T@> eq, /Core/Show%.Show@<T@> show, T@ expected, T@ actual) {
-  eq(expected, actual).?(true: TestResult@(pass: Unit));
-  TestResult@(fail: Strs[
-    Str|'expected: ', show(expected),
-    Str|', but got: ', show(actual)]);
-};
-
-<@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
-AssertNotEquals = <@ T@>(/Core/Eq%.Eq@<T@> eq, /Core/Show%.Show@<T@> show, T@ expected, T@ actual) {
-  eq(expected, actual).?(false: TestResult@(pass: Unit));
-  TestResult@(fail: Strs[show(expected), Str|' == ', show(actual)]);
-};
-
 # ExpectFails --
 #   Change the test result to expected failure if the given test result is
 #   failing and msg is contained somewhere in the failure message.
 (TestResult@, String@) { TestResult@; }
 ExpectFails = (TestResult@ result, String@ msg) {
   result.?(
-    pass: TestResult@(fail: Str|'Expected failure, but test passed'),
+    pass: Fail|'Expected failure, but test passed',
     fail: /Core/String/Eq%.Contains(result.fail, msg).?(
-      true: TestResult@(xfail: Unit),
-      false: TestResult@(fail: Strs[
+      true: ExpectedFail,
+      false: Fail(Strs[
         Str|'Expected failure containing "', msg,
         Str|'", but failed with "', result.fail, Str|'"'])),
-    xfail: TestResult@(fail: Str|'Expected failure, but was xfail'));
+    xfail: Fail|'Expected failure, but was xfail');
 };
 
 @(TestResult@, Test@, TestSuite@, TestCase@,
-  AssertEquals, AssertNotEquals, ExpectFails, Test, TestSuite);
+  Pass, Fail, ExpectedFail,
+  ExpectFails, Test, TestSuite);

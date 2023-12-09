@@ -8,6 +8,8 @@
 % BitStr = /Core/Digits/String%.BitStr;
 % HexToBits = /Core/Digits/String%.HexToBits;
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
@@ -17,7 +19,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

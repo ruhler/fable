@@ -1,13 +1,14 @@
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>% List = /Core/List%.List;
 
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
-@ TestResult@ = /Core/Test%.TestResult@;
 % TestSuite = /Core/Test%.TestSuite;
 % Test = /Core/Test%.Test;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
+% Pass = /Core/Test%.Pass;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -65,7 +66,7 @@ Test@ Tests = TestSuite(Str|TicTacToe, List[
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
 Test@ Bench = Test(Str|TicTacToe, (Unit@ _) {
   AIR@ _ = AI.Move(AI.Initial, EmptyBoard, Player@(X: Unit));
-  TestResult@(pass: Unit);
+  Pass;
 });
 
 @(Tests, Bench);

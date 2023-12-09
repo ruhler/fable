@@ -5,6 +5,8 @@
 @ Hex@ = /Core/Digits%.Hex@;
 % HexStr = /Core/Digits/String%.HexStr;
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
@@ -28,7 +30,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

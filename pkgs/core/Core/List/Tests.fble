@@ -4,6 +4,8 @@
 % False = /Core/Bool%.False;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertNotEquals = /Core/Eq/Assert%.AssertNotEquals;
 
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
@@ -16,8 +18,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
-<@>% AssertNotEquals = /Core/Test%.AssertNotEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

@@ -3,6 +3,7 @@
 % And = /Core/Bool%.And;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 % Int = /Core/Int/Lit%.Int;
 
@@ -17,7 +18,6 @@
 @ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

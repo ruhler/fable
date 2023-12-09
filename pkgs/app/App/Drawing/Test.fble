@@ -131,7 +131,7 @@ Draw_ = {
 
 (Drawn@, Drawn@) { TestResult@; }
 AssertEquals = (Drawn@ expected, Drawn@ actual) {
-  /Core/Test%.AssertEquals(
+  /Core/Eq/Assert%.AssertEquals(
     /Core/Map/Eq%.Eq(EqPoint, EqColor),
     /Core/Map/Show%.Show(ShowPoint, ShowColor),
     expected, actual);

@@ -1,4 +1,6 @@
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>% List = /Core/List%.List;
 
 % Neg = /Pinball/Num%.Neg;
@@ -11,7 +13,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

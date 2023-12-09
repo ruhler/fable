@@ -1,4 +1,6 @@
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 
@@ -26,7 +28,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -255,7 +256,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List[
     # TODO: Test fails due to loss of precision. How should we handle this?
     /Core/Test%.ExpectFails(
       AssertEquals(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got),
-      Str|'got: Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)');
+      Str|'!= Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)');
   }),
 
   Test(Str|'Non-centered Paddle Ball Collision', (Unit@ _) {

@@ -7,6 +7,8 @@
 @ Char@ = /Core/Char%.Char@;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertNotEquals = /Core/Eq/Assert%.AssertNotEquals;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
@@ -28,8 +30,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
-<@>% AssertNotEquals = /Core/Test%.AssertNotEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

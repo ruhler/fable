@@ -2,18 +2,25 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
+
 <@>@ Eq@ = /Core/Eq%.Eq@;
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>% List = /Core/List%.List;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
+
 <@>@ Show@ = /Core/Show%.Show@;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 

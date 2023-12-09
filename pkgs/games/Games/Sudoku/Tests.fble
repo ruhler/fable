@@ -7,6 +7,7 @@
 % Chars = /Core/Char%.Chars;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;
@@ -23,10 +24,9 @@
 @ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
+% Pass = /Core/Test%.Pass;
 
 @ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 @ Symbol@ = /Games/Sudoku%.Symbol@;
 @ Input@ = /Games/Sudoku%.Input@;
@@ -241,7 +241,7 @@ Test@ Tests = TestSuite(Str|Sudoku, List[
 (Input@)(Unit@) { TestResult@; }
 BenchTest = (Input@ input)(Unit@ _) {
   Solved@ _ = Solve(input).just;
-  TestResult@(pass: Unit);
+  Pass;
 };
 
 Test@ Bench = TestSuite(Str|Sudoku, List[

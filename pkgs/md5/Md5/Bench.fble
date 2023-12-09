@@ -1,4 +1,6 @@
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 @ Int@ = /Core/Int%.Int@;
 % Sub = /Core/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
@@ -13,7 +15,6 @@
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

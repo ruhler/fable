@@ -1,0 +1,25 @@
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ TestResult@ = /Core/Test%.TestResult@;
+% Pass = /Core/Test%.Pass;
+% Fail = /Core/Test%.Fail;
+
+<@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
+AssertEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ a, T@ b) {
+  eq(a, b).?(true: Pass);
+  Fail(Strs[show(a), Str|' != ', show(b)]);
+};
+
+<@ T@>(Eq@<T@>, Show@<T@>, T@, T@) { TestResult@; }
+AssertNotEquals = <@ T@>(Eq@<T@> eq, Show@<T@> show, T@ a, T@ b) {
+  eq(a, b).?(false: Pass);
+  Fail(Strs[show(a), Str|' == ', show(b)]);
+};
+
+@(AssertEquals, AssertNotEquals);

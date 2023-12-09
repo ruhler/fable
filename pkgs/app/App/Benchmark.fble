@@ -1,7 +1,5 @@
 
-<<@>@>@ Main@ = /App/App%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Core/Int%.Int@;
 % Decr = /Core/Int%.Decr;
@@ -11,12 +9,14 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ TestResult@ = /Core/Test%.TestResult@;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
 
 % State = /Core/Monad/State%<Int@>;
 

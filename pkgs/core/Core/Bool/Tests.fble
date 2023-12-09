@@ -7,6 +7,8 @@
 % Or = /Core/Bool%.Or;
 % Eq = /Core/Bool/Eq%.Eq;
 
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
 <@>% List = /Core/List%.List;
 
 @ String@ = /Core/String%.String@;
@@ -15,7 +17,6 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
-<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
