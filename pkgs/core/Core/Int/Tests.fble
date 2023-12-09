@@ -28,10 +28,13 @@
 % 7 = /Core/Int%.7;
 % 8 = /Core/Int%.8;
 % Neg = /Core/Int%.Neg;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
 % Exp2 = /Core/Int%.Exp2;
+% Abs = /Core/Int%.Abs;
 
 % Div = /Core/Int/Div%.Div;
 % Sqrt = /Core/Int/Sqrt%.Sqrt;
@@ -41,6 +44,9 @@
 % Le = /Core/Int/Eq%.Le;
 % Gt = /Core/Int/Eq%.Gt;
 % Ge = /Core/Int/Eq%.Ge;
+% IsZero = /Core/Int/Eq%.IsZero;
+% Min = /Core/Int/Eq%.Min;
+% Max = /Core/Int/Eq%.Max;
 
 % Int = /Core/Int/Lit%.Int;
 
@@ -67,6 +73,9 @@ Test@ Tests = TestSuite(Str|Int, List[
   T(Str|Eq_5_m5, (Unit@ _) { Not(Eq(5, Neg(5))); }),
   T(Str|Eq_m1_m1, (Unit@ _) { Eq(Neg(5), Neg(5)); }),
 
+  T(Str|IsZero_0, (Unit@ _) { IsZero(0); }),
+  T(Str|IsZero_3, (Unit@ _) { Not(IsZero(3)); }),
+
   T(Str|Lt_4_2, (Unit@ _) { Not(Lt(4, 2)); }),
   T(Str|Lt_4_3, (Unit@ _) { Not(Lt(4, 3)); }),
   T(Str|Lt_4_4, (Unit@ _) { Not(Lt(4, 4)); }),
@@ -81,6 +90,11 @@ Test@ Tests = TestSuite(Str|Int, List[
 
   T(Str|Lt_m5_m7, (Unit@ _) { Not(Lt(Neg(5), Neg(7))); }),
   T(Str|Lt_m7_m5, (Unit@ _) { Lt(Neg(7), Neg(5)); }),
+
+  T(Str|Lt_0_7, (Unit@ _) { Lt(0, 7); }),
+  T(Str|Lt_7_0, (Unit@ _) { Not(Lt(7, 0)); }),
+  T(Str|Lt_0_m7, (Unit@ _) { Not(Lt(0, Neg(7))); }),
+  T(Str|Lt_m7_0, (Unit@ _) { Lt(Neg(7), 0); }),
 
   T(Str|Le_4_2, (Unit@ _) { Not(Le(4, 2)); }),
   T(Str|Le_4_3, (Unit@ _) { Not(Le(4, 3)); }),
@@ -124,12 +138,30 @@ Test@ Tests = TestSuite(Str|Int, List[
   T(Str|Ge_m5_0, (Unit@ _) { Not(Ge(Neg(5), 0)); }),
   T(Str|Ge_m5_1, (Unit@ _) { Not(Ge(Neg(5), 1)); }),
 
+  TEq(Str|Incr_3, 4, (Unit@ _) { Incr(3); }),
+  TEq(Str|Incr_3, 2, (Unit@ _) { Decr(3); }),
   TEq(Str|Add_2_3, 5, (Unit@ _) { Add(2, 3); }),
   TEq(Str|Add_3_m5, Neg(2), (Unit@ _) { Add(3, Neg(5)); }),
   TEq(Str|Sub_5_3, 2, (Unit@ _) { Sub(5, 3); }),
   TEq(Str|Sub_3_5, Neg(2), (Unit@ _) { Sub(3, 5); }),
   TEq(Str|Neg_m2, 2, (Unit@ _) { Neg(Neg(2)); }),
+  TEq(Str|Neg_0, 0, (Unit@ _) { Neg(0); }),
+
+  TEq(Str|Min_0_5, Int|0, (Unit@ _) { Min(0, 5); }),
+  TEq(Str|Min_3_0, Int|0, (Unit@ _) { Min(3, 0); }),
+  TEq(Str|Max_0_5, Int|5, (Unit@ _) { Max(0, 5); }),
+  TEq(Str|Max_3_0, Int|3, (Unit@ _) { Max(3, 0); }),
+
+  TEq(Str|Abs_0, Int|0, (Unit@ _) { Abs(0); }),
+  TEq(Str|Abs_3, Int|3, (Unit@ _) { Abs(3); }),
+  TEq(Str|Abs_m3, Int|3, (Unit@ _) { Abs(Neg(3)); }),
+
   TEq(Str|Mul_3_5, Int|15, (Unit@ _) { Mul(3, 5); }),
+  TEq(Str|Mul_m3_5, Neg(Int|15), (Unit@ _) { Mul(Neg(3), 5); }),
+  TEq(Str|Mul_3_m5, Neg(Int|15), (Unit@ _) { Mul(3, Neg(5)); }),
+  TEq(Str|Mul_m3_m5, Int|15, (Unit@ _) { Mul(Neg(3), Neg(5)); }),
+  TEq(Str|Mul_0_5, Int|0, (Unit@ _) { Mul(0, 5); }),
+  TEq(Str|Mul_3_0, Int|0, (Unit@ _) { Mul(3, 0); }),
 
   TEq(Str|Div_11_4, Int|2, (Unit@ _) { Div(Int|11, Int|4).q; }),
   TEq(Str|Mod_11_4, Int|3, (Unit@ _) { Div(Int|11, Int|4).r; }),
@@ -140,11 +172,14 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Div_m11_m4, Int|2, (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).q; }),
   TEq(Str|Mod_m11_m4, Neg(Int|3), (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).r; }),
 
+  TEq(Str|Sqrt_0_q, Int|0, (Unit@ _) { Sqrt(Int|0).q; }),
+  TEq(Str|Sqrt_0_r, Int|0, (Unit@ _) { Sqrt(Int|0).r; }),
   TEq(Str|Sqrt_29_q, Int|5, (Unit@ _) { Sqrt(Int|29).q; }),
   TEq(Str|Sqrt_29_r, Int|4, (Unit@ _) { Sqrt(Int|29).r; }),
   TEq(Str|Sqrt_12345_q, Int|111, (Unit@ _) { Sqrt(Int|12345).q; }),
   TEq(Str|Sqrt_12345_r, Int|24, (Unit@ _) { Sqrt(Int|12345).r; }),
 
+  TEq(Str|Exp2_0, Int|1, (Unit@ _) { Exp2(0); }),
   TEq(Str|Exp2_8, Int|256, (Unit@ _) { Exp2(8); }),
   TEq(Str|Exp2_7, Int|128, (Unit@ _) { Exp2(7); }),
 
@@ -157,6 +192,18 @@ Test@ Tests = TestSuite(Str|Int, List[
   Test(Str|Read_Negative, (Unit@ _) {
     Int@ wnt = Neg(Int|49113);
     Int@ got = /Core/Int/Show%.Read(Str|'-49113');
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Read_AllDigits, (Unit@ _) {
+    Int@ wnt = Int|1234567890;
+    Int@ got = /Core/Int/Show%.Read(Str|1234567890);
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Read_empty, (Unit@ _) {
+    Int@ wnt = Int|0;
+    Int@ got = /Core/Int/Show%.Read(Str|'');
     AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   }),
 
@@ -175,6 +222,12 @@ Test@ Tests = TestSuite(Str|Int, List[
   Test(Str|Show_Negative, (Unit@ _) {
     String@ wnt = Str|'-42';
     String@ got = /Core/Int/Show%.Show(Neg(Int|42));
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Show_AllDigits, (Unit@ _) {
+    String@ wnt = Str|'1234567890';
+    String@ got = /Core/Int/Show%.Show(Int|1234567890);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
