@@ -70,8 +70,6 @@ Things to do for the fble-0.2 release.
 * Sat Solver:
  - Add --help command line option to fble-sat.
  - Pull search logic out of /Sat/Solver%
- - Avoid duplicate definitions of ShowVar.
-   By reorganizing code better?
  - Parse dimacs cnf incrementally instead of all at once?
    There should be no need to have the entire text of the file in memory all
    at one time.
@@ -86,10 +84,23 @@ Doc Comments
   - For example: blank lines in doc comments should be allowed and not cause
     the comment to be truncated.
 
+Null/NonNull:
 * Improve documentation about expectations for strict vs. non strict values
  - e.g. FbleThreadTailCall can take a non-strict value, but FbleFuncValueInfo
    requires a strict value.
    And should it be that way?
+* Change FbleProfile functions to accept NULL, and clean up code to take
+  advantage of that where it makes sense?
+* Use some way other than NULL to disable profiling?
+ - To encourage all the apps to support optional profiling, including things
+   like fble-md5 and fble-app?
+ - Check we are passing meaningful block ids to FbleNewFuncValue.
+* [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
+ - It would be convenient for constructing things in case of error.
+ - I'm not sure if there's any performance implications.
+ - It would be nice to specify explicitly and be consistent with this kind of
+   thing.
+
 
 * Come up with a nicer way to implement printf debugging?
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
@@ -151,20 +162,6 @@ Doc Comments
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
 
-* Change FbleProfile functions to accept NULL, and clean up code to take
-  advantage of that where it makes sense?
-
-* Use some way other than NULL to disable profiling?
- - To encourage all the apps to support optional profiling, including things
-   like fble-md5 and fble-app?
- - Check we are passing meaningful block ids to FbleNewFuncValue.
-
-* [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
- - It would be convenient for constructing things in case of error.
- - I'm not sure if there's any performance implications.
- - It would be nice to specify explicitly and be consistent with this kind of
-   thing.
-
 * [tests] Any way to improve memory growth tests?
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
  too specific to the implementation of garbage collection. Anything we can do?
@@ -184,10 +181,6 @@ Doc Comments
 * [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
 * [/Snake%] Keep track of and report score.
 * [/Snake%] Figure out why the background box gets lost some times.
-
-* [libfble] Can fble-stdio check that the function has the right type?
- - Right now, the only info we have at runtime is num_args. We could at least
-   check for that. Also that it's a function.
 
 * [spec] Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?

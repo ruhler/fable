@@ -254,3 +254,24 @@ What we really want here is:
   loading code from source.
 * At compile time, somehow FbleStdioMain can give type info to fble-compile to
   check against the expected type.
+
+I vote we wait on this until next release, when we have a better picture for
+modular compilation.
+
+---
+
+TODO burndown item: Null/NonNull.
+
+There are a number of functions in the implementation that may or may not
+allow NULL arguments: FbleThreadCall, FbleFuncValueInfo, FbleProfile*,
+FbleValueAddRef, etc.
+
+When should we allow arguments to be NULL or not?
+
+Factors:
+* Performance? Is an extra NULL check meaningfully costly?
+* Does accepting NULL hide bugs that you would otherwise find?
+* Accepting NULL makes it easier to not bother programming something like
+  profile blocks that you otherwise ought to?
+
+

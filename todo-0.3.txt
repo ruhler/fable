@@ -44,6 +44,10 @@ Things to consider doing for the fble-0.3 release.
 
 * [compilation] Add support for .fble.@ files and modular compilation.
 
+*  Can fble-stdio check that the function has the right type?
+ - Right now, the only info we have at runtime is num_args. We could at least
+   check for that. Also that it's a function.
+
 * [spec] Add some way to catch or recover from errors at runtime?
 
 * [modules]

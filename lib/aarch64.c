@@ -101,12 +101,11 @@ static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
 
 /**
- * Adds a source location to the list of locations.
- *
- * @param source  The source file name to add
- * @param locs  The list of locs to add to.
- *
- * @sideeffects
+ * @func[AddLoc] Adds a source location to the list of locations.
+ *  @arg[const char*][source] The source file name to add
+ *  @arg[LocV*][locs] The list of locs to add to.
+ *  
+ *  @sideeffects
  *   Adds the source filename to the list of locations if it is not already
  *   present in the list.
  */
@@ -121,17 +120,17 @@ static void AddLoc(const char* source, LocV* locs)
 }
 
 /**
- * Gets the list of blocks and locs referenced by a code block.
+ * @func[CollectBlocksAndLocs] Lists referenced blocks and locs.
+ *  Gets a list of all code blocks and locations referenced from the given
+ *  code block, including the code block itself.
  *
- * Includes the the code block itself.
- *
- * @param blocks  The collection of blocks to add to.
- * @param locs  The collection of location source names to add to.
- * @param code  The code to collect the blocks from.
- *
- * @sideeffects
- * * Appends collected blocks to 'blocks'.
- * * Appends source file names to 'locs'.
+ *  @arg[FbleCodeV*][blocks] The collection of blocks to add to.
+ *  @arg[LocV*][locs] The collection of location source names to add to.
+ *  @arg[FbleCode*][code] The code to collect the blocks from.
+ *  
+ *  @sideeffects
+ *   @i Appends collected blocks to 'blocks'.
+ *   @i Appends source file names to 'locs'.
  */
 static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 {
@@ -196,12 +195,11 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 }
 
 /**
- * Declares a string literal.
- *
- * @param fout  The file to write to.
- * @param string  The contents of the string to write.
- *
- * @sideeffects
+ * @func[StringLit] Declares a string literal.
+ *  @arg[FILE*][fout] The file to write to.
+ *  @arg[const char*][string] The contents of the string to write.
+ *  
+ *  @sideeffects
  *   Adds a .string statement to the output file.
  */
 static void StringLit(FILE* fout, const char* string)
@@ -219,16 +217,14 @@ static void StringLit(FILE* fout, const char* string)
 }
 
 /**
- * Outputs code to declare a static FbleString value.
- *
- * @param fout  The file to write to
- * @param label_id  Pointer to next available label id for use.
- * @param string  The value of the string.
- *
- * @returns
- *   A label id of a local, static FbleString.
- *
- * @sideeffects
+ * @func[StaticString] Outputs code to declare a static FbleString value.
+ *  @arg[FILE*][fout] The file to write to
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[const char*][string] The value of the string.
+ *  
+ *  @returns[LabelId] A label id of a local, static FbleString.
+ *  
+ *  @sideeffects
  *   Writes code to fout and allocates label ids out of label_id.
  */
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
@@ -245,16 +241,14 @@ static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
 }
 
 /**
- * Outputs code to declare a static FbleNameV.xs value.
- *
- * @param fout  The file to write to
- * @param label_id  Pointer to next available label id for use.
- * @param names  The value of the names.
- *
- * @returns
- *   A label id of a local, static FbleNameV.xs.
- *
- * @sideeffects
+ * @func[StaticNames] Outputs code to declare a static FbleNameV.xs value.
+ *  @arg[FILE*][fout] The file to write to.
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[FbleNameV][names] The value of the names.
+ *  
+ *  @returns[LabelId] A label id of a local, static FbleNameV.xs.
+ *  
+ *  @sideeffects
  *   Writes code to fout and allocates label ids out of label_id.
  */
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
