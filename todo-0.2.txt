@@ -169,13 +169,7 @@ Null/NonNull:
 * Add proper support for multiple backed up tick requests in pkgs/app/app.c
  - I think this is why GameOfLife freezes eventually.
 
-* [/*%] Clean up fble library
- - Separate modules as appropriate to reduce false dependencies.
- - Document all functions.
- - Add tests for full code coverage of all functions.
 * [/Int%] Add test coverage for the Int routines.
-* [/Fble/Test%] Clean up fble test framework
- - Properly test the test infra.
 * [/Map%] Add tests for balancing of /Map%?
 * [/Snake%] Test and fix bug when snake eats its tail.
 * [/Snake%] Ignore moves that aren't orthogonal to current snake direction.

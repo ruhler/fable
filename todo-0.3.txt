@@ -66,3 +66,7 @@ Things to consider doing for the fble-0.3 release.
    in the stack?
  - see thoughts/fble.profile.txt
 
+* Clean up fble library
+ - Separate modules as appropriate to reduce false dependencies.
+ - Document all functions.
+ - Add tests for full code coverage of all functions.

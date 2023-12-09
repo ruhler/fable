@@ -3,10 +3,6 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Char@ = /Core/Char%.Char@;
-
-<@>% List = /Core/List%.List;
-<@>% Concat = /Core/List%.Concat;
 <@,@>% ForEach = /Core/List%.ForEach;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
@@ -53,9 +49,8 @@
             });
         },
         suite: {
-          String@ nprefix = Concat<Char@>(List<String@>[
-              prefix, test.suite.name, Str|'.']);
-          ForEach<Test@, M@<Bool@>>(test.suite.tests, m.return(passing),
+          String@ nprefix = Strs[prefix, test.suite.name, Str|'.'];
+          ForEach(test.suite.tests, m.return(passing),
             (Test@ test, M@<Bool@> mp) {
               Bool@ passing <- m.do(mp);
               Run(test, nprefix, passing);

@@ -58,6 +58,34 @@ Test@ Tests = TestSuite(Str|'Test', List[
     Bool@ wnt = True;
     Bool@ got = result.x;
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'RunTest.SuitePass', (Unit@ _) {
+    Test@ suite = TestSuite(Str|'Suite', List[
+      Test(Str|a, (Unit@ _) { Pass; }),
+      Test(Str|b, (Unit@ _) { Pass; }),
+      Test(Str|c, (Unit@ _) { ExpectedFail; }),
+      Test(Str|c, (Unit@ _) { Pass; })]);
+
+    PureResult@<Bool@> result = Run(RunTests(Str|'', suite), Nil<Int@>);
+
+    Bool@ wnt = True;
+    Bool@ got = result.x;
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'RunTest.SuiteFail', (Unit@ _) {
+    Test@ suite = TestSuite(Str|'Suite', List[
+      Test(Str|a, (Unit@ _) { Pass; }),
+      Test(Str|b, (Unit@ _) { Fail|Oops; }),
+      Test(Str|c, (Unit@ _) { ExpectedFail; }),
+      Test(Str|c, (Unit@ _) { Pass; })]);
+
+    PureResult@<Bool@> result = Run(RunTests(Str|'', suite), Nil<Int@>);
+
+    Bool@ wnt = False;
+    Bool@ got = result.x;
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })
 ]);
 
