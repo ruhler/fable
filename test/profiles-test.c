@@ -149,7 +149,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
     return EX_USAGE;
   }
 
-  FbleProfile* profile = FbleNewProfile();
+  FbleProfile* profile = FbleNewProfile(true);
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);

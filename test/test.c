@@ -90,7 +90,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
     }
   }
 
-  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
+  FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
@@ -107,9 +107,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
-  if (fprofile != NULL) {
-    FbleProfileReport(fprofile, profile);
-  }
+  FbleProfileReport(fprofile, profile);
   FbleFreeProfile(profile);
 
   if (result == NULL) {

@@ -87,10 +87,17 @@ typedef struct {
    * block i.
    */
   FbleBlockProfileV blocks;
+
+  bool enabled;     /**< Indicates whether profiling is enabled or not. */
 } FbleProfile;
 
 /**
  * @func[FbleNewProfile] Creates a new profile.
+ *  Users are encouraged to create new profiles regardless of whether
+ *  profiling is enabled or disabled, so that profiling will be available
+ *  later if desired.
+ *
+ *  @arg[bool][enabled] True to enable profiling, false to disable profiling.
  *  @returns FbleProfile*
  *   A new profile with a single root block.
  *
@@ -98,14 +105,14 @@ typedef struct {
  *   Allocates a new profile that should be freed with FbleFreeProfile() when
  *   no longer in use.
  */
-FbleProfile* FbleNewProfile();
+FbleProfile* FbleNewProfile(bool enabled);
 
 /**
  * @func[FbleProfileAddBlock] Adds a block to the profile.
  *  Note: It is acceptable to add blocks in the middle of a profiling run.
  *
  *  @arg[FbleProfile*] profile
- *   The profile to add the block to.
+ *   The profile to add the block to. Must not be NULL.
  *  @arg[FbleName] name
  *   The name of the block
  *
@@ -126,7 +133,7 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
  *  Note: It is acceptable to add blocks in the middle of a profiling run.
  *
  *  @arg[FbleProfile*] profile
- *   The profile to add the blocks to
+ *   The profile to add the blocks to. Must not be NULL.
  *  @arg[FbleNameV] names
  *   The names of the block to add. Borrowed.
  *
@@ -140,7 +147,7 @@ FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
 
 /**
  * @func[FbleFreeProfile] Frees a profile.
- *  @arg[FbleProfile*][profile] The profile to free. May be NULL.
+ *  @arg[FbleProfile*][profile] The profile to free. Must not be NULL.
  *
  *  @sideeffects
  *   Frees the memory resources associated with the given profile, including
@@ -148,7 +155,12 @@ FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
  */
 void FbleFreeProfile(FbleProfile* profile);
 
-/** Profiling state for a running thread. */
+/**
+ * Profiling state for a running thread.
+ *
+ * By convention, a NULL value is used for FbleProfileThread* to indicate that
+ * profiling is disabled.
+ */
 typedef struct FbleProfileThread FbleProfileThread;
 
 /**
@@ -160,7 +172,7 @@ typedef struct FbleProfileThread FbleProfileThread;
  *  @arg[FbleProfile*][profile] The profile to save profiling data to.
  *
  *  @returns FbleProfileThread*
- *   A new profile thread.
+ *   A new profile thread. NULL if profiling is disabled.
  *
  *  @sideeffects
  *   Allocates a new profile thread that should be freed with
@@ -172,10 +184,11 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile);
  * @func[FbleForkProfileThread] Allocates a new profile thread by forking.
  *  The new thread starts with a copy of the parent thread's call stack.
  *
- *  @arg[FbleProfileThread*][parent] The parent thread to fork from.
+ *  @arg[FbleProfileThread*][parent]
+ *   The parent thread to fork from. May be NULL.
  *
  *  @returns FbleProfileThread*
- *   A new profile thread.
+ *   A new profile thread. Null if profiling is disabled.
  *
  *  @sideeffects
  *   Allocates a new profile thread that should be freed with
@@ -198,7 +211,7 @@ void FbleFreeProfileThread(FbleProfileThread* thread);
 /**
  * @func[FbleProfileSample] Takes a profiling sample.
  *  @arg[FbleProfileThread*] thread
- *   The profile thread to sample.
+ *   The profile thread to sample. May be NULL.
  *  @arg[uint64_t] time
  *   The amount of profile time to advance.
  *
@@ -212,7 +225,7 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time);
  *  Reduces overheads associated with profiling by randomly sampling.
  *
  *  @arg[FbleProfileThread*] thread
- *   The profile thread to sample.
+ *   The profile thread to sample. May be NULL.
  *  @arg[size_t] count
  *   The number of random samples to take.
  *
@@ -227,7 +240,7 @@ void FbleProfileRandomSample(FbleProfileThread* thread, size_t count);
  *  logic what block is being called into.
  *
  *  @arg[FbleProfileThread*] thread
- *   The thread to do the call on.
+ *   The thread to do the call on. May be NULL.
  *  @arg[FbleBlockId] block
  *   The block to call into.
  *
@@ -244,7 +257,7 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
  *  logic what block is being called into.
  *
  *  @arg[FbleProfileThread*] thread
- *   The thread to do the call on.
+ *   The thread to do the call on. May be NULL.
  *  @arg[FbleBlockId] block
  *   The block to tail call into.
  *
@@ -263,7 +276,8 @@ void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
  *  When returning from a function, use this function to tell the profiling
  *  logic what block is being exited.
  *
- *  @arg[FbleProfileThread*][thread] The thread to exit the call on.
+ *  @arg[FbleProfileThread*][thread]
+ *   The thread to exit the call on. May be NULL.
  *
  *  @sideeffects
  *   Updates the profile data associated with the given thread.
@@ -272,6 +286,8 @@ void FbleProfileExitBlock(FbleProfileThread* thread);
 
 /**
  * @func[FbleProfileReport] Generates a profiling report.
+ *  Has no effect if profiling is disabled.
+ *
  *  @arg[FILE*] fout
  *   The file to output the profile report to.
  *  @arg[FbleProfile*] profile

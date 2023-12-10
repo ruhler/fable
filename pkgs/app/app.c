@@ -519,7 +519,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     }
   }
 
-  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
+  FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* app = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
@@ -568,11 +568,8 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[1].name = FbleNewString("effect!");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  FbleBlockId block_id = 0;
-  if (profile != NULL) {
-    FbleNameV names = { .size = 2, .xs = block_names };
-    block_id = FbleProfileAddBlocks(profile, names);
-  }
+  FbleNameV names = { .size = 2, .xs = block_names };
+  FbleBlockId block_id = FbleProfileAddBlocks(profile, names);
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
 
@@ -643,9 +640,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
-  if (fprofile != NULL) {
-    FbleProfileReport(fprofile, profile);
-  }
+  FbleProfileReport(fprofile, profile);
   FbleFreeProfile(profile);
 
   SDL_GL_DeleteContext(glctx);

@@ -25,23 +25,22 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 
 
 /**
- * Evaluates the given function.
- *
- * @param heap  The value heap.
- * @param func  The function to evaluate.
- * @param args  Args to pass to the function. length == func->argc.
- * @param profile  Profile to update with execution stats. May be NULL to disable
- *    profiling.
- *
- * @returns
- *   The computed value, or NULL on error.
- *
- * @sideeffects
- * * The returned value must be freed with FbleReleaseValue when no longer in
- *   use.
- * * Prints a message to stderr in case of error.
- * * Updates profile based on the execution.
- * * Does not take ownership of the function or the args.
+ * @func[Eval] Evaluates the given function.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleValue*][func] The function to evaluate.
+ *  @arg[FbleValue**][args] Args to pass to the function. length == func->argc.
+ *  @arg[FbleProfile*][profile]
+ *   Profile to update with execution stats. Must not be NULL.
+ *  
+ *  @returns[FbleValue*] The computed value, or NULL on error.
+ *  
+ *  @sideeffects
+ *   @item
+ *    The returned value must be freed with FbleReleaseValue when no longer in
+ *    use.
+ *   @i Prints a message to stderr in case of error.
+ *   @i Updates profile based on the execution.
+ *   @i Does not take ownership of the function or the args.
  */
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
@@ -58,11 +57,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
     assert(false && "setrlimit failed");
   }
 
-  FbleProfileThread* profile_thread = NULL;
-  if (profile) {
-    profile_thread = FbleNewProfileThread(profile);
-  }
-
+  FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
   FbleValue* result = FbleThreadCall(heap, profile_thread, func, args);
   FbleFreeProfileThread(profile_thread);
 

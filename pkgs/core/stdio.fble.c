@@ -224,11 +224,8 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[2].name = FbleNewString("read");
   block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  FbleBlockId block_id = 0;
-  if (profile != NULL) {
-    FbleNameV names = { .size = 3, .xs = block_names };
-    block_id = FbleProfileAddBlocks(profile, names);
-  };
+  FbleNameV names = { .size = 3, .xs = block_names };
+  FbleBlockId block_id = FbleProfileAddBlocks(profile, names);
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
   FbleFreeName(block_names[2]);
@@ -359,7 +356,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
     }
   }
 
-  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
+  FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* stdio = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
@@ -392,10 +389,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
 
   FbleFreeValueHeap(heap);
 
-  if (fprofile != NULL) {
-    FbleProfileReport(fprofile, profile);
-  }
-
+  FbleProfileReport(fprofile, profile);
   FbleFreeProfile(profile);
   return result;
 }

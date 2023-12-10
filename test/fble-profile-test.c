@@ -63,7 +63,7 @@ static size_t ReplaceMaxMem(size_t n)
   FbleResetMaxTotalBytesAllocated();
 
   // <root> -> 1 -> 1 -> ... -> 1
-  FbleProfile* profile = FbleNewProfile();
+  FbleProfile* profile = FbleNewProfile(true);
   FbleProfileAddBlock(profile, Name("_1")); 
 
   FbleProfileThread* thread = FbleNewProfileThread(profile);
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 -> 3
     //                  -> 4
     //             -> 3
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileAddBlock(profile, Name("_1")); 
     FbleProfileAddBlock(profile, Name("_2")); 
     FbleProfileAddBlock(profile, Name("_3")); 
@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 => 3 -> 4
     //                       => 5
     //             -> 6
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileAddBlock(profile, Name("_1")); 
     FbleProfileAddBlock(profile, Name("_2")); 
     FbleProfileAddBlock(profile, Name("_3")); 
@@ -295,7 +295,7 @@ int main(int argc, char* argv[])
   {
     // Test a profile with self recursion
     // <root> -> 1 -> 2 -> 2 -> 2 -> 3
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileAddBlock(profile, Name("_1")); 
     FbleProfileAddBlock(profile, Name("_2")); 
     FbleProfileAddBlock(profile, Name("_3")); 
@@ -362,7 +362,7 @@ int main(int argc, char* argv[])
   {
     // Test a profile with self recursion and tail calls
     // <root> -> 1 => 2 => 2 => 2 => 3
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileAddBlock(profile, Name("_1")); 
     FbleProfileAddBlock(profile, Name("_2")); 
     FbleProfileAddBlock(profile, Name("_3")); 
@@ -425,7 +425,7 @@ int main(int argc, char* argv[])
   {
     // Test a profile with mutual recursion
     // <root> -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileAddBlock(profile, Name("_1")); 
     FbleProfileAddBlock(profile, Name("_2")); 
     FbleProfileAddBlock(profile, Name("_3")); 
@@ -513,7 +513,7 @@ int main(int argc, char* argv[])
     // Test multithreaded profiling.
     // a: <root> -> 1 -> 2
     // b: <root> -> 1 -> 2
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileAddBlock(profile, Name("_1")); 
     FbleProfileAddBlock(profile, Name("_2")); 
 
@@ -572,7 +572,7 @@ int main(int argc, char* argv[])
     // Test forking of threads.
     // parent: <root> -> 1 -> 2
     // child:            \--> 3
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileAddBlock(profile, Name("_1")); 
     FbleProfileAddBlock(profile, Name("_2")); 
     FbleProfileAddBlock(profile, Name("_3")); 
@@ -638,7 +638,7 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 -> 3
     //                  -> 4
     //             -> 3
-    FbleProfile* profile = FbleNewProfile();
+    FbleProfile* profile = FbleNewProfile(true);
     FbleProfileThread* thread = FbleNewProfileThread(profile);
 
     FbleProfileAddBlock(profile, Name("_1")); 
@@ -710,6 +710,48 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[4]->block.count == 1);
     ASSERT(profile->blocks.xs[4]->block.time == 40);
     ASSERT(profile->blocks.xs[4]->callees.size == 0);
+
+    FbleProfileReport(stdout, profile);
+    FbleFreeProfile(profile);
+  }
+
+  {
+    // Test disabling of profiling.
+    // <root> -> 1 -> 2 -> 3
+    //                  -> 4
+    //             -> 3
+    FbleProfile* profile = FbleNewProfile(false);
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileAddBlock(profile, Name("_3")); 
+    FbleProfileAddBlock(profile, Name("_4")); 
+
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileEnterBlock(thread, 4);
+    FbleProfileSample(thread, 40);
+    FbleProfileExitBlock(thread); // 4
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 31);
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileExitBlock(thread); // 1
+    FbleFreeProfileThread(thread);
+
+    ASSERT(profile->blocks.size == 5);
+    for (size_t i = 0; i < profile->blocks.size; ++i) {
+      ASSERT(profile->blocks.xs[i]->self == 0);
+      ASSERT(profile->blocks.xs[i]->block.id == i);
+      ASSERT(profile->blocks.xs[i]->block.count == 0);
+      ASSERT(profile->blocks.xs[i]->block.time == 0);
+      ASSERT(profile->blocks.xs[i]->callees.size == 0);
+    }
 
     FbleProfileReport(stdout, profile);
     FbleFreeProfile(profile);

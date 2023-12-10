@@ -133,7 +133,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleCompiledModuleFunction* mod
 
   // Use a profile during tests to ensure memory behavior works properly with
   // profiling turned on.
-  FbleProfile* profile = FbleNewProfile();
+  FbleProfile* profile = FbleNewProfile(true);
   FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
   FbleFreeModuleArg(module_arg);

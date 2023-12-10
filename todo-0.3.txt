@@ -18,6 +18,10 @@ Things to consider doing for the fble-0.3 release.
  - Don't distinguish between a -> (b -> c) and (a, b) -> c ?
  - See thoughts/fble-0.2/partial_application.txt for details.
 
+* Improve build times?
+ - It's getting a little annoying for development now that everything is
+   rebuilt and it takes a while when you touch the library code, for example.
+
 * Fbld: Proper support for include/modularity
 * Fbld: Native C implementation.
  - To decouple dependencies and for comparison against fble implementation.

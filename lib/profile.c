@@ -443,10 +443,11 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
 }
 
 // See documentation in fble-profile.h.
-FbleProfile* FbleNewProfile()
+FbleProfile* FbleNewProfile(bool enabled)
 {
   FbleProfile* profile = FbleAlloc(FbleProfile);
   FbleVectorInit(profile->blocks);
+  profile->enabled = enabled;
 
   FbleName root = {
     .name = FbleNewString("<root>"),
@@ -486,10 +487,6 @@ FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names)
 // See documentation in fble-profile.h.
 void FbleFreeProfile(FbleProfile* profile)
 {
-  if (profile == NULL) {
-    return;
-  }
-
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleBlockProfile* block = profile->blocks.xs[i];
     FbleFreeName(block->name);
@@ -506,6 +503,10 @@ void FbleFreeProfile(FbleProfile* profile)
 // See documentation in fble-profile.h.
 FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 {
+  if (!profile->enabled) {
+    return NULL;
+  }
+
   FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
   thread->profile = profile;
 
@@ -528,6 +529,10 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 // See documentation in fble-profile.h.
 FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent)
 {
+  if (parent == NULL) {
+    return NULL;
+  }
+
   FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
   thread->profile = parent->profile;
 
@@ -584,6 +589,10 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
 // See documentation in fble-profile.h.
 void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
 {
+  if (thread == NULL) {
+    return;
+  }
+
   thread->profile->blocks.xs[thread->calls->top->id]->self += time;
 
   // Charge calls in the stack for their time.
@@ -605,6 +614,10 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
 // See documentation in fble-profile.h.
 void FbleProfileRandomSample(FbleProfileThread* profile, size_t count)
 {
+  if (profile == NULL) {
+    return;
+  }
+
   size_t time = 0;
   for (size_t i = 0; i < count; ++i) {
     if (rand() % 1024 == 0) {
@@ -620,18 +633,28 @@ void FbleProfileRandomSample(FbleProfileThread* profile, size_t count)
 // See documentation in fble-profile.h.
 void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block)
 {
+  if (thread == NULL) {
+    return;
+  }
   EnterBlock(thread, block, false);
 }
 
 // See documentation in fble-profile.h.
 void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block)
 {
+  if (thread == NULL) {
+    return;
+  }
   EnterBlock(thread, block, true);
 }
 
 // See documentation in fble-profile.h.
 void FbleProfileExitBlock(FbleProfileThread* thread)
 {
+  if (thread == NULL) {
+    return;
+  }
+
   // TODO: Consider shrinking the sample stack occasionally to recover memory?
   thread->sample.size -= thread->calls->top->exit;
   CallStackPop(thread);
@@ -640,6 +663,10 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
 // See documentation in fble-profile.h.
 void FbleProfileReport(FILE* fout, FbleProfile* profile)
 {
+  if (!profile->enabled) {
+    return;
+  }
+
   FbleCallData* calls[profile->blocks.size];
   FbleCallData* selfs[profile->blocks.size];
 

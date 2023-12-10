@@ -136,7 +136,7 @@ int main(int argc, const char* argv[])
   nread = getline(&line, &len, stdin);
   assert(nread != -1 && "Unexpected error reading first line");
 
-  FbleProfile* profile = FbleNewProfile();
+  FbleProfile* profile = FbleNewProfile(true);
   FbleProfileThread* thread = FbleNewProfileThread(profile);
 	while ((nread = getline(&line, &len, stdin)) != -1) {
     // We're done once we reach the next line of the form:

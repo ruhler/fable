@@ -20,14 +20,11 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 {
   size_t modulec = program->modules.size;
 
-  FbleBlockId main_id = 0;
-  if (profile != NULL) {
-    FbleName main_block = {
-      .name = FbleNewString("<main>"),
-      .loc = FbleNewLoc(__FILE__, __LINE__-2, 12)
-    };
-    main_id = FbleProfileAddBlock(profile, main_block);
-  }
+  FbleName main_block = {
+    .name = FbleNewString("<main>"),
+    .loc = FbleNewLoc(__FILE__, __LINE__-2, 12)
+  };
+  FbleBlockId main_id = FbleProfileAddBlock(profile, main_block);
 
   // Make an FbleFuncValue for each module that computes the value of the
   // module given values of the modules it depends on.
@@ -40,11 +37,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     assert(exe->num_statics == 0 && "Module cannot have statics");
     assert(module->deps.size == exe->num_args && "Module args mismatch");
 
-    size_t profile_block_offset = 0;
-    if (profile != NULL) {
-      profile_block_offset = FbleProfileAddBlocks(profile, module->profile_blocks);
-    }
-
+    size_t profile_block_offset = FbleProfileAddBlocks(profile, module->profile_blocks);
     funcs[i] = FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
   }
 

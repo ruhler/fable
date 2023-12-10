@@ -84,14 +84,6 @@ Doc Comments
   - For example: blank lines in doc comments should be allowed and not cause
     the comment to be truncated.
 
-Null/NonNull:
-* Change FbleProfile functions to accept NULL, and clean up code to take
-  advantage of that where it makes sense?
-* Use some way other than NULL to disable profiling?
- - To encourage all the apps to support optional profiling, including things
-   like fble-md5 and fble-app?
- - Check we are passing meaningful block ids to FbleNewFuncValue.
-
 * Come up with a nicer way to implement printf debugging?
   - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
     for example.

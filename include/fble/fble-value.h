@@ -360,8 +360,7 @@ FbleFuncInfo FbleFuncValueInfo(FbleValue* func);
  * 
  *  @arg[FbleValueHeap*][heap   ] The heap to use for allocating values.
  *  @arg[FbleValue*    ][program] The program to evaluate.
- *  @arg[FbleProfile*  ][profile]
- *   The profile to update. May be NULL to disable profiling.
+ *  @arg[FbleProfile*  ][profile] The profile to update. Must not be NULL.
  * 
  *  @returns FbleValue*
  *   The value of the evaluated program, or @l[NULL] in case of a runtime
@@ -384,8 +383,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
  *  @arg[FbleValue*    ][func] The function to apply.
  *  @arg[FbleValue**] args
  *   The arguments to apply the function to. length == func->argc.
- *  @arg[FbleProfile*] profile
- *   The profile to update. May be NULL to disable profiling.
+ *  @arg[FbleProfile*][profile] The profile to update. Must not be NULL.
  *
  *  @returns FbleValue*
  *   The result of applying the function to the given arguments.
