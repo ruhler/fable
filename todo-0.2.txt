@@ -2,9 +2,6 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-* Add note that behavior is undefined if fble-stdio is called with something
-  of the wrong type.
-
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
@@ -88,10 +85,6 @@ Doc Comments
     the comment to be truncated.
 
 Null/NonNull:
-* Improve documentation about expectations for strict vs. non strict values
- - e.g. FbleThreadTailCall can take a non-strict value, but FbleFuncValueInfo
-   requires a strict value.
-   And should it be that way?
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense?
 * Use some way other than NULL to disable profiling?

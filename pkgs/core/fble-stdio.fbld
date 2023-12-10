@@ -5,8 +5,9 @@
  @description
   Runs an fble stdio program.
  
-  The fble program should be the result of calling @l[/Core/Stdio/IO%.Run] on
-  an argument of type @l[/Core/Stdio%.Main\@].
+  The fble program should be the result of calling @l{/Core/Stdio/IO%.Run} on
+  an argument of type @l{/Core/Stdio%.Main@}. Behavior is undefined if the
+  module to run does not have type @l{/Core/Stdio%.Main@}.
  
  @options
   @GenericProgramInfo

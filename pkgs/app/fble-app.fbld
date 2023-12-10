@@ -5,7 +5,8 @@
  @description
   Runs an fble app program.
  
-  The fble program should be of type @l[/App/App%.Main\@].
+  The fble program should be of type @l{/App/App%.Main@}. Behavior is
+  undefined if the module to run does not have type @l{/App/App%.Main@}.
  
  @options
   @GenericProgramInfo

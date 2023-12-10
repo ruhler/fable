@@ -347,7 +347,7 @@ typedef struct {
  *  as the function is valid, and it will be automatically cleaned up as part
  *  of the function's cleanup.
  *
- *  @arg[FbleValue*][func] The function to get the info for.
+ *  @arg[FbleValue*][func] The function to get the info for. Must not be NULL.
  *  @returns[FbleFuncInfo] The info for the function.
  *  @sideeffects None.
  */
