@@ -41,9 +41,9 @@
 
 @ Effect@ = +(
   # Request for a tick Event@ to occur after the given number of milliseconds.
-  # Time is relative to the time of the previously delivered tick event. The
-  # tick will be delivered immediately if the more time has passed since the
-  # previous tick event then requested.
+  # Time is relative to the time of delivery of the last requested tick event.
+  # The tick will be delivered immediately if its delivery time is in the past
+  # according to wall clock time.
   Int@ tick,
 
   # Draw to the screen.

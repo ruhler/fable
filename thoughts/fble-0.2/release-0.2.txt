@@ -293,3 +293,16 @@ like the idea of saying FbleProfile* should not be null. Instead it should
 have a flag to enable or disable. That encourages users to create an
 FbleProfile* always and supply block information.
 
+---
+
+TODO burndown item:
+* Add tests that at least the compiled apps don't crash when you run them.
+ - Including with --profile enabled.
+
+We can make a test app that displays for a second, then exits. The challenge
+is do we want to assume users have a DISPLAY available during testing? Could
+we use a fake display? xvfb? Do I want to add that dependency?
+
+I think this is worth doing eventually, but I don't want to worry about it
+now. This isn't to test the fble code, mind you. You can do that all inside
+fble. It's specifically to test fble-app.c code.

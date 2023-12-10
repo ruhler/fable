@@ -77,3 +77,7 @@ Things to consider doing for the fble-0.3 release.
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
  - Add tests for full code coverage of all functions.
+
+* Add tests that at least the compiled apps don't crash when you run them.
+ - Including with --profile enabled.
+ - But can we assume there is a DISPLAY available for testing?

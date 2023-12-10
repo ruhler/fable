@@ -381,8 +381,6 @@ static FbleValue* EffectImpl(
     case 0: {
       int tick = FbleIntValueAccess(FbleUnionValueAccess(effect));
 
-      // TODO: This assumes we don't already have a tick in progress. We
-      // should add proper support for multiple backed up tick requests.
       Uint32 now = SDL_GetTicks();
       exe->time += tick;
       if (exe->time < now) {

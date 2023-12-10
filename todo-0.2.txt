@@ -148,9 +148,6 @@ Doc Comments
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
  too specific to the implementation of garbage collection. Anything we can do?
 
-* Add proper support for multiple backed up tick requests in pkgs/app/app.c
- - I think this is why GameOfLife freezes eventually.
-
 * [/Map%] Add tests for balancing of /Map%?
 * [/Snake%] Test and fix bug when snake eats its tail.
 * [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
@@ -165,6 +162,3 @@ Doc Comments
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
 * [typecheck] Better error messages on types that have the same name but different values?
-
-* Add tests that at least the compiled apps don't crash when you run them.
- - Including with --profile enabled.
