@@ -66,13 +66,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
       : m.return(Unit));
   };
 
-  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
-
-  M@<Unit@> WaitForKeyPress = {
-    Event@ e <- m.do(app.event);
-    e.?(key_down: m.return(Unit), : WaitForKeyPress);
-  };
-  WaitForKeyPress;
+  StepUI(State@(Int|0, Int|0, Color.Green));
 };
 
 /App/IO%.Run(Main);

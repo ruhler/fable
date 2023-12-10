@@ -541,7 +541,9 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+    FbleReleaseValue(heap, func);
     FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
     return EX_FAILURE;
   }
 
