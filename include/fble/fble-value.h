@@ -109,20 +109,6 @@ void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args);
 void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...);
 
 /**
- * @func[FbleValueAddRef] Adds reference from one value to another.
- *  Notifies the value heap of a new reference from src to dst.
- *
- *  @arg[FbleValueHeap*][heap] The heap the values are allocated on.
- *  @arg[FbleValue*    ][src ] The source of the reference.
- *  @arg[FbleValue*    ][dst ]
- *   The destination of the reference. Must not be NULL.
- *
- *  @sideeffects
- *   Causes the dst value to be retained for at least as long as the src value.
- */
-void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
-
-/**
  * @func[FbleValueFullGc] Performs a full garbage collection.
  *  Frees any unreachable objects currently on the heap.
  *

@@ -176,6 +176,7 @@ typedef struct {
 // struct values.
 FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 
+static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 static void OnFree(FbleValueHeap* heap, FbleValue* value);
 static void Ref(FbleHeap* heap, FbleValue* value);
 static void Refs(FbleHeap* heap, FbleValue* value);
@@ -232,10 +233,21 @@ void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...)
   va_end(ap);
 }
 
-// See documentation in fble-value.h.
-void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
+/**
+ * @func[AddRef] Adds reference from one value to another.
+ *  Notifies the value heap of a new reference from src to dst.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap the values are allocated on.
+ *  @arg[FbleValue*    ][src ] The source of the reference.
+ *  @arg[FbleValue*    ][dst ]
+ *   The destination of the reference. May be NULL.
+ *
+ *  @sideeffects
+ *   Causes the dst value to be retained for at least as long as the src value.
+ */
+static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!PACKED(src) && !PACKED(dst)) {
+  if (dst && !PACKED(src) && !PACKED(dst)) {
     FbleHeapObjectAddRef(heap, src, dst);
   }
 }
@@ -429,9 +441,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[i];
     value->fields[i] = arg;
-    if (arg != NULL) {
-      FbleValueAddRef(heap, &value->_base, arg);
-    }
+    AddRef(heap, &value->_base, arg);
   }
 
   return &value->_base;
@@ -504,7 +514,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
   union_value->_base.tag = UNION_VALUE;
   union_value->tag = tag;
   union_value->arg = arg;
-  FbleValueAddRef(heap, &union_value->_base, arg);
+  AddRef(heap, &union_value->_base, arg);
   return &union_value->_base;
 }
 // See documentation in fble-value.h.
@@ -591,9 +601,7 @@ FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_
   value->fieldc = fieldc;
   for (size_t i = 0; i < fieldc; ++i) {
     value->fields[i] = fields[i];
-    if (fields[i] != NULL) {
-      FbleValueAddRef(heap, &value->_base, fields[i]);
-    }
+    AddRef(heap, &value->_base, fields[i]);
   }
 
   return &value->_base;
@@ -609,7 +617,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
   v->executable->refcount++;
   for (size_t i = 0; i < executable->num_statics; ++i) {
     v->statics[i] = statics[i];
-    FbleValueAddRef(heap, &v->_base, statics[i]);
+    AddRef(heap, &v->_base, statics[i]);
   }
   return &v->_base;
 }
@@ -717,7 +725,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   RefValue* rv = (RefValue*)ref;
   assert(rv->_base.tag == REF_VALUE);
   rv->value = value;
-  FbleValueAddRef(heap, ref, value);
+  AddRef(heap, ref, value);
   return true;
 }
 

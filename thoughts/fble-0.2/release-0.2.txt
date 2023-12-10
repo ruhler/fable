@@ -274,4 +274,22 @@ Factors:
 * Accepting NULL makes it easier to not bother programming something like
   profile blocks that you otherwise ought to?
 
+I don't think performance is a problem in practice. We should do things on a
+case by case basis, because accepting NULL could find bugs. Better to be
+explicit about when you are hiding bugs than not.
+
+Proposal:
+* By default, assume things should not be null.
+* On case-by-case basis, can choose to support null arguments. Document as
+  'May be NULL' in doc comments.
+
+FbleThreadCall, FbleFuncValueInfo should not accept NULL because there isn't
+compelling motivation yet. Turns out FbleValueAddRef need not be public. I
+made that internal and then allow it to take NULL because half the time we use
+it we check for NULL anyway.
+
+FbleProfileThread* wants to use NULL to say if profiling is enabled or not. I
+like the idea of saying FbleProfile* should not be null. Instead it should
+have a flag to enable or disable. That encourages users to create an
+FbleProfile* always and supply block information.
 
