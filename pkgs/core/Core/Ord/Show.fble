@@ -1,0 +1,12 @@
+
+@ Ordering@ = /Core/Ord%.Ordering@;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Core/String%.Str;
+
+Show@<Ordering@> Show = (Ordering@ a) {
+  a.?(lt: Str|Lt, eq: Str|Eq, gt: Str|Gt);
+};
+
+@(Show);

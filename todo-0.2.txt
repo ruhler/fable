@@ -169,8 +169,6 @@ Null/NonNull:
 * Add proper support for multiple backed up tick requests in pkgs/app/app.c
  - I think this is why GameOfLife freezes eventually.
 
-* [/Int%] Add test coverage for the Int routines.
- - Test Ord,
 * [/Map%] Add tests for balancing of /Map%?
 * [/Snake%] Test and fix bug when snake eats its tail.
 * [/Snake%] Ignore moves that aren't orthogonal to current snake direction.

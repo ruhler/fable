@@ -1,0 +1,16 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Ordering@ = /Core/Ord%.Ordering@;
+
+Eq@<Ordering@> Eq = (Ordering@ a, Ordering@ b) {
+  a.?(
+    lt: b.?(lt: True, : False),
+    eq: b.?(eq: True, : False),
+    gt: b.?(gt: True, : False));
+};
+
+@(Eq);

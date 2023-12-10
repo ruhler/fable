@@ -4,6 +4,9 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
+% Ord = /Core/Ord%;
+@ Ordering@ = Ord.Ordering@;
+
 <@>% List = /Core/List%.List;
 
 @ String@ = /Core/String%.String@;
@@ -50,6 +53,8 @@
 
 % Int = /Core/Int/Lit%.Int;
 
+% IOrd = /Core/Int/Ord%.Ord;
+
 (String@, (Unit@) { Bool@; }) { Test@; }
 T = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
@@ -61,6 +66,13 @@ T = (String@ name, (Unit@) { Bool@; } p) {
 TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
   Test(name, (Unit@ u) {
     AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, a, b(u));
+  });
+};
+
+(String@, Ordering@, (Unit@) { Ordering@; }) { Test@; }
+TOrd = (String@ name, Ordering@ a, (Unit@) { Ordering@; } b) {
+  Test(name, (Unit@ u) {
+    AssertEquals(/Core/Ord/Eq%.Eq, /Core/Ord/Show%.Show, a, b(u));
   });
 };
 
@@ -182,6 +194,18 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Exp2_0, Int|1, (Unit@ _) { Exp2(0); }),
   TEq(Str|Exp2_8, Int|256, (Unit@ _) { Exp2(8); }),
   TEq(Str|Exp2_7, Int|128, (Unit@ _) { Exp2(7); }),
+
+  TOrd(Str|Ord_3_5, Ord.Lt, (Unit@ _) { IOrd(3, 5); }),
+  TOrd(Str|Ord_5_3, Ord.Gt, (Unit@ _) { IOrd(5, 3); }),
+  TOrd(Str|Ord_5_5, Ord.Eq, (Unit@ _) { IOrd(5, 5); }),
+  TOrd(Str|Ord_0_5, Ord.Lt, (Unit@ _) { IOrd(0, 5); }),
+  TOrd(Str|Ord_5_0, Ord.Gt, (Unit@ _) { IOrd(5, 0); }),
+  TOrd(Str|Ord_0_0, Ord.Eq, (Unit@ _) { IOrd(0, 0); }),
+  TOrd(Str|Ord_3_m5, Ord.Gt, (Unit@ _) { IOrd(3, Neg(5)); }),
+  TOrd(Str|Ord_m5_3, Ord.Lt, (Unit@ _) { IOrd(Neg(5), 3); }),
+  TOrd(Str|Ord_m5_m5, Ord.Eq, (Unit@ _) { IOrd(Neg(5), Neg(5)); }),
+  TOrd(Str|Ord_0_m5, Ord.Gt, (Unit@ _) { IOrd(0, Neg(5)); }),
+  TOrd(Str|Ord_m5_0, Ord.Lt, (Unit@ _) { IOrd(Neg(5), 0); }),
 
   Test(Str|Read_Positive, (Unit@ _) {
     Int@ wnt = Int|49113;
