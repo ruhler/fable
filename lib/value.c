@@ -11,7 +11,7 @@
 
 #include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-execute.h>
-#include <fble/fble-vector.h>  // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>  // for FbleInitVector, etc.
 
 #include "heap.h"
 #include "unreachable.h"
@@ -461,7 +461,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
+FbleValue* FbleStructValueField(FbleValue* object, size_t field)
 {
   object = FbleStrictValue(object);
 
@@ -552,7 +552,7 @@ size_t FbleUnionValueTag(FbleValue* object)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleUnionValueAccess(FbleValue* object)
+FbleValue* FbleUnionValueArg(FbleValue* object)
 {
   object = FbleStrictValue(object);
 

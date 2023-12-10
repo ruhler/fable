@@ -213,7 +213,7 @@ static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
   var->used = false;
   var->var.tag = FBLE_LOCAL_VAR;
   var->var.index = scope->locals.size;
-  FbleVectorAppend(scope->locals, var);
+  FbleAppendToVector(scope->locals, var);
   return var;
 }
 
@@ -301,9 +301,9 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
       captured_var->used = !phantom;
       captured_var->var.tag = FBLE_STATIC_VAR;
       captured_var->var.index = scope->statics.size;
-      FbleVectorAppend(scope->statics, captured_var);
+      FbleAppendToVector(scope->statics, captured_var);
       if (scope->captured != NULL) {
-        FbleVectorAppend(*scope->captured, var->var);
+        FbleAppendToVector(*scope->captured, var->var);
       }
       return captured_var;
     }
@@ -334,9 +334,9 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
  */
 static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePath* module, Scope* parent)
 {
-  FbleVectorInit(scope->statics);
-  FbleVectorInit(scope->args);
-  FbleVectorInit(scope->locals);
+  FbleInitVector(scope->statics);
+  FbleInitVector(scope->args);
+  FbleInitVector(scope->locals);
   scope->captured = captured;
   scope->module = FbleCopyModulePath(module);
   scope->parent = parent;
@@ -348,7 +348,7 @@ static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePat
     var->used = false;
     var->var.tag = FBLE_ARG_VAR;
     var->var.index = scope->args.size;
-    FbleVectorAppend(scope->args, var);
+    FbleAppendToVector(scope->args, var);
   }
 }
 
@@ -562,10 +562,10 @@ static FbleTcBinding CopyTcBinding(FbleTcBinding binding)
 static Cleaner* NewCleaner()
 {
   Cleaner* cleaner = FbleAlloc(Cleaner);
-  FbleVectorInit(cleaner->types);
-  FbleVectorInit(cleaner->tcs);
-  FbleVectorInit(cleaner->tyvars);
-  FbleVectorInit(cleaner->bindings);
+  FbleInitVector(cleaner->types);
+  FbleInitVector(cleaner->tcs);
+  FbleInitVector(cleaner->tyvars);
+  FbleInitVector(cleaner->bindings);
   return cleaner;
 }
 
@@ -580,7 +580,7 @@ static Cleaner* NewCleaner()
  */
 static void CleanType(Cleaner* cleaner, FbleType* type)
 {
-  FbleVectorAppend(cleaner->types, type);
+  FbleAppendToVector(cleaner->types, type);
 }
 
 /**
@@ -594,8 +594,8 @@ static void CleanType(Cleaner* cleaner, FbleType* type)
  */
 static void CleanTc(Cleaner* cleaner, Tc tc)
 {
-  FbleVectorAppend(cleaner->types, tc.type);
-  FbleVectorAppend(cleaner->tcs, tc.tc);
+  FbleAppendToVector(cleaner->types, tc.type);
+  FbleAppendToVector(cleaner->tcs, tc.tc);
 }
 
 /**
@@ -609,7 +609,7 @@ static void CleanTc(Cleaner* cleaner, Tc tc)
  */
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars)
 {
-  FbleVectorAppend(cleaner->tyvars, vars);
+  FbleAppendToVector(cleaner->tyvars, vars);
 }
 
 /**
@@ -623,7 +623,7 @@ static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars)
  */
 static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding binding)
 {
-  FbleVectorAppend(cleaner->bindings, binding);
+  FbleAppendToVector(cleaner->bindings, binding);
 }
 
 /**
@@ -692,7 +692,7 @@ static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignment
   while (pbody->tag == FBLE_POLY_TYPE) {
     FblePolyType* poly = (FblePolyType*)pbody;
     FbleTypeAssignment var = { .var = poly->arg, .value = NULL };
-    FbleVectorAppend(*vars, var);
+    FbleAppendToVector(*vars, var);
 
     FbleType* next = FbleNormalType(th, poly->body);
     FbleReleaseType(th, pbody);
@@ -1128,7 +1128,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleLetTc* let_tc = FbleNewTc(FbleLetTc, FBLE_LET_TC, expr->loc);
       let_tc->recursive = recursive;
-      FbleVectorInit(let_tc->bindings);
+      FbleInitVector(let_tc->bindings);
       let_tc->body = body.tc;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleTcBinding ltc = {
@@ -1136,7 +1136,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           .loc = FbleCopyLoc(let_expr->bindings.xs[i].expr->loc),
           .tc = defs[i].tc
         };
-        FbleVectorAppend(let_tc->bindings, ltc);
+        FbleAppendToVector(let_tc->bindings, ltc);
       }
         
       return MkTc(body.type, &let_tc->_base);
@@ -1147,7 +1147,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleDataType* struct_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       struct_type->datatype = FBLE_STRUCT_DATATYPE;
-      FbleVectorInit(struct_type->fields);
+      FbleInitVector(struct_type->fields);
       CleanType(cleaner, &struct_type->_base);
 
       size_t argc = struct_expr->args.size;
@@ -1172,7 +1172,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             .name = FbleCopyName(arg->name),
             .type = args[i].type
           };
-          FbleVectorAppend(struct_type->fields, cfield);
+          FbleAppendToVector(struct_type->fields, cfield);
           FbleTypeAddRef(th, &struct_type->_base, cfield.type);
         }
 
@@ -1191,9 +1191,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleStructValueTc* struct_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);
-      FbleVectorInit(struct_tc->fields);
+      FbleInitVector(struct_tc->fields);
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(struct_tc->fields, FbleCopyTc(args[i].tc));
+        FbleAppendToVector(struct_tc->fields, FbleCopyTc(args[i].tc));
       }
 
       return MkTc(FbleRetainType(th, &struct_type->_base), &struct_tc->_base);
@@ -1232,14 +1232,14 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       size_t fieldc = struct_type->fields.size;
       FbleStructCopyTc* struct_copy = FbleNewTc(FbleStructCopyTc, FBLE_STRUCT_COPY_TC, expr->loc);
       struct_copy->source = FbleCopyTc(src.tc);
-      FbleVectorInit(struct_copy->fields);
+      FbleInitVector(struct_copy->fields);
 
       size_t a = 0;
       for (size_t i = 0; i < fieldc; ++i) {
         FbleTaggedExpr* arg = struct_expr->args.xs + a;
         if (a < struct_expr->args.size && FbleNamesEqual(arg->name, struct_type->fields.xs[i].name)) {
           // Take the field value from the provided argument.
-          FbleVectorAppend(struct_copy->fields, FbleCopyTc(args[a].tc));
+          FbleAppendToVector(struct_copy->fields, FbleCopyTc(args[a].tc));
           if (!FbleTypesEqual(th, struct_type->fields.xs[i].type, args[a].type)) {
             ReportError(args[a].tc->loc,
                 "expected type %t, but found %t\n",
@@ -1249,7 +1249,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           a++;
         } else {
           // Take the field value from the source struct.
-          FbleVectorAppend(struct_copy->fields, NULL);
+          FbleAppendToVector(struct_copy->fields, NULL);
         }
       }
 
@@ -1277,7 +1277,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
-      FbleVectorInit(*vars);
+      FbleInitVector(*vars);
       CleanTypeAssignmentV(cleaner, vars);
 
       FbleDataType* union_type = (FbleDataType*)DepolyType(th, type, vars);
@@ -1320,7 +1320,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       // TypeInferArgs.
       // TODO: Any cleaner way we can do this?
       FbleStructValueTc* unit_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);
-      FbleVectorInit(unit_tc->fields);
+      FbleInitVector(unit_tc->fields);
       Tc vtc = { .type = FbleRetainType(th, type), .tc = &unit_tc->_base };
       CleanTc(cleaner, vtc);
 
@@ -1445,9 +1445,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleUnionSelectTc* select_tc = FbleNewTc(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, expr->loc);
       select_tc->condition = FbleCopyTc(condition.tc);
       select_tc->num_tags = union_type->fields.size;
-      FbleVectorInit(select_tc->targets);
+      FbleInitVector(select_tc->targets);
       for (size_t i = 0; i < branch; ++i) {
-        FbleTcBranchTarget* tgt = FbleVectorExtend(select_tc->targets);
+        FbleTcBranchTarget* tgt = FbleExtendVector(select_tc->targets);
         tgt->tag = branches[i].tag;
         tgt->target = CopyTcBinding(branches[i].target);
       }
@@ -1462,10 +1462,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       bool error = false;
       FbleTypeV arg_types;
-      FbleVectorInit(arg_types);
+      FbleInitVector(arg_types);
       for (size_t i = 0; i < argc; ++i) {
         FbleType* arg_type = TypeCheckType(th, scope, func_value_expr->args.xs[i].type);
-        FbleVectorAppend(arg_types, arg_type);
+        FbleAppendToVector(arg_types, arg_type);
         error = error || arg_type == NULL;
 
         for (size_t j = 0; j < i; ++j) {
@@ -1488,7 +1488,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
 
       FbleVarV captured;
-      FbleVectorInit(captured);
+      FbleInitVector(captured);
 
       Arg args_xs[argc];
       for (size_t i = 0; i < argc; ++i) {
@@ -1523,7 +1523,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       func_tc->body_loc = FbleCopyLoc(func_value_expr->body->loc);
       func_tc->scope = captured;
 
-      FbleVectorInit(func_tc->statics);
+      FbleInitVector(func_tc->statics);
       for (size_t i = 0; i < func_scope.statics.size; ++i) {
         Var* var = func_scope.statics.xs[i];
         FbleName name;
@@ -1532,12 +1532,12 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         } else {
           name = FbleModulePathName(var->name.module);
         }
-        FbleVectorAppend(func_tc->statics, name);
+        FbleAppendToVector(func_tc->statics, name);
       }
 
-      FbleVectorInit(func_tc->args);
+      FbleInitVector(func_tc->args);
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(func_tc->args, FbleCopyName(func_value_expr->args.xs[i].name));
+        FbleAppendToVector(func_tc->args, FbleCopyName(func_value_expr->args.xs[i].name));
       }
       func_tc->body = func_result.tc;
 
@@ -1592,13 +1592,13 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleLetTc* let_tc = FbleNewTc(FbleLetTc, FBLE_LET_TC, expr->loc);
       let_tc->recursive = false;
       let_tc->body = FbleCopyTc(body.tc);
-      FbleVectorInit(let_tc->bindings);
+      FbleInitVector(let_tc->bindings);
       FbleTcBinding ltc = {
         .name = FbleCopyName(poly->arg.name),
         .loc = FbleCopyLoc(poly->arg.name.loc),
         .tc = &type_tc->_base
       };
-      FbleVectorAppend(let_tc->bindings, ltc);
+      FbleAppendToVector(let_tc->bindings, ltc);
 
       return MkTc(pt, &let_tc->_base);
     }
@@ -1622,7 +1622,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
-      FbleVectorInit(*vars);
+      FbleInitVector(*vars);
       CleanTypeAssignmentV(cleaner, vars);
 
       FbleFuncType* func_type = (FbleFuncType*)DepolyType(th, func.type, vars);
@@ -1671,15 +1671,15 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleType* result_type = FbleRetainType(th, inferred_func_type->rtype);
 
       FbleListTc* list_tc = FbleNewTc(FbleListTc, FBLE_LIST_TC, expr->loc);
-      FbleVectorInit(list_tc->fields);
+      FbleInitVector(list_tc->fields);
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(list_tc->fields, FbleCopyTc(args[i].tc));
+        FbleAppendToVector(list_tc->fields, FbleCopyTc(args[i].tc));
       }
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
       apply->func = FbleCopyTc(poly.tc);
-      FbleVectorInit(apply->args);
-      FbleVectorAppend(apply->args, &list_tc->_base);
+      FbleInitVector(apply->args);
+      FbleAppendToVector(apply->args, &list_tc->_base);
       return MkTc(result_type, &apply->_base);
     }
 
@@ -1715,7 +1715,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       unit_type->datatype = FBLE_STRUCT_DATATYPE;
-      FbleVectorInit(unit_type->fields);
+      FbleInitVector(unit_type->fields);
       CleanType(cleaner, &unit_type->_base);
 
       bool error = false;
@@ -1767,15 +1767,15 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleType* result_type = FbleRetainType(th, func_type->rtype);
 
       FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
-      FbleVectorInit(literal_tc->letters);
+      FbleInitVector(literal_tc->letters);
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(literal_tc->letters, args[i]);
+        FbleAppendToVector(literal_tc->letters, args[i]);
       }
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
       apply->func = FbleCopyTc(func.tc);
-      FbleVectorInit(apply->args);
-      FbleVectorAppend(apply->args, &literal_tc->_base);
+      FbleInitVector(apply->args);
+      FbleAppendToVector(apply->args, &literal_tc->_base);
       return MkTc(result_type, &apply->_base);
     }
 
@@ -1965,7 +1965,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
         // Typecheck for possibly polymorphic struct value expression.
         FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
-        FbleVectorInit(*vars);
+        FbleInitVector(*vars);
         CleanTypeAssignmentV(cleaner, vars);
 
         FbleDataType* struct_type = (FbleDataType*)DepolyType(th, vtype, vars);
@@ -1974,9 +1974,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         if (struct_type->_base.tag == FBLE_DATA_TYPE
             && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
           FbleTypeV expected;
-          FbleVectorInit(expected);
+          FbleInitVector(expected);
           for (size_t i = 0; i < struct_type->fields.size; ++i) {
-            FbleVectorAppend(expected, struct_type->fields.xs[i].type);
+            FbleAppendToVector(expected, struct_type->fields.xs[i].type);
           }
 
           TcV argv = { .size = argc, .xs = args };
@@ -1990,9 +1990,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           }
 
           FbleStructValueTc* struct_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);
-          FbleVectorInit(struct_tc->fields);
+          FbleInitVector(struct_tc->fields);
           for (size_t i = 0; i < argc; ++i) {
-            FbleVectorAppend(struct_tc->fields, FbleCopyTc(args[i].tc));
+            FbleAppendToVector(struct_tc->fields, FbleCopyTc(args[i].tc));
           }
           return MkTc(FbleRetainType(th, poly.type), &struct_tc->_base);
         }
@@ -2000,7 +2000,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       // Typecheck for possibly polymorphic function application.
       FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
-      FbleVectorInit(*vars);
+      FbleInitVector(*vars);
       CleanTypeAssignmentV(cleaner, vars);
 
       FbleType* pbody = DepolyType(th, misc.type, vars);
@@ -2025,9 +2025,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
         FbleFuncApplyTc* apply_tc = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
         apply_tc->func = FbleCopyTc(poly.tc);
-        FbleVectorInit(apply_tc->args);
+        FbleInitVector(apply_tc->args);
         for (size_t i = 0; i < argc; ++i) {
-          FbleVectorAppend(apply_tc->args, FbleCopyTc(args[i].tc));
+          FbleAppendToVector(apply_tc->args, FbleCopyTc(args[i].tc));
         }
         return MkTc(rtype, &apply_tc->_base);
       }
@@ -2135,7 +2135,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 
       FbleDataType* dt = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, type->loc);
       dt->datatype = data_type->datatype;
-      FbleVectorInit(dt->fields);
+      FbleInitVector(dt->fields);
       CleanType(cleaner, &dt->_base);
 
       for (size_t i = 0; i < data_type->fields.size; ++i) {
@@ -2154,7 +2154,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
           .name = FbleCopyName(field->name),
           .type = compiled
         };
-        FbleVectorAppend(dt->fields, cfield);
+        FbleAppendToVector(dt->fields, cfield);
         FbleTypeAddRef(th, &dt->_base, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
@@ -2175,7 +2175,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 
       FbleFuncTypeExpr* func_type = (FbleFuncTypeExpr*)type;
 
-      FbleVectorInit(ft->args);
+      FbleInitVector(ft->args);
       ft->rtype = NULL;
 
       bool error = false;
@@ -2184,7 +2184,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
         if (arg == NULL) {
           error = true;
         } else {
-          FbleVectorAppend(ft->args, arg);
+          FbleAppendToVector(ft->args, arg);
           FbleTypeAddRef(th, &ft->_base, arg);
         }
         FbleReleaseType(th, arg);
@@ -2345,7 +2345,7 @@ FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program)
 // See documentation in typecheck.h.
 FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program)
 {
-  FbleTc** tcs = FbleArrayAlloc(FbleTc*, program->modules.size);
+  FbleTc** tcs = FbleAllocArray(FbleTc*, program->modules.size);
 
   bool error = false;
   FbleTypeHeap* th = FbleNewTypeHeap();

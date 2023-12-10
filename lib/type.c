@@ -465,13 +465,13 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleDataType* sdt = FbleNewType(heap, FbleDataType, type->tag, dt->_base.loc);
       sdt->datatype = dt->datatype;
 
-      FbleVectorInit(sdt->fields);
+      FbleInitVector(sdt->fields);
       for (size_t i = 0; i < dt->fields.size; ++i) {
         FbleTaggedType field = {
           .name = FbleCopyName(dt->fields.xs[i].name),
           .type = Subst(heap, dt->fields.xs[i].type, param, arg, tps)
         };
-        FbleVectorAppend(sdt->fields, field);
+        FbleAppendToVector(sdt->fields, field);
         FbleTypeAddRef(heap, &sdt->_base, field.type);
         FbleReleaseType(heap, field.type);
       }
@@ -484,14 +484,14 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleType* rtype = Subst(heap, ft->rtype, param, arg, tps);
 
       FbleFuncType* sft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, ft->_base.loc);
-      FbleVectorInit(sft->args);
+      FbleInitVector(sft->args);
       sft->rtype = rtype;
       FbleTypeAddRef(heap, &sft->_base, sft->rtype);
       FbleReleaseType(heap, sft->rtype);
 
       for (size_t i = 0; i < ft->args.size; ++i) {
         FbleType* farg = Subst(heap, ft->args.xs[i], param, arg, tps);
-        FbleVectorAppend(sft->args, farg);
+        FbleAppendToVector(sft->args, farg);
         FbleTypeAddRef(heap, &sft->_base, farg);
         FbleReleaseType(heap, farg);
       }
@@ -1247,11 +1247,11 @@ void FblePrintType(FbleType* type)
 
     case FBLE_POLY_APPLY_TYPE: {
       FbleTypeV args;
-      FbleVectorInit(args);
+      FbleInitVector(args);
 
       while (type->tag == FBLE_POLY_APPLY_TYPE) {
         FblePolyApplyType* pat = (FblePolyApplyType*)type;
-        FbleVectorAppend(args, pat->arg);
+        FbleAppendToVector(args, pat->arg);
         type = pat->poly;
       }
 

@@ -306,3 +306,16 @@ we use a fake display? xvfb? Do I want to add that dependency?
 I think this is worth doing eventually, but I don't want to worry about it
 now. This isn't to test the fble code, mind you. You can do that all inside
 fble. It's specifically to test fble-app.c code.
+
+---
+
+TODO burndown item:
+* Consider running some of the tests under valgrind?
+
+This would be good to do, but I don't think it's worth the added dependency on
+valgrind. This would catch memory allocations done outside of FbleAlloc, which
+are pretty rare. We have good enough coverage of memory allocations otherwise.
+
+Let me toss this TODO item. If we run into memory bugs in the future that
+valgrind would have caught, we can consider adding this back.
+

@@ -13,7 +13,7 @@
 #include <fble/fble-link.h>        // for FbleCompiledModuleFunction.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-vector.h>      // for FbleVectorInit.
+#include <fble/fble-vector.h>      // for FbleInitVector.
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "char.fble.h"        // for FbleCharValueAccess
@@ -225,7 +225,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   block_names[2].name = FbleNewString("read");
   block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleNameV names = { .size = 3, .xs = block_names };
-  FbleBlockId block_id = FbleProfileAddBlocks(profile, names);
+  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
   FbleFreeName(block_names[2]);
@@ -265,7 +265,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   }
 
   // result has type R@<Bool@>, which is *(s, x)
-  FbleValue* value = FbleStructValueAccess(result, 1);
+  FbleValue* value = FbleStructValueField(result, 1);
   FbleRetainValue(heap, value);
   FbleReleaseValue(heap, result);
   return value;
@@ -368,9 +368,9 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   }
 
   FbleValueV stdio_args;
-  FbleVectorInit(stdio_args);
+  FbleInitVector(stdio_args);
   for (int i = 0; i < argc; ++i) {
-    FbleVectorAppend(stdio_args, FbleNewStringValue(heap, argv[i]));
+    FbleAppendToVector(stdio_args, FbleNewStringValue(heap, argv[i]));
   }
 
   FbleValue* value = FbleStdio(heap, profile, stdio, stdio_args.size, stdio_args.xs);
@@ -389,7 +389,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
 
   FbleFreeValueHeap(heap);
 
-  FbleProfileReport(fprofile, profile);
+  FbleGenerateProfileReport(fprofile, profile);
   FbleFreeProfile(profile);
   return result;
 }

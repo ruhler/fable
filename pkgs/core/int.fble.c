@@ -51,8 +51,8 @@ static int64_t ReadIntP(FbleValue* x)
 {
   switch (FbleUnionValueTag(x)) {
     case 0: return 1;
-    case 1: return 2 * ReadIntP(FbleUnionValueAccess(x));
-    case 2: return 2 * ReadIntP(FbleUnionValueAccess(x)) + 1;
+    case 1: return 2 * ReadIntP(FbleUnionValueArg(x));
+    case 2: return 2 * ReadIntP(FbleUnionValueArg(x)) + 1;
     default: assert(false && "Invalid IntP@ tag"); abort();
   }
 }
@@ -81,9 +81,9 @@ FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x)
 int64_t FbleIntValueAccess(FbleValue* x)
 {
   switch (FbleUnionValueTag(x)) {
-    case 0: return -ReadIntP(FbleUnionValueAccess(x));
+    case 0: return -ReadIntP(FbleUnionValueArg(x));
     case 1: return 0;
-    case 2: return ReadIntP(FbleUnionValueAccess(x));
+    case 2: return ReadIntP(FbleUnionValueArg(x));
     default: assert(false && "Invalid Int@ tag"); abort();
   }
 }

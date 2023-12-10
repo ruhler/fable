@@ -4,7 +4,7 @@
 #include <string.h>         // for strlen
 
 #include <fble/fble-value.h>     // for FbleValue, etc.
-#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "char.fble.h" // for FbleCharValueAccess, FbleNewCharValue
 
@@ -12,16 +12,16 @@
 char* FbleStringValueAccess(FbleValue* str)
 {
   struct { size_t size; char* xs; } chars;
-  FbleVectorInit(chars);
+  FbleInitVector(chars);
   while (FbleUnionValueTag(str) == 0) {
-    FbleValue* charP = FbleUnionValueAccess(str);
-    FbleValue* charV = FbleStructValueAccess(charP, 0);
-    str = FbleStructValueAccess(charP, 1);
+    FbleValue* charP = FbleUnionValueArg(str);
+    FbleValue* charV = FbleStructValueField(charP, 0);
+    str = FbleStructValueField(charP, 1);
 
     char c = FbleCharValueAccess(charV);
-    FbleVectorAppend(chars, c);
+    FbleAppendToVector(chars, c);
   }
-  FbleVectorAppend(chars, '\0');
+  FbleAppendToVector(chars, '\0');
   return chars.xs;
 }
 

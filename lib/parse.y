@@ -196,7 +196,7 @@ start:
    }
  | PARSE_MODULE_PATH module_path {
      // Parsed module path is stored in deps.
-     FbleVectorAppend(*deps, $2);
+     FbleAppendToVector(*deps, $2);
    }
  ;
 
@@ -216,14 +216,14 @@ name:
 path:
    WORD {
      $$ = FbleNewModulePath(@$);
-     FbleName* name = FbleVectorExtend($$->path);
+     FbleName* name = FbleExtendVector($$->path);
      name->name = ToString($1);
      name->space = FBLE_NORMAL_NAME_SPACE;
      name->loc = FbleCopyLoc(@$);
    }
  | path '/' WORD {
      $$ = $1;
-     FbleName* name = FbleVectorExtend($$->path);
+     FbleName* name = FbleExtendVector($$->path);
      name->name = ToString($3);
      name->space = FBLE_NORMAL_NAME_SPACE;
      name->loc = FbleCopyLoc(@$);
@@ -283,25 +283,25 @@ kind: nkind | tkind ;
 
 tkind_p:
    tkind {
-     FbleVectorInit($$);
-     FbleVectorAppend($$, $1);
+     FbleInitVector($$);
+     FbleAppendToVector($$, $1);
    }
  | tkind_p ',' tkind {
      $$ = $1;
-     FbleVectorAppend($$, $3);
+     FbleAppendToVector($$, $3);
    }
  ;
 
 tagged_kind_p:
    kind name {
-     FbleVectorInit($$);
-     FbleTaggedKind* type_field = FbleVectorExtend($$);
+     FbleInitVector($$);
+     FbleTaggedKind* type_field = FbleExtendVector($$);
      type_field->kind = $1;
      type_field->name = $2;
    }
  | tagged_kind_p ',' kind name {
      $$ = $1;
-     FbleTaggedKind* type_field = FbleVectorExtend($$);
+     FbleTaggedKind* type_field = FbleExtendVector($$);
      type_field->kind = $3;
      type_field->name = $4;
    }
@@ -337,7 +337,7 @@ expr:
         }
       }
       if (!found) {
-        FbleVectorAppend(*deps, FbleCopyModulePath(path_expr->path));
+        FbleAppendToVector(*deps, FbleCopyModulePath(path_expr->path));
       }
    }
  | '*' '(' tagged_type_s ')' {
@@ -538,8 +538,8 @@ stmt:
       apply_expr->_base.loc = FbleCopyLoc(@$);
       apply_expr->misc = $4;
       apply_expr->bind = true;
-      FbleVectorInit(apply_expr->args);
-      FbleVectorAppend(apply_expr->args, &func_value_expr->_base);
+      FbleInitVector(apply_expr->args);
+      FbleAppendToVector(apply_expr->args, &func_value_expr->_base);
       $$ = &apply_expr->_base;
     }
   | expr ';' stmt {
@@ -559,17 +559,17 @@ stmt:
 
 expr_p:
    expr {
-     FbleVectorInit($$);
-     FbleVectorAppend($$, $1);
+     FbleInitVector($$);
+     FbleAppendToVector($$, $1);
    }
  | expr_p ',' expr {
      $$ = $1;
-     FbleVectorAppend($$, $3);
+     FbleAppendToVector($$, $3);
    }
  ;
 
 expr_s:
-   %empty { FbleVectorInit($$); }
+   %empty { FbleInitVector($$); }
  | expr_p { $$ = $1; }
  ;
 
@@ -582,21 +582,21 @@ tagged_type:
 
 tagged_type_p:
    tagged_type {
-     FbleVectorInit($$);
-     FbleTaggedTypeExpr* field = FbleVectorExtend($$);
+     FbleInitVector($$);
+     FbleTaggedTypeExpr* field = FbleExtendVector($$);
      field->type = $1.type;
      field->name = $1.name;
    }
  | tagged_type_p ',' tagged_type {
      $$ = $1;
-     FbleTaggedTypeExpr* field = FbleVectorExtend($$);
+     FbleTaggedTypeExpr* field = FbleExtendVector($$);
      field->type = $3.type;
      field->name = $3.name;
    }
  ;
 
 tagged_type_s:
-   %empty { FbleVectorInit($$); }
+   %empty { FbleInitVector($$); }
  | tagged_type_p { $$ = $1; }
  ;
 
@@ -618,17 +618,17 @@ implicit_tagged_expr:
 
 implicit_tagged_expr_p:
   implicit_tagged_expr {
-      FbleVectorInit($$);
-      FbleVectorAppend($$, $1);
+      FbleInitVector($$);
+      FbleAppendToVector($$, $1);
     }
   | implicit_tagged_expr_p ',' implicit_tagged_expr {
       $$ = $1;
-      FbleVectorAppend($$, $3);
+      FbleAppendToVector($$, $3);
     }
   ;
 
 implicit_tagged_expr_s:
-    %empty { FbleVectorInit($$); }
+    %empty { FbleInitVector($$); }
   | implicit_tagged_expr_p { $$ = $1; }
   ;
 
@@ -641,27 +641,27 @@ tagged_expr:
 
 tagged_expr_p:
   tagged_expr {
-      FbleVectorInit($$);
-      FbleVectorAppend($$, $1);
+      FbleInitVector($$);
+      FbleAppendToVector($$, $1);
     }
   | tagged_expr_p ',' tagged_expr {
       $$ = $1;
-      FbleVectorAppend($$, $3);
+      FbleAppendToVector($$, $3);
     }
   ;
 
 let_binding_p: 
   expr name '=' expr {
-      FbleVectorInit($$);
-      FbleBinding* binding = FbleVectorExtend($$);
+      FbleInitVector($$);
+      FbleBinding* binding = FbleExtendVector($$);
       binding->kind = NULL;
       binding->type = $1;
       binding->name = $2;
       binding->expr = $4;
     }
   | kind name '=' expr {
-      FbleVectorInit($$);
-      FbleBinding* binding = FbleVectorExtend($$);
+      FbleInitVector($$);
+      FbleBinding* binding = FbleExtendVector($$);
       binding->kind = $1;
       binding->type = NULL;
       binding->name = $2;
@@ -669,7 +669,7 @@ let_binding_p:
     }
   | let_binding_p ',' expr name '=' expr {
       $$ = $1;
-      FbleBinding* binding = FbleVectorExtend($$);
+      FbleBinding* binding = FbleExtendVector($$);
       binding->kind = NULL;
       binding->type = $3;
       binding->name = $4;
@@ -677,7 +677,7 @@ let_binding_p:
     }
   | let_binding_p ',' kind name '=' expr {
       $$ = $1;
-      FbleBinding* binding = FbleVectorExtend($$);
+      FbleBinding* binding = FbleExtendVector($$);
       binding->kind = $3;
       binding->type = NULL;
       binding->name = $4;
@@ -846,27 +846,27 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
   };
 
   struct { size_t size; char* xs; } wordv;
-  FbleVectorInit(wordv);
+  FbleInitVector(wordv);
 
   if (lex->c == '\'') {
     do {
       ReadNextChar(lex);
       while (lex->c != EOF && lex->c != '\'') {
-        FbleVectorAppend(wordv, lex->c);
+        FbleAppendToVector(wordv, lex->c);
         ReadNextChar(lex);
       }
       ReadNextChar(lex);
       if (lex->c == '\'') {
-        FbleVectorAppend(wordv, '\'');
+        FbleAppendToVector(wordv, '\'');
       }
     } while (lex->c == '\'');
   } else {
     while (IsWordChar(lex->c)) {
-      FbleVectorAppend(wordv, lex->c);
+      FbleAppendToVector(wordv, lex->c);
       ReadNextChar(lex);
     }
   }
-  FbleVectorAppend(wordv, '\0');
+  FbleAppendToVector(wordv, '\0');
 
   lvalp->word = wordv.xs;
   return WORD;
@@ -943,7 +943,7 @@ FbleModulePath* FbleParseModulePath(const char* string)
   };
 
   FbleModulePathV path;
-  FbleVectorInit(path);
+  FbleInitVector(path);
   yyparse(&lex, NULL, &path);
   FbleFreeLoc(lex.loc);
 

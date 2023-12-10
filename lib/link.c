@@ -10,7 +10,7 @@
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, etc.
 #include <fble/fble-interpret.h> // for FbleInterpret
-#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"
 #include "value.h"
@@ -24,7 +24,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     .name = FbleNewString("<main>"),
     .loc = FbleNewLoc(__FILE__, __LINE__-2, 12)
   };
-  FbleBlockId main_id = FbleProfileAddBlock(profile, main_block);
+  FbleBlockId main_id = FbleAddBlockToProfile(profile, main_block);
 
   // Make an FbleFuncValue for each module that computes the value of the
   // module given values of the modules it depends on.
@@ -37,7 +37,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     assert(exe->num_statics == 0 && "Module cannot have statics");
     assert(module->deps.size == exe->num_args && "Module args mismatch");
 
-    size_t profile_block_offset = FbleProfileAddBlocks(profile, module->profile_blocks);
+    size_t profile_block_offset = FbleAddBlocksToProfile(profile, module->profile_blocks);
     funcs[i] = FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
   }
 
@@ -55,12 +55,12 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     call->loc.col = 5;
     call->func.tag = FBLE_STATIC_VAR;
     call->func.index = i;
-    FbleVectorInit(call->args);
+    FbleInitVector(call->args);
     for (size_t d = 0; d < module->deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
         if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[v]->path)) {
           FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
-          FbleVectorAppend(call->args, var);
+          FbleAppendToVector(call->args, var);
           break;
         }
       }
@@ -68,20 +68,20 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     assert(call->args.size == module->deps.size);
 
     call->dest = i;
-    FbleVectorAppend(code->instrs, &call->_base);
+    FbleAppendToVector(code->instrs, &call->_base);
   }
 
   FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-  FbleVectorInit(release_instr->targets);
+  FbleInitVector(release_instr->targets);
   for (size_t i = 0; i + 1 < program->modules.size; ++i) {
-    FbleVectorAppend(release_instr->targets, i);
+    FbleAppendToVector(release_instr->targets, i);
   }
-  FbleVectorAppend(code->instrs, &release_instr->_base);
+  FbleAppendToVector(code->instrs, &release_instr->_base);
 
   FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
   return_instr->result.tag = FBLE_LOCAL_VAR;
   return_instr->result.index = modulec - 1;
-  FbleVectorAppend(code->instrs, &return_instr->_base);
+  FbleAppendToVector(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
   FbleValue* linked = FbleNewFuncValue(heap, &code->_base, 0, funcs);
@@ -131,14 +131,14 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
   }
 
   module->refcount++;
-  FbleVectorAppend(program->modules, module);
+  FbleAppendToVector(program->modules, module);
 }
 
 // FbleLinkFromCompiled -- see documentation in fble-link.h
 FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile)
 {
   FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
-  FbleVectorInit(program->modules);
+  FbleInitVector(program->modules);
   module(program);
   FbleValue* value = FbleLink(heap, program, profile);
   FbleFreeExecutableProgram(program);
@@ -169,7 +169,7 @@ void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg
 
     // Load the module to figure out the path to it.
     FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
-    FbleVectorInit(program->modules);
+    FbleInitVector(program->modules);
     module(program);
     FbleExecutableModule* mod = program->modules.xs[program->modules.size-1];
 

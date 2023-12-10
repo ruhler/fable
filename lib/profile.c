@@ -247,7 +247,7 @@ static FbleCallData* GetCallData(FbleProfile* profile,
     xs[i] = data;
     data = tmp;
   }
-  FbleVectorAppend(*callees, data);
+  FbleAppendToVector(*callees, data);
 
   return call;
 }
@@ -429,7 +429,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   if (!call_running) {
     if (thread->sample.size == thread->sample.capacity) {
       thread->sample.capacity *= 2;
-      Sample* xs = FbleArrayAlloc(Sample, thread->sample.capacity);
+      Sample* xs = FbleAllocArray(Sample, thread->sample.capacity);
       memcpy(xs, thread->sample.xs, thread->sample.size * sizeof(Sample));
       FbleFree(thread->sample.xs);
       thread->sample.xs = xs;
@@ -446,7 +446,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
 FbleProfile* FbleNewProfile(bool enabled)
 {
   FbleProfile* profile = FbleAlloc(FbleProfile);
-  FbleVectorInit(profile->blocks);
+  FbleInitVector(profile->blocks);
   profile->enabled = enabled;
 
   FbleName root = {
@@ -454,14 +454,14 @@ FbleProfile* FbleNewProfile(bool enabled)
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = { .source = FbleNewString(""), .line = 0, .col = 0 }
   };
-  FbleBlockId root_id = FbleProfileAddBlock(profile, root);
+  FbleBlockId root_id = FbleAddBlockToProfile(profile, root);
   assert(root_id == FBLE_ROOT_BLOCK_ID);
 
   return profile;
 }
 
 // See documentation in fble-profile.h.
-FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
+FbleBlockId FbleAddBlockToProfile(FbleProfile* profile, FbleName name)
 {
   FbleBlockId id = profile->blocks.size;
   FbleBlockProfile* block = FbleAlloc(FbleBlockProfile);
@@ -470,16 +470,16 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
   block->block.id = id;
   block->block.count = 0;
   block->block.time = 0;
-  FbleVectorInit(block->callees);
-  FbleVectorAppend(profile->blocks, block);
+  FbleInitVector(block->callees);
+  FbleAppendToVector(profile->blocks, block);
   return id;
 }
 // See documentation in fble-profile.h.
-FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names)
+FbleBlockId FbleAddBlocksToProfile(FbleProfile* profile, FbleNameV names)
 {
   size_t id = profile->blocks.size;
   for (size_t i = 0; i < names.size; ++i) {
-    FbleProfileAddBlock(profile, FbleCopyName(names.xs[i]));
+    FbleAddBlockToProfile(profile, FbleCopyName(names.xs[i]));
   }
   return id;
 }
@@ -520,7 +520,7 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 
   thread->sample.capacity = 8;
   thread->sample.size = 0;
-  thread->sample.xs = FbleArrayAlloc(Sample, thread->sample.capacity);
+  thread->sample.xs = FbleAllocArray(Sample, thread->sample.capacity);
 
   thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   return thread;
@@ -560,7 +560,7 @@ FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent)
   // Copy the sample stack.
   thread->sample.capacity = parent->sample.capacity;
   thread->sample.size = parent->sample.size;
-  thread->sample.xs = FbleArrayAlloc(Sample, thread->sample.capacity);
+  thread->sample.xs = FbleAllocArray(Sample, thread->sample.capacity);
   memcpy(thread->sample.xs, parent->sample.xs, parent->sample.size * sizeof(Sample));
   return thread;
 }
@@ -661,7 +661,7 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
 }
 
 // See documentation in fble-profile.h.
-void FbleProfileReport(FILE* fout, FbleProfile* profile)
+void FbleGenerateProfileReport(FILE* fout, FbleProfile* profile)
 {
   if (!profile->enabled) {
     return;
@@ -676,7 +676,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
 
   FbleCallDataV callers[profile->blocks.size];
   for (size_t i = 0; i < profile->blocks.size; ++i) {
-    FbleVectorInit(callers[i]);
+    FbleInitVector(callers[i]);
   }
 
   for (size_t i = 0; i < profile->blocks.size; ++i) {
@@ -693,7 +693,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
       called->id = i;
       called->count = call->count;
       called->time = call->time;
-      FbleVectorAppend(callers[call->id], called);
+      FbleAppendToVector(callers[call->id], called);
     }
 
     // As a convenience to be able to reuse the sorting logic for sorting

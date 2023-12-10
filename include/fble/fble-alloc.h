@@ -9,9 +9,9 @@
 #include <sys/types.h>    // for size_t
 
 /**
- * @func[FbleRawAlloc] Allocates @a[size] bytes of memory.
+ * @func[FbleAllocRaw] Allocates @a[size] bytes of memory.
  *  This function is not type safe. It is recommended to use the FbleAlloc and
- *  FbleArrayAlloc macros instead.
+ *  FbleAllocArray macros instead.
  *
  *  @arg[size_t][size] The number of bytes to allocate.
  *
@@ -22,7 +22,7 @@
  *   Allocates size bytes that should be freed by calling FbleFree when no
  *   longer in use.
  */
-void* FbleRawAlloc(size_t size);
+void* FbleAllocRaw(size_t size);
 
 /**
  * @func[FbleAlloc] Type safe object allocation.
@@ -34,7 +34,7 @@ void* FbleRawAlloc(size_t size);
  *  @sideeffects
  *   The allocation should be freed by calling FbleFree when no longer in use.
  */
-#define FbleAlloc(T) ((T*) FbleRawAlloc(sizeof(T)))
+#define FbleAlloc(T) ((T*) FbleAllocRaw(sizeof(T)))
 
 /**
  * @func[FbleAllocExtra] Allocate object with extra space.
@@ -55,10 +55,10 @@ void* FbleRawAlloc(size_t size);
  *  @sideeffects
  *   The allocation should be freed by calling FbleFree when no longer in use.
  */
-#define FbleAllocExtra(T, size) ((T*) FbleRawAlloc(sizeof(T) + size))
+#define FbleAllocExtra(T, size) ((T*) FbleAllocRaw(sizeof(T) + size))
 
 /**
- * @func[FbleArrayAlloc] Type safe array allocation.
+ * @func[FbleAllocArray] Type safe array allocation.
  *  @arg[type][T] the type of object to allocate
  *  @arg[size_t][count] the number of objects in the array to allocate.
  *
@@ -68,7 +68,7 @@ void* FbleRawAlloc(size_t size);
  *  @sideeffects
  *   The allocation should be freed by calling FbleFree when no longer in use.
  */
-#define FbleArrayAlloc(T, count) ((T*) FbleRawAlloc((count) * sizeof(T)))
+#define FbleAllocArray(T, count) ((T*) FbleAllocRaw((count) * sizeof(T)))
 
 /**
  * @func[FbleFree] Free a memory allocation.

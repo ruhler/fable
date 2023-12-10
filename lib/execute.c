@@ -14,7 +14,7 @@
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-value.h>     // for FbleValue, etc.
-#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>    // for FbleFreeVector.
 
 #include "heap.h"
 #include "tc.h"
@@ -58,7 +58,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   }
 
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
-  FbleValue* result = FbleThreadCall(heap, profile_thread, func, args);
+  FbleValue* result = FbleCall(heap, profile_thread, func, args);
   FbleFreeProfileThread(profile_thread);
 
   // Restore the stack limit to what it was before.
@@ -69,7 +69,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 }
 
 // See documentation in fble-execute.h.
-FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, FbleValue** args)
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, FbleValue** args)
 {
   FbleFuncInfo info = FbleFuncValueInfo(func);
   FbleExecutable* executable = info.executable;
@@ -132,7 +132,7 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
 }
 
 // See documentation in fble-execute.h.
-FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...)
+FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...)
 {
   FbleExecutable* executable = FbleFuncValueInfo(func).executable;
   size_t argc = executable->num_args;
@@ -143,7 +143,7 @@ FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleProfileThread* profile, Fble
     args[i] = va_arg(ap, FbleValue*);
   }
   va_end(ap);
-  return FbleThreadCall(heap, profile, func, args);
+  return FbleCall(heap, profile, func, args);
 }
 
 // See documentation in fble-value.h.

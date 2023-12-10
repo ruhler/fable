@@ -10,7 +10,6 @@
 #include <fble/fble-compile.h>       // for FbleCompile, etc.
 #include <fble/fble-module-path.h>   // for FbleParseModulePath.
 #include <fble/fble-usage.h>         // for FblePrintUsageDoc
-#include <fble/fble-vector.h>        // for FbleVectorInit.
 #include <fble/fble-version.h>       // for FBLE_VERSION
 
 #define EX_SUCCESS 0

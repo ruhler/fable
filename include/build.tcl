@@ -5,7 +5,7 @@ namespace eval "include" {
 
   set header_funcs {
     fble-alloc.h {
-      FbleRawAlloc FbleAlloc FbleAllocExtra FbleArrayAlloc
+      FbleAllocRaw FbleAlloc FbleAllocExtra FbleAllocArray
       FbleFree
       FbleMaxTotalBytesAllocated FbleResetMaxTotalBytesAllocated
     }
@@ -26,7 +26,7 @@ namespace eval "include" {
       FbleFreeExecutable
       FbleExecutableNothingOnFree
       FbleFreeExecutableModule FbleFreeExecutableProgram
-      FbleThreadCall FbleThreadCall_
+      FbleCall FbleCall_
     }
     fble-interpret.h {
       FbleInterpret
@@ -43,7 +43,7 @@ namespace eval "include" {
     fble-load.h {
       FbleParse
       FbleNewSearchPath FbleFreeSearchPath
-      FbleSearchPathAppend FbleSearchPathAppendString
+      FbleAppendToSearchPath FbleAppendStringToSearchPath
       FbleFindPackage
       FbleLoad
       FbleFreeLoadedProgram
@@ -68,13 +68,13 @@ namespace eval "include" {
     }
     fble-profile.h {
       FbleNewProfile
-      FbleProfileAddBlock FbleProfileAddBlocks
+      FbleAddBlockToProfile FbleAddBlocksToProfile
       FbleFreeProfile
       FbleNewProfileThread FbleForkProfileThread
       FbleFreeProfileThread
       FbleProfileSample FbleProfileRandomSample
       FbleProfileEnterBlock FbleProfileReplaceBlock FbleProfileExitBlock
-      FbleProfileReport
+      FbleGenerateProfileReport
     }
     fble-string.h {
       FbleNewString FbleCopyString FbleFreeString
@@ -87,18 +87,18 @@ namespace eval "include" {
       FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
       FbleValueFullGc
       FbleNewStructValue FbleNewStructValue_
-      FbleStructValueAccess
+      FbleStructValueField
       FbleNewUnionValue FbleNewEnumValue
-      FbleUnionValueTag FbleUnionValueAccess
+      FbleUnionValueTag FbleUnionValueArg
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
       FbleNewFuncValue FbleNewFuncValue_
       FbleFuncValueInfo FbleEval FbleApply
       FbleNewRefValue FbleAssignRefValue FbleStrictValue
     }
     fble-vector.h {
-      FbleVectorInit FbleFreeVector
-      FbleVectorExtend FbleVectorAppend
-      FbleVectorIncrSize
+      FbleInitVector FbleFreeVector
+      FbleExtendVector FbleAppendToVector
+      FbleExtendVectorRaw
     }
     fble-version.h {
       FblePrintVersion

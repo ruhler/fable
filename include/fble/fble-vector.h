@@ -28,7 +28,7 @@
 #include "fble-alloc.h"
 
 /**
- * @func[FbleVectorInit] Initializes a new vector.
+ * @func[FbleInitVector] Initializes a new vector.
  *  @arg[FbleVector<T>][vector] A reference to an uninitialized vector.
  *
  *  @sideeffects
@@ -36,9 +36,9 @@
  */
 // Implementation Note:
 // The array initially has size 0 and capacity 1.
-#define FbleVectorInit(vector) \
+#define FbleInitVector(vector) \
   (vector).size = 0; \
-  (vector).xs = FbleRawAlloc(sizeof(*((vector).xs)))
+  (vector).xs = FbleAllocRaw(sizeof(*((vector).xs)))
 
 /**
  * @func[FbleFreeVector] Frees an Fble vector.
@@ -56,9 +56,9 @@
   FbleFree((vector).xs)
 
 /**
- * @func[FbleVectorExtend] Appends an uninitialized element.
+ * @func[FbleExtendVector] Appends an uninitialized element.
  *  @arg[FbleVector<T>] vector
- *   A vector that was initialized using FbleVectorInit.
+ *   A vector that was initialized using FbleInitVector.
  *
  *  @returns T*
  *   A pointer to the newly appended uninitialized element.
@@ -68,13 +68,13 @@
  *   incremented. If necessary, the array is re-allocated to make space for
  *   the new element.
  */
-#define FbleVectorExtend(vector) \
-  (FbleVectorIncrSize(sizeof(*((vector).xs)), &(vector).size, (void**)&(vector).xs), (vector).xs + (vector).size - 1)
+#define FbleExtendVector(vector) \
+  (FbleExtendVectorRaw(sizeof(*((vector).xs)), &(vector).size, (void**)&(vector).xs), (vector).xs + (vector).size - 1)
 
 /**
- * @func[FbleVectorAppend] Appends an element.
+ * @func[FbleAppendToVector] Appends an element.
  *  @arg[FbleVector<T>] vector
- *   A vector that was initialized using FbleVectorInit.
+ *   A vector that was initialized using FbleInitVector.
  *  @arg[T] elem
  *   An element of type T to append to the array.
  *
@@ -83,16 +83,16 @@
  *   If necessary, the array is re-allocated to make space for the new
  *   element.
  */
-#define FbleVectorAppend(vector, elem) \
-  (*FbleVectorExtend(vector) = elem)
+#define FbleAppendToVector(vector, elem) \
+  (*FbleExtendVector(vector) = elem)
 
 /**
- * @func[FbleVectorIncrSize] Increases the size of a vector.
+ * @func[FbleExtendVectorRaw] Increases the size of a vector.
  *  Increase the size of an fble vector by a single element.
  *
  *  This is an internal function used for implementing the fble vector macros.
- *  This function should not be called directly because because it does not
- *  provide the same level of type safety the macros provide.
+ *  This function should not be called directly because it does not provide
+ *  the same level of type safety the macros provide.
  *
  *  @arg[size_t ][elem_size] The sizeof the element type in bytes.
  *  @arg[size_t*][size     ] A pointer to the size field of the vector.
@@ -103,6 +103,6 @@
  *   incremented. If necessary, the array is re-allocated to make space for
  *   the new element.
  */
-void FbleVectorIncrSize(size_t elem_size, size_t* size, void** xs);
+void FbleExtendVectorRaw(size_t elem_size, size_t* size, void** xs);
 
 #endif // FBLE_VECTOR_H_

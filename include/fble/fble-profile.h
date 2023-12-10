@@ -108,7 +108,7 @@ typedef struct {
 FbleProfile* FbleNewProfile(bool enabled);
 
 /**
- * @func[FbleProfileAddBlock] Adds a block to the profile.
+ * @func[FbleAddBlockToProfile] Adds a block to the profile.
  *  Note: It is acceptable to add blocks in the middle of a profiling run.
  *
  *  @arg[FbleProfile*] profile
@@ -123,10 +123,10 @@ FbleProfile* FbleNewProfile(bool enabled);
  *   Takes ownership of name, which will be freed when FbleFreeProfile() is
  *   called.
  */
-FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
+FbleBlockId FbleAddBlockToProfile(FbleProfile* profile, FbleName name);
 
 /**
- * @func[FbleProfileAddBlocks] Add blocks to the profile.
+ * @func[FbleAddBlocksToProfile] Add blocks to the profile.
  *  Add multiple new block to the profile using a contiguous range of block
  *  ids.
  *
@@ -143,7 +143,7 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
  *  @sideeffects
  *   Adds blocks to the profile.
  */
-FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
+FbleBlockId FbleAddBlocksToProfile(FbleProfile* profile, FbleNameV names);
 
 /**
  * @func[FbleFreeProfile] Frees a profile.
@@ -151,7 +151,7 @@ FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
  *
  *  @sideeffects
  *   Frees the memory resources associated with the given profile, including
- *   the memory for the block names supplied to FbleProfileAddBlock.
+ *   the memory for the block names supplied to FbleAddBlockToProfile.
  */
 void FbleFreeProfile(FbleProfile* profile);
 
@@ -285,7 +285,7 @@ void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 void FbleProfileExitBlock(FbleProfileThread* thread);
 
 /**
- * @func[FbleProfileReport] Generates a profiling report.
+ * @func[FbleGenerateProfileReport] Generates a profiling report.
  *  Has no effect if profiling is disabled.
  *
  *  @arg[FILE*] fout
@@ -296,6 +296,6 @@ void FbleProfileExitBlock(FbleProfileThread* thread);
  *  @sideeffects
  *   Writes a profile report to the given file.
  */
-void FbleProfileReport(FILE* fout, FbleProfile* profile);
+void FbleGenerateProfileReport(FILE* fout, FbleProfile* profile);
 
 #endif // FBLE_PROFILE_H_

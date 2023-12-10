@@ -10,7 +10,6 @@
 #include <fble/fble-load.h>      // for FbleLoad.
 #include <fble/fble-profile.h>   // for FbleNewProfile, etc.
 #include <fble/fble-usage.h>     // for FblePrintUsageDoc
-#include <fble/fble-vector.h>    // for FbleVectorInit.
 #include <fble/fble-version.h>   // for FBLE_VERSION
 
 #define EX_SUCCESS 0

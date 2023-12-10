@@ -14,7 +14,6 @@
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
 
 #define EX_SUCCESS 0
@@ -173,7 +172,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
 
   // Dump the profile to make it easier to develop and debug the tests that
   // follow.
-  FbleProfileReport(stdout, profile);
+  FbleGenerateProfileReport(stdout, profile);
 
   // Each of these top level let bindings were executed once when the main
   // program ran.

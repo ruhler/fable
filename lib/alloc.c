@@ -91,7 +91,7 @@ static void Exit()
 }
 
 // See documentation in fble-alloc.h.
-void* FbleRawAlloc(size_t size)
+void* FbleAllocRaw(size_t size)
 {
   CountAlloc(size);
   Alloc* alloc = malloc(sizeof(Alloc) + size);

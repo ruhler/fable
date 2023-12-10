@@ -1,0 +1,99 @@
+TODO item burndown:
+* Review C API for consistency.
+
+If we were change something, it would be for FbleVector* functions. It's
+typical to have Fble<verb><object>. For example: FbleFreeProfile. So we could
+have: FbleInitVector, FbleExtendVector, etc.
+
+Maybe FbleAccessStructValue instead of FbleStructValueAccess is the other
+place? Like, we have FbleAssignRefValue not FbleRefValueAssign.
+
+I think I like FbleAccessStructValue better than StructValueAccess.
+
+So, proposal is:
+
+FbleVectorInit ==> FbleInitVector
+FbleVectorExtend ==> FbleExtendVector
+FbleVectorAppend ==> FbleAppendToVector
+FbleVectorIncrSize ==> FbleRawExtendVector
+FbleUnionValueAccess ==> FbleAccessUnionValue
+FbleStructValueAccess ==> FbleAccessStructValue
+FbleValueFullGc ==> ???
+FbleProfileReport ==> ???
+FbleProfileSample ==> ???
+
+No. I don't see an obvious improvement here. The guidelines should be:
+* Enough info in name to avoid name conflicts.
+  e.g. FbleAppend would be a bad choice of name.
+
+If I really wanted to be consistent:
+
+FbleRawAlloc ==> FbleAllocRaw
+FbleArrayAlloc ==> FbleAllocArray
+FbleExecutableNothingOnFree ==> ???
+FbleThreadCall ==> FbleCallFunction.
+FbleThreadCall_ ==> FbleCallFunction_
+FbleSearchPathAppend ==> FbleAppendToSearchPath
+FbleSearchPathAppendString ==> FbleAppendStringToSearchPath
+FbleProfileAddBlock ==> FbleAddBlockToProfile
+FbleProfileAddBlocks ==> FbleAddBlocksToProfile
+FbleProfileSample ==> ???
+FbleProfileRandomSample ==> ???
+FbleProfileEnterBlock ==> ???
+FbleProfileReplaceBlock ==> ???
+FbleProfileExitBlock ==> ???
+FbleProfileReport ==> FbleGenerateProfileReport
+FbleValueFullGc ==> FbleFullGc
+FbleStructValueAccess ==> FbleStructValueField
+FbleUnionValueAccess ==> FbleUnionValueArg
+FbleVectorInit ==> FbleInitVector
+FbleVectorExtend ==> FbleExtendVector
+FbleVectorAppend ==> FbleAppendToVector
+FbleVectorIncrSize ==> FbleExtendVectorRaw
+
+The 'Append' versus 'AppendTo' means a couple extra chars on the name.
+Probably okay.
+
+The FbleProfile and FbleValueFullGc ones are tricky, because the natural name
+doesn't include the namespace. Is that okay?
+
+FbleAddBlock, FbleAddBlocks, FbleSample, ... not saying 'Profile' in the name?
+FbleFullGc not saying 'Value' in the name? Like, they are implicit objects.
+
+You 'report' rather than 'report a profile'. You 'sample', rather than 'sample
+a profile'.
+
+My vote is to make the adjustments above, except:
+* Leave the FbleProfile* functions dealing with FbleProfileThread* as is.
+* Leave FbleExecutableNothingOnFree as is.
+
+We'll say in both those cases, we treat 'FbleProfile' and 'FbleExecutable' as
+prefixes to avoid name conflicts, rather than part of the description of what
+the function does. Just like we prefix everything with 'Fble' to avoid name
+conflicts.
+
+What do you think? Shall we do it? Better sooner than later, because the
+longer we wait, the harder it is to change names.
+
+Let's go for it. There are some genuine improvements here. One at a time then?
+Or all in one go? It's simple enough to do all in one go, save the extra
+compile time.
+
+DONE: FbleRawAlloc ==> FbleAllocRaw
+DONE: FbleArrayAlloc ==> FbleAllocArray
+DONE: FbleThreadCall ==> FbleCall
+DONE: FbleThreadCall_ ==> FbleCall_
+DONE: FbleSearchPathAppend ==> FbleAppendToSearchPath
+DONE: FbleSearchPathAppendString ==> FbleAppendStringToSearchPath
+DONE: FbleProfileAddBlock ==> FbleAddBlockToProfile
+DONE: FbleProfileAddBlocks ==> FbleAddBlocksToProfile
+DONE: FbleProfileReport ==> FbleGenerateProfileReport
+DONE: FbleStructValueAccess ==> FbleStructValueField
+DONE: FbleUnionValueAccess ==> FbleUnionValueArg
+DONE: FbleVectorInit ==> FbleInitVector
+DONE: FbleVectorExtend ==> FbleExtendVector
+DONE: FbleVectorAppend ==> FbleAppendToVector
+DONE: FbleVectorIncrSize ==> FbleExtendVectorRaw
+
+I'm discarding the FbleValeuFullGc change. Let's apply FbleValue as a prefix
+here to distinguish between general Heap, and Type FullGc.

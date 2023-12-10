@@ -2,94 +2,26 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+User Documentation:
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
-
 * Rename 'args' to '_args' in hello world tutorial?
   To avoid warning about unused argument?
-
 * Update book/ docs for language changes?
-
-* dc.man: Treat arg and return descriptions as non-block always?
-  Normally they wouldn't be block. Setting them as block adds a blank line
-  before the descriptions in the generated man pages.
-  Means we should change man.fbld to only infer paragraphs where block text is
-  expected.
-
 * Review all the generated documentation.
-
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
-
-* Implement @error builtin?
-
 * Finalize release notes.
-
-* Fbld Misc:
- - Test for location tracking across @head and @tail?
- - Allow multiple errors to be reported from a single run.
-
 * Come up with a better story for building and integrating usage help text?
-
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.
-
-* fbld vim syntax:
- - Figure out how to make {...} only apply in argument context?
- - Any way we can vim highlight next line literal as normal text?
-
-* Update or remove fbld/fbld.lang
-
 * Add back syntax highlighting of @code blocks to html backend.
  - May want improvements to html escaping
-
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.
  - How to support labels in markdown?
  - etc.
-
-* For gdb debug, it would be great to be able to access fields of structs.
-  Example: ra.ok.in is a string, ra is a struct value. Right now, if you try
-  to print ra.ok, it says 'There is no member named ok.'
-
-* Better type error message in case when two different types have the same
-  name? for example:
-
-  <@ A@> {
-     Maybe@<A@> NotA1 = Nothing<A@>;
-     <@ A@> {
-        Maybe@<A@> NotA2 = NotA1;
-     }
-  }
-        
-        
-* Need an easier way to gdb step through fble code without cluttering it with c
-  code in between.
-
-* Sat Solver:
- - Add --help command line option to fble-sat.
- - Pull search logic out of /Sat/Solver%
- - Parse dimacs cnf incrementally instead of all at once?
-   There should be no need to have the entire text of the file in memory all
-   at one time.
-
-Doc Comments
-* convert lib/* code to fbld doc comments.
-* Be able to write doc comments for extern values and types as well as
-  functions.
-* How to handle @file doc comments on header files?
-  - Should we write documentation for them somewhere?
-* Write test cases for doc comments extraction and conversion.
-  - For example: blank lines in doc comments should be allowed and not cause
-    the comment to be truncated.
-
-* Come up with a nicer way to implement printf debugging?
-  - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
-    for example.
-  - Or just use stdio for that?
-  - Or move /Sat/Debug% code to /Core/Debug%?
-
 * Feedback from users:
  - Better explanation of "lack of primitives" and why that's a good thing.
  - Explain how features are related to procedural programming
@@ -101,30 +33,88 @@ Doc Comments
  - Clarify that '%' is needed for module paths in early tutorials.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
-
-* high score saved in invaders game.
 * write tutorials for C api.
-
 * Update install tutorial to reference the release of fble on github, now that
   we'll have published fble-0.1 release there.
-
-* Remove FBLE_PACKAGE_PATH setting from Install tutorial.
-  Now that we have the default package path to look in.
-
-* Would be nice to have SEE ALSO section for library man pages.
-
-* Check if all the fble-module-path.h functions really need to be public API.
-
 * Factor out common code for @FbleVersion (@BuildStamp)
-
 * Is there a 'bnf' @code syntax the source highlighter supports that 
   we could use to make the syntax specification in fble.fbld prettier?
   - if not, consider writing one? Or switching to a syntax that does exist?
-
 * Add a way to specify package path on the command line?
-
 * Improve exercises for Unions and Functions tutorials, and others.
+* Remove FBLE_PACKAGE_PATH setting from Install tutorial.
+  Now that we have the default package path to look in.
+* Add way to do inline code syntax highlighting in fbld?
+  Because it looks a little funny in the tutorials for things to be
+  highlighted in code blocks but not in inline text.
 
+Doc Comments
+* convert lib/* code to fbld doc comments.
+* Be able to write doc comments for extern values and types as well as
+  functions.
+* How to handle @file doc comments on header files?
+  - Should we write documentation for them somewhere?
+* Write test cases for doc comments extraction and conversion.
+  - For example: blank lines in doc comments should be allowed and not cause
+    the comment to be truncated.
+* Would be nice to have SEE ALSO section for library man pages.
+* dc.man: Treat arg and return descriptions as non-block always?
+  Normally they wouldn't be block. Setting them as block adds a blank line
+  before the descriptions in the generated man pages.
+  Means we should change man.fbld to only infer paragraphs where block text is
+  expected.
+
+Syntax highlighting:
+* fbld vim syntax:
+ - Figure out how to make {...} only apply in argument context?
+ - Any way we can vim highlight next line literal as normal text?
+* Update or remove fbld/fbld.lang
+
+* Fbld Misc:
+ - Test for location tracking across @head and @tail?
+ - Allow multiple errors to be reported from a single run.
+ - Implement @error builtin?
+
+Debugging:
+* For gdb debug, it would be great to be able to access fields of structs.
+  Example: ra.ok.in is a string, ra is a struct value. Right now, if you try
+  to print ra.ok, it says 'There is no member named ok.'
+* Need an easier way to gdb step through fble code without cluttering it with c
+  code in between.
+* Come up with a nicer way to implement printf debugging?
+  - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
+    for example.
+  - Or just use stdio for that?
+  - Or move /Sat/Debug% code to /Core/Debug%?
+
+Error Messages:
+* Better type error message in case when two different types have the same
+  name? for example:
+
+  <@ A@> {
+     Maybe@<A@> NotA1 = Nothing<A@>;
+     <@ A@> {
+        Maybe@<A@> NotA2 = NotA1;
+     }
+  }
+* [typecheck] Better error message for importing something from a module that
+  is not defined in the module?
+* [typecheck] Better error messages on types that have the same name but different values?
+        
+App Development
+* Sat Solver:
+ - Add --help command line option to fble-sat.
+ - Pull search logic out of /Sat/Solver%
+ - Parse dimacs cnf incrementally instead of all at once?
+   There should be no need to have the entire text of the file in memory all
+   at one time.
+* high score saved in invaders game.
+* [/Snake%] Test and fix bug when snake eats its tail.
+* [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
+* [/Snake%] Keep track of and report score.
+* [/Snake%] Figure out why the background box gets lost some times.
+
+Build System:
 * How to check errors from stale files in build directory?
   For example, sat/Sat/sat-tests still existed, even though now we're compiling
   to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
@@ -133,32 +123,9 @@ Doc Comments
   Not sure if I want to require ninja 1.10, or if this is a robust solution.
   Maybe depend on full builds from github to catch these issues.
 
-* Review C API for consistency.
-  For example: FbleVectorInit inconsistent with FbleFreeVector?
-  Maybe rename FbleVectorInit to FbleNewVector?
-
-* Add way to do inline code syntax highlighting in fbld?
-  Because it looks a little funny in the tutorials for things to be
-  highlighted in code blocks but not in inline text.
-
-* Consider running some of the tests under valgrind?
- - To catch memory issues that could otherwise go undetected?
-
-* [tests] Any way to improve memory growth tests?
- It feels wrong to me to have to do a full gc for the tests to pass. It feels
- too specific to the implementation of garbage collection. Anything we can do?
-
-* [/Map%] Add tests for balancing of /Map%?
-* [/Snake%] Test and fix bug when snake eats its tail.
-* [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
-* [/Snake%] Keep track of and report score.
-* [/Snake%] Figure out why the background box gets lost some times.
-
+Language Spec:
 * [spec] Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
  
-* [typecheck] Better error message for importing something from a module that
-  is not defined in the module?
-* [typecheck] Better error messages on types that have the same name but different values?

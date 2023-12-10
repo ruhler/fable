@@ -43,7 +43,7 @@ static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleS
 FbleSearchPath* FbleNewSearchPath()
 {
   FbleSearchPath* path = FbleAlloc(FbleSearchPath);
-  FbleVectorInit(*path);
+  FbleInitVector(*path);
   return path;
 }
 
@@ -58,15 +58,15 @@ void FbleFreeSearchPath(FbleSearchPath* path)
 }
 
 // See documentation in fble-load.h.
-void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir)
+void FbleAppendToSearchPath(FbleSearchPath* path, const char* root_dir)
 {
-  FbleVectorAppend(*path, FbleNewString(root_dir));
+  FbleAppendToVector(*path, FbleNewString(root_dir));
 }
 
 // See documentation in fble-load.h.
-void FbleSearchPathAppendString(FbleSearchPath* path, FbleString* root_dir)
+void FbleAppendStringToSearchPath(FbleSearchPath* path, FbleString* root_dir)
 {
-  FbleVectorAppend(*path, FbleCopyString(root_dir));
+  FbleAppendToVector(*path, FbleCopyString(root_dir));
 }
 
 /**
@@ -190,7 +190,7 @@ static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* b
 
   FbleString* found = FbleNewString(filename);
   if (build_deps) {
-    FbleVectorAppend(*build_deps, FbleCopyString(found));
+    FbleAppendToVector(*build_deps, FbleCopyString(found));
   }
 
   return found;
@@ -246,7 +246,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
   }
 
   FbleLoadedProgram* program = FbleAlloc(FbleLoadedProgram);
-  FbleVectorInit(program->modules);
+  FbleInitVector(program->modules);
 
   bool error = false;
   Stack* stack = FbleAlloc(Stack);
@@ -257,7 +257,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
   FbleFreeLoc(stack->module.path->loc);
   stack->module.path->loc = loc;
 
-  FbleVectorInit(stack->module.deps);
+  FbleInitVector(stack->module.deps);
   stack->tail = NULL;
   stack->module.type = NULL;
   stack->module.value = FbleParse(filename, &stack->module.deps);
@@ -270,7 +270,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
   while (stack != NULL) {
     if (stack->deps_loaded == stack->module.deps.size) {
       // We have loaded all the dependencies for this module.
-      FbleVectorAppend(program->modules, stack->module);
+      FbleAppendToVector(program->modules, stack->module);
       Stack* tail = stack->tail;
       FbleFree(stack);
       stack = tail;
@@ -314,7 +314,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
     stack = FbleAlloc(Stack);
     stack->deps_loaded = 0;
     stack->module.path = FbleCopyModulePath(ref);
-    FbleVectorInit(stack->module.deps);
+    FbleInitVector(stack->module.deps);
     stack->module.type = NULL;
     stack->module.value = NULL;
     stack->tail = tail;

@@ -18,7 +18,7 @@ FbleModulePath* FbleNewModulePath(FbleLoc loc)
   path->refcount = 1;
   path->magic = FBLE_MODULE_PATH_MAGIC;
   path->loc = FbleCopyLoc(loc);
-  FbleVectorInit(path->path);
+  FbleInitVector(path->path);
   return path;
 }
 

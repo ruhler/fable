@@ -25,7 +25,7 @@ static void FreeTcBinding(FbleTcBinding binding)
 // FbleNewTcRaw -- see documentation in tc.h
 FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc)
 {
-  FbleTc* tc = (FbleTc*)FbleRawAlloc(size);
+  FbleTc* tc = (FbleTc*)FbleAllocRaw(size);
   tc->refcount = 1;
   tc->magic = FBLE_TC_MAGIC;
   tc->tag = tag;

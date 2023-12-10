@@ -110,24 +110,24 @@ FbleSearchPath* FbleNewSearchPath();
 void FbleFreeSearchPath(FbleSearchPath* path);
 
 /**
- * @func[FbleSearchPathAppend] Appends a module root directory to a search path.
+ * @func[FbleAppendToSearchPath] Appends a module root directory to a search path.
  *  @arg[FbleSearchPath*][path    ] The path to append to.
  *  @arg[const char*    ][root_dir] The directory to add to the path. Borrowed.
  *
  *  @sideeffects
  *   Adds root_dir to the search path.
  */
-void FbleSearchPathAppend(FbleSearchPath* path, const char* root_dir);
+void FbleAppendToSearchPath(FbleSearchPath* path, const char* root_dir);
 
 /**
- * @func[FbleSearchPathAppendString] Appends a module root directory to a search path.
+ * @func[FbleAppendStringToSearchPath] Appends a module root directory to a search path.
  *  @arg[FbleSearchPath*][path    ] The path to append to.
  *  @arg[FbleString*    ][root_dir] The directory to add to the path. Borrowed.
  *
  *  @sideeffects
  *   Adds root_dir to the search path.
  */
-void FbleSearchPathAppendString(FbleSearchPath* path, FbleString* root_dir);
+void FbleAppendStringToSearchPath(FbleSearchPath* path, FbleString* root_dir);
 
 /**
  * @func[FbleFindPackage] Finds a package in the package path.

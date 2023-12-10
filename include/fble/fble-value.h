@@ -164,7 +164,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
 FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
 
 /**
- * @func[FbleStructValueAccess] Gets a field of a struct value.
+ * @func[FbleStructValueField] Gets a field of a struct value.
  *  @arg[FbleValue*][object] The struct value object to get the field value of.
  *  @arg[size_t    ][field ] The field to access.
  *
@@ -178,7 +178,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
  *   Behavior is undefined if the object is not a struct value or the field
  *   is invalid.
  */
-FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
+FbleValue* FbleStructValueField(FbleValue* object, size_t field);
 
 /**
  * @func[FbleNewUnionValue] Creates a new union value.
@@ -224,7 +224,7 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
 size_t FbleUnionValueTag(FbleValue* object);
 
 /**
- * @func[FbleUnionValueAccess] Gets the argument of a union value.
+ * @func[FbleUnionValueArg] Gets the argument of a union value.
  *  @arg[FbleValue*][object] The union value object to get the argument of.
  *
  *  @returns FbleValue*
@@ -233,7 +233,7 @@ size_t FbleUnionValueTag(FbleValue* object);
  *  @sideeffects
  *   Behavior is undefined if the object is not a union value.
  */
-FbleValue* FbleUnionValueAccess(FbleValue* object);
+FbleValue* FbleUnionValueArg(FbleValue* object);
 
 /**
  * @func[FbleNewListValue] Creates an fble list value.

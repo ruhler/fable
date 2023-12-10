@@ -11,7 +11,7 @@
 
 #include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-execute.h>
-#include <fble/fble-vector.h>  // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>  // for FbleInitVector, etc.
 
 #include "tc.h"
 #include "interpret.h"
@@ -41,7 +41,7 @@ static void OnFree(FbleExecutable* executable)
 void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
 {
   assert(sizeof(FbleInstr) <= size);
-  FbleInstr* instr = FbleRawAlloc(size);
+  FbleInstr* instr = FbleAllocRaw(size);
   instr->tag = tag;
   instr->debug_info = NULL;
   instr->profile_ops = NULL;
@@ -199,7 +199,7 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
   code->_base.run = &FbleInterpreterRunFunction;
   code->_base.on_free = &OnFree;
   code->num_locals = num_locals;
-  FbleVectorInit(code->instrs);
+  FbleInitVector(code->instrs);
   return code;
 }
 
@@ -246,8 +246,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "\n");
 
   struct { size_t size; FbleCode** xs; } blocks;
-  FbleVectorInit(blocks);
-  FbleVectorAppend(blocks, module->code);
+  FbleInitVector(blocks);
+  FbleAppendToVector(blocks, module->code);
 
   FbleNameV profile_blocks = module->profile_blocks;
   while (blocks.size > 0) {
@@ -407,7 +407,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
             comma = ", ";
           }
           fprintf(fout, "];\n");
-          FbleVectorAppend(blocks, func_value_instr->code);
+          FbleAppendToVector(blocks, func_value_instr->code);
           break;
         }
 

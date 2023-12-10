@@ -21,6 +21,7 @@ Things to consider doing for the fble-0.3 release.
 * Improve build times?
  - It's getting a little annoying for development now that everything is
    rebuilt and it takes a while when you touch the library code, for example.
+   Full rebuild: real    6m32.236s, sys     3m17.144s
 
 * Fbld: Proper support for include/modularity
 * Fbld: Native C implementation.

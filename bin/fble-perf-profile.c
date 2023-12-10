@@ -47,7 +47,7 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = FbleNewLoc("???", 0, 0),
   };
-  return FbleProfileAddBlock(profile, n);
+  return FbleAddBlockToProfile(profile, n);
 }
 
 // Sample --
@@ -159,7 +159,7 @@ int main(int argc, const char* argv[])
 	free(line);
 
   FbleFreeProfileThread(thread);
-  FbleProfileReport(stdout, profile);
+  FbleGenerateProfileReport(stdout, profile);
   FbleFreeProfile(profile);
   return EX_SUCCESS;
 }

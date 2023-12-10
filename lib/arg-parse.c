@@ -77,7 +77,7 @@ bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool
       return true;
     }
 
-    FbleSearchPathAppend(dest->search_path, (*argv)[1]);
+    FbleAppendToSearchPath(dest->search_path, (*argv)[1]);
 
     (*argc) -= 2;
     (*argv) += 2;
@@ -85,7 +85,7 @@ bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool
   }
 
   if ((*argv)[0][0] == '-' && (*argv)[0][1] == 'I') {
-    FbleSearchPathAppend(dest->search_path, (*argv[0]) + 2);
+    FbleAppendToSearchPath(dest->search_path, (*argv[0]) + 2);
     (*argc)--;
     (*argv)++;
     return true;
@@ -97,7 +97,7 @@ bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool
     if (!(*error)) {
       FbleString* path = FbleFindPackage(package);
       if (path != NULL) {
-        FbleSearchPathAppendString(dest->search_path, path);
+        FbleAppendStringToSearchPath(dest->search_path, path);
         FbleFreeString(path);
       } else {
         fprintf(stderr, "Error: package '%s' not found\n", package);

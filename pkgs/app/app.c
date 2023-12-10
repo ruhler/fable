@@ -13,7 +13,6 @@
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "char.fble.h"             // for FbleCharValueAccess
@@ -78,23 +77,23 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 1: {
       // Triangle
-      FbleValue* v = FbleUnionValueAccess(drawing);
+      FbleValue* v = FbleUnionValueArg(drawing);
 
-      FbleValue* a = FbleStructValueAccess(v, 0);
-      FbleValue* b = FbleStructValueAccess(v, 1);
-      FbleValue* c = FbleStructValueAccess(v, 2);
-      FbleValue* color = FbleStructValueAccess(v, 3);
+      FbleValue* a = FbleStructValueField(v, 0);
+      FbleValue* b = FbleStructValueField(v, 1);
+      FbleValue* c = FbleStructValueField(v, 2);
+      FbleValue* color = FbleStructValueField(v, 3);
 
-      int x0 = ax * FbleIntValueAccess(FbleStructValueAccess(a, 0)) + bx;
-      int y0 = ay * FbleIntValueAccess(FbleStructValueAccess(a, 1)) + by;
-      int x1 = ax * FbleIntValueAccess(FbleStructValueAccess(b, 0)) + bx;
-      int y1 = ay * FbleIntValueAccess(FbleStructValueAccess(b, 1)) + by;
-      int x2 = ax * FbleIntValueAccess(FbleStructValueAccess(c, 0)) + bx;
-      int y2 = ay * FbleIntValueAccess(FbleStructValueAccess(c, 1)) + by;
+      int x0 = ax * FbleIntValueAccess(FbleStructValueField(a, 0)) + bx;
+      int y0 = ay * FbleIntValueAccess(FbleStructValueField(a, 1)) + by;
+      int x1 = ax * FbleIntValueAccess(FbleStructValueField(b, 0)) + bx;
+      int y1 = ay * FbleIntValueAccess(FbleStructValueField(b, 1)) + by;
+      int x2 = ax * FbleIntValueAccess(FbleStructValueField(c, 0)) + bx;
+      int y2 = ay * FbleIntValueAccess(FbleStructValueField(c, 1)) + by;
 
-      int red = FbleIntValueAccess(FbleStructValueAccess(color, 0));
-      int green = FbleIntValueAccess(FbleStructValueAccess(color, 1));
-      int blue = FbleIntValueAccess(FbleStructValueAccess(color, 2));
+      int red = FbleIntValueAccess(FbleStructValueField(color, 0));
+      int green = FbleIntValueAccess(FbleStructValueField(color, 1));
+      int blue = FbleIntValueAccess(FbleStructValueField(color, 2));
       glColor3f(red/256.0, green/256.0, blue/256.0);
       glBegin(GL_TRIANGLES);
       glVertex2i(x0, y0);
@@ -106,13 +105,13 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 2: {
       // Rect
-      FbleValue* rv = FbleUnionValueAccess(drawing);
+      FbleValue* rv = FbleUnionValueArg(drawing);
 
-      FbleValue* x = FbleStructValueAccess(rv, 0);
-      FbleValue* y = FbleStructValueAccess(rv, 1);
-      FbleValue* w = FbleStructValueAccess(rv, 2);
-      FbleValue* h = FbleStructValueAccess(rv, 3);
-      FbleValue* color = FbleStructValueAccess(rv, 4);
+      FbleValue* x = FbleStructValueField(rv, 0);
+      FbleValue* y = FbleStructValueField(rv, 1);
+      FbleValue* w = FbleStructValueField(rv, 2);
+      FbleValue* h = FbleStructValueField(rv, 3);
+      FbleValue* color = FbleStructValueField(rv, 4);
 
       SDL_Rect r = {
         ax * FbleIntValueAccess(x) + bx,
@@ -131,9 +130,9 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
         r.h = -r.h;
       }
 
-      int red = FbleIntValueAccess(FbleStructValueAccess(color, 0));
-      int green = FbleIntValueAccess(FbleStructValueAccess(color, 1));
-      int blue = FbleIntValueAccess(FbleStructValueAccess(color, 2));
+      int red = FbleIntValueAccess(FbleStructValueField(color, 0));
+      int green = FbleIntValueAccess(FbleStructValueField(color, 1));
+      int blue = FbleIntValueAccess(FbleStructValueField(color, 2));
       glColor3f(red/256.0, green/256.0, blue/256.0);
       glRecti(r.x, r.y, r.x + r.w, r.y + r.h);
       return;
@@ -141,15 +140,15 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 3: {
       // Transformed.
-      FbleValue* transformed = FbleUnionValueAccess(drawing);
-      FbleValue* a = FbleStructValueAccess(transformed, 0);
-      FbleValue* b = FbleStructValueAccess(transformed, 1);
-      FbleValue* d = FbleStructValueAccess(transformed, 2);
+      FbleValue* transformed = FbleUnionValueArg(drawing);
+      FbleValue* a = FbleStructValueField(transformed, 0);
+      FbleValue* b = FbleStructValueField(transformed, 1);
+      FbleValue* d = FbleStructValueField(transformed, 2);
 
-      int axi = FbleIntValueAccess(FbleStructValueAccess(a, 0));
-      int ayi = FbleIntValueAccess(FbleStructValueAccess(a, 1));
-      int bxi = FbleIntValueAccess(FbleStructValueAccess(b, 0));
-      int byi = FbleIntValueAccess(FbleStructValueAccess(b, 1));
+      int axi = FbleIntValueAccess(FbleStructValueField(a, 0));
+      int ayi = FbleIntValueAccess(FbleStructValueField(a, 1));
+      int bxi = FbleIntValueAccess(FbleStructValueField(b, 0));
+      int byi = FbleIntValueAccess(FbleStructValueField(b, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
       Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
@@ -158,9 +157,9 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 4: {
       // Over.
-      FbleValue* over = FbleUnionValueAccess(drawing);
-      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0));
-      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 1));
+      FbleValue* over = FbleUnionValueArg(drawing);
+      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, 0));
+      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, 1));
       return;
     }
 
@@ -379,7 +378,7 @@ static FbleValue* EffectImpl(
 
   switch (FbleUnionValueTag(effect)) {
     case 0: {
-      int tick = FbleIntValueAccess(FbleUnionValueAccess(effect));
+      int tick = FbleIntValueAccess(FbleUnionValueArg(effect));
 
       Uint32 now = SDL_GetTicks();
       exe->time += tick;
@@ -392,7 +391,7 @@ static FbleValue* EffectImpl(
 
     case 1: {
       SDL_Surface* surface = SDL_GetWindowSurface(exe->window);
-      Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect));
+      Draw(surface, 1, 1, 0, 0, FbleUnionValueArg(effect));
       SDL_GL_SwapWindow(exe->window);
 
       // Collect status on frame rate.
@@ -569,7 +568,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   block_names[1].name = FbleNewString("effect!");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleNameV names = { .size = 2, .xs = block_names };
-  FbleBlockId block_id = FbleProfileAddBlocks(profile, names);
+  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
 
@@ -640,7 +639,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
-  FbleProfileReport(fprofile, profile);
+  FbleGenerateProfileReport(fprofile, profile);
   FbleFreeProfile(profile);
 
   SDL_GL_DeleteContext(glctx);

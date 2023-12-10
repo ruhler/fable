@@ -12,7 +12,7 @@
 #include <unistd.h>   // for getcwd
 
 #include <fble/fble-compile.h>
-#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"
 #include "tc.h"
@@ -116,7 +116,7 @@ static void AddLoc(const char* source, LocV* locs)
       return;
     }
   }
-  FbleVectorAppend(*locs, source);
+  FbleAppendToVector(*locs, source);
 }
 
 /**
@@ -134,7 +134,7 @@ static void AddLoc(const char* source, LocV* locs)
  */
 static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 {
-  FbleVectorAppend(*blocks, code);
+  FbleAppendToVector(*blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
     switch (code->instrs.xs[i]->tag) {
       case FBLE_DATA_TYPE_INSTR: break;
@@ -665,7 +665,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  bl FbleStrictValue\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
-      fprintf(fout, "  bl FbleStructValueAccess\n");
+      fprintf(fout, "  bl FbleStructValueField\n");
       SetFrameVar(fout, "x0", access_instr->dest);
       return;
     }
@@ -687,7 +687,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Access the field.
       fprintf(fout, "  mov x0, R_SCRATCH_0\n");
-      fprintf(fout, "  bl FbleUnionValueAccess\n");
+      fprintf(fout, "  bl FbleUnionValueArg\n");
       SetFrameVar(fout, "x0", access_instr->dest);
       return;
     }
@@ -784,7 +784,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  mov x1, R_PROFILE\n");
       fprintf(fout, "  mov x3, SP\n");          // args
 
-      fprintf(fout, "  bl FbleThreadCall\n");
+      fprintf(fout, "  bl FbleCall\n");
       SetFrameVar(fout, "x0", call_instr->dest);
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.abort\n", func_id, pc);
@@ -1408,10 +1408,10 @@ static FbleString* LabelForPath(FbleModulePath* path)
 void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 {
   FbleCodeV blocks;
-  FbleVectorInit(blocks);
+  FbleInitVector(blocks);
 
   LocV locs;
-  FbleVectorInit(locs);
+  FbleInitVector(locs);
 
   CollectBlocksAndLocs(&blocks, &locs, module->code);
 

@@ -12,7 +12,7 @@
 #include <unistd.h>   // for getcwd
 
 #include <fble/fble-compile.h>
-#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"
 #include "tc.h"
@@ -55,7 +55,7 @@ static FbleString* LabelForPath(FbleModulePath* path);
  */
 static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
 {
-  FbleVectorAppend(*blocks, code);
+  FbleAppendToVector(*blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
     switch (code->instrs.xs[i]->tag) {
       case FBLE_DATA_TYPE_INSTR: break;
@@ -415,7 +415,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedStructValue", access_instr->loc);
 
-        fprintf(fout, "  l[%zi] = FbleStructValueAccess(x0, %zi);\n",
+        fprintf(fout, "  l[%zi] = FbleStructValueField(x0, %zi);\n",
             access_instr->dest, access_instr->tag);
         break;
       }
@@ -430,7 +430,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (%zi != FbleUnionValueTag(x0)) ", access_instr->tag);
         ReturnAbort(fout, code, label, pc, "WrongUnionTag", access_instr->loc);
 
-        fprintf(fout, "  l[%zi] = FbleUnionValueAccess(x0);\n", access_instr->dest);
+        fprintf(fout, "  l[%zi] = FbleUnionValueArg(x0);\n", access_instr->dest);
         break;
       }
 
@@ -505,7 +505,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
-        fprintf(fout, "  l[%zi] = FbleThreadCall_(heap, profile, x0", call_instr->dest);
+        fprintf(fout, "  l[%zi] = FbleCall_(heap, profile, x0", call_instr->dest);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, ", %s[%zi]",
               var_tag[call_instr->args.xs[i].tag],
@@ -919,11 +919,11 @@ static FbleString* LabelForPath(FbleModulePath* path)
 void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 {
   FbleCodeV blocks;
-  FbleVectorInit(blocks);
+  FbleInitVector(blocks);
 
   CollectBlocks(&blocks, module->code);
 
-  fprintf(fout, "#include <fble/fble-execute.h>\n");  // for FbleThreadCall_
+  fprintf(fout, "#include <fble/fble-execute.h>\n");  // for FbleCall_
   fprintf(fout, "#include <fble/fble-link.h>\n");     // for FbleCompiledModuleFunction
   fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
 

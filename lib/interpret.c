@@ -11,7 +11,7 @@
 
 #include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree
 #include <fble/fble-execute.h>
-#include <fble/fble-vector.h>  // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>  // for FbleInitVector, etc.
 
 #include "code.h"
 #include "unreachable.h"
@@ -322,7 +322,7 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         }
 
-        locals[access_instr->dest] = FbleStructValueAccess(sv, access_instr->tag);
+        locals[access_instr->dest] = FbleStructValueField(sv, access_instr->tag);
         pc++;
         break;
       }
@@ -341,7 +341,7 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         }
 
-        locals[access_instr->dest] = FbleUnionValueAccess(uv);
+        locals[access_instr->dest] = FbleUnionValueArg(uv);
         pc++;
         break;
       }
@@ -412,7 +412,7 @@ FbleValue* FbleInterpreterRunFunction(
         }
 
         pc++;
-        locals[call_instr->dest] = FbleThreadCall(heap, profile, func, call_args);
+        locals[call_instr->dest] = FbleCall(heap, profile, func, call_args);
         if (locals[call_instr->dest] == NULL) {
           return RunAbort(heap, code, vars, pc);
         }
@@ -523,7 +523,7 @@ FbleValue* FbleInterpreterRunFunction(
 FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
 {
   FbleExecutableProgram* executable = FbleAlloc(FbleExecutableProgram);
-  FbleVectorInit(executable->modules);
+  FbleInitVector(executable->modules);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleCompiledModule* module = program->modules.xs[i];
@@ -532,21 +532,21 @@ FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
     executable_module->refcount = 1;
     executable_module->magic = FBLE_EXECUTABLE_MODULE_MAGIC;
     executable_module->path = FbleCopyModulePath(module->path);
-    FbleVectorInit(executable_module->deps);
+    FbleInitVector(executable_module->deps);
     for (size_t d = 0; d < module->deps.size; ++d) {
-      FbleVectorAppend(executable_module->deps, FbleCopyModulePath(module->deps.xs[d]));
+      FbleAppendToVector(executable_module->deps, FbleCopyModulePath(module->deps.xs[d]));
     }
 
     executable_module->executable = &module->code->_base;
     executable_module->executable->refcount++;
 
-    FbleVectorInit(executable_module->profile_blocks);
+    FbleInitVector(executable_module->profile_blocks);
     for (size_t n = 0; n < module->profile_blocks.size; ++n) {
-      FbleVectorAppend(executable_module->profile_blocks,
+      FbleAppendToVector(executable_module->profile_blocks,
           FbleCopyName(module->profile_blocks.xs[n]));
     }
 
-    FbleVectorAppend(executable->modules, executable_module);
+    FbleAppendToVector(executable->modules, executable_module);
   }
 
   return executable;

@@ -222,7 +222,7 @@ typedef struct {
 void FbleFreeExecutableProgram(FbleExecutableProgram* program);
 
 /**
- * @func[FbleThreadCall] Calls an fble function.
+ * @func[FbleCall] Calls an fble function.
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
@@ -240,10 +240,10 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, FbleValue** args);
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, FbleValue** args);
 
 /**
- * @func[FbleThreadCall_] Calls an fble function using varags.
+ * @func[FbleCall_] Calls an fble function using varags.
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
@@ -261,6 +261,6 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleV
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...);
+FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...);
 
 #endif // FBLE_EXECUTE_H_

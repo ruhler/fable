@@ -10,7 +10,7 @@
 #include <stdlib.h>   // for NULL
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, etc.
-#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"
 #include "tc.h"
@@ -164,7 +164,7 @@ static Local* NewLocal(Scope* scope, Local* owner)
   }
 
   if (index == scope->locals.size) {
-    FbleVectorAppend(scope->locals, NULL);
+    FbleAppendToVector(scope->locals, NULL);
     scope->code->num_locals = scope->locals.size;
   }
 
@@ -173,10 +173,10 @@ static Local* NewLocal(Scope* scope, Local* owner)
   local->var.index = index;
   local->refcount = 1;
   local->owner = owner;
-  FbleVectorInit(local->owned);
+  FbleInitVector(local->owned);
 
   if (owner != NULL) {
-    FbleVectorAppend(owner->owned, local);
+    FbleAppendToVector(owner->owned, local);
   }
 
   scope->locals.xs[index] = local;
@@ -234,7 +234,7 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
       // Transfer ownership of owned to the owner.
       for (size_t i = 0; i < local->owned.size; ++i) {
         local->owned.xs[i]->owner = local->owner;
-        FbleVectorAppend(local->owner->owned, local->owned.xs[i]);
+        FbleAppendToVector(local->owner->owned, local->owned.xs[i]);
       }
     }
 
@@ -266,7 +266,7 @@ static void PushVar(Scope* scope, FbleName name, Local* local)
     AppendDebugInfo(scope, &info->_base);
   }
 
-  FbleVectorAppend(scope->vars, local);
+  FbleAppendToVector(scope->vars, local);
 }
 
 /**
@@ -367,30 +367,30 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
  */
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent)
 {
-  FbleVectorInit(scope->statics);
+  FbleInitVector(scope->statics);
   for (size_t i = 0; i < statics.size; ++i) {
     Local* local = FbleAlloc(Local);
     local->var.tag = FBLE_STATIC_VAR;
     local->var.index = i;
     local->refcount = 1;
     local->owner = NULL;
-    FbleVectorInit(local->owned);
-    FbleVectorAppend(scope->statics, local);
+    FbleInitVector(local->owned);
+    FbleAppendToVector(scope->statics, local);
   }
 
-  FbleVectorInit(scope->args);
+  FbleInitVector(scope->args);
   for (size_t i = 0; i < args.size; ++i) {
     Local* local = FbleAlloc(Local);
     local->var.tag = FBLE_ARG_VAR;
     local->var.index = i;
     local->refcount = 1;
     local->owner = NULL;
-    FbleVectorInit(local->owned);
-    FbleVectorAppend(scope->args, local);
+    FbleInitVector(local->owned);
+    FbleAppendToVector(scope->args, local);
   }
 
-  FbleVectorInit(scope->vars);
-  FbleVectorInit(scope->locals);
+  FbleInitVector(scope->vars);
+  FbleInitVector(scope->locals);
 
   scope->code = FbleNewCode(args.size, statics.size, 0, block);
   scope->pending_debug_info = NULL;
@@ -486,7 +486,7 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
     scope->active_profile_ops = &instr->profile_ops;
   }
 
-  FbleVectorAppend(scope->code->instrs, instr);
+  FbleAppendToVector(scope->code->instrs, instr);
 }
 
 /**
@@ -528,14 +528,14 @@ static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index)
       && scope->code->instrs.size > 0) {
     FbleReleaseInstr* instr = (FbleReleaseInstr*)scope->code->instrs.xs[scope->code->instrs.size - 1];
     if (instr->_base.tag == FBLE_RELEASE_INSTR) {
-      FbleVectorAppend(instr->targets, index);
+      FbleAppendToVector(instr->targets, index);
       return;
     }
   }
 
   FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-  FbleVectorInit(release_instr->targets);
-  FbleVectorAppend(release_instr->targets, index);
+  FbleInitVector(release_instr->targets);
+  FbleAppendToVector(release_instr->targets, index);
   AppendInstr(scope, &release_instr->_base);
 }
 
@@ -642,8 +642,8 @@ static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
   size_t id = blocks->profile.size;
-  FbleVectorAppend(blocks->profile, nm);
-  FbleVectorAppend(blocks->stack, id);
+  FbleAppendToVector(blocks->profile, nm);
+  FbleAppendToVector(blocks->stack, id);
   return id;
 }
 
@@ -682,8 +682,8 @@ static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
   size_t id = blocks->profile.size;
-  FbleVectorAppend(blocks->profile, nm);
-  FbleVectorAppend(blocks->stack, id);
+  FbleAppendToVector(blocks->profile, nm);
+  FbleAppendToVector(blocks->stack, id);
   return id;
 }
 
@@ -881,12 +881,12 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope, NULL);
       FbleStructValueInstr* struct_instr = FbleAllocInstr(FbleStructValueInstr, FBLE_STRUCT_VALUE_INSTR);
       struct_instr->dest = local->var.index;
-      FbleVectorInit(struct_instr->args);
+      FbleInitVector(struct_instr->args);
       AppendInstr(scope, &struct_instr->_base);
       CompileExit(exit, scope, local);
 
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(struct_instr->args, args[i]->var);
+        FbleAppendToVector(struct_instr->args, args[i]->var);
         ReleaseLocal(scope, args[i], exit);
       }
 
@@ -917,12 +917,12 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope, NULL);
       FbleStructValueInstr* struct_instr = FbleAllocInstr(FbleStructValueInstr, FBLE_STRUCT_VALUE_INSTR);
       struct_instr->dest = local->var.index;
-      FbleVectorInit(struct_instr->args);
+      FbleInitVector(struct_instr->args);
       AppendInstr(scope, &struct_instr->_base);
       CompileExit(exit, scope, local);
 
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(struct_instr->args, args[i]->var);
+        FbleAppendToVector(struct_instr->args, args[i]->var);
         ReleaseLocal(scope, args[i], exit);
       }
       ReleaseLocal(scope, source, exit);
@@ -953,7 +953,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       select_instr->loc = FbleCopyLoc(select_tc->_base.loc);
       select_instr->condition = condition->var;
       select_instr->num_tags = select_tc->num_tags;
-      FbleVectorInit(select_instr->targets);
+      FbleInitVector(select_instr->targets);
       AppendInstr(scope, &select_instr->_base);
 
       // TODO: Could we arrange for the branches to put their value in the
@@ -966,7 +966,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       for (size_t i = 0; i < select_tc->targets.size; ++i) {
         scope->active_profile_ops = &scope->pending_profile_ops;
 
-        FbleBranchTarget* tgt = FbleVectorExtend(select_instr->targets);
+        FbleBranchTarget* tgt = FbleExtendVector(select_instr->targets);
         tgt->tag = select_tc->targets.xs[i].tag;
         tgt->target = scope->code->instrs.size;
 
@@ -1068,10 +1068,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
       FbleFuncValueInstr* instr = FbleAllocInstr(FbleFuncValueInstr, FBLE_FUNC_VALUE_INSTR);
 
-      FbleVectorInit(instr->scope);
+      FbleInitVector(instr->scope);
       for (size_t i = 0; i < func_tc->scope.size; ++i) {
         Local* local = GetVar(scope, func_tc->scope.xs[i]);
-        FbleVectorAppend(instr->scope, local->var);
+        FbleAppendToVector(instr->scope, local->var);
       }
 
       Scope func_scope;
@@ -1154,9 +1154,9 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         FbleTailCallInstr* call_instr = FbleAllocInstr(FbleTailCallInstr, FBLE_TAIL_CALL_INSTR);
         call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);
         call_instr->func = func->var;
-        FbleVectorInit(call_instr->args);
+        FbleInitVector(call_instr->args);
         for (size_t i = 0; i < argc; ++i) {
-          FbleVectorAppend(call_instr->args, args[i]->var);
+          FbleAppendToVector(call_instr->args, args[i]->var);
         }
         AppendInstr(scope, &call_instr->_base);
 
@@ -1168,10 +1168,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         FbleCallInstr* call_instr = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
         call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);
         call_instr->func = func->var;
-        FbleVectorInit(call_instr->args);
+        FbleInitVector(call_instr->args);
         call_instr->dest = dest->var.index;
         for (size_t i = 0; i < argc; ++i) {
-          FbleVectorAppend(call_instr->args, args[i]->var);
+          FbleAppendToVector(call_instr->args, args[i]->var);
         }
         AppendInstr(scope, &call_instr->_base);
       }
@@ -1197,12 +1197,12 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope, NULL);
       FbleListInstr* list_instr = FbleAllocInstr(FbleListInstr, FBLE_LIST_INSTR);
       list_instr->dest = local->var.index;
-      FbleVectorInit(list_instr->args);
+      FbleInitVector(list_instr->args);
       AppendInstr(scope, &list_instr->_base);
       CompileExit(exit, scope, local);
 
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(list_instr->args, args[i]->var);
+        FbleAppendToVector(list_instr->args, args[i]->var);
         ReleaseLocal(scope, args[i], exit);
       }
 
@@ -1215,12 +1215,12 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope, NULL);
       FbleLiteralInstr* literal_instr = FbleAllocInstr(FbleLiteralInstr, FBLE_LITERAL_INSTR);
       literal_instr->dest = local->var.index;
-      FbleVectorInit(literal_instr->letters);
+      FbleInitVector(literal_instr->letters);
       AppendInstr(scope, &literal_instr->_base);
       CompileExit(exit, scope, local);
 
       for (size_t i = 0; i < literal_tc->letters.size; ++i) {
-        FbleVectorAppend(literal_instr->letters, literal_tc->letters.xs[i]);
+        FbleAppendToVector(literal_instr->letters, literal_tc->letters.xs[i]);
       }
 
       return local;
@@ -1251,8 +1251,8 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* profile_blocks)
 {
   Blocks blocks;
-  FbleVectorInit(blocks.stack);
-  FbleVectorInit(blocks.profile);
+  FbleInitVector(blocks.stack);
+  FbleInitVector(blocks.profile);
 
   FbleCode* code;
   Scope scope;
@@ -1287,12 +1287,12 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
 {
   FbleCompiledModule* compiled = FbleAlloc(FbleCompiledModule);
   compiled->path = FbleCopyModulePath(module->path);
-  FbleVectorInit(compiled->deps);
+  FbleInitVector(compiled->deps);
   FbleNameV args;
-  FbleVectorInit(args);
+  FbleInitVector(args);
   for (size_t d = 0; d < module->deps.size; ++d) {
-    FbleVectorAppend(compiled->deps, FbleCopyModulePath(module->deps.xs[d]));
-    FbleVectorAppend(args, FbleModulePathName(module->deps.xs[d]));
+    FbleAppendToVector(compiled->deps, FbleCopyModulePath(module->deps.xs[d]));
+    FbleAppendToVector(args, FbleModulePathName(module->deps.xs[d]));
   }
 
   FbleName label = FbleModulePathName(module->path);
@@ -1359,11 +1359,11 @@ FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program)
   }
 
   FbleCompiledProgram* compiled = FbleAlloc(FbleCompiledProgram);
-  FbleVectorInit(compiled->modules);
+  FbleInitVector(compiled->modules);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleLoadedModule* module = program->modules.xs + i;
-    FbleVectorAppend(compiled->modules, CompileModule(module, typechecked[i]));
+    FbleAppendToVector(compiled->modules, CompileModule(module, typechecked[i]));
     FbleFreeTc(typechecked[i]);
   }
   FbleFree(typechecked);

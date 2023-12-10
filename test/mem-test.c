@@ -12,7 +12,6 @@
 #include <fble/fble-link.h>        // for FbleLinkFromCompiledOrSource.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-vector.h>      // for FbleVectorInit.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
 
 #define EX_SUCCESS 0
