@@ -284,3 +284,9 @@ puts $::build_ninja_d "$::b/build.ninja: $::build_ninja_deps"
 # malformed ninja file, which is harder to recover from.
 close $::build_ninja
 exec mv $::build_ninja_filename.tmp $::build_ninja_filename
+
+# Optimistically run the cleandead tool to reduce the chance of breaking
+# incremental builds when removing targets. Ignore the output and exit status
+# to avoid spamming users with older versions of ninja that don't have the
+# cleandead tool.
+catch "exec ninja -C $::b -t cleandead"

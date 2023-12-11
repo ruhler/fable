@@ -319,3 +319,22 @@ are pretty rare. We have good enough coverage of memory allocations otherwise.
 Let me toss this TODO item. If we run into memory bugs in the future that
 valgrind would have caught, we can consider adding this back.
 
+---
+
+TODO burndown item:
+* How to check errors from stale files in build directory?
+
+We could use the ninja cleandead tool, but it sounds like it's not entirely
+reliable. It depends on the build log tracking certain things. A more reliable
+approach is to build from scratch. I think it's fine to depend on github full
+build to catch these issues. And periodically build from scratch for changes
+I'm worried about.
+
+It's unsettling to be honest. Incremental build can break without knowing
+because of this.
+
+Maybe I can try ninja -t cleandead, but ignore failures. Not as any sort of
+guarantee. Rather as a way to save time between when I make a mistake and when
+we learn about the mistake from doing a full build.
+
+I'll try cleandead. Maybe it helps with something, maybe not. It can't hurt.

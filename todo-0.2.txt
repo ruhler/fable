@@ -113,12 +113,3 @@ App Development
 * [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
 * [/Snake%] Keep track of and report score.
 * [/Snake%] Figure out why the background box gets lost some times.
-
-Build System:
-* How to check errors from stale files in build directory?
-  For example, sat/Sat/sat-tests still existed, even though now we're compiling
-  to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
-  path.
-  Perhaps make use of ninja cleandead after generating the build.ninja file?
-  Not sure if I want to require ninja 1.10, or if this is a robust solution.
-  Maybe depend on full builds from github to catch these issues.
