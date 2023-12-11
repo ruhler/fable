@@ -59,7 +59,7 @@ Bases@ Empty = /Core/Map%.Empty<Int@, Slice@>;
 # BaseSpec --
 #   Specification for the shape of an individual base, relative to the lower
 #   left corner of an individual base, in order of X from left to right.
-List@<Slice@> BaseSpec = List<Slice@>[
+List@<Slice@> BaseSpec = List[
   Slice@(Int|0, Int|12), Slice@(Int|0, Int|13),
   Slice@(Int|0, Int|14), Slice@(Int|0, Int|15),
   Slice@(Int|0, Int|16), Slice@(Int|2, Int|16),

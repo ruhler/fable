@@ -217,7 +217,7 @@ Int@ Height = Int|8;
 # MoveX --
 #   How far an alien moves side to side, in game coordinates, in a single
 #   step.
-Int@ MoveX = Int|2;
+Int@ MoveX = Int|3;
 
 # MoveY --
 #   How far an alien moves down, in game coordinates, in a single step.
@@ -333,12 +333,14 @@ Vanguard = (Aliens@ aliens, Int@ col) {
 
       Shifted@<Int@> r = ShiftInt(s.lfsr, Int|100);
       Lt(r.output, Int|15).?(false: State@(r.lfsr, s.bombs));
-      Int@ x = Add(Int|5, Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
+      Shifted@<Int@> x_shift = ShiftInt(r.lfsr, MoveX);
+      Int@ x = Add(Add(Int|4, x_shift.output),
+                   Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
       Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
       Kind@ kind = Lt(r.output, Int|2).?(
         true: Kind@(squiggle: Unit),
         false: Kind@(bomb: Unit));
-      State@(r.lfsr, /Invaders/Bombs%.Fire(x, y, kind, s.bombs));
+      State@(x_shift.lfsr, /Invaders/Bombs%.Fire(x, y, kind, s.bombs));
     }).bombs;
 };
 

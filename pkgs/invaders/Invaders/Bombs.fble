@@ -30,10 +30,10 @@
 
 @ Kind@ = +(Unit@ bomb, Unit@ squiggle);
 
-Int@ BombVelocity = Int|2;
+Int@ BombVelocity = Int|1;
 Int@ SquiggleVelocity = Int|3;
 Int@ MinY = Int|2;
-Int@ MaxBombs = Int|15;
+Int@ MaxBombs = Int|20;
 
 @ Bomb@ = *(Int@ x, Int@ y, Kind@ kind);
 
