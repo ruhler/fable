@@ -338,3 +338,16 @@ guarantee. Rather as a way to save time between when I make a mistake and when
 we learn about the mistake from doing a full build.
 
 I'll try cleandead. Maybe it helps with something, maybe not. It can't hurt.
+
+---
+
+TODO item burndown:
+What to do about the /Snake% todo items?
+
+We've introduced the AI now. The snake will not eat its tail because of that.
+It's too fast to play by hand anyway. I can't reproduce the background box
+getting lost. What does it mean when the snake eats its tail?
+
+It's not a real game. It's a demo app really. Probably not even very useful as
+a benchmark. I think just leave it as it is.
+

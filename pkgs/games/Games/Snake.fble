@@ -35,10 +35,10 @@
 % 0 = /Core/Int%.0;
 % 1 = /Core/Int%.1;
 % 2 = /Core/Int%.2;
-% 3 = /Core/Int%.3;
 % Incr = /Core/Int%.Incr;
 % Decr = /Core/Int%.Decr;
 % Add = /Core/Int%.Add;
+% Neg = /Core/Int%.Neg;
 % Mul = /Core/Int%.Mul;
 % Sub = /Core/Int%.Sub;
 % Abs = /Core/Int%.Abs;
@@ -106,8 +106,8 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
   Int@ speed
 );
 
-(List@<Pos@>) { Drawing@; } DrawSnakeS = (List@<Pos@> s) {
-  ForEach<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
+(List@<Pos@>) { Drawing@; } DrawSnake = (List@<Pos@> s) {
+  ForEach(s, Blank, (Pos@ p, Drawing@ d) {
     Over(DrawCell(p, Cell@(snake: Unit)), d);
   });
 };
@@ -115,7 +115,7 @@ Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 (State@) { Drawing@; } Draw = (State@ s) {
   Drawings[
     Rect(0, 0, Incr(MaxCol), Incr(MaxRow), Color.Blue),
-    DrawSnakeS(s.snake),
+    DrawSnake(s.snake),
     DrawCell(s.food, Cell@(food: Unit))
   ];
 };
@@ -267,9 +267,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   };
 
   # Map game coordinates into screen coordinates.
-  Point@ a = @(x: Div(width, Add(3, MaxCol)).q,
-               y: Div(height, Add(3, MaxRow)).q);
-  Point@ b = @(x: Int|0, y: Int|0);
+  Point@ a = @(x: Div(width, MaxCol).q,
+               y: Neg(Div(height, MaxRow).q));
+  Point@ b = @(x: Int|0, y: height);
 
   (Effect@) { M@<Unit@>; } Output = (Effect@ e) {
     Effect@ transformed = e.?(

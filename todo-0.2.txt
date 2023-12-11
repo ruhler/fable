@@ -99,7 +99,6 @@ Error Messages:
   }
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
-* [typecheck] Better error messages on types that have the same name but different values?
         
 App Development
 * Sat Solver:
@@ -109,7 +108,3 @@ App Development
    There should be no need to have the entire text of the file in memory all
    at one time.
 * high score saved in invaders game.
-* [/Snake%] Test and fix bug when snake eats its tail.
-* [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
-* [/Snake%] Keep track of and report score.
-* [/Snake%] Figure out why the background box gets lost some times.
