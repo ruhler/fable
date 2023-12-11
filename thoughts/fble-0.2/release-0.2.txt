@@ -351,3 +351,47 @@ getting lost. What does it mean when the snake eats its tail?
 It's not a real game. It's a demo app really. Probably not even very useful as
 a benchmark. I think just leave it as it is.
 
+---
+
+TODO item burndown:
+* Invaders high score.
+
+This would be nice to have. I think it would make the game a lot more fun to
+play. Single high score, no name. We can look up where to put it on the
+display. Probably the middle under 'HIGH SCORE'.
+
+To save the high score requires being able to read and write files from apps.
+But app doesn't currently have access to a stdio interface. Do I really want
+to make such a big change this late in the release?
+
+Aside from that, where would I save the high score? The current directory? The
+users home directory? How would we know where the home directory was?
+
+xgalaga saves scores in ~/.xgalscores. I think something similar makes sense.
+For example: ~/.fble-invaders-high-score. xgalaga is reading from the HOME
+environment variable to find it.
+
+If we used that same approach, we would need the following:
+* Add Stdio@ interface to apps.
+* Add ability to write files in Stdio@.
+* Add ability to read environment variables to Stdio@.
+* Implement high scores save/restore in invaders game.
+
+This is reasonable. All the above make sense to have as part of Stdio@. Though
+I'm not sure 'Stdio@' makes as much sense for the name anymore. Maybe Posix@
+would be closer to the idea? Or consider environment variables standard input
+and output?
+
+We're talking about adding to Stdio@:
+  (String@) { M@<Maybe@<OStream@<M@>>>; } write
+  (String@) { M@<Maybe@<String@>>; } getenv
+
+Add Stdio@ as an argument to /App/App%.Main@ function.
+
+I think this is worth doing for this release. It adds a lot of capability to
+fble programs, and honestly probably isn't that much work. The biggest thing
+will be figure out a way to share the Stdio implementation code between
+fble-stdio and fble-app. Hmm... Let's see how hard it is and decide based on
+that. If it's not too hard, implement for this release. Otherwise postpone
+invaders high score to the next release.
+

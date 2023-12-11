@@ -52,9 +52,23 @@ static FbleValue* ReadImpl(
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset,
     FbleProfileThread* profile);
+static FbleValue* WriteImpl(
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
+    FbleExecutable* executable,
+    FbleValue** args, FbleValue** statics,
+    FbleBlockId profile_block_offset,
+    FbleProfileThread* profile);
+static FbleValue* GetEnvImpl(
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
+    FbleExecutable* executable,
+    FbleValue** args, FbleValue** statics,
+    FbleBlockId profile_block_offset,
+    FbleProfileThread* profile);
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset);
+static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_offset);
+static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset);
 
 
 // OnFree function for FileExecutable
@@ -69,7 +83,7 @@ static void OnFree(FbleExecutable* this)
   }
 }
 
-// IStream -- Read a byte from a file.
+// IStreamImpl -- Read a byte from a file.
 //   IO@<Maybe@<Int@>>
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleValue** tail_call_buffer,
@@ -102,7 +116,7 @@ static FbleValue* IStreamImpl(
   return result;
 }
 
-// OStream -- Write a byte to a file.
+// OStreamImpl -- Write a byte to a file.
 //   (Int@, World@) { R@<Unit@>; }
 static FbleValue* OStreamImpl(
     FbleValueHeap* heap, FbleValue** tail_call_buffer,
@@ -131,7 +145,7 @@ static FbleValue* OStreamImpl(
   return result;
 }
 
-// Read -- Open a file for reading.
+// ReadImpl -- Open a file for reading.
 //   (String@, World@) { R@<Maybe@<IStream@<R@>>>; }
 static FbleValue* ReadImpl(
     FbleValueHeap* heap, FbleValue** tail_call_buffer,
@@ -165,6 +179,76 @@ static FbleValue* ReadImpl(
   return result;
 }
 
+// WriteImpl -- Open a file for writing.
+//   (String@, World@) { R@<Maybe@<OStream@<R@>>>; }
+static FbleValue* WriteImpl(
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
+    FbleExecutable* executable,
+    FbleValue** args, FbleValue** statics,
+    FbleBlockId profile_block_offset,
+    FbleProfileThread* profile)
+{
+  (void)tail_call_buffer;
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+  (void)profile;
+
+  char* filename = FbleStringValueAccess(args[0]);
+  FbleValue* world = args[1];
+  FILE* fin = fopen(filename, "w");
+  FbleFree(filename);
+
+  FbleValue* mstream;
+  if (fin == NULL) {
+    mstream = FbleNewEnumValue(heap, 1); // Nothing
+  } else {
+    FbleValue* stream = OStream(heap, fin, profile_block_offset);
+    mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
+    FbleReleaseValue(heap, stream);
+  }
+
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, mstream);
+  FbleReleaseValue(heap, mstream);
+  return result;
+}
+
+// GetEnvImpl -- Get an environment variable.
+//   (String@, World@) { R@<Maybe@<String@>>; }
+static FbleValue* GetEnvImpl(
+    FbleValueHeap* heap, FbleValue** tail_call_buffer,
+    FbleExecutable* executable,
+    FbleValue** args, FbleValue** statics,
+    FbleBlockId profile_block_offset,
+    FbleProfileThread* profile)
+{
+  (void)tail_call_buffer;
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+  (void)profile;
+
+  char* var = FbleStringValueAccess(args[0]);
+  FbleValue* world = args[1];
+  char* value = getenv(var);
+  FbleFree(var);
+
+  FbleValue* mstr;
+  if (value == NULL) {
+    mstr = FbleNewEnumValue(heap, 1); // Nothing
+  } else {
+    FbleValue* str = FbleNewStringValue(heap, value);
+    mstr = FbleNewUnionValue(heap, 0, str); // Just(str)
+    FbleReleaseValue(heap, str);
+  }
+
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, mstr);
+  FbleReleaseValue(heap, mstr);
+  return result;
+}
+
+// IStream --
+//  Creates an IStream@ value for the given file.
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
 {
   FileExecutable* exe = FbleAlloc(FileExecutable);
@@ -180,6 +264,8 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
 }
 
+// OStream --
+//  Creates an OStream@ value for the given file.
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
 {
   FileExecutable* exe = FbleAlloc(FileExecutable);
@@ -209,6 +295,34 @@ static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset)
   return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
 }
 
+static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_offset)
+{
+  FbleExecutable* exe = FbleAlloc(FbleExecutable);
+  exe->refcount = 0;
+  exe->magic = FBLE_EXECUTABLE_MAGIC;
+  exe->num_args = 2;
+  exe->num_statics = 0;
+  exe->tail_call_buffer_size = 0;
+  exe->profile_block_id = 3;
+  exe->run = &WriteImpl;
+  exe->on_free = &FbleExecutableNothingOnFree;
+  return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+}
+
+static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset)
+{
+  FbleExecutable* exe = FbleAlloc(FbleExecutable);
+  exe->refcount = 0;
+  exe->magic = FBLE_EXECUTABLE_MAGIC;
+  exe->num_args = 2;
+  exe->num_statics = 0;
+  exe->tail_call_buffer_size = 0;
+  exe->profile_block_id = 4;
+  exe->run = &GetEnvImpl;
+  exe->on_free = &FbleExecutableNothingOnFree;
+  return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+}
+
 // FbleStdio -- see documentation in stdio.fble.h
 FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
 {
@@ -217,23 +331,29 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     return NULL;
   }
 
-  FbleName block_names[3];
+  FbleName block_names[5];
   block_names[0].name = FbleNewString("istream");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[1].name = FbleNewString("ostream");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[2].name = FbleNewString("read");
   block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  FbleNameV names = { .size = 3, .xs = block_names };
+  block_names[3].name = FbleNewString("write");
+  block_names[3].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[4].name = FbleNewString("getenv");
+  block_names[4].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  FbleNameV names = { .size = 5, .xs = block_names };
   FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
-  FbleFreeName(block_names[0]);
-  FbleFreeName(block_names[1]);
-  FbleFreeName(block_names[2]);
+  for (size_t i = 0; i < 5; ++i) {
+    FbleFreeName(block_names[i]);
+  }
 
   FbleValue* fble_stdin = IStream(heap, stdin, block_id);
   FbleValue* fble_stdout = OStream(heap, stdout, block_id);
   FbleValue* fble_stderr = OStream(heap, stderr, block_id);
   FbleValue* fble_read = Read(heap, block_id);
+  FbleValue* fble_write = Write(heap, block_id);
+  FbleValue* fble_getenv = GetEnv(heap, block_id);
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
@@ -243,13 +363,18 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     FbleReleaseValue(heap, argP);
   }
 
-  FbleValue* args[5] = { fble_stdin, fble_stdout, fble_stderr, fble_read, argS };
+  FbleValue* args[7] = {
+    fble_stdin, fble_stdout, fble_stderr,
+    fble_read, fble_write, fble_getenv,
+    argS };
   FbleValue* computation = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, fble_stdin);
   FbleReleaseValue(heap, fble_stdout);
   FbleReleaseValue(heap, fble_stderr);
   FbleReleaseValue(heap, fble_read);
+  FbleReleaseValue(heap, fble_write);
+  FbleReleaseValue(heap, fble_getenv);
   FbleReleaseValue(heap, argS);
 
   if (computation == NULL) {

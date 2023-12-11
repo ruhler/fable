@@ -12,6 +12,7 @@ User Documentation:
 * Review all the generated documentation.
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
+* Add write and getenv to whatever tutorial describes Stdio@ interface.
 * Finalize release notes.
 * Come up with a better story for building and integrating usage help text?
 * Double check @fbld[...fbld#...] generates the right thing for html. For

@@ -25,7 +25,14 @@
 
   # Open the named file for reading.
   # Returns an input stream for reading. Nothing if unable to open the file.
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read,
+
+  # Open the named file for writing.
+  # Returns an output stream for writing. Nothing if unable to open the file.
+  (String@) { M@<Maybe@<OStream@<M@>>>; } write,
+
+  # Gets an environment variable value.
+  (String@) { M@<Maybe@<String@>>; } getenv
 ); };
   
 # Main@ --

@@ -11,6 +11,7 @@
 <@>@ R@ = /Core/Monad/IO%.R@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
 
@@ -24,23 +25,30 @@
   (Int@, World@) { R@<Unit@>; },
   (Int@, World@) { R@<Unit@>; },
   (String@, World@) { R@<Maybe@<IStream@<IO@>>>; },
+  (String@, World@) { R@<Maybe@<OStream@<IO@>>>; },
+  (String@, World@) { R@<Maybe@<String@>>; },
   List@<String@>) { IO@<Bool@>; }
 Run = (/Core/Stdio%.Main@ main)(
   IO@<Maybe@<Int@>> stdin,
   (Int@, World@) { R@<Unit@>; } stdout,
   (Int@, World@) { R@<Unit@>; } stderr,
   (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
+  (String@, World@) { R@<Maybe@<OStream@<IO@>>>; } write,
+  (String@, World@) { R@<Maybe@<String@>>; } getenv,
   List@<String@> args) {
-  # Note: We pass stdout and stderr as functions taking the string and the
-  # world rather than a function from string to IO@ just so we don't have to
-  # implement the currying on the native C side.
+  # Note: We pass functions taking the world as an explicit argument rather
+  # than functions returning IO@ so we don't have to implement the currying on
+  # the native C side.
   main<IO@>(
     /Core/Monad/IO%.Monad,
     @(
       in: stdin,
       out: (Int@ s)(World@ w) { stdout(s, w); },
       err: (Int@ s)(World@ w) { stderr(s, w); },
-      read: (String@ s)(World@ w) { read(s, w); }))(args);
+      read: (String@ s)(World@ w) { read(s, w); },
+      write: (String@ s)(World@ w) { write(s, w); },
+      getenv: (String@ s)(World@ w) { getenv(s, w); }
+    ))(args);
 };
 
 @(Run);

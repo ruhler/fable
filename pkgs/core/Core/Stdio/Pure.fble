@@ -15,6 +15,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
 
@@ -61,7 +62,19 @@ Pure@<Maybe@<Int@>> In = {
   Monad.return(Nothing<IStream@<Pure@>>);
 };
 
-Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err, Read);
+(String@) { Pure@<Maybe@<OStream@<Pure@>>>; } Write = (String@ _filename) {
+  # TODO: Add a map from file name to List@<Int@> to allow modeling of the
+  # filesystem.
+  Monad.return(Nothing<OStream@<Pure@>>);
+};
+
+(String@) { Pure@<Maybe@<String@>>; } GetEnv = (String@ _filename) {
+  # TODO: Add a map from String@ to String@to allow modeling of environment
+  # variables.
+  Monad.return(Nothing<String@>);
+};
+
+Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err, Read, Write, GetEnv);
 
 # Run --
 #   Run a pure stdio computation.
