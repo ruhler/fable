@@ -1028,12 +1028,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         }
       }
 
-      // TODO: We ought to release the condition right after jumping into
-      // a branch, otherwise we'll end up unnecessarily holding on to it
-      // for the full duration of the block. Technically this doesn't
-      // appear to be a violation of the language spec, because it only
-      // effects constants in runtime. But we probably ought to fix it
-      // anyway?
+      // We release the condition after the entire case block as finished
+      // executing because the ReleaseLocal infra doesn't have an easy way
+      // right now to allow us to release the condition at the start of each
+      // branch.
       ReleaseLocal(scope, condition, exit);
       return select_result;
     }

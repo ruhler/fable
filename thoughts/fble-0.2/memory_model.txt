@@ -1,0 +1,63 @@
+
+There's a todo item to clarify memory behavior in the spec. Specifically, how
+long are values allowed to be retained by the implementation?
+
+There are a few different criteria we could use.
+
+A. Not across tail call unless it's being passed explicitly.
+  Foo@ x = ...;
+  foo(y);
+
+Here we do a tail call not involving x. Even though x is technically in scope
+during the tail call, we definitely don't want it to be retained across the
+tail call, because that would lead to a memory leak.
+
+B. If not referenced again.
+  Foo@ x = ...;
+  Int@ y = f(x);
+  Int@ z = g(y);
+  h(z);
+
+We don't use x after defining y. One option would be to say x is not retained
+after the call to f(x), because x isn't used again. If we used this approach,
+we would get (A) for free.
+
+C. If out of scope.
+  Int@ y = {
+    Foo@ x = ...;
+    f(x);
+  }
+  Int@ z = g(y);
+  h(z)
+
+While executing g(y), not only is x not used, it's out of scope. It would not
+be possible to use it.
+
+D. After function call frame returns.
+So we could hold on to x in the example from (C) until the function returns.
+ 
+Honestly, my preference is explicit (A) plus (C) from a semantics point of
+view. From an implementation point of view, we might want to be a little more
+flexible.
+
+Here's an example case where the distinction between (C) and (D) could matter:
+
+(Int@) { Int@; } f = (Int@ n) {
+  n.?(0: 0);
+
+  Int@ y = {
+    List@ x = MakeList(n);
+    Decr(Length(x));
+  };
+  Int z = f(Decr(y));
+  Incr(z, 1);
+};
+  
+If we hold on to the list x during the recursion, we are using O(N^2) memory.
+If we don't, we are using O(N) memory.
+
+I think the current implementation uses explicit (A) plus (C).
+
+How about this: I'll say explicit (A) plus (C) in spec. If later on I find we
+want to be more liberal in the spec for performance reasons, we can relax the
+spec.

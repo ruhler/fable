@@ -259,6 +259,11 @@
    Runtime is O(N log(M)) plus the runtimes of the bindings and the runtime of
    the body, where N is the number of bindings and M is the number of
    variables in scope.
+
+   A variable's value takes up memory for as long as the variable is in scope.
+   Variables are in scope until the body of the let expression has finished
+   evaluation or, as a special case, until the body of the let expression
+   makes a tail recursive call.
  
  @section @label[structs][3. Structs]
   A struct value is a grouping of other values. The items of a struct are
@@ -628,12 +633,15 @@
    arguments to the function and M is the number of variables captured by the
    function.
 
-   In the case of recursive function calls, a deep chain of tail recursive
-   calls takes O(1) stack space. A deep chain of non-tail recursive calls
-   takes O(N) stack space, where N is the depth of the call chain. The
-   implementation must provide the same order of magnitude stack space as
-   there is heap space available. Programmers should not need to convert
-   non-tail recursive functions to use heap space instead of stack space.
+   A deep chain of tail recursive calls takes O(1) stack space. Local
+   variables not passed as arguments in a tail recursive call are not retained
+   across the tail call.
+
+   A deep chain of non-tail recursive calls takes O(N) stack space, where N is
+   the depth of the call chain. The implementation must provide the same order
+   of magnitude stack space as there is heap space available. Programmers
+   should not need to convert non-tail recursive functions to use heap space
+   instead of stack space.
  
  @section @label[polymorphism][6. Polymorphism]
   Polymorphism allows expressions to be parameterized by types.
