@@ -109,3 +109,5 @@ App Development
    There should be no need to have the entire text of the file in memory all
    at one time.
 * high score saved in invaders game.
+ - Consider moving argv to Stdio@ for easier sharing with App.Main@.
+ - Add Stdio@ to App main function.

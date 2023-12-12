@@ -299,6 +299,12 @@ Drawing@ LetterG = Drawings[
   Rect(Int|4, Int|5, Int|1, Int|1, white)
 ];
 
+Drawing@ LetterH = Drawings[
+  Rect(Int|0, Int|0, Int|1, Int|7, white),
+  Rect(Int|4, Int|0, Int|1, Int|7, white),
+  Rect(Int|0, Int|3, Int|4, Int|1, white)
+];
+
 Drawing@ LetterI = Drawings[
   Rect(Int|1, Int|0, Int|3, Int|1, white),
   Rect(Int|1, Int|6, Int|3, Int|1, white),
@@ -360,7 +366,7 @@ Drawing@ LetterV = Drawings[
   Drawing@ first = str.cons.head.?(
     '0': Digit0, '1': Digit1, '2': Digit2, '3': Digit3, '4': Digit4,
     '5': Digit5, '6': Digit6, '7': Digit7, '8': Digit8, '9': Digit9,
-    'A': LetterA, 'C': LetterC, 'E': LetterE, 'G': LetterG,
+    'A': LetterA, 'C': LetterC, 'E': LetterE, 'G': LetterG, 'H': LetterH,
     'I': LetterI, 'L': LetterL, 'M': LetterM, 'O': LetterO, 'R': LetterR,
     'S': LetterS, 'V': LetterV, : Blank);
   Over(first, Translate(Int|8, Int|0, String(str.cons.tail)));
@@ -435,7 +441,8 @@ Drawing@ DeadShipB = Drawings[
 
 Drawing@ Background = Drawings[
     Translate(Int|40, Int|232, String|SCORE),
-    Translate(Int|160, Int|232, String|LIVES),
+    Translate(Int|148, Int|232, String|HIGH),
+    Translate(Int|240, Int|232, String|LIVES),
     Translate(Int|40, Int|0, Ground)
 ];
 

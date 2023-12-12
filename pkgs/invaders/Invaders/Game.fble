@@ -262,9 +262,9 @@ Game@ Initial = @(
 };
 
 (Lives@) { Drawing@; } DrawLives = {
-  Drawing@ l1 = Translate(Int|160, Int|220, Graphics.Ship);
-  Drawing@ l2 = Translate(Int|180, Int|220, Graphics.Ship);
-  Drawing@ l3 = Translate(Int|200, Int|220, Graphics.Ship);
+  Drawing@ l1 = Translate(Int|262, Int|220, Graphics.Ship);
+  Drawing@ l2 = Translate(Int|242, Int|220, Graphics.Ship);
+  Drawing@ l3 = Translate(Int|222, Int|220, Graphics.Ship);
   (Lives@ l) {
     l.?(
       0: Blank,
