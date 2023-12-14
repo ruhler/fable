@@ -13,6 +13,7 @@
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;
 % Neg = /Core/Int%.Neg;
+% Max = /Core/Int/Eq%.Max;
 
 % Int = /Core/Int/Lit%.Int;
 
@@ -66,7 +67,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
       Affine(a, b, Game.Draw(g)))));
   };
 
-  (M@<Unit@>, Game@) { M@<Unit@>; }
+  # Returns the high score after playing the game.
+  (M@<Unit@>, Game@) { M@<Int@>; }
   Run = (M@<Unit@> tick, Game@ game) {
     Input@ i <- m.do(GetInput);
     i.?(
@@ -76,7 +78,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
          Unit@ _ <- m.do(Draw(ngame));
          Run(tick, ngame);
        },
-       quit: m.return(Unit),
+       quit: m.return(Max(game.score, game.high_score)),
        game: Run(tick, Game.Input(game, i.game)));
   };
 
@@ -84,9 +86,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   Int@ frame_period = Int|16;
   M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
-  Game@ game = Game.Initial;
+  Game@ game = Game.Initial(Int|1234);
   Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
-  Run(tick, game); 
+  Int@ _high <- m.do(Run(tick, game));
+  m.return(Unit);
 };
 
 Main;

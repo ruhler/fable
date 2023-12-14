@@ -82,6 +82,7 @@ State@ Dying = State@(dying: DyingWait);
 
 @ Game@ = *(
   Int@ score,
+  Int@ high_score,
   Int@ level,
   Lives@ lives,
   State@ state,
@@ -95,18 +96,21 @@ State@ Dying = State@(dying: DyingWait);
 
 @ Input@ = +(Dir@ dir, Unit@ fire);
 
-Game@ Initial = @(
-  score: Int|0,
-  level: Int|0,
-  lives: Lives@(3: Unit),
-  state: State@(defending: Unit),
-  ship: Ship.Initial,
-  bullet: Bullet.Initial,
-  bases: Bases.Initial(Int|0),
-  aliens: Aliens.Initial(Int|0),
-  bombs: Bombs.Initial,
-  ufo: Ufo.Initial
-);
+(Int@) { Game@; } Initial = (Int@ high_score) {
+  @(
+    score: Int|0,
+    high_score: high_score,
+    level: Int|0,
+    lives: Lives@(3: Unit),
+    state: State@(defending: Unit),
+    ship: Ship.Initial,
+    bullet: Bullet.Initial,
+    bases: Bases.Initial(Int|0),
+    aliens: Aliens.Initial(Int|0),
+    bombs: Bombs.Initial,
+    ufo: Ufo.Initial
+  );
+};
 
 (GameOver@) { GameOver@; } TickGameOver = (GameOver@ over) {
   Gt(over.wait, Int|0).?(true: {
@@ -235,10 +239,9 @@ Game@ Initial = @(
 
 (Game@, Input@) { Game@; } Input = (Game@ g, Input@ input) {
   g.state.?(defending: {
-    Game@(g.score, g.level, g.lives, g.state,
-      input.?(dir: Ship.Input(g.ship, input.dir), : g.ship),
-      input.?(fire: Bullet.Fire(g.bullet, g.ship), : g.bullet),
-      g.bases, g.aliens, g.bombs, g.ufo);
+    g.@(
+      ship: input.?(dir: Ship.Input(g.ship, input.dir), : g.ship),
+      bullet: input.?(fire: Bullet.Fire(g.bullet, g.ship), : g.bullet));
   });
 
   g;
@@ -281,6 +284,7 @@ Game@ Initial = @(
 
   Drawings[
     DrawScore(g.score),
+    Translate(Int|108, Int|0, DrawScore(g.high_score)),
     DrawLives(g.lives),
     Graphics.Background,
     Ship.Draw(g.ship),
