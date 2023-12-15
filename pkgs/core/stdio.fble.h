@@ -5,12 +5,28 @@
 #include <fble/fble-profile.h>
 #include <fble/fble-value.h>
 
+// FbleNewStdioIO --
+//   Allocates a /Core/Stdio/IO%.StdioIO@ instance.
+//
+// Inputs:
+//   heap - The value heap.
+//   profile - Profile to store execution results to.
+//
+// Results:
+//   The newly allocated StdioIO@ instance.
+//
+// Side effects:
+// * Adds blocks to the profile.
+// * The user should call FbleReleaseValue on the result when it is no longer
+//   needed.
+FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile);
+
 // FbleStdio -- 
 //   Execute a /Core/Stdio/IO%.Run(/Core/Stdio%.Main@) function.
 //
 // Inputs:
 //   heap - The value heap.
-//   profile - Optional profile to store execution results to. May be NULL.
+//   profile - Profile to store execution results to.
 //   stdio - The stdio process to execute. Borrowed.
 //   argc - The number of string arguments to the stdio function. Borrowed.
 //   argv - The string arguments to the stdio function. Borrowed.

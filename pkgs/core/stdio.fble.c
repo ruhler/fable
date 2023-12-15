@@ -323,14 +323,9 @@ static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset)
   return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
 }
 
-// FbleStdio -- see documentation in stdio.fble.h
-FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
+// FbleNewStdioIO -- see documentation in stdio.fble.h
+FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile)
 {
-  FbleValue* func = FbleEval(heap, stdio, profile);
-  if (func == NULL) {
-    return NULL;
-  }
-
   FbleName block_names[5];
   block_names[0].name = FbleNewString("istream");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
@@ -354,7 +349,27 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   FbleValue* fble_read = Read(heap, block_id);
   FbleValue* fble_write = Write(heap, block_id);
   FbleValue* fble_getenv = GetEnv(heap, block_id);
+  FbleValue* fble_stdio = FbleNewStructValue_(heap, 6,
+      fble_stdin, fble_stdout, fble_stderr,
+      fble_read, fble_write, fble_getenv);
+  FbleReleaseValue(heap, fble_stdin);
+  FbleReleaseValue(heap, fble_stdout);
+  FbleReleaseValue(heap, fble_stderr);
+  FbleReleaseValue(heap, fble_read);
+  FbleReleaseValue(heap, fble_write);
+  FbleReleaseValue(heap, fble_getenv);
+  return fble_stdio;
+}
+
+// FbleStdio -- see documentation in stdio.fble.h
+FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
+{
+  FbleValue* func = FbleEval(heap, stdio, profile);
+  if (func == NULL) {
+    return NULL;
+  }
 
+  FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* argP = FbleNewStructValue_(heap, 2, argv[argc - i -1], argS);
@@ -363,18 +378,10 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     FbleReleaseValue(heap, argP);
   }
 
-  FbleValue* args[7] = {
-    fble_stdin, fble_stdout, fble_stderr,
-    fble_read, fble_write, fble_getenv,
-    argS };
+  FbleValue* args[2] = { fble_stdio, argS };
   FbleValue* computation = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
-  FbleReleaseValue(heap, fble_stdin);
-  FbleReleaseValue(heap, fble_stdout);
-  FbleReleaseValue(heap, fble_stderr);
-  FbleReleaseValue(heap, fble_read);
-  FbleReleaseValue(heap, fble_write);
-  FbleReleaseValue(heap, fble_getenv);
+  FbleReleaseValue(heap, fble_stdio);
   FbleReleaseValue(heap, argS);
 
   if (computation == NULL) {
