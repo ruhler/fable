@@ -85,7 +85,6 @@ void FbleFreeDebugInfo(FbleDebugInfo* info);
  * Different kinds of instructions.
  */
 typedef enum {
-  FBLE_DATA_TYPE_INSTR,
   FBLE_STRUCT_VALUE_INSTR,
   FBLE_UNION_VALUE_INSTR,
   FBLE_STRUCT_ACCESS_INSTR,
@@ -140,22 +139,6 @@ typedef struct {
   size_t size;      /**< Number of elements. */
   FbleCode** xs;    /**< The elements. */
 } FbleCodeV;
-
-/**
- * FBLE_DATA_TYPE_INSTR: Allocate a data type value.
- *
- * *dest = +(a1, a2, ..., aN)
- * *dest = *(a1, a2, ..., aN)
- *
- * Note: This was introduced to enable better packing of values into machine
- * words, but we haven't implemented that yet, so it's currently unused.
- */
-typedef struct {
-  FbleInstr _base;        /**< FbleInstr base class. */
-  FbleDataTypeTag kind;   /**< The kind of datatype to create. */
-  FbleVarV fields;        /**< The fields of the data type. */
-  FbleLocalIndex dest;    /**< Where to put the created type. */
-} FbleDataTypeInstr;
 
 /**
  * FBLE_STRUCT_VALUE_INSTR: Creates a struct value.

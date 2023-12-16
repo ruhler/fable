@@ -19,7 +19,6 @@
 #include "heap.h"
 #include "tc.h"
 #include "unreachable.h"
-#include "value.h"
 
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 

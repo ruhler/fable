@@ -13,7 +13,6 @@
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"
-#include "value.h"
 
 // FbleLink -- see documentation in fble-link.h
 FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile)

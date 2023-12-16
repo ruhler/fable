@@ -15,7 +15,6 @@
 
 #include "code.h"
 #include "unreachable.h"
-#include "value.h"
 
 static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc);
 
@@ -84,13 +83,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
     assert(pc < code->instrs.size && "Missing return instruction?");
     FbleInstr* instr = code->instrs.xs[pc];
     switch (instr->tag) {
-      case FBLE_DATA_TYPE_INSTR: {
-        FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
-        locals[data_type_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
         locals[struct_value_instr->dest] = NULL;
@@ -278,19 +270,6 @@ FbleValue* FbleInterpreterRunFunction(
     }
 
     switch (instr->tag) {
-      case FBLE_DATA_TYPE_INSTR: {
-        FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
-        size_t fieldc = data_type_instr->fields.size;
-        FbleValue* fields[fieldc];
-        for (size_t i = 0; i < fieldc; ++i) {
-          fields[i] = GET(data_type_instr->fields.xs[i]);
-        }
-
-        locals[data_type_instr->dest] = FbleNewDataTypeValue(heap, data_type_instr->kind, fieldc, fields);
-        pc++;
-        break;
-      }
-
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_value_instr->args.size;

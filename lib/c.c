@@ -17,7 +17,6 @@
 #include "code.h"
 #include "tc.h"
 #include "unreachable.h"
-#include "value.h"
 
 /** Type representing a name as an integer. */
 typedef unsigned int LabelId;
@@ -58,7 +57,6 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
   FbleAppendToVector(*blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
     switch (code->instrs.xs[i]->tag) {
-      case FBLE_DATA_TYPE_INSTR: break;
       case FBLE_STRUCT_VALUE_INSTR: break;
       case FBLE_UNION_VALUE_INSTR: break;
       case FBLE_STRUCT_ACCESS_INSTR: break;
@@ -364,26 +362,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     // Instruction logic.
     static const char* var_tag[] = { "s", "a", "l" };
     switch (instr->tag) {
-      case FBLE_DATA_TYPE_INSTR: {
-        FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-        size_t fieldc = dt_instr->fields.size;
-
-        fprintf(fout, "  {\n");
-        fprintf(fout, "    FbleValue* fields[] = {");
-        for (size_t i = 0; i < fieldc; ++i) {
-          fprintf(fout, " %s[%zi],",
-              var_tag[dt_instr->fields.xs[i].tag],
-              dt_instr->fields.xs[i].index);
-        };
-        fprintf(fout, " };\n");
-
-        static const char* dtkind[] = { "FBLE_STRUCT_DATATYPE", "FBLE_UNION_DATATYPE" };
-        fprintf(fout, "    l[%zi] = FbleNewDataTypeValue(heap, %s, %zi, fields);\n",
-            dt_instr->dest, dtkind[dt_instr->kind], fieldc);
-        fprintf(fout, "  }\n");
-        break;
-      }
-
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_instr->args.size;
@@ -646,12 +624,6 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
 {
   static const char* var_tag[] = { "s", "a", "l" };
   switch (instr->tag) {
-    case FBLE_DATA_TYPE_INSTR: {
-      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", dt_instr->dest);
-      return;
-    }
-
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       fprintf(fout, "  l[%zi] = NULL;\n", struct_instr->dest);

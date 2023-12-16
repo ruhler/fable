@@ -117,13 +117,6 @@ void FbleFreeInstr(FbleInstr* instr)
       return;
     }
 
-    case FBLE_DATA_TYPE_INSTR: {
-      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      FbleFreeVector(dt_instr->fields);
-      FbleFree(instr);
-      return;
-    }
-
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       FbleFreeVector(struct_instr->args);
@@ -311,21 +304,6 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
       }
 
       switch (instr->tag) {
-        case FBLE_DATA_TYPE_INSTR: {
-          FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
-          fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "l%zi = %s(", data_type_instr->dest,
-              data_type_instr->kind == FBLE_STRUCT_DATATYPE ? "*" : "+");
-          const char* comma = "";
-          for (size_t j = 0; j < data_type_instr->fields.size; ++j) {
-            FbleVar field = data_type_instr->fields.xs[j];
-            fprintf(fout, "%s%s%zi", comma, var_tags[field.tag], field.index);
-            comma = ", ";
-          }
-          fprintf(fout, ");\n");
-          break;
-        }
-
         case FBLE_STRUCT_VALUE_INSTR: {
           FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
           fprintf(fout, "%4zi.  ", i);

@@ -3,8 +3,6 @@
  * FbleValue routines.
  */
 
-#include "value.h"
-
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
@@ -32,7 +30,6 @@
 
 /** Different kinds of FbleValue. */
 typedef enum {
-  DATA_TYPE_VALUE,
   STRUCT_VALUE,
   UNION_VALUE,
   FUNC_VALUE,
@@ -50,22 +47,6 @@ typedef enum {
 struct FbleValue {
   ValueTag tag;   /**< The kind of value. */
 };
-
-/**
- * DATA_TYPE_VALUE: A struct or union type value.
- */
-typedef struct {
-  FbleValue _base;        /**< FbleValue base class. */
-
-  /**
-   * Number of bits required for the tag.
-   * 0 if this represents a struct type instead of a union type.
-   */
-  size_t tag_size;        
-
-  size_t fieldc;          /**< Number of fields. */
-  FbleValue* fields[];    /**< The type of each field. */
-} DataTypeValue;
 
 /**
  * STRUCT_VALUE: An fble struct value.
@@ -268,7 +249,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
   (void)heap;
 
   switch (value->tag) {
-    case DATA_TYPE_VALUE: return;
     case STRUCT_VALUE: return;
     case UNION_VALUE: return;
 
@@ -316,14 +296,6 @@ static void Ref(FbleHeap* heap, FbleValue* value)
 static void Refs(FbleHeap* heap, FbleValue* value)
 {
   switch (value->tag) {
-    case DATA_TYPE_VALUE: {
-      DataTypeValue* t = (DataTypeValue*)value;
-      for (size_t i = 0; i < t->fieldc; ++i) {
-        Ref(heap, t->fields[i]);
-      }
-      break;
-    }
-
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
@@ -570,35 +542,6 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
   assert(object != NULL && object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->arg;
-}
-
-// See documentation in value.h.
-FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_t fieldc, FbleValue** fields)
-{
-  size_t tag_size = 0;
-  switch (kind) {
-    case FBLE_STRUCT_DATATYPE:
-      tag_size = 0;
-      break;
-
-    case FBLE_UNION_DATATYPE:
-      tag_size = 1;
-      while (((size_t)1 << tag_size) <= fieldc) {
-        tag_size++;
-      }
-      break;
-  }
-
-  DataTypeValue* value = NewValueExtra(heap, DataTypeValue, sizeof(FbleValue*) * fieldc);
-  value->_base.tag = DATA_TYPE_VALUE;
-  value->tag_size = tag_size;
-  value->fieldc = fieldc;
-  for (size_t i = 0; i < fieldc; ++i) {
-    value->fields[i] = fields[i];
-    AddRef(heap, &value->_base, fields[i]);
-  }
-
-  return &value->_base;
 }
 
 // See documentation in fble-value.h.

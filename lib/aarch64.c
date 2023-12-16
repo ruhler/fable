@@ -17,7 +17,6 @@
 #include "code.h"
 #include "tc.h"
 #include "unreachable.h"
-#include "value.h"
 
 /** Type representing a name as an integer. */
 typedef unsigned int LabelId;
@@ -137,7 +136,6 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
   FbleAppendToVector(*blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
     switch (code->instrs.xs[i]->tag) {
-      case FBLE_DATA_TYPE_INSTR: break;
       case FBLE_STRUCT_VALUE_INSTR: break;
       case FBLE_UNION_VALUE_INSTR: break;
 
@@ -604,29 +602,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
   }
 
   switch (instr->tag) {
-    case FBLE_DATA_TYPE_INSTR: {
-      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      size_t fieldc = dt_instr->fields.size;
-
-      // Allocate space for the fields array on the stack.
-      size_t sp_offset = StackBytesForCount(fieldc);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
-      for (size_t i = 0; i < fieldc; ++i) {
-        GetFrameVar(fout, "x0", dt_instr->fields.xs[i]);
-        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
-      };
-
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %i\n", dt_instr->kind);
-      fprintf(fout, "  mov x2, %zi\n", fieldc);
-      fprintf(fout, "  mov x3, SP\n");
-      fprintf(fout, "  bl FbleNewDataTypeValue\n");
-      SetFrameVar(fout, "x0", dt_instr->dest);
-
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-      return;
-    }
-
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       size_t argc = struct_instr->args.size;
@@ -988,7 +963,6 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
   }
 
   switch (instr->tag) {
-    case FBLE_DATA_TYPE_INSTR: return;
     case FBLE_STRUCT_VALUE_INSTR: return;
     case FBLE_UNION_VALUE_INSTR: return;
     case FBLE_STRUCT_ACCESS_INSTR: {
@@ -1152,12 +1126,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
 {
   switch (instr->tag) {
-    case FBLE_DATA_TYPE_INSTR: {
-      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      SetFrameVar(fout, "XZR", dt_instr->dest);
-      return;
-    }
-
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       SetFrameVar(fout, "XZR", struct_instr->dest);

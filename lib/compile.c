@@ -16,7 +16,6 @@
 #include "tc.h"
 #include "typecheck.h"
 #include "unreachable.h"
-#include "value.h"
 
 typedef struct Local Local;
 

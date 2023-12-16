@@ -266,3 +266,12 @@ I guess one difference is statics being a pointer instead of part of the
 object itself. There's no point in doing that though if people always access
 the field via FbleFuncValueInfo though.
 
+FbleFuncInfo is public. Why not make FbleFuncValue public? It's the same
+thing. The question, I suppose, is what to do about the _base field.
+
+Anyway, don't worry about this now. Back to where we were.
+
+1. Call FbleStrictValue to get the function value.
+2. Call into FbleFuncValueInfo to get the function info.
+  No need to save the function value across this call, because we never refer
+  to it again.
