@@ -54,3 +54,179 @@ In fact, I wonder, could we reuse the profiling protocol somehow? For example,
 with profiling enabled, we ... sort of know the stack trace? That's an
 interesting idea.
 
+---
+
+Revisiting how to use gdb to more easily step through fble code without having
+it stop at C along the way. Any way to do this?
+
+Current status:
+* Next from within fble code works pretty well.
+* Step immediately goes into C code. For example, FbleRetainValue.
+
+gdb says step means "Step program until it reaches a different source line".
+
+So, in theory, it should only stop where we have source lines annotated.
+
+What happens if we remove all debug symbols from C code?
+* It doesn't step into functions at all.
+* It steps into FbleCall with no source available.
+
+In other words, today, gdb step is completely useless. Even if we only have
+debug info for fble code.
+
+My guess is there's something broken about the generated line number
+information. Like maybe we adjust the stack during execution and somehow it
+looses track of where it is.
+
+It's interesting that we can set explicit breakpoints in functions and it
+works.
+
+Wait. Let me change the test to remove -O3 and try again.
+* Doesn't help at all.
+
+Why is 'step' so broken? I have the file and line number info in the generated
+code, right?
+
+From the gdb manual:
+
+          _Warning:_ If you use the 'step' command while control is
+          within a function that was compiled without debugging
+          information, execution proceeds until control reaches a
+          function that does have debugging information.  Likewise, it
+          will not step into a function which is compiled without
+          debugging information.  To step through functions without
+          debugging information, use the 'stepi' command, described
+          below.
+
+There you go. It will not step into a function which is compiled without
+debugging information. As long as function calls go via FbleCall, sounds like
+we are stuck. If FbleCall has debug info, it will step into the C code. If
+FbleCall doesn't have debug info, it will not step into the called code.
+
+We could try 'set step-mode on', which would step into FbleCall even if it
+doesn't have debug info. But it would also step into other things that don't
+have debug info.
+
+I understand now why step is broken for us. What can we do about it?
+A. Inline all uses of FbleCall. Then we could enable step only for .fble code
+and it should do as desired because no native calls will be on the stack.
+B. Figure out a way to mark all C functions except for FbleCall as boring.
+Have the user step through FbleCall.
+C. Find some method other than gdb for debugging.
+
+Interesting note in (A): we should be able to look at a backtrace to see if
+stepping will work. As long as all items in the backtrace are fble code, we
+can step successfully. Otherwise we can't. We need to be able to step into all
+functions on the stack trace, and skip borings.
+
+Let's assume we went with approach (C). Is there any loss in not generating
+dwarf info for fble code? Have I ever made use of that? Presumably if you are
+using gdb, it's for debugging the fble implementation. I can't think of a time
+where having it go into fble code was useful for that. The last thing I
+debugged I switched to the interpreter to avoid that confusion.
+
+So, if we went with approach (C), we could remove all the dwarf related debug
+code.
+
+The other appealing thing about (C) is we could make debug work for all modes:
+interpreted, compiled to C, compiled to native. Not just compiled to native.
+
+I think that's the right approach to take. But how would we implement that
+kind of debug? Let's revisit that idea.
+
+---
+
+All modes have profiling support. Let's see we want a profiling based
+debugger. How would it work?
+
+Let's ignore for the time being that profiling block enter/exit is processed
+in batch instead of at every instruction. Assume profiling block enter/exit
+happens at the right place.
+
+Setting Breakpoints:
+* We could set a breakpoint at a profile op. Or... at a debug op?
+
+Interesting. We could use DebugInfo in the code for debugging. No need to rely
+on profiling code? Maybe that would be helpful? Maybe a mix.
+
+gdb sets breakpoints by modifying the instruction at the start of a
+breakpoint. I'm not sure if we could do that. More easily we could check at
+execution of every instruction if it matches an enabled breakpoint. It will be
+slow, especially with a large number of breakpoints, but maybe not too slow.
+
+Next can be implemented using breakpoints.
+
+Step needs to know about call stack enter/exit. We know when we enter/exit a
+function.
+
+Not sure how to unwind the stack though. We could keep a shadow stack I guess.
+
+Aside from implementing support for all these things, there's the question of
+the UI. Ideally the UI is not at all tied to the internal implementation.
+Different people could use different UIs.
+
+Still sounds hard.
+
+---
+
+Back to gdb for the time being. Assuming we will at some point in the future
+switch away from gdb, can we at least make gdb a little more usable in the
+meantime?
+
+Let's figure out how to skip all c functions except FbleCall. Because my
+hypothesis is that will be the most practical approach for stepping through
+code.
+
+Oh, and we don't want to generate debug symbols for FbleCall, because then it
+will step through it. Sigh.
+
+Maybe I can define a gdb command to set up the environment for fble specific
+debugging. Call it 'fble' for example. What would that do?
+
+* skip ignore all c code.
+* add a skip-hook that:
+  * sets a breakpoint on FbleCall which automatically:
+    - Removes itself and skips to skip to child?
+
+Actually, maybe it's as easy as:
+* Wrap the calls to executable->run in some function, CallRun
+* Ignore all C code.
+* When step is called, add a breakpoint to FbleCallRun that:
+  - disables the breakpoint at FbleCallRun
+  - auto steps.
+
+How nice would it be if we could inline calls to FbleCall in generated code?
+
+For as complicated as it looks, it's not that complicated:
+* call FbleProfileEnterBlock if needed.
+* Allocate space for the tail call buffer.
+* Call the run function.
+* Loop on the result:
+  - Extend tail call buffer if needed and move over args.
+  - Call FbleProfileReplaceBlock if needed.
+  - Call the run function.
+  - Free args from the tail call buffer.
+* Call FbleProfileExitBlock if needed.
+
+I assume this wouldn't have much impact on performance. We save an extra
+function call to FbleCall, but we also increase the size of the generated
+code. And we loose out on whatever optimizations gcc -O3 give us. It's a step
+closer to where we want to be with function calls.
+
+Surely it's worth it if it makes gdb stepping work seamlessly?
+
+The big challenge is just the complexity of writing and maintaining the
+assembly code for this. And maybe some encapsulation issues depending on how
+we get access to the function info. May as well use FbleFuncValueInfo like we
+do now.
+ 
+What do you say? Worth a try? It's a localized change, so not risky in terms
+of impacting the 0.2 release.
+
+I vote we try it and see what happens.
+
+On the other hand, given I'm planning to change the calling convention for
+functions, maybe best to hold off until after I've done that. Otherwise I'll
+just have to rewrite the generated assembly code again.
+
+I don't know. I'm still tempted to do it for the fun of it.

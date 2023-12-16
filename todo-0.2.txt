@@ -100,11 +100,9 @@ Error Messages:
   }
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
-        
-App Development
-* Sat Solver:
- - Add --help command line option to fble-sat.
- - Pull search logic out of /Sat/Solver%
- - Parse dimacs cnf incrementally instead of all at once?
-   There should be no need to have the entire text of the file in memory all
-   at one time.
+
+Misc:
+* Define an FbleUnionValueField function that takes tag as input?
+ - Return NULL if tag doesn't match. Use this to simplify the aarch64 code for
+   union access instruction.
+ - Then we wouldn't need an R_SCRATCH_0 reg at all?
