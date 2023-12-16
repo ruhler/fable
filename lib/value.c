@@ -118,12 +118,6 @@ typedef struct {
   FbleValue* statics[];         
 } FuncValue;
 
-/** A non-circular singly linked list of values. */
-typedef struct Values {
-  FbleValue* value;       /**< An element of the list. */
-  struct Values* next;    /**< The next elements in the list. */
-} Values;
-
 /**
  * REF_VALUE: A reference value.
  *

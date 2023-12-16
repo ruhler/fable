@@ -195,6 +195,9 @@ Actually, maybe it's as easy as:
   - disables the breakpoint at FbleCallRun
   - auto steps.
 
+Nope. Adding a wrapper function isn't good enough, because we would still need
+to step into FbleCall to get to the wrapper function.
+
 How nice would it be if we could inline calls to FbleCall in generated code?
 
 For as complicated as it looks, it's not that complicated:
@@ -230,3 +233,36 @@ functions, maybe best to hold off until after I've done that. Otherwise I'll
 just have to rewrite the generated assembly code again.
 
 I don't know. I'm still tempted to do it for the fun of it.
+
+Let's sketch out how the assembly code would look for this:
+
+1. Call FbleStrictValue to get the function value.
+2. Call into FbleFuncValueInfo to get the function info.
+  No need to save the function value across this call, because we never refer
+  to it again.
+
+It's a little sad that FuncValueInfo is exactly FuncValue, minus the value
+tag. Current uses of the value tag:
+* To find the FbleExecutable* to free OnFree.
+* To traverse the value for references.
+  
+Any better way to structure FbleValue? Like, make it a union type? How would
+that look?
+
+* size_t tag_size/tag/profile_block_offset
+* size_t valuec - Number of values.
+* FbleExecutable* - executable
+* FbleValue* values[] - Any values this may reference.
+
+No. Not worth the added complexity.
+
+Alternatives:
+* Define an FbleFuncValue type, for easy casting from FbleValue* to
+  FbleFuncValue*.
+* Add an explicit function to convert FbleValue* to FbleFuncValue*
+  We could store FbleFuncValue separately.
+
+I guess one difference is statics being a pointer instead of part of the
+object itself. There's no point in doing that though if people always access
+the field via FbleFuncValueInfo though.
+
