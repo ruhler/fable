@@ -13,6 +13,8 @@
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -26,20 +28,24 @@
   (String@, World@) { R@<Maybe@<String@>>; } getenv
 );
 
-# Run --
-#   A top-level IO implementation for running a Stdio Main@ program.
-(/Core/Stdio%.Main@)(StdioIO@, List@<String@>) { IO@<Bool@>; }
-Run = (/Core/Stdio%.Main@ main)(StdioIO@ stdio, List@<String@> args) {
-  main<IO@>(
-    /Core/Monad/IO%.Monad,
-    @(
-      in: stdio.stdin,
-      out: (Int@ s)(World@ w) { stdio.stdout(s, w); },
-      err: (Int@ s)(World@ w) { stdio.stderr(s, w); },
-      read: (String@ s)(World@ w) { stdio.read(s, w); },
-      write: (String@ s)(World@ w) { stdio.write(s, w); },
-      getenv: (String@ s)(World@ w) { stdio.getenv(s, w); }
-    ))(args);
+(StdioIO@) { Stdio@<IO@>; } StdioIO = (StdioIO@ stdio) {
+  @(
+    in: stdio.stdin,
+    out: (Int@ s)(World@ w) { stdio.stdout(s, w); },
+    err: (Int@ s)(World@ w) { stdio.stderr(s, w); },
+    read: (String@ s)(World@ w) { stdio.read(s, w); },
+    write: (String@ s)(World@ w) { stdio.write(s, w); },
+    getenv: (String@ s)(World@ w) { stdio.getenv(s, w); }
+   );
 };
 
-@(Run);
+@ Main@ = (StdioIO@, List@<String@>) { IO@<Bool@>; };
+
+# Run --
+#   A top-level IO implementation for running a Stdio Main@ program.
+(/Core/Stdio%.Main@) { Main@; }
+Run = (/Core/Stdio%.Main@ main)(StdioIO@ stdio, List@<String@> args) {
+  main<IO@>(/Core/Monad/IO%.Monad, StdioIO(stdio))(args);
+};
+
+@(StdioIO@, StdioIO, Run);

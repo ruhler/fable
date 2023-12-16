@@ -1,4 +1,22 @@
 
+% True = /Core/Bool%.True;
+
+@ Int@ = /Core/Int%.Int@;
+% Sub = /Core/Int%.Sub;
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
 <<@>@>@ App@ = /App/App%.App@;
 <<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
@@ -10,15 +28,6 @@
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
 
-@ Int@ = /Core/Int%.Int@;
-% Sub = /Core/Int%.Sub;
-
-% Int = /Core/Int/Lit%.Int;
-
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 @ State@ = *(
   Int@ mouse_x,
@@ -26,7 +35,7 @@
   Color@ mouse_color
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
   M@<Event@> FilterEvent = {
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(e),
@@ -66,7 +75,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
       : m.return(Unit));
   };
 
-  StepUI(State@(Int|0, Int|0, Color.Green));
+  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
+  m.return(True);
 };
 
 /App/IO%.Run(Main);

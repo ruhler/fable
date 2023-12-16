@@ -18,10 +18,11 @@
 #include "char.fble.h"             // for FbleCharValueAccess
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"           // for FbleStringValueAccess
+#include "stdio.fble.h"            // for FbleNewStdioIO
 
 #define EX_SUCCESS 0
-#define EX_FAILURE 1
 #define EX_USAGE 2
+#define EX_FAILURE 3
 
 // Executable for an app.
 typedef struct {
@@ -461,14 +462,28 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
 
   FbleModuleArg module_arg = FbleNewModuleArg();
   const char* profile_file = NULL;
+  bool end_of_options = false;
   bool help = false;
   bool error = false;
   bool version = false;
   bool fps = false;
 
+  // If the module is compiled and '--' isn't present, skip to end of options
+  // right away. That way precompiled programs can go straight to application
+  // args if they want.
+  if (module != NULL) {
+    end_of_options = true;
+    for (int i = 0; i < argc; ++i) {
+      if (strcmp(argv[i], "--") == 0) {
+        end_of_options = false;
+        break;
+      }
+    }
+  }
+
   argc--;
   argv++;
-  while (!(help || error || version) && argc > 0) {
+  while (!(help || error || version) && !end_of_options && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
@@ -476,7 +491,12 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     if (FbleParseBoolArg("--fps", &fps, &argc, &argv, &error)) continue;
     if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
-    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
+
+    end_of_options = true;
+    if (strcmp(argv[0], "--") == 0) {
+      argc--;
+      argv++;
+    }
   }
 
   if (version) {
@@ -598,18 +618,35 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   for (size_t i = 0; i < 61; ++i) {
     effect_exe->fpsHistogram[i] = 0;
   }
-  FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe->_base, 0, NULL);
 
+
+  FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
+
+  FbleValue* argS = FbleNewEnumValue(heap, 1);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleValue* argValue = FbleNewStringValue(heap, argv[i]);
+    FbleValue* argP = FbleNewStructValue_(heap, 2, argValue, argS);
+    FbleReleaseValue(heap, argValue);
+    FbleReleaseValue(heap, argS);
+    argS = FbleNewUnionValue(heap, 0, argP);
+    FbleReleaseValue(heap, argP);
+  }
+
+  FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe->_base, 0, NULL);
   FbleValue* fble_width = FbleNewIntValue(heap, width);
   FbleValue* fble_height = FbleNewIntValue(heap, height);
 
-  FbleValue* args[4] = { fble_event, fble_effect, fble_width, fble_height };
+  FbleValue* args[6] = {
+    fble_stdio, fble_event, fble_effect, fble_width, fble_height, argS
+  };
   FbleValue* computation = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
   FbleReleaseValue(heap, args[1]);
   FbleReleaseValue(heap, args[2]);
   FbleReleaseValue(heap, args[3]);
+  FbleReleaseValue(heap, args[4]);
+  FbleReleaseValue(heap, args[5]);
 
   if (computation == NULL) {
     FbleFreeValueHeap(heap);
@@ -619,7 +656,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     return EX_FAILURE;
   }
 
-  // computation has type IO@<Unit@>, which is (World@) { R@<Bool@>; }
+  // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
   FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, &world, profile);
 
@@ -635,6 +672,11 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleFreeExecutable(event_exe);
   FbleFreeExecutable(&effect_exe->_base);
 
+  int exit_status = EX_FAILURE;
+  if (result != NULL) {
+    exit_status = FbleUnionValueTag(FbleStructValueField(result, 1));
+  }
+
   FbleReleaseValue(heap, computation);
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
@@ -646,5 +688,5 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   SDL_DestroyWindow(window);
   SDL_Quit();
 
-  return EX_SUCCESS;
+  return exit_status;
 }

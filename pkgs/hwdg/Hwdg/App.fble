@@ -1,36 +1,7 @@
 
-<<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
-
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
-% Color = /App/Drawing%.Color;
-% Rect = /App/Drawing%.Rect;
-% Over = /App/Drawing%.Over;
-% Affine = /App/Drawing%.Affine;
-
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
-
-@ Coord@ = /Hwdg/Coord%.Coord@;
-
-@ Data@ = /Hwdg/Data%.Data@;
-% Data0 = /Hwdg/Data%.0;
-% Data1 = /Hwdg/Data%.1;
-
-@ Design@ = /Hwdg/Design%.Design@;
-@ Rule@ = /Hwdg/Design%.Rule@;
-<@>@ Ports@ = /Hwdg/Design%.Ports@;
-<@>% ForEachRule = /Hwdg/Design%.ForEachRule;
-% Step = /Hwdg/Design%.Step;
-
-@ Memory@ = /Hwdg/Memory%.Memory@;
-% Empty = /Hwdg/Memory%.Empty;
-% Set = /Hwdg/Memory%.Set;
 
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;
@@ -47,10 +18,47 @@
 
 % Int = /Core/Int/Lit%.Int;
 
+<@>@ List@ = /Core/List%.List@;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
+
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+@ Point@ = /App/Drawing%.Point@;
+% Color = /App/Drawing%.Color;
+% Rect = /App/Drawing%.Rect;
+% Over = /App/Drawing%.Over;
+% Affine = /App/Drawing%.Affine;
+
+
+@ Coord@ = /Hwdg/Coord%.Coord@;
+
+@ Data@ = /Hwdg/Data%.Data@;
+% Data0 = /Hwdg/Data%.0;
+% Data1 = /Hwdg/Data%.1;
+
+@ Design@ = /Hwdg/Design%.Design@;
+@ Rule@ = /Hwdg/Design%.Rule@;
+<@>@ Ports@ = /Hwdg/Design%.Ports@;
+<@>% ForEachRule = /Hwdg/Design%.ForEachRule;
+% Step = /Hwdg/Design%.Step;
+
+@ Memory@ = /Hwdg/Memory%.Memory@;
+% Empty = /Hwdg/Memory%.Empty;
+% Set = /Hwdg/Memory%.Set;
 
 Int@ XMin = Neg(Int|20);
 Int@ XMax = Int|20;
@@ -120,7 +128,7 @@ Memory@ Cells = {
 
 @ Input@ = +(Unit@ quit, Unit@ step);
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(Input@(step: Unit)),
@@ -150,13 +158,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
           false: StepUI(Decr(n), design, Step(design, cells))));
   };
 
-  M@<Unit@> WaitForKeyPress = {
+  M@<Bool@> WaitForKeyPress = {
     Event@ e <- m.do(app.event);
-    e.?(key_down: m.return(Unit), : WaitForKeyPress);
+    e.?(key_down: m.return(True), : WaitForKeyPress);
   };
 
   Unit@ _ <- m.do(Output(Effect@(draw: Draw(Design, Cells))));
-  Unit@ _ <- m.do(WaitForKeyPress);
+  Bool@ _ <- m.do(WaitForKeyPress);
   Unit@ _ <- m.do(StepUI(Int|2000, Design, Cells));
 
   WaitForKeyPress;

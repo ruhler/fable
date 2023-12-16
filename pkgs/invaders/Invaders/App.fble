@@ -1,4 +1,23 @@
 
+% True = /Core/Bool%.True;
+
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% Neg = /Core/Int%.Neg;
+% Max = /Core/Int/Eq%.Max;
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
 <<@>@>@ App@ = /App/App%.App@;
 <<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
@@ -9,18 +28,6 @@
 % Over = /App/Drawing%.Over;
 % Rect = /App/Drawing%.Rect;
 % Affine = /App/Drawing%.Affine;
-
-@ Int@ = /Core/Int%.Int@;
-% 0 = /Core/Int%.0;
-% Neg = /Core/Int%.Neg;
-% Max = /Core/Int/Eq%.Max;
-
-% Int = /Core/Int/Lit%.Int;
-
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 % Game = /Invaders/Game%;
 @ Game@ = Game.Game@;
@@ -38,7 +45,7 @@ Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
 Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
     e.?(
@@ -89,7 +96,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   Game@ game = Game.Initial(Int|1234);
   Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
   Int@ _high <- m.do(Run(tick, game));
-  m.return(Unit);
+  m.return(True);
 };
 
 Main;

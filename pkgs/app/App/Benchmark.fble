@@ -1,4 +1,7 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Core/Int%.Int@;
@@ -6,7 +9,13 @@
 
 % Int = /Core/Int/Lit%.Int;
 
+<@>% Nil = /Core/List%.Nil;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
 
 @ TestResult@ = /Core/Test%.TestResult@;
 
@@ -49,8 +58,10 @@ Benchmark = (Main@ app, Int@ n, Event@ quit)(Unit@ _) {
     Monad.return(Unit);
   };
 
-  R@<Unit@> r = app<M@>(Monad, App@<M@>(Event, Effect), w, h)(n);
-  AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, r.x, r.x);
+  Stdio@<M@> stdio = /Core/Stdio/Stub%.Stdio<M@>(Monad);
+  M@<Bool@> m = app<M@>(Monad, stdio, App@<M@>(Event, Effect), w, h)(Nil<String@>);
+  R@<Bool@> r = m(n);
+  AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, r.x);
 };
 
 @(Benchmark);

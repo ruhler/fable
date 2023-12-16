@@ -1,4 +1,19 @@
 
+% True = /Core/Bool%.True;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
 <<@>@>@ App@ = /App/App%.App@;
 <<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
@@ -15,14 +30,6 @@
 % Drawings = /App/Drawing%.Drawings;
 % Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Core/Int%.Int@;
-
-<@>% List = /Core/List%.List;
-
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Floor = /Pinball/Num%.Floor;
@@ -192,7 +199,7 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
   World@(w.gravity, w.ball, w.edges, List[l, RightPaddle(v, r.pos)]);
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
   M@<Event@> GetInput = app.event;
 
   Point@ a = @(x: Floor(Int|1), y: Floor(Neg(Int|1)));
@@ -243,8 +250,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
   Unit@ _ <- m.do(app.effect(Effect@(tick: Floor(0))));
-  Run(tick, Initial); 
+  Unit@ _ <- m.do(Run(tick, Initial)); 
+  m.return(True);
 };
 
 Main;
-

@@ -1,33 +1,39 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+
 @ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
 
 <@>@ IO@ = /Core/Monad/IO%.IO@;
 <@>@ R@ = /Core/Monad/IO%.R@;
 @ World@ = /Core/Monad/IO%.World@;
+
+@ StdioIO@ = /Core/Stdio/IO%.StdioIO@;
+% StdioIO = /Core/Stdio/IO%.StdioIO;
+
+@ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
+@ Main@ = (
+  StdioIO@, IO@<Event@>, (Effect@, World@) { R@<Unit@>; },
+  Int@, Int@, List@<String@>) { IO@<Bool@>; };
+
 # Run --
 #   A top-level IO implementation for running an App Main@ program.
-(/App/App%.Main@)(
-  IO@<Event@>,
-  (Effect@, World@) { R@<Unit@>; },
-  Int@, Int@) { IO@<Unit@>; }
+(/App/App%.Main@) { Main@; }
 Run = (/App/App%.Main@ main)(
+  StdioIO@ stdio,
   IO@<Event@> event,
   (Effect@, World@) { R@<Unit@>; } effect,
-  Int@ width, Int@ height) {
-  # Note: We pass effect as a function taking the effect and the
-  # world rather than a function from effect to IO@ just so we don't have to
-  # implement the currying on the native C side.
-  main<IO@>(
-    /Core/Monad/IO%.Monad,
+  Int@ width, Int@ height, List@<String@> args) {
+  main<IO@>(/Core/Monad/IO%.Monad, StdioIO(stdio),
     /App/App%.App@<IO@>(event, (Effect@ e)(World@ w) { effect(e, w); }),
-    width,
-    height);
+    width, height)(args);
 };
 
 @(Run);

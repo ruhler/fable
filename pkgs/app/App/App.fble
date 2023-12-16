@@ -1,9 +1,17 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+
 @ Drawing@ = /App/Drawing%.Drawing@;
 
 @ Int@ = /Core/Int%.Int@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -71,9 +79,17 @@
 # Inputs:
 #   M@ - An abstract computation type.
 #   monad - The monad interface for M@.
+#   stdio - A Stdio@ interface for M@.
 #   app - The app interface for M@.
 #   width - The initial width of the screen.
 #   height - The initial height of the screen.
-<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; };
+#   args - The list of arguments to the application.
+#
+# Results:
+#   True if the program ran successfully and should exit zero. False if the
+#   program failed and should exit non-zero.
+<<@>@>@ Main@ = <<@>@ M@>(
+  Monad@<M@>, Stdio@<M@>,
+  App@<M@>, Int@, Int@)(List@<String@>) { M@<Bool@>; };
 
 @(App@, Main@, Key@, Resize@, Event@, Effect@);

@@ -1,19 +1,4 @@
 
-<<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
-
-@ Color@ = /App/Drawing%.Color@;
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-% Blank = /App/Drawing%.Blank;
-% Color = /App/Drawing%.Color;
-% Drawings = /App/Drawing%.Drawings;
-% Rect = /App/Drawing%.Rect;
-% Over = /App/Drawing%.Over;
-% Affine = /App/Drawing%.Affine;
-
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
@@ -53,8 +38,28 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Color@ = /App/Drawing%.Color@;
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Blank = /App/Drawing%.Blank;
+% Color = /App/Drawing%.Color;
+% Drawings = /App/Drawing%.Drawings;
+% Rect = /App/Drawing%.Rect;
+% Over = /App/Drawing%.Over;
+% Affine = /App/Drawing%.Affine;
+
 
 Int@ MinRow = Int|0;    # Inclusive. This is a legal row.
 Int@ MaxRow = Int|20;   # Inclusive. This is a legal row.
@@ -251,7 +256,7 @@ State@ InitialState = {
   Best(Best(up, down), Best(left, right)).dir;
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
     e.?(
@@ -304,9 +309,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   Unit@ _ <- m.do(app.effect(Effect@(tick: Int|16)));
   Unit@ _ <- m.do(Snake(s));
 
-  M@<Unit@> WaitForKeyPress = {
+  M@<Bool@> WaitForKeyPress = {
     Event@ e <- m.do(app.event);
-    e.?(key_down: m.return(Unit), : WaitForKeyPress);
+    e.?(key_down: m.return(True), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

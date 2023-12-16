@@ -1,17 +1,6 @@
 
-<<@>@>@ App@ = /App/App%.App@;
-<<@>@>@ Main@ = /App/App%.Main@;
-@ Event@ = /App/App%.Event@;
-@ Effect@ = /App/App%.Effect@;
-@ Resize@ = /App/App%.Resize@;
-
-@ Drawing@ = /App/Drawing%.Drawing@;
-@ Point@ = /App/Drawing%.Point@;
-% Color = /App/Drawing%.Color;
-% Rect = /App/Drawing%.Rect;
-% Over = /App/Drawing%.Over;
-% Affine = /App/Drawing%.Affine;
-
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
 % And = /Core/Bool%.And;
 
 @ Int@ = /Core/Int%.Int@;
@@ -29,12 +18,31 @@
 
 % Int = /Core/Int/Lit%.Int;
 
+<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+@ Resize@ = /App/App%.Resize@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Color = /App/Drawing%.Color;
+% Rect = /App/Drawing%.Rect;
+% Over = /App/Drawing%.Over;
+% Affine = /App/Drawing%.Affine;
+
 
 @ World@ = /Games/GameOfLife%.World@;
 @ Coord@ = /Games/GameOfLife%.Coord@;
@@ -90,7 +98,7 @@ World@ acorn = World(List<Coord@>[
   World@ w    # The game world.
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
 
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
@@ -123,9 +131,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   State@ s = State@(Int|200, a, b, acorn);
   Unit@ _ <- m.do(StepUI(s));
 
-  M@<Unit@> WaitForKeyPress = {
+  M@<Bool@> WaitForKeyPress = {
     Event@ e <- m.do(app.event);
-    e.?(key_down: m.return(Unit), : WaitForKeyPress);
+    e.?(key_down: m.return(True), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

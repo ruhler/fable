@@ -1,12 +1,13 @@
 @usage[fble-app] runs an fble app program
  @synopsis
- @ @l[fble-app] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+ @ @l[fble-app] \[@a[OPTION]...\] @a[ARG...]
  
  @description
   Runs an fble app program.
  
-  The fble program should be of type @l{/App/App%.Main@}. Behavior is
-  undefined if the module to run does not have type @l{/App/App%.Main@}.
+  The fble program should be the result of calling @l{/App/IO%.Run} on an
+  argument of type @l{/App/App%.Main@}. Behavior is undefined if the module
+  does not have type @l{/App/IO%.Main@}.
  
  @options
   @GenericProgramInfo
@@ -18,11 +19,19 @@
 
   @subsection Other Options
    @opt[@l[--fps]] reports frames per second histogram when done
+   @opt[@l[--]] indicates end of options
+ 
+   Everything that follows @l[--] is considered @a[ARG...]. Normally the first
+   unrecognized option is considered the start of @a[ARG...]. In the case of
+   compiled fble-stdio binaries, all arguments are assumed to belong to
+   @a[ARG...] unless @l[--] is present, in which case arguments before @l[--]
+   are fble-stdio options and arguments after @l[--] are @a[ARG...].
  
  @exitstatus
-  @def[0] Success.
-  @def[1] Failure.
-  @def[2] Usage Error.
+  @def[0] @l[Stdio\@] process returns @l[True].
+  @def[1] @l[Stdio\@] process returns @l[False].
+  @def[2] Usage Error
+  @def[3] Other Error.
  
  @examples
   @ex[fble-app -p core -p app -m /App/Demo% --fps]
