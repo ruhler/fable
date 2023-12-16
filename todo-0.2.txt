@@ -108,4 +108,3 @@ App Development
  - Parse dimacs cnf incrementally instead of all at once?
    There should be no need to have the entire text of the file in memory all
    at one time.
-* high score saved in invaders game.

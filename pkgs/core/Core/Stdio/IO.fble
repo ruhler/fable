@@ -5,6 +5,8 @@
 <@>@ List@ = /Core/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Nothing = /Core/Maybe%.Nothing;
+<@>% Just = /Core/Maybe%.Just;
 
 <@>@ IO@ = /Core/Monad/IO%.IO@;
 @ World@ = /Core/Monad/IO%.World@;
@@ -24,7 +26,7 @@
   (Int@, World@) { R@<Unit@>; } stdout,
   (Int@, World@) { R@<Unit@>; } stderr,
   (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } read,
-  (String@, World@) { R@<Maybe@<OStream@<IO@>>>; } write,
+  (String@, World@) { R@<Maybe@<(Int@, World@) { R@<Unit@>; }>>; } write,
   (String@, World@) { R@<Maybe@<String@>>; } getenv
 );
 
@@ -34,7 +36,11 @@
     out: (Int@ s)(World@ w) { stdio.stdout(s, w); },
     err: (Int@ s)(World@ w) { stdio.stderr(s, w); },
     read: (String@ s)(World@ w) { stdio.read(s, w); },
-    write: (String@ s)(World@ w) { stdio.write(s, w); },
+    write: (String@ s)(World@ w) {
+      R@<Maybe@<(Int@, World@) { R@<Unit@>; }>> r = stdio.write(s, w);
+      r.x.?(nothing: @(s: r.s, x: Nothing<OStream@<IO@>>));
+      @(s: r.s, x: Just((Int@ s)(World@ w) { r.x.just(s, w); }));
+    },
     getenv: (String@ s)(World@ w) { stdio.getenv(s, w); }
    );
 };

@@ -407,6 +407,7 @@ FbleValue* FbleInterpreterRunFunction(
 
         FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
         FbleValue* call_args[func_exe->num_args];
+        assert(func_exe->num_args == call_instr->args.size);
         for (size_t i = 0; i < func_exe->num_args; ++i) {
           call_args[i] = GET(call_instr->args.xs[i]);
         }
@@ -429,6 +430,7 @@ FbleValue* FbleInterpreterRunFunction(
 
         FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
         tail_call_buffer[0] = GET(call_instr->func);
+        assert(func_exe->num_args == call_instr->args.size);
         for (size_t i = 0; i < func_exe->num_args; ++i) {
           tail_call_buffer[1+i] = GET(call_instr->args.xs[i]);
         }

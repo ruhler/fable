@@ -9,11 +9,15 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -45,7 +49,7 @@ Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
 Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
     e.?(
@@ -93,9 +97,38 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   Int@ frame_period = Int|16;
   M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
 
-  Game@ game = Game.Initial(Int|1234);
+  # Read High Score
+  % I = /Core/Stream/IStream%(m);
+  Int@ high_score <- m.do({
+    Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
+    home.?(nothing: m.return(Int|0));
+
+    String@ filename = Strs[home.just, Str|'/.fble-invaders'];
+    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename));
+    istream.?(nothing: m.return(Int|0));
+
+    String@ text <- m.do(I.GetText(istream.just));
+    m.return(/Core/Int/Show%.Read(text));
+  });
+
+  # Play the game
+  Game@ game = Game.Initial(high_score);
   Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
-  Int@ _high <- m.do(Run(tick, game));
+  Int@ new_high_score <- m.do(Run(tick, game));
+
+  # Save high score.
+  % O = /Core/Stream/OStream%(m);
+  Unit@ _ <- m.do({
+    Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
+    home.?(nothing: m.return(Unit));
+
+    String@ filename = Strs[home.just, Str|'/.fble-invaders'];
+    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename));
+    ostream.?(nothing: m.return(Unit));
+
+    O.PutStr(ostream.just, /Core/Int/Show%.Show(new_high_score));
+  });
+
   m.return(True);
 };
 
