@@ -362,3 +362,41 @@ Some other thoughts:
 * Maybe only inline the code for the main function call. Call out to an
   FbleTailCall to handle the tail call? Because I'm not convinced inlining the
   tail call code helps at all with gdb debugging.
+
+---
+
+Okay, it's implemented now. Fairly gnarly. Hard to debug. But working.
+
+Let's evaluate it:
+* Can we step through code with gdb now more easily?
+  Works awesome with skip -gfi *.c
+* How does runtime performance compare to before the change?
+* How does perf profiling look now?
+
+With this change:
+
+time ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld
+../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+
+real    0m33.546s
+user    0m32.773s
+sys     0m0.761s
+
+Before this change:
+
+time ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld
+../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+
+real    0m33.685s
+user    0m32.985s
+sys     0m0.612s
+
+So, no appreciable difference in performance.
+
+perf profiling looks decent now. Better than with FbleCall everywhere.
+
+What do you say? I think let's take this for now. It gets good coverage, so
+I'm not worried about it hiding bugs. It will just be annoying when I go to
+change the FbleRunFunction API in the next release. If it's too much trouble
+at that point, consider going back to the previous implementation.
+

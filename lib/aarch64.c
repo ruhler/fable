@@ -1130,7 +1130,9 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
       fprintf(fout, "  bl FbleProfileExitBlock\n");
       fprintf(fout, "  b .Lr.%04zx.%zi.ppexb\n", func_id, pc);
 
+      // Callee aborted.
       fprintf(fout, ".Lo.%04zx.%zi.abort:\n", func_id, pc);
+      fprintf(fout, "  mov SP, R_SCRATCH_2\n");
       DoAbort(fout, func_id, pc, ".L.CalleeAborted", call_instr->loc);
       return;
     }
