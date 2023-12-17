@@ -777,7 +777,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Call executable->run
       fprintf(fout, "  ldr x7, [x2, #%zi]\n", offsetof(FbleExecutable, run));
-      fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleFuncValue, statics));
+      fprintf(fout, "  add x4, x0, #%zi\n", offsetof(FbleFuncValue, statics));
       fprintf(fout, "  ldr x5, [x0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
       fprintf(fout, "  mov x1, R_SCRATCH_1\n");   // tail_call_buffer
       fprintf(fout, "  mov x3, SP\n");            // args
@@ -838,7 +838,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Call executable->run
       fprintf(fout, "  ldr x7, [x2, #%zi]\n", offsetof(FbleExecutable, run));
-      fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleFuncValue, statics));
+      fprintf(fout, "  add x4, x0, #%zi\n", offsetof(FbleFuncValue, statics));
       fprintf(fout, "  ldr x5, [x0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
       fprintf(fout, "  add x3, SP, #%zi\n", sizeof(FbleValue*)); // args
       fprintf(fout, "  mov x6, R_PROFILE\n");
