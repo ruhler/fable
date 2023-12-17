@@ -19,6 +19,7 @@
 #include "heap.h"
 #include "tc.h"
 #include "unreachable.h"
+#include "value.h"
 
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
@@ -68,13 +69,14 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 }
 
 // See documentation in fble-execute.h.
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, FbleValue** args)
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* function, FbleValue** args)
 {
-  FbleFuncInfo info = FbleFuncValueInfo(func);
-  FbleExecutable* executable = info.executable;
+  assert(function != NULL && function->tag == FBLE_FUNC_VALUE);
+  FbleFuncValue* func = (FbleFuncValue*)function;
+  FbleExecutable* executable = func->executable;
 
   if (profile) {
-    FbleProfileEnterBlock(profile, info.profile_block_offset + executable->profile_block_id);
+    FbleProfileEnterBlock(profile, func->profile_block_offset + executable->profile_block_id);
   }
 
   size_t buffer_size = executable->tail_call_buffer_size;
@@ -82,14 +84,13 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   FbleValue** tail_call_buffer = buffer;
   FbleValue* result = executable->run(
         heap, tail_call_buffer, executable, args,
-        info.statics, info.profile_block_offset, profile);
+        func->statics, func->profile_block_offset, profile);
   while (result == FbleTailCallSentinelValue) {
     // Invariants at this point in the code:
     // * The new func and args to call are sitting in tail_call_buffer.
     // * The start of our stack allocated buffer is 'buffer'.
-    func = tail_call_buffer[0];
-    info = FbleFuncValueInfo(func);
-    executable = info.executable;
+    func = (FbleFuncValue*)FbleStrictValue(tail_call_buffer[0]);
+    executable = func->executable;
     size_t num_args_plus_1 = 1 + executable->num_args;
     if (executable->tail_call_buffer_size + num_args_plus_1 > buffer_size) {
       size_t incr = executable->tail_call_buffer_size + num_args_plus_1 - buffer_size;
@@ -112,12 +113,12 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
     tail_call_buffer = buffer + num_args_plus_1;
 
     if (profile) {
-      FbleProfileReplaceBlock(profile, info.profile_block_offset + executable->profile_block_id);
+      FbleProfileReplaceBlock(profile, func->profile_block_offset + executable->profile_block_id);
     }
 
     result = executable->run(
         heap, tail_call_buffer, executable, args,
-        info.statics, info.profile_block_offset, profile);
+        func->statics, func->profile_block_offset, profile);
     for (size_t i = 0; i < num_args_plus_1; ++i) {
       FbleReleaseValue(heap, buffer[i]);
     }
@@ -133,8 +134,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 // See documentation in fble-execute.h.
 FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...)
 {
-  FbleExecutable* executable = FbleFuncValueInfo(func).executable;
-  size_t argc = executable->num_args;
+  size_t argc = ((FbleFuncValue*)func)->executable->num_args;
   FbleValue* args[argc];
   va_list ap;
   va_start(ap, func);

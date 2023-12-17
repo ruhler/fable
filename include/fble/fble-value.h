@@ -324,36 +324,6 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
 FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...);
 
 /**
- * Info associated with an fble function value.
- */
-typedef struct {
-  /** Executable for running the function. */
-  FbleExecutable* executable;
-
-  /** Relative offset for block ids referenced from the function. */
-  size_t profile_block_offset;
-
-  /**
-   * The function's static variables.
-   *
-   * The number of elements is executable->num_statics.
-   */
-  FbleValue** statics;
-} FbleFuncInfo;
-
-/**
- * @func[FbleFuncValueInfo] Gets the info associated with a function.
- *  The returned info is owned by the function. It is only valid for as long
- *  as the function is valid, and it will be automatically cleaned up as part
- *  of the function's cleanup.
- *
- *  @arg[FbleValue*][func] The function to get the info for. Must not be NULL.
- *  @returns[FbleFuncInfo] The info for the function.
- *  @sideeffects None.
- */
-FbleFuncInfo FbleFuncValueInfo(FbleValue* func);
-
-/**
  * @func[FbleEval] Evaluates a linked program.
  *  The program is assumed to be a zero argument function as returned by
  *  FbleLink.

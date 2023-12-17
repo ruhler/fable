@@ -92,7 +92,7 @@ namespace eval "include" {
       FbleUnionValueTag FbleUnionValueArg
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
       FbleNewFuncValue FbleNewFuncValue_
-      FbleFuncValueInfo FbleEval FbleApply
+      FbleEval FbleApply
       FbleNewRefValue FbleAssignRefValue FbleStrictValue
     }
     fble-vector.h {

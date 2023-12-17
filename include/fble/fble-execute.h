@@ -23,8 +23,9 @@
  *  Type of a C function that implements an fble function.
  *
  *  To perform a tail call, the implementation of the run function should
- *  place the function to call followed by args in order into the
- *  tail_call_buffer, then return FbleTailCallSentinelValue.
+ *  place the (possibly non-FbleStrictValue()) function to call followed by
+ *  args in order into the tail_call_buffer, then return
+ *  FbleTailCallSentinelValue.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
@@ -228,7 +229,8 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *  @arg[FbleProfileThread*] profile
  *   The current profile thread, or NULL if profiling is disabled.
  *  @arg[FbleValue*] func
- *   The function to execute. Borrowed.
+ *   The function to execute. Borrowed. Must be in strict form re
+ *   FbleStrictValue.
  *  @arg[FbleValue**] args
  *   Arguments to pass to the function. length == func->argc. Borrowed.
  *

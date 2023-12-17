@@ -15,6 +15,7 @@
 
 #include "code.h"
 #include "unreachable.h"
+#include "value.h"
 
 static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc);
 
@@ -384,7 +385,7 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         };
 
-        FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
+        FbleExecutable* func_exe = ((FbleFuncValue*)func)->executable;
         FbleValue* call_args[func_exe->num_args];
         assert(func_exe->num_args == call_instr->args.size);
         for (size_t i = 0; i < func_exe->num_args; ++i) {
@@ -407,7 +408,7 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         };
 
-        FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
+        FbleExecutable* func_exe = ((FbleFuncValue*)func)->executable;
         tail_call_buffer[0] = GET(call_instr->func);
         assert(func_exe->num_args == call_instr->args.size);
         for (size_t i = 0; i < func_exe->num_args; ++i) {

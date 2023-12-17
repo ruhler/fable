@@ -275,3 +275,69 @@ Anyway, don't worry about this now. Back to where we were.
 2. Call into FbleFuncValueInfo to get the function info.
   No need to save the function value across this call, because we never refer
   to it again.
+3. If profiling is enabled, jump to profiling code to call
+  FbleProfileEnterBlock.
+  Will need to save info across this call. Use R_SCRATCH_0.
+4. Allocate space for arguments on stack. Set up args.
+5. Allocate space for tail call buffer on stack.
+6. Call the executable->run function.
+7. Save the result to call_instr->dest.
+8. Loop check:
+  If result != FbleTailCallSentinelValue, goto end of loop
+9. Loop body:
+  a. Call FbleFuncValueInfo to get function info.
+  b. Expand stack allocation as needed.
+  c. Copy args over to the right place - will need an inner loop.
+  d. Jump to profiling code to call FbleProfileReplaceBlock.
+     Need to save info across this call.
+  e. Call run function. Save the result to call_instr->dest.
+  e. Call FbleReleaseValues on args.
+     Save result across the call.
+  f. Go to loop check.
+10. End of loop:
+  a. Call FbleProfileExitBlock if needed. Jump to profiling code for that.
+     No need to save anything.
+  b. Reset the stack pointer from saved value.
+
+The big thing to keep track of at all times is the stack allocation.
+* SP is the start of the stack allocation for tail call and args.
+* Save some reg which is the value of SP before that.
+* We'll need to make sure we always allocate SP in 16 byte chunks. There
+  should be easy logic somewhere to round up to next 16 byte size.
+  As in: (x + 15) & (~0x4);
+
+---
+
+Challenge: How does FbleFuncInfo get returned? Do we need to allocate space
+for it in advance? Is it returned via registers? It would really be nice if I
+could just access FuncValue directly.
+
+From the assembly code, looks like it's storing it to the address passed via
+x8?
+
+Do I want to make FbleValue* public in its entirety? What's the downside? What
+are the consequences?
+* It's really nice to know I can change the format without impacting things.
+* It's nice to know they can only be constructed in value.c. We can deal with
+  packing properly that way.
+
+So, yeah, I would rather keep it private if possible. But making FbleFuncValue
+public seems okay?
+
+It's pretty tempting to allow FbleValue* to be public, so we can directly
+access things from assembly code. But again, there's a risk.
+
+A possible compromise would be to return a pointer to FbleFuncValueInfo
+instead of an FbleFuncValueInfo? Or have a function to extract the fields by
+passing pointers to where to store?
+
+According to the aarch64 spec, allocating a pointer and passing in x8 is the
+right thing, because this is a composite type of more than 16 bytes.
+
+How about this:
+* In value.h, internally make available:
+  FbleValueTag, FbleValue, FbleFuncValue.
+* Get rid of FbleFuncValueInfo. I don't think anyone uses it outside of
+  internal library anymore, right?
+
+Surely that's better? A decent compromise?
