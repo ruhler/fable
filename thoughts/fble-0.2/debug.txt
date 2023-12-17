@@ -341,3 +341,24 @@ How about this:
   internal library anymore, right?
 
 Surely that's better? A decent compromise?
+
+---
+
+Okay, got rid of FbleFuncValueInfo. Now we can access directly from the func
+value.
+
+Okay, draft of assembly code done. 115 lines of code so far. I'm sure there
+are errors. Hopefully nothing major. I also still need to write all the
+profiling code.
+
+I'm not convinced this kind of complexity is worth having. Code bloat, hard to
+maintain, probably doesn't buy us any performance, not clear it's actually
+useful for anything in the future. All just for an improvement to a
+fundamentally limited debugger approach?
+
+Some other thoughts:
+* Maybe this helps perf profiling? Though we could probably special case
+  FbleCall and recover all the same information at processing time.
+* Maybe only inline the code for the main function call. Call out to an
+  FbleTailCall to handle the tail call? Because I'm not convinced inlining the
+  tail call code helps at all with gdb debugging.
