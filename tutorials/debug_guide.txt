@@ -39,13 +39,5 @@ tricks for making the most of the currently available debug support.
     gdb -x pkgs/core/trace.gdb ...
 
 * To avoid stepping into runtime implementation code:
-  In theory:
+
     skip -gfi *.c
-  But doesn't seem to work in practice?
-  It does 'skip' function calls, but that's not what we want. We want it to go
-  into function calls, but only stop when it reaches the fble code.
-
-  The other option: link against a libfble without any symbols.
-  Behaves the same as skip -gfi *.c? Odd. Maybe debug symbols aren't generated
-  correctly?
-
