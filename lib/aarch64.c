@@ -17,6 +17,7 @@
 #include "code.h"
 #include "tc.h"
 #include "unreachable.h"
+#include "value.h"
 
 /** Type representing a name as an integer. */
 typedef unsigned int LabelId;
@@ -780,7 +781,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  ldr x5, [x0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
       fprintf(fout, "  mov x1, R_SCRATCH_1\n");   // tail_call_buffer
       fprintf(fout, "  mov x3, SP\n");            // args
-      fprintf(fout, "  mov x6, R_PROFILE\n", offsetof(FbleFuncValue, profile_block_offset));
+      fprintf(fout, "  mov x6, R_PROFILE\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  blr x7\n");
       SetFrameVar(fout, "x0", call_instr->dest);
@@ -804,6 +805,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  ldr x2, [x0, #%zi]\n", offsetof(FbleFuncValue, executable));
       fprintf(fout, "  ldr x1, [x2, #%zi]\n", offsetof(FbleExecutable, tail_call_buffer_size));
       fprintf(fout, "  ldr x3, [x2, #%zi]\n", offsetof(FbleExecutable, num_args));
+      fprintf(fout, "  add R_SCRATCH_0, x3, #1\n"); // num_args + 1
       fprintf(fout, "  add x1, x1, x3\n");
       fprintf(fout, "  add x1, x1, #2\n");  // 1 for func, 1 for stack align.
 
@@ -813,31 +815,33 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  lsl x1, x1, #4\n");
 
       // Prepare arguments and tail call buffer on the stack.
-      fprintf(fout, "  sub x4, R_SCRATCH_2, x1\n");
-      fprintf(fout, "  cmp x4, SP\n");
-      fprintf(fout, "  mov.lt SP, x4\n");
-      fprintf(fout, "  add R_SCRATCH_0, x3, #1\n"); // num_args + 1
+      fprintf(fout, "  mov x5, SP\n");
+      fprintf(fout, "  sub x4, R_SCRATCH_2, x5\n");
+      fprintf(fout, "  cmp x4, x1\n");
+      fprintf(fout, "  csel x1, x4, x1, gt\n");
+      fprintf(fout, "  sub SP, R_SCRATCH_2, x1\n");
 
       // Copy func, args to start of buffer.
       fprintf(fout, "  lsl x3, R_SCRATCH_0, #3\n");
       fprintf(fout, "  add x1, SP, x3\n");        // new tail_call_buffer
       fprintf(fout, "  mov x4, #0\n");
       fprintf(fout, ".Lr.%04zx.%zi.scp:\n", func_id, pc);
-      fprintf(fout, "  cmp x4, x1\n");
-      fprintf(fout, "  b.eq .Lr.%04zx,%zi.ecp\n", func_id, pc);
+      fprintf(fout, "  cmp x4, x3\n");
+      fprintf(fout, "  b.eq .Lr.%04zx.%zi.ecp\n", func_id, pc);
       fprintf(fout, "  ldr x5, [R_SCRATCH_1, x4]\n");
       fprintf(fout, "  str x5, [SP, x4]\n");
       fprintf(fout, "  add x4, x4, #%zi\n", sizeof(FbleValue*));
       fprintf(fout, "  b .Lr.%04zx.%zi.scp\n", func_id, pc);
+      fprintf(fout, ".Lr.%04zx.%zi.ecp:\n", func_id, pc);
 
-      fprintf(fout, "  mv R_SCRATCH_1, x1\n");    // new tail_call_buffer
+      fprintf(fout, "  mov R_SCRATCH_1, x1\n");    // new tail_call_buffer
 
       // Call executable->run
       fprintf(fout, "  ldr x7, [x2, #%zi]\n", offsetof(FbleExecutable, run));
       fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleFuncValue, statics));
       fprintf(fout, "  ldr x5, [x0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
       fprintf(fout, "  add x3, SP, #%zi\n", sizeof(FbleValue*)); // args
-      fprintf(fout, "  mov x6, R_PROFILE\n", offsetof(FbleFuncValue, profile_block_offset));
+      fprintf(fout, "  mov x6, R_PROFILE\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  blr x7\n");
       SetFrameVar(fout, "x0", call_instr->dest);
@@ -845,7 +849,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Free func and args.
       fprintf(fout, "  mov x1, R_SCRATCH_0\n");   // num_args + 1
-      fprintf(fout, "  mov x2, R_SCRATCH_1\n");   // tail_call_buffer
+      fprintf(fout, "  mov x2, SP\n");            // buffer
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");   // save result
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  bl FbleReleaseValues\n");
@@ -1098,7 +1102,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 
       // Call FbleProfileEnterBlock.
       fprintf(fout, ".Lo.%04zx.%zi.peb:\n", func_id, pc);
-      fprintf(fout, "  mov R_SCRATCH_0, x0");
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
       fprintf(fout, "  ldr x1, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
       fprintf(fout, "  ldr x2, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, executable));
       fprintf(fout, "  ldr x2, [x2, #%zi]\n", offsetof(FbleExecutable, profile_block_id));
@@ -1110,7 +1114,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 
       // Call FbleProfileReplaceBlock.
       fprintf(fout, ".Lo.%04zx.%zi.prb:\n", func_id, pc);
-      fprintf(fout, "  mov R_SCRATCH_0, x0");
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
       fprintf(fout, "  ldr x1, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
       fprintf(fout, "  ldr x2, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, executable));
       fprintf(fout, "  ldr x2, [x2, #%zi]\n", offsetof(FbleExecutable, profile_block_id));
