@@ -16,7 +16,7 @@ tricks for making the most of the currently available debug support.
   print FbleStringValueAccess(foo)
 
 * To access a struct field:
-  print FbleStructValueAccess(foo, tag)
+  print FbleStructValueField(foo, tag)
 
 * To set a breakpoint that will trigger on runtime error:
   break fprintf

@@ -23,7 +23,8 @@ Env@ Env = Builtins[
   @(name: Str|'tail',   impl: /Fbld/Builtin/String%.Tail),
   @(name: Str|'define', impl: /Fbld/Builtin/Define%.Define),
   @(name: Str|'eval',   impl: /Fbld/Builtin/Eval%.Eval),
-  @(name: Str|'plain',  impl: /Fbld/Builtin/Plain%.Plain)
+  @(name: Str|'plain',  impl: /Fbld/Builtin/Plain%.Plain),
+  @(name: Str|'error',  impl: /Fbld/Builtin/Error%.Error)
 ];
 
 @(Env);

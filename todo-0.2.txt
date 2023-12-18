@@ -75,17 +75,11 @@ Syntax highlighting:
 Fbld Misc:
 * Test for location tracking across @head and @tail?
 * Allow multiple errors to be reported from a single run.
-* Implement @error builtin?
 
 Debugging:
 * For gdb debug, it would be great to be able to access fields of structs.
   Example: ra.ok.in is a string, ra is a struct value. Right now, if you try
   to print ra.ok, it says 'There is no member named ok.'
-* Come up with a nicer way to implement printf debugging?
-  - That doesn't depend on gdb, or entering commands, or compiling to aarch64,
-    for example.
-  - Or just use stdio for that?
-  - Or move /Sat/Debug% code to /Core/Debug%?
 
 Error Messages:
 * Better type error message in case when two different types have the same

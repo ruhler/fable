@@ -459,6 +459,9 @@
 
     The command @a[f] ought to satisfy the property: @l{@f[xy] = @f[x]@f[y]}
 
+   @definition @l{@error[msg]}
+    Reports @a[msg] as an error processing the fbld file.
+
   @subsection Evaluation
    Commands do not have any side effects. When a command is encountered in an
    fbld document, it is substituted for the result of its evaluation according
