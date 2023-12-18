@@ -27,7 +27,7 @@
 % Append = /Fbld/Markup%.Append;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Err = /Fbld/Result%.Err;
+<@>% Error = /Fbld/Result%.Error;
 % r = /Fbld/Result%.Monad;
 
 (Markup@) { Result@<Maybe@<Char@>>; } HeadOf = (Markup@ markup) {
@@ -35,7 +35,7 @@
     empty: r.return(Nothing<Char@>),
     plain: r.return(Just(markup.plain.text.cons.head)),
     command: {
-      Err<Maybe@<Char@>>(markup.command.name.loc, Strs[
+      Error<Maybe@<Char@>>(markup.command.name.loc, Strs[
           Str|'expected plain text, but found command @',
           markup.command.name.text]);
     },
@@ -60,7 +60,7 @@ Impl@ Head = (Env@ env, Command@ cmd) {
       r.return(Plain(markup.plain.loc, markup.plain.text.cons.tail));
     },
     command: {
-      Err<Markup@>(markup.command.name.loc, Strs[
+      Error<Markup@>(markup.command.name.loc, Strs[
           Str|'expected plain text, but found command @',
           markup.command.name.text]);
     },

@@ -26,7 +26,7 @@
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
-<@>% Err = /Fbld/Result%.Err;
+<@>% Error = /Fbld/Result%.Error;
 % r = /Fbld/Result%.Monad;
 
 (List@<String@>) { Result@<String@>; } Run = (List@<String@> lines) {
@@ -156,7 +156,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     Result@<String@> got = Run[
       Str|'@error[Oh no!]'
     ];
-    Result@<String@> wnt = Err<String@>(
+    Result@<String@> wnt = Error<String@>(
       Loc@(Str|'foo.fbld', Int|1, Int|2),
       Str|'Oh no!'
     );

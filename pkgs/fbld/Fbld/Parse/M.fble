@@ -31,7 +31,6 @@
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
-<@>% Err = /Fbld/Result%.Err;
 <@>% Fail = /Fbld/Result%.Fail;
 
 @ Text@ = /Fbld/Text%.Text@;
@@ -81,7 +80,7 @@ M@<Int@> GetIndent = (R@ r) {
 # appropriate. Fails if there are no more characters in the input stream.
 M@<CharL@> GetL_ = (R@ r) {
   List@<CharL@> in = r.s;
-  in.?(nil: Err<SM@<CharL@>>(Unknown, Str|'unexpected end of input'));
+  in.?(nil: /Fbld/Result%.Error<SM@<CharL@>>(Unknown, Str|'unexpected end of input'));
   Ok(SM@(in.cons.tail, in.cons.head));
 };
 

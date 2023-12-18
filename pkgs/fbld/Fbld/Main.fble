@@ -29,7 +29,7 @@
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
-<@>% Err = /Fbld/Result%.Err;
+<@>% Error = /Fbld/Result%.Error;
 % r = /Fbld/Result%.Monad;
 <@>% ShowError = /Fbld/Result/Show%.ShowError;
 
@@ -57,7 +57,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
     fin.?(nothing: {
       String@ msg = Strs[Str|'unable to open ', filename];
-      m.return(Err<List@<Text@>>(Unknown, msg));
+      m.return(Error<List@<Text@>>(Unknown, msg));
     });
 
     String@ contents <- m.do(I.GetText(fin.just));

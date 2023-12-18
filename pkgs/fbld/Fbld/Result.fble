@@ -35,7 +35,7 @@ Error_ = <@ T@>(Text@ e) {
 
 # Indicate an error with location and string error message.
 <@ T@>(Loc@, String@) { Result@<T@>; }
-Err = <@ T@>(Loc@ l, String@ msg) {
+Error = <@ T@>(Loc@ l, String@ msg) {
   Error_<T@>(Text(l, msg));
 };
 
@@ -55,4 +55,4 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
 
 /Core/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
 
-@(Result@, Error@, Ok, Raise, Error_, Err, Fail, Monad);
+@(Result@, Error@, Ok, Raise, Error_, Error, Fail, Monad);

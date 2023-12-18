@@ -11,7 +11,7 @@
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
-<@>% Err = /Fbld/Result%.Err;
+<@>% Error = /Fbld/Result%.Error;
 % r = /Fbld/Result%.Monad;
 
 @ Text@ = /Fbld/Text%.Text@;
@@ -59,7 +59,7 @@ ToString_ = (Markup@ m, String@ s) {
     empty: r.return(s),
     plain: r.return(/Core/List%.Append(m.plain.text, s)),
     command: {
-      Err<String@>(m.command.name.loc, Strs[
+      Error<String@>(m.command.name.loc, Strs[
           Str|'expected plain text, but found command @',
           m.command.name.text
           ]);
