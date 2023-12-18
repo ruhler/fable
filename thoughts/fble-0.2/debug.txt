@@ -467,3 +467,6 @@ see much point right now. I don't want to force code to be monadic everywhere.
 This is another place where better debug support in general for the different
 backends could help.
 
+I'm going to drop the printf debugging todo. See if it comes up again later.
+I'm going to defer the member access debugging todo, because it feels like too
+big a change at this point in the release.

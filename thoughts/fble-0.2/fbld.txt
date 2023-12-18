@@ -5769,3 +5769,54 @@ How about this:
 
 Let's try that and see if I can live with it for now.
 
+---
+
+Allowing for multiple error messages in a single run.
+
+We can't do much for parsing. As soon as the parser gets stuck, bail out. But
+we can for eval. To evaluate a sequence, we can try both and join any errors.
+
+First question is: what API do I want for this?
+
+* Result@ now collects a list of error messages, which you can extract using
+  some API or ShowErrors function.
+* Errors are fatal by default, because we have no value to return in that
+  case.
+* We want a way to defer an error to the end. So: if there's an error, return
+  some default value instead and keep going. A non-fatal error, if you will.
+
+For example: 
+
+  (Result@<A@>, A@) { Result@<A@>; } Try;
+
+The thing is, I still want to mark it as having an error in this case.
+
+We still want the option for 'unknown' error. Or error without a message.
+
+So we have three concepts:
+* List of errors: List@<Text@>.
+* Whether something is in an error state or not: Bool@.
+* The returned value: Maybe@<T@>.
+
+Something can be in an error state even if the list of errors is empty.
+We can have a returned value even if we are in an error state.
+
+The only restriction, I would say, is if we have at least one error message,
+then we are in an error state.
+
+Does the API still make sense?
+* Monad, Ok, 
+* Err -> Error?
+* Remove Error?
+* UnknownErr -> Fail?
+* Add 'Try'? 'Catch'?
+
+    sequence: {
+      Markup@ a <- r.do(Try(Eval(env, markup.sequence.a), Empty));
+      Markup@ b <- r.do(Try(Eval(env, markup.sequence.b), Empty));
+      r.return(Append(a, b));
+    });
+
+Yeah, Try sounds reasonable.
+
+

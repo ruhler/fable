@@ -30,8 +30,9 @@ Err = <@ T@>(Loc@ l, String@ msg) {
   Error<T@>(Error@(message: Text(l, msg)));
 };
 
+# Indicate failure without an associated error message.
 <@ T@> { Result@<T@>; }
-UnknownErr = <@ T@> {
+Fail = <@ T@> {
   Error<T@>(Error@(unknown: Unit));
 };
 
@@ -46,4 +47,4 @@ Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
 /Core/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
 
 @(Result@, Error@,
-  Ok, Error, Err, UnknownErr, Monad);
+  Ok, Error, Err, Fail, Monad);

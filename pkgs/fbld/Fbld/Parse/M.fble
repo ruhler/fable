@@ -33,7 +33,7 @@
 @ Error@ = /Fbld/Result%.Error@;
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
-<@>% UnknownErr = /Fbld/Result%.UnknownErr;
+<@>% Fail = /Fbld/Result%.Fail;
 
 @ Text@ = /Fbld/Text%.Text@;
 
@@ -62,7 +62,7 @@ Return = <@ T@>(T@ x)(R@ r) {
 Error = <@ T@>((Unit@) { Text@; } f)(R@ r) {
   r.report_errors.?(
     true: /Fbld/Result%.Error<SM@<T@>>(Error@(message: f(Unit))),
-    false: UnknownErr<SM@<T@>>);
+    false: Fail<SM@<T@>>);
 };
 
 # Monadic Do for the parser monad.
