@@ -31,7 +31,7 @@
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Error = /Fbld/Result%.Error;
 % r = /Fbld/Result%.Monad;
-<@>% ShowError = /Fbld/Result/Show%.ShowError;
+<@>% ShowErrors = /Fbld/Result/Show%.ShowErrors;
 
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
@@ -47,7 +47,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   ReadInputs = (List@<String@> filenames) {
     filenames.?(nil: m.return(Ok(Nil<Text@>)));
     Result@<List@<Text@>> tail <- m.do(ReadInputs(filenames.cons.tail));
-    tail.?(err: m.return(tail));
+    tail.failed.?(true: m.return(tail));
 
     String@ filename = filenames.cons.head;
     Maybe@<IStream@<M@>> fin <- m.do({
@@ -62,28 +62,28 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
 
     String@ contents <- m.do(I.GetText(fin.just));
     Text@ text = Text(Start(filename), contents);
-    m.return(Ok(Cons(text, tail.ok)));
+    m.return(Ok(Cons(text, tail.value.just)));
   };
 
   (List@<String@> args) {
     Result@<List@<Text@>> inputs <- m.do(ReadInputs(args));
-    inputs.?(err: {
-      Unit@ _ <- m.do(O.PutLine(stdio.err, ShowError(inputs)));
+    inputs.failed.?(true: {
+      Unit@ _ <- m.do(O.PutStr(stdio.err, ShowErrors(inputs)));
       m.return(False);
     });
 
     Result@<String@> result = {
-      Markup@ parsed <- r.do(/Fbld/Parse%.Parse(inputs.ok));
+      Markup@ parsed <- r.do(/Fbld/Parse%.Parse(inputs.value.just));
       Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
       /Fbld/Markup%.ToString(evaled);
     };
 
-    result.?(err: {
-      Unit@ _ <- m.do(O.PutLine(stdio.err, ShowError(result)));
+    result.failed.?(true: {
+      Unit@ _ <- m.do(O.PutStr(stdio.err, ShowErrors(result)));
       m.return(False);
     });
 
-    Unit@ _ <- m.do(O.PutStr(stdio.out, result.ok));
+    Unit@ _ <- m.do(O.PutStr(stdio.out, result.value.just));
     m.return(True);
   };
 };

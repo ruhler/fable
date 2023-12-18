@@ -17,9 +17,11 @@
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
 % Append = /Fbld/Markup%.Append;
+% Empty = /Fbld/Markup%.Empty;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Error = /Fbld/Result%.Error;
+<@>% Try = /Fbld/Result%.Try;
 % r = /Fbld/Result%.Monad;
 
 @ Impl@ = (Env@, Command@) { Result@<Markup@>; },
@@ -41,8 +43,8 @@ Eval = (Env@ env, Markup@ markup) {
       impl.just(env, cmd);
     },
     sequence: {
-      Markup@ a <- r.do(Eval(env, markup.sequence.a));
-      Markup@ b <- r.do(Eval(env, markup.sequence.b));
+      Markup@ a <- r.do(Try(Eval(env, markup.sequence.a), Empty));
+      Markup@ b <- r.do(Try(Eval(env, markup.sequence.b), Empty));
       r.return(Append(a, b));
     });
 };

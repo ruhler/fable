@@ -1,36 +1,49 @@
 
-@ String@ = /Core/String%.String@;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% Or = /Core/Bool%.Or;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
+<@>% Append = /Core/List%.Append;
+
+@ String@ = /Core/String%.String@;
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
 @ Text@ = /Fbld/Text%.Text@;
 % Text = /Fbld/Text%.Text;
 
-# Having an option for an 'unknown' error makes it possible to avoid extra
-# allocations at runtime in case we don't care about the error message.
-@ Error@ = +(Unit@ unknown, Text@ message);
-
 # A result of an operation that may fail.
-<@>@ Result@ = <@ T@> { +(T@ ok, Error@ err); };
-
-<@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@<T@>(ok: x);
+# Note:
+# * The result may be failed even if there are no error messages, as an
+#   optimization to avoid having to allocate error messages if all we care
+#   about is detecting if there was failure or not.
+# * The value may be valid even in case of failure, if the Try function has
+#   been used to accumulate multiple error messages.
+# * If failed is False, value is Just.
+<@>@ Result@ = <@ T@> {
+  *(
+    List@<Text@> errors,    # List of error messages reported.
+    Bool@ failed,           # True if there were any errors, false otherwise.
+    Maybe@<T@> value        # The value of the result.
+  );
 };
 
-# Assuming the given result is an error, change its type.
-# Behavior is undefined if the provided result isn't an error.
-<@ B@><@ A@>(Result@<A@>) { Result@<B@>; }
-Raise = <@ B@><@ A@>(Result@<A@> r) {
-  Result@<B@>(err: r.err);
+<@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
+  Result@(Nil<Text@>, False, Just(x));
 };
 
 # Indicate an error with text error message. 
 <@ T@>(Text@) { Result@<T@>; }
 Error_ = <@ T@>(Text@ e) {
-  Result@<T@>(err: Error@(message: e));
+  Result@(List[e], True, Nothing<T@>);
 };
 
 # Indicate an error with location and string error message.
@@ -42,17 +55,33 @@ Error = <@ T@>(Loc@ l, String@ msg) {
 # Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Result@<T@>(err: Error@(unknown: Unit));
+  Result@(Nil<Text@>, True, Nothing<T@>);
+};
+
+# Assuming the given result is an error, change its type.
+<@ B@><@ A@>(Result@<A@>) { Result@<B@>; }
+Raise = <@ B@><@ A@>(Result@<A@> r) {
+  Result@(r.errors, True, Nothing<B@>);
+};
+
+# Continue on using a default value in case of error. This makes it possible
+# to report multiple errors from the same run.
+<@ A@>(Result@<A@>, A@) { Result@<A@>; }
+Try = <@ A@>(Result@<A@> r, A@ default) {
+  r.failed.?(false: r);
+  Result@(r.errors, True, Just(default));
 };
 
 <@ T@>(T@) { Result@<T@>; } Return = Ok;
 
 <@ A@>(Result@<A@>)<@ B@>((A@) { Result@<B@>; }) { Result@<B@>; }
 Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
-  ra.?(err: Raise<B@>(ra));
-  f(ra.ok);
+  ra.value.?(nothing: Raise<B@>(ra));
+
+  Result@<B@> rb = f(ra.value.just);
+  Result@(Append(ra.errors, rb.errors), Or(ra.failed, rb.failed), rb.value);
 };
 
 /Core/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
 
-@(Result@, Error@, Ok, Raise, Error_, Error, Fail, Monad);
+@(Result@, Monad, Ok, Error_, Error, Fail, Raise, Try);

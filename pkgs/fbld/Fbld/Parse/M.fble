@@ -67,8 +67,8 @@ Error = <@ T@>((Unit@) { Text@; } f)(R@ r) {
 <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
 Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
   Result@<SM@<A@>> ra = ma(r);
-  ra.?(err: /Fbld/Result%.Raise<SM@<B@>>(ra));
-  f(ra.ok.x)(r.@(s: ra.ok.s));
+  ra.failed.?(true: /Fbld/Result%.Raise<SM@<B@>>(ra));
+  f(ra.value.just.x)(r.@(s: ra.value.just.s));
 };
 
 # Returns the current indent level.
@@ -96,8 +96,8 @@ M@<CharL@> GetL_ = (R@ r) {
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
 Try = <@ T@>(M@<T@> mx)(R@ r) {
   Result@<SM@<T@>> rx = mx(r.@(report_errors: False));
-  rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
-  Ok(SM@(rx.ok.s, Just(rx.ok.x)));
+  rx.failed.?(true: Ok(SM@(r.s, Nothing<T@>)));
+  Ok(SM@(rx.value.just.s, Just(rx.value.just.x)));
 };
 
 # Test if a parser would match at the current position, without consuming any
@@ -105,8 +105,8 @@ Try = <@ T@>(M@<T@> mx)(R@ r) {
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
 Test = <@ T@>(M@<T@> mx)(R@ r) {
   Result@<SM@<T@>> rx = mx(r.@(report_errors: False));
-  rx.?(err: Ok(SM@(r.s, Nothing<T@>)));
-  Ok(SM@(r.s, Just(rx.ok.x)));
+  rx.failed.?(true: Ok(SM@(r.s, Nothing<T@>)));
+  Ok(SM@(r.s, Just(rx.value.just.x)));
 };
 
 (Loc@, String@, List@<CharL@>) { List@<CharL@>; }
@@ -128,8 +128,8 @@ PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
   Result@<SM@<T@>> r = m(R@(s, Int|0, True));
-  r.?(err: /Fbld/Result%.Raise<T@>(r));
-  Ok(r.ok.x);
+  r.failed.?(true: /Fbld/Result%.Raise<T@>(r));
+  Ok(r.value.just.x);
 };
 
 # Gets the next character in the input stream, advancing the parser state as

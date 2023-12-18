@@ -28,6 +28,7 @@
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Error = /Fbld/Result%.Error;
 % r = /Fbld/Result%.Monad;
+<@>% ShowErrors = /Fbld/Result/Show%.ShowErrors;
 
 (List@<String@>) { Result@<String@>; } Run = (List@<String@> lines) {
   String@ text = Lines(lines);
@@ -163,6 +164,18 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|MultiError, (Unit@ _) {
+    String@ got = ShowErrors(Run[
+      Str|'@error[Oh no!]',
+      Str|'@error[Not good.]'
+    ]);
+
+    String@ wnt = Lines[
+      Str|'foo.fbld:1:2: error: Oh no!',
+      Str|'foo.fbld:2:2: error: Not good.'];
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

@@ -1,23 +1,32 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
 % Strs = /Core/String%.Strs;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 @ Text@ = /Fbld/Text%.Text@;
 
 <@ T@> { Show@<Result@<T@>>; }
-ShowError = <@ T@>(Result@<T@> r) {
-  r.err.?(unknown: Str|'unknown error');
-  Text@ message = r.err.message;
-  /Fbld/Loc%.Report(message.loc, Strs[Str|'error: ', message.text]);
+ShowErrors = <@ T@>(Result@<T@> r) {
+  r.errors.?(nil: Str|'');
+  Text@ message = r.errors.cons.head;
+  String@ tail = ShowErrors(r.@(errors: r.errors.cons.tail));
+  String@ head = /Fbld/Loc%.Report(message.loc,
+    Strs[Str|'error: ', message.text, StrE|'\n']);
+  Strs[head, tail];
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
 Show = <@ T@>(Show@<T@> show)(Result@<T@> r) {
-  r.?(err: ShowError(r));
-  Strs[Str|'ok: ', show(r.ok)];
+  r.failed.?(false: Strs[Str|'ok: ', show(r.value.just)]);
+  Strs[
+    Str|'failed: ',
+    /Core/List/Show%.Show(/Fbld/Text/Show%.Show)(r.errors),
+    Str|', ',
+    /Core/Maybe/Show%.Show(show)(r.value)];
 };
 
-@(Show, ShowError);
+@(Show, ShowErrors);
