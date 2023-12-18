@@ -89,7 +89,7 @@ namespace eval "include" {
       FbleNewStructValue FbleNewStructValue_
       FbleStructValueField
       FbleNewUnionValue FbleNewEnumValue
-      FbleUnionValueTag FbleUnionValueArg
+      FbleUnionValueTag FbleUnionValueArg FbleUnionValueField
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
       FbleNewFuncValue FbleNewFuncValue_
       FbleEval FbleApply

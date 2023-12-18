@@ -657,15 +657,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       // Abort if the union object is NULL.
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
 
-      // Abort if the tag is wrong.
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
-      fprintf(fout, "  bl FbleUnionValueTag\n");
-      fprintf(fout, "  cmp x0, %zi\n", access_instr->tag);
-      fprintf(fout, "  b.ne .Lo.%04zx.%zi.bt\n", func_id, pc);
-
       // Access the field.
-      fprintf(fout, "  mov x0, R_SCRATCH_0\n");
-      fprintf(fout, "  bl FbleUnionValueArg\n");
+      fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
+      fprintf(fout, "  bl FbleUnionValueField\n");
+      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.bt\n", func_id, pc);
       SetFrameVar(fout, "x0", access_instr->dest);
       return;
     }

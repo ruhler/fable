@@ -510,6 +510,39 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
 }
 
 // See documentation in fble-value.h.
+FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
+{
+  object = FbleStrictValue(object);
+
+  if (PACKED(object)) {
+    intptr_t data = (intptr_t)object;
+
+    // Skip past the pack bit and the bit saying this is a union value.
+    data >>= 2;
+
+    // Read the tag.
+    size_t tag = 0;
+    while (data & 0x1) {
+      tag++;
+      data >>= 1;
+    }
+
+    if (tag != field) {
+      return NULL;
+    }
+
+    data >>= 1;
+
+    // Pack the result
+    data = (data << 1) | 1;  // packed marker
+    return (FbleValue*)data;
+  }
+
+  assert(object != NULL && object->tag == FBLE_UNION_VALUE);
+  UnionValue* value = (UnionValue*)object;
+  return (value->tag == field) ? value->arg : NULL;
+}
+// See documentation in fble-value.h.
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics)
 {
   FbleFuncValue* v = NewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * executable->num_statics);

@@ -236,6 +236,19 @@ size_t FbleUnionValueTag(FbleValue* object);
 FbleValue* FbleUnionValueArg(FbleValue* object);
 
 /**
+ * @func[FbleUnionValueField] Gets a field of a union value.
+ *  @arg[FbleValue*][object] The union value object to get the field of.
+ *  @arg[size_t][field] The field to get.
+ *
+ *  @returns FbleValue*
+ *   The field of the union value object, or NULL if it is the wrong field.
+ *
+ *  @sideeffects
+ *   Behavior is undefined if the object is not a union value.
+ */
+FbleValue* FbleUnionValueField(FbleValue* object, size_t field);
+
+/**
  * @func[FbleNewListValue] Creates an fble list value.
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of elements on the list.

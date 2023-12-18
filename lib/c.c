@@ -405,10 +405,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, label, pc, "UndefinedUnionValue", access_instr->loc);
 
-        fprintf(fout, "  if (%zi != FbleUnionValueTag(x0)) ", access_instr->tag);
+        fprintf(fout, "  l[%zi] = FbleUnionValueField(x0, %zi);\n", access_instr->dest, access_instr->tag);
+        fprintf(fout, "  if (!l[%zi]) ", access_instr->dest);
         ReturnAbort(fout, code, label, pc, "WrongUnionTag", access_instr->loc);
-
-        fprintf(fout, "  l[%zi] = FbleUnionValueArg(x0);\n", access_instr->dest);
         break;
       }
 

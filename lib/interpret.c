@@ -316,12 +316,13 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         }
 
-        if (FbleUnionValueTag(uv) != access_instr->tag) {
+        FbleValue* value = FbleUnionValueField(uv, access_instr->tag);
+        if (value == NULL) {
           FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
           return RunAbort(heap, code, vars, pc);
         }
 
-        locals[access_instr->dest] = FbleUnionValueArg(uv);
+        locals[access_instr->dest] = value;
         pc++;
         break;
       }

@@ -99,9 +99,3 @@ Error Messages:
   }
 * [typecheck] Better error message for importing something from a module that
   is not defined in the module?
-
-Misc:
-* Define an FbleUnionValueField function that takes tag as input?
- - Return NULL if tag doesn't match. Use this to simplify the aarch64 code for
-   union access instruction.
- - Then we wouldn't need an R_SCRATCH_0 reg at all?
