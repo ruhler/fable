@@ -20,31 +20,39 @@
   Result@<T@>(ok: x);
 };
 
-<@ T@>(Error@) { Result@<T@>; }
-Error = <@ T@>(Error@ e) {
-  Result@<T@>(err: e);
+# Assuming the given result is an error, change its type.
+# Behavior is undefined if the provided result isn't an error.
+<@ B@><@ A@>(Result@<A@>) { Result@<B@>; }
+Raise = <@ B@><@ A@>(Result@<A@> r) {
+  Result@<B@>(err: r.err);
 };
 
+# Indicate an error with text error message. 
+<@ T@>(Text@) { Result@<T@>; }
+Error_ = <@ T@>(Text@ e) {
+  Result@<T@>(err: Error@(message: e));
+};
+
+# Indicate an error with location and string error message.
 <@ T@>(Loc@, String@) { Result@<T@>; }
 Err = <@ T@>(Loc@ l, String@ msg) {
-  Error<T@>(Error@(message: Text(l, msg)));
+  Error_<T@>(Text(l, msg));
 };
 
-# Indicate failure without an associated error message.
+# Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Error<T@>(Error@(unknown: Unit));
+  Result@<T@>(err: Error@(unknown: Unit));
 };
 
 <@ T@>(T@) { Result@<T@>; } Return = Ok;
 
 <@ A@>(Result@<A@>)<@ B@>((A@) { Result@<B@>; }) { Result@<B@>; }
 Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
-  ra.?(err: Error<B@>(ra.err));
+  ra.?(err: Raise<B@>(ra));
   f(ra.ok);
 };
 
 /Core/Monad%.Monad@<Result@> Monad = @(return: Return, do: Do);
 
-@(Result@, Error@,
-  Ok, Error, Err, Fail, Monad);
+@(Result@, Error@, Ok, Raise, Error_, Err, Fail, Monad);

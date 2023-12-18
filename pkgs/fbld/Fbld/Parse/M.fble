@@ -30,7 +30,6 @@
 % Unknown = /Fbld/Loc%.Unknown;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
-@ Error@ = /Fbld/Result%.Error@;
 <@>% Ok = /Fbld/Result%.Ok;
 <@>% Err = /Fbld/Result%.Err;
 <@>% Fail = /Fbld/Result%.Fail;
@@ -61,7 +60,7 @@ Return = <@ T@>(T@ x)(R@ r) {
 <@ T@>((Unit@) { Text@; }) { M@<T@>; }
 Error = <@ T@>((Unit@) { Text@; } f)(R@ r) {
   r.report_errors.?(
-    true: /Fbld/Result%.Error<SM@<T@>>(Error@(message: f(Unit))),
+    true: /Fbld/Result%.Error_<SM@<T@>>(f(Unit)),
     false: Fail<SM@<T@>>);
 };
 
@@ -69,7 +68,7 @@ Error = <@ T@>((Unit@) { Text@; } f)(R@ r) {
 <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
 Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
   Result@<SM@<A@>> ra = ma(r);
-  ra.?(err: /Fbld/Result%.Error<SM@<B@>>(ra.err));
+  ra.?(err: /Fbld/Result%.Raise<SM@<B@>>(ra));
   f(ra.ok.x)(r.@(s: ra.ok.s));
 };
 
@@ -130,7 +129,7 @@ PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
   Result@<SM@<T@>> r = m(R@(s, Int|0, True));
-  r.?(err: /Fbld/Result%.Error<T@>(r.err));
+  r.?(err: /Fbld/Result%.Raise<T@>(r));
   Ok(r.ok.x);
 };
 

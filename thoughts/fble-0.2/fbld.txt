@@ -5819,4 +5819,8 @@ Does the API still make sense?
 
 Yeah, Try sounds reasonable.
 
-
+The reason for Error is:
+1. We want to make an error from Text@ instead of splitting String@, Loc@.
+  Error vs. Error_?
+2. We want to change the type of an existing error.
+  Add a helper function 'Raise' for this.
