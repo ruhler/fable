@@ -6,8 +6,6 @@ User Documentation:
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
-* Rename 'args' to '_args' in hello world tutorial?
-  To avoid warning about unused argument?
 * Update book/ docs for language changes?
 * Review all the generated documentation.
 * Add usage generated help text to fble derived programs?
