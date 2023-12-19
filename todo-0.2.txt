@@ -65,16 +65,3 @@ Doc Comments
   before the descriptions in the generated man pages.
   Means we should change man.fbld to only infer paragraphs where block text is
   expected.
-
-Error Messages:
-* Better type error message in case when two different types have the same
-  name? for example:
-
-  <@ A@> {
-     Maybe@<A@> NotA1 = Nothing<A@>;
-     <@ A@> {
-        Maybe@<A@> NotA2 = NotA1;
-     }
-  }
-* [typecheck] Better error message for importing something from a module that
-  is not defined in the module?

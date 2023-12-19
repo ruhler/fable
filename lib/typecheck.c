@@ -1054,6 +1054,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           ReportError(binding->expr->loc,
               "expected type %t, but found something of type %t\n",
               types[i], defs[i].type);
+          ReportError(types[i]->loc, "(%t from here)\n", types[i]);
+          ReportError(defs[i].type->loc, "(%t from here)\n", defs[i].type);
         } else if (!error && binding->type == NULL) {
           FbleKind* expected_kind = FbleCopyKind(binding->kind);
           FbleKind* actual_kind = FbleGetKind(defs[i].type);

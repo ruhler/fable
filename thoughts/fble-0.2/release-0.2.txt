@@ -417,3 +417,78 @@ indent. Doesn't sound worth it to me.
 
 Inline literal arg highlighting is okay to. In other words, it's not perfect,
 but I think that's totally fine.
+
+---
+
+Todo item burndown: Better error message for importing something from a module
+that is not defined in the module?
+
+For example:
+
+./foo.fble:5:22: error: 'Foo@' is not a field of type *(@<List@> List@, <@ T@>
+{ (List@<T@>) { List@<T@>; }; } List, <@ T@> { (T@, List@<T@>) { List@<T@>; };
+} Cons, List@ Nil, <@ T@> { (List@<T@>, List@<T@>) { List@<T@>; }; } Append,
+<@ T@> { (List@<T@>) { T@; }; } Last, <@ T@> { (List@<T@>) { List@<T@>; }; }
+Init, <@ T@> { (List@<List@<T@>>) { List@<T@>; }; } Concat, <@ A@, @ B@> {
+(List@<A@>, (A@) { B@; }) { List@<B@>; }; } Map, <@ A@, @ B@> { (List@<A@>,
+B@, (A@, B@) { B@; }) { B@; }; } ForEach, <@ T@> { (List@<T@>) { List@<T@>; };
+} Reverse)
+
+Perhaps better alignment would help? For example, using newline after commas:
+
+./foo.fble:5:22: error: 'Foo@' is not a field of type *(
+  @<List@> List@,
+  <@ T@> { (List@<T@>) { List@<T@>; }; } List,
+  <@ T@> { (T@, List@<T@>) { List@<T@>; }; } Cons,
+  List@ Nil,
+  <@ T@> { (List@<T@>, List@<T@>) { List@<T@>; }; } Append,
+  <@ T@> { (List@<T@>) { T@; }; } Last,
+  <@ T@> { (List@<T@>) { List@<T@>; }; } Init,
+  <@ T@> { (List@<List@<T@>>) { List@<T@>; }; } Concat,
+  <@ A@, @ B@> { (List@<A@>, (A@) { B@; }) { List@<B@>; }; } Map,
+  <@ A@, @ B@> { (List@<A@>, B@, (A@, B@) { B@; }) { B@; }; } ForEach,
+  <@ T@> { (List@<T@>) { List@<T@>; }; } Reverse
+)
+
+I fear this will not nest well.
+
+I think it's clear enough from the error location what the problem is. You
+kind of need to ignore the error message, but if you really want it, it's
+there. I think that's better in case of errors: error on the side of too much
+information.
+
+That suggests I leave things as is.
+
+Could we give the module a type name somehow? Like:
+
+ % ListModule = @(...);
+ ListModule;
+
+What would that show then? It makes no difference, I guess because the type is
+constructed automatically? I don't see an easy way to give a type name here.
+Maybe this will be better after proper support for modular compilation?
+
+I vote to drop this for now. We can revisit later if it comes up. It's mostly
+an ascetic thing.
+
+The harder thing is this error message:
+
+./foo.fble:8:26: error: expected type Maybe@<A@>, but found something of type
+Maybe@<A@>
+
+I wonder if we could give more info about where each of the types comes from?
+
+For example:
+
+./foo.fble:8:26: error: expected type Maybe@<A@>, but found something of type
+Maybe@<A@>
+./foo.fble:8:7: error: (Maybe@<A@> declared here)
+./foo.fble:6:4: error: (Maybe@<A@> declared here)
+
+Do we always want to show that much detail?
+
+Sure, why not? Let's try it. Again, erring on the side of too much information
+in case of error. Hopefully it's clear that the subsequent error messages are
+tied to the previous one?
+
+Let's give it a try. If it turns out to be annoying, I can revisit.
