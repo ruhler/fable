@@ -66,15 +66,6 @@ Doc Comments
   Means we should change man.fbld to only infer paragraphs where block text is
   expected.
 
-Syntax highlighting:
-* fbld vim syntax:
- - Figure out how to make {...} only apply in argument context?
- - Any way we can vim highlight next line literal as normal text?
-* Update or remove fbld/fbld.lang
-
-Fbld Misc:
-* Test for location tracking across @head and @tail?
-
 Error Messages:
 * Better type error message in case when two different types have the same
   name? for example:

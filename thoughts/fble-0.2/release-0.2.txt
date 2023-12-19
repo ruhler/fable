@@ -395,3 +395,25 @@ fble-stdio and fble-app. Hmm... Let's see how hard it is and decide based on
 that. If it's not too hard, implement for this release. Otherwise postpone
 invaders high score to the next release.
 
+---
+
+Todo item burndown: fbld vim syntax highlighting.
+
+I'm pretty happy with it. The only things to highlight are:
+* Escape sequences, commands, braces, @ punctuation.
+
+The only issues are what was listed on the todo:
+* Next line literal text maybe shouldn't be highlighted?
+* Literal arg shouldn't be highlighted unless in the position of an argument
+  to a command?
+* Maybe add builtin commands? Why? Who cares if the command is builtin or not?
+
+Should next line literal text not be highlighted? I guess in theory, but in
+practice, that sounds way to hard to identify. And I don't think it hurts too
+much to highlight it.
+
+How would we identify next line literal? We would have to keep track of
+indent. Doesn't sound worth it to me.
+
+Inline literal arg highlighting is okay to. In other words, it's not perfect,
+but I think that's totally fine.
