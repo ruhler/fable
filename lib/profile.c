@@ -1,6 +1,6 @@
 /**
  * @file profile.c
- * Fble profiling and reporting.
+ *  Fble profiling and reporting.
  *
  * Notes on profiling
  * ------------------

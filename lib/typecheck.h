@@ -1,6 +1,6 @@
 /**
  * @file typecheck.h
- * Header for fble type checking.
+ *  Header for fble type checking.
  */
 
 #ifndef FBLE_INTERNAL_TYPECHECK_H_

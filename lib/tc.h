@@ -1,6 +1,6 @@
 /**
  * @file tc.h
- * Header for FbleTc, typed abstract syntax for fble.
+ *  Header for FbleTc, typed abstract syntax for fble.
  */
 
 #ifndef FBLE_INTERNAL_TC_H_

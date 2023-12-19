@@ -1,6 +1,6 @@
 /**
  * @file expr.h
- * Defines FbleExpr, untyped abstract syntax for fble.
+ *  Defines FbleExpr, untyped abstract syntax for fble.
  */
 
 #ifndef FBLE_INTERNAL_EXPR_H_

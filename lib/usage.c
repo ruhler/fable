@@ -1,6 +1,6 @@
 /**
  * @file usage.c
- * Implementation of usage routines.
+ *  Implementation of usage routines.
  */
 
 #include <fble/fble-usage.h>

@@ -105,6 +105,10 @@ namespace eval "include" {
     }
   }
 
+  foreach {x} [build_glob $::s/include/fble -tails "*.h"] {
+    fbld_check_dc $::b/include/fble/$x.dc $::s/include/fble/$x
+  }
+
   foreach {header funcs} $header_funcs {
     foreach x $funcs {
       fbld_man_dc $::b/include/fble/$x.3 $::s/include/fble/$header $x

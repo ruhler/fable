@@ -1,6 +1,6 @@
 /**
  * @file expr.c
- * FbleExpr* abstract syntax routines.
+ *  FbleExpr* abstract syntax routines.
  */
 
 #include "expr.h"

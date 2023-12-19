@@ -1,6 +1,6 @@
 /**
  * @file unreachable.h
- * Defines FbleUnreachable macro.
+ *  Defines FbleUnreachable macro.
  */
 #ifndef FBLE_INTERNAL_UNREACHABLE_H_
 #define FBLE_INTERNAL_UNREACHABLE_H_

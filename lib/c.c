@@ -1,6 +1,6 @@
 /**
  * @file c.c
- * Converts FbleCode fble bytecode to C code.
+ *  Converts FbleCode fble bytecode to C code.
  */
 
 #include <assert.h>   // for assert

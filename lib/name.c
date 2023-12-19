@@ -1,6 +1,6 @@
 /**
  * @file name.c
- * FbleName routines.
+ *  FbleName routines.
  */
 
 #include <fble/fble-name.h>

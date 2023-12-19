@@ -35,11 +35,26 @@ foreach line [split $input_text "\n"] {
     set found true
   }
 
+  if {[string match " \* @func $id" $line] == 1} {
+    set in_doc_comment true
+    set found true
+  }
+
+  if {[string match " \* @file\\\[$id\\\]*" $line] == 1} {
+    set in_doc_comment true
+    set found true
+  }
+
+  if {[string match " \* @file $id*" $line] == 1} {
+    set in_doc_comment true
+    set found true
+  }
+
   if {$in_doc_comment} {
     puts [string range $line 3 end]
   }
 }
 
 if {!$found} {
-  error "@func\[$id\] not found"
+  error "$id not found"
 }

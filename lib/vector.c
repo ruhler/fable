@@ -1,6 +1,6 @@
 /**
  * @file vector.c
- * Fble vector routines.
+ *  Fble vector routines.
  */
 
 #include <fble/fble-vector.h>

@@ -1,6 +1,6 @@
 /**
  * @file version.c
- * Routines related to the fble version number.
+ *  Routines related to the fble version number.
  */
 
 #include "fble/fble-version.h"

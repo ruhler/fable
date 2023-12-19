@@ -1,6 +1,6 @@
 /**
  * @file tc.c
- * FbleTc abstract syntax routines.
+ *  FbleTc abstract syntax routines.
  */
 
 #include "tc.h"

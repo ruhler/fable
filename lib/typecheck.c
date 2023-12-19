@@ -1,6 +1,6 @@
 /**
  * @file typecheck.c
- * Converts FbleExpr untyped abstract syntax to FbleTc typed abstract syntax.
+ *  Converts FbleExpr untyped abstract syntax to FbleTc typed abstract syntax.
  */
 
 #include "typecheck.h"

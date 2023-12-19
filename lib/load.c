@@ -1,6 +1,6 @@
 /**
  * @file load.c
- * Routines for finding and loading fble modules.
+ *  Routines for finding and loading fble modules.
  */
 
 #include <fble/fble-load.h>

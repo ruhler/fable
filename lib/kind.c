@@ -1,6 +1,6 @@
 /**
  * @file kind.c
- * FbleKind routines.
+ *  FbleKind routines.
  */
 
 #include "kind.h"

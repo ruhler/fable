@@ -1,6 +1,6 @@
 /**
  * @file interpret.h
- * Header for fble interpreter related functions.
+ *  Header for fble interpreter related functions.
  */
 
 #ifndef FBLE_INTERNAL_INTERPRET_H_

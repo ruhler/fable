@@ -1,6 +1,6 @@
 /**
  * @file parse.y --
- * The bison grammar for parsing fble expressions.
+ *  The bison grammar for parsing fble expressions.
  */
 %{
   #include <assert.h>   // for assert

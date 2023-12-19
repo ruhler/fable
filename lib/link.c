@@ -1,6 +1,6 @@
 /**
  * @file link.c
- * Routines for linking fble modules together into FbleValue*.
+ *  Routines for linking fble modules together into FbleValue*.
  */
 
 #include <fble/fble-link.h>

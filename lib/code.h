@@ -1,6 +1,6 @@
 /**
  * @file code.h
- * Defines FbleCode fble bytecode.
+ *  Defines FbleCode fble bytecode.
  */
 
 #ifndef FBLE_INTERNAL_CODE_H_

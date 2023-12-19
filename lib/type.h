@@ -1,6 +1,6 @@
 /**
  * @file type.h
- * Header for FbleType.
+ *  Header for FbleType.
  */
 
 #ifndef FBLE_INTERNAL_TYPE_H_

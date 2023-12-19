@@ -1,6 +1,6 @@
 /**
  * @file value.h
- * Header for FbleValue.
+ *  Header for FbleValue.
  */
 
 #ifndef FBLE_INTERNAL_VALUE_H_

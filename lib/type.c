@@ -1,17 +1,22 @@
 /**
  * @file type.c
- * FbleType routines.
+ *  FbleType routines.
  *
- * Design notes on types:
- * * Instances of Type represent both unevaluated and evaluated versions of
+ *  Design notes on types:
+ *
+ *  @item
+ *   Instances of Type represent both unevaluated and evaluated versions of
  *   the type. We use the unevaluated versions of the type when printing error
  *   messages and as a stable reference to a type before and after evaluation.
- * * Cycles are allowed in the Type data structure, to represent recursive
+ *  @item
+ *   Cycles are allowed in the Type data structure, to represent recursive
  *   types. Every cycle is guaranteed to go through a Var type.
- * * Types are evaluated as they are constructed.
- * * FBLE_TYPE_TYPE is handled specially: we propagate FBLE_TYPE_TYPE up to the top of
- *   the type during construction rather than save the unevaluated version of
- *   a typeof.
+ *  @item
+ *   Types are evaluated as they are constructed.
+ *  @item
+ *   FBLE_TYPE_TYPE is handled specially: we propagate FBLE_TYPE_TYPE up to
+ *   the top of the type during construction rather than save the unevaluated
+ *   version of a typeof.
  */
 
 #include "type.h"

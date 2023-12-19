@@ -1,6 +1,6 @@
 /**
  * @file heap.h
- * Defines FbleHeap, the fble garbage collector API.
+ *  Defines FbleHeap, the fble garbage collector API.
  */
 
 #ifndef FBLE_INTERNAL_HEAP_H_

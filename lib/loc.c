@@ -1,6 +1,6 @@
 /**
  * @file loc.c
- * FbleLoc routines.
+ *  FbleLoc routines.
  */
 
 #include <fble/fble-loc.h>

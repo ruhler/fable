@@ -1,6 +1,6 @@
 /**
  * @file tag.h
- * Header for FbleTagV.
+ *  Header for FbleTagV.
  */
 
 #ifndef FBLE_INTERNAL_TAG_H_

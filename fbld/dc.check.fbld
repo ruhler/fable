@@ -7,3 +7,4 @@
 @define[arg][type name desc][] @@
 @define[returns][type desc][] @@
 @define[sideeffects][desc][] @@
+@define[file][name desc][] @@

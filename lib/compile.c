@@ -1,6 +1,6 @@
 /**
  * @file compile.c
- * Compile FbleTc* abstract syntax into FbleCode* bytecode.
+ *  Compile FbleTc* abstract syntax into FbleCode* bytecode.
  */
 
 #include <fble/fble-compile.h>

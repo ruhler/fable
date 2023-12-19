@@ -1,6 +1,6 @@
 /**
  * @file heap.c
- * Mark-sweep based garbage collector.
+ *  Mark-sweep based garbage collector.
  */
 
 #include "heap.h"

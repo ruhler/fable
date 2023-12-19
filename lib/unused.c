@@ -1,6 +1,6 @@
 /**
  * @file unused.c
- * Checks for unused variables in fble code.
+ *  Checks for unused variables in fble code.
  */
 
 #include "unused.h"

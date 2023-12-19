@@ -32,4 +32,9 @@ extracting them. Unless I want to add dc_check for all the include files, I
 wouldn't catch errors there. Do I want to add dc_check for all the include
 files? Sure. There aren't too many. We can make this the next change.
 
+---
 
+* Document how to write doc comments somewhere.
+
+Should be straight forward. fbld/doc_comments.fbld, or fbld/DocComments.fbld
+should be a good place to write it. We can add it to www next to fbld.html.

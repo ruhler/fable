@@ -1,6 +1,6 @@
 /**
  * @file parse.h
- * Some utility functions related to parsing.
+ *  Some utility functions related to parsing.
  */
 
 #ifndef FBLE_INTERNAL_PARSE_H_

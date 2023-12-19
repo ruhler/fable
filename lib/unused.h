@@ -1,7 +1,6 @@
 /**
  * @file unused.h
- *
- * Function for detecting unused variables.
+ *  Function for detecting unused variables.
  */
 
 #ifndef FBLE_INTERNAL_UNUSED_H_

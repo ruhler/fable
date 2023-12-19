@@ -1,6 +1,6 @@
 /**
  * @file aarch64.c
- * Converts FbleCode fble bytecode to 64-bit ARM machine code.
+ *  Converts FbleCode fble bytecode to 64-bit ARM machine code.
  */
 
 #include <assert.h>   // for assert

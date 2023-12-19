@@ -52,8 +52,6 @@ Doc Comments
 * convert lib/*, bin/*, test/*, etc. code to fbld doc comments.
 * Be able to write doc comments for extern values and types as well as
   functions.
-* How to handle @file doc comments on header files?
-  - Should we write documentation for them somewhere?
 * Write test cases for doc comments extraction and conversion.
   - For example: blank lines in doc comments should be allowed and not cause
     the comment to be truncated.
@@ -64,3 +62,4 @@ Doc Comments
   Means we should change man.fbld to only infer paragraphs where block text is
   expected.
 * Document how to write doc comments somewhere.
+  Maybe some exists right now in fbld/dcget.tcl?

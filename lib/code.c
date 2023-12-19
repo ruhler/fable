@@ -1,6 +1,6 @@
 /**
  * @file code.c
- * FbleCode related routines.
+ *  FbleCode related routines.
  */
 
 #include "code.h"

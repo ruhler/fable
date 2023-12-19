@@ -1,7 +1,6 @@
 /**
  * @file var.h
- * 
- * Data types for describing variables.
+ *  Data types for describing variables.
  */
 
 #ifndef FBLE_INTERNAL_VAR_H_
