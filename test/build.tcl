@@ -41,6 +41,11 @@ namespace eval "test" {
     install $::b/test/$x $::config::bindir/$x
   }
 
+  # Check doc comments
+  foreach {x} [build_glob $::s/test -tails "*.h" "*.c"] {
+    fbld_check_dc $::b/test/$x.dc $::s/test/$x
+  }
+
   # fble-profile-test
   test $::b/test/fble-profile-test.tr $::b/test/fble-profile-test \
     "$::b/test/fble-profile-test > /dev/null"

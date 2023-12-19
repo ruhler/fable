@@ -1,6 +1,8 @@
-// fble-deps.c --
-//   The implementation of the fble-deps program, which generates gcc -MD
-//   compatible dependencies for an .fble file.
+/**
+ * @file fble-deps.c
+ *  The implementation of the fble-deps program, which generates gcc -MD
+ *  compatible dependencies for an .fble file.
+ */
 
 #include <assert.h>   // for assert
 #include <string.h>   // for strcmp, strlen
@@ -18,18 +20,17 @@
 #define EX_USAGE 2
 
 int main(int argc, const char* argv[]);
-// main --
-//   The main entry point for the fble-deps program.
-//
-// Inputs:
-//   argc - The number of command line arguments.
-//   argv - The command line arguments.
-//
-// Results:
-//   0 on success, non-zero on error.
-//
-// Side effects:
-//   Prints an error to stderr and exits the program in the case of error.
+
+/**
+ * @func[main] The main entry point for the fble-deps program.
+ *  @arg[int][argc] The number of command line arguments.
+ *  @arg[const char**][argv] The command line arguments.
+ *
+ *  @returns[int] 0 on success, non-zero on error.
+ *
+ *  @sideeffects
+ *   Prints an error to stderr and exits the program in the case of error.
+ */
 int main(int argc, const char* argv[])
 {
   FbleModuleArg module_arg = FbleNewModuleArg();

@@ -1,6 +1,8 @@
-// fble-native.c --
-//   This file implements the main entry point for the fble-native program,
-//   which compiles *.fble code to *.c code.
+/**
+ * @file fble-native.c
+ *  This file implements the main entry point for the fble-native program,
+ *  which compiles *.fble code to *.c code.
+ */
 
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
@@ -21,18 +23,16 @@ typedef enum {
   TARGET_C
 } Target;
 
-// main --
-//   The main entry point for the fble-compile program.
-//
-// Inputs:
-//   argc - The number of command line arguments.
-//   argv - The command line arguments.
-//
-// Results:
-//   0 on success, non-zero on error.
-//
-// Side effects:
-//   Prints an error to stderr and exits the program in the case of error.
+/**
+ * @func[main] The main entry point for the fble-compile program.
+ *  @arg[int][argc] The number of command line arguments.
+ *  @arg[const char**][argv] The command line arguments.
+ *
+ *  @returns[int] 0 on success, non-zero on error.
+ *
+ *  @sideeffects
+ *   Prints an error to stderr and exits the program in the case of error.
+ */
 int main(int argc, const char* argv[])
 {
   FbleModuleArg module_arg = FbleNewModuleArg();

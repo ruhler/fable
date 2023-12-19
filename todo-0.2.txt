@@ -39,9 +39,7 @@ User Documentation:
 * Update install tutorial to reference the release of fble on github, now that
   we'll have published fble-0.1 release there.
 * Factor out common code for @FbleVersion (@BuildStamp)
-* Is there a 'bnf' @code syntax the source highlighter supports that 
-  we could use to make the syntax specification in fble.fbld prettier?
-  - if not, consider writing one? Or switching to a syntax that does exist?
+* Consider syntax highlighting of the syntax specification in fble.fbld.
 * Add a way to specify package path on the command line?
 * Improve exercises for Unions and Functions tutorials, and others.
 * Remove FBLE_PACKAGE_PATH setting from Install tutorial.
@@ -51,7 +49,7 @@ User Documentation:
   highlighted in code blocks but not in inline text.
 
 Doc Comments
-* convert lib/* code to fbld doc comments.
+* convert lib/*, bin/*, test/*, etc. code to fbld doc comments.
 * Be able to write doc comments for extern values and types as well as
   functions.
 * How to handle @file doc comments on header files?
@@ -65,3 +63,4 @@ Doc Comments
   before the descriptions in the generated man pages.
   Means we should change man.fbld to only infer paragraphs where block text is
   expected.
+* Document how to write doc comments somewhere.

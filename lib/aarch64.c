@@ -283,7 +283,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
  * @param label_id  Pointer to next available label id for use.
  * @param path  The FbleModulePath to generate code for.
  *
- * @returns
+ * @returns[LabelId]
  *   The label id of a local, static FbleModulePath.
  *
  * @sideeffects

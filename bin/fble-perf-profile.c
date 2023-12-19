@@ -1,5 +1,7 @@
-// fble-perf-profile.c --
-//   A program that displays a linux perf tool profile in fble profile format.
+/**
+ * @file fble-perf-profile.c
+ *  A program that displays a linux perf tool profile in fble profile format.
+ */
 
 #define _GNU_SOURCE     // for getline
 #include <assert.h>     // for assert
@@ -20,20 +22,17 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
 static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s);
 int main(int argc, const char* argv[]);
 
-
-// GetBlockId --
-//   Get or create a block id for the given name.
-//
-// Inputs:
-//   profile - the profile.
-//   name - the name of the block.
-//
-// Returns:
-//   The block id to use for the block.
-//
-// Side effects:
-//   Allocates a new block id if there isn't already a block with the given
-//   name.
+/**
+ * @func[GetBlockId] Get or create a block id for the given name.
+ *  @arg[FbleProfile*][profile] The profile.
+ *  @arg[char*][name] The name of the block.
+ *
+ *  @returns[FbleBlockId] The block id to use for the block.
+ *
+ *  @sideeffects
+ *   Allocates a new block id if there isn't already a block with the given
+ *   name.
+ */
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
 {
   for (size_t i = 0; i < profile->blocks.size; ++i) {
@@ -50,18 +49,17 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
   return FbleAddBlockToProfile(profile, n);
 }
 
-// Sample --
-//   Process a profiling sample.
-//
-// Inputs:
-//   profile - the profile
-//   thread - the profiling thread
-//   count - the count corresponding to this sample
-//   s - the sample path, of the form "foo;bar;sludge\n"
-//
-// Side effects:
-// * May modify the contents of s by replacing ';' with nuls.
-// * Adds the sample to the profile.
+/**
+ * @func[Sample] Process a profiling sample.
+ *  @arg[FbleProfile*][profile] The profile.
+ *  @arg[FbleProfileThread*][thread] The profiling thread.
+ *  @arg[int][count] The count corresponding to this sample.
+ *  @arg[char*][s] The sample path, of the form "foo;bar;sludge\n".
+ *
+ *  @sideeffects
+ *   @i May modify the contents of s by replacing ';' with nuls.
+ *   @i Adds the sample to the profile.
+ */
 static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s)
 {
   if (*s == '\0') {
@@ -83,18 +81,16 @@ static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, c
   FbleProfileExitBlock(thread);
 }
 
-// main --
-//   The main entry point for the fble-perf-profile program.
-//
-// Inputs:
-//   argc - The number of command line arguments.
-//   argv - The command line arguments.
-//
-// Results:
-//   0 on success, non-zero on error.
-//
-// Side effects:
-//   Prints an error to stderr and exits the program in the case of error.
+/**
+ * @func[main] The main entry point for the fble-perf-profile program.
+ *  @arg[int][argc] The number of command line arguments.
+ *  @arg[const char**][argv] The command line arguments.
+ *
+ *  @returns[int] 0 on success, non-zero on error.
+ *
+ *  @sideeffects
+ *   Prints an error to stderr and exits the program in the case of error.
+ */
 int main(int argc, const char* argv[])
 {
   bool version = false;

@@ -1,5 +1,7 @@
-// fble-disassemble.c --
-//   This file implements the main entry point for the fble-disassemble program.
+/**
+ * @file fble-disassemble.c
+ *  This file implements the main entry point for the fble-disassemble program.
+ */
 
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
@@ -16,18 +18,16 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-// main --
-//   The main entry point for the fble-disassemble program.
-//
-// Inputs:
-//   argc - The number of command line arguments.
-//   argv - The command line arguments.
-//
-// Results:
-//   0 on success, non-zero on error.
-//
-// Side effects:
-//   Prints an error to stderr and exits the program in the case of error.
+/**
+ * @func[main] The main entry point for the fble-disassemble program.
+ *  @arg[int][argc] The number of command line arguments.
+ *  @arg[const char**][argv] The command line arguments.
+ *
+ *  @returns[int] 0 on success, non-zero on error.
+ *
+ *  @sideeffects
+ *   Prints an error to stderr and exits the program in the case of error.
+ */
 int main(int argc, const char* argv[])
 {
   FbleModuleArg module_arg = FbleNewModuleArg();

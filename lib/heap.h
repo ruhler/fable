@@ -22,7 +22,7 @@ typedef struct FbleHeap FbleHeap;
 /**
  * Creates a new garbage collected heap.
  *
- * @returns
+ * @return
  *   The newly allocated heap.
  *
  * @sideeffects
@@ -64,37 +64,38 @@ FbleHeap* FbleNewHeap(
     void (*on_free)(FbleHeap* heap, void* obj));
 
 /**
- * Frees a heap that is no longer in use.
+ * @func[FbleFreeHeap] Frees a heap that is no longer in use.
+ *  @arg[FbleHeap*][heap] The heap to free.
  *
- * @param heap  The heap to free.
- *
- * @sideeffects
- * * Does a full GC to reclaim all unreachable objects, and frees resources
- *   associated with the given heap.
- * * Does not free objects that are still being retained on the heap. Those
- *   allocations will be leaked.
+ *  @sideeffects
+ *   @item
+ *    Does a full GC to reclaim all unreachable objects, and frees resources
+ *    associated with the given heap.
+ *   @item
+ *    Does not free objects that are still being retained on the heap. Those
+ *    allocations will be leaked.
  */
 void FbleFreeHeap(FbleHeap* heap);
 
 /**
- * Allocates a new object on the heap.
+ * @func[FbleNewHeapObject] Allocates a new object on the heap.
+ *  Callers must ensure the heap is in a consistent state when calling this
+ *  function. In particular, calls to the refs function could be made for any
+ *  objects previously allocated on the heap, so objects must be fully
+ *  initialized.
  *
- * Callers must ensure the heap is in a consistent state when calling this
- * function. In particular, calls to the refs function could be made for any
- * objects previously allocated on the heap, so objects must be fully
- * initialized.
+ *  @arg[FbleHeap*][heap] The heap to allocate an object on.
+ *  @arg[size_t][size] The user size of object to allocate.
  *
- * @param heap  The heap to allocate an object on.
- * @param size  The user size of object to allocate
+ *  @returns[void*] A pointer to a newly allocated object on the heap.
  *
- * @returns
- *   A pointer to a newly allocated object on the heap.
- *
- * @sideeffects
- * * The returned object is retained. A corresponding call to
- *   FbleReleaseHeapObject is required before the object can be freed.
- * * Calls the user provided 'refs' function arbitrarily on existing objects
- *   of the heap.
+ *  @sideeffects
+ *   @item
+ *    The returned object is retained. A corresponding call to
+ *    FbleReleaseHeapObject is required before the object can be freed.
+ *   @item
+ *    Calls the user provided 'refs' function arbitrarily on existing objects
+ *    of the heap.
  */
 void* FbleNewHeapObject(FbleHeap* heap, size_t size);
 

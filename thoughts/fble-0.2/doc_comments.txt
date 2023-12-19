@@ -1,0 +1,35 @@
+Doc Comments
+============
+There are a few remaining todo items around improvements to doc comments
+before making the release. Discussing those here.
+
+---
+
+* convert lib/*, bin/*, test/*, etc. code to fbld doc comments.
+
+This is going to be a lot of work. Let's set up dccheck on bin/* and test/* to
+start. Make some progress on conversions. But otherwise don't worry about
+finishing this. It should be more an incremental progress thing.
+
+Hint for checking doc comments:
+* ninja */*.dc -k0
+* Remember to make the fixes in the original .c file, not the generated .fbld
+  file.
+
+---
+
+* How to handle @file doc comments on header files?
+  - Should we write documentation for them somewhere?
+
+The desired format seems obvious:
+  @file[filename][description]
+
+For dc_check, it would be easy. Add @file to the list of doc comments
+extracted and define @file.
+
+For include files? We don't use them in man pages. We wouldn't end up
+extracting them. Unless I want to add dc_check for all the include files, I
+wouldn't catch errors there. Do I want to add dc_check for all the include
+files? Sure. There aren't too many. We can make this the next change.
+
+
