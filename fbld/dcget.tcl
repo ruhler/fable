@@ -45,7 +45,7 @@ foreach line [split $input_text "\n"] {
     set found true
   }
 
-  if {[string match " \* @file $id*" $line] == 1} {
+  if {[string match " \* @file $id" $line] == 1} {
     set in_doc_comment true
     set found true
   }

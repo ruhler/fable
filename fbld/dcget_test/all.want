@@ -1,0 +1,12 @@
+@file next_line_file
+ The description is on the next line.
+@file[same_line_file] The description is on the same line.
+@func[same_line_func] Brief on same line.
+ Description to follow.
+@func[next_line_func]
+@ Brief on same line.
+ Description to follow.
+@func[blank_line] This function has a blank line.
+ The first line isn't blank. But then look:
+
+ That second line was blank.

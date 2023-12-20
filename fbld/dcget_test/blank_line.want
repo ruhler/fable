@@ -1,0 +1,4 @@
+@func[blank_line] This function has a blank line.
+ The first line isn't blank. But then look:
+
+ That second line was blank.

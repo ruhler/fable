@@ -1,0 +1,35 @@
+
+This file is an input for dcget tests.
+
+Test use of @file comment with next line description:
+/**
+ * @file next_line_file
+ *  The description is on the next line.
+ */
+
+Test use of @file comment with same line description:
+/**
+ * @file[same_line_file] The description is on the same line.
+ */
+
+Test use of @func comment with brief on same line:
+/**
+ * @func[same_line_func] Brief on same line.
+ *  Description to follow.
+ */
+
+Test use of @func comment with brief on next line:
+/**
+ * @func[next_line_func]
+ * @ Brief on same line.
+ *  Description to follow.
+ */
+
+Test use of @func comment with 'blank' line in the comment. The comment should
+not end because of that 'blank' line in it:
+/**
+ * @func[blank_line] This function has a blank line.
+ *  The first line isn't blank. But then look:
+ *
+ *  That second line was blank.
+ */
