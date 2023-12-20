@@ -65,4 +65,8 @@ namespace eval "fbld" {
   # Fbld Spec www.
   ::fbld_html_doc $::b/www/fbld/fbld.html $::s/fbld/fbld.fbld
   www $::b/www/fbld/fbld.html
+
+  # DocComments www.
+  ::fbld_html_doc $::b/www/fbld/DocComments.html $::s/fbld/DocComments.fbld
+  www $::b/www/fbld/DocComments.html
 }

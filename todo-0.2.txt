@@ -59,5 +59,3 @@ Doc Comments
   before the descriptions in the generated man pages.
   Means we should change man.fbld to only infer paragraphs where block text is
   expected.
-* Document how to write doc comments somewhere.
-  Maybe some exists right now in fbld/dcget.tcl?
