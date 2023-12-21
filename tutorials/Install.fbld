@@ -1,14 +1,14 @@
 @tutorial Install
  This tutorial shows you how to install fble for use with subsequent tutorials.
- 
- There have not been any releases of fble yet at the time of writing this
- tutorial. To install fble you'll need to check out the source and manually
- build and install.
+
+ The latest release of fble is available as a source tarball on github
+ at @url[https://github.com/ruhler/fable]{}. To install fble you'll need to
+ download or checkout the source and manually build and install.
  
  @section Source
   The source code for fble is available from github at
-  @url[https://github.com/ruhler/fable]{}. Run the following to check out the
-  source code:
+  @url[https://github.com/ruhler/fable]{}. Download and extract the latest
+  release, or run the following to check out the latest source code:
  
   @code[sh] @
    git clone https://github.com/ruhler/fable.git

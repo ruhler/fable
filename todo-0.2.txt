@@ -14,8 +14,6 @@ Things to do for the fble-0.2 release.
 * Come up with a better story for building and integrating usage help text?
 * Double check @fbld[...fbld#...] generates the right thing for html. For
   example, see the end of the Lists.fbld tutorial.
-* Add back syntax highlighting of @code blocks to html backend.
- - May want improvements to html escaping
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.
  - How to support labels in markdown?
@@ -32,12 +30,13 @@ Things to do for the fble-0.2 release.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
 * write tutorials for C api.
-* Update install tutorial to reference the release of fble on github, now that
-  we'll have published fble-0.1 release there.
 * Factor out common code for @FbleVersion (@BuildStamp)
-* Consider syntax highlighting of the syntax specification in fble.fbld.
-* Add a way to specify package path on the command line?
 * Improve exercises for Unions and Functions tutorials, and others.
-* Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
+
+Fbld Syntax Highlighting of html backend:
+* Fbld
+* Fble
+* Consider syntax highlighting of the syntax specification in fble.fbld.
+* Add way to do inline code syntax highlighting in fbld?
