@@ -81,3 +81,9 @@ Things to consider doing for the fble-0.3 release.
 * Debug improvements:
  - Add debug support for all backends, not just aarch64
  - Add easy member access in debug. e.g.: print(foo.just).
+
+Doc Comments
+* convert lib/*, test/*, etc. code to fbld doc comments.
+* Be able to write doc comments for extern values and types as well as
+  functions.
+* Would be nice to have SEE ALSO section for library man pages.

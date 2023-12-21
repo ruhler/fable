@@ -22,8 +22,8 @@
   developing programs at scale.
 
  It didn't take long to realize I may as well not worry about implementing
- @l{A} and @l{B} if I'm going to implement @l{C}, because it doesn't add
- anything of interest.
+ @l{A} and @l{B} if I'm going to implement @l{C}, because @l{C} covers
+ everything from @l{A} and @l{B}.
 
  We ended up in a place where @l{C} was beautiful and wonderful and perfect,
  but tedious to program in, and @l{D} was getting more and more clunky. I
@@ -53,4 +53,3 @@
   the biggest challenge the language faced. This has since evolved to the
   feeling that we must preserve abstractions at runtime to the extent possible,
   because otherwise things will blow up at runtime.
-

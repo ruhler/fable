@@ -38,3 +38,16 @@ files? Sure. There aren't too many. We can make this the next change.
 
 Should be straight forward. fbld/doc_comments.fbld, or fbld/DocComments.fbld
 should be a good place to write it. We can add it to www next to fbld.html.
+
+---
+
+I'm going to punt the rest of the doc comment todos:
+* convert lib/*, test/*, etc. code to fbld doc comments.
+* Be able to write doc comments for extern values and types as well as
+  functions.
+* Would be nice to have SEE ALSO section for library man pages.
+
+The first will take time, no rush. It's all internal. Too painful to go
+through everything. Perhaps I should convert something every now and then.
+
+For types... worry about it later. Same for see also.

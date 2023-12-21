@@ -56,8 +56,8 @@
      level lists).
   2. braces, semicolon terminated.
 
-  Where braces are used for those cases where names are introduced into the
-  scope, such as variables, and parenthesis are used otherwise.
+  Braces are used for those cases where names are introduced into the scope,
+  such as variables, and parenthesis are used otherwise.
 
   Use of union tags are common: in initializers, in case expressions. That's
   why you have (name ':' expr) in both cases, and for struct values.
@@ -84,12 +84,10 @@
   code generator. Because the abstractions were important enough that we want
   to preserve them all the way through.
 
-  I'm not currently convinced function bind is worthwhile enough to include as
-  a syntactic sugar. It's gone in and out of the language a few times.
-
-  Case statements were introduced recently and have found a lot of use. I
-  think there is a practical need to be able to express a linear tree without
-  explicit nesting.
+  Case statements were introduced later on in the design of the language and
+  have found a lot of use. I think there is a practical need to be able to
+  express a linear tree without explicit nesting. It makes code significantly
+  more readible.
 
   I think of functions as being the way users introduce custom syntax into
   their programs. If syntax is too tedious, define a function to introduce
@@ -114,14 +112,15 @@
   Case expressions do not have advanced pattern matching features, because
   that would hide performance overheads they introduce.
 
-  I don't include a simple struct field update syntax, because that would be
-  misleading. Updating a single field of a struct has performance proportional
-  to the number of fields, so it seems right that the syntax to update a
-  single field of a struct be proportional to the number of fields.
+  A couple places where we don't following this today are with function bind
+  and struct modify. The syntax for both makes describing programs much
+  easier, but hides underlying potentially costly allocations. We'll see how
+  things turn out as we try to further optimize the fble runtime.
 
  @definition On choice of punctuation.
-  @def[@l{+}] for sum type, '*' for product type.
+  @def[@l{+}] for sum type
+  @def[@l{*}] for product type.
   @def[@l{?}] for asking questions about the tag of a union. 
   @def[@l{<-}] for function bind inspired by haskell do notation.
   @def[@l{/}] for its common use as a path delimiter.
-  @def[@l{@} and @l{%}] the few remaining symbols easy to access on a US keyboard.
+  @def[@l{@}, @l{%}] the few remaining symbols easy to access on a US keyboard.

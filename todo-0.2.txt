@@ -2,11 +2,9 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
-User Documentation:
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
-* Update book/ docs for language changes?
 * Review all the generated documentation.
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
@@ -45,14 +43,3 @@ User Documentation:
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
-
-Doc Comments
-* convert lib/*, bin/*, test/*, etc. code to fbld doc comments.
-* Be able to write doc comments for extern values and types as well as
-  functions.
-* Would be nice to have SEE ALSO section for library man pages.
-* dc.man: Treat arg and return descriptions as non-block always?
-  Normally they wouldn't be block. Setting them as block adds a blank line
-  before the descriptions in the generated man pages.
-  Means we should change man.fbld to only infer paragraphs where block text is
-  expected.

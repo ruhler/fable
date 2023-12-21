@@ -1,4 +1,4 @@
-namespace eval "tutorials" {
+namespace eval "book" {
   set docs {
     Book.fbld
     Origins.fbld
