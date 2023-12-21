@@ -8,7 +8,6 @@ Things to do for the fble-0.2 release.
 * Review all the generated documentation.
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
-* Add write and getenv to whatever tutorial describes Stdio@ interface.
 * Update App tutorial (if there is one?) for updated App@ interface.
 * Finalize release notes.
 * Come up with a better story for building and integrating usage help text?

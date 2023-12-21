@@ -152,10 +152,11 @@
      );
    };
  
-  @section @l{/Core/Stdio%}
-   The @l{/Core/Stdio%} module defines the @l{Stdio@} interface for accessing
-   standard input, output, and error streams for an arbitrary monadic type
-   @l{M@}.
+ @section @l{/Core/Stdio%}
+  The @l{/Core/Stdio%} module defines the @l{Stdio@} interface for accessing
+  standard input, output, and error streams for an arbitrary monadic type
+  @l{M@}. It can also be used to read and write files and read environment
+  variables.
  
   Stream types are defined in the @l{/Core/Stream%} module. They describe an
   interface for reading and writing sequence of bytes represented using the
@@ -163,7 +164,7 @@
   @l{/Core/Stream/OStream%} module, which defines @l{PutChar}, @l{PutStr}, and
   @l{PutLine} functions for operating on streams in terms of the @l{Char@}
   type.
- 
+  
   The @l{/Core/Stdio%} module defines the @l{Main@} type, as a type of a main
   function that takes a list of arguments and returns a boolean result. The
   @l{/Core/Stdio/IO%} module defines a @l{Run} function for running a
