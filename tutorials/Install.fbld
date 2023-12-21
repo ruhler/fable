@@ -46,8 +46,8 @@
  @section Environment Setup
   Subsequent tutorials all assume the environment has been set up for easy
   access to the fble installation. If you haven't installed to a standard
-  install path, you can manually set up the environment by modifying PATH,
-  LD_LIBRARY_PATH, and FBLE_PACKAGE_PATH environment variables.
+  install path, you can manually set up the environment by modifying PATH and
+  LD_LIBRARY_PATH environment variables.
  
   The following environment setup makes use of the @l{INSTALL} variable
   defined above:
@@ -55,7 +55,6 @@
   @code[sh] @
    export PATH=$INSTALL/bin:$PATH
    export LD_LIBRARY_PATH=$INSTALL/lib:$LD_LIBRARY_PATH
-   export FBLE_PACKAGE_PATH=$INSTALL/share/fble
  
   To test your environment is properly set up, try running a hello world
   program that ships with the fble installation:
@@ -86,7 +85,7 @@
   module paths. For example, add the following to your ~/.vimrc file:
  
   @code[vim] @
-   autocmd BufNewFile,BufRead *.fble setlocal path=$FBLE_PACKAGE_PATH/*
+   autocmd BufNewFile,BufRead *.fble setlocal path=$INSTALL/share/fble/*
  
   That way you can type @l{gf} with the cursor over a module path to jump to
   the code for that module.

@@ -38,8 +38,6 @@ Things to do for the fble-0.2 release.
 * Consider syntax highlighting of the syntax specification in fble.fbld.
 * Add a way to specify package path on the command line?
 * Improve exercises for Unions and Functions tutorials, and others.
-* Remove FBLE_PACKAGE_PATH setting from Install tutorial.
-  Now that we have the default package path to look in.
 * Add way to do inline code syntax highlighting in fbld?
   Because it looks a little funny in the tutorials for things to be
   highlighted in code blocks but not in inline text.
