@@ -6,17 +6,17 @@ Things to do for the fble-0.2 release.
   output.
   Maybe due to use of unicode character not supported by fble Char@?
 * Review all the generated documentation.
+* Finalize release notes.
+
+Usage docs
+* Come up with a better story for building and integrating usage help text?
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
-* Update App tutorial (if there is one?) for updated App@ interface.
-* Finalize release notes.
-* Come up with a better story for building and integrating usage help text?
-* Double check @fbld[...fbld#...] generates the right thing for html. For
-  example, see the end of the Lists.fbld tutorial.
-* Fbld Markdown Backend
- - Reflow paragraphs to 80 columns.
- - How to support labels in markdown?
- - etc.
+
+Tutorial Improvements
+* Improve exercises for Unions and Functions tutorials, and others.
+  Because it looks a little funny in the tutorials for things to be
+  highlighted in code blocks but not in inline text.
 * Feedback from users:
  - Better explanation of "lack of primitives" and why that's a good thing.
  - Explain how features are related to procedural programming
@@ -28,11 +28,7 @@ Things to do for the fble-0.2 release.
  - Clarify that '%' is needed for module paths in early tutorials.
  - Better explanation of where to find existing and/or generated docs.
  - It's not obvious that 'xfail' means expected failure.
-* write tutorials for C api.
-* Factor out common code for @FbleVersion (@BuildStamp)
-* Improve exercises for Unions and Functions tutorials, and others.
-  Because it looks a little funny in the tutorials for things to be
-  highlighted in code blocks but not in inline text.
+* Update App tutorial (if there is one?) for updated App@ interface.
 
 Fbld Syntax Highlighting of html backend:
 * Fbld

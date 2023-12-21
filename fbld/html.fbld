@@ -32,10 +32,20 @@
 
 @define[url][url label] <a href="@url">@DefLabel[@url][@label]</a> @@
 
+@define[Drop][prefix str]
+ @ifeq[][@prefix][@str] @@
+ @ifeq[][@str][] @@
+ @ifeq[@head[@prefix]][@head[@str]]
+  @Drop[@tail[@prefix]][@tail[@str]]
+ @[]
+@@
+
 @define[ReplaceExt][str]
- @ifeq[@str][][] @@
- @ifeq[@str][.fbld] .html
- @ @head[@str]@ReplaceExt[@tail[@str]]
+ @ifeq[][@str][] @@
+ @ifeq[.fbld][@str] .html @@
+ @define[t][][@Drop[.fbld][@str]] @@
+ @ifeq[][@t] @head[@str]@ReplaceExt[@tail[@str]]
+ @ .html@ReplaceExt[@t]
 @@
 
 @define[fbld][file label]

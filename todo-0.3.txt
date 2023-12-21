@@ -87,3 +87,11 @@ Doc Comments
 * Be able to write doc comments for extern values and types as well as
   functions.
 * Would be nice to have SEE ALSO section for library man pages.
+
+* Fbld Markdown Backend
+ - Reflow paragraphs to 80 columns.
+ - How to support labels in markdown?
+ - etc.
+
+* write tutorials for C api.
+* Factor out common code for @FbleVersion (@BuildStamp)

@@ -492,3 +492,23 @@ in case of error. Hopefully it's clear that the subsequent error messages are
 tied to the previous one?
 
 Let's give it a try. If it turns out to be annoying, I can revisit.
+
+---
+
+TODO burndown item:
+* Double check @fbld[...fbld#...] generates the right thing for html. For
+  example, see the end of the Lists.fbld tutorial.
+
+@fbld[../spec/fble.fbld#lists][text]
+
+We want it to turn into a link to
+
+../spec/fble.html#lists, right?
+
+Currently it's turning into:
+
+../spec/fble.fbld#lists
+
+How did this work before? We replaced all occurrences of '.fbld' with '.html'.
+Let's do the same here. Not just at the end of the list.
+
