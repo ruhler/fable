@@ -102,5 +102,6 @@
   @item A large and vibrant community of users.
  
  @section Next Steps
-  Head over to the @fbld[Install.fbld][Install] tutorial to get your hands on
-  fble and try it out.
+  Head over to the @fbld[ByComparison.fbld][Fble By Comparison] tutorial to
+  get a quick overview of how the fble programming language compares to other
+  programming languages.

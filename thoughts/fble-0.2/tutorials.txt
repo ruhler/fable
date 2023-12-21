@@ -1,0 +1,62 @@
+Tutorials
+=========
+Goal is to do a round of revision of tutorials to address accumulated todos.
+
+General guidelines:
+* Use inclusive language. Avoid unnecessary complex terminology.
+
+Seems like more explanation of how it compares to existing languages may be
+useful. How would I want to present that? Brainstorm:
+* A separate tutorial of the form "if coming from language X" 
+* Inline when describing a feature that could replace another feature?
+* As a dedicated language comparison tutorial?
+* As a cheatsheet for comparing between languages?
+
+I want to avoid duplicating the same explanations across different tutorials.
+I think it is worth adding a dedicated tutorial to help people coming from
+other languages. Not to teach fble in general, but to guide them to the right
+places to learn more?
+
+What other languages would I use? Haskell? Java? C? C++? Or, generally,
+functional and object oriented?
+
+Let's do a sample of language tutorial topics. Maybe a nice approach would be
+to have a single tutorial that lists common programming language topics and
+how they map to fble. Without choosing a specific source language to come
+from.
+
+How to fit this in the organization of things? We want it early on, so people
+can leverage their experience to get up to speed. But I don't want to go into
+so much detail. Maybe enough to interest people and give an overview of the
+language in a way they will understand?
+
+Topics:
+* Comments.
+* Variables.
+* Primitive data types.
+* Integer types and operations.
+* Enums.
+* Pointers.
+* Arrays.
+* Control Flow.
+* Loops.
+* Classes.
+* Interfaces.
+* Inheritance.
+* Lambda expressions.
+* Generics.
+* Threading/concurrency.
+* Packages.
+* Unit tests.
+
+I like this idea. A general warmup / overview of concepts of fble in terms of
+common language constructs.
+
+What to call this tutorial?
+
+Language Cheat sheet?
+
+Language Comparison?
+
+Fble By Comparison? That's kind of nice.
+

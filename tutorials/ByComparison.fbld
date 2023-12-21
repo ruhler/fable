@@ -1,0 +1,159 @@
+@tutorial Fble By Comparison
+ This tutorial compares fble to other programming languages by showing how
+ common programming language features map to the fble language. You can use
+ this to get a quick overview of the fble language in preparation for diving
+ into the details in subsequent tutorials.
+
+ @section Comments
+  Comments in fble start with the @l{#} character end continue to the end of
+  the line. For example:
+
+  @code fble @
+   # Here is a comment line.
+ 
+ @section Primitive Data Types
+  Fble does not have builtin primitive data types such as bool, char, int, or
+  float. These data types can be implemented without special language support;
+  they are available in the core library modules @l{/Core/Bool%},
+  @l{/Core/Char%}, @l{/Core/Int%}, and @l{/Core/Float%}.
+
+ @section Enums
+  Fble supports enums as a special case of union type declarations. For
+  example:
+
+  @code fble @
+   @ Move@ = +(Unit@ rock, Unit@ paper, Unit@ scissors);
+
+   Move@ Rock = Move@(rock: Unit);
+   Move@ Paper = Move@(paper: Unit);
+   Move@ Scissors = Move@(scissors: Unit);
+
+   (Move@) { Bool@; } MoveBeatsRock = (Move@ move) {
+     move.?(rock: False, paper: True, scissors: False);
+   };
+
+ @section Arrays
+  Fble does not have an array type. You can use a map from the @l{/Core/Map%}
+  library instead to map integer indices to values.
+
+ @section Lists
+  The core library module @l{/Core/List%} defines a singly-linked list type
+  and functions for working on lists.
+
+  Fble has special syntax for constructing list-like values.
+
+  @code fble @
+   List@ numbers = List[1, 4, f(3), 7];
+
+ @section Integer Literals
+  Fble has special syntax for user-defined literals. The core library module
+  @l{/Core/Int/Lit%} provides an integer literal:
+
+  @code fble @
+   Int@ year = Int|2023;
+
+ @section String Literals
+  Fble has special syntax for user-defined literals. The core library module
+  @l{/Core/String%} provides some string literal variants:
+
+  @code fble @
+   String@ text = Str|'hello, world';
+   String@ multiline = StrE|'hello, world\nhow are you?\n';
+
+ @section Pointers
+  Fble does not have a pointer type. Automatic memory management takes care of
+  the allocation and freeing of objects on the heap automatically. You can use
+  a map from the @l{/Core/Map%} library to simulate pointers in the language.
+
+ @section Control Flow
+  Fble has a conditional operator to provide control flow. It can be used in
+  statements, replacing if, else, and switch statements common in other
+  languages.
+
+  For example:
+
+  @code fble @
+   # .? Used as a conditional operator:
+   Int@ min = Lt(x, y).?(true: x, false: y);
+
+   # .? Used like an if/else statement:
+   Grade@ grade = {
+     Gt(testscore, 90).?(true: A);
+     Gt(testscore, 80).?(true: B);
+     Gt(testscore, 70).?(true: C);
+     Gt(testscore, 60).?(true: D);
+     F;
+   };
+
+   # .? Used like a switch statement:
+   Int@ gpa = grade.?(a: 4, b: 3, c: 2, d: 1, f: 0);
+
+  The conditional operator works on simple union types. It cannot be used
+  to switch on complex string or integer data types. For those purposes, you
+  can define helper functions that return simple union types and perform
+  control flow based on the results.
+
+ @section Loops
+  Fble has no built-in loop construct. You can implement loops using recursive
+  functions. You can define your own loop functions and call those.
+
+  For example:
+
+  @code fble @
+   # Looping directly with recursive function calls.
+   (Int@) { Int@; } Factorial = (Int@ n) {
+     IsZero(n).?(true: 1);
+     Mul(n, Factorial(Sub(n, 1)));
+   };
+
+   # Looping using a library function.
+   Int@ total = /Core/List%.ForEach(list, 0, (Int@ elem, Int@ sum) {
+     Add(elem, sum);
+   });
+
+ @section Generics
+  Fble supports polymorphic data types and functions with basic support for
+  type inference.
+
+  For example:
+
+  @code fble @
+   <@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
+   Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
+     a.?(nil: Nil<B@>);
+     Cons(f(a.cons.head), Map(a.cons.tail, f));
+   };
+
+   # With explicit types:
+   List@<Int@> ints = List<Int@>[1, 2, 3, 4];
+   List@<String@> strings = Map<Int@, String@>(ints, ShowInt);
+
+   # Using type inference:
+   List@<Int@> ints = List[1, 2, 3, 4];
+   List@<String@> strings = Map(ints, ShowInt);
+
+ @section Lambda Functions
+  The primary way of defining functions in fble is via lambda functions.
+
+  @code fble @
+   List@ sorted = Sort((Record@ x, Record@ y) { Gt(x.id, y.id); }, list);
+
+ @section Todo
+  The following sections to be added to this tutorial:
+
+  @item Structs
+  @item Unions
+  @item Classes
+  @item Variables.
+  @item Classes.
+  @item Interfaces.
+  @item Inheritance.
+  @item Threading/concurrency.
+  @item Monadic do notation.
+  @item Packages.
+  @item Unit tests.
+  @item Default arguments. Keyword arguments.
+
+ @section Next Steps
+  Head over to the @fbld[Install.fbld][Install] tutorial to get your hands on
+  fble and try it out.

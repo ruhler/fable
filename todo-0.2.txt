@@ -2,11 +2,11 @@ Fble 0.2 TODO
 =============
 Things to do for the fble-0.2 release.
 
+* Finalize release notes.
 * tutorials/Introduction phonetic rendering of fble is turning into ?? in html
   output.
   Maybe due to use of unicode character not supported by fble Char@?
 * Review all the generated documentation.
-* Finalize release notes.
 
 Usage docs
 * Come up with a better story for building and integrating usage help text?
@@ -14,15 +14,10 @@ Usage docs
  graphics, md5, pinball, invaders, and sat?
 
 Tutorial Improvements
+* Finish ByComparison tutorial.
 * Improve exercises for Unions and Functions tutorials, and others.
-  Because it looks a little funny in the tutorials for things to be
-  highlighted in code blocks but not in inline text.
 * Feedback from users:
  - Better explanation of "lack of primitives" and why that's a good thing.
- - Explain how features are related to procedural programming
-   - Control Flow
-   - Loops
-   - Interfaces (?)
  - Better explanation of what it means to say a type is a value.
  - Better explanation of mapping from file name to module path early on.
  - Clarify that '%' is needed for module paths in early tutorials.
