@@ -1,9 +1,0 @@
-TODO: Expand this.
-
-perf record -F 997 -d -g ./out/bin/fble-bench
-perf report -q -g folded,count,0 | ./out/bin/fble-perf-profile > bench.perf.txt
-
-* You can adjust -F up or down if it ends up with too many samples to process.
-* Look for FbleNewFuncValue calls, see if they are expected. If not, use
-  regular fble prof profiling to track down who is allocating functions
-  unexpectedly and factor those out.

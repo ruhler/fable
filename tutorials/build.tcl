@@ -28,9 +28,13 @@ namespace eval "tutorials" {
     Main.fble
   }
 
-  # Tutorial table of contents
-  ::fbld_html_doc $::b/www/tutorials/Tutorials.html $::s/tutorials/Tutorials.fbld
-  www $::b/www/tutorials/Tutorials.html
+  # Tutorial table of contents, debug and profiling guides.
+  foreach {x} {Tutorials DebugGuide ProfilingGuide} {
+    ::fbld_html_doc $::b/www/tutorials/$x.html $::s/tutorials/$x.fbld
+    www $::b/www/tutorials/$x.html
+  }
+
+  # Debug and Profiling Guides
 
   # Tutorials
   foreach {x} $tutorials {

@@ -54,3 +54,13 @@
  
  @def @fbld[AbstractTypes.fbld][Abstract Types]
   Learn about support for abstract types in fble.
+
+ Additionally there are some guides with tips about debugging and profiling
+ fble programs.
+
+ @def @fbld[DebugGuide.fbld][Debug Guide]
+  Tips for debugging fble programs with gdb.
+
+ @def @fbld[ProfilingGuide.fbld][Profiling Guide]
+  Tips for profiling fble programs with the built in profiler and with linux
+  perf profiling.
