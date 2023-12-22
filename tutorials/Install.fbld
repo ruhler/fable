@@ -57,12 +57,15 @@
    export LD_LIBRARY_PATH=$INSTALL/lib:$LD_LIBRARY_PATH
  
   To test your environment is properly set up, try running a hello world
-  program that ships with the fble installation:
+  program that ships with the fble installation.
  
   @code[sh] @
    fble-stdio -p core -m /Core/Stdio/HelloWorld%
  
   If all goes well, you should see "hello, world" printed to the terminal.
+  Make sure to use the full command, including the final @l{%} character which
+  is part of the syntax for identifying the hello world program.
+
   You're now ready to work through the rest of the fble tutorials to learn all
   about fble.
  

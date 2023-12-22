@@ -44,7 +44,15 @@
    Names ending in @l{%} are names of modules. For example @l{/Core/Bool%} is a
    module from the core library that defines a boolean type and related
    functions.
- 
+
+   Modules are located by searching module directories of the package search
+   path. The source code for module @l{/Core/Bool%} will be in a file
+   @l{Core/Bool.fble}, the source for @l{/Core/Char%} will be in a file
+   @l{Core/Char.fble}, and so on. You can see the default package search path
+   for your installation by running @l{fble-stdio --help}, or set your own
+   package search path using the FBLE_PACKAGE_PATH environment variable and/or
+   @l{-I} and @l{-p} options to @l{fble-stdio}.
+   
   @subsection Comments in Code
    Comments in fble start with the @l{#} character end continue to the end of
    the line. For example:

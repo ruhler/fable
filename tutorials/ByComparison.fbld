@@ -1,8 +1,8 @@
 @tutorial Fble By Comparison
  This tutorial compares fble to other programming languages by showing how
  common programming language features map to the fble language. You can use
- this to get a quick overview of the fble language in preparation for diving
- into the details in subsequent tutorials.
+ this to get a quick overview and first peek of the fble language in
+ preparation for diving into the details in subsequent tutorials.
 
  @section Comments
   Comments in fble start with the @l{#} character end continue to the end of
@@ -15,11 +15,52 @@
   Fble does not have builtin primitive data types such as bool, char, int, or
   float. These data types can be implemented without special language support;
   they are available in the core library modules @l{/Core/Bool%},
-  @l{/Core/Char%}, @l{/Core/Int%}, and @l{/Core/Float%}.
+  @l{/Core/Char%}, and @l{/Core/Int%}. Library support for floating point
+  numbers has not yet been implemented.
+
+ @section Variables
+  Variables in fble can be declared globally or at any block level. Variables
+  scope over the block in which they are defined. For example:
+
+  @code fble @
+   Int@ three = Int|3;
+   Int@ seven = {
+     Int@ four = Int|4;
+     Add(three, four);
+   };
+
+ @section Structures
+  Fble supports user defined structure types. For example:
+
+  @code fble @
+   @ Person@ = *(String@ name, Int@ age);
+
+   Person@ george = Person@(Str|'George', 8);
+   Person@ fred = @(name: Str|'fred', age: 10);
+   Int@ average_age = Div(Add(george.age, fred.age), 2);
+
+ @section Unions
+  Fble has a discriminated union type. An implicit tag is stored with the
+  union value to track which field of the union is valid. For example:
+
+  @code fble @
+   @ Expr@ = +(
+      *(Expr@ a, Expr@ b) add,
+      *(Expr@ a, Expr@ b) sub,
+      *(Expr@ a) neg,
+      Int@ constant
+   );
+
+   Expr@ one = Expr@(constant: Int|1);
+   Int@ value = one.constant;
+
+   Expr@ two = Expr@(add: @(a: one, b: one));
+   Expr@ first_operand = two.add.a;
+
+   Bool@ is_binary_op = one.?(add: True, sub: True, neg: False, constant: False);
 
  @section Enums
-  Fble supports enums as a special case of union type declarations. For
-  example:
+  Fble supports enums as a special case of union types. For example:
 
   @code fble @
    @ Move@ = +(Unit@ rock, Unit@ paper, Unit@ scissors);
@@ -37,8 +78,8 @@
   library instead to map integer indices to values.
 
  @section Lists
-  The core library module @l{/Core/List%} defines a singly-linked list type
-  and functions for working on lists.
+  The core library module @l{/Core/List%} defines a list type and functions
+  for working on lists.
 
   Fble has special syntax for constructing list-like values.
 
@@ -47,10 +88,16 @@
 
  @section Integer Literals
   Fble has special syntax for user-defined literals. The core library module
-  @l{/Core/Int/Lit%} provides an integer literal:
+  @l{/Core/Int/Lit%} provides a decimal integer literal. The library could
+  also provide hexidecimal or other integer literals if needed:
 
   @code fble @
    Int@ year = Int|2023;
+   Int@ hash = Hex|D76AA478;
+
+ @section Strings
+  Fble does not have a builtin string type. The core library module
+  @l{/Core/String%} provides a string type you can use if you like.
 
  @section String Literals
   Fble has special syntax for user-defined literals. The core library module
@@ -111,6 +158,86 @@
      Add(elem, sum);
    });
 
+ @section Functions
+  Here is an example function that tests if @a[y] is a multiple of @a[x]:
+
+  @code fble @
+   (Int@, Int@) { Bool@; } Divides = (Int@ x, Int@ y) {
+     IsZero(Mod(y, x));
+   };
+
+  @subsection Default and Keyword Arguments
+   Fble does not support default or keyword arguments to functions.
+   
+  @subsection Variable Arguments
+   Fble does not support variable argument functions directly. Variable
+   argument functions can be simulated in fble by passing a list as the final
+   argument to the function, or using a list literal function. All of the
+   variable arguments will need to have the same type.
+
+   For example:
+
+   @code fble @
+    (List@<Int@>) { Int@; } Sum = (List@<Int@> args) {
+      args.?(nil: 0);
+      Add(args.cons.head, Sum(args.cons.tail));
+    };
+
+    Int@ sum_to_4 = Sum[1, 2, 3, 4];
+    Int@ sum_to_5 = Sum[1, 2, 3, 4, 5];
+
+
+  @subsection Nested Functions
+   Fble supports arbitrary nesting of function, type, and other definitions.
+
+   Here's an example from the core library code to convert a string to an
+   integer. It defines inner helper functions @l{Digit} and @l{ReadP}.
+
+   @code fble @
+    (String@) { Int@; } Read = {
+      (Char@) { Int@; } Digit = (Char@ c) {
+        c.?(
+          '0': Int|0, '1': Int|1, '2': Int|2, '3': Int|3, '4': Int|4,
+          '5': Int|5, '6': Int|6, '7': Int|7, '8': Int|8, '9': Int|9,
+          : Int|0);
+      };
+
+      (Int@, String@) { Int@; } ReadP = (Int@ x, String@ s) {
+        s.?(nil: x);
+        ReadP(Add(Mul(Int|10, x), Digit(s.cons.head)), s.cons.tail);
+      };
+      
+      (String@ s) {
+        s.?(nil: Int|0);
+        s.cons.head.?('-': Neg(ReadP(Int|0, s.cons.tail)), : ReadP(Int|0, s));
+      };
+    };
+    
+  @subsection Closures
+   Fble supports closures, but note that variables are immutable in fble, so
+   you can't use closures to hide mutable state.
+
+   For example:
+
+   @code fble @
+    (Int@)(Int@) { Bool@; } IsDouble = (Int@ x) {
+      Int@ 2x = Add(x, x);
+      (Int@ y) {
+        Eq(2x, y);
+      };
+    };
+
+    (Int@) { Bool@; } Is6 = IsDouble(3);
+    (Int@) { Bool@; } Is8 = IsDouble(4);
+
+  @subsection Lambda Functions
+   Function values are always defined anoymously in fble. You can use normal
+   fble function definitions as you would lambda functions in other languages.
+   For example:
+
+   @code fble @
+    List@ sorted = Sort((Record@ x, Record@ y) { Gt(x.id, y.id); }, list);
+
  @section Generics
   Fble supports polymorphic data types and functions with basic support for
   type inference.
@@ -132,27 +259,165 @@
    List@<Int@> ints = List[1, 2, 3, 4];
    List@<String@> strings = Map(ints, ShowInt);
 
- @section Lambda Functions
-  The primary way of defining functions in fble is via lambda functions.
+ @section Classes
+  Fble is not an object oriented programming language. It does not have
+  classes.
+  
+  For namespace management you can use fble's modules. For access controls you
+  can use fble's abstract types. You can create struct values with type and
+  function fields if you want.
+
+  For example, the @l{/Core/Map%} module provides a @l{Map@} type defined in
+  its own module with internal fields protected using an abstract type.
+
+ @section Inheritance
+  Fble is not an object oriented programming language. It does not have
+  classes. You can use composition instead for sharing and reuse of code.
+
+ @section Interfaces
+  Interfaces can be described in fble using polymorphic types.
+
+  For example, here's how you could define an interface that supports
+  object hashing and equality:
+  
+  @code fble @
+   <@>@ Hashable@ = <@ T@> {
+     *(
+       (T@, T@) { Bool@; } equals;
+       (T@) { Int@: } hash;
+     );
+   };
+
+   <@ T@>(Hashable@<T@>, List@<T@>, T@) { Bool@; }
+   Contains = <@ T@>(Hashable@<T@> hashable, List@<T@> list, T@ x) {
+     list.?(nil: False);
+     hashable.equals(x, list.cons.head).?(true: True);
+     Contains(hashable, list.cons.tail, x);
+   };
+
+   Hashable@<Bool@> BoolHashable = @(
+    equals: /Core/Bool/Eq%.Eq,
+    hash: (Bool@ x) { x.?(true: 1, false: 0); }
+   );
+
+   Hashable@<Int@> IntHashable = @(
+    equals: /Core/Int/Eq%.Eq,
+    hash: (Int@ x) { x; }
+   );
+
+  It is not possible to mix interfaces of different types together.
+
+ @section Type Classes
+  Fble does not have builtin support for type classes. You can define an
+  interface as described above and pass an explicit implementation of the
+  methods everywhere they would be used.
+
+ @section Exceptions
+  Fble does not have any builtin support for exceptions or error handling.
+
+  Library code can be written that leverages function bind syntax to make it
+  easy to write code involving potential error cases. For example:
 
   @code fble @
-   List@ sorted = Sort((Record@ x, Record@ y) { Gt(x.id, y.id); }, list);
+   M@<Command@> ParseCommand = {
+     String@ name <- Do(ParseName);
+     name.?(nil: Error<Command@>(Str|'missing command name'));
 
- @section Todo
-  The following sections to be added to this tutorial:
+     List@<Markup@> args <- Do(ParseArgs);
+     Return(Command(name, args));
+   };
 
-  @item Structs
-  @item Unions
-  @item Classes
-  @item Variables.
-  @item Classes.
-  @item Interfaces.
-  @item Inheritance.
-  @item Threading/concurrency.
-  @item Monadic do notation.
-  @item Packages.
-  @item Unit tests.
-  @item Default arguments. Keyword arguments.
+ @section Do Notation
+  Fble has special syntax for applying a function to a function which can be
+  used in place of do-notation. The main difference is the bind function is
+  passed explicitly on each line instead of inferred by the types. For
+  example:
+
+  @code fble @
+   M@<Command@> ParseCommand = {
+     String@ name <- Do(ParseName);
+     name.?(nil: Error<Command@>(Str|'missing command name'));
+
+     List@<Markup@> args <- Do(ParseArgs);
+     Return(Command(name, args));
+   };
+
+  In this case the functions @l{Do} and @l{Return} are user defined, not part
+  of the function bind syntax.
+
+ @section Packages
+  Fble has a notion of a module, which allows you to group together and define
+  related types and functions in separate files.
+
+  Fble has a separate abstract type feature that can be used to restrict
+  access to internals of a module or a group of modules.
+
+  For example, here's part of the @l{/Core/String%} module, which re-uses code
+  from the @l{/Core/Char%} and @l{/Core/String%} modules in its
+  implementation:
+
+  @code fble @
+   @ Char@ = /Core/Char%.Char@;
+   % Chars = /Core/Char%.Chars;
+
+   <@>@ List@ = /Core/List%.List@;
+   <@>% List = /Core/List%.List;
+   <@>% Cons = /Core/List%.Cons;
+   <@>% Append = /Core/List%.Append;
+
+   # String@ --
+   #   A character string.
+   @ String@ = List@<Char@>;
+
+   # StrE --
+   #   A string literal that supports the following escape sequences:
+   #   \\ - backslash
+   #   \n - newline
+   #   \t - tab
+   # 
+   # Any other use of \ is undefined.
+   (List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
+     chars.?(nil: chars);
+     chars.cons.head.?('\': {
+       chars.cons.tail.?(nil: /Core/Undef%.Undef<String@>.undefined);
+       String@ tail = StrE(chars.cons.tail.cons.tail);
+       Char@ head = chars.cons.tail.cons.head.?(
+         '\': Chars.'\',
+         'n': Chars.nl,
+         't': Chars.tab,
+         : /Core/Undef%.Undef<Char@>.undefined);
+       Cons(head, tail);
+     });
+     Cons(chars.cons.head, StrE(chars.cons.tail));
+   };
+
+   # Strs --
+   #   Concatenates a list of strings together.
+   #
+   # Example Use:
+   #   String@ s = Strs[StrE|'x is ', Show(x), StrE|'.']
+   (List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
+
+   @(String@, StrE, Strs);
+
+ @section Threading and Concurrency
+  Fble does not have any builtin support for threading or concurrency.
+  
+  The reference implementation of fble is single thread. In theory you could
+  develop a multi-threaded implementation to take advantage of multiple cores,
+  but it would need to find its own parallelism in the program.
+
+  You can write library code and use function bind to describe programs
+  composed of paces that appear to run concurrently. The md5 application
+  included in the fble release has an example of this.
+
+ @section Foreign Function Interface
+  Fble does not have a foreign function interface defined yet.
+  
+  The reference implementation has a C API for manipulating fble values at
+  runtime. This is how standard IO and graphics are implemented in fble. The C
+  API, however, is not yet stable and not standardized as part of the fble
+  language specification.
 
  @section Next Steps
   Head over to the @fbld[Install.fbld][Install] tutorial to get your hands on
