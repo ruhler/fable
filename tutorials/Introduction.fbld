@@ -65,14 +65,24 @@
    interested in a different perspective on how to program or what's possible in
    a programming language:
    
-   @item No builtin primitives or data types.
    @item
-    A novel type system that specifies types using values instead of type
-    declarations, and special syntax for struct values that allows you to
-    reuse standard runtime abstractions for describing the structure of your
-    programs.
+    No builtin primitives or data types. This means fble cannot take easy
+    advantage of existing hardware support for 32 or 64 bit integer types, for
+    example. The benefit, though, is that programmers don't have to coerce
+    their programs into a 32/64 bit box to run fast, user defined types are
+    not syntactically disadvantaged compared to builtin data types, and the
+    door is left open for running fble programs on different, novel, and
+    potentially much more efficient future hardware architectures.
+
+   @item
+    A novel type system and treatment of modules that makes types and modules
+    first class programming constructs. This allows you to reuse standard
+    programming abstractions for describing the types and modular structure of
+    your programs.
    
-   @item A novel syntax for user-defined literals.
+   @item
+    A novel syntax for user-defined literals.
+
    @item
     A simpler, more general syntax than Haskell's @l[do] notation for monadic
     computation.

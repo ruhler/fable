@@ -231,7 +231,7 @@
     (Int@) { Bool@; } Is8 = IsDouble(4);
 
   @subsection Lambda Functions
-   Function values are always defined anoymously in fble. You can use normal
+   Function values are always defined anonymously in fble. You can use normal
    fble function definitions as you would lambda functions in other languages.
    For example:
 

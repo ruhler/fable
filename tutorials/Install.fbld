@@ -42,6 +42,15 @@
  
   @code[sh] @
    ninja check
+
+  If all tests are passing, it should output a line that looks something like
+  this:
+
+  @code[txt] @
+   Test Summary: 1163 passed, 4 xfailed, 0 failed, 1167 total
+
+  Some tests are marked as 'xfailed', which means they are known to fail.
+  Those expected failures can safely be ignored.
  
  @section Environment Setup
   Subsequent tutorials all assume the environment has been set up for easy

@@ -15,11 +15,6 @@ Usage docs
 
 Tutorial Improvements
 * Improve exercises for Unions and Functions tutorials, and others.
-* Feedback from users:
- - Better explanation of "lack of primitives" and why that's a good thing.
- - Better explanation of what it means to say a type is a value.
- - Better explanation of where to find existing and/or generated docs.
- - It's not obvious that 'xfail' means expected failure.
 * Update App tutorial (if there is one?) for updated App@ interface.
 
 Fbld Syntax Highlighting of html backend:
