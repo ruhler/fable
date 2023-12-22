@@ -21,7 +21,7 @@
   @code[sh] @
    apt install \
      expect binutils bison coreutils \
-     gcc gdb diffutils grep groff-base source-highlight \
+     gcc gdb diffutils grep groff-base \
      ninja-build libgl-dev libsdl2-dev tcl8.6
  
  @section Build

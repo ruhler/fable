@@ -87,8 +87,6 @@ required. The version numbers provided are versions that are known to work:
 
 * **GNU groff version 1.22.4**: For formatting help usage text.
 
-* **GNU Source-highlight 3.1.8 (library: 4:1:0)**: For doc syntax highlighting.
-
 * **Ninja 1.10.1**: For the build system.
 
 * **Open GL 1.2**: For graphical fble apps.
@@ -101,7 +99,7 @@ To install required dependencies on a debian based system:
 
     apt install \
       expect binutils bison coreutils \
-      gcc gdb diffutils grep groff-base source-highlight \
+      gcc gdb diffutils grep groff-base \
       ninja-build libgl-dev libsdl2-dev tcl8.6
 
 ## Build

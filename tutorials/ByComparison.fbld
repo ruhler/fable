@@ -18,6 +18,15 @@
   @l{/Core/Char%}, and @l{/Core/Int%}. Library support for floating point
   numbers has not yet been implemented.
 
+  @subsection Integer Literals
+   Fble has special syntax for user-defined literals. The core library module
+   @l{/Core/Int/Lit%} provides a decimal integer literal. The library could
+   also provide hexidecimal or other integer literals if needed:
+
+   @code fble @
+    Int@ year = Int|2023;
+    Int@ hash = Hex|D76AA478;
+
  @section Variables
   Variables in fble can be declared globally or at any block level. Variables
   scope over the block in which they are defined. For example:
@@ -86,31 +95,29 @@
   @code fble @
    List@ numbers = List[1, 4, f(3), 7];
 
- @section Integer Literals
-  Fble has special syntax for user-defined literals. The core library module
-  @l{/Core/Int/Lit%} provides a decimal integer literal. The library could
-  also provide hexidecimal or other integer literals if needed:
-
-  @code fble @
-   Int@ year = Int|2023;
-   Int@ hash = Hex|D76AA478;
-
  @section Strings
   Fble does not have a builtin string type. The core library module
   @l{/Core/String%} provides a string type you can use if you like.
 
- @section String Literals
-  Fble has special syntax for user-defined literals. The core library module
-  @l{/Core/String%} provides some string literal variants:
+  @subsection String Literals
+   Fble has special syntax for user-defined literals. The core library module
+   @l{/Core/String%} provides some string literal variants:
 
-  @code fble @
-   String@ text = Str|'hello, world';
-   String@ multiline = StrE|'hello, world\nhow are you?\n';
+   @code fble @
+    String@ text = Str|'hello, world';
+    String@ multiline = StrE|'hello, world\nhow are you?\n';
 
  @section Pointers
   Fble does not have a pointer type. Automatic memory management takes care of
   the allocation and freeing of objects on the heap automatically. You can use
   a map from the @l{/Core/Map%} library to simulate pointers in the language.
+
+ @section Garbage Collection
+  Fble uses a garbage collector for automatic memory management. Garbage
+  collection is incremental and only does work when you allocate new objects.
+
+  The fble implementation tries to avoid heap allocations under the covers
+  where possible to improve performance.
 
  @section Control Flow
   Fble has a conditional operator to provide control flow. It can be used in
@@ -239,8 +246,7 @@
     List@ sorted = Sort((Record@ x, Record@ y) { Gt(x.id, y.id); }, list);
 
  @section Generics
-  Fble supports polymorphic data types and functions with basic support for
-  type inference.
+  Fble supports polymorphic data types and functions and basic type inference.
 
   For example:
 
@@ -309,8 +315,8 @@
 
  @section Type Classes
   Fble does not have builtin support for type classes. You can define an
-  interface as described above and pass an explicit implementation of the
-  methods everywhere they would be used.
+  interface as shown in the previous section and pass an explicit
+  implementation of the methods everywhere they would be used.
 
  @section Exceptions
   Fble does not have any builtin support for exceptions or error handling.
@@ -346,7 +352,7 @@
   of the function bind syntax.
 
  @section Packages
-  Fble has a notion of a module, which allows you to group together and define
+  Fble has a notion of modules, which allows you to group together and define
   related types and functions in separate files.
 
   Fble has a separate abstract type feature that can be used to restrict
@@ -403,12 +409,12 @@
  @section Threading and Concurrency
   Fble does not have any builtin support for threading or concurrency.
   
-  The reference implementation of fble is single thread. In theory you could
+  The reference implementation of fble is single threaded. In theory you could
   develop a multi-threaded implementation to take advantage of multiple cores,
   but it would need to find its own parallelism in the program.
 
   You can write library code and use function bind to describe programs
-  composed of paces that appear to run concurrently. The md5 application
+  composed of pieces that appear to run concurrently. The md5 application
   included in the fble release has an example of this.
 
  @section Foreign Function Interface

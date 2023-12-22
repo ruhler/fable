@@ -6,9 +6,8 @@
   To understand the origins of fble, you need to know a little about me, the
   author of this tutorial and the creator of the fble programming language.
  
-  I love programming. I program as a hobby. One of the first questions I have
-  to answer when starting a new programming project is what programming
-  language to use for it.
+  I love programming. I program as a hobby. One of the first questions I ask
+  when starting a new project is what programming language to use for it.
  
   The first programming language I learned was C++, which I learned taking
   classes in college. I wrote a Javascript interpreter in C++ for the fun of
@@ -31,7 +30,7 @@
   where we are today, fble.
  
   Note: "fble" is pronounced as four separate letters @l[f-b-l-e], with stress
-  on the @l[f]: @l[/'ef.biː.el.iː/].
+  on the @l[f]: @l[/'ef.bi:.el.i:/].
  
  @section The fble Language
   Here is how I think of the fble language.
@@ -42,10 +41,10 @@
   performance. Include support for generics and modularity. Remove as many
   hard edges, corner cases and redundancies in the language as possible.
  
-  The result is a simple, general purpose, strongly statically typed, strict,
-  pure functional programming language with automatic memory management,
-  support for polymorphism and modularity, user-defined primitive data types,
-  and a hint of C-like syntax.
+  The result is a simple, general purpose, statically typed, strict, pure
+  functional programming language with automatic memory management, support
+  for polymorphism and modularity, user-defined primitive data types, and a
+  hint of C-like syntax.
  
  @section Why Learn fble
   Here are some reasons why you should learn fble:

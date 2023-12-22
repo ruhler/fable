@@ -16,7 +16,7 @@ jobs:
           sudo apt update
           sudo apt install \
             expect binutils bison coreutils \
-            gcc gdb diffutils grep groff-base source-highlight \
+            gcc gdb diffutils grep groff-base \
             ninja-build libgl-dev libsdl2-dev tcl8.6
 
       - name: Build WWW
@@ -57,7 +57,7 @@ jobs:
           sudo apt update
           sudo apt install \
             expect binutils bison coreutils \
-            gcc gdb diffutils grep groff-base source-highlight \
+            gcc gdb diffutils grep groff-base \
             ninja-build libgl-dev libsdl2-dev tcl8.6
 
       - name: Build and Test
