@@ -16,13 +16,13 @@
  h4 { font-size: 1.2em; }
  p { font-size: 1em; }
 
- .comment { color: cyan; }
- .constant { color: violet; }
- .statement { color: yellow; }
- .preproc { color: blue; }
- .type { color: green; }
- .identifier { color: cyan; }
- .special { color: red; }
+ .comment { color: #000099; }
+ .constant { color: #990099; }
+ .statement { color: #999900; }
+ .preproc { color: #009999; }
+ .type { color: #009900; }
+ .identifier { color: #000099; }
+ .special { color: #990000; }
  .normal { color: #333333; }
  
  </style>

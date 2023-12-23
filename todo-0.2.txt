@@ -8,4 +8,3 @@ Things to do for the fble-0.2 release.
 
 Fbld Syntax Highlighting of html backend:
 * Fble
-* Pick better colors for the highlighting.
