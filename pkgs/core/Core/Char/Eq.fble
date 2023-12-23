@@ -112,7 +112,9 @@ Eq@<Char@> Eq = (Char@ a, Char@ b) {
     '{': b.?('{': True, : False),
     '|': b.?('|': True, : False),
     '}': b.?('}': True, : False),
-    '~': b.?('~': True, : False));
+    '~': b.?('~': True, : False),
+    
+    unknown: b.?(unknown: /Core/Int/Eq%.Eq(a.unknown, b.unknown), : False));
 };
 
 @(Eq);

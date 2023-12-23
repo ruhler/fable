@@ -3,23 +3,12 @@ Fble 0.2 TODO
 Things to do for the fble-0.2 release.
 
 * Finalize release notes.
-* tutorials/Introduction phonetic rendering of fble is turning into ?? in html
-  output.
-  Maybe due to use of unicode character not supported by fble Char@?
 * Review all the generated documentation.
 
-Usage docs
-* Come up with a better story for building and integrating usage help text?
-* Add usage generated help text to fble derived programs?
- graphics, md5, pinball, invaders, and sat?
-
 Tutorial Improvements
-* Improve exercises for Unions and Functions tutorials, and others.
 * Better explanation of where to find existing and/or generated docs.
-* Update App tutorial (if there is one?) for updated App@ interface.
+ - Install all generated www docs?
 
 Fbld Syntax Highlighting of html backend:
 * Fbld
 * Fble
-* Consider syntax highlighting of the syntax specification in fble.fbld.
-* Add way to do inline code syntax highlighting in fbld?

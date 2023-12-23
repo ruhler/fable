@@ -33,7 +33,10 @@
   Unit@ o, Unit@ p, Unit@ q, Unit@ r, Unit@ s, Unit@ t, Unit@ u,
   Unit@ v, Unit@ w, Unit@ x, Unit@ y, Unit@ z,
 
-  Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~'
+  Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~',
+
+  # TODO: Come up with a better way to support things like unicode characters.
+  /Core/Int%.Int@ unknown
 );
 
 Char@ newline = Char@('

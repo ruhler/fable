@@ -5824,3 +5824,15 @@ The reason for Error is:
   Error vs. Error_?
 2. We want to change the type of an existing error.
   Add a helper function 'Raise' for this.
+
+---
+
+Syntax highlighting of fbld and fble. For this release, let's do minimum
+possible.
+
+Proposal:
+* Escape the html first. Syntax highlight on escaped html.  So, anywhere we
+  would highlight based on <, >, highlight based on &lt; and &gt; instead.
+* Use the stylesheet to define the colors. We just need to emit <span
+  class="...">...</span> at highlighting time.
+

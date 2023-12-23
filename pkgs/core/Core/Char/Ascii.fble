@@ -75,7 +75,9 @@
     s: Ascii.s, t: Ascii.t, u: Ascii.u, v: Ascii.v, w: Ascii.w, x: Ascii.x,
     y: Ascii.y, z: Ascii.z,
 
-    '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~');
+    '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~',
+
+    unknown: c.unknown);
 };
 
 # Converts an ascii value to its corresponding character.
@@ -119,7 +121,7 @@
 
   (Int@ i) {
     Maybe@<Char@> mc = Lookup(map, i);
-    mc.?(just: mc.just, nothing: Chars.'?');
+    mc.?(just: mc.just, nothing: Char@(unknown: i));
   };
 };
 
