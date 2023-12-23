@@ -5836,3 +5836,20 @@ Proposal:
 * Use the stylesheet to define the colors. We just need to emit <span
   class="...">...</span> at highlighting time.
 
+---
+
+Start with syntax highlighting of fbld. What constructs do I want to
+highlight?
+
+Think of testing a prefix. The result of testing a prefix is either the prefix
+value or empty. If empty, don't highlight, continue on. If not empty,
+highlight, drop the prefix, then continue on.
+
+So, what prefixes do I want to check for with fbld?
+
+Start simple. Maybe this is enough to start:
+
+* tag: @foo
+* punctuation: @, [, ], {, }
+* escape: \], \[, \@, \\, \n
+

@@ -81,8 +81,48 @@
  @EscHtml[@tail[@str]]
 @@
 
+@define[Take][count str]
+ @ifeq[][@count][] @@
+ @head[@str]
+ @Take[@tail[@count]][@tail[@str]]
+@@
+
+@define[Drop][count str]
+ @ifeq[][@count] @str
+ @ @Drop[@tail[@count]][@tail[@str]]
+@@
+
+@define[IsFbldEscape][str]
+ @ifeq[\\\]][@str] yes @@
+ @ifeq[\\\[][@str] yes @@
+ @ifeq[\\\@][@str] yes @@
+ @ifeq[\\\\][@str] yes @@
+ @ifeq[\\n][@str] yes @@
+ no
+@@
+
+@define[IsFbldPunct][str]
+ @ifeq[\]][@str] yes @@
+ @ifeq[\[][@str] yes @@
+ @ifeq[\@][@str] yes @@
+ @ifeq[{][@str] yes @@
+ @ifeq[}][@str] yes @@
+ no
+@@
+
 @define[HighlightFbld][str]
- <div class="comment">@str</div>
+ @ifeq[][@str][] @@
+
+ @define[esc][] @Take[xx][@str] @@
+ @ifeq[yes][@IsFbldEscape[@esc]]
+ @ <span class="constant">@esc</span>@HighlightFbld[@Drop[xx][@str]] @@
+
+ @define[punct][] @head[@str] @@
+ @ifeq[yes][@IsFbldPunct[@punct]]
+ @ <span class="special">@punct</span>@HighlightFbld[@tail[@str]] @@
+
+ @head[@str]
+ @HighlightFbld[@tail[@str]]
 @@
 
 @define[HighlightFble][str]
