@@ -15,6 +15,16 @@
  h3 { font-size: 1.4em; }
  h4 { font-size: 1.2em; }
  p { font-size: 1em; }
+
+ .comment { color: cyan; }
+ .constant { color: violet; }
+ .statement { color: yellow; }
+ .preproc { color: blue; }
+ .type { color: green; }
+ .identifier { color: cyan; }
+ .special { color: red; }
+ .normal { color: #333333; }
+ 
  </style>
  <title>@title</title>
  </head><body>
@@ -71,6 +81,22 @@
  @EscHtml[@tail[@str]]
 @@
 
-@define[code][lang text] <pre>@EscHtml[@text]</pre>\n @@
+@define[HighlightFbld][str]
+ <div class="comment">@str</div>
+@@
+
+@define[HighlightFble][str]
+ <div class="special">@str</div>
+@@
+
+@define[code][lang text]
+ @define[escaped][] @EscHtml[@text] @@
+ @define[highlighted][]
+  @ifeq[fbld][@lang] @HighlightFbld[@escaped] @@
+  @ifeq[fble][@lang] @HighlightFble[@escaped] @@
+  @escaped
+ @ <pre>@highlighted</pre>\n
+@@
+
 @define[l][text] <code>@EscHtml[@text]</code> @@
 @define[a][text] <i>@EscHtml[@text]</i> @@
