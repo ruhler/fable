@@ -27,7 +27,7 @@ jobs:
           ninja www
 
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v1.0.7
+        uses: actions/upload-pages-artifact@v2
         with:
           path: ${{github.workspace}}/build/www/
           retention-days: 0
@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Deploy GitHub Pages site
         id: deployment
-        uses: actions/deploy-pages@v1.2.3
+        uses: actions/deploy-pages@v4
 
   build:
     runs-on: ubuntu-latest
