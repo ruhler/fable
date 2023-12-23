@@ -7,5 +7,5 @@ Things to do for the fble-0.2 release.
 * Review all the generated documentation.
 
 Fbld Syntax Highlighting of html backend:
-* Fbld
 * Fble
+* Pick better colors for the highlighting.

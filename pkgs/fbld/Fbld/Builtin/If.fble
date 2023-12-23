@@ -55,4 +55,17 @@ Impl@ IfEq = (Env@ env, Command@ cmd) {
   Eval(env, body);
 };
 
-@(IfEq);
+Impl@ IfNEq = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(AssertArgCount(Int|4, cmd));
+
+  Markup@ a <- r.do(Eval(env, Get(cmd.args, Int|0)));
+  Markup@ b <- r.do(Eval(env, Get(cmd.args, Int|1)));
+  Bool@ eq <- r.do(Equals(a, b));
+  Markup@ body = eq.?(
+    true: Get(cmd.args, Int|3),
+    false: Get(cmd.args, Int|2));
+
+  Eval(env, body);
+};
+
+@(IfEq, IfNEq);

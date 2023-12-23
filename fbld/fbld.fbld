@@ -438,6 +438,11 @@
     returns the result of evaluating the @a[then] branch. Otherwise returns
     the results of evaluating the @a[else] branch.
 
+   @definition @l{@ifneq[a][b][then][else]}
+    Compares strings @a[a] and @a[b] after evaluation. If they are not equal,
+    returns the result of evaluating the @a[then] branch. Otherwise returns
+    the results of evaluating the @a[else] branch.
+
    @definition @l{@define[name][params][def][body]}
     Defines a new command @l{@}@a[name] for use in the body. @a[params] is a
     space separated list of parameters for the new command. @a[def] defines

@@ -110,8 +110,40 @@
  no
 @@
 
+@define[ContainsChar][list c]
+ @ifeq[][@list] no @@
+ @ifeq[@c][@head[@list]] yes @@
+ @ContainsChar[@tail[@list]][@c]
+@@
+
+@define[IsFbldCommandNameChar][c]
+ @ifeq[yes][@ContainsChar[abcdefghijklmnopqrstuvwxyz][@c]] yes @@
+ @ifeq[yes][@ContainsChar[ABCDEFGHIJKLMNOPQRSTUVWXYZ][@c]] yes @@
+ @ifeq[yes][@ContainsChar[0123456789_][@c]] yes @@
+ no
+@@
+
+@define[FbldCommandName][str]
+ @ifeq[][@str][] @@
+ @ifeq[yes][@IsFbldCommandNameChar[@head[@str]]]
+  @head[@str]
+  @FbldCommandName[@tail[@str]]
+ @[]
+@@
+
+@define[FbldTag][str]
+ @ifeq[\@][@head[@str]]
+  @define[name][] @FbldCommandName[@tail[@str]] @@
+  @ifeq[][@name][] \@@name
+ @[]
+@@
+
 @define[HighlightFbld][str]
  @ifeq[][@str][] @@
+
+ @define[tag][] @FbldTag[@str] @@
+ @ifneq[][@tag]
+ @ <span class="identifier">@tag</span>@HighlightFbld[@Drop[@tag][@str]] @@
 
  @define[esc][] @Take[xx][@str] @@
  @ifeq[yes][@IsFbldEscape[@esc]]
