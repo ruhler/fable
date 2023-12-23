@@ -101,19 +101,14 @@
  no
 @@
 
-@define[IsFbldPunct][str]
- @ifeq[\]][@str] yes @@
- @ifeq[\[][@str] yes @@
- @ifeq[\@][@str] yes @@
- @ifeq[{][@str] yes @@
- @ifeq[}][@str] yes @@
- no
-@@
-
 @define[ContainsChar][list c]
  @ifeq[][@list] no @@
  @ifeq[@c][@head[@list]] yes @@
  @ContainsChar[@tail[@list]][@c]
+@@
+
+@define[IsFbldPunct][c]
+ @ContainsChar[\]\[\@{}][@c]
 @@
 
 @define[IsFbldCommandNameChar][c]
@@ -157,8 +152,91 @@
  @HighlightFbld[@tail[@str]]
 @@
 
+@define[IsFbleNonWord][c]
+ @ContainsChar[(){|};,:?=.&+*-!$\@~'\\\[\]%/^ \n	#][@c]
+@@
+
+@define[FblePlainWord][str]
+ @ifeq[][@str][] @@
+ @ifeq[yes][@IsFbleNonWord[@head[@str]]][] @@
+ @head[@str]
+ @FblePlainWord[@tail[@str]]
+@@
+
+@define[FbleQuoted][str]
+ @ifeq[][@str][] @@
+ @ifeq[''][@Take[''][@str]]
+ @ ''@FbleQuoted[@Drop[''][@str]] @@
+ @ifeq['][@head[@str]] ' @@
+ @head[@str]
+ @FbleQuoted[@tail[@str]]
+@@
+
+@define[FbleWord][str]
+ @ifeq[][@str][] @@
+ @ifeq['][@head[@str]] '@FbleQuoted[@tail[@str]] @@
+ @FblePlainWord[@str]
+@@
+
+@define[FbleModulePath][str]
+ @ifeq[][@str][] @@
+ @ifeq[%][@head[@str]] % @@
+ @head[@str]
+ @FbleModulePath[@tail[@str]]
+@@
+
+@define[ign][arg][] @@
+
 @define[HighlightFble][str]
- <div class="special">@str</div>
+ @ifeq[][@str][] @@
+
+ @define[word][] @FbleWord[@str] @@
+ @ifneq[][@word]
+  @define[wordtail][] @Drop[@word][@str] @@
+
+  @ifeq[\@][@head[@wordtail]]
+  @ <span class="type">@word\@</span>@HighlightFble[@tail[@wordtail]] @@
+
+  @ifeq[:][@head[@wordtail]]
+  @ <span class="statement">@word:</span>@HighlightFble[@tail[@wordtail]] @@
+
+  @ifeq['][@head[@word]]
+  @ <span class='identifier'>@word</span>@HighlightFble[@wordtail] @@
+
+  @word
+  @HighlightFble[@wordtail]
+ @@
+
+ @ifeq[/][@head[@str]]
+  @define[path][] /@FbleModulePath[@tail[@str]]
+  @ <span class='preproc'>@path</span>@HighlightFble[@Drop[@path][@str]]
+ @@
+
+ @ifeq[|][@head[@str]]
+  @define[lit][] |@FbleWord[@tail[@str]]
+  @ <span class='constant'>@lit</span>@HighlightFble[@Drop[@lit][@str]]
+ @@
+
+ @ifeq[&lt;-][@Take[&lt;-][@str]]
+ @ &lt;-@HighlightFble[@Drop[&lt;-][@str]] @@
+
+ @ifeq[&lt;][@Take[&lt;][@str]]
+ @ <span class="special">&lt;</span>@HighlightFble[@Drop[&lt;][@str]] @@
+
+ @ifeq[&gt;][@Take[&gt;][@str]]
+ @ <span class="special">&gt;</span>@HighlightFble[@Drop[&gt;][@str]] @@
+
+ @ifeq[\@][@head[@str]]
+ @ <span class="special">\@</span>@HighlightFble[@tail[@str]] @@
+
+ @ifeq[:][@head[@str]]
+ @ <span class="statement">:</span>@HighlightFble[@tail[@str]] @@
+
+ @ifeq[%][@head[@str]]
+ @ <span class="special">%</span>@HighlightFble[@tail[@str]] @@
+
+ @head[@str]
+ @HighlightFble[@tail[@str]]
 @@
 
 @define[code][lang text]

@@ -1402,7 +1402,7 @@
   
    @def[Whitespace] Any whitespace character, as traditionally classified.
    @def[Comment] The comment character @l{#}.
-   @def[Punctuation] The characters @l{(){};,:?=.<>+*-!$@~'\[]%/^}.
+   @def[Punctuation] The characters @l{(){|};,:?=.<>+*-!$@~'\[]%/^}.
    @def[Word] Any other character.
    
    The lexical syntax is used to interpret a string of arbitrary characters as

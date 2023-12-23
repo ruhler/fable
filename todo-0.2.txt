@@ -6,5 +6,3 @@ Things to do for the fble-0.2 release.
   Mostly just need the release date at this point.
 * Review all the generated documentation.
 
-Fbld Syntax Highlighting of html backend:
-* Fble

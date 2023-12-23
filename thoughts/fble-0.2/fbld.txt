@@ -5853,3 +5853,25 @@ Start simple. Maybe this is enough to start:
 * punctuation: @, [, ], {, }
 * escape: \], \[, \@, \\, \n
 
+---
+
+Okay, fbld syntax highlighting done. It's super slow. Oh well.
+
+On to fble. How do I want to highlight fble?
+
+* '...' - quoted - identifier       DONE
+* word@ - type - type               DONE
+* word: - label - statement         DONE
+* : - label - statement             DONE
+* |word - literal - constant        DONE
+* /...% - module path - preproc     DONE
+* <- - normal                       DONE
+* @, <, >, % - poly - special       DONE
+
+I don't know. A little at a time. Let's see. It's going to be slow,
+unfortunately. I'll just need to be patient.
+
+Draft of code is done. Let's debug now.
+
+Looks good. It just takes forever to generate the html. Hmm... Is that okay?
+Or we need to speed it up first?
