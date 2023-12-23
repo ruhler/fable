@@ -37,20 +37,27 @@
    INSTALL=`pwd`/install
    ./configure --prefix=$INSTALL
    ninja && ninja install
+
+  @subsection Documentation
+   Documentation is generated and installed by default. You can find the
+   generated man pages in the @l{$INSTALL/man} directory. You can find
+   generated html documentation in the @l{$INSTALL/share/doc/fble} directory,
+   including html generated for these tutorials.
  
-  If you would like to run the full test suite, you can also run:
- 
-  @code[sh] @
-   ninja check
+  @subsection Tests
+   If you would like to run the full test suite, you can also run:
+  
+   @code[sh] @
+    ninja check
 
-  If all tests are passing, it should output a line that looks something like
-  this:
+   If all tests are passing, it should output a line that looks something like
+   this:
 
-  @code[txt] @
-   Test Summary: 1163 passed, 4 xfailed, 0 failed, 1167 total
+   @code[txt] @
+    Test Summary: 1163 passed, 4 xfailed, 0 failed, 1167 total
 
-  Some tests are marked as 'xfailed', which means they are known to fail.
-  Those expected failures can safely be ignored.
+   Some tests are marked as 'xfailed', which means they are known to fail.
+   Those expected failures can safely be ignored.
  
  @section Environment Setup
   Subsequent tutorials all assume the environment has been set up for easy

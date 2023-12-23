@@ -64,11 +64,11 @@ namespace eval "fbld" {
 
   # Fbld Spec www.
   ::fbld_html_doc $::b/www/fbld/fbld.html $::s/fbld/fbld.fbld
-  www $::b/www/fbld/fbld.html
+  www fbld/fbld.html
 
   # DocComments www.
   ::fbld_html_doc $::b/www/fbld/DocComments.html $::s/fbld/DocComments.fbld
-  www $::b/www/fbld/DocComments.html
+  www fbld/DocComments.html
 
   # Test dcget.tcl
   build_tcl $::s/fbld/dcget_test/build.tcl

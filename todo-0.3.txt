@@ -109,3 +109,6 @@ Usage docs
  graphics, md5, pinball, invaders, and sat?
 
 * Proper support for unicode characters in /Core/Char%.
+
+* Consider not building and installing documentation by default?
+  Just because it takes a while to generate?

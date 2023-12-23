@@ -31,7 +31,7 @@ namespace eval "tutorials" {
   # Tutorial table of contents, debug and profiling guides.
   foreach {x} {Tutorials DebugGuide ProfilingGuide} {
     ::fbld_html_doc $::b/www/tutorials/$x.html $::s/tutorials/$x.fbld
-    www $::b/www/tutorials/$x.html
+    www tutorials/$x.html
   }
 
   # Debug and Profiling Guides
@@ -40,7 +40,7 @@ namespace eval "tutorials" {
   foreach {x} $tutorials {
     set base [file rootname [file tail $x]]
     ::fbld_html_tutorial $::b/www/tutorials/$base.html $::s/tutorials/$base.fbld
-    www $::b/www/tutorials/$base.html
+    www tutorials/$base.html
   }
 
   # HelloWorld tests

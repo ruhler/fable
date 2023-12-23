@@ -11,10 +11,10 @@ namespace eval "book" {
   foreach {x} $docs {
     set base [file rootname [file tail $x]]
     ::fbld_html_doc $::b/www/book/$base.html $::s/book/$base.fbld
-    www $::b/www/book/$base.html
+    www book/$base.html
   }
 
   build $::b/www/book/index.html $::b/www/book/Book.html \
     "cp $::b/www/book/Book.html $::b/www/book/index.html"
-  www $::b/www/book/index.html
+  www book/index.html
 }

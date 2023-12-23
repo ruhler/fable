@@ -139,9 +139,11 @@ proc install { src dest } {
 }
 
 # Mark a target as belonging to the www target.
+# The target name should be specified relative to the www/ directory.
 set ::www [list]
 proc www { target } {
-  lappend ::www $target
+  lappend ::www $::b/www/$target
+  install $::b/www/$target $::config::docdir/fble/$target
 }
 
 # test --
@@ -232,14 +234,14 @@ test $::b/pkgs/fbld/README.tr \
 
 # README file www
 fbld_html_doc $::b/www/README.html $::s/README.fbld
-www $::b/www/README.html
+www README.html
 build $::b/www/index.html $::b/www/README.html \
   "cp $::b/www/README.html $::b/www/index.html"
-www $::b/www/index.html
+www index.html
 
 # Release file www
 fbld_html_doc $::b/www/Release.html $::s/Release.fbld
-www $::b/www/Release.html
+www Release.html
 
 # Test summary.
 build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
