@@ -1,4 +1,6 @@
 @doc Fble Profiler
+  @FbleVersion (@BuildStamp)
+
  One of the main goals of the fble language is to support high performance,
  low overhead computing. A profiler is an important tool to aid developers in
  optimizing the performance of fble programs.

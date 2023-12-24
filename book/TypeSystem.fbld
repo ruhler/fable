@@ -1,4 +1,6 @@
 @doc Fble Type System Design
+  @FbleVersion (@BuildStamp)
+
  Guiding principles for the design of the Fble type system:
 
  @definition Avoid builtin types where possible.

@@ -1,4 +1,6 @@
 @doc Fble Performance Philosophy
+  @FbleVersion (@BuildStamp)
+
  The programmer is responsible for optimizing the algorithmic complexity of
  their program, the fble implementation is responsible for optimizing the
  constant overheads.

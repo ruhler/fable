@@ -4,4 +4,6 @@ Things to do for the fble-0.2 release.
 
 * Finalize release notes.
   Mostly just need the release date at this point.
-* Review all the generated documentation.
+
+* Is fbld too slow to release in this state?
+ - How long does it take to do a clean build now?

@@ -1,7 +1,7 @@
 @doc Fble Release Notes
   @FbleVersion (@BuildStamp)
 
- @section fble-0.2
+ @section fble-0.2 (Pending)
   The following list highlights the most notable changes from fble-0.1.
 
   @subsection Fble Language
@@ -16,10 +16,11 @@
    @item Performance improvements.
 
   @subsection Fbld
-   Complete rewrite of fbld documentation language and implementation. Fbld
-   backends are now implemented in fbld directly. The tcl-based implementation
-   is removed in favor of an fble-based implementation with much better error
-   location tracking.
+   @item
+    Complete rewrite of fbld documentation language and implementation. Fbld
+    backends are now implemented in fbld directly. The tcl-based
+    implementation is removed in favor of an fble-based implementation with
+    much better error location tracking.
 
   @subsection Documentation
    @item New Fble By Comparison tutorial comparing against other languages.

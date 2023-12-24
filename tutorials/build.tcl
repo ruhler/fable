@@ -2,9 +2,9 @@ namespace eval "tutorials" {
   set tutorials {
     AbstractTypes.fbld
     Basics.fbld
-    ByComparison.fbld
     Bind.fbld
     Core.fbld
+    Features.fbld
     Functions.fbld
     HelloWorld.fbld
     HelloWorldRevisited.fbld

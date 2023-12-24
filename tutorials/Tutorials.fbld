@@ -6,8 +6,9 @@
  @def @fbld[Introduction.fbld][Introduction]
   What fble is and why bother learning it.
 
- @def @fbld[ByComparison.fbld][Fble By Comparison]
-  See how the fble programming language compares to other languages.
+ @def @fbld[Features.fbld][Language Features]
+  Get a glimps of fble language features to see how it compares with
+  other programming languages.
  
  @def @fbld[Install.fbld][Install]
   Install fble and set up your environment.

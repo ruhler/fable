@@ -184,18 +184,19 @@
   found is used for the definition of the module.
  
   The @l{-p core} option to @l{fble-stdio} has the effect of adding
-  @l{$FBLE_PACKAGE_PATH/core} to the module search path, assuming you have set
-  up @l{$FBLE_PACKAGE_PATH} as described in the
-  @fbld[tutorials/Install.fbld][Install] tutorial. To find the source code for
-  the @l{/Core/String%} module, for example, the runtime will first check for
-  @l{./Core/String.fble}, then @l{$FBLE_PACKAGE_PATH/core/Core/String.fble}.
+  @l{$FBLE_PACKAGE_PATH/core} to the module search path, assuming
+  @l{$FBLE_PACKAGE_PATH} points to the default package search path
+  documented in the output of @l{fble-stdio --help}. To find the source code
+  for the @l{/Core/String%} module, for example, the runtime will first check
+  for @l{./Core/String.fble}, then
+  @l{$FBLE_PACKAGE_PATH/core/Core/String.fble}.
  
   The package path is a list of directories containing packages. A package, in
   this case, is a directory with a collection of modules. For example, the
-  @l{$FBLE_PACKAGE_PATH} you set up lists a single directory with the
-  following packages in it: @l{app}, @l{core}, @l{games}, @l{graphics}, and so
-  on. Each of these packages is a module search path directory to use to
-  search for the definition of modules.
+  default package path lists a single directory with the following packages in
+  it: @l{app}, @l{core}, @l{games}, @l{graphics}, and so on. Each of these
+  packages is a module search path directory to use to search for the
+  definition of modules.
  
  @section Program Module Assembly
   The purpose of modules is to split fble programs up into different files,

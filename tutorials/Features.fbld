@@ -1,8 +1,7 @@
-@tutorial Fble By Comparison
- This tutorial compares fble to other programming languages by showing how
- common programming language features map to the fble language. You can use
- this to get a quick overview and first peek of the fble language in
- preparation for diving into the details in subsequent tutorials.
+@tutorial Language Features
+ This tutorial shows how common programming language features map to the fble
+ language. You can use this to get a quick overview and first peek of the fble
+ language in preparation for diving into the details in subsequent tutorials.
 
  @section Comments
   Comments in fble start with the @l{#} character end continue to the end of

@@ -15,10 +15,10 @@ memory management and make sure there is a clear way to reason about
 performance. Include support for generics and modularity. Remove as many
 hard edges, corner cases and redundancies in the language as possible.
 
-The result is a simple, general purpose, strongly statically typed, strict,
-pure functional programming language with automatic memory management,
-support for polymorphism and modularity, user-defined primitive data types,
-and a hint of C-like syntax.
+The result is a simple, general purpose, statically typed, strict, pure
+functional programming language with automatic memory management, support
+for polymorphism and modularity, user-defined primitive data types, and a
+hint of C-like syntax.
 
 ## Source
 

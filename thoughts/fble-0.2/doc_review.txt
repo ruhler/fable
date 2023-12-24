@@ -162,37 +162,39 @@ Doc Comments - Check man pages:
 ./out/include/fble/FbleCopyLoc.3.fbld               DONE
 
 Tutorials - check for generated html
-./tutorials/HelloWorld.fbld
-./tutorials/HelloWorldRevisited.fbld
-./tutorials/Variables.fbld
-./tutorials/Lists.fbld
-./tutorials/Core.fbld
-./tutorials/AbstractTypes.fbld
-./tutorials/Tutorials.fbld
-./tutorials/Unions.fbld
-./tutorials/Basics.fbld
-./tutorials/Modules.fbld
-./tutorials/Introduction.fbld
-./tutorials/Literals.fbld
-./tutorials/Bind.fbld
-./tutorials/Install.fbld
-./tutorials/tutorial.lib.fbld
-./tutorials/Polymorphism.fbld
-./tutorials/Functions.fbld
-./tutorials/Structs.fbld
+./tutorials/Tutorials.fbld                          DONE
+./tutorials/Introduction.fbld                       DONE
+./tutorials/Features.fbld                           DONE
+./tutorials/Install.fbld                            DONE
+./tutorials/HelloWorld.fbld                         DONE
+./tutorials/Basics.fbld                             DONE
+./tutorials/Variables.fbld                          DONE
+./tutorials/Structs.fbld                            DONE
+./tutorials/Modules.fbld                            DONE
+./tutorials/Unions.fbld                             DONE
+./tutorials/Functions.fbld                          DONE
+./tutorials/Lists.fbld                              DONE
+./tutorials/Literals.fbld                           DONE
+./tutorials/Polymorphism.fbld                       DONE
+./tutorials/Bind.fbld                               DONE
+./tutorials/Core.fbld                               DONE
+./tutorials/HelloWorldRevisited.fbld                DONE
+./tutorials/AbstractTypes.fbld                      DONE
+
+./tutorials/tutorial.lib.fbld                       DONE
 
 Book - check for content and generated html
-./book/Book.fbld
-./book/Origins.fbld
-./book/Performance.fbld
-./book/Profiler.fbld
-./book/Syntax.fbld
-./book/TypeSystem.fbld
+./book/Book.fbld            DONE
+./book/Origins.fbld         DONE
+./book/Performance.fbld     DONE
+./book/Profiler.fbld        DONE
+./book/Syntax.fbld          DONE
+./book/TypeSystem.fbld      DONE
 
 Other
-./Release.fbld
-./fbld/fbld.fbld
-./README.fbld
-./spec/fble.fbld
-./spec/README.fbld
-./spec/style.fbld
+./Release.fbld              DONE
+./fbld/fbld.fbld            DONE
+./README.fbld               DONE
+./spec/fble.fbld            DONE
+./spec/README.fbld          
+./spec/style.fbld           DONE

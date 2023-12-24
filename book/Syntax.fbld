@@ -1,4 +1,6 @@
 @doc Fble Concrete Syntax Design
+  @FbleVersion (@BuildStamp)
+
  Guiding principles for the design of the Fble concrete syntax:
 
  @definition No keywords.
@@ -52,8 +54,10 @@
  @definition Common syntactic structures.
   Lists are common: lists of fields, lists of arguments, lists of statements.
   Try to use consistent syntax for lists. Two approaches are used:
+
   1. parenthesis, comma separated (or the variant angle brackets for type
      level lists).
+
   2. braces, semicolon terminated.
 
   Braces are used for those cases where names are introduced into the scope,
