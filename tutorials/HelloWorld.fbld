@@ -54,7 +54,7 @@
    @l{-I} and @l{-p} options to @l{fble-stdio}.
    
   @subsection Comments in Code
-   Comments in fble start with the @l{#} character end continue to the end of
+   Comments in fble start with the @l{#} character and continue to the end of
    the line. For example:
  
    @code fble @

@@ -185,10 +185,20 @@
  @FbleModulePath[@tail[@str]]
 @@
 
-@define[ign][arg][] @@
+@define[Line][str]
+ @ifeq[][@str][] @@
+ @ifeq[\n][@head[@str]] \n @@
+ @head[@str]
+ @Line[@tail[@str]]
+@@
 
 @define[HighlightFble][str]
  @ifeq[][@str][] @@
+
+ @ifeq[#][@head[@str]]
+  @define[line][] @Line[@str]
+  @ <span class="comment">@line</span>@HighlightFble[@Drop[@line][@str]]
+ @@
 
  @define[word][] @FbleWord[@str] @@
  @ifneq[][@word]
