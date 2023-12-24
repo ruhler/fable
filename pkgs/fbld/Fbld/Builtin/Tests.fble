@@ -62,6 +62,18 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
   }),
 
+  Test(Str|DefineSameArgEval, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[a][] AAAA @@',
+      Str|'@define[a][a] @a @@',
+      Str|'@a[hello]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'hello';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
   Test(Str|Let, (Unit@ _) {
     Result@<String@> got = Run[
       Str|'@let[x] a @@',

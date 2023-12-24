@@ -1,6 +1,9 @@
 
 <@>@ List@ = /Core/List%.List@;
 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
@@ -17,14 +20,16 @@
 @ Text@ = /Fbld/Text%.Text@;
 
 # Fbld marked up text.
-@ Command@ = *(Text@ name, List@<Markup@> args),
+@ Command@ = *(Text@ name, Maybe@<Impl@> impl, List@<Markup@> args),
 @ Sequence@ = *(Markup@ a, Markup@ b),
 @ Markup@ = +(
   Unit@ empty,
   Text@ plain,          # non-empty
   Command@ command,
   Sequence@ sequence    # both a and b are non-empty
-);
+),
+@ Impl@ = (Env@, Command@) { Result@<Markup@>; },
+@ Env@ = /Core/Map%.Map@<String@, Impl@>;
 
 Markup@ Empty = Markup@(empty: Unit);
 
@@ -36,7 +41,7 @@ Plain = (Loc@ l, String@ str) {
 
 (Loc@, String@)(List@<Markup@>) { Markup@; }
 Command = (Loc@ l, String@ name)(List@<Markup@> args) {
-  Markup@(command: Command@(Text@(l, name), args));
+  Markup@(command: Command@(Text@(l, name), Nothing<Impl@>, args));
 };
 
 (Markup@, Markup@) { Markup@; }
@@ -77,6 +82,6 @@ ToString = (Markup@ m) {
   ToString_(m, Str|'');
 };
 
-@(Markup@, Command@, Sequence@,
+@(Markup@, Command@, Sequence@, Env@, Impl@,
   Empty, Plain, Command, Append, Markups,
   ToString);

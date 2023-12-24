@@ -16,6 +16,8 @@
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
+@ Impl@ = /Fbld/Markup%.Impl@;
+@ Env@ = /Fbld/Markup%.Env@;
 % Append = /Fbld/Markup%.Append;
 % Empty = /Fbld/Markup%.Empty;
 
@@ -24,12 +26,10 @@
 <@>% Try = /Fbld/Result%.Try;
 % r = /Fbld/Result%.Monad;
 
-@ Impl@ = (Env@, Command@) { Result@<Markup@>; },
-@ Env@ = /Core/Map%.Map@<String@, Impl@>;
-
 % EmptyEnv = /Core/Map%.Empty<String@, Impl@>;
 % InsertEnv = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Impl@>;
 % LookupEnv = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Impl@>;
+% DeleteEnv = /Core/Map%.Delete<String@>(/Core/String/Ord%.Ord)<Impl@>;
 
 (Env@, Markup@) { Result@<Markup@>; }
 Eval = (Env@ env, Markup@ markup) {
@@ -38,7 +38,10 @@ Eval = (Env@ env, Markup@ markup) {
     plain: r.return(markup),
     command: {
       Command@ cmd = markup.command;
-      Maybe@<Impl@> impl = LookupEnv(env, cmd.name.text);
+      Maybe@<Impl@> impl = {
+        cmd.impl.?(just: cmd.impl);
+        LookupEnv(env, cmd.name.text);
+      };
       impl.?(nothing: r.return(Markup@(command: cmd)));
       impl.just(env, cmd);
     },
@@ -73,6 +76,6 @@ AssertArgCount = (Int@ expected, Command@ cmd) {
 
 
 @(Impl@, Env@,
-  EmptyEnv, LookupEnv, InsertEnv,
+  EmptyEnv, LookupEnv, DeleteEnv, InsertEnv,
   Eval, Evals,
   AssertArgCount);

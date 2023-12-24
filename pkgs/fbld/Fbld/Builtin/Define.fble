@@ -4,18 +4,24 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Length = /Core/List/Length%.Length;
 <@>% Get = /Core/List/Length%.Get;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+% Append = /Fbld/Markup%.Append;
 
 @ Impl@ = /Fbld/Eval%.Impl@;
 @ Env@ = /Fbld/Eval%.Env@;
 % InsertEnv = /Fbld/Eval%.InsertEnv;
+% LookupEnv = /Fbld/Eval%.LookupEnv;
+% DeleteEnv = /Fbld/Eval%.DeleteEnv;
 % Eval = /Fbld/Eval%.Eval;
 % Evals = /Fbld/Eval%.Evals;
 % AssertArgCount = /Fbld/Eval%.AssertArgCount;
@@ -36,6 +42,39 @@ DefArgs = (Env@ env, List@<String@> params, List@<Markup@> args) {
   params.?(nil: env);
   DefArgs(InsertEnv(env, params.cons.head, VarImpl(args.cons.head)),
     params.cons.tail, args.cons.tail);
+};
+
+(Env@, List@<String@>) { Env@; }
+DelArgs = (Env@ env, List@<String@> params) {
+  params.?(nil: env);
+  DelArgs(DeleteEnv(env, params.cons.head), params.cons.tail);
+};
+
+(Env@, Markup@) { Markup@; }
+PreLookup = (Env@ env, Markup@ markup) {
+  markup.?(
+    empty: markup,
+    plain: markup,
+    command: {
+      List@<Markup@> args = PreLookups(env, markup.command.args);
+      Maybe@<Impl@> impl = {
+        markup.command.impl.?(just: markup.command.impl);
+        LookupEnv(env, markup.command.name.text);
+      };
+      Markup@(command: markup.command.@(impl, args));
+    },
+    sequence: {
+      Markup@ a = PreLookup(env, markup.sequence.a);
+      Markup@ b = PreLookup(env, markup.sequence.b);
+      Append(a, b);
+    });
+},
+(Env@, List@<Markup@>) { List@<Markup@>; }
+PreLookups = (Env@ env, List@<Markup@> markups) {
+  markups.?(nil: markups);
+  Markup@ head = PreLookup(env, markups.cons.head);
+  List@<Markup@> tail = PreLookups(env, markups.cons.tail);
+  Cons(head, tail);
 };
 
 Impl@ Define = (Env@ env, Command@ cmd) {
@@ -60,9 +99,10 @@ Impl@ Define = (Env@ env, Command@ cmd) {
     Unit@ _ <- r.do(AssertArgCount(Length(params), c));
 
     List@<Markup@> args <- r.do(Evals(e, c.args));
-    Eval(DefArgs(nenv, params, args), def);
+    Eval(DefArgs(nenv, params, args), prepped);
   },
-  Env@ nenv = InsertEnv(env, name, impl);
+  Env@ nenv = InsertEnv(env, name, impl),
+  Markup@ prepped = PreLookup(DelArgs(InsertEnv(env, name, impl), params), def);
 
   Markup@ body = Get(cmd.args, Int|3);
   Eval(nenv, body);

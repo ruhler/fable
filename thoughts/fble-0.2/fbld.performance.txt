@@ -576,3 +576,10 @@ Command@ to store an already looked up command. Do the command lookups in
 @define.
 
 What do you say? Shall we try it? I think so.
+
+The pollution isn't bad. This drops Features.fbld time from 2m19s to 1m45s, a
+25% improvement. That's pretty good considering total time for lookups was 34%
+of runtime before.
+
+Time to rebuild all the fbld docs is now 8m52 seconds. The longest docs take
+around 3 minutes.
