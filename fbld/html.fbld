@@ -15,7 +15,6 @@
  h3 { font-size: 1.4em; }
  h4 { font-size: 1.2em; }
  p { font-size: 1em; }
-
  .comment { color: #000099; }
  .constant { color: #990099; }
  .statement { color: #999900; }
@@ -24,7 +23,6 @@
  .identifier { color: #000099; }
  .special { color: #990000; }
  .normal { color: #333333; }
- 
  </style>
  <title>@title</title>
  </head><body>
