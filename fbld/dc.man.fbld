@@ -38,7 +38,7 @@
   @define[arg][type name desc][] @@
   @define[returns][type desc] @l[@type] @@
   @define[sideeffects][desc][] @@
-  @define[retval][] @eval[@plain[ignore][@content]] @@
+  @let[retval] @eval[@plain[ignore][@content]] @@
   @ifeq[][@retval][@l[void]] @retval
 
   @inline[ @name(]
@@ -47,7 +47,7 @@
   @define[arg][type name desc][@l[@type] @a[@name];] @@
   @define[returns][type desc][] @@
   @define[sideeffects][desc][] @@
-  @define[args][] @eval[@plain[ignore][@content]] @@
+  @let[args] @eval[@plain[ignore][@content]] @@
   @ifeq[][@ltail[@args]][@lhead[@args]] @ljoin[\n    @args][@l[,\n    ]]
   
   @inline[);\n]

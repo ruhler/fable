@@ -68,4 +68,25 @@ Impl@ Define = (Env@ env, Command@ cmd) {
   Eval(nenv, body);
 };
 
-@(Define);
+Impl@ Let = (Env@ env, Command@ cmd) {
+  Unit@ _ <- r.do(AssertArgCount(Int|3, cmd));
+
+  String@ name <- r.do({
+    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ evaled <- r.do(Eval(env, arg));
+    ToString(evaled);
+  });
+
+  Markup@ def <- r.do(Eval(env, Get(cmd.args, Int|1)));
+
+  Impl@ impl = (Env@ _, Command@ c) {
+    Unit@ _ <- r.do(AssertArgCount(Int|0, c));
+    r.return(def);
+  },
+  Env@ nenv = InsertEnv(env, name, impl);
+
+  Markup@ body = Get(cmd.args, Int|2);
+  Eval(nenv, body);
+};
+
+@(Define, Let);

@@ -53,7 +53,7 @@
 @define[ReplaceExt][str]
  @ifeq[][@str][] @@
  @ifeq[.fbld][@str] .html @@
- @define[t][][@Drop[.fbld][@str]] @@
+ @let[t][@Drop[.fbld][@str]] @@
  @ifeq[][@t] @head[@str]@ReplaceExt[@tail[@str]]
  @ .html@ReplaceExt[@t]
 @@
@@ -128,7 +128,7 @@
 
 @define[FbldTag][str]
  @ifeq[\@][@head[@str]]
-  @define[name][] @FbldCommandName[@tail[@str]] @@
+  @let[name] @FbldCommandName[@tail[@str]] @@
   @ifeq[][@name][] \@@name
  @[]
 @@
@@ -136,15 +136,15 @@
 @define[HighlightFbld][str]
  @ifeq[][@str][] @@
 
- @define[tag][] @FbldTag[@str] @@
+ @let[tag] @FbldTag[@str] @@
  @ifneq[][@tag]
  @ <span class="identifier">@tag</span>@HighlightFbld[@Drop[@tag][@str]] @@
 
- @define[esc][] @Take[xx][@str] @@
+ @let[esc] @Take[xx][@str] @@
  @ifeq[yes][@IsFbldEscape[@esc]]
  @ <span class="constant">@esc</span>@HighlightFbld[@Drop[xx][@str]] @@
 
- @define[punct][] @head[@str] @@
+ @let[punct] @head[@str] @@
  @ifeq[yes][@IsFbldPunct[@punct]]
  @ <span class="special">@punct</span>@HighlightFbld[@tail[@str]] @@
 
@@ -196,13 +196,13 @@
  @ifeq[][@str][] @@
 
  @ifeq[#][@head[@str]]
-  @define[line][] @Line[@str]
+  @let[line] @Line[@str]
   @ <span class="comment">@line</span>@HighlightFble[@Drop[@line][@str]]
  @@
 
- @define[word][] @FbleWord[@str] @@
+ @let[word] @FbleWord[@str] @@
  @ifneq[][@word]
-  @define[wordtail][] @Drop[@word][@str] @@
+  @let[wordtail] @Drop[@word][@str] @@
 
   @ifeq[\@][@head[@wordtail]]
   @ <span class="type">@word\@</span>@HighlightFble[@tail[@wordtail]] @@
@@ -218,12 +218,12 @@
  @@
 
  @ifeq[/][@head[@str]]
-  @define[path][] /@FbleModulePath[@tail[@str]]
+  @let[path] /@FbleModulePath[@tail[@str]]
   @ <span class='preproc'>@path</span>@HighlightFble[@Drop[@path][@str]]
  @@
 
  @ifeq[|][@head[@str]]
-  @define[lit][] |@FbleWord[@tail[@str]]
+  @let[lit] |@FbleWord[@tail[@str]]
   @ <span class='constant'>@lit</span>@HighlightFble[@Drop[@lit][@str]]
  @@
 
@@ -250,8 +250,8 @@
 @@
 
 @define[code][lang text]
- @define[escaped][] @EscHtml[@text] @@
- @define[highlighted][]
+ @let[escaped] @EscHtml[@text] @@
+ @let[highlighted]
   @ifeq[fbld][@lang] @HighlightFbld[@escaped] @@
   @ifeq[fble][@lang] @HighlightFble[@escaped] @@
   @escaped

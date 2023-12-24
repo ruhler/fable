@@ -6,7 +6,7 @@ namespace eval "fbld" {
 
   # version.fbld
   build $::b/fbld/version.fbld "" \
-    "echo @define\[FbleVersion\]\[\]\[$::version\] @@ > $::b/fbld/version.fbld"
+    "echo @let\[FbleVersion\]\[$::version\] @@ > $::b/fbld/version.fbld"
 
   # Builds a man page from an fbld @usage doc.
   proc ::fbld_man_usage { target source } {

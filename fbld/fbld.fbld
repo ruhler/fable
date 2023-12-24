@@ -454,6 +454,11 @@
     @code[fbld] @
      @define[ShowPair][a b][The pair is: @a, @b][@ShowPair[hello][there]]
 
+   @definition @l{@let[name][def][body]}
+    Defines a new variable @l{@}@a[name] for use in the body. @a[def] defines
+    the value of the variable, which will be evaluated in the context of the
+    let command.
+
    @definition @l{@eval[arg]}
     Evaluates @a[arg] in the current environment. Any unevaluated commands in
     arg that are now defined in the environment will be evaluated.

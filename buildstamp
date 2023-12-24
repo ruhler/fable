@@ -24,7 +24,7 @@ switch -exact [lindex $argv 0] {
   }
   --fbld {
     set id [lindex $argv 1]
-    puts "@define\[$id\]\[\]\[$stamp\] @@"
+    puts "@let\[$id\]\[$stamp\] @@"
   }
   default {
     puts $stamp

@@ -8,14 +8,14 @@
 @@
 
 @define[fbld][file label]
- @define[l][][@ifeq[][@label][@file][@label]] \[@l\](@file)
+ @let[l][@ifeq[][@label][@file][@label]] \[@l\](@file)
 @@
 
 @define[def][name value] \n* **@name**: @value\n @@
 @define[inline][arg] @arg @@
 @define[indent][prefix text]
  @ifeq[][@text][] @@
- @define[suffix][] @indent[@ifeq[\n][@head[@text]][    ][]][@tail[@text]] @@
+ @let[suffix] @indent[@ifeq[\n][@head[@text]][    ][]][@tail[@text]] @@
  @prefix
  @head[@text]
  @suffix

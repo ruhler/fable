@@ -415,3 +415,143 @@ supporting partial application too?
 
 See partial_application.txt. Sounds like we should support full partial
 application as part of this. But defer to fble-0.3.
+
+---
+
+Total build time is up from something like 6 minutes to 27 minutes. I'm sure
+it's all from html generation.
+
+Let's do some profiling, see what's up.
+
+Baseline:
+
+time ./out/pkgs/fbld/bin/fbld ./fbld/nobuildstamp.fbld ./out/fbld/version.fbld
+./fbld/html.fbld ./tutorials/tutorial.lib.fbld ./tutorials/Features.fbld >
+/dev/null
+
+real    7m4.093s
+
+Interestingly, HelloWorld.fbld finishes in about 1 minute, but Features.fbld
+takes much longer. Perhaps we can isolate the problem to a particular
+syntactic construct?
+
+Maybe it's worth minimizing the test case, see what's really taking so much
+time.
+
+There are a few places we could look to fix things:
+* html.fbld.
+* /Fbld/... source code.
+* fble implementation.
+
+I'm inclined to go after /Fbld/... source code first.
+
+The trouble is, Features.fbld takes too long to easily evaluate performance.
+With profiling enabled, it's going on 25 minutes now.
+
+I'll let it go in the background. In the meantime, let's profile
+HelloWorld.fbld. Hmm... Still taking a long time. Is there a bug with
+profiling in compiled code? Did I break something when I inlined the calls to
+FbleCall in aarch64? No, Features.fbld just finished.
+
+Looking at Features.prof:
+
+1. 30% self time in Int Ord functions.
+Almost entirely from character comparison.
+All from List comparison, so must be string comparison?
+
+From Map lookup, and a little bit from modify.
+From Eval implementation.
+
+We are spending 3614888 / 5813778 total time in looking up commands.
+
+Before we do anything based off this, let's check perf profile. I can probably
+wait 7 minutes for that.
+
+From HelloWorld.perf.txt:
+
+Shows similar: map lookup in eval. In this case closer to 35% than 62%.
+Regardless, a good place to see if we can improve.
+
+Some of this is passing arguments. Some of this is looking up commands. Can we
+perhaps take a trace and see what value is being looked up most?
+
+I see the following loops:
+* EscHtml does a loop
+  EscHtml, tail, str, ifeq, str, EscHtmlChar, head, str,
+  ifeq, char, ifeq, char, ifeq, char, char, EscHtml
+* ContainsChar, tail, list, c, ifeq, list, head, str,
+  FblePlainWord, tail, str, ifeq, str, ifeq, IsFbleNonWord, head,
+  str, ContainsChar
+
+At one point I had the idea to lookup commands when we define a command, so we
+can reuse those lookups. Does that make sense to do?
+
+The idea is this:
+* When we @define a command...
+
+Wait. When we @define a variable, without any arguments, do we evaluate it
+once, or do we repeatedly evaluate it every time we refer to the variable?
+
+For example:
+ @define[foo][] @f[@x]
+ @foo
+ @foo
+
+Does this evaluate @f[@x] just once, or does it do it twice?
+
+It does it twice. It does it for every use.
+
+Is it safe to try and evaluate the definition of a command first, as much as
+possible?
+
+Certainly if there are no arguments, we could evaluate it once. What are the
+semantics? Should I define an @let builtin command to do that instead? I kind
+of think so.
+
+Okay, let's start by defining @let which evaluates its argument eagerly and
+puts it in the map. See what difference, if any, that makes for performance.
+Use that anywhere we are currently doing @define[foo][]...
+
+It would be:
+
+@let[name][def][body]
+
+Looks like that cut runtime of HelloWorld.fbld to html in half. Awesome.
+
+Let's see out Features.fbld fares now:
+
+2m29 seconds.
+
+Awesome. Let's see how our 26min build time looks now. I'm hoping its under
+10 minutes now.
+
+14 minutes. Much better. But still longer than I want. I would love to get
+total build time to under 10 minutes.
+
+---
+
+The other idea I want to explore: when defining a command, look up referenced
+commands in the def before installing the implementation in the new
+environment. Have a traversal that goes over the markup, looks up any command
+that isn't an argument, and saves the implementation directly in place.
+
+So now Command@ becomes something like
+
+@ Command@ = *(Text@ name, Maybe@<Impl@> impl, List@<Markup@> args),
+
+Hmm... this may be too messy tying up Command@ with Impl@.
+
+Maybe we could define Int@ ids for each command, in addition to the name?
+Store an Int@ along with the name and do command lookups by that if possible?
+Perhaps Env@ is a map from String@ to Int@, and a map from Int@ to Impl@?
+
+Then we could do all the String@ lookups when we define a command, including
+args. Because my guess is that Int@ lookups will be significantly faster than
+String@ lookups.
+
+Still, it would be nicer if we could do direct pointers to the implementation.
+
+Maybe have the environment for the def of a command to execute in be only
+those commands that it would look up? Presumably that's much smaller than the
+total number of commands, so many fewer lookups needed?
+
