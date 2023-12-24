@@ -583,3 +583,28 @@ of runtime before.
 
 Time to rebuild all the fbld docs is now 8m52 seconds. The longest docs take
 around 3 minutes.
+
+Let's look at fble.html now, which I think takes the longest.
+
+It's not the longest? 2m2.153s
+
+Anyway, let's look.
+
+* 38% spent in allocation.
+* 22% inserting args into env in DefArgs.
+* The rest seems to be general traversal stuff.
+
+I don't see anything obvious at the fbld implementation level I can do here.
+
+Let's see how overall build time from scratch looks right now.
+
+Just 'ninja': 9m50.050s
+
+It's under 10 minutes. A little unhappy, but hopefully other people have way
+more cores so they can do a lot more of the build in parallel.
+
+Doing 'ninja check' on top of that: 3m22.398s
+
+Okay. I declare good enough for now. We'll try to tackle this better in the
+next release.
+

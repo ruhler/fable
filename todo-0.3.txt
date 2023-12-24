@@ -121,3 +121,9 @@ Usage docs
 
 * There's no way to do user defined ifneq in fbld?
   Because all the arguments are evaluated. That's annoying?
+
+* Memory leak on undefined union value select in fbld?
+  See Define builtin implementation. It happened when we tried to reuse nenv
+  for prepped instead of duplicating.
+
+* Add git tags for releases? Are they not already there?
