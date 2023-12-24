@@ -555,3 +555,24 @@ Maybe have the environment for the def of a command to execute in be only
 those commands that it would look up? Presumably that's much smaller than the
 total number of commands, so many fewer lookups needed?
 
+---
+
+Trimming the environment brought Features.fbld down from 2m19s to 1m54s, which
+isn't bad. Unfortunately I don't think we can do this in general. Because we
+might have an @eval, which looks up commands in the environment that are
+referenced from arg values we don't know about ahead of time.
+
+Profiling shows maybe 30% of total time in allocating objects. A lot of
+functions related to the use of Result@ monad. Still more time is spent in the
+command Lookup.
+
+I wish I could do the command lookup at @define time instead of invocation
+time. In theory we could, if we had a way to represent that in Markup@, but I
+don't want to pollute Markup@ with eval implementation details.
+
+Maybe it's okay to pollute Markup@ with eval implementation details? It's not
+that hard to define Env@ and Impl@. I just want to add a Maybe@<Impl@> to
+Command@ to store an already looked up command. Do the command lookups in
+@define.
+
+What do you say? Shall we try it? I think so.

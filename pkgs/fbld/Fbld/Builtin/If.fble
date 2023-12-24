@@ -27,12 +27,14 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 % r = /Fbld/Result%.Monad;
 
+% EqMaybeChar = /Core/Maybe/Eq%.Eq(/Core/Char/Eq%.Eq);
+
 (Markup@, Markup@) { Result@<Bool@>; }
 Equals = (Markup@ a, Markup@ b) {
   Maybe@<Char@> ac <- r.do(HeadOf(a));
   Maybe@<Char@> bc <- r.do(HeadOf(b));
 
-  /Core/Maybe/Eq%.Eq(/Core/Char/Eq%.Eq)(ac, bc).?(false: {
+  EqMaybeChar(ac, bc).?(false: {
     r.return(False);
   });
   ac.?(nothing: r.return(True));

@@ -78,12 +78,7 @@ Impl@ Let = (Env@ env, Command@ cmd) {
   });
 
   Markup@ def <- r.do(Eval(env, Get(cmd.args, Int|1)));
-
-  Impl@ impl = (Env@ _, Command@ c) {
-    Unit@ _ <- r.do(AssertArgCount(Int|0, c));
-    r.return(def);
-  },
-  Env@ nenv = InsertEnv(env, name, impl);
+  Env@ nenv = InsertEnv(env, name, VarImpl(def));
 
   Markup@ body = Get(cmd.args, Int|2);
   Eval(nenv, body);

@@ -7,3 +7,5 @@ Things to do for the fble-0.2 release.
 
 * Is fbld too slow to release in this state?
  - How long does it take to do a clean build now?
+
+* Memory leak on undefined union value select in fbld?
