@@ -14,7 +14,7 @@ exec tclsh8.6 "$0" "$@"
 # the contents of the build stamp.
 set entries [list]
 lappend entries [exec date -I]
-catch { lappend entries "dev:[exec git describe --always --dirty]" }
+catch { lappend entries "[exec git describe --always --dirty]" }
 set stamp [join $entries ","]
 
 switch -exact [lindex $argv 0] {
