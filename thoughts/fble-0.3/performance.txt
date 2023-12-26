@@ -259,3 +259,154 @@ IO 2.97
 
 Seems like understanding and eliminating this overhead of monadic style is the
 first big step towards 2x performance improvement.
+
+---
+
+time perf record -F 299 -d -g ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld
+./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld
+> /dev/null
+
+2m3.459s
+
+* 39% time spent in FbleNewHeapObject.
+
+How do I make that time go away?
+
+First, check out where the allocations are coming from:
+
+       1837     2438           FbleNewUnionValue[003aX]   
+       3289     4393           FbleNewStructValue[0018X]   
+       3400     4665           FbleNewFuncValue[0007X]   
+**     8598    11572      180  FbleNewHeapObject[0008X] **
+
+The biggest source of function allocations by far:
+       1660     2374           _2f_Fbld_2f_Result_25__2e_Do_21_.0029[0006X]   
+
+Which is from 'Do' being implemented as
+  Result@<A@> -> (A@ -> Result@<B@>) -> Result@<B@>
+
+Instead of:
+  (Result@<A@>, A@ -> Result@<B@>) -> Result@<B@>
+
+The biggest source of struct values:
+
+        560      793           _2f_Core_2f_Map_2f_Map_25__2e_Rebalance_21_.0068[0023X]   
+        699      881           _2f_Fbld_2f_Result_25__2e_Ok_21_.0014[0045X]   
+        723      995           _2f_Core_2f_Map_2f_Map_25__2e_MapP_21_.0036[0034X]   
+       1213     1626           _2f_Fbld_2f_Result_25__2e_Do_21__21_.002b[0001X]   
+**     3573     4745      314  FbleNewStructValue[0018X] **
+
+1. Allocating the Result@ to return from Do.
+2. Allocating the non-empty map wrapper around Map@.
+Almost entirely from rebalancing the map.
+3. Allocating an 'OK' Result@.
+4. Rebalancing the map.
+Presumably allocating a bunch of @(delta, map) pairs, or maybe @(key, value)
+pairs.
+
+The use of Result@ is to help describe the program nicely. It should all be
+constant time, not super expensive. Ideally free? This would be free in a C
+implementation, I'm almost sure.
+
+The rebalancing of the map is when we insert the arg values in the environment
+before invoking an fbld command. This is more fundamentally difficult to
+accomplish. But again, if data wasn't immutable, we could probably rebalance
+in place and not need too many new allocations for this? Maybe, maybe not.
+
+
+The biggest source of new union values:
+
+        609      834           _2f_Core_2f_Map_2f_Map_25__2e_MapP_21_.0036[0034X]   
+       1102     1435           _2f_Core_2f_Maybe_25__2e_Just_21_.0007[0040X]   
+**     2046     2672      216  FbleNewUnionValue[003aX] **
+
+Allocating Maybe@ value, sounds reasonable. But where from? Looks like
+somewhere we are returning Result@<Maybe@> type.
+
+Some of it is allocating Maybe@ for Maybe@<Impl@> to track if we have a valid
+impl. My guess is HeadOf and TailOf returning Result@<Maybe@<Char@>>.
+
+We could use a sentinel Char@ value, perhaps Unknown: 0 to avoid this extra
+allocation for Maybe@<Char@>. In general, unions of unions could potentially
+avoid layers of allocation if we merge tags.
+
+Now, onto why those allocations are so expensive.
+
+FbleNewHeapObject involves the following leaf calls, sorted into topic:
+
+Gc 43%
+**     2187     2976     2976  FbleHeapRef[001cX] **
+**     3773     4980     1047  IncrGc.part.0[001bX] **
+**     8598    11572      180  FbleNewHeapObject[0008X] **
+**      674      809      809  Refs[0033X] **
+
+FbleValueFree 16%
+**     1219     1741     1741  OnFree[0024X] **
+**      141      148      148  FbleFreeExecutable[005fX] **
+
+Malloc 21%
+**     1183     1924     1695  _int_malloc[000bX] **
+**     1633     2434      516  malloc[000aX] **
+**        8      229      229  malloc_consolidate[000cX] **
+**       40       41       41  malloc@plt[0069X] **
+
+Free 17%
+**      930     1265     1264  _int_free[001dX] **
+**      599      716      716  cfree@GLIBC_2.17[0035X] **
+**       41       41       41  free@plt[006dX] **
+
+FbleAlloc 1%
+**     1669     2476      143  FbleAllocRaw[0009X] **
+
+FbleFree 1%
+**       86       93       93  FbleFree[0062X] **
+
+The FbleAlloc/FbleFree wrappers cost us practically nothing. No need to worry
+about those.
+
+I'm a little surprised by the high cost of OnFree and FbleFreeExecutable.
+Which OnFree call is that? Looks like it's OnFree for FbleValue.
+
+That's crazy. OnFree does nothing but dispatch to FbleFreeExecutable. How can
+it be so expensive compared to FbleFreeExecutable? I bet it's from trying to
+access an object that is almost certainly not in the cache.
+
+It feels to me like we spent 60% of the time for allocations traversing parts
+of the heap that are not in the cache.
+
+Consider two kinds of objects:
+
+1. Short lived objects
+The current GC has short lived objects stay around, putting pressure on the
+heap, for an entire GC cycle. Then it traverses them to free them, smashing
+the cache in the process.
+
+2. Long lived objects.
+The current GC traverses long lived objects every cycle, smashing the cache in
+the process.
+
+Imagine we had a stack-based allocation instead. We allocate at the top of the
+stack. We free from the top of the stack. We copy objects down the stack as
+needed. I claim, in this case, short lived objects stay in the cache the
+entire time and don't put pressure on the heap once they are no longer used.
+Long lived objects migrate down the stack and avoid smashing the cache.
+
+I think stack based allocation is a good idea to try for those reasons:
+* Avoid having short lived objects put pressure on the stack after they are
+  done being used.
+* Avoid smashing the cache to free short lived objects.
+* Avoid repeatedly smashing the cache when traversing long lived objects.
+
+Let's continue the discussion at stack_alloc.txt.
+
+---
+
+Minor optimization: avoiding a layer of indirection in the Obj list object
+stored on FbleHeap:
+
+time perf record -F 299 -d -g ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+
+real    2m2.186s
+
+Okay, so we save a second. Not much more. May as well. I think the code is a
+little bit clearer this way anyway.

@@ -323,3 +323,37 @@ entirely. Allocate everything on the stack. I don't have a good answer for the
 pathological case of constructing a list though.
 
 
+---
+
+Did another round of thought on GC in performance.txt. It suggests stack based
+allocation is worth trying, if only to get the following:
+* Avoid having short lived objects put pressure on the stack after they are
+  done being used.
+* Avoid smashing the cache to free short lived objects.
+* Avoid repeatedly smashing the cache when traversing long lived objects.
+
+There are many different ways I could go about this. I fear getting bogged
+down in details. How about we start like this:
+
+* What is the easiest way we could adjust the heap allocator to have the
+  properties above? Implement that and see what impact it has on performance.
+
+Easiest way to start would be if we could restrict all the changes to heap.c.
+Keep the same API for allocating objects and interacting with the heap. How
+would that look?
+
+Say we keep allocated objects in a linked list, maintaining the order they are
+allocated in. To allocate a new object, you put it at the end of the list.
+
+Say we magically make it so that new objects can refer to old objects, but old
+objects can't refer to new objects.
+
+When we release a heap object, if it's the last object in the list, we can
+free it.
+
+Could we traverse the heap from the back always?
+
+---
+
+Let's try generational gc. See gen_gc.txt for discussion.
+

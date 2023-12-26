@@ -1,0 +1,58 @@
+Generational GC
+===============
+Goal is to try out generation GC, see if it gets us anything.
+
+The idea is to avoid traversing parts of the heap we know we don't need to,
+mainly in the hope it results in better cache behavior. Best case it makes
+allocations a little faster (with better caching) and puts less memory
+pressure on (because we clean up short lived objects sooner).
+
+I think there's one way that makes sense to do generational GC.
+
+At any one time, we divide the heap into three parts:
+1. Older generations. The list of older generations with the invariant that
+older generations cannot reference anything in newer generations.
+2. The current traversal. This is the collection of generations being
+considered for the current traversal. At the end of the traversal, anything
+that survives will become part of the youngest generation. We pick the
+generations for the current traversal at the start of the traversal.
+3. Objects allocated during traversal.
+
+At the end of GC, we get the list of objects that survived. This becomes the
+youngest generation. We get the list of newly allocated objects. Call this the
+'none' generation, or some such. And we get, based on memory actions that
+happened over the previous generation, the id of the oldest generation we plan
+to collect back to in the next generation. This could be "none", or the
+generation we just did collection on, or some older generation.
+
+GC works by traversing objects in the current traversal. Don't traverse into
+objects in older generations. Assume those stay alive and don't keep anything
+in the current traversal alive. Otherwise this behaves like how we do GC
+today.
+
+New objects get allocated to the new object allocation section. They don't
+take part in current GC.
+
+If a reference is added from an older generation to a newer generation, record
+the older generation as needing to be included in the next cycle and traverse
+the newer generation object as referenced.
+
+If we drop a root from an older generation, record the older generation as
+needing to be included in the next cycle.
+
+To keep track of what generation an object belongs to, add a field to Obj with
+the id of its generation. When we do a GC, as we traverse objects to the "to"
+heap, update its generation number to whatever the next new GC generation will
+be.
+
+Maybe, if we don't want to increase the size of Obj, we could pack generation
+and Space in the same word. Don't worry about that in the first
+implementation, unless it turns out to be natural to do.
+
+We'll want to maintain some data structure for heap that lets us traverse the
+objects for all the generations going back to the target generation. I assume
+it will be straightforward how to represent that.
+
+And that's it. We form generations based on what survives a GC cycle. We
+determine next thing to traverse based on memory actions. Hopefully it's nice
+and fast and efficient.
