@@ -255,7 +255,7 @@ static bool IncrGc(FbleHeap* heap)
   }
   
   // From Root -> To Root
-  if (heap->from->roots.next != heap->from.roots) {
+  if (heap->from->roots.next != &heap->from->roots) {
     Obj* obj = (Obj*)heap->from->roots.next;
     obj->gen = heap->to;
     MoveTo(&heap->to->roots, obj);
@@ -289,15 +289,15 @@ static bool IncrGc(FbleHeap* heap)
     Gen* gen = heap->older;
     heap->older = heap->older->tail;
 
-    MoveAllTo(&gen->from.roots, &heap->from.roots);
-    MoveAllTo(&gen->from.non_roots, &heap->from.non_roots);
+    MoveAllTo(&gen->roots, &heap->from->roots);
+    MoveAllTo(&gen->non_roots, &heap->from->non_roots);
     gen->tail = heap->from;
 
     heap->from = gen;
   }
 
   // Set up the next 'to' and 'new' generations.
-  heap->to = NewGen(heap->from_id + 1);
+  heap->to = NewGen(heap->from->id + 1);
   heap->new = NewGen(heap->to->id + 1);
   heap->next = heap->new;
 
@@ -425,7 +425,7 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
     // A from/pending/to object takes a reference to a new object. We need to
     // include the current 'to' generation in the next GC traversal to make
     // sure we see all references to the new object.
-    heap->next->id = heap->to;
+    heap->next = heap->to;
   }
 
   if (dst->gen->id == heap->from->id && src->gen->id != heap->from->id) {
