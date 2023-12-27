@@ -67,3 +67,26 @@ It's leaking a function value. Let's dive in and track down what's going on.
 
 Figured it out. I was failing to update 'next' when dropping roots in some
 cases.
+
+---
+
+To evaluate this GC, keep in mind:
+
+* Does it avoid crashing?
+* Does it avoid leaking memory?
+* Does it make programs run faster than before?
+* Does it make programs use less max memory than before?
+
+Looks like it works. Maybe a tiny little bit faster than before, with a tiny
+bit less max memory.
+
+Should we take this change? I think so.
+
+It feels more general, more powerful. The code is a little cleaner, even if
+the algorithm is more complex. It feels better not to spend a lot of time
+traversing objects that aren't changing.
+
+Too bad it doesn't get significantly better performance. But hey, maybe this
+means we can reduce the rate of GC now that we can traverse the heap that much
+faster?
+

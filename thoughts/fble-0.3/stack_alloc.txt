@@ -357,3 +357,11 @@ Could we traverse the heap from the back always?
 
 Let's try generational gc. See gen_gc.txt for discussion.
 
+In theory we now have all the following:
+* Avoid having short lived objects put pressure on the stack after they are
+  done being used.
+* Avoid smashing the cache to free short lived objects.
+* Avoid repeatedly smashing the cache when traversing long lived objects.
+
+I'm not sure how to verify. It only helped performance a tiny bit though.
+Like, 3% performance improvement.

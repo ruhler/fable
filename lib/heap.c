@@ -201,7 +201,7 @@ static Gen* NewGen(size_t id)
  * @func[IncrGc] Does an incremental amount of GC work.
  *  @arg[FbleHeap*][heap] The heap to do GC on.
  *
- *  @returns
+ *  @returns[bool]
  *   true if this completed a round of GC. False otherwise.
  *
  *  @sideeffects

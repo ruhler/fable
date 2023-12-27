@@ -410,3 +410,8 @@ real    2m2.186s
 
 Okay, so we save a second. Not much more. May as well. I think the code is a
 little bit clearer this way anyway.
+
+---
+
+After switching to generational gc, down to 1m58s.
+
