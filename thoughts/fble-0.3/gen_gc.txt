@@ -56,3 +56,14 @@ it will be straightforward how to represent that.
 And that's it. We form generations based on what survives a GC cycle. We
 determine next thing to traverse based on memory actions. Hopefully it's nice
 and fast and efficient.
+
+---
+
+First try running, I'm getting memory leaks. The simplest:
+
+./test/fble-test.cov -I ../spec -m /'SpecTests'/'Unit'%
+
+It's leaking a function value. Let's dive in and track down what's going on.
+
+Figured it out. I was failing to update 'next' when dropping roots in some
+cases.

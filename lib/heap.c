@@ -107,7 +107,7 @@ struct FbleHeap {
 
   /**
    * Temporary generation for objects that have been seen in the current GC
-   * traversal, but not yet traversed themselves. The id is (-1);
+   * traversal, but not yet traversed themselves. The id is to->id.
    */
   Gen* pending;
 
@@ -282,6 +282,7 @@ static bool IncrGc(FbleHeap* heap)
 
   // Set up the next 'from' generation.
   // It will include all generations from 'next' to 'new'.
+  heap->new->id = heap->older->id + 1;
   heap->from = heap->new;
   while (heap->next != heap->from) {
     heap->from->id = heap->next->id;
@@ -298,6 +299,7 @@ static bool IncrGc(FbleHeap* heap)
 
   // Set up the next 'to' and 'new' generations.
   heap->to = NewGen(heap->from->id + 1);
+  heap->pending->id = heap->to->id;
   heap->new = NewGen(heap->to->id + 1);
   heap->next = heap->new;
 
@@ -316,7 +318,7 @@ FbleHeap* FbleNewHeap(
 
   heap->older = NULL;
   heap->from = NewGen(0);
-  heap->pending = NewGen(-1);
+  heap->pending = NewGen(1);
   heap->to = NewGen(1);
   heap->new = NewGen(2);
   heap->next = heap->new;
@@ -394,11 +396,15 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
     } else if (obj->gen->id < heap->next->id) {
       // We need to GC this object's generation next cycle, because this
       // object may be unreachable now.
-      //
-      // If we've gotten here, the object cannot be in 'from' or 'pending'
-      // (pending->id is the largest possible id), which maintains the
-      // required invariant for heap->next.
-      heap->next = obj->gen;
+      if (obj->gen->id < heap->from->id) {
+        // older object
+        heap->next = obj->gen;
+      } else {
+        // pending/to object.
+        // It can't be a new object, because heap->next->id is never greater
+        // than heap->next->id.
+        heap->next = heap->to;
+      }
     }
     MoveTo(&obj->gen->non_roots, obj);
   }
