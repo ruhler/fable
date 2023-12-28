@@ -978,3 +978,22 @@ Save Root -> Old
 
 I should pretend we are marking it, right? Yes. This is as if it was marked,
 because it was a root.
+
+---
+
+Looks like it works now. I still have some lingering debug code in place, but
+current fble.html:
+
+User time (seconds): 95.29
+Maximum resident set size (kbytes): 97496
+
+That is crazy good. That's what I was looking for.
+
+Let's make sure it wasn't the debug logic I put in to aggressively clean up
+free objects:
+
+User time (seconds): 96.17
+Maximum resident set size (kbytes): 98188
+
+Awesome! I assume it's working now.
+
