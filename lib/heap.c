@@ -448,10 +448,10 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
       // the canonical heap->from generation.
       obj->gen = heap->from;
     } else if (obj->gen->id < heap->next->id
-        && (&obj.list == obj->gen->roots.next)) {
+        && (&obj->list == obj->gen->roots.next)) {
       // We need to GC this object's generation next cycle, because this
       // object may be unreachable now.
-      if (obj->gen->id < heap->from->id) {
+      if (obj->gen->id < heap->to->id) {
         // older object
         heap->next = obj->gen;
       } else {
@@ -491,9 +491,9 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
     // An old/pending/to/new object references a 'from' option.
     dst->gen = heap->pending;
     if (dst->refcount == 0) {
-      MoveTo(&heap->pending->non_roots, dst);
+      MoveToBack(&heap->pending->non_roots, dst);
     } else {
-      MoveTo(&heap->pending->roots, dst);
+      MoveToBack(&heap->pending->roots, dst);
     }
   }
 }
@@ -507,9 +507,9 @@ void FbleHeapRef(FbleHeap* heap, void* obj_)
     // From/FromNew -> Pending
     obj->gen = heap->pending;
     if (obj->refcount == 0) {
-      MoveTo(&heap->pending->non_roots, obj);
+      MoveToBack(&heap->pending->non_roots, obj);
     } else {
-      MoveTo(&heap->pending->roots, obj);
+      MoveToBack(&heap->pending->roots, obj);
     }
   }
 }
