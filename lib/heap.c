@@ -23,13 +23,10 @@ typedef struct ObjList {
  * A generation of allocated objects.
  */
 typedef struct Gen {
-  // Invariant: X.id < Y.id implies no objects in generation X reference any
-  // objects in generation Y.
+  // The id of the generation.
   size_t id;
 
   // The list of root objects in this generation.
-  // Invariant: All objects in this generation are reachable from the first
-  // root in the list of roots.
   ObjList roots;
 
   // The list of non-root objects in this generation.
@@ -39,7 +36,10 @@ typedef struct Gen {
   struct Gen* tail;
 } Gen;
 
-#define FROM_ID ((size_t)-2)
+// Special generation IDs.
+#define GC_ID ((size_t)-4)
+#define MARK_ID ((size_t)-3)
+#define SAVE_ID ((size_t)-2)
 #define NEW_ID ((size_t)-1)
 
 /**
@@ -86,26 +86,26 @@ struct FbleHeap {
   void (*on_free)(FbleHeap* heap, void* obj);
 
   /**
-   * List of older generation of objects.
+   * List of older generations of objects.
    * These generations will not be traversed this GC cycle.
    * In order from youngest generation (largest id) to oldest generation
    * (smallest id).
    *
-   * Generation 0 is an empty initial generation to ensure this is non-NULL.
+   * Invariants (unless it has been recorded in the 'next' field it needs to
+   * be fixed next GC):
+   * * Older generations do not reference younger generations.
+   * * All objects in a generation are reachable from the first root object
+   *   listed in the generation.
    */
-  Gen* older;
+  Gen* old;
 
   /**
-   * Temporary generation for objects that belong to the currently forming
-   * 'to' generation, but not yet been traversed themselves. The id is to->id.
+   * Temporary generation for objects that have been marked but not yet
+   * traversed.
+   *
+   * id is MARK_ID.
    */
-  Gen* pending;
-
-  /**
-   * The generation of objects we are currently forming.
-   * The id is (older->id + 1).
-   */
-  Gen* to;
+  Gen* mark;
 
   /**
    * The generations of objects being traversed this GC cycle.
@@ -119,30 +119,29 @@ struct FbleHeap {
    * map from Gen* to id and to be able to clean up the generation after the
    * current GC traversal has completed.
    *
-   * All generations in this list have id (-2).
+   * All generations in this list have id GC_ID.
    */
-  Gen* from;
+  Gen* gc;
 
   /**
-   * Objects traversed this GC cycle that are reachable from 'new' objects.
+   * Objects that have been marked to be saved this GC cycle, for example,
+   * because of some reference taken from old or new generations.
    *
-   * This is to avoid collecting these objects at the end of the GC cycle if
-   * they don't land in any of the new 'to' generations.
-   *
-   * The id is (-2).
+   * The id is SAVE_ID.
    */
-  Gen* from_new;
+  Gen* save;
 
   /**
    * The generation where newly allocated objects will be placed.
+   * Not traversed in the current GC cycle.
    *
-   * The id is (-1).
+   * The id is NEW_ID.
    */
   Gen* new;
 
   // The oldest generation we plan to traverse in the next GC cycle.
-  // Borrowed, not owned. This could point to 'new', 'to', or one of the
-  // 'older' generations.
+  // Borrowed, not owned. This could point to 'new' or one of the
+  // 'old' generations.
   Gen* next;
 
   /**
@@ -157,7 +156,10 @@ struct FbleHeap {
 static void MoveToFront(ObjList* dest, Obj* obj);
 static void MoveToBack(ObjList* dest, Obj* obj);
 static void MoveAllToFront(ObjList* dest, ObjList* source);
+
 static Gen* NewGen(size_t id);
+static bool GenIsEmpty(Gen* gen);
+
 static bool IncrGc(FbleHeap* heap);
 
 /**
@@ -231,6 +233,17 @@ static Gen* NewGen(size_t id)
 }
 
 /**
+ * @func[GenIsEmpty] Returns true if the generation is empty.
+ *  @arg[Gen*][gen] The generation to check.
+ *  @sideffects None.
+ */
+static bool GenIsEmpty(Gen* gen)
+{
+  return (gen->roots.next == &gen->roots)
+    && (gen->non_roots.next == &gen->non_roots);
+}
+
+/**
  * @func[IncrGc] Does an incremental amount of GC work.
  *  @arg[FbleHeap*][heap] The heap to do GC on.
  *
@@ -267,98 +280,86 @@ static bool IncrGc(FbleHeap* heap)
   //
   // Here we traverse exactly one object.
 
-  // Pending Non-Root -> To Non-Root
-  if (heap->pending->non_roots.next != &heap->pending->non_roots) {
-    Obj* obj = (Obj*)heap->pending->non_roots.next;
-    obj->gen = heap->to;
-    MoveToBack(&heap->to->non_roots, obj);
+  // Mark Non-Root -> Old Non-Root
+  if (heap->mark->non_roots.next != &heap->mark->non_roots) {
+    Obj* obj = (Obj*)heap->mark->non_roots.next;
+    obj->gen = heap->old;
+    MoveToBack(&heap->old->non_roots, obj);
     heap->refs(heap, obj->obj);
     return false;
   }
 
-  // Pending Root -> To Root
-  if (heap->pending->roots.next != &heap->pending->roots) {
-    Obj* obj = (Obj*)heap->pending->roots.next;
-    obj->gen = heap->to;
-    MoveToBack(&heap->to->roots, obj);
+  // Mark Root -> To Root
+  if (heap->mark->roots.next != &heap->mark->roots) {
+    Obj* obj = (Obj*)heap->mark->roots.next;
+    obj->gen = heap->old;
+    MoveToBack(&heap->old->roots, obj);
     heap->refs(heap, obj->obj);
     return false;
   }
 
-  if (heap->to->roots.next != &heap->to->roots
-      || heap->to->non_roots.next != &heap->to->non_roots) {
-    // We have finished forming the current 'to' generation. Install the
-    // generation and start a new one.
-    heap->to->tail = heap->older;
-    heap->older = heap->to;
-    heap->to = NewGen(heap->older->id + 1);
-    heap->pending->id = heap->to->id;
+  if (!GenIsEmpty(heap->old)) {
+    // We have finished traversing all objects reachable from the previous
+    // root. Start the next 'old' generation.
+    Gen* old = NewGen(heap->old->id + 1);
+    old->tail = heap->old;
+    heap->old = old;
   }
 
-  // From Root -> To Root
-  if (heap->from->roots.next != &heap->from->roots) {
-    Obj* obj = (Obj*)heap->from->roots.next;
-    obj->gen = heap->to;
-    MoveToFront(&heap->to->roots, obj);
+  // GC Root -> Old
+  if (heap->gc->roots.next != &heap->gc->roots) {
+    Obj* obj = (Obj*)heap->gc->roots.next;
+    obj->gen = heap->old;
+    MoveToFront(&heap->old->roots, obj);
     heap->refs(heap, obj->obj);
     return false;
   }
 
-  // FromNew Root -> To Root
-  if (heap->from_new->roots.next != &heap->from_new->roots) {
-    Obj* obj = (Obj*)heap->from_new->roots.next;
-    obj->gen = heap->to;
-    MoveToFront(&heap->to->roots, obj);
+  // Save Root -> Old
+  if (heap->save->roots.next != &heap->save->roots) {
+    Obj* obj = (Obj*)heap->save->roots.next;
+    obj->gen = heap->old;
+    MoveToFront(&heap->old->roots, obj);
+    heap->refs(heap, obj->obj);
+    return false;
+  }
+
+  // Save NonRoot -> New
+  if (heap->save->non_roots.next != &heap->save->non_roots) {
+    Obj* obj = (Obj*)heap->save->non_roots.next;
+    obj->gen = heap->new;
+    MoveToFront(&heap->new->non_roots, obj);
     heap->refs(heap, obj->obj);
     return false;
   }
 
   // We are done with this GC cycle. Clean up and prepare for a new GC cycle.
 
-  // From -> Free
+  // Gc NonRoots -> Free
   // These are unreachable objects found by the GC cycle.
-  MoveAllToFront(&heap->free, &heap->from->non_roots);
+  MoveAllToFront(&heap->free, &heap->gc->non_roots);
 
-  // FromNew -> New
-  // Objects only reachable from new objects. May as well be new.
-  MoveAllToFront(&heap->new->roots, &heap->from_new->roots);
-  MoveAllToFront(&heap->new->non_roots, &heap->from_new->non_roots);
-
-  // Clean up the now empty 'from' generations.
-  for (Gen* from = heap->from; from != NULL; from = heap->from) {
-    heap->from = from->tail;
-    FbleFree(from);
+  // Clean up the now empty 'gc' generations.
+  for (Gen* gc = heap->gc; gc != NULL; gc = heap->gc) {
+    heap->gc = gc->tail;
+    FbleFree(gc);
   }
 
-  // Set up the next 'from' generation.
+  // Set up the next 'gc' generation.
   // It will include all generations from 'next' to 'new'.
-
-  // It's possible next points to an empty 'to' generation. In that case, set
-  // it back to 'new'. This happens when AddRef from FROM_NEW to NEW is called
-  // without FROM_NEW being pulled back into a 'to' generation.
-  if (heap->next == heap->to) {
-    heap->next = heap->new;
+  heap->gc = heap->new;
+  heap->gc->id = GC_ID;
+  heap->old = heap->next->tail;
+  heap->next->tail = NULL;
+  for (Gen* gen = heap->gc->tail; gen != NULL; gen = gen->tail) {
+    gen->id = GC_ID;
+    MoveAllToFront(&heap->gc->roots, &gen->roots);
+    MoveAllToFront(&heap->gc->non_roots, &gen->non_roots);
   }
 
-  heap->from = heap->new;
-  heap->from->id = FROM_ID;
-  while (heap->next != heap->from) {
-    Gen* gen = heap->older;
-    heap->older = heap->older->tail;
-
-    gen->id = FROM_ID;
-    MoveAllToFront(&gen->roots, &heap->from->roots);
-    MoveAllToFront(&gen->non_roots, &heap->from->non_roots);
-    gen->tail = heap->from;
-
-    heap->from = gen;
+  if (heap->old == NULL) {
+    heap->old = NewGen(0);
   }
-
-  // Set up the next 'to' generation.
-  heap->to->id = heap->older->id + 1;
-  heap->pending->id = heap->to->id;
-
-  // Set up the next 'new' generation.
   heap->new = NewGen(NEW_ID);
   heap->next = heap->new;
 
@@ -375,11 +376,10 @@ FbleHeap* FbleNewHeap(
   heap->refs = refs;
   heap->on_free = on_free;
 
-  heap->older = NewGen(0);
-  heap->pending = NewGen(1);
-  heap->to = NewGen(1);
-  heap->from = NewGen(FROM_ID);
-  heap->from_new = NewGen(FROM_ID);
+  heap->old = NewGen(0);
+  heap->mark = NewGen(MARK_ID);
+  heap->gc = NewGen(GC_ID);
+  heap->save = NewGen(SAVE_ID);
   heap->new = NewGen(NEW_ID);
   heap->next = heap->new;
 
@@ -394,20 +394,19 @@ void FbleFreeHeap(FbleHeap* heap)
 {
   FbleHeapFullGc(heap);
 
-  for (Gen* gen = heap->older; gen != NULL; gen = heap->older) {
-    heap->older = gen->tail;
+  for (Gen* gen = heap->old; gen != NULL; gen = heap->old) {
+    heap->old = gen->tail;
     FbleFree(gen);
   }
 
-  FbleFree(heap->pending);
-  FbleFree(heap->to);
+  FbleFree(heap->mark);
 
-  for (Gen* gen = heap->from; gen != NULL; gen = heap->from) {
-    heap->from = gen->tail;
+  for (Gen* gen = heap->gc; gen != NULL; gen = heap->gc) {
+    heap->gc = gen->tail;
     FbleFree(gen);
   }
 
-  FbleFree(heap->from_new);
+  FbleFree(heap->save);
   FbleFree(heap->new);
 
   FbleFree(heap);
@@ -435,10 +434,10 @@ void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
   Obj* obj = ToObj(obj_);
   if (obj->refcount++ == 0) {
     // Non-Root -> Root
-    if (obj->gen->id == heap->from->id) {
-      // The object is in one of the 'from' generations, make sure it stays in
-      // the canonical heap->from generation.
-      obj->gen = heap->from;
+    if (obj->gen->id == GC_ID) {
+      // The object is in one of the 'gc' generations, make sure it stays in
+      // the canonical heap->gc generation.
+      obj->gen = heap->gc;
     }
     MoveToBack(&obj->gen->roots, obj);
   }
@@ -451,21 +450,19 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
   assert(obj->refcount > 0);
   if (--obj->refcount == 0) {
     // Root -> Non-Root
-    if (obj->gen->id == heap->from->id) {
-      // The object is in one of the 'from' generations, make sure it stays in
-      // the canonical heap->from generation.
-      obj->gen = heap->from;
-    } else if (obj->gen->id < heap->next->id
+    if (obj->gen->id == GC_ID) {
+      // The object is in one of the 'gc' generations, make sure it stays in
+      // the canonical heap->gc generation.
+      obj->gen = heap->gc;
+    }
+    
+    if (obj->gen->id < heap->next->id
+        && obj->gen->id <= heap->old->id
         && (&obj->list == obj->gen->roots.next)) {
-      // We need to GC this object's generation next cycle, because this
-      // object may be unreachable now.
-      if (obj->gen->id < heap->to->id) {
-        // older object
-        heap->next = obj->gen;
-      } else {
-        // pending/to object.
-        heap->next = heap->to;
-      }
+      // This object is the primary root of an old generation.
+      // We need to GC this object's generation next cycle, because it may be
+      // unreachable now.
+      heap->next = obj->gen;
     }
     MoveToBack(&obj->gen->non_roots, obj);
   }
@@ -479,45 +476,35 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
   Obj* src = ToObj(src_);
   Obj* dst = ToObj(dst_);
 
-  if (src->gen->id < heap->to->id
+  if (src->gen->id <= heap->old->id
       && src->gen->id < dst->gen->id
       && src->gen->id < heap->next->id) {
     // An older generation object takes a reference to something newer. We
     // need to include that older generation in the next GC traversal, to make
     // sure we see all references to the dst object.
     heap->next = src->gen;
-  } else if (dst->gen->id == NEW_ID
-      && src->gen->id != NEW_ID
-      && heap->to->id < heap->next->id) {
-    // A from/pending/to object takes a reference to a new object. We need to
-    // include the current 'to' generation in the next GC traversal to make
-    // sure we see all references to the new object.
-    heap->next = heap->to;
   }
 
-  if (dst->gen->id == FROM_ID && src->gen->id != FROM_ID) {
-    // An old/pending/to/new object references a 'from' option.
-    dst->gen = heap->pending;
-    if (dst->refcount == 0) {
-      MoveToBack(&heap->pending->non_roots, dst);
-    } else {
-      MoveToBack(&heap->pending->roots, dst);
+  Gen* moveto = NULL;
+  if (dst->gen->id == GC_ID) {
+    if (src->gen->id == MARK_ID) {
+      // mark --> gc
+      moveto = heap->mark;
+    } else if (src->gen->id != GC_ID) {
+      // old/save/new --> gc
+      moveto = heap->save;
     }
+  } else if (src->gen->id == MARK_ID && dst->gen->id == SAVE_ID) {
+    // mark --> save
+    moveto = heap->mark;
   }
-}
-
-// See documentation in heap.h
-void FbleHeapRef(FbleHeap* heap, void* obj_)
-{
-  Obj* obj = ToObj(obj_);
 
-  if (obj->gen->id == FROM_ID) {
-    // From/FromNew -> Pending
-    obj->gen = heap->pending;
-    if (obj->refcount == 0) {
-      MoveToBack(&heap->pending->non_roots, obj);
+  if (moveto != NULL) {
+    dst->gen = moveto;
+    if (dst->refcount == 0) {
+      MoveToBack(&moveto->non_roots, dst);
     } else {
-      MoveToBack(&heap->pending->roots, obj);
+      MoveToBack(&moveto->roots, dst);
     }
   }
 }

@@ -41,7 +41,7 @@ FbleHeap* FbleNewHeap(
      * param obj  The object whose references to traverse
      *   
      * sideeffects
-     *   The implementation of this function should call FbleHeapRef on
+     *   The implementation of this function should call FbleHeapAddRef on
      *   each object referenced by obj. If the same object is referenced
      *   multiple times by obj, the callback is called once for each time the
      *   object is referenced by obj.
@@ -131,32 +131,20 @@ void FbleRetainHeapObject(FbleHeap* heap, void* obj);
 void FbleReleaseHeapObject(FbleHeap* heap, void* obj);
 
 /**
- * Adds a reference from one object to another.
+ * @func[FbleHeapObjectAddRef] Adds a reference from one object to another.
+ *  Notifies the garbage collector of a reference from src to dst. The dst
+ *  object should be included in the refs callback for the src object when
+ *  add_ref is called.
  *
- * Notifies the garbage collector that a reference has been added from src to
- * dst. The dst object should be included in the refs callback for the src
- * object when add_ref is called.
- *
- * @param heap  The heap the objects are allocated on.
- * @param src  The source object.
- * @param dst  The destination object. Must not be NULL.
+ *  @arg[FbleHeap*][heap] The heap the objects are allocated on.
+ *  @arg[void*][src] The source object.
+ *  @arg[void*][dst] The destination object. Must not be NULL.
  *
  * @sideeffects
- *   Causes the dst object to be retained at least as long as the src object
- *   is retained.
+ *  Causes the dst object to be retained at least as long as the src object is
+ *  retained.
  */
 void FbleHeapObjectAddRef(FbleHeap* heap, void* src, void* dst);
-
-/**
- * Notifies the heap of a reference to an object.
- *
- * @param heap This heap.
- * @param obj  An object that is referenced from somewhere.
- *
- * @sideeffects
- *  Does internal heap bookkeeping of the reference to the object.
- */
-void FbleHeapRef(FbleHeap* heap, void* obj);
 
 /**
  * Does a full GC.

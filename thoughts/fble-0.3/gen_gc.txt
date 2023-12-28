@@ -795,3 +795,47 @@ this happen where 'to' is empty. What should we do in this case?
 FromNew could turn back to Pending. Should we push the empty 'to' generation?
 Or check for the empty to generation? Maybe next is set to the empty 'to'
 generation, we just reset it to 'new'?
+
+---
+
+Next issue: memory leaks.
+
+The interesting thing is that fbld seems to work. So we can get an early idea
+of performance, even though we have some memory leaks elsewhere.
+
+fbld performance:
+  User time (seconds): 115.70
+  Maximum resident set size (kbytes): 146508
+
+That's competitive for sure. Not much better though.
+
+Let's figure out the memory leak. I want to see what generation the object
+being leaked thinks it belongs to at the end of the day.
+
+These five allocations:
+
+set(['0x1010b068', '0x100f2e68', '0x100f3e48', '0x100ed528', '0x100b3848'])
+
+gen id is 1. Looks like that generation is alive. So it looks like we are
+leaking an entire generation perhaps? No, we haven't cleaned up the
+generations yet.
+
+For some reason, full gc thinks it has finished, even though we still have
+objects on the heap. Note, the generation in question doesn't have any roots.
+Why have we not tried to gc it then?
+
+Before the final GC, that generation has no roots. How can an older generation
+have no roots? The expectation is that we mark the generation as needing GC
+when it drops its last root.
+
+Invariant that's violated: heap->older contains a generation without a root
+object, but heap->next doesn't capture that generation.
+
+---
+
+Here's an issue: Retain heap object could move a from_new object to a from
+object. We need to distinguish between those I think.
+
+Okay, I found a number of bugs in the implementation. Mostly having to do with
+the from_new generation. Let's sleep on it an see if we can come up with a
+clearer solution.

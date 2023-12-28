@@ -13,7 +13,7 @@
 #include <fble/fble-execute.h>
 #include <fble/fble-vector.h>  // for FbleInitVector, etc.
 
-#include "heap.h"
+#include "heap.h"              // for FbleHeap, etc.
 #include "unreachable.h"
 
 /**
@@ -118,7 +118,7 @@ FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 
 static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 static void OnFree(FbleValueHeap* heap, FbleValue* value);
-static void Ref(FbleHeap* heap, FbleValue* value);
+static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst);
 static void Refs(FbleHeap* heap, FbleValue* value);
 
 static size_t PackedValueLength(intptr_t data);
@@ -230,20 +230,20 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 }
 
 /**
- * Helper function for implementing Refs.
+ * @func[Ref] Helper function for implementing Refs.
+ *  Calls FbleHeapObjectAddRef if the dst is not NULL.
  *
- * Calls FbleHeapRef if the value is not NULL.
+ *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[FbleValue*][src] The source of the reference.
+ *  @arg[FbleValue*][dst] The target of the reference.
  *
- * @param heap  The heap.
- * @param value  The value to add.
- *
- * @sideeffects
- *   If value is non-NULL, FbleHeapRef is called for it.
+ *  @sideeffects
+ *   If value is non-NULL, FbleHeapObjectAddRef is called for it.
  */
-static void Ref(FbleHeap* heap, FbleValue* value)
+static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!PACKED(value) && value != NULL) {
-    FbleHeapRef(heap, value);
+  if (!PACKED(dst) && dst != NULL) {
+    FbleHeapObjectAddRef(heap, src, dst);
   }
 }
 
@@ -264,28 +264,28 @@ static void Refs(FbleHeap* heap, FbleValue* value)
     case FBLE_STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
-        Ref(heap, sv->fields[i]);
+        Ref(heap, value, sv->fields[i]);
       }
       break;
     }
 
     case FBLE_UNION_VALUE: {
       UnionValue* uv = (UnionValue*)value;
-      Ref(heap, uv->arg);
+      Ref(heap, value, uv->arg);
       break;
     }
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
       for (size_t i = 0; i < v->executable->num_statics; ++i) {
-        Ref(heap, v->statics[i]);
+        Ref(heap, value, v->statics[i]);
       }
       break;
     }
 
     case FBLE_REF_VALUE: {
       RefValue* v = (RefValue*)value;
-      Ref(heap, v->value);
+      Ref(heap, value, v->value);
       break;
     }
   }

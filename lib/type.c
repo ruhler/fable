@@ -26,6 +26,7 @@
 #include <fble/fble-module-path.h>
 #include <fble/fble-vector.h>
 
+#include "heap.h"           // for FbleHeap, etc.
 #include "unreachable.h"
 
 /** Linked list of types. */
@@ -43,7 +44,7 @@ typedef struct TypePairs {
 
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
 
-static void Ref(FbleHeap* heap, FbleType* type);
+static void Ref(FbleHeap* heap, FbleType* src, FbleType* dst);
 static void Refs(FbleHeap* heap, FbleType* type);
 static void OnFree(FbleTypeHeap* heap, FbleType* type);
 
@@ -102,18 +103,20 @@ static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
 }
 
 /**
- * Helper function for traversing references.
+ * @func[Ref] Helper function for implementing Refs.
+ *  Calls FbleHeapObjectAddRef if the dst is not NULL.
  *
- * @param heap  The heap.
- * @param type  The type to traverse.
+ *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[FbleType*][src] The source of the reference.
+ *  @arg[FbleType*][dst] The target of the reference.
  *
- * @sideeffects
- *   If type is not null, calls FbleHeapRef on the type.
+ *  @sideeffects
+ *   If value is non-NULL, FbleHeapObjectAddRef is called for it.
  */
-static void Ref(FbleHeap* heap, FbleType* type)
+static void Ref(FbleHeap* heap, FbleType* src, FbleType* dst)
 {
-  if (type != NULL) {
-    FbleHeapRef(heap, type);
+  if (dst != NULL) {
+    FbleHeapObjectAddRef(heap, src, dst);
   }
 }
 
@@ -134,7 +137,7 @@ static void Refs(FbleHeap* heap, FbleType* type)
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
-        Ref(heap, dt->fields.xs[i].type);
+        Ref(heap, type, dt->fields.xs[i].type);
       }
       break;
     }
@@ -142,23 +145,23 @@ static void Refs(FbleHeap* heap, FbleType* type)
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
       for (size_t i = 0; i < ft->args.size; ++i) {
-        Ref(heap, ft->args.xs[i]);
+        Ref(heap, type, ft->args.xs[i]);
       }
-      Ref(heap, ft->rtype);
+      Ref(heap, type, ft->rtype);
       break;
     }
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      Ref(heap, pt->arg);
-      Ref(heap, pt->body);
+      Ref(heap, type, pt->arg);
+      Ref(heap, type, pt->body);
       break;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      Ref(heap, pat->poly);
-      Ref(heap, pat->arg);
+      Ref(heap, type, pat->poly);
+      Ref(heap, type, pat->arg);
       break;
     }
 
@@ -166,20 +169,20 @@ static void Refs(FbleHeap* heap, FbleType* type)
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      Ref(heap, &abs->package->_base);
-      Ref(heap, abs->type);
+      Ref(heap, type, &abs->package->_base);
+      Ref(heap, type, abs->type);
       break;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      Ref(heap, var->value);
+      Ref(heap, type, var->value);
       break;
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* t = (FbleTypeType*)type;
-      Ref(heap, t->type);
+      Ref(heap, type, t->type);
       break;
     }
   }
