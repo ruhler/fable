@@ -956,4 +956,25 @@ Again, Save will be retraversed before going to old, so it's fine.
 So looks like all we need to do is fix the one case.  Mark -> New should
 update next to old.
 
+---
 
+Looks like we have more similar leaks.
+
+./bin/fble-compile.cov --compile -I ../spec -m /SpecTests/\'7.3-Bind\'/Basic/TypeInfer%
+
+
+sr 0x55555d2078 (-2)
+addref 0x55555d2078 (-2) -> 0x55555d0288 (-4)
+snr 0x55555d0288 (-2)
+addref 0x55555d05f8 (-2) -> 0x55555d0288 (-1)
+addref 0x55555d0798 (-2) -> 0x55555d0288 (-1)
+GC size: 12, alloc: 5, free: 1, old: 2, next: -1
+free 0x55555d0288
+
+There is a reference from d0798, which is a root, to d0288. In the next GC, we
+don't see that. What's happening here?
+
+Save Root -> Old
+
+I should pretend we are marking it, right? Yes. This is as if it was marked,
+because it was a root.

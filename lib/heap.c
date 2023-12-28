@@ -330,6 +330,7 @@ static bool IncrGc(FbleHeap* heap)
   // Save Root -> Old
   if (heap->save->roots.next != &heap->save->roots) {
     Obj* obj = (Obj*)heap->save->roots.next;
+    obj->gen = heap->mark;
     fprintf(stderr, "sr %p (%zi)\n", (void*)obj, obj->gen->id);
     heap->refs(heap, obj->obj);
     obj->gen = heap->old;
