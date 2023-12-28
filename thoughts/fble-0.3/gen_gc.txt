@@ -730,3 +730,19 @@ referenced a younger object, we still get the benefits of generational GC.
 
 Okay? Is it clear? Shall we try it?
 
+Revisiting the addref logic:
+
+addref src -> dst:
+ older ->
+  if dst is younger than src, update next to include src generation.
+  if dst is from, move dst to pending.
+ from ->
+  if dst is new, update next to include to generation.
+ pending ->
+  if dst is from, move dst to pending.
+  if dst is new, update next to include to generation.
+ to ->
+  if dst is from, move dst to pending.
+  if dst is new, update next to include to generation.
+ new ->
+  if dst is from, move dst to from_new.
