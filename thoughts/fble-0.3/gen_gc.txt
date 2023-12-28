@@ -90,3 +90,643 @@ Too bad it doesn't get significantly better performance. But hey, maybe this
 means we can reduce the rate of GC now that we can traverse the heap that much
 faster?
 
+---
+
+Right now we traverse one object per allocation. Can that change?
+
+Imagine we have constant memory use in a program, because that's really the
+only time it makes sense to look at GC overheads. Consider this scenario:
+we've allocated a bunch of objects on the heap that we will retain. Then we
+start to churn through objects.
+
+Say we are retaining R objects. It used to take R allocations to traverse the
+heap. Roughly speaking, that means we wouldn't free any objects until R
+objects had been allocated. That means total heap size would get to 2R, or
+100% memory overhead.
+
+With generational garbage collection, the math changes. Say we have R older
+objects. If we are purely churning, we don't have any generational objects.
+Just whatever objects we allocated since the last GC to go through. Maybe call
+that A. Then total heap size would be R + 2A. We assume A is much smaller than
+R.
+
+Let's say we traverse p objects per allocation. The numbers would change to...
+
+2R ==> R + R/p = R (p+1)/p
+R + 2A ==> R + A + A/p ==> R + A (p + 1)/p
+
+It's hard to gauge in theory, because it depends a lot on the allocation
+pattern. The point is, in theory I can slow down incremental GC. I want to try
+it on fble.html generation and see what impact it has on runtime and memory
+use.
+
+2:
+	User time (seconds): 126.21
+	Maximum resident set size (kbytes): 102280
+
+1: 
+	User time (seconds): 116.22
+	Maximum resident set size (kbytes): 147016
+
+1/2:
+	User time (seconds): 111.05
+	Maximum resident set size (kbytes): 232736
+
+What surprises me is the very large memory overhead from traversing half an
+object each allocation. I'm also a little surprised by how much difference
+there is in memory overhead if we traverse twice as fast.
+
+Cutting traversal time in half saves us about 4 seconds. Doubling traversal
+time costs us about 10 seconds. That suggests, overall, we are spending 10
+seconds in traversal in the case of one object per allocation. That's about 8%
+time. The best we could hope, if we completely eliminated traversal, would be
+a runtime around 106s.
+
+---
+
+Is generational gc working as expected?
+
+Printing some stats on an fble.html run, for the main part of the program, we
+always GC generations 4 to 5. For the entire duration of the program, we are
+pretty consistently traversing one third of the objects allocated on the heap.
+
+For example:
+
+GC 935238 total, 316178 traversed. Next: 4 - 5
+GC 956455 total, 323967 traversed. Next: 4 - 5
+GC 981246 total, 333180 traversed. Next: 4 - 5
+GC 1008957 total, 342465 traversed. Next: 4 - 5
+GC 1035541 total, 350479 traversed. Next: 4 - 5
+GC 997592 total, 296502 traversed. Next: 4 - 5
+
+Let me try forcing 'next' to 'to' and see what happens. That should cause
+everything to always be traversed, right?
+
+It doesn't really change anything:
+
+GC 945313 total, 319362 traversed. Next: 1 - 2
+GC 967020 total, 328297 traversed. Next: 1 - 2
+GC 993947 total, 337354 traversed. Next: 1 - 2
+GC 1021900 total, 347193 traversed. Next: 1 - 2
+GC 1023093 total, 328708 traversed. Next: 1 - 2
+GC 956458 total, 299043 traversed. Next: 1 - 2
+
+Odd that there are less objects traversed in this case. Because the older
+generations were so tiny before. Like we are capturing 1% of the heap in older
+generations.
+
+To better understand, let me free objects much more proactively?
+
+Here's what's happening:
+
+GC 552154 total, 276011 traversed 276011 allocated, 280337 freed. Next: 4 - 5
+GC 554090 total, 276979 traversed 276979 allocated, 275043 freed. Next: 4 - 5
+GC 553394 total, 276631 traversed 276631 allocated, 277327 freed. Next: 4 - 5
+GC 563748 total, 281808 traversed 281808 allocated, 271454 freed. Next: 4 - 5
+
+The heap size here is around 280K objects. Those are the ones we traverse. In
+that time, we allocate around 280K objects. Because this is all churn, for the
+most part we end up with 280K objects free at the end of the cycle.
+
+That's why it always looked like about one third of the heap being traversed.
+We are traversing the entire heap, but have 2x overhead: 1x for recently
+allocated objects and 1x for freed objects that haven't yet been reclaimed.
+
+In other words, generational GC isn't getting us anything here. The vast
+majority of the heap is in the generation we keep traversing.
+
+Is this expected, or is this a bug?
+
+Let's think about the lifetime of a short lived object.
+
+* It's allocated to 'new' as a root, say at the very end of a GC cycle.
+* It becomes part of 'from' at the start of the next GC cycle.
+* We traverse the object, maybe because it's at the front of the list.
+  It becomes pending.
+* We drop the reference to it. So we mark the entire 'to' generation as
+  poisoned in a sense, and fail to make a new generation from it.
+
+All for a very short lived object.
+
+Consider the order things are done:
+* The new object is allocated to the front of new roots.
+* The next heap->from starts with the new object allocated to the front.
+* We MoveAllTo the previous 'to' generation.
+ => The object stays at the front of the list.
+* That object is the very first object we traverse next cycle.
+
+What if we changed the order? We want to traverse the oldest roots first, not
+the newest roots. Based on the idea that newer roots are likely to be released
+before older roots.
+
+I want to try this. See if it lets us form more generations. It shouldn't be
+too difficult. I just need to get things sorted right.
+
+* MoveAllTo moves the objects to the front of the dest list.
+* The next from becomes:
+    [new, to, old1, old2, ...]
+* So, the easiest way to traverse older roots first is pull roots from the
+  back of the list. 
+
+Let's try and see what happens.
+
+It doesn't seem to have made any difference.
+
+Who is poisoning the generation?
+
+* It's a call to FbleReleaseValues after doing a function call in State Monad
+  do function  f(ra.x)(ra.s);
+
+So, either after the call to f(ra.x) or the call to (...)(ra.s). My guess
+would be freeing the result of f(ra.x).
+
+So, f(ra.x) allocates a function. Then we tail call the function?
+
+Let me see how many object allocations this particular object is surviving?
+
+Interesting:
+
+alloc 0x3d30fb88
+GC 783138 total, 391503 traversed 391503 allocated, 378413 freed. Next: 4 - 5
+alloc 0x3c0c7468
+pr 0x3d30fb88
+alloc 0x3b6ba3b8
+release 4 0x3d30fb88
+
+Allocated at the tail end of the previous GC, released right away. A very
+short lived object. How did it get to 'pending' so quickly?
+
+We must have taken a reference to it. My guess:
+
+alloc 0x3d30fb88
+GC 783138 total, 391503 traversed 391503 allocated, 378413 freed. Next: 4 - 5
+alloc 0x3c0c7468
+addref 0x3c0c7468 -> 0x3d30fb88
+pr 0x3d30fb88
+alloc 0x3b6ba3b8
+release 4 0x3d30fb88
+
+Yup. Here's the actual log:
+
+alloc 0x2d3d2b88
+GC 783138 total, 391503 traversed 391503 allocated, 378413 freed. Next: 4 - 5
+alloc 0x2c18a468
+addref 0x2c18a468 -> 0x2d3d2b88
+pr 0x2d3d2b88
+mark 0x2831cc38
+mark 0x2d3d2b38
+alloc 0x2b77d3b8
+release 4 0x2d3d2b88
+
+How can we get a clean generation break given this behavior?
+
+If it's a pending root, it must have gotten there from one or more of:
+A. A traversed from root.
+B. A retained pending non-root.
+C. A referenced from root.
+
+In the case of (B), we don't care that it was retained and then released,
+because someone referenced it anyway.
+
+In the case of (C), we don't care that it was released, because someone
+referenced it anyway.
+
+In the case of (A), we do care that it was released.
+
+Is there any way I can track the state for when we release an object?
+
+What we want is two categories of pending:
+1. Pending things that are pending only because they were from roots.
+2. Pending things that, even though they may be roots, wouldn't need to be
+roots in pending to stay alive.
+
+If we drop the root to anything in (1), all of the current iteration is
+poisoned. In the case we are seeing, the object would fall in (2) because it's
+given a reference from 'new'.
+
+We could use pending->roots versus pending->non-roots for this?
+
+As soon as we traverse a pending object that is a root, it becomes a 'to'
+root, which would trigger the need to poison the to space when released.
+
+This feels fragile. Is there any more robust way to form new generations?
+
+Using roots versus non-roots list won't be enough here. We need a way to know
+which list the object is on.
+
+Seems like a better approach would be a separate generation.
+
+pending and root_pending?
+
+* addref moves the object to pending.
+* mark moves the object to pending.
+
+Wait. We never move from roots to pending. Everything in pending is already
+reached otherwise. So pending versus to is already the distinction we want
+here.
+
+This means, in theory, it should be safe to drop a root in pending without
+poisoning the current traversal.
+
+Unfortunately it doesn't work. It leaks memory. Same as the bug I already
+fixed. The case is this:
+
+GC 0 total, 0 traversed 0 allocated, 0 freed. Next: 2 - 2
+alloc 0x55aa5166f8
+GC 1 total, 1 traversed 1 allocated, 0 freed. Next: 3 - 3
+alloc 0x55aa516838
+addref 0x55aa516838 -> 0x55aa5166f8
+release 0x55aa5166f8
+release 0x55aa516838
+pnr 0x55aa5166f8
+GC 2 total, 1 traversed 1 allocated, 0 freed. Next: 4 - 4
+free 0x55aa516838
+GC 1 total, 0 traversed 0 allocated, 1 freed. Next: 5 - 5
+ERROR: MEMORY LEAK DETECTED
+
+from.roots: A
+alloc B.
+addref B -> A, moves A to pending root.
+release B: We lose the reference to A that we added.
+release A: we loose the retained reference to A.
+So, A is not a root anymore, and there is nothing to retain it.
+
+Does this mean, potentially, that releasing an object in any generation could
+result in a memory leak?
+
+The idea is, for an object to survive a GC, it must have been retained by:
+* older: not possible.
+* from: not possible. This isn't sufficient for the object to survive.
+* pending: okay. turns into 'to' which is self sustained.
+* to: okay. self sustained.
+* new: buggy case. 
+
+If an object survives only because of a new allocation, the it isn't self
+sustaining. GC in the new generation could require us to revisit older
+generations, and we would have no way to know it.
+
+That explains what's going on.
+* I failed to account for this in the design, which is why, when implemented
+  as designed, it leaks memory.
+* hmmm... why is the 'fix' to merge generations when dropping references to
+  pending roots sufficient in this case? Could we have just gotten lucky?
+
+If we take a reference to an object, it must have been reachable. If it was
+reachable from the 'new' generation, then consider the first 'new' object that
+took a reference to it. It must have been a root at that time. If it stays a
+root, it survives and we don't hit the buggy case. If it doesn't stay a root,
+then our 'fix' merges generations and we don't hit the buggy case.
+
+Okay. Good. That makes sense. But what's the plan? How to handle this case?
+What should the design be to make generational gc work?
+
+There are two approaches we could take:
+1. Drop the requirement for generation self sustainability.
+2. Figure out how to preserve generations with self sustainability.
+
+For (1), we keep just the invariant that older generations don't reference
+objects in newer generations. We need that to be able to properly GC newer
+generations. But we allow there to be unreachable objects in older
+generations.
+
+How this happens is the example above: a newer generation referenced the older
+generation object when forming the older generation. Later on we unknowingly
+dropped that reference.
+
+We can't know when we dropped that reference, unless we want to start tracking
+explicit removal of references again. We'll just have to periodically GC older
+generations.
+
+When should we GC older generations?
+* As part of full gc for sure.
+* periodically?
+
+If we only ever gc the newest generation, we'll never be able to keep up with
+allocations. Not unless the entire new generation is garbage in the next
+cycle.
+
+Say we run GC on the youngest generation. We traverse N objects, we allocate N
+objects, we free who knows how many objects. We've retained N objects, put
+those in a new generation. So now we have two younger generations: the N that
+survived just now, and the N that were allocated in the mean time.
+
+If we just traverse the new ones, some number will survive. Let's say X
+survive the first, Y survive the second, and so on. After n cycles, we'll have
+added X + Y + Z + ... objects to the heap. It only ever goes up. To make it go
+down, we need to try GC of more generations eventually.
+
+Note: the initial size of the new generation is always the same as the
+surviving size of the old generation. If there were a lot of survivors before,
+the new generation will be big. If not so many survivors before, the old
+generation will be smaller.
+
+We could do an arbitrary pattern?
+
+1 generation
+2 generations
+1 generation
+3 generations
+1 generation
+2 generations
+1 generation
+4 generations
+
+And so on.
+
+f(N) = F(N-1), N, f(N-1)
+
+Seems pretty arbitrary to me.
+
+For (2), how to we maintain sustainability? The invariant is that each
+generation is self sustaining.
+
+If a new generation takes a sole reference to a forming generation, what do we
+do?
+
+Depends what state that reference is in?
+* from - it hasn't been referenced from within the current generation yet.
+  Move it to the 'new' generation? If we end up referencing it from the
+  current generation... how would we know? We wouldn't know.
+* Move the src object to the forming generation?
+  But we don't know that src object doesn't reference other objects in the new
+  generation.
+
+What if we could distinguish between merging generations and GCing
+generations?
+
+If we have to merge, we have to merge. But let's say we drop a root pending
+object. We could say, in this case, that we need to GC this generation, but we
+don't need to merge it.
+
+Imagine we have three generations, X, Y, Z. Could we run GC on them and
+preserve the structure of the generations?
+
+No objects in Y reference objects in Z. No objects in X reference objects in
+Y. But an object in Z may reference X or Y.
+
+Start with generation Z. Run GC. Any references to generation X or Y, we mark
+as pending in those generations. Free anything unreferenced in Z, we are done
+with GC of Z.
+
+Now run GC on Y, based on roots of Y and whatever was marked from Z. Do GC,
+free some objects. Mark things in X as needed.
+
+And so on. I claim we can do this. We can preserve generations across GC. Say
+that's our primary method of GC. When we would form new generations? Would we
+ever join generations?
+
+It seems like generations could become small. There's not so much value in
+having a really small generation. Mostly we want constant size generations?
+Could that be how we govern things?
+
+If we pick size 'N' for each generation, we can free things after N iterations
+for sure, and maybe fewer.
+
+Say it only takes M allocations to GC generation Z. Then Z has M objects,
+we've allocated M objects. That leaves N-2M objects we can allocate before Z
+plus new allocations reaches N. That means we have time we can spend on GC of
+an older generation?
+
+Seems backwards. Like we really want to GC older generations when GC of
+younger generations isn't freeing enough objects.
+
+Let's think about another approach. Let's say, if a newer generation
+references an older generation, we treat that as a 'root' for the older
+generation? Then the goal is to detect when we drop that root. But we already
+said that is hard.
+
+Okay, let's say we GC multiple generations and preserve generations. We know
+when we should GC back to a younger generation. It's exactly when we drop a
+pending root from it, right?
+
+Forming generation X, Y is new. An object from Y takes a reference to X, which
+must have been a root of X at that time. Then we drop the root to X. That
+means we need to GC back to it.
+
+Next time, we are doing GC of [X, Y] and Z is new. Now what happens?
+
+Cases:
+* Z takes a reference to Y. It must have been a root. If we later drop the
+  root to Y, we'll traverse Y the next round.
+* Z takes a reference to X. Either that object in X is retained by X, retained
+  by Y, or retained by Z. If retained by X, no need to worry. If not retained
+  by X, but retained by Y.... ?
+  If retained by neither X nor Y, then it must be a root and we know if/when
+  it's dropped.
+
+  If retained by Y... that's the tricky part.
+
+How about this: for each generation, we keep track of:
+* roots, non-roots, and references from youngers.
+
+[X, Y] says all objects in X are retained by X or by Y.
+
+The only way we drop the reference from Y is if we first GC Y. Same goes for
+[X, Y, Z]. Except say we add a reference from Z to X then drop the reference
+from Y to X. Then, later on, we drop the reference...
+
+What I'm getting at is, I think, maybe, it's safe to say: GC Z first, then ask
+if we need to GC Y. If we don't need to GC Y, claim/hope is we don't need to
+consider GC of X either.
+
+If that's the case, then GC algorithm is clear. GC as far back as we need to
+and no more. Do that every time.
+
+So, X knows what objects are retained by younger generations. After doing GC
+of Z, Y, we know what objects of X they retain. If any of 'younger' objects of
+X are not marked, then we need to GC X. If all of the 'younger' objects of X
+were marked, then no need to GC X.
+
+Idea: We could replace FbleHeapRef with FbleHeapAddRef. It just means when we
+mark, we call FbleHeapAddRef instead of FbleHeapRef. It gives us information
+about why we are marking. We have that information available when calling
+FbleHeapRef.
+
+Anyway, try again.
+
+Forming X, Y is new. An object from Y takes a reference to X. Either that
+object in X was retained by X or was a root when Y took a reference to it. So
+now either that object is retained by X or referenced from Y. We say we need
+to GC X again, just in case.
+
+Now, GC [X, Y], Z is new. Start by GC Y, it marks things in X. It may or may
+not cause that reference in X to be marked. Now GC X. That's fine now. But how
+do we know the next time we need to GC X?
+
+Before we consider GC of X, we GC all younger generations. We mark objects
+in X referenced from younger generations.
+
+Now, when we GC X, we first traverse all objects reachable from roots of X.
+Once that is done, we consider objects reachable only from younger
+generations. My first thought is, can we move these objects to the next
+younger generation?
+
+The idea is this: if you drop a root from a generation, you need to GC that
+generation next cycle. When you GC that generation, you start by everything
+reachable from roots. Then you do everything reachable from younger
+generations. Move those objects reachable from younger generations to the
+younger generation. We don't have to rerun GC on X again until another one of
+its roots is dropped.
+
+That way we maintain the invariant that generations are self sustaining while
+maintaining separate generations.
+
+Let's review the proposal.
+
+Invariants for generation:
+* Objects in an older generation cannot reference objects in a younger
+  generation.
+ - If this gets violated, we merge generations to fix it.
+* Objects in a generation are all reachable from roots of that generation.
+ - If this gets violated, we GC/split the generation next cycle to fix it.
+
+For any given GC cycle, I have:
+
+* older generations. Will not be touched.
+* a list of merged generations to run GC on.
+* The new generation where we allocate objects.
+
+Say the list of pre-merged generations to run GC on is X, Y, Z...
+
+* GC Z, from roots first. Keep track of references from younger separately.
+* That forms the new Z. Traverse from references of new next.
+* Anything that survives references of new gets moved to new. Anything else
+  gets freed.
+* GC Y, from roots first. Tracking references from younger separately.
+* That forms the new Y. Traverse from references of younger next. 
+* Anything that survives...
+
+Is this the wrong order? We need to go backwards?
+
+GC X first, from roots. Anything that doesn't survive, move to Y.
+GC Y next, from roots. Anything that doesn't survive, move to Z.
+And so on.
+
+If at any time we drop a root from a generation, mark it for needing GC next
+cycle.
+
+Random idea: how about we organize generations around roots?
+
+Given a full heap with roots, we can do the following:
+1. Pick a root. Traverse all objects reachable from that root. Call this
+generation 0.
+2. Pick a root not yet traversed. Traverse all objects reachable from that
+root. Call this generation 1.
+
+And so on.
+
+I claim this gives us the generation properties: no reference from older to
+younger, and each generation is self sustaining. Different choice of order for
+roots will lead to different partitioning of objects into generations.
+
+If we drop a root, rerun GC for all generations as young as the root that was
+dropped. It's essentially the same thing, right?
+
+Then the question is, can we maintain this structure dynamically? Let's think
+about it some.
+
+---
+
+I think this can work. It's a similar kind of structure:
+
+* older: generations we won't touch this GC cycle.
+* from: collection of objects to build 'to' generations out of.
+* pending: objects in process of being traversed.
+* to: generation in the process of being created.
+* new: all new object allocations.
+* next: the generation to start GC from next cycle.
+
+Here's the behavior:
+* New objects are allocated to the 'new' generation.
+* Retained objects are moved to corresponding 'root' list. Otherwise no
+  change.
+* Release objects are moved to corresponding nonroot list. Update 'next' to
+  include this generation in next generation of objects collected.
+
+Question: some root objects retain other root objects. If a root object is
+retained by another root object, there is no need to do anything if the root
+object is no longer a root. Can we take advantage of that somehow?
+
+Maybe we can say the first root in the list for the generation is the
+canonical root. We only have to update next if the canonical root is dropped.
+That sounds good. It means we should be careful about moving around roots.
+
+Continuing the behavior:
+addref src -> dst:
+ older ->
+  older: if dst is younger: 
+    Merge all generations from older to younger older.  The important part is
+    if we drop a reference to any of those generations, we need to set next to
+    the oldest of them. Not sure what data structure is best to keep track of
+    that just now.
+  from: Move dst to pending. Merge older to 'to'. ???
+  pending: Merge older to 'to'. ???
+  to: Merge older to 'to'. ???
+  new: Mark next gc as needing to include src.
+ from ->
+  older: nothing
+  from: nothing
+  pending: nothing
+  to: nothing
+  new: nothing
+ pending ->
+  older: nothing
+  from: Move dst to pending.
+  pending: nothing
+  to: nothing
+  new: Mark next gc as needing to include to.
+ to ->
+  older: nothing
+  from: Move dst to pending.
+  pending: nothing
+  to: nothing
+  new: Mark next gc as needing to include to.
+ new ->
+  older: nothing
+  from: Move the from object to ???. To avoid collecting it this cycle.
+  pending: nothing
+  to: nothing
+  new: nothing
+
+One question is what to do if an older generation takes a reference to 'to' or
+something that will become 'to'. This means as soon as we drop a root anywhere
+except 'new', we would need to GC from older starting in the next generation.
+Is it worth merging, or should we just mark as GC from older generation right
+away?
+
+Another question: seems like if a new object takes a reference to a 'from'
+object, we need to traverse that 'from' object. How can we indicate that?
+Moving to 'new' isn't right, because we don't traverse those objects. Moving
+to 'pending' isn't right, because it's not referenced from the current root we
+are traversing. Perhaps we need a new category for this.
+
+When we traverse, there are two loops:
+* The GC cycle
+
+Hmm..
+
+Traversing new objects sounds scary to me. Like maybe we never end a GC cycle.
+Let's avoid that.
+
+If we add a reference to a new object, ignore the new object, but mark next GC
+as needing to include the generation we are currently working on.
+
+When we traverse, there are two loops:
+* The GC loop. Goes as long as there are any 'from' roots left.
+* The generation loop. Goes as long as there are any pending objects left.
+
+The generation loop can happen multiple times in a single GC cycle. We are
+creating multiple new 'to' generations as we go.
+
+How likely are we to take a reference from an older generation to a younger
+generation that isn't going to force a GC soon? Can we simplify by saying next
+GC should include the older generation? Then we don't have to merge
+generations at all. Let's try that to start.
+
+The important difference between this and my current approach is we get
+multiple generations out of every GC. We recreate the separate generations. So
+even if we have to occasionally GC the entire heap because an older object
+referenced a younger object, we still get the benefits of generational GC.
+
+Okay? Is it clear? Shall we try it?
+

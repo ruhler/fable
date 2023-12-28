@@ -1,0 +1,46 @@
+Partial Application
+===================
+See thoughts/fble-0.2/partial_application.txt for background.
+
+The motivation is this:
+* Do functions currently have to be split into (a)(b) instead of (a, b) to
+  work with monadic bind.
+* It would be great if we could write Do as (a, b) instead. But then bind gets
+  a little wonky in terms of applying a single arg versus adding a single
+  argument.
+* A clean way to do this in the language we be not to distinguish between
+  functions of type (a)(b) and (a, b).
+
+So, seems like there's opportunity to improve performance and clean up the
+language by not treating multi-arg functions as different from functions to
+functions at the language level.
+
+The sole reason for treating multi-arg functions as different from functions
+to functions in fble is performance. Can we use a better implementation that
+has comparable performance with functions to functions?
+
+A key difference with the language based approach:
+* The type system knows how the function was implemented.
+
+Otherwise the type system doesn't know.
+
+An interesting insight:
+* The compiler could track the difference in types without preventing you from
+  interchanging them.
+
+For example, say a multi arg function is expected, you provide a function to a
+function. Then the compiler automatically inserts a conversion:
+   f(a, b) = g(a)(b).
+
+Say a function to function is expected, but you provide a multiarg. Then the
+compiler automatically inserts a conversion:
+  f(a)(b) = g(a, b)
+
+It worries me that how you write the code could make a difference for
+performance for what otherwise should be the same thing.
+
+The other option is to support partial/over application at runtime in an
+efficient way.
+
+I would like there to be a clear way to reason about the performance of it.
+
