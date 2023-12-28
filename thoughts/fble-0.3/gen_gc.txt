@@ -871,3 +871,89 @@ Found the issue: we were moving an object to its destination before calling
 refs, which mean it was always traversing from 'old' instead of mark/saved as
 we want.
 
+---
+
+Next bug: looks like we are freeing objects prematurely? Let's see if we can
+find the bug.
+
+./bin/fble-compile.cov --compile -I ../spec -m /SpecTests/\'5.2-FuncValue\'/Eval/NoCapture%
+../spec/SpecTests/5.2-FuncValue/Eval/NoCapture.fble:15:3: error: expected
+value of union type, but found value of type S.
+
+I think the previous issue isn't fixed right.
+
+Consider a GC object points to a NEW object. In this case, it's a VarType who
+is having its value set. We need to update next for this. But we aren't now?
+
+So, A -> B, where A is GC, B is NEW. We don't record anything special.
+Now we trigger 'mnr' for A, which says we are pointing mark -> new. And then
+we add that to old, so we now have old -> new not properly tracked. Next time
+we GC, we traverse just the new objects, which will collect B before A is
+collected. Let me see if I can confirm from the logs:
+
+
+addref 0x55555dc1c8 (-3) -> 0x55555d9dc8 (-1)
+mnr 0x55555dc1c8 (-3)
+addref 0x55555dc1c8 (-3) -> 0x55555d9dc8 (-1)
+GC size: 24, alloc: 3, free: 5, old: 10, next: -1
+addref 0x55555dbef8 (-1) -> 0x55555dc1c8 (9)
+free 0x55555d9dc8
+
+Yes. That's exactly what happened here.
+
+What's the right thing to do? Are we stuck in the same hole we were before?
+
+Think about the cases where we traverse objects.
+
+1. Mark Non-Root -> Old Non-Root.
+We are moving a marked object to old. We want to traverse its references.
+Cases for dst:
+  Old: dest cannot be younger, because src is youngest old. Nothing to do.
+  Mark: Nothing to do.
+  GC: Mark the dest.
+  S: Mark the dest.
+  N: Update next to src.
+
+In my first attempt, we were treating this as old->dst, which would behave as:
+  Old: Nothing happens. Desired behavior.
+  Mark: Set next to old. INCORRECT BEHAVIOR.
+  GC: Set next to old. Save the dst. INCORRECT BEHAVIOR.
+  S: Set next to old. INCORRECT BEHAVIOR.
+  N: Set next to old. INCORRECT BEHAVIOR.
+
+In my second attempt, we were treating this as mark -> dst, which was:
+  Old: Nothing happens. Desired behavior.
+  Mark: Nothing happens. Desired behavior.
+  GC: Mark the dst. Desired behavior.
+  S: Mark the dst. Desired behavior.
+  N: Do nothing. INCORRECT BEHAVIOR.
+
+The second attempt is closer. I think it's a good direction. But we need to
+handle the case where we take a reference to a new object. What's the
+proposal?
+
+Let me review the table.
+
+There is clearly one wrong entry:
+  Mark -> New  should update next to old instead of doing nothing.
+
+There are three entries I'm not sure about:
+  Mark -> Save
+  Save -> Save
+  Save -> New
+
+1. Mark -> Save
+Save will end up in mark. The question is, does Save reference new?
+No worries. We'll end up retraversing Save. This is okay as is.
+
+2. Save -> New
+If Save goes to Mark, we will re-traverse it. Otherwise nothing to do. This is
+okay as is.
+
+3. Save -> Save.
+Again, Save will be retraversed before going to old, so it's fine.
+
+So looks like all we need to do is fix the one case.  Mark -> New should
+update next to old.
+
+

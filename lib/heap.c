@@ -526,21 +526,29 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
     // An older generation object takes a reference to something newer. We
     // need to include that older generation in the next GC traversal, to make
     // sure we see all references to the dst object.
-    fprintf(stderr, "next: %zi addref\n", src->gen->id);
+    fprintf(stderr, "next: %zi addref old\n", src->gen->id);
     heap->next = src->gen;
+  } else if (src->gen->id == MARK_ID
+      && dst->gen->id == NEW_ID
+      && src->gen->id < heap->next->id) {
+    // Mark references New. We need to include the old generation where the
+    // marked object ends up in the next GC traversal, to make sure we see all
+    // references to the dst object.
+    fprintf(stderr, "next: %zi addref mark\n", heap->old->id);
+    heap->next = heap->old;
   }
 
   Gen* moveto = NULL;
   if (dst->gen->id == GC_ID) {
     if (src->gen->id == MARK_ID) {
-      // mark --> gc
+      // Mark references GC
       moveto = heap->mark;
     } else if (src->gen->id != GC_ID) {
-      // old/save/new --> gc
+      // Old/Save/New references GC
       moveto = heap->save;
     }
   } else if (src->gen->id == MARK_ID && dst->gen->id == SAVE_ID) {
-    // mark --> save
+    // Mark references Save
     moveto = heap->mark;
   }
 
