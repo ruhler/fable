@@ -746,3 +746,21 @@ addref src -> dst:
   if dst is new, update next to include to generation.
  new ->
   if dst is from, move dst to from_new.
+
+---
+
+Draft of the new approach is done. It seems we have a memory leak somewhere.
+Let me see what the simplest test case that reproduces it is, so I can debug
+what's going on.
+
+To start, we get a seg fault here:
+
+./test/fble-test.cov -I ../spec -m /'SpecTests'/'8.1-Organization'/'Basic'/'PublicVisible'%
+
+Found a bug with ids. We were setting the new to id to older id instead of as
+a next new id. Maybe that explains this?
+
+Looks like it.
+
+Did that fix the memory leak too? Looks like maybe. Cool.
+

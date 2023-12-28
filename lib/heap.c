@@ -347,7 +347,7 @@ static bool IncrGc(FbleHeap* heap)
   }
 
   // Set up the next 'to' generation.
-  heap->to->id = heap->older->id;
+  heap->to->id = heap->older->id + 1;
   heap->pending->id = heap->to->id;
 
   // Set up the next 'new' generation.
