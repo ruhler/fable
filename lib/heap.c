@@ -8,9 +8,11 @@
 #include <assert.h>   // for assert
 #include <stdbool.h>  // for bool
 #include <stdlib.h>   // for NULL
-// #include <stdio.h>    // for fprintf
+#include <stdio.h>    // for fprintf
 
 #include <fble/fble-alloc.h>
+
+#define fprintf(...)
 
 /**
  * A list of objects.
@@ -152,6 +154,9 @@ struct FbleHeap {
    * had their on_free callbacks called.
    */
   ObjList free;
+
+  size_t objects_allocated;
+  size_t traversal_time;
 };
 
 static void MoveToFront(ObjList* dest, Obj* obj);
@@ -267,7 +272,8 @@ static bool IncrGc(FbleHeap* heap)
     Obj* obj = (Obj*)heap->free.next;
     obj->list.prev->next = obj->list.next;
     obj->list.next->prev = obj->list.prev;
-    // fprintf(stderr, "free %p\n", (void*)obj);
+    fprintf(stderr, "free %p\n", (void*)obj);
+    heap->objects_allocated--;
     heap->on_free(heap, obj->obj);
     FbleFree(obj);
   }
@@ -285,20 +291,20 @@ static bool IncrGc(FbleHeap* heap)
   // Mark Non-Root -> Old Non-Root
   if (heap->mark->non_roots.next != &heap->mark->non_roots) {
     Obj* obj = (Obj*)heap->mark->non_roots.next;
+    fprintf(stderr, "mnr %p (%zi)\n", (void*)obj, obj->gen->id);
+    heap->refs(heap, obj->obj);
     obj->gen = heap->old;
     MoveToBack(&heap->old->non_roots, obj);
-    // fprintf(stderr, "mnr %p\n", (void*)obj);
-    heap->refs(heap, obj->obj);
     return false;
   }
 
   // Mark Root -> To Root
   if (heap->mark->roots.next != &heap->mark->roots) {
     Obj* obj = (Obj*)heap->mark->roots.next;
+    fprintf(stderr, "mr %p (%zi)\n", (void*)obj, obj->gen->id);
+    heap->refs(heap, obj->obj);
     obj->gen = heap->old;
     MoveToBack(&heap->old->roots, obj);
-    // fprintf(stderr, "mr %p\n", (void*)obj);
-    heap->refs(heap, obj->obj);
     return false;
   }
 
@@ -313,30 +319,31 @@ static bool IncrGc(FbleHeap* heap)
   // GC Root -> Old
   if (heap->gc->roots.next != &heap->gc->roots) {
     Obj* obj = (Obj*)heap->gc->roots.next;
+    obj->gen = heap->mark;
+    fprintf(stderr, "gcr %p (%zi)\n", (void*)obj, obj->gen->id);
+    heap->refs(heap, obj->obj);
     obj->gen = heap->old;
     MoveToFront(&heap->old->roots, obj);
-    // fprintf(stderr, "gcr %p\n", (void*)obj);
-    heap->refs(heap, obj->obj);
     return false;
   }
 
   // Save Root -> Old
   if (heap->save->roots.next != &heap->save->roots) {
     Obj* obj = (Obj*)heap->save->roots.next;
+    fprintf(stderr, "sr %p (%zi)\n", (void*)obj, obj->gen->id);
+    heap->refs(heap, obj->obj);
     obj->gen = heap->old;
     MoveToFront(&heap->old->roots, obj);
-    // fprintf(stderr, "sr %p\n", (void*)obj);
-    heap->refs(heap, obj->obj);
     return false;
   }
 
   // Save NonRoot -> New
   if (heap->save->non_roots.next != &heap->save->non_roots) {
     Obj* obj = (Obj*)heap->save->non_roots.next;
+    fprintf(stderr, "snr %p (%zi)\n", (void*)obj, obj->gen->id);
+    heap->refs(heap, obj->obj);
     obj->gen = heap->new;
     MoveToFront(&heap->new->non_roots, obj);
-    // fprintf(stderr, "snr %p\n", (void*)obj);
-    heap->refs(heap, obj->obj);
     return false;
   }
 
@@ -351,10 +358,24 @@ static bool IncrGc(FbleHeap* heap)
     heap->gc = gc->tail;
     FbleFree(gc);
   }
+  
+  size_t freed = 0;
+  while (heap->free.next != &heap->free) {
+    Obj* obj = (Obj*)heap->free.next;
+    obj->list.prev->next = obj->list.next;
+    obj->list.next->prev = obj->list.prev;
+    fprintf(stderr, "free %p\n", (void*)obj);
+    heap->objects_allocated--;
+    heap->on_free(heap, obj->obj);
+    FbleFree(obj);
+    freed++;
+  }
 
   // Set up the next 'gc' generation.
   // It will include all generations from 'next' to 'new'.
-  // fprintf(stderr, "GC old: %zi, next: %zi\n", heap->old->id, heap->next->id);
+  fprintf(stderr, "GC size: %zi, alloc: %zi, free: %zi, old: %zi, next: %zi\n",
+      heap->objects_allocated, heap->traversal_time, freed,
+      heap->old->id, heap->next->id);
   heap->new->tail = heap->old;
   heap->gc = heap->new;
   heap->gc->id = GC_ID;
@@ -370,10 +391,11 @@ static bool IncrGc(FbleHeap* heap)
     heap->old = NewGen(0);
   }
   heap->new = NewGen(NEW_ID);
-  // fprintf(stderr, "next: new\n");
+  fprintf(stderr, "next: new\n");
   heap->next = heap->new;
 
   // GC finished. Yay!
+  heap->traversal_time = 0;
   return true;
 }
 
@@ -391,11 +413,14 @@ FbleHeap* FbleNewHeap(
   heap->gc = NewGen(GC_ID);
   heap->save = NewGen(SAVE_ID);
   heap->new = NewGen(NEW_ID);
-  // fprintf(stderr, "next: new\n");
+  fprintf(stderr, "next: new\n");
   heap->next = heap->new;
 
   heap->free.prev = &heap->free;
   heap->free.next = &heap->free;
+
+  heap->objects_allocated = 0;
+  heap->traversal_time = 0;
 
   return heap;
 }
@@ -429,6 +454,8 @@ void* FbleNewHeapObject(FbleHeap* heap, size_t size)
   IncrGc(heap);
 
   // Objects are allocated as New Root.
+  heap->objects_allocated++;
+  heap->traversal_time++;
   Obj* obj = FbleAllocExtra(Obj, size);
   obj->list.next = heap->new->roots.next;
   obj->list.prev = &heap->new->roots;
@@ -436,7 +463,7 @@ void* FbleNewHeapObject(FbleHeap* heap, size_t size)
   obj->refcount = 1;
   heap->new->roots.next->prev = &obj->list;
   heap->new->roots.next = &obj->list;
-  // fprintf(stderr, "alloc %p\n", (void*)obj);
+  fprintf(stderr, "alloc %p\n", (void*)obj);
   return obj->obj;
 }
 
@@ -446,7 +473,7 @@ void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
   Obj* obj = ToObj(obj_);
   if (obj->refcount++ == 0) {
     // Non-Root -> Root
-    // fprintf(stderr, "retain %p %zi\n", (void*)obj, obj->gen->id);
+    fprintf(stderr, "retain %p %zi\n", (void*)obj, obj->gen->id);
     if (obj->gen->id == GC_ID) {
       // The object is in one of the 'gc' generations, make sure it stays in
       // the canonical heap->gc generation.
@@ -463,7 +490,7 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
   assert(obj->refcount > 0);
   if (--obj->refcount == 0) {
     // Root -> Non-Root
-    // fprintf(stderr, "release %p %zi\n", (void*)obj, obj->gen->id);
+    fprintf(stderr, "release %p %zi\n", (void*)obj, obj->gen->id);
     if (obj->gen->id == GC_ID) {
       // The object is in one of the 'gc' generations, make sure it stays in
       // the canonical heap->gc generation.
@@ -476,7 +503,7 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
       // This object is the primary root of an old generation.
       // We need to GC this object's generation next cycle, because it may be
       // unreachable now.
-      // fprintf(stderr, "next: %zi\n", obj->gen->id);
+      fprintf(stderr, "next: %zi release\n", obj->gen->id);
       heap->next = obj->gen;
     }
     MoveToBack(&obj->gen->non_roots, obj);
@@ -491,15 +518,15 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
   Obj* src = ToObj(src_);
   Obj* dst = ToObj(dst_);
 
-  // fprintf(stderr, "addref %p (%zi) -> %p (%zi)\n",
-  //    (void*)src, src->gen->id, (void*)dst, dst->gen->id);
+  fprintf(stderr, "addref %p (%zi) -> %p (%zi)\n",
+     (void*)src, src->gen->id, (void*)dst, dst->gen->id);
   if (src->gen->id <= heap->old->id
       && src->gen->id < dst->gen->id
       && src->gen->id < heap->next->id) {
     // An older generation object takes a reference to something newer. We
     // need to include that older generation in the next GC traversal, to make
     // sure we see all references to the dst object.
-    // fprintf(stderr, "next: %zi\n", src->gen->id);
+    fprintf(stderr, "next: %zi addref\n", src->gen->id);
     heap->next = src->gen;
   }
 
@@ -549,7 +576,8 @@ void FbleHeapFullGc(FbleHeap* heap)
       obj->list.prev->next = obj->list.next;
       obj->list.next->prev = obj->list.prev;
       heap->on_free(heap, obj->obj);
-      // fprintf(stderr, "free %p\n", (void*)obj);
+      fprintf(stderr, "free %p\n", (void*)obj);
+      heap->objects_allocated--;
       FbleFree(obj);
     }
   } while (!done);

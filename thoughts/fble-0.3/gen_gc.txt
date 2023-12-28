@@ -839,3 +839,35 @@ object. We need to distinguish between those I think.
 Okay, I found a number of bugs in the implementation. Mostly having to do with
 the from_new generation. Let's sleep on it an see if we can come up with a
 clearer solution.
+
+---
+
+I cleaned up the code. It passes all tests now and feels much nicer.
+
+Some minor concerns I have:
+* O(N) behavior at the end of a GC cycle if we've dropped an old root.
+* Overhead of Gen* allocations?
+
+Checking on memory behavior and performance of fble.html now:
+
+User time (seconds): 118.64
+Maximum resident set size (kbytes): 149820
+
+It's slightly slower, but otherwise on par with where we were before.
+
+Now let's check if it's taking advantage of generations.
+
+It's not. We always end up doing gc for the entire heap for fbld:
+
+GC size: 583545, alloc: 291773, free: 277667, old: 5568, next: 0
+GC size: 597911, alloc: 298956, free: 284590, old: 8315, next: 0
+GC size: 611897, alloc: 305949, free: 291963, old: 10969, next: 0
+
+Maybe that's why we don't see any bugs or memory leaks yet.
+
+Let's debug that. Why is next always either NEW or 0?
+
+Found the issue: we were moving an object to its destination before calling
+refs, which mean it was always traversing from 'old' instead of mark/saved as
+we want.
+
