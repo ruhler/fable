@@ -332,6 +332,14 @@ static bool IncrGc(FbleHeap* heap)
 
   // Set up the next 'from' generation.
   // It will include all generations from 'next' to 'new'.
+
+  // It's possible next points to an empty 'to' generation. In that case, set
+  // it back to 'new'. This happens when AddRef from FROM_NEW to NEW is called
+  // without FROM_NEW being pulled back into a 'to' generation.
+  if (heap->next == heap->to) {
+    heap->next = heap->new;
+  }
+
   heap->from = heap->new;
   heap->from->id = FROM_ID;
   while (heap->next != heap->from) {

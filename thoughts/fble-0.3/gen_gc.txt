@@ -764,3 +764,34 @@ Looks like it.
 
 Did that fix the memory leak too? Looks like maybe. Cool.
 
+---
+
+I see some seg faults and some memory leaks.
+
+Let's go with seg faults first.
+
+Yet again, we are failing to find our 'next'.
+
+next id is 57. to id is 57.
+
+Looks like next is 'to', which is allowed. But 'to' is empty, so we never
+added it to the list of olders.
+
+How can we set next to an empty generation?
+
+Somehow heap->older->id is FROM_ID. That's not good. How did that happen?
+
+I see. I messed up my debugging. We moved heap->older to from. That's how that
+happened.
+
+We had FbleHeapObjectAddRef from FROM/FROM_NEW -> NEW.
+
+It must have been FROM_NEW, right?
+
+If it was 'FROM', GC would not have ended without the from object being either
+a root or reachable some other way. If it was 'FROM_NEW' though, we could have
+this happen where 'to' is empty. What should we do in this case?
+
+FromNew could turn back to Pending. Should we push the empty 'to' generation?
+Or check for the empty to generation? Maybe next is set to the empty 'to'
+generation, we just reset it to 'new'?
