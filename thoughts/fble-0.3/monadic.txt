@@ -193,3 +193,22 @@ The function f could allocate its result b on the stack if it can assume its
 input argument a will outlive its output argument. But we would have to know
 the size of b before calling f to allocate enough space.
 
+---
+
+Consider Result@, which is implemented as a struct.
+
+   Markup@ a <- r.do(Try(Eval(env, markup.sequence.a), Empty));
+   Markup@ b <- r.do(Try(Eval(env, markup.sequence.b), Empty));
+   r.return(Append(a, b));
+
+The r.do function allocates a struct. Hmm... This looks like:
+
+r.do(Try(...))(\a -> r.do(Try(...))(\b -> return(a + b)))
+
+In this case, Try allocates a Result@ struct. The call to 'Do' consumes it.
+And then we throw away the wrapper. It's a very short lived object. Any way we
+could avoid allocating a heap object for that case?
+
+We can't pack in this case, because one of the fields is a Markup@, which is
+likely to be too large to pack. Aside from that, the other fields would pack
+fine.

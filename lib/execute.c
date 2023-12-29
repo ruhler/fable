@@ -119,9 +119,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
     result = executable->run(
         heap, tail_call_buffer, executable, args,
         func->statics, func->profile_block_offset, profile);
-    for (size_t i = 0; i < num_args_plus_1; ++i) {
-      FbleReleaseValue(heap, buffer[i]);
-    }
+    FbleReleaseValues(heap, num_args_plus_1, buffer);
   }
 
   if (profile != NULL) {

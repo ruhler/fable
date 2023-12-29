@@ -204,3 +204,16 @@ right now Call assumes it's already been made strict.
 Cool. fble.html generation is done from 96s to 89s. 8% performance
 improvement.
  
+Before:
+ 9.59     2391  FbleStrictValue[000fX]
+ 3.86      961  FbleUnionValueTag[0011X]
+ 2.96      737  FbleStructValueField[0018X]
+ 2.68      667  FbleUnionValueField[0024X]
+
+After:
+ 4.23      958  FbleUnionValueTag[001bX]
+ 4.19      950  FbleStructValueField[0014X]
+ 3.56      806  FbleStrictValue[001cX]
+ 3.21      726  FbleUnionValueField[0019X]
+
+Is this worth trying to improve more?

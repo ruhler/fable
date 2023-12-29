@@ -423,3 +423,40 @@ before coming back to that.
 
 FbleStrictValue shows up as almost 10% of total time. Anything we can do about
 that? Let's discuss at strict_value.txt.
+
+---
+
+Improvements to FbleStrictValue got us down to 1m29s.
+
+What's next? I notice a lot of time spent releasing values. And, in
+particular, FbleReleaseValues.
+
+With some investigation, the top caller of FbleReleaseValues is in List Ord
+function, releasing the tail call buffer.
+
+Consider the following code:
+
+    Ordering@ ordering = ord(a.cons.head, b.cons.head);
+    ordering.?(eq: Ord_(a.cons.tail, b.cons.tail));
+
+The first line is a normal function call. The second line has a tail call. The
+first line will end up having to invoke the second.
+
+What's sad here is that, in order to do the tail call, we do:
+  retain Ord_
+  retain a.cons.tail
+  retain b.cons.tail
+
+Then, after invoking the tail recursive call, we do ReleaseValues on those.
+
+Any way to avoid this extra retain/release? I know they aren't needed, because
+the caller is holding on to Ord_ and a and b. But I guess we don't know that
+in general.
+
+This is expensive, because a.cons.tail and b.cons.tail are likely not to be
+roots otherwise. So we do the most expensive retain and release there is on
+them.
+
+You know what's interesting? If this was a non-recursive call, we wouldn't
+have to pay the cost for the retain/release. I'm tempted to try changing that.
+
