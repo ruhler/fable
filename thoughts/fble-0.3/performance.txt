@@ -415,3 +415,11 @@ little bit clearer this way anyway.
 
 After switching to generational gc, down to 1m58s.
 
+After fixing generational gc, down to 1m36s.
+
+Allocations are still 27% of time in fble.html generation. But since the
+improvement in generational GC, I want to look elsewhere for a little while
+before coming back to that.
+
+FbleStrictValue shows up as almost 10% of total time. Anything we can do about
+that? Let's discuss at strict_value.txt.

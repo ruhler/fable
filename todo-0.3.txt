@@ -126,4 +126,5 @@ Usage docs
   See Define builtin implementation. It happened when we tried to reuse nenv
   for prepped instead of duplicating.
 
-* Add git tags for releases? Are they not already there?
+* Avoid O(N) operations for allocations in heap.c?
+  Specifically, forming the 'gc' generation and cleaning up the gc generation.

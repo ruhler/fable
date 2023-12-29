@@ -1,0 +1,39 @@
+Strict Value
+============
+FbleStringValue takes almost 10% of self time in generating fble.html with
+fbld. Anything we can do about that?
+
+This is all about how we deal with RefValues / recursive values at runtime.
+
+At a high level, there are two categories of things to worry about:
+1. Identifying if we are trying to access an undefined value.
+2. Dereferencing an assigned ref value.
+
+Some ideas for (1):
+* Current approach - check if its a ref value that ends in NULL.
+* Inline the current implementation of FbleStrictValue to avoid the extra
+  function call.
+* Encode whether it's a ref value in the pointer itself, to avoid having to
+  read from the pointer.
+* Memory protect the pointer value to trigger a fault if trying to access the
+  memory, which we can redirect to a fault handler.
+
+Most of the above requires we address the second category first.
+
+Some ideas for (2):
+* Current approach - dereference every time on use.
+* At RefValueAssign time, overwrite the original RefValue with a copy of the
+  return value so we don't have to dereference ever. This may require we know
+  at compile time how big a RefValue memory region to allocate. Maybe we need
+  to use extra indirection for FuncValue statics to make that more
+  predictable. Maybe we need to disallow abstract type recursive values,
+  because that should be impossible anyway?
+* Track every time a value takes a reference to a ref value (at the FbleValue*
+  level, not the FbleHeap* level). Record that with the ref value. When we do
+  the RefValueAssign, switch all the references over to the assigned value.
+  We could have the RefValue FbleRetain any objects that reference it until
+  FbleValueAssign time, to avoid worries about those objects disappearing
+  before we've done the updated assignment.
+* At RefValueAssign time, traverse the value to replace all references. Though
+  that sounds potentially very bad if there some big datastructure we end up
+  traversing for no reason.

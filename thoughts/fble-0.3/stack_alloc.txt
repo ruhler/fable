@@ -365,3 +365,13 @@ In theory we now have all the following:
 
 I'm not sure how to verify. It only helped performance a tiny bit though.
 Like, 3% performance improvement.
+
+Actually, turns out it was a bug in generational GC. With the fix, we now see
+18% improvement and better memory behavior. I think we have achieved the goals
+above.
+
+Let's give memory management a break for a little while since the switch to
+generational GC. Focus on partial application or other approaches to avoid or
+reduce the cost of function allocations rather than a rework of overall memory
+allocation for now.
+

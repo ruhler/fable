@@ -997,3 +997,17 @@ Maximum resident set size (kbytes): 98188
 
 Awesome! I assume it's working now.
 
+---
+
+Just for the fun of it, let's see if we can slow the pace of gc now and have
+it make any performance difference.
+
+Traversing every other allocation:
+  User time (seconds): 103.17
+  Maximum resident set size (kbytes): 157348
+
+Worse performance and memory behavior.
+
+Okay. Let's keep it how it was. I think that's a wrap for generational GC for
+now.
+

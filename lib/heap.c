@@ -217,7 +217,7 @@ static void MoveAllToFront(ObjList* dest, ObjList* source)
 
 /**
  * @func[NewGen] Allocates a new generation.
- *  @arg[size_t][id] The id to assing to the new generation.
+ *  @arg[size_t][id] The id to assign to the new generation.
  *  @returns[Gen*] Newly allocated, empty, initialized generation.
  *  @sideeffects
  *   Allocates a generation that should be freed with FbleFree when no longer
