@@ -134,8 +134,8 @@ extern FbleValue* FbleGenericTypeValue;
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[FbleValue**   ][args]
- *    @a[argc] arguments to the struct value. Args are borrowed, and may be
- *   NULL.
+ *    @a[argc] arguments to the struct value. Args are borrowed. They must not
+ *   be NULL.
  *
  *  @returns[FbleValue*]
  *   A newly allocated struct value with given args.
@@ -151,8 +151,8 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[...           ][    ]
- *    @a[argc] FbleValue arguments to the struct value. Args are borrowed, and
- *   may be NULL.
+ *    @a[argc] FbleValue arguments to the struct value. Args are borrowed.
+ *   They must not be NULL.
  *
  *  @returns FbleValue*
  *   A newly allocated struct value with given args.
@@ -172,7 +172,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
  *   The value of the given field of the struct value object. The returned
  *   value will stay alive as long as the given struct value. The caller is
  *   responsible for calling FbleRetainValue on the returned value to keep it
- *   alive longer if necessary.
+ *   alive longer if necessary. Returns NULL if the struct value is undefined.
  *
  *  @sideeffects
  *   Behavior is undefined if the object is not a struct value or the field
@@ -216,7 +216,8 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
  *  @arg[FbleValue*][object] The union value object to get the tag of.
  *
  *  @returns size_t
- *   The tag of the union value object.
+ *   The tag of the union value object. Returns -1 if the union value is
+ *   undefined.
  *
  *  @sideeffects
  *   Behavior is undefined if the object is not a union value.
@@ -228,7 +229,8 @@ size_t FbleUnionValueTag(FbleValue* object);
  *  @arg[FbleValue*][object] The union value object to get the argument of.
  *
  *  @returns FbleValue*
- *   The argument of the union value object.
+ *   The argument of the union value object. Returns NULL if the union value
+ *   is undefined.
  *
  *  @sideeffects
  *   Behavior is undefined if the object is not a union value.
@@ -236,12 +238,21 @@ size_t FbleUnionValueTag(FbleValue* object);
 FbleValue* FbleUnionValueArg(FbleValue* object);
 
 /**
+ * Sentinel value indicating wrong field in FbleUnionValueField function.
+ *
+ * We use the value 0x2 to be distinct from NULL and packed values.
+ */
+#define FbleWrongUnionTag ((FbleValue*) 0x2)
+
+/**
  * @func[FbleUnionValueField] Gets a field of a union value.
  *  @arg[FbleValue*][object] The union value object to get the field of.
  *  @arg[size_t][field] The field to get.
  *
  *  @returns FbleValue*
- *   The field of the union value object, or NULL if it is the wrong field.
+ *   @i The field of the union value object.
+ *   @i NULL if the union value is undefined.
+ *   @i FbleWrongUnionTag if it is the wrong field.
  *
  *  @sideeffects
  *   Behavior is undefined if the object is not a union value.

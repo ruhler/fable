@@ -640,44 +640,42 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       GetFrameVar(fout, "x0", access_instr->obj);
-      fprintf(fout, "  bl FbleStrictValue\n");
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueField\n");
       SetFrameVar(fout, "x0", access_instr->dest);
+      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
       return;
     }
 
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      // Get the union value.
+
       GetFrameVar(fout, "x0", access_instr->obj);
-      fprintf(fout, "  bl FbleStrictValue\n");
-
-      // Abort if the union object is NULL.
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
-
-      // Access the field.
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleUnionValueField\n");
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.bt\n", func_id, pc);
       SetFrameVar(fout, "x0", access_instr->dest);
+
+      // Check for undefined
+      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
+
+      // Check for wrong tag
+      fprintf(fout, "  cmp x0, %p\n", (void*)FbleWrongUnionTag);
+      fprintf(fout, "  b.eq .Lo.%04zx.%zi.bt\n", func_id, pc);
       return;
     }
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
-      // Get the union value.
+      // Get the union value tag.
       GetFrameVar(fout, "x0", select_instr->condition);
-      fprintf(fout, "  bl FbleStrictValue\n");
+      fprintf(fout, "  bl FbleUnionValueTag\n");
 
-      // Abort if the union object is NULL.
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
-
+      // Abort if the union object is undefined.
+      fprintf(fout, "  cmp x0, -1\n");
+      fprintf(fout, "  b.eq .Lo.%04zx.%zi.u\n", func_id, pc);
 
       // Binary search for the jump target based on the tag in x0.
-      fprintf(fout, "  bl FbleUnionValueTag\n");
       Context context = { .fout = fout, .func_id = func_id, .pc = pc, .label = 0 };
       Interval interval = {
         .lo = 0, .hi = select_instr->num_tags - 1,
@@ -1075,6 +1073,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
       DoAbort(fout, func_id, pc, ".L.UndefinedUnionValue", access_instr->loc);
 
       fprintf(fout, ".Lo.%04zx.%zi.bt:\n", func_id, pc);
+      SetFrameVar(fout, "XZR", access_instr->dest);
       DoAbort(fout, func_id, pc, ".L.WrongUnionTag", access_instr->loc);
       return;
     }

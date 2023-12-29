@@ -388,39 +388,39 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-            var_tag[access_instr->obj.tag], access_instr->obj.index);
-        fprintf(fout, "  if (!x0) ");
+        fprintf(fout, "  l[%zi] = FbleStructValueField(%s[%zi], %zi);\n",
+            access_instr->dest, var_tag[access_instr->obj.tag],
+            access_instr->obj.index, access_instr->tag);
+        fprintf(fout, "  if (l[%zi] == NULL) ", access_instr->dest);
         ReturnAbort(fout, code, label, pc, "UndefinedStructValue", access_instr->loc);
-
-        fprintf(fout, "  l[%zi] = FbleStructValueField(x0, %zi);\n",
-            access_instr->dest, access_instr->tag);
         break;
       }
 
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-            var_tag[access_instr->obj.tag], access_instr->obj.index);
-        fprintf(fout, "  if (!x0) ");
+        fprintf(fout, "  l[%zi] = FbleUnionValueField(%s[%zi], %zi);\n",
+            access_instr->dest, var_tag[access_instr->obj.tag],
+            access_instr->obj.index, access_instr->tag);
+
+        fprintf(fout, "  if (l[%zi] == NULL) ", access_instr->dest);
         ReturnAbort(fout, code, label, pc, "UndefinedUnionValue", access_instr->loc);
 
-        fprintf(fout, "  l[%zi] = FbleUnionValueField(x0, %zi);\n", access_instr->dest, access_instr->tag);
-        fprintf(fout, "  if (!l[%zi]) ", access_instr->dest);
+        fprintf(fout, "  if (l[%zi] == FbleWrongUnionTag) {", access_instr->dest);
+        fprintf(fout, "    l[%zi] = NULL;", access_instr->dest);
         ReturnAbort(fout, code, label, pc, "WrongUnionTag", access_instr->loc);
+        fprintf(fout, "  }");
         break;
       }
 
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
-        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+        fprintf(fout, "  switch (FbleUnionValueTag(%s[%zi])) {\n",
             var_tag[select_instr->condition.tag],
             select_instr->condition.index);
-        fprintf(fout, "  if (!x0) ");
+        fprintf(fout, "    case -1:");
         ReturnAbort(fout, code, label, pc, "UndefinedUnionSelect", select_instr->loc);
 
-        fprintf(fout, "  switch (FbleUnionValueTag(x0)) {\n");
         for (size_t i = 0; i < select_instr->targets.size; ++i) {
           size_t tag = select_instr->targets.xs[i].tag;
           size_t target = select_instr->targets.xs[i].target;
@@ -479,7 +479,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
             var_tag[call_instr->func.tag],
             call_instr->func.index);
-        fprintf(fout, "  if (!x0) ");
+        fprintf(fout, "  if (x0 == NULL) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
         fprintf(fout, "  l[%zi] = FbleCall_(heap, profile, x0", call_instr->dest);
@@ -500,7 +500,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
             var_tag[call_instr->func.tag],
             call_instr->func.index);
-        fprintf(fout, "  if (!x0) ");
+        fprintf(fout, "  if (x0 == NULL) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
         fprintf(fout, "  tail_call_buffer[0] = %s[%zi];\n",

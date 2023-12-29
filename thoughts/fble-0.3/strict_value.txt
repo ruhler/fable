@@ -37,3 +37,170 @@ Some ideas for (2):
 * At RefValueAssign time, traverse the value to replace all references. Though
   that sounds potentially very bad if there some big datastructure we end up
   traversing for no reason.
+
+---
+
+The easiest approach for (2), I think, would be if we could overwrite the
+RefValue object in place. Change the value type, fill in the fields.
+
+It is possible for us to have an abstract type ref value. For example:
+
+<@ A@>((A@) { A@; }) { A@; }
+g = <@ A@>((A@) { A@; } f) {
+  A@ a = f(a);
+  a;
+};
+
+We could then pass functions like:
+
+Union:
+  (List@<Int@> a) {
+     Cons(3, a);
+  };
+
+Struct:
+  (Cycle@ a) {
+     Cycle@(a);
+  }
+
+Function:
+  ((Int@) { Int@; } f)(Int@ x) {
+     f(x);
+  }
+
+The function g looks almost like a fix point combinator, which I could
+actually imagine someone wanting to provide as part of a library.
+
+The key point is, we do not know the size of the RefValue needed for A@ at
+compile time. It could be any struct type, for example.
+     
+We could be optimistic? Like, allocate RefValue as a somewhat large object,
+with space for say, 8 fields. If the resulting value fits in that size, we
+overwrite. Otherwise we keep the indirection like we have now.
+
+Hmm... It's interesting how we use FbleStrictValue in the generated code.
+
+Struct access, union access, union select:
+* We only use it to check if the value is defined. We then call into
+  FbleStructValueField to access the field, which does its own check.
+
+Call:
+* We use it both to check and to get the function value contents.
+
+Tail Call:
+* We only use it to check the value.
+
+Can I see somehow which of these uses is dominating FbleStrictValue
+invocations?
+
+It's not the calls in FbleStructValueField, FbleUnionValueField, or
+FbleUnionValueTag. Those are being inlined directly.
+
+ 9.59     2391  FbleStrictValue[000fX]
+ 3.86      961  FbleUnionValueTag[0011X]
+ 2.96      737  FbleStructValueField[0018X]
+ 2.68      667  FbleUnionValueField[0024X]
+
+If we modified FbleStructValueField to return NULL in case of undefined
+struct, we wouldn't need to call FbleStrictValue in the generated aarch64
+code. No need to duplicate the work.
+
+We can't say the same thing for FbleUnionValueField, because there are two
+possible error conditions there to distinguish between: undefined union value
+and undefined field access. Unless we want to return 0 or 1 to distinguish
+between those cases? FbleUnionValueTag could return -1 in case of undefined
+value?
+
+Could we skip the tail call check? Return that to the caller? Hmm... I think
+better to have the error message right there. Otherwise it will be very
+confusing.
+
+Interesting though. That means we only need to export FbleStrictValue for
+functions. We could, perhaps, optimize union values internally to overwrite
+the ref value instead of have the indirection.
+
+Though I'm sure, in practice, functions are the vast majority of use of
+recursive values.
+
+How about this as a first step:
+* Get rid of FbleStrictValue as a function entirely. Instead:
+
+* FbleStructValueField returns NULL on undefined. Or -1 on undefined?
+* FbleUnionValueField returns -1 on undefined, NULL on wrong field.
+* FbleUnionValueTag returns -1 on undefined.
+* FbleGetFuncValue converts FbleValue* to FbleFuncValue*, does the equivalent
+  of FbleStrictValue, and returns -1 on undefined.
+
+Hmm... There's a TBNZ function that can test a particular bit, but we can't
+use that here, because values could be packed. That suggests to me it's better
+to return NULL on undefined if we can. We can use CMN #1 to set the condition
+code to check for -1.
+
+If we picked -1 for undefined, we could use that consistently for all cases.
+If we use NULL, we can't use that for FbleUnionValueTag
+
+But, anywhere we return a value, it would be nice for that to be NULL, in case
+we write it somewhere and later try to free it, for example when unwinding the
+stack.
+
+The hardest one, then, will be FbleUnionValueField. It's the only case we are
+returning an FbleValue* that could have two different error conditions. It's
+not that hard to say if it's -1, then set it to 0 though.
+
+So, two approaches that sound reasonable.
+
+A.
+* FbleStructValueField NULL on undefined.
+* FbleUnionValueField -1 on undefined, NULL on wrong field.
+* FbleUnionValueTag -1 on undefined.
+* FbleGetFuncValue NULL on undefined.
+
+B.
+* FbleStructValueField -1 on undefined.
+* FbleUnionValueField -1 on undefined, NULL on wrong field.
+* FbleUnionValueTag -1 on undefined.
+* FbleGetFuncValue -1 on undefined.
+
+The tradeoff is between consistency of -1 for undefined versus potential
+performance and code cleanliness cost of NULL versus -1 in case of struct
+value and func value.
+
+Let's go with (A). There is some consistency: -1 for undefined union values.
+Otherwise we take advantage of the more standard NULL for indicating error.
+
+Okay, how about FbleUnionValueArg? Should that return NULL or -1?
+
+Could field values be legitimately NULL? In that case, wouldn't we want to
+return -1 for undefined in all cases?
+
+Okay, let me switch to (B) and see how bad it is.
+
+Oops! -1 could be a valid packed value. We need something different. Like
+FbleTailCallSentinelValue, which is 0x2? We could use -1 for
+FbleUnionValueTag.
+
+We could define an FbleUndefinedErrorValue. Maybe rename
+FbleTailCallSentinelValue to FbleTailCallValue? They can both be 0x2. That
+avoids confusion with packed values and lets us return NULL for field access
+as if NULL is a valid field value. Just in case?
+
+It appears there are no current uses of storing NULL field values on unions or
+structs. So we could use NULL as a legitimate sentinel value for this.
+
+In that case:
+* FbleStructValueField NULL on undefined.
+* FbleUnionValueField NULL on undefined, FbleWrongUnionTag = 0x2 on wrong tag.
+* FbleUnionValueTag -1 on undefined.
+* FbleGetFuncValue NULL on undefined.
+
+Another problem: FbleFuncValue* is not public. We don't want to make
+FbleGetFuncValue public. What do we do for generated C code?
+
+Better would be to have an FbleIsUndefinedValue I guess.
+
+Um, maybe I shouldn't change how we deal with function values yet, because
+right now Call assumes it's already been made strict.
+
+Cool. fble.html generation is done from 96s to 89s. 8% performance
+improvement.
+ 

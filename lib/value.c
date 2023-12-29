@@ -180,14 +180,14 @@ void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...)
  *  @arg[FbleValueHeap*][heap] The heap the values are allocated on.
  *  @arg[FbleValue*    ][src ] The source of the reference.
  *  @arg[FbleValue*    ][dst ]
- *   The destination of the reference. May be NULL.
+ *   The destination of the reference. Must not be NULL.
  *
  *  @sideeffects
  *   Causes the dst value to be retained for at least as long as the src value.
  */
 static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (dst && !PACKED(src) && !PACKED(dst)) {
+  if (!PACKED(src) && !PACKED(dst)) {
     FbleHeapObjectAddRef(heap, src, dst);
   }
 }
@@ -231,18 +231,18 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
 /**
  * @func[Ref] Helper function for implementing Refs.
- *  Calls FbleHeapObjectAddRef if the dst is not NULL.
+ *  Calls FbleHeapObjectAddRef.
  *
  *  @arg[FbleHeap*][heap] The heap.
  *  @arg[FbleValue*][src] The source of the reference.
- *  @arg[FbleValue*][dst] The target of the reference.
+ *  @arg[FbleValue*][dst] The target of the reference. Must not be NULL.
  *
  *  @sideeffects
  *   If value is non-NULL, FbleHeapObjectAddRef is called for it.
  */
 static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!PACKED(dst) && dst != NULL) {
+  if (!PACKED(dst)) {
     FbleHeapObjectAddRef(heap, src, dst);
   }
 }
@@ -285,7 +285,9 @@ static void Refs(FbleHeap* heap, FbleValue* value)
 
     case FBLE_REF_VALUE: {
       RefValue* v = (RefValue*)value;
-      Ref(heap, value, v->value);
+      if (v->value != NULL) {
+        Ref(heap, value, v->value);
+      }
       break;
     }
   }
@@ -396,6 +398,10 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field)
 {
   object = FbleStrictValue(object);
 
+  if (object == NULL) {
+    return NULL;
+  }
+
   if (PACKED(object)) {
     intptr_t data = (intptr_t)object;
 
@@ -418,7 +424,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field)
     return (FbleValue*)data;
   }
 
-  assert(object != NULL && object->tag == FBLE_STRUCT_VALUE);
+  assert(object->tag == FBLE_STRUCT_VALUE);
   StructValue* value = (StructValue*)object;
   assert(field < value->fieldc);
   return value->fields[field];
@@ -462,6 +468,10 @@ size_t FbleUnionValueTag(FbleValue* object)
 {
   object = FbleStrictValue(object);
 
+  if (object == NULL) {
+    return (size_t)(-1);
+  }
+
   if (PACKED(object)) {
     intptr_t data = (intptr_t)object;
 
@@ -477,7 +487,7 @@ size_t FbleUnionValueTag(FbleValue* object)
     return tag;
   }
 
-  assert(object != NULL && object->tag == FBLE_UNION_VALUE);
+  assert(object->tag == FBLE_UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->tag;
 }
@@ -486,6 +496,10 @@ size_t FbleUnionValueTag(FbleValue* object)
 FbleValue* FbleUnionValueArg(FbleValue* object)
 {
   object = FbleStrictValue(object);
+
+  if (object == NULL) {
+    return NULL;
+  }
 
   if (PACKED(object)) {
     intptr_t data = (intptr_t)object;
@@ -504,7 +518,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
     return (FbleValue*)data;
   }
 
-  assert(object != NULL && object->tag == FBLE_UNION_VALUE);
+  assert(object->tag == FBLE_UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->arg;
 }
@@ -513,6 +527,10 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
 FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
 {
   object = FbleStrictValue(object);
+
+  if (object == NULL) {
+    return NULL;
+  }
 
   if (PACKED(object)) {
     intptr_t data = (intptr_t)object;
@@ -528,7 +546,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
     }
 
     if (tag != field) {
-      return NULL;
+      return FbleWrongUnionTag;
     }
 
     data >>= 1;
@@ -538,9 +556,9 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
     return (FbleValue*)data;
   }
 
-  assert(object != NULL && object->tag == FBLE_UNION_VALUE);
+  assert(object->tag == FBLE_UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
-  return (value->tag == field) ? value->arg : NULL;
+  return (value->tag == field) ? value->arg : FbleWrongUnionTag;
 }
 // See documentation in fble-value.h.
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics)

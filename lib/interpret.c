@@ -39,25 +39,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 #define GET(idx) (vars[idx.tag][idx.index])
 
 /**
- * Gets the strict value of a variable in scope.
- *
- * Assumes existance of a local vars variable:
- *   FbleValue** vars[3];
- *   vars[FBLE_STATIC_VAR] = statics;
- *   vars[FBLE_ARG_VAR] = args;
- *   vars[FBLE_LOCAL_VAR] = locals;
- *
- * @param idx  The index of the variable.
- *
- * @returns
- *   The FbleStrctValue of the variable.
- *
- * @sideeffects
- *   None.
- */
-#define GET_STRICT(idx) FbleStrictValue(GET(idx))
-
-/**
  * Aborts a function.
  *
  * To abort a stack frame we execute the remaining instructions in the stack
@@ -296,13 +277,14 @@ FbleValue* FbleInterpreterRunFunction(
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleValue* sv = GET_STRICT(access_instr->obj);
-        if (sv == NULL) {
+        FbleValue* obj = GET(access_instr->obj);
+        locals[access_instr->dest] = FbleStructValueField(obj, access_instr->tag);
+
+        if (locals[access_instr->dest] == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
           return RunAbort(heap, code, vars, pc);
         }
 
-        locals[access_instr->dest] = FbleStructValueField(sv, access_instr->tag);
         pc++;
         break;
       }
@@ -310,32 +292,33 @@ FbleValue* FbleInterpreterRunFunction(
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleValue* uv = GET_STRICT(access_instr->obj);
-        if (uv == NULL) {
+        FbleValue* obj = GET(access_instr->obj);
+        locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tag);
+
+        if (locals[access_instr->dest] == NULL) {
           FbleReportError("undefined union value access\n", access_instr->loc);
           return RunAbort(heap, code, vars, pc);
         }
 
-        FbleValue* value = FbleUnionValueField(uv, access_instr->tag);
-        if (value == NULL) {
+        if (locals[access_instr->dest] == FbleWrongUnionTag) {
+          locals[access_instr->dest] = NULL;
           FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
           return RunAbort(heap, code, vars, pc);
         }
 
-        locals[access_instr->dest] = value;
         pc++;
         break;
       }
 
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        FbleValue* uv = GET_STRICT(select_instr->condition);
-        if (uv == NULL) {
+        FbleValue* obj = GET(select_instr->condition);
+        size_t tag = FbleUnionValueTag(obj);
+
+        if (tag == (size_t)(-1)) {
           FbleReportError("undefined union value select\n", select_instr->loc);
           return RunAbort(heap, code, vars, pc);
         }
-
-        size_t tag = FbleUnionValueTag(uv);
 
         // Binary search for the matching tag.
         assert(select_instr->targets.size > 0);
@@ -380,7 +363,7 @@ FbleValue* FbleInterpreterRunFunction(
 
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-        FbleValue* func = GET_STRICT(call_instr->func);
+        FbleValue* func = FbleStrictValue(GET(call_instr->func));
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
           return RunAbort(heap, code, vars, pc);
@@ -403,7 +386,7 @@ FbleValue* FbleInterpreterRunFunction(
 
       case FBLE_TAIL_CALL_INSTR: {
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-        FbleValue* func = GET_STRICT(call_instr->func);
+        FbleValue* func = FbleStrictValue(GET(call_instr->func));
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
           return RunAbort(heap, code, vars, pc);
