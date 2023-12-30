@@ -369,10 +369,8 @@ FbleValue* FbleInterpreterRunFunction(
           return RunAbort(heap, code, vars, pc);
         };
 
-        FbleExecutable* func_exe = ((FbleFuncValue*)func)->executable;
-        FbleValue* call_args[func_exe->num_args];
-        assert(func_exe->num_args == call_instr->args.size);
-        for (size_t i = 0; i < func_exe->num_args; ++i) {
+        FbleValue* call_args[call_instr->args.size];
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
           call_args[i] = GET(call_instr->args.xs[i]);
         }
 

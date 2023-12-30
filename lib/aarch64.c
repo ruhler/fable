@@ -740,123 +740,24 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       GetFrameVar(fout, "x0", call_instr->func);
       fprintf(fout, "  bl FbleStrictValue\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
+      fprintf(fout, "  mov x2, x0\n");
 
-      // Call FbleProfileEnterBlock if needed.
-      // Note: the .peb code must preserve x0 as func.
-      fprintf(fout, "  cbnz R_PROFILE, .Lo.%04zx.%zi.peb\n", func_id, pc);
-      fprintf(fout, ".Lr.%04zx.%zi.ppeb:\n", func_id, pc);
-
-      // x0: func, x1: buffer_size, x2: executable
-      // R_SCRATCH_2: Original SP value.
-      fprintf(fout, "  ldr x2, [x0, #%zi]\n", offsetof(FbleFuncValue, executable));
-      fprintf(fout, "  mov R_SCRATCH_2, SP\n");
-      fprintf(fout, "  ldr x1, [x2, #%zi]\n", offsetof(FbleExecutable, tail_call_buffer_size));
-      fprintf(fout, "  add x1, x1, #%zi\n", 1 + call_instr->args.size);
-
-      // Convert buffer_size from count to stack aligned number of bytes.
-      assert(sizeof(FbleValue*) == 8);
-      fprintf(fout, "  lsr x1, x1, #1\n");
-      fprintf(fout, "  lsl x1, x1, #4\n");
-
-      // Prepare arguments and tail call buffer on the stack.
-      fprintf(fout, "  sub SP, R_SCRATCH_2, x1\n");
+      // Allocate space for the arguments array on the stack.
+      size_t sp_offset = StackBytesForCount(call_instr->args.size);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
-        GetFrameVar(fout, "x3", call_instr->args.xs[i]);
-        fprintf(fout, "  str x3, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+        GetFrameVar(fout, "x0", call_instr->args.xs[i]);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
 
-      // R_SCRATCH_1: Tail call buffer
-      fprintf(fout, "  add R_SCRATCH_1, SP, #%zi\n", sizeof(FbleValue*) * call_instr->args.size);
-
-      // Call executable->run
-      fprintf(fout, "  ldr x7, [x2, #%zi]\n", offsetof(FbleExecutable, run));
-      fprintf(fout, "  add x4, x0, #%zi\n", offsetof(FbleFuncValue, statics));
-      fprintf(fout, "  ldr x5, [x0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
-      fprintf(fout, "  mov x1, R_SCRATCH_1\n");   // tail_call_buffer
-      fprintf(fout, "  mov x3, SP\n");            // args
-      fprintf(fout, "  mov x6, R_PROFILE\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  blr x7\n");
+      fprintf(fout, "  mov x1, R_PROFILE\n");
+      fprintf(fout, "  mov x3, SP\n");          // args
+
+      fprintf(fout, "  bl FbleCall\n");
       SetFrameVar(fout, "x0", call_instr->dest);
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.abort\n", func_id, pc);
-
-      // Check for tail recursion.
-      fprintf(fout, ".Lr.%04zx.%zi.cl:\n", func_id, pc);
-      fprintf(fout, "  cmp x0, %p\n", (void*)FbleTailCallSentinelValue);
-      fprintf(fout, "  b.ne .Lr.%04zx.%zi.el\n", func_id, pc);
-
-      // Need to perform a tail recursive call
-      fprintf(fout, "  ldr x0, [R_SCRATCH_1]\n"); // tail_call_buffer[0]
-      fprintf(fout, "  bl FbleStrictValue\n");
-
-      // Call FbleProfileReplaceBlock if needed.
-      // Note: the .prb code must preserve x0 as func.
-      fprintf(fout, "  cbnz R_PROFILE, .Lo.%04zx.%zi.prb\n", func_id, pc);
-      fprintf(fout, ".Lr.%04zx.%zi.pprb:\n", func_id, pc);
-
-      // x0: func, x1: buffer_size, x2: executable, x3: num_args
-      fprintf(fout, "  ldr x2, [x0, #%zi]\n", offsetof(FbleFuncValue, executable));
-      fprintf(fout, "  ldr x1, [x2, #%zi]\n", offsetof(FbleExecutable, tail_call_buffer_size));
-      fprintf(fout, "  ldr x3, [x2, #%zi]\n", offsetof(FbleExecutable, num_args));
-      fprintf(fout, "  add R_SCRATCH_0, x3, #1\n"); // num_args + 1
-      fprintf(fout, "  add x1, x1, x3\n");
-      fprintf(fout, "  add x1, x1, #2\n");  // 1 for func, 1 for stack align.
-
-      // Convert buffer_size from count to stack aligned number of bytes.
-      assert(sizeof(FbleValue*) == 8);
-      fprintf(fout, "  lsr x1, x1, #1\n");
-      fprintf(fout, "  lsl x1, x1, #4\n");
-
-      // Prepare arguments and tail call buffer on the stack.
-      fprintf(fout, "  mov x5, SP\n");
-      fprintf(fout, "  sub x4, R_SCRATCH_2, x5\n");
-      fprintf(fout, "  cmp x4, x1\n");
-      fprintf(fout, "  csel x1, x4, x1, gt\n");
-      fprintf(fout, "  sub SP, R_SCRATCH_2, x1\n");
-
-      // Copy func, args to start of buffer.
-      fprintf(fout, "  lsl x3, R_SCRATCH_0, #3\n");
-      fprintf(fout, "  add x1, SP, x3\n");        // new tail_call_buffer
-      fprintf(fout, "  mov x4, #0\n");
-      fprintf(fout, ".Lr.%04zx.%zi.scp:\n", func_id, pc);
-      fprintf(fout, "  cmp x4, x3\n");
-      fprintf(fout, "  b.eq .Lr.%04zx.%zi.ecp\n", func_id, pc);
-      fprintf(fout, "  ldr x5, [R_SCRATCH_1, x4]\n");
-      fprintf(fout, "  str x5, [SP, x4]\n");
-      fprintf(fout, "  add x4, x4, #%zi\n", sizeof(FbleValue*));
-      fprintf(fout, "  b .Lr.%04zx.%zi.scp\n", func_id, pc);
-      fprintf(fout, ".Lr.%04zx.%zi.ecp:\n", func_id, pc);
-
-      fprintf(fout, "  mov R_SCRATCH_1, x1\n");    // new tail_call_buffer
-
-      // Call executable->run
-      fprintf(fout, "  ldr x7, [x2, #%zi]\n", offsetof(FbleExecutable, run));
-      fprintf(fout, "  add x4, x0, #%zi\n", offsetof(FbleFuncValue, statics));
-      fprintf(fout, "  ldr x5, [x0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
-      fprintf(fout, "  add x3, SP, #%zi\n", sizeof(FbleValue*)); // args
-      fprintf(fout, "  mov x6, R_PROFILE\n");
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  blr x7\n");
-      SetFrameVar(fout, "x0", call_instr->dest);
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.abort\n", func_id, pc);
-
-      // Free func and args.
-      fprintf(fout, "  mov x1, R_SCRATCH_0\n");   // num_args + 1
-      fprintf(fout, "  mov x2, SP\n");            // buffer
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");   // save result
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  bl FbleReleaseValues\n");
-
-      fprintf(fout, "  mov x0, R_SCRATCH_0\n");
-      fprintf(fout, "  b .Lr.%04zx.%zi.cl\n", func_id, pc);
-
-      // Call FbleProfileExitBlock if needed.
-      fprintf(fout, ".Lr.%04zx.%zi.el:\n", func_id, pc);
-      fprintf(fout, "  cbnz R_PROFILE, .Lo.%04zx.%zi.pexb\n", func_id, pc);
-      fprintf(fout, ".Lr.%04zx.%zi.ppexb:\n", func_id, pc);
-
-      // Restore the stack pointer.
-      fprintf(fout, "  mov SP, R_SCRATCH_2\n");
       return;
     }
 
@@ -1094,39 +995,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
       fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
       DoAbort(fout, func_id, pc, ".L.UndefinedFunctionValue", call_instr->loc);
 
-      // Call FbleProfileEnterBlock.
-      fprintf(fout, ".Lo.%04zx.%zi.peb:\n", func_id, pc);
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
-      fprintf(fout, "  ldr x1, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
-      fprintf(fout, "  ldr x2, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, executable));
-      fprintf(fout, "  ldr x2, [x2, #%zi]\n", offsetof(FbleExecutable, profile_block_id));
-      fprintf(fout, "  add x1, x1, x2\n");
-      fprintf(fout, "  mov x0, R_PROFILE\n");
-      fprintf(fout, "  bl FbleProfileEnterBlock\n");
-      fprintf(fout, "  mov x0, R_SCRATCH_0\n");
-      fprintf(fout, "  b .Lr.%04zx.%zi.ppeb\n", func_id, pc);
-
-      // Call FbleProfileReplaceBlock.
-      fprintf(fout, ".Lo.%04zx.%zi.prb:\n", func_id, pc);
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
-      fprintf(fout, "  ldr x1, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, profile_block_offset));
-      fprintf(fout, "  ldr x2, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, executable));
-      fprintf(fout, "  ldr x2, [x2, #%zi]\n", offsetof(FbleExecutable, profile_block_id));
-      fprintf(fout, "  add x1, x1, x2\n");
-      fprintf(fout, "  mov x0, R_PROFILE\n");
-      fprintf(fout, "  bl FbleProfileReplaceBlock\n");
-      fprintf(fout, "  mov x0, R_SCRATCH_0\n");
-      fprintf(fout, "  b .Lr.%04zx.%zi.pprb\n", func_id, pc);
-
-      // Call FbleProfileExitBlock.
-      fprintf(fout, ".Lo.%04zx.%zi.pexb:\n", func_id, pc);
-      fprintf(fout, "  mov x0, R_PROFILE\n");
-      fprintf(fout, "  bl FbleProfileExitBlock\n");
-      fprintf(fout, "  b .Lr.%04zx.%zi.ppexb\n", func_id, pc);
-
-      // Callee aborted.
       fprintf(fout, ".Lo.%04zx.%zi.abort:\n", func_id, pc);
-      fprintf(fout, "  mov SP, R_SCRATCH_2\n");
       DoAbort(fout, func_id, pc, ".L.CalleeAborted", call_instr->loc);
       return;
     }

@@ -2,6 +2,13 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Change FbleRunFunction to pass FbleFuncValue directly instead of 
+  executable, statics, and profile_block_offset.
+
+* Memory leak on undefined union value select in fbld?
+  See Define builtin implementation. It happened when we tried to reuse nenv
+  for prepped instead of duplicating.
+
 * Module compilation
  - As a blocker for major compiler optimizations.
 
@@ -35,7 +42,6 @@ Things to consider doing for the fble-0.3 release.
 * Make programs run twice as fast.
  - Implement function inlining?
  - Implement packing of data types?
- - Avoid repeated calls to FbleStrictValue in generated code?
  - Use registers for args and locals instead of the stack?
  - Inline calls to things like FbleStrictValue?
 
@@ -81,6 +87,7 @@ Things to consider doing for the fble-0.3 release.
 * Debug improvements:
  - Add debug support for all backends, not just aarch64
  - Add easy member access in debug. e.g.: print(foo.just).
+ - Inline FbleCall again to support stepping through code?
 
 Doc Comments
 * convert lib/*, test/*, etc. code to fbld doc comments.
@@ -121,10 +128,6 @@ Usage docs
 
 * There's no way to do user defined ifneq in fbld?
   Because all the arguments are evaluated. That's annoying?
-
-* Memory leak on undefined union value select in fbld?
-  See Define builtin implementation. It happened when we tried to reuse nenv
-  for prepped instead of duplicating.
 
 * Avoid O(N) operations for allocations in heap.c?
   Specifically, forming the 'gc' generation and cleaning up the gc generation.

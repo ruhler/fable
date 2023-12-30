@@ -51,3 +51,6 @@
  @definition To avoid stepping into runtime implementation code
   @code[gdb] @
    skip -gfi *.c
+
+  Note: This currently will not work because it's too much of a pain to
+  maintain the code needed to support it.

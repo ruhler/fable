@@ -1,0 +1,21 @@
+Debug
+=====
+Thoughts on how to improve the fble debugger situation.
+
+Current problems with debug:
+* You can't debug with interpreted code.
+* You can't debug with C backend.
+* Stepping through fble code requires inlining the FbleCall in aarch64, which
+  is a pain to maintain.
+
+Challenges with a dwarf based approach:
+* I don't have a way to generate architecture agnostic dwarf info for
+  interpreted code or C backend.
+* I need a better way than inlining FbleCall in aarch64 to be able to single
+  step through code.
+
+Let's start with the second. Any magic in dwarf we can use to label FbleCall
+as a trampoline function? Except, we don't want to call it that when debugging
+C code directly, so this would have to be a gdb thing, right?
+
+Let's review the dwarf spec anyway, just in case.

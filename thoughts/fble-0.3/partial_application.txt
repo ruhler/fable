@@ -44,3 +44,63 @@ efficient way.
 
 I would like there to be a clear way to reason about the performance of it.
 
+---
+
+It's probably pretty easy to implement over and under application. I bet we
+could just change FbleCall implementation. It would be something like this:
+
+while argc >= func->num_args:
+  num_args = func->num_args
+  func = func(argv)
+  argc -= num_args
+  argv += num_args
+
+if argc > 0:
+  FblePartialFuncValue(func, argc, args)
+
+Where FblePartialFuncValue is a helper function to allocate a partially
+applied function value. We can provide a custom executable for that that
+stuffs func and args in statics and knows how to apply the function when given
+enough arguments.
+
+I don't expect a big performance hit. We can support over and under
+application. I think the idea would be foo(a)(b) gets rewritten to foo(a, b)
+as much as possible.
+
+To bring this up, I would want to revert aarch64 to using FbleCall. Decide
+later if we want to go back and inline the code again to help with gdb
+stepping through the code.
+
+Type inference gets a little interesting. For example, f(x)(y) doesn't give us
+access to the type of y for knowing how to apply f(x). But maybe f(x, y) does.
+
+Maybe we say type inference happens at the syntactic boundary, like f(x). So
+you can do type inference explicitly. Or maybe we say we always merge
+application, so f(x)(y) is treated as f(x, y) and we do type inference there.
+
+Is the type of Do still separate arguments? I think we could automatically
+turn this into a multi argument function at runtime for a more efficient
+implementation. A function value whose body is a function value, or a poly
+of a function value can be compiled to a multi argument function.
+
+So, there are some details to work out, but I think it's worth doing. My
+intuition says we really should allow partial and over application of
+functions at the fble language level. It gives more flexibility to optimize
+performance later on.
+
+I guess I'll have to come up with a clear performance model for it though.
+Hmm...
+
+Anyway, if I want to try this, steps would be:
+
+1. Update implementation of FbleCall to support different number of args at
+runtime.
+2. Update type checker to allow under/over application.
+3. Update language spec for details on type inference.
+
+And go from there.
+
+The hope is fbld should run noticeably faster because Result@ Do function is
+implemented as a multi argument function instead of a function that returns a
+function, so we avoid the extra function object allocation.
+
