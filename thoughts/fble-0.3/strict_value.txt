@@ -217,3 +217,10 @@ After:
  3.21      726  FbleUnionValueField[0019X]
 
 Is this worth trying to improve more?
+
+---
+
+I ended up cleaning up the function value strictness a little too. We still
+have duplication for checking if a function for tail call is undefined, but
+otherwise StrictValue is all internal to value.c now.
+

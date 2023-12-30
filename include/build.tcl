@@ -91,9 +91,9 @@ namespace eval "include" {
       FbleNewUnionValue FbleNewEnumValue
       FbleUnionValueTag FbleUnionValueArg FbleUnionValueField
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
-      FbleNewFuncValue FbleNewFuncValue_
+      FbleNewFuncValue FbleNewFuncValue_ FbleFuncValueFunction
       FbleEval FbleApply
-      FbleNewRefValue FbleAssignRefValue FbleStrictValue
+      FbleNewRefValue FbleAssignRefValue
     }
     fble-vector.h {
       FbleInitVector FbleFreeVector

@@ -58,7 +58,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   }
 
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
-  FbleValue* result = FbleCall(heap, profile_thread, func, args);
+  FbleFunction* function = FbleFuncValueFunction(func);
+  FbleValue* result = FbleCall(heap, profile_thread, function, args);
   FbleFreeProfileThread(profile_thread);
 
   // Restore the stack limit to what it was before.
@@ -69,10 +70,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 }
 
 // See documentation in fble-execute.h.
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* function, FbleValue** args)
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, FbleValue** args)
 {
-  assert(function != NULL && function->tag == FBLE_FUNC_VALUE);
-  FbleFuncValue* func = (FbleFuncValue*)function;
   FbleExecutable* executable = func->executable;
 
   if (profile) {
@@ -89,7 +88,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
     // Invariants at this point in the code:
     // * The new func and args to call are sitting in tail_call_buffer.
     // * The start of our stack allocated buffer is 'buffer'.
-    func = (FbleFuncValue*)FbleStrictValue(tail_call_buffer[0]);
+    func = FbleFuncValueFunction(tail_call_buffer[0]);
     executable = func->executable;
     size_t num_args_plus_1 = 1 + executable->num_args;
     if (executable->tail_call_buffer_size + num_args_plus_1 > buffer_size) {
@@ -130,9 +129,9 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 }
 
 // See documentation in fble-execute.h.
-FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...)
+FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, ...)
 {
-  size_t argc = ((FbleFuncValue*)func)->executable->num_args;
+  size_t argc = func->executable->num_args;
   FbleValue* args[argc];
   va_list ap;
   va_start(ap, func);

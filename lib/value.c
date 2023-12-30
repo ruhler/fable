@@ -122,6 +122,7 @@ static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst);
 static void Refs(FbleHeap* heap, FbleValue* value);
 
 static size_t PackedValueLength(intptr_t data);
+static FbleValue* StrictValue(FbleValue* value);
 
 // See documentation in fble-value.h.
 FbleValueHeap* FbleNewValueHeap()
@@ -219,7 +220,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      FbleFreeExecutable(v->executable);
+      FbleFreeExecutable(v->function.executable);
       return;
     }
 
@@ -277,7 +278,7 @@ static void Refs(FbleHeap* heap, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      for (size_t i = 0; i < v->executable->num_statics; ++i) {
+      for (size_t i = 0; i < v->function.executable->num_statics; ++i) {
         Ref(heap, value, v->statics[i]);
       }
       break;
@@ -334,6 +335,30 @@ static size_t PackedValueLength(intptr_t data)
     data >>= 1; len++;      // tag terminator.
     return len + PackedValueLength(data);
   }
+}
+
+/**
+ * @func[StrictValue] Removes layers of refs from a value.
+ *  Gets the strict value associated with the given value, which will either
+ *  be the value itself, or the dereferenced value if the value is a
+ *  reference.
+ *
+ *  @arg[FbleValue*][value] The value to get the strict version of.
+ *
+ *  @returns FbleValue*
+ *   The value with all layers of reference indirection removed. NULL if the
+ *   value is a reference that has no value yet.
+ *
+ *  @sideeffects
+ *   None.
+ */
+static FbleValue* StrictValue(FbleValue* value)
+{
+  while (!PACKED(value) && value != NULL && value->tag == FBLE_REF_VALUE) {
+    RefValue* ref = (RefValue*)value;
+    value = ref->value;
+  }
+  return value;
 }
 
 // See documentation in fble-value.h.
@@ -396,7 +421,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
 // See documentation in fble-value.h.
 FbleValue* FbleStructValueField(FbleValue* object, size_t field)
 {
-  object = FbleStrictValue(object);
+  object = StrictValue(object);
 
   if (object == NULL) {
     return NULL;
@@ -466,7 +491,7 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 // See documentation in fble-value.h.
 size_t FbleUnionValueTag(FbleValue* object)
 {
-  object = FbleStrictValue(object);
+  object = StrictValue(object);
 
   if (object == NULL) {
     return (size_t)(-1);
@@ -495,7 +520,7 @@ size_t FbleUnionValueTag(FbleValue* object)
 // See documentation in fble-value.h.
 FbleValue* FbleUnionValueArg(FbleValue* object)
 {
-  object = FbleStrictValue(object);
+  object = StrictValue(object);
 
   if (object == NULL) {
     return NULL;
@@ -526,7 +551,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
 // See documentation in fble-value.h.
 FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
 {
-  object = FbleStrictValue(object);
+  object = StrictValue(object);
 
   if (object == NULL) {
     return NULL;
@@ -565,9 +590,10 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
 {
   FbleFuncValue* v = NewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * executable->num_statics);
   v->_base.tag = FBLE_FUNC_VALUE;
-  v->profile_block_offset = profile_block_offset;
-  v->executable = executable;
-  v->executable->refcount++;
+  v->function.profile_block_offset = profile_block_offset;
+  v->function.executable = executable;
+  v->function.executable->refcount++;
+  v->function.statics = v->statics;
   for (size_t i = 0; i < executable->num_statics; ++i) {
     v->statics[i] = statics[i];
     AddRef(heap, &v->_base, statics[i]);
@@ -587,6 +613,17 @@ FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, si
   }
   va_end(ap);
   return FbleNewFuncValue(heap, executable, profile_block_offset, args);
+}
+
+// See documentation in fble-value.h
+FbleFunction* FbleFuncValueFunction(FbleValue* value)
+{
+  FbleFuncValue* func = (FbleFuncValue*)StrictValue(value);
+  if (func == NULL) {
+    return NULL;
+  }
+  assert(func->_base.tag == FBLE_FUNC_VALUE);
+  return &func->function;
 }
 
 // See documentation in fble-value.h.
@@ -667,14 +704,4 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   rv->value = value;
   AddRef(heap, ref, value);
   return true;
-}
-
-// See documentation in fble-value.h.
-FbleValue* FbleStrictValue(FbleValue* value)
-{
-  while (!PACKED(value) && value != NULL && value->tag == FBLE_REF_VALUE) {
-    RefValue* ref = (RefValue*)value;
-    value = ref->value;
-  }
-  return value;
 }

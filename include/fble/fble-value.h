@@ -32,6 +32,18 @@ typedef struct {
 } FbleValueV;
 
 /**
+ * Information about an fble function.
+ *
+ * The statics are owned by whatever FbleValue object represents the function.
+ * Don't try accessing them unless you know that FbleValue object is retained.
+ */
+typedef struct {
+  FbleExecutable* executable;
+  FbleBlockId profile_block_offset;
+  FbleValue** statics;
+} FbleFunction;
+
+/**
  * @func[FbleNewValueHeap] Creates a new FbleValueHeap.
  *  @returns FbleValueHeap*
  *   A heap that can be used to allocate values.
@@ -348,6 +360,19 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
 FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...);
 
 /**
+ * @func[FbleFuncValueFunction] Gets the info from a function value.
+ *  @arg[FbleValue*][value] The value to get the function info of.
+ *
+ *  @returns FbleFunction*
+ *   The function info, or NULL if the function is undefined. The returned
+ *   function info is only valid for as long as the value stays alive.
+ *
+ *  @sideeffects
+ *   Behavior is undefined if the value is not a function.
+ */
+FbleFunction* FbleFuncValueFunction(FbleValue* value);
+
+/**
  * @func[FbleEval] Evaluates a linked program.
  *  The program is assumed to be a zero argument function as returned by
  *  FbleLink.
@@ -424,22 +449,5 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap);
  *   Updates ref to point to value.
  */
 bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
-
-/**
- * @func[FbleStrictValue] Removes layers of refs from a value.
- *  Gets the strict value associated with the given value, which will either
- *  be the value itself, or the dereferenced value if the value is a
- *  reference.
- *
- *  @arg[FbleValue*][value] The value to get the strict version of.
- *
- *  @returns FbleValue*
- *   The value with all layers of reference indirection removed. NULL if the
- *   value is a reference that has no value yet.
- *
- *  @sideeffects
- *   None.
- */
-FbleValue* FbleStrictValue(FbleValue* value);
 
 #endif // FBLE_VALUE_H_

@@ -19,3 +19,92 @@ as a trampoline function? Except, we don't want to call it that when debugging
 C code directly, so this would have to be a gdb thing, right?
 
 Let's review the dwarf spec anyway, just in case.
+
+Section 3.3.9 has a way to describe a function as a trampoline. It looks like
+maybe we could use this to say FbleCall is a trampoline and get gdb stepping
+to work?
+
+A few challenges there:
+* Where do we put the DW_AT_trampoline entry? With each generated object file?
+* Can we reference the gdb generated dwarf info for FbleCall to track down the
+  executable run function appropriately?
+
+It just feels hard.
+
+I want to propose an alternative, non dwarf based debug approach. Based on an
+approach similar to the current profiling approach.
+
+The profile has block information. We can use that to map current location to
+source code.
+
+Imagine we have a little protocol for interacting with the debugger over a
+socket. Then anyone can write their own front end. We could start with a
+simple command based debugger, and later make a tui enabled one. Regardless,
+keep all that logic out of libfble itself.
+
+For stack trace, when debugging is enabled, we can keep a linked list
+representing the stack that has, at each point, the func value and args passed
+to each function. And maybe locals too.
+
+Now that should give enough info, when we are stopped, to dump the back trace
+and access everything you might want everywhere. Any extra debug info we need
+for custom executables we could define a standard API for.
+
+Here's what I'm envisioning:
+* The process is initialized normally. No need for special debug support. But
+  when you start the program, you add a --debug option that says to stop at
+  the beginning and wait for a debugger to connect.
+* You can set breakpoints at profile block ids.
+  We can maintain a table from profile block id to boolean saying if a
+  breakpoint is enabled. Whenever we enter a block, quickly check the table to
+  know if we should call into the debugger.
+* 'next' can determine the breakpoint based on walking through debug info.
+* 'step' can be generic 'break at any block enter'. Hmm... Maybe we want to
+  distinguish between statement blocks and function blocks? It wouldn't be
+  hard. We know the function ones are what we call in FbleCall.
+
+I think this is totally doable. As I said, don't worry about the UI to start.
+As long as we can get all the info we need, we could make a fancy text based
+UI (which is primarily a source code viewer). I can come up with my own
+protocol.
+
+What do I need to be feature compatible to what we have today?
+
+First Round: stepping through code.
+* break at file:line
+* break at function name
+  Tab completion would be really nice.
+* step, next, continue
+* list backtrace 
+  function name, file:line of each entry.
+
+Second Round: viewing data
+* Have a way to print an fble value.
+* Be able to reference variables in a frame.
+* Ideally be able to execute arbitrary fble expressions.
+* Any way to print/infer string/char/integer literals?
+
+Advanced features:
+* ctrl-c to interrupt running program ???
+  Maybe we check on each block enter if there's some new command on the
+  socket? Not sure how expensive that would be.
+* stop on abort.
+
+Let's focus on the first round to start. What do we need?
+* --debug switch to enable debug.
+* Profiling operations call into debugger.
+* socket commands:
+ - list function names matching some pattern.
+ - break/clear at function
+ - break/clear at file:line
+ - break/clear next
+ - break/clear step
+ - print backtrace.
+ - continue
+ - notified of breakpoint reached
+ - notified of end of program
+
+First proof of concept could be to set breakpoint at file:line and print
+backtrace? Certainly its going to take a while before it's built up enough to
+be useful. Baby steps. Try to keep the code mostly separate from the rest of
+fble.

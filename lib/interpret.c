@@ -363,7 +363,7 @@ FbleValue* FbleInterpreterRunFunction(
 
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-        FbleValue* func = FbleStrictValue(GET(call_instr->func));
+        FbleFunction* func = FbleFuncValueFunction(GET(call_instr->func));
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
           return RunAbort(heap, code, vars, pc);
@@ -384,16 +384,14 @@ FbleValue* FbleInterpreterRunFunction(
 
       case FBLE_TAIL_CALL_INSTR: {
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-        FbleValue* func = FbleStrictValue(GET(call_instr->func));
+        FbleFunction* func = FbleFuncValueFunction(GET(call_instr->func));
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
           return RunAbort(heap, code, vars, pc);
         };
 
-        FbleExecutable* func_exe = ((FbleFuncValue*)func)->executable;
         tail_call_buffer[0] = GET(call_instr->func);
-        assert(func_exe->num_args == call_instr->args.size);
-        for (size_t i = 0; i < func_exe->num_args; ++i) {
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
           tail_call_buffer[1+i] = GET(call_instr->args.xs[i]);
         }
         return FbleTailCallSentinelValue;

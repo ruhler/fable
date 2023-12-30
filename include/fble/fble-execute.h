@@ -23,9 +23,9 @@
  *  Type of a C function that implements an fble function.
  *
  *  To perform a tail call, the implementation of the run function should
- *  place the (possibly non-FbleStrictValue()) function to call followed by
- *  args in order into the tail_call_buffer, then return
- *  FbleTailCallSentinelValue.
+ *  place the function to call followed by args in order into the
+ *  tail_call_buffer, then return FbleTailCallSentinelValue. The function to
+ *  tail call must not be undefined.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
@@ -228,9 +228,8 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
  *   The current profile thread, or NULL if profiling is disabled.
- *  @arg[FbleValue*] func
- *   The function to execute. Borrowed. Must be in strict form re
- *   FbleStrictValue.
+ *  @arg[FbleFunction*] func
+ *   The function to execute.
  *  @arg[FbleValue**] args
  *   Arguments to pass to the function. length == func->argc. Borrowed.
  *
@@ -242,7 +241,7 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, FbleValue** args);
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, FbleValue** args);
 
 /**
  * @func[FbleCall_] Calls an fble function using varags.
@@ -250,7 +249,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
  *   The current profile thread, or NULL if profiling is disabled.
- *  @arg[FbleValue*] func
+ *  @arg[FbleFunction*] func
  *   The function to execute. Borrowed.
  *  @arg[...][]
  *   func->argc number of arguments to pass to the function. Borrowed.
@@ -263,6 +262,6 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, ...);
+FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, ...);
 
 #endif // FBLE_EXECUTE_H_

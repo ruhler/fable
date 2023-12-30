@@ -2,7 +2,10 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Change FbleRunFunction to pass FbleFuncValue directly instead of 
+* Can FbleFuncValue be defined internally again now?
+* Remove unused R_SCRATCH_{1,2} registers now?
+
+* Change FbleRunFunction to pass FbleFunction directly instead of 
   executable, statics, and profile_block_offset.
 
 * Memory leak on undefined union value select in fbld?

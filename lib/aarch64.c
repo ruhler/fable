@@ -738,7 +738,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       GetFrameVar(fout, "x0", call_instr->func);
-      fprintf(fout, "  bl FbleStrictValue\n");
+      fprintf(fout, "  bl FbleFuncValueFunction\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
       fprintf(fout, "  mov x2, x0\n");
 
@@ -765,9 +765,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       GetFrameVar(fout, "x0", call_instr->func);
       fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #0]\n");
-      fprintf(fout, "  bl FbleStrictValue\n");
+
+      // Verify the function isn't defined.
+      fprintf(fout, "  bl FbleFuncValueFunction\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
 
+      // Set up the tail call arguments.
       for (size_t i = 0; i < call_instr->args.size; ++i) {
         GetFrameVar(fout, "x0", call_instr->args.xs[i]);
         fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #%zi]\n", sizeof(FbleValue*) * (i + 1));

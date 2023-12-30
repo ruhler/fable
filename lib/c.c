@@ -311,9 +311,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  FbleValue* l[%zi];\n", code->num_locals);
   fprintf(fout, "  FbleValue** s = statics;\n");
 
-  // x0 is a temporary variable individual instructions can use however they
-  // wish.
+  // x0, f0 are temporary variables individual instructions can use however
+  // they wish.
   fprintf(fout, "  FbleValue* x0 = NULL;\n");
+  fprintf(fout, "  FbleFunction* f0 = NULL;\n");
 
   // Emit code for each fble instruction
   bool jump_target[code->instrs.size];
@@ -476,13 +477,13 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
 
-        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+        fprintf(fout, "  f0 = FbleFuncValueFunction(%s[%zi]);\n",
             var_tag[call_instr->func.tag],
             call_instr->func.index);
-        fprintf(fout, "  if (x0 == NULL) ");
+        fprintf(fout, "  if (f0 == NULL) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
-        fprintf(fout, "  l[%zi] = FbleCall_(heap, profile, x0", call_instr->dest);
+        fprintf(fout, "  l[%zi] = FbleCall_(heap, profile, f0", call_instr->dest);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, ", %s[%zi]",
               var_tag[call_instr->args.xs[i].tag],
@@ -497,10 +498,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_TAIL_CALL_INSTR: {
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
 
-        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+        fprintf(fout, "  f0 = FbleFuncValueFunction(%s[%zi]);\n",
             var_tag[call_instr->func.tag],
             call_instr->func.index);
-        fprintf(fout, "  if (x0 == NULL) ");
+        fprintf(fout, "  if (f0 == NULL) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
         fprintf(fout, "  tail_call_buffer[0] = %s[%zi];\n",

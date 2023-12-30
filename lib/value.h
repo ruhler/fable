@@ -8,7 +8,7 @@
 
 #include <fble/fble-value.h>
 
-#include <fble/fble-link.h>    // for typedef of FbleExecutable
+#include <fble/fble-execute.h>    // for FbleFunction
 
 /** Different kinds of FbleValue. */
 typedef enum {
@@ -35,16 +35,8 @@ struct FbleValue {
  */
 typedef struct {
   FbleValue _base;              /**< FbleValue base class. */
-  FbleExecutable* executable;   /**< The code for the function. */
-
-  /** Offset to use for profile blocks referenced from this function. */
-  size_t profile_block_offset;  
-
-  /**
-   * Static variables captured by the function.
-   * Size is executable->num_statics
-   */
-  FbleValue* statics[];         
+  FbleFunction function;        /**< Function information. */
+  FbleValue* statics[];         /**< Storage location for static variables. */
 } FbleFuncValue;
 
 #endif // FBLE_INTERNAL_VALUE_H_
