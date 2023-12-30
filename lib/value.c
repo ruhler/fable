@@ -11,8 +11,8 @@
 #include <fble/fble-execute.h>   // for FbleFreeExecutable
 #include <fble/fble-value.h>     // for FbleValue, etc.
 
-#include "heap.h"              // for FbleHeap, etc.
-#include "unreachable.h"
+#include "heap.h"           // for FbleHeap, etc.
+#include "unreachable.h"    // for FbleUnreachable
 
 /**
  * Tests whether a value is packed into an FbleValue* pointer.

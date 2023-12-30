@@ -46,9 +46,7 @@ typedef struct {
   void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
   void* r_profile_block_offset_save;  /**< Saved contents of R_PROFILE_BLOCK_OFFSET reg. */
   void* r_profile_save;     /**< Saved contents of R_PROFILE reg. */
-  void* r_scratch_0_save;   /**< Saved contents of R_SCRATCH_0 reg. */
-  void* r_scratch_1_save;   /**< Saved contents of R_SCRATCH_1 reg. */
-  void* r_scratch_2_save;   /**< Saved contents of R_SCRATCH_2 reg. */
+  void* padding;            /**< Padding to keep RunStackFrame 16 byte aligned. */
   void* locals[];           /**< Local variables. */
 } RunStackFrame;
 
@@ -1069,8 +1067,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  stp R_HEAP, R_TAIL_CALL_BUFFER, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  stp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  stp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  stp R_PROFILE, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-  fprintf(fout, "  stp R_SCRATCH_1, R_SCRATCH_2, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
+  fprintf(fout, "  str R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
 
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
@@ -1092,8 +1089,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  ldp R_HEAP, R_TAIL_CALL_BUFFER, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  ldp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldp R_PROFILE, R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-  fprintf(fout, "  ldp R_SCRATCH_1, R_SCRATCH_2, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
+  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");
@@ -1394,9 +1390,6 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_STATICS .req x23\n");
   fprintf(fout, "  R_PROFILE_BLOCK_OFFSET .req x24\n");
   fprintf(fout, "  R_PROFILE .req x25\n");
-  fprintf(fout, "  R_SCRATCH_0 .req x26\n");
-  fprintf(fout, "  R_SCRATCH_1 .req x27\n");
-  fprintf(fout, "  R_SCRATCH_2 .req x28\n");
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
