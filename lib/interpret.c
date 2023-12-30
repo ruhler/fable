@@ -15,7 +15,6 @@
 
 #include "code.h"
 #include "unreachable.h"
-#include "value.h"
 
 static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc);
 

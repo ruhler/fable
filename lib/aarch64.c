@@ -17,7 +17,6 @@
 #include "code.h"
 #include "tc.h"
 #include "unreachable.h"
-#include "value.h"
 
 /** Type representing a name as an integer. */
 typedef unsigned int LabelId;
