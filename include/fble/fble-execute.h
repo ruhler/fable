@@ -29,19 +29,15 @@
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
- *  @arg[FbleValue**] tail_call_buffer
- *   Pre-allocated space to store tail call func and args.
- *  @arg[FbleExecutable*] executable
- *   The FbleExecutable associated with the function.
- *  @arg[FbleValue**] args
- *   Arguments to the function. Borrowed.
- *  @arg[FbleValue**] statics
- *   The function's static variables. Borrowed.
- *  @arg[FbleBlockId] profile_block_offset
- *   The function profile block offset.
  *  @arg[FbleProfileThread*] profile
  *   Profile thread for recording profiling information. NULL if profiling is
  *   disabled.
+ *  @arg[FbleValue**] tail_call_buffer
+ *   Pre-allocated space to store tail call func and args.
+ *  @arg[FbleFunction*] function
+ *   The function to execute.
+ *  @arg[FbleValue**] args
+ *   Arguments to the function. Borrowed.
  *
  *  @returns FbleValue*
  *   @i The result of executing the function.
@@ -53,12 +49,10 @@
  */
 typedef FbleValue* FbleRunFunction(
     FbleValueHeap* heap,
+    FbleProfileThread* profile,
     FbleValue** tail_call_buffer,
-    FbleExecutable* executable,
-    FbleValue** args,
-    FbleValue** statics,
-    FbleBlockId profile_block_offset,
-    FbleProfileThread* profile);
+    FbleFunction* function,
+    FbleValue** args);
 
 /**
  * Magic number used by FbleExecutable.

@@ -80,9 +80,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunctio
   size_t buffer_size = executable->tail_call_buffer_size;
   FbleValue** buffer = alloca(buffer_size * sizeof(FbleValue*));
   FbleValue** tail_call_buffer = buffer;
-  FbleValue* result = executable->run(
-        heap, tail_call_buffer, executable, args,
-        func->statics, func->profile_block_offset, profile);
+  FbleValue* result = executable->run(heap, profile, tail_call_buffer, func, args);
   while (result == FbleTailCallSentinelValue) {
     // Invariants at this point in the code:
     // * The new func and args to call are sitting in tail_call_buffer.
@@ -114,9 +112,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunctio
       FbleProfileReplaceBlock(profile, func->profile_block_offset + executable->profile_block_id);
     }
 
-    result = executable->run(
-        heap, tail_call_buffer, executable, args,
-        func->statics, func->profile_block_offset, profile);
+    result = executable->run(heap, profile, tail_call_buffer, func, args);
     FbleReleaseValues(heap, num_args_plus_1, buffer);
   }
 

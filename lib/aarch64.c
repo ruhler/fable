@@ -1070,12 +1070,12 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  str R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
 
   // Set up common registers.
+  fprintf(fout, "  ldr R_STATICS, [x3, #%zi]\n", offsetof(FbleFunction, statics));
+  fprintf(fout, "  ldr R_PROFILE_BLOCK_OFFSET, [x3, #%zi]\n", offsetof(FbleFunction, profile_block_offset));
   fprintf(fout, "  mov R_HEAP, x0\n");
-  fprintf(fout, "  mov R_TAIL_CALL_BUFFER, x1\n");
-  fprintf(fout, "  mov R_ARGS, x3\n");
-  fprintf(fout, "  mov R_STATICS, x4\n");
-  fprintf(fout, "  mov R_PROFILE_BLOCK_OFFSET, x5\n");
-  fprintf(fout, "  mov R_PROFILE, x6\n");
+  fprintf(fout, "  mov R_TAIL_CALL_BUFFER, x2\n");
+  fprintf(fout, "  mov R_ARGS, x4\n");
+  fprintf(fout, "  mov R_PROFILE, x1\n");
   fprintf(fout, "  add R_LOCALS, SP, #%zi\n", offsetof(RunStackFrame, locals));
 
   // Emit code for each fble instruction

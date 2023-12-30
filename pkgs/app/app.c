@@ -40,17 +40,11 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 
 static FbleValue* EventImpl(
-    FbleValueHeap* heap, FbleValue** tail_call_buffer,
-    FbleExecutable* executable,
-    FbleValue** args, FbleValue** statics,
-    FbleBlockId profile_block_offset,
-    FbleProfileThread* profile);
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
 static FbleValue* EffectImpl(
-    FbleValueHeap* heap, FbleValue** tail_call_buffer,
-    FbleExecutable* executable,
-    FbleValue** args, FbleValue** statics,
-    FbleBlockId profile_block_offset,
-    FbleProfileThread* profile);
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
 
 static Uint32 OnTimer(Uint32 interval, void* param);
 
@@ -246,17 +240,11 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 // Event -- Implementation of event function.
 //   IO@<Event@>
 static FbleValue* EventImpl(
-    FbleValueHeap* heap, FbleValue** tail_call_buffer,
-    FbleExecutable* executable,
-    FbleValue** args, FbleValue** statics,
-    FbleBlockId profile_block_offset,
-    FbleProfileThread* profile)
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
 {
-  (void)tail_call_buffer;
-  (void)executable;
-  (void)statics;
-  (void)profile_block_offset;
   (void)profile;
+  (void)tail_call_buffer;
 
   FbleValue* world = args[0];
   FbleValue* value = NULL;
@@ -361,18 +349,13 @@ static FbleValue* EventImpl(
 // Effect -- Implementation of effect function.
 //   (Effect@, World@) { R@<Unit@>; }
 static FbleValue* EffectImpl(
-    FbleValueHeap* heap, FbleValue** tail_call_buffer,
-    FbleExecutable* executable,
-    FbleValue** args, FbleValue** statics,
-    FbleBlockId profile_block_offset,
-    FbleProfileThread* profile)
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
 {
-  (void)tail_call_buffer;
-  (void)statics;
-  (void)profile_block_offset;
   (void)profile;
+  (void)tail_call_buffer;
 
-  Executable* exe = (Executable*)executable;
+  Executable* exe = (Executable*)function->executable;
 
   FbleValue* effect = args[0];
   FbleValue* world = args[1];

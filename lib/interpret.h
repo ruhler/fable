@@ -10,32 +10,14 @@
 
 /**
  * An FbleRunFunction for interpreting FbleCode fble bytecode.
- *
- * @param heap        The value heap.
- * @param tail_call_buffer  The tail call buffer.
- * @param executable  The FbleCode to run.
- * @param args        Arguments to the function. Borrowed.
- * @param statics     The function's static variables. Borrowed.
- * @param profile_block_offset  The function profile block offset.
- * @param profile  The profile thread, or NULL if profiling is enabled.
- *
- * @returns
- * * The result of executing the function.
- * * NULL if the function aborts.
- * * A special sentinal value to indicate a tail call is required.
- *
- * @sideeffects
- * * May call FbleThreadTailCall to indicate tail call required.
- * * Executes the fble function, with whatever side effects that may have.
+ * See documentation of FbleRunFunction in fble-execute.h.
  */
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
+    FbleProfileThread* profile,
     FbleValue** tail_call_buffer,
-    FbleExecutable* executable,
-    FbleValue** args,
-    FbleValue** statics,
-    FbleBlockId profile_block_offset,
-    FbleProfileThread* profile);
+    FbleFunction* function,
+    FbleValue** args);
 
 #endif // FBLE_INTERNAL_INTERPRET_H_
 

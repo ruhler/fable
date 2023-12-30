@@ -208,21 +208,21 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 // See documentation in interpret.h.
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
+    FbleProfileThread* profile,
     FbleValue** tail_call_buffer,
-    FbleExecutable* executable,
-    FbleValue** args,
-    FbleValue** statics,
-    FbleBlockId profile_block_offset,
-    FbleProfileThread* profile)
+    FbleFunction* function,
+    FbleValue** args)
 {
-  FbleCode* code = (FbleCode*)executable;
+  FbleCode* code = (FbleCode*)function->executable;
   FbleInstr** instrs = code->instrs.xs;
   FbleValue* locals[code->num_locals];
 
   FbleValue** vars[3];
-  vars[FBLE_STATIC_VAR] = statics;
+  vars[FBLE_STATIC_VAR] = function->statics;
   vars[FBLE_ARG_VAR] = args;
   vars[FBLE_LOCAL_VAR] = locals;
+
+  FbleBlockId profile_block_offset = function->profile_block_offset;
 
   size_t pc = 0;
   while (true) {

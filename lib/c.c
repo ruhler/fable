@@ -301,15 +301,16 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
   fprintf(fout, "static FbleValue* %s_%04zx("
-      "FbleValueHeap* heap, FbleValue** tail_call_buffer, "
-      "FbleExecutable* executable, FbleValue** args, "
-      "FbleValue** statics, FbleBlockId profile_block_offset, "
-      "FbleProfileThread* profile)\n",
+      "FbleValueHeap* heap, FbleProfileThread* profile, "
+      "FbleValue** tail_call_buffer, FbleFunction* function, "
+      "FbleValue** args)\n",
       label, code->_base.profile_block_id);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue** a = args;\n");
   fprintf(fout, "  FbleValue* l[%zi];\n", code->num_locals);
-  fprintf(fout, "  FbleValue** s = statics;\n");
+  fprintf(fout, "  FbleValue** s = function->statics;\n");
+
+  fprintf(fout, "  FbleBlockId profile_block_offset = function->profile_block_offset;\n");
 
   // x0, f0 are temporary variables individual instructions can use however
   // they wish.
@@ -922,10 +923,9 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
     fprintf(fout, "static FbleValue* %s_%04zx("
-      "FbleValueHeap* heap, FbleValue** tail_call_buffer, "
-      "FbleExecutable* executable, FbleValue** locals, "
-      "FbleValue** statics, FbleBlockId profile_block_offset, "
-      "FbleProfileThread* profile);\n",
+      "FbleValueHeap* heap, FbleProfileThread* profile, "
+      "FbleValue** tail_call_buffer, FbleFunction* function, "
+      "FbleValue** args);\n",
         function_label, code->_base.profile_block_id);
     fprintf(fout, "static FbleValue* %s_%04zx_abort(FbleValueHeap* heap, FbleValue** statics, FbleValue** args, FbleValue** locals, size_t pc);\n",
         function_label, code->_base.profile_block_id);

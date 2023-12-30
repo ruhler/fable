@@ -2,21 +2,12 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Change FbleRunFunction to pass FbleFunction directly instead of 
-  executable, statics, and profile_block_offset.
-
 * Memory leak on undefined union value select in fbld?
   See Define builtin implementation. It happened when we tried to reuse nenv
   for prepped instead of duplicating.
 
 * Module compilation
  - As a blocker for major compiler optimizations.
-
-* Switch to varargs for FbleRunFunction?
- - Require callee to handle tail call (possibly with wrapper function for
-   C-implemented callees)
- - Pass args as varargs.
- - Pass statics, executable, profile_block_offset via FbleFuncValue*?
 
 * Support partial function application?
  - Allow over-application of functions.
@@ -38,12 +29,12 @@ Things to consider doing for the fble-0.3 release.
 * Smten, and smten-based mnist classification.
 * IEEE floating point support.
 * Implement an image viewer.
+* Satgame application.
 
 * Make programs run twice as fast.
  - Implement function inlining?
  - Implement packing of data types?
  - Use registers for args and locals instead of the stack?
- - Inline calls to things like FbleStrictValue?
 
 * Do something with .@ module value vs. type?
   - There's currently unexercised code for it.
@@ -57,7 +48,7 @@ Things to consider doing for the fble-0.3 release.
  - Right now, the only info we have at runtime is num_args. We could at least
    check for that. Also that it's a function.
 
-* [spec] Add some way to catch or recover from errors at runtime?
+* [lang] Add some way to catch or recover from errors at runtime?
 
 * [modules]
  - Decide about .fble.@ files.
@@ -88,6 +79,7 @@ Things to consider doing for the fble-0.3 release.
  - Add debug support for all backends, not just aarch64
  - Add easy member access in debug. e.g.: print(foo.just).
  - Inline FbleCall again to support stepping through code?
+   Or try using dwarf trampoline annotation?
 
 Doc Comments
 * convert lib/*, test/*, etc. code to fbld doc comments.
