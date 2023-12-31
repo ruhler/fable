@@ -374,7 +374,7 @@ FbleValue* FbleInterpreterRunFunction(
         }
 
         pc++;
-        locals[call_instr->dest] = FbleCall(heap, profile, func, call_args);
+        locals[call_instr->dest] = FbleCall(heap, profile, func, call_instr->args.size, call_args);
         if (locals[call_instr->dest] == NULL) {
           return RunAbort(heap, code, vars, pc);
         }
@@ -393,6 +393,7 @@ FbleValue* FbleInterpreterRunFunction(
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           tail_call_buffer[1+i] = GET(call_instr->args.xs[i]);
         }
+        tail_call_buffer[call_instr->args.size+1] = NULL;
         return FbleTailCallSentinelValue;
       }
 

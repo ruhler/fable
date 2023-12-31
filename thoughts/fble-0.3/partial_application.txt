@@ -118,3 +118,23 @@ allowed to make O(N^2) to to O(N) for N the number of args, or fields. I think
 that should give the performance flexibility we want to make things fast
 without having to rely on a runtime implementation to do crazy things.
 
+---
+
+Step one: Update FbleCall to support less/more arguments than the function
+expects.
+
+One challenge: our tail call protocol doesn't have a way to indicate how many
+arguments are being returned. How should we update it? Set the last entry to
+NULL, have FbleCall count them? That's doable actually. We just overallocate
+buffer to be tail_call_buffer_size of previous plus tail call buffer size of
+new. Because we know tail_call_buffer_size is max of args, and we copy over
+each individual arg anyway.
+
+Yeah. I think that's easiest to start.
+
+Next step: Update FbleCall to take explicit argc. Update tail call standard to
+set entry following the args to NULL. Maybe special case it so max number of
+args is tail_call_buffer_size, so we don't need to allocate the extra space?
+Or just be easy and require an extra element in tail_call_buffer_size and
+always set NULL following it.
+

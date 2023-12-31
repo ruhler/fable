@@ -336,7 +336,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   }
 
   FbleValue* args[2] = { fble_stdio, argS };
-  FbleValue* computation = FbleApply(heap, func, args, profile);
+  FbleValue* computation = FbleApply(heap, func, 2, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, fble_stdio);
   FbleReleaseValue(heap, argS);
@@ -347,7 +347,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
 
   // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
   FbleValue* world = FbleNewStructValue_(heap, 0);
-  FbleValue* result = FbleApply(heap, computation, &world, profile);
+  FbleValue* result = FbleApply(heap, computation, 1, &world, profile);
   FbleReleaseValue(heap, computation);
   if (result == NULL) {
     return NULL;

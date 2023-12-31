@@ -24,8 +24,8 @@
  *
  *  To perform a tail call, the implementation of the run function should
  *  place the function to call followed by args in order into the
- *  tail_call_buffer, then return FbleTailCallSentinelValue. The function to
- *  tail call must not be undefined.
+ *  tail_call_buffer, followed by NULL, then return FbleTailCallSentinelValue.
+ *  The function to tail call must not be undefined.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
@@ -33,7 +33,7 @@
  *   Profile thread for recording profiling information. NULL if profiling is
  *   disabled.
  *  @arg[FbleValue**] tail_call_buffer
- *   Pre-allocated space to store tail call func and args.
+ *   Pre-allocated space to store tail call func, args, and terminated NULL.
  *  @arg[FbleFunction*] function
  *   The function to execute.
  *  @arg[FbleValue**] args
@@ -85,9 +85,10 @@ struct FbleExecutable {
    * The tail call buffer is used to pass function and arguments when making a
    * tail call.
    *
-   * This will be 0 if there are no tail calls. It will be (1 + argc) for the
+   * This will be 0 if there are no tail calls. It will be (2 + argc) for the
    * tail call with the most number of arguments, allowing sufficient space
-   * to pass the function and all arguments for that tail call.
+   * to pass the function, all arguments, and NULL terminator for that tail
+   * call.
    */
   size_t tail_call_buffer_size;
 
@@ -224,8 +225,10 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   The current profile thread, or NULL if profiling is disabled.
  *  @arg[FbleFunction*] func
  *   The function to execute.
+ *  @arg[size_t] argc
+ *   Number of arguments passed to the function.
  *  @arg[FbleValue**] args
- *   Arguments to pass to the function. length == func->argc. Borrowed.
+ *   Arguments to pass to the function. Borrowed.
  *
  *  @returns FbleValue*
  *   The result of the function call, or NULL in case of abort.
@@ -235,6 +238,6 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, FbleValue** args);
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, size_t argc, FbleValue** args);
 
 #endif // FBLE_EXECUTE_H_

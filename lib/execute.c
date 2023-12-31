@@ -20,14 +20,15 @@
 #include "tc.h"
 #include "unreachable.h"
 
-static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
 
 
 /**
  * @func[Eval] Evaluates the given function.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleValue*][func] The function to evaluate.
- *  @arg[FbleValue**][args] Args to pass to the function. length == func->argc.
+ *  @arg[FbleValue**][argc] Number of args to pass.
+ *  @arg[FbleValue**][args] Args to pass to the function.
  *  @arg[FbleProfile*][profile]
  *   Profile to update with execution stats. Must not be NULL.
  *  
@@ -41,7 +42,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
  *   @i Updates profile based on the execution.
  *   @i Does not take ownership of the function or the args.
  */
-static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
+static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
 {
   // The fble spec requires we don't put an arbitrarily low limit on the stack
   // size. Fix that here.
@@ -58,7 +59,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
   FbleFunction* function = FbleFuncValueFunction(func);
-  FbleValue* result = FbleCall(heap, profile_thread, function, args);
+  FbleValue* result = FbleCall(heap, profile_thread, function, argc, args);
   FbleFreeProfileThread(profile_thread);
 
   // Restore the stack limit to what it was before.
@@ -69,9 +70,10 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 }
 
 // See documentation in fble-execute.h.
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, FbleValue** args)
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, size_t argc, FbleValue** args)
 {
   FbleExecutable* executable = func->executable;
+  assert(executable->num_args == argc);
 
   if (profile) {
     FbleProfileEnterBlock(profile, func->profile_block_offset + executable->profile_block_id);
@@ -85,11 +87,11 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunctio
     // Invariants at this point in the code:
     // * The new func and args to call are sitting in tail_call_buffer.
     // * The start of our stack allocated buffer is 'buffer'.
+    size_t max_num_args_plus_1 = executable->tail_call_buffer_size - 1;
     func = FbleFuncValueFunction(tail_call_buffer[0]);
     executable = func->executable;
-    size_t num_args_plus_1 = 1 + executable->num_args;
-    if (executable->tail_call_buffer_size + num_args_plus_1 > buffer_size) {
-      size_t incr = executable->tail_call_buffer_size + num_args_plus_1 - buffer_size;
+    if (executable->tail_call_buffer_size + max_num_args_plus_1 > buffer_size) {
+      size_t incr = executable->tail_call_buffer_size + max_num_args_plus_1 - buffer_size;
       FbleValue** nbuffer = alloca(incr * sizeof(FbleValue*));
 
       // We assume repeated calls to alloca result in adjacent memory
@@ -102,18 +104,22 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunctio
       buffer_size += incr;
     }
 
-    for (size_t i = 0; i < num_args_plus_1; ++i) {
-      buffer[i] = tail_call_buffer[i];
+    buffer[0] = tail_call_buffer[0];
+    argc = 0;
+    for (argc = 0; tail_call_buffer[argc + 1] != NULL; argc++) {
+      buffer[argc + 1] = tail_call_buffer[argc + 1];
     }
+
     args = buffer + 1;
-    tail_call_buffer = buffer + num_args_plus_1;
+    tail_call_buffer = buffer + argc + 1;
 
     if (profile) {
       FbleProfileReplaceBlock(profile, func->profile_block_offset + executable->profile_block_id);
     }
 
+    assert(executable->num_args == argc);
     result = executable->run(heap, profile, tail_call_buffer, func, args);
-    FbleReleaseValues(heap, num_args_plus_1, buffer);
+    FbleReleaseValues(heap, argc + 1, buffer);
   }
 
   if (profile != NULL) {
@@ -126,13 +132,13 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunctio
 // See documentation in fble-value.h.
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
-  return FbleApply(heap, program, NULL, profile);
+  return FbleApply(heap, program, 0, NULL, profile);
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
+FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
 {
-  return Eval(heap, func, args, profile);
+  return Eval(heap, func, argc, args, profile);
 }
 
 // See documentation in fble-execute.h.

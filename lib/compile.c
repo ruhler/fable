@@ -1157,7 +1157,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         }
         AppendInstr(scope, &call_instr->_base);
 
-        size_t tail_call_buffer_size = 1 + argc;
+        size_t tail_call_buffer_size = 2 + argc;
         if (tail_call_buffer_size > scope->code->_base.tail_call_buffer_size) {
           scope->code->_base.tail_call_buffer_size = tail_call_buffer_size;
         }

@@ -31,6 +31,8 @@ Things to consider doing for the fble-0.3 release.
  - Implement function inlining?
  - Implement packing of data types?
  - Use registers for args and locals instead of the stack?
+ - Avoid copying func, args in FbleCall tail call case?
+   Instead allocate enough space before/after for tail call buffer as needed?
 
 * Do something with .@ module value vs. type?
   - There's currently unexercised code for it.

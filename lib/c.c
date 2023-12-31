@@ -491,7 +491,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
               call_instr->args.xs[i].index);
         }
         fprintf(fout, "};\n");
-        fprintf(fout, "  l[%zi] = FbleCall(heap, profile, f0, ca%zi);\n", call_instr->dest, pc);
+        fprintf(fout, "  l[%zi] = FbleCall(heap, profile, f0, %zi, ca%zi);\n",
+            call_instr->dest, call_instr->args.size, pc);
         fprintf(fout, "  if (l[%zi] == NULL) ", call_instr->dest);
         ReturnAbort(fout, code, label, pc, "CalleeAborted", call_instr->loc);
         break;
@@ -514,6 +515,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
               i + 1, var_tag[call_instr->args.xs[i].tag],
               call_instr->args.xs[i].index);
         }
+        fprintf(fout, "  tail_call_buffer[%zi] = NULL;\n",
+            call_instr->args.size + 1);
+
         fprintf(fout, "  return FbleTailCallSentinelValue;\n");
         break;
       }

@@ -71,7 +71,7 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
   FbleValueFullGc(heap);
 
   FbleResetMaxTotalBytesAllocated();
-  FbleValue* result = FbleApply(heap, func, &tail, profile);
+  FbleValue* result = FbleApply(heap, func, 1, &tail, profile);
 
   FbleReleaseValue(heap, result);
   FbleReleaseValue(heap, tail);

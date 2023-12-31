@@ -622,7 +622,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleValue* args[6] = {
     fble_stdio, fble_event, fble_effect, fble_width, fble_height, argS
   };
-  FbleValue* computation = FbleApply(heap, func, args, profile);
+  FbleValue* computation = FbleApply(heap, func, 6, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
   FbleReleaseValue(heap, args[1]);
@@ -641,7 +641,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
 
   // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
   FbleValue* world = FbleNewStructValue_(heap, 0);
-  FbleValue* result = FbleApply(heap, computation, &world, profile);
+  FbleValue* result = FbleApply(heap, computation, 1, &world, profile);
 
   if (fps) {
     fprintf(stderr, "FPS Histogram:\n");

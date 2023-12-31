@@ -399,9 +399,9 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 /**
  * @func[FbleApply] Applies an fble function to arguments.
  *  @arg[FbleValueHeap*][heap] The heap to use for allocating values.
- *  @arg[FbleValue*    ][func] The function to apply.
- *  @arg[FbleValue**] args
- *   The arguments to apply the function to. length == func->argc.
+ *  @arg[FbleValue*][func] The function to apply.
+ *  @arg[size_t][argc] The number of args to apply.
+ *  @arg[FbleValue**][args] The arguments to apply the function to.
  *  @arg[FbleProfile*][profile] The profile to update. Must not be NULL.
  *
  *  @returns FbleValue*
@@ -418,7 +418,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
  *   @i Prints an error message to stderr in case of error.
  *   @i Updates the profile with stats from the evaluation.
  */
-FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
+FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
 
 /**
  * @func[FbleNewRefValue] Creates a reference value.

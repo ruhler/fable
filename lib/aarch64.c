@@ -749,7 +749,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, R_PROFILE\n");
-      fprintf(fout, "  mov x3, SP\n");          // args
+      fprintf(fout, "  mov x3, %zi\n", call_instr->args.size);
+      fprintf(fout, "  mov x4, SP\n");          // args
 
       fprintf(fout, "  bl FbleCall\n");
       SetFrameVar(fout, "x0", call_instr->dest);
@@ -772,6 +773,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
         GetFrameVar(fout, "x0", call_instr->args.xs[i]);
         fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #%zi]\n", sizeof(FbleValue*) * (i + 1));
       }
+      fprintf(fout, "  str XZR, [R_TAIL_CALL_BUFFER, #%zi]\n",
+          sizeof(FbleValue*) * (call_instr->args.size + 1));
 
       fprintf(fout, "  mov x0, %p\n", (void*)FbleTailCallSentinelValue);
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
