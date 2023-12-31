@@ -734,10 +734,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      GetFrameVar(fout, "x0", call_instr->func);
-      fprintf(fout, "  bl FbleFuncValueFunction\n");
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
-      fprintf(fout, "  mov x2, x0\n");
 
       // Allocate space for the arguments array on the stack.
       size_t sp_offset = StackBytesForCount(call_instr->args.size);
@@ -749,6 +745,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, R_PROFILE\n");
+      GetFrameVar(fout, "x2", call_instr->func);
       fprintf(fout, "  mov x3, %zi\n", call_instr->args.size);
       fprintf(fout, "  mov x4, SP\n");          // args
 

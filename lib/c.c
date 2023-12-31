@@ -478,12 +478,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
 
-        fprintf(fout, "  f0 = FbleFuncValueFunction(%s[%zi]);\n",
-            var_tag[call_instr->func.tag],
-            call_instr->func.index);
-        fprintf(fout, "  if (f0 == NULL) ");
-        ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
-
         fprintf(fout, "  FbleValue* ca%zi[%zi] = {", pc, call_instr->args.size);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, "%s[%zi],",
@@ -491,8 +485,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
               call_instr->args.xs[i].index);
         }
         fprintf(fout, "};\n");
-        fprintf(fout, "  l[%zi] = FbleCall(heap, profile, f0, %zi, ca%zi);\n",
-            call_instr->dest, call_instr->args.size, pc);
+        fprintf(fout, "  l[%zi] = FbleCall(heap, profile, %s[%zi], %zi, ca%zi);\n",
+            call_instr->dest,
+            var_tag[call_instr->func.tag], call_instr->func.index,
+            call_instr->args.size, pc);
         fprintf(fout, "  if (l[%zi] == NULL) ", call_instr->dest);
         ReturnAbort(fout, code, label, pc, "CalleeAborted", call_instr->loc);
         break;

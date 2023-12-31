@@ -2,6 +2,8 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Remove unused undefined function warning message in aarch and c backends.
+
 * Module compilation
  - As a blocker for major compiler optimizations.
 

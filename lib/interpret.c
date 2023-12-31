@@ -362,12 +362,7 @@ FbleValue* FbleInterpreterRunFunction(
 
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-        FbleFunction* func = FbleFuncValueFunction(GET(call_instr->func));
-        if (func == NULL) {
-          FbleReportError("called undefined function\n", call_instr->loc);
-          return RunAbort(heap, code, vars, pc);
-        };
-
+        FbleValue* func = GET(call_instr->func);
         FbleValue* call_args[call_instr->args.size];
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           call_args[i] = GET(call_instr->args.xs[i]);

@@ -138,3 +138,166 @@ args is tail_call_buffer_size, so we don't need to allocate the extra space?
 Or just be easy and require an extra element in tail_call_buffer_size and
 always set NULL following it.
 
+---
+
+Question: how do we record profiling for partial function application?
+
+My vote: we don't enter the function until we actually enter it. We can say we
+enter it from the thunk.
+
+How will we pick the profile block offset for the thunk?
+
+If we did it at the language level today, we would have two different block
+ids: one for creating the thunk, one for calling the function.
+
+Maybe each function should allocate a range of block ids given the number of
+its arguments? Let's worry about that later, because allocating a range of
+block ids for each function sounds like a workable approach worst case.
+
+---
+
+Trying to update FbleCall for under/over application logic. It's tricky, I
+think because it's most natural to write it recursively, but we need to
+transform into a loop.
+
+Let me brainstorm the nicest way to write it assuming I didn't have to worry
+about recursion or costs of retain/release.
+
+Ugh. This is complicated.
+
+The main split, I think, is Exact number of args versus NonExact.
+
+NonExact:
+  while (sufficient args):
+    Exact.
+  if args left
+    Partial
+  else
+    Result.
+
+Exact:
+  executable->run
+  while tail call
+    NonExact(tail call)
+    clean up args.
+  return result
+
+We have Call and CallExact. Call is responsible for various args. It will
+never get sentinel tail call. Exact is responsible for sentinel tail call.
+
+The problem is, NonExact has no way to return a tail call.
+
+Perhaps the cases are about Exact/NonExact and Tail versus NonTail?
+
+Say 'Tail' means it could return a tail call. NonTail means it can't.
+
+NonExactNonTail - The high level FbleCall. We do everything.
+NonExactTail - Arg number may mismatch. We can return tail call.
+ExactNonTail - Exact args, can't return tail call.
+ExactTail - Exact args, can return tail call.
+
+NonExactNonTail:
+  while sufficient args:
+    ExactNonTail
+  if args left:
+    Partial
+  else
+    Return result
+
+ExactNonTail:
+  executable->run
+  while tail call
+    NonExactTail(tail call)
+    clean up args.
+  return result
+
+NonExactTail:
+  
+I think where I'm getting stuck is if you do an under application and the
+result is a request for a tail call.
+
+In this case, we have args left over from the first application and we have
+args from the tail call. All at once, we should be able to merge those args
+together and be done, right? One big happy family? A tail call provides a
+function and more arguments. We know how to deal with more arguments. The
+arguments at the end are the ones that we don't own.
+
+Not worrying about argument ownership, it would look something like this:
+
+  if insufficient args:
+    return partial
+
+  Call with exact args.
+  if tail requested
+    insert tail args before leftover args
+  
+  if leftover args
+    rinse and repeat
+
+Ownership makes it tricky. Some args we own, some we don't. One function we
+own, the rest we don't.
+
+Let's say FbleCall is the wrapper. It takes ownership of func and args, then
+calls our function above.
+
+  if insufficient args:
+    Allocate Partial.
+    Release func and all args.
+    return
+
+  Call with exact args.
+  Free function. (We can't do this for top level func, don't worry about it yet).
+  Free exact args.
+  if tail requested
+    Add leftover args to end of tail call buffer.
+  
+  if leftover args
+    rinse and repeat
+
+Say we have two versions then: top level (where we don't own func, args), and
+else, where we do own func and args.
+
+Top:
+  if insufficient args:
+    Allocate partial. Return.
+
+  Call with exact args.
+  if no tail and no args leftover.
+    Return result.
+
+  We now own func one way or the other.
+  Retain leftover args, add to tail args if any.
+  Call into NonTop.
+
+NonTop:
+  if insufficient args:
+    Allocate partial.
+    Release func, args. Return.
+  
+  Call with exact args.
+  Free func, exact args.
+  if tail:
+    Add leftover args to tail.
+
+  if leftover args:
+    Go back to start of NonTop.
+  return result
+
+There you go. Let's try implementing for real. Top is FbleCall. What shall we
+call NonTop? FinishCall. Or just Call. Yeah. Just Call.
+
+Trouble:
+* We can't allocate a partial function from just FbleFunction. We need the
+  FbleValue* to hold on to it. Will that cause any issues? It shouldn't,
+  right? Just means potentially some duplicate code to check if the function
+  is undefined.
+
+I feel like undefined function locations are messed up anyway with this new
+approach. Maybe we can move all error reporting for that into FbleCall?
+
+Okay. Draft is basically done. It seems reasonable. Just need to make the
+change that we pass FbleValue* for func instead of FbleFunction*, and
+undefined function is reported in FbleCall. We'll still have the original
+call site error reported via an '@...', so it should be okay. No loss of
+information.
+

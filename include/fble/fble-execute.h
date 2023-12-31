@@ -25,7 +25,7 @@
  *  To perform a tail call, the implementation of the run function should
  *  place the function to call followed by args in order into the
  *  tail_call_buffer, followed by NULL, then return FbleTailCallSentinelValue.
- *  The function to tail call must not be undefined.
+ *  The function to tail call may be undefined.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
@@ -223,8 +223,8 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
  *   The current profile thread, or NULL if profiling is disabled.
- *  @arg[FbleFunction*] func
- *   The function to execute.
+ *  @arg[FbleValue*] func
+ *   The function to execute. May be undefined.
  *  @arg[size_t] argc
  *   Number of arguments passed to the function.
  *  @arg[FbleValue**] args
