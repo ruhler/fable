@@ -301,3 +301,7 @@ undefined function is reported in FbleCall. We'll still have the original
 call site error reported via an '@...', so it should be okay. No loss of
 information.
 
+---
+
+Sneaky idea for how to implement PartialApply: return
+FbleSentinelTailCallValue. Force the caller to tail call it.

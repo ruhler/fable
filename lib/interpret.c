@@ -368,11 +368,13 @@ FbleValue* FbleInterpreterRunFunction(
           call_args[i] = GET(call_instr->args.xs[i]);
         }
 
-        pc++;
         locals[call_instr->dest] = FbleCall(heap, profile, func, call_instr->args.size, call_args);
         if (locals[call_instr->dest] == NULL) {
+          FbleReportError("callee aborted\n", call_instr->loc);
           return RunAbort(heap, code, vars, pc);
         }
+
+        pc++;
         break;
       }
 

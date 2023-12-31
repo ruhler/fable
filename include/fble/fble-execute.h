@@ -238,6 +238,6 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  */
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, size_t argc, FbleValue** args);
+FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, size_t argc, FbleValue** args);
 
 #endif // FBLE_EXECUTE_H_

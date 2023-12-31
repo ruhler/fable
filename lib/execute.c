@@ -8,7 +8,7 @@
 #include <alloca.h>         // for alloca
 #include <assert.h>         // for assert
 #include <stdlib.h>         // for NULL
-#include <string.h>         // for memcpy
+#include <string.h>         // for memcpy, memmove
 #include <sys/time.h>       // for getrlimit, setrlimit
 #include <sys/resource.h>   // for getrlimit, setrlimit
 
@@ -75,7 +75,10 @@ static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t a
   while (true) {
     FbleFunction* func = FbleFuncValueFunction(func_and_args[0]);
     if (func == NULL) {
-      FbleReportError("called undefined function\n", FbleNewLoc(__FILE__, __LINE__, 7));
+      FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 7);
+      FbleReportError("called undefined function\n", loc);
+      FbleFreeLoc(loc);
+      FbleReleaseValues(heap, 1 + argc, func_and_args);
       return NULL;
     }
 
@@ -109,12 +112,12 @@ static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t a
       }
       buffer_size += incr;
     }
-    memmove(buffer, func_and_args, argc + 1 * sizeof(FbleValue*));
+    memmove(buffer, func_and_args, (argc + 1) * sizeof(FbleValue*));
     func_and_args = buffer;
 
     FbleValue** tail_call_buffer = func_and_args + 1 + argc;
     FbleValue* result = executable->run(heap, profile,
-        tail_call_buffer, func_and_args[0], func_and_args + 1);
+        tail_call_buffer, func, func_and_args + 1);
     FbleReleaseValues(heap, 1 + executable->num_args, func_and_args);
     FbleValue** unused = func_and_args + 1 + executable->num_args;
 
@@ -177,8 +180,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
   }
 
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
-  FbleFunction* function = FbleFuncValueFunction(func);
-  FbleValue* result = FbleCall(heap, profile_thread, function, argc, args);
+  FbleValue* result = FbleCall(heap, profile_thread, func, argc, args);
   FbleFreeProfileThread(profile_thread);
 
   // Restore the stack limit to what it was before.
@@ -193,7 +195,9 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 {
   FbleFunction* func = FbleFuncValueFunction(function);
   if (func == NULL) {
-    FbleReportError("called undefined function\n", FbleNewLoc(__FILE__, __LINE__, 5));
+    FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 5);
+    FbleReportError("called undefined function\n", loc);
+    FbleFreeLoc(loc);
     return NULL;
   }
 
@@ -228,8 +232,8 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 
     // Add the unused args to the end of the tail call args and make that
     // our new func and args. We'll have to retain those args.
-    for (size_t i = 0; i < num_unused) {
-      FbleRetainValue(unused[i]);
+    for (size_t i = 0; i < num_unused; ++i) {
+      FbleRetainValue(heap, unused[i]);
       tail_call_buffer[1 + argc] = unused[i];
       argc++;
     }
