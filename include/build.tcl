@@ -26,7 +26,7 @@ namespace eval "include" {
       FbleFreeExecutable
       FbleExecutableNothingOnFree
       FbleFreeExecutableModule FbleFreeExecutableProgram
-      FbleCall FbleCall_
+      FbleCall
     }
     fble-interpret.h {
       FbleInterpret

@@ -123,20 +123,6 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunctio
   return result;
 }
 
-// See documentation in fble-execute.h.
-FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, ...)
-{
-  size_t argc = func->executable->num_args;
-  FbleValue* args[argc];
-  va_list ap;
-  va_start(ap, func);
-  for (size_t i = 0; i < argc; ++i) {
-    args[i] = va_arg(ap, FbleValue*);
-  }
-  va_end(ap);
-  return FbleCall(heap, profile, func, args);
-}
-
 // See documentation in fble-value.h.
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {

@@ -237,25 +237,4 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  */
 FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, FbleValue** args);
 
-/**
- * @func[FbleCall_] Calls an fble function using varags.
- *  @arg[FbleValueHeap*] heap
- *   The value heap.
- *  @arg[FbleProfileThread*] profile
- *   The current profile thread, or NULL if profiling is disabled.
- *  @arg[FbleFunction*] func
- *   The function to execute. Borrowed.
- *  @arg[...][]
- *   func->argc number of arguments to pass to the function. Borrowed.
- *
- *  @returns FbleValue*
- *   The result of the function call, or NULL in case of abort.
- *
- *  @sideeffects
- *   @i Updates the threads stack.
- *   @i Enters a profiling block for the function being called.
- *   @i Executes the called function to completion, returning the result.
- */
-FbleValue* FbleCall_(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* func, ...);
-
 #endif // FBLE_EXECUTE_H_

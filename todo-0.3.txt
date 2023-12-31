@@ -2,10 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Memory leak on undefined union value select in fbld?
-  See Define builtin implementation. It happened when we tried to reuse nenv
-  for prepped instead of duplicating.
-
 * Module compilation
  - As a blocker for major compiler optimizations.
 

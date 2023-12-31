@@ -104,3 +104,17 @@ The hope is fbld should run noticeably faster because Result@ Do function is
 implemented as a multi argument function instead of a function that returns a
 function, so we avoid the extra function object allocation.
 
+---
+
+On type inference: do everything in terms of single arg application. Users
+should write their functions to mix type parameters with arguments. They
+should do that anyway, because it makes it more flexible. This way type
+inference is clear. Nothing tricky to work out in the spec.
+
+For performance, here's an idea: for the sake of 'compiler doesn't change
+algorithmic complexity', assume the number of arguments to a function, the
+number of fields in a struct or union type are small. That means we are
+allowed to make O(N^2) to to O(N) for N the number of args, or fields. I think
+that should give the performance flexibility we want to make things fast
+without having to rely on a runtime implementation to do crazy things.
+
