@@ -1474,7 +1474,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         }
         body = fv->body;
         fv = (FbleFuncValueExpr*)fv->body;
-      } while (fv->_base.tag == FBLE_FUNC_VALUE_EXPR);
+
+        // TODO: re-enable merging after function types no longer distinguish
+        // between single and multi arg functions.
+      } while (false && fv->_base.tag == FBLE_FUNC_VALUE_EXPR);
 
       bool error = false;
       FbleTypeV arg_types;

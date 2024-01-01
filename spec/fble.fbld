@@ -545,24 +545,29 @@
     }
  
  @section @label[functions][5. Functions]
-  A function is a mapping from one or more argument values to a result value.
-  Each argument has a name, used to identify the argument in the body of the
+  A function is a mapping from an argument value to a result value.
+  The argument has a name, used to identify the argument in the body of the
   function, and a type, specifying the type of value that can be supplied for
-  that argument. A function has a return type, specifying the type of value
+  the argument. A function has a return type, specifying the type of value
   that will result when applying the function.
+
   
   Functions are described using the fble expression language. A function can
-  be applied to arguments of appropriate type to produce a value with the
-  return type of the function.
+  be applied to an argument of appropriate type to produce a value with the
+  return type of the function. Syntactic sugar is provided to make it easier
+  to describe multi-argument functions.
   
   @subsection 5.1 Function Type
    @AbstractSyntax @
-    Type ::= func_type (args : [Type]) (return : Type)
+    Type ::= func_type (arg : Type) (return : Type)
   
    @ConcreteSyntax @
     block ::= '(' type [',' type [...]] ')' block
   
    @Example @
+    (Int@) { Bool@; }
+    (Int@) { (Int@) { Bool@; }; }
+    (Int@)(Int@) { Bool@; }
     (Int@, Int@) { Bool@; }
   
    The function type describes the type of a function value by specifying the
@@ -572,41 +577,46 @@
    unions, or functions.
   
    Two function types are equal if their argument and return types are equal.
-  
-   Curried function types are not considered equal. For example, the following
-   two expressions describe different types:
+
+   The concrete syntax allows you to specify multiple arguments in a function
+   type. This is syntactic sugar for nested single argument function types.
+   For example, the following two expressions describe the same type:
   
    @code[fble] @
     (a, b) { c; }
     (a) { (b) { c; }; }
     
-   We distinguish between these types because in practice there are
-   performance implications for which type you choose.
-  
    Runtime is O(1).
   
   @subsection 5.2 Function Value
    @AbstractSyntax @
-    Expr ::= func_value (args : [(Type, Name)]) (body : Expr)
+    Expr ::= func_value (arg : (Type, Name)) (body : Expr)
   
    @ConcreteSyntax @
     block ::= '(' type name [',' type name [...]] ')' block
   
    @Example @
+    (Bool@ a) { a.?(true: 1, false: 0); }
+    (Bool@ a)(Bool@ b) { a.?(true: b, false: False); }
     (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
   
-   The function value expression is used to describe a primitive function
-   value given the arguments and the body of the function. The return type of
-   the function is inferred to be the type of the body of the function. The
-   argument names chosen when defining a function have no effect on the type
-   of the function.
-  
-   Arguments to multi-argument functions must have distinct names.
+   The function value expression is used to describe a function value given
+   the argument and the body of the function. The return type of the function
+   is inferred to be the type of the body of the function. The argument name
+   chosen when defining a function has no effect on the type of the function.
 
    Implementations are encouraged to emit warnings for unused arguments, with
    the convention that no warnings should be produced for arguments starting
    with @l{_} in their name. This allows the programmer to annotate an
    argument as intentionally unused, which is occasionally useful in practice.
+
+   The concrete syntax allows you to specify multiple arguments in a function
+   value. This is syntactic sugar for nested single argument function values.
+   For example, the following two expressions describe the same function:
+  
+   @code[fble] @
+    (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
+    (Bool@ a) { (Bool@ b) { a.?(true: b, false: False); }; }
   
    Runtime is O(N log(M)), where N is the number of variables in scope that
    are captured by the function and M is the number of variables in scope.
@@ -615,23 +625,33 @@
   
   @subsection 5.3 Function Application
    @AbstractSyntax @
-    Expr ::= func_apply (func : Expr) (args : [Expr])
+    Expr ::= func_apply (func : Expr) (arg : Expr)
   
    @ConcreteSyntax @
     expr ::= expr '(' expr [',' expr [...]] ')'
   
    @Example @
+    foo(x)
+    foo(x)(y)
     foo(x, y)
   
-   The application expression is used to apply a function to some arguments.
-   The supplied arguments must match the type and number of arguments
-   specified for the function. The application expression evaluates to the
-   value of the body of the function in the context of the supplied arguments.
+   The application expression is used to apply a function to an argument.
+   The supplied argument must match the type specified for the function. The
+   application expression evaluates to the value of the body of the function
+   in the context of the supplied argument.
+
+   The concrete syntax allows you to specify multiple arguments in a function
+   application. This is syntactic sugar for nested single argument function
+   application. For example, the following two expressions describe the same
+   function application:
   
-   Runtime is O(log(N + M)) plus the runtime of func, the runtimes of each of
-   the arguments, and the runtime of the body, where N is the number of
-   arguments to the function and M is the number of variables captured by the
-   function.
+   @code[fble] @
+    foo(x)(y)
+    foo(x, y)
+  
+   Runtime is O(log(M)) plus the runtime of func, the runtime of the
+   argument, and the runtime of the body, where M is the number of variables
+   captured by the function.
 
    A deep chain of tail recursive calls takes O(1) stack space. Local
    variables not passed as arguments in a tail recursive call are not retained
@@ -924,11 +944,10 @@
     stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
   
    @Example @
-    Int@ x <- Map(l);
-    f(x, y)
+    Int@ x <- Map(l); f(x, y)
   
    Bind is syntactic sugar for calling a function with an anonymous function
-   as its only argument. It is equivalent to:
+   as its argument. It is equivalent to:
   
    @code[txt] @
     func_apply func (func_value args [body])
@@ -943,6 +962,18 @@
   
    @code[fble] @
     Map(l)((Int@ x) { f(x, y); });
+
+   Multiple arguments can be provided in the bind syntax to form a multi
+   argument function. For exmaple:
+
+   @code[fble] @
+    Int@ x, Bool@ y <- Map(l);
+    f(x, y)
+  
+   Desugars to:
+  
+   @code[fble] @
+    Map(l)((Int@ x, Bool@ y) { f(x, y); });
   
    Bind is particularly suited for abstracting glue logic that manipulates how
    program statements are combined. For example, it can be used to hide error
@@ -1376,9 +1407,9 @@
     | union_access (object : Expr) (field : Name)
     | union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
    
-    | func_type (args : [Type]) (result : Type)
-    | func_value (args : [(Type, Name)]) (body : Expr)
-    | func_apply (func : Expr) (args : [Expr])
+    | func_type (arg : Type) (result : Type)
+    | func_value (arg : (Type, Name)) (body : Expr)
+    | func_apply (func : Expr) (arg : Expr)
    
     | poly_value (arg : (Kind, Name)) (body : Expr)
     | poly_apply (poly : Expr) (arg : Expr)

@@ -427,3 +427,9 @@ function types.
 I think it's time to go all in on the front end with single argument function
 application and function values.
 
+* Update spec.
+* Change FbleExpr to all single arg functions.
+* Change FbleType to all single arg function types.
+
+It might be a little crazy for while in terms of things being broken.
+
