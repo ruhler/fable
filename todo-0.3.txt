@@ -2,9 +2,7 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Avoid putting type values in locals.
-* Avoid allocating a type value for poly values.
-  Mostly to enable merging of multi-arg functions with type variables.
+* Enable multi-arg merging of poly function values with function values.
 
 * Module compilation
  - As a blocker for major compiler optimizations.

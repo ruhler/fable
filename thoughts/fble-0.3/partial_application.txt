@@ -421,3 +421,9 @@ That's annoying. Yeah, let's take baby steps here.
 I can't merge function values in compile.c. The arg indices change. I
 don't want to deal with that in compile.c. Better to merge in typecheck.c.
 
+We can merge in typecheck.c. It isn't hard. But first we need to unify
+function types.
+
+I think it's time to go all in on the front end with single argument function
+application and function values.
+
