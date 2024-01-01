@@ -332,3 +332,13 @@ performance improvement here, because none of the functions we allocate can
 take advantage of the over application, but we will at least exercise the code
 to make sure it works.
 
+---
+
+Tried over-application. Seems like it works okay? Though it doesn't have much
+coverage yet.
+
+Next step: implement support for partial application.
+
+How would we test partial application? We need updates to the type checker
+before we can check that, right? Well, one step at a time.
+

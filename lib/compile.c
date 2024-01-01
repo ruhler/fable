@@ -1090,12 +1090,33 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
     case FBLE_FUNC_APPLY_TC: {
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)v;
-      Local* func = CompileExpr(blocks, false, false, scope, apply_tc->func);
 
-      size_t argc = apply_tc->args.size;
+      // We merge multiple func applies into one to reduce the overhead of
+      // function calls.
+      //  e.g. f(a)(b) ==> f(a, b).
+
+      // Find the underlying function and count total number of args.
+      FbleFuncApplyTc* atc = apply_tc;
+      size_t argc = 0;
+      while (atc->_base.tag == FBLE_FUNC_APPLY_TC) {
+        argc += atc->args.size;
+        atc = (FbleFuncApplyTc*)atc->func;
+      }
+      FbleTc* func_tc = &atc->_base;
+
+      // Compile the function.
+      Local* func = CompileExpr(blocks, false, false, scope, func_tc);
+
+      // Compile the args.
       Local* args[argc];
-      for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(blocks, false, false, scope, apply_tc->args.xs[i]);
+      size_t argi = argc;
+      atc = apply_tc;
+      while (atc->_base.tag == FBLE_FUNC_APPLY_TC) {
+        argi -= atc->args.size;
+        for (size_t i = 0; i < atc->args.size; ++i) {
+          args[argi + i] = CompileExpr(blocks, false, false, scope, atc->args.xs[i]);
+        }
+        atc = (FbleFuncApplyTc*)atc->func;
       }
 
       if (exit) {
