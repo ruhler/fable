@@ -360,3 +360,24 @@ Let's see.
 There are static variables referenced. In this case type variables. We'll need
 changes in typecheck.c. Either to avoid capturing types as static variables,
 or to merge the functions there.
+
+Why does it try to capture the type in that case? The fble disassembly shows
+that static value is not used anywhere. Is this a bug?
+
+Looks like the type in this case is being used to form a struct value:
+
+(Pair@)((Bool@){ Bool@; }) { Pair@; } Map = (Pair@ p)((Bool@){ Bool@; } f) {
+  Pair@(f(p.first), f(p.second));
+};
+
+The type is Pair@. The code the handles this is misc apply. It doesn't check
+for type versus non-type. We need the variable in scope to know its type.
+
+I think we should special case type variables in typecheck.c. List them as
+variables, but when you look it up, don't mark it as used, and when you go to
+use it, generate a type literal instead.
+
+Maybe we save some performance and memory that way. We can skip definitions of
+variables. It also should let us avoid allocating a type value for poly value
+expressions.
+

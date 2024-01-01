@@ -1065,43 +1065,18 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
       FbleFuncValueInstr* instr = FbleAllocInstr(FbleFuncValueInstr, FBLE_FUNC_VALUE_INSTR);
 
-      // Merge together functions to functions into multi-argument functions
-      // to reduce overheads of function calls.
-      FbleLoc body_loc;
-      FbleVarV ftc_scope;
-      FbleNameV statics;
-      FbleNameV args; FbleInitVector(args);
-      FbleTc* body;
-      FbleFuncValueTc* ftc = func_tc;
-      do {
-        body_loc = ftc->body_loc;
-        ftc_scope = ftc->scope;
-        statics = ftc->statics;
-        for (size_t i = 0; i < ftc->args.size; ++i) {
-          FbleAppendToVector(args, ftc->args.xs[i]);
-        }
-        body = ftc->body;
-
-        if (body->tag == FBLE_FUNC_VALUE_TC) {
-          assert(ftc_scope.size == 0);
-          assert(statics.size == 0);
-        }
-        ftc = (FbleFuncValueTc*)body;
-      } while (ftc->_base.tag == FBLE_FUNC_VALUE_TC);
-
       FbleInitVector(instr->scope);
-      for (size_t i = 0; i < ftc_scope.size; ++i) {
-        Local* local = GetVar(scope, ftc_scope.xs[i]);
+      for (size_t i = 0; i < func_tc->scope.size; ++i) {
+        Local* local = GetVar(scope, func_tc->scope.xs[i]);
         FbleAppendToVector(instr->scope, local->var);
       }
 
       Scope func_scope;
-      FbleBlockId scope_block = PushBodyBlock(blocks, body_loc);
-      assert(ftc_scope.size == statics.size);
-      InitScope(&func_scope, &instr->code, args, statics, scope_block, scope);
-      FbleFreeVector(args);
+      FbleBlockId scope_block = PushBodyBlock(blocks, func_tc->body_loc);
+      assert(func_tc->scope.size == func_tc->statics.size);
+      InitScope(&func_scope, &instr->code, func_tc->args, func_tc->statics, scope_block, scope);
 
-      Local* func_result = CompileExpr(blocks, true, true, &func_scope, body);
+      Local* func_result = CompileExpr(blocks, true, true, &func_scope, func_tc->body);
       ExitBlock(blocks, &func_scope, true);
       ReleaseLocal(&func_scope, func_result, true);
       FreeScope(&func_scope);
