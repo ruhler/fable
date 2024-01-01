@@ -1582,7 +1582,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleType* pt = FbleNewPolyType(th, expr->loc, arg, body.type);
 
       // A poly value expression gets rewritten as a let when we erase types:
-      // <@ T@> ...
+      // <@ T@> { ...; }
       // turns into:
       //   let T@ = type
       //   in ...

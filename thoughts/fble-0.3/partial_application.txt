@@ -305,3 +305,30 @@ information.
 
 Sneaky idea for how to implement PartialApply: return
 FbleSentinelTailCallValue. Force the caller to tail call it.
+
+Anyway, initial draft of FbleCall seems to be working now. I want to get a
+pulse on what runtime looks like, to see if there were any noticeable
+performance regressions.
+
+fble.html generation is up to 100s. That's noticeably slower. It was like 92,
+93s before I think.
+
+Next steps:
+* Test out over application.
+* Implement PartialApply.
+* Review performance difference.
+
+Nothing obvious shows up in the performance profile. Presumably this is the
+overhead we are dealing with to check number of args against what we expect.
+I'm hoping this is a worst case performance regression. Anything else from
+here should be performance improvement by letting us avoid unnecessary
+partial applications.
+
+Let's try over-application next, to test it out.
+
+In compile.c, I think we just check for apply_tc where the function is itself
+apply_tc. Merge all the arguments into a single call. We don't expect any
+performance improvement here, because none of the functions we allocate can
+take advantage of the over application, but we will at least exercise the code
+to make sure it works.
+

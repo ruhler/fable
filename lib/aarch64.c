@@ -761,7 +761,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       GetFrameVar(fout, "x0", call_instr->func);
       fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #0]\n");
 
-      // Verify the function isn't defined.
+      // Verify the function isn't undefined.
       fprintf(fout, "  bl FbleFuncValueFunction\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
 
@@ -992,9 +992,6 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.UndefinedFunctionValue", call_instr->loc);
-
       fprintf(fout, ".Lo.%04zx.%zi.abort:\n", func_id, pc);
       DoAbort(fout, func_id, pc, ".L.CalleeAborted", call_instr->loc);
       return;
