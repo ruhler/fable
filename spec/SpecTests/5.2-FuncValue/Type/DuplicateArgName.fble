@@ -1,5 +1,11 @@
-# @@fble-test@@ compile-error 5:17
+# @@fble-test@@ no-error
 @ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
 
-# multi-arg functions must have unique argument names.
-(Unit@ x, Unit@ x) { x; };
+# multi-arg functions do not have to have unique argument names.
+# The last argument with the given name will be used to match what would
+# happen if this was written as a nested single argument function value.
+(Unit@ _x, Bool@ _x) {
+  Bool@ y = _x;
+  y;
+};

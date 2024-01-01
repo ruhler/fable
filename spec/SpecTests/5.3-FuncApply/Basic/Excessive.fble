@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 13:1
+# @@fble-test@@ no-error
 @ Unit@ = *();
 @ Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
@@ -9,5 +9,5 @@ Bool@ false = Bool@(false: Unit@());
       false: (Bool@ b) { false; });
 };
 
-# Excessive application is not allowed.
+# Excessive application is allowed.
 And(true, true).true;
