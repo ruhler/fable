@@ -20,15 +20,35 @@
 #include "tc.h"
 #include "unreachable.h"
 
-static FbleValue* PartialApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args);
+static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
+static FbleValue* PartialApplyImpl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+
 static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t argc, FbleValue** func_and_args);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
 
 
+// FbleRunFunction for PartialApply executable.
+// See documentation of FbleRunFunction in fble-execute.h
+static FbleValue* PartialApplyImpl(
+    FbleValueHeap* heap, FbleProfileThread* profile,
+    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+{
+  size_t s = function->executable->num_statics;
+  size_t a = function->executable->num_args;
+  size_t argc = s + a;
+  FbleValue* nargs[argc];
+  memcpy(nargs, function->statics + 1, s * sizeof(FbleValue*));
+  memcpy(nargs + s, args, a * sizeof(FbleValue*));
+  return FbleCall(heap, profile, function->statics[0], argc, nargs);
+}
+
 /**
  * @func[PartialApply] Partially applies a function.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][func] The function to evaluate.
+ *  @arg[FbleFunction*][function] The function to apply.
+ *  @arg[FbleValue*][func] The function value to apply.
  *  @arg[size_t][argc] Number of args to pass.
  *  @arg[FbleValue**][args] Args to pass to the function.
  *
@@ -42,10 +62,22 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
  *    Behavior is undefined if the number of arguments provided is not less
  *    than the number of arguments expected by the function.
  */
-static FbleValue* PartialApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args)
+static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
-  assert(false && "TODO: Implement me");
-  return NULL;
+  FbleExecutable* exe = FbleAlloc(FbleExecutable);
+  exe->refcount = 0;
+  exe->magic = FBLE_EXECUTABLE_MAGIC;
+  exe->num_args = function->executable->num_args - argc;
+  exe->num_statics = 1 + argc;
+  exe->tail_call_buffer_size = 2 + function->executable->num_args;
+  exe->profile_block_id = function->executable->profile_block_id;
+  exe->run = &PartialApplyImpl;
+  exe->on_free = &FbleExecutableNothingOnFree;
+
+  FbleValue* statics[1 + argc];
+  statics[0] = func;
+  memcpy(statics + 1, args, argc * sizeof(FbleValue*));
+  return FbleNewFuncValue(heap, exe, function->profile_block_offset, statics);
 }
 
 /**
@@ -84,7 +116,7 @@ static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t a
 
     FbleExecutable* executable = func->executable;
     if (argc < executable->num_args) {
-      FbleValue* partial = PartialApply(heap, func_and_args[0], argc, func_and_args + 1);
+      FbleValue* partial = PartialApply(heap, func, func_and_args[0], argc, func_and_args + 1);
       FbleReleaseValues(heap, argc+1, func_and_args);
       return partial;
     }
@@ -203,7 +235,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 
   FbleExecutable* executable = func->executable;
   if (argc < executable->num_args) {
-    return PartialApply(heap, function, argc, args);
+    return PartialApply(heap, func, function, argc, args);
   }
 
   if (profile) {
