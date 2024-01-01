@@ -416,3 +416,8 @@ reference to a type var. What to use for FbleVar? Use a special tag I guess.
 In that case, we have to make sure we don't compute the value of any type var.
 That's annoying. Yeah, let's take baby steps here.
 
+---
+
+I can't merge function values in compile.c. The arg indices change. I
+don't want to deal with that in compile.c. Better to merge in typecheck.c.
+

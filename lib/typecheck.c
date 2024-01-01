@@ -961,24 +961,15 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
       VarName name = { .normal = var_expr->var, .module = NULL };
-
-      bool istype = var_expr->var.space == FBLE_TYPE_NAME_SPACE;
-      Var* var = GetVar(th, scope, name, istype);
+      Var* var = GetVar(th, scope, name, false);
       if (var == NULL) {
         ReportError(var_expr->var.loc, "variable '%n' not defined\n", var_expr->var);
         return TC_FAILED;
       }
 
-      FbleTc* tc;
-      if (istype) {
-        FbleTypeValueTc* type_tc = FbleNewTc(FbleTypeValueTc, FBLE_TYPE_VALUE_TC, expr->loc);
-        tc = &type_tc->_base;
-      } else {
-        FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
-        var_tc->var = var->var;
-        tc = &var_tc->_base;
-      }
-      return MkTc(FbleRetainType(th, var->type), tc);
+      FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
+      var_tc->var = var->var;
+      return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
 
     case FBLE_LET_EXPR: {
