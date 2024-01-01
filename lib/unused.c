@@ -42,9 +42,7 @@ static void Expr(FbleExpr* expr, Vars* vars)
 
     case FBLE_FUNC_TYPE_EXPR: {
       FbleFuncTypeExpr* e = (FbleFuncTypeExpr*)expr;
-      for (size_t i = 0; i < e->args.size; ++i) {
-        Expr(e->args.xs[i], vars);
-      }
+      Expr(e->arg, vars);
       Expr(e->rtype, vars);
       return;
     }

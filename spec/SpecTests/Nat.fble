@@ -26,7 +26,7 @@ Unit@ Unit = Unit@();
   bits;
 };
 
-(BitS@){ *(BitS@ x, Bit@ overflow); } Decr = (BitS@ s) {
+(BitS@) { *(BitS@ x, Bit@ overflow); } Decr = (BitS@ s) {
   s.?(
      cons: {
        % d = Decr(s.cons.tail);

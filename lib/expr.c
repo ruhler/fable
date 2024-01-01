@@ -117,10 +117,7 @@ void FbleFreeExpr(FbleExpr* expr)
 
     case FBLE_FUNC_TYPE_EXPR: {
       FbleFuncTypeExpr* e = (FbleFuncTypeExpr*)expr;
-      for (size_t i = 0; i < e->args.size; ++i) {
-        FbleFreeExpr(e->args.xs[i]);
-      }
-      FbleFreeVector(e->args);
+      FbleFreeExpr(e->arg);
       FbleFreeExpr(e->rtype);
       FbleFree(expr);
       return;

@@ -810,9 +810,9 @@
    is syntactic sugar for constructing a list value and passing it as a single
    argument to a function.
   
-   The list expression can be used with any function that has a single
-   argument of list type. A list type is any type matching the structure of
-   the following type @l{L@}:
+   The list expression can be used with any function that has an argument of
+   list type. A list type is any type matching the structure of the following
+   type @l{L@}:
   
    @code[fble] @
     @ L@ = +(*(E@ head, L@ tail) cons, *() nil);
@@ -872,8 +872,8 @@
    individual letter of the literal expression's word.
   
    As with the list expression, the literal expression is used with a function
-   that has a single argument of list type. The element type of the list must
-   be a union type with fields of type @l{*()} for each letter in the word.
+   that has an argument of list type. The element type of the list must be a
+   union type with fields of type @l{*()} for each letter in the word.
   
    For example, the element type for an octal literal might look like:
   

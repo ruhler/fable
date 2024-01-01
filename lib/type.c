@@ -144,9 +144,7 @@ static void Refs(FbleHeap* heap, FbleType* type)
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        Ref(heap, type, ft->args.xs[i]);
-      }
+      Ref(heap, type, ft->arg);
       Ref(heap, type, ft->rtype);
       break;
     }
@@ -214,12 +212,7 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
       return;
     }
 
-    case FBLE_FUNC_TYPE: {
-      FbleFuncType* ft = (FbleFuncType*)type;
-      FbleFreeVector(ft->args);
-      return;
-    }
-
+    case FBLE_FUNC_TYPE: return;
     case FBLE_POLY_TYPE: return;
     case FBLE_POLY_APPLY_TYPE: return;
 
@@ -384,12 +377,7 @@ static bool HasParam_(FbleType* type, FbleType* param)
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        if (HasParam(ft->args.xs[i], param)) {
-          return true;
-        }
-      }
-      return HasParam(ft->rtype, param);
+      return HasParam(ft->arg, param) || HasParam(ft->rtype, param);
     }
 
     case FBLE_POLY_TYPE: {
@@ -492,18 +480,13 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleType* rtype = Subst(heap, ft->rtype, param, arg, tps);
 
       FbleFuncType* sft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, ft->_base.loc);
-      FbleInitVector(sft->args);
+      sft->arg = Subst(heap, ft->arg, param, arg, tps);
+      FbleTypeAddRef(heap, &sft->_base, sft->arg);
+      FbleReleaseType(heap, sft->arg);
+
       sft->rtype = rtype;
       FbleTypeAddRef(heap, &sft->_base, sft->rtype);
       FbleReleaseType(heap, sft->rtype);
-
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        FbleType* farg = Subst(heap, ft->args.xs[i], param, arg, tps);
-        FbleAppendToVector(sft->args, farg);
-        FbleTypeAddRef(heap, &sft->_base, farg);
-        FbleReleaseType(heap, farg);
-      }
-
       return &sft->_base;
     }
 
@@ -716,21 +699,10 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
     case FBLE_FUNC_TYPE: {
       FbleFuncType* fta = (FbleFuncType*)a;
       FbleFuncType* ftb = (FbleFuncType*)b;
-      if (fta->args.size != ftb->args.size) {
-        FbleReleaseType(heap, a);
-        FbleReleaseType(heap, b);
-        return false;
-      }
 
-      for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!TypesEqual(heap, vars, fta->args.xs[i], ftb->args.xs[i], &neq)) {
-          FbleReleaseType(heap, a);
-          FbleReleaseType(heap, b);
-          return false;
-        }
-      }
+      bool result = TypesEqual(heap, vars, fta->arg, ftb->arg, &neq)
+        && TypesEqual(heap, vars, fta->rtype, ftb->rtype, &neq);
 
-      bool result = TypesEqual(heap, vars, fta->rtype, ftb->rtype, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -1216,16 +1188,16 @@ void FblePrintType(FbleType* type)
     }
 
     case FBLE_FUNC_TYPE: {
-      FbleFuncType* ft = (FbleFuncType*)type;
-      fprintf(stderr, "(");
-      const char* comma = "";
-      for (size_t i = 0; i < ft->args.size; ++i) {
-        fprintf(stderr, "%s", comma);
-        FblePrintType(ft->args.xs[i]);
-        comma = ", ";
+      const char* prefix = "(";
+      while (type->tag == FBLE_FUNC_TYPE) {
+        FbleFuncType* ft = (FbleFuncType*)type;
+        fprintf(stderr, "%s", prefix);
+        FblePrintType(ft->arg);
+        prefix = ", ";
+        type = ft->rtype;
       }
       fprintf(stderr, ") { ");
-      FblePrintType(ft->rtype);
+      FblePrintType(type);
       fprintf(stderr, "; }");
       return;
     }

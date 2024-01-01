@@ -158,7 +158,7 @@ typedef struct {
  */
 typedef struct {
   FbleTypeExpr _base;     /**< FbleExpr base class. */
-  FbleTypeExprV args;     /**< Argument types. */
+  FbleTypeExpr* arg;      /**< Argument type. */
   FbleTypeExpr* rtype;    /**< Return type. */
 } FbleFuncTypeExpr;
 

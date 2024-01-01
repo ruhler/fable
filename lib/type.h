@@ -78,7 +78,7 @@ typedef struct {
 /** A function type. */
 typedef struct {
   FbleType _base;     /**< FbleType base class. */
-  FbleTypeV args;     /**< Argument types. */
+  FbleType* arg;      /**< Argument type. */
   FbleType* rtype;    /**< Return type. */
 } FbleFuncType;
 

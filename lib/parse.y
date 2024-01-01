@@ -484,12 +484,17 @@ block:
       $$ = $2;
    }
  | '(' expr_p ')' block {
-      FbleFuncTypeExpr* func_type = FbleAlloc(FbleFuncTypeExpr);
-      func_type->_base.tag = FBLE_FUNC_TYPE_EXPR;
-      func_type->_base.loc = FbleCopyLoc(@$);
-      func_type->args = $2;
-      func_type->rtype = $4;
-      $$ = &func_type->_base;
+      FbleExpr* expr = $4;
+      for (size_t i = 0; i < $2.size; ++i) {
+        FbleFuncTypeExpr* func_type = FbleAlloc(FbleFuncTypeExpr);
+        func_type->_base.tag = FBLE_FUNC_TYPE_EXPR;
+        func_type->_base.loc = FbleCopyLoc(@$);
+        func_type->arg = $2.xs[$2.size - 1 - i];
+        func_type->rtype = expr;
+        expr = &func_type->_base;
+      }
+      FbleFreeVector($2);
+      $$ = expr;
    }
  | '(' tagged_type_p ')' block {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
