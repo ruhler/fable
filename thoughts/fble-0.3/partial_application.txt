@@ -342,3 +342,21 @@ Next step: implement support for partial application.
 How would we test partial application? We need updates to the type checker
 before we can check that, right? Well, one step at a time.
 
+---
+
+The implementation is all there in theory. We support partial and over
+application. Next step is to update the language spec and type checker and
+compiler.
+
+My vision is for there to only be single application and single argument
+functions at the FbleExpr* and Tc* levels. It's in compile.c that we convert
+to multiarg functions and calls.
+
+Looking at FbleFuncValueTc, it might be easier to merge function values in
+typecheck.c to avoid duplicating static variables? No. If the body of a
+function is a func value, then there should be no static variables referenced.
+Let's see.
+
+There are static variables referenced. In this case type variables. We'll need
+changes in typecheck.c. Either to avoid capturing types as static variables,
+or to merge the functions there.
