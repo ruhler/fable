@@ -164,10 +164,11 @@ static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t a
       memcpy(func_and_args + 1 + argc, unused, num_unused * sizeof(FbleValue*));
       argc += num_unused;
     } else if (num_unused > 0) {
-      // Make the result be the new func for the unused args.
-      func_and_args = unused - 1;
-      func_and_args[0] = result;
-      argc = num_unused;
+      FbleValue* new_func = result;
+      result = FbleCall(heap, profile, new_func, num_unused, unused);
+      FbleReleaseValue(heap, new_func);
+      FbleReleaseValues(heap, num_unused, unused);
+      return result;
     } else {
       return result;
     }
@@ -248,16 +249,9 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   FbleValue* tail_call_buffer[executable->tail_call_buffer_size + 1 + num_unused];
   FbleValue* result = executable->run(heap, profile, tail_call_buffer, func, args);
 
-  if (num_unused > 0 && result != FbleTailCallSentinelValue) {
-    // If not all args were used, treat that like we need to do a tail call.
-    tail_call_buffer[0] = result;
-    tail_call_buffer[1] = NULL;
-    result = FbleTailCallSentinelValue;
-  }
-
   if (result == FbleTailCallSentinelValue) {
     // Find how many tail call args there are.
-    argc = 0;
+    argc = 1;
     while (tail_call_buffer[1 + argc] != NULL) {
       argc++;
     }
@@ -273,6 +267,10 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
     // Use Call to finish up now that we have ownership of the func and
     // remaining args.
     result = Call(heap, profile, argc, tail_call_buffer);
+  } else if (num_unused > 0) {
+    FbleValue* new_func = result;
+    result = FbleCall(heap, profile, new_func, num_unused, unused);
+    FbleReleaseValue(heap, new_func);
   }
 
   if (profile != NULL) {
