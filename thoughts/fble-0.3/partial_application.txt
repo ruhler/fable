@@ -381,3 +381,38 @@ Maybe we save some performance and memory that way. We can skip definitions of
 variables. It also should let us avoid allocating a type value for poly value
 expressions.
 
+What about function arguments that are types? That's allowed, right? I have a
+spec test for that.
+
+---
+
+Here's a proposal for how to update typecheck.c
+
+When looking for a var, we always check locals, then args, then statics. I
+vote we add an additional category 'types'. If it's a type variable, always
+look in 'types'. 'types' don't have locals associated with them.
+
+Hmm... Maybe I'm trying to do too much at once.
+
+Perhaps the first step is:
+
+If GetVar is called on a type variable, consider it a phantom variable lookup
+and return a type instruction instead. This should hopefully eliminate the
+type in statics and let us merge multiarg func values at compile time.
+
+Type variables would still take up space at runtime. A later step would be ...
+
+I wish there was a way to represent 'type var' in FbleVar. But I want that
+only for typecheck.
+
+The general proposal would be:
+* VAR_EXPR turns onto TYPE_VALUE_TC for all types.
+* Treat type vars as always not used. (they don't show up in statics).
+* Avoid allocating slots for type vars. (they don't show up in locals).
+
+Really what I want is a way to sanity check I'm not accidentally making a
+reference to a type var. What to use for FbleVar? Use a special tag I guess.
+
+In that case, we have to make sure we don't compute the value of any type var.
+That's annoying. Yeah, let's take baby steps here.
+
