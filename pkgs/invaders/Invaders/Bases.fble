@@ -154,14 +154,10 @@ BulletHit = (Int@ x, Int@ y, Bases@ bases) {
 
 # Draw --
 #   Draw the bases.
-(Bases@) { Drawing@; } Draw = {
-  % ForEach = /Core/Map%.ForEach<Int@, Slice@, Drawing@>;
-
-  (Bases@ bases) {
-    ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
-      Over(d, Rect(x, s.min, 1, Sub(s.max, s.min), Color.Green));
-    });
-  };
+(Bases@) { Drawing@; } Draw = (Bases@ bases) {
+  /Core/Map%.ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
+    Over(d, Rect(x, s.min, 1, Sub(s.max, s.min), Color.Green));
+  });
 };
 
 @(Bases@, HitResult@, Initial, BombHit, BulletHit, Draw);

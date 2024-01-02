@@ -14,7 +14,7 @@
 <@>% List = /Core/List%.List;
 <@>% Init = /Core/List%.Init;
 <@>% Cons = /Core/List%.Cons;
-<@,@>% ForEach = /Core/List%.ForEach;
+<@>% ForEach = /Core/List%.ForEach;
 
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;

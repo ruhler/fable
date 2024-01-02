@@ -5,7 +5,7 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List ;
 <@>% Concat = /Core/List%.Concat;
-<@,@>% Map = /Core/List%.Map;
+<@>% Map = /Core/List%.Map;
 
 # A literal spec for a list of binary digits.
 (List@<Bit@>) { List@<Bit@>; } BitStr = List<Bit@>;

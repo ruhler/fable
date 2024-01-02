@@ -15,7 +15,7 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
-<@,@>% DoWhile = /Core/Maybe%.DoWhile;
+<@>% DoWhile = /Core/Maybe%.DoWhile;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

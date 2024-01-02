@@ -14,7 +14,7 @@
   % InsertWith = /Core/Map%.InsertWith(OrdId)<T@>;
   % Lookup = /Core/Map%.Lookup(OrdId)<T@>;
   % Delete = /Core/Map%.Delete(OrdId)<T@>;
-  <@>% ForEach = /Core/Map%.ForEach<Id@, T@>;
+  % ForEach = /Core/Map%.ForEach<Id@, T@>;
 
   % Show = (Show@<T@> show) {
     /Core/Map/Show%.Show(/Core/Int/Show%.Show, show);
@@ -29,7 +29,7 @@
   % IsEmpty = /Core/Set%.IsEmpty<Id@>;
   % Insert = /Core/Set%.Insert(OrdId);
   % Delete = /Core/Set%.Delete(OrdId);
-  <@>% ForEach = /Core/Set%.ForEach<Id@>;
+  % ForEach = /Core/Set%.ForEach<Id@>;
   % Show = /Core/Set/Show%.Show(/Core/Int/Show%.Show);
 
   @(Set@, Empty, IsEmpty, Insert, Delete, ForEach, Show);

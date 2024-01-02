@@ -5,7 +5,7 @@
 <@>@ Overflow@ = /Md5/Bits/Bits%.Overflow@;
 
 
-<@ X@, @ Y@>(Bits@<X@> X, Bits@<Y@> Y) {
+<@ X@>(Bits@<X@> X)<@ Y@>(Bits@<Y@> Y) {
 
   @ BitXY@ = *(X@ hi, Y@ lo);
 

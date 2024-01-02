@@ -8,7 +8,7 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing; 
-<@,@>% DoWhile = /Core/Maybe%.DoWhile; 
+<@>% DoWhile = /Core/Maybe%.DoWhile; 
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -74,8 +74,8 @@ BoxIndex@ B3 = BoxIndex@(3: Unit);
 
 # Set the value of a single element of an array.
 #   a[s] = x
-<@ T@>(Symbol@, T@, Array@<T@>) { Array@<T@>; }
-Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) {
+(Symbol@)<@ T@>(T@, Array@<T@>) { Array@<T@>; }
+Set = (Symbol@ s)<@ T@>(T@ x, Array@<T@> a) {
   T@ a1 = s.?(1: x, : a(1));
   T@ a2 = s.?(2: x, : a(2));
   T@ a3 = s.?(3: x, : a(3));
@@ -93,8 +93,8 @@ Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) {
   };
 };
 
-<@ T@>(Symbol@, Symbol@, T@, Array@<Array@<T@>>) { Array@<Array@<T@>>; }
-Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
+(Symbol@, Symbol@)<@ T@>(T@, Array@<Array@<T@>>) { Array@<Array@<T@>>; }
+Set2D = (Symbol@ a, Symbol@ b)<@ T@>(T@ x, Array@<Array@<T@>> array) {
   Set(a, Set(b, x, array(a)), array);
 };
 

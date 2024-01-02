@@ -78,7 +78,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 <@>% Lookup = /Core/Map%.Lookup<Bit2@>(OrdBit2);
 <@>% Insert = /Core/Map%.Insert<Bit2@>(OrdBit2);
 <@>% Delete = /Core/Map%.Delete<Bit2@>(OrdBit2);
-<@,@>% ForEach = /Core/Map%.ForEach<Bit2@>;
+<@>% ForEach = /Core/Map%.ForEach<Bit2@>;
 <@>% Union = /Core/Map%.Union<Bit2@>(OrdBit2);
 
 Test@ Tests = TestSuite(Str|Map, List<Test@>[
@@ -147,11 +147,11 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     # to be in the order B, A.
     @ Entry@ = *(Bit2@ key, Bool@ value);
     List@<Entry@> wnt = List[Entry@(B, False), Entry@(A, True)];
-    List@<Entry@> got = ForEach<Bool@, List@<Entry@>>(map, Nil<Entry@>,
+    List@<Entry@> got = ForEach(map, Nil<Entry@>,
       (Bit2@ k, Bool@ v, List@<Entry@> l) {
         Cons(Entry@(k, v), l);
       });
-    AssertEquals<List@<Entry@>>(
+    AssertEquals(
       /Core/List/Eq%.Eq((Entry@ a, Entry@ b) {
         And(EqBit2(a.key, b.key), /Core/Bool/Eq%.Eq(a.value, b.value));
       }),

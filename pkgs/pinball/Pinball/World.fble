@@ -61,7 +61,7 @@ Num@ '1/2' = Div(1, Int|2);
     /Pinball/Ball%.Move(w.ball, event.time);
   };
 
-  List@<Paddle@> paddles = /Core/List%.Map<Paddle@, Paddle@>(w.paddles, (Paddle@ p) {
+  List@<Paddle@> paddles = /Core/List%.Map(w.paddles, (Paddle@ p) {
     /Pinball/Paddle%.Move(p, event.time);
   });
 

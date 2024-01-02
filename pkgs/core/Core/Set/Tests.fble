@@ -75,7 +75,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 % Contains = /Core/Set%.Contains(OrdBit2);
 % Insert = /Core/Set%.Insert(OrdBit2);
 % Delete = /Core/Set%.Delete(OrdBit2);
-<@>% ForEach = /Core/Set%.ForEach<Bit2@>;
+% ForEach = /Core/Set%.ForEach<Bit2@>;
 
 Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {

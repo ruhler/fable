@@ -46,8 +46,8 @@ IterM@ End = <@ T@> { IterM@<T@>(end: Unit); };
 #   for x in iter:
 #     b = body(x, b)
 #   return b
-<@ I@, @ B@>(Iter@<I@>, B@, (I@, B@) { B@; }) { B@; }
-For = <@ I@, @ B@>(Iter@<I@> iter, B@ base, (I@, B@) { B@; } body) {
+<@ I@>(Iter@<I@>)<@ B@>(B@, (I@, B@) { B@; }) { B@; }
+For = <@ I@>(Iter@<I@> iter)<@ B@>(B@ base, (I@, B@) { B@; } body) {
   IterM@<I@> m = iter(Unit);
   m.?(end: base);
   For(m.has.next, body(m.has.value, base), body);

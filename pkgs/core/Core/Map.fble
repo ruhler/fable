@@ -154,7 +154,7 @@ Delete = _@.<@<Delete>>(Map.Delete);
 #   foreach (k, v) in map:
 #     b = body(k, v, b)
 #   return b
-<@ K@, @ V@, @ B@>(Map@<K@, V@>, B@, (K@, V@, B@) { B@; }) { B@; }
+<@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; }
 ForEach = _@.<@<ForEach>>(Map.ForEach);
 
 # Union --
@@ -163,10 +163,9 @@ ForEach = _@.<@<ForEach>>(Map.ForEach);
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, Map@<K@, V@>) { Map@<K@, V@>; }
 Union = <@ K@>(Ord@<K@> ord)<@ V@> {
   % insert = Insert<K@>(ord)<V@>;
-  % foreach = ForEach<K@, V@, Map@<K@, V@>>;
 
   (Map@<K@, V@> a, Map@<K@, V@> b) {
-    foreach(b, a, (K@ k, V@ v, Map@<K@, V@> m) {
+    ForEach(b, a, (K@ k, V@ v, Map@<K@, V@> m) {
       insert(m, k, v);
     });
   };

@@ -105,8 +105,8 @@ List@ Nil = <@ T@> {
 #   foreach x in list:
 #     b = body(x, b)
 #   return b
-<@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@; }) { B@; }
-ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
+<@ A@>(List@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+ForEach = <@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body) {
   list.?(nil: base);
   ForEach(list.cons.tail, body(list.cons.head, base), body);
 };
@@ -129,8 +129,8 @@ ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
 #
 # Result:
 #   A list of elements f(a_i) for each a_i in the input list.
-<@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
-Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
+<@ A@>(List@<A@>)<@ B@>((A@) { B@; }) { List@<B@>; }
+Map = <@ A@>(List@<A@> a)<@ B@>((A@) { B@; } f) {
   a.?(nil: Nil<B@>);
   Cons(f(a.cons.head), Map(a.cons.tail, f));
 };

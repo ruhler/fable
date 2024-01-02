@@ -5,7 +5,7 @@
 <@>% Reverse = /Core/List%.Reverse;
 
 <@>@ Set@ = /Core/Set%.Set@;
-<@,@>% ForEach = /Core/Set%.ForEach;
+<@>% ForEach = /Core/Set%.ForEach;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

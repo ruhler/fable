@@ -18,7 +18,7 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
-<@,@>% ForEach = /Core/List%.ForEach;
+<@>% ForEach = /Core/List%.ForEach;
 <@>% Length = /Core/List/Length%.Length;
 
 % Bases = /Invaders/Bases%;

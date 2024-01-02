@@ -17,7 +17,7 @@
 <@>% Append = /Core/List%.Append;
 <@>% Last = /Core/List%.Last;
 <@>% Init = /Core/List%.Init;
-<@,@>% ForEach = /Core/List%.ForEach;
+<@>% ForEach = /Core/List%.ForEach;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

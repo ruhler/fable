@@ -65,8 +65,8 @@ Memory@ Empty = /Core/Map%.Empty<Coord@, Data@>;
 #   foreach (coord, data) in memory:
 #     b = body(k, coord, data)
 #   return b
-<@ B@>(Memory@, B@, (Coord@, Data@, B@) { B@; }) { B@; }
-ForEach = <@ B@> { /Core/Map%.ForEach<Coord@, Data@, B@>; };
+(Memory@)<@ B@>(B@, (Coord@, Data@, B@) { B@; }) { B@; }
+ForEach = /Core/Map%.ForEach<Coord@, Data@>;
 
 # Cell@ --
 #   Describes the data value at a particular location in memory.

@@ -8,7 +8,7 @@
 @ Hex@ = /Core/Digits%.Hex@;
 
 <@>% List = /Core/List%.List;
-<@,@>% ForEach = /Core/List%.ForEach;
+<@>% ForEach = /Core/List%.ForEach;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

@@ -29,8 +29,8 @@
 <@>% Append = /Core/List%.Append;
 <@>% Init = /Core/List%.Init;
 <@>% Concat = /Core/List%.Concat;
-<@,@>% Map = /Core/List%.Map;
-<@,@>% ForEach = /Core/List%.ForEach;
+<@>% Map = /Core/List%.Map;
+<@>% ForEach = /Core/List%.ForEach;
 <@>% Reverse = /Core/List%.Reverse;
 
 <@>% Length = /Core/List/Length%.Length;

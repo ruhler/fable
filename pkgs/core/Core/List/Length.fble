@@ -14,7 +14,8 @@
 #   Remove the first n elements from the list.
 #
 # Returns an empty list if there are less than n elements on the list.
-<@ T@>(Int@, List@<T@>) { List@<T@>; } Drop = <@ T@>(Int@ n, List@<T@> l) {
+(Int@)<@ T@>(List@<T@>) { List@<T@>; }
+Drop = (Int@ n)<@ T@>(List@<T@> l) {
   Le(n, 0).?(true: l);
   l.?(nil: l);
   Drop(Decr(n), l.cons.tail);
@@ -24,7 +25,8 @@
 #   Returns the first n elements on the list.
 #
 # Returns fewer than n elements if there are less than n elements on the list.
-<@ T@>(Int@, List@<T@>) { List@<T@>; } Take = <@ T@>(Int@ n, List@<T@> l) {
+(Int@)<@ T@>(List@<T@>) { List@<T@>; }
+Take = (Int@ n)<@ T@>(List@<T@> l) {
   Le(n, 0).?(true: Nil<T@>);
   l.?(nil: Nil<T@>);
   Cons(l.cons.head, Take(Decr(n), l.cons.tail));

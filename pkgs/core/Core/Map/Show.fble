@@ -5,7 +5,7 @@
 <@>% Reverse = /Core/List%.Reverse;
 
 <@,@>@ Map@ = /Core/Map%.Map@;
-<@,@,@>% ForEach = /Core/Map%.ForEach;
+<@,@>% ForEach = /Core/Map%.ForEach;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
@@ -21,8 +21,8 @@
 #   { a => b; }
 #   { a => b; c => d; }
 #
-<@ K@, @ V@>(Show@<K@>, Show@<V@>) { Show@<Map@<K@, V@>>; }
-Show = <@ K@, @ V@>(Show@<K@> show_key, Show@<V@> show_value)(Map@<K@, V@> m) {
+<@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
+Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value)(Map@<K@, V@> m) {
   List@<String@> elems = ForEach(m, List[Str|'{ '],
     (K@ k, V@ v, List@<String@> es) {
       Cons(Strs[show_key(k), Str|' => ', show_value(v), Str|'; '], es);

@@ -13,7 +13,7 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
-<@,@>% Map = /Core/List%.Map;
+<@>% Map = /Core/List%.Map;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

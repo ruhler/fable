@@ -122,8 +122,8 @@ Delete = <@ T@>(Ord@<T@> ord) {
 #   foreach x in map:
 #     b = body(x, b)
 #   return b
-<@ T@, @ B@>(Set@<T@>, B@, (T@, B@) { B@; }) { B@; }
-ForEach = <@ T@, @ B@>(Set@<T@> set, B@ base, (T@, B@) { B@; } body) {
+<@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; }
+ForEach = <@ T@>(Set@<T@> set)<@ B@>(B@ base, (T@, B@) { B@; } body) {
   /Core/Map%.ForEach(set, base, (T@ x, Unit@ _, B@ b) { body(x, b); });
 };
 

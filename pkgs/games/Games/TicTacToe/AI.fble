@@ -1,12 +1,12 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@,@>% ForEach = /Core/List%.ForEach;
+<@>% ForEach = /Core/List%.ForEach;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
-<@,@>% DoWhile = /Core/Maybe%.DoWhile;
+<@>% DoWhile = /Core/Maybe%.DoWhile;
 
 % Lt = /Core/Ord%.Lt;
 % Eq = /Core/Ord%.Eq;

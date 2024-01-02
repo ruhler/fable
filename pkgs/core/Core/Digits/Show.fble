@@ -3,7 +3,7 @@
 @ Hex@ = /Core/Digits%.Hex@;
 
 <@>@ List@ = /Core/List%.List@;
-<@,@>% Map = /Core/List%.Map;
+<@>% Map = /Core/List%.Map;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

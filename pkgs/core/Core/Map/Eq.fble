@@ -15,7 +15,7 @@
 <@,@>@ Map@ = /Core/Map%.Map@;
 @ _@ = /Core/Map%._@;
 <@,@>@ Entry@ = /Core/Map%.Entry@;
-<@,@,@>% ForEach = /Core/Map%.ForEach;
+<@,@>% ForEach = /Core/Map%.ForEach;
 
 
 # IsEmpty --
@@ -34,23 +34,25 @@
   _@.<Map.Map@<K@, V@>>(map).?(empty: True, map: False);
 };
 
-<@ K@, @ V@>(Eq@<K@>, Eq@<V@>) { Eq@<Entry@<K@, V@>>; }
-EqEntry = <@ K@, @ V@>(Eq@<K@> keq, Eq@<V@> veq)(Entry@<K@, V@> a, Entry@<K@, V@> b) {
+<@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>) { Eq@<Entry@<K@, V@>>; }
+EqEntry = <@ K@>(Eq@<K@> keq)<@ V@>(Eq@<V@> veq)(Entry@<K@, V@> a, Entry@<K@, V@> b) {
   And(keq(a.key, b.key), veq(a.value, b.value));
 };
 
 # Eq --
 #   Implementation of Eq@ for Map@. See documentation of /Eq%.Eq@.
-<@ K@, @ V@>(Eq@<K@>, Eq@<V@>) { Eq@<Map@<K@, V@>>; }
-Eq = <@ K@, @ V@>(Eq@<K@> keq, Eq@<V@> veq)(Map@<K@, V@> a, Map@<K@, V@> b) {
-  List@<Entry@<K@, V@>> aes = ForEach<K@, V@, List@<Entry@<K@, V@>>>(a,
-    Nil<Entry@<K@, V@>>, (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
-      Cons(Entry@<K@, V@>(k, v), b);
-  });
-  List@<Entry@<K@, V@>> bes = ForEach<K@, V@, List@<Entry@<K@, V@>>>(b,
-    Nil<Entry@<K@, V@>>, (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
-      Cons(Entry@<K@, V@>(k, v), b);
-  });
+<@ K@>(Eq@<K@>)<@ V@>(Eq@<V@>) { Eq@<Map@<K@, V@>>; }
+Eq = <@ K@>(Eq@<K@> keq)<@ V@>(Eq@<V@> veq)(Map@<K@, V@> a, Map@<K@, V@> b) {
+  List@<Entry@<K@, V@>> aes = ForEach(a, Nil<Entry@<K@, V@>>,
+    (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
+      Cons(Entry@(k, v), b);
+    });
+
+  List@<Entry@<K@, V@>> bes = ForEach(b, Nil<Entry@<K@, V@>>,
+    (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
+      Cons(Entry@(k, v), b);
+    });
+
   /Core/List/Eq%.Eq(EqEntry(keq, veq))(aes, bes);
 };
 

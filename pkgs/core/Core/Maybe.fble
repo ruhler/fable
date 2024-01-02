@@ -78,8 +78,8 @@ Do = <@ A@>(Maybe@<A@> m)<@ B@>((A@) { Maybe@<B@>; } f) {
 #   next - Compute the next index value from the current index value.
 #   base - The initial loop state.
 #   body - The body of the loop.
-<@ I@, @ B@>(Maybe@<I@>, (I@) { Maybe@<I@>; }, B@, (I@, B@) { B@; }) { B@; }
-For = <@ I@, @ B@>(Maybe@<I@> mi, (I@) { Maybe@<I@>; } next, B@ base, (I@, B@) { B@; } body) {
+<@ I@>(Maybe@<I@>, (I@) { Maybe@<I@>; })<@ B@>(B@, (I@, B@) { B@; }) { B@; }
+For = <@ I@>(Maybe@<I@> mi, (I@) { Maybe@<I@>; } next)<@ B@>(B@ base, (I@, B@) { B@; } body) {
   mi.?(nothing: base);
   For(next(mi.just), next, body(mi.just, base), body);
 };
@@ -97,8 +97,8 @@ For = <@ I@, @ B@>(Maybe@<I@> mi, (I@) { Maybe@<I@>; } next, B@ base, (I@, B@) {
 #   next - Compute the next index value from the current index value.
 #   base - The initial loop state.
 #   body - The body of the loop.
-<@ I@, @ B@>(I@, (I@) { Maybe@<I@>; }, B@, (I@, B@) { B@; }) { B@; }
-DoWhile = <@ I@, @ B@>(I@ i, (I@) { Maybe@<I@>; } next, B@ base, (I@, B@) { B@; } body) {
+<@ I@>(I@, (I@) { Maybe@<I@>; })<@ B@>(B@, (I@, B@) { B@; }) { B@; }
+DoWhile = <@ I@>(I@ i, (I@) { Maybe@<I@>; } next)<@ B@>(B@ base, (I@, B@) { B@; } body) {
   For(Just(i), next, base, body);
 };
 

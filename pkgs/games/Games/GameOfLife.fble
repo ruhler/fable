@@ -16,7 +16,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@,@>% ForEach = /Core/List%.ForEach;
+<@>% ForEach = /Core/List%.ForEach;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -118,7 +118,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
         Coord@(Incr(coord.row),     coord.col ),
         Coord@(Incr(coord.row), Incr(coord.col))];
 
-      ForEach<Coord@, Cand@>(neighbors, cand_alive, (Coord@ n, Cand@ c) {
+      ForEach(neighbors, cand_alive, (Coord@ n, Cand@ c) {
         C.InsertWith(c, n, (Maybe@<Status@> ms) {
           ms.?(just: Status@(ms.just.alive, IncCount(ms.just.neighbors)),
                nothing: Status@(False, Count@(1: Unit)));
@@ -128,7 +128,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
   );
 
   # 2. Filter live cells from the map.
-  C.ForEach<World@>(candidates, W.Empty,
+  C.ForEach(candidates, W.Empty,
     (Coord@ coord, Status@ status, World@ w_in) {
     Lives(status).?(false: w_in);
     W.Insert(w_in, coord);

@@ -121,8 +121,8 @@
 #   foreach (coord, rule) in placed:
 #     b = body(coord, rule, b)
 #   return b
-<@ B@>(Placed@, B@, (Coord@, Rule@, B@) { B@; }) { B@; }
-ForEachRulePlaced = <@ B@>(Placed@ placed, B@ base, (Coord@, Rule@, B@) { B@; } body) {
+(Placed@)<@ B@>(B@, (Coord@, Rule@, B@) { B@; }) { B@; }
+ForEachRulePlaced = (Placed@ placed)<@ B@>(B@ base, (Coord@, Rule@, B@) { B@; } body) {
   placed.design.?(
     rule: body(placed.coord, placed.design.rule, base),
     designs: {

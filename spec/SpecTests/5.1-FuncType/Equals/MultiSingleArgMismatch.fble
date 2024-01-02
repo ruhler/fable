@@ -7,6 +7,6 @@ Bool@ true = Bool@(true: Unit@());
 # corresponding nested single argument function type.
 @ A@ = (Unit@, Bool@) { Bool@; };
 @ B@ = (Unit@) { (Bool@) { Bool@;}; };
-A@ a = (Unit@ x, Bool@ y) { true; };
+A@ a = (Unit@ _x, Bool@ _y) { true; };
 B@ b = a;
 b;

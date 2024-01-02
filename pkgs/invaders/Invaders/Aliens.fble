@@ -47,8 +47,8 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
-<@,@>% DoWhile = /Core/Maybe%.DoWhile;
-<@,@>% For = /Core/Maybe%.For;
+<@>% DoWhile = /Core/Maybe%.DoWhile;
+<@>% For = /Core/Maybe%.For;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -122,7 +122,7 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 #   The set of all aliens.
 Set@ AllAliens = {
   % Insert = /Core/Map%.Insert<Alien@>(AlienOrd)<Unit@>;
-  DoWhile<Alien@, Set@>(FirstAlien, Next, /Core/Map%.Empty<Alien@, Unit@>, 
+  DoWhile(FirstAlien, Next, /Core/Map%.Empty<Alien@, Unit@>, 
     (Alien@ a, Set@ s) {
       Insert(s, a, Unit);
     });
@@ -492,12 +492,12 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
 # Draw --
 #   Make a drawing of the aliens in their current location.
 (Aliens@) { Drawing@; } Draw = (Aliens@ as) {
-  Drawing@ dying = /Core/List%.ForEach<Dying@, Drawing@>(as.dying, Blank,
+  Drawing@ dying = /Core/List%.ForEach(as.dying, Blank,
     (Dying@ dy, Drawing@ d) {
       Over(d, Translate(dy.x, dy.y, DeadAlien));
     });
      
-  For<Alien@, Drawing@>(
+  For(
     FirstAlive(as.alive),
     (Alien@ a) { NextAlive(as.alive, a); },
     dying,

@@ -170,7 +170,7 @@ World@ Initial = World@(
 };
 
 Drawing@ Background = {
-  /Core/List%.ForEach<Edge@, Drawing@>(Initial.edges, Blank, (Edge@ e, Drawing@ d) {
+  /Core/List%.ForEach(Initial.edges, Blank, (Edge@ e, Drawing@ d) {
     Over(d, DrawEdge(e));
   });
 };

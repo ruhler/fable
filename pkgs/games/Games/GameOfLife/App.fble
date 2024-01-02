@@ -47,7 +47,7 @@
 @ World@ = /Games/GameOfLife%.World@;
 @ Coord@ = /Games/GameOfLife%.Coord@;
 % World = /Games/GameOfLife%.World;
-<@>% ForWorld = /Games/GameOfLife%.ForWorld;
+% ForWorld = /Games/GameOfLife%.ForWorld;
 % Step = /Games/GameOfLife%.Step;
 
 
@@ -79,7 +79,7 @@ World@ acorn = World(List<Coord@>[
          Sub(Width, Int|2), Sub(Height, Int|2), Color.Black));
     
   # 2. For each live cell in range, draw a green unit square.
-  ForWorld<Drawing@>(w, clear, (Coord@ coord, Drawing@ d) {
+  ForWorld(w, clear, (Coord@ coord, Drawing@ d) {
     Int@ r = coord.row;
     Int@ c = coord.col;
     And(And(Lt(YMin, r), Lt(XMin, c)),
