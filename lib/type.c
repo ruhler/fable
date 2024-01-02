@@ -477,15 +477,16 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
 
+      FbleType* sarg = Subst(heap, ft->arg, param, arg, tps);
       FbleType* rtype = Subst(heap, ft->rtype, param, arg, tps);
 
       FbleFuncType* sft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, ft->_base.loc);
-      sft->arg = Subst(heap, ft->arg, param, arg, tps);
-      FbleTypeAddRef(heap, &sft->_base, sft->arg);
-      FbleReleaseType(heap, sft->arg);
-
+      sft->arg = sarg;
       sft->rtype = rtype;
+      FbleTypeAddRef(heap, &sft->_base, sft->arg);
       FbleTypeAddRef(heap, &sft->_base, sft->rtype);
+
+      FbleReleaseType(heap, sft->arg);
       FbleReleaseType(heap, sft->rtype);
       return &sft->_base;
     }
