@@ -1099,7 +1099,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleFuncApplyTc* atc = apply_tc;
       size_t argc = 0;
       while (atc->_base.tag == FBLE_FUNC_APPLY_TC) {
-        argc += atc->args.size;
+        argc++;
         atc = (FbleFuncApplyTc*)atc->func;
       }
       FbleTc* func_tc = &atc->_base;
@@ -1112,10 +1112,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       size_t argi = argc;
       atc = apply_tc;
       while (atc->_base.tag == FBLE_FUNC_APPLY_TC) {
-        argi -= atc->args.size;
-        for (size_t i = 0; i < atc->args.size; ++i) {
-          args[argi + i] = CompileExpr(blocks, false, false, scope, atc->args.xs[i]);
-        }
+        args[--argi] = CompileExpr(blocks, false, false, scope, atc->arg);
         atc = (FbleFuncApplyTc*)atc->func;
       }
 

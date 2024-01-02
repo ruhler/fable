@@ -215,7 +215,7 @@ typedef struct {
 typedef struct {
   FbleTc _base;       /**< FbleTc base class. */
   FbleTc* func;       /**< The function to apply. */
-  FbleTcV args;       /**< Arguments to function to apply. */
+  FbleTc* arg;        /**< Argument to function to apply. */
 } FbleFuncApplyTc;
 
 /**

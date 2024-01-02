@@ -1684,8 +1684,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
       apply->func = FbleCopyTc(poly.tc);
-      FbleInitVector(apply->args);
-      FbleAppendToVector(apply->args, &list_tc->_base);
+      apply->arg = &list_tc->_base;
       return MkTc(result_type, &apply->_base);
     }
 
@@ -1780,8 +1779,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
       apply->func = FbleCopyTc(func.tc);
-      FbleInitVector(apply->args);
-      FbleAppendToVector(apply->args, &literal_tc->_base);
+      apply->arg = &literal_tc->_base;
       return MkTc(result_type, &apply->_base);
     }
 
@@ -2032,8 +2030,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
           FbleFuncApplyTc* apply_tc = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
           apply_tc->func = FbleCopyTc(poly.tc);
-          FbleInitVector(apply_tc->args);
-          FbleAppendToVector(apply_tc->args, FbleCopyTc(args[i].tc));
+          apply_tc->arg = FbleCopyTc(args[i].tc);
 
           CleanTc(cleaner, MkTc(&func_type->_base, &apply_tc->_base));
           result.tc = &apply_tc->_base;

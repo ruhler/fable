@@ -149,10 +149,7 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_FUNC_APPLY_TC: {
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)tc;
       FbleFreeTc(apply_tc->func);
-      for (size_t i = 0; i < apply_tc->args.size; ++i) {
-        FbleFreeTc(apply_tc->args.xs[i]);
-      }
-      FbleFreeVector(apply_tc->args);
+      FbleFreeTc(apply_tc->arg);
       FbleFree(tc);
       return;
     }
