@@ -433,3 +433,27 @@ application and function values.
 
 It might be a little crazy for while in terms of things being broken.
 
+---
+
+Next step: need to fix how type inference works for multi arg application.
+Once that's sorted out, we'll need to update all the library code to put the
+type parameters in the right place. For example:
+
+<@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@; }) { B@; }
+ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
+  list.?(nil: base);
+  ForEach(list.cons.tail, body(list.cons.head, base), body);
+};
+
+Needs to change to:
+
+<@ A@>(List@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+ForEach = <@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+  list.?(nil: base);
+  ForEach(list.cons.tail, body(list.cons.head, base), body);
+};
+
+Keeping these changes in mind, it's going to be critical that we can merge
+poly functions into multi arg functions like this. ForEach should end up being
+a 3 argument function at runtime.
+
