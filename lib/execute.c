@@ -35,7 +35,7 @@ static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
 {
-  size_t s = function->executable->num_statics;
+  size_t s = function->executable->num_statics - 1;
   size_t a = function->executable->num_args;
   size_t argc = s + a;
   FbleValue* nargs[argc];
