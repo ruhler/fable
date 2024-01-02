@@ -141,22 +141,18 @@ static void Expr(FbleExpr* expr, Vars* vars)
     case FBLE_FUNC_VALUE_EXPR: {
       FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
 
-      size_t argc = func_value_expr->args.size;
-      Vars nvars[argc];
-      for (size_t i = 0; i < argc; ++i) {
-        Expr(func_value_expr->args.xs[i].type, vars);
-        nvars[i].name = func_value_expr->args.xs[i].name;
-        nvars[i].used = func_value_expr->args.xs[i].name.name->str[0] == '_';
-        nvars[i].next = (i == 0) ? vars : (nvars + i - 1);
-      }
-      Expr(func_value_expr->body, nvars + argc - 1);
+      Expr(func_value_expr->arg.type, vars);
+      Vars nvars = {
+        .name = func_value_expr->arg.name,
+        .used = func_value_expr->arg.name.name->str[0] == '_',
+        .next = vars
+      };
+      Expr(func_value_expr->body, &nvars);
 
-      for (size_t i = 0; i < argc; ++i) {
-        if (!nvars[i].used) {
-          FbleReportWarning("argument '", nvars[i].name.loc);
-          FblePrintName(stderr, nvars[i].name);
-          fprintf(stderr, "' is unused\n");
-        }
+      if (!nvars.used) {
+        FbleReportWarning("argument '", nvars.name.loc);
+        FblePrintName(stderr, nvars.name);
+        fprintf(stderr, "' is unused\n");
       }
       return;
     }

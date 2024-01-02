@@ -125,11 +125,8 @@ void FbleFreeExpr(FbleExpr* expr)
 
     case FBLE_FUNC_VALUE_EXPR: {
       FbleFuncValueExpr* e = (FbleFuncValueExpr*)expr;
-      for (size_t i = 0; i < e->args.size; ++i) {
-        FbleFreeExpr(e->args.xs[i].type);
-        FbleFreeName(e->args.xs[i].name);
-      }
-      FbleFreeVector(e->args);
+      FbleFreeExpr(e->arg.type);
+      FbleFreeName(e->arg.name);
       FbleFreeExpr(e->body);
       FbleFree(expr);
       return;

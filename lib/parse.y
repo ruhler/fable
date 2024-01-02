@@ -497,12 +497,17 @@ block:
       $$ = expr;
    }
  | '(' tagged_type_p ')' block {
-      FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
-      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
-      func_value_expr->_base.loc = FbleCopyLoc(@$);
-      func_value_expr->args = $2;
-      func_value_expr->body = $4;
-      $$ = &func_value_expr->_base;
+      FbleExpr* expr = $4;
+      for (size_t i = 0; i < $2.size; ++i) {
+        FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
+        func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+        func_value_expr->_base.loc = FbleCopyLoc(@$);
+        func_value_expr->arg = $2.xs[$2.size - 1 - i];
+        func_value_expr->body = expr;
+        expr = &func_value_expr->_base;
+      }
+      FbleFreeVector($2);
+      $$ = expr;
    }
  | '<' tagged_kind_p '>' block {
       FbleExpr* expr = $4;
@@ -532,11 +537,16 @@ stmt:
       $$ = &let_expr->_base;
     }  
   | tagged_type_p '<' '-' expr ';' stmt {
-      FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
-      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
-      func_value_expr->_base.loc = FbleCopyLoc(@$);
-      func_value_expr->args = $1;
-      func_value_expr->body = $6;
+      FbleExpr* expr = $6;
+      for (size_t i = 0; i < $1.size; ++i) {
+        FbleFuncValueExpr* func_value_expr = FbleAlloc(FbleFuncValueExpr);
+        func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+        func_value_expr->_base.loc = FbleCopyLoc(@$);
+        func_value_expr->arg = $1.xs[$1.size - 1 - i];
+        func_value_expr->body = expr;
+        expr = &func_value_expr->_base;
+      }
+      FbleFreeVector($1);
 
       FbleApplyExpr* apply_expr = FbleAlloc(FbleApplyExpr);
       apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
@@ -544,7 +554,7 @@ stmt:
       apply_expr->misc = $4;
       apply_expr->bind = true;
       FbleInitVector(apply_expr->args);
-      FbleAppendToVector(apply_expr->args, &func_value_expr->_base);
+      FbleAppendToVector(apply_expr->args, expr);
       $$ = &apply_expr->_base;
     }
   | expr ';' stmt {

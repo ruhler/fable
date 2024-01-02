@@ -457,3 +457,19 @@ Keeping these changes in mind, it's going to be critical that we can merge
 poly functions into multi arg functions like this. ForEach should end up being
 a 3 argument function at runtime.
 
+---
+
+Yay! Looks like all the tests are passing. Things are compiling. And
+performance is no absurdly slow. I think this is a really good improvement to
+the language. A lot more flexibility.
+
+Let's do some more clean up.  The big final piece for performance will be
+compiling poly functions to functions at the Tc level instead of lets.
+
+Just to see where we are at now for performance for fble.html generation:
+  User time (seconds): 119.91
+  Maximum resident set size (kbytes): 144776
+
+That's 20 seconds slower than it used to be, and a lot more memory use. I did
+change fble.fbld for partial function application, so it's hard to know how
+comparable this is to previous numbers.

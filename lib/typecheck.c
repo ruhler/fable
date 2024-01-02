@@ -1470,9 +1470,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleExpr* body;
       FbleFuncValueExpr* fv = func_value_expr;
       do {
-        for (size_t i = 0; i < fv->args.size; ++i) {
-          FbleAppendToVector(fv_args, fv->args.xs[i]);
-        }
+        FbleAppendToVector(fv_args, fv->arg);
         body = fv->body;
         fv = (FbleFuncValueExpr*)fv->body;
       } while (fv->_base.tag == FBLE_FUNC_VALUE_EXPR);

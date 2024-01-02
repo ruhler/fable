@@ -167,7 +167,7 @@ typedef struct {
  */
 typedef struct {
   FbleExpr _base;             /**< FbleExpr base class. */
-  FbleTaggedTypeExprV args;   /**< Arguments to the function. */
+  FbleTaggedTypeExpr arg;     /**< Argument to the function. */
   FbleExpr* body;             /**< The function body. */
 } FbleFuncValueExpr;
 

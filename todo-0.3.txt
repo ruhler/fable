@@ -3,7 +3,6 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * Partial function application
- - Change FbleFuncValueExpr to have a single arg.
  - Change FbleApplyTc to have a single arg.
  - Enable multi-arg merging of poly function values with function values.
  - Update function tutorial. And probably type inference too.
