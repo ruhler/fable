@@ -70,6 +70,10 @@ typedef struct {
   Var** xs;       /**< The elements. */
 } VarV;
 
+// Special value for FbleVarTag used during typechecking to indicate a new
+// type value should be used instead of reading the variable.
+#define TYPE_VAR 4
+
 /**
  * Scope of variables visible during type checking.
  */
@@ -83,9 +87,18 @@ typedef struct Scope {
   /**
    * Stack of local variables in scope order.
    * Variables may be NULL to indicate they are anonymous.
+   * The locals->var.tag may be TYPE_VAR to indicate the caller should create
+   * a type value instead of trying to read the var value from locals.
    * Scope owns the Vars.
    */
   VarV locals;
+
+  /**
+   * The number of allocated locals.
+   * This may be different from locals.size because some of the locals.xs can
+   * be TYPE_VAR which are unallocated.
+   */
+  size_t allocated_locals;
 
   /**
    * Collects the source of variables captured from the parent scope.
@@ -100,6 +113,7 @@ typedef struct Scope {
 
 static bool VarNamesEqual(VarName a, VarName b);
 static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type);
+static Var* PushLocalTypeVar(Scope* scope, VarName name, FbleType* type);
 static void PopLocalVar(FbleTypeHeap* heap, Scope* scope);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom);
 
@@ -212,7 +226,41 @@ static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
   var->type = type;
   var->used = false;
   var->var.tag = FBLE_LOCAL_VAR;
-  var->var.index = scope->locals.size;
+  var->var.index = scope->allocated_locals++;
+  FbleAppendToVector(scope->locals, var);
+  return var;
+}
+
+/**
+ * Pushes a local type variable onto the current scope.
+ * 
+ * Type variables do not have a corresponding definition. Anyone who
+ * references a type variable will allocate a new type value instead.
+ *
+ * @param scope  The scope to push the variable on to.
+ * @param name  The name of the variable.
+ * @param type  The type of the variable.
+ *
+ * @returns
+ *   A pointer to the newly pushed variable. The pointer is owned by the
+ *   scope. It remains valid until a corresponding PopLocalVar or FreeScope
+ *   occurs.
+ *
+ * @sideeffects
+ * * Pushes a new variable with given name and type onto the scope.
+ * * Takes ownership of the given type, which will be released when the
+ *   variable is freed.
+ * * Does not take ownership of name. It is the callers responsibility
+ *   to ensure that 'name' outlives the returned Var.
+ */
+static Var* PushLocalTypeVar(Scope* scope, VarName name, FbleType* type)
+{
+  Var* var = FbleAlloc(Var);
+  var->name = name;
+  var->type = type;
+  var->used = false;
+  var->var.tag = TYPE_VAR;
+  var->var.index = -1;
   FbleAppendToVector(scope->locals, var);
   return var;
 }
@@ -232,6 +280,10 @@ static void PopLocalVar(FbleTypeHeap* heap, Scope* scope)
   scope->locals.size--;
   Var* var = scope->locals.xs[scope->locals.size];
   if (var != NULL) {
+    if (var->var.tag != TYPE_VAR) {
+      scope->allocated_locals--;
+    }
+
     FbleReleaseType(heap, var->type);
     FbleFree(var);
   }
@@ -259,7 +311,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
     size_t j = scope->locals.size - i - 1;
     Var* var = scope->locals.xs[j];
     if (var != NULL && VarNamesEqual(name, var->name)) {
-      if (!phantom) {
+      if (!phantom && var->var.tag != TYPE_VAR) {
         var->used = true;
       }
       return var;
@@ -290,9 +342,9 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
   if (scope->parent != NULL) {
     Var* var = GetVar(heap, scope->parent, name, scope->captured == NULL || phantom);
     if (var != NULL) {
-      if (phantom) {
+      if (phantom || var->var.tag == TYPE_VAR) {
         // It doesn't matter that we are returning a variable for the wrong
-        // scope here. phantom means we won't actually use it ever.
+        // scope here. Phantom/TYPE_VAR means we won't actually use it ever.
         return var;
       }
 
@@ -338,6 +390,7 @@ static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePat
   FbleInitVector(scope->statics);
   FbleInitVector(scope->args);
   FbleInitVector(scope->locals);
+  scope->allocated_locals = 0;
   scope->captured = captured;
   scope->module = FbleCopyModulePath(module);
   scope->parent = parent;
@@ -968,9 +1021,16 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
-      var_tc->var = var->var;
-      return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
+      FbleTc* tc = NULL;
+      if (var->var.tag == TYPE_VAR) {
+        FbleTypeValueTc* type_tc = FbleNewTc(FbleTypeValueTc, FBLE_TYPE_VALUE_TC, expr->loc);
+        tc = &type_tc->_base;
+      } else {
+        FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
+        var_tc->var = var->var;
+        tc = &var_tc->_base;
+      }
+      return MkTc(FbleRetainType(th, var->type), tc);
     }
 
     case FBLE_LET_EXPR: {
@@ -1540,7 +1600,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       assert(arg != NULL);
 
       VarName name = { .normal = poly->arg.name, .module = NULL };
-      PushLocalVar(scope, name, arg_type);
+      PushLocalTypeVar(scope, name, arg_type);
       Tc body = TypeCheckExpr(th, scope, poly->body);
       CleanTc(cleaner, body);
       PopLocalVar(th, scope);
@@ -1550,29 +1610,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleType* pt = FbleNewPolyType(th, expr->loc, arg, body.type);
-
-      // A poly value expression gets rewritten as a let when we erase types:
-      // <@ T@> { ...; }
-      // turns into:
-      //   let T@ = type
-      //   in ...
-
-      // TODO: Do we really have to allocate a type value here? Can we
-      // optimize this away?
-      FbleTypeValueTc* type_tc = FbleNewTc(FbleTypeValueTc, FBLE_TYPE_VALUE_TC, expr->loc);
-
-      FbleLetTc* let_tc = FbleNewTc(FbleLetTc, FBLE_LET_TC, expr->loc);
-      let_tc->recursive = false;
-      let_tc->body = FbleCopyTc(body.tc);
-      FbleInitVector(let_tc->bindings);
-      FbleTcBinding ltc = {
-        .name = FbleCopyName(poly->arg.name),
-        .loc = FbleCopyLoc(poly->arg.name.loc),
-        .tc = &type_tc->_base
-      };
-      FbleAppendToVector(let_tc->bindings, ltc);
-
-      return MkTc(pt, &let_tc->_base);
+      return MkTc(pt, FbleCopyTc(body.tc));
     }
 
     case FBLE_POLY_APPLY_EXPR: {

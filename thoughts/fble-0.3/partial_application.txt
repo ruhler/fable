@@ -501,3 +501,20 @@ have to do a single layer of merging, which will be a little bit easier. Think
 of it as a special constructor for FuncValueTc. We could even call it that.
 
 Wait. Tc doesn't have any types. I shouldn't need a type heap for this at all.
+
+---
+
+Okay, in theory it's all done. We support partial/over function application,
+and we automatically merge poly and nonpoly functions. I expect improvements
+in fble.html from the previous attempt, because we should now be able to
+implement Do and function bind as a single multi-argument function call.
+
+User time (seconds): 98.73
+Maximum resident set size (kbytes): 106756
+
+Awesome. 20 seconds improvement. Memory is much improved.
+
+Still not the 90 seconds we once had, but I'll put that down to changes in
+fble.fbld.
+
+Call this task complete.

@@ -2,9 +2,7 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Partial function application
- - Enable multi-arg merging of poly function values with function values.
- - Update function tutorial. And probably type inference too.
+* Update tutorials for partial function application updates.
    Particularly noting how to do type inference for multiple poly parameters.
 
 * It's strange that a function that returns a poly has kind %.
@@ -14,8 +12,6 @@ Things to consider doing for the fble-0.3 release.
  - As a blocker for major compiler optimizations.
 
 * Add spec tests for coverage.
-
-
 
 * Improve build times?
  - It's getting a little annoying for development now that everything is
