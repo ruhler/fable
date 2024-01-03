@@ -473,3 +473,31 @@ Just to see where we are at now for performance for fble.html generation:
 That's 20 seconds slower than it used to be, and a lot more memory use. I did
 change fble.fbld for partial function application, so it's hard to know how
 comparable this is to previous numbers.
+
+---
+
+How do I merge poly function values into func values for multi-arg functions?
+Now that we do the merging in typecheck.c, we can't just implement poly as
+values.
+
+I wish I could do the merging in compile.c. It would be much simpler not to
+have to deal with type checking at the same time.
+
+I think I can do it. We just need to re-write references to statics and
+arguments in the body. Keep track of where the statics point to and the
+argument number, and we should be fine.
+
+One problem: I want to write a new body in compile.c, but I don't have the
+original type heap to be able to do that with.
+
+Should this be a helper function, perhaps in tc.c instead? Maybe we call it as
+part of typecheck.c after creating the initial FuncValueTc?
+
+Yeah, maybe let's try that next.
+
+Input is a Tc, output is a rewritten Tc, arg-merged Tc. I think better to
+modify in place for this. We pass the type heap while we are at it. We only
+have to do a single layer of merging, which will be a little bit easier. Think
+of it as a special constructor for FuncValueTc. We could even call it that.
+
+Wait. Tc doesn't have any types. I shouldn't need a type heap for this at all.

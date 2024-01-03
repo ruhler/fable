@@ -1460,72 +1460,41 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
     }
 
     case FBLE_FUNC_VALUE_EXPR: {
-      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
+      FbleFuncValueExpr* fv = (FbleFuncValueExpr*)expr;
 
-      // We merge multiple func values into one to reduce the overhead of
-      // function calls.
-      //  e.g. \a -> \b -> ... ==> \a b -> ...
-      FbleTaggedTypeExprV fv_args;
-      FbleInitVector(fv_args);
-      FbleExpr* body;
-      FbleFuncValueExpr* fv = func_value_expr;
-      do {
-        FbleAppendToVector(fv_args, fv->arg);
-        body = fv->body;
-        fv = (FbleFuncValueExpr*)fv->body;
-      } while (fv->_base.tag == FBLE_FUNC_VALUE_EXPR);
-
-      bool error = false;
-      FbleType* arg_types[fv_args.size];
-      for (size_t i = 0; i < fv_args.size; ++i) {
-        arg_types[i] = TypeCheckType(th, scope, fv_args.xs[i].type);
-        error = error || arg_types[i] == NULL;
-      }
-
-      if (error) {
-        for (size_t i = 0; i < fv_args.size; ++i) {
-          FbleReleaseType(th, arg_types[i]);
-        }
-        FbleFreeVector(fv_args);
+      FbleType* arg_type = TypeCheckType(th, scope, fv->arg.type);
+      if (arg_type == NULL) {
         return TC_FAILED;
       }
-
 
       FbleVarV captured;
       FbleInitVector(captured);
 
-      Arg args_xs[fv_args.size];
-      for (size_t i = 0; i < fv_args.size; ++i) {
-        args_xs[i].name.normal = fv_args.xs[i].name;
-        args_xs[i].name.module = NULL;
-        args_xs[i].type = arg_types[i];
-      }
-      ArgV args = { .size = fv_args.size, .xs = args_xs };
+      Arg arg;
+      arg.name.normal = fv->arg.name;
+      arg.name.module = NULL;
+      arg.type = arg_type;
+      ArgV args = { .size = 1, .xs = &arg };
 
       Scope func_scope;
       InitScope(&func_scope, &captured, args, scope->module, scope);
 
-      Tc func_result = TypeCheckExpr(th, &func_scope, body);
+      Tc func_result = TypeCheckExpr(th, &func_scope, fv->body);
       if (func_result.type == NULL) {
         FreeScope(th, &func_scope);
         FbleFreeVector(captured);
-        FbleFreeVector(fv_args);
         return TC_FAILED;
       }
 
-      FbleType* rtype = func_result.type;
-      for (size_t i = 0; i < fv_args.size; ++i) {
-        FbleFuncType* ft = FbleNewType(th, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-        ft->arg = arg_types[fv_args.size - 1 - i];
-        ft->rtype = rtype;
-        FbleTypeAddRef(th, &ft->_base, ft->arg);
-        FbleTypeAddRef(th, &ft->_base, ft->rtype);
-        FbleReleaseType(th, ft->rtype);
-        rtype = &ft->_base;
-      }
+      FbleFuncType* ft = FbleNewType(th, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+      ft->arg = arg_type;
+      ft->rtype = func_result.type;
+      FbleTypeAddRef(th, &ft->_base, ft->arg);
+      FbleTypeAddRef(th, &ft->_base, ft->rtype);
+      FbleReleaseType(th, ft->rtype);
 
       FbleFuncValueTc* func_tc = FbleNewTc(FbleFuncValueTc, FBLE_FUNC_VALUE_TC, expr->loc);
-      func_tc->body_loc = FbleCopyLoc(body->loc);
+      func_tc->body_loc = FbleCopyLoc(fv->body->loc);
       func_tc->scope = captured;
 
       FbleInitVector(func_tc->statics);
@@ -1541,14 +1510,11 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleInitVector(func_tc->args);
-      for (size_t i = 0; i < fv_args.size; ++i) {
-        FbleAppendToVector(func_tc->args, FbleCopyName(fv_args.xs[i].name));
-      }
+      FbleAppendToVector(func_tc->args, FbleCopyName(fv->arg.name));
       func_tc->body = func_result.tc;
 
       FreeScope(th, &func_scope);
-      FbleFreeVector(fv_args);
-      return MkTc(rtype, &func_tc->_base);
+      return MkTc(&ft->_base, &func_tc->_base);
     }
 
     case FBLE_POLY_VALUE_EXPR: {

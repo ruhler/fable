@@ -199,6 +199,8 @@ typedef struct {
 
 /**
  * FBLE_FUNC_VALUE_TC: A function value.
+ *
+ * Supports multi-argument functions.
  */
 typedef struct {
   FbleTc _base;         /**< FbleTc base class. */

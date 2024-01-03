@@ -96,6 +96,9 @@ static void PopVar(Scope* scope, bool exit);
 static Local* GetVar(Scope* scope, FbleVar index);
 static void SetVar(Scope* scope, size_t index, FbleName name, Local* local);
 
+static FbleVar RewriteVar(FbleVarV statics, size_t arg_offset, FbleVar var);
+static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc);
+
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
@@ -345,6 +348,208 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
   info->name = FbleCopyName(name);
   info->var = local->var;
   AppendDebugInfo(scope, &info->_base);
+}
+
+/**
+ * @func[RewriteVar] Rewrites a variable.
+ *  Replaces static variable references their corresponding values in the
+ *  given scope, and increments arg variable indices by the given offset.
+ *
+ *  This is a helper function for merging nested function values into a multi
+ *  argument function.
+ *
+ *  @arg[FbleVarV][statics] Replacements to use for static variable references.
+ *  @arg[size_t][arg_offset] Offset to apply to arg variable references.
+ *  @arg[FbleVar][var] The var to rewrite.
+ *
+ *  @returns[FbleVar] The rewriten var.
+ *
+ *  @sideeffects None
+ */
+static FbleVar RewriteVar(FbleVarV statics, size_t arg_offset, FbleVar var)
+{
+  switch (var.tag) {
+    case FBLE_STATIC_VAR: {
+      assert(var.index < statics.size);
+      return statics.xs[var.index];
+    }
+
+    case FBLE_ARG_VAR: {
+      FbleVar nvar = { .tag = FBLE_ARG_VAR, .index = var.index + arg_offset };
+      return nvar;
+    }
+
+    case FBLE_LOCAL_VAR: {
+      return var;
+    }
+  }
+
+  FbleUnreachable("should never get here");
+  return var;
+}
+
+/**
+ * @func[RewriteVars] Adjust vars in expr.
+ *  Replaces static variable references in expr with their corresponding
+ *  values in the given scope, and increments arg variable indices by the
+ *  given offset.
+ *
+ *  This is a helper function for merging nested function values into a multi
+ *  argument function.
+ *
+ *  @arg[FbleVarV][statics] Replacements to use for static variable references.
+ *  @arg[size_t][arg_offset] Offset to apply to arg variable references.
+ *  @arg[FbleTc*][tc] The expression to rewrite. Borrowed.
+ *
+ *  @returns[FbleTc*] The rewriten expression.
+ *
+ *  @sideeffects
+ *   Allocates a new FbleTc* that should be freed with FbleFreeTc when no
+ *   longer needed.
+ */
+static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
+{
+  switch (tc->tag) {
+    case FBLE_TYPE_VALUE_TC: return FbleCopyTc(tc);
+
+    case FBLE_VAR_TC: {
+      FbleVarTc* var_tc = (FbleVarTc*)tc;
+      FbleVarTc* ntc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, tc->loc);
+      ntc->var = RewriteVar(statics, arg_offset, var_tc->var);
+      return &ntc->_base;
+    }
+
+    case FBLE_LET_TC: {
+      FbleLetTc* let_tc = (FbleLetTc*)tc;
+
+      FbleLetTc* ntc = FbleNewTc(FbleLetTc, FBLE_LET_TC, tc->loc);
+      ntc->recursive = let_tc->recursive;
+
+      FbleInitVector(ntc->bindings);
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        FbleTcBinding* binding = FbleExtendVector(ntc->bindings);
+        binding->name = FbleCopyName(let_tc->bindings.xs[i].name);
+        binding->loc = FbleCopyLoc(let_tc->bindings.xs[i].loc);
+        binding->tc = RewriteVars(statics, arg_offset, let_tc->bindings.xs[i].tc);
+      }
+
+      ntc->body = RewriteVars(statics, arg_offset, let_tc->body);
+      return &ntc->_base;
+    }
+
+    case FBLE_STRUCT_VALUE_TC: {
+      FbleStructValueTc* sv = (FbleStructValueTc*)tc;
+      FbleStructValueTc* ntc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, tc->loc);
+      FbleInitVector(ntc->fields);
+      for (size_t i = 0; i < sv->fields.size; ++i) {
+        FbleAppendToVector(ntc->fields, RewriteVars(statics, arg_offset, sv->fields.xs[i]));
+      }
+      return &ntc->_base;
+    }
+
+    case FBLE_STRUCT_COPY_TC: {
+      FbleStructCopyTc* sv = (FbleStructCopyTc*)tc;
+      FbleStructCopyTc* ntc = FbleNewTc(FbleStructCopyTc, FBLE_STRUCT_COPY_TC, tc->loc);
+      ntc->source = RewriteVars(statics, arg_offset, sv->source);
+      FbleInitVector(ntc->fields);
+      for (size_t i = 0; i < sv->fields.size; ++i) {
+        FbleTc* field = NULL;
+        if (sv->fields.xs[i] != NULL) {
+          field = RewriteVars(statics, arg_offset, sv->fields.xs[i]);
+        }
+        FbleAppendToVector(ntc->fields, field);
+      }
+      return &ntc->_base;
+    }
+
+    case FBLE_UNION_VALUE_TC: {
+      FbleUnionValueTc* uv = (FbleUnionValueTc*)tc;
+      FbleUnionValueTc* ntc = FbleNewTc(FbleUnionValueTc, FBLE_UNION_VALUE_TC, tc->loc);
+      ntc->tag = uv->tag;
+      ntc->arg = RewriteVars(statics, arg_offset, uv->arg);
+      return &ntc->_base;
+    }
+
+    case FBLE_UNION_SELECT_TC: {
+      FbleUnionSelectTc* v = (FbleUnionSelectTc*)tc;
+      FbleUnionSelectTc* ntc = FbleNewTc(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, tc->loc);
+      ntc->condition = RewriteVars(statics, arg_offset, v->condition);
+      ntc->num_tags = v->num_tags;
+      FbleInitVector(ntc->targets);
+      for (size_t i = 0; i < v->targets.size; ++i) {
+        FbleTcBranchTarget* tgt = FbleExtendVector(ntc->targets);
+        tgt->tag = v->targets.xs[i].tag;
+        tgt->target.name = FbleCopyName(v->targets.xs[i].target.name);
+        tgt->target.loc = FbleCopyLoc(v->targets.xs[i].target.loc);
+        tgt->target.tc = RewriteVars(statics, arg_offset, v->targets.xs[i].target.tc);
+      }
+
+      ntc->default_.name = FbleCopyName(v->default_.name);
+      ntc->default_.loc = FbleCopyLoc(v->default_.loc);
+      ntc->default_.tc = RewriteVars(statics, arg_offset, v->default_.tc);
+      return &ntc->_base;
+    }
+
+    case FBLE_DATA_ACCESS_TC: {
+      FbleDataAccessTc* v = (FbleDataAccessTc*)tc;
+      FbleDataAccessTc* ntc = FbleNewTc(FbleDataAccessTc, FBLE_DATA_ACCESS_TC, tc->loc);
+      ntc->datatype = v->datatype;
+      ntc->obj = RewriteVars(statics, arg_offset, v->obj);
+      ntc->tag = v->tag;
+      ntc->loc = FbleCopyLoc(v->loc);
+      return &ntc->_base;
+    }
+
+    case FBLE_FUNC_VALUE_TC: {
+      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)tc;
+      FbleFuncValueTc* ntc = FbleNewTc(FbleFuncValueTc, FBLE_FUNC_VALUE_TC, tc->loc);
+      ntc->body_loc = FbleCopyLoc(func_tc->body_loc);
+
+      FbleInitVector(ntc->scope);
+      for (size_t i = 0; i < func_tc->scope.size; ++i) {
+        FbleVar nvar = RewriteVar(statics, arg_offset, func_tc->scope.xs[i]);
+        FbleAppendToVector(ntc->scope, nvar);
+      }
+
+      FbleInitVector(ntc->statics);
+      for (size_t i = 0; i < func_tc->statics.size; ++i) {
+        FbleAppendToVector(ntc->statics, FbleCopyName(func_tc->statics.xs[i]));
+      }
+
+      FbleInitVector(ntc->args);
+      for (size_t i = 0; i < func_tc->args.size; ++i) {
+        FbleAppendToVector(ntc->args, FbleCopyName(func_tc->args.xs[i]));
+      }
+
+      ntc->body = FbleCopyTc(func_tc->body);
+      return &ntc->_base;
+    }
+
+    case FBLE_FUNC_APPLY_TC: {
+      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)tc;
+      FbleFuncApplyTc* ntc = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, tc->loc);
+      ntc->func = RewriteVars(statics, arg_offset, apply_tc->func);
+      ntc->arg = RewriteVars(statics, arg_offset, apply_tc->arg);
+      return &ntc->_base;
+    }
+
+    case FBLE_LIST_TC: {
+      FbleListTc* v = (FbleListTc*)tc;
+      FbleListTc* ntc = FbleNewTc(FbleListTc, FBLE_LIST_TC, tc->loc);
+      FbleInitVector(ntc->fields);
+      for (size_t i = 0; i < v->fields.size; ++i) {
+        FbleAppendToVector(ntc->fields, RewriteVars(statics, arg_offset, v->fields.xs[i]));
+      }
+      return &ntc->_base;
+    }
+
+    case FBLE_LITERAL_TC: {
+      return FbleCopyTc(tc);
+    }
+  }
+
+  FbleUnreachable("should never get here");
+  return NULL;
 }
 
 /**
@@ -1063,8 +1268,52 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
     case FBLE_FUNC_VALUE_TC: {
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
-      FbleFuncValueInstr* instr = FbleAllocInstr(FbleFuncValueInstr, FBLE_FUNC_VALUE_INSTR);
 
+      // We merge multiple func values into one to reduce the overhead of
+      // function calls.
+      //  e.g. \a -> \b -> ... ==> \a b -> ...
+      // This requires rewriting references to statics and args in the bodies
+      // of the functions.
+      FbleVarV statics;
+      FbleInitVector(statics);
+      for (size_t i = 0; i < func_tc->scope.size; ++i) {
+        FbleVar var = { .tag = FBLE_STATIC_VAR, .index = i };
+        FbleAppendToVector(statics, var);
+      }
+
+      FbleNameV args;
+      FbleInitVector(args);
+      for (size_t i = 0; i < func_tc->args.size; ++i) {
+        FbleAppendToVector(args, func_tc->args.xs[i]);
+      }
+      FbleTc* body = func_tc->body;
+      FbleLoc body_loc = func_tc->body_loc;
+      size_t arg_offset = 0;
+      while (body->tag == FBLE_FUNC_VALUE_TC) {
+        FbleFuncValueTc* ftc = (FbleFuncValueTc*)body;
+
+        FbleVarV nstatics;
+        FbleInitVector(nstatics);
+        for (size_t i = 0; i < ftc->scope.size; ++i) {
+          FbleVar nvar = RewriteVar(statics, arg_offset, ftc->scope.xs[i]);
+          FbleAppendToVector(nstatics, nvar);
+        }
+        FbleFreeVector(statics);
+        statics = nstatics;
+        
+        arg_offset = args.size;
+        for (size_t i = 0; i < ftc->args.size; ++i) {
+          FbleAppendToVector(args, ftc->args.xs[i]);
+        }
+
+        body = ftc->body;
+        body_loc = ftc->body_loc;
+      }
+
+      body = RewriteVars(statics, arg_offset, body);
+      FbleFreeVector(statics);
+
+      FbleFuncValueInstr* instr = FbleAllocInstr(FbleFuncValueInstr, FBLE_FUNC_VALUE_INSTR);
       FbleInitVector(instr->scope);
       for (size_t i = 0; i < func_tc->scope.size; ++i) {
         Local* local = GetVar(scope, func_tc->scope.xs[i]);
@@ -1072,14 +1321,17 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       }
 
       Scope func_scope;
-      FbleBlockId scope_block = PushBodyBlock(blocks, func_tc->body_loc);
+      FbleBlockId scope_block = PushBodyBlock(blocks, body_loc);
       assert(func_tc->scope.size == func_tc->statics.size);
-      InitScope(&func_scope, &instr->code, func_tc->args, func_tc->statics, scope_block, scope);
+      InitScope(&func_scope, &instr->code, args, func_tc->statics, scope_block, scope);
+      FbleFreeVector(args);
 
-      Local* func_result = CompileExpr(blocks, true, true, &func_scope, func_tc->body);
+      Local* func_result = CompileExpr(blocks, true, true, &func_scope, body);
       ExitBlock(blocks, &func_scope, true);
       ReleaseLocal(&func_scope, func_result, true);
       FreeScope(&func_scope);
+
+      FbleFreeTc(body);
 
       Local* local = NewLocal(scope, NULL);
       instr->dest = local->var.index;
