@@ -460,3 +460,226 @@ them.
 You know what's interesting? If this was a non-recursive call, we wouldn't
 have to pay the cost for the retain/release. I'm tempted to try changing that.
 
+---
+
+Next round of analysis since adding support for partial function application.
+
+Some top contributors by self time:
+
+Memory Management
+ 6.35     1918  FbleReleaseHeapObject[0004X]
+ 5.27     1594  IncrGc.part.0[0007X]
+ 5.16     1560  FbleReleaseValues[002eX]
+ 4.70     1421  _int_free[0008X]
+ 4.41     1333  _int_malloc[000fX]
+ 4.24     1283  FbleHeapObjectAddRef[0030X]
+ 3.42     1035  FbleRetainHeapObject[003bX]
+ 3.21      971  malloc[000eX]
+ 2.47      747  cfree@GLIBC_2.17[0009X]
+ 2.30      695  FbleRetainValue[0039X]
+ 2.23      675  __memcpy_generic[0031X]
+ 2.17      657  Refs[0025X]
+ 1.61      486  FbleNewStructValue[0005X]
+ 1.32      398  FbleNewHeapObject[0006X]
+ 0.91      275  FbleAllocRaw[000dX]
+ 0.90      272  FbleNewUnionValue[0034X]
+ 0.78      236  OnFree[0035X]
+ 0.73      222  FbleNewFuncValue[000cX]
+
+Function Calls
+ 6.63     2005  FbleCall[0001X]
+ 6.27     1896  Call[0002X]
+
+Value Manipulations
+ 4.10     1238  FbleStructValueField[000aX]
+ 3.66     1106  FbleUnionValueTag[0033X]
+ 3.62     1095  FbleFuncValueFunction[0038X]
+ 2.87      866  FbleUnionValueField[002cX]
+
+Compiled Code
+ 3.93     1189  _2f_Core_2f_Int_2f_IntP_2f_Ord_25__2e_Ord_21_.0010[001dX]
+ 1.04      313  _2f_Core_2f_Char_2f_Ascii_25__2e_Ord_21_.000a[0037X]
+ 0.90      271  _2f_Core_2f_List_2f_Ord_25__2e_Ord_21__2e_Ord_5f__21_.000a[001cX]
+
+Clearly memory management is still a big factor. Function calls after that.
+
+Let's look at FbleCall and Call first, to see if anything obvious shows up in
+the profile.
+
+The one thing that stands out in the profile for FbleCall is the chained
+memory load: func->executable->num_args.
+
+We can see in this case that the functions being called the most are fbld
+builtin @ifeq, Eval of sequence, defined command implementations.
+
+Not too sure what we can do there, aside from reduce the number of function
+calls made in the fble program in question.
+
+Back to the memory. Where are all our allocations coming from now?
+
+Breakdown by type:
+       1472     1993           FbleNewUnionValue[0034X]   
+       1325     2200           FbleNewFuncValue[000cX]   
+       2807     4509           FbleNewStructValue[0005X]   
+
+Structs:
+        130      192           _2f_Core_2f_List_25__2e_Cons_21_.0006[005cX]   
+        137      217           _2f_Fbld_2f_Parse_2f_M_25__2e_Return_21_.0021[0054X]   
+        274      386           _2f_Fbld_2f_Parse_2f_M_25__2e_Do_21_.0027[0024X]   
+        365      597           _2f_Core_2f_Map_2f_Map_25__2e_Rebalance_21_.0052[002aX]   
+        456      701           _2f_Core_2f_Map_2f_Map_25__2e_MapP_21_.0030[0032X]   
+        663      892           _2f_Fbld_2f_Result_25__2e_Ok_21_.0012[0044X]   
+        759     1494           _2f_Fbld_2f_Result_25__2e_Do_21_.0020[0003X]   
+**     3183     5055      486  FbleNewStructValue[0005X] **
+
+Mostly Result@ allocations.
+
+Functions:
+         42      102           Call[0002X]   
+         71      103           _2f_Core_2f_Map_2f_Map_25__2e_Insert_21__21_.009d[0055X]   
+         57      124           _2f_Fbld_2f_Builtin_2f_If_25__2e_IfEq_21__21__21_.0021[0019X]   
+         73      128           _2f_Fbld_2f_Builtin_2f_If_25__2e_Equals_21__21_.0016[003dX]   
+         70      135           _2f_Fbld_2f_Builtin_2f_If_25__2e_IfEq_21_.001f[0022X]   
+         49      136           _2f_Fbld_2f_Builtin_2f_Define_25__2e_Define_21__21__21__21__2e_impl_21_.003c[000bX]   
+         70      138           _2f_Fbld_2f_Builtin_2f_If_25__2e_IfEq_21__21_.0020[002bX]   
+        100      141           FbleCall[0001X]   
+         85      173           _2f_Fbld_2f_Builtin_2f_If_25__2e_Equals_21_.0015[0018X]   
+        147      187           _2f_Fbld_2f_Builtin_2f_Define_25__2e_VarImpl_21_.0019[0063X]   
+**     1485     2443      222  FbleNewFuncValue[000cX] **
+
+Functions are very evenly spread out. VarImpl captures cmd to check arg count
+is correct. Equals is monadic bind code that captures the previous monadic
+result. A lot of these look like functions allocated for monadic style coding
+that capture the bind result.
+
+Unions:
+        137      187           _2f_Core_2f_List_25__2e_Cons_21_.0006[005cX]   
+        372      537           _2f_Core_2f_Map_2f_Map_25__2e_MapP_21_.0030[0032X]   
+        997     1313           _2f_Core_2f_Maybe_25__2e_Just_21_.0005[0045X]   
+**     1688     2294      272  FbleNewUnionValue[0034X] **
+
+The unions one is Maybe@ I think I saw before: HeadOf, TailOf returning
+Result@<Maybe@<Char@>>. Does that make sense? Don't we expect Maybe@<Char@> to
+fit in a packed value? It must be the Maybe@ from Result@, whatever value is
+being returned.
+
+You see the common theme in all these allocations? Result@ monad. Structs
+because it is a struct. Functions for bind. Unions because it is a union. The
+approach of monadic code is to allocate an object for every 'statement' in the
+program. We execute a lot of statements, so we allocate a lot of objects.
+
+In a language like C, we wouldn't have these glue allocations at all.
+
+I would say all these allocations are probably short lived. Just look at the
+implementation of Do:
+
+<@ A@>(Result@<A@>)<@ B@>((A@) { Result@<B@>; }) { Result@<B@>; }
+Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
+  ra.value.?(nothing: Raise<B@>(ra));
+
+  Result@<B@> rb = f(ra.value.just);
+  Result@(Append(ra.errors, rb.errors), Or(ra.failed, rb.failed), rb.value);
+};
+
+Call f, throw it a way. Take allocated Result@, access its fields and throw
+away the wrapper. Check if value is nothing, then throw it away.
+
+Maybe the question to ask is: can I have 0 allocation overhead to monadic
+style programming? Is there something fundamental about information hiding
+that makes monadic programming useful but need to make allocations?
+
+If we were smart, could we realize that Result@ rb is no longer used, so we
+can reuse that existing allocation for the return result? Instead of
+allocating a new Result@ value?
+
+If we inlined Do, could we see that we have the function and it's being used
+only once, so we could turn it into a let and not allocate any function value
+at all?
+
+Let's try inlining Do.
+
+  Markup@ a <- r.do(g(...));
+  Markup@ b <- r.do(h(...));
+  f(a, b)
+
+  Do(g(...), (Markup@ a) {
+    Do(h(...), (Markup@ b) {
+      i(a, b);
+    });
+  });
+
+When we inline a function, we end up with the construct 
+func_apply (func_value arg)
+
+This can be turned into a let. Let's inline it as a let for clarity.
+
+  Result@ ra = g(...);
+  (Markup@) { Result@; } f = (Markup@ a) {
+    Result@ ra1 = h(...);
+    (Markup@) { Result@; } f1 = (Markup@ b) {
+      i(a, b);
+    };
+    ra1.value.?(nothing: Raise(ra1));
+
+    Result@ rb1 = f1(ra1.value.just);
+    Result@(Append(ra1.errors, rb1.errors), Or(ra1.failed, rb1.failed), rb1.value);
+  };
+  ra.value.?(nothing: Raise(ra));
+
+  Result@ rb = f(ra.value.just);
+  Result@(Append(ra.errors, rb.errors), Or(ra.failed, rb.failed), rb.value);
+
+If we are smart, we can see that f and f1 are only used once. We can inline
+them, and turn them back into lets.
+    
+  Result@ ra = g(...);
+  ra.value.?(nothing: Raise(ra));
+
+  Markup@ a = ra.value.just;
+  Result@ ra1 = h(...);
+  ra1.value.?(nothing: Raise(ra1));
+
+  Markup@ b = ra1.value.just;
+  Result@ rb1 = i(a, b);
+  Result@ rb = Result@(Append(ra1.errors, rb1.errors), Or(ra1.failed, rb1.failed), rb1.value);
+  Result@(Append(ra.errors, rb.errors), Or(ra.failed, rb.failed), rb.value);
+
+Not surprisingly, if we get rid of use of bind and inline Do, we avoid the
+need for the extra function allocations in the glue logic.
+
+For the struct value, look at rb. We allocate a struct result, access its
+fields, then otherwise no longer use the struct result. In that case, we could
+turn the fields into individual values.
+
+  Result@ ra = g(...);
+  ra.value.?(nothing: Raise(ra));
+
+  Markup@ a = ra.value.just;
+  Result@ ra1 = h(...);
+  ra1.value.?(nothing: Raise(ra1));
+
+  Markup@ b = ra1.value.just;
+  Result@ rb1 = i(a, b);
+  List@ rb_errors = Append(ra1.errors, rb1.errors);
+  Bool@ rb_failed = Or(ra1.failed, rb1.failed)
+  Markup@ rb_value = rb1.value;
+  Result@(Append(ra.errors, rb_errors), Or(ra.failed, rb_failed), rb_value);
+
+I don't see an obvious way to get rid of the Maybe@ allocation. Those are
+allocated inside g, h, i. We would have to inline those too. At some point
+that starts to be excessive inlining.
+
+What we observed:
+* function allocations can be avoided by replacing with let if you know the
+  args at time of function value allocation and its only used once.
+* struct allocations can be avoided if you know all uses of its fields at time
+  of allocation.
+
+This 'inline and optimize' approach doesn't feel great to me though. It feels
+fundamentally limited in terms of how much inlining you can do and how much
+visibility you have into the functions you are inlining.
+
+Any way we could make the allocations significantly cheaper? As in... allocate
+on the stack and not the heap?
+
+Let's take the discussion back to stack_alloc.txt. Time to revisit that again.

@@ -25,15 +25,7 @@
 #define EX_USAGE 2
 #define EX_FAILURE 3
 
-/**
- * An FbleExecutable with a FILE handle.
- */
-typedef struct {
-  FbleExecutable _base;
-  FILE* file;
-} FileExecutable;
-
-static void OnFree(FbleExecutable* this);
+static void OnFree(void* data);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
@@ -56,15 +48,15 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_offset);
 static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset);
 
 
-// OnFree function for FileExecutable
-static void OnFree(FbleExecutable* this)
+// OnFree function for FILE* native values.
+static void OnFree(void* data)
 {
-  FileExecutable* file = (FileExecutable*)this;
+  FILE* file = *(FILE**)data;
 
   // Don't close stderr, because that could prevent us from seeing runtime
   // errors printed to stderr.
-  if (file->file != stderr) {
-    fclose(file->file);
+  if (file != stderr) {
+    fclose(file);
   }
 }
 
@@ -77,11 +69,11 @@ static FbleValue* IStreamImpl(
   (void)profile;
   (void)tail_call_buffer;
 
-  FileExecutable* file = (FileExecutable*)function->executable;
+  FILE* file = *(FILE**)FbleNativeValueData(function->statics[0]);
 
   FbleValue* world = args[0];
 
-  int c = fgetc(file->file);
+  int c = fgetc(file);
   FbleValue* ms;
   if (c == EOF) {
     ms = FbleNewEnumValue(heap, 1);
@@ -105,14 +97,14 @@ static FbleValue* OStreamImpl(
   (void)profile;
   (void)tail_call_buffer;
 
-  FileExecutable* file = (FileExecutable*)function->executable;
+  FILE* file = *(FILE**)FbleNativeValueData(function->statics[0]);
 
   FbleValue* byte = args[0];
   FbleValue* world = args[1];
 
   int64_t c = FbleIntValueAccess(byte);
-  fputc(c, file->file);
-  fflush(file->file);
+  fputc(c, file);
+  fflush(file);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
@@ -208,34 +200,42 @@ static FbleValue* GetEnvImpl(
 //  Creates an IStream@ value for the given file.
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
 {
-  FileExecutable* exe = FbleAlloc(FileExecutable);
-  exe->_base.refcount = 0;
-  exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  exe->_base.num_args = 1;
-  exe->_base.num_statics = 0;
-  exe->_base.tail_call_buffer_size = 0;
-  exe->_base.profile_block_id = 0;
-  exe->_base.run = &IStreamImpl;
-  exe->_base.on_free = &OnFree;
-  exe->file = file;
-  return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
+  FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
+
+  FbleExecutable* exe = FbleAlloc(FbleExecutable);
+  exe->refcount = 0;
+  exe->magic = FBLE_EXECUTABLE_MAGIC;
+  exe->num_args = 1;
+  exe->num_statics = 1;
+  exe->tail_call_buffer_size = 0;
+  exe->profile_block_id = 0;
+  exe->run = &IStreamImpl;
+  exe->on_free = &FbleExecutableNothingOnFree;
+
+  FbleValue* func = FbleNewFuncValue(heap, exe, profile_block_offset, &native);
+  FbleReleaseValue(heap, native);
+  return func;
 }
 
 // OStream --
 //  Creates an OStream@ value for the given file.
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
 {
-  FileExecutable* exe = FbleAlloc(FileExecutable);
-  exe->_base.refcount = 0;
-  exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  exe->_base.num_args = 2;
-  exe->_base.num_statics = 0;
-  exe->_base.tail_call_buffer_size = 0;
-  exe->_base.profile_block_id = 1;
-  exe->_base.run = &OStreamImpl;
-  exe->_base.on_free = &OnFree;
-  exe->file = file;
-  return FbleNewFuncValue(heap, &exe->_base, profile_block_offset, NULL);
+  FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
+
+  FbleExecutable* exe = FbleAlloc(FbleExecutable);
+  exe->refcount = 0;
+  exe->magic = FBLE_EXECUTABLE_MAGIC;
+  exe->num_args = 2;
+  exe->num_statics = 1;
+  exe->tail_call_buffer_size = 0;
+  exe->profile_block_id = 1;
+  exe->run = &OStreamImpl;
+  exe->on_free = &FbleExecutableNothingOnFree;
+
+  FbleValue* func = FbleNewFuncValue(heap, exe, profile_block_offset, &native);
+  FbleReleaseValue(heap, native);
+  return func;
 }
 
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset)

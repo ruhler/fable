@@ -375,3 +375,198 @@ generational GC. Focus on partial application or other approaches to avoid or
 reduce the cost of function allocations rather than a rework of overall memory
 allocation for now.
 
+---
+
+We are again back to the high cost of allocations. Specifically a struct,
+union, and function allocation required as part of the Result@ monad. Every
+statement of Result@ monad requires an allocation.
+
+I really wish we could allocate these directly on the stack. I think that
+would make it much cheaper.
+
+<@ A@>(Result@<A@>)<@ B@>((A@) { Result@<B@>; }) { Result@<B@>; }
+Do = <@ A@>(Result@<A@> ra)<@ B@>((A@) { Result@<B@>; } f) {
+  ra.value.?(nothing: Raise<B@>(ra));
+
+  Result@<B@> rb = f(ra.value.just);
+  Result@(Append(ra.errors, rb.errors), Or(ra.failed, rb.failed), rb.value);
+};
+
+Look at rb here. We know rb is a struct. We know that we only access the
+individual fields of rb, after that we are done. From the Do function's point
+of view, rb is short lived. Though we don't know if anyone else is using it
+for other reasons.
+
+In practice, that function f is likely to be Do itself, allocating a brand new
+result.
+
+Let's say we could return values in three different ways:
+1. packed.
+2. stack allocated.
+3. heap allocated.
+
+We always prefer packed over stack over heap.
+
+To stack allocate, we are specifically talking about results of functions. The
+caller should allocate space on the stack for the presumably shallow
+allocation of the object. The callee knows about that and fills it in on the
+stack if possible.
+
+We just need to work out when to do which kind of allocation and how to manage
+references.
+
+---
+
+Three approaches for returning objects on the stack:
+1. Return the entire object on the stack.
+2. Return the shallow object on the stack, anything else it references on the
+heap.
+3. Return up to a fixed amount of memory for the object on the stack, anything
+else on the heap.
+
+I want to try (1) to start, because it's so far in a different direction. With
+(1), everything is allocated on the stack. There is no heap.
+
+The big concern with (1) is the pathological case of building a large object,
+like a linked list. Because we copy back every value return, and we are
+copying N values back O(N) times, that's O(N^2) runtime to allocate an O(N)
+list.
+
+Heap allocations are expensive to allocate and cheap to move around. Stack
+allocations are hopefully cheap to allocate but expensive to move around.
+
+For (1), we need a managed stack, because standard calling conventions have no
+way for a callee to return an unbounded amount of data on the stack to the
+caller.
+
+One idea that may make it easier is to have two stacks that we alternate
+between for every call. If A calls B calls C calls D calls E calls F:
+
+First stack: A C E
+Second stack: B D F
+
+This way, for example, when F is returning, it can return directly to the end
+of E's stack frame without worrying about clobbering things. Otherwise it may
+have to worry about clobbering itself. That is, compacting is easier if you
+are compacting to a different memory region.
+
+The API for the new proposed value heap:
+
+FbleNewValueHeap, FbleFreeValueHeap
+  As before, except Free cleans up any remaining objects.
+FbleNewStructValue, FbleNewFuncValue, FbleNewUnionValue - as before.
+
+void FbleValueHeapCall();
+  Sets up a new stack frame on the heap, recording the current position.
+
+FbleValue* FbleValueHeapReturn(FbleValue* return);
+  Returns to the previous stack frame on the heap. Frees every object
+  allocated on the current stack frame that is not reachable from the return
+  value. Moves everything reachable from the return value allocated on the
+  current stack frame back to the previous stack frame. Returns the new
+  address to use for the returned value.
+
+To manage objects in the C API, it will have to manage the stack as if it was
+a bunch of stack frames. The easiest would be have everything it uses in the
+first stack frame, which stays alive until FbleFreeValueHeap is called.
+FbleEval can allocate a new stack frame to start so its only returning what it
+uses.
+
+We can still have packed values if we want. RefValues are not allowed to span
+across stack frames, but that should come naturally. No need for
+retain/free/addref.
+
+Open question: how to properly free function values? Any way we can avoid the
+need to free function values? Seems like that would make things easier in
+general. Perhaps during compacting we iterate through all the allocated
+objects (they should be next to each other on the heap) and free the ones not
+moved. We could keep functions separately so its easier to iterate through
+just those.
+
+This approach sounds doable to me. I'm not convinced it's viable though,
+because of these two things:
+1. The pathological O(N^2) runtime to construct a N element list.
+2. The need to iterate through all functions to clean up their executables.
+
+Is it worth trying? Or should we find a solution to (1) and (2) first?
+
+To address (1), we would want to limit to a constant amount of data returned
+to the caller. Put the rest on the heap. If we do that, then we are basically
+going to original approach (3). No need for a managed stack anymore. We
+allocate a fixed amount of space for the callee to return values to. Anything
+that doesn't fit in that fixed space we allocate on the heap.
+
+The hope is this efficiently handles the case of small, short lived
+allocations that are slowing us down with monadic code today. I fear it makes
+inefficient use of stack space. All that potential space that won't be reused.
+
+Honestly, I think we should try (1). Give it a chance to see its full
+potential before worrying about how to address the bad cases. See how close it
+gets to the current approach and if it solves any problems we are having
+currently.
+
+---
+
+Here's an idea for how to avoid iterating through all the objects to clean
+them up. Change FuncValue to directly store num_args, num_statics,
+tail_call_buffer_size, profile_block_id, and run functions. Then we no longer
+need to do anything on free of functions.
+
+To support destructors, define a new internal value type NativeValue which is
+a wrapper around a native object. NativeValue participates in GC, it's
+basically raw data and an on_free function. Allocate things like file
+descriptors and FbleExecutable (for interpreter) in NativeValue objects that
+belong to statics of a function value. The run function can assume those
+objects exist and have the desired native type.
+
+The hope is that in normal execution, we very rarely have to deal with
+NativeValue objects. Add some extra data structure for NativeValue objects,
+such as an embedded doubly linked list, that makes it easy to traverse just
+the native objects for on free.
+
+I'm feeling good about this approach. We could implement it with the current
+heap garbage collector if we wanted to. I'm not sure it gets us much. I
+suppose the main downside is we can't share num args, num statics, tail call
+buffer size, profile block id and run functions. So, if lots of functions are
+instantiated with the same parameters, we end up with duplicate data. Perhaps
+memory for that is expensive. On the other hand, when do you expect a bunch of
+different functions to have the same executable? It would be functions
+allocated by other functions. Maybe it's not that common.
+
+---
+
+First question: how to implement the stack data structure?
+
+A. Use the existing native stack.
+
+I'm not sure this is legit, but, for example, maybe we use alloca to allocate
+on the callee stack. Then return the resulting pointer to the caller. The
+caller used alloca to keep track of its local allocations. To access the
+returned data from the callee, call alloca with the needed size to get access
+to whatever was on the callee stack when it returned.
+
+Downsides:
+* It's pretty hacky. Probably not portable.
+
+Assuming the hacks work, we could compact the stack as follows:
+* The callee returns the value from its stack without any compaction.
+* Immediately on return, the caller uses alloca to capture the callee's stack.
+* We call a Compact function giving it a pointer to the original caller stack
+  and the new caller stack. It can copy over everything.
+* Somehow we need a way to realloc to free up the unused space from the
+  callee. Hmm.. Sounds tricky.
+
+B. Implement a single continuous address space.
+
+This sounds nice, because:
+* it's cheap to allocate and free: increment and decrement a pointer. 
+* We can easily check if a pointer is in the compacting region of the stack or
+  not, so traversal is easy. Just do pointer comparison.
+
+How can we get a single continuous address space?
+* Pass a fixed size heap when we create FbleValueHeap. 
+  Sounds reasonable in theory. We could pick a default large heap.
+* Use something like MAP_GROWSDOWN?
+  Is that portable? How are you supposed to use that?
+* mmap on demand and hope you can get continuous regions?
+

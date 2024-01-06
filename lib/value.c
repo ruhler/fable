@@ -6,6 +6,7 @@
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
+#include <string.h>   // for memcpy
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-execute.h>   // for FbleFreeExecutable
@@ -34,6 +35,7 @@ typedef enum {
   UNION_VALUE,
   FUNC_VALUE,
   REF_VALUE,
+  NATIVE_VALUE,
 } ValueTag;
 
 /**
@@ -105,6 +107,15 @@ typedef struct {
   FbleValue _base;      /**< FbleValue base class. */
   FbleValue* value;     /**< The referenced value, or NULL. */
 } RefValue;
+
+/**
+ * NATIVE_VALUE: GC tracked native allocation.
+ */
+typedef struct {
+  FbleValue _base;              /**< FbleValue base class. */
+  void (*on_free)(void* data);  /**< Destructor for user data. */
+  char data[];                  /**< User data. */               
+} NativeValue;
 
 /**
  * Allocates a new value of the given type.
@@ -252,6 +263,11 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     }
 
     case REF_VALUE: return;
+    case NATIVE_VALUE: {
+      NativeValue* v = (NativeValue*)value;
+      v->on_free(v->data);
+      return;
+    }
   }
 
   FbleUnreachable("Should not get here");
@@ -316,6 +332,10 @@ static void Refs(FbleHeap* heap, FbleValue* value)
       if (v->value != NULL) {
         Ref(heap, value, v->value);
       }
+      break;
+    }
+
+    case NATIVE_VALUE: {
       break;
     }
   }
@@ -731,4 +751,25 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   rv->value = value;
   AddRef(heap, ref, value);
   return true;
+}
+
+// See documentation in fble-value.h
+FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
+    size_t size, void (*on_free)(void* data), void* data)
+{
+  NativeValue* value = NewValueExtra(heap, NativeValue, size);
+  value->_base.tag = NATIVE_VALUE;
+  value->on_free = on_free;
+  if (data != NULL) {
+    memcpy(value->data, data, size);
+  }
+  return &value->_base;
+}
+
+// See documentation in fble-value.h
+void* FbleNativeValueData(FbleValue* value)
+{
+  value = StrictValue(value);
+  assert(value->tag == NATIVE_VALUE);
+  return ((NativeValue*)value)->data;
 }
