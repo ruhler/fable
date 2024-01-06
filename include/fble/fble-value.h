@@ -459,7 +459,8 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
  *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
  *  @arg[size_t][size] The number of bytes of native data to allocate.
  *  @arg[void (*)(void*)][on_free]
- *   Function called just before freeing the allocated native data.
+ *   Function called just before freeing the allocated native data. May be
+ *   NULL to indicate that nothing should be done on free.
  *  @arg[void*][data]
  *   Initial data to store on the native value. size bytes from data are
  *   copied over to the native value data. May be NULL to leave the native

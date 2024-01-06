@@ -24,16 +24,14 @@
 #define EX_USAGE 2
 #define EX_FAILURE 3
 
-// Executable for an app.
 typedef struct {
-  FbleExecutable _base;
   SDL_Window* window;
   Uint32 time;
 
   // fpsHistogram[i] is the number of samples with i frames per second.
   // Anything above 60 FPS is counted towards i = 60.
   int fpsHistogram[61];
-} Executable;
+} App;
 
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
@@ -355,7 +353,7 @@ static FbleValue* EffectImpl(
   (void)profile;
   (void)tail_call_buffer;
 
-  Executable* exe = (Executable*)function->executable;
+  App* app = *(App**)FbleNativeValueData(function->statics[0]);
 
   FbleValue* effect = args[0];
   FbleValue* world = args[1];
@@ -365,18 +363,18 @@ static FbleValue* EffectImpl(
       int tick = FbleIntValueAccess(FbleUnionValueArg(effect));
 
       Uint32 now = SDL_GetTicks();
-      exe->time += tick;
-      if (exe->time < now) {
-        exe->time = now;
+      app->time += tick;
+      if (app->time < now) {
+        app->time = now;
       }
-      SDL_AddTimer(exe->time - now, OnTimer, NULL);
+      SDL_AddTimer(app->time - now, OnTimer, NULL);
       break;
     }
 
     case 1: {
-      SDL_Surface* surface = SDL_GetWindowSurface(exe->window);
+      SDL_Surface* surface = SDL_GetWindowSurface(app->window);
       Draw(surface, 1, 1, 0, 0, FbleUnionValueArg(effect));
-      SDL_GL_SwapWindow(exe->window);
+      SDL_GL_SwapWindow(app->window);
 
       // Collect status on frame rate.
       static Uint32 last = 0;
@@ -389,7 +387,7 @@ static FbleValue* EffectImpl(
         if (fps > 60) {
           fps = 60;
         }
-        exe->fpsHistogram[fps]++;
+        app->fpsHistogram[fps]++;
         last = now;
       }
       break;
@@ -522,16 +520,16 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* app = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
+  FbleValue* app_main = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
   FbleFreeModuleArg(module_arg);
-  if (app == NULL) {
+  if (app_main == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAILURE;
   }
 
-  FbleValue* func = FbleEval(heap, app, profile);
-  FbleReleaseValue(heap, app);
+  FbleValue* func = FbleEval(heap, app_main, profile);
+  FbleReleaseValue(heap, app_main);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
@@ -575,33 +573,40 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
 
-  FbleExecutable* event_exe = FbleAlloc(FbleExecutable);
-  event_exe->refcount = 1;
-  event_exe->magic = FBLE_EXECUTABLE_MAGIC;
-  event_exe->num_args = 1;
-  event_exe->num_statics = 0;
-  event_exe->tail_call_buffer_size = 0;
-  event_exe->profile_block_id = block_id;
-  event_exe->run = &EventImpl;
-  event_exe->on_free = &FbleExecutableNothingOnFree;
-  FbleValue* fble_event = FbleNewFuncValue(heap, event_exe, 0, NULL);
+  FbleExecutable event_exe = {
+    .refcount = 1,
+    .magic = FBLE_EXECUTABLE_MAGIC,
+    .num_args = 1,
+    .num_statics = 0,
+    .tail_call_buffer_size = 0,
+    .profile_block_id = block_id,
+    .run = &EventImpl,
+    .on_free = &FbleExecutableNothingOnFree,
+  };
+  FbleValue* fble_event = FbleNewFuncValue(heap, &event_exe, 0, NULL);
 
-  Executable* effect_exe = FbleAlloc(Executable);
-  effect_exe->_base.refcount = 1;
-  effect_exe->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  effect_exe->_base.num_args = 2;
-  effect_exe->_base.num_statics = 0;
-  effect_exe->_base.tail_call_buffer_size = 0;
-  effect_exe->_base.profile_block_id = block_id + 1;
-  effect_exe->_base.run = &EffectImpl;
-  effect_exe->_base.on_free = &FbleExecutableNothingOnFree;
-  effect_exe->window = window;
-  effect_exe->time = SDL_GetTicks();
+  FbleExecutable effect_exe = {
+    .refcount = 1,
+    .magic = FBLE_EXECUTABLE_MAGIC,
+    .num_args = 2,
+    .num_statics = 1,
+    .tail_call_buffer_size = 0,
+    .profile_block_id = block_id + 1,
+    .run = &EffectImpl,
+    .on_free = &FbleExecutableNothingOnFree,
+  };
 
+  App app;
+  app.window = window;
+  app.time = SDL_GetTicks();
   for (size_t i = 0; i < 61; ++i) {
-    effect_exe->fpsHistogram[i] = 0;
+    app.fpsHistogram[i] = 0;
   }
 
+  App* app_ptr = &app;
+  FbleValue* app_value = FbleNewNativeValue(heap, sizeof(App*), NULL, &app_ptr);
+  FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, 0, &app_value);
+  FbleReleaseValue(heap, app_value);
 
   FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
 
@@ -615,7 +620,6 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     FbleReleaseValue(heap, argP);
   }
 
-  FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe->_base, 0, NULL);
   FbleValue* fble_width = FbleNewIntValue(heap, width);
   FbleValue* fble_height = FbleNewIntValue(heap, height);
 
@@ -646,14 +650,11 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   if (fps) {
     fprintf(stderr, "FPS Histogram:\n");
     for (size_t i = 0; i < 61; ++i) {
-      if (effect_exe->fpsHistogram[i] > 0) {
-        printf("  % 3zi: % 12i\n", i, effect_exe->fpsHistogram[i]);
+      if (app.fpsHistogram[i] > 0) {
+        printf("  % 3zi: % 12i\n", i, app.fpsHistogram[i]);
       }
     }
   }
-
-  FbleFreeExecutable(event_exe);
-  FbleFreeExecutable(&effect_exe->_base);
 
   int exit_status = EX_FAILURE;
   if (result != NULL) {

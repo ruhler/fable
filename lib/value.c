@@ -265,7 +265,9 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case REF_VALUE: return;
     case NATIVE_VALUE: {
       NativeValue* v = (NativeValue*)value;
-      v->on_free(v->data);
+      if (v->on_free != NULL) {
+        v->on_free(v->data);
+      }
       return;
     }
   }
