@@ -464,13 +464,18 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "    .run = &%s_%04zx,\n", function_label, func_instr->code->_base.profile_block_id);
         fprintf(fout, "    .on_free = NULL\n");
         fprintf(fout, "  };\n");
-        fprintf(fout, "  l[%zi] = FbleNewFuncValue_(heap, &exe_%zi, profile_block_offset", func_instr->dest, exe_id);
-        exe_id++;
+
+        fprintf(fout, "  FbleValue* fv%zi[%zi] = {", pc, func_instr->code->_base.num_statics);
         for (size_t i = 0; i < func_instr->code->_base.num_statics; ++i) {
-          fprintf(fout, ", %s[%zi]",
+          fprintf(fout, "%s[%zi], ",
               var_tag[func_instr->scope.xs[i].tag],
               func_instr->scope.xs[i].index);
         }
+        fprintf(fout, "};\n");
+
+        fprintf(fout, "  l[%zi] = FbleNewFuncValue(heap, &exe_%zi, profile_block_offset, fv%zi",
+            func_instr->dest, exe_id, pc);
+        exe_id++;
         fprintf(fout, ");\n");
         break;
       }

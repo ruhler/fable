@@ -650,20 +650,6 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
   return &v->_base;
 }
 
-// See documentation in fble-value.h.
-FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...)
-{
-  size_t argc = executable->num_statics;
-  FbleValue* args[argc];
-  va_list ap;
-  va_start(ap, profile_block_offset);
-  for (size_t i = 0; i < argc; ++i) {
-    args[i] = va_arg(ap, FbleValue*);
-  }
-  va_end(ap);
-  return FbleNewFuncValue(heap, executable, profile_block_offset, args);
-}
-
 // See documentation in fble-value.h
 FbleFunction* FbleFuncValueFunction(FbleValue* value)
 {

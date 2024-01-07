@@ -339,27 +339,6 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics);
 
 /**
- * @func[FbleNewFuncValue_] Creates an fble function value using varargs.
- *  @arg[FbleValueHeap*] heap
- *   Heap to use for allocations.
- *  @arg[FbleExecutable*] executable
- *   The executable to run. Borrowed.
- *  @arg[size_t] profile_block_offset
- *   The profile block offset to use for the function.
- *  @arg[...][]
- *   Static variables for the function. The count should match
- *   executable->num_statics.
- *
- *  @returns FbleValue*
- *   A newly allocated function value.
- *
- *  @sideeffects
- *   Allocates a new function value that should be freed using
- *   FbleReleaseValue when it is no longer needed.
- */
-FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...);
-
-/**
  * @func[FbleFuncValueFunction] Gets the info from a function value.
  *  @arg[FbleValue*][value] The value to get the function info of.
  *

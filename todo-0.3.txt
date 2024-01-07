@@ -2,6 +2,11 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Remove FbleExecutable* pointer from FuncValue
+ - Implement native function in FbleLink instead of via FbleCode.
+ - Construct FbleFuncValue from FbleFunction*.
+ - Add number args and num statics to FbleFunction.
+
 * Update tutorials for partial function application updates.
    Particularly noting how to do type inference for multiple poly parameters.
 
