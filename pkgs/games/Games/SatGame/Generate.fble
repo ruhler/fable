@@ -1,0 +1,26 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+@ LFSR@ = /Core/LFSR%.LFSR@;
+
+<@>% Nil = /Core/List%.Nil;
+
+@ Clause@ = /Games/SatGame/Puzzle%.Clause@;
+@ Puzzle@ = /Games/SatGame/Puzzle%.Puzzle@;
+
+# @func[Generate] Generates a sat game puzzle.
+#  The puzzle is randomly generated to be solvable via a sequence of pure
+#  literals. 
+#
+#  @arg[LFSR@][rand] The random number generator to use.
+#  @arg[Int@][num_vars] The number of unique variables in the puzzle.
+#  @arg[Int@][num_clauses] The number of clauses in the puzzle.
+#  @arg[Int@][vars_per_clause] The number of variables in each clause.
+#  @returns[Puzzle@] The generated puzzle.
+(LFSR@, Int@, Int@, Int@) { Puzzle@; }
+Generate = (LFSR@ _rand, Int@ _num_vars, Int@ _num_clauses, Int@ _vars_per_clause) {
+  # TODO: Implement something useful here.
+  Nil<Clause@>;
+};
+
+@(Generate);

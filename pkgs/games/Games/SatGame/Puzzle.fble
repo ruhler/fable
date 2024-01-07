@@ -1,0 +1,13 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+@ VarId@ = Int@;
+@ Var@ = *(VarId@ id, Bool@ pos);
+
+@ Clause@ = List@<Var@>;
+@ Puzzle@ = List@<Clause@>;
+
+@(Puzzle@, Clause@, Var@, VarId@);

@@ -2,10 +2,15 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Remove FbleExecutable* pointer from FuncValue
- - Implement native function in FbleLink instead of via FbleCode.
- - Construct FbleFuncValue from FbleFunction*.
- - Add number args and num statics to FbleFunction.
+* Remove on_free from FuncValue
+ - Use NativeValue to track FbleCode* allocation.
+ - Inline FbleExecutable directly into FbleFunction
+ - Figure out how to track abstract freeable data in FbleExecutableModule.
+
+* SatGame
+ - Implement a nicer Random@ interface.
+ - Implement List@ shuffle.
+ - Implement Puzzle@ generator.
 
 * Update tutorials for partial function application updates.
    Particularly noting how to do type inference for multiple poly parameters.

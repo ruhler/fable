@@ -570,3 +570,20 @@ How can we get a single continuous address space?
   Is that portable? How are you supposed to use that?
 * mmap on demand and hope you can get continuous regions?
 
+Some experiments to try:
+1. What does the virtual address space look like for a mostly empty c program?
+2. What does the virtual address space look like for, say, fbld while it's running?
+3. What's the largest single region I can successfully mmap in one attempt?
+
+(1):
+
+55800b0000-55800c2000 r-xp  /home/richard/scratch/stack/main
+55bab88000-55baba9000 rw-p  [heap]
+7fa96b1000-7faa0b1000 rw-p  My 10MB mmap.
+7faa0b1000-7faa21e000 ***p  /usr/lib/aarch64-linux-gnu/libc-2.28.so
+7fde589000-7fde5aa000 rw-p  [stack]
+
+(2):
+  0bb34000-  10e9b000 rw-p  [heap]
+7fd93ca000-7fda670000 rw-p  [stack]
+
