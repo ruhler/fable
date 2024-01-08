@@ -3,6 +3,10 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * Remove on_free from FuncValue
+ - Rename FbleLinkFromCompiledOrSource to FbleLink.
+ - Make FbleExecutableModule private to link.c?
+ - Change FbleExecutableModule to store an FbleValue function value instead of
+   FbleExecutable?
  - Use NativeValue to track FbleCode* allocation.
  - Inline FbleExecutable directly into FbleFunction
  - Figure out how to track abstract freeable data in FbleExecutableModule.

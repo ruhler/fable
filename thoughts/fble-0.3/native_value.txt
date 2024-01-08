@@ -1,0 +1,27 @@
+Native Value
+============
+The goal is to avoid having a destructor for Function Value. Instead use a
+separate Native Value.
+
+The trick is untangling FbleCode/FbleExecutableModule.
+
+What should FbleCompiledModuleFunction be?
+
+I think it should take a heap and a program. The program is a list of pairs of
+(module_path, FbleValue). That is, the value of all the loaded modules so far.
+A given module can look up and, if necessary, load any of its dependencies
+into the program.
+
+No need for FbleLink? The modules link themselves together?
+
+And we have an option from the interpreter to load a module from code. It will
+allocate a function with the code internally.
+
+And we maybe can do something reasonable with profile blocks. As in, the
+program also has profile blocks, and you add to the profile blocks when you
+load the module.
+
+I'll have to remember how I implement the generated code. Perhaps we could
+avoid passing around a profile_block_offset everywhere? Not sure. One step at
+a time.
+

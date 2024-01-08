@@ -14,8 +14,32 @@
 
 #include "code.h"
 
-// FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile)
+static FbleValue* Link(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile);
+static FbleValue* LinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile);
+static FbleValue* LinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
+
+/**
+ * @func[Link] Links an fble program.
+ *  Links the modules of an executable program together into a single
+ *  FbleValue representing a zero-argument function that can be used to
+ *  compute the value of the program.
+ *
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleExecutableProgram*] program
+ *   The executable program to link.
+ *  @arg[FbleProfile*] profile
+ *   Profile to construct for the linked program. May be NULL.
+ *
+ *  @returns FbleValue*
+ *   An FbleValue representing a zero-argument function that can be used to
+ *   compute the value of the program.
+ *
+ *  @sideeffects
+ *   Allocates an FbleValue that should be freed using FbleReleaseValue when
+ *   no longer needed.
+ */
+static FbleValue* Link(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile)
 {
   size_t modulec = program->modules.size;
 
@@ -92,8 +116,30 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   return linked;
 }
 
-// FbleLinkFromSource -- see documentation in fble-link.h
-FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile)
+/**
+ * @func[LinkFromSource] Loads an fble program from source.
+ *  Loads, compiles, and links a full program from source.
+ *
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for locating .fble files.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load. Borrowed.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
+ *
+ *  @returns FbleValue*
+ *   A zero-argument function that computes the value of the program when
+ *   executed, or NULL in case of error.
+ *
+ *  @sideeffects
+ *   @i Prints an error message to stderr if the program fails to load.
+ *   @item
+ *    The user should call FbleReleaseValue on the returned value when it is
+ *    no longer needed.
+ */
+static FbleValue* LinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile)
 {
   FbleLoadedProgram* program = FbleLoad(search_path, module_path, NULL);
   if (program == NULL) {
@@ -109,12 +155,12 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, 
   FbleExecutableProgram* executable = FbleInterpret(compiled);
   FbleFreeCompiledProgram(compiled);
 
-  FbleValue* linked = FbleLink(heap, executable, profile);
+  FbleValue* linked = Link(heap, executable, profile);
   FbleFreeExecutableProgram(executable);
   return linked;
 }
 
-// FbleLoadFromCompiled -- see documentation in fble-link.h
+// See documentation in fble-link.h
 void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps)
 {
   // Don't do anything if the module has already been loaded.
@@ -124,7 +170,7 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
     }
   }
 
-  // Otherwise, load it's dependencies and add it to the list.
+  // Otherwise, load its dependencies and add it to the list.
   for (size_t i = 0; i < depc; ++i) {
     deps[i](program);
   }
@@ -133,13 +179,29 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
   FbleAppendToVector(program->modules, module);
 }
 
-// FbleLinkFromCompiled -- see documentation in fble-link.h
-FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile)
+/**
+ * @func[LinkFromCompiled] Loads and links a precompield fble program.
+ *  @arg[FbleCompiledModuleFunction] module
+ *   The compiled main module function.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
+ *
+ *  @returns FbleValue*
+ *   A zero-argument fble function that computes the value of the program when
+ *   executed.
+ *
+ *  @sideeffects
+ *   The user should call FbleReleaseValue on the returned value when it is no
+ *   longer needed.
+ */
+static FbleValue* LinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile)
 {
   FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
   FbleInitVector(program->modules);
   module(program);
-  FbleValue* value = FbleLink(heap, program, profile);
+  FbleValue* value = Link(heap, program, profile);
   FbleFreeExecutableProgram(program);
   return value;
 }
@@ -148,11 +210,11 @@ FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHea
 FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path)
 {
   if (module != NULL) {
-    return FbleLinkFromCompiled(module, heap, profile);
+    return LinkFromCompiled(module, heap, profile);
   }
 
   assert(module_path != NULL);
-  FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, profile);
+  FbleValue* linked = LinkFromSource(heap, search_path, module_path, profile);
   return linked;
 }
 // See documentation in fble-link.h

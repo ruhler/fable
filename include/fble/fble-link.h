@@ -12,54 +12,6 @@
 #include "fble-value.h"
 
 /**
- * @func[FbleLink] Links an fble program.
- *  Links the modules of an executable program together into a single
- *  FbleValue representing a zero-argument function that can be used to
- *  compute the value of the program.
- *
- *  @arg[FbleValueHeap*] heap
- *   Heap to use for allocations.
- *  @arg[FbleExecutableProgram*] program
- *   The executable program to link.
- *  @arg[FbleProfile*] profile
- *   Profile to construct for the linked program. May be NULL.
- *
- *  @returns FbleValue*
- *   An FbleValue representing a zero-argument function that can be used to
- *   compute the value of the program.
- *
- *  @sideeffects
- *   Allocates an FbleValue that should be freed using FbleReleaseValue when
- *   no longer needed.
- */
-FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile);
-
-/**
- * @func[FbleLinkFromSource] Loads an fble program from source.
- *  Loads, compiles, and links a full program from source.
- *
- *  @arg[FbleValueHeap*] heap
- *   Heap to use for allocations.
- *  @arg[FbleSearchPath*] search_path
- *   The search path to use for locating .fble files.
- *  @arg[FbleModulePath*] module_path
- *   The module path for the main module to load. Borrowed.
- *  @arg[FbleProfile*] profile
- *   Profile to populate with blocks. May be NULL.
- *
- *  @returns FbleValue*
- *   A zero-argument function that computes the value of the program when
- *   executed, or NULL in case of error.
- *
- *  @sideeffects
- *   @i Prints an error message to stderr if the program fails to load.
- *   @item
- *    The user should call FbleReleaseValue on the returned value when it is
- *    no longer needed.
- */
-FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile);
-
-/**
  * @func[FbleCompiledModuleFunction] Compiled module function type.
  *  The type of a module function generated for compiled .fble code.
  *
@@ -87,25 +39,6 @@ typedef void FbleCompiledModuleFunction(FbleExecutableProgram* program);
  *   Adds this module and any modules it depends on to the given program.
  */
 void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps);
-
-/**
- * @func[FbleLinkFromCompiled] Loads and links a precompield fble program.
- *  @arg[FbleCompiledModuleFunction] module
- *   The compiled main module function.
- *  @arg[FbleValueHeap*] heap
- *   Heap to use for allocations.
- *  @arg[FbleProfile*] profile
- *   Profile to populate with blocks. May be NULL.
- *
- *  @returns FbleValue*
- *   A zero-argument fble function that computes the value of the program when
- *   executed.
- *
- *  @sideeffects
- *   The user should call FbleReleaseValue on the returned value when it is no
- *   longer needed.
- */
-FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
 
 /**
  * @func[FbleLinkFromCompiledOrSource] Loads an optionally compiled program.

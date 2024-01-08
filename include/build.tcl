@@ -32,11 +32,8 @@ namespace eval "include" {
       FbleInterpret
     }
     fble-link.h {
-      FbleLink
-      FbleLinkFromSource
       FbleCompiledModuleFunction
       FbleLoadFromCompiled
-      FbleLinkFromCompiled
       FbleLinkFromCompiledOrSource
       FblePrintCompiledHeaderLine
     }

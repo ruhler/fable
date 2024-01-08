@@ -587,3 +587,70 @@ Some experiments to try:
   0bb34000-  10e9b000 rw-p  [heap]
 7fd93ca000-7fda670000 rw-p  [stack]
 
+(3):
+
+Somewhere between 512MB and 1GB. I wonder if it's trying to reserve the space.
+
+Let's try with MAP_NORESERVE now.
+
+That gives us somewhere between 256GB and 512GB.
+
+Cool. So with MAP_NORESERVE, we can get plenty of virtual address space for
+the stack. Looks like in my case it allocates memory at the end of the
+available region.
+
+Any way to pick a decent default value for the heap size? I guess I could do
+what I'm doing now: keeping trying 2x until we fail to allocate that much
+virtual memory.
+
+I suppose a more portable way to do this would be to malloc 2x until we fail,
+use the last successful size as the stack.
+
+Using malloc, the biggest allocation I get is 512MB.
+
+If I search more precisely, the biggest allocation I get is around 1009MB.
+
+I don't see any need to use mmap myself. Malloc a big region sounds fine to
+me. We can search for what's available. Or take a fixed size.
+
+---
+
+Random different idea: what if we implement a copying collector instead of
+mark sweep?
+
+The stack allocation approach has already abandoned the idea of incremental
+garbage collection. We know we care about maximum memory. So how about
+something simple like this:
+
+Start with some reasonable smallish heap size. Say 1MB. When we fill up that
+1MB, then we do a big copy traversal of the entire heap.
+
+A couple problems with this:
+* We need to update all external references to use the new pointers. We can't
+  do that as easily when there are external references beyond the one we are
+  returning.
+* How/when do we grow the heap? It's only after we copy that we know how much
+  space we need for it.
+
+Maybe we say at 1MB, copy over. If the result is less than 512KB, fine. If the
+result is more than 512KB, then the next time we allocate a new region,
+allocate it as a 2MB region?
+
+In other words, we have heap size (after compaction), heap max (allocated
+space). We set the next heap max based on heap size after compaction.
+
+The nice thing about this approach is:
+* It should be really fast when we aren't compacting.
+* It's based specifically around the idea of minimizing the max memory usage.
+
+Downsides:
+* It doesn't work well with caching. Short lived objects will go out of cache.
+* Big stop the world GC events.
+
+---
+
+Anyway, back to previously proposed stack allocation approach. We can use
+malloc to allocate a single large enough region of memory up front. Allocation
+is bumping a pointer. On 'enter', save the current stack pointer so we can
+jump back to it. On traverse, we can use the pointer values to check what is
+included in the traversal and what is down the stack.
