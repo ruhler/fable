@@ -34,7 +34,7 @@ namespace eval "include" {
     fble-link.h {
       FbleCompiledModuleFunction
       FbleLoadFromCompiled
-      FbleLinkFromCompiledOrSource
+      FbleLink
       FblePrintCompiledHeaderLine
     }
     fble-load.h {

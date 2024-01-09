@@ -206,8 +206,8 @@ static FbleValue* LinkFromCompiled(FbleCompiledModuleFunction* module, FbleValue
   return value;
 }
 
-// FbleLinkFromCompiledOrSource -- see documentation in fble-link.h
-FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path)
+// FbleLink -- see documentation in fble-link.h
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path)
 {
   if (module != NULL) {
     return LinkFromCompiled(module, heap, profile);

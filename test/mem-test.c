@@ -9,7 +9,7 @@
 
 #include <fble/fble-alloc.h>       // for FbleFree, FbleMaxTotalBytesAllocated.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-link.h>        // for FbleLinkFromCompiledOrSource.
+#include <fble/fble-link.h>        // for FbleLink.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
@@ -134,7 +134,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleCompiledModuleFunction* mod
   // profiling turned on.
   FbleProfile* profile = FbleNewProfile(true);
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
+  FbleValue* linked = FbleLink(heap, profile, module, module_arg.search_path, module_arg.module_path);
   FbleFreeModuleArg(module_arg);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);

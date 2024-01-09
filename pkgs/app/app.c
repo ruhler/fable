@@ -520,7 +520,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* app_main = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
+  FbleValue* app_main = FbleLink(heap, profile, module, module_arg.search_path, module_arg.module_path);
   FbleFreeModuleArg(module_arg);
   if (app_main == NULL) {
     FbleFreeValueHeap(heap);

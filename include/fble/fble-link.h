@@ -41,9 +41,9 @@ typedef void FbleCompiledModuleFunction(FbleExecutableProgram* program);
 void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps);
 
 /**
- * @func[FbleLinkFromCompiledOrSource] Loads an optionally compiled program.
- *  This is a convenience function that attempts to load a compiled program if
- *  available, and if not, attempts to load from source.
+ * @func[FbleLink] Loads an optionally compiled program.
+ *  This function attempts to load a compiled program if available, and if
+ *  not, attempts to load from source.
  *
  *  If module is non-NULL, loads from compiled. Otherwise loads from
  *  module_path.
@@ -67,7 +67,7 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
  *   The user should call FbleReleaseValue on the returned value when it is no
  *   longer needed.
  */
-FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path);
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 
 /**
  * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.

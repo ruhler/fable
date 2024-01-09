@@ -448,7 +448,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* stdio = FbleLinkFromCompiledOrSource(heap, profile, module, module_arg.search_path, module_arg.module_path);
+  FbleValue* stdio = FbleLink(heap, profile, module, module_arg.search_path, module_arg.module_path);
   FbleFreeModuleArg(module_arg);
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);
