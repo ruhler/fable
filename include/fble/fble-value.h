@@ -10,12 +10,9 @@
 
 #include "fble-profile.h"   // for FbleProfile
 
-/**
- * Forward reference for FbleExecutable
- *
- * See fble-execute.h for the full definition.
- */
+// Forward references for types defined in fble-function.h
 typedef struct FbleExecutable FbleExecutable;
+typedef struct FbleFunction FbleFunction;
 
 /**
  * Memory heap for allocating fble values.
@@ -30,18 +27,6 @@ typedef struct {
   size_t size;      /**< Number of elements. */
   FbleValue** xs;   /**< Elements .*/
 } FbleValueV;
-
-/**
- * Information about an fble function.
- *
- * The statics are owned by whatever FbleValue object represents the function.
- * Don't try accessing them unless you know that FbleValue object is retained.
- */
-typedef struct {
-  FbleExecutable* executable;
-  FbleBlockId profile_block_offset;
-  FbleValue** statics;
-} FbleFunction;
 
 /**
  * @func[FbleNewValueHeap] Creates a new FbleValueHeap.

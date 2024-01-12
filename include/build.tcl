@@ -21,12 +21,12 @@ namespace eval "include" {
       FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main
       FbleGenerateC FbleGenerateCExport FbleGenerateCMain
     }
-    fble-execute.h {
+    fble-function.h {
       FbleRunFunction
       FbleFreeExecutable
       FbleExecutableNothingOnFree
-      FbleFreeExecutableModule FbleFreeExecutableProgram
       FbleCall
+      FbleFreeExecutableModule FbleFreeExecutableProgram
     }
     fble-interpret.h {
       FbleInterpret

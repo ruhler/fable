@@ -1,0 +1,47 @@
+Module Compilation
+==================
+
+Thoughts on modular compilation.
+
+Today we can't mix compiled and interpreted code based on how we link
+functions. The rest of the implementation would support it if we had a way of
+loading them. That could clean up the FbleLink API too.
+
+Let's imagine three places you can get the code:
+1. It's statically compiled into the executable. Given a module name, you can
+convert to the C name for loading the compiled module and check if it is
+present in the executable (somehow?).
+
+2. It's compiled to a shared library. Look for the shared library on the
+module search path.
+
+3. It's source. Look for the source on the module search path.
+
+Then the FbleLink process will be all around module paths. For a module to
+load its dependencies, it requests for load of the module paths. The loader
+finds where each module is, in whatever format it prefers.
+
+Can we search for a symbol in the main function somehow? One that is
+statically compiled in? Looks like dlsym could do that with handle
+RTLD_DEFAULT? Or dlopen with filename NULL opens the main executable. Yes.
+Note, it needs -rdynamic at link time for the symbol to be findable. Then we
+can do: dlsym(NULL, "foo") to get the address of function foo.
+
+---
+
+True modular compilation would allow us to compile a module only knowing the
+types of its dependencies. To only know the type of a dependency, we need a
+way to express that. Three options:
+
+1. Like we currently do: read the source of the dependency. But that's more
+than we want.
+
+2. Use my proposed fble language for types from before: add an 'undefined' let
+value statement.
+
+3. Generate something automatically from the compiler.
+
+In general, types of modules depend on types of dependent modules. We probably
+want to share that, so in general each module will have a type associated with
+it that can depend on the types for other modules.
+

@@ -9,9 +9,9 @@
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for NULL
 
-#include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree, etc.
-#include <fble/fble-execute.h>
-#include <fble/fble-vector.h>  // for FbleInitVector, etc.
+#include <fble/fble-alloc.h>      // for FbleAlloc, FbleFree, etc.
+#include <fble/fble-function.h>   // for FbleExecutable
+#include <fble/fble-vector.h>     // for FbleInitVector, etc.
 
 #include "tc.h"
 #include "interpret.h"

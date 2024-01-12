@@ -1,9 +1,9 @@
 /**
- * @file execute.c
+ * @file function.c
  *  Execution of fble functions.
  */
 
-#include <fble/fble-execute.h>
+#include <fble/fble-function.h>
 
 #include <alloca.h>         // for alloca
 #include <assert.h>         // for assert
@@ -30,7 +30,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
 
 
 // FbleRunFunction for PartialApply executable.
-// See documentation of FbleRunFunction in fble-execute.h
+// See documentation of FbleRunFunction in fble-function.h
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
@@ -223,7 +223,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
   return result;
 }
 
-// See documentation in fble-execute.h.
+// See documentation in fble-function.h
 FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* function, size_t argc, FbleValue** args)
 {
   FbleFunction* func = FbleFuncValueFunction(function);
@@ -292,7 +292,7 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValu
   return Eval(heap, func, argc, args, profile);
 }
 
-// See documentation in fble-execute.h.
+// See documentation in fble-function.h
 void FbleFreeExecutable(FbleExecutable* executable)
 {
   if (executable == NULL) {
@@ -314,13 +314,13 @@ void FbleFreeExecutable(FbleExecutable* executable)
   }
 }
 
-// See documentation in fble-execute.h.
+// See documentation in fble-function.h
 void FbleExecutableNothingOnFree(FbleExecutable* this)
 {
   (void)this;
 }
 
-// See documentation in fble-execute.h.
+// See documentation in fble-function.h
 void FbleFreeExecutableModule(FbleExecutableModule* module)
 {
   assert(module->magic == FBLE_EXECUTABLE_MODULE_MAGIC && "corrupt FbleExecutableModule");
@@ -339,7 +339,7 @@ void FbleFreeExecutableModule(FbleExecutableModule* module)
   }
 }
 
-// See documentation in fble-execute.h.
+// See documentation in fble-function.h
 void FbleFreeExecutableProgram(FbleExecutableProgram* program)
 {
   if (program != NULL) {

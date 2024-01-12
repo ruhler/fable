@@ -9,9 +9,9 @@
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for rand
 
-#include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree
-#include <fble/fble-execute.h>
-#include <fble/fble-vector.h>  // for FbleInitVector, etc.
+#include <fble/fble-alloc.h>    // for FbleAlloc, FbleFree
+#include <fble/fble-function.h> // For FbleExecutableModule
+#include <fble/fble-vector.h>   // for FbleInitVector, etc.
 
 #include "code.h"
 #include "unreachable.h"

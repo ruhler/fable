@@ -25,3 +25,214 @@ I'll have to remember how I implement the generated code. Perhaps we could
 avoid passing around a profile_block_offset everywhere? Not sure. One step at
 a time.
 
+---
+
+We currently distinguish between linking and execution of a program. FbleLink
+will compile a program, but not evaluate it. The whole test suite is based
+around compile error versus runtime error, so we can't just get rid of that
+distinction.
+
+Thus, seems like for now, to minimize disruption, we should keep FbleLink as
+returning a zero-argument fble function to compute the value of the program
+when executed.
+
+In that case, how should we change FbleCompiledModuleFunction? It's straight
+forward, right? FbleExecutableProgram* becomes a list of FbleModulePath,
+FbleValue pairs.
+
+How to implement it? Needs thought.
+
+Seems straight forward. Just replace the FbleExecutable with an FbleValue*
+which is the function. The rest can stay the same.
+
+What are we getting from this? FbleInterpret can hide the FbleCode* pointer in
+a NativeValue instead of returning it as executable. That would be a step in
+the right direction.
+
+Maybe I should write a helper function: FbleNewInterpretedFuncValue. It takes
+FbleCode* and produces an FbleValue*. Yeah. That would be good.
+
+---
+
+It's tied in a knot. How to link modules together. Let's work out a clean way
+to express it, because trying to undo the knot may be too messy.
+
+Both interpreted and compiled code want to be linked before executing any
+code. What's the input to the linker?
+
+A list of:
+* (ModulePath, FbleValue, [Deps])
+ - ModulePath is needed to avoid re-loading the same module path and look up
+   the index of a dependency.
+ - FbleValue is the function value for the module.
+ - Deps is a list of indices of modules this module depends on.
+
+In order to make the FbleValue, we need the profile. So we will be passing the
+profile to whoever constructs this ExecutableProgram.
+
+FbleInterpret builds the entire program. It doesn't link it together yet. It
+needs the compiled program as input and the profile. Perhaps more general
+would be to pass the Executable Program as an out arg to better match how
+compiled programs work.
+
+CompiledModuleFunction takes program, profile. It adds to the program. It
+returns the index to the loaded module.
+
+The implementation of FbleLink is as it was, without the first loop to create
+FbleValue.
+
+That leaves the question of FbleLoadFromCompiled. This is the helper function
+to implement the CompiledModuleFunction. The easiest way would be pass program
+and profile, module path, FbleExecutable*, ...
+
+Somehow we need to manage conversion of the compiled module functions for
+dependencies to program index. The CompiledModuleFunction should return the
+index of the loaded module, which may or may not be the last in the list.
+There you go.
+
+---
+
+Having second thoughts. What are all the interfaces here?
+
+1. Link interface. Standard way to put together modules. Adds the <main>
+profiling block. Probably want to keep that standard between interpreted and
+compiled code. You could imagine a future where we use that for mixed
+interpreted and compiled code.
+
+2. Compiled code interface. Standard thing for compiled code to export for a
+module. This we should think of more like an internal interface. Designed to
+be easy to compile to and write a C wrapper (currently FbleLoadFromCompiled)
+to do the heavy lifting. Today we use a FbleCompiledModuleFunction, but we may
+as well use a struct type. The easiest thing to compile to is static data, so
+we don't have to worry about allocating things. For example, maybe this is a
+struct type with module path name, for each dependency, pointer to struct type
+for that compiled module, and FbleExecutable.
+
+3. General module interface. What you would think the interface for a generic
+module should be, regardless of how you implement it. This should cover both
+interpreted modules and compiled modules. I'm on the fence about whether it
+should be tied to a specific program context or be something independent.
+There can be some internal allocation associated with this interface that
+needs to be managed.
+
+What would (3) look like in an ideal world? In a future world?
+
+In an ideal/future world, a module knows nothing about how its dependencies
+are loaded. It knows its module path. It knows the module paths of its
+dependencies. It provides an FbleValue function that can be used to evaluate the module
+given the values of its dependencies. That function can have static arguments
+to hold any required native internal state.
+
+To load a program, we would have the following procedures:
+ LoadModule: Given ModulePath, program, returns the (3) for that module.
+   Doesn't reload the module if it already has been loaded..
+ Link: Given program as an ordered list of (3), returns a zero-arg FbleValue
+   function representing the composite program.
+ LoadCompiledModule: Given pointer to (2), returns (3) for a compiled module.
+   This is a helper function for implementing (3) for compiled code.
+
+Questions:
+* Is a (3) standalone, or it is tied somehow to a program?
+* Should (3) have an FbleValue* function, or should it be a C function from
+  heap to FbleValue* function so that it is independent of the heap?
+* How do we build up the full program's profile?
+* How do we manage memory for all these things?
+
+---
+
+LinkableModule:
+  ModulePath path;
+  ModulePathV deps;
+  FbleValue* func;
+
+LinkableProgram:
+  LinkableModuleV
+
+LinkableProgram has a single owner. It owns path, deps, func for each module.
+
+Choose to store deps as path instead of index into program because its a
+little more explicit. Otherwise it shouldn't matter.
+
+CompiledModule:
+  ModulePath path
+  CompiledModuleV deps
+  FbleExecutable executable
+  ProfileBlocks blocks
+
+CompiledModule is statically allocated.
+
+LoadCompiled is given a heap, profile, and program. Given a CompiledModule, it
+ensures that module is loaded, loading dependencies if required.
+
+You can't write your own CompiledModule on the fly with this interface. But
+you could compile to one. That seems fair to me. It needs to have everything
+statically allocated.
+
+In a future world where we want to mix compiled and interpreted code, we
+change CompiledModule deps to be module path instead of CompiledModuleV.
+LoadCompiled will be changed to support incremental loading.
+
+Good. That makes everything clear now I think. And we can do this
+incrementally:
+1. Switch to CompiledModule interface. LoadCompiled to load all of the
+compiled modules. No change to ExecutableModule at this point.
+
+2. Change ExecutableModule to LinkableModule.
+
+Where should everything live? It's a little confusing right now:
+
+fble-compile.h
+  FbleCompiledModule - with different meaning from what I'm proposing
+fble-execute.h
+  FbleExecutableModule, FbleExecutableProgram
+fble-link.h
+  FbleCompieldModuleFunction, FbleLoadFromCompiled, FbleLink
+
+Remember that compile means 'compiled to bytecode' elsewhere in fble. That's
+different from 'compiled to machine code'. We use 'generate' for compilation
+to aarch64 and c. I don't like 'generate' much as a term, but something other
+than 'compile' would be nice. Use 'generate' for now.
+
+fble-compile.h
+  Only deals with compilation to bytecode. No backend generated code.
+
+fble-executable.h
+  Only deals with functions, execution, call. Nothing about modules or
+  programs.
+
+fble-link.h
+  Interface for LinkableModule, FbleLink. Only reference to generated code is
+  in argument to FbleLink.
+
+fble-generate.h (or whatever I decide to call it)
+  For invoking backend code generators, and representing backend generated
+  modules and being able to load that into a linkable module. Let's use
+  GeneratedModule for that purpose.
+
+There is an unfortunate cyclic dependency between generate.h and link.h right
+now. That goes away in the future when we have proper modular compilation I
+hope.
+  
+fble-generate.h could be that, or fble-backend.h? If it's backend, we could
+include the interpreter. Maybe fble-codegen.h?
+
+Let's reorganize these headers then:
+  fble-compile.h
+  fble-execute.h
+  fble-link.h
+
+Into:
+  fble-compile.h    For just the bytecode related compilation.
+  fble-function.h   For FbleExecutable, FbleFunction, FbleCall.
+  fble-link.h       For FbleLink, FbleInterpret
+  fble-codegen.h    For FbleGenerate*
+
+Note that FbleLinkable* can all be internal. No need to make that public.
+  
+fble-link.h and fble-interpret.h are pretty small. The FbleLink function is
+awkward. It's like a mix of linking and loading interpreted and generated
+code. I'm tempted to move FbleInterpret prototype to fble-link.h. It's all
+stuff related to linking together back end modules into a program.
+
+Cool. That sounds like a plan. Let's try this restructuring and see how goes,
+before we change any types or names of other things.

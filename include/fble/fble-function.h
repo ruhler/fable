@@ -1,15 +1,26 @@
 /**
- * @file fble-execute.h
+ * @file fble-function.h
  *  API for describing fble functions.
  */
 
 #ifndef FBLE_EXECUTE_H_
 #define FBLE_EXECUTE_H_
 
-#include "fble-alloc.h"       // for FbleStackAllocator, etc.
 #include "fble-module-path.h" // for FbleModulePath
 #include "fble-profile.h"     // for FbleProfileThread
-#include "fble-value.h"       // for FbleValue, FbleValueHeap
+#include "fble-value.h"       // for FbleValue
+
+/**
+ * Information about an fble function.
+ *
+ * The statics are owned by whatever FbleValue object represents the function.
+ * Don't try accessing them unless you know that FbleValue object is retained.
+ */
+struct FbleFunction {
+  FbleExecutable* executable;
+  FbleBlockId profile_block_offset;
+  FbleValue** statics;
+};
 
 /**
  * Sentinel value to return from FbleRunFunction to indicate tail call.

@@ -6,11 +6,11 @@
 #ifndef FBLE_INTERNAL_INTERPRET_H_
 #define FBLE_INTERNAL_INTERPRET_H_
 
-#include <fble/fble-execute.h>
+#include <fble/fble-function.h>
 
 /**
  * An FbleRunFunction for interpreting FbleCode fble bytecode.
- * See documentation of FbleRunFunction in fble-execute.h.
+ * See documentation of FbleRunFunction in fble-function.h.
  */
 FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,

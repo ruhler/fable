@@ -3,18 +3,21 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * Remove on_free from FuncValue
- - Rename FbleLinkFromCompiledOrSource to FbleLink.
- - Make FbleExecutableModule private to link.c?
- - Change FbleExecutableModule to store an FbleValue function value instead of
-   FbleExecutable?
- - Use NativeValue to track FbleCode* allocation.
+ - Change FbleExecutableModule to store an FbleValue* instead of executable.
+ - Implement FbleInterpretedFuncValue helper function for creating functions
+   from FbleCode*.
+ - Re-implement FbleInterpretedFuncValue to store FbleCode* with first static
+   arg instead of part of the executable.
+ - Remove on_free from FbleExecutable.
  - Inline FbleExecutable directly into FbleFunction
- - Figure out how to track abstract freeable data in FbleExecutableModule.
 
 * SatGame
  - Implement a nicer Random@ interface.
  - Implement List@ shuffle.
  - Implement Puzzle@ generator.
+
+* Some better way to recover if build.ninja gets messed up than having to
+  re-run configure.
 
 * Update tutorials for partial function application updates.
    Particularly noting how to do type inference for multiple poly parameters.

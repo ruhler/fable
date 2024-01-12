@@ -6,7 +6,7 @@
 #ifndef FBLE_LINK_H_
 #define FBLE_LINK_H_
 
-#include "fble-execute.h"
+#include "fble-function.h"
 #include "fble-load.h"
 #include "fble-profile.h"
 #include "fble-value.h"

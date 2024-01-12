@@ -9,7 +9,7 @@
 #include <string.h>   // for memcpy
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
-#include <fble/fble-execute.h>   // for FbleFreeExecutable
+#include <fble/fble-function.h>  // for FbleFreeExecutable
 #include <fble/fble-value.h>     // for FbleValue, etc.
 
 #include "heap.h"           // for FbleHeap, etc.

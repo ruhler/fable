@@ -7,7 +7,7 @@
 #define FBLE_INTERPRET_H_
 
 #include "fble-compile.h"
-#include "fble-execute.h"
+#include "fble-function.h"
 
 /**
  * @func[FbleInterpret] Creates an interpreter-based FbleExecutableProgram.
