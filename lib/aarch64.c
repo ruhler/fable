@@ -1365,7 +1365,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
   return FbleNewString(name);
 }
 
-// See documentation in fble-compile.h.
+// See documentation in fble-codegen.h.
 void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 {
   FbleCodeV blocks;
@@ -1624,7 +1624,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   FbleFreeVector(locs);
 }
 
-// See documentation in fble-compile.h.
+// See documentation in fble-codegen.h.
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path)
 {
   fprintf(fout, "  .text\n");
@@ -1642,7 +1642,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
   fprintf(fout, "  ret\n");
 }
 
-// See documentation in fble-compile.h.
+// See documentation in fble-codegen.h.
 void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
 {
   fprintf(fout, "  .text\n");
