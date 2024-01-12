@@ -12,6 +12,91 @@
 #include "fble-value.h"
 
 /**
+ * Magic number used by FbleExecutableModule.
+ */
+#define FBLE_EXECUTABLE_MODULE_MAGIC 0x38333
+
+/**
+ * An executable module.
+ *
+ * Reference counted. Pass by pointer. Explicit copy and free required.
+ *
+ * Note: The magic field is set to FBLE_EXECUTABLE_MODULE_MAGIC and is used to
+ * help detect double frees.
+ */ 
+typedef struct {
+  size_t refcount;  /**< Current reference count. */
+  size_t magic;     /**< FBLE_EXECUTABLE_MODULE_MAGIC. */
+
+  /** the path to the module */
+  FbleModulePath* path;
+
+  /** list of distinct modules this module depends on. */
+  FbleModulePathV deps;
+
+  /**
+   * Code to compute the value of the module.
+   *
+   * Suiteable for use in the body of a function that takes the computed
+   * module values for each module listed in 'deps' as arguments to the
+   * function.
+   *
+   * executable->args must be the same as deps.size.
+   * executable->statics must be 0.
+   */
+  FbleExecutable* executable;
+
+  /**
+   * Profile blocks used by functions in the module.
+   *
+   * This FbleExecutableModule owns the names and the vector.
+   */
+  FbleNameV profile_blocks;
+} FbleExecutableModule;
+
+/** A vector of FbleExecutableModule. */
+typedef struct {
+  size_t size;                /**< Number of elements. */
+  FbleExecutableModule** xs;  /**< Elements. */
+} FbleExecutableModuleV;
+
+/**
+ * @func[FbleFreeExecutableModule] Frees an FbleExecutableModule.
+ *  Decrements the reference count and if appropriate frees resources
+ *  associated with the given module.
+ *
+ *  @arg[FbleExecutableModule*][module] The module to free
+ *
+ *  @sideeffects
+ *   Frees resources associated with the module as appropriate.
+ */
+void FbleFreeExecutableModule(FbleExecutableModule* module);
+
+/**
+ * An executable program.
+ *
+ * The program is represented as a list of executable modules in topological
+ * dependency order. Later modules in the list may depend on earlier modules
+ * in the list, but not the other way around.
+ *
+ * The last module in the list is the main program. The module path for the
+ * main module is /%.
+ */
+typedef struct {
+  FbleExecutableModuleV modules;  /**< Program modules. */
+} FbleExecutableProgram;
+
+/**
+ * @func[FbleFreeExecutableProgram] Frees an FbleExecutableProgram.
+ *  @arg[FbleExecutableProgram*][program] The program to free, may be NULL.
+ *
+ *  @sideeffects
+ *   Frees resources associated with the given program.
+ */
+void FbleFreeExecutableProgram(FbleExecutableProgram* program);
+
+
+/**
  * @func[FbleCompiledModuleFunction] Compiled module function type.
  *  The type of a module function generated for compiled .fble code.
  *

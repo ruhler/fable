@@ -3,13 +3,14 @@
  *  Compile FbleTc* abstract syntax into FbleCode* bytecode.
  */
 
-#include <fble/fble-compile.h>
+#include <fble/fble-codegen.h>
 
 #include <assert.h>   // for assert
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, etc.
+#include <fble/fble-link.h>      // for FbleExecutableModule
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"

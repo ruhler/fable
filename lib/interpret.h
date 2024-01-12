@@ -8,6 +8,7 @@
 
 #include <fble/fble-compile.h>    // For FbleCompiledProgram
 #include <fble/fble-function.h>   // for FbleFunction, etc.
+#include <fble/fble-link.h>       // For FbleExecutableModule
 
 /**
  * An FbleRunFunction for interpreting FbleCode fble bytecode.

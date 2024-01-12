@@ -978,8 +978,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
 
-  fprintf(fout, "#include <fble/fble-function.h>\n");
-  fprintf(fout, "#include <fble/fble-value.h>\n");
+  fprintf(fout, "#include <fble/fble-link.h>\n");   // for FbleExecutableProgram
   fprintf(fout, "void %s(FbleExecutableProgram* program);\n", module_name->str);
   fprintf(fout, "void %s(FbleExecutableProgram* program)\n", name);
   fprintf(fout, "{\n");

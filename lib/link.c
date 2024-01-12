@@ -161,6 +161,37 @@ static FbleValue* LinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_pat
 }
 
 // See documentation in fble-link.h
+void FbleFreeExecutableModule(FbleExecutableModule* module)
+{
+  assert(module->magic == FBLE_EXECUTABLE_MODULE_MAGIC && "corrupt FbleExecutableModule");
+  if (--module->refcount == 0) {
+    FbleFreeModulePath(module->path);
+    for (size_t j = 0; j < module->deps.size; ++j) {
+      FbleFreeModulePath(module->deps.xs[j]);
+    }
+    FbleFreeVector(module->deps);
+    FbleFreeExecutable(module->executable);
+    for (size_t i = 0; i < module->profile_blocks.size; ++i) {
+      FbleFreeName(module->profile_blocks.xs[i]);
+    }
+    FbleFreeVector(module->profile_blocks);
+    FbleFree(module);
+  }
+}
+
+// See documentation in fble-link.h
+void FbleFreeExecutableProgram(FbleExecutableProgram* program)
+{
+  if (program != NULL) {
+    for (size_t i = 0; i < program->modules.size; ++i) {
+      FbleFreeExecutableModule(program->modules.xs[i]);
+    }
+    FbleFreeVector(program->modules);
+    FbleFree(program);
+  }
+}
+
+// See documentation in fble-link.h
 void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps)
 {
   // Don't do anything if the module has already been loaded.

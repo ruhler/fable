@@ -3,6 +3,8 @@
  *  Converts FbleCode fble bytecode to 64-bit ARM machine code.
  */
 
+#include <fble/fble-codegen.h>
+
 #include <assert.h>   // for assert
 #include <ctype.h>    // for isalnum
 #include <stdio.h>    // for sprintf
@@ -11,7 +13,7 @@
 #include <string.h>   // for strlen, strcat
 #include <unistd.h>   // for getcwd
 
-#include <fble/fble-compile.h>
+#include <fble/fble-link.h>      // for FbleExecutableModule
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"

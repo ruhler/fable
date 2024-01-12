@@ -28,9 +28,9 @@ namespace eval "include" {
       FbleFreeExecutable
       FbleExecutableNothingOnFree
       FbleCall
-      FbleFreeExecutableModule FbleFreeExecutableProgram
     }
     fble-link.h {
+      FbleFreeExecutableModule FbleFreeExecutableProgram
       FbleCompiledModuleFunction
       FbleLoadFromCompiled
       FbleLink
