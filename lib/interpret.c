@@ -3,7 +3,6 @@
  *  Interpreter for FbleCode fble bytecode.
  */
 
-#include <fble/fble-interpret.h>
 #include "interpret.h"
 
 #include <assert.h>   // for assert
@@ -478,7 +477,7 @@ FbleValue* FbleInterpreterRunFunction(
   }
 }
 
-// See documentation in fble-interpret.h.
+// See documentation in interpret.h.
 FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
 {
   FbleExecutableProgram* executable = FbleAlloc(FbleExecutableProgram);

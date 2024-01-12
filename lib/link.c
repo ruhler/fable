@@ -8,11 +8,11 @@
 #include <assert.h>     // for assert
 #include <string.h>     // for strrchr
 
-#include <fble/fble-alloc.h>     // for FbleAlloc, etc.
-#include <fble/fble-interpret.h> // for FbleInterpret
-#include <fble/fble-vector.h>    // for FbleInitVector, etc.
+#include <fble/fble-alloc.h>   // for FbleAlloc, etc.
+#include <fble/fble-vector.h>  // for FbleInitVector, etc.
 
-#include "code.h"
+#include "code.h"       // for FbleCode
+#include "interpret.h"  // for FbleInterpret
 
 static FbleValue* Link(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile);
 static FbleValue* LinkFromSource(FbleValueHeap* heap, FbleSearchPath* search_path, FbleModulePath* module_path, FbleProfile* profile);

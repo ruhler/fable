@@ -3,6 +3,12 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * Remove on_free from FuncValue
+ - Finish reorganizing header files
+   Move code-gen specific stuff to fble-codegen.h
+   Move ExecutableModule stuff to fble-link.h
+ - Define GeneratedModule, LoadGeneratedModule as interface between compiled
+   code and the runtime instead of CompiledModuleFunction.
+
  - Change FbleExecutableModule to store an FbleValue* instead of executable.
  - Implement FbleInterpretedFuncValue helper function for creating functions
    from FbleCode*.
