@@ -2,14 +2,12 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Remove on_free from FuncValue
- - Implement FbleInterpretedFuncValue helper function for creating functions
-   from FbleCode*.
- - Re-implement FbleInterpretedFuncValue to store FbleCode* with first static
-   arg instead of part of the executable.
- - Figure out how to avoid duplicate code between LinkInterpreted and
-   LinkGenerated?
- - Inline FbleExecutable directly into FbleFunction and remove on_free.
+* Use an enum instead of #define for *_MAGIC functions?
+  That should make it easier to see in gdb if the magic is correct or not and
+  make it more type safe, right?
+
+* Figure out how to avoid duplicate code between LinkInterpreted and
+  LinkGenerated?
 
 * SatGame
  - Implement a nicer Random@ interface.

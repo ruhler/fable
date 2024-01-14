@@ -203,17 +203,15 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
 {
   FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
 
-  FbleExecutable* exe = FbleAlloc(FbleExecutable);
-  exe->refcount = 0;
-  exe->magic = FBLE_EXECUTABLE_MAGIC;
-  exe->num_args = 1;
-  exe->num_statics = 1;
-  exe->tail_call_buffer_size = 0;
-  exe->profile_block_id = 0;
-  exe->run = &IStreamImpl;
-  exe->on_free = &FbleExecutableNothingOnFree;
+  FbleExecutable exe = {
+    .num_args = 1,
+    .num_statics = 1,
+    .tail_call_buffer_size = 0,
+    .profile_block_id = 0,
+    .run = &IStreamImpl,
+  };
 
-  FbleValue* func = FbleNewFuncValue(heap, exe, profile_block_offset, &native);
+  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_offset, &native);
   FbleReleaseValue(heap, native);
   return func;
 }
@@ -224,61 +222,53 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
 {
   FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
 
-  FbleExecutable* exe = FbleAlloc(FbleExecutable);
-  exe->refcount = 0;
-  exe->magic = FBLE_EXECUTABLE_MAGIC;
-  exe->num_args = 2;
-  exe->num_statics = 1;
-  exe->tail_call_buffer_size = 0;
-  exe->profile_block_id = 1;
-  exe->run = &OStreamImpl;
-  exe->on_free = &FbleExecutableNothingOnFree;
+  FbleExecutable exe = {
+    .num_args = 2,
+    .num_statics = 1,
+    .tail_call_buffer_size = 0,
+    .profile_block_id = 1,
+    .run = &OStreamImpl,
+  };
 
-  FbleValue* func = FbleNewFuncValue(heap, exe, profile_block_offset, &native);
+  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_offset, &native);
   FbleReleaseValue(heap, native);
   return func;
 }
 
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset)
 {
-  FbleExecutable* exe = FbleAlloc(FbleExecutable);
-  exe->refcount = 0;
-  exe->magic = FBLE_EXECUTABLE_MAGIC;
-  exe->num_args = 2;
-  exe->num_statics = 0;
-  exe->tail_call_buffer_size = 0;
-  exe->profile_block_id = 2;
-  exe->run = &ReadImpl;
-  exe->on_free = &FbleExecutableNothingOnFree;
-  return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+  FbleExecutable exe = {
+    .num_args = 2,
+    .num_statics = 0,
+    .tail_call_buffer_size = 0,
+    .profile_block_id = 2,
+    .run = &ReadImpl,
+  };
+  return FbleNewFuncValue(heap, &exe, profile_block_offset, NULL);
 }
 
 static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_offset)
 {
-  FbleExecutable* exe = FbleAlloc(FbleExecutable);
-  exe->refcount = 0;
-  exe->magic = FBLE_EXECUTABLE_MAGIC;
-  exe->num_args = 2;
-  exe->num_statics = 0;
-  exe->tail_call_buffer_size = 0;
-  exe->profile_block_id = 3;
-  exe->run = &WriteImpl;
-  exe->on_free = &FbleExecutableNothingOnFree;
-  return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+  FbleExecutable exe = {
+    .num_args = 2,
+    .num_statics = 0,
+    .tail_call_buffer_size = 0,
+    .profile_block_id = 3,
+    .run = &WriteImpl,
+  };
+  return FbleNewFuncValue(heap, &exe, profile_block_offset, NULL);
 }
 
 static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset)
 {
-  FbleExecutable* exe = FbleAlloc(FbleExecutable);
-  exe->refcount = 0;
-  exe->magic = FBLE_EXECUTABLE_MAGIC;
-  exe->num_args = 2;
-  exe->num_statics = 0;
-  exe->tail_call_buffer_size = 0;
-  exe->profile_block_id = 4;
-  exe->run = &GetEnvImpl;
-  exe->on_free = &FbleExecutableNothingOnFree;
-  return FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+  FbleExecutable exe = {
+    .num_args = 2,
+    .num_statics = 0,
+    .tail_call_buffer_size = 0,
+    .profile_block_id = 4,
+    .run = &GetEnvImpl,
+  };
+  return FbleNewFuncValue(heap, &exe, profile_block_offset, NULL);
 }
 
 // FbleNewStdioIO -- see documentation in stdio.fble.h

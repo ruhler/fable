@@ -35,8 +35,8 @@ static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
 {
-  size_t s = function->executable->num_statics - 1;
-  size_t a = function->executable->num_args;
+  size_t s = function->executable.num_statics - 1;
+  size_t a = function->executable.num_args;
   size_t argc = s + a;
   FbleValue* nargs[argc];
   memcpy(nargs, function->statics + 1, s * sizeof(FbleValue*));
@@ -64,20 +64,18 @@ static FbleValue* PartialApplyImpl(
  */
 static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
-  FbleExecutable* exe = FbleAlloc(FbleExecutable);
-  exe->refcount = 0;
-  exe->magic = FBLE_EXECUTABLE_MAGIC;
-  exe->num_args = function->executable->num_args - argc;
-  exe->num_statics = 1 + argc;
-  exe->tail_call_buffer_size = 2 + function->executable->num_args;
-  exe->profile_block_id = function->executable->profile_block_id;
-  exe->run = &PartialApplyImpl;
-  exe->on_free = &FbleExecutableNothingOnFree;
+  FbleExecutable exe = {
+    .num_args = function->executable.num_args - argc,
+    .num_statics = 1 + argc,
+    .tail_call_buffer_size = 2 + function->executable.num_args,
+    .profile_block_id = function->executable.profile_block_id,
+    .run = &PartialApplyImpl
+  };
 
   FbleValue* statics[1 + argc];
   statics[0] = func;
   memcpy(statics + 1, args, argc * sizeof(FbleValue*));
-  return FbleNewFuncValue(heap, exe, function->profile_block_offset, statics);
+  return FbleNewFuncValue(heap, &exe, function->profile_block_offset, statics);
 }
 
 /**
@@ -114,7 +112,7 @@ static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t a
       return NULL;
     }
 
-    FbleExecutable* executable = func->executable;
+    FbleExecutable* executable = &func->executable;
     if (argc < executable->num_args) {
       FbleValue* partial = PartialApply(heap, func, func_and_args[0], argc, func_and_args + 1);
       FbleReleaseValues(heap, argc+1, func_and_args);
@@ -234,7 +232,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
     return NULL;
   }
 
-  FbleExecutable* executable = func->executable;
+  FbleExecutable* executable = &func->executable;
   if (argc < executable->num_args) {
     return PartialApply(heap, func, function, argc, args);
   }
@@ -290,32 +288,4 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
 {
   return Eval(heap, func, argc, args, profile);
-}
-
-// See documentation in fble-function.h
-void FbleFreeExecutable(FbleExecutable* executable)
-{
-  if (executable == NULL) {
-    return;
-  }
-
-  // We've had trouble with double free in the past. Check to make sure the
-  // magic in the block hasn't been corrupted. Otherwise we've probably
-  // already freed this executable and decrementing the refcount could end up
-  // corrupting whatever is now making use of the memory that was previously
-  // used for the instruction block.
-  assert(executable->magic == FBLE_EXECUTABLE_MAGIC && "corrupt FbleExecutable");
-
-  assert(executable->refcount > 0);
-  executable->refcount--;
-  if (executable->refcount == 0) {
-    executable->on_free(executable);
-    FbleFree(executable);
-  }
-}
-
-// See documentation in fble-function.h
-void FbleExecutableNothingOnFree(FbleExecutable* this)
-{
-  (void)this;
 }

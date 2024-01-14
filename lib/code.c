@@ -14,28 +14,9 @@
 #include <fble/fble-vector.h>     // for FbleInitVector, etc.
 
 #include "tc.h"
-#include "interpret.h"
 #include "unreachable.h"
 
-static void OnFree(FbleExecutable* executable);
 static void PrintLoc(FILE* fout, FbleLoc loc);
-
-/**
- * FbleExecutable.on_free function for FbleCode.
- *
- * @param executable  The FbleCode to free state from.
- *
- * @sideeffects
- *   Frees FbleCode specific fields.
- */
-static void OnFree(FbleExecutable* executable)
-{
-  FbleCode* code = (FbleCode*)executable;
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    FbleFreeInstr(code->instrs.xs[i]);
-  }
-  FbleFreeVector(code->instrs);
-}
 
 // See documentation in code.h.
 void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
@@ -183,14 +164,13 @@ void FbleFreeInstr(FbleInstr* instr)
 FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, FbleBlockId profile_block_id)
 {
   FbleCode* code = FbleAlloc(FbleCode);
-  code->_base.refcount = 1;
-  code->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  code->_base.num_args = num_args;
-  code->_base.num_statics = num_statics;
-  code->_base.tail_call_buffer_size = 0;
-  code->_base.profile_block_id = profile_block_id;
-  code->_base.run = &FbleInterpreterRunFunction;
-  code->_base.on_free = &OnFree;
+  code->refcount = 1;
+  code->magic = FBLE_CODE_MAGIC;
+  code->executable.num_args = num_args;
+  code->executable.num_statics = num_statics;
+  code->executable.tail_call_buffer_size = 0;
+  code->executable.profile_block_id = profile_block_id;
+  code->executable.run = NULL;
   code->num_locals = num_locals;
   FbleInitVector(code->instrs);
   return code;
@@ -199,7 +179,22 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
 // See documentation in code.h.
 void FbleFreeCode(FbleCode* code)
 {
-  FbleFreeExecutable(&code->_base);
+  // We've had trouble with double free in the past. Check to make sure the
+  // magic in the block hasn't been corrupted. Otherwise we've probably
+  // already freed this code and decrementing the refcount could end up
+  // corrupting whatever is now making use of the memory that was previously
+  // used for the instruction block.
+  assert(code->magic == FBLE_CODE_MAGIC && "corrupt FbleCode");
+  assert(code->refcount > 0);
+
+  code->refcount--;
+  if (code->refcount == 0) {
+    for (size_t i = 0; i < code->instrs.size; ++i) {
+      FbleFreeInstr(code->instrs.xs[i]);
+    }
+    FbleFreeVector(code->instrs);
+    FbleFree(code);
+  }
 }
 
 /**
@@ -245,11 +240,11 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
   FbleNameV profile_blocks = module->profile_blocks;
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
-    FbleName block_name = profile_blocks.xs[block->_base.profile_block_id];
-    fprintf(fout, "%s[%04zx]\n", block_name.name->str, block->_base.profile_block_id);
+    FbleName block_name = profile_blocks.xs[block->executable.profile_block_id];
+    fprintf(fout, "%s[%04zx]\n", block_name.name->str, block->executable.profile_block_id);
     fprintf(fout, "  args: %zi, statics: %zi, locals: %zi, tail_call_buffer_size: %zi\n",
-        block->_base.num_args, block->_base.num_statics, block->num_locals,
-        block->_base.tail_call_buffer_size);
+        block->executable.num_args, block->executable.num_statics,
+        block->num_locals, block->executable.tail_call_buffer_size);
     PrintLoc(fout, block_name.loc);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];
@@ -372,11 +367,11 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_FUNC_VALUE_INSTR: {
           FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
           FbleCode* func = func_value_instr->code;
-          FbleName func_name = profile_blocks.xs[func->_base.profile_block_id];
+          FbleName func_name = profile_blocks.xs[func->executable.profile_block_id];
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "l%zi = func %s[%04zx] [",
               func_value_instr->dest,
-              func_name.name->str, func->_base.profile_block_id);
+              func_name.name->str, func->executable.profile_block_id);
           const char* comma = "";
           for (size_t j = 0; j < func_value_instr->scope.size; ++j) {
             fprintf(fout, "%s%s%zi",

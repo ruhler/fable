@@ -253,16 +253,12 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
   (void)heap;
 
   switch (value->tag) {
-    case STRUCT_VALUE: return;
-    case UNION_VALUE: return;
-
-    case FUNC_VALUE: {
-      FuncValue* v = (FuncValue*)value;
-      FbleFreeExecutable(v->function.executable);
+    case STRUCT_VALUE:
+    case UNION_VALUE:
+    case FUNC_VALUE:
+    case REF_VALUE:
       return;
-    }
 
-    case REF_VALUE: return;
     case NATIVE_VALUE: {
       NativeValue* v = (NativeValue*)value;
       if (v->on_free != NULL) {
@@ -323,7 +319,7 @@ static void Refs(FbleHeap* heap, FbleValue* value)
 
     case FUNC_VALUE: {
       FuncValue* v = (FuncValue*)value;
-      for (size_t i = 0; i < v->function.executable->num_statics; ++i) {
+      for (size_t i = 0; i < v->function.executable.num_statics; ++i) {
         Ref(heap, value, v->statics[i]);
       }
       break;
@@ -640,8 +636,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
   FuncValue* v = NewValueExtra(heap, FuncValue, sizeof(FbleValue*) * executable->num_statics);
   v->_base.tag = FUNC_VALUE;
   v->function.profile_block_offset = profile_block_offset;
-  v->function.executable = executable;
-  v->function.executable->refcount++;
+  memcpy(&v->function, executable, sizeof(FbleExecutable));
   v->function.statics = v->statics;
   for (size_t i = 0; i < executable->num_statics; ++i) {
     v->statics[i] = statics[i];

@@ -575,26 +575,20 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   FbleFreeName(block_names[1]);
 
   FbleExecutable event_exe = {
-    .refcount = 1,
-    .magic = FBLE_EXECUTABLE_MAGIC,
     .num_args = 1,
     .num_statics = 0,
     .tail_call_buffer_size = 0,
     .profile_block_id = block_id,
     .run = &EventImpl,
-    .on_free = &FbleExecutableNothingOnFree,
   };
   FbleValue* fble_event = FbleNewFuncValue(heap, &event_exe, 0, NULL);
 
   FbleExecutable effect_exe = {
-    .refcount = 1,
-    .magic = FBLE_EXECUTABLE_MAGIC,
     .num_args = 2,
     .num_statics = 1,
     .tail_call_buffer_size = 0,
     .profile_block_id = block_id + 1,
     .run = &EffectImpl,
-    .on_free = &FbleExecutableNothingOnFree,
   };
 
   App app;

@@ -12,7 +12,7 @@
 #include <fble/fble-vector.h>  // for FbleInitVector, etc.
 
 #include "code.h"       // for FbleCode
-#include "interpret.h"  // for FbleInterpret
+#include "interpret.h"  // for FbleNewInterpretedFuncValue
 
 static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, FbleSearchPath* search_path, FbleModulePath* module_path);
 
@@ -50,14 +50,8 @@ static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, Fbl
   for (size_t i = 0; i < modulec; ++i) {
     FbleCompiledModule* module = compiled->modules.xs[i];
 
-    FbleExecutable* exe = &module->code->_base;
-
-    // TODO: Return error messages in these cases instead of assert failures?
-    assert(exe->num_statics == 0 && "Module cannot have statics");
-    assert(module->deps.size == exe->num_args && "Module args mismatch");
-
     size_t profile_block_offset = FbleAddBlocksToProfile(profile, module->profile_blocks);
-    funcs[i] = FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+    funcs[i] = FbleNewInterpretedFuncValue(heap, module->code, profile_block_offset, NULL);
 
     FbleCallInstr* call = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
     call->loc.source = FbleNewString(__FILE__);
@@ -94,7 +88,7 @@ static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, Fbl
   FbleAppendToVector(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleValue* linked = FbleNewFuncValue(heap, &code->_base, 0, funcs);
+  FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs);
   for (size_t i = 0; i < modulec; ++i) {
     FbleReleaseValue(heap, funcs[i]);
   }
@@ -197,7 +191,7 @@ static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleG
   FbleAppendToVector(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleValue* linked = FbleNewFuncValue(heap, &code->_base, 0, funcs);
+  FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs);
   for (size_t i = 0; i < modulec; ++i) {
     FbleReleaseValue(heap, funcs[i]);
   }

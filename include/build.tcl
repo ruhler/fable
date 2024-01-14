@@ -21,8 +21,6 @@ namespace eval "include" {
     }
     fble-function.h {
       FbleRunFunction
-      FbleFreeExecutable
-      FbleExecutableNothingOnFree
       FbleCall
     }
     fble-generate.h {

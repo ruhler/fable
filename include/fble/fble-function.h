@@ -11,18 +11,6 @@
 #include "fble-value.h"       // for FbleValue
 
 /**
- * Information about an fble function.
- *
- * The statics are owned by whatever FbleValue object represents the function.
- * Don't try accessing them unless you know that FbleValue object is retained.
- */
-struct FbleFunction {
-  FbleExecutable* executable;
-  FbleBlockId profile_block_offset;
-  FbleValue** statics;
-};
-
-/**
  * Sentinel value to return from FbleRunFunction to indicate tail call.
  *
  * We use the value 0x2 to be distinct from NULL and packed values.
@@ -66,24 +54,9 @@ typedef FbleValue* FbleRunFunction(
     FbleValue** args);
 
 /**
- * Magic number used by FbleExecutable.
- */
-#define FBLE_EXECUTABLE_MAGIC 0xB10CE
-
-/**
- * Describes how to execute a function.
- *
- * FbleExecutable is a reference counted, partially abstract data type
- * describing how to execute a function. Users can subclass this type to
- * provide their own implementations for fble functions.
+ * Information needed to execute a function.
  */
 struct FbleExecutable {
-  /** reference count. */
-  size_t refcount;
-
-  /** FBLE_EXECUTABLE_MAGIC */
-  size_t magic;
-
   /** Number of args to the function. */
   size_t num_args;
 
@@ -111,38 +84,19 @@ struct FbleExecutable {
 
   /** How to run the function. See FbleRunFunction for more info. */
   FbleRunFunction* run;
-
-  /**
-   * Called to free this FbleExecutable.
-   *
-   * Subclasses of FbleExecutable should use this to free any custom state.
-   */
-  void (*on_free)(struct FbleExecutable* this);
 };
 
 /**
- * @func[FbleFreeExecutable] Frees an FbleExecutable.
- *  Decrements the refcount and, if necessary, frees resources associated with
- *  the given executable.
+ * Information about an fble function.
  *
- *  @arg[FbleExecutable*][executable] The executable to free. May be NULL.
- *
- *  @sideeffects
- *   Decrements the refcount and, if necessary, calls executable->on_free and
- *   free resources associated with the given executable.
+ * The statics are owned by whatever FbleValue object represents the function.
+ * Don't try accessing them unless you know that FbleValue object is retained.
  */
-void FbleFreeExecutable(FbleExecutable* executable);
-
-/**
- * @func[FbleExecutableNothingOnFree] No-op FbleExecutable on_free function.
- *  Implementation of a no-op FbleExecutable.on_free function.
- *
- *  @arg[FbleExecutable*][this] The FbleExecutable to free.
- *
- *  @sideeffects
- *   None.
- */
-void FbleExecutableNothingOnFree(FbleExecutable* this);
+struct FbleFunction {
+  FbleExecutable executable;
+  FbleBlockId profile_block_offset;
+  FbleValue** statics;
+};
 
 /**
  * @func[FbleCall] Calls an fble function.

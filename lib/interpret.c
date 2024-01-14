@@ -7,6 +7,7 @@
 
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for rand
+#include <string.h>   // for memcpy
 
 #include <fble/fble-alloc.h>    // for FbleAlloc, FbleFree
 #include <fble/fble-function.h> // For FbleFunction, etc.
@@ -15,6 +16,7 @@
 #include "code.h"
 #include "unreachable.h"
 
+static void FreeCode(void* code);
 static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc);
 
 /**
@@ -35,6 +37,18 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
  *   None.
  */
 #define GET(idx) (vars[idx.tag][idx.index])
+
+/**
+ * @func[FreeCode] Calls FbleFreeCode.
+ *  @arg[void*][code] The code to free.
+ *  @sideeffects
+ *   Calls FbleFreeCode on the given code.
+ */
+static void FreeCode(void* data)
+{
+  FbleCode* code = *(FbleCode**)data;
+  FbleFreeCode(code);
+}
 
 /**
  * Aborts a function.
@@ -204,15 +218,17 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
   return NULL;
 }
 
-// See documentation in interpret.h.
-FbleValue* FbleInterpreterRunFunction(
+// FbleRunFunction for running interpreted code.
+// See documentation for FbleRunFunction in fble-function.h.
+static FbleValue* Interpret(
     FbleValueHeap* heap,
     FbleProfileThread* profile,
     FbleValue** tail_call_buffer,
     FbleFunction* function,
     FbleValue** args)
 {
-  FbleCode* code = (FbleCode*)function->executable;
+  size_t num_statics = function->executable.num_statics;
+  FbleCode* code = *(FbleCode**)FbleNativeValueData(function->statics[num_statics - 1]);
   FbleInstr** instrs = code->instrs.xs;
   FbleValue* locals[code->num_locals];
 
@@ -354,7 +370,7 @@ FbleValue* FbleInterpreterRunFunction(
           func_statics[i] = GET(func_value_instr->scope.xs[i]);
         }
 
-        locals[func_value_instr->dest] = FbleNewFuncValue(heap, &func_value_instr->code->_base, profile_block_offset, func_statics);
+        locals[func_value_instr->dest] = FbleNewInterpretedFuncValue(heap, func_value_instr->code, profile_block_offset, func_statics);
         pc++;
         break;
       }
@@ -475,4 +491,27 @@ FbleValue* FbleInterpreterRunFunction(
       }
     }
   }
+}
+
+// See documentation in interpret.h
+FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size_t profile_block_offset, FbleValue** statics)
+{
+  // Add an extra static to store the FbleCode for access in the interpreter.
+  FbleExecutable exe = {
+    .num_args = code->executable.num_args,
+    .num_statics = code->executable.num_statics + 1,
+    .tail_call_buffer_size = code->executable.tail_call_buffer_size,
+    .profile_block_id = code->executable.profile_block_id,
+    .run = &Interpret
+  };
+  FbleValue* nstatics[exe.num_statics];
+  memcpy(nstatics, statics, code->executable.num_statics * sizeof(FbleValue*));
+
+  code->refcount++;
+  FbleValue* vcode = FbleNewNativeValue(heap, sizeof(FbleCode*), &FreeCode, &code);
+  nstatics[exe.num_statics - 1 ] = vcode;
+
+  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_offset, nstatics);
+  FbleReleaseValue(heap, vcode);
+  return func;
 }
