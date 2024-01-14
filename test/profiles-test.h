@@ -1,7 +1,7 @@
 #ifndef FBLE_TEST_PROFILES_TEST_H_
 #define FBLE_TEST_PROFILES_TEST_H_
 
-#include <fble/fble-codegen.h>
+#include <fble/fble-generate.h>   // for FbleGeneratedModule
 
 // FbleProfilesTestMain -- 
 //   A main function for running the profiles test.

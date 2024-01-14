@@ -1,7 +1,7 @@
 #ifndef FBLE_TEST_TEST_H_
 #define FBLE_TEST_TEST_H_
 
-#include <fble/fble-codegen.h>
+#include <fble/fble-generate.h>   // for FbleGeneratedModule
 
 // FbleTestMain -- 
 //   A main function for running a basic fble test.

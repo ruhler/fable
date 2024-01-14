@@ -9,7 +9,7 @@
 
 #include <fble/fble-alloc.h>         // for FbleFree.
 #include <fble/fble-arg-parse.h>     // for FbleParseBoolArg, etc.
-#include <fble/fble-codegen.h>       // for FbleGenerate*
+#include <fble/fble-generate.h>      // for FbleGenerate*
 #include <fble/fble-compile.h>       // for FbleCompile, etc.
 #include <fble/fble-module-path.h>   // for FbleParseModulePath.
 #include <fble/fble-usage.h>         // for FblePrintUsageDoc

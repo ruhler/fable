@@ -892,7 +892,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
   return FbleNewString(name);
 }
 
-// See documentation in fble-codegen.h.
+// See documentation in fble-generate.h.
 void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 {
   FbleCodeV blocks;
@@ -900,7 +900,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocks(&blocks, module->code);
 
-  fprintf(fout, "#include <fble/fble-codegen.h>\n");  // for FbleGeneratedModule
+  fprintf(fout, "#include <fble/fble-generate.h>\n");  // for FbleGeneratedModule
   fprintf(fout, "#include <fble/fble-function.h>\n"); // for FbleCall
   fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
 
@@ -947,7 +947,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   FbleFreeVector(blocks);
 }
 
-// See documentation in fble-codegen.h.
+// See documentation in fble-generate.h.
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
@@ -957,7 +957,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
   FbleFreeString(module_name);
 }
 
-// See documentation in fble-codegen.h.
+// See documentation in fble-generate.h.
 void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);

@@ -1,7 +1,7 @@
 #ifndef FBLE_APP_APP_FBLE_H_
 #define FBLE_APP_APP_FBLE_H_
 
-#include <fble/fble-codegen.h>
+#include <fble/fble-generate.h>   // for FbleGeneratedModule
 
 // FbleAppMain -- 
 //   A main function for running an App@ program with standard command line

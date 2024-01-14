@@ -3,14 +3,12 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * Remove on_free from FuncValue
- - Rename fble-codegen.h to fble-generate.h
  - Implement FbleInterpretedFuncValue helper function for creating functions
    from FbleCode*.
  - Re-implement FbleInterpretedFuncValue to store FbleCode* with first static
    arg instead of part of the executable.
  - Figure out how to avoid duplicate code between LinkInterpreted and
    LinkGenerated?
- - Remove on_free from FbleExecutable.
  - Inline FbleExecutable directly into FbleFunction and remove on_free.
 
 * SatGame

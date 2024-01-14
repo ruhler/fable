@@ -1,10 +1,10 @@
 /**
- * @file fble-codegen.h
+ * @file fble-generate.h
  *  Fble backend code generation API.
  */
 
-#ifndef FBLE_CODEGEN_H_
-#define FBLE_CODEGEN_H_
+#ifndef FBLE_GENERATE_H_
+#define FBLE_GENERATE_H_
 
 #include <stdio.h>        // for FILE
 
@@ -157,4 +157,4 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
  */
 void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path);
 
-#endif // FBLE_CODEGEN_H_
+#endif // FBLE_GENERATE_H_

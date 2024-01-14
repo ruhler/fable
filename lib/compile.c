@@ -3,7 +3,7 @@
  *  Compile FbleTc* abstract syntax into FbleCode* bytecode.
  */
 
-#include <fble/fble-codegen.h>
+#include <fble/fble-generate.h>
 
 #include <assert.h>   // for assert
 #include <string.h>   // for strlen, strcat

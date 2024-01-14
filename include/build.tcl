@@ -14,10 +14,6 @@ namespace eval "include" {
       FbleNewModuleArg FbleFreeModuleArg FbleParseModuleArg
       FbleParseInvalidArg
     }
-    fble-codegen.h {
-      FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main
-      FbleGenerateC FbleGenerateCExport FbleGenerateCMain
-    }
     fble-compile.h {
       FbleFreeCompiledModule FbleFreeCompiledProgram
       FbleCompileModule FbleCompileProgram
@@ -28,6 +24,10 @@ namespace eval "include" {
       FbleFreeExecutable
       FbleExecutableNothingOnFree
       FbleCall
+    }
+    fble-generate.h {
+      FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main
+      FbleGenerateC FbleGenerateCExport FbleGenerateCMain
     }
     fble-link.h {
       FbleLink

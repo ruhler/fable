@@ -1,7 +1,7 @@
 #ifndef FBLE_TEST_MEM_TEST_H_
 #define FBLE_TEST_MEM_TEST_H_
 
-#include <fble/fble-codegen.h>    // for FbleGeneratedModule
+#include <fble/fble-generate.h>    // for FbleGeneratedModule
 
 /**
  * @func[FbleMemTestMain] A main function for running an fble memory test.

@@ -3,7 +3,7 @@
  *  Converts FbleCode fble bytecode to 64-bit ARM machine code.
  */
 
-#include <fble/fble-codegen.h>
+#include <fble/fble-generate.h>
 
 #include <assert.h>   // for assert
 #include <ctype.h>    // for isalnum
@@ -1359,7 +1359,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
   return FbleNewString(name);
 }
 
-// See documentation in fble-codegen.h.
+// See documentation in fble-generate.h.
 void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 {
   FbleCodeV blocks;
@@ -1591,7 +1591,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   FbleFreeVector(locs);
 }
 
-// See documentation in fble-codegen.h.
+// See documentation in fble-generate.h.
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
@@ -1603,7 +1603,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
   FbleFreeString(module_name);
 }
 
-// See documentation in fble-codegen.h.
+// See documentation in fble-generate.h.
 void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
 {
   fprintf(fout, "  .text\n");

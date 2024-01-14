@@ -1,7 +1,7 @@
 #ifndef FBLE_CORE_STDIO_FBLE_H_
 #define FBLE_CORE_STDIO_FBLE_H_
 
-#include <fble/fble-codegen.h>
+#include <fble/fble-generate.h>   // for FbleGeneratedModule
 #include <fble/fble-profile.h>
 #include <fble/fble-value.h>
 
