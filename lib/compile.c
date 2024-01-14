@@ -10,7 +10,6 @@
 #include <stdlib.h>   // for NULL
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, etc.
-#include <fble/fble-link.h>      // for FbleExecutableModule
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"

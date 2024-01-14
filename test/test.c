@@ -8,13 +8,13 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include <fble/fble-alloc.h>       // for FbleFree
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-link.h>        // for FbleCompiledModuleFunction.
+#include <fble/fble-codegen.h>     // for FbleGeneratedModule
+#include <fble/fble-link.h>        // for FbleLink
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-version.h>     // for FBLE_VERSION
+#include <fble/fble-version.h>     // for FblePrintVersion
 
 #define EX_SUCCESS 0
 #define EX_COMPILE_ERROR 1
@@ -23,7 +23,7 @@
 #define EX_OTHER_ERROR 4
 
 // FbleTestMain -- see documentation in test.h
-int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module)
+int FbleTestMain(int argc, const char** argv, FbleGeneratedModule* module)
 {
   const char* arg0 = argv[0];
 

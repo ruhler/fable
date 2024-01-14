@@ -30,9 +30,6 @@ namespace eval "include" {
       FbleCall
     }
     fble-link.h {
-      FbleFreeExecutableModule FbleFreeExecutableProgram
-      FbleCompiledModuleFunction
-      FbleLoadFromCompiled
       FbleLink
       FblePrintCompiledHeaderLine
     }

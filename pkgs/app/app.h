@@ -1,9 +1,7 @@
 #ifndef FBLE_APP_APP_FBLE_H_
 #define FBLE_APP_APP_FBLE_H_
 
-#include <fble/fble-link.h>
-#include <fble/fble-profile.h>
-#include <fble/fble-value.h>
+#include <fble/fble-codegen.h>
 
 // FbleAppMain -- 
 //   A main function for running an App@ program with standard command line
@@ -22,7 +20,7 @@
 // * Runs the App@ program, which may interact with keyboard and time events
 //   and draw to a display.
 // * Writes to a profile if specified by the command line options.
-int FbleAppMain(int argc, const char** argv, FbleCompiledModuleFunction* module);
+int FbleAppMain(int argc, const char** argv, FbleGeneratedModule* module);
 
 #endif // FBLE_APP_APP_FBLE_H_
 

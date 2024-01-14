@@ -9,7 +9,7 @@
 #include <stdlib.h>   // for rand
 
 #include <fble/fble-alloc.h>    // for FbleAlloc, FbleFree
-#include <fble/fble-function.h> // For FbleExecutableModule
+#include <fble/fble-function.h> // For FbleFunction, etc.
 #include <fble/fble-vector.h>   // for FbleInitVector, etc.
 
 #include "code.h"
@@ -475,37 +475,4 @@ FbleValue* FbleInterpreterRunFunction(
       }
     }
   }
-}
-
-// See documentation in interpret.h.
-FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
-{
-  FbleExecutableProgram* executable = FbleAlloc(FbleExecutableProgram);
-  FbleInitVector(executable->modules);
-
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleCompiledModule* module = program->modules.xs[i];
-
-    FbleExecutableModule* executable_module = FbleAlloc(FbleExecutableModule);
-    executable_module->refcount = 1;
-    executable_module->magic = FBLE_EXECUTABLE_MODULE_MAGIC;
-    executable_module->path = FbleCopyModulePath(module->path);
-    FbleInitVector(executable_module->deps);
-    for (size_t d = 0; d < module->deps.size; ++d) {
-      FbleAppendToVector(executable_module->deps, FbleCopyModulePath(module->deps.xs[d]));
-    }
-
-    executable_module->executable = &module->code->_base;
-    executable_module->executable->refcount++;
-
-    FbleInitVector(executable_module->profile_blocks);
-    for (size_t n = 0; n < module->profile_blocks.size; ++n) {
-      FbleAppendToVector(executable_module->profile_blocks,
-          FbleCopyName(module->profile_blocks.xs[n]));
-    }
-
-    FbleAppendToVector(executable->modules, executable_module);
-  }
-
-  return executable;
 }

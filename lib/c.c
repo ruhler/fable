@@ -30,7 +30,7 @@ static void StringLit(FILE* fout, const char* string);
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string);
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
-static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
+static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
 static void ReturnAbort(FILE* fout, FbleCode* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc);
 
@@ -202,32 +202,32 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
 }
 
 /**
- * Generates code to declare a static FbleExecutableModule value.
+ * Generates code to declare a static FbleGeneratedModule value.
  *
  * @param fout  The output stream to write the code to.
  * @param label_id  Pointer to next available label id for use.
  * @param module  The FbleCompiledModule to generate code for.
  *
- * @returns
- *   The label id of a local, static FbleExecutableModule.
- *
  * @sideeffects
  * * Outputs code to fout.
  * * Increments label_id based on the number of internal labels used.
  */
-static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
+static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
 {
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
 
-  LabelId dep_ids[module->deps.size];
   for (size_t i = 0; i < module->deps.size; ++i) {
-    dep_ids[i] = StaticModulePath(fout, label_id, module->deps.xs[i]);
+    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
+    fprintf(fout, "extern FbleGeneratedModule %s;\n", dep_name->str);
+    FbleFreeString(dep_name);
   }
 
   LabelId deps_xs_id = (*label_id)++;
-  fprintf(fout, "static FbleModulePath* " LABEL "[] = {\n", deps_xs_id);
+  fprintf(fout, "static FbleGeneratedModule* " LABEL "[] = {\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
-    fprintf(fout, "  &" LABEL ",\n", dep_ids[i]);
+    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
+    fprintf(fout, "  &%s,\n", dep_name->str);
+    FbleFreeString(dep_name);
   }
   fprintf(fout, "};\n");
 
@@ -249,10 +249,8 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
-  LabelId module_id = (*label_id)++;
-  fprintf(fout, "static FbleExecutableModule " LABEL " = {\n", module_id);
-  fprintf(fout, "  .refcount = 1,\n");
-  fprintf(fout, "  .magic = FBLE_EXECUTABLE_MODULE_MAGIC,\n");
+  FbleString* module_name = LabelForPath(module->path);
+  fprintf(fout, "FbleGeneratedModule %s = {\n", module_name->str);
   fprintf(fout, "  .path = &" LABEL ",\n", path_id);
   fprintf(fout, "  .deps = { .size = %zi, .xs = " LABEL "},\n",
       module->deps.size, deps_xs_id);
@@ -260,7 +258,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .profile_blocks = { .size = %zi, .xs = " LABEL "},\n",
       module->profile_blocks.size, profile_blocks_xs_id);
   fprintf(fout, "};\n");
-  return module_id;
+  FbleFreeString(module_name);
 }
 
 /**
@@ -902,8 +900,8 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocks(&blocks, module->code);
 
+  fprintf(fout, "#include <fble/fble-codegen.h>\n");  // for FbleGeneratedModule
   fprintf(fout, "#include <fble/fble-function.h>\n"); // for FbleCall
-  fprintf(fout, "#include <fble/fble-link.h>\n");     // for FbleCompiledModuleFunction
   fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
 
   // Error messages.
@@ -944,31 +942,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
 
   LabelId label_id = 0;
-  LabelId module_id = StaticExecutableModule(fout, &label_id, module);
-
-  // Generate prototypes for dependencies.
-  for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
-    fprintf(fout, "void %s(FbleExecutableProgram* program);\n", dep_name->str);
-    FbleFreeString(dep_name);
-  }
-
-  LabelId deps_id = label_id++;
-  fprintf(fout, "static FbleCompiledModuleFunction* " LABEL "[] = {\n", deps_id);
-  for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
-    fprintf(fout, "  &%s,\n", dep_name->str);
-    FbleFreeString(dep_name);
-  }
-  fprintf(fout, "};\n");
-
-  FbleString* func_name = LabelForPath(module->path);
-  fprintf(fout, "void %s(FbleExecutableProgram* program)\n", func_name->str);
-  fprintf(fout, "{\n");
-  fprintf(fout, "  FbleLoadFromCompiled(program, &" LABEL ", %zi, " LABEL ");\n",
-      module_id, module->deps.size, deps_id);
-  fprintf(fout, "}\n");
-  FbleFreeString(func_name);
+  StaticGeneratedModule(fout, &label_id, module);
 
   FbleFreeVector(blocks);
 }
@@ -977,13 +951,9 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
-
   fprintf(fout, "#include <fble/fble-link.h>\n");   // for FbleExecutableProgram
-  fprintf(fout, "void %s(FbleExecutableProgram* program);\n", module_name->str);
-  fprintf(fout, "void %s(FbleExecutableProgram* program)\n", name);
-  fprintf(fout, "{\n");
-  fprintf(fout, "  return %s(program);\n", module_name->str);
-  fprintf(fout, "}\n");
+  fprintf(fout, "extern FbleGeneratedModule %s;\n", module_name->str);
+  fprintf(fout, "FbleGeneratedModule* %s = &%s;\n", name, module_name->str);
   FbleFreeString(module_name);
 }
 
@@ -993,11 +963,11 @@ void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
   FbleString* module_name = LabelForPath(path);
 
   fprintf(fout, "#include <fble/fble-link.h>\n");
-  fprintf(fout, "void %s(FbleExecutableProgram* program);\n", module_name->str);
-  fprintf(fout, "int %s(int argc, const char** argv, FbleCompiledModuleFunction* module);\n", main);
+  fprintf(fout, "extern FbleGeneratedModule %s;\n", module_name->str);
+  fprintf(fout, "int %s(int argc, const char** argv, FbleGeneratedModule* module);\n", main);
   fprintf(fout, "int main(int argc, const char** argv)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  return %s(argc, argv, %s);\n", main, module_name->str);
+  fprintf(fout, "  return %s(argc, argv, &%s);\n", main, module_name->str);
   fprintf(fout, "}\n");
 
   FbleFreeString(module_name);

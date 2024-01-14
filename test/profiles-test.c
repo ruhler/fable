@@ -9,7 +9,8 @@
 
 #include <fble/fble-alloc.h>       // for FbleFree
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-link.h>        // for FbleCompiledModuleFunction.
+#include <fble/fble-codegen.h>     // for FbleGeneratedModule
+#include <fble/fble-link.h>        // for FbleLink
 #include <fble/fble-name.h>        // for FbleName.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
@@ -101,7 +102,7 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 }
 
 // FbleProfilesTestMain -- see documentation in profiles-test.h
-int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module)
+int FbleProfilesTestMain(int argc, const char** argv, FbleGeneratedModule* module)
 {
   const char* arg0 = argv[0];
 

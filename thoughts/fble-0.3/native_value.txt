@@ -236,3 +236,9 @@ stuff related to linking together back end modules into a program.
 
 Cool. That sounds like a plan. Let's try this restructuring and see how goes,
 before we change any types or names of other things.
+
+---
+
+How to define static pointer values for a struct for generated code? I'm
+getting errors about the initializer not being constant.
+

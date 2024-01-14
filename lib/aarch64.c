@@ -13,7 +13,6 @@
 #include <string.h>   // for strlen, strcat
 #include <unistd.h>   // for getcwd
 
-#include <fble/fble-link.h>      // for FbleExecutableModule
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "code.h"
@@ -59,7 +58,7 @@ static void StringLit(FILE* fout, const char* string);
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string);
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
-static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
+static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
@@ -309,34 +308,28 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
 }
 
 /**
- * Generates code to declare a static FbleExecutableModule value.
+ * Generates code to declare a static FbleGeneratedModule value.
  *
  * @param fout  The output stream to write the code to.
  * @param label_id  Pointer to next available label id for use.
  * @param module  The FbleCompiledModule to generate code for.
  *
- * @returns
- *   The label id of a local, static FbleExecutableModule.
- *
  * @sideeffects
  * * Outputs code to fout.
  * * Increments label_id based on the number of internal labels used.
  */
-static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
+static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
 {
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
-
-  LabelId dep_ids[module->deps.size];
-  for (size_t i = 0; i < module->deps.size; ++i) {
-    dep_ids[i] = StaticModulePath(fout, label_id, module->deps.xs[i]);
-  }
 
   LabelId deps_xs_id = (*label_id)++;
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
-    fprintf(fout, "  .xword " LABEL "\n", dep_ids[i]);
+    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
+    fprintf(fout, "  .xword %s\n", dep_name->str);
+    FbleFreeString(dep_name);
   }
 
   LabelId executable_id = (*label_id)++;
@@ -359,19 +352,18 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
-  LabelId module_id = (*label_id)++;
+  FbleString* module_name = LabelForPath(module->path);
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", module_id);
-  fprintf(fout, "  .xword 1\n");                                  // .refcount
-  fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MODULE_MAGIC);   // .magic
+  fprintf(fout, "  .global %s\n", module_name->str);
+  fprintf(fout, "%s:\n", module_name->str);
   fprintf(fout, "  .xword " LABEL "\n", path_id);                 // .path
   fprintf(fout, "  .xword %zi\n", module->deps.size);
   fprintf(fout, "  .xword " LABEL "\n", deps_xs_id);
   fprintf(fout, "  .xword " LABEL "\n", executable_id);
   fprintf(fout, "  .xword %zi\n", module->profile_blocks.size);
   fprintf(fout, "  .xword " LABEL "\n", profile_blocks_xs_id);
-  return module_id;
+  FbleFreeString(module_name);
 }
 
 /**
@@ -1425,37 +1417,10 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   for (size_t i = 0; i < blocks.size; ++i) {
     EmitCode(fout, profile_blocks, blocks.xs[i]);
   }
+  fprintf(fout, ".L.high_pc:\n");
 
   LabelId label_id = 0;
-  LabelId module_id = StaticExecutableModule(fout, &label_id, module);
-  LabelId deps_id = label_id++;
-
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", deps_id);
-  for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
-    fprintf(fout, "  .xword %s\n", dep_name->str);
-    FbleFreeString(dep_name);
-  }
-
-  FbleString* func_name = LabelForPath(module->path);
-  fprintf(fout, "  .text\n");
-  fprintf(fout, "  .align 2\n");
-  fprintf(fout, "  .global %s\n", func_name->str);
-  fprintf(fout, "%s:\n", func_name->str);
-  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
-  fprintf(fout, "  mov FP, SP\n");
-
-  Adr(fout, "x1", LABEL, module_id);
-  fprintf(fout, "  mov x2, %zi\n", module->deps.size);
-  Adr(fout, "x3", LABEL, deps_id);
-  fprintf(fout, "  bl FbleLoadFromCompiled\n");
-
-  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
-  fprintf(fout, "  ret\n");
-  fprintf(fout, ".L.high_pc:\n");
-  FbleFreeString(func_name);
+  StaticGeneratedModule(fout, &label_id, module);
 
   // Emit dwarf debug info.
   fprintf(fout, "  .section .debug_info\n");
@@ -1629,19 +1594,13 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 // See documentation in fble-codegen.h.
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path)
 {
-  fprintf(fout, "  .text\n");
-  fprintf(fout, "  .align 2\n");
+  FbleString* module_name = LabelForPath(path);
+  fprintf(fout, "  .section .data\n");
+  fprintf(fout, "  .align 3\n");
   fprintf(fout, "  .global %s\n", name);
   fprintf(fout, "%s:\n", name);
-  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
-  fprintf(fout, "  mov FP, SP\n");
-
-  FbleString* module_name = LabelForPath(path);
-  fprintf(fout, "  bl %s\n\n", module_name->str);
+  fprintf(fout, "  .xword %s\n", module_name->str);
   FbleFreeString(module_name);
-
-  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
-  fprintf(fout, "  ret\n");
 }
 
 // See documentation in fble-codegen.h.

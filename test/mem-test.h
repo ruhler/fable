@@ -1,15 +1,13 @@
 #ifndef FBLE_TEST_MEM_TEST_H_
 #define FBLE_TEST_MEM_TEST_H_
 
-#include <fble/fble-link.h>
-#include <fble/fble-profile.h>
-#include <fble/fble-value.h>
+#include <fble/fble-codegen.h>    // for FbleGeneratedModule
 
 /**
  * @func[FbleMemTestMain] A main function for running an fble memory test.
  *  @arg[int][argc] The number of args.
  *  @arg[const char**][argv] The args.
- *  @arg[FbleCompiledModuleFunction*][module]
+ *  @arg[FbleGeneratedModule*][module]
  *   The compiled module to run, or NULL to determine the module based on
  *   command line options.
  *
@@ -18,6 +16,6 @@
  *  @sideeffects
  *   Prints an error to stderr and exits the program in the case of error.
  */
-int FbleMemTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module);
+int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module);
 
 #endif // FBLE_TEST_MEM_TEST_H_

@@ -1,9 +1,7 @@
 #ifndef FBLE_TEST_TEST_H_
 #define FBLE_TEST_TEST_H_
 
-#include <fble/fble-link.h>
-#include <fble/fble-profile.h>
-#include <fble/fble-value.h>
+#include <fble/fble-codegen.h>
 
 // FbleTestMain -- 
 //   A main function for running a basic fble test.
@@ -19,7 +17,7 @@
 //
 // Side effects:
 // * Prints an error to stderr and exits the program in the case of error.
-int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module);
+int FbleTestMain(int argc, const char** argv, FbleGeneratedModule* module);
 
 
 #endif // FBLE_TEST_TEST_H_

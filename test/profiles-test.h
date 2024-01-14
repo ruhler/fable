@@ -1,9 +1,7 @@
 #ifndef FBLE_TEST_PROFILES_TEST_H_
 #define FBLE_TEST_PROFILES_TEST_H_
 
-#include <fble/fble-link.h>
-#include <fble/fble-profile.h>
-#include <fble/fble-value.h>
+#include <fble/fble-codegen.h>
 
 // FbleProfilesTestMain -- 
 //   A main function for running the profiles test.
@@ -20,7 +18,7 @@
 // Side effects:
 // * Outputs a profile to stdout for debug purposes.
 // * Aborts in case of assertion failure.
-int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module);
+int FbleProfilesTestMain(int argc, const char** argv, FbleGeneratedModule* module);
 
 
 #endif // FBLE_TEST_PROFILES_TEST_H_

@@ -11,9 +11,10 @@
 
 #include <fble/fble-alloc.h>       // for FbleFree.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
+#include <fble/fble-link.h>        // for FbleLink
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-version.h>     // for FBLE_VERSION
+#include <fble/fble-version.h>     // for FblePrintVersion
 
 #include "char.fble.h"             // for FbleCharValueAccess
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
@@ -431,7 +432,7 @@ static Uint32 OnTimer(Uint32 interval, void* param)
 }
 
 // FbleAppMain -- See documentation in app.fble.h
-int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module)
+int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
 {
   const char* arg0 = argv[0];
 

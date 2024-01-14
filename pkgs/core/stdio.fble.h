@@ -1,7 +1,7 @@
 #ifndef FBLE_CORE_STDIO_FBLE_H_
 #define FBLE_CORE_STDIO_FBLE_H_
 
-#include <fble/fble-link.h>
+#include <fble/fble-codegen.h>
 #include <fble/fble-profile.h>
 #include <fble/fble-value.h>
 
@@ -60,6 +60,6 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
 // * Runs the Stdio@ program, which may interact with stdin, stdout, and
 //   stderr.
 // * Writes to a profile if specified by the command line options.
-int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* module);
+int FbleStdioMain(int argc, const char** argv, FbleGeneratedModule* module);
 
 #endif // FBLE_CORE_STDIO_FBLE_H_

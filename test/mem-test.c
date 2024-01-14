@@ -9,6 +9,7 @@
 
 #include <fble/fble-alloc.h>       // for FbleFree, FbleMaxTotalBytesAllocated.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
+#include <fble/fble-codegen.h>     // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink.
 #include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
@@ -79,7 +80,7 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
 }
 
 // FbleMemTestMain -- see documentation in mem-test.h.
-int FbleMemTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module)
+int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
 {
   const char* arg0 = argv[0];
 
