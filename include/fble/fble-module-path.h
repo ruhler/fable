@@ -12,7 +12,9 @@
 /**
  * Magic number used in FbleModulePath.
  */
-#define FBLE_MODULE_PATH_MAGIC 0x77806584
+typedef enum {
+  FBLE_MODULE_PATH_MAGIC = 0x77806584
+} FbleModulePathMagic;
 
 /**
  * A module path.
@@ -28,7 +30,7 @@
  */
 typedef struct {
   size_t refcount;    /**< Current reference count. */
-  size_t magic;       /**< FBLE_MODULE_PATH_MAGIC. */
+  FbleModulePathMagic magic;  /**< FBLE_MODULE_PATH_MAGIC. */
   FbleLoc loc;        /**< Location associated with the path. */
   FbleNameV path;     /**< Name of the path. */
 } FbleModulePath;

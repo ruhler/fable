@@ -297,9 +297,10 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
   fprintf(fout, "  .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", path_id);
-  fprintf(fout, "  .xword 1\n");                  // .refcount
-  fprintf(fout, "  .xword 2004903300\n");         // .magic
-  fprintf(fout, "  .xword " LABEL "\n", src_id);        // path->loc.src
+  fprintf(fout, "  .xword 1\n");                          // .refcount
+  fprintf(fout, "  .word %i\n", FBLE_MODULE_PATH_MAGIC);  // .magic
+  fprintf(fout, "  .align 3\n");
+  fprintf(fout, "  .xword " LABEL "\n", src_id);          // path->loc.src
   fprintf(fout, "  .xword %zi\n", path->loc.line);
   fprintf(fout, "  .xword %zi\n", path->loc.col);
   fprintf(fout, "  .xword %zi\n", path->path.size);

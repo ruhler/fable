@@ -732,8 +732,14 @@ What we get from this:
 * Avoid need for allocating a tail_call_buffer.
 * Feels like it's more natural for work on switching to stack allocator for
   the heap.
+* Simpler implementation of FbleCall, Call.
 
 The cost:
 * An extra partial function allocation on the heap for tail calls that we
   didn't need before.
+
+I think it's worth a try, to see if it's cleaner and what impact, if any, it
+has on performance. It feels like it should be cleaner. It's hard for me to
+predict performance. I feel like it could be a small performance improvement
+due to less complicated function calling code.
 

@@ -2,10 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Use enum instead of size_t for *_MAGIC?
-  Be careful about packing/alignment in aarch64, because enums are 4 bytes
-  there, not 8 bytes like size_t.
-
 * Figure out how to avoid duplicate code between LinkInterpreted and
   LinkGenerated?
 
