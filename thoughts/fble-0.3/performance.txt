@@ -719,3 +719,21 @@ User time (seconds): 49.54
 Maximum resident set size (kbytes): 2448
 
 We were hovering around 1m10s last time I ran this, so that's cool.
+
+---
+
+Random idea: what if we change the tail call protocol to return a
+zero-argument function value? We Have some way to quickly check if that's what
+we are doing. Maybe a zero-arg function value pointer with bit 1 set in the
+pointer.
+
+What we get from this:
+* Avoid having to retain/release function and args. It uses AddRef instead.
+* Avoid need for allocating a tail_call_buffer.
+* Feels like it's more natural for work on switching to stack allocator for
+  the heap.
+
+The cost:
+* An extra partial function allocation on the heap for tail calls that we
+  didn't need before.
+

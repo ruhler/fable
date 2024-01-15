@@ -11,7 +11,9 @@
 /**
  * Magic number used in FbleString.
  */
-#define FBLE_STRING_MAGIC 0x516179
+typedef enum {
+  FBLE_STRING_MAGIC = 0x516179
+} FbleStringMagic;
 
 /**
  * A reference counted string of characters.
@@ -22,9 +24,9 @@
  * double frees of FbleString, which we have had trouble with in the past.
  */
 typedef struct {
-  size_t refcount;    /**< The reference count. */
-  size_t magic;       /**< FBLE_STRING_MAGIC. */
-  char str[];         /**< The string contents. */
+  size_t refcount;        /**< The reference count. */
+  FbleStringMagic magic;  /**< FBLE_STRING_MAGIC. */
+  char str[];             /**< The string contents. */
 } FbleString;
 
 /** Vector of FbleString. */

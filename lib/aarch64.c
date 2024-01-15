@@ -234,7 +234,7 @@ static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
   fprintf(fout, "  .align 3\n");                       // 64 bit alignment
   fprintf(fout, LABEL ":\n", id);
   fprintf(fout, "  .xword 1\n");                       // .refcount = 1
-  fprintf(fout, "  .xword %i\n", FBLE_STRING_MAGIC);   // .magic
+  fprintf(fout, "  .word %i\n", FBLE_STRING_MAGIC);    // .magic
   StringLit(fout, string);                             // .str
   return id;
 }
