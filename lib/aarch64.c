@@ -41,13 +41,11 @@ typedef struct {
   void* FP;                 /**< Frame pointer. */
   void* LR;                 /**< Link register. */
   void* r_heap_save;        /**< Saved contents of R_HEAP reg. */
-  void* r_tail_call_buffer_save;    /**< Saved contents of R_TAIL_CALL_BUFFER reg. */
   void* r_locals_save;      /**< Saved contents of R_LOCALS reg. */
   void* r_args_save;        /**< Saved contents of R_ARGS reg. */
   void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
   void* r_profile_block_offset_save;  /**< Saved contents of R_PROFILE_BLOCK_OFFSET reg. */
   void* r_profile_save;     /**< Saved contents of R_PROFILE reg. */
-  void* padding;            /**< Padding to keep RunStackFrame 16 byte aligned. */
   void* locals[];           /**< Local variables. */
 } RunStackFrame;
 
@@ -339,7 +337,6 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledMod
   fprintf(fout, LABEL ":\n", executable_id);
   fprintf(fout, "  .xword %zi\n", module->code->executable.num_args);
   fprintf(fout, "  .xword %zi\n", module->code->executable.num_statics);
-  fprintf(fout, "  .xword %zi\n", module->code->executable.tail_call_buffer_size);
   fprintf(fout, "  .xword %zi\n", module->code->executable.profile_block_id);
 
   FbleName function_block = module->profile_blocks.xs[module->code->executable.profile_block_id];
@@ -690,7 +687,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, ".Lr.%04zx.%zi.exe:\n", func_id, pc);
       fprintf(fout, "  .xword %zi\n", func_instr->code->executable.num_args);
       fprintf(fout, "  .xword %zi\n", func_instr->code->executable.num_statics);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->executable.tail_call_buffer_size);
       fprintf(fout, "  .xword %zi\n", func_instr->code->executable.profile_block_id);
 
       FbleName function_block = profile_blocks.xs[func_instr->code->executable.profile_block_id];
@@ -748,21 +744,28 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_TAIL_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       GetFrameVar(fout, "x0", call_instr->func);
-      fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #0]\n");
 
       // Verify the function isn't undefined.
       fprintf(fout, "  bl FbleFuncValueFunction\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
 
-      // Set up the tail call arguments.
+      // Set up the arguments.
+      size_t sp_offset = StackBytesForCount(call_instr->args.size);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
-        GetFrameVar(fout, "x0", call_instr->args.xs[i]);
-        fprintf(fout, "  str x0, [R_TAIL_CALL_BUFFER, #%zi]\n", sizeof(FbleValue*) * (i + 1));
+        GetFrameVar(fout, "x1", call_instr->args.xs[i]);
+        fprintf(fout, "  str x1, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
-      fprintf(fout, "  str XZR, [R_TAIL_CALL_BUFFER, #%zi]\n",
-          sizeof(FbleValue*) * (call_instr->args.size + 1));
 
-      fprintf(fout, "  mov x0, %p\n", (void*)FbleTailCallSentinelValue);
+      // Create the thunk value.
+      fprintf(fout, "  mov x1, x0\n");
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      GetFrameVar(fout, "x2", call_instr->func);
+      fprintf(fout, "  mov x3, %zi\n", call_instr->args.size);
+      fprintf(fout, "  mov x4, SP\n");          // args
+      fprintf(fout, "  bl FblePartialApply\n");
+
+      fprintf(fout, "  mov x0, %p\n", (void*)0x2);    // TailCallSentinelValue
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;
     }
@@ -1050,17 +1053,15 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  mov FP, SP\n");
 
   // Save callee saved registers for later restoration.
-  fprintf(fout, "  stp R_HEAP, R_TAIL_CALL_BUFFER, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-  fprintf(fout, "  stp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-  fprintf(fout, "  stp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  str R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
+  fprintf(fout, "  stp R_HEAP, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  stp R_ARGS, R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
+  fprintf(fout, "  stp R_PROFILE_BLOCK_OFFSET, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
 
   // Set up common registers.
-  fprintf(fout, "  ldr R_STATICS, [x3, #%zi]\n", offsetof(FbleFunction, statics));
-  fprintf(fout, "  ldr R_PROFILE_BLOCK_OFFSET, [x3, #%zi]\n", offsetof(FbleFunction, profile_block_offset));
+  fprintf(fout, "  ldr R_STATICS, [x2, #%zi]\n", offsetof(FbleFunction, statics));
+  fprintf(fout, "  ldr R_PROFILE_BLOCK_OFFSET, [x2, #%zi]\n", offsetof(FbleFunction, profile_block_offset));
   fprintf(fout, "  mov R_HEAP, x0\n");
-  fprintf(fout, "  mov R_TAIL_CALL_BUFFER, x2\n");
-  fprintf(fout, "  mov R_ARGS, x4\n");
+  fprintf(fout, "  mov R_ARGS, x3\n");
   fprintf(fout, "  mov R_PROFILE, x1\n");
   fprintf(fout, "  add R_LOCALS, SP, #%zi\n", offsetof(RunStackFrame, locals));
 
@@ -1072,10 +1073,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
   // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, ".Lr.%04zx.exit:\n", func_id);
-  fprintf(fout, "  ldp R_HEAP, R_TAIL_CALL_BUFFER, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-  fprintf(fout, "  ldp R_LOCALS, R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-  fprintf(fout, "  ldp R_STATICS, R_PROFILE_BLOCK_OFFSET, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
+  fprintf(fout, "  ldp R_HEAP, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  ldp R_ARGS, R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
+  fprintf(fout, "  ldp R_PROFILE_BLOCK_OFFSET, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");

@@ -11,28 +11,33 @@
 #include "fble-value.h"       // for FbleValue
 
 /**
- * Sentinel value to return from FbleRunFunction to indicate tail call.
- *
- * We use the value 0x2 to be distinct from NULL and packed values.
+ * To implement a tail call in the FbleRunFunction, return a zero-argument
+ * function value with the tail call bit set.
  */
-#define FbleTailCallSentinelValue ((FbleValue*) 0x2)
+#define FbleTailCallBit ((intptr_t)0x2)
+#define FbleTailCallMask ((intptr_t)0x3)
+
+/**
+ * @func[FbleTailCall] Marks a value for tail call.
+ *  @arg[FbleValue*][thunk] The thunk to mark for tail call.
+ *  @result[FbleValue*] The thunk marked for tail call.
+ *  @sideeffects none
+ */
+#define FbleTailCall(thunk) ((FbleValue*)((intptr_t)thunk | FbleTailCallBit))
 
 /**
  * @func[FbleRunFunction] Implementation of fble function logic.
  *  Type of a C function that implements an fble function.
  *
  *  To perform a tail call, the implementation of the run function should
- *  place the function to call followed by args in order into the
- *  tail_call_buffer, followed by NULL, then return FbleTailCallSentinelValue.
- *  The function to tail call may be undefined.
+ *  allocate and return a zero-argument function value with the
+ *  FbleTailCallBit set.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
  *   Profile thread for recording profiling information. NULL if profiling is
  *   disabled.
- *  @arg[FbleValue**] tail_call_buffer
- *   Pre-allocated space to store tail call func, args, and terminated NULL.
  *  @arg[FbleFunction*] function
  *   The function to execute.
  *  @arg[FbleValue**] args
@@ -41,7 +46,9 @@
  *  @returns FbleValue*
  *   @i The result of executing the function.
  *   @i NULL if the function aborts.
- *   @i FbleTailCallSentinelValue to indicate tail call.
+ *   @item
+ *    A zero-argument function value with FbleTailCallBit set to indicate tail
+ *    call.
  *
  *  @sideeffects
  *   Executes the fble function, with whatever side effects that may have.
@@ -49,7 +56,6 @@
 typedef FbleValue* FbleRunFunction(
     FbleValueHeap* heap,
     FbleProfileThread* profile,
-    FbleValue** tail_call_buffer,
     FbleFunction* function,
     FbleValue** args);
 
@@ -62,19 +68,6 @@ struct FbleExecutable {
 
   /** Number of static values used by the function. */
   size_t num_statics;
-
-  /**
-   * Number of value slots needed for the tail call buffer.
-   *
-   * The tail call buffer is used to pass function and arguments when making a
-   * tail call.
-   *
-   * This will be 0 if there are no tail calls. It will be (2 + argc) for the
-   * tail call with the most number of arguments, allowing sufficient space
-   * to pass the function, all arguments, and NULL terminator for that tail
-   * call.
-   */
-  size_t tail_call_buffer_size;
 
   /**
    * Profiling block associated with this executable. Relative to the
@@ -97,6 +90,25 @@ struct FbleFunction {
   FbleBlockId profile_block_offset;
   FbleValue** statics;
 };
+
+/**
+ * @func[FblePartialApply] Partially applies a function.
+ *  Creates a thunk with the function and arguments without applying the
+ *  function yet.
+ *
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleFunction*][function] The function to apply.
+ *  @arg[FbleValue*][func] The function value to apply.
+ *  @arg[size_t][argc] Number of args to pass.
+ *  @arg[FbleValue**][args] Args to pass to the function.
+ *
+ *  @returns[FbleValue*] The allocated result.
+ *
+ *  @sideeffects
+ *   Allocates an FbleValue that should be freed with FbleReleaseValue when no
+ *   longer needed.
+ */
+FbleValue* FblePartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
 
 /**
  * @func[FbleCall] Calls an fble function.

@@ -743,3 +743,29 @@ has on performance. It feels like it should be cleaner. It's hard for me to
 predict performance. I feel like it could be a small performance improvement
 due to less complicated function calling code.
 
+Let's try this. It's slightly involved.
+
+Across the board the code is cleaner this way. I really hope it does go
+noticeably slower, because I would love to keep this change.
+
+First need to work through bugs.
+
+* Error unwinding tail recursion.
+* Memory leak in TailRecursion.
+
+Those are the only ones so far (haven't implemented aarch64 backend yet).
+
+The unwind must be the abort logic for tail recursion that I didn't implement
+right. Yeah. That's fixed now.
+
+Memory leak in TailRecursion?
+
+Maybe it's not a real memory leak, it's just that we are allocating during the
+call and we don't get a chance to GC soon enough?
+
+No. It looks like a real memory leak. But a slow one. How could that be?
+
+I bet it's because PartialApply uses FbleCall, which will then try to resolve
+tail calls from within itself instead of being willing to return tail call
+directly.
+

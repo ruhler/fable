@@ -40,10 +40,10 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 
 static FbleValue* EventImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 static FbleValue* EffectImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 
 static Uint32 OnTimer(Uint32 interval, void* param);
 
@@ -240,10 +240,9 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 //   IO@<Event@>
 static FbleValue* EventImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
   (void)profile;
-  (void)tail_call_buffer;
 
   FbleValue* world = args[0];
   FbleValue* value = NULL;
@@ -349,10 +348,9 @@ static FbleValue* EventImpl(
 //   (Effect@, World@) { R@<Unit@>; }
 static FbleValue* EffectImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
   (void)profile;
-  (void)tail_call_buffer;
 
   App* app = *(App**)FbleNativeValueData(function->statics[0]);
 
@@ -577,7 +575,6 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   FbleExecutable event_exe = {
     .num_args = 1,
     .num_statics = 0,
-    .tail_call_buffer_size = 0,
     .profile_block_id = block_id,
     .run = &EventImpl,
   };
@@ -586,7 +583,6 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   FbleExecutable effect_exe = {
     .num_args = 2,
     .num_statics = 1,
-    .tail_call_buffer_size = 0,
     .profile_block_id = block_id + 1,
     .run = &EffectImpl,
   };

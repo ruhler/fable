@@ -1368,53 +1368,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         atc = (FbleFuncApplyTc*)atc->func;
       }
 
-      if (exit) {
-        // Take ownership of func for transfer to the tail call.
-        if (func->var.tag != FBLE_LOCAL_VAR || func->owner != NULL ) {
-          AppendRetainInstr(scope, func->var);
-        }
-
-        // Take ownership of args for transfer to the tail call.
-        for (size_t i = 0; i < argc; ++i) {
-          // We can trasfer ownership instead of take ownership if it's a
-          // local variable that we haven't already transferred ownership for.
-          bool transfer = args[i]->var.tag == FBLE_LOCAL_VAR
-            && args[i]->owner == NULL;
-
-          if (func->var.tag == FBLE_LOCAL_VAR
-              && args[i]->var.index == func->var.index) {
-            transfer = false;
-          }
-
-          for (size_t j = 0; j < i; ++j) {
-            if (args[j]->var.tag == FBLE_LOCAL_VAR
-                && args[i]->var.index == args[j]->var.index) {
-              transfer = false;
-              break;
-            }
-          }
-
-          if (!transfer) {
-            AppendRetainInstr(scope, args[i]->var);
-          }
-        }
-
-        // Release any remaining unused locals before tail calling.
-        for (size_t i = 0; i < scope->locals.size; ++i) {
-          Local* local = scope->locals.xs[i];
-          if (local != NULL) {
-            bool used = (local == func);
-            for (size_t j = 0; !used && j < argc; ++j) {
-              used = (local == args[j]);
-            }
-
-            if (!used && local->owner == NULL) {
-              AppendReleaseInstr(scope, local->var.index);
-            }
-          }
-        }
-      }
-
       Local* dest = exit ? NULL : NewLocal(scope, NULL);
 
       if (exit) {
@@ -1425,12 +1378,15 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         for (size_t i = 0; i < argc; ++i) {
           FbleAppendToVector(call_instr->args, args[i]->var);
         }
-        AppendInstr(scope, &call_instr->_base);
 
-        size_t tail_call_buffer_size = 2 + argc;
-        if (tail_call_buffer_size > scope->code->executable.tail_call_buffer_size) {
-          scope->code->executable.tail_call_buffer_size = tail_call_buffer_size;
+        FbleInitVector(call_instr->release);
+        for (size_t i = 0; i < scope->locals.size; ++i) {
+          Local* local = scope->locals.xs[i];
+          if (local != NULL && local->owner == NULL) {
+            FbleAppendToVector(call_instr->release, local->var.index);
+          }
         }
+        AppendInstr(scope, &call_instr->_base);
       } else {
         FbleCallInstr* call_instr = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
         call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);

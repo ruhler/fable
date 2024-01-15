@@ -235,7 +235,6 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledMod
   fprintf(fout, "static FbleExecutable " LABEL " = {\n", executable_id);
   fprintf(fout, "  .num_args = %zi, \n", module->code->executable.num_args);
   fprintf(fout, "  .num_statics = %zi,\n", module->code->executable.num_statics);
-  fprintf(fout, "  .tail_call_buffer_size = %zi,\n", module->code->executable.tail_call_buffer_size);
   fprintf(fout, "  .profile_block_id = %zi,\n", module->code->executable.profile_block_id);
 
   FbleName function_block = module->profile_blocks.xs[module->code->executable.profile_block_id];
@@ -297,8 +296,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   SanitizeString(block.name->str, label);
   fprintf(fout, "static FbleValue* %s_%04zx("
       "FbleValueHeap* heap, FbleProfileThread* profile, "
-      "FbleValue** tail_call_buffer, FbleFunction* function, "
-      "FbleValue** args)\n",
+      "FbleFunction* function, FbleValue** args)\n",
       label, code->executable.profile_block_id);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue** a = args;\n");
@@ -452,7 +450,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  static FbleExecutable exe_%zi = {\n", exe_id);
         fprintf(fout, "    .num_args = %zi,\n", func_instr->code->executable.num_args);
         fprintf(fout, "    .num_statics = %zi,\n", func_instr->code->executable.num_statics);
-        fprintf(fout, "    .tail_call_buffer_size = %zi,\n", func_instr->code->executable.tail_call_buffer_size);
         fprintf(fout, "    .profile_block_id = %zi,\n", func_instr->code->executable.profile_block_id);
         fprintf(fout, "    .run = &%s_%04zx,\n", function_label, func_instr->code->executable.profile_block_id);
         fprintf(fout, "  };\n");
@@ -500,18 +497,25 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (f0 == NULL) ");
         ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
 
-        fprintf(fout, "  tail_call_buffer[0] = %s[%zi];\n",
-          var_tag[call_instr->func.tag],
-          call_instr->func.index);
+        fprintf(fout, "  FbleValue* ca%zi[%zi] = {", pc, call_instr->args.size);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, "  tail_call_buffer[%zi] = %s[%zi];\n",
-              i + 1, var_tag[call_instr->args.xs[i].tag],
+          fprintf(fout, "%s[%zi],",
+              var_tag[call_instr->args.xs[i].tag],
               call_instr->args.xs[i].index);
         }
-        fprintf(fout, "  tail_call_buffer[%zi] = NULL;\n",
-            call_instr->args.size + 1);
+        fprintf(fout, "};\n");
 
-        fprintf(fout, "  return FbleTailCallSentinelValue;\n");
+        fprintf(fout, "  x0 = FblePartialApply(heap, f0, %s[%zi], %zi, ca%zi);\n",
+            var_tag[call_instr->func.tag], call_instr->func.index,
+            call_instr->args.size, pc);
+
+        fprintf(fout, "  FbleReleaseValues_(heap, %zi", call_instr->release.size);
+        for (size_t i = 0; i < call_instr->release.size; ++i) {
+          fprintf(fout, ", l[%zi]", call_instr->release.xs[i]);
+        }
+        fprintf(fout, ");\n");
+
+        fprintf(fout, "  return FbleTailCall(x0);\n");
         break;
       }
 
@@ -674,14 +678,11 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
     case FBLE_TAIL_CALL_INSTR: {
       FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
 
-      fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
-          var_tag[call_instr->func.tag],
-          call_instr->func.index);
-      for (size_t i = 0; i < call_instr->args.size; ++i) {
-        fprintf(fout, "  FbleReleaseValue(heap, %s[%zi]);\n",
-            var_tag[call_instr->args.xs[i].tag],
-            call_instr->args.xs[i].index);
+      fprintf(fout, "  FbleReleaseValues_(heap, %zi", call_instr->release.size);
+      for (size_t i = 0; i < call_instr->release.size; ++i) {
+        fprintf(fout, ", l[%zi]", call_instr->release.xs[i]);
       }
+      fprintf(fout, ");\n");
 
       fprintf(fout, "  return NULL;\n");
       return;
@@ -922,8 +923,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     SanitizeString(function_block.name->str, function_label);
     fprintf(fout, "static FbleValue* %s_%04zx("
       "FbleValueHeap* heap, FbleProfileThread* profile, "
-      "FbleValue** tail_call_buffer, FbleFunction* function, "
-      "FbleValue** args);\n",
+      "FbleFunction* function, FbleValue** args);\n",
         function_label, code->executable.profile_block_id);
     fprintf(fout, "static FbleValue* %s_%04zx_abort(FbleValueHeap* heap, FbleValue** statics, FbleValue** args, FbleValue** locals, size_t pc);\n",
         function_label, code->executable.profile_block_id);

@@ -20,7 +20,7 @@
 # fble binaries in the build directory and $builddir/spec/${FBLE}.d the result
 # of running fble-deps on the FBLE file.
 
-set ::arch "[exec arch]"
+set ::arch "xxx[exec arch]"
 
 proc module_path { path } {
   # Add quotes around module path words so we can name spec tests to match
@@ -163,7 +163,7 @@ proc compile {target main} {
   if {[exec uname -o] == "Cygwin"} {
     set stackflag "-Wl,--stack,1073741824"
   }
-  exec gcc {*}$stackflag --pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs
+  exec gcc {*}$stackflag --pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O0 -o $exe {*}$objs
   return $exe
 }
 

@@ -135,12 +135,9 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 
       case FBLE_TAIL_CALL_INSTR: {
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-
-        FbleReleaseValue(heap, GET(call_instr->func));
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          FbleReleaseValue(heap, GET(call_instr->args.xs[i]));
+        for (size_t i = 0; i < call_instr->release.size; ++i) {
+          FbleReleaseValue(heap, locals[call_instr->release.xs[i]]);
         }
-
         return NULL;
       }
 
@@ -223,7 +220,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 static FbleValue* Interpret(
     FbleValueHeap* heap,
     FbleProfileThread* profile,
-    FbleValue** tail_call_buffer,
     FbleFunction* function,
     FbleValue** args)
 {
@@ -395,18 +391,26 @@ static FbleValue* Interpret(
 
       case FBLE_TAIL_CALL_INSTR: {
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-        FbleFunction* func = FbleFuncValueFunction(GET(call_instr->func));
-        if (func == NULL) {
+        FbleValue* func = GET(call_instr->func);
+        FbleFunction* call_function = FbleFuncValueFunction(func);
+        if (call_function == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
           return RunAbort(heap, code, vars, pc);
         };
 
-        tail_call_buffer[0] = GET(call_instr->func);
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          tail_call_buffer[1+i] = GET(call_instr->args.xs[i]);
+        size_t argc = call_instr->args.size;
+        FbleValue* call_args[argc];
+        for (size_t i = 0; i < argc; ++i) {
+          call_args[i] = GET(call_instr->args.xs[i]);
         }
-        tail_call_buffer[call_instr->args.size+1] = NULL;
-        return FbleTailCallSentinelValue;
+
+        FbleValue* thunk = FblePartialApply(heap, call_function, func, argc, call_args);
+
+        for (size_t i = 0; i < call_instr->release.size; ++i) {
+          FbleReleaseValue(heap, locals[call_instr->release.xs[i]]);
+        }
+
+        return FbleTailCall(thunk);
       }
 
       case FBLE_COPY_INSTR: {
@@ -500,7 +504,6 @@ FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size
   FbleExecutable exe = {
     .num_args = code->executable.num_args,
     .num_statics = code->executable.num_statics + 1,
-    .tail_call_buffer_size = code->executable.tail_call_buffer_size,
     .profile_block_id = code->executable.profile_block_id,
     .run = &Interpret
   };

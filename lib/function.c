@@ -20,54 +20,77 @@
 #include "tc.h"
 #include "unreachable.h"
 
-static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
+static bool IsTailCall(FbleValue* result);
+static FbleValue* GetThunk(FbleValue* result);
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 
-static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t argc, FbleValue** func_and_args);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
 
+
+/**
+ * @func[IsTailCall] Tests if a tail call is requried.
+ *  @arg[FbleValue*][result] The result of a call to check.
+ *  @returns[bool] True if the tail call bit is set.
+ *  @sideeffects None
+ */
+static bool IsTailCall(FbleValue* result)
+{
+  return (((intptr_t)result) & FbleTailCallMask) == FbleTailCallBit;
+}
+
+/**
+ * @func[GetThunk] Gets the thunk for a tail call.
+ *  @arg[FbleValue*][result] The result of the call to get the thunk from.
+ *  @returns[FbleValue*] The thunk for the tail call.
+ *  @sideffects
+ *   Behavior is undefined if result is not a tail call.
+ */
+static FbleValue* GetThunk(FbleValue* result)
+{
+  return (FbleValue*)((intptr_t)result & ~FbleTailCallBit);
+}
 
 // FbleRunFunction for PartialApply executable.
 // See documentation of FbleRunFunction in fble-function.h
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
-  size_t s = function->executable.num_statics - 1;
   size_t a = function->executable.num_args;
+  size_t s = function->executable.num_statics - 1;
   size_t argc = s + a;
   FbleValue* nargs[argc];
   memcpy(nargs, function->statics + 1, s * sizeof(FbleValue*));
   memcpy(nargs + s, args, a * sizeof(FbleValue*));
+
+  FbleFunction* func = FbleFuncValueFunction(function->statics[0]);
+  if (func == NULL) {
+    FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 5);
+    FbleReportError("called undefined function\n", loc);
+    FbleFreeLoc(loc);
+    return NULL;
+  }
+
+  FbleExecutable* executable = &func->executable;
+  if (argc == executable->num_args) {
+    return func->executable.run(heap, profile, func, nargs);
+  }
   return FbleCall(heap, profile, function->statics[0], argc, nargs);
 }
 
-/**
- * @func[PartialApply] Partially applies a function.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleFunction*][function] The function to apply.
- *  @arg[FbleValue*][func] The function value to apply.
- *  @arg[size_t][argc] Number of args to pass.
- *  @arg[FbleValue**][args] Args to pass to the function.
- *
- *  @returns[FbleValue*] The allocated result.
- *
- *  @sideeffects
- *   @item
- *    Allocates an FbleValue that should be freed with FbleReleaseValue when
- *    no longer needed.
- *   @item
- *    Behavior is undefined if the number of arguments provided is not less
- *    than the number of arguments expected by the function.
- */
-static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
+// See documentation in fble-function.h
+FbleValue* FblePartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
+  size_t num_args = 0;
+  if (function->executable.num_args > argc) {
+    num_args = function->executable.num_args - argc;
+  }
+
   FbleExecutable exe = {
-    .num_args = function->executable.num_args - argc,
+    .num_args = num_args,
     .num_statics = 1 + argc,
-    .tail_call_buffer_size = 2 + function->executable.num_args,
     .profile_block_id = function->executable.profile_block_id,
     .run = &PartialApplyImpl
   };
@@ -76,104 +99,6 @@ static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, Fble
   statics[0] = func;
   memcpy(statics + 1, args, argc * sizeof(FbleValue*));
   return FbleNewFuncValue(heap, &exe, function->profile_block_offset, statics);
-}
-
-/**
- * @func[Call] Calls an fble function.
- *  @arg[FbleValueHeap*] heap
- *   The value heap.
- *  @arg[FbleProfileThread*] profile
- *   The current profile thread, or NULL if profiling is disabled.
- *  @arg[size_t] argc
- *   Number of arguments passed to the function.
- *  @arg[FbleValue**] func_and_args
- *   Function followed by arguments to pass to the function. Consumed.
- *
- *  @returns FbleValue*
- *   The result of the function call, or NULL in case of abort.
- *
- *  @sideeffects
- *   @i Enters a profiling block for the function being called.
- *   @i Executes the called function to completion, returning the result.
- *   @i Calls FbleReleaseValue on the provided func and args.
- */
-static FbleValue* Call(FbleValueHeap* heap, FbleProfileThread* profile, size_t argc, FbleValue** func_and_args)
-{
-  size_t buffer_size = 1; // In units of FbleValue*.
-  FbleValue** buffer = alloca(sizeof(FbleValue*));
-
-  while (true) {
-    FbleFunction* func = FbleFuncValueFunction(func_and_args[0]);
-    if (func == NULL) {
-      FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 7);
-      FbleReportError("called undefined function\n", loc);
-      FbleFreeLoc(loc);
-      FbleReleaseValues(heap, 1 + argc, func_and_args);
-      return NULL;
-    }
-
-    FbleExecutable* executable = &func->executable;
-    if (argc < executable->num_args) {
-      FbleValue* partial = PartialApply(heap, func, func_and_args[0], argc, func_and_args + 1);
-      FbleReleaseValues(heap, argc+1, func_and_args);
-      return partial;
-    }
-
-    if (profile) {
-      FbleProfileReplaceBlock(profile, func->profile_block_offset + executable->profile_block_id);
-    }
-
-    // Move func_and_args to start of buffer, allocating more space at the
-    // back of the buffer for the tail_call_buffer if needed.
-    size_t num_unused = argc - executable->num_args;
-    size_t needed_buffer_size = 1 + argc
-      + executable->tail_call_buffer_size
-      + num_unused;   // Space for moving unused args after tail_call_buffer.
-    if (needed_buffer_size > buffer_size) {
-      size_t incr = needed_buffer_size - buffer_size;
-      FbleValue** nbuffer = alloca(incr * sizeof(FbleValue*));
-
-      // We assume repeated calls to alloca result in adjacent memory
-      // allocations on the stack. We don't know if stack goes up or down. To
-      // find the start of the full allocated region, pick the smallest of the
-      // pointers we have so far.
-      if (nbuffer < buffer) {
-        buffer = nbuffer;
-      }
-      buffer_size += incr;
-    }
-    memmove(buffer, func_and_args, (argc + 1) * sizeof(FbleValue*));
-    func_and_args = buffer;
-
-    FbleValue** tail_call_buffer = func_and_args + 1 + argc;
-    FbleValue* result = executable->run(heap, profile,
-        tail_call_buffer, func, func_and_args + 1);
-    FbleReleaseValues(heap, 1 + executable->num_args, func_and_args);
-    FbleValue** unused = func_and_args + 1 + executable->num_args;
-
-    if (result == FbleTailCallSentinelValue) {
-      // Add the unused args to the end of the tail call args and make that
-      // our new func and args.
-      func_and_args = tail_call_buffer;
-      argc = 1;
-      while (func_and_args[1 + argc] != NULL) {
-        argc++;
-      }
-      memcpy(func_and_args + 1 + argc, unused, num_unused * sizeof(FbleValue*));
-      argc += num_unused;
-    } else if (num_unused > 0) {
-      FbleValue* new_func = result;
-      result = FbleCall(heap, profile, new_func, num_unused, unused);
-      FbleReleaseValue(heap, new_func);
-      FbleReleaseValues(heap, num_unused, unused);
-      return result;
-    } else {
-      return result;
-    }
-  }
-
-  FbleUnreachable("should never get here");
-  return NULL;
 }
 
 /**
@@ -234,7 +159,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 
   FbleExecutable* executable = &func->executable;
   if (argc < executable->num_args) {
-    return PartialApply(heap, func, function, argc, args);
+    return FblePartialApply(heap, func, function, argc, args);
   }
 
   if (profile) {
@@ -244,28 +169,34 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   size_t num_unused = argc - executable->num_args;
   FbleValue** unused = args + executable->num_args;
 
-  FbleValue* tail_call_buffer[executable->tail_call_buffer_size + 1 + num_unused];
-  FbleValue* result = executable->run(heap, profile, tail_call_buffer, func, args);
+  FbleValue* result = executable->run(heap, profile, func, args);
 
-  if (result == FbleTailCallSentinelValue) {
-    // Find how many tail call args there are.
-    argc = 1;
-    while (tail_call_buffer[1 + argc] != NULL) {
-      argc++;
+  while (IsTailCall(result)) {
+    FbleValue* thunk = GetThunk(result);
+    FbleFunction* thunk_func = FbleFuncValueFunction(thunk);
+    if (thunk_func == NULL) {
+      FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 7);
+      FbleReportError("called undefined function\n", loc);
+      FbleFreeLoc(loc);
+      FbleReleaseValue(heap, thunk);
+      return NULL;
     }
 
-    // Add the unused args to the end of the tail call args and make that
-    // our new func and args. We'll have to retain those args.
-    for (size_t i = 0; i < num_unused; ++i) {
-      FbleRetainValue(heap, unused[i]);
-      tail_call_buffer[1 + argc] = unused[i];
-      argc++;
+    FbleExecutable* thunk_exe = &thunk_func->executable;
+    if (thunk_exe->num_args > 0) {
+      result = thunk;
+      break;
     }
 
-    // Use Call to finish up now that we have ownership of the func and
-    // remaining args.
-    result = Call(heap, profile, argc, tail_call_buffer);
-  } else if (num_unused > 0) {
+    if (profile) {
+      FbleProfileReplaceBlock(profile, thunk_func->profile_block_offset + thunk_exe->profile_block_id);
+    }
+
+    result = thunk_exe->run(heap, profile, thunk_func, NULL);
+    FbleReleaseValue(heap, thunk);
+  }
+  
+  if (num_unused > 0) {
     FbleValue* new_func = result;
     result = FbleCall(heap, profile, new_func, num_unused, unused);
     FbleReleaseValue(heap, new_func);

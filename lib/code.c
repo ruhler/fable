@@ -133,6 +133,7 @@ void FbleFreeInstr(FbleInstr* instr)
       FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
       FbleFreeLoc(call_instr->loc);
       FbleFreeVector(call_instr->args);
+      FbleFreeVector(call_instr->release);
       FbleFree(instr);
       return;
     }
@@ -168,7 +169,6 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
   code->magic = FBLE_CODE_MAGIC;
   code->executable.num_args = num_args;
   code->executable.num_statics = num_statics;
-  code->executable.tail_call_buffer_size = 0;
   code->executable.profile_block_id = profile_block_id;
   code->executable.run = NULL;
   code->num_locals = num_locals;
@@ -242,9 +242,9 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
     FbleCode* block = blocks.xs[--blocks.size];
     FbleName block_name = profile_blocks.xs[block->executable.profile_block_id];
     fprintf(fout, "%s[%04zx]\n", block_name.name->str, block->executable.profile_block_id);
-    fprintf(fout, "  args: %zi, statics: %zi, locals: %zi, tail_call_buffer_size: %zi\n",
+    fprintf(fout, "  args: %zi, statics: %zi, locals: %zi\n",
         block->executable.num_args, block->executable.num_statics,
-        block->num_locals, block->executable.tail_call_buffer_size);
+        block->num_locals);
     PrintLoc(fout, block_name.loc);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];
@@ -406,7 +406,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         }
 
         case FBLE_TAIL_CALL_INSTR: {
-          FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+          FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "return ");
           fprintf(fout, "%s%zi(",
@@ -423,6 +423,14 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
               
           fprintf(fout, ");");
           PrintLoc(fout, call_instr->loc);
+
+          fprintf(fout, "       releasing ");
+          comma = "";
+          for (size_t j = 0; j < call_instr->release.size; ++j) {
+            fprintf(fout, "%sl%zi", comma, call_instr->release.xs[j]); 
+            comma = ",";
+          }
+          fprintf(fout, "\n");
           break;
         }
 

@@ -29,19 +29,19 @@
 static void OnFree(void* data);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 static FbleValue* OStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 static FbleValue* ReadImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 static FbleValue* WriteImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 static FbleValue* GetEnvImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args);
+    FbleFunction* function, FbleValue** args);
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset);
@@ -65,10 +65,9 @@ static void OnFree(void* data)
 //   IO@<Maybe@<Int@>>
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
   (void)profile;
-  (void)tail_call_buffer;
 
   FILE* file = *(FILE**)FbleNativeValueData(function->statics[0]);
 
@@ -93,10 +92,9 @@ static FbleValue* IStreamImpl(
 //   (Int@, World@) { R@<Unit@>; }
 static FbleValue* OStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
   (void)profile;
-  (void)tail_call_buffer;
 
   FILE* file = *(FILE**)FbleNativeValueData(function->statics[0]);
 
@@ -117,10 +115,9 @@ static FbleValue* OStreamImpl(
 //   (String@, World@) { R@<Maybe@<IStream@<R@>>>; }
 static FbleValue* ReadImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
   (void)profile;
-  (void)tail_call_buffer;
 
   char* filename = FbleStringValueAccess(args[0]);
   FbleValue* world = args[1];
@@ -145,10 +142,9 @@ static FbleValue* ReadImpl(
 //   (String@, World@) { R@<Maybe@<OStream@<R@>>>; }
 static FbleValue* WriteImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
   (void)profile;
-  (void)tail_call_buffer;
 
   char* filename = FbleStringValueAccess(args[0]);
   FbleValue* world = args[1];
@@ -173,10 +169,9 @@ static FbleValue* WriteImpl(
 //   (String@, World@) { R@<Maybe@<String@>>; }
 static FbleValue* GetEnvImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
-    FbleValue** tail_call_buffer, FbleFunction* function, FbleValue** args)
+    FbleFunction* function, FbleValue** args)
 {
   (void)profile;
-  (void)tail_call_buffer;
 
   char* var = FbleStringValueAccess(args[0]);
   FbleValue* world = args[1];
@@ -206,7 +201,6 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   FbleExecutable exe = {
     .num_args = 1,
     .num_statics = 1,
-    .tail_call_buffer_size = 0,
     .profile_block_id = 0,
     .run = &IStreamImpl,
   };
@@ -225,7 +219,6 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 1,
-    .tail_call_buffer_size = 0,
     .profile_block_id = 1,
     .run = &OStreamImpl,
   };
@@ -240,7 +233,6 @@ static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset)
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
-    .tail_call_buffer_size = 0,
     .profile_block_id = 2,
     .run = &ReadImpl,
   };
@@ -252,7 +244,6 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_offset)
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
-    .tail_call_buffer_size = 0,
     .profile_block_id = 3,
     .run = &WriteImpl,
   };
@@ -264,7 +255,6 @@ static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset)
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
-    .tail_call_buffer_size = 0,
     .profile_block_id = 4,
     .run = &GetEnvImpl,
   };
