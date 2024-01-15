@@ -1190,6 +1190,9 @@ static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
       fprintf(fout, "  mov x2, SP\n");
       fprintf(fout, "  bl FbleReleaseValues\n");
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+
+      fprintf(fout, "  mov x0, XZR\n");
+      fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;
     }
 

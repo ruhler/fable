@@ -219,7 +219,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
     FbleReleaseValue(heap, thunk);
   }
   
-  if (num_unused > 0) {
+  if (result != NULL && num_unused > 0) {
     FbleValue* new_func = result;
     result = FbleCall(heap, profile, new_func, num_unused, unused);
     FbleReleaseValue(heap, new_func);
