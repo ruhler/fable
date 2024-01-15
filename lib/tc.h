@@ -49,7 +49,9 @@ typedef enum {
 /**
  * Magic number used to detect double free in FbleTc.
  */
-#define FBLE_TC_MAGIC 0x5443
+typedef enum {
+  FBLE_TC_MAGIC = 0x5443
+} FbleTcMagic;
 
 /**
  * Base class for FbleTc types.
@@ -65,7 +67,7 @@ typedef enum {
  */
 struct FbleTc {
   size_t refcount;    /**< Reference count. */
-  size_t magic;       /**< FBLE_TC_MAGIC. */
+  FbleTcMagic magic;  /**< FBLE_TC_MAGIC. */
   FbleTcTag tag;      /**< Kind of FbleTc. */
 
   /**

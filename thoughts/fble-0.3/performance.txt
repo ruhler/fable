@@ -683,3 +683,39 @@ Any way we could make the allocations significantly cheaper? As in... allocate
 on the stack and not the heap?
 
 Let's take the discussion back to stack_alloc.txt. Time to revisit that again.
+
+---
+
+Double checking performance since upgrading OS and refactoring some things.
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+
+User time (seconds): 99.81
+Maximum resident set size (kbytes): 103300
+
+The perf profile looks similar to before.
+
+For the fun of it, let's look at md5 perf profile. See if there's anything
+interesting there.
+
+Self time:
+
+18.37    30668  FbleStructValueField[000bX]
+15.85    26460  PackedValueLength[0013X]
+14.67    24494  FbleNewStructValue[000cX]
+ 8.39    14015  FbleCall[0001X]
+ 4.19     7001  FbleReleaseValues[0015X]
+ 3.10     5174  FbleFuncValueFunction[0017X]
+
+Not surprising I guess. Lots of time spent packing and unpacking. Not as much
+time in allocations. Most the allocations are coming from BitXY.Addx. Another
+example of a short-lived struct being returned from a function.
+
+For the record to measure against:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+
+User time (seconds): 49.54
+Maximum resident set size (kbytes): 2448
+
+We were hovering around 1m10s last time I ran this, so that's cool.
