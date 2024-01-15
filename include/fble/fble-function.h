@@ -11,27 +11,11 @@
 #include "fble-value.h"       // for FbleValue
 
 /**
- * To implement a tail call in the FbleRunFunction, return a zero-argument
- * function value with the tail call bit set.
- */
-#define FbleTailCallBit ((intptr_t)0x2)
-#define FbleTailCallMask ((intptr_t)0x3)
-
-/**
- * @func[FbleTailCall] Marks a value for tail call.
- *  @arg[FbleValue*][thunk] The thunk to mark for tail call.
- *  @result[FbleValue*] The thunk marked for tail call.
- *  @sideeffects none
- */
-#define FbleTailCall(thunk) ((FbleValue*)((intptr_t)thunk | FbleTailCallBit))
-
-/**
  * @func[FbleRunFunction] Implementation of fble function logic.
  *  Type of a C function that implements an fble function.
  *
  *  To perform a tail call, the implementation of the run function should
- *  allocate and return a zero-argument function value with the
- *  FbleTailCallBit set.
+ *  call and return the result of FbleTailCall.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
@@ -46,9 +30,7 @@
  *  @returns FbleValue*
  *   @i The result of executing the function.
  *   @i NULL if the function aborts.
- *   @item
- *    A zero-argument function value with FbleTailCallBit set to indicate tail
- *    call.
+ *   @i The result of calling FbleTailCall.
  *
  *  @sideeffects
  *   Executes the fble function, with whatever side effects that may have.
@@ -92,25 +74,6 @@ struct FbleFunction {
 };
 
 /**
- * @func[FblePartialApply] Partially applies a function.
- *  Creates a thunk with the function and arguments without applying the
- *  function yet.
- *
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleFunction*][function] The function to apply.
- *  @arg[FbleValue*][func] The function value to apply.
- *  @arg[size_t][argc] Number of args to pass.
- *  @arg[FbleValue**][args] Args to pass to the function.
- *
- *  @returns[FbleValue*] The allocated result.
- *
- *  @sideeffects
- *   Allocates an FbleValue that should be freed with FbleReleaseValue when no
- *   longer needed.
- */
-FbleValue* FblePartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
-
-/**
  * @func[FbleCall] Calls an fble function.
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
@@ -132,5 +95,28 @@ FbleValue* FblePartialApply(FbleValueHeap* heap, FbleFunction* function, FbleVal
  *   @i Executes the called function to completion, returning the result.
  */
 FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, size_t argc, FbleValue** args);
+
+/**
+ * @func[FbleTailCall] Creates a tail call.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleFunction*][function] The function to execute.
+ *  @arg[FbleValue*][func] The function value to execute.
+ *  @arg[size_t][argc] Number of arguments passed to the function.
+ *  @arg[FbleValue**][args] Arguments to pass to the function. Borrowed.
+ *  @arg[size_t][releasec] Number of values to release
+ *  @arg[FbleValue**][releases] Values to release as part of the tail call.
+ *
+ *  @returns FbleValue*
+ *   The result of the function call, or NULL in case of abort.
+ *
+ *  @sideeffects
+ *   @i Allocates an opaque object representing a tail call.
+ *   @i Calls FbleReleaseValue on all @a[releases] values.
+ */
+FbleValue* FbleTailCall(
+    FbleValueHeap* heap,
+    FbleFunction* function, FbleValue* func,
+    size_t argc, FbleValue** args,
+    size_t releasec, FbleValue** releases);
 
 #endif // FBLE_EXECUTE_H_

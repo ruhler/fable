@@ -21,7 +21,7 @@ namespace eval "include" {
     }
     fble-function.h {
       FbleRunFunction
-      FbleCall
+      FbleCall FbleTailCall
     }
     fble-generate.h {
       FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main

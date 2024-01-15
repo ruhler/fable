@@ -404,13 +404,12 @@ static FbleValue* Interpret(
           call_args[i] = GET(call_instr->args.xs[i]);
         }
 
-        FbleValue* thunk = FblePartialApply(heap, call_function, func, argc, call_args);
-
+        FbleValue* releases[call_instr->release.size];
         for (size_t i = 0; i < call_instr->release.size; ++i) {
-          FbleReleaseValue(heap, locals[call_instr->release.xs[i]]);
+          releases[i] = locals[call_instr->release.xs[i]];
         }
 
-        return FbleTailCall(thunk);
+        return FbleTailCall(heap, call_function, func, argc, call_args, call_instr->release.size, releases);
       }
 
       case FBLE_COPY_INSTR: {

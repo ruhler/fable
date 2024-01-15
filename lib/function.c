@@ -20,14 +20,21 @@
 #include "tc.h"
 #include "unreachable.h"
 
+/**
+ * To implement a tail call in the FbleRunFunction, return a zero-argument
+ * function value with the tail call bit set.
+ */
+#define TailCallBit ((intptr_t)0x2)
+#define TailCallMask ((intptr_t)0x3)
+
 static bool IsTailCall(FbleValue* result);
 static FbleValue* GetThunk(FbleValue* result);
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
+static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
 
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
-
 
 /**
  * @func[IsTailCall] Tests if a tail call is requried.
@@ -37,7 +44,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
  */
 static bool IsTailCall(FbleValue* result)
 {
-  return (((intptr_t)result) & FbleTailCallMask) == FbleTailCallBit;
+  return (((intptr_t)result) & TailCallMask) == TailCallBit;
 }
 
 /**
@@ -49,7 +56,7 @@ static bool IsTailCall(FbleValue* result)
  */
 static FbleValue* GetThunk(FbleValue* result)
 {
-  return (FbleValue*)((intptr_t)result & ~FbleTailCallBit);
+  return (FbleValue*)((intptr_t)result & ~TailCallBit);
 }
 
 // FbleRunFunction for PartialApply executable.
@@ -80,8 +87,24 @@ static FbleValue* PartialApplyImpl(
   return FbleCall(heap, profile, function->statics[0], argc, nargs);
 }
 
-// See documentation in fble-function.h
-FbleValue* FblePartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
+/**
+ * @func[PartialApply] Partially applies a function.
+ *  Creates a thunk with the function and arguments without applying the
+ *  function yet.
+ *
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleFunction*][function] The function to apply.
+ *  @arg[FbleValue*][func] The function value to apply.
+ *  @arg[size_t][argc] Number of args to pass.
+ *  @arg[FbleValue**][args] Args to pass to the function.
+ *
+ *  @returns[FbleValue*] The allocated result.
+ *
+ *  @sideeffects
+ *   Allocates an FbleValue that should be freed with FbleReleaseValue when no
+ *   longer needed.
+ */
+static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
   size_t num_args = 0;
   if (function->executable.num_args > argc) {
@@ -159,7 +182,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 
   FbleExecutable* executable = &func->executable;
   if (argc < executable->num_args) {
-    return FblePartialApply(heap, func, function, argc, args);
+    return PartialApply(heap, func, function, argc, args);
   }
 
   if (profile) {
@@ -207,6 +230,14 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   }
 
   return result;
+}
+
+// See documentation in fble-function.h
+FbleValue* FbleTailCall(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args, size_t releasec, FbleValue** releases)
+{
+  FbleValue* thunk = PartialApply(heap, function, func, argc, args);
+  FbleReleaseValues(heap, releasec, releases);
+  return ((FbleValue*)((intptr_t)thunk | TailCallBit));
 }
 
 // See documentation in fble-value.h.
