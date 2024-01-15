@@ -128,14 +128,16 @@ typedef struct {
 /**
  * Magic number used by FbleCode.
  */
-#define FBLE_CODE_MAGIC 0xB01CE
+typedef enum {
+  FBLE_CODE_MAGIC = 0xB01CE,
+} FbleCodeMagic;
 
 /**
  * Fble bytecode.
  */
 struct FbleCode {
   size_t refcount;        /**< Reference count. */
-  size_t magic;           /**< FBLE_CODE_MAGIC */
+  FbleCodeMagic magic;    /**< FBLE_CODE_MAGIC */
   FbleExecutable executable;   /**< FbleExecutable. Run function is unused. */
   size_t num_locals;      /**< Number of local variable slots used/required. */
   FbleInstrV instrs;      /**< The instructions to execute. */
