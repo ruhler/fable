@@ -20,7 +20,7 @@
 # fble binaries in the build directory and $builddir/spec/${FBLE}.d the result
 # of running fble-deps on the FBLE file.
 
-set ::arch "xxx[exec arch]"
+set ::arch "[exec arch]"
 
 proc module_path { path } {
   # Add quotes around module path words so we can name spec tests to match

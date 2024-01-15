@@ -16,7 +16,7 @@ set ::b $::config::builddir
 
 set ::build_ninja_filename [lindex $argv 0]
 set ::build_ninja [open "$::build_ninja_filename.tmp" "w"]
-set ::arch "xxx[exec arch]"
+set ::arch "[exec arch]"
 
 # build.ninja header.
 puts $::build_ninja {

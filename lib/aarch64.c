@@ -742,30 +742,44 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     }
 
     case FBLE_TAIL_CALL_INSTR: {
-      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
       GetFrameVar(fout, "x0", call_instr->func);
 
       // Verify the function isn't undefined.
       fprintf(fout, "  bl FbleFuncValueFunction\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
 
+      fprintf(fout, "  mov x1, x0\n");              // function
+      fprintf(fout, "  mov x0, R_HEAP\n");          // heap
+      GetFrameVar(fout, "x2", call_instr->func);    // func
+
       // Set up the arguments.
       size_t sp_offset = StackBytesForCount(call_instr->args.size);
       fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
-        GetFrameVar(fout, "x1", call_instr->args.xs[i]);
-        fprintf(fout, "  str x1, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+        GetFrameVar(fout, "x9", call_instr->args.xs[i]);
+        fprintf(fout, "  str x9, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
-
-      // Create the thunk value.
-      fprintf(fout, "  mov x1, x0\n");
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      GetFrameVar(fout, "x2", call_instr->func);
       fprintf(fout, "  mov x3, %zi\n", call_instr->args.size);
-      fprintf(fout, "  mov x4, SP\n");          // args
-      fprintf(fout, "  bl FblePartialApply\n");
+      fprintf(fout, "  mov x4, SP\n");              // args
 
-      fprintf(fout, "  mov x0, %p\n", (void*)0x2);    // TailCallSentinelValue
+      // Set up values for release.
+      size_t sp_offset2 = StackBytesForCount(call_instr->release.size);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset2);
+      for (size_t i = 0; i < call_instr->release.size; ++i) {
+        FbleVar target = {
+          .tag = FBLE_LOCAL_VAR,
+          .index = call_instr->release.xs[i]
+        };
+        GetFrameVar(fout, "x9", target);
+        fprintf(fout, "  str x9, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+      }
+      fprintf(fout, "  mov x5, %zi\n", call_instr->release.size);
+      fprintf(fout, "  mov x6, SP\n");              // releases
+
+      fprintf(fout, "  bl FbleTailCall\n");
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset + sp_offset2);
+
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;
     }
@@ -1159,18 +1173,23 @@ static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
 
     case FBLE_TAIL_CALL_INSTR: {
       FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      GetFrameVar(fout, "x1", call_instr->func);
-      fprintf(fout, "  bl FbleReleaseValue\n");
 
-      for (size_t i = 0; i < call_instr->args.size; ++i) {
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        GetFrameVar(fout, "x1", call_instr->args.xs[i]);
-        fprintf(fout, "  bl FbleReleaseValue\n");
+      size_t sp_offset = StackBytesForCount(call_instr->release.size);
+      fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
+      for (size_t i = 0; i < call_instr->release.size; ++i) {
+        FbleVar target = {
+          .tag = FBLE_LOCAL_VAR,
+          .index = call_instr->release.xs[i]
+        };
+        GetFrameVar(fout, "x9", target);
+        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
       }
 
-      fprintf(fout, "  mov x0, XZR\n");
-      fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, %zi\n", call_instr->release.size);
+      fprintf(fout, "  mov x2, SP\n");
+      fprintf(fout, "  bl FbleReleaseValues\n");
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       return;
     }
 
@@ -1370,12 +1389,11 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // Common things we hold in callee saved registers for Run and Abort
   // functions.
   fprintf(fout, "  R_HEAP .req x19\n");
-  fprintf(fout, "  R_TAIL_CALL_BUFFER .req x20\n");
-  fprintf(fout, "  R_LOCALS .req x21\n");
-  fprintf(fout, "  R_ARGS .req x22\n");
-  fprintf(fout, "  R_STATICS .req x23\n");
-  fprintf(fout, "  R_PROFILE_BLOCK_OFFSET .req x24\n");
-  fprintf(fout, "  R_PROFILE .req x25\n");
+  fprintf(fout, "  R_LOCALS .req x20\n");
+  fprintf(fout, "  R_ARGS .req x21\n");
+  fprintf(fout, "  R_STATICS .req x22\n");
+  fprintf(fout, "  R_PROFILE_BLOCK_OFFSET .req x23\n");
+  fprintf(fout, "  R_PROFILE .req x24\n");
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
