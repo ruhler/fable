@@ -769,3 +769,51 @@ I bet it's because PartialApply uses FbleCall, which will then try to resolve
 tail calls from within itself instead of being willing to return tail call
 directly.
 
+---
+
+Seems to be a bug with debug info in the aarch64 back end. Otherwise things
+appear to be working.
+
+Let's check performance. I worry it's not good.
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.54 ==> 60.85
+  Maximum resident set size (kbytes): 2448 ==> 22268
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 99.81 ==> 166.96
+  Maximum resident set size (kbytes): 103300 ==> 148720
+
+Yeah, not good. A lot more memory pressure. I assume perf profiling shows more
+time in NewHeapObject, malloc, free and IncrGC. Maybe a little less time in
+ReleaseValues. Yeah, that's what perf profiling shows.
+
+That's too big a slowdown.
+
+I wonder if we can keep the API cleanup somehow, but avoid the extra
+allocation. Maybe get the best of both worlds.
+
+The idea is to keep a global side buffer for passing tail call data to the
+caller. One should be sufficient. Use that in place of tail_call_buffer.
+
+We do retain/release on all the arguments again, but avoid the heap allocation
+and call to InitGc. Hopefully it's like the previous implementation, except
+the extra simplicity in FbleCall speeds things up.
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.54 ==> 60.85 ==> 50.98
+  Maximum resident set size (kbytes): 2448 ==> 22268 ==> 22092
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 99.81 ==> 166.96 ==> 98.60
+  Maximum resident set size (kbytes): 103300 ==> 148720 ==> 133432
+
+Looks like md5 is leaking memory though.
+
+Performance of this approach is fine compared to before the change. That means
+we can keep it and the nice cleanliness that goes with it.
+
+But I need to figure out the issues first:
+
+* debug test is failing.
+* md5 appears to be leaking memory.

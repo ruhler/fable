@@ -20,44 +20,25 @@
 #include "tc.h"
 #include "unreachable.h"
 
-/**
- * To implement a tail call in the FbleRunFunction, return a zero-argument
- * function value with the tail call bit set.
- */
-#define TailCallBit ((intptr_t)0x2)
-#define TailCallMask ((intptr_t)0x3)
 
-static bool IsTailCall(FbleValue* result);
-static FbleValue* GetThunk(FbleValue* result);
+static FbleValue* TailCallSentinel = (FbleValue*)0x2;
+#define MAX_TAIL_CALL_ARGS 1024
+
+typedef struct {
+  FbleFunction* function;
+  FbleValue* func;
+  size_t argc;
+  FbleValue* args[MAX_TAIL_CALL_ARGS];
+} TailCall;
+
+static TailCall gTailCallData;
+
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
 
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
-
-/**
- * @func[IsTailCall] Tests if a tail call is requried.
- *  @arg[FbleValue*][result] The result of a call to check.
- *  @returns[bool] True if the tail call bit is set.
- *  @sideeffects None
- */
-static bool IsTailCall(FbleValue* result)
-{
-  return (((intptr_t)result) & TailCallMask) == TailCallBit;
-}
-
-/**
- * @func[GetThunk] Gets the thunk for a tail call.
- *  @arg[FbleValue*][result] The result of the call to get the thunk from.
- *  @returns[FbleValue*] The thunk for the tail call.
- *  @sideffects
- *   Behavior is undefined if result is not a tail call.
- */
-static FbleValue* GetThunk(FbleValue* result)
-{
-  return (FbleValue*)((intptr_t)result & ~TailCallBit);
-}
 
 // FbleRunFunction for PartialApply executable.
 // See documentation of FbleRunFunction in fble-function.h
@@ -71,19 +52,6 @@ static FbleValue* PartialApplyImpl(
   FbleValue* nargs[argc];
   memcpy(nargs, function->statics + 1, s * sizeof(FbleValue*));
   memcpy(nargs + s, args, a * sizeof(FbleValue*));
-
-  FbleFunction* func = FbleFuncValueFunction(function->statics[0]);
-  if (func == NULL) {
-    FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 5);
-    FbleReportError("called undefined function\n", loc);
-    FbleFreeLoc(loc);
-    return NULL;
-  }
-
-  FbleExecutable* executable = &func->executable;
-  if (argc == executable->num_args) {
-    return func->executable.run(heap, profile, func, nargs);
-  }
   return FbleCall(heap, profile, function->statics[0], argc, nargs);
 }
 
@@ -194,29 +162,25 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 
   FbleValue* result = executable->run(heap, profile, func, args);
 
-  while (IsTailCall(result)) {
-    FbleValue* thunk = GetThunk(result);
-    FbleFunction* thunk_func = FbleFuncValueFunction(thunk);
-    if (thunk_func == NULL) {
-      FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 7);
-      FbleReportError("called undefined function\n", loc);
-      FbleFreeLoc(loc);
-      FbleReleaseValue(heap, thunk);
-      return NULL;
-    }
-
-    FbleExecutable* thunk_exe = &thunk_func->executable;
-    if (thunk_exe->num_args > 0) {
-      result = thunk;
-      break;
-    }
+  while (result == TailCallSentinel) {
+    FbleFunction* tail_function = gTailCallData.function;
+    FbleExecutable* tail_exe = &tail_function->executable;
 
     if (profile) {
-      FbleProfileReplaceBlock(profile, thunk_func->profile_block_offset + thunk_exe->profile_block_id);
+      FbleProfileReplaceBlock(profile, tail_function->profile_block_offset + tail_exe->profile_block_id);
     }
 
-    result = thunk_exe->run(heap, profile, thunk_func, NULL);
-    FbleReleaseValue(heap, thunk);
+    size_t tail_argc = gTailCallData.argc;
+    FbleValue* tail_func = gTailCallData.func;
+    FbleValue* tail_args[tail_argc];
+    memcpy(tail_args, gTailCallData.args, tail_argc * sizeof(FbleValue*));
+    if (tail_exe->num_args == tail_argc) {
+      result = tail_exe->run(heap, profile, tail_function, tail_args);
+    } else {
+      result = FbleCall(heap, profile, tail_func, tail_argc, tail_args);
+    }
+    FbleReleaseValue(heap, tail_func);
+    FbleReleaseValues(heap, tail_argc, tail_args);
   }
   
   if (result != NULL && num_unused > 0) {
@@ -235,9 +199,17 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 // See documentation in fble-function.h
 FbleValue* FbleTailCall(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args, size_t releasec, FbleValue** releases)
 {
-  FbleValue* thunk = PartialApply(heap, function, func, argc, args);
+  assert(argc < MAX_TAIL_CALL_ARGS && "TODO: Support tail calls with more args");
+  gTailCallData.function = function;
+  gTailCallData.func = func;
+  gTailCallData.argc = argc;
+  FbleRetainValue(heap, func);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleRetainValue(heap, args[i]);
+    gTailCallData.args[i] = args[i];
+  }
   FbleReleaseValues(heap, releasec, releases);
-  return ((FbleValue*)((intptr_t)thunk | TailCallBit));
+  return TailCallSentinel;
 }
 
 // See documentation in fble-value.h.
