@@ -2,6 +2,9 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Add test for overapplication to a function whose value is 'NULL' due to
+  abort.
+
 * Can we remove the need for profile_block_offset by making function profile
   blocks be relative to the function that allocates them?
 

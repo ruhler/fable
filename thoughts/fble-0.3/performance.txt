@@ -833,3 +833,15 @@ and so on.
 
 It's got to be the case where we do FbleCall to implement tail call. I need to
 restructure the code, like it was before, to merge unused args with tail call.
+
+Done. Memory leak is fixed now.
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.54 ==> 60.85 ==> 50.98 ==> 49.33
+  Maximum resident set size (kbytes): 2448 ==> 22268 ==> 22092 ==> 2516
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 99.81 ==> 166.96 ==> 98.60 ==> 96.37
+  Maximum resident set size (kbytes): 103300 ==> 148720 ==> 133432 ==> 99776
+
+Good. We can take this change now.
