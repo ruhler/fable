@@ -817,3 +817,19 @@ But I need to figure out the issues first:
 
 * debug test is failing.
 * md5 appears to be leaking memory.
+
+---
+
+Debug test is fixed. md5 is growing the stack. That's why we don't see it in
+the spec memory tests.
+
+The stack cycle is:
+
+PartialApplyImpl
+ FbleCall
+  TailCall with wrong number of args to FbleCall
+
+and so on.
+
+It's got to be the case where we do FbleCall to implement tail call. I need to
+restructure the code, like it was before, to merge unused args with tail call.
