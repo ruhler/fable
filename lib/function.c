@@ -22,16 +22,24 @@
 
 
 static FbleValue* TailCallSentinel = (FbleValue*)0x2;
-#define MAX_TAIL_CALL_ARGS 1024
 
 typedef struct {
   FbleFunction* function;
   FbleValue* func;
   size_t argc;
-  FbleValue* args[MAX_TAIL_CALL_ARGS];
+  FbleValue** args;
+  size_t args_capacity;
 } TailCallData;
 
-static TailCallData gTailCallData;
+static TailCallData gTailCallData = {
+  .function = NULL,
+  .func = NULL,
+  .argc = 0,
+  .args = NULL,
+  .args_capacity = 0
+};
+
+static void EnsureTailCallArgsSpace(size_t argc);
 
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -40,6 +48,26 @@ static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, Fble
 
 static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
+
+/**
+ * @func[EnsureTailCallArgsSpace] Makes sure enough space is allocated.
+ *  Resizes gTailCallData.args as needed to have space for @a[argc] values.
+ *
+ *  @arg[size_t][argc] The number of arguments needed.
+ *  @sideeffects
+ *   Resizes gTailCallData.args as needed. The args array may be reallocated;
+ *   the previous value should not be referenced after this call.
+ */
+static void EnsureTailCallArgsSpace(size_t argc)
+{
+  if (argc > gTailCallData.args_capacity) {
+    gTailCallData.args_capacity = argc;
+    FbleValue** args = FbleAllocArray(FbleValue*, argc);
+    memcpy(args, gTailCallData.args, gTailCallData.argc * sizeof(FbleValue*));
+    FbleFree(gTailCallData.args);
+    gTailCallData.args = args;
+  }
+}
 
 // FbleRunFunction for PartialApply executable.
 // See documentation of FbleRunFunction in fble-function.h
@@ -136,7 +164,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
     if (result == TailCallSentinel) {
       // Add the unused args to the end of the tail call args and make that
       // our new func and args.
-      // TODO: Make sure there is enough space on gTailCallData.args.
+      EnsureTailCallArgsSpace(gTailCallData.argc + num_unused);
       memcpy(gTailCallData.args + gTailCallData.argc, unused, num_unused * sizeof(FbleValue*));
       gTailCallData.argc += num_unused;
     } else if (num_unused > 0) {
@@ -188,9 +216,19 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
     assert(false && "setrlimit failed");
   }
 
+  // Set up gTailCallData.args.
+  gTailCallData.args_capacity = 0;
+  gTailCallData.args = NULL;
+  gTailCallData.argc = 0;
+
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
   FbleValue* result = FbleCall(heap, profile_thread, func, argc, args);
   FbleFreeProfileThread(profile_thread);
+
+  FbleFree(gTailCallData.args);
+  gTailCallData.args = NULL;
+  gTailCallData.args_capacity = 0;
+  gTailCallData.argc = 0;
 
   // Restore the stack limit to what it was before.
   if (setrlimit(RLIMIT_STACK, &original_stack_limit) != 0) {
@@ -225,7 +263,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   FbleValue* result = executable->run(heap, profile, func, args);
 
   if (result == TailCallSentinel) {
-    // TODO: Make sure there is enough space on gTailCallData.args.
+    EnsureTailCallArgsSpace(gTailCallData.argc + num_unused);
     for (size_t i = 0; i < num_unused; ++i) {
       gTailCallData.args[gTailCallData.argc++] = unused[i];
       FbleRetainValue(heap, unused[i]);
@@ -247,7 +285,8 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 // See documentation in fble-function.h
 FbleValue* FbleTailCall(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args, size_t releasec, FbleValue** releases)
 {
-  assert(argc < MAX_TAIL_CALL_ARGS && "TODO: Support tail calls with more args");
+  EnsureTailCallArgsSpace(argc);
+
   gTailCallData.function = function;
   gTailCallData.func = func;
   gTailCallData.argc = argc;
