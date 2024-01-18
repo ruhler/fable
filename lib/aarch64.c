@@ -44,7 +44,7 @@ typedef struct {
   void* r_locals_save;      /**< Saved contents of R_LOCALS reg. */
   void* r_args_save;        /**< Saved contents of R_ARGS reg. */
   void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
-  void* r_profile_block_offset_save;  /**< Saved contents of R_PROFILE_BLOCK_OFFSET reg. */
+  void* r_profile_block_id_save;  /**< Saved contents of R_PROFILE_BLOCK_ID reg. */
   void* r_profile_save;     /**< Saved contents of R_PROFILE reg. */
   void* locals[];           /**< Local variables. */
 } RunStackFrame;
@@ -337,13 +337,12 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledMod
   fprintf(fout, LABEL ":\n", executable_id);
   fprintf(fout, "  .xword %zi\n", module->code->executable.num_args);
   fprintf(fout, "  .xword %zi\n", module->code->executable.num_statics);
-  fprintf(fout, "  .xword %zi\n", module->code->executable.profile_block_id);
 
-  FbleName function_block = module->profile_blocks.xs[module->code->executable.profile_block_id];
+  FbleName function_block = module->profile_blocks.xs[module->code->profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "  .xword %s.%04zx\n",
-      function_label, module->code->executable.profile_block_id);
+      function_label, module->code->profile_block_id);
 
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
@@ -687,13 +686,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, ".Lr.%04zx.%zi.exe:\n", func_id, pc);
       fprintf(fout, "  .xword %zi\n", func_instr->code->executable.num_args);
       fprintf(fout, "  .xword %zi\n", func_instr->code->executable.num_statics);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->executable.profile_block_id);
 
-      FbleName function_block = profile_blocks.xs[func_instr->code->executable.profile_block_id];
+      FbleName function_block = profile_blocks.xs[func_instr->code->profile_block_id];
       char function_label[SizeofSanitizedString(function_block.name->str)];
       SanitizeString(function_block.name->str, function_label);
       fprintf(fout, "  .xword %s.%04zx\n",
-          function_label, func_instr->code->executable.profile_block_id);
+          function_label, func_instr->code->profile_block_id);
 
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");
@@ -708,7 +706,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       fprintf(fout, "  mov x0, R_HEAP\n");
       Adr(fout, "x1", ".Lr.%04zx.%zi.exe", func_id, pc);
-      fprintf(fout, "  mov x2, R_PROFILE_BLOCK_OFFSET\n");
+      fprintf(fout, "  add x2, R_PROFILE_BLOCK_ID, #%zi\n", func_instr->profile_block_offset);
       fprintf(fout, "  mov x3, SP\n");
       fprintf(fout, "  bl FbleNewFuncValue\n");
       SetFrameVar(fout, "x0", func_instr->dest);
@@ -933,7 +931,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP: {
           fprintf(fout, "  mov x0, R_PROFILE\n");
-          fprintf(fout, "  mov x1, R_PROFILE_BLOCK_OFFSET\n");
+          fprintf(fout, "  mov x1, R_PROFILE_BLOCK_ID\n");
           fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
           fprintf(fout, "  bl FbleProfileEnterBlock\n");
           break;
@@ -941,7 +939,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 
         case FBLE_PROFILE_REPLACE_OP: {
           fprintf(fout, "  mov x0, R_PROFILE\n");
-          fprintf(fout, "  mov x1, R_PROFILE_BLOCK_OFFSET\n");
+          fprintf(fout, "  mov x1, R_PROFILE_BLOCK_ID\n");
           fprintf(fout, "  add x1, x1, #%zi\n", op->arg);
           fprintf(fout, "  bl FbleProfileReplaceBlock\n");
           break;
@@ -1046,11 +1044,11 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
  */
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
-  size_t func_id = code->executable.profile_block_id;
+  size_t func_id = code->profile_block_id;
 
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
-  FbleName function_block = profile_blocks.xs[code->executable.profile_block_id];
+  FbleName function_block = profile_blocks.xs[code->profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "%s.%04zx:\n", function_label, func_id);
@@ -1069,11 +1067,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Save callee saved registers for later restoration.
   fprintf(fout, "  stp R_HEAP, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  stp R_ARGS, R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
-  fprintf(fout, "  stp R_PROFILE_BLOCK_OFFSET, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
+  fprintf(fout, "  stp R_PROFILE_BLOCK_ID, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_id_save));
 
   // Set up common registers.
   fprintf(fout, "  ldr R_STATICS, [x2, #%zi]\n", offsetof(FbleFunction, statics));
-  fprintf(fout, "  ldr R_PROFILE_BLOCK_OFFSET, [x2, #%zi]\n", offsetof(FbleFunction, profile_block_offset));
+  fprintf(fout, "  ldr R_PROFILE_BLOCK_ID, [x2, #%zi]\n", offsetof(FbleFunction, profile_block_id));
   fprintf(fout, "  mov R_HEAP, x0\n");
   fprintf(fout, "  mov R_ARGS, x3\n");
   fprintf(fout, "  mov R_PROFILE, x1\n");
@@ -1089,7 +1087,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, ".Lr.%04zx.exit:\n", func_id);
   fprintf(fout, "  ldp R_HEAP, R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldp R_ARGS, R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
-  fprintf(fout, "  ldp R_PROFILE_BLOCK_OFFSET, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
+  fprintf(fout, "  ldp R_PROFILE_BLOCK_ID, R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_id_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");
@@ -1395,7 +1393,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_LOCALS .req x20\n");
   fprintf(fout, "  R_ARGS .req x21\n");
   fprintf(fout, "  R_STATICS .req x22\n");
-  fprintf(fout, "  R_PROFILE_BLOCK_OFFSET .req x23\n");
+  fprintf(fout, "  R_PROFILE_BLOCK_ID .req x23\n");
   fprintf(fout, "  R_PROFILE .req x24\n");
 
   // Error messages.
@@ -1475,9 +1473,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // subprogram entries
   for (size_t i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
-    size_t func_id = code->executable.profile_block_id;
+    size_t func_id = code->profile_block_id;
 
-    FbleName function_block = profile_blocks.xs[code->executable.profile_block_id];
+    FbleName function_block = profile_blocks.xs[code->profile_block_id];
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
 

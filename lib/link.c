@@ -153,8 +153,8 @@ static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleG
     assert(exe->num_statics == 0 && "Module cannot have statics");
     assert(module->deps.size == exe->num_args && "Module args mismatch");
 
-    size_t profile_block_offset = FbleAddBlocksToProfile(profile, module->profile_blocks);
-    funcs[i] = FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
+    size_t profile_block_id = FbleAddBlocksToProfile(profile, module->profile_blocks);
+    funcs[i] = FbleNewFuncValue(heap, exe, profile_block_id, NULL);
 
     FbleCallInstr* call = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
     call->loc.source = FbleNewString(__FILE__);
@@ -191,7 +191,7 @@ static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleG
   FbleAppendToVector(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs);
+  FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, main_id, funcs);
   for (size_t i = 0; i < modulec; ++i) {
     FbleReleaseValue(heap, funcs[i]);
   }

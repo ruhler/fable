@@ -31,7 +31,11 @@ typedef struct FbleProfileOp {
   /** The profiling operation. */
   FbleProfileOpTag tag;
 
-  /** Block to enter or replace. Time to sample. Unused for EXIT ops. */
+  /**
+   * Block to enter or replace, relative to current profile_block_id.
+   * Time to sample.
+   * Unused for EXIT ops.
+   **/
   size_t arg;
 
   /** Next profile op in the list, or NULL for end of list. */
@@ -139,6 +143,7 @@ struct FbleCode {
   size_t refcount;        /**< Reference count. */
   FbleCodeMagic magic;    /**< FBLE_CODE_MAGIC */
   FbleExecutable executable;   /**< FbleExecutable. Run function is unused. */
+  FbleBlockId profile_block_id; /**< Id of the profile block for this code. */
   size_t num_locals;      /**< Number of local variable slots used/required. */
   FbleInstrV instrs;      /**< The instructions to execute. */
 };
@@ -252,6 +257,12 @@ typedef struct {
   
   /** Where to store the allocated function. */
   FbleLocalIndex dest;
+
+  /**
+   * The profile_block_id of the function, relative to the profile_block_id
+   * of the currently executing function.
+   */
+  FbleBlockId profile_block_offset;
 
   /**
    * A block of instructions that executes the body of the function in the

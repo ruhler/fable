@@ -845,3 +845,36 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
   Maximum resident set size (kbytes): 103300 ==> 148720 ==> 133432 ==> 99776
 
 Good. We can take this change now.
+
+---
+
+Minor possible cleanup/performance improvement: store a single profile_block
+for functions, instead of profile_block_offset + profile_block_id.
+
+The function ideally stores its absolute block id. This will depend on
+linking. I think we just need to update FBLE_FUNC_VALUE_INSTR to store block
+id relative to the currently executing function.
+
+So, remove profile id from FbleExecutable. Change FbleFunction to have
+profile_block_id as an absolute block id. See if I can figure out the right
+way to set it in all cases.
+
+I think this is a good change to make. But it's going to be tricky to keep
+track of profile ids properly, particularly in compile.c.
+
+I think this trick is scope->block in compile.c needs to be absolute, not
+relative to the parent block.
+
+Next issue: how do we map FbleCode* to absolute profile_block index for code
+generation? I guess FbleCode could keep track of its absolute offset? Same too
+for naming blocks in disassembly.
+
+Okay. Got it worked out. Not much performance impact:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.33 ==> 49.82
+  Maximum resident set size (kbytes): 2516 ==> 2516
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 96.37 ==> 98.44
+  Maximum resident set size (kbytes): 99776 ==> 99592

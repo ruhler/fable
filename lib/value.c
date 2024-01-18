@@ -631,11 +631,11 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
   return (value->tag == field) ? value->arg : FbleWrongUnionTag;
 }
 // See documentation in fble-value.h.
-FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics)
+FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics)
 {
   FuncValue* v = NewValueExtra(heap, FuncValue, sizeof(FbleValue*) * executable->num_statics);
   v->_base.tag = FUNC_VALUE;
-  v->function.profile_block_offset = profile_block_offset;
+  v->function.profile_block_id = profile_block_id;
   memcpy(&v->function, executable, sizeof(FbleExecutable));
   v->function.statics = v->statics;
   for (size_t i = 0; i < executable->num_statics; ++i) {

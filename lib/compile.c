@@ -908,7 +908,9 @@ static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
 static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace)
 {
   FbleBlockId id = PushBlock(blocks, name, loc);
-  AppendProfileOp(scope, replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP, id);
+  AppendProfileOp(scope,
+      replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP,
+      id - scope->code->profile_block_id);
 }
 
 /**
@@ -1322,6 +1324,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Scope func_scope;
       FbleBlockId scope_block = PushBodyBlock(blocks, body_loc);
+      instr->profile_block_offset = scope_block - scope->code->profile_block_id;
       assert(func_tc->scope.size == func_tc->statics.size);
       InitScope(&func_scope, &instr->code, args, func_tc->statics, scope_block, scope);
       FbleFreeVector(args);

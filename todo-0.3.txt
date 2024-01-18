@@ -5,9 +5,6 @@ Things to consider doing for the fble-0.3 release.
 * Add test for overapplication to a function whose value is 'NULL' due to
   abort.
 
-* Can we remove the need for profile_block_offset by making function profile
-  blocks be relative to the function that allocates them?
-
 * Figure out how to avoid duplicate code between LinkInterpreted and
   LinkGenerated?
 
@@ -48,8 +45,6 @@ Things to consider doing for the fble-0.3 release.
  - Implement function inlining?
  - Implement packing of data types?
  - Use registers for args and locals instead of the stack?
- - Avoid copying func, args in FbleCall tail call case?
-   Instead allocate enough space before/after for tail call buffer as needed?
 
 * Do something with .@ module value vs. type?
   - There's currently unexercised code for it.

@@ -169,8 +169,8 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
   code->magic = FBLE_CODE_MAGIC;
   code->executable.num_args = num_args;
   code->executable.num_statics = num_statics;
-  code->executable.profile_block_id = profile_block_id;
   code->executable.run = NULL;
+  code->profile_block_id = profile_block_id;
   code->num_locals = num_locals;
   FbleInitVector(code->instrs);
   return code;
@@ -240,8 +240,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
   FbleNameV profile_blocks = module->profile_blocks;
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
-    FbleName block_name = profile_blocks.xs[block->executable.profile_block_id];
-    fprintf(fout, "%s[%04zx]\n", block_name.name->str, block->executable.profile_block_id);
+    FbleName block_name = profile_blocks.xs[block->profile_block_id];
+    fprintf(fout, "%s[%04zx]\n", block_name.name->str, block->profile_block_id);
     fprintf(fout, "  args: %zi, statics: %zi, locals: %zi\n",
         block->executable.num_args, block->executable.num_statics,
         block->num_locals);
@@ -367,11 +367,11 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_FUNC_VALUE_INSTR: {
           FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
           FbleCode* func = func_value_instr->code;
-          FbleName func_name = profile_blocks.xs[func->executable.profile_block_id];
+          FbleName func_name = profile_blocks.xs[func->profile_block_id];
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "l%zi = func %s[%04zx] [",
               func_value_instr->dest,
-              func_name.name->str, func->executable.profile_block_id);
+              func_name.name->str, func->profile_block_id);
           const char* comma = "";
           for (size_t j = 0; j < func_value_instr->scope.size; ++j) {
             fprintf(fout, "%s%s%zi",
@@ -379,7 +379,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
                 func_value_instr->scope.xs[j].index);
             comma = ", ";
           }
-          fprintf(fout, "];\n");
+          fprintf(fout, "]; +%zi\n", func_value_instr->profile_block_offset);
           FbleAppendToVector(blocks, func_value_instr->code);
           break;
         }

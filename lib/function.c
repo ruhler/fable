@@ -106,14 +106,13 @@ static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, Fble
   FbleExecutable exe = {
     .num_args = function->executable.num_args - argc,
     .num_statics = 1 + argc,
-    .profile_block_id = function->executable.profile_block_id,
     .run = &PartialApplyImpl
   };
 
   FbleValue* statics[1 + argc];
   statics[0] = func;
   memcpy(statics + 1, args, argc * sizeof(FbleValue*));
-  return FbleNewFuncValue(heap, &exe, function->profile_block_offset, statics);
+  return FbleNewFuncValue(heap, &exe, function->profile_block_id, statics);
 }
 
 /**
@@ -149,7 +148,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
     }
 
     if (profile) {
-      FbleProfileReplaceBlock(profile, function->profile_block_offset + exe->profile_block_id);
+      FbleProfileReplaceBlock(profile, function->profile_block_id);
     }
 
     FbleValue* args[argc];
@@ -254,7 +253,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   }
 
   if (profile) {
-    FbleProfileEnterBlock(profile, func->profile_block_offset + executable->profile_block_id);
+    FbleProfileEnterBlock(profile, func->profile_block_id);
   }
 
   size_t num_unused = argc - executable->num_args;

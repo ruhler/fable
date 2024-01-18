@@ -575,15 +575,13 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   FbleExecutable event_exe = {
     .num_args = 1,
     .num_statics = 0,
-    .profile_block_id = block_id,
     .run = &EventImpl,
   };
-  FbleValue* fble_event = FbleNewFuncValue(heap, &event_exe, 0, NULL);
+  FbleValue* fble_event = FbleNewFuncValue(heap, &event_exe, block_id, NULL);
 
   FbleExecutable effect_exe = {
     .num_args = 2,
     .num_statics = 1,
-    .profile_block_id = block_id + 1,
     .run = &EffectImpl,
   };
 
@@ -596,7 +594,7 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
 
   App* app_ptr = &app;
   FbleValue* app_value = FbleNewNativeValue(heap, sizeof(App*), NULL, &app_ptr);
-  FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, 0, &app_value);
+  FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
   FbleReleaseValue(heap, app_value);
 
   FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);

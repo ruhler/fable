@@ -42,11 +42,11 @@ static FbleValue* WriteImpl(
 static FbleValue* GetEnvImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
-static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
-static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset);
-static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset);
-static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_offset);
-static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset);
+static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id);
+static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id);
+static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id);
+static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id);
+static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id);
 
 
 // OnFree function for FILE* native values.
@@ -128,7 +128,7 @@ static FbleValue* ReadImpl(
   if (fin == NULL) {
     mstream = FbleNewEnumValue(heap, 1); // Nothing
   } else {
-    FbleValue* stream = IStream(heap, fin, function->profile_block_offset);
+    FbleValue* stream = IStream(heap, fin, function->profile_block_id - 2);
     mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
     FbleReleaseValue(heap, stream);
   }
@@ -155,7 +155,7 @@ static FbleValue* WriteImpl(
   if (fin == NULL) {
     mstream = FbleNewEnumValue(heap, 1); // Nothing
   } else {
-    FbleValue* stream = OStream(heap, fin, function->profile_block_offset);
+    FbleValue* stream = OStream(heap, fin, function->profile_block_id - 2);
     mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
     FbleReleaseValue(heap, stream);
   }
@@ -194,71 +194,66 @@ static FbleValue* GetEnvImpl(
 
 // IStream --
 //  Creates an IStream@ value for the given file.
-static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
+static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
 {
   FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
 
   FbleExecutable exe = {
     .num_args = 1,
     .num_statics = 1,
-    .profile_block_id = 0,
     .run = &IStreamImpl,
   };
 
-  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_offset, &native);
+  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, &native);
   FbleReleaseValue(heap, native);
   return func;
 }
 
 // OStream --
 //  Creates an OStream@ value for the given file.
-static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_offset)
+static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
 {
   FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
 
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 1,
-    .profile_block_id = 1,
     .run = &OStreamImpl,
   };
 
-  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_offset, &native);
+  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, &native);
   FbleReleaseValue(heap, native);
   return func;
 }
 
-static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_offset)
+static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id)
 {
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
-    .profile_block_id = 2,
     .run = &ReadImpl,
   };
-  return FbleNewFuncValue(heap, &exe, profile_block_offset, NULL);
+  return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
 }
 
-static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_offset)
+static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id)
 {
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
-    .profile_block_id = 3,
     .run = &WriteImpl,
   };
-  return FbleNewFuncValue(heap, &exe, profile_block_offset, NULL);
+  return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
 }
 
-static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_offset)
+static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id)
 {
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
-    .profile_block_id = 4,
     .run = &GetEnvImpl,
   };
-  return FbleNewFuncValue(heap, &exe, profile_block_offset, NULL);
+  return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
 }
 
 // FbleNewStdioIO -- see documentation in stdio.fble.h
@@ -282,11 +277,11 @@ FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile)
   }
 
   FbleValue* fble_stdin = IStream(heap, stdin, block_id);
-  FbleValue* fble_stdout = OStream(heap, stdout, block_id);
-  FbleValue* fble_stderr = OStream(heap, stderr, block_id);
-  FbleValue* fble_read = Read(heap, block_id);
-  FbleValue* fble_write = Write(heap, block_id);
-  FbleValue* fble_getenv = GetEnv(heap, block_id);
+  FbleValue* fble_stdout = OStream(heap, stdout, block_id + 1);
+  FbleValue* fble_stderr = OStream(heap, stderr, block_id + 1);
+  FbleValue* fble_read = Read(heap, block_id + 2);
+  FbleValue* fble_write = Write(heap, block_id + 3);
+  FbleValue* fble_getenv = GetEnv(heap, block_id + 4);
   FbleValue* fble_stdio = FbleNewStructValue_(heap, 6,
       fble_stdin, fble_stdout, fble_stderr,
       fble_read, fble_write, fble_getenv);

@@ -51,12 +51,6 @@ struct FbleExecutable {
   /** Number of static values used by the function. */
   size_t num_statics;
 
-  /**
-   * Profiling block associated with this executable. Relative to the
-   * function's profile_block_offset.
-   */
-  FbleBlockId profile_block_id;
-
   /** How to run the function. See FbleRunFunction for more info. */
   FbleRunFunction* run;
 };
@@ -66,10 +60,13 @@ struct FbleExecutable {
  *
  * The statics are owned by whatever FbleValue object represents the function.
  * Don't try accessing them unless you know that FbleValue object is retained.
+ *
+ * The profile_block_id is the absolute profile block ID after linking modules
+ * together.
  */
 struct FbleFunction {
   FbleExecutable executable;
-  FbleBlockId profile_block_offset;
+  FbleBlockId profile_block_id;
   FbleValue** statics;
 };
 

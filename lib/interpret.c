@@ -233,7 +233,7 @@ static FbleValue* Interpret(
   vars[FBLE_ARG_VAR] = args;
   vars[FBLE_LOCAL_VAR] = locals;
 
-  FbleBlockId profile_block_offset = function->profile_block_offset;
+  FbleBlockId profile_block_id = function->profile_block_id;
 
   size_t pc = 0;
   while (true) {
@@ -243,11 +243,11 @@ static FbleValue* Interpret(
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(profile, profile_block_offset + op->arg);
+            FbleProfileEnterBlock(profile, profile_block_id + op->arg);
             break;
 
           case FBLE_PROFILE_REPLACE_OP:
-            FbleProfileReplaceBlock(profile, profile_block_offset + op->arg);
+            FbleProfileReplaceBlock(profile, profile_block_id + op->arg);
             break;
 
           case FBLE_PROFILE_EXIT_OP:
@@ -366,7 +366,7 @@ static FbleValue* Interpret(
           func_statics[i] = GET(func_value_instr->scope.xs[i]);
         }
 
-        locals[func_value_instr->dest] = FbleNewInterpretedFuncValue(heap, func_value_instr->code, profile_block_offset, func_statics);
+        locals[func_value_instr->dest] = FbleNewInterpretedFuncValue(heap, func_value_instr->code, profile_block_id + func_value_instr->profile_block_offset, func_statics);
         pc++;
         break;
       }
@@ -497,13 +497,12 @@ static FbleValue* Interpret(
 }
 
 // See documentation in interpret.h
-FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size_t profile_block_offset, FbleValue** statics)
+FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size_t profile_block_id, FbleValue** statics)
 {
   // Add an extra static to store the FbleCode for access in the interpreter.
   FbleExecutable exe = {
     .num_args = code->executable.num_args,
     .num_statics = code->executable.num_statics + 1,
-    .profile_block_id = code->executable.profile_block_id,
     .run = &Interpret
   };
   FbleValue* nstatics[exe.num_statics];
@@ -513,7 +512,7 @@ FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size
   FbleValue* vcode = FbleNewNativeValue(heap, sizeof(FbleCode*), &FreeCode, &code);
   nstatics[exe.num_statics - 1 ] = vcode;
 
-  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_offset, nstatics);
+  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, nstatics);
   FbleReleaseValue(heap, vcode);
   return func;
 }
