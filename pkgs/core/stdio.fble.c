@@ -52,7 +52,7 @@ static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id);
 // OnFree function for FILE* native values.
 static void OnFree(void* data)
 {
-  FILE* file = *(FILE**)data;
+  FILE* file = (FILE*)data;
 
   // Don't close stderr, because that could prevent us from seeing runtime
   // errors printed to stderr.
@@ -69,7 +69,7 @@ static FbleValue* IStreamImpl(
 {
   (void)profile;
 
-  FILE* file = *(FILE**)FbleNativeValueData(function->statics[0]);
+  FILE* file = (FILE*)FbleNativeValueData(function->statics[0]);
 
   FbleValue* world = args[0];
 
@@ -96,7 +96,7 @@ static FbleValue* OStreamImpl(
 {
   (void)profile;
 
-  FILE* file = *(FILE**)FbleNativeValueData(function->statics[0]);
+  FILE* file = (FILE*)FbleNativeValueData(function->statics[0]);
 
   FbleValue* byte = args[0];
   FbleValue* world = args[1];
@@ -196,7 +196,7 @@ static FbleValue* GetEnvImpl(
 //  Creates an IStream@ value for the given file.
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
 {
-  FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
+  FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
 
   FbleExecutable exe = {
     .num_args = 1,
@@ -213,7 +213,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
 //  Creates an OStream@ value for the given file.
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
 {
-  FbleValue* native = FbleNewNativeValue(heap, sizeof(FILE*), &OnFree, &file);
+  FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
 
   FbleExecutable exe = {
     .num_args = 2,

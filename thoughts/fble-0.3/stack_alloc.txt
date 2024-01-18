@@ -654,3 +654,63 @@ malloc to allocate a single large enough region of memory up front. Allocation
 is bumping a pointer. On 'enter', save the current stack pointer so we can
 jump back to it. On traverse, we can use the pointer values to check what is
 included in the traversal and what is down the stack.
+
+---
+
+Time to try implementing my stack allocation approach for real. The hope is we
+remove all the time for IncrGc, malloc, free, ReleaseValue, and AddRef. We
+replace it with time to traverse objects when returning. There's no doubt the
+traversal will be expensive. But how will it compare to what we save? That's
+what we want to find out.
+
+Use md5sum as a best case example. I don't expect any large objects returned
+there.
+
+Where to start? Implement the heap API. Which will be:
+
+FbleNewValueHeap, FbleFreeValueHeap,
+FbleValueHeapCall, FbleValueHeapReturn
+FbleNewStructValue, etc.
+
+No need for FbleRetain/FbleRelease. No need for FbleValueAddRef. Start by
+assuming we can make one big allocation for the heap space, if that's easier.
+No obligation.
+
+There are three major parts to this:
+1. Implementing the new heap API
+2. Switching to the new heap API
+3. Cleaning up now unnecessary retain/release.
+
+(3) we can do last. Just implement them as no-ops to start. That will be fun
+cleanup/performance optimization.
+
+High level sketch of implementation:
+* Value is vtag + data
+  - struct value: vtag + fieldc + fields
+  - union value: vtag + tag + arg
+  - func value is vtag + function + statics
+  - ref value is vtag + value
+  - native value is vtag + data + on_free
+* Two stack regions, alternating back and forth for frames
+* Each region has:
+  - Pointer to the top, for new allocations.
+  - Pointer to the base -> which should form a linked list of stack frames.
+* We keep track of the current 'to' and 'from' regions for allocation.
+* New heap: allocates and initializes the regions.
+* Free heap: frees the regions.
+* New value: increments the top of the current region and returns the previous
+  top. All values are now properly aligned, so no worry about alignment here.
+* Call: swap to/from regions, push a new frame onto the new to region.
+* Return: Traverse/Copy everything on the top frame of the from region to the
+  too region. Pop the top frame. Call native destructors on everything in the
+  top frame being popped.
+
+Let's say the 'base' of a stack frame points to a single pointer which is the
+base of the previous frame on that stack. That's how we store the linked list
+of frames.
+
+That leaves two tricky parts:
+* Keeping track of native values whose destructors need to be called.
+  Ideally make this really fast assuming no native values, and reasonably fast
+  assuming some native values.
+* Implementing the traverse/copy logic.

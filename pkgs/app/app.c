@@ -352,7 +352,7 @@ static FbleValue* EffectImpl(
 {
   (void)profile;
 
-  App* app = *(App**)FbleNativeValueData(function->statics[0]);
+  App* app = (App*)FbleNativeValueData(function->statics[0]);
 
   FbleValue* effect = args[0];
   FbleValue* world = args[1];
@@ -592,8 +592,7 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
     app.fpsHistogram[i] = 0;
   }
 
-  App* app_ptr = &app;
-  FbleValue* app_value = FbleNewNativeValue(heap, sizeof(App*), NULL, &app_ptr);
+  FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
   FbleReleaseValue(heap, app_value);
 

@@ -46,8 +46,7 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
  */
 static void FreeCode(void* data)
 {
-  FbleCode* code = *(FbleCode**)data;
-  FbleFreeCode(code);
+  FbleFreeCode((FbleCode*)data);
 }
 
 /**
@@ -224,7 +223,7 @@ static FbleValue* Interpret(
     FbleValue** args)
 {
   size_t num_statics = function->executable.num_statics;
-  FbleCode* code = *(FbleCode**)FbleNativeValueData(function->statics[num_statics - 1]);
+  FbleCode* code = (FbleCode*)FbleNativeValueData(function->statics[num_statics - 1]);
   FbleInstr** instrs = code->instrs.xs;
   FbleValue* locals[code->num_locals];
 
@@ -509,7 +508,7 @@ FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size
   memcpy(nstatics, statics, code->executable.num_statics * sizeof(FbleValue*));
 
   code->refcount++;
-  FbleValue* vcode = FbleNewNativeValue(heap, sizeof(FbleCode*), &FreeCode, &code);
+  FbleValue* vcode = FbleNewNativeValue(heap, code, &FreeCode);
   nstatics[exe.num_statics - 1 ] = vcode;
 
   FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, nstatics);

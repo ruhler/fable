@@ -113,8 +113,8 @@ typedef struct {
  */
 typedef struct {
   FbleValue _base;              /**< FbleValue base class. */
+  void* data;                   /**< User data. */               
   void (*on_free)(void* data);  /**< Destructor for user data. */
-  char data[];                  /**< User data. */               
 } NativeValue;
 
 /**
@@ -738,14 +738,12 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 
 // See documentation in fble-value.h
 FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
-    size_t size, void (*on_free)(void* data), void* data)
+    void* data, void (*on_free)(void* data))
 {
-  NativeValue* value = NewValueExtra(heap, NativeValue, size);
+  NativeValue* value = NewValue(heap, NativeValue);
   value->_base.tag = NATIVE_VALUE;
+  value->data = data;
   value->on_free = on_free;
-  if (data != NULL) {
-    memcpy(value->data, data, size);
-  }
   return &value->_base;
 }
 

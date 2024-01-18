@@ -416,19 +416,15 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
 
 /**
  * @func[FbleNewNativeValue] Creates a GC managed native allocation.
- *  The given on_free function will be called on the size bytes of allocated
- *  data when the value is no longer reachable. Native values must not
- *  reference other values through the native allocation.
+ *  The given on_free function will be called on the user data when the value
+ *  is no longer reachable. Native values must not reference other values
+ *  through the user data.
  *
  *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
- *  @arg[size_t][size] The number of bytes of native data to allocate.
+ *  @arg[void*][data] The user data to store on the native value.
  *  @arg[void (*)(void*)][on_free]
  *   Function called just before freeing the allocated native data. May be
  *   NULL to indicate that nothing should be done on free.
- *  @arg[void*][data]
- *   Initial data to store on the native value. size bytes from data are
- *   copied over to the native value data. May be NULL to leave the native
- *   value data uninitialized.
  *
  *  @returns[FbleValue*] The newly allocated native value.
  *
@@ -437,12 +433,12 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
  *   needed.
  */
 FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
-    size_t size, void (*on_free)(void* data), void* data);
+    void* data, void (*on_free)(void* data));
 
 /**
- * @func[FbleNativeValueData] Gets a native value's native allocation.
+ * @func[FbleNativeValueData] Gets a native value's user data.
  *  @arg[FbleValue*][value] The value to get the native allocation for.
- *  @returns[void*] The native allocation associated with the value.
+ *  @returns[void*] The user data associated with the value.
  *  @sideeffects
  *   Behavior is undefined if the value is not a native value.
  */
