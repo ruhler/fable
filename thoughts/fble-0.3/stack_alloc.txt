@@ -714,3 +714,29 @@ That leaves two tricky parts:
   Ideally make this really fast assuming no native values, and reasonably fast
   assuming some native values.
 * Implementing the traverse/copy logic.
+
+For the traversal, implement a recursive function that, given a value, copies
+it over to the new space and returns the new pointer. Case:
+* The value is in an old space. Return it.
+* The value hasn't been seen yet.
+  Allocate space for it on the new stack. Set its type on the 'from' space to
+  COPIED or some such and store a pointer to where it was copied to.
+  Recursively copy over all the fields.
+* The value has been seen. It's marked COPIED. Return the saved pointer for
+  that value.
+
+Easy.
+
+For native values, keep them in a singly linked list. Use a field of the
+native which isn't one that will be overwritten by the 'COPIED' value. After
+the traversal, walk through the linked list. Skip over any values marked
+'COPIED'. Call on_free on the rest.
+
+That's it. Easy.
+
+---
+
+I drafted the code for implementing the new value heap. It's all very straight
+forward and nice. Should be low overhead, if only it weren't for the bad
+complexity of traversing the entire result every time we return from a call.
+
