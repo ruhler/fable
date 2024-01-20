@@ -942,3 +942,10 @@ call FbleFramePush/FbleFramePop to avoid leaking those allocations.
 ---
 
 Code is drafted. Let's see if it's in a working state.
+
+Some bugs:
+* fble-mem-tests are hitting an assertion in FbleNativeValueData.
+* StackSmash is clobbering a func value.
+
+Yeah, so seems like we are clobbering memory somewhere. Let's see. Start with
+the first failure.

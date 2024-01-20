@@ -168,7 +168,7 @@ FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 
 static void* NewValueRaw(FbleValueHeap* heap, size_t size);
 static void FreeNatives(FbleValue* natives);
-static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value);
+static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* base, FbleValue* top, FbleValue* value);
 
 static bool IsPacked(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
@@ -245,7 +245,11 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
   Frame* popped = heap->stack;
   heap->stack = popped->caller;
-  FbleValue* nv = Traverse(heap, value);
+
+  FbleValue* base = (FbleValue*)(popped + 1);
+  FbleValue* top = (FbleValue*)popped->top;
+  FbleValue* nv = Traverse(heap, base, top, value);
+
   FreeNatives(popped->natives);
   return nv;
 }
@@ -254,6 +258,9 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
 {
   Frame* popped = heap->stack;
+
+  FbleValue* base = (FbleValue*)(popped + 1);
+  FbleValue* top = (FbleValue*)popped->top;
 
   Frame* new = (Frame*)popped->alternate->top;
   new->top = (intptr_t)(new + 1);
@@ -264,7 +271,7 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   heap->stack = new;
 
   for (size_t i = 0; i < n; ++i) {
-    save[i] = Traverse(heap, save[i]);
+    save[i] = Traverse(heap, base, top, save[i]);
   }
   FreeNatives(popped->natives);
 }
@@ -291,28 +298,19 @@ static void FreeNatives(FbleValue* natives)
 }
 
 /**
- * @func[Traverse] Copies a value from 'previous' to 'current' frame.
- *  The 'previous' frame will be the frame we are popping off to get to the
- *  'current' frame. We switch the names so we can reuse the NewValue
- *  functions for allocating space on the current frame.
- *
+ * @func[Traverse] Copies a value from to the current' frame.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][value] The value on the previous frame to copy.
+ *  @arg[FbleValue*][base] The base of the frame we are popping from.
+ *  @arg[FbleValue*][top] The top of the frame we are popping from.
+ *  @arg[FbleValue*][value] The value on the popped frame to copy.
  *  @returns[FbleValue*] The new address for value.
  *  @sideeffects
- *   Copies value and anything it depends on from the previous frame to the
+ *   Copies value and anything it depends on from the popped frame to the
  *   current frame.
  */
-static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
+static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* base, FbleValue* top, FbleValue* value)
 {
-  if (IsPacked(value)) {
-    return value;
-  }
-
-  FbleValue* base = (FbleValue*)(heap->stack + 1);
-  FbleValue* top = (FbleValue*)heap->stack->top;
-  if (value < base || value >= top) {
-    // The value isn't on this frame. Nothing to copy.
+  if (IsPacked(value) || value < base || value >= top) {
     return value;
   }
 
@@ -328,7 +326,7 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
       t->dest = &nv->_base;
 
       for (size_t i = 0; i < nv->fieldc; ++i) {
-        nv->fields[i] = Traverse(heap, v->fields[i]);
+        nv->fields[i] = Traverse(heap, base, top, v->fields[i]);
       }
 
       return &nv->_base;
@@ -344,7 +342,7 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
       t->_base.tag = TRAVERSED_VALUE;
       t->dest = &nv->_base;
 
-      nv->arg = Traverse(heap, v->arg);
+      nv->arg = Traverse(heap, base, top, v->arg);
       return &nv->_base;
     }
 
@@ -359,7 +357,7 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
       t->dest = &nv->_base;
 
       for (size_t i = 0; i < num_statics; ++i) {
-        nv->statics[i] = Traverse(heap, v->statics[i]);
+        nv->statics[i] = Traverse(heap, base, top, v->statics[i]);
       }
 
       return &nv->_base;
@@ -376,7 +374,7 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
       t->_base.tag = TRAVERSED_VALUE;
       t->dest = &nv->_base;
 
-      nv->value = Traverse(heap, ref_value);
+      nv->value = Traverse(heap, base, top, ref_value);
       return &nv->_base;
     }
 
