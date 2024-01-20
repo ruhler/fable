@@ -49,6 +49,76 @@ FbleValueHeap* FbleNewValueHeap();
 void FbleFreeValueHeap(FbleValueHeap* heap);
 
 /**
+ * @func[FbleRetainValue] Increments refcount on an FbleValue.
+ *  Keep the given value alive until a corresponding FbleReleaseValue is
+ *  called.
+ *
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleValue*    ][src ] The value to retain. May be NULL.
+ *
+ *  @sideeffects
+ *   Causes the value to be retained until a corresponding FbleReleaseValue
+ *   calls is made on the value. FbleReleaseValue must be called when the
+ *   value is no longer needed.
+ */
+void FbleRetainValue(FbleValueHeap* heap, FbleValue* src);
+
+/**
+ * @func[FbleReleaseValue] Decrements refcount on an FbleValue.
+ *  Decrements the strong reference count of a value and free the resources
+ *  associated with that value if it has no more references.
+ *
+ *  @arg[FbleValueHeap*][heap ] The heap the value was allocated with.
+ *  @arg[FbleValue*    ][value]
+ *   The value to decrement the strong reference count of. The value may be
+ *   NULL, in which case no action is performed.
+ *
+ *  @sideeffects
+ *   Decrements the strong reference count of the value and frees resources
+ *   associated with the value if there are no more references to it.
+ */
+void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
+
+/**
+ * @func[FbleReleaseValues] Releases multiple values at once.
+ *  Calls FbleReleaseValue for each provide value.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap the values were allocated with.
+ *  @arg[size_t        ][argc] The number of values to release.
+ *  @arg[FbleValue**   ][args] The values to release.
+ *
+ *  @sideeffects
+ *   Calls FbleReleaseValue on all the values.
+ */
+void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+/**
+ * @func[FbleReleaseValues_] Releases multiple values at once using varargs.
+ *  Calls FbleReleaseValue for each provide value.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap the values were allocated with.
+ *  @arg[size_t        ][argc] The number of values to release.
+ *  @arg[...           ][    ] The values to release.
+ *
+ *  @sideeffects
+ *   Calls FbleReleaseValue on all the values.
+ */
+void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...);
+
+/**
+ * @func[FbleValueFullGc] Performs a full garbage collection.
+ *  Frees any unreachable objects currently on the heap.
+ *
+ *  This is an expensive operation intended only for test and debug purposes.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap to perform gc on.
+ *
+ *  @sideeffects
+ *   Frees any unreachable objects currently on the heap.
+ */
+void FbleValueFullGc(FbleValueHeap* heap);
+
+/**
  * FbleValue instance for types.
  *
  * Used as an instance of an fble type for those types that don't need any

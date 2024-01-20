@@ -75,7 +75,6 @@ namespace eval "include" {
     }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
-      FbleRetainValue FbleReleaseValue FbleReleaseValues FbleReleaseValues_
       FbleValueFullGc
       FbleNewStructValue FbleNewStructValue_
       FbleStructValueField

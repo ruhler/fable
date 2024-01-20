@@ -5,6 +5,16 @@ Things to consider doing for the fble-0.3 release.
 * Add regression test for memory leak fixed in
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
+* Stack Alloc
+ - Add uses of FblePushValueFrame, FblePopValueFrame (or whatever I want to
+   call it).
+ - Figure out how to implement TailCall.
+ - Add assertion/docs saying ref value assignment must be done to ref/value in
+   the same stack frame.
+ - Remove uses of Retain/Release/AddRef.
+   Including RELEASE instruction.
+   Including tracking thereof in compile.c
+
 * Add test for overapplication to a function whose value is 'NULL' due to
   abort.
 

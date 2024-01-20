@@ -287,10 +287,10 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
 
       TraversedValue* t = (TraversedValue*)v;
       t->_base.tag = TRAVERSED_VALUE;
-      t->dest = nv;
+      t->dest = &nv->_base;
 
       for (size_t i = 0; i < nv->fieldc; ++i) {
-        nv->fields[i] = Travese(heap, v->fields[i]);
+        nv->fields[i] = Traverse(heap, v->fields[i]);
       }
 
       return &nv->_base;
@@ -304,7 +304,7 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
 
       TraversedValue* t = (TraversedValue*)v;
       t->_base.tag = TRAVERSED_VALUE;
-      t->dest = nv;
+      t->dest = &nv->_base;
 
       nv->arg = Traverse(heap, v->arg);
       return &nv->_base;
@@ -314,14 +314,14 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
       FuncValue* v = (FuncValue*)value;
       size_t num_statics = v->function.executable.num_statics;
       FuncValue* nv = NewValueExtra(heap, FuncValue, num_statics);
-      memcpy(&nv->function, v->function, sizeof(FbleFunction));
+      memcpy(&nv->function, &v->function, sizeof(FbleFunction));
 
       TraversedValue* t = (TraversedValue*)v;
       t->_base.tag = TRAVERSED_VALUE;
-      t->dest = nv;
+      t->dest = &nv->_base;
 
       for (size_t i = 0; i < num_statics; ++i) {
-        nv->statics[i] = Traverse(v->statics[i]);
+        nv->statics[i] = Traverse(heap, v->statics[i]);
       }
 
       return &nv->_base;
@@ -336,7 +336,7 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
 
       TraversedValue* t = (TraversedValue*)v;
       t->_base.tag = TRAVERSED_VALUE;
-      t->dest = nv;
+      t->dest = &nv->_base;
 
       nv->value = Traverse(heap, ref_value);
       return &nv->_base;
@@ -349,12 +349,12 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
       nv->_base.tag = NATIVE_VALUE;
       nv->data = v->data;
       nv->on_free = v->on_free;
-      nv->next = heap->current->natives;
+      nv->tail = heap->current->natives;
       heap->current->natives = &nv->_base;
 
       TraversedValue* t = (TraversedValue*)v;
       t->_base.tag = TRAVERSED_VALUE;
-      t->dest = nv;
+      t->dest = &nv->_base;
 
       return &nv->_base;
     }
@@ -770,7 +770,7 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
   value->_base.tag = NATIVE_VALUE;
   value->data = data;
   value->on_free = on_free;
-  value->next = heap->current->natives;
+  value->tail = heap->current->natives;
   heap->current->natives = &value->_base;
   return &value->_base;
 }
@@ -782,3 +782,11 @@ void* FbleNativeValueData(FbleValue* value)
   assert(value->tag == NATIVE_VALUE);
   return ((NativeValue*)value)->data;
 }
+
+// TODO: Remove me.
+void FbleRetainValue(FbleValueHeap* heap, FbleValue* src) {}
+void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value) {}
+void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args) {}
+void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...) {}
+void FbleValueFullGc(FbleValueHeap* heap) {}
+
