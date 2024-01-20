@@ -949,3 +949,52 @@ Some bugs:
 
 Yeah, so seems like we are clobbering memory somewhere. Let's see. Start with
 the first failure.
+
+---
+
+Progress. We can run fble-md5 now. There are still bugs. fbld-md5 is clearly
+leaking memory. That said, we have some numbers:
+
+User time (seconds): 47.01
+Maximum resident set size (kbytes): 30500
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.82 ==> 47.01
+  Maximum resident set size (kbytes): 2516 => 30500
+
+This is hopefully just the starting point to improve performance, because we
+haven't optimized out calls to Retain/Release yet and we still have the memory
+leak. So, decent start?
+
+We need to track down the memory leak for sure.
+
+Let's see if I can reproduce the memory leak in a simpler test case.
+
+Yes. This leaks a lot:
+
+  @ Unit@ = *();
+  Unit@ Unit = Unit@();
+
+  @ Bool@ = +(Unit@ true, Unit@ false);
+  Bool@ True = Bool@(true: Unit);
+  Bool@ False = Bool@(true: Unit);
+
+  (Bool@) { Unit@; } Toggle = (Bool@ x) {
+    Bool@ y = x.?(true: False, false: True);
+    Toggle(y);
+  };
+
+  Toggle(True);
+
+I've messed up management of the three stacks. In FbleCompactFrame, we somehow
+need to reset the popped frame.
+
+---
+
+Problem fixed now.
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.82 ==> 47.01 ==> 47.22
+  Maximum resident set size (kbytes): 2516 => 30500 ==> 2176
+
+Let's see where else we are at.

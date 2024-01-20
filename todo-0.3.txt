@@ -15,6 +15,8 @@ Things to consider doing for the fble-0.3 release.
  - Remove uses of Retain/Release/AddRef.
    Including RELEASE instruction.
    Including tracking thereof in compile.c
+ - Figure out how to fix fble-mem-test
+ - Figure out better way to pick initial heap size.
 
 * Add test for overapplication to a function whose value is 'NULL' due to
   abort.
