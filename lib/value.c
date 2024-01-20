@@ -14,15 +14,17 @@
 
 #include "unreachable.h"    // for FbleUnreachable
 
-typedef struct Frame {
-  intptr_t top;             /**< Next FbleValue to allocate on this stack frame. */
-  FbleValue* natives;       /**< Singly linked list of native values on this frame. */
-  struct Frame* tail;       /**< The stack frame below this frame. */
-} Frame;
+typedef struct Frame Frame;
+
+struct Frame {
+  intptr_t top;           /**< Next FbleValue to allocate on this stack frame. */
+  FbleValue* natives;     /**< Singly linked list of native values on this frame. */
+  Frame* caller;          /**< The caller's frame. */
+  Frame* alternate;       /**< An alternate frame. */
+};
 
 struct FbleValueHeap {
-  Frame* current;
-  Frame* previous;
+  Frame* stack;
 };
 
 /** Different kinds of FbleValue. */
@@ -177,19 +179,27 @@ FbleValueHeap* FbleNewValueHeap()
 {
   // TODO: Come up with a better way to size these initial allocations.
   // For now, 256MB each should fit in the 1GB available on my pi.
-  Frame* current = FbleAllocExtra(Frame, 256 * 1024 * 1024);
-  current->top = (intptr_t)(current + 1);
-  current->natives = NULL;
-  current->tail = NULL;
+  size_t stack_size = 256 * 1024 * 1024;
+  Frame* caller = FbleAllocExtra(Frame, stack_size);
+  caller->top = (intptr_t)(caller + 1);
+  caller->natives = NULL;
+  caller->caller = NULL;
+  caller->alternate = NULL;
 
-  Frame* previous = FbleAllocExtra(Frame, 256 * 1024 * 1024);
-  previous->top = (intptr_t)(previous + 1);
-  previous->natives = NULL;
-  previous->tail = NULL;
+  Frame* alternate = FbleAllocExtra(Frame, stack_size);
+  alternate->top = (intptr_t)(alternate + 1);
+  alternate->natives = NULL;
+  alternate->caller = NULL;
+  alternate->alternate = NULL;
 
+  Frame* stack = FbleAllocExtra(Frame, stack_size);
+  stack->top = (intptr_t)(stack + 1);
+  stack->natives = NULL;
+  stack->caller = caller;
+  stack->alternate = alternate;
+  
   FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
-  heap->current = current;
-  heap->previous = previous;
+  heap->stack = stack;
 
   return heap;
 }
@@ -197,13 +207,21 @@ FbleValueHeap* FbleNewValueHeap()
 // See documentation in fble-value.h.
 void FbleFreeValueHeap(FbleValueHeap* heap)
 {
-  assert(heap->current->tail == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  FreeNatives(heap->current->natives);
-  FbleFree(heap->current);
+  Frame* caller = heap->stack->caller;
+  assert(caller->natives == NULL && "Mismatched FblePushFrame/FblePopFrame");
+  assert(caller->caller == NULL && "Mismatched FblePushFrame/FblePopFrame");
+  assert(caller->alternate == NULL && "Mismatched FblePushFrame/FblePopFrame");
+  FbleFree(caller);
 
-  assert(heap->previous->tail == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  FreeNatives(heap->previous->natives);
-  FbleFree(heap->previous);
+  Frame* alternate = heap->stack->alternate;
+  assert(alternate->natives == NULL && "Mismatched FblePushFrame/FblePopFrame");
+  assert(alternate->caller == NULL && "Mismatched FblePushFrame/FblePopFrame");
+  assert(alternate->alternate == NULL && "Mismatched FblePushFrame/FblePopFrame");
+  FbleFree(alternate);
+
+  Frame* stack = heap->stack;
+  FreeNatives(stack->natives);
+  FbleFree(stack);
 
   FbleFree(heap);
 }
@@ -211,31 +229,51 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 // See documentation in fble-value.h
 void FblePushFrame(FbleValueHeap* heap)
 {
-  Frame* new = (Frame*)heap->previous->top;
+  Frame* stack = heap->stack;
+
+  Frame* new = (Frame*)stack->alternate->top;
   new->top = (intptr_t)(new + 1);
   new->natives = NULL;
-  new->tail = heap->previous;
+  new->caller = stack;
+  new->alternate = stack->caller;
 
-  heap->previous = heap->current;
-  heap->current = new;
+  heap->stack = new;
 }
 
 // See documentation in fble-value.h
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
-  Frame* popped = heap->current;
-  heap->current = heap->previous;
-  heap->previous = popped->tail;
+  Frame* popped = heap->stack;
+  heap->stack = popped->caller;
   FbleValue* nv = Traverse(heap, value);
   FreeNatives(popped->natives);
   return nv;
 }
 
+// See documentation in fble-value.h
+void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
+{
+  Frame* popped = heap->stack;
+
+  Frame* new = (Frame*)popped->alternate->top;
+  new->top = (intptr_t)(new + 1);
+  new->natives = NULL;
+  new->caller = popped->caller;
+  new->alternate = popped;
+
+  heap->stack = new;
+
+  for (size_t i = 0; i < n; ++i) {
+    save[i] = Traverse(heap, save[i]);
+  }
+  FreeNatives(popped->natives);
+}
+
 static void* NewValueRaw(FbleValueHeap* heap, size_t size)
 {
-  Frame* frame = heap->current;
-  intptr_t value = frame->top;
-  frame->top += size;
+  Frame* stack = heap->stack;
+  intptr_t value = stack->top;
+  stack->top += size;
   return (void*)value;
 }
 
@@ -271,8 +309,8 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
     return value;
   }
 
-  FbleValue* base = (FbleValue*)(heap->previous->tail + 1);
-  FbleValue* top = (FbleValue*)heap->previous->top;
+  FbleValue* base = (FbleValue*)(heap->stack + 1);
+  FbleValue* top = (FbleValue*)heap->stack->top;
   if (value < base || value >= top) {
     // The value isn't on this frame. Nothing to copy.
     return value;
@@ -349,8 +387,8 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* value)
       nv->_base.tag = NATIVE_VALUE;
       nv->data = v->data;
       nv->on_free = v->on_free;
-      nv->tail = heap->current->natives;
-      heap->current->natives = &nv->_base;
+      nv->tail = heap->stack->natives;
+      heap->stack->natives = &nv->_base;
 
       TraversedValue* t = (TraversedValue*)v;
       t->_base.tag = TRAVERSED_VALUE;
@@ -770,8 +808,8 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
   value->_base.tag = NATIVE_VALUE;
   value->data = data;
   value->on_free = on_free;
-  value->tail = heap->current->natives;
-  heap->current->natives = &value->_base;
+  value->tail = heap->stack->natives;
+  heap->stack->natives = &value->_base;
   return &value->_base;
 }
 

@@ -933,3 +933,12 @@ CompactFrame and have it work.
 
 Okay? Let's try it.
 
+---
+
+More guidance on when to use FbleFramePush: Any native function that allocates
+new FbleValues that are not returned directly to the caller should probably
+call FbleFramePush/FbleFramePop to avoid leaking those allocations.
+
+---
+
+Code is drafted. Let's see if it's in a working state.

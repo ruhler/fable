@@ -76,6 +76,22 @@ void FblePushFrame(FbleValueHeap* heap);
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
 
 /**
+ * @func[FbleCompactFrame] Compacts the top heap frame.
+ *  Values allocated on the frame are freed except for those reachable from
+ *  the given list of saved values.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[size_t][n] The number of save values.
+ *  @arg[FbleValue**][save] Values to save.
+ *
+ *  @sideeffects
+ *   Compacts the heap frame. Updates pointers in the save array to their new
+ *   values. You must not reference any values allocated to the frame after
+ *   this call except for the updated values in the save array.
+ */
+void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save);
+
+/**
  * @func[FbleRetainValue] Increments refcount on an FbleValue.
  *  Keep the given value alive until a corresponding FbleReleaseValue is
  *  called.

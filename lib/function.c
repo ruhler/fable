@@ -24,19 +24,15 @@
 static FbleValue* TailCallSentinel = (FbleValue*)0x2;
 
 typedef struct {
-  FbleFunction* function;
-  FbleValue* func;
-  size_t argc;
-  FbleValue** args;
-  size_t args_capacity;
+  size_t capacity;
+  size_t argc;      /** Number of args, not including func. */
+  FbleValue** func_and_args;
 } TailCallData;
 
 static TailCallData gTailCallData = {
-  .function = NULL,
-  .func = NULL,
-  .argc = 0,
-  .args = NULL,
-  .args_capacity = 0
+  .capacity = -1,
+  .argc = -1,
+  .func_and_args = NULL,
 };
 
 static void EnsureTailCallArgsSpace(size_t argc);
@@ -60,12 +56,13 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
  */
 static void EnsureTailCallArgsSpace(size_t argc)
 {
-  if (argc > gTailCallData.args_capacity) {
-    gTailCallData.args_capacity = argc;
-    FbleValue** args = FbleAllocArray(FbleValue*, argc);
-    memcpy(args, gTailCallData.args, gTailCallData.argc * sizeof(FbleValue*));
-    FbleFree(gTailCallData.args);
-    gTailCallData.args = args;
+  size_t capacity = argc + 1;
+  if (capacity > gTailCallData.capacity) {
+    gTailCallData.capacity = capacity;
+    FbleValue** func_and_args = FbleAllocArray(FbleValue*, capacity);
+    memcpy(func_and_args, gTailCallData.func_and_args, (1 + gTailCallData.argc) * sizeof(FbleValue*));
+    FbleFree(gTailCallData.func_and_args);
+    gTailCallData.func_and_args = func_and_args;
   }
 }
 
@@ -131,29 +128,37 @@ static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, Fble
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
  *   @i Calls FbleReleaseValue on the provided func and args.
+ *   @i Pops the current frame from the heap.
  */
 static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
 {
   while (true) {
-    FbleFunction* function = gTailCallData.function;
+    FbleValue* func = gTailCallData.func_and_args[0];
+    FbleFunction* function = FbleFuncValueFunction(func);
     FbleExecutable* exe = &function->executable;
     size_t argc = gTailCallData.argc;
-    FbleValue* func = gTailCallData.func;
 
     if (argc < exe->num_args) {
-      return PartialApply(heap, function, func, argc, thunk->args);
+      FbleValue* partial = PartialApply(heap, function, func, argc, gTailCallData.func_and_args + 1);
+      return FblePopFrame(heap, partial);
     }
 
     if (profile) {
       FbleProfileReplaceBlock(profile, function->profile_block_id);
     }
 
+    FbleCompactFrame(heap, 1 + argc, gTailCallData.func_and_args);
+
+    func = gTailCallData.func_and_args[0];
+    function = FbleFuncValueFunction(func);
+    exe = &function->executable;
+    argc = gTailCallData.argc;
+
     FbleValue* args[argc];
-    memcpy(args, gTailCallData.args, argc * sizeof(FbleValue*));
+    memcpy(args, gTailCallData.func_and_args + 1, argc * sizeof(FbleValue*));
 
     FbleValue* result = exe->run(heap, profile, function, args);
-    FbleReleaseValue(heap, func);
-    FbleReleaseValues(heap, exe->num_args, args);
+
     size_t num_unused = argc - exe->num_args;
     FbleValue** unused = args + exe->num_args;
 
@@ -161,16 +166,13 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
       // Add the unused args to the end of the tail call args and make that
       // our new func and args.
       EnsureTailCallArgsSpace(gTailCallData.argc + num_unused);
-      memcpy(gTailCallData.args + gTailCallData.argc, unused, num_unused * sizeof(FbleValue*));
+      memcpy(gTailCallData.func_and_args + 1 + gTailCallData.argc, unused, num_unused * sizeof(FbleValue*));
       gTailCallData.argc += num_unused;
     } else if (num_unused > 0) {
-      FbleValue* new_func = result;
-      result = FbleCall(heap, profile, new_func, num_unused, unused);
-      FbleReleaseValue(heap, new_func);
-      FbleReleaseValues(heap, num_unused, unused);
-      return result;
+      FbleValue* new_func = FblePopFrame(heap, result);
+      return FbleCall(heap, profile, new_func, num_unused, unused);
     } else {
-      return result;
+      return FblePopFrame(heap, result);
     }
   }
 
@@ -213,18 +215,18 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
   }
 
   // Set up gTailCallData.args.
-  gTailCallData.args_capacity = 0;
-  gTailCallData.args = NULL;
+  gTailCallData.capacity = 1;
   gTailCallData.argc = 0;
+  gTailCallData.func_and_args = FbleAllocArray(FbleValue*, 1);
 
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
   FbleValue* result = FbleCall(heap, profile_thread, func, argc, args);
   FbleFreeProfileThread(profile_thread);
 
-  FbleFree(gTailCallData.args);
-  gTailCallData.args = NULL;
-  gTailCallData.args_capacity = 0;
-  gTailCallData.argc = 0;
+  FbleFree(gTailCallData.func_and_args);
+  gTailCallData.func_and_args = NULL;
+  gTailCallData.capacity = -1;
+  gTailCallData.argc = -1;
 
   // Restore the stack limit to what it was before.
   if (setrlimit(RLIMIT_STACK, &original_stack_limit) != 0) {
@@ -256,19 +258,19 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   size_t num_unused = argc - executable->num_args;
   FbleValue** unused = args + executable->num_args;
 
+  FblePushFrame(heap);
   FbleValue* result = executable->run(heap, profile, func, args);
 
   if (result == TailCallSentinel) {
     EnsureTailCallArgsSpace(gTailCallData.argc + num_unused);
-    for (size_t i = 0; i < num_unused; ++i) {
-      gTailCallData.args[gTailCallData.argc++] = unused[i];
-      FbleRetainValue(heap, unused[i]);
-    }
+    memcpy(gTailCallData.func_and_args + 1 + gTailCallData.argc, unused, num_unused * sizeof(FbleValue*));
+    gTailCallData.argc += num_unused;
     result = TailCall(heap, profile);
   } else if (num_unused > 0) {
-    FbleValue* new_func = result;
+    FbleValue* new_func = FblePopFrame(heap, result);
     result = FbleCall(heap, profile, new_func, num_unused, unused);
-    FbleReleaseValue(heap, new_func);
+  } else {
+    result = FblePopFrame(heap, result);
   }
 
   if (profile != NULL) {
@@ -283,15 +285,9 @@ FbleValue* FbleTailCall(FbleValueHeap* heap, FbleFunction* function, FbleValue* 
 {
   EnsureTailCallArgsSpace(argc);
 
-  gTailCallData.function = function;
-  gTailCallData.func = func;
   gTailCallData.argc = argc;
-  FbleRetainValue(heap, func);
-  for (size_t i = 0; i < argc; ++i) {
-    FbleRetainValue(heap, args[i]);
-    gTailCallData.args[i] = args[i];
-  }
-  FbleReleaseValues(heap, releasec, releases);
+  gTailCallData.func_and_args[0] = func;
+  memcpy(gTailCallData.func_and_args + 1, args, argc * sizeof(FbleValue*));
   return TailCallSentinel;
 }
 
