@@ -740,3 +740,196 @@ I drafted the code for implementing the new value heap. It's all very straight
 forward and nice. Should be low overhead, if only it weren't for the bad
 complexity of traversing the entire result every time we return from a call.
 
+---
+
+What to call my Call/Return, Push/Pop functions? Let's brainstorm.
+
+FbleValueHeapCall, FbleValueHeapReturn
+FblePushValueFrame, FblePopValueFrame
+FblePushFrame, FblePopFrame
+FbleValueHeapPush, FbleValueHeapPop
+FbleNewFrame, FbleFreeFrame
+FbleFramePush, FbleFrameReturn
+FblePushValueFrame, FbleReturnValueFrame
+
+I like Push/Pop. I like Frame. How to link that to the heap and values?
+
+FblePushHeapFrame, FblePopHeapFrame.
+FblePushStackFrame, FblePopStackFrame.
+FbleNewFrame, FbleReleaseFrame
+
+FbleNewStackFrame
+FbleNewDataStackFrame
+
+I like New too. Maybe better than 'Push'.
+
+FbleNewHeapFrame, FbleReleaseHeapFrame
+FbleNewValueFrame, FblePopValueFrame
+FblePushValueFrame, FblePopValueFrame
+
+FbleCallFrame, FbleReturnFromFrame
+
+I like Return.
+
+FbleNewHeapFrame, FbleExitHeapFrame
+FbleNewHeapFrame, FbleReleaseHeapFrame
+
+FbleReturnValue - This is good.
+
+FblePushFrame, FbleReturnValue
+
+Let's go with: FblePushFrame, FblePopFrame.
+
+---
+
+How to implement tail call?
+
+I can bundle up the function and arguments into a struct value so it gets
+copied back to the caller frame appropriately. But then I'll want to add more
+args to the back of it.
+
+Cases when we add num_unused to the back:
+* If it's a tail call. Always that case.
+
+How about we make num_unused and unused available for FbleTailCall, it can
+bundle in those automatically? I kind of like that idea.
+
+I think it's worth defining a special internal ThunkValue for this, so it's
+easier to access the fields. We don't have to worry about packing. We can have
+separate accessors for the function and args.
+
+---
+
+Trouble with tail call. We can't return the func and args to the caller frame,
+because that memory will not end up getting reclaimed if we are in a loop.
+Every subsequent tail call we do will add more and more to the caller frame
+leaking memory.
+
+We need the func and args for the tail call to end up on the callee's frame.
+How do we manage that?
+
+The other thing to figure out: what convention should I use for who calls
+FbleFramePush/FbleFramePop when, particularly when dealing with native
+functions? I think if I call some function FbleFoo(...) that returns an
+FbleValue*, it should be the job of FbleFoo to do FbleFramePush and
+FbleFramePop internally. Yeah. That's consistent and reasonable.
+
+How to handle tail call then?
+
+======= caller
+======= callee
+
+Seems like we want a way to traverse/compact in place. If executable->run
+returns tail call, it returns the function and args to tail call still on the
+callee frame (we could pass them via gTailCallData still if we want to).
+
+What I want, then, is a function like:
+
+void FbleCompactFrame(FbleValueHeap* heap, size_t count, FbleValue** save);
+
+It frees everything in the frame except things reachable from those values
+listed in save. It updates the pointers listed in save. If we had this, then
+the implementation is straight forward I think. Do just like we have now,
+except run FbleCompactFrame just before doing the tail call.
+
+How could I implement this? We can't assume the frame is going to be small.
+Some of the args could have been allocated on the frame and be really big.
+
+Brute force way would be to double compact. Compact from A to B. Compact back
+from B to A. That's two traversals instead of one. It's probably doable to
+start, but not much fun.
+
+For example, push a new frame, 'return' from the caller frame to the new
+frame, then push a new caller frame, return from the previous new frame to the
+new new frame. We don't have to write any new code for this, aside from the
+wrapper to update save values.
+
+Could we instead flip the polarity of the two stacks?
+
+Say our stacks are A and B.
+
+Say X calls Y and Y tail calls Z.
+
+A: X
+B: Y
+
+When Y tail calls into Z, we 'pop' from B to a new frame in A.
+
+A: X, Z
+B: 
+
+Now two things can happen.
+1. We do another tail call. Z to W say.
+
+A: X,
+B: W
+
+We end up exactly where we want to be.
+
+2. We do a return from Z. Now we are in trouble again, because we can't return
+in place.
+
+What if we had 3 stacks, A, B, C?
+
+X calls Y
+
+A: X
+B: Y
+C:
+
+Y tail calls Z
+
+A: X
+B: 
+C: Z
+
+Z tail calls W
+
+A: X
+B: W
+C: 
+
+Z returns to X
+
+A: X
+B:
+C:
+
+I think that works. We just need to keep track of which secondary stack is
+active. Tail call swaps the active secondary stack.
+
+We'll need to record where to return to. I'm sure it's doable. Just need to
+work out the details.
+
+Okay, easy.
+
+Heap is a Frame* current.
+
+Frame stores a Frame* caller and a Frame* alternative.
+
+PushFrame:
+  Pick either current->caller or current->alternative for the new current.
+  The old current becomes caller, the unchosen becomes alternate.
+  (In the future we could maybe pick based on free space for better memory use?)
+
+PopFrame:
+  current becomes current->caller
+
+CompactFrame:
+  current becomes current->alternate. It's caller is old current->caller and
+  alternate is old current.
+  
+Sounds like a plan. How will we make use of this for tail calls now?
+
+FbleTailCall does exactly what it does today. Copy func and args to
+gTailCallData and return TailCallSentinel.
+
+When we see TailCallSentinel, we add unused to gTailCallData like today. Then
+we call CompactHeap, passing a pointer to gTailCallData.
+
+The only thing is, I think we should store func and args next to each other on
+gTailCallData and avoid storing the FbleFunction* pointer so that we can call
+CompactFrame and have it work.
+
+Okay? Let's try it.
+

@@ -141,10 +141,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
     FbleValue* func = gTailCallData.func;
 
     if (argc < exe->num_args) {
-      FbleValue* partial = PartialApply(heap, function, func, argc, gTailCallData.args);
-      FbleReleaseValue(heap, func);
-      FbleReleaseValues(heap, argc, gTailCallData.args);
-      return partial;
+      return PartialApply(heap, function, func, argc, thunk->args);
     }
 
     if (profile) {

@@ -208,8 +208,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModu
   }
 
   assert(module_path != NULL);
-  FbleValue* linked = LinkInterpreted(heap, profile, search_path, module_path);
-  return linked;
+  return LinkInterpreted(heap, profile, search_path, module_path);
 }
 // See documentation in fble-link.h
 void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleGeneratedModule* module)

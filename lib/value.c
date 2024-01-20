@@ -197,11 +197,11 @@ FbleValueHeap* FbleNewValueHeap()
 // See documentation in fble-value.h.
 void FbleFreeValueHeap(FbleValueHeap* heap)
 {
-  assert(heap->current->tail == NULL && "Mismatched FbleValueHeap Call/Return");
+  assert(heap->current->tail == NULL && "Mismatched FblePushFrame/FblePopFrame");
   FreeNatives(heap->current->natives);
   FbleFree(heap->current);
 
-  assert(heap->previous->tail == NULL && "Mismatched FbleValueHeap Call/Return");
+  assert(heap->previous->tail == NULL && "Mismatched FblePushFrame/FblePopFrame");
   FreeNatives(heap->previous->natives);
   FbleFree(heap->previous);
 
@@ -209,7 +209,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 }
 
 // See documentation in fble-value.h
-void FbleValueHeapCall(FbleValueHeap* heap)
+void FblePushFrame(FbleValueHeap* heap)
 {
   Frame* new = (Frame*)heap->previous->top;
   new->top = (intptr_t)(new + 1);
@@ -221,7 +221,7 @@ void FbleValueHeapCall(FbleValueHeap* heap)
 }
 
 // See documentation in fble-value.h
-FbleValue* FbleValueHeapReturn(FbleValueHeap* heap, FbleValue* value)
+FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
   Frame* popped = heap->current;
   heap->current = heap->previous;

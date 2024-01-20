@@ -297,9 +297,10 @@ FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile)
 // FbleStdio -- see documentation in stdio.fble.h
 FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
 {
+  FbleFramePush(heap);
   FbleValue* func = FbleEval(heap, stdio, profile);
   if (func == NULL) {
-    return NULL;
+    return FbleFramePop(heap, NULL);
   }
 
   FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
@@ -318,7 +319,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   FbleReleaseValue(heap, argS);
 
   if (computation == NULL) {
-    return NULL;
+    return FbleFramePop(heap, NULL);
   }
 
   // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
@@ -326,14 +327,14 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   FbleValue* result = FbleApply(heap, computation, 1, &world, profile);
   FbleReleaseValue(heap, computation);
   if (result == NULL) {
-    return NULL;
+    return FbleFramePop(heap, NULL);
   }
 
   // result has type R@<Bool@>, which is *(s, x)
   FbleValue* value = FbleStructValueField(result, 1);
   FbleRetainValue(heap, value);
   FbleReleaseValue(heap, result);
-  return value;
+  return FbleFramePop(heap, value);
 }
 
 // FbleStdioMain -- See documentation in stdio.fble.h

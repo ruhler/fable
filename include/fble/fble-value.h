@@ -49,6 +49,33 @@ FbleValueHeap* FbleNewValueHeap();
 void FbleFreeValueHeap(FbleValueHeap* heap);
 
 /**
+ * @func[FblePushFrame] Adds a new frame to the heap.
+ *  Values allocated after this call will be allocated to a new frame, staying
+ *  alive until the matching call to FblePopFrame.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap.
+ *  @sideeffects
+ *   Pushes a new frame on the heap that should be freed with a call to
+ *   FblePopFrame when no longer needed.
+ */
+void FblePushFrame(FbleValueHeap* heap);
+
+/**
+ * @func[FblePopFrame] Pops a frame from the heap.
+ *  All values allocated on the frame are freed. The returned value is moved
+ *  to the parent frame.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[FbleValue*][value] Value to return when popping the frame.
+ *  @returns[FbleValue*]
+ *   A copy of @a[value] moved to the top frame after the frame is popped.
+ *  @sideeffects
+ *   Frees all values allocated on the top frame. You must not reference any
+ *   values allocated to that frame after this call.
+ */
+FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
+
+/**
  * @func[FbleRetainValue] Increments refcount on an FbleValue.
  *  Keep the given value alive until a corresponding FbleReleaseValue is
  *  called.
