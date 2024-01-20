@@ -350,7 +350,10 @@ static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* base, FbleValue* top,
       FuncValue* v = (FuncValue*)value;
       size_t num_statics = v->function.executable.num_statics;
       FuncValue* nv = NewValueExtra(heap, FuncValue, num_statics);
-      memcpy(&nv->function, &v->function, sizeof(FbleFunction));
+      nv->_base.tag = FUNC_VALUE;
+      nv->function.executable = v->function.executable;
+      nv->function.profile_block_id = v->function.profile_block_id;
+      nv->function.statics = nv->statics;
 
       TraversedValue* t = (TraversedValue*)v;
       t->_base.tag = TRAVERSED_VALUE;
