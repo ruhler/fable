@@ -174,7 +174,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   FbleFreeProfile(profile);
 
   if (!growth && max_large_n > max_small_n) {
-    fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
+    fprintf(stderr, "memory growth of %zi KB\n", max_large_n - max_small_n);
     return EX_FAIL;
   }
 
