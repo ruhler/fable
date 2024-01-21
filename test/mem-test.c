@@ -7,6 +7,9 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
+#include <sys/time.h>       // for getrusage
+#include <sys/resource.h>   // for getrusage
+
 #include <fble/fble-alloc.h>       // for FbleFree, FbleMaxTotalBytesAllocated.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-generate.h>    // for FbleGeneratedModule
@@ -19,10 +22,18 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
+static long GetMemoryUsage();
+static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
+
+static long GetMemoryUsage()
+{
+  struct rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+  return usage.ru_maxrss;
+}
 
 // Run --
-//   Run the program, measuring maximum memory needed to evaluate f[n].
+//   Run the program for f[n].
 //
 // Inputs:
 //   heap - heap to use for allocations.
@@ -32,12 +43,9 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
 //   alloc_n - the value of n to allocate, which should match on all runs if
 //             we want a fair memory comparison.
 //
-// Returns:
-//   The maximum number of bytes allocated while running the function.
-//
 // Side effects:
-//   Resets the max total allocated bytes on the heap.
-static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
+//   Running the program will impact max RSS of the process.
+static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
   assert(use_n <= alloc_n);
 
@@ -76,7 +84,6 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
 
   FbleReleaseValue(heap, result);
   FbleReleaseValue(heap, tail);
-  return FbleMaxTotalBytesAllocated();
 }
 
 // FbleMemTestMain -- see documentation in mem-test.h.
@@ -89,7 +96,6 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   bool error = false;
   bool version = false;
   bool growth = false;
-  bool debug = false;
 
   argc--;
   argv++;
@@ -100,7 +106,6 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--growth", &growth, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--debug", &debug, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
@@ -151,18 +156,18 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
     return EX_FAIL;
   }
 
-  if (debug) {
-    for (size_t i = 0; i <= 200; ++i) {
-      size_t max_n = Run(heap, func, profile, i, 200);
-      fprintf(stderr, "% 4zi: %zi\n", i, max_n);
-    }
-  }
+  // Pick sufficiently large values for n to overcome any constant memory
+  // overheads for setting up the process.
+  size_t small_n = 10000;
+  size_t large_n = 20000;
 
-  size_t small_n = 100;
-  size_t large_n = 200;
+  size_t max_start = GetMemoryUsage();
 
-  size_t max_small_n = Run(heap, func, profile, small_n, large_n);
-  size_t max_large_n = Run(heap, func, profile, large_n, large_n);
+  Run(heap, func, profile, small_n, large_n);
+  size_t max_small_n = GetMemoryUsage() - max_start;
+
+  Run(heap, func, profile, large_n, large_n);
+  size_t max_large_n = GetMemoryUsage() - max_start;
 
   FbleReleaseValue(heap, func);
   FbleFreeValueHeap(heap);
@@ -171,7 +176,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   // The memory samples can be a little bit noisy. Be lenient to that.
   // Hopefully small memory growth will not be able to hide within a small
   // percent of the small heap size.
-  size_t noise = 4 * max_small_n / 100;
+  size_t noise = 1 * max_small_n / 100;
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
     return EX_FAIL;
