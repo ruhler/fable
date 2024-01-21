@@ -998,3 +998,84 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
   Maximum resident set size (kbytes): 2516 => 30500 ==> 2176
 
 Let's see where else we are at.
+
+---
+
+* fbld is really slow. That's not surprising.
+* memory growth tests fail. That's not surprising.
+* fbld-tests gets an assert failure. That's surprising. Any other assert
+  failures?
+
+All the other spec tests seem to pass. Hmm... It's probably worth checking.
+
+Next steps:
+* Try to clean up / disable known failing tests so its easier to see if we
+  break something.
+* Try cleaning up Release values calls, see what kind of performance boost we
+  get in md5.
+
+---
+
+Initial linux perf review of md5.
+
+Before:
+ 4.19     7001  FbleReleaseValues[0015X]
+ 2.43     4057  _int_free[001fX]
+ 2.31     3857  IncrGc[001eX]
+ 2.21     3694  FbleReleaseHeapObject[0016X]
+ 1.71     2855  malloc[0029X]
+ 1.28     2138  FbleRetainValue[001cX]
+ 1.12     1864  FbleHeapObjectAddRef[0031X]
+ 1.01     1683  cfree@GLIBC_2.17[002fX]
+ 0.98     1641  Refs[002eX]
+ 0.93     1550  FbleRetainHeapObject[0018X]
+ 0.90     1504  FbleNewHeapObject[001dX]
+ 0.69     1155  FbleAllocRaw[0028X]
+
+After:
+ 4.72     9262  Traverse.part.0[0026X]
+ 4.58     8988  FblePopFrame[0014X]
+ 3.54     6950  FblePushFrame[0017X]
+ 2.38     4668  FbleCompactFrame[0013X]
+ 1.41     2774  __memcpy_generic[001bX]
+ 0.31      601  FbleRetainValue[0034X]
+
+Oh well. What did you expect?
+
+---
+
+Currently failing tests:
+* ./pkgs/fbld/fbld-tests
+* SpecTests/Test/MemoryGrowth.fble
+* SpecTests/Test/MemoryGrowth.fble
+* pkgs/sat/tests, compiled & interpreted in Sat.Dimacs test.
+* fbld generated values.
+
+My guess is just the two issues right now: the known issue with memory growth
+test, and some issue causing problems for fbld-tests and sat tests.
+
+Let's start with memory tests. Even before the stack allocation change
+tracking number of FbleAllocs wasn't enough to catch leaks due to stack
+growth. I want to try max RSS instead. It may be flaky, depending on how much
+memory pressure the system is under. But assuming not too much memory
+pressure, maybe it's good enough?
+
+The first test is to see if memory-growth test works. Another good test would
+be to see if the memory leak in the stack I fixed before gets detected.
+
+The concern is whether we can observe the memory growth in the noise of
+everything else involved during the memory test. Namely:
+
+1. Compilation, initial evaluation of the function.
+2. Allocation of the large value n.
+3. Running the small test.
+4. Running the large test.
+
+Let's see some numbers for how it goes today. How do we get RSS/Max RSS for a
+process?
+
+getrusage has ru_maxrss and a few other memory related ones. Let's see what
+those look like. Looks like just ru_maxrss actually.
+
+MemoryGrowth sees 1704 RSS from start to finish. Do we need bigger n?
+
