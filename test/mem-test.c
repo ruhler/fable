@@ -173,16 +173,12 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   FbleFreeValueHeap(heap);
   FbleFreeProfile(profile);
 
-  // The memory samples can be a little bit noisy. Be lenient to that.
-  // Hopefully small memory growth will not be able to hide within a small
-  // percent of the small heap size.
-  size_t noise = 1 * max_small_n / 100;
-  if (!growth && max_large_n > max_small_n + noise) {
+  if (!growth && max_large_n > max_small_n) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
     return EX_FAIL;
   }
 
-  if (growth && max_large_n <= max_small_n + noise) {
+  if (growth && max_large_n <= max_small_n) {
     fprintf(stderr, "memory constant: M(%zi) = %zi, M(%zi) = %zi\n",
         small_n, max_small_n, large_n, max_large_n);
     return EX_FAIL;
