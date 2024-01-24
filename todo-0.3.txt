@@ -12,7 +12,6 @@ Things to consider doing for the fble-0.3 release.
  - Remove unused FbleFunction* argument to FbleTailCall.
  - Add assertion/docs saying ref value assignment must be done to ref/value in
    the same stack frame.
- - Any clever way to avoid the need for 'tail' field of Frame?
  - Remove uses of Retain/Release/AddRef.
    Including RELEASE instruction.
    Including tracking thereof in compile.c

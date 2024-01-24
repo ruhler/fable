@@ -19,14 +19,12 @@ typedef struct Frame Frame;
 /**
  * Invariants:
  *   StackOf(a) != StackOf(a->caller) != StackOf(a->alternate)
- *   StackOf(a) == StackOf(a->tail)
  */
 struct Frame {
   intptr_t top;           /**< Next FbleValue to allocate on this stack frame. */
   FbleValue* natives;     /**< Singly linked list of native values on this frame. */
   Frame* caller;          /**< The caller's frame. */
   Frame* alternate;       /**< An alternate frame. */
-  Frame* tail;            /**< The next frame down on this memory region. */
 };
 
 struct FbleValueHeap {
@@ -191,21 +189,18 @@ FbleValueHeap* FbleNewValueHeap()
   caller->natives = NULL;
   caller->caller = NULL;
   caller->alternate = NULL;
-  caller->tail = NULL;
 
   Frame* alternate = FbleAllocExtra(Frame, stack_size);
   alternate->top = (intptr_t)(alternate + 1);
   alternate->natives = NULL;
   alternate->caller = NULL;
   alternate->alternate = NULL;
-  alternate->tail = NULL;
 
   Frame* stack = FbleAllocExtra(Frame, stack_size);
   stack->top = (intptr_t)(stack + 1);
   stack->natives = NULL;
   stack->caller = caller;
   stack->alternate = alternate;
-  stack->tail = NULL;
   
   FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
   heap->stack = stack;
@@ -245,7 +240,6 @@ void FblePushFrame(FbleValueHeap* heap)
   new->natives = NULL;
   new->caller = stack;
   new->alternate = stack->caller;
-  new->tail = stack->alternate;
 
   heap->stack = new;
 }
@@ -272,12 +266,21 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   FbleValue* base = (FbleValue*)(popped + 1);
   FbleValue* top = (FbleValue*)popped->top;
 
-  Frame* new = (Frame*)popped->alternate->top;
+  // The new frame is whichever of caller->alternate or caller->caller we
+  // aren't currently popping from.
+  Frame* caller = popped->caller;
+  Frame* new = (Frame*)caller->caller->top;
+  Frame* alt = caller->alternate;
+  if (new == popped) {
+    new = (Frame*)caller->alternate->top;
+    alt = caller->caller;
+  }
+  assert(popped == (Frame*)alt->top);
+
   new->top = (intptr_t)(new + 1);
   new->natives = NULL;
-  new->caller = popped->caller;
-  new->alternate = popped->tail;
-  new->tail = popped->alternate;
+  new->caller = caller;
+  new->alternate = alt;
 
   heap->stack = new;
 
