@@ -169,8 +169,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
       memcpy(gTailCallData.func_and_args + 1 + gTailCallData.argc, unused, num_unused * sizeof(FbleValue*));
       gTailCallData.argc += num_unused;
     } else if (num_unused > 0) {
-      FbleValue* new_func = FblePopFrame(heap, result);
-      return FbleCall(heap, profile, new_func, num_unused, unused);
+      return FblePopFrame(heap, FbleCall(heap, profile, result, num_unused, unused));
     } else {
       return FblePopFrame(heap, result);
     }

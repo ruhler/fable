@@ -1047,7 +1047,6 @@ Oh well. What did you expect?
 Currently failing tests:
 * ./pkgs/fbld/fbld-tests
 * SpecTests/Test/MemoryGrowth.fble
-* SpecTests/Test/MemoryGrowth.fble
 * pkgs/sat/tests, compiled & interpreted in Sat.Dimacs test.
 * fbld generated values.
 
@@ -1079,3 +1078,167 @@ those look like. Looks like just ru_maxrss actually.
 
 MemoryGrowth sees 1704 RSS from start to finish. Do we need bigger n?
 
+---
+
+Through the power of git rebase, we now have ru_maxrss based memory tests.
+Let's see if it's working now.
+
+Yes, works now. It's just really slow because, well, O(n^2) traversal behavior
+when allocating larger data structures.
+
+---
+
+Let's see what we can do about the sat test failure. I rather work with the
+interpreter on this one I think.
+
+I minimized the test a little. We are doing Reverse, ForEach in ParseLines. We
+have a List@ whose 'cons' is showing up as a UnionValue instead of a
+StructValue.
+
+I should be able to step through the ForEach code to see how that list value
+is constructed and trace when it gets corrupted.
+
+First question:
+* Is the list corrupted at the start of the call to Reverse?
+Yes. It's already corrupted by then. That's going to make it harder to track
+down what's wrong.
+
+Maybe I can step through construction of the list and see where it goes bad.
+
+---
+
+Some logging shows an issue here:
+
+pop
+u 0x7fc7e4b348 -> 0x7fd7e47f20
+s 2 0x7fc7e4b328 -> 0x7fd7e47f38
+s 2 0x7fc7e4b308 -> 0x7fd7e47f58
+n 0x7
+n 0x7fd7e47f78
+u 0x7fc7e4b2f0 -> 0x7fd7e47f78
+n 0x7fd7e47e60
+
+Look at 0x7fd7e47f78. The 'n' means we don't touch it because it's out of
+range. But then right away we allocate it as a new value. That almost
+certainly clobbers the original value, right? It shouldn't be possible to see
+an address and have it be in the new allocation. The new allocation region has
+to be empty.
+
+Yeah. That explains the abort I'm getting. 0x7fd7e47f78 was the original list
+pointer, but we over-allocated it as a new union value.
+
+Next step is to figure out how we could ever see something in a region that is
+supposedly all free. Add some more debug logs to print the frame regions when
+we push/pop/compact. That should help to see what's going on. In particular,
+when we reallocated this region that was apparently in use.
+
+After modifying the algorithm slightly, now we have:
+
+pop
+u 0x7fc7e4b320 -> 0x7fd7e47ef8
+s 2 0x7fc7e4b300 -> 0x7fd7e47f10
+s 2 0x7fc7e4b2e0 -> 0x7fd7e47f30
+n 0x7
+n 0x7fd7e47f50
+u 0x7fc7e4b2c8 -> 0x7fd7e47f50
+n 0x7fd7e47e48
+
+So question is, going into this pop, how could 0x7fd7e47f50 be both allocated
+and free? Which one is correct?
+
+Just before, we did:
+pop 0x7fd7e47ef8 - 0x7fd7e47f88
+
+That should have removed all references to 0x7fd7e47f50. How could we still
+have a reference to it?
+
+We compacted to 0x7fd7e47ef8 - 0x7fd7e47f88, then popped that range. The
+popped value is 0x7fc7e4b178.
+
+Hmm... I need to track allocations I think.
+
+Here's a more complete sequence.
+
+push 0x7fc7e4b2a8
+push 0x7fd7e47ef8
+push 0x7fe7e480d8
+push 0x7fc7e4b2c8
+pop 0x7fc7e4b2c8 - 0x7fc7e4b2e0
+u 0x7fc7e4b2c8 -> 0x7fe7e480f8
+n 0x7fd7e47e48
+compact 0x7fe7e480d8 - 0x7fe7e48110
+n 0x7fc7e4a360
+u 0x7fe7e480f8 -> 0x7fc7e4b2c8
+n 0x7fd7e47e48
+s 2 0x7fe7e480d8 -> 0x7fc7e4b2e0
+n 0x7
+n 0x7fd7e47f50
+ ==> 0x7fc7e4b2c8 - 0x7fc7e4b300
+pop 0x7fc7e4b2c8 - 0x7fc7e4b338
+u 0x7fc7e4b320 -> 0x7fd7e47ef8
+s 2 0x7fc7e4b300 -> 0x7fd7e47f10
+s 2 0x7fc7e4b2e0 -> 0x7fd7e47f30
+n 0x7
+n 0x7fd7e47f50
+u 0x7fc7e4b2c8 -> 0x7fd7e47f50
+n 0x7fd7e47e48
+
+It looks to me like an issue here:
+
+alloc 0x7fd7e47f50
+u 0x7fc7e4b398 -> 0x7fd7e47f50
+alloc 0x7fd7e47f68
+s 2 0x7fc7e4b3b0 -> 0x7fd7e47f68
+n 0x6316eecc88bb33
+n 0x7
+ ==> 0x7fd7e47ef8 - 0x7fd7e47f88
+pop 0x7fd7e47ef8 - 0x7fd7e47f88
+n 0x7fc7e4b178
+
+I'm pretty sure we should be returning 0x7fd7e47f50 as part of this pop, but
+we don't see it in the traversal. Later on we get a pointer to it somehow, but
+because it was popped, we allocate on top of it.
+
+Oh, look at that. 0x7fc7e4b178 is a ref value. Yeah. That's a problem. We
+traverse the ref value, but fail to see through it to the value allocated on
+the stack.
+
+alloc 0x7fc7e4b178
+r 0x7fd7e4da88 -> 0x7fc7e4b178
+
+I was kind of assuming we would assign ref values in the same stack frame as
+the value we assign to. That way we would traverse into their value? I'm not
+sure. Think about it some more.
+
+---
+
+Question: How could a ref value in 0x7fc7e4b... be assigned a value allocated
+higher up on the stack?
+
+Okay, I'm close to decoding this.
+
+Do tail calls 
+  f(r.parsed.result)(r.parsed.state);
+
+f is  /Sat/Dimacs%.ParseClauses!.:!!, with static ParseClauses
+result is Unit.
+state is our state with formula as a list of clauses.
+
+We call the ParseClauses!.:!! function, which returns ParseClauses. We have
+not yet applied the state argument, but we pop the frame anyway. When popping
+the frame, we destroy the state, but it's saved as an unused argument. We
+later go to apply the unused argument, but it's garbage. I think that's the
+problem.
+
+Here it is:
+
+    } else if (num_unused > 0) {
+      FbleValue* new_func = FblePopFrame(heap, result);
+      return FbleCall(heap, profile, new_func, num_unused, unused);
+
+Note the call to FblePopFrame too soon.
+
+---
+
+I tried writing a regression test for this, but I can't figure out how to
+reproduce it in a small test.
