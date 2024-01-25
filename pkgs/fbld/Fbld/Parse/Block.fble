@@ -109,7 +109,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
   Bool@ final_same_line <- Do(Try_(String(StrE|' @@\n')));
   final_same_line.?(true: {
     Markup@ arg <- Do(Block);
-    Return(/Fbld/Markup%.Command(l, name)(Concat[
+    Return(/Fbld/Markup%.Command(l, name, Concat[
         args, inline_args, same_line, List[arg]]));
   });
 
@@ -136,7 +136,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
   Bool@ final <- Do(Try_(String(StrE|'@@\n')));
   final.?(true: {
     Markup@ arg <- Do(Block);
-    Return(/Fbld/Markup%.Command(l, name)(Concat[
+    Return(/Fbld/Markup%.Command(l, name, Concat[
         args, inline_args, same_line, literal, next, List[arg]]));
   });
 
@@ -150,7 +150,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
       args, inline_args, same_line, literal, next]);
   });
 
-  Return(/Fbld/Markup%.Command(l, name)(Concat[
+  Return(/Fbld/Markup%.Command(l, name, Concat[
       args, inline_args, same_line, literal, next]));
 },
 

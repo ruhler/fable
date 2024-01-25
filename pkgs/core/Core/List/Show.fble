@@ -20,9 +20,9 @@
 #   A string representation of the tail of the list. For example, the list 
 #   [1, 2, 3] is shown as ", 1, 2, 3]"
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
-ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
+ShowTail = <@ T@>(Show@<T@> show, List@<T@> l) {
   l.?(nil: Str|']');
-  Strs[Str|', ', show(l.cons.head), ShowTail(show)(l.cons.tail)];
+  Strs[Str|', ', show(l.cons.head), ShowTail(show, l.cons.tail)];
 };
 
 # Show --
@@ -40,9 +40,9 @@ ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
 #   A string representation of the list. For example, the list [1, 2, 3] might
 #   be shown as "[1, 2, 3]"
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
-Show = <@ T@>(Show@<T@> show)(List@<T@> l) {
+Show = <@ T@>(Show@<T@> show, List@<T@> l) {
   l.?(nil: Str|'[]');
-  Strs[Str|'[', show(l.cons.head), ShowTail(show)(l.cons.tail)];
+  Strs[Str|'[', show(l.cons.head), ShowTail(show, l.cons.tail)];
 };
 
 @(Show);

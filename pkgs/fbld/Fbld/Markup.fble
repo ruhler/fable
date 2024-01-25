@@ -39,8 +39,8 @@ Plain = (Loc@ l, String@ str) {
   Markup@(plain: Text@(l, str));
 };
 
-(Loc@, String@)(List@<Markup@>) { Markup@; }
-Command = (Loc@ l, String@ name)(List@<Markup@> args) {
+(Loc@, String@, List@<Markup@>) { Markup@; }
+Command = (Loc@ l, String@ name, List@<Markup@> args) {
   Markup@(command: Command@(Text@(l, name), Nothing<Impl@>, args));
 };
 

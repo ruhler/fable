@@ -20,13 +20,13 @@ ShowErrors = <@ T@>(Result@<T@> r) {
 };
 
 <@ T@>(Show@<T@>) { Show@<Result@<T@>>; }
-Show = <@ T@>(Show@<T@> show)(Result@<T@> r) {
+Show = <@ T@>(Show@<T@> show, Result@<T@> r) {
   r.failed.?(false: Strs[Str|'ok: ', show(r.value.just)]);
   Strs[
     Str|'failed: ',
-    /Core/List/Show%.Show(/Fbld/Text/Show%.Show)(r.errors),
+    /Core/List/Show%.Show(/Fbld/Text/Show%.Show, r.errors),
     Str|', ',
-    /Core/Maybe/Show%.Show(show)(r.value)];
+    /Core/Maybe/Show%.Show(show, r.value)];
 };
 
 @(Show, ShowErrors);

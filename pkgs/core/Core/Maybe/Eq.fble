@@ -5,7 +5,7 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 <@ T@>(Eq@<T@>) { Eq@<Maybe@<T@>>; }
-Eq = <@ T@>(Eq@<T@> eq)(Maybe@<T@> a, Maybe@<T@> b) {
+Eq = <@ T@>(Eq@<T@> eq, Maybe@<T@> a, Maybe@<T@> b) {
   a.?(nothing: b.?(nothing: True, : False));
   b.?(nothing: False);
   eq(a.just, b.just);

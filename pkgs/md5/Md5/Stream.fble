@@ -19,8 +19,8 @@
   # Put --
   #   Convenience function for defining a Stream@ of values in terms of a
   #   sequence of Puts.
-  (T@)((Unit@) { M@<Stream@>; }) { M@<Stream@>; }
-  Put = (T@ x)((Unit@) { M@<Stream@>; } f) {
+  (T@, (Unit@) { M@<Stream@>; }) { M@<Stream@>; }
+  Put = (T@ x, (Unit@) { M@<Stream@>; } f) {
     m.return(Just(Next@(x, f(Unit))));
   };
 
@@ -35,10 +35,10 @@
 
   # StreamM -- The Monad@ instance for StreamM@.
   Monad@<StreamM@> StreamM = @(
-    return: <@ A@>(A@ x)(M@<Stream@> s) { m.return(Result@<A@>(s, x)); },
-    do: <@ A@>(StreamM@<A@> ma)<@ B@>((A@ ) { StreamM@<B@>; } f)(M@<Stream@> s) {
+    return: <@ A@>(A@ x, M@<Stream@> s) { m.return(Result@<A@>(s, x)); },
+    do: <@ A@>(StreamM@<A@> ma)<@ B@>((A@ ) { StreamM@<B@>; } f, M@<Stream@> s) {
       Result@<A@> r <- m.do(ma(s));
-      f(r.x)(r.s);
+      f(r.x, r.s);
     });
 
   # Get -- The get instance for StreamM@.

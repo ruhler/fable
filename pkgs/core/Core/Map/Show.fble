@@ -22,7 +22,7 @@
 #   { a => b; c => d; }
 #
 <@ K@>(Show@<K@>)<@ V@>(Show@<V@>) { Show@<Map@<K@, V@>>; }
-Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value)(Map@<K@, V@> m) {
+Show = <@ K@>(Show@<K@> show_key)<@ V@>(Show@<V@> show_value, Map@<K@, V@> m) {
   List@<String@> elems = ForEach(m, List[Str|'{ '],
     (K@ k, V@ v, List@<String@> es) {
       Cons(Strs[show_key(k), Str|' => ', show_value(v), Str|'; '], es);

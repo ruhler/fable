@@ -114,7 +114,7 @@ M@<Markup@> Command = {
   });
 
   List@<Markup@> args <- Do(Args);
-  Return(/Fbld/Markup%.Command(l, name)(args));
+  Return(/Fbld/Markup%.Command(l, name, args));
 },
 
 # Helper function for Inline. Returns parsed markup as plain text followed by

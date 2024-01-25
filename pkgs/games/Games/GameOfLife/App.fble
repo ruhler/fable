@@ -98,7 +98,7 @@ World@ acorn = World(List<Coord@>[
   World@ w    # The game world.
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
 
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);

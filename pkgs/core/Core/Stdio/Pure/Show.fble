@@ -9,13 +9,13 @@
 
 Show@<PureState@> PureStateShow = (PureState@ a) {
   Strs[
-    Str|'In: ', /Core/List/Show%.Show(/Core/Int/Show%.Show)(a.in),
-    Str|', Out: ', /Core/List/Show%.Show(/Core/Int/Show%.Show)(a.out),
-    Str|', Err: ', /Core/List/Show%.Show(/Core/Int/Show%.Show)(a.err)];
+    Str|'In: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
+    Str|', Out: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
+    Str|', Err: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
 };
 
 <@ A@>(Show@<A@>) { Show@<PureResult@<A@>>; }
-PureResultShow = <@ A@>(Show@<A@> show)(PureResult@<A@> a) {
+PureResultShow = <@ A@>(Show@<A@> show, PureResult@<A@> a) {
   Strs[PureStateShow(a.s), Str|', Result: ', show(a.x)];
 };
 

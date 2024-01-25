@@ -22,7 +22,7 @@
 #   { a; b; }
 #
 <@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
-Show = <@ T@>(Show@<T@> show)(Set@<T@> s) {
+Show = <@ T@>(Show@<T@> show, Set@<T@> s) {
   List@<String@> elems = ForEach(s, List[Str|'{ '],
     (T@ x, List@<String@> es) {
       Cons(Strs[show(x), Str|'; '], es);

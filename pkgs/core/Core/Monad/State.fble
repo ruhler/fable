@@ -12,10 +12,10 @@
 
   # State -- The Monad@ instance for State@.
   Monad@<State@> Monad = @(
-    return: <@ A@>(A@ x)(S@ s) { R@<A@>(s, x); },
-    do: <@ A@>(State@<A@> ma)<@ B@>((A@) { State@<B@>; } f)(S@ s) {
+    return: <@ A@>(A@ x, S@ s) { R@<A@>(s, x); },
+    do: <@ A@>(State@<A@> ma)<@ B@>((A@) { State@<B@>; } f, S@ s) {
       R@<A@> ra = ma(s);
-      f(ra.x)(ra.s);
+      f(ra.x, ra.s);
     }
   );
 
@@ -25,7 +25,7 @@
   };
 
   # Set -- Set the state value.
-  (S@) { State@<Unit@>; } Set = (S@ ns)(S@ _) {
+  (S@) { State@<Unit@>; } Set = (S@ ns, S@ _) {
     R@<Unit@>(ns, Unit);
   };
 

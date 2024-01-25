@@ -47,6 +47,6 @@
 # Results:
 #   True if the program ran successfully and should exit zero. False if the
 #   program failed and should exit non-zero.
-<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, Stdio@<M@>)(List@<String@>) { M@<Bool@>; };
+<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
 
 @(Stdio@, Main@);

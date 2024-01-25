@@ -49,7 +49,7 @@ Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
 Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
     e.?(

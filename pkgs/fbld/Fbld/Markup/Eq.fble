@@ -10,7 +10,7 @@
 
 Eq@<Command@> Command = (Command@ a, Command@ b) {
   /Fbld/Text/Eq%.Eq(a.name, b.name).?(false: False);
-  /Core/List/Eq%.Eq(Markup)(a.args, b.args);
+  /Core/List/Eq%.Eq(Markup, a.args, b.args);
 },
 
 Eq@<Markup@> Markup = (Markup@ a, Markup@ b) {

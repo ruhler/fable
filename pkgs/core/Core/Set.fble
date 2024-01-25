@@ -50,9 +50,9 @@ Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
 # Example Use:
 #   % Contains = /Set%.Contains<String@>(/Core/String/Ord%.Ord);
 #   Contains(set, value);
-<@ T@>(Ord@<T@>)(Set@<T@>, T@) { Bool@; }
-Contains = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
-  /Core/Map%.Lookup(ord)(set, element).?(just: True, nothing: False);
+<@ T@>(Ord@<T@>, Set@<T@>, T@) { Bool@; }
+Contains = <@ T@>(Ord@<T@> ord, Set@<T@> set, T@ element) {
+  /Core/Map%.Lookup(ord, set, element).?(just: True, nothing: False);
 };
 
 # Insert --
@@ -69,7 +69,7 @@ Contains = <@ T@>(Ord@<T@> ord)(Set@<T@> set, T@ element) {
 # Example Use:
 #   % Insert = /Set%.Insert<String@>(/Core/String/Ord%.Ord);
 #   Insert(set, Str(Chars|foo));
-<@ T@>(Ord@<T@>)(Set@<T@>, T@) { Set@<T@>; }
+<@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; }
 Insert = <@ T@>(Ord@<T@> ord) {
   % insert = /Core/Map%.Insert<T@>(ord)<Unit@>;
   (Set@<T@> set, T@ element) {
@@ -93,7 +93,7 @@ Insert = <@ T@>(Ord@<T@> ord) {
 # Example Use:
 #   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
 #   Delete(set, Str(Chars|foo));
-<@ T@>(Ord@<T@>)(Set@<T@>, T@) { Set@<T@>; }
+<@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; }
 Delete = <@ T@>(Ord@<T@> ord) {
   % delete = /Core/Map%.Delete<T@>(ord)<Unit@>;
   (Set@<T@> set, T@ element) {

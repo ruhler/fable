@@ -35,7 +35,7 @@
   Color@ mouse_color
 );
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
   M@<Event@> FilterEvent = {
     Event@ e <- m.do(app.event);
     e.?(tick: m.return(e),

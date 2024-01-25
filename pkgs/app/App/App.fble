@@ -90,6 +90,6 @@
 #   program failed and should exit non-zero.
 <<@>@>@ Main@ = <<@>@ M@>(
   Monad@<M@>, Stdio@<M@>,
-  App@<M@>, Int@, Int@)(List@<String@>) { M@<Bool@>; };
+  App@<M@>, Int@, Int@, List@<String@>) { M@<Bool@>; };
 
 @(App@, Main@, Key@, Resize@, Event@, Effect@);

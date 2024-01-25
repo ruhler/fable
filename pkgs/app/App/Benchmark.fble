@@ -42,8 +42,8 @@ Monad@<M@> Monad = State.Monad;
 #   app - the app to benchmark.
 #   n - the number of iterations to run the benchmark.
 #   quit - an event that will cause the app to quit when sent to the app.
-(Main@, Int@, Event@)(Unit@) { TestResult@; }
-Benchmark = (Main@ app, Int@ n, Event@ quit)(Unit@ _) {
+(Main@, Int@, Event@, Unit@) { TestResult@; }
+Benchmark = (Main@ app, Int@ n, Event@ quit, Unit@ _) {
   Int@ w = Int|640;
   Int@ h = Int|480;
 
@@ -59,7 +59,7 @@ Benchmark = (Main@ app, Int@ n, Event@ quit)(Unit@ _) {
   };
 
   Stdio@<M@> stdio = /Core/Stdio/Stub%.Stdio<M@>(Monad);
-  M@<Bool@> m = app<M@>(Monad, stdio, App@<M@>(Event, Effect), w, h)(Nil<String@>);
+  M@<Bool@> m = app<M@>(Monad, stdio, App@<M@>(Event, Effect), w, h, Nil<String@>);
   R@<Bool@> r = m(n);
   AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, r.x);
 };

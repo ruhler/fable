@@ -224,8 +224,8 @@ AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
 };
 
 # Removes a clause from a Vars@ var entry.
-(ClauseId@)(Var@, Solver@) { Solver@; }
-RemoveClauseFromVar = (ClauseId@ clause)(Var@ var, Solver@ s) {
+(ClauseId@, Var@, Solver@) { Solver@; }
+RemoveClauseFromVar = (ClauseId@ clause, Var@ var, Solver@ s) {
   Maybe@<VarS@> mvs = Vars.Lookup(s.vars, var.id);
   mvs.?(nothing: s);
   VarS@ vs = mvs.just;
@@ -258,8 +258,8 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
 
 # Caller is responsible for ensuring no conflict arises as a result of
 # removing the variable.
-(VarId@)(ClauseId@, Solver@) { Solver@; }
-RemoveVarFromClause = (VarId@ var)(ClauseId@ clause, Solver@ s) {
+(VarId@, ClauseId@, Solver@) { Solver@; }
+RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
   Maybe@<Clause@> mcs = Clauses.Lookup(s.clauses, clause);
   mcs.?(nothing: s);
 
@@ -386,7 +386,7 @@ GetConflict = (List@<Assign@> todo)
       todo));
 };
 
-<<@>@ M@>(Monad@<M@>, Debug@<M@>)(Solver@) { M@<Result@>; }
+<<@>@ M@>(Monad@<M@>, Debug@<M@>, Solver@) { M@<Result@>; }
 Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
   % O = /Core/Stream/OStream%(m);
 

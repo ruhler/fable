@@ -39,7 +39,7 @@ Main = (
   (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } _read,
   List@<String@> args) {
 
-  (Int@) { IO@<Unit@>; } stdout_ = (Int@ s)(World@ w) {
+  (Int@) { IO@<Unit@>; } stdout_ = (Int@ s, World@ w) {
     stdout(s, w);
   };
 

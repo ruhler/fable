@@ -17,7 +17,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
   % O = /Core/Stream/OStream%(m);
 
   (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {

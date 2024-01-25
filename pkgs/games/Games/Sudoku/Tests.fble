@@ -69,7 +69,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
 # Print a solved board.
 # If spaced is true, insert whitespace to make it more legible.
 # Otherwise, don't include any whitespace in the output.
-(Bool@)(Solved@) { String@; } ShowBoard = (Bool@ spaced) {
+(Bool@, Solved@) { String@; } ShowBoard = (Bool@ spaced) {
   (Symbol@) { String@; } ShowCell = (Symbol@ s) {
     s.?(1: Str|1, 2: Str|2, 3: Str|3,
         4: Str|4, 5: Str|5, 6: Str|6,
@@ -238,8 +238,8 @@ Test@ Tests = TestSuite(Str|Sudoku, List[
   })
 ]);
 
-(Input@)(Unit@) { TestResult@; }
-BenchTest = (Input@ input)(Unit@ _) {
+(Input@, Unit@) { TestResult@; }
+BenchTest = (Input@ input, Unit@ _) {
   Solved@ _ = Solve(input).just;
   Pass;
 };

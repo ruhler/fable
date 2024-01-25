@@ -10,7 +10,7 @@
 # Converts an Int@ to a fixed-width bit vector.
 # Assumes the Int@ is non-negative. Truncates if needed to fit in the bit
 # vector.
-<@ T@>(Bits@<T@>)(Int@) { T@; } ToBits = <@ T@>(Bits@<T@> b) {
+<@ T@>(Bits@<T@>, Int@) { T@; } ToBits = <@ T@>(Bits@<T@> b) {
   (IntP@) { T@; } P = (IntP@ i) {
     i.?(
       1: b.Inc(b.0),

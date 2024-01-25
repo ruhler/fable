@@ -129,21 +129,21 @@ Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'Show empty', (Unit@ _) {
     Set@ set = Empty;
     String@ wnt = Str|'{ }';
-    String@ got = /Core/Set/Show%.Show(ShowBit2)(set);
+    String@ got = /Core/Set/Show%.Show(ShowBit2, set);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Show single', (Unit@ _) {
     Set@ set = Insert(Empty, B);
     String@ wnt = Str|'{ 01; }';
-    String@ got = /Core/Set/Show%.Show(ShowBit2)(set);
+    String@ got = /Core/Set/Show%.Show(ShowBit2, set);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Show multi', (Unit@ _) {
     Set@ set = Insert(Insert(Empty, B), C);
     String@ wnt = Str|'{ 01; 10; }';
-    String@ got = /Core/Set/Show%.Show(ShowBit2)(set);
+    String@ got = /Core/Set/Show%.Show(ShowBit2, set);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

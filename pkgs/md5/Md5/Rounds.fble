@@ -173,7 +173,7 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
 @ X@ = (Bit32@, Bit32@, Bit32@) { Bit32@; };
 @ XX@ = (Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@) { Bit32@; };
 
-(X@) { XX@; } XX = (X@ xf)(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+(X@) { XX@; } XX = (X@ xf, Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
   Add(b, cls(Add(Add(a, xf(b, c, d)), Add(x, t)), s));
 };
 

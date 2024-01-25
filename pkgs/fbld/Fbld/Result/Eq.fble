@@ -6,10 +6,10 @@
 <@>@ Result@ = /Fbld/Result%.Result@;
 
 <@ T@>(Eq@<T@>) { Eq@<Result@<T@>>; }
-Eq = <@ T@>(Eq@<T@> eq)(Result@<T@> a, Result@<T@> b) {
-  /Core/List/Eq%.Eq(/Fbld/Text/Eq%.Eq)(a.errors, b.errors).?(false: False);
+Eq = <@ T@>(Eq@<T@> eq, Result@<T@> a, Result@<T@> b) {
+  /Core/List/Eq%.Eq(/Fbld/Text/Eq%.Eq, a.errors, b.errors).?(false: False);
   /Core/Bool/Eq%.Eq(a.failed, b.failed).?(false: False);
-  /Core/Maybe/Eq%.Eq(eq)(a.value, b.value);
+  /Core/Maybe/Eq%.Eq(eq, a.value, b.value);
 };
 
 @(Eq);

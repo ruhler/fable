@@ -33,29 +33,29 @@
 
 @ Text@ = /Fbld/Text%.Text@;
 
-(List@<Decimal@>)(List@<Decimal@>) { Loc@; }
-L = (List@<Decimal@> line)(List@<Decimal@> col) {
+(List@<Decimal@>, List@<Decimal@>) { Loc@; }
+L = (List@<Decimal@> line, List@<Decimal@> col) {
   Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int(line), /Core/Int/Lit%.Int(col));
 };
 
-(List@<Decimal@>)(List@<Decimal@>)(String@)(List@<Markup@>) { Markup@; }
-C = (List@<Decimal@> line)(List@<Decimal@> col)(String@ name)(List@<Markup@> args) {
-  Command(L(line)(col), name)(args);
+(List@<Decimal@>, List@<Decimal@>, String@, List@<Markup@>) { Markup@; }
+C = (List@<Decimal@> line, List@<Decimal@> col, String@ name, List@<Markup@> args) {
+  Command(L(line, col), name, args);
 };
 
-(List@<Decimal@>)(List@<Decimal@>)(String@) { Text@; }
-T = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
-  Text@(L(line)(col), text);
+(List@<Decimal@>, List@<Decimal@>, String@) { Text@; }
+T = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+  Text@(L(line, col), text);
 };
 
-(List@<Decimal@>)(List@<Decimal@>)(String@) { Markup@; }
-P = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
-  Plain(L(line)(col), StrE(text));
+(List@<Decimal@>, List@<Decimal@>, String@) { Markup@; }
+P = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+  Plain(L(line, col), StrE(text));
 };
 
-(List@<Decimal@>)(List@<Decimal@>)(String@) { Markup@; }
-Pr = (List@<Decimal@> line)(List@<Decimal@> col)(String@ text) {
-  Plain(L(line)(col), Str(text));
+(List@<Decimal@>, List@<Decimal@>, String@) { Markup@; }
+Pr = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+  Plain(L(line, col), Str(text));
 };
 
 (Result@<Markup@>, Result@<Markup@>) { TestResult@; }

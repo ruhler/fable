@@ -26,14 +26,14 @@
 # Run --
 #   A top-level IO implementation for running an App Main@ program.
 (/App/App%.Main@) { Main@; }
-Run = (/App/App%.Main@ main)(
+Run = (/App/App%.Main@ main, 
   StdioIO@ stdio,
   IO@<Event@> event,
   (Effect@, World@) { R@<Unit@>; } effect,
   Int@ width, Int@ height, List@<String@> args) {
   main<IO@>(/Core/Monad/IO%.Monad, StdioIO(stdio),
-    /App/App%.App@<IO@>(event, (Effect@ e)(World@ w) { effect(e, w); }),
-    width, height)(args);
+    /App/App%.App@<IO@>(event, (Effect@ e, World@ w) { effect(e, w); }),
+    width, height, args);
 };
 
 @(Run);

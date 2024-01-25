@@ -32,7 +32,7 @@ Debug = <<@>@ M@>(Monad@<M@> m, Int@ enabled_level, OStream@<M@> stream) {
 
 # Create a Debug@ instance that disables debug messages entirely.
 <<@>@ M@>(Monad@<M@>) { Debug@<M@>; }
-NoDebug = <<@>@ M@>(Monad@<M@> m)(Int@ _l, (OStream@<M@>) { M@<Unit@>; } _f) {
+NoDebug = <<@>@ M@>(Monad@<M@> m, Int@ _l, (OStream@<M@>) { M@<Unit@>; } _f) {
   m.return(Unit);
 };
 

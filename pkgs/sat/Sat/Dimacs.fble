@@ -48,31 +48,31 @@
 <@>@ ParseStatus@ = <@ T@> { +(String@ error, ParseResult@<T@> parsed); };
 <@>@ ParseM@ = <@ T@> { (ParseState@) { ParseStatus@<T@>; }; };
 
-<@ T@>(T@) { ParseM@<T@>; } Return = <@ T@>(T@ x)(ParseState@ s) {
+<@ T@>(T@) { ParseM@<T@>; } Return = <@ T@>(T@ x, ParseState@ s) {
   ParseStatus@<T@>(parsed: ParseResult@(s, x));
 };
 
 <@ A@>(ParseM@<A@>)<@ B@>((A@) { ParseM@<B@>; }) { ParseM@<B@>; }
-Do = <@ A@>(ParseM@<A@> m)<@ B@>((A@) { ParseM@<B@>; } f)(ParseState@ s) {
+Do = <@ A@>(ParseM@<A@> m)<@ B@>((A@) { ParseM@<B@>; } f, ParseState@ s) {
   ParseStatus@<A@> r = m(s);
   r.?(error: ParseStatus@<B@>(error: r.error));
-  f(r.parsed.result)(r.parsed.state);
+  f(r.parsed.result, r.parsed.state);
 };
 
-<@ T@>(String@) { ParseM@<T@>; } Error = <@ T@>(String@ msg)(ParseState@ _) {
+<@ T@>(String@) { ParseM@<T@>; } Error = <@ T@>(String@ msg, ParseState@ _) {
   ParseStatus@<T@>(error: msg);
 };
 
 ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
-  state.lines.?(nil: Return(Nothing<String@>)(state));
+  state.lines.?(nil: Return(Nothing<String@>, state));
 
   ParseState@ nstate = ParseState@(state.lines.cons.tail, state.formula);
-  Return(Just(state.lines.cons.head))(nstate);
+  Return(Just(state.lines.cons.head), nstate);
 };
 
-(Clause@) { ParseM@<Unit@>; } AddClause = (Clause@ clause)(ParseState@ s) {
+(Clause@) { ParseM@<Unit@>; } AddClause = (Clause@ clause, ParseState@ s) {
   ParseState@ ns = ParseState@(s.lines, Cons(clause, s.formula));
-  Return(Unit)(ns);
+  Return(Unit, ns);
 };
 
 (List@<String@>) { ParseM@<Clause@>; } ParseVars = (List@<String@> words) {

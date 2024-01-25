@@ -51,13 +51,13 @@
 
 # Return the given value.
 <@ T@>(T@) { M@<T@>; }
-Return = <@ T@>(T@ x)(R@ r) {
+Return = <@ T@>(T@ x, R@ r) {
   Ok(SM@(r.s, x));
 };
 
 # Report a parse error.
 <@ T@>((Unit@) { Text@; }) { M@<T@>; }
-Error = <@ T@>((Unit@) { Text@; } f)(R@ r) {
+Error = <@ T@>((Unit@) { Text@; } f, R@ r) {
   r.report_errors.?(
     true: /Fbld/Result%.Error_<SM@<T@>>(f(Unit)),
     false: Fail<SM@<T@>>);
@@ -65,10 +65,10 @@ Error = <@ T@>((Unit@) { Text@; } f)(R@ r) {
 
 # Monadic Do for the parser monad.
 <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
-Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(R@ r) {
+Do = <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f, R@ r) {
   Result@<SM@<A@>> ra = ma(r);
   ra.failed.?(true: /Fbld/Result%.Raise<SM@<B@>>(ra));
-  f(ra.value.just.x)(r.@(s: ra.value.just.s));
+  f(ra.value.just.x, r.@(s: ra.value.just.s));
 };
 
 # Returns the current indent level.
@@ -87,14 +87,14 @@ M@<CharL@> GetL_ = (R@ r) {
 # Parse an indented block of text.
 # Single space indent is used. The indent characters will be skipped over and
 # end of input will be returned when the indented text ends.
-<@ T@>(M@<T@>) { M@<T@>; } Indented = <@ T@>(M@<T@> mx)(R@ r) {
+<@ T@>(M@<T@>) { M@<T@>; } Indented = <@ T@>(M@<T@> mx, R@ r) {
   mx(r.@(indent: Incr(r.indent)));
 };
   
 # Try running a parser. If it succeeds, return the parsed value. If it fails,
 # return Nothing.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
-Try = <@ T@>(M@<T@> mx)(R@ r) {
+Try = <@ T@>(M@<T@> mx, R@ r) {
   Result@<SM@<T@>> rx = mx(r.@(report_errors: False));
   rx.failed.?(true: Ok(SM@(r.s, Nothing<T@>)));
   Ok(SM@(rx.value.just.s, Just(rx.value.just.x)));
@@ -103,7 +103,7 @@ Try = <@ T@>(M@<T@> mx)(R@ r) {
 # Test if a parser would match at the current position, without consuming any
 # input.
 <@ T@>(M@<T@>) { M@<Maybe@<T@>>; }
-Test = <@ T@>(M@<T@> mx)(R@ r) {
+Test = <@ T@>(M@<T@> mx, R@ r) {
   Result@<SM@<T@>> rx = mx(r.@(report_errors: False));
   rx.failed.?(true: Ok(SM@(r.s, Nothing<T@>)));
   Ok(SM@(r.s, Just(rx.value.just.x)));

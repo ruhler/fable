@@ -92,7 +92,7 @@ M@<Maybe@<Bit8@>> Get = {
 
 # Compute the md5 hash for a string of bytes.
 (List@<Bit8@>) { Hash@; } Md5Str = (List@<Bit8@> bytes) {
-  Md5<M@>(Monad, Get)(bytes).x;
+  Md5<M@>(Monad, Get, bytes).x;
 };
 
 (List@<Hex@>) { List@<Bit8@>; } Hex2Bytes = (List@<Hex@> hex) {

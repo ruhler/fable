@@ -32,7 +32,7 @@
 
 % r = /Fbld/Result%.Monad;
 
-(Markup@) { Impl@; } VarImpl = (Markup@ markup)(Env@ _, Command@ cmd) {
+(Markup@) { Impl@; } VarImpl = (Markup@ markup, Env@ _, Command@ cmd) {
   Unit@ _ <- r.do(AssertArgCount(Int|0, cmd));
   r.return(markup);
 };

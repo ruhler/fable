@@ -124,7 +124,7 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
   ];
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height)(List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
 
   M@<Event@> In = app.event;
 

@@ -24,9 +24,9 @@
 
 % Stdio = /Core/Stdio/Stub%.Stdio<Pure@>(Monad);
 
-(Main@, String@)(Unit@) { TestResult@; }
-RunBench = (Main@ game, String@ n)(Unit@ _) {
-  Bool@ got = Run(game<Pure@>(Monad, Stdio)(List[n]));
+(Main@, String@, Unit@) { TestResult@; }
+RunBench = (Main@ game, String@ n, Unit@ _) {
+  Bool@ got = Run(game<Pure@>(Monad, Stdio, List[n]));
   AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, got);
 };
 

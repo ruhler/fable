@@ -10,7 +10,7 @@
 Show@<Command@> Command = (Command@ x) {
   Strs[
     /Fbld/Text/Show%.Show(x.name),
-    /Core/List/Show%.Show(Markup)(x.args)
+    /Core/List/Show%.Show(Markup, x.args)
   ];
 },
 

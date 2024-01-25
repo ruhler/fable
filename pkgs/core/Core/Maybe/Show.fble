@@ -8,7 +8,7 @@
 # Show --
 #   Implementation of Show@ for Maybe@<T@>. See documentation of /Show%.Show@.
 <@ T@>(Show@<T@>) { Show@<Maybe@<T@>>; }
-Show = <@ T@>(Show@<T@> show)(Maybe@<T@> m) {
+Show = <@ T@>(Show@<T@> show, Maybe@<T@> m) {
   m.?(nothing: Str|'Nothing');
   Append(Str|'Just:', show(m.just));
 };
