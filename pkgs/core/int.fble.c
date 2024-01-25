@@ -20,8 +20,7 @@ static int64_t ReadIntP(FbleValue* num);
 //   An FbleValue for the integer.
 //
 // Side effects:
-//   Allocates a value that should be freed with FbleReleaseValue when no
-//   longer needed. Behavior is undefined if x is not positive.
+//   Allocates a value on the heap.
 static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
 {
   assert(x > 0);
@@ -30,9 +29,7 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
   }
 
   FbleValue* p = MakeIntP(heap, x / 2);
-  FbleValue* result = FbleNewUnionValue(heap, 1 + (x % 2), p);
-  FbleReleaseValue(heap, p);
-  return result;
+  return FbleNewUnionValue(heap, 1 + (x % 2), p);
 }
 
 // ReadIntP --
@@ -63,7 +60,6 @@ FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x)
   if (x < 0) {
     FbleValue* p = MakeIntP(heap, -x);
     FbleValue* result = FbleNewUnionValue(heap, 0, p);
-    FbleReleaseValue(heap, p);
     return result;
   }
 
@@ -72,9 +68,7 @@ FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x)
   }
 
   FbleValue* p = MakeIntP(heap, x);
-  FbleValue* result = FbleNewUnionValue(heap, 2, p);
-  FbleReleaseValue(heap, p);
-  return result;
+  return FbleNewUnionValue(heap, 2, p);
 }
 
 // FbleIntValueAccess -- see documentation in int.fble.h

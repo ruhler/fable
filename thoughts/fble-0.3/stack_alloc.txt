@@ -1242,3 +1242,12 @@ Note the call to FblePopFrame too soon.
 
 I tried writing a regression test for this, but I can't figure out how to
 reproduce it in a small test.
+
+---
+
+With the fix, all fble tests pass now. It takes 4 hours to build everything,
+but it all passes.
+
+Next phase:
+* Clean up retain/release calls, which are no longer needed.
+

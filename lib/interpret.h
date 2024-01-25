@@ -26,8 +26,7 @@
  *   A newly allocated function value.
  *
  *  @sideeffects
- *   Allocates a new function value that should be freed using
- *   FbleReleaseValue when it is no longer needed.
+ *   Allocates a new function value on the heap.
  */
 FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size_t profile_block_id, FbleValue** statics);
 

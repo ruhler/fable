@@ -15,8 +15,7 @@
 //   A newly allocated fble /Core/String%.String@ with the contents of str.
 //
 // Side effects:
-//   Allocates an FbleValue that should be freed with FbleReleaseValue when no
-//   longer needed.
+//   Allocates an FbleValue on the heap.
 FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str);
 
 // FbleStringValueAccess --

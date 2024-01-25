@@ -835,11 +835,3 @@ void* FbleNativeValueData(FbleValue* value)
   assert(value->tag == NATIVE_VALUE);
   return ((NativeValue*)value)->data;
 }
-
-// TODO: Remove me.
-void FbleRetainValue(FbleValueHeap* heap, FbleValue* src) {}
-void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value) {}
-void FbleReleaseValues(FbleValueHeap* heap, size_t argc, FbleValue** args) {}
-void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...) {}
-void FbleValueFullGc(FbleValueHeap* heap) {}
-

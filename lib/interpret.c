@@ -133,10 +133,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
       }
 
       case FBLE_TAIL_CALL_INSTR: {
-        FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-        for (size_t i = 0; i < call_instr->release.size; ++i) {
-          FbleReleaseValue(heap, locals[call_instr->release.xs[i]]);
-        }
         return NULL;
       }
 
@@ -160,8 +156,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
       }
 
       case FBLE_RETURN_INSTR: {
-        FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        FbleReleaseValue(heap, locals[return_instr->result.index]);
         return NULL;
       }
 
@@ -173,18 +167,11 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
       }
 
       case FBLE_RETAIN_INSTR: {
-        FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
-        FbleValue* target = GET(retain_instr->target);
-        FbleRetainValue(heap, target);
         pc++;
         break;
       }
 
       case FBLE_RELEASE_INSTR: {
-        FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-        for (size_t i = 0; i < release_instr->targets.size; ++i) {
-          FbleReleaseValue(heap, locals[release_instr->targets.xs[i]]);
-        }
         pc++;
         break;
       }
@@ -451,18 +438,11 @@ static FbleValue* Interpret(
       }
 
       case FBLE_RETAIN_INSTR: {
-        FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
-        FbleValue* target = GET(retain_instr->target);
-        FbleRetainValue(heap, target);
         pc++;
         break;
       }
 
       case FBLE_RELEASE_INSTR: {
-        FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-        for (size_t i = 0; i < release_instr->targets.size; ++i) {
-          FbleReleaseValue(heap, locals[release_instr->targets.xs[i]]);
-        }
         pc++;
         break;
       }
@@ -511,7 +491,5 @@ FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size
   FbleValue* vcode = FbleNewNativeValue(heap, code, &FreeCode);
   nstatics[exe.num_statics - 1 ] = vcode;
 
-  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, nstatics);
-  FbleReleaseValue(heap, vcode);
-  return func;
+  return FbleNewFuncValue(heap, &exe, profile_block_id, nstatics);
 }

@@ -161,9 +161,6 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleGeneratedModule* modul
   }
 
   FbleValue* result = FbleEval(heap, linked, profile);
-  FbleReleaseValue(heap, linked);
-
-  FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
   if (result == NULL) {

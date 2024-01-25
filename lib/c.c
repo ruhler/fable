@@ -555,23 +555,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         break;
       }
 
-      case FBLE_RETAIN_INSTR: {
-        FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
-        fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
-            var_tag[retain_instr->target.tag],
-            retain_instr->target.index);
-        break;
-      }
-
-      case FBLE_RELEASE_INSTR: {
-        FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-        fprintf(fout, "  FbleReleaseValues_(heap, %zi", release_instr->targets.size);
-        for (size_t i = 0; i < release_instr->targets.size; ++i) {
-          fprintf(fout, ", l[%zi]", release_instr->targets.xs[i]);
-        }
-        fprintf(fout, ");\n");
-        break;
-      }
+      case FBLE_RETAIN_INSTR: break;
+      case FBLE_RELEASE_INSTR: break;
 
       case FBLE_LIST_INSTR: {
         FbleListInstr* list_instr = (FbleListInstr*)instr;
@@ -621,7 +606,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
  */
 static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
 {
-  static const char* var_tag[] = { "s", "a", "l" };
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
@@ -672,14 +656,6 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
     }
 
     case FBLE_TAIL_CALL_INSTR: {
-      FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-
-      fprintf(fout, "  FbleReleaseValues_(heap, %zi", call_instr->release.size);
-      for (size_t i = 0; i < call_instr->release.size; ++i) {
-        fprintf(fout, ", l[%zi]", call_instr->release.xs[i]);
-      }
-      fprintf(fout, ");\n");
-
       fprintf(fout, "  return NULL;\n");
       return;
     }
@@ -701,8 +677,6 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
     }
 
     case FBLE_RETURN_INSTR: {
-      FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", return_instr->result.index);
       fprintf(fout, "  return NULL;\n");
       return;
     }
@@ -713,23 +687,8 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
       return;
     }
 
-    case FBLE_RETAIN_INSTR: {
-      FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
-      fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
-          var_tag[retain_instr->target.tag],
-          retain_instr->target.index);
-      break;
-    }
-
-    case FBLE_RELEASE_INSTR: {
-      FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      fprintf(fout, "  FbleReleaseValues_(heap, %zi", release_instr->targets.size);
-      for (size_t i = 0; i < release_instr->targets.size; ++i) {
-        fprintf(fout, ", l[%zi]", release_instr->targets.xs[i]);
-      }
-      fprintf(fout, ");\n");
-      return;
-    }
+    case FBLE_RETAIN_INSTR: break;
+    case FBLE_RELEASE_INSTR: break;
 
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;

@@ -10,8 +10,7 @@
  * @param x  The integer value to create.
  * @returns An newly allocated fble integer value.
  * @sideeffects
- *   The caller is responsible for calling FbleReleaseValue when the returned
- *   value is no longer needed.
+ *   Allocates an FbleValue on the heap.
  */
 FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x);
 

@@ -176,8 +176,7 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 //   that scan code.
 //
 // Side effects:
-//   Allocates a value that should be freed with FbleReleaseValue when no
-//   longer needed.
+//   Allocates a value on the heap.
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
 {
   int k = -1;
@@ -219,8 +218,7 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
 //   for that button
 //
 // Side effects:
-//   Allocates a value that should be freed with FbleReleaseValue when no
-//   longer needed.
+//   Allocates a value on the heap.
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 {
   int k = -1;
@@ -259,7 +257,6 @@ static FbleValue* EventImpl(
         FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
         if (key != NULL) {
           value = FbleNewUnionValue(heap, 1, key);
-          FbleReleaseValue(heap, key);
         }
         break;
       }
@@ -268,7 +265,6 @@ static FbleValue* EventImpl(
         FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
         if (key != NULL) {
           value = FbleNewUnionValue(heap, 2, key);
-          FbleReleaseValue(heap, key);
         }
         break;
       }
@@ -279,11 +275,7 @@ static FbleValue* EventImpl(
           FbleValue* x = FbleNewIntValue(heap, event.button.x);
           FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
-          FbleReleaseValue(heap, button);
-          FbleReleaseValue(heap, x);
-          FbleReleaseValue(heap, y);
           value = FbleNewUnionValue(heap, 3, mouse_button);
-          FbleReleaseValue(heap, mouse_button);
         }
         break;
       }
@@ -294,11 +286,7 @@ static FbleValue* EventImpl(
           FbleValue* x = FbleNewIntValue(heap, event.button.x);
           FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
-          FbleReleaseValue(heap, button);
-          FbleReleaseValue(heap, x);
-          FbleReleaseValue(heap, y);
           value = FbleNewUnionValue(heap, 4, mouse_button);
-          FbleReleaseValue(heap, mouse_button);
         }
         break;
       }
@@ -314,10 +302,7 @@ static FbleValue* EventImpl(
           FbleValue* width = FbleNewIntValue(heap, event.window.data1);
           FbleValue* height = FbleNewIntValue(heap, event.window.data2);
           FbleValue* resized = FbleNewStructValue_(heap, 2, width, height);
-          FbleReleaseValue(heap, width);
-          FbleReleaseValue(heap, height);
           value = FbleNewUnionValue(heap, 5, resized);
-          FbleReleaseValue(heap, resized);
         }
         break;
       }
@@ -328,20 +313,13 @@ static FbleValue* EventImpl(
         FbleValue* dx = FbleNewIntValue(heap, event.motion.xrel);
         FbleValue* dy = FbleNewIntValue(heap, event.motion.yrel);
         FbleValue* motion = FbleNewStructValue_(heap, 4, x, y, dx, dy);
-        FbleReleaseValue(heap, x);
-        FbleReleaseValue(heap, y);
-        FbleReleaseValue(heap, dx);
-        FbleReleaseValue(heap, dy);
         value = FbleNewUnionValue(heap, 6, motion);
-        FbleReleaseValue(heap, motion);
         break;
       }
     }
   }
 
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, value);
-  FbleReleaseValue(heap, value);
-  return result;
+  return FbleNewStructValue_(heap, 2, world, value);
 }
 
 // Effect -- Implementation of effect function.
@@ -394,9 +372,7 @@ static FbleValue* EffectImpl(
   }
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
-  FbleReleaseValue(heap, unit);
-  return result;
+  return FbleNewStructValue_(heap, 2, world, unit);
 }
 
 // OnTimer --
@@ -528,7 +504,6 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   }
 
   FbleValue* func = FbleEval(heap, app_main, profile);
-  FbleReleaseValue(heap, app_main);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
@@ -538,7 +513,6 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-    FbleReleaseValue(heap, func);
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAILURE;
@@ -594,7 +568,6 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
 
   FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
-  FbleReleaseValue(heap, app_value);
 
   FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
 
@@ -602,10 +575,7 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* argValue = FbleNewStringValue(heap, argv[i]);
     FbleValue* argP = FbleNewStructValue_(heap, 2, argValue, argS);
-    FbleReleaseValue(heap, argValue);
-    FbleReleaseValue(heap, argS);
     argS = FbleNewUnionValue(heap, 0, argP);
-    FbleReleaseValue(heap, argP);
   }
 
   FbleValue* fble_width = FbleNewIntValue(heap, width);
@@ -615,13 +585,6 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
     fble_stdio, fble_event, fble_effect, fble_width, fble_height, argS
   };
   FbleValue* computation = FbleApply(heap, func, 6, args, profile);
-  FbleReleaseValue(heap, func);
-  FbleReleaseValue(heap, args[0]);
-  FbleReleaseValue(heap, args[1]);
-  FbleReleaseValue(heap, args[2]);
-  FbleReleaseValue(heap, args[3]);
-  FbleReleaseValue(heap, args[4]);
-  FbleReleaseValue(heap, args[5]);
 
   if (computation == NULL) {
     FbleFreeValueHeap(heap);
@@ -649,8 +612,6 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
     exit_status = FbleUnionValueTag(FbleStructValueField(result, 1));
   }
 
-  FbleReleaseValue(heap, computation);
-  FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
   FbleGenerateProfileReport(fprofile, profile);

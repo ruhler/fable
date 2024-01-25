@@ -17,8 +17,7 @@
 //
 // Side effects:
 // * Adds blocks to the profile.
-// * The user should call FbleReleaseValue on the result when it is no longer
-//   needed.
+// * Allocates a value on the heap.
 FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile);
 
 // FbleStdio -- 
@@ -37,8 +36,7 @@ FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile);
 //
 // Side effects:
 // * Updates the profile.
-// * The user should call FbleReleaseValue on the result when it is no longer
-//   needed.
+// * Allocates a value on the heap.
 // * Performs input and output on stdin, stdout, and stderr according to the
 //   execution of the Stdio@ process.
 FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv);

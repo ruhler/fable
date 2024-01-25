@@ -80,12 +80,9 @@ static FbleValue* IStreamImpl(
   } else {
     FbleValue* v = FbleNewIntValue(heap, c);
     ms = FbleNewUnionValue(heap, 0, v);
-    FbleReleaseValue(heap, v);
   }
 
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, ms);
-  FbleReleaseValue(heap, ms);
-  return result;
+  return FbleNewStructValue_(heap, 2, world, ms);
 }
 
 // OStreamImpl -- Write a byte to a file.
@@ -106,9 +103,7 @@ static FbleValue* OStreamImpl(
   fflush(file);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
-  FbleReleaseValue(heap, unit);
-  return result;
+  return FbleNewStructValue_(heap, 2, world, unit);
 }
 
 // ReadImpl -- Open a file for reading.
@@ -130,12 +125,9 @@ static FbleValue* ReadImpl(
   } else {
     FbleValue* stream = IStream(heap, fin, function->profile_block_id - 2);
     mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
-    FbleReleaseValue(heap, stream);
   }
 
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, mstream);
-  FbleReleaseValue(heap, mstream);
-  return result;
+  return FbleNewStructValue_(heap, 2, world, mstream);
 }
 
 // WriteImpl -- Open a file for writing.
@@ -157,12 +149,9 @@ static FbleValue* WriteImpl(
   } else {
     FbleValue* stream = OStream(heap, fin, function->profile_block_id - 2);
     mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
-    FbleReleaseValue(heap, stream);
   }
 
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, mstream);
-  FbleReleaseValue(heap, mstream);
-  return result;
+  return FbleNewStructValue_(heap, 2, world, mstream);
 }
 
 // GetEnvImpl -- Get an environment variable.
@@ -184,12 +173,9 @@ static FbleValue* GetEnvImpl(
   } else {
     FbleValue* str = FbleNewStringValue(heap, value);
     mstr = FbleNewUnionValue(heap, 0, str); // Just(str)
-    FbleReleaseValue(heap, str);
   }
 
-  FbleValue* result = FbleNewStructValue_(heap, 2, world, mstr);
-  FbleReleaseValue(heap, mstr);
-  return result;
+  return FbleNewStructValue_(heap, 2, world, mstr);
 }
 
 // IStream --
@@ -204,9 +190,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
     .run = &IStreamImpl,
   };
 
-  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, &native);
-  FbleReleaseValue(heap, native);
-  return func;
+  return FbleNewFuncValue(heap, &exe, profile_block_id, &native);
 }
 
 // OStream --
@@ -221,9 +205,7 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
     .run = &OStreamImpl,
   };
 
-  FbleValue* func = FbleNewFuncValue(heap, &exe, profile_block_id, &native);
-  FbleReleaseValue(heap, native);
-  return func;
+  return FbleNewFuncValue(heap, &exe, profile_block_id, &native);
 }
 
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id)
@@ -285,12 +267,6 @@ FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile)
   FbleValue* fble_stdio = FbleNewStructValue_(heap, 6,
       fble_stdin, fble_stdout, fble_stderr,
       fble_read, fble_write, fble_getenv);
-  FbleReleaseValue(heap, fble_stdin);
-  FbleReleaseValue(heap, fble_stdout);
-  FbleReleaseValue(heap, fble_stderr);
-  FbleReleaseValue(heap, fble_read);
-  FbleReleaseValue(heap, fble_write);
-  FbleReleaseValue(heap, fble_getenv);
   return fble_stdio;
 }
 
@@ -307,16 +283,11 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* argP = FbleNewStructValue_(heap, 2, argv[argc - i -1], argS);
-    FbleReleaseValue(heap, argS);
     argS = FbleNewUnionValue(heap, 0, argP);
-    FbleReleaseValue(heap, argP);
   }
 
   FbleValue* args[2] = { fble_stdio, argS };
   FbleValue* computation = FbleApply(heap, func, 2, args, profile);
-  FbleReleaseValue(heap, func);
-  FbleReleaseValue(heap, fble_stdio);
-  FbleReleaseValue(heap, argS);
 
   if (computation == NULL) {
     return FblePopFrame(heap, NULL);
@@ -325,15 +296,12 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
   FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, 1, &world, profile);
-  FbleReleaseValue(heap, computation);
   if (result == NULL) {
     return FblePopFrame(heap, NULL);
   }
 
   // result has type R@<Bool@>, which is *(s, x)
   FbleValue* value = FbleStructValueField(result, 1);
-  FbleRetainValue(heap, value);
-  FbleReleaseValue(heap, result);
   return FblePopFrame(heap, value);
 }
 
@@ -441,16 +409,11 @@ int FbleStdioMain(int argc, const char** argv, FbleGeneratedModule* module)
 
   FbleValue* value = FbleStdio(heap, profile, stdio, stdio_args.size, stdio_args.xs);
 
-  FbleReleaseValue(heap, stdio);
-  for (size_t i = 0; i < stdio_args.size; ++i) {
-    FbleReleaseValue(heap, stdio_args.xs[i]);
-  }
   FbleFreeVector(stdio_args);
 
   size_t result = EX_FAILURE;
   if (value != NULL) {
     result = FbleUnionValueTag(value);
-    FbleReleaseValue(heap, value);
   }
 
   FbleFreeValueHeap(heap);

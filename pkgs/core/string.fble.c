@@ -33,10 +33,7 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
   for (size_t i = 0; i < length; ++i) {
     FbleValue* charV = FbleNewCharValue(heap, str[length - i - 1]);
     FbleValue* charP = FbleNewStructValue_(heap, 2, charV, charS);
-    FbleReleaseValue(heap, charV);
-    FbleReleaseValue(heap, charS);
     charS = FbleNewUnionValue(heap, 0, charP);
-    FbleReleaseValue(heap, charP);
   }
   return charS;
 }

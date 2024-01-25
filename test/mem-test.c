@@ -66,22 +66,10 @@ static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size
     FbleValue* bit = (use_n % 2 == 0) ? zero : one;
     use_n /= 2;
     FbleValue* cons = FbleNewStructValue_(heap, 2, bit, tail);
-    FbleReleaseValue(heap, tail);
     tail = FbleNewUnionValue(heap, 0, cons);
-    FbleReleaseValue(heap, cons);
   }
-  FbleReleaseValue(heap, zero);
-  FbleReleaseValue(heap, one);
 
-  // Run an explicit full gc before applying the function so that garbage
-  // collection during function application is not impacted by any
-  // allocations made so far.
-  FbleValueFullGc(heap);
-
-  FbleValue* result = FbleApply(heap, func, 1, &tail, profile);
-
-  FbleReleaseValue(heap, result);
-  FbleReleaseValue(heap, tail);
+  FbleApply(heap, func, 1, &tail, profile);
 }
 
 // FbleMemTestMain -- see documentation in mem-test.h.
@@ -147,7 +135,6 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   }
 
   FbleValue* func = FbleEval(heap, linked, profile);
-  FbleReleaseValue(heap, linked);
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
@@ -167,7 +154,6 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   Run(heap, func, profile, large_n, large_n);
   size_t max_large_n = GetMemoryUsage() - max_start;
 
-  FbleReleaseValue(heap, func);
   FbleFreeValueHeap(heap);
   FbleFreeProfile(profile);
 

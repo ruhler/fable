@@ -89,9 +89,6 @@ static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, Fbl
 
   // Wrap that all up into an FbleFuncValue.
   FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs);
-  for (size_t i = 0; i < modulec; ++i) {
-    FbleReleaseValue(heap, funcs[i]);
-  }
   FbleFreeCode(code);
   FbleFreeCompiledProgram(compiled);
   return linked;
@@ -192,9 +189,6 @@ static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleG
 
   // Wrap that all up into an FbleFuncValue.
   FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, main_id, funcs);
-  for (size_t i = 0; i < modulec; ++i) {
-    FbleReleaseValue(heap, funcs[i]);
-  }
   FbleFreeCode(code);
   FbleFreeVector(modules);
   return linked;

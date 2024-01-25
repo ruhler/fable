@@ -828,35 +828,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       return;
     }
 
-    case FBLE_RETAIN_INSTR: {
-      FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      GetFrameVar(fout, "x1", retain_instr->target);
-      fprintf(fout, "  bl FbleRetainValue\n");
-      return;
-    }
-
-    case FBLE_RELEASE_INSTR: {
-      FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-
-      size_t sp_offset = StackBytesForCount(release_instr->targets.size);
-      fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
-      for (size_t i = 0; i < release_instr->targets.size; ++i) {
-        FbleVar target = {
-          .tag = FBLE_LOCAL_VAR,
-          .index = release_instr->targets.xs[i]
-        };
-        GetFrameVar(fout, "x9", target);
-        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
-      }
-
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", release_instr->targets.size);
-      fprintf(fout, "  mov x2, SP\n");
-      fprintf(fout, "  bl FbleReleaseValues\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-      return;
-    }
+    case FBLE_RETAIN_INSTR: return;
+    case FBLE_RELEASE_INSTR: return;
 
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;
@@ -1170,25 +1143,6 @@ static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
     }
 
     case FBLE_TAIL_CALL_INSTR: {
-      FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-
-      size_t sp_offset = StackBytesForCount(call_instr->release.size);
-      fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
-      for (size_t i = 0; i < call_instr->release.size; ++i) {
-        FbleVar target = {
-          .tag = FBLE_LOCAL_VAR,
-          .index = call_instr->release.xs[i]
-        };
-        GetFrameVar(fout, "x9", target);
-        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
-      }
-
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", call_instr->release.size);
-      fprintf(fout, "  mov x2, SP\n");
-      fprintf(fout, "  bl FbleReleaseValues\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-
       fprintf(fout, "  mov x0, XZR\n");
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;
@@ -1211,10 +1165,6 @@ static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
     }
 
     case FBLE_RETURN_INSTR: {
-      FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      GetFrameVar(fout, "x1", return_instr->result);
-      fprintf(fout, "  bl FbleReleaseValue\n");
       fprintf(fout, "  mov x0, XZR\n");
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;
@@ -1226,34 +1176,8 @@ static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
       return;
     }
 
-    case FBLE_RETAIN_INSTR: {
-      FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      GetFrameVar(fout, "x1", retain_instr->target);
-      fprintf(fout, "  bl FbleRetainValue\n");
-      return;
-    }
-
-    case FBLE_RELEASE_INSTR: {
-      FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      size_t sp_offset = StackBytesForCount(release_instr->targets.size);
-      fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
-      for (size_t i = 0; i < release_instr->targets.size; ++i) {
-        FbleVar target = {
-          .tag = FBLE_LOCAL_VAR,
-          .index = release_instr->targets.xs[i]
-        };
-        GetFrameVar(fout, "x9", target);
-        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
-      }
-
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", release_instr->targets.size);
-      fprintf(fout, "  mov x2, SP\n");
-      fprintf(fout, "  bl FbleReleaseValues\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-      return;
-    }
+    case FBLE_RETAIN_INSTR: break;
+    case FBLE_RELEASE_INSTR: break;
 
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;

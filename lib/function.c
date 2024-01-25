@@ -95,8 +95,7 @@ static FbleValue* PartialApplyImpl(
  *  @returns[FbleValue*] The allocated result.
  *
  *  @sideeffects
- *   Allocates an FbleValue that should be freed with FbleReleaseValue when no
- *   longer needed.
+ *   Allocates an FbleValue on the heap.
  */
 static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
@@ -127,7 +126,6 @@ static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, Fble
  *  @sideeffects
  *   @i Enters a profiling block for the function being called.
  *   @i Executes the called function to completion, returning the result.
- *   @i Calls FbleReleaseValue on the provided func and args.
  *   @i Pops the current frame from the heap.
  */
 static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
@@ -191,9 +189,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
  *  @returns[FbleValue*] The computed value, or NULL on error.
  *  
  *  @sideeffects
- *   @item
- *    The returned value must be freed with FbleReleaseValue when no longer in
- *    use.
+ *   @i Allocates a value on the heap.
  *   @i Prints a message to stderr in case of error.
  *   @i Updates profile based on the execution.
  *   @i Does not take ownership of the function or the args.
