@@ -93,7 +93,6 @@ static void EmitSearch(Context* context, Interval* interval);
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr);
 static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
-static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
@@ -417,8 +416,9 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
   Adr(fout, "x5", "%s", lmsg);
   fprintf(fout, "  bl fprintf\n");
 
-  // Go to abort cleanup code.
-  fprintf(fout, "  b .La.%04zx.%zi\n", func_id, pc);
+  // Return NULL.
+  fprintf(fout, "  mov x0, XZR\n");
+  fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
 }
 
 /**
@@ -1049,128 +1049,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     EmitOutlineCode(fout, func_id, i, code->instrs.xs[i]);
   }
 
-  // Emit code for aborts:
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, ".La.%04zx.%zi:\n", func_id, i);
-    EmitInstrForAbort(fout, func_id, code->instrs.xs[i]);
-  }
-
-
   fprintf(fout, ".L.%04zx.high_pc:\n", func_id);
-}
-
-/**
- * Generates code to execute an instruction for the purposes of abort.
- *
- * @param fout  The output stream to write the code to.
- * @param func_id  Unique id for the function to use in labels.
- * @param pc  The program counter of the instruction.
- * @param instr  The instruction to execute.
- *
- * @sideeffects
- * * Outputs code to fout.
- */
-static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
-{
-  switch (instr->tag) {
-    case FBLE_STRUCT_VALUE_INSTR: {
-      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      SetFrameVar(fout, "XZR", struct_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_VALUE_INSTR: {
-      FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      SetFrameVar(fout, "XZR", union_instr->dest);
-      return;
-    }
-
-    case FBLE_STRUCT_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      SetFrameVar(fout, "XZR", access_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      SetFrameVar(fout, "XZR", access_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_SELECT_INSTR: {
-      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  b .La.%04zx.%zi\n", func_id, select_instr->default_);
-      return;
-    }
-
-    case FBLE_GOTO_INSTR: {
-      FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-      fprintf(fout, "  b .La.%04zx.%zi\n", func_id, goto_instr->target);
-      return;
-    }
-
-    case FBLE_FUNC_VALUE_INSTR: {
-      FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      SetFrameVar(fout, "XZR", func_instr->dest);
-      return;
-    }
-
-    case FBLE_CALL_INSTR: {
-      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      SetFrameVar(fout, "XZR", call_instr->dest);
-      return;
-    }
-
-    case FBLE_TAIL_CALL_INSTR: {
-      fprintf(fout, "  mov x0, XZR\n");
-      fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
-      return;
-    }
-
-    case FBLE_COPY_INSTR: {
-      FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-      SetFrameVar(fout, "XZR", copy_instr->dest);
-      return;
-    }
-
-    case FBLE_REF_VALUE_INSTR: {
-      FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-      SetFrameVar(fout, "XZR", ref_instr->dest);
-      return;
-    }
-
-    case FBLE_REF_DEF_INSTR: {
-      return;
-    }
-
-    case FBLE_RETURN_INSTR: {
-      fprintf(fout, "  mov x0, XZR\n");
-      fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
-      return;
-    }
-
-    case FBLE_TYPE_INSTR: {
-      FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      SetFrameVar(fout, "XZR", type_instr->dest);
-      return;
-    }
-
-    case FBLE_LIST_INSTR: {
-      FbleListInstr* list_instr = (FbleListInstr*)instr;
-      SetFrameVar(fout, "XZR", list_instr->dest);
-      return;
-    }
-
-    case FBLE_LITERAL_INSTR: {
-      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      SetFrameVar(fout, "XZR", literal_instr->dest);
-      return;
-    }
-
-    case FBLE_NOP_INSTR: {
-      return;
-    }
-  }
 }
 
 /**
