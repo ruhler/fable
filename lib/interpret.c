@@ -17,7 +17,6 @@
 #include "unreachable.h"
 
 static void FreeCode(void* code);
-static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc);
 
 /**
  * Gets the value of a variable in scope.
@@ -47,148 +46,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
 static void FreeCode(void* data)
 {
   FbleFreeCode((FbleCode*)data);
-}
-
-/**
- * Aborts a function.
- *
- * To abort a stack frame we execute the remaining instructions in the stack
- * frame only as much as necessary to release any live local variables. We
- * don't do new allocations or function calls as part of this execution.
- *
- * While aborting, any value normally expected to be allocated may be set to
- * NULL.
- *
- * @param heap  The value heap.
- * @param code  The code for the function.
- * @param locals  The function's local variables.
- * @param pc  The pc to start aborting from.
- *
- * @return NULL for convenience.
- *
- * @sideeffects
- * Cleans up the function's local variables.
- */
-static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** vars, size_t pc)
-{
-  FbleValue** locals = vars[FBLE_LOCAL_VAR];
-  while (true) {
-    assert(pc < code->instrs.size && "Missing return instruction?");
-    FbleInstr* instr = code->instrs.xs[pc];
-    switch (instr->tag) {
-      case FBLE_STRUCT_VALUE_INSTR: {
-        FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-        locals[struct_value_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_UNION_VALUE_INSTR: {
-        FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-        locals[union_value_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_STRUCT_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        locals[access_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_UNION_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        locals[access_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_UNION_SELECT_INSTR: {
-        // For the purposes of abort, it doesn't matter which branch we take,
-        // because all branches have to clean up memory the same way.
-        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        pc = select_instr->default_;
-        break;
-      }
-
-      case FBLE_GOTO_INSTR: {
-        FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-        pc = goto_instr->target;
-        break;
-      }
-
-      case FBLE_FUNC_VALUE_INSTR: {
-        FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-        locals[func_value_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_CALL_INSTR: {
-        FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-        locals[call_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_TAIL_CALL_INSTR: {
-        return NULL;
-      }
-
-      case FBLE_COPY_INSTR: {
-        FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-        locals[copy_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_REF_VALUE_INSTR: {
-        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-        locals[ref_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_REF_DEF_INSTR: {
-        pc++;
-        break;
-      }
-
-      case FBLE_RETURN_INSTR: {
-        return NULL;
-      }
-
-      case FBLE_TYPE_INSTR: {
-        FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-        locals[type_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_LIST_INSTR: {
-        FbleListInstr* list_instr = (FbleListInstr*)instr;
-        locals[list_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_LITERAL_INSTR: {
-        FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-        locals[literal_instr->dest] = NULL;
-        pc++;
-        break;
-      }
-
-      case FBLE_NOP_INSTR: {
-        pc++;
-        break;
-      }
-    }
-  }
-
-  FbleUnreachable("Should never get here");
-  return NULL;
 }
 
 // FbleRunFunction for running interpreted code.
@@ -268,7 +125,7 @@ static FbleValue* Interpret(
 
         if (locals[access_instr->dest] == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
-          return RunAbort(heap, code, vars, pc);
+          return NULL;
         }
 
         pc++;
@@ -283,13 +140,13 @@ static FbleValue* Interpret(
 
         if (locals[access_instr->dest] == NULL) {
           FbleReportError("undefined union value access\n", access_instr->loc);
-          return RunAbort(heap, code, vars, pc);
+          return NULL;
         }
 
         if (locals[access_instr->dest] == FbleWrongUnionTag) {
           locals[access_instr->dest] = NULL;
           FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-          return RunAbort(heap, code, vars, pc);
+          return NULL;
         }
 
         pc++;
@@ -303,7 +160,7 @@ static FbleValue* Interpret(
 
         if (tag == (size_t)(-1)) {
           FbleReportError("undefined union value select\n", select_instr->loc);
-          return RunAbort(heap, code, vars, pc);
+          return NULL;
         }
 
         // Binary search for the matching tag.
@@ -358,7 +215,7 @@ static FbleValue* Interpret(
         locals[call_instr->dest] = FbleCall(heap, profile, func, call_instr->args.size, call_args);
         if (locals[call_instr->dest] == NULL) {
           FbleReportError("callee aborted\n", call_instr->loc);
-          return RunAbort(heap, code, vars, pc);
+          return NULL;
         }
 
         pc++;
@@ -371,7 +228,7 @@ static FbleValue* Interpret(
         FbleFunction* call_function = FbleFuncValueFunction(func);
         if (call_function == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
-          return RunAbort(heap, code, vars, pc);
+          return NULL;
         };
 
         size_t argc = call_instr->args.size;
@@ -403,7 +260,7 @@ static FbleValue* Interpret(
         FbleValue* value = GET(ref_def_instr->value);
         if (!FbleAssignRefValue(heap, ref, value)) {
           FbleReportError("vacuous value\n", ref_def_instr->loc);
-          return RunAbort(heap, code, vars, pc);
+          return NULL;
         }
 
         pc++;
