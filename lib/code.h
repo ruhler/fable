@@ -103,8 +103,6 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
-  FBLE_RETAIN_INSTR,
-  FBLE_RELEASE_INSTR,
   FBLE_LIST_INSTR,
   FBLE_LITERAL_INSTR,
   FBLE_NOP_INSTR,
@@ -356,26 +354,6 @@ typedef struct {
   FbleInstr _base;      /**< FbleInstr base class. */
   FbleLocalIndex dest;  /**< Where to put the created value. */
 } FbleTypeInstr;
-
-/**
- * FBLE_RETAIN_INSTR: Retains an fble value.
- *
- * FbleRetainValue(target)
- */
-typedef struct {
-  FbleInstr _base;          /**< FbleInstr base class. */
-  FbleVar target;           /**< The value to reatin. */
-} FbleRetainInstr;
-
-/**
- * FBLE_RELEASE_INSTR: Releases fble values.
- *
- * FbleReleaseValue(targets)
- */
-typedef struct {
-  FbleInstr _base;          /**< FbleInstr base class. */
-  FbleLocalIndexV targets;  /**< The values to release. */
-} FbleReleaseInstr;
 
 /**
  * FBLE_LIST_INSTR: Creates a list value.

@@ -166,16 +166,6 @@ static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue*** var
         break;
       }
 
-      case FBLE_RETAIN_INSTR: {
-        pc++;
-        break;
-      }
-
-      case FBLE_RELEASE_INSTR: {
-        pc++;
-        break;
-      }
-
       case FBLE_LIST_INSTR: {
         FbleListInstr* list_instr = (FbleListInstr*)instr;
         locals[list_instr->dest] = NULL;
@@ -433,16 +423,6 @@ static FbleValue* Interpret(
       case FBLE_TYPE_INSTR: {
         FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         locals[type_instr->dest] = FbleGenericTypeValue;
-        pc++;
-        break;
-      }
-
-      case FBLE_RETAIN_INSTR: {
-        pc++;
-        break;
-      }
-
-      case FBLE_RELEASE_INSTR: {
         pc++;
         break;
       }

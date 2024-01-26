@@ -1251,3 +1251,11 @@ but it all passes.
 Next phase:
 * Clean up retain/release calls, which are no longer needed.
 
+After removing calls to FbleRetain/FbleRelease:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.82 ==> 47.22 ==> 45.03
+  Maximum resident set size (kbytes): 2516 => 2176 ==> 2108
+
+Cool. There's still more cleanup to do. Then it's time to work on this
+pathological case. I have ideas.

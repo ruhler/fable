@@ -77,8 +77,6 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_REF_DEF_INSTR: break;
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
-      case FBLE_RETAIN_INSTR: break;
-      case FBLE_RELEASE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
       case FBLE_NOP_INSTR: break;
@@ -555,9 +553,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         break;
       }
 
-      case FBLE_RETAIN_INSTR: break;
-      case FBLE_RELEASE_INSTR: break;
-
       case FBLE_LIST_INSTR: {
         FbleListInstr* list_instr = (FbleListInstr*)instr;
         size_t argc = list_instr->args.size;
@@ -686,9 +681,6 @@ static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
       fprintf(fout, "  l[%zi] = NULL;\n", type_instr->dest);
       return;
     }
-
-    case FBLE_RETAIN_INSTR: break;
-    case FBLE_RELEASE_INSTR: break;
 
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;

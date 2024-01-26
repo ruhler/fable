@@ -702,16 +702,7 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
  * @sideeffects:
  *   Appends an instruction to the code block for the given scope.
  */
-static void AppendRetainInstr(Scope* scope, FbleVar var)
-{
-  FbleRetainInstr* retain = FbleAllocInstr(FbleRetainInstr, FBLE_RETAIN_INSTR);
-  retain->target = var;
-  assert((var.tag == FBLE_STATIC_VAR
-      || var.tag == FBLE_ARG_VAR
-      || var.tag == FBLE_LOCAL_VAR)
-      && "Invalid var tag");
-  AppendInstr(scope, &retain->_base);
-}
+static void AppendRetainInstr(Scope* scope, FbleVar var) { }
 
 /**
  * Outputs an FbleReleaseInstr.
@@ -725,23 +716,7 @@ static void AppendRetainInstr(Scope* scope, FbleVar var)
  * @sideeffects:
  * * Appends an instruction to the code block for the given scope.
  */
-static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index)
-{
-  if (scope->pending_debug_info == NULL
-      && scope->pending_profile_ops == NULL
-      && scope->code->instrs.size > 0) {
-    FbleReleaseInstr* instr = (FbleReleaseInstr*)scope->code->instrs.xs[scope->code->instrs.size - 1];
-    if (instr->_base.tag == FBLE_RELEASE_INSTR) {
-      FbleAppendToVector(instr->targets, index);
-      return;
-    }
-  }
-
-  FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-  FbleInitVector(release_instr->targets);
-  FbleAppendToVector(release_instr->targets, index);
-  AppendInstr(scope, &release_instr->_base);
-}
+static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index) { }
 
 /**
  * Appends a single debug info entry to the code block for the given scope.

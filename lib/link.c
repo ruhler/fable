@@ -75,13 +75,6 @@ static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, Fbl
     FbleAppendToVector(code->instrs, &call->_base);
   }
 
-  FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-  FbleInitVector(release_instr->targets);
-  for (size_t i = 0; i + 1 < compiled->modules.size; ++i) {
-    FbleAppendToVector(release_instr->targets, i);
-  }
-  FbleAppendToVector(code->instrs, &release_instr->_base);
-
   FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
   return_instr->result.tag = FBLE_LOCAL_VAR;
   return_instr->result.index = modulec - 1;
@@ -174,13 +167,6 @@ static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleG
     call->dest = i;
     FbleAppendToVector(code->instrs, &call->_base);
   }
-
-  FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
-  FbleInitVector(release_instr->targets);
-  for (size_t i = 0; i + 1 < modules.size; ++i) {
-    FbleAppendToVector(release_instr->targets, i);
-  }
-  FbleAppendToVector(code->instrs, &release_instr->_base);
 
   FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
   return_instr->result.tag = FBLE_LOCAL_VAR;

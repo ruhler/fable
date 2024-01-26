@@ -182,8 +182,6 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
-      case FBLE_RETAIN_INSTR: break;
-      case FBLE_RELEASE_INSTR: break;
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
       case FBLE_NOP_INSTR: break;
@@ -828,9 +826,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       return;
     }
 
-    case FBLE_RETAIN_INSTR: return;
-    case FBLE_RELEASE_INSTR: return;
-
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;
       size_t argc = list_instr->args.size;
@@ -997,8 +992,6 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 
     case FBLE_RETURN_INSTR: return;
     case FBLE_TYPE_INSTR: return;
-    case FBLE_RETAIN_INSTR: return;
-    case FBLE_RELEASE_INSTR: return;
     case FBLE_LIST_INSTR: return;
     case FBLE_LITERAL_INSTR: return;
     case FBLE_NOP_INSTR: return;
@@ -1175,9 +1168,6 @@ static void EmitInstrForAbort(FILE* fout, size_t func_id, FbleInstr* instr)
       SetFrameVar(fout, "XZR", type_instr->dest);
       return;
     }
-
-    case FBLE_RETAIN_INSTR: break;
-    case FBLE_RELEASE_INSTR: break;
 
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;

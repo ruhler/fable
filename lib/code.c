@@ -71,17 +71,8 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
-    case FBLE_RETAIN_INSTR:
       FbleFree(instr);
       return;
-
-
-    case FBLE_RELEASE_INSTR: {
-      FbleReleaseInstr* i = (FbleReleaseInstr*)instr;
-      FbleFreeVector(i->targets);
-      FbleFree(instr);
-      return;
-    }
 
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
@@ -476,28 +467,6 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
           FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "l%zi = type;\n", type_instr->dest);
-          break;
-        }
-
-        case FBLE_RETAIN_INSTR: {
-          FbleRetainInstr* retain_instr = (FbleRetainInstr*)instr;
-          fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "retain %s%zi;\n", 
-              var_tags[retain_instr->target.tag],
-              retain_instr->target.index);
-          break;
-        }
-
-        case FBLE_RELEASE_INSTR: {
-          FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-          fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "release ");
-          const char* comma = "";
-          for (size_t j = 0; j < release_instr->targets.size; ++j) {
-            fprintf(fout, "%sl%zi", comma, release_instr->targets.xs[j]);
-            comma = ", ";
-          }
-          fprintf(fout, ";\n");
           break;
         }
 

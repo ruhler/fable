@@ -8,8 +8,7 @@ Things to consider doing for the fble-0.3 release.
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
 * Stack Alloc
- - Remove FBLE_RETAIN_INSTR
- - Remove FBLE_RELEASE_INSTR
+ - Remove compile.c AppendRetainInstr, AppendReleaseInstr.
  - Remove TAIL_CALL_INSTR's release field.
  - Remove code in compile.c tracking ownership.
  - Do abort functions now simplify to return NULL?
