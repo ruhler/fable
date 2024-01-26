@@ -29,17 +29,6 @@ typedef struct {
 struct Local {
   FbleVar var;        /**< The variable. */
   size_t refcount;    /**< The number of references to the local. */
-
-  /**
-   * NULL if this local is retained. Non-NULL if this local is kept alive by
-   * some other owner, where owner is that other local keeping this alive.
-   */
-  struct Local* owner;
-
-  /**
-   * List of other locals that have this local as the owner.
-   */
-  LocalV owned;
 };
 
 /** Scope of variables visible during compilation. */
@@ -89,7 +78,7 @@ typedef struct Scope {
 } Scope;
 
 static void FreeLocal(Local* local);
-static Local* NewLocal(Scope* scope, Local* owner);
+static Local* NewLocal(Scope* scope);
 static void ReleaseLocal(Scope* scope, Local* local, bool exit);
 static void PushVar(Scope* scope, FbleName name, Local* local);
 static void PopVar(Scope* scope, bool exit);
@@ -102,8 +91,6 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc);
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
-static void AppendRetainInstr(Scope* scope, FbleVar var);
-static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index);
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg);
 
@@ -138,7 +125,6 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc);
  */
 static void FreeLocal(Local* local)
 {
-  FbleFreeVector(local->owned);
   FbleFree(local);
 }
 
@@ -146,7 +132,6 @@ static void FreeLocal(Local* local)
  * Allocates space for an anonymous local variable on the stack frame.
  *
  * @param scope  The scope to allocate the local on.
- * @param owner  The owner of this local, or NULL.
  *
  * @returns
  *   A newly allocated local.
@@ -155,7 +140,7 @@ static void FreeLocal(Local* local)
  *   Allocates a space on the scope's locals for the local. The local should
  *   be freed with ReleaseLocal when no longer in use.
  */
-static Local* NewLocal(Scope* scope, Local* owner)
+static Local* NewLocal(Scope* scope)
 {
   size_t index = scope->locals.size;
   for (size_t i = 0; i < scope->locals.size; ++i) {
@@ -174,12 +159,6 @@ static Local* NewLocal(Scope* scope, Local* owner)
   local->var.tag = FBLE_LOCAL_VAR;
   local->var.index = index;
   local->refcount = 1;
-  local->owner = owner;
-  FbleInitVector(local->owned);
-
-  if (owner != NULL) {
-    FbleAppendToVector(owner->owned, local);
-  }
 
   scope->locals.xs[index] = local;
   return local;
@@ -208,38 +187,6 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
     // refcount should never drop to 0 on static or arg vars.
     assert(local->var.tag == FBLE_LOCAL_VAR);
     assert(scope->locals.xs[local->var.index] == local);
-
-    if (local->owner == NULL) {
-      // Explicitly retain any owned by this local, because they can no
-      // longer rely on this local to keep them alive.
-      for (size_t i = 0; i < local->owned.size; ++i) {
-        local->owned.xs[i]->owner = NULL;
-        if (!exit) {
-          AppendRetainInstr(scope, local->owned.xs[i]->var);
-        }
-      }
-
-      if (!exit) {
-        // Release this var.
-        AppendReleaseInstr(scope, local->var.index);
-      }
-    } else {
-      // Remove ownership of this from the owner
-      for (size_t i = 0; i < local->owner->owned.size; ++i) {
-        if (local->owner->owned.xs[i] == local) {
-          local->owner->owned.size--;
-          local->owner->owned.xs[i] = local->owner->owned.xs[local->owner->owned.size];
-          break;
-        }
-      }
-
-      // Transfer ownership of owned to the owner.
-      for (size_t i = 0; i < local->owned.size; ++i) {
-        local->owned.xs[i]->owner = local->owner;
-        FbleAppendToVector(local->owner->owned, local->owned.xs[i]);
-      }
-    }
-
     scope->locals.xs[local->var.index] = NULL;
     FreeLocal(local);
   }
@@ -577,8 +524,6 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV s
     local->var.tag = FBLE_STATIC_VAR;
     local->var.index = i;
     local->refcount = 1;
-    local->owner = NULL;
-    FbleInitVector(local->owned);
     FbleAppendToVector(scope->statics, local);
   }
 
@@ -588,8 +533,6 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV s
     local->var.tag = FBLE_ARG_VAR;
     local->var.index = i;
     local->refcount = 1;
-    local->owner = NULL;
-    FbleInitVector(local->owned);
     FbleAppendToVector(scope->args, local);
   }
 
@@ -692,31 +635,6 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
 
   FbleAppendToVector(scope->code->instrs, instr);
 }
-
-/**
- * Outputs an FbleRetainInstr.
- *
- * @param scope  The scope to append the instruction to.
- * @var var  The variable to retain.
- *
- * @sideeffects:
- *   Appends an instruction to the code block for the given scope.
- */
-static void AppendRetainInstr(Scope* scope, FbleVar var) { }
-
-/**
- * Outputs an FbleReleaseInstr.
- *
- * Use this for release instructions to facilitate coallescing of sequential
- * releases into a single instruction.
- *
- * @param scope  The scope to append the instruction to.
- * @param index  The index of the variable to release.
- *
- * @sideeffects:
- * * Appends an instruction to the code block for the given scope.
- */
-static void AppendReleaseInstr(Scope* scope, FbleLocalIndex index) { }
 
 /**
  * Appends a single debug info entry to the code block for the given scope.
@@ -934,18 +852,6 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 static void CompileExit(bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    // Release any remaining local variables before returning.
-    for (size_t i = 0; i < scope->locals.size; ++i) {
-      Local* local = scope->locals.xs[i];
-      if (local != NULL && local != result && local->owner == NULL) {
-        AppendReleaseInstr(scope, local->var.index);
-      }
-    }
-
-    if (result->var.tag != FBLE_LOCAL_VAR || result->owner != NULL) {
-      AppendRetainInstr(scope, result->var);
-    }
-
     FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
     return_instr->result = result->var;
     AppendInstr(scope, &return_instr->_base);
@@ -989,7 +895,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
   switch (v->tag) {
     case FBLE_TYPE_VALUE_TC: {
-      Local* local = NewLocal(scope, NULL);
+      Local* local = NewLocal(scope);
       FbleTypeInstr* instr = FbleAllocInstr(FbleTypeInstr, FBLE_TYPE_INSTR);
       instr->dest = local->var.index;
       AppendInstr(scope, &instr->_base);
@@ -1014,7 +920,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         vars[i] = NULL;
         if (let_tc->recursive) {
-          vars[i] = NewLocal(scope, NULL);
+          vars[i] = NewLocal(scope);
           FbleRefValueInstr* ref_instr = FbleAllocInstr(FbleRefValueInstr, FBLE_REF_VALUE_INSTR);
           ref_instr->dest = vars[i]->var.index;
           AppendInstr(scope, &ref_instr->_base);
@@ -1059,7 +965,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         args[i] = CompileExpr(blocks, false, false, scope, struct_tc->fields.xs[i]);
       }
 
-      Local* local = NewLocal(scope, NULL);
+      Local* local = NewLocal(scope);
       FbleStructValueInstr* struct_instr = FbleAllocInstr(FbleStructValueInstr, FBLE_STRUCT_VALUE_INSTR);
       struct_instr->dest = local->var.index;
       FbleInitVector(struct_instr->args);
@@ -1085,7 +991,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         if (struct_copy->fields.xs[i]) {
           args[i] = CompileExpr(blocks, false, false, scope, struct_copy->fields.xs[i]);
         } else {
-          args[i] = NewLocal(scope, source);
+          args[i] = NewLocal(scope);
           FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
           access->obj = source->var;
           access->tag = i;
@@ -1095,7 +1001,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         }
       }
 
-      Local* local = NewLocal(scope, NULL);
+      Local* local = NewLocal(scope);
       FbleStructValueInstr* struct_instr = FbleAllocInstr(FbleStructValueInstr, FBLE_STRUCT_VALUE_INSTR);
       struct_instr->dest = local->var.index;
       FbleInitVector(struct_instr->args);
@@ -1115,7 +1021,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleUnionValueTc* union_tc = (FbleUnionValueTc*)v;
       Local* arg = CompileExpr(blocks, false, false, scope, union_tc->arg);
 
-      Local* local = NewLocal(scope, NULL);
+      Local* local = NewLocal(scope);
       FbleUnionValueInstr* union_instr = FbleAllocInstr(FbleUnionValueInstr, FBLE_UNION_VALUE_INSTR);
       union_instr->tag = union_tc->tag;
       union_instr->arg = arg->var;
@@ -1140,7 +1046,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       // TODO: Could we arrange for the branches to put their value in the
       // target directly instead of in some cases allocating a new local and
       // then copying that to target?
-      Local* select_result = exit ? NULL : NewLocal(scope, NULL);
+      Local* select_result = exit ? NULL : NewLocal(scope);
       FbleGotoInstr* exit_gotos[select_tc->targets.size];
 
       // Non-default branches.
@@ -1155,8 +1061,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->targets.xs[i].target.tc);
 
         if (!exit) {
-          AppendRetainInstr(scope, result->var);
-
           FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
           copy->source = result->var;
           copy->dest = select_result->var.index;
@@ -1182,8 +1086,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         Local* result = CompileExpr(blocks, true, exit, scope, select_tc->default_.tc);
 
         if (!exit) {
-          AppendRetainInstr(scope, result->var);
-
           FbleCopyInstr* copy = FbleAllocInstr(FbleCopyInstr, FBLE_COPY_INSTR);
           copy->source = result->var;
           copy->dest = select_result->var.index;
@@ -1235,7 +1137,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       access->loc = FbleCopyLoc(access_tc->loc);
       AppendInstr(scope, &access->_base);
 
-      Local* local = NewLocal(scope, obj);
+      Local* local = NewLocal(scope);
       access->dest = local->var.index;
 
       CompileExit(exit, scope, local);
@@ -1311,7 +1213,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       FbleFreeTc(body);
 
-      Local* local = NewLocal(scope, NULL);
+      Local* local = NewLocal(scope);
       instr->dest = local->var.index;
       AppendInstr(scope, &instr->_base);
       CompileExit(exit, scope, local);
@@ -1346,7 +1248,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         atc = (FbleFuncApplyTc*)atc->func;
       }
 
-      Local* dest = exit ? NULL : NewLocal(scope, NULL);
+      Local* dest = exit ? NULL : NewLocal(scope);
 
       if (exit) {
         FbleTailCallInstr* call_instr = FbleAllocInstr(FbleTailCallInstr, FBLE_TAIL_CALL_INSTR);
@@ -1388,7 +1290,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         args[i] = CompileExpr(blocks, false, false, scope, list_tc->fields.xs[i]);
       }
 
-      Local* local = NewLocal(scope, NULL);
+      Local* local = NewLocal(scope);
       FbleListInstr* list_instr = FbleAllocInstr(FbleListInstr, FBLE_LIST_INSTR);
       list_instr->dest = local->var.index;
       FbleInitVector(list_instr->args);
@@ -1406,7 +1308,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
     case FBLE_LITERAL_TC: {
       FbleLiteralTc* literal_tc = (FbleLiteralTc*)v;
 
-      Local* local = NewLocal(scope, NULL);
+      Local* local = NewLocal(scope);
       FbleLiteralInstr* literal_instr = FbleAllocInstr(FbleLiteralInstr, FBLE_LITERAL_INSTR);
       literal_instr->dest = local->var.index;
       FbleInitVector(literal_instr->letters);

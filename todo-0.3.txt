@@ -8,8 +8,6 @@ Things to consider doing for the fble-0.3 release.
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
 * Stack Alloc
- - Remove compile.c AppendRetainInstr, AppendReleaseInstr.
- - Remove code in compile.c tracking ownership.
  - Do abort functions now simplify to return NULL?
  - Add assertion/docs saying ref value assignment must be done to ref/value in
    the same stack frame.
