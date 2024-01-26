@@ -296,7 +296,6 @@ typedef struct {
   FbleLoc loc;          /**< Location of the call for error reporting. */
   FbleVar func;         /**< The function to call. */
   FbleVarV args;        /**< The arguments to pass to the called function. */
-  FbleLocalIndexV release;  /**< Values to release before returning. */
 } FbleTailCallInstr;
 
 /**

@@ -124,7 +124,6 @@ void FbleFreeInstr(FbleInstr* instr)
       FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
       FbleFreeLoc(call_instr->loc);
       FbleFreeVector(call_instr->args);
-      FbleFreeVector(call_instr->release);
       FbleFree(instr);
       return;
     }
@@ -414,14 +413,6 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
               
           fprintf(fout, ");");
           PrintLoc(fout, call_instr->loc);
-
-          fprintf(fout, "       releasing ");
-          comma = "";
-          for (size_t j = 0; j < call_instr->release.size; ++j) {
-            fprintf(fout, "%sl%zi", comma, call_instr->release.xs[j]); 
-            comma = ",";
-          }
-          fprintf(fout, "\n");
           break;
         }
 

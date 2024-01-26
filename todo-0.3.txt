@@ -9,10 +9,8 @@ Things to consider doing for the fble-0.3 release.
 
 * Stack Alloc
  - Remove compile.c AppendRetainInstr, AppendReleaseInstr.
- - Remove TAIL_CALL_INSTR's release field.
  - Remove code in compile.c tracking ownership.
  - Do abort functions now simplify to return NULL?
- - Remove unused FbleFunction* argument to FbleTailCall.
  - Add assertion/docs saying ref value assignment must be done to ref/value in
    the same stack frame.
  - Figure out better way to pick initial heap size.

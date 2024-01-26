@@ -1357,13 +1357,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
           FbleAppendToVector(call_instr->args, args[i]->var);
         }
 
-        FbleInitVector(call_instr->release);
-        for (size_t i = 0; i < scope->locals.size; ++i) {
-          Local* local = scope->locals.xs[i];
-          if (local != NULL && local->owner == NULL) {
-            FbleAppendToVector(call_instr->release, local->var.index);
-          }
-        }
         AppendInstr(scope, &call_instr->_base);
       } else {
         FbleCallInstr* call_instr = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);

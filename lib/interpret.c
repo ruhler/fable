@@ -380,12 +380,7 @@ static FbleValue* Interpret(
           call_args[i] = GET(call_instr->args.xs[i]);
         }
 
-        FbleValue* releases[call_instr->release.size];
-        for (size_t i = 0; i < call_instr->release.size; ++i) {
-          releases[i] = locals[call_instr->release.xs[i]];
-        }
-
-        return FbleTailCall(heap, call_function, func, argc, call_args, call_instr->release.size, releases);
+        return FbleTailCall(heap, call_function, func, argc, call_args);
       }
 
       case FBLE_COPY_INSTR: {

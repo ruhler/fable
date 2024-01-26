@@ -759,22 +759,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  mov x3, %zi\n", call_instr->args.size);
       fprintf(fout, "  mov x4, SP\n");              // args
 
-      // Set up values for release.
-      size_t sp_offset2 = StackBytesForCount(call_instr->release.size);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset2);
-      for (size_t i = 0; i < call_instr->release.size; ++i) {
-        FbleVar target = {
-          .tag = FBLE_LOCAL_VAR,
-          .index = call_instr->release.xs[i]
-        };
-        GetFrameVar(fout, "x9", target);
-        fprintf(fout, "  str x9, [SP, #%zi]\n", sizeof(FbleValue*) * i);
-      }
-      fprintf(fout, "  mov x5, %zi\n", call_instr->release.size);
-      fprintf(fout, "  mov x6, SP\n");              // releases
-
       fprintf(fout, "  bl FbleTailCall\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset + sp_offset2);
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
 
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;

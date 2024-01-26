@@ -100,20 +100,16 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
  *  @arg[FbleValue*][func] The function value to execute.
  *  @arg[size_t][argc] Number of arguments passed to the function.
  *  @arg[FbleValue**][args] Arguments to pass to the function. Borrowed.
- *  @arg[size_t][releasec] Number of values to release
- *  @arg[FbleValue**][releases] Values to release as part of the tail call.
  *
  *  @returns FbleValue*
  *   The result of the function call, or NULL in case of abort.
  *
  *  @sideeffects
  *   @i Allocates an opaque object representing a tail call.
- *   @i Calls FbleReleaseValue on all @a[releases] values.
  */
 FbleValue* FbleTailCall(
     FbleValueHeap* heap,
     FbleFunction* function, FbleValue* func,
-    size_t argc, FbleValue** args,
-    size_t releasec, FbleValue** releases);
+    size_t argc, FbleValue** args);
 
 #endif // FBLE_EXECUTE_H_

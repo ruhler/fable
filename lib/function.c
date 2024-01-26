@@ -276,7 +276,7 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 }
 
 // See documentation in fble-function.h
-FbleValue* FbleTailCall(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args, size_t releasec, FbleValue** releases)
+FbleValue* FbleTailCall(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
   EnsureTailCallArgsSpace(argc);
 

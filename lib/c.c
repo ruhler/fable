@@ -501,15 +501,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         }
         fprintf(fout, "};\n");
 
-        fprintf(fout, "  FbleValue* rv%zi[%zi] = {", pc, call_instr->release.size);
-        for (size_t i = 0; i < call_instr->release.size; ++i) {
-          fprintf(fout, "l[%zi],", call_instr->release.xs[i]);
-        }
-        fprintf(fout, "};\n");
-
-        fprintf(fout, "  return FbleTailCall(heap, f0, %s[%zi], %zi, ca%zi, %zi, rv%zi);\n",
+        fprintf(fout, "  return FbleTailCall(heap, f0, %s[%zi], %zi, ca%zi);\n",
             var_tag[call_instr->func.tag], call_instr->func.index,
-            call_instr->args.size, pc, call_instr->release.size, pc);
+            call_instr->args.size, pc);
         break;
       }
 
