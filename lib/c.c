@@ -32,11 +32,9 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
-static void ReturnAbort(FILE* fout, FbleCode* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc);
+static void ReturnAbort(FILE* fout, const char* lmsg, FbleLoc loc);
 
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
-static void EmitInstrForAbort(FILE* fout, FbleInstr* instr);
-static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
@@ -258,21 +256,17 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledMod
  * Emits code to return an error from a Run function.
  *
  * @param fout  The output stream.
- * @param code  Pointer to current code block to use for labels.
- * @param function_label  The label for the currently executing function.
- * @param pc  The program counter of the abort location.
  * @param lmsg  The name of the error message to use.
  * @param loc  The location to report with the error message.
  *
  * @sideeffects
  *   Emits code to return the error.
  */
-static void ReturnAbort(FILE* fout, FbleCode* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc)
+static void ReturnAbort(FILE* fout, const char* lmsg, FbleLoc loc)
 {
   fprintf(fout, "{\n");
   fprintf(fout, "    ReportAbort(%s, %zi, %zi);\n", lmsg, loc.line, loc.col);
-  fprintf(fout, "    return %s_%04zx_abort(heap, s, a, l, %zi);\n",
-      function_label, code->profile_block_id, pc);
+  fprintf(fout, "    return NULL;\n");
   fprintf(fout, "  }\n");
 }
 
@@ -384,7 +378,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             access_instr->dest, var_tag[access_instr->obj.tag],
             access_instr->obj.index, access_instr->tag);
         fprintf(fout, "  if (l[%zi] == NULL) ", access_instr->dest);
-        ReturnAbort(fout, code, label, pc, "UndefinedStructValue", access_instr->loc);
+        ReturnAbort(fout, "UndefinedStructValue", access_instr->loc);
         break;
       }
 
@@ -395,11 +389,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             access_instr->obj.index, access_instr->tag);
 
         fprintf(fout, "  if (l[%zi] == NULL) ", access_instr->dest);
-        ReturnAbort(fout, code, label, pc, "UndefinedUnionValue", access_instr->loc);
+        ReturnAbort(fout, "UndefinedUnionValue", access_instr->loc);
 
         fprintf(fout, "  if (l[%zi] == FbleWrongUnionTag) {", access_instr->dest);
         fprintf(fout, "    l[%zi] = NULL;", access_instr->dest);
-        ReturnAbort(fout, code, label, pc, "WrongUnionTag", access_instr->loc);
+        ReturnAbort(fout, "WrongUnionTag", access_instr->loc);
         fprintf(fout, "  }");
         break;
       }
@@ -411,7 +405,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             var_tag[select_instr->condition.tag],
             select_instr->condition.index);
         fprintf(fout, "    case -1:");
-        ReturnAbort(fout, code, label, pc, "UndefinedUnionSelect", select_instr->loc);
+        ReturnAbort(fout, "UndefinedUnionSelect", select_instr->loc);
 
         for (size_t i = 0; i < select_instr->targets.size; ++i) {
           size_t tag = select_instr->targets.xs[i].tag;
@@ -480,7 +474,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             var_tag[call_instr->func.tag], call_instr->func.index,
             call_instr->args.size, pc);
         fprintf(fout, "  if (l[%zi] == NULL) ", call_instr->dest);
-        ReturnAbort(fout, code, label, pc, "CalleeAborted", call_instr->loc);
+        ReturnAbort(fout, "CalleeAborted", call_instr->loc);
         break;
       }
 
@@ -491,7 +485,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             var_tag[call_instr->func.tag],
             call_instr->func.index);
         fprintf(fout, "  if (f0 == NULL) ");
-        ReturnAbort(fout, code, label, pc, "UndefinedFunctionValue", call_instr->loc);
+        ReturnAbort(fout, "UndefinedFunctionValue", call_instr->loc);
 
         fprintf(fout, "  FbleValue* ca%zi[%zi] = {", pc, call_instr->args.size);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
@@ -529,7 +523,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             ref_instr->ref,
             var_tag[ref_instr->value.tag],
             ref_instr->value.index);
-        ReturnAbort(fout, code, label, pc, "VacuousValue", ref_instr->loc);
+        ReturnAbort(fout, "VacuousValue", ref_instr->loc);
         break;
       }
 
@@ -579,150 +573,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         break;
       }
     }
-  }
-  fprintf(fout, "}\n");
-}
-
-/**
- * Generates code to execute an instruction for the purposes of abort.
- *
- * @param fout  The output stream to write the code to.
- * @param pc  The program counter of the instruction.
- * @param instr  The instruction to execute.
- *
- * @sideeffects
- * * Outputs code to fout.
- */
-static void EmitInstrForAbort(FILE* fout, FbleInstr* instr)
-{
-  switch (instr->tag) {
-    case FBLE_STRUCT_VALUE_INSTR: {
-      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", struct_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_VALUE_INSTR: {
-      FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", union_instr->dest);
-      return;
-    }
-
-    case FBLE_STRUCT_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", access_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", access_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_SELECT_INSTR: {
-      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  goto pc_%zi;\n", select_instr->default_);
-      return;
-    }
-
-    case FBLE_GOTO_INSTR: {
-      FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-      fprintf(fout, "  goto pc_%zi;\n", goto_instr->target);
-      return;
-    }
-
-    case FBLE_FUNC_VALUE_INSTR: {
-      FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", func_instr->dest);
-      return;
-    }
-
-    case FBLE_CALL_INSTR: {
-      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", call_instr->dest);
-      return;
-    }
-
-    case FBLE_TAIL_CALL_INSTR: {
-      fprintf(fout, "  return NULL;\n");
-      return;
-    }
-
-    case FBLE_COPY_INSTR: {
-      FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", copy_instr->dest);
-      return;
-    }
-
-    case FBLE_REF_VALUE_INSTR: {
-      FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", ref_instr->dest);
-      return;
-    }
-
-    case FBLE_REF_DEF_INSTR: {
-      return;
-    }
-
-    case FBLE_RETURN_INSTR: {
-      fprintf(fout, "  return NULL;\n");
-      return;
-    }
-
-    case FBLE_TYPE_INSTR: {
-      FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", type_instr->dest);
-      return;
-    }
-
-    case FBLE_LIST_INSTR: {
-      FbleListInstr* list_instr = (FbleListInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", list_instr->dest);
-      return;
-    }
-
-    case FBLE_LITERAL_INSTR: {
-      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      fprintf(fout, "  l[%zi] = NULL;\n", literal_instr->dest);
-      return;
-    }
-
-    case FBLE_NOP_INSTR: {
-      return;
-    };
-  }
-}
-
-/**
- * Generates code to abort an FbleCode block.
- *
- * @param fout  The output stream to write the code to.
- * @param profile_blocks  The list of profile block names for the module.
- * @param code  The block of code to generate assembly.
- *
- * @sideeffects
- * * Outputs generated code to the given output stream.
- */
-static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
-{
-  // Jump table data for jumping to the right fble pc.
-  FbleName block = profile_blocks.xs[code->profile_block_id];
-  char label[SizeofSanitizedString(block.name->str)];
-  SanitizeString(block.name->str, label);
-  fprintf(fout, "static FbleValue* %s_%04zx_abort(FbleValueHeap* heap, FbleValue** s, FbleValue** a, FbleValue** l, size_t pc)\n", label, code->profile_block_id);
-  fprintf(fout, "{\n");
-  fprintf(fout, "  switch (pc)\n");
-  fprintf(fout, "  {\n");
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "    case %zi: goto pc_%zi;\n", i, i);
-  }
-  fprintf(fout, "  }\n");
-
-  // Emit code for each fble instruction
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "pc_%zi:\n", i);
-    EmitInstrForAbort(fout, code->instrs.xs[i]);
   }
   fprintf(fout, "}\n");
 }
@@ -855,7 +705,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
       module->path->loc.source->str);
   fprintf(fout, "}\n");
 
-  // Generate prototypes for all the run and abort functions.
+  // Generate prototypes for all the run functions.
   FbleNameV profile_blocks = module->profile_blocks;
   for (size_t i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
@@ -866,14 +716,11 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
       "FbleValueHeap* heap, FbleProfileThread* profile, "
       "FbleFunction* function, FbleValue** args);\n",
         function_label, code->profile_block_id);
-    fprintf(fout, "static FbleValue* %s_%04zx_abort(FbleValueHeap* heap, FbleValue** statics, FbleValue** args, FbleValue** locals, size_t pc);\n",
-        function_label, code->profile_block_id);
   }
 
-  // Generate the implementations of all the run and abort functions.
+  // Generate the implementations of all the run functions.
   for (size_t i = 0; i < blocks.size; ++i) {
     EmitCode(fout, profile_blocks, blocks.xs[i]);
-    EmitCodeForAbort(fout, profile_blocks, blocks.xs[i]);
   }
 
   LabelId label_id = 0;

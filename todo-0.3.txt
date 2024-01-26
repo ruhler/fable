@@ -8,7 +8,6 @@ Things to consider doing for the fble-0.3 release.
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
 * Stack Alloc
- - Remove Abort function code in c backend.
  - Remove Abort function code in aarch64 backend.
  - Add assertion/docs saying ref value assignment must be done to ref/value in
    the same stack frame.
