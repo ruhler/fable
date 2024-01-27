@@ -1259,3 +1259,165 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 
 Cool. There's still more cleanup to do. Then it's time to work on this
 pathological case. I have ideas.
+
+---
+
+All the cleanup is done now.
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.82 ==> 47.22 ==> 45.03 ==> 44.81
+  Maximum resident set size (kbytes): 2516 => 2176 ==> 2108 ==> 2116
+
+Now on to performance.
+
+There are a couple high level ideas to improve performance. I'm sure it's
+dominated by Traverse. We should be able to verify very quickly running fbld
+with linux perf.
+
+Yeah:
+
+Flat Profile by Self Time
+-------------------------
+    %     self  block
+99.97    17963  Traverse.part.0[0001X]
+ 0.03        5  0xffffffd436e103cc[000aX]
+ 
+How can we avoid so much traversal?
+
+1. Merge stack frames.
+For example, if we call a => b => c => d, instead of traversing when we go d
+to c, c to b, and b to a, merge the stack frames for a,b and c,d. Traverse
+only when we go c to b.
+
+Variations: Merge frames until a certain number of allocations have been done.
+We could limit overhead of potential garbage this way.
+
+2. Make use of GC for some objects.
+The extreme case is implementing the current API with every object GC
+allocated. I feel like we should be able to get performance equivalent to
+before stack alloc, but with all the nice cleanup of the new API.
+
+The less extreme case is somehow identifying objects appropriate to allocate
+on the heap and track them separately.
+
+3. Allocate directly to caller.
+Is there some way we could know where returned values should be allocated to
+start? For example, in a function, I know if I'm allocating something I'm
+going to return. Have the caller pass the frame where I should allocate to
+directly.
+
+4. ???
+
+---
+
+There are too many different ideas to try out. Let's pick one and run with it.
+Specifically, let's go back to a GC based approach with the new API. I'm
+hopeful that will be fast enough to let us merge the recent changes with the
+main line and continue iterating from there.
+
+How does a GC based approach work?
+
+At a high level:
+* Objects are 'owned' by their stack frame.
+* When you return from a frame, you transfer ownership of returned objects to
+  the new frame.
+
+For performance to work out, we need to avoid doing allocation for new frames.
+Ideally dropping a frame is constant time, regardless of how many objects were
+allocated on it (not including time in incremental GC).
+
+This means:
+* We don't have to explicitly release each object on a frame when dropping the
+  frame.
+* We have immediate access to the next frame when dropping a frame.
+
+We will need to drop references to objects at some point. Better to do it
+sooner because it's more likely to be in the cache sooner than later.
+
+Straw 1:
+* Objects form a linked list. Each new object on a frame keeps the next one on
+  the frame alive and so on.
+* The 'top' object on a frame also points to the next frame.
+
+This adds 16 bytes overhead to objects, in addition to the GC overhead.
+
+Straw 2:
+* For each frame we track two representative objects.
+  1. An object whose 'next' is the next frame, forming a linked list of
+     frames.
+  2. An object whose 'next' is the next object in the frame, forming a linked
+     list of objects in the frame.
+
+Object (1) does not participate in the linked list of object (2).
+
+Now we only need 8 bytes overhead per object, which sounds reasonable to me.
+
+But where do we keep track of these two objects? That's the trouble. We don't
+have a place for that.
+
+Another challenge with this approach is I'm not sure if it's safe to remove a
+reference from an object the way the current GC is implemented. That may not
+trigger a collection event.
+
+We could store the frame data structure separately, outside of the heap. Maybe
+batch things together, so we allocate once every 1000 frames or so. Or have a
+vector of objects. That sounds reasonable to start anyway.
+
+Let's start simple. Each object has two extra fields: next in frame, and next
+frame. FbleValueHeap keeps track of the top frame, and maybe an integer saying
+how many frames down on the stack that is.
+
+To allocate an object:
+* next points to top frame,
+* tail points to top frame's tail.
+* drop reference to previous top frame.
+* set new top frame
+
+To allocate a new frame:
+* increment count on FbleValueHeap.
+
+To pop a frame:
+* release the top frame, decrement the pop count? No, that doesn't quite work.
+
+How can we have frames with no allocations? Where to keep info about that?
+
+Again, start simple. Each object has one extra field: next in frame. We have a
+vector of Frame entries that we update for each frame we enter (regardless of
+whether we allocate there or not). The frame stores the top object on the
+frame which we have retained. It could be NULL.
+
+To push: update top object on frame.
+To pop: release top object on frame, pop frame.
+
+Yeah. That's it. Good and simple.
+
+Trouble: I need a way to know if the value being returned was allocated on the
+frame being popped or not.
+
+The cases are:
+A. value being popped was allocated down on the stack. No need to
+   Retain/Release.
+B. value being popped was allocated on this frame.
+   Don't release. Push onto child frame.
+C. value being popped is referenced from a value allocated on this frame.
+   Retain and push onto the child frame.
+
+How do I distinguish between these three cases?
+
+We need to allow the same value to show up on multiple frames.
+
+That solves it. So in the end we basically move our stack from managed by the
+compiler to managed by the heap.
+
+Performance:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.82 ==> 44.81 ==> 56.61
+  Maximum resident set size (kbytes): 2516 ==> 2116 ==> 2364
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 98.44 ==> 120.47
+  Maximum resident set size (kbytes): 99592 ==> 101404
+
+We'll need to improve performance before we can take it. But at least fbld is
+in the right ball part now.

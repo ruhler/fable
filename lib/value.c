@@ -11,24 +11,14 @@
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-function.h>  // for FbleFreeExecutable
 #include <fble/fble-value.h>     // for FbleValue, etc.
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
+#include "heap.h"           // for FbleHeap, etc.
 #include "unreachable.h"    // for FbleUnreachable
 
-typedef struct Frame Frame;
-
-/**
- * Invariants:
- *   StackOf(a) != StackOf(a->caller) != StackOf(a->alternate)
- */
-struct Frame {
-  intptr_t top;           /**< Next FbleValue to allocate on this stack frame. */
-  FbleValue* natives;     /**< Singly linked list of native values on this frame. */
-  Frame* caller;          /**< The caller's frame. */
-  Frame* alternate;       /**< An alternate frame. */
-};
-
 struct FbleValueHeap {
-  Frame* stack;
+  FbleHeap* heap;
+  FbleValueV frames;  // NULL is used to indicate the base of a frame.
 };
 
 /** Different kinds of FbleValue. */
@@ -38,7 +28,6 @@ typedef enum {
   FUNC_VALUE,
   REF_VALUE,
   NATIVE_VALUE,
-  TRAVERSED_VALUE,
 } ValueTag;
 
 /**
@@ -122,36 +111,29 @@ typedef struct {
   FbleValue _base;              /**< FbleValue base class. */
   void* data;                   /**< User data. */               
   void (*on_free)(void* data);  /**< Destructor for user data. */
-  FbleValue* tail;              /**< Singly linked list of native values in this frame. */
 } NativeValue;
-
-/**
- * TRAVERSED_VALUE: Marker used during traversal.
- */
-typedef struct {
-  FbleValue _base;             /**< FbleValue base class. */
-  FbleValue* dest;             /**< Where the value was copied to. */
-} TraversedValue;
 
 /**
  * Allocates a new value of the given type.
  *
  * @param heap  The heap to allocate the value on
  * @param T  The type of the value
+ * @param tag The tag of the value
  *
  * @returns
- *   The newly allocated value. The value does not have its tag initialized.
+ *   The newly allocated value.
  *
  * @sideeffects
  *   Allocates a value that should be released when it is no longer needed.
  */
-#define NewValue(heap, T) ((T*) NewValueRaw(heap, sizeof(T)))
+#define NewValue(heap, T, tag) ((T*) NewValueRaw(heap, tag, sizeof(T)))
 
 /**
  * Allocates a new value with some extra space.
  *
  * @param heap  The heap to allocate the value on
  * @param T  The type of the value
+ * @param tag The tag of the value
  * @param count  The number of FbleValue* worth of extra space to include in
  *   the allocated object.
  *
@@ -161,7 +143,7 @@ typedef struct {
  * @sideeffects
  *   Allocates a value that should be released when it is no longer needed.
  */
-#define NewValueExtra(heap, T, count) ((T*) NewValueRaw(heap, sizeof(T) + count * sizeof(FbleValue*)))
+#define NewValueExtra(heap, T, tag, count) ((T*) NewValueRaw(heap, tag, sizeof(T) + count * sizeof(FbleValue*)))
 
 // See documentation in fble-value.h
 //
@@ -170,9 +152,13 @@ typedef struct {
 // struct values.
 FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 
-static void* NewValueRaw(FbleValueHeap* heap, size_t size);
-static void FreeNatives(FbleValue* natives);
-static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* base, FbleValue* top, FbleValue* value);
+static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
+static void OnFree(FbleHeap* heap, FbleValue* value);
+static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst);
+static void Refs(FbleHeap* heap, FbleValue* value);
+static void RetainValue(FbleValueHeap* heap, FbleValue* value);
+static void ReleaseValue(FbleValueHeap* heap, FbleValue* value);
+static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
 
 static bool IsPacked(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
@@ -181,245 +167,212 @@ static FbleValue* StrictValue(FbleValue* value);
 // See documentation in fble-value.h.
 FbleValueHeap* FbleNewValueHeap()
 {
-  // TODO: Come up with a better way to size these initial allocations.
-  // For now, 256MB each should fit in the 1GB available on my pi.
-  size_t stack_size = 256 * 1024 * 1024;
-  Frame* caller = FbleAllocExtra(Frame, stack_size);
-  caller->top = (intptr_t)(caller + 1);
-  caller->natives = NULL;
-  caller->caller = NULL;
-  caller->alternate = NULL;
-
-  Frame* alternate = FbleAllocExtra(Frame, stack_size);
-  alternate->top = (intptr_t)(alternate + 1);
-  alternate->natives = NULL;
-  alternate->caller = NULL;
-  alternate->alternate = NULL;
-
-  Frame* stack = FbleAllocExtra(Frame, stack_size);
-  stack->top = (intptr_t)(stack + 1);
-  stack->natives = NULL;
-  stack->caller = caller;
-  stack->alternate = alternate;
-  
   FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
-  heap->stack = stack;
-
+  heap->heap = FbleNewHeap(
+      (void (*)(FbleHeap*, void*))&Refs,
+      (void (*)(FbleHeap*, void*))&OnFree);
+  FbleInitVector(heap->frames);
+  FbleAppendToVector(heap->frames, NULL);
   return heap;
 }
 
 // See documentation in fble-value.h.
 void FbleFreeValueHeap(FbleValueHeap* heap)
 {
-  Frame* caller = heap->stack->caller;
-  assert(caller->natives == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  assert(caller->caller == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  assert(caller->alternate == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  FbleFree(caller);
-
-  Frame* alternate = heap->stack->alternate;
-  assert(alternate->natives == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  assert(alternate->caller == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  assert(alternate->alternate == NULL && "Mismatched FblePushFrame/FblePopFrame");
-  FbleFree(alternate);
-
-  Frame* stack = heap->stack;
-  FreeNatives(stack->natives);
-  FbleFree(stack);
-
+  for (size_t i = 0; i < heap->frames.size; ++i) {
+    // fprintf(stderr, "f %p\n", (void*)heap->frames.xs[i]);
+    ReleaseValue(heap, heap->frames.xs[i]);
+  }
+  FbleFreeVector(heap->frames);
+  FbleFreeHeap(heap->heap);
   FbleFree(heap);
 }
 
+static void RetainValue(FbleValueHeap* heap, FbleValue* value)
+{
+  if (!PACKED(value) && value != NULL) {
+    FbleRetainHeapObject(heap->heap, value);
+  }
+}
+
+static void ReleaseValue(FbleValueHeap* heap, FbleValue* value)
+{
+  if (!PACKED(value) && value != NULL) {
+    FbleReleaseHeapObject(heap->heap, value);
+  }
+}
 // See documentation in fble-value.h
 void FblePushFrame(FbleValueHeap* heap)
 {
-  Frame* stack = heap->stack;
-
-  Frame* new = (Frame*)stack->alternate->top;
-  new->top = (intptr_t)(new + 1);
-  new->natives = NULL;
-  new->caller = stack;
-  new->alternate = stack->caller;
-
-  heap->stack = new;
+  // fprintf(stderr, "+\n");
+  FbleAppendToVector(heap->frames, NULL);
 }
 
 // See documentation in fble-value.h
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
-  Frame* popped = heap->stack;
-  heap->stack = popped->caller;
+  RetainValue(heap, value);
 
-  FbleValue* base = (FbleValue*)(popped + 1);
-  FbleValue* top = (FbleValue*)popped->top;
-  FbleValue* nv = Traverse(heap, base, top, value);
+  size_t top = heap->frames.size - 1;
+  while (heap->frames.xs[top] != NULL) {
+    ReleaseValue(heap, heap->frames.xs[top]);
+    top--;
+  }
 
-  FreeNatives(popped->natives);
-  return nv;
+  heap->frames.size = top;
+  FbleAppendToVector(heap->frames, value);
+  return value;
 }
 
 // See documentation in fble-value.h
 void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
 {
-  Frame* popped = heap->stack;
-
-  FbleValue* base = (FbleValue*)(popped + 1);
-  FbleValue* top = (FbleValue*)popped->top;
-
-  // The new frame is whichever of caller->alternate or caller->caller we
-  // aren't currently popping from.
-  Frame* caller = popped->caller;
-  Frame* new = (Frame*)caller->caller->top;
-  Frame* alt = caller->alternate;
-  if (new == popped) {
-    new = (Frame*)caller->alternate->top;
-    alt = caller->caller;
-  }
-  assert(popped == (Frame*)alt->top);
-
-  new->top = (intptr_t)(new + 1);
-  new->natives = NULL;
-  new->caller = caller;
-  new->alternate = alt;
-
-  heap->stack = new;
-
   for (size_t i = 0; i < n; ++i) {
-    save[i] = Traverse(heap, base, top, save[i]);
+    RetainValue(heap, save[i]);
   }
-  FreeNatives(popped->natives);
-}
-
-static void* NewValueRaw(FbleValueHeap* heap, size_t size)
-{
-  Frame* stack = heap->stack;
-  intptr_t value = stack->top;
-  stack->top += size;
-  return (void*)value;
-}
-
-static void FreeNatives(FbleValue* natives)
-{
-  while (natives != NULL) {
-    NativeValue* native = (NativeValue*)natives;
-    if (native->_base.tag == NATIVE_VALUE) {
-      if (native->on_free != NULL) {
-        native->on_free(native->data);
-      }
-    }
-    natives = native->tail;
+
+  size_t top = heap->frames.size - 1;
+  while (heap->frames.xs[top] != NULL) {
+    ReleaseValue(heap, heap->frames.xs[top]);
+    top--;
+  }
+
+  heap->frames.size = top + 1;
+  for (size_t i = 0; i < n; ++i) {
+    FbleAppendToVector(heap->frames, save[i]);
   }
 }
 
 /**
- * @func[Traverse] Copies a value from to the current' frame.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleValue*][base] The base of the frame we are popping from.
- *  @arg[FbleValue*][top] The top of the frame we are popping from.
- *  @arg[FbleValue*][value] The value on the popped frame to copy.
- *  @returns[FbleValue*] The new address for value.
+ * @func[AddRef] Adds reference from one value to another.
+ *  Notifies the value heap of a new reference from src to dst.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap the values are allocated on.
+ *  @arg[FbleValue*    ][src ] The source of the reference.
+ *  @arg[FbleValue*    ][dst ]
+ *   The destination of the reference. Must not be NULL.
+ *
  *  @sideeffects
- *   Copies value and anything it depends on from the popped frame to the
- *   current frame.
+ *   Causes the dst value to be retained for at least as long as the src value.
  */
-static FbleValue* Traverse(FbleValueHeap* heap, FbleValue* base, FbleValue* top, FbleValue* value)
+static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (IsPacked(value) || value < base || value >= top) {
-    return value;
+  if (!PACKED(src) && !PACKED(dst)) {
+    // fprintf(stderr, "%p -> %p\n", (void*)src, (void*)dst);
+    FbleHeapObjectAddRef(heap->heap, src, dst);
   }
+}
+
+/**
+ * The 'on_free' function for values.
+ *
+ * See documentation of on_free in heap.h.
+ *
+ * @param heap  The heap.
+ * @param value  The value being freed.
+ * 
+ * @sideeffects
+ *   Frees any resources outside of the heap that this value holds on to.
+ */
+static void OnFree(FbleHeap* heap, FbleValue* value)
+{
+  // fprintf(stderr, "free %p\n", (void*)value);
+  (void)heap;
 
   switch (value->tag) {
-    case STRUCT_VALUE: {
-      StructValue* v = (StructValue*)value;
-      StructValue* nv = NewValueExtra(heap, StructValue, v->fieldc);
-      nv->_base.tag = STRUCT_VALUE;
-      nv->fieldc = v->fieldc;
+    case STRUCT_VALUE:
+    case UNION_VALUE:
+    case FUNC_VALUE:
+    case REF_VALUE:
+      return;
 
-      TraversedValue* t = (TraversedValue*)v;
-      t->_base.tag = TRAVERSED_VALUE;
-      t->dest = &nv->_base;
-
-      for (size_t i = 0; i < nv->fieldc; ++i) {
-        nv->fields[i] = Traverse(heap, base, top, v->fields[i]);
+    case NATIVE_VALUE: {
+      NativeValue* v = (NativeValue*)value;
+      if (v->on_free != NULL) {
+        v->on_free(v->data);
       }
+      return;
+    }
+  }
 
-      return &nv->_base;
+  FbleUnreachable("Should not get here");
+}
+
+/**
+ * @func[Ref] Helper function for implementing Refs.
+ *  Calls FbleHeapObjectAddRef.
+ *
+ *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[FbleValue*][src] The source of the reference.
+ *  @arg[FbleValue*][dst] The target of the reference. Must not be NULL.
+ *
+ *  @sideeffects
+ *   If value is non-NULL, FbleHeapObjectAddRef is called for it.
+ */
+static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst)
+{
+  if (!IsPacked(dst)) {
+    FbleHeapObjectAddRef(heap, src, dst);
+  }
+}
+
+/**
+ * The 'refs' function for values.
+ *
+ * See documentation of refs in heap.h.
+ *
+ * @param heap  The heap.
+ * @param value  The value whose references to traverse
+ *   
+ * @sideeffects
+ * * Calls FbleHeapRef for each object referenced by obj.
+ */
+static void Refs(FbleHeap* heap, FbleValue* value)
+{
+  switch (value->tag) {
+    case STRUCT_VALUE: {
+      StructValue* sv = (StructValue*)value;
+      for (size_t i = 0; i < sv->fieldc; ++i) {
+        Ref(heap, value, sv->fields[i]);
+      }
+      break;
     }
 
     case UNION_VALUE: {
-      UnionValue* v = (UnionValue*)value;
-      UnionValue* nv = NewValue(heap, UnionValue);
-      nv->_base.tag = UNION_VALUE;
-      nv->tag = v->tag;
-
-      TraversedValue* t = (TraversedValue*)v;
-      t->_base.tag = TRAVERSED_VALUE;
-      t->dest = &nv->_base;
-
-      nv->arg = Traverse(heap, base, top, v->arg);
-      return &nv->_base;
+      UnionValue* uv = (UnionValue*)value;
+      Ref(heap, value, uv->arg);
+      break;
     }
 
     case FUNC_VALUE: {
       FuncValue* v = (FuncValue*)value;
-      size_t num_statics = v->function.executable.num_statics;
-      FuncValue* nv = NewValueExtra(heap, FuncValue, num_statics);
-      nv->_base.tag = FUNC_VALUE;
-      nv->function.executable = v->function.executable;
-      nv->function.profile_block_id = v->function.profile_block_id;
-      nv->function.statics = nv->statics;
-
-      TraversedValue* t = (TraversedValue*)v;
-      t->_base.tag = TRAVERSED_VALUE;
-      t->dest = &nv->_base;
-
-      for (size_t i = 0; i < num_statics; ++i) {
-        nv->statics[i] = Traverse(heap, base, top, v->statics[i]);
+      for (size_t i = 0; i < v->function.executable.num_statics; ++i) {
+        Ref(heap, value, v->statics[i]);
       }
-
-      return &nv->_base;
+      break;
     }
 
     case REF_VALUE: {
       RefValue* v = (RefValue*)value;
-      RefValue* nv = NewValue(heap, RefValue);
-      nv->_base.tag = REF_VALUE;
-
-      FbleValue* ref_value = v->value;
-
-      TraversedValue* t = (TraversedValue*)v;
-      t->_base.tag = TRAVERSED_VALUE;
-      t->dest = &nv->_base;
-
-      nv->value = Traverse(heap, base, top, ref_value);
-      return &nv->_base;
+      if (v->value != NULL) {
+        Ref(heap, value, v->value);
+      }
+      break;
     }
 
     case NATIVE_VALUE: {
-      NativeValue* v = (NativeValue*)value;
-      NativeValue* nv = NewValue(heap, NativeValue);
-
-      nv->_base.tag = NATIVE_VALUE;
-      nv->data = v->data;
-      nv->on_free = v->on_free;
-      nv->tail = heap->stack->natives;
-      heap->stack->natives = &nv->_base;
-
-      TraversedValue* t = (TraversedValue*)v;
-      t->_base.tag = TRAVERSED_VALUE;
-      t->dest = &nv->_base;
-
-      return &nv->_base;
-    }
-
-    case TRAVERSED_VALUE: {
-      TraversedValue* v = (TraversedValue*)value;
-      return v->dest;
+      break;
     }
   }
-
-  FbleUnreachable("should never get here");
-  return NULL;
+}
+
+static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
+{
+  FbleValue* value = (FbleValue*)FbleNewHeapObject(heap->heap, size);
+  value->tag = tag;
+  // fprintf(stderr, "a %i %p\n", tag, (void*)value);
+  FbleAppendToVector(heap->frames, value);
+  return value;
 }
 
 /**
@@ -530,13 +483,13 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
     return (FbleValue*)data;
   }
 
-  StructValue* value = NewValueExtra(heap, StructValue, argc);
-  value->_base.tag = STRUCT_VALUE;
+  StructValue* value = NewValueExtra(heap, StructValue, STRUCT_VALUE, argc);
   value->fieldc = argc;
 
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[i];
     value->fields[i] = arg;
+    AddRef(heap, &value->_base, arg);
   }
 
   return &value->_base;
@@ -609,10 +562,10 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
     }
   }
 
-  UnionValue* union_value = NewValue(heap, UnionValue);
-  union_value->_base.tag = UNION_VALUE;
+  UnionValue* union_value = NewValue(heap, UnionValue, UNION_VALUE);
   union_value->tag = tag;
   union_value->arg = arg;
+  AddRef(heap, &union_value->_base, arg);
   return &union_value->_base;
 }
 // See documentation in fble-value.h.
@@ -723,13 +676,13 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
 // See documentation in fble-value.h.
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics)
 {
-  FuncValue* v = NewValueExtra(heap, FuncValue, executable->num_statics);
-  v->_base.tag = FUNC_VALUE;
+  FuncValue* v = NewValueExtra(heap, FuncValue, FUNC_VALUE, executable->num_statics);
   v->function.profile_block_id = profile_block_id;
   memcpy(&v->function, executable, sizeof(FbleExecutable));
   v->function.statics = v->statics;
   for (size_t i = 0; i < executable->num_statics; ++i) {
     v->statics[i] = statics[i];
+    AddRef(heap, &v->_base, statics[i]);
   }
   return &v->_base;
 }
@@ -753,6 +706,7 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[argc - i - 1];
     FbleValue* cons = FbleNewStructValue_(heap, 2, arg, tail);
+
     tail = FbleNewUnionValue(heap, 0, cons);
   }
   return tail;
@@ -788,8 +742,7 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 // See documentation in fble-value.h.
 FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 {
-  RefValue* rv = NewValue(heap, RefValue);
-  rv->_base.tag = REF_VALUE;
+  RefValue* rv = NewValue(heap, RefValue, REF_VALUE);
   rv->value = NULL;
   return &rv->_base;
 }
@@ -812,6 +765,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   RefValue* rv = (RefValue*)ref;
   assert(rv->_base.tag == REF_VALUE);
   rv->value = value;
+  AddRef(heap, ref, value);
   return true;
 }
 
@@ -819,12 +773,9 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
     void* data, void (*on_free)(void* data))
 {
-  NativeValue* value = NewValue(heap, NativeValue);
-  value->_base.tag = NATIVE_VALUE;
+  NativeValue* value = NewValue(heap, NativeValue, NATIVE_VALUE);
   value->data = data;
   value->on_free = on_free;
-  value->tail = heap->stack->natives;
-  heap->stack->natives = &value->_base;
   return &value->_base;
 }
 
