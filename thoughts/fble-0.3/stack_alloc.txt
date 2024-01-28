@@ -1421,3 +1421,12 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 
 We'll need to improve performance before we can take it. But at least fbld is
 in the right ball part now.
+
+---
+
+Avoiding vector shrink resize for the stack:
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 98.44 ==> 120.47 ==> 109.03
+  Maximum resident set size (kbytes): 99592 ==> 101404 ==> 100472
+

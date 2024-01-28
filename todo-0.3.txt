@@ -2,6 +2,12 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Use custom data type for heap frames instead of vector
+ - To avoid resizing. Just let it grow.
+ - And let it pre-allocate enough space on FbleCompactHeap.
+
+* Document functions in lib/value.c
+
 * Remove use of FbleResetMaxTotalBytesAllocated in memtest.
 
 * Add regression test for memory leak fixed in

@@ -18,7 +18,10 @@
 
 struct FbleValueHeap {
   FbleHeap* heap;
-  FbleValueV frames;  // NULL is used to indicate the base of a frame.
+
+  size_t capacity;
+  size_t size;
+  FbleValue** stack;
 };
 
 /** Different kinds of FbleValue. */
@@ -160,6 +163,9 @@ static void RetainValue(FbleValueHeap* heap, FbleValue* value);
 static void ReleaseValue(FbleValueHeap* heap, FbleValue* value);
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
 
+static void AddToStack(FbleValueHeap* heap, FbleValue* value);
+static void AddsToStack(FbleValueHeap* heap, size_t count, FbleValue** values);
+
 static bool IsPacked(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
@@ -171,19 +177,20 @@ FbleValueHeap* FbleNewValueHeap()
   heap->heap = FbleNewHeap(
       (void (*)(FbleHeap*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
-  FbleInitVector(heap->frames);
-  FbleAppendToVector(heap->frames, NULL);
+  heap->capacity = 1;
+  heap->size = 1;
+  heap->stack = FbleAllocArray(FbleValue*, heap->capacity);
+  heap->stack[0] = NULL;
   return heap;
 }
 
 // See documentation in fble-value.h.
 void FbleFreeValueHeap(FbleValueHeap* heap)
 {
-  for (size_t i = 0; i < heap->frames.size; ++i) {
-    // fprintf(stderr, "f %p\n", (void*)heap->frames.xs[i]);
-    ReleaseValue(heap, heap->frames.xs[i]);
+  for (size_t i = 0; i < heap->size; ++i) {
+    ReleaseValue(heap, heap->stack[i]);
   }
-  FbleFreeVector(heap->frames);
+  FbleFree(heap->stack);
   FbleFreeHeap(heap->heap);
   FbleFree(heap);
 }
@@ -204,8 +211,7 @@ static void ReleaseValue(FbleValueHeap* heap, FbleValue* value)
 // See documentation in fble-value.h
 void FblePushFrame(FbleValueHeap* heap)
 {
-  // fprintf(stderr, "+\n");
-  FbleAppendToVector(heap->frames, NULL);
+  AddToStack(heap, NULL);
 }
 
 // See documentation in fble-value.h
@@ -213,14 +219,14 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
   RetainValue(heap, value);
 
-  size_t top = heap->frames.size - 1;
-  while (heap->frames.xs[top] != NULL) {
-    ReleaseValue(heap, heap->frames.xs[top]);
+  size_t top = heap->size - 1;
+  while (heap->stack[top] != NULL) {
+    ReleaseValue(heap, heap->stack[top]);
     top--;
   }
 
-  heap->frames.size = top;
-  FbleAppendToVector(heap->frames, value);
+  heap->size = top;
+  AddToStack(heap, value);
   return value;
 }
 
@@ -231,16 +237,14 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
     RetainValue(heap, save[i]);
   }
 
-  size_t top = heap->frames.size - 1;
-  while (heap->frames.xs[top] != NULL) {
-    ReleaseValue(heap, heap->frames.xs[top]);
+  size_t top = heap->size - 1;
+  while (heap->stack[top] != NULL) {
+    ReleaseValue(heap, heap->stack[top]);
     top--;
   }
 
-  heap->frames.size = top + 1;
-  for (size_t i = 0; i < n; ++i) {
-    FbleAppendToVector(heap->frames, save[i]);
-  }
+  heap->size = top + 1;
+  AddsToStack(heap, n, save);
 }
 
 /**
@@ -258,7 +262,6 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
 static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
   if (!PACKED(src) && !PACKED(dst)) {
-    // fprintf(stderr, "%p -> %p\n", (void*)src, (void*)dst);
     FbleHeapObjectAddRef(heap->heap, src, dst);
   }
 }
@@ -276,7 +279,6 @@ static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
  */
 static void OnFree(FbleHeap* heap, FbleValue* value)
 {
-  // fprintf(stderr, "free %p\n", (void*)value);
   (void)heap;
 
   switch (value->tag) {
@@ -370,9 +372,31 @@ static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
 {
   FbleValue* value = (FbleValue*)FbleNewHeapObject(heap->heap, size);
   value->tag = tag;
-  // fprintf(stderr, "a %i %p\n", tag, (void*)value);
-  FbleAppendToVector(heap->frames, value);
+  AddToStack(heap, value);
   return value;
+}
+
+static void AddToStack(FbleValueHeap* heap, FbleValue* value)
+{
+  AddsToStack(heap, 1, &value);
+}
+
+static void AddsToStack(FbleValueHeap* heap, size_t count, FbleValue** values)
+{
+  if (heap->size + count > heap->capacity) {
+    while (heap->size + count > heap->capacity) {
+      heap->capacity *= 2;
+    }
+    FbleValue** nstack = FbleAllocArray(FbleValue*, heap->capacity);
+    memcpy(nstack, heap->stack, heap->size * sizeof(FbleValue*));
+    FbleFree(heap->stack);
+    heap->stack = nstack;
+  }
+
+  for (size_t i = 0; i < count; ++i) {
+    heap->stack[heap->size + i] = values[i];
+  }
+  heap->size += count;
 }
 
 /**
