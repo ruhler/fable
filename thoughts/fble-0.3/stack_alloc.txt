@@ -1430,3 +1430,99 @@ Avoiding vector shrink resize for the stack:
   User time (seconds): 98.44 ==> 120.47 ==> 109.03
   Maximum resident set size (kbytes): 99592 ==> 101404 ==> 100472
 
+---
+
+Idea for tracking these cases:
+A. value being popped was allocated down on the stack. No need to
+   Retain/Release.
+B. value being popped was allocated on this frame.
+   Don't release. Push onto child frame.
+C. value being popped is referenced from a value allocated on this frame.
+   Retain and push onto the child frame.
+
+Have a frame counter. Every time we push a new frame, increment the counter by
+1. When we allocate a new object, store the current frame counter with the
+object.
+
+Now, when we return an object, there are three cases:
+1. The object's allocation frame is less than the frame being popped. No need
+to retain/release.
+2. The object's allocation frame is the frame being popped. Don't release, move
+to child frame. Update the allocation frame value to the child frame.
+3. The object's allocation frame is the greater than the frame being popped.
+The value being popped is referenced from a value allocated on this frame.
+Retain and move onto the child frame, updating its allocation frame.
+
+It's exactly the info we wanted. The benefit of this is we don't have to walk
+through all the objects on a frame when we pop or compact. We can let GC
+traversal take care of that. We just need to retain one object per frame which
+can reach all the other objects on the frame.
+
+Actually, in this case, no need to distinguish between (2) and (3)? The main
+thing being that we aren't allowed to disrupt the reference chain down the
+stack. But we can mess it up for any other objects?
+
+Straw:
+* For each frame we retain a single object which can reach any other object on
+  the frame.
+* Each object says which frame push it was allocated on.
+* When you pop a frame,
+  - if the returned object was allocated downstack, we know it's retained
+    downframe, so just return it.
+  - if the returned object was allocated since, make it the new retaining
+    object for down stack (i.e. retain it) and return it.
+
+Easy, no? Compact works similarly, except we add saved values to a new
+frame instead of going downstack.
+
+Each value has:
+* 'next' field in singly linked list.
+* 'generation' field for frame it was allocated at.
+
+And we have a growing vector of values which are the retainers for each frame
+on the stack.
+
+The heap knows its current generation count.
+
+Let's try it.
+
+Do we have to increment generation count for compact frame? No, because
+'downstack' hasn't changed?
+
+It's leaking memory. I fear the current GC assumes we never change pointer
+values of an object except to go from NULL to non-NULL.
+
+Can I make a custom GC for this? It feels like we should be able to do better
+that way.
+
+---
+
+Proposal for a custom GC:
+
+Objects can be part of a doubly linked list of objects.
+
+Each frame stores three lists of objects:
+1. Potentially garbage objects allocated on callee frames.
+2. Non-garbage objects returned from callee frames.
+3. Objects allocated on this frame.
+
+New objects go to the list of objects allocated on the latest frame. When we
+pop from a frame, we add all objects allocated there to (1) of the caller,
+then move the returned objects to (2) of the caller.
+
+To perform GC: find the oldest frame with garbage (we can track this
+incrementally so it's constant time to find), traverse objects on (2) as
+roots, any objects in (1) not traversed after GC are freed.
+
+During the traversal, we only traverse objects in (1) and (2). Any other
+objects we don't have to worry about.
+
+Keep track of the frame/generation an object belongs to so it's easy to tell
+if we need to traverse an object or not. When traversing, update the traversed
+objects generation to the current frame.
+
+The reason to GC the oldest frame with garbage is because newer frames will be
+popped first, and if we pop a newer frame before we GC that frame, we can
+avoid traversing some objects entirely.
+
+

@@ -16,12 +16,19 @@
 #include "heap.h"           // for FbleHeap, etc.
 #include "unreachable.h"    // for FbleUnreachable
 
+typedef struct {
+  size_t generation;
+  FbleValue* values;
+} Frame;
+
 struct FbleValueHeap {
   FbleHeap* heap;
 
+  size_t generation;
+
   size_t capacity;
   size_t size;
-  FbleValue** stack;
+  Frame* frames;
 };
 
 /** Different kinds of FbleValue. */
@@ -47,6 +54,8 @@ typedef enum {
  */
 struct FbleValue {
   ValueTag tag;   /**< The kind of value. */
+  size_t generation;  /**< Generation this object was allocated in. */
+  FbleValue* next;    /**< Next value in a singly linked list of values. */
 };
 
 /**
@@ -163,10 +172,10 @@ static void RetainValue(FbleValueHeap* heap, FbleValue* value);
 static void ReleaseValue(FbleValueHeap* heap, FbleValue* value);
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
 
-static void AddToStack(FbleValueHeap* heap, FbleValue* value);
-static void AddsToStack(FbleValueHeap* heap, size_t count, FbleValue** values);
+static void AddValue(FbleValueHeap* heap, FbleValue* value);
 
 static bool IsPacked(FbleValue* value);
+static bool IsAlloced(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
 
@@ -177,10 +186,16 @@ FbleValueHeap* FbleNewValueHeap()
   heap->heap = FbleNewHeap(
       (void (*)(FbleHeap*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
+
+  heap->generation = 0;
+
   heap->capacity = 1;
   heap->size = 1;
-  heap->stack = FbleAllocArray(FbleValue*, heap->capacity);
-  heap->stack[0] = NULL;
+
+  heap->frames = FbleAllocArray(Frame, heap->capacity);
+  heap->frames[0].generation = 0;
+  heap->frames[0].values = NULL;
+
   return heap;
 }
 
@@ -188,63 +203,82 @@ FbleValueHeap* FbleNewValueHeap()
 void FbleFreeValueHeap(FbleValueHeap* heap)
 {
   for (size_t i = 0; i < heap->size; ++i) {
-    ReleaseValue(heap, heap->stack[i]);
+    ReleaseValue(heap, heap->frames[i].values);
   }
-  FbleFree(heap->stack);
+  FbleFree(heap->frames);
   FbleFreeHeap(heap->heap);
   FbleFree(heap);
 }
 
 static void RetainValue(FbleValueHeap* heap, FbleValue* value)
 {
-  if (!PACKED(value) && value != NULL) {
+  if (ALLOCED(value)) {
+    fprintf(stderr, "retain %p\n", (void*)value);
     FbleRetainHeapObject(heap->heap, value);
   }
 }
 
 static void ReleaseValue(FbleValueHeap* heap, FbleValue* value)
 {
-  if (!PACKED(value) && value != NULL) {
+  if (ALLOCED(value)) {
+    fprintf(stderr, "release %p\n", (void*)value);
     FbleReleaseHeapObject(heap->heap, value);
   }
 }
+
 // See documentation in fble-value.h
 void FblePushFrame(FbleValueHeap* heap)
 {
-  AddToStack(heap, NULL);
+  if (heap->size == heap->capacity) {
+    heap->capacity *= 2;
+
+    Frame* nframes = FbleAllocArray(Frame, heap->capacity);
+    memcpy(nframes, heap->frames, heap->size * sizeof(Frame));
+    FbleFree(heap->frames);
+    heap->frames = nframes;
+  }
+
+  heap->frames[heap->size].generation = ++heap->generation;
+  heap->frames[heap->size].values = NULL;
+  fprintf(stderr, "push %zi\n", heap->frames[heap->size].generation);
+  heap->size++;
 }
 
 // See documentation in fble-value.h
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
-  RetainValue(heap, value);
-
-  size_t top = heap->size - 1;
-  while (heap->stack[top] != NULL) {
-    ReleaseValue(heap, heap->stack[top]);
-    top--;
+  heap->size--;
+  if (ALLOCED(value) && value->generation >= heap->frames[heap->size].generation) {
+    fprintf(stderr, "pop %p (young)\n", (void*)value);
+    RetainValue(heap, value);
+    AddValue(heap, value);
+  } else {
+    fprintf(stderr, "pop %p (old)\n", (void*)value);
   }
 
-  heap->size = top;
-  AddToStack(heap, value);
+  ReleaseValue(heap, heap->frames[heap->size].values);
   return value;
 }
 
 // See documentation in fble-value.h
 void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
 {
+  FbleValue* pop = heap->frames[heap->size-1].values;
+  heap->frames[heap->size-1].values = NULL;
+
+  fprintf(stderr, "compact\n");
+  size_t gen = heap->frames[heap->size-1].generation;
   for (size_t i = 0; i < n; ++i) {
-    RetainValue(heap, save[i]);
+    if (ALLOCED(save[i]) && save[i]->generation >= gen) {
+      fprintf(stderr, " %p (young)\n", (void*)save[i]);
+      RetainValue(heap, save[i]);
+      AddValue(heap, save[i]);
+    } else {
+      fprintf(stderr, " %p (old)\n", (void*)save[i]);
+    }
   }
 
-  size_t top = heap->size - 1;
-  while (heap->stack[top] != NULL) {
-    ReleaseValue(heap, heap->stack[top]);
-    top--;
-  }
-
-  heap->size = top + 1;
-  AddsToStack(heap, n, save);
+  ReleaseValue(heap, pop);
 }
 
 /**
@@ -253,15 +287,14 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
  *
  *  @arg[FbleValueHeap*][heap] The heap the values are allocated on.
  *  @arg[FbleValue*    ][src ] The source of the reference.
- *  @arg[FbleValue*    ][dst ]
- *   The destination of the reference. Must not be NULL.
+ *  @arg[FbleValue*    ][dst ] The destination of the reference. May be NULL.
  *
  *  @sideeffects
  *   Causes the dst value to be retained for at least as long as the src value.
  */
 static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!PACKED(src) && !PACKED(dst)) {
+  if (!PACKED(src) && ALLOCED(dst)) {
     FbleHeapObjectAddRef(heap->heap, src, dst);
   }
 }
@@ -279,6 +312,7 @@ static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
  */
 static void OnFree(FbleHeap* heap, FbleValue* value)
 {
+  fprintf(stderr, "free %p\n", (void*)value);
   (void)heap;
 
   switch (value->tag) {
@@ -313,7 +347,7 @@ static void OnFree(FbleHeap* heap, FbleValue* value)
  */
 static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!IsPacked(dst)) {
+  if (IsAlloced(dst)) {
     FbleHeapObjectAddRef(heap, src, dst);
   }
 }
@@ -331,6 +365,7 @@ static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst)
  */
 static void Refs(FbleHeap* heap, FbleValue* value)
 {
+  Ref(heap, value, value->next);
   switch (value->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
@@ -372,41 +407,39 @@ static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
 {
   FbleValue* value = (FbleValue*)FbleNewHeapObject(heap->heap, size);
   value->tag = tag;
-  AddToStack(heap, value);
+  value->generation = heap->generation;
+  fprintf(stderr, "alloc %p\n", (void*)value);
+  AddValue(heap, value);
   return value;
 }
 
-static void AddToStack(FbleValueHeap* heap, FbleValue* value)
+static void AddValue(FbleValueHeap* heap, FbleValue* value)
 {
-  AddsToStack(heap, 1, &value);
-}
-
-static void AddsToStack(FbleValueHeap* heap, size_t count, FbleValue** values)
-{
-  if (heap->size + count > heap->capacity) {
-    while (heap->size + count > heap->capacity) {
-      heap->capacity *= 2;
-    }
-    FbleValue** nstack = FbleAllocArray(FbleValue*, heap->capacity);
-    memcpy(nstack, heap->stack, heap->size * sizeof(FbleValue*));
-    FbleFree(heap->stack);
-    heap->stack = nstack;
-  }
-
-  for (size_t i = 0; i < count; ++i) {
-    heap->stack[heap->size + i] = values[i];
-  }
-  heap->size += count;
+  value->next = heap->frames[heap->size-1].values;
+  fprintf(stderr, "add %p -> %p\n", (void*)value, (void*)value->next);
+  AddRef(heap, value, value->next);
+  ReleaseValue(heap, value->next);
+  heap->frames[heap->size-1].values = value;
 }
 
 /**
  * @func[IsPacked] Tests whether a value is packed into an FbleValue* pointer.
  *  @arg[FbleValue*][value] The value to test.
- *  @returns[bool] True if the value is a packaged value, false otherwise.
+ *  @returns[bool] True if the value is a packed value, false otherwise.
  */
 static bool IsPacked(FbleValue* value)
 {
   return (((intptr_t)value) & 1);
+}
+
+/**
+ * @func[IsAlloced] Tests whether a value is unpacked and not NULL.
+ *  @arg[FbleValue*][value] The value to test.
+ *  @returns[bool] True if the value is a non-NULL unpacked value.
+ */
+static bool IsAlloced(FbleValue* value)
+{
+  return !IsPacked(value) && value != NULL;
 }
 
 /**
@@ -469,7 +502,7 @@ static size_t PackedValueLength(intptr_t data)
  */
 static FbleValue* StrictValue(FbleValue* value)
 {
-  while (!IsPacked(value) && value != NULL && value->tag == REF_VALUE) {
+  while (IsAlloced(value) && value->tag == REF_VALUE) {
     RefValue* ref = (RefValue*)value;
     value = ref->value;
   }
