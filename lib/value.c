@@ -212,7 +212,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 
 static void RetainValue(FbleValueHeap* heap, FbleValue* value)
 {
-  if (ALLOCED(value)) {
+  if (IsAlloced(value)) {
     fprintf(stderr, "retain %p\n", (void*)value);
     FbleRetainHeapObject(heap->heap, value);
   }
@@ -220,7 +220,7 @@ static void RetainValue(FbleValueHeap* heap, FbleValue* value)
 
 static void ReleaseValue(FbleValueHeap* heap, FbleValue* value)
 {
-  if (ALLOCED(value)) {
+  if (IsAlloced(value)) {
     fprintf(stderr, "release %p\n", (void*)value);
     FbleReleaseHeapObject(heap->heap, value);
   }
@@ -248,7 +248,7 @@ void FblePushFrame(FbleValueHeap* heap)
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
   heap->size--;
-  if (ALLOCED(value) && value->generation >= heap->frames[heap->size].generation) {
+  if (IsAlloced(value) && value->generation >= heap->frames[heap->size].generation) {
     fprintf(stderr, "pop %p (young)\n", (void*)value);
     RetainValue(heap, value);
     AddValue(heap, value);
@@ -269,7 +269,7 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   fprintf(stderr, "compact\n");
   size_t gen = heap->frames[heap->size-1].generation;
   for (size_t i = 0; i < n; ++i) {
-    if (ALLOCED(save[i]) && save[i]->generation >= gen) {
+    if (IsAlloced(save[i]) && save[i]->generation >= gen) {
       fprintf(stderr, " %p (young)\n", (void*)save[i]);
       RetainValue(heap, save[i]);
       AddValue(heap, save[i]);
@@ -294,7 +294,7 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
  */
 static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!PACKED(src) && ALLOCED(dst)) {
+  if (!IsPacked(src) && IsAlloced(dst)) {
     FbleHeapObjectAddRef(heap->heap, src, dst);
   }
 }
