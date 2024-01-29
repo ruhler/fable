@@ -10,7 +10,6 @@
 #include <sys/time.h>       // for getrusage
 #include <sys/resource.h>   // for getrusage
 
-#include <fble/fble-alloc.h>       // for FbleFree, FbleMaxTotalBytesAllocated.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-generate.h>    // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink.
@@ -79,7 +78,6 @@ static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size
   // allocations made so far.
   FbleValueFullGc(heap);
 
-  FbleResetMaxTotalBytesAllocated();
   FbleValue* result = FbleApply(heap, func, 1, &tail, profile);
 
   FbleReleaseValue(heap, result);
