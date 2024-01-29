@@ -15,20 +15,6 @@
 #include "heap.h"           // for FbleHeap, etc.
 #include "unreachable.h"    // for FbleUnreachable
 
-/**
- * Tests whether a value is packed into an FbleValue* pointer.
- *
- * IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
- * to save space. An FbleValue* only points to an FbleValue if the least
- * significant bit of the pointer is 0.
- *
- * @param x  The value to test.
- *
- * @returns
- *   True if the value is a packaged value, false otherwise.
- */
-#define PACKED(x) (((intptr_t)x) & 1)
-
 /** Different kinds of FbleValue. */
 typedef enum {
   STRUCT_VALUE,
@@ -45,6 +31,10 @@ typedef enum {
  * FbleValue. The tag can be used to determine what kind of value this is to
  * get access to additional fields of the value by first casting to that
  * specific type of value.
+ *
+ * IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
+ * to save space. An FbleValue* only points to an FbleValue if the least
+ * significant bit of the pointer is 0.
  */
 struct FbleValue {
   ValueTag tag;   /**< The kind of value. */
@@ -159,6 +149,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value);
 static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst);
 static void Refs(FbleHeap* heap, FbleValue* value);
 
+static bool IsPacked(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
 
@@ -179,7 +170,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 // See documentation in fble-value.h.
 void FbleRetainValue(FbleValueHeap* heap, FbleValue* value)
 {
-  if (!PACKED(value) && value != NULL) {
+  if (!IsPacked(value) && value != NULL) {
     FbleRetainHeapObject(heap, value);
   }
 }
@@ -187,7 +178,7 @@ void FbleRetainValue(FbleValueHeap* heap, FbleValue* value)
 // See documentation in fble-value.h.
 void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
 {
-  if (!PACKED(value) && value != NULL) {
+  if (!IsPacked(value) && value != NULL) {
     FbleReleaseHeapObject(heap, value);
   }
 }
@@ -226,7 +217,7 @@ void FbleReleaseValues_(FbleValueHeap* heap, size_t argc, ...)
  */
 static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!PACKED(src) && !PACKED(dst)) {
+  if (!IsPacked(src) && !IsPacked(dst)) {
     FbleHeapObjectAddRef(heap, src, dst);
   }
 }
@@ -284,7 +275,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
  */
 static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (!PACKED(dst)) {
+  if (!IsPacked(dst)) {
     FbleHeapObjectAddRef(heap, src, dst);
   }
 }
@@ -337,6 +328,16 @@ static void Refs(FbleHeap* heap, FbleValue* value)
       break;
     }
   }
+}
+
+/**
+ * @func[IsPacked] Tests whether a value is packed into an FbleValue* pointer.
+ *  @arg[FbleValue*][value] The value to test.
+ *  @returns[bool] True if the value is a packaged value, false otherwise.
+ */
+static bool IsPacked(FbleValue* value)
+{
+  return (((intptr_t)value) & 1);
 }
 
 /**
@@ -399,7 +400,7 @@ static size_t PackedValueLength(intptr_t data)
  */
 static FbleValue* StrictValue(FbleValue* value)
 {
-  while (!PACKED(value) && value != NULL && value->tag == REF_VALUE) {
+  while (!IsPacked(value) && value != NULL && value->tag == REF_VALUE) {
     RefValue* ref = (RefValue*)value;
     value = ref->value;
   }
@@ -414,7 +415,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   size_t num_bits = 0;
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[argc-i-1];
-    if (PACKED(arg)) {
+    if (IsPacked(arg)) {
       intptr_t argdata = (intptr_t)arg;
       argdata >>= 1;   // skip past pack marker.
       size_t arglen = PackedValueLength(argdata);
@@ -472,7 +473,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field)
     return NULL;
   }
 
-  if (PACKED(object)) {
+  if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
 
     // Skip past the pack bit and the bit saying this is a struct value.
@@ -503,7 +504,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field)
 // See documentation in fble-value.h.
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 {
-  if (PACKED(arg)) {
+  if (IsPacked(arg)) {
     intptr_t data = (intptr_t)arg;
     data >>= 1;
 
@@ -542,7 +543,7 @@ size_t FbleUnionValueTag(FbleValue* object)
     return (size_t)(-1);
   }
 
-  if (PACKED(object)) {
+  if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
 
     // Skip past the pack bit and the bit saying this is a union value.
@@ -571,7 +572,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
     return NULL;
   }
 
-  if (PACKED(object)) {
+  if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
 
     // Skip past the pack bit and the bit saying this is a union value.
@@ -602,7 +603,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
     return NULL;
   }
 
-  if (PACKED(object)) {
+  if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
 
     // Skip past the pack bit and the bit saying this is a union value.
@@ -720,7 +721,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   // Unwrap any accumulated layers of references on the value and make sure we
   // aren't forming a vacuous value.
   RefValue* unwrap = (RefValue*)value;
-  while (!PACKED(value) && value->tag == REF_VALUE && unwrap->value != NULL) {
+  while (!IsPacked(value) && value->tag == REF_VALUE && unwrap->value != NULL) {
     value = unwrap->value;
     unwrap = (RefValue*)value;
   }
