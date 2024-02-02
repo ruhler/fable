@@ -13,24 +13,21 @@
 #include <fble/fble-value.h>     // for FbleValue, etc.
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
-#include "heap.h"           // for FbleHeap, etc.
 #include "unreachable.h"    // for FbleUnreachable
 
-typedef struct {
-  size_t generation;
-  FbleValue* values;
-} Frame;
+/**
+ * Circular, doubly linked list of values.
+ */
+typedef struct List {
+  struct List* next;
+  struct List* prev;
+} List;
 
-struct FbleValueHeap {
-  FbleHeap* heap;
-
-  size_t generation;
-
-  size_t capacity;
-  size_t size;
-  Frame* frames;
-};
-
+static void Clear(List* list);
+static FbleValue* Get(List* list);
+static void MoveTo(List* dst, FbleValue* value);
+static void MoveAllTo(List* dst, List* src);
+
 /** Different kinds of FbleValue. */
 typedef enum {
   STRUCT_VALUE,
@@ -53,9 +50,9 @@ typedef enum {
  * significant bit of the pointer is 0.
  */
 struct FbleValue {
-  ValueTag tag;   /**< The kind of value. */
-  size_t generation;  /**< Generation this object was allocated in. */
-  FbleValue* next;    /**< Next value in a singly linked list of values. */
+  List list;          /**< A list of values this value belongs to. */
+  ValueTag tag;       /**< The kind of value. */
+  size_t gen;         /**< Generation this object was allocated in. */
 };
 
 /**
@@ -157,269 +154,171 @@ typedef struct {
  */
 #define NewValueExtra(heap, T, tag, count) ((T*) NewValueRaw(heap, tag, sizeof(T) + count * sizeof(FbleValue*)))
 
-// See documentation in fble-value.h
-//
-// Note: the packed value for a generic type matches the packed value of a
-// zero-argument struct value, so that it can be packed along with union and
-// struct values.
-FbleValue* FbleGenericTypeValue = (FbleValue*)1;
-
-static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
-static void OnFree(FbleHeap* heap, FbleValue* value);
-static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst);
-static void Refs(FbleHeap* heap, FbleValue* value);
-static void RetainValue(FbleValueHeap* heap, FbleValue* value);
-static void ReleaseValue(FbleValueHeap* heap, FbleValue* value);
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
-
-static void AddValue(FbleValueHeap* heap, FbleValue* value);
+static void FreeValue(FbleValue* value);
 
 static bool IsPacked(FbleValue* value);
 static bool IsAlloced(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
 
-// See documentation in fble-value.h.
-FbleValueHeap* FbleNewValueHeap()
+typedef struct {
+  // Invariant: Objects allocated before entering this stack frame have
+  // generation less than this generation.
+  size_t gen;
+
+  // List of objects popped from a callee's frame.
+  // Any objects in this list not reachable from 'saved' are garbage objects.
+  List popped;
+
+  // List of objects returned from a callee's frame.
+  List saved;
+
+  // List of objects allocated to this frame, not including anything in saved.
+  List alloced;
+} Frame;
+
+// TODO: Don't hard code the limit on number of stack frames.
+#define MAX_FRAMES 1048576
+
+struct FbleValueHeap {
+  // The generation to allocate new objects to.
+  size_t gen;
+
+  // Backing memory for all the stack frames.
+  // TODO: Don't hard code the limit on number of stack frames.
+  Frame frames[MAX_FRAMES];
+
+  // The top frame of the stack. New values are allocated here.
+  Frame* top;
+
+  // The frame currently running garbage collection on.
+  Frame* gc;
+
+  // The next frame to run garbage collection on.
+  // This is the frames[i] with the smallest i where saved+popped is
+  // non-empty.
+  Frame* next_gc;
+
+  // Objects being traversed in the current GC cycle.
+  List marked;
+  List unmarked;
+
+  // A list of garbage objects to be freed.
+  List free;
+};
+
+static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
+static void MarkRefs(FbleValueHeap* heap, FbleValue* value);
+static void IncrGc(FbleValueHeap* heap);
+
+/**
+ * @func[Clear] Initialize a list to empty.
+ *  @arg[List*][list] The list to initialize
+ *  @sideeffects
+ *   Makes the list empty, ignoring anything that was previously on the list.
+ */
+static void Clear(List* list)
 {
-  FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
-  heap->heap = FbleNewHeap(
-      (void (*)(FbleHeap*, void*))&Refs,
-      (void (*)(FbleHeap*, void*))&OnFree);
-
-  heap->generation = 0;
-
-  heap->capacity = 1;
-  heap->size = 1;
-
-  heap->frames = FbleAllocArray(Frame, heap->capacity);
-  heap->frames[0].generation = 0;
-  heap->frames[0].values = NULL;
-
-  return heap;
+  list->next = list;
+  list->prev = list;
 }
 
-// See documentation in fble-value.h.
-void FbleFreeValueHeap(FbleValueHeap* heap)
+/**
+ * @func[Get] Take a value off of a list.
+ *  @arg[List*][list] The list to get a value from.
+ *  @returns[FbleValue*] A value from the list. NULL if the list is empty.
+ *  @sideeffects
+ *   Removes the value from the list.
+ */
+static FbleValue* Get(List* list)
 {
-  for (size_t i = 0; i < heap->size; ++i) {
-    ReleaseValue(heap, heap->frames[i].values);
-  }
-  FbleFree(heap->frames);
-  FbleFreeHeap(heap->heap);
-  FbleFree(heap);
-}
-
-static void RetainValue(FbleValueHeap* heap, FbleValue* value)
-{
-  if (IsAlloced(value)) {
-    fprintf(stderr, "retain %p\n", (void*)value);
-    FbleRetainHeapObject(heap->heap, value);
-  }
-}
-
-static void ReleaseValue(FbleValueHeap* heap, FbleValue* value)
-{
-  if (IsAlloced(value)) {
-    fprintf(stderr, "release %p\n", (void*)value);
-    FbleReleaseHeapObject(heap->heap, value);
-  }
-}
-
-// See documentation in fble-value.h
-void FblePushFrame(FbleValueHeap* heap)
-{
-  if (heap->size == heap->capacity) {
-    heap->capacity *= 2;
-
-    Frame* nframes = FbleAllocArray(Frame, heap->capacity);
-    memcpy(nframes, heap->frames, heap->size * sizeof(Frame));
-    FbleFree(heap->frames);
-    heap->frames = nframes;
+  if (list->next == list) {
+    return NULL;
   }
 
-  heap->frames[heap->size].generation = ++heap->generation;
-  heap->frames[heap->size].values = NULL;
-  fprintf(stderr, "push %zi\n", heap->frames[heap->size].generation);
-  heap->size++;
+  FbleValue* got = (FbleValue*)list->next;
+  got->list.prev->next = got->list.next;
+  got->list.next->prev = got->list.prev;
+  Clear(&got->list);
+  return got;
 }
 
-// See documentation in fble-value.h
-FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
+/**
+ * @func[MoveTo] Moves an value from one list to another.
+ *  @arg[List*][dst] The list to move the value to.
+ *  @arg[FbleValue*][value] The value to move.
+ *  @sideffects
+ *   Moves the value from its current list to @a[dst].
+ */
+static void MoveTo(List* dst, FbleValue* value)
 {
-  heap->size--;
-  if (IsAlloced(value) && value->generation >= heap->frames[heap->size].generation) {
-    fprintf(stderr, "pop %p (young)\n", (void*)value);
-    RetainValue(heap, value);
-    AddValue(heap, value);
-  } else {
-    fprintf(stderr, "pop %p (old)\n", (void*)value);
+  value->list.prev->next = value->list.next;
+  value->list.next->prev = value->list.prev;
+  value->list.next = dst->next;
+  value->list.prev = dst;
+  dst->next->prev = &value->list;
+  dst->next = &value->list;
+}
+
+/**
+ * @func[MoveAllTo] Moves all values from one list to another.
+ *  @arg[List*][dst] The list to move the values to.
+ *  @arg[List*][src] The list to move the values from.
+ *  @sideeffects
+ *   Moves all values from @a[src] to @[dst], leaving @a[src] empty.
+ */
+static void MoveAllTo(List* dst, List* src)
+{
+  if (src->next != src) {
+    dst->next->prev = src->prev;
+    src->prev->next = dst->next;
+    dst->next = src->next;
+    dst->next->prev = dst;
+    src->next = src;
+    src->prev = src;
   }
+}
+
+/**
+ * @func[NewValueRaw] Allocates a new value on the heap.
+ *  @arg[FbleValueHeap*][heap] The heap to allocate to.
+ *  @arg[ValueTag][tag] The tag of the new value.
+ *  @arg[size_t][size] The number of bytes to allocate for the value.
+ *  @returns[FbleValue*] The newly allocated value.
+ *  @sideeffects
+ *   Allocates a value to the top frame of the heap.
+ */
+static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
+{
+  IncrGc(heap);
 
-  ReleaseValue(heap, heap->frames[heap->size].values);
+  FbleValue* value = (FbleValue*)FbleAllocRaw(size);
+  value->tag = tag;
+  value->gen = heap->gen;
+
+  Clear(&value->list);
+  MoveTo(&heap->top->alloced, value);
   return value;
 }
 
-// See documentation in fble-value.h
-void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
-{
-  FbleValue* pop = heap->frames[heap->size-1].values;
-  heap->frames[heap->size-1].values = NULL;
-
-  fprintf(stderr, "compact\n");
-  size_t gen = heap->frames[heap->size-1].generation;
-  for (size_t i = 0; i < n; ++i) {
-    if (IsAlloced(save[i]) && save[i]->generation >= gen) {
-      fprintf(stderr, " %p (young)\n", (void*)save[i]);
-      RetainValue(heap, save[i]);
-      AddValue(heap, save[i]);
-    } else {
-      fprintf(stderr, " %p (old)\n", (void*)save[i]);
-    }
-  }
-
-  ReleaseValue(heap, pop);
-}
-
 /**
- * @func[AddRef] Adds reference from one value to another.
- *  Notifies the value heap of a new reference from src to dst.
- *
- *  @arg[FbleValueHeap*][heap] The heap the values are allocated on.
- *  @arg[FbleValue*    ][src ] The source of the reference.
- *  @arg[FbleValue*    ][dst ] The destination of the reference. May be NULL.
- *
+ * @func[FreeValue] Frees a value.
+ *  @arg[FbleValue*][value] The value to free. May be NULL.
  *  @sideeffects
- *   Causes the dst value to be retained for at least as long as the src value.
- */
-static void AddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
-{
-  if (!IsPacked(src) && IsAlloced(dst)) {
-    FbleHeapObjectAddRef(heap->heap, src, dst);
-  }
-}
-
-/**
- * The 'on_free' function for values.
- *
- * See documentation of on_free in heap.h.
- *
- * @param heap  The heap.
- * @param value  The value being freed.
- * 
- * @sideeffects
  *   Frees any resources outside of the heap that this value holds on to.
  */
-static void OnFree(FbleHeap* heap, FbleValue* value)
+static void FreeValue(FbleValue* value)
 {
-  fprintf(stderr, "free %p\n", (void*)value);
-  (void)heap;
-
-  switch (value->tag) {
-    case STRUCT_VALUE:
-    case UNION_VALUE:
-    case FUNC_VALUE:
-    case REF_VALUE:
-      return;
-
-    case NATIVE_VALUE: {
+  if (value != NULL) {
+    if (value->tag == NATIVE_VALUE) {
       NativeValue* v = (NativeValue*)value;
       if (v->on_free != NULL) {
         v->on_free(v->data);
       }
-      return;
     }
+    FbleFree(value);
   }
-
-  FbleUnreachable("Should not get here");
-}
-
-/**
- * @func[Ref] Helper function for implementing Refs.
- *  Calls FbleHeapObjectAddRef.
- *
- *  @arg[FbleHeap*][heap] The heap.
- *  @arg[FbleValue*][src] The source of the reference.
- *  @arg[FbleValue*][dst] The target of the reference. Must not be NULL.
- *
- *  @sideeffects
- *   If value is non-NULL, FbleHeapObjectAddRef is called for it.
- */
-static void Ref(FbleHeap* heap, FbleValue* src, FbleValue* dst)
-{
-  if (IsAlloced(dst)) {
-    FbleHeapObjectAddRef(heap, src, dst);
-  }
-}
-
-/**
- * The 'refs' function for values.
- *
- * See documentation of refs in heap.h.
- *
- * @param heap  The heap.
- * @param value  The value whose references to traverse
- *   
- * @sideeffects
- * * Calls FbleHeapRef for each object referenced by obj.
- */
-static void Refs(FbleHeap* heap, FbleValue* value)
-{
-  Ref(heap, value, value->next);
-  switch (value->tag) {
-    case STRUCT_VALUE: {
-      StructValue* sv = (StructValue*)value;
-      for (size_t i = 0; i < sv->fieldc; ++i) {
-        Ref(heap, value, sv->fields[i]);
-      }
-      break;
-    }
-
-    case UNION_VALUE: {
-      UnionValue* uv = (UnionValue*)value;
-      Ref(heap, value, uv->arg);
-      break;
-    }
-
-    case FUNC_VALUE: {
-      FuncValue* v = (FuncValue*)value;
-      for (size_t i = 0; i < v->function.executable.num_statics; ++i) {
-        Ref(heap, value, v->statics[i]);
-      }
-      break;
-    }
-
-    case REF_VALUE: {
-      RefValue* v = (RefValue*)value;
-      if (v->value != NULL) {
-        Ref(heap, value, v->value);
-      }
-      break;
-    }
-
-    case NATIVE_VALUE: {
-      break;
-    }
-  }
-}
-
-static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
-{
-  FbleValue* value = (FbleValue*)FbleNewHeapObject(heap->heap, size);
-  value->tag = tag;
-  value->generation = heap->generation;
-  fprintf(stderr, "alloc %p\n", (void*)value);
-  AddValue(heap, value);
-  return value;
-}
-
-static void AddValue(FbleValueHeap* heap, FbleValue* value)
-{
-  value->next = heap->frames[heap->size-1].values;
-  fprintf(stderr, "add %p -> %p\n", (void*)value, (void*)value->next);
-  AddRef(heap, value, value->next);
-  ReleaseValue(heap, value->next);
-  heap->frames[heap->size-1].values = value;
 }
 
 /**
@@ -509,6 +408,211 @@ static FbleValue* StrictValue(FbleValue* value)
   return value;
 }
 
+/**
+ * @func[MarkRef] Marks a value referenced from another value.
+ *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[FbleValue*][src] The source of the reference.
+ *  @arg[FbleValue*][dst] The target of the reference. Must not be NULL.
+ *
+ *  @sideeffects
+ *   If value is non-NULL, moves the object to the heap->marked list.
+ */
+static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
+{
+  if (IsAlloced(dst) && dst->gen > src->gen) {
+    MoveTo(&heap->marked, dst);
+  }
+}
+
+/**
+ * @func[MarkRefs] Marks references from a value.
+ *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[FbleValue*][value] The value whose references to traverse
+ *   
+ *  @sideeffects
+ *   Calls MarkRef for each object referenced by obj.
+ */
+static void MarkRefs(FbleValueHeap* heap, FbleValue* value)
+{
+  switch (value->tag) {
+    case STRUCT_VALUE: {
+      StructValue* sv = (StructValue*)value;
+      for (size_t i = 0; i < sv->fieldc; ++i) {
+        MarkRef(heap, value, sv->fields[i]);
+      }
+      break;
+    }
+
+    case UNION_VALUE: {
+      UnionValue* uv = (UnionValue*)value;
+      MarkRef(heap, value, uv->arg);
+      break;
+    }
+
+    case FUNC_VALUE: {
+      FuncValue* v = (FuncValue*)value;
+      for (size_t i = 0; i < v->function.executable.num_statics; ++i) {
+        MarkRef(heap, value, v->statics[i]);
+      }
+      break;
+    }
+
+    case REF_VALUE: {
+      RefValue* v = (RefValue*)value;
+      if (v->value != NULL) {
+        MarkRef(heap, value, v->value);
+      }
+      break;
+    }
+
+    case NATIVE_VALUE: {
+      break;
+    }
+  }
+}
+
+/**
+ * @func[IncrGc] Performs an incremental GC.
+ *  @arg[FbleValueHeap*][heap] The heap to GC on.
+ *  @sideeffects
+ *   Performs a constant amount of GC work on the heap.
+ */
+static void IncrGc(FbleValueHeap* heap)
+{
+  // Free a couple objects on the free list.
+  FreeValue(Get(&heap->free));
+  FreeValue(Get(&heap->free));
+
+  // Traverse an object on the heap.
+  FbleValue* marked = Get(&heap->marked);
+  if (marked != NULL) {
+    marked->gen = heap->gc->gen;
+    MarkRefs(heap, marked);
+    MoveTo(&heap->gc->alloced, marked);
+    return;
+  }
+
+  // Anything left unmarked is unreachable.
+  MoveAllTo(&heap->free, &heap->unmarked);
+
+  // Set up the next GC.
+  if (heap->next_gc <= heap->top) {
+    heap->gc = heap->next_gc;
+    MoveAllTo(&heap->marked, &heap->gc->saved);
+    MoveAllTo(&heap->unmarked, &heap->gc->popped);
+    heap->next_gc = heap->gc + 1;
+  }
+}
+
+// See documentation in fble-value.h.
+FbleValueHeap* FbleNewValueHeap()
+{
+  FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
+  heap->gen = 0;
+
+  heap->top = heap->frames;
+  heap->top->gen = heap->gen;
+  Clear(&heap->top->popped);
+  Clear(&heap->top->saved);
+  Clear(&heap->top->alloced);
+
+  heap->gc = heap->top;
+  heap->next_gc = heap->top + 1;
+  Clear(&heap->marked);
+  Clear(&heap->unmarked);
+  Clear(&heap->free);
+
+  return heap;
+}
+
+// See documentation in fble-value.h.
+void FbleFreeValueHeap(FbleValueHeap* heap)
+{
+  List values;
+  Clear(&values);
+  for (Frame* frame = heap->frames; frame <= heap->top; ++frame) {
+    MoveAllTo(&values, &frame->popped);
+    MoveAllTo(&values, &frame->saved);
+    MoveAllTo(&values, &frame->alloced);
+  }
+  MoveAllTo(&values, &heap->free);
+  MoveAllTo(&values, &heap->marked);
+  MoveAllTo(&values, &heap->unmarked);
+
+  for (FbleValue* value = Get(&values); value != NULL; value = Get(&values)) {
+    FreeValue(value);
+  }
+  FbleFree(heap);
+}
+
+// See documentation in fble-value.h
+void FblePushFrame(FbleValueHeap* heap)
+{
+  heap->top++;
+  assert(heap->top < heap->frames + MAX_FRAMES);
+
+  heap->gen++;
+  heap->top->gen = heap->gen;
+  Clear(&heap->top->popped);
+  Clear(&heap->top->saved);
+  Clear(&heap->top->alloced);
+}
+
+// See documentation in fble-value.h
+FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
+{
+  Frame* top = heap->top;
+  heap->top--;
+
+  MoveAllTo(&heap->top->popped, &top->popped);
+  MoveAllTo(&heap->top->popped, &top->saved);
+  MoveAllTo(&heap->top->popped, &top->alloced);
+
+  if (heap->top < heap->next_gc) {
+    heap->next_gc = heap->top;
+  }
+
+  if (heap->gc == top) {
+    // If GC was in progress on the frame we are popping, abandon that GC
+    // because it's out of date now.
+    MoveAllTo(&heap->top->popped, &heap->unmarked);
+    MoveAllTo(&heap->top->popped, &heap->marked);
+
+    heap->gc = heap->next_gc;
+    heap->next_gc = heap->gc + 1;
+  }
+
+  if (IsAlloced(value) && value->gen >= top->gen) {
+    MoveTo(&heap->top->saved, value);
+  }
+
+  return value;
+}
+
+// See documentation in fble-value.h
+void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
+{
+  MoveAllTo(&heap->top->popped, &heap->top->alloced);
+  MoveAllTo(&heap->top->popped, &heap->top->saved);
+
+  for (size_t i = 0; i < n; ++i) {
+    if (IsAlloced(save[i]) && save[i]->gen >= heap->top->gen) {
+      MoveTo(&heap->top->saved, save[i]);
+    }
+  }
+
+  if (heap->top < heap->next_gc) {
+    heap->next_gc = heap->top;
+  }
+}
+
+// See documentation in fble-value.h
+//
+// Note: the packed value for a generic type matches the packed value of a
+// zero-argument struct value, so that it can be packed along with union and
+// struct values.
+FbleValue* FbleGenericTypeValue = (FbleValue*)1;
+
 // See documentation in fble-value.h.
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
@@ -546,7 +650,6 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[i];
     value->fields[i] = arg;
-    AddRef(heap, &value->_base, arg);
   }
 
   return &value->_base;
@@ -622,7 +725,6 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
   UnionValue* union_value = NewValue(heap, UnionValue, UNION_VALUE);
   union_value->tag = tag;
   union_value->arg = arg;
-  AddRef(heap, &union_value->_base, arg);
   return &union_value->_base;
 }
 // See documentation in fble-value.h.
@@ -739,7 +841,6 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
   v->function.statics = v->statics;
   for (size_t i = 0; i < executable->num_statics; ++i) {
     v->statics[i] = statics[i];
-    AddRef(heap, &v->_base, statics[i]);
   }
   return &v->_base;
 }
@@ -822,7 +923,6 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   RefValue* rv = (RefValue*)ref;
   assert(rv->_base.tag == REF_VALUE);
   rv->value = value;
-  AddRef(heap, ref, value);
   return true;
 }
 

@@ -1525,4 +1525,25 @@ The reason to GC the oldest frame with garbage is because newer frames will be
 popped first, and if we pop a newer frame before we GC that frame, we can
 avoid traversing some objects entirely.
 
+---
 
+A couple thoughts:
+* If we pop a frame while doing GC on it, we could lose track of where some
+  objects belong. Best to not allow popping a frame while doing GC on it.
+  Instead, when popping the frame, abandon the GC in progress entirely and
+  return the garbage to the caller like we normally would when popping a frame.
+
+  In practice, implement this by doing GC directly the data structure for the
+  frame rather than moving potential garbage to a central area.
+
+* If we are storing pointers to lists on frames, we have to be careful about
+  reallocating and moving frames. To be on the safe side, use a data structure
+  that doesn't move frames around in memory.
+
+* How do we prevent GC from falling behind when GCing a frame that we keep
+  compacting? If GC can't finish by the next time around and we keep adding
+  more values to GC, we'll never finish, right?
+
+  So, we should store current GC objects separately from the frame. We just
+  need to make sure we pull them back into the frame if we pop the frame
+  before GC finishes.
