@@ -24,6 +24,7 @@ typedef struct List {
 } List;
 
 static void Clear(List* list);
+static bool IsEmpty(List* list);
 static FbleValue* Get(List* list);
 static void MoveTo(List* dst, FbleValue* value);
 static void MoveAllTo(List* dst, List* src);
@@ -163,18 +164,25 @@ static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
 
 typedef struct {
-  // Invariant: Objects allocated before entering this stack frame have
-  // generation less than this generation.
+  // Objects allocated before entering this stack frame have generation less
+  // than min_gen. Objects allocated before the most recent compaction on the
+  // frame have generation less than gen.
+  size_t min_gen;
   size_t gen;
 
-  // List of objects popped from a callee's frame.
-  // Any objects in this list not reachable from 'saved' are garbage objects.
+  // List of objects compacted from this frame.
+  // Objects in compacted that are not reachable from compacted_saved are
+  // garbage objects.
+  List compacted;
+  List compacted_saved;
+
+  // Lists of objects popped from a callee's frame.
+  // Objects in popped that are not reachable from popped_saved are garbage
+  // objects.
   List popped;
+  List popped_saved;
 
-  // List of objects returned from a callee's frame.
-  List saved;
-
-  // List of objects allocated to this frame, not including anything in saved.
+  // List of any other objects allocated to this frame.
   List alloced;
 } Frame;
 
@@ -203,6 +211,9 @@ struct FbleValueHeap {
   // Objects being traversed in the current GC cycle.
   List marked;
   List unmarked;
+  size_t min_gen; // Minimum generation to traverse, inclusive.
+  size_t max_gen; // Maximum generation to traverse, exclusive.
+  size_t dst_gen; // Generation to move reachable GC'd objects to.
 
   // A list of garbage objects to be freed.
   List free;
@@ -222,6 +233,16 @@ static void Clear(List* list)
 {
   list->next = list;
   list->prev = list;
+}
+
+/**
+ * @func[IsEmpty] Checks if a list is empty.
+ *  @arg[List*][list] The list to check.
+ *  @returns true if the list is empty.
+ */
+static bool IsEmpty(List* list)
+{
+  return list->next == list;
 }
 
 /**
@@ -311,6 +332,7 @@ static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
 static void FreeValue(FbleValue* value)
 {
   if (value != NULL) {
+    // fprintf(stderr, "free %p\n", (void*)value);
     if (value->tag == NATIVE_VALUE) {
       NativeValue* v = (NativeValue*)value;
       if (v->on_free != NULL) {
@@ -419,8 +441,11 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (IsAlloced(dst) && dst->gen > src->gen) {
+  if (IsAlloced(dst) && dst->gen >= heap->min_gen && dst->gen < heap->max_gen) {
+    // fprintf(stderr, "marked %p gen %zi\n", (void*)dst, dst->gen);
     MoveTo(&heap->marked, dst);
+  } else {
+    // fprintf(stderr, "not marked %p\n", (void*)dst);
   }
 }
 
@@ -486,20 +511,47 @@ static void IncrGc(FbleValueHeap* heap)
   // Traverse an object on the heap.
   FbleValue* marked = Get(&heap->marked);
   if (marked != NULL) {
-    marked->gen = heap->gc->gen;
+    // fprintf(stderr, "mark %p gen %zi\n", (void*)marked, heap->gc->gen);
+    marked->gen = heap->dst_gen;
     MarkRefs(heap, marked);
     MoveTo(&heap->gc->alloced, marked);
     return;
   }
 
   // Anything left unmarked is unreachable.
+  // fprintf(stderr, "end gc\n");
   MoveAllTo(&heap->free, &heap->unmarked);
 
-  // Set up the next GC.
+  // Prefer to GC older frames because newer frames are more likely to be
+  // popped than older frames.
+  if (heap->next_gc < heap->gc) {
+    heap->gc = heap->next_gc;
+    heap->next_gc = heap->gc + 1;
+  }
+
+  // Set up gc of compacted objects.
+  if (!(IsEmpty(&heap->gc->compacted) && IsEmpty(&heap->gc->compacted_saved))) {
+    MoveAllTo(&heap->marked, &heap->gc->compacted_saved);
+    MoveAllTo(&heap->unmarked, &heap->gc->compacted);
+    heap->min_gen = heap->gc->min_gen;
+    heap->max_gen = heap->gc->gen;
+    heap->dst_gen = heap->gc->gen;
+    return;
+  }
+
+  // Set up gc of popped objects.
+  if (!(IsEmpty(&heap->gc->popped) && !IsEmpty(&heap->gc->popped_saved))) {
+    MoveAllTo(&heap->marked, &heap->gc->popped_saved);
+    MoveAllTo(&heap->unmarked, &heap->gc->popped);
+    heap->min_gen = heap->gc->min_gen + 1;
+    heap->max_gen = heap->gen;
+    heap->dst_gen = heap->gc->min_gen;
+    return;
+  }
+
+  // Move to the next frame to gc.
   if (heap->next_gc <= heap->top) {
     heap->gc = heap->next_gc;
-    MoveAllTo(&heap->marked, &heap->gc->saved);
-    MoveAllTo(&heap->unmarked, &heap->gc->popped);
     heap->next_gc = heap->gc + 1;
   }
 }
@@ -511,13 +563,17 @@ FbleValueHeap* FbleNewValueHeap()
   heap->gen = 0;
 
   heap->top = heap->frames;
+  heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
   Clear(&heap->top->popped);
-  Clear(&heap->top->saved);
+  Clear(&heap->top->popped_saved);
+  Clear(&heap->top->compacted);
+  Clear(&heap->top->compacted_saved);
   Clear(&heap->top->alloced);
 
   heap->gc = heap->top;
   heap->next_gc = heap->top + 1;
+
   Clear(&heap->marked);
   Clear(&heap->unmarked);
   Clear(&heap->free);
@@ -532,7 +588,9 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   Clear(&values);
   for (Frame* frame = heap->frames; frame <= heap->top; ++frame) {
     MoveAllTo(&values, &frame->popped);
-    MoveAllTo(&values, &frame->saved);
+    MoveAllTo(&values, &frame->popped_saved);
+    MoveAllTo(&values, &frame->compacted);
+    MoveAllTo(&values, &frame->compacted_saved);
     MoveAllTo(&values, &frame->alloced);
   }
   MoveAllTo(&values, &heap->free);
@@ -549,41 +607,48 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 void FblePushFrame(FbleValueHeap* heap)
 {
   heap->top++;
+  // fprintf(stderr, "push %zi\n", heap->top - heap->frames);
   assert(heap->top < heap->frames + MAX_FRAMES);
 
   heap->gen++;
+  heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
+  Clear(&heap->top->compacted);
+  Clear(&heap->top->compacted_saved);
   Clear(&heap->top->popped);
-  Clear(&heap->top->saved);
+  Clear(&heap->top->popped_saved);
   Clear(&heap->top->alloced);
 }
 
 // See documentation in fble-value.h
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
+  // fprintf(stderr, "pop %zi %p\n", heap->top - heap->frames, (void*)value);
+
   Frame* top = heap->top;
   heap->top--;
 
+  MoveAllTo(&heap->top->popped, &top->compacted);
+  MoveAllTo(&heap->top->popped, &top->compacted_saved);
   MoveAllTo(&heap->top->popped, &top->popped);
-  MoveAllTo(&heap->top->popped, &top->saved);
+  MoveAllTo(&heap->top->popped, &top->popped_saved);
   MoveAllTo(&heap->top->popped, &top->alloced);
-
-  if (heap->top < heap->next_gc) {
-    heap->next_gc = heap->top;
-  }
 
   if (heap->gc == top) {
     // If GC was in progress on the frame we are popping, abandon that GC
     // because it's out of date now.
+    // fprintf(stderr, "abandon gc for %zi\n", heap->next_gc - heap->frames);
     MoveAllTo(&heap->top->popped, &heap->unmarked);
     MoveAllTo(&heap->top->popped, &heap->marked);
-
-    heap->gc = heap->next_gc;
-    heap->next_gc = heap->gc + 1;
   }
 
-  if (IsAlloced(value) && value->gen >= top->gen) {
-    MoveTo(&heap->top->saved, value);
+  if (IsAlloced(value) && value->gen >= top->min_gen) {
+    // fprintf(stderr, " save %p\n", (void*)value);
+    MoveTo(&heap->top->popped_saved, value);
+  }
+
+  if (heap->top < heap->next_gc) {
+    heap->next_gc = heap->top;
   }
 
   return value;
@@ -592,12 +657,19 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 // See documentation in fble-value.h
 void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
 {
-  MoveAllTo(&heap->top->popped, &heap->top->alloced);
-  MoveAllTo(&heap->top->popped, &heap->top->saved);
+  // fprintf(stderr, "compact\n");
+  heap->gen++;
+  heap->top->gen = heap->gen;
+
+  MoveAllTo(&heap->top->compacted, &heap->top->popped);
+  MoveAllTo(&heap->top->compacted, &heap->top->popped_saved);
+  MoveAllTo(&heap->top->compacted, &heap->top->compacted_saved);
+  MoveAllTo(&heap->top->compacted, &heap->top->alloced);
 
   for (size_t i = 0; i < n; ++i) {
-    if (IsAlloced(save[i]) && save[i]->gen >= heap->top->gen) {
-      MoveTo(&heap->top->saved, save[i]);
+    if (IsAlloced(save[i]) && save[i]->gen >= heap->top->min_gen) {
+      // fprintf(stderr, "  save %p\n", (void*)save[i]);
+      MoveTo(&heap->top->compacted_saved, save[i]);
     }
   }
 
@@ -645,6 +717,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   }
 
   StructValue* value = NewValueExtra(heap, StructValue, STRUCT_VALUE, argc);
+  // fprintf(stderr, "alloc struct %p\n", (void*)value);
   value->fieldc = argc;
 
   for (size_t i = 0; i < argc; ++i) {
@@ -723,6 +796,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
   }
 
   UnionValue* union_value = NewValue(heap, UnionValue, UNION_VALUE);
+  // fprintf(stderr, "alloc union %p\n", (void*)union_value);
   union_value->tag = tag;
   union_value->arg = arg;
   return &union_value->_base;
@@ -836,6 +910,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics)
 {
   FuncValue* v = NewValueExtra(heap, FuncValue, FUNC_VALUE, executable->num_statics);
+  // fprintf(stderr, "alloc func %p\n", (void*)v);
   v->function.profile_block_id = profile_block_id;
   memcpy(&v->function, executable, sizeof(FbleExecutable));
   v->function.statics = v->statics;
@@ -901,6 +976,7 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 {
   RefValue* rv = NewValue(heap, RefValue, REF_VALUE);
+  // fprintf(stderr, "alloc ref %p\n", (void*)rv);
   rv->value = NULL;
   return &rv->_base;
 }
@@ -923,6 +999,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   RefValue* rv = (RefValue*)ref;
   assert(rv->_base.tag == REF_VALUE);
   rv->value = value;
+  // fprintf(stderr, "assign %p ==> %p\n", (void*)rv, (void*)rv->value);
   return true;
 }
 
@@ -931,6 +1008,7 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
     void* data, void (*on_free)(void* data))
 {
   NativeValue* value = NewValue(heap, NativeValue, NATIVE_VALUE);
+  // fprintf(stderr, "alloc native %p\n", (void*)value);
   value->data = data;
   value->on_free = on_free;
   return &value->_base;

@@ -1547,3 +1547,137 @@ A couple thoughts:
   So, we should store current GC objects separately from the frame. We just
   need to make sure we pull them back into the frame if we pop the frame
   before GC finishes.
+
+---
+
+Draft is done. Things to debug:
+
+SpecTests:
+* StackSmash: fble-test.cov: ../lib/value.c|855| FbleFuncValueFunction:
+  Assertion `func->_base.tag == FUNC_VALUE' failed.
+* MemoryGrowth test: memory constant: M(10000) = 0, M(20000) = 0
+
+Let's debug StackSmash first.
+
+We allocate a ref value. Then a function value. We assign the function to the
+ref. We free the ref value. We allocate a union value over the same space,
+then try to access the ref value as a function.
+
+Question is: how did we have a reference to the ref value but somehow managed
+to GC the ref value? Guess I'll have to debug more.
+
+We compact the heap, saving the function that the ref value points to. We
+don't see that function holding on to anything, so we free the ref value.
+
+Ah. I think I see. We are compacting the heap. We need to track generations
+properly in this case to know what we should or should not traverse. Right now
+we are saying don't traverse from func back to ref because ref has the
+generation of the gc frame. That's the logic I had in mind, but it's wrong
+because we want to traverse ref in this case because of compacting the heap.
+
+---
+
+If we didn't have compact frame:
+
+Objects popped and saved to a frame with gen x:
+* All have gen greater than x.
+* None reference any object with gen greater than x outside of the set
+  popped+saved.
+
+That way we can safely traverse, following all objects with gen greater than
+x. We'll cover all objects in the set and never go outside. As we go, we set
+objects to gen x to remove them from the set of things to traverse.
+
+That works great.
+
+If we only had compact frame:
+
+Objects popped and saved to a frame with gen x:
+* All have gen greater than or equal to x.
+* None reference any object with gen greater than or equal to x outside of the
+  set popped+saved.
+
+We could traverse by following all objects with gen greater than or equal to
+x. We'll cover all objects in the set and never go outside. But we have no
+obvious gen to set the new objects to remove them from the set of things to
+traverse.
+
+In general we have a mix of the two cases. Say we compact a frame, then push,
+then pop back to it, all while GC is working elsewhere.
+
+In the case of normal popping, we only traverse an object once, to move it to
+the caller frame. For compacting, we could repeatedly traverse it on the same
+frame as we repeatedly compact that frame.
+
+In terms of generations when compacting, how about:
+* Original generation of the frame is X.
+* On compact, saved+popped is generation [X,Y].
+* On compact, set new generation for frame to Z.
+
+Now when we gc, we say traverse anything in range [X,Y], move to Z. Can we
+make this work for both pop and compact cases?
+
+Say we stored the range explicitly for saved+popped. If we had that, it's easy
+to traverse it. And say we promise the generation for the target frame is not
+in that range. Then it's easy to traverse. Can we maintain that?
+
+At any time we might pop the frame before finishing GC. We would know the
+range of all objects: range of saved+popped plus frame->gen plus anything
+between here and current heap->gen.
+
+Three operations to handle: Push, Pop, Compact.
+* Push: Increment heap->gen, range starts empty (?).
+* Pop: Add to range [callee->gen, heap->gen]. Note: caller->gen < callee->gen.
+  Let's say callee->gen is the lowest gen object allocated on the frame always.
+* Compact: Add to range [caller->gen, heap->gen].
+
+New objects can always be allocated to a frame using heap->gen. They aren't
+allocated using frame->gen. Is it safe to use heap->gen as the destination for
+traversed objects?
+
+I don't think so. Say we have callees allocating objects. Some will be gen
+less than heap->gen, some will be gen greater than heap->gen, some will refer
+to these objects we are saving in the caller. When the callee pops, we won't
+be able to isolate the objects to traverse to saved+popped.
+
+Compact is a special case. When we compact, we can allocate a new target id. A
+new current generation for that frame.
+
+What if we can process frame->gen is outside of saved+popped? GC needs to know
+the lower and upper bound for traversal still.
+
+Can we use (frame-1)->gen as a lower bound? Not if frame->gen is the lower
+bound.
+
+How about we record if we have compacted or not? compacted means the range of
+saved+popped is ((frame-1)->gen, frame->gen), otherwise saved+popped is
+(frame->gen, heap->gen]. Excepted we can't use (frame-1)->gen, because it's
+lower than the actual lower bound.
+
+Say we have two generations per frame: min, gen. They start the same. When we
+compact, min stays the same, we bump gen. You can always use gen as the
+destination for gc. Record if you've compacted or not.
+
+If you've compacted, range is [min, gen). Otherwise range is (min, heap->gen).
+
+Except, the problem is if you both compacted and popped. We can no longer use
+frame->gen as an upper bound.
+
+Needs more thought.
+
+---
+
+compact + compact => compact
+popped + popped => popped
+popped + compact => compact
+
+The problem is: compact + popped. We want to compact forward to the
+post-compact generation and pop back to the post-compact generation. That
+means the objects span before and after.
+
+A solution is to keep them separate. Each frame can have compacted objects and
+separately popped objects.
+
+Conceptually the solution is easy. A clean implementation is harder to come
+by. Now each frame can have two parts of GC.
+
