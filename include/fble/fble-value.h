@@ -375,6 +375,9 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap);
 
 /**
  * @func[FbleAssignRefValue] Sets the value pointed to by a ref value.
+ *  The ref value must be allocated on the top frame of the stack when calling
+ *  this function, otherwise behavior is undefined.
+ *
  *  @arg[FbleValueHeap*][heap ] The heap to use for allocations
  *  @arg[FbleValue*    ][ref  ] The reference to assign to
  *  @arg[FbleValue*    ][value] The value to assign to the reference.

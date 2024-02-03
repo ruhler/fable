@@ -1000,6 +1000,9 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 // See documentation in fble-value.h.
 bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 {
+  assert((heap->top->callee == NULL || heap->top->callee->min_gen == MAX_GEN)
+      && "FbleAssignRefValue must be called with ref on top of stack");
+
   // Unwrap any accumulated layers of references on the value and make sure we
   // aren't forming a vacuous value.
   RefValue* unwrap = (RefValue*)value;

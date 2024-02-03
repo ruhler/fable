@@ -1745,3 +1745,12 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 
 Cool. I think we're ready to mainline this now. I don't mind a 1 second
 regression in md5 given the 7 second improvement in fbld.
+
+---
+
+What are the next steps here?
+
+Do another round of performance analysis. Maybe there are some improvements we
+can make to the current GC approach based on that. After that, consider again
+if we can avoid allocating on the heap in some case.
+
