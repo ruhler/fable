@@ -15,6 +15,7 @@
 
 #include "unreachable.h"    // for FbleUnreachable
 
+//#define debug(...) fprintf(stderr, __VA_ARGS__)
 #define debug(...)
 
 /**
@@ -149,7 +150,7 @@ typedef struct {
  * @param count  The number of FbleValue* worth of extra space to include in
  *   the allocated object.
  *
- * @returns
+ * @returns[FbleValue*]
  *   The newly allocated value with extra space.
  *
  * @sideeffects
@@ -240,7 +241,7 @@ static void Clear(List* list)
 /**
  * @func[IsEmpty] Checks if a list is empty.
  *  @arg[List*][list] The list to check.
- *  @returns true if the list is empty.
+ *  @returns[bool] true if the list is empty.
  */
 static bool IsEmpty(List* list)
 {
@@ -289,11 +290,11 @@ static void MoveTo(List* dst, FbleValue* value)
  *  @arg[List*][dst] The list to move the values to.
  *  @arg[List*][src] The list to move the values from.
  *  @sideeffects
- *   Moves all values from @a[src] to @[dst], leaving @a[src] empty.
+ *   Moves all values from @a[src] to @a[dst], leaving @a[src] empty.
  */
 static void MoveAllTo(List* dst, List* src)
 {
-  if (src->next != src) {
+  if (!IsEmpty(src)) {
     dst->next->prev = src->prev;
     src->prev->next = dst->next;
     dst->next = src->next;
@@ -458,7 +459,6 @@ static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
  * @func[MarkRefs] Marks references from a value.
  *  @arg[FbleValueHeap*][heap] The heap.
  *  @arg[FbleValue*][value] The value whose references to traverse
- *   
  *  @sideeffects
  *   Calls MarkRef for each object referenced by obj.
  */
@@ -524,7 +524,10 @@ static void IncrGc(FbleValueHeap* heap)
   }
 
   // Anything left unmarked is unreachable.
-  debug("finish\n");
+  // TODO: Move these to the free list instead of freeing them right away.
+  for (FbleValue* value = Get(&heap->unmarked); value != NULL; value = Get(&heap->unmarked)) {
+    FreeValue(value);
+  }
   MoveAllTo(&heap->free, &heap->unmarked);
 
   // Prefer to GC older frames because newer frames are more likely to be
@@ -664,7 +667,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 // See documentation in fble-value.h
 void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
 {
-  debug("compact\n");
+  debug("compact %zi\n", heap->top - heap->frames);
   heap->gen++;
   heap->top->gen = heap->gen;
 
@@ -672,6 +675,14 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   MoveAllTo(&heap->top->compacted, &heap->top->popped_saved);
   MoveAllTo(&heap->top->compacted, &heap->top->compacted_saved);
   MoveAllTo(&heap->top->compacted, &heap->top->alloced);
+
+  if (heap->gc == heap->top) {
+    // If GC was in progress on the frame we are popping, abandon that GC
+    // because it's out of date now.
+    debug("abandon gc for %zi\n", heap->top - heap->frames);
+    MoveAllTo(&heap->top->compacted, &heap->unmarked);
+    MoveAllTo(&heap->top->compacted, &heap->marked);
+  }
 
   for (size_t i = 0; i < n; ++i) {
     if (IsAlloced(save[i]) && save[i]->gen >= heap->top->min_gen) {

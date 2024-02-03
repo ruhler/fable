@@ -1681,3 +1681,38 @@ separately popped objects.
 Conceptually the solution is easy. A clean implementation is harder to come
 by. Now each frame can have two parts of GC.
 
+---
+
+Bugs to work out. All the spec tests are passing, but as we know, that doesn't
+mean much when working on GC these days.
+
+Core test fails. Need to minimize.
+
+It looks like we were compacting a frame while gcing the frame, which caused
+us to somehow try to free a non-value alloced list node. The workaround was to
+abandon gc in this case.
+
+But now I'm afraid we could fall behind and never finish GC in a tight tail
+recursive loop. In theory we should be able to keep subsequent compactions
+separate from the current gc. The challenge is making sure we move marked
+objects to compacted_saved instead of alloced after that. That means knowing a
+bit more about what we are currently running GC on.
+
+I should maybe write a test case for this? The idea would be: allocate a bunch
+on the frame. Then compact and go into a tight tail recursive loop that
+doesn't allocate much each iteration. The claim is we leak memory when we
+shouldn't be leaking memory. We would get memory growth instead of memory
+constant.
+
+Initial performance numbers:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.82 ==> 52.21
+  Maximum resident set size (kbytes): 2516 ==> 2260
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 98.44 ==> 86.73
+  Maximum resident set size (kbytes): 99592 ==> 83044
+
+Oh hey, that's actually pretty good for fbld. Maybe good enough to
+mainline?

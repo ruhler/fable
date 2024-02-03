@@ -2,16 +2,19 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Document functions in lib/value.c
-* Clean up and reorganize lib/value.c
+* Stack Alloc
+ - Don't hard code limit on number of stack frames.
+ - Incrementally free objects instead of proactively.
+ - Remove debug code.
+ - Update the abandon gc comment in compact case to be more precise.
+ - Add assertion/docs saying ref value assignment must be done to ref/value in
+   the same stack frame.
+* Write test case for big compact followed by tight small compact leading to
+  memory growth instead of constant memory?
 
 * Add regression test for memory leak fixed in
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
-* Stack Alloc
- - Add assertion/docs saying ref value assignment must be done to ref/value in
-   the same stack frame.
- - Figure out better way to pick initial heap size.
 
 * Add test for overapplication to a function whose value is 'NULL' due to
   abort.
