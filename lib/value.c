@@ -513,10 +513,6 @@ static void IncrGc(FbleValueHeap* heap)
   }
 
   // Anything left unmarked is unreachable.
-  // TODO: Move these to the free list instead of freeing them right away.
-  for (FbleValue* value = Get(&heap->unmarked); value != NULL; value = Get(&heap->unmarked)) {
-    FreeValue(value);
-  }
   MoveAllTo(&heap->free, &heap->unmarked);
 
   // Prefer to GC older frames because newer frames are more likely to be
@@ -658,8 +654,10 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   MoveAllTo(&heap->top->compacted, &heap->top->alloced);
 
   if (heap->gc == heap->top) {
-    // If GC was in progress on the frame we are popping, abandon that GC
-    // because it's out of date now.
+    // If GC was in progress on the frame we are compacting we could run into
+    // some trouble. Abandon the ongoing GC to avoid any potential problems.
+    // TODO: Does this mean we may never get a chance to finish GC because we
+    // keep restarting it before it can finish?
     MoveAllTo(&heap->top->compacted, &heap->unmarked);
     MoveAllTo(&heap->top->compacted, &heap->marked);
   }

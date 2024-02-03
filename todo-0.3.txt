@@ -4,8 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Stack Alloc
  - Don't hard code limit on number of stack frames.
- - Incrementally free objects instead of proactively.
- - Update the abandon gc comment in compact case to be more precise.
  - Add assertion/docs saying ref value assignment must be done to ref/value in
    the same stack frame.
 * Write test case for big compact followed by tight small compact leading to
