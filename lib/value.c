@@ -15,9 +15,6 @@
 
 #include "unreachable.h"    // for FbleUnreachable
 
-//#define debug(...) fprintf(stderr, __VA_ARGS__)
-#define debug(...)
-
 /**
  * Circular, doubly linked list of values.
  */
@@ -335,7 +332,6 @@ static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
 static void FreeValue(FbleValue* value)
 {
   if (value != NULL) {
-    debug("free %p\n", (void*)value);
     if (value->tag == NATIVE_VALUE) {
       NativeValue* v = (NativeValue*)value;
       if (v->on_free != NULL) {
@@ -445,13 +441,7 @@ static FbleValue* StrictValue(FbleValue* value)
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
   if (IsAlloced(dst) && dst->gen >= heap->min_gen && dst->gen < heap->max_gen) {
-    debug("marked %p gen %zi\n", (void*)dst, dst->gen);
     MoveTo(&heap->marked, dst);
-  } else {
-    if (IsAlloced(dst)) {
-      debug("not marked %p gen %zi not in [%zi, %zi)\n",
-          (void*)dst, dst->gen, heap->min_gen, heap->max_gen);
-    }
   }
 }
 
@@ -516,7 +506,6 @@ static void IncrGc(FbleValueHeap* heap)
   // Traverse an object on the heap.
   FbleValue* marked = Get(&heap->marked);
   if (marked != NULL) {
-    debug("mark %p gen %zi\n", (void*)marked, heap->gc->gen);
     marked->gen = heap->dst_gen;
     MarkRefs(heap, marked);
     MoveTo(&heap->gc->alloced, marked);
@@ -539,7 +528,6 @@ static void IncrGc(FbleValueHeap* heap)
 
   // Set up gc of compacted objects.
   if (!(IsEmpty(&heap->gc->compacted) && IsEmpty(&heap->gc->compacted_saved))) {
-    debug("start compacted %zi\n", heap->gc - heap->frames);
     MoveAllTo(&heap->marked, &heap->gc->compacted_saved);
     MoveAllTo(&heap->unmarked, &heap->gc->compacted);
     heap->min_gen = heap->gc->min_gen;
@@ -550,7 +538,6 @@ static void IncrGc(FbleValueHeap* heap)
 
   // Set up gc of popped objects.
   if (!(IsEmpty(&heap->gc->popped) && IsEmpty(&heap->gc->popped_saved))) {
-    debug("start popped %zi\n", heap->gc - heap->frames);
     MoveAllTo(&heap->marked, &heap->gc->popped_saved);
     MoveAllTo(&heap->unmarked, &heap->gc->popped);
     heap->min_gen = heap->gc->min_gen + 1;
@@ -617,7 +604,6 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 void FblePushFrame(FbleValueHeap* heap)
 {
   heap->top++;
-  debug("push %zi\n", heap->top - heap->frames);
   assert(heap->top < heap->frames + MAX_FRAMES);
 
   heap->gen++;
@@ -633,8 +619,6 @@ void FblePushFrame(FbleValueHeap* heap)
 // See documentation in fble-value.h
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
-  debug("pop %zi %p\n", heap->top - heap->frames, (void*)value);
-
   Frame* top = heap->top;
   heap->top--;
 
@@ -647,13 +631,11 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   if (heap->gc == top) {
     // If GC was in progress on the frame we are popping, abandon that GC
     // because it's out of date now.
-    debug("abandon gc for %zi\n", heap->top - heap->frames);
     MoveAllTo(&heap->top->popped, &heap->unmarked);
     MoveAllTo(&heap->top->popped, &heap->marked);
   }
 
   if (IsAlloced(value) && value->gen >= top->min_gen) {
-    debug(" save %p\n", (void*)value);
     MoveTo(&heap->top->popped_saved, value);
   }
 
@@ -667,7 +649,6 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 // See documentation in fble-value.h
 void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
 {
-  debug("compact %zi\n", heap->top - heap->frames);
   heap->gen++;
   heap->top->gen = heap->gen;
 
@@ -679,14 +660,12 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   if (heap->gc == heap->top) {
     // If GC was in progress on the frame we are popping, abandon that GC
     // because it's out of date now.
-    debug("abandon gc for %zi\n", heap->top - heap->frames);
     MoveAllTo(&heap->top->compacted, &heap->unmarked);
     MoveAllTo(&heap->top->compacted, &heap->marked);
   }
 
   for (size_t i = 0; i < n; ++i) {
     if (IsAlloced(save[i]) && save[i]->gen >= heap->top->min_gen) {
-      debug("  save %p\n", (void*)save[i]);
       MoveTo(&heap->top->compacted_saved, save[i]);
     }
   }
@@ -735,7 +714,6 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   }
 
   StructValue* value = NewValueExtra(heap, StructValue, STRUCT_VALUE, argc);
-  debug("alloc struct %p\n", (void*)value);
   value->fieldc = argc;
 
   for (size_t i = 0; i < argc; ++i) {
@@ -814,7 +792,6 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
   }
 
   UnionValue* union_value = NewValue(heap, UnionValue, UNION_VALUE);
-  debug("alloc union %p\n", (void*)union_value);
   union_value->tag = tag;
   union_value->arg = arg;
   return &union_value->_base;
@@ -928,7 +905,6 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics)
 {
   FuncValue* v = NewValueExtra(heap, FuncValue, FUNC_VALUE, executable->num_statics);
-  debug("alloc func %p\n", (void*)v);
   v->function.profile_block_id = profile_block_id;
   memcpy(&v->function, executable, sizeof(FbleExecutable));
   v->function.statics = v->statics;
@@ -994,7 +970,6 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 {
   RefValue* rv = NewValue(heap, RefValue, REF_VALUE);
-  debug("alloc ref %p\n", (void*)rv);
   rv->value = NULL;
   return &rv->_base;
 }
@@ -1017,7 +992,6 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   RefValue* rv = (RefValue*)ref;
   assert(rv->_base.tag == REF_VALUE);
   rv->value = value;
-  debug("assign %p ==> %p\n", (void*)rv, (void*)rv->value);
   return true;
 }
 
@@ -1026,7 +1000,6 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
     void* data, void (*on_free)(void* data))
 {
   NativeValue* value = NewValue(heap, NativeValue, NATIVE_VALUE);
-  debug("alloc native %p\n", (void*)value);
   value->data = data;
   value->on_free = on_free;
   return &value->_base;
