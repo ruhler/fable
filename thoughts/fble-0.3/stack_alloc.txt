@@ -1716,3 +1716,32 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 
 Oh hey, that's actually pretty good for fbld. Maybe good enough to
 mainline?
+
+Before we mainline, I want to figure out a way to avoid hard coding a limit on
+number of stack frames and preallocating stack frames.
+
+Maybe allocate new frames on demand, put them in a linked list, but save them
+for reuse? The important point is that we don't try to move them via realloc,
+otherwise the pointers to lists get messed up.
+
+Operations on frames:
+* quickly compare stack depth of two frames.
+* quickly access frame + 1 for next_gc.
+* iterate over all frames for final cleanup.
+* Add frame to the back.
+* Pop frame from the back.
+
+Seems like a linear doubly linked list of frames where we append to the end of
+the list as needed and keep a pointer into the top of the list could work
+well?
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 49.82 ==> 52.21 ==> 51.05
+  Maximum resident set size (kbytes): 2516 ==> 2260 ==> 2344
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 98.44 ==> 86.73 ==> 86.85
+  Maximum resident set size (kbytes): 99592 ==> 83044 ==> 86060
+
+Cool. I think we're ready to mainline this now. I don't mind a 1 second
+regression in md5 given the 7 second improvement in fbld.

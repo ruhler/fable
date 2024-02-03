@@ -163,10 +163,19 @@ static bool IsAlloced(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
 
-typedef struct {
+#define MAX_GEN ((size_t)-1)
+
+typedef struct Frame {
+  // Frames are allocated as needed and stored in a linear doubly linked list.
+  // Frames that have been allocated but are unused are stored with all their
+  // lists cleared and with min_gen set to MAX_GEN;
+  struct Frame* caller;
+  struct Frame* callee;
+
   // Objects allocated before entering this stack frame have generation less
   // than min_gen. Objects allocated before the most recent compaction on the
   // frame have generation less than gen.
+  // If a.min_gen < b.min_gen, then a is further down the stack than b.
   size_t min_gen;
   size_t gen;
 
@@ -186,16 +195,9 @@ typedef struct {
   List alloced;
 } Frame;
 
-// TODO: Don't hard code the limit on number of stack frames.
-#define MAX_FRAMES 1048576
-
 struct FbleValueHeap {
   // The generation to allocate new objects to.
   size_t gen;
-
-  // Backing memory for all the stack frames.
-  // TODO: Don't hard code the limit on number of stack frames.
-  Frame frames[MAX_FRAMES];
 
   // The top frame of the stack. New values are allocated here.
   Frame* top;
@@ -204,8 +206,10 @@ struct FbleValueHeap {
   Frame* gc;
 
   // The next frame to run garbage collection on.
-  // This is the frames[i] with the smallest i where saved+popped is
-  // non-empty.
+  // This is the frame closest to the base of the stack with some potential
+  // garbage objects to GC.
+  // May be NULL to indicate that no frames have potential garbage objects to
+  // GC.
   Frame* next_gc;
 
   // Objects being traversed in the current GC cycle.
@@ -517,9 +521,9 @@ static void IncrGc(FbleValueHeap* heap)
 
   // Prefer to GC older frames because newer frames are more likely to be
   // popped than older frames.
-  if (heap->next_gc < heap->gc) {
+  if (heap->next_gc != NULL && heap->next_gc->min_gen < heap->gc->min_gen) {
     heap->gc = heap->next_gc;
-    heap->next_gc = heap->gc + 1;
+    heap->next_gc = heap->gc->callee;
   }
 
   // Set up gc of compacted objects.
@@ -543,9 +547,9 @@ static void IncrGc(FbleValueHeap* heap)
   }
 
   // Move to the next frame to gc.
-  if (heap->next_gc <= heap->top) {
+  if (heap->next_gc != NULL && heap->next_gc->min_gen <= heap->top->min_gen) {
     heap->gc = heap->next_gc;
-    heap->next_gc = heap->gc + 1;
+    heap->next_gc = heap->gc->callee;
   }
 }
 
@@ -555,7 +559,9 @@ FbleValueHeap* FbleNewValueHeap()
   FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
   heap->gen = 0;
 
-  heap->top = heap->frames;
+  heap->top = FbleAlloc(Frame);
+  heap->top->caller = NULL;
+  heap->top->callee = NULL;
   heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
   Clear(&heap->top->popped);
@@ -565,7 +571,7 @@ FbleValueHeap* FbleNewValueHeap()
   Clear(&heap->top->alloced);
 
   heap->gc = heap->top;
-  heap->next_gc = heap->top + 1;
+  heap->next_gc = NULL;
 
   Clear(&heap->marked);
   Clear(&heap->unmarked);
@@ -579,7 +585,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 {
   List values;
   Clear(&values);
-  for (Frame* frame = heap->frames; frame <= heap->top; ++frame) {
+  for (Frame* frame = heap->top; frame != NULL; frame = frame->caller) {
     MoveAllTo(&values, &frame->popped);
     MoveAllTo(&values, &frame->popped_saved);
     MoveAllTo(&values, &frame->compacted);
@@ -590,6 +596,18 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   MoveAllTo(&values, &heap->marked);
   MoveAllTo(&values, &heap->unmarked);
 
+  while (heap->top->callee != NULL) {
+    Frame* callee = heap->top->callee;
+    heap->top->callee = callee->callee;
+    FbleFree(callee);
+  }
+
+  while (heap->top != NULL) {
+    Frame* top = heap->top;
+    heap->top = top->caller;
+    FbleFree(top);
+  }
+
   for (FbleValue* value = Get(&values); value != NULL; value = Get(&values)) {
     FreeValue(value);
   }
@@ -599,24 +617,30 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 // See documentation in fble-value.h
 void FblePushFrame(FbleValueHeap* heap)
 {
-  heap->top++;
-  assert(heap->top < heap->frames + MAX_FRAMES);
+  if (heap->top->callee == NULL) {
+    Frame* callee = FbleAlloc(Frame);
+    callee->caller = heap->top;
+    callee->callee = NULL;
+    Clear(&callee->compacted);
+    Clear(&callee->compacted_saved);
+    Clear(&callee->popped);
+    Clear(&callee->popped_saved);
+    Clear(&callee->alloced);
+    heap->top->callee = callee;
+  }
+
+  heap->top = heap->top->callee;
 
   heap->gen++;
   heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
-  Clear(&heap->top->compacted);
-  Clear(&heap->top->compacted_saved);
-  Clear(&heap->top->popped);
-  Clear(&heap->top->popped_saved);
-  Clear(&heap->top->alloced);
 }
 
 // See documentation in fble-value.h
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
   Frame* top = heap->top;
-  heap->top--;
+  heap->top = heap->top->caller;
 
   MoveAllTo(&heap->top->popped, &top->compacted);
   MoveAllTo(&heap->top->popped, &top->compacted_saved);
@@ -634,8 +658,9 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   if (IsAlloced(value) && value->gen >= top->min_gen) {
     MoveTo(&heap->top->popped_saved, value);
   }
+  top->min_gen = MAX_GEN;
 
-  if (heap->top < heap->next_gc) {
+  if (heap->next_gc == NULL || heap->top->min_gen < heap->next_gc->min_gen) {
     heap->next_gc = heap->top;
   }
 
@@ -668,7 +693,7 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
     }
   }
 
-  if (heap->top < heap->next_gc) {
+  if (heap->next_gc == NULL || heap->top->min_gen < heap->next_gc->min_gen) {
     heap->next_gc = heap->top;
   }
 }
