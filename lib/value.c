@@ -175,23 +175,18 @@ typedef struct Frame {
   // Objects allocated before entering this stack frame have generation less
   // than min_gen. Objects allocated before the most recent compaction on the
   // frame have generation less than gen.
-  // If a.min_gen < b.min_gen, then a is further down the stack than b.
+  // If a.min_gen < b.min_gen, then a is closer to the base of the stack than
+  // b.
   size_t min_gen;
   size_t gen;
 
-  // List of objects compacted from this frame.
-  // Objects in compacted that are not reachable from compacted_saved are
-  // garbage objects.
-  List compacted;
-  List compacted_saved;
+  // Potential garbage objects on the frame. These are either from objects
+  // allocated to callee frames that have since returned or objects allocated
+  // on this frame prior to compaction.
+  List unmarked;    // Objects not yet seen in traversal.
+  List marked;      // Objects seen in traversal but not processed yet.
 
-  // Lists of objects popped from a callee's frame.
-  // Objects in popped that are not reachable from popped_saved are garbage
-  // objects.
-  List popped;
-  List popped_saved;
-
-  // List of any other objects allocated to this frame.
+  // Other objects allocated to this frame.
   List alloced;
 } Frame;
 
@@ -212,12 +207,10 @@ struct FbleValueHeap {
   // GC.
   Frame* next_gc;
 
-  // Objects being traversed in the current GC cycle.
+  // Objects being traversed in the current GC cycle. These belong to heap->gc
+  // frame.
   List marked;
   List unmarked;
-  size_t min_gen; // Minimum generation to traverse, inclusive.
-  size_t max_gen; // Maximum generation to traverse, exclusive.
-  size_t dst_gen; // Generation to move reachable GC'd objects to.
 
   // A list of garbage objects to be freed.
   List free;
@@ -444,7 +437,9 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (IsAlloced(dst) && dst->gen >= heap->min_gen && dst->gen < heap->max_gen) {
+  if (IsAlloced(dst)
+      && dst->gen >= heap->gc->min_gen
+      && dst->gen != heap->gc->gen) {
     MoveTo(&heap->marked, dst);
   }
 }
@@ -510,7 +505,7 @@ static void IncrGc(FbleValueHeap* heap)
   // Traverse an object on the heap.
   FbleValue* marked = Get(&heap->marked);
   if (marked != NULL) {
-    marked->gen = heap->dst_gen;
+    marked->gen = heap->gc->gen;
     MarkRefs(heap, marked);
     MoveTo(&heap->gc->alloced, marked);
     return;
@@ -519,37 +514,13 @@ static void IncrGc(FbleValueHeap* heap)
   // Anything left unmarked is unreachable.
   MoveAllTo(&heap->free, &heap->unmarked);
 
-  // Prefer to GC older frames because newer frames are more likely to be
-  // popped than older frames.
-  if (heap->next_gc != NULL && heap->next_gc->min_gen < heap->gc->min_gen) {
-    heap->gc = heap->next_gc;
-    heap->next_gc = heap->gc->callee;
-  }
-
-  // Set up gc of compacted objects.
-  if (!(IsEmpty(&heap->gc->compacted) && IsEmpty(&heap->gc->compacted_saved))) {
-    MoveAllTo(&heap->marked, &heap->gc->compacted_saved);
-    MoveAllTo(&heap->unmarked, &heap->gc->compacted);
-    heap->min_gen = heap->gc->min_gen;
-    heap->max_gen = heap->gc->gen;
-    heap->dst_gen = heap->gc->gen;
-    return;
-  }
-
-  // Set up gc of popped objects.
-  if (!(IsEmpty(&heap->gc->popped) && IsEmpty(&heap->gc->popped_saved))) {
-    MoveAllTo(&heap->marked, &heap->gc->popped_saved);
-    MoveAllTo(&heap->unmarked, &heap->gc->popped);
-    heap->min_gen = heap->gc->min_gen + 1;
-    heap->max_gen = heap->gen + 1;
-    heap->dst_gen = heap->gc->min_gen;
-    return;
-  }
-
-  // Move to the next frame to gc.
+  // Set up next gc
   if (heap->next_gc != NULL && heap->next_gc->min_gen <= heap->top->min_gen) {
     heap->gc = heap->next_gc;
     heap->next_gc = heap->gc->callee;
+
+    MoveAllTo(&heap->marked, &heap->gc->marked);
+    MoveAllTo(&heap->unmarked, &heap->gc->unmarked);
   }
 }
 
@@ -564,10 +535,8 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top->callee = NULL;
   heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
-  Clear(&heap->top->popped);
-  Clear(&heap->top->popped_saved);
-  Clear(&heap->top->compacted);
-  Clear(&heap->top->compacted_saved);
+  Clear(&heap->top->unmarked);
+  Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
 
   heap->gc = heap->top;
@@ -586,10 +555,8 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   List values;
   Clear(&values);
   for (Frame* frame = heap->top; frame != NULL; frame = frame->caller) {
-    MoveAllTo(&values, &frame->popped);
-    MoveAllTo(&values, &frame->popped_saved);
-    MoveAllTo(&values, &frame->compacted);
-    MoveAllTo(&values, &frame->compacted_saved);
+    MoveAllTo(&values, &frame->unmarked);
+    MoveAllTo(&values, &frame->marked);
     MoveAllTo(&values, &frame->alloced);
   }
   MoveAllTo(&values, &heap->free);
@@ -621,10 +588,8 @@ void FblePushFrame(FbleValueHeap* heap)
     Frame* callee = FbleAlloc(Frame);
     callee->caller = heap->top;
     callee->callee = NULL;
-    Clear(&callee->compacted);
-    Clear(&callee->compacted_saved);
-    Clear(&callee->popped);
-    Clear(&callee->popped_saved);
+    Clear(&callee->unmarked);
+    Clear(&callee->marked);
     Clear(&callee->alloced);
     heap->top->callee = callee;
   }
@@ -642,21 +607,19 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   Frame* top = heap->top;
   heap->top = heap->top->caller;
 
-  MoveAllTo(&heap->top->popped, &top->compacted);
-  MoveAllTo(&heap->top->popped, &top->compacted_saved);
-  MoveAllTo(&heap->top->popped, &top->popped);
-  MoveAllTo(&heap->top->popped, &top->popped_saved);
-  MoveAllTo(&heap->top->popped, &top->alloced);
+  MoveAllTo(&heap->top->unmarked, &top->unmarked);
+  MoveAllTo(&heap->top->unmarked, &top->marked);
+  MoveAllTo(&heap->top->unmarked, &top->alloced);
 
   if (heap->gc == top) {
-    // If GC was in progress on the frame we are popping, abandon that GC
+    // If GC is in progress on the frame we are popping, abandon that GC
     // because it's out of date now.
-    MoveAllTo(&heap->top->popped, &heap->unmarked);
-    MoveAllTo(&heap->top->popped, &heap->marked);
+    MoveAllTo(&heap->top->unmarked, &heap->unmarked);
+    MoveAllTo(&heap->top->unmarked, &heap->marked);
   }
 
   if (IsAlloced(value) && value->gen >= top->min_gen) {
-    MoveTo(&heap->top->popped_saved, value);
+    MoveTo(&heap->top->marked, value);
   }
   top->min_gen = MAX_GEN;
 
@@ -673,23 +636,21 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   heap->gen++;
   heap->top->gen = heap->gen;
 
-  MoveAllTo(&heap->top->compacted, &heap->top->popped);
-  MoveAllTo(&heap->top->compacted, &heap->top->popped_saved);
-  MoveAllTo(&heap->top->compacted, &heap->top->compacted_saved);
-  MoveAllTo(&heap->top->compacted, &heap->top->alloced);
+  MoveAllTo(&heap->top->unmarked, &heap->top->marked);
+  MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
 
   if (heap->gc == heap->top) {
-    // If GC was in progress on the frame we are compacting we could run into
+    // If GC is in progress on the frame we are compacting we could run into
     // some trouble. Abandon the ongoing GC to avoid any potential problems.
     // TODO: Does this mean we may never get a chance to finish GC because we
     // keep restarting it before it can finish?
-    MoveAllTo(&heap->top->compacted, &heap->unmarked);
-    MoveAllTo(&heap->top->compacted, &heap->marked);
+    MoveAllTo(&heap->top->unmarked, &heap->unmarked);
+    MoveAllTo(&heap->top->unmarked, &heap->marked);
   }
 
   for (size_t i = 0; i < n; ++i) {
     if (IsAlloced(save[i]) && save[i]->gen >= heap->top->min_gen) {
-      MoveTo(&heap->top->compacted_saved, save[i]);
+      MoveTo(&heap->top->marked, save[i]);
     }
   }
 

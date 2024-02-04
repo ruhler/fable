@@ -1744,7 +1744,7 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
   Maximum resident set size (kbytes): 99592 ==> 83044 ==> 86060
 
 Cool. I think we're ready to mainline this now. I don't mind a 1 second
-regression in md5 given the 7 second improvement in fbld.
+regression in md5 given the 11 second improvement in fbld.
 
 ---
 
@@ -1754,3 +1754,77 @@ Do another round of performance analysis. Maybe there are some improvements we
 can make to the current GC approach based on that. After that, consider again
 if we can avoid allocating on the heap in some case.
 
+md5:
+
+ 7.69    33193  FblePopFrame[0012X]
+ 3.67    15822  FblePushFrame[0016X]
+ 2.16     9304  FbleCompactFrame[0014X]
+
+**      950    38890    14550  NewValueRaw[0019X] **
+        362    10369           FbleAllocRaw[0028X]   
+        124     9023           _int_free[001eX]   
+        107     3674           cfree@GLIBC_2.17[002cX]   
+         85      828           FbleFree[0041X]   
+         70      355           free@plt[004aX]   
+         39       90           malloc[0029X]   
+
+We could maybe improve PopFrame and CompactFrame if we had fewer object lists
+to manage on each frame. Perhaps most of the time these lists are empty. Maybe
+we could use a separate data structure to store GC possibilities separate from
+the main stack? That way we don't need to deal with any lists if they are
+otherwise empty.
+
+PushFrame appears to mostly be overheads of the function call. I wonder if we
+could inline it, since it is mostly called in one place, and if that wouldn't
+improve performance notably.
+
+Today we don't move any objects. We could simplify the code slightly under
+that assumption. Not sure if I want to make that assumption yet though.
+
+If we can do anything to improve GC, I think it would be to keep potential
+garbage on a separate stack. Push/Pop frame should be faster, especially for
+frames that don't do any allocation.
+
+Otherwise, for md5, can we come up with some way to avoid IncrGc and malloc
+for the short lived struct object allocations in Addx and Shlx?
+
+fbld:
+ 8.94     2375  FbleCompactFrame[0007X]
+ 6.87     1826  NewValueRaw[000aX]
+ 6.54     1738  FblePopFrame[000eX]
+ 2.18      579  FblePushFrame[0050X]
+
+**     3398     5337     1826  NewValueRaw[000aX] **
+        951     1812           FbleAllocRaw[000bX]   
+        754     1065           _int_free[0044X]   
+        406      503           cfree@GLIBC_2.17[0059X]   
+         84       90           FbleFree[0085X]   
+
+fbld looks similar to md5.
+
+Note that Push/Pop/Compact are orthogonal from NewValueRaw. NewValueRaw only
+happens with allocations. Push/Pop/Compact happens all the time.
+
+That means there are two things to work on next:
+1. Optimize Push/Pop/Compact. By coming up with better data structures.
+2. Optimize NewValueRaw. By figuring out how to avoid calling it for short
+lived objects.
+
+---
+
+For (1), I think we can group compacted and popped together. The key is that
+we don't traverse if the object has the same gen as the gc frame's gen. That
+covers both cases of compacted and popped.
+
+That should be a good start to performance improvement. There may be room for
+more after that.
+
+I haven't thought of anything for (2) worth trying yet.
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 51.05 ==> 50.59
+  Maximum resident set size (kbytes): 2344 ==> 2268
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 86.85 ==> 84.46
+  Maximum resident set size (kbytes): 86060 ==> 83784

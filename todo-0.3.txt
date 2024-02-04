@@ -136,6 +136,3 @@ Usage docs
 
 * There's no way to do user defined ifneq in fbld?
   Because all the arguments are evaluated. That's annoying?
-
-* Avoid O(N) operations for allocations in heap.c?
-  Specifically, forming the 'gc' generation and cleaning up the gc generation.
