@@ -2,6 +2,10 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Remove references to FbleReleaseValue in header files.
+
+* Move code in function.{h,c} to value.{h,c}.
+
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 

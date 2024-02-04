@@ -1828,3 +1828,37 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 /usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
   User time (seconds): 86.85 ==> 84.46
   Maximum resident set size (kbytes): 86060 ==> 83784
+
+---
+
+Idea: We don't have to call FblePushFrame/FblePopFrame at every function call.
+We only need to call it enough to avoid excessive garbage. In particular:
+* Only call FblePushFrame/FblePopFrame for recursive functions (when it's a
+  RefValue?). Anything else will do constant allocation, which we assume is
+  small enough we don't need to worry about.
+* Only call FblePushFrame/FblePopFrame for one out of every X function calls.
+  Again, each individual call is a constant amount of allocation. We can take
+  a constant overhead of garbage easily enough.
+* To skip FbleCompactFrame, just don't compact the frame. If we skipped the
+  push for the caller and then find ourselves in a tight FbleCompactFrame
+  loop, we can push a new frame instead of compacting and then compact in
+  place the next time around on that frame.
+
+This could get us up to 10-15% improvement based on the profiles for md5 and
+fbld.
+
+To start, I think we should move the code from function.c into value.c. It was
+never clear which code should go where. That will let the compiler do inlining
+in performance sensitive code and let us play around with things like only
+calling PushFrame/PopFrame at recursive function boundaries without having to
+deal with crossing a level of abstraction.
+
+Moving the function.c code into value.c:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 50.59 ==> 49.05
+  Maximum resident set size (kbytes): 2268 ==> 2340
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 84.46 ==> 80.68
+  Maximum resident set size (kbytes): 83784 ==> 84732
