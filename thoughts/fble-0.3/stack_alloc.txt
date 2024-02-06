@@ -1862,3 +1862,57 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 /usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
   User time (seconds): 84.46 ==> 80.68
   Maximum resident set size (kbytes): 83784 ==> 84732
+
+---
+
+To give a sense, here's a sample of function calls from md5 based on whether
+they are normal, recursive, tail normal, or tail recursive. Note that
+relatively few calls are recursive. So there's a potential to save a lot
+here by skipping Push/Pop/Compact frame in that case.
+
+1144988 n
+  12907 r
+ 192804 tn
+   7205 tr
+
+How about this: add an option 'recursive' to push/pop/compact. Add to each
+frame a count of non-recursive pushes and pops.
+
+Push:
+ * If recursive, push a new frame.
+ * If not recursive, increment the non-recursive push count.
+
+Pop:
+ * Decrement the push count. If it's zero, pop the frame.
+
+Compact:
+ * If not recursive, do nothing.
+ * If recursive and push count is 0, do like we do today.
+ * If recursive and push count is greater than 0,
+   Decrement the push count on the frame and push a new frame with push count
+   0.
+
+Easy? Worth a try?
+
+Double check this is okay to do though. For example, any frame could end up
+pointing to a really big object. With this approach, we end up essentially
+holding on to some frames longer than they would otherwise. Are there bad
+cases where that could impact memory complexity?
+
+It's always a constant factor, right? 
+
+Say we merge 5 frames, and each frame holds on to a big list. We end up with 5
+big lists. That's not breaking anything. It's as if we had a single big list
+which took 5x more memory to store. Constant factor should be fine.
+
+But is it merging 5 frames, or is it potentially merging more? It's really
+merging a tree of frames, right? If we assume at most K calls per frame,
+that's potentially K^5 frames worth of memory all being merged into one. Still
+constant, but a bit larger of a constant.
+
+I still think we are okay. Shall we try it?
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 80.68 ==> 77.85
+
+So, a little bit of improvement.

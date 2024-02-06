@@ -171,9 +171,12 @@ static FbleValue* StrictValue(FbleValue* value);
 typedef struct Frame {
   // Frames are allocated as needed and stored in a linear doubly linked list.
   // Frames that have been allocated but are unused are stored with all their
-  // lists cleared and with min_gen set to MAX_GEN;
+  // lists cleared, with min_gen set to MAX_GEN, and with merges set to 0.
   struct Frame* caller;
   struct Frame* callee;
+
+  // The number of frames that have been merged into this frame.
+  size_t merges;
 
   // Objects allocated before entering this stack frame have generation less
   // than min_gen. Objects allocated before the most recent compaction on the
@@ -560,6 +563,7 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top = FbleAlloc(Frame);
   heap->top->caller = NULL;
   heap->top->callee = NULL;
+  heap->top->merges = 0;
   heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
   Clear(&heap->top->unmarked);
@@ -619,6 +623,7 @@ void FblePushFrame(FbleValueHeap* heap)
     Clear(&callee->marked);
     Clear(&callee->alloced);
     heap->top->callee = callee;
+    callee->merges = 0;
   }
 
   heap->top = heap->top->callee;
@@ -632,6 +637,11 @@ void FblePushFrame(FbleValueHeap* heap)
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
 {
   Frame* top = heap->top;
+  if (top->merges > 0) {
+    top->merges--;
+    return value;
+  }
+
   heap->top = heap->top->caller;
 
   MoveAllTo(&heap->top->unmarked, &top->unmarked);
@@ -1013,7 +1023,14 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
       FbleProfileReplaceBlock(profile, function->profile_block_id);
     }
 
-    FbleCompactFrame(heap, 1 + argc, gTailCallData.func_and_args);
+    if (func->tag == REF_VALUE) {
+      if (heap->top->merges == 0) {
+        FbleCompactFrame(heap, 1 + argc, gTailCallData.func_and_args);
+      } else {
+        heap->top->merges--;
+        FblePushFrame(heap);
+      }
+    }
 
     func = gTailCallData.func_and_args[0];
     function = FbleFuncValueFunction(func);
@@ -1121,8 +1138,13 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   size_t num_unused = argc - executable->num_args;
   FbleValue** unused = args + executable->num_args;
 
-  FblePushFrame(heap);
+  if (function->tag == REF_VALUE) {
+    heap->top->merges++;
+  } else {
+    FblePushFrame(heap);
+  }
   FbleValue* result = executable->run(heap, profile, func, args);
+
 
   if (result == TailCallSentinel) {
     EnsureTailCallArgsSpace(gTailCallData.argc + num_unused);
