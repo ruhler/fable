@@ -176,6 +176,9 @@ typedef struct Frame {
   struct Frame* callee;
 
   // The number of frames that have been merged into this frame.
+  // As an optimization, we avoid pushing and popping new frames for each
+  // function call. This keeps track of how many calls we've done without
+  // pushing a new frame.
   size_t merges;
 
   // Objects allocated before entering this stack frame have generation less
@@ -225,6 +228,8 @@ struct FbleValueHeap {
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 static void MarkRefs(FbleValueHeap* heap, FbleValue* value);
 static void IncrGc(FbleValueHeap* heap);
+static void PushFrame(FbleValueHeap* heap, bool merge);
+static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** save);
 
 static FbleValue* TailCallSentinel = (FbleValue*)0x2;
 
@@ -612,9 +617,15 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   FbleFree(heap);
 }
 
-// See documentation in fble-value.h
-void FblePushFrame(FbleValueHeap* heap)
+// See documentation of FblePushFrame in fble-value.h
+// If merge is true, reuse the same allocation space as the caller frame.
+static void PushFrame(FbleValueHeap* heap, bool merge)
 {
+  if (merge) {
+    heap->top->merges++;
+    return;
+  }
+  
   if (heap->top->callee == NULL) {
     Frame* callee = FbleAlloc(Frame);
     callee->caller = heap->top;
@@ -631,6 +642,12 @@ void FblePushFrame(FbleValueHeap* heap)
   heap->gen++;
   heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
+}
+
+// See documentation in fble-value.h
+void FblePushFrame(FbleValueHeap* heap)
+{
+  PushFrame(heap, false);
 }
 
 // See documentation in fble-value.h
@@ -667,9 +684,22 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   return value;
 }
 
-// See documentation in fble-value.h
-void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
+// See documentation of FbleCompactFrame in fble-value.h
+// If merge is true, reuse the caller's allocation frame.
+static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** save)
 {
+  if (merge) {
+    return;
+  }
+
+  if (heap->top->merges > 0) {
+    // We can't compact in place because some of the frame is shared with the
+    // caller. Push a fresh frame so we can compact next time around.
+    heap->top->merges--;
+    PushFrame(heap, false);
+    return;
+  }
+
   heap->gen++;
   heap->top->gen = heap->gen;
 
@@ -694,6 +724,12 @@ void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
   if (heap->next_gc == NULL || heap->top->min_gen < heap->next_gc->min_gen) {
     heap->next_gc = heap->top;
   }
+}
+
+// See documentation in fble-value.h
+void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
+{
+  CompactFrame(heap, false, n, save);
 }
 
 // See documentation in fble-value.h
@@ -1023,14 +1059,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
       FbleProfileReplaceBlock(profile, function->profile_block_id);
     }
 
-    if (func->tag == REF_VALUE) {
-      if (heap->top->merges == 0) {
-        FbleCompactFrame(heap, 1 + argc, gTailCallData.func_and_args);
-      } else {
-        heap->top->merges--;
-        FblePushFrame(heap);
-      }
-    }
+    CompactFrame(heap, func->tag != REF_VALUE, 1 + argc, gTailCallData.func_and_args);
 
     func = gTailCallData.func_and_args[0];
     function = FbleFuncValueFunction(func);
@@ -1138,13 +1167,8 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   size_t num_unused = argc - executable->num_args;
   FbleValue** unused = args + executable->num_args;
 
-  if (function->tag == REF_VALUE) {
-    heap->top->merges++;
-  } else {
-    FblePushFrame(heap);
-  }
+  PushFrame(heap, function->tag != REF_VALUE);
   FbleValue* result = executable->run(heap, profile, func, args);
-
 
   if (result == TailCallSentinel) {
     EnsureTailCallArgsSpace(gTailCallData.argc + num_unused);
