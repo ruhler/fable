@@ -827,6 +827,8 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     return value;
   }
 
+  value = GcRealloc(heap, value);
+
   heap->top = heap->top->caller;
   heap->top->callee = NULL;
 
@@ -840,8 +842,6 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     MoveAllTo(&heap->top->unmarked, &heap->unmarked);
     MoveAllTo(&heap->top->unmarked, &heap->marked);
   }
-
-  value = GcRealloc(heap, value);
 
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
     MoveTo(&heap->top->marked, value);
@@ -871,6 +871,10 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
     return;
   }
 
+  for (size_t i = 0; i < n; ++i) {
+    save[i] = GcRealloc(heap, save[i]);
+  }
+
   heap->gen++;
   heap->top->gen = heap->gen;
 
@@ -887,7 +891,6 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   }
 
   for (size_t i = 0; i < n; ++i) {
-    save[i] = GcRealloc(heap, save[i]);
     if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
       MoveTo(&heap->top->marked, save[i]);
     }
