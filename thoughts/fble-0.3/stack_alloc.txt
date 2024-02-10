@@ -1940,3 +1940,50 @@ traversal. The best of all worlds hopefully. If we find short lived objects do
 end up allocating on the heap, we can consider merge more of the recursive
 calls, say 4 of every 5. We end up with a decent sized pool of stack allocated
 objects that avoid the need for malloc/free.
+
+---
+
+It's fine for stack allocations to refer to GC allocations. When we pop the
+frame we'll traverse the stack allocations to see which GC allocations are
+referenced.
+
+It's not okay for GC allocations to refer to stack allocations, because we
+don't want to have to traverse a long chain of GC objects every time we pop.
+Proposed solution: turn all stack allocations into GC allocations as part of
+traversing the popped frame. This includes stack allocations farther down the
+stack.
+
+To avoid creating duplicate GC allocations for the same stack allocation,
+create a GcValue kind on the stack to replace the original stack allocation.
+That GcValue acts like a RefValue and points to the Gc version of the
+allocation.
+
+For stack allocations, we want a stack data structure. Maybe start with like
+what I did before: malloc a big array at the start for all the stack
+allocations and hope it's big enough. Once we prove out the approach, we can
+think of better ways to (dynamically) size the stack. We can use that stack
+space for storing frames as well. Only the GC allocated objects need to be
+allocated via malloc.
+
+Pieces to pull together:
+* Use malloc allocated stack space for frames.
+* Implement a GcAlloc function that converts a stack allocated value to a gc
+  allocated value.
+
+To start, we can allocate values on the stack with space for list and gen
+fields. It's a little wasteful, but will simplify the programming. We could
+reuse a list field to track gc allocated counterparts to the value, for
+example. We could optimize space usage later if desired.
+
+High level approach is easy then:
+* Initially allocate by bumping the stack pointer.
+* Pop and Compact call GcAlloc to convert to a GC object when
+  popping/compacting.
+
+Cool. Let's give it a try.
+
+---
+
+* Let's allocate all native values on the heap instead of the stack, to
+  simplify tracking of the destructors.
+

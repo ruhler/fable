@@ -1,6 +1,4 @@
-/**
- * @file value.c
- *  FbleValue routines.
+/** * @file value.c *  FbleValue routines.
  */
 
 #include <assert.h>   // for assert
@@ -32,6 +30,8 @@ static FbleValue* Get(List* list);
 static void MoveTo(List* dst, FbleValue* value);
 static void MoveAllTo(List* dst, List* src);
 
+typedef struct Frame Frame;
+
 /** Different kinds of FbleValue. */
 typedef enum {
   STRUCT_VALUE,
@@ -40,6 +40,27 @@ typedef enum {
   REF_VALUE,
   NATIVE_VALUE,
 } ValueTag;
+
+// Header for values allocated to the stack.
+typedef struct {
+  // The equivalent GC value allocated for this value, or NULL if this value
+  // has not been GC allocated yet.
+  FbleValue* gc;
+
+  // The frame this value is allocated to.
+  Frame* frame;
+} StackHeader;
+
+// Header for GC allocated values.
+typedef struct {
+  List list;          /**< A list of values this value belongs to. */
+  size_t gen;         /**< Generation this object was allocated in. */
+} GcHeader;
+
+typedef union {
+  GcHeader gc;
+  StackHeader stack;
+} Header;
 
 /**
  * Base class for fble values.
@@ -54,9 +75,10 @@ typedef enum {
  * significant bit of the pointer is 0.
  */
 struct FbleValue {
-  List list;          /**< A list of values this value belongs to. */
+  // Note: Header.gc.list must be the first thing in FbleValue so we can map
+  // from GC list pointers back to FbleValue. 
+  Header h;
   ValueTag tag;       /**< The kind of value. */
-  size_t gen;         /**< Generation this object was allocated in. */
 };
 
 /**
@@ -142,7 +164,7 @@ typedef struct {
 #define NewValue(heap, T, tag) ((T*) NewValueRaw(heap, tag, sizeof(T)))
 
 /**
- * Allocates a new value with some extra space.
+ * Allocates a new value with some extra space to the stack.
  *
  * @param heap  The heap to allocate the value on
  * @param T  The type of the value
@@ -154,12 +176,46 @@ typedef struct {
  *   The newly allocated value with extra space.
  *
  * @sideeffects
- *   Allocates a value that should be released when it is no longer needed.
+ *   Allocates a value on the stack.
  */
 #define NewValueExtra(heap, T, tag, count) ((T*) NewValueRaw(heap, tag, sizeof(T) + count * sizeof(FbleValue*)))
 
+/**
+ * @func[NewGcValue] Allocates a new value of the given type on the heap.
+ *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[Frame*][frame] The frame to allocate the value on.
+ *  @arg[type][T] The type of the value.
+ *  @arg[ValueTag][tag] The tag of the value.
+ *  @returns[T*] The newly allocated value.
+ *
+ *  @sideeffects
+ *   Allocates a GC value on the heap.
+ */
+#define NewGcValue(heap, frame, T, tag) ((T*) NewGcValueRaw(heap, frame, tag, sizeof(T)))
+
+/**
+ * Allocates a new value with some extra space to the heap.
+ *
+ * @param heap The heap to allocate on.
+ * @param frame  The frame to allocate the value on
+ * @param T  The type of the value
+ * @param tag The tag of the value
+ * @param count  The number of FbleValue* worth of extra space to include in
+ *   the allocated object.
+ *
+ * @returns[FbleValue*]
+ *   The newly allocated value with extra space.
+ *
+ * @sideeffects
+ *   Allocates a value on the heap.
+ */
+#define NewGcValueExtra(heap, frame, T, tag, count) ((T*) NewGcValueRaw(heap, frame, tag, sizeof(T) + count * sizeof(FbleValue*)))
+
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
-static void FreeValue(FbleValue* value);
+static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag, size_t size);
+static void FreeGcValue(FbleValue* value);
+static bool IsGcAllocated(FbleValueHeap* heap, FbleValue* value);
+static FbleValue* GcRealloc(FbleValueHeap* heap, FbleValue* value);
 
 static bool IsPacked(FbleValue* value);
 static bool IsAlloced(FbleValue* value);
@@ -168,12 +224,9 @@ static FbleValue* StrictValue(FbleValue* value);
 
 #define MAX_GEN ((size_t)-1)
 
-typedef struct Frame {
-  // Frames are allocated as needed and stored in a linear doubly linked list.
-  // Frames that have been allocated but are unused are stored with all their
-  // lists cleared, with min_gen set to MAX_GEN, and with merges set to 0.
+struct Frame {
   struct Frame* caller;
-  struct Frame* callee;
+  struct Frame* callee; // NULL or top
 
   // The number of frames that have been merged into this frame.
   // As an optimization, we avoid pushing and popping new frames for each
@@ -184,22 +237,28 @@ typedef struct Frame {
   // Objects allocated before entering this stack frame have generation less
   // than min_gen. Objects allocated before the most recent compaction on the
   // frame have generation less than gen.
-  // If a.min_gen < b.min_gen, then a is closer to the base of the stack than
-  // b.
   size_t min_gen;
   size_t gen;
 
-  // Potential garbage objects on the frame. These are either from objects
+  // Potential garbage GC objects on the frame. These are either from objects
   // allocated to callee frames that have since returned or objects allocated
   // on this frame prior to compaction.
   List unmarked;    // Objects not yet seen in traversal.
   List marked;      // Objects seen in traversal but not processed yet.
 
-  // Other objects allocated to this frame.
+  // Other GC objects allocated to this frame.
   List alloced;
-} Frame;
+
+  // The top of the frame on the stack.
+  // This points to the callee frame or new stack allocations if this is the
+  // top frame on the stack.
+  intptr_t top;
+};
 
 struct FbleValueHeap {
+  // The base of the stack.
+  void* stack;
+
   // The generation to allocate new objects to.
   size_t gen;
 
@@ -291,9 +350,9 @@ static FbleValue* Get(List* list)
   }
 
   FbleValue* got = (FbleValue*)list->next;
-  got->list.prev->next = got->list.next;
-  got->list.next->prev = got->list.prev;
-  Clear(&got->list);
+  got->h.gc.list.prev->next = got->h.gc.list.next;
+  got->h.gc.list.next->prev = got->h.gc.list.prev;
+  Clear(&got->h.gc.list);
   return got;
 }
 
@@ -306,12 +365,12 @@ static FbleValue* Get(List* list)
  */
 static void MoveTo(List* dst, FbleValue* value)
 {
-  value->list.prev->next = value->list.next;
-  value->list.next->prev = value->list.prev;
-  value->list.next = dst->next;
-  value->list.prev = dst;
-  dst->next->prev = &value->list;
-  dst->next = &value->list;
+  value->h.gc.list.prev->next = value->h.gc.list.next;
+  value->h.gc.list.next->prev = value->h.gc.list.prev;
+  value->h.gc.list.next = dst->next;
+  value->h.gc.list.prev = dst;
+  dst->next->prev = &value->h.gc.list;
+  dst->next = &value->h.gc.list;
 }
 
 /**
@@ -334,7 +393,7 @@ static void MoveAllTo(List* dst, List* src)
 }
 
 /**
- * @func[NewValueRaw] Allocates a new value on the heap.
+ * @func[NewValueRaw] Allocates a new value on the stack.
  *  @arg[FbleValueHeap*][heap] The heap to allocate to.
  *  @arg[ValueTag][tag] The tag of the new value.
  *  @arg[size_t][size] The number of bytes to allocate for the value.
@@ -344,24 +403,46 @@ static void MoveAllTo(List* dst, List* src)
  */
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
 {
-  IncrGc(heap);
+  FbleValue* value = (FbleValue*)heap->top->top;
+  heap->top->top += size;
 
-  FbleValue* value = (FbleValue*)FbleAllocRaw(size);
+  value->h.stack.gc = NULL;
+  value->h.stack.frame = heap->top;
   value->tag = tag;
-  value->gen = heap->gen;
-
-  Clear(&value->list);
-  MoveTo(&heap->top->alloced, value);
   return value;
 }
 
 /**
- * @func[FreeValue] Frees a value.
+ * @func[NewGcValueRaw] Allocates a new value on the heap.
+ *  @arg[FbleValueHeap*][heap] The heap to allocate on.
+ *  @arg[Frame*][frame] The frame to allocate to.
+ *  @arg[ValueTag][tag] The tag of the new value.
+ *  @arg[size_t][size] The number of bytes to allocate for the value.
+ *  @returns[FbleValue*] The newly allocated value.
+ *  @sideeffects
+ *   Allocates a value to the given frame of the heap.
+ */
+static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag, size_t size)
+{
+  IncrGc(heap);
+
+  FbleValue* value = (FbleValue*)FbleAllocRaw(size);
+  value->tag = tag;
+  value->h.gc.gen = frame->gen;
+
+  Clear(&value->h.gc.list);
+  MoveTo(&frame->alloced, value);
+  return value;
+}
+
+/**
+ * @func[FreeGcValue] Frees a GC allocated value.
  *  @arg[FbleValue*][value] The value to free. May be NULL.
  *  @sideeffects
- *   Frees any resources outside of the heap that this value holds on to.
+ *   @i Frees any resources outside of the heap that this value holds on to.
+ *   @i Behavior is undefined if the value is not GC allocated.
  */
-static void FreeValue(FbleValue* value)
+static void FreeGcValue(FbleValue* value)
 {
   if (value != NULL) {
     if (value->tag == NATIVE_VALUE) {
@@ -372,6 +453,98 @@ static void FreeValue(FbleValue* value)
     }
     FbleFree(value);
   }
+}
+
+/**
+ * @func[IsGcAllocated] Tests if an object is GC allocated.
+ *  @arg[FbleValueHeap*][heap] The heap the object is allocated on.
+ *  @arg[FbleValue*][value] The value to check.
+ *  @returns[bool] True if the object is gc allocated.
+ *  @sideeffects
+ *   None.
+ */
+static bool IsGcAllocated(FbleValueHeap* heap, FbleValue* value)
+{
+  return value < (FbleValue*)heap->stack || value >= (FbleValue*)heap->top->top;
+}
+
+/**
+ * @func[GcRealloc] Reallocate a value onto the heap.
+ *  @arg[FbleValueHeap*][heap] The heap to allocate to.
+ *  @arg[FbleValue*][value] The value to allocate.
+ *  @returns[FbleValue*] A gc allocated value equivalent to @a[value].
+ *  @sideeffects
+ *   @i Allocates GC values on the heap.
+ *   @i Records mapping from original value to GC value on the stack.
+ */
+static FbleValue* GcRealloc(FbleValueHeap* heap, FbleValue* value)
+{
+  // Packed values and NULL need not be allocated at all.
+  if (!IsAlloced(value)) {
+    return value;
+  }
+
+  // If the value is already a GC value, there's nothing to do.
+  if (IsGcAllocated(heap, value)) {
+    return value;
+  }
+
+  // If the value has already been GC allocated, return the associated GC
+  // allocated value.
+  if (value->h.stack.gc != NULL) {
+    return value->h.stack.gc;
+  }
+
+  switch (value->tag) {
+    case STRUCT_VALUE: {
+      StructValue* sv = (StructValue*)value;
+      StructValue* nv = NewGcValueExtra(heap, value->h.stack.frame, StructValue, STRUCT_VALUE, sv->fieldc);
+      value->h.stack.gc = &nv->_base;
+      
+      nv->fieldc = sv->fieldc;
+      for (size_t i = 0; i < sv->fieldc; ++i) {
+        nv->fields[i] = GcRealloc(heap, sv->fields[i]);
+      }
+      return &nv->_base;
+    }
+
+    case UNION_VALUE: {
+      UnionValue* uv = (UnionValue*)value;
+      UnionValue* nv = NewGcValue(heap, value->h.stack.frame, UnionValue, UNION_VALUE);
+      value->h.stack.gc = &nv->_base;
+      nv->tag = uv->tag;
+      nv->arg = GcRealloc(heap, uv->arg);
+      return &nv->_base;
+    }
+
+    case FUNC_VALUE: {
+      FuncValue* fv = (FuncValue*)value;
+      FuncValue* nv = NewGcValueExtra(heap, value->h.stack.frame, FuncValue, FUNC_VALUE, fv->function.executable.num_statics);
+      value->h.stack.gc = &nv->_base;
+      memcpy(&nv->function.executable, &fv->function.executable, sizeof(FbleExecutable));
+      nv->function.profile_block_id = fv->function.profile_block_id;
+      nv->function.statics = nv->statics;
+      for (size_t i = 0; i < nv->function.executable.num_statics; ++i) {
+        nv->statics[i] = GcRealloc(heap, fv->statics[i]);
+      }
+      return &nv->_base;
+    }
+
+    case REF_VALUE: {
+      RefValue* rv = (RefValue*)value;
+      RefValue* nv = NewGcValue(heap, value->h.stack.frame, RefValue, REF_VALUE);
+      value->h.stack.gc = &nv->_base;
+      nv->value = GcRealloc(heap, rv->value);
+      return &nv->_base;
+    }
+
+    case NATIVE_VALUE: {
+      FbleUnreachable("native value should already be GC allocated.");
+      return NULL;
+    }
+  }
+
+  FbleUnreachable("should never get here");
 }
 
 /**
@@ -462,7 +635,7 @@ static FbleValue* StrictValue(FbleValue* value)
 }
 
 /**
- * @func[MarkRef] Marks a value referenced from another value.
+ * @func[MarkRef] Marks a GC value referenced from another value.
  *  @arg[FbleHeap*][heap] The heap.
  *  @arg[FbleValue*][src] The source of the reference.
  *  @arg[FbleValue*][dst] The target of the reference. Must not be NULL.
@@ -473,14 +646,14 @@ static FbleValue* StrictValue(FbleValue* value)
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
   if (IsAlloced(dst)
-      && dst->gen >= heap->gc->min_gen
-      && dst->gen != heap->gc->gen) {
+      && dst->h.gc.gen >= heap->gc->min_gen
+      && dst->h.gc.gen != heap->gc->gen) {
     MoveTo(&heap->marked, dst);
   }
 }
 
 /**
- * @func[MarkRefs] Marks references from a value.
+ * @func[MarkRefs] Marks references from a GC allocated value.
  *  @arg[FbleValueHeap*][heap] The heap.
  *  @arg[FbleValue*][value] The value whose references to traverse
  *  @sideeffects
@@ -534,13 +707,13 @@ static void MarkRefs(FbleValueHeap* heap, FbleValue* value)
 static void IncrGc(FbleValueHeap* heap)
 {
   // Free a couple objects on the free list.
-  FreeValue(Get(&heap->free));
-  FreeValue(Get(&heap->free));
+  FreeGcValue(Get(&heap->free));
+  FreeGcValue(Get(&heap->free));
 
   // Traverse an object on the heap.
   FbleValue* marked = Get(&heap->marked);
   if (marked != NULL) {
-    marked->gen = heap->gc->gen;
+    marked->h.gc.gen = heap->gc->gen;
     MarkRefs(heap, marked);
     MoveTo(&heap->gc->alloced, marked);
     return;
@@ -563,9 +736,14 @@ static void IncrGc(FbleValueHeap* heap)
 FbleValueHeap* FbleNewValueHeap()
 {
   FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
+
+  // TODO: Don't hard code the stack size.
+  heap->stack = FbleAllocRaw(256 * 1024 * 1024);
+
   heap->gen = 0;
 
-  heap->top = FbleAlloc(Frame);
+  heap->top = (Frame*)heap->stack;
+
   heap->top->caller = NULL;
   heap->top->callee = NULL;
   heap->top->merges = 0;
@@ -574,6 +752,7 @@ FbleValueHeap* FbleNewValueHeap()
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
+  heap->top->top = (intptr_t)(heap->top + 1);
 
   heap->gc = heap->top;
   heap->next_gc = NULL;
@@ -599,20 +778,10 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   MoveAllTo(&values, &heap->marked);
   MoveAllTo(&values, &heap->unmarked);
 
-  while (heap->top->callee != NULL) {
-    Frame* callee = heap->top->callee;
-    heap->top->callee = callee->callee;
-    FbleFree(callee);
-  }
-
-  while (heap->top != NULL) {
-    Frame* top = heap->top;
-    heap->top = top->caller;
-    FbleFree(top);
-  }
+  FbleFree(heap->stack);
 
   for (FbleValue* value = Get(&values); value != NULL; value = Get(&values)) {
-    FreeValue(value);
+    FreeGcValue(value);
   }
   FbleFree(heap);
 }
@@ -625,19 +794,18 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
     heap->top->merges++;
     return;
   }
-  
-  if (heap->top->callee == NULL) {
-    Frame* callee = FbleAlloc(Frame);
-    callee->caller = heap->top;
-    callee->callee = NULL;
-    Clear(&callee->unmarked);
-    Clear(&callee->marked);
-    Clear(&callee->alloced);
-    heap->top->callee = callee;
-    callee->merges = 0;
-  }
 
-  heap->top = heap->top->callee;
+  Frame* callee = (Frame*)heap->top->top;
+  callee->caller = heap->top;
+  callee->callee = NULL;
+  Clear(&callee->unmarked);
+  Clear(&callee->marked);
+  Clear(&callee->alloced);
+  heap->top->callee = callee;
+  callee->merges = 0;
+  callee->top = (intptr_t)(callee + 1);
+  
+  heap->top = callee;
 
   heap->gen++;
   heap->top->min_gen = heap->gen;
@@ -660,6 +828,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   }
 
   heap->top = heap->top->caller;
+  heap->top->callee = NULL;
 
   MoveAllTo(&heap->top->unmarked, &top->unmarked);
   MoveAllTo(&heap->top->unmarked, &top->marked);
@@ -672,7 +841,9 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     MoveAllTo(&heap->top->unmarked, &heap->marked);
   }
 
-  if (IsAlloced(value) && value->gen >= top->min_gen) {
+  value = GcRealloc(heap, value);
+
+  if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
     MoveTo(&heap->top->marked, value);
   }
   top->min_gen = MAX_GEN;
@@ -716,7 +887,8 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   }
 
   for (size_t i = 0; i < n; ++i) {
-    if (IsAlloced(save[i]) && save[i]->gen >= heap->top->min_gen) {
+    save[i] = GcRealloc(heap, save[i]);
+    if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
       MoveTo(&heap->top->marked, save[i]);
     }
   }
@@ -1217,7 +1389,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
 {
   FuncValue* v = NewValueExtra(heap, FuncValue, FUNC_VALUE, executable->num_statics);
   v->function.profile_block_id = profile_block_id;
-  memcpy(&v->function, executable, sizeof(FbleExecutable));
+  memcpy(&v->function.executable, executable, sizeof(FbleExecutable));
   v->function.statics = v->statics;
   for (size_t i = 0; i < executable->num_statics; ++i) {
     v->statics[i] = statics[i];
@@ -1313,7 +1485,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
     void* data, void (*on_free)(void* data))
 {
-  NativeValue* value = NewValue(heap, NativeValue, NATIVE_VALUE);
+  NativeValue* value = NewGcValue(heap, heap->top, NativeValue, NATIVE_VALUE);
   value->data = data;
   value->on_free = on_free;
   return &value->_base;
