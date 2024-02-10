@@ -877,6 +877,7 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
 
   heap->gen++;
   heap->top->gen = heap->gen;
+  heap->top->top = (intptr_t)(heap->top + 1);
 
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);

@@ -1987,3 +1987,17 @@ Cool. Let's give it a try.
 * Let's allocate all native values on the heap instead of the stack, to
   simplify tracking of the destructors.
 
+---
+
+Okay, draft is done. Looks like we have a memory leak somewhere. How to track
+it down? Found it.
+
+Some early results:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 48.07 ==> 43.30
+  Maximum resident set size (kbytes): 3668 ==> 3180
+
+That's pretty nice.
+
+Looks like we have some bug with ref values though, because fbld fails.
