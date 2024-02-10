@@ -531,11 +531,8 @@ static FbleValue* GcRealloc(FbleValueHeap* heap, FbleValue* value)
     }
 
     case REF_VALUE: {
-      RefValue* rv = (RefValue*)value;
-      RefValue* nv = NewGcValue(heap, value->h.stack.frame, RefValue, REF_VALUE);
-      value->h.stack.gc = &nv->_base;
-      nv->value = GcRealloc(heap, rv->value);
-      return &nv->_base;
+      FbleUnreachable("ref value should already be GC allocated.");
+      return NULL;
     }
 
     case NATIVE_VALUE: {
@@ -1456,7 +1453,7 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 // See documentation in fble-value.h.
 FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 {
-  RefValue* rv = NewValue(heap, RefValue, REF_VALUE);
+  RefValue* rv = NewGcValue(heap, heap->top, RefValue, REF_VALUE);
   rv->value = NULL;
   return &rv->_base;
 }

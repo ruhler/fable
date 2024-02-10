@@ -2001,3 +2001,31 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 That's pretty nice.
 
 Looks like we have some bug with ref values though, because fbld fails.
+
+Let me allocate ref values on gc all the time. Yeah, that seems to fix it. I'm
+not sure exactly why it's problematic, but it wouldn't surprise me if it is.
+It shouldn't be bad to always Gc alloc.
+
+The performance numbers look good:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 48.07 ==> 43.72
+  Maximum resident set size (kbytes): 3668 ==> 3168
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 78.77 ==> 64.85
+  Maximum resident set size (kbytes): 103956 ==> 107168
+
+Can we mainline this?
+
+Steps to do first:
+* Make sure all the tests pass.
+* Review linux perf results. See if anything interesting shows up.
+* Figure out how to properly pick the stack size. Can we dynamically allocate
+  as needed?
+
+The performance is good enough. Good enough to declare the performance goals
+of release fble-0.3 met I would say.
+
+Tests pass. Let's mainline this and worry about a better approach to picking
+stack size next.
