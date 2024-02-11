@@ -1,0 +1,14 @@
+Fble 0.3 Release Burndown
+=========================
+I'm satisfied on performance work for this release. Let's start the release
+burndown. What to focus on next?
+
+Potential big things are:
+* SatGame
+* Rewrite fbld in C.
+* Redesign debugger.
+* Fbld modularity.
+* Modular compilation.
+
+How about we do some fble coding and work on SatGame next?
+

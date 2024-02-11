@@ -878,3 +878,10 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 /usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
   User time (seconds): 96.37 ==> 98.44
   Maximum resident set size (kbytes): 99776 ==> 99592
+
+---
+
+After rewriting the memory management code a few times, we've reached a place
+I'm happy with. Runtimes are somewhere between 50% to 75% of where they were
+before. Not quite 2x, but not bad either. There's been enough change it's time
+to take a break from performance improvements for a while.

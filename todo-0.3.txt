@@ -5,6 +5,9 @@ Things to consider doing for the fble-0.3 release.
 * Clarify in API documentation how memory management of fble values works from
   a user's perspective.
 
+* Remove FbleCompactFrame API?
+  It's only used internally?
+
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 
@@ -31,7 +34,7 @@ Things to consider doing for the fble-0.3 release.
 * It's strange that a function that returns a poly has kind %.
   Does that make sense?
 
-* Module compilation
+* Modular compilation
  - As a blocker for major compiler optimizations.
 
 * Add spec tests for coverage.
@@ -50,16 +53,8 @@ Things to consider doing for the fble-0.3 release.
 * IEEE floating point support.
 * Implement an image viewer.
 
-* Make programs run twice as fast.
- - Implement function inlining?
- - Implement packing of data types?
- - Use registers for args and locals instead of the stack?
-
 * Do something with .@ module value vs. type?
   - There's currently unexercised code for it.
-
-* Improving packing support for data values.
- - Taking advantage of explicit type info to pack and unpack.
 
 * [compilation] Add support for .fble.@ files and modular compilation.
 

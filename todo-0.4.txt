@@ -1,0 +1,9 @@
+Fble 0.4 TODO
+=============
+Things to consider doing for the fble-0.4 release.
+
+* Make programs run twice as fast.
+
+* Improving packing support for data values.
+ - Taking advantage of explicit type info to pack and unpack.
+
