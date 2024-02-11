@@ -3,7 +3,7 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * Don't hard code stack size.
-* Use pointer values instead of min_gc values to compare frame locations?
+* Avoid use of min_gen to validate next_gc?
 * Get rid of redundant Frame.callee field?
 
 * Remove references to FbleReleaseValue in header files.

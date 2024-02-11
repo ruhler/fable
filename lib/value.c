@@ -57,6 +57,13 @@ typedef struct {
   size_t gen;         /**< Generation this object was allocated in. */
 } GcHeader;
 
+// Where an object is allocated.
+typedef enum {
+  GC_ALLOC,
+  STACK_ALLOC
+} AllocLoc;
+
+// Value header depending on a value's AllocLoc.
 typedef union {
   GcHeader gc;
   StackHeader stack;
@@ -79,6 +86,7 @@ struct FbleValue {
   // from GC list pointers back to FbleValue. 
   Header h;
   ValueTag tag;       /**< The kind of value. */
+  AllocLoc loc;       /**< Where the object is allocated. */
 };
 
 /**
@@ -214,7 +222,6 @@ typedef struct {
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
 static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag, size_t size);
 static void FreeGcValue(FbleValue* value);
-static bool IsGcAllocated(FbleValueHeap* heap, FbleValue* value);
 static FbleValue* GcRealloc(FbleValueHeap* heap, FbleValue* value);
 
 static bool IsPacked(FbleValue* value);
@@ -409,6 +416,7 @@ static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
   value->h.stack.gc = NULL;
   value->h.stack.frame = heap->top;
   value->tag = tag;
+  value->loc = STACK_ALLOC;
   return value;
 }
 
@@ -428,6 +436,7 @@ static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag,
 
   FbleValue* value = (FbleValue*)FbleAllocRaw(size);
   value->tag = tag;
+  value->loc = GC_ALLOC;
   value->h.gc.gen = frame->gen;
 
   Clear(&value->h.gc.list);
@@ -456,19 +465,6 @@ static void FreeGcValue(FbleValue* value)
 }
 
 /**
- * @func[IsGcAllocated] Tests if an object is GC allocated.
- *  @arg[FbleValueHeap*][heap] The heap the object is allocated on.
- *  @arg[FbleValue*][value] The value to check.
- *  @returns[bool] True if the object is gc allocated.
- *  @sideeffects
- *   None.
- */
-static bool IsGcAllocated(FbleValueHeap* heap, FbleValue* value)
-{
-  return value < (FbleValue*)heap->stack || value >= (FbleValue*)heap->top->top;
-}
-
-/**
  * @func[GcRealloc] Reallocate a value onto the heap.
  *  @arg[FbleValueHeap*][heap] The heap to allocate to.
  *  @arg[FbleValue*][value] The value to allocate.
@@ -485,7 +481,7 @@ static FbleValue* GcRealloc(FbleValueHeap* heap, FbleValue* value)
   }
 
   // If the value is already a GC value, there's nothing to do.
-  if (IsGcAllocated(heap, value)) {
+  if (value->loc == GC_ALLOC) {
     return value;
   }
 

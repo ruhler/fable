@@ -2029,3 +2029,74 @@ of release fble-0.3 met I would say.
 
 Tests pass. Let's mainline this and worry about a better approach to picking
 stack size next.
+
+It's hard to see much from the md5 perf profile. Who knows how much is inlined
+where. The time spent in NewGcValueRaw is 2.5%. It's looking pretty good.
+
+Similar in fbld perf profile. Hard to see based on what's inlined where.
+
+I'd say performance wise we've achieved our object with stack allocation.
+
+Now, how do we pick a better size for the stack?
+
+Options:
+1. Pick a better absolute size to start with.
+2. Dynamically allocate more as needed in big chunks.
+
+I like (2) better practically because we don't have to worry about silently
+overrunning buffers or trying to gauge how much memory the user has, or
+worrying about overcommit policy. The downside of (2) is we don't have a
+single continuous range.
+
+Let's start with (2), see how we can handle it.
+
+A few issues to handle:
+* How to check order of frames. Right now we use min_gen. Let's continue to
+  use that for the time being. Easy.
+* How to test if an object is gc allocated or not?
+  - Store something in the value itself next to tag. Easy to do. Too costly?
+  - Store something in the pointer value itself. Trickier. Maybe okay?
+* Tracking bounds for new allocation.
+  - Add a check every time we allocate. Easy. Not sure how costly.
+
+Sounds like (2) is entirely feasible. Not sure how big a cost it is, but
+honestly probably not very costly in practice. The idea is to allocate the
+stack dynamically in large chunks of say, 1MB each. When we run out of space,
+allocate a new chunk. We can keep linked list of allocated chunks if needed.
+
+Say a Frame* lives in it's caller's space. The frame itself can allocate extra
+if it needs to for new values or the callee. When we pop a frame, we put aside
+any extra allocations it made for later use. Shouldn't be too bad. It's nice
+to align the cleanup with frame pop. I assume/hope that the majority of frames
+don't have any extra space allocated, so it's pretty cheap to deal with.
+
+Add two fields to frame:
+* A singly linked linked list of extra allocations.
+* An intptr_t which is the max of the allocations.
+
+Add one field to heap:
+* A singly linked list of extra allocations.
+
+Add a helper function to StackAlloc a certain size. Use that for allocating
+values and frames. It checks for sufficient space, advances top pointer. If
+necessary it uses or allocates a new extra allocation. When we pop the frame,
+move all the extra allocations to the heap - O(N) is fine here, because there
+should be very few extra allocations. It's very unlikely that a heap needs
+more than 1.
+
+Sounds like a plan. Let's implement it.
+
+---
+
+Cost of using a field in the value to store gc versus stack alloc instead of
+pointer comparison:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 43.72 ==> 43.25
+  Maximum resident set size (kbytes): 3168 ==> 3280
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 64.85 ==> 64.59
+  Maximum resident set size (kbytes): 107168 ==> 106024
+
+Cool, it's a performance improvement.
