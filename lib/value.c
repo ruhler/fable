@@ -167,7 +167,7 @@ typedef struct {
  *   The newly allocated value.
  *
  * @sideeffects
- *   Allocates a value that should be released when it is no longer needed.
+ *   Allocates a value on the heap.
  */
 #define NewValue(heap, T, tag) ((T*) NewValueRaw(heap, tag, sizeof(T)))
 

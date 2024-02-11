@@ -111,8 +111,7 @@ extern FbleValue* FbleGenericTypeValue;
  *   A newly allocated struct value with given args.
  *
  *  @sideeffects
- *   The returned struct value must be freed using FbleReleaseValue when no
- *   longer in use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
@@ -128,8 +127,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
  *   A newly allocated struct value with given args.
  *
  *  @sideeffects
- *   The returned struct value must be freed using FbleReleaseValue when no
- *   longer in use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
 
@@ -140,9 +138,8 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
  *
  *  @returns FbleValue*
  *   The value of the given field of the struct value object. The returned
- *   value will stay alive as long as the given struct value. The caller is
- *   responsible for calling FbleRetainValue on the returned value to keep it
- *   alive longer if necessary. Returns NULL if the struct value is undefined.
+ *   value will stay alive as long as the given struct value.
+ *   Returns NULL if the struct value is undefined.
  *
  *  @sideeffects
  *   Behavior is undefined if the object is not a struct value or the field
@@ -160,8 +157,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field);
  *   A newly allocated union value with given tag and arg.
  *
  *  @sideeffects
- *   The returned union value must be freed using FbleReleaseValue when no
- *   longer in use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 
@@ -176,8 +172,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
  *   A newly allocated union value with given tag and arg.
  *
  *  @sideeffects
- *   The returned union value must be freed using FbleReleaseValue when no
- *   longer in use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
 
@@ -239,8 +234,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field);
  *   A newly allocated list value.
  *
  *  @sideeffects
- *   The returned value must be freed using FbleReleaseValue when no longer in
- *   use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
@@ -255,8 +249,7 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
  *   A newly allocated list value.
  *
  *  @sideeffects
- *   The returned value must be freed using FbleReleaseValue when no longer in
- *   use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
 
@@ -270,8 +263,7 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
  *   A newly allocated literal value.
  *
  *  @sideeffects
- *   The returned value must be freed using FbleReleaseValue when no longer in
- *   use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 
@@ -291,8 +283,7 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
  *   A newly allocated function value.
  *
  *  @sideeffects
- *   Allocates a new function value that should be freed using
- *   FbleReleaseValue when it is no longer needed.
+ *   Allocates a function value on the heap.
  */
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics);
 
@@ -323,9 +314,7 @@ FbleFunction* FbleFuncValueFunction(FbleValue* value);
  *   error in the program.
  * 
  *  @sideeffects
- *   @item
- *    The returned value must be freed with @l[FbleReleaseValue] when no
- *    longer in use.
+ *   @i Allocates a value on the heap.
  *   @i Prints an error message to stderr in case of a runtime error.
  *   @item
  *    Updates profiling information in profile based on the execution of the
@@ -345,12 +334,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
  *   The result of applying the function to the given arguments.
  *
  *  @sideeffects
- *   @item
- *    The returned value must be freed with FbleReleaseValue when no longer
- *    in use.
- *   @item
- *    Does not take ownership of the func. Does not take ownership of the
- *    args.
+ *   @i Allocates a value on the heap.
  *   @i Prints warning messages to stderr.
  *   @i Prints an error message to stderr in case of error.
  *   @i Updates the profile with stats from the evaluation.
@@ -368,8 +352,7 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValu
  *   A newly allocated reference value.
  *
  *  @sideeffects
- *   The returned value must be freed using FbleReleaseValue when no longer in
- *   use.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewRefValue(FbleValueHeap* heap);
 
@@ -405,8 +388,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
  *  @returns[FbleValue*] The newly allocated native value.
  *
  *  @sideeffects
- *   The returned value must be freed using FbleReleaseValue when no longer
- *   needed.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
     void* data, void (*on_free)(void* data));

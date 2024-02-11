@@ -36,8 +36,7 @@
  *   executed, or NULL in case of error.
  *
  *  @sideeffects
- *   The user should call FbleReleaseValue on the returned value when it is no
- *   longer needed.
+ *   Allocates a value on the heap.
  */
 FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModule* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 
