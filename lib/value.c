@@ -238,8 +238,6 @@ typedef struct Chunk {
   struct Chunk* next;
 } Chunk;
 
-#define MAX_GEN ((size_t)-1)
-
 struct Frame {
   struct Frame* caller;
   struct Frame* callee; // NULL or top
@@ -900,7 +898,6 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     MoveTo(&heap->top->marked, value);
   }
 
-  top->min_gen = MAX_GEN;
   while (top->chunks != NULL) {
     Chunk* chunk = top->chunks;
     top->chunks = chunk->next;
@@ -1532,7 +1529,7 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 // See documentation in fble-value.h.
 bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 {
-  assert((heap->top->callee == NULL || heap->top->callee->min_gen == MAX_GEN)
+  assert(ref->h.gc.gen >= heap->top->min_gen
       && "FbleAssignRefValue must be called with ref on top of stack");
 
   // Unwrap any accumulated layers of references on the value and make sure we
