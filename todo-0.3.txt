@@ -2,8 +2,8 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Avoid use of min_gen to validate next_gc?
 * Get rid of redundant Frame.callee field?
+* Remove unused MAX_GEN in lib/value.c?
 
 * Remove references to FbleReleaseValue in header files.
 

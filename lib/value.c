@@ -294,8 +294,7 @@ struct FbleValueHeap {
   // The next frame to run garbage collection on.
   // This is the frame closest to the base of the stack with some potential
   // garbage objects to GC.
-  // May be NULL to indicate that no frames have potential garbage objects to
-  // GC.
+  // NULL to indicate that no frames have potential garbage objects to GC.
   Frame* next_gc;
 
   // Objects being traversed in the current GC cycle. These belong to heap->gc
@@ -763,7 +762,7 @@ static void IncrGc(FbleValueHeap* heap)
   MoveAllTo(&heap->free, &heap->unmarked);
 
   // Set up next gc
-  if (heap->next_gc != NULL && heap->next_gc->min_gen <= heap->top->min_gen) {
+  if (heap->next_gc != NULL) {
     heap->gc = heap->next_gc;
     heap->next_gc = heap->gc->callee;
 
@@ -909,7 +908,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     heap->chunks = chunk;
   }
 
-  if (heap->next_gc == NULL || heap->top->min_gen < heap->next_gc->min_gen) {
+  if (heap->next_gc == NULL || heap->next_gc == top) {
     heap->next_gc = heap->top;
   }
 
@@ -966,7 +965,7 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
     }
   }
 
-  if (heap->next_gc == NULL || heap->top->min_gen < heap->next_gc->min_gen) {
+  if (heap->next_gc == NULL) {
     heap->next_gc = heap->top;
   }
 }
