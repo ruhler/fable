@@ -2100,3 +2100,17 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
   Maximum resident set size (kbytes): 107168 ==> 106024
 
 Cool, it's a performance improvement.
+
+---
+
+Cost of allocating the stack in 1MB chunks instead of all up front:
+
+yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+  User time (seconds): 43.25 ==> 44.19
+  Maximum resident set size (kbytes): 3280 ==> 3276
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+  User time (seconds): 64.59 ==> 66.65
+  Maximum resident set size (kbytes): 106024 ==> 108952
+
+Oh well. There was bound to be some cost.

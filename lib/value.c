@@ -219,6 +219,7 @@ typedef struct {
  */
 #define NewGcValueExtra(heap, frame, T, tag, count) ((T*) NewGcValueRaw(heap, frame, tag, sizeof(T) + count * sizeof(FbleValue*)))
 
+static void* StackAlloc(FbleValueHeap* heap, size_t size);
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
 static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag, size_t size);
 static void FreeGcValue(FbleValue* value);
@@ -229,6 +230,14 @@ static bool IsAlloced(FbleValue* value);
 static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
 
+// We allocate memory for the stack in 1MB chunks.
+#define CHUNK_SIZE (1024 * 1024)
+
+// A chunk of allocated stack space.
+typedef struct Chunk {
+  struct Chunk* next;
+} Chunk;
+
 #define MAX_GEN ((size_t)-1)
 
 struct Frame {
@@ -260,6 +269,13 @@ struct Frame {
   // This points to the callee frame or new stack allocations if this is the
   // top frame on the stack.
   intptr_t top;
+
+  // The max bounds of allocated memory for this frame.
+  intptr_t max;
+
+  // Additional chunks of memory allocated for the stack for use by this and
+  // callee frames.
+  Chunk* chunks;
 };
 
 struct FbleValueHeap {
@@ -289,6 +305,9 @@ struct FbleValueHeap {
 
   // A list of garbage objects to be freed.
   List free;
+
+  // Chunks of allocated stack memory not currently in use.
+  Chunk* chunks;
 };
 
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
@@ -400,6 +419,36 @@ static void MoveAllTo(List* dst, List* src)
 }
 
 /**
+ * @func[StackAlloc] Allocates memory on the stack.
+ *  @arg[Heap*][heap] The heap to allocate the memory to.
+ *  @arg[size_t][size] The number of bytes to allocate.
+ *  @returns[void*] Pointer to the allocated memory.
+ *  @sideeffects
+ *   Allocates a new stack chunk if needed.
+ */
+static void* StackAlloc(FbleValueHeap* heap, size_t size)
+{
+  Frame* frame = heap->top;
+  if (frame->max < frame->top + size) {
+    Chunk* chunk = heap->chunks;
+    if (chunk == NULL) {
+      chunk = (Chunk*)FbleAllocRaw(CHUNK_SIZE);
+    } else {
+      heap->chunks = chunk->next;
+    }
+
+    chunk->next = frame->chunks;
+    frame->chunks = chunk;
+    frame->top = size + (intptr_t)(chunk + 1);
+    frame->max = CHUNK_SIZE + (intptr_t)chunk;
+  }
+
+  void* result = (void*)frame->top;
+  frame->top += size;
+  return result;
+}
+
+/**
  * @func[NewValueRaw] Allocates a new value on the stack.
  *  @arg[FbleValueHeap*][heap] The heap to allocate to.
  *  @arg[ValueTag][tag] The tag of the new value.
@@ -410,9 +459,7 @@ static void MoveAllTo(List* dst, List* src)
  */
 static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
 {
-  FbleValue* value = (FbleValue*)heap->top->top;
-  heap->top->top += size;
-
+  FbleValue* value = StackAlloc(heap, size);
   value->h.stack.gc = NULL;
   value->h.stack.frame = heap->top;
   value->tag = tag;
@@ -730,8 +777,7 @@ FbleValueHeap* FbleNewValueHeap()
 {
   FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
 
-  // TODO: Don't hard code the stack size.
-  heap->stack = FbleAllocRaw(256 * 1024 * 1024);
+  heap->stack = FbleAllocRaw(CHUNK_SIZE);
 
   heap->gen = 0;
 
@@ -746,6 +792,8 @@ FbleValueHeap* FbleNewValueHeap()
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
   heap->top->top = (intptr_t)(heap->top + 1);
+  heap->top->max = CHUNK_SIZE + (intptr_t)heap->stack;
+  heap->chunks = NULL;
 
   heap->gc = heap->top;
   heap->next_gc = NULL;
@@ -753,6 +801,8 @@ FbleValueHeap* FbleNewValueHeap()
   Clear(&heap->marked);
   Clear(&heap->unmarked);
   Clear(&heap->free);
+
+  heap->chunks = NULL;
 
   return heap;
 }
@@ -766,12 +816,21 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
     MoveAllTo(&values, &frame->unmarked);
     MoveAllTo(&values, &frame->marked);
     MoveAllTo(&values, &frame->alloced);
+
+    for (Chunk* chunk = frame->chunks; chunk != NULL; chunk = frame->chunks) {
+      frame->chunks = chunk->next;
+      FbleFree(chunk);
+    }
   }
   MoveAllTo(&values, &heap->free);
   MoveAllTo(&values, &heap->marked);
   MoveAllTo(&values, &heap->unmarked);
 
   FbleFree(heap->stack);
+  for (Chunk* chunk = heap->chunks; chunk != NULL; chunk = heap->chunks) {
+    heap->chunks = chunk->next;
+    FbleFree(chunk);
+  }
 
   for (FbleValue* value = Get(&values); value != NULL; value = Get(&values)) {
     FreeGcValue(value);
@@ -788,7 +847,7 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
     return;
   }
 
-  Frame* callee = (Frame*)heap->top->top;
+  Frame* callee = (Frame*)StackAlloc(heap, sizeof(Frame));
   callee->caller = heap->top;
   callee->callee = NULL;
   Clear(&callee->unmarked);
@@ -797,6 +856,8 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
   heap->top->callee = callee;
   callee->merges = 0;
   callee->top = (intptr_t)(callee + 1);
+  callee->max = heap->top->max;
+  callee->chunks = NULL;
   
   heap->top = callee;
 
@@ -839,7 +900,14 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
     MoveTo(&heap->top->marked, value);
   }
+
   top->min_gen = MAX_GEN;
+  while (top->chunks != NULL) {
+    Chunk* chunk = top->chunks;
+    top->chunks = chunk->next;
+    chunk->next = heap->chunks;
+    heap->chunks = chunk;
+  }
 
   if (heap->next_gc == NULL || heap->top->min_gen < heap->next_gc->min_gen) {
     heap->next_gc = heap->top;
@@ -870,7 +938,15 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
 
   heap->gen++;
   heap->top->gen = heap->gen;
+
   heap->top->top = (intptr_t)(heap->top + 1);
+  heap->top->max = heap->top->caller->max;
+  while (heap->top->chunks != NULL) {
+    Chunk* chunk = heap->top->chunks;
+    heap->top->chunks = chunk->next;
+    chunk->next = heap->chunks;
+    heap->chunks = chunk;
+  }
 
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
