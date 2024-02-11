@@ -2,8 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Get rid of redundant Frame.callee field?
-
 * Remove references to FbleReleaseValue in header files.
 
 * Write test case for big compact followed by tight small compact leading to

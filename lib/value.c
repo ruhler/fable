@@ -240,7 +240,6 @@ typedef struct Chunk {
 
 struct Frame {
   struct Frame* caller;
-  struct Frame* callee; // NULL or top
 
   // The number of frames that have been merged into this frame.
   // As an optimization, we avoid pushing and popping new frames for each
@@ -762,7 +761,11 @@ static void IncrGc(FbleValueHeap* heap)
   // Set up next gc
   if (heap->next_gc != NULL) {
     heap->gc = heap->next_gc;
-    heap->next_gc = heap->gc->callee;
+    if (heap->gc == heap->top) {
+      heap->next_gc = NULL;
+    } else {
+      heap->next_gc = ((Frame*)heap->gc->top) - 1;
+    }
 
     MoveAllTo(&heap->marked, &heap->gc->marked);
     MoveAllTo(&heap->unmarked, &heap->gc->unmarked);
@@ -781,7 +784,6 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top = (Frame*)heap->stack;
 
   heap->top->caller = NULL;
-  heap->top->callee = NULL;
   heap->top->merges = 0;
   heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
@@ -846,11 +848,9 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
 
   Frame* callee = (Frame*)StackAlloc(heap, sizeof(Frame));
   callee->caller = heap->top;
-  callee->callee = NULL;
   Clear(&callee->unmarked);
   Clear(&callee->marked);
   Clear(&callee->alloced);
-  heap->top->callee = callee;
   callee->merges = 0;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
@@ -881,7 +881,6 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   value = GcRealloc(heap, value);
 
   heap->top = heap->top->caller;
-  heap->top->callee = NULL;
 
   MoveAllTo(&heap->top->unmarked, &top->unmarked);
   MoveAllTo(&heap->top->unmarked, &top->marked);
