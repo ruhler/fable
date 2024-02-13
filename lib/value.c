@@ -911,8 +911,21 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   return value;
 }
 
-// See documentation of FbleCompactFrame in fble-value.h
-// If merge is true, reuse the caller's allocation frame.
+/**
+ * @func[CompactFrame] Compacts the top heap frame.
+ *  Values allocated on the frame are freed except for those reachable from
+ *  the given list of saved values.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[bool][merge] If true, skip compaction.
+ *  @arg[size_t][n] The number of save values.
+ *  @arg[FbleValue**][save] Values to save.
+ *
+ *  @sideeffects
+ *   Compacts the heap frame. Updates pointers in the save array to their new
+ *   values. You must not reference any values allocated to the frame after
+ *   this call except for the updated values in the save array.
+ */
 static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** save)
 {
   if (merge) {
@@ -964,12 +977,6 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   if (heap->next_gc == NULL) {
     heap->next_gc = heap->top;
   }
-}
-
-// See documentation in fble-value.h
-void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save)
-{
-  CompactFrame(heap, false, n, save);
 }
 
 // See documentation in fble-value.h

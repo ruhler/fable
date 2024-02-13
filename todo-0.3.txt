@@ -2,12 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Clarify in API documentation how memory management of fble values works from
-  a user's perspective.
-
-* Remove FbleCompactFrame API?
-  It's only used internally?
-
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 

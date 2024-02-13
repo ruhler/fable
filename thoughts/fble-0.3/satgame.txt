@@ -1,0 +1,24 @@
+Sat Game
+========
+Making sure we have enough experience programming in fble this release, let's
+implement a sat game.
+
+First step: have a nicer Random@ interface. Because I'd like to reuse code for
+things like random integers and shuffling lists.
+
+The current interface for Random is LFSR@. You can shift out a Bit@. I'd like
+something monadic. Like:
+
+<<@>@>@ Random@ = <<@>@ M@> { *(
+  M@<Bit@> bit
+);
+
+Something like that. Build on top of that:
+
+<<@>@ M@> {
+  (Random@<M@>) { M@<Bool@>; } Bool;
+  (Random@<M@>) { M@<Int@>; } Int;
+  (Random@<M@>)<@ A@>(List@<A@>) { M@<List@<A@>>; } Shuffle;
+  ...
+};
+

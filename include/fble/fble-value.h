@@ -30,6 +30,11 @@ typedef struct {
 
 /**
  * @func[FbleNewValueHeap] Creates a new FbleValueHeap.
+ *  The heap is organized as a stack of frames. New values are allocated to
+ *  the top frame on the stack. Values are automatically freed when their
+ *  frame is popped from the stack. See FblePushFrame and FblePopFrame for
+ *  more info.
+ *
  *  @returns FbleValueHeap*
  *   A heap that can be used to allocate values.
  *
@@ -74,22 +79,6 @@ void FblePushFrame(FbleValueHeap* heap);
  *   values allocated to that frame after this call.
  */
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
-
-/**
- * @func[FbleCompactFrame] Compacts the top heap frame.
- *  Values allocated on the frame are freed except for those reachable from
- *  the given list of saved values.
- *
- *  @arg[FbleValueHeap*][heap] The heap.
- *  @arg[size_t][n] The number of save values.
- *  @arg[FbleValue**][save] Values to save.
- *
- *  @sideeffects
- *   Compacts the heap frame. Updates pointers in the save array to their new
- *   values. You must not reference any values allocated to the frame after
- *   this call except for the updated values in the save array.
- */
-void FbleCompactFrame(FbleValueHeap* heap, size_t n, FbleValue** save);
 
 /**
  * FbleValue instance for types.
