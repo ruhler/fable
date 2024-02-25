@@ -3,8 +3,8 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Implement Puzzle@ generator, without random shift to start.
- - Implement List@ shuffle, use it to randomize puzzle.
+ - Debug failure generating puzzle 6 6 3 0
+ - Take seed into account in PureLFSR.
 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?

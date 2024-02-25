@@ -1,0 +1,22 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+@ Id@ = /Core/Int%.Int@;
+@ VarId@ = Id@;
+
+@ Var@ = *(VarId@ id, Bool@ pos);
+@ Clause@ = List@<Var@>;
+@ Puzzle@ = List@<Clause@>;
+
+# Parameters describing the shape and size of a puzzle.
+@ Params@ = *(
+  Int@ num_vars,
+  Int@ num_clauses,
+  Int@ num_vars_per_clause
+);
+
+@(VarId@, Var@, Clause@, Puzzle@, Params@);

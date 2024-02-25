@@ -1,0 +1,33 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Ge = /Core/Int/Eq%.Ge;
+% Lt = /Core/Int/Eq%.Lt;
+% Int = /Core/Int/Lit%.Int;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Random@ = /SatGame/Random%.Random@;
+
+# RandInt --
+#   Generate a random integer in the range [0, max).
+<<@>@ M@>(Monad@<M@>, Random@<M@>, Int@) { M@<Int@>; }
+RandInt = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, Int@ max) {
+  # Given integer u and random integer v in range [0, u), returns
+  # a random integer in some range [0, x] where x >= max.
+  (Int@, Int@) { M@<Int@>; } f = (Int@ u, Int@ v) {
+    Ge(u, max).?(true: m.return(v));
+    Bool@ incr <- m.do(rand.bool);
+    Int@ b = incr.?(true: Int|1, false: Int|0);
+    f(Mul(Int|2, u), Add(Mul(Int|2, v), b));
+  };
+
+  Int@ x <- m.do(f(Int|1, Int|0));
+  Lt(x, max).?(true: m.return(x));
+  RandInt(m, rand, max);
+};
+
+@(RandInt);

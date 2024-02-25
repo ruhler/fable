@@ -5,6 +5,7 @@ namespace eval "pkgs" {
     fbld
     md5
     sat
+    satgame
     hwdg
     games
     invaders

@@ -1,0 +1,35 @@
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Join = /Core/String%.Join;
+% Lines = /Core/String%.Lines;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Var@ = /SatGame/Puzzle%.Var@;
+@ Clause@ = /SatGame/Puzzle%.Clause@;
+@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+@ Params@ = /SatGame/Puzzle%.Params@;
+
+Show@<Var@> Var = (Var@ var) {
+  String@ sign = var.pos.?(true: Str|'+', false: Str|'-');
+  Strs[sign, /Core/Int/Show%.Show(var.id)];
+};
+
+Show@<Clause@> Clause = (Clause@ clause) {
+  Join(/Core/List%.Map(clause, Var), Str|' ');
+};
+
+Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
+  Lines(/Core/List%.Map(puzzle, Clause));
+};
+
+Show@<Params@> Params = (Params@ params) {
+  Strs[
+    Str|'Vars: ', /Core/Int/Show%.Show(params.num_vars), Str|',',
+    Str|'Clauses: ', /Core/Int/Show%.Show(params.num_clauses), Str|',',
+    Str|'Vars Per Clause: ', /Core/Int/Show%.Show(params.num_vars_per_clause)];
+};
+
+@(Var, Clause, Puzzle, Params);

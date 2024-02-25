@@ -1,0 +1,36 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Random@ = /SatGame/Random%.Random@;
+
+# Shuffles the elements of a list randomly.
+<<@>@ M@>(Monad@<M@>, Random@<M@>)<@ T@>(List@<T@>) { M@<List@<T@>>; }
+Shuffle = <<@>@ M@>(Monad@<M@> m, Random@<M@> r)<@ T@> {
+  @ Split@ = *(List@<T@> a, List@<T@> b);
+  (List@<T@>) { M@<Split@>; } Split = (List@<T@> l) {
+    l.?(nil: m.return(Split@(l, l)));
+    T@ head = l.cons.head;
+    Split@ s <- m.do(Split(l.cons.tail));
+    Bool@ p <- m.do(r.bool);
+    m.return(p.?(
+      true: Split@(Cons(head, s.a), s.b),
+      false: Split@(s.a, Cons(head, s.b))));
+  };
+
+  (List@<T@> l) {
+    l.?(nil: m.return(l));
+    l.cons.tail.?(nil: m.return(l));
+    Split@ s <- m.do(Split(l));
+    List@<T@> a <- m.do(Shuffle(m, r, s.a));
+    List@<T@> b <- m.do(Shuffle(m, r, s.b));
+    m.return(Append(a, b));
+  };
+};
+
+@(Shuffle);

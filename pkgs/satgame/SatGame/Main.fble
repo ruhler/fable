@@ -1,0 +1,52 @@
+
+% True = /Core/Bool%.True;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Params@ = /SatGame/Puzzle%.Params@;
+@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+
+% PureLFSR = /SatGame/Random/PureLFSR%;
+% Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+  % O = /Core/Stream/OStream%(m);
+
+  (List@<String@> args) {
+    Int@ num_vars = /Core/Int/Show%.Read(args.cons.head);
+
+    List@<String@> a2 = args.cons.tail;
+    Int@ num_clauses = /Core/Int/Show%.Read(a2.cons.head);
+
+    List@<String@> a3 = a2.cons.tail;
+    Int@ num_vars_per_clause = /Core/Int/Show%.Read(a3.cons.head);
+
+    List@<String@> a4 = a3.cons.tail;
+    Int@ seed = /Core/Int/Show%.Read(a4.cons.head);
+
+    Params@ params = @(num_vars, num_clauses, num_vars_per_clause);
+    Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+        Str|'Generating puzzle with params: ',
+        /SatGame/Puzzle/Show%.Params(params),
+        Str|' (seed ', /Core/Int/Show%.Show(seed), Str|')'
+    ]));
+
+    Puzzle@ puzzle = PureLFSR.Run(Generate.Generate(params), seed);
+    Unit@ _ <- m.do(O.PutLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
+    m.return(True);
+  };
+};
+
+/Core/Stdio/IO%.Run(Main);

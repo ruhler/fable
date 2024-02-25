@@ -1,0 +1,38 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Bit@ = /Core/Digits%.Bit@;
+
+@ Int@ = /Core/Int%.Int@;
+
+@ LFSR@ = /Core/LFSR%.LFSR@;
+<@>@ Shifted@ = /Core/LFSR%.Shifted@;
+
+% State = /Core/Monad/State%<LFSR@>;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+<<@>@>@ Random@ = /SatGame/Random%.Random@;
+
+<@>@ M@ = State.State@;
+
+% Monad = State.Monad;
+
+M@<Bool@> RandBool = {
+  LFSR@ lfsr <- Monad.do(State.Get);
+  Shifted@<Bit@> shifted = /Core/LFSR%.Shift(lfsr);
+  Unit@ _ <- Monad.do(State.Set(shifted.lfsr));
+  Monad.return(shifted.output.?(0: False, 1: True));
+};
+
+Random@<M@> Random = Random@<M@>(RandBool);
+
+<@ T@>(M@<T@>, Int@) { T@; }
+Run = <@ T@>(M@<T@> mr, Int@ _seed) {
+  # TODO: Make use of the seed.
+  State.Run(mr, /Core/LFSR%.LFSRs.8).x;
+};
+
+@(M@, Monad, Random, Run);
