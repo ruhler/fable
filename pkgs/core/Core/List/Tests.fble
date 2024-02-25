@@ -32,6 +32,7 @@
 <@>% Map = /Core/List%.Map;
 <@>% ForEach = /Core/List%.ForEach;
 <@>% Reverse = /Core/List%.Reverse;
+<@>% Join = /Core/List%.Join;
 
 <@>% Length = /Core/List/Length%.Length;
 <@>% Split = /Core/List/Eq%.Split;
@@ -176,6 +177,12 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
       /Core/List/Eq%.Eq(/Core/List/Eq%.Eq(eq)),
       /Core/List/Show%.Show(/Core/List/Show%.Show(show)),
       want, got);
+  }),
+
+  Test(Str|Join, (Unit@ _) {
+    List@<Elem@> wnt = EL|'AABBCBBDE';
+    List@<Elem@> got = Join(List[EL|'AA', EL|'C', EL|'DE'], EL|'BB');
+    AssertEquals(Eq, Show, wnt, got);
   })
 ]);
 

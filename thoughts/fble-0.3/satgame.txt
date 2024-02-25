@@ -22,3 +22,10 @@ Something like that. Build on top of that:
   ...
 };
 
+---
+
+The key to start is I don't want to have to reference LFSR@ or Shifted@.
+
+Maybe start by defining Random@ as part of SatGame package. We can move it to
+core if it turns out to be useful.
+

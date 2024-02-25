@@ -2,6 +2,10 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* SatGame
+ - Implement Puzzle@ generator, without random shift to start.
+ - Implement List@ shuffle, use it to randomize puzzle.
+
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 
@@ -13,11 +17,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Figure out how to avoid duplicate code between LinkInterpreted and
   LinkGenerated?
-
-* SatGame
- - Implement a nicer Random@ interface.
- - Implement List@ shuffle.
- - Implement Puzzle@ generator.
 
 * Some better way to recover if build.ninja gets messed up than having to
   re-run configure.

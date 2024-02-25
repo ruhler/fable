@@ -13,6 +13,7 @@
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
 % Strs = /Core/String%.Strs;
+% Join = /Core/String%.Join;
 % Lines = /Core/String%.Lines;
 
 @ Test@ = /Core/Test%.Test@;
@@ -43,6 +44,12 @@ Test@ Tests = TestSuite(Str|String, List[
   Test(Str|Lines, (Unit@ _) {
     String@ wnt = StrE|'hello\nthere\n';
     String@ got = Lines[Str|'hello', Str|'there'];
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Join, (Unit@ _) {
+    String@ wnt = Str|'abcXYdeXYfgh';
+    String@ got = Join(List[Str|'abc', Str|'de', Str|'fgh'], Str|'XY');
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

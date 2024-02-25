@@ -169,4 +169,17 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
   Append(x.cons.head, Concat(x.cons.tail));
 };
 
-@(List@, List, Cons, Nil, Append, Last, Init, Concat, Map, ForEach, Reverse);
+# @func[Join] Joins a list of lists together.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<List@<T@>>][lists] The list of lists to join.
+#  @arg[List@<T@>][separator] Separator to put between the joined lists.
+#  @returns[List@<T@>] The joined list.
+<@ T@>(List@<List@<T@>>, List@<T@>) { List@<T@>; }
+Join = <@ T@>(List@<List@<T@>> lists, List@<T@> separator) {
+  lists.?(nil: Nil<T@>);
+  lists.cons.tail.?(nil: lists.cons.head);
+  Concat[lists.cons.head, separator, Join(lists.cons.tail, separator)];
+};
+
+@(List@, List, Cons, Nil, Append, Last, Init, Concat, Map, ForEach, Reverse,
+  Join);

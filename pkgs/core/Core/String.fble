@@ -47,6 +47,12 @@
 #   String@ s = Strs[Str|'x is ', Show(x), Str|'.']
 (List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
 
+# @func[Join] Joins a list of strings together.
+#  @arg[List@<String@>][strings] The list of strings to join.
+#  @arg[String@][separator] Separator to put between the joined strings.
+#  @returns[String@] The joined string.
+(List@<String@>, String@) { String@; } Join = /Core/List%.Join<Char@>;
+
 # Lines --
 #   Concatenates a list of strings together, adding newlines after each
 #   string.
@@ -56,4 +62,4 @@
   Append(strs.cons.head, Cons(Chars.nl, tail));
 };
 
-@(String@, Str, StrE, Strs, Lines);
+@(String@, Str, StrE, Strs, Join, Lines);
