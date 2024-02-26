@@ -73,16 +73,17 @@
     });
 
     Int@ num_free_vars = Sub(p.num_vars, p.num_vars_per_clause);
-    Int@ clauses_per_variable = Div(Decr(Add(num_free_vars, p.num_vars_per_clause)), p.num_vars_per_clause).q;
+    Int@ clauses_per_variable = Div(Decr(Add(p.num_clauses, num_free_vars)), num_free_vars).q;
 
     Puzzle@ puzzle <- m.do(/Core/Iter%.For(
       Range(p.num_vars_per_clause, p.num_vars), m.return(Nil<Clause@>),
       (VarId@ vid, M@<Puzzle@> mp) {
+        Bool@ pos <- m.do(rand.bool);
+        Var@ var = Var@(vid, pos);
         /Core/Iter%.For(CountUpTo(clauses_per_variable), mp,
           (Int@ _, M@<Puzzle@> mp) {
             Puzzle@ tail <- m.do(mp);
-            Bool@ pos <- m.do(rand.bool);
-            Clause@ clause <- m.do(GenClause(p, Var@(vid, pos)));
+            Clause@ clause <- m.do(GenClause(p, var));
             m.return(Cons(clause, tail));
           });
       }));

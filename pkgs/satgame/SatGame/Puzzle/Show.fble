@@ -27,8 +27,8 @@ Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
 
 Show@<Params@> Params = (Params@ params) {
   Strs[
-    Str|'Vars: ', /Core/Int/Show%.Show(params.num_vars), Str|',',
-    Str|'Clauses: ', /Core/Int/Show%.Show(params.num_clauses), Str|',',
+    Str|'Vars: ', /Core/Int/Show%.Show(params.num_vars), Str|', ',
+    Str|'Clauses: ', /Core/Int/Show%.Show(params.num_clauses), Str|', ',
     Str|'Vars Per Clause: ', /Core/Int/Show%.Show(params.num_vars_per_clause)];
 };
 
