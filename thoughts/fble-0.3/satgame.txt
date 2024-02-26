@@ -29,3 +29,32 @@ The key to start is I don't want to have to reference LFSR@ or Shifted@.
 Maybe start by defining Random@ as part of SatGame package. We can move it to
 core if it turns out to be useful.
 
+---
+
+Draft of puzzle generation is done. It compiles, but crashes in a bad way at
+runtime.
+
+Three issues to investigate:
+1. How it's getting tag 2 for a List@ value. This should be impossible. It's
+not a bug in the satgame implementation. It must be a bug in the fble
+implementation somewhere.
+
+2. Why the stack trace for (1) says undefined function in multiple places.
+
+3. Why number of clauses is 3 when asked for 6 using params 6 6 3 0.
+
+Let's deal with the easy one first.
+
+Clauses added should be:
+
+num_free_vars = num_vars - num_vars_per_clause = 6 - 3 = 3.
+clauses_per_variable = (3 + 3 - 1) / 3 = 1.
+
+That's clearly wrong. We didn't even ask how many clauses we wanted here. It
+should be: num_clauses / num_free_vars rounded up.
+
+Let's add a test suite and then fix this.
+
+
+
+

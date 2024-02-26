@@ -110,7 +110,7 @@ M@<Maybe@<Bit8@>> Get = {
   });
 };
 
-Test@ Tests = TestSuite(Str|Md5, List<Test@>[
+Test@ Tests = TestSuite(Str|Md5, List[
   # ""
   TestStr(
     Str|empty,

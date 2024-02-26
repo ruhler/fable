@@ -1,0 +1,37 @@
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Params@ = /SatGame/Puzzle%.Params@;
+@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+
+% PureLFSR = /SatGame/Random/PureLFSR%;
+% Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
+
+Test@ Tests = TestSuite(Str|SatGame, List[
+  Test(Str|'Generate.Length', (Unit@ _) {
+    Params@ params = @(
+      num_vars: Int|6,
+      num_clauses: Int|6,
+      num_vars_per_clause: Int|3
+    );
+    Int@ seed = Int|0;
+    Puzzle@ puzzle = PureLFSR.Run(Generate.Generate(params), seed);
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show,
+      Int|6, /Core/List/Length%.Length(puzzle));
+  })
+]);
+
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));
