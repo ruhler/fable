@@ -55,6 +55,39 @@ should be: num_clauses / num_free_vars rounded up.
 
 Let's add a test suite and then fix this.
 
+---
 
+(3) is fixed.
+
+Here's the stack trace:
+
+@[SatGame.Generate.Length]: ../pkgs/satgame/SatGame/Random/List.fble:28:7:
+error: union field access undefined: wrong tag
+../pkgs/satgame/SatGame/Random/List.fble:30:25: error: callee aborted
+../pkgs/satgame/SatGame/Random/List.fble:19:22: error: callee aborted
+../pkgs/satgame/SatGame/Random/List.fble:29:22: error: callee aborted
+../pkgs/satgame/SatGame/Random/List.fble:30:25: error: callee aborted
+../lib/value.c:1400:5: error: called undefined function
+../pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+../pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+../pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+../pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+../pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+../pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+../pkgs/core/Core/Monad/State.fble:17:19: error: callee aborted
+../pkgs/satgame/SatGame/Random/PureLFSR.fble:35:3: error: callee aborted
+../pkgs/satgame/SatGame/Tests.fble:31:22: error: callee aborted
+../pkgs/core/Core/Test/Run.fble:36:28: error: callee aborted
+../lib/value.c:1400:5: error: called undefined function
+
+Does that make any sense at all?
+
+Maybe. We are returning a function, we return NULL when we abort, that creates
+an 'undefined' function value. But why would I call that function?
+
+Okay. I bet the case is: we do an overapplication or something to a function
+that returns NULL. We should do something smarter there.
+
+Also: why '../' for all the paths. Isn't that strange?
 
 
