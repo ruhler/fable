@@ -28,7 +28,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
       num_vars_per_clause: Int|3
     );
     Int@ seed = Int|0;
-    Puzzle@ puzzle = PureLFSR.Run(Generate.Generate(params), seed);
+    Puzzle@ puzzle = PureLFSR.Run(Generate(params), seed);
     AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show,
       Int|6, /Core/List/Length%.Length(puzzle));
   })

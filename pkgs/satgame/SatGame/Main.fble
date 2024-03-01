@@ -43,7 +43,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
         Str|' (seed ', /Core/Int/Show%.Show(seed), Str|')'
     ]));
 
-    Puzzle@ puzzle = PureLFSR.Run(Generate.Generate(params), seed);
+    Puzzle@ puzzle = PureLFSR.Run(Generate(params), seed);
     Unit@ _ <- m.do(O.PutLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
     m.return(True);
   };

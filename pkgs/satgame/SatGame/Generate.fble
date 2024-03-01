@@ -30,7 +30,13 @@
 <<@>@>% RandInt = /SatGame/Random/Int%.RandInt;
 <<@>@>% Shuffle = /SatGame/Random/List%.Shuffle;
 
-<<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
+# @func[Generate] Generates a random satgame puzzle.
+#  @arg[<@>@][M@] Type of monad to use for random number generation.
+#  @arg[Monad@<M@>][m] Monad to use for random number generation.
+#  @arg[Random@<M@>][rand] Random number generator.
+#  @arg[Params@][params] Parameters for the puzzle to generate.
+#  @returns[M@<Puzzle@>] The generated puzzle.
+<<@>@ M@>(Monad@<M@> m, Random@<M@> rand, Params@ params) {
   (VarId@) { M@<VarId@>; } RandVarId = RandInt(m, rand);
 
   (Int@) { M@<Var@>; } RandVar = (VarId@ max) {
@@ -61,35 +67,28 @@
     Shuffle(m, rand, clause);
   };
     
-  # @func[Generate] Generates a random satgame puzzle.
-  #  @arg[Params@][params] Parameters for the puzzle to generate.
-  #  @returns[M@<Puzzle@>] The generated puzzle.
-  (Params@) { M@<Puzzle@>; } Generate = (Params@ p) {
-    Le(p.num_vars, p.num_vars_per_clause).?(true: {
-      # We can't generate a puzzle unless we have more vars to work with than
-      # vars per clause.
-      % TooFewVars = /Core/Undef%.Undef<M@<Puzzle@>>;
-      TooFewVars.undefined;
-    });
+  Le(params.num_vars, params.num_vars_per_clause).?(true: {
+    # We can't generate a puzzle unless we have more vars to work with than
+    # vars per clause.
+    % TooFewVars = /Core/Undef%.Undef<M@<Puzzle@>>;
+    TooFewVars.undefined;
+  });
 
-    Int@ num_free_vars = Sub(p.num_vars, p.num_vars_per_clause);
-    Int@ clauses_per_variable = Div(Decr(Add(p.num_clauses, num_free_vars)), num_free_vars).q;
+  Int@ num_free_vars = Sub(params.num_vars, params.num_vars_per_clause);
+  Int@ clauses_per_variable = Div(Decr(Add(params.num_clauses, num_free_vars)), num_free_vars).q;
 
-    Puzzle@ puzzle <- m.do(/Core/Iter%.For(
-      Range(p.num_vars_per_clause, p.num_vars), m.return(Nil<Clause@>),
-      (VarId@ vid, M@<Puzzle@> mp) {
-        Bool@ pos <- m.do(rand.bool);
-        Var@ var = Var@(vid, pos);
-        /Core/Iter%.For(CountUpTo(clauses_per_variable), mp,
-          (Int@ _, M@<Puzzle@> mp) {
-            Puzzle@ tail <- m.do(mp);
-            Clause@ clause <- m.do(GenClause(p, var));
-            m.return(Cons(clause, tail));
-          });
-      }));
-    Puzzle@ shuffled <- m.do(Shuffle(m, rand, puzzle));
-    m.return(Take(p.num_clauses, shuffled));
-  };
-
-  @(Generate);
+  Puzzle@ puzzle <- m.do(/Core/Iter%.For(
+    Range(params.num_vars_per_clause, params.num_vars), m.return(Nil<Clause@>),
+    (VarId@ vid, M@<Puzzle@> mp) {
+      Bool@ pos <- m.do(rand.bool);
+      Var@ var = Var@(vid, pos);
+      /Core/Iter%.For(CountUpTo(clauses_per_variable), mp,
+        (Int@ _, M@<Puzzle@> mp) {
+          Puzzle@ tail <- m.do(mp);
+          Clause@ clause <- m.do(GenClause(params, var));
+          m.return(Cons(clause, tail));
+        });
+    }));
+  Puzzle@ shuffled <- m.do(Shuffle(m, rand, puzzle));
+  m.return(Take(params.num_clauses, shuffled));
 };
