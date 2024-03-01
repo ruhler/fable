@@ -2126,3 +2126,9 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 /usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
   User time (seconds): 66.84
   Maximum resident set size (kbytes): 108708
+
+---
+
+One problem with this approach: It's really hard to write spec tests that
+capture bugs in the implementation, because the paths to hit the bug depend so
+much on details of the implementation.

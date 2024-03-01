@@ -1552,7 +1552,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 
   RefValue* rv = (RefValue*)ref;
   assert(rv->_base.tag == REF_VALUE);
-  rv->value = value;
+  rv->value = GcRealloc(heap, value);
   return true;
 }
 

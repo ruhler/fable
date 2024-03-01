@@ -24,15 +24,12 @@ Shuffle = <<@>@ M@>(Monad@<M@> m, Random@<M@> r)<@ T@> {
   };
 
   (List@<T@> l) {
-    m.return(l);
-
-    # TODO: Figure out why this crashes fble.
-    # l.?(nil: m.return(l));
-    # l.cons.tail.?(nil: m.return(l));
-    # Split@ s <- m.do(Split(l));
-    # List@<T@> a <- m.do(Shuffle(m, r, s.a));
-    # List@<T@> b <- m.do(Shuffle(m, r, s.b));
-    # m.return(Append(a, b));
+    l.?(nil: m.return(l));
+    l.cons.tail.?(nil: m.return(l));
+    Split@ s <- m.do(Split(l));
+    List@<T@> a <- m.do(Shuffle(m, r, s.a));
+    List@<T@> b <- m.do(Shuffle(m, r, s.b));
+    m.return(Append(a, b));
   };
 };
 

@@ -90,4 +90,65 @@ that returns NULL. We should do something smarter there.
 
 Also: why '../' for all the paths. Isn't that strange?
 
+---
 
+Here's the code in question:
+
+  (List@<T@>) { M@<List@<T@>>; } S = (List@<T@> l) {
+    l.?(nil: m.return(l));
+    l.cons.tail.?(nil: m.return(l));
+    Split@ s <- m.do(Split(l));
+    List@<T@> a <- m.do(Shuffle(m, r, s.a));
+    List@<T@> b <- m.do(Shuffle(m, r, s.b));
+    m.return(Append(a, b));
+  };
+
+The first time we call Split, it returns
+  s.a = 0x3117766445bb3 - same as the initial l.cons.tail
+  s.b = 0x318bb33 - must be equivalent to List[l.cons.head],
+     where l.cons.head is 0x62ed
+
+Now we call Split again on s.a. It returns:
+  0x188bbb33
+  That's clearly wrong, because that's a union, and Split@ should be a struct.
+
+So, next step for debug is to trace through the implementation of
+Split(0x31177664445bb3) and figure out how it can be returning the wrong type
+of object.
+
+---
+
+Based on the symptoms, my guess for what could be happening is a stack
+allocated value is being returned and referenced after the stack is popped, we
+allocate a new value on top of it, then we access a field. The field contains
+the wrong packed value.
+
+Let's debug to see what's really going on.
+
+---
+
+We do a tail call to Split, but instead of it passing the list argument
+to split, it passes that list argument to the anonymous function 'S!.:.:!'.
+
+Specifically, the function being called is
+  0x533c48 GC allocated RefValue pointing to
+  0x7ff7d58ad9 stack allocated FuncValue for 'S!.:.:!'.
+
+In theory the arg should be statics[1] of the Split function, which is
+definitely supposed to be 'Split'.
+
+Somehow we get a Gc Value pointing to a stack allocated value. That's not
+allowed, right? Because if it is, GcRealloc will not work correctly.
+
+I see. Bug: when we assign a value to a ref value, we need to GcRealloc that
+value. Otherwise things go bad.
+
+Can I write a regression test for this? Should be able to.
+
+1. Create a ref value. It's value should be an object allocated on the stack.
+2. Return the ref value sufficiently far to pop the from of the stack
+allocated value.
+3. Do a nested call to clobber the stack with garbage.
+4. Try to access the original ref value's value in a meaningful way.
+
+Ugh. I tried reproducing it in a small test case. It's not reproducing.

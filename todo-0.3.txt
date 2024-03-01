@@ -3,8 +3,7 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Debug generation of wrong number of clauses.
- - Debug failure generating puzzle 6 6 3 0
+ - Randomize variable names.
  - Take seed into account in PureLFSR.
 
 * Write test case for big compact followed by tight small compact leading to
