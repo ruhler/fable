@@ -6,7 +6,8 @@
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
 <@>@ Shifted@ = /Core/LFSR%.Shifted@;
-% LFSRs = /Core/LFSR%.LFSRs;
+% LFSR = /Core/LFSR%.LFSR;
+% Polynomials = /Core/LFSR%.Polynomials;
 % Shift = /Core/LFSR%.Shift;
 % ShiftInt = /Core/LFSR/Int%.ShiftInt;
 
@@ -135,7 +136,7 @@ State@ InitialState = {
   State@(
     Dir@(right: Unit),
     Pos@(r4, c1),
-    LFSRs.8,
+    LFSR(Polynomials.8, Polynomials.8),
     List[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
     Int|40);
 };

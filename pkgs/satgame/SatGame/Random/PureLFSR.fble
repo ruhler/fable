@@ -4,11 +4,21 @@
 % False = /Core/Bool%.False;
 
 @ Bit@ = /Core/Digits%.Bit@;
+% Bit = /Core/Digits%.Bit;
 
 @ Int@ = /Core/Int%.Int@;
+@ QR@ = /Core/Int/Div%.QR@;
+% Div = /Core/Int/Div%.Div;
+% IsZero = /Core/Int/Eq%.IsZero;
+% Int = /Core/Int/Lit%.Int;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
 <@>@ Shifted@ = /Core/LFSR%.Shifted@;
+% LFSR = /Core/LFSR%.LFSR;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 % State = /Core/Monad/State%<LFSR@>;
 
@@ -29,10 +39,18 @@ M@<Bool@> RandBool = {
 
 Random@<M@> Random = Random@<M@>(RandBool);
 
+(Int@, List@<Bit@>) { List@<Bit@>; }
+IntToBits = (Int@ x, List@<Bit@> bits) {
+  IsZero(x).?(true: bits);
+  QR@ qr = Div(x, Int|2);
+  Bit@ bit = /Core/Int/Eq%.Eq(Int|0, qr.r).?(true: Bit.0, false: Bit.1);
+  IntToBits(qr.q, Cons(bit, bits));
+};
+
 <@ T@>(M@<T@>, Int@) { T@; }
-Run = <@ T@>(M@<T@> mr, Int@ _seed) {
-  # TODO: Make use of the seed.
-  State.Run(mr, /Core/LFSR%.LFSRs.8).x;
+Run = <@ T@>(M@<T@> mr, Int@ seed) {
+  LFSR@ lfsr = LFSR(/Core/LFSR%.Polynomials.24, IntToBits(seed, Nil<Bit@>));
+  State.Run(mr, lfsr).x;
 };
 
 @(M@, Monad, Random, Run);

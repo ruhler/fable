@@ -37,6 +37,8 @@
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
 <@>@ Shifted@ = /Core/LFSR%.Shifted@;
+% LFSR = /Core/LFSR%.LFSR;
+% Polynomials = /Core/LFSR%.Polynomials;
 % Shift = /Core/LFSR%.Shift;
 % ShiftInt = /Core/LFSR/Int%.ShiftInt;
 
@@ -289,7 +291,7 @@ Int@ DyingTime = Int|10;
     next: Just(FirstAlien),
     turn: False,
     dying: Nil<Dying@>,
-    lfsr: /Core/LFSR%.LFSRs.8);
+    lfsr: LFSR(Polynomials.8, Polynomials.8));
 };
 
 # TickDying --

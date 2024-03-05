@@ -54,19 +54,33 @@ ShiftIn = (List@<Bit@> s, Bit@ i) {
     output: lfsr.s.cons.head);
 };
 
-# Init --
-#   Initialize an LFSR with the given taps.
-(List@<Bit@>) { LFSR@; } Init = (List@<Bit@> taps) {
-  # We take the taps as the initial seed, because it is convenient.
-  LFSR@(taps, taps);
+# Creates an LFSR from the given coefficients and initial seed.
+# Pads or truncates seed as necessary to match the length of coefficients.
+(List@<Bit@>, List@<Bit@>) { LFSR@; }
+LFSR = (List@<Bit@> coefficients, List@<Bit@> seed) {
+  (List@<Bit@>, List@<Bit@>, List@<Bit@>) { List@<Bit@>; }
+  Resize = (List@<Bit@> c, List@<Bit@> s, List@<Bit@> sd) {
+    c.?(nil: {
+      s.?(nil: sd); # The sizes match. We're all set.
+      Resize(c, s.cons.tail, sd.cons.tail); # Drop the MSB from the seed.
+    });
+
+    s.?(nil: Resize(c.cons.tail, s, Cons(Bit.0, sd))); # Pad the seed with 0.
+    Resize(c.cons.tail, s.cons.tail, sd);
+  };
+
+  LFSR@(coefficients, Resize(coefficients, seed, seed));
 };
 
-# LFSRs -- 
-#   A collection of LFSRs using primitive polynomials (from wikipedia).
+
+# Taps -- 
+#   A collection of LFSR primitive polynomials (from wikipedia).
 #
-# LFSRs.n has period 2^n - 1.
-% LFSRs = @(
-  8: Init(BitStr|10111000)
+# Polynomials.n has period 2^n - 1.
+% Polynomials = @(
+  8: BitStr|10111000,
+  16: BitStr|1101000000001000,
+  24: BitStr|111000010000000000000000
 );
 
-@(LFSR@, Shifted@, LFSRs, Shift);
+@(LFSR@, Shifted@, LFSR, Shift, Polynomials);

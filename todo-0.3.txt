@@ -3,8 +3,7 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Start VarIds at 1 instead of 0, to avoid +0, -0.
- - Take seed into account in PureLFSR.
+ - Implement UI for solving puzzles.
 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?

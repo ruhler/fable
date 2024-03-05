@@ -152,3 +152,123 @@ allocated value.
 4. Try to access the original ref value's value in a meaningful way.
 
 Ugh. I tried reproducing it in a small test case. It's not reproducing.
+
+---
+
+Next step is to implement seed support. I need to think about how to do this.
+
+Should we have an option to introduce randomness into any random number
+generator, or should that be something specific to the random number
+generator? For example, true random number generators have no need for seeds?
+Seeds are pretty important for pseudo random number generators though.
+
+There are two different approaches as well:
+1. Set the seed.
+2. Add randomness.
+
+(1) sounds more useful, because it would let us 'reset' a random number
+generator to produce the same sequence again. (2) sounds more general, because
+it makes sense to use for a true random number generator.
+
+If we can reset a random number generator to its initial state, then (2) gives
+us (1) as adding randomness to the initial state.
+
+LFSR could support both fairly easily: (1) sets the state bits, (2) shifts
+bits into the state bits.
+
+Let's review some APIs for random number generation and see if it suggests a
+good API for our random number generation.
+
+Python core random number generation API:
+ - Random float in [0, 1), or get k random bits.
+ - Mersenne Twister is the underlying pseudo random generator algorithm.
+ - seed can be specified as an integer
+ - setstate/getstate functions to save and restore state
+
+Go:
+ - Random source can be seeded and can give a random 63 bit number.
+ 
+Java:
+ - Can set long seed.
+ - Get n random bits.
+
+So it's pretty clear. For pseudo random number generation we want two methods:
+set seed, get bits of randomness. Presumably getting K bits at once is more
+efficient in general than getting a single bit at a time, otherwise we could
+ask for one bit of randomness at a time.
+
+There is no notion of adding randomness.
+
+How about hardware random number generator APIs? Looks like you just get
+random data. Makes sense.
+
+What's my proposal? How do I want to offer random numbers in the fble standard
+library?
+
+Two parts: the API and the implementation. People should be able to provide
+their own implementation.
+
+Ideally the API can be reused with both pseudo random and true random number
+generators. That suggests splitting it into two parts: seeding (for psuedo
+random only) and generation (for both).
+
+For generation:
+* Simplest API is get a single random bit. I like Monad approach for
+  sequencing. Let's start there and worry about performance later. When we
+  start to worry about performance, the new API will be get K bits. The
+  problem is it requires us to take a dependency on List@ and Int@.
+
+  For the Bit@... do we want Bit@ or Bool@? I kind of like the idea of Bit@ so
+  people use a RandBool@ function analogous to RandInt@.
+
+  Alternatively, we could say: pick between two values of any type. That
+  avoids the dependence on Bit@ versus Bool@. Yeah, I like that.
+
+For seeding:
+* A separate API from generation. Separate from implementation too I think.
+
+  Now seeding with a single bit doesn't make sense. We really want an
+  arbitrary number of bits in general. Or make it implementation specific.
+
+  It all depends what we want to depend on. Int@, String@, List@? We need
+  something with sequencing. If generation uses Bit@, then it makes sense to
+  pass a binary string. But binary string is a fairly uncommon type. Int@ is a
+  much more common type.
+
+If we are willing to depend on the Int@ type, we could have:
+  RandInt - select a uniform random Int@ in range [0, max). That allows for
+            plenty of efficiency. Scales up quite nicely.
+  SeedInt - seed from an int. Presumably there will be two seeds that
+            behave the same way. But that's always going to be the case.
+
+
+This brings up a common language challenge: we have an API we could build on
+top of a few different core APIs. Different implementations may want to be
+built on different core APIs for efficiency or convenience reasons. We don't
+want the user of the API to have to care. Can I come up with a good story for
+that in fble? It honestly shows up a lot.
+
+Implementation:
+* The implementation may not want to know about the Monad@ type M@. That
+  suggests maybe we want even another different API, and layer the monadic API
+  on top of that? Yeah.
+
+The raw API would be:
+
+Pseudo Random:
+  S@ - state of random number generator.
+  <@ A@>(A@, A@, S@) { *(A@ x, S@ s); }  - select between first and second arg.
+  (Int@) { S@; } - seed the random number generator, assuming we seed with Int@.
+
+Random:
+  May require the Monad@ because it's in IO@?
+  S@ - internal state.
+  ...
+
+This is surprisingly involved API design.
+
+---
+
+To make practical forward progress, I suggest modifying the LFSR@ API to allow
+a bit string seed, and convert Int@ to bit string in the main program of
+satgame puzzle generation.
