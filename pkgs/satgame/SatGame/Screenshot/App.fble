@@ -1,0 +1,46 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+
+% Neg = /Core/Int%.Neg;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Affine = /App/Drawing%.Affine;
+
+% Screenshot = /SatGame/Graphics%.Screenshot;
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
+  # Map game coordinates into screen coordinate.
+  Point@ a = @(x: Int|2, y: Neg(Int|2));
+  Point@ b = @(x: Int|0, y: Int|480);
+
+  Drawing@ screenshot = Screenshot;
+  Unit@ _ <- m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
+
+  M@<Bool@> WaitForKeyPress = {
+    Event@ e <- m.do(app.event);
+    e.?(key_down: m.return(True), : WaitForKeyPress);
+  };
+  WaitForKeyPress;
+};
+
+Main;

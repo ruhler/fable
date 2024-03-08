@@ -1,0 +1,20 @@
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Color = /App/Drawing%.Color;
+% Drawings = /App/Drawing%.Drawings;
+% Rect = /App/Drawing%.Rect;
+% Translate = /App/Drawing%.Translate;
+
+% Int = /Core/Int/Lit%.Int;
+
+Drawing@ Square = Rect(Int|2, Int|2, Int|30, Int|30, Color.Blue);
+
+Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);
+
+Drawing@ Screenshot = Drawings[
+  Background,
+
+  Translate(Int|64, Int|64, Square)
+];
+
+@(Screenshot);

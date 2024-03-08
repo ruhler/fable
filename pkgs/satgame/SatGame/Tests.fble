@@ -20,6 +20,8 @@
 % PureLFSR = /SatGame/Random/PureLFSR%;
 % Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
 
+% _ = /SatGame/Graphics%;
+
 Test@ Tests = TestSuite(Str|SatGame, List[
   Test(Str|'Generate.Length', (Unit@ _) {
     Params@ params = @(
