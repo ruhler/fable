@@ -3,7 +3,9 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Implement UI for solving puzzles.
+ - Come up with two more images at least, so we have 9 pairs.
+ - Implement a 2 column, 6 row, 3 var per clause layout.
+ - Add ability to click on tiles to cycle through selected, stricken.
 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?

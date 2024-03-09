@@ -30,7 +30,7 @@
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ _width, Int@ _height, List@<String@> _args) {
   # Map game coordinates into screen coordinate.
-  Point@ a = @(x: Int|2, y: Neg(Int|2));
+  Point@ a = @(x: Int|1, y: Neg(Int|1));
   Point@ b = @(x: Int|0, y: Int|480);
 
   Drawing@ screenshot = Screenshot;

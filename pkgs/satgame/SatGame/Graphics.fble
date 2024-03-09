@@ -19,7 +19,7 @@
 
 @ ImagePair@ = *(Drawing@ a, Drawing@ b);
 
-Color@ BackgroundColor = Color@(Int|127, Int|127, Int|127);
+Color@ BackgroundColor = Color@(Int|208, Int|208, Int|208);
 
 Drawing@ TileBackground = Rect(Int|0, Int|0, Int|48, Int|48, BackgroundColor);
 
@@ -33,6 +33,40 @@ ImagePair@ Square = {
   Drawing@ fill = Rect(Int|4, Int|4, Int|26, Int|26, BackgroundColor);
   Drawing@ a = Drawings[outline, fill];
   Drawing@ b = outline;
+  @(a, b);
+};
+
+ImagePair@ Squares = {
+  Drawing@ outline1 = Rect(Int|2, Int|15, Int|15, Int|15, Color.Black);
+  Drawing@ outline2 = Rect(Int|15, Int|2, Int|15, Int|15, Color.Black);
+  Drawing@ fill1 = Rect(Int|4, Int|17, Int|11, Int|11, BackgroundColor);
+  Drawing@ fill2 = Rect(Int|17, Int|4, Int|11, Int|11, BackgroundColor);
+  Drawing@ b = Drawings[outline1, outline2];
+  Drawing@ a = Drawings[b, fill1, fill2];
+  @(a, b);
+};
+
+ImagePair@ Squares2 = {
+  Drawing@ outline1 = Rect(Int|15, Int|15, Int|15, Int|15, Color.Black);
+  Drawing@ outline2 = Rect(Int|2, Int|2, Int|15, Int|15, Color.Black);
+  Drawing@ fill1 = Rect(Int|17, Int|17, Int|11, Int|11, BackgroundColor);
+  Drawing@ fill2 = Rect(Int|4, Int|4, Int|11, Int|11, BackgroundColor);
+  Drawing@ b = Drawings[outline1, outline2];
+  Drawing@ a = Drawings[b, fill1, fill2];
+  @(a, b);
+};
+
+ImagePair@ Squares4 = {
+  Drawing@ outline1 = Rect(Int|2, Int|2, Int|12, Int|12, Color.Black);
+  Drawing@ outline2 = Rect(Int|18, Int|2, Int|12, Int|12, Color.Black);
+  Drawing@ outline3 = Rect(Int|18, Int|18, Int|12, Int|12, Color.Black);
+  Drawing@ outline4 = Rect(Int|2, Int|18, Int|12, Int|12, Color.Black);
+  Drawing@ fill1 = Rect(Int|4, Int|4, Int|8, Int|8, BackgroundColor);
+  Drawing@ fill2 = Rect(Int|20, Int|4, Int|8, Int|8, BackgroundColor);
+  Drawing@ fill3 = Rect(Int|20, Int|20, Int|8, Int|8, BackgroundColor);
+  Drawing@ fill4 = Rect(Int|4, Int|20, Int|8, Int|8, BackgroundColor);
+  Drawing@ b = Drawings[outline1, outline2, outline3, outline4];
+  Drawing@ a = Drawings[b, fill1, fill2, fill3, fill4];
   @(a, b);
 };
 
@@ -115,7 +149,9 @@ ImagePair@ Diamond = {
   @(a, b);
 };
 
-List@<ImagePair@> Images = List[Square, Triangle, HourGlass, Diamond];
+List@<ImagePair@> Images = List[
+  Square, Triangle, HourGlass, Diamond, Squares, Squares2, Squares4
+];
 
 Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);
 
