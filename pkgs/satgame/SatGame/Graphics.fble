@@ -28,14 +28,11 @@ Tile = (Drawing@ image) {
   Drawings[TileBackground, Translate(Int|8, Int|8, image)];
 };
 
-Color@ FillColor = Color@(Int|96, Int|96, Int|156);
-
 ImagePair@ Square = {
   Drawing@ outline = Rect(Int|2, Int|2, Int|30, Int|30, Color.Black);
-  Drawing@ inline_empty = Rect(Int|4, Int|4, Int|26, Int|26, BackgroundColor);
-  Drawing@ inline_fill = Rect(Int|4, Int|4, Int|26, Int|26, FillColor);
-  Drawing@ a = Drawings[outline, inline_empty];
-  Drawing@ b = Drawings[outline, inline_fill];
+  Drawing@ fill = Rect(Int|4, Int|4, Int|26, Int|26, BackgroundColor);
+  Drawing@ a = Drawings[outline, fill];
+  Drawing@ b = outline;
   @(a, b);
 };
 
@@ -46,25 +43,79 @@ ImagePair@ Triangle = {
     Point@(Int|30, Int|2),
     Color.Black
   );
-  Drawing@ inline_empty = /App/Drawing%.Triangle(
+  Drawing@ fill = /App/Drawing%.Triangle(
     Point@(Int|5, Int|4),
     Point@(Int|16, Int|26),
     Point@(Int|27, Int|4),
     BackgroundColor
   );
-  Drawing@ inline_fill = /App/Drawing%.Triangle(
-    Point@(Int|5, Int|4),
-    Point@(Int|16, Int|26),
-    Point@(Int|27, Int|4),
-    FillColor
-  );
 
-  Drawing@ a = Drawings[outline, inline_empty];
-  Drawing@ b = Drawings[outline, inline_fill];
+  Drawing@ a = Drawings[outline, fill];
+  Drawing@ b = Drawings[outline];
   @(a, b);
 };
 
-List@<ImagePair@> Images = List[Square, Triangle];
+ImagePair@ HourGlass = {
+  Drawing@ outline = Drawings[
+    /App/Drawing%.Triangle(
+        Point@(Int|2, Int|2),
+        Point@(Int|16, Int|17),
+        Point@(Int|30, Int|2),
+        Color.Black),
+    /App/Drawing%.Triangle(
+        Point@(Int|16, Int|15),
+        Point@(Int|2, Int|30),
+        Point@(Int|30, Int|30),
+        Color.Black)];
+
+  Drawing@ fill = Drawings[
+    /App/Drawing%.Triangle(
+        Point@(Int|6, Int|4),
+        Point@(Int|16, Int|15),
+        Point@(Int|26, Int|4),
+        BackgroundColor),
+    /App/Drawing%.Triangle(
+        Point@(Int|16, Int|17),
+        Point@(Int|6, Int|28),
+        Point@(Int|26, Int|28),
+        BackgroundColor)];
+    
+  Drawing@ a = Drawings[outline, fill];
+  Drawing@ b = Drawings[outline];
+  @(a, b);
+};
+
+ImagePair@ Diamond = {
+  Drawing@ outline = Drawings[
+    /App/Drawing%.Triangle(
+        Point@(Int|2, Int|16),
+        Point@(Int|16, Int|30),
+        Point@(Int|30, Int|16),
+        Color.Black),
+    /App/Drawing%.Triangle(
+        Point@(Int|16, Int|2),
+        Point@(Int|2, Int|16),
+        Point@(Int|30, Int|16),
+        Color.Black)];
+
+  Drawing@ fill = Drawings[
+    /App/Drawing%.Triangle(
+        Point@(Int|5, Int|16),
+        Point@(Int|16, Int|27),
+        Point@(Int|27, Int|16),
+        BackgroundColor),
+    /App/Drawing%.Triangle(
+        Point@(Int|16, Int|5),
+        Point@(Int|5, Int|16),
+        Point@(Int|27, Int|16),
+        BackgroundColor)];
+    
+  Drawing@ a = Drawings[outline, fill];
+  Drawing@ b = Drawings[outline];
+  @(a, b);
+};
+
+List@<ImagePair@> Images = List[Square, Triangle, HourGlass, Diamond];
 
 Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);
 
@@ -75,7 +126,7 @@ Drawing@ Screenshot = {
     });
 
   @ S@ = *(Int@ x, Drawing@ d);
-  /Core/List%.ForEach(images, S@(Int|32, Background),
+  /Core/List%.ForEach(images, S@(Int|4, Background),
     (Drawing@ i, S@ s) {
       S@(Add(Int|48, s.x), Over(s.d, Translate(s.x, Int|64, Tile(i))));
     }).d;
