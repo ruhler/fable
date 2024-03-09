@@ -5,9 +5,19 @@
 % Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
+% Over = /App/Drawing%.Over;
 % Translate = /App/Drawing%.Translate;
 
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
 % Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
+<@>% List = /Core/List%.List;
+
+@ ImagePair@ = *(Drawing@ a, Drawing@ b);
 
 Color@ BackgroundColor = Color@(Int|127, Int|127, Int|127);
 
@@ -18,39 +28,57 @@ Tile = (Drawing@ image) {
   Drawings[TileBackground, Translate(Int|8, Int|8, image)];
 };
 
-Drawing@ Square = Drawings[
-  Rect(Int|2, Int|2, Int|30, Int|30, Color.Black),
-  Rect(Int|4, Int|4, Int|26, Int|26, BackgroundColor)
-];
-
 Color@ FillColor = Color@(Int|96, Int|96, Int|156);
 
-Drawing@ Square2 = Drawings[
-  Rect(Int|2, Int|2, Int|30, Int|30, Color.Black),
-  Rect(Int|4, Int|4, Int|26, Int|26, FillColor)
-];
+ImagePair@ Square = {
+  Drawing@ outline = Rect(Int|2, Int|2, Int|30, Int|30, Color.Black);
+  Drawing@ inline_empty = Rect(Int|4, Int|4, Int|26, Int|26, BackgroundColor);
+  Drawing@ inline_fill = Rect(Int|4, Int|4, Int|26, Int|26, FillColor);
+  Drawing@ a = Drawings[outline, inline_empty];
+  Drawing@ b = Drawings[outline, inline_fill];
+  @(a, b);
+};
 
-Drawing@ Triangle = Drawings[
-  /App/Drawing%.Triangle(
+ImagePair@ Triangle = {
+  Drawing@ outline = /App/Drawing%.Triangle(
     Point@(Int|2, Int|2),
     Point@(Int|16, Int|30),
     Point@(Int|30, Int|2),
-    Color.Black),
-  /App/Drawing%.Triangle(
+    Color.Black
+  );
+  Drawing@ inline_empty = /App/Drawing%.Triangle(
     Point@(Int|5, Int|4),
     Point@(Int|16, Int|26),
     Point@(Int|27, Int|4),
-    BackgroundColor)
-];
+    BackgroundColor
+  );
+  Drawing@ inline_fill = /App/Drawing%.Triangle(
+    Point@(Int|5, Int|4),
+    Point@(Int|16, Int|26),
+    Point@(Int|27, Int|4),
+    FillColor
+  );
+
+  Drawing@ a = Drawings[outline, inline_empty];
+  Drawing@ b = Drawings[outline, inline_fill];
+  @(a, b);
+};
+
+List@<ImagePair@> Images = List[Square, Triangle];
 
 Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);
 
-Drawing@ Screenshot = Drawings[
-  Background,
+Drawing@ Screenshot = {
+  List@<Drawing@> images = /Core/List%.ForEach(Images, Nil<Drawing@>,
+    (ImagePair@ p, List@<Drawing@> l) {
+      Cons(p.a, Cons(p.b, l));
+    });
 
-  Translate(Int|64, Int|64, Tile(Square)),
-  Translate(Int|112, Int|64, Tile(Triangle)),
-  Translate(Int|160, Int|64, Tile(Square2))
-];
+  @ S@ = *(Int@ x, Drawing@ d);
+  /Core/List%.ForEach(images, S@(Int|32, Background),
+    (Drawing@ i, S@ s) {
+      S@(Add(Int|48, s.x), Over(s.d, Translate(s.x, Int|64, Tile(i))));
+    }).d;
+};
 
 @(Screenshot);
