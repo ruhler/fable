@@ -93,17 +93,34 @@ List@<ImagePair@> Images = List[
 
 Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);
 
-Drawing@ Screenshot = {
-  List@<Drawing@> images = /Core/List%.ForEach(Images, Nil<Drawing@>,
+# Splits a list of image pairs into a list of 6 element drawing lists.
+# For the purposes of displaying all the drawings in a single screenshot.
+(List@<ImagePair@>) { List@<List@<Drawing@>>; }
+Split6 = (List@<ImagePair@> pairs) {
+  pairs.?(nil: Nil<List@<Drawing@>>);
+
+  List@<Drawing@> head = /Core/List%.ForEach(
+    /Core/List/Length%.Take(Int|3, pairs), Nil<Drawing@>,
     (ImagePair@ p, List@<Drawing@> l) {
       Cons(p.a, Cons(p.b, l));
     });
+    
+  List@<List@<Drawing@>> tail = Split6(/Core/List/Length%.Drop(Int|3, pairs));
+  Cons(head, tail);
+};
+      
+Drawing@ Screenshot = {
+  List@<List@<Drawing@>> images = Split6(Images);
 
   @ S@ = *(Int@ x, Drawing@ d);
   /Core/List%.ForEach(images, S@(Int|4, Background),
-    (Drawing@ i, S@ s) {
-      S@(Add(Int|48, s.x), Over(s.d, Translate(s.x, Int|64, Tile(i))));
-    }).d;
+    (List@<Drawing@> drawings, S@ s) {
+      Int@ y = s.x;
+      S@(Add(Int|48, y), /Core/List%.ForEach(drawings, s.@(x: Int|4),
+          (Drawing@ i, S@ r) {
+            S@(Add(Int|48, r.x), Over(r.d, Translate(r.x, y, Tile(i))));
+          }).d);
+      }).d;
 };
 
 @(Screenshot);
