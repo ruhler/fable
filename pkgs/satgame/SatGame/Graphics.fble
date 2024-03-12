@@ -1,7 +1,6 @@
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
 % Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
@@ -28,129 +27,68 @@ Tile = (Drawing@ image) {
   Drawings[TileBackground, Translate(Int|8, Int|8, image)];
 };
 
-ImagePair@ Square = {
-  Drawing@ outline = Rect(Int|2, Int|2, Int|30, Int|30, Color.Black);
-  Drawing@ fill = Rect(Int|4, Int|4, Int|26, Int|26, BackgroundColor);
-  Drawing@ a = Drawings[outline, fill];
-  Drawing@ b = outline;
+ImagePair@ S1x1 = {
+  Drawing@ left = Rect(Int|0, Int|0, Int|2, Int|32, Color.Black);
+  Drawing@ right = Rect(Int|30, Int|0, Int|2, Int|32, Color.Black);
+  Drawing@ top = Rect(Int|0, Int|30, Int|32, Int|2, Color.Black);
+  Drawing@ bottom = Rect(Int|0, Int|0, Int|32, Int|2, Color.Black);
+  Drawing@ outline = Drawings[left, right, top, bottom];
+
+  Drawing@ a = outline;
+  Drawing@ b = Drawings[Rect(Int|0, Int|0, Int|32, Int|32, Color.Yellow), outline];
   @(a, b);
 };
 
-ImagePair@ Squares = {
-  Drawing@ outline1 = Rect(Int|2, Int|15, Int|15, Int|15, Color.Black);
-  Drawing@ outline2 = Rect(Int|15, Int|2, Int|15, Int|15, Color.Black);
-  Drawing@ fill1 = Rect(Int|4, Int|17, Int|11, Int|11, BackgroundColor);
-  Drawing@ fill2 = Rect(Int|17, Int|4, Int|11, Int|11, BackgroundColor);
-  Drawing@ b = Drawings[outline1, outline2];
-  Drawing@ a = Drawings[b, fill1, fill2];
+ImagePair@ S2x2 = {
+  Drawing@ left = Rect(Int|0, Int|0, Int|2, Int|14, Color.Black);
+  Drawing@ right = Rect(Int|12, Int|0, Int|2, Int|14, Color.Black);
+  Drawing@ top = Rect(Int|0, Int|12, Int|14, Int|2, Color.Black);
+  Drawing@ bottom = Rect(Int|0, Int|0, Int|14, Int|2, Color.Black);
+  Drawing@ outline = Drawings[left, right, top, bottom];
+
+  Drawing@ a1 = outline;
+  Drawing@ b1 = outline;
+
+  Drawing@ a = Drawings[
+    Translate(Int|0, Int|0, a1),
+    Translate(Int|0, Int|18, a1),
+    Translate(Int|18, Int|18, a1),
+    Translate(Int|18, Int|0, a1)];
+  Drawing@ b = Drawings[
+    Rect(Int|0, Int|0, Int|32, Int|32, Color.Yellow),
+    Translate(Int|0, Int|0, b1),
+    Translate(Int|0, Int|18, b1),
+    Translate(Int|18, Int|18, b1),
+    Translate(Int|18, Int|0, b1)];
   @(a, b);
 };
 
-ImagePair@ Squares2 = {
-  Drawing@ outline1 = Rect(Int|15, Int|15, Int|15, Int|15, Color.Black);
-  Drawing@ outline2 = Rect(Int|2, Int|2, Int|15, Int|15, Color.Black);
-  Drawing@ fill1 = Rect(Int|17, Int|17, Int|11, Int|11, BackgroundColor);
-  Drawing@ fill2 = Rect(Int|4, Int|4, Int|11, Int|11, BackgroundColor);
-  Drawing@ b = Drawings[outline1, outline2];
-  Drawing@ a = Drawings[b, fill1, fill2];
-  @(a, b);
-};
+ImagePair@ S3x3 = {
+  Drawing@ left = Rect(Int|0, Int|0, Int|2, Int|10, Color.Black);
+  Drawing@ right = Rect(Int|8, Int|0, Int|2, Int|10, Color.Black);
+  Drawing@ top = Rect(Int|0, Int|8, Int|10, Int|2, Color.Black);
+  Drawing@ bottom = Rect(Int|0, Int|0, Int|10, Int|2, Color.Black);
+  Drawing@ outline = Drawings[left, right, top, bottom];
 
-ImagePair@ Squares4 = {
-  Drawing@ outline1 = Rect(Int|2, Int|2, Int|12, Int|12, Color.Black);
-  Drawing@ outline2 = Rect(Int|18, Int|2, Int|12, Int|12, Color.Black);
-  Drawing@ outline3 = Rect(Int|18, Int|18, Int|12, Int|12, Color.Black);
-  Drawing@ outline4 = Rect(Int|2, Int|18, Int|12, Int|12, Color.Black);
-  Drawing@ fill1 = Rect(Int|4, Int|4, Int|8, Int|8, BackgroundColor);
-  Drawing@ fill2 = Rect(Int|20, Int|4, Int|8, Int|8, BackgroundColor);
-  Drawing@ fill3 = Rect(Int|20, Int|20, Int|8, Int|8, BackgroundColor);
-  Drawing@ fill4 = Rect(Int|4, Int|20, Int|8, Int|8, BackgroundColor);
-  Drawing@ b = Drawings[outline1, outline2, outline3, outline4];
-  Drawing@ a = Drawings[b, fill1, fill2, fill3, fill4];
-  @(a, b);
-};
+  Drawing@ a1 = outline;
 
-ImagePair@ Triangle = {
-  Drawing@ outline = /App/Drawing%.Triangle(
-    Point@(Int|2, Int|2),
-    Point@(Int|16, Int|30),
-    Point@(Int|30, Int|2),
-    Color.Black
-  );
-  Drawing@ fill = /App/Drawing%.Triangle(
-    Point@(Int|5, Int|4),
-    Point@(Int|16, Int|26),
-    Point@(Int|27, Int|4),
-    BackgroundColor
-  );
+  Drawing@ a = Drawings[
+    Translate(Int|0, Int|0, a1),
+    Translate(Int|0, Int|11, a1),
+    Translate(Int|0, Int|22, a1),
+    Translate(Int|11, Int|0, a1),
+    Translate(Int|11, Int|11, a1),
+    Translate(Int|11, Int|22, a1),
+    Translate(Int|22, Int|0, a1),
+    Translate(Int|22, Int|11, a1),
+    Translate(Int|22, Int|22, a1)];
 
-  Drawing@ a = Drawings[outline, fill];
-  Drawing@ b = Drawings[outline];
-  @(a, b);
-};
-
-ImagePair@ HourGlass = {
-  Drawing@ outline = Drawings[
-    /App/Drawing%.Triangle(
-        Point@(Int|2, Int|2),
-        Point@(Int|16, Int|17),
-        Point@(Int|30, Int|2),
-        Color.Black),
-    /App/Drawing%.Triangle(
-        Point@(Int|16, Int|15),
-        Point@(Int|2, Int|30),
-        Point@(Int|30, Int|30),
-        Color.Black)];
-
-  Drawing@ fill = Drawings[
-    /App/Drawing%.Triangle(
-        Point@(Int|6, Int|4),
-        Point@(Int|16, Int|15),
-        Point@(Int|26, Int|4),
-        BackgroundColor),
-    /App/Drawing%.Triangle(
-        Point@(Int|16, Int|17),
-        Point@(Int|6, Int|28),
-        Point@(Int|26, Int|28),
-        BackgroundColor)];
-    
-  Drawing@ a = Drawings[outline, fill];
-  Drawing@ b = Drawings[outline];
-  @(a, b);
-};
-
-ImagePair@ Diamond = {
-  Drawing@ outline = Drawings[
-    /App/Drawing%.Triangle(
-        Point@(Int|2, Int|16),
-        Point@(Int|16, Int|30),
-        Point@(Int|30, Int|16),
-        Color.Black),
-    /App/Drawing%.Triangle(
-        Point@(Int|16, Int|2),
-        Point@(Int|2, Int|16),
-        Point@(Int|30, Int|16),
-        Color.Black)];
-
-  Drawing@ fill = Drawings[
-    /App/Drawing%.Triangle(
-        Point@(Int|5, Int|16),
-        Point@(Int|16, Int|27),
-        Point@(Int|27, Int|16),
-        BackgroundColor),
-    /App/Drawing%.Triangle(
-        Point@(Int|16, Int|5),
-        Point@(Int|5, Int|16),
-        Point@(Int|27, Int|16),
-        BackgroundColor)];
-    
-  Drawing@ a = Drawings[outline, fill];
-  Drawing@ b = Drawings[outline];
+  Drawing@ b = Drawings[Rect(Int|0, Int|0, Int|32, Int|32, Color.Yellow), a];
   @(a, b);
 };
 
 List@<ImagePair@> Images = List[
-  Square, Triangle, HourGlass, Diamond, Squares, Squares2, Squares4
+  S1x1, S2x2, S3x3
 ];
 
 Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);

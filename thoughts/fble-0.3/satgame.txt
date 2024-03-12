@@ -272,3 +272,18 @@ This is surprisingly involved API design.
 To make practical forward progress, I suggest modifying the LFSR@ API to allow
 a bit string seed, and convert Int@ to bit string in the main program of
 satgame puzzle generation.
+
+---
+
+For images, I think it would be cool if we say they are all black, and only
+draw the parts of the image that are strokes. That way we could change color
+programmatically, and we can change background color programmatically. I could
+implement some helper functions for drawing lines to make it easier.
+
+I like the idea of 32 by 32. Maybe best to center at the origin instead of at
+(16, 16)? That way it's easier to scale the images up and down if we ever want
+to.
+
+Realistically, how many image pairs do I need to start? At least 9, I feel
+like, for a 3x3x3 Sudoku style grid. Probably 16 is more than enough to start.
+
