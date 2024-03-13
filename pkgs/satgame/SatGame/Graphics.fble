@@ -1,17 +1,17 @@
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Color@ = /App/Drawing%.Color@;
-@ Point@ = /App/Drawing%.Point@;
 % Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
-% Triangle = /App/Drawing%.Triangle;
 % Over = /App/Drawing%.Over;
 % Translate = /App/Drawing%.Translate;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
+% CountUpTo = /Core/Int/Iter%.CountUpTo;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Nil = /Core/List%.Nil;
@@ -37,25 +37,18 @@ Drawing@ box = {
   Drawings[left, right, top, bottom];
 };
 
-Drawing@ filled = Drawings[
-  box,
-
-  Triangle(Point@(Int|2, Int|6), Point@(Int|3, Int|8), Point@(Int|2, Int|5), Color.Black),
-  Triangle(Point@(Int|2, Int|5), Point@(Int|3, Int|8), Point@(Int|4, Int|8), Color.Black),
-
-  Triangle(Point@(Int|2, Int|4), Point@(Int|5, Int|8), Point@(Int|2, Int|3), Color.Black),
-  Triangle(Point@(Int|2, Int|3), Point@(Int|5, Int|8), Point@(Int|6, Int|8), Color.Black),
-
-  Triangle(Point@(Int|2, Int|2), Point@(Int|8, Int|8), Point@(Int|3, Int|2), Color.Black),
-  Triangle(Point@(Int|3, Int|2), Point@(Int|8, Int|8), Point@(Int|8, Int|7), Color.Black),
-
-  Triangle(Point@(Int|4, Int|2), Point@(Int|8, Int|6), Point@(Int|5, Int|2), Color.Black),
-  Triangle(Point@(Int|5, Int|2), Point@(Int|8, Int|6), Point@(Int|8, Int|5), Color.Black),
-
-  Triangle(Point@(Int|6, Int|2), Point@(Int|8, Int|4), Point@(Int|7, Int|2), Color.Black),
-  Triangle(Point@(Int|7, Int|2), Point@(Int|8, Int|4), Point@(Int|8, Int|3), Color.Black)
-
-];
+Drawing@ filled = {
+  /Core/Iter%.For(CountUpTo(Int|3), box,
+    (Int@ x, Drawing@ d) {
+      /Core/Iter%.For(CountUpTo(Int|3), d,
+        (Int@ y, Drawing@ e) {
+          Drawings[
+            e,
+            Rect(Add(Mul(Int|2, x), Int|2), Add(Mul(Int|2, y), Int|2), Int|1, Int|1, Color.Black),
+            Rect(Add(Mul(Int|2, x), Int|3), Add(Mul(Int|2, y), Int|3), Int|1, Int|1, Color.Black)];
+          });
+      });
+};
 
 Drawing@ 0 = Translate(Int|0, Int|0, box),
 Drawing@ 1 = Translate(Int|0, Int|11, box),
