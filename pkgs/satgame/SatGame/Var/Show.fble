@@ -1,0 +1,33 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ Var@ = /SatGame/Var%.Var@;
+
+# We convert variables to an integer and then print the integer value.
+Show@<Var@> Show = {
+  (Int@, Bool@) { Int@; } Shift = (Int@ x, Bool@ p) {
+    Add(Mul(Int|2, x), p.?(true: Int|1, false: Int|0));
+  };
+
+  (Int@, List@<Bool@>) { Int@; } Shifts = (Int@ x, List@<Bool@> ps) {
+    ps.?(nil: x);
+    Shifts(Shift(x, ps.cons.head), ps.cons.tail);
+  };
+  
+  (Var@ x) {
+    Int@ i = Shifts(Int|0)[x.ul, x.uc, x.ur, x.ml, x.mc, x.mr, x.ll, x.lc, x.lr];
+    /Core/Int/Show%.Show(i);
+  };
+};
+
+
+@(Show);

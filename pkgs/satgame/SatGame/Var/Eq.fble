@@ -1,0 +1,23 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Var@ = /SatGame/Var%.Var@;
+
+Eq@<Var@> Eq = (Var@ a, Var@ b) {
+  /Core/Bool/Eq%.Eq(a.ul, b.ul).?(false: False);
+  /Core/Bool/Eq%.Eq(a.uc, b.uc).?(false: False);
+  /Core/Bool/Eq%.Eq(a.ur, b.ur).?(false: False);
+  /Core/Bool/Eq%.Eq(a.ml, b.ml).?(false: False);
+  /Core/Bool/Eq%.Eq(a.mc, b.mc).?(false: False);
+  /Core/Bool/Eq%.Eq(a.mr, b.mr).?(false: False);
+  /Core/Bool/Eq%.Eq(a.ll, b.ll).?(false: False);
+  /Core/Bool/Eq%.Eq(a.lc, b.lc).?(false: False);
+  /Core/Bool/Eq%.Eq(a.lr, b.lr).?(false: False);
+  True;
+};
+
+@(Eq);

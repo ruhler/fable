@@ -1,0 +1,52 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% Not = /Core/Bool%.Not;
+% Or = /Core/Bool%.Or;
+% And = /Core/Bool%.And;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Random@ = /SatGame/Random%.Random@;
+
+@ Var@ = /SatGame/Var%.Var@;
+
+# In some cases two variables may look similar. Prefer to use the canonical
+# variable in that case.
+(Var@) { Bool@; }
+IsCanonical = (Var@ v) {
+  # Non-canonical cases:
+  # * All empty.
+  # * Bottom row empty but top row not empty.
+  #   Prefer to move it down a row.
+  # * Left column empty but right column not empty.
+  #   Prefer to move it left a column.
+  Bool@ top_empty = Not(Or(v.ul, Or(v.uc, v.ur)));
+  Bool@ mid_empty = Not(Or(v.ml, Or(v.mc, v.mr)));
+  Bool@ bottom_empty = Not(Or(v.ll, Or(v.lc, v.lr)));
+  Bool@ all_empty = And(top_empty, And(mid_empty, bottom_empty));
+  Bool@ left_empty = Not(Or(v.ul, Or(v.ml, v.ll)));
+  Bool@ right_empty = Not(Or(v.ur, Or(v.mr, v.lr)));
+  all_empty.?(true: False);
+  And(bottom_empty, Not(top_empty)).?(true: False);
+  And(left_empty, Not(right_empty)).?(true: False);
+  True;
+};
+
+<<@>@ M@>(Monad@<M@>, Random@<M@>) { M@<Var@>; }
+Rand = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
+  Bool@ ul <- m.do(rand.bool);
+  Bool@ uc <- m.do(rand.bool);
+  Bool@ ur <- m.do(rand.bool);
+  Bool@ ml <- m.do(rand.bool);
+  Bool@ mc <- m.do(rand.bool);
+  Bool@ mr <- m.do(rand.bool);
+  Bool@ ll <- m.do(rand.bool);
+  Bool@ lc <- m.do(rand.bool);
+  Bool@ lr <- m.do(rand.bool);
+  Var@ var = @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
+  IsCanonical(var).?(true: m.return(var));
+  Rand(m, rand);
+};
+
+@(Rand);

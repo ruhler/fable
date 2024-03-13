@@ -1,0 +1,67 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+% Drawings = /App/Drawing%.Drawings;
+% Rect = /App/Drawing%.Rect;
+% Blank = /App/Drawing%.Blank;
+% Translate = /App/Drawing%.Translate;
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Int = /Core/Int/Lit%.Int;
+% CountUpTo = /Core/Int/Iter%.CountUpTo;
+
+@ Var@ = /SatGame/Var%.Var@;
+
+# Draws a single small box.
+(Bool@, Color@) { Drawing@; }
+Box = (Bool@ p, Color@ color) {
+  Drawing@ box = {
+    Drawing@ left = Rect(Int|0, Int|0, Int|2, Int|10, color);
+    Drawing@ right = Rect(Int|8, Int|0, Int|2, Int|10, color);
+    Drawing@ top = Rect(Int|0, Int|8, Int|10, Int|2, color);
+    Drawing@ bottom = Rect(Int|0, Int|0, Int|10, Int|2, color);
+    Drawings[left, right, top, bottom];
+  };
+  p.?(true: box);
+
+  /Core/Iter%.For(CountUpTo(Int|3), box,
+    (Int@ x, Drawing@ d) {
+      /Core/Iter%.For(CountUpTo(Int|3), d,
+        (Int@ y, Drawing@ e) {
+          Drawings[
+            e,
+            Rect(Add(Mul(Int|2, x), Int|2), Add(Mul(Int|2, y), Int|2), Int|1, Int|1, color),
+            Rect(Add(Mul(Int|2, x), Int|3), Add(Mul(Int|2, y), Int|3), Int|1, Int|1, color)];
+          });
+      });
+};
+
+# Draws a Var@ using a 32x32 space.
+(Var@, Bool@, Color@) { Drawing@; }
+Draw = (Var@ v, Bool@ p, Color@ color) {
+  Drawing@ box = Box(p, color);
+
+  (Bool@, Int@, Int@) { Drawing@; }
+  B = (Bool@ e, Int@ x, Int@ y) {
+    e.?(true: Translate(x, y, box));
+    Blank;
+  };
+
+  Drawings[
+    B(v.ul, Int|0, Int|0),
+    B(v.uc, Int|0, Int|11),
+    B(v.ur, Int|0, Int|22),
+    B(v.ml, Int|11, Int|0),
+    B(v.mc, Int|11, Int|11),
+    B(v.mr, Int|11, Int|22),
+    B(v.ll, Int|22, Int|0),
+    B(v.lc, Int|22, Int|11),
+    B(v.lr, Int|22, Int|22)
+  ];
+};
+
+@(Draw);

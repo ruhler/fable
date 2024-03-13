@@ -1,0 +1,15 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+% Lt = /Core/Ord%.Lt;
+% Gt = /Core/Ord%.Gt;
+% Eq = /Core/Ord%.Eq;
+
+Ord@<Bool@> Ord = (Bool@ a, Bool@ b) {
+  a.?(
+    true: b.?(true: Eq, false: Gt),
+    false: b.?(true: Lt, false: Eq));
+};
+
+@(Ord);

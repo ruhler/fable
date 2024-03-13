@@ -1,0 +1,22 @@
+
+<@>@ Ord@ = /Core/Ord%.Ord@;
+% Lt = /Core/Ord%.Lt;
+% Gt = /Core/Ord%.Gt;
+% Eq = /Core/Ord%.Eq;
+
+@ Var@ = /SatGame/Var%.Var@;
+
+Ord@<Var@> Ord = (Var@ a, Var@ b) {
+  /Core/Bool/Ord%.Ord(a.ul, b.ul).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.uc, b.uc).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.ur, b.ur).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.ml, b.ml).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.mc, b.mc).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.mr, b.mr).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.ll, b.ll).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.lc, b.lc).?(lt: Lt, gt: Gt);
+  /Core/Bool/Ord%.Ord(a.lr, b.lr).?(lt: Lt, gt: Gt);
+  Eq;
+};
+
+@(Ord);
