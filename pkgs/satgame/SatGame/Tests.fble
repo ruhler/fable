@@ -27,7 +27,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
     Params@ params = @(
       num_vars: Int|6,
       num_clauses: Int|6,
-      num_vars_per_clause: Int|3
+      num_literals_per_clause: Int|3
     );
     Int@ seed = Int|0;
     Puzzle@ puzzle = PureLFSR.Run(Generate(params), seed);

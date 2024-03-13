@@ -5,18 +5,17 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ Id@ = /Core/Int%.Int@;
-@ VarId@ = Id@;
+@ Var_@ = /Core/Int%.Int@;
 
-@ Var@ = *(VarId@ id, Bool@ pos);
-@ Clause@ = List@<Var@>;
+@ Literal@ = *(Var_@ var, Bool@ pos);
+@ Clause@ = List@<Literal@>;
 @ Puzzle@ = List@<Clause@>;
 
 # Parameters describing the shape and size of a puzzle.
 @ Params@ = *(
   Int@ num_vars,
   Int@ num_clauses,
-  Int@ num_vars_per_clause
+  Int@ num_literals_per_clause
 );
 
-@(VarId@, Var@, Clause@, Puzzle@, Params@);
+@(Var_@, Literal@, Clause@, Puzzle@, Params@);

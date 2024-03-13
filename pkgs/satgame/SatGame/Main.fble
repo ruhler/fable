@@ -31,12 +31,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
     Int@ num_clauses = /Core/Int/Show%.Read(a2.cons.head);
 
     List@<String@> a3 = a2.cons.tail;
-    Int@ num_vars_per_clause = /Core/Int/Show%.Read(a3.cons.head);
+    Int@ num_literals_per_clause = /Core/Int/Show%.Read(a3.cons.head);
 
     List@<String@> a4 = a3.cons.tail;
     Int@ seed = /Core/Int/Show%.Read(a4.cons.head);
 
-    Params@ params = @(num_vars, num_clauses, num_vars_per_clause);
+    Params@ params = @(num_vars, num_clauses, num_literals_per_clause);
     Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
         Str|'Generating puzzle with params: ',
         /SatGame/Puzzle/Show%.Params(params),

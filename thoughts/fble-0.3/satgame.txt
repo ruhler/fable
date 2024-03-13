@@ -287,3 +287,14 @@ to.
 Realistically, how many image pairs do I need to start? At least 9, I feel
 like, for a 3x3x3 Sudoku style grid. Probably 16 is more than enough to start.
 
+---
+
+Note on notation:
+
+Var@ should be 'x', 'y', 'z', ...
+Literal@ should be '+x', '-x', etc.
+
+Literals are positive or negative, which is the polarity of the literal.
+
+Let's switch to this terminology.
+
