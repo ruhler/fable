@@ -3,8 +3,9 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Come up with two more images at least, so we have 9 pairs.
- - Implement a 2 column, 6 row, 3 var per clause layout.
+ - Implement /SatGame/Game%.Solved function to see if game is solved.
+   Add test cases for this.
+ - Implement Game@ Draw function to draw a game to the screen.
  - Add ability to click on tiles to cycle through selected, stricken.
 
 * Write test case for big compact followed by tight small compact leading to
@@ -105,6 +106,8 @@ Doc Comments
 
 * Consider syntax highlighting of the syntax specification in fble.fbld.
 * Add way to do inline code syntax highlighting in fbld?
+
+* vim :spell for fble should only effect comments
 
 * Improve vim syntax highlighting of {} blocks in fbld
  - For example, it shouldn't highlight in the case of: @l[{]@hi@l[}].

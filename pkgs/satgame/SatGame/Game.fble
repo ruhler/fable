@@ -1,0 +1,70 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Int@ = /Core/Int%.Int@;
+% Decr = /Core/Int%.Decr;
+% IsZero = /Core/Int/Eq%.IsZero;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Literal@ = /SatGame/Puzzle%.Literal@;
+@ Clause@ = /SatGame/Puzzle%.Clause@;
+@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+
+@ Var@ = /SatGame/Var%.Var@;
+
+@ TileState@ = +(
+  Unit@ normal,     # The tile has been neither selected nor dismissed.
+  Unit@ selected,   # The user has selected this tile.
+  Unit@ dismissed   # The user has crossed off this tile.
+);
+
+@ Tile@ = *(Var@ var, Bool@ pos, TileState@ state);
+@ Group@ = List@<Tile@>;
+@ Game@ = List@<Group@>;
+
+(Literal@) { Tile@; } Tile = (Literal@ l) {
+  Tile@(l.var, l.pos, TileState@(normal: Unit));
+};
+
+(Clause@) { Group@; } Group = (Clause@ clause) {
+  /Core/List%.Map(clause, Tile);
+};
+
+(Puzzle@) { Game@; } Game = (Puzzle@ puzzle) {
+  /Core/List%.Map(puzzle, Group);
+};
+
+# Toggle the state of the tile in the given group of the puzzle.
+#  @arg[Int@][group] The index of the group in the Game@.
+#  @arg[Int@][tile] The index of the tile within the group.
+(Int@, Int@, Game@) { Game@; } Toggle = {
+  (TileState@) { TileState@; } State = (TileState@ s) {
+    s.?(
+      normal: TileState@(dismissed: Unit),
+      selected: TileState@(normal: Unit),
+      dismissed: TileState@(selected: Unit));
+  };
+
+  (Tile@) { Tile@; } Tile = (Tile@ t) {
+    t.@(state: State(t.state));
+  };
+
+  (Int@, Group@) { Group@; } Group = (Int@ tile, Group@ group) {
+    group.?(nil: group);
+    IsZero(tile).?(true: Cons(Tile(group.cons.head), group.cons.tail));
+    Cons(group.cons.head, Group(Decr(tile), group.cons.tail));
+  };
+  
+  (Int@ group, Int@ tile, Game@ game) {
+    game.?(nil: game);
+    IsZero(group).?(true: Cons(Group(tile, game.cons.head), game.cons.tail));
+    Cons(game.cons.head, Toggle(Decr(group), tile, game.cons.tail));
+  };
+};
+
+@(Game@, Game, Toggle);
