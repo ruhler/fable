@@ -6,6 +6,15 @@
 % Or = /Core/Bool%.Or;
 % And = /Core/Bool%.And;
 
+@ Int@ = /Core/Int%.Int@;
+% Decr = /Core/Int%.Decr;
+% IsZero = /Core/Int/Eq%.IsZero;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Contains = /Core/List/Eq%.Contains;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Random@ = /SatGame/Random%.Random@;
 
@@ -16,25 +25,30 @@
 (Var@) { Bool@; }
 IsCanonical = (Var@ v) {
   # Non-canonical cases:
-  # * All empty.
+  # * The middle row/column should not be empty.
+  #    Prefer to move things towards the middle/center.
+  Bool@ mid_empty = Not(Or(v.ml, Or(v.mc, v.mr)));
+  Bool@ center_empty = Not(Or(v.uc, Or(v.mc, v.lc)));
+  Or(mid_empty, center_empty).?(true: False);
+
   # * Bottom row empty but top row not empty.
   #   Prefer to move it down a row.
+  Bool@ top_empty = Not(Or(v.ul, Or(v.uc, v.ur)));
+  Bool@ bottom_empty = Not(Or(v.ll, Or(v.lc, v.lr)));
+  And(bottom_empty, Not(top_empty)).?(true: False);
+
   # * Left column empty but right column not empty.
   #   Prefer to move it left a column.
-  Bool@ top_empty = Not(Or(v.ul, Or(v.uc, v.ur)));
-  Bool@ mid_empty = Not(Or(v.ml, Or(v.mc, v.mr)));
-  Bool@ bottom_empty = Not(Or(v.ll, Or(v.lc, v.lr)));
-  Bool@ all_empty = And(top_empty, And(mid_empty, bottom_empty));
   Bool@ left_empty = Not(Or(v.ul, Or(v.ml, v.ll)));
   Bool@ right_empty = Not(Or(v.ur, Or(v.mr, v.lr)));
-  all_empty.?(true: False);
-  And(bottom_empty, Not(top_empty)).?(true: False);
   And(left_empty, Not(right_empty)).?(true: False);
+
   True;
 };
 
+# Generate a random variable.
 <<@>@ M@>(Monad@<M@>, Random@<M@>) { M@<Var@>; }
-Rand = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
+Var = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
   Bool@ ul <- m.do(rand.bool);
   Bool@ uc <- m.do(rand.bool);
   Bool@ ur <- m.do(rand.bool);
@@ -46,7 +60,24 @@ Rand = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
   Bool@ lr <- m.do(rand.bool);
   Var@ var = @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
   IsCanonical(var).?(true: m.return(var));
-  Rand(m, rand);
+  Var(m, rand);
 };
 
-@(Rand);
+# Generates a random variable distinct from the given list of variables.
+<<@>@ M@>(Monad@<M@>, Random@<M@>, List@<Var@>) { M@<Var@>; }
+DistinctVar = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, List@<Var@> vars) {
+  Var@ x <- m.do(Var(m, rand));
+  Contains(/SatGame/Var/Eq%.Eq, vars, x).?(false: m.return(x));
+  DistinctVar(m, rand, vars);
+};
+
+# Generate N distinct random variables.
+<<@>@ M@>(Monad@<M@>, Random@<M@>, Int@) { M@<List@<Var@>>; }
+Vars = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, Int@ n) {
+  IsZero(n).?(true: m.return(Nil<Var@>));
+  List@<Var@> tail <- m.do(Vars(m, rand, Decr(n)));
+  Var@ head <- m.do(DistinctVar(m, rand, tail));
+  m.return(Cons(head, tail));
+};
+
+@(Var, Vars);

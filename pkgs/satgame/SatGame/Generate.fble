@@ -23,18 +23,18 @@
 <@>% List = /Core/List%.List;
 % Take = /Core/List/Length%.Take;
 
-@ Var_@ = /SatGame/Puzzle%.Var_@;
 @ Literal@ = /SatGame/Puzzle%.Literal@;
 @ Clause@ = /SatGame/Puzzle%.Clause@;
 @ Params@ = /SatGame/Puzzle%.Params@;
 @ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+@ Var@ = /SatGame/Var%.Var@;
 
 <<@>@>@ Random@ = /SatGame/Random%.Random@;
 
 <@,@>@ Map@ = /Core/Map%.Map@;
-% Empty = /Core/Map%.Empty<Int@, Var_@>;
-% Lookup = /Core/Map%.Lookup<Int@>(/Core/Int/Ord%.Ord)<Var_@>;
-% Insert = /Core/Map%.Insert<Int@>(/Core/Int/Ord%.Ord)<Var_@>;
+% Empty = /Core/Map%.Empty<Int@, Var@>;
+% Lookup = /Core/Map%.Lookup<Int@>(/Core/Int/Ord%.Ord)<Var@>;
+% Insert = /Core/Map%.Insert<Int@>(/Core/Int/Ord%.Ord)<Var@>;
 
 # @func[Generate] Generates a random satgame puzzle.
 #  @arg[<@>@][M@] Type of monad to use for random number generation.
@@ -53,32 +53,31 @@
     TooFewVars.undefined;
   });
 
-  Map@<Int@, Var_@> var_ids <- m.do({
-    List@<Var_@> ordered = /Core/Iter%.For(CountUpTo(params.num_vars), Nil<Var_@>, Cons<Var_@>);
-    List@<Var_@> shuffled <- m.do(Shuffle(ordered));
-    @ S@ = *(Int@ i, Map@<Int@, Var_@> map);
-    Map@<Int@, Var_@> map = /Core/List%.ForEach(shuffled, S@(Int|0, Empty),
-      (Var_@ vid, S@ s) {
+  Map@<Int@, Var@> vars <- m.do({
+    List@<Var@> list <- m.do(/SatGame/Var/Rand%.Vars(m, rand, params.num_vars));
+    @ S@ = *(Int@ i, Map@<Int@, Var@> map);
+    Map@<Int@, Var@> map = /Core/List%.ForEach(list, S@(Int|0, Empty),
+      (Var@ vid, S@ s) {
         S@(Incr(s.i), Insert(s.map, s.i, vid));
       }).map;
     m.return(map);
   });
 
-  (Int@) { M@<Var_@>; } RandVar = (Int@ max) {
+  (Int@) { M@<Var@>; } RandVar = (Int@ max) {
     Int@ index <- m.do(RandInt(max));
-    m.return(Lookup(var_ids, index).just);
+    m.return(Lookup(vars, index).just);
   };
 
   (Int@) { M@<Literal@>; } RandLiteral = (Int@ max) {
     Bool@ pos <- m.do(rand.bool);
-    Var_@ var <- m.do(RandVar(max));
+    Var@ var <- m.do(RandVar(max));
     m.return(Literal@(var, pos));
   };
 
-  (Clause@, Var_@) { Bool@; }
-  ContainsVar = (Clause@ c, Var_@ var) {
+  (Clause@, Var@) { Bool@; }
+  ContainsVar = (Clause@ c, Var@ var) {
     c.?(nil: False);
-    /Core/Int/Eq%.Eq(c.cons.head.var, var).?(true: True);
+    /SatGame/Var/Eq%.Eq(c.cons.head.var, var).?(true: True);
     ContainsVar(c.cons.tail, var);
   };
 
@@ -105,7 +104,7 @@
     Range(params.num_literals_per_clause, params.num_vars), m.return(Nil<Clause@>),
     (Int@ i, M@<Puzzle@> mp) {
       Bool@ pos <- m.do(rand.bool);
-      Literal@ var = Literal@(Lookup(var_ids, i).just, pos);
+      Literal@ var = Literal@(Lookup(vars, i).just, pos);
       /Core/Iter%.For(CountUpTo(clauses_per_variable), mp,
         (Int@ _, M@<Puzzle@> mp) {
           Puzzle@ tail <- m.do(mp);

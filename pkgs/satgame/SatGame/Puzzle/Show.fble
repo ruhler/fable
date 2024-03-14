@@ -14,7 +14,7 @@
 
 Show@<Literal@> Literal = (Literal@ literal) {
   String@ sign = literal.pos.?(true: Str|'+', false: Str|'-');
-  Strs[sign, /Core/Int/Show%.Show(literal.var)];
+  Strs[sign, /SatGame/Var/Show%.Show(literal.var)];
 };
 
 Show@<Clause@> Clause = (Clause@ clause) {

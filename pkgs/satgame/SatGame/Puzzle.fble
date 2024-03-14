@@ -5,9 +5,9 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ Var_@ = /Core/Int%.Int@;
+@ Var@ = /SatGame/Var%.Var@;
 
-@ Literal@ = *(Var_@ var, Bool@ pos);
+@ Literal@ = *(Var@ var, Bool@ pos);
 @ Clause@ = List@<Literal@>;
 @ Puzzle@ = List@<Clause@>;
 
@@ -18,4 +18,4 @@
   Int@ num_literals_per_clause
 );
 
-@(Var_@, Literal@, Clause@, Puzzle@, Params@);
+@(Literal@, Clause@, Puzzle@, Params@);
