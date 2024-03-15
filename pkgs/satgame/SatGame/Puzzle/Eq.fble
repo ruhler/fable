@@ -1,0 +1,13 @@
+
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Literal@ = /SatGame/Puzzle%.Literal@;
+
+Eq@<Literal@> Literal = (Literal@ a, Literal@ b) {
+  /SatGame/Var/Eq%.Eq(a.var, b.var).?(false: False);
+  /Core/Bool/Eq%.Eq(a.pos, b.pos);
+};
+
+@(Literal);

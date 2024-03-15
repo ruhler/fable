@@ -1,5 +1,8 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% Not = /Core/Bool%.Not;
 
 @ Int@ = /Core/Int%.Int@;
 % Decr = /Core/Int%.Decr;
@@ -7,6 +10,12 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Contains = /Core/List/Eq%.Contains;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -67,4 +76,45 @@
   };
 };
 
-@(Game@, Game, Toggle);
+(Game@) { Bool@; } Solved = {
+  # Removes all dismissed tiles from a group.
+  (Group@) { Group@; }
+  Dismiss = (Group@ group) {
+    group.?(nil: group);
+    Group@ tail = Dismiss(group.cons.tail);
+    group.cons.head.state.?(dismissed: tail);
+    Cons(group.cons.head, tail);
+  };
+
+  # Checks if an individual group is 'solved'.
+  # Returns the single selected literal if so, Nothing otherwise.
+  (Group@) { Maybe@<Literal@>; }
+  Group = (Group@ group) {
+    Group@ remaining = Dismiss(group);
+    remaining.?(nil: Nothing<Literal@>);
+    remaining.cons.tail.?(cons: Nothing<Literal@>);
+    Tile@ tile = remaining.cons.head;
+    tile.state.?(normal: Nothing<Literal@>);
+    Just(Literal@(tile.var, tile.pos));
+  };
+
+  # Checks if a set of groups is solved.
+  #  @arg[lits] literals selected so far.
+  #  @arg[groups] rest of groups to check.
+  (List@<Literal@>, List@<Group@>) { Bool@; }
+  Groups = (List@<Literal@> lits, List@<Group@> groups) {
+    groups.?(nil: True);
+
+    Maybe@<Literal@> mlit = Group(groups.cons.head);
+    mlit.?(nothing: False);
+
+    Literal@ lit = mlit.just;
+    Literal@ complement = lit.@(pos: Not(lit.pos));
+    Contains(/SatGame/Puzzle/Eq%.Literal, lits, complement).?(true: False);
+    Groups(Cons(lit, lits), groups.cons.tail);
+  };
+
+  Groups(Nil<Literal@>);
+};
+
+@(Game@, Game, Toggle, Solved);
