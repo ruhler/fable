@@ -6,12 +6,8 @@ namespace eval "pkgs/satgame" {
   testsuite $::b/pkgs/satgame/satgame-tests.tr $::b/pkgs/satgame/satgame-tests \
     "$::b/pkgs/satgame/satgame-tests"
 
-  # fble-satgame binary
-  stdio $::b/pkgs/satgame/fble-satgame "/SatGame/Main%" "satgame app"
-  install $::b/pkgs/satgame/fble-satgame $::config::bindir/fble-satgame
-
   if $::config::enable_fble_app {
-    app $::b/pkgs/satgame/fble-satgame-screenshot "/SatGame/Screenshot/AppIO%" "satgame"
-    install $::b/pkgs/satgame/fble-satgame-screenshot $::config::bindir/fble-satgame-screenshot
+    app $::b/pkgs/satgame/fble-satgame "/SatGame/AppIO%" "satgame"
+    install $::b/pkgs/satgame/fble-satgame $::config::bindir/fble-satgame
   }
 }

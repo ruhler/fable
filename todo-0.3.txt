@@ -3,8 +3,6 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Implement Game@ Draw function to draw a game to the screen.
- - Merge puzzle generator and screenshot into single game App.
  - Add ability to click on tiles to cycle through selected, stricken.
  - Add test cases for /SatGame/Game%.Solved.
 

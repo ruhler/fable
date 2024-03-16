@@ -573,7 +573,7 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* argValue = FbleNewStringValue(heap, argv[i]);
+    FbleValue* argValue = FbleNewStringValue(heap, argv[argc - i - 1]);
     FbleValue* argP = FbleNewStructValue_(heap, 2, argValue, argS);
     argS = FbleNewUnionValue(heap, 0, argP);
   }

@@ -1,0 +1,86 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+
+% Neg = /Core/Int%.Neg;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Affine = /App/Drawing%.Affine;
+
+@ Params@ = /SatGame/Puzzle%.Params@;
+@ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+@ Game@ = /SatGame/Game%.Game@;
+
+% PureLFSR = /SatGame/Random/PureLFSR%;
+% Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
+
+@ Args@ = *(
+  Int@ num_vars,
+  Int@ num_clauses,
+  Int@ num_literals_per_clause,
+  Int@ seed
+);
+
+(List@<String@>) { Args@; }
+GetArgs = (List@<String@> args) {
+  Int@ num_vars = /Core/Int/Show%.Read(args.cons.head);
+
+  List@<String@> a2 = args.cons.tail;
+  Int@ num_clauses = /Core/Int/Show%.Read(a2.cons.head);
+
+  List@<String@> a3 = a2.cons.tail;
+  Int@ num_literals_per_clause = /Core/Int/Show%.Read(a3.cons.head);
+
+  List@<String@> a4 = a3.cons.tail;
+  Int@ seed = /Core/Int/Show%.Read(a4.cons.head);
+
+  @(num_vars, num_clauses, num_literals_per_clause, seed);
+};
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ _width, Int@ _height, List@<String@> argv) {
+  % O = /Core/Stream/OStream%(m);
+
+  Args@ args = GetArgs(argv);
+  Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+      Str|'Generating puzzle with params: ',
+      /SatGame/Puzzle/Show%.Params(params),
+      Str|' (seed ', /Core/Int/Show%.Show(args.seed), Str|')'
+  ]));
+
+  Puzzle@ puzzle = PureLFSR.Run(Generate(params), args.seed);
+  Unit@ _ <- m.do(O.PutLine(stdio.out, /SatGame/Puzzle/Show%.Puzzle(puzzle)));
+
+  Game@ game = /SatGame/Game%.Game(puzzle);
+
+  Drawing@ screen = /SatGame/Game/Draw%.Draw(Int|2, game);
+  Unit@ _ <- m.do(app.effect(Effect@(draw: screen)));
+
+  M@<Bool@> WaitForKeyPress = {
+    Event@ e <- m.do(app.event);
+    e.?(key_down: m.return(True), : WaitForKeyPress);
+  };
+  WaitForKeyPress;
+};
+
+Main;
