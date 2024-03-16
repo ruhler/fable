@@ -1,7 +1,9 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
+% Div = /Core/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -20,10 +22,15 @@
 @ Group@ = /SatGame/Game%.Group@;
 @ Tile@ = /SatGame/Game%.Tile@;
 
+Int@ VarWidth = Int|32;
+Int@ TileWidth = Int|48;
+Int@ GroupPad = Int|4;
+Int@ VarShift = Div(Sub(TileWidth, VarWidth), Int|2).q;
+
 (Tile@) { Drawing@; }
 Tile = (Tile@ tile) {
   Color@ bg_color = Color@(Int|208, Int|208, Int|208);
-  Drawing@ bg = Rect(Int|0, Int|0, Int|48, Int|48, bg_color);
+  Drawing@ bg = Rect(Int|0, Int|0, TileWidth, TileWidth, bg_color);
 
   Color@ fill_color = tile.state.?(
     normal: Color@(Int|0, Int|0, Int|0),
@@ -31,7 +38,7 @@ Tile = (Tile@ tile) {
     dismissed: Color@(Int|172, Int|172, Int|172));
 
   Drawing@ v = /SatGame/Var/Draw%.Draw(tile.var, tile.pos, fill_color);
-  Drawings[bg, Translate(Int|8, Int|8, v)];
+  Drawings[bg, Translate(VarShift, VarShift, v)];
 };
 
 (List@<Tile@>) { Drawing@; }
@@ -39,7 +46,7 @@ Group = (List@<Tile@> tiles) {
   tiles.?(nil: Blank);
   Drawing@ head = Tile(tiles.cons.head);
   Drawing@ tail = Group(tiles.cons.tail);
-  Drawings[head, Translate(Int|48, Int|0, tail)];
+  Drawings[head, Translate(TileWidth, Int|0, tail)];
 };
 
 (List@<Group@>) { Drawing@; }
@@ -49,7 +56,7 @@ Row = (List@<Group@> groups) {
   Drawing@ tail = Row(groups.cons.tail);
   Drawings[
     head,
-    Translate(Add(Mul(Int|48, Length(groups.cons.head)), Int|4), Int|0, tail)
+    Translate(Add(Mul(TileWidth, Length(groups.cons.head)), GroupPad), Int|0, tail)
   ];
 };
 
@@ -61,7 +68,7 @@ Draw = (Int@ cols, Game@ game) {
   game.?(nil: Blank);
   Drawing@ head = Row(Take(cols, game));
   Drawing@ tail = Draw(cols, Drop(cols, game));
-  Drawings[head, Translate(Int|0, Int|52, tail)];
+  Drawings[head, Translate(Int|0, Add(TileWidth, GroupPad), tail)];
 };
 
 @(Draw);
