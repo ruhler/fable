@@ -117,4 +117,4 @@
   Groups(Nil<Literal@>);
 };
 
-@(Game@, Game, Toggle, Solved);
+@(Game@, Group@, Tile@, Game, Toggle, Solved);

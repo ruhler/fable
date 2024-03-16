@@ -1,0 +1,63 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Length = /Core/List/Length%.Length;
+% Take = /Core/List/Length%.Take;
+% Drop = /Core/List/Length%.Drop;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+% Color = /App/Drawing%.Color;
+% Drawings = /App/Drawing%.Drawings;
+% Rect = /App/Drawing%.Rect;
+% Blank = /App/Drawing%.Blank;
+% Translate = /App/Drawing%.Translate;
+
+@ Game@ = /SatGame/Game%.Game@;
+@ Group@ = /SatGame/Game%.Group@;
+@ Tile@ = /SatGame/Game%.Tile@;
+
+(Tile@) { Drawing@; }
+Tile = (Tile@ tile) {
+  # TODO: Draw tile state somehow too.
+  Color@ bg_color = Color@(Int|208, Int|208, Int|208);
+  Drawing@ bg = Rect(Int|0, Int|0, Int|48, Int|48, bg_color);
+  Drawing@ v = /SatGame/Var/Draw%.Draw(tile.var, tile.pos, Color.Black);
+  Drawings[bg, Translate(Int|8, Int|8, v)];
+};
+
+(List@<Tile@>) { Drawing@; }
+Group = (List@<Tile@> tiles) {
+  tiles.?(nil: Blank);
+  Drawing@ head = Tile(tiles.cons.head);
+  Drawing@ tail = Group(tiles.cons.tail);
+  Drawings[head, Translate(Int|48, Int|0, tail)];
+};
+
+(List@<Group@>) { Drawing@; }
+Row = (List@<Group@> groups) {
+  groups.?(nil: Blank);
+  Drawing@ head = Group(groups.cons.head);
+  Drawing@ tail = Row(groups.cons.tail);
+  Drawings[
+    head,
+    Translate(Add(Mul(Int|48, Length(groups.cons.head)), Int|4), Int|0, tail)
+  ];
+};
+
+# Draws a game.
+#  @args[Int@][cols] The number of groups per column.
+#  @args[Game@][game] The game to draw.
+(Int@, Game@) { Drawing@; }
+Draw = (Int@ cols, Game@ game) {
+  game.?(nil: Blank);
+  Drawing@ head = Row(Take(cols, game));
+  Drawing@ tail = Draw(cols, Drop(cols, game));
+  Drawings[head, Translate(Int|0, Int|52, tail)];
+};
+
+@(Draw);

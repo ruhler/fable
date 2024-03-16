@@ -298,3 +298,19 @@ Literals are positive or negative, which is the polarity of the literal.
 
 Let's switch to this terminology.
 
+---
+
+UI layout.
+
+I'm thinking that we should target a fixed aspect ratio and scale the tile
+size up or down automatically to be as big as we can while fitting in that
+aspect ratio. For the aspect ratio, I think go portrait mode, because that's
+more common for reading things (music, books, papers, websites, etc.) than
+horizontal.
+
+The aspect ratio for A4 paper is sqrt(2). 4/3 is pretty close to that. My
+vote: target a 4/3 aspect ratio, round as needed.
+
+Use the target aspect ratio to determine number of group columns. Draw tile as
+32x32, then scale it to fill up as big as we can to fit the display. Center in
+the screen.
