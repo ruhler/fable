@@ -11,7 +11,6 @@
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Color@ = /App/Drawing%.Color@;
-% Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
 % Blank = /App/Drawing%.Blank;
@@ -23,10 +22,15 @@
 
 (Tile@) { Drawing@; }
 Tile = (Tile@ tile) {
-  # TODO: Draw tile state somehow too.
   Color@ bg_color = Color@(Int|208, Int|208, Int|208);
   Drawing@ bg = Rect(Int|0, Int|0, Int|48, Int|48, bg_color);
-  Drawing@ v = /SatGame/Var/Draw%.Draw(tile.var, tile.pos, Color.Black);
+
+  Color@ fill_color = tile.state.?(
+    normal: Color@(Int|0, Int|0, Int|0),
+    selected: Color@(Int|0, Int|156, Int|0),
+    dismissed: Color@(Int|172, Int|172, Int|172));
+
+  Drawing@ v = /SatGame/Var/Draw%.Draw(tile.var, tile.pos, fill_color);
   Drawings[bg, Translate(Int|8, Int|8, v)];
 };
 
