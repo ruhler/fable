@@ -1,8 +1,8 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 
 @ Int@ = /Core/Int%.Int@;
+% Sub = /Core/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -15,6 +15,7 @@
 % Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 <<@>@>@ App@ = /App/App%.App@;
 <<@>@>@ Main@ = /App/App%.Main@;
@@ -22,6 +23,9 @@
 @ Effect@ = /App/App%.Effect@;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
+% Color = /App/Drawing%.Color;
+% Rect = /App/Drawing%.Rect;
+% Drawings = /App/Drawing%.Drawings;
 
 @ Params@ = /SatGame/Puzzle%.Params@;
 @ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
@@ -55,7 +59,12 @@ GetArgs = (List@<String@> args) {
   @(num_vars, num_clauses, num_literals_per_clause, seed);
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ _width, Int@ _height, List@<String@> argv) {
+@ State@ = *(
+  Int@ mouse_x,
+  Int@ mouse_y
+);
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
   % O = /Core/Stream/OStream%(m);
 
   Args@ args = GetArgs(argv);
@@ -75,14 +84,36 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ _width
   Game@ g2 = Toggle(Int|1, Int|1, g1);
   Game@ g3 = Toggle(Int|1, Int|2, g2);
 
-  Drawing@ screen = /SatGame/Game/Draw%.Draw(Int|2, g3);
-  Unit@ _ <- m.do(app.effect(Effect@(draw: screen)));
-
-  M@<Bool@> WaitForKeyPress = {
-    Event@ e <- m.do(app.event);
-    e.?(key_down: m.return(True), : WaitForKeyPress);
+  (State@) { M@<Unit@>; } Draw = (State@ state) {
+    Drawing@ background = Rect(Int|0, Int|0, width, height, Color.Black);
+    Drawing@ cursor = Rect(
+      Sub(state.mouse_x, Int|4),
+      Sub(state.mouse_y, Int|4),
+      Int|8, Int|8, Color.Yellow);
+    Drawing@ game = /SatGame/Game/Draw%.Draw(Int|2, g3);
+    Drawing@ screen = Drawings[background, game, cursor];
+    app.effect(Effect@(draw: screen));
   };
-  WaitForKeyPress;
+
+  (State@) { M@<Unit@>; } EventLoop = (State@ state) {
+    Event@ e <- m.do(app.event);
+    e.?(
+      tick: EventLoop(state),
+      key_down: m.return(Unit),
+      key_up: m.return(Unit),
+      mouse_down: EventLoop(state),
+      mouse_up: EventLoop(state),
+      resize: EventLoop(state),
+      mouse_motion: {
+        State@ ns = State@(e.mouse_motion.x, e.mouse_motion.y);
+        Unit@ _ <- m.do(Draw(ns));
+        EventLoop(ns);
+      });
+  };
+
+  Unit@ _ <- m.do(Draw(State@(Int|0, Int|0)));
+  Unit@ _ <- m.do(EventLoop(State@(Int|0, Int|0)));
+  m.return(True);
 };
 
 Main;
