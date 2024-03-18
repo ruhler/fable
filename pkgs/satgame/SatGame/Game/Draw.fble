@@ -3,6 +3,8 @@
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
+% Gt = /Core/Int/Eq%.Gt;
+@ QR@ = /Core/Int/Div%.QR@;
 % Div = /Core/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;
 
@@ -10,6 +12,10 @@
 <@>% Length = /Core/List/Length%.Length;
 % Take = /Core/List/Length%.Take;
 % Drop = /Core/List/Length%.Drop;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Color@ = /App/Drawing%.Color@;
@@ -21,6 +27,8 @@
 @ Game@ = /SatGame/Game%.Game@;
 @ Group@ = /SatGame/Game%.Group@;
 @ Tile@ = /SatGame/Game%.Tile@;
+
+@ Params@ = /SatGame/Puzzle%.Params@;
 
 Int@ VarWidth = Int|32;
 Int@ TileWidth = Int|48;
@@ -71,4 +79,23 @@ Draw = (Int@ cols, Game@ game) {
   Drawings[head, Translate(Int|0, Add(TileWidth, GroupPad), tail)];
 };
 
-@(Draw);
+@ TileIndex@ = *(Int@ group, Int@ tile);
+
+# Returns the tile associated with the given (x, y) coordinate, if any.
+(Params@, Int@, Int@, Int@) { Maybe@<TileIndex@>; }
+TileOf = (Params@ params, Int@ cols, Int@ x, Int@ y) {
+  QR@ row = Div(y, Add(TileWidth, GroupPad));
+  Gt(row.r, TileWidth).?(true: Nothing<TileIndex@>);
+
+  Int@ group_width = Mul(TileWidth, params.num_literals_per_clause);
+  QR@ col = Div(x, Add(group_width, GroupPad));
+  Gt(col.r, group_width).?(true: Nothing<TileIndex@>);
+
+  Int@ group = Add(Mul(cols, row.q), col.q);
+  Gt(group, params.num_clauses).?(true: Nothing<TileIndex@>);
+
+  Int@ tile = Div(col.r, TileWidth).q;
+  Just(TileIndex@(group, tile));
+};
+
+@(Draw, TileIndex@, TileOf);

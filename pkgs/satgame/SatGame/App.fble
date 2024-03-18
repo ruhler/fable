@@ -7,6 +7,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
@@ -32,6 +34,9 @@
 
 @ Game@ = /SatGame/Game%.Game@;
 % Toggle = /SatGame/Game%.Toggle;
+
+@ TileIndex@ = /SatGame/Game/Draw%.TileIndex@;
+% TileOf = /SatGame/Game/Draw%.TileOf;
 
 % PureLFSR = /SatGame/Random/PureLFSR%;
 % Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
@@ -60,6 +65,7 @@ GetArgs = (List@<String@> args) {
 };
 
 @ State@ = *(
+  Game@ game,
   Int@ mouse_x,
   Int@ mouse_y
 );
@@ -69,6 +75,46 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Args@ args = GetArgs(argv);
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
+
+  Int@ cols = Int|2;
+
+  (State@) { M@<Unit@>; } Draw = (State@ state) {
+    Drawing@ background = Rect(Int|0, Int|0, width, height, Color.Black);
+    Drawing@ cursor = Rect(
+      Sub(state.mouse_x, Int|4),
+      Sub(state.mouse_y, Int|4),
+      Int|8, Int|8, Color.Yellow);
+    Drawing@ game = /SatGame/Game/Draw%.Draw(cols, state.game);
+    Drawing@ screen = Drawings[background, game, cursor];
+    app.effect(Effect@(draw: screen));
+  };
+
+  (State@) { M@<Unit@>; } EventLoop = (State@ state) {
+    Event@ e <- m.do(app.event);
+    e.?(
+      tick: EventLoop(state),
+      key_down: m.return(Unit),
+      key_up: m.return(Unit),
+      mouse_down: {
+        Int@ x = e.mouse_down.x;
+        Int@ y = e.mouse_down.y;
+        Maybe@<TileIndex@> ti = TileOf(params, cols, x, y);
+        ti.?(nothing: EventLoop(state));
+        State@ ns = state.@(game: Toggle(ti.just.group, ti.just.tile, state.game));
+        Unit@ _ <- m.do(Draw(ns));
+        EventLoop(ns);
+      },
+      mouse_up: EventLoop(state),
+      resize: EventLoop(state),
+      mouse_motion: {
+        State@ ns = state.@(
+          mouse_x: e.mouse_motion.x,
+          mouse_y: e.mouse_motion.y);
+        Unit@ _ <- m.do(Draw(ns));
+        EventLoop(ns);
+      });
+  };
+
   Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
       Str|'Generating puzzle with params: ',
       /SatGame/Puzzle/Show%.Params(params),
@@ -80,39 +126,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 
-  Game@ g1 = Toggle(Int|1, Int|1, game);
-  Game@ g2 = Toggle(Int|1, Int|1, g1);
-  Game@ g3 = Toggle(Int|1, Int|2, g2);
-
-  (State@) { M@<Unit@>; } Draw = (State@ state) {
-    Drawing@ background = Rect(Int|0, Int|0, width, height, Color.Black);
-    Drawing@ cursor = Rect(
-      Sub(state.mouse_x, Int|4),
-      Sub(state.mouse_y, Int|4),
-      Int|8, Int|8, Color.Yellow);
-    Drawing@ game = /SatGame/Game/Draw%.Draw(Int|2, g3);
-    Drawing@ screen = Drawings[background, game, cursor];
-    app.effect(Effect@(draw: screen));
-  };
-
-  (State@) { M@<Unit@>; } EventLoop = (State@ state) {
-    Event@ e <- m.do(app.event);
-    e.?(
-      tick: EventLoop(state),
-      key_down: m.return(Unit),
-      key_up: m.return(Unit),
-      mouse_down: EventLoop(state),
-      mouse_up: EventLoop(state),
-      resize: EventLoop(state),
-      mouse_motion: {
-        State@ ns = State@(e.mouse_motion.x, e.mouse_motion.y);
-        Unit@ _ <- m.do(Draw(ns));
-        EventLoop(ns);
-      });
-  };
-
-  Unit@ _ <- m.do(Draw(State@(Int|0, Int|0)));
-  Unit@ _ <- m.do(EventLoop(State@(Int|0, Int|0)));
+  State@ state = State@(game, Int|0, Int|0);
+  Unit@ _ <- m.do(Draw(state));
+  Unit@ _ <- m.do(EventLoop(state));
   m.return(True);
 };
 

@@ -3,9 +3,9 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Add ability to click on tiles to cycle through selected, stricken.
  - Auto compute number of columns.
  - Scale up to fit in window.
+ - Have left click select, right click dismiss?
  - Add test cases for /SatGame/Game%.Solved.
 
 * Write test case for big compact followed by tight small compact leading to
