@@ -1,0 +1,116 @@
+Fble on Windows
+===============
+Goal is to be able to build and run fble apps on Windows.
+
+I could build with Cygwin, but not run the apps without an X server.
+
+I think I've figured out how to run apps using msys2 instead of cygwin. Here are the steps:
+
+Using UCRT64 envrionment, because that's what I got working my first attempt
+and that's the recommended one to use from msys2. I suspect it may have some include files we need that other environments from msys2 don't, but I'm not sure.
+
+package installs:
+* Initial package update:
+  pacman -Suy
+  pacman -Suy
+
+* Packages to get fable:
+  pacman -S git
+  pacman -S vim			# no ucrt variant?
+
+* Packages to build fble:
+  pacman -S tcl			# ucrt variant provides tclsh86 instead of tclsh8.6
+  pacman -S ninja		# ucrt variant gives error creating files.
+  pacman -S gcc			# ucrt variant lacks sys/mman.h
+  pacman -S bison
+  pacman -S groff
+  pacman -S diffutils
+
+  pacman -S mingw-w64-ucrt-x86_64-SDL2
+  pacman -S mingw-w64-ucrt-x86_64-mesa
+
+
+I'm not sure when I should use plain 'tcl', 'vim' versus
+'mingw-w64-ucrt-x86_64-tcl', etc. Plain tcl has tclsh8.6 instead of tclsh86, which is convenient. I don't see a non-plain vim variant.
+
+Hmm... Seems like msys environment works, but not the ucrt one. So maybe I need
+to use msys for everything except SDL?
+
+Failing tests:
+* @[SpecTests/5.3-FuncApply/Eval/TailRecursionMemory.fble]
+  memory growth of 4 KB
+* SpecTests/5.3-FuncApply/Eval/StackSmash.fble
+  segmentation violation
+
+
+Using the following settings, from the UCRT64 environment (for SDL2 and opengl32):
+
+    set sdl_cflags "-IC:/msys64/ucrt64/include/SDL2 -Dmain=SDL_main"
+    set sdl_libs "-LC:/msys64/ucrt64/lib -mwindows -lSDL2main -lSDL2"
+    set gl_libs "-lopengl32"
+
+Oddly though, I'm getting an error trying to link fble-app. All the other apps
+work okay. What's the difference?
+
+Getting: undefined reference to WinMain. Internet suggests I need to use
+mingw-w64-ucrt-x86_64-gcc instead of the msys gcc version?
+
+---
+
+Let's go down the route of ucrt version of gcc and see how far we get.
+
+Issues:
+- sys/mman.h 
+  Turns out that's included unecessarily.
+- sys/resource.h
+  For get rlimit. That logic doesn't work for windows anyway.
+
+I ran into some issue with 'assert'. After rebuilding from a new terminal, now I get a really weird error:
+
+error parsing module path 'C:/msys64/Core/Eq%'
+
+It looks like someone is magically turning '/Core/Eq%' into
+'C:/msys64/Core/Eq%'. That's really awkward. Who does that?
+
+Looks like this is by msys2 design. It's documented on the msys website.
+
+Supress it with `export MSYS2_ARG_CONV_EXCL='*'`?
+
+Yes. Now things seem to be working using the original sdl2-config command. Let's try that route.
+
+So, plan is:
+* UCRT64 environment, using sdl2-config as is, having installed the ucrt64 gcc.
+
+Cool. Let's see if I can summarize now:
+
+  UCRT64 environment.
+
+  pacman -S tcl	
+  pacman -S ninja
+  pacman -S bison
+  pacman -S groff
+  pacman -S diffutils
+
+  pacman -S mingw-w64-ucrt-x86_64-gcc
+  pacman -S mingw-w64-ucrt-x86_64-SDL2
+  pacman -S mingw-w64-ucrt-x86_64-mesa
+
+  Use sdl2-config as is.
+  -lopengl32 instead of -lGL
+
+  export MSYS2_ARG_CONV_EXCL='*'`
+
+  * Remove include of sys/mman.h
+  * Remove use of sys/resource.h (getrlimit)
+    Breaks mem-test though...
+  * Use of getline in fble-perf-profile not supported.
+  * Add extra stack arg for Msys as well as Cygwin.
+  * diff tests are failing on generated README.md due to \n versus \n\r
+ 
+Okay, what now?
+
+Honestly I feel like it's better to remove use of sys/mman.h, sys/resource.h,
+and getline if possible to make things more portable. We saw sys/mman.h can and
+should be removed. I assume we can get rid of getline easily enough.
+
+Sounds a little tricky.

@@ -3,15 +3,12 @@
  *  Implementation of fble allocation routines.
  */
 
-#define _GNU_SOURCE   // for MAP_ANONYMOUS
-
 #include <fble/fble-alloc.h>
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
 #include <stdbool.h>  // for bool
 #include <stdlib.h>   // for malloc
-#include <sys/mman.h> // for mmap, munmap
 #include <unistd.h>   // for sysconf
 
 

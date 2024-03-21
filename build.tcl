@@ -97,7 +97,8 @@ proc lib { lib objs } {
 
 # We have to reserve stack space at compile time on Windows.
 set ::stackflag ""
-if {[exec uname -o] == "Cygwin"} {
+set os [exec uname -o]
+if {$os == "Cygwin" || $os == "Msys"} {
   set ::stackflag "-Wl,--stack,1073741824"
 }
 
