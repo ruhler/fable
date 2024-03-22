@@ -24,6 +24,7 @@
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
+@ Color@ = /App/Drawing%.Color@;
 @ Drawing@ = /App/Drawing%.Drawing@;
 % Color = /App/Drawing%.Color;
 % Rect = /App/Drawing%.Rect;
@@ -34,6 +35,7 @@
 
 @ Game@ = /SatGame/Game%.Game@;
 % Toggle = /SatGame/Game%.Toggle;
+% Solved = /SatGame/Game%.Solved;
 
 @ TileIndex@ = /SatGame/Game/Draw%.TileIndex@;
 % TileOf = /SatGame/Game/Draw%.TileOf;
@@ -79,7 +81,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Int@ cols = Int|2;
 
   (State@) { M@<Unit@>; } Draw = (State@ state) {
-    Drawing@ background = Rect(Int|0, Int|0, width, height, Color.Black);
+    Color@ bg_color = Solved(state.game).?(true: Color.Green, false: Color.Black);
+    Drawing@ background = Rect(Int|0, Int|0, width, height, bg_color);
     Drawing@ cursor = Rect(
       Sub(state.mouse_x, Int|4),
       Sub(state.mouse_y, Int|4),

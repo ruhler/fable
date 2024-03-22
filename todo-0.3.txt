@@ -5,7 +5,11 @@ Things to consider doing for the fble-0.3 release.
 * SatGame
  - Auto compute number of columns.
  - Scale up to fit in window.
+ - Have group pad border around the outside edge.
+ - Add support for touch screen.
+   Not needed? Mouse event takes care of it?
  - Have left click select, right click dismiss?
+ - Pick default values for params with flags to modify.
  - Add test cases for /SatGame/Game%.Solved.
 
 * Windows support:
