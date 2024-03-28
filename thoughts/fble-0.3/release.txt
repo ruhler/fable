@@ -12,3 +12,19 @@ Potential big things are:
 
 How about we do some fble coding and work on SatGame next?
 
+---
+
+SatGame is in decent enough shape now to start burndown of it. Do I want to
+work on anything else big, or start burndown for the release now?
+
+We've updated the language. We've updated the implementation. We've added new
+fble programs. I would say modular compilation overlaps a bit with
+implementation update, so maybe no need to pull that into this release. fbld
+and debugger are separate. Should we try to make some notable progress on
+those?
+
+I'd like to start burndown of some things, otherwise the little things are
+going to keep adding up. Let's put a little thought into fbld and debugger for
+this release, while burning down other things.
+
+

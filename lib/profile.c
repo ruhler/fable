@@ -527,45 +527,6 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 }
 
 // See documentation in fble-profile.h.
-FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent)
-{
-  if (parent == NULL) {
-    return NULL;
-  }
-
-  FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
-  thread->profile = parent->profile;
-
-  // Copy the call stack.
-  {
-    CallStack* next = NULL;
-    for (CallStack* p = parent->calls; p != NULL; p = p->tail) {
-      size_t chunk_size = p->end - p->data;
-      CallStack* c = FbleAllocExtra(CallStack, chunk_size * sizeof(Call));
-      if (next == NULL) {
-        thread->calls = c;
-      } else {
-        next->tail = c;
-      }
-
-      c->tail = NULL;
-      c->next = next;
-      c->top = c->data + (p->top - p->data);
-      c->end = c->data + chunk_size;
-      memcpy(c->data, p->data, chunk_size * sizeof(Call));
-      next = c;
-    }
-  }
-
-  // Copy the sample stack.
-  thread->sample.capacity = parent->sample.capacity;
-  thread->sample.size = parent->sample.size;
-  thread->sample.xs = FbleAllocArray(Sample, thread->sample.capacity);
-  memcpy(thread->sample.xs, parent->sample.xs, parent->sample.size * sizeof(Sample));
-  return thread;
-}
-
-// See documentation in fble-profile.h.
 void FbleFreeProfileThread(FbleProfileThread* thread)
 {
   if (thread == NULL) {

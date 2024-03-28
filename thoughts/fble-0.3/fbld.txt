@@ -1,0 +1,27 @@
+Fbld Improvements
+=================
+The big issue with fbld right now is lack of modularity. We have to know or
+assume what order .fbld files are concatenated together, which is hard to
+manage.
+
+What feature or builtin or syntax can we add to fix this?
+
+Practically speaking, what do I want?
+* A way to 'include' another .fbld file, to bring into the environment all the
+  commands it defines.
+* A way to 'require' an interface, to bring into the environment a bunch of
+  known commands, where we don't know at run time which implement set of those
+  commands we get?
+* Maybe a way to define a set of expected 'free' commands that are not to be
+  processed this pass?
+* If the same module is included multiple times, ideally we can do some
+  sharing to improve memory use and performance.
+
+Ideally this gives us namespace management, so we can tell (statically?) if we
+are referring to an undefined command or using the wrong number of arguments.
+And we don't have to worry about polluting the namespace of other modules.
+So... we would want some sort of namespace control of explicit import/export
+or a struct like field access operation?
+
+Structs could be useful elsewhere too.
+

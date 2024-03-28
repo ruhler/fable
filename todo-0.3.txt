@@ -6,17 +6,20 @@ Things to consider doing for the fble-0.3 release.
  - Auto compute number of columns.
  - Scale up to fit in window.
  - Have group pad border around the outside edge.
- - Add support for touch screen.
-   Not needed? Mouse event takes care of it?
  - Have left click select, right click dismiss?
  - Pick default values for params with flags to modify.
  - Add test cases for /SatGame/Game%.Solved.
 
 * Windows support:
  - Find an alternative to getline (fble-perf-profile).
+   Add a test case for fble-perf-profile first?
  - Add a proper way to overwrite GL libs. At configure time?
  - Find an alternative to getrlimit for mem-test
  - Find a better solution for 'unlimited stack' support?
+
+* Switch profile-test to getrlimit based memory tracking?
+ Instead of having getrlimit based one place and count based somewhere else?
+ Or implement some abstract API and use that instead?
 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
@@ -43,6 +46,18 @@ Things to consider doing for the fble-0.3 release.
  - As a blocker for major compiler optimizations.
 
 * Add spec tests for coverage.
+ - Test list and struct copy in multi argument function dealing with args from
+   different levels of the function.
+ - Test overapplication in a tail call.
+ - Test tail call of undefined function value.
+ - Lots of code in load.c not exercised?
+ - Remove unused modular compilation code?
+ - Poly type with mistyped body.
+ - Substitution involving package type
+ - Test for variables defined but not used?
+ - Test for unused arguments?
+ - MarkRefs on a REF_VALUE.
+ - And more...
 
 * Improve build times?
  - It's getting a little annoying for development now that everything is
@@ -116,8 +131,6 @@ Doc Comments
 
 * Consider syntax highlighting of the syntax specification in fble.fbld.
 * Add way to do inline code syntax highlighting in fbld?
-
-* vim :spell for fble should only effect comments
 
 * Improve vim syntax highlighting of {} blocks in fbld
  - For example, it shouldn't highlight in the case of: @l[{]@hi@l[}].

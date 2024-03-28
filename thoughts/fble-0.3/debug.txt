@@ -108,3 +108,13 @@ First proof of concept could be to set breakpoint at file:line and print
 backtrace? Certainly its going to take a while before it's built up enough to
 be useful. Baby steps. Try to keep the code mostly separate from the rest of
 fble.
+
+---
+
+What protocol should we use for communication? Can/should we use the GDB
+remote serial protocol? Invent our own? Some other protocol?
+
+I think run our own protocol. We can always write a wrapper if we want to
+support something more standard. gdb remote serial protocol at a glance
+doesn't look abstract enough to fit nicely with fble I feel like.
+

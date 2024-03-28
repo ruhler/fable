@@ -165,9 +165,7 @@ typedef struct FbleProfileThread FbleProfileThread;
 
 /**
  * @func[FbleNewProfileThread] Allocates a new profile thread.
- *  The new thread starts in the FBLE_ROOT_BLOCK_ID block. See
- *  FbleForkProfileThread() for an alternative way to create a new profile
- *  thread.
+ *  The new thread starts in the FBLE_ROOT_BLOCK_ID block.
  *
  *  @arg[FbleProfile*][profile] The profile to save profiling data to.
  *
@@ -179,22 +177,6 @@ typedef struct FbleProfileThread FbleProfileThread;
  *   FreeProfileThread when no longer in use.
  */
 FbleProfileThread* FbleNewProfileThread(FbleProfile* profile);
-
-/**
- * @func[FbleForkProfileThread] Allocates a new profile thread by forking.
- *  The new thread starts with a copy of the parent thread's call stack.
- *
- *  @arg[FbleProfileThread*][parent]
- *   The parent thread to fork from. May be NULL.
- *
- *  @returns FbleProfileThread*
- *   A new profile thread. Null if profiling is disabled.
- *
- *  @sideeffects
- *   Allocates a new profile thread that should be freed with
- *   FreeProfileThread when no longer in use.
- */
-FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent);
 
 /**
  * @func[FbleFreeProfileThread] Frees a profile thread.
