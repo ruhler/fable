@@ -1,0 +1,13 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+(Bool@) { (Bool@) { Bool@; }; } F = (Bool@ s) {
+  s.?(true: F(False));
+  (Bool@ p) { p.?(true: False, false: True); };
+};
+
+# Test over application of a tail called function for code coverage.
+F(True, True).false;

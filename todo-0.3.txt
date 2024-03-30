@@ -2,6 +2,16 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Add spec tests for coverage.
+ - Test tail call of undefined function value.
+ - Lots of code in load.c not exercised?
+ - Poly type with mistyped body.
+ - Substitution involving package type
+ - Test for variables defined but not used?
+ - Test for unused arguments?
+ - MarkRefs on a REF_VALUE.
+ - And more...
+
 * SatGame
  - Auto compute number of columns.
  - Scale up to fit in window.
@@ -41,17 +51,6 @@ Things to consider doing for the fble-0.3 release.
 
 * It's strange that a function that returns a poly has kind %.
   Does that make sense?
-
-* Add spec tests for coverage.
- - Test overapplication in a tail call.
- - Test tail call of undefined function value.
- - Lots of code in load.c not exercised?
- - Poly type with mistyped body.
- - Substitution involving package type
- - Test for variables defined but not used?
- - Test for unused arguments?
- - MarkRefs on a REF_VALUE.
- - And more...
 
 * Improve build times?
  - It's getting a little annoying for development now that everything is
