@@ -1,4 +1,4 @@
 # @@fble-test@@ compile-error 3:11
 # A module may not depend on itself.
-@ Unit@ = /SpecTests/'9.3-Program'/Type/SelfCycle%.Unit@;
+@ Unit@ = /SpecTests/'8.3-Program'/Type/SelfCycle%.Unit@;
 @(Unit@);
