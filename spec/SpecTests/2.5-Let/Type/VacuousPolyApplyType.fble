@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 7:3
+@ Unit@ = *();
+
+<@,@>@ Snd@ = <@ A@, @ B@> { B@; };
+
+# The poly apply type M@ must not be vacuously defined like this.
+@ M@ = <@ T@> { Snd@<T@, M@>; } <Unit@>;
+
+M@();
