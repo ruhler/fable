@@ -7,9 +7,6 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include <sys/time.h>       // for getrusage
-#include <sys/resource.h>   // for getrusage
-
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-generate.h>    // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink.
@@ -17,19 +14,13 @@
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
 
+#include "memory.h"   // for FbleGetMaxMemoryUsageKB
+
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static long GetMemoryUsage();
 static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
-
-static long GetMemoryUsage()
-{
-  struct rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
-  return usage.ru_maxrss;
-}
 
 // Run --
 //   Run the program for f[n].
@@ -146,13 +137,13 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   size_t small_n = 10000;
   size_t large_n = 20000;
 
-  size_t max_start = GetMemoryUsage();
+  size_t max_start = FbleGetMaxMemoryUsageKB();
 
   Run(heap, func, profile, small_n, large_n);
-  size_t max_small_n = GetMemoryUsage() - max_start;
+  size_t max_small_n = FbleGetMaxMemoryUsageKB() - max_start;
 
   Run(heap, func, profile, large_n, large_n);
-  size_t max_large_n = GetMemoryUsage() - max_start;
+  size_t max_large_n = FbleGetMaxMemoryUsageKB() - max_start;
 
   FbleFreeValueHeap(heap);
   FbleFreeProfile(profile);

@@ -108,15 +108,3 @@ void FbleFree(void* ptr)
   CountFree(alloc->size);
   free(alloc);
 }
-
-// See documentation in fble-alloc.h.
-size_t FbleMaxTotalBytesAllocated()
-{
-  return gMaxTotalBytesAllocated;
-}
-
-// See documentation in fble-alloc.h.
-void FbleResetMaxTotalBytesAllocated()
-{
-  gMaxTotalBytesAllocated = gTotalBytesAllocated;
-}

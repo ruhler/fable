@@ -4,9 +4,9 @@
 #include <string.h>   // for strcpy
 #include <stdlib.h>   // for rand
 
-#include <fble/fble-alloc.h>     // for FbleResetMaxTotalBytesAllocated, etc.
 #include <fble/fble-profile.h>
 
+#include "memory.h"   // for FbleMaxMemoryUsageKB
 
 static bool sTestsFailed = false;
 
@@ -45,23 +45,17 @@ static FbleName Name(const char* name)
   return nm;
 }
 
-// ReplaceMaxMem --
-//   Returns the maximum memory required for an n deep replace self
-//   recursive call. For the purposes of testing that tail calls can be done
-//   using O(1) memory.
+// ReplaceN --
+//   Performs an N deep replace self recursive call. For the purposes of
+//   testing that tail calls can be done using O(1) memory.
 //
 // Inputs:
 //   n - the depth of recursion
 //
-// Results:
-//   The max number of bytes allocated during the recursion.
-//
 // Side effects:
-//   None.
-static size_t ReplaceMaxMem(size_t n)
+//   Allocates memory that impacts the result of FbleGetMaxMemoryUsageKB.
+static void ReplaceN(size_t n)
 {
-  FbleResetMaxTotalBytesAllocated();
-
   // <root> -> 1 -> 1 -> ... -> 1
   FbleProfile* profile = FbleNewProfile(true);
   FbleAddBlockToProfile(profile, Name("_1")); 
@@ -97,7 +91,6 @@ static size_t ReplaceMaxMem(size_t n)
   ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 10 * n);
 
   FbleFreeProfile(profile);
-  return FbleMaxTotalBytesAllocated();
 }
 
 // main --
@@ -504,9 +497,12 @@ int main(int argc, char* argv[])
 
   {
     // Test that tail calls have O(1) memory.
-    size_t mem_100 = ReplaceMaxMem(100);
-    size_t mem_200 = ReplaceMaxMem(200);
-    ASSERT(mem_100 == mem_200);
+    ReplaceN(1024);
+    size_t mem_small = FbleGetMaxMemoryUsageKB();
+
+    ReplaceN(4096);
+    size_t mem_large = FbleGetMaxMemoryUsageKB();
+    ASSERT(mem_small == mem_large);
   }
 
   {
