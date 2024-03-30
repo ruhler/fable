@@ -7,3 +7,24 @@ Things to consider doing for the fble-0.4 release.
 * Improving packing support for data values.
  - Taking advantage of explicit type info to pack and unpack.
 
+* Modular compilation
+ - Start using unused code for .@ module value vs type.
+ - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
+ - Add support for loading .fble.@ files.
+ - Test coverage of .fble/.fble.@ combinations.
+ - Add option for loading modules from .so files?
+
+* Fbld Language Revision
+ - modularity
+ - native C implementation
+
+* New apps
+ - IEEE floating point support.
+ - More benchmark games.
+ - Implement an image viewer.
+
+* Fble Language Features
+ - Add some way to catch or recover from errors at runtime?
+
+* Fble Debugger
+ - Add support for all backends.

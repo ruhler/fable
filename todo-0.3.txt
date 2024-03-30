@@ -42,16 +42,10 @@ Things to consider doing for the fble-0.3 release.
 * It's strange that a function that returns a poly has kind %.
   Does that make sense?
 
-* Modular compilation
- - As a blocker for major compiler optimizations.
-
 * Add spec tests for coverage.
- - Test list and struct copy in multi argument function dealing with args from
-   different levels of the function.
  - Test overapplication in a tail call.
  - Test tail call of undefined function value.
  - Lots of code in load.c not exercised?
- - Remove unused modular compilation code?
  - Poly type with mistyped body.
  - Substitution involving package type
  - Test for variables defined but not used?
@@ -64,36 +58,10 @@ Things to consider doing for the fble-0.3 release.
    rebuilt and it takes a while when you touch the library code, for example.
    Full rebuild: real    6m32.236s, sys     3m17.144s
 
-* Fbld: Proper support for include/modularity
-* Fbld: Native C implementation.
- - To decouple dependencies and for comparison against fble implementation.
-* Fbld: Language agnostic test suite.
-
-* Smten, and smten-based mnist classification.
-* IEEE floating point support.
-* Implement an image viewer.
-
-* Do something with .@ module value vs. type?
-  - There's currently unexercised code for it.
-
-* [compilation] Add support for .fble.@ files and modular compilation.
-
 *  Can fble-stdio check that the function has the right type?
  - Right now, the only info we have at runtime is num_args. We could at least
    check for that. Also that it's a function.
 
-* [lang] Add some way to catch or recover from errors at runtime?
-
-* [modules]
- - Decide about .fble.@ files.
- - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
- - Add support for loading .fble.@ files.
-   And presumably some way to test this and something about it in the language
-   spec?
- - Test all combinations of .fble/.fble.@, with all combinations of type
-   errors in one or the other or both.
-
-* Add option for passing .so files to FbleLinkFromCompiledOrSource?
 
 * Improve performance with profiling enabled?
  - Now that we removed the optimization for detecting duplicate call entries
@@ -110,7 +78,6 @@ Things to consider doing for the fble-0.3 release.
  - But can we assume there is a DISPLAY available for testing?
 
 * Debug improvements:
- - Add debug support for all backends, not just aarch64
  - Add easy member access in debug. e.g.: print(foo.just).
  - Inline FbleCall again to support stepping through code?
    Or try using dwarf trampoline annotation?

@@ -27,4 +27,9 @@ I'd like to start burndown of some things, otherwise the little things are
 going to keep adding up. Let's put a little thought into fbld and debugger for
 this release, while burning down other things.
 
+---
+
+On further thought, I think we've got enough big features for this release.
+Let's burn down and get the release out. Save fbld updates, debugger updates,
+modular compilation, etc. for the next release.
 

@@ -1,0 +1,38 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+@ Triple@ = *(Bool@ x, Bool@ y, Bool@ z);
+
+@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit@ _b = l.cons.head.B;
+  Unit@ _a = l.cons.tail.cons.head.A;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit;
+};
+
+# Test for code coverage of various language features appearing 
+# inside a multi-argument function.
+(Triple@, Bool@, Bool@) { Unit@; } g = (Triple@ t, Bool@ p, Bool@ q) {
+  # Struct Copy:
+  Triple@ s = t.@(y: p, z: q);
+
+  # List:
+  Unit@ _x = f[Enum@(B: s.x.true), Enum@(A: s.y.false), Enum@(C: s.z.true)];
+
+  # Literal:
+  Unit@ _y = f|BAC;
+
+  Unit;
+};
+
+g(@(x: True, y: True, z: False), False, True);
