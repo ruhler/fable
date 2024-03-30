@@ -1,0 +1,21 @@
+# @@fble-test@@ runtime-error 9:3
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+((Bool@) { Bool@; }, Bool@) { Bool@; }
+Apply = ((Bool@) { Bool@; } f, Bool@ x) {
+  f(x);
+};
+
+# Test tail call of an undefined function.
+(Bool@) { Bool@; } g = (Bool@ x) {
+  x.?(true: v, false: f(True));
+},
+(Bool@) { Bool@; } f = (Bool@ x) {
+  x.?(true: v, false: g(True));
+},
+Bool@ v = Apply(f, False);
+
+v;

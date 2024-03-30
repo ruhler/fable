@@ -3,7 +3,8 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * Add spec tests for coverage.
- - Test tail call of undefined function value.
+ - compile.c 1438: FbleTypeCheckModule returns NULL.
+   Because we don't run compile tests in the error case. Should we?
  - Lots of code in load.c not exercised?
  - Poly type with mistyped body.
  - Substitution involving package type
