@@ -118,3 +118,9 @@ I think run our own protocol. We can always write a wrapper if we want to
 support something more standard. gdb remote serial protocol at a glance
 doesn't look abstract enough to fit nicely with fble I feel like.
 
+---
+
+We could support both aarch64 dwarf based debug and source level fble debug.
+That might be useful. We don't necessarily have to get rid of aarch64 dwarf
+based debug if/when we add a custom fble debug layer.
+

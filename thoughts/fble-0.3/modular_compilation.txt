@@ -45,3 +45,11 @@ In general, types of modules depend on types of dependent modules. We probably
 want to share that, so in general each module will have a type associated with
 it that can depend on the types for other modules.
 
+---
+
+Idea: we could have the compiler get a type from a full implementation .fble
+file without typechecking anything more than it has to. The key thing being
+for type of let expression, no need to typecheck the definition if we are
+given the type.
+
+That could potentially be useful?
