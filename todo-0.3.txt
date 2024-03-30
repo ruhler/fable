@@ -5,7 +5,7 @@ Things to consider doing for the fble-0.3 release.
 * Add spec tests for coverage.
  - compile.c 1438: FbleTypeCheckModule returns NULL.
    Because we don't run compile tests in the error case. Should we?
- - Poly type with mistyped body.
+
  - Substitution involving package type
  - Test for variables defined but not used?
  - Test for unused arguments?
