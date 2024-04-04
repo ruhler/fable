@@ -6,7 +6,6 @@ Things to consider doing for the fble-0.3 release.
  - compile.c 1438: FbleTypeCheckModule returns NULL.
    Because we don't run compile tests in the error case. Should we?
  - value.c 724: MarkRefs for RefValue
- - value.c 1546: Wrapped reference value
  - value.c some way to test multi-chunk logic?
 
  - Test for variables defined but not used?

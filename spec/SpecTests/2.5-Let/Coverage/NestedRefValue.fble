@@ -1,0 +1,20 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+@ BoolF@ = (Bool@) { Bool@; };
+@ Bools@ = *(BoolF@ head, Bools@ tail);
+Unit@ Unit = Unit@();
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+BoolF@ Not = (Bool@ p) { p.?(true: False, false: True); };
+
+(Bools@, Bools@) { Bools@; } First = (Bools@ a, Bools@ _b) { a; };
+
+# Code coverage for the case where we assign an already assigned ref value (y) as
+# the value to another ref value (x).
+Bools@ x = {
+  Bools@ y = First(Bools@(Not, y), x);
+  y.tail;
+};
+
+x.tail.tail.head(True).false;
