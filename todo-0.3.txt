@@ -6,11 +6,8 @@ Things to consider doing for the fble-0.3 release.
  - compile.c 1438: FbleTypeCheckModule returns NULL.
    Because we don't run compile tests in the error case. Should we?
  - value.c some way to test multi-chunk logic?
-
  - Test for variables defined but not used?
  - Test for unused arguments?
- - MarkRefs on a REF_VALUE.
- - And more...
 
 * SatGame
  - Auto compute number of columns.
@@ -27,18 +24,11 @@ Things to consider doing for the fble-0.3 release.
  - Find an alternative to getrlimit for mem-test
  - Find a better solution for 'unlimited stack' support?
 
-* Switch profile-test to getrlimit based memory tracking?
- Instead of having getrlimit based one place and count based somewhere else?
- Or implement some abstract API and use that instead?
-
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 
 * Add regression test for memory leak fixed in
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
-
-* Add test for overapplication to a function whose value is 'NULL' due to
-  abort.
 
 * Figure out how to avoid duplicate code between LinkInterpreted and
   LinkGenerated?

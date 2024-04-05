@@ -1,0 +1,18 @@
+# @@fble-test@@ runtime-error 13:5
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+@ Maybe@ = +(Bool@ just, Unit@ nothing);
+
+(Maybe@) { (Bool@) { Bool@; }; } G = (Maybe@ m) {
+  # Test that we can unwind a stack through an overapplication.
+  m.just.?(
+    true: (Bool@ p) { p; },
+    false: (Bool@ p) { p.?(true: False, false: True); });
+};
+
+G(Maybe@(nothing: Unit), False);
