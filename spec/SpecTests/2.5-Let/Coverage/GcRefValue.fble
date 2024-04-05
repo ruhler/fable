@@ -1,0 +1,34 @@
+# @@fble-test@@ no-error
+@ Nat@ = /SpecTests/Nat%.Nat@;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
+% Nat = /SpecTests/Nat%.Nat;
+
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+@ BoolF@ = (Bool@) { Bool@; };
+@ Bools@ = *(BoolF@ head, Bools@ tail);
+Unit@ Unit = Unit@();
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+BoolF@ Not = (Bool@ p) { p.?(true: False, false: True); };
+
+# Code coverage for GC marking of an assigned ref value.
+(Nat@) { Bools@; } f = (Nat@ n) {
+  S@ s = S(n);
+  s.?(S: f(s.S));
+
+  Bools@ x = Bools@(Not, x);
+  x;
+};
+
+(Bools@, Nat@, Bool@) { Bool@; } g = (Bools@ x, Nat@ n, Bool@ p) {
+  S@ s = S(n);
+  s.?(S: g(x, s.S, p));
+
+  x.tail.tail.head(p);
+};
+
+Nat@ n = Nat|10000000;
+
+g(f(n), n, True).false;

@@ -5,7 +5,7 @@
 @ Nat@ = /SpecTests/Nat%.Nat@;
 
 # f requires O(1) memory.
-(Nat@){ Unit@; } f = (Nat@ _) {
+(Nat@) { Unit@; } f = (Nat@ _) {
   Unit@();
 };
 
