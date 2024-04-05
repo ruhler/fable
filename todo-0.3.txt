@@ -18,11 +18,11 @@ Things to consider doing for the fble-0.3 release.
  - Add test cases for /SatGame/Game%.Solved.
 
 * Windows support:
- - Find an alternative to getline (fble-perf-profile).
-   Add a test case for fble-perf-profile first?
  - Add a proper way to overwrite GL libs. At configure time?
  - Find an alternative to getrlimit for mem-test
  - Find a better solution for 'unlimited stack' support?
+
+* Add a test case for fble-perf-profile first?
 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?

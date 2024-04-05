@@ -3,10 +3,8 @@
  *  A program that displays a linux perf tool profile in fble profile format.
  */
 
-#define _GNU_SOURCE     // for getline
 #include <assert.h>     // for assert
-#include <stdio.h>      // for getline
-#include <stdlib.h>     // for free
+#include <stdlib.h>     // for realloc, free
 #include <string.h>     // for strcmp, strchr
 
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg
@@ -18,9 +16,41 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
+typedef struct {
+  size_t size;
+  size_t capacity;
+  char* chars;
+} String;
+
+static bool GetLine(FILE* file, String* line);
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
 static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s);
 int main(int argc, const char* argv[]);
+
+/**
+ * @func[GetLine] Reads a line of input from a file.
+ *  @arg[file] The file to read from.
+ *  @arg[line] String to store the line to.
+ *  @returns True if a newline was read, false if end of file reached.
+ *  @sideeffects
+ *   Reads the next line of @a[file] into @a[line].
+ */
+static bool GetLine(FILE* file, String* line)
+{
+  line->size = 0;
+
+  int c = fgetc(file);
+  while (c != EOF && c != '\n') {
+    if (line->size == line->capacity) {
+      line->capacity = 2 * (line->capacity + 1);
+      line->chars = realloc(line->chars, line->capacity * sizeof(char));
+    }
+    line->chars[line->size++] = c;
+    c = fgetc(file);
+  }
+  line->chars[line->size] = '\0';
+  return c == '\n';
+}
 
 /**
  * @func[GetBlockId] Get or create a block id for the given name.
@@ -54,7 +84,7 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
  *  @arg[FbleProfile*][profile] The profile.
  *  @arg[FbleProfileThread*][thread] The profiling thread.
  *  @arg[int][count] The count corresponding to this sample.
- *  @arg[char*][s] The sample path, of the form "foo;bar;sludge\n".
+ *  @arg[char*][s] The sample path, of the form "foo;bar;sludge".
  *
  *  @sideeffects
  *   @i May modify the contents of s by replacing ';' with nuls.
@@ -62,22 +92,18 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
  */
 static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s)
 {
-  if (*s == '\0') {
-    // We've reached the end of the sample.
-    FbleProfileSample(thread, count);
-    return;
-  }
-
   char* end = strchr(s, ';');
-  if (end == NULL) {
-    end = strchr(s, '\n');
-    assert(end != NULL);
+  if (end != NULL) {
+    *end = '\0';
   }
-  *end = '\0';
 
   FbleBlockId block = GetBlockId(profile, s);
   FbleProfileEnterBlock(thread, block);
-  Sample(profile, thread, count, end + 1);
+  if (end == NULL) {
+    FbleProfileSample(thread, count);
+  } else {
+    Sample(profile, thread, count, end + 1);
+  }
   FbleProfileExitBlock(thread);
 }
 
@@ -123,36 +149,33 @@ int main(int argc, const char* argv[])
     return EX_USAGE;
   }
 
-  char* line = NULL;
-  size_t len = 0;
-  ssize_t nread;
+  String line = { .capacity = 0, .size = 0, .chars = NULL };
 
   // Skip the first line of the form:
   //   100.00%     0.00%  <cmd>  <exe>        [.] _start
-  nread = getline(&line, &len, stdin);
-  assert(nread != -1 && "Unexpected error reading first line");
+  GetLine(stdin, &line);
 
   FbleProfile* profile = FbleNewProfile(true);
   FbleProfileThread* thread = FbleNewProfileThread(profile);
-	while ((nread = getline(&line, &len, stdin)) != -1) {
+	while (GetLine(stdin, &line)) {
     // We're done once we reach the next line of the form:
     //    100.00%     0.00%  <cmd>  <ex>      [.] __libc_start_main
-    char* space = strchr(line, ' '); 
-    if (space == line || space == NULL) {
+    char* space = strchr(line.chars, ' ');
+    if (space == line.chars || space == NULL) {
       break;
     }
 
     // We expect a line of the form:
     // 3694 foo;bar;sludge\n
     int count;
-    if (sscanf(line, "%i", &count) != 1) {
+    if (sscanf(line.chars, "%i", &count) != 1) {
       fprintf(stderr, "Unable to parse profile report.\n");
       return EX_FAIL;
     }
 
     Sample(profile, thread, count, space+1);
 	}
-	free(line);
+	free(line.chars);
 
   FbleFreeProfileThread(thread);
   FbleGenerateProfileReport(stdout, profile);
