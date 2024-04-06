@@ -45,7 +45,7 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.out"
   test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
-    "cmp $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
+    "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% interpreted test 2.
   build $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
@@ -53,7 +53,7 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.2.out"
   test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
-    "cmp $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
+    "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% compiled.
   stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" ""

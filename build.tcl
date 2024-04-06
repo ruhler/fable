@@ -231,7 +231,7 @@ build $::b/pkgs/fbld/README.md \
 # Make sure the version of README.md checked in matches the latest version.
 test $::b/pkgs/fbld/README.tr \
   "$::s/README.md $::b/pkgs/fbld/README.md" \
-  "diff $::s/README.md $::b/pkgs/fbld/README.md"
+  "diff --strip-trailing-cr $::s/README.md $::b/pkgs/fbld/README.md"
 
 # README file www
 fbld_html_doc $::b/www/README.html $::s/README.fbld

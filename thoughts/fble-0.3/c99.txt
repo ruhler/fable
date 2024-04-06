@@ -135,4 +135,5 @@ Before I decide, I want to get the whole build working on windows, hacking as
 necessary. In particular, figure out how to get max memory for memory tests
 working on windows. That may give some relevant insight.
 
-
+Looks like __WIN32 is defined by gcc on windows. Run cpp -dM < /dev/null to
+see the list. Sounds like a good option to try and use.

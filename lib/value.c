@@ -5,8 +5,10 @@
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
 #include <string.h>   // for memcpy
-#include <sys/resource.h>   // for getrlimit, setrlimit
 
+#ifndef __WIN32
+#include <sys/resource.h>   // for getrlimit, setrlimit
+#endif // __WIN32
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-function.h>  // for FbleFunction, etc.
@@ -1356,6 +1358,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
  */
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
 {
+#ifndef __WIN32
   // The fble spec requires we don't put an arbitrarily low limit on the stack
   // size. Fix that here.
   struct rlimit original_stack_limit;
@@ -1368,6 +1371,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
   if (setrlimit(RLIMIT_STACK, &new_stack_limit) != 0) {
     assert(false && "setrlimit failed");
   }
+#endif // __WIN32
 
   // Set up gTailCallData.args.
   gTailCallData.capacity = 1;
@@ -1383,10 +1387,13 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
   gTailCallData.capacity = -1;
   gTailCallData.argc = -1;
 
+#ifndef __WIN32
   // Restore the stack limit to what it was before.
   if (setrlimit(RLIMIT_STACK, &original_stack_limit) != 0) {
     assert(false && "setrlimit failed");
   }
+#endif // __WIN32
+
   return result;
 }
 

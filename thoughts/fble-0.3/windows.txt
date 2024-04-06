@@ -114,3 +114,58 @@ and getline if possible to make things more portable. We saw sys/mman.h can and
 should be removed. I assume we can get rid of getline easily enough.
 
 Sounds a little tricky.
+
+---
+
+Next attempt at getting windows to compile.
+
+Current failures:
+* ./test/fble-test.cov --profile /dev/null -I ../spec -m /'SpecTests'/'Unit'%
+  Error: unable to open /dev/null for writing.
+  Because we don't rewrite it to C:/msys64/dev/null.
+  Easiest workaround might be specify a local path?
+
+* -LGL: No such file or directory.
+  Need -lopengl32 instead.
+
+* ./spec/SpecTests/5.3-FuncApply/Eval/StackSmash/SpecTests-Nat.fble.c
+  --profile C:/msys64/dev/null
+  ../spec/SpecTests/5.3-FuncApply/Eval/StackSmash.fble:1: error: no-error test
+  failed:
+  child process exited abnormally
+  Need --stack for Msys too.
+
+* README.md newine issue.
+
+---
+
+Okay got ninja check to succeed all the way through with hacks. We'll need the
+following for cleanup:
+
+* diff --skip-trailing-cr
+  I'm fine to check this in always.
+* GL libs -lGL versus -lopengl32
+  How to know? Is -lopengl32 available on linux?
+* Memory tests seem to need bigger N and/or 4KB allowance.
+* memory.c
+  Guard code with #ifdefs on __WIN32 and something else.
+* --stack option: figure out a cleaner way to apply it everywhere.
+* --profile /dev/null - can we give it a real filename, or that won't help?
+
+That's it! Pretty close.
+
+On linux I see __linux__ and __unix__ defined. Nothing POSIX related by
+default. Apparently if unistd.h exists, it should define some POSIX related
+thing. But unistd.h does exist in msys windows?
+
+So let's do the following:
+
+#ifndef __WIN32 for setting the stack limit. Because we know for windows we
+have to use a different approach.
+
+#ifdef __WIN32 for memory.c to use windows APIs and #else to use getrlimit? Or
+__unix__ to get rlimit and else don't define anything so we get a linker
+error? Well, we would get a linker error anyway, so I think skip __unix__.
+
+
+

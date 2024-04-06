@@ -160,7 +160,8 @@ proc compile {target main} {
   lappend objs $::b/test/libfbletest.a
   lappend objs $::b/lib/libfble.cov.a
   set stackflag ""
-  if {[exec uname -o] == "Cygwin"} {
+  set os [exec uname -o]
+  if {$os == "Cygwin" || $os == "Msys"} {
     set stackflag "-Wl,--stack,1073741824"
   }
   exec gcc {*}$stackflag --pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -no-pie -O0 -o $exe {*}$objs
