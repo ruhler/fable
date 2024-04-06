@@ -6,7 +6,7 @@
 #ifndef FBLE_INTERNAL_VAR_H_
 #define FBLE_INTERNAL_VAR_H_
 
-#include <sys/types.h>    // for size_t
+#include <stddef.h>    // for size_t
 
 /**
  * Tag used to distinguish different kinds of variables.

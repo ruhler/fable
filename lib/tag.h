@@ -6,7 +6,7 @@
 #ifndef FBLE_INTERNAL_TAG_H_
 #define FBLE_INTERNAL_TAG_H_
 
-#include <sys/types.h>    // for size_t
+#include <stddef.h>    // for size_t
 
 /**
  * Vector of tags used in union values.

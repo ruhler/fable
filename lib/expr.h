@@ -6,7 +6,7 @@
 #ifndef FBLE_INTERNAL_EXPR_H_
 #define FBLE_INTERNAL_EXPR_H_
 
-#include <sys/types.h>    // for size_t
+#include <stddef.h>    // for size_t
 
 #include <fble/fble-load.h>    // for public typedef of FbleExpr.
 #include <fble/fble-name.h>

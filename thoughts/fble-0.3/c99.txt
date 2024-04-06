@@ -1,0 +1,41 @@
+C99 Compliance
+==============
+It would be cool to restrict ourselves to C99 standard behavior and libraries.
+
+I assume we get the behavior, based on the gcc settings '-std=c99 -pedantic'.
+
+So really it's a question about the include files.
+
+Here are the includes we are currently using:
+
+C99 includes:
+<assert.h> <ctype.h> <inttypes.h> <math.h> <stdarg.h>
+<stdbool.h> <stddef.h> <stdint.h> <stdio.h> <stdlib.h>
+<string.h>
+
+That leaves:
+
+<GL/gl.h> <SDL.h>
+ - for graphics.
+
+<unistd.h>
+ - getcwd for generated dwarf debug info.
+ - access in load.c to check if a path exists.
+
+<sys/resource.h>
+<sys/time.h>
+ - getrlimit in value.c to make stack size unlimited.
+ - getrusage in memory.c to measure max memory use.
+
+A brief search doesn't find a way to limit includes to C99 headers at compile
+time. Oh well.
+
+So, the questions are:
+* Can we ditch unistd.h?
+* What to do able stack size setting and memory measurements?
+
+There's nothing in the C99 standard about stack size limits or getting current
+memory use.
+
+Let's look at unistd.h to start.
+* It's used for dwarf compilation directory. That's from the dwarf spec.

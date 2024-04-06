@@ -9,7 +9,6 @@
 #include <stdarg.h>   // for va_list, va_start, va_end.
 #include <stddef.h>   // for offsetof
 #include <string.h>   // for strlen, strcat, memset
-#include <unistd.h>   // for getcwd
 
 #include <fble/fble-compile.h>
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.

@@ -6,7 +6,7 @@
 #ifndef FBLE_INTERNAL_HEAP_H_
 #define FBLE_INTERNAL_HEAP_H_
 
-#include <sys/types.h>  // for size_t
+#include <stddef.h>  // for size_t
 
 /**
  * Heap of objects managed by the garbage collector.

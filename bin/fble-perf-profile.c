@@ -29,9 +29,9 @@ int main(int argc, const char* argv[]);
 
 /**
  * @func[GetLine] Reads a line of input from a file.
- *  @arg[file] The file to read from.
- *  @arg[line] String to store the line to.
- *  @returns True if a newline was read, false if end of file reached.
+ *  @arg[FILE*][file] The file to read from.
+ *  @arg[String*][line] String to store the line to.
+ *  @returns[bool] True if a newline was read, false if end of file reached.
  *  @sideeffects
  *   Reads the next line of @a[file] into @a[line].
  */

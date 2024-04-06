@@ -70,7 +70,6 @@
 #include <stdbool.h>  // for bool
 #include <string.h>   // for memset, memcpy
 #include <stdlib.h>   // for rand
-#include <sys/time.h> // for gettimeofday
 
 #include <fble/fble-alloc.h>
 #include <fble/fble-name.h>

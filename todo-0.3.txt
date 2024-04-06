@@ -22,7 +22,7 @@ Things to consider doing for the fble-0.3 release.
  - Find an alternative to getrlimit for mem-test
  - Find a better solution for 'unlimited stack' support?
 
-* Add a test case for fble-perf-profile first?
+* Add a test case for fble-perf-profile?
 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
