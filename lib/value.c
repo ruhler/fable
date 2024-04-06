@@ -5,8 +5,7 @@
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
 #include <string.h>   // for memcpy
-#include <sys/time.h>       // for getrlimit
-#include <sys/resource.h>   // for getrlimit
+#include <sys/resource.h>   // for getrlimit, setrlimit
 
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.

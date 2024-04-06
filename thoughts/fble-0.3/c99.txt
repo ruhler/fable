@@ -39,3 +39,100 @@ memory use.
 
 Let's look at unistd.h to start.
 * It's used for dwarf compilation directory. That's from the dwarf spec.
+* access in load.c - probably we can remove this.
+
+How we use access function:
+1. It's used to check for package paths. We want a way to test if a directory
+   exists or not. How else could we do that? What happens if you fopen a
+   directory?
+2. It's used to check for a module in the module search path.
+
+I don't know. Something to think about.
+
+***
+
+Let's review stack limit and see what I can make of it.
+* c99 standard says nothing.
+* posix has getrlimit/setrlimit, so it must say something about stack.
+* my linux system sets 8MB stack soft limit by default. I wonder who picks
+  that? A kernel option maybe?
+  Boot time limit is _STK_LIM in kernel source code, hard coded to 8MB.
+
+  include/uapi/linux/resource.h:
+
+  /*
+   * Limit the stack by to some sane default: root can always
+   * increase this limit if needed..  8MB seems reasonable.
+   */
+  #define _STK_LIM  (8*1024*1024)
+* It seems clear on linux we need to use setrlimit to set the stack. Though
+  not necessarily obvious who should set this when.
+* Windows has the following methods to set stack size (at compile time):
+  /F option in Visual Studio
+  /STACK linker option
+  Use EDITBIN on executable.
+  The default size reserved for the stack is in the executable header.
+  Defaults to 1MB.
+  There's a .def file STACKSIZE statement we can use to change it?
+    - .def is an input to the linker.
+  CreateThread has a dwStackSize parameter
+  There is also a /HEAP linker option.
+
+I wonder what /HEAP is set to. The documentation says 1MB by default, but that
+can't be practically the case. If there is a fixed /HEAP size on windows apps,
+we just need to set stack to match that.
+
+Apparently Visual C++ allows a pragma to set these things. e.g.:
+
+ #pragma comment(linker, "/STACK:2000000")
+ #pragma comment(linker, "/HEAP:2000000")
+
+Looks like limits for windows memory are:
+* 2GB for 32 bit process
+* At least 7TB for 64 bit process
+
+It depends a lot on the platform. We care about virtual address space, not
+physical address space, though, so maybe we can know that at compile time?
+
+So, it seems to me the desired behavior on windows would be whatever HEAP size
+is set to default, give half of that over to stack size.
+
+dumpbin is showing me size of heap reserve as 100000. Surely it goes beyond
+that?
+
+There's an option for heaps in windows to have max size 0, which means keep
+growing.
+
+Okay, looks like windows linker docs for /STACK and /HEAP say /STACK is the
+stack size, /HEAP is the initial heap size.
+
+That makes things more difficult. It means executables are not readily
+portable across machines with different amounts of memory.
+
+From what I read, it sounds like 1GB stack is the best we can hope for on
+Windows. Maybe we can document for users on windows to use editbin to change
+that for their computer if needed.
+
+Let's stick with 1GB for now. Next question is reviewing how/where we want to
+set stack limits on linux and windows.
+
+The current approach for setting stack limit looks right to me:
+* Windows as compiler option. We can't put it in code, because the code is for
+  a library, not the final executable.
+* Linux in Eval, restoring the old.
+
+To get windows to compile, I should put #ifdef of some sort around the
+getrlimit code. If it's not inconvenient, we could pull that code out to a
+separate file, just to keep platform dependent code separate from platform
+independent code.
+
+What preprocessor flag should we use?
+* Is there anything that would already exist?
+* Something specific to Windows, or specific to getrlimit? For example, cygwin
+  has getrlimit (though it does nothing).
+
+Before I decide, I want to get the whole build working on windows, hacking as
+necessary. In particular, figure out how to get max memory for memory tests
+working on windows. That may give some relevant insight.
+
+
