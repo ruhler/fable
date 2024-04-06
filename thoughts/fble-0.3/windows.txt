@@ -167,5 +167,47 @@ have to use a different approach.
 __unix__ to get rlimit and else don't define anything so we get a linker
 error? Well, we would get a linker error anyway, so I think skip __unix__.
 
+---
 
+Next issues to work on:
+
+* GL libs -lGL versus -lopengl32
+  How to know? Is -lopengl32 available on linux?
+* Memory tests seem to need bigger N and/or 4KB allowance.
+* --profile /dev/null - can we give it a real filename, or that won't help?
+
+`pkg-config --libs gl` works on linux. Does it work on windows too? That would
+be nice.
+
+In addition to -lGL, I also see -lOpenGL on linux. Could we use that? Yes.
+That works on linux too.
+
+There is no pkg-config for gl on msys. Nothing besides opengl32. OpenGL FAQ
+says use opengl32 for windows, it's provided by windows or some such.
+
+Let's use the same mechanism we use currently to detect the need for --stack
+to pick between -lGL and -lopengl32. Can I clean that up somehow?
+
+Let's check if uname -s contains '_NT'. That covers all the windows cases I
+think.
+
+Three places we currently want to make use of this:
+* configure
+* build.tcl
+* spec-test-run.tcl
+
+build.tcl has access to configuration options.
+spec-test-run.tcl doesn't have access to anything else? Well, it could access
+config.tcl if it wanted to.
+
+Options:
+1. Everyone duplicates the test for windows.
+2. Save boolean isWindows or some such in config.tcl, read it everywhere.
+3. Save CFLAGS in config.tcl, read it everywhere.
+
+I kind of like (3). What should we call these cflags? Just cflags I guess?
+
+Um... stackflag is ldflags though, right? Yeah.
+
+Let's try that then.
 

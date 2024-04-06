@@ -78,6 +78,16 @@ namespace eval "config" {
   set datadir $::config::prefix/share
   set docdir $::config::prefix/share/doc
 
+  set ldflags ""
+  if {[string first "_NT" [exec uname -s]] != -1} {
+    # On Windows we need to increase the stack size at compile time, because
+    # it doesn't support changing the stack to unlimited at runtime.
+    # We pick 1GB stack as something that hopefully works on a variety of
+    # Windows platforms while still giving a large enough stack to hopefully
+    # appear unlimited in practice.
+    set ldflags "-Wl,--stack,[expr 1024 * 1024 * 1024]"
+  }
+
   # SDL and OpenGL specific configuration.
   if $enable_fble_app {
     try {
@@ -91,6 +101,10 @@ namespace eval "config" {
 
     set gl_cflags ""
     set gl_libs "-lGL"
+    if {[string first "_NT" [exec uname -s]] != -1} {
+      # Windows uses -lopengl32 instead of -lGL.
+      set gl_libs "-lopengl32"
+    }
   }
 }
 

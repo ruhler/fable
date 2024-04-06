@@ -22,6 +22,8 @@
 
 set ::arch "[exec arch]"
 
+source config.tcl
+
 proc module_path { path } {
   # Add quotes around module path words so we can name spec tests to match
   # spec section numbers, e.g. 2.2-Kinds.
@@ -159,12 +161,7 @@ proc compile {target main} {
 
   lappend objs $::b/test/libfbletest.a
   lappend objs $::b/lib/libfble.cov.a
-  set stackflag ""
-  set os [exec uname -o]
-  if {$os == "Cygwin" || $os == "Msys"} {
-    set stackflag "-Wl,--stack,1073741824"
-  }
-  exec gcc {*}$stackflag --pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -no-pie -O0 -o $exe {*}$objs
+  exec gcc {*}$::config::ldflags --pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -no-pie -O0 -o $exe {*}$objs
   return $exe
 }
 
