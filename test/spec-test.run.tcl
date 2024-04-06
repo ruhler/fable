@@ -187,8 +187,8 @@ proc compile_and_run {main body} {
 proc dispatch {} {
   switch $::type {
     no-error {
-      execv $::b/test/fble-test.cov --profile /dev/null -I $::s/spec -m $::mpath
-      compile_and_run FbleTestMain { execv $compiled --profile /dev/null }
+      execv $::b/test/fble-test.cov --profile $::outdir/profile.txt -I $::s/spec -m $::mpath
+      compile_and_run FbleTestMain { execv $compiled --profile $::outdir/profile.txt }
       execv $::b/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
 
