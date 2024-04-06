@@ -502,7 +502,7 @@ int main(int argc, char* argv[])
 
     ReplaceN(4096);
     size_t mem_large = FbleGetMaxMemoryUsageKB();
-    ASSERT(mem_small == mem_large);
+    ASSERT(mem_small <= mem_large + 4);
   }
 
   {

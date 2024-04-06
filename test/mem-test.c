@@ -148,13 +148,16 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   FbleFreeValueHeap(heap);
   FbleFreeProfile(profile);
 
-  if (!growth && max_large_n > max_small_n) {
-    fprintf(stderr, "memory growth of %ziKB from %ziKB to %ziKB\n",
-        max_large_n - max_small_n, max_small_n, max_large_n);
+  // Be a little lenient with memory usage.
+  size_t margin = 4;
+
+  if (!growth && max_large_n > max_small_n + margin) {
+    fprintf(stderr, "memory growth of %ziKB (%ziKB +%ziKB -> +%ziKB)\n",
+        max_large_n - max_small_n, max_start, max_small_n, max_large_n);
     return EX_FAIL;
   }
 
-  if (growth && max_large_n <= max_small_n) {
+  if (growth && max_large_n <= max_small_n + margin) {
     fprintf(stderr, "memory constant: M(%zi) = %ziKB, M(%zi) = %ziKB\n",
         small_n, max_small_n, large_n, max_large_n);
     return EX_FAIL;

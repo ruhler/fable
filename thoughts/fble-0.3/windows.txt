@@ -211,3 +211,8 @@ Um... stackflag is ldflags though, right? Yeah.
 
 Let's try that then.
 
+---
+
+Okay! It's all done now. I can compile on windows without any additional hacks
+now. Perhaps it's worth adding a readme file for this.
+
