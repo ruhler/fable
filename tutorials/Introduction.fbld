@@ -6,8 +6,9 @@
   To understand the origins of fble, you need to know a little about me, the
   author of this tutorial and the creator of the fble programming language.
  
-  I love programming. I program as a hobby. One of the first questions I ask
-  when starting a new project is what programming language to use for it.
+  I love programming. I program for a living and as a hobby. One of the first
+  questions I ask when starting a new project is what programming language to
+  use for it.
  
   The first programming language I learned was C++, which I learned taking
   classes in college. I wrote a Javascript interpreter in C++ for the fun of
@@ -55,7 +56,7 @@
    the fble language is the best way I can share that experience with you.
  
   @item
-   The fble language is probably one of the simplest pure functional programming
+   The fble language is probably one of the simpler pure functional programming
    languages out there. If you have no former experience with functional
    programming languages, fble is a great place to start.
  

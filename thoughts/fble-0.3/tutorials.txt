@@ -21,3 +21,94 @@ start with?
 * benchmark games?
 * rosetta code tasks?
 
+If we did simple main app for tutorials, what would we need for which
+tutorials? They could all be done without just string output. We should have a
+separate tutorial for apps that take command line arguments (after lists, etc).
+
+I think it makes sense to hide as much as Stdio@ as we can for tutorials
+designed to be language focused, not library focused.
+
+But it also seems like we need another set of tutorials which are practical
+tutorials. The kind you can do something interesting and make progress on. I
+think there's a place for both kinds of tutorials. One for the language deep
+dive, the other for people who don't want to deep dive yet. I feel like the
+non-deep dive tutorial maybe comes first?
+
+What can I do the non-deep dive tutorial on? Let's sample some kinds of
+example programs other languages use in tutorials:
+
+...
+
+Maybe task-based tutorials would be good instead. For example, take rosetta
+code tasks that would be fun to program. Organize them by language feature
+needed. Have tutorials for language features, then have the rosetta tasks as
+the fun exercises?
+
+Let's see more about how rosetta tasks look, in terms of complexity, fun, and
+input/output.
+
+It looks like a lot of those tasks just need string output.
+
+If I were to break down different levels of Main abstraction, I would do:
+
+1. Output a single string.
+   String@ -> ...
+2. Take list of string arguments and output a single string.
+   (List@<String@>) { String@; } -> ...
+3. Full Interactive IO
+
+You can do a lot with (1) for learning a language, but not much interesting
+practical? That's not true. You could do generation of numbers and sorting and
+all that stuff.
+
+Here's what I think:
+* Rewrite the current tutorials to be based on outputting a string.
+* Add a tutorial for full fledged fble-stdio based programs.
+* Add a tutorial for fble-app based programs.
+* Implement a bunch of rosettacode tasks in a new package and see how that
+  feels.
+
+Don't worry about coming up with a new tutorial with motivating app yet. We'll
+see when doing the rosettacode tasks if any interesting ones pop up.
+
+How much of this should I do for fble-0.3, and what should wait? Let's do as
+much as we can, at least rewriting the current tutorials.
+
+Maybe I can reference resettacode tasks as exercises for people to do after
+reaching far enough along in a tutorial? Not sure.
+
+Step 1: Rewrite the current tutorials.
+
+What's the goal/mindset to have?
+* These are for learning the language features, adding color to the language
+  specification.
+* Be friendly and welcoming. Don't use big language without clearly explaining
+  what it means first.
+
+---
+
+Tutorials to review:
+
+Introduction.fbld  DONE
+Features.fbld      DONE
+Install.fbld       DONE
+HelloWorld.fbld
+Basics.fbld
+Variables.fbld
+Structs.fbld
+Modules.fbld
+Unions.fbld
+Functions.fbld
+Lists.fbld
+Literals.fbld
+Polymorphism.fbld
+Bind.fbld
+Core.fbld
+HelloWorldRevisted.fbld
+AbstractTypes.fbld
+DebugGuide.fbld
+ProfilingGuide.fbld
+Tutorials.fbld
+
+
+

@@ -226,7 +226,7 @@
    For example:
 
    @code fble @
-    (Int@)(Int@) { Bool@; } IsDouble = (Int@ x) {
+    (Int@) { (Int@) { Bool@; }; } IsDouble = (Int@ x) {
       Int@ 2x = Add(x, x);
       (Int@ y) {
         Eq(2x, y);
@@ -245,7 +245,8 @@
     List@ sorted = Sort((Record@ x, Record@ y) { Gt(x.id, y.id); }, list);
 
  @section Generics
-  Fble supports polymorphic data types and functions and basic type inference.
+  Fble supports polymorphic data types and functions. It supports basic type
+  inference.
 
   For example:
 
@@ -318,7 +319,7 @@
   implementation of the methods everywhere they would be used.
 
  @section Exceptions
-  Fble does not have any builtin support for exceptions or error handling.
+  Fble does not have builtin support for exceptions or error handling.
 
   Library code can be written that leverages function bind syntax to make it
   easy to write code involving potential error cases. For example:
@@ -406,7 +407,7 @@
    @(String@, StrE, Strs);
 
  @section Threading and Concurrency
-  Fble does not have any builtin support for threading or concurrency.
+  Fble does not have builtin support for threading or concurrency.
   
   The reference implementation of fble is single threaded. In theory you could
   develop a multi-threaded implementation to take advantage of multiple cores,

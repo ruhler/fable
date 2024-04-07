@@ -78,7 +78,7 @@
   @code[sh] @
    fble-stdio -p core -m /Core/Stdio/HelloWorld%
  
-  If all goes well, you should see "hello, world" printed to the terminal.
+  If all goes well, you should see @l{"hello, world"} printed to the terminal.
   Make sure to use the full command, including the final @l{%} character which
   is part of the syntax for identifying the hello world program.
 
