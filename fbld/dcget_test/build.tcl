@@ -4,7 +4,7 @@ namespace eval "fbld/dcget_test" {
     "tclsh8.6 $::s/fbld/dcget.tcl < $::s/fbld/dcget_test/input.txt > $::b/fbld/dcget_test/all.got"
   test $::b/fbld/decget_test/all.tr \
     "$::s/fbld/dcget_test/all.want $::b/fbld/dcget_test/all.got" \
-    "diff $::s/fbld/dcget_test/all.want $::b/fbld/dcget_test/all.got"
+    "diff --strip-trailing-cr $::s/fbld/dcget_test/all.want $::b/fbld/dcget_test/all.got"
 
   set ids {
     blank_line next_line_file
@@ -16,6 +16,6 @@ namespace eval "fbld/dcget_test" {
       "tclsh8.6 $::s/fbld/dcget.tcl $id < $::s/fbld/dcget_test/input.txt > $::b/fbld/dcget_test/$id.got"
     test $::b/fbld/dcget_test/$id.tr \
     "$::s/fbld/dcget_test/$id.want $::b/fbld/dcget_test/$id.got" \
-    "diff $::s/fbld/dcget_test/$id.want $::b/fbld/dcget_test/$id.got"
+    "diff --strip-trailing-cr $::s/fbld/dcget_test/$id.want $::b/fbld/dcget_test/$id.got"
   }
 }
