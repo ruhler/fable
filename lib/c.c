@@ -94,9 +94,14 @@ static void StringLit(FILE* fout, const char* string)
 {
   fprintf(fout, "\"");
   for (const char* p = string; *p; p++) {
-    // TODO: Handle other special characters too.
     switch (*p) {
+      case '\a': fprintf(fout, "\\a"); break;
+      case '\b': fprintf(fout, "\\b"); break;
+      case '\f': fprintf(fout, "\\f"); break;
       case '\n': fprintf(fout, "\\n"); break;
+      case '\r': fprintf(fout, "\\r"); break;
+      case '\t': fprintf(fout, "\\t"); break;
+      case '\v': fprintf(fout, "\\v"); break;
       case '"': fprintf(fout, "\\\""); break;
       case '\\': fprintf(fout, "\\\\"); break;
       default: fprintf(fout, "%c", *p); break;
