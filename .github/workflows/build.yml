@@ -89,6 +89,5 @@ jobs:
           export MSYS2_ARG_CONV_EXCL='*'
           mkdir build
           cd build
-          ../configure --prefix=${{github.workspace}}/install
+          ../configure
           ninja check
-          ninja install
