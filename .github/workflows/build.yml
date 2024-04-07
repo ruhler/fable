@@ -5,7 +5,7 @@ on:
     branches:
       - main
 jobs:
-  build_www:
+  www:
     runs-on: ubuntu-latest
     steps:
       - name: Check Out
@@ -33,7 +33,7 @@ jobs:
           retention-days: 0
 
   deploy:
-    needs: build_www
+    needs: www
     permissions:
       pages: write
       id-token: write
@@ -46,7 +46,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  build:
+  ubuntu:
     runs-on: ubuntu-latest
     steps:
       - name: Check Out
@@ -62,6 +62,31 @@ jobs:
 
       - name: Build and Test
         run: |
+          mkdir build
+          cd build
+          ../configure --prefix=${{github.workspace}}/install
+          ninja check
+          ninja install
+
+  msys2-ucrt64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            tcl ninja gcc bison groff diffutils
+            mingw-w64-ucrt-x86_64-SDL2
+            mingw-w64-ucrt-x86_64-mesa
+
+      - name: Build and Test
+        run: |
+          export MSYS2_ARG_CONV_EXCL='*'
           mkdir build
           cd build
           ../configure --prefix=${{github.workspace}}/install
