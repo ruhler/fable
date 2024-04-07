@@ -102,6 +102,14 @@ To install required dependencies on a debian based system:
       gcc gdb diffutils grep groff-base \
       ninja-build libgl-dev libsdl2-dev tcl8.6
 
+To install required dependencies on an MSYS2 UCRT64 based system:
+
+     pacman -S tcl ninja gcc bison groff diffutils \
+       mingw-w64-ucrt-x86_64-toolchain \
+       mingw-w64-ucrt-x86_64-SDL2 \
+       mingw-w64-ucrt-x86_64-mesa
+     export MSYS2_ARG_CONV_EXCL='*'
+
 ## Build
 
 To build and install:

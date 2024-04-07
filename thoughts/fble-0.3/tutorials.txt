@@ -1,0 +1,23 @@
+Tutorial Review
+===============
+
+For fble 0.3, we need to revise the tutorials now that we removed
+multi-argument functions, and the implications that has for type inference.
+
+Should we do more while we are at it? Possible ideas:
+
+* Remove scary language from the tutorials.
+* Create special Stdio App run functions to greatly simplify the main function
+  needed for the tutorials?
+* Consider adding a separate line of tutorials that are application based
+  instead of language feature based?
+
+If we did application based tutorials, what would be some fun applications to
+start with?
+* tic tac toe?
+* sudoku solver?
+* card games?
+* prime numbers?
+* benchmark games?
+* rosetta code tasks?
+
