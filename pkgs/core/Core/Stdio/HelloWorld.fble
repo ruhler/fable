@@ -1,10 +1,7 @@
 
 % True = /Core/Bool%.True;
 
-@ Char@ = /Core/Char%.Char@;
-
 <@>@ List@ = /Core/List%.List@;
-<@>% Concat = /Core/List%.Concat;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -16,15 +13,11 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-
+# A hello world program using the Stdio@ interface.
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
   % O = /Core/Stream/OStream%(m);
-
-  (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
-    O.PutLine(stdio.out, Concat<Char@>(strs));
-  };
   
-  Unit@ _ <- m.do(Puts[Str|'hello, world']);
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Str|'hello, world'));
   m.return(True);
 };
 

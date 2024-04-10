@@ -1,0 +1,34 @@
+
+
+% True = /Core/Bool%.True;
+
+<@>@ List@ = /Core/List%.List@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+# StringO --
+#   A stdio main function that outputs a single string.
+(String@) { Main@; } StringO = (String@ str) {
+  <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
+    % O = /Core/Stream/OStream%(m);
+    Unit@ _ <- m.do(O.PutLine(stdio.out, str));
+    m.return(True);
+  };
+};
+
+# Run --
+#   A top-level IO implementation for running a StringO program.
+(String@) { /Core/Stdio/IO%.Main@; }
+Run = (String@ str) {
+  /Core/Stdio/IO%.Run(StringO(str));
+};
+
+@(StringO, Run);
+

@@ -54,4 +54,4 @@ Run = (/Core/Stdio%.Main@ main, StdioIO@ stdio, List@<String@> args) {
   main<IO@>(/Core/Monad/IO%.Monad, StdioIO(stdio), args);
 };
 
-@(StdioIO@, StdioIO, Run);
+@(StdioIO@, Main@, StdioIO, Run);

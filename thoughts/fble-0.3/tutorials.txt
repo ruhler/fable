@@ -92,7 +92,7 @@ Tutorials to review:
 Introduction.fbld  DONE
 Features.fbld      DONE
 Install.fbld       DONE
-HelloWorld.fbld
+HelloWorld.fbld    DONE
 Basics.fbld
 Variables.fbld
 Structs.fbld

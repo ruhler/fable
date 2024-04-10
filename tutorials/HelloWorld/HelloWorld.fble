@@ -1,33 +1,34 @@
 
-% True = /Core/Bool%.True;
+# Import boolean type and values.
+@ Bool@ = /Core/Bool%.Bool@;
+Bool@ True = /Core/Bool%.True;
+Bool@ False = /Core/Bool%.False;
+
+# Import character type and values.
 @ Char@ = /Core/Char%.Char@;
-<@>@ List@ = /Core/List%.List@;
-<@>% Concat = /Core/List%.Concat;
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
+% Chars = /Core/Char%.Chars;
+
+# Import integer type and literal.
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+# Import string type and functions.
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-@ Unit@ = /Core/Unit%.Unit@;
+% Strs = /Core/String%.Strs;
+% Lines = /Core/String%.Lines;
 
-# Here are some comment lines you can include in your
-# hello world program if you want to.
+# Specify the output string.
+Char@ c = Chars.A;
+Int@ x = Int|42;
+String@ output = Lines[
+  Str|'hello, world',
+  Strs[Str|'A boolean: ', /Core/Bool/Show%.Show(True)],
+  Strs[Str|'A character: ', /Core/Char/Show%.Show(c)],
+  Strs[Str|'A list: ',
+    /Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, False, False]],
+  Strs[Str|'An integer: ', /Core/Int/Show%.Show(x)]];
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _args) {
-  % O = /Core/Stream/OStream%(m);
-
-  (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
-    O.PutLine(stdio.out, Concat<Char@>(strs));
-  };
-  
-  Unit@ _ <- m.do(Puts[Str|'hello, world']);
-  Unit@ _ <- m.do(Puts[Str|'A boolean: ', /Core/Bool/Show%.Show(True)]);
-  Unit@ _ <- m.do(Puts[Str|'A character: ', /Core/Char/Show%.Show(/Core/Char%.Chars.A)]);
-  Unit@ _ <- m.do(Puts[Str|'A list: ',
-    /Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, True, True]]);
-  Unit@ _ <- m.do(Puts[Str|'An integer: ',
-    /Core/Int/Show%.Show(/Core/Int/Lit%.Int|42)]);
-  m.return(True);
-};
-
-/Core/Stdio/IO%.Run(Main);
+# Call the helper function for a main function
+# that outputs a single string value.
+/Core/Stdio/StringO%.Run(output);
