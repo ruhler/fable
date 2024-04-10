@@ -130,7 +130,7 @@
  
  @section The Type of a Type
   If a type is a value, and all values have types, that means a type has a
-  type.  In fble, the type of a type is defined to be the type of that type.
+  type. In fble, the type of a type is defined to be the type of that type.
   If @l{A@} is a type and @l{B@} is some other type, the type of @l{A@} is
   some type that is different from the type of @l{B@}. More importantly, if
   the compiler knows the type of the type @l{A@}, it can derive from that the
@@ -172,7 +172,7 @@
   automatic memory management to ensure values stay alive at runtime as long
   as they are needed.
  
-  Anywhere an expression is expected, you can use @l{{} and @l{}} braces to
+  Anywhere an expression is expected, you can use @l{{}} braces to
   introduce a new scope for variables. For example:
  
   @code[fble] @
@@ -187,7 +187,7 @@
  
   Variables @l{a}, @l{b}, and @l{d} can be referenced between their definition
   and the end of the outer most block. Variable @l{c} can be referenced only
-  inside the block where the value of @l{b} is being defined.
+  inside the block where it is declared.
  
   It's possible to capture variables from outer blocks in function bodies.
   We've already seen examples of this:
@@ -274,7 +274,7 @@
  @section Mutually Recursive Declarations
   There are times you may want to define mutually recursive variables. To do
   this, you can specify multiple variable definitions in the same let
-  expression separate by a comma.
+  expression separated by comma.
  
   Here's an example of declaring multiple variables at once without them
   referring to each other:
@@ -302,7 +302,7 @@
    @ List@ = +(ListP@ cons, Unit@ nil);
  
  @section Variable Shadowing
-  In fble it's allowed to shadow previous variable declarations. For example:
+  In fble you are allowed to shadow previous variable declarations. For example:
  
   @code[fble] @
    Int@ x = 0;
@@ -319,14 +319,15 @@
   avoid the compiler emitting a warning. By convention, the variable name
   @l{_} is used to indicate a value we don't care about.
  
-  For example, we saw use of @l{_} in the hello world program:
+  We'll see less contrived examples of this later on, but for now, here's a
+  contrived example of an unused variable:
  
   @code[fble] @
-     Unit@ _ <- m.do(Puts[Str|'hello, world']);
-     m.return(True)
+     String@ _ = Str|'this string is not used';
+
+     /Core/Stdio/StringO%.Run(Str|'hello, world');
  
-  Here we use the variable name @l{_} for the result of @l{m.do}. Because it's
-  a @l{Unit@}, we know and don't care about its value.
+  Here we use the variable name @l{_} for the unused string variable.
  
  @section Variables in the Language Specification
   You now know everything there is to know about variables in fble. To

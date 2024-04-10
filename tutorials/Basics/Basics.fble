@@ -1,14 +1,8 @@
 
 # Imports
-% True = /Core/Bool%.True;
-@ Char@ = /Core/Char%.Char@;
-<@>@ List@ = /Core/List%.List@;
-<@>% Concat = /Core/List%.Concat;
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 # Types
 @ Unit@ = *();
@@ -41,20 +35,10 @@ Bit4@ Z = And4(X, Y);
 };
 
 (Bit4@) { String@; } ShowBit4 = (Bit4@ a) {
-  Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
+  Strs[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
 };
 
-# Main
-Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _args) {
-  % O = /Core/Stream/OStream%(m);
+String@ output = Strs[
+  ShowBit4(X), Str|' AND ', ShowBit4(Y), Str|' = ', ShowBit4(Z)];
 
-  (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
-    O.PutLine(stdio.out, Concat<Char@>(strs));
-  };
-  
-  Unit@ _ <- m.do(Puts[
-    ShowBit4(X), Str|' AND ', ShowBit4(Y), Str|' = ', ShowBit4(Z)]);
-  m.return(True);
-};
-
-/Core/Stdio/IO%.Run(Test);
+/Core/Stdio/StringO%.Run(output);

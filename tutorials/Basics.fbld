@@ -5,26 +5,17 @@
  
  In your favorite text editor, start a new file called @l{Basics.fble}.
  
- @section Boiler Plate
-  We'll start by reusing the same imports from the HelloWorld tutorial, except
-  without the import for the @l{Unit@} type, which we will define ourselves:
+ @section Module Imports
+  We'll start by reusing some imports from the HelloWorld tutorial:
   
   @code[fble] @
-   % True = /Core/Bool%.True;
-   @ Char@ = /Core/Char%.Char@;
-   <@>@ List@ = /Core/List%.List@;
-   <@>% Concat = /Core/List%.Concat;
-   <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-   <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-   <<@>@>@ Main@ = /Core/Stdio%.Main@;
+   # Imports
    @ String@ = /Core/String%.String@;
    % Str = /Core/String%.Str;
+   % Strs = /Core/String%.Strs;
   
-  These are so we can write our @l{Main} function later on.
- 
  @section Types
-  Now that the boiler plate is out of the way, We'll start by defining types
-  for a single bit and a 4 bit bit-vector:
+  Next we define types for a single bit and a 4 bit bit-vector:
  
   @code[fble] @
    @ Unit@ = *();
@@ -155,30 +146,21 @@
    };
    
    (Bit4@) { String@; } ShowBit4 = (Bit4@ a) {
-     Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
+     Strs[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
    };
  
   We'll explain in more detail about the list and string literals used here in
   future tutorials.
  
- @section The Main Function
-  All that's left is to write a main function. We'll have it print out the
-  values of @l{X}, @l{Y}, and @l{Z}:
+ @section The Output String
+  All that's left is to set our output string and main function. We'll have
+  the program print out the values of @l{X}, @l{Y}, and @l{Z}:
  
   @code[fble] @
-   Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-     % O = /Core/Stream/OStream%(m);
-   
-     (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
-       O.PutLine(stdio.out, Concat<Char@>(strs));
-     };
-     
-     Unit@ _ <- m.do(Puts[
-       ShowBit4(X), Str|' AND ', ShowBit4(Y), Str|' = ', ShowBit4(Z)]);
-     m.return(True);
-   };
-   
-   /Core/Stdio/IO%.Run(Test);
+   String@ output = Strs[
+     ShowBit4(X), Str|' AND ', ShowBit4(Y), Str|' = ', ShowBit4(Z)];
+
+   /Core/Stdio/StringO%.Run(output);
  
  @section Running the program
   We can now run our program to try it out:

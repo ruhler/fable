@@ -93,9 +93,9 @@ Introduction.fbld  DONE
 Features.fbld      DONE
 Install.fbld       DONE
 HelloWorld.fbld    DONE
-Basics.fbld
-Variables.fbld
-Structs.fbld
+Basics.fbld        DONE
+Variables.fbld     DONE
+Structs.fbld       DONE
 Modules.fbld
 Unions.fbld
 Functions.fbld
