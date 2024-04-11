@@ -99,8 +99,8 @@ Structs.fbld       DONE
 Modules.fbld       DONE
 Unions.fbld        DONE
 Functions.fbld     DONE
-Lists.fbld
-Literals.fbld
+Lists.fbld         DONE
+Literals.fbld      DONE
 Polymorphism.fbld
 Bind.fbld
 Core.fbld

@@ -53,13 +53,13 @@
  
   @code[fble] @
    Int@ 2023 = Int|2023;
-   String@ hello_world = String|'hello world';
+   String@ hello_world = String|'hello, world';
  
   A literal expression is a function followed by @l{|} and then a single word.
   In this case, @l{Int} is a function that converts a list of letters to an
   integer and @l{2023} is a word with the list of letters to pass to the
   @l{Int} function. Similarly, @l{String} is a function that converts a list
-  of letters to a string and @l{'hello world'} is a word with the list of
+  of letters to a string and @l{'hello, world'} is a word with the list of
   letters to pass to the @l{String} function.
  
   The only tricky part is specifying what we mean by a letter. For literals in
@@ -121,7 +121,8 @@
      (Bit4@, BitList@) { Bit4@; } Helper = (Bit4@ x, BitList@ bits) {
        bits.?(nil: x);
        Helper(ShiftIn(x, bits.cons.head), bits.cons.tail);
-     }
+     };
+
      (BitList@ bits) {
        Helper(Zero, bits);
      };
@@ -222,6 +223,15 @@
  
   You can also reuse literal functions as normal functions in fble, passing a
   list value directly to them.
+
+  For example:
+
+  @code[fble] @
+   Bit4@ a = Bit4|1010;
+   Bit4@ b = Bit4[1, 0, one, zero];
+
+   BitList@ bits = ...;
+   Bit4@ c = Bit4(bits);
  
  @section Empty Literals
   Empty literals are allowed. For example, you might write the empty string as:

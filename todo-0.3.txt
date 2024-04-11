@@ -78,6 +78,8 @@ Doc Comments
   functions.
 * Would be nice to have SEE ALSO section for library man pages.
 
+* Update Literals tutorial given that multi-character names are allowed now?
+
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.
  - How to support labels in markdown?

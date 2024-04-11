@@ -136,9 +136,9 @@
   @fbld[HelloWorld.fbld][HelloWorld] tutorial. For instance:
  
   @code[fble] @
-   Unit@ _ <- m.do(Puts[Str|'A boolean: ', /Core/Bool/Show%.Show(True)]);
+   String@ output = Strs[Str|'A boolean: ', /Core/Bool/Show%.Show(True)];
  
-  Here the @l{Puts} function takes a list of strings as its only argument, so
+  Here the @l{Strs} function takes a list of strings as its only argument, so
   we can use the list expression to call it.
  
  @section Variable Arguments
