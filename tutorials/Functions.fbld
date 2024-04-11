@@ -8,7 +8,7 @@
   the code to execute when the function is called. You can later invoke the
   function by supplying the arguments to execute the function with.
  
-  Here are examples functions we've already seen:
+  Here are examples of functions we've already seen:
  
   @code[fble] @
    (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
@@ -110,7 +110,7 @@
  @section Pulling Logic Outside a Function
   The definition of @l{Add1} in the previous section involves creating a
   function value and assigning it to the variable @l{Add1}. This will happen
-  every time the @l{Add} function is executed. Because @l{Add1} doesn't depend
+  every time the @l{Add} function is called. Because @l{Add1} doesn't depend
   on the inputs @l{x} and @l{y} to the @l{Add} function, we can pull it out of
   the body of the @l{Add} function to avoid some extra allocations. You could
   pull the definition of @l{Result@} and @l{Add1} out into the global scope,
@@ -230,7 +230,7 @@
  
  @section Functions Returning Functions
   We've seen an example of passing functions as arguments to other functions.
-  It's also possible to return functions from functions. In fact, that's a
+  It's also possible to return functions from functions. That's arguably a
   more natural way to write our @l{BinaryBitwise} helper function. Instead of
   it taking three arguments, the operation and both operands, we can change it
   to take a single argument which is the operation and return a function that
@@ -253,91 +253,84 @@
    (Bit4@, Bit4@) { Bit4@; } Or4 = BinaryBitwise(Or);
    (Bit4@, Bit4@) { Bit4@; } Xor4 = BinaryBitwise(Xor);
  
-  It's not uncommon to have functions that return functions, so the language
-  syntax supports a slightly more compact form. Instead of having to use
-  braces for every layer of function in the type and value of the function,
-  you only need the braces for the inner most layer. An equivalent definition
-  of @l{BinaryBitwise} is:
- 
-  @code[fble] @
-   ((Bit@, Bit@) { Bit@; })(Bit4@, Bit4@) { Bit4@; };
-   BinaryBitwise = ((Bit@, Bit@) { Bit@; } op)(Bit4@ a, Bit4@ b) {
-     Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
-   };
- 
-  Notice this is almost identical to our original three argument version of
-  @l{BinaryBitwise}, except we've replaced the @l{, } between the first and
-  second arguments with @l{)(}.
- 
  @section Currying Functions
   What we saw in the previous section is an example of currying functions,
   where we replace a function of multiple arguments with a function that
-  returns a function. For a simpler example, consider the single bit @l{And}
-  function:
- 
+  returns a function.
+
+  Internally fble treats every multi-argument function as a single argument
+  function that returns another function. The two definitions we gave for
+  @l{BinaryBitwise} produce exactly the same function value from the runtime's
+  point of view. That means you can define @l{BinaryBitwise} using whichever
+  of the following is your favorite:
+
   @code[fble] @
-   (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
-     a.?(0: 0, 1: b);
+   # 3 argument function version of BinaryBitwise
+   ((Bit@, Bit@) { Bit@; }, Bit4@, Bit4@) { Bit4@; }
+   BinaryBitwise = ((Bit@, Bit@) { Bit@; } op, Bit4@ a, Bit4@ b) {
+     Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
    };
- 
-  Function currying can be used to transform this into a function that returns
-  a function:
- 
-  @code[fble] @
-   (Bit@)(Bit@) { Bit@; } And = (Bit@ a)(Bit@ b) {
-     a.?(0: 0, 1: b);
+
+   # Function returning function version of BinaryBitwise
+   ((Bit@, Bit@) { Bit@; }) { (Bit4@, Bit4@) { Bit4@; }; }
+   BinaryBitwise = ((Bit@, Bit@) { Bit@; } op) {
+     (Bit4@ a, Bit4@ b) {
+       Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
+     };
    };
- 
-  As a more extreme case that better highlights this as a function that
-  returns a function, we could write:
- 
-  @code[fble] @
-   (Bit@) { Bit@; } ConstZero = (Bit@ _) { 0; };
-   (Bit@) { Bit@; } Identity = (Bit@ b) { b; };
-   (Bit@) { (Bit@) { Bit@; }; } And = (Bit@ a) {
-     a.?(0: ConstZero, 1: Identity);
-   };
- 
-  In some languages function currying wouldn't change how you interact with
-  the function, but in fble the curried version of @l{And} has a different
-  type than the original version. In fble the number of arguments to a
-  function matters in the function type. This means you'll have to call our
-  second version of @l{And} slightly differently. Instead of @l{And(x, y)},
-  you would use @l{And(x)(y)}.
- 
-  Fble treats these two versions of @l{And} separately because there are
-  performance implications at runtime. The first version of @l{And} computes
-  the result directly given two arguments. The second version of @l{And} takes
-  a single argument and allocates a function value to return. Then you supply
-  the second argument which computes the final result. That extra function
-  value allocation may be important for performance, especially if it
-  references a lot of other variables from the external scope that need to be
-  captured, and especially if this is compounded by having more and more
-  curried arguments to the function.
- 
-  In practice it is straight forward to convert between the two forms of the
-  function. Let's call them @l{UncurriedAnd} and @l{CurriedAnd}. Here's how
-  you could implement @l{CurriedAnd} given @l{UncurriedAnd}:
- 
-  @code[fble] @
-   (Bit@)(Bit@) { Bit@; } CurriedAnd = (Bit@ a)(Bit@ b) {
-     UncurriedAnd(a, b);
-   };
- 
-  Here's how you could implement @l{UncurriedAnd} given @l{CurriedAnd}:
- 
-  @code[fble] @
-   (Bit@, Bit@) { Bit@; } UncurriedAnd = (Bit@ a, Bit@ b) {
-     CurriedAnd(a)(b);
-   };
- 
-  When should you use functions with multiple arguments versus curried
-  functions that return functions? For the most part just use functions that
-  take multiple arguments. Use curried functions when it is more convenient,
-  like we did with the @l{BinaryBitwise} function above, and use curried
-  functions if required to match the type of a function expected expected to
-  be passed to another function.
- 
+
+  Both version of BinaryBitwise have the same function type and can be used
+  interchangeably.
+
+  @subsection Partial Function Application
+   Because a multi-argument function is treated the same as a function that
+   returns a function, you can call a function without supplying all its
+   arguments. Using the @l{BinaryBitwise} example:
+
+   @code[fble] @
+    ((Bit@, Bit@) { Bit@; }, Bit4@, Bit4@) { Bit4@; }
+    BinaryBitwise = ((Bit@, Bit@) { Bit@; } op, Bit4@ a, Bit4@ b) {
+      Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
+    };
+
+    (Bit4@, Bit4@) { Bit4@; } And4 = BinaryBitwise(And);
+    (Bit4@, Bit4@) { Bit4@; } Or4 = BinaryBitwise(Or);
+    (Bit4@, Bit4@) { Bit4@; } Xor4 = BinaryBitwise(Xor);
+
+   The @l{BinaryBitwise} function takes three arguments, but here we call it
+   with only one. The result is a function that takes the rest of the
+   arguments and returns the result of calling BinaryBitwise once all the
+   arguments are supplied.
+
+   We could implement a bitwise Not4 function by supplying one more argument:
+
+   @code[fble] @
+    (Bit4@) { Bit4@; } Not4 = BinaryBitwise(Xor, Bit4@(1, 1, 1, 1));
+
+   One thing to keep in mind is that in some cases partial application of
+   a function requires allocating an intermediate function value, which may
+   impact performance depending on how often it is done.
+
+  @subsection Function Over-Application
+   The flip side of partial function application is that, in the case of a
+   function that returns a function, you can supply more arguments than the
+   function is declared with.
+
+   In this case we define @l{BinaryBitwise} using the one argument version,
+   but call it with three arguments:
+
+   @code[fble] @
+    ((Bit@, Bit@) { Bit@; }) { (Bit4@, Bit4@) { Bit4@; }; }
+    BinaryBitwise = ((Bit@, Bit@) { Bit@; } op) {
+      (Bit4@ a, Bit4@ b) {
+        Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
+      };
+    };
+
+    (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+      BinaryBitwise(And, a, b);
+    };
+   
  @section Anonymous Functions
   Some languages have a distinct notion of an anonymous function, sometimes
   called a lambda. In fble, every function value is defined using an anonymous
@@ -359,7 +352,7 @@
   functions if we want. In practice, there's no real use for this.
  
   If you know the type of a type value, you know the value of that type value.
-  You have to specify the the type of all function arguments and the return
+  You have to specify the type of all function arguments and the return
   type of the function. That means you know the value of the type value when
   defining the function, so there's no point in taking it as an argument to a
   function.

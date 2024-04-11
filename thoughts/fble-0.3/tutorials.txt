@@ -96,9 +96,9 @@ HelloWorld.fbld    DONE
 Basics.fbld        DONE
 Variables.fbld     DONE
 Structs.fbld       DONE
-Modules.fbld
-Unions.fbld
-Functions.fbld
+Modules.fbld       DONE
+Unions.fbld        DONE
+Functions.fbld     DONE
 Lists.fbld
 Literals.fbld
 Polymorphism.fbld

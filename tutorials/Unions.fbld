@@ -41,10 +41,10 @@
  
   The argument value to the union changes depending on what kind of expression
   it is. For @l{add} and @l{sub}, the argument is a pair of operand
-  expressions.  For @l{neg} the argument is single operand expression, and
+  expressions. For @l{neg} the argument is a single operand expression, and
   @l{constant} is an integer value.
  
-  When we construct an expression, we need to say what operation to use and
+  When we construct a @l{Expr@} value, we need to say what operation to use and
   provide the appropriate argument. You do this by providing the name of the
   field and the value for that field when constructing a union value. For
   example, to construct expressions for the constants @l{0} and @l{1}:
@@ -53,8 +53,7 @@
    Expr@ zero = Expr@(constant: 0);
    Expr@ one = Expr@(constant: 1);
  
-  To construct an expression representing negative one using the negation
-  operation:
+  To construct an expression representing @l{-1} using the negation operation:
  
   @code[fble] @
    Expr@ minus_one = Expr@(neg: one);
@@ -66,7 +65,7 @@
   implicit struct type value:
  
   @code[fble] @
-   Expr@ two = Expr@(add: @(a: one, a: one));
+   Expr@ two = Expr@(add: @(a: one, b: one));
  
   In order to work with union values, we need to be able to figure out what
   field the value was constructed with and the argument. We can use the union

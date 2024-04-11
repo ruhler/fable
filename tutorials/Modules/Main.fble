@@ -1,15 +1,7 @@
 
-% True = /Core/Bool%.True;
-@ Char@ = /Core/Char%.Char@;
-<@>@ List@ = /Core/List%.List@;
-<@>% Concat = /Core/List%.Concat;
-<<@>@>@ Monad@ = /Core/Monad%.Monad@;
-<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-<<@>@>@ Main@ = /Core/Stdio%.Main@;
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-
-@ Unit@ = /Unit%.Unit@;
+% Strs = /Core/String%.Strs;
 
 % 0 = /Bit%.0;
 % 1 = /Bit%.1;
@@ -22,17 +14,6 @@ Bit4@ X = Bit4@(0, 0, 1, 1);
 Bit4@ Y = Bit4@(1, 0, 1, 0);
 Bit4@ Z = And(X, Y);
 
-# Main
-Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> _args) {
-  % O = /Core/Stream/OStream%(m);
+String@ output = Strs[Show(X), Str|' AND ', Show(Y), Str|' = ', Show(Z)];
 
-  (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
-    O.PutLine(stdio.out, Concat<Char@>(strs));
-  };
-  
-  Unit@ _ <- m.do(Puts[
-    Show(X), Str|' AND ', Show(Y), Str|' = ', Show(Z)]);
-  m.return(True);
-};
-
-/Core/Stdio/IO%.Run(Test);
+/Core/Stdio/StringO%.Run(output);

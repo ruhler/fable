@@ -123,43 +123,24 @@
   And finally, @l{Main.fble}:
  
   @code[fble] @
-   % True = /Core/Bool%.True;
-   @ Char@ = /Core/Char%.Char@;
-   <@>@ List@ = /Core/List%.List@;
-   <@>% Concat = /Core/List%.Concat;
-   <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-   <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
-   <<@>@>@ Main@ = /Core/Stdio%.Main@;
    @ String@ = /Core/String%.String@;
    % Str = /Core/String%.Str;
-   
-   @ Unit@ = /Unit%.Unit@;
-   
+   % Strs = /Core/String%.Strs;
+
    % 0 = /Bit%.0;
    % 1 = /Bit%.1;
-   
+
    @ Bit4@ = /Bit4%.Bit4@;
    % And = /Bit4%.And;
    % Show = /Bit4/Show%.Show;
-   
+
    Bit4@ X = Bit4@(0, 0, 1, 1);
    Bit4@ Y = Bit4@(1, 0, 1, 0);
    Bit4@ Z = And(X, Y);
-   
-   # Main
-   Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-     % O = /Core/Stream/OStream%(m);
-   
-     (List@<String@>) { M@<Unit@>; } Puts = (List@<String@> strs) {
-       O.PutLine(stdio.out, Concat<Char@>(strs));
-     };
-     
-     Unit@ _ <- m.do(Puts[
-       Show(X), Str|' AND ', Show(Y), Str|' = ', Show(Z)]);
-     m.return(True);
-   };
-   
-   /Core/Stdio/IO%.Run(Test);
+
+   String@ output = Strs[Show(X), Str|' AND ', Show(Y), Str|' = ', Show(Z)];
+
+   /Core/Stdio/StringO%.Run(output);
  
   We can run our new program just like before, passing @l{Main%} as the name
   of the module to run:
@@ -286,7 +267,7 @@
   The idea behind the directory structure is that modules in the same
   directory are developed by the same organization. That organization is
   responsible for ensuring you don't have two modules in the same directory
-  with the same name.  There is a language feature for abstract types that
+  with the same name. There is a language feature for abstract types that
   grants or restricts access to modules based on the directory structure.
  
   Think of modules as dependency units. Break up code into modules to avoid
@@ -310,10 +291,12 @@
   applications. The main functions for @l{fble-app} have a different type than
   the main functions for @l{fble-stdio}.
  
-  Another interesting example is the @l{/Core/Stream/OStream%} module. This
-  module defines a function that returns a struct value. This is effectively a
-  parameterized module. In this case, the parameter is @l{Monad@<M@> m}.
- 
+  You could define a parameterized module by making the module value be a
+  function whose arguments are the parameters to the module and whose result
+  is a struct value with the types and functions being declared by the module.
+  There are a few examples of this in the core library, such as
+  @l{/Core/Stream/OStream%}.
+
   You can do a lot of interesting things with fble modules by keeping in mind
   that they can describe any type of value, not just struct values.
  
