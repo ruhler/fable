@@ -2,6 +2,9 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Update tutorials for partial function application updates.
+   Particularly noting how to do type inference for multiple poly parameters.
+
 * Update release notes for 0.3
 
 * Add fble to rosettacode.org?
@@ -37,8 +40,6 @@ Things to consider doing for the fble-0.3 release.
 * Some better way to recover if build.ninja gets messed up than having to
   re-run configure.
 
-* Update tutorials for partial function application updates.
-   Particularly noting how to do type inference for multiple poly parameters.
 
 * It's strange that a function that returns a poly has kind %.
   Does that make sense?

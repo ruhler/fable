@@ -101,7 +101,7 @@ Unions.fbld        DONE
 Functions.fbld     DONE
 Lists.fbld         DONE
 Literals.fbld      DONE
-Polymorphism.fbld
+Polymorphism.fbld  DONE
 Bind.fbld
 Core.fbld
 HelloWorldRevisted.fbld

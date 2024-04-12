@@ -11,7 +11,7 @@
   purpose, Java has generics and Haskell has type parameters.
  
   The fble language has something called a polymorphic value, or poly for
-  short.  Polys are a class of types in fble in addition to structs, unions,
+  short. Polys are a class of types in fble in addition to structs, unions,
   and functions which you already know about. A poly is an fble value
   parameterized by a type.
  
@@ -20,7 +20,7 @@
   @subsection The Maybe Type
    In languages like Java and C, which have pointers, it's common to use
    @l{NULL} as a special value to distinguish between valid pointers and
-   invalid pointers.  Some languages have an option type for describing a
+   invalid pointers. Some languages have an option type for describing a
    value that may be invalid.  In Haskell and fble, that type is called
    "Maybe".
  
@@ -163,10 +163,9 @@
   @l{@} and produces a value of kind @l{%}. The kind of @l{Maybe@} is
   @l{<@>@}, because it has a type parameter of kind @l{@} and produces a type
   value of kind @l{@}.
- 
-  This is why, for example, in the @fbld[HelloWorld.fbld][HelloWorld] tutorial
-  we wrote things like:
- 
+
+  The following shows how you might import different kinds of values:
+
   @code[fble] @
    % True = /Core/Bool%.True;
    @ Char@ = /Core/Char%.Char@;
@@ -264,7 +263,7 @@
  @section Interfaces
   Some languages have the concept of an interface. You can write a function
   that operates on any type, as long as that type implements a particular
-  interface.  Interfaces can be implemented in fble as a polymorphic
+  interface. Interfaces can be implemented in fble as a polymorphic
   collection of functions parameterized by some type @l{T@}.
  
   For example, in another language you might define an @l{Eq} interface that
@@ -324,19 +323,15 @@
   as @l{<@,@>@}. And the kind of @l{First} can be written either as
   @l{<@><@>%} or as @l{<@, @>%}, indicating that it takes two type arguments.
  
-  Note that this is different from the case of multi-argument functions, where
-  a multi-argument function is not the same thing is a function that returns a
-  function.
- 
   This means you can do partial application of multi-argument poly values. For
   example, you could write @l{Pair@<Int@>} to refer to the polymorphic type
   @l{<@ A@> { Pair@<Int@, A@>; }}.
  
  @section Higher Order Polys
-  So far we've only show type parameters of kind @l{@}. It's not legal in fble
+  So far we've only shown type parameters of kind @l{@}. It's not legal in fble
   to use a type parameter of kind @l{%}, because that @l{%} doesn't represent
   a type. But you could specify a type parameter of kind @l{<@>@} if you want.
-  This would be a high order polymorphic value.
+  This would be a higher order polymorphic value.
  
   The classic example of a higher order polynomial value is the @l{Monad@}
   type, which describes an interface that container types such as @l{List@}
@@ -443,7 +438,7 @@
   type parameter to @l{Nothing@}, because it would have to know how the
   expression is being used to know what type to pass.
  
-  For the most part type inference is a minor convenience. Where type
+  For the most part type inference is just a convenience. Where type
   inference becomes crucially important is when using function bind for
   monadic computations. We'll discuss function bind and monadic computations
   in the next tutorial.
