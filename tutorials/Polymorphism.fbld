@@ -495,7 +495,44 @@
    In some cases the compiler is simply not smart enough to infer the type.
    When in doubt, you can always provide an explicit type parameter if the
    compiler is having trouble with type inference.
- 
+
+  @subsection Type Inference of Nested Polys
+   Consider a polymorphic function with two type parameters, such as a Map
+   lookup function where you need to provide a key type and a value type.
+
+   You may be tempted to write this with both type parameters in front:
+
+   @code[fble] @
+    <@ K@, @ V@>((K@, K@) { Bool@; }, Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup = ...
+
+   The problem with this approach is it doesn't lend well to type inference of
+   the second type parameter @l{V@}. Multi-argument functions are treated as
+   single argument functions that return functions and type inference only
+   takes effect one argument at a time. That means type inference cannot infer
+   the type of @l{V@} when calling the @l{Lookup} function; @l{V@} doesn't
+   appear anywhere in the first argument of @l{Lookup}.
+
+   A better way to define the @l{Lookup} function is to move the @l{V@} type
+   parameter to just before the argument where it is first used:
+
+   @code[fble] @
+    <@ K@>((K@, K@) { Bool@; })<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup = ...
+
+   The type of the @l{Lookup} function is slightly more awkward to write this
+   way, but it provides better flexibility for users and means that type
+   inference can infer the types of @l{K@} and @l{V@} no problem. For example:
+
+   @code[fble] @
+    Maybe@<String@> result = Lookup(IntLt, map, Int|4);
+
+   The sequence of steps to do type inference on this, starting with viewing
+   it using single argument functions, is:
+
+   @code[fble] @
+    Lookup(IntLt) (map) (Int|4)
+    Lookup<Int@>(IntLt) (map) (Int|4)
+    Lookup<Int@>(IntLt) <String@>(map) (Int|4);
+
  @section Polymorphism in the Language Specification
   You now know everything there is to know about polymorphism in fble. To
   reinforce this, read over @fbld[../spec/fble.fbld#polymorphism][section 6 of

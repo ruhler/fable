@@ -2,9 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Update tutorials for partial function application updates.
-   Particularly noting how to do type inference for multiple poly parameters.
-
 * Update release notes for 0.3
 
 * Add fble to rosettacode.org?
