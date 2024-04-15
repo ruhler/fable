@@ -244,6 +244,29 @@
   @code[fble] @
    String@ empty = String[];
    String@ empty = String(EmptyList);
+
+ @section Longer Letters
+  The main use of literals, and all of the examples we've shown so far, have
+  single-character letters. Technically speaking, a single letter could be
+  made up of multiple characters. In that case, the next letter of the literal
+  word is the longest letter that is a prefix of the word.
+
+  For example, say our letter type was defined as:
+
+  @code[fble] @
+   @ Letter@ = +(Unit@ a, Unit@ ab, Unit@ b);
+
+   (Letter@) { Letter@; } Letter = (Letter@ x) {
+     x;
+   };
+
+  The literal @l{Letter|aabb} is broken down into the three element sequence
+  @l{a}, @l{ab}, @l{b}.
+
+  This behavior exists to better support multi-byte characters, where it's
+  harder to say where one character ends and the next character begins.
+  Otherwise there's probably not much practical use for longer letters in
+  literals.
  
  @section Literals in the Language Specification
   Literals are described in @fbld[../spec/fble.fbld#literals][section 7.2 of
