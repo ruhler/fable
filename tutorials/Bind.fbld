@@ -54,7 +54,7 @@
    the single function argument:
  
    @code[fble] @
-    (Bit4@, Bit4@)((Bit@, Bit@) { Bit@; }) { Bit4@; }
+    (Bit4@, Bit4@) { ((Bit@, Bit@) { Bit@; }) { Bit4@; }; }
     BinaryBitwise = (Bit4@ a, Bit4@ b)((Bit@, Bit@) { Bit@; } op) {
       Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
     };
@@ -140,8 +140,8 @@
   @l{Nothing}:
  
   @code[fble] @
-   (MaybeInt@)((Int@) { MaybeInt@; }) { MaybeInt@; }
-   Maybe = (MaybeInt@ mx)((Int@) { MaybeInt@ } f) {
+   (MaybeInt@, (Int@) { MaybeInt@; }) { MaybeInt@; }
+   Maybe = (MaybeInt@ mx, (Int@) { MaybeInt@ } f) {
      mx.?(nothing: Nothing);
      f(mx.just);
    };
@@ -151,8 +151,8 @@
   @code[fble] @
    (MaybeInt@, MaybeInt@) { MaybeInt@; }
    MaybeAdd = (MaybeInt@ ma, MaybeInt@ mb) {
-     Maybe(ma)((Int@ a) {
-       Maybe(mb)((Int@ b) {
+     Maybe(ma, (Int@ a) {
+       Maybe(mb, (Int@ b) {
          Just(Add(a, b));
        });
      });
@@ -160,8 +160,8 @@
      
    (MaybeInt@, MaybeInt@) { MaybeInt@; }
    MaybeDiv = (MaybeInt@ ma, MaybeInt@ mb) {
-     Maybe(ma)((Int@ a) {
-       Maybe(mb)((Int@ b) {
+     Maybe(ma, (Int@ a) {
+       Maybe(mb, (Int@ b) {
          Div(a, b);
        });
      });
@@ -339,18 +339,9 @@
   @item Do computations that read or write state.
   @item Do computations with logging, printf, or other input and output.
  
-  This is how standard input output is described in fble. The main function to
-  @l{HelloWorld} is a generic monadic computation that takes abstract
-  primitive operations for input and output. Recall from the
-  @fbld[HelloWorld.fbld][Hello World] tutorial:
- 
-  @code[fble] @
-   Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio)(List@<String@> args) {
-     ...
-     Unit@ _ <- m.do(Puts[Str|'hello, world']);
-     m.return(True);
-   };
- 
+  This is how standard input and output is described in fble. More about that
+  in a later tutorial.
+
  @section Bind in the Language Specification
   See @fbld[../spec/fble.fbld#bind][section 7.3 of the fble language
   specification] for the specification of the bind syntax.

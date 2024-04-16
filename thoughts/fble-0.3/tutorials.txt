@@ -102,7 +102,7 @@ Functions.fbld     DONE
 Lists.fbld         DONE
 Literals.fbld      DONE
 Polymorphism.fbld  DONE
-Bind.fbld
+Bind.fbld          DONE
 Core.fbld
 HelloWorldRevisted.fbld
 AbstractTypes.fbld
