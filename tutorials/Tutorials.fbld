@@ -45,6 +45,9 @@
  
  @def @fbld[Bind.fbld][Bind]
   Learn about function bind syntax and monad computations in fble.
+
+ @def @fbld[AbstractTypes.fbld][Abstract Types]
+  Learn about support for abstract types in fble.
  
  @def @fbld[Core.fbld][Core]
   Learn about core library types and functions used in the hello world program.
@@ -52,9 +55,6 @@
  @def @fbld[HelloWorldRevisited.fbld][Hello World Revisited]
   Review the hello world program now that you know all the language features
   used.
- 
- @def @fbld[AbstractTypes.fbld][Abstract Types]
-  Learn about support for abstract types in fble.
 
  Additionally there are some guides with tips about debugging and profiling
  fble programs.

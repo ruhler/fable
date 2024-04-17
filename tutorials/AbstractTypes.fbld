@@ -45,7 +45,7 @@
   @l{/Mine/A%}, @l{/Mine/A/B%}, and @l{/Mine/C%}, but excludes modules like
   @l{/Yours%}.
   
-  One you have the package type @l{MyPackage@}, you can create
+  Once you have the package type @l{MyPackage@}, you can create
   package-specific wrappers around other types. In this case, the type
   @l{MyBool@} is created which is considered a different type from @l{Bool@}.
   The only thing you can do with values of the @l{MyBool@} type is convert
@@ -73,7 +73,14 @@
   that are equivalent except for some parts of one type being abstract. For
   example, imagine you have a list of @l{MyBool@}. Rather than have to iterate
   over all the elements of the list converting them one at a time to
-  @l{Bool@}, you can do a direct cast:
+  @l{Bool@}, you can do a direct cast.
+
+  The syntax for a direct cast is the package type, followed by @l{.}, followed
+  by the destination type in angle brackets, followed by the object to cast in
+  parenthesis: @l{ package_type '.' '<' dest_type '>' '(' value ')'}.
+
+  Here are a direct casts to convert a list of booleans to and from a list of
+  abstract booleans:
   
   @code[fble] @
    List@<Bool@> original = List[True, False, False, True];
@@ -82,7 +89,7 @@
  
  @section Example
   The general approach for using abstract values is to use abstract types in
-  the user interface, and cast to the underly values internally. For example,
+  the user interface and cast to the underly values internally. For example,
   here is how you could define a three element enum type that can only be
   accessed externally using the provided methods:
  
@@ -118,4 +125,6 @@
   of the fble language specification].
  
  @section Next Steps
-  You've now learned about all of the fble language features.
+  You've now learned about all of the fble language features. Continue on to
+  the @fbld[Core.fbld][Core Library] tutorial to learn about some common types
+  and functions defined in the core library.

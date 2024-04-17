@@ -103,12 +103,39 @@ Lists.fbld         DONE
 Literals.fbld      DONE
 Polymorphism.fbld  DONE
 Bind.fbld          DONE
+AbstractTypes.fbld DONE
 Core.fbld
 HelloWorldRevisted.fbld
-AbstractTypes.fbld
 DebugGuide.fbld
 ProfilingGuide.fbld
 Tutorials.fbld
 
+---
 
+Should Core and HelloWorldRevisted tutorials be moved to a different tutorial
+series? Maybe a 'Core library' series?
 
+The hello world tutorial at least should be rewritten to be a Stdio main
+tutorial. Like, command line arguments and such.
+
+I think it's fine to keep these tutorials in the current series. Expand on
+Core to include more of the things in the library, not limited to hello world.
+Like Map@. Change HelloWorldRevisited to 'Command Line Programs' perhaps. Or
+Standard IO. We can write a hello world program in Standard IO, perhaps show
+how the StringO function is defined. Yeah.
+
+Maybe we want to add another tutorial which is App?
+
+What types should we include in the Core tutorial? Let's see what all we
+currently have defined in the library.
+
+These are the ones worth including:
+
+  Bool Char Int List Map Maybe Set Unit String
+  Eq Monad Ord Show
+  Stdio Stream
+  Test
+
+These are the ones not worth including:
+
+  Fifo CRC LFSR Debug Digits Iter Undef

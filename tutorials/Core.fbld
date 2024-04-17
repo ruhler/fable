@@ -11,7 +11,7 @@
  program.
  
  @section @l{/Core/Unit%}
-  The @l{/Core/Unit%} module defines type type @l{Unit@} and value @l{Unit}
+  The @l{/Core/Unit%} module defines type @l{Unit@} and value @l{Unit}
   that we have seen many times in this series of tutorials:
  
   @code[fble] @
