@@ -1,15 +1,18 @@
 @tutorial Core Library
- This tutorial goes over some of the core library types and function used in
- the hello world program.
+ This tutorial goes over some of the types and functions available from the
+ core library.
+
+ You've learned about all the fble language features already. The core library
+ is implemented on top of those language features as a common set of types and
+ functions useful in programming with fble. Making use of the core library
+ saves you the effort of defining and implementing these types yourself.
+
+ The core library is not part of the language specification. Thus far it has
+ grown organically based on the needs of the sample applications included with
+ the fble release.
  
- By this point you've learned about all the fble language features used in the
- hello world program. In fact, you've learned about all the fble language
- features except for relatively minor feature to support abstract values.
- 
- Thus, to understand the hello world program entirely, you just need to know a
- little more about the core library modules we've used in the hello world
- program.
- 
+ The following sections highlight various useful parts of the core library.
+
  @section @l{/Core/Unit%}
   The @l{/Core/Unit%} module defines type @l{Unit@} and value @l{Unit}
   that we have seen many times in this series of tutorials:
@@ -36,9 +39,24 @@
    (Bool@) { Bool@; } Not = ...;
    (Bool@, Bool@) { Bool@; } And = ...;
    (Bool@, Bool@) { Bool@; } Or = ...;
- 
-  The @l{Bool@} type is used in the hello world program to indicate the exit
-  status of the main program.
+
+ @section @l{/Core/Eq%}
+  The @l{/Core/Eq%} module defines an @l{Eq@} interface for types that can be
+  compared for equality or other kinds of relationships.
+
+  @code[fble] @
+   <@>@ Eq@ = <@ T@>(T@, T@) { /Core/Bool%.Bool@; };
+
+ @section @l{/Core/Maybe%}
+  The @l{/Core/Maybe%} module defines a @l{Maybe@} type for representing
+  optional values. It defines functions @l{Just} and @l{Nothing} for
+  constructing these optional values.
+
+  @code[fble] @
+   <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+   <@ T@>(T@){ Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@(just: x); };
+   Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
  
  @section @l{/Core/Char%}
   The @l{/Core/Char%} module defines a @l{Char@} type representing characters.
@@ -72,7 +90,7 @@
      IntP@ 2p1
    );
  
-  The @l{Int@} type is a union with postivie, zero, and negative fields:
+  The @l{Int@} type is a union with positive, zero, and negative fields:
  
   @code[fble] @
    @ Int@ = +(
@@ -139,6 +157,62 @@
  
   @code[fble] @
    (List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
+
+ @section @l{/Core/Show%}
+  The @l{/Core/Show%} module defines a @l{Show@} interface for types that can
+  be converted to strings.
+
+  @code[fble] @
+   <@>@ Show@ = <@ T@>(T@) { /Core/String%.String@; };
+
+ @section @l{/Core/Ord%}
+  The @l{/Core/Ord%} module defines an @l{Ordering@} type and @l{Ord@}
+  interface for types that can be compared.
+
+  @code[fble] @
+   @ Ordering@ = +(Unit@ lt, Unit@ eq, Unit@ gt);
+
+   Ordering@ Lt = Ordering@(lt: Unit);
+   Ordering@ Eq = Ordering@(eq: Unit);
+   Ordering@ Gt = Ordering@(gt: Unit);
+
+   <@>@ Ord@ = <@ T@>(T@, T@) { Ordering@; };
+
+ @section @l{/Core/Map%}
+  The @l{/Core/Map%} module defines the type @l{Map@}, which maps from keys to
+  values using a self balancing tree data structure. It provides functions for
+  inserting, looking up, and removing values from the map.
+
+  Any type can be used for the key, as long as there is an ordering relation
+  defined on the type via the @l{Ord@} interface.
+
+  @code[fble] @
+   <@,@>@ Map@ = <@ K@, @ V@> { ... };
+
+   Map@ Empty = ...;
+   <@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = ...;
+   <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup = ...;
+   <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; } Insert = ...;
+   <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; } Delete = ...;
+   <@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach = ...;
+
+ @section @l{/Core/Set%}
+  The @l{/Core/Set%} module defines a @l{Set@} type for describing a set of
+  values. It's a special case of the @l{Map@} type.
+
+  @code[fble] @
+   <@>@ Set@ = <@ T@> { Map@<T@, Unit@>; };
+
+   Set@ Empty = ...;
+   <@ T@>(Set@<T@>) { Bool@; } IsEmpty = ...;
+   <@ T@>(Ord@<T@>, Set@<T@>, T@) { Bool@; } Contains = ...;
+   <@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; } Insert = ...;
+   <@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; } Delete = ...;
+   <@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; } ForEach = ...;
+
+ @section @l{/Core/Test%}
+  The @l{/Core/Test%} module defines types @l{Test@}, @l{TestSuite@} and
+  others for writing and running unit tests.
  
  @section @l{/Core/Monad%}
   The @l{/Core/Monad%} module defines a monad interface like the one we saw in
@@ -171,6 +245,5 @@
   @l{Main@} function with the @l{fble-stdio} program.
  
  @section Next Steps
-  Head over to the @fbld[HelloWorldRevisited.fbld][Hello World Revisited]
-  tutorial to take look back at our hello world program with full knowledge
-  about the language features and libraries used.
+  Head over to the @fbld[Stdio.fbld][Standard IO] tutorial to learn about
+  writing command line fble programs that can interact with their environment.

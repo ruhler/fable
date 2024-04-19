@@ -104,7 +104,7 @@ Literals.fbld      DONE
 Polymorphism.fbld  DONE
 Bind.fbld          DONE
 AbstractTypes.fbld DONE
-Core.fbld
+Core.fbld          DONE
 HelloWorldRevisted.fbld
 DebugGuide.fbld
 ProfilingGuide.fbld
@@ -131,7 +131,7 @@ currently have defined in the library.
 
 These are the ones worth including:
 
-  Bool Char Int List Map Maybe Set Unit String
+  Unit Bool Char Int List String Map Maybe Set 
   Eq Monad Ord Show
   Stdio Stream
   Test

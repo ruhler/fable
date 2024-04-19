@@ -50,7 +50,7 @@
   Learn about support for abstract types in fble.
  
  @def @fbld[Core.fbld][Core]
-  Learn about core library types and functions used in the hello world program.
+  Learn about useful core library types and functions.
  
  @def @fbld[HelloWorldRevisited.fbld][Hello World Revisited]
   Review the hello world program now that you know all the language features

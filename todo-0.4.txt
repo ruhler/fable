@@ -18,6 +18,8 @@ Things to consider doing for the fble-0.4 release.
  - modularity
  - native C implementation
 
+* Design a standard library?
+
 * New apps
  - IEEE floating point support.
  - More benchmark games.
