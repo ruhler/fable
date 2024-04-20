@@ -89,7 +89,8 @@ GetArgs = (List@<String@> args) {
 @ State@ = *(
   Game@ game,
   Int@ mouse_x,
-  Int@ mouse_y
+  Int@ mouse_y,
+  Drawing@ screen   # Cached drawing of the game without the cursor.
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
@@ -100,15 +101,21 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Int@ cols = Int|3;
 
-  (State@) { M@<Unit@>; } Draw = (State@ state) {
-    Color@ bg_color = Solved(state.game).?(true: Color.Green, false: Color.Black);
+  (Game@) { Drawing@; } DrawScreen = (Game@ game) {
+    Color@ bg_color = Solved(game).?(true: Color.Green, false: Color.Black);
     Drawing@ background = Rect(Int|0, Int|0, width, height, bg_color);
-    Drawing@ cursor = Rect(
+    Drawings[background, /SatGame/Game/Draw%.Draw(cols, game)];
+  };
+
+  (State@) { Drawing@; } DrawCursor = (State@ state) {
+    Rect(
       Sub(state.mouse_x, Int|4),
       Sub(state.mouse_y, Int|4),
       Int|8, Int|8, Color.Yellow);
-    Drawing@ game = /SatGame/Game/Draw%.Draw(cols, state.game);
-    Drawing@ screen = Drawings[background, game, cursor];
+  };
+
+  (State@) { M@<Unit@>; } Draw = (State@ state) {
+    Drawing@ screen = Drawings[state.screen, DrawCursor(state)];
     app.effect(Effect@(draw: screen));
   };
 
@@ -123,7 +130,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         Int@ y = e.mouse_down.y;
         Maybe@<TileIndex@> ti = TileOf(params, cols, x, y);
         ti.?(nothing: EventLoop(state));
-        State@ ns = state.@(game: Toggle(ti.just.group, ti.just.tile, state.game));
+        Game@ ng = Toggle(ti.just.group, ti.just.tile, state.game);
+        State@ ns = state.@(game: ng, screen: DrawScreen(ng));
         Unit@ _ <- m.do(Draw(ns));
         EventLoop(ns);
       },
@@ -132,7 +140,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       mouse_motion: {
         State@ ns = state.@(
           mouse_x: e.mouse_motion.x,
-          mouse_y: e.mouse_motion.y);
+          mouse_y: e.mouse_motion.y
+          );
         Unit@ _ <- m.do(Draw(ns));
         EventLoop(ns);
       });
@@ -149,7 +158,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 
-  State@ state = State@(game, Int|0, Int|0);
+  State@ state = State@(game, Int|0, Int|0, DrawScreen(game));
   Unit@ _ <- m.do(Draw(state));
   Unit@ _ <- m.do(EventLoop(state));
   m.return(True);
