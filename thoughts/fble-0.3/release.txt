@@ -52,3 +52,10 @@ Starting from tag fble-0.2:
 
 It's worth doing a review of fble lib API changes too, and seeing what more we
 want to do before finishing out the fble-0.3 release.
+
+---
+
+I would say all the big things are done now. What's left is going item by item
+and either getting it done or pushing it out to a later release. We have 114
+lines of todo items to go through.
+

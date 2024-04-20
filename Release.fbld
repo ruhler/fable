@@ -1,6 +1,27 @@
 @doc Fble Release Notes
   @FbleVersion (@BuildStamp)
 
+ @section fble-0.3 Pending
+  The following list highlights the most notable changes from fble-0.2.
+
+  @subsection Fble Language
+   @item General support for partial and over application of functions.
+
+  @subsection Fble Implementation
+   @item Added support for compiling on Windows with MSYS2
+   @item Complete rewrite of memory allocator for improved performance.
+   @item Revamped FbleExecutable API for improved performance.
+   @item Miscellanous backwards incompatible API changes.
+
+  @subsection Fble Debugger
+   @item Removed difficult-to-maintain support for easy single step in gdb.
+
+  @subsection Documentation
+   @item Simplified and revised fble language tutorials.
+
+  @subsection Applications
+   @item Added new satgame application.
+
  @section fble-0.2 December 2023
   The following list highlights the most notable changes from fble-0.1.
 
