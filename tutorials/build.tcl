@@ -7,7 +7,6 @@ namespace eval "tutorials" {
     Features.fbld
     Functions.fbld
     HelloWorld.fbld
-    HelloWorldRevisited.fbld
     Install.fbld
     Introduction.fbld
     Lists.fbld
@@ -15,6 +14,7 @@ namespace eval "tutorials" {
     Modules.fbld
     Polymorphism.fbld
     Structs.fbld
+    Stdio.fbld
     Unions.fbld
     Variables.fbld
   }

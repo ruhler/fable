@@ -1,0 +1,132 @@
+@tutorial Standard IO
+ In this tutorial we'll learn how to write command line programs that interact
+ with the environment.
+
+ Until now we've been writing fble programs that use
+ @l{/Core/Stdio/StringO%.Run} to output a string:
+
+ @code[fble] @
+   String@ output = Str|'hello, world';
+   /Core/Stdio/StringO%.Run(output);
+
+ The @l{/Core/Stdio%} library provides a more general interface for writing
+ fble programs that allows you to access command line arguments, access
+ standard input, output, and error streams, read and write files, read
+ environment variables, and return an exit status.
+
+ The @l{/Core/Stdio/IO%.Run} function takes a @l{Main@} function with the
+ following type:
+
+ @code[fble] @
+  <<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
+
+ Here is an example hello world program using this more general interface:
+
+ @code[fble] @
+  # A hello world program using the Stdio@ interface.
+  Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
+    % O = /Core/Stream/OStream%(m);
+    
+    Unit@ _ <- m.do(O.PutLine(stdio.out, Str|'hello, world'));
+    m.return(True);
+  };
+
+  /Core/Stdio/IO%.Run(Main);
+
+ Let's break this down
+
+ @section @l{<<@>@ M@>}
+  The @l{Main@} function is polymorphic, parameterized by type @l{M@}. The
+  first two arguments to the function are @l{m} and @l{stdio}, which are
+  interfaces supported by the abstract type @l{M@}.
+
+  This says your main function can be used with any type @l{M@} that
+  implements the @l{Monad@} and @l{Stdio@} interfaces. The
+  @l{/Core/Stdio/IO%.Run} function provides a concrete type of @l{M@} for use
+  with the @l{fble-stdio} program.
+
+  The reason @l{Main@} is polymorphic instead of hard coding the concrete type
+  for @l{M@} provided by @l{/Core/Stdio/IO%.Run} is to make your main function
+  more general than just for use with @l{fble-stdio}. For example, you can
+  write test cases for your main function using a simulated environment.
+
+ @section @l{Monad@<M@> m}
+  The @l{Monad@<M@>} interface @l{m} provides a way to sequence operations.
+  This is needed to have a well defined order of operations when interacting
+  with input and output streams and files.
+
+ @section @l{Stdio@<M@> stdio}
+  The @l{Stdio@<M@>} interface is defined as follows:
+
+  @code[fble] @
+   <<@>@>@ Stdio@ = <<@>@ M@> { *(
+     # stdin stream
+     IStream@<M@> in,
+
+     # stdout stream
+     OStream@<M@> out,
+
+     # stderr stream
+     OStream@<M@> err,
+
+     # Open the named file for reading.
+     # Returns an input stream for reading. Nothing if unable to open the file.
+     (String@) { M@<Maybe@<IStream@<M@>>>; } read,
+
+     # Open the named file for writing.
+     # Returns an output stream for writing. Nothing if unable to open the file.
+     (String@) { M@<Maybe@<OStream@<M@>>>; } write,
+
+     # Gets an environment variable value.
+     (String@) { M@<Maybe@<String@>>; } getenv
+   ); };
+  
+  The @l{IStream@} and @l{OStream@} are types for reading a sequence of bytes.
+  The @l{Stdio@} interface represents bytes using the @l{Int@} type:
+
+  @code[fble] @
+   <<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
+   <<@>@>@ OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
+
+  The fields @l{in}, @l{out}, and @l{err} let you read and write standard
+  input and output streams.
+
+  The fields @l{read} and @l{write} let you open files for reading and writing
+  respectively.
+
+  The field @l{getenv} lets you access the value of an environment variable.
+
+ @section @l{List@<String@> args}
+  The @l{args} argument is the list of command line arguments passed when
+  invoking the program. For example, if you ran your program as:
+
+  @code[sh] @
+   fble-stdio -p core -I . -m /Foo% -- hello there now
+
+  Then the value of @l{args} would be:
+
+  @code[fble] @
+   List[Str|'hello', Str|'there', Str|'now']
+ 
+ @section @l{M@<Bool@>;}
+  The result of the @l{Main@} program has type @l{M@<Bool@>}. If you return
+  @l{True} using @l{m.return(True)}, your program will have exit status 0.
+  Otherwise your program will have exit status 1.
+
+ @section Exercises
+  @exercise
+   Write an fble program that prints out a sorted list of the command line
+   arguments passed to it.
+
+  @exercise
+   Write an fble program that outputs the length of a given file. Try passing
+   the file via standard input and as a file path.
+
+  @exercise
+   Write an fble program that repeatedly prompts the user for a number and
+   outputs the largest number input so far.
+   
+ @section Next Steps
+  This completes this tutorial series on the fble language. You now understand
+  all the fble language features and can write interesting programs that
+  interact with the environment on the command line. Go forth now and program.

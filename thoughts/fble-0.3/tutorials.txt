@@ -105,10 +105,10 @@ Polymorphism.fbld  DONE
 Bind.fbld          DONE
 AbstractTypes.fbld DONE
 Core.fbld          DONE
-HelloWorldRevisted.fbld
-DebugGuide.fbld
-ProfilingGuide.fbld
-Tutorials.fbld
+HelloWorldRevisted.fbld  DONE
+DebugGuide.fbld DONE
+ProfilingGuide.fbld DONE
+Tutorials.fbld DONE
 
 ---
 

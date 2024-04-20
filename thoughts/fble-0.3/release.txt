@@ -33,3 +33,22 @@ On further thought, I think we've got enough big features for this release.
 Let's burn down and get the release out. Save fbld updates, debugger updates,
 modular compilation, etc. for the next release.
 
+---
+
+Summary of things done so far this release (since f6ead011908897a9a):
+
+Starting from tag fble-0.2:
+
+* Revise tutorials - to simplify and for partial application changes
+* Windows msys support for native fble apps
+* satgame sample app
+* completely revamped memory allocation, do more stack allocation.
+  - generational GC
+  - for performance improvements
+* language support for partial function application.
+* Simplify and revamp FbleExecutable API
+  - for performance improvements
+  - gdb step capability sacrificed
+
+It's worth doing a review of fble lib API changes too, and seeing what more we
+want to do before finishing out the fble-0.3 release.
