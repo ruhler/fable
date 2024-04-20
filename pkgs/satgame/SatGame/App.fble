@@ -50,20 +50,40 @@
   Int@ seed
 );
 
+Args@ DefaultArgs = @(
+  num_vars: Int|12,
+  num_clauses: Int|18,
+  num_literals_per_clause: Int|3,
+  seed: Int|1
+);
+
 (List@<String@>) { Args@; }
 GetArgs = (List@<String@> args) {
-  Int@ num_vars = /Core/Int/Show%.Read(args.cons.head);
+  args.?(nil: DefaultArgs);
+  args.cons.tail.?(nil: DefaultArgs);
 
-  List@<String@> a2 = args.cons.tail;
-  Int@ num_clauses = /Core/Int/Show%.Read(a2.cons.head);
+  Args@ tail = GetArgs(args.cons.tail.cons.tail);
 
-  List@<String@> a3 = a2.cons.tail;
-  Int@ num_literals_per_clause = /Core/Int/Show%.Read(a3.cons.head);
+  String@ arg = args.cons.head;
+  Int@ value = /Core/Int/Show%.Read(args.cons.tail.cons.head);
 
-  List@<String@> a4 = a3.cons.tail;
-  Int@ seed = /Core/Int/Show%.Read(a4.cons.head);
+  /Core/String/Eq%.Eq(arg, Str|'--vars').?(true: {
+    tail.@(num_vars: value);
+  });
 
-  @(num_vars, num_clauses, num_literals_per_clause, seed);
+  /Core/String/Eq%.Eq(arg, Str|'--clauses').?(true: {
+    tail.@(num_clauses: value);
+  });
+
+  /Core/String/Eq%.Eq(arg, Str|'--lits-per-clause').?(true: {
+    tail.@(num_literals_per_clause: value);
+  });
+
+  /Core/String/Eq%.Eq(arg, Str|'--seed').?(true: {
+    tail.@(seed: value);
+  });
+
+  tail;
 };
 
 @ State@ = *(
@@ -78,7 +98,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Args@ args = GetArgs(argv);
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
 
-  Int@ cols = Int|2;
+  Int@ cols = Int|3;
 
   (State@) { M@<Unit@>; } Draw = (State@ state) {
     Color@ bg_color = Solved(state.game).?(true: Color.Green, false: Color.Black);

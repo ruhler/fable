@@ -314,3 +314,19 @@ vote: target a 4/3 aspect ratio, round as needed.
 Use the target aspect ratio to determine number of group columns. Draw tile as
 32x32, then scale it to fill up as big as we can to fit the display. Center in
 the screen.
+
+---
+
+Let's make SatGame release worthy at least.
+
+Pick good default parameters and make it actually random.
+
+To make it actually random, we can store a seed in the users home directory
+and update it every time we play.
+
+Proposed options:
+  --vars, number of variables. Defaults to 12
+  --clauses, number of clauses. Defaults to 18
+  --literals-per-clause. Defaults to 3
+  --seed. Defaults to $HOME/.fble-satgame value, or 1.
+

@@ -3,11 +3,12 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
+ - Pick different default seed every time.
+ - Fix performance issue with mouse motion.
  - Auto compute number of columns.
  - Scale up to fit in window.
  - Have group pad border around the outside edge.
  - Have left click select, right click dismiss?
- - Pick default values for params with flags to modify.
  - Add test cases for /SatGame/Game%.Solved.
 
 * Add fble to rosettacode.org?
