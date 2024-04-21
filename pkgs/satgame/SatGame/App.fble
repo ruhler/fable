@@ -57,33 +57,34 @@ Args@ DefaultArgs = @(
   seed: Int|1
 );
 
-(List@<String@>) { Args@; }
-GetArgs = (List@<String@> args) {
-  args.?(nil: DefaultArgs);
-  args.cons.tail.?(nil: DefaultArgs);
-
-  Args@ tail = GetArgs(args.cons.tail.cons.tail);
+(List@<String@>, Args@) { Args@; }
+GetArgs = (List@<String@> args, Args@ default) {
+  args.?(nil: default);
+  args.cons.tail.?(nil: default);
 
   String@ arg = args.cons.head;
   Int@ value = /Core/Int/Show%.Read(args.cons.tail.cons.head);
 
-  /Core/String/Eq%.Eq(arg, Str|'--vars').?(true: {
-    tail.@(num_vars: value);
-  });
+  Args@ nargs = {
+    /Core/String/Eq%.Eq(arg, Str|'--vars').?(true: {
+      default.@(num_vars: value);
+    });
 
-  /Core/String/Eq%.Eq(arg, Str|'--clauses').?(true: {
-    tail.@(num_clauses: value);
-  });
+    /Core/String/Eq%.Eq(arg, Str|'--clauses').?(true: {
+      default.@(num_clauses: value);
+    });
 
-  /Core/String/Eq%.Eq(arg, Str|'--lits-per-clause').?(true: {
-    tail.@(num_literals_per_clause: value);
-  });
+    /Core/String/Eq%.Eq(arg, Str|'--lits-per-clause').?(true: {
+      default.@(num_literals_per_clause: value);
+    });
 
-  /Core/String/Eq%.Eq(arg, Str|'--seed').?(true: {
-    tail.@(seed: value);
-  });
+    /Core/String/Eq%.Eq(arg, Str|'--seed').?(true: {
+      default.@(seed: value);
+    });
 
-  tail;
+    default;
+  };
+  GetArgs(args.cons.tail.cons.tail, nargs);
 };
 
 @ State@ = *(
@@ -96,7 +97,7 @@ GetArgs = (List@<String@> args) {
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
   % O = /Core/Stream/OStream%(m);
 
-  Args@ args = GetArgs(argv);
+  Args@ args = GetArgs(argv, DefaultArgs);
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
 
   Int@ cols = Int|3;
