@@ -3,7 +3,6 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Pick different default seed every time.
  - Auto compute number of columns.
  - Scale up to fit in window.
  - Have group pad border around the outside edge.

@@ -2,6 +2,7 @@
 % True = /Core/Bool%.True;
 
 @ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
 % Sub = /Core/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
 
@@ -11,6 +12,8 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -95,9 +98,33 @@ GetArgs = (List@<String@> args, Args@ default) {
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
+  % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 
-  Args@ args = GetArgs(argv, DefaultArgs);
+  # Read and update the default seed value.
+  Int@ seed <- m.do({
+    Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
+    home.?(nothing: m.return(Int|0));
+
+    String@ filename = Strs[home.just, Str|'/.fble-satgame'];
+    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename));
+
+    Int@ seed <- m.do({
+      istream.?(nothing: m.return(Int|0));
+      String@ text <- m.do(I.GetText(istream.just));
+      m.return(/Core/Int/Show%.Read(text));
+    });
+
+    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename));
+    Unit@ _ <- m.do({
+      ostream.?(nothing: m.return(Unit));
+      O.PutStr(ostream.just, /Core/Int/Show%.Show(Incr(seed)));
+    });
+
+    m.return(seed);
+  });
+
+  Args@ args = GetArgs(argv, DefaultArgs.@(seed));
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
 
   Int@ cols = Int|3;
