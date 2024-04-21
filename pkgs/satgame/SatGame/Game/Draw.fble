@@ -1,9 +1,11 @@
 
 @ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
 % Decr = /Core/Int%.Decr;
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
+% Gt = /Core/Int/Eq%.Gt;
 % Lt = /Core/Int/Eq%.Lt;
 @ QR@ = /Core/Int/Div%.QR@;
 % Div = /Core/Int/Div%.Div;
@@ -45,16 +47,24 @@ Int@ VarShift = Div(Sub(TileWidth, VarWidth), Int|2).q;
   Int@ height             # Total height.
 );
 
-# Compute the layout for the given game parameters.
-(Params@) { Layout@; }
-Layout = (Params@ params) {
-  Int@ cols = Int|3;  # TODO: auto-compute this.
+# Computes the best layout with at least the given number of columns.
+(Int@, Params@) { Layout@; }
+BestLayout = (Int@ cols, Params@ params) {
   Int@ rows = Div(Add(params.num_clauses, Decr(cols)), cols).q;
   Int@ group_width = Add(Mul(TileWidth, params.num_literals_per_clause), GroupPad);
   Int@ width = Add(Mul(cols, group_width), GroupPad);
   Int@ height = Add(Mul(rows, Add(TileWidth, GroupPad)), GroupPad);
+
+  # Target an aspect ratio of 4/3
+  Int@ 4w = Mul(Int|4, width);
+  Int@ 3h = Mul(Int|3, height);
+  Gt(3h, 4w).?(true: BestLayout(Incr(cols), params));
+
   @(cols, rows, group_width, width, height);
 };
+
+# Computes the layout for the given game parameters.
+(Params@) { Layout@; } Layout = BestLayout(Int|1);
 
 (Tile@) { Drawing@; }
 Tile = (Tile@ tile) {

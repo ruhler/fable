@@ -3,7 +3,6 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Auto compute number of columns.
  - Center the groups.
  - Scale up the groups to fill the window.
  - Have left click select, right click dismiss?
