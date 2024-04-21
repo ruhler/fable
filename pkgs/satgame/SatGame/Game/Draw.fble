@@ -109,7 +109,10 @@ Rows = (Layout@ layout, Game@ game) {
 #  @args[Game@][game] The game to draw.
 (Layout@, Game@) { Drawing@; }
 Draw = (Layout@ layout, Game@ game) {
-  Color@ bg_color = Solved(game).?(true: Color.Green, false: Color.Blue);
+  Color@ bg_color = Solved(game).?(
+    true: Color@(Int|0, Int|156, Int|0),
+    false: Color.Blue
+  );
   Drawing@ background = Rect(Int|0, Int|0, layout.width, layout.height, bg_color);
   Drawing@ rows = Rows(layout, game);
   Drawings[background, rows];
