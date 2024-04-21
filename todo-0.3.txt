@@ -3,8 +3,8 @@ Fble 0.3 TODO
 Things to consider doing for the fble-0.3 release.
 
 * SatGame
- - Center the groups.
- - Scale up the groups to fill the window.
+ - Scale up the board to fill the window.
+ - Add support for resizing the window.
  - Have left click select, right click dismiss?
  - Add test cases for /SatGame/Game%.Solved.
 

@@ -4,6 +4,7 @@
 @ Int@ = /Core/Int%.Int@;
 % Incr = /Core/Int%.Incr;
 % Sub = /Core/Int%.Sub;
+% Div = /Core/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -29,8 +30,10 @@
 
 @ Color@ = /App/Drawing%.Color@;
 @ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
 % Color = /App/Drawing%.Color;
 % Rect = /App/Drawing%.Rect;
+% Translate = /App/Drawing%.Translate;
 % Drawings = /App/Drawing%.Drawings;
 
 @ Params@ = /SatGame/Puzzle%.Params@;
@@ -129,10 +132,20 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
   Layout@ layout = Layout(params);
 
+  # Center the game in the window.
+  # TODO: We should scale it to fit too, if only affine transformations
+  # allowed non-integer multiples.
+  Point@ origin = {
+    Int@ x = Div(Sub(width, layout.width), Int|2).q;
+    Int@ y = Div(Sub(height, layout.height), Int|2).q;
+    @(x, y);
+  };
+
   (Game@) { Drawing@; } DrawScreen = (Game@ game) {
     Color@ bg_color = Color@(Int|64, Int|64, Int|64);
     Drawing@ background = Rect(Int|0, Int|0, width, height, bg_color);
-    Drawings[background, /SatGame/Game/Draw%.Draw(layout, game)];
+    Drawing@ board = /SatGame/Game/Draw%.Draw(layout, game);
+    Drawings[background, Translate(origin.x, origin.y, board)];
   };
 
   (State@) { Drawing@; } DrawCursor = (State@ state) {
@@ -154,8 +167,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       key_down: m.return(Unit),
       key_up: m.return(Unit),
       mouse_down: {
-        Int@ x = e.mouse_down.x;
-        Int@ y = e.mouse_down.y;
+        Int@ x = Sub(e.mouse_down.x, origin.x);
+        Int@ y = Sub(e.mouse_down.y, origin.y);
         Maybe@<TileIndex@> ti = TileOf(layout, x, y);
         ti.?(nothing: EventLoop(state));
         Game@ ng = Toggle(ti.just.group, ti.just.tile, state.game);

@@ -330,3 +330,8 @@ Proposed options:
   --literals-per-clause. Defaults to 3
   --seed. Defaults to $HOME/.fble-satgame value, or 1.
 
+---
+
+Trying to scale the game to fit in the window... uh, affine transformation
+isn't very useful for this because it only allows integer multiples.
+
