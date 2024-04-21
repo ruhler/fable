@@ -38,9 +38,10 @@
 
 @ Game@ = /SatGame/Game%.Game@;
 % Toggle = /SatGame/Game%.Toggle;
-% Solved = /SatGame/Game%.Solved;
 
+@ Layout@ = /SatGame/Game/Draw%.Layout@;
 @ TileIndex@ = /SatGame/Game/Draw%.TileIndex@;
+% Layout = /SatGame/Game/Draw%.Layout;
 % TileOf = /SatGame/Game/Draw%.TileOf;
 
 % PureLFSR = /SatGame/Random/PureLFSR%;
@@ -126,13 +127,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Args@ args = GetArgs(argv, DefaultArgs.@(seed));
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
-
-  Int@ cols = Int|3;
+  Layout@ layout = Layout(params);
 
   (Game@) { Drawing@; } DrawScreen = (Game@ game) {
-    Color@ bg_color = Solved(game).?(true: Color.Green, false: Color.Black);
+    Color@ bg_color = Color@(Int|64, Int|64, Int|64);
     Drawing@ background = Rect(Int|0, Int|0, width, height, bg_color);
-    Drawings[background, /SatGame/Game/Draw%.Draw(cols, game)];
+    Drawings[background, /SatGame/Game/Draw%.Draw(layout, game)];
   };
 
   (State@) { Drawing@; } DrawCursor = (State@ state) {
@@ -156,7 +156,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       mouse_down: {
         Int@ x = e.mouse_down.x;
         Int@ y = e.mouse_down.y;
-        Maybe@<TileIndex@> ti = TileOf(params, cols, x, y);
+        Maybe@<TileIndex@> ti = TileOf(layout, x, y);
         ti.?(nothing: EventLoop(state));
         Game@ ng = Toggle(ti.just.group, ti.just.tile, state.game);
         State@ ns = state.@(game: ng, screen: DrawScreen(ng));

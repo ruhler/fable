@@ -1,15 +1,15 @@
 
 @ Int@ = /Core/Int%.Int@;
+% Decr = /Core/Int%.Decr;
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
-% Gt = /Core/Int/Eq%.Gt;
+% Lt = /Core/Int/Eq%.Lt;
 @ QR@ = /Core/Int/Div%.QR@;
 % Div = /Core/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Length = /Core/List/Length%.Length;
 % Take = /Core/List/Length%.Take;
 % Drop = /Core/List/Length%.Drop;
 
@@ -19,6 +19,7 @@
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Color@ = /App/Drawing%.Color@;
+% Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
 % Blank = /App/Drawing%.Blank;
@@ -27,6 +28,7 @@
 @ Game@ = /SatGame/Game%.Game@;
 @ Group@ = /SatGame/Game%.Group@;
 @ Tile@ = /SatGame/Game%.Tile@;
+% Solved = /SatGame/Game%.Solved;
 
 @ Params@ = /SatGame/Puzzle%.Params@;
 
@@ -34,6 +36,25 @@ Int@ VarWidth = Int|32;
 Int@ TileWidth = Int|48;
 Int@ GroupPad = Int|4;
 Int@ VarShift = Div(Sub(TileWidth, VarWidth), Int|2).q;
+
+@ Layout@ = *(
+  Int@ cols,              # Number of group columns.
+  Int@ rows,              # Number of rows.
+  Int@ group_width,       # Width of a group, including one group pad.
+  Int@ width,             # Total width.
+  Int@ height             # Total height.
+);
+
+# Compute the layout for the given game parameters.
+(Params@) { Layout@; }
+Layout = (Params@ params) {
+  Int@ cols = Int|3;  # TODO: auto-compute this.
+  Int@ rows = Div(Add(params.num_clauses, Decr(cols)), cols).q;
+  Int@ group_width = Add(Mul(TileWidth, params.num_literals_per_clause), GroupPad);
+  Int@ width = Add(Mul(cols, group_width), GroupPad);
+  Int@ height = Add(Mul(rows, Add(TileWidth, GroupPad)), GroupPad);
+  @(cols, rows, group_width, width, height);
+};
 
 (Tile@) { Drawing@; }
 Tile = (Tile@ tile) {
@@ -57,45 +78,48 @@ Group = (List@<Tile@> tiles) {
   Drawings[head, Translate(TileWidth, Int|0, tail)];
 };
 
-(List@<Group@>) { Drawing@; }
-Row = (List@<Group@> groups) {
+(Layout@, List@<Group@>) { Drawing@; }
+Row = (Layout@ layout, List@<Group@> groups) {
   groups.?(nil: Blank);
-  Drawing@ head = Group(groups.cons.head);
-  Drawing@ tail = Row(groups.cons.tail);
-  Drawings[
-    head,
-    Translate(Add(Mul(TileWidth, Length(groups.cons.head)), GroupPad), Int|0, tail)
-  ];
+  Drawing@ head = Translate(GroupPad, Int|0, Group(groups.cons.head));
+  Drawing@ tail = Row(layout, groups.cons.tail);
+  Drawings[head, Translate(layout.group_width, Int|0, tail)];
+};
+
+(Layout@, Game@) { Drawing@; }
+Rows = (Layout@ layout, Game@ game) {
+  game.?(nil: Blank);
+  Drawing@ head = Translate(Int|0, GroupPad, Row(layout, Take(layout.cols, game)));
+  Drawing@ tail = Rows(layout, Drop(layout.cols, game));
+  Drawings[head, Translate(Int|0, Add(TileWidth, GroupPad), tail)];
 };
 
 # Draws a game.
-#  @args[Int@][cols] The number of groups per column.
+#  @args[Layout@][layout] The pre-computed game layout.
 #  @args[Game@][game] The game to draw.
-(Int@, Game@) { Drawing@; }
-Draw = (Int@ cols, Game@ game) {
-  game.?(nil: Blank);
-  Drawing@ head = Row(Take(cols, game));
-  Drawing@ tail = Draw(cols, Drop(cols, game));
-  Drawings[head, Translate(Int|0, Add(TileWidth, GroupPad), tail)];
+(Layout@, Game@) { Drawing@; }
+Draw = (Layout@ layout, Game@ game) {
+  Color@ bg_color = Solved(game).?(true: Color.Green, false: Color.Blue);
+  Drawing@ background = Rect(Int|0, Int|0, layout.width, layout.height, bg_color);
+  Drawing@ rows = Rows(layout, game);
+  Drawings[background, rows];
 };
 
 @ TileIndex@ = *(Int@ group, Int@ tile);
 
 # Returns the tile associated with the given (x, y) coordinate, if any.
-(Params@, Int@, Int@, Int@) { Maybe@<TileIndex@>; }
-TileOf = (Params@ params, Int@ cols, Int@ x, Int@ y) {
+(Layout@, Int@, Int@) { Maybe@<TileIndex@>; }
+TileOf = (Layout@ layout, Int@ x, Int@ y) {
   QR@ row = Div(y, Add(TileWidth, GroupPad));
-  Gt(row.r, TileWidth).?(true: Nothing<TileIndex@>);
+  Lt(row.r, GroupPad).?(true: Nothing<TileIndex@>);
 
-  Int@ group_width = Mul(TileWidth, params.num_literals_per_clause);
-  QR@ col = Div(x, Add(group_width, GroupPad));
-  Gt(col.r, group_width).?(true: Nothing<TileIndex@>);
+  QR@ col = Div(x, layout.group_width);
+  Lt(col.r, GroupPad).?(true: Nothing<TileIndex@>);
 
-  Int@ group = Add(Mul(cols, row.q), col.q);
-  Gt(group, params.num_clauses).?(true: Nothing<TileIndex@>);
+  Int@ group = Add(Mul(layout.cols, row.q), col.q);
 
-  Int@ tile = Div(col.r, TileWidth).q;
+  Int@ tile = Div(Sub(col.r, GroupPad), TileWidth).q;
   Just(TileIndex@(group, tile));
 };
 
-@(Draw, TileIndex@, TileOf);
+@(Layout@, Layout, Draw, TileIndex@, TileOf);
