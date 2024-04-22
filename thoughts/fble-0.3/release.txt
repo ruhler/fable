@@ -59,3 +59,58 @@ I would say all the big things are done now. What's left is going item by item
 and either getting it done or pushing it out to a later release. We have 114
 lines of todo items to go through.
 
+---
+
+Going through release items:
+* rosetta code - not worth doing now. There are too many tasks without precise
+  specifications. I'm not convinced it's worth doing at all honestly.
+  Regardless, let's not worry about for this release.
+* Spec tests for coverage
+  - It's not worth checking compiled code errors in spec tests. The additional
+    coverage is a single line, and we would know pretty quickly if things were
+    broken there.
+  - Not worth checking multi-chunk logic in spec tests, because it is so
+    implementation detail specific. And we should know pretty soon from
+    application level tests if there is something wrong there.
+  - Test for warnings
+    I don't feel like it. It's optional anyway, right? If we started testing
+    for these, there are a whole bunch of different scenarios to test for.
+    Hmm... On second thought, let me not give up on this yet.
+* Share code between LinkInterpreted and LinkGenerated?
+  The trouble is LinkInterpreted goes directly from FbleCode* to FbleValue*,
+  and LinkGenerated goes from FbleExecutable* to FbleValue*. There's no clear
+  path from FbleCode -> FbleExecutable we could use. The only way to share,
+  then would be to factor out code for * -> FbleValue* -> Link. The logic we
+  could share is for writing FbleCode, which is all about the dependency
+  structure. It doesn't seem worth it. This is well contained code. We can
+  worry about it later if it becomes a problem.
+
+* Some better way to recover if build.ninja gets messed up than having to
+  re-run configure.
+  I can't reproduce the issue. We already have a mechanism in place that seems
+  to work for me. I'll have to wait until we run into a similar problem again
+  to have something more concrete to solve.
+
+---
+
+Does it make sense that a function that returns a poly has kind %?
+
+For example, ???. Seems like the original example was List%.Map function has
+kind <@>% instead of <@, @>%.
+ 
+It's similar to the question of why we can wrap a poly in a struct and go from
+higher order kind to kind %.
+
+The purpose of kind is for dealing with abstract types, where we need to know
+if we can do application or not. We need to know if type inference should be
+done or not. Except now for types we ignore that. Maybe let's plan to review
+this for next release?
+
+For example, let's say you have something of kind <@>%. You apply it to get
+something of kind %. There's nothing you can do with that without knowing its
+type. If you know it's type you might be able to do more.
+
+I'm inclined to say it does make sense to distinguish these. Is it useful
+though? Is there any time we don't know the type of something when we could or
+could not try to apply to it?
+

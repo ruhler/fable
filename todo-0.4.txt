@@ -2,6 +2,9 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Consider removing higher order kinds from the language.
+  Make everything either kind @ or %. What would we lose?
+
 * Make programs run twice as fast.
 
 * Improving packing support for data values.
@@ -17,6 +20,11 @@ Things to consider doing for the fble-0.4 release.
 * Fbld Language Revision
  - modularity
  - native C implementation
+
+* Add fble to rosettacode.org?
+  Or at least implement all the tasks, perhaps in a separate RosettaCode
+  package to start.
+  Probably start with all the 'Simple' tasks.
 
 * Design a standard library?
 
