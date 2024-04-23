@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-warning 7:7
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# The variable 'Unit' is unused, because it is referenced from the unused
+# variable 'True'.
+Unit@ Unit = Unit@();
+Bool@ True = Bool@(true: Unit);
+Unit@();

@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-warning 5:7
+@ Unit@ = *();
+
+# The variable 'x' is unused.
+Unit@ x = Unit@();
+Unit@();

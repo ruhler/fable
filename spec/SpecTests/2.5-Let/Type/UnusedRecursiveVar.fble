@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-warning 6:6
+@ Unit@ = *();
+@ Foo@ = *(Unit@ u, Foo@ x);
+
+# The variable 'f' is unused, even though it references itself.
+Foo@ f = Foo@(Unit@(), f);
+Unit@();

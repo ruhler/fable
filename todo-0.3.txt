@@ -8,8 +8,6 @@ Things to consider doing for the fble-0.3 release.
  - Have left click select, right click dismiss?
  - Add test cases for /SatGame/Game%.Solved.
 
-* Test for unused variables and arguments?
-
 * Add a test case for fble-perf-profile?
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?

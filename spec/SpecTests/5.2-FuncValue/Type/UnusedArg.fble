@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-warning 9:8
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+Unit@ Unit = Unit@();
+Bool@ True = Bool@(true: Unit);
+
+# The argument 'x' is unused.
+(Bool@ x) { True; };
+

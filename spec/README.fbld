@@ -33,6 +33,18 @@
   specified in the form line:col, where line is the line number of the
   expected error and col is the column number in the line of the expected
   error.
+
+ @section Compile Warning
+  Annotation:
+ 
+  @code[fble] @
+   # @@fble-test@@ compile-warning <loc>
+ 
+  Compile the module. The test is considered passing if there is a compilation
+  warning reported at location @l[<loc>], but the compilation otherwise
+  succeeds. The location of the error message specified in the form line:col,
+  where line is the line number of the expected error and col is the column
+  number in the line of the expected error.
  
  @section Runtime Error
   Annotation:

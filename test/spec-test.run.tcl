@@ -74,6 +74,21 @@ proc expect_error { type loc args } {
   }
 }
 
+# expect_warning
+#   Helper function for expected warning case.
+#
+# Inputs:
+#   loc - location of expected warning.
+#   args - command to run.
+proc expect_warning { loc args } {
+  set output [execv {*}$args 2>@1]
+
+  if {-1 == [string first ":$::loc: warning" $output]} {
+    puts "@FAILED"
+    error "Expected warning at $::loc, but got:\n$output"
+  }
+}
+
 set ::s [lindex $argv 0]
 set ::b [lindex $argv 1]
 set ::fble [lindex $argv 2]
@@ -194,6 +209,10 @@ proc dispatch {} {
 
     compile-error {
       expect_error compile $::loc $::b/test/fble-test.cov -I $::s/spec -m $::mpath
+    }
+
+    compile-warning {
+      expect_warning $::loc $::b/test/fble-test.cov -I $::s/spec -m $::mpath
     }
 
     runtime-error {
