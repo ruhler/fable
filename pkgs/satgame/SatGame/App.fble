@@ -98,7 +98,11 @@ GetArgs = (List@<String@> args, Args@ default) {
   Game@ game,
   Int@ mouse_x,
   Int@ mouse_y,
-  Drawing@ screen   # Cached drawing of the game without the cursor.
+  Drawing@ board,  # Cached drawing of the game board.
+
+  Int@ width,      # width of the window
+  Int@ height,     # height of the window
+  Point@ origin    # Position of game board in window
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
@@ -135,28 +139,24 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   # Center the game in the window.
   # TODO: We should scale it to fit too, if only affine transformations
   # allowed non-integer multiples.
-  Point@ origin = {
-    Int@ x = Div(Sub(width, layout.width), Int|2).q;
-    Int@ y = Div(Sub(height, layout.height), Int|2).q;
+  (Int@, Int@) { Point@; } Origin = (Int@ w, Int@ h) {
+    Int@ x = Div(Sub(w, layout.width), Int|2).q;
+    Int@ y = Div(Sub(h, layout.height), Int|2).q;
     @(x, y);
   };
 
-  (Game@) { Drawing@; } DrawScreen = (Game@ game) {
+  (State@) { M@<Unit@>; } Draw = (State@ state) {
     Color@ bg_color = Color@(Int|64, Int|64, Int|64);
-    Drawing@ background = Rect(Int|0, Int|0, width, height, bg_color);
-    Drawing@ board = /SatGame/Game/Draw%.Draw(layout, game);
-    Drawings[background, Translate(origin.x, origin.y, board)];
-  };
-
-  (State@) { Drawing@; } DrawCursor = (State@ state) {
-    Rect(
+    Drawing@ background = Rect(Int|0, Int|0, state.width, state.height, bg_color);
+    Drawing@ cursor = Rect(
       Sub(state.mouse_x, Int|4),
       Sub(state.mouse_y, Int|4),
       Int|8, Int|8, Color.Yellow);
-  };
+    Drawing@ screen = Drawings[
+      background,
+      Translate(state.origin.x, state.origin.y, state.board),
+      cursor];
 
-  (State@) { M@<Unit@>; } Draw = (State@ state) {
-    Drawing@ screen = Drawings[state.screen, DrawCursor(state)];
     app.effect(Effect@(draw: screen));
   };
 
@@ -167,22 +167,31 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       key_down: m.return(Unit),
       key_up: m.return(Unit),
       mouse_down: {
-        Int@ x = Sub(e.mouse_down.x, origin.x);
-        Int@ y = Sub(e.mouse_down.y, origin.y);
+        Int@ x = Sub(e.mouse_down.x, state.origin.x);
+        Int@ y = Sub(e.mouse_down.y, state.origin.y);
         Maybe@<TileIndex@> ti = TileOf(layout, x, y);
         ti.?(nothing: EventLoop(state));
-        Game@ ng = Toggle(ti.just.group, ti.just.tile, state.game);
-        State@ ns = state.@(game: ng, screen: DrawScreen(ng));
-        Unit@ _ <- m.do(Draw(ns));
-        EventLoop(ns);
+        Game@ ngame = Toggle(ti.just.group, ti.just.tile, state.game);
+        Drawing@ board = /SatGame/Game/Draw%.Draw(layout, ngame);
+        State@ nstate = state.@(game: ngame, board: board);
+        Unit@ _ <- m.do(Draw(nstate));
+        EventLoop(nstate);
       },
       mouse_up: EventLoop(state),
-      resize: EventLoop(state),
+      resize: {
+        State@ nstate = state.@(
+          width: e.resize.width,
+          height: e.resize.height,
+          origin: Origin(e.resize.width, e.resize.height)
+        );
+        Unit@ _ <- m.do(Draw(nstate));
+        EventLoop(nstate);
+      },
       mouse_motion: {
         State@ ns = state.@(
           mouse_x: e.mouse_motion.x,
           mouse_y: e.mouse_motion.y
-          );
+        );
         Unit@ _ <- m.do(Draw(ns));
         EventLoop(ns);
       });
@@ -199,7 +208,16 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   Game@ game = /SatGame/Game%.Game(puzzle);
 
-  State@ state = State@(game, Int|0, Int|0, DrawScreen(game));
+  State@ state = @(
+    game,
+    mouse_x: Int|0,
+    mouse_y: Int|0,
+    board: /SatGame/Game/Draw%.Draw(layout, game),
+    width,
+    height,
+    origin: Origin(width, height)
+  );
+
   Unit@ _ <- m.do(Draw(state));
   Unit@ _ <- m.do(EventLoop(state));
   m.return(True);
