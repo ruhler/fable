@@ -32,9 +32,10 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ _widt
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);
+  Point@ d = @(x: Int|1, y: Int|1);
 
   Drawing@ screenshot = Screenshot;
-  Unit@ _ <- m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
+  Unit@ _ <- m.do(app.effect(Effect@(draw: Affine(a, b, d, screenshot))));
 
   M@<Bool@> WaitForKeyPress = {
     Event@ e <- m.do(app.event);

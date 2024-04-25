@@ -41,8 +41,8 @@ Int@ 1 = Int|1;
   *(Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) rect,
   
   # Draw a drawing transformed by an affine transformation of the form
-  # a*x + b.
-  *(Point@ a, Point@ b, Drawing@ drawing) transformed,
+  # (a*x + b) / d.
+  *(Point@ a, Point@ b, Point@ d, Drawing@ drawing) transformed,
 
   # Draw one drawing over another.
   *(Drawing@ below, Drawing@ above) over
@@ -76,16 +76,16 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 };
 
 # Transform the drawing using an affine transform. Each point p will be
-# transformed to (a.x*p.x + b.x, a.y*p.y + b.y).
-(Point@, Point@, Drawing@) { Drawing@; }
-Affine = (Point@ a, Point@ b, Drawing@ d) {
-  Drawing@(transformed: @(a, b, drawing: d));
+# transformed to ((a.x*p.x + b.x)/d.x, (a.y*p.y + b.y)/d.y).
+(Point@, Point@, Point@, Drawing@) { Drawing@; }
+Affine = (Point@ a, Point@ b, Point@ d, Drawing@ drawing) {
+  Drawing@(transformed: @(a, b, d, drawing));
 };
 
 # Translate the drawing by the given x and y amounts.
 (Int@, Int@, Drawing@) { Drawing@; }
-Translate = (Int@ dx, Int@ dy, Drawing@ d) {
-  Affine(@(x: 1, y: 1), @(x: dx, y: dy), d);
+Translate = (Int@ dx, Int@ dy, Drawing@ drawing) {
+  Affine(@(x: 1, y: 1), @(x: dx, y: dy), @(x: 1, y: 1), drawing);
 };
 
 @(Color@, Drawing@, Point@, Color,
