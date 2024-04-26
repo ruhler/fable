@@ -43,6 +43,9 @@
 @ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
 
 @ Game@ = /SatGame/Game%.Game@;
+@ Toggle@ = /SatGame/Game%.Toggle@;
+% Cycle = /SatGame/Game%.Cycle;
+% ToggleDismissed = /SatGame/Game%.ToggleDismissed;
 % Toggle = /SatGame/Game%.Toggle;
 
 @ Layout@ = /SatGame/Game/Draw%.Layout@;
@@ -181,7 +184,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         Int@ y = Div(Sub(e.mouse_down.y, state.transform.y), state.transform.s).q;
         Maybe@<TileIndex@> ti = TileOf(layout, x, y);
         ti.?(nothing: EventLoop(state));
-        Game@ ngame = Toggle(ti.just.group, ti.just.tile, state.game);
+
+        Toggle@ toggle = e.mouse_down.button.?(
+          left: Cycle,
+          right: ToggleDismissed);
+        Game@ ngame = Toggle(toggle, ti.just.group, ti.just.tile, state.game);
         Drawing@ board = /SatGame/Game/Draw%.Draw(layout, ngame);
         State@ nstate = state.@(game: ngame, board: board);
         Unit@ _ <- m.do(Draw(nstate));

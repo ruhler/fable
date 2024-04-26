@@ -32,6 +32,34 @@
   Unit@ dismissed   # The user has crossed off this tile.
 );
 
+# A function to transform a tile state.
+@ Toggle@ = (TileState@) { TileState@; };
+
+# Toggle function to cycle through states.
+# normal -> selected -> dismissed
+Toggle@ Cycle = (TileState@ s) {
+  s.?(
+    normal: TileState@(selected: Unit),
+    selected: TileState@(dismissed: Unit),
+    dismissed: TileState@(normal: Unit));
+};
+
+# Toggle function to switch between normal and selected.
+Toggle@ ToggleSelected = (TileState@ s) {
+  s.?(
+    normal: TileState@(selected: Unit),
+    selected: TileState@(normal: Unit),
+    dismissed: TileState@(normal: Unit));
+};
+
+# Toggle function to switch between normal and dismissed.
+Toggle@ ToggleDismissed = (TileState@ s) {
+  s.?(
+    normal: TileState@(dismissed: Unit),
+    selected: TileState@(normal: Unit),
+    dismissed: TileState@(normal: Unit));
+};
+
 @ Tile@ = *(Var@ var, Bool@ pos, TileState@ state);
 @ Group@ = List@<Tile@>;
 @ Game@ = List@<Group@>;
@@ -49,18 +77,13 @@
 };
 
 # Toggle the state of the tile in the given group of the puzzle.
+#  @arg[(TileState@) { TileState@; }][toggle] How to toggle the state.
 #  @arg[Int@][group] The index of the group in the Game@.
 #  @arg[Int@][tile] The index of the tile within the group.
-(Int@, Int@, Game@) { Game@; } Toggle = {
-  (TileState@) { TileState@; } State = (TileState@ s) {
-    s.?(
-      normal: TileState@(dismissed: Unit),
-      selected: TileState@(normal: Unit),
-      dismissed: TileState@(selected: Unit));
-  };
-
+(Toggle@, Int@, Int@, Game@) { Game@; }
+Toggle = (Toggle@ toggle) {
   (Tile@) { Tile@; } Tile = (Tile@ t) {
-    t.@(state: State(t.state));
+    t.@(state: toggle(t.state));
   };
 
   (Int@, Group@) { Group@; } Group = (Int@ tile, Group@ group) {
@@ -68,11 +91,11 @@
     IsZero(tile).?(true: Cons(Tile(group.cons.head), group.cons.tail));
     Cons(group.cons.head, Group(Decr(tile), group.cons.tail));
   };
-  
+
   (Int@ group, Int@ tile, Game@ game) {
     game.?(nil: game);
     IsZero(group).?(true: Cons(Group(tile, game.cons.head), game.cons.tail));
-    Cons(game.cons.head, Toggle(Decr(group), tile, game.cons.tail));
+    Cons(game.cons.head, Toggle(toggle, Decr(group), tile, game.cons.tail));
   };
 };
 
@@ -117,4 +140,8 @@
   Groups(Nil<Literal@>);
 };
 
-@(Game@, Group@, Tile@, Game, Toggle, Solved);
+@(
+  Game@, Group@, Tile@, Toggle@,
+  Cycle, ToggleSelected, ToggleDismissed,
+  Game, Toggle, Solved
+);
