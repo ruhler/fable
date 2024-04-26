@@ -4,7 +4,10 @@
 @ Int@ = /Core/Int%.Int@;
 % Incr = /Core/Int%.Incr;
 % Sub = /Core/Int%.Sub;
+% Mul = /Core/Int%.Mul;
 % Div = /Core/Int/Div%.Div;
+% Max = /Core/Int/Eq%.Max;
+% Min = /Core/Int/Eq%.Min;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -33,7 +36,7 @@
 @ Point@ = /App/Drawing%.Point@;
 % Color = /App/Drawing%.Color;
 % Rect = /App/Drawing%.Rect;
-% Translate = /App/Drawing%.Translate;
+% Affine = /App/Drawing%.Affine;
 % Drawings = /App/Drawing%.Drawings;
 
 @ Params@ = /SatGame/Puzzle%.Params@;
@@ -94,15 +97,17 @@ GetArgs = (List@<String@> args, Args@ default) {
   GetArgs(args.cons.tail.cons.tail, nargs);
 };
 
+@ Transform@ = *(Int@ x, Int@ y, Int@ s);
+
 @ State@ = *(
   Game@ game,
   Int@ mouse_x,
   Int@ mouse_y,
   Drawing@ board,  # Cached drawing of the game board.
 
-  Int@ width,      # width of the window
-  Int@ height,     # height of the window
-  Point@ origin    # Position of game board in window
+  Int@ width,      # width of the window.
+  Int@ height,     # height of the window.
+  Transform@ transform  # Transformation to apply to the board.
 );
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> argv) {
@@ -136,13 +141,20 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Params@ params = Params@(args.num_vars, args.num_clauses, args.num_literals_per_clause);
   Layout@ layout = Layout(params);
 
-  # Center the game in the window.
-  # TODO: We should scale it to fit too, if only affine transformations
-  # allowed non-integer multiples.
-  (Int@, Int@) { Point@; } Origin = (Int@ w, Int@ h) {
-    Int@ x = Div(Sub(w, layout.width), Int|2).q;
-    Int@ y = Div(Sub(h, layout.height), Int|2).q;
-    @(x, y);
+  # @func[Fit] Fit the game board in the window.
+  #  @arg[Int@][w] The width of the window
+  #  @arg[Int@][h] The height of the window
+  (Int@, Int@) { Transform@; } Fit = (Int@ w, Int@ h) {
+    Int@ sx = Div(w, layout.width).q;
+    Int@ sy = Div(h, layout.height).q;
+    Int@ s = Max(Int|1, Min(sx, sy));
+
+    Int@ swidth = Mul(s, layout.width);
+    Int@ sheight = Mul(s, layout.height);
+
+    Int@ x = Div(Sub(w, swidth), Int|2).q;
+    Int@ y = Div(Sub(h, sheight), Int|2).q;
+    @(x, y, s);
   };
 
   (State@) { M@<Unit@>; } Draw = (State@ state) {
@@ -152,11 +164,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       Sub(state.mouse_x, Int|4),
       Sub(state.mouse_y, Int|4),
       Int|8, Int|8, Color.Yellow);
-    Drawing@ screen = Drawings[
-      background,
-      Translate(state.origin.x, state.origin.y, state.board),
-      cursor];
-
+    Point@ a = Point@(state.transform.s, state.transform.s);
+    Point@ b = Point@(state.transform.x, state.transform.y);
+    Drawing@ screen = Drawings[background, Affine(a, b, state.board), cursor];
     app.effect(Effect@(draw: screen));
   };
 
@@ -167,8 +177,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       key_down: m.return(Unit),
       key_up: m.return(Unit),
       mouse_down: {
-        Int@ x = Sub(e.mouse_down.x, state.origin.x);
-        Int@ y = Sub(e.mouse_down.y, state.origin.y);
+        Int@ x = Div(Sub(e.mouse_down.x, state.transform.x), state.transform.s).q;
+        Int@ y = Div(Sub(e.mouse_down.y, state.transform.y), state.transform.s).q;
         Maybe@<TileIndex@> ti = TileOf(layout, x, y);
         ti.?(nothing: EventLoop(state));
         Game@ ngame = Toggle(ti.just.group, ti.just.tile, state.game);
@@ -182,7 +192,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
         State@ nstate = state.@(
           width: e.resize.width,
           height: e.resize.height,
-          origin: Origin(e.resize.width, e.resize.height)
+          transform: Fit(e.resize.width, e.resize.height)
         );
         Unit@ _ <- m.do(Draw(nstate));
         EventLoop(nstate);
@@ -215,7 +225,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     board: /SatGame/Game/Draw%.Draw(layout, game),
     width,
     height,
-    origin: Origin(width, height)
+    transform: Fit(width, height)
   );
 
   Unit@ _ <- m.do(Draw(state));
