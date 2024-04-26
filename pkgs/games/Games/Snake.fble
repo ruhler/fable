@@ -276,12 +276,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   Point@ a = @(x: Div(width, MaxCol).q,
                y: Neg(Div(height, MaxRow).q));
   Point@ b = @(x: Int|0, y: height);
-  Point@ d = @(x: Int|1, y: Int|1);
 
   (Effect@) { M@<Unit@>; } Output = (Effect@ e) {
     Effect@ transformed = e.?(
       tick: e,
-      draw: Effect@(draw: Affine(a, b, d, e.draw)));
+      draw: Effect@(draw: Affine(a, b, e.draw)));
     app.effect(transformed);
   };
 

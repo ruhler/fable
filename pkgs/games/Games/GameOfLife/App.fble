@@ -111,8 +111,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   (Effect@) { M@<Unit@>; } Output = app.effect;
 
   (State@) { M@<Unit@>; } StepUI = (State@ s) {
-    Point@ d = @(x: Int|1, y: Int|1);
-    Unit@ _ <- m.do(Output(Effect@(draw: Affine(s.a, s.b, d, DrawWorld(s.w)))));
+    Unit@ _ <- m.do(Output(Effect@(draw: Affine(s.a, s.b, DrawWorld(s.w)))));
     Unit@ _ <- m.do(Output(Effect@(tick: Int|200)));
     Input@ x <- m.do(GetInput);
     x.?(quit: m.return(Unit),

@@ -34,7 +34,7 @@ typedef struct {
   int fpsHistogram[61];
 } App;
 
-static void Draw(SDL_Surface* s, int64_t ax, int64_t ay, int64_t bx, int64_t by, int64_t dx, int64_t dy, FbleValue* drawing);
+static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 
@@ -52,7 +52,7 @@ static Uint32 OnTimer(Uint32 interval, void* param);
 //
 // Inputs:
 //   surface - the surface to draw to.
-//   ax, ay, bx, by, dx, dy - a transformation to apply to the drawing: (a*p + b)/d.
+//   ax, ay, bx, by - a transformation to apply to the drawing: a*p + b.
 //   drawing - the drawing to draw.
 //
 // Results:
@@ -61,7 +61,7 @@ static Uint32 OnTimer(Uint32 interval, void* param);
 // Side effects:
 //   Draws the drawing to the window. The caller must call
 //   SDL_UpdateWindowSurface for the screen to actually be updated.
-static void Draw(SDL_Surface* surface, int64_t ax, int64_t ay, int64_t bx, int64_t by, int64_t dx, int64_t dy, FbleValue* drawing)
+static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing)
 {
   switch (FbleUnionValueTag(drawing)) {
     case 0: {
@@ -78,12 +78,12 @@ static void Draw(SDL_Surface* surface, int64_t ax, int64_t ay, int64_t bx, int64
       FbleValue* c = FbleStructValueField(v, 2);
       FbleValue* color = FbleStructValueField(v, 3);
 
-      int x0 = (ax * FbleIntValueAccess(FbleStructValueField(a, 0)) + bx) / dx;
-      int y0 = (ay * FbleIntValueAccess(FbleStructValueField(a, 1)) + by) / dy;
-      int x1 = (ax * FbleIntValueAccess(FbleStructValueField(b, 0)) + bx) / dx;
-      int y1 = (ay * FbleIntValueAccess(FbleStructValueField(b, 1)) + by) / dy;
-      int x2 = (ax * FbleIntValueAccess(FbleStructValueField(c, 0)) + bx) / dx;
-      int y2 = (ay * FbleIntValueAccess(FbleStructValueField(c, 1)) + by) / dy;
+      int x0 = ax * FbleIntValueAccess(FbleStructValueField(a, 0)) + bx;
+      int y0 = ay * FbleIntValueAccess(FbleStructValueField(a, 1)) + by;
+      int x1 = ax * FbleIntValueAccess(FbleStructValueField(b, 0)) + bx;
+      int y1 = ay * FbleIntValueAccess(FbleStructValueField(b, 1)) + by;
+      int x2 = ax * FbleIntValueAccess(FbleStructValueField(c, 0)) + bx;
+      int y2 = ay * FbleIntValueAccess(FbleStructValueField(c, 1)) + by;
 
       int red = FbleIntValueAccess(FbleStructValueField(color, 0));
       int green = FbleIntValueAccess(FbleStructValueField(color, 1));
@@ -108,10 +108,10 @@ static void Draw(SDL_Surface* surface, int64_t ax, int64_t ay, int64_t bx, int64
       FbleValue* color = FbleStructValueField(rv, 4);
 
       SDL_Rect r = {
-        (ax * FbleIntValueAccess(x) + bx) / dx,
-        (ay * FbleIntValueAccess(y) + by) / dy,
-        ax * FbleIntValueAccess(w) / dx,
-        ay * FbleIntValueAccess(h) / dy
+        ax * FbleIntValueAccess(x) + bx,
+        ay * FbleIntValueAccess(y) + by,
+        ax * FbleIntValueAccess(w),
+        ay * FbleIntValueAccess(h)
       };
 
       if (r.w < 0) {
@@ -138,34 +138,22 @@ static void Draw(SDL_Surface* surface, int64_t ax, int64_t ay, int64_t bx, int64
       FbleValue* a = FbleStructValueField(transformed, 0);
       FbleValue* b = FbleStructValueField(transformed, 1);
       FbleValue* d = FbleStructValueField(transformed, 2);
-      FbleValue* subdrawing = FbleStructValueField(transformed, 3);
 
       int axi = FbleIntValueAccess(FbleStructValueField(a, 0));
       int ayi = FbleIntValueAccess(FbleStructValueField(a, 1));
       int bxi = FbleIntValueAccess(FbleStructValueField(b, 0));
       int byi = FbleIntValueAccess(FbleStructValueField(b, 1));
-      int dxi = FbleIntValueAccess(FbleStructValueField(d, 0));
-      int dyi = FbleIntValueAccess(FbleStructValueField(d, 1));
 
-      // (a * (ai * x + bi)/di + b) / d ==>
-      // (a * (ai * x + bi) + di*b) / (d*di) ==>
-      // ((a * ai) * x + (a * bi + di*b)) / (d * di)
-      Draw(surface,
-          ax * axi,
-          ay * ayi,
-          ax * bxi + bx * dxi,
-          ay * byi + by * dyi,
-          dx * dxi,
-          dy * dyi,
-          subdrawing);
+      // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
+      Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
       return;
     }
 
     case 4: {
       // Over.
       FbleValue* over = FbleUnionValueArg(drawing);
-      Draw(surface, ax, ay, bx, by, dx, dy, FbleStructValueField(over, 0));
-      Draw(surface, ax, ay, bx, by, dx, dy, FbleStructValueField(over, 1));
+      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, 0));
+      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, 1));
       return;
     }
 
@@ -362,7 +350,7 @@ static FbleValue* EffectImpl(
 
     case 1: {
       SDL_Surface* surface = SDL_GetWindowSurface(app->window);
-      Draw(surface, 1, 1, 0, 0, 1, 1, FbleUnionValueArg(effect));
+      Draw(surface, 1, 1, 0, 0, FbleUnionValueArg(effect));
       SDL_GL_SwapWindow(app->window);
 
       // Collect status on frame rate.

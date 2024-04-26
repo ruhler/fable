@@ -132,12 +132,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   # right corner.
   Point@ a = @(x: Int|10, y: Neg(Int|10));
   Point@ b = @(x: Int|320, y: Int|240);
-  Point@ d = @(x: Int|1, y: Int|1);
 
   (State@) { M@<Unit@>; } Out = (State@ s) {
     app.effect(Effect@(draw: Over(
       Rect(Int|0, Int|0, width, height, Color.Black),
-      Affine(a, b, d, Draw(s)))));
+      Affine(a, b, Draw(s)))));
   };
 
 

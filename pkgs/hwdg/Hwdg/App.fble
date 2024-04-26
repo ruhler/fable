@@ -139,12 +139,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Div(width, Width).q, y: Div(height, Height).q);
   Point@ b = @(x: Div(width, 2).q, y: Div(height, 2).q);
-  Point@ d = @(x: Int|1, y: Int|1);
 
   (Effect@) { M@<Unit@>; } Output = (Effect@ e) {
     Effect@ transformed = e.?(
       tick: e,
-      draw: Effect@(draw: Affine(a, b, d, e.draw)));
+      draw: Effect@(draw: Affine(a, b, e.draw)));
     app.effect(transformed);
   };
 

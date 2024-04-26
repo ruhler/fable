@@ -204,12 +204,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width
 
   Point@ a = @(x: Floor(Int|1), y: Floor(Neg(Int|1)));
   Point@ b = @(x: Floor(Int|320), y: Floor(Int|240));
-  Point@ d = @(x: Floor(Int|1), y: Floor(Int|1));
 
   (World@) { M@<Unit@>; } Output = (World@ s) {
     app.effect(Effect@(draw: Over(
       Rect(Floor(0), Floor(0), width, height, Color.Black),
-      Affine(a, b, d, Draw(s)))));
+      Affine(a, b, Draw(s)))));
   };
 
   (M@<Unit@>, World@) { M@<Unit@>; }
