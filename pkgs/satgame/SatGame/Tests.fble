@@ -1,4 +1,8 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Core/Int%.Int@;
@@ -14,13 +18,32 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+@ Game@ = /SatGame/Game%.Game@;
+% Game = /SatGame/Game%.Game;
+% Solved = /SatGame/Game%.Solved;
+% Toggle = /SatGame/Game%.Toggle;
+% ToggleSelected = /SatGame/Game%.ToggleSelected;
+% ToggleDismissed = /SatGame/Game%.ToggleDismissed;
+
 @ Params@ = /SatGame/Puzzle%.Params@;
 @ Puzzle@ = /SatGame/Puzzle%.Puzzle@;
+
+% Var = /SatGame/Var/Lit%.Var;
 
 % PureLFSR = /SatGame/Random/PureLFSR%;
 % Generate = /SatGame/Generate%<PureLFSR.M@>(PureLFSR.Monad, PureLFSR.Random);
 
 % _ = /SatGame/Graphics%;
+
+Puzzle@ puzzle = List[
+  List[
+    @(var: Var|0, pos: True),
+    @(var: Var|1, pos: False),
+    @(var: Var|2, pos: True)],
+  List[
+    @(var: Var|2, pos: True),
+    @(var: Var|0, pos: False),
+    @(var: Var|1, pos: True)]];
 
 Test@ Tests = TestSuite(Str|SatGame, List[
   Test(Str|'Generate.Length', (Unit@ _) {
@@ -33,6 +56,53 @@ Test@ Tests = TestSuite(Str|SatGame, List[
     Puzzle@ puzzle = PureLFSR.Run(Generate(params), seed);
     AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show,
       Int|6, /Core/List/Length%.Length(puzzle));
+  }),
+
+  Test(Str|'Game.Unsolved', (Unit@ _) {
+    Game@ game = Game(puzzle);
+    Bool@ solved = Solved(game);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
+  }),
+
+  Test(Str|'Game.Solved', (Unit@ _) {
+    Game@ start = Game(puzzle);
+    Game@ finish = Toggle(
+      ToggleDismissed, Int|0, Int|0, Toggle(
+      ToggleDismissed, Int|0, Int|1, Toggle(
+      ToggleSelected, Int|0, Int|2, Toggle(
+      ToggleSelected, Int|1, Int|0, Toggle(
+      ToggleDismissed, Int|1, Int|1, Toggle(
+      ToggleDismissed, Int|1, Int|2, start))))));
+
+    Bool@ solved = Solved(finish);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, solved);
+  }),
+
+  Test(Str|'Game.Incomplete', (Unit@ _) {
+    Game@ start = Game(puzzle);
+    Game@ finish = Toggle(
+      ToggleDismissed, Int|0, Int|0, Toggle(
+      ToggleSelected, Int|0, Int|2, Toggle(
+      ToggleSelected, Int|1, Int|0, Toggle(
+      ToggleDismissed, Int|1, Int|1, Toggle(
+      ToggleDismissed, Int|1, Int|2, start)))));
+
+    Bool@ solved = Solved(finish);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
+  }),
+
+  Test(Str|'Game.Incorrect', (Unit@ _) {
+    Game@ start = Game(puzzle);
+    Game@ finish = Toggle(
+      ToggleDismissed, Int|0, Int|0, Toggle(
+      ToggleSelected, Int|0, Int|1, Toggle(
+      ToggleDismissed, Int|0, Int|2, Toggle(
+      ToggleDismissed, Int|1, Int|0, Toggle(
+      ToggleDismissed, Int|1, Int|1, Toggle(
+      ToggleSelected, Int|1, Int|2, start))))));
+
+    Bool@ solved = Solved(finish);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
   })
 ]);
 

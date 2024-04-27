@@ -1,0 +1,49 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Bit@ = /Core/Digits%.Bit@;
+@ Hex@ = /Core/Digits%.Hex@;
+% HexToBits = /Core/Digits/String%.HexToBits;
+% BitStr = /Core/Digits/String%.BitStr;
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Append = /Core/List%.Append;
+% Take = /Core/List/Length%.Take;
+
+@ Var@ = /SatGame/Var%.Var@;
+
+(Bit@) { Bool@; } ToBool = (Bit@ x) {
+  x.?(0: False, 1: True);
+};
+
+# A literal to create vars from hex digits.
+(List@<Hex@>) { Var@; } Var = (List@<Hex@> hex) {
+  List@<Bit@> bits = HexToBits(hex);
+
+  List@<Bit@> 9 = Take(Int|9, Append(bits, BitStr|000000000));
+  List@<Bit@> 8 = 9.cons.tail;
+  List@<Bit@> 7 = 8.cons.tail;
+  List@<Bit@> 6 = 7.cons.tail;
+  List@<Bit@> 5 = 6.cons.tail;
+  List@<Bit@> 4 = 5.cons.tail;
+  List@<Bit@> 3 = 4.cons.tail;
+  List@<Bit@> 2 = 3.cons.tail;
+  List@<Bit@> 1 = 2.cons.tail;
+
+  Bool@ ul = ToBool(9.cons.head);
+  Bool@ uc = ToBool(8.cons.head);
+  Bool@ ur = ToBool(7.cons.head);
+  Bool@ ml = ToBool(6.cons.head);
+  Bool@ mc = ToBool(5.cons.head);
+  Bool@ mr = ToBool(4.cons.head);
+  Bool@ ll = ToBool(3.cons.head);
+  Bool@ lc = ToBool(2.cons.head);
+  Bool@ lr = ToBool(1.cons.head);
+  @(ul, uc, ur, ml, mc, mr, ll, lc, lr);
+};
+
+@(Var);
