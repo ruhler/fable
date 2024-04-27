@@ -2,7 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Add a test case for fble-perf-profile?
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 * Add regression test for memory leak fixed in

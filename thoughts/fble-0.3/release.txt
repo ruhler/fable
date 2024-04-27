@@ -114,3 +114,18 @@ I'm inclined to say it does make sense to distinguish these. Is it useful
 though? Is there any time we don't know the type of something when we could or
 could not try to apply to it?
 
+---
+
+* Add a test case for fble-perf-profile?
+
+The test would be given an input sample and output sample and verify they
+match? We can't control when the sample happens, so it would be hard to run
+perf as part of the test. We also wouldn't be able to run the test on
+platforms without perf available, and it's not the easiest thing to install.
+
+A sample input would be nice to document how the program is intended to work.
+
+Let's try writing a test: hard code the sample input and output. See how it
+goes.
+
+
