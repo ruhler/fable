@@ -128,4 +128,25 @@ A sample input would be nice to document how the program is intended to work.
 Let's try writing a test: hard code the sample input and output. See how it
 goes.
 
+---
+
+Improving build times is so much tied to fbld. Let's worry about that later
+as part of re-implementing fbld in C.
+
+---
+
+Saving library cleanup for a future release, because I think it's worth a much
+deeper look into standard library design.
+
+Overview of remaining categories:
+* Some tricky test cases to write - it's worth trying at least.
+* Debugger improvements - probably worth trying at least.
+* Lots of fbld related stuff - see if I can do some of it at least?
+* More tutorials and improvements. And other doc improvements.
+
+Let's continue slogging through. Spend time on each item before giving up,
+otherwise we'll continue to carry these things forever.
+ 
+---
+
 

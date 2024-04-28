@@ -2,30 +2,19 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Improve performance with profiling enabled?
+ - Now that we removed the optimization for detecting duplicate call entries
+   in the stack?
+ - See thoughts/fble-0.1/fble.profile.txt.
+
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 * Add regression test for memory leak fixed in
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
-* Improve build times?
- - It's getting a little annoying for development now that everything is
-   rebuilt and it takes a while when you touch the library code, for example.
-   Full rebuild: real    6m32.236s, sys     3m17.144s
-
 *  Can fble-stdio check that the function has the right type?
  - Right now, the only info we have at runtime is num_args. We could at least
    check for that. Also that it's a function.
-
-
-* Improve performance with profiling enabled?
- - Now that we removed the optimization for detecting duplicate call entries
-   in the stack?
- - see thoughts/fble.profile.txt
-
-* Clean up fble library
- - Separate modules as appropriate to reduce false dependencies.
- - Document all functions.
- - Add tests for full code coverage of all functions.
 
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.

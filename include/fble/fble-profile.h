@@ -109,7 +109,7 @@ FbleProfile* FbleNewProfile(bool enabled);
 
 /**
  * @func[FbleAddBlockToProfile] Adds a block to the profile.
- *  Note: It is acceptable to add blocks in the middle of a profiling run.
+ *  Note: It is not acceptable to add blocks in the middle of a profiling run.
  *
  *  @arg[FbleProfile*] profile
  *   The profile to add the block to. Must not be NULL.
@@ -130,7 +130,7 @@ FbleBlockId FbleAddBlockToProfile(FbleProfile* profile, FbleName name);
  *  Add multiple new block to the profile using a contiguous range of block
  *  ids.
  *
- *  Note: It is acceptable to add blocks in the middle of a profiling run.
+ *  Note: It is not acceptable to add blocks in the middle of a profiling run.
  *
  *  @arg[FbleProfile*] profile
  *   The profile to add the blocks to. Must not be NULL.

@@ -20,6 +20,7 @@ Things to consider doing for the fble-0.4 release.
 * Fbld Language Revision
  - modularity
  - native C implementation
+   Including fble build time improvements.
 
 * Add fble to rosettacode.org?
   Or at least implement all the tasks, perhaps in a separate RosettaCode
@@ -27,6 +28,9 @@ Things to consider doing for the fble-0.4 release.
   Probably start with all the 'Simple' tasks.
 
 * Design a standard library?
+ - Separate modules as appropriate to reduce false dependencies.
+ - Document all functions.
+ - Add tests for full code coverage of all functions.
 
 * New apps
  - IEEE floating point support.

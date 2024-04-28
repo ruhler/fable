@@ -1,0 +1,225 @@
+Profiling Performance Improvements.
+===================================
+Checking up on performance with profiling enabled. Is there an issue? If so,
+what's the issue? Can we fix that issue?
+
+Before I try, what's my target? Ideally no more than 2x overhead with
+profiling enabled? Let's try on compiled code, because that should have the
+most overhead. We can try on fbld benchmark.
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 1:06.27
+Maximum resident set size (kbytes): 106064
+ 
+/usr/bin/time -v ./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 6:42.84
+Maximum resident set size (kbytes): 105364
+
+That's almost 7x slowdown. That's worth trying to improve, especially since
+thoughts/fble-0.1/fble.profile.txt suggest the pathological case we fixed was
+for forking threads, which we no longer have.
+ 
+First step: profiling the profiler. Let's pick a shorter benchmark. HelloWorld
+tutorial perhaps?
+
+./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../tutorials/tutorial.lib.fbld ../tutorials/HelloWorld.fbld > /dev/null
+
+---
+
+Profiling suggests most of the time is in FbleProfileRandomSample. Notably not
+FbleProfileSample. That suggests easy opportunity for improvement for sure.
+I'm a little surprised by this though. You mean taking the profiling sample
+doesn't cost us much at all?
+
+We can test it out anyway. Print out counts to see how big they are. Use math
+to compute the some of X + X + ... where each X is randomly 1/1024.
+
+Maybe HelloWorld isn't a good example. Maybe we should try on the longer one
+just in case.
+
+---
+
+Here's a test: skip the for loop in FbleProfileRandomSample on the longer
+benchmark, see how it looks. If it's notably faster, that's the problem. Come
+up with some way to more accurately skip the for loop. If not, there's some
+other problem with performance to track down.
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 6:42.84 ==> 5:54.18
+
+So it's a notable bit of performance overhead, but not the majority. Let's
+find the next bit.
+
+Nothing obvious shows up in perf profiling, which suggests its the overhead of
+executing the generated aarch64 code for profiling based logic, right?
+
+Oh, I see it now. EnterBlock is 55% self time of the entire program when
+running with profiling. That seems to be dominated by this code:
+
+  // Check to see if this (caller,callee) pair is already on the stack.
+  FbleCallData* data = NULL;
+  for (size_t i = 0; i < thread->sample.size; ++i) {
+    Sample* sample = thread->sample.xs + thread->sample.size - i - 1;
+    if (sample->caller == caller && sample->callee == callee) {
+      data = sample->call;
+      break;
+    }
+  }
+
+So, answer is easy right? Add back the hash table of (caller, callee) pairs on
+the stack for fast lookup?
+
+Do I want to take back the old code, or try to implement something new from
+scratch?
+
+Maybe try something new, to keep it as simple as possible. Getting call data
+is not expensive. It's all seeing what's on the stack. My guess is we have a
+fairly deep recursive cycle. Say it's N elements deep. Then we end up
+searching N iteration every time we sample, because the matching item on the
+stack is ...
+
+Or worse, we mostly get the case where we don't see the sample on the stack?
+That could be.
+
+Let's implement a hash set of (caller, callee) then, shall we?
+
+Or even easier. Have an array from caller to a linked listed of callees on the
+stack. Iterate over callees for the caller. I expect that to be fast and easy
+enough to implement.
+
+Or, array from caller to vector of callees.
+
+* Insert when we add a sample.
+* Remove when we remove a sample.
+
+It's not enough to track whether it exists or not. We need to track how many
+times it exists on the stack to maintain things correctly.
+
+---
+
+I'm trying to remember how profiling works.
+
+Call stack - the actual stack of calls. Id for each call. Says how many
+'samples' apply to each call stack frame.
+
+Samples - Stack of (caller, callee) pairs. Only includes (caller, callee) the
+first time it shows up in the call stack.
+
+EnterBlock:
+ - increment caller,callee count
+ - push or replace top call stack entry
+ - add caller,callee sample if it's not on the stack.
+ 
+ExitBlock:
+ - pop caller,callee samples on the top that no longer apply.
+ - pop the top call entry.
+
+Sample:
+ - Increment time called into each block that appears on the stack.
+
+How we use the Sample stack:
+* To check if a (caller,callee) pair is already on the stack, to avoid having
+  the same (caller,callee) pair twice on the sample stack.
+* To know which callee's to charge time to during a sample. 
+
+I think what's tricky about changing the data structure for the sample stack
+is we want to be able to quickly identify two things: if (caller,callee)
+exists, and what the top N elements of the stack are. Could we or should we
+separate those things?
+
+We can't store auto-exited functions on the call stack, because then memory
+could grow too much. We can store cycles on the call stack, because that's not
+more than the real memory we would use otherwise.
+
+Sample stack is bounded by number of (caller,callee) pairs, so we can and must
+store auto-exited functions there.
+
+We know each (caller,callee) pair only shows up once on the sample stack,
+right? What if we organized the Sample stack as:
+
+array[caller] -> list[callee] -> (call, tail)
+
+Where 'tail' points somehow to the previous Sample on the stack.
+
+Now, to see if we have (caller,callee) pair on the stack, we iterate over the
+hopefully small list of callees for the caller. To pop from the stack, we
+traverse down the tails. To take a sample... Iterate over all the samples,
+update the callee time only the first time it appears.
+
+What do you think? Sound good? How precisely do we represent 'tail'?
+
+Sample becomes:
+ * FbleCallData* - id gives callee, context gives caller
+
+Um... we don't want to iterate over all profiling blocks to iterate over all
+samples. That would be expensive.
+
+Let's keep the stack data structure for samples for now. That's easy to
+iterate over and to push/pop.
+
+sample->call->id = always sample->callee, right?
+
+Let's be honest, what I'm proposing is the easy approach: add another data
+structure which is array[caller]->vector(?) of FbleCallData. For entries
+currently on the stack.
+
+Push is easy: append to vector.
+Pop is easy: pop from vector (we can keep them in sorted order for O(1) pop).
+Search is easy: search.
+
+Let's try it and see what happens.
+
+---
+
+One problem: we can no longer add blocks in the middle of a profiling run now,
+which if nothing else breaks fble-perf-profile.
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 6:42.84 ==> 4:35.54
+
+So, modest performance gain, assuming the implementation is correct. Let's get
+a reference profile to see.
+
+It matches the reference profile. So looks correct.
+
+What do you think? Is it worth it? Do we want to support adding profiling
+blocks mid way through? It wouldn't be too hard. Use a vector instead of a
+pointer. Append as needed.
+
+I wonder how much slowdown we get from the interpreter and how that compares.
+For example, if we only get 2x slowdown from the interpreter, but 4x from
+profiling, does it make sense to as people to always use the interpreter for
+profiling? Save some effort in overhead and maintenance of compiled code?
+
+Interpreter without profiling:
+
+/usr/bin/time -v ./pkgs/core/fble-stdio -I ../pkgs/core -I ../pkgs/fbld -m
+/Fbld/Main% -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld
+../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 2:13.64 (2x slowdown)
+
+Interpreter with (optimized) profiling:
+
+/usr/bin/time -v ./pkgs/core/fble-stdio -I ../pkgs/core -I ../pkgs/fbld -m
+/Fbld/Main% --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld
+../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 6:28.66
+
+If interpreter adds +1X and profile adds +6X, well, compare 6X versus 7X.
+That's only 15% slowdown going from compiled to optimized code when profiling,
+compared to 100% slowdown going from compiled to optimized code when not
+profiling.
+
+There are other reasons to want to keep profiling for compiled code. For
+example, to allow people to ship compiled code that supports profiling?
+
+Probably not a good idea to make this decision based on today's poor profiling
+performance. For now lets just optimize profiling as best we can.
+
+Next steps:
+
+* Update optimized version to support adding blocks dynamically. Maybe
+  allocate vectors lazily too, just for the fun of it and to save space?
+* Figure out the match to reduce calls to rand() in FbleRandomProfileSample.
+* Do another round of perf review to see if there's anything else easy we can
+  optimize. 

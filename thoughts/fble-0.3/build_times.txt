@@ -1,0 +1,109 @@
+Optimizing build times...
+
+.ninja_log file format according to the internet:
+
+    1. Start time in milliseconds since the start of the run (integer)
+    2. End time in milliseconds since the start of the run (integer)
+    3. Restat mtime (integer) (0 if there was none)
+    4. Output path (string)
+    5. In v5: The hash of the command in hexadecimal. In v4: The full command
+       as string.
+
+We could get the build graph from ninja. So we could figure out, in theory,
+what the critical path of the build is for a particular system assuming we
+have enough parallelism. Does that mean anything?
+
+I know why build is slow. It's all the fbld code, right? And it's only slow
+for me. It takes only a couple minutes for github servers to build. Or maybe
+it's some of the test cases.
+
+Part of the question is how well incremental build works. Who cares if full
+build is slow if we almost never need to do a full build?
+
+Maybe all we care about is the structure of the build graph?
+
+What would be the real goal of optimizing this?
+
+Look at the category of things we could modify:
+* A test case - fast incremental
+* An fble app - fast incremental
+* Fble core library - have to rebuild all fbld documentation :(
+* lib, bin - have to rebuild all documentation and rerun all tests. :(
+* tutorial - have to rebuild the tutorial... could be slow, but not deep.
+
+The are two big things that stand out to me as being slow:
+* Running all the spec tests.
+* Building documentation.
+
+I assume, if we re-implement fbld in C, this will solve itself: breaks the
+dependency of documentation on fble core, lib, bin, and makes tutorial build
+faster.
+
+Maybe we could look at optimizing the overheads for spec tests. I assume it's
+mostly file IO.
+
+How about we snapshot things now, using a full build as a measure of worst
+case. Then worry about it later.
+
+Or, rather, add up all the times from the ninja log, categorize, and see if my
+assumption about spec tests and building documentation holds true.
+
+Let me separate 'ninja' from 'ninja check'. I think that's fair.
+
+$ ninja
+real    6m15.902s
+user    19m58.490s
+sys     1m23.585s
+
+$ ninja check
+real    3m23.925s
+user    8m23.888s
+sys     2m41.509s
+
+Sorting by time makes it pretty clear. The top time takers are fbld, followed
+by spec tests.
+
+From awk  '{ print $2 - $1, $4 }' < .ninja_log:
+
+198160 www/spec/fble.html
+173983 www/tutorials/Functions.html
+173570 www/tutorials/Features.html
+158413 www/tutorials/Bind.html
+111677 www/tutorials/Polymorphism.html
+78704 www/tutorials/Core.html
+74047 www/tutorials/Literals.html
+73458 spec/SpecTests/5.3-FuncApply/Eval/StackSmash.fble.tr
+69825 www/tutorials/Structs.html
+58820 spec/SpecTests/5.2-FuncValue/Eval/Capture.fble.tr
+57987 www/tutorials/Modules.html
+57792 spec/SpecTests/Test/MemoryGrowth.fble.tr
+57713 www/tutorials/Variables.html
+55560 www/tutorials/Lists.html
+54114 spec/SpecTests/5.2-FuncValue/Eval/NoCaptureTypeof.fble.tr
+53657 www/fbld/fbld.html
+52234 www/tutorials/Unions.html
+51907 spec/SpecTests/5.2-FuncValue/Eval/NoCapture.fble.tr
+50640 spec/SpecTests/5.3-FuncApply/Eval/TailRecursionMemory.fble.tr
+36470 www/tutorials/Basics.html
+36188 www/tutorials/Stdio.html
+33092 www/tutorials/AbstractTypes.html
+25852 www/tutorials/HelloWorld.html
+
+After that are gcc compiled code:
+
+16156 lib/typecheck.o
+15601 lib/compile.o
+13299 lib/parse.tab.o
+12690 lib/aarch64.o
+12612 lib/value.o
+11505 lib/type.o
+
+Not all spec tests take a long time. Mostly the memory ones. There's just a
+whole lot of spec tests, so it adds up.
+
+There are a lot of man pages and doc comment stuff too that's fbld based.
+
+I'm confident re-implementing fbld in c will solve this problem. It will be a
+really good use case for fbld as a viable language too.
+
+Let's hold off on that for now then.

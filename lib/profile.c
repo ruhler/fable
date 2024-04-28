@@ -101,8 +101,10 @@ typedef struct CallStack {
 /** Representation of a call in a sample. */
 typedef struct {
   FbleBlockId caller;   /**< The caller for this particular call. */
-  FbleBlockId callee;   /**< The callee for this particular call. */
-  FbleCallData* call;   /**< Cached result of GetCallData(caller, callee). */
+
+  // Cached result of GetCallData(caller, callee).
+  // call->id gives callee id for the sample.
+  FbleCallData* call;   
 } Sample;
 
 /**
@@ -118,12 +120,32 @@ typedef struct {
   Sample* xs;         /**< Samples on the stack. */
 } SampleStack;
 
+/**
+ * An ever expanding vector of call data.
+ */
+typedef struct {
+  size_t capacity;
+  size_t size;
+  FbleCallData** xs;
+} CallDataEV;
+
 /** Profiling state for a thread of execution. */
 struct FbleProfileThread {
   FbleProfile* profile;   /**< The profile data. */
 
   CallStack* calls;       /**< The current call stack. */
   SampleStack sample;     /**< The current sample stack. */
+
+  // The set of samples on the sample stack, for fast lookup of FbleCallData
+  // for a (caller,callee) pair.
+  //
+  // sample_set[caller] points to list of FbleCallData where call->id is the
+  // id of the callee. FbleCallData are sorted such that most recently added
+  // to the sample_set is at the end.
+  // 
+  // sample_set[caller] is empty if the pair (caller,callee) does not appear
+  // on the sample stack.
+  CallDataEV* sample_set;
 };
 
 /**
@@ -403,10 +425,11 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
 
   // Check to see if this (caller,callee) pair is already on the stack.
   FbleCallData* data = NULL;
-  for (size_t i = 0; i < thread->sample.size; ++i) {
-    Sample* sample = thread->sample.xs + thread->sample.size - i - 1;
-    if (sample->caller == caller && sample->callee == callee) {
-      data = sample->call;
+  CallDataEV* callees = thread->sample_set + caller;
+  for (size_t i = 0; i < callees->size; ++i) {
+    FbleCallData* candidate = callees->xs[i];
+    if (candidate->id == callee) {
+      data = candidate;
       break;
     }
   }
@@ -435,9 +458,17 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
     }
     Sample* sample = thread->sample.xs + thread->sample.size++;
     sample->caller = caller;
-    sample->callee = callee;
     sample->call = data;
     call->exit++;
+
+    if (callees->size == callees->capacity) {
+      callees->capacity *= 2;
+      FbleCallData** xs = FbleAllocArray(FbleCallData*, callees->capacity);
+      memcpy(xs, callees->xs, callees->size * sizeof(FbleCallData*));
+      FbleFree(callees->xs);
+      callees->xs = xs;
+    }
+    callees->xs[callees->size++] = data;
   }
 }
 
@@ -521,6 +552,13 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
   thread->sample.size = 0;
   thread->sample.xs = FbleAllocArray(Sample, thread->sample.capacity);
 
+  thread->sample_set = FbleAllocArray(CallDataEV, profile->blocks.size);
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    thread->sample_set[i].capacity = 1;
+    thread->sample_set[i].size = 0;
+    thread->sample_set[i].xs = FbleAllocArray(FbleCallData*, 1);
+  }
+
   thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   return thread;
 }
@@ -543,6 +581,12 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
   }
 
   FbleFree(thread->sample.xs);
+
+  for (size_t i = 0; i < thread->profile->blocks.size; ++i) {
+    FbleFree(thread->sample_set[i].xs);
+  }
+  FbleFree(thread->sample_set);
+
   FbleFree(thread);
 }
 
@@ -561,9 +605,10 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
   for (size_t i = 0; i < thread->sample.size; ++i) {
     Sample* sample = thread->sample.xs + i;
     FbleCallData* data = sample->call;
-    if (!block_seen[sample->callee]) {
-      block_seen[sample->callee] = true;
-      thread->profile->blocks.xs[sample->callee]->block.time += time;
+    FbleBlockId callee = data->id;
+    if (!block_seen[callee]) {
+      block_seen[callee] = true;
+      thread->profile->blocks.xs[callee]->block.time += time;
     }
     data->time += time;
   }
@@ -616,7 +661,13 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
   }
 
   // TODO: Consider shrinking the sample stack occasionally to recover memory?
-  thread->sample.size -= thread->calls->top->exit;
+  while (thread->calls->top->exit > 0) {
+    thread->calls->top->exit--;
+    thread->sample.size--;
+    Sample* sample = thread->sample.xs + thread->sample.size;
+    thread->sample_set[sample->caller].size--;
+  }
+
   CallStackPop(thread);
 }
 
