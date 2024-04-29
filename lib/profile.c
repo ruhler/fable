@@ -122,6 +122,8 @@ typedef struct {
 
 /**
  * An ever expanding vector of call data.
+ *
+ * Capacity may be 0 and xs NULL to indicate an empty vector.
  */
 typedef struct {
   size_t capacity;
@@ -146,6 +148,7 @@ struct FbleProfileThread {
   // sample_set[caller] is empty if the pair (caller,callee) does not appear
   // on the sample stack.
   CallDataEV* sample_set;
+  size_t sample_set_size;   // Length of sample_set.
 };
 
 /**
@@ -423,6 +426,22 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   FbleBlockId callee = block;
   thread->profile->blocks.xs[callee]->block.count++;
 
+  // Resize sample_set if needed.
+  // This could happen if new blocks were added to the profile during
+  // evaluation.
+  if (caller < thread->sample_set_size) {
+    size_t old_size = thread->sample_set_size;
+    size_t new_size = thread->profile->blocks.size;
+
+    CallDataEV* sample_set = FbleAllocArray(CallDataEV, new_size);
+    memcpy(sample_set, thread->sample_set, sizeof(CallDataEV) * old_size);
+    memset(sample_set + old_size, 0, sizeof(CallDataEV) * (new_size - old_size));
+
+    FbleFree(thread->sample_set);
+    thread->sample_set = sample_set;
+    thread->sample_set_size = new_size;
+  }
+
   // Check to see if this (caller,callee) pair is already on the stack.
   FbleCallData* data = NULL;
   CallDataEV* callees = thread->sample_set + caller;
@@ -461,7 +480,11 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
     sample->call = data;
     call->exit++;
 
-    if (callees->size == callees->capacity) {
+    if (callees->capacity == 0) {
+      callees->capacity = 1;
+      callees->size = 0;
+      callees->xs = FbleAllocArray(FbleCallData*, 1);
+    } else if (callees->size == callees->capacity) {
       callees->capacity *= 2;
       FbleCallData** xs = FbleAllocArray(FbleCallData*, callees->capacity);
       memcpy(xs, callees->xs, callees->size * sizeof(FbleCallData*));
@@ -553,11 +576,8 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
   thread->sample.xs = FbleAllocArray(Sample, thread->sample.capacity);
 
   thread->sample_set = FbleAllocArray(CallDataEV, profile->blocks.size);
-  for (size_t i = 0; i < profile->blocks.size; ++i) {
-    thread->sample_set[i].capacity = 1;
-    thread->sample_set[i].size = 0;
-    thread->sample_set[i].xs = FbleAllocArray(FbleCallData*, 1);
-  }
+  memset(thread->sample_set, 0, sizeof(CallDataEV) * profile->blocks.size);
+  thread->sample_set_size = profile->blocks.size;
 
   thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   return thread;

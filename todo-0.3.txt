@@ -2,6 +2,8 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Add and make use of FbleRealloc or FbleReallocArray function.
+
 * Improve performance with profiling enabled?
  - Now that we removed the optimization for detecting duplicate call entries
    in the stack?
