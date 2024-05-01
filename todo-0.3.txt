@@ -2,13 +2,12 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Add and make use of FbleRealloc or FbleReallocArray function.
-
-* Improve performance with profiling enabled?
- - Now that we removed the optimization for detecting duplicate call entries
-   in the stack?
- - See thoughts/fble-0.1/fble.profile.txt.
-
+* Add and make use of FbleRealloc or FbleReallocArray function?
+  - profile.c sample_set resize.
+  - profile.c sample resize.
+  - profile.c callees resize.
+  - value.c gTailCallData.func_and_args resize.
+ 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 * Add regression test for memory leak fixed in

@@ -272,6 +272,34 @@ instead of when necessary.
 
 Baseline time now is:
 
-
 /usr/bin/time -v ./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
 Elapsed (wall clock) time (h:mm:ss or m:ss): 4:37.74
+
+---
+
+Trying now by taking a sample ever rand() % (2 * 1024) time, which should
+average about one sample every 1024 time. That's a reasonable approach right?
+It's pretty easy to implement.
+
+Performance now:
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 4:37.74 ==> 2:53.34
+
+The profile numbers have changed slightly, but only very slightly. The high
+level info is the same. Let's go with this.
+
+---
+
+We're down to under 3X now from profiling. Let's do one last round of perf
+analysis. Otherwise I'm satisfied.
+
+Flat Profile by Self Time
+-------------------------
+    %     self  block
+38.63    13342  EnterBlock[0008X]
+11.92     4116  FbleCall[0001X]
+ 8.15     2815  FbleProfileRandomSample[001aX]
+ 4.95     1710  FbleProfileExitBlock[0023X]
+
+I'm not seeing anything obvious. Let's leave it there for now.

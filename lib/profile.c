@@ -76,6 +76,9 @@
 #include <fble/fble-profile.h>
 #include <fble/fble-vector.h>
 
+// The average period of time between random samples.
+#define RANDOM_SAMPLE_PERIOD 1024
+
 /** Representation of a call in the current call stack. */
 typedef struct {
   /** The id of the current block. */
@@ -149,6 +152,9 @@ struct FbleProfileThread {
   // on the sample stack.
   CallDataEV* sample_set;
   size_t sample_set_size;   // Length of sample_set.
+
+  // Time to next random sample.
+  int32_t ttrs;
 };
 
 /**
@@ -579,6 +585,8 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
   memset(thread->sample_set, 0, sizeof(CallDataEV) * profile->blocks.size);
   thread->sample_set_size = profile->blocks.size;
 
+  thread->ttrs = rand() % (2 * RANDOM_SAMPLE_PERIOD);
+
   thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   return thread;
 }
@@ -643,15 +651,10 @@ void FbleProfileRandomSample(FbleProfileThread* profile, size_t count)
     return;
   }
 
-  size_t time = 0;
-  for (size_t i = 0; i < count; ++i) {
-    if (rand() % 1024 == 0) {
-      time++;
-    }
-  }
-
-  if (time > 0) {
-    FbleProfileSample(profile, time);
+  profile->ttrs -= count;
+  while (profile->ttrs <= 0) {
+    FbleProfileSample(profile, 1);
+    profile->ttrs += rand() % (2 * RANDOM_SAMPLE_PERIOD);
   }
 }
 
