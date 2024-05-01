@@ -223,3 +223,55 @@ Next steps:
 * Figure out the match to reduce calls to rand() in FbleRandomProfileSample.
 * Do another round of perf review to see if there's anything else easy we can
   optimize. 
+
+---
+
+To reduce cost of calls to rand() in FbleRandomProfileSample...
+
+High level, we want to count time at each point of the program. But that's too
+expensive to compute (I tried it again just now, it's at least 3x slower).
+
+So we say, we can sample, say once every 1024 points of the program. We could
+do that regularly, but the concern is we hit some pathological case or cycle
+where the sample always lands in the sample place in the code, and never to
+what's around that.
+
+So we sample randomly. Current approach is 1/1024 chance of sampling at every
+point in time. But that's expensive, because it means calling rand() at every
+point in time.
+
+We could try to compute a binomial distribution, so we call rand() once for
+every time FbleRandomProfileSample is called. But that sounds hard.
+
+How about a different approach to random sampling? The important part is that
+we have almost exactly the same number of total samples if the program time
+doesn't change. How about let's divide the program into 1024 long chunks of
+time, and randomly sample once uniformly within each interval? Now we only
+have to call rand() once every 1024 units of time. Should be super fast,
+right?
+
+Let's try it:
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 4:35.54 ==>  ???
+
+I don't understand. It's at least 3X slower. How can that be?
+* Maybe count is often bigger than 1024, so grouping multiple samples together
+  gives a noticeable benefit? That's hard for me to believe. The biggest count
+  I saw was 99.
+* Maybe it's causing us to take (significantly?) more samples than before?
+* Maybe adding support for dynamically growing the sample_set slowed us way
+  down?
+
+Looks like the last one. I'm surprised. I'll need to revisit that first.
+
+---
+
+Found the bug. I was resizing the sample_set every time EnterBlock was called
+instead of when necessary.
+
+Baseline time now is:
+
+
+/usr/bin/time -v ./pkgs/fbld/bin/fbld --profile foo.prof -- ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+Elapsed (wall clock) time (h:mm:ss or m:ss): 4:37.74

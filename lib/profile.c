@@ -429,7 +429,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   // Resize sample_set if needed.
   // This could happen if new blocks were added to the profile during
   // evaluation.
-  if (caller < thread->sample_set_size) {
+  if (caller >= thread->sample_set_size) {
     size_t old_size = thread->sample_set_size;
     size_t new_size = thread->profile->blocks.size;
 
@@ -602,7 +602,7 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
 
   FbleFree(thread->sample.xs);
 
-  for (size_t i = 0; i < thread->profile->blocks.size; ++i) {
+  for (size_t i = 0; i < thread->sample_set_size; ++i) {
     FbleFree(thread->sample_set[i].xs);
   }
   FbleFree(thread->sample_set);
