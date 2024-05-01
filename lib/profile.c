@@ -68,7 +68,7 @@
 #include <inttypes.h> // for PRIu64
 #include <math.h>     // for sqrt
 #include <stdbool.h>  // for bool
-#include <string.h>   // for memset, memcpy
+#include <string.h>   // for memset
 #include <stdlib.h>   // for rand
 
 #include <fble/fble-alloc.h>
@@ -439,12 +439,8 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
     size_t old_size = thread->sample_set_size;
     size_t new_size = thread->profile->blocks.size;
 
-    CallDataEV* sample_set = FbleAllocArray(CallDataEV, new_size);
-    memcpy(sample_set, thread->sample_set, sizeof(CallDataEV) * old_size);
-    memset(sample_set + old_size, 0, sizeof(CallDataEV) * (new_size - old_size));
-
-    FbleFree(thread->sample_set);
-    thread->sample_set = sample_set;
+    thread->sample_set = FbleReAllocArray(CallDataEV, thread->sample_set, new_size);
+    memset(thread->sample_set + old_size, 0, sizeof(CallDataEV) * (new_size - old_size));
     thread->sample_set_size = new_size;
   }
 
@@ -476,10 +472,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   if (!call_running) {
     if (thread->sample.size == thread->sample.capacity) {
       thread->sample.capacity *= 2;
-      Sample* xs = FbleAllocArray(Sample, thread->sample.capacity);
-      memcpy(xs, thread->sample.xs, thread->sample.size * sizeof(Sample));
-      FbleFree(thread->sample.xs);
-      thread->sample.xs = xs;
+      thread->sample.xs = FbleReAllocArray(Sample, thread->sample.xs, thread->sample.capacity);
     }
     Sample* sample = thread->sample.xs + thread->sample.size++;
     sample->caller = caller;
@@ -492,10 +485,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
       callees->xs = FbleAllocArray(FbleCallData*, 1);
     } else if (callees->size == callees->capacity) {
       callees->capacity *= 2;
-      FbleCallData** xs = FbleAllocArray(FbleCallData*, callees->capacity);
-      memcpy(xs, callees->xs, callees->size * sizeof(FbleCallData*));
-      FbleFree(callees->xs);
-      callees->xs = xs;
+      callees->xs = FbleReAllocArray(FbleCallData*, callees->xs, callees->capacity);
     }
     callees->xs[callees->size++] = data;
   }

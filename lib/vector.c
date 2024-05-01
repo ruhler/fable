@@ -5,8 +5,6 @@
 
 #include <fble/fble-vector.h>
 
-#include <string.h>     // for memcpy
-
 #include <fble/fble-alloc.h>
 
 // FbleExtendVectorRaw -- see fble.h for documentation of this function.
@@ -18,9 +16,6 @@ void FbleExtendVectorRaw(size_t elem_size, size_t* size, void** xs)
   // incremented.
   size_t s = (*size)++;
   if (s > 0 && (s & (s - 1)) == 0) {
-    void* resized = FbleAllocRaw(2 * s * elem_size);
-    memcpy(resized, *xs, s * elem_size);
-    FbleFree(*xs);
-    *xs = resized;
+    *xs = FbleReAllocRaw(*xs, 2 * s * elem_size);
   }
 }

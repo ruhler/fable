@@ -48,6 +48,11 @@ void* FbleAllocRaw(size_t size)
   gCurrentAllocationsCount++;
   return malloc(size);
 }
+// See documentation in fble-alloc.h.
+void* FbleReAllocRaw(void* ptr, size_t size)
+{
+  return realloc(ptr, size);
+}
 
 // See documentation in fble-alloc.h.
 void FbleFree(void* ptr)

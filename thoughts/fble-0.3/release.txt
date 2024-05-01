@@ -149,4 +149,10 @@ otherwise we'll continue to carry these things forever.
  
 ---
 
+* Can fble-stdio check that the function has the right type?
+
+What can we know about the value passed to it? Literally nothing. We can't
+call FbleFuncValueFunction, because we don't know its a function. I think
+better to hold off on this question until after modular compilation, because
+modular compilation may give a way to talk about compiled types of modules.
 

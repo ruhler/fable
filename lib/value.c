@@ -1221,10 +1221,7 @@ static void EnsureTailCallArgsSpace(size_t argc)
   size_t capacity = argc + 1;
   if (capacity > gTailCallData.capacity) {
     gTailCallData.capacity = capacity;
-    FbleValue** func_and_args = FbleAllocArray(FbleValue*, capacity);
-    memcpy(func_and_args, gTailCallData.func_and_args, (1 + gTailCallData.argc) * sizeof(FbleValue*));
-    FbleFree(gTailCallData.func_and_args);
-    gTailCallData.func_and_args = func_and_args;
+    gTailCallData.func_and_args = FbleReAllocArray(FbleValue*, gTailCallData.func_and_args, capacity);
   }
 }
 

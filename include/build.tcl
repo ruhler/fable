@@ -5,7 +5,9 @@ namespace eval "include" {
 
   set header_funcs {
     fble-alloc.h {
-      FbleAllocRaw FbleAlloc FbleAllocExtra FbleAllocArray
+      FbleAllocRaw FbleReAllocRaw
+      FbleAlloc FbleAllocExtra
+      FbleAllocArray FbleReAllocArray
       FbleFree
     }
     fble-arg-parse.h {

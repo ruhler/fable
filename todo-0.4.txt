@@ -16,6 +16,7 @@ Things to consider doing for the fble-0.4 release.
  - Add support for loading .fble.@ files.
  - Test coverage of .fble/.fble.@ combinations.
  - Add option for loading modules from .so files?
+ - Have fble-stdio check that the function has the right type?
 
 * Fbld Language Revision
  - modularity

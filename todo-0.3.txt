@@ -2,20 +2,12 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Add and make use of FbleRealloc or FbleReallocArray function?
-  - profile.c sample_set resize.
-  - profile.c sample resize.
-  - profile.c callees resize.
-  - value.c gTailCallData.func_and_args resize.
- 
+* Convert lib/*, test/*, etc. code to fbld doc comments.
+
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 * Add regression test for memory leak fixed in
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
-
-*  Can fble-stdio check that the function has the right type?
- - Right now, the only info we have at runtime is num_args. We could at least
-   check for that. Also that it's a function.
 
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.
@@ -27,7 +19,6 @@ Things to consider doing for the fble-0.3 release.
    Or try using dwarf trampoline annotation?
 
 Doc Comments
-* convert lib/*, test/*, etc. code to fbld doc comments.
 * Be able to write doc comments for extern values and types as well as
   functions.
 * Would be nice to have SEE ALSO section for library man pages.

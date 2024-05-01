@@ -25,6 +25,21 @@
 void* FbleAllocRaw(size_t size);
 
 /**
+ * @func[FbleReAllocRaw] Re-allocates to @a[size] bytes of memory.
+ *  This function is not type safe.
+ *
+ *  @arg[void*][ptr] The memory region to reallocate.
+ *  @arg[size_t][size] The number of bytes to reallocate to.
+ *
+ *  @returns[void*]
+ *   A pointer to the reallocated size bytes of memory.
+ *
+ *  @sideeffects
+ *   The original buffer is invalidated by this call.
+ */
+void* FbleReAllocRaw(void* ptr, size_t size);
+
+/**
  * @func[FbleAlloc] Type safe object allocation.
  *  @arg[type][T] The type of object to allocate.
  *
@@ -69,6 +84,20 @@ void* FbleAllocRaw(size_t size);
  *   The allocation should be freed by calling FbleFree when no longer in use.
  */
 #define FbleAllocArray(T, count) ((T*) FbleAllocRaw((count) * sizeof(T)))
+
+/**
+ * @func[FbleReAllocArray] Type safe array re-allocation.
+ *  @arg[type][T] the type of object to allocate
+ *  @arg[T*][ptr] the original allocation.
+ *  @arg[size_t][count] the number of objects to reallocate the array to.
+ *
+ *  @returns T*
+ *   A pointer to a newly re-allocated array of count objects of the given type.
+ *
+ *  @sideeffects
+ *   The original buffer is invalidated by this call.
+ */
+#define FbleReAllocArray(T, ptr, count) ((T*) FbleReAllocRaw(ptr, (count) * sizeof(T)))
 
 /**
  * @func[FbleFree] Free a memory allocation.
