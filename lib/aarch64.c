@@ -270,18 +270,18 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
 }
 
 /**
- * Generates code to declare a static FbleModulePath value.
+ * @func[StaticModulePath]
+ * @ Generates code to declare a static FbleModulePath value.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[FbleModulePath*][path] The FbleModulePath to generate code for.
  *
- * @param fout  The output stream to write the code to.
- * @param label_id  Pointer to next available label id for use.
- * @param path  The FbleModulePath to generate code for.
- *
- * @returns[LabelId]
+ *  @returns[LabelId]
  *   The label id of a local, static FbleModulePath.
  *
- * @sideeffects
- * * Outputs code to fout.
- * * Increments label_id based on the number of internal labels used.
+ *  @sideeffects
+ *   @i Outputs code to fout.
+ *   @i Increments label_id based on the number of internal labels used.
  */
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path)
 {
@@ -304,15 +304,16 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
 }
 
 /**
- * Generates code to declare a static FbleGeneratedModule value.
+ * @func[StaticGeneratedModule]
+ * @ Generates code to declare a static FbleGeneratedModule value.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[FbleCompiledModule*][module]
+ *   The FbleCompiledModule to generate code for.
  *
- * @param fout  The output stream to write the code to.
- * @param label_id  Pointer to next available label id for use.
- * @param module  The FbleCompiledModule to generate code for.
- *
- * @sideeffects
- * * Outputs code to fout.
- * * Increments label_id based on the number of internal labels used.
+ *  @sideeffects
+ *   @i Outputs code to fout.
+ *   @i Increments label_id based on the number of internal labels used.
  */
 static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
 {
@@ -358,14 +359,15 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledMod
 }
 
 /**
- * Generates code to read a variable from the current frame into register rdst.
+ * @func[GetFrameVar]
+ * @ Generates code to read var from the current frame into register rdst.
+ *  @arg[FILE*][fout] The output stream.
+ *  @arg[const char*][rdst]
+ *   The name of the register to read the variable into
+ *  @arg[FbleVar][var] The variable to read.
  *
- * @param fout  The output stream
- * @param rdst  The name of the register to read the variable into
- * @param var  The variable to read.
- *
- * @sideeffects
- * * Writes to the output stream.
+ *  @sideeffects
+ *   Writes to the output stream.
  */
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar var)
 {
@@ -374,14 +376,14 @@ static void GetFrameVar(FILE* fout, const char* rdst, FbleVar var)
 }
 
 /**
- * Generates code to write a variable to the current frame from register rsrc.
+ * @func[SetFrameVar]
+ * @ Generates code to write a variable to the current frame from register rsrc.
+ *  @arg[FILE*][fout] The output stream.
+ *  @arg[const char*][rsrc] The name of the register with the value to write.
+ *  @arg[FbleLocalIndex*][index] The index of the value to write.
  *
- * @param fout  The output stream
- * @param rsrc  The name of the register with the value to write.
- * @param index  The index of the value to write.
- *
- * @sideeffects
- * * Writes to the output stream.
+ *  @sideeffects
+ *   Writes to the output stream.
  */
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
 {
@@ -389,16 +391,15 @@ static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
 }
 
 /**
- * Emits code to return an error from a Run function.
+ * @func[DoAbort] Emits code to return an error from a Run function.
+ *  @arg[FILE*][fout] The output stream.
+ *  @arg[size_t][func_id] A unique id for the function to use for labels.
+ *  @arg[size_t][pc] The program counter of the abort location.
+ *  @arg[const char*][lmsg] The label of the error message to use.
+ *  @arg[FbleLoc][loc] The location to report with the error message.
  *
- * @param fout  The output stream.
- * @param func_id  A unique id for the function to use for labels.
- * @param pc  The program counter of the abort location.
- * @param lmsg  The label of the error message to use.
- * @param loc  The location to report with the error message.
- *
- * @sideeffects
- *   Emit code to return the error.
+ *  @sideeffects
+ *   Emits code to return the error.
  */
 static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, FbleLoc loc)
 {
@@ -422,14 +423,16 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
 }
 
 /**
- * Calculates a 16 byte aligned number of bytes sufficient to store count xwords.
+ * @func[StackBytesForCount] Get bytes needed for count xwords.
+ *  Calculates a 16 byte aligned number of bytes sufficient to store count
+ *  xwords.
  *
- * @param count  The number of xwords.
+ *  @arg[size_t][count] The number of xwords.
  *
- * @returns
+ *  @returns[size_t]
  *   The number of bytes to allocate on the stack.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static size_t StackBytesForCount(size_t count)
@@ -438,14 +441,13 @@ static size_t StackBytesForCount(size_t count)
 }
 
 /**
- * Emits an adr instruction to load a label into a register.
+ * @func[Adr] Emits an adr instruction to load a label into a register.
+ *  @arg[FILE*][fout] The output stream
+ *  @arg[const char*][r_dst] The name of the register to load the label into
+ *  @arg[const char*][fmt] A printf format string for the label to load.
+ *  @arg[...][] Printf format arguments. 
  *
- * @param fout  The output stream
- * @param r_dst  The name of the register to load the label into
- * @param fmt  A printf format string for the label to load.
- * @param ...  Printf format arguments. 
- *
- * @sideeffects
+ *  @sideeffects
  *   Emits a sequence of instructions to load the label into the register.
  */
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
@@ -466,12 +468,13 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
 }
 
 /**
- * Tests whether the given search interval has a single possible target.
+ * @func[GetSingleTarget] Helper for case statement code gen.
+ *  Tests whether the given search interval has a single possible target.
+ *  
+ *  @arg[Interval*][interval] The specific search interval.
  *
- * @param interval  The specific search interval.
- *
- * @returns
- *  The target if there is a single possible target, NONE otherwise.
+ *  @returns[size_t]
+ *   The target if there is a single possible target, NONE otherwise.
  */
 static size_t GetSingleTarget(Interval* interval)
 {
@@ -488,13 +491,12 @@ static size_t GetSingleTarget(Interval* interval)
 }
 
 /**
- * Generates code to jump to a union select target.
+ * @func[EmitSearch] Generates code to jump to a union select target.
+ *  @arg[Context*][context] Context on what is being generated for.
+ *  @arg[Interval*][interval] The specific interval in the search to generate.
  *
- * @param context  Context on what is being generated for.
- * @param interval  The specific interval in the search to generate.
- *
- * @sideeffects
- * * Outputs code to fout.
+ *  @sideeffects
+ *   Outputs code to fout.
  */
 static void EmitSearch(Context* context, Interval* interval)
 {
@@ -561,16 +563,17 @@ static void EmitSearch(Context* context, Interval* interval)
 }
 
 /**
- * Generates code to execute an instruction.
+ * @func[EmitInstr] Generates code to execute an instruction.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[FbleNameV][profile_blocks]
+ *   The list of profile block names for the module.
+ *  @arg[size_t][code]
+ *   Pointer to the current code block, for referencing labels.
+ *  @arg[size_t][pc] The program counter of the instruction.
+ *  @arg[FbleInstr*][instr] The instruction to execute.
  *
- * @param fout  The output stream to write the code to.
- * @param profile_blocks  The list of profile block names for the module.
- * @param code  Pointer to the current code block, for referencing labels.
- * @param pc  The program counter of the instruction.
- * @param instr  The instruction to execute.
- *
- * @sideeffects
- * * Outputs code to fout.
+ *  @sideeffects
+ *   Outputs code to fout.
  */
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size_t pc, FbleInstr* instr)
 {
@@ -863,19 +866,18 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 }
 
 /**
- * Generates code that doesn't need to be in the main execution path.
+ * @func[EmitOutlineCode]
+ * @ Generates code that doesn't need to be in the main execution path.
+ *  This code is referenced from the EmitInstr code in rare or unexpected
+ *  cases.
  *
- * This code is referenced from the EmitInstr code in rare or unexpected
- * cases.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[size_t][func_id] A unique id for the function to use in labels.
+ *  @arg[size_t][pc] The program counter of the instruction.
+ *  @arg[FbleInstr*][instr] The instruction to generate code for.
  *
- * @param fout  The output stream to write the code to.
- * @param profile_blocks  The list of profile block names for the module.
- * @param func_id  A unique id for the function to use in labels.
- * @param pc  The program counter of the instruction.
- * @param instr  The instruction to generate code for.
- *
- * @sideeffects
- * * Outputs code to fout.
+ *  @sideeffects
+ *   Outputs code to fout.
  */
 static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* instr)
 {
@@ -985,14 +987,14 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 }
 
 /**
- * Generates code to execute an FbleCode block.
+ * @func[EmitCode] Generates code to execute an FbleCode block.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[FbleNameV][profile_blocks]
+ *   The list of profile block names for the module.
+ *  @arg[FbleCode*][code] The block of code to generate a C function for.
  *
- * @param fout  The output stream to write the code to.
- * @param profile_blocks  The list of profile block names for the module.
- * @param code  The block of code to generate a C function for.
- *
- * @sideeffects
- * * Outputs code to fout with two space indent.
+ *  @sideeffects
+ *   Outputs code to fout with two space indent.
  */
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
@@ -1053,15 +1055,15 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 }
 
 /**
- * Returns the size of the label-sanitized version of a given string.
+ * @func[SizeofSanitizedString]
+ * @ Returns the size of the label-sanitized version of a given string.
+ *  @arg[const char*][str] The string to get the sanitized size of.
  *
- * @param str  The string to get the sanitized size of.
- *
- * @returns
+ *  @returns[size_t]
  *   The number of bytes needed for the sanitized version of the given string,
  *   including nul terminator.
  *
- * @sideeffects
+ *  @sideeffects
  *   None
  */
 static size_t SizeofSanitizedString(const char* str)
@@ -1074,13 +1076,14 @@ static size_t SizeofSanitizedString(const char* str)
 }
 
 /**
- * Returns a version of the string suitable for use in labels.
+ * @func[SanitizeString]
+ * @ Returns a version of the string suitable for use in labels.
+ *  @arg[const char*][str] The string to sanitize.
+ *  @arg[char*][dst]
+ *   A character buffer of size SizeofSanitizedString(str) to write the
+ *   sanitized string to.
  *
- * @param str  The string to sanitize.
- * @param dst  A character buffer of size SizeofSanitizedString(str) to write
- *   the sanitized string to.
- *
- * @sideeffects
+ *  @sideeffects
  *   Fills in dst with the sanitized version of the string.
  */
 static void SanitizeString(const char* str, char* dst)
@@ -1094,14 +1097,14 @@ static void SanitizeString(const char* str, char* dst)
 }
 
 /**
- * Returns a C function identifier to for the give module path.
+ * @func[LableForPath]
+ * @ Returns a C function identifier to for the give module path.
+ *  @arg[FbleModulePath*][path] The path to get the name for.
  *
- * @param path  The path to get the name for.
- *
- * @returns
+ *  @returns[FbleString*]
  *   A C function name for the module path.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates an FbleString* that should be freed with FbleFreeString when no
  *   longer needed.
  */

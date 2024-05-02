@@ -156,3 +156,48 @@ call FbleFuncValueFunction, because we don't know its a function. I think
 better to hold off on this question until after modular compilation, because
 modular compilation may give a way to talk about compiled types of modules.
 
+---
+
+lib/ files to switch to fbld doc comments:
+
+aarch64.c       DONE.
+alloc.c
+arg-parse.c
+c.c
+code.c
+code.h
+compile.c
+config.h.tcl
+expr.c
+expr.h
+heap.c
+heap.h
+interpret.c
+interpret.h
+kind.c
+kind.h
+link.c
+load.c
+loc.c
+module-path.c
+name.c
+parse.h
+parse.y
+profile.c
+string.c
+tag.h
+tc.c
+tc.h
+type.c
+typecheck.c
+typecheck.h
+type.h
+unreachable.h
+unused.c
+unused.h
+usage.c
+value.c
+var.h
+vector.c
+version.c
+
