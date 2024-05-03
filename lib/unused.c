@@ -15,16 +15,13 @@ typedef struct Vars {
 
 static void Expr(FbleExpr* expr, Vars* vars);
 
-// Expr --
-//   Traverses the given expression.
+// @func[Expr] Traverses the given expression.
+//  @arg[FbleExpr*][expr] The expression to traverse. May be NULL.
+//  @arg[Vars*][vars] vars in scope.
 //
-// Args:
-//   expr - the expression to traverse. May be NULL.
-//   vars - vars in scope.
-//
-// Side effects
-//   * Prints warnings for unused variables.
-//   * Marks used variables as used.
+//  @sideeffects
+//   @i Prints warnings for unused variables.
+//   @i Marks used variables as used.
 static void Expr(FbleExpr* expr, Vars* vars)
 {
   if (!expr) {

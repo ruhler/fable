@@ -59,6 +59,7 @@ FbleModuleArg FbleNewModuleArg()
   return arg;
 }
 
+// See documentation in fble-arg-parse.h
 void FbleFreeModuleArg(FbleModuleArg arg)
 {
   FbleFreeSearchPath(arg.search_path);
@@ -67,7 +68,7 @@ void FbleFreeModuleArg(FbleModuleArg arg)
   };
 }
 
-// FbleParseModuleArg -- See documentation in fble-arg-parse.h
+// See documentation in fble-arg-parse.h
 bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool* error)
 {
   if (strcmp("-I", (*argv)[0]) == 0) {
@@ -128,8 +129,7 @@ bool FbleParseModuleArg(FbleModuleArg* dest, int* argc, const char*** argv, bool
   return false;
 }
 
-// FbleParseInvalidArg --
-//   See documentation in fble-arg-parse.h
+// See documentation in fble-arg-parse.h
 bool FbleParseInvalidArg(int* argc, const char*** argv, bool* error)
 {
   (void)argc;

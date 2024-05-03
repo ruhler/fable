@@ -23,11 +23,9 @@ bool gInitialized = false;
 static void Exit();
 
 /**
- * Cleans up the global arena.
- *
- * @sideeffects
- * * Frees resources associated with the global arena.
- * * Checks for memory leaks.
+ * @func[Exit] Exit function to check for memory leaks.
+ *  @sideeffects
+ *   Prints an error message and aborts if memory leaks are detected.
  */
 static void Exit()
 {
