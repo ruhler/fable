@@ -158,33 +158,33 @@ typedef struct {
 } NativeValue;
 
 /**
- * Allocates a new value of the given type.
+ * @func[NewValue] Allocates a new value of the given type.
+ *  @arg[FbleValueHeap*][heap] The heap to allocate the value on
+ *  @arg[<type>][T] The type of the value
+ *  @arg[ValueTag*][tag] The tag of the value
  *
- * @param heap  The heap to allocate the value on
- * @param T  The type of the value
- * @param tag The tag of the value
- *
- * @returns
+ *  @returns[T*]
  *   The newly allocated value.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a value on the heap.
  */
 #define NewValue(heap, T, tag) ((T*) NewValueRaw(heap, tag, sizeof(T)))
 
 /**
- * Allocates a new value with some extra space to the stack.
+ * @func[NewValueExtra]
+ * @ Allocates a new value with some extra space to the stack.
+ *  @arg[FbleValueHeap*][heap] The heap to allocate the value on
+ *  @arg[<type>][T] The type of the value
+ *  @arg[ValueTag][tag] The tag of the value
+ *  @arg[size_t][count]
+ *   The number of FbleValue* worth of extra space to include in the allocated
+ *   object.
  *
- * @param heap  The heap to allocate the value on
- * @param T  The type of the value
- * @param tag The tag of the value
- * @param count  The number of FbleValue* worth of extra space to include in
- *   the allocated object.
- *
- * @returns[FbleValue*]
+ *  @returns[T*]
  *   The newly allocated value with extra space.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a value on the stack.
  */
 #define NewValueExtra(heap, T, tag, count) ((T*) NewValueRaw(heap, tag, sizeof(T) + count * sizeof(FbleValue*)))
@@ -203,19 +203,20 @@ typedef struct {
 #define NewGcValue(heap, frame, T, tag) ((T*) NewGcValueRaw(heap, frame, tag, sizeof(T)))
 
 /**
- * Allocates a new value with some extra space to the heap.
- *
- * @param heap The heap to allocate on.
- * @param frame  The frame to allocate the value on
- * @param T  The type of the value
- * @param tag The tag of the value
- * @param count  The number of FbleValue* worth of extra space to include in
+ * @func[NewGcValueExtra]
+ * @ Allocates a new value with some extra space to the heap.
+ *  @arg[FbleTypeHeap*][heap] The heap to allocate on.
+ *  @arg[Frame*][frame] The frame to allocate the value on
+ *  @arg[<type>][T] The type of the value
+ *  @arg[ValueTag][tag] The tag of the value
+ *  @arg[size_t][count]
+ *   The number of FbleValue* worth of extra space to include in
  *   the allocated object.
  *
- * @returns[FbleValue*]
+ *  @returns[T*]
  *   The newly allocated value with extra space.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a value on the heap.
  */
 #define NewGcValueExtra(heap, frame, T, tag, count) ((T*) NewGcValueRaw(heap, frame, tag, sizeof(T) + count * sizeof(FbleValue*)))
@@ -605,17 +606,17 @@ static bool IsAlloced(FbleValue* value)
 }
 
 /**
- * Computes bits needed for a packed value.
+ * @func[PackedValueLength] Computes bits needed for a packed value.
+ *  Compute the number of bits needed for the value packed into the least
+ *  significat bits of @a[data]. @a[data] should not include the pack marker.
  *
- * Compute the number of bits needed for the value packed into the least
- * significat bits of 'data'. 'data' should not include the pack marker.
+ *  @arg[intptr_t][data]
+ *   Raw data bits for a packed value without the pack marker.
  *
- * @param data  Raw data bits for a packed value without the pack marker.
- *
- * @returns
+ *  @returns[size_t]
  *   The number of bits of the data used to describe that value.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static size_t PackedValueLength(intptr_t data)

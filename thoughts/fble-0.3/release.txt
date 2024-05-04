@@ -196,8 +196,7 @@ load.c        DONE.
 parse.y       DONE.
 profile.c     DONE.
 type.c        DONE.
-
-typecheck.c
-type.h
-value.c
+typecheck.c   DONE.
+type.h        DONE.
+value.c       DONE.
 

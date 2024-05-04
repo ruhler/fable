@@ -176,15 +176,14 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType**
 
 
 /**
- * Tests whether two variable names are equal.
+ * @func[VarNamesEqual] Tests whether two variable names are equal.
+ *  @arg[VarName][a] The first variable name.
+ *  @arg[VarName][b] The second variable name.
  *
- * @param a  The first variable name.
- * @param b  The second variable name.
- *
- * @returns
+ *  @returns[bool]
  *   true if the names are equal, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static bool VarNamesEqual(VarName a, VarName b)
@@ -201,23 +200,24 @@ static bool VarNamesEqual(VarName a, VarName b)
 }
 
 /**
- * Pushes a local variable onto the current scope.
+ * @func[PushLocalVar] Pushes a local variable onto the current scope.
+ *  @arg[Scope*][scope] The scope to push the variable on to.
+ *  @arg[VarName][name] The name of the variable.
+ *  @arg[FbleType*][type] The type of the variable.
  *
- * @param scope  The scope to push the variable on to.
- * @param name  The name of the variable.
- * @param type  The type of the variable.
- *
- * @returns
+ *  @returns[Var*]
  *   A pointer to the newly pushed variable. The pointer is owned by the
  *   scope. It remains valid until a corresponding PopLocalVar or FreeScope
  *   occurs.
  *
- * @sideeffects
- * * Pushes a new variable with given name and type onto the scope.
- * * Takes ownership of the given type, which will be released when the
- *   variable is freed.
- * * Does not take ownership of name. It is the callers responsibility
- *   to ensure that 'name' outlives the returned Var.
+ *  @sideeffects
+ *   @i Pushes a new variable with given name and type onto the scope.
+ *   @item
+ *    Takes ownership of the given type, which will be released when the
+ *    variable is freed.
+ *   @item
+ *    Does not take ownership of name. It is the callers responsibility to
+ *    ensure that 'name' outlives the returned Var.
  */
 static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
 {
@@ -232,26 +232,27 @@ static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
 }
 
 /**
- * Pushes a local type variable onto the current scope.
- * 
- * Type variables do not have a corresponding definition. Anyone who
- * references a type variable will allocate a new type value instead.
+ * @func[PushLocalTypeVar] Pushes a local type variable onto the current scope.
+ *  Type variables do not have a corresponding definition. Anyone who
+ *  references a type variable will allocate a new type value instead.
  *
- * @param scope  The scope to push the variable on to.
- * @param name  The name of the variable.
- * @param type  The type of the variable.
+ *  @arg[Scope*][scope] The scope to push the variable on to.
+ *  @arg[VarName][name] The name of the variable.
+ *  @arg[FbleType*][type] The type of the variable.
  *
- * @returns
+ *  @returns[Var*]
  *   A pointer to the newly pushed variable. The pointer is owned by the
  *   scope. It remains valid until a corresponding PopLocalVar or FreeScope
  *   occurs.
  *
- * @sideeffects
- * * Pushes a new variable with given name and type onto the scope.
- * * Takes ownership of the given type, which will be released when the
- *   variable is freed.
- * * Does not take ownership of name. It is the callers responsibility
- *   to ensure that 'name' outlives the returned Var.
+ *  @sideeffects
+ *   @i Pushes a new variable with given name and type onto the scope.
+ *   @item
+ *    Takes ownership of the given type, which will be released when the
+ *    variable is freed.
+ *   @item
+ *    Does not take ownership of name. It is the callers responsibility to
+ *    ensure that 'name' outlives the returned Var.
  */
 static Var* PushLocalTypeVar(Scope* scope, VarName name, FbleType* type)
 {
@@ -266,12 +267,11 @@ static Var* PushLocalTypeVar(Scope* scope, VarName name, FbleType* type)
 }
 
 /**
- * Pops a local var off the given scope.
+ * @func[PopLocalVar] Pops a local var off the given scope.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[Scope*][scope] The scope to pop from.
  *
- * @param heap  Heap to use for allocations.
- * @param scope  The scope to pop from.
- *
- * @sideeffects
+ *  @sideeffects
  *   Pops the top var off the scope. Invalidates the pointer to the variable
  *   originally returned in PushLocalVar.
  */
@@ -290,19 +290,18 @@ static void PopLocalVar(FbleTypeHeap* heap, Scope* scope)
 }
 
 /**
- * Looks up a var in the given scope.
+ * @func[GetVar] Looks up a var in the given scope.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[Scope*][scope] The scope to look in.
+ *  @arg[VarName][name] The name of the variable.
+ *  @arg[bool][phantom] If true, do not consider the variable to be accessed.
  *
- * @param heap  Heap to use for allocations.
- * @param scope  The scope to look in.
- * @param name  The name of the variable.
- * @param phantom  If true, do not consider the variable to be accessed.
- *
- * @returns
+ *  @returns[Var*]
  *   The variable from the scope, or NULL if no such variable was found. The
  *   variable is owned by the scope and remains valid until either PopLocalVar
  *   is called or the scope is finished.
  *
- * @sideeffects
+ *  @sideeffects
  *   Marks variable as used and for capture if necessary and not phantom.
  */
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
@@ -366,24 +365,26 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 }
 
 /**
- * Initialize a new scope.
+ * @func[InitScope] Initialize a new scope.
+ *  @arg[Scope*][scope] The scope to initialize.
+ *  @arg[Scope*][captured]
+ *   Collects the source of variables captured from the parent scope. May be
+ *   NULL to indicate that operations on this scope should not have any side
+ *   effects on the parent scope.
+ *  @arg[ArgV][args] Args to the scope.
+ *  @arg[FbleModulePath][module] The current module. Borrowed.
+ *  @arg[Scope*][parent] The parent of the scope to initialize. May be NULL.
  *
- * @param scope  The scope to initialize.
- * @param captured  Collects the source of variables captured from the parent
- *   scope. May be NULL to indicate that operations on this scope should not
- *   have any side effects on the parent scope.
- * @param args  Args to the scope.
- * @param module  The current module. Borrowed.
- * @param parent  The parent of the scope to initialize. May be NULL.
- *
- * @sideeffects
- * * Initializes scope based on parent.
- * * FreeScope should be called to free the allocations for scope.
- * * The lifetime of the parent scope must exceed the lifetime of this scope.
- * * Takes ownership of the args types, which will be released when the
- *   scope is freed.
- * * Does not take ownership of arg names. It is the callers responsibility to
- *   ensure that arg names outlive the scope.
+ *  @sideeffects
+ *   @i Initializes scope based on parent.
+ *   @i FreeScope should be called to free the allocations for scope.
+ *   @i The lifetime of the parent scope must exceed the lifetime of this scope.
+ *   @item
+ *    Takes ownership of the args types, which will be released when the scope
+ *    is freed.
+ *   @item
+ *    Does not take ownership of arg names. It is the callers responsibility
+ *    to ensure that arg names outlive the scope.
  */
 static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePath* module, Scope* parent)
 {
@@ -407,13 +408,12 @@ static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePat
 }
 
 /**
- * Frees memory associated with a Scope.
+ * @func[FreeScope] Frees memory associated with a Scope.
+ *  @arg[FbleTYpeHeap*][heap] Heap to use for allocations
+ *  @arg[Scope*][scope] The scope to finish.
  *
- * @param heap  Heap to use for allocations
- * @param scope  The scope to finish.
- *
- * @sideeffects
- * * Frees memory associated with scope.
+ *  @sideeffects
+ *   Frees memory associated with scope.
  */
 static void FreeScope(FbleTypeHeap* heap, Scope* scope)
 {
@@ -437,10 +437,11 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
 }
 
 /**
- * Reports a compiler error.
+ * @func[ReportError] Reports a compiler error.
+ *  This uses a printf-like format string. The following format specifiers are
+ *  supported:
  *
- * This uses a printf-like format string. The following format specifiers
- * are supported:
+ *  @code[txt] @
  *   %i - size_t
  *   %k - FbleKind*
  *   %n - FbleName
@@ -448,13 +449,14 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
  *   %t - FbleType*
  *   %m - FbleModulePath*
  *   %% - literal '%'
- * Please add additional format specifiers as needed.
  *
- * @param loc  The location of the error.
- * @param fmt  The format string.
- * @param ...  The var-args for the associated conversion specifiers in fmt.
+ *  Please add additional format specifiers as needed.
  *
- * @sideeffects
+ *  @arg[FbleLoc][loc] The location of the error.
+ *  @arg[const char*][fmt] The format string.
+ *  @arg[...][] The var-args for the associated conversion specifiers in fmt.
+ *
+ *  @sideeffects
  *   Prints a message to stderr as described by fmt and provided arguments.
  */
 static void ReportError(FbleLoc loc, const char* fmt, ...)
@@ -521,19 +523,18 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
 }
 
 /**
- * Checks that the right namespace is used for a variable.
+ * @func[CheckNameSpace] Checks that the right namespace is used for a variable.
+ *  Normal variables should use the normal name space. Type variables should
+ *  use the type namespace.
  *
- * Normal variables should use the normal name space. Type variables should
- * use the type namespace.
+ *  @arg[FbleName][name] The name in question
+ *  @arg[FbleType*][type] The type of the value refered to by the name.
  *
- * @param name  The name in question
- * @param type  The type of the value refered to by the name.
- *
- * @returns
+ *  @returns[bool]
  *   true if the namespace of the name is consistent with the type. false
  *   otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   Prints a message to stderr if the namespace and type don't match.
  */
 static bool CheckNameSpace(FbleName name, FbleType* type)
@@ -553,15 +554,14 @@ static bool CheckNameSpace(FbleName name, FbleType* type)
 }
 
 /**
- * Constructs a tc pair.
+ * @func[MkTc] Constructs a tc pair.
+ *  @arg[FbleType*][type] The type to put in the tc.
+ *  @arg[FbleTc*][tc] The tc to put in the tc.
  *
- * @param type  The type to put in the tc.
- * @param tc  The tc to put in the tc.
- *
- * @returns
+ *  @returns[Tc]
  *   A Tc with type and tc as fields.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static Tc MkTc(FbleType* type, FbleTc* tc)
@@ -571,12 +571,11 @@ static Tc MkTc(FbleType* type, FbleTc* tc)
 }
 
 /**
- * Frees type and tc fields of a Tc.
+ * @func[FreeTc] Frees type and tc fields of a Tc.
+ *  @arg[FbleTypeHeap*][th] Heap to use for allocations
+ *  @arg[Tc][tc] Tc to free the fields of. May be TC_FAILED.
  *
- * @param th  Heap to use for allocations
- * @param tc  Tc to free the fields of. May be TC_FAILED.
- *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the type and tc fields of tc.
  */
 static void FreeTc(FbleTypeHeap* th, Tc tc)
@@ -586,14 +585,15 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 }
 
 /**
- * Copies a tc binding.
+ * @func[CopyTcBinding] Copies a tc binding.
+ *  @arg[FbleTcBinding][binding] The binding to copy.
  *
- * @param binding  The binding to copy.
- * @returns
- *  The copied binding.
- * @sideeffects
- *  The user should free name, loc, and tc of the copied binding when no
- *  longer needed.
+ *  @returns[FbleTcBinding]
+ *   The copied binding.
+ *
+ *  @sideeffects
+ *   The user should free name, loc, and tc of the copied binding when no
+ *   longer needed.
  */
 static FbleTcBinding CopyTcBinding(FbleTcBinding binding)
 {
@@ -604,12 +604,11 @@ static FbleTcBinding CopyTcBinding(FbleTcBinding binding)
 }
 
 /**
- * Allocates and returns a new cleaner object.
- *
- * @returns
+ * @func[NewCleaner] Allocates and returns a new cleaner object.
+ *  @returns[Cleaner*]
  *   A newly allocated cleaner object.
  *
- * @sideeffects
+ *  @sideeffects
  *   The user should call a WithCleanup function to free resources associated
  *   with the cleaner object when no longer needed.
  */
@@ -624,12 +623,11 @@ static Cleaner* NewCleaner()
 }
 
 /**
- * Adds an FbleType for automatic cleanup.
+ * @func[CleanType] Adds an FbleType for automatic cleanup.
+ *  @arg[Cleaner*][cleaner] The cleaner to add the type to.
+ *  @arg[FbleType*][type] The type to track.
  *
- * @param cleaner  The cleaner to add the type to.
- * @param type  The type to track.
- *
- * @sideeffects
+ *  @sideeffects
  *   The type will be automatically released when the cleaner is cleaned up.
  */
 static void CleanType(Cleaner* cleaner, FbleType* type)
@@ -638,12 +636,11 @@ static void CleanType(Cleaner* cleaner, FbleType* type)
 }
 
 /**
- * Adds a Tc for automatic cleanup.
+ * @func[CleanTc] Adds a Tc for automatic cleanup.
+ *  @arg[Cleaner*][cleaner] The cleaner to add the type to.
+ *  @arg[Tc][tc] The tc to track.
  *
- * @param cleaner  The cleaner to add the type to.
- * @param tc  The tc to track.
- *
- * @sideeffects
+ *  @sideeffects
  *   The tc will be automatically released when the cleaner is cleaned up.
  */
 static void CleanTc(Cleaner* cleaner, Tc tc)
@@ -653,12 +650,13 @@ static void CleanTc(Cleaner* cleaner, Tc tc)
 }
 
 /**
- * Adds an FbleTypeAssignmentV for automatic cleanup.
+ * @func[CleanTypeAssignmentV]
+ * @ Adds an FbleTypeAssignmentV for automatic cleanup.
+ *  @arg[Cleaner*][cleaner] The cleaner to add the assignment to.
+ *  @arg[FbleTypeAssignmentV*][vars]
+ *   The vars to track. Should be allocated with FbleAlloc.
  *
- * @param cleaner  The cleaner to add the assignment to.
- * @param vars  The vars to track. Should be allocated with FbleAlloc.
- *
- * @sideeffects
+ *  @sideeffects
  *   The vars will be automatically released when the cleaner is cleaned up.
  */
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars)
@@ -667,13 +665,12 @@ static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars)
 }
 
 /**
- * Adds an FbleTcBinding for automatic cleanup.
+ * @func[CleanTcBinding] Adds an FbleTcBinding for automatic cleanup.
+ *  @arg[Cleaner*][cleaner] The cleaner to add binding to.
+ *  @arg[FbleTcBinding][binding] The binding to track.
  *
- * @param cleaner  The cleaner to add binding to.
- * @param binding  The binding to track.
- *
- * @sideeffects
- *  The binding will be automatically freed when the cleaner is cleaned up.
+ *  @sideeffects
+ *   The binding will be automatically freed when the cleaner is cleaned up.
  */
 static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding binding)
 {
@@ -681,12 +678,11 @@ static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding binding)
 }
 
 /**
- * Cleans up objects marked for automatic cleanup.
+ * @func[Cleanup] Cleans up objects marked for automatic cleanup.
+ *  @arg[FbleTypeHeap*][th] The type heap used for cleanup.
+ *  @arg[Cleaner*][cleaner] The cleaner object to trigger cleanup on.
  *
- * @param th  The type heap used for cleanup.
- * @param cleaner  The cleaner object to trigger cleanup on.
- *
- * @sideeffects
+ *  @sideeffects
  *   Cleans up all objects tracked by the cleaner along with the cleaner
  *   object itself.
  */
@@ -723,22 +719,23 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
 }
 
 /**
- * Normalizes the given type.
+ * @func[DepolyType] Normalizes the given type.
+ *  Normalizes and removes any layers of polymorphic type variables from the
+ *  given type.
  *
- * Normalizes and removes any layers of polymorphic type variables from the
- * given type.
+ *  @arg[FbleTypeHeap*][th] The type heap
+ *  @arg[FbleType*][type] The type to normalize and unwrap poly type vars from.
+ *  @arg[FbleTypeAssignmentV*][vars]
+ *   Output variable to populate unwrapped type variables to.
  *
- * @param th  The type heap
- * @param type  The type to normalize and unwrap poly type vars from.
- * @param vars  Output variable to populate unwrapped type variables to.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The normalized and depolyed type.
  *
- * @sideeffects
- * * Adds unwrapped type variables to vars.
- * * The caller should call FbleReleaseType on the returned type when no
- *   longer needed.
+ *  @sideeffects
+ *   @i Adds unwrapped type variables to vars.
+ *   @item
+ *    The caller should call FbleReleaseType on the returned type when no
+ *    longer needed.
  */
 static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars)
 {
@@ -756,23 +753,24 @@ static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignment
 }
 
 /**
- * Typechecks poly application.
+ * @func[PolyApply] Typechecks poly application.
+ *  @arg[FbleTypeHeap*][th] The type heap
+ *  @arg[Tc][poly] The type and value of the poly. Borrowed.
+ *  @arg[FbleType*][arg_type]
+ *   The type of the arg type to apply the poly to. May be NULL. Borrowed.
+ *  @arg[FbleLoc][expr_loc] The location of the application expression.
+ *  @arg[FbleLoc][arg_loc] The location of the argument type.
  *
- * @param th  The type heap
- * @param poly  The type and value of the poly. Borrowed.
- * @param arg_type  The type of the arg type to apply the poly to. May be NULL. Borrowed.
- * @param expr_loc  The location of the application expression.
- * @param arg_loc  The location of the argument type.
- *
- * @returns
+ *  @returns[Tc]
  *   The Tc for the application of the poly to the argument, or TC_FAILED in
  *   case of error.
  *
- * @sideeffects
- * * Reports an error in case of error.
- * * The caller should call FbleFreeTc when the returned FbleTc is no longer
- *   needed and FbleReleaseType when the returned FbleType is no longer
- *   needed.
+ *  @sideeffects
+ *   @i Reports an error in case of error.
+ *   @item
+ *    The caller should call FbleFreeTc when the returned FbleTc is no longer
+ *    needed and FbleReleaseType when the returned FbleType is no longer
+ *    needed.
  */
 static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc)
 {
@@ -854,25 +852,25 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
 }
 
 /**
- * Infers and checks argument types.
+ * @func[TypeInferArgs] Infers and checks argument types.
+ *  Common code to infer type variables of and check types of arguments to a
+ *  potential polymorphic typed object.
  *
- * Common code to infer type variables of and check types of arguments to a
- * potential polymorphic typed object.
+ *  @arg[FbleTypeHeap*][th] The type heap
+ *  @arg[FbleTypeAssignmentV][vars] The type variables. Borrowed.
+ *  @arg[FbleTypeV][expected]
+ *   List of expected types to be passed to the poly. Borrowed.
+ *  @arg[TcV][actual] List of actual arguments to the poly. Borrowed.
+ *  @arg[Tc][poly] The poly. Borrowed.
  *
- * @param th  The type heap
- * @param vars  The type variables. Borrowed.
- * @param expected  List of expected types to be passed to the poly. Borrowed.
- * @param actual  List of actual arguments to the poly. Borrowed.
- * @param poly  The poly. Borrowed.
- *
- * @returns
+ *  @returns[Tc]
  *   The result of applying the poly to the inferred type variables, or
  *   TC_FAILED in case of type error.
  *
- * @sideeffects
- * * Prints error message in case of failure to type check.
- * * Populates values of vars based on type inference.
- * * Allocates a Tc that should be freed with FreeTc when no longer needed.
+ *  @sideeffects
+ *   @i Prints error message in case of failure to type check.
+ *   @i Populates values of vars based on type inference.
+ *   @i Allocates a Tc that should be freed with FreeTc when no longer needed.
  */
 static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly)
 {
@@ -946,21 +944,21 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
 }
 
 /**
- * Typechecks an expression.
+ * @func[TypeCheckExpr] Typechecks an expression.
+ *  @arg[FbleTypeHeap*][th] Heap to use for type allocations.
+ *  @arg[Scope*][scope] The list of variables in scope.
+ *  @arg[FbleExpr*][expr] The expression to type check.
  *
- * @param th  Heap to use for type allocations.
- * @param scope  The list of variables in scope.
- * @param expr  The expression to type check.
- *
- * @returns
+ *  @returns[Tc]
  *   The type checked expression, or TC_FAILED if the expression is not well
  *   typed.
  *
- * @sideeffects
- * * Prints a message to stderr if the expression fails to compile.
- * * The caller should call FbleFreeTc when the returned FbleTc is no longer
- *   needed and FbleReleaseType when the returned FbleType is no longer
- *   needed.
+ *  @sideeffects
+ *   @i Prints a message to stderr if the expression fails to compile.
+ *   @item
+ *    The caller should call FbleFreeTc when the returned FbleTc is no longer
+ *    needed and FbleReleaseType when the returned FbleType is no longer
+ *    needed.
  */
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
@@ -971,24 +969,26 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 }
 
 /**
- * Type checks an expression with automatic cleanup.
+ * @func[TypeCheckExprWithCleaner]
+ * @ Type checks an expression with automatic cleanup.
+ *  @arg[FbleTypeHeap*][th] Heap to use for type allocations.
+ *  @arg[Scope*][scope] The list of variables in scope.
+ *  @arg[FbleExpr*][expr] The expression to type check.
+ *  @arg[Cleanr*][cleaner] The cleaner object.
  *
- * @param th  Heap to use for type allocations.
- * @param scope  The list of variables in scope.
- * @param expr  The expression to type check.
- * @param cleaner  The cleaner object.
- *
- * @returns
+ *  @returns[Tc]
  *   The type checked expression, or TC_FAILED if the expression is not well
  *   typed.
  *
- * @sideeffects
- * * Prints a message to stderr if the expression fails to compile.
- * * The caller should call FbleFreeTc when the returned FbleTc is no longer
- *   needed and FbleReleaseType when the returned FbleType is no longer
- *   needed.
- * * Adds objects to the cleaner that the caller is responsible for
- *   automatically cleaning up when this function returns.
+ *  @sideeffects
+ *   @i Prints a message to stderr if the expression fails to compile.
+ *   @item
+ *    The caller should call FbleFreeTc when the returned FbleTc is no longer
+ *    needed and FbleReleaseType when the returned FbleType is no longer
+ *    needed.
+ *   @item
+ *    Adds objects to the cleaner that the caller is responsible for
+ *    automatically cleaning up when this function returns.
  */
 static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* expr, Cleaner* cleaner)
 {
@@ -2060,24 +2060,25 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 }
 
 /**
- * Typechecks the given expression, ignoring accesses to variables.
+ * @func[TypeCheckExprForType]
+ * @ Typechecks the given expression, ignoring accesses to variables.
+ *  Sometimes an expression is used only for its type. We don't want to mark
+ *  variables referenced by the expression as used, because we don't need to
+ *  know the value of the variable at runtime. This function typechecks an
+ *  expression without marking variables as used.
  *
- * Sometimes an expression is used only for its type. We don't want to
- * mark variables referenced by the expression as used, because we don't need
- * to know the value of the variable at runtime. This function typechecks an
- * expression without marking variables as used.
+ *  @arg[FbleTypeHeap*][th] Heap to use for allocations.
+ *  @arg[FbleScope*][scope] The list of variables in scope.
+ *  @arg[FbleExpr*][expr] The expression to compile.
  *
- * @param th  Heap to use for allocations.
- * @param scope  The list of variables in scope.
- * @param expr  The expression to compile.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The type of the expression, or NULL if the expression is not well typed.
  *
- * @sideeffects
- * * Prints a message to stderr if the expression fails to compile.
- * * Allocates an FbleType that must be freed using FbleReleaseType when it is
- *   no longer needed.
+ *  @sideeffects
+ *   @i Prints a message to stderr if the expression fails to compile.
+ *   @item
+ *    Allocates an FbleType that must be freed using FbleReleaseType when it
+ *    is no longer needed.
  */
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
@@ -2093,19 +2094,19 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* 
 }
 
 /**
- * Typechecks a type, returning its value.
+ * @func[TypeCheckType] Typechecks a type, returning its value.
+ *  @arg[FbleTypeHeap*][th] Heap to use for allocations.
+ *  @arg[Scope*][scope] The value of variables in scope.
+ *  @arg[FbleTypeExpr*][type] The type to compile.
  *
- * @param th  Heap to use for allocations.
- * @param scope  The value of variables in scope.
- * @param type  The type to compile.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The type checked and evaluated type, or NULL in case of error.
  *
- * @sideeffects
- * * Prints a message to stderr if the type fails to compile or evalute.
- * * Allocates an FbleType that must be freed using FbleReleaseType when it is
- *   no longer needed.
+ *  @sideeffects
+ *   @i Prints a message to stderr if the type fails to compile or evalute.
+ *   @item
+ *    Allocates an FbleType that must be freed using FbleReleaseType when it
+ *    is no longer needed.
  */
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type)
 {
@@ -2116,22 +2117,23 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
 }
  
 /**
- * Typechecks a type, with automatic cleanup.
+ * @func[TypeCheckTypeWithCleaner] Typechecks a type, with automatic cleanup.
+ *  @arg[FbleTypeHeap*][th] Heap to use for allocations.
+ *  @arg[Scope*][scope] The value of variables in scope.
+ *  @arg[FbleTypeExpr*][type] The type to compile.
+ *  @arg[Cleaner*][cleaner] The cleaner object.
  *
- * @param th  Heap to use for allocations.
- * @param scope  The value of variables in scope.
- * @param type  The type to compile.
- * @param cleaner  The cleaner object.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The type checked and evaluated type, or NULL in case of error.
  *
- * @sideeffects
- * * Prints a message to stderr if the type fails to compile or evalute.
- * * Allocates an FbleType that must be freed using FbleReleaseType when it is
- *   no longer needed.
- * * Adds objects to the cleaner that the caller is responsible for cleaning
- *   up after the function returns.
+ *  @sideeffects
+ *   @i Prints a message to stderr if the type fails to compile or evalute.
+ *   @item
+ *    Allocates an FbleType that must be freed using FbleReleaseType when it
+ *    is no longer needed.
+ *   @item
+ *    Adds objects to the cleaner that the caller is responsible for cleaning
+ *    up after the function returns.
  */
 static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner)
 {
@@ -2248,14 +2250,14 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 }
 
 /**
- * Typechecks a module.
+ * @func[TypeCheckModule] Typechecks a module.
+ *  @arg[FbleTypeHeap*][th] Heap to use for allocations.
+ *  @arg[FbleLoadedModule*][module] The module to check.
+ *  @arg[FbleType**][deps]
+ *   The type of each module this module depends on, in the same order as
+ *   module->deps. size is module->deps.size.
  *
- * @param th  Heap to use for allocations.
- * @param module  The module to check.
- * @param deps  The type of each module this module depends on, in the same order
- *   as module->deps. size is module->deps.size.
- *
- * @returns
+ *  @returns[Tc]
  *   Returns the type, and optionally value of the module as the body of a
  *   function that takes module dependencies as arguments and computes the
  *   value of the module. TC_FAILED if the module failed to type check.
@@ -2263,12 +2265,13 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
  *   If module->value is not provided but module->type still type checks, this
  *   will return a Tc with non-NULL type but NULL tc.
  *
- * @sideeffects
- * * Prints warning messages to stderr.
- * * Prints a message to stderr if the module fails to type check.
- * * The caller should call FbleFreeTc when the returned result is no longer
- *   needed and FbleReleaseType when the returned FbleType is no longer
- *   needed.
+ *  @sideeffects
+ *   @i Prints warning messages to stderr.
+ *   @i Prints a message to stderr if the module fails to type check.
+ *   @item
+ *    The caller should call FbleFreeTc when the returned result is no longer
+ *    needed and FbleReleaseType when the returned FbleType is no longer
+ *    needed.
  */
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps)
 {

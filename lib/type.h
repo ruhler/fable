@@ -178,52 +178,49 @@ typedef struct {
 } FbleTypeAssignmentV;
 
 /**
- * Gets the kind of a value with the given type.
+ * @func[FbleGetKind] Gets the kind of a value with the given type.
+ *  @arg[FbleType*][type] The type of the value to get the kind of.
  *
- * @param type  The type of the value to get the kind of.
- *
- * @returns
+ *  @returns[FbleKind*]
  *   The kind of the value with the given type.
  *
- * @sideeffects
+ *  @sideeffects
  *   The caller is responsible for calling FbleFreeKind on the returned
  *   kind when it is no longer needed.
  */
 FbleKind* FbleGetKind(FbleType* type);
 
 /**
- * Returns the level of the fully applied version of this kind.
+ * @func[FbleGetKindLevel]
+ * @ Returns the level of the fully applied version of this kind.
+ *  @arg[FbleKind*][kind] The kind to get the fully applied level of.
  *
- * @param kind  The kind to get the fully applied level of.
- *
- * @returns
+ *  @returns[size_t]
  *   The level of the kind after it has been fully applied.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 size_t FbleGetKindLevel(FbleKind* kind);
 
 /**
- * Tests whether the two given compiled kinds are equal.
+ * @func[FbleKindsEqual] Tests whether the two given compiled kinds are equal.
+ *  @arg[FbleKind*][a] The first kind
+ *  @arg[FbleKind*][b] The second kind
  *
- * @param a  The first kind
- * @param b  The second kind
- *
- * @returns
+ *  @returns[bool]
  *   True if the first kind equals the second kind, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 bool FbleKindsEqual(FbleKind* a, FbleKind* b);
 
 /**
- * Prints an FbleKind in human readable form to stderr.
+ * @func[FblePrintKind] Prints an FbleKind in human readable form to stderr.
+ *  @arg[FbleKind*][kind] The kind to print.
  *
- * @param kind  The kind to print.
- *
- * @sideeffects
+ *  @sideeffects
  *   Prints the given kind in human readable form to stderr.
  */
 void FblePrintKind(FbleKind* kind);
@@ -232,157 +229,151 @@ void FblePrintKind(FbleKind* kind);
 typedef FbleHeap FbleTypeHeap;
 
 /**
- * Creates a new type heap.
- *
- * @returns
+ * @func[FbleNewTypeHeap] Creates a new type heap.
+ *  @returns[FbleTypeHeap*]
  *   A newly allocated type heap.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new type heap that should be freed with FbleFreeTypeHeap
  *   when no longer in use.
  */
 FbleTypeHeap* FbleNewTypeHeap();
 
 /**
- * Frees resources associated with the given type heap.
+ * @func[FbleFreeTypeHeap] Frees resources associated with the given type heap.
+ *  @arg[FbleTypeHeap*][heap] The heap to free
  *
- * @param heap  The heap to free
- *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with the given type heap. The type heap must
  *   not be accessed after this call.
  */
 void FbleFreeTypeHeap(FbleTypeHeap* heap);
 
 /**
- * Allocates a new type.
+ * @func[FbleNewType] Allocates a new type.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations
+ *  @arg[<type>][T] The type of the type to allocate.
+ *  @arg[FbleTypeTag][tag] The tag of the type.
+ *  @arg[FbleLoc][loc] The source loc of the type. Borrowed.
  *
- * @param heap  Heap to use for allocations
- * @param T  The type of the type to allocate.
- * @param tag  The tag of the type.
- * @param loc  The source loc of the type. Borrowed.
- *
- * @returns
+ *  @returns[T*]
  *   The newly allocated type.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new type that should be released when no longer needed.
  */
 #define FbleNewType(heap, T, tag, loc) ((T*) FbleNewTypeRaw(heap, sizeof(T), tag, loc))
 
 /**
- * Allocates a new type. This function is not type safe.
+ * @func[FbleNewTypeRaw] Allocates a new type.
+ *  This function is not type safe.
  *
- * @param heap  Heap to use for allocations
- * @param size  The number of bytes to allocate.
- * @param tag  The tag of the type.
- * @param loc  The source loc of the type. Borrowed.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations
+ *  @arg[size_t][size] The number of bytes to allocate.
+ *  @arg[FbleTypeTag][tag] The tag of the type.
+ *  @arg[FbleLoc][loc] The source loc of the type. Borrowed.
  *
- * @returns
+ *  @returns[FbleType*]
  *   The newly allocated type.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new type that should be released when no longer needed.
  */
 FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc);
 
 /**
- * Takes a reference to an FbleType.
+ * @func[FbleRetainType] Takes a reference to an FbleType.
+ *  @arg[FbleTypeHeap*][heap] The heap the type was allocated on.
+ *  @arg[FbleTypeHeap*][type] The type to take the reference for.
  *
- * @param heap  The heap the type was allocated on.
- * @param type  The type to take the reference for.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The type with incremented strong reference count.
  *
- * @sideeffects
+ *  @sideeffects
  *   The returned type must be freed using FbleReleaseType when no longer in
  *   use.
  */
 FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type);
 
 /**
- * Drops a reference to an FbleType.
+ * @func[FbleReleaseType] Drops a reference to an FbleType.
+ *  @arg[FbleTypeHeap*][heap] The heap the type was allocated on.
+ *  @arg[FbleType*][type] The type to drop the refcount for. May be NULL.
  *
- * @param heap  The heap the type was allocated on.
- * @param type  The type to drop the refcount for. May be NULL.
- *
- * @sideeffects
+ *  @sideeffects
  *   Decrements the strong refcount for the type and frees it if there are no
  *   more references to it.
  */
 void FbleReleaseType(FbleTypeHeap* heap, FbleType* type);
 
 /**
- * Adds a reference from one type to another.
+ * @func[FbleTypeAddRef] Adds a reference from one type to another.
+ *  Notifies the type heap of a new reference from src to dst.
  *
- * Notifies the type heap of a new reference from src to dst.
+ *  @arg[FbleTypeHeap*][heap] The heap the types are allocated on.
+ *  @arg[FbleType*][src] The source of the reference.
+ *  @arg[FbleType*][dst] The destination of the reference.
  *
- * @param heap  The heap the types are allocated on.
- * @param src  The source of the reference.
- * @param dst  The destination of the reference.
- *
- * @sideeffects
+ *  @sideeffects
  *   Causes the dst type to be retained for at least as long as the src type.
  */
 void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 
 /**
- * Constructs a VarType.
+ * @func[FbleNewVarType] Constructs a VarType.
+ *  Maintains the invariant the that a higher kinded var types is constructed
+ *  as typeof a lower kinded var type.
  *
- * Maintains the invariant the that a higher kinded var types is constructed
- * as typeof a lower kinded var type.
+ *  @arg[FbleTypeHeap*][heap] The heap to allocate the type on.
+ *  @arg[FbleLoc][loc] The location for the type. Borrowed.
+ *  @arg[FbleKind*][kind] The kind of a value of this type. Borrowed.
+ *  @arg[FbleName][name] The name of the type variable. Borrowed.
  *
- * @param heap  The heap to allocate the type on.
- * @param loc  The location for the type. Borrowed.
- * @param kind  The kind of a value of this type. Borrowed.
- * @param name  The name of the type variable. Borrowed.
- *
- * @returns
+ *  @returns[FbleType*]
  *   A type representing an abstract variable type of given kind and name.
  *   This may be a TYPE_TYPE if kind has kind level greater than 0.
  *   The value of the variable type is initialized to NULL. Use
  *   FbleAssignVarType to set the value of the var type if desired.
  *
- * @sideeffects
+ *  @sideeffects
  *   The caller is responsible for calling FbleReleaseType on the returned
  *   type when it is no longer needed.
  */
 FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name);
 
 /**
- * Assigns a value to the given abstract type.
+ * @func[FbleAssignVarType] Assigns a value to the given abstract type.
+ *  @arg[FbleTypeHeap*][heap] The type heap.
+ *  @arg[FbleType*][var]
+ *   The type to assign the value of. This type should have been created with
+ *   FbleNewVarType.
+ *  @arg[FbleType*][value] The value to assign to the type.
  *
- * @param heap  The type heap.
- * @param var  The type to assign the value of. This type should have been
- *   created with FbleNewVarType.
- * @param value  The value to assign to the type.
- *
- * @sideeffects
- * * Sets the value of the var type to the given value.
- * * Updates the kind of the var type based on the kind of the given value.
- * * This function does not take ownership of either var or value types. 
- * * Behavior is undefined if var is not a type constructed with
- *   FbleNewVarType or the kind level of value does not match the kind level of
- *   var.
+ *  @sideeffects
+ *   @i Sets the value of the var type to the given value.
+ *   @i Updates the kind of the var type based on the kind of the given value.
+ *   @i This function does not take ownership of either var or value types. 
+ *   @item
+ *    Behavior is undefined if var is not a type constructed with
+ *    FbleNewVarType or the kind level of value does not match the kind level
+ *    of var.
  */
 void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value);
 
 /**
- * Constructs a PolyType.
+ * @func[FbleNewPolyType] Constructs a PolyType.
+ *  Maintains the invariant that poly of a typeof should be constructed as a
+ *  typeof a poly.
  *
- * Maintains the invariant that poly of a typeof should be constructed as a
- * typeof a poly.
+ *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleLoc][loc] The location for the type.
+ *  @arg[FbleType*][arg] The poly arg.
+ *  @arg[FbleType*][body] The poly body.
  *
- * @param heap  The heap to use for allocations.
- * @param loc  The location for the type.
- * @param arg  The poly arg.
- * @param body  The poly body.
+ *  @returns[FbleType*]
+ *   A type representing the poly type: arg -> body.
  *
- * @returns
- *   A type representing the poly type: \arg -> body.
- *
- * @sideeffects
+ *  @sideeffects
  *   The caller is responsible for calling FbleReleaseType on the returned type
  *   when it is no longer needed. This function does not take ownership of the
  *   passed arg or body types.
@@ -390,20 +381,19 @@ void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value);
 FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleType* body);
 
 /**
- * Constructs a PolyApplyType.
+ * @func[FbleNewPolyApplyType] Constructs a PolyApplyType.
+ *  Maintains the invariant that poly apply of a typeof should be constructed
+ *  as a typeof a poly apply.
  *
- * Maintains the invariant that poly apply of a typeof should be constructed
- * as a typeof a poly apply.
+ *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleLoc][loc] The location for the type.
+ *  @arg[FbleType*][poly] The poly apply poly.
+ *  @arg[FbleType*][arg] The poly apply arg.
  *
- * @param heap  The heap to use for allocations.
- * @param loc  The location for the type.
- * @param poly  The poly apply poly.
- * @param arg  The poly apply arg.
- *
- * @returns
+ *  @returns[FbleType*]
  *   An unevaluated type representing the poly apply type: poly<arg>
  *
- * @sideeffects
+ *  @sideeffects
  *   The caller is responsible for calling FbleReleaseType on the returned type
  *   when it is no longer needed. This function does not take ownership of the
  *   passed poly or arg types.
@@ -411,32 +401,31 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
 FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg);
 
 /**
- * Checks if a type will reduce to normal form.
+ * @func[FbleTypeIsVacuous] Checks if a type will reduce to normal form.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleType*][type] The type to check.
  *
- * @param heap  Heap to use for allocations.
- * @param type  The type to check.
- *
- * @returns
+ *  @returns[bool]
  *   true if the type will fail to reduce to normal form because it is
  *   vacuous, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type);
 
 /**
- * Reduces an evaluated type to normal form.
- * Normal form types are struct, union, and func types, but not var types, for
- * example.
+ * @func[FbleNormalType] Reduces an evaluated type to normal form.
+ *  Normal form types are struct, union, and func types, but not var types,
+ *  for example.
  *
- * @param heap  Heap to use for allocations.
- * @param type  The type to reduce.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleType*][type] The type to reduce.
  *
- * @returns
+ *  @returns[FbleType*]
  *   The type reduced to normal form.
  *
- * @sideeffects
+ *  @sideeffects
  *   The caller is responsible for calling FbleReleaseType on the returned type
  *   when it is no longer needed. The behavior is undefined if the type is
  *   vacuous.
@@ -444,86 +433,85 @@ bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type);
 FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type);
 
 /**
- * Returns the value of a type given the type of the type.
+ * @func[FbleValueOfType]
+ * @ Returns the value of a type given the type of the type.
+ *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleType*][typeof] The type of the type to get the value of.
  *
- * @param heap  The heap to use for allocations.
- * @param typeof  The type of the type to get the value of.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The value of the type to get the value of. Or NULL if the value is not a
  *   type.
  *
- * @sideeffects
+ *  @sideeffects
  *   The returned type must be released using FbleReleaseType when no longer
  *   needed.
  */
 FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof);
 
 /**
- * Gets the element type for a list.
+ * @func[FbleListElementType] Gets the element type for a list.
+ *  Returns the element type of a type matching the structure needed for list
+ *  literals.
  *
- * Returns the element type of a type matching the structure needed for list
- * literals.
+ *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleType*][type] The list type to get the element type of.
  *
- * @param heap  The heap to use for allocations.
- * @param type  The list type to get the element type of.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The element type of the list, or NULL if the type does not match the
  *   structured needed for list listerals.
  *
- * @sideeffects
+ *  @sideeffects
  *   The returned type must be released using FbleReleaseType when no longer
  *   needed.
  */
 FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type);
 
 /**
- * Tests whether the two given evaluated types are equal.
+ * @func[FbleTypesEqual] Tests whether the two given evaluated types are equal.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleType*][a] The first type
+ *  @arg[FbleType*][b] The second type
  *
- * @param heap  Heap to use for allocations.
- * @param a  The first type
- * @param b  The second type
- *
- * @returns
+ *  @returns[bool]
  *   True if the first type equals the second type, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 
 /**
- * Infers type values.
+ * @func[FbleTypeInfer] Infers type values.
+ *  Infers type values for the given type variables to make the abstract type
+ *  equal to the concrete type.
  *
- * lnfers type values for the given type variables to make the abstract type
- * equal to the concrete type.
- *
- * @param heap  The heap to use for allocations.
- * @param vars  The list of type variables along with their assignments. Initially
+ *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleTypeAssignmentV][vars]
+ *   The list of type variables along with their assignments. Initially
  *   the assigned values can be NULL or non-NULL. If an assignment for a type
  *   variable is non-NULL, the type variable is treated as equal to its
  *   assignment.
- * @param abstract  The type with occurences of the type variables in it.
- * @param concrete  The concrete type to infer the values of type variables from.
+ *  @arg[FbleType*][abstract]
+ *   The type with occurences of the type variables in it.
+ *  @arg[FbleType*][concrete]
+ *   The concrete type to infer the values of type variables from.
  *
- * @returns
+ *  @returns[bool]
  *   True if the abstract type can be made equal to the concrete type with
  *   type inference, false otherwise.
  *
- * @sideeffects
- * * Updates vars assignments based on inferred types. The caller is
+ *  @sideeffects
+ *   Updates vars assignments based on inferred types. The caller is
  *   responsible for freeing any assignements to the type variables added to
  *   vars.
  */
 bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete);
 
 /**
- * Prints an FbleType in human readable form to stderr.
+ * @func[FblePrintType] Prints an FbleType in human readable form to stderr.
+ *  @arg[FbleType*][type] The type to print.
  *
- * @param type  The type to print.
- *
- * @sideeffects
+ *  @sideeffects
  *   Prints the given type in human readable form to stderr.
  */
 void FblePrintType(FbleType* type);
