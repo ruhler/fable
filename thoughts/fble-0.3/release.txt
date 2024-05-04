@@ -200,3 +200,23 @@ typecheck.c   DONE.
 type.h        DONE.
 value.c       DONE.
 
+---
+
+Should we build and install documentation by default?
+
+It takes a long time to build for me, but probably not so long for others?
+
+GNU coding standard says default make need not rebuild documentation, but
+implies the prebuilt documentation is available with the release tarball. The
+standard implies documentation should be installed with 'make install'. But
+that's intended for info files. They have separate targets for installing
+html, dvs, ps and pdf. There are also separate targets for building (but not
+yet installing) html, dvs, ps, pdf.
+
+Assume we fix the slow build times. Then surely we should build and install
+the documentation by default. Thus I propose we build and install the
+documentation by default. No need to special case it. Using my standard
+philosophy: build by default anything needed to install. We install the
+documentation, so build that by default and install it by default.
+
+The only thing not to do by default is run the test cases.
