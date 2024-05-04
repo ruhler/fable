@@ -8,6 +8,11 @@ namespace eval "pkgs/core" {
   }
   pkg core [list] $objs
 
+  # Check doc comments
+  foreach {x} [build_glob $::s/pkgs/core -tails "*.h" "*.c"] {
+    fbld_check_dc $::b/pkgs/core/$x.dc $::s/pkgs/core/$x
+  }
+
   # fble-stdio program.
   fbld_help_usage $::b/pkgs/core/fble-stdio.usage.txt $::s/pkgs/core/fble-stdio.fbld
   fbld_man_usage $::b/pkgs/core/fble-stdio.1 $::s/pkgs/core/fble-stdio.fbld

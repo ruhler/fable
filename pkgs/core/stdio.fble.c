@@ -1,6 +1,7 @@
-
-// stdio.fble.c --
-//   Implementation of FbleStdio and FbleStdioMain functions.
+/**
+ * @file stdio.fble.c
+ *  Implementation of FbleStdio and FbleStdioMain functions.
+ */
 
 #include "stdio.fble.h"
 
@@ -49,7 +50,10 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id);
 static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id);
 
 
-// OnFree function for FILE* native values.
+/**
+ * @func[OnFree] OnFree function for FILE* native values.
+ *  See documentation of FbleNewNativeValue in fble-value.h.
+ */
 static void OnFree(void* data)
 {
   FILE* file = (FILE*)data;

@@ -1,4 +1,7 @@
-
+/**
+ * @file string.fble.c
+ *  Routines for interacting with @l{String@} types.
+ */
 #include "string.fble.h"
 
 #include <string.h>         // for strlen

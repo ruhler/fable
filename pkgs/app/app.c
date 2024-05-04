@@ -1,5 +1,7 @@
-// app.c --
-//   Implementation of FbleAppMain function.
+/**
+ * @file app.c
+ *  Implementation of FbleAppMain function.
+ */
 
 #include "app.h"
 
@@ -47,20 +49,17 @@ static FbleValue* EffectImpl(
 
 static Uint32 OnTimer(Uint32 interval, void* param);
 
-// Draw --
-//   Draw a drawing to the screen of type /Drawing%.Drawing@.
-//
-// Inputs:
-//   surface - the surface to draw to.
-//   ax, ay, bx, by - a transformation to apply to the drawing: a*p + b.
-//   drawing - the drawing to draw.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Draws the drawing to the window. The caller must call
-//   SDL_UpdateWindowSurface for the screen to actually be updated.
+/**
+ * @func[Draw] Draws a drawing to the screen of type @l{/Drawing%.Drawing@}.
+ *  @arg[SDL_Surface*][surface] The surface to draw to.
+ *  @arg[int][ax, ay, bx, by]
+ *   A transformation to apply to the drawing: a*p + b.
+ *  @arg[FbleValue*][drawing] The drawing to draw.
+ *
+ *  @sideeffects
+ *   Draws the drawing to the window. The caller must call
+ *   SDL_UpdateWindowSurface for the screen to actually be updated.
+ */
 static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing)
 {
   switch (FbleUnionValueTag(drawing)) {
@@ -164,19 +163,18 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
   }
 }
 
-// MakeKey -- 
-//   Make an FbleValue of type /App%.Key@ for the given scancode.
-//
-// Inputs:
-//   heap - the heap to use for allocations.
-//   scancode - the scan code.
-//
-// Results:
-//   An FbleValue for the scancode, or NULL if there is corresponding Key@ for
-//   that scan code.
-//
-// Side effects:
-//   Allocates a value on the heap.
+/**
+ * @func[MakeKey] Makes an @l{/App%.Key@} for the given scancode.
+ *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[SDL_Scancode*][scancode] The scan code.
+ *
+ *  @returns[FbleValue*]
+ *   An FbleValue for the scancode, or NULL if there is corresponding @l{Key@}
+ *   for that scan code.
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
 {
   int k = -1;
@@ -206,19 +204,18 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
   return NULL;
 }
 
-// MakeButton -- 
-//   Make an FbleValue of type /App%.Button@ for the given button.
-//
-// Inputs:
-//   heap - the heap to use for allocations.
-//   button - the button id.
-//
-// Results:
-//   An FbleValue for the button, or NULL if there is corresponding Button@
-//   for that button
-//
-// Side effects:
-//   Allocates a value on the heap.
+/**
+ * @func[MakeButton] Makes an FbleValue of type @l{/App%.Button@}.
+ *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleValueHeap*][button] The button id.
+ *
+ *  @returns[FbleValue*]
+ *   An FbleValue for the button, or NULL if there is corresponding
+ *   @l{Button@} for that button
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 {
   int k = -1;
@@ -234,8 +231,12 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
   return NULL;
 }
 
-// Event -- Implementation of event function.
-//   IO@<Event@>
+/**
+ * @func[EventImpl] FbleRunFunction Implementation of @l{App@.event} function.
+ *  See documentation of FbleRunFunction in fble-function.h.
+ *  Has fble type @l{IO@<Event}.
+ *  Gets the next input event.
+ */
 static FbleValue* EventImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -322,8 +323,12 @@ static FbleValue* EventImpl(
   return FbleNewStructValue_(heap, 2, world, value);
 }
 
-// Effect -- Implementation of effect function.
-//   (Effect@, World@) { R@<Unit@>; }
+/**
+ * @func[EffectImpl] FbleRunFunction Implementation of @l{App@.effect} function.
+ *  See documentation of FbleRunFunction in fble-function.h.
+ *  Has fble type @l{(Effect@, World@) { R@<Unit@>; }}.
+ *  Applies the given effect to the world.
+ */
 static FbleValue* EffectImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -375,18 +380,17 @@ static FbleValue* EffectImpl(
   return FbleNewStructValue_(heap, 2, world, unit);
 }
 
-// OnTimer --
-//   Callback called for every timer tick.
-//
-// Inputs:
-//   interval - the timer interval
-//   param - unused
-//
-// Results:
-//   0 to cancel to the timer.
-//
-// Side effects:
-//   Pushes a user event onto the SDL event queue.
+/**
+ * @func[OnTimer] Callback called for every timer tick.
+ *  @args[Uint32][interval] The timer interval
+ *  @args[void*][param] unused.
+ *
+ *  @returns[Uint32]
+ *   0 to cancel to the timer.
+ *
+ *  @sideeffects
+ *   Pushes a user event onto the SDL event queue.
+ */
 static Uint32 OnTimer(Uint32 interval, void* param)
 {
   (void)interval;

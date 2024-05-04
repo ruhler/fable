@@ -9,6 +9,11 @@ namespace eval "pkgs/app" {
 
   pkg app [list core] $objs
 
+  # Check doc comments
+  foreach {x} [build_glob $::s/pkgs/app -tails "*.h" "*.c"] {
+    fbld_check_dc $::b/pkgs/app/$x.dc $::s/pkgs/app/$x
+  }
+
   # /App/Tests% interpreted
   set cflags "-I $::s/pkgs/app -I $::s/pkgs/core"
   test $::b/pkgs/app/App/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/app/App/Tests.fble.d" \

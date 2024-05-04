@@ -1,4 +1,7 @@
-
+/**
+ * @file int.fble.c
+ *  Routines for interacting with @l{Int@} type.
+ */
 #include <assert.h>       // for assert
 #include <stdlib.h>       // for abort
 
@@ -9,18 +12,17 @@
 static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x);
 static int64_t ReadIntP(FbleValue* num);
 
-// MakeIntP -- 
-//   Make an FbleValue of type /Core/Int/Core/IntP%.IntP@ for the given integer.
-//
-// Inputs:
-//   heap - the heap to use for allocations.
-//   x - the integer value. Must be greater than 0.
-//
-// Results:
-//   An FbleValue for the integer.
-//
-// Side effects:
-//   Allocates a value on the heap.
+/**
+ * @func[MakeIntP] Makes an FbleValue of type @l{/Core/Int/Core/IntP%.IntP@}.
+ *  @arg[FbleValueHeap*][heap] The heap to use for allocations.
+ *  @arg[int64_t][x] The integer value. Must be greater than 0.
+ *
+ *  @returns[FbleValue*]
+ *   An FbleValue for the integer.
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
 static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
 {
   assert(x > 0);
@@ -32,18 +34,17 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
   return FbleNewUnionValue(heap, 1 + (x % 2), p);
 }
 
-// ReadIntP --
-//   Read a number from an FbleValue of type /Core/Int/Core/IntP%.IntP@.
-//
-// Inputs:
-//   x - the value of the number.
-//
-// Results:
-//   The number x represented as an integer.
-//
-// Side effects:
-//   Behavior is undefined if the int value cannot be represented using the C
-//   int64_t type, for example because it is too large.
+/**
+ * @func[ReadIntP] Reads a number of type @l{/Core/Int/Core/IntP%.IntP@}.
+ *  @arg[FbleValue*][x] The value of the number.
+ *
+ *  @returns[int64_t]
+ *   The number x represented as an integer.
+ *
+ *  @sideeffects
+ *   Behavior is undefined if the int value cannot be represented using the C
+ *   int64_t type, for example because it is too large.
+ */
 static int64_t ReadIntP(FbleValue* x)
 {
   switch (FbleUnionValueTag(x)) {

@@ -2,7 +2,7 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Convert pkgs/core, pkgs/app code to fbld doc comments.
+* Use fbld doc comments in pkgs/core/stdio.fble.c.
 
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?

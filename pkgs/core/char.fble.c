@@ -1,4 +1,7 @@
-
+/**
+ * @file char.fble.c
+ *  Implementation of routines to interact with @l{Char@} type.
+ */
 #include <assert.h>   // for assert
 #include <string.h>   // for strchr
 
