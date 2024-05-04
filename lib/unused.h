@@ -8,17 +8,16 @@
 
 #include "expr.h"
 
-// FbleWarnAboutUnusedVars -
-//   Prints a warning for each unused variable in the given expression.
-//
-// The expression should be a well formed and properly typed fble expression.
-//
-// Args:
-//   expr - the expression to check.
-//
-// Side effects:
-//   Prints a warning message for each unused variable in the given
-//   expression.
+/**
+ * @func[FbleWarnAboutUnusedVars] Prints warnings about unused vars.
+ *  The expression should be a well formed and properly typed fble expression.
+ *
+ *  @arg[FbleExpr*][expr] The expression to check.
+ *
+ *  @sideeffects
+ *   Prints a warning message for each unused variable in the given
+ *   expression.
+ */
 void FbleWarnAboutUnusedVars(FbleExpr* expr);
 
 #endif // FBLE_INTERNAL_UNUSED_H_

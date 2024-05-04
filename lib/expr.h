@@ -330,11 +330,10 @@ typedef struct {
 } FbleDataAccessExpr;
 
 /**
- * Frees resources associated with an expression.
+ * @func[FbleFreeExpr] Frees resources associated with an expression.
+ *  @arg[FbleExpr*][expr] Expression to free. May be NULL.
  *
- * @param expr  Expression to free. May be NULL.
- *
- * @sideeffects
+ *  @sideeffects
  *   Frees resources associated with expr.
  */
 void FbleFreeExpr(FbleExpr* expr);

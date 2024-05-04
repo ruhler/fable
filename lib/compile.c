@@ -117,11 +117,11 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
 static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc);
 
 /**
- * Frees memory assicoated with a local.
+ * @func[FreeLocal] Frees memory assicoated with a local.
+ *  @arg[Local*][local] The local to free.
  *
- * @param local  The local to free.
- * @sideeffects
- *  Frees memory associated with local.
+ *  @sideeffects
+ *   Frees memory associated with local.
  */
 static void FreeLocal(Local* local)
 {
@@ -129,14 +129,14 @@ static void FreeLocal(Local* local)
 }
 
 /**
- * Allocates space for an anonymous local variable on the stack frame.
+ * @func[NewLocal]
+ * @ Allocates space for an anonymous local variable on the stack frame.
+ *  @arg[Scope*][scope] The scope to allocate the local on.
  *
- * @param scope  The scope to allocate the local on.
- *
- * @returns
+ *  @returns[Local*]
  *   A newly allocated local.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a space on the scope's locals for the local. The local should
  *   be freed with ReleaseLocal when no longer in use.
  */
@@ -165,13 +165,13 @@ static Local* NewLocal(Scope* scope)
 }
 
 /**
- * Decrements the reference count on a local and free it if appropriate.
+ * @func[ReleaseLocal]
+ * @ Decrements the reference count on a local and free it if appropriate.
+ *  @arg[Scope*][scope] The scope that the local belongs to
+ *  @arg[Local*][local] The local to release. May be NULL.
+ *  @arg[bool][exit] Whether the stack frame has already been exited or not.
  *
- * @param scope  The scope that the local belongs to
- * @param local  The local to release. May be NULL.
- * @param exit  Whether the stack frame has already been exited or not.
- *
- * @sideeffects
+ *  @sideeffects
  *   Decrements the reference count on the local and frees it if the refcount
  *   drops to 0. Emits a RELEASE instruction if this is the last reference the
  *   local and the stack frame hasn't already been exited.
@@ -193,13 +193,12 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
 }
 
 /**
- * Pushes a variable onto the current scope.
+ * @func[PushVar] Pushes a variable onto the current scope.
+ *  @arg[Scope*][scope] The scope to push the variable on to.
+ *  @arg[FbleName][name] The name of the variable. Borrowed.
+ *  @arg[Local*][local] The local address of the variable. Consumed.
  *
- * @param scope  The scope to push the variable on to.
- * @param name  The name of the variable. Borrowed.
- * @param local  The local address of the variable. Consumed.
- *
- * @sideeffects
+ *  @sideeffects
  *   Pushes a new variable onto the scope. Takes ownership of the given local,
  *   which will be released when the variable is freed by a call to PopVar or
  *   FreeScope.
@@ -219,12 +218,11 @@ static void PushVar(Scope* scope, FbleName name, Local* local)
 }
 
 /**
- * Pops a var off the given scope.
+ * @func[PopVar] Pops a var off the given scope.
+ *  @arg[Scope*][scope] The scope to pop from.
+ *  @arg[bool][exit] Whether the stack frame has already been exited or not.
  *
- * @param scope  The scope to pop from.
- * @param exit  Whether the stack frame has already been exited or not.
- *
- * @sideeffects
+ *  @sideeffects
  *   Pops the top var off the scope.
  */
 static void PopVar(Scope* scope, bool exit)
@@ -235,16 +233,15 @@ static void PopVar(Scope* scope, bool exit)
 }
 
 /**
- * Lookup a var in the given scope.
+ * @func[GetVar] Lookup a var in the given scope.
+ *  @arg[Scope*][scope] The scope to look in.
+ *  @arg[FbleVar][var] The variable to look up.
  *
- * @param scope  The scope to look in.
- * @param var  The variable to look up.
- *
- * @returns
+ *  @returns[Local*]
  *   The variable from the scope. The variable is owned by the scope and
  *   remains valid until either PopVar is called or the scope is finished.
  *
- * @sideeffects
+ *  @sideeffects
  *   Behavior is undefined if there is no such variable.
  */
 static Local* GetVar(Scope* scope, FbleVar var)
@@ -271,17 +268,16 @@ static Local* GetVar(Scope* scope, FbleVar var)
 }
 
 /**
- * Changes the value of a variable in scope.
+ * @func[SetVar] Changes the value of a variable in scope.
+ *  @arg[Scope*][scope] Scope of variables
+ *  @arg[size_t][index] The index of the local variable to change
+ *  @arg[FbleName][name] The name of the variable.
+ *  @arg[Local*][local] The new value for the local variable
  *
- * @param scope  Scope of variables
- * @param index  The index of the local variable to change
- * @param name  The name of the variable.
- * @param local  The new value for the local variable
- *
- * @sideeffects
- * * Frees the existing local value of the variable.
- * * Sets the value of the variable to the given local.
- * * Takes ownership of the given local.
+ *  @sideeffects
+ *   @i Frees the existing local value of the variable.
+ *   @i Sets the value of the variable to the given local.
+ *   @i Takes ownership of the given local.
  */
 static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
 {
@@ -500,21 +496,27 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
 }
 
 /**
- * Initializes a new scope.
- *
- * @param scope  The scope to initialize.
- * @param code  A pointer to store the allocated code block for this scope.
- * @param args  The arguments to the function the scope is for. Borrowed.
- * @param statics  Static variables captured by the function. Borrowed.
- * @param block  The profile block id to enter when executing this scope.
- * @param parent  The parent of the scope to initialize. May be NULL.
+ * @func[InitScope] Initializes a new scope.
+ *  @arg[Scope*][scope] The scope to initialize.
+ *  @arg[FbleCode**][code]
+ *   A pointer to store the allocated code block for this scope.
+ *  @arg[FbleNameV][args]
+ *   The arguments to the function the scope is for. Borrowed.
+ *  @arg[FbleNameV][statics]
+ *   Static variables captured by the function. Borrowed.
+ *  @arg[FbleBlockId][block]
+ *   The profile block id to enter when executing this scope.
+ *  @arg[Scope*][parent]
+ *   The parent of the scope to initialize. May be NULL.
  *
  * @sideeffects
- * * Initializes scope based on parent. FreeScope should be
- *   called to free the allocations for scope. The lifetimes of the code block
- *   and the parent scope must exceed the lifetime of this scope.
- * * The caller is responsible for calling FbleFreeCode on *code when it
- *   is no longer needed.
+ *  @item
+ *   Initializes scope based on parent. FreeScope should be called to free the
+ *   allocations for scope. The lifetimes of the code block and the parent
+ *   scope must exceed the lifetime of this scope.
+ *  @item
+ *   The caller is responsible for calling FbleFreeCode on *code when it is no
+ *   longer needed.
  */
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent)
 {
@@ -569,12 +571,11 @@ static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV s
 }
 
 /**
- * Free memory associated with a Scope.
+ * @func[FreeScope] Free memory associated with a Scope.
+ *  @arg[Scope*][scope] The scope to finish.
  *
- * @param scope  The scope to finish.
- *
- * @sideeffects
- *   * Frees memory associated with scope.
+ *  @sideeffects
+ *   Frees memory associated with scope.
  */
 static void FreeScope(Scope* scope)
 {
@@ -609,12 +610,12 @@ static void FreeScope(Scope* scope)
 }
 
 /**
- * Appends an instruction to the code block for the given scope.
+ * @func[AppendInstr]
+ * @ Appends an instruction to the code block for the given scope.
+ *  @arg[Scope*][scope] The scope to append the instruction to.
+ *  @arg[FbleInstr*][instr] The instruction to append.
  *
- * @param scope  The scope to append the instruction to.
- * @param instr  The instruction to append.
- *
- * @sideeffects
+ *  @sideeffects
  *   Appends instr to the code block for the given scope, thus taking
  *   ownership of the instr.
  */
@@ -637,12 +638,13 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
 }
 
 /**
- * Appends a single debug info entry to the code block for the given scope.
+ * @func[AppendDebugInfo]
+ * @ Appends a single debug info entry to the code block for the given scope.
+ *  @arg[Scope*][scope] The scope to append the instruction to.
+ *  @arg[FbleDebugInfo*][info]
+ *   The debug info entry whose next field must be NULL. Consumed.
  *
- * @param scope  The scope to append the instruction to.
- * @param info  The debug info entry whose next field must be NULL. Consumed.
- *
- * @sideeffects
+ *  @sideeffects
  *   Appends the debug info to the code block for the given scope, taking
  *   ownership of the allocated debug info object.
  */
@@ -661,13 +663,13 @@ static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info)
 }
 
 /**
- * Appends a profile op to the code block for the given scope.
+ * @func[AppendProfileOp]
+ * @ Appends a profile op to the code block for the given scope.
+ *  @arg[Scope*][scope] The scope to append the instruction to.
+ *  @arg[FbleProfileOpTag][tag] The tag of the profile op to insert.
+ *  @arg[size_t][arg] The argument to the profiling op if relevant.
  *
- * @param scope  The scope to append the instruction to.
- * @param tag  The tag of the profile op to insert.
- * @param arg  The argument to the profiling op if relevant.
- *
- * @sideeffects
+ *  @sideeffects
  *   Appends the profile op to the code block for the given scope.
  */
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
@@ -697,19 +699,20 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
 }
 
 /**
- * Pushes a new profiling block onto the block stack.
+ * @func[PushBlock] Pushes a new profiling block onto the block stack.
+ *  @arg[Blocks*][blocks] The blocks stack.
+ *  @arg[FbleName][name]
+ *   Name to add to the current block path for naming the new block.
+ *  @arg[FbleLoc][loc] The location of the block.
  *
- * @param blocks  The blocks stack.
- * @param name  Name to add to the current block path for naming the new block.
- * @param loc  The location of the block.
- *
- * @returns
+ *  @returns[FbleBlockId]
  *   The id of the newly pushed profiling block.
  *
- * @sideeffects
- * * Pushes a new block to the blocks stack.
- * * The block should be popped from the stack using ExitBlock or one of the
- *   other functions that exit a block when no longer needed.
+ *  @sideeffects
+ *   @i Pushes a new block to the blocks stack.
+ *   @item
+ *    The block should be popped from the stack using ExitBlock or one of the
+ *    other functions that exit a block when no longer needed.
  */
 static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
 {
@@ -745,21 +748,21 @@ static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
 }
 
 /**
- * Adds a new body profiling block to the block stack.
+ * @func[PushBodyBlock] Adds a new body profiling block to the block stack.
+ *  This is used for the body of functions and processes that are executed
+ *  when they are called, not when they are defined.
  *
- * This is used for the body of functions and processes that are executed when
- * they are called, not when they are defined.
+ *  @arg[Blocks*][blocks] The blocks stack.
+ *  @arg[FbleLoc][loc] The location of the new block.
  *
- * @param blocks  The blocks stack.
- * @param loc  The location of the new block.
- *
- * @returns
+ *  @returns[FbleBlockId]
  *   The id of the newly pushed block.
  *
- * @sideeffects
- * * Adds a new block to the blocks stack.
- * * The block should be popped from the stack using ExitBlock or one of the
- *   other functions that exit a block when no longer needed.
+ *  @sideeffects
+ *   @i Adds a new block to the blocks stack.
+ *   @item
+ *    The block should be popped from the stack using ExitBlock or one of the
+ *    other functions that exit a block when no longer needed.
  */
 static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
 {
@@ -785,15 +788,16 @@ static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
 }
 
 /**
- * Enters a new profiling block.
+ * @func[EnterBlock] Enters a new profiling block.
+ *  @args[Blocks*][blocks] The blocks stack.
+ *  @args[FbleName][name]
+ *   Name to add to the current block path for naming the new block.
+ *  @args[FbleLoc][loc] The location of the block.
+ *  @args[Scope*][scope] Where to add the ENTER_BLOCK instruction to.
+ *  @args[bool][replace]
+ *   If true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
  *
- * @param blocks  The blocks stack.
- * @param name  Name to add to the current block path for naming the new block.
- * @param loc  The location of the block.
- * @param scope  Where to add the ENTER_BLOCK instruction to.
- * @param replace  If true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
- *
- * @sideeffects
+ *  @sideeffects
  *   Adds a new block to the blocks stack. Change the current block to the new
  *   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
  *   exited when no longer in scope using ExitBlock.
@@ -807,11 +811,10 @@ static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope,
 }
 
 /**
- * Pops the current profiling block frame.
+ * @func[PopBlock] Pops the current profiling block frame.
+ *  @arg[Blocks*][blocks] The blocks stack.
  *
- * @param blocks  The blocks stack.
- *
- * @sideeffects
+ *  @sideeffects
  *   Pops the top block frame off the blocks stack.
  */
 static void PopBlock(Blocks* blocks)
@@ -821,13 +824,12 @@ static void PopBlock(Blocks* blocks)
 }
 
 /**
- * Exits the current profiling block frame.
+ * @func[ExitBlock] Exits the current profiling block frame.
+ *  @arg[Blocks*][blocks] The blocks stack.
+ *  @arg[Scope*][scope] Where to append the profile exit op.
+ *  @arg[bool][exit] Whether the frame has already been exited.
  *
- * @param blocks  The blocks stack.
- * @param scope  Where to append the profile exit op.
- * @param exit  Whether the frame has already been exited.
- *
- * @sideeffects
+ *  @sideeffects
  *   Pops the top block frame off the blocks stack.
  *   profile exit op to the scope if exit is false.
  */
@@ -840,13 +842,12 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 }
 
 /**
- * Appends a return instruction to instrs if exit is true.
+ * @func[CompileExit] Appends a return instruction to instrs if exit is true.
+ *  @arg[bool][exit] Whether we actually want to exit.
+ *  @arg[Scope*][scope] The scope to append the instructions to.
+ *  @arg[Local*][result] The result to return when exiting. May be NULL.
  *
- * @param exit  Whether we actually want to exit.
- * @param scope  The scope to append the instructions to.
- * @param result  The result to return when exiting. May be NULL.
- *
- * @sideeffects
+ *  @sideeffects
  *   If exit is true, appends a return instruction to instrs
  */
 static void CompileExit(bool exit, Scope* scope, Local* result)
@@ -859,29 +860,30 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
 }
 
 /**
- * Compiles the given expression.
+ * @func[CompileExpr] Compiles the given expression.
+ *  Returns the local variable that will hold the result of the expression and
+ *  generates instructions to compute the value of that expression at runtime.
  *
- * Returns the local variable that will hold the result of the expression and
- * generates instructions to compute the value of that expression at runtime.
+ *  @arg[Blocks*][blocks] The blocks stack.
+ *  @arg[bool][stmt]
+ *   True if this marks the beginning of a statement, for debug purposes.
+ *  @arg[bool][exit] If true, generate instructions to exit the current scope.
+ *  @arg[Scope*][scope] The list of variables in scope.
+ *  @arg[FbleTc*][v] The type checked expression to compile.
  *
- * @param blocks  The blocks stack.
- * @param stmt  True if this marks the beginning of a statement, for debug
- *   purposes.
- * @param exit  If true, generate instructions to exit the current scope.
- * @param scope  The list of variables in scope.
- * @param v  The type checked expression to compile.
- *
- * @returns
+ *  @returns[Local*]
  *   The local of the compiled expression.
  *
- * @sideeffects
- * * Updates the blocks stack with with compiled block information.
- * * Appends instructions to the scope for executing the given expression.
- *   There is no gaurentee about what instructions have been appended to
- *   the scope if the expression fails to compile.
- * * The caller should call ReleaseLocal when the returned results are no
- *   longer needed. Note that FreeScope calls ReleaseLocal for all locals
- *   allocated to the scope, so that can also be used to clean up the local.
+ *  @sideeffects
+ *   @i Updates the blocks stack with with compiled block information.
+ *   @item
+ *    Appends instructions to the scope for executing the given expression.
+ *    There is no gaurentee about what instructions have been appended to the
+ *    scope if the expression fails to compile.
+ *   @item
+ *    The caller should call ReleaseLocal when the returned results are no
+ *    longer needed. Note that FreeScope calls ReleaseLocal for all locals
+ *    allocated to the scope, so that can also be used to clean up the local.
  */
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* v)
 {
@@ -1328,21 +1330,24 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 }
 
 /**
- * Compiles a type-checked expression.
+ * @func[Compile] Compiles a type-checked expression.
+ *  @arg[FbleNameV][args] Local variables to reserve for arguments.
+ *  @arg[FbleTc*][tc] The type-checked expression to compile.
+ *  @arg[FbleName][name]
+ *   The name of the expression to use in profiling. Borrowed.
+ *  @arg[FbleNameV*][profile_blocks]
+ *   Uninitialized vector to store profile blocks to.
  *
- * @param args            Local variables to reserve for arguments.
- * @param tc              The type-checked expression to compile.
- * @param name            The name of the expression to use in profiling. Borrowed.
- * @param profile_blocks  Uninitialized vector to store profile blocks to.
+ *  @returns[FbleCode*] The compiled program.
  *
- * @returns The compiled program.
- *
- * @sideeffects
- * * Initializes and fills profile_blocks vector. The caller should free the
- *   elements and vector itself when no longer needed.
- * * Adds blocks to the given profile.
- * * The caller should call FbleFreeCode to release resources
- *   associated with the returned program when it is no longer needed.
+ *  @sideeffects
+ *   @item
+ *    Initializes and fills profile_blocks vector. The caller should free the
+ *    elements and vector itself when no longer needed.
+ *   @i Adds blocks to the given profile.
+ *   @item
+ *    The caller should call FbleFreeCode to release resources associated with
+ *    the returned program when it is no longer needed.
  */
 static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* profile_blocks)
 {
@@ -1367,15 +1372,15 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
 }
 
 /**
- * Compiles a single module.
+ * @func[CompileModule] Compiles a single module.
+ *  @arg[FbleLoadedModule*][module]
+ *   Meta info about the module and its dependencies.
+ *  @arg[FbleTc*][tc] The typechecked value of the module.
  *
- * @param module  Meta info about the module and its dependencies.
- * @param tc  The typechecked value of the module.
- *
- * @returns
+ *  @returns[FbleCompiledModule*]
  *   The compiled module.
  *
- * @sideeffects
+ *  @sideeffects
  *   The user should call FbleFreeCompiledModule on the resulting module when
  *   it is no longer needed.
  */

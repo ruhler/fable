@@ -19,23 +19,24 @@
 static void FreeCode(void* code);
 
 /**
- * Gets the value of a variable in scope.
+ * @func[GET] Gets the value of a variable in scope.
+ *  Assumes existance of a local vars variable:
  *
- * Assumes existance of a local vars variable:
+ *  @code[c] @
  *   FbleValue** vars[3];
  *   vars[FBLE_STATIC_VAR] = statics;
  *   vars[FBLE_ARG_VAR] = args;
  *   vars[FBLE_LOCAL_VAR] = locals;
  *
- * @param idx  The index of the variable.
+ *  @arg[FbleVar][var] The index of the variable.
  *
- * @returns
+ *  @returns[FbleValue*]
  *   The value of the variable.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
-#define GET(idx) (vars[idx.tag][idx.index])
+#define GET(var) (vars[var.tag][var.index])
 
 /**
  * @func[FreeCode] Calls FbleFreeCode.

@@ -188,12 +188,14 @@ void FbleFreeCode(FbleCode* code)
 }
 
 /**
- * Prints a location.
+ * @func[PrintLoc] Prints a location.
+ *  For use in the diassembly output.
  *
- * For use in the diassembly output.
+ *  @arg[FILE*][fout] The stream to print to.
+ *  @arg[FbleLoc][loc] The location to print.
  *
- * @param fout  The stream to print to.
- * @param loc  The location to print.
+ *  @sideeffects
+ *   Prints the location to the given output stream.
  */
 static void PrintLoc(FILE* fout, FbleLoc loc)
 {

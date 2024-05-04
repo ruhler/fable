@@ -16,17 +16,18 @@ static FILE* LocalPath(const char* arg0, const char* name);
 static FILE* DocPath(const char* name);
 
 /**
- * Returns a file stream to the usage info in the same directory as the
- * executable.
+ * @func[LocalPath] Finds the local path to the usage info file.
+ *  Returns a file stream to the usage info in the same directory as the
+ *  executable.
  *
- * @param arg0  The arg0 for the program.
- * @param name  The name of the usage doc.
+ *  @arg[const char*][arg0] The arg0 for the program.
+ *  @arg[const char*][name] The name of the usage doc.
  *
- * @returns
- *  A FILE pointer to the usage doc if found, NULL if not found.
+ *  @returns[FILE*]
+ *   A FILE pointer to the usage doc if found, NULL if not found.
  *
- * @sideeffects
- *  Opens a file that should be closed when no longer needed.
+ *  @sideeffects
+ *   Opens a file that should be closed when no longer needed.
  */
 static FILE* LocalPath(const char* arg0, const char* name)
 {
@@ -43,15 +44,16 @@ static FILE* LocalPath(const char* arg0, const char* name)
 }
 
 /**
- * Returns a file stream to the usage info in the fble doc directory.
+ * @func[DocPath] Finds the fble doc path to the usage info.
+ *  Returns a file stream to the usage info in the fble doc directory.
  *
- * @param name  The name of the usage doc.
+ *  @arg[const char*][name] The name of the usage doc.
  *
- * @returns
- *  A FILE pointer to the usage doc if found, NULL if not found.
+ *  @returns[FILE*]
+ *   A FILE pointer to the usage doc if found, NULL if not found.
  *
- * @sideeffects
- *  Opens a file that should be closed when no longer needed.
+ *  @sideeffects
+ *   Opens a file that should be closed when no longer needed.
  */
 static FILE* DocPath(const char* name)
 {

@@ -1,6 +1,7 @@
 /**
  * @file heap.h
- *  Defines FbleHeap, the fble garbage collector API.
+ *  Defines FbleHeap, the fble garbage collector API used for types (not
+ *  values).
  */
 
 #ifndef FBLE_INTERNAL_HEAP_H_
@@ -20,9 +21,13 @@
 typedef struct FbleHeap FbleHeap;
 
 /**
- * Creates a new garbage collected heap.
+ * @func[FbleNewHeap] Creates a new garbage collected heap.
+ *  @arg[void (*)(FbleHeap*, void*)][refs]
+ *   Reference traversal callback.
+ *  @arg[void (*)(FbleHeap*, void*)][on_free]
+ *   Object destructor callback.
  *
- * @return
+ * @returns[FbleHeap*]
  *   The newly allocated heap.
  *
  * @sideeffects
@@ -31,16 +36,16 @@ typedef struct FbleHeap FbleHeap;
  */
 FbleHeap* FbleNewHeap(
     /**
-     * User supplied function to traverse over the objects referenced by obj.
+     * func[refs]
+     *  User supplied function to traverse over the objects referenced by obj.
      *
-     * This function will be called by the garbage collector as needed to
-     * traverse objects on the heap.
+     *  This function will be called by the garbage collector as needed to
+     *  traverse objects on the heap.
      *
+     *  @arg[FbleHeap*][heap] This heap.
+     *  @arg[void*][obj] The object whose references to traverse
      *   
-     * param heap This heap.
-     * param obj  The object whose references to traverse
-     *   
-     * sideeffects
+     *  @sideeffects
      *   The implementation of this function should call FbleHeapAddRef on
      *   each object referenced by obj. If the same object is referenced
      *   multiple times by obj, the callback is called once for each time the
@@ -49,16 +54,15 @@ FbleHeap* FbleNewHeap(
     void (*refs)(FbleHeap* heap, void* obj),
 
     /**
-     * User supplied function called when an object is freed.
-     *
-     * This function will be called by the garbage collector after the
-     * collector has determined it is done with the object, just before
-     * freeing the underlying memory for the object.
+     * func[on_free] User supplied function called when an object is freed.
+     *  This function will be called by the garbage collector after the
+     *  collector has determined it is done with the object, just before
+     *  freeing the underlying memory for the object.
      * 
-     * param heap  This heap.
-     * param obj  The object being freed.
+     *  @arg[FbleHeap*][heap] This heap.
+     *  @arg[void*][obj] The object being freed.
      * 
-     * sideeffects
+     *  @sideeffects
      *   Frees resources outside of the heap that this obj holds on to.
      */
     void (*on_free)(FbleHeap* heap, void* obj));
@@ -116,15 +120,14 @@ void* FbleNewHeapObject(FbleHeap* heap, size_t size);
 void FbleRetainHeapObject(FbleHeap* heap, void* obj);
 
 /**
- * Releases a retained heap object.
+ * @func[FbleReleaseHeapObject] Releases a retained heap object.
+ *  Releases the given object, allowing the object to be freed if there is
+ *  nothing else causing it to be retained.
  *
- * Releases the given object, allowing the object to be freed if there is
- * nothing else causing it to be retained.
+ *  @arg[FbleHeap*][heap] The heap the object is allocated on.
+ *  @arg[FbleHeap*][obj] The object to release.
  *
- * @param heap  The heap the object is allocated on.
- * @param obj  The object to release.
- *
- * @sideeffects
+ *  @sideeffects
  *   The object is released. If there are no more references to it, the
  *   object will (eventually) be freed.
  */
@@ -140,25 +143,24 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj);
  *  @arg[void*][src] The source object.
  *  @arg[void*][dst] The destination object. Must not be NULL.
  *
- * @sideeffects
- *  Causes the dst object to be retained at least as long as the src object is
- *  retained.
+ *  @sideeffects
+ *   Causes the dst object to be retained at least as long as the src object is
+ *   retained.
  */
 void FbleHeapObjectAddRef(FbleHeap* heap, void* src, void* dst);
 
 /**
- * Does a full GC.
+ * @func[FbleHeapFullGc] Does a full GC.
+ *  Causes the garbage collector to perform a full garbage collection,
+ *  collecting all objects that are currently unreachable.
  *
- * Causes the garbage collector to perform a full garbage collection,
- * collecting all objects that are currently unreachable.
+ *  Full GC can be a very expensive operation. This method is primarily
+ *  intended to be used to help in testing and debugging of memory use.
  *
- * Full GC can be a very expensive operation. This method is primarily
- * intended to be used to help in testing and debugging of memory use.
+ *  @arg[FbleHeap*][heap] The heap to perform GC on.
  *
- * @param heap  The heap to perform GC on.
- *
- * @sideeffects
- * * Causes all currently unreachable objects on the heap to be freed.
+ *  @sideeffects
+ *   Causes all currently unreachable objects on the heap to be freed.
  */
 void FbleHeapFullGc(FbleHeap* heap);
 

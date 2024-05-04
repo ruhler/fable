@@ -70,37 +70,37 @@ typedef struct {
 } FblePolyKind;
 
 /**
- * Creates a basic kind of given level.
+ * @func[FbleNewBasicKind] Creates a basic kind of given level.
+ *  @arg[FbleLoc][loc] Location for the kind.
+ *  @arg[size_t][level] The level to use for the kind.
+ * 
+ *  @returns[FbleKind*]
+ *   A basic kind of the given level.
  *
- * @param loc  Location for the kind.
- * @param level  The level to use for the kind.
- * @returns  A basic kind of the given level.
- * @sideeffects
+ *  @sideeffects
  *   Allocates a kind that should be freed using FbleFreeKind when no longer
  *   needed.
  */
 FbleKind* FbleNewBasicKind(FbleLoc loc, size_t level);
 
 /**
- * Makes a (refcount) copy of a kind.
+ * @func[FbleCopyKind] Makes a (refcount) copy of a kind.
+ *  @arg[FbleKind*][kind] The kind to copy.
  *
- * @param kind  The kind to copy.
- *
- * @returns
+ *  @returns[FbleKind*]
  *   The copied kind.
  *
- * @sideeffects
+ *  @sideeffects
  *   The returned kind must be freed using FbleFreeKind when no longer in
  *   use.
  */
 FbleKind* FbleCopyKind(FbleKind* kind);
 
 /**
- * Frees a (refcount) copy of a compiled kind.
+ * @func[FbleFreeKind] Frees a (refcount) copy of a compiled kind.
+ *  @arg[FbleKind*][kind] The kind to free. May be NULL.
  *
- * @param kind  The kind to free. May be NULL.
- *
- * @sideeffects
+ *  @sideeffects
  *   Decrements the refcount for the kind and frees it if there are no
  *   more references to it.
  */

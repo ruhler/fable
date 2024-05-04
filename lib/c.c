@@ -39,15 +39,14 @@ static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
 
 /**
- * Gets the list of code blocks referenced by a code block.
+ * @func[CollectBlocks] Gets the list of code blocks referenced by a code block.
+ *  Includes the the code block itself.
  *
- * Includes the the code block itself.
+ *  @arg[FbleCodeV*][blocks] The collection of blocks to add to.
+ *  @arg[FbleCode*][code] The code to collect the blocks from.
  *
- * @param blocks  The collection of blocks to add to.
- * @param code  The code to collect the blocks from.
- *
- * @sideeffects
- *   Appends collected blocks to 'blocks'.
+ *  @sideeffects
+ *   Appends collected blocks to @a[blocks].
  */
 static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
 {
@@ -82,12 +81,11 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
 }
 
 /**
- * Outputs a string literal to fout.
- *
- * @param fout  The file to write to.
- * @param string  The contents of the string to write.
- *
- * @sideeffects
+ * @func[StringLit] Outputs a string literal to fout.
+ *  @arg[FILE*][fout] The file to write to.
+ *  @arg[const char*][string] The contents of the string to write.
+ *  
+ *  @sideeffects
  *   Outputs the given string as a C string literal to the given file.
  */
 static void StringLit(FILE* fout, const char* string)
@@ -111,16 +109,15 @@ static void StringLit(FILE* fout, const char* string)
 }
 
 /**
- * Outputs code to declare a static FbleString value.
- *
- * @param fout  The file to write to
- * @param label_id  Pointer to next available label id for use.
- * @param string  The value of the string.
- *
- * @returns
+ * @func[StaticString] Outputs code to declare a static FbleString value.
+ *  @arg[FILE*][fout] The file to write to
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[const char*][string] The value of the string.
+ *  
+ *  @returns[LabelId]
  *   A label id of a local, static FbleString.
  *
- * @sideeffects
+ *  @sideeffects
  *   Writes code to fout and allocates label ids out of label_id.
  */
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
@@ -137,16 +134,15 @@ static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
 }
 
 /**
- * Output code to declare a static FbleNameV.xs value.
- *
- * @param fout  The file to write to
- * @param label_id  Pointer to next available label id for use.
- * @param names  The value of the names.
- *
- * @returns
+ * @func[StaticNames] Output code to declare a static FbleNameV.xs value.
+ *  @arg[FILE*][fout] The file to write to
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[FbleNameV][names] The value of the names.
+ *  
+ *  @returns[LabelId]
  *   A label id of a local, static FbleNameV.xs.
  *
- * @sideeffects
+ *  @sideeffects
  *   Writes code to fout and allocates label ids out of label_id.
  */
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
@@ -171,18 +167,18 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
 }
 
 /**
- * Generates code to declare a static FbleModulePath value.
+ * @func[StaticModulePath]
+ * @ Generates code to declare a static FbleModulePath value.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[FbleModulePath*][path] The FbleModulePath to generate code for.
  *
- * @param fout  The output stream to write the code to.
- * @param label_id  Pointer to next available label id for use.
- * @param path  The FbleModulePath to generate code for.
- *
- * @returns
+ *  @returns[LabelId]
  *   The label id of a local, static FbleModulePath.
  *
- * @sideeffects
- * * Outputs code to fout.
- * * Increments label_id based on the number of internal labels used.
+ *  @sideeffects
+ *   @i Outputs code to fout.
+ *   @i Increments label_id based on the number of internal labels used.
  */
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path)
 {
@@ -202,15 +198,15 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
 }
 
 /**
- * Generates code to declare a static FbleGeneratedModule value.
+ * @func[StaticGeneratedModule]
+ * @ Generates code to declare a static FbleGeneratedModule value.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[LabelId*][label_id] Pointer to next available label id for use.
+ *  @arg[FbleCompiledModule*][module] The FbleCompiledModule to generate code for.
  *
- * @param fout  The output stream to write the code to.
- * @param label_id  Pointer to next available label id for use.
- * @param module  The FbleCompiledModule to generate code for.
- *
- * @sideeffects
- * * Outputs code to fout.
- * * Increments label_id based on the number of internal labels used.
+ *  @sideeffects
+ *   @i Outputs code to fout.
+ *   @i Increments label_id based on the number of internal labels used.
  */
 static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
 {
@@ -257,13 +253,12 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledMod
 }
 
 /**
- * Emits code to return an error from a Run function.
+ * @func[ReturnAbort] Emits code to return an error from a Run function.
+ *  @arg[FILE*][fout] The output stream.
+ *  @arg[const char*][lmsg] The name of the error message to use.
+ *  @arg[FbleLoc][loc] The location to report with the error message.
  *
- * @param fout  The output stream.
- * @param lmsg  The name of the error message to use.
- * @param loc  The location to report with the error message.
- *
- * @sideeffects
+ *  @sideeffects
  *   Emits code to return the error.
  */
 static void ReturnAbort(FILE* fout, const char* lmsg, FbleLoc loc)
@@ -275,14 +270,14 @@ static void ReturnAbort(FILE* fout, const char* lmsg, FbleLoc loc)
 }
 
 /**
- * Generates code to execute an FbleCode block.
+ * @func[EmitCode] Generates code to execute an FbleCode block.
+ *  @arg[FILE*][fout] The output stream to write the code to.
+ *  @arg[FbleNameV][profile_blocks]
+ *   The list of profile block names for the module.
+ *  @arg[FbleCode*][code] The block of code to generate a C function for.
  *
- * @param fout  The output stream to write the code to.
- * @param profile_blocks  The list of profile block names for the module.
- * @param code  The block of code to generate a C function for.
- *
- * @sideeffects
- * * Outputs code to fout with two space indent.
+ *  @sideeffects
+ *   Outputs code to fout with two space indent.
  */
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
@@ -582,15 +577,15 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 }
 
 /**
- * Returns the size of the label-sanitized version of a given string.
+ * @func[SizeofSanitizedString]
+ * @ Returns the size of the label-sanitized version of a given string.
+ *  @arg[const char*][str] The string to get the sanitized size of.
  *
- * @param str  The string to get the sanitized size of.
- *
- * @returns
+ *  @returns[size_t]
  *   The number of bytes needed for the sanitized version of the given string,
  *   including nul terminator.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static size_t SizeofSanitizedString(const char* str)
@@ -603,13 +598,14 @@ static size_t SizeofSanitizedString(const char* str)
 }
 
 /**
- * Returns a version of the string suitable for use in labels.
+ * @func[SanitizeString]
+ * @ Returns a version of the string suitable for use in labels.
+ *  @arg[const char*][str] The string to sanitize.
+ *  @arg[char*][dst]
+ *   A character buffer of size SizeofSanitizedString(str) to write the
+ *   sanitized string to.
  *
- * @param str  The string to sanitize.
- * @param dst  A character buffer of size SizeofSanitizedString(str) to write
- *   the sanitized string to.
- *
- * @sideeffects
+ *  @sideeffects
  *   Fills in dst with the sanitized version of the string.
  */
 static void SanitizeString(const char* str, char* dst)
@@ -623,14 +619,13 @@ static void SanitizeString(const char* str, char* dst)
 }
 
 /**
- * Returns a C identifier for a module path. 
+ * @func[LabelForPath] Returns a C identifier for a module path. 
+ *  @arg[FbleMOdulePath*][path] The path to get the name for.
  *
- * @param path  The path to get the name for.
- *
- * @returns
+ *  @returns[FbleString*]
  *   A C function name for the module path.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates an FbleString* that should be freed with FbleFreeString when no
  *   longer needed.
  */

@@ -15,6 +15,13 @@
 static void FreeTcBinding(FbleTcBinding binding);
 
 
+/**
+ * @func[FreeTcBinding] Frees resources associated with an FbleTcBinding]
+ *  @arg[FbleTcBinding][binding] The binding to free resources for.
+ *
+ *  @sideeffects
+ *   Frees resources associated with @a[binding].
+ */
 static void FreeTcBinding(FbleTcBinding binding)
 {
   FbleFreeName(binding.name);
@@ -174,4 +181,3 @@ void FbleFreeTc(FbleTc* tc)
 
   FbleUnreachable("should never get here");
 }
-

@@ -247,55 +247,55 @@ typedef struct {
 } FbleLiteralTc;
 
 /**
- * Allocates a new tc. This function is not type safe.
+ * @func[FbleNewTc] Allocates a new tc.
+ *  This function is not type safe.
  *
- * @param T  The type of the tc to allocate.
- * @param tag  The tag of the tc.
- * @param loc  The source loc of the tc. Borrowed.
+ *  @arg[<type>][T] The type of the tc to allocate.
+ *  @arg[FbleTcTag][tag] The tag of the tc.
+ *  @arg[FbleLoc][loc] The source loc of the tc. Borrowed.
  *
- * @returns The newly allocated tc.
+ *  @returns[T*] The newly allocated tc.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new tc that should be freed using FbleFreeTc when no longer
  *   needed.
  */
 #define FbleNewTc(T, tag, loc) ((T*) FbleNewTcRaw(sizeof(T), tag, loc))
 
 /**
- * Allocates a new tc. This function is not type safe.
+ * @func[FbleNewTcRaw] Allocates a new tc.
+ *  This function is not type safe.
  *
- * @param size The number of bytes to allocate.
- * @param tag  The tag of the tc.
- * @param loc  The source loc of the tc. Borrowed.
+ *  @arg[size_t][size] The number of bytes to allocate.
+ *  @arg[FbleTcTag][tag] The tag of the tc.
+ *  @arg[FbleLoc][loc] The source loc of the tc. Borrowed.
  *
- * @returns The newly allocated tc.
+ *  @returns[FbleTc*] The newly allocated tc.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new tc that should be freed using FbleFreeTc when no longer
  *   needed.
  */
 FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc);
 
 /**
- * Makes a reference counted copy of the given tc.
+ * @func[FbleCopyTc] Makes a reference counted copy of the given tc.
+ *  @arg[FbleTc*][tc] The tc to copy.
  *
- * @param tc  The tc to copy.
- *
- * @returns
+ *  @returns[FbleTc*]
  *   The copy of the tc.
  *
- * @sideeffects
+ *  @sideeffects
  *   The user should arrange for FbleFreeTc to be called on this tc when it is
  *   no longer needed.
  */
 FbleTc* FbleCopyTc(FbleTc* tc);
 
 /**
- * Frees resources associated with an FbleTc.
+ * @func[FbleFreeTc] Frees resources associated with an FbleTc.
+ *  @arg[FbleTc*][tc] The tc to free. May be NULL.
  *
- * @param tc  The tc to free. May be NULL.
- *
- * @sideeffects
+ *  @sideeffects
  *   Frees all resources associated with the given tc.
  */
 void FbleFreeTc(FbleTc* tc);

@@ -163,40 +163,42 @@ lib/ files to switch to fbld doc comments:
 aarch64.c       DONE.
 alloc.c         DONE.
 arg-parse.c     DONE.
-c.c
-code.c
-code.h
-compile.c
-expr.c
-expr.h
-heap.c
-heap.h
-interpret.c
-interpret.h
+c.c             DONE.
+code.c          DONE.
+code.h          DONE.
+interpret.h   DONE.
 kind.c        DONE.
-kind.h
-link.c
-load.c
+kind.h        DONE.
 loc.c         DONE.
 module-path.c DONE.
 name.c        DONE.
-parse.h
-parse.y
-profile.c
+parse.h       DONE.
 string.c      DONE.
-tag.h
-tc.c
-tc.h
-type.c
-typecheck.c
-typecheck.h
-type.h
-unreachable.h
+tag.h         DONE.
+unreachable.h   DONE.
 unused.c        DONE.
-unused.h
-usage.c
-value.c
-var.h
+unused.h        DONE.
+usage.c         DONE.
+var.h           DONE.
 vector.c        DONE.
 version.c       DONE.
+expr.h        DONE.
+heap.h        DONE.
+expr.c        DONE.
+tc.h          DONE.
+tc.c          DONE.
+interpret.c   DONE.
+typecheck.h   DONE.
+compile.c     DONE.
+
+
+heap.c
+link.c
+load.c
+parse.y
+profile.c
+type.c
+typecheck.c
+type.h
+value.c
 

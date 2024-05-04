@@ -78,10 +78,11 @@ typedef struct {
 } FbleVarDebugInfo;
 
 /**
- * Frees the given chain of debug infos.
- *
- * @param info  The chain of debug infos to free. May be NULL.
- * @sideeffects  Frees memory allocated for the given debug infos.
+ * @func[FbleFreeDebugInfo] Frees the given chain of debug infos.
+ *  @arg[FbleDebugInfo*][info] The chain of debug infos to free. May be NULL.
+ * 
+ *  @sideeffects
+ *   Frees memory allocated for the given debug infos.
  */
 void FbleFreeDebugInfo(FbleDebugInfo* info);
 
@@ -387,89 +388,87 @@ typedef struct {
 } FbleNopInstr;
 
 /**
- * Allocates and partially initialize an FbleInstr.
+ * @func[FbleRawAllocInstr]
+ * @ Allocates and partially initialize an FbleInstr.
+ *  This function is not type safe. It is recommended to use the FbleAllocInstr
+ *  and FbleAllocInstrExtra macros instead.
  *
- * This function is not type safe. It is recommended to use the FbleAllocInstr
- * and FbleAllocInstrExtra macros instead.
+ *  @arg[size_t][size]
+ *   The total number of bytes to allocate for the instruction.
+ *  @arg[FbleInstrTag][tag] The instruction tag.
  *
- * @param size  The total number of bytes to allocate for the instruction.
- * @param tag  The instruction tag.
- *
- * @returns
+ *  @returns[void*]
  *   A pointer to a newly allocated size bytes of memory with FbleInstr tag,
  *   debug_info, and profile_ops initialized.
  */
 void* FbleRawAllocInstr(size_t size, FbleInstrTag tag);
 
 /**
- * Allocates an FbleInstr in a type safe way.
+ * @func[FbleAllocInstr] Allocates an FbleInstr in a type safe way.
+ *  @arg[<type>][T] The type of instruction to allocate.
+ *  @arg[FbleInstrTag][tag] The tag of the instruction to allocate.
  *
- * @param T  The type of instruction to allocate.
- * @param tag  The tag of the instruction to allocate.
- *
- * @returns
+ *  @returns[T*]
  *   A pointer to a newly allocated object of the given type with the
  *   FbleInstr tag, debug_info, and profile_ops fields initialized.
  *
- * @sideeffects
- * * The allocation should be freed by calling FbleFreeInstr when no longer in
+ *  @sideeffects
+ *   The allocation should be freed by calling FbleFreeInstr when no longer in
  *   use.
  */
 #define FbleAllocInstr(T, tag) ((T*) FbleRawAllocInstr(sizeof(T), tag))
 
 /**
- * Allocate an FbleInstr with additional extra space.
+ * @func[FbleAllocInstrExtra]
+ * @ Allocates an FbleInstr with additional extra space.
+ *  @arg[<type>][T] The type of instruction to allocate.
+ *  @arg[size_t][size] The size in bytes of extra space to include.
+ *  @arg[FbleInstrTag][tag] The tag of the instruction.
  *
- * @param T  The type of instruction to allocate.
- * @param size  The size in bytes of extra space to include.
- * @param tag  The tag of the instruction.
- *
- * @returns
+ *  @returns[T*]
  *   A pointer to a newly allocated instruction of the given type with extra
  *   size, with FbleInstr fields initialized.
  *
- * @sideeffects
- * * The allocation should be freed by calling FbleFreeInstr when no longer in
+ *  @sideeffects
+ *   The allocation should be freed by calling FbleFreeInstr when no longer in
  *   use.
  */
 #define FbleAllocInstrExtra(T, size, tag) ((T*) FbleRawAllocInstr(sizeof(T) + size), tag)
 
 /**
- * Frees an FbleInstr.
+ * @func[FbleFreeInstr] Frees an FbleInstr.
+ *  @arg[FbleInstr*][instr] The instruction to free.
  *
- * @param instr  The instruction to free.
- *
- * @sideeffects
+ *  @sideeffects
  *   Frees memory allocated for the given instruction.
  */
 void FbleFreeInstr(FbleInstr* instr);
 
 /**
- * Allocates a new, empty FbleCode instance.
+ * @func[FbleNewCode] Allocates a new, empty FbleCode instance.
+ *  @arg[size_t][num_args] The number of arguments to the function.
+ *  @arg[size_t][num_statics] The number of statics captured by the function.
+ *  @arg[size_t][num_locals] The number of locals used by the function.
+ *  @arg[FbleBlockId][profile_block_id]
+ *   The profile block to use for this function.
  *
- * @param num_args  The number of arguments to the function.
- * @param num_statics  The number of statics captured by the function.
- * @param num_locals  The number of locals used by the function.
- * @param profile_block_id  The profile block to use for this function.
- *
- * @returns
+ *  @returns[FbleCode*]
  *   A newly allocated FbleCode object with no initial instructions.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new FbleCode object that should be freed with FbleFreeCode or
  *   FbleFreeExecutable when no longer needed.
  */
 FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, FbleBlockId profile_block_id);
 
 /**
- * Frees an FbleCode.
+ * @func[FbleFreeCode] Frees an FbleCode.
+ *  Decrements the refcount on the given block of instructions and free it if
+ *  appropriate.
  *
- * Decrements the refcount on the given block of instructions and free it if
- * appropriate.
+ *  @arg[FbleCode*][code] The code to free. May be NULL.
  *
- * @param code  The code to free. May be NULL.
- *
- * @sideeffects
+ *  @sideeffects
  *   Frees memory allocated for the given block of instruction if the refcount
  *   has gone to 0.
  */
