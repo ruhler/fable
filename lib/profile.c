@@ -1,7 +1,9 @@
 /**
  * @file profile.c
  *  Fble profiling and reporting.
- *
+ */
+
+/**
  * Notes on profiling
  * ------------------
  * Consider a profile call graph entry such as:
@@ -177,14 +179,15 @@ static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCall
 static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace);
 
 /**
- * Pushes an uninitialized Call onto the call stack for the thread.
+ * @func[CallStackPush]
+ * @ Pushes an uninitialized Call onto the call stack for the thread.
+ *  @arg[FbleProfileThread*][thread]
+ *   The thread whose call stack to push a value on.
  *
- * @param thread  The thread whose call stack to push a value on.
- *
- * @returns
+ *  @returns[Call*]
  *   A pointer to the memory for the newly pushed value.
  *
- * @sideeffects
+ *  @sideeffects
  *   Pushes a value on the stack that should be freed using CallStackPop when
  *   no longer needed.
  */
@@ -206,11 +209,10 @@ static Call* CallStackPush(FbleProfileThread* thread)
 }
 
 /**
- * Pops a Call off of the call stack for the thread.
+ * @func[CallStackPop] Pops a Call off of the call stack for the thread.
+ *  @arg[FbleProfileThread*][thread] The thread whose call stack to pop.
  *
- * @param thread  The thread whose call stack to pop.
- *
- * @sideeffects
+ *  @sideeffects
  *   Pops a value on the stack that. Potentially invalidates any pointers
  *   previously returned from CallStackPush.
  */
@@ -227,19 +229,20 @@ static void CallStackPop(FbleProfileThread* thread)
 }
 
 /**
- * Gets the call data associated with the given caller/callee pair in the call
- * profile. Creates new empty call data and adds it to the profile as
- * required.
+ * @func[GetCallData] Look up call data for caller/callee pair.
+ *  Gets the call data associated with the given caller/callee pair in the
+ *  call profile. Creates new empty call data and adds it to the profile as
+ *  required.
  *
- * @param profile  The profile to get the data for
- * @param caller  The caller of the call
- * @param callee  The callee of the call
+ *  @arg[FbleProfile*][profile] The profile to get the data for
+ *  @arg[FbleBlockId][caller] The caller of the call
+ *  @arg[FbleBlockId][callee] The callee of the call
  *
- * @returns
+ *  @returns[FbleCallData*]
  *   The call data associated with the caller/callee pair in the given
  *   profile.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates new empty call data and adds it to the profile if necessary.
  */
 static FbleCallData* GetCallData(FbleProfile* profile,
@@ -283,20 +286,20 @@ static FbleCallData* GetCallData(FbleProfile* profile,
 }
 
 /**
- * Does a merge sort of call data.
+ * @func[MergeSortCallData] Does a merge sort of call data.
+ *  There are two modes for sorting:
+ *  1. in_place - a is sorted in place, using b as a scratch buffer
+ *  2. !in_place - a is sorted into b, then a can be used as a scratch buffer
  *
- * There are two modes for sorting:
- * 1. in_place - a is sorted in place, using b as a scratch buffer
- * 2. !in_place - a is sorted into b, then a can be used as a scratch buffer
+ *  @arg[Order][order] The order to sort in.
+ *  @arg[bool][in_place] Whether to use in place sort or not.
+ *  @arg[FbleCallData**][a] The data to sort.
+ *  @arg[FbleCallData**][b]
+ *   If in_place, a scratch buffer. Otherwise the destination for the sorted
+ *   values.
+ *  @arg[size_t][size] The number of elements to sort.
  *
- * @param order  The order to sort in.
- * @param in_place  Whether to use in place sort or not.
- * @param a  The data to sort
- * @param b  If in_place, a scratch buffer. Otherwise the destination for the
- *    sorted values
- * @param size  The number of elements to sort.
- *
- * @sideeffects
+ *  @sideeffects
  *   Sorts the contents of data a, either in place or into b. Overwrites the
  *   contents of the non-sorted array with scratch data.
  */
@@ -355,13 +358,12 @@ static void MergeSortCallData(Order order, bool in_place, FbleCallData** a, Fble
 }
 
 /**
- * Sorts a vector of call data by time.
+ * @func[SortCallData] Sorts a vector of call data by time.
+ *  @arg[Order][order] The order to sort in.
+ *  @arg[FbleCallData**][data] The call data to sort
+ *  @arg[size_t][size] The number of elements of data.
  *
- * @param order  The order to sort in.
- * @param data  The call data to sort
- * @param size  The number of elements of data.
- *
- * @sideeffects
+ *  @sideeffects
  *   Sorts the given array of call data in increasing order of time.
  */
 static void SortCallData(Order order, FbleCallData** data, size_t size)
@@ -371,13 +373,12 @@ static void SortCallData(Order order, FbleCallData** data, size_t size)
 }
 
 /**
- * Prints a block name in human readable format.
- * 
- * @param fout  Where to print the name
- * @param profile  The profile, used for getting block names
- * @param id  The id of the block
+ * @func[PrintBlockName] Prints a block name in human readable format.
+ *  @arg[FILE*][fout] Where to print the name
+ *  @arg[FbleProfile*][profile] The profile, used for getting block names
+ *  @arg[FbleBlockId][id] The id of the block
  *
- * @sideeffects
+ *  @sideeffects
  *   Prints a human readable description of the block to the given file.
  */
 static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
@@ -386,15 +387,15 @@ static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 }
 
 /**
- * Prints a line of call data.
- *
- * @param fout  The file to print to
- * @param profile  The profile, used for getting block names
- * @param block  If true, print the call data for a block. This adds highlights to the
+ * @func[PrintCallData] Prints a line of call data.
+ *  @arg[FILE*][fout] The file to print to
+ *  @arg[FbleProfile*][profile] The profile, used for getting block names
+ *  @arg[bool][block]
+ *   If true, print the call data for a block. This adds highlights to the
  *   line and includes information about self time.
- * @param call  The call data to print
+ *  @arg[FbleCallData*][call] The call data to print
  *
- * @sideeffects
+ *  @sideeffects
  *   Prints a single line description of the call data to the given file.
  */
 static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCallData* call)
@@ -413,14 +414,14 @@ static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCall
 }
 
 /**
- * Enters a block on the given profile thread.
+ * @func[EnterBlock] Enters a block on the given profile thread.
+ *  @arg[FbleProfileThread*][thread] The thread to do the call on.
+ *  @arg[FbleBlockId][block] The block to call into.
+ *  @arg[bool][replace]
+ *   If true, replace the current block with the new block being entered
+ *   instead of calling into the new block.
  *
- * @param thread  The thread to do the call on.
- * @param block  The block to call into.
- * @param replace  If true, replace the current block with the new block being
- *   entered instead of calling into the new block.
- *
- * @sideeffects
+ *  @sideeffects
  *   A corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
  *   should be made when the call leaves, for proper accounting and resource
  *   management.

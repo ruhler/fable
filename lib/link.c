@@ -20,6 +20,24 @@ static void LoadGenerated(FbleGeneratedModuleV* collected, FbleGeneratedModule* 
 static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModule* module);
 
 
+/**
+ * @func[LinkInterpreted] Loads an interpreted program.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for locating .fble files.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load.
+ *
+ *  @returns FbleValue*
+ *   A zero-argument fble function that computes the value of the program when
+ *   executed, or NULL in case of error.
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
 static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, FbleSearchPath* search_path, FbleModulePath* module_path)
 {
   // Load the source files.
@@ -115,6 +133,22 @@ static void LoadGenerated(FbleGeneratedModuleV* loaded, FbleGeneratedModule* mod
   FbleAppendToVector(*loaded, module);
 }
 
+/**
+ * @func[LinkGenerated] Loads a compiled program.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
+ *  @arg[FbleGeneratedModule*] module
+ *   The compiled main module function. May be NULL.
+ *
+ *  @returns FbleValue*
+ *   A zero-argument fble function that computes the value of the program when
+ *   executed, or NULL in case of error.
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
 static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModule* program)
 {
   // Load the modules.

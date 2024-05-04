@@ -59,17 +59,16 @@ typedef struct {
 } Obj;
 
 /**
- * Gets the Obj* corresponding to a void* obj pointer.
+ * @func[ToObj] Gets the Obj* corresponding to a void* obj pointer.
+ *  Defined as a macro instead of a function to improve performance.
  *
- * @param obj  The void* obj pointer.
+ *  @arg[void*][obj] The void* obj pointer.
  *
- * @returns
+ *  @returns[Obj*]
  *   The corresponding Obj* pointer.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
- *
- * Notes: defined as a macro instead of a function to improve performance.
  */
 #define ToObj(obj) (((Obj*)obj)-1)
 

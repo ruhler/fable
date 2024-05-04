@@ -55,22 +55,25 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* src, FbleType* param, FbleT
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq);
 
 /**
- * Constructs a level adjusted version of the given kind.
+ * @func[LevelAdjustedKind]
+ * @ Constructs a level adjusted version of the given kind.
+ *  @arg[FbleKind*][kind] The kind to use as the basis.
+ *  @arg[FbleKind*][increment]
+ *   The kind level increment amount. May be negative to decrease the kind
+ *   level.
  *
- * @param kind  The kind to use as the basis.
- * @param increment  The kind level increment amount. May be negative to decrease
- *    the kind level.
- *
- * @returns
+ *  @returns[FbleKind*]
  *   A new kind that is the same as the given kind except with level
  *   incremented by the given increment.
  *
- * @sideeffects
- * * The caller is responsible for calling FbleFreeKind on the returned
- *   kind when it is no longer needed. This function does not take ownership
- *   of the given kind.
- * * Behavior is undefined if the increment causes the resulting kind level
- *   to be less than 0.
+ *  @sideeffects
+ *   @item
+ *    The caller is responsible for calling FbleFreeKind on the returned kind
+ *    when it is no longer needed. This function does not take ownership of
+ *    the given kind.
+ *   @item
+ *    Behavior is undefined if the increment causes the resulting kind level
+ *    to be less than 0.
  */
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
 {
@@ -121,15 +124,14 @@ static void Ref(FbleHeap* heap, FbleType* src, FbleType* dst)
 }
 
 /**
- * The 'refs' function for types.
+ * @func[Refs] The refs function for types.
+ *  See documentation in heap.h.
  *
- * See documentation in heap.h.
+ *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[FbleType*][type] The type whose references to traverse.
  *
- * @param heap  The heap.
- * @param type  The type whose references to traverse
- *   
- * @sideeffects
- *   Calls FbleHeapRef for each type referenced by 'type'.
+ *  @sideeffects
+ *   Calls FbleHeapRef for each type referenced by @a[type].
  */
 static void Refs(FbleHeap* heap, FbleType* type)
 {
@@ -187,14 +189,13 @@ static void Refs(FbleHeap* heap, FbleType* type)
 }
 
 /**
- * The on_free function for types.
+ * @func[OnFree] The on_free function for types.
+ *  See documentation in heap.h
  *
- * See documentation in heap.h
- *
- * @param heap  The heap.
- * @param type  The type being freed.
+ *  @arg[FbleTypeHeap*][heap] The heap.
+ *  @arg[FbleType*][type] The type being freed.
  * 
- * @sideeffects
+ *  @sideeffects
  *   Free any resources outside of the heap that this type holds on to.
  */
 static void OnFree(FbleTypeHeap* heap, FbleType* type)
@@ -238,18 +239,17 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
 }
 
 /**
- * Computes the normal form of a type.
+ * @func[Normal] Computes the normal form of a type.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleType*][type] The type to reduce.
+ *  @arg[TypeList*][normalizing] The set of types currently being normalized.
  *
- * @param heap  Heap to use for allocations.
- * @param type  The type to reduce.
- * @param normalizing  The set of types currently being normalized.
- *
- * @returns
+ *  @returns[FbleType*]
  *   The type reduced to normal form, or NULL if the type cannot be reduced to
  *   normal form.
  *
- * @sideeffects
- * * The caller is responsible for calling FbleReleaseType on the returned type
+ *  @sideeffects
+ *   The caller is responsible for calling FbleReleaseType on the returned type
  *   when it is no longer needed.
  */
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing)
@@ -327,15 +327,15 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
 }
 
 /**
- * Checks whether a type has the given param as a free type variable.
+ * @func[HasParam]
+ * @ Checks whether a type has the given param as a free type variable.
+ *  @arg[FbleType*][type] The type to check.
+ *  @arg[FbleType*][param] The abstract type to check for.
  *
- * @param type  The type to check.
- * @param param  The abstract type to check for.
- *
- * @returns
+ *  @returns[bool]
  *   True if the param occur in type, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static bool HasParam(FbleType* type, FbleType* param)
@@ -351,15 +351,15 @@ static bool HasParam(FbleType* type, FbleType* param)
 }
 
 /**
- * Checks whether a type has the given param as a free type variable.
+ * @func[HasParam_]
+ * @ Checks whether a type has the given param as a free type variable.
+ *  @arg[FbleType*][type] The type to check.
+ *  @arg[FbleType*][param] The abstract type to check for.
  *
- * @param type  The type to check.
- * @param param  The abstract type to check for.
- *
- * @returns
+ *  @returns[bool]
  *   True if the param occur in type, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static bool HasParam_(FbleType* type, FbleType* param)
@@ -417,37 +417,39 @@ static bool HasParam_(FbleType* type, FbleType* param)
 }
 
 /**
- * Subsititues a value for a type variable.
+ * @func[Subst] Subsititues a value for a type variable.
+ *  Substitute the given argument in place of the given parameter in the given
+ *  type. This function does not attempt to evaluate the results of the
+ *  substitution.
  *
- * Substitute the given argument in place of the given parameter in the given
- * type. This function does not attempt to evaluate the results of the
- * substitution.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleType*][type] The type to substitute into.
+ *  @arg[FbleType*][param] The abstract type to substitute out.
+ *  @arg[FbleType*][arg] The concrete type to substitute in.
+ *  @arg[TypePairs*][tps]
+ *   A map of already substituted types, to avoid infinite recursion.
+ *   External callers should pass NULL.
  *
- * @param heap  Heap to use for allocations.
- * @param type  The type to substitute into.
- * @param param  The abstract type to substitute out.
- * @param arg  The concrete type to substitute in.
- * @param tps  A map of already substituted types, to avoid infinite recursion.
- *    External callers should pass NULL.
- *
- * @returns
+ *  @returns[FbleType*]
  *   A type with all occurrences of param replaced with the arg type. The type
  *   may not be fully evaluated.
  *
- * @sideeffects
+ *  @sideeffects
  *   The caller is responsible for calling FbleReleaseType on the returned
  *   type when it is no longer needed. No new type ids are allocated by
  *   substitution.
  *
- * Design notes:
- *   The given type may have cycles. For example:
- *     <@>@ F@ = <@ T@> {
- *        @ X@ = +(T@ a, X@ b);
- *     };
- *     F@<Unit@>
+ *  Design note: The given type may have cycles. For example:
  *
- *   To prevent infinite recursion, we use tps to record that we have already
- *   substituted Unit@ for T@ in X@ when traversing into field 'b' of X@.
+ *  @code[fble] @
+ *   <@>@ F@ = <@ T@> {
+ *      @ X@ = +(T@ a, X@ b);
+ *   };
+ *   F@<Unit@>
+ *
+ *  To prevent infinite recursion, we use tps to record that we have already
+ *  substituted @l{Unit@} for @l{T@} in @l{X@} when traversing into field 'b'
+ *  of @l{X@}.
  */
 static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, FbleType* arg, TypePairs* tps)
 {
@@ -588,19 +590,19 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 }
 
 /**
- * Infers types and checks for type equality.
+ * @func[TypesEqual] Infers types and checks for type equality.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations
+ *  @arg[FbleTypeAssignmentV][vars] Variables for type inference.
+ *  @arg[FbleType*][a] The first type, abstract in the type variables. Borrowed.
+ *  @arg[FbleType*][b] The second type, which should be concrete. Borrowed.
+ *  @arg[TypePairs*][eq]
+ *   A set of pairs of types that should be assumed to be equal
  *
- * @param heap  Heap to use for allocations
- * @param vars  Variables for type inference.
- * @param a  The first type, abstract in the type variables. Borrowed.
- * @param b  The second type, which should be concrete. Borrowed.
- * @param eq  A set of pairs of types that should be assumed to be equal
- *
- * @returns
+ *  @returns[bool]
  *   True if the first type equals the second type, false otherwise.
  *
- * @sideeffects
- * * Sets value of assignments to type variables to make the types equal.
+ *  @sideeffects
+ *   Sets value of assignments to type variables to make the types equal.
  */
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq)
 {

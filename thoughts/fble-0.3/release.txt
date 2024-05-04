@@ -190,14 +190,13 @@ tc.c          DONE.
 interpret.c   DONE.
 typecheck.h   DONE.
 compile.c     DONE.
+heap.c        DONE.
+link.c        DONE.
+load.c        DONE.
+parse.y       DONE.
+profile.c     DONE.
+type.c        DONE.
 
-
-heap.c
-link.c
-load.c
-parse.y
-profile.c
-type.c
 typecheck.c
 type.h
 value.c

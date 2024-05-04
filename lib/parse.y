@@ -702,15 +702,14 @@ let_binding_p:
 
 %%
 /**
- * Converts a dynamically allocated char* to FbleString*.
- *
- * @param str  The string to convert
+ * @func[ToString] Converts a dynamically allocated char* to FbleString*.
+ *  @arg[const char*][str] The string to convert
  * 
- * @returns
+ *  @returns[FbleString*]
  *   An FbleString version of str.
  *
- * @sideeffects
- *   Frees 'str'. Allocates a new FbleString that should be freed using
+ *  @sideeffects
+ *   Frees @a[str]. Allocates a new FbleString that should be freed using
  *   FbleFreeString.
  */
 static FbleString* ToString(const char* str)
@@ -721,15 +720,14 @@ static FbleString* ToString(const char* str)
 }
 
 /**
- * Tests whether a character is whitespace.
+ * @func[IsSpaceChar] Tests whether a character is whitespace.
+ *  @arg[int][c]
+ *   The character to test. This must have a value of an unsigned char or EOF.
  *
- * @param c  The character to test. This must have a value of an unsigned char
- *   or EOF.
- *
- * @returns
+ *  @returns[bool]
  *   The value true if the character is whitespace, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static bool IsSpaceChar(int c)
@@ -738,16 +736,15 @@ static bool IsSpaceChar(int c)
 }
 
 /**
- * Tests whether a character is one of the single-character punctuation tokens.
+ * @func[IsPunctiationChar] Tests for single-character punctuation tokens.
+ *  @arg[int][c]
+ *   The character to test. This must have a value of an unsigned char or EOF.
  *
- * @param c  The character to test. This must have a value of an unsigned char
- *   or EOF.
- *
- * @returns
+ *  @returns[bool]
  *   The value true if the character is one of the fble punctuation tokens,
  *   false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static bool IsPunctuationChar(int c)
@@ -756,16 +753,17 @@ static bool IsPunctuationChar(int c)
 }
 
 /**
- * Tests whether a character is a normal character suitable for direct use in
- * fble words.
+ * @func[IsWordChar] Tests for word character.
+ *  Tests whether a character is a normal character suitable for direct use in
+ *  fble words.
  *
- * @param c  The character to test. This must have a value of an unsigned char
- *   or EOF.
+ *  @arg[int][c]
+ *   The character to test. This must have a value of an unsigned char or EOF.
  *
- * @returns
+ *  @returns[bool]
  *   The value true if the character is a normal character, false otherwise.
  *
- * @sideeffects
+ *  @sideeffects
  *   None.
  */
 static bool IsWordChar(int c)
@@ -777,11 +775,10 @@ static bool IsWordChar(int c)
 }
 
 /**
- * Advances to the next character in the input stream.
+ * @func[ReadNextChar] Advances to the next character in the input stream.
+ *  @arg[Lex*][lex] The context of the lexer to advance.
  *
- * @param lex  The context of the lexer to advance.
- *
- * @sideeffects
+ *  @sideeffects
  *   Updates the character, location, and input stream of the lex context.
  */
 static void ReadNextChar(Lex* lex)
@@ -810,17 +807,18 @@ static void ReadNextChar(Lex* lex)
 }
 
 /**
- * Returns the next token in the input stream for the given lex context.
- * This is the lexer for the bison generated parser.
+ * @func[yylex] Lex function for parser.
+ *  Returns the next token in the input stream for the given lex context.
+ *  This is the lexer for the bison generated parser.
  *
- * @param lvalp  Output parameter for returned token value.
- * @param llocp  Output parameter for the returned token's location.
- * @param lex  The lex context to parse the next token from.
+ *  @arg[YYSTYPE*][lvalp] Output parameter for returned token value.
+ *  @arg[YYLTYPE*][llocp] Output parameter for the returned token's location.
+ *  @arg[Lex*][lex] The lex context to parse the next token from.
  * 
- * @returns
+ *  @returns[int]
  *   The id of the next terminal symbol in the input stream.
  *
- * @sideeffects
+ *  @sideeffects
  *   Sets lvalp with the semantic value of the next token in the input
  *   stream, sets llocp with the location of the next token in the input
  *   stream, advances the stream to the subsequent token and updates the lex
@@ -888,14 +886,14 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
 }
 
 /**
- * The error reporting function for the bison generated parser.
- * 
- * @param llocp  The location of the error.
- * @param lex  Unused.
- * @param result  Unused.
- * @param msg  The error message.
+ * @func[yyerror] The error reporting function for the bison generated parser.
+ *  @arg[YYLTYPE*][llocp] The location of the error.
+ *  @arg[Lex*][lex] Unused.
+ *  @arg[FbleExpr**][result] Unused.
+ *  @arg[FbleModulePathV*][deps] Unused.
+ *  @arg[const char*][msg] The error message.
  *
- * @sideeffects
+ *  @sideeffects
  *   An error message is printed to stderr.
  */
 static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV* deps, const char* msg)

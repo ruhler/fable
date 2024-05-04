@@ -9,6 +9,8 @@ Things to consider doing for the fble-0.3 release.
 * Add regression test for memory leak fixed in
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
+* Fbld 'end of input' error should point to last character of file, not ???
+
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.
  - But can we assume there is a DISPLAY available for testing?

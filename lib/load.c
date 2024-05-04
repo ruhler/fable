@@ -70,19 +70,18 @@ void FbleAppendStringToSearchPath(FbleSearchPath* path, FbleString* root_dir)
 }
 
 /**
- * Finds a package in the given package directory.
+ * @func[FindPackageAt] Finds a package in the given package directory.
+ *  Searches for the package in the given directory.
  *
- * Searches for the package in the given directory.
+ *  @arg[const char*][package] The name of the package.
+ *  @arg[const char*][package_dir] The package directory to search.
  *
- * @param package  The name of the package.
- * @param package_dir The package directory to search.
- *
- * @returns
+ *  @returns[FbleString*]
  *   The module root directory for the package, or NULL in case no such
  *   package is found.
  *
- * @sideeffects
- * * Allocates an FbleString that should be freed with FbleFreeString when no
+ *  @sideeffects
+ *   Allocates an FbleString that should be freed with FbleFreeString when no
  *   longer needed.
  */
 static FbleString* FindPackageAt(const char* package, const char* package_dir)
@@ -132,25 +131,27 @@ FbleString* FbleFindPackage(const char* package)
 }
 
 /**
- * Gets the file path for an fble module given the root directory.
- * 
- * Returns the path on disk of the .fble file for the given root directory and
- * module path.
+ * @func[FindAt] Gets the file path for an fble module given the root directory.
+ *  Returns the path on disk of the .fble file for the given root directory and
+ *  module path.
  *  
- * @param root  File path to the root of the module search path.
- * @param path  The module path to find the source file for.
- * @param build_deps  Preinitialized output vector to store list of files searched in.
- *    May be NULL.
+ *  @arg[const char*][root] File path to the root of the module search path.
+ *  @arg[FbleModulePath*][path] The module path to find the source file for.
+ *  @arg[FbleStringV*][build_deps]
+ *   Preinitialized output vector to store list of files searched in. May be
+ *   NULL.
  *
- * @returns
+ *  @returns[FbleString*]
  *   The file path to the source code of the module, or NULL in case no such
  *   file can be found.
  *
- * @sideeffects
- * * The user should call FbleFreeString when the returned string is no
- *   longer needed.
- * * Adds strings to build_deps that should be freed with FbleFreeString when no
- *   longer needed.
+ *  @sideeffects
+ *   @item
+ *    The user should call FbleFreeString when the returned string is no
+ *    longer needed.
+ *   @item
+ *    Adds strings to build_deps that should be freed with FbleFreeString when
+ *    no longer needed.
  */
 static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* build_deps)
 {
@@ -197,24 +198,25 @@ static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* b
 }
 
 /**
- * Finds the source code for a module.
- *
- * Returns the path on disk of the .fble file for the given search path and
- * module path.
+ * @func[Find] Finds the source code for a module.
+ *  Returns the path on disk of the .fble file for the given search path and
+ *  module path.
  *  
- * @param search_path  The module search path.
- * @param path  The module path to find the source file for.
- * @param build_deps  Preinitialized output vector to store list of files
- *   searched in. May be NULL.
+ *  @arg[FbleSearchPath*][search_path] The module search path.
+ *  @arg[FbleModulePath*][path] The module path to find the source file for.
+ *  @arg[FbleStringV*][build_deps]
+ *   Preinitialized output vector to store list of files searched in. May be
+ *   NULL.
  *
- * @returns
+ *  @returns[FbleString*]
  *   The file path to the source code of the module, or NULL in case no such
  *   file can be found.
  *
- * @sideeffects
- * * Prints an error message to stderr in case of error.
- * * The user should call FbleFreeString when the returned string is no
- *   longer needed.
+ *  @sideeffects
+ *   @item Prints an error message to stderr in case of error.
+ *   @item
+ *    The user should call FbleFreeString when the returned string is no
+ *    longer needed.
  */
 static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleStringV* build_deps)
 {
