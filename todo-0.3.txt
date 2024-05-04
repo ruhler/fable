@@ -2,14 +2,12 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Use fbld doc comments in pkgs/core/stdio.fble.c.
-
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 * Add regression test for memory leak fixed in
   9e6f637dc25422ae357f21040f11eb8693b6ddb0
 
-* Fbld 'end of input' error should point to last character of file, not ???
+* Fbld 'end of input' error should point to last character of file, not '???'
 
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.

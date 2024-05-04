@@ -52,7 +52,9 @@ static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id);
 
 /**
  * @func[OnFree] OnFree function for FILE* native values.
- *  See documentation of FbleNewNativeValue in fble-value.h.
+ *  @arg[void*][data] FILE* pointer to close.
+ *  @sideeffects
+ *   Closes the @a[data] file.
  */
 static void OnFree(void* data)
 {
@@ -65,8 +67,15 @@ static void OnFree(void* data)
   }
 }
 
-// IStreamImpl -- Read a byte from a file.
-//   IO@<Maybe@<Int@>>
+/**
+ * @func[IStreamImpl] FbleRunFunction to read a byte from a file.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is @l{IO@<Maybe@<Int@>>}.
+ *
+ *  @sideeffects
+ *   Reads a byte from the file.
+ */
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -89,8 +98,12 @@ static FbleValue* IStreamImpl(
   return FbleNewStructValue_(heap, 2, world, ms);
 }
 
-// OStreamImpl -- Write a byte to a file.
-//   (Int@, World@) { R@<Unit@>; }
+/**
+ * @func[OStreamImpl] FbleRunFunction to write a byte to a file.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is @l{(Int@, World@) { R@<Unit@>; }}.
+ */
 static FbleValue* OStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -110,8 +123,15 @@ static FbleValue* OStreamImpl(
   return FbleNewStructValue_(heap, 2, world, unit);
 }
 
-// ReadImpl -- Open a file for reading.
-//   (String@, World@) { R@<Maybe@<IStream@<R@>>>; }
+/**
+ * @func[ReadImpl] FbleRunFunction to open a file for reading.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (String@, World@) { R@<Maybe@<IStream@<R@>>>; }
+ */
 static FbleValue* ReadImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -134,8 +154,15 @@ static FbleValue* ReadImpl(
   return FbleNewStructValue_(heap, 2, world, mstream);
 }
 
-// WriteImpl -- Open a file for writing.
-//   (String@, World@) { R@<Maybe@<OStream@<R@>>>; }
+/**
+ * @func[WriteImpl] FbleRunFunction to open a file for writing.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (String@, World@) { R@<Maybe@<OStream@<R@>>>; }
+ */
 static FbleValue* WriteImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -158,8 +185,15 @@ static FbleValue* WriteImpl(
   return FbleNewStructValue_(heap, 2, world, mstream);
 }
 
-// GetEnvImpl -- Get an environment variable.
-//   (String@, World@) { R@<Maybe@<String@>>; }
+/**
+ * @func[GetEnvImpl] FbleRunFunction to read and environment variable.
+ *  See documentation of FbleRunFunction in fble-function.h
+ *
+ *  The fble type of the function is:
+ *
+ *  @code[fble] @
+ *   (String@, World@) { R@<Maybe@<String@>>; }
+ */
 static FbleValue* GetEnvImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
@@ -182,8 +216,18 @@ static FbleValue* GetEnvImpl(
   return FbleNewStructValue_(heap, 2, world, mstr);
 }
 
-// IStream --
-//  Creates an IStream@ value for the given file.
+/**
+ * @func[IStream] Allocates an @l{IStream@} for a file.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FILE*][file] The FILE to allocate the @l{IStream@} for.
+ *  @arg[FbleBlockId][profile_block_id]
+ *   The profile_block_id of the function to allocate.
+ *
+ *  @returns[FbleValue*] An fble @l{IStream@} function value.
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
 {
   FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
@@ -197,8 +241,18 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   return FbleNewFuncValue(heap, &exe, profile_block_id, &native);
 }
 
-// OStream --
-//  Creates an OStream@ value for the given file.
+/**
+ * @func[OStream] Allocates an @l{OStream@} for a file.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FILE*][file] The FILE to allocate the @l{OStream@} for.
+ *  @arg[FbleBlockId][profile_block_id]
+ *   The profile_block_id of the function to allocate.
+ *
+ *  @returns[FbleValue*] An fble @l{OStream@} function value.
+ *
+ *  @sideeffects
+ *   Allocates a value on the heap.
+ */
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
 {
   FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
@@ -212,6 +266,13 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
   return FbleNewFuncValue(heap, &exe, profile_block_id, &native);
 }
 
+/**
+ * @func[Read] Allocates an fble read function.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleBlockId][profile_block_id] The profile block id for the function.
+ *  @returns[FbleValue*] The allocated function.
+ *  @sideeffects Allocates an fble value.
+ */
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id)
 {
   FbleExecutable exe = {
@@ -222,6 +283,13 @@ static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id)
   return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
 }
 
+/**
+ * @func[Write] Allocates an fble write function.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleBlockId][profile_block_id] The profile block id for the function.
+ *  @returns[FbleValue*] The allocated function.
+ *  @sideeffects Allocates an fble value.
+ */
 static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id)
 {
   FbleExecutable exe = {
@@ -232,6 +300,13 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id)
   return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
 }
 
+/**
+ * @func[GetEnv] Allocates an fble getenv function.
+ *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[FbleBlockId][profile_block_id] The profile block id for the function.
+ *  @returns[FbleValue*] The allocated function.
+ *  @sideeffects Allocates an fble value.
+ */
 static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id)
 {
   FbleExecutable exe = {
