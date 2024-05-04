@@ -1,5 +1,7 @@
-// mem-test.c --
-//   Implementation of FbleMemTestMain function.
+/**
+ * @file mem-test.c
+ *  Implementation of FbleMemTestMain function.
+ */
 
 #include "mem-test.h"
 
@@ -22,19 +24,19 @@
 
 static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
 
-// Run --
-//   Run the program for f[n].
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   func - the function f to run.
-//   profile - the profile to run with.
-//   use_n - the value of n to run for.
-//   alloc_n - the value of n to allocate, which should match on all runs if
-//             we want a fair memory comparison.
-//
-// Side effects:
-//   Running the program will impact max RSS of the process.
+/**
+ * @func[Run] Runs the program for f[n].
+ *  @arg[FbleValueHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleValue*][func] The function f to run.
+ *  @arg[FbleProfile*][profile] The profile to run with.
+ *  @arg[size_t][use_n] The value of n to run for.
+ *  @arg[size_t][alloc_n]
+ *   The value of n to allocate, which should match on all runs if we want a
+ *   fair memory comparison.
+ *
+ *  @sideeffects
+ *   Running the program will impact max RSS of the process.
+ */
 static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
   assert(use_n <= alloc_n);

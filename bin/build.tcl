@@ -25,8 +25,10 @@ namespace eval "bin" {
     # Man page.
     fbld_man_usage $::b/bin/$base.1 $::s/bin/$base.fbld
     install $::b/bin/$base.1 $::config::mandir/man1/$base.1
+  }
 
-    # Check doc comments.
+  # Check doc comments
+  foreach {x} [build_glob $::s/bin -tails "*.h" "*.c"] {
     fbld_check_dc $::b/bin/$x.dc $::s/bin/$x
   }
 

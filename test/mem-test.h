@@ -1,3 +1,7 @@
+/**
+ * @file mem-test.h
+ *  Header for FbleMemTestMain.
+ */
 #ifndef FBLE_TEST_MEM_TEST_H_
 #define FBLE_TEST_MEM_TEST_H_
 

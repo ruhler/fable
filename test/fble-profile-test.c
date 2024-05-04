@@ -1,5 +1,7 @@
-// fble-profile-test.c --
-//   A program that runs unit tests for the FbleProfile APIs.
+/**
+ * @file fble-profile-test.c
+ *  A program that runs unit tests for the FbleProfile APIs.
+ */
 
 #include <string.h>   // for strcpy
 #include <stdlib.h>   // for rand
@@ -10,32 +12,45 @@
 
 static bool sTestsFailed = false;
 
+/**
+ * @func[ASSERT] Test assertion function.
+ *  @arg[bool][p] Property to assert to be true.
+ *
+ *  @sideeffects
+ *   Reports a test failure if @a[p] is not true.
+ */
 #define ASSERT(p) { \
   if (!(p)) { \
     Fail(__FILE__, __LINE__, #p); \
   } \
 }
 
-// Fail --
-//   Report a test failure.
+/**
+ * @func[Fail] Reports a test failure.
+ *  @arg[const char*][file] The source code file.
+ *  @arg[int][line] The line number of the failure.
+ *  @arg[const char*][msg] The failure message.
+ *  @sideeffects
+ *   Reports and records the test failure.
+ */
 static void Fail(const char* file, int line, const char* msg)
 {
   fprintf(stderr, "%s:%i: assert failure: %s\n", file, line, msg);
   sTestsFailed = true;
 }
 
-// FbleName --
-//   Create a name to use in FbleAddBlockToProfile.
-//
-// Inputs:
-//   name - The name to use for the block. Typically a string literal.
-//
-// Results:
-//   An FbleName that can be used in FbleAddBlockToProfile.
-//
-// Side effects:
-//   Allocates memory for the name that we expect to be freed by
-//   FbleFreeProfile.
+/**
+ * @func[Name] Creates a name to use in FbleAddBlockToProfile.
+ *  @arg[const char*][name]
+ *   The name to use for the block. Typically a string literal.
+ *
+ *  @returns[FbleName]
+ *   An FbleName that can be used in FbleAddBlockToProfile.
+ *
+ *  @sideeffects
+ *   Allocates memory for the name that we expect to be freed by
+ *   FbleFreeProfile.
+ */
 static FbleName Name(const char* name)
 {
   FbleName nm = {
@@ -45,15 +60,15 @@ static FbleName Name(const char* name)
   return nm;
 }
 
-// ReplaceN --
-//   Performs an N deep replace self recursive call. For the purposes of
-//   testing that tail calls can be done using O(1) memory.
-//
-// Inputs:
-//   n - the depth of recursion
-//
-// Side effects:
-//   Allocates memory that impacts the result of FbleGetMaxMemoryUsageKB.
+/**
+ * @func[ReplaceN] Performs an N deep replace self recursive call.
+ *  For the purposes of testing that tail calls can be done using O(1) memory.
+ *
+ *  @arg[size_t][n] The depth of recursion
+ *
+ *  @sideeffects
+ *   Allocates memory that impacts the result of FbleGetMaxMemoryUsageKB.
+ */
 static void ReplaceN(size_t n)
 {
   // <root> -> 1 -> 1 -> ... -> 1
@@ -93,18 +108,17 @@ static void ReplaceN(size_t n)
   FbleFreeProfile(profile);
 }
 
-// main --
-//   The main entry point for the fble-profile-test program.
-//
-// Inputs:
-//   argc - The number of command line arguments.
-//   argv - The command line arguments.
-//
-// Results:
-//   0 on success, non-zero on error.
-//
-// Side effects:
-//   Prints an error to stderr and exits the program in the case of error.
+/**
+ * @func[main] The main entry point for the fble-profile-test program.
+ *  @arg[int][argc] Unused.
+ *  @arg[char**][argv] Unused.
+ *
+ *  @returns[int]
+ *   0 on success, non-zero on error.
+ *
+ *  @sideeffects
+ *   Prints an error to stderr and exits the program in the case of error.
+ */
 int main(int argc, char* argv[])
 {
   (void)argc;

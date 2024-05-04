@@ -1,5 +1,7 @@
-// profiles-test.c --
-//   Implementation of FbleProfilesTestMain function.
+/**
+ * @file profiles-test.c
+ *  Implementation of FbleProfilesTestMain function.
+ */
 
 #include "profiles-test.h"
 
@@ -25,19 +27,18 @@ static FbleBlockProfile* Block(FbleProfile* profile, const char* name);
 static size_t Count(FbleProfile* profile, const char* name);
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
 
-// Block --
-//   Look up information for the given named block.
-//
-// Inputs:
-//   profile - the profile to get the block info for.
-//   name - the name of the block to get.
-//
-// Results:
-//   The block.
-//
-// Side effects:
-//   Asserts with failure if there are no blocks with the given name or there
-//   is more than one block with the given name.
+/**
+ * @func[Block] Looks up information for the given named block.
+ *  @arg[FbleProfile*][profile] The profile to get the block info for.
+ *  @arg[const char*][name] The name of the block to get.
+ *
+ *  @returns[FbleBlockProfile*]
+ *   The block.
+ *
+ *  @sideeffects
+ *   Asserts with failure if there are no blocks with the given name or there
+ *   is more than one block with the given name.
+ */
 static FbleBlockProfile* Block(FbleProfile* profile, const char* name)
 {
   FbleBlockProfile* result = NULL;
@@ -52,40 +53,39 @@ static FbleBlockProfile* Block(FbleProfile* profile, const char* name)
   return result;
 }
 
-// Count --
-//   Return the total number of times the profiling block with the given name
-//   was called in the profile.
-//
-// Inputs:
-//   profile - the profile to get the count from.
-//   name - the name of the block to get the count for.
-//
-// Results:
-//   The number of times the block was called.
-//
-// Side effects:
-//   Asserts with failure if there are no blocks with the given name or there
-//   is more than one block with the given name.
+/**
+ * @func[Count] Gets the count for a profile block.
+ *  Return the total number of times the profiling block with the given name
+ *  was called in the profile.
+ *
+ *  @arg[FbleProfile*][profile] The profile to get the count from.
+ *  @arg[const char*][name] The name of the block to get the count for.
+ *
+ *  @returns[size_t]
+ *   The number of times the block was called.
+ *
+ *  @sideeffects
+ *   Asserts with failure if there are no blocks with the given name or there
+ *   is more than one block with the given name.
+ */
 static size_t Count(FbleProfile* profile, const char* name)
 {
   return Block(profile,name)->block.count;
 }
 
-// Calls --
-//   Return the total number of times the callee block called the caller
-//   block.
-//
-// Inputs:
-//   profile - the profile to get the count from.
-//   caller - the name of the caller block.
-//   callee - the name of the callee block.
-//
-// Results:
-//   The number of times the callee directly called the caller.
-//
-// Side effects:
-//   Asserts with failure if there are no blocks matching the names of callee
-//   and caller or if there are multiple blocks matching the names.
+/**
+ * @func[Calls] Gets the number of times a caller calls a callee.
+ *  @arg[FbleProfile*][profile] The profile to get the count from.
+ *  @arg[const char*][caller] The name of the caller block.
+ *  @arg[const char*][callee] The name of the callee block.
+ *
+ *  @returns[size_t]
+ *   The number of times the callee directly called the caller.
+ *
+ *  @sideeffects
+ *   Asserts with failure if there are no blocks matching the names of callee
+ *   and caller or if there are multiple blocks matching the names.
+ */
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee)
 {
   FbleBlockProfile* caller_block = Block(profile, caller);
@@ -203,4 +203,3 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleGeneratedModule* modul
   FbleFreeProfile(profile);
   return EX_SUCCESS;
 }
-

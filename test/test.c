@@ -1,5 +1,7 @@
-// test.c --
-//   Implementation of FbleTestMain function.
+/**
+ * @file test.c
+ *  Implementation of FbleTestMain function.
+ */
 
 #include "test.h"
 
