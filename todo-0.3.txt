@@ -5,9 +5,6 @@ Things to consider doing for the fble-0.3 release.
 * Write test case for big compact followed by tight small compact leading to
   memory growth instead of constant memory?
 
-* Add regression test for memory leak fixed in
-  9e6f637dc25422ae357f21040f11eb8693b6ddb0
-
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.
  - But can we assume there is a DISPLAY available for testing?

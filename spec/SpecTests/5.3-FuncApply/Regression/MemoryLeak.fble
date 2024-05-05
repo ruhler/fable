@@ -1,0 +1,41 @@
+# @@fble-test@@ memory-constant
+#
+# Regression test for memory application where we were leaking memory.
+
+@ Nat@ = /SpecTests/Nat%.Nat@;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ R@ =  { *(Unit@ s, Unit@ x); };
+@ M@ = (Unit@) { R@; };
+
+(Unit@) { M@; }
+Return = (Unit@ x)(Unit@ s) {
+  R@(s, x);
+};
+
+(M@)((Unit@) { M@; }) { M@; }
+Do = (M@ ma)((Unit@) { M@; } f)(Unit@ s) {
+  R@ ra = ma(s);
+  f(ra.x)(ra.s);
+};
+
+(Nat@, M@) { M@; } Eat = (Nat@ n, M@ input) {
+  S@ s = S(n);
+  s.?(Z: Return(Unit));
+
+  Unit@ _ <- Do(input);
+  Eat(s.S, input);
+};
+
+M@ Food = Return(Unit);
+
+# F ought to be O(1) memory.
+(Nat@) { R@; } F = (Nat@ n) {
+  Eat(n, Food)(Unit);
+};
+
+F;
