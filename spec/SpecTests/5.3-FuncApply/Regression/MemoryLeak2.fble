@@ -1,0 +1,28 @@
+# @@fble-test@@ memory-constant
+#
+# Regression test for a case where we were leaking memory.
+# Specifically, GC was not finishing during a tight recursive call allocating
+# garbage.
+
+@ Nat@ = /SpecTests/Nat%.Nat@;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
+
+(Nat@, Nat@) { Nat@; } G = (Nat@ a, Nat@ _b) {
+  a;
+};
+
+(Nat@, (Nat@) { Nat@; }) { Nat@; }
+F = (Nat@ n, (Nat@) { Nat@; } g) {
+  S@ s = S(n);
+  s.?(Z: g(n));
+
+  # We are allocating function values G(n) in a tight recursive loop.
+  # This should be constant memory, because we don't hold on to the allocated
+  # G(n) for more than a single iteration.
+  F(s.S, G(n));
+};
+
+(Nat@ n) {
+  F(n, G(n));
+};

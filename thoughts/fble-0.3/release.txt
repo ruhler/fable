@@ -220,3 +220,44 @@ philosophy: build by default anything needed to install. We install the
 documentation, so build that by default and install it by default.
 
 The only thing not to do by default is run the test cases.
+
+---
+
+There's a TODO in CompactFrame:
+
+    // If GC is in progress on the frame we are compacting we could run into
+    // some trouble. Abandon the ongoing GC to avoid any potential problems.
+    // TODO: Does this mean we may never get a chance to finish GC because we
+    // keep restarting it before it can finish?
+
+Anything we can do about this?
+
+The worst case scenario would be...
+* We allocate a couple long linked lists, say and return them to our frame.
+* Now that frame goes into a tail recursive loop doing small allocations that
+  quickly get thrown away.
+
+The hypothesis is that we end up restarting the GC on every tail call, we
+never finish the GC, so we end up growing memory use instead of having
+constant memory use.
+
+Either this is a real problem or it isn't. If it's a real problem, either I
+can find the case to trigger it or not. If it's a real problem and I can find
+the way to trigger it, that would be nice. If I can't find a way to trigger
+it, I won't know if it's not a real problem or if I just can't find a way to
+trigger it.
+
+I think the case is possible. I think it's not too hard to trigger. I don't
+know how realistic it is. I could add logging to the gc code to help
+understand why I'm not reaching it.
+
+I think we should try reproducing it. Either we get a regression test showing
+the failure, or we gain some confidence that it's not an issue. If we get a
+regression test, maybe that gives us a way to figure out how to fix the issue,
+and then we never have to worry about it again.
+
+I am able to reproduce a memory leak, presumably due to this case. Let's add a
+memory test for it and figure out how to fix it.
+
+Maybe we could just push a new frame in that case? Hopefully it's rare, and
+once you push a new frame, you have no trouble doing GC, right?

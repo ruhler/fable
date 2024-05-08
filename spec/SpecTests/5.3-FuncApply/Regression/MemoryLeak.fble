@@ -1,6 +1,6 @@
 # @@fble-test@@ memory-constant
 #
-# Regression test for memory application where we were leaking memory.
+# Regression test for function application where we were leaking memory.
 
 @ Nat@ = /SpecTests/Nat%.Nat@;
 @ S@ = /SpecTests/Nat%.S@;

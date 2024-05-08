@@ -2132,3 +2132,66 @@ yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
 One problem with this approach: It's really hard to write spec tests that
 capture bugs in the implementation, because the paths to hit the bug depend so
 much on details of the implementation.
+
+---
+
+Memory leak:
+
+(Int@) { Unit@; } F = (Int@ i) {
+  Int@ ni = Incr(Gt(i, Int|100000).?(true: Int|50000, false: i));
+  F(ni);
+};
+
+Let's write up a test case to reproduce it, then figure out what's really
+going on and fix it.
+
+My suspicion (what originally led to this test case) is that we keep aborting
+the top GC when we compact the frame. We should figure out a way to avoid
+aborting GC in that case, or maybe push a frame occasionally to allow GC to
+happen.
+
+To minimize the use case: you have a function that allocates garbage in a
+tight loop.
+
+---
+
+Memory test written to reproduce the issue. Next question is what's going on
+and how to fix it.
+
+Here is the cycle of GC.
+
+|| ABORT
+|| FINISH
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| MARK
+|| COMPACT
+|| MARK
+|| MARK
+|| MARK
+|| ABORT
+

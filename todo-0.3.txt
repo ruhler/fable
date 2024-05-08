@@ -2,8 +2,7 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Write test case for big compact followed by tight small compact leading to
-  memory growth instead of constant memory?
+* Fix failing memory leak test.
 
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.
