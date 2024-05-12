@@ -2581,3 +2581,18 @@ objects to 'unmarked' if target X+P is greater than the current frame.
 So, for GC,we store: marked, unmarked, target X+P, pointer to current frame
 being GC'd, and the frame to GC next.
 
+---
+
+I drafted up the code for part 1. The code's not bad. But we're getting seg
+faults at runtime. Will need to debug.
+
+Let's start with MemoryGrowth, which isn't showing any growth. That suggests
+objects are being GC'd when they ought not to be.
+
+---
+
+alloc 0x55b2446a50[10]
+alloc 0x55b2442c80[8]
+0x55b2445ec0 ==> 0x55b2442c80
+0x55b2442c80 ==> 0x55b2446a50
+
