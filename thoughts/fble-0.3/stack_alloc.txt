@@ -2160,38 +2160,424 @@ and how to fix it.
 
 Here is the cycle of GC.
 
-|| ABORT
-|| FINISH
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| MARK
-|| COMPACT
-|| MARK
-|| MARK
-|| MARK
-|| ABORT
+ 1 ABORT
+ 1 FINISH
+27 MARK
+ 1 COMPACT
+ 3 MARK
+ 1 ABORT
+
+---
+
+The high level problem is clear: there is interference when popping or
+compacting the frame we are currently running GC on, so today we abort the GC.
+This makes it possible to get stuck in a loop aborting GC, which causes memory
+leaks.
+
+The issue happens both for popping frames and compacting. It's probably more
+noticeable and significant when compacting, but easier to understand when
+popping frames.
+
+Conceptually I'd like the solution to be to finish out the current GC in this
+case instead of abandoning it. We may end up doing some unnecessary traversal,
+but it would ensure forward progress and in theory makes perfect sense.
+
+If I remember correctly, the GC algorith works roughly as follows:
+
+* We have a stack of frames.
+* Each frame stores GC allocated objects in one of three sets: alloced,
+  marked, and unmarked.
+* Invariant: if an unmarked object on a frame is reachable, it is reachable
+  from a marked object on that frame.
+* Thus if the set of marked objects is empty on a frame, we know all unmarked
+  objects on that frame are unreachable.
+
+When you first GC alloc an object to a frame, it goes to 'alloced'. When you
+return a result to a frame, the returned result goes to 'marked' and
+everything else allocated on the returning frame goes to 'unmarked'. To GC a
+frame, you traverse through 'marked' objects over anything in 'unmarked',
+adding those to 'marked' and moving the marked object to 'alloced'. You are
+done when there are no more 'marked' objects to traverse.
+
+Now let's say you are doing GC on a frame and during that process you pop the
+frame. We set aside the 'marked' and 'unmarked' objects of the frame that GC
+is working on compared to any new ones. If GC continued to work on those set
+aside objects, what does it do to a marked object after it's done visiting it?
+
+Case: The marked object was the value returned when the frame returned.
+  It should be moved to 'marked' in the parent frame. Or 'alloced' ???
+
+Case: The marked object is reachable from the value returned when the frame
+  returned.
+  It should be moved to 'marked' in the parent frame. Or 'alloced' ???
+  Or it could be moved to 'unmarked' if the returned value was moved to
+  'marked'.
+
+Case: The marked object is not reachable from the value returned when the
+  frame returned.
+  It should be moved to 'unmarked' in the parent frame.
+
+Perhaps that's the key:
+* After traversing a 'marked' object, move it to the 'unmarked' group of the
+  parent frame, unless it was the object returned, in which case move it to
+  the 'marked' group of the parent frame.
+
+That makes sense, because it's consistent with what would have happened had GC
+finished on the frame before it returned.
+
+I guess there's another issue, which is the question of knowing what objects
+to traverse from 'marked'. I seem to recall when we move an object from
+'marked' to 'alloced', we update a generation id in the object to keep track
+of that. That can continue to work, so long as we simulate what would have
+happened had we finished GC before popping the frame.
+
+Sounds like I have a plausible approach with the clear guideline: treat things
+as if GC had finished before popping the frame. Let's review the source code
+and see if I have any concerns.
+
+No concerns. Only point worth noting perhaps is that we keep track of a
+'min_gen' and 'gen' for a frame, and the way we know what to traverse is
+anything that's >= min_gen but != gen. That is, objects allocated at or below
+this frame, except for 'gen' which are things that have already been
+traversed.
+
+Next step is to work out the book keeping for GC on a frame that has been
+popped.
+
+We need:
+* Original gen, min_gen of the frame gc is done on.
+  Easy. Make a copy of them at start of GC.
+* Target frame to move 'marked' objects to.
+  And whether to move it to alloced (frame didn't pop)
+  or to 'marked' (value was returned) or to 'unmarked' (frame did pop).
+
+How do we deal with multiple pops during a GC? Then we have multiple values
+being returned. We need to keep track of the most recent.
+
+For CompactFrame, it's not just one value being returned, it's a list. How do
+we keep track of the set and do fast lookup?
+
+Could we make use of 'gen' of the marked object to manage things more easily?
+For example, when we return (or save) an object, update it's gen right away.
+After traversing it, cases are:
+* gen matches target heap, move it to alloced (frame didn't pop)
+* gen > target heap, move to unmarked (frame did pop)
+* gen < target heap, move to marked (value was returned)
+
+Sounds plausible. Tricky, but plausible.
+
+---
+
+We need to be careful whenever we move or change the generation of an object,
+because that could break the current GC round.
+
+For example, if we move an object to a parent frame, and that object happened
+to be on the 'marked' list in gc, then we break GC. Anything that object
+refers to that hasn't been marked yet could get prematurely collected.
+
+If we change the generation of an object to a parent frame, and that object
+happens to be on the 'unmarked' list in gc, potentially we could break GC
+unless we explicitly move the object off the 'unmarked' list when we change
+its generation.
+
+Let's draft some details, not worrying about compact frame just yet.
+
+Straw 1
+=======
+Same list structures that we have today:
+* Frame: alloced, marked, unmarked
+* GC: marked, unmarked
+
+PopFrame, assuming GC may or may not be in progress on the frame we are
+popping.
+* alloced => parent.unmarked.
+* marked => parent.unmarked.
+* unmarked => parent.unmarked
+* return value => parent.marked
+* GC.marked => unchanged (we have to let GC finish)
+* GC.unmarked => unchanged (we have to let GC finish)
+
+But here is where much care is needed. The return value could be GC.marked or
+GC.unmarked. If so, we can't move it. Unless we visit it first?
+
+Let's say we GC visit the returned object. What would happen?
+
+I need a way to refer to how things are related on the stack.
+
+Say A calls B calls C. 'A' is an older generation frame. C is a younger
+generation frame.
+
+If the returned object is on a younger generation frame than current GC, we
+should not visit it when returning, otherwise it would pollute the current GC.
+
+If the returned object is being returned to the frame we are currently doing
+GC on, again we should not interfere with current GC.
+
+If the returned object is from the frame we are doing GC on, it could either
+be in frame.alloced,marked,unmarked or GC.marked,unmarked.
+
+If it's in frame.alloced,marked,or unmarked, we want to move it to the caller
+frame.marked without effecting the current GC.
+
+If it's in GC.marked,unmarked, we want to visit refs, then we can safely move
+it to the caller frame.marked.
+
+We ought to be able to determine where the object is from the gen, right?
+
+gen can tell us:
+* If gen < GC.min_gen, the object is from an older generation.
+* If gen < GC.gen, the object is currently in GC.marked,unmarked
+* Else if gen < FRAME.gen, the object is in FRAME.marked,unmarked
+* else object is in a younger generation frame.
+
+I claim, as long as we ensure gen for an object stays accurate, and we keep
+track of generations in the current GC, that should be enough for us to figure
+out where things are and where things ought to go when.
+
+I think this simplifies how we handle GC, based on the idea that when we
+PopFrame or Compact, we take care of the returned/saved value immediately,
+traversing it if necessary to avoid breaking the current GC.
+
+Except we still need some way to keep track of where to put a marked object
+after we finish traversing it.
+
+---
+
+I want to be careful. Let's say we return from a 100 deep stack, with GC at
+the top of the stack. It's important that this doesn't result in 100 GC
+iterations with GC chasing down the stack. That would result in pathological
+poor performance.
+
+If it takes GC 50 stack frame pops worth of time, then once that first GC
+finishes, it should jump right to the GC 50 down the line.
+
+Let me pose the problem a slightly different way. Say GC becomes totally
+independent of the frame it's working on. We have GC.alloced, GC.marked,
+GC.unmarked, and all generation ids required for the GC. We can finish GC
+entirely, always move everything to GC.alloced.
+
+How could this fit with frame pops going on during GC?
+
+A. If the GC frame wasn't touched or popped during GC, then move GC.alloced
+back to the frame that GC was run on. This is what we do today.
+
+B. If the GC frame was popped, we will have returned a single value when it
+was popped. There are two cases:
+
+1. The value returned was not in the set of objects being GC'd.
+Move the returned value to parent frame's marked.
+
+At the end of GC, move GC.alloced to the parent frame's unmarked.
+
+2. The value returned is in the set of objects being GC'd. 
+Traverse returned value right then. Move the returned value to parent frame's
+marked.
+
+At the end of GC, move GC.alloced to the parent frame's unmarked.
+
+C. If multiple levels of the GC frame are popped.
+Repeat the same logic. Pull out returned values as needed, Update the target
+frame for GC.alloced when it is done.
+
+We can do this as long as we can always easily tell, for a given object, if
+it's in the current GC set or not. I think that should be doable based on
+generations.
+
+So, high level idea is this:
+* GC keeps track of it's alloced and relevant generations.
+* We keep enough info about GC to know if an object 'belongs' to GC or not.
+* We keep track of where to store the GC.alloced result of GC
+  Some frame.alloced, or some frame.unmarked.
+* When we pop/save a value that belongs to the GC generation, we pull it out
+  of the GC generation and update the GC target.
+
+Easy, no?
+
+The key challenge will be maintaining information to know what objects belong
+to the GC generation. Let's see if we can work out the details.
+
+We store with gc:
+* min_gen - objects with gen less than min_gen are not in the current gc.
+* ...
+
+I need to remind myself how the MarkRef logic keeps track of what to traverse.
+
+min_gen - objects with gen less than min_gen are owned by some parent frame.
+  They should never be traversed by GC. They can never point to something with
+  gen >= min_gen.
+
+gen - Objects allocated before the most recent compaction on the frame have
+  gen >= min_gen and less than gen.
+
+When we call PopFrame, we move to marked/unmarked a bunch of objects whose gen
+is greater than min_gen. In this case, frame.min_gen = frame.gen, so a bunch
+of objects have gen greater than both frame.min_gen and frame.gen.
+
+When we call CompactFrame, we move to marked/unmarked a bunch of objects with
+gen is >= frame.min_gen, but < frame.gen. None of them are larger than
+frame.gen.
+
+MarkRef works correctly in both these cases:
+  gen >= frame.min_gen && gen != frame.gen
+
+For the PopFrame case, this is equivalent to gen > frame.min_gen, as desired.
+For the CompactFrame case, this is equivalent to gen >= frame.min_gen && gen <
+frame.gen.
+
+Objects allocated after gc could have:
+* gen >= GC.gen in the case of compaction.
+* gen == GC.min_gen, or gen >= heap.gen in the case of pop frame.
+  That is, more objects allocated on the current frame, or objects allocated
+  on some new frame.
+
+The challenge is, when we start GC, the frame could have a combination of
+unmarked/marked coming from frame pops or frame compaction?
+
+While I'm thinking about it, it bothers me that heap->gen continually
+increases and is never reset to a smaller value. At some point, if it wraps
+around, GC will fall apart.
+
+Maybe we could redesign 'gen' to track precisely what it needs?
+
+What gen needs is, when we start GC on a new frame, the unmarked/marked have
+to know which references go to a parent frame. That suggests, at each frame,
+at minimum we need at least one gen for each distinct frame of the stack.
+
+We always GC from older frame to younger frame, right? Let's ignore
+CompactFrame for now. Could we allocate gen for an object as the stack frame
+depth?
+
+Objects in the GC set cannot refer to objects up the stack. So I think that
+can work. Anything in the GC set for frame X with gen Y > X can only be
+reachable from an object allocated on frame X. So if we don't see it when
+traversing objects from frame X, we know it's unreachable.
+
+In that case (still no compaction), the GC set just needs to know the id of X
+to know what objects it should traverse. When it's done, it updates ids of all
+objects to X? Is that even needed? I think not. No need to update objects. If
+it's in the alloced/marked/unmarked set for frame X, then it's not reachable
+from anything outside of the alloced/marked/unmarked set for frame X, and it
+has id >= X.
+
+No. That's not right. Consider this case: we have a bunch of objects returned
+to frame X in alloced/marked/unmarked, including one with id X+1. Then we push
+a new frame with id X+1, and take a reference to an 'X' frame object with id
+X+1. We don't know that we should not be traversing that referenced 'X' frame
+object with id X+1. So yes, after GC, we need to update all objects to have id
+'X'. The important point is we don't start a new GC until all object id's have
+been updated to 'X'.
+
+Next layer of complexity: CompactFrame.
+
+On frame X, we have a bunch of objects with id >= X. alloced/marked/unmarked.
+When we compact frame, we move all but saved objects to unmarked. What's the
+problem? Why do we need any special behavior in this case?
+
+I think it's this. When traversing marked/unmarked, we don't want to
+re-traverse anything in alloced. For pop frame, everything in marked/unmarked
+has id > X, and everything in alloced has id X. We can use that to keep track
+of what's already been traversed.
+
+In the case of CompactFrame, we have some objects with id X that we want to
+traverse, so we need to pick a new, unique ID that no objects in
+marked/unmarked have. That's the hard part. We can't pick X, anything less
+than X, or anything greater than X that might exist. So we have to pick a
+completely new ID that has never been picked before.
+
+But we only need to pick that new ID once we start a round of GC. Could we get
+away with two ID's for each frame? X and X+1? We keep track of which is
+active. We promise that no objects on the frame have id 'X', or the other way
+around, no objects on the frame have id 'X+1'. At the start of GC, we flip
+between them, by the end of GC, the invariant holds true.
+
+Now CompactFrame is nothing special. We have alloced/marked/unmarked. The key
+is we know either 'X' or 'X+1' is unused, so we can move all objects traversed
+there. Now generation ids are limited by stack depth, and I no longer have any
+fear of running out (you'll run out of memory before you run out of ids).
+
+Is it enough? I'm not sure. If everything is pop frame, we can keep X always.
+If everything is CompactFrame, we can alternate. But what happens when we have
+a mix? Should be okay? CompactFrame switches, PopFrame keeps. PopFrame
+accumulates objects to the target Gen, compact frame whole sale ... I'm not
+sure still.
+
+PopFrame puts objects into marked/unmarked, promising all ids are greater than
+X (and X+1). CompactFrame puts all objects into marked/unmarked, promising ...
+
+So the invariant is:
+
+alloced: all have id A
+unmarked/marked: all have id != A
+
+New alloces go to A.
+PopFrame all in unmarked/marked have id > max(A,B).
+CompactFrame: Move alloced to unmarked/marked. So it has id A, pick B now as
+the new id. But we could ...
+
+No, it's not enough. New allocs after compact must have a different ID than
+compacted allocs in unmarked/marked. So some have X, some of X+1. If you
+compact again, you need to move all those to unmarked/unmarked, thus having
+used up your X and X+1 ids.
+
+Needs more thought.
+
+---
+
+Okay, how's this for a solution.
+
+1.
+Each frame has X, X+1 for generation. Really this is a stack depth plus an
+extra bit for GC phase. Each frame has GC phase P set to 0 or 1. You allocate
+new objects to generation X+P.
+
+At start of GC for a frame, you toggle the phase for the frame. An object of
+the GC is considered done with GC after it's gen is set to the new X+P. We
+are guaranteed there are no untraversed objects of generation X+P in the GC
+set, because when the previous GC finished there were only objects allocated
+of the other frame, just as when this GC finished there will only be objects
+of X+P on the frame.
+
+No need to have separate 'min_gen' and 'gen' for a frame. A single 'gen'
+suffices. When you compact a frame, you simply move all alloc/marked/unmarked
+to unmarked, and move save to marked.
+
+GC should traverse any objects >= GC.gen that are not equal to X+P.
+
+We can make that change. That will solve the concern about running out of gen
+ids. Gen id is limited by stack depth. We'll run out of memory before we run
+out of ids.
+
+2.
+When we pop or compact a frame that is currently undergoing GC, we record the
+returned/saved value(s), but we do not move them yet. We wait until GC
+finishes. We update the target of GC to the appropriate 'unmarked' list, we
+keep the target gen as the original X+P that GC was going to do anyway.
+
+When GC is finished, we take the recorded returned/saved value(s) and move
+them to 'marked'.
+
+We pop or compact a frame that has GC going that already has some of these
+recorded value(s), simply discard the existing recorded values and save the
+new ones.
+
+The extra space needed to record these values is bounded by the largest number
+of saved variables in a single compact, so it will be relatively small. We can
+have a dynamically allocated array that we expand if/as needed.
+
+And that's it. Simple as that, we make it so nothing interrupts the current
+GC, but we're still able to batch together everything that happened down the
+stack in the time it took the current GC to complete.
+
+Net benefits of these changes:
+* No more concern about running out of gen ids.
+* No more memory leak due to interrupted popped or compacted frames.
+
+There is some minor detail to work out in terms of how we keep track of the
+target of a GC and whether the frame we are popping/compacting is the current
+frame. Maybe easiest is to track a pointer to the frame we are running GC on.
+We know to move objects to 'alloced' if target X+P matches the frame, we move
+objects to 'unmarked' if target X+P is greater than the current frame.
+
+So, for GC,we store: marked, unmarked, target X+P, pointer to current frame
+being GC'd, and the frame to GC next.
 
