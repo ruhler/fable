@@ -265,6 +265,7 @@ struct Frame {
   // Objects allocated before entering this stack frame have generation less
   // than (gen & (~1)). Objects with generation equal to gen have been fully
   // traversed already in this GC round.
+  size_t min_gen; // unused.
   size_t gen;
 
   // Potential garbage GC objects on the frame. These are either from objects
@@ -293,6 +294,7 @@ struct FbleValueHeap {
   // The base of the stack.
   void* stack;
 
+  size_t gen; // unused
   // The top frame of the stack. New values are allocated here.
   Frame* top;
 
