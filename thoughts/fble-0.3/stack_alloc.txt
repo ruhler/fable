@@ -2591,8 +2591,323 @@ objects are being GC'd when they ought not to be.
 
 ---
 
-alloc 0x55b2446a50[10]
-alloc 0x55b2442c80[8]
-0x55b2445ec0 ==> 0x55b2442c80
-0x55b2442c80 ==> 0x55b2446a50
+Okay. Comparing traces of known good versus failing, I can see a case where we
+are not marking an object we expect to. In memory growth, based on my tracing,
+it's around line 5550 in the trace.
 
+We are traversing an object that's moving from 480 to 496 in the original GC,
+it sees a reference to another object with gen 480, which it follows.
+
+In the new gc we are traversing an object that's moving from 2 to 3. It sees a
+reference to another object with gen 3, which it does not follow.
+
+Let's track this GC and understand how we could end up with an object there
+which we had not visited but which had the target generation in place. Because
+according to my theory, That shouldn't be possible.
+
+We start from the previous gc, which moves the misgenned object 0x55b6048e70
+to the gc target gen 3. Now 0x55b6048e70 is in 'alloced' with gen 3.
+
+  gc [2 -> 3]
+  traverse 0x55b6048e70[2 -> 3]
+
+We traverse for a while, moving a bunch of objects to gen 3. Then we finish
+that GC and move on to the next one
+
+  ...
+  traverse 0x55b6045fa0[20 -> 3]
+  traverse 0x55b604aa20[20 -> 3]
+  pop [6]
+  gc [4 -> 5]
+  gc [6 -> 7]
+  pop [5]
+  gc [5 -> 4]
+
+  compact [3]
+  gc [3 -> 2]
+
+Now in theory we are starting the gc that ought to move the object in question
+to generation 2. But we never see that object. We start a new GC, and then run
+into trouble:
+
+  gc [2 -> 3]
+  traverse 0x55b6041380[2 -> 3]
+  0x55b6041380 ==> 0x55b6048e70
+
+Hypothesis:
+* If we pop the frame GC is working on, we do the following:
+1. Move top->alloced to top->unmarked. So top->unmarked contains target gen.
+2. Move heap->marked/unmarked to top->unmarked. So top->unmarked contains
+other phase.
+
+Now we've mixed together objects with X+P and X+'P together, we are screwed.
+
+What's interesting is that if we finish out GC every time, this wouldn't be a
+problem. Like, maybe if I implement Part 2, I can get around this issue.
+
+Perhaps as an intermediate stepping stone we can increment phase instead of
+toggle it? No, it wouldn't fit in a single bit in gen if we did that.
+
+Well hmm... Should we make the jump, go to the full solution and hope for the
+best?
+
+How about this: split depth and phase. Get GC working with that. Then do Part
+2, get GC working with that. Then toggle instead of increment phase, get GC
+working with that. Then merge depth and phase into gen, get GC working with
+that.
+
+---
+
+I think we need a global gc phase, not per frame. Because we could pop a
+frame, push a new one, then end up with a mix of objects at higher phases that
+we don't expect.
+
+This is tedious.
+
+No, it doesn't work. We're ending up with double free. I'll need to understand
+what's really going on here to address the problem properly.
+
+---
+
+Review of invariants.
+
+1. An object in GC.unmarked is reachable iff it is reachable from an object
+in GC.marked.
+
+This is the key invariant to maintain. Since that holds, as soon as GC.marked
+is empty, we can free everything in GC.unmarked.
+
+2. An object in Frame[x].unmarked is reachable iff it is reachable from an
+object in Frame[x].marked. Needed to preserve invariant (1) when starting GC.
+
+A. Mark operation preserves invariant (1).
+The object being marked cannot be in GC.unmarked, because it is in GC.marked.
+To remove the object being marked, we must ensure that all objects in
+GC.unmarked that are reachable from marked are subsequently reachable from
+some other object in GC.marked.
+
+Consider a reference from the object being marked to some other object X. Case
+on X:
+
+* X is the object itself. By some sort of induction, we can skip this case.
+* X is in GC.marked. We can skip this case, because anything in GC.unreachable
+  reachable via this reference is also reachable via X, which is in
+  GC.unmarked.
+* X is in GC.unreachable. We move X to GC.marked.
+* X does not belong to the set GC.marked,GC.unmarked. We can skip this case,
+  because any object reachable...
+
+I want to strengthen invariant (1) to say an object in GC.unmarked is reachable
+iff it is reachable via a path of objects starting from GC.marked and
+continuing through objects from GC.marked,GC.unmarked.
+
+That way we can easily ignore any references X going out of an object being
+marked that don't belong to GC.marked,GC.unmarked.
+
+Good. I think that's clear. We need to ensure we preserve this invariant going
+into GC. We need ensure our logic for determining if X belongs to the set
+GC.marked,GC.unmarked is correct.
+
+3. No object in GC.unmarked has depth and phase equal to depth and phase of
+GC.
+
+4. If an object X in GC.marked,GC.unmarked has a reference to some other
+object Y, and Y.depth > X.depth, then Y is in GC.marked,GC.unmarked.
+
+5. If an object X in GC.marked,GC.unmarked has a reference to some other
+object Y, and Y.depth = X.depth, and Y.phase != X.phase, then Y is in
+GC.marked,GC.unmarked.
+
+---
+
+Okay, I think I got it.
+
+When we do GC, we have some set of marked,unmarked. Let's call this the GC
+set. What we need is some way to distinguish between objects in the GC set,
+and objects reachable from the GC set but not in the GC set. We don't care
+about objects not reachable from the GC set.
+
+The original, working approach:
+
+* PopFrame: objects in GC set have gen greater than frame gen, object's
+  reachable from GC set not in the set have gen less than or equal to the
+  frame gen.
+
+* CompactFrame: objects in GC set have gen greater than frame min_gen but not
+  equal to frame gen. Objects reachable from GC set not in set have some
+  other gen.
+
+My current, broken approach: We only need to find an example where we can't
+distinguish objects properly.
+
+X in frame 1.
+Y in frame 2 references X.
+Pop Y to frame 1, run GC.
+
+Now we think X is in the GC set, because X frame 1 >= GC frame 1 and X phase 0
+is less than GC phase 1. That's wrong.
+
+Can we come up with a better approach? Better meaning, easier to reason about
+and not leaking ids.
+
+PopFrame is easy: we can use stack depth to easily distinguish between GC and
+non-GC objects.
+
+CompactFrame is the tricky one, so let's focus there.
+
+Before any CompactFrame, objects in the GC set have depth greater than the
+current frame.
+
+After CompactFrame, some objects in the GC set have depth equal to the current
+frame. Let's focus on those. How do we distinguish those from newly allocated
+objects?
+
+Claim: We don't care about truly newly allocated objects, because we can't
+have any references to them from the GC set (double check the assign ref case
+though).
+
+That means we only need to care about objects we have traversed from the
+current GC set. But I still think a single phase bit should be sufficient
+for this. New objects get allocated with the target phase, we move objects to
+the target phase. We only check target phase when the depth is equal.
+
+What's broken in my current implementation is we mix up the PopFrame and
+CompactFrame cases. In the PopFrame case, same depth objects are always
+outside the set. In the CompactFrame case, same depth objects are outside the
+set depending on phase.
+
+Say new objects are allocated to phase 0. We aren't running GC on this frame
+yet. We can call PopFrame all we want, no need to adjust target phase.
+
+As soon as we call CompactFrame, we need GC to know that phase 0 objects
+should be considered part of the GC set. We can continue to allocate new
+objects to phase 0, because they aren't reachable from the GC set (double
+check assign ref case).
+
+Except, if we call PopFrame again, we might add objects into the GC set that
+refer to phase 0 allocated objects. That's no good. So a single bit will not
+be enough.
+
+Whenever we call CompactFrame, increment the frame phase. Allocate new objects
+to the new phase.
+
+When it comes time to do GC, we traverse objects with depth greater than the
+current depth, plus objects whose depth equals the current depth but phase is
+less than the current phase.
+
+I bet this works. I'm not sure if it's an improvement though. We make better
+use of ids, but if a single frame compacts enough times, we still run out. And
+the cost is an extra word in the GC header of an object to maintain.
+
+Is there any time we could reset the phase for a frame?
+
+Once GC has started on a frame, new objects could be allocated to phase 0. But
+objects moved out of GC can't, because they may be reachable from within. We
+could keep track of a start phase and an end phase though, which would allow
+us to wrap around.
+
+Is there anything better we can do?
+
+Any time we call PopFrame, it might add a reference from GC set to newly
+allocated objects. Any time we compact, we need a way to distinguish compacted
+objects to newly allocated objects. Assuming we don't modify objects when we
+do compact, we need a way to distinguish between N sets of objects, where N is
+the number of times we compact the frame since the previous GC on that frame.
+
+Random brainstorm time.
+
+It would be nice if we could preserve that newly allocated objects have phase
+0. What if phase itself had two parts: a count and a GC cycle A or B?
+
+Once GC starts on a frame, flip the GC cycle for the frame and reset the phase
+counter. For example, go from odd phases to even phases. I think that works.
+We can still use phase to distinguish between N things, we just have a more
+natural way of resetting it after each GC.
+
+Another idea: Say we run GC on a frame. Now we promise not to run GC again on
+that frame until PopFrame or CompactFrame has been called on that frame. Then
+maybe we don't need to distinguish between different CompactFrame calls. We
+have a single phase bit. New objects allocated during GC get the new value.
+Not sure.
+
+---
+
+Summary of some thoughts.
+
+The current approach relies on having an easy way to distinguish between
+objects that have or have not already been traversed this GC round.
+
+If it weren't for CompactFrame, this would be easy. Set an objects frame
+number to the current frame to indicate it has already been traversed this
+round.
+
+That doesn't work with CompactFrame, because some of the untraversed objects
+may have object frame number set to current frame to start.
+
+There are a few different approaches to get around this:
+
+1. Store stack depth and phase with an object. Each time we compact frame, we
+increment phase. We can tell if an object is traversed or not by comparing
+both depth and phase.
+
+Downsides:
+* Extra word of memory needed per object to track the phase.
+* To avoid issues with overflows, we need an extra bit somewhere to let us
+  reset the phase.
+
+Sounds complicated and practically expensive. Conceptually the cleanest
+approach.
+
+2. Try to merge depth and phase into a single entity 'gen'.
+This is the current working approach.
+
+Downsides:
+* No clear way to avoid issues with overflows.
+
+Practically nice, conceptually and theoretically pending towards not viable.
+
+3. Double traverse reachable objects.
+We can have a sentinel id reserved for GC that we move objects to during GC.
+Then we add an extra traversal at the end of GC to set depth back when GC is
+done.
+
+Downsides:
+* 2x traversal of reachable objects presumably doubles the latency of GC.
+
+Maybe okay?
+
+4. Traverse alloced objects too.
+If we know some unmarked/marked objects have depth equal to the current frame
+to start, move all alloced objects to marked as well. Use a phase bit to track
+the new ID to allocate to.
+
+Downsides:
+* Extra traversal of known allocated objects.
+
+Better than (3) I think, because unmarked/marked objects grow in scale more
+than direct alloced objects on a frame.
+
+---
+
+There are unknowns in terms of performance costs. Certainly I want to try (4).
+Maybe the trick is to try (4) and compare it performance wise to our current
+(2). That should give a sense of worst case performance overhead. If it's not
+bad, go with (4).
+
+Let's work out details for 4.
+
+* Object stores stack depth + single bit phase.
+* Alloc allocs to current stack depth and phase.
+* PopFrame as is now.
+* CompactFrame moves objects to marked/unmarked, does not touch phase. Set a
+  flag on the frame to indicate some objects in marked/unmarked may have
+  current alloc stack depth and phase.
+* On GC start, if that flag is set, toggle phase on the frame, move all
+  alloced to marked, and reset the flag.
+
+I think it's that simple.
+
+How do we want to store depth + phase? Probably like before:
+gen = 2*depth + phase.
+
+Let's draft it up, see how goes.

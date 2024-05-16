@@ -54,10 +54,29 @@ typedef struct {
   Frame* frame;
 } StackHeader;
 
+/**
+ * An objects generation.
+ * This is a combination of the stack depth of the frame the object is
+ * allocated to and the GC phase of that frame.
+ * gen = 2*depth + phase.
+ */
+typedef size_t Generation;
+
+/**
+ * @func[Depth] Returns the stack depth of the given generation.
+ *  @arg[gen] The generation to get stack depth of.
+ *  @returns The stack depth of the generation.
+ *  @sideeffects None
+ */
+static size_t Depth(Generation gen)
+{
+  return gen >> 1;
+}
+
 // Header for GC allocated values.
 typedef struct {
   List list;          /**< A list of values this value belongs to. */
-  size_t gen;         /**< Generation this object was allocated in. */
+  Generation gen;     /**< Generation object is allocated to. */
 } GcHeader;
 
 // Where an object is allocated.
@@ -242,13 +261,6 @@ typedef struct Chunk {
   struct Chunk* next;
 } Chunk;
 
-/**
- * @func[Depth] Gets the stack depth of a generation.
- *  @arg[size_t][gen] The generation to get the stack depth of.
- *  @returns[size_t] The stack depth of the generation.
- */
-#define Depth(gen) (gen >> 1)
-
 struct Frame {
   struct Frame* caller;
 
@@ -258,15 +270,13 @@ struct Frame {
   // pushing a new frame.
   size_t merges;
 
-  // The generation to allocate new objects to.
-  // gen is 2*depth + phase, where depth is the depth of this stack frame and
-  // phase switches between 0 and 1 whenever GC starts on a frame.
-  //
-  // Objects allocated before entering this stack frame have generation less
-  // than (gen & (~1)). Objects with generation equal to gen have been fully
-  // traversed already in this GC round.
-  size_t min_gen; // unused.
-  size_t gen;
+  // The generation of this stack frame, which is a combination of stack depth
+  // and GC phase.
+  Generation gen;
+
+  // Flag set to true if the frame has been compacted since the most recent
+  // GC.
+  bool compacted;
 
   // Potential garbage GC objects on the frame. These are either from objects
   // allocated to callee frames that have since returned or objects allocated
@@ -294,7 +304,6 @@ struct FbleValueHeap {
   // The base of the stack.
   void* stack;
 
-  size_t gen; // unused
   // The top frame of the stack. New values are allocated here.
   Frame* top;
 
@@ -495,8 +504,6 @@ static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag,
   value->loc = GC_ALLOC;
   value->h.gc.gen = frame->gen;
 
-  fprintf(stderr, "alloc %p[%zi]\n", (void*)value, frame->gen);
-
   Clear(&value->h.gc.list);
   MoveTo(&frame->alloced, value);
   return value;
@@ -512,7 +519,6 @@ static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag,
 static void FreeGcValue(FbleValue* value)
 {
   if (value != NULL) {
-    fprintf(stderr, "free %p\n", (void*)value);
     if (value->tag == NATIVE_VALUE) {
       NativeValue* v = (NativeValue*)value;
       if (v->on_free != NULL) {
@@ -697,11 +703,9 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  fprintf(stderr, "%p ==> %p\n", (void*)src, (void*)dst);
   if (IsAlloced(dst)
       && Depth(dst->h.gc.gen) >= Depth(heap->gc->gen)
       && dst->h.gc.gen != heap->gc->gen) {
-    fprintf(stderr, "marked %p[%zi]\n", (void*)dst, dst->h.gc.gen);
     MoveTo(&heap->marked, dst);
   }
 }
@@ -767,7 +771,6 @@ static void IncrGc(FbleValueHeap* heap)
   // Traverse an object on the heap.
   FbleValue* marked = Get(&heap->marked);
   if (marked != NULL) {
-    fprintf(stderr, "traverse %p[%zi -> %zi]\n", (void*)marked, marked->h.gc.gen, heap->gc->gen);
     marked->h.gc.gen = heap->gc->gen;
     MarkRefs(heap, marked);
     MoveTo(&heap->gc->alloced, marked);
@@ -788,8 +791,12 @@ static void IncrGc(FbleValueHeap* heap)
 
     MoveAllTo(&heap->marked, &heap->gc->marked);
     MoveAllTo(&heap->unmarked, &heap->gc->unmarked);
-    fprintf(stderr, "gc [%zi -> %zi]\n", heap->gc->gen, heap->gc->gen ^ 1);
-    heap->gc->gen ^= 1;
+
+    if (heap->gc->compacted) {
+      heap->gc->gen ^= 1;
+      MoveAllTo(&heap->marked, &heap->gc->alloced);
+    }
+    heap->gc->compacted = false;
   }
 }
 
@@ -805,6 +812,7 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top->caller = NULL;
   heap->top->merges = 0;
   heap->top->gen = 0;
+  heap->top->compacted = false;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
@@ -871,12 +879,12 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
   Clear(&callee->alloced);
   callee->merges = 0;
   callee->gen = heap->top->gen + 2;
+  callee->compacted = false;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
   
   heap->top = callee;
-  fprintf(stderr, "push [%zi]\n", heap->top->gen);
 }
 
 // See documentation in fble-value.h
@@ -893,7 +901,6 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     top->merges--;
     return value;
   }
-  fprintf(stderr, "pop [%zi]\n", top->gen);
 
   value = GcRealloc(heap, value);
 
@@ -957,8 +964,6 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
     return;
   }
 
-  fprintf(stderr, "compact [%zi]\n", heap->top->gen);
-
   for (size_t i = 0; i < n; ++i) {
     save[i] = GcRealloc(heap, save[i]);
   }
@@ -974,6 +979,7 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
 
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
+  heap->top->compacted = true;
 
   if (heap->gc == heap->top) {
     // If GC is in progress on the frame we are compacting we could run into
