@@ -2911,3 +2911,11 @@ How do we want to store depth + phase? Probably like before:
 gen = 2*depth + phase.
 
 Let's draft it up, see how goes.
+
+---
+
+To start, same issue as before. As long as we can interrupt GC, a single bit
+for phase isn't enough.
+
+After changing phase to a counter, now I'm getting a memory leak somewhere,
+and elsewhere corruption of some sort. So there must be some bug still.

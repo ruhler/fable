@@ -55,23 +55,12 @@ typedef struct {
 } StackHeader;
 
 /**
- * An objects generation.
- * This is a combination of the stack depth of the frame the object is
- * allocated to and the GC phase of that frame.
- * gen = 2*depth + phase.
+ * An object's generation.
  */
-typedef size_t Generation;
-
-/**
- * @func[Depth] Returns the stack depth of the given generation.
- *  @arg[gen] The generation to get stack depth of.
- *  @returns The stack depth of the generation.
- *  @sideeffects None
- */
-static size_t Depth(Generation gen)
-{
-  return gen >> 1;
-}
+typedef struct {
+  size_t depth;   // stack depth of the frame.
+  size_t phase;   // GC phase of the frame.
+} Generation;
 
 // Header for GC allocated values.
 typedef struct {
@@ -704,8 +693,9 @@ static FbleValue* StrictValue(FbleValue* value)
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
   if (IsAlloced(dst)
-      && Depth(dst->h.gc.gen) >= Depth(heap->gc->gen)
-      && dst->h.gc.gen != heap->gc->gen) {
+      && dst->h.gc.gen.depth >= heap->gc->gen.depth
+      && (dst->h.gc.gen.depth != heap->gc->gen.depth
+           || dst->h.gc.gen.phase != heap->gc->gen.phase)) {
     MoveTo(&heap->marked, dst);
   }
 }
@@ -793,7 +783,7 @@ static void IncrGc(FbleValueHeap* heap)
     MoveAllTo(&heap->unmarked, &heap->gc->unmarked);
 
     if (heap->gc->compacted) {
-      heap->gc->gen ^= 1;
+      heap->gc->gen.phase++;
       MoveAllTo(&heap->marked, &heap->gc->alloced);
     }
     heap->gc->compacted = false;
@@ -811,7 +801,8 @@ FbleValueHeap* FbleNewValueHeap()
 
   heap->top->caller = NULL;
   heap->top->merges = 0;
-  heap->top->gen = 0;
+  heap->top->gen.depth = 0;
+  heap->top->gen.phase = 0;
   heap->top->compacted = false;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
@@ -878,7 +869,8 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
   Clear(&callee->marked);
   Clear(&callee->alloced);
   callee->merges = 0;
-  callee->gen = heap->top->gen + 2;
+  callee->gen.depth = heap->top->gen.depth + 1;
+  callee->gen.phase = 0;
   callee->compacted = false;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
@@ -917,7 +909,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     MoveAllTo(&heap->top->unmarked, &heap->marked);
   }
 
-  if (IsAlloced(value) && Depth(value->h.gc.gen) >= Depth(top->gen)) {
+  if (IsAlloced(value) && value->h.gc.gen.depth >= top->gen.depth) {
     MoveTo(&heap->top->marked, value);
   }
 
@@ -991,7 +983,7 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   }
 
   for (size_t i = 0; i < n; ++i) {
-    if (IsAlloced(save[i]) && Depth(save[i]->h.gc.gen) >= Depth(heap->top->gen)) {
+    if (IsAlloced(save[i]) && save[i]->h.gc.gen.depth >= heap->top->gen.depth) {
       MoveTo(&heap->top->marked, save[i]);
     }
   }
@@ -1559,7 +1551,7 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 // See documentation in fble-value.h.
 bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 {
-  assert(Depth(ref->h.gc.gen) >= Depth(heap->top->gen)
+  assert(ref->h.gc.gen.depth >= heap->top->gen.depth
       && "FbleAssignRefValue must be called with ref on top of stack");
 
   // Unwrap any accumulated layers of references on the value and make sure we
