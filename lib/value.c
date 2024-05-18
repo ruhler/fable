@@ -54,19 +54,10 @@ typedef struct {
   Frame* frame;
 } StackHeader;
 
-/**
- * An object's generation.
- */
-typedef struct {
-  size_t gen;     // Old algo gen.
-  size_t depth;   // stack depth of the frame.
-  size_t phase;   // GC phase of the frame.
-} Generation;
-
 // Header for GC allocated values.
 typedef struct {
   List list;          /**< A list of values this value belongs to. */
-  Generation gen;     /**< Generation object is allocated to. */
+  size_t gen;         /**< Generation this object was allocated in. */
 } GcHeader;
 
 // Where an object is allocated.
@@ -260,10 +251,11 @@ struct Frame {
   // pushing a new frame.
   size_t merges;
 
-  // The generation of this stack frame, which is a combination of stack depth
-  // and GC phase.
-  Generation gen;
+  // Objects allocated before entering this stack frame have generation less
+  // than min_gen. Objects allocated before the most recent compaction on the
+  // frame have generation less than gen.
   size_t min_gen;
+  size_t gen;
 
   // Potential garbage GC objects on the frame. These are either from objects
   // allocated to callee frames that have since returned or objects allocated
@@ -291,7 +283,9 @@ struct FbleValueHeap {
   // The base of the stack.
   void* stack;
 
+  // The generation to allocate new objects to.
   size_t gen;
+
   // The top frame of the stack. New values are allocated here.
   Frame* top;
 
@@ -691,17 +685,10 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (IsAlloced(dst)) {
-    bool traverse0 = dst->h.gc.gen.gen >= heap->gc->min_gen
-      && dst->h.gc.gen.gen != heap->gc->gen.gen;
-    bool traverse1 = dst->h.gc.gen.depth >= heap->gc->gen.depth
-      && (dst->h.gc.gen.depth != heap->gc->gen.depth
-          || dst->h.gc.gen.phase != heap->gc->gen.phase);
-    assert(traverse0 == traverse1);
-
-    if (traverse0) {
-      MoveTo(&heap->marked, dst);
-    }
+  if (IsAlloced(dst)
+      && dst->h.gc.gen >= heap->gc->min_gen
+      && dst->h.gc.gen != heap->gc->gen) {
+    MoveTo(&heap->marked, dst);
   }
 }
 
@@ -797,14 +784,13 @@ FbleValueHeap* FbleNewValueHeap()
   heap->stack = FbleAllocRaw(CHUNK_SIZE);
 
   heap->gen = 0;
+
   heap->top = (Frame*)heap->stack;
 
   heap->top->caller = NULL;
   heap->top->merges = 0;
   heap->top->min_gen = heap->gen;
-  heap->top->gen.gen = heap->gen;
-  heap->top->gen.depth = 0;
-  heap->top->gen.phase = 0;
+  heap->top->gen = heap->gen;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
@@ -870,16 +856,15 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
   Clear(&callee->marked);
   Clear(&callee->alloced);
   callee->merges = 0;
-  heap->gen++;
-  callee->gen.depth = heap->top->gen.depth + 1;
-  callee->gen.phase = 0;
-  callee->gen.gen = heap->gen;
-  callee->min_gen = heap->gen;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
   
   heap->top = callee;
+
+  heap->gen++;
+  heap->top->min_gen = heap->gen;
+  heap->top->gen = heap->gen;
 }
 
 // See documentation in fble-value.h
@@ -912,13 +897,8 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     MoveAllTo(&heap->top->unmarked, &heap->marked);
   }
 
-  if (IsAlloced(value)) {
-    bool save0 = value->h.gc.gen.depth >= top->gen.depth;
-    bool save1 = value->h.gc.gen.gen >= top->min_gen;
-    assert(save0 == save1);
-    if (save0) {
-      MoveTo(&heap->top->marked, value);
-    }
+  if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
+    MoveTo(&heap->top->marked, value);
   }
 
   while (top->chunks != NULL) {
@@ -969,8 +949,7 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   }
 
   heap->gen++;
-  heap->top->gen.phase++;
-  heap->top->gen.gen = heap->gen;
+  heap->top->gen = heap->gen;
 
   heap->top->top = (intptr_t)(heap->top + 1);
   heap->top->max = heap->top->caller->max;
@@ -994,13 +973,8 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   }
 
   for (size_t i = 0; i < n; ++i) {
-    if (IsAlloced(save[i])) {
-      bool save0 = save[i]->h.gc.gen.gen >= heap->top->min_gen;
-      bool save1 = save[i]->h.gc.gen.depth >= heap->top->gen.depth;
-      assert(save0 == save1);
-      if (save0) {
-        MoveTo(&heap->top->marked, save[i]);
-      }
+    if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
+      MoveTo(&heap->top->marked, save[i]);
     }
   }
 
@@ -1567,7 +1541,7 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 // See documentation in fble-value.h.
 bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 {
-  assert(ref->h.gc.gen.depth >= heap->top->gen.depth
+  assert(ref->h.gc.gen >= heap->top->min_gen
       && "FbleAssignRefValue must be called with ref on top of stack");
 
   // Unwrap any accumulated layers of references on the value and make sure we

@@ -3014,3 +3014,22 @@ Some questions:
 2. Can we fix the memory leak in the gen/min_gen based GC algorithm?
 3. How important is (1)?
 
+I can't think of a way to get rid of the gen overflow issue entirely. We could
+detect when we hit overflow and do a stop the world compaction of ids. We
+could slow down the rate of growth of ids by avoiding incrementing gen if the
+previous frame returns an object that was already allocated.
+
+How important is this? Let's estimate how long it would take to overflow. Say
+you can increment gen at a rate of 4GHz. It would take 1 second to overflow a
+32 bit integer. It would take 4 billion seconds to overflow a 64 bit integer.
+That's 136 years. It is really difficult for me to imagine an fble program
+running for 136 years. I think we're safe for now.
+
+Maybe I'll throw in an assert for the fun of it, so when somebody's program
+has run for 136 years, they'll at least know right away that we hit overflow
+(because I'm sure they are closely watching) instead of running into
+mysterious crashes.
+
+It is important we have gen be a 64 bit counter though. Not size_t, which
+could be just 32 bits.
+
