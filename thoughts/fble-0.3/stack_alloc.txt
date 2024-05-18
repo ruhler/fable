@@ -2951,3 +2951,66 @@ Program to trace to start, because it seems to fail quickly.
 
 ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld
 ../fbld/html.fbld ../README.fbld > ./www/README.html
+
+Here's what I've done: I run both GC algorithms in parallel in the same
+executable and assert if they differ.
+
+The difference in this case is in PopFrame.
+
+The old GC algorithm thinks the returned value is owned by some caller frame.
+The new GC algorithm thinks it is owned by the callee frame.
+
+Object:
+  depth: 46         46 > 45, so new GC algo thinks we own this object.
+  phase: 0
+  gen: 401360       401360 < 401364, so old GC algo thinks we don't.
+
+Callee Frame:
+  depth: 45
+  phase: 0
+  gen: 401364
+  min_gen: 401364
+
+Caller Frame:
+  depth: 44
+  phase: 0
+  gen: 401363
+  min_gen: 401363
+
+GC:
+  depth: 1
+  phase: 0
+  gen: 4734
+
+Question: How can gen point to an older frame than depth? How is that ever
+possible? We must not be updating depth properly in all cases, right?
+
+No, this could be reasonable.
+
+At some point, gen 401360 was at depth 46. We must have popped that object to
+a parent frame, depth 45, which had some gen less than 401360. Then we
+compacted that caller frame to get depth 401364.
+
+Here's the case:
+
+1. We allocate the object at stack frame 46, gen 401360.
+2. We return the object to some caller, let's say frame 43.
+3. Before GC has had a chance to do anything, we call into a new stack frame
+   46, gen 401364 say.
+4. We return the object from that new stack frame.
+
+The new GC algo has lost track of the owner. The old GC algo has kept track of
+the fact that the object was returned to a caller before we called into frame
+46 again. No GC has occurred in between the actions.
+
+That makes some sense then. I was assuming GC would have happened, but GC may
+not happen between pushes and pops. Stack depth is not sufficient to determine
+if an object is owned by a caller or callee. We would need some sort of stack
+depth + phase, where phase persists. aka generation.
+
+Some questions:
+
+1. Can we remove cycling overflow issues the gen/min_gen based GC algorithm?
+2. Can we fix the memory leak in the gen/min_gen based GC algorithm?
+3. How important is (1)?
+
