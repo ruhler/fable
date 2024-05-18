@@ -688,11 +688,19 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (IsAlloced(dst)
-      && dst->h.gc.gen.depth >= heap->gc->gen.depth
+  static size_t count = 0;
+  if (IsAlloced(dst)) {
+    bool traverse = dst->h.gc.gen.depth >= heap->gc->gen.depth
       && (dst->h.gc.gen.depth != heap->gc->gen.depth
-           || dst->h.gc.gen.phase != heap->gc->gen.phase)) {
-    MoveTo(&heap->marked, dst);
+          || dst->h.gc.gen.phase != heap->gc->gen.phase);
+    fprintf(stderr, "%zi: %s %zi.%zi vs. %zi.%zi\n",
+        count++, traverse ? "Y" : "N",
+        dst->h.gc.gen.depth, dst->h.gc.gen.phase,
+        heap->gc->gen.depth, heap->gc->gen.phase);
+
+    if (traverse) {
+      MoveTo(&heap->marked, dst);
+    }
   }
 }
 

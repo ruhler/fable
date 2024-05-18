@@ -2938,3 +2938,16 @@ storing the phase in addition to the stack depth.
 
 Actually, seems like it doesn't work. :(
 
+Here's my plan: enable tracing again on the simplest test failure I can find.
+I expect GC operations to happen identically in both cases. Find the
+difference and we can track down where things went wrong.
+
+Specially I want to keep track of the MarkRef decision sequence.
+
+Maybe print: global count, decision, followed by gen/phase information.
+Hopefully vim can deal with diff for that well enough.
+
+Program to trace to start, because it seems to fail quickly.
+
+./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld
+../fbld/html.fbld ../README.fbld > ./www/README.html
