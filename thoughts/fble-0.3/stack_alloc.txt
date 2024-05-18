@@ -2919,3 +2919,22 @@ for phase isn't enough.
 
 After changing phase to a counter, now I'm getting a memory leak somewhere,
 and elsewhere corruption of some sort. So there must be some bug still.
+
+Maybe I should start with the pure depth,phase approach, which is supposed to
+be the simplest conceptually? Otherwise... take the time to debug so I learn
+why it's not working.
+
+---
+
+Pure depth,phase approach seems to work better. Let's start there on our
+exploration.
+
+Do we have to worry about cycling over? No. As long as GC happens before 2^64
+frame compactions, it should be fine. We only ever do equal or not equal
+comparison for phase.
+
+That fixes the concern about cycling over. At the cost of object overhead for
+storing the phase in addition to the stack depth.
+
+Actually, seems like it doesn't work. :(
+

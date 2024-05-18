@@ -263,10 +263,6 @@ struct Frame {
   // and GC phase.
   Generation gen;
 
-  // Flag set to true if the frame has been compacted since the most recent
-  // GC.
-  bool compacted;
-
   // Potential garbage GC objects on the frame. These are either from objects
   // allocated to callee frames that have since returned or objects allocated
   // on this frame prior to compaction.
@@ -781,12 +777,6 @@ static void IncrGc(FbleValueHeap* heap)
 
     MoveAllTo(&heap->marked, &heap->gc->marked);
     MoveAllTo(&heap->unmarked, &heap->gc->unmarked);
-
-    if (heap->gc->compacted) {
-      heap->gc->gen.phase++;
-      MoveAllTo(&heap->marked, &heap->gc->alloced);
-    }
-    heap->gc->compacted = false;
   }
 }
 
@@ -803,7 +793,6 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top->merges = 0;
   heap->top->gen.depth = 0;
   heap->top->gen.phase = 0;
-  heap->top->compacted = false;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
@@ -871,7 +860,6 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
   callee->merges = 0;
   callee->gen.depth = heap->top->gen.depth + 1;
   callee->gen.phase = 0;
-  callee->compacted = false;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
@@ -960,6 +948,8 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
     save[i] = GcRealloc(heap, save[i]);
   }
 
+  heap->top->gen.phase++;
+
   heap->top->top = (intptr_t)(heap->top + 1);
   heap->top->max = heap->top->caller->max;
   while (heap->top->chunks != NULL) {
@@ -971,7 +961,6 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
 
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
-  heap->top->compacted = true;
 
   if (heap->gc == heap->top) {
     // If GC is in progress on the frame we are compacting we could run into
