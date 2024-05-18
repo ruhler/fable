@@ -57,7 +57,7 @@ typedef struct {
 // Header for GC allocated values.
 typedef struct {
   List list;          /**< A list of values this value belongs to. */
-  size_t gen;         /**< Generation this object was allocated in. */
+  uint64_t gen;       /**< Generation this object was allocated in. */
 } GcHeader;
 
 // Where an object is allocated.
@@ -254,8 +254,8 @@ struct Frame {
   // Objects allocated before entering this stack frame have generation less
   // than min_gen. Objects allocated before the most recent compaction on the
   // frame have generation less than gen.
-  size_t min_gen;
-  size_t gen;
+  uint64_t min_gen;
+  uint64_t gen;
 
   // Potential garbage GC objects on the frame. These are either from objects
   // allocated to callee frames that have since returned or objects allocated
@@ -284,7 +284,7 @@ struct FbleValueHeap {
   void* stack;
 
   // The generation to allocate new objects to.
-  size_t gen;
+  uint64_t gen;
 
   // The top frame of the stack. New values are allocated here.
   Frame* top;
@@ -850,21 +850,25 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
     return;
   }
 
+  // If a program runs for a really long time (like over 100 years), it's
+  // possible we could overflow the GC gen value and GC would break. Hopefully
+  // that never happens.
+  heap->gen++;
+  assert(heap->gen > 0 && "GC gen overflow!");
+
   Frame* callee = (Frame*)StackAlloc(heap, sizeof(Frame));
   callee->caller = heap->top;
   Clear(&callee->unmarked);
   Clear(&callee->marked);
   Clear(&callee->alloced);
   callee->merges = 0;
+  callee->min_gen = heap->gen;
+  callee->gen = heap->gen;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
   
   heap->top = callee;
-
-  heap->gen++;
-  heap->top->min_gen = heap->gen;
-  heap->top->gen = heap->gen;
 }
 
 // See documentation in fble-value.h
@@ -944,11 +948,16 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
     return;
   }
 
+  // If a program runs for a really long time (like over 100 years), it's
+  // possible we could overflow the GC gen value and GC would break. Hopefully
+  // that never happens.
+  heap->gen++;
+  assert(heap->gen > 0 && "GC gen overflow!");
+
   for (size_t i = 0; i < n; ++i) {
     save[i] = GcRealloc(heap, save[i]);
   }
 
-  heap->gen++;
   heap->top->gen = heap->gen;
 
   heap->top->top = (intptr_t)(heap->top + 1);
