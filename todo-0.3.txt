@@ -2,13 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Clearly document GC algorithm and it's various features?
-  - Stack to GC allocation
-  - Frame Merging
-  - Basic GC
-  - Compaction
-  - Interrupted GC
-
 * Fix potential GC gen overflow?
 
 * Add tests that at least the compiled apps don't crash when you run them.

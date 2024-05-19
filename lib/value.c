@@ -1,6 +1,12 @@
 /**
  * @file value.c
  *  FbleValue routines.
+ *
+ *  Including the implementations of:
+ *
+ *  @i All the various types of Fble values.
+ *  @i Memory management: value packing and garbage collection.
+ *  @i The execution stack and function calls.
  */
 
 #include <assert.h>   // for assert
@@ -18,6 +24,91 @@
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "unreachable.h"    // for FbleUnreachable
+
+// Notes on Memory Management
+// ==========================
+//
+// Value Packing
+// -------------
+// Values are either 'packed' or 'alloced'.
+//
+// Packed values are stored (packed into) in a single machine word. They are
+// passed around by value. We try to use packed values wherever we can.
+//
+// Allocated values are allocated in memory. They are passed around by
+// reference.
+//
+// Stack Allocation
+// ----------------
+// An allocated value is owned by a particular frame of the stack.
+//
+// When a value is first allocated, it is allocated to the (managed) stack. We
+// say the value is 'stack allocated'.
+//
+// If a stack allocated value is returned from the stack frame that owns it to
+// the caller frame, we re-allocate the value on the heap before returning it.
+// The value is now and forever more 'GC allocated'.
+//
+// Reference values and native values are GC allocated up front, they are
+// never stack allocated.
+//
+// Stack Frame Merging
+// -------------------
+// To reduce the number of short lived GC allocated objects, we 'merge'
+// together adjacent stack frames. For example, a sequence of calls
+// A->B->C->D->E->F->G might get merged into just a couple of stack frames
+// (A,B,C,D)->(E,F,G).
+//
+// We can merge as many stack frames as we want, so long as we don't incur
+// more than constant memory overhead from doing so. In practice we merge 
+// all stack frames until we encounter a recursive function recursive call.
+//
+// Garbage Collection
+// ------------------
+// Once an object is GC allocated, it becomes subject to garbage collection. A
+// GC allocated object is associated with the stack frame that owns it. When a
+// stack frame returns, it transfers ownership of all GC allocated objects
+// associated with it to the caller stack frame.
+//
+// Garbage collection is incremental. Any time we GC allocate a new object, we
+// do a small amount of GC work.
+//
+// Garbage collection operates one stack frame at a time. Each stack frame
+// keeps track of a set of marked/unmarked objects with the invariant that
+// 'unmarked' objects are reachable if and only if they are reachable from a
+// 'marked' object. Garbage collection traverses all the marked objects,
+// moving unmarked objects to marked objects, and marked objects to the
+// frame's allocated objects until there are no more marked objects. At that
+// point anything left in 'unmarked' is unreachable and can be reclaimed.
+//
+// The idea is, the only time we can create garbage is when we return from (or
+// compact) a stack frame. At that point any object allocated on the stack
+// frame that isn't reachable from the returned value is garbage. We add the
+// returned value to the set of marked objects and everything else allocated
+// on the frame to the set of unmarked objects.
+//
+// We collect garbage from the oldest frame of the stack first, then work our
+// way to younger frames of the stack. This gives us a chance to batch
+// together objects from younger frames of the stack as those stack frames
+// return, while working on GC for the older frames of the stack.
+//
+// A GC allocated object belongs to a singly linked list of objects and is
+// tagged with a generation id ('gen'). The generation id is used to keep
+// track of which frame and alloced/marked/unmarked list the object currently
+// belongs to.
+//
+// Frame Compaction
+// ----------------
+// Tail recursive calls result in frame compaction. This is similar to
+// returning from a stack frame, but needs some special handling to keep track
+// of objects properly.
+//
+// Interrupted GC
+// --------------
+// If a stack frame returns or is compacted while garbage collection is
+// happening on that frame, we say GC is interrupted. We let GC finish its
+// work and give responsibility for transferring returned objects to the
+// caller stack frame to GC when it finishes.
 
 /**
  * Circular, doubly linked list of values.
@@ -800,7 +891,7 @@ static void IncrGc(FbleValueHeap* heap)
   // Anything left unmarked is unreachable.
   MoveAllTo(&gc->free, &gc->unmarked);
 
-  // Resurrect anything that needs saving.
+  // Resurrect anything that needs saving due to interrupted GC.
   for (size_t i = 0; gc->save.xs[i] != NULL; ++i) {
     MoveTo(&gc->frame->marked, gc->save.xs[i]);
   }
