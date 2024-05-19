@@ -3077,3 +3077,16 @@ When popping a frame with GC in progress
 
 I think that should do it.
 
+---
+
+First draft done. I think there is a bug. If we pop frame, then we will fail
+to save any values. We need to keep track of the maximum gen of object being
+gc'd, which is not necessarily heap->gc.gen.
+
+It should be fixable though. We just need to store a heap->gc.maxgen, right?
+
+Let me keep the tests running and verify things fail first. Then I can add the
+fix.
+
+Good. I got some failure.
+

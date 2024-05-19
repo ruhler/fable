@@ -294,10 +294,21 @@ typedef struct {
   // NULL to indicate that no frames have potential garbage objects to GC.
   Frame* next;
 
-  // Objects being traversed in the current GC cycle. These belong to heap->gc
-  // frame.
+  // Objects being traversed in the current GC cycle. These belong to
+  // gc->frame.
   List marked;
   List unmarked;
+
+  // True if the frame GC was working on was popped or compacted during GC.
+  // If this is the case, we'll move reachable objects to 'unmarked' instead
+  // of 'alloced'. See also 'save' field.
+  bool interrupted;
+
+  // List of objects to resurrect at the end of GC if it was interrupted.
+  //
+  // save.size is the capacity of the array, which is expanded as needed. The
+  // The list of values in save.xs is NULL terminated.
+  FbleValueV save;
 
   // A list of garbage objects to be freed.
   List free;
@@ -767,12 +778,24 @@ static void IncrGc(FbleValueHeap* heap)
   if (marked != NULL) {
     marked->h.gc.gen = gc->gen;
     MarkRefs(gc, marked);
-    MoveTo(&gc->frame->alloced, marked);
+
+    if (gc->interrupted) {
+      // GC was interrupted during pop frame or compact, so this object should
+      // be moved to 'unmarked'.
+      MoveTo(&gc->frame->unmarked, marked);
+    } else {
+      MoveTo(&gc->frame->alloced, marked);
+    }
     return;
   }
 
   // Anything left unmarked is unreachable.
   MoveAllTo(&gc->free, &gc->unmarked);
+
+  // Resurrect anything that needs saving.
+  for (size_t i = 0; gc->save.xs[i] != NULL; ++i) {
+    MoveTo(&gc->frame->marked, gc->save.xs[i]);
+  }
 
   // Set up next gc
   if (gc->next != NULL) {
@@ -787,6 +810,8 @@ static void IncrGc(FbleValueHeap* heap)
     gc->gen = gc->frame->gen;
     MoveAllTo(&gc->marked, &gc->frame->marked);
     MoveAllTo(&gc->unmarked, &gc->frame->unmarked);
+    gc->interrupted = false;
+    gc->save.xs[0] = NULL;
   }
 }
 
@@ -819,6 +844,10 @@ FbleValueHeap* FbleNewValueHeap()
   Clear(&heap->gc.marked);
   Clear(&heap->gc.unmarked);
   Clear(&heap->gc.free);
+  heap->gc.interrupted = false;
+  heap->gc.save.size = 2;
+  heap->gc.save.xs = FbleAllocArray(FbleValue*, heap->gc.save.size);
+  heap->gc.save.xs[0] = NULL;
 
   heap->chunks = NULL;
 
@@ -843,6 +872,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   MoveAllTo(&values, &heap->gc.free);
   MoveAllTo(&values, &heap->gc.marked);
   MoveAllTo(&values, &heap->gc.unmarked);
+  FbleFree(heap->gc.save.xs);
 
   FbleFree(heap->stack);
   for (Chunk* chunk = heap->chunks; chunk != NULL; chunk = heap->chunks) {
@@ -909,15 +939,26 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   MoveAllTo(&heap->top->unmarked, &top->marked);
   MoveAllTo(&heap->top->unmarked, &top->alloced);
 
-  if (heap->gc.frame == top) {
-    // If GC is in progress on the frame we are popping, abandon that GC
-    // because it's out of date now.
-    MoveAllTo(&heap->top->unmarked, &heap->gc.unmarked);
-    MoveAllTo(&heap->top->unmarked, &heap->gc.marked);
-  }
-
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
     MoveTo(&heap->top->marked, value);
+  }
+
+  if (heap->gc.frame == top) {
+    // We are popping the frame currently being GC'd.
+    heap->gc.interrupted = true;
+    heap->gc.frame = heap->top;
+
+    // If the value we are returning is currently undergoing GC, keep it there
+    // until GC has a chance to finish.
+    if (IsAlloced(value)
+        && value->h.gc.gen >= heap->gc.min_gen
+        && value->h.gc.gen < heap->gc.gen) {
+      MoveTo(&heap->gc.marked, value);
+      heap->gc.save.xs[0] = value;
+      heap->gc.save.xs[1] = NULL;
+    } else {
+      heap->gc.save.xs[0] = NULL;
+    }
   }
 
   while (top->chunks != NULL) {
@@ -987,19 +1028,34 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
 
-  if (heap->gc.frame == heap->top) {
-    // If GC is in progress on the frame we are compacting we could run into
-    // some trouble. Abandon the ongoing GC to avoid any potential problems.
-    // TODO: Does this mean we may never get a chance to finish GC because we
-    // keep restarting it before it can finish?
-    MoveAllTo(&heap->top->unmarked, &heap->gc.unmarked);
-    MoveAllTo(&heap->top->unmarked, &heap->gc.marked);
-  }
-
   for (size_t i = 0; i < n; ++i) {
     if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
       MoveTo(&heap->top->marked, save[i]);
     }
+  }
+
+  if (heap->gc.frame == heap->top) {
+    // We are compacting the frame currently being GC'd.
+    heap->gc.interrupted = true;
+
+    // If any values we are saving are currently undergoing GC, keep them
+    // there until GC has a chance to finish.
+    if (heap->gc.save.size < n + 1) {
+      heap->gc.save.size = n + 1;
+      heap->gc.save.xs = FbleReAllocArray(FbleValue*, heap->gc.save.xs, n + 1);
+    }
+
+    size_t s = 0;
+    for (size_t i = 0; i < n; ++i) {
+      if (IsAlloced(save[i])
+          && save[i]->h.gc.gen >= heap->gc.min_gen
+          && save[i]->h.gc.gen < heap->gc.gen) {
+        MoveTo(&heap->gc.marked, save[i]);
+        heap->gc.save.xs[s] = save[i];
+        s++;
+      }
+    }
+    heap->gc.save.xs[s] = NULL;
   }
 
   if (heap->gc.next == NULL) {

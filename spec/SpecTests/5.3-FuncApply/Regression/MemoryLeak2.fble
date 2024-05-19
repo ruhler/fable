@@ -1,5 +1,3 @@
-# @@fble-test@@ xfail
-# @@fble-test@@ memory-growth
 # @@fble-test@@ memory-constant
 #
 # Regression test for a case where we were leaking memory.
