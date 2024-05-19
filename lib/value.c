@@ -320,8 +320,8 @@ struct FbleValueHeap {
   Chunk* chunks;
 };
 
-static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
-static void MarkRefs(FbleValueHeap* heap, FbleValue* value);
+static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst);
+static void MarkRefs(Gc* gc, FbleValue* value);
 static void IncrGc(FbleValueHeap* heap);
 static void PushFrame(FbleValueHeap* heap, bool merge);
 static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** save);
@@ -686,50 +686,50 @@ static FbleValue* StrictValue(FbleValue* value)
 
 /**
  * @func[MarkRef] Marks a GC value referenced from another value.
- *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[Gc*][gc] The current Gc.
  *  @arg[FbleValue*][src] The source of the reference.
  *  @arg[FbleValue*][dst] The target of the reference. Must not be NULL.
  *
  *  @sideeffects
  *   If value is non-NULL, moves the object to the heap->marked list.
  */
-static void MarkRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
+static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst)
 {
   if (IsAlloced(dst)
-      && dst->h.gc.gen >= heap->gc.min_gen
-      && dst->h.gc.gen != heap->gc.gen) {
-    MoveTo(&heap->gc.marked, dst);
+      && dst->h.gc.gen >= gc->min_gen
+      && dst->h.gc.gen != gc->gen) {
+    MoveTo(&gc->marked, dst);
   }
 }
 
 /**
  * @func[MarkRefs] Marks references from a GC allocated value.
- *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[Gc*][gc] The current gc.
  *  @arg[FbleValue*][value] The value whose references to traverse
  *  @sideeffects
  *   Calls MarkRef for each object referenced by obj.
  */
-static void MarkRefs(FbleValueHeap* heap, FbleValue* value)
+static void MarkRefs(Gc* gc, FbleValue* value)
 {
   switch (value->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
-        MarkRef(heap, value, sv->fields[i]);
+        MarkRef(gc, value, sv->fields[i]);
       }
       break;
     }
 
     case UNION_VALUE: {
       UnionValue* uv = (UnionValue*)value;
-      MarkRef(heap, value, uv->arg);
+      MarkRef(gc, value, uv->arg);
       break;
     }
 
     case FUNC_VALUE: {
       FuncValue* v = (FuncValue*)value;
       for (size_t i = 0; i < v->function.executable.num_statics; ++i) {
-        MarkRef(heap, value, v->statics[i]);
+        MarkRef(gc, value, v->statics[i]);
       }
       break;
     }
@@ -737,7 +737,7 @@ static void MarkRefs(FbleValueHeap* heap, FbleValue* value)
     case REF_VALUE: {
       RefValue* v = (RefValue*)value;
       if (v->value != NULL) {
-        MarkRef(heap, value, v->value);
+        MarkRef(gc, value, v->value);
       }
       break;
     }
@@ -756,35 +756,37 @@ static void MarkRefs(FbleValueHeap* heap, FbleValue* value)
  */
 static void IncrGc(FbleValueHeap* heap)
 {
+  Gc* gc = &heap->gc;
+
   // Free a couple objects on the free list.
-  FreeGcValue(Get(&heap->gc.free));
-  FreeGcValue(Get(&heap->gc.free));
+  FreeGcValue(Get(&gc->free));
+  FreeGcValue(Get(&gc->free));
 
   // Traverse an object on the heap.
-  FbleValue* marked = Get(&heap->gc.marked);
+  FbleValue* marked = Get(&gc->marked);
   if (marked != NULL) {
-    marked->h.gc.gen = heap->gc.gen;
-    MarkRefs(heap, marked);
-    MoveTo(&heap->gc.frame->alloced, marked);
+    marked->h.gc.gen = gc->gen;
+    MarkRefs(gc, marked);
+    MoveTo(&gc->frame->alloced, marked);
     return;
   }
 
   // Anything left unmarked is unreachable.
-  MoveAllTo(&heap->gc.free, &heap->gc.unmarked);
+  MoveAllTo(&gc->free, &gc->unmarked);
 
   // Set up next gc
-  if (heap->gc.next != NULL) {
-    heap->gc.frame = heap->gc.next;
-    if (heap->gc.frame == heap->top) {
-      heap->gc.next = NULL;
+  if (gc->next != NULL) {
+    gc->frame = gc->next;
+    if (gc->frame == heap->top) {
+      gc->next = NULL;
     } else {
-      heap->gc.next = ((Frame*)heap->gc.frame->top) - 1;
+      gc->next = ((Frame*)gc->frame->top) - 1;
     }
 
-    heap->gc.min_gen = heap->gc.frame->min_gen;
-    heap->gc.gen = heap->gc.frame->gen;
-    MoveAllTo(&heap->gc.marked, &heap->gc.frame->marked);
-    MoveAllTo(&heap->gc.unmarked, &heap->gc.frame->unmarked);
+    gc->min_gen = gc->frame->min_gen;
+    gc->gen = gc->frame->gen;
+    MoveAllTo(&gc->marked, &gc->frame->marked);
+    MoveAllTo(&gc->unmarked, &gc->frame->unmarked);
   }
 }
 
