@@ -5,6 +5,9 @@ Things to consider doing for the fble-0.3 release.
 * Fix (x)failing memory leak test.
  spec/SpecTests/5.3-FuncApply/Regression/MemoryLeak2.fble
 
+* Fix potential GC gen overflow?
+* Pass Gc to MarkRef and MarkRefs instead of Heap.
+
 * Add tests that at least the compiled apps don't crash when you run them.
  - Including with --profile enabled.
  - But can we assume there is a DISPLAY available for testing?

@@ -3033,3 +3033,47 @@ mysterious crashes.
 It is important we have gen be a 64 bit counter though. Not size_t, which
 could be just 32 bits.
 
+---
+
+Right now we increment global gen on Push and on Compact. Makes sense to me.
+An optimization could be to reset global gen to top gen if we return something
+less than or equal to top gen, or if everything we save in a compact is less
+than or equal to top gen. I don't think it's worth it though. It doesn't solve
+the fundamental problem, just hides it more.
+
+---
+
+Moving on, at last, to fix our memory leak. Remember the original proposal?
+Let's review.
+
+When we pop or compact a frame that is currently undergoing GC, we record the
+returned/saved value(s), but we do not move them yet. We wait until GC
+finishes. We update the target of GC to the appropriate 'unmarked' list, we
+keep the target gen as the original gen that GC was going to do anyway.
+
+When GC is finished, we take the recorded returned/saved value(s) and move
+them to 'marked'.
+
+We pop or compact a frame that has GC going that already has some of these
+recorded value(s), simply discard the existing recorded values and save the
+new ones.
+
+Changes to data structure needed:
+* Add ValueV save to Heap with the list of values that need to be resurrected
+  after the GC is done. size is capacity, have it be NULL terminated.
+* Add gc_gen field.
+* It might be worth having a special Gc struct, to help organize GC specific
+  data structures instead of prefixing everything with gc_.
+
+To determine where to put marked objects when visiting them:
+* If save.xs[0] is NULL, move them to gc.frame->alloced.
+* Otherwise move them to gc.frame->unmarked.
+
+When GC is finished:
+* Move save.xs[*] to gc.frame->marked.
+
+When popping a frame with GC in progress
+* Update gc.frame to point to the callee instead.
+
+I think that should do it.
+
