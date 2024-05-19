@@ -253,9 +253,11 @@ struct Frame {
 
   // Objects allocated before entering this stack frame have generation less
   // than min_gen. Objects allocated before the most recent compaction on the
-  // frame have generation less than gen.
+  // frame have generation less than gen. Objects in marked,unmarked have
+  // generation less than max_gen.
   uint64_t min_gen;
   uint64_t gen;
+  uint64_t max_gen;
 
   // Potential garbage GC objects on the frame. These are either from objects
   // allocated to callee frames that have since returned or objects allocated
@@ -281,9 +283,15 @@ struct Frame {
 
 // Information about the current set of objects undergoing GC.
 typedef struct {
-  // The generation that reachable objects are to be moved to.
-  uint64_t min_gen;
+  // The generation to move objects to when they survive GC.
+  // Guaranteed to be distinct from the generation of any object currently in
+  // GC.
   uint64_t gen;
+
+  // An object is currently undergoing GC if its generation is in the interval
+  // [min_gen, max_gen), but not equal to gen.
+  uint64_t min_gen;
+  uint64_t max_gen;
 
   // The frame that GC is currently running on.
   Frame* frame;
@@ -808,6 +816,7 @@ static void IncrGc(FbleValueHeap* heap)
 
     gc->min_gen = gc->frame->min_gen;
     gc->gen = gc->frame->gen;
+    gc->max_gen = gc->frame->max_gen;
     MoveAllTo(&gc->marked, &gc->frame->marked);
     MoveAllTo(&gc->unmarked, &gc->frame->unmarked);
     gc->interrupted = false;
@@ -830,6 +839,7 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top->merges = 0;
   heap->top->min_gen = heap->gen;
   heap->top->gen = heap->gen;
+  heap->top->max_gen = heap->gen + 1;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
@@ -839,6 +849,7 @@ FbleValueHeap* FbleNewValueHeap()
 
   heap->gc.min_gen = heap->top->min_gen;
   heap->gc.gen = heap->top->gen;
+  heap->gc.max_gen = heap->top->max_gen;
   heap->gc.frame = heap->top;
   heap->gc.next = NULL;
   Clear(&heap->gc.marked);
@@ -934,6 +945,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   value = GcRealloc(heap, value);
 
   heap->top = heap->top->caller;
+  heap->top->max_gen = heap->gen + 1;
 
   MoveAllTo(&heap->top->unmarked, &top->unmarked);
   MoveAllTo(&heap->top->unmarked, &top->marked);
@@ -952,7 +964,8 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
     // until GC has a chance to finish.
     if (IsAlloced(value)
         && value->h.gc.gen >= heap->gc.min_gen
-        && value->h.gc.gen < heap->gc.gen) {
+        && value->h.gc.gen != heap->gc.gen
+        && value->h.gc.gen < heap->gc.max_gen) {
       MoveTo(&heap->gc.marked, value);
       heap->gc.save.xs[0] = value;
       heap->gc.save.xs[1] = NULL;
@@ -1015,6 +1028,7 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
   }
 
   heap->top->gen = heap->gen;
+  heap->top->max_gen = heap->gen;
 
   heap->top->top = (intptr_t)(heap->top + 1);
   heap->top->max = heap->top->caller->max;
@@ -1049,7 +1063,8 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
     for (size_t i = 0; i < n; ++i) {
       if (IsAlloced(save[i])
           && save[i]->h.gc.gen >= heap->gc.min_gen
-          && save[i]->h.gc.gen < heap->gc.gen) {
+          && save[i]->h.gc.gen != heap->gc.gen
+          && save[i]->h.gc.gen < heap->gc.max_gen) {
         MoveTo(&heap->gc.marked, save[i]);
         heap->gc.save.xs[s] = save[i];
         s++;

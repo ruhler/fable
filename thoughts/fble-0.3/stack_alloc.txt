@@ -3090,3 +3090,5 @@ fix.
 
 Good. I got some failure.
 
+We'll need to keep track of maxgen for all the frames I think. When we Compact
+a frame, maxgen becomes gen. When we pop a frame, maxgen because heap->gen.
