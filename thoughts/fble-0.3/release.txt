@@ -261,3 +261,14 @@ memory test for it and figure out how to fix it.
 
 Maybe we could just push a new frame in that case? Hopefully it's rare, and
 once you push a new frame, you have no trouble doing GC, right?
+
+---
+
+Is it worth fixing the GC gen overflow case this release? I can't think of a
+good way. I already spent a bunch of time thinking about it this release. My
+vote is to punt it to revisit in a later release.
+
+What we need is some set data structure with constant time insertion, removal,
+lookup, and union. generation ids are how we do that today. Can I come up with
+some other way? Sounds hard.
+

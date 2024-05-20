@@ -922,15 +922,13 @@ FbleValueHeap* FbleNewValueHeap()
 
   heap->stack = FbleAllocRaw(CHUNK_SIZE);
 
-  heap->gen = 0;
-
   heap->top = (Frame*)heap->stack;
 
   heap->top->caller = NULL;
   heap->top->merges = 0;
-  heap->top->min_gen = heap->gen;
-  heap->top->gen = heap->gen;
-  heap->top->max_gen = heap->gen + 1;
+  heap->top->min_gen = 0;
+  heap->top->gen = 0;
+  heap->top->max_gen = 1;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
@@ -997,23 +995,23 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
     return;
   }
 
-  // If a program runs for a really long time (like over 100 years), it's
-  // possible we could overflow the GC gen value and GC would break. Hopefully
-  // that never happens.
-  heap->gen++;
-  assert(heap->gen > 0 && "GC gen overflow!");
-
   Frame* callee = (Frame*)StackAlloc(heap, sizeof(Frame));
   callee->caller = heap->top;
   Clear(&callee->unmarked);
   Clear(&callee->marked);
   Clear(&callee->alloced);
   callee->merges = 0;
-  callee->min_gen = heap->gen;
-  callee->gen = heap->gen;
+  callee->min_gen = heap->top->max_gen;
+  callee->gen = heap->top->max_gen;
+  callee->max_gen = callee->gen + 1;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
+
+  // If a program runs for a really long time (like over 100 years), it's
+  // possible we could overflow the GC gen value and GC would break. Hopefully
+  // that never happens.
+  assert(callee->gen > 0 && "GC gen overflow!");
   
   heap->top = callee;
 }
@@ -1036,13 +1034,13 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
   value = GcRealloc(heap, value);
 
   heap->top = heap->top->caller;
-  heap->top->max_gen = heap->gen + 1;
 
   MoveAllTo(&heap->top->unmarked, &top->unmarked);
   MoveAllTo(&heap->top->unmarked, &top->marked);
   MoveAllTo(&heap->top->unmarked, &top->alloced);
 
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
+    heap->top->max_gen = top->max_gen;
     MoveTo(&heap->top->marked, value);
   }
 
@@ -1108,18 +1106,17 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
     return;
   }
 
-  // If a program runs for a really long time (like over 100 years), it's
-  // possible we could overflow the GC gen value and GC would break. Hopefully
-  // that never happens.
-  heap->gen++;
-  assert(heap->gen > 0 && "GC gen overflow!");
-
   for (size_t i = 0; i < n; ++i) {
     save[i] = GcRealloc(heap, save[i]);
   }
 
-  heap->top->gen = heap->gen;
-  heap->top->max_gen = heap->gen;
+  heap->top->gen = heap->top->max_gen;
+  heap->top->max_gen = heap->top->gen + 1;
+
+  // If a program runs for a really long time (like over 100 years), it's
+  // possible we could overflow the GC gen value and GC would break. Hopefully
+  // that never happens.
+  assert(heap->top->max_gen > 0 && "GC gen overflow!");
 
   heap->top->top = (intptr_t)(heap->top + 1);
   heap->top->max = heap->top->caller->max;
