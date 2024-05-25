@@ -1,0 +1,104 @@
+
+Add tests that at least the compiled apps don't crash when you run them?
+
+The code coverage we are looking for here is:
+1. app.c
+2. For each compiled app binary, making sure we have the right module path and
+type to work with fble-app.
+
+Compiled app binaries are:
+* fble-graphics
+* fble-invaders
+* fble-pinball
+* fble-satgame
+
+The idea is, it's really annoying if I accidentally break something and don't
+discover it until a while later when I happen to try running one of these
+apps.
+
+To get the coverage I want, ideally:
+1. Launch each of the app binaries, make sure a screen pops up and we can quit.
+2. Run the demo app, interact with it using all the supported mechanisms and
+   verify it looks okay.
+
+(2) sounds hard to automate.
+
+(1) would be easier to automate if we had a display. Or we could have a built
+in option to the compiled binary maybe specifically to test for this?
+
+I didn't find anything in a search online for SDL options to test applications
+without a display.
+
+xvfb looks relevant. I don't necessarily want to assume users are using X
+though. Ideal would be SDL.
+
+Let's check SDL source code. Maybe there is something there. If I can figure
+out how to download it.
+
+For (1), this is a general problem with compiled apps. It would be nice to
+enforce types at compile time. Perhaps better to have a general solution,
+perhaps as part of the modular compilation work.
+
+(2) sounds hard in general, and maybe not worth doing.
+
+SDL source code has a 'dummy' driver. Maybe let's try that out.
+
+There are two video drivers in SDL that look relevant. The are enabled with
+#defines at compile time:
+
+SDL_VIDEO_DRIVER_DUMMY, SDL_VIDEO_DRIVER_OFFSCREEN
+
+There is a hint we can use: SDL_HINT_VIDEO_DRIVER to select the name of the
+driver we want. Otherwise it tries them in order. Use SDL_SetHint to set it.
+Looks like we can set environment variables too, like
+
+SDL_HINT_VIDEO_DRIVER=...
+
+Then run the app. That's cool.
+
+A couple of questions:
+* Which video drivers are included in whatever I have installed?
+* What are the names of the dummy and offscreen drivers?
+  "dummy", "evdev", "offscreen"
+
+Looks like there's something called 'evdev', which is "dummy" with linuxev for
+input. I wonder what linuxev is.
+
+Looks like we can get the list of available video drivers using:
+
+SDL_GetNumVideoDrivers and SDL_GetVideoDriver. Let's try and see.
+
+driver 0: x11
+driver 1: wayland
+driver 2: KMSDRM
+driver 3: KMSDRM_LEGACY
+driver 4: dummy
+
+Let's try with the dummy driver and see what happens, using environment
+variables.
+
+My version of SDL, 2.0.14, doesn't support the video driver hint.
+
+In that version, SDL_VIDEODRIVER was the way to choose. That does something,
+but I don't see a way to interact with the application in that case. There is
+no window.
+
+KMSDRM at least responds to key press 'q' to quit.
+
+If I don't have a display set on my Pi, SDL falls back to KMSDRM. I can't echo
+q into that, but I can press the q key to exit my app.
+
+Options:
+1. Give up trying to add automated tests for this. The effort involved in
+getting something to work reliably and portable is not worth the small amount
+of code coverage it would bring. We can revisit typechecking of compiled fble
+apps in the next release as part of modular compilation to cover that class of
+errors. Otherwise this approach doesn't give us any real coverage of app.c.
+
+2. Assume we have some display available on all the platforms. Add a command
+line option to the apps to exit right away, perhaps after doing some useful
+drawing. It should at least detect the crashing case, but may not work on many
+platforms? We should check Pi, Windows, and github setups.
+
+Let's try (2) for one of the apps at least on all the platforms, see what kind
+of issues we run into, and make a decision based on how that goes.

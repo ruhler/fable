@@ -3092,3 +3092,31 @@ Good. I got some failure.
 
 We'll need to keep track of maxgen for all the frames I think. When we Compact
 a frame, maxgen becomes gen. When we pop a frame, maxgen because heap->gen.
+
+---
+
+Can we come up with a better way that doesn't overflow the GC generation?
+
+I can think of two approaches:
+1. Use a tree set data structure rather than generation ID to track sets of
+objects. The set an object belongs to is determined by the root of the tree
+the object belongs to. Everything is good complexity wise except for testing
+objects, which is log instead of constant time. I think that's going to really
+hurt performance, given that we test objects every time we return from a
+function call.
+
+2. Split generation into depth and phase, where depth always tends to go back
+towards zero, and phase always tends to increase. When we return objects to a
+caller, eventually (via GC) lower their depth. When we compact a frame,
+eventually (via GC) increase the max depth. If we use relative comparisons for
+phase, such as a - b > BIG_NUMBER instead of b > 0, then maybe we get more
+lucky.
+
+Option (1) is more properly tied to number of currently allocated objects.
+Option (2) is a little murky.
+
+One way to think about generation ids is take the entire expanded execution
+tree. Each node in the tree represents a potential set of objects. How can you
+label the nodes to distinguish between all the different sets and have some
+way of reclaiming and reusing ids?
+

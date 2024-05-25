@@ -2,12 +2,6 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Fix potential GC gen overflow?
-
-* Add tests that at least the compiled apps don't crash when you run them.
- - Including with --profile enabled.
- - But can we assume there is a DISPLAY available for testing?
-
 * Debug improvements:
  - Add easy member access in debug. e.g.: print(foo.just).
  - Inline FbleCall again to support stepping through code?

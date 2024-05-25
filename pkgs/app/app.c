@@ -516,7 +516,14 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   }
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
-    SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+    fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
+
+    fprintf(stderr, "Drivers attempted:\n");
+    int num_drivers = SDL_GetNumVideoDrivers();
+    for (int i = 0; i < num_drivers; ++i) {
+      fprintf(stderr, "%i: %s\n", i, SDL_GetVideoDriver(i));
+    }
+
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAILURE;

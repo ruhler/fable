@@ -9,6 +9,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Contains = /Core/List/Eq%.Contains;
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -49,7 +50,7 @@ Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
 Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
     e.?(
@@ -111,9 +112,18 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     m.return(/Core/Int/Show%.Read(text));
   });
 
-  # Play the game
+  # Set up the game.
   Game@ game = Game.Initial(high_score);
   Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
+
+  # Check for --test mode, where we draw something to the screen and exit
+  # right away.
+  Contains(/Core/String/Eq%.Eq, args, Str|'--test').?(true: {
+    Unit@ _ <- m.do(Draw(game));
+    m.return(True); 
+  });
+
+  # Play the game
   Int@ new_high_score <- m.do(Run(tick, game));
 
   # Save high score.

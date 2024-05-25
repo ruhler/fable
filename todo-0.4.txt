@@ -2,6 +2,9 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Fix potential GC gen overflow?
+ - See thoughts/fble-0.3/stack_alloc.txt for details.
+
 * Consider removing higher order kinds from the language.
   Make everything either kind @ or %. What would we lose?
 

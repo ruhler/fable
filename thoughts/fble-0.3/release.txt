@@ -272,3 +272,6 @@ What we need is some set data structure with constant time insertion, removal,
 lookup, and union. generation ids are how we do that today. Can I come up with
 some other way? Sounds hard.
 
+Yeah, let's punt to a later release. We've already done plenty of GC work for
+this release.
+
