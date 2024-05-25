@@ -124,3 +124,40 @@ We could support both aarch64 dwarf based debug and source level fble debug.
 That might be useful. We don't necessarily have to get rid of aarch64 dwarf
 based debug if/when we add a custom fble debug layer.
 
+---
+
+Revisiting gdb dwarf based member access. See thoughts/fble-0.2/debug.txt for
+previous discussion.
+
+Challenges:
+* Support for packed vs. unpacked values.
+* Distinguishing between different types with the same name.
+* Passing type info via debug info.
+
+Ideally we have a way to store the type of each variable in debug info. And a
+way to store types in debug info (where does the type get defined though?).
+Where the type maps field number to name. And then we let gdb call
+FbleStructValueAccess(...) or FbleUnionValueAccess(...) to access the field
+value. Then we can handle packed and unpacked just fine.
+
+Worst case we could define a dwarf type for each variable.
+
+It's sad, because this would be so easy to add to a custom debugger if I had
+implemented one. It feels convoluted to try adding it into dwarf.
+
+Let's focus on this to start: can we call a function in dwarf to get a
+location?
+
+We can define and call a dwarf function, which has its own language for stack
+operations. I don't see any way to call a native function. For supporting
+packed, there are bit offsets, so maybe it's possible. I don't really want to
+re-implement value functions in dwarf though. Especially when you can just
+call the runtime APIs.
+
+I'm coming to the same conclusion as last time. It's not worth the effort to
+add to dwarf. Especially given the potential benefits of switching to a custom
+debugger.
+
+Let's drop this request entirely and refocus on custom debugger in the next
+release (or whenever we get around to it).
+
