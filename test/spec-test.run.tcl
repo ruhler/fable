@@ -164,6 +164,7 @@ proc compile {target main} {
     if {$fble == $::fble} {
       lappend flags "--main"
       lappend flags $main
+      set main_exe $exe
     }
     execv $::b/bin/fble-compile.cov {*}$flags -t $target -c -I $::s/spec -m $m > $out
 
@@ -176,8 +177,8 @@ proc compile {target main} {
 
   lappend objs $::b/test/libfbletest.a
   lappend objs $::b/lib/libfble.cov.a
-  exec gcc {*}$::config::ldflags --pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -no-pie -O0 -o $exe {*}$objs
-  return $exe
+  exec gcc {*}$::config::ldflags --pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -no-pie -O0 -o $main_exe {*}$objs
+  return $main_exe
 }
 
 # compile_and_run --
