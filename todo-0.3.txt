@@ -2,6 +2,8 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
+* Fix failing memory tests on windows laptop
+
 Doc Comments
 * Be able to write doc comments for extern values and types as well as
   functions.

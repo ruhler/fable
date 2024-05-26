@@ -19,6 +19,6 @@ namespace eval "pkgs/invaders" {
 
     test $::b/pkgs/invaders/fble-invaders.tr \
       "$::b/pkgs/invaders/fble-invaders" \
-      "$::b/pkgs/invaders/fble-invaders --profile $::b/pkgs/invaders/fble-invaders.prof -- --test"
+      "$::b/pkgs/invaders/fble-invaders --driver dummy --profile $::b/pkgs/invaders/fble-invaders.prof -- --test"
   }
 }

@@ -102,3 +102,21 @@ platforms? We should check Pi, Windows, and github setups.
 
 Let's try (2) for one of the apps at least on all the platforms, see what kind
 of issues we run into, and make a decision based on how that goes.
+
+---
+
+The memory test fails on github ubuntu with 'Unable to initialize video
+driver', or some such similar error. That's using a variant of sdl 2.0.20. It
+lists dummy driver as an available driver, along with wayland, x11, and
+KMSDRM.
+
+Looking through the code, looks like dummy driver is only considered available
+if it is specifically requested. We can request it by setting SDL_VIDEODRIVER
+to 'dummy' on 2.0.14 and 2.0.20.
+
+I don't see an easy way to set that environment variable. Maybe I can add an
+explicit options to app.c to optionally set the video driver. Have it deal
+with all the various portability issues.
+
+Except, it seems there is no 'setenv' in C99, even though there is a 'getenv'.
+How am I supposed to set the environment variable portably?

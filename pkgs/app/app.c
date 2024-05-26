@@ -427,6 +427,7 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
   bool error = false;
   bool version = false;
   bool fps = false;
+  const char* driver = NULL;
 
   // If the module is compiled and '--' isn't present, skip to end of options
   // right away. That way precompiled programs can go straight to application
@@ -451,6 +452,7 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
     if (FbleParseBoolArg("--fps", &fps, &argc, &argv, &error)) continue;
     if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--driver", &driver, &argc, &argv, &error)) continue;
 
     end_of_options = true;
     if (strcmp(argv[0], "--") == 0) {
@@ -515,10 +517,15 @@ int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
     return EX_FAILURE;
   }
 
+  if (driver != NULL) {
+    SDL_setenv("SDL_VIDEODRIVER", driver, 1);
+    SDL_setenv("SDL_VIDEO_DRIVER", driver, 1);
+  }
+
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
 
-    fprintf(stderr, "Drivers attempted:\n");
+    fprintf(stderr, "Driver options:\n");
     int num_drivers = SDL_GetNumVideoDrivers();
     for (int i = 0; i < num_drivers; ++i) {
       fprintf(stderr, "%i: %s\n", i, SDL_GetVideoDriver(i));
