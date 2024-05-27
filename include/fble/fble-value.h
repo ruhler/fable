@@ -81,10 +81,11 @@ void FblePushFrame(FbleValueHeap* heap);
 FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value);
 
 /**
- * FbleValue instance for types.
+ * @value[FbleGenericTypeValue] FbleValue instance for types.
+ *  Used as an instance of an fble type for those types that don't need any
+ *  extra information at runtime.
  *
- * Used as an instance of an fble type for those types that don't need any
- * extra information at runtime.
+ *  @type FbleValue*
  */
 extern FbleValue* FbleGenericTypeValue;
 

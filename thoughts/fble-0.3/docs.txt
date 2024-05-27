@@ -1,0 +1,72 @@
+Fble 0.3 Miscellaneous Docs Topics
+==================================
+
+Be able to write doc comments for extern values and types as well as
+functions?
+
+Let's find some concrete examples.
+
+Extern: fble-value.h FbleGenericTypeValue.
+
+/**
+ * FbleValue instance for types.
+ *
+ * Used as an instance of an fble type for those types that don't need any
+ * extra information at runtime.
+ */
+extern FbleValue* FbleGenericTypeValue;
+
+What do we want to turn it into?
+
+There are 4 pieces of information:
+* name
+* brief
+* type
+* description
+
+Call it @value.
+
+The only real question is how we want to pass the type. Probably as an
+argument, but that might make brief slightly annoying. For example:
+
+/**
+ * @value[FbleGenericTypeValue][FbleValue*] FbleValue instance for types.
+ *  Used as an instance of an fble type for those types that don't need any
+ *  extra information at runtime.
+ */
+extern FbleValue* FbleGenericTypeValue;
+
+/**
+ * @value[FbleGenericTypeValue] FbleValue instance for types.
+ *  Used as an instance of an fble type for those types that don't need any
+ *  extra information at runtime.
+ *  
+ *  @type FbleValue*
+ */
+extern FbleValue* FbleGenericTypeValue;
+
+/**
+ * @value[FbleValue*][FbleGenericTypeValue] FbleValue instance for types.
+ *  Used as an instance of an fble type for those types that don't need any
+ *  extra information at runtime.
+ */
+extern FbleValue* FbleGenericTypeValue;
+
+/**
+ * @value[FbleGenericTypeValue] FbleValue instance for types.
+ * @[FbleValue*]
+ *  Used as an instance of an fble type for those types that don't need any
+ *  extra information at runtime.
+ */
+extern FbleValue* FbleGenericTypeValue;
+
+Honestly, I think @value[type][name][brief][description] makes sense. Except
+that doesn't work as well with dcget.
+
+Otherwise, @value[name][brief][description], where description contains @type
+tag is okay I guess. Consistent with function. Except what does it mean of
+@type isn't provided? Dunno. Anyway, let's give that a try to start.
+
+We want to generate a man page and run dc check. Should be straight forward.
+
+Can we require @type in dc check? That would be nice. We can probably do that.

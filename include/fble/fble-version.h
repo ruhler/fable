@@ -26,14 +26,6 @@
 #define FBLE_VERSION "fble-0.3"
 
 /**
- * A brief description with some info about the particular build of the fble
- * library.
- *
- * For debug purposes only.
- */
-extern const char* FbleBuildStamp;
-
-/**
  * @func[FblePrintVersion] Prints version info.
  *  For example, prints something like:
  *
