@@ -8,3 +8,5 @@
 @define[returns][type desc][] @@
 @define[sideeffects][desc][] @@
 @define[file][name desc][] @@
+@define[type][type][] @@
+@define[value][name brief content][] @@

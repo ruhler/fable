@@ -17,6 +17,12 @@
 # @func[ID] ...
 # ...
 # ...
+#
+# The following document tags are currently supported:
+#  @file
+#  @func
+#  @value
+set tags [list "func" "file" "value"]
 
 lappend argv "*"
 set id [lindex $argv 0]
@@ -30,24 +36,16 @@ foreach line [split $input_text "\n"] {
     set in_doc_comment false
   }
 
-  if {[string match " \* @func\\\[$id\\\]*" $line] == 1} {
-    set in_doc_comment true
-    set found true
-  }
+  foreach tag $tags {
+    if {[string match " \* @$tag\\\[$id\\\]*" $line] == 1} {
+      set in_doc_comment true
+      set found true
+    }
 
-  if {[string match " \* @func $id" $line] == 1} {
-    set in_doc_comment true
-    set found true
-  }
-
-  if {[string match " \* @file\\\[$id\\\]*" $line] == 1} {
-    set in_doc_comment true
-    set found true
-  }
-
-  if {[string match " \* @file $id" $line] == 1} {
-    set in_doc_comment true
-    set found true
+    if {[string match " \* @$tag $id" $line] == 1} {
+      set in_doc_comment true
+      set found true
+    }
   }
 
   if {$in_doc_comment} {
