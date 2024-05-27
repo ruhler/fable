@@ -27,7 +27,7 @@
 @@
 
 @define[i][text] @item[@par[@text]] @@
-@define[synopsis][name content]
+@define[func_synopsis][name content]
  @define[inline][x] @x @@
  @section[SYNOPSIS]
   @l{#include <fble/fble.h>}
@@ -52,7 +52,7 @@
   
   @inline[);\n]
 @@
-@define[description][content]
+@define[func_description][content]
  @define[arg][type name desc]
   @definition[@l[@type] @a[@name]]
    @ifeq[\n][@last[@desc]][@desc][@par[@desc]]
@@ -70,6 +70,28 @@
 @define[func][name brief content]
  @man[3][@name][@FbleVersion (@BuildStamp)]
   @section[NAME] @name - @brief\n
-  @synopsis[@name][@content]
-  @section[DESCRIPTION] @brief\n\n@description[@content]
+  @func_synopsis[@name][@content]
+  @section[DESCRIPTION] @brief\n\n@func_description[@content]
+@@
+@define[value_synopsis][name content]
+ @define[inline][x] @x @@
+ @section[SYNOPSIS]
+  @l{#include <fble/fble.h>}
+  @inline[\n]
+  @par[]
+
+  @define[.block][text][] @@
+  @define[type][value] @l[@value] @@
+  @eval[@plain[ignore][@content]]
+  @inline[ @name;\n]
+@@
+@define[value_description][content]
+ @define[type][value][] @@
+ @eval[@content]
+@@
+@define[value][name brief content]
+ @man[3][@name][@FbleVersion (@BuildStamp)]
+  @section[NAME] @name - @brief\n
+  @value_synopsis[@name][@content]
+  @section[DESCRIPTION] @brief\n\n@value_description[@content]
 @@

@@ -4,8 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* Generate man page for @value.
-
 Doc Comments
 * Add support for documenting types as well as values and functions.
 * Would be nice to have SEE ALSO section for library man pages.
