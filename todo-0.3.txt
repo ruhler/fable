@@ -5,8 +5,12 @@ Things to consider doing for the fble-0.3 release.
 * Fix failing memory tests on windows laptop
 
 Doc Comments
-* Add support for documenting types as well as values and functions.
+* dccheck for @type in @value content.
+* Make use of @struct doc comments everywhere.
+* Add support for @union and @enum doc comments?
 * Would be nice to have SEE ALSO section for library man pages.
+* Figure out how to get rid of extra space before '}' in man page struct
+  synopsis.
 
 * Fbld Markdown Backend
  - Reflow paragraphs to 80 columns.

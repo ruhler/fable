@@ -11,25 +11,18 @@
 #include "fble-string.h"  // for FbleString
 
 /**
- * Source file location.
+ * @struct[FbleLoc] Source file location
+ *  Pass by value. Explicit copy and free required.
  *
- * Pass by value. Explicit copy and free required.
+ *  @field[FbleString*][source]
+ *   Source file name. Or other description of the source of the program text.
+ *   Owned by this FbleLoc.
+ *  @field[size_t][line] The line number.
+ *  @field[size_t][col] The column number.
  */
 typedef struct {
-  /**
-   * Source file name. Or other description of the source of the program text.
-   * Owned by this FbleLoc.
-   */
   FbleString* source;
-
-  /**
-   * The line number.
-   */
   size_t line;
-
-  /**
-   * The column number.
-   */
   size_t col;
 } FbleLoc;
 

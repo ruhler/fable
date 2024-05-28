@@ -70,3 +70,53 @@ tag is okay I guess. Consistent with function. Except what does it mean of
 We want to generate a man page and run dc check. Should be straight forward.
 
 Can we require @type in dc check? That would be nice. We can probably do that.
+
+---
+
+Next step: types. Probably @struct to start.
+
+For example:
+
+/**
+ * Source file location.
+ *
+ * Pass by value. Explicit copy and free required.
+ */
+typedef struct {
+  /**
+   * Source file name. Or other description of the source of the program text.
+   * Owned by this FbleLoc.
+   */
+  FbleString* source;
+
+  /**
+   * The line number.
+   */
+  size_t line;
+
+  /**
+   * The column number.
+   */
+  size_t col;
+} FbleLoc;
+
+This is just like function, except no return value and rename @arg to @field,
+right?
+
+/**
+ * @struct[FbleLoc] Source file location.
+ *  Pass by value. Explicit copy and free required.
+ * 
+ *  @field[FbleString*][source]
+ *   Source file name or other description of the source of the program text.
+ *   Owned by this FbleLoc.
+ *  @field[size_t][line] The line number.
+ *  @field[size_t][col] The column number.
+ */
+typedef struct {
+  FbleString* source;
+  size_t line;
+  size_t col;
+} FbleLoc;
+
+Great. That should be easily doable, right?

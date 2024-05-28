@@ -19,10 +19,8 @@
 # ...
 #
 # The following document tags are currently supported:
-#  @file
-#  @func
-#  @value
-set tags [list "func" "file" "value"]
+#  @file, @func, @struct, @value
+set tags [list "func" "file" "struct" "value"]
 
 lappend argv "*"
 set id [lindex $argv 0]

@@ -10,3 +10,5 @@
 @define[file][name desc][] @@
 @define[type][type][] @@
 @define[value][name brief content][] @@
+@define[field][type name desc][] @@
+@define[struct][name brief content][] @@
