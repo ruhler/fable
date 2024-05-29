@@ -5,9 +5,10 @@ Things to consider doing for the fble-0.3 release.
 * Fix failing memory tests on windows laptop
 
 Doc Comments
-* dccheck for @type in @value content.
-* Make use of @struct doc comments everywhere.
+* dccheck require @type in @value content.
+* Make use of @struct doc comments in lib, tests, pkgs, etc.
 * Add support for @union and @enum doc comments?
+* Add support for abstract typdef struct doc comments?
 * Would be nice to have SEE ALSO section for library man pages.
 * Figure out how to get rid of extra space before '}' in man page struct
   synopsis.

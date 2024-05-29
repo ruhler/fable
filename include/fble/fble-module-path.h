@@ -17,28 +17,36 @@ typedef enum {
 } FbleModulePathMagic;
 
 /**
- * A module path.
+ * @struct[FbleModulePath] A module path.
+ *  For example: @l{/Foo/Bar%}.
  *
- * For example: /Foo/Bar%.
- *
- * Pass by pointer. Explicitly copy and free required.
+ *  Pass by pointer. Explicitly copy and free required.
  * 
- * By convention, all names in the path belong to the FBLE_NORMAL_NAME_SPACE.
+ *  By convention, all names in the path belong to the FBLE_NORMAL_NAME_SPACE.
  *  
- * The magic field is set to FBLE_MODULE_PATH_MAGIC and is used to detect
- * double frees of FbleModulePath.
+ *  The magic field is set to FBLE_MODULE_PATH_MAGIC and is used to detect
+ *  double frees of FbleModulePath.
+ *
+ *  @field[size_t][refcount] Current reference count.
+ *  @field[FbleModulePathMagic][magic] FBLE_MODULE_PATH_MAGIC.
+ *  @field[FbleLoc][loc] Location associated with the path.
+ *  @field[FbleNameV][path] Name of the path.
  */
 typedef struct {
-  size_t refcount;    /**< Current reference count. */
-  FbleModulePathMagic magic;  /**< FBLE_MODULE_PATH_MAGIC. */
-  FbleLoc loc;        /**< Location associated with the path. */
-  FbleNameV path;     /**< Name of the path. */
+  size_t refcount;
+  FbleModulePathMagic magic;
+  FbleLoc loc;
+  FbleNameV path;
 } FbleModulePath;
 
-/** A vector of FbleModulePath. */
+/**
+ * @struct[FbleModulePathV] A vector of FbleModulePath.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleModulePath**][xs] Elements.
+ */
 typedef struct {
-  size_t size;          /**< Number of elements. */
-  FbleModulePath** xs;  /**< Elements. */
+  size_t size;
+  FbleModulePath** xs;
 } FbleModulePathV;
 
 /**

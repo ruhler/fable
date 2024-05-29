@@ -17,46 +17,49 @@
 typedef struct FbleExpr FbleExpr;
 
 /**
- * Abstract syntax tree of a module.
+ * @struct[FbleLoadedModule] Abstract syntax tree of a module.
+ *  Either one or both of 'type' and 'value' fields may be supplied. The
+ *  'value' field is required to run or generate code for the module. The type
+ *  of the module can be determined either from the 'type' field or the type
+ *  of the 'value' field. If both 'type' and 'value' are supplied, the
+ *  typechecker will check that they describe the same type for the module.
  *
- * Either one or both of 'type' and 'value' fields may be supplied. The
- * 'value' field is required to run or generate code for the module. The type
- * of the module can be determined either from the 'type' field or the type of
- * the 'value' field. If both 'type' and 'value' are supplied, the typechecker
- * will check that they describe the same type for the module.
+ *  @field[FbleModulePath*][path] The path to the module.
+ *  @field[FbleModulePathV][deps] List of modules this module depends on.
+ *  @field[FbleExpr*][type] Abstract syntax of the module type. May be NULL.
+ *  @field[FbleExpr*][value]
+ *   Abstract syntax of the module implementation. May be NULL.
  */
 typedef struct {
-  /** the path to the module. */
   FbleModulePath* path;
-
-  /** list of modules this module depends on. */
   FbleModulePathV deps;
-
-  /** abstract syntax of the module type. May be NULL. */
   FbleExpr* type;
-
-  /** abstract syntax of the module implementation. May be NULL. */
   FbleExpr* value;
 } FbleLoadedModule;
 
-/** Vector of FbleLoadedModule. */
+/**
+ * @struct[FbleLoadedModuleV] Vector of FbleLoadedModule.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleLoadedModule*][xs] Elements.
+ */
 typedef struct {
-  size_t size;            /**< Number of elements. */
-  FbleLoadedModule* xs;   /**< Elements. */
+  size_t size;
+  FbleLoadedModule* xs;
 } FbleLoadedModuleV;
 
 /**
- * Abstract syntax tree for a full fble program.
+ * @struct[FbleLoadedProgram] Abstract syntax tree for a full fble program.
+ *  The program is represented as a list of dependant module in topological
+ *  dependancy order. Later modules in the list may depend on earlier modules
+ *  in the list, but not the other way around.
  *
- * The program is represented as a list of dependant module in topological
- * dependancy order. Later modules in the list may depend on earlier modules
- * in the list, but not the other way around.
+ *  The last module in the list is the main program. The module path for the
+ *  main module is the empty path @l{/%}.
  *
- * The last module in the list is the main program. The module path for the
- * main module is the empty path /%.
+ *  @field[FbleLoadedModuleV][modules] Program modules.
  */
 typedef struct {
-  FbleLoadedModuleV modules;  /**< Program modules. */
+  FbleLoadedModuleV modules;
 } FbleLoadedProgram;
 
 /**

@@ -12,19 +12,22 @@ namespace eval "include" {
     }
     fble-arg-parse.h {
       FbleParseBoolArg FbleParseStringArg
-      FbleNewModuleArg FbleFreeModuleArg FbleParseModuleArg
+      FbleModuleArg FbleNewModuleArg FbleFreeModuleArg FbleParseModuleArg
       FbleParseInvalidArg
     }
     fble-compile.h {
+      FbleCompiledModule FbleCompiledModuleV FbleCompiledProgram
       FbleFreeCompiledModule FbleFreeCompiledProgram
       FbleCompileModule FbleCompileProgram
       FbleDisassemble
     }
     fble-function.h {
+      FbleExecutable FbleFunction
       FbleRunFunction
       FbleCall FbleTailCall
     }
     fble-generate.h {
+      FbleGeneratedModule FbleGeneratedModuleV
       FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main
       FbleGenerateC FbleGenerateCExport FbleGenerateCMain
     }
@@ -33,6 +36,7 @@ namespace eval "include" {
       FblePrintCompiledHeaderLine
     }
     fble-load.h {
+      FbleLoadedModule FbleLoadedModuleV FbleLoadedProgram
       FbleParse
       FbleNewSearchPath FbleFreeSearchPath
       FbleAppendToSearchPath FbleAppendStringToSearchPath
@@ -47,6 +51,7 @@ namespace eval "include" {
       FbleReportWarning FbleReportError
     }
     fble-module-path.h {
+      FbleModulePath FbleModulePathV
       FbleNewModulePath
       FbleModulePathName
       FblePrintModulePath
@@ -57,9 +62,14 @@ namespace eval "include" {
       FbleFreeModulePath
     }
     fble-name.h {
+      FbleName FbleNameV
       FbleCopyName FbleFreeName FbleNamesEqual FblePrintName
     }
     fble-profile.h {
+      FbleBlockIdV
+      FbleCallData FbleCallDataV
+      FbleBlockProfile FbleBlockProfileV
+      FbleProfile
       FbleNewProfile
       FbleAddBlockToProfile FbleAddBlocksToProfile
       FbleFreeProfile
@@ -69,13 +79,14 @@ namespace eval "include" {
       FbleGenerateProfileReport
     }
     fble-string.h {
-      FbleNewString FbleCopyString FbleFreeString
+      FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString
     }
     fble-usage.h {
       FblePrintUsageDoc
     }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
+      FbleValueV
       FbleGenericTypeValue
       FbleNewStructValue FbleNewStructValue_
       FbleStructValueField

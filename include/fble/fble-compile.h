@@ -16,54 +16,51 @@
 typedef struct FbleCode FbleCode;
 
 /**
- * A compiled module.
+ * @struct[FbleCompiledModule] A compiled module.
+ *  @field[FbleModulePath*][path] Path to the module.
+ *  @field[FbleModulePathV][deps]
+ *   List of distinct modules this module depends on.
+ *  @field[FbleCode*][code]
+ *   Code to compute the module's value.
+ *
+ *   The code should be suitable for use in the body of a function that takes
+ *   the computed module values for each module listed in 'deps' as arguments
+ *   to the function
+ *  @field[FbleNameV][profile_blocks]
+ *   Profile blocks used by functions in the module.
+ *
+ *   This FbleCompiledModule owns the names and the vector.
  */
 typedef struct {
-  /**
-   * Path to the module.
-   */
   FbleModulePath* path;
-
-  /**
-   * List of distinct modules this module depends on.
-   */
   FbleModulePathV deps;
-
-  /**
-   * Code to compute the module's value.
-   *
-   * The code should be suitable for use in the body of a function that takes
-   * the computed module values for each module listed in 'deps' as
-   * arguments to the function
-   */
   FbleCode* code;
-
-  /**
-   * Profile blocks used by functions in the module.
-   *
-   * This FbleCompiledModule owns the names and the vector.
-   */
   FbleNameV profile_blocks;
 } FbleCompiledModule;
 
-/** Vector of compiled modules. */
+/**
+ * @struct[FbleCompiledModuleV] Vector of compiled modules.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleCompiledModule**][xs] Elements.
+ */
 typedef struct {
-  size_t size;              /**< Number of elements. */
-  FbleCompiledModule** xs;  /**< Elements. */
+  size_t size;
+  FbleCompiledModule** xs;
 } FbleCompiledModuleV;
 
 /**
- * A compiled program.
+ * @struct[FbleCompiledProgram] A compiled program.
+ *  The program is represented as a list of compiled modules in topological
+ *  dependency order. Later modules in the list may depend on earlier modules
+ *  in the list, but not the other way around.
  *
- * The program is represented as a list of compiled modules in topological
- * dependency order. Later modules in the list may depend on earlier modules
- * in the list, but not the other way around.
+ *  The last module in the list is the main program. The module path for the
+ *  main module is @l{/%}.
  *
- * The last module in the list is the main program. The module path for the
- * main module is /%.
+ *  @field[FbleCompiledModuleV][modules] List of compiled modules.
  */
 typedef struct {
-  FbleCompiledModuleV modules;  /**< List of compiled modules. */
+  FbleCompiledModuleV modules;
 } FbleCompiledProgram;
 
 /**

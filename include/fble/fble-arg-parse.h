@@ -75,7 +75,9 @@ bool FbleParseBoolArg(const char* name, bool* dest, int* argc, const char*** arg
 bool FbleParseStringArg(const char* name, const char** dest, int* argc, const char*** argv, bool* error);
 
 /**
- * Describes an input module to a program.
+ * @struct[FbleModuleArg] Describes an input module to a program.
+ *  @field[FbleSearchPath*][search_path] Module search path.
+ *  @field[FbleModulePath*][module_path] The module argument.
  */
 typedef struct {
   FbleSearchPath* search_path;

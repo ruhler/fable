@@ -22,73 +22,80 @@ typedef size_t FbleBlockId;
  */
 #define FBLE_ROOT_BLOCK_ID 0
 
-/** A vector of BlockId. */
+/**
+ * @struct[FbleBlockIdV] A vector of BlockId.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleBlockid*][xs] Elements.
+ */
 typedef struct {
-  size_t size;      /**< Number of elements. */
-  FbleBlockId* xs;  /**< Elements. */
+  size_t size;
+  FbleBlockId* xs;
 } FbleBlockIdV;
 
 /**
- * Info about calls to a block.
+ * @struct[FbleCallData] Info about calls to a block.
+ *  Represents the number of calls and time spent when calling into or from
+ *  another block.
  *
- * Represents the number of calls and time spent when calling into or from
- * another block.
- * Fields:
- *   id - The id of the caller/callee block.
- *   count - The number of times the call was made.
- *   time - The amount of time spent in the call.
+ *  @field[FbleBlockId][id] Id of the caller/callee block.
+ *  @field[uint64_t][count] Number of times the call was made.
+ *  @field[uint64_t][time] Amount of time spent in the call.
  */
 typedef struct {
-  /** Id of the caller/callee block. */
   FbleBlockId id;
-
-  /** Number of times the call was made. */
   uint64_t count;
-
-  /** Amount of time spent in the call. */
   uint64_t time;
 } FbleCallData;
 
-/** A vector of FbleCallData. */
+/**
+ * @struct[FbleCallDataV] A vector of FbleCallData.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleCallData**][xs] Elements.
+ */
 typedef struct {
-  size_t size;        /**< Number of elements. */
-  FbleCallData** xs;  /**< Elements. */
+  size_t size;
+  FbleCallData** xs;
 } FbleCallDataV;
 
-/** Profile information for a particular block. */
+/**
+ * @struct[FbleBlockProfile] Profile information for a particular block.
+ *  @field[FbleName][name] Name of the block.
+ *  @field[uint64_t][self]
+ *   Time spent in the block. Not including callees of this block.
+ *  @field[FbleCallData][block]
+ *   Id, summary count, and time spent in this block.
+ *  @field[FbleCallDataV][callees]
+ *   Info about calls from this block into other blocks. Sorted in increasing
+ *   order of callee. Only callees that have been called from this block are
+ *   included.
+ */
 typedef struct {
-  /** Name of the block. */
   FbleName name;
-
-  /** Time spent in the block. Not including callees of this block. */
   uint64_t self;
-
-  /** Id, summary count, and time spent in this block. */
   FbleCallData block;
-
-  /**
-   * Info about calls from this block into other blocks. Sorted in increasing
-   * order of callee. Only callees that have been called from this block are
-   * included.
-   */
   FbleCallDataV callees;
 } FbleBlockProfile;
 
-/** A vector of FbleBlockProfile. */
+/**
+ * @struct[FbleBlockProfileV] A vector of FbleBlockProfile.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleBlockProfile**][xs] Elements.
+ */
 typedef struct {
-  size_t size;            /**< Number of elements. */
-  FbleBlockProfile** xs;  /**< Elements. */
+  size_t size;
+  FbleBlockProfile** xs;
 } FbleBlockProfileV;
 
-/** Profiling data collected for a program. */
+/**
+ * @struct[FbleProfile] Profiling data collected for a program.
+ *  @field[FbleBlockProfileV][blocks]
+ *   Profiling blocks. blocks.xs[i] contains block and callee information for
+ *   block i.
+ *  @field[bool][enabled] Indicates whether profiling is enabled or not.
+ */
 typedef struct {
-  /**
-   * Profiling blocks. blocks.xs[i] contains block and callee information for
-   * block i.
-   */
   FbleBlockProfileV blocks;
-
-  bool enabled;     /**< Indicates whether profiling is enabled or not. */
+  bool enabled;
 } FbleProfile;
 
 /**

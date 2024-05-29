@@ -20,25 +20,32 @@ typedef enum {
 } FbleNameSpace;
 
 /**
- * A type or variable name.
+ * @struct[FbleName] A type or variable name.
+ *  Along with its associated location in a source file. The location is
+ *  typically used for error reporting purposes.
  *
- * Along with its associated location in a source file. The location is
- * typically used for error reporting purposes.
+ *  Pass by value. Explicit copy and free required.
  *
- * Pass by value. Explicit copy and free required.
+ *  The name and loc fields are owned by this FbleName.
  *
- * The name and loc fields are owned by this FbleName.
+ *  @field[FbleString*][name] The name.
+ *  @field[FbleNameSpace][space] Namespace of the name.
+ *  @field[FbleLoc][loc] Location of name's occurence.
  */
 typedef struct {
-  FbleString* name;     /**< The name. */
-  FbleNameSpace space;  /**< Namespace of the name. */
-  FbleLoc loc;          /**< Location of name's occurrence. */
+  FbleString* name;
+  FbleNameSpace space;
+  FbleLoc loc;
 } FbleName;
 
-/** Vector of FbleNames. */
+/**
+ * @struct[FbleNameV] Vector of FbleNames.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleName*][xs] Elements.
+ */
 typedef struct {
-  size_t size;    /**< Number of elements. */
-  FbleName* xs;   /**< Elements. */
+  size_t size;
+  FbleName* xs;
 } FbleNameV;
 
 /**

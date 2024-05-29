@@ -2,13 +2,20 @@
 @define[a][text][] @@
 @define[item][text][] @@
 @define[i][text][] @@
-@define[func][name brief content][] @@
+@define[code][lang text][] @@
 @define[.block][text][] @@
-@define[arg][type name desc][] @@
-@define[returns][type desc][] @@
-@define[sideeffects][desc][] @@
+@define[func][name brief content]
+ @define[arg][type name desc][] @@
+ @define[returns][type desc][] @@
+ @define[sideeffects][desc][] @@
+ @eval[@content]
+@@
 @define[file][name desc][] @@
-@define[type][type][] @@
-@define[value][name brief content][] @@
-@define[field][type name desc][] @@
-@define[struct][name brief content][] @@
+@define[value][name brief content]
+ @define[type][type][] @@
+ @eval[@content]
+@@
+@define[struct][name brief content]
+ @define[field][type name desc][] @@
+ @eval[@content]
+@@

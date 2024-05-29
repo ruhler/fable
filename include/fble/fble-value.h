@@ -22,7 +22,11 @@ typedef struct FbleValueHeap FbleValueHeap;
 /** An fble value. */
 typedef struct FbleValue FbleValue;
 
-/** Vector of FbleValue* */
+/**
+ * @struct[FbleValueV] Vector of FbleValue
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleValue**][xs] Elements.
+ */
 typedef struct {
   size_t size;      /**< Number of elements. */
   FbleValue** xs;   /**< Elements .*/

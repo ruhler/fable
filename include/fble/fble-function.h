@@ -42,27 +42,29 @@ typedef FbleValue* FbleRunFunction(
     FbleValue** args);
 
 /**
- * Information needed to execute a function.
+ * @struct[FbleExecutable] Information needed to execute a function.
+ *  @field[size_t][num_args] Number of args to the function.
+ *  @field[size_t][num_statics] Number of static values used by the function.
+ *  @field[FbleRunFunction*][run]
+ *   How to run the function. See FbleRunFunction for more info.
  */
 struct FbleExecutable {
-  /** Number of args to the function. */
   size_t num_args;
-
-  /** Number of static values used by the function. */
   size_t num_statics;
-
-  /** How to run the function. See FbleRunFunction for more info. */
   FbleRunFunction* run;
 };
 
 /**
- * Information about an fble function.
+ * @struct[FbleFunction] Information about an fble function.
+ *  The statics are owned by whatever FbleValue object represents the
+ *  function. Don't try accessing them unless you know that FbleValue object
+ *  is retained.
  *
- * The statics are owned by whatever FbleValue object represents the function.
- * Don't try accessing them unless you know that FbleValue object is retained.
- *
- * The profile_block_id is the absolute profile block ID after linking modules
- * together.
+ *  @field[FbleExecutable][executable] The code for executing the function.
+ *  @field[FbleBlockid][profile_block_id]
+ *   The absolute profile block ID of the function after linking modules
+ *   together.
+ *  @field[FbleValue**][statics] Static variables captured by the function.
  */
 struct FbleFunction {
   FbleExecutable executable;
