@@ -27,10 +27,10 @@ typedef struct FbleHeap FbleHeap;
  *  @arg[void (*)(FbleHeap*, void*)][on_free]
  *   Object destructor callback.
  *
- * @returns[FbleHeap*]
+ *  @returns[FbleHeap*]
  *   The newly allocated heap.
  *
- * @sideeffects
+ *  @sideeffects
  *   Allocates a new heap. The caller is resposible for
  *   calling FbleFreeHeap when the heap is no longer needed.
  */

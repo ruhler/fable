@@ -506,7 +506,7 @@ static FbleValue* Get(List* list)
  * @func[MoveTo] Moves an value from one list to another.
  *  @arg[List*][dst] The list to move the value to.
  *  @arg[FbleValue*][value] The value to move.
- *  @sideffects
+ *  @sideeffects
  *   Moves the value from its current list to @a[dst].
  */
 static void MoveTo(List* dst, FbleValue* value)

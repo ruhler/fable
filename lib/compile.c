@@ -509,14 +509,14 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
  *  @arg[Scope*][parent]
  *   The parent of the scope to initialize. May be NULL.
  *
- * @sideeffects
- *  @item
- *   Initializes scope based on parent. FreeScope should be called to free the
- *   allocations for scope. The lifetimes of the code block and the parent
- *   scope must exceed the lifetime of this scope.
- *  @item
- *   The caller is responsible for calling FbleFreeCode on *code when it is no
- *   longer needed.
+ *  @sideeffects
+ *   @item
+ *    Initializes scope based on parent. FreeScope should be called to free the
+ *    allocations for scope. The lifetimes of the code block and the parent
+ *    scope must exceed the lifetime of this scope.
+ *   @item
+ *    The caller is responsible for calling FbleFreeCode on *code when it is no
+ *    longer needed.
  */
 static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, FbleNameV statics, FbleBlockId block, Scope* parent)
 {
@@ -789,12 +789,12 @@ static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
 
 /**
  * @func[EnterBlock] Enters a new profiling block.
- *  @args[Blocks*][blocks] The blocks stack.
- *  @args[FbleName][name]
+ *  @arg[Blocks*][blocks] The blocks stack.
+ *  @arg[FbleName][name]
  *   Name to add to the current block path for naming the new block.
- *  @args[FbleLoc][loc] The location of the block.
- *  @args[Scope*][scope] Where to add the ENTER_BLOCK instruction to.
- *  @args[bool][replace]
+ *  @arg[FbleLoc][loc] The location of the block.
+ *  @arg[Scope*][scope] Where to add the ENTER_BLOCK instruction to.
+ *  @arg[bool][replace]
  *   If true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
  *
  *  @sideeffects

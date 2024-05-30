@@ -22,7 +22,7 @@ FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str);
 
 /**
  * @func[FbleStringValueAccess] Convert a @l{String@} value to a c string.
- *  @args[FbleValue*][str] The @l{/Core/String%.String@} to convert.
+ *  @arg[FbleValue*][str] The @l{/Core/String%.String@} to convert.
  *
  *  @returns[char*]
  *   A newly allocated nul terminated c string with the contents of str.

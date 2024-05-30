@@ -382,8 +382,8 @@ static FbleValue* EffectImpl(
 
 /**
  * @func[OnTimer] Callback called for every timer tick.
- *  @args[Uint32][interval] The timer interval
- *  @args[void*][param] unused.
+ *  @arg[Uint32][interval] The timer interval
+ *  @arg[void*][param] unused.
  *
  *  @returns[Uint32]
  *   0 to cancel to the timer.

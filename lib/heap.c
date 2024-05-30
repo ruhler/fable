@@ -168,7 +168,7 @@ static bool IncrGc(FbleHeap* heap);
  * @func[MoveToFront] Move an object to the front of the given list.
  *  @arg[ObjList*][dest] Where to move the object to.
  *  @arg[Obj*][obj] The object to move.
- *  @sideffects Moves the object to the front of the given list.
+ *  @sideeffects Moves the object to the front of the given list.
  */
 static void MoveToFront(ObjList* dest, Obj* obj)
 {
@@ -184,7 +184,7 @@ static void MoveToFront(ObjList* dest, Obj* obj)
  * @func[MoveToBack] Move an object to the back of the given list.
  *  @arg[ObjList*][dest] Where to move the object to.
  *  @arg[Obj*][obj] The object to move.
- *  @sideffects Moves the object to the back of the given list.
+ *  @sideeffects Moves the object to the back of the given list.
  */
 static void MoveToBack(ObjList* dest, Obj* obj)
 {
@@ -200,7 +200,7 @@ static void MoveToBack(ObjList* dest, Obj* obj)
  * @func[MoveAllToFront] Move all objects in source to the front of dest.
  *  @arg[ObjList*][dest] Where to move the objects to.
  *  @arg[ObjList*][source] The list of objects to move.
- *  @sideffects Moves all objects from @a[source] to @a[dest].
+ *  @sideeffects Moves all objects from @a[source] to @a[dest].
  */
 static void MoveAllToFront(ObjList* dest, ObjList* source)
 {
@@ -237,7 +237,7 @@ static Gen* NewGen(size_t id)
 /**
  * @func[GenIsEmpty] Returns true if the generation is empty.
  *  @arg[Gen*][gen] The generation to check.
- *  @sideffects None.
+ *  @sideeffects None.
  */
 static bool GenIsEmpty(Gen* gen)
 {
