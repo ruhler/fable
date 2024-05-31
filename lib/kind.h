@@ -19,54 +19,63 @@ typedef enum {
 } FbleKindTag;
 
 /**
- * FbleKind base class.
+ * @struct[FbleKind] FbleKind base class.
+ *  A tagged union of kind types. All kinds have the same initial layout as
+ *  FbleKind. The tag can be used to determine what kind of kind this is to
+ *  get access to additional fields of the kind by first casting to that
+ *  specific type of kind.
  *
- * A tagged union of kind types. All kinds have the same initial layout as
- * FbleKind. The tag can be used to determine what kind of kind this is to get
- * access to additional fields of the kind by first casting to that specific
- * type of kind.
+ *  Kinds are non-cyclcically reference counted. Use FbleCopyKind and
+ *  FbleFreeKind to manage the reference count and memory associated with the
+ *  kind.
  *
- * Kinds are non-cyclcically reference counted. Use FbleCopyKind and
- * FbleFreeKind to manage the reference count and memory associated with
- * the kind.
+ *  @field[FbleKindTag][tag] The kind of this kind.
+ *  @field[FbleLoc][loc] Location for error reporting.
+ *  @field[int][refcount] Reference count.
  */
 typedef struct {
-  FbleKindTag tag;    /**< The kind of this kind. */
-  FbleLoc loc;        /**< Location for error reporting. */
-  int refcount;       /**< Reference count. */
+  FbleKindTag tag;
+  FbleLoc loc;
+  int refcount;
 } FbleKind;
 
-/** Vector of FbleKind. */
+/**
+ * @struct[FbleKindV] Vector of FbleKind.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleKind**][xs] The elements.
+ */
 typedef struct {
-  size_t size;      /**< Number of elements. */
-  FbleKind** xs;    /**< The elements. */
+  size_t size;
+  FbleKind** xs;
 } FbleKindV;
 
 /**
- * FBLE_BASIC_KIND: A basic kind.
+ * @struct[FbleBasicKind] FBLE_BASIC_KIND: A basic kind.
+ *  @field[FbleKind][_base] FbleKind base class.
+ *  @field[size_t][level]
+ *   The level of the kind.
+ *   
+ *   0: A normal, non-type value.
+ *   1: A normal type. A type of a level 0.
+ *   2: A type of a type of a value.
+ *   3: A type of a type of a type of a value.
+ *   etc.
  */
 typedef struct {
-  FbleKind _base;   /**< FbleKind base class. */
-
-  /**
-   * The level of the kind.
-   *
-   * 0: A normal, non-type value.
-   * 1: A normal type. A type of a level 0.
-   * 2: A type of a type of a value.
-   * 3: A type of a type of a type of a value.
-   * etc.
-   */
+  FbleKind _base;
   size_t level;
 } FbleBasicKind;
 
 /**
- * FBLE_POLY_KIND: A polymorphic kind.
+ * @struct[FblePolyKind] FBLE_POLY_KIND: A polymorphic kind.
+ *  @field[FbleKind][_base] FbleKind base class.
+ *  @field[FbleKind*][arg] The kind argument.
+ *  @field[FbleKind*][rkind] The result kind.
  */
 typedef struct {
-  FbleKind _base;     /**< FbleKind base class. */
-  FbleKind* arg;      /**< The kind argument. */
-  FbleKind* rkind;    /**< The result kind. */
+  FbleKind _base;
+  FbleKind* arg;
+  FbleKind* rkind;
 } FblePolyKind;
 
 /**

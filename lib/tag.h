@@ -9,11 +9,13 @@
 #include <stddef.h>    // for size_t
 
 /**
- * Vector of tags used in union values.
+ * @struct[FbleTagV] Vector of tags used in union values.
+ *  @field[size_t][size] Number of elements.
+ *  @field[size_t*][xs] The elements of the vector.
  */
 typedef struct {
-  size_t size;    /**< Number of elements. */
-  size_t* xs;     /**< The elements of the vector. */
+  size_t size;
+  size_t* xs;
 } FbleTagV;
 
 #endif // FBLE_INTERNAL_TAG_H_

@@ -30,26 +30,36 @@ typedef enum {
 } FbleVarTag;
 
 /**
- * Identifies a variable in scope.
+ * @struct[FbleVar] Identifies a variable in scope.
+ *  @field[FbleVarTag][tag] The kind of variable.
+ *  @field[size_t][index] Where to find the variable on the stack frame.
  */
 typedef struct {
-  FbleVarTag tag;   /**< The kind of variable. */
-  size_t index;     /**< Where to find the variable on the stack frame. */
+  FbleVarTag tag;
+  size_t index;
 } FbleVar;
 
-/** Vector of FbleVar */
+/**
+ * @struct[FbleVarV] Vector of FbleVar
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleVar*][xs] The elements.
+ */
 typedef struct {
-  size_t size;      /**< Number of elements. */
-  FbleVar* xs;      /**< The elements. */
+  size_t size;
+  FbleVar* xs;
 } FbleVarV;
 
 /** Identifies a local variable in scope.  */
 typedef size_t FbleLocalIndex;
 
-/** Vector of FbleLocalIndex */
+/**
+ * @struct[FbleLocalIndexV] Vector of FbleLocalIndex
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleLocalIndex*][xs] The elements.
+ */
 typedef struct {
-  size_t size;          /**< Number of elements. */
-  FbleLocalIndex* xs;   /**< The elements. */
+  size_t size;
+  FbleLocalIndex* xs;
 } FbleLocalIndexV;
 
 #endif // FBLE_INTERNAL_VAR_H_

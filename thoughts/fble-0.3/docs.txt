@@ -120,3 +120,26 @@ typedef struct {
 } FbleLoc;
 
 Great. That should be easily doable, right?
+
+---
+
+List of files to go through for @struct conversion.
+
+lib/aarch64.c
+lib/code.h
+lib/compile.c
+lib/expr.h
+lib/heap.c
+lib/kind.h        DONE
+lib/load.c
+lib/parse.y       DONE
+lib/profile.c
+lib/tag.h         DONE
+lib/tc.h
+lib/type.c
+lib/typecheck.c
+lib/type.h
+lib/unused.c      DONE
+lib/value.c
+lib/var.h         DONE
+pkgs/app/app.c

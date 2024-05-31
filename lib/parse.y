@@ -3,52 +3,52 @@
  *  The bison grammar for parsing fble expressions.
  */
 %{
-  #include <assert.h>   // for assert
-  #include <ctype.h>    // for isalnum
-  #include <stdbool.h>  // for bool
-  #include <stdio.h>    // for FILE, fprintf, stderr
-  #include <string.h>   // for strchr, strcpy
 
-  #include <fble/fble-alloc.h>
-  #include <fble/fble-load.h>
-  #include <fble/fble-loc.h>
-  #include <fble/fble-module-path.h>
-  #include <fble/fble-name.h>
-  #include <fble/fble-string.h>
-  #include <fble/fble-vector.h>
-  #include "expr.h"
+#include <assert.h>   // for assert
+#include <ctype.h>    // for isalnum
+#include <stdbool.h>  // for bool
+#include <stdio.h>    // for FILE, fprintf, stderr
+#include <string.h>   // for strchr, strcpy
 
-  /** State for the lexer. */
-  //
-  // Fields:
-  //   loc - The location corresponding to the character c.
-  //   fin - The input stream, if reading from a file. NULL otherwise.
-  //   sin - The input stream, if reading from a string. NULL otherwise.
-  typedef struct {
-    /**
-     * The next character in the input stream.
-     * EOF is used to indicate the end of the input stream.
-     */
-    int c;
+#include <fble/fble-alloc.h>
+#include <fble/fble-load.h>
+#include <fble/fble-loc.h>
+#include <fble/fble-module-path.h>
+#include <fble/fble-name.h>
+#include <fble/fble-string.h>
+#include <fble/fble-vector.h>
+#include "expr.h"
 
-    FbleLoc loc;      /**< The location corresponding to the character c. */
-    FILE* fin;        /**< The input stream if reading from a file. NULL otherwise. */
-    const char* sin;  /**< The input stream if reading from a string. NULL otherwise. */
+/**
+ * @struct[Lex] State for the lexer.
+ *  @field[int][c]
+ *   The next character in the input stream.
+ *   EOF is used to indicate the end of the input stream.
+ *  @field[FbleLoc][loc] The location corresponding to the character c.
+ *  @field[FILE*][fin]
+ *   The input stream if reading from a file. NULL otherwise.
+ *  @field[const char*][sin]
+ *   The input stream if reading from a string. NULL otherwise.
+ *  @field[int][start_token]
+ *   Token to emit at start of lexing if non-zero. 
+ *   Used to switch between different kinds of entities to parse.
+ */
+typedef struct {
+  int c;
+  FbleLoc loc;
+  FILE* fin;
+  const char* sin;
+  int start_token;
+} Lex;
 
-    /**
-     * Token to emit at start of lexing if non-zero. 
-     * Used to switch between different kinds of entities to parse.
-     */
-    int start_token;
-  } Lex;
+#define YYLTYPE FbleLoc
 
-  #define YYLTYPE FbleLoc
+#define YYLLOC_DEFAULT(Cur, Rhs, N)  \
+do                                   \
+  if (N) (Cur) = YYRHSLOC(Rhs, 1);   \
+  else   (Cur) = YYRHSLOC(Rhs, 0);   \
+while (0)
 
-  #define YYLLOC_DEFAULT(Cur, Rhs, N)  \
-  do                                   \
-    if (N) (Cur) = YYRHSLOC(Rhs, 1);   \
-    else   (Cur) = YYRHSLOC(Rhs, 0);   \
-  while (0)
 %}
 
 %union {

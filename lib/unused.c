@@ -7,10 +7,16 @@
 
 #include "unreachable.h"    // for FbleUnreachable
 
+/**
+ * @struct[Vars] Linked list of variables in scope.
+ *  @field[FbleName][name] Name of this variable.
+ *  @field[bool][used] Whether this variable is used.
+ *  @field[Vars*][next] The rest of the variables in scope.
+ */
 typedef struct Vars {
-  FbleName name;      // Name of this variable.
-  bool used;          // Whether this varible is used.
-  struct Vars* next;  // The rest of the variables in scope.
+  FbleName name;
+  bool used;
+  struct Vars* next;
 } Vars;
 
 static void Expr(FbleExpr* expr, Vars* vars);
