@@ -19,61 +19,60 @@
 
 typedef struct Local Local;
 
-/** Vector of pointers to locals. */
+/**
+ * @struct[LocalV] Vector of pointers to locals.
+ *  @field[size_t][size] Number of elements.
+ *  @field[Local**][xs] The elements.
+ */
 typedef struct {
-  size_t size;      /**< Number of elements. */
-  Local** xs;       /**< The elements. */
+  size_t size;
+  Local** xs;
 } LocalV;
 
-/** Info about a value available in the stack frame. */
+/**
+ * @struct[Local] Info about a value available in the stack frame.
+ *  @field[FbleVar][var] The variable.
+ *  @field[size_t][refcount] The number of references to the local.
+ */
 struct Local {
-  FbleVar var;        /**< The variable. */
-  size_t refcount;    /**< The number of references to the local. */
+  FbleVar var;
+  size_t refcount;
 };
 
-/** Scope of variables visible during compilation. */
+/**
+ * @struct[Scope] Scope of variables visible during compilation.
+ *  @field[LocalV][statics]
+ *   Variables captured from the parent scope. Owned by the scope.
+ *  @field[LocalV][args]
+ *   Arguments to the function. Owns the Locals.
+ *  @field[LocalV][vars]
+ *   Stack of local variables in scope order. Entries may be NULL. Owns the
+ *   Locals.
+ *  @field[LocalV][locals]
+ *   Local values. Entries may be NULL to indicate a free slot. Owns the
+ *   Locals.
+ *  @field[FbleCode*][code] The instruction block for this scope.
+ *  @field[FbleDebugInfo*][pending_debug_info]
+ *   Debug info to apply before the next instruction to be added.
+ *  @field[FbleProfileOp*][pending_profile_ops]
+ *   Profiling ops associated with the next instruction to be added.
+ *  @field[FbleProfileOp**][active_profile_ops]
+ *   The currently active set of profiling ops.
+ *  
+ *   New ops should be added to this list to be coalesced together where
+ *   possible. This should be reset to point to pending_profile_ops at the
+ *   start of any new basic blocks.
+ *  @field[Scope*][parent] The parent of this scope. May be NULL.
+ */
 typedef struct Scope {
-  /** Variables captured from the parent scope. Owned by the scope. */
   LocalV statics;
-
-  /** Arguments to the function. Owns the Locals. */
   LocalV args;
-
-  /**
-   * Stack of local variables in scope order.
-   * Entries may be NULL.
-   * Owns the Locals.
-   */
   LocalV vars;
-
-  /**
-   * Local values.
-   * Entries may be NULL to indicate a free slot.
-   * Owns the Locals.
-   */
   LocalV locals;
-
-  /** The instruction block for this scope. */
   FbleCode* code;
-
-  /**
-   * Debug info to apply before the next instruction to be added.
-   */
   FbleDebugInfo* pending_debug_info;
-
-  /** Profiling ops associated with the next instruction to be added. */
   FbleProfileOp* pending_profile_ops;
-
-  /**
-   * The currently active set of profiling ops.
-   *
-   * New ops should be added to this list to be coalesced together where
-   * possible. This should be reset to point to pending_profile_ops at the
-   * start of any new basic blocks.
-   */
   FbleProfileOp** active_profile_ops;
-
-  /** The parent of this scope. May be NULL. */
   struct Scope* parent;
 } Scope;
 
@@ -95,13 +94,13 @@ static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg);
 
 /**
- *   Stack of block frames tracking the current block for profiling.
+ * @struct[Blocks] Stack of block frames for the current profiling block.
+ *  @field[FbleBlockIdV][stack]
+ *   The stack of black frames representing the current location.
+ *  @field[FbleNameV][profile] The names of profile blocks to append to.
  */
 typedef struct {
-  /** The stack of black frames representing the current location. */
   FbleBlockIdV stack;
-
-  /** The names of profile blocks to append to. */
   FbleNameV profile;
 } Blocks;
 

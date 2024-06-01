@@ -127,7 +127,7 @@ List of files to go through for @struct conversion.
 
 lib/aarch64.c     DONE
 lib/code.h        DONE
-lib/compile.c
+lib/compile.c     DONE
 lib/expr.h
 lib/heap.c
 lib/kind.h        DONE
