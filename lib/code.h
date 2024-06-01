@@ -25,20 +25,18 @@ typedef enum {
 } FbleProfileOpTag;
 
 /**
- * Singly-linked list of profiling operations.
+ * @struct[FbleProfileOp] Singly-linked list of profiling operations.
+ *  @field[FbleProfileOpTag][tag] The profiling operation.
+ *  @field[size_t][arg]
+ *   Block to enter or replace, relative to current profile_block_id.
+ *   Time to sample.
+ *   Unused for EXIT ops.
+ *  @field[FbleProfileOp*][next]
+ *   Next profile op in the list, or NULL for end of list.
  */
 typedef struct FbleProfileOp {
-  /** The profiling operation. */
   FbleProfileOpTag tag;
-
-  /**
-   * Block to enter or replace, relative to current profile_block_id.
-   * Time to sample.
-   * Unused for EXIT ops.
-   **/
   size_t arg;
-
-  /** Next profile op in the list, or NULL for end of list. */
   struct FbleProfileOp* next;
 } FbleProfileOp;
 
@@ -50,31 +48,36 @@ typedef enum {
   FBLE_VAR_DEBUG_INFO,
 } FbleDebugInfoTag;
 
-/** Singly-linked list of debug info. */
+/**
+ * @struct[FbleDebugInfo] Singly-linked list of debug info.
+ *  @field[FbleDbugInfoTag][tag] The kind of debug info.
+ *  @field[FbleDebugInfo*][next] The next element in the list, or NULL.
+ */
 typedef struct FbleDebugInfo {
-  FbleDebugInfoTag tag;         /**< The kind of debug info. */
-  struct FbleDebugInfo* next;   /**< The next element in the list, or NULL. */
+  FbleDebugInfoTag tag;
+  struct FbleDebugInfo* next;
 } FbleDebugInfo;
 
 /**
- * Debug info indicating start of a new statement.
- *
- * FBLE_STATEMENT_DEBUG_INFO
+ * @struct[FbleStatementDebugInfo] FBLE_STATEMENT_DEBUG_INFO
+ *  @field[FbleDebugInfo][_base] FbleDebugInfo base class.
+ *  @field[FbleLoc][loc] The source code location of the statement.
  */
 typedef struct {
-  FbleDebugInfo _base;    /**< FbleDebugInfo base class. */
-  FbleLoc loc;            /**< The source code location of the statement. */
+  FbleDebugInfo _base;
+  FbleLoc loc;
 } FbleStatementDebugInfo;
 
 /**
- * Debug info about a variable.
- *
- * FBLE_VAR_DEBUG_INFO
+ * @struct[FbleVarDebugInfo] FBLE_VAR_DEBUG_INFO
+ *  @field[FbleDebugInfo][_base] FbleDebugInfo base class.
+ *  @field[FbleName][name] Name of the variable.
+ *  @field[FbleVar][var] Location of the variable in the stack frame.
  */
 typedef struct {
-  FbleDebugInfo _base;  /**< FbleDebugInfo base class. */
-  FbleName name;        /**< Name of the variable. */
-  FbleVar var;          /**< Location of the variable in the stack frame. */
+  FbleDebugInfo _base;
+  FbleName name;
+  FbleVar var;
 } FbleVarDebugInfo;
 
 /**
@@ -110,22 +113,27 @@ typedef enum {
 } FbleInstrTag;
 
 /**
- * Base type for all instructions.
+ * @struct[FbleInstr] Base type for all instructions.
+ *  @field[FbleInstrTag][tag] The kind of instruction.
+ *  @field[FbleDebugInfo*][debug_info]
+ *   Debug info that applies to just before executing the instruction.
+ *  @field[FbleProfileOp*][profile_ops]
+ *   Profiling operations to perform before executing the instruction.
  */
 typedef struct {
-  FbleInstrTag tag;           /**< The kind of instruction. */
-
-  /** Debug info that applies to just before executing the instruction. */
+  FbleInstrTag tag;
   FbleDebugInfo* debug_info;  
-
-  /** Profiling operations to perform before executing the instruction. */
   FbleProfileOp* profile_ops;
 } FbleInstr;
 
-/** Vector of FbleInstr. */
+/**
+ * @struct[FbleInstrV] Vector of FbleInstr.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleInstr**][xs] The elements.
+ */
 typedef struct {
-  size_t size;      /**< Number of elements. */
-  FbleInstr** xs;   /**< The elements. */
+  size_t size;
+  FbleInstr** xs;
 } FbleInstrV;
 
 /**
@@ -136,174 +144,233 @@ typedef enum {
 } FbleCodeMagic;
 
 /**
- * Fble bytecode.
+ * @struct[FbleCode] Fble bytecode.
+ *  @field[size_t][refcount] Reference count.
+ *  @field[FbleCodeMagic][magic] FBLE_CODE_MAGIC
+ *  @field[FbleExecutable][executable] FbleExecutable. Run function is unused.
+ *  @field[FbleBlockId][profile_block_id]
+ *   Id of the profile block for this code.
+ *  @field[size_t][num_locals]
+ *   Number of local variable slots used/required.
+ *  @field[FbleInstrV][instrs] The instructions to execute.
  */
 struct FbleCode {
-  size_t refcount;        /**< Reference count. */
-  FbleCodeMagic magic;    /**< FBLE_CODE_MAGIC */
-  FbleExecutable executable;   /**< FbleExecutable. Run function is unused. */
-  FbleBlockId profile_block_id; /**< Id of the profile block for this code. */
-  size_t num_locals;      /**< Number of local variable slots used/required. */
-  FbleInstrV instrs;      /**< The instructions to execute. */
+  size_t refcount;
+  FbleCodeMagic magic;
+  FbleExecutable executable;
+  FbleBlockId profile_block_id;
+  size_t num_locals;
+  FbleInstrV instrs;
 };
 
-/** Vector of FbleCode. */
+/**
+ * @struct[FbleCodeV] Vector of FbleCode.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleCode**][xs] The elements.
+ */
 typedef struct {
   size_t size;      /**< Number of elements. */
   FbleCode** xs;    /**< The elements. */
 } FbleCodeV;
 
 /**
- * FBLE_STRUCT_VALUE_INSTR: Creates a struct value.
+ * @struct[FbleStructValueINstr]
+ * @ FBLE_STRUCT_VALUE_INSTR: Creates a struct value.
+ *  @code[txt] @
+ *   *dest = struct(a1, a2, ..., aN)
  *
- * *dest = struct(a1, a2, ..., aN)
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleVarV][args] Arguments to the struct value.
+ *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleVarV args;        /**< Arguments to the struct value. */
-  FbleLocalIndex dest;  /**< Where to put the created value. */
+  FbleInstr _base;
+  FbleVarV args;
+  FbleLocalIndex dest;
 } FbleStructValueInstr;
 
 /**
- * FBLE_UNION_VALUE_INSTR: Creates a union value.
+ * @struct[FbleUnionValueInstr]
+ * @ FBLE_UNION_VALUE_INSTR: Creates a union value.
+ *  @code[txt] @
+ *   *dest = union(arg)
  *
- * *dest = union(arg)
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[size_t][tag] The tag of the value to create.
+ *  @field[FbleVar][arg] The argument to the value to create.
+ *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  size_t tag;           /**< The tag of of the value to create. */
-  FbleVar arg;          /**< The argument to the value to create. */
-  FbleLocalIndex dest;  /**< Where to put the created value. */
+  FbleInstr _base;
+  size_t tag;
+  FbleVar arg;
+  FbleLocalIndex dest;
 } FbleUnionValueInstr;
 
 /**
- * Accesses a tagged field from an object.
+ * @struct[FbleAccessInstr] Accesses a tagged field from an object.
+ *  Used for both FBLE_STRUCT_ACCESS_INSTR and FBLE_UNION_ACCESS_INSTR.
  *
- * Used for both FBLE_STRUCT_ACCESS_INSTR and FBLE_UNION_ACCESS_INSTR.
+ *  @code[txt] @
+ *   *dest = obj.tag
  *
- * *dest = obj.tag
- *
- * The resulting value is not implicitly retained. Use an explicit retain
- * instruction to keep the returned value alive if desired.
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLoc][loc] Location of the access, for error reporting.
+ *  @field[FbleVar][obj] The object whose field to access.
+ *  @field[size_t][tag] The field to access.
+ *  @field[FbleLocalIndex][dest] Where to store the result.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleLoc loc;          /**< Location of the access, for error reporting. */
-  FbleVar obj;          /**< The object whose field to access. */
-  size_t tag;           /**< The field to access. */
-  FbleLocalIndex dest;  /**< Where to store the result. */
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleVar obj;
+  size_t tag;
+  FbleLocalIndex dest;
 } FbleAccessInstr;
 
-/** Vector of offsets. */
+/**
+ * @struct[FbleOffsetV] Vector of offsets.
+ *  @field[size_t][size] Number of elements.
+ *  @field[size_t*][xs] The elements.
+ */
 typedef struct {
-  size_t size;    /**< Number of elements. */
-  size_t* xs;     /**< The elements. */
+  size_t size;
+  size_t* xs;
 } FbleOffsetV;
 
 /**
- * Specifies a target for branch.
+ * @struct[FbleBranchTarget] Specifies a target for branch.
+ *  If object has the given tag, go to the absolute pc target.
  *
- * If object has the given tag, go to the absolute pc target.
+ *  @field[size_t][tag] The condition of the branch.
+ *  @field[size_t][target] The target of the branch.
  */
 typedef struct {
   size_t tag;
   size_t target;
 } FbleBranchTarget;
 
+/**
+ * @struct[FbleBranchTargetV] Vector of FbleBranchTarget.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleBranchTarget*][xs] The elements.
+ */
 typedef struct {
   size_t size;
   FbleBranchTarget* xs;
 } FbleBranchTargetV;
 
 /**
- * FBLE_UNION_SELECT_INSTR: Branches based on object tag.
+ * @struct[FbleUnionSelectInstr] FBLE_UNION_SELECT_INSTR
+ *  Branches based on object tag.
  *
- * next_pc = ?(condition.tag;
- *              targets[0].tag: targets[0].target,
- *              targets[1].tag: targets[1].target,
- *              ...
- *              : default_);
+ *  @code[txt] @
+ *   next_pc = ?(condition.tag;
+ *                targets[0].tag: targets[0].target,
+ *                targets[1].tag: targets[1].target,
+ *                ...
+ *                : default_);
  *
- * targets is sorted in increasing order of tag.
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLoc][loc] Location to use for error reporting.
+ *  @field[FbleVar][condition] The object to branch based on.
+ *  @field[size_t][num_tags] Number of possible tag values.
+ *  @field[FbleBranchTargetV][targets]
+ *   Non-default branch targets. Sorted in increasing order of tag.
+ *  @field[size_t][default_] Default branch target.
  */
 typedef struct {
-  FbleInstr _base;        /**< FbleInstr base class. */
-  FbleLoc loc;            /**< Location to use for error reporting. */
-  FbleVar condition;      /**< The object to branch based on. */
-  size_t num_tags;        /**< Number of possible tag values. */
-  FbleBranchTargetV targets;  /**< Non-default branch targets. */
-  size_t default_;        /**< Default branch target. */
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleVar condition;
+  size_t num_tags;
+  FbleBranchTargetV targets;
+  size_t default_;
 } FbleUnionSelectInstr;
 
 /**
- * FBLE_GOTO_INSTR: Jump to a given address.
+ * @struct[FbleGotoInstr] FBLE_GOTO_INSTR: Jump to a given address.
+ *  @code[txt] @
+ *   next_pc = target
  *
- * next_pc = target
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[size_t][target] Absolute pc to jump to.
  */
 typedef struct {
-  FbleInstr _base;    /**< FbleInstr base class. */
-  size_t target;      /**< Absolute pc to jump to. */
+  FbleInstr _base;
+  size_t target;
 } FbleGotoInstr;
 
 /**
- * FBLE_FUNC_VALUE_INSTR: Creates a function value.
+ * @struct[FbleFuncValueInstr] FBLE_FUNC_VALUE_INSTR
+ *  Creates a function value.
  *
- * *dest = code[v1, v2, ...](argc)
+ *  @code[txt] @
+ *   *dest = code[v1, v2, ...](argc)
+ *
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLocalIndex][dest] Where to store the allocated function.
+ *  @field[FbleBlockId][profile_block_offset]
+ *   The profile_block_id of the function, relative to the profile_block_id of
+ *   the currently executing function.
+ *  @field[FbleCode*][code]
+ *   A block of instructions that executes the body of the function in the
+ *   context of its scope and arguments. The instruction should remove the
+ *   context of its scope and arguments.
+ *  @field[FbleVarV][scope]
+ *   Variables from the scope to capture for the function.
  */
 typedef struct {
-  /** FbleInstr base class. */
   FbleInstr _base;
-  
-  /** Where to store the allocated function. */
   FbleLocalIndex dest;
-
-  /**
-   * The profile_block_id of the function, relative to the profile_block_id
-   * of the currently executing function.
-   */
   FbleBlockId profile_block_offset;
-
-  /**
-   * A block of instructions that executes the body of the function in the
-   * context of its scope and arguments. The instruction should remove the
-   * context of its scope and arguments.
-   */
   FbleCode* code;
-
-  /** Variables from the scope to capture for the function. */
   FbleVarV scope;
 } FbleFuncValueInstr;
 
 /**
- * FBLE_CALL_INSTR: Calls a function.
+ * @struct[FbleCallInstr] FBLE_CALL_INSTR: Calls a function.
+ *  @code[txt] @
+ *   *dest = func(args[0], args[1], ...)
  *
- * *dest = func(args[0], args[1], ...)
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLoc][loc] Location of the call for error reporting.
+ *  @field[FbleVar][func] The function to call.
+ *  @field[FbleVarV][args] The arguments to pass to the called function.
+ *  @field[FbleLocalIndex][dest] Where to store the result of the call.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleLoc loc;          /**< Location of the call for error reporting. */
-  FbleVar func;         /**< The function to call. */
-  FbleVarV args;        /**< The arguments to pass to the called function. */
-  FbleLocalIndex dest;  /**< Where to store the result of the call. */
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleVar func;
+  FbleVarV args;
+  FbleLocalIndex dest;
 } FbleCallInstr;
 
 /**
- * FBLE_TAIL_CALL_INSTR: Tail calls a function.
+ * @struct[FbleTailCallInstr] FBLE_TAIL_CALL_INSTR: Tail calls a function.
+ *  @code[txt] @
+ *   return func(args[0], args[1], ...)
  *
- * return func(args[0], args[1], ...)
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLoc][loc] Location of the call for error reporting.
+ *  @field[FbleVar][func] The function to call.
+ *  @field[FbleVarV][args] The arguments to pass to the called function.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleLoc loc;          /**< Location of the call for error reporting. */
-  FbleVar func;         /**< The function to call. */
-  FbleVarV args;        /**< The arguments to pass to the called function. */
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleVar func;
+  FbleVarV args;
 } FbleTailCallInstr;
 
 /**
- * FBLE_COPY_INSTR: Copies a value from one location to another.
+ * @struct[FbleCopyInstr] FBLE_COPY_INSTR
+ *  Copies a value from one location to another.
  *
- * Does not increment the ref count. If refcount increment is required, use an
- * explicit retain instruction.
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleVar][source] The value to copy.
+ *  @field[FbleLocalIndex][dest] Where to copy the value to.
  */
 typedef struct {
   FbleInstr _base;      /**< FbleInstr base class. */
@@ -312,76 +379,98 @@ typedef struct {
 } FbleCopyInstr;
 
 /**
- * FBLE_REF_VALUE_INSTR: Creates a ref value.
+ * @struct[FbleRefValueInstr] FBLE_REF_VALUE_INSTR: Creates a ref value.
+ *  @code[txt] @
+ *   *dest = new ref
  *
- * *dest = new ref
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleLocalIndex dest;  /**< Where to put the created value. */
+  FbleInstr _base;
+  FbleLocalIndex dest;
 } FbleRefValueInstr;
 
 /**
- * FBLE_REF_DEF_INSTR: Sets the value of a reference.
+ * @struct[FbleRefDefInstr] FBLE_REF_DEF_INSTR
+ *  Sets the value of a reference.
  *
- * ref->value = value
+ *  @code[txt] @
+ *   ref->value = value
+ *
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLoc][loc] Location to use for error reporting.
+ *  @field[FbleLocalIndex][ref] The ref value to update.
+ *  @field[FbleVar][value] The updated target for the ref value.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleLoc loc;          /**< Location to user for error reporting. */
-  FbleLocalIndex ref;   /**< The ref value to update. */
-  FbleVar value;        /**< The updated target for the ref value. */
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleLocalIndex ref;
+  FbleVar value;
 } FbleRefDefInstr;
 
 /**
- * FBLE_RETURN_INSTR: Returns 'result' and exits the current stack frame.
+ * @struct[FbleReturnInstr] FBLE_RETURN_INSTR
+ *  Returns 'result' and exits the current stack frame.
  *
- * Does not implicitly retain the value to be returned. If the value needs to
- * be retained before returning, use an explicit return instruction.
- *
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleVar][result] The value to return.
  */
 typedef struct {
-  FbleInstr _base;    /**< FbleInstr base class. */
-  FbleVar result;     /**< The value to return. */
+  FbleInstr _base;
+  FbleVar result;
 } FbleReturnInstr;
 
 /**
- * FBLE_TYPE_INSTR: Creates a type value.
+ * @struct[FbleTypeInstr] FBLE_TYPE_INSTR: Creates a type value.
+ *  @code[txt] @
+ *   *dest = @<>
  *
- * *dest = @<>
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleLocalIndex dest;  /**< Where to put the created value. */
+  FbleInstr _base;
+  FbleLocalIndex dest;
 } FbleTypeInstr;
 
 /**
- * FBLE_LIST_INSTR: Creates a list value.
+ * @struct[FbleListInstr] FBLE_LIST_INSTR: Creates a list value.
+ *  @code[txt] @
+ *   *dest = [a1, a2, ..., aN]
  *
- * *dest = [a1, a2, ..., aN]
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleVarV][args] The elements of the list to create.
+ *  @field[FbleLocalIndex][dest] Where to put the created list.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleVarV args;        /**< The elements of the list to create. */
-  FbleLocalIndex dest;  /**< Where to put the created list. */
+  FbleInstr _base;
+  FbleVarV args;
+  FbleLocalIndex dest;
 } FbleListInstr;
 
 /**
- * FBLE_LITERAL_INSTR: Creates a literal value.
+ * @struct[FbleLiteralInstr] FBLE_LITERAL_INSTR: Creates a literal value.
+ *  @code[txt] @
+ *   *dest = "xxx"
  *
- * *dest = "xxx"
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleTagV][letters] The letters to create the literal from.
+ *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
-  FbleInstr _base;      /**< FbleInstr base class. */
-  FbleTagV letters;     /**< The letters to create the literal from. */
-  FbleLocalIndex dest;  /**< Where to put the created value. */
+  FbleInstr _base;
+  FbleTagV letters;
+  FbleLocalIndex dest;
 } FbleLiteralInstr;
 
 /**
- * FBLE_NOP_INSTRUCTION: Does nothing.
+ * @struct[FbleNopInstruction] FBLE_NOP_INSTRUCTION: Does nothing.
+ *  This is used for a particular case where we need to force profiling
+ *  operations to run at a certain point in the code.
  *
- * This is used for a particular case where we need to force profiling
- * operations to run at a certain point in the code.
+ *  @field[FbleInstr][_base] FbleInstr base clsas.
  */
 typedef struct {
   FbleInstr _base;

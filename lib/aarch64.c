@@ -25,28 +25,42 @@ typedef unsigned int LabelId;
 /** Printf format string for printing label. */
 #define LABEL ".Lx%x"
 
-/** A vector of strings. */
+/**
+ * @struct[LocV] A vector of strings.
+ *  @field[size_t][size] Number of elements.
+ *  @field[const char**][xs] The elements.
+ */
 typedef struct {
-  size_t size;        /**< Number of elements. */
-  const char** xs;    /**< The elements. */
+  size_t size;
+  const char** xs;
 } LocV;
 
 /**
- * Stack frame layout for _Run_ functions.
+ * @struct[RunStackFrame] Stack frame layout for _Run_ functions.
+ *  Note: The size of this struct must be a multiple of 16 bytes to avoid bus
+ *  errors.
  *
- * Note: The size of this struct must be a multiple of 16 bytes to avoid bus
- * errors.
+ *  @field[void*][FP] Frame pointer.
+ *  @field[void*][LR] Link register.
+ *  @field[void*][r_heap_save] Saved contents of R_HEAP reg.
+ *  @field[void*][r_locals_save] Saved contents of R_LOCALS reg.
+ *  @field[void*][r_args_save] Saved contents of R_ARGS reg.
+ *  @field[void*][r_statics_save] Saved contents of R_STATICS reg.
+ *  @field[void*][r_profile_block_id_save]
+ *   Saved contents of R_PROFILE_BLOCK_ID reg.
+ *  @field[void*][r_profile_save] Saved contents of R_PROFILE reg.
+ *  @field[void*][locals] Local variables.
  */
 typedef struct {
-  void* FP;                 /**< Frame pointer. */
-  void* LR;                 /**< Link register. */
-  void* r_heap_save;        /**< Saved contents of R_HEAP reg. */
-  void* r_locals_save;      /**< Saved contents of R_LOCALS reg. */
-  void* r_args_save;        /**< Saved contents of R_ARGS reg. */
-  void* r_statics_save;     /**< Saved contents of R_STATICS reg. */
-  void* r_profile_block_id_save;  /**< Saved contents of R_PROFILE_BLOCK_ID reg. */
-  void* r_profile_save;     /**< Saved contents of R_PROFILE reg. */
-  void* locals[];           /**< Local variables. */
+  void* FP;
+  void* LR;
+  void* r_heap_save;
+  void* r_locals_save;
+  void* r_args_save;
+  void* r_statics_save;
+  void* r_profile_block_id_save;
+  void* r_profile_save;
+  void* locals[];
 } RunStackFrame;
 
 static void AddLoc(const char* source, LocV* locs);
@@ -67,7 +81,13 @@ static size_t StackBytesForCount(size_t count);
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 
-// Context for emitting binary search instructions for union select.
+/*
+ * @struct[Context] Context for union select binary search codegen.
+ *  @field[FILE*][fout] The file to output instructions to.
+ *  @field[size_t][func_id] The id of the current function.
+ *  @field[size_t][pc] The pc of the union select instruction.
+ *  @field[size_t][label] Unique id to use for next generated label.
+ */
 typedef struct {
   FILE* fout;
   size_t func_id;
@@ -77,13 +97,20 @@ typedef struct {
 
 static const size_t NONE = -1;
 
-// Interval info for emitting binary search instructions for union select.
+/**
+ * @struct[Interval] Info about interval for union select codegen.
+ *  @field[size_t][lo] Lowest possible tag, inclusive.
+ *  @field[size_t][hi] Highest possible tag, inclusive.
+ *  @field[FbleBranchTarget*][targets] Branch targets in the interval.
+ *  @field[size_t][num_targets] Number of branch targets in the interval.
+ *  @field[size_t][default_] Default target.
+ */
 typedef struct {
-  size_t lo;                    // lowest possible tag, inclusive.
-  size_t hi;                    // highest possible tag, inclusive.
-  FbleBranchTarget* targets;    // branch targets in the interval.
-  size_t num_targets;           // number of branch targets in the interval
-  size_t default_;              // default target.
+  size_t lo;
+  size_t hi;
+  FbleBranchTarget* targets;
+  size_t num_targets;
+  size_t default_;
 } Interval;
 
 static size_t GetSingleTarget(Interval* interval);

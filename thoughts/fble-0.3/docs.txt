@@ -125,8 +125,8 @@ Great. That should be easily doable, right?
 
 List of files to go through for @struct conversion.
 
-lib/aarch64.c
-lib/code.h
+lib/aarch64.c     DONE
+lib/code.h        DONE
 lib/compile.c
 lib/expr.h
 lib/heap.c
