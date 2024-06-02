@@ -81,54 +81,74 @@
 // The average period of time between random samples.
 #define RANDOM_SAMPLE_PERIOD 1024
 
-/** Representation of a call in the current call stack. */
+/**
+ * @struct[Call] Representation of a call in the current call stack.
+ *  @field[FbleBlockId][id] The id of the current block.
+ *  @field[size_t][exit]
+ *   The number of elements to pop from the sample stack when exiting this
+ *   call.
+ */
 typedef struct {
-  /** The id of the current block. */
   FbleBlockId id;   
-
-  /** The number of elements to pop from the sample stack when exiting this call. */
   size_t exit;
 } Call;
 
 /**
- * A stack of calls.
+ * @struct[CallStack] A stack of calls.
+ *  The call stack is organized into a linked list of chunks.
  *
- * The call stack is organized into a linked list of chunks.
+ *  @field[CallStack*][tail] The next chunk down in the stack.
+ *  @field[CallStack*][next]
+ *   The next (unused) chunk up in the stack. May be NULL.
+ *  @field[Call*][top] Pointer to the valid top entry on the stack.
+ *  @field[Call*][end] Pointer past the last allocated data in this chunk.
+ *  @field[Call*][data] The raw data for this chunk.
  */
 typedef struct CallStack {
-  struct CallStack* tail; /**< The next chunk down in the stack. */
-  struct CallStack* next; /**< The next (unused) chunk up in the stack. May be NULL. */
-  Call* top;              /**< Pointer to the valid top entry on the stack. */
-  Call* end;              /**< Pointer past the last allocated data in this chunk. */
-  Call data[];            /**< The raw data for this chunk. */
+  struct CallStack* tail;
+  struct CallStack* next;
+  Call* top; 
+  Call* end;
+  Call data[];
 } CallStack;
 
-/** Representation of a call in a sample. */
+/**
+ * @struct[Sample] Representation of a call in a sample.
+ *  @field[FbleBlockId][caller] The caller for this particular call.
+ *  @field[FbleCallData*][call]
+ *    Cached result of GetCallData(caller, callee). call->id gives callee id
+ *    for the sample.
+ */
 typedef struct {
-  FbleBlockId caller;   /**< The caller for this particular call. */
-
-  // Cached result of GetCallData(caller, callee).
-  // call->id gives callee id for the sample.
+  FbleBlockId caller;
   FbleCallData* call;   
 } Sample;
 
 /**
- * A stack of Samples.
+ * @struct[SampleStack] A stack of Samples.
+ *  This is different from the call stack in that calls to the same
+ *  caller/callee appear at most once in the sample stack, and it includes
+ *  information about auto-exited calls.
  *
- * This is different from the call stack in that calls to the same
- * caller/callee appear at most once in the sample stack, and it includes
- * information about auto-exited calls.
+ *  @field[size_t][capacity]
+ *   Number of samples stack space has been allocated for.
+ *  @field[size_t][size]
+ *   Number of samples actually on the stack.
+ *  @field[Sample*][xs] Samples on the stack.
  */
 typedef struct {
-  size_t capacity;    /**< Number of samples stack space has been allocated for. */
-  size_t size;        /**< Number of samples actually on the stack. */
-  Sample* xs;         /**< Samples on the stack. */
+  size_t capacity;
+  size_t size;
+  Sample* xs;
 } SampleStack;
 
 /**
- * An ever expanding vector of call data.
+ * @struct[CallDataEV] An ever expanding vector of call data.
+ *  Capacity may be 0 and xs NULL to indicate an empty vector.
  *
- * Capacity may be 0 and xs NULL to indicate an empty vector.
+ *  @field[size_t][capacity] Number of elements of xs allocated.
+ *  @field[size_t][size] Number of valid elements on the vector.
+ *  @field[FbleCallData**][xs] The elements of the vector.
  */
 typedef struct {
   size_t capacity;
@@ -136,26 +156,30 @@ typedef struct {
   FbleCallData** xs;
 } CallDataEV;
 
-/** Profiling state for a thread of execution. */
+/**
+ * @struct[FbleProfileThread] Profiling state for a thread of execution.
+ *  @field[FbleProfile*][profile] The profile data.
+ *  @field[CallStack*][calls] The current call stack.
+ *  @field[SampleStack][sample] The current sample stack.
+ *  @field[CallDataEV*][sample_set]
+ *   The set of samples on the sample stack, for fast lookup of FbleCallData
+ *   for a (caller,callee) pair.
+ *  
+ *   sample_set[caller] points to list of FbleCallData where call->id is the
+ *   id of the callee. FbleCallData are sorted such that most recently added
+ *   to the sample_set is at the end.
+ *   
+ *   sample_set[caller] is empty if the pair (caller,callee) does not appear
+ *   on the sample stack.
+ *  @field[size_t][sample_set_size] Length of sample_set.
+ *  @field[int32_t][ttrs] Time to next random sample.
+ */
 struct FbleProfileThread {
-  FbleProfile* profile;   /**< The profile data. */
-
-  CallStack* calls;       /**< The current call stack. */
-  SampleStack sample;     /**< The current sample stack. */
-
-  // The set of samples on the sample stack, for fast lookup of FbleCallData
-  // for a (caller,callee) pair.
-  //
-  // sample_set[caller] points to list of FbleCallData where call->id is the
-  // id of the callee. FbleCallData are sorted such that most recently added
-  // to the sample_set is at the end.
-  // 
-  // sample_set[caller] is empty if the pair (caller,callee) does not appear
-  // on the sample stack.
+  FbleProfile* profile;
+  CallStack* calls;
+  SampleStack sample;
   CallDataEV* sample_set;
-  size_t sample_set_size;   // Length of sample_set.
-
-  // Time to next random sample.
+  size_t sample_set_size;
   int32_t ttrs;
 };
 

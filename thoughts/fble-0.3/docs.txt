@@ -131,9 +131,9 @@ lib/compile.c     DONE
 lib/expr.h
 lib/heap.c
 lib/kind.h        DONE
-lib/load.c
+lib/load.c        DONE
 lib/parse.y       DONE
-lib/profile.c
+lib/profile.c     DONE
 lib/tag.h         DONE
 lib/tc.h
 lib/type.c
@@ -142,4 +142,4 @@ lib/type.h
 lib/unused.c      DONE
 lib/value.c
 lib/var.h         DONE
-pkgs/app/app.c
+pkgs/app/app.c    DONE

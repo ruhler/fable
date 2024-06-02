@@ -27,12 +27,17 @@
 #define EX_USAGE 2
 #define EX_FAILURE 3
 
+/**
+ * @struct[App] Application state.
+ *  @field[SDL_Window*][window] The application window for drawing.
+ *  @field[Uint32][time] The application time based on effect ticks.
+ *  @field[int*][fpsHistogram]
+ *   The value at index i is the count of samples with i frames per second.
+ *   Anything above 60 FPS is counted towards i = 60.
+ */
 typedef struct {
   SDL_Window* window;
   Uint32 time;
-
-  // fpsHistogram[i] is the number of samples with i frames per second.
-  // Anything above 60 FPS is counted towards i = 60.
   int fpsHistogram[61];
 } App;
 

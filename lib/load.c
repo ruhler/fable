@@ -22,17 +22,27 @@
  */
 const char* FbleDefaultPackagePath = FBLE_CONFIG_DATADIR "/fble";
 
-/** An fble search path. */
+/**
+ * @struct[FbleSearchPath] An fble search path.
+ *  @field[size_t][size] The number of elements.
+ *  @field[FbleString**][xs] The elements.
+ */
 struct FbleSearchPath {
-  size_t size;      /**< The number of elements. */
-  FbleString** xs;  /**< The elements. */
+  size_t size;
+  FbleString** xs;
 };
 
-/** A stack of modules in the process of being loaded. */
+/**
+ * @struct[Stack] A stack of modules in the process of being loaded.
+ *  @field[FbleLoadedModule][module] The value of the module.
+ *  @field[size_t][deps_loaded]
+ *   The number of deps we have attempted to load so far.
+ *  @field[Stack*][tail] The rest of the stack of modules.
+ */
 typedef struct Stack {
-  FbleLoadedModule module;  /**< The value of the module. */
-  size_t deps_loaded;  /**< The number of deps we have attempted to load so far. */
-  struct Stack* tail;  /**< The rest of the stack of modules. */
+  FbleLoadedModule module;
+  size_t deps_loaded;
+  struct Stack* tail;
 } Stack;
 
 static FbleString* FindPackageAt(const char* package, const char* package_dir);
