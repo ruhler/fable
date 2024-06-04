@@ -4,6 +4,9 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
+* move heap.c contents to type.c, given it's only used for types now and
+  to avoid confusion otherwise? Or at least rename type_heap.c?
+
 Doc Comments
 * dccheck require @type in @value content?
 * Make use of @struct doc comments in lib, tests, pkgs, etc.

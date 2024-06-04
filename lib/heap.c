@@ -12,27 +12,26 @@
 #include <fble/fble-alloc.h>
 
 /**
- * A list of objects.
+ * @struct[ObjList] A list of objects.
+ *  @field[ObjList*][prev] Previous entry in doubly linked list of objects.
+ *  @field[ObjList*][next] Next entry in doubly linked list of objects.
  */
 typedef struct ObjList {
-  struct ObjList* prev;   /**< Previous entry in doubly linked list of objects. */
-  struct ObjList* next;   /**< Next entry in doubly linked list of objects. */
+  struct ObjList* prev;
+  struct ObjList* next;
 } ObjList;
 
 /**
- * A generation of allocated objects.
+ * @struct[Gen] A generation of allocated objects.
+ *  @field[size_t][id] The id of the generation.
+ *  @field[ObjList][roots] The list of root objects in this generation.
+ *  @field[ObjList][non_roots] The list of non-root objects in this generation.
+ *  @field[Gen*][tail] Singly linked list of generations.
  */
 typedef struct Gen {
-  // The id of the generation.
   size_t id;
-
-  // The list of root objects in this generation.
   ObjList roots;
-
-  // The list of non-root objects in this generation.
   ObjList non_roots;
-
-  // Singly linked list of generations.
   struct Gen* tail;
 } Gen;
 
@@ -43,19 +42,19 @@ typedef struct Gen {
 #define NEW_ID ((size_t)-1)
 
 /**
- * An object allocated on the heap.
+ * @struct[Obj] An object allocated on the heap.
+ *  @field[ObjList][list] List of objects this object belongs to.
+ *  @field[Gen*][gen] The generation the object currently belongs to.
+ *  @field[size_t][refcount]
+ *   The number of external (non-cyclic) references to this object.  Objects
+ *   with refcount greater than 0 are roots.
+ *  @field[char*][obj] The object pointer visible to the user.
  */
 typedef struct {
-  ObjList list;       /**< List of objects this object belongs to. */
-  Gen* gen;           /**< The generation the object currently belongs to. */
-
-  /**
-   * The number of external (non-cyclic) references to this object.
-   * Objects with refcount greater than 0 are roots.
-   */
+  ObjList list;
+  Gen* gen;
   size_t refcount;
-
-  char obj[];         /**< The object pointer visible to the user. */
+  char obj[];
 } Obj;
 
 /**
@@ -73,86 +72,80 @@ typedef struct {
 #define ToObj(obj) (((Obj*)obj)-1)
 
 /**
- * GC managed heap of objects.
+ * @struct[FbleHeap] GC managed heap of objects.
+ *  See documentation in heap.h.
  *
- * See documentation in heap.h.
+ *  @field[void (*)(FbleHeap*, void*)][refs]
+ *   The refs callback to traverse reference from an object.
+ *
+ *  @field[void (*)(FbleHeap*, void*)][on_free]
+ *   The on_free callback to indicate an object has been freed.
+ *
+ *  @field[Gen*][old]
+ *   List of older generations of objects.
+ *
+ *   These generations will not be traversed this GC cycle.  In order from
+ *   youngest generation (largest id) to oldest generation (smallest id).
+ *  
+ *   Invariants (unless it has been recorded in the 'next' field it needs to
+ *   be fixed next GC):
+ *
+ *   @i Older generations do not reference younger generations.
+ *   @item
+ *    All objects in a generation are reachable from the first root object
+ *    listed in the generation.
+ *
+ *  @field[Gen*][mark]
+ *   Temporary generation for objects that have been marked but not yet
+ *   traversed. id is MARK_ID.
+ *
+ *  @field[Gen*][gc]
+ *   The generations of objects being traversed this GC cycle.  This
+ *   represents the union of all the generations being traversed this GC
+ *   cycle.
+ *  
+ *   For convenience, we move all objects to the roots and non_roots fields of
+ *   the first generation on the list.
+ *  
+ *   The rest of the generations on the list we keep around to maintain the
+ *   map from Gen* to id and to be able to clean up the generation after the
+ *   current GC traversal has completed.
+ *  
+ *   All generations in this list have id GC_ID.
+ *
+ *  @field[Gen*][save]
+ *   Objects that have been marked to be saved this GC cycle, for example,
+ *   because of some reference taken from old or new generations.
+ *  
+ *   The id is SAVE_ID.
+ *
+ *  @field[Gen*][new]
+ *   The generation where newly allocated objects will be placed.  Not
+ *   traversed in the current GC cycle.
+ *  
+ *   The id is NEW_ID.
+ *
+ *  @field[Gen*][next]
+ *   The oldest generation we plan to traverse in the next GC cycle.
+ *   Borrowed, not owned. This could point to 'new' or one of the 'old'
+ *   generations.
+ *
+ *  @field[ObjList][free]
+ *   List of free objects.
+ *  
+ *   These objects have been determined to be unreachable. They have not yet
+ *   had their on_free callbacks called.
  */
 struct FbleHeap {
-  /** The refs callback to traverse reference from an object. */
   void (*refs)(FbleHeap* heap, void* obj);
-
-  /** The on_free callback to indicate an object has been freed. */
   void (*on_free)(FbleHeap* heap, void* obj);
-
-  /**
-   * List of older generations of objects.
-   * These generations will not be traversed this GC cycle.
-   * In order from youngest generation (largest id) to oldest generation
-   * (smallest id).
-   *
-   * Invariants (unless it has been recorded in the 'next' field it needs to
-   * be fixed next GC):
-   * * Older generations do not reference younger generations.
-   * * All objects in a generation are reachable from the first root object
-   *   listed in the generation.
-   */
   Gen* old;
-
-  /**
-   * Temporary generation for objects that have been marked but not yet
-   * traversed.
-   *
-   * id is MARK_ID.
-   */
   Gen* mark;
-
-  /**
-   * The generations of objects being traversed this GC cycle.
-   * This represents the union of all the generations being traversed this GC
-   * cycle.
-   *
-   * For convenience, we move all objects to the roots and non_roots
-   * fields of the first generation on the list.
-   *
-   * The rest of the generations on the list we keep around to maintain the
-   * map from Gen* to id and to be able to clean up the generation after the
-   * current GC traversal has completed.
-   *
-   * All generations in this list have id GC_ID.
-   */
   Gen* gc;
-
-  /**
-   * Objects that have been marked to be saved this GC cycle, for example,
-   * because of some reference taken from old or new generations.
-   *
-   * The id is SAVE_ID.
-   */
   Gen* save;
-
-  /**
-   * The generation where newly allocated objects will be placed.
-   * Not traversed in the current GC cycle.
-   *
-   * The id is NEW_ID.
-   */
   Gen* new;
-
-  // The oldest generation we plan to traverse in the next GC cycle.
-  // Borrowed, not owned. This could point to 'new' or one of the
-  // 'old' generations.
   Gen* next;
-
-  /**
-   * List of free objects.
-   *
-   * These objects have been determined to be unreachable. They have not yet
-   * had their on_free callbacks called.
-   */
   ObjList free;
-
-  size_t objects_allocated;
-  size_t traversal_time;
 };
 
 static void MoveToFront(ObjList* dest, Obj* obj);
@@ -268,7 +261,6 @@ static bool IncrGc(FbleHeap* heap)
     Obj* obj = (Obj*)heap->free.next;
     obj->list.prev->next = obj->list.next;
     obj->list.next->prev = obj->list.prev;
-    heap->objects_allocated--;
     heap->on_free(heap, obj->obj);
     FbleFree(obj);
   }
@@ -370,7 +362,6 @@ static bool IncrGc(FbleHeap* heap)
   heap->next = heap->new;
 
   // GC finished. Yay!
-  heap->traversal_time = 0;
   return true;
 }
 
@@ -392,9 +383,6 @@ FbleHeap* FbleNewHeap(
 
   heap->free.prev = &heap->free;
   heap->free.next = &heap->free;
-
-  heap->objects_allocated = 0;
-  heap->traversal_time = 0;
 
   return heap;
 }
@@ -428,8 +416,6 @@ void* FbleNewHeapObject(FbleHeap* heap, size_t size)
   IncrGc(heap);
 
   // Objects are allocated as New Root.
-  heap->objects_allocated++;
-  heap->traversal_time++;
   Obj* obj = FbleAllocExtra(Obj, size);
   obj->list.next = heap->new->roots.next;
   obj->list.prev = &heap->new->roots;
@@ -550,7 +536,6 @@ void FbleHeapFullGc(FbleHeap* heap)
       obj->list.prev->next = obj->list.next;
       obj->list.next->prev = obj->list.prev;
       heap->on_free(heap, obj->obj);
-      heap->objects_allocated--;
       FbleFree(obj);
     }
   } while (!done);
