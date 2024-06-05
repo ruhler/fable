@@ -14,7 +14,7 @@
 #include "var.h"        // for FbleVar
 
 /**
- * Abstract syntax for already type-checked fble expressions.//
+ * Abstract syntax for already type-checked fble expressions.
  *
  * FbleTc is like FbleExpr, except that:
  * * Field and variable names are replaced with integer indicies.
@@ -22,10 +22,14 @@
  */
 typedef struct FbleTc FbleTc;
 
-/** Vector of FbleTc. */
+/**
+ * @struct[FbleTcV] Vector of FbleTc.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleTc**][xs] The elements.
+ */
 typedef struct {
-  size_t size;  /**< Number of elements. */
-  FbleTc** xs;  /**< The elements. */
+  size_t size;
+  FbleTc** xs;
 } FbleTcV;
 
 /**
@@ -54,192 +58,263 @@ typedef enum {
 } FbleTcMagic;
 
 /**
- * Base class for FbleTc types.
+ * @struct[FbleTc] Base class for FbleTc types.
+ *  A tagged union of tc types. All tcs have the same initial layout as
+ *  FbleTc.  The tag can be used to determine what kind of tc this is to get
+ *  access to additional fields of the value by first casting to that specific
+ *  type of tc.
  *
- * A tagged union of tc types. All tcs have the same initial layout as FbleTc.
- * The tag can be used to determine what kind of tc this is to get access to
- * additional fields of the value by first casting to that specific type of
- * tc.
+ *  FbleTc is reference counted. Pass by pointer. Explicit copy and free
+ *  required. The magic field is set to FBLE_TC_MAGIC and is used to detect
+ *  double frees of FbleTc.
  *
- * FbleTc is reference counted. Pass by pointer. Explicit copy and free
- * required. The magic field is set to FBLE_TC_MAGIC and is used to detect
- * double frees of FbleTc.
+ *  @field[size_t][refcount] Reference count.
+ *  @field[FbleTcMagic][magic] FBLE_TC_MAGIC.
+ *  @field[FbleTcTag][tag] Kind of FbleTc.
+ *  @field[FbleLoc][loc]
+ *   The location of the start of the expression in source code. Used for
+ *   general purpose debug information.
  */
 struct FbleTc {
-  size_t refcount;    /**< Reference count. */
-  FbleTcMagic magic;  /**< FBLE_TC_MAGIC. */
-  FbleTcTag tag;      /**< Kind of FbleTc. */
-
-  /**
-   * The location of the start of the expression in source code. Used for
-   * general purpose debug information.
-   */
+  size_t refcount;
+  FbleTcMagic magic;
+  FbleTcTag tag;
   FbleLoc loc;
 };
 
 /**
- * FBLE_TYPE_VALUE_TC: Computes the type value.
+ * @struct[FbleTypeValueTc] FBLE_TYPE_VALUE_TC
+ *  Computes the type value.
+ *
+ *  @field[FbleTc][_base] FbleTc base class
  */
 typedef struct {
-  FbleTc _base;     /**< FbleTc base class */
+  FbleTc _base;
 } FbleTypeValueTc;
 
 /**
- * FBLE_VAR_TC: A variable expression.
+ * @struct[FbleVarTc] FBLE_VAR_TC
+ *  A variable expression. Used to represent local variables, static
+ *  variables, and arguments to functions.
  *
- * Used to represent local variables, static variables, and arguments to
- * functions.
+ *  For args, index starts at 0 and increases by one for each argument going
+ *  from left to right.
  *
- * For args, index starts at 0 and increases by one for each argument going
- * from left to right.
+ *  For local variables, index starts at 0 and increases by one for each new
+ *  variable introduced, going from left to right, outer most to inner most
+ *  binding.
  *
- * For local variables, index starts at 0 and increases by one for each new
- * variable introduced, going from left to right, outer most to inner most
- * binding.
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleVar][var] Identifies the variable.
  */
 typedef struct {
-  FbleTc _base;   /**< FbleTc base class. */
-  FbleVar var;    /**< Identifies the variable. */
+  FbleTc _base;
+  FbleVar var;
 } FbleVarTc;
 
 /**
- * Information for a binding.
+ * @struct[FbleTcBinding] Information for a binding.
+ *  Used for let bindings, exec bindings, and case branches.
  *
- * Used for let bindings, exec bindings, and case branches.
+ *  @field[FbleName][name] The name of the variable or branch.
+ *  @field[FbleLoc][loc] The location of the value.
+ *  @field[FbleTc*][tc] The value of the binding.
  */
 typedef struct {
-  FbleName name;  /**< The name of the variable or branch. */
-  FbleLoc loc;    /**< The location of the value. */
-  FbleTc* tc;     /**< The value of the binding. */
+  FbleName name;
+  FbleLoc loc;
+  FbleTc* tc;
 } FbleTcBinding;
 
-/** Vector of FbleTcBinding. */
+/**
+ * @struct[FbleTcBindingV] Vector of FbleTcBinding.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleTcBinding*][xs] The elements.
+ */
 typedef struct {
-  size_t size;        /**< Number of elements. */
-  FbleTcBinding* xs;  /**< The elements. */
+  size_t size;
+  FbleTcBinding* xs;
 } FbleTcBindingV;
 
 /**
- * FBLE_LET_TC: A let expression.
+ * @struct[FbleLetTc] FBLE_LET_TC
+ *  A let expression.
  *
- * The bindings are bound to variables implicitly based on the position of the
- * binding in the let expression and the position of the let expression in its
- * parent expression as specified for FbleVar.
+ *  The bindings are bound to variables implicitly based on the position of
+ *  the binding in the let expression and the position of the let expression
+ *  in its parent expression as specified for FbleVar.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[bool][recursive] false if the let is a non-recursive let expression.
+ *  @field[FbleTcBindingV][bindings] The variables being defined.
+ *  @field[FbleTc*][body] The body of the let.
  */
 typedef struct {
-  FbleTc _base;             /**< FbleTc base class. */
-
-  /** false if the let is a non-recursive let expression. */
+  FbleTc _base;
   bool recursive;           
-  FbleTcBindingV bindings;  /**< The variables being defined. */
-  FbleTc* body;             /**< The body of the let. */
+  FbleTcBindingV bindings;
+  FbleTc* body;
 } FbleLetTc;
 
 /**
- * FBLE_STRUCT_VALUE_TC: A struct value expression.
+ * @struct[FbleStructValueTc] FBLE_STRUCT_VALUE_TC
+ *  A struct value expression.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTcV][fields] Arguments to the struct value.
  */
 typedef struct {
-  FbleTc _base;       /**< FbleTc base class. */
-  FbleTcV fields;     /**< Arguments to the struct value. */
+  FbleTc _base;
+  FbleTcV fields;
 } FbleStructValueTc;
 
 /**
- * FBLE_STRUCT_COPY_TC: A struct copy expression.
+ * @struct[FbleStructCopyTc] FBLE_STRUCT_COPY_TC
+ *  A struct copy expression.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTc*][source] The source object.
+ *  @field[FbleTcV][fields]
+ *   Arguments to the struct value, or NULL to take from source.
  */
 typedef struct {
-  FbleTc _base;      /**< FbleTc base class. */
-  FbleTc* source;    /**< The source object. */
-  FbleTcV fields;    /**< Arguments to the struct value, or NULL to take from source */
+  FbleTc _base;
+  FbleTc* source;
+  FbleTcV fields;
 } FbleStructCopyTc;
 
 /**
- * FBLE_UNION_VALUE_TC: A union value expression.
+ * @struct[FbleUnionValueTc] FBLE_UNION_VALUE_TC
+ *  A union value expression.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[size_t][tag] Tag of the union value to create.
+ *  @field[FbleTc*][arg] Argument to the union valu to create.
  */
 typedef struct {
-  FbleTc _base;       /**< FbleTc base class. */
-  size_t tag;         /**< Tag of the union value to create. */
-  FbleTc* arg;        /**< Argument to the union value to create. */
+  FbleTc _base;
+  size_t tag;
+  FbleTc* arg;
 } FbleUnionValueTc;
 
-/** Target of a union select branch. */
+/**
+ * @struct[FbleTcBranchTarget] Target of a union select branch.
+ *  @field[size_t][tag] Tag for the branch target.
+ *  @field[FbleTcBinding][target] The branch target.
+ */
 typedef struct {
   size_t tag;
   FbleTcBinding target;
 } FbleTcBranchTarget;
 
-/** Vector of FbleTcBranchTarget. */
+/**
+ * @struct[FbleTcBranchTargetV] Vector of FbleTcBranchTarget.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleTcBranchTarget*][xs] The elements.
+ */
 typedef struct {
   size_t size;
   FbleTcBranchTarget* xs;
 } FbleTcBranchTargetV;
 
 /**
- * FBLE_UNION_SELECT_TC: A union select expression.
+ * @struct[FbleUnionSelectTc] FBLE_UNION_SELECT_TC
+ *  A union select expression.
  *
- * * Targets must be listed in tag order.
- * * A default target is required.
- * * Not all tags need be present in the list of non-default targets.
+ *  @i Targets must be listed in tag order.
+ *  @i A default target is required.
+ *  @i Not all tags need be present in the list of non-default targets.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTc*][condition] The condition to the union select.
+ *  @field[size_t][num_tags] Number of possible tags for condition.
+ *  @field[FbleTcBranchTargetV][targets] Non-default targets.
+ *  @field[FbleTcBinding][default_] The default target.
  */
 typedef struct {
-  FbleTc _base;             /**< FbleTc base class. */
-  FbleTc* condition;        /**< The condition to the union select. */
-  size_t num_tags;          /**< Number of possible tags for condition. */
+  FbleTc _base;
+  FbleTc* condition;
+  size_t num_tags;
   FbleTcBranchTargetV targets;
   FbleTcBinding default_;
 } FbleUnionSelectTc;
 
 /**
- * FBLE_DATA_ACCESS_TC: Struct and union access expressions.
+ * @struct[FbleDataAccessTc] FBLE_DATA_ACCESS_TC
+ *  Struct and union access expressions.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleDataTypeTag][datatype] Whether this is struct or union access.
+ *  @field[FbleTc*][obj] The object to access a field of.
+ *  @field[size_t][tag] The field to access.
+ *  @field[FbleLoc][loc] Location to use for error reporting.
  */
 typedef struct {
-  FbleTc _base;               /**< FbleTc base class. */
-  FbleDataTypeTag datatype;   /**< Whether this is struct or union access. */
-  FbleTc* obj;                /**< The object to access a field of. */
-  size_t tag;                 /**< The field to access. */
-  FbleLoc loc;                /**< Location to use for error reporting. */
+  FbleTc _base;
+  FbleDataTypeTag datatype;
+  FbleTc* obj;
+  size_t tag;
+  FbleLoc loc;
 } FbleDataAccessTc;
 
 /**
- * FBLE_FUNC_VALUE_TC: A function value.
+ * @struct[FbleFuncValueTc] FBLE_FUNC_VALUE_TC
+ *  A function value. Supports multi-argument functions.
  *
- * Supports multi-argument functions.
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleLoc][body_loc] Location of the body.
+ *  @field[FbleVarV][scope] Sources of static variables.
+ *  @field[FbleNameV][statics] Names of static variables.
+ *  @field[FbleNameV][args] Names of arguments.
+ *  @field[FbleTc*][body] The body of the function.
  */
 typedef struct {
-  FbleTc _base;         /**< FbleTc base class. */
-  FbleLoc body_loc;     /**< Location of the body. */
-  FbleVarV scope;       /**< Sources of static variables. */
-  FbleNameV statics;    /**< Names of static variables. */
-  FbleNameV args;       /**< Names of arguments. */
-  FbleTc* body;         /**< The body of the function. */
+  FbleTc _base;
+  FbleLoc body_loc;
+  FbleVarV scope;
+  FbleNameV statics;
+  FbleNameV args;
+  FbleTc* body;
 } FbleFuncValueTc;
 
 /**
- * FBLE_FUNC_APPLY_TC: Function application.
+ * @struct[FbleFuncApplyTc] FBLE_FUNC_APPLY_TC
+ *  Function application.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTc*][func] The function to apply.
+ *  @field[FbleTc*][arg] Argument to function to apply.
  */
 typedef struct {
-  FbleTc _base;       /**< FbleTc base class. */
-  FbleTc* func;       /**< The function to apply. */
-  FbleTc* arg;        /**< Argument to function to apply. */
+  FbleTc _base;
+  FbleTc* func;
+  FbleTc* arg;
 } FbleFuncApplyTc;
 
 /**
- * FBLE_LIST_TC: List part of a list expression.
+ * @struct[FbleListTc] FBLE_LIST_TC
+ *  List part of a list expression.
  *
- * An expression to construct the list value that will be passed to the
- * function as part of a list expression.
+ *  An expression to construct the list value that will be passed to the
+ *  function as part of a list expression.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTcV][fields] The elements of the list.
  */
 typedef struct {
-  FbleTc _base;       /**< FbleTc base class. */
-  FbleTcV fields;     /**< The elements of the list. */
+  FbleTc _base;
+  FbleTcV fields;
 } FbleListTc;
 
 /**
- * FBLE_LITERAL_TC: Literal part of a literal expression.
+ * @struct[FbleLiteralTc] FBLE_LITERAL_TC
+ *  Literal part of a literal expression.
  *
- * An expression to construct the list value that will be passed to the
- * function as part of a literal expression.
+ *  An expression to construct the list value that will be passed to the
+ *  function as part of a literal expression.
  *
- * letters[i] is the tag value to use for the ith letter in the literal.
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTagV][letters] Tag values for letters in the literal.
  */
 typedef struct {
   FbleTc _base;       /**< FbleTc base class. */

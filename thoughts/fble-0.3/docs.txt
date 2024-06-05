@@ -135,9 +135,9 @@ lib/load.c        DONE
 lib/parse.y       DONE
 lib/profile.c     DONE
 lib/tag.h         DONE
-lib/tc.h
-lib/type.c
-lib/typecheck.c
+lib/tc.h          DONE
+lib/type.c        DONE
+lib/typecheck.c   DONE
 lib/type.h
 lib/unused.c      DONE
 lib/value.c

@@ -29,17 +29,26 @@
 #include "heap.h"           // for FbleHeap, etc.
 #include "unreachable.h"
 
-/** Linked list of types. */
+/**
+ * @struct[TypeList] Linked list of types.
+ *  @field[FbleType*][type] The current element.
+ *  @field[TypeList*][next] The rest of the elements.
+ */
 typedef struct TypeList {
-  FbleType* type;           /**< The current element. */
-  struct TypeList* next;    /**< The rest of the elements. */
+  FbleType* type;
+  struct TypeList* next;
 } TypeList;
 
-/** A set of pairs of types. */
+/**
+ * @struct[TypePairs] A set of pairs of types.
+ *  @field[FbleType*][a] The first type of the current pair.
+ *  @field[FbleType*][b] The second type of the current pair.
+ *  @field[TypePairs*][next] The rest of the pairs in the set.
+ */
 typedef struct TypePairs {
-  FbleType* a;              /**< The first type of the current pair. */
-  FbleType* b;              /**< The second type of the current pair. */
-  struct TypePairs* next;   /**< The rest of the pairs in the set. */
+  FbleType* a;
+  FbleType* b;
+  struct TypePairs* next;
 } TypePairs;
 
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);

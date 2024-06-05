@@ -21,53 +21,66 @@
 #include "unused.h"
 
 /**
- * Name of a variable.
+ * @struct[VarName] Name of a variable.
+ *  Variables can refer to normal values or module values.
  *
- * Variables can refer to normal values or module values.
+ *  module == NULL means this is a normal value with name in 'normal'.
+ *  module != NULL means this is a module value with path in 'module'.
  *
- * module == NULL means this is a normal value with name in 'normal'.
- * module != NULL means this is a module value with path in 'module'.
+ *  @field[FbleName][normal] Name for normal variables.
+ *  @field[FbleModulePath*][module] Module for module variables.
  */
 typedef struct {
-  FbleName normal;            /**< Name for normal variables. */
-  FbleModulePath* module;     /**< Module for module variables. */
+  FbleName normal;
+  FbleModulePath* module;
 } VarName;
 
-/** Info about an argument. */
+/**
+ * @struct[Arg] Info about an argument.
+ *  @field[VarName][name] The name of the argument.
+ *  @field[FbleType*][type] The type of the argument.
+ */
 typedef struct {
-  VarName name;       /**< The name of the argument. */
-  FbleType* type;     /**< The type of the argument. */
+  VarName name;
+  FbleType* type;
 } Arg;
 
-/** Vector of Args. */
+/**
+ * @struct[ArgV] Vector of Args.
+ *  @field[size_t][size] Number of elements.
+ *  @field[Arg*][xs] The elements.
+ */
 typedef struct {
-  size_t size;      /**< Number of elements. */
-  Arg* xs;          /**< The elements. */
+  size_t size;
+  Arg* xs;
 } ArgV;
 
 /**
- * Info about a variable visible during type checking.
+ * @struct[Var] Info about a variable visible during type checking.
+ *  A variable that is captured from one scope to another will have a separate
+ *  instance of Var for each scope that it is captured in.
  *
- * A variable that is captured from one scope to another will have a separate
- * instance of Var for each scope that it is captured in.
+ *  @field[VarName][name] The name of the variable.
+ *  @field[FbleType*][type]
+ *   The type of the variable. A reference to the type is owned by this Var.
+ *  @field[bool][used] Teu if the variable is used anywhere at runtime.
+ *  @field[FbleVar][var] The index of the variable.
  */
 typedef struct {
-  VarName name;     /**< The name of the variable. */
-
-  /**
-   * The type of the variable.
-   * A reference to the type is owned by this Var.
-   */
+  VarName name;
   FbleType* type;         
-
-  bool used;        /**< True if the variable is used anywhere at runtime. */
-  FbleVar var;      /**< The index of the variable. */
+  bool used;
+  FbleVar var;
 } Var;
 
-/** Vector of Var. */
+/**
+ * @struct[VarV] Vector of Var.
+ *  @field[size_t][size] Number of elements.
+ *  @field[Var**][xs] The elements.
+ */
 typedef struct {
-  size_t size;    /**< Number of elements. */
-  Var** xs;       /**< The elements. */
+  size_t size;
+  Var** xs;
 } VarV;
 
 // Special value for FbleVarTag used during typechecking to indicate a new
@@ -75,40 +88,34 @@ typedef struct {
 #define TYPE_VAR 4
 
 /**
- * Scope of variables visible during type checking.
+ * @struct[Scope] Scope of variables visible during type checking.
+ *  @field[VarV][statics]
+ *   Variables captured from the parent scope. Scope owns the Vars.
+ *  @field[VarV][args]
+ *   List of args to the current scope. Scope owns the Vars.
+ *  @field[VarV] locals
+ *   Stack of local variables in scope order. Variables may be NULL to
+ *   indicate they are anonymous. The locals->var.tag may be TYPE_VAR to
+ *   indicate the caller should create a type value instead of trying to read
+ *   the var value from locals. Scope owns the Vars.
+ *  @field[size_t][allocated_locals]
+ *   The number of allocated locals. This may be different from locals.size
+ *   because some of the locals.xs can be TYPE_VAR which are unallocated.
+ *  @field[FbleVarV*][captured]
+ *   Collects the source of variables captured from the parent scope. May be
+ *   NULL to indicate that operations on this scope should not have any side
+ *   effects on the parent scope.
+ *  @field[FbleModulePath*][module] The current module being compiled.
+ *  @field[Scope*][parent] The parent of this scope. May be NULL.
  */
 typedef struct Scope {
-  /** Variables captured from the parent scope. Scope owns the Vars. */
   VarV statics;
-
-  /** List of args to the current scope. Scope owns the Vars. */
   VarV args;
-
-  /**
-   * Stack of local variables in scope order.
-   * Variables may be NULL to indicate they are anonymous.
-   * The locals->var.tag may be TYPE_VAR to indicate the caller should create
-   * a type value instead of trying to read the var value from locals.
-   * Scope owns the Vars.
-   */
   VarV locals;
-
-  /**
-   * The number of allocated locals.
-   * This may be different from locals.size because some of the locals.xs can
-   * be TYPE_VAR which are unallocated.
-   */
   size_t allocated_locals;
-
-  /**
-   * Collects the source of variables captured from the parent scope.
-   * May be NULL to indicate that operations on this scope should not have any
-   * side effects on the parent scope.
-   */
   FbleVarV* captured;
-
-  FbleModulePath* module;   /**< The current module being compiled. */
-  struct Scope* parent;     /**< The parent of this scope. May be NULL. */
+  FbleModulePath* module;
+  struct Scope* parent;
 } Scope;
 
 static bool VarNamesEqual(VarName a, VarName b);
@@ -123,16 +130,24 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 static void ReportError(FbleLoc loc, const char* fmt, ...);
 static bool CheckNameSpace(FbleName name, FbleType* type);
 
-/** Pair of returned type and type checked expression. */
+/**
+ * @struct[Tc] Pair of returned type and type checked expression.
+ *  @field[FbleType*][type] The type of the expression.
+ *  @field[FbleTc*][tc] The type checked expression.
+ */
 typedef struct {
-  FbleType* type;   /**< The type of the expression. */
-  FbleTc* tc;       /**< The type checked expression. */
+  FbleType* type;
+  FbleTc* tc;
 } Tc;
 
-/** Vector of Tc. */
+/**
+ * @struct[TcV] Vector of Tc.
+ *  @field[size_t][size] Number of elements.
+ *  @field[Tc*][xs] The elements.
+ */
 typedef struct {
-  size_t size;    /**< Number of elements. */
-  Tc* xs;         /**< The elements. */
+  size_t size;
+  Tc* xs;
 } TcV;
 
 /** Tc returned to indicate that type check has failed. */
@@ -142,16 +157,27 @@ static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
 
 /**
- * Tracks values for automatic cleanup.
+ * @struct[TypeAssignmentVV] A vector of FbleTypeAssignmentV.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleTypeAssignmentV**][xs] The elements.
  */
 typedef struct {
-  FbleTypeV types;      /**< List of types to clean up. */
-  FbleTcV tcs;          /**< List of tcs to clean up. */
-  struct {
-    size_t size;                /**< Number of elements. */
-    FbleTypeAssignmentV** xs;   /**< The elements. */
-  } tyvars;             /**< List of type variables to clean up. */
-  FbleTcBindingV bindings;      /**< List of bindings to clean up. */
+  size_t size;
+  FbleTypeAssignmentV** xs;
+} TypeAssignmentVV;
+
+/**
+ * @struct[Cleaner] Tracks values for automatic cleanup.
+ *  @field[FbleTypeV][types] List of types to clean up.
+ *  @field[FbleTcV][tcs] List of tcs to clean up.
+ *  @field[TypeAssignmentVV][xs] List of type variables to clean up.
+ *  @field[FbleTcBindingV][bindings] List of bindings to clean up.
+ */
+typedef struct {
+  FbleTypeV types;
+  FbleTcV tcs;
+  TypeAssignmentVV tyvars;
+  FbleTcBindingV bindings;
 } Cleaner;
 
 static FbleTcBinding CopyTcBinding(FbleTcBinding binding);
