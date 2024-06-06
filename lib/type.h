@@ -30,151 +30,200 @@ typedef enum {
 } FbleTypeTag;
 
 /**
- * FbleType base class.
+ * @struct[FbleType] FbleType base class.
+ *  A tagged union of type types. All types have the same initial layout as
+ *  FbleType. The tag can be used to determine what kind of type this is to
+ *  get access to additional fields of the type by first casting to that
+ *  specific type of type.
  *
- * A tagged union of type types. All types have the same initial layout as
- * FbleType. The tag can be used to determine what kind of type this is to get
- * access to additional fields of the type by first casting to that specific
- * type of type.
- *
- *   id - a unique id for this type that is preserved across type level
- *        substitution. For internal use in type.c.
+ *  @field[FbleTypeTag][tag] The kind of FbleType.
+ *  @field[FbleLoc][loc] Source location for error reporting.
+ *  @field[bool][visiting] Internal flag. Do not touch.
  */
 typedef struct FbleType {
-  FbleTypeTag tag;    /**< The kind of FbleType. */
-  FbleLoc loc;        /**< Source location for error reporting. */
-  bool visiting;      /**< Internal flag. Do not touch. */
+  FbleTypeTag tag;
+  FbleLoc loc;
+  bool visiting;
 } FbleType;
 
-/** Vector of FbleType. */
+/**
+ * @struct[FbleTypeV] Vector of FbleType.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleType**][xs] The elements.
+ */
 typedef struct {
-  size_t size;      /**< Number of elements. */
-  FbleType** xs;    /**< The elements. */
+  size_t size;
+  FbleType** xs;
 } FbleTypeV;
 
 /**
- * Type name pair used to describe type and function arguments.
+ * @struct[FbleTaggedType] Type name pair.
+ *  Used to describe type and function arguments.
+ *
+ *  @field[FbleType*][type] The type.
+ *  @field[FbleName][name] The name.
  */
 typedef struct {
-  FbleType* type;   /**< The type. */
-  FbleName name;    /**< The name. */
+  FbleType* type;
+  FbleName name;
 } FbleTaggedType;
 
-/** Vector of FbleTaggedType. */
+/**
+ * @struct[FbleTaggedTypeV] Vector of FbleTaggedType.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleTaggedType*][xs] The elements.
+ */
 typedef struct {
-  size_t size;          /**< Number of elements. */
-  FbleTaggedType* xs;   /**< The elements. */
+  size_t size;
+  FbleTaggedType* xs;
 } FbleTaggedTypeV;
 
 /**
- * A struct or union type.
+ * @struct[FbleDataType] A struct or union type.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleDataTypeTag][datatype] Whether this is for struct or union.
+ *  @field[FbleTaggedTypeV][fields] The fields of the data type.
  */
 typedef struct {
-  FbleType _base;             /**< FbleType base class. */
-  FbleDataTypeTag datatype;   /**< Whether this is for struct or union. */
-  FbleTaggedTypeV fields;     /**< The fields of the data type. */
+  FbleType _base;
+  FbleDataTypeTag datatype;
+  FbleTaggedTypeV fields;
 } FbleDataType;
 
-/** A function type. */
+/**
+ * @struct[FbleFuncType] A function type.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleType*][arg] Argument type.
+ *  @field[FbleType*][rtype] Return type.
+ */
 typedef struct {
-  FbleType _base;     /**< FbleType base class. */
-  FbleType* arg;      /**< Argument type. */
-  FbleType* rtype;    /**< Return type. */
+  FbleType _base;
+  FbleType* arg;
+  FbleType* rtype;
 } FbleFuncType;
 
-/** A package type. */
+/**
+ * @struct[FblePackageType] A package type.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleMOdulePath*][path] The package path.
+ *  @field[bool][opaque]
+ *   Helper flag. Used to control whether or not an abstract type associated
+ *   with this package type is considered equal to its underlying type. It is
+ *   temporarily set to false while testing type equality for abstract cast
+ *   expressions.
+ */
 typedef struct {
-  FbleType _base;         /**< FbleType base class. */
-  FbleModulePath* path;   /**< The package path. */
-
-  /**
-   * Helper flag. Used to control whether or not an abstract type associated
-   * with this package type is considered equal to its underlying type.  It is
-   * temporarily set to false while testing type equality for abstract cast
-   * expressions.
-   */
+  FbleType _base;
+  FbleModulePath* path;
   bool opaque;
 } FblePackageType;
 
 /**
- * An abstract type. A type protected by a package type.
+ * @struct[FbleAbstractType] An abstract type.
+ *  A type protected by a package type.
+ *
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FblePackageType*][package] The package with access.
+ *  @field[FbleType*][type] The underlying type.
  */
 typedef struct {
-  FbleType _base;             /**< FbleType base class. */
-  FblePackageType* package;   /**< The package with access. */
-  FbleType* type;             /**< The underlying type. */
+  FbleType _base;
+  FblePackageType* package;
+  FbleType* type;
 } FbleAbstractType;
 
 /**
- * A type variable.
+ * @struct[FbleVarType] A type variable.
+ *  Used for the value of type parameters and recursive type values.
  *
- * Used for the value of type parameters and recursive type values.
+ *  We maintain an invariant when constructing FbleVarTypes that the value is
+ *  not an FBLE_TYPE_TYPE. In other words, the kind must have kind level 0.
+ *  Construct var types using FbleNewVarType to enforce this invariant.
  *
- * We maintain an invariant when constructing FbleVarTypes that the value is
- * not an FBLE_TYPE_TYPE. In other words, the kind must have kind level 0.
- * Construct var types using FbleNewVarType to enforce this invariant.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleKind*][kind] The kind of value that has this type.
+ *  @field[FbleName][name] The name of the type variable.
+ *  @field[FbleType*][value] The value of the type variable. May be NULL.
  */
 typedef struct FbleVarType {
-  FbleType _base;   /**< FbleType base class. */
-  FbleKind* kind;   /**< The kind of value that has this type. */
-  FbleName name;    /**< The name of the type variable. */
-  FbleType* value;  /**< The value of the type variable. May be NULL. */
+  FbleType _base;
+  FbleKind* kind;
+  FbleName name;
+  FbleType* value;
 } FbleVarType;
 
-/** Vector of FbleVarType. */
+/**
+ * @struct[FbleVarTypeV] Vector of FbleVarType.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleVarType**][xs] The elements.
+ */
 typedef struct {
-  size_t size;        /**< Number of elements. */
-  FbleVarType** xs;   /**< The elements. */
+  size_t size;
+  FbleVarType** xs;
 } FbleVarTypeV;
 
 /**
- * A polymorphic type.
+ * @struct[FblePolyType] A polymorphic type.
+ *  We maintain an invariant when constructing FblePolyTypes that the body is
+ *  not an FBLE_TYPE_TYPE. For example: @l{\a -> typeof(a)} is constructed as
+ *  @l{typeof(\a -> a)}. Construct FblePolyTypes using FbleNewPolyType to
+ *  enforce this invariant.
  *
- * We maintain an invariant when constructing FblePolyTypes that the body is
- * not an FBLE_TYPE_TYPE. For example: \a -> typeof(a) is constructed as
- * typeof(\a -> a). Construct FblePolyTypes using FbleNewPolyType to enforce
- * this invariant.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleType*][arg] Argument to the poly type.
+ *  @field[FbleType*][body] The body of the poly type.
  */
 typedef struct {
-  FbleType _base;   /**< FbleType base class. */
-  FbleType* arg;    /**< Argument to the poly type. */
-  FbleType* body;   /**< The body of the poly type. */
+  FbleType _base;
+  FbleType* arg;
+  FbleType* body;
 } FblePolyType;
 
 /**
- * A poly applied type.
+ * @struct[FblePolyApplyType] A poly applied type.
+ *  We maintain an invariant when constructing FblePolyApplyTypes that the
+ *  poly is not a FBLE_TYPE_TYPE. For example: (typeof(f) x) is constructed as
+ *  typeof(f x). Construct FblePolyApplyTypes using FbleNewPolyApplyType to
+ *  enforce this invariant.
  *
- * We maintain an invariant when constructing FblePolyApplyTypes that the poly is
- * not a FBLE_TYPE_TYPE. For example: (typeof(f) x) is constructed as
- * typeof(f x). Construct FblePolyApplyTypes using FbleNewPolyApplyType to
- * enforce this invariant.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleType*][poly] The poly to apply.
+ *  @field[FbleType*][arg] Argument to the poly.
  */
 typedef struct {
-  FbleType _base;     /**< FbleType base class. */
-  FbleType* poly;     /**< The poly to apply. */
-  FbleType* arg;      /**< Argument to the poly. */
+  FbleType _base;
+  FbleType* poly;
+  FbleType* arg;
 } FblePolyApplyType;
 
 /**
- * The type of a type.
+ * @struct[FbleTypeType] The type of a type.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleType*][type] The type to represent the type of.
  */
 typedef struct {
-  FbleType _base;   /**< FbleType base class. */
-  FbleType* type;   /**< The type to represent the type of. */
+  FbleType _base;
+  FbleType* type;
 } FbleTypeType;
 
 /**
- * A type variable assignment.
+ * @struct[FbleTypeAssignment] A type variable assignment.
+ *  @field[FbleType*][var] The type variable.
+ *  @field[FbleType*][value] The value to assign to the type variable.
  */
 typedef struct {
-  FbleType* var;        /**< The type variable. */
-  FbleType* value;      /**< The value to assign to the type variable. */
+  FbleType* var;
+  FbleType* value;
 } FbleTypeAssignment;
 
-/** Vector of FbleTypeAssignment. */
+/**
+ * @struct[FbleTypeAssignmentV] Vector of FbleTypeAssignment.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleTypeAssignment*][xs] The elements.
+ */
 typedef struct {
-  size_t size;              /**< Number of elements. */
-  FbleTypeAssignment* xs;   /**< The elements. */
+  size_t size;
+  FbleTypeAssignment* xs;
 } FbleTypeAssignmentV;
 
 /**

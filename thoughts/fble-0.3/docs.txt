@@ -138,8 +138,8 @@ lib/tag.h         DONE
 lib/tc.h          DONE
 lib/type.c        DONE
 lib/typecheck.c   DONE
-lib/type.h
+lib/type.h        DONE
 lib/unused.c      DONE
-lib/value.c
+lib/value.c       DONE
 lib/var.h         DONE
 pkgs/app/app.c    DONE

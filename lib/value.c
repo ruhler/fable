@@ -111,7 +111,9 @@
 // caller stack frame to GC when it finishes.
 
 /**
- * Circular, doubly linked list of values.
+ * @struct[List] Circular, doubly linked list of values.
+ *  @field[List*][next] The next element in the list.
+ *  @field[List*][prev] The previous element in the list.
  */
 typedef struct List {
   struct List* next;
@@ -135,20 +137,26 @@ typedef enum {
   NATIVE_VALUE,
 } ValueTag;
 
-// Header for values allocated to the stack.
+/**
+ * @struct[StackHeader] Object header for values allocated to the stack.
+ *  @field[FbleValue*][gc]
+ *   The equivalent GC value allocated for this value, or NULL if this value
+ *   has not been GC allocated yet.
+ *  @field[Frame*][frame] The frame this value is allocated to.
+ */
 typedef struct {
-  // The equivalent GC value allocated for this value, or NULL if this value
-  // has not been GC allocated yet.
   FbleValue* gc;
-
-  // The frame this value is allocated to.
   Frame* frame;
 } StackHeader;
 
-// Header for GC allocated values.
+/**
+ * @struct[GcHeader] Object header for GC allocated values.
+ *  @field[List][list] A list of values this value belongs to.
+ *  @field[uint64_t][gen] Generation this object is allocated in.
+ */
 typedef struct {
-  List list;          /**< A list of values this value belongs to. */
-  uint64_t gen;       /**< Generation this object was allocated in. */
+  List list;
+  uint64_t gen;
 } GcHeader;
 
 // Where an object is allocated.
@@ -164,90 +172,112 @@ typedef union {
 } Header;
 
 /**
- * Base class for fble values.
+ * @struct[FbleValue] Base class for fble values.
+ *  A tagged union of value types. All values have the same initial layout as
+ *  FbleValue. The tag can be used to determine what kind of value this is to
+ *  get access to additional fields of the value by first casting to that
+ *  specific type of value.
  *
- * A tagged union of value types. All values have the same initial layout as
- * FbleValue. The tag can be used to determine what kind of value this is to
- * get access to additional fields of the value by first casting to that
- * specific type of value.
+ *  IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
+ *  to save space. An FbleValue* only points to an FbleValue if the least
+ *  significant bit of the pointer is 0.
  *
- * IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
- * to save space. An FbleValue* only points to an FbleValue if the least
- * significant bit of the pointer is 0.
+ *  @field[Header][h] The object header.
+ *  @field[ValueTag][tag] The kind of value.
+ *  @field[AllocLoc][loc] Where the object is allocated.
  */
 struct FbleValue {
   // Note: Header.gc.list must be the first thing in FbleValue so we can map
   // from GC list pointers back to FbleValue. 
   Header h;
-  ValueTag tag;       /**< The kind of value. */
-  AllocLoc loc;       /**< Where the object is allocated. */
+  ValueTag tag;
+  AllocLoc loc;
 };
 
 /**
- * STRUCT_VALUE: An fble struct value.
+ * @struct[StructValue] STRUCT_VALUE
+ *  An fble struct value.
  *
- * Packings:
- *   Struct values may be packed. If so, read in order from the least
- *   significant bits:
- *   '0' - to indicate it is a struct value instead of a union value.
- *   'num_args' - unary encoded number of arguments in the struct.
- *     e.g. "0" for 0 args, "10" for 1 arg, "110" for 2 args, and so on.
- *   'args' in order of argument arg0, arg1, etc.
+ *  Struct values may be packed. If so, read in order from the least
+ *  significant bits:
+ *  '0' - to indicate it is a struct value instead of a union value.
+ *  'num_args' - unary encoded number of arguments in the struct.
+ *    e.g. "0" for 0 args, "10" for 1 arg, "110" for 2 args, and so on.
+ *  'args' in order of argument arg0, arg1, etc.
+ *
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[size_t][fieldc] Number of fields.
+ *  @field[FbleValue**][fields] Field values.
  */
 typedef struct {
-  FbleValue _base;        /**< FbleValue base class. */
-  size_t fieldc;          /**< Number of fields. */
-  FbleValue* fields[];    /**< Field values. */
+  FbleValue _base;
+  size_t fieldc;
+  FbleValue* fields[];
 } StructValue;
 
 /**
- * UNION_VALUE: An fble union value.
+ * @struct[UnionValue] UNION_VALUE
+ *  An fble union value.
  *
- * Packings:
- *   Union values may be packed. If so, read in order from the least
- *   significant bit:
- *   '1' - to indicate it is a union value instead of a struct value.
- *   'tag' - the tag, using a unary encoding terminated with 0.
- *     e.g. "0" for 0, "10" for 1, "110" for 2, and so on.
- *   'arg' - the argument.
+ *  Union values may be packed. If so, read in order from the least
+ *  significant bit:
+ *  '1' - to indicate it is a union value instead of a struct value.
+ *  'tag' - the tag, using a unary encoding terminated with 0.
+ *    e.g. "0" for 0, "10" for 1, "110" for 2, and so on.
+ *  'arg' - the argument.
+ *
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[size_t][tag] Union tag value.
+ *  @field[FbleValue*][arg] Union argument value.
  */
 typedef struct {
-  FbleValue _base;    /**< FbleValue base class. */
-  size_t tag;         /**< Union tag value. */
-  FbleValue* arg;     /**< Union argument value. */
+  FbleValue _base;
+  size_t tag;
+  FbleValue* arg;
 } UnionValue;
 
 /**
- * FUNC_VALUE: An fble function value.
+ * @struct[FuncValue] FUNC_VALUE
+ *  An fble function value.
+ *
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[FbleFunction][function] Function information.
+ *  @field[FbleValue**][statics] Storage location for static variables.
  */
 typedef struct {
-  FbleValue _base;              /**< FbleValue base class. */
-  FbleFunction function;        /**< Function information. */
-  FbleValue* statics[];         /**< Storage location for static variables. */
+  FbleValue _base;
+  FbleFunction function;
+  FbleValue* statics[];
 } FuncValue;
 
 /**
- * REF_VALUE: A reference value.
+ * @struct[RefValue] A reference value.
+ *  An implementation-specific value introduced to support recursive values
+ *  and not yet computed values.
  *
- * An implementation-specific value introduced to support recursive values and
- * not yet computed values.
+ *  A ref value holds a reference to another value. All values must be
+ *  dereferenced before being otherwise accessed in case they are ref values.
  *
- * A ref value holds a reference to another value. All values must be
- * dereferenced before being otherwise accessed in case they are ref
- * values.
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[FbleValue*][value] The referenced value, or NULL.
  */
 typedef struct {
-  FbleValue _base;      /**< FbleValue base class. */
-  FbleValue* value;     /**< The referenced value, or NULL. */
+  FbleValue _base;
+  FbleValue* value;
 } RefValue;
 
 /**
- * NATIVE_VALUE: GC tracked native allocation.
+ * @struct[NativeValue] NATIVE_VALUE
+ *  GC tracked native allocation.
+ *
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[void*][data] User data.
+ *  @field[void (*)(void*)][on_free] Destructor for user data.
  */
 typedef struct {
-  FbleValue _base;              /**< FbleValue base class. */
-  void* data;                   /**< User data. */               
-  void (*on_free)(void* data);  /**< Destructor for user data. */
+  FbleValue _base;
+  void* data;
+  void (*on_free)(void* data);
 } NativeValue;
 
 /**
@@ -328,105 +358,129 @@ static FbleValue* StrictValue(FbleValue* value);
 // We allocate memory for the stack in 1MB chunks.
 #define CHUNK_SIZE (1024 * 1024)
 
-// A chunk of allocated stack space.
+/**
+ * @struct[Chunk] A chunk of allocated stack space.
+ *  @field[Chunk*][next] The next chunk in the list.
+ */
 typedef struct Chunk {
   struct Chunk* next;
 } Chunk;
 
+/**
+ * @struct[Frame] A stack frame.
+ *  @field[Frame*][caller] The caller's stack frame.
+ *  @field[size_t][merges]
+ *   The number of frames that have been merged into this frame.  As an
+ *   optimization, we avoid pushing and popping new frames for each function
+ *   call. This keeps track of how many calls we've done without pushing a new
+ *   frame.
+ *  @field[uint64_t][min_gen]
+ *   Objects allocated before entering this stack frame have generation less
+ *   than min_gen.
+ *  @field[uint64_t][gen]
+ *   Objects allocated before the most recent compaction on the frame have
+ *   generation less than gen.
+ *  @field[uint64_t][max_gen]
+ *   Objects in marked,unmarked have generation less than max_gen.
+ *  @field[List][unmarked]
+ *   Potential garbage GC objects on the frame not yet seen in traversal.
+ *   These are either from objects allocated to callee frames that have since
+ *   returned or objects allocated on this frame prior to compaction.
+ *  @field[List][marked]
+ *   Potential garbage GC objects on the frame seen in traversal but not
+ *   processed yet. These are either from objects allocated to callee frames
+ *   that have since returned or objects allocated on this frame prior to
+ *   compaction.
+ *  @field[List][alloced] Other GC objects allocated to this frame.
+ *  @field[intptr_t][top]
+ *   The top of the frame on the stack. This points to the callee frame or new
+ *   stack allocations if this is the top frame on the stack.
+ *  @field[intptr_t][max] The max bounds of allocated memory for this frame.
+ *  @field[Chunk*][chunks]
+ *   Additional chunks of memory allocated for the stack for use by this and
+ *   callee frames.
+ */
 struct Frame {
   struct Frame* caller;
-
-  // The number of frames that have been merged into this frame.
-  // As an optimization, we avoid pushing and popping new frames for each
-  // function call. This keeps track of how many calls we've done without
-  // pushing a new frame.
   size_t merges;
 
-  // Objects allocated before entering this stack frame have generation less
-  // than min_gen. Objects allocated before the most recent compaction on the
-  // frame have generation less than gen. Objects in marked,unmarked have
-  // generation less than max_gen.
   uint64_t min_gen;
   uint64_t gen;
   uint64_t max_gen;
 
-  // Potential garbage GC objects on the frame. These are either from objects
-  // allocated to callee frames that have since returned or objects allocated
-  // on this frame prior to compaction.
-  List unmarked;    // Objects not yet seen in traversal.
-  List marked;      // Objects seen in traversal but not processed yet.
-
-  // Other GC objects allocated to this frame.
+  List unmarked;
+  List marked;
   List alloced;
 
-  // The top of the frame on the stack.
-  // This points to the callee frame or new stack allocations if this is the
-  // top frame on the stack.
   intptr_t top;
-
-  // The max bounds of allocated memory for this frame.
   intptr_t max;
 
-  // Additional chunks of memory allocated for the stack for use by this and
-  // callee frames.
   Chunk* chunks;
 };
 
-// Information about the current set of objects undergoing GC.
+/**
+ * @struct[Gc] Information about the current set of objects undergoing GC.
+ *  @field[uint64_t][gen]
+ *   The generation to move objects to when they survive GC. Guaranteed to be
+ *   distinct from the generation of any object currently in GC.
+ *  @field[uint64_t][min_gen]
+ *   An object is currently undergoing GC if its generation is in the interval
+ *   [min_gen, max_gen), but not equal to gen.
+ *  @field[uint64_t][max_gen]
+ *   An object is currently undergoing GC if its generation is in the interval
+ *   [min_gen, max_gen), but not equal to gen.
+ *  @field[Frame*][frame] The frame that GC is currently running on.
+ *  @field[Frame*][next]
+ *   The next frame to run garbage collection on. This is the frame closest to
+ *   the base of the stack with some potential garbage objects to GC. NULL to
+ *   indicate that no frames have potential garbage objects to GC.
+ *  @field[List][marked]
+ *   Marked objects being traversed in the current GC cycle. These belong to
+ *   gc->frame.
+ *  @field[List][unmarked]
+ *   Unmarked objects being traversed in the current GC cycle. These belong to
+ *   gc->frame.
+ *  @field[bool][interrupted]
+ *   True if the frame GC was working on was popped or compacted during GC.
+ *   If this is the case, we'll move reachable objects to 'unmarked' instead
+ *   of 'alloced'. See also 'save' field.
+ *  @field[FbleValueV][save]
+ *   List of objects to resurrect at the end of GC if it was interrupted.
+ *   save.size is the capacity of the array, which is expanded as needed. The
+ *   The list of values in save.xs is NULL terminated.
+ *  @field[List][free] A list of garbage objects to be freed.
+ */
 typedef struct {
-  // The generation to move objects to when they survive GC.
-  // Guaranteed to be distinct from the generation of any object currently in
-  // GC.
   uint64_t gen;
 
-  // An object is currently undergoing GC if its generation is in the interval
-  // [min_gen, max_gen), but not equal to gen.
   uint64_t min_gen;
   uint64_t max_gen;
 
-  // The frame that GC is currently running on.
   Frame* frame;
-
-  // The next frame to run garbage collection on.
-  // This is the frame closest to the base of the stack with some potential
-  // garbage objects to GC.
-  // NULL to indicate that no frames have potential garbage objects to GC.
   Frame* next;
 
-  // Objects being traversed in the current GC cycle. These belong to
-  // gc->frame.
   List marked;
   List unmarked;
 
-  // True if the frame GC was working on was popped or compacted during GC.
-  // If this is the case, we'll move reachable objects to 'unmarked' instead
-  // of 'alloced'. See also 'save' field.
   bool interrupted;
-
-  // List of objects to resurrect at the end of GC if it was interrupted.
-  //
-  // save.size is the capacity of the array, which is expanded as needed. The
-  // The list of values in save.xs is NULL terminated.
   FbleValueV save;
 
-  // A list of garbage objects to be freed.
   List free;
 } Gc;
 
+/**
+ * @struct[FbleValueHeap] The runtime stack and heap.
+ *  @field[void*][stack] The base of the stack.
+ *  @field[Frame*][top]
+ *   The top frame of the stack. New values are allocated here.
+ *  @field[Gc][gc] Info about currently running GC.
+ *  @field[Chunk*][chunks]
+ *   Chunks of allocated stack memory not currently in use.
+ */
 struct FbleValueHeap {
-  // The base of the stack.
   void* stack;
-
-  // The generation to allocate new objects to.
-  uint64_t gen;
-
-  // The top frame of the stack. New values are allocated here.
   Frame* top;
-
-  // Info about currently running GC.
   Gc gc;
-
-  // Chunks of allocated stack memory not currently in use.
   Chunk* chunks;
 };
 
@@ -438,9 +492,15 @@ static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** 
 
 static FbleValue* TailCallSentinel = (FbleValue*)0x2;
 
+/**
+ * @struct[TailCallData] Side buffer to store tail call data.
+ *  @field[size_t][capacity] Number of allocated slots in func_and_args.
+ *  @field[size_t][argc] Number of args, not including func.
+ *  @field[FbleValue**][func_and_args] Tail call function followed by args.
+ */
 typedef struct {
   size_t capacity;
-  size_t argc;      /** Number of args, not including func. */
+  size_t argc;
   FbleValue** func_and_args;
 } TailCallData;
 
