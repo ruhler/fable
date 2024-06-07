@@ -143,3 +143,11 @@ lib/unused.c      DONE
 lib/value.c       DONE
 lib/var.h         DONE
 pkgs/app/app.c    DONE
+
+---
+
+I'm going to punt some doc comment stuff to the next release. We made good
+incremental progress by adding @struct. I want to let it sit and see how I
+feel about having the documentation before the struct instead of inline with
+it, because it feels a little more silly for the @enum use case.
+

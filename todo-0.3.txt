@@ -4,14 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* move heap.c contents to type.c, given it's only used for types now and
-  to avoid confusion otherwise? Or at least rename type_heap.c?
-
-Doc Comments
-* dccheck require @type in @value content?
-* Add support for @union and @enum doc comments?
-* Add support for abstract typedef struct doc comments?
-* Would be nice to have SEE ALSO section for library man pages.
 * Figure out how to get rid of extra space before '}' in man page struct
   synopsis.
 

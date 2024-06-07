@@ -12,7 +12,7 @@
 #include <fble/fble-module-path.h>
 #include <fble/fble-name.h>
 
-#include "heap.h"
+#include "type-heap.h"
 #include "kind.h"     // for FbleKind
 
 /**

@@ -51,3 +51,10 @@ Things to consider doing for the fble-0.4 release.
 
 * Fble Debugger
  - Add support for all backends.
+
+Doc Comments
+ - dccheck should require @type present in @value content?
+ - Add support for @union and @enum doc comments?
+ - Add support for abstract typedef struct doc comments?
+ - Would be nice to have SEE ALSO section for library man pages.
+

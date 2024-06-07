@@ -1,9 +1,9 @@
 /**
- * @file heap.c
- *  Mark-sweep based garbage collector.
+ * @file type-heap.c
+ *  Mark-sweep based garbage collector for types.
  */
 
-#include "heap.h"
+#include "type-heap.h"
 
 #include <assert.h>   // for assert
 #include <stdbool.h>  // for bool

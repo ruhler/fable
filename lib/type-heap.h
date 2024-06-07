@@ -1,11 +1,10 @@
 /**
- * @file heap.h
- *  Defines FbleHeap, the fble garbage collector API used for types (not
- *  values).
+ * @file type-heap.h
+ *  Defines FbleHeap, the fble garbage collector API used for types.
  */
 
-#ifndef FBLE_INTERNAL_HEAP_H_
-#define FBLE_INTERNAL_HEAP_H_
+#ifndef FBLE_INTERNAL_TYPE_HEAP_H_
+#define FBLE_INTERNAL_TYPE_HEAP_H_
 
 #include <stddef.h>  // for size_t
 
@@ -164,4 +163,4 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src, void* dst);
  */
 void FbleHeapFullGc(FbleHeap* heap);
 
-#endif // FBLE_INTERNAL_HEAP_H_
+#endif // FBLE_INTERNAL_TYPE_HEAP_H_
