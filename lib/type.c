@@ -26,7 +26,7 @@
 #include <fble/fble-module-path.h>
 #include <fble/fble-vector.h>
 
-#include "type-heap.h"           // for FbleHeap, etc.
+#include "type-heap.h"           // for FbleTypeHeap, etc.
 #include "unreachable.h"
 
 /**
@@ -53,8 +53,8 @@ typedef struct TypePairs {
 
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
 
-static void Ref(FbleHeap* heap, FbleType* src, FbleType* dst);
-static void Refs(FbleHeap* heap, FbleType* type);
+static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
+static void Refs(FbleTypeHeap* heap, FbleType* type);
 static void OnFree(FbleTypeHeap* heap, FbleType* type);
 
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing);
@@ -118,14 +118,14 @@ static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
  * @func[Ref] Helper function for implementing Refs.
  *  Calls FbleHeapObjectAddRef if the dst is not NULL.
  *
- *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[FbleTypeHeap*][heap] The heap.
  *  @arg[FbleType*][src] The source of the reference.
  *  @arg[FbleType*][dst] The target of the reference.
  *
  *  @sideeffects
  *   If value is non-NULL, FbleHeapObjectAddRef is called for it.
  */
-static void Ref(FbleHeap* heap, FbleType* src, FbleType* dst)
+static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
 {
   if (dst != NULL) {
     FbleHeapObjectAddRef(heap, src, dst);
@@ -136,13 +136,13 @@ static void Ref(FbleHeap* heap, FbleType* src, FbleType* dst)
  * @func[Refs] The refs function for types.
  *  See documentation in heap.h.
  *
- *  @arg[FbleHeap*][heap] The heap.
+ *  @arg[FbleTypeHeap*][heap] The heap.
  *  @arg[FbleType*][type] The type whose references to traverse.
  *
  *  @sideeffects
  *   Calls FbleHeapRef for each type referenced by @a[type].
  */
-static void Refs(FbleHeap* heap, FbleType* type)
+static void Refs(FbleTypeHeap* heap, FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
@@ -945,8 +945,8 @@ void FblePrintKind(FbleKind* kind)
 FbleTypeHeap* FbleNewTypeHeap()
 {
   return FbleNewHeap(
-      (void (*)(FbleHeap*, void*))&Refs,
-      (void (*)(FbleHeap*, void*))&OnFree);
+      (void (*)(FbleTypeHeap*, void*))&Refs,
+      (void (*)(FbleTypeHeap*, void*))&OnFree);
 }
 
 // See documentation in type.h.

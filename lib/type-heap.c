@@ -72,13 +72,13 @@ typedef struct {
 #define ToObj(obj) (((Obj*)obj)-1)
 
 /**
- * @struct[FbleHeap] GC managed heap of objects.
+ * @struct[FbleTypeHeap] GC managed heap of types.
  *  See documentation in heap.h.
  *
- *  @field[void (*)(FbleHeap*, void*)][refs]
+ *  @field[void (*)(FbleTypeHeap*, void*)][refs]
  *   The refs callback to traverse reference from an object.
  *
- *  @field[void (*)(FbleHeap*, void*)][on_free]
+ *  @field[void (*)(FbleTypeHeap*, void*)][on_free]
  *   The on_free callback to indicate an object has been freed.
  *
  *  @field[Gen*][old]
@@ -136,9 +136,9 @@ typedef struct {
  *   These objects have been determined to be unreachable. They have not yet
  *   had their on_free callbacks called.
  */
-struct FbleHeap {
-  void (*refs)(FbleHeap* heap, void* obj);
-  void (*on_free)(FbleHeap* heap, void* obj);
+struct FbleTypeHeap {
+  void (*refs)(FbleTypeHeap* heap, void* obj);
+  void (*on_free)(FbleTypeHeap* heap, void* obj);
   Gen* old;
   Gen* mark;
   Gen* gc;
@@ -155,7 +155,7 @@ static void MoveAllToFront(ObjList* dest, ObjList* source);
 static Gen* NewGen(size_t id);
 static bool GenIsEmpty(Gen* gen);
 
-static bool IncrGc(FbleHeap* heap);
+static bool IncrGc(FbleTypeHeap* heap);
 
 /**
  * @func[MoveToFront] Move an object to the front of the given list.
@@ -240,7 +240,7 @@ static bool GenIsEmpty(Gen* gen)
 
 /**
  * @func[IncrGc] Does an incremental amount of GC work.
- *  @arg[FbleHeap*][heap] The heap to do GC on.
+ *  @arg[FbleTypeHeap*][heap] The heap to do GC on.
  *
  *  @returns[bool]
  *   true if this completed a round of GC. False otherwise.
@@ -249,7 +249,7 @@ static bool GenIsEmpty(Gen* gen)
  *   Does some GC work, which may involve moving objects around, traversing
  *   objects, freeing objects, etc.
  */
-static bool IncrGc(FbleHeap* heap)
+static bool IncrGc(FbleTypeHeap* heap)
 {
   // Free a couple of objects on the free list.
   // If we free less than one object, we won't be able to keep up with
@@ -366,11 +366,11 @@ static bool IncrGc(FbleHeap* heap)
 }
 
 // See documentation in heap.h.
-FbleHeap* FbleNewHeap(
-    void (*refs)(FbleHeap* heap, void* obj),
-    void (*on_free)(FbleHeap* heap, void* obj))
+FbleTypeHeap* FbleNewHeap(
+    void (*refs)(FbleTypeHeap* heap, void* obj),
+    void (*on_free)(FbleTypeHeap* heap, void* obj))
 {
-  FbleHeap* heap = FbleAlloc(FbleHeap);
+  FbleTypeHeap* heap = FbleAlloc(FbleTypeHeap);
   heap->refs = refs;
   heap->on_free = on_free;
 
@@ -388,7 +388,7 @@ FbleHeap* FbleNewHeap(
 }
 
 // See documentation in heap.h.
-void FbleFreeHeap(FbleHeap* heap)
+void FbleFreeHeap(FbleTypeHeap* heap)
 {
   FbleHeapFullGc(heap);
 
@@ -411,7 +411,7 @@ void FbleFreeHeap(FbleHeap* heap)
 }
 
 // See documentation in heap.h.
-void* FbleNewHeapObject(FbleHeap* heap, size_t size)
+void* FbleNewHeapObject(FbleTypeHeap* heap, size_t size)
 {
   IncrGc(heap);
 
@@ -427,7 +427,7 @@ void* FbleNewHeapObject(FbleHeap* heap, size_t size)
 }
 
 // See documentation in heap.h.
-void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
+void FbleRetainHeapObject(FbleTypeHeap* heap, void* obj_)
 {
   Obj* obj = ToObj(obj_);
   if (obj->refcount++ == 0) {
@@ -442,7 +442,7 @@ void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
 }
 
 // See documentation in heap.h.
-void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
+void FbleReleaseHeapObject(FbleTypeHeap* heap, void* obj_)
 {
   Obj* obj = ToObj(obj_);
   assert(obj->refcount > 0);
@@ -467,7 +467,7 @@ void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
 }
 
 // See documentation in heap.h.
-void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
+void FbleHeapObjectAddRef(FbleTypeHeap* heap, void* src_, void* dst_)
 {
   assert(dst_ != NULL);
 
@@ -515,7 +515,7 @@ void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
 }
 
 // See documentation in heap.h.
-void FbleHeapFullGc(FbleHeap* heap)
+void FbleHeapFullGc(FbleTypeHeap* heap)
 {
   // Finish the GC in progress.
   while (!IncrGc(heap));

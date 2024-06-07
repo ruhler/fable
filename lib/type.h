@@ -274,9 +274,6 @@ bool FbleKindsEqual(FbleKind* a, FbleKind* b);
  */
 void FblePrintKind(FbleKind* kind);
 
-/** An FbleHeap for FbleType objects. */
-typedef FbleHeap FbleTypeHeap;
-
 /**
  * @func[FbleNewTypeHeap] Creates a new type heap.
  *  @returns[FbleTypeHeap*]
