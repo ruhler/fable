@@ -11,6 +11,8 @@
 
 #include <fble/fble-alloc.h>
 
+#include "type-heap.h"
+
 /**
  * @struct[ObjList] A list of objects.
  *  @field[ObjList*][prev] Previous entry in doubly linked list of objects.
@@ -156,6 +158,7 @@ static Gen* NewGen(size_t id);
 static bool GenIsEmpty(Gen* gen);
 
 static bool IncrGc(FbleTypeHeap* heap);
+static void FullGc(FbleTypeHeap* heap);
 
 /**
  * @func[MoveToFront] Move an object to the front of the given list.
@@ -386,7 +389,7 @@ FbleTypeHeap* FbleNewTypeHeap()
 // See documentation in type.h.
 void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
-  FbleHeapFullGc(heap);
+  FullGc(heap);
 
   for (Gen* gen = heap->old; gen != NULL; gen = heap->old) {
     heap->old = gen->tail;
@@ -510,8 +513,20 @@ void FbleHeapObjectAddRef(FbleTypeHeap* heap, FbleType* src_, FbleType* dst_)
   }
 }
 
-// See documentation in heap.h.
-void FbleHeapFullGc(FbleTypeHeap* heap)
+/**
+ * @func[FullGc] Does a full GC.
+ *  Causes the garbage collector to perform a full garbage collection,
+ *  collecting all objects that are currently unreachable.
+ *
+ *  Full GC can be a very expensive operation. This method is primarily
+ *  intended to be used to help in testing and debugging of memory use.
+ *
+ *  @arg[FbleTypeHeap*][heap] The heap to perform GC on.
+ *
+ *  @sideeffects
+ *   Causes all currently unreachable objects on the heap to be freed.
+ */
+void FullGc(FbleTypeHeap* heap)
 {
   // Finish the GC in progress.
   while (!IncrGc(heap));

@@ -26,6 +26,7 @@
 #include <fble/fble-module-path.h>
 #include <fble/fble-vector.h>
 
+#include "type-heap.h"
 #include "unreachable.h"
 
 /**
