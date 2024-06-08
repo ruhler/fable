@@ -26,7 +26,6 @@
 #include <fble/fble-module-path.h>
 #include <fble/fble-vector.h>
 
-#include "type-heap.h"           // for FbleTypeHeap, etc.
 #include "unreachable.h"
 
 /**
@@ -54,8 +53,6 @@ typedef struct TypePairs {
 static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
 
 static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
-static void Refs(FbleTypeHeap* heap, FbleType* type);
-static void OnFree(FbleTypeHeap* heap, FbleType* type);
 
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing);
 static bool HasParam(FbleType* type, FbleType* param);
@@ -132,17 +129,8 @@ static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
   }
 }
 
-/**
- * @func[Refs] The refs function for types.
- *  See documentation in heap.h.
- *
- *  @arg[FbleTypeHeap*][heap] The heap.
- *  @arg[FbleType*][type] The type whose references to traverse.
- *
- *  @sideeffects
- *   Calls FbleHeapRef for each type referenced by @a[type].
- */
-static void Refs(FbleTypeHeap* heap, FbleType* type)
+// See documenatation in type.h
+void FbleTypeRefs(FbleTypeHeap* heap, FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
@@ -197,20 +185,9 @@ static void Refs(FbleTypeHeap* heap, FbleType* type)
   }
 }
 
-/**
- * @func[OnFree] The on_free function for types.
- *  See documentation in heap.h
- *
- *  @arg[FbleTypeHeap*][heap] The heap.
- *  @arg[FbleType*][type] The type being freed.
- * 
- *  @sideeffects
- *   Free any resources outside of the heap that this type holds on to.
- */
-static void OnFree(FbleTypeHeap* heap, FbleType* type)
+// See documentation in type.h
+void FbleTypeOnFree(FbleType* type)
 {
-  (void)heap;
-
   FbleFreeLoc(type->loc);
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
@@ -939,18 +916,6 @@ void FblePrintKind(FbleKind* kind)
       break;
     }
   }
-}
-
-// See documentation in type.h.
-FbleTypeHeap* FbleNewTypeHeap()
-{
-  return FbleNewHeap(&Refs, &OnFree);
-}
-
-// See documentation in type.h.
-void FbleFreeTypeHeap(FbleTypeHeap* heap)
-{
-  FbleFreeHeap(heap);
 }
 
 // See documentation in type.h.

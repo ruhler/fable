@@ -3,7 +3,7 @@
  *  Mark-sweep based garbage collector for types.
  */
 
-#include "type-heap.h"
+#include "type.h"
 
 #include <assert.h>   // for assert
 #include <stdbool.h>  // for bool
@@ -261,7 +261,7 @@ static bool IncrGc(FbleTypeHeap* heap)
     Obj* obj = (Obj*)heap->free.next;
     obj->list.prev->next = obj->list.next;
     obj->list.next->prev = obj->list.prev;
-    heap->on_free(heap, (FbleType*)obj->obj);
+    FbleTypeOnFree((FbleType*)obj->obj);
     FbleFree(obj);
   }
 
@@ -278,7 +278,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   // Mark Non-Root -> Old Non-Root
   if (heap->mark->non_roots.next != &heap->mark->non_roots) {
     Obj* obj = (Obj*)heap->mark->non_roots.next;
-    heap->refs(heap, (FbleType*)obj->obj);
+    FbleTypeRefs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToBack(&heap->old->non_roots, obj);
     return false;
@@ -287,7 +287,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   // Mark Root -> To Root
   if (heap->mark->roots.next != &heap->mark->roots) {
     Obj* obj = (Obj*)heap->mark->roots.next;
-    heap->refs(heap, (FbleType*)obj->obj);
+    FbleTypeRefs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToBack(&heap->old->roots, obj);
     return false;
@@ -305,7 +305,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   if (heap->gc->roots.next != &heap->gc->roots) {
     Obj* obj = (Obj*)heap->gc->roots.next;
     obj->gen = heap->mark;
-    heap->refs(heap, (FbleType*)obj->obj);
+    FbleTypeRefs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToFront(&heap->old->roots, obj);
     return false;
@@ -315,7 +315,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   if (heap->save->roots.next != &heap->save->roots) {
     Obj* obj = (Obj*)heap->save->roots.next;
     obj->gen = heap->mark;
-    heap->refs(heap, (FbleType*)obj->obj);
+    FbleTypeRefs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToFront(&heap->old->roots, obj);
     return false;
@@ -324,7 +324,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   // Save NonRoot -> New
   if (heap->save->non_roots.next != &heap->save->non_roots) {
     Obj* obj = (Obj*)heap->save->non_roots.next;
-    heap->refs(heap, (FbleType*)obj->obj);
+    FbleTypeRefs(heap, (FbleType*)obj->obj);
     obj->gen = heap->new;
     MoveToFront(&heap->new->non_roots, obj);
     return false;
@@ -365,14 +365,10 @@ static bool IncrGc(FbleTypeHeap* heap)
   return true;
 }
 
-// See documentation in heap.h.
-FbleTypeHeap* FbleNewHeap(
-    void (*refs)(FbleTypeHeap* heap, FbleType* obj),
-    void (*on_free)(FbleTypeHeap* heap, FbleType* obj))
+// See documentation in type.h.
+FbleTypeHeap* FbleNewTypeHeap()
 {
   FbleTypeHeap* heap = FbleAlloc(FbleTypeHeap);
-  heap->refs = refs;
-  heap->on_free = on_free;
 
   heap->old = NewGen(0);
   heap->mark = NewGen(MARK_ID);
@@ -387,8 +383,8 @@ FbleTypeHeap* FbleNewHeap(
   return heap;
 }
 
-// See documentation in heap.h.
-void FbleFreeHeap(FbleTypeHeap* heap)
+// See documentation in type.h.
+void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
   FbleHeapFullGc(heap);
 
@@ -535,7 +531,7 @@ void FbleHeapFullGc(FbleTypeHeap* heap)
       Obj* obj = (Obj*)heap->free.next;
       obj->list.prev->next = obj->list.next;
       obj->list.next->prev = obj->list.prev;
-      heap->on_free(heap, (FbleType*)obj->obj);
+      FbleTypeOnFree((FbleType*)obj->obj);
       FbleFree(obj);
     }
   } while (!done);
