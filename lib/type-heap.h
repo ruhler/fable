@@ -9,7 +9,7 @@
 #include "type.h"
 
 /**
- * @func[FbleNewHeapObject] Allocates a new object on the heap.
+ * @func[FbleAllocType] Allocates a new object on the heap.
  *  Callers must ensure the heap is in a consistent state when calling this
  *  function. In particular, calls to the refs function could be made for any
  *  objects previously allocated on the heap, so objects must be fully
@@ -28,37 +28,7 @@
  *    Calls the user provided 'refs' function arbitrarily on existing objects
  *    of the heap.
  */
-FbleType* FbleNewHeapObject(FbleTypeHeap* heap, size_t size);
-
-/**
- * Retains an object on the heap.
- *
- * Causes obj, and any other references that are referred to directly or
- * indirectly from obj, to be retained until a corresponding call to
- * FbleReleaseHeapObject is made.
- *
- * @param heap  The heap the object is allocated on.
- * @param obj  The object to retain.
- *
- * @sideeffects
- *   The object is retained until a corresponding FbleReleaseHeapObject is
- *   made.
- */
-void FbleRetainHeapObject(FbleTypeHeap* heap, FbleType* obj);
-
-/**
- * @func[FbleReleaseHeapObject] Releases a retained heap object.
- *  Releases the given object, allowing the object to be freed if there is
- *  nothing else causing it to be retained.
- *
- *  @arg[FbleTypeHeap*][heap] The heap the object is allocated on.
- *  @arg[FbleTypeHeap*][obj] The object to release.
- *
- *  @sideeffects
- *   The object is released. If there are no more references to it, the
- *   object will (eventually) be freed.
- */
-void FbleReleaseHeapObject(FbleTypeHeap* heap, FbleType* obj);
+FbleType* FbleAllocType(FbleTypeHeap* heap, size_t size);
 
 /**
  * @func[FbleTypeRefs]

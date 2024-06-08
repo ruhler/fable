@@ -130,7 +130,7 @@ static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
   }
 }
 
-// See documenatation in type.h
+// See documenatation in type-heap.h
 void FbleTypeRefs(FbleTypeHeap* heap, FbleType* type)
 {
   switch (type->tag) {
@@ -186,7 +186,7 @@ void FbleTypeRefs(FbleTypeHeap* heap, FbleType* type)
   }
 }
 
-// See documentation in type.h
+// See documentation in type-heap.h
 void FbleTypeOnFree(FbleType* type)
 {
   FbleFreeLoc(type->loc);
@@ -922,19 +922,11 @@ void FblePrintKind(FbleKind* kind)
 // See documentation in type.h.
 FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc)
 {
-  FbleType* type = (FbleType*)FbleNewHeapObject(heap, size);
+  FbleType* type = (FbleType*)FbleAllocType(heap, size);
   type->tag = tag;
   type->loc = FbleCopyLoc(loc);
   type->visiting = false;
   return type;
-}
-
-// See documentation in type.h.
-void FbleReleaseType(FbleTypeHeap* heap, FbleType* type)
-{
-  if (type != NULL) {
-    FbleReleaseHeapObject(heap, type);
-  }
 }
 
 // See documentation in type.h.
