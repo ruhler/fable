@@ -8,22 +8,21 @@
 
 #include <stddef.h>  // for size_t
 
+typedef struct FbleType FbleType;
+
 /**
- * Heap of objects managed by the garbage collector.
+ * Heap of type values managed by the garbage collector.
  *
  * Objects are allocated on a heap. They can have references to other objects
  * on the heap, potentially involving cycles.
- *
- * Heaps can be customized by the type of object allocated on the heap. See
- * documentation of FbleNewHeap for more details.
  */
 typedef struct FbleTypeHeap FbleTypeHeap;
 
 /**
  * @func[FbleNewHeap] Creates a new garbage collected heap.
- *  @arg[void (*)(FbleTypeHeap*, void*)][refs]
+ *  @arg[void (*)(FbleTypeHeap*, FbleType*)][refs]
  *   Reference traversal callback.
- *  @arg[void (*)(FbleTypeHeap*, void*)][on_free]
+ *  @arg[void (*)(FbleTypeHeap*, FbleType*)][on_free]
  *   Object destructor callback.
  *
  *  @returns[FbleTypeHeap*]
@@ -42,7 +41,7 @@ FbleTypeHeap* FbleNewHeap(
      *  traverse objects on the heap.
      *
      *  @arg[FbleTypeHeap*][heap] This heap.
-     *  @arg[void*][obj] The object whose references to traverse
+     *  @arg[FbleType*][obj] The object whose references to traverse
      *   
      *  @sideeffects
      *   The implementation of this function should call FbleHeapAddRef on
@@ -50,7 +49,7 @@ FbleTypeHeap* FbleNewHeap(
      *   multiple times by obj, the callback is called once for each time the
      *   object is referenced by obj.
      */
-    void (*refs)(FbleTypeHeap* heap, void* obj),
+    void (*refs)(FbleTypeHeap* heap, FbleType* obj),
 
     /**
      * func[on_free] User supplied function called when an object is freed.
@@ -59,12 +58,12 @@ FbleTypeHeap* FbleNewHeap(
      *  freeing the underlying memory for the object.
      * 
      *  @arg[FbleTypeHeap*][heap] This heap.
-     *  @arg[void*][obj] The object being freed.
+     *  @arg[FbleType*][obj] The object being freed.
      * 
      *  @sideeffects
      *   Frees resources outside of the heap that this obj holds on to.
      */
-    void (*on_free)(FbleTypeHeap* heap, void* obj));
+    void (*on_free)(FbleTypeHeap* heap, FbleType* obj));
 
 /**
  * @func[FbleFreeHeap] Frees a heap that is no longer in use.
@@ -90,7 +89,7 @@ void FbleFreeHeap(FbleTypeHeap* heap);
  *  @arg[FbleTypeHeap*][heap] The heap to allocate an object on.
  *  @arg[size_t][size] The user size of object to allocate.
  *
- *  @returns[void*] A pointer to a newly allocated object on the heap.
+ *  @returns[FbleType*] A pointer to a newly allocated object on the heap.
  *
  *  @sideeffects
  *   @item
@@ -100,7 +99,7 @@ void FbleFreeHeap(FbleTypeHeap* heap);
  *    Calls the user provided 'refs' function arbitrarily on existing objects
  *    of the heap.
  */
-void* FbleNewHeapObject(FbleTypeHeap* heap, size_t size);
+FbleType* FbleNewHeapObject(FbleTypeHeap* heap, size_t size);
 
 /**
  * Retains an object on the heap.
@@ -116,7 +115,7 @@ void* FbleNewHeapObject(FbleTypeHeap* heap, size_t size);
  *   The object is retained until a corresponding FbleReleaseHeapObject is
  *   made.
  */
-void FbleRetainHeapObject(FbleTypeHeap* heap, void* obj);
+void FbleRetainHeapObject(FbleTypeHeap* heap, FbleType* obj);
 
 /**
  * @func[FbleReleaseHeapObject] Releases a retained heap object.
@@ -130,7 +129,7 @@ void FbleRetainHeapObject(FbleTypeHeap* heap, void* obj);
  *   The object is released. If there are no more references to it, the
  *   object will (eventually) be freed.
  */
-void FbleReleaseHeapObject(FbleTypeHeap* heap, void* obj);
+void FbleReleaseHeapObject(FbleTypeHeap* heap, FbleType* obj);
 
 /**
  * @func[FbleHeapObjectAddRef] Adds a reference from one object to another.
@@ -139,14 +138,14 @@ void FbleReleaseHeapObject(FbleTypeHeap* heap, void* obj);
  *  add_ref is called.
  *
  *  @arg[FbleTypeHeap*][heap] The heap the objects are allocated on.
- *  @arg[void*][src] The source object.
- *  @arg[void*][dst] The destination object. Must not be NULL.
+ *  @arg[FbleType*][src] The source object.
+ *  @arg[FbleType*][dst] The destination object. Must not be NULL.
  *
  *  @sideeffects
  *   Causes the dst object to be retained at least as long as the src object is
  *   retained.
  */
-void FbleHeapObjectAddRef(FbleTypeHeap* heap, void* src, void* dst);
+void FbleHeapObjectAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 
 /**
  * @func[FbleHeapFullGc] Does a full GC.

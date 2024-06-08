@@ -944,9 +944,7 @@ void FblePrintKind(FbleKind* kind)
 // See documentation in type.h.
 FbleTypeHeap* FbleNewTypeHeap()
 {
-  return FbleNewHeap(
-      (void (*)(FbleTypeHeap*, void*))&Refs,
-      (void (*)(FbleTypeHeap*, void*))&OnFree);
+  return FbleNewHeap(&Refs, &OnFree);
 }
 
 // See documentation in type.h.

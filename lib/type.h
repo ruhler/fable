@@ -40,11 +40,11 @@ typedef enum {
  *  @field[FbleLoc][loc] Source location for error reporting.
  *  @field[bool][visiting] Internal flag. Do not touch.
  */
-typedef struct FbleType {
+struct FbleType {
   FbleTypeTag tag;
   FbleLoc loc;
   bool visiting;
-} FbleType;
+};
 
 /**
  * @struct[FbleTypeV] Vector of FbleType.

@@ -58,10 +58,10 @@ typedef struct {
 } Obj;
 
 /**
- * @func[ToObj] Gets the Obj* corresponding to a void* obj pointer.
+ * @func[ToObj] Gets the Obj* corresponding to a FbleType* obj pointer.
  *  Defined as a macro instead of a function to improve performance.
  *
- *  @arg[void*][obj] The void* obj pointer.
+ *  @arg[FbleType*][obj] The FbleType* obj pointer.
  *
  *  @returns[Obj*]
  *   The corresponding Obj* pointer.
@@ -75,10 +75,10 @@ typedef struct {
  * @struct[FbleTypeHeap] GC managed heap of types.
  *  See documentation in heap.h.
  *
- *  @field[void (*)(FbleTypeHeap*, void*)][refs]
+ *  @field[void (*)(FbleTypeHeap*, FbleType*)][refs]
  *   The refs callback to traverse reference from an object.
  *
- *  @field[void (*)(FbleTypeHeap*, void*)][on_free]
+ *  @field[void (*)(FbleTypeHeap*, FbleType*)][on_free]
  *   The on_free callback to indicate an object has been freed.
  *
  *  @field[Gen*][old]
@@ -137,8 +137,8 @@ typedef struct {
  *   had their on_free callbacks called.
  */
 struct FbleTypeHeap {
-  void (*refs)(FbleTypeHeap* heap, void* obj);
-  void (*on_free)(FbleTypeHeap* heap, void* obj);
+  void (*refs)(FbleTypeHeap* heap, FbleType* obj);
+  void (*on_free)(FbleTypeHeap* heap, FbleType* obj);
   Gen* old;
   Gen* mark;
   Gen* gc;
@@ -261,7 +261,7 @@ static bool IncrGc(FbleTypeHeap* heap)
     Obj* obj = (Obj*)heap->free.next;
     obj->list.prev->next = obj->list.next;
     obj->list.next->prev = obj->list.prev;
-    heap->on_free(heap, obj->obj);
+    heap->on_free(heap, (FbleType*)obj->obj);
     FbleFree(obj);
   }
 
@@ -278,7 +278,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   // Mark Non-Root -> Old Non-Root
   if (heap->mark->non_roots.next != &heap->mark->non_roots) {
     Obj* obj = (Obj*)heap->mark->non_roots.next;
-    heap->refs(heap, obj->obj);
+    heap->refs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToBack(&heap->old->non_roots, obj);
     return false;
@@ -287,7 +287,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   // Mark Root -> To Root
   if (heap->mark->roots.next != &heap->mark->roots) {
     Obj* obj = (Obj*)heap->mark->roots.next;
-    heap->refs(heap, obj->obj);
+    heap->refs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToBack(&heap->old->roots, obj);
     return false;
@@ -305,7 +305,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   if (heap->gc->roots.next != &heap->gc->roots) {
     Obj* obj = (Obj*)heap->gc->roots.next;
     obj->gen = heap->mark;
-    heap->refs(heap, obj->obj);
+    heap->refs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToFront(&heap->old->roots, obj);
     return false;
@@ -315,7 +315,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   if (heap->save->roots.next != &heap->save->roots) {
     Obj* obj = (Obj*)heap->save->roots.next;
     obj->gen = heap->mark;
-    heap->refs(heap, obj->obj);
+    heap->refs(heap, (FbleType*)obj->obj);
     obj->gen = heap->old;
     MoveToFront(&heap->old->roots, obj);
     return false;
@@ -324,7 +324,7 @@ static bool IncrGc(FbleTypeHeap* heap)
   // Save NonRoot -> New
   if (heap->save->non_roots.next != &heap->save->non_roots) {
     Obj* obj = (Obj*)heap->save->non_roots.next;
-    heap->refs(heap, obj->obj);
+    heap->refs(heap, (FbleType*)obj->obj);
     obj->gen = heap->new;
     MoveToFront(&heap->new->non_roots, obj);
     return false;
@@ -367,8 +367,8 @@ static bool IncrGc(FbleTypeHeap* heap)
 
 // See documentation in heap.h.
 FbleTypeHeap* FbleNewHeap(
-    void (*refs)(FbleTypeHeap* heap, void* obj),
-    void (*on_free)(FbleTypeHeap* heap, void* obj))
+    void (*refs)(FbleTypeHeap* heap, FbleType* obj),
+    void (*on_free)(FbleTypeHeap* heap, FbleType* obj))
 {
   FbleTypeHeap* heap = FbleAlloc(FbleTypeHeap);
   heap->refs = refs;
@@ -411,7 +411,7 @@ void FbleFreeHeap(FbleTypeHeap* heap)
 }
 
 // See documentation in heap.h.
-void* FbleNewHeapObject(FbleTypeHeap* heap, size_t size)
+FbleType* FbleNewHeapObject(FbleTypeHeap* heap, size_t size)
 {
   IncrGc(heap);
 
@@ -423,11 +423,11 @@ void* FbleNewHeapObject(FbleTypeHeap* heap, size_t size)
   obj->refcount = 1;
   heap->new->roots.next->prev = &obj->list;
   heap->new->roots.next = &obj->list;
-  return obj->obj;
+  return (FbleType*)obj->obj;
 }
 
 // See documentation in heap.h.
-void FbleRetainHeapObject(FbleTypeHeap* heap, void* obj_)
+void FbleRetainHeapObject(FbleTypeHeap* heap, FbleType* obj_)
 {
   Obj* obj = ToObj(obj_);
   if (obj->refcount++ == 0) {
@@ -442,7 +442,7 @@ void FbleRetainHeapObject(FbleTypeHeap* heap, void* obj_)
 }
 
 // See documentation in heap.h.
-void FbleReleaseHeapObject(FbleTypeHeap* heap, void* obj_)
+void FbleReleaseHeapObject(FbleTypeHeap* heap, FbleType* obj_)
 {
   Obj* obj = ToObj(obj_);
   assert(obj->refcount > 0);
@@ -467,7 +467,7 @@ void FbleReleaseHeapObject(FbleTypeHeap* heap, void* obj_)
 }
 
 // See documentation in heap.h.
-void FbleHeapObjectAddRef(FbleTypeHeap* heap, void* src_, void* dst_)
+void FbleHeapObjectAddRef(FbleTypeHeap* heap, FbleType* src_, FbleType* dst_)
 {
   assert(dst_ != NULL);
 
@@ -535,7 +535,7 @@ void FbleHeapFullGc(FbleTypeHeap* heap)
       Obj* obj = (Obj*)heap->free.next;
       obj->list.prev->next = obj->list.next;
       obj->list.next->prev = obj->list.prev;
-      heap->on_free(heap, obj->obj);
+      heap->on_free(heap, (FbleType*)obj->obj);
       FbleFree(obj);
     }
   } while (!done);
