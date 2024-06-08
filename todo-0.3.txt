@@ -8,9 +8,6 @@ Things to consider doing for the fble-0.3 release.
   synopsis.
 
 * Merge some stuff from FbleHeap and FbleTypeHeap
- - Export Refs and OnFree function from types.c
- - FbleNewHeap ==> FbleNewTypeHeap.
- - FbleHeapObjectAddRef ==> FbleTypeAddRef
  - FbleRetainHeapObject ==> FbleRetainType
  - FbleReleaseHeapObject ==> FbleReleaseType
  - Ref, FbleHeapObjectAddRef ==> FbleTypeAddRef

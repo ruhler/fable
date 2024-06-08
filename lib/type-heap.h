@@ -61,22 +61,6 @@ void FbleRetainHeapObject(FbleTypeHeap* heap, FbleType* obj);
 void FbleReleaseHeapObject(FbleTypeHeap* heap, FbleType* obj);
 
 /**
- * @func[FbleHeapObjectAddRef] Adds a reference from one object to another.
- *  Notifies the garbage collector of a reference from src to dst. The dst
- *  object should be included in the refs callback for the src object when
- *  add_ref is called.
- *
- *  @arg[FbleTypeHeap*][heap] The heap the objects are allocated on.
- *  @arg[FbleType*][src] The source object.
- *  @arg[FbleType*][dst] The destination object. Must not be NULL.
- *
- *  @sideeffects
- *   Causes the dst object to be retained at least as long as the src object is
- *   retained.
- */
-void FbleHeapObjectAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
-
-/**
  * @func[FbleTypeRefs]
  *  Function to traverse over the objects referenced by obj.
  *
@@ -87,7 +71,7 @@ void FbleHeapObjectAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
  *  @arg[FbleType*][obj] The object whose references to traverse
  *   
  *  @sideeffects
- *   The implementation of this function calls FbleHeapAddRef on
+ *   The implementation of this function calls FbleTypeAddRef on
  *   each object referenced by obj. If the same object is referenced
  *   multiple times by obj, the callback is called once for each time the
  *   object is referenced by obj.

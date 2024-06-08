@@ -114,19 +114,19 @@ static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
 
 /**
  * @func[Ref] Helper function for implementing Refs.
- *  Calls FbleHeapObjectAddRef if the dst is not NULL.
+ *  Calls FbleTypeAddRef if the dst is not NULL.
  *
  *  @arg[FbleTypeHeap*][heap] The heap.
  *  @arg[FbleType*][src] The source of the reference.
  *  @arg[FbleType*][dst] The target of the reference.
  *
  *  @sideeffects
- *   If value is non-NULL, FbleHeapObjectAddRef is called for it.
+ *   If value is non-NULL, FbleTypeAddRef is called for it.
  */
 static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
 {
   if (dst != NULL) {
-    FbleHeapObjectAddRef(heap, src, dst);
+    FbleTypeAddRef(heap, src, dst);
   }
 }
 
@@ -944,11 +944,6 @@ void FbleReleaseType(FbleTypeHeap* heap, FbleType* type)
   if (type != NULL) {
     FbleReleaseHeapObject(heap, type);
   }
-}
-// See documentation in type.h.
-void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
-{
-  FbleHeapObjectAddRef(heap, src, dst);
 }
 
 // See documentation in type.h.

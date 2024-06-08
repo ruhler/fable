@@ -466,7 +466,7 @@ void FbleReleaseHeapObject(FbleTypeHeap* heap, FbleType* obj_)
 }
 
 // See documentation in heap.h.
-void FbleHeapObjectAddRef(FbleTypeHeap* heap, FbleType* src_, FbleType* dst_)
+void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src_, FbleType* dst_)
 {
   assert(dst_ != NULL);
 
