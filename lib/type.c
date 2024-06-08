@@ -929,15 +929,6 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
   return type;
 }
 
-// See documentation in type.h
-FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type)
-{
-  if (type != NULL) {
-    FbleRetainHeapObject(heap, type);
-  }
-  return type;
-}
-
 // See documentation in type.h.
 void FbleReleaseType(FbleTypeHeap* heap, FbleType* type)
 {

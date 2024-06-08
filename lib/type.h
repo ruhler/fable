@@ -341,7 +341,7 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
 /**
  * @func[FbleRetainType] Takes a reference to an FbleType.
  *  @arg[FbleTypeHeap*][heap] The heap the type was allocated on.
- *  @arg[FbleTypeHeap*][type] The type to take the reference for.
+ *  @arg[FbleTypeHeap*][type] The type to take the reference for. May be NULL.
  *
  *  @returns[FbleType*]
  *   The type with incremented strong reference count.

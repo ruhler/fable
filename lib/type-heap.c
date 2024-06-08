@@ -409,7 +409,7 @@ void FbleFreeTypeHeap(FbleTypeHeap* heap)
   FbleFree(heap);
 }
 
-// See documentation in heap.h.
+// See documentation in type-heap.h.
 FbleType* FbleNewHeapObject(FbleTypeHeap* heap, size_t size)
 {
   IncrGc(heap);
@@ -425,10 +425,14 @@ FbleType* FbleNewHeapObject(FbleTypeHeap* heap, size_t size)
   return (FbleType*)obj->obj;
 }
 
-// See documentation in heap.h.
-void FbleRetainHeapObject(FbleTypeHeap* heap, FbleType* obj_)
+// See documentation in type.h.
+FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type)
 {
-  Obj* obj = ToObj(obj_);
+  if (type == NULL) {
+    return NULL;
+  }
+
+  Obj* obj = ToObj(type);
   if (obj->refcount++ == 0) {
     // Non-Root -> Root
     if (obj->gen->id == GC_ID) {
@@ -438,6 +442,8 @@ void FbleRetainHeapObject(FbleTypeHeap* heap, FbleType* obj_)
     }
     MoveToBack(&obj->gen->roots, obj);
   }
+
+  return type;
 }
 
 // See documentation in heap.h.

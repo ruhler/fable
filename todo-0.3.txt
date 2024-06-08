@@ -8,7 +8,6 @@ Things to consider doing for the fble-0.3 release.
   synopsis.
 
 * Merge some stuff from FbleHeap and FbleTypeHeap
- - FbleRetainHeapObject ==> FbleRetainType
  - FbleReleaseHeapObject ==> FbleReleaseType
  - Ref, FbleHeapObjectAddRef ==> FbleTypeAddRef
 
