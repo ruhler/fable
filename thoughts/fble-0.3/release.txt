@@ -275,3 +275,29 @@ some other way? Sounds hard.
 Yeah, let's punt to a later release. We've already done plenty of GC work for
 this release.
 
+---
+
+Fbld Markdown Backend?
+
+The todo item is about making a fully featured markdown backend for fbld. We
+don't need it for fble. The limited support we have today works fine. I don't
+think it's worth the effort and distraction to get 100% markdown support in
+fbld. I'm going to drop this todo item entirely.
+
+---
+
+Write tutorials for C api?
+
+I expect changes soon to the C api. It's not stable enough for tutorials, and
+there is less need for people to write C api stuff now, hopefully, given
+better support in the library with stdio.
+
+There will be plenty of things I could write tutorials for as they stabilize.
+Let me drop this todo item for now.
+
+Add a tutorial for writing unit tests? App tutorials?
+
+Maybe we can have a generic add tutorials item with C api, unit tests, app,
+etc. Punt those for next release I think. I've done enough this release. We at
+least have mention of Tests% module in the Core tutorial.
+

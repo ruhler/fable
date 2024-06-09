@@ -58,3 +58,7 @@ Doc Comments
  - Add support for abstract typedef struct doc comments?
  - Would be nice to have SEE ALSO section for library man pages.
 
+Tutorials
+ - C API
+ - /App/App%
+ - /Core/Test%

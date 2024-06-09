@@ -7,12 +7,9 @@ Things to consider doing for the fble-0.3 release.
 * Figure out how to get rid of extra space before '}' in man page struct
   synopsis.
 
-* Fbld Markdown Backend
- - Reflow paragraphs to 80 columns.
- - How to support labels in markdown?
- - etc.
+* Update fbld/DocComments.fbld for @struct.
+  Probably need to add tests too?
 
-* write tutorials for C api.
 * Factor out common code for @FbleVersion (@BuildStamp)
 
 * Consider syntax highlighting of the syntax specification in fble.fbld.
@@ -27,8 +24,6 @@ Things to consider doing for the fble-0.3 release.
   block? Adding a space at the start of the line makes it become part of the
   @code block.
 
-* Add a tutorial for writing unit tests?
-* Write an App tutorial.
 * Improve exercises for Unions and Functions tutorials, and others.
 
 Usage docs
