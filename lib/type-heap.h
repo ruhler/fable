@@ -31,15 +31,13 @@
 FbleType* FbleAllocType(FbleTypeHeap* heap, size_t size);
 
 /**
- * @func[FbleTypeRefs]
- *  Function to traverse over the objects referenced by obj.
- *
+ * @func[FbleTypeRefs] Traverse over the objects referenced by obj.
  *  This function will be called by the garbage collector as needed to
  *  traverse objects on the heap.
  *
  *  @arg[FbleTypeHeap*][heap] This heap.
  *  @arg[FbleType*][obj] The object whose references to traverse
- *   
+ *
  *  @sideeffects
  *   The implementation of this function calls FbleTypeAddRef on
  *   each object referenced by obj. If the same object is referenced
