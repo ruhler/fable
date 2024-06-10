@@ -3,9 +3,9 @@
  
  @section Introduction
   Doc comments are a way of documenting functions in source code using fbld
-  document syntax. Two top level fbld tags @l{@file} and @l{@func} are defined
-  for describing files and functions. Convention is used to embed fbld markup
-  in comments.
+  document syntax. Top level fbld tags @l{@file}, @l{@struct}, @l{@value}, and
+  @l{@func} are defined for describing files, structs, values, and functions.
+  Convention is used to embed fbld markup in comments.
 
  @section Example
   Here is an example of writing doc comments in C code:
@@ -16,6 +16,25 @@
     *  API for interacting with fble values.
     */
    ...
+
+   /**
+    * @value[FbleGenericTypeValue] FbleValue instance for types.
+    *  Used as an instance of an fble type for those types that don't need any
+    *  extra information at runtime.
+    *
+    *  @type FbleValue*
+    */
+   extern FbleValue* FbleGenericTypeValue;
+
+   /**
+    * @struct[FbleValueV] Vector of FbleValue
+    *  @field[size_t][size] Number of elements.
+    *  @field[FbleValue**][xs] Elements.
+    */
+   typedef struct {
+     size_t size;      /**< Number of elements. */
+     FbleValue** xs;   /**< Elements .*/
+   } FbleValueV;
 
    /**
     * @func[FbleNewStructValue] Creates a new struct value.
@@ -40,6 +59,36 @@
 
   @code[fbld] @
    @file[name][description]
+ 
+ @section @l{@struct}
+  The @l{@struct} tag is used to describe a struct type. The struct command
+  takes three arguments: the name of the struct type, a brief description of
+  the type, and a detailed description:
+
+  @code[fbld] @
+   @struct[name][brief][description]
+
+  The description should contain @l{@field} tags to describe the fields. Field
+  tags should list all the fields of the struct. The @l{@field} tag has three
+  arguments: the type of the field, the name of the field, and a description
+  of the field.
+
+  @code[fbld] @
+   @field[type][name][description]
+
+ @section @l{@value}
+  The @l{@value} tag is used describe a global value. The value command takes
+  three arguments: the name of the value, a brief description of the value,
+  and a detailed description:
+
+  @code[fbld] @
+   @value[name][brief][description]
+
+  The description should contain an @l{@type} tag describing the type of the
+  value. The @l{@type} tag has a single argument: the type of the value.
+
+  @code[fbld] @
+   @type[type]
 
  @section @l{@func}
   The @l{@func} tag is used to describe a function. The func command takes
@@ -54,7 +103,7 @@
   function respectively.
 
   Argument tags should list all of the arguments to the function, in the order
-  accepted by the function. The @l{@arg} tag as three arguments: the type of
+  accepted by the function. The @l{@arg} tag has three arguments: the type of
   the argument, the name of the argument, and a description of the argument.
 
   @code[fbld] @
@@ -82,17 +131,16 @@
 
  @section Embedding Doc Comments
   In C code, doc comments are embedded in @l{/** ... */} comments as in the
-  example above. Specifically, they are introduced using @l{@file} or
-  @l{@func} on a line starting with @l{' * '} and continuing as long as lines
-  continue to start with @l{' * '}.
+  example above. Specifically, they are introduced using @l{@file},
+  @l{@struct}, @l{@value} or @l{@func} on a line starting with @l{' * '} and
+  continuing as long as lines continue to start with @l{' * '}.
 
   Other languages can use similar conventions of placing doc comments in
   comments with doc comment tags up to the end of the comment.
 
   Technically it doesn't matter where in the source code the doc comment is
   placed. It's recommended to put @l{@file} at the start of the file and
-  @l{func} just before the prototype or implementation of the function it
-  describes.
+  other tags just before the corresponding entity is defined.
 
  @section Use of Doc Comments
   Doc comments can be used for the following purposes:
