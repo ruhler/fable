@@ -151,3 +151,45 @@ incremental progress by adding @struct. I want to let it sit and see how I
 feel about having the documentation before the struct instead of inline with
 it, because it feels a little more silly for the @enum use case.
 
+---
+
+* Figure out how to get rid of extra space before '}' in man page struct
+  synopsis.
+
+Right now, using:
+
+  @inline[\n };\n]
+
+Generates something like:
+
+struct FbleValueV {
+    \fBsize_t\fR \fIsize\fR\fB,
+    \fR\fBFbleValue**\fR \fIxs\fR
+ };
+.SH "DESCRIPTION"
+
+If I get rid of the space:
+
+struct FbleValueV {
+    \fBsize_t\fR \fIsize\fR\fB,
+    \fR\fBFbleValue**\fR \fIxs\fR
+};
+.SH "DESCRIPTION"
+
+Something about space is continuation in troff?
+
+Options:
+* Indent the struct description?
+* Insert a .P somewhere?
+* Insert a break somewhere?
+
+Let's review troff syntax for this.
+
+It's not clear. Troff syntax says:
+* .br for break
+* Lines starting with '.' are control, otherwise printed.
+
+I guess that means newlines are ignored? Then why does it work some times?
+
+I don't really understand what I should be doing here, but a well placed .br
+seems to make things work.

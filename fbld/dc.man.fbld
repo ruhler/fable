@@ -111,8 +111,7 @@
   @define[field][type name desc][@l[@type] @a[@name];] @@
   @let[fields] @eval[@plain[ignore][@content]] @@
   @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[\n    @fields][@l[,\n    ]]
-
-  @inline[\n };\n]
+  @inline[\n.br\n};\n]
 @@
 @define[struct_description][content]
  @define[field][type name desc]

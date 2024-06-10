@@ -4,9 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* Figure out how to get rid of extra space before '}' in man page struct
-  synopsis.
-
 * Factor out common code for @FbleVersion (@BuildStamp)
 
 * Consider syntax highlighting of the syntax specification in fble.fbld.
