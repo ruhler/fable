@@ -12,8 +12,17 @@ syn match fbldTag "@[a-zA-Z0-9_]\+"
 syn match fbldBracket "\["
 syn match fbldBracket "\]"
 
+" Highlighting of inline literal args.
+"   The fbldContainedNormal is for nested {} within inline args.
+"   The "}{" start is for inline literal arg following an inline literal arg.
+"   The "]{" start is for inline literal arg following an inline normal arg.
+"   The "@...{" start is for inline args following a tag or continuation.
+" The goal is to avoid matching things like "@l[{]@hi@l[}]" as inline literal
+" args.
 syn region fbldContainedNormal start="{" end="}" contains=fbldContainedNormal contained
-syn region fbldNormal matchgroup=fbldBracket start="{" end="}" contains=fbldContainedNormal
+syn region fbldNormal matchgroup=fbldBracket start="}\@<={" end="}" contains=fbldContainedNormal
+syn region fbldNormal matchgroup=fbldBracket start="]\@<={" end="}" contains=fbldContainedNormal
+syn region fbldNormal matchgroup=fbldBracket start="\(@[a-zA-Z0-9_]*\)\@<={" end="}" contains=fbldContainedNormal
 
 syn match fbldEscape "\\\]"
 syn match fbldEscape "\\\["

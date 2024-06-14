@@ -9,11 +9,6 @@ Things to consider doing for the fble-0.3 release.
 * Consider syntax highlighting of the syntax specification in fble.fbld.
 * Add way to do inline code syntax highlighting in fbld?
 
-* Improve vim syntax highlighting of {} blocks in fbld
- - For example, it shouldn't highlight in the case of: @l[{]@hi@l[}].
-
-* Improve fbld syntax highlighting of {} blocks in fbld
- - For example, don't highlight @degralder in @l{ruhler@degralder.com}.
 * fbld how to start a paragraph with inline text after a literal @code[...] @
   block? Adding a space at the start of the line makes it become part of the
   @code block.

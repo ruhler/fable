@@ -193,3 +193,80 @@ I guess that means newlines are ignored? Then why does it work some times?
 
 I don't really understand what I should be doing here, but a well placed .br
 seems to make things work.
+
+---
+
+How to fix vim syntax highlighting of {} in fbld?
+
+Examples:
+
+  @l[{]@hi@l[}]             - broken now, do want to highlight @hi
+  @l[x]@hi@l[x]             - should highlight same as above.
+  @l{ruhler@degralder.com}  - works now, don't want to highlight @degralder.com
+
+Current strategy:
+
+  Anything in between { and } is highlighted as normal, with outer most braces
+  colored as bracket.
+
+A better approach might be:
+
+  @ name { ... }
+
+or
+
+  @name[...]{
+
+Hmm...
+
+A hack in this case could be:
+  ]{ ... }
+  }{ ... }
+  n{ ... } ?
+
+Also think about: where do we support escape sequences? In []? In {}?
+
+Let's summarize from the fbld spec.
+* \ @ [ ] n - supported in plain text.
+* [] args take plain text.
+* {} args take literal text (no subcommands or escapes, braces nest)
+
+Conceptually the trick is figuring out when { is just in plain text, or when
+it is the start of an argument. Specifically:
+
+]{...}
+}{...}
+@{...}
+@<name>{...}
+
+That's what I want to predicate on. The challenge being the case of
+@<name>{...}, which has a more involved start regex and wants
+sub-highlighting.
+
+This should certainly be doable. Let's read more about regions first.
+
+There are magic regex options to explicitly specify things to match without
+including them in the match itself. Could we use that for start?
+
+For example:
+
+@(name)?...
+
+Ugh. Feels complicated. Maybe:
+
+\(@[name]\)\@={
+
+To say: match @name{, but the @name part match with zero width.
+
+Or, looks like \@<= is designed for this.
+
+\(@[a-zA-Z0-9_]\+\)\@<={
+
+Proposal then is to try that. Have 4 different regions set up with starting
+regex:
+
+  @{
+  }{
+  ]{
+  \(@[a-zA-Z0-9_]\+\)\@<={
+
