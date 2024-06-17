@@ -1,5 +1,5 @@
 @doc Fable README
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  Fable is a programming language project. It includes a specification,
  reference implementation, library, and sample applications for the fble

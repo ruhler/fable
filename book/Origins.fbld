@@ -1,5 +1,5 @@
 @doc The Origins of Fble
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  In the beginning there was Fable, an idea that there was no such thing as one
  language to rule them all, instead we should have a collection of related

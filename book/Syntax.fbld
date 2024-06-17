@@ -1,5 +1,5 @@
 @doc Fble Concrete Syntax Design
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  Guiding principles for the design of the Fble concrete syntax:
 

@@ -1,5 +1,5 @@
 @doc Fble Type System Design
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  Guiding principles for the design of the Fble type system:
 

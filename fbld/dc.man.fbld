@@ -68,7 +68,7 @@
  @eval[@content]
 @@
 @define[func][name brief content]
- @man[3][@name][@FbleVersion (@BuildStamp)]
+ @man[3][@name][@FbleVersionStamp]
   @section[NAME] @name - @brief\n
   @func_synopsis[@name][@content]
   @section[DESCRIPTION] @brief\n\n@func_description[@content]
@@ -90,7 +90,7 @@
  @eval[@content]
 @@
 @define[value][name brief content]
- @man[3][@name][@FbleVersion (@BuildStamp)]
+ @man[3][@name][@FbleVersionStamp]
   @section[NAME] @name - @brief\n
   @value_synopsis[@name][@content]
   @section[DESCRIPTION] @brief\n\n@value_description[@content]
@@ -121,7 +121,7 @@
  @eval[@content]
 @@
 @define[struct][name brief content]
- @man[3][@name][@FbleVersion (@BuildStamp)]
+ @man[3][@name][@FbleVersionStamp]
   @section[NAME] @name - @brief\n
   @struct_synopsis[@name][@content]
   @section[DESCRIPTION] @brief\n\n@struct_description[@content]

@@ -1,5 +1,5 @@
 @doc Debugging Guide
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  Fble has some limited support for debugging. This document explains tips and
  tricks for making the most of the currently available debug support.

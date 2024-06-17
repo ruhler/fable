@@ -1,5 +1,5 @@
 @doc Fble Release Notes
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  @section fble-0.3 Pending
   The following list highlights the most notable changes from fble-0.2.

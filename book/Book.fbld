@@ -1,5 +1,5 @@
 @doc Fble Language Design Book
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  This document is a collection of topics on the fble language design.
 

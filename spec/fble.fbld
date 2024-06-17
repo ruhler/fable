@@ -1,5 +1,5 @@
 @doc Fble
-  @FbleVersion (@BuildStamp)
+  @FbleVersionStamp
 
  @section 1. Introduction
   Fble is a general purpose functional programming language with support for

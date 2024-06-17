@@ -1,6 +1,6 @@
 @define[tutorial][name content]
  @doc[@name]
-   @FbleVersion (@BuildStamp)
+   @FbleVersionStamp
 
   @content
 @@

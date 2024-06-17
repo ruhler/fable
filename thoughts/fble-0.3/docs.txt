@@ -270,3 +270,28 @@ regex:
   ]{
   \(@[a-zA-Z0-9_]\+\)\@<={
 
+---
+
+How to factor out common code for @FbleVersion (@BuildStamp)?
+
+Define something called @FbleVersionStamp. Where would I define it?
+
+- With @BuildStamp?
+  Currently defined in buildstamp and fbld/nobuildstamp.fbld.
+
+- With @FbleVersion?
+  Currently defined in fbld/build.tcl.
+
+- Some place new?
+
+Certainly it will be convenient to have.
+
+Putting it with @BuildStamp is nice because we can special for presence of
+absences of build stamp more easily. But it ties together two otherwise
+separate concepts.
+
+I vote for putting it with the generated @FbleVersion tag. We can always add a
+check for empty @BuildStamp if we want to specialize. The only tedious part is
+the script to generate the file. We can write a more formal one. An
+fbld/version.fbld.sh which takes the version string as input.
+

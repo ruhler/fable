@@ -1,5 +1,5 @@
 @define[usage][name brief content]
- @man[1][@name][@FbleVersion (@BuildStamp)]
+ @man[1][@name][@FbleVersionStamp]
   @section[NAME] @name - @brief\n
   @content
 @@

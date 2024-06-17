@@ -5,8 +5,8 @@ namespace eval "fbld" {
     "tclsh8.6 $::s/fbld/config.fbld.tcl > $::b/fbld/config.fbld"
 
   # version.fbld
-  build $::b/fbld/version.fbld "" \
-    "echo @let\[FbleVersion\]\[$::version\] @@ > $::b/fbld/version.fbld"
+  build $::b/fbld/version.fbld "$::s/fbld/version.fbld.sh" \
+    "$::s/fbld/version.fbld.sh $::version > $::b/fbld/version.fbld"
 
   # Builds a man page from an fbld @usage doc.
   proc ::fbld_man_usage { target source } {
