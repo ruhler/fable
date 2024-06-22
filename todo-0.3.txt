@@ -4,9 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* Make use of inline code highlighting in tutorials.
-* Make use of inline code highlighting in fbld spec?
-
 * fbld how to start a paragraph with inline text after a literal @code[...] @
   block? Adding a space at the start of the line makes it become part of the
   @code block.

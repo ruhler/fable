@@ -13,8 +13,8 @@
  
  The following sections highlight various useful parts of the core library.
 
- @section @l{/Core/Unit%}
-  The @l{/Core/Unit%} module defines type @l{Unit@} and value @l{Unit}
+ @section @L{/Core/Unit%}
+  The @L{/Core/Unit%} module defines type @L{Unit@} and value @L{Unit}
   that we have seen many times in this series of tutorials:
  
   @code[fble] @
@@ -22,13 +22,13 @@
  
    Unit@ Unit = Unit@();
  
-  By itself @l{Unit@} is not very interesting, but it's a building block used
+  By itself @L{Unit@} is not very interesting, but it's a building block used
   in all other data types.
  
- @section @l{/Core/Bool%}
-  The @l{/Core/Bool%} module defines a boolean type @l{Bool@}, values @l{True}
-  and @l{False}, and a few functions that operate on booleans, such as
-  @l{And}, @l{Or}, and @l{Not}:
+ @section @L{/Core/Bool%}
+  The @L{/Core/Bool%} module defines a boolean type @L{Bool@}, values @L{True}
+  and @L{False}, and a few functions that operate on booleans, such as
+  @L{And}, @L{Or}, and @L{Not}:
  
   @code[fble] @
    @ Bool@ = +(Unit@ true, Unit@ false);
@@ -40,16 +40,16 @@
    (Bool@, Bool@) { Bool@; } And = ...;
    (Bool@, Bool@) { Bool@; } Or = ...;
 
- @section @l{/Core/Eq%}
-  The @l{/Core/Eq%} module defines an @l{Eq@} interface for types that can be
+ @section @L{/Core/Eq%}
+  The @L{/Core/Eq%} module defines an @L{Eq@} interface for types that can be
   compared for equality or other kinds of relationships.
 
   @code[fble] @
    <@>@ Eq@ = <@ T@>(T@, T@) { /Core/Bool%.Bool@; };
 
- @section @l{/Core/Maybe%}
-  The @l{/Core/Maybe%} module defines a @l{Maybe@} type for representing
-  optional values. It defines functions @l{Just} and @l{Nothing} for
+ @section @L{/Core/Maybe%}
+  The @L{/Core/Maybe%} module defines a @L{Maybe@} type for representing
+  optional values. It defines functions @L{Just} and @L{Nothing} for
   constructing these optional values.
 
   @code[fble] @
@@ -58,27 +58,27 @@
    <@ T@>(T@){ Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@(just: x); };
    Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
  
- @section @l{/Core/Char%}
-  The @l{/Core/Char%} module defines a @l{Char@} type representing characters.
-  The @l{Char@} type is implemented as a union type with a separate field of
-  type @l{Unit@} for each different character which is suitable for use as a
+ @section @L{/Core/Char%}
+  The @L{/Core/Char%} module defines a @L{Char@} type representing characters.
+  The @L{Char@} type is implemented as a union type with a separate field of
+  type @L{Unit@} for each different character which is suitable for use as a
   letter type in a literal expression.
  
   Characters include digits, upper and lower case letters, punctuation, and
   some whitespace characters.
  
-  The @l{/Core/Char%} module defines a struct @l{Chars} that holds all the
-  different characters. For example, you could refer to the letter @l{A} using
-  @l{/Core/Char%.Chars.A}. It provides some more convenient names
-  @l{Chars.tab} and @l{Chars.nl} for tab and newline characters, which are
+  The @L{/Core/Char%} module defines a struct @L{Chars} that holds all the
+  different characters. For example, you could refer to the letter @L{A} using
+  @L{/Core/Char%.Chars.A}. It provides some more convenient names
+  @L{Chars.tab} and @L{Chars.nl} for tab and newline characters, which are
   otherwise slightly awkward to refer to in fble.
  
-  There is also a @l{/Core/Char/Show%} module that defines a @l{Show} function
+  There is also a @L{/Core/Char/Show%} module that defines a @L{Show} function
   to convert a character to a string.
  
- @section @l{/Core/Int%}
-  The @l{/Core/Int%} module defines an @l{Int@} type, representing unbounded
-  integers. It's implemented on top of an @l{IntP@} type representing positive
+ @section @L{/Core/Int%}
+  The @L{/Core/Int%} module defines an @L{Int@} type, representing unbounded
+  integers. It's implemented on top of an @L{IntP@} type representing positive
   integers.
  
   Positive integers are described using a recursive union data type:
@@ -90,7 +90,7 @@
      IntP@ 2p1
    );
  
-  The @l{Int@} type is a union with positive, zero, and negative fields:
+  The @L{Int@} type is a union with positive, zero, and negative fields:
  
   @code[fble] @
    @ Int@ = +(
@@ -99,24 +99,24 @@
      IntP@ p    # Positive integers
    );
  
-  The @l{/Core/Int%} module provides standard integer arithmetic operations:
-  @l{Inc}, @l{Dec}, @l{Add}, @l{Sub}, @l{Neg}, @l{Mul}, @l{Exp2}, @l{Abs}.
+  The @L{/Core/Int%} module provides standard integer arithmetic operations:
+  @L{Inc}, @L{Dec}, @L{Add}, @L{Sub}, @L{Neg}, @L{Mul}, @L{Exp2}, @L{Abs}.
   Other operations are defined in submodules:
  
-  @definition @l{/Core/Int/Eq%}
-   Defines comparison operations @l{IsZero}, @l{Eq}, @l{Lt}, @l{Le}, @l{Gt},
-   @l{Ge}, @l{Max}, and @l{Min}.
+  @definition @L{/Core/Int/Eq%}
+   Defines comparison operations @L{IsZero}, @L{Eq}, @L{Lt}, @L{Le}, @L{Gt},
+   @L{Ge}, @L{Max}, and @L{Min}.
  
-  @def @l{/Core/Int/Lit%}
-   Defines an @l{Int} function that can be used for non-negative integer
+  @def @L{/Core/Int/Lit%}
+   Defines an @L{Int} function that can be used for non-negative integer
    literals.
  
-  @def[@l{/Core/Int/Div%}] Defines a @l{Div} operation for integers.
-  @def[@l{/Core/Int/Sqrt%}] Defines a @l{Sqrt} operation for integers.
-  @def[@l{/Core/Int/Show%}] Defines a @l{Show} function for integers.
+  @def[@L{/Core/Int/Div%}] Defines a @L{Div} operation for integers.
+  @def[@L{/Core/Int/Sqrt%}] Defines a @L{Sqrt} operation for integers.
+  @def[@L{/Core/Int/Show%}] Defines a @L{Show} function for integers.
  
- @section @l{/Core/List%}
-  The @l{/Core/List%} module defines a polymorphic list type like the one we
+ @section @L{/Core/List%}
+  The @L{/Core/List%} module defines a polymorphic list type like the one we
   have already seen in this tutorial series:
  
   @code[fble] @
@@ -124,49 +124,49 @@
  
   It defines a number of functions for working with lists:
  
-  @def[@l{List}] For constructing lists using list expressions.
-  @def[@l{Cons}] For adding a value to the front of a list.
-  @def[@l{Nil}] For the empty list.
-  @def[@l{Append}] For appending a list to another list.
-  @def[@l{Last}] For getting the last element of a list.
-  @def[@l{Init}] For getting all but the last element of a list.
-  @def[@l{Concat}] For flattening a list of lists into a single list.
-  @def[@l{Map}] For applying a function to each element of a list.
-  @def[@l{ForEach}] For iterating over elements of a list.
-  @def[@l{Reverse}] For reversing the elements of a list.
+  @def[@L{List}] For constructing lists using list expressions.
+  @def[@L{Cons}] For adding a value to the front of a list.
+  @def[@L{Nil}] For the empty list.
+  @def[@L{Append}] For appending a list to another list.
+  @def[@L{Last}] For getting the last element of a list.
+  @def[@L{Init}] For getting all but the last element of a list.
+  @def[@L{Concat}] For flattening a list of lists into a single list.
+  @def[@L{Map}] For applying a function to each element of a list.
+  @def[@L{ForEach}] For iterating over elements of a list.
+  @def[@L{Reverse}] For reversing the elements of a list.
  
-  There is a @l{/Core/List/Show%} module that defines a @l{Show} function for
+  There is a @L{/Core/List/Show%} module that defines a @L{Show} function for
   lists. It takes a function for showing an element of a list, and returns a
   function for showing a given list.
  
- @section @l{/Core/String%}
-  The @l{/Core/String%} module defines the type @l{String@} as list of
+ @section @L{/Core/String%}
+  The @L{/Core/String%} module defines the type @L{String@} as list of
   characters:
  
   @code[fble] @
    @ String@ = List@<Char@>;
  
-  It defines a @l{Str} function that you can use for string literals:
+  It defines a @L{Str} function that you can use for string literals:
  
   @code[fble] @
    # Example Use:
    #   String@ s = Str|'hello, world'
    (List@<Char@>) { String@; } Str = List<Char@>;
  
-  And a helper function @l{Strs} for concatenating a bunch of strings together:
+  And a helper function @L{Strs} for concatenating a bunch of strings together:
  
   @code[fble] @
    (List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
 
- @section @l{/Core/Show%}
-  The @l{/Core/Show%} module defines a @l{Show@} interface for types that can
+ @section @L{/Core/Show%}
+  The @L{/Core/Show%} module defines a @L{Show@} interface for types that can
   be converted to strings.
 
   @code[fble] @
    <@>@ Show@ = <@ T@>(T@) { /Core/String%.String@; };
 
- @section @l{/Core/Ord%}
-  The @l{/Core/Ord%} module defines an @l{Ordering@} type and @l{Ord@}
+ @section @L{/Core/Ord%}
+  The @L{/Core/Ord%} module defines an @L{Ordering@} type and @L{Ord@}
   interface for types that can be compared.
 
   @code[fble] @
@@ -178,13 +178,13 @@
 
    <@>@ Ord@ = <@ T@>(T@, T@) { Ordering@; };
 
- @section @l{/Core/Map%}
-  The @l{/Core/Map%} module defines the type @l{Map@}, which maps from keys to
+ @section @L{/Core/Map%}
+  The @L{/Core/Map%} module defines the type @L{Map@}, which maps from keys to
   values using a self balancing tree data structure. It provides functions for
   inserting, looking up, and removing values from the map.
 
   Any type can be used for the key, as long as there is an ordering relation
-  defined on the type via the @l{Ord@} interface.
+  defined on the type via the @L{Ord@} interface.
 
   @code[fble] @
    <@,@>@ Map@ = <@ K@, @ V@> { ... };
@@ -196,9 +196,9 @@
    <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; } Delete = ...;
    <@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach = ...;
 
- @section @l{/Core/Set%}
-  The @l{/Core/Set%} module defines a @l{Set@} type for describing a set of
-  values. It's a special case of the @l{Map@} type.
+ @section @L{/Core/Set%}
+  The @L{/Core/Set%} module defines a @L{Set@} type for describing a set of
+  values. It's a special case of the @L{Map@} type.
 
   @code[fble] @
    <@>@ Set@ = <@ T@> { Map@<T@, Unit@>; };
@@ -210,12 +210,12 @@
    <@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; } Delete = ...;
    <@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; } ForEach = ...;
 
- @section @l{/Core/Test%}
-  The @l{/Core/Test%} module defines types @l{Test@}, @l{TestSuite@} and
+ @section @L{/Core/Test%}
+  The @L{/Core/Test%} module defines types @L{Test@}, @L{TestSuite@} and
   others for writing and running unit tests.
  
- @section @l{/Core/Monad%}
-  The @l{/Core/Monad%} module defines a monad interface like the one we saw in
+ @section @L{/Core/Monad%}
+  The @L{/Core/Monad%} module defines a monad interface like the one we saw in
   the @fbld[Bind.fbld][Bind] tutorial:
  
   @code[fble] @
@@ -226,23 +226,23 @@
      );
    };
  
- @section @l{/Core/Stdio%}
-  The @l{/Core/Stdio%} module defines the @l{Stdio@} interface for accessing
+ @section @L{/Core/Stdio%}
+  The @L{/Core/Stdio%} module defines the @L{Stdio@} interface for accessing
   standard input, output, and error streams for an arbitrary monadic type
-  @l{M@}. It can also be used to read and write files and read environment
+  @L{M@}. It can also be used to read and write files and read environment
   variables.
  
-  Stream types are defined in the @l{/Core/Stream%} module. They describe an
+  Stream types are defined in the @L{/Core/Stream%} module. They describe an
   interface for reading and writing sequence of bytes represented using the
-  @l{Int@} type. You can interact with output streams most easily using the
-  @l{/Core/Stream/OStream%} module, which defines @l{PutChar}, @l{PutStr}, and
-  @l{PutLine} functions for operating on streams in terms of the @l{Char@}
+  @L{Int@} type. You can interact with output streams most easily using the
+  @L{/Core/Stream/OStream%} module, which defines @L{PutChar}, @L{PutStr}, and
+  @L{PutLine} functions for operating on streams in terms of the @L{Char@}
   type.
   
-  The @l{/Core/Stdio%} module defines the @l{Main@} type, as a type of a main
+  The @L{/Core/Stdio%} module defines the @L{Main@} type, as a type of a main
   function that takes a list of arguments and returns a boolean result. The
-  @l{/Core/Stdio/IO%} module defines a @l{Run} function for running a
-  @l{Main@} function with the @l{fble-stdio} program.
+  @L{/Core/Stdio/IO%} module defines a @L{Run} function for running a
+  @L{Main@} function with the @l{fble-stdio} program.
  
  @section Next Steps
   Head over to the @fbld[Stdio.fbld][Standard IO] tutorial to learn about

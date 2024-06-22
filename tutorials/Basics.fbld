@@ -22,38 +22,38 @@
    @ Bit@ = +(Unit@ 0, Unit@ 1);
    @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
  
-  This code defines three types, named @l{Unit@}, @l{Bit@}, and @l{Bit4@}. The
-  language requires type names to end with the @l{@} character, to distinguish
+  This code defines three types, named @L{Unit@}, @L{Bit@}, and @L{Bit4@}. The
+  language requires type names to end with the @L{@} character, to distinguish
   them from normal variable names.
  
-  The @l{@} at the beginning of each line says we are defining names of types.
-  The syntax @l{*(...)} is used for struct types and @l{+(...)} for union
+  The @L{@} at the beginning of each line says we are defining names of types.
+  The syntax @L{*(...)} is used for struct types and @L{+(...)} for union
   types. 
  
-  The @l{Unit@} type defined here is a struct type without any fields. We call
-  it @l{Unit@} because there's only one possible value for the type. It is a
-  building block for the @l{Bit@} type. @l{Unit@} is equivalent to the @l{()}
+  The @L{Unit@} type defined here is a struct type without any fields. We call
+  it @L{Unit@} because there's only one possible value for the type. It is a
+  building block for the @L{Bit@} type. @L{Unit@} is equivalent to the @l{()}
   type in Haskell, or the type of a zero-element tuple @l{()} in Python.
  
-  The @l{Bit@} type is defined as a union of two @l{Unit@} types, labeled
-  @l{0} and @l{1}. There are two possible values for the @l{Bit@} type, a
-  @l{Unit@} value tagged with @l{0} and a @l{Unit@} value tagged with @l{1}.
+  The @L{Bit@} type is defined as a union of two @L{Unit@} types, labeled
+  @L{0} and @L{1}. There are two possible values for the @L{Bit@} type, a
+  @L{Unit@} value tagged with @L{0} and a @L{Unit@} value tagged with @L{1}.
   Union values implicitly keep track of their tag, unlike in C. You can ask a
   union value what its tag is and access the value associated with the tag.
   More on that later. There is nothing special about the names of the fields
-  @l{0} and @l{1} that we have chosen here. We could just as well have named
-  them @l{zero} and @l{one}. The fble language has no notion of built in
+  @L{0} and @L{1} that we have chosen here. We could just as well have named
+  them @L{zero} and @L{one}. The fble language has no notion of built in
   numbers, which means you are free to use numbers as identifiers for variable
   names or field names.
  
-   @l{Bit4@} is a struct type with four fields, named @l{3}, @l{2}, @l{1}, and
-  @l{0}. Each field has type @l{Bit@}. This represents a bit vector of 4 bits.
+   @L{Bit4@} is a struct type with four fields, named @L{3}, @L{2}, @L{1}, and
+  @L{0}. Each field has type @L{Bit@}. This represents a bit vector of 4 bits.
   We'll call bit 3 the most significant bit and put it on the left as is
   conventional, but it doesn't really matter for the bitwise operations
   defined in this tutorial.
  
  @section Values
-  Now that we have the @l{Bit@} and @l{Bit4@} types defined, we can declare
+  Now that we have the @L{Bit@} and @L{Bit4@} types defined, we can declare
   some variables of those types:
  
   @code[fble] @
@@ -65,9 +65,9 @@
    Bit4@ X = Bit4@(0, 0, 1, 1);
    Bit4@ Y = Bit4@(1, 0, 1, 0);
  
-  This code declares 5 variables, named @l{Unit}, @l{0}, @l{1}, @l{X}, and
-  @l{Y}. The variable declarations start with the type of the variable,
-  followed by the name of the variable, @l{=}, and the value of the variable.
+  This code declares 5 variables, named @L{Unit}, @L{0}, @L{1}, @L{X}, and
+  @L{Y}. The variable declarations start with the type of the variable,
+  followed by the name of the variable, @L{=}, and the value of the variable.
  
   The syntax to create a struct value is the struct type followed by the list
   of values for each field of the struct, in order, in parenthesis. The syntax
@@ -75,13 +75,13 @@
   the value to use for that tagged field all in parenthesis.
  
   Union and struct values are immutable, lightweight, and passed by value. A
-  decent implementation of fble will implement a value of @l{Bit4@} like @l{X}
-  or @l{Y} easily in a single machine word.
+  decent implementation of fble will implement a value of @L{Bit4@} like @L{X}
+  or @L{Y} easily in a single machine word.
  
  @section Functions
   Next we'll define a couple of functions that implement a bitwise @l{AND}
-  operation: A function @l{And} that computes the @l{AND} operation on
-  individual bits, and a function @l{And4} to compute bitwise @l{AND} on our 4
+  operation: A function @L{And} that computes the @l{AND} operation on
+  individual bits, and a function @L{And4} to compute bitwise @l{AND} on our 4
   bit bit-vectors:
  
   @code[fble] @
@@ -93,50 +93,50 @@
      Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
    };
  
-  The functions @l{And} and @l{And4} are variables just like @l{Unit}, @l{0},
-  @l{1}, @l{X}, and @l{Y}. To declare these variables, we start with the type,
-  followed by the name, @l{=}, and the their value. In this case we have
+  The functions @L{And} and @L{And4} are variables just like @L{Unit}, @L{0},
+  @L{1}, @L{X}, and @L{Y}. To declare these variables, we start with the type,
+  followed by the name, @L{=}, and the their value. In this case we have
   function types and function values instead of struct or union types and
   struct or union values.
  
   The syntax for a function type is the list of argument types in parenthesis,
   followed by the return type of the function in braces. The type for the
-  @l{And} function is @l{(Bit@, Bit@) { Bit@; }}, which means it is a function
-  that takes two arguments of type @l{Bit@} and returns a @l{Bit@} as a
+  @L{And} function is @L{(Bit@, Bit@) { Bit@; }}, which means it is a function
+  that takes two arguments of type @L{Bit@} and returns a @L{Bit@} as a
   result.
  
   The syntax for a function value is a list of named arguments in parenthesis
-  followed by the body of the function. The implementation of the @l{And}
-  function uses names @l{a} and @l{b} for the arguments. The body of the
+  followed by the body of the function. The implementation of the @L{And}
+  function uses names @L{a} and @L{b} for the arguments. The body of the
   function consists of a single expression, which will be evaluated to compute
   the result of the function.
  
-  In the case of the @l{And} function, the result is computed using the
-  conditional expression @l{a.?(0: 0, 1: b)}. Conditional expressions, also
+  In the case of the @L{And} function, the result is computed using the
+  conditional expression @L{a.?(0: 0, 1: b)}. Conditional expressions, also
   known in fble as "union select" expressions, are similar to the conditional
   operator, if statements, or case statements in C and other languages. The
   syntax for a conditional expression is the union value to switch on,
-  followed by @l{.?}, followed by an expression to evaluate for each possible
+  followed by @L{.?}, followed by an expression to evaluate for each possible
   tag of the union value. At runtime, the tag associated with the union value
-  is used to select the expression to return. In this case, if @l{a} is tagged
-  with @l{0}, the result @l{0} will be returned, and if @l{a} is tagged with
-  @l{1}, the result @l{b} will be returned. That defines an @l{AND} operation.
+  is used to select the expression to return. In this case, if @L{a} is tagged
+  with @L{0}, the result @L{0} will be returned, and if @L{a} is tagged with
+  @L{1}, the result @L{b} will be returned. That defines an @l{AND} operation.
  
-  The @l{And4} function is similarly defined. It returns a @l{Bit4@} value
-  whose fields are the result of applying the @l{And} function to the
-  corresponding fields of the arguments @l{a} and @l{b}. For example,
-  @l{And(a.3, b.3)} calls the @l{And} function with bit 3 of @l{a} and bit 3
-  of @l{b}, and uses the result for bit 3 of the result of the @l{And4}
+  The @L{And4} function is similarly defined. It returns a @L{Bit4@} value
+  whose fields are the result of applying the @L{And} function to the
+  corresponding fields of the arguments @L{a} and @L{b}. For example,
+  @L{And(a.3, b.3)} calls the @L{And} function with bit 3 of @L{a} and bit 3
+  of @L{b}, and uses the result for bit 3 of the result of the @L{And4}
   function.
  
-  We can apply our @l{And4} function to variables @l{X} and @l{Y} to get a
-  result @l{Z}:
+  We can apply our @L{And4} function to variables @L{X} and @L{Y} to get a
+  result @L{Z}:
  
   @code[fble] @
    Bit4@ Z = And4(X, Y);
  
  @section String Conversions
-  We'd like to write some functions to convert @l{Bit@} and @l{Bit4@} values
+  We'd like to write some functions to convert @L{Bit@} and @L{Bit4@} values
   to strings so we can print them out. These functions are similar to the
   functions we have already written:
  
@@ -154,7 +154,7 @@
  
  @section The Output String
   All that's left is to set our output string and main function. We'll have
-  the program print out the values of @l{X}, @l{Y}, and @l{Z}:
+  the program print out the values of @L{X}, @L{Y}, and @L{Z}:
  
   @code[fble] @
    String@ output = Strs[
@@ -168,7 +168,7 @@
   @code[sh] @
    fble-stdio -p core -I . -m /Basics%
  
-  If all goes well, you should see the values of @l{X}, @l{Y}, and @l{Z}
+  If all goes well, you should see the values of @L{X}, @L{Y}, and @L{Z}
   printed out:
  
   @code[txt] @
@@ -179,12 +179,12 @@
    Try implementing bitwise @l{NOT}, @l{OR} and @l{XOR} functions.
  
   @exercise
-   Try defining a @l{Bit8@} type and implementing a bitwise @l{And8} operation
-   for it. You could reuse @l{Bit4@} for the definition of @l{Bit8@} or just
-   use @l{Bit@} like how we defined @l{Bit4@}.
+   Try defining a @L{Bit8@} type and implementing a bitwise @L{And8} operation
+   for it. You could reuse @L{Bit4@} for the definition of @L{Bit8@} or just
+   use @L{Bit@} like how we defined @L{Bit4@}.
  
   @exercise
-   Try implementing a 4-bit @l{Add} function that can add two @l{Bit4@}
+   Try implementing a 4-bit @L{Add} function that can add two @L{Bit4@}
    interpreted as twos-complement integers.
  
  @section Next Steps

@@ -3,18 +3,18 @@
  with the environment.
 
  Until now we've been writing fble programs that use
- @l{/Core/Stdio/StringO%.Run} to output a string:
+ @L{/Core/Stdio/StringO%.Run} to output a string:
 
  @code[fble] @
    String@ output = Str|'hello, world';
    /Core/Stdio/StringO%.Run(output);
 
- The @l{/Core/Stdio%} library provides a more general interface for writing
+ The @L{/Core/Stdio%} library provides a more general interface for writing
  fble programs that allows you to access command line arguments, access
  standard input, output, and error streams, read and write files, read
  environment variables, and return an exit status.
 
- The @l{/Core/Stdio/IO%.Run} function takes a @l{Main@} function with the
+ The @L{/Core/Stdio/IO%.Run} function takes a @L{Main@} function with the
  following type:
 
  @code[fble] @
@@ -35,28 +35,28 @@
 
  Let's break this down
 
- @section @l{<<@>@ M@>}
-  The @l{Main@} function is polymorphic, parameterized by type @l{M@}. The
-  first two arguments to the function are @l{m} and @l{stdio}, which are
-  interfaces supported by the abstract type @l{M@}.
+ @section @L{<<@>@ M@>}
+  The @L{Main@} function is polymorphic, parameterized by type @L{M@}. The
+  first two arguments to the function are @L{m} and @L{stdio}, which are
+  interfaces supported by the abstract type @L{M@}.
 
-  This says your main function can be used with any type @l{M@} that
-  implements the @l{Monad@} and @l{Stdio@} interfaces. The
-  @l{/Core/Stdio/IO%.Run} function provides a concrete type of @l{M@} for use
+  This says your main function can be used with any type @L{M@} that
+  implements the @L{Monad@} and @L{Stdio@} interfaces. The
+  @L{/Core/Stdio/IO%.Run} function provides a concrete type of @L{M@} for use
   with the @l{fble-stdio} program.
 
-  The reason @l{Main@} is polymorphic instead of hard coding the concrete type
-  for @l{M@} provided by @l{/Core/Stdio/IO%.Run} is to make your main function
+  The reason @L{Main@} is polymorphic instead of hard coding the concrete type
+  for @L{M@} provided by @L{/Core/Stdio/IO%.Run} is to make your main function
   more general than just for use with @l{fble-stdio}. For example, you can
   write test cases for your main function using a simulated environment.
 
- @section @l{Monad@<M@> m}
-  The @l{Monad@<M@>} interface @l{m} provides a way to sequence operations.
+ @section @L{Monad@<M@> m}
+  The @L{Monad@<M@>} interface @L{m} provides a way to sequence operations.
   This is needed to have a well defined order of operations when interacting
   with input and output streams and files.
 
- @section @l{Stdio@<M@> stdio}
-  The @l{Stdio@<M@>} interface is defined as follows:
+ @section @L{Stdio@<M@> stdio}
+  The @L{Stdio@<M@>} interface is defined as follows:
 
   @code[fble] @
    <<@>@>@ Stdio@ = <<@>@ M@> { *(
@@ -81,36 +81,36 @@
      (String@) { M@<Maybe@<String@>>; } getenv
    ); };
   
-  The @l{IStream@} and @l{OStream@} are types for reading a sequence of bytes.
-  The @l{Stdio@} interface represents bytes using the @l{Int@} type:
+  The @L{IStream@} and @L{OStream@} are types for reading a sequence of bytes.
+  The @L{Stdio@} interface represents bytes using the @L{Int@} type:
 
   @code[fble] @
    <<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
    <<@>@>@ OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
 
-  The fields @l{in}, @l{out}, and @l{err} let you read and write standard
+  The fields @L{in}, @L{out}, and @L{err} let you read and write standard
   input and output streams.
 
-  The fields @l{read} and @l{write} let you open files for reading and writing
+  The fields @L{read} and @L{write} let you open files for reading and writing
   respectively.
 
-  The field @l{getenv} lets you access the value of an environment variable.
+  The field @L{getenv} lets you access the value of an environment variable.
 
- @section @l{List@<String@> args}
-  The @l{args} argument is the list of command line arguments passed when
+ @section @L{List@<String@> args}
+  The @L{args} argument is the list of command line arguments passed when
   invoking the program. For example, if you ran your program as:
 
   @code[sh] @
    fble-stdio -p core -I . -m /Foo% -- hello there now
 
-  Then the value of @l{args} would be:
+  Then the value of @L{args} would be:
 
   @code[fble] @
    List[Str|'hello', Str|'there', Str|'now']
  
- @section @l{M@<Bool@>;}
-  The result of the @l{Main@} program has type @l{M@<Bool@>}. If you return
-  @l{True} using @l{m.return(True)}, your program will have exit status 0.
+ @section @L{M@<Bool@>;}
+  The result of the @L{Main@} program has type @L{M@<Bool@>}. If you return
+  @L{True} using @L{m.return(True)}, your program will have exit status 0.
   Otherwise your program will have exit status 1.
 
  @section Exercises

@@ -13,71 +13,71 @@
   use as a map data type. The internal structure of the tree may be
   complicated and rely on invariants about how the tree is balanced. As long
   as users only interact with the tree through provided functions like
-  @l{Empty}, @l{Lookup}, @l{Insert}, and @l{Delete}, those invariants can be
+  @L{Empty}, @L{Lookup}, @L{Insert}, and @L{Delete}, those invariants can be
   maintained. But technically there is nothing stopping a user from
   constructing their own tree value directly and in a way that violates the
   expected invariants.
   
   Abstract types are a way to restrict access to types to a set of modules.
-  This way, for example, you can say only the @l{/Core/Map%} module is allowed
+  This way, for example, you can say only the @L{/Core/Map%} module is allowed
   to construct a map directly; everyone else has to use the functions provided
-  by @l{/Core/Map%} to construct maps.
+  by @L{/Core/Map%} to construct maps.
  
  @section Basics
   An abstract type is a guarded wrapper around a normal type that can only be
   accessed by modules in a specified subtree of the module hierarchy.
   
-  For example, the normal type @l{Bool@} is accessible to everyone. Anyone can
+  For example, the normal type @L{Bool@} is accessible to everyone. Anyone can
   test if a boolean value is true or false or construct their own boolean
-  value using @l{Bool@(true: Unit)} and @l{Bool@(false: Unit)}.
+  value using @L{Bool@(true: Unit)} and @L{Bool@(false: Unit)}.
   
-  We can define an abstract type @l{MyBool@} that wraps the @l{Bool@} type,
-  and make it so only modules in the @l{/Mine/} part of the module hierarchy
+  We can define an abstract type @L{MyBool@} that wraps the @L{Bool@} type,
+  and make it so only modules in the @L{/Mine/} part of the module hierarchy
   can unwrap it:
   
   @code[fble] @
    @ MyPackage@ = %(/Mine%);
    @ MyBool@ = MyPackage@<Bool@>;
   
-  The syntax @l{%(...)} is used to describe a package type. Package types
-  represent sets of modules. In this case, because it's given @l{/Mine%} as an
-  argument to the package type, it includes modules like @l{/Mine%},
-  @l{/Mine/A%}, @l{/Mine/A/B%}, and @l{/Mine/C%}, but excludes modules like
-  @l{/Yours%}.
+  The syntax @L{%(...)} is used to describe a package type. Package types
+  represent sets of modules. In this case, because it's given @L{/Mine%} as an
+  argument to the package type, it includes modules like @L{/Mine%},
+  @L{/Mine/A%}, @L{/Mine/A/B%}, and @L{/Mine/C%}, but excludes modules like
+  @L{/Yours%}.
   
-  Once you have the package type @l{MyPackage@}, you can create
+  Once you have the package type @L{MyPackage@}, you can create
   package-specific wrappers around other types. In this case, the type
-  @l{MyBool@} is created which is considered a different type from @l{Bool@}.
-  The only thing you can do with values of the @l{MyBool@} type is convert
-  them to and from values of @l{Bool@} type, but you can only do that from
-  modules included in the @l{MyPackage@} package type.
+  @L{MyBool@} is created which is considered a different type from @L{Bool@}.
+  The only thing you can do with values of the @L{MyBool@} type is convert
+  them to and from values of @L{Bool@} type, but you can only do that from
+  modules included in the @L{MyPackage@} package type.
   
-  To create a value of @l{MyBool@}:
+  To create a value of @L{MyBool@}:
   
   @code[fble] @
    MyBool@ MyTrue = MyBool@(True);
   
-  This succeeds only from modules in the set described by the @l{MyPackage@}
+  This succeeds only from modules in the set described by the @L{MyPackage@}
   type.
   
-  To extract a value from @l{MyBool@} you use an abstract access:
+  To extract a value from @L{MyBool@} you use an abstract access:
   
   @code[fble] @
    Bool@ OriginalTrue = MyTrue.%;
   
   Again, this succeeds only from modules in the set described by the
-  @l{MyPackage@} type. If you write this in a different module, you'll get a
+  @L{MyPackage@} type. If you write this in a different module, you'll get a
   type error.
   
   More generally, you can use an abstract cast to convert between two types
   that are equivalent except for some parts of one type being abstract. For
-  example, imagine you have a list of @l{MyBool@}. Rather than have to iterate
+  example, imagine you have a list of @L{MyBool@}. Rather than have to iterate
   over all the elements of the list converting them one at a time to
-  @l{Bool@}, you can do a direct cast.
+  @L{Bool@}, you can do a direct cast.
 
-  The syntax for a direct cast is the package type, followed by @l{.}, followed
+  The syntax for a direct cast is the package type, followed by @L{.}, followed
   by the destination type in angle brackets, followed by the object to cast in
-  parenthesis: @l{ package_type '.' '<' dest_type '>' '(' value ')'}.
+  parenthesis: @c[ebnf]{ package_type, '.', '<', dest_type, '>', '(', value, ')'}.
 
   Here are a direct casts to convert a list of booleans to and from a list of
   abstract booleans:
@@ -109,16 +109,16 @@
    
    @(Enum@, A, B, C, IsA, IsB, IsC);
  
-  The @l{Impl@} type is the internal type used to implement the enum. The
-  @l{Enum@} type is the abstract type used in the external interface. Values
-  @l{A}, @l{B}, and @l{C} are defined using the internal @l{Impl@} type, but
-  immediately wrapped to convert them to the external @l{Enum@} type.
+  The @L{Impl@} type is the internal type used to implement the enum. The
+  @L{Enum@} type is the abstract type used in the external interface. Values
+  @L{A}, @L{B}, and @L{C} are defined using the internal @L{Impl@} type, but
+  immediately wrapped to convert them to the external @L{Enum@} type.
  
-  The functions @l{IsA}, @l{IsB}, and @l{IsC} are similarly created as
-  functions operating on the @l{Impl@}, then cast and exported as functions
-  operating on the external type @l{Enum@}. In this example we take advantage
+  The functions @L{IsA}, @L{IsB}, and @L{IsC} are similarly created as
+  functions operating on the @L{Impl@}, then cast and exported as functions
+  operating on the external type @L{Enum@}. In this example we take advantage
   of the typeof operator to more easily refer to the types of functions
-  @l{IsA}, @l{IsB}, and @l{IsC} being defined.
+  @L{IsA}, @L{IsB}, and @L{IsC} being defined.
  
  @section Abstract Types in the Language Specification
   Abstract types are described in @fbld[../spec/fble.fbld#abstract][section 9

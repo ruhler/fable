@@ -8,3 +8,5 @@
 @define[exercise][content]
  @content
 @@
+
+@define[L][str] @c[fble][@str] @@

@@ -24,7 +24,7 @@
   We'll break this down piece by piece in the following sections.
 
   @subsection Comments in Code
-   Comments in fble start with the @l{#} character and continue to the end of
+   Comments in fble start with the @L{#} character and continue to the end of
    the line. For example:
 
    @code fble @
@@ -32,41 +32,41 @@
 
   @subsection Module Imports
    The first few lines of code of the hello world program import the
-   @l{String@} type and @l{Str} string literal function from the core library.
+   @L{String@} type and @L{Str} string literal function from the core library.
 
    @code[fble] @
     @ String@ = /Core/String%.String@;
     % Str = /Core/String%.Str;
    
-   Names ending in the @l{@} character are types. Names without @l{@} are
-   values. In this case @l{String@} is a type and @l{Str} is a value.
+   Names ending in the @L{@} character are types. Names without @L{@} are
+   values. In this case @L{String@} is a type and @L{Str} is a value.
 
-   Names ending in @l{%} are names of modules. @l{/Core/String%} is a module
+   Names ending in @L{%} are names of modules. @L{/Core/String%} is a module
    from the core library that defines the string type and related functions.
 
    Modules are located by searching module directories of the package search
-   path. The source code for module @l{/Core/String%} will be in a file
+   path. The source code for module @L{/Core/String%} will be in a file
    @l{Core/String.fble}. You can see the default package search path
    for your installation by running @l{fble-stdio --help}, or set your own
    package search path using the FBLE_PACKAGE_PATH environment variable and/or
    @l{-I} and @l{-p} options to @l{fble-stdio}.
    
   @subsection Variable Declaration
-   Next we declare a variable called @l{output} whose value is the string
+   Next we declare a variable called @L{output} whose value is the string
    literal for @l{hello, world}.
  
    @code[fble] @
     String@ output = Str|'hello, world';
 
   @subsection The Module Value
-   The last thing we do is specify the @l{/HelloWorld%} module value,
+   The last thing we do is specify the @L{/HelloWorld%} module value,
    which will be used as the main function for the program.
  
    @code[fble] @
     /Core/Stdio/StringO%.Run(output);
 
-   This uses a helper function from the @l{/Core/Stdio/StringO%} module which
-   defines a main function that outputs a single string when run. The @l{Run}
+   This uses a helper function from the @L{/Core/Stdio/StringO%} module which
+   defines a main function that outputs a single string when run. The @L{Run}
    function returns a main function that can be run by the @l{fble-stdio}
    program.
 
@@ -81,16 +81,16 @@
   The @l{-p} option to @l{fble-stdio} says our program relies on modules from
   the @l{core} package. The @l{-I} option says to look for your
   @l{HelloWorld.fble} file in the current directory, and the @l{-m} option says
-  to execute code from the @l{/HelloWorld%} module you just defined.
+  to execute code from the @L{/HelloWorld%} module you just defined.
  
  @section Printing Different Kinds of Things
   An important motivation for the hello world program is to show you how to
   print things to the output, so you can see the results of trying
   different things in subsequent tutorials. Fble doesn't have a printf
   function or format strings. Instead, many of the types defined in
-  the core library define a @l{Show} function to convert them to strings. You
-  can concatenate strings directly together using the @l{/Core/String%.Strs}
-  function or join them as separate lines using the @l{/Core/String%.Lines}
+  the core library define a @L{Show} function to convert them to strings. You
+  can concatenate strings directly together using the @L{/Core/String%.Strs}
+  function or join them as separate lines using the @L{/Core/String%.Lines}
   function.
  
   For example, try updating your hello world program to print some of the
@@ -133,12 +133,12 @@
 
   @exercise
    Sometimes we import values from other modules, other times we use them
-   directly. It's your choice. Try removing the import for @l{String@} and using
-   the value directly from the @l{/Core/String%} module. Try importing the
-   @l{/Core/Stdio/StringO%.Run} function before using it.
+   directly. It's your choice. Try removing the import for @L{String@} and using
+   the value directly from the @L{/Core/String%} module. Try importing the
+   @L{/Core/Stdio/StringO%.Run} function before using it.
  
   @exercise
-   String literals are introduced using @l{Str|}, not from single quotes. If
+   String literals are introduced using @L{Str|}, not from single quotes. If
    you have a string without spaces or other punctuation characters, you don't
    need single quotes. Try printing @l{hello} using a string literal without
    single quotes.

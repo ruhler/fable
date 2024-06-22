@@ -4,7 +4,7 @@
  language in preparation for diving into the details in subsequent tutorials.
 
  @section Comments
-  Comments in fble start with the @l{#} character end continue to the end of
+  Comments in fble start with the @L{#} character end continue to the end of
   the line. For example:
 
   @code fble @
@@ -13,13 +13,13 @@
  @section Primitive Data Types
   Fble does not have builtin primitive data types such as bool, char, int, or
   float. These data types can be implemented without special language support;
-  they are available in the core library modules @l{/Core/Bool%},
-  @l{/Core/Char%}, and @l{/Core/Int%}. Library support for floating point
+  they are available in the core library modules @L{/Core/Bool%},
+  @L{/Core/Char%}, and @L{/Core/Int%}. Library support for floating point
   numbers has not yet been implemented.
 
   @subsection Integer Literals
    Fble has special syntax for user-defined literals. The core library module
-   @l{/Core/Int/Lit%} provides a decimal integer literal. The library could
+   @L{/Core/Int/Lit%} provides a decimal integer literal. The library could
    also provide hexidecimal or other integer literals if needed:
 
    @code fble @
@@ -82,11 +82,11 @@
    };
 
  @section Arrays
-  Fble does not have an array type. You can use a map from the @l{/Core/Map%}
+  Fble does not have an array type. You can use a map from the @L{/Core/Map%}
   library instead to map integer indices to values.
 
  @section Lists
-  The core library module @l{/Core/List%} defines a list type and functions
+  The core library module @L{/Core/List%} defines a list type and functions
   for working on lists.
 
   Fble has special syntax for constructing list-like values.
@@ -96,11 +96,11 @@
 
  @section Strings
   Fble does not have a builtin string type. The core library module
-  @l{/Core/String%} provides a string type you can use if you like.
+  @L{/Core/String%} provides a string type you can use if you like.
 
   @subsection String Literals
    Fble has special syntax for user-defined literals. The core library module
-   @l{/Core/String%} provides some string literal variants:
+   @L{/Core/String%} provides some string literal variants:
 
    @code fble @
     String@ text = Str|'hello, world';
@@ -109,7 +109,7 @@
  @section Pointers
   Fble does not have a pointer type. Automatic memory management takes care of
   the allocation and freeing of objects on the heap automatically. You can use
-  a map from the @l{/Core/Map%} library to simulate pointers in the language.
+  a map from the @L{/Core/Map%} library to simulate pointers in the language.
 
  @section Garbage Collection
   Fble uses a garbage collector for automatic memory management. Garbage
@@ -197,7 +197,7 @@
    Fble supports arbitrary nesting of function, type, and other definitions.
 
    Here's an example from the core library code to convert a string to an
-   integer. It defines inner helper functions @l{Digit} and @l{ReadP}.
+   integer. It defines inner helper functions @L{Digit} and @L{ReadP}.
 
    @code fble @
     (String@) { Int@; } Read = {
@@ -273,7 +273,7 @@
   can use fble's abstract types. You can create struct values with type and
   function fields if you want.
 
-  For example, the @l{/Core/Map%} module provides a @l{Map@} type defined in
+  For example, the @L{/Core/Map%} module provides a @L{Map@} type defined in
   its own module with internal fields protected using an abstract type.
 
  @section Inheritance
@@ -348,7 +348,7 @@
      Return(Command(name, args));
    };
 
-  In this case the functions @l{Do} and @l{Return} are user defined, not part
+  In this case the functions @L{Do} and @L{Return} are user defined, not part
   of the function bind syntax.
 
  @section Packages
@@ -358,8 +358,8 @@
   Fble has a separate abstract type feature that can be used to restrict
   access to internals of a module or a group of modules.
 
-  For example, here's part of the @l{/Core/String%} module, which re-uses code
-  from the @l{/Core/Char%} and @l{/Core/String%} modules in its
+  For example, here's part of the @L{/Core/String%} module, which re-uses code
+  from the @L{/Core/Char%} and @L{/Core/String%} modules in its
   implementation:
 
   @code fble @

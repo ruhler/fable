@@ -20,14 +20,14 @@
      a.?(0: 0, 1: b);
    };
  
-  In this case, we defined a union type @l{Bit@} that represents a choice
-  between @l{0} and @l{1}. This is a special case of a union where we don't
+  In this case, we defined a union type @L{Bit@} that represents a choice
+  between @L{0} and @L{1}. This is a special case of a union where we don't
   care about the argument value, we only care about whether the union is
-  tagged as @l{0} or @l{1}.
+  tagged as @L{0} or @L{1}.
  
   For a more general example, imagine we want to implement a calculator that
   supports addition, subtraction, negation, and integer literals. We can
-  define a union type @l{Expr@} representing a calculator expression. The
+  define a union type @L{Expr@} representing a calculator expression. The
   expression could either be addition, subtraction, negation, or an integer
   constant:
  
@@ -40,14 +40,14 @@
    );
  
   The argument value to the union changes depending on what kind of expression
-  it is. For @l{add} and @l{sub}, the argument is a pair of operand
-  expressions. For @l{neg} the argument is a single operand expression, and
-  @l{constant} is an integer value.
+  it is. For @L{add} and @L{sub}, the argument is a pair of operand
+  expressions. For @L{neg} the argument is a single operand expression, and
+  @L{constant} is an integer value.
  
-  When we construct a @l{Expr@} value, we need to say what operation to use and
+  When we construct a @L{Expr@} value, we need to say what operation to use and
   provide the appropriate argument. You do this by providing the name of the
   field and the value for that field when constructing a union value. For
-  example, to construct expressions for the constants @l{0} and @l{1}:
+  example, to construct expressions for the constants @L{0} and @L{1}:
  
   @code[fble] @
    Expr@ zero = Expr@(constant: 0);
@@ -58,8 +58,8 @@
   @code[fble] @
    Expr@ minus_one = Expr@(neg: one);
  
-  Notice that this time the argument @l{one} has type @l{Expr@} instead of
-  @l{Int@} like we had when creating constants.
+  Notice that this time the argument @L{one} has type @L{Expr@} instead of
+  @L{Int@} like we had when creating constants.
  
   To construct an addition operation, taking advantage of the syntax for
   implicit struct type value:
@@ -81,14 +81,14 @@
        constant: Str|'Constant');
    };
  
-  If the expression was created with the field @l{add}, the value of the
-  @l{add} branch of the union select expression is returned. If the expression
-  was created with the field @l{sub}, the value of the @l{sub} branch of the
+  If the expression was created with the field @L{add}, the value of the
+  @L{add} branch of the union select expression is returned. If the expression
+  was created with the field @L{sub}, the value of the @L{sub} branch of the
   union select expression is returned, and so on.
  
   In order to access the argument value to a union, you use the same syntax
   you use to access the field of a structure. For example, to get the constant
-  value: @l{e.constant}. This only makes sense if the expression @l{e} in this
+  value: @L{e.constant}. This only makes sense if the expression @L{e} in this
   case refers to a constant value. You'll get a runtime error if you try to
   access the incorrect field of a union value.
  
@@ -184,7 +184,7 @@
  
  @section Exercises
   @exercise
-   Reimplement the @l{And} function from previous tutorials using the
+   Reimplement the @L{And} function from previous tutorials using the
    statement version of union select.
  
  @section Next Steps

@@ -48,7 +48,7 @@
       }
     );
  
-   Let's rewrite the @l{BinaryBitwise} function to something where we could
+   Let's rewrite the @L{BinaryBitwise} function to something where we could
    apply the bind syntax. We need it to take a single function argument, so
    we'll swap the order of arguments and have it return a function that takes
    the single function argument:
@@ -59,7 +59,7 @@
       Bit4@(op(a.3, b.3), op(a.2, b.2), op(a.1, b.1), op(a.0, b.0));
     };
  
-   We can define @l{And4} using our new @l{BinaryBitwise} function as follows:
+   We can define @L{And4} using our new @L{BinaryBitwise} function as follows:
  
    @code[fble] @
     (Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ x, Bit4@ y) {
@@ -70,7 +70,7 @@
     };
  
    Now all the requirements for bind are satisfied when we call the
-   @l{BinaryBitwise(x, y)} function: it takes a single function argument which
+   @L{BinaryBitwise(x, y)} function: it takes a single function argument which
    we are supplying with an anonymous function.
  
    Using the bind syntax, we can rewrite the code to:
@@ -86,7 +86,7 @@
  
  @section A Less Contrived Example
   The example we gave for bind syntax in the previous section was totally
-  contrived, just to demonstrate the syntax. You wouldn't implement @l{And4}
+  contrived, just to demonstrate the syntax. You wouldn't implement @L{And4}
   using bind syntax in practice.
  
   Let's take a look at a less contrived example. Imagine you are doing
@@ -95,7 +95,7 @@
   type of division to distinguish between an integer result and an undefined
   result.
  
-  For example, let's define a type @l{MaybeInt@} that holds either an integer
+  For example, let's define a type @L{MaybeInt@} that holds either an integer
   or nothing:
  
   @code[fble] @
@@ -107,19 +107,19 @@
    
    MaybeInt@ Nothing = MaybeInt@(nothing: Unit);
  
-  Now we can define a @l{Div} function for integer division with the following
+  Now we can define a @L{Div} function for integer division with the following
   type:
  
   @code[fble] @
    (Int@, Int@) { MaybeInt@; } Div = (Int@ a, Int@ b) { ... };
  
-  The @l{Div} function will return @l{Nothing} if it is a divide by zero and
-  @l{Just(x)} otherwise.
+  The @L{Div} function will return @L{Nothing} if it is a divide by zero and
+  @L{Just(x)} otherwise.
  
   Any time you work with this division function, you'll have to check the
   answer to see if it is undefined. To propagate that case, it would be nice
   if we have variations of all our arithmetic operations to work with
-  @l{MaybeInt@} instead of @l{Int@}. For example:
+  @L{MaybeInt@} instead of @L{Int@}. For example:
  
   @code[fble] @
    (MaybeInt@, MaybeInt@) { MaybeInt@; }
@@ -136,8 +136,8 @@
      Div(ma.just, mb.just);
    };
  
-  We can factor out glue code for checking if a @l{MaybeInt@} value is
-  @l{Nothing}:
+  We can factor out glue code for checking if a @L{MaybeInt@} value is
+  @L{Nothing}:
  
   @code[fble] @
    (MaybeInt@, (Int@) { MaybeInt@; }) { MaybeInt@; }
@@ -185,17 +185,17 @@
    };
  
   I would argue this is slightly better than our original definitions for
-  @l{MaybeAdd} and @l{MaybeDiv} because we've factored out the logic for
+  @L{MaybeAdd} and @L{MaybeDiv} because we've factored out the logic for
   testing if a value is undefined or not. If we wanted to, we could easily
-  change the definition of @l{MaybeInt@} to take an error message in the case
+  change the definition of @L{MaybeInt@} to take an error message in the case
   of undefined and propagate that without having to change the definitions of
-  @l{MaybeAdd} or @l{MaybeDiv}.
+  @L{MaybeAdd} or @L{MaybeDiv}.
  
  @section Type Inference
   Bind is syntactic sugar for function application, which means it supports
   type inference.
  
-  Let's generalize our @l{MaybeInt@} type to work for any kind of type using
+  Let's generalize our @L{MaybeInt@} type to work for any kind of type using
   polymorphism:
  
   @code[fble] @
@@ -208,7 +208,7 @@
    Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
  
   Now we could propagate a divide by zero error to a boolean comparison
-  result, for example. We'll start by updating our definition of the @l{Maybe}
+  result, for example. We'll start by updating our definition of the @L{Maybe}
   function for the case where the argument type and result types can be
   different:
  
@@ -219,11 +219,11 @@
      f(mx.just);
    };
  
-  Take a moment to understand the interleaving of type parameters @l{A@} and
-  @l{B@} and functions in that definition.
+  Take a moment to understand the interleaving of type parameters @L{A@} and
+  @L{B@} and functions in that definition.
  
-  Now let's write a @l{MaybeEquals} function to test whether two
-  @l{Maybe@<Int@>} values are equal. First without the bind syntax:
+  Now let's write a @L{MaybeEquals} function to test whether two
+  @L{Maybe@<Int@>} values are equal. First without the bind syntax:
  
   @code[fble] @
    (Maybe@<Int@>, Maybe@<Int@>) { Maybe@<Bool@>; }
@@ -245,10 +245,10 @@
      Just<Bool@>(Equals(a, b));
    };
  
-  The problem with this is we have to repeat the @l{Bool@} type argument every
-  time we call the @l{Maybe} function. If we changed the result type to
-  @l{Maybe@<Int@>} instead of @l{Maybe@<Bool@>}, we would have to update every
-  line where @l{Bool@} is mentioned.
+  The problem with this is we have to repeat the @L{Bool@} type argument every
+  time we call the @L{Maybe} function. If we changed the result type to
+  @L{Maybe@<Int@>} instead of @L{Maybe@<Bool@>}, we would have to update every
+  line where @L{Bool@} is mentioned.
  
   Fortunately we can take advantage of type inference here. In fact, this
   scenario where we chain together bind syntax is the true motivation for
@@ -265,22 +265,22 @@
  @section Monadic Computations
   This idea of factoring out common glue logic for a data type into separate
   functions is very powerful and can be applied to many more things than the
-  example we showed with the @l{Maybe@} type. This is related to the term
+  example we showed with the @L{Maybe@} type. This is related to the term
   "Monad" from category theory, so we call this kind of thing "Monadic
   Computation".
  
-  The relevant pieces for monadic computation in the @l{Maybe@} example were:
+  The relevant pieces for monadic computation in the @L{Maybe@} example were:
  
-  @item A polymoprhic @l{Maybe@} type.
-  @item The @l{Just} function to turn a value into a @l{Maybe@} value.
+  @item A polymoprhic @L{Maybe@} type.
+  @item The @L{Just} function to turn a value into a @L{Maybe@} value.
   @item
-   The @l{Maybe} function to extract a value from a @l{Maybe@} and apply it to
+   The @L{Maybe} function to extract a value from a @L{Maybe@} and apply it to
    a function.
  
   We can define an interface that captures these relevant pieces. We'll have
-  the interface apply to an abstract type @l{M@} in place of @l{Maybe@},
-  rename the @l{Just} function to @l{return}, and rename the @l{Maybe}
-  function to @l{do}:
+  the interface apply to an abstract type @L{M@} in place of @L{Maybe@},
+  rename the @L{Just} function to @L{return}, and rename the @L{Maybe}
+  function to @L{do}:
  
   @code[fble] @
    <<@>@>@ Monad@ = <<@>@ M@> {
@@ -290,18 +290,18 @@
      );
    };
  
-  An example instance of this @l{Monad@} interface is what we've already seen:
+  An example instance of this @L{Monad@} interface is what we've already seen:
  
   @code[fble] @
    Monad@<Maybe@> MaybeMonad = @(return: Just, do: Maybe);
  
   We can generalize our arithmetic operations to work on any data type that
-  supports this @l{Monad@} interface. In the @l{Maybe@} example we had the
-  @l{Nothing} function to use in the case of @l{MaybeDiv}. @l{Nothing} is like
-  a primitive function of the @l{Maybe@} monad.
+  supports this @L{Monad@} interface. In the @L{Maybe@} example we had the
+  @L{Nothing} function to use in the case of @L{MaybeDiv}. @L{Nothing} is like
+  a primitive function of the @L{Maybe@} monad.
  
   Here's how we could define monadic add, equality, and division functions for
-  an abstract monadic type @l{M@} with a given primitive function for the case
+  an abstract monadic type @L{M@} with a given primitive function for the case
   of divide by zero:
  
   @code[fble] @
@@ -328,8 +328,8 @@
      @(AddM, DivM, EqualsM);
    };
  
-  To get definitions for @l{MaybeAdd}, @l{MaybeDiv}, and @l{MaybeEquals}, we
-  just need to pass @l{Maybe@}, @l{MaybeMonad}, and @l{Nothing} to the above
+  To get definitions for @L{MaybeAdd}, @L{MaybeDiv}, and @L{MaybeEquals}, we
+  just need to pass @L{Maybe@}, @L{MaybeMonad}, and @L{Nothing} to the above
   function.
  
   Here are some different things you could do with monads:

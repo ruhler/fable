@@ -5,7 +5,7 @@
  @section Lists in Fble
   There is no builtin list type in fble. You can define your own list type in
   fble using a mix of structs and unions.  For example, here's a possible
-  definition for a list of @l{Int@}:
+  definition for a list of @L{Int@}:
  
   @code[fble] @
    @ List@ = +(*(Int@ head, List@ tail) cons, Unit@ nil);
@@ -36,7 +36,7 @@
      Int|13, Empty))))))));
  
   It's pretty tedious to write a list this way. In most languages you could
-  write something like @l{[0, 1, 1, 2, 3, 5, 8, 13]}, which is much more
+  write something like @L{[0, 1, 1, 2, 3, 5, 8, 13]}, which is much more
   compact and readable.
  
  @section The List Expression
@@ -75,7 +75,7 @@
   For the compiler to support the list expression, it has to know what the
   structure of a list is. It doesn't care what name you use for the list type,
   or what name you use for the list fields. As long as it has the same
-  structure as the @l{List@} type we already defined.
+  structure as the @L{List@} type we already defined.
  
   Specifically, the required structure of a list type is:
  
@@ -102,7 +102,7 @@
    
    IntList@ Fibonacci = Elements[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
  
-  This works because the @l{IntList@} type, even though it uses different
+  This works because the @L{IntList@} type, even though it uses different
   names for things, matches the structure of a list type expected by the
   compiler for list expressions.
  
@@ -115,7 +115,7 @@
  
  @section List Functions
   The list expression requires a function that takes a single argument which
-  is of list type. We saw an example function @l{List} that returns its value
+  is of list type. We saw an example function @L{List} that returns its value
   directly to construct a list, but you can do anything you want in the list
   function.
  
@@ -127,7 +127,7 @@
      Add(xs.cons.head, Sum(xs.cons.tail));
    };
 
-  We can use @l{Sum} as the list function in a list expression:
+  We can use @L{Sum} as the list function in a list expression:
  
   @code[fble] @
    Int@ sum = Sum[Int|0, Int|1, Int|1, Int|2, Int|3, Int|5, Int|8, Int|13];
@@ -138,7 +138,7 @@
   @code[fble] @
    String@ output = Strs[Str|'A boolean: ', /Core/Bool/Show%.Show(True)];
  
-  Here the @l{Strs} function takes a list of strings as its only argument, so
+  Here the @L{Strs} function takes a list of strings as its only argument, so
   we can use the list expression to call it.
  
  @section Variable Arguments

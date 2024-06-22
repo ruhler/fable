@@ -32,7 +32,7 @@
       };
    };
  
-  Because our @l{MakeInt} function takes a list of integers as its single
+  Because our @L{MakeInt} function takes a list of integers as its single
   argument, we can use a list expression to define our integer:
  
   @code[fble] @
@@ -56,18 +56,18 @@
    String@ hello_world = String|'hello, world';
  
   A literal expression is a function followed by @l{|} and then a single word.
-  In this case, @l{Int} is a function that converts a list of letters to an
-  integer and @l{2023} is a word with the list of letters to pass to the
-  @l{Int} function. Similarly, @l{String} is a function that converts a list
-  of letters to a string and @l{'hello, world'} is a word with the list of
-  letters to pass to the @l{String} function.
+  In this case, @L{Int} is a function that converts a list of letters to an
+  integer and @L{2023} is a word with the list of letters to pass to the
+  @L{Int} function. Similarly, @L{String} is a function that converts a list
+  of letters to a string and @L{'hello, world'} is a word with the list of
+  letters to pass to the @L{String} function.
  
   The only tricky part is specifying what we mean by a letter. For literals in
   fble, the type of a letter is a union type that has fields with
   single-letter names whose types are the struct type with no fields.
  
   For example, for the letters used in integer literals, we define a type
-  @l{Decimal@}:
+  @L{Decimal@}:
  
   @code[fble] @
    @ Decimal@ = +(
@@ -78,21 +78,21 @@
  
   When the compiler sees a literal expression with the word @l{2023}, it
   splits it up into letters @l{2}, @l{0}, @l{2}, @l{3}, and uses those to
-  construct @l{Decimal@} values directly. The literal expression @l{Int|2023}
+  construct @L{Decimal@} values directly. The literal expression @L{Int|2023}
   gets converted into a list expression:
  
   @code[fble] @
    Int@ 2023 = Int[Decimal@(2: Unit), Decimal@(0: Unit), Decimal@(2: Unit), Decimal@(3: Unit)];
  
-  Except, in reality, the compiler would use the value @l{*()()} instead of
-  @l{Unit}, because it doesn't know about the name @l{Unit}.
+  Except, in reality, the compiler would use the value @L{*()()} instead of
+  @L{Unit}, because it doesn't know about the name @L{Unit}.
  
   In summary, a literal expression can be used in place of list expressions in
   the special case where the type of element of the list is a union type with
   single-letter named fields whose types are the struct type with no fields.
  
- @section Defining Literals for @l{Bit4@}
-  Let's define our own literals for the @l{Bit4@} type. We already have a
+ @section Defining Literals for @L{Bit4@}
+  Let's define our own literals for the @L{Bit4@} type. We already have a
   letter type we can use the satisfies the requirements for literal
   expressions:
  
@@ -100,7 +100,7 @@
    @ Bit@ = +(Unit@ 0, Unit@ 1);
  
   That means all we need to do is define a function that takes a list of
-  @l{Bit@} and produces a @l{Bit4@}. Because we haven't introduced
+  @L{Bit@} and produces a @L{Bit4@}. Because we haven't introduced
   polymorphism yet, let's redefine our own list type:
  
   @code[fble] @
@@ -109,7 +109,7 @@
   Next we need to decide how we will handle literals with too few or too many
   bits. Let's say literals like @l{1} and @l{10} are treated like @l{0001} and
   @l{0010}, and literals like @l{10110} are truncated to be like @l{0110}. A
-  simple way to implement this would be start with a @l{Bit4@} value @l{0} and
+  simple way to implement this would be start with a @L{Bit4@} value @l{0} and
   shift in bits from the literal.
  
   @code[fble] @
@@ -128,7 +128,7 @@
      };
    };
  
-  That's it. We now can write literals for the @l{Bit4@} type. Here are some
+  That's it. We now can write literals for the @L{Bit4@} type. Here are some
   examples:
  
   @code[fble] @
@@ -136,15 +136,15 @@
    Bit4@ b = Bit4|1010;
    Bit4@ c = Bit4|110010;
  
-  Note that this only works because the @l{Bit@} type was defined with field
-  names @l{0} and @l{1}. If instead we had defined @l{Bit@} with field names
-  @l{zero} and @l{one}, you could not use it for the type of letters in a
+  Note that this only works because the @L{Bit@} type was defined with field
+  names @L{0} and @L{1}. If instead we had defined @L{Bit@} with field names
+  @L{zero} and @L{one}, you could not use it for the type of letters in a
   literal expression. In that case, you can define a separate letter type with
-  field names @l{0} and @l{1} for use in your literals.
+  field names @L{0} and @L{1} for use in your literals.
  
  @section Different Kinds of Literals for the Same Type
-  For the @l{Int@} type, we can define integer literals that take decimal
-  numbers. In this case, the letter type is @l{Decimal@}, decimal digits. If
+  For the @L{Int@} type, we can define integer literals that take decimal
+  numbers. In this case, the letter type is @L{Decimal@}, decimal digits. If
   we wanted to, we could as easily provide integer literals that take binary,
   octal, or hexidecimal digits. The literal function is what's used to
   distinguish between them. For example, we could have all of the following:
@@ -156,38 +156,38 @@
    Int@ 42 = HexInt|2a;
  
  @section Invalid Literals
-  In a literal expression such as @l{Int|2023}, the compiler knows what the
-  element type is based on the function @l{Int}. From this it can infer what
+  In a literal expression such as @L{Int|2023}, the compiler knows what the
+  element type is based on the function @L{Int}. From this it can infer what
   the legal letters are to appear in the literal word. For example, if you
-  wrote @l{Int|20y3}, it would give a type error, because there is no field
-  named @l{y} in the @l{Decimal@} type.
+  wrote @L{Int|20y3}, it would give a type error, because there is no field
+  named @L{y} in the @L{Decimal@} type.
  
   The compiler can't do any more than that to validate the syntax of the
   literal though. For instance, maybe you want to write a negative integer
-  literal as: @l{Int|'-123'}. For that to work, you would need to add @l{'-'}
-  as a field to @l{Decimal@}, and then the compiler will accept words like
-  @l{Int|'12-41'}, even though those aren't what we think of as legal integer
+  literal as: @L{Int|'-123'}. For that to work, you would need to add @L{'-'}
+  as a field to @L{Decimal@}, and then the compiler will accept words like
+  @L{Int|'12-41'}, even though those aren't what we think of as legal integer
   literals.
  
   There are a few ways to handle syntax errors in literals that consist only
   of the letters you expect:
  
   @item
-   Don't include letters like @l{'-'} that can be put out of order. For example,
-   instead of adding @l{'-'} to @l{Decimal@}, define a separate integer literal
-   function @l{Neg} that negates the literal and write @l{Neg|123}.
+   Don't include letters like @L{'-'} that can be put out of order. For example,
+   instead of adding @L{'-'} to @L{Decimal@}, define a separate integer literal
+   function @L{Neg} that negates the literal and write @L{Neg|123}.
  
   @item
    Have the literal return a type that can indicate whether there was an error or
-   not in parsing the literal. For example, define a type @l{Maybe@} which is
-   either an @l{Int@} or an error. Have the literal function return @l{Maybe@}
-   instead of @l{Int@}, and the caller is required to check whether parsing
+   not in parsing the literal. For example, define a type @L{Maybe@} which is
+   either an @L{Int@} or an error. Have the literal function return @L{Maybe@}
+   instead of @L{Int@}, and the caller is required to check whether parsing
    succeeded.
  
   @item
    Be tolerant of improperly formatted literal words. For example, if @l{'-'} is
    seen out of place, pretend it didn't occur in the literal word at all. This is
-   like what we did for the @l{Bit4} literal, where we silently truncated
+   like what we did for the @L{Bit4} literal, where we silently truncated
    literals with too many bits.
  
   @item
@@ -215,7 +215,7 @@
    String@ example = String|one;
  
  @section Re-using Literal Functions
-  Literal functions like @l{Int}, @l{Bit4}, and @l{String} that we have shown
+  Literal functions like @L{Int}, @L{Bit4}, and @L{String} that we have shown
   here can be used as is for list expressions if you want. This can be
   convenient when defining values where one or more digits are derived
   programmatically instead of being constant. No need to define a separate
@@ -260,7 +260,7 @@
      x;
    };
 
-  The literal @l{Letter|aabb} is broken down into the three element sequence
+  The literal @L{Letter|aabb} is broken down into the three element sequence
   @l{a}, @l{ab}, @l{b}.
 
   This behavior exists to better support multi-byte characters, where it's
