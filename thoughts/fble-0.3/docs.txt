@@ -492,3 +492,17 @@ Summary of approach taken for notation in the fble spec:
 I should probably describe the notation in the spec itself. I don't know.
 Seems annoying and distracting. Hopefully people can figure it out from all
 the descriptions and examples provided.
+
+---
+
+Back to the question of ebnf syntax highlighting. I don't think we need to
+worry about abstract syntax highlighting: there's nothing worth highlighting.
+
+For ebnf:
+* comments, literals
+
+I think that's enough. Easy.
+
+(*...*) comment
+'...' literal
+

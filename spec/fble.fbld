@@ -1467,7 +1467,7 @@
    word.
   
   @subsection 11.2 Concrete Syntax Reference
-   @code[txt] @
+   @code[ebnf] @
     word = ? word as described in the section on lexical syntax ?
     normal_name = word
     type_name =   word, '@'
@@ -1518,7 +1518,7 @@
      | expr, '[', [expr, {',', expr}], ']'             (* list *)
      | expr, '|', word                                 (* literal *)
     
-     | '%', '(', [path], ')'                           (* package_type* )
+     | '%', '(', [path], ')'                           (* package_type *)
      | type, '<', type, '>'                            (* abstract_type *) 
      | type, '.', '<', type, '>', '(', expr, ')'       (* abstract_cast *) 
      | type, '(', expr, ')'                            (* abstract_value *) 

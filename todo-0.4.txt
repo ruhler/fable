@@ -28,6 +28,8 @@ Things to consider doing for the fble-0.4 release.
 
 * Fbld Language Revision
  - modularity
+ - Better support for structs in fbld language, so its easier to write decent
+   performing fbld code.
  - native C implementation
    Including fble build time improvements.
 

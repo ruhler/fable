@@ -5,7 +5,7 @@
 
 @define[ConcreteSyntax][content]
  @definition[Concrete Syntax]
-  @code[txt][@content]
+  @code[ebnf][@content]
 @@
 
 @define[Example][content]

@@ -90,6 +90,13 @@
  @ @Drop[@tail[@count]][@tail[@str]]
 @@
 
+@define[TakeUpTo][needle str]
+ @ifeq[][@str][] @@
+ @ifeq[@needle][@Take[@needle][@str]] @needle @@
+ @head[@str]
+ @TakeUpTo[@needle][@tail[@str]]
+@@
+
 @define[IsFbldEscape][str]
  @ifeq[\\\]][@str] yes @@
  @ifeq[\\\[][@str] yes @@
@@ -183,18 +190,11 @@
  @FbleModulePath[@tail[@str]]
 @@
 
-@define[Line][str]
- @ifeq[][@str][] @@
- @ifeq[\n][@head[@str]] \n @@
- @head[@str]
- @Line[@tail[@str]]
-@@
-
 @define[HighlightFble][str]
  @ifeq[][@str][] @@
 
  @ifeq[#][@head[@str]]
-  @let[line] @Line[@str]
+  @let[line] @TakeUpTo[\n][@str]
   @ <span class="comment">@line</span>@HighlightFble[@Drop[@line][@str]]
  @@
 
@@ -247,11 +247,29 @@
  @HighlightFble[@tail[@str]]
 @@
 
+@define[HighlightEbnf][str]
+ @ifeq[][@str][] @@
+
+ @ifeq[(*][@Take[(*][@str]]
+  @let[comment] @TakeUpTo[*)][@str]
+  @ <span class="comment">@comment</span>@HighlightEbnf[@Drop[@comment][@str]]
+ @@
+
+ @ifeq['][@head[@str]]
+  @let[literal] @TakeUpTo['][@tail[@str]]
+  @ <span class="constant">'@literal</span>@HighlightEbnf[@Drop['@literal][@str]]
+ @@
+
+ @head[@str]
+ @HighlightEbnf[@tail[@str]]
+@@
+
 @define[code][lang text]
  @let[escaped] @EscHtml[@text] @@
  @let[highlighted]
   @ifeq[fbld][@lang] @HighlightFbld[@escaped] @@
   @ifeq[fble][@lang] @HighlightFble[@escaped] @@
+  @ifeq[ebnf][@lang] @HighlightEbnf[@escaped] @@
   @escaped
  @ <pre>@highlighted</pre>\n
 @@

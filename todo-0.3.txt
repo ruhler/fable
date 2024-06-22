@@ -4,9 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* Add syntax highlighting of the EBNF notation in fble.fbld.
-* Add syntax highlighting of the abstract syntax notation in fble.fbld?
-
 * Add way to do inline code syntax highlighting in fbld?
 
 * fbld how to start a paragraph with inline text after a literal @code[...] @
