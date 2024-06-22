@@ -282,5 +282,15 @@
  @ <pre>@highlighted</pre>\n
 @@
 
+@define[c][lang text]
+ @let[escaped] @EscHtml[@text] @@
+ @let[highlighted]
+  @ifeq[fbld][@lang] @HighlightFbld[@escaped] @@
+  @ifeq[fble][@lang] @HighlightFble[@escaped] @@
+  @ifeq[ebnf][@lang] @HighlightEbnf[@escaped] @@
+  @escaped
+ @ <code>@highlighted</code>
+@@
+
 @define[l][text] <code>@EscHtml[@text]</code> @@
 @define[a][text] <i>@EscHtml[@text]</i> @@

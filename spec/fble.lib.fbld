@@ -12,3 +12,5 @@
  @definition[Example]
   @code[fble][@content]
 @@
+
+@define[L][content] @c[fble][@content] @@

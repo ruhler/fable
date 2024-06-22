@@ -59,13 +59,13 @@
    consequence, you can determine the value of a type if you know the type of
    that type.
   
-   For example, the boolean value @l{True} is a normal value. The type of
-   @l{True} is the type @l{Bool@}, which is a union type. @l{Bool@} is a type
-   value. The type of @l{Bool@} is known only as the type of @l{Bool@},
-   expressed using the syntax: @l{@<Bool@>}. @l{@<Bool@>} is also a type
-   value, and the type of that value is @l{@<@<Bool@>>}. If you have an
-   expression of type @l{@<Bool@>}, you know statically that the value of that
-   expression must be @l{Bool@}, so the expression need not be evaluated at
+   For example, the boolean value @L{True} is a normal value. The type of
+   @L{True} is the type @L{Bool@}, which is a union type. @L{Bool@} is a type
+   value. The type of @L{Bool@} is known only as the type of @L{Bool@},
+   expressed using the syntax: @L{@<Bool@>}. @L{@<Bool@>} is also a type
+   value, and the type of that value is @L{@<@<Bool@>>}. If you have an
+   expression of type @L{@<Bool@>}, you know statically that the value of that
+   expression must be @L{Bool@}, so the expression need not be evaluated at
    runtime.
   
    Type information is stripped away at runtime. The value of a type at
@@ -92,10 +92,10 @@
    Kinds are used to classify whether a value is a normal value, a type value,
    or something else. Using the example in the previous section:
   
-   @item @l{True} is a normal value. It is of normal kind.
-   @item @l{Bool@} is a type value. It is of type kind.
-   @item @l{@<Bool@>} is a type of a type value. It is of higher kind.
-   @item @l{@<@<Bool@>>} is also of higher kind.
+   @item @L{True} is a normal value. It is of normal kind.
+   @item @L{Bool@} is a type value. It is of type kind.
+   @item @L{@<Bool@>} is a type of a type value. It is of higher kind.
+   @item @L{@<@<Bool@>>} is also of higher kind.
   
    Kinds are analogous to types in that they describe what operations are
    supported by a particular value, but they are much more restricted in the
@@ -109,16 +109,16 @@
    to a normal value, a type value, or something else. For that reason, we
    require different namespaces be used for different kinds of values. In the
    concrete syntax, names of normal variables are unadorned, while names of
-   type variables must be followed with the character @l{@}. So, for example,
-   @l{True} is a normal value, and @l{Bool@} is a type value.
+   type variables must be followed with the character @L{@}. So, for example,
+   @L{True} is a normal value, and @L{Bool@} is a type value.
   
-   The @l{@} character is not considered part of the variable, but rather is
-   an indicator of the namespace of the variable. So, for example @l{'Foo'@}
-   is a type variable named @l{Foo}, and @l{'Foo@'} is a normal variable named
-   @l{Foo@}.
+   The @L{@} character is not considered part of the variable, but rather is
+   an indicator of the namespace of the variable. So, for example @L{'Foo'@}
+   is a type variable named @L{Foo}, and @L{'Foo@'} is a normal variable named
+   @L{Foo@}.
   
    You are not allowed to use a variable to refer to a higher kinded value,
-   because then using @l{@} in variable names to distinguish between normal
+   because then using @L{@} in variable names to distinguish between normal
    variables and type variables would be insufficient. In practice this should
    not be a significant limitation because you should be able to use a type
    variable for the value of the type and use the typeof operator to get the
@@ -253,7 +253,7 @@
   
    Implementations are encouraged to emit warnings for unused variables, with
    the convention that no warnings should be produced for variables starting
-   with @l{_} in their name. This allows the programmer to annotate a variable
+   with @L{_} in their name. This allows the programmer to annotate a variable
    as intentionally unused, which is occasionally useful in practice.
   
    Runtime is O(N log(M)) plus the runtimes of the bindings and the runtime of
@@ -391,7 +391,7 @@
    arguments as in a struct value implicit type expression; any fields not
    included in arguments take their values from the source struct value.
 
-   In the above example, the definition of @l{w} is equivalent to:
+   In the above example, the definition of @L{w} is equivalent to:
   
    @code[fble] @
     Vector@ w = @(x: 3, y: v.y, z: v.z);
@@ -607,7 +607,7 @@
 
    Implementations are encouraged to emit warnings for unused arguments, with
    the convention that no warnings should be produced for arguments starting
-   with @l{_} in their name. This allows the programmer to annotate an
+   with @L{_} in their name. This allows the programmer to annotate an
    argument as intentionally unused, which is occasionally useful in practice.
 
    The concrete syntax allows you to specify multiple arguments in a function
@@ -756,13 +756,13 @@
    of the arguments to the struct_value_explicit_type, union_value, or
    func_apply.
   
-   For example, assume you have a polymorphic function @l{fromJust} of type:
+   For example, assume you have a polymorphic function @L{fromJust} of type:
   
    @code[fble] @
     <@ T@>(T@) { Maybe@<T@>; }
   
-   Assuming the type of @l{3} is @l{Int@}, the func_apply expression
-   @l{fromJust(3)} is rewritten by the compiler to @l{fromJust<Int@>(3)}.
+   Assuming the type of @L{3} is @L{Int@}, the func_apply expression
+   @L{fromJust(3)} is rewritten by the compiler to @L{fromJust<Int@>(3)}.
   
    The motivation for supporting type inference is to prevent cluttering the
    code with types that are otherwise straight forward to infer. This is
@@ -812,16 +812,16 @@
   
    The list expression can be used with any function that has an argument of
    list type. A list type is any type matching the structure of the following
-   type @l{L@}:
+   type @L{L@}:
   
    @code[fble] @
     @ L@ = +(*(E@ head, L@ tail) cons, *() nil);
   
    The fields can be named anything, but the order of the fields must match
-   that shown above. Any type @l{E@} of list elements may be used.
+   that shown above. Any type @L{E@} of list elements may be used.
   
-   The list expression @l{f[a, b, c]}, assuming the type of f is
-   @l{(L@) { V@; }} for some type @l{V@}, is desugared to:
+   The list expression @L{f[a, b, c]}, assuming the type of f is
+   @L{(L@) { V@; }} for some type @L{V@}, is desugared to:
   
    @code[fble] @
     f(L@(cons: @(head: a, tail:
@@ -829,8 +829,8 @@
       L@(cons: @(head: c, tail:
       L@(nil: *()()))))))));
   
-   Each argument to the list expression must have a type @l{E@} matching the
-   element type of the list type @l{L@} expected by the function f.
+   Each argument to the list expression must have a type @L{E@} matching the
+   element type of the list type @L{L@} expected by the function f.
   
    The function provided in the list expression may be a polymorphic function
    value, in which case type inference is performed as with func_apply
@@ -842,7 +842,7 @@
   
    The motivation for requiring a function to be supplied as part of the list
    expression, instead of having stand alone list expressions like
-   @l{[a, b, c]}, is:
+   @L{[a, b, c]}, is:
   
    @item
     It allows the user to specify what type of list to build instead of assuming
@@ -873,15 +873,15 @@
   
    As with the list expression, the literal expression is used with a function
    that has an argument of list type. The element type of the list must be a
-   union type with fields of type @l{*()} for each letter in the word.
+   union type with fields of type @L{*()} for each letter in the word.
   
    For example, the element type for an octal literal might look like:
   
    @code[fble] @
     @Octal = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
   
-   The literal expression @l{f|077}, assuming the element type for the list
-   argument to @l{f} is @l{Octal@}, is desugared to:
+   The literal expression @L{f|077}, assuming the element type for the list
+   argument to @L{f} is @L{Octal@}, is desugared to:
   
    @code[fble] @
     f[Octal@(0: *()()), Octal@(7: *()()), Octal@(7: *()())];
@@ -892,7 +892,7 @@
    the longest field name to match at each position.
 
    It is a type error if the word cannot be decoded into a sequence of letters
-   based on the field names of the element type @l{E@}.
+   based on the field names of the element type @L{E@}.
    
    Struct types and package types cannot be used for the function in literal
    syntax, even though they share a similar concrete syntax to function
@@ -915,7 +915,7 @@
      @ Bits@ = +(*(Bit@ head, Bits@ tail) cons, Unit@ nil);
   
     The function specifies how to transform a list of bits into an integer,
-    assuming some int type @l{Int@}:
+    assuming some int type @L{Int@}:
   
     @code[fble] @
      (Int@, Bits@) { Int@; } Helper = (Int@ n, Bits@ bits) {
@@ -977,7 +977,7 @@
   
    Bind is particularly suited for abstracting glue logic that manipulates how
    program statements are combined. For example, it can be used to hide error
-   propagation based on a @l{Maybe@} monad.
+   propagation based on a @L{Maybe@} monad.
   
    Instead of:
   
@@ -1051,7 +1051,7 @@
    value of a module Foo is described in the file Foo.fble as an fble
    expression using the 'stmt' concrete syntactic term. The child modules of
    Foo are placed in a directory Foo/. The absence of a file Foo.fble implies
-   the value of the module Foo is @l{*()()}. The absence of a subdirectory Foo
+   the value of the module Foo is @L{*()()}. The absence of a subdirectory Foo
    implies the module Foo has no children.
   
    For example, you might have the following directory structure:
@@ -1102,9 +1102,9 @@
    @code[fble] @
     <<@>@ M@>(Monad@<M@>, Stdio@<M@>)(List@<String@>) { M@<Bool@>; };
   
-   The function is provided with instances of the @l{Monad@} and @l{Stdio@}
+   The function is provided with instances of the @L{Monad@} and @L{Stdio@}
    interface and a list of command line arguments. The function is executed,
-   resulting in input and output operations over the @l{Stdio@} interface, and
+   resulting in input and output operations over the @L{Stdio@} interface, and
    the final result is converted to a standard exit code.
   
    Other examples of ways to execute an fble program:
@@ -1137,7 +1137,7 @@
     /Md5% -> /StdLib/Unit%, /StdLib/List%
     /Md5/Tests% -> /StdLib/Unit%, /Md5%
   
-   The module @l{/Md5/Tests%} can be turned into a program to run Md5 tests
+   The module @L{/Md5/Tests%} can be turned into a program to run Md5 tests
    conceptually by forming a let expression in topological sort dependency
    order:
   
@@ -1147,11 +1147,11 @@
     Md5 = </Md5%>;
     </Md5/Tests%>;
   
-   Where @l{</Foo%>} is the fble expression describing the value of module
-   @l{/Foo%} and we assume references to a module @l{/Foo/Bar%} in the
-   expression are replaced with variables named @l{Foo_Bar}.
+   Where @L{</Foo%>} is the fble expression describing the value of module
+   @L{/Foo%} and we assume references to a module @L{/Foo/Bar%} in the
+   expression are replaced with variables named @L{Foo_Bar}.
   
-   Notice in this case that the value of @l{/StdLib/List/Tests%} is not used.
+   Notice in this case that the value of @L{/StdLib/List/Tests%} is not used.
   
    The modules may be combined in any order that satisfies their dependencies.
   
@@ -1188,9 +1188,9 @@
     ...
   
    The package type describes the set of modules whose module path prefix
-   matches the given path. For example, the type @l{%(/Foo/Bar%)} includes
-   modules @l{/Foo/Bar%}, @l{/Foo/Bar/Sludge%}, and @l{/Foo/Bar/A/B%}, but not
-   @l{/Foo%} or @l{/Bar%}.
+   matches the given path. For example, the type @L{%(/Foo/Bar%)} includes
+   modules @L{/Foo/Bar%}, @L{/Foo/Bar/Sludge%}, and @L{/Foo/Bar/A/B%}, but not
+   @L{/Foo%} or @L{/Bar%}.
 
    As a special case, if the module path is ommitted in the concrete syntax,
    the package type describes the set of all modules.
@@ -1199,7 +1199,7 @@
    need not be any modules that satisfy the package path. A module need not be
    a member of whatever package type it constructs.
   
-   A package type has kind @l{@}. Two package types are considered equal if
+   A package type has kind @L{@}. Two package types are considered equal if
    they have the same path.
   
   @subsection 9.2 Abstract Type
@@ -1218,7 +1218,7 @@
    type and underlying types are equal.
   
    The package type must be a package type. The underlying type can be any
-   type of any kind. The resulting abstract type has kind @l{@}.
+   type of any kind. The resulting abstract type has kind @L{@}.
   
   @subsection 9.3 Abstract Cast
    @AbstractSyntax @
@@ -1234,7 +1234,7 @@
     Bool@ OriginalTrue = FooBar@.<Bool@>(AbstractTrue);
   
    Casts a value between two types that are equal under the assumption that
-   for all types @l{T@}, the type @l{FooBar@<T@>} is equal to @l{T@}.
+   for all types @L{T@}, the type @L{FooBar@<T@>} is equal to @L{T@}.
   
    The type of the resulting value is the target type. It is a type error if
    the current module is not a member of the package described by the package
@@ -1252,7 +1252,7 @@
     @ AbstractBool@ = FooBar@<Bool@>;
     AbstractBool@ AbstractTrue = FooBar@(True);
   
-   Casts a value of type @l{T@} to type @l{FooBar@<T@>}. This is a convenience
+   Casts a value of type @L{T@} to type @L{FooBar@<T@>}. This is a convenience
    syntax equivalent to:
   
    @code[txt] @
@@ -1279,7 +1279,7 @@
     AbstractBool@ AbstractTrue = FooBar@(True);
     Bool@ true = AbstractTrue.%;
   
-   Casts a value of type @l{FooBar@<T@>} to type @l{T@}. This is a convenience
+   Casts a value of type @L{FooBar@<T@>} to type @L{T@}. This is a convenience
    syntax equivalent to:
   
    @code[txt] @
@@ -1313,15 +1313,15 @@
     
     @(Enum@, A, B, C, IsA, IsB, IsC);
   
-   The @l{Pkg@} type restricts access to the internals of the @l{Enum@} type
-   to modules starting with @l{/MyPackage} in their path. Other users are
-   unable to construct or access fields of the @l{Enum@} type directly; they
-   can only use the provided values @l{A}, @l{B}, @l{C} and functions @l{IsA},
-   @l{IsB}, and @l{IsC}.
+   The @L{Pkg@} type restricts access to the internals of the @L{Enum@} type
+   to modules starting with @L{/MyPackage} in their path. Other users are
+   unable to construct or access fields of the @L{Enum@} type directly; they
+   can only use the provided values @L{A}, @L{B}, @L{C} and functions @L{IsA},
+   @L{IsB}, and @L{IsC}.
   
   @subsection 9.7 Private Module Example
    Abstract types can be used to effectively mark modules or parts of modules
-   private. For example, consider a module @l{/Foo/Internal%}:
+   private. For example, consider a module @L{/Foo/Internal%}:
   
    @code[fble] @
     @ Pkg@ = %(/Foo%);
@@ -1339,10 +1339,10 @@
     % M = /Foo/Internal%.%;
   
    This will result in a type error if the user does not belong to the package
-   @l{/Foo%}.
+   @L{/Foo%}.
   
    The same approach can be used to restrict access to individual fields of a
-   module. For example, consider a module @l{/Foo%}:
+   module. For example, consider a module @L{/Foo%}:
   
    @code[fble] @
     @ Pkg@ = %(/Foo%);
@@ -1354,14 +1354,14 @@
     
     @(X@, Y@, X, Pkg@(Y));
   
-   In this case, the @l{X} field is publicly accessible. The @l{Y} field can
-   only be accessed by modules in the package @l{/Foo%}. For example:
+   In this case, the @L{X} field is publicly accessible. The @L{Y} field can
+   only be accessed by modules in the package @L{/Foo%}. For example:
   
    @code[fble] @
     % Y = /Foo%.Y.%;
   
    This will result in a type error if the user does not belong to the package
-   @l{/Foo%}.
+   @L{/Foo%}.
  
  @section 10. Abstract Syntax Reference
   @code[txt] @
@@ -1448,11 +1448,11 @@
    A sequence of characters surrounded by single quotes is treated as a
    sequence of word characters, regardless of what class the characters come
    from. This makes it possible to specify words containing whitespace,
-   comment, and punctuation characters. For example, @l{'Foo,Bar'} is treated
+   comment, and punctuation characters. For example, @L{'Foo,Bar'} is treated
    as a single word where the fourth character of the word is a comma.
    
    Within a single quoted word, a single quote character can be expressed by
-   using two adjacent single quote characters. For example, @l{'Foo''Bar'} is
+   using two adjacent single quote characters. For example, @L{'Foo''Bar'} is
    treated as a single word where the fourth character of the word is a single
    quote.
    
@@ -1461,8 +1461,8 @@
    @code[fble] @
     Foo'.'Bar
    
-   is treated as three separate words: @l{'Foo'}, @l{'.'}, and @l{'Bar'}, not
-   as a single word @l{'Foo.Bar'}.  The only exception is when consecutive
+   is treated as three separate words: @L{'Foo'}, @L{'.'}, and @L{'Bar'}, not
+   as a single word @L{'Foo.Bar'}.  The only exception is when consecutive
    single quote characters are used to embed a single quote character in a
    word.
   
@@ -1563,4 +1563,4 @@
     the argument is used to distinguish between these kinds of expressions.
 
    @item
-    The module value for module @l{/Foo/Bar%} is stored in @l{Foo/Bar.fble}.
+    The module value for module @L{/Foo/Bar%} is stored in @l{Foo/Bar.fble}.

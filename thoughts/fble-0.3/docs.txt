@@ -506,3 +506,61 @@ I think that's enough. Easy.
 (*...*) comment
 '...' literal
 
+---
+
+Next question for docs: inline code highlighting. Should be easy enough.
+
+How about:
+
+  @c[lang][text]
+
+Hopefully that's not too verbose?
+
+Let's take a sample paragraph:
+
+   For example, the boolean value @c[fbld]{True} is a normal value. The type of
+   @c[fbld]{True} is the type @c[fbld]{Bool@}, which is a union type. @c[fbld]{Bool@} is a type
+   value. The type of @c[fbld]{Bool@} is known only as the type of @c[fbld]{Bool@},
+   expressed using the syntax: @c[fbld]{@<Bool@>}. @c[fbld]{@<Bool@>} is also a type
+   value, and the type of that value is @c[fbld]{@<@<Bool@>>}. If you have an
+   expression of type @c[fbld]{@<Bool@>}, you know statically that the value of that
+   expression must be @c[fbld]{Bool@}, so the expression need not be evaluated at
+   runtime.
+
+It's a little bit verbose for my taste. Maybe better in the case of fble to
+add something to the library. Like: @Code or @C or @L.
+
+   For example, the boolean value @L{True} is a normal value. The type of
+   @L{True} is the type @L{Bool@}, which is a union type. @L{Bool@} is a type
+   value. The type of @L{Bool@} is known only as the type of @L{Bool@},
+   expressed using the syntax: @L{@<Bool@>}. @L{@<Bool@>} is also a type
+   value, and the type of that value is @L{@<@<Bool@>>}. If you have an
+   expression of type @L{@<Bool@>}, you know statically that the value of that
+   expression must be @L{Bool@}, so the expression need not be evaluated at
+   runtime.
+
+Which suggests we define a verbose version and a non-verbose. Maybe:
+
+   @c[lang][...]
+
+   @L[...] = @c[fble][...] for the purposes of fble spec. And tutorials?
+
+Could we use @code already as the inline option? What would happen then? Let's
+try it.
+
+Here is what's tricky:
+* <pre> gives a non-inline block, monospace text, and preservation of
+  whitespace.
+* <code> gives an inline block, monospace text, but not preservation of
+  whitespace.
+
+I want monospace text, preservation of whitespace, inline. But I also
+sometimes want the non-inline block behavior in non-inline cases.
+
+Needs thought.
+
+How about this:
+
+* @code[...] for code blocks. Keep as is using <pre>
+* @c[...] for inline code blocks, use <code>, for now don't worry about the
+  fact that it doesn't preserve whitespace. I can add that later if needed.
