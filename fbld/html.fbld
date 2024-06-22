@@ -247,6 +247,10 @@
  @HighlightFble[@tail[@str]]
 @@
 
+@define[IsEbnfPunct][c]
+ @ContainsChar{][{}}[@c]
+@@
+
 @define[HighlightEbnf][str]
  @ifeq[][@str][] @@
 
@@ -259,6 +263,10 @@
   @let[literal] @TakeUpTo['][@tail[@str]]
   @ <span class="constant">'@literal</span>@HighlightEbnf[@Drop['@literal][@str]]
  @@
+
+ @let[punct] @head[@str] @@
+ @ifeq[yes][@IsEbnfPunct[@punct]]
+ @ <span class="special">@punct</span>@HighlightEbnf[@tail[@str]] @@
 
  @head[@str]
  @HighlightEbnf[@tail[@str]]
