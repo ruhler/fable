@@ -295,3 +295,200 @@ check for empty @BuildStamp if we want to specialize. The only tedious part is
 the script to generate the file. We can write a more formal one. An
 fbld/version.fbld.sh which takes the version string as input.
 
+---
+
+Syntax highlighting of bnf format in fbld spec. What to highlight:
+
+* Comments: (* ... *)
+* Punctuation: '::=', '|', ';'. Or maybe don't highlight punctuation, because
+  it's not normally something you needed colored specially?
+* Literal: '...'
+
+I use some special things in my syntax though, like Haskell style types,
+[...], etc.
+
+It's not clear there is a canonical bnf syntax to choose. Ideally there's a
+clear, canonical, well defined syntax that supports all the features I want to
+make use of.
+
+Looks like I want EBNF features.
+
+Standards we could pick from:
+* W3C EBNF - apparently two different ones: a spec, and one used for xml.
+* BS 6154
+* ISO/IEC 14977,
+
+Let's go with ISO 14977, which at least tries to be a canonical standard. What
+changes would I need to make to switch to this standard?
+
+* Use '=' instead of '::=' for definitions. I'm happy to do that.
+* Use ? ... ?  for things like 'word as described in the section on lex syntax'
+* use ',' to concatenate elements, not space.
+* Use {...} for repeat and [] for optional.
+
+This should be fine for concrete syntax. The extra ',' will be slightly
+annoying and seem unnecessary given I'm not using space in my identifiers. But
+repetition should be nicer with {...} instead of [...].
+
+For abstract syntax, use comments for the types?
+
+For example, instead of:
+
+    | struct_value_explicit_type (type : Type) (args : [Expr])
+
+Some thing like:
+
+    | struct_value_explicit_type (type : Type) (args : [Expr])
+
+Oh, hmm.. That's interesting. I use constructor based format to give names and
+values. It's a little strange. Technically this should be either:
+
+  | type (* Type *), args (* [Expr] *)
+
+or:
+ 
+  | struct_value_explicit_type
+ ...
+
+struct_value_explicit_type = type (* Type *), args (* [Expr] *) ;
+
+Or perhaps:
+
+  | (* struct_value_explicit_type *) type (* Type *), args (* [Expr] *)
+
+I'm not sure it's worth it. I think my description for abstract syntax is
+easier to understand personally. But who knows?
+
+Anyway, maybe start by updating the concrete syntax and see how that feels.
+
+---
+
+Converting ebnf syntax for concrete syntax looks reasonable except comma
+separated lists feel tricky. Any compact way to do that? Conceptually I want
+something like: a, b, [',' ...]. I'm putting:
+
+  a, b, {',', a, b}
+
+Which is okay, except for having to repeat a and b.
+
+You know, commas are slightly annoying when writing fble too, because you
+can't use them as terminators. I feel like we really ought to support comma
+separated lists as comma separated or terminated lists. Would that make it
+easier to describe the syntax? With the last comma optional? I suspect not
+honestly.
+
+  {a, b, ','}, [a, b]
+
+Doesn't really help.
+
+I kind of want syntax like:
+
+  {a, b, [',' ...]}
+
+Maybe I could use:
+
+  (a, b, {',', ...})
+
+As my own shorthand? Is it worth it?
+
+Well, in this case it helps to define something like:
+ ab = a, b
+
+ ab, {',', ab}
+
+Honestly, the change of concrete syntax to ebnf looks good to me. Let's go
+with it.
+
+---
+
+There is some ASN.1 format for describing protocols. It looks close to what I
+need, but is not aesthetically pleasing to me.
+
+Let's play around with some different options for the abstract syntax.
+
+For example, today we have something like:
+
+   Expr ::=
+      typeof (expr : Expr)
+    | struct_value_explicit_type (type : Type) (args : [Expr])
+    ;
+
+In more ebnf format:
+
+   Expr =
+      (* typeof *) (* expr *) Expr
+    | (* struct_value_explicit_type *) (* type *) Type, (* args *) {Expr}
+    ;
+
+No. Not at all worth it.
+
+The key is I want name of constructor and names of fields in addition to type.
+
+   Expr =
+      typeof { Expr expr; }
+    | struct_value_explicit_type { Type type; [Expr] args; }
+    ;
+
+   Expr =
+      typeof { expr : Expr }
+    | struct_value_explicit_type { type : Type, args : [Expr] }
+    ;
+
+   Expr =
+      typeof(Expr expr)
+    | struct_value_explicit_type(Type type, [Expr] args)
+    ;
+
+   Expr =
+      typeof: Expr expr
+    | struct_value_explicit_type: Type type, [Expr] args
+    ;
+
+   Expr =
+      typeof (expr : Expr)
+    | struct_value_explicit_type (type : Type) (args : [Expr])
+    ;
+
+I like my current syntax the best. Though we can change ::= into =.
+
+Actually, slightly nicer:
+
+   Expr:
+      typeof (expr : Expr)
+    | struct_value_explicit_type (type : Type) (args : [Expr])
+    ;
+
+Can I use the same approach for concrete syntax? Would it work there?
+
+No, I think ebnf is still appropriate for concrete syntax. We don't want
+constructor names mixed in with concrete syntax.
+
+If I were to do a variation, I might say we use space for concatenation rather
+than comma. ':' instead of ' = '. And some other kind of comment. For example,
+instead of:
+
+    kind =
+       '%'                                             (* normal_kind *)
+     | '@'                                             (* type_kind *)
+     | '<', kind, {',', kind}, '>', kind               (* poly_kind *)
+     ;
+
+Something like:
+
+    kind:
+       '%'                                             # normal_kind
+     | '@'                                             # type_kind
+     | '<' kind {',' kind} '>' kind               # poly_kind
+     ;
+
+No. ebnf from iso is fine for this.
+
+---
+
+Summary of approach taken for notation in the fble spec:
+1. Custom abstract syntax format. foo: ... | xxx (a: A) (b: B) | ... ;
+2. ISO EBNF concrete syntax format. foo = ...
+
+I should probably describe the notation in the spec itself. I don't know.
+Seems annoying and distracting. Hopefully people can figure it out from all
+the descriptions and examples provided.
