@@ -42,6 +42,7 @@ Things to consider doing for the fble-0.4 release.
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
  - Add tests for full code coverage of all functions.
+ - Proper support for unicode characters in /Core/Char%.
 
 * New apps
  - IEEE floating point support.

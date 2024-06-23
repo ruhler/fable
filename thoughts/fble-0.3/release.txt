@@ -301,3 +301,28 @@ Maybe we can have a generic add tutorials item with C api, unit tests, app,
 etc. Punt those for next release I think. I've done enough this release. We at
 least have mention of Tests% module in the Core tutorial.
 
+---
+
+* Proper support for unicode characters in /Core/Char%?
+
+What does that mean?
+
+There are two parts here:
+1. How to represent a unicode character in the Char@ type.
+2. How to decode utf8 into that representation when doing stdio reads.
+
+What we are doing today doesn't really make sense: we have unknown Int@ which
+in practice is part of a multi-byte sequence for multi-byte characters.
+
+Ways to represent a unicode character:
+* Explicitly spell out all the unicode characters. Have a different field for
+  each one. Sounds like a ton of work. A massive type definition. Though I
+  guess we could have subsets.
+
+* Int@ of the underlying unicode value.
+
+Either way, sounds like a standard library question I would like to punt to
+next release.
+
+So let's worry about it another time.
+
