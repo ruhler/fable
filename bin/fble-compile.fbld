@@ -23,7 +23,7 @@
    The wrapper function should have type:
   
    @code[c]
-     @l[int] @a[NAME](
+    @@l[int] @a[NAME](
          @l[int] @a[argc], @l[const char**] @a[argv],
          @l[FbleGeneratedModule*] @a[module]);
   

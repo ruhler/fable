@@ -26,8 +26,8 @@
  *  @sideeffects
  *   @i Prints messages to stderr in case of failure to type check.
  *   @item
- *     The user is responsible for freeing the returned FbleTc using
- *     FbleFreeTc when it is no longer needed.
+ *    The user is responsible for freeing the returned FbleTc using FbleFreeTc
+ *    when it is no longer needed.
  */
 FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program);
 

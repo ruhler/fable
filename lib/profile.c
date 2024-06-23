@@ -116,8 +116,8 @@ typedef struct CallStack {
  * @struct[Sample] Representation of a call in a sample.
  *  @field[FbleBlockId][caller] The caller for this particular call.
  *  @field[FbleCallData*][call]
- *    Cached result of GetCallData(caller, callee). call->id gives callee id
- *    for the sample.
+ *   Cached result of GetCallData(caller, callee). call->id gives callee id
+ *   for the sample.
  */
 typedef struct {
   FbleBlockId caller;

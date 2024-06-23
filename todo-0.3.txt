@@ -4,9 +4,7 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* fbld how to start a paragraph with inline text after a literal @code[...] @
-  block? Adding a space at the start of the line makes it become part of the
-  @code block.
+* Remove migration helper for ' @' to '@@' in fbld parser.
 
 * Improve exercises for Unions and Functions tutorials, and others.
 
@@ -23,4 +21,5 @@ Usage docs
   Because all the arguments are evaluated. That's annoying?
 
 * Finalize release:
+ - Add anything missing since last update.
  - record release date in release notes.

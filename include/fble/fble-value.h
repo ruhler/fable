@@ -98,7 +98,7 @@ extern FbleValue* FbleGenericTypeValue;
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[FbleValue**   ][args]
- *    @a[argc] arguments to the struct value. Args are borrowed. They must not
+ *   @@a[argc] arguments to the struct value. Args are borrowed. They must not
  *   be NULL.
  *
  *  @returns[FbleValue*]
@@ -114,7 +114,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of fields in the struct value.
  *  @arg[...           ][    ]
- *    @a[argc] FbleValue arguments to the struct value. Args are borrowed.
+ *   @@a[argc] FbleValue arguments to the struct value. Args are borrowed.
  *   They must not be NULL.
  *
  *  @returns FbleValue*
@@ -237,7 +237,7 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
  *  @arg[size_t        ][argc] The number of elements on the list.
  *  @arg[...           ][    ]
- *    @a[argc] FbleValue elements to put on the list. Borrowed.
+ *   @@a[argc] FbleValue elements to put on the list. Borrowed.
  *
  *  @returns FbleValue*
  *   A newly allocated list value.

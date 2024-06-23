@@ -1,5 +1,5 @@
 @doc Profiling Guide
-  @FbleVersionStamp
+ @@FbleVersionStamp
 
  @section Fble Based Profiling
   Most fble binaries accept a @l{--profile} option to generate a profiling

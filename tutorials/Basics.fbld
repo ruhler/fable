@@ -46,7 +46,7 @@
   numbers, which means you are free to use numbers as identifiers for variable
   names or field names.
  
-   @L{Bit4@} is a struct type with four fields, named @L{3}, @L{2}, @L{1}, and
+  @@L{Bit4@} is a struct type with four fields, named @L{3}, @L{2}, @L{1}, and
   @L{0}. Each field has type @L{Bit@}. This represents a bit vector of 4 bits.
   We'll call bit 3 the most significant bit and put it on the left as is
   conventional, but it doesn't really matter for the bitwise operations

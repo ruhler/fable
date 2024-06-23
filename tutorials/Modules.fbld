@@ -213,7 +213,7 @@
   practice it shouldn't make much difference what order the modules are
   evaluated in.
  
-   @l{.fble} files for a module that the main module does not depend on
+  @@l{.fble} files for a module that the main module does not depend on
   directly or indirectly are ignored by the compiler. For example, if you put
   @L{/Bit4%} as the main module, the compiler would only read @l{Unit.fble},
   @l{Bit.fble} and @l{Bit4.fble}. It wouldn't read @l{Bit/Show.fble},

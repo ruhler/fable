@@ -1,5 +1,5 @@
 @doc Fble Style Guide
-  @FbleVersionStamp
+ @@FbleVersionStamp
 
  This document records a particular style of fble programming. It's not
  necessarily a good one, but it can at least be used as an explicit and

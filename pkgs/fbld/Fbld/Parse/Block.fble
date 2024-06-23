@@ -34,7 +34,6 @@
 % Loc = /Fbld/Parse/M%.Loc;
 % Get = /Fbld/Parse/M%.Get;
 % GetIndent = /Fbld/Parse/M%.GetIndent;
-<@>% Try = /Fbld/Parse/M%.Try;
 <@>% Try_ = /Fbld/Parse/M%.Try_;
 <@>% Test = /Fbld/Parse/M%.Test;
 <@>% Test_ = /Fbld/Parse/M%.Test_;
@@ -170,6 +169,16 @@ M@<Markup@> Command = {
 M@<Markup@> Block = {
   Unit@ _ <- Do(SkipBlankLines);
 
+  Bool@ explicit_inline <- Do(Test_(String|'@@'));
+  explicit_inline.?(true: {
+    # Skip the first @ and parse the rest as implicit block text.
+    Loc@ loc <- Do(Loc);
+    Unit@ _ <- Do(String|'@');
+    Markup@ inline <- Do(Inline(Or(EndOfInput, BlankLine)));
+    Markup@ tail <- Do(Block);
+    Return(Append(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
+  });
+
   Bool@ cmd <- Do(Try_(String|'@'));
   cmd.?(true: {
     Markup@ command <- Do(Command);
@@ -181,9 +190,14 @@ M@<Markup@> Block = {
   Maybe@<Char@> c <- Do(Test(Get));
   c.?(nothing: Return(Empty));
 
-  # If the next character is a space, it indicates explicit implicit block
-  # text. Skip over the space character.
-  Maybe@<Unit@> _ <- Do(Try(String|' '));
+  # If the next character is a space, we are using the old syntax for explicit
+  # implicit block text. Report an error for easier migration.
+  # TODO: Remove this after the migration to the new syntax is done.
+  Bool@ old_implicit_block <- Do(Try_(String|' '));
+  old_implicit_block.?(true: {
+    Unit@ _ <- Error<Markup@>;
+    Text@(loc, Str|'old explicit implicit block');
+  });
 
   Markup@ inline <- Do(Inline(Or(EndOfInput, BlankLine)));
   Markup@ tail <- Do(Block);

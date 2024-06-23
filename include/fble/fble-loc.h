@@ -79,7 +79,7 @@ void FbleFreeLoc(FbleLoc loc);
  *   Format arguments as specified by the format string.
  *  
  *  @sideeffects
- *    Prints a warning message to stderr with error location.
+ *   Prints a warning message to stderr with error location.
  */
 void FbleReportWarning(const char* format, FbleLoc loc, ...);
 

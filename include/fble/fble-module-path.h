@@ -107,10 +107,10 @@ bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b);
  *  @arg[FbleModulePath*][package] The module path describing the package.
  *  
  *  @returns bool
- *    True if the module belongs to the package, false otherwise.
+ *   True if the module belongs to the package, false otherwise.
  *  
  *  @sideeffects
- *    None.
+ *   None.
  */
 bool FbleModuleBelongsToPackage(FbleModulePath* module, FbleModulePath* package);
 

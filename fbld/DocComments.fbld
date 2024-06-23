@@ -1,5 +1,5 @@
 @doc Doc Comments
-  @FbleVersionStamp
+ @@FbleVersionStamp
  
  @section Introduction
   Doc comments are a way of documenting functions in source code using fbld

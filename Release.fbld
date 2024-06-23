@@ -1,5 +1,5 @@
 @doc Fble Release Notes
-  @FbleVersionStamp
+ @@FbleVersionStamp
 
  @section fble-0.3 Pending
   The following list highlights the most notable changes from fble-0.2.
@@ -15,6 +15,9 @@
 
   @subsection Fble Debugger
    @item Removed difficult-to-maintain support for easy single step in gdb.
+
+  @subsection Fbld
+   @item Change syntax for explicit implicit blocks from @l{' @'} to @l{'@@'}.
 
   @subsection Documentation
    @item Simplified and revised fble language tutorials.

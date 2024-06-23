@@ -267,9 +267,9 @@ Test@ Tests = TestSuite(Str|Parse, List[
   }),
 
   Test(Str|ExplicitImplicitBlock, (Unit@ _) {
-    # The space character indicates this should be parsed as implicit block
-    # text without the space character.
-    String@ text = Str|' @hello there!';
+    # The extra @ character indicates this should be parsed as implicit block
+    # text without the @ character.
+    String@ text = Str|'@@hello there!';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[

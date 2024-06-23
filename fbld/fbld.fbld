@@ -1,5 +1,5 @@
 @doc Fbld
-  @FbleVersionStamp
+ @@FbleVersionStamp
 
  @section Introduction
   Fbld is a lightweight markup language for structured text. It aims to
@@ -273,16 +273,16 @@
 
     In this case, the command @l{@l} is intended as inline structured text of
     the paragraph, not as a separate block command. To parse this as an
-    implicit block command, put a single space before the @l{@} character. The
-    space indicates the following text should be parsed as an implicit block
-    command, not including the leading space character.
+    implicit block command, use two @l{@} characters at the start of the line.
+    The extra @l{@} indicates the following text should be parsed as an
+    implicit block command, not including the first @l{@} character.
 
     In this case, for example:
 
     @code[fbld] @
      Pay attention to the next paragraph of this document.
 
-      @l{malloc} is a very interesting function to call, because it could be
+     @@l{malloc} is a very interesting function to call, because it could be
      that it returns @NULL.
 
    @subsubsection Same Line Arg

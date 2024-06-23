@@ -25,3 +25,48 @@ or a struct like field access operation?
 
 Structs could be useful elsewhere too.
 
+---
+
+Question that's come up:
+
+How to start a paragraph with inline text after a literal @code[...] @ block?
+Adding a space at the start of the line makes it become part of the @code
+block.
+
+So, using space at the start of the line is not a good choice to distinguish
+between inline and block command, because it's ambiguous. Maybe best to come
+up with a better syntax.
+
+Brainstorm, on an example:
+
+  Hello there.
+
+  @l{Foo} is a word.
+
+
+Today we use:
+
+  Hello there.
+
+   @l{Foo} is a word.
+
+Some alternative brainstorm:
+
+  Hello there.
+
+  @@l{Foo} is a word.
+
+  Hello there.
+
+  \@l{Foo} is a word.
+
+The @@ seems reasonable to me actually. The important thing is to have
+something there. Why not make this change? It's a rare case, no?
+
+Any ambiguity in the syntax using @@? It would be with '@@\n.' But we always
+check for \n, so that should be fine.
+
+Okay, let's make this change. Should be simple enough. The hard part will be
+tracking down where we use the ' @'. Maybe add a temporary error in that case
+we can use to fix it up.
+
