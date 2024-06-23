@@ -70,3 +70,16 @@ Okay, let's make this change. Should be simple enough. The hard part will be
 tracking down where we use the ' @'. Maybe add a temporary error in that case
 we can use to fix it up.
 
+---
+
+Implementation issue: how to give better error message at end of input?
+
+Currently input to parser run function is:
+
+List@<Text@>, where each Text@ is a Loc@ and String@.
+
+We preprocess the inputs into a single List@<CharL@>.
+
+So, we just need to cache the previous location? Or we could add a special end
+token to the input?
+

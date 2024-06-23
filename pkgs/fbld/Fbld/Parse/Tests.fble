@@ -28,6 +28,7 @@
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Ok = /Fbld/Result%.Ok;
+<@>% Error = /Fbld/Result%.Error;
 
 % Parse = /Fbld/Parse%.Parse;
 
@@ -306,6 +307,19 @@ Test@ Tests = TestSuite(Str|Parse, List[
         C|1|10|'a'[P|1|12|'command with...\n\na blank line in the argument.'],
         P|3|31|' What think you?\n'
       ]]]);
+    AssertResultEquals(wnt, got);
+  }),
+
+  Test(Str|EndOfInputError, (Unit@ _) {
+    # Regression test for when end of input would be reported at file ???
+    # instead of the end of the last file.
+    String@ text = Str|'@a[hello';
+
+    Result@<Markup@> got = Parse[T|1|1(text)];
+    Result@<Markup@> wnt = Error<Markup@>(
+      Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int|1, /Core/Int/Lit%.Int|8),
+      Str|'unexpected end of input'
+    );
     AssertResultEquals(wnt, got);
   })
 ]);

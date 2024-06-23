@@ -17,6 +17,7 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
+<@>% Last = /Core/List%.Last;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -41,7 +42,7 @@
 @ S@ = List@<CharL@>;
 
 # R@ - Reader for parser monad.
-@ R@ = *(S@ s, Int@ indent, Bool@ report_errors);
+@ R@ = *(S@ s, Int@ indent, Bool@ report_errors, Loc@ end_of_input_loc);
 
 # State monad for parser monad.
 <@>@ SM@ = <@ T@> { *(S@ s, T@ x); };
@@ -80,7 +81,7 @@ M@<Int@> GetIndent = (R@ r) {
 # appropriate. Fails if there are no more characters in the input stream.
 M@<CharL@> GetL_ = (R@ r) {
   List@<CharL@> in = r.s;
-  in.?(nil: /Fbld/Result%.Error<SM@<CharL@>>(Unknown, Str|'unexpected end of input'));
+  in.?(nil: /Fbld/Result%.Error<SM@<CharL@>>(r.end_of_input_loc, Str|'unexpected end of input'));
   Ok(SM@(in.cons.tail, in.cons.head));
 };
 
@@ -127,7 +128,11 @@ PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
-  Result@<SM@<T@>> r = m(R@(s, Int|0, True));
+  Loc@ end_of_input_loc = {
+    s.?(nil: Unknown);
+    Last(s).l;
+  };
+  Result@<SM@<T@>> r = m(R@(s, Int|0, True, end_of_input_loc));
   r.failed.?(true: /Fbld/Result%.Raise<T@>(r));
   Ok(r.value.just.x);
 };

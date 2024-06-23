@@ -13,8 +13,6 @@ Usage docs
 
 * Proper support for unicode characters in /Core/Char%.
 
-* Fbld 'end of input' error should point to last character of file, not '???'
-
 * There's no way to do user defined ifneq in fbld?
   Because all the arguments are evaluated. That's annoying?
 
