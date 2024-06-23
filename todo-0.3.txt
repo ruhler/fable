@@ -4,8 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* Remove migration helper for ' @' to '@@' in fbld parser.
-
 * Improve exercises for Unions and Functions tutorials, and others.
 
 Usage docs

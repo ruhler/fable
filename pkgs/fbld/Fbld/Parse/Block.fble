@@ -169,6 +169,7 @@ M@<Markup@> Command = {
 M@<Markup@> Block = {
   Unit@ _ <- Do(SkipBlankLines);
 
+  # Explicit Implicit Block Command
   Bool@ explicit_inline <- Do(Test_(String|'@@'));
   explicit_inline.?(true: {
     # Skip the first @ and parse the rest as implicit block text.
@@ -179,6 +180,7 @@ M@<Markup@> Block = {
     Return(Append(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
   });
 
+  # Block Command
   Bool@ cmd <- Do(Try_(String|'@'));
   cmd.?(true: {
     Markup@ command <- Do(Command);
@@ -186,19 +188,12 @@ M@<Markup@> Block = {
     Return(Append(command, tail));
   });
 
-  Loc@ loc <- Do(Loc);
+  # End of Block
   Maybe@<Char@> c <- Do(Test(Get));
   c.?(nothing: Return(Empty));
 
-  # If the next character is a space, we are using the old syntax for explicit
-  # implicit block text. Report an error for easier migration.
-  # TODO: Remove this after the migration to the new syntax is done.
-  Bool@ old_implicit_block <- Do(Try_(String|' '));
-  old_implicit_block.?(true: {
-    Unit@ _ <- Error<Markup@>;
-    Text@(loc, Str|'old explicit implicit block');
-  });
-
+  # Implicit Block Command
+  Loc@ loc <- Do(Loc);
   Markup@ inline <- Do(Inline(Or(EndOfInput, BlankLine)));
   Markup@ tail <- Do(Block);
   Return(Append(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
