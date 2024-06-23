@@ -11,9 +11,6 @@ Usage docs
 * Add usage generated help text to fble derived programs?
  graphics, md5, pinball, invaders, and sat?
 
-* There's no way to do user defined ifneq in fbld?
-  Because all the arguments are evaluated. That's annoying?
-
 * Finalize release:
  - Add anything missing since last update.
  - record release date in release notes.

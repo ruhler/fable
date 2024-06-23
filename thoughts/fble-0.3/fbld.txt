@@ -83,3 +83,27 @@ We preprocess the inputs into a single List@<CharL@>.
 So, we just need to cache the previous location? Or we could add a special end
 token to the input?
 
+---
+
+* There's no way to do user defined ifneq in fbld?
+  Because all the arguments are evaluated. That's annoying?
+
+Fble doesn't suffer this problem because it has special syntax for conditional
+that easily enough supports a not equal equivalent. More general conditional
+functions aren't supported in fble. Same with tcl.
+
+Fble does have a slightly easier way to pass a function instead of a value,
+for any special cases needed.
+
+Another difference is how we combine equality check and conditional into a
+single primitive in fbld. If we had instead an 'equals', 'not_equals', and
+'if' functions, we wouldn't see this as a problem.
+
+So, in summary, I don't think it's a big deal that we can't define general
+conditional like functions on our in fbld. If there's anything to worry about
+here, it's whether ifeq,ifneq are the right primitives for conditional
+execution in fbld.
+
+We can revisit this in a later release as part of revisiting support for
+things like structs and unions in fbld.
+

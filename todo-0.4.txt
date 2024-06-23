@@ -30,6 +30,7 @@ Things to consider doing for the fble-0.4 release.
  - modularity
  - Better support for structs in fbld language, so its easier to write decent
    performing fbld code.
+ - Have an 'if' primitive instead of 'ifeq' and 'ifneq'?
  - native C implementation
    Including fble build time improvements.
 
