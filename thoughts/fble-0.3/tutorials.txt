@@ -139,3 +139,25 @@ These are the ones worth including:
 These are the ones not worth including:
 
   Fifo CRC LFSR Debug Digits Iter Undef
+
+---
+
+Can we improve exercises in Function, Union, and other tutorials? What would
+be the goal? What does that mean?
+
+One idea could be: aim for at least 3 exercises per tutorial?
+
+Brainstorm:
+* Union:
+ - Add a new operation to the Expr@ type.
+ - Reorder the tags in a union select, what error message do you get?
+ - define your own enum type.
+ - 
+
+Basically I could have an exercise to exercise each different point
+(subsection) in the tutorial.
+
+It's worth doing. But is it worth doing in this release? We've already had a
+round of simplification and revision of the tutorials this time around. Maybe
+let's punt exercises to next time around, now that we have a more concrete
+goal for the exercises.
