@@ -9,11 +9,13 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Contains = /Core/List/Eq%.Contains;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -124,7 +126,13 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
   ];
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> _stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+  % O = /Core/Stream/OStream%(m);
+
+  Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
+    Unit@ _ <- m.do(O.PutStr(stdio.out, /Graphics/Usage%));
+    m.return(True);
+  });
 
   M@<Event@> In = app.event;
 

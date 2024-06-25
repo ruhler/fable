@@ -1,0 +1,17 @@
+/Core/String%.Str|'
+fble-graphics - 3D graphics in fble
+
+Usage: fble-graphics
+
+An early sandbox for 3D graphics on fble.
+
+Play  around  with  left and right arrows, and keys a, d, j, k, s and w to see
+what they do.
+
+Examples:
+
+  fble-graphics
+
+  Launch the graphics app.
+
+';

@@ -1,0 +1,16 @@
+/Core/String%.Str|'
+fble-pinball - pinball game
+
+Usage: fble-pinball
+
+Experimental pinball game implemented in fble.
+
+Use left and right shift keys for the paddles, q to quit, and s to restart.
+
+Examples:
+
+  fble-pinball
+
+  Launch the pinball app.
+
+';
