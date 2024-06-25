@@ -52,6 +52,20 @@ namespace eval "fbld" {
       "groff -P -c -P -b -P -u -T utf8 < $target.roff > $target"
   }
 
+  # Builds usage help text for use in an fble program.
+  # @arg target - the .fble file to generate.
+  # @arg source - the .fbld usage doc to generate the header from.
+  proc ::fbld_help_fble_usage { target source } {
+    build $target.roff \
+      "$::b/pkgs/fbld/bin/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
+      "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/bin/fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
+    # Pass -c, -b, -u to grotty to escape sequences and backspaces in the output.
+    build $target.txt $target.roff \
+      "groff -P -c -P -b -P -u -T ascii < $target.roff > $target.txt"
+    build $target "$target.txt $::s/fbld/fblestr.sh" \
+      "$::s/fbld/fblestr.sh $target.txt > $target"
+  }
+
   proc ::fbld_html_doc { target sources } {
     build $target \
       "$::b/pkgs/fbld/bin/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/html.fbld $sources" \

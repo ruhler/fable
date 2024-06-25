@@ -564,3 +564,41 @@ How about this:
 * @code[...] for code blocks. Keep as is using <pre>
 * @c[...] for inline code blocks, use <code>, for now don't worry about the
   fact that it doesn't preserve whitespace. I can add that later if needed.
+
+---
+
+Usage docs... should we use them for fble derived programs? Can we have a
+better story for building and integrating them?
+
+The better story is easy: have an implementation of fbld that doesn't depend
+on fble. Then fble can build the usage docs right into the program binaries.
+
+Add --help to fble derived programs? I could take a build time dependency on
+fbld for these. How would it look?
+
+Options:
+* Get fbld to generate a .fble program with a string constant defined?
+* Use the same hack to search for usage help file at runtime?
+
+Some concerns:
+* We need a wrapper script or a new fbld backend to generate .fble string
+  literal?
+* What about characters not supported in Char@ type yet, like formatting
+  characters for bold text?
+
+---
+
+I can generate a .fble string literal easily. The challenge is the build
+infrastructure to build an fble package involving dynamically generated files.
+
+Maybe let's use our old trick of checking in a copy of the .fble file and
+comparing it against what is auto-generated.
+
+Cool. That sounds like a plan. Let's wire it up for md5 first, and go from
+there.
+
+---
+
+The generated .fble contains a funny dash character, which Char@ doesn't
+support. Let me tweak the options to avoid that?
+

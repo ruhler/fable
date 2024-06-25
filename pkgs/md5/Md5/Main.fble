@@ -8,6 +8,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
+<@>% Contains = /Core/List/Eq%.Contains;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -66,6 +67,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   };
 
   (List@<String@> args) {
+    Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
+      Unit@ _ <- m.do(O.PutStr(stdio.out, /Md5/Usage%));
+      m.return(True);
+    });
+
     md5s(True, args.?(nil: List[Str|'-'], : args));
   };
 };
