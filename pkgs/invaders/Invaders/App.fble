@@ -51,6 +51,13 @@ Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
+  % O = /Core/Stream/OStream%(m);
+
+  Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
+    Unit@ _ <- m.do(O.PutStr(stdio.out, /Invaders/Usage%));
+    m.return(True);
+  });
+
   M@<Input@> GetInput = {
     Event@ e <- m.do(app.event);
     e.?(
@@ -127,7 +134,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
   Int@ new_high_score <- m.do(Run(tick, game));
 
   # Save high score.
-  % O = /Core/Stream/OStream%(m);
   Unit@ _ <- m.do({
     Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
     home.?(nothing: m.return(Unit));

@@ -1,0 +1,16 @@
+/Core/String%.Str|'
+fble-invaders - space invaders clone
+
+Usage: fble-invaders
+
+A space invaders clone implemented in fble.
+
+Move using left and right arrows. Fire using space bar. Quit using q.
+
+Examples:
+
+  fble-invaders
+
+  Launch the invaders app.
+
+';
