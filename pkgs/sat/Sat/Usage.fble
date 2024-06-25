@@ -1,0 +1,20 @@
+/Core/String%.Str|'
+fble-sat - solves a sat problem
+
+Usage: fble-sat
+
+Solve the SAT problem described on standard input in DIMACS cnf format.
+
+Exit Status:
+  0
+      Success.
+  1
+      Parse error.
+
+Examples:
+
+  fble-sat < foo.cnf
+
+  Tests for satisfiability of the formula described in foo.cnf.
+
+';
