@@ -633,3 +633,9 @@ We'll see what happens when I try building with different parameters anyway.
 
 Now that I look, I guess I might have some different version of groff that
 does whitespace formatting slightly differently. Let's see.
+
+---
+
+I changed the fble usage to pull directly from the generated code instead of
+using the golden approach. That will be ideal for everything eventually, but
+let's wait until we have a separate C implementation fbld to do that with.

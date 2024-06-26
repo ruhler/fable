@@ -1,17 +1,11 @@
 namespace eval "pkgs/sat" {
-  pkg sat [list core] "" ""
-
-  # Usage.fble is checked in from generated code. Add a test to ensure
-  # the checked in version is updated. If this test fails, update the source
-  # version of Usage.fble to match the generated version.
   fbld_help_fble_usage $::b/pkgs/sat/Sat/Usage.fble $::s/pkgs/sat/fble-sat.fbld
-  test $::b/pkgs/sat/Usage.tr \
-    "$::s/pkgs/sat/Sat/Usage.fble $::b/pkgs/sat/Sat/Usage.fble" \
-    "diff --strip-trailing-cr $::s/pkgs/sat/Sat/Usage.fble $::b/pkgs/sat/Sat/Usage.fble"
+
+  pkg sat [list core] "$::b/pkgs/sat/Sat/Usage.fble" ""
 
   # /Sat/Tests% interpreted
   testsuite $::b/pkgs/sat/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/sat/Sat/Tests.fble.d" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/sat -m /Sat/Tests% --prefix Interpreted."
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/sat -I $::b/pkgs/sat -m /Sat/Tests% --prefix Interpreted."
 
   # /Sat/Tests% compiled
   stdio $::b/pkgs/sat/sat-tests "/Sat/Tests%" "sat"

@@ -33,6 +33,9 @@ Things to consider doing for the fble-0.4 release.
  - Have an 'if' primitive instead of 'ifeq' and 'ifneq'?
  - native C implementation
    Including fble build time improvements.
+   Generate usage help text at build time and link into binaries instead of
+   having to search for the installed documentation at runtime when --help is
+   passed.
 
 * Add fble to rosettacode.org?
   Or at least implement all the tasks, perhaps in a separate RosettaCode

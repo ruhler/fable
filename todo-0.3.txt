@@ -4,8 +4,6 @@ Things to consider doing for the fble-0.3 release.
 
 * Fix failing memory tests on windows laptop
 
-* Come up with a better story for building and integrating usage help text?
-
 * Finalize release:
  - Add anything missing since last update.
  - record release date in release notes.

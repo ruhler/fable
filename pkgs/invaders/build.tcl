@@ -1,16 +1,10 @@
 namespace eval "pkgs/invaders" {
-  pkg invaders [list core app] "" ""
-
-  # Usage.fble is checked in from generated code. Add a test to ensure
-  # the checked in version is updated. If this test fails, update the source
-  # version of Usage.fble to match the generated version.
   fbld_help_fble_usage $::b/pkgs/invaders/Invaders/Usage.fble $::s/pkgs/invaders/fble-invaders.fbld
-  test $::b/pkgs/invaders/Usage.tr \
-    "$::s/pkgs/invaders/Invaders/Usage.fble $::b/pkgs/invaders/Invaders/Usage.fble" \
-    "diff --strip-trailing-cr $::s/pkgs/invaders/Invaders/Usage.fble $::b/pkgs/invaders/Invaders/Usage.fble"
+
+  pkg invaders [list core app] $::b/pkgs/invaders/Invaders/Usage.fble ""
 
   # /Invaders/Tests% interpreted
-  set cflags "-I $::s/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/core"
+  set cflags "-I $::s/pkgs/invaders -I $::b/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/core"
   testsuite $::b/pkgs/invaders/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/invaders/Invaders/Tests.fble.d" \
     "$::b/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%"
 
