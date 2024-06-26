@@ -7,7 +7,7 @@ namespace eval "pkgs/app" {
     lappend objs $::b/pkgs/app/app.o
   }
 
-  pkg app [list core] $objs
+  pkg app [list core] "" $objs
 
   # Check doc comments
   foreach {x} [build_glob $::s/pkgs/app -tails "*.h" "*.c"] {

@@ -1,17 +1,13 @@
 namespace eval "pkgs/md5" {
-  pkg md5 [list core] ""
 
-  # Usage.fble is checked in from generated code. Add a test to ensure
-  # the checked in version is updated. If this test fails, update the source
-  # version of Usage.fble to match the generated version.
   fbld_help_fble_usage $::b/pkgs/md5/Md5/Usage.fble $::s/pkgs/md5/fble-md5.fbld
-  test $::b/pkgs/md5/Usage.tr \
-    "$::s/pkgs/md5/Md5/Usage.fble $::b/pkgs/md5/Md5/Usage.fble" \
-    "diff --strip-trailing-cr $::s/pkgs/md5/Md5/Usage.fble $::b/pkgs/md5/Md5/Usage.fble"
+
+  pkg md5 [list core] $::b/pkgs/md5/Md5/Usage.fble ""
 
   # Md5/Tests interpreted
-  testsuite $::b/pkgs/md5/Md5/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/md5/Md5/Tests.fble.d" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/md5 -m /Md5/Tests% --prefix Interpreted."
+  testsuite $::b/pkgs/md5/Md5/tests.tr \
+    "$::b/pkgs/core/fble-stdio $::b/pkgs/md5/Md5/Tests.fble.d" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/md5 -I $::b/pkgs/md5 -m /Md5/Tests% --prefix Interpreted."
 
   # Md5/Tests compiled
   stdio $::b/pkgs/md5/md5-tests "/Md5/Tests%" "md5"

@@ -36,8 +36,9 @@ namespace eval "bin" {
   #   target - the name of the .d file to generate.
   #   module - the module path to generate it for.
   #   flags - search path flags for the module.
-  proc ::fbledep { target module flags } {
-    build $target "$::b/bin/fble-deps" \
+  #   args - additional dependencies for build
+  proc ::fbledep { target module flags args} {
+    build $target "$::b/bin/fble-deps $args" \
       "$::b/bin/fble-deps $flags -t $target -m $module > $target" \
       "depfile = $target"
   }

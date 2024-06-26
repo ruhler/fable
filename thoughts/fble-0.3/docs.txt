@@ -602,3 +602,34 @@ there.
 The generated .fble contains a funny dash character, which Char@ doesn't
 support. Let me tweak the options to avoid that?
 
+---
+
+Cool, so fble apps are using fbld generated usage --help. The approach used
+was to check in the original usage as source and add a test case to make sure
+it matches what is generated.
+
+Could we take the same approach with other generated usage? Would that work
+better than the current approach of searching for usage in a file dynamically?
+
+I feel like it would be a better approach. But I also think I used to do it
+this way and went away from it for some reason? Let me see if I can dig up my
+notes about it.
+
+Uh oh:
+
+    The approach of using golden files for usage help text doesn't work
+    because the usage help text depends on build configuration parameters.
+
+    Instead break the build dependency cycle by store usage help text
+    separate from the binary. The binary can be used before the help text is
+    generated.
+
+Does that mean my fble usage text will not work well?
+
+I think it's okay for now, because unlike the library usage text, we don't
+depend on build configuration parameters for this help text.
+
+We'll see what happens when I try building with different parameters anyway.
+
+Now that I look, I guess I might have some different version of groff that
+does whitespace formatting slightly differently. Let's see.

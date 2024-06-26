@@ -1,5 +1,5 @@
 namespace eval "pkgs/invaders" {
-  pkg invaders [list core app] ""
+  pkg invaders [list core app] "" ""
 
   # Usage.fble is checked in from generated code. Add a test to ensure
   # the checked in version is updated. If this test fails, update the source

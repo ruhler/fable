@@ -1,5 +1,5 @@
 namespace eval "pkgs/games" {
-  pkg games [list core app] ""
+  pkg games [list core app] "" ""
 
   # /Games/Tests% interpreted
   set cflags "-I $::s/pkgs/games -I $::s/pkgs/app -I $::s/pkgs/core"

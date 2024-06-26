@@ -1,5 +1,5 @@
 namespace eval "pkgs/graphics" {
-  pkg graphics [list core app] ""
+  pkg graphics [list core app] "" ""
 
   # Usage.fble is checked in from generated code. Add a test to ensure
   # the checked in version is updated. If this test fails, update the source

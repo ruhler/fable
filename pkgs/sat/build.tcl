@@ -1,5 +1,5 @@
 namespace eval "pkgs/sat" {
-  pkg sat [list core] ""
+  pkg sat [list core] "" ""
 
   # Usage.fble is checked in from generated code. Add a test to ensure
   # the checked in version is updated. If this test fails, update the source

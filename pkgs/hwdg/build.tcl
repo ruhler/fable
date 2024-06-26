@@ -1,5 +1,5 @@
 namespace eval "pkgs/hwdg" {
-  pkg hwdg [list core app] ""
+  pkg hwdg [list core app] "" ""
 
   # /Hwdg/Tests% interpreted
   set cflags "-I $::s/pkgs/hwdg -I $::s/pkgs/app -I $::s/pkgs/core"

@@ -6,7 +6,7 @@ namespace eval "pkgs/core" {
     obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c \
       "-I $::s/include -I $::s/pkgs/core"
   }
-  pkg core [list] $objs
+  pkg core [list] "" $objs
 
   # Check doc comments
   foreach {x} [build_glob $::s/pkgs/core -tails "*.h" "*.c"] {
