@@ -2,8 +2,11 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Fix failing memory tests on windows laptop
+* Fix flaky memory test failures
+ - Seen on windows laptop
+ - Seen on github ubuntu
+
+* Review documentation one last time.
 
 * Finalize release:
- - Add anything missing since last update.
  - record release date in release notes.
