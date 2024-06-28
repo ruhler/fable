@@ -9,6 +9,7 @@ namespace eval "include" {
       FbleAlloc FbleAllocExtra
       FbleAllocArray FbleReAllocArray
       FbleFree
+      FbleMaxTotalBytesAllocated FbleResetMaxTotalBytesAllocated
     }
     fble-arg-parse.h {
       FbleParseBoolArg FbleParseStringArg

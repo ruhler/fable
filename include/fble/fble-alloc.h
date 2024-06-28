@@ -113,5 +113,21 @@ void* FbleReAllocRaw(void* ptr, size_t size);
  *    FbleAlloc or one of its variants.
  */
 void FbleFree(void* ptr);
+
+/**
+ * @func[FbleMaxTotalBytesAllocated] Gets the max bytes allocated.
+ *  @returns size_t
+ *   The high watermark of bytes allocated using the fble allocation routines
+ *   since the most recent call to FbleResetMaxTotalBytesAllocated.
+ */
+size_t FbleMaxTotalBytesAllocated();
+
+/**
+ * @func[FbleResetMaxTotalBytesAllocated] Resets the max bytes allocated.
+ *  @sideeffects
+ *   Resets the max total alloc size to the current number of bytes allocated
+ *   using the fble allocation routines.
+ */
+void FbleResetMaxTotalBytesAllocated();
 
 #endif // FBLE_ALLOC_H_
