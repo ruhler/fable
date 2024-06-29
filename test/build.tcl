@@ -5,7 +5,6 @@ namespace eval "test" {
 
   set lib_sources {
     test.c
-    memory.c
     mem-test.c
     profiles-test.c
   }

@@ -6,9 +6,9 @@
 #include <string.h>   // for strcpy
 #include <stdlib.h>   // for rand
 
+#include <fble/fble-alloc.h>     // for FbleResetMaxTotalBytesAllocated, etc.
 #include <fble/fble-profile.h>
 
-#include "memory.h"   // for FbleMaxMemoryUsageKB
 
 static bool sTestsFailed = false;
 
@@ -67,7 +67,7 @@ static FbleName Name(const char* name)
  *  @arg[size_t][n] The depth of recursion
  *
  *  @sideeffects
- *   Allocates memory that impacts the result of FbleGetMaxMemoryUsageKB.
+ *   Allocates memory that impacts the result of FbleMaxTotalBytesAllocated.
  */
 static void ReplaceN(size_t n)
 {
@@ -511,11 +511,13 @@ int main(int argc, char* argv[])
 
   {
     // Test that tail calls have O(1) memory.
+    FbleResetMaxTotalBytesAllocated();
     ReplaceN(1024);
-    size_t mem_small = FbleGetMaxMemoryUsageKB();
+    size_t mem_small = FbleMaxTotalBytesAllocated();
 
+    FbleResetMaxTotalBytesAllocated();
     ReplaceN(4096);
-    size_t mem_large = FbleGetMaxMemoryUsageKB();
+    size_t mem_large = FbleMaxTotalBytesAllocated();
     ASSERT(mem_small <= mem_large + 4);
   }
 

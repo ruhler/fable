@@ -17,8 +17,6 @@
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
 
-#include "memory.h"   // for FbleGetMaxMemoryUsageKB
-
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
