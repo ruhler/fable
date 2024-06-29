@@ -80,3 +80,4 @@ Steps:
 5. Add stack size tracking into memory test.
  - Verify memory growth via stack test passes.
 6. Remove OS specific code in memory.c.
+7. Reduce size N of mem test, which need not be so large anymore.

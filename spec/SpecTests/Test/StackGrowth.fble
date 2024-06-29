@@ -1,0 +1,18 @@
+# @@fble-test@@ memory-growth
+#
+# Test memory-growth test infrastructure for stack memory use.
+
+@ Nat@ = /SpecTests/Nat%.Nat@;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
+
+# f requires O(N) memory on the stack, without allocating new objects.
+(Nat@) { S@; } f = (Nat@ n) {
+  S@ s = S(n);
+  s.?(Z: s);
+
+  S@ x = f(s.S);
+  x.?(Z: s, : x);
+};
+
+f;
