@@ -125,3 +125,23 @@ test infrastructure? Let's dig deeper into the simplest case:
 I found a memory leak in the memory test itself. That seems to have improved
 some things. But there is still some step-like behavior in memory use around
 n = 10000 to figure out.
+
+Starting from n = 0 going up, on the TailRecursive test case:
+* Looks like it stabilizes around n = 50.
+* Stable means mostly 1079086, with occasional 1079030 instead.
+
+I'm pretty confident if we increase N by 10,000 and the memory use increases
+by less than 10,000, it's not a memory leak. Because surely we would need at
+least one byte per N.
+
+Since I'm seeing variations around 50 byte per iteration regularly, and I
+arbitrarily picked a 4x factor, let's say we use N 1000 and 2000, to give 250
+variation allowed.
+
+Cool, I think that cleans up the memory tests.
+
+I haven't added stack tracking yet. How important is that?
+
+The idea is to add something to FbleCall. It already uses push frame though. I
+have the test case for stack memory growth which should catch if there was a
+deficiency in memory tests here. I vote we leave it as is for now.

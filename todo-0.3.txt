@@ -2,9 +2,8 @@ Fble 0.3 TODO
 =============
 Things to consider doing for the fble-0.3 release.
 
-* Fix flaky memory test failures
- - Seen on windows laptop
- - Seen on github ubuntu
+* Remove test/memory.c?
+ - Needs update to profiles test?
 
 * Review documentation one last time.
 

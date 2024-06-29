@@ -144,18 +144,17 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
     return EX_FAIL;
   }
 
-  // Pick sufficiently large values for n to overcome any constant memory
-  // overheads for setting up the process.
-  size_t small_n = 10000;
-  size_t large_n = 20000;
+  // Pick sufficiently large values for n to overcome any small constant memory
+  // variations from run to run.
+  size_t small_n = 1000;
+  size_t large_n = 2000;
 
   if (debug) {
-    for (size_t i = small_n; i <= large_n; i += 100) {
+    for (size_t i = 0; i <= large_n; i++) {
       size_t max_n = Run(heap, func, profile, i, large_n);
       fprintf(stderr, "% 4zi: %zi\n", i, max_n);
     }
   }
-
 
   size_t max_small_n = Run(heap, func, profile, small_n, large_n);
   size_t max_large_n = Run(heap, func, profile, large_n, large_n);
@@ -163,8 +162,10 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   FbleFreeValueHeap(heap);
   FbleFreeProfile(profile);
 
-  // Be a little lenient with memory usage.
-  size_t margin = 0;
+  // Be a little lenient with memory usage, because there can be small
+  // variations from run to run. If the total number of bytes increased is
+  // less than the increase in N, it's very unlikely to be a memory leak.
+  size_t margin = (large_n - small_n) / 4;
 
   if (!growth && max_large_n > max_small_n + margin) {
     fprintf(stderr, "memory growth of %zi (%zi -> %zi)\n",
