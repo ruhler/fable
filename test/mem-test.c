@@ -42,6 +42,8 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
  */
 static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
+  FbleValueFullGc(heap);
+  FblePushFrame(heap);
   assert(use_n <= alloc_n);
 
   size_t num_bits = 0;
@@ -65,9 +67,9 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
     tail = FbleNewUnionValue(heap, 0, cons);
   }
 
-  FbleValueFullGc(heap);
   FbleResetMaxTotalBytesAllocated();
   FbleApply(heap, func, 1, &tail, profile);
+  FblePopFrame(heap, NULL);
   return FbleMaxTotalBytesAllocated();
 }
 

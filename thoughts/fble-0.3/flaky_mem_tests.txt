@@ -94,3 +94,34 @@ Good news and bad news. Some of the memory tests are failing now. The good
 news is, it looks like we actually are leaking memory, and switching to
 FbleAlloc tracking captures that memory use. The bad news, it looks like we
 actually are leaking memory?
+
+../spec/SpecTests/5.3-FuncApply/Eval/TailRecursionMemory.fble|1| error: memory-constant test failed:
+|| memory growth of 1072 (1079006 -> 1080078)
+
+../spec/SpecTests/5.2-FuncValue/Eval/NoCaptureTypeof.fble|1| error: memory-constant test failed:
+|| memory growth of 1288 (1082697 -> 1083985)
+
+../spec/SpecTests/5.3-FuncApply/Regression/MemoryLeak2.fble|1| error: memory-constant test failed:
+|| memory growth of 2208 (1086745 -> 1088953)
+
+../spec/SpecTests/5.2-FuncValue/Eval/NoCapture.fble|1| error: memory-constant test failed:
+|| memory growth of 1280 (1082082 -> 1083362)
+
+../spec/SpecTests/5.3-FuncApply/Regression/MemoryLeak.fble|1| error: memory-constant test failed:
+|| memory growth of 1144 (1087379 -> 1088523)
+
+Which implies the following are passing:
+
+../spec/SpecTests/Test/MemoryConstant.fble:# @@fble-test@@ memory-constant
+
+That's interesting. Does that suggest perhaps a bug in the memory-constant
+test infrastructure? Let's dig deeper into the simplest case:
+
+../spec/SpecTests/5.3-FuncApply/Eval/TailRecursionMemory.fble|1| error: memory-constant test failed:
+|| memory growth of 1072 (1079006 -> 1080078)
+
+---
+
+I found a memory leak in the memory test itself. That seems to have improved
+some things. But there is still some step-like behavior in memory use around
+n = 10000 to figure out.
