@@ -396,4 +396,17 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
  */
 void* FbleNativeValueData(FbleValue* value);
 
+/**
+ * @func[FbleValueFullGc] Performs a full garbage collection.
+ *  Frees any unreachable objects currently on the heap.
+ *
+ *  This is an expensive operation intended only for test and debug purposes.
+ *
+ *  @arg[FbleValueHeap*][heap] The heap to perform gc on.
+ *
+ *  @sideeffects
+ *   Frees any unreachable objects currently on the heap.
+ */
+void FbleValueFullGc(FbleValueHeap* heap);
+
 #endif // FBLE_VALUE_H_

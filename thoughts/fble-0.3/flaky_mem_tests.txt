@@ -81,3 +81,16 @@ Steps:
  - Verify memory growth via stack test passes.
 6. Remove OS specific code in memory.c.
 7. Reduce size N of mem test, which need not be so large anymore.
+
+---
+
+Another case for OS memory use instead of our trackers was to try and catch
+when large FbleAlloc buffers are only being partially used. I don't know about
+that. Let's see how things go switching back to FbleAlloc.
+
+---
+
+Good news and bad news. Some of the memory tests are failing now. The good
+news is, it looks like we actually are leaking memory, and switching to
+FbleAlloc tracking captures that memory use. The bad news, it looks like we
+actually are leaking memory?

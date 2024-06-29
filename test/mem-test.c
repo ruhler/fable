@@ -9,6 +9,7 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
+#include <fble/fble-alloc.h>       // for FbleMaxTotalBytesAllocated, etc.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-generate.h>    // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink.
@@ -22,7 +23,7 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
+static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
 
 /**
  * @func[Run] Runs the program for f[n].
@@ -34,10 +35,12 @@ static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size
  *   The value of n to allocate, which should match on all runs if we want a
  *   fair memory comparison.
  *
+ *  @returns[size_t] The number of max bytes allocated during the run.
+ *
  *  @sideeffects
- *   Running the program will impact max RSS of the process.
+ *   Resets the number of max bytes allocated.
  */
-static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
+static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
   assert(use_n <= alloc_n);
 
@@ -62,7 +65,10 @@ static void Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size
     tail = FbleNewUnionValue(heap, 0, cons);
   }
 
+  FbleValueFullGc(heap);
+  FbleResetMaxTotalBytesAllocated();
   FbleApply(heap, func, 1, &tail, profile);
+  return FbleMaxTotalBytesAllocated();
 }
 
 // FbleMemTestMain -- see documentation in mem-test.h.
@@ -75,6 +81,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   bool error = false;
   bool version = false;
   bool growth = false;
+  bool debug = false;
 
   argc--;
   argv++;
@@ -85,6 +92,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--growth", &growth, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--debug", &debug, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
@@ -139,28 +147,31 @@ int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
   size_t small_n = 10000;
   size_t large_n = 20000;
 
-  size_t max_start = FbleGetMaxMemoryUsageKB();
+  if (debug) {
+    for (size_t i = small_n; i <= large_n; i += 100) {
+      size_t max_n = Run(heap, func, profile, i, large_n);
+      fprintf(stderr, "% 4zi: %zi\n", i, max_n);
+    }
+  }
 
-  Run(heap, func, profile, small_n, large_n);
-  size_t max_small_n = FbleGetMaxMemoryUsageKB() - max_start;
 
-  Run(heap, func, profile, large_n, large_n);
-  size_t max_large_n = FbleGetMaxMemoryUsageKB() - max_start;
+  size_t max_small_n = Run(heap, func, profile, small_n, large_n);
+  size_t max_large_n = Run(heap, func, profile, large_n, large_n);
 
   FbleFreeValueHeap(heap);
   FbleFreeProfile(profile);
 
   // Be a little lenient with memory usage.
-  size_t margin = 4;
+  size_t margin = 0;
 
   if (!growth && max_large_n > max_small_n + margin) {
-    fprintf(stderr, "memory growth of %ziKB (%ziKB +%ziKB -> +%ziKB)\n",
-        max_large_n - max_small_n, max_start, max_small_n, max_large_n);
+    fprintf(stderr, "memory growth of %zi (%zi -> %zi)\n",
+        max_large_n - max_small_n, max_small_n, max_large_n);
     return EX_FAIL;
   }
 
   if (growth && max_large_n <= max_small_n + margin) {
-    fprintf(stderr, "memory constant: M(%zi) = %ziKB, M(%zi) = %ziKB\n",
+    fprintf(stderr, "memory constant: M(%zi) = %zi, M(%zi) = %zi\n",
         small_n, max_small_n, large_n, max_large_n);
     return EX_FAIL;
   }

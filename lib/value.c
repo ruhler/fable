@@ -1822,3 +1822,13 @@ void* FbleNativeValueData(FbleValue* value)
   assert(value->tag == NATIVE_VALUE);
   return ((NativeValue*)value)->data;
 }
+
+// See documentation in fble-value.h
+void FbleValueFullGc(FbleValueHeap* heap)
+{
+  while (!(heap->gc.next == NULL
+      && IsEmpty(&heap->gc.frame->marked)
+      && IsEmpty(&heap->gc.frame->unmarked))) {
+    IncrGc(heap);
+  }
+}
