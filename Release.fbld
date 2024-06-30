@@ -1,8 +1,8 @@
 @doc Fble Release Notes
  @@FbleVersionStamp
 
- @section fble-0.3 Pending
-  The following list highlights notable changes from fble-0.2.
+ @section fble-0.3 June 2024
+  The following list highlights the most notable changes from fble-0.2.
 
   @subsection Fble Language
    @item General support for partial and over application of functions.

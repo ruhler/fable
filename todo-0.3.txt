@@ -1,8 +1,0 @@
-Fble 0.3 TODO
-=============
-Things to consider doing for the fble-0.3 release.
-
-* Review documentation one last time.
-
-* Finalize release:
- - record release date in release notes.
