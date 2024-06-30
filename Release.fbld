@@ -78,3 +78,13 @@
   @item
    An initial fbld markup language specification and rough implementation of it.
 
+@section Release Instructions
+ @item Commit release candidate with todo for the release removed.
+ @item Verify local build.
+ @item Push to github, verify builds succeed.
+ @item Locally git tag -a fble-?.? to create annotated release tag.
+ @item git push origin tag fble-?.? to upstream to origin and github.
+ @item Create release from github on existing tag.
+ @item Build www.
+ @item Grab tarball from github and move that and www to website.
+ @item Update version numbers in fble-version.h and README.md to next version.

@@ -1,7 +1,7 @@
 
 # Fable README
 
-fble-0.3 ()
+fble-0.4 ()
 
 Fable is a programming language project. It includes a specification,
 reference implementation, library, and sample applications for the fble
