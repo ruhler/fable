@@ -86,4 +86,11 @@ namespace eval "fbld" {
 
   # Test dcget.tcl
   build_tcl $::s/fbld/dcget_test/build.tcl
+
+  # Fbld spec tests.
+  foreach {x} [build_glob $::s/fbld/SpecTests -tails -nocomplain -type f *.fbld] {
+    test $::b/fbld/SpecTests/$x.tr \
+      "$::b/pkgs/fbld/bin/fbld $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
+      "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/pkgs/fbld/bin/fbld $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
+  }
 }

@@ -1,0 +1,163 @@
+Fbld In C
+=========
+Goal is to implement fbld in C.
+
+Benefits:
+* Breaks circular dependency of usage files on libfble and fbld package. So we
+  can clean up usage generated help.
+* I expect fbld to run much faster, which should fix long build times.
+* We can separate out fbld from fble into a separate repo if we want, for
+  better modularity.
+* It should give a nice baseline of expected performance for fbld in fble, and
+  hopefully some ideas for how to improve fble performance.
+* I'll get to see how fbld language compares to C.
+
+I'll want a test suite separate from the fble-fbld based test suite,
+preferably reusble by both implementations. I can build that up a little at a
+time, and implement the C version as we go.
+
+---
+
+The main data structure for documents is clear. Just mirror the abstract
+syntax in the fbld spec.
+
+For test suite, I'm thinking something like fble. We definitely want to be
+able to test for errors and error locations.
+
+The most natural way to describe an fbld test, in my mind, is:
+
+* Provide input fbld text.
+* For error cases, provide location of error message.
+* For passing cases, provide expected output.
+
+For example, a passing test might look like:
+
+  @asserteq @
+   a: hello, b: there
+  @@
+  @define[foo][a b] a: @a, b: @b @@
+  @foo[hello][there]
+
+And a test expected to fail.
+
+  @assertfail[4][5] @@
+  @define[foo][a b] a: @a, b: @b @@
+  @foo[hello][there]
+
+The passing case we could implement entirely in fbld. We could define asserteq
+as if not equal, error.
+
+The failing case we need outside support for, because we can't get the error
+message inside fbld. That suggests maybe we want:
+
+@expect_error 4:1 @@
+...
+
+The wrapper script can grep for that signature at the top and handle it
+appropriately.
+
+Otherwise, run the conversion, ignore the output, make sure we don't get an
+@error.
+
+Sample test cases to start off with:
+
+To verify we get errors as desired:
+
+  @expect_error 2:1 @@
+  @error This is an error.
+
+To verify things pass as desired:
+
+  Hello. This is text.
+
+A test to assert the correct value of things:
+
+  @define[assert_eq][a][b] @ifeq[@a][@b][][@error['@a' != '@b']] @@
+
+Or, perhaps simpler:
+
+  @ifeq
+   Hello. This is text.
+  @ @
+   Hello. This is text.
+  @[] @error[mismatch]
+   
+No. Better to have the assert_eq, so we see what the mismatch is in case of
+failure.
+
+Then we can do two tests to start:
+
+  @expect_okay @@
+  @define[assert_eq][a][b] @ifeq[@a][@b][][@error['@a' != '@b']] @@
+  @assert_eq[hello][hello]
+
+  @expect_error 2:45 @@
+  @define[assert_eq][a][b] @ifeq[@a][@b][][@error['@a' != '@b']] @@
+  @assert_eq[hello][there]
+
+An interesting question: where do we expect the error location in the second
+case? Let's try and see!
+
+  @define[assert_eq][a b] @ifeq[@a][@b][][@error['@a' != '@b']] @@
+  @assert_eq[hello][there]
+
+The error happens at 1:42. I can't have @expect_error there and undefined. So
+how about we make a tiny library that we always supply first.
+
+Library is:
+
+  @define[expect_error][loc][body] @@
+  @define[assert_eq][a b] @ifeq[@a][@b][][@error['@a' != '@b']] @@
+
+The test is as before.
+
+Slight refinement:
+
+For passing tests:
+
+  @test[pass] @@
+  ...
+
+For tests that hit an assert failure:
+
+  @test[fail] @@
+  ...
+
+For tests that hit an explicit error:
+
+  @test[error 3:1] @@
+  ...
+
+The test framework can grep for those initial lines in the file.
+
+---
+
+It would be much easier if we could capture an error in fbld itself. For
+example:
+
+@try @@
+
+Turns into the body, or in case of error, turns into the error message.
+
+Or, more generally:
+
+@try[onfail][body]
+
+Where onfail is a function that can refer to @file, @line, @col, @msg?
+
+Have that be built in.
+
+Then all we have to do is run fbld, no need for a wrapper test framework.
+
+Can we catch parse errors this way though?
+
+---
+
+Because we want to catch parse errors cleanly, I vote doing the error
+detection stuff outside of fbld. I've got the test framework all drafted up
+now.
+
+Possible next steps:
+* Add more fbld spec tests.
+* Draft initial implementation of fbld in C with support for:
+  @error, @ifeq, @define

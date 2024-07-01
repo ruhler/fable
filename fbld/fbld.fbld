@@ -119,13 +119,13 @@
    Here's an abstract syntax for fbld document structure:
 
    @code[text] @
-    Text ::= (* A string of plain text characters *)
+    Text: A string of plain text characters.
 
-    Command ::=
+    Command:
         command (name : Text) (args : [Markup])
       ;
 
-    Markup ::=
+    Markup:
         plain (text : Text)
       | command (command : Command)
       | sequence (markups : [Markup])

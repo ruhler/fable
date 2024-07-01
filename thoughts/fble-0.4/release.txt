@@ -1,0 +1,23 @@
+Fble 0.4 Release
+================
+What's the plan?
+
+Big categories of work right now are:
+* Performance
+ - Better data value packing.
+ - Function call inlining.
+* Modular compilation
+* Debugger
+* Fbld in C.
+* Fbld core library revision.
+* Fble standard library.
+* New apps.
+
+My vote:
+1. Start with fbld in C. That should give some performance baseline and also
+improve build times a bunch.
+
+Then go from there, whatever I feel like. We have a pretty solid list of
+options for things to work on. There's more than enough here for a release.
+What's nice is these big things are mostly orthogonal.
+
