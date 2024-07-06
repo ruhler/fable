@@ -1,5 +1,6 @@
 
 #include <assert.h>   // for assert
+#include <stdbool.h>  // for false
 
 #include "fbld.h"
 

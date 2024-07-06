@@ -6,7 +6,6 @@
 #ifndef _FBLD_H_
 #define _FBLD_H_
 
-#include <stdbool.h>    // for bool
 #include <stddef.h>     // for size_t
 
 typedef struct FbldMarkup FbldMarkup;
@@ -35,7 +34,7 @@ typedef struct {
 } FbldString;
 
 typedef struct {
-  FbldString* file;
+  const char* file;
   size_t line;
   size_t column;
 } FbldLoc;
@@ -73,27 +72,30 @@ void FbldFreeMarkup(FbldMarkup* markup);
 
 /**
  * @func[FbldParse] Parses a sequence of fbld files.
- *  @arg[size_t][argc] The number of input files.
- *  @arg[const char**][argv] The names of input files.
+ *  @arg[const char**][inputs] Null terminated array of input file names.
  *
- *  @returns[FbldMarkup*] The parsed markup, or NULL in case of failure.
+ *  @returns[FbldMarkup*] The parsed markup.
  *
  *  @sideeffects
- *   @i Prints an error to stderr in case of error.
+ *   @i Prints an error to stderr and aborts the program in case of error.
+ *   @item
+ *    References the input file names in the parsed markup. The caller is
+ *    responsible for ensuring those pointers stay valid as long as they may
+ *    continue to be access from the parsed markup.
  *   @item
  *    The user is responsible for calling FbldFreeMarkup on the returned
  *    markup object when no longer needed.
  */
-FbldMarkup* FbldParse(size_t argc, const char** argv);
+FbldMarkup* FbldParse(const char** inputs);
 
 /**
  * @func[FbldEval] Evaluates an fbld document.
  *  @arg[FbldMarkup*][markup] The markup to evaluate.
  *
- *  @returns[FbldMarkup*] The evaluated markup, or NULL in case of failure.
+ *  @returns[FbldMarkup*] The evaluated markup.
  *
  *  @sideeffects
- *   @i Prints an error to stderr in case of error.
+ *   @i Prints an error to stderr and aborts the program in case of error.
  *   @item
  *    The user is responsible for calling FbldFreeMarkup on the returned
  *    markup object when no longer needed.
@@ -104,11 +106,9 @@ FbldMarkup* FbldEval(FbldMarkup* markup);
  * @func[FbldPrintMarkup] Prints markup to stdout.
  *  @arg[FbldMarkup*][markup] The markup to print.
  *
- *  @returns[bool] True on success, false in case of error.
- *
  *  @sideeffects
- *   @i Prints an error to stderr in case of error.
+ *   @i Prints an error to stderr and aborst the program in case of error.
  */
-bool FbldPrintMarkup(FbldMarkup* markup);
+void FbldPrintMarkup(FbldMarkup* markup);
 
 #endif // _FBLD_H_

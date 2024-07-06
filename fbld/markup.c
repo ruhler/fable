@@ -1,5 +1,6 @@
 
 #include <assert.h>   // for assert
+#include <stdbool.h>  // for false
 
 #include "fbld.h"
 
@@ -9,8 +10,7 @@ void FbldFreeMarkup(FbldMarkup* markup)
   assert(false && "TODO: implement FbldFreeMarkup");
 }
 
-bool FbldPrintMarkup(FbldMarkup* markup)
+void FbldPrintMarkup(FbldMarkup* markup)
 {
   assert(false && "TODO: implement FbldPrintMarkup");
-  return false;
 }

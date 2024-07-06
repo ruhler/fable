@@ -5,9 +5,6 @@
 
 #include "fbld.h"
 
-#define EX_SUCCESS 0
-#define EX_FAIL 1
-
 /**
  * @func[main] The main entry point for the fbld program.
  *  @arg[int][argc] The number of command line arguments.
@@ -20,22 +17,11 @@
  */
 int main(int argc, const char* argv[])
 {
-  FbldMarkup* parsed = FbldParse(argc, argv);
-  if (parsed == NULL) {
-    return EX_FAIL;
-  }
-
+  FbldMarkup* parsed = FbldParse(argv + 1);
   FbldMarkup* evaled = FbldEval(parsed);
+  FbldPrintMarkup(evaled);
+
   FbldFreeMarkup(parsed);
-  if (evaled == NULL) {
-    return EX_FAIL;
-  }
-
-  bool printed = FbldPrintMarkup(evaled);
   FbldFreeMarkup(evaled);
-  if (!printed) {
-    return EX_FAIL;
-  }
-
-  return EX_SUCCESS;
+  return 0;
 }
