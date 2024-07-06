@@ -87,9 +87,23 @@ namespace eval "fbld" {
   # Test dcget.tcl
   build_tcl $::s/fbld/dcget_test/build.tcl
 
+  # fbld binary.
+  set objs [list]
+  foreach {x} {fbld eval markup parse} {
+    obj $::b/fbld/$x.o $::s/fbld/$x.c "-I $::s/fbld"
+    lappend objs $::b/fbld/$x.o
+  }
+  bin $::b/fbld/fbld $objs ""
+
   # Fbld spec tests.
   foreach {x} [build_glob $::s/fbld/SpecTests -tails -nocomplain -type f *.fbld] {
-    test $::b/fbld/SpecTests/$x.tr \
+    # c-based fbld.
+    test $::b/fbld/SpecTests/$x.c.tr \
+      "$::b/fbld/fbld $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
+      "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/fbld/fbld $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
+
+    # fble-based fbld.
+    test $::b/fbld/SpecTests/$x.fble.tr \
       "$::b/pkgs/fbld/bin/fbld $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
       "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/pkgs/fbld/bin/fbld $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
   }

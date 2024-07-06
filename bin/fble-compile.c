@@ -1,6 +1,6 @@
 /**
- * @file fble-native.c
- *  This file implements the main entry point for the fble-native program,
+ * @file fble-compile.c
+ *  This file implements the main entry point for the fble-compile program,
  *  which compiles *.fble code to *.c code.
  */
 
