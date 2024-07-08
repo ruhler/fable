@@ -57,9 +57,35 @@ typedef enum {
 
 struct FbldMarkup {
   FbldMarkupTag tag;
-  FbldText* text;         // Plain text or command name.
-  FbldMarkupV markups;    // Sequence of markups or command args.
+  FbldText* text;         // Plain text, command name, or NULL.
+  FbldMarkupV markups;    // Sequence of markups, command args, or empty.
 };
+
+/**
+ * @func[FbldInitVector] Initializes a vector of markups.
+ *  @arg[FbldMarkupV*][v] The vector to initialize.
+ *  @sideeffects
+ *   Allocates memory that should be freed with FbldFreeVector when no longer
+ *   needed.
+ */
+void FbldInitVector(FbldMarkupV* v);
+
+/**
+ * @func[FbldAppendToVector] Adds an element to a vector.
+ *  @arg[FbldMarkupV*][v] The vector to add the element to.
+ *  @arg[FbldMarkup*][e] The element to append.
+ *  @sideeffects
+ *   The given element is appended to the vector. If necessary the underlying
+ *   array is re-allocated to make space for the new element.
+ */
+void FbldAppendToVector(FbldMarkupV* v, FbldMarkup* e);
+
+/**
+ * @func[FbldFreeVector] Frees a vector of markups.
+ *  @arg[FbldMarkupV][v] The vector to free.
+ *  @sideeffects Frees resources associated with the given vector.
+ */
+void FbldFreeVector(FbldMarkupV v);
 
 /**
  * @func[FbldFreeMarkup] Frees resources associated with the given markup.
@@ -69,6 +95,15 @@ struct FbldMarkup {
  *   Frees resources associated with the given markup.
  */
 void FbldFreeMarkup(FbldMarkup* markup);
+
+/**
+ * @func[FbldError] Reports an error.
+ *  @arg[FbldLoc][loc] The location of the error.
+ *  @arg[const char*][msg] The error message.
+ *  @sideeffects
+ *   Prints the error message to stderr and aborts the program.
+ */
+void FbldError(FbldLoc loc, const char* message);
 
 /**
  * @func[FbldParse] Parses a sequence of fbld files.
