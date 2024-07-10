@@ -1,8 +1,10 @@
 
 #include <assert.h>   // for assert
+#include <ctype.h>    // for isalnum
 #include <stdbool.h>  // for false
 #include <stdio.h>    // for FILE, feof, etc.
 #include <stdlib.h>   // for abort, malloc
+#include <string.h>   // for strcpy
 
 #include "fbld.h"
 
@@ -21,9 +23,22 @@ typedef struct {
 } Lex;
 
 static void Next(Lex* lex);
+static bool IsNameChar(int c);
 static FbldText* ParseName(Lex* lex);
+static void ParseInlineArgs(Lex* lex, FbldMarkupV* args);
 static FbldMarkup* ParseBlockCommand(Lex* lex);
 static FbldMarkup* ParseBlock(Lex* lex);
+
+/**
+ * @func[IsNameChar] Tests if a character is a name character
+ *  @arg[int][c] The character to test.
+ *  @returns[bool] True if the char is a name character.
+ *  @sideeffects None
+ */
+static bool IsNameChar(int c)
+{
+  return c == '_' || isalnum(c);
+}
 
 /**
  * @func[Next] Advance the lexer by a single character.
@@ -81,8 +96,47 @@ static void Next(Lex* lex)
  */
 static FbldText* ParseName(Lex* lex)
 {
-  assert(false && "TODO: ParseName");
-  return NULL;
+  FbldText* text = malloc(sizeof(FbldText));
+  text->loc = lex->loc;
+
+  size_t capacity = 8;
+  size_t size = 0;
+  char* name = malloc(capacity * sizeof(char));
+  while (IsNameChar(lex->c)) {
+    name[size++] = (char)lex->c;
+    Next(lex);
+    if (size == capacity) {
+      capacity *= 2;
+      name = realloc(name, capacity * sizeof(char));
+    }
+  }
+  name[size] = '\0';
+
+  FbldString* str = malloc(sizeof(FbldString) + size * sizeof(char));
+  str->refcount = 1;
+  strcpy(str->str, name);
+  free(name);
+
+  text->str = str;
+  return text;
+}
+
+/**
+ * @func[ParseInlineArgs] Parses a sequence of [...] and {...} args.
+ *  There may be zero or more such args.
+ *
+ *  @arg[Lex*][lex] The lexer state
+ *  @arg[FbldMarkupV*][args] Output vector to append parsed args to.
+ *  @sideeffects
+ *   @i Prints a message to stderr and aborts the program in case of error.
+ *   @i Advances lex state just past the parsed args.
+ *   @i Appends to args vector.
+ */
+static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
+{
+  while (lex->c == '[' || lex->c == '{') {
+    assert(false && "TODO: ParseInlineArgs");
+  }
 }
 
 /**
@@ -103,6 +157,13 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
   markup->text = ParseName(lex);
   FbldInitVector(&markup->markups);
 
+  ParseInlineArgs(lex, &markup->markups);
+
+  // '[' -> inline arg
+  // '{' -> literal inline arg
+  // <text>'\n' -> <same line arg> + end of command
+  // <text>' @\n' -> <same line arg> + Next line literal
+  // <text>' @@\n' -> <same line arg> + Next line final
   assert(false && "TODO: Parse block command args");
 
   return markup;
