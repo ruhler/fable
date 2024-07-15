@@ -185,3 +185,40 @@ Should we just bail out right away if there is an error? Rather than propagate
 it up? That seems decent enough for this simple program. Easier API and
 implementation, right?
 
+---
+
+Parser question: how to parse inline text where the end of the inline text
+depends on context?
+* End at ']' when parsing an inline arg.
+* End at '\n', ' @\n', or ' @@\n' when parsing same line arg.
+* End at EOF or blank line when parsing implicit block.
+
+In the fble based implementation we have a 'try' function that parses, tests
+for error, then resets. Currently I abort right away in case of error, and we
+don't have a mechanism to go backward in the input.
+
+For same line arg, it seems natural to read in the line, strip the trailing '
+@' or ' @@', then parse the rest of inline to end of string. That feels
+inefficient though. I don't have a way to parse from string at this point
+either.
+
+We could add a custom state machine when parsing inline that takes context as
+input. If looking for ']' and we see it, end then. If looking for same line
+arg end and we see ' @', check for \n after, or @ after, and we know that should
+be the end. Save somewhere where we saw \n, @\n or @@\n and return that.
+
+What if we had a way to test for a string at the current position without
+advancing the position? I should be able to hack that up.
+
+Let's try that. Pass a function to check if end of inline without advancing
+lex state. It can go until end.
+
+To check if starts with string, maybe I can use seek, or pull characters into
+a side buffer for processing.
+* seek isn't good, because it's not supported on FIFOs.
+* ungetc only guarantees one character pushback.
+
+Or just use special casing. If we see lex->c is '@', and the previous
+character was space, and the next character is \n or @, we should be all set.
+That's doable. Let's try that approach. No fancy pushback or rewind or what
+not needed. Just need to remember the previous character.

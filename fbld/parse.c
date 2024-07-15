@@ -29,6 +29,21 @@ typedef struct {
   size_t buffer_capacity;
 } Lex;
 
+// The context we are parsing inline text from.
+//  INLINE_ARG - Inside a [...] block.
+//  SAME_LINE_ARG - From a same line arg.
+typedef enum {
+  INLINE_ARG,
+  SAME_LINE_ARG
+} InlineContext;
+
+// The terminator of a same line arg.
+typedef enum {
+  END_SAME_LINE,
+  NEXT_LINE_LITERAL,
+  NEXT_LINE_FINAL
+} SameLineArgEnd;
+
 static void Next(Lex* lex);
 
 static void ClearBuffer(Lex* lex);
@@ -38,7 +53,7 @@ static bool IsNameChar(int c);
 static FbldText* ParseName(Lex* lex);
 static void ParseInlineArgs(Lex* lex, FbldMarkupV* args);
 static FbldMarkup* ParseInlineCommand(Lex* lex);
-static FbldMarkup* ParseInline(Lex* lex);
+static FbldMarkup* ParseInline(Lex* lex, InlineContext context, SameLineArgEnd* same_line_end);
 static FbldMarkup* ParseBlockCommand(Lex* lex);
 static FbldMarkup* ParseBlock(Lex* lex);
 
@@ -175,7 +190,7 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
 
     if (lex->c == '[') {
       Next(lex);
-      FbldMarkup* arg = ParseInline(lex);
+      FbldMarkup* arg = ParseInline(lex, INLINE_ARG, NULL);
       FbldAppendToVector(args, arg);
     }
   }
@@ -205,14 +220,21 @@ static FbldMarkup* ParseInlineCommand(Lex* lex)
 
 /**
  * @func[ParseInline] Parses fbld inline structured markup.
+ *  In the case of INLINE_ARG, parses just past the closing ']' character. In
+ *  the case of SAME_LINE_ARG, parses just past the closing '\n' and sets
+ *  same_line_end appropriately. same_line_end must be provided in case of
+ *  SAME_LINE_ARG; it can be NULL in case of INLINE_ARG.
+ *
  *  @arg[Lex*][lex] The lexer state.
+ *  @arg[InlineContext][context] The context to parse from.
+ *  @arg[SameLineArgEnd*][same_line_end] How a same line arg ended.
  *  @returns[FbldMarkup*] The parsed inline markup.
  *  @sideeffects
  *   @i Prints a message to stderr and aborts the program in case of error.
- *   @i Advances lex state just past the parsed block.
+ *   @i Advances lex state just past the parsed inline text.
  *   @i Allocates an FbldMarkup* that should be freed when no longer needed.
  */
-static FbldMarkup* ParseInline(Lex* lex)
+static FbldMarkup* ParseInline(Lex* lex, InlineContext context, SameLineArgEnd* same_line_end)
 {
   // Inline markup is a sequence of plain text and inline commands.
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
@@ -220,34 +242,87 @@ static FbldMarkup* ParseInline(Lex* lex)
   markup->text = NULL;
   FbldInitVector(&markup->markups);
 
-  while (lex->c != ']' && lex->c != EOF) {
+  ClearBuffer(lex);
+  FbldLoc loc = lex->loc;
+  while (true) {
+    if (context == INLINE_ARG && lex->c == ']') {
+      Next(lex);
+      break;
+    }
+
+    if (context == SAME_LINE_ARG && lex->c == '\n') {
+      *same_line_end = END_SAME_LINE;
+      Next(lex);
+      break;
+    }
+
     if (lex->c == '@') {
       Next(lex);
+
+      bool prior_space = lex->buffer_size > 0
+        && lex->buffer[lex->buffer_size-1] == ' ';
+      if (context == SAME_LINE_ARG && prior_space && lex->c == '\n') {
+        // Next line literal case: ... @\n
+        lex->buffer_size--;
+        *same_line_end = NEXT_LINE_LITERAL;
+        Next(lex);
+        break;
+      }
+
+      if (context == SAME_LINE_ARG && prior_space && lex->c == '@') {
+        // The only valid thing for ' @@' is if it ends in \n and becomes a
+        // next line final arg ' @@\n'.
+        Next(lex);
+        if (lex->c != '\n') {
+          FbldError(lex->loc, "expected newline after @@");
+        }
+        lex->buffer_size--;
+        Next(lex);
+        break;
+      }
+
+      if (lex->buffer_size != 0) {
+        AddToBuffer(lex, '\0');
+        FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
+        str->refcount = 1;
+        strcpy(str->str, lex->buffer);
+
+        FbldText* text = malloc(sizeof(FbldText));
+        text->loc = loc;
+        text->str = str;
+
+        FbldMarkup* plain = malloc(sizeof(FbldMarkup));
+        plain->tag = FBLD_MARKUP_PLAIN;
+        plain->text = text;
+        FbldInitVector(&plain->markups);
+        FbldAppendToVector(&markup->markups, plain);
+
+        ClearBuffer(lex);
+      }
+
       FbldMarkup* command = ParseInlineCommand(lex);
       FbldAppendToVector(&markup->markups, command);
       continue;
     }
 
-    ClearBuffer(lex);
-    FbldLoc loc = lex->loc;
-    ClearBuffer(lex);
-    while (lex->c != '@' && lex->c != ']' && lex->c != EOF) {
-      if (lex->c == '\\') {
-        Next(lex);
-        switch (lex->c) {
-          case '@': AddToBuffer(lex, '@'); break;
-          case '[': AddToBuffer(lex, '['); break;
-          case '\\': AddToBuffer(lex, '\\'); break;
-          case ']': AddToBuffer(lex, ']'); break;
-          case 'n': AddToBuffer(lex, '\n'); break;
-          default: FbldError(lex->loc, "unsupported escape sequence"); break;
-        }
-      } else {
-        AddToBuffer(lex, lex->c);
-      }
-
+    if (lex->c == '\\') {
       Next(lex);
+      switch (lex->c) {
+        case '@': AddToBuffer(lex, '@'); break;
+        case '[': AddToBuffer(lex, '['); break;
+        case '\\': AddToBuffer(lex, '\\'); break;
+        case ']': AddToBuffer(lex, ']'); break;
+        case 'n': AddToBuffer(lex, '\n'); break;
+        default: FbldError(lex->loc, "unsupported escape sequence"); break;
+      }
+      continue;
     }
+    
+    AddToBuffer(lex, lex->c);
+    Next(lex);
+  }
+
+  if (lex->buffer_size != 0) {
     AddToBuffer(lex, '\0');
     FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
     str->refcount = 1;
@@ -286,11 +361,17 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
 
   ParseInlineArgs(lex, &markup->markups);
 
-  // <text>'\n' -> <same line arg> + end of command
-  // <text>' @\n' -> <same line arg> + Next line literal
-  // <text>' @@\n' -> <same line arg> + Next line final
-  assert(false && "TODO: Parse block command args");
+  SameLineArgEnd same_line_end = END_SAME_LINE;
+  if (lex->c == ' ') {
+    Next(lex);
+    FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG, &same_line_end);
+    FbldAppendToVector(&markup->markups, same_line);
+  } else if (lex->c != '\n') {
+    FbldError(lex->loc, "expecting space or newline");
+  }
 
+  assert(same_line_end != NEXT_LINE_LITERAL && "TODO: next line literal");
+  assert(same_line_end != NEXT_LINE_FINAL && "TODO: next line final");
   return markup;
 }
 

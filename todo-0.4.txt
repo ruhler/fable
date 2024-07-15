@@ -4,6 +4,8 @@ Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
  - Make helper function for converting lex buffer into FbldString.
+ - Test case of empty same line arg.
+ - Switch back to -O3 in build.tcl
 
 
 * Fix potential GC gen overflow?
