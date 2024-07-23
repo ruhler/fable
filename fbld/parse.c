@@ -9,11 +9,19 @@
 #include "fbld.h"
 
 /**
+ * @value[END] The character used to denote end of input.
+ *  @type[char]
+ */
+const char END = '\x03';
+
+/**
  * @struct[Lex] State of the lexer.
  *  @field[const char**][inputs] Remaining input files to process.
  *  @field[FILE*][fin] The current input file being processed.
- *  @field[int][c] The next input character, or EOF for end of file.
  *  @field[FbldLoc][loc] The current location.
+ *  @field[char*][next] A buffer for storing the next characters in the input.
+ *  @field[size_t][next_size] The number of characters in next.
+ *  @field[size_t][next_capacity] The allocated size of next.
  *  @field[char*][buffer] A scratch buffer for reading in characters.
  *  @field[size_t][buffer_size] The number of characters in the buffer.
  *  @field[size_t][buffer_capacity] The allocated size of the buffer.
@@ -21,8 +29,11 @@
 typedef struct {
   const char** inputs;
   FILE* fin;
-  int c;
   FbldLoc loc;
+
+  char* next;
+  size_t next_size;
+  size_t next_capacity;
 
   char* buffer;
   size_t buffer_size;
@@ -37,14 +48,11 @@ typedef enum {
   SAME_LINE_ARG
 } InlineContext;
 
-// The terminator of a same line arg.
-typedef enum {
-  END_SAME_LINE,
-  NEXT_LINE_LITERAL,
-  NEXT_LINE_FINAL
-} SameLineArgEnd;
-
-static void Next(Lex* lex);
+static char GetC(Lex* lex);
+static char Char(Lex* lex);
+static bool Is(Lex* lex, const char* str);
+static bool IsEnd(Lex* lex);
+static void Advance(Lex* lex);
 
 static void ClearBuffer(Lex* lex);
 static void AddToBuffer(Lex* lex, char c);
@@ -53,39 +61,33 @@ static bool IsNameChar(int c);
 static FbldText* ParseName(Lex* lex);
 static void ParseInlineArgs(Lex* lex, FbldMarkupV* args);
 static FbldMarkup* ParseInlineCommand(Lex* lex);
-static FbldMarkup* ParseInline(Lex* lex, InlineContext context, SameLineArgEnd* same_line_end);
+static FbldMarkup* ParseInline(Lex* lex, InlineContext context);
 static FbldMarkup* ParseBlockCommand(Lex* lex);
 static FbldMarkup* ParseBlock(Lex* lex);
 
 /**
- * @func[Next] Advance the lexer by a single character.
- *  @arg[Lex*][lex] The lexer state to advance.
- *  @sideeffects Advances to the next character in the input.
+ * @func[GetC] Fetches another input character.
+ *  Does not cross input files unless current next buffer is empty.
+ *
+ *  @arg[Lex*][lex] The lexer state.
+ *  @returns[char] The input character fetched, or END in case of end of input.
+ *  @sideeffects Advances location to next file if appropriate.
  */
-static void Next(Lex* lex)
+static char GetC(Lex* lex)
 {
-  // Advance the location.
-  switch (lex->c) {
-    case '\n':
-      lex->loc.line++;
-      lex->loc.column = 1;
-      break;
-
-    case EOF:
-      break;
-
-    default:
-      lex->loc.column++;
+  int c = EOF;
+  if (lex->fin != NULL && !feof(lex->fin)) {
+    c = fgetc(lex->fin);
   }
 
-  lex->c = EOF;
-  while (lex->c == EOF) {
+  while (lex->next_size == 0 && c == EOF) {
     if (lex->fin == NULL) {
-      const char* filename = *lex->inputs++;
+      const char* filename = *lex->inputs;
       if (filename == NULL) {
         // We've finished processing all the inputs.
-        return;
+        return END;
       }
+      lex->inputs++;
 
       // Open the next input file for processing.
       lex->fin = fopen(filename, "r");
@@ -98,8 +100,89 @@ static void Next(Lex* lex)
       lex->loc.column = 1;
     }
 
-    lex->c = fgetc(lex->fin);
+    c = fgetc(lex->fin);
   }
+  return c == EOF ? END : c;
+}
+
+/**
+ * @func[Char] Returns the next input character.
+ *  @arg[Lex*][lex] The lexer state.
+ *  @returns[char] The next input character, or END in case of end of input.
+ *  @sideeffects Fetches the next input character if needed.
+ */
+static char Char(Lex* lex)
+{
+  if (lex->next_size == 0) {
+    char c = GetC(lex);
+    if (c == END) {
+      return c;
+    }
+
+    lex->next[0] = c;
+    lex->next_size++;
+  }
+  return lex->next[0];
+}
+
+/**
+ * @func[Is] Test if the next characters in the input match str.
+ *  The match is not allowed to span different input files.
+ *
+ *  @arg[Lex*][lex] The lexer state.
+ *  @arg[const char*][str] The string to match.
+ *  @returns[bool] true if the next characters match str, false otherwise.
+ *  @sideeffects Fetches the next input characters as needed.
+ */
+static bool Is(Lex* lex, const char* str)
+{
+  size_t len = strlen(str);
+  while (lex->next_size < len) {
+    char c = GetC(lex);
+    if (c == END) {
+      break;
+    }
+
+    if (lex->next_size == lex->next_capacity) {
+      lex->next_capacity *= 2;
+      lex->next = realloc(lex->next, lex->next_capacity * sizeof(char));
+    }
+
+    lex->next[lex->next_size] = c;
+    lex->next_size++;
+  }
+  return lex->next_size >= len && strncmp(str, lex->next, len) == 0;
+}
+
+static bool IsEnd(Lex* lex)
+{
+  return END == Char(lex);
+}
+
+/**
+ * @func[Advance] Advances to the next character in the input.
+ *  @arg[Lex*][lex] The lexer state.
+ *  @sideeffects Advances to the next character in the input.
+ */
+static void Advance(Lex* lex)
+{
+  // We assume we at least tried to read the next input character before
+  // advancing past it.
+  assert(lex->next_size > 0);
+
+  // Advance the location.
+  switch (lex->next[0]) {
+    case '\n':
+      lex->loc.line++;
+      lex->loc.column = 1;
+      break;
+
+    default:
+      lex->loc.column++;
+  }
+
+  lex->next_size--;
+  memmove(lex->next, lex->next + 1, lex->next_size);
 }
 
 /**
@@ -155,9 +238,9 @@ static FbldText* ParseName(Lex* lex)
   text->loc = lex->loc;
 
   ClearBuffer(lex);
-  while (IsNameChar(lex->c)) {
-    AddToBuffer(lex, (char)lex->c);
-    Next(lex);
+  while (IsNameChar(Char(lex))) {
+    AddToBuffer(lex, Char(lex));
+    Advance(lex);
   }
   AddToBuffer(lex, '\0');
 
@@ -182,16 +265,19 @@ static FbldText* ParseName(Lex* lex)
  */
 static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
 {
-  while (lex->c == '[' || lex->c == '{') {
-    if (lex->c == '{') {
+  while (Is(lex, "[") || Is(lex, "{")) {
+    if (Is(lex, "{")) {
       assert(false && "TODO: Parse literal inline arg");
       return;
     }
 
-    if (lex->c == '[') {
-      Next(lex);
-      FbldMarkup* arg = ParseInline(lex, INLINE_ARG, NULL);
+    if (Is(lex, "[")) {
+      Advance(lex);
+      FbldMarkup* arg = ParseInline(lex, INLINE_ARG);
       FbldAppendToVector(args, arg);
+
+      assert(Is(lex, "]"));
+      Advance(lex);
     }
   }
 }
@@ -220,21 +306,15 @@ static FbldMarkup* ParseInlineCommand(Lex* lex)
 
 /**
  * @func[ParseInline] Parses fbld inline structured markup.
- *  In the case of INLINE_ARG, parses just past the closing ']' character. In
- *  the case of SAME_LINE_ARG, parses just past the closing '\n' and sets
- *  same_line_end appropriately. same_line_end must be provided in case of
- *  SAME_LINE_ARG; it can be NULL in case of INLINE_ARG.
- *
  *  @arg[Lex*][lex] The lexer state.
  *  @arg[InlineContext][context] The context to parse from.
- *  @arg[SameLineArgEnd*][same_line_end] How a same line arg ended.
  *  @returns[FbldMarkup*] The parsed inline markup.
  *  @sideeffects
  *   @i Prints a message to stderr and aborts the program in case of error.
  *   @i Advances lex state just past the parsed inline text.
  *   @i Allocates an FbldMarkup* that should be freed when no longer needed.
  */
-static FbldMarkup* ParseInline(Lex* lex, InlineContext context, SameLineArgEnd* same_line_end)
+static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
 {
   // Inline markup is a sequence of plain text and inline commands.
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
@@ -245,41 +325,17 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context, SameLineArgEnd* 
   ClearBuffer(lex);
   FbldLoc loc = lex->loc;
   while (true) {
-    if (context == INLINE_ARG && lex->c == ']') {
-      Next(lex);
+    if (context == INLINE_ARG && Is(lex, "]")) {
       break;
     }
 
-    if (context == SAME_LINE_ARG && lex->c == '\n') {
-      *same_line_end = END_SAME_LINE;
-      Next(lex);
+    if (context == SAME_LINE_ARG
+        && (Is(lex, "\n") || Is(lex, " @\n") || Is(lex, " @@\n"))) {
       break;
     }
 
-    if (lex->c == '@') {
-      Next(lex);
-
-      bool prior_space = lex->buffer_size > 0
-        && lex->buffer[lex->buffer_size-1] == ' ';
-      if (context == SAME_LINE_ARG && prior_space && lex->c == '\n') {
-        // Next line literal case: ... @\n
-        lex->buffer_size--;
-        *same_line_end = NEXT_LINE_LITERAL;
-        Next(lex);
-        break;
-      }
-
-      if (context == SAME_LINE_ARG && prior_space && lex->c == '@') {
-        // The only valid thing for ' @@' is if it ends in \n and becomes a
-        // next line final arg ' @@\n'.
-        Next(lex);
-        if (lex->c != '\n') {
-          FbldError(lex->loc, "expected newline after @@");
-        }
-        lex->buffer_size--;
-        Next(lex);
-        break;
-      }
+    if (Is(lex, "@")) {
+      Advance(lex);
 
       if (lex->buffer_size != 0) {
         AddToBuffer(lex, '\0');
@@ -305,9 +361,9 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context, SameLineArgEnd* 
       continue;
     }
 
-    if (lex->c == '\\') {
-      Next(lex);
-      switch (lex->c) {
+    if (Is(lex, "\\")) {
+      Advance(lex);
+      switch (Char(lex)) {
         case '@': AddToBuffer(lex, '@'); break;
         case '[': AddToBuffer(lex, '['); break;
         case '\\': AddToBuffer(lex, '\\'); break;
@@ -315,11 +371,12 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context, SameLineArgEnd* 
         case 'n': AddToBuffer(lex, '\n'); break;
         default: FbldError(lex->loc, "unsupported escape sequence"); break;
       }
+      Advance(lex);
       continue;
     }
     
-    AddToBuffer(lex, lex->c);
-    Next(lex);
+    AddToBuffer(lex, Char(lex));
+    Advance(lex);
   }
 
   if (lex->buffer_size != 0) {
@@ -361,18 +418,26 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
 
   ParseInlineArgs(lex, &markup->markups);
 
-  SameLineArgEnd same_line_end = END_SAME_LINE;
-  if (lex->c == ' ') {
-    Next(lex);
-    FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG, &same_line_end);
+  if (Is(lex, " ") && !Is(lex, " @\n") && !Is(lex, " @@\n")) {
+    Advance(lex);
+    FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG);
     FbldAppendToVector(&markup->markups, same_line);
-  } else if (lex->c != '\n') {
+  }
+  
+  if (Is(lex, "\n")) {
     FbldError(lex->loc, "expecting space or newline");
+    return markup;
   }
 
-  assert(same_line_end != NEXT_LINE_LITERAL && "TODO: next line literal");
-  assert(same_line_end != NEXT_LINE_FINAL && "TODO: next line final");
-  return markup;
+  if (Is(lex, " @\n")) {
+    assert(false && "TODO: next line literal");
+  }
+
+  if (Is(lex, " @@\n")) {
+    assert(false && "TODO: next line final");
+  }
+
+  return NULL;
 }
 
 /**
@@ -391,13 +456,13 @@ static FbldMarkup* ParseBlock(Lex* lex)
   markup->text = NULL;
   FbldInitVector(&markup->markups);
 
-  while (lex->c == '@') {
-    Next(lex);
+  while (Is(lex, "@")) {
+    Advance(lex);
     FbldMarkup* command = ParseBlockCommand(lex);
     FbldAppendToVector(&markup->markups, command);
   }
 
-  if (lex->c != EOF) {
+  if (IsEnd(lex)) {
     FbldError(lex->loc, "expected '@' or EOF");
   }
   return markup;
@@ -408,13 +473,14 @@ FbldMarkup* FbldParse(const char** inputs)
   Lex lex = {
     .inputs = inputs,
     .fin = NULL,
-    .c = ' ',
     .loc = { .file = "???", .line = 0, .column = 0 },
+    .next = malloc(4 * sizeof(char)),
+    .next_size = 0,
+    .next_capacity = 4,
     .buffer = malloc(4 * sizeof(char)),
     .buffer_size = 0,
     .buffer_capacity = 4,
   };
-  Next(&lex);
 
   FbldMarkup* parsed = ParseBlock(&lex);
   free(lex.buffer);

@@ -222,3 +222,34 @@ Or just use special casing. If we see lex->c is '@', and the previous
 character was space, and the next character is \n or @, we should be all set.
 That's doable. Let's try that approach. No fancy pushback or rewind or what
 not needed. Just need to remember the previous character.
+
+---
+
+Let me take the time to create a better interface for lexing. Specifically I
+want to be able test if the current position matches a string without
+advancing the current position yet.
+
+Current lexer API:
+* Next() - Advance past the next character.
+* lex->c - The next character.
+* lex->loc - The location of the next character.
+
+Proposed lexer API:
+* lex->loc - The location of the next character.
+* Char() - Gets the next character without advancing.
+* Is(const char*) - Tests if the next few characters match, without
+  advancing.
+* Advance(const char*) - Advance by number of characters in argument.
+
+The Inline function can either take an enum for context, of pass a function to
+match the end as a bool without advancing. I think enum is simpler and easier
+to understand?
+
+Let's try it, see how it goes.
+
+In terms of implementation, read into a growing buffer. Advance can do a
+memmove.
+
+How to encode end of file as a character? How about 0x03 End Of Text character
+for now? And hope we don't get into trouble with utf8 encodings. No need to
+worry about those for now.
