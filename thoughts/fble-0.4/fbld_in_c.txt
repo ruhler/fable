@@ -253,3 +253,11 @@ memmove.
 How to encode end of file as a character? How about 0x03 End Of Text character
 for now? And hope we don't get into trouble with utf8 encodings. No need to
 worry about those for now.
+
+---
+
+Parser issues to revisit:
+* Don't skip empty args []
+* Why/how is args getting nulled out after parsing inline args?
+  We aren't actually appending in FbldAppendToVector
+

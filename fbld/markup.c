@@ -25,6 +25,7 @@ void FbldAppendToVector(FbldMarkupV* v, FbldMarkup* e)
   if (s > 0 && (s & (s - 1)) == 0) {
     v->xs = realloc(v->xs, 2 * s * sizeof(FbldMarkup*));
   }
+  v->xs[s] = e;
 }
 
 // See documenetation in fbld.h

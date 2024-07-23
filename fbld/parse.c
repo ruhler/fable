@@ -205,7 +205,7 @@ static void ClearBuffer(Lex* lex)
  */
 static void AddToBuffer(Lex* lex, char c)
 {
-  if (lex->buffer_size < lex->buffer_capacity) {
+  if (lex->buffer_size == lex->buffer_capacity) {
     lex->buffer_capacity *= 2;
     lex->buffer = realloc(lex->buffer, lex->buffer_capacity * sizeof(char));
   }
@@ -425,16 +425,19 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
   }
   
   if (Is(lex, "\n")) {
-    FbldError(lex->loc, "expecting space or newline");
     return markup;
   }
 
   if (Is(lex, " @\n")) {
     assert(false && "TODO: next line literal");
+    return NULL;
   }
 
   if (Is(lex, " @@\n")) {
-    assert(false && "TODO: next line final");
+    Advance(lex); Advance(lex); Advance(lex); Advance(lex);
+    FbldMarkup* final = ParseBlock(lex);
+    FbldAppendToVector(&markup->markups, final);
+    return markup;
   }
 
   return NULL;
