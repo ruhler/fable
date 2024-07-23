@@ -76,29 +76,27 @@ static FbldMarkup* ParseBlock(Lex* lex);
 static char GetC(Lex* lex)
 {
   int c = EOF;
-  if (lex->fin != NULL && !feof(lex->fin)) {
+  if (lex->fin != NULL) {
     c = fgetc(lex->fin);
   }
 
   while (lex->next_size == 0 && c == EOF) {
-    if (lex->fin == NULL) {
-      const char* filename = *lex->inputs;
-      if (filename == NULL) {
-        // We've finished processing all the inputs.
-        return END;
-      }
-      lex->inputs++;
-
-      // Open the next input file for processing.
-      lex->fin = fopen(filename, "r");
-      if (lex->fin == NULL) {
-        perror("fopen");
-        abort();
-      }
-      lex->loc.file = filename;
-      lex->loc.line = 1;
-      lex->loc.column = 1;
+    const char* filename = *lex->inputs;
+    if (filename == NULL) {
+      // We've finished processing all the inputs.
+      return END;
     }
+    lex->inputs++;
+
+    // Open the next input file for processing.
+    lex->fin = fopen(filename, "r");
+    if (lex->fin == NULL) {
+      perror("fopen");
+      abort();
+    }
+    lex->loc.file = filename;
+    lex->loc.line = 1;
+    lex->loc.column = 1;
 
     c = fgetc(lex->fin);
   }
