@@ -6,7 +6,21 @@
 
 #include "fbld.h"
 
-
+static bool Eq(FbldMarkup* a, FbldMarkup* b);
+
+/**
+ * @func[Eq] Test whether two markup are equal for @ifeq
+ *  @arg[FbldMarkup*][a] The first markup.
+ *  @arg[FbldMarkup*][b] The second markup.
+ *  @returns[bool] True if they are string equal. False otherwise.
+ *  @sideeffects None
+ */
+static bool Eq(FbldMarkup* a, FbldMarkup* b)
+{
+  assert(false && "TODO");
+  return false;
+}
+
 FbldMarkup* FbldEval(FbldMarkup* markup)
 {
   switch (markup->tag) {
@@ -46,8 +60,17 @@ FbldMarkup* FbldEval(FbldMarkup* markup)
       }
 
       if (strcmp(markup->text->str->str, "ifeq") == 0) {
-        assert(false && "TODO: implement @ifeq");
-        return NULL;
+        if (markup->markups.size != 4) {
+          FbldError(markup->text->loc, "expected 4 arguments to @ifeq");
+          return NULL;
+        }
+
+        // TODO: Handle the case where arguments can't be compared for
+        // equality.
+        if (Eq(markup->markups.xs[0], markup->markups.xs[1])) {
+          return FbldEval(markup->markups.xs[2]);
+        }
+        return FbldEval(markup->markups.xs[3]);
       }
 
       FbldError(markup->text->loc, "unsupported command");

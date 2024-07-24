@@ -5,6 +5,10 @@ Things to consider doing for the fble-0.4 release.
 * Fbld C rewrite
  - Make helper function for converting lex buffer into FbldString.
  - Test case of empty same line arg.
+ - Test case of unresolved @x in ifeq.
+   It should error out rather than be treated as false.
+ - Test case of unresolved @x in error argument.
+ - Add tests for code coverage.
  - Switch back to -O3 in build.tcl
 
 

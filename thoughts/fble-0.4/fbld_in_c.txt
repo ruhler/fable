@@ -272,3 +272,10 @@ Next step is to implement FbldEval.
 Commands to support:
 * @define, @ifeq, @error
 * Custom commands and variables.
+
+A custom command is: name + list of arg names + markup body. We can start with
+a linked list of them with linear search. Tedious bits:
+* Generalize FbldVector to work on any kind of type, so we can use it for list
+  of args.
+* Implement function to split arg list string into arg list list.
+
