@@ -261,3 +261,14 @@ Parser issues to revisit:
 * Why/how is args getting nulled out after parsing inline args?
   We aren't actually appending in FbldAppendToVector
 
+---
+
+We have enough of the parser for the first test case it seems. I haven't
+checked to see if it's parsing correctly, but at least it finishes without
+error.
+
+Next step is to implement FbldEval.
+
+Commands to support:
+* @define, @ifeq, @error
+* Custom commands and variables.
