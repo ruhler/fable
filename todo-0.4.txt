@@ -9,7 +9,10 @@ Things to consider doing for the fble-0.4 release.
    It should error out rather than be treated as false.
  - Test case of unresolved @x in error argument.
  - Add tests for code coverage.
+ - Test that function evaluation happens in functions scope, not callers
+   scope.
  - Switch back to -O3 in build.tcl
+ - Add proper doc comments on all the code.
 
 
 * Fix potential GC gen overflow?

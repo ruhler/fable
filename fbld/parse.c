@@ -394,6 +394,14 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     FbldInitVector(plain->markups);
     FbldAppendToVector(markup->markups, plain);
   }
+
+  if (markup->markups.size == 1) {
+    FbldMarkup* tmp = markup->markups.xs[0];
+    free(markup->markups.xs);
+    free(markup);
+    markup = tmp;
+  }
+
   return markup;
 }
 

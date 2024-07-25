@@ -46,6 +46,11 @@ typedef struct {
 
 typedef struct {
   size_t size;
+  FbldText** xs;
+} FbldTextV;
+
+typedef struct {
+  size_t size;
   FbldMarkup** xs;
 } FbldMarkupV;
 
