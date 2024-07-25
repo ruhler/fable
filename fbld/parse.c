@@ -7,6 +7,7 @@
 #include <string.h>   // for strcpy
 
 #include "fbld.h"
+#include "vector.h"
 
 /**
  * @value[END] The character used to denote end of input.
@@ -272,7 +273,7 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
     if (Is(lex, "[")) {
       Advance(lex);
       FbldMarkup* arg = ParseInline(lex, INLINE_ARG);
-      FbldAppendToVector(args, arg);
+      FbldAppendToVector(*args, arg);
 
       assert(Is(lex, "]"));
       Advance(lex);
@@ -296,7 +297,7 @@ static FbldMarkup* ParseInlineCommand(Lex* lex)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_COMMAND;
   markup->text = ParseName(lex);
-  FbldInitVector(&markup->markups);
+  FbldInitVector(markup->markups);
 
   ParseInlineArgs(lex, &markup->markups);
   return markup;
@@ -318,7 +319,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_SEQUENCE;
   markup->text = NULL;
-  FbldInitVector(&markup->markups);
+  FbldInitVector(markup->markups);
 
   ClearBuffer(lex);
   FbldLoc loc = lex->loc;
@@ -348,14 +349,14 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         FbldMarkup* plain = malloc(sizeof(FbldMarkup));
         plain->tag = FBLD_MARKUP_PLAIN;
         plain->text = text;
-        FbldInitVector(&plain->markups);
-        FbldAppendToVector(&markup->markups, plain);
+        FbldInitVector(plain->markups);
+        FbldAppendToVector(markup->markups, plain);
 
         ClearBuffer(lex);
       }
 
       FbldMarkup* command = ParseInlineCommand(lex);
-      FbldAppendToVector(&markup->markups, command);
+      FbldAppendToVector(markup->markups, command);
       continue;
     }
 
@@ -390,8 +391,8 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     FbldMarkup* plain = malloc(sizeof(FbldMarkup));
     plain->tag = FBLD_MARKUP_PLAIN;
     plain->text = text;
-    FbldInitVector(&plain->markups);
-    FbldAppendToVector(&markup->markups, plain);
+    FbldInitVector(plain->markups);
+    FbldAppendToVector(markup->markups, plain);
   }
   return markup;
 }
@@ -412,14 +413,14 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_COMMAND;
   markup->text = ParseName(lex);
-  FbldInitVector(&markup->markups);
+  FbldInitVector(markup->markups);
 
   ParseInlineArgs(lex, &markup->markups);
 
   if (Is(lex, " ") && !Is(lex, " @\n") && !Is(lex, " @@\n")) {
     Advance(lex);
     FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG);
-    FbldAppendToVector(&markup->markups, same_line);
+    FbldAppendToVector(markup->markups, same_line);
   }
   
   if (Is(lex, "\n")) {
@@ -434,7 +435,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
   if (Is(lex, " @@\n")) {
     Advance(lex); Advance(lex); Advance(lex); Advance(lex);
     FbldMarkup* final = ParseBlock(lex);
-    FbldAppendToVector(&markup->markups, final);
+    FbldAppendToVector(markup->markups, final);
     return markup;
   }
 
@@ -455,12 +456,12 @@ static FbldMarkup* ParseBlock(Lex* lex)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_SEQUENCE;
   markup->text = NULL;
-  FbldInitVector(&markup->markups);
+  FbldInitVector(markup->markups);
 
   while (Is(lex, "@")) {
     Advance(lex);
     FbldMarkup* command = ParseBlockCommand(lex);
-    FbldAppendToVector(&markup->markups, command);
+    FbldAppendToVector(markup->markups, command);
   }
 
   if (IsEnd(lex)) {

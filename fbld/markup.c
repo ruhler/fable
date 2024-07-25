@@ -6,34 +6,6 @@
 
 #include "fbld.h"
 
-// See documenetation in fbld.h
-void FbldInitVector(FbldMarkupV* v)
-{
-  // Initial size is 0. Initial capacity is 1.
-  v->size = 0;
-  v->xs = malloc(sizeof(FbldMarkup*));
-}
-
-// See documenetation in fbld.h
-void FbldAppendToVector(FbldMarkupV* v, FbldMarkup* e)
-{
-  // We assume the capacity of the array is the smallest power of 2 that holds
-  // size elements. If size is equal to the capacity of the array, we double
-  // the capacity of the array, which preserves the invariant after the size is
-  // incremented.
-  size_t s = v->size++;
-  if (s > 0 && (s & (s - 1)) == 0) {
-    v->xs = realloc(v->xs, 2 * s * sizeof(FbldMarkup*));
-  }
-  v->xs[s] = e;
-}
-
-// See documenetation in fbld.h
-void FbldFreeVector(FbldMarkupV v)
-{
-  free(v.xs);
-}
-
 // See documentation in fbld.h
 void FbldError(FbldLoc loc, const char* message)
 {

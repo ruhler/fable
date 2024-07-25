@@ -89,7 +89,7 @@ namespace eval "fbld" {
 
   # fbld binary.
   set objs [list]
-  foreach {x} {fbld eval markup parse} {
+  foreach {x} {fbld eval markup parse vector} {
     obj $::b/fbld/$x.o $::s/fbld/$x.c "-I $::s/fbld"
     lappend objs $::b/fbld/$x.o
   }

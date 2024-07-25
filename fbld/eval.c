@@ -5,6 +5,7 @@
 #include <string.h>   // for strcmp
 
 #include "fbld.h"
+#include "vector.h"
 
 static bool Eq(FbldMarkup* a, FbldMarkup* b);
 
@@ -32,7 +33,7 @@ FbldMarkup* FbldEval(FbldMarkup* markup)
       m->text->loc = markup->text->loc;
       m->text->str = markup->text->str;
       m->text->str->refcount++;
-      FbldInitVector(&m->markups);
+      FbldInitVector(m->markups);
       return m;
     }
 
@@ -81,9 +82,9 @@ FbldMarkup* FbldEval(FbldMarkup* markup)
       FbldMarkup* m = malloc(sizeof(FbldMarkup));
       m->tag = FBLD_MARKUP_SEQUENCE;
       m->text = NULL;
-      FbldInitVector(&m->markups);
+      FbldInitVector(m->markups);
       for (size_t i = 0; i < markup->markups.size; ++i) {
-        FbldAppendToVector(&m->markups, FbldEval(markup->markups.xs[i]));
+        FbldAppendToVector(m->markups, FbldEval(markup->markups.xs[i]));
       }
       return m;
     }
