@@ -69,11 +69,15 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
             envs[i].name = e->args.xs[i];
             envs[i].args.xs = NULL;
             envs[i].args.size = 0;
-            envs[i].body = markup->markups.xs[i];
+            envs[i].body = Eval(markup->markups.xs[i], env);
             envs[i].next = (i == 0) ? env : (envs + i - 1);
           }
 
-          return Eval(e->body, envs + e->args.size - 1);
+          FbldMarkup* result = Eval(e->body, envs + e->args.size - 1);
+          for (size_t i = 0; i < e->args.size; ++i) {
+            FbldFreeMarkup(envs[i].body);
+          }
+          return result;
         }
       }
 

@@ -279,3 +279,17 @@ a linked list of them with linear search. Tedious bits:
   of args.
 * Implement function to split arg list string into arg list list.
 
+---
+
+Okay, we have the first basic test case passing with the C based fbld
+implementation. With a fair number of hacks and assumptions.
+
+What's the next step from here?
+
+We want to improve spec test coverage to the point where once all those tests
+pass, we can process, say, fble.fbld. So I think the approach is clear:
+1. Get all spec tests to pass. Preferably with clean, general code solution.
+2. If fble.fbld doesn't pass, add a spec test to catch that case and go to (1).
+
+Keep iterating until we are done. Then we can see how bad performance is and
+what we can do to fix it.
