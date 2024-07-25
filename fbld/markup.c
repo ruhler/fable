@@ -17,7 +17,19 @@ void FbldError(FbldLoc loc, const char* message)
 // See documentation in fbld.h
 void FbldFreeMarkup(FbldMarkup* markup)
 {
-  assert(false && "TODO: implement FbldFreeMarkup");
+  if (markup->text) {
+    markup->text->str->refcount--;
+    if (markup->text->str->refcount == 0) {
+      free(markup->text->str);
+    }
+    free(markup->text);
+  }
+
+  for (size_t i = 0; i < markup->markups.size; ++i) {
+    FbldFreeMarkup(markup->markups.xs[i]);
+  }
+  free(markup->markups.xs);
+  free(markup);
 }
 
 // See documentation in fbld.h
