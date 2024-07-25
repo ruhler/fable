@@ -30,7 +30,7 @@ set ::lib [lindex $argv 1]
 set ::test [lindex $argv 2]
 
 # Parse the @test metadata.
-set type "???"
+set ::type "???"
 set loc ""
 set fin [open "$::test" "r"]
 set test_line 1
@@ -39,11 +39,11 @@ while {[gets $fin line] >= 0} {
   if {$first != -1} {
     set index [expr $first + [string length "@test "]]
     set metadata [string trim [string range $line $index end-3]]
-    set type $metadata
+    set ::type $metadata
     set loc ""
     set space [string first " " $metadata]
     if {$space != -1} {
-      set type [string trim [string range $metadata 0 $space]]
+      set ::type [string trim [string range $metadata 0 $space]]
       set loc [string trim [string range $metadata $space end]]
     }
     break
@@ -74,7 +74,7 @@ proc expect_error { loc args } {
   }
 
   if {$status == 0} {
-    error "Expected $type error, but no error encountered."
+    error "Expected $::type error, but no error encountered."
   }
 
   if {-1 == [string first ":$::loc: error" $output]} {
@@ -99,7 +99,7 @@ proc dispatch {} {
 }
 
 if { [catch dispatch msg] } {
-  puts "$::test:$test_line: error: $type test failed:"
+  puts "$::test:$test_line: error: $::type test failed:"
   puts "$msg"
   exit 1
 }
