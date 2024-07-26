@@ -8,6 +8,7 @@ Things to consider doing for the fble-0.4 release.
  - Test case of unresolved @x in ifeq.
    It should error out rather than be treated as false.
  - Test case of unresolved @x in error argument.
+ - Test that we evaluate appropriate args to builtins before executing them.
  - Add tests for code coverage.
  - Test that function evaluation happens in functions scope, not callers
    scope.

@@ -8,4 +8,4 @@ name=$1
 shift 1
 
 echo @[$name]
-$* && echo @PASSED || echo @FAILED
+$* && echo @PASSED || (echo @FAILED ; exit 1)
