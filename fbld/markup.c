@@ -75,3 +75,32 @@ void FbldPrintMarkup(FbldMarkup* markup)
     }
   }
 }
+
+// See documentation in fbld.h
+void FbldDebugMarkup(FbldMarkup* markup)
+{
+  switch (markup->tag) {
+    case FBLD_MARKUP_PLAIN: {
+      printf("%s", markup->text->str->str);
+      break;
+    }
+
+    case FBLD_MARKUP_COMMAND: {
+      printf("@{%s}", markup->text->str->str);
+      for (size_t i = 0; i < markup->markups.size; ++i) {
+        printf("{");
+        FbldDebugMarkup(markup->markups.xs[i]);
+        printf("}");
+      }
+      break;
+    }
+
+    case FBLD_MARKUP_SEQUENCE: {
+      // TODO: Avoid this potentially deep recursion.
+      for (size_t i = 0; i < markup->markups.size; ++i) {
+        FbldDebugMarkup(markup->markups.xs[i]);
+      }
+      break;
+    }
+  }
+}

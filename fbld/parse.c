@@ -246,6 +246,7 @@ static FbldText* ParseName(Lex* lex)
   FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
   str->refcount = 1;
   strcpy(str->str, lex->buffer);
+  ClearBuffer(lex);
 
   text->str = str;
   return text;
@@ -341,6 +342,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
         str->refcount = 1;
         strcpy(str->str, lex->buffer);
+        ClearBuffer(lex);
 
         FbldText* text = malloc(sizeof(FbldText));
         text->loc = loc;
@@ -351,8 +353,6 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         plain->text = text;
         FbldInitVector(plain->markups);
         FbldAppendToVector(markup->markups, plain);
-
-        ClearBuffer(lex);
       }
 
       FbldMarkup* command = ParseInlineCommand(lex);
@@ -383,6 +383,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
     str->refcount = 1;
     strcpy(str->str, lex->buffer);
+    ClearBuffer(lex);
 
     FbldText* text = malloc(sizeof(FbldText));
     text->loc = loc;

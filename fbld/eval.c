@@ -3,6 +3,7 @@
 #include <ctype.h>    // for isspace
 #include <stdbool.h>  // for false
 #include <stdlib.h>   // for malloc
+#include <stdio.h>    // for printf
 #include <string.h>   // for strcmp
 
 #include "fbld.h"
@@ -151,6 +152,8 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b)
 
 FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 {
+  // printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
+
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
       // TODO: Use reference counting to avoid a copy here?

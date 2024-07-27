@@ -130,8 +130,16 @@ FbldMarkup* FbldEval(FbldMarkup* markup);
  *  @arg[FbldMarkup*][markup] The markup to print.
  *
  *  @sideeffects
+ *   @i Outputs the markup to stdout.
  *   @i Prints an error to stderr and aborst the program in case of error.
  */
 void FbldPrintMarkup(FbldMarkup* markup);
+
+/**
+ * @func[FbldDebugMarkup] Debug prints markup to stdout.
+ *  @arg[FbldMarkup*][markup] The markup to print.
+ *  @sideeffects Outputs the markup to stdout.
+ */
+void FbldDebugMarkup(FbldMarkup* markup);
 
 #endif // _FBLD_H_
