@@ -76,6 +76,15 @@ struct FbldMarkup {
 void FbldFreeMarkup(FbldMarkup* markup);
 
 /**
+ * @func[FbldCopyMarkup] Makes a copy of the given markup.
+ *  @arg[FbldMarkup*][markup] The markup to copy.
+ *  @returns[FbldMarkup*] A copy of the markup.
+ *  @sideeffects
+ *   Allocates an FbldMarkup* that should be freed with FbldFreeMarkup.
+ */
+FbldMarkup* FbldCopyMarkup(FbldMarkup* markup);
+
+/**
  * @func[FbldError] Reports an error.
  *  @arg[FbldLoc][loc] The location of the error.
  *  @arg[const char*][msg] The error message.

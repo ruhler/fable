@@ -15,6 +15,10 @@ Things to consider doing for the fble-0.4 release.
  - Switch back to -O3 in build.tcl
  - Add proper doc comments on all the code.
 
+* Fbld
+ - Clarify in spec if @if[a@x][b@x] ... is an error or not.
+   Or redesign semantics of fbld to avoid that question entirely.
+
 
 * Fix potential GC gen overflow?
  - See thoughts/fble-0.3/stack_alloc.txt for details.

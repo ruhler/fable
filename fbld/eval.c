@@ -22,7 +22,100 @@ typedef struct Env {
   struct Env* next;
 } Env;
 
+static int HeadOf(FbldMarkup* m);
+static FbldMarkup* TailOf(FbldMarkup* m);
 static bool Eq(FbldMarkup* a, FbldMarkup* b);
+
+/**
+ * @func[HeadOf] Returns first character of markup.
+ *  @arg[FbldMarkup*][m] The markup to get the first character of.
+ *  @returns[int] The first character if any, 0 if end, -1 if command.
+ *  @sideeffects None.
+ */
+static int HeadOf(FbldMarkup* m)
+{
+  switch (m->tag) {
+    case FBLD_MARKUP_PLAIN: {
+      return m->text->str->str[0];
+    }
+
+    case FBLD_MARKUP_COMMAND: {
+      return -1;
+    }
+
+    case FBLD_MARKUP_SEQUENCE: {
+      int c = 0;
+      for (size_t i = 0; c == 0 && i < m->markups.size; ++i) {
+        c = HeadOf(m->markups.xs[i]);
+      }
+      return c;
+    }
+  }
+
+  assert(false && "unrechable");
+  return -1;
+}
+
+/**
+ * @func[TailOf] Removes first character of markup.
+ *  @arg[FbldMarkup*][m] The markup to remove the character from.
+ *  @returns[FbldMarkup*]
+ *   A new markup without the first character. NULL if markup is empty.
+ *  @sideeffects Allocates a new markup that should be freed when done.
+ */
+static FbldMarkup* TailOf(FbldMarkup* m)
+{
+  switch (m->tag) {
+    case FBLD_MARKUP_PLAIN: {
+      if (m->text->str->str[0] == '\0') {
+        return NULL;
+      }
+      
+      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      n->tag = FBLD_MARKUP_PLAIN;
+      n->text = malloc(sizeof(FbldText));
+      n->text->loc = m->text->loc;    // TODO: fixme.
+      n->text->str = malloc(sizeof(FbldString) + sizeof(char) * strlen(m->text->str->str));
+      strcpy(n->text->str->str, m->text->str->str + 1);
+      FbldInitVector(n->markups);
+      return n;
+    }
+
+    case FBLD_MARKUP_COMMAND: {
+      assert(false && "Please don't call TailOf in this case.");
+      return NULL;
+    }
+
+    case FBLD_MARKUP_SEQUENCE: {
+      size_t i = 0;
+      FbldMarkup* child = NULL;
+      for (i = 0; child == NULL && i < m->markups.size; ++i) {
+        child = TailOf(m->markups.xs[i]);
+      }
+
+      if (child == NULL) {
+        return NULL;
+      }
+
+      if (i == m->markups.size) {
+        return child;
+      }
+
+      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      n->tag = FBLD_MARKUP_SEQUENCE;
+      n->text = NULL;
+      FbldInitVector(n->markups);
+      FbldAppendToVector(n->markups, child);
+      for (size_t j = i; j < m->markups.size; ++j) {
+        FbldAppendToVector(n->markups, FbldCopyMarkup(m->markups.xs[j]));
+      }
+      return n;
+    }
+  }
+
+  assert(false && "unreachable");
+  return NULL;
+}
 
 /**
  * @func[Eq] Test whether two markup are equal for @ifeq
@@ -33,8 +126,27 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b);
  */
 static bool Eq(FbldMarkup* a, FbldMarkup* b)
 {
-  assert(false && "TODO");
-  return false;
+  int ha = HeadOf(a);
+  int hb = HeadOf(b);
+  if (ha != hb) {
+    return false;
+  }
+
+  if (ha == 0) {
+    return true;
+  }
+
+  if (ha == -1) {
+    assert(false && "TODO: Eq on non-string");
+    return false;
+  }
+
+  FbldMarkup* na = TailOf(a);
+  FbldMarkup* nb = TailOf(b);
+  bool teq = Eq(na, nb);
+  FbldFreeMarkup(na);
+  FbldFreeMarkup(nb);
+  return teq;
 }
 
 FbldMarkup* Eval(FbldMarkup* markup, Env* env)
@@ -173,7 +285,13 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 
         // TODO: Handle the case where arguments can't be compared for
         // equality.
-        if (Eq(markup->markups.xs[0], markup->markups.xs[1])) {
+        FbldMarkup* a = Eval(markup->markups.xs[0], env);
+        FbldMarkup* b = Eval(markup->markups.xs[1], env);
+        bool eq = Eq(a, b);
+        FbldFreeMarkup(a);
+        FbldFreeMarkup(b);
+
+        if (eq) {
           return Eval(markup->markups.xs[2], env);
         }
         return Eval(markup->markups.xs[3], env);

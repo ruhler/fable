@@ -5,6 +5,7 @@
 #include <stdlib.h>   // for abort
 
 #include "fbld.h"
+#include "vector.h"
 
 // See documentation in fbld.h
 void FbldError(FbldLoc loc, const char* message)
@@ -30,6 +31,25 @@ void FbldFreeMarkup(FbldMarkup* markup)
   }
   free(markup->markups.xs);
   free(markup);
+}
+
+// See documentation in fbld.h
+FbldMarkup* FbldCopyMarkup(FbldMarkup* markup)
+{
+  FbldMarkup* n = malloc(sizeof(FbldMarkup));
+  n->tag = markup->tag;
+  n->text = NULL;
+  if (markup->text) {
+    n->text = malloc(sizeof(FbldText));
+    n->text->loc = markup->text->loc;
+    n->text->str = markup->text->str;
+    n->text->str->refcount++;
+  }
+  FbldInitVector(n->markups);
+  for (size_t i = 0; i < markup->markups.size; ++i) {
+    FbldAppendToVector(n->markups, FbldCopyMarkup(markup->markups.xs[i]));
+  }
+  return n;
 }
 
 // See documentation in fbld.h

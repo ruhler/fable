@@ -293,3 +293,54 @@ pass, we can process, say, fble.fbld. So I think the approach is clear:
 
 Keep iterating until we are done. Then we can see how bad performance is and
 what we can do to fix it.
+
+---
+
+How to implement equality check? There are three cases:
+1. The strings are equal. Doesn't matter how you do the check. You have to
+read all of both strings to compute the result.
+2. The strings are strings but not equal. You could try reading the entire
+strings, or for better performance (?) you could read up until the first
+difference.
+3. The strings aren't strings.
+
+The semantics aren't clear. If you have, for example:
+
+  @if[a@x][b@x] ...
+
+Should it say not equal, or should it give an error?
+
+Probably it should give an error. Current implementation is to return false in
+this case.
+
+Worth having a test case for it I guess.
+
+Is there any real performance benefit for not evaluating the entirety of the
+strings? Yes! For example, we often check if we have reached the end of a
+large chunk of text. In this case, you want to avoid reading the large chunk
+of text to find it isn't empty.
+
+So let's implement things the same way, and worry about clarifying the
+semantics later. Or, better yet, restructure fbld to avoid having partially
+evaluated markup.
+
+---
+
+It's pretty tedious to implement Eq. To need to iterate over markup for string
+comparison. I'm tempted to think about how to redo the semantics now to avoid
+partially evaluated markup.
+
+There's really only one case where we make use of @eval with partially
+evaluated markup. That's for doc comments. Can we come up with a better
+approach for those?
+
+Conceptually the idea is to encode the information in a value (string), and
+write code to process the info from the string as needed. As a start, we can
+go to a string. Eventually we can go to struct/dictionary/etc. So don't worry
+about it being annoyingly complicated to process the string for now.
+
+Consider @arg, @returns, @sideeffects.
+
+
+
+
