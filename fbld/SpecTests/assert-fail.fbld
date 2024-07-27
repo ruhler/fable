@@ -1,4 +1,4 @@
-@test error 2:42 @@
+@test error 3:42 @@
 
 The error message here corresponds to the line and column in SpecTests.fbld
 for the assert_eq error.

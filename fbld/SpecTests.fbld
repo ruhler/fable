@@ -1,2 +1,3 @@
+@define[.block][x] @x @@
 @define[test][metadata body][] @@
 @define[assert_eq][a b] @ifeq[@a][@b][][@error['@a' != '@b']] @@

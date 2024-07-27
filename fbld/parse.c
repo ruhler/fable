@@ -43,9 +43,11 @@ typedef struct {
 
 // The context we are parsing inline text from.
 //  INLINE_ARG - Inside a [...] block.
+//  IMPLICIT_BLOCK - Parsing implicit block text.
 //  SAME_LINE_ARG - From a same line arg.
 typedef enum {
   INLINE_ARG,
+  IMPLICIT_BLOCK,
   SAME_LINE_ARG
 } InlineContext;
 
@@ -334,6 +336,15 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
       break;
     }
 
+    if (context == IMPLICIT_BLOCK) {
+      if (lex->loc.column == 1 && Is(lex, "\n")) {
+        break;
+      }
+      if (IsEnd(lex)) {
+        break;
+      }
+    }
+
     if (Is(lex, "@")) {
       Advance(lex);
 
@@ -467,15 +478,37 @@ static FbldMarkup* ParseBlock(Lex* lex)
   markup->text = NULL;
   FbldInitVector(markup->markups);
 
-  while (Is(lex, "@")) {
-    Advance(lex);
-    FbldMarkup* command = ParseBlockCommand(lex);
-    FbldAppendToVector(markup->markups, command);
+  // Skip blank lines.
+  while (Is(lex, "\n")) Advance(lex);
+
+  while (!IsEnd(lex)) {
+    // Command.
+    if (Is(lex, "@")) {
+      Advance(lex);
+      FbldMarkup* command = ParseBlockCommand(lex);
+      FbldAppendToVector(markup->markups, command);
+
+      // Skip blank lines.
+      while (Is(lex, "\n")) Advance(lex);
+      continue;
+    }
+
+    // Implicit block
+    FbldMarkup* cmd = malloc(sizeof(FbldMarkup));
+    cmd->tag = FBLD_MARKUP_COMMAND;
+    cmd->text = malloc(sizeof(FbldText));
+    cmd->text->loc = lex->loc;
+    cmd->text->str = malloc(sizeof(FbldString) + sizeof(char) * (strlen(".block") + 1));
+    cmd->text->str->refcount = 1;
+    strcpy(cmd->text->str->str, ".block");
+    FbldInitVector(cmd->markups);
+    FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
+    FbldAppendToVector(markup->markups, cmd);
+
+    // Skip blank lines.
+    while (Is(lex, "\n")) Advance(lex);
   }
 
-  if (IsEnd(lex)) {
-    FbldError(lex->loc, "expected '@' or EOF");
-  }
   return markup;
 }
 
