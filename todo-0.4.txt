@@ -3,6 +3,7 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
+ - Implement parsing of implicit block text.
  - Make helper function for converting lex buffer into FbldString.
  - Test case of empty same line arg.
  - Test case of unresolved @x in ifeq.

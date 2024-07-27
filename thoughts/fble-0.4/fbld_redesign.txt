@@ -1,0 +1,190 @@
+Fbld Redesign
+=============
+Can we redesign the fbld language to make it faster to process and easier to
+write for?
+
+I'm happy with the document syntax. I'd love for that to stay the way it is.
+It's the library processing code that's painful to write.
+
+Specifically we want:
+* Support for modularity.
+* Support for unions, structs, dictionaries, and other such useful data structures.
+* Avoid need to deal with evaluated vs unevaluated strings in implementation.
+
+Thoughts:
+
+1.
+Implementing @ifeq is hard, because we compare two strings with arbitrary
+hierarchy. For example: a(bc(d)e)fg versus (abc)(def)g. That happens because
+we have partial evaluation of expressions where we want to preserve the
+internal structure, and we want to avoid a quadratic blowup for constructing
+strings.
+
+This maybe wouldn't be a problem if we had an associative operator we could
+evaluate everything with. Then we could reduce up front to canonical form
+abcdefg and abcdefg.
+
+2. Unions, structs, dictionaries could all be implemented with dictionaries.
+Union: Single key->value, where key is the tag, value is the arg.
+Struct: Multiple key->value, where key is the field name, value is the field
+value.
+
+If we had functions as first class values, then we could use dictionaries to
+easily organize modules too. A module is a dictionary if (key,value) where key
+is name of function and value is the function value.
+
+3. Values
+From above, we have the following types of values:
+* strings
+* functions
+* dictionaries
+
+I feel like we want list too. Not sure if we should implement that in strings
+or structs/unions or as a fundamental primitive.
+
+Also, some @none type, for use with associativity.
+
+4. Associativity operator
+String: easy. String concatenation. (ab)c = a(bc) = abc
+Dictionary: How about union? That way we can build up dictionaries with
+concatenation.
+Function: You could concatenate the results: f . g = \x -> f(x) . g(x)
+
+5. Everything a function.
+For doc comment use case, we mix strings and data structures. Okay, weird
+conclusion of some line of thinking I don't fully recall: make everything a
+function? Because certainly a dictionary is a special case of a function. We
+can say a string is a const function. Use the function concatenation operator.
+
+Actually, I want string to be a function from special value @none (or ""?) to
+the string value. These are partial functions. @foo[x] can be @none.
+
+6. Lists.
+Maybe we encode lists as strings with a helper function.
+
+Say @list[foo] turns into the string "{foo}", where we do any escaping
+necessary inside to keep proper nesting of {}. Then concatenation of list
+gives you a list back: "{foo}{bar}{sludge}" and so on. We can provide helper
+functions to iterate over the values of these lists.
+
+How does doc comments work now? The body of @func[]... is going to be an
+interesting value:
+* When passed @none (or ""?) as the argument, it gives you the description
+  without @args, @return, @sideeffects.
+* When passed "sideeffects" as the argument, it gives you the side effects
+  description.
+* When passed "return.type" as the argument, it gives you the return type.
+* When passed "return.description" it gives the return description.
+* When passed "args", it gives a list of argument names.
+* When passed ("arg", <arg>, type) it gives the type of arg <arg>.
+
+The implementation is straight forward I think. Assume we have a helper
+function to define a key=>value entry.
+
+@return[type][description]:
+ @def[return.type][@type]
+ @def[return.description][@description]
+
+@arg[type][name][desc]:
+ @def[arg]
+  @def[@name]
+   @def[type] @type
+   @def[desc] @desc
+ @def[args] @list[@name]
+
+@sideeffects[desc] @def[sideeffects][@desc]
+
+Now we have that value, to extract the return type is easy:
+  @content['return.type']
+
+To extract the arguments:
+  @foreach[@content['args']]
+   @func[name] @l[@content['arg'][@name]['type'] @a[@name];
+  etc.
+
+The only info we lose is the position of args within the description. But I
+think that's fine.
+
+My claim:
+* This makes language notably nicer to use.
+* This makes the language semantics cleaner.
+* This makes the implementation simpler and faster.
+
+Pending questions/concerns:
+* What argument to get string value? @none? ""? Something else?
+  I like "" better.
+* Is there a difference between @none and "", or are they the same?
+  Let's keep them different, so we can tell if a value is present in a map but
+  empty, or not present in the map.
+* @if makes sense to test for @none now, but we still need an @eq for string
+  comparison, right? If so, does it just work on strings, or does it work on
+  arbitrary functions? If so, how can you efficiently implement it?
+* Can we use functions or dictionaries where a string is expected?
+* It would be nice to have a @foo.bar syntax for passing argument 'bar' to a
+  function. For easy member access. I think that's doable.
+
+Modules can work just like fble: @module command takes a module path, returns
+the value of the module. We have internal smarts to avoid reimplementing. And
+the value of a module is a function (like everything) that you can reference
+however you like.
+
+While I'm at it, clean up the syntax to separate commands from variables, now
+that functions are first class. The concrete syntax can be the same, but
+abstract syntax is different.
+
+Cool. The question is... am I ready to dive in and make this reality? Or is
+more prep work needed? Should I wait for the C implementation of the original
+fbld first?
+
+Abstract Syntax:
+  Markup:
+     plain (text : Text)
+   | application (name) (args : [Markup])
+   | sequence (markups : [Markup])
+
+Basically the same. That makes things easier.
+
+But add syntax for:
+ @foo.bar.sludge
+
+When parsing inline args, you can use '.<name>' as an additional argument.
+
+What builtin commands do we want?
+* @def[key][value] - Creates a function mapping key to value.
+* @if[condition][a][b] - @a if condition is not none, @b otherwise.
+* @eq[a][b] - "" if @a and @b are equal (with restrictions on type?), @none
+  otherwise
+* @let[key][def][body] - Replaces @define.
+* @func[params][def] - Function value
+* @list[value] - Creates a single element list.
+* @none
+* @error
+
+Maybe string functions take 'head' and 'tail' as potential arguments and
+return the corresponding value? That way it's easy to say "foo".head?
+
+And list functions: @head, @tail, @foreach and so on.
+
+Question: Any way to remove a value from a dictionary?
+  @def[a][foo]
+  @def[a][bar]
+
+Gives:
+  @def[a][foobar]
+
+It would seem there is no way to remove a value from a dictionary. I suppose
+we could add a special command for that. Is there a way to iterate over
+arguments to a function? That might be nice. Then a list could be a function
+where elements are the arguments things are defined for. That's nice... And
+then equality is easier too. But that gives you a set, not a list, right? So
+maybe not.
+
+To implement this, we need to get over the @eval knot. All uses of @eval need
+to be replaced with this new mechanism. I'm not sure how to do it
+incrementally.
+
+Development plan:
+1. Draft new spec.
+2. Incrementally add new spec tests until we get coverage and full conversion
+on existing docs.
+
