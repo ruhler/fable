@@ -235,8 +235,7 @@ static bool IsNameChar(int c)
  */
 static FbldText* ParseName(Lex* lex)
 {
-  FbldText* text = malloc(sizeof(FbldText));
-  text->loc = lex->loc;
+  FbldLoc loc = lex->loc;
 
   ClearBuffer(lex);
   while (IsNameChar(Char(lex))) {
@@ -245,8 +244,7 @@ static FbldText* ParseName(Lex* lex)
   }
   AddToBuffer(lex, '\0');
 
-  text->str = malloc(lex->buffer_size * sizeof(char));
-  strcpy(text->str, lex->buffer);
+  FbldText* text = FbldNewText(loc, lex->buffer);
   ClearBuffer(lex);
   return text;
 }
@@ -348,10 +346,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
       if (lex->buffer_size != 0) {
         AddToBuffer(lex, '\0');
 
-        FbldText* text = malloc(sizeof(FbldText));
-        text->loc = loc;
-        text->str = malloc(lex->buffer_size * sizeof(char));
-        strcpy(text->str, lex->buffer);
+        FbldText* text = FbldNewText(loc, lex->buffer);
         ClearBuffer(lex);
 
         FbldMarkup* plain = malloc(sizeof(FbldMarkup));
@@ -385,12 +380,8 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
   }
 
   if (lex->buffer_size != 0) {
-    FbldText* text = malloc(sizeof(FbldText));
-    text->loc = loc;
-
     AddToBuffer(lex, '\0');
-    text->str = malloc(lex->buffer_size * sizeof(char));
-    strcpy(text->str, lex->buffer);
+    FbldText* text = FbldNewText(loc, lex->buffer);
     ClearBuffer(lex);
 
     FbldMarkup* plain = malloc(sizeof(FbldMarkup));
@@ -489,10 +480,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
     // Implicit block
     FbldMarkup* cmd = malloc(sizeof(FbldMarkup));
     cmd->tag = FBLD_MARKUP_COMMAND;
-    cmd->text = malloc(sizeof(FbldText));
-    cmd->text->loc = lex->loc;
-    cmd->text->str = malloc(sizeof(char) * (strlen(".block") + 1));
-    strcpy(cmd->text->str, ".block");
+    cmd->text = FbldNewText(lex->loc, ".block");
     FbldInitVector(cmd->markups);
     FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
     FbldAppendToVector(markup->markups, cmd);

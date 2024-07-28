@@ -72,12 +72,10 @@ static FbldMarkup* TailOf(FbldMarkup* m)
         return NULL;
       }
       
+      // TODO: Fix location - advance by the first character.
       FbldMarkup* n = malloc(sizeof(FbldMarkup));
       n->tag = FBLD_MARKUP_PLAIN;
-      n->text = malloc(sizeof(FbldText));
-      n->text->loc = m->text->loc;    // TODO: fixme.
-      n->text->str = malloc(sizeof(char) * strlen(m->text->str));
-      strcpy(n->text->str, m->text->str + 1);
+      n->text = FbldNewText(m->text->loc, m->text->str + 1);
       FbldInitVector(n->markups);
       return n;
     }
@@ -232,10 +230,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
             if (i > 0) {
               // TODO: Pick a better location here.
               buf[i] = '\0';
-              FbldText* text = malloc(sizeof(FbldText));
-              text->loc = args->text->loc;
-              text->str = malloc(sizeof(char) * (1+i));
-              strcpy(text->str, buf);
+              FbldText* text = FbldNewText(args->text->loc, buf);
               FbldAppendToVector(nenv.args, text);
               i = 0;
             }
@@ -249,17 +244,13 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         if (i > 0) {
           // TODO: Pick a better location here.
           buf[i] = '\0';
-          FbldText* text = malloc(sizeof(FbldText));
-          text->loc = args->text->loc;
-          text->str = malloc(sizeof(char) * (1+i));
-          strcpy(text->str, buf);
+          FbldText* text = FbldNewText(args->text->loc, buf);
           FbldAppendToVector(nenv.args, text);
         }
 
         FbldMarkup* result = Eval(body, &nenv);
 
         for (size_t j = 0; j < nenv.args.size; ++j) {
-          free(nenv.args.xs[j]->str);
           free(nenv.args.xs[j]);
         }
         free(nenv.args.xs);

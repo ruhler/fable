@@ -17,10 +17,18 @@ void FbldError(FbldLoc loc, const char* message)
 }
 
 // See documentation in fbld.h
+FbldText* FbldNewText(FbldLoc loc, const char* str)
+{
+  FbldText* text = malloc(sizeof(FbldText) + sizeof(char) * strlen(str) + 1);
+  text->loc = loc;
+  strcpy(text->str, str);
+  return text;
+}
+
+// See documentation in fbld.h
 void FbldFreeMarkup(FbldMarkup* markup)
 {
   if (markup->text) {
-    free(markup->text->str);
     free(markup->text);
   }
 
@@ -38,10 +46,7 @@ FbldMarkup* FbldCopyMarkup(FbldMarkup* markup)
   n->tag = markup->tag;
   n->text = NULL;
   if (markup->text) {
-    n->text = malloc(sizeof(FbldText));
-    n->text->loc = markup->text->loc;
-    n->text->str = malloc(sizeof(char) * strlen(markup->text->str) + 1);
-    strcpy(n->text->str, markup->text->str);
+    n->text = FbldNewText(markup->text->loc, markup->text->str);
   }
   FbldInitVector(n->markups);
   for (size_t i = 0; i < markup->markups.size; ++i) {

@@ -18,13 +18,23 @@ typedef struct {
 
 typedef struct {
   FbldLoc loc;
-  char* str;
+  char str[];
 } FbldText;
 
 typedef struct {
   size_t size;
   FbldText** xs;
 } FbldTextV;
+
+/**
+ * @func[FbldNewText] Allocate a new FbldText.
+ *  @arg[FbldLoc][loc] The location to use for the text.
+ *  @arg[const char*][str] The string contents. Borrowed.
+ *  @returns[FbldText*] Newly allocated FbldText
+ *  @sideeffects
+ *   Allocates new FbldText that should be freed when no longer needed.
+ */
+FbldText* FbldNewText(FbldLoc loc, const char* str);
 
 typedef struct {
   size_t size;
