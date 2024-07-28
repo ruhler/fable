@@ -37,7 +37,7 @@ static int HeadOf(FbldMarkup* m)
 {
   switch (m->tag) {
     case FBLD_MARKUP_PLAIN: {
-      return m->text->str->str[0];
+      return m->text->str[0];
     }
 
     case FBLD_MARKUP_COMMAND: {
@@ -68,7 +68,7 @@ static FbldMarkup* TailOf(FbldMarkup* m)
 {
   switch (m->tag) {
     case FBLD_MARKUP_PLAIN: {
-      if (m->text->str->str[0] == '\0') {
+      if (m->text->str[0] == '\0') {
         return NULL;
       }
       
@@ -76,8 +76,8 @@ static FbldMarkup* TailOf(FbldMarkup* m)
       n->tag = FBLD_MARKUP_PLAIN;
       n->text = malloc(sizeof(FbldText));
       n->text->loc = m->text->loc;    // TODO: fixme.
-      n->text->str = malloc(sizeof(FbldString) + sizeof(char) * strlen(m->text->str->str));
-      strcpy(n->text->str->str, m->text->str->str + 1);
+      n->text->str = malloc(sizeof(char) * strlen(m->text->str));
+      strcpy(n->text->str, m->text->str + 1);
       FbldInitVector(n->markups);
       return n;
     }
@@ -156,22 +156,14 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
-      // TODO: Use reference counting to avoid a copy here?
-      FbldMarkup* m = malloc(sizeof(FbldMarkup));
-      m->tag = FBLD_MARKUP_PLAIN;
-      m->text = malloc(sizeof(FbldText));
-      m->text->loc = markup->text->loc;
-      m->text->str = markup->text->str;
-      m->text->str->refcount++;
-      FbldInitVector(m->markups);
-      return m;
+      return FbldCopyMarkup(markup);
     }
 
     case FBLD_MARKUP_COMMAND: {
-      const char* command = markup->text->str->str;
+      const char* command = markup->text->str;
 
       for (Env* e = env; e != NULL; e = e->next) {
-        if (strcmp(command, e->name->str->str) == 0) {
+        if (strcmp(command, e->name->str) == 0) {
           if (markup->markups.size != e->args.size) {
             FbldError(markup->text->loc, "wrong number of arguments");
             return NULL;
@@ -209,7 +201,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           return NULL;
         }
 
-        FbldError(markup->text->loc, arg->text->str->str);
+        FbldError(markup->text->loc, arg->text->str);
         return NULL;
       }
 
@@ -233,18 +225,17 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         nenv.next = env;
 
         FbldInitVector(nenv.args);
-        char buf[strlen(args->text->str->str) + 1];
+        char buf[strlen(args->text->str) + 1];
         size_t i = 0;
-        for (const char* p = args->text->str->str; *p != '\0'; p++) {
+        for (const char* p = args->text->str; *p != '\0'; p++) {
           if (isspace(*p)) {
             if (i > 0) {
               // TODO: Pick a better location here.
               buf[i] = '\0';
               FbldText* text = malloc(sizeof(FbldText));
               text->loc = args->text->loc;
-              text->str = malloc(sizeof(FbldString) + sizeof(char) * (1+i));
-              text->str->refcount = 1;
-              strcpy(text->str->str, buf);
+              text->str = malloc(sizeof(char) * (1+i));
+              strcpy(text->str, buf);
               FbldAppendToVector(nenv.args, text);
               i = 0;
             }
@@ -260,19 +251,15 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           buf[i] = '\0';
           FbldText* text = malloc(sizeof(FbldText));
           text->loc = args->text->loc;
-          text->str = malloc(sizeof(FbldString) + sizeof(char) * (1+i));
-          text->str->refcount = 1;
-          strcpy(text->str->str, buf);
+          text->str = malloc(sizeof(char) * (1+i));
+          strcpy(text->str, buf);
           FbldAppendToVector(nenv.args, text);
         }
 
         FbldMarkup* result = Eval(body, &nenv);
 
         for (size_t j = 0; j < nenv.args.size; ++j) {
-          nenv.args.xs[j]->str->refcount--;
-          if (nenv.args.xs[j]->str->refcount == 0) {
-            free(nenv.args.xs[j]->str);
-          }
+          free(nenv.args.xs[j]->str);
           free(nenv.args.xs[j]);
         }
         free(nenv.args.xs);

@@ -3,6 +3,7 @@
 #include <stdbool.h>  // for false
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for abort
+#include <string.h>   // for strlen
 
 #include "fbld.h"
 #include "vector.h"
@@ -19,10 +20,7 @@ void FbldError(FbldLoc loc, const char* message)
 void FbldFreeMarkup(FbldMarkup* markup)
 {
   if (markup->text) {
-    markup->text->str->refcount--;
-    if (markup->text->str->refcount == 0) {
-      free(markup->text->str);
-    }
+    free(markup->text->str);
     free(markup->text);
   }
 
@@ -42,8 +40,8 @@ FbldMarkup* FbldCopyMarkup(FbldMarkup* markup)
   if (markup->text) {
     n->text = malloc(sizeof(FbldText));
     n->text->loc = markup->text->loc;
-    n->text->str = markup->text->str;
-    n->text->str->refcount++;
+    n->text->str = malloc(sizeof(char) * strlen(markup->text->str) + 1);
+    strcpy(n->text->str, markup->text->str);
   }
   FbldInitVector(n->markups);
   for (size_t i = 0; i < markup->markups.size; ++i) {
@@ -57,7 +55,7 @@ void FbldPrintMarkup(FbldMarkup* markup)
 {
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
-      printf("%s", markup->text->str->str);
+      printf("%s", markup->text->str);
       break;
     }
 
@@ -81,12 +79,12 @@ void FbldDebugMarkup(FbldMarkup* markup)
 {
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
-      printf("%s", markup->text->str->str);
+      printf("%s", markup->text->str);
       break;
     }
 
     case FBLD_MARKUP_COMMAND: {
-      printf("@{%s}", markup->text->str->str);
+      printf("@{%s}", markup->text->str);
       for (size_t i = 0; i < markup->markups.size; ++i) {
         printf("{");
         FbldDebugMarkup(markup->markups.xs[i]);

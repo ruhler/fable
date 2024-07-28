@@ -10,29 +10,6 @@
 
 typedef struct FbldMarkup FbldMarkup;
 
-/**
- * Magic number used in FbldString.
- */
-typedef enum {
-  FBLD_STRING_MAGIC = 0x51617a
-} FbldStringMagic;
-
-/**
- * @struct[FbldString] A reference counted string of characters.
- *  Pass by pointer. Explicit copy and free required.
- *
- *  Note: The magic field is set to FBLE_STRING_MAGIC and is used to detect
- *  double frees of FbleString, which we have had trouble with in the past.
- *
- *  @field[size_t][refcount] The reference count.
- *  @field[FbleStringMagic][magic] FBLE_STRING_MAGIC.
- *  @field{char[]}[str] The string contents.
- */
-typedef struct {
-  size_t refcount;
-  char str[];
-} FbldString;
-
 typedef struct {
   const char* file;
   size_t line;
@@ -41,7 +18,7 @@ typedef struct {
 
 typedef struct {
   FbldLoc loc;
-  FbldString* str;
+  char* str;
 } FbldText;
 
 typedef struct {

@@ -245,12 +245,9 @@ static FbldText* ParseName(Lex* lex)
   }
   AddToBuffer(lex, '\0');
 
-  FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
-  str->refcount = 1;
-  strcpy(str->str, lex->buffer);
+  text->str = malloc(lex->buffer_size * sizeof(char));
+  strcpy(text->str, lex->buffer);
   ClearBuffer(lex);
-
-  text->str = str;
   return text;
 }
 
@@ -350,14 +347,12 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
 
       if (lex->buffer_size != 0) {
         AddToBuffer(lex, '\0');
-        FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
-        str->refcount = 1;
-        strcpy(str->str, lex->buffer);
-        ClearBuffer(lex);
 
         FbldText* text = malloc(sizeof(FbldText));
         text->loc = loc;
-        text->str = str;
+        text->str = malloc(lex->buffer_size * sizeof(char));
+        strcpy(text->str, lex->buffer);
+        ClearBuffer(lex);
 
         FbldMarkup* plain = malloc(sizeof(FbldMarkup));
         plain->tag = FBLD_MARKUP_PLAIN;
@@ -390,15 +385,13 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
   }
 
   if (lex->buffer_size != 0) {
-    AddToBuffer(lex, '\0');
-    FbldString* str = malloc(sizeof(FbldString) + lex->buffer_size * sizeof(char));
-    str->refcount = 1;
-    strcpy(str->str, lex->buffer);
-    ClearBuffer(lex);
-
     FbldText* text = malloc(sizeof(FbldText));
     text->loc = loc;
-    text->str = str;
+
+    AddToBuffer(lex, '\0');
+    text->str = malloc(lex->buffer_size * sizeof(char));
+    strcpy(text->str, lex->buffer);
+    ClearBuffer(lex);
 
     FbldMarkup* plain = malloc(sizeof(FbldMarkup));
     plain->tag = FBLD_MARKUP_PLAIN;
@@ -498,9 +491,8 @@ static FbldMarkup* ParseBlock(Lex* lex)
     cmd->tag = FBLD_MARKUP_COMMAND;
     cmd->text = malloc(sizeof(FbldText));
     cmd->text->loc = lex->loc;
-    cmd->text->str = malloc(sizeof(FbldString) + sizeof(char) * (strlen(".block") + 1));
-    cmd->text->str->refcount = 1;
-    strcpy(cmd->text->str->str, ".block");
+    cmd->text->str = malloc(sizeof(char) * (strlen(".block") + 1));
+    strcpy(cmd->text->str, ".block");
     FbldInitVector(cmd->markups);
     FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
     FbldAppendToVector(markup->markups, cmd);
