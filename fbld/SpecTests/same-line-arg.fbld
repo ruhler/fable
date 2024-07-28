@@ -1,0 +1,7 @@
+@test no-error @@
+
+Test for same line argument.
+
+@assert_eq[foo] foo
+
+End of test.
