@@ -8,6 +8,8 @@
 #include "fbld.h"
 #include "vector.h"
 
+static void TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity);
+
 // See documentation in fbld.h
 void FbldError(FbldLoc loc, const char* message)
 {
@@ -53,6 +55,64 @@ FbldMarkup* FbldCopyMarkup(FbldMarkup* markup)
     FbldAppendToVector(n->markups, FbldCopyMarkup(markup->markups.xs[i]));
   }
   return n;
+}
+
+/**
+ * @func[TextOfMarkup] Helper function for FbldTextOfMarkup
+ *  @arg[markup] Markup to convert.
+ *  @arg[FbldText**] Text constructed so far. Value may be NULL.
+ *  @arg[size_t*][available]
+ *   Available unused size allocated for text str.
+ *  @sideeffects
+ *   @i Reallocates FbldText* if needed and populates it with text.
+ *   @i Errors out if the markup has unevaluated commands.
+ */
+static void TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
+{
+  switch (markup->tag) {
+    case FBLD_MARKUP_PLAIN: {
+      if (*text == NULL) {
+        *text = FbldNewText(markup->text->loc, markup->text->str);
+        *capacity = 0;
+        return;
+      }
+
+      size_t src_size = strlen(markup->text->str);
+      if (src_size >= *capacity) {
+        size_t size = strlen((*text)->str) + *capacity;
+        size_t nsize = 2 * (strlen((*text)->str) + src_size);
+        *text = realloc(*text, sizeof(FbldText) + nsize);
+        *capacity = nsize - size;
+        assert(src_size < *capacity);
+      }
+
+      *capacity -= src_size;
+      strcat((*text)->str, markup->text->str);
+      return;
+    }
+
+    case FBLD_MARKUP_COMMAND: {
+      FbldError(markup->text->loc, "expected plain text, but found command");
+      break;
+    }
+
+    case FBLD_MARKUP_SEQUENCE: {
+      // TODO: Avoid this potentially deep recursion.
+      for (size_t i = 0; i < markup->markups.size; ++i) {
+        TextOfMarkup(markup->markups.xs[i], text, capacity);
+      }
+      return;
+    }
+  }
+}
+
+// See documentation in fbld.h
+FbldText* FbldTextOfMarkup(FbldMarkup* markup)
+{
+  FbldText* text = NULL;
+  size_t capacity = 0;
+  TextOfMarkup(markup, &text, &capacity);
+  return text;
 }
 
 // See documentation in fbld.h

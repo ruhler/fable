@@ -193,13 +193,11 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         }
 
         FbldMarkup* arg = Eval(markup->markups.xs[0], env);
-        if (arg->tag != FBLD_MARKUP_PLAIN) {
-          // TODO: Sequence of plain ought to be allowed too, right?
-          FbldError(markup->text->loc, "argument to @error is not plain");
-          return NULL;
-        }
+        FbldText* arg_text = FbldTextOfMarkup(arg);
+        FbldFreeMarkup(arg);
 
-        FbldError(markup->text->loc, arg->text->str);
+        FbldError(markup->text->loc, arg_text->str);
+        free(arg_text);
         return NULL;
       }
 

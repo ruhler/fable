@@ -113,6 +113,16 @@ FbldMarkup* FbldParse(const char** inputs);
 FbldMarkup* FbldEval(FbldMarkup* markup);
 
 /**
+ * @func[FbldTextOfMarkup] Converts markup to text.
+ *  @arg[FbldMarkup*][markup] The markup to convert.
+ *  @returns[FbldText*] Text version of the markup.
+ *  @sideeffects
+ *   @i Allocates an FbldText* that should be freed when no longer needed.
+ *   @i Behavior is undefined if the markup contains unevaluated commands.
+ */
+FbldText* FbldTextOfMarkup(FbldMarkup* markup);
+
+/**
  * @func[FbldPrintMarkup] Prints markup to stdout.
  *  @arg[FbldMarkup*][markup] The markup to print.
  *
