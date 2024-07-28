@@ -1,0 +1,12 @@
+@test no-error @@
+
+Test for next line argument.
+
+@assert_eq[Hi.\nThere.\n]
+ Hi.
+
+ @assert_eq[foo][foo]
+
+ There.
+
+End of test.

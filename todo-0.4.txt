@@ -3,6 +3,8 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
+ - Remove buffer field from Lex. Make them local instead.
+ - Test next line argument.
  - Make helper function for converting lex buffer into FbldText.
  - Test case of unresolved @x in ifeq.
    It should error out rather than be treated as false.
@@ -11,6 +13,8 @@ Things to consider doing for the fble-0.4 release.
  - Add tests for code coverage.
  - Test that function evaluation happens in functions scope, not callers
    scope.
+ - Improve error messages.
+   Include number of expected and actual arguments, for example.
  - Switch back to -O3 in build.tcl
  - Add proper doc comments on all the code.
 

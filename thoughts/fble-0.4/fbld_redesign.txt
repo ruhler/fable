@@ -30,7 +30,7 @@ Struct: Multiple key->value, where key is the field name, value is the field
 value.
 
 If we had functions as first class values, then we could use dictionaries to
-easily organize modules too. A module is a dictionary if (key,value) where key
+easily organize modules too. A module is a dictionary of (key,value) where key
 is name of function and value is the function value.
 
 3. Values
