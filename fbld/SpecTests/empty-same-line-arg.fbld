@@ -1,0 +1,8 @@
+@test no-error @@
+
+Empty same line arguments should be allowed. Note the trailing space on the
+following line to indicate same line argument.
+
+@assert_eq[] 
+
+End of test.
