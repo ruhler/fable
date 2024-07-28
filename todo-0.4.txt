@@ -3,7 +3,6 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
- - Add test for literal inline arguments.
  - Make helper function for converting lex buffer into FbldText.
  - Test case of unresolved @x in ifeq.
    It should error out rather than be treated as false.

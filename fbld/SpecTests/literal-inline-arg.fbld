@@ -1,0 +1,7 @@
+@test no-error @@
+
+Test of literal inline argument.
+
+@assert_eq[a \@ is \[x\]]{a @ is [x]}
+
+End of test.

@@ -264,8 +264,36 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
 {
   while (Is(lex, "[") || Is(lex, "{")) {
     if (Is(lex, "{")) {
-      assert(false && "TODO: Parse literal inline arg");
-      return;
+      Advance(lex);
+      FbldLoc loc = lex->loc;
+
+      size_t nest = 0;
+      ClearBuffer(lex);
+      while (nest > 0 || !Is(lex, "}")) {
+        if (IsEnd(lex)) {
+          FbldError(lex->loc, "end of file in literal inline arg");
+        }
+
+        if (Is(lex, "{")) {
+          nest++;
+        }
+
+        if (Is(lex, "}")) {
+          nest--;
+        }
+
+        AddToBuffer(lex, Char(lex));
+        Advance(lex);
+      }
+      Advance(lex);
+      AddToBuffer(lex, '\0');
+      FbldMarkup* arg = malloc(sizeof(FbldMarkup));
+      arg->tag = FBLD_MARKUP_PLAIN;
+      arg->text = FbldNewText(loc, lex->buffer);
+      ClearBuffer(lex);
+      FbldInitVector(arg->markups);
+      FbldAppendToVector(*args, arg);
+      continue;
     }
 
     if (Is(lex, "[")) {
