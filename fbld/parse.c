@@ -23,9 +23,6 @@ const char END = '\x03';
  *  @field[char*][next] A buffer for storing the next characters in the input.
  *  @field[size_t][next_size] The number of characters in next.
  *  @field[size_t][next_capacity] The allocated size of next.
- *  @field[char*][buffer] A scratch buffer for reading in characters.
- *  @field[size_t][buffer_size] The number of characters in the buffer.
- *  @field[size_t][buffer_capacity] The allocated size of the buffer.
  */
 typedef struct {
   const char** inputs;
@@ -35,10 +32,6 @@ typedef struct {
   char* next;
   size_t next_size;
   size_t next_capacity;
-
-  char* buffer;
-  size_t buffer_size;
-  size_t buffer_capacity;
 } Lex;
 
 // The context we are parsing inline text from.
@@ -56,9 +49,6 @@ static char Char(Lex* lex);
 static bool Is(Lex* lex, const char* str);
 static bool IsEnd(Lex* lex);
 static void Advance(Lex* lex);
-
-static void ClearBuffer(Lex* lex);
-static void AddToBuffer(Lex* lex, char c);
 
 static bool IsNameChar(int c);
 static FbldText* ParseName(Lex* lex);
@@ -187,33 +177,6 @@ static void Advance(Lex* lex)
 }
 
 /**
- * @func[ClearBuffer] Clears the lex buffer.
- *  @arg[Lex*][lex] The lexer state.
- *  @sideeffects Resets the size of the lex buffer to zero.
- */
-static void ClearBuffer(Lex* lex)
-{
-  lex->buffer_size = 0;
-}
-
-/**
- * @func[AddToBuffer] Add a character to the lex buffer.
- *  @arg[Lex*][lex] The lexer state.
- *  @arg[char][c] The character to add.
- *  @sideeffects
- *   @i Appends the character to the lex buffer, incrementing the size.
- *   @i Reallocs the lex buffer as needed to make room.
- */
-static void AddToBuffer(Lex* lex, char c)
-{
-  if (lex->buffer_size == lex->buffer_capacity) {
-    lex->buffer_capacity *= 2;
-    lex->buffer = realloc(lex->buffer, lex->buffer_capacity * sizeof(char));
-  }
-  lex->buffer[lex->buffer_size++] = c;
-}
-
-/**
  * @func[IsNameChar] Tests if a character is a name character
  *  @arg[int][c] The character to test.
  *  @returns[bool] True if the char is a name character.
@@ -237,15 +200,16 @@ static FbldText* ParseName(Lex* lex)
 {
   FbldLoc loc = lex->loc;
 
-  ClearBuffer(lex);
+  struct { size_t size; char* xs; } chars;
+  FbldInitVector(chars);
   while (IsNameChar(Char(lex))) {
-    AddToBuffer(lex, Char(lex));
+    FbldAppendToVector(chars, Char(lex));
     Advance(lex);
   }
-  AddToBuffer(lex, '\0');
+  FbldAppendToVector(chars, '\0');
 
-  FbldText* text = FbldNewText(loc, lex->buffer);
-  ClearBuffer(lex);
+  FbldText* text = FbldNewText(loc, chars.xs);
+  free(chars.xs);
   return text;
 }
 
@@ -268,7 +232,8 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
       FbldLoc loc = lex->loc;
 
       size_t nest = 0;
-      ClearBuffer(lex);
+      struct { size_t size; char* xs; } chars;
+      FbldInitVector(chars);
       while (nest > 0 || !Is(lex, "}")) {
         if (IsEnd(lex)) {
           FbldError(lex->loc, "end of file in literal inline arg");
@@ -282,15 +247,15 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
           nest--;
         }
 
-        AddToBuffer(lex, Char(lex));
+        FbldAppendToVector(chars, Char(lex));
         Advance(lex);
       }
       Advance(lex);
-      AddToBuffer(lex, '\0');
+      FbldAppendToVector(chars, '\0');
       FbldMarkup* arg = malloc(sizeof(FbldMarkup));
       arg->tag = FBLD_MARKUP_PLAIN;
-      arg->text = FbldNewText(loc, lex->buffer);
-      ClearBuffer(lex);
+      arg->text = FbldNewText(loc, chars.xs);
+      free(chars.xs);
       FbldInitVector(arg->markups);
       FbldAppendToVector(*args, arg);
       continue;
@@ -347,7 +312,8 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
   markup->text = NULL;
   FbldInitVector(markup->markups);
 
-  ClearBuffer(lex);
+  struct { size_t size; char* xs; } chars;
+  FbldInitVector(chars);
   FbldLoc loc = lex->loc;
   while (true) {
     if (context == INLINE_ARG && Is(lex, "]")) {
@@ -371,11 +337,11 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     if (Is(lex, "@")) {
       Advance(lex);
 
-      if (lex->buffer_size != 0) {
-        AddToBuffer(lex, '\0');
+      if (chars.size != 0) {
+        FbldAppendToVector(chars, '\0');
 
-        FbldText* text = FbldNewText(loc, lex->buffer);
-        ClearBuffer(lex);
+        FbldText* text = FbldNewText(loc, chars.xs);
+        chars.size = 0;
 
         FbldMarkup* plain = malloc(sizeof(FbldMarkup));
         plain->tag = FBLD_MARKUP_PLAIN;
@@ -392,25 +358,24 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     if (Is(lex, "\\")) {
       Advance(lex);
       switch (Char(lex)) {
-        case '@': AddToBuffer(lex, '@'); break;
-        case '[': AddToBuffer(lex, '['); break;
-        case '\\': AddToBuffer(lex, '\\'); break;
-        case ']': AddToBuffer(lex, ']'); break;
-        case 'n': AddToBuffer(lex, '\n'); break;
+        case '@': FbldAppendToVector(chars, '@'); break;
+        case '[': FbldAppendToVector(chars, '['); break;
+        case '\\': FbldAppendToVector(chars, '\\'); break;
+        case ']': FbldAppendToVector(chars, ']'); break;
+        case 'n': FbldAppendToVector(chars, '\n'); break;
         default: FbldError(lex->loc, "unsupported escape sequence"); break;
       }
       Advance(lex);
       continue;
     }
     
-    AddToBuffer(lex, Char(lex));
+    FbldAppendToVector(chars, Char(lex));
     Advance(lex);
   }
 
-  if (lex->buffer_size != 0) {
-    AddToBuffer(lex, '\0');
-    FbldText* text = FbldNewText(loc, lex->buffer);
-    ClearBuffer(lex);
+  if (chars.size != 0) {
+    FbldAppendToVector(chars, '\0');
+    FbldText* text = FbldNewText(loc, chars.xs);
 
     FbldMarkup* plain = malloc(sizeof(FbldMarkup));
     plain->tag = FBLD_MARKUP_PLAIN;
@@ -418,6 +383,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     FbldInitVector(plain->markups);
     FbldAppendToVector(markup->markups, plain);
   }
+  free(chars.xs);
 
   if (markup->markups.size == 1) {
     FbldMarkup* tmp = markup->markups.xs[0];
@@ -529,12 +495,8 @@ FbldMarkup* FbldParse(const char** inputs)
     .next = malloc(4 * sizeof(char)),
     .next_size = 0,
     .next_capacity = 4,
-    .buffer = malloc(4 * sizeof(char)),
-    .buffer_size = 0,
-    .buffer_capacity = 4,
   };
 
   FbldMarkup* parsed = ParseBlock(&lex);
-  free(lex.buffer);
   return parsed;
 }
