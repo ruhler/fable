@@ -413,30 +413,62 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
   markup->text = ParseName(lex);
   FbldInitVector(markup->markups);
 
-  ParseInlineArgs(lex, &markup->markups);
+  while (true) {
+    // Inline args.
+    ParseInlineArgs(lex, &markup->markups);
 
-  if (Is(lex, " ") && !Is(lex, " @\n") && !Is(lex, " @@\n")) {
+    // Same line arg.
+    if (Is(lex, " ") && !Is(lex, " @\n") && !Is(lex, " @@\n")) {
+      Advance(lex);
+      FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG);
+      FbldAppendToVector(markup->markups, same_line);
+    }
+
+    // Same line final arg.
+    if (Is(lex, " @@\n")) {
+      Advance(lex); Advance(lex); Advance(lex); Advance(lex);
+      FbldMarkup* final = ParseBlock(lex);
+      FbldAppendToVector(markup->markups, final);
+      return markup;
+    }
+
+    // Next line literal arg.
+    if (Is(lex, " @\n")) {
+      assert(false && "TODO: next line literal");
+      return NULL;
+    }
+
+    if (!Is(lex, "\n")) {
+      fprintf(stderr, "Got: 0x%x\n", Char(lex));
+      FbldError(lex->loc, "expected newline");
+      return NULL;
+    }
     Advance(lex);
-    FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG);
-    FbldAppendToVector(markup->markups, same_line);
-  }
-  
-  if (Is(lex, "\n")) {
+
+    // Next line arg.
+    if (Is(lex, " ")) {
+      assert(false && "TODO: next line arg.");
+      return NULL;
+    }
+
+    // Next line final arg.
+    if (Is(lex, "@@\n")) {
+      Advance(lex); Advance(lex); Advance(lex);
+      FbldMarkup* final = ParseBlock(lex);
+      FbldAppendToVector(markup->markups, final);
+      return markup;
+    }
+
+    // Continuation.
+    if (Is(lex, "@\n"), Is(lex, "@ ") || Is(lex, "@[") || Is(lex, "@{")) {
+      Advance(lex);
+      continue;
+    }
+
     return markup;
   }
 
-  if (Is(lex, " @\n")) {
-    assert(false && "TODO: next line literal");
-    return NULL;
-  }
-
-  if (Is(lex, " @@\n")) {
-    Advance(lex); Advance(lex); Advance(lex); Advance(lex);
-    FbldMarkup* final = ParseBlock(lex);
-    FbldAppendToVector(markup->markups, final);
-    return markup;
-  }
-
+  assert(false && "unreachable");
   return NULL;
 }
 
