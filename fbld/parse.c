@@ -20,6 +20,7 @@ const char END = '\x03';
  *  @field[const char**][inputs] Remaining input files to process.
  *  @field[FILE*][fin] The current input file being processed.
  *  @field[FbldLoc][loc] The current location.
+ *  @field[size_t][indent] The current block indent level.
  *  @field[char*][next] A buffer for storing the next characters in the input.
  *  @field[size_t][next_size] The number of characters in next.
  *  @field[size_t][next_capacity] The allocated size of next.
@@ -28,6 +29,8 @@ typedef struct {
   const char** inputs;
   FILE* fin;
   FbldLoc loc;
+
+  size_t indent;
 
   char* next;
   size_t next_size;
@@ -60,7 +63,8 @@ static FbldMarkup* ParseBlock(Lex* lex);
 
 /**
  * @func[GetC] Fetches another input character.
- *  Does not cross input files unless current next buffer is empty.
+ *  Does not cross input files unless current next buffer is empty. Treats
+ *  unindented lines as end of input.
  *
  *  @arg[Lex*][lex] The lexer state.
  *  @returns[char] The input character fetched, or END in case of end of input.
@@ -127,22 +131,31 @@ static char Char(Lex* lex)
  */
 static bool Is(Lex* lex, const char* str)
 {
-  size_t len = strlen(str);
-  while (lex->next_size < len) {
-    char c = GetC(lex);
-    if (c == END) {
-      break;
+  size_t next_i = 0;
+  while (*str != '\0') {
+    if (lex->next_size <= next_i) {
+      char c = GetC(lex);
+      if (c == END) {
+        return false;
+      }
+
+      if (lex->next_size == lex->next_capacity) {
+        lex->next_capacity *= 2;
+        lex->next = realloc(lex->next, lex->next_capacity * sizeof(char));
+      }
+
+      lex->next[lex->next_size] = c;
+      lex->next_size++;
     }
 
-    if (lex->next_size == lex->next_capacity) {
-      lex->next_capacity *= 2;
-      lex->next = realloc(lex->next, lex->next_capacity * sizeof(char));
+    if (*str != lex->next[next_i]) {
+      return false;
     }
 
-    lex->next[lex->next_size] = c;
-    lex->next_size++;
+    str++;
+    next_i++;
   }
-  return lex->next_size >= len && strncmp(str, lex->next, len) == 0;
+  return true;
 }
 
 static bool IsEnd(Lex* lex)
@@ -445,18 +458,23 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
     Advance(lex);
 
-    // Next line arg.
-    if (Is(lex, " ")) {
-      assert(false && "TODO: next line arg.");
-      return NULL;
-    }
-
     // Next line final arg.
     if (Is(lex, "@@\n")) {
       Advance(lex); Advance(lex); Advance(lex);
       FbldMarkup* final = ParseBlock(lex);
       FbldAppendToVector(markup->markups, final);
       return markup;
+    }
+
+    // Next line arg.
+    if (Is(lex, " ")) {
+      lex->indent++;
+      assert(false && "TODO: proper handling of non-zero indent");
+      FbldMarkup* arg = ParseBlock(lex);
+      lex->indent--;
+
+      FbldAppendToVector(markup->markups, arg);
+      return NULL;
     }
 
     // Continuation.
@@ -524,6 +542,7 @@ FbldMarkup* FbldParse(const char** inputs)
     .inputs = inputs,
     .fin = NULL,
     .loc = { .file = "???", .line = 0, .column = 0 },
+    .indent = 0,
     .next = malloc(4 * sizeof(char)),
     .next_size = 0,
     .next_capacity = 4,

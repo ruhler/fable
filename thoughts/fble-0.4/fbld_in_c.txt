@@ -341,6 +341,47 @@ about it being annoyingly complicated to process the string for now.
 
 Consider @arg, @returns, @sideeffects.
 
+---
 
+Tricky bit to work out: parsing of indented blocks. Where/how should I process
+the indent computation?
 
+Handling it in GetC or in Is/Char seems like two potential options.
 
+Is/Char ideally skips over whitespace that makes up the indent. If it turns
+out not to go far enough for the indent, ideally it keeps that whitespace. So
+maybe we read in whitespace in Is/Char as long as we need to verify it meets
+the indent. If it doesn't meet the indent, return EOF. If it does meet the
+indent, erase the whitespace of the indent?
+
+If we did it in GetC, we have to remember how much whitespace we encountered
+in case we don't reach full indent.
+
+Here's what I think:
+* Read in all the whitespace into the next buffer. Keep it there. Don't erase
+  it. That way Is, Char, and IsEof continue to not have conceptual side
+  effects. We don't have to worry about a call to one messing things up for a
+  later call in a different indent.
+* Update Is, Char, and Advance to be indent aware.
+ - Is skips over indent when doing the check.
+ - Char skips over indent when doing the check.
+ - Advance skips past indent.
+
+We just need to sort out all the various cases:
+* Is the newline in the next buffer, or we already advanced past it?
+* etc.
+
+Hopefully shouldn't be too hard to work out the details given the concept and
+approach is clear.
+
+Let's take one case at a time:
+* Is
+* Char
+* Advance
+
+Starting with 'Is'.
+
+Current approach is to read in enough characters, then do a strncmp. With
+indent, we don't know how many characters we may need. So perhaps do it more
+lazily. For each character in the input string: get or fetch the next
+character. If the next character is an indent, skip past it. No?
