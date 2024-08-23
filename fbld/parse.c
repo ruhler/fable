@@ -131,9 +131,14 @@ static char Char(Lex* lex)
  */
 static bool Is(Lex* lex, const char* str)
 {
-  size_t next_i = 0;
-  while (*str != '\0') {
-    if (lex->next_size <= next_i) {
+  // Assume nobody will have advanced partway into an indented line.
+  // TODO: Is that a reasonable assumption?
+  size_t col = lex->loc.column;
+  bool indenting = (col == 0);
+
+  for (size_t i = 0; *str != '\0'; i++) {
+    // Fetch another character into the 'next' buffer if needed.
+    if (lex->next_size <= i) {
       char c = GetC(lex);
       if (c == END) {
         return false;
@@ -148,12 +153,31 @@ static bool Is(Lex* lex, const char* str)
       lex->next_size++;
     }
 
-    if (*str != lex->next[next_i]) {
+    // Update col and indenting based on the next character.
+    if (lex->next[i] == '\n') {
+      col = 0;
+      indenting = true;
+    } else {
+      col++;
+      indenting = indenting && lex->next[i] == ' ';
+    }
+
+    // Check for indent.
+    if (col < lex->indent) {
+      if (indenting) {
+        continue;
+      }
+
+      // Unindented text is treated as 'END'.
+      return false;
+    }
+
+    // Check if next character matches the input string.
+    if (*str != lex->next[i]) {
       return false;
     }
 
     str++;
-    next_i++;
   }
   return true;
 }
