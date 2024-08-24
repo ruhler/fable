@@ -48,7 +48,7 @@ typedef enum {
 } InlineContext;
 
 static char GetC(Lex* lex);
-static char NextFetched(Lex* lex, size_t* col, size_t* i);
+static char NextFetched(Lex* lex, size_t* i);
 static char Char(Lex* lex);
 static bool Is(Lex* lex, const char* str);
 static bool IsEnd(Lex* lex);
@@ -107,16 +107,30 @@ static char GetC(Lex* lex)
  *  characters into 'next' as needed.
  *
  *  @arg[Lex*][lex] The lexer state.
- *  @arg[size_t*][col] Column state. Initialize to @l{lex->loc.column}.
  *  @arg[size_t*][i] Index into lex->next to start fetching from.
  *  @returns The next character in the input, given current indent level.
  *  @sideeffects Updates col, and i to point to the next character.
  */
-static char NextFetched(Lex* lex, size_t* col, size_t* i)
+static char NextFetched(Lex* lex, size_t* i)
 {
+  // Assume we traverse a single index at at a time starting from 0. Callers
+  // should not be giving random indexes for i.
+  assert(*i <= lex->next_size);
+
+  // Compute the current column.
+  // TODO: Should we make this more efficient?
+  size_t col = lex->loc.column;
+  for (size_t j = 0; j < *i; ++j) {
+    if (lex->next[j] == '\n') {
+      col = 1;
+    } else {
+      col++;
+    }
+  }
+
   while (true) {
     // Fetch another character into the 'next' buffer if needed.
-    if (lex->next_size <= *i) {
+    if (lex->next_size == *i) {
       char c = GetC(lex);
       if (c == END) {
         return END;
@@ -131,17 +145,15 @@ static char NextFetched(Lex* lex, size_t* col, size_t* i)
       lex->next_size++;
     }
 
-    if (*col < lex->indent + 1) {
+    if (col < lex->indent + 1) {
       if (lex->next[*i] == ' ') {
-        (*col)++;
+        col++;
         (*i)++;
         continue;
       }
 
       if (lex->next[*i] == '\n') {
-        *col = 0;
-        (*i)++;
-        continue;
+        return '\n';
       }
 
       // Unindented text is treated as 'END'.
@@ -160,9 +172,8 @@ static char NextFetched(Lex* lex, size_t* col, size_t* i)
  */
 static char Char(Lex* lex)
 {
-  size_t col = lex->loc.column;
   size_t i = 0;
-  return NextFetched(lex, &col, &i);
+  return NextFetched(lex, &i);
 }
 
 /**
@@ -176,12 +187,8 @@ static char Char(Lex* lex)
  */
 static bool Is(Lex* lex, const char* str)
 {
-  // Assume nobody will have advanced partway into an indented line.
-  // TODO: Is that a reasonable assumption?
-  size_t col = lex->loc.column;
-
   for (size_t i = 0; *str != '\0'; ++i) {
-    char c = NextFetched(lex, &col, &i);
+    char c = NextFetched(lex, &i);
     if (c == END) {
       return false;
     }
@@ -208,9 +215,8 @@ static bool IsEnd(Lex* lex)
  */
 static void Advance(Lex* lex)
 {
-  size_t col = lex->loc.column;
   size_t index = 0;
-  char c = NextFetched(lex, &col, &index);
+  char c = NextFetched(lex, &index);
   assert(c != END);
   size_t len = index+1;
 
@@ -514,7 +520,6 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       lex->indent--;
 
       FbldAppendToVector(markup->markups, arg);
-      return NULL;
     }
 
     // Continuation.

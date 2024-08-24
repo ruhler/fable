@@ -385,3 +385,7 @@ Current approach is to read in enough characters, then do a strncmp. With
 indent, we don't know how many characters we may need. So perhaps do it more
 lazily. For each character in the input string: get or fetch the next
 character. If the next character is an indent, skip past it. No?
+
+---
+
+Next line arg parsing support is now there. What's next?
