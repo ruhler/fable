@@ -1,0 +1,8 @@
+@test no-error @@
+
+Test for having a final arg after a next line argument.
+
+@assert_eq
+ Hello.
+@@
+Hello.

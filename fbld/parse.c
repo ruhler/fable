@@ -505,14 +505,6 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
     Advance(lex);
 
-    // Next line final arg.
-    if (Is(lex, "@@\n")) {
-      Advance(lex); Advance(lex); Advance(lex);
-      FbldMarkup* final = ParseBlock(lex);
-      FbldAppendToVector(markup->markups, final);
-      return markup;
-    }
-
     // Next line arg.
     if (Is(lex, " ")) {
       lex->indent++;
@@ -520,6 +512,14 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       lex->indent--;
 
       FbldAppendToVector(markup->markups, arg);
+    }
+
+    // Next line final arg.
+    if (Is(lex, "@@\n")) {
+      Advance(lex); Advance(lex); Advance(lex);
+      FbldMarkup* final = ParseBlock(lex);
+      FbldAppendToVector(markup->markups, final);
+      return markup;
     }
 
     // Continuation.
