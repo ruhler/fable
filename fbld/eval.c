@@ -150,7 +150,7 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b)
 
 FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 {
-  // printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
+  printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
 
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
