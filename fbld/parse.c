@@ -494,16 +494,31 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
 
     // Next line literal arg.
     if (Is(lex, " @\n")) {
-      assert(false && "TODO: next line literal");
-      return NULL;
-    }
+      Advance(lex); Advance(lex); Advance(lex);
+      FbldLoc loc = lex->loc;
 
-    if (!Is(lex, "\n")) {
+      lex->indent++;
+      struct { size_t size; char* xs; } chars;
+      FbldInitVector(chars);
+      while (!IsEnd(lex) && !(lex->loc.column == 1 && Is(lex, "\n"))) {
+        FbldAppendToVector(chars, Char(lex));
+        Advance(lex);
+      }
+      lex->indent--;
+      FbldAppendToVector(chars, '\0');
+      FbldMarkup* arg = malloc(sizeof(FbldMarkup));
+      arg->tag = FBLD_MARKUP_PLAIN;
+      arg->text = FbldNewText(loc, chars.xs);
+      free(chars.xs);
+      FbldInitVector(arg->markups);
+      FbldAppendToVector(markup->markups, arg);
+    } else if (Is(lex, "\n")) {
+      Advance(lex);
+    } else {
       fprintf(stderr, "Got: 0x%x\n", Char(lex));
       FbldError(lex->loc, "expected newline");
       return NULL;
     }
-    Advance(lex);
 
     // Next line arg.
     if (Is(lex, " ")) {

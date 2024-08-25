@@ -1,0 +1,8 @@
+@test no-error @@
+
+Test for next line literal.
+
+@assert_eq[a\@bc\@\@\n] @
+ a@bc@@
+
+End of test.
