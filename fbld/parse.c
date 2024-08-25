@@ -555,7 +555,22 @@ static FbldMarkup* ParseBlock(Lex* lex)
   while (Is(lex, "\n")) Advance(lex);
 
   while (!IsEnd(lex)) {
-    // Command.
+    // Explicit implicit block command.
+    if (Is(lex, "@@")) {
+      Advance(lex);
+      FbldMarkup* cmd = malloc(sizeof(FbldMarkup));
+      cmd->tag = FBLD_MARKUP_COMMAND;
+      cmd->text = FbldNewText(lex->loc, ".block");
+      FbldInitVector(cmd->markups);
+      FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
+      FbldAppendToVector(markup->markups, cmd);
+
+      // Skip blank lines.
+      while (Is(lex, "\n")) Advance(lex);
+      continue;
+    }
+
+    // Block Command.
     if (Is(lex, "@")) {
       Advance(lex);
       FbldMarkup* command = ParseBlockCommand(lex);

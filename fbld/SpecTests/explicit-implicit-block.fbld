@@ -1,0 +1,8 @@
+@test no-error @@
+
+Test for explicit implicit block.
+
+@define[foo][x] @x@x @@
+
+@assert_eq[hihi there.\n] @@
+@@foo[hi] there.
