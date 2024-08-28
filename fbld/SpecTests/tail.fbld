@@ -1,0 +1,5 @@
+@test no-error @@
+
+Test of the tail builtin.
+
+@assert_eq[@tail[hello]][ello]

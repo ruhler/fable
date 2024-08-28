@@ -300,6 +300,22 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         return result;
       }
 
+      if (strcmp(command, "tail") == 0) {
+        if (markup->markups.size != 1) {
+          FbldError(markup->text->loc, "expected 1 arguments to @tail");
+          return NULL;
+        }
+
+        FbldMarkup* str = Eval(markup->markups.xs[0], env);
+
+        FbldMarkup* result = TailOf(str);
+        if (result == NULL) {
+          return str;
+        }
+        FbldFreeMarkup(str);
+        return result;
+      }
+
       if (strcmp(command, "ifeq") == 0) {
         if (markup->markups.size != 4) {
           FbldError(markup->text->loc, "expected 4 arguments to @ifeq");
