@@ -1,0 +1,5 @@
+@test no-error @@
+
+Test of the head builtin.
+
+@assert_eq[@head[hello]][h]

@@ -279,6 +279,27 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         return Eval(body, &nenv);
       }
 
+      if (strcmp(command, "head") == 0) {
+        if (markup->markups.size != 1) {
+          FbldError(markup->text->loc, "expected 1 arguments to @head");
+          return NULL;
+        }
+
+        FbldMarkup* str = Eval(markup->markups.xs[0], env);
+
+        int c = HeadOf(str);
+        assert(c != -1 && c != 0 && "TODO?");
+
+        // TODO: Fix the location of the result.
+        char plain[] = {(char)c, '\0'};
+        FbldMarkup* result = malloc(sizeof(FbldMarkup));
+        result->tag = FBLD_MARKUP_PLAIN;
+        result->text = FbldNewText(str->text->loc, plain);
+        FbldInitVector(result->markups);
+        FbldFreeMarkup(str);
+        return result;
+      }
+
       if (strcmp(command, "ifeq") == 0) {
         if (markup->markups.size != 4) {
           FbldError(markup->text->loc, "expected 4 arguments to @ifeq");
