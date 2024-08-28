@@ -1,0 +1,8 @@
+@test no-error @@
+
+Test of the let builtin.
+
+@let[x][aa] @@
+@let[y][@x@x] @@
+@let[z][@y@y] @@
+@assert_eq[@z][aaaaaaaa]

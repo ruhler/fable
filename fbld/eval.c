@@ -170,15 +170,17 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           // TODO: The body should be evaluated in the function's scope, not
           // the caller's scope, right?
           Env envs[e->args.size];
+          Env* next = env;
           for (size_t i = 0; i < e->args.size; ++i) {
             envs[i].name = e->args.xs[i];
             envs[i].args.xs = NULL;
             envs[i].args.size = 0;
             envs[i].body = Eval(markup->markups.xs[i], env);
-            envs[i].next = (i == 0) ? env : (envs + i - 1);
+            envs[i].next = next;
+            next = envs + i;
           }
 
-          FbldMarkup* result = Eval(e->body, envs + e->args.size - 1);
+          FbldMarkup* result = Eval(e->body, next);
           for (size_t i = 0; i < e->args.size; ++i) {
             FbldFreeMarkup(envs[i].body);
           }
@@ -254,6 +256,27 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         free(nenv.args.xs);
 
         return result;
+      }
+
+      if (strcmp(command, "let") == 0) {
+        if (markup->markups.size != 3) {
+          FbldError(markup->text->loc, "expected 3 arguments to @let");
+          return NULL;
+        }
+
+        FbldMarkup* name = markup->markups.xs[0];
+        FbldMarkup* def = markup->markups.xs[1];
+        FbldMarkup* body = markup->markups.xs[2];
+
+        assert(name->tag == FBLD_MARKUP_PLAIN && "TODO");
+
+        Env nenv;
+        nenv.name = name->text;
+        nenv.body = def;
+        nenv.next = env;
+        FbldInitVector(nenv.args);
+
+        return Eval(body, &nenv);
       }
 
       if (strcmp(command, "ifeq") == 0) {
