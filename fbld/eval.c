@@ -336,6 +336,26 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         return Eval(markup->markups.xs[3], env);
       }
 
+      if (strcmp(command, "ifneq") == 0) {
+        if (markup->markups.size != 4) {
+          FbldError(markup->text->loc, "expected 4 arguments to @ifneq");
+          return NULL;
+        }
+
+        // TODO: Handle the case where arguments can't be compared for
+        // equality.
+        FbldMarkup* a = Eval(markup->markups.xs[0], env);
+        FbldMarkup* b = Eval(markup->markups.xs[1], env);
+        bool eq = Eq(a, b);
+        FbldFreeMarkup(a);
+        FbldFreeMarkup(b);
+
+        if (eq) {
+          return Eval(markup->markups.xs[3], env);
+        }
+        return Eval(markup->markups.xs[2], env);
+      }
+
       FbldError(markup->text->loc, "unsupported command");
       return NULL;
     }

@@ -1,0 +1,6 @@
+@test no-error @@
+
+Test of the ifneq builtin.
+
+@assert_eq[hello][@ifneq[a][b][hello][there]]
+@assert_eq[there][@ifneq[a][a][hello][there]]
