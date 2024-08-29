@@ -392,3 +392,15 @@ Next line arg parsing support is now there. What's next?
 
 Test for next line final after next line arg. Because it looks like I have the
 orders messed up in the parser.
+
+---
+
+Good news, we can now convert README.fbld to README.md with the C
+implementation. What's next?
+
+I suppose fble.fbld is the big one.
+
+Based on switching the build system to use the C implementation by default,
+the next place we run into issue is the following:
+
+./out/fbld/fbld ./fbld/nobuildstamp.fbld ./out/fbld/version.fbld ./fbld/html.fbld ./fbld/fbld.fbld > out/fbld.html

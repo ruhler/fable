@@ -87,10 +87,14 @@ static char GetC(Lex* lex)
     lex->inputs++;
 
     // Open the next input file for processing.
-    lex->fin = fopen(filename, "r");
-    if (lex->fin == NULL) {
-      perror("fopen");
-      abort();
+    if (strcmp(filename, "-") == 0) {
+      lex->fin = stdin;
+    } else {
+      lex->fin = fopen(filename, "r");
+      if (lex->fin == NULL) {
+        fprintf(stderr, "ERROR: unable to open '%s' for reading\n", filename); 
+        abort();
+      }
     }
     lex->loc.file = filename;
     lex->loc.line = 1;
