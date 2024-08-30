@@ -288,7 +288,14 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         FbldMarkup* str = Eval(markup->markups.xs[0], env);
 
         int c = HeadOf(str);
-        assert(c != -1 && c != 0 && "TODO?");
+        if (c == 0) {
+          return str;
+        }
+
+        if (c == -1) {
+          FbldError(FbldMarkupLoc(str), "argument to @head not evaluated");
+          return NULL;
+        }
 
         char plain[] = {(char)c, '\0'};
         FbldMarkup* result = malloc(sizeof(FbldMarkup));
