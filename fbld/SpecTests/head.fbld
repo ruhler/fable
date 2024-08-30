@@ -1,5 +1,13 @@
 @test no-error @@
 
-Test of the head builtin.
+Basic use of head builtin:
 
 @assert_eq[@head[hello]][h]
+
+Regression test for a bug where head didn't work properly if its argument was
+represented as a sequence internally:
+
+@let[h][h] @@
+@let[i][i] @@
+@assert_eq[@head[@h@i]][h]
+

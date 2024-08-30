@@ -3,7 +3,7 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
- - Implement @ifneq builtin.
+ - Avoid constructing markups with singleton sequences?
  - Have a way to add dynamic info to fbld error messages, like '%s' format
    string.
  - Test that the correct variable is used in case of shadowing in let

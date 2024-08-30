@@ -57,6 +57,23 @@ FbldMarkup* FbldCopyMarkup(FbldMarkup* markup)
   return n;
 }
 
+// See documentation in fbld.h
+FbldLoc FbldMarkupLoc(FbldMarkup* markup)
+{
+  switch (markup->tag) {
+    case FBLD_MARKUP_PLAIN: return markup->text->loc;
+    case FBLD_MARKUP_COMMAND: return markup->text->loc;
+    case FBLD_MARKUP_SEQUENCE: {
+      // TODO: Don't assume markup is non-empty.
+      assert(markup->markups.size > 0 && "TODO");
+      return FbldMarkupLoc(markup->markups.xs[0]);
+    }
+  }
+
+  assert(false && "Unreachable");
+  return markup->text->loc;
+}
+
 /**
  * @func[TextOfMarkup] Helper function for FbldTextOfMarkup
  *  @arg[markup] Markup to convert.

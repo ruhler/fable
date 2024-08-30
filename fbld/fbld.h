@@ -113,6 +113,14 @@ FbldMarkup* FbldParse(const char** inputs);
 FbldMarkup* FbldEval(FbldMarkup* markup);
 
 /**
+ * @func[FbldMarkupLoc] Returns the location of the markup.
+ *  @arg[FbldMarkup*][markup] The markup to get the location from.
+ *  @returns[FbldLoc] The location of the markup.
+ *  @sideeffects None
+ */
+FbldLoc FbldMarkupLoc(FbldMarkup* markup);
+
+/**
  * @func[FbldTextOfMarkup] Converts markup to text.
  *  @arg[FbldMarkup*][markup] The markup to convert.
  *  @returns[FbldText*] Text version of the markup.

@@ -290,11 +290,10 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         int c = HeadOf(str);
         assert(c != -1 && c != 0 && "TODO?");
 
-        // TODO: Fix the location of the result.
         char plain[] = {(char)c, '\0'};
         FbldMarkup* result = malloc(sizeof(FbldMarkup));
         result->tag = FBLD_MARKUP_PLAIN;
-        result->text = FbldNewText(str->text->loc, plain);
+        result->text = FbldNewText(FbldMarkupLoc(str), plain);
         FbldInitVector(result->markups);
         FbldFreeMarkup(str);
         return result;
