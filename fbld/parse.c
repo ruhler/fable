@@ -504,11 +504,19 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       lex->indent++;
       struct { size_t size; char* xs; } chars;
       FbldInitVector(chars);
-      while (!IsEnd(lex) && !(lex->loc.column == 1 && Is(lex, "\n"))) {
+      while (!IsEnd(lex)) {
         FbldAppendToVector(chars, Char(lex));
         Advance(lex);
       }
       lex->indent--;
+
+      // Strip any trailing blank lines.
+      while (chars.size > 1
+          && chars.xs[chars.size-1] == '\n'
+          && chars.xs[chars.size-2] == '\n') {
+        chars.size--;
+      }
+
       FbldAppendToVector(chars, '\0');
       FbldMarkup* arg = malloc(sizeof(FbldMarkup));
       arg->tag = FBLD_MARKUP_PLAIN;

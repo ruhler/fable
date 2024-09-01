@@ -2,7 +2,9 @@
 
 Test for next line literal.
 
-@assert_eq[a\@bc\@\@\n] @
+@assert_eq[a\@bc\@\@\n\nq\@ddef\n] @
  a@bc@@
+
+ q@ddef
 
 End of test.
