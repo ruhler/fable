@@ -18,4 +18,10 @@ not the scope of the caller.
  @define[c][] DDDD @@
  @foo[hello][@a]
 
+Test use of recursive definitions:
+
+@assert_eq[done]
+ @define[foo][x] @ifeq[@x][a][done][@foo[a]] @@
+ @foo[hello]
+
 End of tests.

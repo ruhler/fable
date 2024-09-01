@@ -168,7 +168,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           }
 
           Env envs[e->args.size];
-          Env* next = e->next;
+          Env* next = e;
           for (size_t i = 0; i < e->args.size; ++i) {
             envs[i].name = e->args.xs[i];
             envs[i].args.xs = NULL;
