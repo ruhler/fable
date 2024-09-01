@@ -1,0 +1,21 @@
+@test no-error @@
+
+Test that local variables shadow global variables:
+
+@assert_eq[hello,AAAA,CCCC]
+ @define[a][] AAAA @@
+ @define[c][] CCCC @@
+ @define[foo][a b] @a,@b,@c @@
+ @foo[hello][@a]
+
+Test that the body of a function is executed in the scope where it is defined,
+not the scope of the caller.
+
+@assert_eq[hello,AAAA,CCCC]
+ @define[a][] AAAA @@
+ @define[c][] CCCC @@
+ @define[foo][a b] @a,@b,@c @@
+ @define[c][] DDDD @@
+ @foo[hello][@a]
+
+End of tests.

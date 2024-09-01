@@ -150,7 +150,7 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b)
 
 FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 {
-  printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
+  // printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
 
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
@@ -167,10 +167,8 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
             return NULL;
           }
 
-          // TODO: The body should be evaluated in the function's scope, not
-          // the caller's scope, right?
           Env envs[e->args.size];
-          Env* next = env;
+          Env* next = e->next;
           for (size_t i = 0; i < e->args.size; ++i) {
             envs[i].name = e->args.xs[i];
             envs[i].args.xs = NULL;

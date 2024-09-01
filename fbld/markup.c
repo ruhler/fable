@@ -64,8 +64,11 @@ FbldLoc FbldMarkupLoc(FbldMarkup* markup)
     case FBLD_MARKUP_PLAIN: return markup->text->loc;
     case FBLD_MARKUP_COMMAND: return markup->text->loc;
     case FBLD_MARKUP_SEQUENCE: {
-      // TODO: Don't assume markup is non-empty.
-      assert(markup->markups.size > 0 && "TODO");
+      if (markup->markups.size == 0) {
+        // TODO: Track locations properly in this case.
+        FbldLoc loc = { .file = "???", .line = 1, .column = 1 };
+        return loc;
+      }
       return FbldMarkupLoc(markup->markups.xs[0]);
     }
   }
@@ -110,7 +113,7 @@ static void TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
 
     case FBLD_MARKUP_COMMAND: {
       FbldError(markup->text->loc, "expected plain text, but found command");
-      break;
+      return;
     }
 
     case FBLD_MARKUP_SEQUENCE: {
@@ -129,6 +132,9 @@ FbldText* FbldTextOfMarkup(FbldMarkup* markup)
   FbldText* text = NULL;
   size_t capacity = 0;
   TextOfMarkup(markup, &text, &capacity);
+  if (text == NULL) {
+    return FbldNewText(FbldMarkupLoc(markup), "");
+  }
   return text;
 }
 
