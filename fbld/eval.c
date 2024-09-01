@@ -150,7 +150,7 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b)
 
 FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 {
-  // printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
+  printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
 
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
@@ -209,28 +209,31 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           return NULL;
         }
 
-        FbldMarkup* name = markup->markups.xs[0];
-        FbldMarkup* args = markup->markups.xs[1];
+        FbldMarkup* name = Eval(markup->markups.xs[0], env);
+        FbldText* name_text = FbldTextOfMarkup(name);
+        FbldFreeMarkup(name);
+
+        FbldMarkup* args = Eval(markup->markups.xs[1], env);
+        FbldText* args_text = FbldTextOfMarkup(args);
+        FbldFreeMarkup(args);
+
         FbldMarkup* def = markup->markups.xs[2];
         FbldMarkup* body = markup->markups.xs[3];
 
-        assert(name->tag == FBLD_MARKUP_PLAIN && "TODO");
-        assert(args->tag == FBLD_MARKUP_PLAIN && "TODO");
-
         Env nenv;
-        nenv.name = name->text;
+        nenv.name = name_text;
         nenv.body = def;
         nenv.next = env;
 
         FbldInitVector(nenv.args);
-        char buf[strlen(args->text->str) + 1];
+        char buf[strlen(args_text->str) + 1];
         size_t i = 0;
-        for (const char* p = args->text->str; *p != '\0'; p++) {
+        for (const char* p = args_text->str; *p != '\0'; p++) {
           if (isspace(*p)) {
             if (i > 0) {
               // TODO: Pick a better location here.
               buf[i] = '\0';
-              FbldText* text = FbldNewText(args->text->loc, buf);
+              FbldText* text = FbldNewText(args_text->loc, buf);
               FbldAppendToVector(nenv.args, text);
               i = 0;
             }
@@ -244,11 +247,13 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         if (i > 0) {
           // TODO: Pick a better location here.
           buf[i] = '\0';
-          FbldText* text = FbldNewText(args->text->loc, buf);
+          FbldText* text = FbldNewText(args_text->loc, buf);
           FbldAppendToVector(nenv.args, text);
         }
 
         FbldMarkup* result = Eval(body, &nenv);
+        free(name_text);
+        free(args_text);
 
         for (size_t j = 0; j < nenv.args.size; ++j) {
           free(nenv.args.xs[j]);

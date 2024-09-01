@@ -3,8 +3,8 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
- - Add test for parsing of next line literal with blank lines inside
-   And/or test for nesting levels of next line args and next line literals.
+ - Identify, test, and fix memory leak / infinite loop in fbld.fbld
+   processing. Maybe need to evaluate body in function's scope, not callers?
  - Avoid constructing markups with singleton sequences?
  - Have a way to add dynamic info to fbld error messages, like '%s' format
    string.
