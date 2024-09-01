@@ -3,6 +3,9 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
+ - Figure out why fbld.fbld isn't finishing.
+   Is it just too slow and too much of a memory hog?
+   Are we leaking memory? Maybe run spec tests with valgrind?
  - Figure out how to associate a location with empty markup.
  - Avoid constructing markups with singleton sequences?
  - Have a way to add dynamic info to fbld error messages, like '%s' format

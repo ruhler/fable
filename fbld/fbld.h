@@ -6,6 +6,7 @@
 #ifndef _FBLD_H_
 #define _FBLD_H_
 
+#include <stdbool.h>    // for bool
 #include <stddef.h>     // for size_t
 
 typedef struct FbldMarkup FbldMarkup;
@@ -101,6 +102,7 @@ FbldMarkup* FbldParse(const char** inputs);
 /**
  * @func[FbldEval] Evaluates an fbld document.
  *  @arg[FbldMarkup*][markup] The markup to evaluate.
+ *  @arg[bool][debug] Set to true to enable debug log output.
  *
  *  @returns[FbldMarkup*] The evaluated markup.
  *
@@ -110,7 +112,7 @@ FbldMarkup* FbldParse(const char** inputs);
  *    The user is responsible for calling FbldFreeMarkup on the returned
  *    markup object when no longer needed.
  */
-FbldMarkup* FbldEval(FbldMarkup* markup);
+FbldMarkup* FbldEval(FbldMarkup* markup, bool debug);
 
 /**
  * @func[FbldMarkupLoc] Returns the location of the markup.

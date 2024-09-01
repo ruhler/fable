@@ -148,9 +148,11 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b)
   return teq;
 }
 
-FbldMarkup* Eval(FbldMarkup* markup, Env* env)
+FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
 {
-  // printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
+  if (debug) {
+    printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
+  }
 
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
@@ -173,12 +175,12 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
             envs[i].name = e->args.xs[i];
             envs[i].args.xs = NULL;
             envs[i].args.size = 0;
-            envs[i].body = Eval(markup->markups.xs[i], env);
+            envs[i].body = Eval(markup->markups.xs[i], env, debug);
             envs[i].next = next;
             next = envs + i;
           }
 
-          FbldMarkup* result = Eval(e->body, next);
+          FbldMarkup* result = Eval(e->body, next, debug);
           for (size_t i = 0; i < e->args.size; ++i) {
             FbldFreeMarkup(envs[i].body);
           }
@@ -192,7 +194,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           return NULL;
         }
 
-        FbldMarkup* arg = Eval(markup->markups.xs[0], env);
+        FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
         FbldText* arg_text = FbldTextOfMarkup(arg);
         FbldFreeMarkup(arg);
 
@@ -207,11 +209,11 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           return NULL;
         }
 
-        FbldMarkup* name = Eval(markup->markups.xs[0], env);
+        FbldMarkup* name = Eval(markup->markups.xs[0], env, debug);
         FbldText* name_text = FbldTextOfMarkup(name);
         FbldFreeMarkup(name);
 
-        FbldMarkup* args = Eval(markup->markups.xs[1], env);
+        FbldMarkup* args = Eval(markup->markups.xs[1], env, debug);
         FbldText* args_text = FbldTextOfMarkup(args);
         FbldFreeMarkup(args);
 
@@ -249,7 +251,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           FbldAppendToVector(nenv.args, text);
         }
 
-        FbldMarkup* result = Eval(body, &nenv);
+        FbldMarkup* result = Eval(body, &nenv, debug);
         free(name_text);
         free(args_text);
 
@@ -279,7 +281,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
         nenv.next = env;
         FbldInitVector(nenv.args);
 
-        return Eval(body, &nenv);
+        return Eval(body, &nenv, debug);
       }
 
       if (strcmp(command, "head") == 0) {
@@ -288,7 +290,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           return NULL;
         }
 
-        FbldMarkup* str = Eval(markup->markups.xs[0], env);
+        FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
 
         int c = HeadOf(str);
         if (c == 0) {
@@ -315,7 +317,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
           return NULL;
         }
 
-        FbldMarkup* str = Eval(markup->markups.xs[0], env);
+        FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
 
         FbldMarkup* result = TailOf(str);
         if (result == NULL) {
@@ -333,16 +335,16 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 
         // TODO: Handle the case where arguments can't be compared for
         // equality.
-        FbldMarkup* a = Eval(markup->markups.xs[0], env);
-        FbldMarkup* b = Eval(markup->markups.xs[1], env);
+        FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
+        FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
         bool eq = Eq(a, b);
         FbldFreeMarkup(a);
         FbldFreeMarkup(b);
 
         if (eq) {
-          return Eval(markup->markups.xs[2], env);
+          return Eval(markup->markups.xs[2], env, debug);
         }
-        return Eval(markup->markups.xs[3], env);
+        return Eval(markup->markups.xs[3], env, debug);
       }
 
       if (strcmp(command, "ifneq") == 0) {
@@ -353,16 +355,16 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
 
         // TODO: Handle the case where arguments can't be compared for
         // equality.
-        FbldMarkup* a = Eval(markup->markups.xs[0], env);
-        FbldMarkup* b = Eval(markup->markups.xs[1], env);
+        FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
+        FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
         bool eq = Eq(a, b);
         FbldFreeMarkup(a);
         FbldFreeMarkup(b);
 
         if (eq) {
-          return Eval(markup->markups.xs[3], env);
+          return Eval(markup->markups.xs[3], env, debug);
         }
-        return Eval(markup->markups.xs[2], env);
+        return Eval(markup->markups.xs[2], env, debug);
       }
 
       FbldError(markup->text->loc, "unsupported command");
@@ -375,7 +377,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
       m->text = NULL;
       FbldInitVector(m->markups);
       for (size_t i = 0; i < markup->markups.size; ++i) {
-        FbldAppendToVector(m->markups, Eval(markup->markups.xs[i], env));
+        FbldAppendToVector(m->markups, Eval(markup->markups.xs[i], env, debug));
       }
       return m;
     }
@@ -384,7 +386,7 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env)
   return NULL;
 }
 
-FbldMarkup* FbldEval(FbldMarkup* markup)
+FbldMarkup* FbldEval(FbldMarkup* markup, bool debug)
 {
-  return Eval(markup, NULL);
+  return Eval(markup, NULL, debug);
 }
