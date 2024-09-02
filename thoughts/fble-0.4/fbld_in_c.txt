@@ -404,3 +404,30 @@ Based on switching the build system to use the C implementation by default,
 the next place we run into issue is the following:
 
 ./out/fbld/fbld ./fbld/nobuildstamp.fbld ./out/fbld/version.fbld ./fbld/html.fbld ./fbld/fbld.fbld > out/fbld.html
+
+---
+
+I'm able to convert fbld.fbld now, it's just a little bit slower than I
+expected. Patience. Let's see what, if anything, breaks next.
+
+Looks like all the .html documentation gets through without error. Let's
+compare contents to see if anything is different than we expect.
+
+Looks like it's working. That's cool.
+
+Next step is to get fbld in c working on all the other docs I build. After I
+get that far, do some performance investigation to see if I can speed things
+up.
+
+It feels like current fbld_in_c is the same order of magnitude runtime and
+memory use as the original fbld in fble. That's surprising to me. But it's
+early days for the C implementation.
+
+After the initial performance investigation, there are two different
+directions we could go:
+1. Fork fbld off from fble. Fix the build dependencies, cycles, etc.
+2. Rewrite the fbld language.
+
+Not sure which makes most sense right now. Either way, it's nice to be able to
+run everything on both versions of fbld, to verify they are both correct and
+be able to compare performance.
