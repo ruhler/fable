@@ -58,6 +58,8 @@ PreLookup = (Env@ env, Markup@ markup) {
     command: {
       List@<Markup@> args = PreLookups(env, markup.command.args);
       Maybe@<Impl@> impl = {
+        # TODO: If the command is builtin @define or @let, remove the
+        # now-shadowed variable from env.
         markup.command.impl.?(just: markup.command.impl);
         LookupEnv(env, markup.command.name.text);
       };

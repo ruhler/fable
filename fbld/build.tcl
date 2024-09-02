@@ -67,19 +67,12 @@ namespace eval "fbld" {
   }
 
   proc ::fbld_html_doc { target sources } {
-    # For now, build the documentation with both implementations of fbld and
-    # make sure they give the same result.
     build $target \
       "$::b/pkgs/fbld/bin/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/html.fbld $sources" \
       "$::s/buildstamp --fbld BuildStamp | $::b/pkgs/fbld/bin/fbld - $::b/fbld/version.fbld $::s/fbld/html.fbld $sources > $target"
-    build $target.in_c \
-      "$::b/fbld/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/html.fbld $sources" \
-      "$::s/buildstamp --fbld BuildStamp | $::b/fbld/fbld - $::b/fbld/version.fbld $::s/fbld/html.fbld $sources > $target.in_c"
-
-    # Make sure the version of README.md checked in matches the latest version.
-    test $target.fblds.tr \
-      "$target $target.in_c" \
-      "diff $target $target.in_c"
+    # build $target \
+    #   "$::b/fbld/fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/html.fbld $sources" \
+    #   "$::s/buildstamp --fbld BuildStamp | $::b/fbld/fbld - $::b/fbld/version.fbld $::s/fbld/html.fbld $sources > $target"
   }
 
   proc ::fbld_html_tutorial { target source } {

@@ -24,4 +24,21 @@ Test use of recursive definitions:
  @define[foo][x] @ifeq[@x][a][done][@foo[a]] @@
  @foo[hello]
 
+Test that definitions shadow previous definitions.
+
+@assert_eq[B: Hey]
+ @define[foo][text][A: @text] @@
+ @define[foo][text][B: @text] @@
+ @foo[Hey]
+
+Regression test for a bug where we access the wrong definition of a function:
+
+@assert_eq[B: Hello]
+ @define[foo][text][A: @text] @@
+ @define[doc][body]
+  @define[foo][text][B: @text] @@
+  @foo[@body]
+ @@
+ @doc[Hello]
+
 End of tests.

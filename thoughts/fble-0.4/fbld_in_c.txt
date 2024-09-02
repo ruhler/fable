@@ -431,3 +431,25 @@ directions we could go:
 Not sure which makes most sense right now. Either way, it's nice to be able to
 run everything on both versions of fbld, to verify they are both correct and
 be able to compare performance.
+
+---
+
+Oops. I was running the wrong command. Looks like there are some differences
+in the new and old implementation. Good. Let's chase them down.
+
+Two issues so far:
+* Build stamps don't match given incremental build and I committed some
+  things.
+ - This is an issue with the test, not the program.
+* The original fbld is wrapping the entire html document in <p></p>
+ - Seems like original fbld is outputting the wrong thing?
+ - But also, they should be outputting the same thing. I should be able to
+   write a spec test to catch this difference in behavior.
+
+Looks like a bug in the original fbld. Interesting.
+
+I think what's happening is we are doing a prelookup for function @foo in the
+body of the definition of @doc, without realizing that foo is itself defined.
+
+So, be very careful when going into the body of an @define for prelookup. We
+can't blindly substitute into all the arguments of the function.
