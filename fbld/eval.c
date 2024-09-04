@@ -367,6 +367,18 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
         return Eval(markup->markups.xs[2], env, debug);
       }
 
+      if (strcmp(command, "eval") == 0) {
+        if (markup->markups.size != 1) {
+          FbldError(markup->text->loc, "expected 1 argument to @eval");
+          return NULL;
+        }
+
+        FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
+        FbldMarkup* result = Eval(arg, env, debug);
+        FbldFreeMarkup(arg);
+        return result;
+      }
+
       // Unknown command. Leave it unevaluated for now.
       return FbldCopyMarkup(markup);
     }
