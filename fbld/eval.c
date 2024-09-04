@@ -367,8 +367,8 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
         return Eval(markup->markups.xs[2], env, debug);
       }
 
-      FbldError(markup->text->loc, "unsupported command");
-      return NULL;
+      // Unknown command. Leave it unevaluated for now.
+      return FbldCopyMarkup(markup);
     }
 
     case FBLD_MARKUP_SEQUENCE: {

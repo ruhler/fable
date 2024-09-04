@@ -8,7 +8,7 @@ Things to consider doing for the fble-0.4 release.
  - Avoid constructing markups with singleton sequences?
  - Have a way to add dynamic info to fbld error messages, like '%s' format
    string.
-    Use it for 'unsupported command' error message.
+    Use it for expected plain text, but found command.
  - Test that the correct variable is used in case of shadowing in let
    Specifically that the def argument to let is evaluated before the body.
  - Test for @define and @let names to be expressions instead of literals.

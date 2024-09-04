@@ -42,7 +42,7 @@ Eval = (Env@ env, Markup@ markup) {
         cmd.impl.?(just: cmd.impl);
         LookupEnv(env, cmd.name.text);
       };
-      impl.?(nothing: r.return(Markup@(command: cmd)));
+      impl.?(nothing: r.return(markup));
       impl.just(env, cmd);
     },
     sequence: {
