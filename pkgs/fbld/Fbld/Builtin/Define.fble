@@ -12,6 +12,7 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -56,10 +57,20 @@ PreLookup = (Env@ env, Markup@ markup) {
     empty: markup,
     plain: markup,
     command: {
+      /Core/String/Eq%.Eq(Str|'define', markup.command.name.text).?(true: {
+        # Avoid doing prelookup in the body of @define, in case it references
+        # the new function being defined.
+        markup;
+      });
+
+      /Core/String/Eq%.Eq(Str|'let', markup.command.name.text).?(true: {
+        # Avoid doing prelookup in the body of @let, in case it references
+        # the new value being defined.
+        markup;
+      });
+
       List@<Markup@> args = PreLookups(env, markup.command.args);
       Maybe@<Impl@> impl = {
-        # TODO: If the command is builtin @define or @let, remove the
-        # now-shadowed variable from env.
         markup.command.impl.?(just: markup.command.impl);
         LookupEnv(env, markup.command.name.text);
       };

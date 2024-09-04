@@ -4,7 +4,6 @@ Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
  - Test for @eval and @plain builtins.
- - Fix prelookup bug in fble based fbld implementation.
  - Figure out how to associate a location with empty markup.
  - Avoid constructing markups with singleton sequences?
  - Have a way to add dynamic info to fbld error messages, like '%s' format
