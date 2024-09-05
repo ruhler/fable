@@ -1,0 +1,11 @@
+@test no-error @@
+
+Basic test for plain builtin:
+
+@assert_eq[GX.]
+ @let[z][AB@g[X]CDE.] @@
+ @define[f][x][] @@
+ @define[g][x] G@x. @@
+ @eval[@plain[f][@z]]
+
+End of tests.

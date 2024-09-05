@@ -26,6 +26,8 @@ typedef struct Env {
 static int HeadOf(FbldMarkup* m);
 static FbldMarkup* TailOf(FbldMarkup* m);
 static bool Eq(FbldMarkup* a, FbldMarkup* b);
+static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
+static FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug);
 
 /**
  * @func[HeadOf] Returns first character of markup.
@@ -148,7 +150,39 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b)
   return teq;
 }
 
-FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
+static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
+{
+  switch (m->tag) {
+    case FBLD_MARKUP_PLAIN: {
+      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      n->tag = FBLD_MARKUP_COMMAND;
+      n->text = FbldNewText(m->text->loc, f);
+      FbldInitVector(n->markups);
+      FbldAppendToVector(n->markups, FbldCopyMarkup(m));
+      return n;
+    }
+
+    case FBLD_MARKUP_COMMAND: {
+      return FbldCopyMarkup(m);
+    }
+
+    case FBLD_MARKUP_SEQUENCE: {
+      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      n->tag = m->tag;
+      n->text = NULL;
+      FbldInitVector(n->markups);
+      for (size_t i = 0; i < m->markups.size; ++i) {
+        FbldAppendToVector(n->markups, MapPlain(f, m->markups.xs[i]));
+      }
+      return n;
+    }
+  }
+
+  assert(false && "unreachable");
+  return NULL;
+}
+
+static FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
 {
   if (debug) {
     printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
@@ -376,6 +410,27 @@ FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
         FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
         FbldMarkup* result = Eval(arg, env, debug);
         FbldFreeMarkup(arg);
+        return result;
+      }
+
+      if (strcmp(command, "plain") == 0) {
+        if (markup->markups.size != 2) {
+          FbldError(markup->text->loc, "expected 2 argument to @plain");
+          return NULL;
+        }
+
+        FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
+        FbldText* arg_text = FbldTextOfMarkup(arg);
+        FbldFreeMarkup(arg);
+
+        FbldMarkup* evaled = Eval(markup->markups.xs[1], env, debug);
+
+        FbldMarkup* plained = MapPlain(arg_text->str, evaled);
+        FbldFreeMarkup(evaled);
+        free(arg_text);
+
+        FbldMarkup* result = Eval(plained, env, debug);
+        FbldFreeMarkup(plained);
         return result;
       }
 

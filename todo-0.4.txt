@@ -25,6 +25,9 @@ Things to consider doing for the fble-0.4 release.
  - Add proper doc comments on all the code.
 
 * Fbld
+ - The @plain builtin is really strange. I had trouble coming up with a test
+   case for it. Consider if there's some way we can get rid of that or make it
+   more sensible.
  - Clarify in spec if @if[a@x][b@x] ... is an error or not.
    Or redesign semantics of fbld to avoid that question entirely.
 
