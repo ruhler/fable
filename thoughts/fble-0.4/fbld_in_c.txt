@@ -453,3 +453,60 @@ body of the definition of @doc, without realizing that foo is itself defined.
 
 So, be very careful when going into the body of an @define for prelookup. We
 can't blindly substitute into all the arguments of the function.
+
+---
+
+Looks like fbld in c can now run on everything we use fbld for, except for the
+fble spec, which seg faults. I assume due to smashing the stack in a deep
+recursive call. Maybe I can add a test case for that somehow?
+
+../buildstamp --fbld BuildStamp | ./fbld/fbld - ./fbld/version.fbld
+../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld >
+./www/spec/fble.html
+
+I also would like to double check the contents of the generated files match
+what's expected.
+
+---
+
+The contents of fbld in c all match fbld in fble. We just need to debug that
+last fble.fble case. Let's do it.
+
+While I wait for that, let me summarize the programming in C experience:
+
+C puts you in a specific box of things that goes fast: fixed width integers,
+avoid dynamic memory allocations, don't worry about propagating errors, pass
+simple values to and from functions. It makes it easy to work within that
+specific box, but as soon as you want to go outside, it gets difficult.
+
+For example, aside from some tricky parsing parsing, the first implementation
+of fbld in c isn't bad. Except:
+* It's annoying to implement and use FbldCopyMarkup everywhere. Feels tedious
+  and slow.
+* Errors abort the program rather than propagate cleanly. That's fine I guess
+  for this one-off program. But it won't work if we want to make this a
+  reusable library. As soon as we want to propagate error messages cleanly, we
+  have to worry a lot more about managing and cleaning up allocated memory as
+  we go. And checking everywhere for case of error.
+* I make heavy use of recursion that could smash the stack. I need to change
+  all of those to non-recursive calls, which is a big pain, because it means
+  managing memory dynamically and tracking state explicitly in memory instead
+  of implicitly in control.
+* I have a lot of TODO and asserts around corner cases I didn't feel like
+  handling in the first draft.
+
+I didn't end up having to implement garbage collection in C, which I was
+originally worried about. Because in this case ownership of objects can be
+managed via stack. The lifetimes of objects are all clearly defined and
+scoped.
+
+---
+
+The stack smashing issue is in Eval of EscHtmlChar, going through ifeq,
+sequence, EscHtmlChar, EscHtml, etc. The solution is to make Eval
+non-recursive, ugh. To test it, presumably I can do a recursive function, say
+10 deep call, and have a long string to go through it?
+
+I have the test case now. I don't know a good way to solve this though. It's
+like I need to completely rewrite the evaluator to break things up into little
+pieces, manage memory better in case of user command tail calls. Ugh.

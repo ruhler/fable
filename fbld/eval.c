@@ -196,6 +196,7 @@ static FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
     case FBLD_MARKUP_COMMAND: {
       const char* command = markup->text->str;
 
+      // Check for user defined command.
       for (Env* e = env; e != NULL; e = e->next) {
         if (strcmp(command, e->name->str) == 0) {
           if (markup->markups.size != e->args.size) {
