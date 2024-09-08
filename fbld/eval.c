@@ -11,23 +11,80 @@
 
 /**
  * @struct[Env] Environment for execution.
+ *  @field[size_t][refcount] Reference count.
  *  @field[FbldText*][name] The name of the first defined function.
  *  @field[FbldTextV][args] Names of arguments to the first defined function.
  *  @field[FbldMarkup*][body] Body of the first defined function.
  *  @field[Env*][next] Rest of the defined functions or NULL.
  */
 typedef struct Env {
+  size_t refcount;
   FbldText* name;
   FbldTextV args;
   FbldMarkup* body;
   struct Env* next;
 } Env;
 
+/**
+ * Types of evaluation commands.
+ */
+typedef enum {
+  EVAL_CMD
+} CmdTag;
+
+/**
+ * @struct[Cmd] Base type for an evaluation command to execute.
+ *  @field[CmdTag][tag] The type of command.
+ *  @field[Cmd*][next] The next command to execute.
+ */
+typedef struct Cmd {
+  CmdTag tag;
+  struct Cmd* next;
+} Cmd;
+
+// Evaluates 'markup' in the environment 'env', storing the result in 'dest.'.
+// The EvalCmd owns env and markup.
+typedef struct {
+  Cmd _base;
+  Env* env;
+  FbldMarkup* markup;
+  FbldMarkup** dest;
+} EvalCmd;
+
+static Env* CopyEnv(Env* env);
+static void FreeEnv(Env* env);
+
 static int HeadOf(FbldMarkup* m);
 static FbldMarkup* TailOf(FbldMarkup* m);
 static bool Eq(FbldMarkup* a, FbldMarkup* b);
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
-static FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug);
+static void Eval(Cmd* cmd, bool debug);
+
+static Env* CopyEnv(Env* env)
+{
+  if (env != NULL) {
+    env->refcount++;
+  }
+  return env;
+}
+
+static void FreeEnv(Env* env)
+{
+  while (env != NULL) {
+    if (--env->refcount > 0) {
+      return;
+    }
+
+    free(env->name);
+    for (size_t i = 0; i < env->args.size; ++i) {
+      free(env->args.xs[i]);
+    }
+    free(env->args.xs);
+    Env* next = env->next;
+    free(env);
+    env = next;
+  }
+}
 
 /**
  * @func[HeadOf] Returns first character of markup.
@@ -182,279 +239,325 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
   return NULL;
 }
 
-static FbldMarkup* Eval(FbldMarkup* markup, Env* env, bool debug)
+static void Eval(Cmd* cmd, bool debug)
 {
-  if (debug) {
-    printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
-  }
-
-  switch (markup->tag) {
-    case FBLD_MARKUP_PLAIN: {
-      return FbldCopyMarkup(markup);
-    }
-
-    case FBLD_MARKUP_COMMAND: {
-      const char* command = markup->text->str;
-
-      // Check for user defined command.
-      for (Env* e = env; e != NULL; e = e->next) {
-        if (strcmp(command, e->name->str) == 0) {
-          if (markup->markups.size != e->args.size) {
-            FbldError(markup->text->loc, "wrong number of arguments");
-            return NULL;
+  while (cmd != NULL) {
+    switch (cmd->tag) {
+      case EVAL_CMD: {
+        EvalCmd* c = (EvalCmd*)cmd;
+        FbldMarkup* markup = c->markup;
+        switch (markup->tag) {
+          case FBLD_MARKUP_PLAIN: {
+            *(c->dest) = markup;
+            FreeEnv(c->env);
+            cmd = c->_base.next;
+            free(c);
+            break;
           }
 
-          Env envs[e->args.size];
-          Env* next = e;
-          for (size_t i = 0; i < e->args.size; ++i) {
-            envs[i].name = e->args.xs[i];
-            envs[i].args.xs = NULL;
-            envs[i].args.size = 0;
-            envs[i].body = Eval(markup->markups.xs[i], env, debug);
-            envs[i].next = next;
-            next = envs + i;
-          }
+          case FBLD_MARKUP_COMMAND: {
+            const char* command = markup->text->str;
 
-          FbldMarkup* result = Eval(e->body, next, debug);
-          for (size_t i = 0; i < e->args.size; ++i) {
-            FbldFreeMarkup(envs[i].body);
-          }
-          return result;
-        }
-      }
+            // Check for user defined command.
+            for (Env* e = c->env; e != NULL; e = e->next) {
+              if (strcmp(command, e->name->str) == 0) {
+                if (markup->markups.size != e->args.size) {
+                  FbldError(markup->text->loc, "wrong number of arguments");
+                }
 
-      if (strcmp(command, "error") == 0) {
-        if (markup->markups.size != 1) {
-          FbldError(markup->text->loc, "expected 1 argument to @error");
-          return NULL;
-        }
+                Env* next = CopyEnv(e);
 
-        FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
-        FbldText* arg_text = FbldTextOfMarkup(arg);
-        FbldFreeMarkup(arg);
+                for (size_t i = 0; i < e->args.size; ++i) {
+                  // Add arg to the envrionment for executing the body.
+                  Env* ne = malloc(sizeof(Env));
+                  ne->refcount = 1;
+                  ne->name = FbldNewText(e->args.xs[i]->loc, e->args.xs[i]->str);
+                  ne->args.xs = NULL;
+                  ne->args.size = 0;
+                  ne->body = NULL;
+                  ne->next = next;
+                  next = ne;
 
-        FbldError(markup->text->loc, arg_text->str);
-        free(arg_text);
-        return NULL;
-      }
+                  // Add a command to evaluate the argument.
+                  EvalCmd* ec = malloc(sizeof(EvalCmd));
+                  ec->_base.tag = EVAL_CMD;
+                  ec->_base.next = cmd;
+                  ec->env = CopyEnv(c->env);
+                  ec->markup = FbldCopyMarkup(markup->markups.xs[i]);
+                  ec->dest = &ne->body;
+                  cmd = &ec->_base;
+                }
 
-      if (strcmp(command, "define") == 0) {
-        if (markup->markups.size != 4) {
-          FbldError(markup->text->loc, "expected 4 arguments to @define");
-          return NULL;
-        }
-
-        FbldMarkup* name = Eval(markup->markups.xs[0], env, debug);
-        FbldText* name_text = FbldTextOfMarkup(name);
-        FbldFreeMarkup(name);
-
-        FbldMarkup* args = Eval(markup->markups.xs[1], env, debug);
-        FbldText* args_text = FbldTextOfMarkup(args);
-        FbldFreeMarkup(args);
-
-        FbldMarkup* def = markup->markups.xs[2];
-        FbldMarkup* body = markup->markups.xs[3];
-
-        Env nenv;
-        nenv.name = name_text;
-        nenv.body = def;
-        nenv.next = env;
-
-        FbldInitVector(nenv.args);
-        char buf[strlen(args_text->str) + 1];
-        size_t i = 0;
-        for (const char* p = args_text->str; *p != '\0'; p++) {
-          if (isspace(*p)) {
-            if (i > 0) {
-              // TODO: Pick a better location here.
-              buf[i] = '\0';
-              FbldText* text = FbldNewText(args_text->loc, buf);
-              FbldAppendToVector(nenv.args, text);
-              i = 0;
+                // Replace the evaluation command for the application with one
+                // to evaluate the body.
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                c->env = next;
+                c->markup = FbldCopyMarkup(e->body);
+                break;
+              }
             }
-            continue;
+
+            if (strcmp(command, "error") == 0) {
+              if (markup->markups.size != 1) {
+                FbldError(markup->text->loc, "expected 1 argument to @error");
+              }
+
+              assert(false && "TODO: @error");
+              // FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
+              // FbldText* arg_text = FbldTextOfMarkup(arg);
+              // FbldFreeMarkup(arg);
+
+              // FbldError(markup->text->loc, arg_text->str);
+              // free(arg_text);
+              // return NULL;
+            }
+
+            if (strcmp(command, "define") == 0) {
+              if (markup->markups.size != 4) {
+                FbldError(markup->text->loc, "expected 4 arguments to @define");
+              }
+
+              assert(false && "TODO: @define");
+              // FbldMarkup* name = Eval(markup->markups.xs[0], env, debug);
+              // FbldText* name_text = FbldTextOfMarkup(name);
+              // FbldFreeMarkup(name);
+
+              // FbldMarkup* args = Eval(markup->markups.xs[1], env, debug);
+              // FbldText* args_text = FbldTextOfMarkup(args);
+              // FbldFreeMarkup(args);
+
+              // FbldMarkup* def = markup->markups.xs[2];
+              // FbldMarkup* body = markup->markups.xs[3];
+
+              // Env nenv;
+              // nenv.name = name_text;
+              // nenv.body = def;
+              // nenv.next = env;
+
+              // FbldInitVector(nenv.args);
+              // char buf[strlen(args_text->str) + 1];
+              // size_t i = 0;
+              // for (const char* p = args_text->str; *p != '\0'; p++) {
+              //   if (isspace(*p)) {
+              //     if (i > 0) {
+              //       // TODO: Pick a better location here.
+              //       buf[i] = '\0';
+              //       FbldText* text = FbldNewText(args_text->loc, buf);
+              //       FbldAppendToVector(nenv.args, text);
+              //       i = 0;
+              //     }
+              //     continue;
+              //   }
+
+              //   buf[i] = *p;
+              //   i++;
+              // }
+
+              // if (i > 0) {
+              //   // TODO: Pick a better location here.
+              //   buf[i] = '\0';
+              //   FbldText* text = FbldNewText(args_text->loc, buf);
+              //   FbldAppendToVector(nenv.args, text);
+              // }
+
+              // FbldMarkup* result = Eval(body, &nenv, debug);
+              // free(name_text);
+              // free(args_text);
+
+              // for (size_t j = 0; j < nenv.args.size; ++j) {
+              //   free(nenv.args.xs[j]);
+              // }
+              // free(nenv.args.xs);
+
+              // return result;
+            }
+
+            if (strcmp(command, "let") == 0) {
+              if (markup->markups.size != 3) {
+                FbldError(markup->text->loc, "expected 3 arguments to @let");
+              }
+
+              assert(false && "TODO: @let");
+              // FbldMarkup* name = markup->markups.xs[0];
+              // FbldMarkup* def = markup->markups.xs[1];
+              // FbldMarkup* body = markup->markups.xs[2];
+
+              // assert(name->tag == FBLD_MARKUP_PLAIN && "TODO");
+
+              // Env nenv;
+              // nenv.name = name->text;
+              // nenv.body = def;
+              // nenv.next = env;
+              // FbldInitVector(nenv.args);
+
+              // return Eval(body, &nenv, debug);
+            }
+
+            if (strcmp(command, "head") == 0) {
+              if (markup->markups.size != 1) {
+                FbldError(markup->text->loc, "expected 1 arguments to @head");
+              }
+
+              assert(false && "TODO: @head");
+              // FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
+
+              // int c = HeadOf(str);
+              // if (c == 0) {
+              //   return str;
+              // }
+
+              // if (c == -1) {
+              //   FbldError(FbldMarkupLoc(str), "argument to @head not evaluated");
+              //   return NULL;
+              // }
+
+              // char plain[] = {(char)c, '\0'};
+              // FbldMarkup* result = malloc(sizeof(FbldMarkup));
+              // result->tag = FBLD_MARKUP_PLAIN;
+              // result->text = FbldNewText(FbldMarkupLoc(str), plain);
+              // FbldInitVector(result->markups);
+              // FbldFreeMarkup(str);
+              // return result;
+            }
+
+            if (strcmp(command, "tail") == 0) {
+              if (markup->markups.size != 1) {
+                FbldError(markup->text->loc, "expected 1 arguments to @tail");
+              }
+
+              assert(false && "TODO: @tail");
+              // FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
+
+              // FbldMarkup* result = TailOf(str);
+              // if (result == NULL) {
+              //   return str;
+              // }
+              // FbldFreeMarkup(str);
+              // return result;
+            }
+
+            if (strcmp(command, "ifeq") == 0) {
+              if (markup->markups.size != 4) {
+                FbldError(markup->text->loc, "expected 4 arguments to @ifeq");
+              }
+
+              assert(false && "TODO: @ifeq");
+              (void) &Eq;
+
+              // // TODO: Handle the case where arguments can't be compared for
+              // // equality.
+              // FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
+              // FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
+              // bool eq = Eq(a, b);
+              // FbldFreeMarkup(a);
+              // FbldFreeMarkup(b);
+
+              // if (eq) {
+              //   return Eval(markup->markups.xs[2], env, debug);
+              // }
+              // return Eval(markup->markups.xs[3], env, debug);
+            }
+
+            if (strcmp(command, "ifneq") == 0) {
+              if (markup->markups.size != 4) {
+                FbldError(markup->text->loc, "expected 4 arguments to @ifneq");
+              }
+
+              assert(false && "TODO: @ifneq");
+
+              // // TODO: Handle the case where arguments can't be compared for
+              // // equality.
+              // FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
+              // FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
+              // bool eq = Eq(a, b);
+              // FbldFreeMarkup(a);
+              // FbldFreeMarkup(b);
+
+              // if (eq) {
+              //   return Eval(markup->markups.xs[3], env, debug);
+              // }
+              // return Eval(markup->markups.xs[2], env, debug);
+            }
+
+            if (strcmp(command, "eval") == 0) {
+              if (markup->markups.size != 1) {
+                FbldError(markup->text->loc, "expected 1 argument to @eval");
+              }
+
+              assert(false && "TODO: @eval");
+              // FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
+              // FbldMarkup* result = Eval(arg, env, debug);
+              // FbldFreeMarkup(arg);
+              // return result;
+            }
+
+            if (strcmp(command, "plain") == 0) {
+              if (markup->markups.size != 2) {
+                FbldError(markup->text->loc, "expected 2 argument to @plain");
+              }
+
+              assert(false && "TODO: @plain");
+              (void) &MapPlain;
+              // FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
+              // FbldText* arg_text = FbldTextOfMarkup(arg);
+              // FbldFreeMarkup(arg);
+
+              // FbldMarkup* evaled = Eval(markup->markups.xs[1], env, debug);
+
+              // FbldMarkup* plained = MapPlain(arg_text->str, evaled);
+              // FbldFreeMarkup(evaled);
+              // free(arg_text);
+
+              // FbldMarkup* result = Eval(plained, env, debug);
+              // FbldFreeMarkup(plained);
+              // return result;
+            }
+
+            // Unknown command. Leave it unevaluated for now.
+            assert(false && "TODO: unknown cmd");
+            // return FbldCopyMarkup(markup);
           }
 
-          buf[i] = *p;
-          i++;
+          case FBLD_MARKUP_SEQUENCE: {
+            FbldMarkup* m = malloc(sizeof(FbldMarkup));
+            m->tag = FBLD_MARKUP_SEQUENCE;
+            m->text = NULL;
+            m->markups.xs = malloc(markup->markups.size * sizeof(FbldMarkup*));
+            m->markups.size = markup->markups.size;
+            *(c->dest) = m;
+
+            cmd = c->_base.next;
+            for (size_t i = 0; i < markup->markups.size; ++i) {
+              EvalCmd* e = malloc(sizeof(EvalCmd));
+              e->_base.tag = EVAL_CMD;
+              e->_base.next = cmd;
+              e->env = CopyEnv(c->env);
+              e->markup = FbldCopyMarkup(markup->markups.xs[i]);
+              e->dest = m->markups.xs + i;
+              cmd = &e->_base;
+            }
+            FbldFreeMarkup(markup);
+            FreeEnv(c->env);
+            free(c);
+            break;
+          }
         }
-
-        if (i > 0) {
-          // TODO: Pick a better location here.
-          buf[i] = '\0';
-          FbldText* text = FbldNewText(args_text->loc, buf);
-          FbldAppendToVector(nenv.args, text);
-        }
-
-        FbldMarkup* result = Eval(body, &nenv, debug);
-        free(name_text);
-        free(args_text);
-
-        for (size_t j = 0; j < nenv.args.size; ++j) {
-          free(nenv.args.xs[j]);
-        }
-        free(nenv.args.xs);
-
-        return result;
       }
-
-      if (strcmp(command, "let") == 0) {
-        if (markup->markups.size != 3) {
-          FbldError(markup->text->loc, "expected 3 arguments to @let");
-          return NULL;
-        }
-
-        FbldMarkup* name = markup->markups.xs[0];
-        FbldMarkup* def = markup->markups.xs[1];
-        FbldMarkup* body = markup->markups.xs[2];
-
-        assert(name->tag == FBLD_MARKUP_PLAIN && "TODO");
-
-        Env nenv;
-        nenv.name = name->text;
-        nenv.body = def;
-        nenv.next = env;
-        FbldInitVector(nenv.args);
-
-        return Eval(body, &nenv, debug);
-      }
-
-      if (strcmp(command, "head") == 0) {
-        if (markup->markups.size != 1) {
-          FbldError(markup->text->loc, "expected 1 arguments to @head");
-          return NULL;
-        }
-
-        FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
-
-        int c = HeadOf(str);
-        if (c == 0) {
-          return str;
-        }
-
-        if (c == -1) {
-          FbldError(FbldMarkupLoc(str), "argument to @head not evaluated");
-          return NULL;
-        }
-
-        char plain[] = {(char)c, '\0'};
-        FbldMarkup* result = malloc(sizeof(FbldMarkup));
-        result->tag = FBLD_MARKUP_PLAIN;
-        result->text = FbldNewText(FbldMarkupLoc(str), plain);
-        FbldInitVector(result->markups);
-        FbldFreeMarkup(str);
-        return result;
-      }
-
-      if (strcmp(command, "tail") == 0) {
-        if (markup->markups.size != 1) {
-          FbldError(markup->text->loc, "expected 1 arguments to @tail");
-          return NULL;
-        }
-
-        FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
-
-        FbldMarkup* result = TailOf(str);
-        if (result == NULL) {
-          return str;
-        }
-        FbldFreeMarkup(str);
-        return result;
-      }
-
-      if (strcmp(command, "ifeq") == 0) {
-        if (markup->markups.size != 4) {
-          FbldError(markup->text->loc, "expected 4 arguments to @ifeq");
-          return NULL;
-        }
-
-        // TODO: Handle the case where arguments can't be compared for
-        // equality.
-        FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
-        FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
-        bool eq = Eq(a, b);
-        FbldFreeMarkup(a);
-        FbldFreeMarkup(b);
-
-        if (eq) {
-          return Eval(markup->markups.xs[2], env, debug);
-        }
-        return Eval(markup->markups.xs[3], env, debug);
-      }
-
-      if (strcmp(command, "ifneq") == 0) {
-        if (markup->markups.size != 4) {
-          FbldError(markup->text->loc, "expected 4 arguments to @ifneq");
-          return NULL;
-        }
-
-        // TODO: Handle the case where arguments can't be compared for
-        // equality.
-        FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
-        FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
-        bool eq = Eq(a, b);
-        FbldFreeMarkup(a);
-        FbldFreeMarkup(b);
-
-        if (eq) {
-          return Eval(markup->markups.xs[3], env, debug);
-        }
-        return Eval(markup->markups.xs[2], env, debug);
-      }
-
-      if (strcmp(command, "eval") == 0) {
-        if (markup->markups.size != 1) {
-          FbldError(markup->text->loc, "expected 1 argument to @eval");
-          return NULL;
-        }
-
-        FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
-        FbldMarkup* result = Eval(arg, env, debug);
-        FbldFreeMarkup(arg);
-        return result;
-      }
-
-      if (strcmp(command, "plain") == 0) {
-        if (markup->markups.size != 2) {
-          FbldError(markup->text->loc, "expected 2 argument to @plain");
-          return NULL;
-        }
-
-        FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
-        FbldText* arg_text = FbldTextOfMarkup(arg);
-        FbldFreeMarkup(arg);
-
-        FbldMarkup* evaled = Eval(markup->markups.xs[1], env, debug);
-
-        FbldMarkup* plained = MapPlain(arg_text->str, evaled);
-        FbldFreeMarkup(evaled);
-        free(arg_text);
-
-        FbldMarkup* result = Eval(plained, env, debug);
-        FbldFreeMarkup(plained);
-        return result;
-      }
-
-      // Unknown command. Leave it unevaluated for now.
-      return FbldCopyMarkup(markup);
-    }
-
-    case FBLD_MARKUP_SEQUENCE: {
-      FbldMarkup* m = malloc(sizeof(FbldMarkup));
-      m->tag = FBLD_MARKUP_SEQUENCE;
-      m->text = NULL;
-      FbldInitVector(m->markups);
-      for (size_t i = 0; i < markup->markups.size; ++i) {
-        FbldAppendToVector(m->markups, Eval(markup->markups.xs[i], env, debug));
-      }
-      return m;
     }
   }
-
-  return NULL;
 }
 
 FbldMarkup* FbldEval(FbldMarkup* markup, bool debug)
 {
-  return Eval(markup, NULL, debug);
+  FbldMarkup* result = NULL;
+
+  EvalCmd* eval = malloc(sizeof(EvalCmd));
+  eval->_base.tag = EVAL_CMD;
+  eval->_base.next = NULL;
+  eval->env = NULL;
+  eval->markup = FbldCopyMarkup(markup);
+  eval->dest = &result;
+  Eval(&eval->_base, debug);
+  return result;
 }

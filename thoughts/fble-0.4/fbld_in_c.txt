@@ -510,3 +510,58 @@ non-recursive, ugh. To test it, presumably I can do a recursive function, say
 I have the test case now. I don't know a good way to solve this though. It's
 like I need to completely rewrite the evaluator to break things up into little
 pieces, manage memory better in case of user command tail calls. Ugh.
+
+---
+
+Let's say we have a command processor for evaluation. What commands would I
+have?
+
+* eval: given Env*, FbldMarkup* and output destination FbldMarkup**, evaluates
+  the markup and stores the result. We can decide if evaluation happens in
+  place or not, depending on how we want to manage lifetimes of markup. I'm
+  tempted to say evaluate in place?
+* FreeEnv: Easiest if we have reference counting of environments. Then you
+  give the environment to free. The environment owns 'body' and frees that too
+  if needed.
+
+Using these to do evaluation:
+* plain text:
+  Update in place. Easy.
+* @define:
+  Set up the new environment with holes for the body of args.
+  Push commands to evaluate each of the args.
+  Push command to evaluate the body.
+  Push command to free the new environment.
+* @error:
+  Push command to evaluate the arg.
+  Execute the rest in place.
+* @define: 
+  Push commands to evaluate the args.
+  Create the new environment.
+  Push command to evaluate the body.
+  Push command to free the environment.
+* @let: Same old.
+* head, tail:
+  Push commands to evaluate args.
+  Push specific commands for head and tail on evaluated args.
+
+We could have the commands own their own environment, then we don't need a
+separate 'free environment' command.
+
+Basically I propose the following:
+* Reference count FbldMarkup*
+* Reference count Env*
+* Create a command language where we have a separate command for each state of
+  execution for each builtin.
+  
+Maintain a stack of commands. Execute them until we reach the bottom.
+  
+I like the idea of evaluation in place. You can always make a separate copy
+before evaluation to avoid that. But the main use case is to evaluate in
+place, so good to take advantage of that. Except... we can't really evaluate
+in place with sharing? Unclear. Maybe don't evaluate in place at this point.
+Because I'm not sure how to evaluate in place on markup that has refcount
+greater than 1.
+  
+
+
