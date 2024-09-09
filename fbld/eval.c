@@ -30,7 +30,8 @@ typedef struct Env {
  */
 typedef enum {
   EVAL_CMD,
-  DEFINE_CMD
+  DEFINE_CMD,
+  IF_CMD
 } CmdTag;
 
 /**
@@ -61,6 +62,15 @@ typedef struct {
   FbldMarkup* body;
   Env* env;
 } DefineCmd;
+
+typedef struct {
+  Cmd _base;
+  FbldMarkup* a;
+  FbldMarkup* b;
+  FbldMarkup* if_eq;
+  FbldMarkup* if_ne;
+  Env* env;
+} IfCmd;
 
 
 static Env* CopyEnv(Env* env);
@@ -439,21 +449,24 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 4 arguments to @ifeq");
               }
 
-              assert(false && "TODO: @ifeq");
-              (void) &Eq;
+              IfCmd* ic = malloc(sizeof(IfCmd));
+              ic->_base.tag = IF_CMD;
+              ic->_base.dest = c->_base.dest;
+              ic->_base.next = c->_base.next;
+              ic->a = NULL;
+              ic->b = NULL;
+              ic->if_eq = FbldCopyMarkup(markup->markups.xs[2]);
+              ic->if_ne = FbldCopyMarkup(markup->markups.xs[3]);
+              ic->env = CopyEnv(c->env);
+              cmd = &ic->_base;
 
-              // // TODO: Handle the case where arguments can't be compared for
-              // // equality.
-              // FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
-              // FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
-              // bool eq = Eq(a, b);
-              // FbldFreeMarkup(a);
-              // FbldFreeMarkup(b);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &ic->a);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &ic->b);
 
-              // if (eq) {
-              //   return Eval(markup->markups.xs[2], env, debug);
-              // }
-              // return Eval(markup->markups.xs[3], env, debug);
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             if (strcmp(command, "ifneq") == 0) {
@@ -461,20 +474,24 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 4 arguments to @ifneq");
               }
 
-              assert(false && "TODO: @ifneq");
+              IfCmd* ic = malloc(sizeof(IfCmd));
+              ic->_base.tag = IF_CMD;
+              ic->_base.dest = c->_base.dest;
+              ic->_base.next = c->_base.next;
+              ic->a = NULL;
+              ic->b = NULL;
+              ic->if_eq = FbldCopyMarkup(markup->markups.xs[3]);
+              ic->if_ne = FbldCopyMarkup(markup->markups.xs[2]);
+              ic->env = CopyEnv(c->env);
+              cmd = &ic->_base;
 
-              // // TODO: Handle the case where arguments can't be compared for
-              // // equality.
-              // FbldMarkup* a = Eval(markup->markups.xs[0], env, debug);
-              // FbldMarkup* b = Eval(markup->markups.xs[1], env, debug);
-              // bool eq = Eq(a, b);
-              // FbldFreeMarkup(a);
-              // FbldFreeMarkup(b);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &ic->a);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &ic->b);
 
-              // if (eq) {
-              //   return Eval(markup->markups.xs[3], env, debug);
-              // }
-              // return Eval(markup->markups.xs[2], env, debug);
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             if (strcmp(command, "eval") == 0) {
@@ -586,6 +603,31 @@ static void Eval(Cmd* cmd, bool debug)
         free(args);
         FreeEnv(nenv);
         FbldFreeMarkup(c->body);
+        break;
+      }
+
+      case IF_CMD: {
+        IfCmd* c = (IfCmd*)cmd;
+        if (debug) {
+          printf("IF\n");
+        }
+
+        // TODO: Handle the case where arguments can't be compared for
+        // equality.
+        bool eq = Eq(c->a, c->b);
+
+        if (eq) {
+          cmd = NewEval(c->_base.next, c->env, c->if_eq, c->_base.dest);
+        } else {
+          cmd = NewEval(c->_base.next, c->env, c->if_ne, c->_base.dest);
+        }
+
+        FbldFreeMarkup(c->a);
+        FbldFreeMarkup(c->b);
+        FbldFreeMarkup(c->if_eq);
+        FbldFreeMarkup(c->if_ne);
+        FreeEnv(c->env);
+        free(c);
         break;
       }
     }
