@@ -31,7 +31,8 @@ typedef struct Env {
 typedef enum {
   EVAL_CMD,
   DEFINE_CMD,
-  IF_CMD
+  IF_CMD,
+  ERROR_CMD,
 } CmdTag;
 
 /**
@@ -72,6 +73,11 @@ typedef struct {
   Env* env;
 } IfCmd;
 
+typedef struct {
+  Cmd _base;
+  FbldLoc loc;
+  FbldMarkup* msg;
+} ErrorCmd;
 
 static Env* CopyEnv(Env* env);
 static void FreeEnv(Env* env);
@@ -345,14 +351,19 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 1 argument to @error");
               }
 
-              assert(false && "TODO: @error");
-              // FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
-              // FbldText* arg_text = FbldTextOfMarkup(arg);
-              // FbldFreeMarkup(arg);
+              ErrorCmd* ec = malloc(sizeof(ErrorCmd));
+              ec->_base.tag = ERROR_CMD;
+              ec->_base.dest = c->_base.dest;
+              ec->_base.next = c->_base.next;
+              ec->loc = markup->text->loc;
+              ec->msg = NULL;
+              cmd = &ec->_base;
 
-              // FbldError(markup->text->loc, arg_text->str);
-              // free(arg_text);
-              // return NULL;
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &ec->msg);
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             if (strcmp(command, "define") == 0) {
@@ -628,6 +639,19 @@ static void Eval(Cmd* cmd, bool debug)
         FbldFreeMarkup(c->if_ne);
         FreeEnv(c->env);
         free(c);
+        break;
+      }
+
+      case ERROR_CMD: {
+        ErrorCmd* c = (ErrorCmd*)cmd;
+        if (debug) {
+          printf("ERROR\n");
+        }
+
+        FbldText* msg = FbldTextOfMarkup(c->msg);
+        FbldError(c->loc, msg->str);
+        free(msg);
+        FbldFreeMarkup(c->msg);
         break;
       }
     }
