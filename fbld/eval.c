@@ -396,20 +396,28 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 3 arguments to @let");
               }
 
-              assert(false && "TODO: @let");
-              // FbldMarkup* name = markup->markups.xs[0];
-              // FbldMarkup* def = markup->markups.xs[1];
-              // FbldMarkup* body = markup->markups.xs[2];
+              DefineCmd* dc = malloc(sizeof(DefineCmd));
+              dc->_base.tag = DEFINE_CMD;
+              dc->_base.dest = c->_base.dest;
+              dc->_base.next = c->_base.next;
+              dc->name = NULL;
 
-              // assert(name->tag == FBLD_MARKUP_PLAIN && "TODO");
+              dc->args = malloc(sizeof(FbldMarkup));
+              dc->args->tag = FBLD_MARKUP_SEQUENCE;
+              dc->args->text = NULL;
+              FbldInitVector(dc->args->markups);
 
-              // Env nenv;
-              // nenv.name = name->text;
-              // nenv.body = def;
-              // nenv.next = env;
-              // FbldInitVector(nenv.args);
+              dc->def = FbldCopyMarkup(markup->markups.xs[1]);
+              dc->body = FbldCopyMarkup(markup->markups.xs[2]);
+              dc->env = CopyEnv(c->env);
+              cmd = &dc->_base;
 
-              // return Eval(body, &nenv, debug);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &dc->name);
+
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             if (strcmp(command, "head") == 0) {
