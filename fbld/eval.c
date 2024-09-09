@@ -526,12 +526,11 @@ static void Eval(Cmd* cmd, bool debug)
               if (markup->markups.size != 1) {
                 FbldError(markup->text->loc, "expected 1 argument to @eval");
               }
-
-              assert(false && "TODO: @eval");
-              // FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
-              // FbldMarkup* result = Eval(arg, env, debug);
-              // FbldFreeMarkup(arg);
-              // return result;
+              
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &c->markup);
+              FbldFreeMarkup(c->markup);
+              c->markup = NULL;
+              break;
             }
 
             if (strcmp(command, "plain") == 0) {
@@ -557,8 +556,11 @@ static void Eval(Cmd* cmd, bool debug)
             }
 
             // Unknown command. Leave it unevaluated for now.
-            assert(false && "TODO: unknown cmd");
-            // return FbldCopyMarkup(markup);
+            *(c->_base.dest) = c->markup;
+            cmd = c->_base.next;
+            FreeEnv(c->env);
+            free(c);
+            break;
           }
 
           case FBLD_MARKUP_SEQUENCE: {
