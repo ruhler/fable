@@ -35,6 +35,7 @@ typedef enum {
   ERROR_CMD,
   HEAD_CMD,
   TAIL_CMD,
+  PLAIN_CMD,
 } CmdTag;
 
 /**
@@ -90,6 +91,13 @@ typedef struct {
   Cmd _base;
   FbldMarkup* a;
 } TailCmd;
+
+typedef struct {
+  Cmd _base;
+  FbldMarkup* f;
+  FbldMarkup* body;
+  Env* env;
+} PlainCmd;
 
 static Env* CopyEnv(Env* env);
 static void FreeEnv(Env* env);
@@ -538,21 +546,22 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 2 argument to @plain");
               }
 
-              assert(false && "TODO: @plain");
-              (void) &MapPlain;
-              // FbldMarkup* arg = Eval(markup->markups.xs[0], env, debug);
-              // FbldText* arg_text = FbldTextOfMarkup(arg);
-              // FbldFreeMarkup(arg);
+              PlainCmd* pc = malloc(sizeof(PlainCmd));
+              pc->_base.tag = PLAIN_CMD;
+              pc->_base.dest = c->_base.dest;
+              pc->_base.next = c->_base.next;
+              pc->f = NULL;
+              pc->body = NULL;
+              pc->env = CopyEnv(c->env);
+              cmd = &pc->_base;
 
-              // FbldMarkup* evaled = Eval(markup->markups.xs[1], env, debug);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &pc->f);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &pc->body);
 
-              // FbldMarkup* plained = MapPlain(arg_text->str, evaled);
-              // FbldFreeMarkup(evaled);
-              // free(arg_text);
-
-              // FbldMarkup* result = Eval(plained, env, debug);
-              // FbldFreeMarkup(plained);
-              // return result;
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             // Unknown command. Leave it unevaluated for now.
@@ -730,6 +739,24 @@ static void Eval(Cmd* cmd, bool debug)
         *(c->_base.dest) = result;
         FbldFreeMarkup(c->a);
         cmd = c->_base.next;
+        free(c);
+        break;
+      }
+
+      case PLAIN_CMD: {
+        PlainCmd* c = (PlainCmd*)cmd;
+        if (debug) {
+          printf("PLAIN\n");
+        }
+
+        FbldText* f = FbldTextOfMarkup(c->f);
+        FbldMarkup* plained = MapPlain(f->str, c->body);
+        FbldFreeMarkup(c->f);
+        FbldFreeMarkup(c->body);
+        free(f);
+
+        cmd = NewEval(c->_base.next, c->env, plained, c->_base.dest);
+        FreeEnv(c->env);
         free(c);
         break;
       }
