@@ -29,16 +29,19 @@ typedef struct Env {
  * Types of evaluation commands.
  */
 typedef enum {
-  EVAL_CMD
+  EVAL_CMD,
+  DEFINE_CMD
 } CmdTag;
 
 /**
  * @struct[Cmd] Base type for an evaluation command to execute.
  *  @field[CmdTag][tag] The type of command.
+ *  @field[FbldMarkup**][dest] Where to store the result of evaluation.
  *  @field[Cmd*][next] The next command to execute.
  */
 typedef struct Cmd {
   CmdTag tag;
+  FbldMarkup** dest;
   struct Cmd* next;
 } Cmd;
 
@@ -48,11 +51,22 @@ typedef struct {
   Cmd _base;
   Env* env;
   FbldMarkup* markup;
-  FbldMarkup** dest;
 } EvalCmd;
+
+typedef struct {
+  Cmd _base;
+  FbldMarkup* name;
+  FbldMarkup* args;
+  FbldMarkup* def;
+  FbldMarkup* body;
+  Env* env;
+} DefineCmd;
+
 
 static Env* CopyEnv(Env* env);
 static void FreeEnv(Env* env);
+
+static Cmd* NewEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest);
 
 static int HeadOf(FbldMarkup* m);
 static FbldMarkup* TailOf(FbldMarkup* m);
@@ -84,6 +98,18 @@ static void FreeEnv(Env* env)
     free(env);
     env = next;
   }
+}
+
+// env, markup both borrowed, not consumed.
+static Cmd* NewEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
+{
+  EvalCmd* eval = malloc(sizeof(EvalCmd));
+  eval->_base.tag = EVAL_CMD;
+  eval->_base.next = next;
+  eval->_base.dest = dest;
+  eval->env = CopyEnv(env);
+  eval->markup = FbldCopyMarkup(markup);
+  return &eval->_base;
 }
 
 /**
@@ -130,7 +156,7 @@ static FbldMarkup* TailOf(FbldMarkup* m)
       if (m->text->str[0] == '\0') {
         return NULL;
       }
-      
+
       // TODO: Fix location - advance by the first character.
       FbldMarkup* n = malloc(sizeof(FbldMarkup));
       n->tag = FBLD_MARKUP_PLAIN;
@@ -246,9 +272,14 @@ static void Eval(Cmd* cmd, bool debug)
       case EVAL_CMD: {
         EvalCmd* c = (EvalCmd*)cmd;
         FbldMarkup* markup = c->markup;
+
+        if (debug) {
+          printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
+        }
+
         switch (markup->tag) {
           case FBLD_MARKUP_PLAIN: {
-            *(c->dest) = markup;
+            *(c->_base.dest) = markup;
             FreeEnv(c->env);
             cmd = c->_base.next;
             free(c);
@@ -258,7 +289,9 @@ static void Eval(Cmd* cmd, bool debug)
           case FBLD_MARKUP_COMMAND: {
             const char* command = markup->text->str;
 
+
             // Check for user defined command.
+            bool user = false;
             for (Env* e = c->env; e != NULL; e = e->next) {
               if (strcmp(command, e->name->str) == 0) {
                 if (markup->markups.size != e->args.size) {
@@ -279,13 +312,7 @@ static void Eval(Cmd* cmd, bool debug)
                   next = ne;
 
                   // Add a command to evaluate the argument.
-                  EvalCmd* ec = malloc(sizeof(EvalCmd));
-                  ec->_base.tag = EVAL_CMD;
-                  ec->_base.next = cmd;
-                  ec->env = CopyEnv(c->env);
-                  ec->markup = FbldCopyMarkup(markup->markups.xs[i]);
-                  ec->dest = &ne->body;
-                  cmd = &ec->_base;
+                  cmd = NewEval(cmd, c->env, markup->markups.xs[i], &ne->body);
                 }
 
                 // Replace the evaluation command for the application with one
@@ -294,8 +321,13 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldFreeMarkup(c->markup);
                 c->env = next;
                 c->markup = FbldCopyMarkup(e->body);
+                user = true;
                 break;
               }
+            }
+
+            if (user) {
+              break;
             }
 
             if (strcmp(command, "error") == 0) {
@@ -318,59 +350,24 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 4 arguments to @define");
               }
 
-              assert(false && "TODO: @define");
-              // FbldMarkup* name = Eval(markup->markups.xs[0], env, debug);
-              // FbldText* name_text = FbldTextOfMarkup(name);
-              // FbldFreeMarkup(name);
+              DefineCmd* dc = malloc(sizeof(DefineCmd));
+              dc->_base.tag = DEFINE_CMD;
+              dc->_base.dest = c->_base.dest;
+              dc->_base.next = c->_base.next;
+              dc->name = NULL;
+              dc->args = NULL;
+              dc->def = FbldCopyMarkup(markup->markups.xs[2]);
+              dc->body = FbldCopyMarkup(markup->markups.xs[3]);
+              dc->env = CopyEnv(c->env);
+              cmd = &dc->_base;
 
-              // FbldMarkup* args = Eval(markup->markups.xs[1], env, debug);
-              // FbldText* args_text = FbldTextOfMarkup(args);
-              // FbldFreeMarkup(args);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &dc->name);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &dc->args);
 
-              // FbldMarkup* def = markup->markups.xs[2];
-              // FbldMarkup* body = markup->markups.xs[3];
-
-              // Env nenv;
-              // nenv.name = name_text;
-              // nenv.body = def;
-              // nenv.next = env;
-
-              // FbldInitVector(nenv.args);
-              // char buf[strlen(args_text->str) + 1];
-              // size_t i = 0;
-              // for (const char* p = args_text->str; *p != '\0'; p++) {
-              //   if (isspace(*p)) {
-              //     if (i > 0) {
-              //       // TODO: Pick a better location here.
-              //       buf[i] = '\0';
-              //       FbldText* text = FbldNewText(args_text->loc, buf);
-              //       FbldAppendToVector(nenv.args, text);
-              //       i = 0;
-              //     }
-              //     continue;
-              //   }
-
-              //   buf[i] = *p;
-              //   i++;
-              // }
-
-              // if (i > 0) {
-              //   // TODO: Pick a better location here.
-              //   buf[i] = '\0';
-              //   FbldText* text = FbldNewText(args_text->loc, buf);
-              //   FbldAppendToVector(nenv.args, text);
-              // }
-
-              // FbldMarkup* result = Eval(body, &nenv, debug);
-              // free(name_text);
-              // free(args_text);
-
-              // for (size_t j = 0; j < nenv.args.size; ++j) {
-              //   free(nenv.args.xs[j]);
-              // }
-              // free(nenv.args.xs);
-
-              // return result;
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             if (strcmp(command, "let") == 0) {
@@ -525,17 +522,11 @@ static void Eval(Cmd* cmd, bool debug)
             m->text = NULL;
             m->markups.xs = malloc(markup->markups.size * sizeof(FbldMarkup*));
             m->markups.size = markup->markups.size;
-            *(c->dest) = m;
+            *(c->_base.dest) = m;
 
             cmd = c->_base.next;
             for (size_t i = 0; i < markup->markups.size; ++i) {
-              EvalCmd* e = malloc(sizeof(EvalCmd));
-              e->_base.tag = EVAL_CMD;
-              e->_base.next = cmd;
-              e->env = CopyEnv(c->env);
-              e->markup = FbldCopyMarkup(markup->markups.xs[i]);
-              e->dest = m->markups.xs + i;
-              cmd = &e->_base;
+              cmd = NewEval(cmd, c->env, markup->markups.xs[i], m->markups.xs + i);
             }
             FbldFreeMarkup(markup);
             FreeEnv(c->env);
@@ -543,6 +534,59 @@ static void Eval(Cmd* cmd, bool debug)
             break;
           }
         }
+        break;
+      }
+
+      case DEFINE_CMD: {
+        DefineCmd* c = (DefineCmd*)cmd;
+
+        FbldText* name = FbldTextOfMarkup(c->name);
+        FbldFreeMarkup(c->name);
+
+        FbldText* args = FbldTextOfMarkup(c->args);
+        FbldFreeMarkup(c->args);
+
+        if (debug) {
+          printf("DEFINE %s(%s)\n", name->str, args->str);
+        }
+
+        Env* nenv = malloc(sizeof(Env));
+        nenv->refcount = 1;
+        nenv->name = name;
+        nenv->body = c->def;
+        nenv->next = c->env;
+        FbldInitVector(nenv->args);
+
+        char buf[strlen(args->str) + 1];
+        size_t i = 0;
+        for (const char* p = args->str; *p != '\0'; p++) {
+          if (isspace(*p)) {
+            if (i > 0) {
+              // TODO: Pick a better location here.
+              buf[i] = '\0';
+              FbldText* text = FbldNewText(args->loc, buf);
+              FbldAppendToVector(nenv->args, text);
+              i = 0;
+            }
+            continue;
+          }
+
+          buf[i] = *p;
+          i++;
+        }
+
+        if (i > 0) {
+          // TODO: Pick a better location here.
+          buf[i] = '\0';
+          FbldText* text = FbldNewText(args->loc, buf);
+          FbldAppendToVector(nenv->args, text);
+        }
+
+        cmd = NewEval(c->_base.next, nenv, c->body, c->_base.dest);
+        free(args);
+        FreeEnv(nenv);
+        FbldFreeMarkup(c->body);
+        break;
       }
     }
   }
@@ -552,12 +596,6 @@ FbldMarkup* FbldEval(FbldMarkup* markup, bool debug)
 {
   FbldMarkup* result = NULL;
 
-  EvalCmd* eval = malloc(sizeof(EvalCmd));
-  eval->_base.tag = EVAL_CMD;
-  eval->_base.next = NULL;
-  eval->env = NULL;
-  eval->markup = FbldCopyMarkup(markup);
-  eval->dest = &result;
-  Eval(&eval->_base, debug);
+  Eval(NewEval(NULL, NULL, markup, &result), debug);
   return result;
 }
