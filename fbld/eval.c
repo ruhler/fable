@@ -33,6 +33,8 @@ typedef enum {
   DEFINE_CMD,
   IF_CMD,
   ERROR_CMD,
+  HEAD_CMD,
+  TAIL_CMD,
 } CmdTag;
 
 /**
@@ -78,6 +80,16 @@ typedef struct {
   FbldLoc loc;
   FbldMarkup* msg;
 } ErrorCmd;
+
+typedef struct {
+  Cmd _base;
+  FbldMarkup* a;
+} HeadCmd;
+
+typedef struct {
+  Cmd _base;
+  FbldMarkup* a;
+} TailCmd;
 
 static Env* CopyEnv(Env* env);
 static void FreeEnv(Env* env);
@@ -425,26 +437,19 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 1 arguments to @head");
               }
 
-              assert(false && "TODO: @head");
-              // FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
+              HeadCmd* hc = malloc(sizeof(HeadCmd));
+              hc->_base.tag = HEAD_CMD;
+              hc->_base.dest = c->_base.dest;
+              hc->_base.next = c->_base.next;
+              hc->a = NULL;
+              cmd = &hc->_base;
 
-              // int c = HeadOf(str);
-              // if (c == 0) {
-              //   return str;
-              // }
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &hc->a);
 
-              // if (c == -1) {
-              //   FbldError(FbldMarkupLoc(str), "argument to @head not evaluated");
-              //   return NULL;
-              // }
-
-              // char plain[] = {(char)c, '\0'};
-              // FbldMarkup* result = malloc(sizeof(FbldMarkup));
-              // result->tag = FBLD_MARKUP_PLAIN;
-              // result->text = FbldNewText(FbldMarkupLoc(str), plain);
-              // FbldInitVector(result->markups);
-              // FbldFreeMarkup(str);
-              // return result;
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             if (strcmp(command, "tail") == 0) {
@@ -452,15 +457,19 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 1 arguments to @tail");
               }
 
-              assert(false && "TODO: @tail");
-              // FbldMarkup* str = Eval(markup->markups.xs[0], env, debug);
+              TailCmd* tc = malloc(sizeof(TailCmd));
+              tc->_base.tag = TAIL_CMD;
+              tc->_base.dest = c->_base.dest;
+              tc->_base.next = c->_base.next;
+              tc->a = NULL;
+              cmd = &tc->_base;
 
-              // FbldMarkup* result = TailOf(str);
-              // if (result == NULL) {
-              //   return str;
-              // }
-              // FbldFreeMarkup(str);
-              // return result;
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &tc->a);
+
+              FreeEnv(c->env);
+              FbldFreeMarkup(c->markup);
+              free(c);
+              break;
             }
 
             if (strcmp(command, "ifeq") == 0) {
@@ -569,6 +578,11 @@ static void Eval(Cmd* cmd, bool debug)
             free(c);
             break;
           }
+
+          default: {
+            assert(false && "unreachable");
+            break;
+          }
         }
         break;
       }
@@ -660,6 +674,61 @@ static void Eval(Cmd* cmd, bool debug)
         FbldError(c->loc, msg->str);
         free(msg);
         FbldFreeMarkup(c->msg);
+        break;
+      }
+
+      case HEAD_CMD: {
+        HeadCmd* c = (HeadCmd*)cmd;
+        if (debug) {
+          printf("HEAD\n");
+        }
+
+        int ch = HeadOf(c->a);
+        if (ch == 0) {
+          *(c->_base.dest) = c->a;
+          cmd = c->_base.next;
+          free(c);
+          break;
+        }
+
+        if (ch == -1) {
+          FbldError(FbldMarkupLoc(c->a), "argument to @head not evaluated");
+          FbldFreeMarkup(c->a);
+          cmd = c->_base.next;
+          free(c);
+          break;
+        }
+
+        char plain[] = {(char)ch, '\0'};
+        FbldMarkup* result = malloc(sizeof(FbldMarkup));
+        result->tag = FBLD_MARKUP_PLAIN;
+        result->text = FbldNewText(FbldMarkupLoc(c->a), plain);
+        FbldInitVector(result->markups);
+        *(c->_base.dest) = result;
+        FbldFreeMarkup(c->a);
+        cmd = c->_base.next;
+        free(c);
+        break;
+      }
+
+      case TAIL_CMD: {
+        TailCmd* c = (TailCmd*)cmd;
+        if (debug) {
+          printf("TAIL\n");
+        }
+
+        FbldMarkup* result = TailOf(c->a);
+        if (result == NULL) {
+          *(c->_base.dest) = c->a;
+          cmd = c->_base.next;
+          free(c);
+          break;
+        }
+
+        *(c->_base.dest) = result;
+        FbldFreeMarkup(c->a);
+        cmd = c->_base.next;
+        free(c);
         break;
       }
     }
