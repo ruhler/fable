@@ -196,6 +196,7 @@ static FbldMarkup* TailOf(FbldMarkup* m)
       // TODO: Fix location - advance by the first character.
       FbldMarkup* n = malloc(sizeof(FbldMarkup));
       n->tag = FBLD_MARKUP_PLAIN;
+      n->refcount = 1;
       n->text = FbldNewText(m->text->loc, m->text->str + 1);
       FbldInitVector(n->markups);
       return n;
@@ -224,6 +225,7 @@ static FbldMarkup* TailOf(FbldMarkup* m)
       FbldMarkup* n = malloc(sizeof(FbldMarkup));
       n->tag = FBLD_MARKUP_SEQUENCE;
       n->text = NULL;
+      n->refcount = 1;
       FbldInitVector(n->markups);
       FbldAppendToVector(n->markups, child);
       for (size_t j = i; j < m->markups.size; ++j) {
@@ -276,6 +278,7 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
       FbldMarkup* n = malloc(sizeof(FbldMarkup));
       n->tag = FBLD_MARKUP_COMMAND;
       n->text = FbldNewText(m->text->loc, f);
+      n->refcount = 1;
       FbldInitVector(n->markups);
       FbldAppendToVector(n->markups, FbldCopyMarkup(m));
       return n;
@@ -289,6 +292,7 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
       FbldMarkup* n = malloc(sizeof(FbldMarkup));
       n->tag = m->tag;
       n->text = NULL;
+      n->refcount = 1;
       FbldInitVector(n->markups);
       for (size_t i = 0; i < m->markups.size; ++i) {
         FbldAppendToVector(n->markups, MapPlain(f, m->markups.xs[i]));
@@ -425,6 +429,7 @@ static void Eval(Cmd* cmd, bool debug)
               dc->args = malloc(sizeof(FbldMarkup));
               dc->args->tag = FBLD_MARKUP_SEQUENCE;
               dc->args->text = NULL;
+              dc->args->refcount = 1;
               FbldInitVector(dc->args->markups);
 
               dc->def = FbldCopyMarkup(markup->markups.xs[1]);
@@ -576,6 +581,7 @@ static void Eval(Cmd* cmd, bool debug)
             FbldMarkup* m = malloc(sizeof(FbldMarkup));
             m->tag = FBLD_MARKUP_SEQUENCE;
             m->text = NULL;
+            m->refcount = 1;
             m->markups.xs = malloc(markup->markups.size * sizeof(FbldMarkup*));
             m->markups.size = markup->markups.size;
             *(c->_base.dest) = m;
@@ -714,6 +720,7 @@ static void Eval(Cmd* cmd, bool debug)
         FbldMarkup* result = malloc(sizeof(FbldMarkup));
         result->tag = FBLD_MARKUP_PLAIN;
         result->text = FbldNewText(FbldMarkupLoc(c->a), plain);
+        result->refcount = 1;
         FbldInitVector(result->markups);
         *(c->_base.dest) = result;
         FbldFreeMarkup(c->a);

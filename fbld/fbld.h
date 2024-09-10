@@ -52,6 +52,7 @@ struct FbldMarkup {
   FbldMarkupTag tag;
   FbldText* text;         // Plain text, command name, or NULL.
   FbldMarkupV markups;    // Sequence of markups, command args, or empty.
+  size_t refcount;
 };
 
 /**

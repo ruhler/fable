@@ -319,6 +319,7 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
       FbldMarkup* arg = malloc(sizeof(FbldMarkup));
       arg->tag = FBLD_MARKUP_PLAIN;
       arg->text = FbldNewText(loc, chars.xs);
+      arg->refcount = 1;
       free(chars.xs);
       FbldInitVector(arg->markups);
       FbldAppendToVector(*args, arg);
@@ -352,6 +353,7 @@ static FbldMarkup* ParseInlineCommand(Lex* lex)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_COMMAND;
   markup->text = ParseName(lex);
+  markup->refcount = 1;
   FbldInitVector(markup->markups);
 
   ParseInlineArgs(lex, &markup->markups);
@@ -374,6 +376,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_SEQUENCE;
   markup->text = NULL;
+  markup->refcount = 1;
   FbldInitVector(markup->markups);
 
   struct { size_t size; char* xs; } chars;
@@ -410,6 +413,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         FbldMarkup* plain = malloc(sizeof(FbldMarkup));
         plain->tag = FBLD_MARKUP_PLAIN;
         plain->text = text;
+        plain->refcount = 1;
         FbldInitVector(plain->markups);
         FbldAppendToVector(markup->markups, plain);
       }
@@ -444,6 +448,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     FbldMarkup* plain = malloc(sizeof(FbldMarkup));
     plain->tag = FBLD_MARKUP_PLAIN;
     plain->text = text;
+    plain->refcount = 1;
     FbldInitVector(plain->markups);
     FbldAppendToVector(markup->markups, plain);
   }
@@ -475,6 +480,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_COMMAND;
   markup->text = ParseName(lex);
+  markup->refcount = 1;
   FbldInitVector(markup->markups);
 
   while (true) {
@@ -521,6 +527,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       FbldMarkup* arg = malloc(sizeof(FbldMarkup));
       arg->tag = FBLD_MARKUP_PLAIN;
       arg->text = FbldNewText(loc, chars.xs);
+      arg->refcount = 1;
       free(chars.xs);
       FbldInitVector(arg->markups);
       FbldAppendToVector(markup->markups, arg);
@@ -576,6 +583,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
   FbldMarkup* markup = malloc(sizeof(FbldMarkup));
   markup->tag = FBLD_MARKUP_SEQUENCE;
   markup->text = NULL;
+  markup->refcount = 1;
   FbldInitVector(markup->markups);
 
   // Skip blank lines.
@@ -588,6 +596,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
       FbldMarkup* cmd = malloc(sizeof(FbldMarkup));
       cmd->tag = FBLD_MARKUP_COMMAND;
       cmd->text = FbldNewText(lex->loc, ".block");
+      cmd->refcount = 1;
       FbldInitVector(cmd->markups);
       FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
       FbldAppendToVector(markup->markups, cmd);
@@ -612,6 +621,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
     FbldMarkup* cmd = malloc(sizeof(FbldMarkup));
     cmd->tag = FBLD_MARKUP_COMMAND;
     cmd->text = FbldNewText(lex->loc, ".block");
+    cmd->refcount = 1;
     FbldInitVector(cmd->markups);
     FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
     FbldAppendToVector(markup->markups, cmd);

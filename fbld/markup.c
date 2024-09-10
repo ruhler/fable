@@ -30,6 +30,11 @@ FbldText* FbldNewText(FbldLoc loc, const char* str)
 // See documentation in fbld.h
 void FbldFreeMarkup(FbldMarkup* markup)
 {
+  markup->refcount--;
+  if (markup->refcount > 0) {
+    return;
+  }
+
   if (markup->text) {
     free(markup->text);
   }
@@ -44,17 +49,8 @@ void FbldFreeMarkup(FbldMarkup* markup)
 // See documentation in fbld.h
 FbldMarkup* FbldCopyMarkup(FbldMarkup* markup)
 {
-  FbldMarkup* n = malloc(sizeof(FbldMarkup));
-  n->tag = markup->tag;
-  n->text = NULL;
-  if (markup->text) {
-    n->text = FbldNewText(markup->text->loc, markup->text->str);
-  }
-  FbldInitVector(n->markups);
-  for (size_t i = 0; i < markup->markups.size; ++i) {
-    FbldAppendToVector(n->markups, FbldCopyMarkup(markup->markups.xs[i]));
-  }
-  return n;
+  markup->refcount++;
+  return markup;
 }
 
 // See documentation in fbld.h
