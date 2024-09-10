@@ -11,6 +11,9 @@
 
 /**
  * @struct[Env] Environment for execution.
+ *  The environment is the owner of its name, args (vector and elements),
+ *  body, and next.
+ *
  *  @field[size_t][refcount] Reference count.
  *  @field[FbldText*][name] The name of the first defined function.
  *  @field[FbldTextV][args] Names of arguments to the first defined function.
@@ -130,13 +133,24 @@ static void FreeEnv(Env* env)
       FbldFree(env->args.xs[i]);
     }
     FbldFree(env->args.xs);
+    FbldFreeMarkup(env->body);
     Env* next = env->next;
     FbldFree(env);
     env = next;
   }
 }
 
-// env, markup both borrowed, not consumed.
+/**
+ * @func[NewEval] Adds a command to evaluate a markup.
+ *  @arg[Cmd*][next] The command to evaluate after this one.
+ *  @arg[Env*][env] The environment to evaluate the markup in. Borrowed.
+ *  @arg[FbldMarkup*][markup] The markup to evaluate. Borrowed.
+ *  @arg[FbldMarkup**][dest] Where to store the evaluated markup.
+ *  @returns[Cmd*] The newly allocated command.
+ *  @sideeffects
+ *   Allocates a new command that will be freed by Eval when the command is
+ *   executed.
+ */
 static Cmd* NewEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
 {
   EvalCmd* eval = FbldAlloc(EvalCmd);
@@ -775,7 +789,6 @@ static void Eval(Cmd* cmd, bool debug)
 FbldMarkup* FbldEval(FbldMarkup* markup, bool debug)
 {
   FbldMarkup* result = NULL;
-
   Eval(NewEval(NULL, NULL, markup, &result), debug);
   return result;
 }

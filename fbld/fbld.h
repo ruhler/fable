@@ -102,7 +102,7 @@ FbldMarkup* FbldParse(const char** inputs);
 
 /**
  * @func[FbldEval] Evaluates an fbld document.
- *  @arg[FbldMarkup*][markup] The markup to evaluate.
+ *  @arg[FbldMarkup*][markup] The markup to evaluate. Borrowed.
  *  @arg[bool][debug] Set to true to enable debug log output.
  *
  *  @returns[FbldMarkup*] The evaluated markup.

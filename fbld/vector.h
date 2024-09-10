@@ -23,8 +23,9 @@
 #ifndef FBLD_VECTOR_H_
 #define FBLD_VECTOR_H_
 
-#include <stdlib.h>       // for malloc
 #include <sys/types.h>    // for size_t
+
+#include "alloc.h"
 
 /**
  * @func[FbldInitVector] Initializes a new vector.
@@ -37,7 +38,7 @@
 // The array initially has size 0 and capacity 1.
 #define FbldInitVector(vector) \
   (vector).size = 0; \
-  (vector).xs = malloc(sizeof(*((vector).xs)))
+  (vector).xs = FbldAllocRaw(sizeof(*((vector).xs)))
 
 /**
  * @func[FbldFreeVector] Frees an Fbld vector.
@@ -51,7 +52,7 @@
  *  @sideeffects
  *   Frees resources of the vector.
  */
-#define FbldFreeVector(vector) free((vector).xs)
+#define FbldFreeVector(vector) FbldFree((vector).xs)
 
 /**
  * @func[FbldExtendVector] Appends an uninitialized element.

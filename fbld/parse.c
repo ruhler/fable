@@ -87,6 +87,10 @@ static char GetC(Lex* lex)
     }
     lex->inputs++;
 
+    if (lex->fin) {
+      fclose(lex->fin);
+    }
+
     // Open the next input file for processing.
     if (strcmp(filename, "-") == 0) {
       lex->fin = stdin;
@@ -143,7 +147,7 @@ static char NextFetched(Lex* lex, size_t* i)
 
       if (lex->next_size == lex->next_capacity) {
         lex->next_capacity *= 2;
-        lex->next = realloc(lex->next, lex->next_capacity * sizeof(char));
+        lex->next = FbldReAllocArray(char, lex->next, lex->next_capacity);
       }
 
       lex->next[lex->next_size] = c;
@@ -647,6 +651,11 @@ FbldMarkup* FbldParse(const char** inputs)
   };
 
   FbldMarkup* parsed = ParseBlock(&lex);
+
+  if (lex.fin != NULL) {
+    fclose(lex.fin);
+  }
+
   FbldFree(lex.next);
   return parsed;
 }

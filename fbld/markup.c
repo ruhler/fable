@@ -98,7 +98,7 @@ static void TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
       if (src_size >= *capacity) {
         size_t size = strlen((*text)->str) + *capacity;
         size_t nsize = 2 * (strlen((*text)->str) + src_size);
-        *text = realloc(*text, sizeof(FbldText) + nsize);
+        *text = FbldReAllocRaw(*text, sizeof(FbldText) + nsize);
         *capacity = nsize - size;
         assert(src_size < *capacity);
       }
