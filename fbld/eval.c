@@ -778,6 +778,7 @@ static void Eval(Cmd* cmd, bool debug)
         FbldFree(f);
 
         cmd = NewEval(c->_base.next, c->env, plained, c->_base.dest);
+        FbldFreeMarkup(plained);
         FreeEnv(c->env);
         FbldFree(c);
         break;
