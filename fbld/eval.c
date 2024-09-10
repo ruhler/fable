@@ -2,10 +2,10 @@
 #include <assert.h>   // for assert
 #include <ctype.h>    // for isspace
 #include <stdbool.h>  // for false
-#include <stdlib.h>   // for malloc
 #include <stdio.h>    // for printf
 #include <string.h>   // for strcmp
 
+#include "alloc.h"
 #include "fbld.h"
 #include "vector.h"
 
@@ -125,13 +125,13 @@ static void FreeEnv(Env* env)
       return;
     }
 
-    free(env->name);
+    FbldFree(env->name);
     for (size_t i = 0; i < env->args.size; ++i) {
-      free(env->args.xs[i]);
+      FbldFree(env->args.xs[i]);
     }
-    free(env->args.xs);
+    FbldFree(env->args.xs);
     Env* next = env->next;
-    free(env);
+    FbldFree(env);
     env = next;
   }
 }
@@ -139,7 +139,7 @@ static void FreeEnv(Env* env)
 // env, markup both borrowed, not consumed.
 static Cmd* NewEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
 {
-  EvalCmd* eval = malloc(sizeof(EvalCmd));
+  EvalCmd* eval = FbldAlloc(EvalCmd);
   eval->_base.tag = EVAL_CMD;
   eval->_base.next = next;
   eval->_base.dest = dest;
@@ -194,7 +194,7 @@ static FbldMarkup* TailOf(FbldMarkup* m)
       }
 
       // TODO: Fix location - advance by the first character.
-      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      FbldMarkup* n = FbldAlloc(FbldMarkup);
       n->tag = FBLD_MARKUP_PLAIN;
       n->refcount = 1;
       n->text = FbldNewText(m->text->loc, m->text->str + 1);
@@ -222,7 +222,7 @@ static FbldMarkup* TailOf(FbldMarkup* m)
         return child;
       }
 
-      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      FbldMarkup* n = FbldAlloc(FbldMarkup);
       n->tag = FBLD_MARKUP_SEQUENCE;
       n->text = NULL;
       n->refcount = 1;
@@ -275,7 +275,7 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
 {
   switch (m->tag) {
     case FBLD_MARKUP_PLAIN: {
-      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      FbldMarkup* n = FbldAlloc(FbldMarkup);
       n->tag = FBLD_MARKUP_COMMAND;
       n->text = FbldNewText(m->text->loc, f);
       n->refcount = 1;
@@ -289,7 +289,7 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
     }
 
     case FBLD_MARKUP_SEQUENCE: {
-      FbldMarkup* n = malloc(sizeof(FbldMarkup));
+      FbldMarkup* n = FbldAlloc(FbldMarkup);
       n->tag = m->tag;
       n->text = NULL;
       n->refcount = 1;
@@ -322,7 +322,7 @@ static void Eval(Cmd* cmd, bool debug)
             *(c->_base.dest) = markup;
             FreeEnv(c->env);
             cmd = c->_base.next;
-            free(c);
+            FbldFree(c);
             break;
           }
 
@@ -342,7 +342,7 @@ static void Eval(Cmd* cmd, bool debug)
 
                 for (size_t i = 0; i < e->args.size; ++i) {
                   // Add arg to the envrionment for executing the body.
-                  Env* ne = malloc(sizeof(Env));
+                  Env* ne = FbldAlloc(Env);
                   ne->refcount = 1;
                   ne->name = FbldNewText(e->args.xs[i]->loc, e->args.xs[i]->str);
                   ne->args.xs = NULL;
@@ -375,7 +375,7 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 1 argument to @error");
               }
 
-              ErrorCmd* ec = malloc(sizeof(ErrorCmd));
+              ErrorCmd* ec = FbldAlloc(ErrorCmd);
               ec->_base.tag = ERROR_CMD;
               ec->_base.dest = c->_base.dest;
               ec->_base.next = c->_base.next;
@@ -386,7 +386,7 @@ static void Eval(Cmd* cmd, bool debug)
               cmd = NewEval(cmd, c->env, markup->markups.xs[0], &ec->msg);
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -395,7 +395,7 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 4 arguments to @define");
               }
 
-              DefineCmd* dc = malloc(sizeof(DefineCmd));
+              DefineCmd* dc = FbldAlloc(DefineCmd);
               dc->_base.tag = DEFINE_CMD;
               dc->_base.dest = c->_base.dest;
               dc->_base.next = c->_base.next;
@@ -411,7 +411,7 @@ static void Eval(Cmd* cmd, bool debug)
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -420,13 +420,13 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 3 arguments to @let");
               }
 
-              DefineCmd* dc = malloc(sizeof(DefineCmd));
+              DefineCmd* dc = FbldAlloc(DefineCmd);
               dc->_base.tag = DEFINE_CMD;
               dc->_base.dest = c->_base.dest;
               dc->_base.next = c->_base.next;
               dc->name = NULL;
 
-              dc->args = malloc(sizeof(FbldMarkup));
+              dc->args = FbldAlloc(FbldMarkup);
               dc->args->tag = FBLD_MARKUP_SEQUENCE;
               dc->args->text = NULL;
               dc->args->refcount = 1;
@@ -441,7 +441,7 @@ static void Eval(Cmd* cmd, bool debug)
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -450,7 +450,7 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 1 arguments to @head");
               }
 
-              HeadCmd* hc = malloc(sizeof(HeadCmd));
+              HeadCmd* hc = FbldAlloc(HeadCmd);
               hc->_base.tag = HEAD_CMD;
               hc->_base.dest = c->_base.dest;
               hc->_base.next = c->_base.next;
@@ -461,7 +461,7 @@ static void Eval(Cmd* cmd, bool debug)
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -470,7 +470,7 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 1 arguments to @tail");
               }
 
-              TailCmd* tc = malloc(sizeof(TailCmd));
+              TailCmd* tc = FbldAlloc(TailCmd);
               tc->_base.tag = TAIL_CMD;
               tc->_base.dest = c->_base.dest;
               tc->_base.next = c->_base.next;
@@ -481,7 +481,7 @@ static void Eval(Cmd* cmd, bool debug)
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -490,7 +490,7 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 4 arguments to @ifeq");
               }
 
-              IfCmd* ic = malloc(sizeof(IfCmd));
+              IfCmd* ic = FbldAlloc(IfCmd);
               ic->_base.tag = IF_CMD;
               ic->_base.dest = c->_base.dest;
               ic->_base.next = c->_base.next;
@@ -506,7 +506,7 @@ static void Eval(Cmd* cmd, bool debug)
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -515,7 +515,7 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 4 arguments to @ifneq");
               }
 
-              IfCmd* ic = malloc(sizeof(IfCmd));
+              IfCmd* ic = FbldAlloc(IfCmd);
               ic->_base.tag = IF_CMD;
               ic->_base.dest = c->_base.dest;
               ic->_base.next = c->_base.next;
@@ -531,7 +531,7 @@ static void Eval(Cmd* cmd, bool debug)
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -551,7 +551,7 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 2 argument to @plain");
               }
 
-              PlainCmd* pc = malloc(sizeof(PlainCmd));
+              PlainCmd* pc = FbldAlloc(PlainCmd);
               pc->_base.tag = PLAIN_CMD;
               pc->_base.dest = c->_base.dest;
               pc->_base.next = c->_base.next;
@@ -565,7 +565,7 @@ static void Eval(Cmd* cmd, bool debug)
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
-              free(c);
+              FbldFree(c);
               break;
             }
 
@@ -573,16 +573,16 @@ static void Eval(Cmd* cmd, bool debug)
             *(c->_base.dest) = c->markup;
             cmd = c->_base.next;
             FreeEnv(c->env);
-            free(c);
+            FbldFree(c);
             break;
           }
 
           case FBLD_MARKUP_SEQUENCE: {
-            FbldMarkup* m = malloc(sizeof(FbldMarkup));
+            FbldMarkup* m = FbldAlloc(FbldMarkup);
             m->tag = FBLD_MARKUP_SEQUENCE;
             m->text = NULL;
             m->refcount = 1;
-            m->markups.xs = malloc(markup->markups.size * sizeof(FbldMarkup*));
+            m->markups.xs = FbldAllocArray(FbldMarkup*, markup->markups.size);
             m->markups.size = markup->markups.size;
             *(c->_base.dest) = m;
 
@@ -592,7 +592,7 @@ static void Eval(Cmd* cmd, bool debug)
             }
             FbldFreeMarkup(markup);
             FreeEnv(c->env);
-            free(c);
+            FbldFree(c);
             break;
           }
 
@@ -617,7 +617,7 @@ static void Eval(Cmd* cmd, bool debug)
           printf("DEFINE %s(%s)\n", name->str, args->str);
         }
 
-        Env* nenv = malloc(sizeof(Env));
+        Env* nenv = FbldAlloc(Env);
         nenv->refcount = 1;
         nenv->name = name;
         nenv->body = c->def;
@@ -650,10 +650,10 @@ static void Eval(Cmd* cmd, bool debug)
         }
 
         cmd = NewEval(c->_base.next, nenv, c->body, c->_base.dest);
-        free(args);
+        FbldFree(args);
         FreeEnv(nenv);
         FbldFreeMarkup(c->body);
-        free(c);
+        FbldFree(c);
         break;
       }
 
@@ -678,7 +678,7 @@ static void Eval(Cmd* cmd, bool debug)
         FbldFreeMarkup(c->if_eq);
         FbldFreeMarkup(c->if_ne);
         FreeEnv(c->env);
-        free(c);
+        FbldFree(c);
         break;
       }
 
@@ -690,7 +690,7 @@ static void Eval(Cmd* cmd, bool debug)
 
         FbldText* msg = FbldTextOfMarkup(c->msg);
         FbldError(c->loc, msg->str);
-        free(msg);
+        FbldFree(msg);
         FbldFreeMarkup(c->msg);
         break;
       }
@@ -705,7 +705,7 @@ static void Eval(Cmd* cmd, bool debug)
         if (ch == 0) {
           *(c->_base.dest) = c->a;
           cmd = c->_base.next;
-          free(c);
+          FbldFree(c);
           break;
         }
 
@@ -713,12 +713,12 @@ static void Eval(Cmd* cmd, bool debug)
           FbldError(FbldMarkupLoc(c->a), "argument to @head not evaluated");
           FbldFreeMarkup(c->a);
           cmd = c->_base.next;
-          free(c);
+          FbldFree(c);
           break;
         }
 
         char plain[] = {(char)ch, '\0'};
-        FbldMarkup* result = malloc(sizeof(FbldMarkup));
+        FbldMarkup* result = FbldAlloc(FbldMarkup);
         result->tag = FBLD_MARKUP_PLAIN;
         result->text = FbldNewText(FbldMarkupLoc(c->a), plain);
         result->refcount = 1;
@@ -726,7 +726,7 @@ static void Eval(Cmd* cmd, bool debug)
         *(c->_base.dest) = result;
         FbldFreeMarkup(c->a);
         cmd = c->_base.next;
-        free(c);
+        FbldFree(c);
         break;
       }
 
@@ -740,14 +740,14 @@ static void Eval(Cmd* cmd, bool debug)
         if (result == NULL) {
           *(c->_base.dest) = c->a;
           cmd = c->_base.next;
-          free(c);
+          FbldFree(c);
           break;
         }
 
         *(c->_base.dest) = result;
         FbldFreeMarkup(c->a);
         cmd = c->_base.next;
-        free(c);
+        FbldFree(c);
         break;
       }
 
@@ -761,11 +761,11 @@ static void Eval(Cmd* cmd, bool debug)
         FbldMarkup* plained = MapPlain(f->str, c->body);
         FbldFreeMarkup(c->f);
         FbldFreeMarkup(c->body);
-        free(f);
+        FbldFree(f);
 
         cmd = NewEval(c->_base.next, c->env, plained, c->_base.dest);
         FreeEnv(c->env);
-        free(c);
+        FbldFree(c);
         break;
       }
     }

@@ -3,9 +3,10 @@
 #include <ctype.h>    // for isalnum
 #include <stdbool.h>  // for false
 #include <stdio.h>    // for FILE, feof, etc.
-#include <stdlib.h>   // for abort, malloc
+#include <stdlib.h>   // for abort
 #include <string.h>   // for strcpy
 
+#include "alloc.h"
 #include "fbld.h"
 #include "vector.h"
 
@@ -273,7 +274,7 @@ static FbldText* ParseName(Lex* lex)
   FbldAppendToVector(chars, '\0');
 
   FbldText* text = FbldNewText(loc, chars.xs);
-  free(chars.xs);
+  FbldFree(chars.xs);
   return text;
 }
 
@@ -316,11 +317,11 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
       }
       Advance(lex);
       FbldAppendToVector(chars, '\0');
-      FbldMarkup* arg = malloc(sizeof(FbldMarkup));
+      FbldMarkup* arg = FbldAlloc(FbldMarkup);
       arg->tag = FBLD_MARKUP_PLAIN;
       arg->text = FbldNewText(loc, chars.xs);
       arg->refcount = 1;
-      free(chars.xs);
+      FbldFree(chars.xs);
       FbldInitVector(arg->markups);
       FbldAppendToVector(*args, arg);
       continue;
@@ -350,7 +351,7 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
  */
 static FbldMarkup* ParseInlineCommand(Lex* lex)
 {
-  FbldMarkup* markup = malloc(sizeof(FbldMarkup));
+  FbldMarkup* markup = FbldAlloc(FbldMarkup);
   markup->tag = FBLD_MARKUP_COMMAND;
   markup->text = ParseName(lex);
   markup->refcount = 1;
@@ -373,7 +374,7 @@ static FbldMarkup* ParseInlineCommand(Lex* lex)
 static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
 {
   // Inline markup is a sequence of plain text and inline commands.
-  FbldMarkup* markup = malloc(sizeof(FbldMarkup));
+  FbldMarkup* markup = FbldAlloc(FbldMarkup);
   markup->tag = FBLD_MARKUP_SEQUENCE;
   markup->text = NULL;
   markup->refcount = 1;
@@ -410,7 +411,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         FbldText* text = FbldNewText(loc, chars.xs);
         chars.size = 0;
 
-        FbldMarkup* plain = malloc(sizeof(FbldMarkup));
+        FbldMarkup* plain = FbldAlloc(FbldMarkup);
         plain->tag = FBLD_MARKUP_PLAIN;
         plain->text = text;
         plain->refcount = 1;
@@ -445,19 +446,19 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     FbldAppendToVector(chars, '\0');
     FbldText* text = FbldNewText(loc, chars.xs);
 
-    FbldMarkup* plain = malloc(sizeof(FbldMarkup));
+    FbldMarkup* plain = FbldAlloc(FbldMarkup);
     plain->tag = FBLD_MARKUP_PLAIN;
     plain->text = text;
     plain->refcount = 1;
     FbldInitVector(plain->markups);
     FbldAppendToVector(markup->markups, plain);
   }
-  free(chars.xs);
+  FbldFree(chars.xs);
 
   if (markup->markups.size == 1) {
     FbldMarkup* tmp = markup->markups.xs[0];
-    free(markup->markups.xs);
-    free(markup);
+    FbldFree(markup->markups.xs);
+    FbldFree(markup);
     markup = tmp;
   }
 
@@ -477,7 +478,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
  */
 static FbldMarkup* ParseBlockCommand(Lex* lex)
 {
-  FbldMarkup* markup = malloc(sizeof(FbldMarkup));
+  FbldMarkup* markup = FbldAlloc(FbldMarkup);
   markup->tag = FBLD_MARKUP_COMMAND;
   markup->text = ParseName(lex);
   markup->refcount = 1;
@@ -524,11 +525,11 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       }
 
       FbldAppendToVector(chars, '\0');
-      FbldMarkup* arg = malloc(sizeof(FbldMarkup));
+      FbldMarkup* arg = FbldAlloc(FbldMarkup);
       arg->tag = FBLD_MARKUP_PLAIN;
       arg->text = FbldNewText(loc, chars.xs);
       arg->refcount = 1;
-      free(chars.xs);
+      FbldFree(chars.xs);
       FbldInitVector(arg->markups);
       FbldAppendToVector(markup->markups, arg);
     } else if (Is(lex, "\n")) {
@@ -580,7 +581,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
  */
 static FbldMarkup* ParseBlock(Lex* lex)
 {
-  FbldMarkup* markup = malloc(sizeof(FbldMarkup));
+  FbldMarkup* markup = FbldAlloc(FbldMarkup);
   markup->tag = FBLD_MARKUP_SEQUENCE;
   markup->text = NULL;
   markup->refcount = 1;
@@ -593,7 +594,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
     // Explicit implicit block command.
     if (Is(lex, "@@")) {
       Advance(lex);
-      FbldMarkup* cmd = malloc(sizeof(FbldMarkup));
+      FbldMarkup* cmd = FbldAlloc(FbldMarkup);
       cmd->tag = FBLD_MARKUP_COMMAND;
       cmd->text = FbldNewText(lex->loc, ".block");
       cmd->refcount = 1;
@@ -618,7 +619,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
     }
 
     // Implicit block
-    FbldMarkup* cmd = malloc(sizeof(FbldMarkup));
+    FbldMarkup* cmd = FbldAlloc(FbldMarkup);
     cmd->tag = FBLD_MARKUP_COMMAND;
     cmd->text = FbldNewText(lex->loc, ".block");
     cmd->refcount = 1;
@@ -640,12 +641,12 @@ FbldMarkup* FbldParse(const char** inputs)
     .fin = NULL,
     .loc = { .file = "???", .line = 0, .column = 0 },
     .indent = 0,
-    .next = malloc(4 * sizeof(char)),
+    .next = FbldAllocArray(char, 4),
     .next_size = 0,
     .next_capacity = 4,
   };
 
   FbldMarkup* parsed = ParseBlock(&lex);
-  free(lex.next);
+  FbldFree(lex.next);
   return parsed;
 }

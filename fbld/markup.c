@@ -5,6 +5,7 @@
 #include <stdlib.h>   // for abort
 #include <string.h>   // for strlen
 
+#include "alloc.h"
 #include "fbld.h"
 #include "vector.h"
 
@@ -21,7 +22,7 @@ void FbldError(FbldLoc loc, const char* message)
 // See documentation in fbld.h
 FbldText* FbldNewText(FbldLoc loc, const char* str)
 {
-  FbldText* text = malloc(sizeof(FbldText) + sizeof(char) * strlen(str) + 1);
+  FbldText* text = FbldAllocExtra(FbldText, strlen(str) + 1);
   text->loc = loc;
   strcpy(text->str, str);
   return text;
@@ -36,14 +37,14 @@ void FbldFreeMarkup(FbldMarkup* markup)
   }
 
   if (markup->text) {
-    free(markup->text);
+    FbldFree(markup->text);
   }
 
   for (size_t i = 0; i < markup->markups.size; ++i) {
     FbldFreeMarkup(markup->markups.xs[i]);
   }
-  free(markup->markups.xs);
-  free(markup);
+  FbldFree(markup->markups.xs);
+  FbldFree(markup);
 }
 
 // See documentation in fbld.h
