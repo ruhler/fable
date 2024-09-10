@@ -646,5 +646,6 @@ FbldMarkup* FbldParse(const char** inputs)
   };
 
   FbldMarkup* parsed = ParseBlock(&lex);
+  free(lex.next);
   return parsed;
 }

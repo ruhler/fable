@@ -653,6 +653,7 @@ static void Eval(Cmd* cmd, bool debug)
         free(args);
         FreeEnv(nenv);
         FbldFreeMarkup(c->body);
+        free(c);
         break;
       }
 
