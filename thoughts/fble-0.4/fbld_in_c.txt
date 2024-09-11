@@ -563,5 +563,65 @@ in place with sharing? Unclear. Maybe don't evaluate in place at this point.
 Because I'm not sure how to evaluate in place on markup that has refcount
 greater than 1.
   
+---
+
+What's slow now in stack smasher, algorithmically:
+* We have to iterate over each of the input characters "a", including the
+  ifeq, head, tail loop. That's expected.
+* The body of the function f is getting wrapped in a singleton sequence
+  markup. That doesn't impact complexity, but we could be twice as fast maybe
+  if we didn't do that. That kind of thing comes up a few times.
+* When constructing the new string of "bbb..." we have some crazy explosion.
+
+Can I understand what's happening with construction of bbb...?
+
+When executing the function, we say:
+* Push: evaluate b
+* Push: evaluate f(tail(x))
+
+It looks we are doing:
+* b
+* bb, b
+* bbb, bb, b
+* bbbb, bbb, bb, b,
+...
+
+So, n * n^2, or O(N^3) for what I hope would be an O(N) evaluation.
+
+Because the sequence we are building up is:
+
+b(b(b(b(b(b(b(...)))))))
+
+Which, in general, is:
+
+b(bbbbbbbb)
+
+---
+
+I think the problem is we do an extra round of evaluation. For example:
+
+  define[f][x] @x @@
+  f[aaa]
+
+First we evaluate aaa. The result is aaa.
+
+Next, to apply f, we turn it into:
+
+EVAL(
+  define[x][][aaa] @@
+  @x
+)
+
+Next, to apply x, we turn it into:
+
+EVAL(
+  aaa
+)
+
+We shouldn't be doing EVAL at the end, because the argument was already
+evaluated.
+
+Perhaps that's why I distinguish between Let and Define, and don't use @define
+for @let?
 
 

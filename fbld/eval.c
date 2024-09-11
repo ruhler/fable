@@ -14,6 +14,10 @@
  *  The environment is the owner of its name, args (vector and elements),
  *  body, and next.
  *
+ *  The args.xs field is NULL to indicate this is a variable definition
+ *  instead of a function definition. In that case the body has already been
+ *  evaluated.
+ *
  *  @field[size_t][refcount] Reference count.
  *  @field[FbldText*][name] The name of the first defined function.
  *  @field[FbldTextV][args] Names of arguments to the first defined function.
@@ -34,6 +38,7 @@ typedef struct Env {
 typedef enum {
   EVAL_CMD,
   DEFINE_CMD,
+  LET_CMD,
   IF_CMD,
   ERROR_CMD,
   HEAD_CMD,
@@ -69,6 +74,14 @@ typedef struct {
   FbldMarkup* body;
   Env* env;
 } DefineCmd;
+
+typedef struct {
+  Cmd _base;
+  FbldMarkup* name;
+  FbldMarkup* def;
+  FbldMarkup* body;
+  Env* env;
+} LetCmd;
 
 typedef struct {
   Cmd _base;
@@ -352,6 +365,18 @@ static void Eval(Cmd* cmd, bool debug)
                   FbldError(markup->text->loc, "wrong number of arguments");
                 }
 
+                if (e->args.xs == NULL) {
+                  // This is a variable lookup rather than a function
+                  // application. Handle it directly.
+                  *(c->_base.dest) = FbldCopyMarkup(e->body);
+                  FreeEnv(c->env);
+                  FbldFreeMarkup(c->markup);
+                  cmd = c->_base.next;
+                  FbldFree(c);
+                  user = true;
+                  break;
+                }
+
                 Env* next = CopyEnv(e);
 
                 for (size_t i = 0; i < e->args.size; ++i) {
@@ -434,24 +459,19 @@ static void Eval(Cmd* cmd, bool debug)
                 FbldError(markup->text->loc, "expected 3 arguments to @let");
               }
 
-              DefineCmd* dc = FbldAlloc(DefineCmd);
-              dc->_base.tag = DEFINE_CMD;
-              dc->_base.dest = c->_base.dest;
-              dc->_base.next = c->_base.next;
-              dc->name = NULL;
+              LetCmd* lc = FbldAlloc(LetCmd);
+              lc->_base.tag = LET_CMD;
+              lc->_base.dest = c->_base.dest;
+              lc->_base.next = c->_base.next;
+              lc->name = NULL;
 
-              dc->args = FbldAlloc(FbldMarkup);
-              dc->args->tag = FBLD_MARKUP_SEQUENCE;
-              dc->args->text = NULL;
-              dc->args->refcount = 1;
-              FbldInitVector(dc->args->markups);
+              lc->def = NULL;
+              lc->body = FbldCopyMarkup(markup->markups.xs[2]);
+              lc->env = CopyEnv(c->env);
+              cmd = &lc->_base;
 
-              dc->def = FbldCopyMarkup(markup->markups.xs[1]);
-              dc->body = FbldCopyMarkup(markup->markups.xs[2]);
-              dc->env = CopyEnv(c->env);
-              cmd = &dc->_base;
-
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &dc->name);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &lc->name);
+              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &lc->def);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -665,6 +685,33 @@ static void Eval(Cmd* cmd, bool debug)
 
         cmd = NewEval(c->_base.next, nenv, c->body, c->_base.dest);
         FbldFree(args);
+        FreeEnv(nenv);
+        FbldFreeMarkup(c->body);
+        FbldFree(c);
+        break;
+      }
+
+      case LET_CMD: {
+        LetCmd* c = (LetCmd*)cmd;
+
+        FbldText* name = FbldTextOfMarkup(c->name);
+        FbldFreeMarkup(c->name);
+
+        if (debug) {
+          printf("LET %s = ", name->str);
+          FbldDebugMarkup(c->def);
+          printf("\n");
+        }
+
+        Env* nenv = FbldAlloc(Env);
+        nenv->refcount = 1;
+        nenv->name = name;
+        nenv->body = c->def;
+        nenv->next = c->env;
+        nenv->args.xs = NULL;
+        nenv->args.size = 0;
+
+        cmd = NewEval(c->_base.next, nenv, c->body, c->_base.dest);
         FreeEnv(nenv);
         FbldFreeMarkup(c->body);
         FbldFree(c);
