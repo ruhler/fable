@@ -624,4 +624,17 @@ evaluated.
 Perhaps that's why I distinguish between Let and Define, and don't use @define
 for @let?
 
+---
+
+Okay, implementation of fbld in c looks to be caught up to the fble
+implementation in terms of processing all the existing documents. And wow is
+it fast. 4 seconds to process fble.fbld, compared to a 4m31s fble
+implementation.
+
+Next step is to do a big round of cleanup on fbld in c implementation:
+* Address TODOs.
+* Clean up the code.
+* Port over fble tests to fbld spec tests.
+* Remove all reference of the fble impl from fbld/ directory and build.
+* Merge into the main branch and continue development from there.
 
