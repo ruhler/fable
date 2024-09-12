@@ -635,6 +635,6 @@ Next step is to do a big round of cleanup on fbld in c implementation:
 * Address TODOs.
 * Clean up the code.
 * Port over fble tests to fbld spec tests.
-* Remove all reference of the fble impl from fbld/ directory and build.
-* Merge into the main branch and continue development from there.
+* Remove all reference of the fble impl from fbld/ directory and build. DONE.
+* Merge into the main branch and continue development from there. DONE.
 
