@@ -11,7 +11,7 @@
 #
 # Example:
 #
-#   tclsh8.6 spec-test.run.tcl out/pkgs/fbld/bin/fbld fbld/SpecTests.fbld fbld/SpecTests/basic.fbld
+#   tclsh8.6 spec-test.run.tcl out/fbld/fbld fbld/SpecTests.fbld fbld/SpecTests/basic.fbld
 #
 # Parses the @test metadata of $FBLD and executes the test appropriately.
 # Reports an error in case of test failure.

@@ -8,13 +8,13 @@ namespace eval "fbld" {
   build $::b/fbld/version.fbld "$::s/fbld/version.fbld.sh" \
     "$::s/fbld/version.fbld.sh $::version > $::b/fbld/version.fbld"
 
-  set ::default_fbld $::b/pkgs/fbld/bin/fbld
+  set ::fbld $::b/fbld/fbld
 
   # Builds a man page from an fbld @usage doc.
   proc ::fbld_man_usage { target source } {
     build $target \
-      "$::default_fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
-      "$::s/buildstamp --fbld BuildStamp | $::default_fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $source > $target"
+      "$::fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
+      "$::s/buildstamp --fbld BuildStamp | $::fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/usage.man.fbld $::s/fbld/usage.lib.fbld $source > $target"
   }
 
   # Builds a man page from an fbld doc comment.
@@ -26,8 +26,8 @@ namespace eval "fbld" {
       "$source $::s/fbld/dcget.tcl" \
       "tclsh8.6 $::s/fbld/dcget.tcl $id < $source > $target.fbld"
     build $target \
-      "$::default_fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/dc.man.fbld $::b/fbld/config.fbld $target.fbld" \
-      "$::s/buildstamp --fbld BuildStamp | $::default_fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/dc.man.fbld $target.fbld > $target"
+      "$::fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/dc.man.fbld $::b/fbld/config.fbld $target.fbld" \
+      "$::s/buildstamp --fbld BuildStamp | $::fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/man.fbld $::s/fbld/dc.man.fbld $target.fbld > $target"
   }
 
   # Check syntax of doc comments in the given file.
@@ -38,8 +38,8 @@ namespace eval "fbld" {
       "$source $::s/fbld/dcget.tcl" \
       "tclsh8.6 $::s/fbld/dcget.tcl < $source > $target.fbld"
     test $target \
-      "$::default_fbld $::s/fbld/dc.check.fbld $target.fbld" \
-      "$::default_fbld $::s/fbld/dc.check.fbld $target.fbld"
+      "$::fbld $::s/fbld/dc.check.fbld $target.fbld" \
+      "$::fbld $::s/fbld/dc.check.fbld $target.fbld"
   }
 
   # Builds usage help text.
@@ -47,8 +47,8 @@ namespace eval "fbld" {
   # @arg source - the .fbld usage doc to generate the header from.
   proc ::fbld_help_usage { target source } {
     build $target.roff \
-      "$::default_fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
-      "$::s/buildstamp --fbld BuildStamp | $::default_fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
+      "$::fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
+      "$::s/buildstamp --fbld BuildStamp | $::fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
     # Pass -c, -b, -u to grotty to escape sequences and backspaces in the output.
     build $target $target.roff \
       "groff -P -c -P -b -P -u -T utf8 < $target.roff > $target"
@@ -59,8 +59,8 @@ namespace eval "fbld" {
   # @arg source - the .fbld usage doc to generate the header from.
   proc ::fbld_help_fble_usage { target source } {
     build $target.roff \
-      "$::default_fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
-      "$::s/buildstamp --fbld BuildStamp | $::default_fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
+      "$::fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
+      "$::s/buildstamp --fbld BuildStamp | $::fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
     # Pass -c, -b, -u to grotty to escape sequences and backspaces in the output.
     build $target.txt $target.roff \
       "groff -P -c -P -b -P -u -T ascii < $target.roff > $target.txt"
@@ -70,8 +70,8 @@ namespace eval "fbld" {
 
   proc ::fbld_html_doc { target sources } {
     build $target \
-      "$::default_fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/html.fbld $sources" \
-      "$::s/buildstamp --fbld BuildStamp | $::default_fbld - $::b/fbld/version.fbld $::s/fbld/html.fbld $sources > $target"
+      "$::fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/html.fbld $sources" \
+      "$::s/buildstamp --fbld BuildStamp | $::fbld - $::b/fbld/version.fbld $::s/fbld/html.fbld $sources > $target"
   }
 
   proc ::fbld_html_tutorial { target source } {
@@ -103,10 +103,5 @@ namespace eval "fbld" {
     test $::b/fbld/SpecTests/$x.c.tr \
       "$::b/fbld/fbld $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
       "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/fbld/fbld $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
-
-    # fble-based fbld.
-    test $::b/fbld/SpecTests/$x.fble.tr \
-      "$::b/pkgs/fbld/bin/fbld $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
-      "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/pkgs/fbld/bin/fbld $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
   }
 }

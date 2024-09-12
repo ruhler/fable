@@ -13,4 +13,12 @@ namespace eval "pkgs/fbld" {
   install $::b/pkgs/fbld/bin/fbld $::config::bindir/fbld
   fbld_man_usage $::b/pkgs/fbld/fbld.1 $::s/pkgs/fbld/fbld.fbld
   install $::b/pkgs/fbld/fbld.1 $::config::mandir/man1/fbld.1
+
+  # Fbld spec tests.
+  foreach {x} [build_glob $::s/fbld/SpecTests -tails -nocomplain -type f *.fbld] {
+    # fble-based fbld.
+    test $::b/fbld/SpecTests/$x.fble.tr \
+      "$::b/pkgs/fbld/bin/fbld $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
+      "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/pkgs/fbld/bin/fbld $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
+  }
 }

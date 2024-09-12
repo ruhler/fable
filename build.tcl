@@ -54,7 +54,7 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  set cflags "-std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -O0"
+  set cflags "-std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -O3"
   set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
@@ -103,7 +103,7 @@ proc lib { lib objs } {
 #   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 proc bin { bin objs lflags } {
-  set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O0"
+  set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
 }
 
@@ -217,14 +217,14 @@ build_tcl $::s/tutorials/build.tcl
 build_tcl $::s/book/build.tcl
 
 # README.md
-build $::b/pkgs/fbld/README.md \
-  "$::b/pkgs/fbld/bin/fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld" \
-  "$::b/pkgs/fbld/bin/fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld > $::b/pkgs/fbld/README.md"
+build $::b/README.gen.md \
+  "$::fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld" \
+  "$::fbld $::s/fbld/nobuildstamp.fbld $::b/fbld/version.fbld $::s/fbld/markdown.fbld $::s/README.fbld > $::b/README.gen.md"
 
 # Make sure the version of README.md checked in matches the latest version.
-test $::b/pkgs/fbld/README.tr \
-  "$::s/README.md $::b/pkgs/fbld/README.md" \
-  "diff --strip-trailing-cr $::s/README.md $::b/pkgs/fbld/README.md"
+test $::b/README.tr \
+  "$::s/README.md $::b/README.gen.md" \
+  "diff --strip-trailing-cr $::s/README.md $::b/README.gen.md"
 
 # README file www
 fbld_html_doc $::b/www/README.html $::s/README.fbld

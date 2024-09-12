@@ -22,7 +22,6 @@ Things to consider doing for the fble-0.4 release.
    scope.
  - Improve error messages.
    Include number of expected and actual arguments, for example.
- - Switch back to -O3 in build.tcl
  - Add proper doc comments on all the code.
 
 * Fbld
