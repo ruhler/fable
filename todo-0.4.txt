@@ -6,8 +6,6 @@ Things to consider doing for the fble-0.4 release.
  - Separate out loc.h, text.h, markup.h, etc?
  - Change FbldMarkup type to more explicitly distinguish between the different
    kinds of markups.
- - Test the difference between zero arg @define and @let.
-   The @define def isn't evaluated until the function is called.
  - Figure out how to associate a location with empty markup.
  - Avoid constructing markups with singleton sequences?
  - Have a way to add dynamic info to fbld error messages, like '%s' format

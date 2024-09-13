@@ -41,4 +41,13 @@ Regression test for a bug where we access the wrong definition of a function:
  @@
  @doc[Hello]
 
+Test that body of define is not executed until the command is called, even if
+it's a zero argument define.
+
+@assert_eq[hello\n]
+ @define[x][]
+  @error[This error won't happen]
+ @@
+ hello
+
 End of tests.

@@ -1,0 +1,6 @@
+@test error 5:10 @@
+
+Test that the let builtin is strict in its definition.
+
+@let[x][@error[This is an error]] @@
+hello
