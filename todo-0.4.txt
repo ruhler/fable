@@ -3,6 +3,7 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
+ - Port tests from fble implementation to spec tests.
  - Separate out loc.h, text.h, markup.h, etc?
  - Change FbldMarkup type to more explicitly distinguish between the different
    kinds of markups.
@@ -17,9 +18,8 @@ Things to consider doing for the fble-0.4 release.
    It should error out rather than be treated as false.
  - Test case of unresolved @x in error argument.
  - Test that we evaluate appropriate args to builtins before executing them.
+   Done with @define and @let. Still need others.
  - Add tests for code coverage.
- - Test that function evaluation happens in functions scope, not callers
-   scope.
  - Improve error messages.
    Include number of expected and actual arguments, for example.
  - Add proper doc comments on all the code.

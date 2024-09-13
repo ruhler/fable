@@ -12,7 +12,7 @@
 /**
  * @value[gNumAllocations]
  *  Total number of regions allocated via FbldAlloc routines that have not yet
- *  been freed.
+ *  been freed. Used for detecting memory leak at exit.
  *
  *  @type[size_t]
  */
@@ -40,7 +40,7 @@ static void Exit()
   }
 }
 
-// See documentation in fble-alloc.h.
+// See documentation in alloc.h.
 void* FbldAllocRaw(size_t size)
 {
   if (!gInitialized) {
@@ -51,7 +51,7 @@ void* FbldAllocRaw(size_t size)
   gNumAllocations++;
   return malloc(size);
 }
-// See documentation in fble-alloc.h.
+// See documentation in alloc.h.
 void* FbldReAllocRaw(void* ptr, size_t size)
 {
   if (ptr == NULL) {
@@ -60,7 +60,7 @@ void* FbldReAllocRaw(void* ptr, size_t size)
   return realloc(ptr, size);
 }
 
-// See documentation in fble-alloc.h.
+// See documentation in alloc.h.
 void FbldFree(void* ptr)
 {
   if (ptr == NULL) {
