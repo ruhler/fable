@@ -50,4 +50,11 @@ it's a zero argument define.
  @@
  hello
 
+Test that the name being defined is evaluated before use.
+
+@assert_eq[hihi]
+ @let[x][y] @@
+ @define[@x][a][@a@a]
+  @y[hi]
+
 End of tests.

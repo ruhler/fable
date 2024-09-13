@@ -6,3 +6,12 @@ Test of the let builtin.
 @let[y][@x@x] @@
 @let[z][@y@y] @@
 @assert_eq[@z][aaaaaaaa]
+
+Test that the name being defined is evaluated before use.
+
+@assert_eq[zz]
+ @let[x][y] @@
+ @let[@x][zz] @@
+ @y
+
+End of tests.
