@@ -31,10 +31,21 @@ int main(int argc, const char* argv[])
   }
 
   FbldMarkup* parsed = FbldParse(argv);
-  FbldMarkup* evaled = FbldEval(parsed, debug);
-  FbldPrintMarkup(evaled);
+  if (parsed == NULL) {
+    return 1;
+  }
 
+  FbldMarkup* evaled = FbldEval(parsed, debug);
   FbldFreeMarkup(parsed);
+  if (evaled == NULL) {
+    return 1;
+  }
+
+  if (!FbldPrintMarkup(evaled)) {
+    FbldFreeMarkup(evaled);
+    return 1;
+  }
+
   FbldFreeMarkup(evaled);
   return 0;
 }

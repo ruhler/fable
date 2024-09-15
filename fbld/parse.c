@@ -57,7 +57,7 @@ static void Advance(Lex* lex);
 
 static bool IsNameChar(int c);
 static FbldText* ParseName(Lex* lex);
-static void ParseInlineArgs(Lex* lex, FbldMarkupV* args);
+static bool ParseInlineArgs(Lex* lex, FbldMarkupV* args);
 static FbldMarkup* ParseInlineCommand(Lex* lex);
 static FbldMarkup* ParseInline(Lex* lex, InlineContext context);
 static FbldMarkup* ParseBlockCommand(Lex* lex);
@@ -288,12 +288,13 @@ static FbldText* ParseName(Lex* lex)
  *
  *  @arg[Lex*][lex] The lexer state
  *  @arg[FbldMarkupV*][args] Output vector to append parsed args to.
+ *  @returns[bool] True on success, false in case of error.
  *  @sideeffects
- *   @i Prints a message to stderr and aborts the program in case of error.
+ *   @i Prints a message to stderr in case of error.
  *   @i Advances lex state just past the parsed args.
  *   @i Appends to args vector.
  */
-static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
+static bool ParseInlineArgs(Lex* lex, FbldMarkupV* args)
 {
   while (Is(lex, "[") || Is(lex, "{")) {
     if (Is(lex, "{")) {
@@ -305,7 +306,9 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
       FbldInitVector(chars);
       while (nest > 0 || !Is(lex, "}")) {
         if (IsEnd(lex)) {
-          FbldError(lex->loc, "end of file in literal inline arg");
+          FbldReportError(lex->loc, "end of file in literal inline arg");
+          FbldFree(chars.xs);
+          return false;
         }
 
         if (Is(lex, "{")) {
@@ -334,12 +337,16 @@ static void ParseInlineArgs(Lex* lex, FbldMarkupV* args)
     if (Is(lex, "[")) {
       Advance(lex);
       FbldMarkup* arg = ParseInline(lex, INLINE_ARG);
+      if (arg == NULL) {
+        return NULL;
+      }
       FbldAppendToVector(*args, arg);
 
       assert(Is(lex, "]"));
       Advance(lex);
     }
   }
+  return true;
 }
 
 /**
@@ -361,7 +368,10 @@ static FbldMarkup* ParseInlineCommand(Lex* lex)
   markup->refcount = 1;
   FbldInitVector(markup->markups);
 
-  ParseInlineArgs(lex, &markup->markups);
+  if (!ParseInlineArgs(lex, &markup->markups)) {
+    FbldFreeMarkup(markup);
+    return NULL;
+  }
   return markup;
 }
 
@@ -369,9 +379,9 @@ static FbldMarkup* ParseInlineCommand(Lex* lex)
  * @func[ParseInline] Parses fbld inline structured markup.
  *  @arg[Lex*][lex] The lexer state.
  *  @arg[InlineContext][context] The context to parse from.
- *  @returns[FbldMarkup*] The parsed inline markup.
+ *  @returns[FbldMarkup*] The parsed inline markup, or NULL in case of error.
  *  @sideeffects
- *   @i Prints a message to stderr and aborts the program in case of error.
+ *   @i Prints a message to stderr in case of error.
  *   @i Advances lex state just past the parsed inline text.
  *   @i Allocates an FbldMarkup* that should be freed when no longer needed.
  */
@@ -436,7 +446,12 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         case '\\': FbldAppendToVector(chars, '\\'); break;
         case ']': FbldAppendToVector(chars, ']'); break;
         case 'n': FbldAppendToVector(chars, '\n'); break;
-        default: FbldError(lex->loc, "unsupported escape sequence"); break;
+        default: {
+          FbldReportError(lex->loc, "unsupported escape sequence");
+          FbldFree(chars.xs);
+          FbldFreeMarkup(markup);
+          return NULL;
+        }
       }
       Advance(lex);
       continue;
@@ -474,9 +489,9 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
  *  From just after the initial '@' character.
  *
  *  @arg[Lex*][lex] The lexer state.
- *  @returns[FbldMarkup*] The parsed command.
+ *  @returns[FbldMarkup*] The parsed command, or NULL in case of error.
  *  @sideeffects
- *   @i Prints a message to stderr and aborts the program in case of error.
+ *   @i Prints a message to stderr in case of error.
  *   @i Advances lex state just past the parsed block.
  *   @i Allocates an FbldMarkup* that should be freed when no longer needed.
  */
@@ -490,12 +505,19 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
 
   while (true) {
     // Inline args.
-    ParseInlineArgs(lex, &markup->markups);
+    if (!ParseInlineArgs(lex, &markup->markups)) {
+      FbldFreeMarkup(markup);
+      return NULL;
+    }
 
     // Same line arg.
     if (Is(lex, " ") && !Is(lex, " @\n") && !Is(lex, " @@\n")) {
       Advance(lex);
       FbldMarkup* same_line = ParseInline(lex, SAME_LINE_ARG);
+      if (same_line == NULL) {
+        FbldFreeMarkup(markup);
+        return NULL;
+      }
       FbldAppendToVector(markup->markups, same_line);
     }
 
@@ -503,6 +525,10 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     if (Is(lex, " @@\n")) {
       Advance(lex); Advance(lex); Advance(lex); Advance(lex);
       FbldMarkup* final = ParseBlock(lex);
+      if (final == NULL) {
+        FbldFreeMarkup(markup);
+        return NULL;
+      }
       FbldAppendToVector(markup->markups, final);
       return markup;
     }
@@ -540,7 +566,8 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       Advance(lex);
     } else {
       fprintf(stderr, "Got: 0x%x\n", Char(lex));
-      FbldError(lex->loc, "expected newline");
+      FbldReportError(lex->loc, "expected newline");
+      FbldFreeMarkup(markup);
       return NULL;
     }
 
@@ -548,6 +575,10 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     if (Is(lex, " ")) {
       lex->indent++;
       FbldMarkup* arg = ParseBlock(lex);
+      if (arg == NULL) {
+        FbldFreeMarkup(markup);
+        return NULL;
+      }
       lex->indent--;
 
       FbldAppendToVector(markup->markups, arg);
@@ -557,6 +588,10 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     if (Is(lex, "@@\n")) {
       Advance(lex); Advance(lex); Advance(lex);
       FbldMarkup* final = ParseBlock(lex);
+      if (final == NULL) {
+        FbldFreeMarkup(markup);
+        return NULL;
+      }
       FbldAppendToVector(markup->markups, final);
       return markup;
     }
@@ -579,7 +614,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
  *  @arg[Lex*][lex] The lexer state.
  *  @returns[FbldMarkup*] The parsed block markup.
  *  @sideeffects
- *   @i Prints a message to stderr and aborts the program in case of error.
+ *   @i Prints a message to stderr in case of error.
  *   @i Advances lex state just past the parsed block.
  *   @i Allocates an FbldMarkup* that should be freed when no longer needed.
  */
@@ -603,7 +638,15 @@ static FbldMarkup* ParseBlock(Lex* lex)
       cmd->text = FbldNewText(lex->loc, ".block");
       cmd->refcount = 1;
       FbldInitVector(cmd->markups);
-      FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
+
+      FbldMarkup* arg = ParseInline(lex, IMPLICIT_BLOCK);
+      if (arg == NULL) {
+        FbldFreeMarkup(cmd);
+        FbldFreeMarkup(markup);
+        return NULL;
+      }
+
+      FbldAppendToVector(cmd->markups, arg);
       FbldAppendToVector(markup->markups, cmd);
 
       // Skip blank lines.
@@ -615,6 +658,10 @@ static FbldMarkup* ParseBlock(Lex* lex)
     if (Is(lex, "@")) {
       Advance(lex);
       FbldMarkup* command = ParseBlockCommand(lex);
+      if (command == NULL) {
+        FbldFreeMarkup(markup);
+        return NULL;
+      }
       FbldAppendToVector(markup->markups, command);
 
       // Skip blank lines.
@@ -628,7 +675,15 @@ static FbldMarkup* ParseBlock(Lex* lex)
     cmd->text = FbldNewText(lex->loc, ".block");
     cmd->refcount = 1;
     FbldInitVector(cmd->markups);
-    FbldAppendToVector(cmd->markups, ParseInline(lex, IMPLICIT_BLOCK));
+
+    FbldMarkup* arg = ParseInline(lex, IMPLICIT_BLOCK);
+    if (arg == NULL) {
+      FbldFreeMarkup(cmd);
+      FbldFreeMarkup(markup);
+      return NULL;
+    }
+
+    FbldAppendToVector(cmd->markups, arg);
     FbldAppendToVector(markup->markups, cmd);
 
     // Skip blank lines.

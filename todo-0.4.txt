@@ -14,6 +14,7 @@ Things to consider doing for the fble-0.4 release.
 
  - Add proper doc comments on all the code.
 
+ - Support for reporting multiple error messages.
  - Separate out loc.h, text.h, markup.h, etc?
  - Change FbldMarkup type to more explicitly distinguish between the different
    kinds of markups.

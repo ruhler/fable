@@ -9,14 +9,13 @@
 #include "fbld.h"
 #include "vector.h"
 
-static void TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity);
+static bool TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity);
 
 // See documentation in fbld.h
-void FbldError(FbldLoc loc, const char* message)
+void FbldReportError(FbldLoc loc, const char* message)
 {
   fprintf(stderr, "%s:%zi:%zi: error: %s\n",
       loc.file, loc.line, loc.column, message);
-  abort();
 }
 
 // See documentation in fbld.h
@@ -31,6 +30,10 @@ FbldText* FbldNewText(FbldLoc loc, const char* str)
 // See documentation in fbld.h
 void FbldFreeMarkup(FbldMarkup* markup)
 {
+  if (markup == NULL) {
+    return;
+  }
+
   markup->refcount--;
   if (markup->refcount > 0) {
     return;
@@ -80,18 +83,19 @@ FbldLoc FbldMarkupLoc(FbldMarkup* markup)
  *  @arg[FbldText**] Text constructed so far. Value may be NULL.
  *  @arg[size_t*][available]
  *   Available unused size allocated for text str.
+ *  @returns[bool] True on success, false in case of error.
  *  @sideeffects
  *   @i Reallocates FbldText* if needed and populates it with text.
- *   @i Errors out if the markup has unevaluated commands.
+ *   @i Prints message to stderr in case of error.
  */
-static void TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
+static bool TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
 {
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
       if (*text == NULL) {
         *text = FbldNewText(markup->text->loc, markup->text->str);
         *capacity = 0;
-        return;
+        return true;
       }
 
       size_t src_size = strlen(markup->text->str);
@@ -105,22 +109,31 @@ static void TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
 
       *capacity -= src_size;
       strcat((*text)->str, markup->text->str);
-      return;
+      return true;
     }
 
     case FBLD_MARKUP_COMMAND: {
-      FbldError(markup->text->loc, "expected plain text, but found command");
-      return;
+      FbldReportError(markup->text->loc, "expected plain text, but found command");
+      return false;
     }
 
     case FBLD_MARKUP_SEQUENCE: {
       // TODO: Avoid this potentially deep recursion.
       for (size_t i = 0; i < markup->markups.size; ++i) {
-        TextOfMarkup(markup->markups.xs[i], text, capacity);
+        if (!TextOfMarkup(markup->markups.xs[i], text, capacity)) {
+          if (*text != NULL) {
+            FbldFree(*text);
+            *text = NULL;
+          }
+          return false;
+        }
       }
-      return;
+      return true;
     }
   }
+
+  assert(false && "unreachable");
+  return false;
 }
 
 // See documentation in fbld.h
@@ -128,7 +141,9 @@ FbldText* FbldTextOfMarkup(FbldMarkup* markup)
 {
   FbldText* text = NULL;
   size_t capacity = 0;
-  TextOfMarkup(markup, &text, &capacity);
+  if (!TextOfMarkup(markup, &text, &capacity)) {
+    return NULL;
+  }
   if (text == NULL) {
     return FbldNewText(FbldMarkupLoc(markup), "");
   }
@@ -136,27 +151,32 @@ FbldText* FbldTextOfMarkup(FbldMarkup* markup)
 }
 
 // See documentation in fbld.h
-void FbldPrintMarkup(FbldMarkup* markup)
+bool FbldPrintMarkup(FbldMarkup* markup)
 {
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
       printf("%s", markup->text->str);
-      break;
+      return true;
     }
 
     case FBLD_MARKUP_COMMAND: {
-      FbldError(markup->text->loc, "expected plain text, but found command");
-      break;
+      FbldReportError(markup->text->loc, "expected plain text, but found command");
+      return false;
     }
 
     case FBLD_MARKUP_SEQUENCE: {
       // TODO: Avoid this potentially deep recursion.
       for (size_t i = 0; i < markup->markups.size; ++i) {
-        FbldPrintMarkup(markup->markups.xs[i]);
+        if (!FbldPrintMarkup(markup->markups.xs[i])) {
+          return false;
+        }
       }
-      break;
+      return true;
     }
   }
+
+  assert(false && "unreachable");
+  return false;
 }
 
 // See documentation in fbld.h

@@ -24,13 +24,12 @@ typedef struct {
 } FbldLoc;
 
 /**
- * @func[FbldError] Reports an error.
+ * @func[FbldReportError] Reports an error.
  *  @arg[FbldLoc][loc] The location of the error.
  *  @arg[const char*][msg] The error message.
- *  @sideeffects
- *   Prints the error message to stderr and aborts the program.
+ *  @sideeffects Prints the error message to stderr.
  */
-void FbldError(FbldLoc loc, const char* message);
+void FbldReportError(FbldLoc loc, const char* message);
 
 /*
  * @struct[FbldText] A string with a location.
@@ -102,7 +101,7 @@ struct FbldMarkup {
 
 /**
  * @func[FbldFreeMarkup] Frees resources associated with the given markup.
- *  @arg[FbldMarkup*][markup] The markup to free resources for.
+ *  @arg[FbldMarkup*][markup] The markup to free resources for. May be NULL.
  *
  *  @sideeffects
  *   Frees resources associated with the given markup.
@@ -129,22 +128,23 @@ FbldLoc FbldMarkupLoc(FbldMarkup* markup);
 /**
  * @func[FbldTextOfMarkup] Converts markup to text.
  *  @arg[FbldMarkup*][markup] The markup to convert.
- *  @returns[FbldText*] Text version of the markup.
+ *  @returns[FbldText*] Text version of the markup, or NULL in case of error.
  *  @sideeffects
  *   @i Allocates an FbldText* that should be freed when no longer needed.
- *   @i Behavior is undefined if the markup contains unevaluated commands.
+ *   @i Prints message to stderr if markup contains unevaluated commands.
  */
 FbldText* FbldTextOfMarkup(FbldMarkup* markup);
 
 /**
  * @func[FbldPrintMarkup] Prints markup to stdout.
  *  @arg[FbldMarkup*][markup] The markup to print.
+ *  @return[bool] True on success, false in case of error.
  *
  *  @sideeffects
  *   @i Outputs the markup to stdout.
- *   @i Prints an error to stderr and aborst the program in case of error.
+ *   @i Prints an error to stderr in case of error.
  */
-void FbldPrintMarkup(FbldMarkup* markup);
+bool FbldPrintMarkup(FbldMarkup* markup);
 
 /**
  * @func[FbldDebugMarkup] Debug prints markup to stdout.
@@ -157,10 +157,10 @@ void FbldDebugMarkup(FbldMarkup* markup);
  * @func[FbldParse] Parses a sequence of fbld files.
  *  @arg[const char**][inputs] Null terminated array of input file names.
  *
- *  @returns[FbldMarkup*] The parsed markup.
+ *  @returns[FbldMarkup*] The parsed markup, or NULL in case of error.
  *
  *  @sideeffects
- *   @i Prints an error to stderr and aborts the program in case of error.
+ *   @i Prints an error to stderr in case of error.
  *   @item
  *    References the input file names in the parsed markup. The caller is
  *    responsible for ensuring those pointers stay valid as long as they may
@@ -176,10 +176,10 @@ FbldMarkup* FbldParse(const char** inputs);
  *  @arg[FbldMarkup*][markup] The markup to evaluate. Borrowed.
  *  @arg[bool][debug] Set to true to enable debug log output.
  *
- *  @returns[FbldMarkup*] The evaluated markup.
+ *  @returns[FbldMarkup*] The evaluated markup, or NULL in case of error.
  *
  *  @sideeffects
- *   @i Prints an error to stderr and aborts the program in case of error.
+ *   @i Prints an error to stderr in case of error.
  *   @item
  *    The user is responsible for calling FbldFreeMarkup on the returned
  *    markup object when no longer needed.
