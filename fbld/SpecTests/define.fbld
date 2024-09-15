@@ -1,5 +1,11 @@
 @test no-error @@
 
+Basic test for define builtin:
+
+@assert_eq[a: hello, b: there]
+ @define[foo][a b] a: @a, b: @b @@
+ @foo[hello][there]
+
 Test that local variables shadow global variables:
 
 @assert_eq[hello,AAAA,CCCC]
@@ -17,6 +23,13 @@ not the scope of the caller.
  @define[foo][a b] @a,@b,@c @@
  @define[c][] DDDD @@
  @foo[hello][@a]
+
+Test where arg name is the same as function name:
+
+@assert_eq[hello]
+ @define[a][] AAAA @@
+ @define[a][a] @a @@
+ @a[hello]
 
 Test use of recursive definitions:
 

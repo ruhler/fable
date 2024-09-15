@@ -1,0 +1,8 @@
+@test error 5:2 @@
+
+Test with two errors, both of which should be reported.
+
+@error[The first error]
+@error[The second error]
+
+End of test.

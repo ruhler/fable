@@ -3,7 +3,17 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
- - Port tests from fble implementation to spec tests.
+ - Port parser tests from fble implementation to spec tests.
+ - Test that the correct variable is used in case of shadowing in let
+ - Test case of unresolved @x in ifeq.
+   It should error out rather than be treated as false.
+ - Test case of unresolved @x in error argument.
+ - Test that we evaluate appropriate args to builtins before executing them.
+   Done with @define and @let. Still need others.
+ - Add tests for code coverage.
+
+ - Add proper doc comments on all the code.
+
  - Separate out loc.h, text.h, markup.h, etc?
  - Change FbldMarkup type to more explicitly distinguish between the different
    kinds of markups.
@@ -12,17 +22,9 @@ Things to consider doing for the fble-0.4 release.
  - Have a way to add dynamic info to fbld error messages, like '%s' format
    string.
     Use it for expected plain text, but found command.
- - Test that the correct variable is used in case of shadowing in let
    Specifically that the def argument to let is evaluated before the body.
- - Test case of unresolved @x in ifeq.
-   It should error out rather than be treated as false.
- - Test case of unresolved @x in error argument.
- - Test that we evaluate appropriate args to builtins before executing them.
-   Done with @define and @let. Still need others.
- - Add tests for code coverage.
  - Improve error messages.
    Include number of expected and actual arguments, for example.
- - Add proper doc comments on all the code.
 
 * Fbld
  - The @plain builtin is really strange. I had trouble coming up with a test

@@ -2,10 +2,23 @@
 
 Basic test for plain builtin:
 
-@assert_eq[GX.]
- @let[z][AB@g[X]CDE.] @@
- @define[f][x][] @@
- @define[g][x] G@x. @@
- @eval[@plain[f][@z]]
+@assert_eq[bd]
+ @define[foo][x]
+  @define[keep][y] @y @@
+  @eval[@x]
+ @@
+ @define[ignore][x][] @@
+ @foo[@plain[ignore][a@keep[b]c@keep[d]e]]
+
+Another test of plain builtin:
+
+@assert_eq[bd]
+ @define[foo][x]
+  @define[keep][y] @y @@
+  @eval[@x]
+ @@
+ @define[ignore][x][] @@
+ @define[arg][][a@keep[b]c@keep[d]e] @@
+ @foo[@plain[ignore][@arg]]
 
 End of tests.

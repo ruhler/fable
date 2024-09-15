@@ -1,0 +1,6 @@
+@test no-error @@
+
+Test of the ifeq builtin.
+
+@assert_eq[there][@ifeq[a][b][hello][there]]
+@assert_eq[hello][@ifeq[a][a][hello][there]]
