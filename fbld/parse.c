@@ -212,6 +212,14 @@ static bool Is(Lex* lex, const char* str)
   return true;
 }
 
+/**
+ * @func[IsEnd] Checks if we've reached the end of input.
+ *  Taking into account the current indent level.
+ *
+ *  @arg[Lex*][lex] The lexer state.
+ *  @returns[bool] True if we are at the end of input, false otherwise.
+ *  @sideeffects Fetches the next input character if needed.
+ */
 static bool IsEnd(Lex* lex)
 {
   return END == Char(lex);
@@ -693,6 +701,7 @@ static FbldMarkup* ParseBlock(Lex* lex)
   return markup;
 }
 
+// See documentation in fbld.h
 FbldMarkup* FbldParse(const char** inputs)
 {
   Lex lex = {

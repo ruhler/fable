@@ -7,7 +7,7 @@
 
 #include <stdlib.h>   // for realloc
 
-// FbldExtendVectorRaw -- see fble.h for documentation of this function.
+// See documentation in vector.h
 void FbldExtendVectorRaw(size_t elem_size, size_t* size, void** xs)
 {
   // We assume the capacity of the array is the smallest power of 2 that holds
