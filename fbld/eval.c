@@ -124,7 +124,6 @@ static int HeadOf(FbldMarkup* m);
 static FbldMarkup* TailOf(FbldMarkup* m);
 static bool Eq(FbldMarkup* a, FbldMarkup* b);
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
-static void FreeCmds(Cmd* cmd);
 static bool Eval(Cmd* cmd, bool debug);
 
 static Env* CopyEnv(Env* env)
@@ -333,91 +332,24 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
   return NULL;
 }
 
-static void FreeCmds(Cmd* cmd)
-{
-  while (cmd != NULL) {
-    switch (cmd->tag) {
-      case EVAL_CMD: {
-        EvalCmd* e = (EvalCmd*)cmd;
-        FreeEnv(e->env);
-        FbldFreeMarkup(e->markup);
-        break;
-      }
-
-      case DEFINE_CMD: {
-        DefineCmd* c = (DefineCmd*)cmd;
-        FbldFreeMarkup(c->name);
-        FbldFreeMarkup(c->args);
-        FbldFreeMarkup(c->def);
-        FbldFreeMarkup(c->body);
-        FreeEnv(c->env);
-        break;
-      }
-
-      case LET_CMD: {
-        LetCmd* c = (LetCmd*)cmd;
-        FbldFreeMarkup(c->name);
-        FbldFreeMarkup(c->def);
-        FbldFreeMarkup(c->body);
-        FreeEnv(c->env);
-        break;
-      }
-
-      case IF_CMD: {
-        IfCmd* c = (IfCmd*)cmd;
-        FbldFreeMarkup(c->a);
-        FbldFreeMarkup(c->b);
-        FbldFreeMarkup(c->if_eq);
-        FbldFreeMarkup(c->if_ne);
-        FreeEnv(c->env);
-        break;
-      }
-
-      case ERROR_CMD: {
-        ErrorCmd* c = (ErrorCmd*)cmd;
-        FbldFreeMarkup(c->msg);
-        break;
-      }
-
-      case HEAD_CMD: {
-        HeadCmd* c = (HeadCmd*)cmd;
-        FbldFreeMarkup(c->a);
-        break;
-      }
-
-      case TAIL_CMD: {
-        TailCmd* c = (TailCmd*)cmd;
-        FbldFreeMarkup(c->a);
-        break;
-      }
-
-      case PLAIN_CMD: {
-        PlainCmd* c = (PlainCmd*)cmd;
-        FbldFreeMarkup(c->f);
-        FbldFreeMarkup(c->body);
-        FreeEnv(c->env);
-        break;
-      }
-
-      default: {
-        assert(false && "unreachable");
-        break;
-      }
-    }
-
-    Cmd* old = cmd;
-    cmd = old->next;
-    FbldFree(old);
-  }
-}
-
 static bool Eval(Cmd* cmd, bool debug)
 {
+  bool error = false;
   while (cmd != NULL) {
     switch (cmd->tag) {
       case EVAL_CMD: {
         EvalCmd* c = (EvalCmd*)cmd;
         FbldMarkup* markup = c->markup;
+
+        if (markup == NULL) {
+          // We must have hit an error earlier. Bail out here.
+          assert(error && "prior error not recorded properly?");
+
+          EvalCmd* e = (EvalCmd*)cmd;
+          cmd = cmd->next;
+          FreeEnv(e->env);
+          break;
+        }
 
         if (debug) {
           printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
@@ -439,10 +371,15 @@ static bool Eval(Cmd* cmd, bool debug)
             bool user = false;
             for (Env* e = c->env; e != NULL; e = e->next) {
               if (strcmp(command, e->name->str) == 0) {
+                user = true;
                 if (markup->markups.size != e->args.size) {
                   FbldReportError(markup->text->loc, "wrong number of arguments");
-                  FreeCmds(cmd);
-                  return false;
+                  error = true;
+                  cmd = cmd->next;
+                  FreeEnv(c->env);
+                  FbldFreeMarkup(c->markup);
+                  FbldFree(c);
+                  break;
                 }
 
                 if (e->args.xs == NULL) {
@@ -453,7 +390,6 @@ static bool Eval(Cmd* cmd, bool debug)
                   FbldFreeMarkup(c->markup);
                   cmd = c->_base.next;
                   FbldFree(c);
-                  user = true;
                   break;
                 }
 
@@ -480,7 +416,6 @@ static bool Eval(Cmd* cmd, bool debug)
                 FbldFreeMarkup(c->markup);
                 c->env = next;
                 c->markup = FbldCopyMarkup(e->body);
-                user = true;
                 break;
               }
             }
@@ -492,8 +427,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "error") == 0) {
               if (markup->markups.size != 1) {
                 FbldReportError(markup->text->loc, "expected 1 argument to @error");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               ErrorCmd* ec = FbldAlloc(ErrorCmd);
@@ -514,8 +453,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "define") == 0) {
               if (markup->markups.size != 4) {
                 FbldReportError(markup->text->loc, "expected 4 arguments to @define");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               DefineCmd* dc = FbldAlloc(DefineCmd);
@@ -541,8 +484,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "let") == 0) {
               if (markup->markups.size != 3) {
                 FbldReportError(markup->text->loc, "expected 3 arguments to @let");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               LetCmd* lc = FbldAlloc(LetCmd);
@@ -568,8 +515,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "head") == 0) {
               if (markup->markups.size != 1) {
                 FbldReportError(markup->text->loc, "expected 1 arguments to @head");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               HeadCmd* hc = FbldAlloc(HeadCmd);
@@ -590,8 +541,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "tail") == 0) {
               if (markup->markups.size != 1) {
                 FbldReportError(markup->text->loc, "expected 1 arguments to @tail");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               TailCmd* tc = FbldAlloc(TailCmd);
@@ -612,8 +567,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "ifeq") == 0) {
               if (markup->markups.size != 4) {
                 FbldReportError(markup->text->loc, "expected 4 arguments to @ifeq");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               IfCmd* ic = FbldAlloc(IfCmd);
@@ -639,8 +598,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "ifneq") == 0) {
               if (markup->markups.size != 4) {
                 FbldReportError(markup->text->loc, "expected 4 arguments to @ifneq");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               IfCmd* ic = FbldAlloc(IfCmd);
@@ -666,8 +629,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "eval") == 0) {
               if (markup->markups.size != 1) {
                 FbldReportError(markup->text->loc, "expected 1 argument to @eval");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
               
               cmd = NewEval(cmd, c->env, markup->markups.xs[0], &c->markup);
@@ -679,8 +646,12 @@ static bool Eval(Cmd* cmd, bool debug)
             if (strcmp(command, "plain") == 0) {
               if (markup->markups.size != 2) {
                 FbldReportError(markup->text->loc, "expected 2 argument to @plain");
-                FreeCmds(cmd);
-                return false;
+                error = true;
+                cmd = cmd->next;
+                FreeEnv(c->env);
+                FbldFreeMarkup(c->markup);
+                FbldFree(c);
+                break;
               }
 
               PlainCmd* pc = FbldAlloc(PlainCmd);
@@ -744,15 +715,29 @@ static bool Eval(Cmd* cmd, bool debug)
 
         FbldText* name = FbldTextOfMarkup(c->name);
         if (name == NULL) {
-          FreeCmds(cmd);
-          return false;
+          error = true;
+          cmd = cmd->next;
+          FbldFreeMarkup(c->name);
+          FbldFreeMarkup(c->args);
+          FbldFreeMarkup(c->def);
+          FbldFreeMarkup(c->body);
+          FreeEnv(c->env);
+          FbldFree(c);
+          break;
         }
         FbldFreeMarkup(c->name);
 
         FbldText* args = FbldTextOfMarkup(c->args);
         if (args == NULL) {
-          FreeCmds(cmd);
-          return false;
+          error = true;
+          cmd = cmd->next;
+          FbldFreeMarkup(c->name);
+          FbldFreeMarkup(c->args);
+          FbldFreeMarkup(c->def);
+          FbldFreeMarkup(c->body);
+          FreeEnv(c->env);
+          FbldFree(c);
+          break;
         }
         FbldFreeMarkup(c->args);
 
@@ -805,8 +790,14 @@ static bool Eval(Cmd* cmd, bool debug)
 
         FbldText* name = FbldTextOfMarkup(c->name);
         if (name == NULL) {
-          FreeCmds(cmd);
-          return false;
+          error = true;
+          cmd = cmd->next;
+          FbldFreeMarkup(c->name);
+          FbldFreeMarkup(c->def);
+          FbldFreeMarkup(c->body);
+          FreeEnv(c->env);
+          FbldFree(c);
+          break;
         }
         FbldFreeMarkup(c->name);
 
@@ -864,13 +855,20 @@ static bool Eval(Cmd* cmd, bool debug)
 
         FbldText* msg = FbldTextOfMarkup(c->msg);
         if (msg == NULL) {
-          FreeCmds(cmd);
-          return false;
+          error = true;
+          cmd = cmd->next;
+          FbldFreeMarkup(c->msg);
+          FbldFree(c);
+          break;
         }
+
         FbldReportError(c->loc, msg->str);
         FbldFree(msg);
-        FreeCmds(cmd);
-        return false;
+        error = true;
+        cmd = cmd->next;
+        FbldFreeMarkup(c->msg);
+        FbldFree(c);
+        break;
       }
 
       case HEAD_CMD: {
@@ -889,8 +887,11 @@ static bool Eval(Cmd* cmd, bool debug)
 
         if (ch == -1) {
           FbldReportError(FbldMarkupLoc(c->a), "argument to @head not evaluated");
-          FreeCmds(cmd);
-          return false;
+          error = true;
+          cmd = cmd->next;
+          FbldFreeMarkup(c->a);
+          FbldFree(c);
+          break;
         }
 
         char plain[] = {(char)ch, '\0'};
@@ -935,8 +936,13 @@ static bool Eval(Cmd* cmd, bool debug)
 
         FbldText* f = FbldTextOfMarkup(c->f);
         if (f == NULL) {
-          FreeCmds(cmd);
-          return false;
+          error = true;
+          cmd = cmd->next;
+          FbldFreeMarkup(c->f);
+          FbldFreeMarkup(c->body);
+          FreeEnv(c->env);
+          FbldFree(c);
+          break;
         }
         FbldMarkup* plained = MapPlain(f->str, c->body);
         FbldFreeMarkup(c->f);
@@ -951,7 +957,7 @@ static bool Eval(Cmd* cmd, bool debug)
       }
     }
   }
-  return true;
+  return !error;
 }
 
 FbldMarkup* FbldEval(FbldMarkup* markup, bool debug)
