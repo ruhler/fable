@@ -23,19 +23,12 @@ int main(int argc, const char* argv[])
   argc--;
   argv++;
 
-  bool debug = false;
-  if (argc > 0 && strcmp(*argv, "--debug") == 0) {
-    debug = true;
-    argc--;
-    argv++;
-  }
-
   FbldMarkup* parsed = FbldParse(argv);
   if (parsed == NULL) {
     return 1;
   }
 
-  FbldMarkup* evaled = FbldEval(parsed, debug);
+  FbldMarkup* evaled = FbldEval(parsed);
   FbldFreeMarkup(parsed);
   if (evaled == NULL) {
     return 1;

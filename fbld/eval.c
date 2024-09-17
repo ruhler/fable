@@ -124,7 +124,7 @@ static int HeadOf(FbldMarkup* m);
 static FbldMarkup* TailOf(FbldMarkup* m);
 static bool Eq(FbldMarkup* a, FbldMarkup* b);
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
-static bool Eval(Cmd* cmd, bool debug);
+static bool Eval(Cmd* cmd);
 
 static Env* CopyEnv(Env* env)
 {
@@ -332,7 +332,7 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
   return NULL;
 }
 
-static bool Eval(Cmd* cmd, bool debug)
+static bool Eval(Cmd* cmd)
 {
   bool error = false;
   while (cmd != NULL) {
@@ -349,10 +349,6 @@ static bool Eval(Cmd* cmd, bool debug)
           cmd = cmd->next;
           FreeEnv(e->env);
           break;
-        }
-
-        if (debug) {
-          printf("EVAL: "); FbldDebugMarkup(markup); printf("\n");
         }
 
         switch (markup->tag) {
@@ -741,10 +737,6 @@ static bool Eval(Cmd* cmd, bool debug)
         }
         FbldFreeMarkup(c->args);
 
-        if (debug) {
-          printf("DEFINE %s(%s)\n", name->str, args->str);
-        }
-
         Env* nenv = FbldAlloc(Env);
         nenv->refcount = 1;
         nenv->name = name;
@@ -801,12 +793,6 @@ static bool Eval(Cmd* cmd, bool debug)
         }
         FbldFreeMarkup(c->name);
 
-        if (debug) {
-          printf("LET %s = ", name->str);
-          FbldDebugMarkup(c->def);
-          printf("\n");
-        }
-
         Env* nenv = FbldAlloc(Env);
         nenv->refcount = 1;
         nenv->name = name;
@@ -824,9 +810,6 @@ static bool Eval(Cmd* cmd, bool debug)
 
       case IF_CMD: {
         IfCmd* c = (IfCmd*)cmd;
-        if (debug) {
-          printf("IF\n");
-        }
 
         // TODO: Handle the case where arguments can't be compared for
         // equality.
@@ -849,9 +832,6 @@ static bool Eval(Cmd* cmd, bool debug)
 
       case ERROR_CMD: {
         ErrorCmd* c = (ErrorCmd*)cmd;
-        if (debug) {
-          printf("ERROR\n");
-        }
 
         FbldText* msg = FbldTextOfMarkup(c->msg);
         if (msg == NULL) {
@@ -873,9 +853,6 @@ static bool Eval(Cmd* cmd, bool debug)
 
       case HEAD_CMD: {
         HeadCmd* c = (HeadCmd*)cmd;
-        if (debug) {
-          printf("HEAD\n");
-        }
 
         int ch = HeadOf(c->a);
         if (ch == 0) {
@@ -909,9 +886,6 @@ static bool Eval(Cmd* cmd, bool debug)
 
       case TAIL_CMD: {
         TailCmd* c = (TailCmd*)cmd;
-        if (debug) {
-          printf("TAIL\n");
-        }
 
         FbldMarkup* result = TailOf(c->a);
         if (result == NULL) {
@@ -930,9 +904,6 @@ static bool Eval(Cmd* cmd, bool debug)
 
       case PLAIN_CMD: {
         PlainCmd* c = (PlainCmd*)cmd;
-        if (debug) {
-          printf("PLAIN\n");
-        }
 
         FbldText* f = FbldTextOfMarkup(c->f);
         if (f == NULL) {
@@ -960,10 +931,10 @@ static bool Eval(Cmd* cmd, bool debug)
   return !error;
 }
 
-FbldMarkup* FbldEval(FbldMarkup* markup, bool debug)
+FbldMarkup* FbldEval(FbldMarkup* markup)
 {
   FbldMarkup* result = NULL;
-  if (!Eval(NewEval(NULL, NULL, markup, &result), debug)) {
+  if (!Eval(NewEval(NULL, NULL, markup, &result))) {
     FbldFreeMarkup(result);
     return NULL;
   }

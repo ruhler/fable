@@ -174,7 +174,6 @@ FbldMarkup* FbldParse(const char** inputs);
 /**
  * @func[FbldEval] Evaluates an fbld document.
  *  @arg[FbldMarkup*][markup] The markup to evaluate. Borrowed.
- *  @arg[bool][debug] Set to true to enable debug log output.
  *
  *  @returns[FbldMarkup*] The evaluated markup, or NULL in case of error.
  *
@@ -184,6 +183,6 @@ FbldMarkup* FbldParse(const char** inputs);
  *    The user is responsible for calling FbldFreeMarkup on the returned
  *    markup object when no longer needed.
  */
-FbldMarkup* FbldEval(FbldMarkup* markup, bool debug);
+FbldMarkup* FbldEval(FbldMarkup* markup);
 
 #endif // _FBLD_H_
