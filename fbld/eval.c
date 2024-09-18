@@ -187,7 +187,7 @@ typedef struct {
 static Env* CopyEnv(Env* env);
 static void FreeEnv(Env* env);
 
-static Cmd* NewEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest);
+static Cmd* PushEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest);
 
 static int HeadOf(FbldMarkup* m);
 static FbldMarkup* TailOf(FbldMarkup* m);
@@ -238,7 +238,7 @@ static void FreeEnv(Env* env)
 }
 
 /**
- * @func[NewEval] Adds a command to evaluate a markup.
+ * @func[PushEval] Adds a command to evaluate a markup.
  *  @arg[Cmd*][next] The command to evaluate after this one.
  *  @arg[Env*][env] The environment to evaluate the markup in. Borrowed.
  *  @arg[FbldMarkup*][markup] The markup to evaluate. Borrowed.
@@ -248,7 +248,7 @@ static void FreeEnv(Env* env)
  *   Allocates a new command that will be freed by Eval when the command is
  *   executed.
  */
-static Cmd* NewEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
+static Cmd* PushEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
 {
   EvalCmd* eval = FbldAlloc(EvalCmd);
   eval->_base.tag = EVAL_CMD;
@@ -508,7 +508,7 @@ static bool Eval(Cmd* cmd)
                   next = ne;
 
                   // Add a command to evaluate the argument.
-                  cmd = NewEval(cmd, c->env, markup->markups.xs[i], &ne->body);
+                  cmd = PushEval(cmd, c->env, markup->markups.xs[i], &ne->body);
                 }
 
                 // Replace the evaluation command for the application with one
@@ -544,7 +544,7 @@ static bool Eval(Cmd* cmd)
               ec->msg = NULL;
               cmd = &ec->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &ec->msg);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &ec->msg);
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
               FbldFree(c);
@@ -573,8 +573,8 @@ static bool Eval(Cmd* cmd)
               dc->env = CopyEnv(c->env);
               cmd = &dc->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &dc->name);
-              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &dc->args);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &dc->name);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[1], &dc->args);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -604,8 +604,8 @@ static bool Eval(Cmd* cmd)
               lc->env = CopyEnv(c->env);
               cmd = &lc->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &lc->name);
-              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &lc->def);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &lc->name);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[1], &lc->def);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -631,7 +631,7 @@ static bool Eval(Cmd* cmd)
               hc->a = NULL;
               cmd = &hc->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &hc->a);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &hc->a);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -657,7 +657,7 @@ static bool Eval(Cmd* cmd)
               tc->a = NULL;
               cmd = &tc->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &tc->a);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &tc->a);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -687,8 +687,8 @@ static bool Eval(Cmd* cmd)
               ic->env = CopyEnv(c->env);
               cmd = &ic->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &ic->a);
-              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &ic->b);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &ic->a);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[1], &ic->b);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -718,8 +718,8 @@ static bool Eval(Cmd* cmd)
               ic->env = CopyEnv(c->env);
               cmd = &ic->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &ic->a);
-              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &ic->b);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &ic->a);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[1], &ic->b);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -738,7 +738,7 @@ static bool Eval(Cmd* cmd)
                 break;
               }
               
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &c->markup);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &c->markup);
               FbldFreeMarkup(c->markup);
               c->markup = NULL;
               break;
@@ -764,8 +764,8 @@ static bool Eval(Cmd* cmd)
               pc->env = CopyEnv(c->env);
               cmd = &pc->_base;
 
-              cmd = NewEval(cmd, c->env, markup->markups.xs[0], &pc->f);
-              cmd = NewEval(cmd, c->env, markup->markups.xs[1], &pc->body);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[0], &pc->f);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[1], &pc->body);
 
               FreeEnv(c->env);
               FbldFreeMarkup(c->markup);
@@ -795,7 +795,7 @@ static bool Eval(Cmd* cmd)
 
             cmd = c->_base.next;
             for (size_t i = 0; i < markup->markups.size; ++i) {
-              cmd = NewEval(cmd, c->env, markup->markups.xs[i], m->markups.xs + i);
+              cmd = PushEval(cmd, c->env, markup->markups.xs[i], m->markups.xs + i);
             }
             FbldFreeMarkup(markup);
             FreeEnv(c->env);
@@ -874,7 +874,7 @@ static bool Eval(Cmd* cmd)
           FbldAppendToVector(nenv->args, text);
         }
 
-        cmd = NewEval(c->_base.next, nenv, c->body, c->_base.dest);
+        cmd = PushEval(c->_base.next, nenv, c->body, c->_base.dest);
         FbldFree(args);
         FreeEnv(nenv);
         FbldFreeMarkup(c->body);
@@ -906,7 +906,7 @@ static bool Eval(Cmd* cmd)
         nenv->args.xs = NULL;
         nenv->args.size = 0;
 
-        cmd = NewEval(c->_base.next, nenv, c->body, c->_base.dest);
+        cmd = PushEval(c->_base.next, nenv, c->body, c->_base.dest);
         FreeEnv(nenv);
         FbldFreeMarkup(c->body);
         FbldFree(c);
@@ -921,9 +921,9 @@ static bool Eval(Cmd* cmd)
         bool eq = Eq(c->a, c->b);
 
         if (eq) {
-          cmd = NewEval(c->_base.next, c->env, c->if_eq, c->_base.dest);
+          cmd = PushEval(c->_base.next, c->env, c->if_eq, c->_base.dest);
         } else {
-          cmd = NewEval(c->_base.next, c->env, c->if_ne, c->_base.dest);
+          cmd = PushEval(c->_base.next, c->env, c->if_ne, c->_base.dest);
         }
 
         FbldFreeMarkup(c->a);
@@ -1025,7 +1025,7 @@ static bool Eval(Cmd* cmd)
         FbldFreeMarkup(c->body);
         FbldFree(f);
 
-        cmd = NewEval(c->_base.next, c->env, plained, c->_base.dest);
+        cmd = PushEval(c->_base.next, c->env, plained, c->_base.dest);
         FbldFreeMarkup(plained);
         FreeEnv(c->env);
         FbldFree(c);
@@ -1040,7 +1040,7 @@ static bool Eval(Cmd* cmd)
 FbldMarkup* FbldEval(FbldMarkup* markup)
 {
   FbldMarkup* result = NULL;
-  if (!Eval(NewEval(NULL, NULL, markup, &result))) {
+  if (!Eval(PushEval(NULL, NULL, markup, &result))) {
     FbldFreeMarkup(result);
     return NULL;
   }
