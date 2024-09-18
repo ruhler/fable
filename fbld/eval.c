@@ -58,14 +58,31 @@ typedef struct Cmd {
   struct Cmd* next;
 } Cmd;
 
-// Evaluates 'markup' in the environment 'env', storing the result in 'dest.'.
-// The EvalCmd owns env and markup.
+/**
+ * @struct[EvalCmd] EVAL_CMD arguments.
+ *  Evaluates @a[markup] in the environment @a[env].
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[Env*][env] Environment to evaluate under. Owned.
+ *  @field[FbldMarkup*][markup] Markup to evaluate. Owned.
+ */
 typedef struct {
   Cmd _base;
   Env* env;
   FbldMarkup* markup;
 } EvalCmd;
 
+/**
+ * @struct[DefineCmd] DEFINE_CMD arguments.
+ *  Defines a new command.
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[FbldMarkup*][name] Evaluated name of the command to define. Owned.
+ *  @field[FbldMarkup*][args] Evaluated argument name list. Owned.
+ *  @field[FbldMarkup*][def] Definition of the command. Owned.
+ *  @field[FbldMarkup*][body] Markup to evaluate with command defined. Owned.
+ *  @field[Env*][env] Environment to add the definition to. Owned.
+ */
 typedef struct {
   Cmd _base;
   FbldMarkup* name;
@@ -75,6 +92,16 @@ typedef struct {
   Env* env;
 } DefineCmd;
 
+/**
+ * @struct[LetCmd] LET_CMD arguments.
+ *  Defines a new variable.
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[FbldMarkup*][name] Evaluated name of the variable to define. Owned.
+ *  @field[FbldMarkup*][def] Evaluated value of the variable. Owned.
+ *  @field[FbldMarkup*][body] Markup to evaluate with variable defined. Owned.
+ *  @field[Env*][env] Environment to add the variable to. Owned.
+ */
 typedef struct {
   Cmd _base;
   FbldMarkup* name;
@@ -83,6 +110,17 @@ typedef struct {
   Env* env;
 } LetCmd;
 
+/**
+ * @struct[IfCmd] IF_CMD arguments.
+ *  Conditional execution.
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[FbldMarkup*][a] Evaluated left hand side of comparison. Owned.
+ *  @field[FbldMarkup*][b] Evaluated right hand side of comparison. Owned.
+ *  @field[FbldMarkup*][if_eq] Markup to evaluate if a equals b. Owned.
+ *  @field[FbldMarkup*][if_ne] Markup to evaluate if a doesn't equal b. Owned.
+ *  @field[Env*][env] Environment to evaluate the body in.
+ */
 typedef struct {
   Cmd _base;
   FbldMarkup* a;
@@ -92,22 +130,53 @@ typedef struct {
   Env* env;
 } IfCmd;
 
+/**
+ * @struct[ErrorCmd] ERROR_CMD arguments.
+ *  Explicitly trigger an error.
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[FbldLoc][loc] Location to report with the error message.
+ *  @field[FbldMarkup*][msg] Evaluated message to report.. Owned.
+ */
 typedef struct {
   Cmd _base;
   FbldLoc loc;
   FbldMarkup* msg;
 } ErrorCmd;
 
+/**
+ * @struct[HeadCmd] HEAD_CMD arguments.
+ *  Gets the first character of the given markup.
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[FbldMarkup*][a] Evaluated markup to get first character of. Owned.
+ */
 typedef struct {
   Cmd _base;
   FbldMarkup* a;
 } HeadCmd;
 
+/**
+ * @struct[TailCmd] TAIL_CMD arguments.
+ *  Gets all but the first character of the given markup.
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[FbldMarkup*][a] Evaluated markup to get the tail of. Owned.
+ */
 typedef struct {
   Cmd _base;
   FbldMarkup* a;
 } TailCmd;
 
+/**
+ * @struct[PlainCmd] PLAIN_CMD arguments.
+ *  The \@plain builtin.
+ *
+ *  @field[Cmd][_base] The Cmd base class.
+ *  @field[FbldMarkup*][f] Evaluated command name to apply to plain text. Owned.
+ *  @field[FbldMarkup*][body] Markup to apply plain function too. Owned.
+ *  @field[Env*][env] Environment to evaluate the body in.
+ */
 typedef struct {
   Cmd _base;
   FbldMarkup* f;
@@ -126,6 +195,14 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b);
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
 static bool Eval(Cmd* cmd);
 
+/**
+ * @func[CopyEnv] Make reference counted copy of environment.
+ *  @arg[Env*][env] The environment to copy. Borrowed.
+ *  @returns[Env*] The copied environment.
+ *  @sideeffects
+ *   The user should call FreeEnv on the returned environment when they are
+ *   done with it.
+ */
 static Env* CopyEnv(Env* env)
 {
   if (env != NULL) {
@@ -134,6 +211,13 @@ static Env* CopyEnv(Env* env)
   return env;
 }
 
+/**
+ * @func[FreeEnv] Frees resources associated with an environment.
+ *  @arg[Env*][env] The environment to copy.
+ *  @sideeffects
+ *   Frees resources associated with the environment, which should not be
+ *   accessed after this call.
+ */
 static void FreeEnv(Env* env)
 {
   while (env != NULL) {
@@ -210,7 +294,8 @@ static int HeadOf(FbldMarkup* m)
  *  @arg[FbldMarkup*][m] The markup to remove the character from.
  *  @returns[FbldMarkup*]
  *   A new markup without the first character. NULL if markup is empty.
- *  @sideeffects Allocates a new markup that should be freed when done.
+ *  @sideeffects
+ *   Allocates a new markup that should be freed with FbldFreeMarkup when done.
  */
 static FbldMarkup* TailOf(FbldMarkup* m)
 {
@@ -298,6 +383,15 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b)
   return teq;
 }
 
+/**
+ * @func[MapPlain] Applies function f to each plain text in the given markup.
+ *  @arg[const char*][f] Name of the function to apply. Borrowed.
+ *  @arg[FbldMarkup*][m] Markup to apply the function in.
+ *  @returns[FbldMarkup*] Markup with calls to f inserted.
+ *  @sideeffects
+ *   Allocates markup that should be freed with FbldFreeMarkup when no longer
+ *   needed.
+ */
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
 {
   switch (m->tag) {
@@ -332,6 +426,17 @@ static FbldMarkup* MapPlain(const char* f, FbldMarkup* m)
   return NULL;
 }
 
+/**
+ * @func[Eval] Evaluates a command to completion.
+ *  @arg[Cmd*][cmd] The command to evaluate. Consumed.
+ *  @returns[bool] True of success, false in case of error.
+ *  @sideeffects
+ *   @i Frees resources associated with cmd.
+ *   @i Executes the command, storing a value to cmd->dest.
+ *   @item
+ *    The caller should call FbldFreeMarkup on cmd->dest when the result is no
+ *    longer needed.
+ */
 static bool Eval(Cmd* cmd)
 {
   bool error = false;
@@ -931,6 +1036,7 @@ static bool Eval(Cmd* cmd)
   return !error;
 }
 
+// See documentation in fbld.h.
 FbldMarkup* FbldEval(FbldMarkup* markup)
 {
   FbldMarkup* result = NULL;

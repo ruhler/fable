@@ -12,8 +12,7 @@ Things to consider doing for the fble-0.4 release.
    Done with @define and @let. Still need others.
  - Add tests for code coverage.
 
- - Add proper doc comments in eval.c
-
+ - Pick a better name for NewEval function?
  - Assume markup could be NULL at any time during evaluation and handle it
    gracefully.
  - Separate out loc.h, text.h, markup.h, etc?
