@@ -4,12 +4,12 @@ Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
  - Port parser tests from fble implementation to spec tests.
- - Test that the correct variable is used in case of shadowing in let
  - Test case of unresolved @x in ifeq.
    It should error out rather than be treated as false.
  - Test case of unresolved @x in error argument.
  - Test that we evaluate appropriate args to builtins before executing them.
-   Done with @define and @let. Still need others.
+   Done with @define and @let. Still need others:
+   error, head, tail, ifeq, ifneq, eval, plain
  - Add tests for code coverage.
 
  - Assume markup could be NULL at any time during evaluation and handle it

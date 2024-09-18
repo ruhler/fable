@@ -14,4 +14,11 @@ Test that the name being defined is evaluated before use.
  @let[@x][zz] @@
  @y
 
+Test that the correct variable is used in the case of shadowing.
+
+@assert_eq[goodbye]
+ @let[x][hello] @@
+ @let[x][goodbye] @@
+ @x
+
 End of tests.
