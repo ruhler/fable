@@ -4,3 +4,19 @@ Test of the ifneq builtin.
 
 @assert_eq[hello][@ifneq[a][b][hello][there]]
 @assert_eq[there][@ifneq[a][a][hello][there]]
+
+Test that we evaluate the conditional arguments first.
+
+@assert_eq[hellothere]
+ @let[x][one] @@
+ @let[y][one] @@
+ @let[z][two] @@
+ @ifneq[@x][@y][abcd][hello]
+ @ifneq[@x][@z][there][efgh]
+
+Test that we don't evaluate the branch not taken.
+
+@ifneq[a][a][@error[This branch not taken]][hello]
+@ifneq[a][b][hello][@error[This branch not taken]]
+
+End of tests.

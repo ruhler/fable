@@ -4,3 +4,19 @@ Test of the ifeq builtin.
 
 @assert_eq[there][@ifeq[a][b][hello][there]]
 @assert_eq[hello][@ifeq[a][a][hello][there]]
+
+Test that we evaluate the conditional arguments first.
+
+@assert_eq[hellothere]
+ @let[x][one] @@
+ @let[y][one] @@
+ @let[z][two] @@
+ @ifeq[@x][@y][hello][abcd]
+ @ifeq[@x][@z][efgh][there]
+
+Test that we don't evaluate the branch not taken.
+
+@ifeq[a][a][hello][@error[This branch not taken]]
+@ifeq[a][b][@error[This branch not taken]][hello]
+
+End of tests.

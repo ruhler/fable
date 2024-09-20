@@ -1,0 +1,40 @@
+Fble Performance
+================
+
+The next round.
+
+Starting with fbld as the application, because I have a C implementation to
+compare against now.
+
+
+
+fble implementation:
+* ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+* Elapsed (wall clock) time (h:mm:ss or m:ss): 1:29.06
+* Maximum resident set size (kbytes): 122500
+
+c implementation:
+* ./fbld/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld 
+* Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.82
+* Maximum resident set size (kbytes): 10480
+
+C implementation is 30x faster and uses 10x less memory. Wow.
+
+Perf breakdown for C implementation:
+* Not surprisingly, most of the time is in FbldEval, spread across strcmp,
+  malloc, free, etc.
+* The big thing that stands out in FbldEval itself is environment lookup. 
+
+Perf breakdown for Fble implementation:
+* Evaluating sequence shows up a fair amount? Like half the time? With all the
+  function call overheads involved with that.
+
+It's difficult to tell from my profile, because of the way we merge samples
+together.
+
+Looking at raw samples:
+* List.Ord, Map lookup are prevalent in the most common samples.
+* Next is the 'Tail' function. 
+* Next is the 'Head' function.
+
+But really, map lookup seems to dominate.

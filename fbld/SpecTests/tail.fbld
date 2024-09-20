@@ -3,3 +3,12 @@
 Test of the tail builtin.
 
 @assert_eq[@tail[hello]][ello]
+
+Test that we evaluate the argument to tail first.
+
+@assert_eq[bcde]
+ @let[x][abcde] @@
+ @tail[@x]
+
+End of tests.
+
