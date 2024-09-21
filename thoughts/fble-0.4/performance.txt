@@ -61,3 +61,14 @@ How about this, rewrite fble implementation to use a list for Env instead of a
 map. That way calls to Ord should go away, almost entirely? Maybe it's an
 improvement. Maybe it brings us closer to the C implementation, and we can
 focus on the lookup cost from there.
+
+---
+
+Switch to linked list for fble implementation. It's much faster. Wow.
+
+Elapsed (wall clock) time (h:mm:ss or m:ss): 1:29.06 ==> 0:43.50
+Maximum resident set size (kbytes): 122500 ==> 118964
+
+Who would have thought? Does that imply that my Map implementation just isn't
+very good?
+
