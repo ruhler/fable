@@ -16,13 +16,14 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+@ Impl@ = /Fbld/Markup%.Impl@;
 % Append = /Fbld/Markup%.Append;
 
-@ Impl@ = /Fbld/Eval%.Impl@;
-@ Env@ = /Fbld/Eval%.Env@;
-% InsertEnv = /Fbld/Eval%.InsertEnv;
-% LookupEnv = /Fbld/Eval%.LookupEnv;
-% DeleteEnv = /Fbld/Eval%.DeleteEnv;
+@ Env@ = /Fbld/Env%.Env@<Impl@>;
+% Insert = /Fbld/Env%.Insert<Impl@>;
+% Lookup = /Fbld/Env%.Lookup<Impl@>;
+% Delete = /Fbld/Env%.Delete<Impl@>;
+
 % Eval = /Fbld/Eval%.Eval;
 % Evals = /Fbld/Eval%.Evals;
 % AssertArgCount = /Fbld/Eval%.AssertArgCount;
@@ -41,14 +42,14 @@
 (Env@, List@<String@>, List@<Markup@>) { Env@; }
 DefArgs = (Env@ env, List@<String@> params, List@<Markup@> args) {
   params.?(nil: env);
-  DefArgs(InsertEnv(env, params.cons.head, VarImpl(args.cons.head)),
+  DefArgs(Insert(env, params.cons.head, VarImpl(args.cons.head)),
     params.cons.tail, args.cons.tail);
 };
 
 (Env@, List@<String@>) { Env@; }
 DelArgs = (Env@ env, List@<String@> params) {
   params.?(nil: env);
-  DelArgs(DeleteEnv(env, params.cons.head), params.cons.tail);
+  DelArgs(Delete(env, params.cons.head), params.cons.tail);
 };
 
 (Env@, Markup@) { Markup@; }
@@ -72,7 +73,7 @@ PreLookup = (Env@ env, Markup@ markup) {
       List@<Markup@> args = PreLookups(env, markup.command.args);
       Maybe@<Impl@> impl = {
         markup.command.impl.?(just: markup.command.impl);
-        LookupEnv(env, markup.command.name.text);
+        Lookup(env, markup.command.name.text);
       };
       Markup@(command: markup.command.@(impl, args));
     },
@@ -114,8 +115,8 @@ Impl@ Define = (Env@ env, Command@ cmd) {
     List@<Markup@> args <- r.do(Evals(e, c.args));
     Eval(DefArgs(nenv, params, args), prepped);
   },
-  Env@ nenv = InsertEnv(env, name, impl),
-  Markup@ prepped = PreLookup(DelArgs(InsertEnv(env, name, impl), params), def);
+  Env@ nenv = Insert(env, name, impl),
+  Markup@ prepped = PreLookup(DelArgs(Insert(env, name, impl), params), def);
 
   Markup@ body = Get(cmd.args, Int|3);
   Eval(nenv, body);
@@ -131,7 +132,7 @@ Impl@ Let = (Env@ env, Command@ cmd) {
   });
 
   Markup@ def <- r.do(Eval(env, Get(cmd.args, Int|1)));
-  Env@ nenv = InsertEnv(env, name, VarImpl(def));
+  Env@ nenv = Insert(env, name, VarImpl(def));
 
   Markup@ body = Get(cmd.args, Int|2);
   Eval(nenv, body);

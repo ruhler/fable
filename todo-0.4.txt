@@ -4,18 +4,28 @@ Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
  - Port parser tests from fble implementation to spec tests.
-   Unescape, BasicInline, InlineUnescapedBrackets, NestedInline,
-   BasicBlock, NestedBlockLoc, IndentedSequentialPlainBlocks,
-   Continuation, Final, SameLineFinal, NextLineLiteral,
-   InlineLiteral, ExplicitImplicitBlock, EmptyContinuation,
-   BlankInlineInImplicitBlock, EndOfInputError,
-   
+   Unescape,
+   BasicInline,
+   InlineUnescapedBrackets,
+   NestedInline,
+   BasicBlock,
+   NestedBlockLoc,
+   IndentedSequentialPlainBlocks,
+   Continuation,
+   Final,
+   SameLineFinal,
+   NextLineLiteral,
+   InlineLiteral,
+   ExplicitImplicitBlock,
+   EmptyContinuation,
+   BlankInlineInImplicitBlock,
+   EndOfInputError
  - Test case of unresolved @x in ifeq.
    It should error out rather than be treated as false.
  - Test case of unresolved @x in error argument.
  - Test that we evaluate appropriate args to builtins before executing them.
    Done with @define, @let, @head @tail, ifeq, ifneq. Still need:
-   error, eval, plain
+   error, eval, plain, user defined function?
  - Add tests for code coverage.
 
  - Assume markup could be NULL at any time during evaluation and handle it

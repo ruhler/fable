@@ -38,3 +38,26 @@ Looking at raw samples:
 * Next is the 'Head' function.
 
 But really, map lookup seems to dominate.
+
+---
+
+What next here? It would be nice if I had a simple test case that demonstrated
+the performance issue, where we are using the same algorithm in C and in fble.
+That way I can dive deep into what overheads we have in fble that we don't
+have in C, and try to get rid of them.
+
+To start, string comparison? Or maybe there are some silly benchmark game
+benchmarks we can use for string comparison? No, doesn't look like it.
+
+How about this for a silly program:
+* Input is a list of words.
+* Add each word to a list.
+* Look up each suffix of each word to see if it's in the list?
+
+Or, we could look at the List.Ord function to start, since we are spending a
+lot of time there?
+
+How about this, rewrite fble implementation to use a list for Env instead of a
+map. That way calls to Ord should go away, almost entirely? Maybe it's an
+improvement. Maybe it brings us closer to the C implementation, and we can
+focus on the lookup cost from there.

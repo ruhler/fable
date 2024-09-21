@@ -13,6 +13,8 @@
 
 @ Loc@ = /Fbld/Loc%.Loc@;
 
+<@>@ Env@ = /Fbld/Env%.Env@;
+
 <@>@ Result@ = /Fbld/Result%.Result@;
 <@>% Error = /Fbld/Result%.Error;
 % r = /Fbld/Result%.Monad;
@@ -28,8 +30,7 @@
   Command@ command,
   Sequence@ sequence    # both a and b are non-empty
 ),
-@ Impl@ = (Env@, Command@) { Result@<Markup@>; },
-@ Env@ = /Core/Map%.Map@<String@, Impl@>;
+@ Impl@ = (Env@<Impl@>, Command@) { Result@<Markup@>; };
 
 Markup@ Empty = Markup@(empty: Unit);
 
@@ -82,6 +83,6 @@ ToString = (Markup@ m) {
   ToString_(m, Str|'');
 };
 
-@(Markup@, Command@, Sequence@, Env@, Impl@,
+@(Markup@, Command@, Sequence@, Impl@,
   Empty, Plain, Command, Append, Markups,
   ToString);

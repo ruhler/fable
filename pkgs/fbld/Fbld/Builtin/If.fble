@@ -16,13 +16,14 @@
 % HeadOf = /Fbld/Builtin/String%.HeadOf;
 % TailOf = /Fbld/Builtin/String%.TailOf;
 
-@ Impl@ = /Fbld/Eval%.Impl@;
-@ Env@ = /Fbld/Eval%.Env@;
-% Eval = /Fbld/Eval%.Eval;
-% AssertArgCount = /Fbld/Eval%.AssertArgCount;
-
+@ Impl@ = /Fbld/Markup%.Impl@;
 @ Markup@ = /Fbld/Markup%.Markup@;
 @ Command@ = /Fbld/Markup%.Command@;
+
+@ Env@ = /Fbld/Env%.Env@<Impl@>;
+
+% Eval = /Fbld/Eval%.Eval;
+% AssertArgCount = /Fbld/Eval%.AssertArgCount;
 
 <@>@ Result@ = /Fbld/Result%.Result@;
 % r = /Fbld/Result%.Monad;
