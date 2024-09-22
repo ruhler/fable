@@ -5,7 +5,12 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-% Int = /Core/Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+Int@ 0 = /Core/Int%.0;
+Int@ 1 = /Core/Int%.1;
+Int@ 2 = /Core/Int%.2;
+Int@ 3 = /Core/Int%.3;
+Int@ 4 = /Core/Int%.4;
 
 <@>% Get = /Core/List/Length%.Get;
 
@@ -46,27 +51,27 @@ Equals = (Markup@ a, Markup@ b) {
 };
 
 Impl@ IfEq = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|4, cmd));
+  Unit@ _ <- r.do(AssertArgCount(4, cmd));
 
-  Markup@ a <- r.do(Eval(env, Get(cmd.args, Int|0)));
-  Markup@ b <- r.do(Eval(env, Get(cmd.args, Int|1)));
+  Markup@ a <- r.do(Eval(env, Get(cmd.args, 0)));
+  Markup@ b <- r.do(Eval(env, Get(cmd.args, 1)));
   Bool@ eq <- r.do(Equals(a, b));
   Markup@ body = eq.?(
-    true: Get(cmd.args, Int|2),
-    false: Get(cmd.args, Int|3));
+    true: Get(cmd.args, 2),
+    false: Get(cmd.args, 3));
 
   Eval(env, body);
 };
 
 Impl@ IfNEq = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|4, cmd));
+  Unit@ _ <- r.do(AssertArgCount(4, cmd));
 
-  Markup@ a <- r.do(Eval(env, Get(cmd.args, Int|0)));
-  Markup@ b <- r.do(Eval(env, Get(cmd.args, Int|1)));
+  Markup@ a <- r.do(Eval(env, Get(cmd.args, 0)));
+  Markup@ b <- r.do(Eval(env, Get(cmd.args, 1)));
   Bool@ eq <- r.do(Equals(a, b));
   Markup@ body = eq.?(
-    true: Get(cmd.args, Int|3),
-    false: Get(cmd.args, Int|2));
+    true: Get(cmd.args, 3),
+    false: Get(cmd.args, 2));
 
   Eval(env, body);
 };

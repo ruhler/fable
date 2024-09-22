@@ -1,7 +1,13 @@
 
 % IsSpace = /Core/Char/Type%.IsSpace;
 
-% Int = /Core/Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+Int@ 0 = /Core/Int%.0;
+Int@ 1 = /Core/Int%.1;
+Int@ 2 = /Core/Int%.2;
+Int@ 3 = /Core/Int%.3;
+Int@ 4 = /Core/Int%.4;
+
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -35,7 +41,7 @@
 % r = /Fbld/Result%.Monad;
 
 (Markup@) { Impl@; } VarImpl = (Markup@ markup, Env@ _, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|0, cmd));
+  Unit@ _ <- r.do(AssertArgCount(0, cmd));
   r.return(markup);
 };
 
@@ -92,22 +98,22 @@ PreLookups = (Env@ env, List@<Markup@> markups) {
 };
 
 Impl@ Define = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|4, cmd));
+  Unit@ _ <- r.do(AssertArgCount(4, cmd));
 
   String@ name <- r.do({
-    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ arg = Get(cmd.args, 0);
     Markup@ evaled <- r.do(Eval(env, arg));
     ToString(evaled);
   });
 
   List@<String@> params <- r.do({
-    Markup@ arg = Get(cmd.args, Int|1);
+    Markup@ arg = Get(cmd.args, 1);
     Markup@ evaled <- r.do(Eval(env, arg));
     String@ list <- r.do(ToString(evaled));
     r.return(Split(list, IsSpace));
   });
 
-  Markup@ def = Get(cmd.args, Int|2);
+  Markup@ def = Get(cmd.args, 2);
 
   Impl@ impl = (Env@ e, Command@ c) {
     Unit@ _ <- r.do(AssertArgCount(Length(params), c));
@@ -118,23 +124,23 @@ Impl@ Define = (Env@ env, Command@ cmd) {
   Env@ nenv = Insert(env, name, impl),
   Markup@ prepped = PreLookup(DelArgs(Insert(env, name, impl), params), def);
 
-  Markup@ body = Get(cmd.args, Int|3);
+  Markup@ body = Get(cmd.args, 3);
   Eval(nenv, body);
 };
 
 Impl@ Let = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|3, cmd));
+  Unit@ _ <- r.do(AssertArgCount(3, cmd));
 
   String@ name <- r.do({
-    Markup@ arg = Get(cmd.args, Int|0);
+    Markup@ arg = Get(cmd.args, 0);
     Markup@ evaled <- r.do(Eval(env, arg));
     ToString(evaled);
   });
 
-  Markup@ def <- r.do(Eval(env, Get(cmd.args, Int|1)));
+  Markup@ def <- r.do(Eval(env, Get(cmd.args, 1)));
   Env@ nenv = Insert(env, name, VarImpl(def));
 
-  Markup@ body = Get(cmd.args, Int|2);
+  Markup@ body = Get(cmd.args, 2);
   Eval(nenv, body);
 };
 

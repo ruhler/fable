@@ -1,7 +1,9 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-% Int = /Core/Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+Int@ 0 = /Core/Int%.0;
+Int@ 1 = /Core/Int%.1;
 
 <@>% Get = /Core/List/Length%.Get;
 
@@ -44,8 +46,8 @@
 };
 
 Impl@ Head = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
-  Markup@ arg <- r.do(Eval(env, Get(cmd.args, Int|0)));
+  Unit@ _ <- r.do(AssertArgCount(1, cmd));
+  Markup@ arg <- r.do(Eval(env, Get(cmd.args, 0)));
   Maybe@<Char@> mc <- r.do(HeadOf(arg));
   mc.?(nothing: r.return(arg));
 
@@ -72,8 +74,8 @@ Impl@ Head = (Env@ env, Command@ cmd) {
 };
 
 Impl@ Tail = (Env@ env, Command@ cmd) {
-  Unit@ _ <- r.do(AssertArgCount(Int|1, cmd));
-  Markup@ arg <- r.do(Eval(env, Get(cmd.args, Int|0)));
+  Unit@ _ <- r.do(AssertArgCount(1, cmd));
+  Markup@ arg <- r.do(Eval(env, Get(cmd.args, 0)));
   TailOf(arg);
 };
 

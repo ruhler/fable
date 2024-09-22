@@ -5,6 +5,7 @@
 @ Int@ = /Core/Int%.Int@;
 % Incr = /Core/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
+Int@ 1 = Int|1;
 
 @ String@ = /Core/String%.String@;
 % Strs = /Core/String%.Strs;
@@ -15,13 +16,13 @@
 
 # Location representing the start of a file.
 (String@) { Loc@; } Start = (String@ file) {
-  Loc@(file, Int|1, Int|1);
+  Loc@(file, 1, 1);
 };
 
 # Advance a location past the given character.
 (Loc@, Char@) { Loc@; } Advance = (Loc@ l, Char@ c) {
   IsNewline(c).?(true: {
-    l.@(line: Incr(l.line), col: Int|1);
+    l.@(line: Incr(l.line), col: 1);
   });
   l.@(col: Incr(l.col));
 };
@@ -34,6 +35,6 @@
     msg];
 };
 
-Loc@ Unknown = Loc@(Str|'???', Int|1, Int|1);
+Loc@ Unknown = Loc@(Str|'???', 1, 1);
 
 @(Loc@, Start, Advance, Report, Unknown);
