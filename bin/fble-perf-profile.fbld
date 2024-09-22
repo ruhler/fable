@@ -20,7 +20,11 @@
  
  @options
   @GenericProgramInfo
- 
+
+  @subsection Other Options
+   @opt[@l[-s], @l[--squash] @a[NAME]]
+   @ attribute the costs of frame @a[NAME] to its caller.
+  
  @exitstatus
   @def[0] Success.
   @def[1] Failure.

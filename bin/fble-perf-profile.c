@@ -11,6 +11,7 @@
 #include <fble/fble-profile.h>   // for FbleProfile, etc.
 #include <fble/fble-usage.h>     // for FblePrintUsageDoc
 #include <fble/fble-version.h>   // for FBLE_VERSION, FbleBuildStamp
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -22,9 +23,14 @@ typedef struct {
   char* chars;
 } String;
 
+typedef struct {
+  size_t size;
+  const char** xs;
+} StringV;
+
 static bool GetLine(FILE* file, String* line);
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
-static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s);
+static void Sample(FbleProfile* profile, FbleProfileThread* thread, StringV* squashes, int count, char* s);
 int main(int argc, const char* argv[]);
 
 /**
@@ -90,21 +96,35 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
  *   @i May modify the contents of s by replacing ';' with nuls.
  *   @i Adds the sample to the profile.
  */
-static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s)
+static void Sample(FbleProfile* profile, FbleProfileThread* thread, StringV* squashes, int count, char* s)
 {
   char* end = strchr(s, ';');
   if (end != NULL) {
     *end = '\0';
   }
 
-  FbleBlockId block = GetBlockId(profile, s);
-  FbleProfileEnterBlock(thread, block);
+  bool squash = false;
+  for (size_t i = 0; i < squashes->size; ++i) {
+    if (strcmp(s, squashes->xs[i]) == 0) {
+      squash = true;
+      break;
+    }
+  }
+
+  if (!squash) {
+    FbleBlockId block = GetBlockId(profile, s);
+    FbleProfileEnterBlock(thread, block);
+  }
+
   if (end == NULL) {
     FbleProfileSample(thread, count);
   } else {
-    Sample(profile, thread, count, end + 1);
+    Sample(profile, thread, squashes, count, end + 1);
   }
-  FbleProfileExitBlock(thread);
+
+  if (!squash) {
+    FbleProfileExitBlock(thread);
+  }
 }
 
 /**
@@ -123,6 +143,10 @@ int main(int argc, const char* argv[])
   bool help = false;
   bool error = false;
 
+  const char* squash = NULL;
+  StringV squashes;
+  FbleInitVector(squashes);
+
   const char* arg0 = argv[0];
 
   argc--;
@@ -130,22 +154,33 @@ int main(int argc, const char* argv[])
   while (!(help || version || error) && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("-s", &squash, &argc, &argv, &error)) {
+      FbleAppendToVector(squashes, squash);
+      continue;
+    }
+    if (FbleParseStringArg("--squash", &squash, &argc, &argv, &error)) {
+      FbleAppendToVector(squashes, squash);
+      continue;
+    }
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
   }
 
   if (version) {
     FblePrintVersion(stdout, "fble-perf-profile");
+    FbleFree(squashes.xs);
     return EX_SUCCESS;
   }
 
   if (help) {
     FblePrintUsageDoc(arg0, "fble-perf-profile.usage.txt");
+    FbleFree(squashes.xs);
     return EX_SUCCESS;
   }
 
   if (error) {
     fprintf(stderr, "Try --help for usage\n");
+    FbleFree(squashes.xs);
     return EX_USAGE;
   }
 
@@ -157,7 +192,7 @@ int main(int argc, const char* argv[])
 
   FbleProfile* profile = FbleNewProfile(true);
   FbleProfileThread* thread = FbleNewProfileThread(profile);
-	while (GetLine(stdin, &line)) {
+  while (GetLine(stdin, &line)) {
     // We're done once we reach the next line of the form:
     //    100.00%     0.00%  <cmd>  <ex>      [.] __libc_start_main
     char* space = strchr(line.chars, ' ');
@@ -170,15 +205,17 @@ int main(int argc, const char* argv[])
     int count;
     if (sscanf(line.chars, "%i", &count) != 1) {
       fprintf(stderr, "Unable to parse profile report.\n");
+      FbleFree(squashes.xs);
       return EX_FAIL;
     }
 
-    Sample(profile, thread, count, space+1);
-	}
-	free(line.chars);
+    Sample(profile, thread, &squashes, count, space+1);
+  }
+  free(line.chars);
 
   FbleFreeProfileThread(thread);
   FbleGenerateProfileReport(stdout, profile);
   FbleFreeProfile(profile);
+  FbleFree(squashes.xs);
   return EX_SUCCESS;
 }
