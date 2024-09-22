@@ -156,10 +156,12 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-s", &squash, &argc, &argv, &error)) {
       FbleAppendToVector(squashes, squash);
+      squash = NULL;
       continue;
     }
     if (FbleParseStringArg("--squash", &squash, &argc, &argv, &error)) {
       FbleAppendToVector(squashes, squash);
+      squash = NULL;
       continue;
     }
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;

@@ -72,3 +72,16 @@ Maximum resident set size (kbytes): 122500 ==> 118964
 Who would have thought? Does that imply that my Map implementation just isn't
 very good?
 
+---
+
+Trying to tease out where time is going from the profile report for fble
+implementation now.
+
+Total time: 13234
+
+Why is there no Parse() entry in the profile? Because it's a tail call I
+guess. This is where perf based sampling hurts us that profiling wouldn't.
+
+Parse: 1132. Almost entirely in self time / call overhead of Parse.M@.Do
+function.
+
