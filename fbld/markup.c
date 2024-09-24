@@ -1,5 +1,6 @@
 
 #include <assert.h>   // for assert
+#include <stdarg.h>   // for va_list, va_start, va_arg, va_end
 #include <stdbool.h>  // for false
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for abort
@@ -12,10 +13,43 @@
 static bool TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity);
 
 // See documentation in fbld.h
-void FbldReportError(FbldLoc loc, const char* message)
+void FbldReportError(const char* fmt, FbldLoc loc, ...)
 {
-  fprintf(stderr, "%s:%zi:%zi: error: %s\n",
-      loc.file, loc.line, loc.column, message);
+  fprintf(stderr, "%s:%zi:%zi: error: ", loc.file, loc.line, loc.column);
+
+  va_list ap;
+  va_start(ap, loc);
+
+  for (const char* p = strchr(fmt, '%'); p != NULL; p = strchr(fmt, '%')) {
+    fprintf(stderr, "%.*s", (int)(p - fmt), fmt);
+
+    switch (*(p + 1)) {
+      case '%': {
+        fprintf(stderr, "%%");
+        break;
+      }
+
+      case 'i': {
+        size_t x = va_arg(ap, size_t);
+        fprintf(stderr, "%zd", x);
+        break;
+      }
+
+      case 's': {
+        const char* str = va_arg(ap, const char*);
+        fprintf(stderr, "%s", str);
+        break;
+      }
+
+      default: {
+        assert(false && "Unsupported format conversion.");
+        break;
+      }
+    }
+    fmt = p + 2;
+  }
+  fprintf(stderr, "%s", fmt);
+  va_end(ap);
 }
 
 // See documentation in fbld.h
@@ -113,7 +147,8 @@ static bool TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
     }
 
     case FBLD_MARKUP_COMMAND: {
-      FbldReportError(markup->text->loc, "expected plain text, but found command");
+      FbldReportError("expected plain text, but found command %s\n",
+          markup->text->loc, markup->text->str);
       return false;
     }
 
@@ -160,7 +195,8 @@ bool FbldPrintMarkup(FbldMarkup* markup)
     }
 
     case FBLD_MARKUP_COMMAND: {
-      FbldReportError(markup->text->loc, "expected plain text, but found command");
+      FbldReportError("expected plain text, but found command %s\n",
+          markup->text->loc, markup->text->str);
       return false;
     }
 

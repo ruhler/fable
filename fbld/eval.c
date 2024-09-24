@@ -474,7 +474,8 @@ static bool Eval(Cmd* cmd)
               if (strcmp(command, e->name->str) == 0) {
                 user = true;
                 if (markup->markups.size != e->args.size) {
-                  FbldReportError(markup->text->loc, "wrong number of arguments");
+                  FbldReportError("expected %i arguments to %s, but got %i\n",
+                      markup->text->loc, e->args.size, command, markup->markups.size);
                   error = true;
                   cmd = cmd->next;
                   FreeEnv(c->env);
@@ -527,7 +528,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "error") == 0) {
               if (markup->markups.size != 1) {
-                FbldReportError(markup->text->loc, "expected 1 argument to @error");
+                FbldReportError("expected 1 argument to @error, but got %i\n",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -553,7 +555,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "define") == 0) {
               if (markup->markups.size != 4) {
-                FbldReportError(markup->text->loc, "expected 4 arguments to @define");
+                FbldReportError("expected 4 arguments to @define, but got %i\n",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -584,7 +587,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "let") == 0) {
               if (markup->markups.size != 3) {
-                FbldReportError(markup->text->loc, "expected 3 arguments to @let");
+                FbldReportError("expected 3 arguments to @let, but got %i\n",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -615,7 +619,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "head") == 0) {
               if (markup->markups.size != 1) {
-                FbldReportError(markup->text->loc, "expected 1 arguments to @head");
+                FbldReportError("expected 1 arguments to @head, but got %i\n",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -641,7 +646,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "tail") == 0) {
               if (markup->markups.size != 1) {
-                FbldReportError(markup->text->loc, "expected 1 arguments to @tail");
+                FbldReportError("expected 1 arguments to @tail, but got %i\n",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -667,7 +673,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "ifeq") == 0) {
               if (markup->markups.size != 4) {
-                FbldReportError(markup->text->loc, "expected 4 arguments to @ifeq");
+                FbldReportError("expected 4 arguments to @ifeq, but got %i\n",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -698,7 +705,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "ifneq") == 0) {
               if (markup->markups.size != 4) {
-                FbldReportError(markup->text->loc, "expected 4 arguments to @ifneq");
+                FbldReportError("expected 4 arguments to @ifneq, but got %i",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -729,7 +737,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "eval") == 0) {
               if (markup->markups.size != 1) {
-                FbldReportError(markup->text->loc, "expected 1 argument to @eval");
+                FbldReportError("expected 1 argument to @eval, but got %i\n",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -746,7 +755,8 @@ static bool Eval(Cmd* cmd)
 
             if (strcmp(command, "plain") == 0) {
               if (markup->markups.size != 2) {
-                FbldReportError(markup->text->loc, "expected 2 argument to @plain");
+                FbldReportError("expected 2 argument to @plain, but got %i",
+                    markup->text->loc, markup->markups.size);
                 error = true;
                 cmd = cmd->next;
                 FreeEnv(c->env);
@@ -947,7 +957,7 @@ static bool Eval(Cmd* cmd)
           break;
         }
 
-        FbldReportError(c->loc, msg->str);
+        FbldReportError("%s\n", c->loc, msg->str);
         FbldFree(msg);
         error = true;
         cmd = cmd->next;
@@ -968,7 +978,7 @@ static bool Eval(Cmd* cmd)
         }
 
         if (ch == -1) {
-          FbldReportError(FbldMarkupLoc(c->a), "argument to @head not evaluated");
+          FbldReportError("argument to @head not evaluated", FbldMarkupLoc(c->a));
           error = true;
           cmd = cmd->next;
           FbldFreeMarkup(c->a);

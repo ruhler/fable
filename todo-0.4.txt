@@ -35,12 +35,6 @@ Things to consider doing for the fble-0.4 release.
    kinds of markups.
  - Figure out how to associate a location with empty markup.
  - Avoid constructing markups with singleton sequences?
- - Have a way to add dynamic info to fbld error messages, like '%s' format
-   string.
-    Use it for expected plain text, but found command.
-   Specifically that the def argument to let is evaluated before the body.
- - Improve error messages.
-   Include number of expected and actual arguments, for example.
 
 * Fbld
  - The @plain builtin is really strange. I had trouble coming up with a test

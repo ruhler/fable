@@ -314,7 +314,7 @@ static bool ParseInlineArgs(Lex* lex, FbldMarkupV* args)
       FbldInitVector(chars);
       while (nest > 0 || !Is(lex, "}")) {
         if (IsEnd(lex)) {
-          FbldReportError(lex->loc, "end of file in literal inline arg");
+          FbldReportError("end of file in literal inline arg\n", lex->loc);
           FbldFree(chars.xs);
           return false;
         }
@@ -455,7 +455,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
         case ']': FbldAppendToVector(chars, ']'); break;
         case 'n': FbldAppendToVector(chars, '\n'); break;
         default: {
-          FbldReportError(lex->loc, "unsupported escape sequence");
+          FbldReportError("unsupported escape sequence\n", lex->loc);
           FbldFree(chars.xs);
           FbldFreeMarkup(markup);
           return NULL;
@@ -574,7 +574,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       Advance(lex);
     } else {
       fprintf(stderr, "Got: 0x%x\n", Char(lex));
-      FbldReportError(lex->loc, "expected newline");
+      FbldReportError("expected newline\n", lex->loc);
       FbldFreeMarkup(markup);
       return NULL;
     }

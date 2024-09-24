@@ -99,3 +99,15 @@ Removing the biggest use of Int literals:
 
 Elapsed (wall clock) time (h:mm:ss or m:ss): 0:43.50 ==> 0:38.92
 Maximum resident set size (kbytes): 118964 ==> 113248
+
+---
+
+Total:    526362
+Eval:     451992
+ Lookup:  135473
+Parse:     50039
+
+Result%.Ok! alone: 35563
+
+It's an allocation, and it has to be if the argument 'x' isn't packed. Except
+most of the time it's AssertArgCount, which is passing Unit?

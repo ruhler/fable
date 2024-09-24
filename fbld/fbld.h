@@ -25,11 +25,29 @@ typedef struct {
 
 /**
  * @func[FbldReportError] Reports an error.
- *  @arg[FbldLoc][loc] The location of the error.
- *  @arg[const char*][msg] The error message.
- *  @sideeffects Prints the error message to stderr.
+ *  Reports an error message associated with a location in a source file.
+ *
+ *  This uses a printf-like format string. The following format specifiers are
+ *  supported:
+ *
+ *  @code[txt] @
+ *   %i - size_t
+ *   %s - const char*
+ *   %% - literal '%'
+ *
+ *  Please add additional format specifiers as needed.
+ *
+ *  @arg[const char*] format
+ *   A printf format string for the error message.
+ *  @arg[FbldLoc] loc
+ *   The location of the error message to report.
+ *  @arg[...] 
+ *   Format arguments as specified by the format string.
+ *
+ *  @sideeffects
+ *   Prints an error message to stderr with error location.
  */
-void FbldReportError(FbldLoc loc, const char* message);
+void FbldReportError(const char* format, FbldLoc loc, ...);
 
 /*
  * @struct[FbldText] A string with a location.
