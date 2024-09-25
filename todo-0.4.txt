@@ -20,9 +20,6 @@ Things to consider doing for the fble-0.4 release.
    EmptyContinuation,
    BlankInlineInImplicitBlock,
    EndOfInputError
- - Test case of unresolved @x in ifeq.
-   It should error out rather than be treated as false.
- - Test case of unresolved @x in error argument.
  - Test that we evaluate appropriate args to builtins before executing them.
    Done with @define, @let, @head @tail, ifeq, ifneq. Still need:
    error, eval, plain, user defined function?

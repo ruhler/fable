@@ -191,7 +191,7 @@ static Cmd* PushEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
 
 static int HeadOf(FbldMarkup* m);
 static FbldMarkup* TailOf(FbldMarkup* m);
-static bool Eq(FbldMarkup* a, FbldMarkup* b);
+static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq);
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
 static bool Eval(Cmd* cmd);
 
@@ -353,34 +353,61 @@ static FbldMarkup* TailOf(FbldMarkup* m)
 
 /**
  * @func[Eq] Test whether two markup are equal for @ifeq
- *  @arg[FbldMarkup*][a] The first markup.
- *  @arg[FbldMarkup*][b] The second markup.
- *  @returns[bool] True if they are string equal. False otherwise.
- *  @sideeffects None
+ *  @arg[FbldMarkup*][a] The first markup. Borrowed.
+ *  @arg[FbldMarkup*][b] The second markup. Borrowed.
+ *  @arg[bool*][eq] Set to true if markups are equal, false otherwise.
+ *  @returns[bool] True on success, false if the args couldn't be compared.
+ *  @sideeffects
+ *   @i Sets @a[eq] to the result of comparison on success.
+ *   @i Reports an error to stderr in case args can't be compared.
  */
-static bool Eq(FbldMarkup* a, FbldMarkup* b)
+static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq)
 {
-  int ha = HeadOf(a);
-  int hb = HeadOf(b);
-  if (ha != hb) {
-    return false;
+  a = FbldCopyMarkup(a);
+  b = FbldCopyMarkup(b);
+
+  while (true) {
+    int ha = HeadOf(a);
+    if (ha == -1) {
+      FbldReportError("unevaluated command %s\n", a->text->loc, a->text->str);
+      FbldFreeMarkup(a);
+      FbldFreeMarkup(b);
+      return false;
+    }
+
+    int hb = HeadOf(b);
+    if (hb == -1) {
+      FbldReportError("unevaluated command %s\n", b->text->loc, b->text->str);
+      FbldFreeMarkup(a);
+      FbldFreeMarkup(b);
+      return false;
+    }
+
+    if (ha != hb) {
+      *eq = false;
+      FbldFreeMarkup(a);
+      FbldFreeMarkup(b);
+      return true;
+    }
+
+    if (ha == 0) {
+      assert(hb == 0);
+      *eq = true;
+      FbldFreeMarkup(a);
+      FbldFreeMarkup(b);
+      return true;
+    }
+
+    FbldMarkup* na = TailOf(a);
+    FbldMarkup* nb = TailOf(b);
+    FbldFreeMarkup(a);
+    FbldFreeMarkup(b);
+    a = na;
+    b = nb;
   }
 
-  if (ha == 0) {
-    return true;
-  }
-
-  if (ha == -1) {
-    assert(false && "TODO: Eq on non-string");
-    return false;
-  }
-
-  FbldMarkup* na = TailOf(a);
-  FbldMarkup* nb = TailOf(b);
-  bool teq = Eq(na, nb);
-  FbldFreeMarkup(na);
-  FbldFreeMarkup(nb);
-  return teq;
+  assert(false && "unreachable");
+  return false;
 }
 
 /**
@@ -926,14 +953,13 @@ static bool Eval(Cmd* cmd)
       case IF_CMD: {
         IfCmd* c = (IfCmd*)cmd;
 
-        // TODO: Handle the case where arguments can't be compared for
-        // equality.
-        bool eq = Eq(c->a, c->b);
-
-        if (eq) {
-          cmd = PushEval(c->_base.next, c->env, c->if_eq, c->_base.dest);
-        } else {
-          cmd = PushEval(c->_base.next, c->env, c->if_ne, c->_base.dest);
+        bool eq;
+        if (Eq(c->a, c->b, &eq)) {
+          if (eq) {
+            cmd = PushEval(c->_base.next, c->env, c->if_eq, c->_base.dest);
+          } else {
+            cmd = PushEval(c->_base.next, c->env, c->if_ne, c->_base.dest);
+          }
         }
 
         FbldFreeMarkup(c->a);

@@ -111,3 +111,15 @@ Result%.Ok! alone: 35563
 
 It's an allocation, and it has to be if the argument 'x' isn't packed. Except
 most of the time it's AssertArgCount, which is passing Unit?
+
+---
+
+Thoughts on what to do next:
+* Can think about or play around with what to collect for profiles and how to
+  present it to be most useful. Seems like right now it isn't highlighting
+  performance optimization candidates as much as I would hope.
+  - Dispatching functions like 'FbleCall' or 'Builtin.If' too hard to tease
+    out performance of.
+* Make a simple micro-benchmark that counts to a given number.
+  - Implement in fble and transliterate that into C.
+  - Dive deep to understand potential performance opportunities there.

@@ -1,0 +1,7 @@
+@test error 5:11 @@
+
+Test that the argument to ifeq is evaluated before ifeq.
+
+@ifeq[a][@x][hello][there]
+
+End of test.

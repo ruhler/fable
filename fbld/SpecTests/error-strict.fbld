@@ -1,0 +1,8 @@
+@test error 6:14 @@
+
+The variable x is not defined. This should give an error about x not being
+defined rather than the explicit error message.
+
+@error[This @x has an error]
+
+End of test.
