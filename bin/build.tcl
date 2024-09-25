@@ -10,8 +10,13 @@ namespace eval "bin" {
   foreach {x} $bin_sources {
     set base [file rootname [file tail $x]]
 
+    # Generated header file for help usage text.
+    fbld_header_usage $::b/bin/$base.usage.h $::s/bin/$base.fbld \
+      fbldUsageHelpText
+
     # The binary.
-    obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include"
+    obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \
+      $::b/bin/$base.usage.h
     bin $::b/bin/$base \
       "$::b/bin/$base.o $::b/lib/libfble.a" ""
     bin_cov $::b/bin/$base.cov \

@@ -12,8 +12,9 @@
 #include <fble/fble-generate.h>      // for FbleGenerate*
 #include <fble/fble-compile.h>       // for FbleCompile, etc.
 #include <fble/fble-module-path.h>   // for FbleParseModulePath.
-#include <fble/fble-usage.h>         // for FblePrintUsageDoc
 #include <fble/fble-version.h>       // for FBLE_VERSION
+
+#include "fble-compile.usage.h"      // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -45,8 +46,6 @@ int main(int argc, const char* argv[])
   bool error = false;
   bool version = false;
 
-  const char* arg0 = argv[0];
-
   argc--;
   argv++;
   while (!(help || error || version)  && argc > 0) {
@@ -72,7 +71,7 @@ int main(int argc, const char* argv[])
   }
 
   if (help) {
-    FblePrintUsageDoc(arg0, "fble-compile.usage.txt");
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
