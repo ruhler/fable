@@ -9,9 +9,10 @@
 
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg
 #include <fble/fble-profile.h>   // for FbleProfile, etc.
-#include <fble/fble-usage.h>     // for FblePrintUsageDoc
 #include <fble/fble-version.h>   // for FBLE_VERSION, FbleBuildStamp
 #include <fble/fble-vector.h>    // for FbleInitVector, etc.
+
+#include "fble-perf-profile.usage.h"   // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -147,8 +148,6 @@ int main(int argc, const char* argv[])
   StringV squashes;
   FbleInitVector(squashes);
 
-  const char* arg0 = argv[0];
-
   argc--;
   argv++;
   while (!(help || version || error) && argc > 0) {
@@ -175,7 +174,7 @@ int main(int argc, const char* argv[])
   }
 
   if (help) {
-    FblePrintUsageDoc(arg0, "fble-perf-profile.usage.txt");
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFree(squashes.xs);
     return EX_SUCCESS;
   }

@@ -21,8 +21,8 @@ Things to consider doing for the fble-0.4 release.
    BlankInlineInImplicitBlock,
    EndOfInputError
  - Test that we evaluate appropriate args to builtins before executing them.
-   Done with @define, @let, @head @tail, ifeq, ifneq. Still need:
-   error, eval, plain, user defined function?
+   Done with @define, @let, @head @tail, ifeq, ifneq, error. Still need:
+   eval, plain, user defined function?
  - Add tests for code coverage.
 
  - Assume markup could be NULL at any time during evaluation and handle it
@@ -75,6 +75,10 @@ Things to consider doing for the fble-0.4 release.
    Generate usage help text at build time and link into binaries instead of
    having to search for the installed documentation at runtime when --help is
    passed.
+
+* Double check generated --help usage format.
+  Because I switched from some previous version of groff options to some new
+  version, and I haven't looked closely at the implications of that change.
 
 * Add fble to rosettacode.org?
   Or at least implement all the tasks, perhaps in a separate RosettaCode
