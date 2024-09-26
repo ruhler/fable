@@ -14,9 +14,10 @@
 #include <fble/fble-generate.h>    // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
-#include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-version.h>     // for FblePrintVersion
+
+#include "fble-test.usage.h"       // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_COMPILE_ERROR 1
@@ -56,7 +57,7 @@ int FbleTestMain(int argc, const char** argv, FbleGeneratedModule* module)
 
   if (help) {
     FblePrintCompiledHeaderLine(stdout, "fble-test", arg0, module);
-    FblePrintUsageDoc(arg0, "fble-test.usage.txt");
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }

@@ -15,9 +15,10 @@
 #include <fble/fble-link.h>        // for FbleLink
 #include <fble/fble-name.h>        // for FbleName.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
-#include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
+
+#include "fble-profiles-test.usage.h"    // for fbldUsageHelpText
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -131,7 +132,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleGeneratedModule* modul
 
   if (help) {
     FblePrintCompiledHeaderLine(stdout, "fble-profiles-test", arg0, module);
-    FblePrintUsageDoc(arg0, "fble-profiles-test.usage.txt");
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }

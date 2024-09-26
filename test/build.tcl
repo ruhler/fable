@@ -20,9 +20,11 @@ namespace eval "test" {
   set objs [list]
   foreach {x} $lib_sources {
     set base [file rootname [file tail $x]]
+    fbld_header_usage $::b/test/fble-$base.usage.h $::s/test/fble-$base.fbld \
+      fbldUsageHelpText
     fbld_help_usage $::b/test/fble-$base.usage.txt $::s/test/fble-$base.fbld
     fbld_man_usage $::b/test/fble-$base.1 $::s/test/fble-$base.fbld
-    obj $::b/test/$base.o $::s/test/$base.c $cflags
+    obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/fble-$base.usage.h
     lappend objs $::b/test/$base.o
   }
   lib $::b/test/libfbletest.a $objs

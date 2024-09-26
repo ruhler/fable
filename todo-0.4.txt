@@ -33,6 +33,13 @@ Things to consider doing for the fble-0.4 release.
  - Figure out how to associate a location with empty markup.
  - Avoid constructing markups with singleton sequences?
 
+* Remove FblePrintUsageDoc API
+ - pkgs/app/app.c
+ - pkgs/core/stdio.fble.c
+
+* Don't install fbld_help_usage anymore?
+ - Or do it in html? Because we don't need it for --help anymore?
+
 * Fbld
  - The @plain builtin is really strange. I had trouble coming up with a test
    case for it. Consider if there's some way we can get rid of that or make it
