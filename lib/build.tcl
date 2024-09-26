@@ -20,16 +20,6 @@ namespace eval "lib" {
   lappend objs $::b/lib/parse.tab.o
   lappend objs_cov $::b/lib/parse.tab.cov.o
 
-  # usage.path.c
-  build "$::b/lib/usage.path.c" "" \
-    "echo \"const char* FbleDocDir = \\\"$::config::docdir/fble\\\";\" > $::b/lib/usage.path.c"
-
-  # usage.path.o
-  obj $::b/lib/usage.path.o $::b/lib/usage.path.c ""
-  obj_cov $::b/lib/usage.path.cov.o $::b/lib/usage.path.c ""
-  lappend objs $::b/lib/usage.path.o
-  lappend objs_cov $::b/lib/usage.path.cov.o
-
   # general .o files
   foreach {x} [build_glob $::s/lib -tails "*.c"] {
     set object $::b/lib/[string map {.c .o} $x]

@@ -82,9 +82,6 @@ namespace eval "include" {
     fble-string.h {
       FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString
     }
-    fble-usage.h {
-      FblePrintUsageDoc
-    }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap
       FbleValueV

@@ -13,10 +13,11 @@
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-generate.h>    // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink
-#include <fble/fble-usage.h>       // for FblePrintUsageDoc
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleInitVector.
 #include <fble/fble-version.h>     // for FBLE_VERSION
+
+#include "fble-stdio.usage.h"      // for fbldUsageHelpText
 
 #include "char.fble.h"        // for FbleCharValueAccess
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
@@ -441,7 +442,7 @@ int FbleStdioMain(int argc, const char** argv, FbleGeneratedModule* module)
 
   if (help) {
     FblePrintCompiledHeaderLine(stdout, "fble-stdio", arg0, module);
-    FblePrintUsageDoc(arg0, "fble-stdio.usage.txt");
+    fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_TRUE;
   }

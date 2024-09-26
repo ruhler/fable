@@ -33,10 +33,6 @@ Things to consider doing for the fble-0.4 release.
  - Figure out how to associate a location with empty markup.
  - Avoid constructing markups with singleton sequences?
 
-* Remove FblePrintUsageDoc API
- - pkgs/app/app.c
- - pkgs/core/stdio.fble.c
-
 * Don't install fbld_help_usage anymore?
  - Or do it in html? Because we don't need it for --help anymore?
 
@@ -77,11 +73,6 @@ Things to consider doing for the fble-0.4 release.
  - Better support for structs in fbld language, so its easier to write decent
    performing fbld code.
  - Have an 'if' primitive instead of 'ifeq' and 'ifneq'?
- - native C implementation
-   Including fble build time improvements.
-   Generate usage help text at build time and link into binaries instead of
-   having to search for the installed documentation at runtime when --help is
-   passed.
 
 * Double check generated --help usage format.
   Because I switched from some previous version of groff options to some new
