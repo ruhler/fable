@@ -102,17 +102,30 @@ namespace eval "fbld" {
 
   # fbld binary.
   set objs [list]
+  set objs_cov [list]
   foreach {x} {alloc fbld eval markup parse vector} {
     obj $::b/fbld/$x.o $::s/fbld/$x.c "-I $::s/fbld"
+    obj_cov $::b/fbld/$x.cov.o $::s/fbld/$x.c "-I $::s/fbld"
     lappend objs $::b/fbld/$x.o
+    lappend objs_cov $::b/fbld/$x.cov.o
   }
   bin $::b/fbld/fbld $objs ""
+  bin_cov $::b/fbld/fbld.cov $objs_cov ""
+  set ::fbld_objs_cov $objs_cov
 
   # Fbld spec tests.
+  set fbld_spec_tests [list]
   foreach {x} [build_glob $::s/fbld/SpecTests -tails -nocomplain -type f *.fbld] {
     # c-based fbld.
+    lappend fbld_spec_tests $::b/fbld/SpecTests/$x.c.tr
     test $::b/fbld/SpecTests/$x.c.tr \
-      "$::b/fbld/fbld $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
-      "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/fbld/fbld $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
+      "$::b/fbld/fbld.cov $::s/fbld/spec-test.run.tcl $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x" \
+      "tclsh8.6 $::s/fbld/spec-test.run.tcl $::b/fbld/fbld.cov $::s/fbld/SpecTests.fbld $::s/fbld/SpecTests/$x"
   }
+
+  # Code coverage. Mark it as 'testsuite' so it gets built along with all the
+  # other test cases.
+  # TODO: There should be a better way to say when it gets built.
+  testsuite $::b/fbld/cov/gcov.txt "$::fbld_objs_cov $fbld_spec_tests" \
+    "gcov $::fbld_objs_cov > $::b/fbld/cov/gcov.txt && mv *.gcov $::b/fbld/cov"
 }
