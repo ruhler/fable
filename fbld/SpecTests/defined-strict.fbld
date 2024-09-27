@@ -1,0 +1,9 @@
+@test error 7:7 @@
+
+Test that arguments to a user defined function are evaluated before calling
+the function.
+
+@define[foo][a][hello] @@
+@foo[@error[evaluate me]]
+
+End of tests.

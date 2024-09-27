@@ -147,7 +147,7 @@ static bool TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
     }
 
     case FBLD_MARKUP_COMMAND: {
-      FbldReportError("expected plain text, but found command %s\n",
+      FbldReportError("expected plain text, but found command @%s\n",
           markup->text->loc, markup->text->str);
       return false;
     }
@@ -195,7 +195,7 @@ bool FbldPrintMarkup(FbldMarkup* markup)
     }
 
     case FBLD_MARKUP_COMMAND: {
-      FbldReportError("expected plain text, but found command %s\n",
+      FbldReportError("expected plain text, but found command @%s\n",
           markup->text->loc, markup->text->str);
       return false;
     }

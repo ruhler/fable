@@ -9,4 +9,11 @@ Basic test for eval builtin:
  @@
  @foo[1: @a, 2: @a]
 
+Test that eval evaluates the argument before evaluating it.
+
+@assert_eq[hello]
+ @let[a][@b] @@
+ @let[b][hello] @@
+ @eval[@a]
+
 End of tests.

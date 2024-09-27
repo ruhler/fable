@@ -10,7 +10,7 @@ Basic test for plain builtin:
  @define[ignore][x][] @@
  @foo[@plain[ignore][a@keep[b]c@keep[d]e]]
 
-Another test of plain builtin:
+Test that the arguments to plain are evaluated before calling into plain:
 
 @assert_eq[bd]
  @define[foo][x]
@@ -19,6 +19,7 @@ Another test of plain builtin:
  @@
  @define[ignore][x][] @@
  @define[arg][][a@keep[b]c@keep[d]e] @@
- @foo[@plain[ignore][@arg]]
+ @let[f][ignore] @@
+ @foo[@plain[@f][@arg]]
 
 End of tests.
