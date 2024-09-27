@@ -65,18 +65,6 @@ namespace eval "fbld" {
       "tclsh8.6 $::s/fbld/cdata.tcl $id < $target.txt > $target"
   }
 
-  # Builds usage help text.
-  # @arg target - the name of the help text file to generate.
-  # @arg source - the .fbld usage doc to generate the header from.
-  proc ::fbld_help_usage { target source } {
-    build $target.roff \
-      "$::fbld $::s/buildstamp $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $::b/fbld/config.fbld $source" \
-      "$::s/buildstamp --fbld BuildStamp | $::fbld - $::b/fbld/config.fbld $::b/fbld/version.fbld $::s/fbld/roff.fbld $::s/fbld/usage.help.fbld $::s/fbld/usage.lib.fbld $source > $target.roff"
-    # Pass -c, -b, -u to grotty to escape sequences and backspaces in the output.
-    build $target $target.roff \
-      "groff -P -c -P -b -P -u -T utf8 < $target.roff > $target"
-  }
-
   # Builds usage help text for use in an fble program.
   # @arg target - the .fble file to generate.
   # @arg source - the .fbld usage doc to generate the header from.

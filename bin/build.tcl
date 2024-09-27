@@ -23,10 +23,6 @@ namespace eval "bin" {
       "$::b/bin/$base.o $::b/lib/libfble.cov.a" ""
     install $::b/bin/$base $::config::bindir/$base
 
-    # Usage help
-    fbld_help_usage $::b/bin/$base.usage.txt $::s/bin/$base.fbld
-    install $::b/bin/$base.usage.txt $::config::docdir/fble/$base.usage.txt
-
     # Man page.
     fbld_man_usage $::b/bin/$base.1 $::s/bin/$base.fbld
     install $::b/bin/$base.1 $::config::mandir/man1/$base.1

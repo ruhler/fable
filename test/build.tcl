@@ -22,7 +22,6 @@ namespace eval "test" {
     set base [file rootname [file tail $x]]
     fbld_header_usage $::b/test/fble-$base.usage.h $::s/test/fble-$base.fbld \
       fbldUsageHelpText
-    fbld_help_usage $::b/test/fble-$base.usage.txt $::s/test/fble-$base.fbld
     fbld_man_usage $::b/test/fble-$base.1 $::s/test/fble-$base.fbld
     obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/fble-$base.usage.h
     lappend objs $::b/test/$base.o
@@ -38,7 +37,6 @@ namespace eval "test" {
   }
 
   foreach {x} [list fble-test fble-mem-test] {
-    install $::b/test/$x.usage.txt $::config::docdir/fble/$x.usage.txt
     install $::b/test/$x.1 $::config::mandir/man1/$x.1
     install $::b/test/$x $::config::bindir/$x
   }
@@ -65,10 +63,6 @@ namespace eval "test" {
 
   test $::b/test/ProfilesTest.c.tr "$::b/test/ProfilesTest.c" \
     "$::b/test/ProfilesTest.c > $::b/test/ProfilesTest.c.prof"
-
-  test $::b/tests/fble-profiles-test.usage.txt.tr \
-    $::b/test/fble-profiles-test.usage.txt \
-    "touch $::b/tests/fble-profiles-test.usage.txt"
 
   if {$::arch == "aarch64"} {
     # fble-compiled-profiles-test-aarch64

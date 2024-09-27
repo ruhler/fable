@@ -18,7 +18,6 @@ namespace eval "pkgs/core" {
   }
 
   # fble-stdio program.
-  fbld_help_usage $::b/pkgs/core/fble-stdio.usage.txt $::s/pkgs/core/fble-stdio.fbld
   fbld_man_usage $::b/pkgs/core/fble-stdio.1 $::s/pkgs/core/fble-stdio.fbld
   install $::b/pkgs/core/fble-stdio.1 $::config::mandir/man1/fble-stdio.1
   obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
@@ -26,7 +25,6 @@ namespace eval "pkgs/core" {
   bin $::b/pkgs/core/fble-stdio \
     "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" ""
   install $::b/pkgs/core/fble-stdio $::config::bindir/fble-stdio
-  install $::b/pkgs/core/fble-stdio.usage.txt $::config::docdir/fble/fble-stdio.usage.txt
 
   # Build an fble-stdio compiled binary.
   #

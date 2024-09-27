@@ -3,7 +3,6 @@ namespace eval "pkgs/app" {
   if $::config::enable_fble_app {
     fbld_header_usage $::b/pkgs/app/fble-app.usage.h $::s/pkgs/app/fble-app.fbld \
       fbldUsageHelpText
-    fbld_help_usage $::b/pkgs/app/fble-app.usage.txt $::s/pkgs/app/fble-app.fbld
     obj $::b/pkgs/app/app.o $::s/pkgs/app/app.c \
       "$::config::sdl_cflags $::config::gl_cflags -I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app -I $::b/pkgs/app" \
       $::b/pkgs/app/fble-app.usage.h
@@ -26,7 +25,6 @@ namespace eval "pkgs/app" {
     # fble-app program.
     fbld_man_usage $::b/pkgs/app/fble-app.1 $::s/pkgs/app/fble-app.fbld
     install $::b/pkgs/app/fble-app.1 $::config::mandir/man1/fble-app.1
-    install $::b/pkgs/app/fble-app.usage.txt $::config::docdir/fble/fble-app.usage.txt
 
     obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
       "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app $::config::sdl_cflags"
