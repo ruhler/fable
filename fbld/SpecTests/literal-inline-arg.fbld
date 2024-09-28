@@ -4,4 +4,8 @@ Test of literal inline argument.
 
 @assert_eq[a \@ is \[x\]]{a @ is [x]}
 
+Test nesting of braces allowed in literal inline argument.
+
+@assert_eq[a {is} b]{a {is} b}
+
 End of test.

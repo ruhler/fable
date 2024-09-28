@@ -7,12 +7,8 @@ Things to consider doing for the fble-0.4 release.
    InlineUnescapedBrackets - spec is not clear on what behavior to allow?
    NestedBlockLoc,
    IndentedSequentialPlainBlocks,
-   Continuation,
    Final,
    SameLineFinal,
-   NextLineLiteral,
-   InlineLiteral,
-   ExplicitImplicitBlock,
    BlankInlineInImplicitBlock,
  - Add tests for code coverage.
 
@@ -34,6 +30,7 @@ Things to consider doing for the fble-0.4 release.
    more sensible.
  - Clarify in spec if @if[a@x][b@x] ... is an error or not.
    Or redesign semantics of fbld to avoid that question entirely.
+ - Clarify in the spec if "foo[bar]sludge' is allowed in inline text.
 
 
 * Fix potential GC gen overflow?

@@ -5,6 +5,12 @@ Test for basic continuation:
 @assert_eq{a: hello, b: there}
 @ a: hello, b: there
 
+More interesting variety of continuation:
+
+@assert_eq
+@{a: hello, b: there}
+@[a: hello, b: there]
+
 Test for empty continuation:
 
 @assert_eq{a: hello, b: there}
