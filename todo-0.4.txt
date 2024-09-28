@@ -13,7 +13,6 @@ Things to consider doing for the fble-0.4 release.
    NextLineLiteral,
    InlineLiteral,
    ExplicitImplicitBlock,
-   EmptyContinuation,
    BlankInlineInImplicitBlock,
  - Add tests for code coverage.
 

@@ -618,7 +618,7 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
     }
 
     // Continuation.
-    if (Is(lex, "@\n"), Is(lex, "@ ") || Is(lex, "@[") || Is(lex, "@{")) {
+    if (Is(lex, "@\n") || Is(lex, "@ ") || Is(lex, "@[") || Is(lex, "@{")) {
       Advance(lex);
       continue;
     }
