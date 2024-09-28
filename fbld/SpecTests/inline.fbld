@@ -1,0 +1,9 @@
+@test no-error @@
+
+Test that inline commands nest:
+
+@assert_eq{helloa: thec: red, b: ugdone}
+ @define[foo][a b] a: @a, b: @b @@
+ @define[bar][x][c: @x] hello@foo[the@bar[re]d][ug]done
+
+End of tests.

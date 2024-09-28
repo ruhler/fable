@@ -6,7 +6,7 @@
 @ Test@ = /Core/Test%.Test@;
 % TestSuite = /Core/Test%.TestSuite;
 
-Test@ Tests = TestSuite(Str|Fbld2, List[
+Test@ Tests = TestSuite(Str|Fbld, List[
   /Fbld/Parse/Tests%.Tests,
   /Fbld/Builtin/Tests%.Tests
 ]);

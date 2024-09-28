@@ -1,0 +1,8 @@
+@test no-error @@
+
+Test more varieties of escape characters.
+
+@assert_eq[a \\ a\[\]b\ncd\@]{a \ a[]b
+cd@}
+
+End of test.

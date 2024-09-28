@@ -1,0 +1,6 @@
+@test error 7:1 @@
+
+Test error location of unexpected end of input.
+
+@define[a][x] a@xa @@
+Well, @a[this is unexpected

@@ -317,7 +317,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Error<Markup@>(
-      Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int|1, /Core/Int/Lit%.Int|8),
+      Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int|1, /Core/Int/Lit%.Int|9),
       Str|'unexpected end of input'
     );
     AssertResultEquals(wnt, got);

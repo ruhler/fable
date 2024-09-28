@@ -4,11 +4,7 @@ Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
  - Port parser tests from fble implementation to spec tests.
-   Unescape,
-   BasicInline,
-   InlineUnescapedBrackets,
-   NestedInline,
-   BasicBlock,
+   InlineUnescapedBrackets - spec is not clear on what behavior to allow?
    NestedBlockLoc,
    IndentedSequentialPlainBlocks,
    Continuation,
@@ -19,7 +15,6 @@ Things to consider doing for the fble-0.4 release.
    ExplicitImplicitBlock,
    EmptyContinuation,
    BlankInlineInImplicitBlock,
-   EndOfInputError
  - Add tests for code coverage.
 
  - Assume markup could be NULL at any time during evaluation and handle it

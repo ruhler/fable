@@ -128,9 +128,10 @@ PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
   List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
+  CharL@ last = Last(s);
   Loc@ end_of_input_loc = {
     s.?(nil: Unknown);
-    Last(s).l;
+    Advance(last.l, last.c);
   };
   Result@<SM@<T@>> r = m(R@(s, Int|0, True, end_of_input_loc));
   r.failed.?(true: /Fbld/Result%.Raise<T@>(r));
