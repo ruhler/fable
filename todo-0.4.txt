@@ -3,13 +3,6 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
- - Port parser tests from fble implementation to spec tests.
-   InlineUnescapedBrackets - spec is not clear on what behavior to allow?
-   NestedBlockLoc,
-   IndentedSequentialPlainBlocks,
-   Final,
-   SameLineFinal,
-   BlankInlineInImplicitBlock,
  - Add tests for code coverage.
 
  - Assume markup could be NULL at any time during evaluation and handle it
@@ -30,7 +23,6 @@ Things to consider doing for the fble-0.4 release.
    more sensible.
  - Clarify in spec if @if[a@x][b@x] ... is an error or not.
    Or redesign semantics of fbld to avoid that question entirely.
- - Clarify in the spec if "foo[bar]sludge' is allowed in inline text.
 
 
 * Fix potential GC gen overflow?

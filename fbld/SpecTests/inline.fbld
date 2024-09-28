@@ -6,4 +6,10 @@ Test that inline commands nest:
  @define[foo][a b] a: @a, b: @b @@
  @define[bar][x][c: @x] hello@foo[the@bar[re]d][ug]done
 
+Inline argument with a blank line in it:
+
+@assert_eq[hello\n\nthere][hello
+
+there]
+
 End of tests.

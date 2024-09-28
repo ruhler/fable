@@ -1,0 +1,10 @@
+@test error 7:4 @@
+
+Test that the location for a nest block is correct.
+
+@assert_eq[hello]
+ @assert_eq[there]
+  @error[oops]
+
+End of test.
+

@@ -1,0 +1,8 @@
+@test no-error @@
+
+Test for unescaped square brackets in implicit block.
+
+@assert_eq[hello \[there\] now\n]
+ hello [there] now
+
+End of test.

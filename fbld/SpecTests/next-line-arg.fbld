@@ -9,4 +9,12 @@ Test for next line argument.
 
  There.
 
+Test sequential implicit blocks in next line arg:
+
+@assert_eq[Hello.\nThere.\nNext line here.\n]
+ Hello.
+ There.
+
+ Next line here.
+
 End of test.

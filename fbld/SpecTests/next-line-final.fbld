@@ -1,0 +1,11 @@
+@test no-error @@
+
+Test for next line final argument.
+
+@assert_eq[The next line starts\nhere.\nEnd of test.\n]
+@@
+The next line starts
+here.
+
+End of test.
+
