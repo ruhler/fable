@@ -1,0 +1,7 @@
+@test error 5:8 @@
+
+The argument to head must be fully evaluated.
+
+@head[@x]
+
+End of tests.

@@ -10,5 +10,9 @@ Test that we evaluate the argument to tail first.
  @let[x][abcde] @@
  @tail[@x]
 
+Test of tail of empty string:
+
+@assert_eq[][@tail[]]
+
 End of tests.
 
