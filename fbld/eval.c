@@ -189,9 +189,8 @@ static void FreeEnv(Env* env);
 
 static Cmd* PushEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest);
 
-static bool IsEmpty(FbldMarkup* m);
 static int HeadOf(FbldMarkup* m);
-static FbldMarkup* TailOf(FbldMarkup* m);
+static bool TailOf(FbldMarkup* m, FbldMarkup** out);
 static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq);
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
 static bool Eval(Cmd* cmd);
@@ -261,37 +260,6 @@ static Cmd* PushEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
 }
 
 /**
- * @func[IsEmpty] Returns true if the markup is empty.
- *  @arg[FbldMarkup*][m] The markup to test.
- *  @returns[bool] True if the markup is empty, false otherwise.
- *  @sideeffects None.
- */
-static bool IsEmpty(FbldMarkup* m)
-{
-  switch (m->tag) {
-    case FBLD_MARKUP_PLAIN: {
-      return m->text->str[0] == '\0';
-    }
-
-    case FBLD_MARKUP_COMMAND: {
-      return false;
-    }
-
-    case FBLD_MARKUP_SEQUENCE: {
-      for (size_t i = 0; i < m->markups.size; ++i) {
-        if (!IsEmpty(m->markups.xs[i])) {
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
-  assert(false && "unreachable");
-  return false;
-}
-
-/**
  * @func[HeadOf] Returns first character of markup.
  *  @arg[FbldMarkup*][m] The markup to get the first character of.
  *  @returns[int] The first character if any, 0 if end, -1 if command.
@@ -323,19 +291,28 @@ static int HeadOf(FbldMarkup* m)
 
 /**
  * @func[TailOf] Removes first character of markup.
+ *  There are three cases. If the markup is empty, sets out to NULL and
+ *  returns success. If the markup is non-empty but has an unevaluated command
+ *  in it, returns failure. Otherwise sets out to the tail of the markup and
+ *  returns success.
+ *
  *  @arg[FbldMarkup*][m] The markup to remove the character from.
- *  @returns[FbldMarkup*]
- *   A new markup without the first character. NULL in case of error.
+ *  @arg[FbldMarkup*][out] Where to store the result.
+ *  @returns[bool] True on success, false on error.
  *  @sideeffects
- *   @i Allocates a new markup that should be freed with FbldFreeMarkup when done.
  *   @i Prints a message to stderr in case of error.
+ *   @i Sets @a{out} with the result if the markup is non-empty.
+ *   @item
+ *    Allocates a new markup that should be freed with FbldFreeMarkup when
+ *    done.
  */
-static FbldMarkup* TailOf(FbldMarkup* m)
+static bool TailOf(FbldMarkup* m, FbldMarkup** out)
 {
   switch (m->tag) {
     case FBLD_MARKUP_PLAIN: {
       if (m->text->str[0] == '\0') {
-        return FbldCopyMarkup(m);
+        *out = NULL;
+        return true;
       }
 
       // TODO: Fix location - advance by the first character.
@@ -344,27 +321,32 @@ static FbldMarkup* TailOf(FbldMarkup* m)
       n->refcount = 1;
       n->text = FbldNewText(m->text->loc, m->text->str + 1);
       FbldInitVector(n->markups);
-      return n;
+      *out = n;
+      return true;
     }
 
     case FBLD_MARKUP_COMMAND: {
       FbldReportError("unevaluated command %s\n", m->text->loc, m->text->str);
-      return NULL;
+      return false;
     }
 
     case FBLD_MARKUP_SEQUENCE: {
       size_t i = 0;
-      while (i < m->markups.size && IsEmpty(m->markups.xs[i])) {
-        i++;
+      FbldMarkup* child = NULL;
+      for (i = 0; child == NULL && i < m->markups.size; ++i) {
+        if (!TailOf(m->markups.xs[i], &child)) {
+          return false;
+        }
+      }
+
+      if (child == NULL) {
+        *out = NULL;
+        return true;
       }
 
       if (i == m->markups.size) {
-        return FbldCopyMarkup(m);
-      }
-
-      FbldMarkup* child = TailOf(m->markups.xs[i]);
-      if (child == NULL) {
-        return NULL;
+        *out = child;
+        return true;
       }
 
       FbldMarkup* n = FbldAlloc(FbldMarkup);
@@ -373,10 +355,11 @@ static FbldMarkup* TailOf(FbldMarkup* m)
       n->refcount = 1;
       FbldInitVector(n->markups);
       FbldAppendToVector(n->markups, child);
-      for (size_t j = i + 1; j < m->markups.size; ++j) {
+      for (size_t j = i; j < m->markups.size; ++j) {
         FbldAppendToVector(n->markups, FbldCopyMarkup(m->markups.xs[j]));
       }
-      return n;
+      *out = n;
+      return true;
     }
   }
 
@@ -431,22 +414,26 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq)
       return true;
     }
 
-    FbldMarkup* na = TailOf(a);
-    FbldMarkup* nb = TailOf(b);
+    FbldMarkup* na = NULL;
+    if (!TailOf(a, &na)) {
+      FbldFreeMarkup(a);
+      FbldFreeMarkup(b);
+      return false;
+    }
+    assert(na != NULL);
+
+    FbldMarkup* nb = NULL;
+    if (!TailOf(b, &nb)) {
+      FbldFreeMarkup(a);
+      FbldFreeMarkup(b);
+      FbldFreeMarkup(nb);
+      return false;
+    }
+    assert(nb != NULL);
     FbldFreeMarkup(a);
     FbldFreeMarkup(b);
     a = na;
     b = nb;
-
-    if (a == NULL) {
-      FbldFreeMarkup(b);
-      return false;
-    }
-
-    if (b == NULL) {
-      FbldFreeMarkup(a);
-      return false;
-    }
   }
 
   assert(false && "unreachable");
@@ -1071,8 +1058,23 @@ static bool Eval(Cmd* cmd)
       case TAIL_CMD: {
         TailCmd* c = (TailCmd*)cmd;
 
-        FbldMarkup* result = TailOf(c->a);
-        error = error || (result == NULL);
+        FbldMarkup* result = NULL;
+        if (!TailOf(c->a, &result)) {
+          error = true;
+          *(c->_base.dest) = NULL;
+          FbldFreeMarkup(c->a);
+          cmd = c->_base.next;
+          FbldFree(c);
+          break;
+        }
+
+        if (result == NULL) {
+          *(c->_base.dest) = c->a;
+          cmd = c->_base.next;
+          FbldFree(c);
+          break;
+        }
+
         *(c->_base.dest) = result;
         FbldFreeMarkup(c->a);
         cmd = c->_base.next;
