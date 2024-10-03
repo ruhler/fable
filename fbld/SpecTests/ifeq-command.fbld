@@ -1,0 +1,7 @@
+@test error 5:8 @@
+
+Test that the argument to ifeq isn't an unevaluated command.
+
+@ifeq[@x][a][hello][there]
+
+End of test.

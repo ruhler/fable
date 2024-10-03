@@ -1,0 +1,7 @@
+@test error 5:8 @@
+
+The argument to tail must be evaluated.
+
+@tail[@x abc]
+
+End of tests.

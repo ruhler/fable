@@ -68,7 +68,7 @@ proc expect_error { loc args } {
   set status 0
   try {
     execv {*}$args 2>@1
-  } on error {results options} {
+  } trap CHILDSTATUS {results options} {
     set output $results
     set status [lindex [dict get $options -errorcode] 2]
   }

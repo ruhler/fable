@@ -189,7 +189,7 @@ static void FreeEnv(Env* env);
 
 static Cmd* PushEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest);
 
-static int HeadOf(FbldMarkup* m);
+static bool HeadOf(FbldMarkup* m, char* out);
 static bool TailOf(FbldMarkup* m, FbldMarkup** out);
 static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq);
 static FbldMarkup* MapPlain(const char* f, FbldMarkup* m);
@@ -262,31 +262,43 @@ static Cmd* PushEval(Cmd* next, Env* env, FbldMarkup* markup, FbldMarkup** dest)
 /**
  * @func[HeadOf] Returns first character of markup.
  *  @arg[FbldMarkup*][m] The markup to get the first character of.
- *  @returns[int] The first character if any, 0 if end, -1 if command.
- *  @sideeffects None.
+ *  @arg[char*][out] Where to output the result character to.
+ *  @returns[bool] True on success, false in case of error.
+ *  @sideeffects
+ *   @i Sets @a[out] to the first character of @a[m], or 0 if @a[m] is empty.
+ *   @i Prints a message to stderr in case of error.
  */
-static int HeadOf(FbldMarkup* m)
+static bool HeadOf(FbldMarkup* m, char* out)
 {
+  if (m == NULL) {
+    // There must have already been some error message reported. Bail out.
+    return false;
+  }
+
   switch (m->tag) {
     case FBLD_MARKUP_PLAIN: {
-      return m->text->str[0];
+      *out = m->text->str[0];
+      return true;
     }
 
     case FBLD_MARKUP_COMMAND: {
-      return -1;
+      FbldReportError("unevaluated command %s\n", m->text->loc, m->text->str);
+      return false;
     }
 
     case FBLD_MARKUP_SEQUENCE: {
-      int c = 0;
-      for (size_t i = 0; c == 0 && i < m->markups.size; ++i) {
-        c = HeadOf(m->markups.xs[i]);
+      *out = '\0';
+      for (size_t i = 0; *out == '\0' && i < m->markups.size; ++i) {
+        if (!HeadOf(m->markups.xs[i], out)) {
+          return false;
+        }
       }
-      return c;
+      return true;
     }
   }
 
   assert(false && "unrechable");
-  return -1;
+  return false;
 }
 
 /**
@@ -383,17 +395,15 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq)
   b = FbldCopyMarkup(b);
 
   while (true) {
-    int ha = HeadOf(a);
-    if (ha == -1) {
-      FbldReportError("unevaluated command %s\n", a->text->loc, a->text->str);
+    char ha;
+    if (!HeadOf(a, &ha)) {
       FbldFreeMarkup(a);
       FbldFreeMarkup(b);
       return false;
     }
 
-    int hb = HeadOf(b);
-    if (hb == -1) {
-      FbldReportError("unevaluated command %s\n", b->text->loc, b->text->str);
+    char hb;
+    if (!HeadOf(b, &hb)) {
       FbldFreeMarkup(a);
       FbldFreeMarkup(b);
       return false;
@@ -406,8 +416,8 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq)
       return true;
     }
 
-    if (ha == 0) {
-      assert(hb == 0);
+    if (ha == '\0') {
+      assert(hb == '\0');
       *eq = true;
       FbldFreeMarkup(a);
       FbldFreeMarkup(b);
@@ -990,6 +1000,9 @@ static bool Eval(Cmd* cmd)
           } else {
             cmd = PushEval(c->_base.next, c->env, c->if_ne, c->_base.dest);
           }
+        } else {
+          error = true;
+          cmd = c->_base.next;
         }
 
         FbldFreeMarkup(c->a);
@@ -1025,19 +1038,18 @@ static bool Eval(Cmd* cmd)
       case HEAD_CMD: {
         HeadCmd* c = (HeadCmd*)cmd;
 
-        int ch = HeadOf(c->a);
-        if (ch == 0) {
-          *(c->_base.dest) = c->a;
-          cmd = c->_base.next;
+        char ch = '\0';
+        if (!HeadOf(c->a, &ch)) {
+          error = true;
+          cmd = cmd->next;
+          FbldFreeMarkup(c->a);
           FbldFree(c);
           break;
         }
 
-        if (ch == -1) {
-          FbldReportError("argument to @head not evaluated", FbldMarkupLoc(c->a));
-          error = true;
-          cmd = cmd->next;
-          FbldFreeMarkup(c->a);
+        if (ch == '\0') {
+          *(c->_base.dest) = c->a;
+          cmd = c->_base.next;
           FbldFree(c);
           break;
         }
