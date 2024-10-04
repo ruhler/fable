@@ -1,7 +1,16 @@
-@test error 5:10 @@
+@test error 9:15 @@
 
 Test that we can unwind an error without crashing through various places.
 
-@define[@error[oops]][a b][a: @a, b: @b][hello]
+@eval
+ @plain
+  @let
+   @define[foo]
+   @ @define[@error[oops]][a b][a: @a, b: @b][hello]
+   @ x is @x
+   @ okay
+  @ abc
+  @ xyz
+ @ 123
 
 End of tests.

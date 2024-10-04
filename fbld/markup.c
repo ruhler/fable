@@ -87,6 +87,10 @@ void FbldFreeMarkup(FbldMarkup* markup)
 // See documentation in fbld.h
 FbldMarkup* FbldCopyMarkup(FbldMarkup* markup)
 {
+  if (markup == NULL) {
+    return NULL;
+  }
+
   markup->refcount++;
   return markup;
 }
@@ -124,6 +128,10 @@ FbldLoc FbldMarkupLoc(FbldMarkup* markup)
  */
 static bool TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
 {
+  if (markup == NULL) {
+    return false;
+  }
+
   switch (markup->tag) {
     case FBLD_MARKUP_PLAIN: {
       if (*text == NULL) {

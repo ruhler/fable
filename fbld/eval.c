@@ -517,9 +517,9 @@ static bool Eval(Cmd* cmd)
           // We must have hit an error earlier. Bail out here.
           assert(error && "prior error not recorded properly?");
 
-          EvalCmd* e = (EvalCmd*)cmd;
           cmd = cmd->next;
-          FreeEnv(e->env);
+          FreeEnv(c->env);
+          FbldFree(c);
           break;
         }
 
@@ -909,7 +909,7 @@ static bool Eval(Cmd* cmd)
         if (args == NULL) {
           error = true;
           cmd = cmd->next;
-          FbldFreeMarkup(c->name);
+          FbldFree(name);
           FbldFreeMarkup(c->args);
           FbldFreeMarkup(c->def);
           FbldFreeMarkup(c->body);
