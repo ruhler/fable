@@ -1,0 +1,7 @@
+@test error 5:10 @@
+
+Test that we can unwind an error without crashing through various places.
+
+@define[@error[oops]][a b][a: @a, b: @b][hello]
+
+End of tests.

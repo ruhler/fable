@@ -1,0 +1,7 @@
+@test error 5:2 @@
+
+The eval function is called with too few arguments.
+
+@eval
+
+End of tests.

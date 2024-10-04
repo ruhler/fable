@@ -1,0 +1,7 @@
+@test error 5:2 @@
+
+The define function is called with too few arguments.
+
+@define[foo][a b][hello]
+
+End of tests.

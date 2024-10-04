@@ -1,0 +1,8 @@
+@test error 6:2 @@
+
+The function foo is called with too many arguments.
+
+@define[foo][a b] a: @a, b: @b @@
+@foo[hello][there][now]
+
+End of tests.

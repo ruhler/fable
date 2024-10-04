@@ -174,6 +174,10 @@ static bool TextOfMarkup(FbldMarkup* markup, FbldText** text, size_t* capacity)
 // See documentation in fbld.h
 FbldText* FbldTextOfMarkup(FbldMarkup* markup)
 {
+  if (markup == NULL) {
+    return NULL;
+  }
+
   FbldText* text = NULL;
   size_t capacity = 0;
   if (!TextOfMarkup(markup, &text, &capacity)) {

@@ -1,0 +1,7 @@
+@test error 5:2 @@
+
+The tail function is called with too few arguments.
+
+@tail
+
+End of tests.

@@ -1,0 +1,7 @@
+@test error 5:2 @@
+
+The ifneq function is called with too few arguments.
+
+@ifneq[a][b][c]
+
+End of tests.

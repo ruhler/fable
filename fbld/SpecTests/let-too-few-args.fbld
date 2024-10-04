@@ -1,0 +1,7 @@
+@test error 5:2 @@
+
+The let function is called with too few arguments.
+
+@let[foo][hello]
+
+End of tests.

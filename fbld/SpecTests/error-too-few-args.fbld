@@ -1,0 +1,7 @@
+@test error 5:2 @@
+
+The error function is called with too few arguments.
+
+@error
+
+End of test.
