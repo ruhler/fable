@@ -3,10 +3,6 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Fbld C rewrite
- - Add tests for code coverage.
-
- - Assume markup could be NULL at any time during evaluation and handle it
-   gracefully.
  - Separate out loc.h, text.h, markup.h, etc?
  - Change FbldMarkup type to more explicitly distinguish between the different
    kinds of markups.

@@ -426,6 +426,8 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq)
 
     FbldMarkup* na = NULL;
     if (!TailOf(a, &na)) {
+      // Note: I suspect this code is unreachable, because any errors in
+      // TailOf we would have encountered in HeadOf earlier.
       FbldFreeMarkup(a);
       FbldFreeMarkup(b);
       return false;
@@ -434,6 +436,8 @@ static bool Eq(FbldMarkup* a, FbldMarkup* b, bool* eq)
 
     FbldMarkup* nb = NULL;
     if (!TailOf(b, &nb)) {
+      // Note: I suspect this code is unreachable, because any errors in
+      // TailOf we would have encountered in HeadOf earlier.
       FbldFreeMarkup(a);
       FbldFreeMarkup(b);
       FbldFreeMarkup(nb);

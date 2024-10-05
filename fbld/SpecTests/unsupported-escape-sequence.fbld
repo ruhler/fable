@@ -1,0 +1,6 @@
+@test error 3:50 @@
+
+The following escape sequence is not supported: \y.
+
+End of test.
+

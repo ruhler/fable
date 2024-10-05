@@ -1,0 +1,8 @@
+@test error 5:14 @@
+
+Unwind a parser error through various different syntactic constructs.
+
+@@let[x][y][\z] okay.
+
+End of test.
+

@@ -131,6 +131,8 @@ static char NextFetched(Lex* lex, size_t* i)
   size_t col = lex->loc.column;
   for (size_t j = 0; j < *i; ++j) {
     if (lex->next[j] == '\n') {
+      // Note: I think this is unreachable because we have no calls to the Is
+      // function with newline not at the end of the string.
       col = 1;
     } else {
       col++;

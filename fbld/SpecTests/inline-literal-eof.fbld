@@ -1,0 +1,6 @@
+@test error 7:1 @@
+
+End of file is encountered in the middle of an inline literal argument:
+
+@head{hello
+

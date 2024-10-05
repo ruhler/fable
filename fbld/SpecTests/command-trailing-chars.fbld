@@ -1,0 +1,8 @@
+@test error 5:14 @@
+
+A command shouldn't end with trailing characters like this.
+
+@let[x][y][z]blahblah.
+
+End of test.
+
