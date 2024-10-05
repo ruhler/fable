@@ -1,0 +1,12 @@
+@test error 10:14   
+@ ignored.
+
+Note: the goal is to have an unevaluated command outside of the test body,
+because the test body is otherwise ignored. We use a hack based on the
+implementation of spec-test.run.tcl that replaces the normal final arg marker
+with spaces to trick it into parsing the correct test metadata without
+starting a final argument.
+
+The command @x is never fully evaluated.
+
+End of test.
