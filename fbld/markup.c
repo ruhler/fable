@@ -60,6 +60,16 @@ FbldText* FbldNewText(FbldLoc loc, const char* str)
   strcpy(text->str, str);
   return text;
 }
+// See documentation in fbld.h
+FbldMarkup* FbldNewPlainMarkup(FbldLoc loc, const char* text)
+{
+  FbldMarkup* markup = FbldAlloc(FbldMarkup);
+  markup->tag = FBLD_MARKUP_PLAIN;
+  markup->text = FbldNewText(loc, text);
+  markup->refcount = 1;
+  FbldInitVector(markup->markups);
+  return markup;
+}
 
 // See documentation in fbld.h
 void FbldFreeMarkup(FbldMarkup* markup)

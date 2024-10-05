@@ -118,6 +118,17 @@ struct FbldMarkup {
 };
 
 /**
+ * @func[FbldNewPlainMarkup] Allocates plain markup.
+ *  @arg[FbldLoc][loc] The location of the markup.
+ *  @arg[const char*][text] The text of the markup. Borrowed.
+ *  @returns[FbldMarkup*] The newly allocated markup.
+ *  @sideeffects
+ *   Allocates markup that should be freed with FbldFreeMarkup when no longer
+ *   needed.
+ */
+FbldMarkup* FbldNewPlainMarkup(FbldLoc loc, const char* text);
+
+/**
  * @func[FbldFreeMarkup] Frees resources associated with the given markup.
  *  @arg[FbldMarkup*][markup] The markup to free resources for. May be NULL.
  *

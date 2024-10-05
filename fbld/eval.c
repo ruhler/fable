@@ -328,12 +328,7 @@ static bool TailOf(FbldMarkup* m, FbldMarkup** out)
       }
 
       // TODO: Fix location - advance by the first character.
-      FbldMarkup* n = FbldAlloc(FbldMarkup);
-      n->tag = FBLD_MARKUP_PLAIN;
-      n->refcount = 1;
-      n->text = FbldNewText(m->text->loc, m->text->str + 1);
-      FbldInitVector(n->markups);
-      *out = n;
+      *out = FbldNewPlainMarkup(m->text->loc, m->text->str + 1);
       return true;
     }
 
@@ -1059,12 +1054,7 @@ static bool Eval(Cmd* cmd)
         }
 
         char plain[] = {(char)ch, '\0'};
-        FbldMarkup* result = FbldAlloc(FbldMarkup);
-        result->tag = FBLD_MARKUP_PLAIN;
-        result->text = FbldNewText(FbldMarkupLoc(c->a), plain);
-        result->refcount = 1;
-        FbldInitVector(result->markups);
-        *(c->_base.dest) = result;
+        *(c->_base.dest) = FbldNewPlainMarkup(FbldMarkupLoc(c->a), plain);
         FbldFreeMarkup(c->a);
         cmd = c->_base.next;
         FbldFree(c);

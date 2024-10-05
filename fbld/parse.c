@@ -334,12 +334,8 @@ static bool ParseInlineArgs(Lex* lex, FbldMarkupV* args)
       }
       Advance(lex);
       FbldAppendToVector(chars, '\0');
-      FbldMarkup* arg = FbldAlloc(FbldMarkup);
-      arg->tag = FBLD_MARKUP_PLAIN;
-      arg->text = FbldNewText(loc, chars.xs);
-      arg->refcount = 1;
+      FbldMarkup* arg = FbldNewPlainMarkup(loc, chars.xs);
       FbldFree(chars.xs);
-      FbldInitVector(arg->markups);
       FbldAppendToVector(*args, arg);
       continue;
     }
@@ -438,16 +434,9 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
 
       if (chars.size != 0) {
         FbldAppendToVector(chars, '\0');
-
-        FbldText* text = FbldNewText(loc, chars.xs);
-        chars.size = 0;
-
-        FbldMarkup* plain = FbldAlloc(FbldMarkup);
-        plain->tag = FBLD_MARKUP_PLAIN;
-        plain->text = text;
-        plain->refcount = 1;
-        FbldInitVector(plain->markups);
+        FbldMarkup* plain = FbldNewPlainMarkup(loc, chars.xs);
         FbldAppendToVector(markup->markups, plain);
+        chars.size = 0;
       }
 
       FbldMarkup* command = ParseInlineCommand(lex);
@@ -486,13 +475,7 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
 
   if (chars.size != 0) {
     FbldAppendToVector(chars, '\0');
-    FbldText* text = FbldNewText(loc, chars.xs);
-
-    FbldMarkup* plain = FbldAlloc(FbldMarkup);
-    plain->tag = FBLD_MARKUP_PLAIN;
-    plain->text = text;
-    plain->refcount = 1;
-    FbldInitVector(plain->markups);
+    FbldMarkup* plain = FbldNewPlainMarkup(loc, chars.xs);
     FbldAppendToVector(markup->markups, plain);
   }
   FbldFree(chars.xs);
@@ -578,12 +561,8 @@ static FbldMarkup* ParseBlockCommand(Lex* lex)
       }
 
       FbldAppendToVector(chars, '\0');
-      FbldMarkup* arg = FbldAlloc(FbldMarkup);
-      arg->tag = FBLD_MARKUP_PLAIN;
-      arg->text = FbldNewText(loc, chars.xs);
-      arg->refcount = 1;
+      FbldMarkup* arg = FbldNewPlainMarkup(loc, chars.xs);
       FbldFree(chars.xs);
-      FbldInitVector(arg->markups);
       FbldAppendToVector(markup->markups, arg);
     } else if (Is(lex, "\n")) {
       Advance(lex);
