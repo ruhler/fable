@@ -123,3 +123,141 @@ Thoughts on what to do next:
 * Make a simple micro-benchmark that counts to a given number.
   - Implement in fble and transliterate that into C.
   - Dive deep to understand potential performance opportunities there.
+
+---
+
+Performance focus: write a program that increments an Int@ value until it
+reaches a given value. Try to optimize that compared to an equivalent
+implementation in C. That will have structs, unions, function calls,
+recursion. All the good stuff, but in a simple enough program we can fully
+understand it.
+
+Review of currently generated code for ideas of potential performance
+improvements:
+* Args are always passed on the stack, not by register.
+* Profiling logic is always emitted.
+* Function calls instead of inlining of, e.g. FbleUnionValueTag,
+  FbleUnionValueField
+* Stack instead of registers for local values.
+  - Or can compiler turn locals array into registers?
+* Error checking, null checking sprinkled throughout the code.
+* Indirect function calls via FbleTailCall, FbleCall
+* Indirect allocations via FbleNewUnionValue, etc.
+
+Even just that review seems like enough to suggest things to try:
+* Experimentally remove profiling and error checking code. See how much of a
+  difference it makes, optimize the rest with that out?
+* Try using registers more for things currently on the stack.
+* Packing of values + inlining of allocations and field accesses.
+* Direct calls of known functions.
+
+Honestly I doubt using registers instead of stack for arguments and locals
+will make much difference to start. Better to hold off on that.
+
+Certainly we can try disabling error and profiling. But that's just an
+experiment, because I can't imagine shipping that way. Eventually yes, but not
+at this stage of development. Unless we can do some hacks with signals to let
+us get the same functionality without incurring the overhead. Probably we
+could for the error case, but for profiling that sounds hard. There's too much
+information embedded in the code about where we are from a profiling point of
+view.
+
+That suggests starting with either better packing of allocations, and whether
+that means we can start to inline calls there. And direct call of known
+functions.
+
+Better packing of allocations is difficult because of polymorphic functions.
+It means we'll have to pass the type around at runtime. I worry that makes
+things too slow from passing around types everywhere. On the other hand, we'll
+be able to pass static values in some cases and pack bigger values, which
+means less allocation and GC work.
+
+Direct function call will need a little bit of abstract interpretation from
+the compiler. The tricky part here is dealing with possible partial and over
+application of arguments.
+
+---
+
+For profiling and error handling, I don't see that there is much we can do. If
+it doesn't make a big performance difference, leave it in. If it does, we can
+have a switch to enable or disable it at compile time. We could maybe get
+single line error messages enabled without code cost, but I don't see how we
+could unwind the stack cleanly like we do today without sprinkling code
+everywhere to handle it.
+
+I may want to rethink profiling entirely, but that won't change the need to
+track something at runtime.
+
+It doesn't make sense to worry about passing args as registers versus locals
+as long as we are going through ThreadCall functions. So save that for later.
+
+Changing the data type packing is more fundamental than doing direct function
+calls. Probably we should deal with that first so we know how to deal with
+type arguments when doing direct function calls.
+
+All of which suggests the following:
+1. Measure performance with and without error, profiling to see where we are
+at. We can do this on fbld benchmark. No need to make any changes at this
+time, or add a switch to explicitly disable it. Maybe --no-debug could be the
+switch name.
+
+2. Finally get back to binary packing of datatypes.
+
+Paging back in how packing of datatypes would work:
+* When we construct or access a struct or union, we pass an additional
+  argument describing the type.
+* Pass that through to PackedValueLength, which we still need to use.
+* Struct: we pack fields next to each other, no num-args marker.
+* Union: Binary encoding of tag instead of unary.
+
+The data type descriptor will be a vector of data type descriptors, one for
+each field, and a boolean saying whether it is for struct or union. I hope
+most of the descriptors can be shared static global data. For polymorphic
+functions we'll have to allocate some descriptors on the fly. We could
+allocate space for the descriptor on the stack and fill in the holes from
+arguments passed in.
+
+DOn't worry about polymorphic code to start. Phase one is to implement with
+non-polymorphic code and see how it goes. Phase two will be to get it working
+for polymorphic code.
+
+---
+
+What's the goal of better packing of datatypes? My fear is if we have a
+separate descriptor that we have to read to also read the data types, then we
+introduce memory reads into packing and unpacking of data types, which
+defeates the whole purpose. It's hard to believe that will improve performance
+at all, especially combine with the need to call polys where we didn't have to
+previously.
+
+Possible things to try to optimize:
+* Have more values packed to reduce GC cost. Wants density.
+* Be able to efficiently inline value access methods in the case where the
+  data type is known.
+* More efficient packing/unpacking of bits, without additional memory access.
+* Get the density of data we expect: direct concat of struct args and binary
+  encoding of tags for unions.
+
+I claim that I know the number of fields and possible tags when I access a
+struct or union value. I just don't know how much space each individual field
+takes up. Could we pack things differently to take advantage of that?
+
+---
+
+It feels like it would be awesome to pack data without struct sizes, just
+binary packing of tags. To do that, we have to keep the structure of values
+separately. But the good thing is we should know the structure of values
+statically.
+
+The idea is clear: pass a type descriptor for all struct and union access. We
+can allocate type descriptors statically and on the stack for polymorphic
+function calls.
+
+It's not clear to me how this will impact performance. Benefits are much
+better packing of values (feels good) and reduced calls to GC. Costs are
+turning polys into functions, requiring memory reads of the type
+descriptors for accessing packed data values, and the development effort
+and code complexity involved in implementating all that.
+
+I probably ought to try it and see how it goes.
+

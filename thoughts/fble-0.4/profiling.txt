@@ -1,0 +1,224 @@
+Fble Profiling
+==============
+Revisiting fble profiling, based on the following:
+* Can we eliminate the overhead of profiling when it is disabled?
+* We could implement 'call' counts as another form of profiling time, rather
+  than treat it separately. Every function call counts as 1. To find call to a
+  particular function, look at its self time.
+* Challenges with over-abstraction currently: Lots of calls of a->b->c and
+  d->b->e will make it look like a calls e a lot, when in reality it never
+  does.
+* Recently added -s option to fble-perf-profile.
+
+For example, imagine I change the implementation of profiling to collect the
+set of samples, e.g. {(a->b->c, 1000), (d->b->e), 200), ...}. We could do
+everything in post processing.
+
+The set will be large. We can save memory by representing it as a tree
+perhaps, assuming most samples share common prefixes. But we still have the
+challenges of recursion and tail calls that can make it get too large.
+
+Is there some clever way I can encode things to bound the size of the profile
+data based on the size of the code rather than the duration of execution?
+
+Let's start by thinking about recursion.
+
+  a -> b -> b -> b -> c
+
+Potentially b could be an unbounded length. Say 1000 calls. And say we do a
+sample for every call. That leaves 1000 different sequences to store. Sadness.
+But is it useful? Can we use some sort of abstraction to save space without
+losing anything interesting?
+
+The current implementation uses the idea that... well, there are two parts.
+One is time spent calling a function, and one is time spent calling into a
+function from another function. As soon as we call function 'b', no need to
+add more calls to b on the stack, because it won't make a difference to the
+final numbers we care about. As soon as we add a call a->b, no need to add
+more calls a->b to the stack, because it won't make a difference to the final
+numbers we care about. But now I say we care about more things than we did
+before. Is there a happy medium?
+
+In the example above, I'm fine to merge b->b into b. It doesn't add any more
+info. For example, assuming we are counting calls for simplicity:
+
+ a: 1
+ a->b: 1
+ a->b->b: 1
+ a->b->b->b: 1
+ a->b->b->b->c: 1
+
+May as well be saved as:
+ a: 1
+ a->b: 3
+ a->b->c: 1
+
+We see that a is called once, b is called 3 times, c is called once. I guess
+what we are missing here is that b is called three times, twice by b and once
+by a. So really we need:
+
+ a: 1
+ a->b: 1
+ a->b->b: 2
+ a->b->b->c: 1
+
+Where, in this case, b->b stands for a recursive cycle?
+
+How about any time we see a recursive cycle, create a new name for the cycle
+and use that.
+
+a->b->b: here we see a cycle: b->b. We want to keep track of entrance into the
+cycle separately from cycling into it. Let's say B = b->b:
+
+a->b->B->c ?
+
+Not sure.
+
+---
+
+Proposal for new profiling format and viewer.
+
+We describe a profile as a tree of nodes. Each node is labeled with the
+profiling block it corresponds to and a sample count.
+
+We can convert the tree of nodes to a set of samples sequences. There is one
+sequence per node, and that sequence occurs the number of times of the sample
+count of the node.
+
+For example, you might have something like:
+
+ -> a 1 -> b 1 -> b 2 -> c 1
+
+This corresponds to the set of samples:
+
+ -> a 1
+ -> a -> b 1
+ -> a -> b -> b 2
+ -> a -> b -> b -> c 1
+
+To bound the size of the tree, we impose a restriction that X -> Y for some
+particular X and Y does not appear more than once on any given sample path.
+For example, the following sequence is disallowed:
+
+   -> a -> b -> a -> b -> c
+
+Instead we abstract it as:
+
+   -> a -> b -> a
+            \-> c
+
+This abstraction is a loss of information for the purposes of keeping the
+profiling data more compact. In theory we could pick any length sequence
+X -> Y -> Z -> ... to use as the restriction. I think a 2 element sequence is
+most useful in practice.
+
+For example,
+
+ a 1 -> b 1 -> b 1 -> b 1 -> c 1
+
+If we used a single element sequence for the restrction, this would be:
+
+ a 1 -> b 3 -> c 1
+
+That suggests a calls b 3 times, and b never calls b. With a two element
+restriction, we have:
+
+ a 1 -> b 1 -> b 2 -> c 1
+
+Which makes it clear a calls b one time, and b calls itself twice.
+
+A three element restriction doesn't appear to give us any more useful
+information:
+
+ a 1 -> b 1 -> b 1 -> b 1 -> c 1
+
+Though I imagine there is some sequence you could come up with where you lose
+useful information with a 2 element restriction instead of a 3 element
+restriction.
+
+We put the restriction on each path of the tree rather than the tree as a
+whole to avoid confusing sequences from different paths. For example:
+
+  -> a -> b -> c
+  -> e -> b -> c -> d
+
+We don't want this to be abstracted as:
+
+  -> a -> b -> c -> d
+  -> e -> b ->/
+
+Because that suggests there is some path from a to d when there is not.
+
+The bounds on tree size aren't great. It's something like O(N^N), but I bet in
+practice it will be much better than that because the majority of callsites
+have a constant number of callees.
+
+Okay, so the profile format is clear. Here's how we track it at runtime:
+
+The profiling thread has two data structure:
+* The current real callstack. Each entry is a pair of profile id and pointer
+  into the profile tree of the location corresponding to this stack entry.
+* The current profile tree.
+
+We keep a current pointer into the current profile tree. Call it P.
+
+Push X:
+  Push X onto the stack.
+  If P -> X exists on the path from the root to P, go to that X. Otherwise add
+  '-> X' at the current place in the tree and go to X.
+
+Pop:
+  Pop from the real stack. Update P to point to whatever is now on the top of
+  the real stack.
+
+Replace X:
+  Pop from the real stack. Then push like you normally would.
+
+Sample:
+  Increment current sample value of P.
+
+The only tricky part is detecting if P -> X exists on the path from the root
+to P. But we already have something like that. We don't switch paths randomly,
+we always pop everything off one path before going to the next, so we should
+be fine there.
+
+The last part is how to present the information. I vote for a web server so
+you can use browser as a UI. The variety of information  we may want to
+present is to big to have a single static text file.
+
+Each page has the following options:
+* List of 'selected' profile blocks. Removes from the profile tree any paths
+  that do not contain all of the selected profile blocks.
+* List of 'excluded' profile blocks. Removes from the profile tree any paths
+  that contain any of the excluded profile blocks.
+* List of 'folded' profile blocks. Replaces any sequences of the form
+  a -> X -> y for folded block X with a -> y (details need ironing out).
+
+Those options all act as modifiers on the profiling data.
+
+To view profiling data, we have the following pages:
+* Self times: For each profiling block, reports the self time of the block.
+  That is, the sum of sample values of nodes with that block id.
+* Dominated times: For each profiling block, the sum of sample values for
+  every path that contains that profile block.
+* Specific profile block X: 
+   Going in: For each other block Y, counts number of samples with Y -> X.
+   That's how much time you get back if you remove Y -> X.
+   Going out: For each other block Y, counts number of samples with X -> Y.
+   That's how much time you get back if you remove X -> Y.
+
+For any profile block X mentioned on any page, make it easy to:
+* Jump to the specific profile block X
+* Add/remove X to/from 'selected', 'excluded' and 'folded' block options.
+
+Make it easy to jump to self time pages and dominated time pages.
+
+Have a list of currently selected, excluded, folded blocks to make it obvious
+what they are looking at and be able to remove those blocks from those lists.
+
+That's it!
+
+Oh, and consider having different kinds of profiles: call count, time, allocs.
+Whatever counter you want. Those will require different implementations at
+runtime. It might be easiest if a profile tracked only one thing at a time.
+Produce separate profiles for separate metrics? Not sure.
