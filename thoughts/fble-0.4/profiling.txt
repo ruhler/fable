@@ -222,3 +222,200 @@ Oh, and consider having different kinds of profiles: call count, time, allocs.
 Whatever counter you want. Those will require different implementations at
 runtime. It might be easiest if a profile tracked only one thing at a time.
 Produce separate profiles for separate metrics? Not sure.
+
+---
+
+Development plan:
+1. Settle on a file format for recording the profile.
+2. Generate a properly formatted perf based profile.
+3. Write a viewer. See if it's more useful or not. Iterate as needed.
+4. Update the profiling implementation in fble to generate a profile.
+
+For (1), ideally use an existing standard format. If not, I guess make my own.
+Some key questions:
+* Should it support multiple metrics or just one?
+* How to store profiling block info: file, line number, etc.
+
+Before I go down that path, I want to review some of the challenges I have
+with the existing profiles and see if we have a path to solve them here.
+
+1. Dispatch function overabstraction.
+
+-> a -> Call -> b
+-> c -> Call -> d
+
+In the profile ends up with:
+
+  a,c -> Call -> b,d
+
+Makes it look like a calls d or c call b, when that's not true.
+
+Example:
+
+      59194   451688           /Fbld/Eval%.Eval!.sequence[084eX]   
+         90   451988           /Fbld/Builtin/Define%.Define!!![090fX]   
+       7166   451990           /Fbld/Builtin/Define%.Let!!![0921X]   
+          1   453490           /Fbld/Main%.Main!!!.:.result[09d6X]   
+**  5687121   453490    11226  /Fbld/Result%.Do![0497X] **
+
+**  5687121   453490    16573  /Fbld/Result%.Do!.:.rb[049aX] **
+          1   453490           /Fbld/Main%.Main!!!.:.result![09d7X]   
+       7166   451990           /Fbld/Builtin/Define%.Let!![0920X]   
+         45   451988           /Fbld/Builtin/Define%.Define!!![090fX]   
+      59194   451688           /Fbld/Eval%.Eval!.sequence![084fX]   
+
+I have two potential solutions here with my new format:
+1. fold 'Do', and all the in between helpers.
+2. If we start looking at Eval!.sequence!, then go to Do!., then add a filter
+Do!. -> Eval!.sequence!, then you should see only the inputs Eval!.sequence
+into Do! when you look at it.
+
+This is slightly different from before, where we said we would limit all
+traces to, say, onces containing Eval!.sequence!. Now I'm saying as I explore
+up (or down?) from a node, add the path being followed as a filter.
+
+2. Continuation/Dispatch functions showing up high in list.
+For example:
+
+**     7166   451990       28  /Fbld/Builtin/Define%.Let![091fX] **
+
+So much time is spent in Let! because after we call Let!, the next thing it
+does is evaluate its body, and everything is in the body. Let! has no
+influence at all over what is executed in the body, so it's not useful to
+associate the body time with the function Let!.
+
+I almost want to set: only charge Let! for code under its control, not the
+'Eval(env, Get(cmd.args, 1))' part. Just because so much of the rest of the program is
+stuffed into body Eval part.
+
+I'm not convinced we can figure out in general when we care about the
+subroutine call and when not. For example, List.Length, the cost of the tail
+entirely depends on the structure of the list argument. Clearly we want to
+count that towards the cost of List.Length. But how is Let evaluation any
+different? Depending on the structure of its argument, it has a different
+tail.
+
+Maybe the challenge here is the annoying structure of the fbld evaluation code
+where Eval calls into everything and everything calls into Eval. It's a big
+recursive knot that is difficult to untangle.
+
+Any solutions for this? I wonder if we could group the recursive cycle into a
+knot and then subdivide it into its child parts?
+
+3. Recursive functions.
+
+        226      148           /Fbld/Builtin/Define%.PreLookup!.command.:.:.impl.:[0902X]   
+    3125991   101562           /Fbld/Env%.Lookup!.:.:[0469X]   
+     981307   134898           /Fbld/Eval%.Eval!.command.impl.:[084bX]   
+**  4107524   135046     4028  /Fbld/Env%.Lookup![0465X] **
+    4107414   134081           /Fbld/Env%.Lookup!.:[0467X]   
+        110        0           /Fbld/Env%.Lookup!.nil[0466X]   
+
+Lookup calls into itself. Looking at entries like this don't feel terribly
+useful. Self time is 4028. So where is all that 134081 going to? I guess in
+this case we can follow it down and see it's the call to /Core/List/Eq%.Eq!,
+which is outside of the recursive loop. Once again, it feels like we want to
+separate 'recursive loop' from 'children of recursive loop'. Maybe that's okay
+for now, it's just a bit tedious to traverse the graph and manually separate
+out which parts are in the recursive loop and which parts are not.
+
+4. Excessive traversal.
+
+**        3   526454        0  <root>[0000X] **
+          1   526384           /Core/Monad/State%.Monad![0976X]   
+          1       70           <main>[0001X]   
+          1        0           /Core/Stdio/IO%.Run![09a2X]   
+
+**   282549   526384      615  /Core/Monad/State%.Monad![0976X] **
+      65573   526384           /Core/Monad/State%.Monad![0976X]   
+          1   505499           /Fbld/Main%.Main!!![09d2X]   
+     216976    22757           /Core/Monad/State%.Monad!.ra[0977X]   
+
+**        1   505499        0  /Fbld/Main%.Main!!![09d2X] **
+          1   505499           /Fbld/Main%.Main!!!.:[09d5X]   
+
+**        1   505499        0  /Fbld/Main%.Main!!!.:[09d5X] **
+          1   503627           /Fbld/Main%.Main!!!.:.result[09d6X]   
+
+**        1   503627        0  /Fbld/Main%.Main!!!.:.result[09d6X] **
+          1   453490           /Fbld/Result%.Do![0497X]   
+          1    50137           /Fbld/Parse%.Parse![080fX]   
+
+As I traverse down, it's commonly the case that the majority of time is spent
+in a particular child call. Maybe it would be nice to merge those all
+together. For example, in this case, something like merging
+/Fbld/Main%.Main!!! and /Fbld/Main%.Main!!!. into a single frame, so we don't
+have to click through stuff we don't care about.
+
+I think we could get pretty close if we pick something like 95% time, and
+accumulate that as we go down. We could let the user pick the percentage to
+join on.
+
+Sounds like overall there's plenty to explore in the UI for viewing profiles.
+Good news is I think the new profile format preserves all the information we
+need for playing around with these things, unlike the current profiling
+format.
+
+---
+
+On to profiling format. 
+
+What I want:
+* Describe a tree whose values are block id, sample count(s).
+* Include for each block id, name, file, line number, column number.
+
+Worst case, we could have a list of sample sequences instead of a tree. Just
+seems like the tree is the more efficient way to store the data.
+
+Survey of existing formats:
+Linux Perf:
+  tools/perf/Documentation/perf.data-file-format.txt
+  It's very specific to the linux kernel. We could probably use it, but feels
+  rather out of the way.
+
+gperftools:
+  https://gperftools.github.io/gperftools/cpuprofile-fileformat.html
+  Basically a list of (sample count, list of PCs)
+  Followed by a text map, which maps PCs to build number and filename. Looks
+  like addrtoline can then be used separately to extract line number info.
+
+Python Fil profiler:
+ 
+Python cProfile:
+  Has not compatibility or stability guarantees. So don't use this.
+
+google/pprof:
+  profile.proto format
+  Uses proto3 syntax.
+  Supports multiple custom metrics.
+  Looks like it supports exactly the information we want:
+  - multiple metrics per sample.
+  - sample as a list of location ids.
+  - separate section for giving info about location ids, including file and
+    line and column number.
+  Already has support for converting linux perf to pprof format.
+  
+I'm tempted to use google/pprof format, except that it's a bit complicated in
+depending on things like proto3 and gzip. So it could be harder to write a
+standalone tool for it.
+
+Maybe I can use textproto format instead of binary? Or some other format pprof
+supports?
+
+Looks like proto3 has a way to convert between proto3 and json file format?
+
+It looks like the proto3 wire format is fairly straight forward though. So
+perhaps fine for me to write to it directly. There's just a lot of layers
+involved: binary -> protoscope -> proto3 -> pprof.
+
+I vote we eventually support pprof format, but to start, if we want, I can
+define my own simpler format. We can provide a library in my format to
+save/load as whatever syntax I want to start, and pprof eventually in the end.
+In other words: for now write a library for my profiling format. Worry about
+the file format later. But let's keep pprof format it mind for question's
+about things like multiple metrics.
+
+Cool. Next step is to draft the data structure / library for representing my
+profiles in C. I can add code to load from linux perf directly to start rather
+than have a separate file syntax to go through.
+

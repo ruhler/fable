@@ -1,0 +1,39 @@
+HTTP Profile Viewer
+===================
+Goal is to write an http based profile viewer.
+
+Here I'm specifically interested in the http server aspects of writing it.
+What minimal http support can I provide myself? What library dependencies must
+we have?
+
+Here's an example HTTP request:
+
+  GET /hello.html?foo=bar HTTP/1.1
+  Host: localhost:8000
+  User-Agent: Elinks
+  Accept: */*
+  Accept-Language: en
+  Connection: Keep-Alive
+
+Here's an example HTTP response (from wget -S ...).
+
+  HTTP/1.1 200 OK
+  Content-Type: text/html
+  Accept-Ranges: bytes
+  ETag: "1512195059"
+  Last-Modified: Sat, 08 Jan 2022 20:18:45 GMT
+  Content-Length: 1062
+  Date: Tue, 22 Oct 2024 14:11:07 GMT
+  Server: lighttpd/1.4.53
+
+Steps to make this work:
+
+1. Write code for main loop to start a server and accept a connection.
+For this part, just print the request.
+
+2. Parse the GET request and headers.
+
+3. Generate some sample responses that I can try with elinks.
+
+The most annoying part, I think, is having to output content length. It means
+I can't stream the output? I need two passes?
