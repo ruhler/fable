@@ -9,6 +9,22 @@
 #include <string.h>
 #include <unistd.h>
 
+static void handle_connection(int fd)
+{
+  char buf[1025];
+  ssize_t len = 0;
+  do {
+    for (size_t i = 0; i < len; ++i) {
+      printf("%c", toupper(buf[i]));
+    }
+    len = read(fd, buf, 1024);
+    if (len < 0) {
+      perror("read");
+      return;
+    }
+  } while (len > 0);
+}
+
 int main(int argc, char *argv[])
 {
 	int sfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -39,19 +55,7 @@ int main(int argc, char *argv[])
       perror("accept");
       return 1;
     }
-
-    char buf[1025];
-    ssize_t len = 0;
-    do {
-      for (size_t i = 0; i < len; ++i) {
-        printf("%c", toupper(buf[i]));
-      }
-      len = read(cfd, buf, 1024);
-      if (len < 0) {
-        perror("read");
-        return 1;
-      }
-    } while (len > 0);
+    handle_connection(cfd);
     close(cfd);
   }
 

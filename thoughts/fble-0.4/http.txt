@@ -37,3 +37,10 @@ For this part, just print the request.
 
 The most annoying part, I think, is having to output content length. It means
 I can't stream the output? I need two passes?
+
+---
+
+Done with step (1). Next is step (2).
+
+Some challenges we are going to have with this server:
+* It's not C99. It requires posix.
