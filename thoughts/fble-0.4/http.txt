@@ -8,12 +8,12 @@ we have?
 
 Here's an example HTTP request:
 
-  GET /hello.html?foo=bar HTTP/1.1
-  Host: localhost:8000
-  User-Agent: Elinks
-  Accept: */*
-  Accept-Language: en
-  Connection: Keep-Alive
+GET /hello.html?foo=bar HTTP/1.1
+Host: localhost:8000
+User-Agent: Elinks
+Accept: */*
+Accept-Language: en
+Connection: Keep-Alive
 
 Here's an example HTTP response (from wget -S ...).
 
@@ -44,3 +44,28 @@ Done with step (1). Next is step (2).
 
 Some challenges we are going to have with this server:
 * It's not C99. It requires posix.
+
+--- 
+
+Interpretation of the sample headers:
+
+Accept: */*
+  Says what kind of responses to accept. If our response is not in the list,
+  we should return 406 error code. Probably safe to ignore to begin.
+  
+Accept-Language: en
+  Preferred language to return. Probably safe to ignore to begin.
+
+Connection: Keep-Alive
+  Seems to suggest the user agent supports keeping the connection alive, but I
+  don't think requires it. Probably safe to ignore to begin.
+
+Host: localhost:8000
+  Host and optional port of origin. Probably safe to ignore, but in theory we
+  should return 400 (bad request) if it is missing.
+
+User-Agent: Elinks
+  The user agent. Safe to ignore.
+
+In other words, to start, I can ignore all of these fields. Just skip past
+them, and I'm done and ready to respond.

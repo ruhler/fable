@@ -9,20 +9,49 @@
 #include <string.h>
 #include <unistd.h>
 
+// Handles an incoming socket connection.
+// Takes ownership of fd, closing it when done.
 static void handle_connection(int fd)
 {
-  char buf[1025];
-  ssize_t len = 0;
+  FILE* f = fdopen(fd, "rw");
+
+  char* line = NULL;
+  size_t line_size = 0;
+  ssize_t read = 0;
+ 
+  // Get the start line
   do {
-    for (size_t i = 0; i < len; ++i) {
-      printf("%c", toupper(buf[i]));
-    }
-    len = read(fd, buf, 1024);
-    if (len < 0) {
-      perror("read");
-      return;
-    }
-  } while (len > 0);
+    read = getline(&line, &line_size, f);
+  } while (read >= 0 && strcmp(line, "\n") == 0);
+
+  if (read < 0) {
+    perror("failed to read start-line");
+    free(line);
+    fclose(f);
+    return;
+  }
+
+  char* start = strdup(line);
+  printf("start-line: %s", start);
+
+  // Skip past request headers. We don't care about those.
+  do {
+    read = getline(&line, &line_size, f);
+  } while (read >= 0 && strcmp(line, "\n") != 0);
+
+  if (read < 0) {
+    perror("failed to parse rest of response");
+    free(start);
+    free(line);
+    fclose(f);
+    return;
+  }
+
+  // TODO: Send response.
+
+  free(start);
+  free(line);
+  fclose(f);
 }
 
 int main(int argc, char *argv[])
@@ -56,7 +85,6 @@ int main(int argc, char *argv[])
       return 1;
     }
     handle_connection(cfd);
-    close(cfd);
   }
 
   return 0;
