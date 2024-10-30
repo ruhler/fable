@@ -69,3 +69,60 @@ User-Agent: Elinks
 
 In other words, to start, I can ignore all of these fields. Just skip past
 them, and I'm done and ready to respond.
+
+---
+
+What response headers do I want to provide?
+
+general-header = Cache-Control            ; Section 14.9
+               | Connection               ; Section 14.10
+               | Date                     ; Section 14.18
+               | Pragma                   ; Section 14.32
+               | Trailer                  ; Section 14.40
+               | Transfer-Encoding        ; Section 14.41
+               | Upgrade                  ; Section 14.42
+               | Via                      ; Section 14.45
+               | Warning                  ; Section 14.46
+
+response-header = Accept-Ranges           ; Section 14.5
+                | Age                     ; Section 14.6
+                | ETag                    ; Section 14.19
+                | Location                ; Section 14.30
+                | Proxy-Authenticate      ; Section 14.33
+                | Retry-After             ; Section 14.37
+                | Server                  ; Section 14.38
+                | Vary                    ; Section 14.44
+                | WWW-Authenticate        ; Section 14.47
+
+entity-header  = Allow                    ; Section 14.7
+               | Content-Encoding         ; Section 14.11
+               | Content-Language         ; Section 14.12
+               | Content-Length           ; Section 14.13
+               | Content-Location         ; Section 14.14
+               | Content-MD5              ; Section 14.15
+               | Content-Range            ; Section 14.16
+               | Content-Type             ; Section 14.17
+               | Expires                  ; Section 14.21
+               | Last-Modified            ; Section 14.29
+               | extension-header
+
+
+The ones that look relevant:
+* Don't worry about caching for now. It should only matter when loading a
+  different profile. I can worry about that case later.
+* "Connection: close", since we don't support consistent connections yet.
+* Date: ..., which we are supposed to send always.
+*  
+
+Aside from Date, looks like none are required. Maybe also Content-Type? Some
+others could be useful.
+
+How about we start with something like:
+
+  HTTP/1.1 200 OK
+  Content-Type: text/html
+  Last-Modified: Sat, 08 Jan 2022 20:18:45 GMT (date of profile file)
+  Date: Tue, 22 Oct 2024 14:11:07 GMT
+
+I dunno. Start with nothing, see what elinks accepts. No reason to go above
+and beyond here.

@@ -13,7 +13,7 @@
 // Takes ownership of fd, closing it when done.
 static void handle_connection(int fd)
 {
-  FILE* f = fdopen(fd, "rw");
+  FILE* fin = fdopen(fd, "r");
 
   char* line = NULL;
   size_t line_size = 0;
@@ -21,13 +21,13 @@ static void handle_connection(int fd)
  
   // Get the start line
   do {
-    read = getline(&line, &line_size, f);
+    read = getline(&line, &line_size, fin);
   } while (read >= 0 && strcmp(line, "\n") == 0);
 
   if (read < 0) {
     perror("failed to read start-line");
     free(line);
-    fclose(f);
+    fclose(fin);
     return;
   }
 
@@ -36,22 +36,31 @@ static void handle_connection(int fd)
 
   // Skip past request headers. We don't care about those.
   do {
-    read = getline(&line, &line_size, f);
-  } while (read >= 0 && strcmp(line, "\n") != 0);
+    read = getline(&line, &line_size, fin);
+    fprintf(stderr, "%s", line);
+  } while (read >= 0 && strcmp(line, "\r\n") != 0);
 
   if (read < 0) {
     perror("failed to parse rest of response");
     free(start);
     free(line);
-    fclose(f);
+    fclose(fin);
     return;
   }
 
-  // TODO: Send response.
+  FILE* fout = fdopen(fd, "w");
+  fprintf(fout, "HTTP/1.1 200 OK\n");
+  fprintf(fout, "Content-Type: text/html\r\n");
+  fprintf(fout, "Content-Length: 49\r\n");
+  fprintf(fout, "\r\n");
+  fprintf(fout, "<h1>Thanks for visiting</h1>\n");
+  fprintf(fout, "That's all for now.\n");
+  fflush(fout);
 
   free(start);
   free(line);
-  fclose(f);
+  fclose(fin);
+  fclose(fout);
 }
 
 int main(int argc, char *argv[])
