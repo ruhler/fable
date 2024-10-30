@@ -126,3 +126,19 @@ How about we start with something like:
 
 I dunno. Start with nothing, see what elinks accepts. No reason to go above
 and beyond here.
+
+---
+
+A couple issues addressed:
+* Have separate FILE* for input and output streams.
+* Look for "\r\n" instead of "\n" for end of request headers.
+
+Now I can generate html that is displayed by elinks.
+
+Next step is to parse the start line. Goal is to extract:
+* method - make sure it is GET
+* http version - make sure it is HTTP/1.1
+* path, e.g. "/", or "/self", or "/index.html" or some such.
+* query arguments 
+
+Let's start by printing those in the generated html.

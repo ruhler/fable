@@ -48,13 +48,23 @@ static void handle_connection(int fd)
     return;
   }
 
+  char* method = start;
+  char* method_end = strchr(method, ' ');
+  char* uri = method_end + 1;
+  char* uri_end = strchr(uri, ' ');
+  char* version = uri_end + 1;
+
+  *method_end = '\0';
+  *uri_end = '\0';
+
   FILE* fout = fdopen(fd, "w");
   fprintf(fout, "HTTP/1.1 200 OK\n");
   fprintf(fout, "Content-Type: text/html\r\n");
-  fprintf(fout, "Content-Length: 49\r\n");
   fprintf(fout, "\r\n");
-  fprintf(fout, "<h1>Thanks for visiting</h1>\n");
-  fprintf(fout, "That's all for now.\n");
+  fprintf(fout, "<h1>Request Info</h1>\n");
+  fprintf(fout, "Method: %s <br/>\n", method);
+  fprintf(fout, "URI: %s <br/>\n", uri);
+  fprintf(fout, "Version: %s <br/>\n", version);
   fflush(fout);
 
   free(start);
