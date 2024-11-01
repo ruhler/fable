@@ -57,13 +57,22 @@ static void handle_connection(int fd)
   *method_end = '\0';
   *uri_end = '\0';
 
+  char* path = uri;
+  char* path_end = strchr(uri, '?');
+  char* query = NULL;
+  if (path_end != NULL) {
+    query = path_end + 1;
+    *path_end = '\0';
+  }
+
   FILE* fout = fdopen(fd, "w");
   fprintf(fout, "HTTP/1.1 200 OK\n");
   fprintf(fout, "Content-Type: text/html\r\n");
   fprintf(fout, "\r\n");
   fprintf(fout, "<h1>Request Info</h1>\n");
   fprintf(fout, "Method: %s <br/>\n", method);
-  fprintf(fout, "URI: %s <br/>\n", uri);
+  fprintf(fout, "Path: %s <br/>\n", path);
+  fprintf(fout, "Query: %s <br/>\n", query);
   fprintf(fout, "Version: %s <br/>\n", version);
   fflush(fout);
 

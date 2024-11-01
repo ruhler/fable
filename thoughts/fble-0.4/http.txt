@@ -142,3 +142,25 @@ Next step is to parse the start line. Goal is to extract:
 * query arguments 
 
 Let's start by printing those in the generated html.
+
+---
+
+Next is URI parsing.
+
+In theory it could be an absolute URI or an absolute path. In practice it's
+supposed to only be an absolute path.
+
+http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
+
+With % HEX HEX encoding on top.
+
+It sounds like technically the format of query is not standardized. I could
+use whatever I want. In practice, may as well use the common:
+name1=value1&name2=value2&..., which is based on how html forms are
+implemented when using the GET method.
+
+Regardless of whose responsibility it is, I'll want some code to convert the
+raw query string into, perhaps, an array of pairs of values. Probably I'll
+want this to be the responsibility not of the http part of the server, but the
+content generation part of the server. So we can pass in the query string to
+the next level in the API.
