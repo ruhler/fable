@@ -1,0 +1,95 @@
+Operating System Input/Output
+=============================
+I have a Stdio interface for fble as the top level interface. It supports
+reading and writing files and getting environment values.
+
+It doesn't support everything I want for every application. For example, I
+want to be able to write an Http server. I want to be able to write an ncurses
+application.
+
+It feels like stuffing all the kinds of IO support that the operating system
+provides into a single top level Stdio interface doesn't scale well. Why
+should my hello world program have to know about sockets, for example?
+
+Take ncurses for example. There's an fble API I would want for using ncurses.
+There is an implementation of ncurses. The API could be written in a way that
+allows a pure implementation. At the end of the day, we probably want a C
+implementation in practice.
+
+My solution today is to stuff everything into the same top level Stdio
+interface. That doesn't scale. Is there some other way we could connect the
+ncurses API to an IO based ncurses interface on an as needed basis?
+
+Well, for example, you could say compose at the IO monad level. The top level
+program is IO. You can include modules that use a foreign interface to
+implement their APIs in IO. Then anything you want to put in IO you can.
+
+The trouble with that, is it encourages everything to be written in IO. It
+doesn't allow you to easily compose different APIs at the pure level.
+
+---
+
+When you call into pure code, you know the side effects it can have are:
+* Read information you give it, or that is built into the code, and nothing
+  else.
+* Output information to you, and nowhere else.
+* Take CPU time and memory, and possibly crash.
+
+In contrast, in a general IO monad, the side effects code could have are:
+* Read privileged information without you knowing about it.
+* Share privileged information with anyone without you knowing about it.
+* Destroy privileged information without anyone knowing about it.
+
+The benefit of using an abstract polymorphic monadic interface is you get full
+control over what it can do. You can intercept all the calls if you want. You
+can force it to be pure. The key is that you put yourself between the code
+making use of the interface and the IO implementation of the interface.
+
+Today I'm putting the IO implementation of the interfaces I have in
+fble-stdio.c. That guarantees the fble code that cares is between the user of
+the IO and the implementation. The downside being that fble-stdio.c has to
+know about all of the implementations of IO related things, as does any fble
+code trying to make use of fble-stdio.
+
+Let me propose an alternative. We have an IO monad. Change fble-stdio to work
+on anything in the IO monad. For any IO-based computation, such as file
+read/write, environment get/set, sockets, ncurses, you define an abstract
+polymorphic monadic API, and separately provide an implementation of that API
+in the IO monad.
+
+Now what happens is, code will pass up the monadic API to callers as far as
+needed. The top level caller in fble then provides the IO implementations of
+everything it needs, and can do any security screening it wants there. This
+way we still get the security and control over IO, but it scales up much
+better to different IO libraries.
+
+Some notes about this:
+* There's nothing to stop people from writing their IO based library APIs
+  directly in the IO monad, which would be bad because their libraries
+  wouldn't support security screening and use cases like pure tests. Hopefully
+  people learn not to do that, and users of code learn not to use libraries
+  like that. The alternative of having me implement any and all IO based
+  library things in fble-stdio doesn't scale.
+* We need to have a way for people to provide IO monad implementations of
+  their fble libraries. In theory this means they provide a C implementation
+  of a library that can be imported into fble. Like a modular compilation kind
+  of approach.
+
+If people can use C to implement fble code, what's to stop them from
+implementing unsafe pure fble code? What's to stop that from happening today
+already, given that we are linking with elf files, not fble files?
+
+It's a question of trust. Do you trust that the native implementation of a
+library you are given doesn't have bad side effects? Do you trust it was
+generated from pure fble code? Sounds like a slightly separate problem.
+
+How to implement an fble module in C? We have the C API already. The compiler
+can do it. We just need a way to communicate the required function names.
+Today that's an instance of FbleGeneratedModule with the mangled name. Along
+with some fble file that encodes the type.
+
+Which brings us around to the topic of modular compilation. Basically: can we
+have a way to define a module type/API without providing the implementation as
+well? That way we can hide the implementation, either fble or implement it
+directly in C.
+

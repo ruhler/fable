@@ -164,3 +164,67 @@ raw query string into, perhaps, an array of pairs of values. Probably I'll
 want this to be the responsibility not of the http part of the server, but the
 content generation part of the server. So we can pass in the query string to
 the next level in the API.
+
+---
+
+How to handle 404 not found when passing the path and query to the next level
+in the API? We can't easily pass a FILE* for writing the output content if we
+don't already assume response 200. And how would that work with a HEAD
+request? Seems we need to detect path support separately.
+
+One approach is to have the http server register a set of handlers, one per
+path. Then the server can search for the matching handler. If none found,
+return 404. If a handler is found, return 200, then call the handler with the
+query and the FILE*. That should be fine for my use case. It just means
+putting any interesting parameters in the query rather than the path. Makes
+total sense to me. Static number of supported paths. Infinite number of
+supported queries.
+
+---
+
+Can I implement my server in fble instead of C? It would be a good use case to
+exercise fble, and much nicer to program in because I would have access to
+list and map libraries for representing the profile.
+
+The challenge is what API I should offer for doing a server. And it would
+impact the Stdio interface, which is tedious. And sockets are not platform
+portable.
+
+Could I hack something up using stdin and stdout for the communication with
+the server, and wire it up to nc to do the actual socket communication part?
+That's an interesting idea. Why not?
+
+Proof of concept: change the server to operate on stdin/stdout... maybe have
+it handle a single request? Because it's going to close stdin/stdout in
+between otherwise?
+
+What I want with netcat would be:
+* Listen for some port. Forward connections to a program that you fork?
+
+That means parsing the profile data over and over again, which is not ideal.
+Let's see what options netcat has.
+
+The man page has an example of using file redirection to make this work. It
+would be single-request kind of thing though, and pretty tedious to play
+around with.
+
+---
+
+Here are the challenges I'm facing:
+* It's tedious to redefine vector in my C prototype of the new profiler
+  viewer.
+* It's tedious to add a socket API to fble to use it for the new profiler
+  viewer.
+* It's tedious to add an ncurses API to fble to use it for the new profiler
+  without http.
+
+Remember what my goals are.
+* Prototype a new profiler viewer to see if it's notably more useful and we
+  should change the profile collection strategy in fble. We don't have to ever
+  release the prototype. We could just generate pprof in the end.
+* Make fble a useful general purpose programming language. Http servers and
+  ncurses based applications are the kinds of things you want to be able to
+  develop in a general purpose programming language.
+
+Perhaps it's time to take a detour from our detour of a detour from improving
+fble performance.

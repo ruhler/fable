@@ -21,3 +21,13 @@ Then go from there, whatever I feel like. We have a pretty solid list of
 options for things to work on. There's more than enough here for a release.
 What's nice is these big things are mostly orthogonal.
 
+---
+
+Tracking my current stack of work:
+
+Improve performance.
+=> Improve profiling.
+=> Write an http server in fble.
+=> Improve OS IO handling in fble.
+=> Implement proper modular compilation support.
+

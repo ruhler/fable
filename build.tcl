@@ -95,6 +95,16 @@ proc lib { lib objs } {
   build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
 }
 
+# shared_lib --
+#   Builds a shared library.
+#
+# Inputs:
+#   lib - the library file to build
+#   objs - the list of .o files to include in the library.
+proc shared_lib { lib objs } {
+  build $lib $objs "gcc -o $lib -shared $objs"
+}
+
 # bin --
 #   Build a binary.
 #

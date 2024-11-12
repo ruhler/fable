@@ -1,0 +1,40 @@
+Modular Compilation
+===================
+Goals:
+* Avoid having to read implementation details just to get the type of a
+  module.
+* Allow shipping a module in binary form without full source code available.
+* Allow implementing a module in C directly, see os_io.txt.
+
+Proposal:
+
+1.
+Add special let syntax for defining a variable with no value. Just don't
+provide a value. 
+
+For example:
+
+Int@ x;
+
+It uses the <type> form of let, not the <kind> form. Semantics are to give a
+runtime error saying x is uninitialized. Intention is to be able to describe
+types without the implementation. Now we can provide .fble files for reading
+the type from, as long as you don't try to interpret or compile that .fble
+file itself.
+
+2.
+Add option to compiler to pass a separate implementation file. In this case,
+the compiler compiles your implementation file. It still reads the .fble file
+from the expected path, and uses that to verify the type of your
+implementation file.
+
+The idea is: you compile your private implementation file, and you distribute
+the public header file.
+
+No need for .fble vs. .fble.@. Everything is .fble.
+
+3.
+Need a way to find and load a compiled .fble file on the fly. For example,
+someone ships a .so with their compiled code, and you want to run it with your
+fble-stdio app.
+

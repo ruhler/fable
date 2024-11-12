@@ -1,0 +1,207 @@
+Foreign Function Interface
+==========================
+
+Simple: we provide a way to call a foreign (aka C) function from fble. The
+compiler generates the logic to call it for you.
+
+The abstract syntax is:
+  foreign <type> <name>
+
+This is an expression of given type implemented in C (or whatever foreign
+language your compiler is targeting) named <name>.
+
+Any reasonable way to do type checking to make sure what your calling
+implements the type it claims it does?
+
+And on the C side, provide a standard header for writing functions that
+compute Fble values. Like I already have now, just slightly more abstracted
+and formalized to work with different implementations.
+
+---
+
+Foreign function interface on the C side, I think should be, for now:
+
+  FbleValue* <function>(FbleValueHeap* heap, FbleProfile* profile);
+
+But we want this to be called once to set up the profile blocks. It would be
+bad if it was called repeatedly and kept adding more and more to the profile.
+
+Oh well. Let's not worry about that for now. To start I'll just make sure I
+don't call an ffi expression in the body of a function. They'll all be module
+level variable declarations anyway.
+
+I almost want the whole foreign function expression to be a separate module,
+to guarantee it's only called once. Or maybe each FFI expression is treated
+like a module reference, and loaded as part of module initialization. Yeah,
+that sounds good. Doesn't matter where you have it, we arrange for it to be
+called once at link time.
+
+This needs to be made clear to the user, in case it's something expect to run
+a long time. But it is a static thing, in the sense that you can't pass
+arguments at FFI expression time.
+
+The implementation is simple for C and aarch64 backends I think. Add an FFI
+instruction? Hmm... If we are doing things at link time, then no instruction
+needed, but we would need some metadata to tell the compiler about it.
+
+Maybe the easy way to start is to do things at FFI expression eval time
+instead of module link time. Then all we need is a new FFI instruction with
+the name of the thing and the destination for the value. C and aarch64
+backends are easy: generate code to call the function...
+
+Except we don't have access to the profile then. Just the profile thread? Is
+that enough?
+
+Anyway, the point I was trying to get to, is interpreter is harder, because we
+have to look up the symbol somehow. One idea I had to get a hacky prototype
+working is to pass a map from name to function to the interpreter. When it
+sees the instruction, it looks in the map to get the function to call.
+
+That doesn't work unless you have the FFI function built into the interpreter
+though, which I don't want. I could get away with it for stdio, because the
+interpreter is part of the same library. But that wouldn't let you add any FFI
+in other packages to be used with fble-stdio. For example, it wouldn't work
+for spec tests, which don't depend on studio, and would want to use contrived
+FFI functions I don't want built into any implementation.
+
+So the question is, how should FFI work in general? How do we bundle the FFI
+implementation with the module? In particular, how to make it work in the
+interpreter case?
+
+The way I think of FFI is that we have two layers of abstraction going on
+during execution: the fble layer, and the native layer. What is considered
+'native' depends on the backend you are using. If it's C backend, then C code
+is your native layer. If it's aarch64 backend, then aarch64 is your native
+layer. If it's interpreter... then?
+
+If it's C backend, is C code your native layer, or is it always machine code?
+Because for interpreter, I could say it's the native machine code the
+interpreter is implemented in.
+
+Regardless, native code of some sort is going to be involved. Precompiled
+native code, that is built separately from the interpreter. How can I pass
+that to the interpreter? Using an elf file on linux.
+
+Now things start to get tricky with different platforms. Let's not worry about
+that right now. Let's focus on linux.
+
+In the compiled case, we already have an elf file associated with the fble
+module. That's your package level elf file. Perfect place to store your FFI
+implementation. And you can reference it directly from there.
+
+In the interpreted case, today all we have is .fble code. There is no
+associated package level elf file. Then what can we do?
+A. Provide a list of .so files with symbols to use for FFI to the interpreter.
+B. Allow mixing of interpreted and compiled code, and require compiled code
+for FFI.
+
+(A) feels weird from a usage point of view? Or I suppose we could have
+Foo.fble.so in the search path, and load that anytime we see it with
+interpreted code for the sole purpose of looking up FFI. Yeah, that could
+work. But also annoying to have to mix architecturally independent fble code
+with architecturally dependent FFI implementation.
+
+(B) seems more natural from a usage and distribution point of view. How would
+it look in practice? It's related to modular compilation.
+
+Ooh. (B) is the same mechanism we would want for being able to distribute
+binary code without source for some packages. That's a uniform approach to
+take. It's something we'll want eventually anyway. Which suggests (B) is the
+way to go. Kill two birds with one stone.
+
+How fble package distribution works today:
+1. For the interpreter case: you have a package directly with all the .fble
+files, each with full source.
+
+2. For the compiled case, you have a .so file for each package that you link
+with at compile time.
+
+Today there is no mixed case. Either every package is compiled, or no package
+is compiled. That's what I want to add. How would it look?
+
+You are running an interpreter. It isn't pre-linked with all the compiled
+packages you need. It needs a way to find and load that code. There are two
+things it needs: the implementation of the modules (for execution), and the
+types of the modules (for use).
+
+I can imagine two different ways to provide the types:
+1. Using .fble files with a special syntax to allow elision of the
+implementation.
+2. Compiled into whatever .so file we have with the rest of the code.
+
+Option (1) is more geared towards user documentation. So that we can give nice
+error messages and clear description of what the type should be. Option (2)
+seems safer, in the sense that it's harder to mess with than it would be to
+mess with the .fble files. For user sanity, some form of (1) will be needed.
+
+Let's say we go with (1). We could always fall back to (2) later. We could do
+both (1) for the user and (2) for the trust. But for now, just (1).
+
+This means, in the package search path, for a package, we'll want to have:
+
+* A tree of .fble files, one for each module.
+* A .so file containing the code for the module.
+
+You know what's interesting about this? It looks like it could support FFI
+usage mode (A). The .fble files could contain the implementation and the .so
+file could contain just the FFI code.
+
+Anyway, what are the semantics? Can we use the same approach for interpreter
+and compiler?
+
+Think of the tree of .fble files as the header files. Think of the .so file as
+the library file. This is straight forward, right?
+
+When compiling a module against the package, use the .fble files to get the
+type.
+
+When linking your compiled code, use the .so file. This just tells you were to
+look for that.
+
+When loading the package from the interpreter, we just need a way to figure
+out if we should read the .fble files for bytecode to interpret, or we already
+have compiled code available. This can be on a per-module basis perhaps. That
+sounds reasonable. Maybe you want to ship a mix of interpreted and compiled
+code in a package, rather than have all one or another.
+
+Which means, when loading a particular module, first, look for the
+FbleGeneratedModule symbol associated with that module. If you can't find
+that, then fall back to loading bytecode from the .fble file.
+
+Can we go the other way? Can we link compiled code against interpreted code?
+How to deal with dependencies between packages?
+
+I think, maybe the directory structure we want is:
+
+/usr/share/fble/<package>/Foo.fble
+/usr/lib/fble/libfble-<package>.so
+
+Anyway, what this means is, for the interpreter case, when we want to load a
+module, we look for the .so file first, try to dynamically load it, before
+falling back to the .fble file.
+
+---
+
+First step towards foreign function interface: switch from static libraries to
+shared libraries in the build system. In preparation for being able to load
+those libraries dynamically in the interpreter use case.
+
+Start with linux. Worry about Windows separately.
+
+Today we make .a files, e.g.:
+
+  lib "$::b/lib/libfble.a" $objs
+
+Based on:
+
+proc lib { lib objs } {
+  build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
+}
+
+Okay, so what are the commands to build a shared library from a bunch of .o
+files instead? Sounds like we need to add -fPIC when compiling C files. Then
+use:
+
+gcc -o foo.so -shared $objs.
+
+Let's try one step at a time.
