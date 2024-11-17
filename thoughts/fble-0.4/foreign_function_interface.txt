@@ -205,3 +205,165 @@ use:
 gcc -o foo.so -shared $objs.
 
 Let's try one step at a time.
+
+One concern is that we use the static libraries by passing them as if they
+were object files. Is something else needed now? Seems like maybe not.
+
+I'm getting errors like:
+
+/usr/bin/ld: ./pkgs/satgame/SatGame/Generate.fble.o: relocation
+R_AARCH64_ADR_PREL_PG_HI21 against symbol `stderr@@GLIBC_2.17' which may bind
+externally can not be used when making a shared object; recompile with -fPIC
+
+Add -pic to as call?
+
+---
+
+Let's go step by step for this .so change, to make sure I understand what's
+really needed.
+
+Step 1: Build libfble.so. Done. No issues.
+Step 2: Use libfble.so in the bin/ binaries.
+
+* If we directly replace the libfble.a argument with libfble.so:
+
+Works, but only if I call it from the out/ directory. Otherwise we get an
+error:
+
+./out/bin/fble-compile: error while loading shared libraries:
+./lib/libfble.so: cannot open shared object file: No such file or directory
+
+Same thing after I install to the target location.
+
+https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html
+
+Reading up on shared libraries:
+* -rpath option to ld sets a relative path to search for the .so file.
+  - For example: -Wl,-rpath,$(DEFAULT_LIB_INSTALL_PATH)
+* In theory I should pass -fPIC to gcc when compiling the .o files that go
+  into a shared library.
+* In theory I should run ldconfig after installing the library.
+  - ldconfig -n directory_with_shared_libraries
+
+I just need to figure out the approach for running locally and installed. Use
+some existing package for example, that ships its own .so file. The question
+is:
+
+* Can I run the binary before it's installed? If so, how does it find the
+  library it needs?
+* Can I run the binary after it's installed to my custom directory? If so, how
+  does it find the library it needs?
+
+Then try to mimic that approach.
+
+---
+
+Looking at freetype as an example.
+
+Unfortunately, I don't think freetype builds any binaries. Maybe sdl instead?
+
+How about sudo? It looks like that builds .so and binary.
+
+Notes:
+* `objdump -x <foo> | grep PATH` is supposed to show the rpath of an
+  executable. I see none in fble-compile. I wonder how it finds libfble.so
+  then?
+* readelf -d <foo> shows the path of the library needed. In my case, it shows
+  ./lib/libfble.so. That explains what it's looking for anyway. 
+* ldd shows not found if the library wouldn't be found at runtime.
+* If I do '-l fble' when compiling fble-compile instead of 'lib/libfble.so' as
+  an object file, then it shows up as 'libfble.so' in the executable.
+* ./sudo doesn't work in the build directory. It says it can't find
+  libsudo_util.so. It has 'libsudo_util.so.1' listed as the library from
+  readelf.
+
+---
+
+This shared library stuff sounds tedious and tricky.
+
+Anyway, my goals are:
+* Need to be able to build from tools before installing.
+* Would like to be able to run tools before installing without passing special
+  arguments or environment variables.
+* Need to be able to run tools after installing without passing special
+  arguments or environment variables.
+
+Static libraries easily satisfy all these requirements. How should we handle
+it for dynamic libraries?
+
+The things we can manipulate:
+* The absolute/relative path to the library when building the executable.
+  e.g. gcc -o foo foo.o ../../libbar.so
+* The LD_LIBRARY_PATH
+* The DT_RUNPATH attribute of the in the readelf -d section.
+* ldconfig cache.
+* The default search path.
+
+It sounds like the path to the directory and DT_RUNPATH are two separate
+things. Let me confirm experimentally.
+
+Yes. For example:
+
+ 0x0000000000000001 (NEEDED)             Shared library: [libfoo.so]
+ 0x000000000000001d (RUNPATH)            Library runpath: [/home/richard/scratch/so]
+
+NEEDED comes from how I pass the .so to gcc
+ - Either as a path to libbar.so, or using -lbar
+RUNPATH comes from -Wl,-rpath,<path> option to gcc.
+ - And can be specified multiple times.
+
+Every installed binary I see on my system sets NEEDED without an / in it, so
+using the -lbar option to gcc. It depends on the library being found in the 
+
+There is potentially an option to modify the executable when installing. Let
+me see if I can figure out how to do that.
+
+Yes, via: chrpath or patchelf. But I don't have those installed on my system.
+
+Or, we could create two separate versions of the binary, the 'local' one, and
+the 'to be installed' one. Though that feels like a pain.
+
+How does it work if I install a package and executable to a local directory?
+Do I have to set LD_LIBRARY_PATH? I feel like I normally wouldn't? Let's try
+that.
+
+Note that when calling dlopen, I can pass an absolute path to the .so file
+to open, so I can use my own search logic for that.
+
+sqlite is interesting. It distributes a library and binary, but the installed
+binary is statically linked with the library rather than dynamically linked.
+Can I take that approach? How would that look? What needs to be dynamic vs.
+shared in fble?
+
+Libraries to consider:
+* libfble, libfbletest, for lib for each package.
+
+How about we statically link with libfble and libfbletest. We can make .so
+files out of the package libraries and use explicit dlopen for all of them?
+They can assume the binary has been statically linked with libfble, so we
+avoid duplicates of that in process. It just means duplicate across binaries,
+but I'm okay with that?
+
+* libfble.a is 1.8M
+* libfble.so is 1M
+* fble-deps, fble-disassemble, etc are around 25K each when dynamically
+  linked. They are around 200K to 600K when statically linked.
+
+It would be really nice if we could dynamically link, to save on space.
+
+If I'm willing to be hacky, how about build them with:
+* rpath $ORIGIN/../lib
+
+That way they always work, no need for LD_LIBRARY_PATH. The user can't specify
+separate bindir and libdir anyway at the moment, so should be okay, right?
+
+Yeah, that works. Just tedious to escape the mix of tcl, ninja, and shell:
+
+  -Wl,-rpath,\\\$\$ORIGIN/../lib
+
+\$ to escape tcl
+$$ to escape ninja
+\$ to escape shell
+
+All combined: \\\$\$
+

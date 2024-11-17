@@ -45,12 +45,15 @@ namespace eval "lib" {
   # libraries
   lib "$::b/lib/libfble.a" $objs
   lib "$::b/lib/libfble.cov.a" $objs_cov
+  shared_lib "$::b/lib/libfble.so" $objs
+  shared_lib "$::b/lib/libfble.cov.so" $objs_cov
 
   foreach {x} [build_glob $::s/lib -tails "*.*"] {
     fbld_check_dc $::b/lib/$x.dc $::s/lib/$x
   }
 
   install $::b/lib/libfble.a $::config::libdir/libfble.a
+  install $::b/lib/libfble.so $::config::libdir/libfble.so
 
   set ::fble_objs_cov $objs_cov
 }

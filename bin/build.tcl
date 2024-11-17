@@ -18,7 +18,7 @@ namespace eval "bin" {
     obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \
       $::b/bin/$base.usage.h
     bin $::b/bin/$base \
-      "$::b/bin/$base.o $::b/lib/libfble.a" ""
+      "$::b/bin/$base.o" "-Wl,-rpath,\\\$\$ORIGIN/../lib -L $::b/lib -lfble"
     bin_cov $::b/bin/$base.cov \
       "$::b/bin/$base.o $::b/lib/libfble.cov.a" ""
     install $::b/bin/$base $::config::bindir/$base
