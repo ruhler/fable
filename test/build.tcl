@@ -1,7 +1,7 @@
 namespace eval "test" {
   set cflags "-I $::s/include -I $::b/test"
-  set libs "$::b/test/libfbletest.a $::b/lib/libfble.a"
-  set libs_cov "$::b/test/libfbletest.a $::b/lib/libfble.cov.a"
+  set libs "$::b/test/libfbletest.a"
+  set libs_cov "$::b/test/libfbletest.a"
 
   set lib_sources {
     test.c
@@ -32,8 +32,8 @@ namespace eval "test" {
   foreach {x} $bin_sources {
     set base [file rootname [file tail $x]]
     obj $::b/test/$base.o $::s/test/$x $cflags
-    bin $::b/test/$base "$::b/test/$base.o $libs" ""
-    bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" ""
+    fble_bin $::b/test/$base "$::b/test/$base.o $libs" ""
+    fble_bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" ""
   }
 
   foreach {x} [list fble-test fble-mem-test] {
@@ -59,7 +59,7 @@ namespace eval "test" {
   fbleobj_c $::b/test/ProfilesTest.c.o $::b/bin/fble-compile \
     "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%" \
     $::s/test/ProfilesTest.fble
-  bin $::b/test/ProfilesTest.c "$::b/test/ProfilesTest.c.o $libs" ""
+  fble_bin $::b/test/ProfilesTest.c "$::b/test/ProfilesTest.c.o $libs" ""
 
   test $::b/test/ProfilesTest.c.tr "$::b/test/ProfilesTest.c" \
     "$::b/test/ProfilesTest.c > $::b/test/ProfilesTest.c.prof"
@@ -69,14 +69,14 @@ namespace eval "test" {
     fbleobj_aarch64 $::b/test/ProfilesTest.aarch64.o $::b/bin/fble-compile \
       "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%" \
       $::s/test/ProfilesTest.fble
-    bin $::b/test/ProfilesTest.aarch64 "$::b/test/ProfilesTest.aarch64.o $libs" ""
+    fble_bin $::b/test/ProfilesTest.aarch64 "$::b/test/ProfilesTest.aarch64.o $libs" ""
     test $::b/test/ProfilesTest.aarch64.tr "$::b/test/ProfilesTest.aarch64" \
       "$::b/test/ProfilesTest.aarch64 > $::b/test/ProfilesTest.aarch64.prof"
 
     # /Fble/DebugTest%
     fbleobj_aarch64 $::b/test/fble-debug-test.o $::b/bin/fble-compile \
       "--main FbleTestMain -c -I $::s/test -m /DebugTest%"
-    bin $::b/test/fble-debug-test "$::b/test/fble-debug-test.o $libs" ""
+    fble_bin $::b/test/fble-debug-test "$::b/test/fble-debug-test.o $libs" ""
 
     # Test that there are no dwarf warnings in the generated fble-debug-test
     # binary.

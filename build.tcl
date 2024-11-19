@@ -54,7 +54,7 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  set cflags "-std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -O3"
+  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -O3"
   set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
@@ -69,7 +69,7 @@ proc obj { obj src iflags args } {
 #   args - optional additional dependencies.
 proc obj_cov { obj src iflags args } {
   set gcda [string map {.o .gcda} $obj]
-  set cflags "-std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
+  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   set cmd "rm -f $gcda ; gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
@@ -112,9 +112,10 @@ proc shared_lib { lib objs } {
 #   bin - the binary file to build.
 #   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
-proc bin { bin objs lflags } {
+#   args - additional dependencies
+proc bin { bin objs lflags args } {
   set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
-  build $bin $objs "gcc $cflags -o $bin $objs $lflags"
+  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }
 
 # bin_cov --
@@ -124,10 +125,11 @@ proc bin { bin objs lflags } {
 #   bin - the binary file to build.
 #   objs - the list of .o files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
-proc bin_cov { bin objs lflags } {
+#   args - additional dependencies
+proc bin_cov { bin objs lflags args } {
   #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 $::config::ldflags --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
-  build $bin $objs "gcc $cflags -o $bin $objs $lflags"
+  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }
 
 # install --

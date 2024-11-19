@@ -17,10 +17,8 @@ namespace eval "bin" {
     # The binary.
     obj $::b/bin/$base.o $::s/bin/$x "-I $::s/include -I $::b/bin" \
       $::b/bin/$base.usage.h
-    bin $::b/bin/$base \
-      "$::b/bin/$base.o" "-Wl,-rpath,\\\$\$ORIGIN/../lib -L $::b/lib -lfble"
-    bin_cov $::b/bin/$base.cov \
-      "$::b/bin/$base.o $::b/lib/libfble.cov.a" ""
+    fble_bin $::b/bin/$base "$::b/bin/$base.o" ""
+    fble_bin_cov $::b/bin/$base.cov "$::b/bin/$base.o" ""
     install $::b/bin/$base $::config::bindir/$base
 
     # Man page.

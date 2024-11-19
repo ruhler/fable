@@ -367,3 +367,17 @@ $$ to escape ninja
 
 All combined: \\\$\$
 
+Next step on the journey: get rid of libfble.a entirely. Switch everyone over
+to libfble.so. Just so I don't have to worry about things anymore with regards
+to that.
+
+Trouble: pkgs/fbld/bin/fbld is installed to bin/fbld. Aside from that being
+wrong in general (we should be installing the C implementation there), it's
+problematic because $ORIGIN/../lib isn't the right value to use there. Should
+be the same for any of the binaries built as part of fble packages.
+
+---
+
+Let's start with two relative runpaths: relative for build and relative for
+installed. I don't think it matters what order we do them in.
+

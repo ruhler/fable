@@ -28,8 +28,8 @@ namespace eval "pkgs/app" {
 
     obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
       "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app $::config::sdl_cflags"
-    bin $::b/pkgs/app/fble-app \
-      "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" \
+    fble_bin $::b/pkgs/app/fble-app \
+      "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a" \
       "$::config::sdl_libs $::config::gl_libs"
     install $::b/pkgs/app/fble-app $::config::bindir/fble-app
 
@@ -48,11 +48,10 @@ namespace eval "pkgs/app" {
       }
       append objs " $::b/pkgs/app/libfble-app.a"
       append objs " $::b/pkgs/core/libfble-core.a"
-      append objs " $::b/lib/libfble.a"
       
       fbleobj $target.o $::b/bin/fble-compile \
         "--main FbleAppMain -m $path"
-      bin $target $objs "$::config::sdl_libs $::config::gl_libs"
+      fble_bin $target $objs "$::config::sdl_libs $::config::gl_libs"
     }
   }
 }

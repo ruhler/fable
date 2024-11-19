@@ -22,8 +22,8 @@ namespace eval "pkgs/core" {
   install $::b/pkgs/core/fble-stdio.1 $::config::mandir/man1/fble-stdio.1
   obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
     "-I $::s/include -I $::s/pkgs/core"
-  bin $::b/pkgs/core/fble-stdio \
-    "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" ""
+  fble_bin $::b/pkgs/core/fble-stdio \
+    "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a" ""
   install $::b/pkgs/core/fble-stdio $::config::bindir/fble-stdio
 
   # Build an fble-stdio compiled binary.
@@ -39,11 +39,10 @@ namespace eval "pkgs/core" {
       append objs " $::b/pkgs/$lib/libfble-$lib.a"
     }
     append objs " $::b/pkgs/core/libfble-core.a"
-    append objs " $::b/lib/libfble.a"
 
     fbleobj $target.o $::b/bin/fble-compile \
       "--main FbleStdioMain -m $path"
-    bin $target $objs ""
+    fble_bin $target $objs ""
   }
 
   # /Core/Stdio/Cat% interpreted test.

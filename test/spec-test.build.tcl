@@ -2,7 +2,7 @@ namespace eval "spec-test" {
   set spec_tests [list]
   set deps [list \
     $::s/test/spec-test.run.tcl \
-    $::b/lib/libfble.a \
+    $::b/lib/libfble.cov.a \
     $::b/bin/fble-compile.cov \
     $::b/bin/fble-disassemble.cov \
     $::b/test/fble-test.cov \
