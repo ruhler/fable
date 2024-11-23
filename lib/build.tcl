@@ -78,8 +78,9 @@ namespace eval "lib" {
   }
 
   # Functions to build binaries linked against the fble library.
-  proc ::fble_bin { bin objs lflags } {
-    ::bin $bin $objs "[::libfble_rpath $bin] -L $::b/lib -lfble $lflags" $::b/lib/libfble.so
+  #   args - additional dependencies
+  proc ::fble_bin { bin objs lflags args } {
+    ::bin $bin $objs "[::libfble_rpath $bin] -L $::b/lib $lflags -lfble" "$::b/lib/libfble.so $args"
   }
 
   proc ::fble_bin_cov { bin objs lflags } {

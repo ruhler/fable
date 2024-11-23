@@ -114,7 +114,7 @@ proc shared_lib { lib objs } {
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - additional dependencies
 proc bin { bin objs lflags args } {
-  set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
+  set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -O3"
   build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }
 
@@ -127,7 +127,7 @@ proc bin { bin objs lflags args } {
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - additional dependencies
 proc bin_cov { bin objs lflags args } {
-  #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
+  #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 $::config::ldflags --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }

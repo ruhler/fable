@@ -381,3 +381,27 @@ be the same for any of the binaries built as part of fble packages.
 Let's start with two relative runpaths: relative for build and relative for
 installed. I don't think it matters what order we do them in.
 
+---
+
+Next issue: 
+
+I'm getting an error at link time when linking a .o file created from my
+aarch64 backend. I don't see any -pic option we can pass to the assembler. I
+think I have to generate different assembly, specifically for 'Adr': loading a
+label into a register.
+
+Maybe we want something different for local vs. global labels?
+
+Anyway, let's test out on gcc. What does gcc change one way or the other? I
+can try on FbleGenericTypeValue.
+
+	adrp	x0, :got:FbleGenericTypeValue
+	ldr	x0, [x0, #:got_lo12:FbleGenericTypeValue]
+
+What I'm currently generating:
+
+  adrp x0, FbleGenericTypeValue
+  add x0, x0, :lo12:FbleGenericTypeValue
+
+Cool. That works. Now I just need to get the library rpath right, because the
+binaries and the libraries they depend on are in a subdirectory.

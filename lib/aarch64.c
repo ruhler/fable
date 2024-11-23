@@ -79,6 +79,7 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
 static size_t StackBytesForCount(size_t count);
 
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
+static void GAdr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 
 /*
@@ -431,7 +432,7 @@ static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
 static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, FbleLoc loc)
 {
   // Print error message.
-  Adr(fout, "x0", "stderr");
+  GAdr(fout, "x0", "stderr");
   fprintf(fout, "  ldr x0, [x0]\n");
   Adr(fout, "x1", ".L.ErrorFormatString");
 
@@ -468,7 +469,7 @@ static size_t StackBytesForCount(size_t count)
 }
 
 /**
- * @func[Adr] Emits an adr instruction to load a label into a register.
+ * @func[Adr] Emits an adr instruction to load a local label into a register.
  *  @arg[FILE*][fout] The output stream
  *  @arg[const char*][r_dst] The name of the register to load the label into
  *  @arg[const char*][fmt] A printf format string for the label to load.
@@ -492,6 +493,33 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
   vfprintf(fout, fmt, ap);
   va_end(ap);
   fprintf(fout, "\n");
+}
+
+/**
+ * @func[GAdr] Emits an adr instruction to load a global label into a register.
+ *  @arg[FILE*][fout] The output stream
+ *  @arg[const char*][r_dst] The name of the register to load the label into
+ *  @arg[const char*][fmt] A printf format string for the label to load.
+ *  @arg[...][] Printf format arguments. 
+ *
+ *  @sideeffects
+ *   Emits a sequence of instructions to load the label into the register.
+ */
+static void GAdr(FILE* fout, const char* r_dst, const char* fmt, ...)
+{
+  va_list ap;
+
+  fprintf(fout, "  adrp %s, :got:", r_dst);
+  va_start(ap, fmt);
+  vfprintf(fout, fmt, ap);
+  va_end(ap);
+  fprintf(fout, "\n");
+
+  fprintf(fout, "  ldr %s, [%s, #:got_lo12:", r_dst, r_dst);
+  va_start(ap, fmt);
+  vfprintf(fout, fmt, ap);
+  va_end(ap);
+  fprintf(fout, "]\n");
 }
 
 /**
@@ -836,7 +864,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
     case FBLE_TYPE_INSTR: {
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      Adr(fout, "x0", "FbleGenericTypeValue");
+      GAdr(fout, "x0", "FbleGenericTypeValue");
       fprintf(fout, "  ldr x0, [x0]\n");
       SetFrameVar(fout, "x0", type_instr->dest);
       return;
