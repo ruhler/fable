@@ -53,37 +53,4 @@ namespace eval "lib" {
   install $::b/lib/libfble.so $::config::libdir/libfble.so
 
   set ::fble_objs_cov $objs_cov
-
-  proc ::libfble_rpath { bin } {
-    # We assume all binaries are installed to .../bin when the library is
-    # installed to .../lib.
-    set install "-Wl,-rpath,\\\$\$ORIGIN/../lib"
-
-    if {[string first $::b $bin] == -1} {
-      throw "$::bin not in build directory $::b"
-    }
-
-    # At build time, binaries may be installed to a subdirectory.
-    set rel "lib"
-    set dir [file dirname $bin]
-    while {![string equal $::b $dir]} {
-      set rel "../$rel"
-      set dir [file dirname $dir]
-    }
-
-    if {![string equal $rel "../lib"]} {
-      set install "-Wl,-rpath,\\\$\$ORIGIN/$rel $install"
-    }
-    return $install
-  }
-
-  # Functions to build binaries linked against the fble library.
-  #   args - additional dependencies
-  proc ::fble_bin { bin objs lflags args } {
-    ::bin $bin $objs "[::libfble_rpath $bin] -L $::b/lib $lflags -lfble" "$::b/lib/libfble.so $args"
-  }
-
-  proc ::fble_bin_cov { bin objs lflags } {
-    ::bin_cov $bin "$objs $::b/lib/libfble.cov.a" $lflags
-  }
 }

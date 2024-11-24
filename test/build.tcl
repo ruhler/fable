@@ -32,8 +32,8 @@ namespace eval "test" {
   foreach {x} $bin_sources {
     set base [file rootname [file tail $x]]
     obj $::b/test/$base.o $::s/test/$x $cflags
-    fble_bin $::b/test/$base "$::b/test/$base.o $libs" ""
-    fble_bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" ""
+    bin $::b/test/$base "$::b/test/$base.o $libs" "$::b/lib/libfble.so" ""
+    bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov $::b/lib/libfble.cov.a" "" ""
   }
 
   foreach {x} [list fble-test fble-mem-test] {
@@ -59,7 +59,7 @@ namespace eval "test" {
   fbleobj_c $::b/test/ProfilesTest.c.o $::b/bin/fble-compile \
     "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%" \
     $::s/test/ProfilesTest.fble
-  fble_bin $::b/test/ProfilesTest.c "$::b/test/ProfilesTest.c.o $libs" ""
+  bin $::b/test/ProfilesTest.c "$::b/test/ProfilesTest.c.o $libs" "$::b/lib/libfble.so" ""
 
   test $::b/test/ProfilesTest.c.tr "$::b/test/ProfilesTest.c" \
     "$::b/test/ProfilesTest.c > $::b/test/ProfilesTest.c.prof"
@@ -69,14 +69,14 @@ namespace eval "test" {
     fbleobj_aarch64 $::b/test/ProfilesTest.aarch64.o $::b/bin/fble-compile \
       "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%" \
       $::s/test/ProfilesTest.fble
-    fble_bin $::b/test/ProfilesTest.aarch64 "$::b/test/ProfilesTest.aarch64.o $libs" ""
+    bin $::b/test/ProfilesTest.aarch64 "$::b/test/ProfilesTest.aarch64.o $libs" "$::b/lib/libfble.so" ""
     test $::b/test/ProfilesTest.aarch64.tr "$::b/test/ProfilesTest.aarch64" \
       "$::b/test/ProfilesTest.aarch64 > $::b/test/ProfilesTest.aarch64.prof"
 
     # /Fble/DebugTest%
     fbleobj_aarch64 $::b/test/fble-debug-test.o $::b/bin/fble-compile \
       "--main FbleTestMain -c -I $::s/test -m /DebugTest%"
-    fble_bin $::b/test/fble-debug-test "$::b/test/fble-debug-test.o $libs" ""
+    bin $::b/test/fble-debug-test "$::b/test/fble-debug-test.o $libs" "$::b/lib/libfble.so" ""
 
     # Test that there are no dwarf warnings in the generated fble-debug-test
     # binary.

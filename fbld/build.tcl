@@ -109,8 +109,8 @@ namespace eval "fbld" {
     lappend objs $::b/fbld/$x.o
     lappend objs_cov $::b/fbld/$x.cov.o
   }
-  bin $::b/fbld/fbld $objs ""
-  bin_cov $::b/fbld/fbld.cov $objs_cov ""
+  bin $::b/fbld/fbld $objs "" ""
+  bin_cov $::b/fbld/fbld.cov $objs_cov "" ""
   set ::fbld_objs_cov $objs_cov
 
   # Fbld spec tests.

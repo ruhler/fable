@@ -405,3 +405,25 @@ What I'm currently generating:
 
 Cool. That works. Now I just need to get the library rpath right, because the
 binaries and the libraries they depend on are in a subdirectory.
+
+---
+
+Any way to fix rpath settings in general?
+
+For a binary $bin and library $lib, we want:
+* -L the directory to the library. That's still needed, right? Yes.
+* -l<foo> for the library.
+* -rpath from bin to library directory, for running at build time.
+* -rpath from bin to ../lib, for running at install time
+  Assuming we install all bins to bindir and libs to libdir.
+* Take a dependency on the library.
+
+How about: add a libs option to bin which takes the .../libfoo.so. For locally
+built libraries. It can compute the necessary rpaths and everyone is happy.
+
+---
+
+Okay, it looks like it works. One annoying problem now: we have to know to
+link against SDL for any stdio programs that depend on the 'app' package.
+That's pretty annoying?
+

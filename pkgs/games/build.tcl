@@ -7,7 +7,7 @@ namespace eval "pkgs/games" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Games/Tests% --prefix Interpreted."
 
   # /Games/Tests% compiled
-  stdio $::b/pkgs/games/Games/games-tests "/Games/Tests%" "games app"
+  stdio $::b/pkgs/games/Games/games-tests "/Games/Tests%" "app games"
   testsuite $::b/pkgs/games/Games/games-tests.tr $::b/pkgs/games/Games/games-tests \
     "$::b/pkgs/games/Games/games-tests --prefix Compiled."
 

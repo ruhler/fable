@@ -9,7 +9,7 @@ namespace eval "pkgs/invaders" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%"
 
   # /Invaders/Tests% compiled
-  stdio $::b/pkgs/invaders/invaders-tests "/Invaders/Tests%" "invaders app"
+  stdio $::b/pkgs/invaders/invaders-tests "/Invaders/Tests%" "app invaders"
   testsuite $::b/pkgs/invaders/tests-compiled.tr $::b/pkgs/invaders/invaders-tests \
     "$::b/pkgs/invaders/invaders-tests"
 

@@ -105,17 +105,66 @@ proc shared_lib { lib objs } {
   build $lib $objs "gcc -o $lib -shared $objs"
 }
 
+# Helper function to get extra flags for linking against local .so files.
+# Inputs:
+#   bin - the binary to produce
+#   libs - the list of locally built .so files to link against.
+proc libsflags { bin libs } {
+  # We add rpaths to the binary so it can find the shared libs when run from
+  # the build directory and from the install directory.
+  set rpaths [list]
+  if {[llength $libs] > 0} {
+    # We assume all binaries are installed to $prefix/bin and libraries
+    # installed to $prefix/lib, so that libraries can be found at ../lib at
+    # install time.
+    lappend rpaths "../lib"
+  }
+
+  # The directory of the binary, relative to $::b.
+  if {[regexp $::b/(.*)/\[^/\]*\$ $bin m_all bindir] != 1} {
+    error "invalid bin specified: $bin"
+  }
+
+  set lflags ""
+  foreach lib $libs {
+    # The library should match the pattern $::b/<path>/lib<name>.so
+    set m [regexp $::b/(.*)/lib(.*)\.so $lib m_all m_path m_lib]
+    if {$m != 1} {
+      error "invalid lib specified: $lib"
+    }
+
+    append lflags " -L $::b/$m_path -l$m_lib"
+
+    set reldirs [list]
+    foreach d [file split $bindir] {
+      lappend reldirs ".."
+    }
+    set reldir "[join $reldirs /]/$m_path"
+    if {[lsearch $rpaths $reldir] == -1} {
+      lappend rpaths $reldir
+    }
+  }
+
+  set rpath ""
+  foreach p $rpaths {
+    append rpath " -Wl,-rpath,\\\$\$ORIGIN/$p"
+  }
+
+  return "$rpath $lflags"
+}
+
 # bin --
 #   Build a binary.
 #
 # Inputs:
 #   bin - the binary file to build.
 #   objs - the list of .o and .a files to build from.
-#   lflags - library flags, e.g. "-L foo/ -lfoo".
+#   libs - list of local .so files to link against.
+#   lflags - additional library flags, e.g. "-L foo/ -lfoo".
 #   args - additional dependencies
-proc bin { bin objs lflags args } {
+proc bin { bin objs libs lflags args } {
   set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -O3"
-  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
+  build $bin "$objs $libs $args" "gcc $cflags -o $bin $objs [::libsflags $bin $libs] $lflags"
 }
 
 # bin_cov --
@@ -127,7 +176,6 @@ proc bin { bin objs lflags args } {
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - additional dependencies
 proc bin_cov { bin objs lflags args } {
-  #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 $::config::ldflags --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }

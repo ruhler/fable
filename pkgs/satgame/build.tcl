@@ -2,7 +2,7 @@ namespace eval "pkgs/satgame" {
   pkg satgame [list core app] "" ""
 
   # SatGame/Tests compiled
-  stdio $::b/pkgs/satgame/satgame-tests "/SatGame/Tests%" "satgame app"
+  stdio $::b/pkgs/satgame/satgame-tests "/SatGame/Tests%" "app satgame"
   testsuite $::b/pkgs/satgame/satgame-tests.tr $::b/pkgs/satgame/satgame-tests \
     "$::b/pkgs/satgame/satgame-tests"
 

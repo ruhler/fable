@@ -28,8 +28,9 @@ namespace eval "pkgs/app" {
 
     obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
       "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app $::config::sdl_cflags"
-    fble_bin $::b/pkgs/app/fble-app \
-      "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a" \
+    bin $::b/pkgs/app/fble-app \
+      "$::b/pkgs/app/fble-app.o" \
+      "$::b/pkgs/app/libfble-app.so $::b/pkgs/core/libfble-core.so $::b/lib/libfble.so" \
       "$::config::sdl_libs $::config::gl_libs"
     install $::b/pkgs/app/fble-app $::config::bindir/fble-app
 
@@ -43,15 +44,15 @@ namespace eval "pkgs/app" {
     #          (without fble- prefix).
     proc ::app { target path libs} {
       set objs $target.o
-      foreach lib $libs {
-        append objs " $::b/pkgs/$lib/libfble-$lib.a"
+      set nlibs ""
+      foreach lib [lreverse $libs] {
+        append nlibs " $::b/pkgs/$lib/libfble-$lib.so"
       }
-      append objs " $::b/pkgs/app/libfble-app.a"
-      append objs " $::b/pkgs/core/libfble-core.a"
+      append nlibs " $::b/pkgs/app/libfble-app.so $::b/pkgs/core/libfble-core.so $::b/lib/libfble.so"
       
       fbleobj $target.o $::b/bin/fble-compile \
         "--main FbleAppMain -m $path"
-      fble_bin $target $objs "$::config::sdl_libs $::config::gl_libs"
+      bin $target $objs $nlibs "$::config::sdl_libs $::config::gl_libs"
     }
   }
 }

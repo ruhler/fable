@@ -2,6 +2,8 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Install the C version of fbld, not the fble version.
+
 * http profiler server
  - Add support for HEAD method.
  - Return (501) NOT IMPLEMENTED for any method other than GET, HEAD.

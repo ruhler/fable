@@ -7,7 +7,7 @@ namespace eval "pkgs/hwdg" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Hwdg/Tests% --prefix Interpreted."
 
   # /Hwdg/Tests% compiled
-  stdio $::b/pkgs/hwdg/Hwdg/hwdg-tests "/Hwdg/Tests%" "hwdg app"
+  stdio $::b/pkgs/hwdg/Hwdg/hwdg-tests "/Hwdg/Tests%" "app hwdg"
   testsuite $::b/pkgs/hwdg/Hwdg/hwdg-tests.tr $::b/pkgs/hwdg/Hwdg/hwdg-tests \
     "$::b/pkgs/hwdg/Hwdg/hwdg-tests --prefix Compiled."
 }

@@ -376,6 +376,8 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledMod
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, "  .global %s\n", module_name->str);
+  fprintf(fout, "  .type %s, %%object\n", module_name->str);
+  fprintf(fout, "  .size %s, %zi\n", module_name->str, sizeof(FbleGeneratedModule));
   fprintf(fout, "%s:\n", module_name->str);
   fprintf(fout, "  .xword " LABEL "\n", path_id);                 // .path
   fprintf(fout, "  .xword %zi\n", module->deps.size);
@@ -1465,10 +1467,10 @@ void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
   fprintf(fout, "  mov FP, SP\n");
 
   FbleString* module_name = LabelForPath(path);
-  Adr(fout, "x2", "%s", module_name->str);
+  GAdr(fout, "x2", "%s", module_name->str);
   FbleFreeString(module_name);
 
-  Adr(fout, "x3", "%s", main);
+  GAdr(fout, "x3", "%s", main);
 
   fprintf(fout, "  br x3\n");
   fprintf(fout, "  ldp FP, LR, [SP], #16\n");
