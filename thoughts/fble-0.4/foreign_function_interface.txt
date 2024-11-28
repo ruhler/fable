@@ -597,3 +597,29 @@ Is there a modular compilation aspect to this? There is, right?
 I have three things to derisk. Let's get going on those.
 
 Next step: shared libraries on windows.
+
+---
+
+FAILED: bin/fble-disassemble
+gcc -std=c99 -Wl,--stack,1073741824 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -O3 -o ./bin/fble-disassemble ./bin/fble-disassemble.o  -Wl,-rpath,\$ORIGIN/../lib  -L ./lib -lfble
+C:/msys64/ucrt64/bin/../lib/gcc/x86_64-w64-mingw32/13.2.0/../../../../x86_64-w64-mingw32/bin/ld.exe: cannot find -lfble: No such file or directory
+collect2.exe: error: ld returned 1 exit status
+
+Let's figure out how to make and use a shared library on windows then.
+
+Looks like I need to name the file libfble.dll instead of libfble.so. That's
+enough to fix it?
+
+Next issue is we can't find the libfble.dll file at runtime. rpath doesn't
+seem to help (not surprising). LD_LIBRARY_PATH isn't helping. Running from the
+same directory as the .dll works. How to manage all that?
+
+I don't see anything analogous to rpath on windows. Looks like it checks
+current directory, directory of the executable, and system directory. But
+that's about it.
+
+I see msys installs libraries like SDL as static libraries rather than shared
+libraries. That suggests maybe we don't want to use shared libraries on
+Windows. Though I think it works in the build system via dlls if I can find a
+solution or workaround to the dll search path issue.
+
