@@ -480,3 +480,120 @@ That means I need to put it on the call to the specific binary I'm building,
 which means passing it through to stdio.
 
 Yeah. Works, but not pretty at all.
+
+---
+
+Now the build system is using shared libraries. Summary of things I don't
+like:
+* rpath is annoying
+* need for --allow-shlib-undefined for app test binaries.
+
+Next steps:
+* do shared libraries work on windows?
+* remind myself again why I want shared libraries.
+
+Reminding myself of how we got here:
+* Foreign function interfacing doesn't scale today to build all possible
+  foreign functions into the interpreter binary and the type of the fble main
+  function.
+* To make it scale better:
+  - Have a generic FFI monad type that you can implicitly extend by
+    implementing your own ffi operations.
+  - Allow fble packages to ship the code needed for their own ffi operations.
+* Compiled fble packages can already ship code needed for their own ffi
+  operations. Interpreted fble packages can't.
+* So the first primary goal is to make it possible for interpreted fble
+  packages to ship their own ffi operations.
+* The way it works in practice today, is each package (core, app) ships its
+  own interpreter (fble-stdio, fble-app), which declares the set of permitted
+  ffi operations. It's not possible, for example, to write an fble-app that
+  makes use of an FFI operation fble-app doesn't know about.
+* Thus, the proof will be my ability to write an fble-app that makes use of an
+  FFI operation fble-app doesn't know about, and run it interpreted.
+
+Let's come up with something a little more specific, because I'm sold on the
+issue yet.
+
+We are writing an fble-app. So we need SDL.
+Say I want to write my own web browser as an fble-app. I need sockets, which
+is a foreign function interface. That would be part of a 'sockets' package. So
+we have the following packages:
+
+* stdio, app
+* sockets
+* browser
+
+The 'sockets' package has to ship binary code, like stdio and app packages.
+Because they provide ffi implementations.
+
+The 'browser' package should have the option of being entirely interpreted.
+But it's also the only package that knows it needs the ffi code from both app
+and sockets.
+
+The best option we have today for this kind of thing is for browser to provide
+its own interpreter, fble-browser. fble-browser is a binary linked with both
+app and sockets to get the ffi calls it needs.
+
+If I didn't care about interpreted code at all, this wouldn't be an issue.
+
+Even if I care about interpreted code, as long as I don't mind shipping
+fble-browser as a custom interpreter, it's not an issue. What's the issue
+with that?
+
+Certainly it would be convenient if there was a single fble interpreter binary
+we could run that finds whatever ffi code it needs and loads it dynamically.
+
+Note, we could separate out ffi code from module code if we want. For example,
+maybe the 'app' and 'socket' packages are entirely interpreted, but they
+include libapp-ffi.so and libsocket-ffi.so libraries with the native bindings.
+You also need the linker flags for SDL, sockets, etc.
+
+Then the question is: can I write a single fble interpreter binary that knows
+how to dynamically load libapp-ffi.so and libsocket-ffi.so passed on the
+command line, and then lets you run your interpreted code?
+
+Another reason to support .so files is because it seems like a more standard
+thing to do than .a files, and I ought to try and get there eventually, right?
+
+For example, we can compare the output size of the fble install before and
+after switching to .so files.
+
+Before: 42M: 22M bin, 18M lib
+After: 12M: 292K bin, 8.3M lib
+
+That's pretty significant.
+
+Summary of options:
+1. Avoid use of .so files.
+ - have to provide custom interpreter for different combinations of ffi
+   packages.
+ - deal with larger file sizes.
+2. Use of .so files without dlopen.
+ - have to provide custom interpreter for different combinations of ffi
+   packages.
+ - does it work on windows?
+ - smaller file sizes, potentially more standard, but also lots of pitfalls to
+   worry about there.
+3. Use of .so files with dlopen
+ - full flexibility
+ - does it work on linux?
+ - does it work on windows?
+
+Interesting that the language changes for FFI and the restructuring of how we
+do stdio and app ffi typing doesn't depend on any of these options.
+
+Anyway, key things to de-risk:
+* building with shared libraries on windows (no dlopen yet)
+* dlopen on linux
+* dlopen on windows
+
+Is there a modular compilation aspect to this? There is, right?
+* I want to be able to ship compiled code for packages that doesn't include
+  the fble source code.
+* It's a similar composition problem. But work-aroundable. Namely: you
+  implement your own custom interpreter pre-linked against whatever packages
+  you need.
+
+I have three things to derisk. Let's get going on those.
+
+Next step: shared libraries on windows.
