@@ -34,7 +34,8 @@ namespace eval "pkgs/core" {
   #   path - the module path to use as Stdio@ main.
   #   libs - additional fble packages this depends on, not including core,
   #          without the fble- prefix.
-  proc ::stdio { target path libs} {
+  #   lflags - additional linker flags to use when creating the binary.
+  proc ::stdio { target path libs lflags} {
     set objs $target.o
     set nlibs ""
     foreach lib [lreverse $libs] {
@@ -44,7 +45,7 @@ namespace eval "pkgs/core" {
 
     fbleobj $target.o $::b/bin/fble-compile \
       "--main FbleStdioMain -m $path"
-    bin $target $objs $nlibs ""
+    bin $target $objs $nlibs $lflags
   }
 
   # /Core/Stdio/Cat% interpreted test.
@@ -64,13 +65,13 @@ namespace eval "pkgs/core" {
     "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% compiled.
-  stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" ""
+  stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" "" ""
   install $::b/pkgs/core/fble-cat $::config::bindir/fble-cat
   fbld_man_usage $::b/pkgs/core/fble-cat.1 $::s/pkgs/core/fble-cat.fbld
   install $::b/pkgs/core/fble-cat.1 $::config::mandir/man1/fble-cat.1
 
   # /Core/Stdio/FastCat% compiled.
-  stdio $::b/pkgs/core/fble-fast-cat "/Core/Stdio/FastCat%" ""
+  stdio $::b/pkgs/core/fble-fast-cat "/Core/Stdio/FastCat%" "" ""
   install $::b/pkgs/core/fble-fast-cat $::config::bindir/fble-fast-cat
 
   # /Core/Stdio/HelloWorld% interpreted test.
@@ -78,7 +79,7 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/HelloWorld% | grep hello"
 
   # /Core/Stdio/HelloWorld% compiled test.
-  stdio $::b/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/HelloWorld%" ""
+  stdio $::b/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/HelloWorld%" "" ""
   test $::b/pkgs/core/Core/Stdio/fble-stdio-test.out \
     $::b/pkgs/core/Core/Stdio/fble-stdio-test \
     "$::b/pkgs/core/Core/Stdio/fble-stdio-test > $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
@@ -90,7 +91,7 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Tests% --prefix Interpreted."
 
   # Core/Tests compiled
-  stdio $::b/pkgs/core/Core/core-tests "/Core/Tests%" ""
+  stdio $::b/pkgs/core/Core/core-tests "/Core/Tests%" "" ""
   testsuite $::b/pkgs/core/Core/core-tests.tr $::b/pkgs/core/Core/core-tests \
     "$::b/pkgs/core/Core/core-tests --prefix Compiled."
 }

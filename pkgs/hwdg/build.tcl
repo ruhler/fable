@@ -7,7 +7,9 @@ namespace eval "pkgs/hwdg" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Hwdg/Tests% --prefix Interpreted."
 
   # /Hwdg/Tests% compiled
-  stdio $::b/pkgs/hwdg/Hwdg/hwdg-tests "/Hwdg/Tests%" "app hwdg"
+  # --allow-shlib-undefined because we know this doesn't use the part of the
+  # app package that depends on SDL.
+  stdio $::b/pkgs/hwdg/Hwdg/hwdg-tests "/Hwdg/Tests%" "app hwdg" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/hwdg/Hwdg/hwdg-tests.tr $::b/pkgs/hwdg/Hwdg/hwdg-tests \
     "$::b/pkgs/hwdg/Hwdg/hwdg-tests --prefix Compiled."
 }

@@ -10,17 +10,17 @@ namespace eval "pkgs/md5" {
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/md5 -I $::b/pkgs/md5 -m /Md5/Tests% --prefix Interpreted."
 
   # Md5/Tests compiled
-  stdio $::b/pkgs/md5/md5-tests "/Md5/Tests%" "md5"
+  stdio $::b/pkgs/md5/md5-tests "/Md5/Tests%" "md5" ""
   testsuite $::b/pkgs/md5/md5-tests.tr $::b/pkgs/md5/md5-tests \
     "$::b/pkgs/md5/md5-tests --prefix Compiled."
 
   # Md5/Bench compiled
-  stdio $::b/pkgs/md5/md5-bench "/Md5/Bench%" "md5"
+  stdio $::b/pkgs/md5/md5-bench "/Md5/Bench%" "md5" ""
 
   # fble-md5 program.
   fbld_man_usage $::b/pkgs/md5/fble-md5.1 $::s/pkgs/md5/fble-md5.fbld
   install $::b/pkgs/md5/fble-md5.1 $::config::mandir/man1/fble-md5.1
-  stdio $::b/pkgs/md5/fble-md5 "/Md5/Main%" "md5"
+  stdio $::b/pkgs/md5/fble-md5 "/Md5/Main%" "md5" ""
   install $::b/pkgs/md5/fble-md5 $::config::bindir/fble-md5
 
   # fble-md5 test

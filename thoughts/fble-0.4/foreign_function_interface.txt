@@ -427,3 +427,56 @@ Okay, it looks like it works. One annoying problem now: we have to know to
 link against SDL for any stdio programs that depend on the 'app' package.
 That's pretty annoying?
 
+It's not just annoying. It's a real problem. I explicitly want people to be
+able to run these unit tests without having SDL installed on their system.
+
+It used to work. How?
+
+We conditionally compile app.o into libfble-app.so based on enable_fble_app.
+The stdio function adds the library as the list of objects to the test binary.
+I guess before it would follow references from main, not see anything from
+app.o, so not require anything from SDL. Now it sees libfble-app.so, we get a
+false dependency, so it complains about the missing (false) dependency on SDL.
+
+The person linking against libfble-app.so ought not to have to know what
+libraries it depends on, don't you think? Except, they need to know if they
+have to install that library or make sure it is installed.
+
+That's pretty annoying.
+
+Brainstorm:
+* Any options we can pass to the linker to ignore the error, and everything
+  goes away nicely in this case? We just end up with potential mysterious
+  errors when you really do want to link against SDL.
+* Use package config for each library to know what additional things to link
+  against. Or something similar built into my build system.
+* Give up on shared libraries approach.
+
+Let's explore the options at least. Note this is going to be a general issue
+with foreign function interface. You will write fble code that depends on
+other libraries. Users will want to reference some but not all modules from
+your package. They shouldn't have to know what external libraries they need to
+link with to make their particular program work, and they shouldn't have to
+install and link against libraries they don't need. But they should be
+informed when they do need to link against a particular library.
+
+Note that static libraries apparently work fine in that sense. You get an
+error at static link time unless you specify the set of library dependencies
+you need.
+
+First step: understanding linker options. I want some way to say: ignore this
+unmet dependency, because I know it won't be an issue at runtime.
+
+-Wl,--unresolved-symbols=ignore-in-shared-libs
+--[no-]allow-shlib-undefined 
+
+Let's try --allow-shlib-undefined. Where would I add this? It doesn't really
+make sense to put it anywhere specifically. The only reason I can safely do
+this, and the only reason I will be able to safely do it in the end dream, is
+because I know the test apps happen to not depend on any of the code where the
+library in question is needed. The build system doesn't know that in general.
+
+That means I need to put it on the call to the specific binary I'm building,
+which means passing it through to stdio.
+
+Yeah. Works, but not pretty at all.

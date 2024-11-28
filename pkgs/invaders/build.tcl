@@ -9,9 +9,11 @@ namespace eval "pkgs/invaders" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%"
 
   # /Invaders/Tests% compiled
-  stdio $::b/pkgs/invaders/invaders-tests "/Invaders/Tests%" "app invaders"
+  # --allow-shlib-undefined because we know this doesn't use the part of the
+  # app package that depends on SDL.
+  stdio $::b/pkgs/invaders/invaders-tests "/Invaders/Tests%" "app invaders" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/invaders/tests-compiled.tr $::b/pkgs/invaders/invaders-tests \
-    "$::b/pkgs/invaders/invaders-tests"
+    "$::b/pkgs/invaders/invaders-tests" 
 
   if $::config::enable_fble_app {
     fbld_man_usage $::b/pkgs/invaders/fble-invaders.1 $::s/pkgs/invaders/fble-invaders.fbld

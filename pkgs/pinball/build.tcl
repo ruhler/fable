@@ -9,7 +9,9 @@ namespace eval "pkgs/pinball" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Pinball/Tests% --prefix Interpreted."
 
   # /Pinball/Tests% compiled
-  stdio $::b/pkgs/pinball/pinball-tests "/Pinball/Tests%" "app pinball"
+  # --allow-shlib-undefined because we know this doesn't use the part of the
+  # app package that depends on SDL.
+  stdio $::b/pkgs/pinball/pinball-tests "/Pinball/Tests%" "app pinball" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/pinball/tests-compiled.tr \
     $::b/pkgs/pinball/pinball-tests \
     "$::b/pkgs/pinball/pinball-tests --prefix Compiled"

@@ -7,10 +7,14 @@ namespace eval "pkgs/games" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Games/Tests% --prefix Interpreted."
 
   # /Games/Tests% compiled
-  stdio $::b/pkgs/games/Games/games-tests "/Games/Tests%" "app games"
+  # --allow-shlib-undefined because we know this doesn't use the part of the
+  # app package that depends on SDL.
+  stdio $::b/pkgs/games/Games/games-tests "/Games/Tests%" "app games" "-Wl,--allow-shlib-undefined"
   testsuite $::b/pkgs/games/Games/games-tests.tr $::b/pkgs/games/Games/games-tests \
     "$::b/pkgs/games/Games/games-tests --prefix Compiled."
 
+  # --allow-shlib-undefined because we know this doesn't use the part of the
+  # app package that depends on SDL.
   stdio $::b/pkgs/games/reverse-complement \
-    "/Games/BenchmarkGame/ReverseComplement/Stdio%" "games app"
+    "/Games/BenchmarkGame/ReverseComplement/Stdio%" "games app" "-Wl,--allow-shlib-undefined"
 }
