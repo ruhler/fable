@@ -86,7 +86,8 @@ proc asm { obj src args } {
 }
 
 # The filename extension to use for libraries on this platform.
-set ::lext ".so"
+set ::lext ".a"
+#set ::lext ".so"
 
 # lib --
 #   Build a library.
@@ -95,8 +96,8 @@ set ::lext ".so"
 #   lib - the library file to build
 #   objs - the list of .o files to include in the library.
 proc lib { lib objs } {
-  #build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
-  build $lib $objs "gcc -o $lib -shared $objs"
+  build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
+  #build $lib $objs "gcc -o $lib -shared $objs"
 }
 
 # lib_cov --
