@@ -107,7 +107,8 @@ proc lib { lib objs } {
 #   lib - the library file to build
 #   objs - the list of .o files to include in the library.
 proc lib_cov { lib objs } {
-  build $lib $objs "gcc -o $lib -shared $objs --coverage"
+  build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
+  #build $lib $objs "gcc -o $lib -shared $objs --coverage"
 }
 
 # Helper function to get extra flags for linking against local .so files.
