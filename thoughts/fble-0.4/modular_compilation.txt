@@ -559,3 +559,19 @@ about some other missing library.
 
 Okay, figured it out. I need -lgcov or --coverage when building the shared
 library. Let's try that route and see how goes.
+
+---
+
+How to make users of libraries agnostic as to whether they are dynamic or
+shared?
+
+We already have that for system libraries. -L ... -l... No need to care. The
+difference for local libraries is we need to take dependencies on them, which
+means we need to know their names.
+
+The solution ought to be simple. Have lib return the name of the generated
+library. Pass that around instead of the explicit name.
+
+The only annoying bit would be spec-test.run.tcl. Can I remove those bit of
+references? I ought to be able to.
+
