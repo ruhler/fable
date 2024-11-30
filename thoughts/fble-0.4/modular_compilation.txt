@@ -575,3 +575,14 @@ library. Pass that around instead of the explicit name.
 The only annoying bit would be spec-test.run.tcl. Can I remove those bit of
 references? I ought to be able to.
 
+---
+
+Can we have all libraries built the same? Avoid the distinction between lib
+and shared_lib?
+
+Let me see what all the uses of those are today.
+
+Everyone is using shared_lib today except libfbletest.a. Let's switch
+libfbletest.a over to shared_lib. Then everyone will be the same. Then we can
+rename it all back to just lib.
+

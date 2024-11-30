@@ -1,7 +1,7 @@
 namespace eval "test" {
   set cflags "-I $::s/include -I $::b/test"
-  set libs "$::b/test/libfbletest.a"
-  set libs_cov "$::b/test/libfbletest.a"
+  set libs "$::b/test/libfbletest.so"
+  set libs_cov "$::b/test/libfbletest.so"
 
   set lib_sources {
     test.c
@@ -16,7 +16,7 @@ namespace eval "test" {
     fble-test.c
   }
 
-  # libfbletest.a
+  # libfbletest.so
   set objs [list]
   foreach {x} $lib_sources {
     set base [file rootname [file tail $x]]
@@ -26,7 +26,7 @@ namespace eval "test" {
     obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/fble-$base.usage.h
     lappend objs $::b/test/$base.o
   }
-  lib $::b/test/libfbletest.a $objs
+  shared_lib $::b/test/libfbletest.so $objs
 
   # test binaries
   foreach {x} $bin_sources {

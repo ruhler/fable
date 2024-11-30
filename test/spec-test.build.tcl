@@ -7,7 +7,7 @@ namespace eval "spec-test" {
     $::b/bin/fble-disassemble.cov \
     $::b/test/fble-test.cov \
     $::b/test/fble-mem-test.cov \
-    $::b/test/libfbletest.a \
+    $::b/test/libfbletest.so \
   ]
 
   foreach dir [dirs $::s/spec ""] {
