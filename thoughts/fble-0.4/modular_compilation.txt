@@ -38,3 +38,488 @@ Need a way to find and load a compiled .fble file on the fly. For example,
 someone ships a .so with their compiled code, and you want to run it with your
 fble-stdio app.
 
+---
+
+See foreign_function_interface.txt for many related thoughts.
+
+My latest thinking is:
+* '?' '<' <type> '>' as concrete syntax for an undefined expression.
+  Use this to be able to write .fble header files.
+* When reading a .fble for types only, have the compiler be smarter about only
+  loading dependencies needed to get the types.
+* You distribute a package with optional libfble-<pkg>.so file and .fble
+  source. Types are read from the .fble files. We always load the
+  libfble-<pkg>.so file if we can. If it defines a module implementation,
+  prefer that. Otherwise fall back to the .fble source code and interpreter.
+
+Some scenarios:
+* Pure interpreted - you ship the full .fble source. Your package is
+  interpreted.
+* Binary only - you ship a libfble-<pkg>.so with compiled code, and .fble
+  source with ?<...> for all the implementations to provide the type info and
+  documentation.
+
+If you wanted to, I suppose you could implement your own fble compiled module
+directly in native, rather than have any .fble source code. Note this is a
+different approach from FFI. You would present an FbleGeneratedModule, rather
+than an FbleFFIFunction.
+
+Now that I think about it, let's use the FbleGeneratedModule approach for FFI
+rather than add FFI to the language. In that case, what do we need to support
+the FbleGeneratedModule approach in practice?
+
+We should add the ?<...> construct to the language. That's so fble-compile can
+compile code against precompiled modules.
+
+Once we have that, in theory I can have two variations on .fble files for a
+module: the actual source passed to the compiler, and the 'header' version.
+
+How do I keep these separate in practice? What's a normal developer flow going
+to look like? Honestly I like having them next to each other, named the same,
+but with different extension. What would we call them? Would we rename them at
+install time?
+
+I think it's nice to make it obvious whether the code is a header file or full
+source from the extension. So people know what to expect. We already have a
+nice proposal for that: .fble for full source, .fble.@ for the type. Because
+.fble.@ is a special funny kind of thing.
+
+And now it's simple, right?
+
+* When you load a module for its type, you look for the .fble.@ file first,
+  then the .fble file.
+* When you load a module for its value, you look for the .fble file.
+* When you compile an fble module, you compile the .fble file, but also check
+  the type against the .fble.@ file if it exists.
+
+Bad things happen if the type of the .fble file doesn't match the type of the
+.fble.@ file. Maybe that's one reason to prefer one over the other? If you are
+shipping a .fble file, there is no reason to ship a .fble.@ file too. If you
+aren't shipping a .fble file, you need to ship a .fble.@ file. Things can't
+get out of sync if you don't ship them both.
+
+We'll always have the possibility of the generated code not matching the
+.fble.@ type, but that seems harder to mess up in practice.
+
+Hmm...
+
+Imagine we are shipping pure interpreted. Then locally all you have are .fble
+files. Easy.
+
+Imagine we are shipping binary instead. Locally you'll need both. At install,
+you'll want just the header files.
+
+If the compiler is looking for the header files, seems like you should name
+the header files .fble. Name the implementation files something special. For
+example, .fble.%? But that's weird to me. The main implementation of fble
+should be called .fble, then header should be called something different.
+
+Okay then, how about this:
+
+.fble always used for full source.
+.fble.@ always used for header.
+
+If you ship just .fble, that's used for type and interpreter.
+If you ship just .fble.@, that's used for type, no interpreter supported.
+If you ship both, 
+  For interpreter: use .fble for code, use .fble.@ for type, and verify the
+  types match at runtime.
+
+  For type, just use .fble.@.
+
+In other words, .fble.@ is the source of truth for the type. If there is a
+discrepancy, it's considered a bug in the .fble file, and we validate that
+before loading and using the .fble file.
+
+Summary of proposal:
+* ?<...> syntax for undefined value, for use in .fble.@ files.
+* .fble.@ file source of truth for type, if it is present. It will always be
+  read if present.
+* No change to fble-compile command line invocation.
+* Developers organize their code as .../Foo/Foo.fble.@, .../Foo/Foo.fble.
+  They can chose to install just the Foo.fble.@, the Foo.fble, or both.
+
+After I make this change, I'll should be able to compile a libfble-<pkg>
+library, then compile other code against it using a -I path that just contains
+the .@ files, and have it work.
+
+Is this all I need for the FFI case? For compiled code, I think yes. I can
+manually write my own generated module code. Maybe we need some assumptions
+about naming in the generated code. More on that in a second.
+
+For the interpreted case, I want interpreted code to be able to load compiled
+modules. We need some way to tell the Load function about pre-compiled
+modules.
+
+Today we have a way to tell FbleLink that the module we want to link is
+compiled. Really what I want is to tell FbleLink the list of modules that are
+compiled. For this case, we assume compiled code never tries to reference
+interpreted code? Yes, because we generate the code to manually link via
+direct reference to FbleGeneratedModule. Maybe we want to relax that
+eventually, but I think it's fine to do that as an orthogonal project?
+
+Good. So change the interface to FbleLink to pass a list of
+FbleGeneratedModule files. Any time we try to load, first we check that list.
+Fall back to the interpreter if it's not in there.
+
+So, for example, FbleStdioMain will add to the list of precompiled modules
+whatever you give plus any FFI compiled modules. FbleLink should double check
+the type from the .fble.@ file. That happens implicitly in the interpreted
+load of the .fble file that references the precompiled module.
+
+Now, back to the question of exposing internal names. If I'm manually writing
+my FbleGeneratedModule instead of relying on the compiler to generate it. The
+challenge is, if A depends on B, and you compile A, we assume we know what the
+name of the FbleGeneratedModule for B is. Can, or should, we not do that?
+
+Here's my proposal:
+* FbleGeneratedModule stores 'deps' as a module path instead of as
+  FbleGeneratedModule.
+
+It's that simple. Now, we load interpreted or compiled on a module-by-module
+basis. The compiled code for A doesn't have to care if B is compiled or
+interpreted, or what the name of the compiled code is for B if B is compiled.
+
+What this does mean is we need to tell FbleLink about the complete list of
+compiled modules. That's a pain. And we would need to know generated compiled
+code names in that case regardless.
+
+In a future world, it would be nice if FbleLink could dlopen to figure that
+out. It's going to have to look for a libfble-foo.so file to load for the
+compiled code anyway. If it can do that, it can look to see what's statically
+linked as well, but, well, it shouldn't have to. In other words, it discovers
+the list of compiled modules from the package search path. No need to tell it
+things explicitly. I like that.
+
+Summary of end vision:
+* Ship libfble-foo.so with your package. FbleLink will look for it and load it
+  to try and find compiled code first.
+* Ship Foo.fble for FbleLink to interpret from if not compiled.
+* Ship Foo.fble.@ to give source of truth type for the module.
+* Compiled code for a module has FbleGeneratedModule type using a standard
+  symbol name based on the module path. Each FbleGeneratedModule refers to the
+  module path of any dependencies. It's FbleLink's job to locate and load
+  those dependant modules.
+
+Question on mapping module path to symbol:
+* We could use a standard name mangling.
+* Or, each .so file defines some standard init name that gives back the list
+  of FbleGeneratedModule's that it provides.
+
+Standard name mangling sounds fine to me. It's straight forward. It just means
+we make the name part of the standard. Note this is a platform-specific part
+of the standard, not tied to the fble language spec (though we could if we
+want for practical reasons).
+
+A separate list of generated modules seems ... well. dlsym can already do the
+lookup. The dynamic symbol table is basically that. I don't know what
+algorithm dlsym uses, but why not reuse that?
+
+Name mangling seems straight forward. We would have to do it anyway, even if
+we wanted some standard init name. Makes sense to me to do it at the module
+level, not the package level.
+
+But, if we are assuming some standard for module names, then no need, for now,
+to change FbleGeneratedModule to list deps instead of generated modules.
+Also, when would we be able to double check the type of the
+FbleGeneratedModule is what's expected by the compiled code?
+
+Fine. Now, can we try to put everything together into a coherent development
+plan?
+
+Phase 1: Link against a precompiled library without source.
+* Add ?<type> expression.
+* Add support for .fble.@ files.
+  - When loading for a type, load that file if it exists instead of .fble.
+  - When loading for a value, load that file if it exists in addition to the
+    .fble, and very the .fble type matches it.
+* Now, in theory, I could distribute just the .fble.@ files and the
+  libfble-foo.a file and generated compiled code from it that works.
+
+Phase 2: Use precompiled library from interpreted code, short term.
+* Change FbleLink to take a list of FbleGeneratedModules to look in.
+ - note: .fble.@ or .fble is required for type info.
+* Now, in theory, I can manually write StdioIO and other FFI code and pass
+  that in as part of FbleStdioMain.
+
+Phase 3: StdioIO and AppIO rewrite
+* Change return type from Bool to Int
+* Pull StdioIO% out into a hand written module implementation.
+  The native implementation should need no module dependencies.
+* Rewrite the AppIO% API in whatever similar way makes sense.
+
+Phase 4: Dynamic loading of package libraries.
+* Remove FbleGeneratedModules list option to FbleLink.
+* Have FbleLink look for and dynamically load .so/.dll files.
+
+And beyond:
+* Write my sockets module and http server.
+* etc...
+
+I do have the option to jump straight to Phase 4 instead of going via Phase 2.
+We could even start with that, right?
+
+For example, what if I have FbleLink try to load the generated module with
+dlsym, and compare that with what is provided. If we can get that to work on
+linux and windows, then we should be in good shape, right?
+
+From some tests, it shouldn't be hard to make work on linux. We just need
+something like:
+
+  #include <dlfcn.h>
+  void* dlFoo = dlsym(NULL, "Foo");
+
+  -ldl
+
+dlfcn isn't c99 though, meaning I would have to go back to platform specific
+coding again.
+
+If we aren't automatically loading the required library, then we need
+something like the following first:
+
+  dlopen("libfoo.so", RTLD_LAZY | RTLD_GLOBAL); 
+
+Assume there is some windows magic to make the same thing work. How should I
+proceed on windows?
+* libfble-<pkg>.dll needs to be shared library.
+* libfble.a could stay a static library, no problem.
+* We need to track down libfble-<pkg>.dll files at runtime. I want to control
+  the search path myself. If I had code in place for that, then this would be
+  not so bad. I don't have to worry about annoyances of rpath.
+
+What I would want is to update the FbleLink code to explicitly try to load any
+and all libfble-<pkg>.so files during load?
+
+The downside there is that we can no longer bundle all the code with a
+compiled fble binary. We would have to install the libfble-<pkg>.so files
+somewhere and track down where they are at runtime. But that's the whole
+problem with using .dlls for those things on windows in the first place, so
+that's probably expected.
+
+On Linux, I can statically link a function into the executable, then make it
+dlsym accessible with -rdynamic (and presumably related options). That's kind
+of cool. It means we aren't forced to find symbols in separate .so files. We
+can find them in the currently running executable too if we want.
+
+One challenge is we don't know which package a module belongs to. We have a
+search path. When do we load the .so file for a package?
+
+Does it make sense to have one-to-one mapping from package name to .so file?
+Maybe you want to spread an implementation of a package across multiple .so
+files, or you want to bundle multiple packages into a single .so file?
+
+Part of the challenge is getting the type info for a module. We don't care
+today about the type of the main module or compiled modules we reference
+directly. But if we are loading a module from a package, we'll want to double
+check against the .fble.@ file? I suppose only if referencing it from
+interpreted code. If referencing from compiled code, we'll already have done a
+check and hope for the best.
+
+Let's try and summarize how we can find code:
+A. Embedded in the currently running executable.
+B. In a shared library in the current working directory.
+C. In a shared library in the same directory as the executable.
+D. In a shared library on the runpath.
+E. In a shared library on the package path.
+
+Linux supports (D) for auto loading, windows apparently doesn't.
+
+Well, I suppose we be flexible and do the best we can.
+
+1. See if the module symbol is already available.
+Allows for any preferred mix of (A), (B), (C), and (D).
+
+2. For each package path in turn:
+...
+
+We need to be careful about the case when the compiled code shows up in
+multiple places at once. And it would be nice to avoid dlopening the same
+packages over and over. I worry about namespace collisions.
+
+If we don't have to worry about collisions, I would say:
+
+At the start of FbleLink, load all the .so files from the package path. Then,
+when looking for a module, see if we loaded it yet or not.
+
+Do we need to worry about security? Like, it's dangerous to load an arbitrary
+.so file? Not sure what we can do about that. If you are providing the package
+path with that directory, we need to be okay to open it.
+
+I forget a little bit how the package path and module search path works.
+Anyway, seems reasonable to start by loading every .so you find on the package
+path, then search for modules in whatever you loaded.
+
+Is that too expensive? We end up loading a bunch of code we don't need? How
+else can we know what we need to load though?
+
+You almost wish the module path told you the package it belongs to.
+
+---
+
+I remember how it works today. The main thing for finding modules is the
+module search path, which is the list of root directories to search in. The
+package search path gives you a way to easily add a package to the module
+search path.
+
+Stepping back, what are the problems I'm trying to solve here?
+* Prevent different packages from defining the same modules.
+* Define what .so files to load to find a particular module.
+
+Today nothing prevents different packages from defining the same modules. This
+could lead to collision. It gives a way to work around abstract type access
+restrictions. That's not great.
+
+How might we structure things differently?
+
+Require all packages be installed to the same module root?
+* But then we have no way to mix system and locally provided modules.
+
+Commit to the first module root that has a prefix of the package path? For
+example, assume package A provides /Foo/Bar% and package B provides
+/Foo/Bar/Sludge%. If package A is on the path before package B, then when
+looking for /Foo/Bar%, you find it in A and stop. When looking for
+/Foo/Bar/Sludge%, you find /Foo/Bar% in A, then commit to looking there for
+Sludge, you don't find it. If B is before A, then looking for /Foo/Bar%, you
+see the path in B and commit there?
+
+Does that help with the build dependency tracking issue we have with
+fble-deps? Not entirely. You could still add a new module to an earlier
+package in the search path that conflicts with something later.
+
+Based on the system vs local idea, we need some way to provide multiple
+arbitrary paths to module roots. We need to search those paths. I seem to be
+suggesting that we want to enforce somehow that trees in these different paths
+don't overlap in some way, or at least make it well enough defined that if you
+have some path in A, you can't have some subpath of that path in B?
+
+It would be nice if we can organize code where different subpackages are in
+different directories. Let's look at some examples:
+
+A provides /Foo/Bar%, B provides /Foo/Bar/Sludge%
+* Ought to be disallowed.
+
+A provides /Foo/Bar/Sludge%, B provides /Foo/Bar%
+* Ought to be disallowed.
+
+A provides /Foo/Bar%, B provides /Foo/Sludge%
+* Ought to be allowed?
+
+A provides /Foo%, B provides /Foo/Sludge%
+* ??? Ought to be disallowed per above?
+
+That suggest we look at .fble file availability. When searching for
+/Foo/Sludge%, for each module root:
+* Does this have /Foo%? If yes, commit to this package. If no, allow it to be
+  in another package.
+
+Another aspect to consider is how to link with libraries directly instead of
+via the search path.
+
+For example, I'm thinking of naming the .so files after the modules, not the
+packages. Instead of libfble-core.so, have libfble-Core.so? Allow there to be
+libfble-Core-Foo.so and libfble-Core-Bar.so?
+
+Seems like we want the entire module path in the library name. We need a way
+to convert the '/' in the module name.
+
+Or, associate each package with a module path prefix. For the package
+/Foo/Bar%, distribute it as .../Foo/libfble-Bar.so. To link against the
+package, you list package directories in order: -L .../Foo -lfble-Bar.
+
+We distinguish between empty directories - for organization, and directories
+with a Foo.fble or Foo.fble.@ or libfble-Foo.so. As soon as we find one of
+those in the package search path, we commit to that location for all
+submodules.
+
+Now, what if the same module is defined in multiple places?
+* We have a well defined search path to tell us which to use.
+* We load .so files using RTLD_LOCAL, keep track of the handles by name, load
+  them as soon as we encounter a submodule, and look directly for the
+  submodule in the loaded .so file.
+
+In other words, submodule gives us a search path, we traverse from the root
+and get a .fble or .so from a parent path. Look for the submodule there. If
+not found, error out.
+
+How about, use raw .so or .dll extension for a precompiled module? Like,
+either we have Foo.fble, Foo.fble.@, and/or Foo.so. There is an option to the
+linker to avoid the lib<...>.so name mangling. For example: -l:Foo.so 
+
+The implications of this change are we now need to search the entire module
+path, not just jump right to the end module. But that's true as soon as we
+start bundling multiple modules into the same file, so that makes sense to me.
+
+Good. We have a solid proposal now:
+* Keep package search path as is for now, and the code organization we have.
+* Keep module search path as is for now.
+* When looking for modules, look for parents first, as soon as you find any
+  parent, commit to the current module root for that module.
+* Put .so files for a module tree in Foo.so where you would have had Foo.fble.
+
+Now then, going back to how to organize the search code for a module:
+
+1. Search in the current executable.
+2. Search in already loaded .so files explicitly, we'll keep track of the
+module tree for each loaded .so, so we know which one is the right one if any.
+3. Search on disk, loading a .so and using it if appropriate.
+
+Imagine we build some fble-foo executable. We can link it against module
+libraries statically, and everything is fine (on Linux at least, assuming we
+used export dynamic). We can link it against module libraries dynamically on
+Linux, using rpath to find the .so files. What about Windows?
+
+I expect the executable is installed to .../bin/ and called from an arbitrary
+place. How can it find the .dll files it needs? Can I make it relative to
+where the binary is installed?
+
+Things to look into:
+* SxS manifest redirection
+* PATH - as a brute force, we could use this maybe.
+
+Looks like SxS could work for us. We can compile it into the executable or
+install it with the executable. It should be able to list for us where all the
+.dll files are that it wants to load.
+
+Note that the dlopen/dlsym equivalent on windows appears to be
+LoadLibrary/GetProcAddress?
+
+---
+
+I have a clear vision now I think. How do I want to get there?
+
+Brainstorm of tasks:
+* Figure out how to use SxS on windows.
+* Avoid hard coding .so vs. .dll in build system.
+* Pass FbleGeneratedModuleV instead of FbleGeneratedModule* to FbleLink.
+* Get fble building again on windows.
+* Update search algorithm to commit as soon as parent module found.
+* Add support for ?<...> construct.
+* Add support for reading types from .fble.@ files.
+* Add support for dlsym loading modules from the current executable.
+* Add support for dlsym loading modules from Foo.so files.
+* Change Stdio to return Int@ instead of Bool@.
+* Move StdioIO to a custom implemented module.
+* Move AppIO to a custom implemented module.
+* Start an fble user guide doc to document these things in detail?
+
+First priority should be to get the windows build working again. I just need
+to decide how to do that. Some options:
+* Learn about SxS, figure out how to use that to make .dlls work.
+* Switch back entirely to static libraries.
+* Switch just windows back to static libraries.
+* Go straight to LoadLibrary/GetProcAddress support.
+
+What I ought to do is figure out how to abstract away in the build system
+whether a library being used is shared or static. Switch to that. Save the
+code somewhere for switching to shared, but then go back to static. Or add a
+switch, but I don't have a good way to test the switch, so doesn't seem like
+the best approach.
+
+Let's do this.
+
+Step 1: Double check if we can use .so for  -l fble.cov, and if not,
+understand better why not.
+
+If we can, then no need to separate 'lib' from 'shared_lib' in the build
+system?
+

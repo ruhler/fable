@@ -623,3 +623,342 @@ libraries. That suggests maybe we don't want to use shared libraries on
 Windows. Though I think it works in the build system via dlls if I can find a
 solution or workaround to the dll search path issue.
 
+---
+
+Looking at Java and python approaches to native code, it seems like there's no
+magic easy solution. It's what I was already thinking: you can compile the
+native code into a custom interpreter, or use .so/.dll to explicitly
+dynamically load a library and call functions in it.
+
+Why it's important to keep the interpreter working:
+* For users who are not writing their own native code, they should be able to
+  distribute their programs in a platform independent manner and have it just
+  work on any platform that supports the fble language. That means
+  distributing source and running in an interpreter.
+
+Let's not worry about dynamic code loading for now. Assume we'll start by
+compiling custom interpreters as needed. There are still a lot of open
+questions about FFI. Let's get into them.
+
+1. What kind of enforcement do we want on what the FFI call can do?
+As soon as you are calling into native code, who knows what that native code
+will do? It can do anything the native platform lets it.
+
+Normally fble code is limited to:
+* Consuming CPU and memory resources.
+* Causing the program to 'error' out.
+* Computing the result of a function, which should be the same if the
+  arguments are the same and have no other side effects.
+
+With native code, you could do all sorts of crazy stuff:
+* Talk to the outside world.
+* Corrupt memory.
+* Read and write environment variables and files.
+* Ask for the time of day.
+* ...
+
+From a technical point of view, there's no difficulty letting native code do
+whatever it wants. I can already do that in the C code I write for fble. Users
+can already do that by writing custom C code into a function and passing that
+in to fble code to call. Anyone could write something that looks like a
+compiled module that does anything it wants.
+
+For my IO primitives today, I use a contrived IO monad to represent the side
+effects. Basically: IO A = Unit -> (Unit, A), where 'Unit' represents the
+world.
+
+I claim using 'IO A' instead of 'A' for FFI in fble code will make it
+significantly less likely for people to write functions with side effects that
+aren't captured in any way in the type of the function. Even if they could
+always do that kind of thing if they wanted.
+
+So there's value to giving an ffi expression: ffi <type> <name> an FBLE type
+of IO <type>, not <type>. And let's rename IO to 'FFI' to be a little more
+generic. Let's do that.
+
+How is the FFI type defined? There are a couple issues. First is the type we
+actually use. Second is how we name it 'FFI'.
+
+The IO type today is:
+
+  @ World@ = %(/Core/Monad/IO%)<*()>;
+  IO@ = <@ A@>(World@) { *(World@, A@); };
+
+Assuming nobody writes their own module in the path /Core/Monad/IO/..., nobody
+can instantiate the world from fble code. We can only instantiate it from
+native code.
+
+How would I generalize this to be built into the language, independent of the
+core library? Options:
+* Have a builtin type for World@.
+* Have a builtin type for IO@.
+* Have a special package type that nobody can access.
+
+The last option seems most pure to me. Then we can say FFI is:
+  (%()@<*()>) { ...
+
+Slightly annoying that we don't have a generic tuple type. I guess we would
+use the pattern approach we use for lists?
+
+Syntax today for package type is:
+
+  %(/foo/bar%)
+
+I have a special case for empty path:
+
+  %()
+
+Today that means any package. But now I'm saying I want a no package option.
+Is there a better way to describe that?
+
+Internally a path is FbleModulePath*. We can distinguish between an empty path
+and NULL. So, for example, have special cases:
+
+  %(/%)  - any path
+  %()    - no path
+
+Or, brainstorming:
+*  %(*)  - any path
+*  %(-)  - no path. Also known as: FFI native code only.
+
+Sounds reasonable to me.
+
+Now, how to do the type pattern matching for FFI?
+
+For lists, we apply a function that matches the right type pattern instead of
+creating a list out of thin air. Does something similar make sense for FFI?
+
+I want FFI to behave as a function that takes world as input and returns a
+pair of world and value? I would end up combining using return and do? So
+maybe FFI is syntax for a do function?
+
+do: <@ A@>(FFI@<A@> ma)<@ B@>((A@) { FFI@<B@>; } f) { FFI@<B@>; }
+
+It feels too contrived. The option is to give an 'FFI' type in the FFI syntax,
+and just verify it works out there. We already represent the pair type in a
+list expression. May as well do it for FFI too.
+
+So, for example, I could say:
+
+<@>@ FFI@ = <@ A@>((%(-)) { *(%(-)<*()> s, A@ x); };
+
+% MyFunction = ?'my_function'<(Int@) { FFI@<Int@>; }>;
+
+The type is what we explicitly provide. The compiler can enforce it has the
+right pattern. We can't enforce that's what the function actually does, but we
+can't do that in general anyway.
+
+Here's the first suggestion of concrete syntax for FFI:
+   
+   ? <word> '<' <type> '>'
+
+I had mentioned elsewhere the desire for 'undefined'. We could use similar
+syntax:
+
+   ? '<' <type> '>'
+
+For example, if you want to write a header file for something:
+
+<@ T@>(List@<List@<T@>>, List@<T@>) { List@<T@>; } Join = ?<@<Join>>;
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = ?<@<IsEmpty>>;
+
+That's convenient enough.
+
+(Int@) { FFI@<Int@>; } MyFunction = ?'my_function'<@<MyFunction>>;
+
+Better to pass explicit type in the expression than force use of let in the
+syntax. Because we can always use the typeof operator to easily pass the type.
+
+There. We now have a concrete proposal for 'undefined' and 'ffi' at the
+language level.
+
+Semantics of undefined are: runtime error at evaluation.
+
+Semantics of FFI are:
+* Invoke the native function with given name on your platform.
+* It's an error if the foreign function cannot be found.
+
+Conceptually, the interpreter is given a map from ffi name to corresponding
+code to compute the value. Compiled code references a symbol of the given name
+having code to compute the value.
+
+Next question: When do we resolve the foreign function? What type do we use on
+the native side to represent the function?
+
+Today we use something like:
+
+  FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile)
+
+Hmmm.... Now this is very interesting. Because we are returning a struct of
+values. That suggests the potential for abuse of my FFI@ monad type.
+
+For example, what's to stop me from writing an FFI function that returns an
+unsafe pure function? Nothing, right? You could write a generic FFI function
+that takes another FFI function as argument and returns a pure function that
+just passes unit in and ignores the unit out of the call.
+
+That suggests, maybe, we shouldn't try FFI semantics enforcement at the
+language level. It's just too easy to work around. Because we can't check
+types or restrict access to the 'world' in FFI.
+
+There's no loss of security, I claim, because you could already hack around
+things on your native platform if you really wanted to. We just need to set
+the culture right in setting the types right for FFI calls.
+
+The good news is, if we take that approach, no need to have FFI@ type baked
+into the language.
+
+And now, if we wanted, I could do things like:
+
+?'MyModule'<StdioIO@>;
+
+Where StdioIO@ is a collection of functions. Yeah. That's nicer.
+
+Anyway, back to the question of when to resolve things and what things look
+like in the C side.
+
+The simplest way conceptually is to call the FFI code every time the
+expression is evaluated:
+
+  FbleValue* FbleFFIFunction(FbleValueHeap* heap, FbleProfile* profile)
+
+The profile is needed to add profile blocks to the function.
+
+What's annoying about this is if we call the FFI function multiple times, it
+ends up adding multiple blocks to the profile and doing the lookup multiple
+times. You can prevent that with proper fble code easily enough. But it seems
+like a trap to fall in to call FFI code from a function call.
+
+We know the FFI call is 'pure'. Every time you run it, it should behave the
+same. You aren't passing arguments to it. A different approach is for the
+runtime to arrange for the FbleFFIFunction to be called exactly one time to
+compute the FbleValue*, then reuse that everywhere it is referenced. Treat it
+just like a module reference that way. The fble code stays the same, and the
+FFI implementation stays the same. You just worry less.
+
+If we took that approach, we could say the FFI function is resolved at program
+link time. I like that. It means we get an error even if the function is never
+used. Unless we don't want those kind of false dependencies in code?
+
+Again, you can always structure the fble code to have the same effect. It's
+not hard. For simplicity of implementation, it would be so much simpler to say
+we invoke the FbleFFIFunction exactly where it is in the code. Yes. Let's go
+with that to start.
+
+Summarizing where we are now:
+* '?' '<' <type> '>' is concrete syntax for undefined value.
+* At runtime, undefined value gives an error.
+* '?' <name> '<' <type> '>' is concrete syntax for FFI function with given
+  name and fble type <type>.
+* Native implementation for ffi is
+   FbleValue* <name>(FbleValueHeap*, FbleProfile*)
+* For interpreter, we pass a map from name to (FbleValue*)(*)(FbleValueHeap*,
+  FbleProfile*) with list of supported FFI calls.
+* If the symbol is not found, you get an error.
+* Encourage people to use FFI@ type for their FFI functions.
+
+Note: you could get a compile time error for bad FFI in case of compiled
+code. That sounds reasonable to me.
+
+Now, StdioIO@ is entirely natural as FFI. But what about FbleApp? And what
+about accessing command line arguments and returning exit status result?
+
+---
+
+It makes sense to me to have the fble-stdio interface be: you are given a list
+of string arguments. You do an IO computation that returns an Int@ status
+code. If you want to read or write files or stdin and stdout, you can use the
+FFI library we provide. Note that the FFI interaction is at the boundary of
+code: most users will have no interaction at all with the FFI functions
+directly. They should be using the Stdio@ monad instead.
+
+For fble-app interface, something similar. You are given a list of string
+arguments. You do an IO computation that returns an Int@ status code. For
+generality, probably nice to have the same interface as fble-stdio. We provide
+FFI functions to initialize a display or window or some such, and then to
+interact with that window. Again, most people don't touch the FFI calls at
+all.
+
+I definitely am going to want, eventually, to be able to dynamically load .so
+and .dll files for foreign function calls. That doesn't mean we have to ship
+libfble as an .so file or .dll file if we don't want to. I shouldn't have to
+worry about default dynamic load paths if I don't want to. I expect we would
+do explicit load of any .so or .dll files associated with fble packages.
+
+Now consider the socket + stdio or socket + app case today, before we
+implement dynamic loading of fble packages. There are two entry points: with
+compiled code and without compiled code. With compiled code, FFI should be no
+issue. Without compiled code, ... I just need my own interpreter. Fine. For
+now, we pass the map of FFI name to symbol explicitly. Eventually we look that
+up automatically.
+
+I'll want some redesign of the fble-app native API to work with fble-stdio
+interface. That's fine.
+
+Okay? Cool? All questions answered for the time being?
+
+Next steps to work on:
+* Learn how to dlopen and resolve symbol on linux, for when I want to do that.
+* Learn how to dlopen and resolve symbol on windows, for when I want to do
+  that.
+* Get fble compiling again on windows.
+  - Probably by switching back to static libraries on windows.
+* Add 'undefined' expression to language spec and spec tests.
+  - For now it will be unused. So, honestly, this can wait.
+* Add ffi to language spec.
+  - Spec tests will be hard...
+* Change fble-stdio to return Int@ instead of Bool@.
+* Move StdioIO@ to FFI.
+* Move AppIO@ to FFI.
+
+There are a lot of moving pieces here. It makes sense to focus on a little bit
+at a time, not solving the world all at once. To do that, I suggest we
+prioritize getting windows building again, then peeling off the easiest bits.
+Probably FFI first. Save dlopen, dynamic loading, modular compilation for
+later. I have a clear proposal for FFI now.
+
+---
+
+Note: modular compilation could give us a way to write our own
+FbleGeneratedModule implementations, without the need for FFI. You could
+accomplish a lot of the same things that way. Any reason not to prefer that
+approach to FFI? Any downsides?
+
+Actually, that's worth considering.
+
+FFI operates at the level of single values. But so do modules already.
+Anywhere I would have written:
+
+  ?'MyFFIValue'<MyFFIValue@> 
+
+I could instead write:
+
+  /MyFFIModule%
+
+With: MyFFIModule.fble as:
+
+  ?<MyFFIValue@>;
+
+It feels a little more effort, but that's a good thing. FFI is high effort, it
+should be high effort. It also clarifies the semantics of loading and name
+resolution.
+
+The interesting question is how to handle the interpreter in the short term.
+In the long term it's easy: we'll put our module code in our libfble-<pkg>.so
+file, interpreter will look for the code there as part of standard modular
+compilation.
+
+Short term, we need some way to tell the loader that a particular module is
+compiled. That's not bad. Instead of a map from FFI name to FbleFFIFunction,
+pass a map from module path to FbleGeneratedModule. The loader can reference
+that directly.
+
+Cool. I think I'm sold. No need to add FFI to the language spec. Instead use
+the modular compilation approach and leverage the existing module system to do
+exactly what you want.
+
+That shifts our priorities slightly though. It says we need to support modular
+compilation first, before changing how we implement StdioIO@ and AppIO@.
+
+

@@ -93,3 +93,13 @@ have a way to define a module type/API without providing the implementation as
 well? That way we can hide the implementation, either fble or implement it
 directly in C.
 
+---
+
+See foreign_function_interface.txt. The proposal is to do scalable operating
+system input and output with a combination of FFI and dynamic native code
+loading.
+
+---
+
+See modular_compilation.txt. Revised proposal is to implement module by hand
+instead of via compiler.
