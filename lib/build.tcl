@@ -44,7 +44,7 @@ namespace eval "lib" {
 
   # libraries
   shared_lib "$::b/lib/libfble.so" $objs
-  lib "$::b/lib/libfble.cov.a" $objs_cov
+  shared_lib_cov "$::b/lib/libfble.cov.so" $objs_cov
 
   foreach {x} [build_glob $::s/lib -tails "*.*"] {
     fbld_check_dc $::b/lib/$x.dc $::s/lib/$x

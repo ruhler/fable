@@ -176,7 +176,7 @@ proc compile {target main} {
   }
 
   lappend objs $::b/test/libfbletest.a
-  lappend objs $::b/lib/libfble.cov.a
+  lappend objs $::b/lib/libfble.cov.so
   exec gcc {*}$::config::ldflags --pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -no-pie -O0 -o $main_exe {*}$objs
   return $main_exe
 }

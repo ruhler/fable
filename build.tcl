@@ -69,7 +69,7 @@ proc obj { obj src iflags args } {
 #   args - optional additional dependencies.
 proc obj_cov { obj src iflags args } {
   set gcda [string map {.o .gcda} $obj]
-  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
+  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb --coverage"
   set cmd "rm -f $gcda ; gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
@@ -103,6 +103,16 @@ proc lib { lib objs } {
 #   objs - the list of .o files to include in the library.
 proc shared_lib { lib objs } {
   build $lib $objs "gcc -o $lib -shared $objs"
+}
+
+# shared_lib_cov --
+#   Builds a shared library for code coverage.
+#
+# Inputs:
+#   lib - the library file to build
+#   objs - the list of .o files to include in the library.
+proc shared_lib_cov { lib objs } {
+  build $lib $objs "gcc -o $lib -shared $objs --coverage"
 }
 
 # Helper function to get extra flags for linking against local .so files.
@@ -175,9 +185,9 @@ proc bin { bin objs libs lflags args } {
 #   objs - the list of .o files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - additional dependencies
-proc bin_cov { bin objs lflags args } {
-  set cflags "-std=c99 $::config::ldflags --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
-  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
+proc bin_cov { bin objs libs lflags args } {
+  set cflags "-std=c99 $::config::ldflags --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb --coverage"
+  build $bin "$objs $libs $args" "gcc $cflags -o $bin $objs [::libsflags $bin $libs] $lflags"
 }
 
 # install --

@@ -33,7 +33,7 @@ namespace eval "test" {
     set base [file rootname [file tail $x]]
     obj $::b/test/$base.o $::s/test/$x $cflags
     bin $::b/test/$base "$::b/test/$base.o $libs" "$::b/lib/libfble.so" ""
-    bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov $::b/lib/libfble.cov.a" "" ""
+    bin_cov $::b/test/$base.cov "$::b/test/$base.o $libs_cov" "$::b/lib/libfble.cov.so" ""
   }
 
   foreach {x} [list fble-test fble-mem-test] {

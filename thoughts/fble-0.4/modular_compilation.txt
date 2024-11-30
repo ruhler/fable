@@ -523,3 +523,39 @@ understand better why not.
 If we can, then no need to separate 'lib' from 'shared_lib' in the build
 system?
 
+/usr/bin/ld: ./test/fble-mem-test.cov: hidden symbol `__gcov_merge_add' in
+/usr/lib/gcc/aarch64-linux-gnu/10/libgcov.a(_gcov_merge_add.o) is referenced
+by DSO
+/usr/bin/ld: final link failed: bad value
+
+I don't know. I can't seem to figure it out.
+
+gcc -std=c99  --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb
+--coverage -o ./bin/fble-disassemble.cov ./bin/fble-disassemble.cov.o
+-Wl,-rpath,\$ORIGIN/../lib  -L ./lib -lfble.cov
+/usr/bin/ld: ./bin/fble-disassemble.cov: hidden symbol `__gcov_merge_add' in
+/usr/lib/gcc/aarch64-linux-gnu/10/libgcov.a(_gcov_merge_add.o) is referenced
+by DSO
+/usr/bin/ld: final link failed: bad value
+collect2: error: ld returned 1 exit status
+n
+
+Which DSO is referencing this symbol? the only DSO it could be is
+libfble.cov.so.
+
+      8: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT  UND __gcov_merge_add
+
+That makes sense that it is trying to link to that symbol. For whatever
+reason, libgcov.a says you aren't allowed to have a dynamic shared object file
+do that. Okay, so why doesn't libgcov.a like that, and what should we do
+instead?
+
+It's because libgcov.a is a static library, not a shared library. Maybe I
+would need libgcov.a to be a shared library installed on my platform?
+
+The other option is to try and pull that into libfble.cov.so using magic
+linker flags. Add the -static linker option. Doesn't work. Different error
+about some other missing library.
+
+Okay, figured it out. I need -lgcov or --coverage when building the shared
+library. Let's try that route and see how goes.
