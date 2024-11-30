@@ -24,7 +24,7 @@ namespace eval "pkgs/core" {
     "-I $::s/include -I $::s/pkgs/core"
   bin $::b/pkgs/core/fble-stdio \
     "$::b/pkgs/core/fble-stdio.o" \
-    "$::b/pkgs/core/libfble-core.so $::b/lib/libfble.so" ""
+    "$::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext" ""
   install $::b/pkgs/core/fble-stdio $::config::bindir/fble-stdio
 
   # Build an fble-stdio compiled binary.
@@ -39,9 +39,9 @@ namespace eval "pkgs/core" {
     set objs $target.o
     set nlibs ""
     foreach lib [lreverse $libs] {
-      append nlibs " $::b/pkgs/$lib/libfble-$lib.so"
+      append nlibs " $::b/pkgs/$lib/libfble-$lib$::lext"
     }
-    append nlibs " $::b/pkgs/core/libfble-core.so $::b/lib/libfble.so"
+    append nlibs " $::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext"
 
     fbleobj $target.o $::b/bin/fble-compile \
       "--main FbleStdioMain -m $path"

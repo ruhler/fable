@@ -85,6 +85,9 @@ proc asm { obj src args } {
   build $obj "$src $args" $cmd
 }
 
+# The filename extension to use for libraries on this platform.
+set ::lext ".so"
+
 # lib --
 #   Build a library.
 #
@@ -129,7 +132,7 @@ proc libsflags { bin libs } {
   set lflags ""
   foreach lib $libs {
     # The library should match the pattern $::b/<path>/lib<name>.so
-    set m [regexp $::b/(.*)/lib(.*)\.so $lib m_all m_path m_lib]
+    set m [regexp "$::b/(.*)/lib(.*)$::lext" $lib m_all m_path m_lib]
     if {$m != 1} {
       error "invalid lib specified: $lib"
     }

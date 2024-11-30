@@ -586,3 +586,24 @@ Everyone is using shared_lib today except libfbletest.a. Let's switch
 libfbletest.a over to shared_lib. Then everyone will be the same. Then we can
 rename it all back to just lib.
 
+---
+
+Next step is to abstract away the suffix of the library.
+
+I see two ways we could go about this:
+1. Pass directory, lib name, objs to lib. Return the path to the library.
+2. Have a variable we pass everywhere with the name of the extension.
+
+For whatever reason (1) feels cleaner to me. Let's try that route.
+
+Libraries I'm building that I should properly reference now:
+* 
+
+hmm ...  libfble-$name.so is tricky to reference?
+
+Also, installing the file becomes trickier: how do I know where to install it
+to? There needs to be an easy way to get the name of a library. Easiest way
+would seem to be, just have some $::lext?
+
+
+

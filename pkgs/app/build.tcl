@@ -30,7 +30,7 @@ namespace eval "pkgs/app" {
       "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/app $::config::sdl_cflags"
     bin $::b/pkgs/app/fble-app \
       "$::b/pkgs/app/fble-app.o" \
-      "$::b/pkgs/app/libfble-app.so $::b/pkgs/core/libfble-core.so $::b/lib/libfble.so" \
+      "$::b/pkgs/app/libfble-app$::lext $::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext" \
       "$::config::sdl_libs $::config::gl_libs"
     install $::b/pkgs/app/fble-app $::config::bindir/fble-app
 
@@ -46,9 +46,9 @@ namespace eval "pkgs/app" {
       set objs $target.o
       set nlibs ""
       foreach lib [lreverse $libs] {
-        append nlibs " $::b/pkgs/$lib/libfble-$lib.so"
+        append nlibs " $::b/pkgs/$lib/libfble-$lib$::lext"
       }
-      append nlibs " $::b/pkgs/app/libfble-app.so $::b/pkgs/core/libfble-core.so $::b/lib/libfble.so"
+      append nlibs " $::b/pkgs/app/libfble-app$::lext $::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext"
       
       fbleobj $target.o $::b/bin/fble-compile \
         "--main FbleAppMain -m $path"

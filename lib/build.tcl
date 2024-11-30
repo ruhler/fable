@@ -43,14 +43,14 @@ namespace eval "lib" {
   lappend objs_cov $::b/lib/buildstamp.cov.o
 
   # libraries
-  lib "$::b/lib/libfble.so" $objs
-  lib_cov "$::b/lib/libfble.cov.so" $objs_cov
+  lib "$::b/lib/libfble$::lext" $objs
+  lib_cov "$::b/lib/libfble.cov$::lext" $objs_cov
 
   foreach {x} [build_glob $::s/lib -tails "*.*"] {
     fbld_check_dc $::b/lib/$x.dc $::s/lib/$x
   }
 
-  install $::b/lib/libfble.so $::config::libdir/libfble.so
+  install $::b/lib/libfble$::lext $::config::libdir/libfble$::lext
 
   set ::fble_objs_cov $objs_cov
 }

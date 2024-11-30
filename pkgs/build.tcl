@@ -59,8 +59,8 @@ namespace eval "pkgs" {
       lappend objs $::b/pkgs/$name/$x.o
     }
 
-    lib $::b/pkgs/$name/libfble-$name.so $objs
-    install $::b/pkgs/$name/libfble-$name.so $::config::libdir/libfble-$name.so
+    lib $::b/pkgs/$name/libfble-$name$::lext $objs
+    install $::b/pkgs/$name/libfble-$name$::lext $::config::libdir/libfble-$name$::lext
   }
 
   foreach {x} $pkgs {
