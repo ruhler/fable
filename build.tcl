@@ -92,26 +92,17 @@ proc asm { obj src args } {
 #   lib - the library file to build
 #   objs - the list of .o files to include in the library.
 proc lib { lib objs } {
-  build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
-}
-
-# shared_lib --
-#   Builds a shared library.
-#
-# Inputs:
-#   lib - the library file to build
-#   objs - the list of .o files to include in the library.
-proc shared_lib { lib objs } {
+  #build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
   build $lib $objs "gcc -o $lib -shared $objs"
 }
 
-# shared_lib_cov --
-#   Builds a shared library for code coverage.
+# lib_cov --
+#   Builds a library for code coverage.
 #
 # Inputs:
 #   lib - the library file to build
 #   objs - the list of .o files to include in the library.
-proc shared_lib_cov { lib objs } {
+proc lib_cov { lib objs } {
   build $lib $objs "gcc -o $lib -shared $objs --coverage"
 }
 

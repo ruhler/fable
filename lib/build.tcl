@@ -43,8 +43,8 @@ namespace eval "lib" {
   lappend objs_cov $::b/lib/buildstamp.cov.o
 
   # libraries
-  shared_lib "$::b/lib/libfble.so" $objs
-  shared_lib_cov "$::b/lib/libfble.cov.so" $objs_cov
+  lib "$::b/lib/libfble.so" $objs
+  lib_cov "$::b/lib/libfble.cov.so" $objs_cov
 
   foreach {x} [build_glob $::s/lib -tails "*.*"] {
     fbld_check_dc $::b/lib/$x.dc $::s/lib/$x

@@ -59,7 +59,7 @@ namespace eval "pkgs" {
       lappend objs $::b/pkgs/$name/$x.o
     }
 
-    shared_lib $::b/pkgs/$name/libfble-$name.so $objs
+    lib $::b/pkgs/$name/libfble-$name.so $objs
     install $::b/pkgs/$name/libfble-$name.so $::config::libdir/libfble-$name.so
   }
 

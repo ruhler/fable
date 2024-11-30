@@ -26,7 +26,7 @@ namespace eval "test" {
     obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/fble-$base.usage.h
     lappend objs $::b/test/$base.o
   }
-  shared_lib $::b/test/libfbletest.so $objs
+  lib $::b/test/libfbletest.so $objs
 
   # test binaries
   foreach {x} $bin_sources {
