@@ -24,9 +24,9 @@
 #   T@ - The type of undefined value.
 #
 # Example Use:
-#   % ErrorMessage = /Core/Undef%.Undef<Foo@>;
+#   % InvalidArgumentError = /Core/Undef%.Undef;
 #
-#   ... ErrorMessage.undefined ...
+#   ... InvalidArgumentError<Foo@>.undefined ...
 Undef@ Undef = <@ T@> { Undef@<T@>(unit: Unit); };
 
 @(Undef@, Undef);

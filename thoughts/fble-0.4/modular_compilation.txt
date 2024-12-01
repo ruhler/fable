@@ -605,5 +605,81 @@ Also, installing the file becomes trickier: how do I know where to install it
 to? There needs to be an easy way to get the name of a library. Easiest way
 would seem to be, just have some $::lext?
 
+---
 
+Next question: do we really need an undefined expression as part of the fble
+language?
 
+The proposal was:
+
+   ?<Foo@>
+
+To create an undefined expression of type Foo@. The behavior is to report an
+error when the expression is evaluated at runtime, and to have compile time
+type Foo@.
+
+But I can already accomplish that in the language, using, for example:
+
+  /Core/Undef%.Undef<Foo@>.undefined
+
+If I wanted to, I could write a helper function:
+
+  Undefined<Foo@>
+
+How to think about this question?
+
+Things to think about:
+* There is no way in general to prevent access of the wrong union field. There
+  will always be a way to have errors in the language, without adding an extra
+  syntax for it.
+* ?<...> is not very descriptive from a code point of view. Alternatives could
+  provide a string explanation. The Undef approach can communicate some
+  information. A function that takes an error string more, but that would
+  depend on the definition of a string type.
+* Syntax is slightly clunky (see above) if we want to report the error message
+  exactly where the error occurs. Because wrapping it in a helper function
+  moves the origin of the error to the function body. This isn't a problem if
+  we report the full stack of an error though.
+* Use of undefined expressions ought to be rare, so a little extra syntax
+  isn't an issue. We also shouldn't expect to execute in practice.
+* You could imagine having an 'error' primitive in the stdio library.
+
+All of which is to say, it's hard to find a compelling reason to add new
+syntax to the language for something you can already do.
+
+Here's what I suggestion: re-conceptualize .fble.@ files. Instead of thinking
+of them as header files where values of things are marked ?<...>, think of
+them as: this has the same type as the .fble module. Which is exactly what
+they are. They needn't have the same structure.
+
+Thus, I conclude: now need to add a new ?<...> syntax to the language. Good.
+We just need to give some hints as to how to write .fble.@ files manually.
+
+---
+
+Next step in our journey is to support .fble.@ files for reading types from.
+We need this before we can have interpreted code call into compiled code,
+because we need some way to communicate the type of the compiled code to the
+interpreted code.
+
+We need to unify the FbleGeneratedModule and FbleLoadedModule types. Because I
+want to be able to load an FbleGeneratedModule.
+
+FbleLoadedModule:
+  - module path,
+  - list of (module path) deps
+  - FbleExpr* type and value.
+
+FbleGeneratedModule:
+  - module path,
+  - list of (generated module) deps
+  - executable, profile_blocks.
+
+The way we link these together:
+* Loaded modules get compiled, which replaces type, expr with code and
+  profile_blocks. We add the blocks to the profile and allocate a new
+  interpreted function value from the code. To create the interpreted
+  function, we create an FbleExecutable wrapping the FbleCode.
+* Generated blocks get added to the profile, we create a new function value
+  out of the executable.
+  
