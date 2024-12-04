@@ -17,8 +17,6 @@ namespace eval "include" {
       FbleParseInvalidArg
     }
     fble-compile.h {
-      FbleCompiledModule FbleCompiledModuleV FbleCompiledProgram
-      FbleFreeCompiledModule FbleFreeCompiledProgram
       FbleCompileModule FbleCompileProgram
       FbleDisassemble
     }
@@ -80,6 +78,8 @@ namespace eval "include" {
     fble-program.h {
       FbleLoadedModule FbleLoadedModuleV FbleLoadedProgram
       FbleFreeLoadedProgram
+      FbleCompiledModule FbleCompiledModuleV FbleCompiledProgram
+      FbleFreeCompiledModule FbleFreeCompiledProgram
     }
     fble-string.h {
       FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString
