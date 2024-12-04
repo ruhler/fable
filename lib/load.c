@@ -351,25 +351,6 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
 }
 
 // See documentation in fble-load.h.
-void FbleFreeLoadedProgram(FbleLoadedProgram* program)
-{
-  if (program != NULL) {
-    for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleLoadedModule* module = program->modules.xs + i;
-      FbleFreeModulePath(module->path);
-      for (size_t j = 0; j < module->deps.size; ++j) {
-        FbleFreeModulePath(module->deps.xs[j]);
-      }
-      FbleFreeVector(module->deps);
-      FbleFreeExpr(module->type);
-      FbleFreeExpr(module->value);
-    }
-    FbleFreeVector(program->modules);
-    FbleFree(program);
-  }
-}
-
-// See documentation in fble-load.h.
 void FbleSaveBuildDeps(FILE* fout, const char* target, FbleStringV build_deps)
 {
   int cols = 1 + strlen(target);

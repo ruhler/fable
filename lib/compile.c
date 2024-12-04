@@ -1406,35 +1406,6 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
 }
 
 // See documentation in fble-compile.h.
-void FbleFreeCompiledModule(FbleCompiledModule* module)
-{
-  FbleFreeModulePath(module->path);
-  for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleFreeModulePath(module->deps.xs[i]);
-  }
-  FbleFreeVector(module->deps);
-  FbleFreeCode(module->code);
-  for (size_t i = 0; i < module->profile_blocks.size; ++i) {
-    FbleFreeName(module->profile_blocks.xs[i]);
-  }
-  FbleFreeVector(module->profile_blocks);
-
-  FbleFree(module);
-}
-
-// See documentation in fble-compile.h.
-void FbleFreeCompiledProgram(FbleCompiledProgram* program)
-{
-  if (program != NULL) {
-    for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleFreeCompiledModule(program->modules.xs[i]);
-    }
-    FbleFreeVector(program->modules);
-    FbleFree(program);
-  }
-}
-
-// See documentation in fble-compile.h.
 FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program)
 {
   FbleTc* tc = FbleTypeCheckModule(program);
