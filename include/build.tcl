@@ -37,13 +37,11 @@ namespace eval "include" {
       FblePrintCompiledHeaderLine
     }
     fble-load.h {
-      FbleLoadedModule FbleLoadedModuleV FbleLoadedProgram
       FbleParse
       FbleNewSearchPath FbleFreeSearchPath
       FbleAppendToSearchPath FbleAppendStringToSearchPath
       FbleFindPackage
       FbleLoad
-      FbleFreeLoadedProgram
       FbleSaveBuildDeps
     }
     fble-loc.h {
@@ -78,6 +76,10 @@ namespace eval "include" {
       FbleProfileSample FbleProfileRandomSample
       FbleProfileEnterBlock FbleProfileReplaceBlock FbleProfileExitBlock
       FbleGenerateProfileReport
+    }
+    fble-program.h {
+      FbleLoadedModule FbleLoadedModuleV FbleLoadedProgram
+      FbleFreeLoadedProgram
     }
     fble-string.h {
       FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString

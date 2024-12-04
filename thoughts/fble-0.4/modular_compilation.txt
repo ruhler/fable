@@ -683,3 +683,281 @@ The way we link these together:
 * Generated blocks get added to the profile, we create a new function value
   out of the executable.
   
+---
+
+How would I design loading and linking if I did it from scratch?
+
+Consider sources and use cases.
+
+Use cases:
+1. Load something to get its type only.
+ - fble-compile case, when compiling some other module.
+2. Load something to get its bytecode.
+ - fble-compile case, for the module being compiled.
+ - fble-disassemble.
+3. Load something for the purpose of executing it.
+ - interpreter case for running code
+ - running generated code
+
+Source:
+A. .fble.@ - for type information.
+B. .fble - for source and/or type information.
+C. .so/compiled in - for generated code.
+
+Considering the combinations:
+* 1A - want to load FbleType*.
+* 1B - want to load FbleType*.
+* 1C - not supported.
+* 2A - not applicable.
+* 2B - want to load FbleExpr*.
+* 2C - not applicable.
+* 3A - not applicable.
+* 3B - want to load FbleExpr*.
+* 3C - want to load FbleExecutable*.
+
+Case (1C) looks wrong. It means we couldn't bundle a standalone interpreter
+that is prelinked with compiled code, because we wouldn't have access to the
+types of precompiled modules.
+
+I've wanted in the past some way to validate types of modules passed to
+fble-stdio and fble-app, for example. Maybe there is an appropriate solution
+here to solve these two issues?
+
+Let's assume I magically have a way to describe the type of a generated
+module, so that 1C is now supported. How should things look?
+
+Note that when I load something, I often (but not always) want or need to load
+its dependencies too:
+* To get the type of a module, I need the type of its dependencies.
+* To execute a module, I need to be able to execute its dependencies.
+* You could imagine a case at some point where I want a way to load bytecode
+  for all modules, but that's not the case today. We only want to load
+  bytecode for a particular module, and the types of all its dependencies.
+
+This brings us back to a question I've had before: if we store the type as
+part of the generated module, what's the point of having a .fble.@ file at
+all? Here are some reasons:
+* .fble.@ files serve as user documentation for the API to a module.
+* It's easier to describe the type of a native module using .fble code.
+* Error messages related to types will be easier to understand if there is a
+  .fble.@ file to reference.
+
+It's the conflict between those things saying a separate .fble.@ file is very
+good to have, and the 'standalone' desire saying we want to avoid a separate
+.fble.@ file.
+
+I don't want compiled code to be able to depend on interpreted code, because
+if you change the interpreted code's type, it's going to crash.
+
+---
+
+This is tricky because there are so many different corner cases.
+
+The .fble.@ files could, in theory, have a different, conflicting, dependency
+order from the .fble files. I don't know why you would do that. It sounds like
+something to avoid. But nothing in the spec I have in mind prevents it.
+
+This suggests to me we want to keep type and expr and generated code in
+separate data structures when loading.
+
+If I didn't care about duplicated work, I could structure like this:
+
+1. Load the types of all the modules.
+For each module, load an FbleExpr* for the type. Convert to FbleType* in the
+compiler using a 'CompileForType'. You could imagine an optimization that
+skips loading dependencies that are not necessary to compute the resulting
+type. Mainly avoid going into the def of a let variable with an explicit type.
+
+2a. If trying to compile a specific module, load the bytecode for that module.
+Um... we may get a new set of dependencies we need to load for typing though.
+That sounds problematic.
+
+To compile a module or to evaluate its type, we need to evaluate the type of
+everything it depends on.
+
+To execute a module, we need to load all the modules it depends on in
+dependency order.
+
+Let's just list all the possibilities, and think about it in terms of the API
+to load a single module versus to load a module and all its dependencies.
+
+1. Load for compilation.
+The main module:
+ - Load .fble and, if it exists, .fble.@
+ - Recursively load dependencies for both the .fble and .fble.@ for types.
+ - Get the type from the .fble.@ (if it exists).
+ - Compile the .fble to bytecode and get its type.
+
+This gives us the following variations on recursive loading:
+* Load all for types. Given a list of modules, loads them all and everything
+  they depend on, but only for the purpose of evaluating the types of the
+  modules. Prefers .fble.@ files. Falls back to .fble files if no .fble.@
+  files present.
+* Load for compilation. Loads the main module specially. Then calls 'Load all
+  for types' on dependencies.
+
+And individual module loading:
+* Load for type. Loads just for the type. Prefer .fble.@ file. Fall back to
+  .fble if .fble.@ doesn't exist.
+* Load for compile. Load .fble file. Load .fble.@ file too if it exists.
+
+2. Load for execution
+- Load the main module, either generated or from .fble. If it has a .fble.@,
+  we'll want to check the type of that too.
+- If it's from .fble, for anything it depends on, load for type??
+- For anything it depends on, recursively load for execution.
+- Each loaded module is either a GeneratedModule or bytecode.
+
+So we are adding the following variation on recursive loading:
+* Load all for execution.
+
+And the following variation on individual module loading:
+* Load for execution. If there is a GeneratedModule, use that. I suppose
+  simplest is always to load the .fble.@ type?
+
+Anyway, we could start with individual module loading.
+* Given module path to load, and the module search path.
+* Input whether you are loading for Type, loading for Compile, or loading for
+  execution.
+* Returns path, deps, FbleExpr* type, FbleExpr* value, and
+  FbleGeneratedModule* generated. The type, value, and generated are filled in
+  depending on what was requested. Loading for type files in only the type.
+  Loading for compile files in type and value. Loading for execution fills in
+  type and either value or generated depending on what was found.
+
+It's a little sad to add that false dependency of the compiler on code
+generation. We could layer it in two parts. Load for type and load for compile
+is the first part. We have a separate load for execution, which first tries
+FbleGeneratedModule, then falls back to load for compiled if need be.
+
+LoadForType - returns path, deps, FbleExpr* type.
+LoadForCompile - returns path, deps, FbleExpr* type, FbleExpr* value.
+LoadForExecution - returns path, deps, FbleExpr* type, FbleExpr* value,
+  FbleGeneratedModule* generated. Or, returns FbleGeneratedModule* only,
+  doesn't try to load the type. It's the caller's job to fall back to
+  LoadForCompile if it can't find the generated module already. We do it that
+  way just to simplify the return type instead of making it a union of
+  FbleGeneratedModule* or  LoadedForCompiledModule*. If you load the
+  GeneratedModule and still need the type, you can LoadForType from there
+  instead of LoadForCompiled.
+
+---
+
+The first thing I want to accomplish is writing a StdioIO% module by hand.
+I'll want to write a .fble.@ file and pass the hand coded 'generated' module
+to FbleLink to link with. The assumption is we have interpreted code that
+references the generated code. How can we get there?
+
+FbleLink should gather together a list of compiled and generated modules that
+it then links together. What type does it use for the list?
+
+We want an FbleLoadedProgram*, that has the mix. The type checker can
+typecheck that?
+
+Review of the various kinds of programs we have today:
+* Loaded: path, deps, FbleExpr* type, FbleExpr* value
+* Typechecked: FbleTc*, currently a side data structure.
+* Compiled: path, deps, FbleCode* code, FbleNameV profile_blocks,
+* Generated: path, FbleGeneratedModuleV deps, FbleExecutable*, FbleName
+
+When we compile a module, all we use are path, deps, and the FbleTc*. After it
+is typechecked, we don't worry about FbleExpr* anymore.
+
+So in practice, today we go:
+
+path, deps,
+    FbleExpr*                           Loaded
+==> FbleTc*                             Typechecked
+==> (FbleCode*, FbleNameV)              Compiled
+==> (FbleExecutable*, FbleNameV)        Generated
+
+Note there are two ways to go from FbleCode* to FbleExecutable*. One is via
+generated code. The other is via FbleNewInterpretedFuncValue, which wraps the
+FbleCode* in an FbleExecutable, and at the same time passes the FreeCode
+destructor to the FbleValue* function value we allocate.
+
+For generated modules, we don't manage their memory, we just assume they stay
+alive as long as they need. For FbleCode*, we make sure it stays alive as long
+as it needs, taking a refcount on the code.
+
+Okay? I have a decent understanding of where things are now. How do I want
+them to look?
+
+---
+
+Proposal:
+
+FbleProgram* has, for each module:
+  FbleModulePath* path;
+  FbleModulePathV deps;
+  FbleExpr* type;
+  FbleExpr* value;
+  FbleCode* code;
+  FbleExecutable* native;
+  FbleNameV profile_blocks;
+  
+When we load a program or a module, we tell the loader what we need from it.
+
+After loading, a module can have one of the following states:
+* type is non-NULL, all else NULL. This module is loaded solely for its type.
+* type and value are non-NUll, all else NULL. This module is loaded for
+  compilation. If type == value, the compiler can optimize and avoid
+  recompiling that multiple times.
+* type and native are non-NULL, all else NULL: This is a generated module
+  whose type is also required.
+* native is non-NULL, all else NULL: This is a generated module whose type is
+  not required.
+
+After loading a program, we pass it through the compiler. The compiler does
+typechecking of everything needed, and converts the 'value' to 'FbleCode*' for
+those modules with non-NULL value. We can continue to keep FbleTc internal to
+the compiler.
+
+It may be there are no modules which need compilation, in which case the
+compiler pass will be effectively a no-op.
+
+After a program is compiled, if you want to do something with the compiled
+main code, go ahead. If you want to run the program, you link together
+everything into a single FbleValue*.
+
+We can still have FbleGeneratedModule and have it store dependencies to other
+FbleGeneratedModules directly. We treat that as information needed to
+initialize an FbleProgram*, copying over the deps, profile names, and
+native FbleExecutable as part of the load step before linking the program.
+
+Am I okay mixing all the phases of the program into a single type, or do I
+want to split them? If I split them, how would I do that?
+
+Three separate types, like we have now. We can treat Compiled and Generated as
+the same, with just a type cast difference for FbleCode* versus
+FbleExecutable*. The tricky part is when you load a module, you don't know if
+you're going to get value or native. I suppose we load into two parts. The
+type gets loaded separately from the native. But if the loader knows about
+these things from the start, may as well combine the data structure from the
+start. As long as interpreted code can depend on generated code, and the
+loader is responsible for loading interpreted and generated code, it makes
+sense for it all to be together in a single data structure.
+
+Sounds like a plan. How to we get there?
+
+1. Replace FbleLoadedModule and FbleCompiledModule with FbleModule.
+2. Link generated via FbleModule.
+3. Clean up and generalize loading of modules to allow for mixing of
+interpreted and generated instead of having separate load paths for each.
+4. Add support for .fble.@, etc.
+
+While I'm at it, I might want to rename FbleGeneratedModule, because we'll
+start writing them by hand. We could say, FbleNativeModule. I think that's
+more descriptive.
+
+---
+
+FbleProgram could be kept internal if I have the right APIs. Let's review.
+
+* FbleLink - already hides it in case of loading for execution.
+* FbleCompile - could be added to load and compile right away.
+* fble-deps is the only tricky part?
+
+fble-deps is the case where we want to load without compiling. Hmm...
+
+I don't know. Maybe that's too much change for right now. Start smaller?
