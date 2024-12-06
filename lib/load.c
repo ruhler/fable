@@ -273,6 +273,7 @@ FbleProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, 
   stack->tail = NULL;
   stack->module.type = NULL;
   stack->module.code = NULL;
+  stack->module.exe = NULL;
   stack->module.profile_blocks.size = 0;
   stack->module.profile_blocks.xs = NULL;
   stack->module.value = FbleParse(filename, &stack->module.deps);
@@ -333,6 +334,7 @@ FbleProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, 
     stack->module.type = NULL;
     stack->module.value = NULL;
     stack->module.code = NULL;
+    stack->module.exe = NULL;
     stack->module.profile_blocks.size = 0;
     stack->module.profile_blocks.xs = NULL;
     stack->tail = tail;

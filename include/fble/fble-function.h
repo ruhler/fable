@@ -3,8 +3,8 @@
  *  API for describing fble functions.
  */
 
-#ifndef FBLE_EXECUTE_H_
-#define FBLE_EXECUTE_H_
+#ifndef FBLE_FUNCTION_H_
+#define FBLE_FUNCTION_H_
 
 #include "fble-module-path.h" // for FbleModulePath
 #include "fble-profile.h"     // for FbleProfileThread
@@ -114,4 +114,4 @@ FbleValue* FbleTailCall(
     FbleFunction* function, FbleValue* func,
     size_t argc, FbleValue** args);
 
-#endif // FBLE_EXECUTE_H_
+#endif // FBLE_FUNCTION_H_

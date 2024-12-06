@@ -8,6 +8,7 @@
 
 #include <stdio.h>  // for FILE
 
+#include "fble-function.h"
 #include "fble-module-path.h"
 #include "fble-string.h"
 
@@ -26,7 +27,8 @@ typedef struct FbleCode FbleCode;
  *  typechecker will check that they describe the same type for the module.
  *
  *  The @a[code] and @a[profile_blocks] fields are populated by calling
- *  FbleCompileModule or FbleCompileProgram.
+ *  FbleCompileModule or FbleCompileProgram. Alternatively the @a[exe] and
+ *  @a[profile_blocks] fields are populated by loading a generated module.
  *
  *  @field[FbleModulePath*][path] The path to the module.
  *  @field[FbleModulePathV][deps] List of modules this module depends on.
@@ -35,6 +37,11 @@ typedef struct FbleCode FbleCode;
  *   Abstract syntax of the module implementation. May be NULL.
  *  @field[FbleCode*][code]
  *   Compiled bytecode to compute the module's value. May be NULL.
+ *
+ *   The code describes the body of a function that takes the computed module
+ *   values for each module listed in 'deps' as arguments to the function
+ *  @field[FbleExecutable*][exe]
+ *   Executable code to compute the module's value. May be NULL.
  *
  *   The code describes the body of a function that takes the computed module
  *   values for each module listed in 'deps' as arguments to the function
@@ -47,6 +54,7 @@ typedef struct {
   FbleExpr* type;
   FbleExpr* value;
   FbleCode* code;
+  FbleExecutable* exe;
   FbleNameV profile_blocks;
 } FbleModule;
 
