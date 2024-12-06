@@ -70,7 +70,7 @@ static void StringLit(FILE* fout, const char* string);
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string);
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
-static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
+static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleModule* module);
 
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
@@ -336,14 +336,14 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
  * @ Generates code to declare a static FbleGeneratedModule value.
  *  @arg[FILE*][fout] The output stream to write the code to.
  *  @arg[LabelId*][label_id] Pointer to next available label id for use.
- *  @arg[FbleCompiledModule*][module]
- *   The FbleCompiledModule to generate code for.
+ *  @arg[FbleModule*][module]
+ *   The FbleModule to generate code for.
  *
  *  @sideeffects
  *   @i Outputs code to fout.
  *   @i Increments label_id based on the number of internal labels used.
  */
-static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
+static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleModule* module)
 {
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
 
@@ -1214,7 +1214,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
 }
 
 // See documentation in fble-generate.h.
-void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
+void FbleGenerateAArch64(FILE* fout, FbleModule* module)
 {
   FbleCodeV blocks;
   FbleInitVector(blocks);

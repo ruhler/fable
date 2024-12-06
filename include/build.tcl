@@ -76,10 +76,8 @@ namespace eval "include" {
       FbleGenerateProfileReport
     }
     fble-program.h {
-      FbleLoadedModule FbleLoadedModuleV FbleLoadedProgram
-      FbleFreeLoadedProgram
-      FbleCompiledModule FbleCompiledModuleV FbleCompiledProgram
-      FbleFreeCompiledModule FbleFreeCompiledProgram
+      FbleModule FbleModuleV FbleProgram
+      FbleFreeModule FbleFreeProgram
     }
     fble-string.h {
       FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString

@@ -110,19 +110,19 @@ FbleString* FbleFindPackage(const char* package);
  *   Output to store list of files the load depended on. This should be a
  *   preinitialized vector, or NULL.
  *
- *  @returns FbleLoadedProgram*
+ *  @returns FbleProgram*
  *   The parsed program, or NULL in case of error.
  *
  *  @sideeffects
  *   @i Prints an error message to stderr if the program cannot be parsed.
  *   @item
- *    The user should call FbleFreeLoadedProgram to free resources
+ *    The user should call FbleFreeProgram to free resources
  *    associated with the given program when it is no longer needed.
  *   @item
  *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
-FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+FbleProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * @func[FbleSaveBuildDeps] Saves a depfile.

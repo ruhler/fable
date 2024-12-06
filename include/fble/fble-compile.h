@@ -12,37 +12,33 @@
 
 /**
  * @func[FbleCompileModule] Compiles a module.
- *  @arg[FbleLoadedProgram*][program] The program to compile.
+ *  @arg[FbleProgram*][program] The program whose main module to compile.
  *
- *  @returns FbleCompiledModule*
- *   The compiled module, or NULL if the program is not well typed.
+ *  @returns bool
+ *   True on success, false if the program is not well typed.
  *
  *  @sideeffects
+ *   @i Updates code and profile_blocks fields of the main module.
  *   @i Prints warning messages to stderr.
  *   @i Prints a message to stderr if the program fails to compile.
- *   @item
- *    The caller should call FbleFreeCompiledModule to release resources
- *    associated with the returned module when it is no longer needed.
  */
-FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
+bool FbleCompileModule(FbleProgram* program);
 
 /**
  * @func[FbleCompileProgram] Compiles a program.
  *  Type check and compile all modules of the given program.
  *
- *  @arg[FbleLoadedProgram*][program] The program to compile.
+ *  @arg[FbleProgram*][program] The program to compile.
  *
- *  @returns FbleCompiledProgram
- *   The compiled program, or NULL if the program is not well typed.
+ *  @returns bool
+ *   True on success, false if the program is not well typed.
  *
  *  @sideeffects
+ *   @i Updates code and profile_blocks fields of the program modules.
  *   @i Prints warning messages to stderr.
  *   @i Prints a message to stderr if the program fails to compile.
- *   @item
- *    The caller should call FbleFreeCompiledProgram to release resources
- *    associated with the returned program when it is no longer needed.
  */
-FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
+bool FbleCompileProgram(FbleProgram* program);
 
 /**
  * @func[FbleDisassemble] Dissassembles a compiled module.
@@ -52,12 +48,13 @@ FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
  *
  *  @arg[FILE*] fout
  *   The file to write the disassembled program to.
- *  @arg[FbleCompiledModule*] module
+ *  @arg[FbleModule*] module
  *   The module to disassemble.
  *
  *  @sideeffects
- *   A disassembled version of the module is printed to fout.
+ *   @i A disassembled version of the module is printed to fout.
+ *   @i Behavior is undefined if the module hasn't been compiled yet.
  */
-void FbleDisassemble(FILE* fout, FbleCompiledModule* module);
+void FbleDisassemble(FILE* fout, FbleModule* module);
 
 #endif // FBLE_COMPILE_H_

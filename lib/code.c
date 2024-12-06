@@ -169,6 +169,10 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
 // See documentation in code.h.
 void FbleFreeCode(FbleCode* code)
 {
+  if (code == NULL) {
+    return;
+  }
+
   // We've had trouble with double free in the past. Check to make sure the
   // magic in the block hasn't been corrupted. Otherwise we've probably
   // already freed this code and decrementing the refcount could end up
@@ -203,8 +207,10 @@ static void PrintLoc(FILE* fout, FbleLoc loc)
 }
 
 // See documentation in fble-compile.h.
-void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
+void FbleDisassemble(FILE* fout, FbleModule* module)
 {
+  assert(module->code != NULL && "module hasn't been compiled yet");
+
   // Map from FbleFrameSection to short descriptor of the source.
   static const char* var_tags[] = {"s", "a", "l"};
 

@@ -198,7 +198,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
-static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps);
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps);
 
 
 /**
@@ -2278,7 +2278,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 /**
  * @func[TypeCheckModule] Typechecks a module.
  *  @arg[FbleTypeHeap*][th] Heap to use for allocations.
- *  @arg[FbleLoadedModule*][module] The module to check.
+ *  @arg[FbleModule*][module] The module to check.
  *  @arg[FbleType**][deps]
  *   The type of each module this module depends on, in the same order as
  *   module->deps. size is module->deps.size.
@@ -2299,7 +2299,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
  *    needed and FbleReleaseType when the returned FbleType is no longer
  *    needed.
  */
-static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps)
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps)
 {
   Arg args_xs[module->deps.size];
   for (size_t i = 0; i < module->deps.size; ++i) {
@@ -2358,7 +2358,7 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType**
 }
 
 // See documentation in typecheck.h.
-FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program)
+FbleTc* FbleTypeCheckModule(FbleProgram* program)
 {
   FbleTc** tcs = FbleTypeCheckProgram(program);
   if (tcs == NULL) {
@@ -2374,7 +2374,7 @@ FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program)
 }
 
 // See documentation in typecheck.h.
-FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program)
+FbleTc** FbleTypeCheckProgram(FbleProgram* program)
 {
   FbleTc** tcs = FbleAllocArray(FbleTc*, program->modules.size);
 
@@ -2383,7 +2383,7 @@ FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program)
   FbleType* types[program->modules.size];
 
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleLoadedModule* module = program->modules.xs + i;
+    FbleModule* module = program->modules.xs + i;
     FbleType* deps[module->deps.size];
 
     bool skip = false;

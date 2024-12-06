@@ -34,13 +34,13 @@ struct FbleSearchPath {
 
 /**
  * @struct[Stack] A stack of modules in the process of being loaded.
- *  @field[FbleLoadedModule][module] The value of the module.
+ *  @field[FbleModule][module] The value of the module.
  *  @field[size_t][deps_loaded]
  *   The number of deps we have attempted to load so far.
  *  @field[Stack*][tail] The rest of the stack of modules.
  */
 typedef struct Stack {
-  FbleLoadedModule module;
+  FbleModule module;
   size_t deps_loaded;
   struct Stack* tail;
 } Stack;
@@ -245,7 +245,7 @@ static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleS
 }
 
 // See documentation in fble-load.h.
-FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+FbleProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
   if (module_path == NULL) {
     fprintf(stderr, "no module path specified\n");
@@ -257,7 +257,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
     return NULL;
   }
 
-  FbleLoadedProgram* program = FbleAlloc(FbleLoadedProgram);
+  FbleProgram* program = FbleAlloc(FbleProgram);
   FbleInitVector(program->modules);
 
   bool error = false;
@@ -272,6 +272,9 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
   FbleInitVector(stack->module.deps);
   stack->tail = NULL;
   stack->module.type = NULL;
+  stack->module.code = NULL;
+  stack->module.profile_blocks.size = 0;
+  stack->module.profile_blocks.xs = NULL;
   stack->module.value = FbleParse(filename, &stack->module.deps);
   if (stack->module.value == NULL) {
     error = true;
@@ -329,6 +332,9 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
     FbleInitVector(stack->module.deps);
     stack->module.type = NULL;
     stack->module.value = NULL;
+    stack->module.code = NULL;
+    stack->module.profile_blocks.size = 0;
+    stack->module.profile_blocks.xs = NULL;
     stack->tail = tail;
 
     FbleString* filename_str = Find(search_path, stack->module.path, build_deps);
@@ -344,7 +350,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_
   }
 
   if (error) {
-    FbleFreeLoadedProgram(program);
+    FbleFreeProgram(program);
     return NULL;
   }
   return program;

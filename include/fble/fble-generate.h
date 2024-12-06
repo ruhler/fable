@@ -52,13 +52,13 @@ struct FbleGeneratedModule {
  *  
  *  @arg[FILE*] fout
  *   The output stream to write the C code to.
- *  @arg[FbleCompiledModule*] module
+ *  @arg[FbleModule*] module
  *   The module to generate code for.
  *
  *  @sideeffects
  *   Generates aarch64 code for the given module.
  */
-void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
+void FbleGenerateAArch64(FILE* fout, FbleModule* module);
 
 /**
  * @func[FbleGenerateAArch64Export] Generates aarch64 to export a compiled module.
@@ -111,13 +111,13 @@ void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
  *
  *  @arg[FILE*] fout
  *   The output stream to write the C code to.
- *  @arg[FbleCompiledModule*] module
+ *  @arg[FbleModule*] module
  *   The module to generate code for.
  *
  *  @sideeffects
  *   Outputs C code to the given file.
  */
-void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
+void FbleGenerateC(FILE* fout, FbleModule* module);
 
 /**
  * @func[FbleGenerateCExport] Generates C code to export a compiled module.

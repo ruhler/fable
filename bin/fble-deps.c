@@ -87,9 +87,9 @@ int main(int argc, const char* argv[])
 
   FbleStringV deps;
   FbleInitVector(deps);
-  FbleLoadedProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, &deps);
+  FbleProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, &deps);
   FbleFreeModuleArg(module_arg);
-  FbleFreeLoadedProgram(prgm);
+  FbleFreeProgram(prgm);
 
   FbleSaveBuildDeps(stdout, target, deps);
 

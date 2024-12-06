@@ -125,19 +125,19 @@ int main(int argc, const char* argv[])
   }
 
   if (compile) {
-    FbleLoadedProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, NULL);
+    FbleProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, NULL);
     if (prgm == NULL) {
       FbleFreeModuleArg(module_arg);
       return EX_FAIL;
     }
 
-    FbleCompiledModule* module = FbleCompileModule(prgm);
-    FbleFreeLoadedProgram(prgm);
-
-    if (module == NULL) {
+    if (!FbleCompileModule(prgm)) {
+      FbleFreeProgram(prgm);
       FbleFreeModuleArg(module_arg);
       return EX_FAIL;
     }
+
+    FbleModule* module = prgm->modules.xs + prgm->modules.size - 1;
 
     FbleFreeModulePath(module->path);
     module->path = FbleCopyModulePath(module_arg.module_path);
@@ -147,7 +147,7 @@ int main(int argc, const char* argv[])
       case TARGET_C: FbleGenerateC(stdout, module); break;
     }
 
-    FbleFreeCompiledModule(module);
+    FbleFreeProgram(prgm);
   }
 
   FbleFreeModuleArg(module_arg);

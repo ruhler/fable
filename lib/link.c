@@ -41,16 +41,15 @@ static FbleValue* LinkGenerated(FbleValueHeap* heap, FbleProfile* profile, FbleG
 static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, FbleSearchPath* search_path, FbleModulePath* module_path)
 {
   // Load the source files.
-  FbleLoadedProgram* program = FbleLoad(search_path, module_path, NULL);
+  FbleProgram* program = FbleLoad(search_path, module_path, NULL);
   if (program == NULL) {
     return NULL;
   }
 
   // Compiled to bytecode.
-  FbleCompiledProgram* compiled = FbleCompileProgram(program);
-  FbleFreeLoadedProgram(program);
-  if (compiled == NULL) {
-   return NULL;
+  if (!FbleCompileProgram(program)) {
+    FbleFreeProgram(program);
+    return NULL;
   }
 
   // Write some code to call each of module functions in turn with the
@@ -62,11 +61,11 @@ static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, Fbl
   };
   FbleBlockId main_id = FbleAddBlockToProfile(profile, main_block);
 
-  size_t modulec = compiled->modules.size;
+  size_t modulec = program->modules.size;
   FbleCode* code = FbleNewCode(0, modulec, modulec, main_id);
   FbleValue* funcs[modulec];
   for (size_t i = 0; i < modulec; ++i) {
-    FbleCompiledModule* module = compiled->modules.xs[i];
+    FbleModule* module = program->modules.xs + i;
 
     size_t profile_block_offset = FbleAddBlocksToProfile(profile, module->profile_blocks);
     funcs[i] = FbleNewInterpretedFuncValue(heap, module->code, profile_block_offset, NULL);
@@ -80,7 +79,7 @@ static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, Fbl
     FbleInitVector(call->args);
     for (size_t d = 0; d < module->deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
-        if (FbleModulePathsEqual(module->deps.xs[d], compiled->modules.xs[v]->path)) {
+        if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[v].path)) {
           FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
           FbleAppendToVector(call->args, var);
           break;
@@ -101,7 +100,7 @@ static FbleValue* LinkInterpreted(FbleValueHeap* heap, FbleProfile* profile, Fbl
   // Wrap that all up into an FbleFuncValue.
   FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs);
   FbleFreeCode(code);
-  FbleFreeCompiledProgram(compiled);
+  FbleFreeProgram(program);
   return linked;
 }
 
