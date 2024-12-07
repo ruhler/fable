@@ -11,8 +11,8 @@
 
 #include <fble/fble-alloc.h>       // for FbleFree
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-generate.h>    // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink
+#include <fble/fble-program.h>     // for FbleNativeModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleInitVector.
 #include <fble/fble-version.h>     // for FBLE_VERSION
@@ -386,7 +386,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
 }
 
 // FbleStdioMain -- See documentation in stdio.fble.h
-int FbleStdioMain(int argc, const char** argv, FbleGeneratedModule* module)
+int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module)
 {
   const char* arg0 = argv[0];
 

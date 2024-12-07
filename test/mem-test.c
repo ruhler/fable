@@ -11,8 +11,8 @@
 
 #include <fble/fble-alloc.h>       // for FbleMaxTotalBytesAllocated, etc.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-generate.h>    // for FbleGeneratedModule
 #include <fble/fble-link.h>        // for FbleLink.
+#include <fble/fble-program.h>     // for FbleNativeModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
 
@@ -73,7 +73,7 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
 }
 
 // FbleMemTestMain -- see documentation in mem-test.h.
-int FbleMemTestMain(int argc, const char** argv, FbleGeneratedModule* module)
+int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module)
 {
   const char* arg0 = argv[0];
 

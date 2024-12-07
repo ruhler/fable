@@ -26,7 +26,6 @@ namespace eval "include" {
       FbleCall FbleTailCall
     }
     fble-generate.h {
-      FbleGeneratedModule FbleGeneratedModuleV
       FbleGenerateAArch64 FbleGenerateAArch64Export FbleGenerateAArch64Main
       FbleGenerateC FbleGenerateCExport FbleGenerateCMain
     }
@@ -78,6 +77,7 @@ namespace eval "include" {
     fble-program.h {
       FbleModule FbleModuleV FbleProgram
       FbleFreeModule FbleFreeProgram
+      FbleNativeModule FbleNativeModuleV
     }
     fble-string.h {
       FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString

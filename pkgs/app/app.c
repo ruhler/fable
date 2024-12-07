@@ -416,7 +416,7 @@ static Uint32 OnTimer(Uint32 interval, void* param)
 }
 
 // FbleAppMain -- See documentation in app.fble.h
-int FbleAppMain(int argc, const char* argv[], FbleGeneratedModule* module)
+int FbleAppMain(int argc, const char* argv[], FbleNativeModule* module)
 {
   const char* arg0 = argv[0];
 

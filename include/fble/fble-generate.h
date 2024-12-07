@@ -8,42 +8,7 @@
 
 #include <stdio.h>        // for FILE
 
-#include "fble-compile.h"   // for FbleCompiledModule
-#include "fble-function.h"  // for FbleExecutable
-
-typedef struct FbleGeneratedModule FbleGeneratedModule;
-
-/**
- * @struct[FbleGeneratedModuleV] A vector of FbleGeneratedModule.
- *  @field[size_t][size] Number of elements.
- *  @field[FbleGeneratedModule**][xs] Elements.
- */
-typedef struct {
-  size_t size;
-  FbleGeneratedModule** xs;
-} FbleGeneratedModuleV;
-
-/**
- * @struct[FbleGeneratedModule] A native compiled module implementation.
- *  @field[FbleModulePath*][path] The path to the module.
- *  @field[FbleGeneratedModuleV][deps]
- *   List of modules this module depends on.
- *  @field[FbleExecutable*][executable]
- *   Code to compute the value of the module, suitable for use in the body of
- *   a function that takes the computed module values for each module listed
- *   in 'deps' as arguments to the function.
- *   
- *   executable->args must be the same as deps.size.
- *   executable->statics must be 0.
- *  @field[FbleNameV][profile_blocks]
- *   Profile blocks used by functions in the module.
- */
-struct FbleGeneratedModule {
-  FbleModulePath* path;
-  FbleGeneratedModuleV deps;
-  FbleExecutable* executable;
-  FbleNameV profile_blocks;
-};
+#include "fble-program.h"   // for FbleModule
 
 /**
  * @func[FbleGenerateAArch64] Generates aarch64 for a compiled module.

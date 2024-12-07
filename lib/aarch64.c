@@ -70,7 +70,7 @@ static void StringLit(FILE* fout, const char* string);
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string);
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
-static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleModule* module);
+static void StaticNativeModule(FILE* fout, LabelId* label_id, FbleModule* module);
 
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
@@ -332,8 +332,8 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
 }
 
 /**
- * @func[StaticGeneratedModule]
- * @ Generates code to declare a static FbleGeneratedModule value.
+ * @func[StaticNativeModule]
+ * @ Generates code to declare a static FbleNativeModule value.
  *  @arg[FILE*][fout] The output stream to write the code to.
  *  @arg[LabelId*][label_id] Pointer to next available label id for use.
  *  @arg[FbleModule*][module]
@@ -343,7 +343,7 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
  *   @i Outputs code to fout.
  *   @i Increments label_id based on the number of internal labels used.
  */
-static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleModule* module)
+static void StaticNativeModule(FILE* fout, LabelId* label_id, FbleModule* module)
 {
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
 
@@ -377,7 +377,7 @@ static void StaticGeneratedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   fprintf(fout, "  .align 3\n");
   fprintf(fout, "  .global %s\n", module_name->str);
   fprintf(fout, "  .type %s, %%object\n", module_name->str);
-  fprintf(fout, "  .size %s, %zi\n", module_name->str, sizeof(FbleGeneratedModule));
+  fprintf(fout, "  .size %s, %zi\n", module_name->str, sizeof(FbleNativeModule));
   fprintf(fout, "%s:\n", module_name->str);
   fprintf(fout, "  .xword " LABEL "\n", path_id);                 // .path
   fprintf(fout, "  .xword %zi\n", module->deps.size);
@@ -1273,7 +1273,7 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module)
   fprintf(fout, ".L.high_pc:\n");
 
   LabelId label_id = 0;
-  StaticGeneratedModule(fout, &label_id, module);
+  StaticNativeModule(fout, &label_id, module);
 
   // Emit dwarf debug info.
   fprintf(fout, "  .section .debug_info\n");

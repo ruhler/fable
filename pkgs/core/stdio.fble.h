@@ -6,7 +6,7 @@
 #ifndef FBLE_CORE_STDIO_FBLE_H_
 #define FBLE_CORE_STDIO_FBLE_H_
 
-#include <fble/fble-generate.h>   // for FbleGeneratedModule
+#include <fble/fble-program.h>   // for FbleNativeModule
 #include <fble/fble-profile.h>
 #include <fble/fble-value.h>
 
@@ -52,8 +52,8 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
  * @func[FbleStdioMain] A main function for a @l{Stdio@} program.
  *  @arg[int][argc] The number of args.
  *  @arg[const char**][argv] The args.
- *  @arg[FbleGeneratedModule*][module]
- *   The compiled module to use as the @l{Stdio@} program to run, or NULL to
+ *  @arg[FbleNativeModule*][module]
+ *   The native module to use as the @l{Stdio@} program to run, or NULL to
  *   determine the module based on command line options.
  *
  *  @returns[int]
@@ -65,6 +65,6 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
  *    stderr.
  *   @i Writes to a profile if specified by the command line options.
  */
-int FbleStdioMain(int argc, const char** argv, FbleGeneratedModule* module);
+int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module);
 
 #endif // FBLE_CORE_STDIO_FBLE_H_

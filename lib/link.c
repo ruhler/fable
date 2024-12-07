@@ -14,48 +14,48 @@
 #include "code.h"       // for FbleCode
 #include "interpret.h"  // for FbleNewInterpretedFuncValue
 
-static void LoadGenerated(FbleProgram* program, FbleGeneratedModule* generated);
+static void LoadNative(FbleProgram* program, FbleNativeModule* native);
 static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program);
 
 
 /**
- * @func[LoadGenerated] Loads a program from generated modules.
+ * @func[LoadNative] Loads a program from native modules.
  *  Loads the module and all its dependencies in topological order, such that
  *  later modules in the list depend on earlier modules, but not the other way
  *  around.
  *
  *  @arg[FbleProgram*][program] The modules loaded so far.
- *  @arg[FbleGeneratedModule*][generated] The module to load.
+ *  @arg[FbleNativeModule*][native] The module to load.
  *  @sideeffects
  *   Adds the module and all dependencies to the program.
  */
-static void LoadGenerated(FbleProgram* program, FbleGeneratedModule* generated)
+static void LoadNative(FbleProgram* program, FbleNativeModule* native)
 {
   // Check if we've already loaded the module.
   for (size_t i = 0; i < program->modules.size; ++i) {
-    if (FbleModulePathsEqual(program->modules.xs[i].path, generated->path)) {
+    if (FbleModulePathsEqual(program->modules.xs[i].path, native->path)) {
       return;
     }
   }
 
   // Load the dependencies.
-  for (size_t i = 0; i < generated->deps.size; ++i) {
-    LoadGenerated(program, generated->deps.xs[i]);
+  for (size_t i = 0; i < native->deps.size; ++i) {
+    LoadNative(program, native->deps.xs[i]);
   }
 
   FbleModule* module = FbleExtendVector(program->modules);
-  module->path = FbleCopyModulePath(generated->path);
+  module->path = FbleCopyModulePath(native->path);
   FbleInitVector(module->deps);
-  for (size_t i = 0; i < generated->deps.size; ++i) {
-    FbleAppendToVector(module->deps, FbleCopyModulePath(generated->deps.xs[i]->path));
+  for (size_t i = 0; i < native->deps.size; ++i) {
+    FbleAppendToVector(module->deps, FbleCopyModulePath(native->deps.xs[i]->path));
   }
   module->type = NULL;
   module->value = NULL;
   module->code = NULL;
-  module->exe = generated->executable;
+  module->exe = native->executable;
   FbleInitVector(module->profile_blocks);
-  for (size_t i = 0; i < generated->profile_blocks.size; ++i) {
-    FbleAppendToVector(module->profile_blocks, FbleCopyName(generated->profile_blocks.xs[i]));
+  for (size_t i = 0; i < native->profile_blocks.size; ++i) {
+    FbleAppendToVector(module->profile_blocks, FbleCopyName(native->profile_blocks.xs[i]));
   }
 }
 
@@ -139,13 +139,13 @@ static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* p
 }
 
 // FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModule* module, FbleSearchPath* search_path, FbleModulePath* module_path)
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModule* module, FbleSearchPath* search_path, FbleModulePath* module_path)
 {
   FbleProgram* program = NULL;
   if (module != NULL) {
     program = FbleAlloc(FbleProgram);
     FbleInitVector(program->modules);
-    LoadGenerated(program, module);
+    LoadNative(program, module);
   } else {
     assert(module_path != NULL);
 
@@ -165,7 +165,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModu
   return linked;
 }
 // See documentation in fble-link.h
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleGeneratedModule* module)
+void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleNativeModule* module)
 {
   if (module != NULL) {
     const char* binary_name = strrchr(arg0, '/');

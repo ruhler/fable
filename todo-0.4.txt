@@ -3,6 +3,7 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * Install the C version of fbld, not the fble version.
+* Clean up stray reference to FbleExecutableModule in aarch64.c or c.c
 
 * http profiler server
  - Add support for HEAD method.

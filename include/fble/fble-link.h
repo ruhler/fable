@@ -24,8 +24,8 @@
  *   Heap to use for allocations.
  *  @arg[FbleProfile*] profile
  *   Profile to populate with blocks. May be NULL.
- *  @arg[FbleGeneratedModule*] module
- *   The compiled main module function. May be NULL.
+ *  @arg[FbleNativeModule*] module
+ *   The native main module function. May be NULL.
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for locating .fble files.
  *  @arg[FbleModulePath*] module_path
@@ -38,7 +38,7 @@
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModule* module, FbleSearchPath* search_path, FbleModulePath* module_path);
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModule* module, FbleSearchPath* search_path, FbleModulePath* module_path);
 
 /**
  * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.
@@ -55,12 +55,12 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleGeneratedModu
  *   Name of the underlying tool, e.g. "fble-test".
  *  @arg[const char*] arg0
  *   argv[0] from the main function.
- *  @arg[FbleGeneratedModule*] module
- *   The optionally compiled module to get the module name from.
+ *  @arg[FbleNativeModule*] module
+ *   Optional native module to get the module name from.
  *
  *  @sideeffects
  *   Prints a header line to the given stream.
  */
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleGeneratedModule* module);
+void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleNativeModule* module);
 
 #endif // FBLE_LINK_H_
