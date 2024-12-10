@@ -9,11 +9,11 @@
   
   @definition Compiled Module
    Code generated for executing the given module. This will generate an
-   @l[FbleGeneratedModule] for the module under an internal name that
+   @l[FbleNativeModule] for the module under an internal name that
    users should not directly reference.
   
   @definition Exported Module
-   An explicitly named @l[FbleGeneratedModule*] for the generated module.
+   An explicitly named @l[FbleNativeModule*] for the generated module.
    Users provide their desired name for the exported module. The
    compiler will define a pointer to the generated module wit hthe user
    specified exported module name.
@@ -25,7 +25,7 @@
    @code[c]
     @@l[int] @a[NAME](
          @l[int] @a[argc], @l[const char**] @a[argv],
-         @l[FbleGeneratedModule*] @a[module]);
+         @l[FbleNativeModule*] @a[module]);
   
    It will be called passing @a[argc] and @a[argv] from @l[main] and the
    compiled module generated using the Compiled Module option.

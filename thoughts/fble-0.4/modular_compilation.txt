@@ -961,3 +961,47 @@ FbleProgram could be kept internal if I have the right APIs. Let's review.
 fble-deps is the case where we want to load without compiling. Hmm...
 
 I don't know. Maybe that's too much change for right now. Start smaller?
+
+---
+
+I want to change FbleLink API. Instead of being either interpreted or
+compiled, pass a module_path and a native_search_path so we can mix.
+
+But a lot of code is assuming either/or right now. How should I update that?
+For example:
+* compiled header line is printed for compiled programs.
+* We change arg parsing in case of compiled programs.
+
+Consider something like fble-stdio:
+
+In some cases we compile the module path in. In other places we want to get
+that on the command line. Seems like I'm currently conflating two, now
+different, things:
+1. Is the program running with compiled code or not.
+2. Is the module to run compiled into the program or not.
+
+(1) isn't going to make sense for much longer. We'll have a mix of interpreted
+and "compiled" code, because the builtin stdio API is implemented as native
+code.
+
+(2) still makes sense. And you could imagine mixing it with interpreted code.
+For example, I create an fble-sat program that reads from the .fble file.
+That's reasonable. It provides default arguments for the module. Not sure how
+it's going to provide the module search path though... Use the default?
+
+---
+
+I'm not convinced it makes sense to change the standard main function API:
+passing argv and a single optional FbleNativeModule. If we want to add builtin
+modules, that should be part of the main function itself. Think of this main
+function as an interface for the compiler to use to pass a single compiled
+module.
+
+So it makes sense to keep that API as is. No need to worry about header line.
+I can jump straight to the internal API update.
+
+The internal API update will be to FbleLink to start. It takes a vector of
+native modules as the native_search_path. All else the same. Callers should
+pass their single native module in the vector, in addition to any other
+builtin native modules they want to make available.
+
