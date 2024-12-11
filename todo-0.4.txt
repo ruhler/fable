@@ -4,8 +4,8 @@ Things to consider doing for the fble-0.4 release.
 
 * Install the C version of fbld, not the fble version.
 * Clean up stray reference to FbleExecutableModule in aarch64.c or c.c
-* Figure out what to do about FblePrintCompiledHeaderLine
-  Now that code can be a mix of compiled and interpreted.
+* Move FblePrintCompiledHeaderLine to fble-generate.h
+  And the impl to generate.c? And rename to FblePrintGeneratedHeaderLine?
 
 * http profiler server
  - Add support for HEAD method.

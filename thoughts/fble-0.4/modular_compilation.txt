@@ -1005,3 +1005,17 @@ native modules as the native_search_path. All else the same. Callers should
 pass their single native module in the vector, in addition to any other
 builtin native modules they want to make available.
 
+---
+
+The next step is to add support for .fble.@ files.
+
+FbleLoad needs to know what it's being called for:
+* From FbleLink: FbleLoadForExecution
+* From fble-deps: FbleLoadForExecution for now. Needs more discussion.
+* From fble-disassemble: FbleLoadForModuleCompilation
+* From fble-compile: FbleLoadForModuleCompilation
+
+Internally we'll want FbleLoadForType as well, but no need to expose that.
+
+Eventually we'll want these load functions to take a native search path
+argument. Don't worry about that right now.

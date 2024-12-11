@@ -61,7 +61,7 @@ typedef struct {
 /**
  * @struct[FbleModuleV] Vector of FbleModule.
  *  @field[size_t][size] Number of elements.
- *  @field[FbleLoadedModule*][xs] Elements.
+ *  @field[FbleModule*][xs] Elements.
  */
 typedef struct {
   size_t size;

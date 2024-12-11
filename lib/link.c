@@ -139,16 +139,20 @@ static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* p
 }
 
 // FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModule* module, FbleSearchPath* search_path, FbleModulePath* module_path)
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path)
 {
   FbleProgram* program = NULL;
-  if (module != NULL) {
-    program = FbleAlloc(FbleProgram);
-    FbleInitVector(program->modules);
-    LoadNative(program, module);
-  } else {
-    assert(module_path != NULL);
 
+  for (size_t i = 0; i < native_search_path.size; ++i) {
+    if (FbleModulePathsEqual(native_search_path.xs[i]->path, module_path)) {
+      program = FbleAlloc(FbleProgram);
+      FbleInitVector(program->modules);
+      LoadNative(program, native_search_path.xs[i]);
+      break;
+    }
+  }
+
+  if (program == NULL) {
     program = FbleLoad(search_path, module_path, NULL);
     if (program == NULL) {
       return NULL;

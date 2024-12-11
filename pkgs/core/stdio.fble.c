@@ -470,10 +470,20 @@ int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module)
     }
   }
 
+  FbleNativeModuleV native_search_path = { .xs = NULL, .size = 0 };
+  if (module != NULL) {
+    native_search_path.xs = &module;
+    native_search_path.size = 1;
+  }
+
+  if (module_arg.module_path == NULL) {
+    module_arg.module_path = FbleCopyModulePath(module->path);
+  }
+
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* stdio = FbleLink(heap, profile, module, module_arg.search_path, module_arg.module_path);
+  FbleValue* stdio = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path);
   FbleFreeModuleArg(module_arg);
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);

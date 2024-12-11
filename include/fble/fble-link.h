@@ -14,18 +14,12 @@
 
 /**
  * @func[FbleLink] Loads an optionally compiled program.
- *  This function attempts to load a compiled program if available, and if
- *  not, attempts to load from source.
- *
- *  If module is non-NULL, loads from compiled. Otherwise loads from
- *  module_path.
- *
  *  @arg[FbleValueHeap*] heap
  *   Heap to use for allocations.
  *  @arg[FbleProfile*] profile
  *   Profile to populate with blocks. May be NULL.
- *  @arg[FbleNativeModule*] module
- *   The native main module function. May be NULL.
+ *  @arg[FbleNativeModuleV] native_search_path
+ *   The search path to use for locating native modules.
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for locating .fble files.
  *  @arg[FbleModulePath*] module_path
@@ -38,7 +32,7 @@
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModule* module, FbleSearchPath* search_path, FbleModulePath* module_path);
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path);
 
 /**
  * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.
