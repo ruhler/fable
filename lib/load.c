@@ -245,7 +245,7 @@ static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleS
 }
 
 // See documentation in fble-load.h.
-FbleProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
   if (module_path == NULL) {
     fprintf(stderr, "no module path specified\n");
@@ -356,6 +356,14 @@ FbleProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, 
     return NULL;
   }
   return program;
+}
+
+FbleProgram* FbleLoadForModuleCompilation(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+{
+  // TODO: Avoid loading dependencies not needed for module compilation once
+  // we support loading of types via .fble.@ files. For now just load
+  // everything.
+  return FbleLoadForExecution(search_path, module_path, build_deps);
 }
 
 // See documentation in fble-load.h.

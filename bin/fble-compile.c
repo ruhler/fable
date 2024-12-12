@@ -125,7 +125,7 @@ int main(int argc, const char* argv[])
   }
 
   if (compile) {
-    FbleProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, NULL);
+    FbleProgram* prgm = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, NULL);
     if (prgm == NULL) {
       FbleFreeModuleArg(module_arg);
       return EX_FAIL;

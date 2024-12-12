@@ -153,7 +153,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV
   }
 
   if (program == NULL) {
-    program = FbleLoad(search_path, module_path, NULL);
+    program = FbleLoadForExecution(search_path, module_path, NULL);
     if (program == NULL) {
       return NULL;
     }

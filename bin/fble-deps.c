@@ -10,7 +10,7 @@
 
 #include <fble/fble-alloc.h>     // for FbleFree.
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg, FbleParseStringArg
-#include <fble/fble-load.h>      // for FbleLoad.
+#include <fble/fble-load.h>      // for FbleLoadForExecution.
 #include <fble/fble-vector.h>    // for FbleInitVector.
 #include <fble/fble-version.h>   // for FBLE_VERSION
 
@@ -87,7 +87,7 @@ int main(int argc, const char* argv[])
 
   FbleStringV deps;
   FbleInitVector(deps);
-  FbleProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, &deps);
+  FbleProgram* prgm = FbleLoadForExecution(module_arg.search_path, module_arg.module_path, &deps);
   FbleFreeModuleArg(module_arg);
   FbleFreeProgram(prgm);
 

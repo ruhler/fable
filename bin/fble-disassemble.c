@@ -9,7 +9,7 @@
 #include <fble/fble-alloc.h>     // for FbleFree.
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg, etc.
 #include <fble/fble-compile.h>   // for FbleCompile, FbleDisassemble.
-#include <fble/fble-load.h>      // for FbleLoad.
+#include <fble/fble-load.h>      // for FbleLoadForModuleCompilation.
 #include <fble/fble-profile.h>   // for FbleNewProfile, etc.
 #include <fble/fble-version.h>   // for FBLE_VERSION
 
@@ -72,7 +72,7 @@ int main(int argc, const char* argv[])
     return EX_USAGE;
   }
 
-  FbleProgram* prgm = FbleLoad(module_arg.search_path, module_arg.module_path, NULL);
+  FbleProgram* prgm = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, NULL);
   FbleFreeModuleArg(module_arg);
   if (prgm == NULL) {
     return EX_FAIL;

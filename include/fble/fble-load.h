@@ -101,7 +101,10 @@ void FbleAppendStringToSearchPath(FbleSearchPath* path, FbleString* root_dir);
 FbleString* FbleFindPackage(const char* package);
 
 /**
- * @func[FbleLoad] Loads an fble program.
+ * @func[FbleLoadForExecution] Loads an fble program for execution.
+ *  Loads code sufficient for executing the main module and all other modules
+ *  it depends on.
+ *
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for location .fble files. Borrowed.
  *  @arg[FbleModulePath*] module_path
@@ -122,7 +125,34 @@ FbleString* FbleFindPackage(const char* package);
  *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
-FbleProgram* FbleLoad(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+
+/**
+ * @func[FbleLoadForModuleCompilation]
+ * @ Loads an fble program for module compilation.
+ *  Loads code sufficient for type checking and compiling the main module.
+ *
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for location .fble files. Borrowed.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load. Borrowed.
+ *  @arg[FbleStringV*] build_deps
+ *   Output to store list of files the load depended on. This should be a
+ *   preinitialized vector, or NULL.
+ *
+ *  @returns FbleProgram*
+ *   The parsed program, or NULL in case of error.
+ *
+ *  @sideeffects
+ *   @i Prints an error message to stderr if the program cannot be parsed.
+ *   @item
+ *    The user should call FbleFreeProgram to free resources
+ *    associated with the given program when it is no longer needed.
+ *   @item
+ *    The user should free strings added to build_deps when no longer
+ *    needed, including in the case when program loading fails.
+ */
+FbleProgram* FbleLoadForModuleCompilation(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * @func[FbleSaveBuildDeps] Saves a depfile.
