@@ -652,7 +652,7 @@ of them as header files where values of things are marked ?<...>, think of
 them as: this has the same type as the .fble module. Which is exactly what
 they are. They needn't have the same structure.
 
-Thus, I conclude: now need to add a new ?<...> syntax to the language. Good.
+Thus, I conclude: no need to add a new ?<...> syntax to the language. Good.
 We just need to give some hints as to how to write .fble.@ files manually.
 
 ---
@@ -1019,3 +1019,57 @@ Internally we'll want FbleLoadForType as well, but no need to expose that.
 
 Eventually we'll want these load functions to take a native search path
 argument. Don't worry about that right now.
+
+---
+
+Is typecheck all set up to support .fble.@ files? In theory I want it to use
+the 'type' field for type checking, not the 'expr' field. Let's see what it
+does today.
+
+FbleTypeCheckProgram:
+  We type check each module in tern. If it has a type, we type check the type.
+  If it has a value, we type check the value. Then we double check their types
+  match.
+
+FbleTypeCheckModule:
+  Type checks the program.
+  
+Issues with the current approach:
+* We don't optimize for the case where type and value are both provided and
+  are the same. I suppose load can indicate that by setting type to NULL? But
+  that's not really what we want.
+* We assume the same module arguments are required for the 'type' and 'value'
+  expressions. This is a problem if the type has dependencies not in value,
+  and we are compiling for execution.
+
+What to do about those cases?
+
+---
+
+Easy:
+* If something is loaded into the .type field, it is intended only to be used
+  for type purposes. If something is loaded into the .expr field, it is
+  intended to be used for execution. If both are available, we get the type
+  from the .type field and double check against. expr. If only one is
+  available, whichever one that is, we get the type from that field.
+* For module dependencies, take the union of the .fble and .fble.@
+  dependencies. There's no harm having unused dependencies, and it will make
+  things simpler.
+
+I claim the typechecking code already implements exactly the behavior we want.
+Except, minor point: if both type and expr exist, we should return the type
+from 'type', not from expr. That's an easy fix.
+
+Next step will be to add support for loading .fble.@ files in FbleLoad. But
+let me review first changes to the search logic I wanted to do, in case we can
+simplify things. Recall from before:
+
+* When looking for modules, look for parents first, as soon as you find any
+  parent, commit to the current module root for that module.
+
+When loading for type, we try .fble.@ first, then fall back to .fble. When
+loading for execution, we try .fble.@, then we open .fble.
+
+As soon as we find either .fble.@ or .fble file in the module search path, we
+commit to that root. I can make that change first. I should document it
+somewhere. And ideally test it?

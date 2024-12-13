@@ -2345,7 +2345,9 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps)
       FreeTc(th, tc);
       return TC_FAILED;
     }
-    FbleReleaseType(th, type);
+
+    FbleReleaseType(th, tc.type);
+    tc.type = type;
     return tc;
   }
 
