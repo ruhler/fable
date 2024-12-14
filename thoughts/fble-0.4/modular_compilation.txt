@@ -1073,3 +1073,48 @@ loading for execution, we try .fble.@, then we open .fble.
 As soon as we find either .fble.@ or .fble file in the module search path, we
 commit to that root. I can make that change first. I should document it
 somewhere. And ideally test it?
+
+---
+
+Trouble: Say the first package in the search path has /foo/bar/sludge%, and
+the next package in the search path has /foo/bar%. What should the behavior
+be? I want this to be disallowed, but how can we reasonably discover it?
+
+I think, don't worry about package search restrictions yet. We can do that
+separately.
+
+Then the next step is looking for .fble.@ files. The behavior we want in load
+is:
+* If loading for type: try .fble.@, if not tryp .fble for 'type'.
+* If loading for exec: try .fble.@. Require .fble for 'expr'.
+
+Two questions:
+1. Can we update the spec tests to make it easy to test .fble.@ files?
+2. How do we keep track of whether we are loading for type or for exec in
+FbleLoad?
+
+To properly test .fble.@, I would want:
+* .fble and .fble.@ for execution, with types matching.
+* .fble and .fble.@ for execution, types not matching.
+* .fble.@ only for execution of that module: fails.
+* .fble.@ only for compile of that module: fails.
+* .fble.@ only for compile of other module: succeeds.
+
+So, a couple features we want:
+1. Be able to specify both .fble and .fble.@ for the same module path.
+2. Be able to test 'compile only' of a module in spec tests.
+Add: no-compile-error option: all it does is try to compile.
+Or: Just runtime-error to say expect runtime error because module not found.
+And distinguish between that and compile-error. I kind of like that. Good.
+
+And for (1): great! We already read directly from .fble and .fble.@ files. No
+more generating things from tcl. So we are good. We already support everything
+we need.
+
+But I need to update the language spec for .fble.@ files, right?
+
+My desired changes to the spec:
+* Ditch this notion of no Foo.fble meaning value is Unit@().
+* Add a paragraph or so on .fble.@ files.
+
+Cool. Let's get to it.

@@ -1037,22 +1037,13 @@
    structure is to group modules together that are developed by the same
    organization to help avoid name conflicts.
   
-   Each node in the tree is a module. Each module has a value and zero or more
-   named child nodes.
-  
-   A module's value may be trivial if the module is intended primarily for
-   organizational purposes. A module need not contain any children if it is
-   intended primarily for providing a useful module value.
-  
    The module hierarchy is described in a platform dependant manner. On a
    platform with standard file system, the following is suggested:
   
    The hierarchy of modules is expressed using a directory hierarchy. The
-   value of a module Foo is described in the file Foo.fble as an fble
-   expression using the 'stmt' concrete syntactic term. The child modules of
-   Foo are placed in a directory Foo/. The absence of a file Foo.fble implies
-   the value of the module Foo is @L{*()()}. The absence of a subdirectory Foo
-   implies the module Foo has no children.
+   value of a module @l{Foo} is described in the file @l{Foo.fble} as an fble
+   expression using the @l{stmt} concrete syntactic term. The child modules of
+   @l{Foo} are placed in a directory @l{Foo/}.
   
    For example, you might have the following directory structure:
   
@@ -1066,12 +1057,12 @@
      Md5.fble
      Md5/
        Tests.fble
-  
+
   @subsection 8.2 Path
    Modules may depend on other modules independent of the tree hierarchy of
    modules. A program can include a module without having to depend on any
-   descendants of that module. The only restrictions on module dependencies
-   are that there must not be any cyclic dependencies. A module may not
+   descendants of that module. The only restriction on module dependencies
+   is that there must not be any cyclic dependencies. A module may not
    reference itself, as that is considered a form of cyclic dependency.
   
    A module is referred to using an absolute path, which describes a path of
@@ -1155,12 +1146,37 @@
   
    The modules may be combined in any order that satisfies their dependencies.
   
-   The same module hierarchy can be used for a program to run List tests:
+   The same module hierarchy can be used for a program to run @l{List} tests:
   
    @code[txt] @
     StdLib_Unit = </Stdlib/Unit%>;
     StdLib_List = </StdLib/List%>;
     </StdLib/List/Tests%>;
+
+  @subsection 8.4 Modular Compilation
+   On a platform with standard file system, the following is suggested:
+
+   To support modular compilation and platforms that allow distributing
+   pre-compiled modules in binary form, the type of a module can optionally
+   be described in the file @l{Foo.fble.@} as an fble expression using the
+   @l{stmt} concrete syntactic term whose type is the same as the type of the
+   module @l{Foo}. The @l{Foo.fble.@} file will never be executed, which means
+   it may contain undefined values for implementations of functions. In this
+   way, @l{Foo.fble.@} can be considered as a header file for the module
+   @l{Foo}.
+
+   If both @l{Foo.fble} and @l{Foo.fble.@} are provided for a module, the
+   @l{Foo.fble.@} file is considered the source of truth for the type of
+   @l{Foo}. It is a compile error if the type of @l{Foo.fble} does not match
+   the type of @l{Foo.fble.@}.
+
+   If @l{Foo.fble.@} is provided, then compilation of a module that depends on
+   @l{Foo} should read the type of @l{Foo} from the @l{Foo.fble.@} file,
+   ignoring any @l{Foo.fble} file that may or may not be present at the time
+   of compilation.
+
+   The @l{Foo.fble.@} file is optional. If it is not provided, the type of a
+   module should be determined from the @l{Foo.fble} file for the module.
  
  @section @label[abstract][9. Abstract Types]
   Abstract types provide a mechanism to define types of values that can only
