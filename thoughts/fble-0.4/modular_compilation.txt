@@ -1118,3 +1118,18 @@ My desired changes to the spec:
 * Add a paragraph or so on .fble.@ files.
 
 Cool. Let's get to it.
+
+---
+
+Next step is loading of .fble.@ in addition to .fble. Assume loading for
+execution for now.
+
+The way the loader currently works is:
+* It calls Find to get the filename of the .fble file.
+* It calls FbleParse to get the value and record dependencies.
+* The main module uses a different block of code than dependant modules.
+
+For first round, let's assume the .fble.@ file is located in the same
+directory as the .fble file? No. In general I might expect them to be located
+in different directories? Unclear. I don't have a good story at the moment.
+

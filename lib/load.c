@@ -46,8 +46,8 @@ typedef struct Stack {
 } Stack;
 
 static FbleString* FindPackageAt(const char* package, const char* package_dir);
-static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* build_deps);
-static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleStringV* build_deps);
+static FbleString* FindAt(const char* root, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
+static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
 
 // See documentation in fble-load.h.
 FbleSearchPath* FbleNewSearchPath()
@@ -146,6 +146,8 @@ FbleString* FbleFindPackage(const char* package)
  *  module path.
  *  
  *  @arg[const char*][root] File path to the root of the module search path.
+ *  @arg[const char*][suffix]
+ *   The suffix of the file to look for, e.g. @l{.fble}.
  *  @arg[FbleModulePath*][path] The module path to find the source file for.
  *  @arg[FbleStringV*][build_deps]
  *   Preinitialized output vector to store list of files searched in. May be
@@ -163,12 +165,12 @@ FbleString* FbleFindPackage(const char* package)
  *    Adds strings to build_deps that should be freed with FbleFreeString when
  *    no longer needed.
  */
-static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* build_deps)
+static FbleString* FindAt(const char* root, const char* suffix, FbleModulePath* path, FbleStringV* build_deps)
 {
   assert(root != NULL);
 
   // Cacluate the length of the filename for the module.
-  size_t len = strlen(root) + strlen(".fble") + 1;
+  size_t len = strlen(root) + strlen(suffix) + 1;
   for (size_t i = 0; i < path->path.size; ++i) {
     // "/name"
     len += 1 + strlen(path->path.xs[i].name->str);
@@ -190,7 +192,7 @@ static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* b
     strcat(filename, "/");
     strcat(filename, path->path.xs[i].name->str);
   }
-  strcat(filename, ".fble");
+  strcat(filename, suffix);
 
   if (access(filename, F_OK) != 0) {
     // TODO: We should add as much of the directory of 'filename' that exists
@@ -213,6 +215,8 @@ static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* b
  *  module path.
  *  
  *  @arg[FbleSearchPath*][search_path] The module search path.
+ *  @arg[const char*][suffix]
+ *   The suffix of the file to look for, e.g. @l{.fble}.
  *  @arg[FbleModulePath*][path] The module path to find the source file for.
  *  @arg[FbleStringV*][build_deps]
  *   Preinitialized output vector to store list of files searched in. May be
@@ -223,24 +227,16 @@ static FbleString* FindAt(const char* root, FbleModulePath* path, FbleStringV* b
  *   file can be found.
  *
  *  @sideeffects
- *   @item Prints an error message to stderr in case of error.
- *   @item
- *    The user should call FbleFreeString when the returned string is no
- *    longer needed.
+ *   The user should call FbleFreeString when the returned string is no longer
+ *   needed.
  */
-static FbleString* Find(FbleSearchPath* search_path, FbleModulePath* path, FbleStringV* build_deps)
+static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleStringV* build_deps)
 {
   FbleString* found = NULL;
   for (size_t i = 0; !found && i < search_path->size; ++i) {
-    found = FindAt(search_path->xs[i]->str, path, build_deps);
+    found = FindAt(search_path->xs[i]->str, suffix, path, build_deps);
   }
 
-  if (found == NULL) {
-    FbleReportError("module ", path->loc);
-    FblePrintModulePath(stderr, path);
-    fprintf(stderr, " not found\n");
-    return NULL;
-  }
   return found;
 }
 
@@ -252,8 +248,11 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
     return NULL;
   }
 
-  FbleString* filename = Find(search_path, module_path, build_deps);
+  FbleString* filename = Find(search_path, ".fble", module_path, build_deps);
   if (filename == NULL) {
+    FbleReportError("module ", module_path->loc);
+    FblePrintModulePath(stderr, module_path);
+    fprintf(stderr, " not found\n");
     return NULL;
   }
 
@@ -339,8 +338,12 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
     stack->module.profile_blocks.xs = NULL;
     stack->tail = tail;
 
-    FbleString* filename_str = Find(search_path, stack->module.path, build_deps);
-    if (filename_str != NULL) {
+    FbleString* filename_str = Find(search_path, ".fble", stack->module.path, build_deps);
+    if (filename_str == NULL) {
+      FbleReportError("module ", stack->module.path->loc);
+      FblePrintModulePath(stderr, stack->module.path);
+      fprintf(stderr, " not found\n");
+    } else {
       stack->module.value = FbleParse(filename_str, &stack->module.deps);
       FbleFreeString(filename_str);
     }
