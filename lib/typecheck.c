@@ -2315,7 +2315,7 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps)
 
   FbleType* type = NULL;
   if (module->type) {
-    type = TypeCheckType(th, &scope, module->value);
+    type = TypeCheckExprForType(th, &scope, module->type);
     if (type == NULL) {
       FreeScope(th, &scope);
       return TC_FAILED;

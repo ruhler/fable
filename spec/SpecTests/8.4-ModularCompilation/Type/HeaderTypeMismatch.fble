@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 17:1
+# @@fble-test@@ compile-error 14:3
 # Test that the type of a module is checked against its corresponding
 # .fble.@ file.
 

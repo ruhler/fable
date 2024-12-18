@@ -32,7 +32,9 @@ typedef struct FbleCode FbleCode;
  *
  *  @field[FbleModulePath*][path] The path to the module.
  *  @field[FbleModulePathV][deps] List of modules this module depends on.
- *  @field[FbleExpr*][type] Abstract syntax of the module type. May be NULL.
+ *  @field[FbleExpr*][type]
+ *   Abstract syntax of an expression whose type is the module type. May be
+ *   NULL.
  *  @field[FbleExpr*][value]
  *   Abstract syntax of the module implementation. May be NULL.
  *  @field[FbleCode*][code]

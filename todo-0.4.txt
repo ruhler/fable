@@ -2,6 +2,9 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Add test for .fble vs. .fble.@ type for main module as well as dependant
+  module.
+
 * Install the C version of fbld, not the fble version.
 * Clean up stray reference to FbleExecutableModule in aarch64.c or c.c
 * Move FblePrintCompiledHeaderLine to fble-generate.h

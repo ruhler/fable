@@ -276,7 +276,15 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
   stack->module.profile_blocks.size = 0;
   stack->module.profile_blocks.xs = NULL;
   stack->module.value = FbleParse(filename, &stack->module.deps);
-  if (stack->module.value == NULL) {
+
+  FbleString* header = Find(search_path, ".fble.@", module_path, build_deps);
+  if (header != NULL) {
+    stack->module.type = FbleParse(header, &stack->module.deps);
+    FbleFreeString(header);
+  }
+
+  if (stack->module.value == NULL
+      || (header != NULL && stack->module.type == NULL)) {
     error = true;
     stack->deps_loaded = stack->module.deps.size;
   }
@@ -348,7 +356,14 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
       FbleFreeString(filename_str);
     }
 
-    if (stack->module.value == NULL) {
+    FbleString* header_str = Find(search_path, ".fble.@", stack->module.path, build_deps);
+    if (header_str != NULL) {
+      stack->module.type = FbleParse(header_str, &stack->module.deps);
+      FbleFreeString(header_str);
+    }
+
+    if (stack->module.value == NULL
+        || (header_str != NULL && stack->module.type == NULL)) {
       error = true;
       stack->deps_loaded = stack->module.deps.size;
     }
