@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-module
+#
+# Test compile-module test infrastructure.
+@ Unit@ = *();
+Unit@();

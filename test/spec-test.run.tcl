@@ -217,6 +217,10 @@ proc dispatch {} {
       compile_and_run FbleTestMain { expect_error runtime $::loc $compiled }
       execv $::b/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
+
+    compile-module {
+      execv $::b/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
+    }
     
     memory-constant {
       execv $::b/test/fble-mem-test.cov -I $::s/spec -m $::mpath

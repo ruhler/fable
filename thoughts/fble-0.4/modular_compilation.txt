@@ -1133,3 +1133,38 @@ For first round, let's assume the .fble.@ file is located in the same
 directory as the .fble file? No. In general I might expect them to be located
 in different directories? Unclear. I don't have a good story at the moment.
 
+---
+
+Next step is to avoid loading .fble files for compilation if there are .fble.@
+files. The code should be easy. The slightly more tedious part is adding
+support for it in the test suite. I want a kind of run that is compile only
+without error.
+
+Currently I have 'no-error' to mean compile and run without error. How do I
+say: compile only, expect no error? Let's summarize options:
+
+  no-error: compile, evaluate, no error expected
+  compile-error: compile, expect error
+  compile-warning: compile, expect warning
+  runtime-error: compile, evaluate, expect error
+
+Running implies compiling. Ignore the warning part for now. Options are:
+
+{compile, execute} * {error, no-error}. I'm only missing the compile-no-error
+options. Can we come up with better names? Maybe:
+
+  @@fble-test@@ compile-error
+  @@fble-test@@ runtime-error
+  @@fble-test@@ no-error
+
+Hmm...
+
+runtime-error is nice, because it says you get the error at runtime, not at
+compile time. Rather than have to duplicate the test. I really just need a
+better name for: compile only. Maybe:
+
+  @@fble-test@@ compile
+
+implies you only compile, and you don't expect an error? Sounds good to me.
+Should be easy to implement. Or, @@fble-test@@ compile-module, to be explicit
+that we are only compiling the main module. I like that.

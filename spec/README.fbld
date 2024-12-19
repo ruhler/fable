@@ -18,9 +18,8 @@
   @code[fble] @
    # @@fble-test@@ no-error
  
-  Type check and evaluate the module. If the module is a process type, run the
-  resulting process. The test is considered passing if there are no type
-  errors and no undefined union field accesses.
+  Type check and evaluate the module. The test is considered passing if there
+  are no type errors and no undefined union field accesses.
  
  @section Compile Error
   Annotation:
@@ -52,9 +51,17 @@
   @code[fble] @
    # @@fble-test@@ runtime-error <loc>
  
-  Compile and evaluate the module. If the module is a process type, run the
-  resulting process. The test is considered passing if there is a runtime
-  error reported at location <loc>.
+  Compile and evaluate the module. The test is considered passing if there is
+  a runtime error reported at location <loc>.
+
+ @section Compile Module
+  Annotation:
+
+  @code[fble] @
+   # @@fble-test@@ compile-module
+ 
+  Compile the main module of the program only. The test is considered passing
+  if there are no type errors.
  
  @section Memory Constant
   Annotation:
