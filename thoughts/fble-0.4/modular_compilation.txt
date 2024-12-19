@@ -1168,3 +1168,18 @@ better name for: compile only. Maybe:
 implies you only compile, and you don't expect an error? Sounds good to me.
 Should be easy to implement. Or, @@fble-test@@ compile-module, to be explicit
 that we are only compiling the main module. I like that.
+
+---
+
+Okay! Now in theory we support modular compilation with .fble.@ files. Nifty.
+What's next?
+
+Back to the goal of writing a StdioIO% module by hand. Now I can write the
+header file for it and compile modules against that header file. I could hand
+write my own FbleNativeModule for it. In theory compiled code should now work
+fine. What's missing is being able to load native code for execution. That's
+the next step.
+
+Add native_search_path argument to FbleLoad functions. Have it search that
+list when trying to load a module for execution.
+

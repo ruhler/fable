@@ -4,6 +4,9 @@ Things to consider doing for the fble-0.4 release.
 
 * Add test for .fble vs. .fble.@ type for main module as well as dependant
   module.
+* Test for .fble.@ of dependant file present but with bad syntax.
+* Test for malformed .fble of dependant file gives no error when well formed
+  .fble.@ is there and we are just compiling the module.
 
 * Install the C version of fbld, not the fble version.
 * Clean up stray reference to FbleExecutableModule in aarch64.c or c.c
@@ -50,9 +53,6 @@ Things to consider doing for the fble-0.4 release.
  - Taking advantage of explicit type info to pack and unpack.
 
 * Modular compilation
- - Start using unused code for .@ module value vs type.
- - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
- - Add support for loading .fble.@ files.
  - Test coverage of .fble/.fble.@ combinations.
  - Add option for loading modules from .so files?
  - Have fble-stdio check that the function has the right type?

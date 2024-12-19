@@ -48,6 +48,7 @@ typedef struct Stack {
 static FbleString* FindPackageAt(const char* package, const char* package_dir);
 static FbleString* FindAt(const char* root, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
 static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
+static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps);
 
 // See documentation in fble-load.h.
 FbleSearchPath* FbleNewSearchPath()
@@ -240,8 +241,32 @@ static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleMod
   return found;
 }
 
-// See documentation in fble-load.h.
-FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+/**
+ * @func[Load] Loads an fble program.
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for location .fble files. Borrowed.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load. Borrowed.
+ *  @arg[bool] for_execution
+ *   If true, load the program for execution. Otherwise load it module
+ *   compilation.
+ *  @arg[FbleStringV*] build_deps
+ *   Output to store list of files the load depended on. This should be a
+ *   preinitialized vector, or NULL.
+ *
+ *  @returns FbleProgram*
+ *   The parsed program, or NULL in case of error.
+ *
+ *  @sideeffects
+ *   @i Prints an error message to stderr if the program cannot be parsed.
+ *   @item
+ *    The user should call FbleFreeProgram to free resources
+ *    associated with the given program when it is no longer needed.
+ *   @item
+ *    The user should free strings added to build_deps when no longer
+ *    needed, including in the case when program loading fails.
+ */
+static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps)
 {
   if (module_path == NULL) {
     fprintf(stderr, "no module path specified\n");
@@ -346,26 +371,39 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
     stack->module.profile_blocks.xs = NULL;
     stack->tail = tail;
 
-    FbleString* filename_str = Find(search_path, ".fble", stack->module.path, build_deps);
-    if (filename_str == NULL) {
-      FbleReportError("module ", stack->module.path->loc);
-      FblePrintModulePath(stderr, stack->module.path);
-      fprintf(stderr, " not found\n");
-    } else {
-      stack->module.value = FbleParse(filename_str, &stack->module.deps);
-      FbleFreeString(filename_str);
-    }
-
     FbleString* header_str = Find(search_path, ".fble.@", stack->module.path, build_deps);
     if (header_str != NULL) {
       stack->module.type = FbleParse(header_str, &stack->module.deps);
       FbleFreeString(header_str);
+      if (stack->module.type == NULL) {
+        error = true;
+        stack->deps_loaded = stack->module.deps.size;
+      }
     }
 
-    if (stack->module.value == NULL
-        || (header_str != NULL && stack->module.type == NULL)) {
-      error = true;
-      stack->deps_loaded = stack->module.deps.size;
+    if (for_execution || header_str == NULL) {
+      FbleString* filename_str = Find(search_path, ".fble", stack->module.path, build_deps);
+      if (filename_str == NULL) {
+        FbleReportError("module ", stack->module.path->loc);
+        FblePrintModulePath(stderr, stack->module.path);
+        fprintf(stderr, " not found\n");
+        error = true;
+        stack->deps_loaded = stack->module.deps.size;
+      } else {
+        FbleExpr* parsed = FbleParse(filename_str, &stack->module.deps);
+        if (parsed == NULL) {
+          error = true;
+          stack->deps_loaded = stack->module.deps.size;
+        }
+
+        if (for_execution) {
+          stack->module.value = parsed;
+        } else {
+          assert(stack->module.type == NULL);
+          stack->module.type = parsed;
+        }
+        FbleFreeString(filename_str);
+      }
     }
   }
 
@@ -376,12 +414,16 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
   return program;
 }
 
+// See documentation in fble-load.h.
+FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+{
+  return Load(search_path, module_path, true, build_deps);
+}
+
+// See documentation in fble-load.h.
 FbleProgram* FbleLoadForModuleCompilation(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
-  // TODO: Avoid loading dependencies not needed for module compilation once
-  // we support loading of types via .fble.@ files. For now just load
-  // everything.
-  return FbleLoadForExecution(search_path, module_path, build_deps);
+  return Load(search_path, module_path, false, build_deps);
 }
 
 // See documentation in fble-load.h.

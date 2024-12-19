@@ -1,0 +1,13 @@
+# @@fble-test@@ none
+# Module used in CompileModule test.
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+<@ T@> { T@; } Undefined = <@ T@> { +(T@ undef, Unit@ u)(u: Unit).undef; };
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Undefined<Bool@>;
+Bool@ False = Undefined<Bool@>;
+
+@(Unit@, Unit, Bool@, True, False);
