@@ -2337,7 +2337,8 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps)
 
   if (type && tc.type) {
     if (!FbleTypesEqual(th, type, tc.type)) {
-      ReportError(tc.type->loc, "the type %t does not match interface type %t for module ",
+      ReportError(module->value->loc,
+          "the type %t does not match interface type %t for module ",
           tc.type, type);
       FblePrintModulePath(stderr, module->path);
       fprintf(stderr, "\n");

@@ -143,10 +143,8 @@ proc compile {target main} {
   # Parse the list of .fble files the test depends on from the .d file.
   set fbles [list]
   foreach x [lrange [split [read [open $::b/spec/$::fble.d "r"]]] 1 end] {
-    switch $x {
-      {} {}
-      "\\" {}
-      default { lappend fbles [string map [list "$::s/spec/" ""] $x] }
+    if {[string match *.fble $x]} {
+      lappend fbles [string map [list "$::s/spec/" ""] $x]
     }
   }
 
