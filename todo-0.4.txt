@@ -2,6 +2,9 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Fix issue of fble-deps reporting error for /Debug/Trace/Native% references.
+* Figure out how to make generated c for fble modules satisfy -Wpedantic?
+
 * Add test for .fble vs. .fble.@ type for main module as well as dependant
   module.
 * Test for .fble.@ of dependant file present but with bad syntax.

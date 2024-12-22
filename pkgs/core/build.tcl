@@ -4,7 +4,7 @@ namespace eval "pkgs/core" {
 
   # .c library files.
   set objs [list]
-  foreach {x} { char.fble int.fble stdio.fble string.fble } {
+  foreach {x} { char.fble debug.fble int.fble stdio.fble string.fble } {
     lappend objs $::b/pkgs/core/$x.o
     obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c \
       "-I $::s/include -I $::s/pkgs/core -I $::b/pkgs/core" \

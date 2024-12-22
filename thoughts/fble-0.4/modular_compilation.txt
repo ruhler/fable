@@ -1183,3 +1183,42 @@ the next step.
 Add native_search_path argument to FbleLoad functions. Have it search that
 list when trying to load a module for execution.
 
+---
+
+Let's test out modular compilation for real by implementing a native Trace
+function for debugging. My claim is it should work if compiling an app, but
+fail if trying to interpret.
+
+Steps:
+1. Write the .fble.@ header file for the module.
+2. Try using the module: expect to get a link error in compile case and module
+not found error in interpreted case.
+3. Implement the native module by hand. That should fix the compile case.
+
+Step 1:
+* Does as I expect. But also reminds me that fble-deps defaults to for
+  execution, so we get an error in that case. That should be okay to worry
+  about later.
+
+Step 2:
+* This is a good experience. It's pretty tedious doing all the boiler plate
+  code. Let me follow through and see how it looks in the end. We may want
+  some macros to help with writing this code for us.
+* Apparently the code I generate doesn't satisfy -pedantic, which gets tricky
+  with the build system when I'm hand writing code. Worry about that later.
+* I need to double check what profile block id I should give to the function.
+  Probably I need to have a block id, not just use 0, otherwise profiling will
+  be messed up.
+
+Otherwise, looks like my native module is working. That's pretty cool.
+
+Let's sort out the -pedantic and profile block issue. Um, let's worry about
+-pedantic later, because that sounds like a bigger thing.
+
+---
+
+The compile case works. The interpreter case fails as expected. It's a bit
+tedious to write these modules, and they don't satisfy -pedantic, but let's
+not worry about that right now.
+
+Next step is back to native search path. But needs some design thought still.
