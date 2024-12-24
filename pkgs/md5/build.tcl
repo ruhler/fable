@@ -6,7 +6,7 @@ namespace eval "pkgs/md5" {
 
   # Md5/Tests interpreted
   testsuite $::b/pkgs/md5/Md5/tests.tr \
-    "$::b/pkgs/core/fble-stdio $::b/pkgs/md5/Md5/Tests.fble.d" \
+    "$::b/pkgs/core/fble-stdio $::b/pkgs/md5/libfble-md5$::lext" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/md5 -I $::b/pkgs/md5 -m /Md5/Tests% --prefix Interpreted."
 
   # Md5/Tests compiled

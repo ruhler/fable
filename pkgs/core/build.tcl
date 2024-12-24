@@ -43,14 +43,13 @@ namespace eval "pkgs/core" {
     }
     append nlibs " $::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext"
 
-    fbleobj $target.o $::b/bin/fble-compile \
-      "--main FbleStdioMain -m $path"
+    fblemain $target.o $::b/bin/fble-compile "--main FbleStdioMain -m $path"
     bin $target $objs $nlibs $lflags
   }
 
   # /Core/Stdio/Cat% interpreted test.
   build $::b/pkgs/core/Core/Stdio/fble-cat.out \
-    "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/Cat.fble.d" \
+    "$::b/pkgs/core/fble-stdio" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.out"
   test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
@@ -58,7 +57,7 @@ namespace eval "pkgs/core" {
 
   # /Core/Stdio/Cat% interpreted test 2.
   build $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
-    "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/Cat.fble.d" \
+    "$::b/pkgs/core/fble-stdio" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.2.out"
   test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
@@ -75,7 +74,7 @@ namespace eval "pkgs/core" {
   install $::b/pkgs/core/fble-fast-cat $::config::bindir/fble-fast-cat
 
   # /Core/Stdio/HelloWorld% interpreted test.
-  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/HelloWorld.fble.d" \
+  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr $::b/pkgs/core/fble-stdio \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/HelloWorld% | grep hello"
 
   # /Core/Stdio/HelloWorld% compiled test.
@@ -87,7 +86,7 @@ namespace eval "pkgs/core" {
     "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
 
   # Core/Tests interpreted
-  testsuite $::b/pkgs/core/Core/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Tests.fble.d" \
+  testsuite $::b/pkgs/core/Core/tests.tr $::b/pkgs/core/fble-stdio \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Tests% --prefix Interpreted."
 
   # Core/Tests compiled

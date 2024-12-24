@@ -57,8 +57,7 @@ namespace eval "test" {
 
   # fble-compiled-profiles-test-c
   fbleobj_c $::b/test/ProfilesTest.c.o $::b/bin/fble-compile \
-    "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%" \
-    $::s/test/ProfilesTest.fble
+    "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%"
   bin $::b/test/ProfilesTest.c "$::b/test/ProfilesTest.c.o $libs" "$::b/lib/libfble$::lext" ""
 
   test $::b/test/ProfilesTest.c.tr "$::b/test/ProfilesTest.c" \
@@ -67,8 +66,7 @@ namespace eval "test" {
   if {$::arch == "aarch64"} {
     # fble-compiled-profiles-test-aarch64
     fbleobj_aarch64 $::b/test/ProfilesTest.aarch64.o $::b/bin/fble-compile \
-      "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%" \
-      $::s/test/ProfilesTest.fble
+      "-c -e FbleCompiledMain --main FbleProfilesTestMain -I $::s/test -m /ProfilesTest%"
     bin $::b/test/ProfilesTest.aarch64 "$::b/test/ProfilesTest.aarch64.o $libs" "$::b/lib/libfble$::lext" ""
     test $::b/test/ProfilesTest.aarch64.tr "$::b/test/ProfilesTest.aarch64" \
       "$::b/test/ProfilesTest.aarch64 > $::b/test/ProfilesTest.aarch64.prof"

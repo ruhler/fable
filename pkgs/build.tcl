@@ -39,8 +39,7 @@ namespace eval "pkgs" {
         set target $::config::datadir/fble/$name/$x
         install $root/$x $target
 
-        fbledep $::b/pkgs/$name/$x.d $mpath $cflags $gens
-        fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
+        fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath"
         lappend objs $::b/pkgs/$name/$x.o
       }
     }
@@ -55,7 +54,7 @@ namespace eval "pkgs" {
       install $gen $target
 
       fbledep $::b/pkgs/$name/$x.d $mpath $cflags $gens
-      fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
+      fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath"
       lappend objs $::b/pkgs/$name/$x.o
     }
 

@@ -2,7 +2,13 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Fix issue of fble-deps reporting error for /Debug/Trace/Native% references.
+* Figure out a nicer way for interpreted tests to depend on required .fble
+  files?
+  Currently I'm using the compiled code to track the dependency. Feels like a hack.
+* Fix missing build dependency on generated usage files for .fble
+  In particular: all fbleobjs in pkgs/build.tcl should depend on all gens.
+* Get rid of fble-deps, in favor of a generic --make-deps option to fble
+  binaries.
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
 
 * Add test for .fble vs. .fble.@ type for main module as well as dependant

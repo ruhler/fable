@@ -47,8 +47,16 @@
   
    @opt[@l[--main] @a[NAME]]
    @ generate main function using @a[NAME] wrapper
+
+   @opt[@l[--deps-file] @a[FILE]]
+   @ write compilation dependencies in makefile syntax to @a[FILE].
+
+   @opt[@l[--deps-target] @a[FILE]]
+   @ use @a[FILE] as the makefile target for @l[--deps-file].
   
    At least one of @l[--compile], @l[--export], or @l[--main] must be provided.
+   The @l[--deps-file] and @l[--deps-target] options must be used together, and
+   may only be used with @l[--compile].
  
  @exitstatus
   @def[0] Success.

@@ -48,12 +48,11 @@ namespace eval "bin" {
   #   obj - the name of the .o file to generate.
   #   compile - the name of the fble-compile executable.
   #   compileargs - args to pass to the fble compiler.
-  #   args - additional dependencies, typically including the .fble file.
-  proc ::fbleobj_aarch64 { obj compile compileargs args } {
+  proc ::fbleobj_aarch64 { obj compile compileargs } {
     set s [string map {.o .s} $obj]
-    build $s "$compile $args" "$compile $compileargs > $s"
+    build $s $compile "$compile --deps-file $s.d --deps-target $s $compileargs >$s" "depfile = $s.d"
     set cmd "as -o $obj $s"
-    build $obj "$s $args" $cmd
+    build $obj $s $cmd
   }
 
   # Compile a .fble file to .o via c.
@@ -62,12 +61,11 @@ namespace eval "bin" {
   #   obj - the name of the .o file to generate.
   #   compile - the name of the fble-compile executable.
   #   compileargs - args to pass to the fble compiler.
-  #   args - additional dependencies, typically including the .fble file.
-  proc ::fbleobj_c { obj compile compileargs args } {
+  proc ::fbleobj_c { obj compile compileargs } {
     set c [string map {.o .c} $obj]
-    build $c "$compile $args" "$compile -t c $compileargs > $c"
+    build $c $compile "$compile --deps-file $c.d --deps-target $c -t c $compileargs > $c" "depfile = $c.d"
     set cmd "gcc -c -o $obj -I $::s/include $c"
-    build $obj "$c $args" $cmd
+    build $obj $c $cmd
   }
 
   # Compile a .fble file to .o.
@@ -78,12 +76,53 @@ namespace eval "bin" {
   #   obj - the name of the .o file to generate.
   #   compile - the name of the fble-compile executable.
   #   compileargs - args to pass to the fble compiler.
-  #   args - additional dependencies, typically including the .fble file.
-  proc ::fbleobj { obj compile compileargs args } {
+  proc ::fbleobj { obj compile compileargs } {
     if {$::arch == "aarch64"} {
-      fbleobj_aarch64 $obj $compile $compileargs {*}$args
+      fbleobj_aarch64 $obj $compile $compileargs
     } else {
-      fbleobj_c $obj $compile $compileargs {*}$args
+      fbleobj_c $obj $compile $compileargs
+    }
+  }
+
+  # Compile an .fble main wrapper to .o via aarch64.
+  #
+  # Inputs:
+  #   obj - the name of the .o file to generate.
+  #   compile - the name of the fble-compile executable.
+  #   compileargs - args to pass to the fble compiler.
+  proc ::fblemain_aarch64 { obj compile compileargs } {
+    set s [string map {.o .s} $obj]
+    build $s $compile "$compile $compileargs > $s"
+    set cmd "as -o $obj $s"
+    build $obj $s $cmd
+  }
+
+  # Compile an .fble main wrapper to .o via c.
+  #
+  # Inputs:
+  #   obj - the name of the .o file to generate.
+  #   compile - the name of the fble-compile executable.
+  #   compileargs - args to pass to the fble compiler.
+  proc ::fblemain_c { obj compile compileargs } {
+    set c [string map {.o .c} $obj]
+    build $c $compile "$compile -t c $compileargs > $c"
+    set cmd "gcc -c -o $obj -I $::s/include $c"
+    build $obj $c $cmd
+  }
+
+  # Compile an .fble main wrapper to .o.
+  #
+  # Via whatever target it thinks is best.
+  #
+  # Inputs:
+  #   obj - the name of the .o file to generate.
+  #   compile - the name of the fble-compile executable.
+  #   compileargs - args to pass to the fble compiler.
+  proc ::fblemain { obj compile compileargs } {
+    if {$::arch == "aarch64"} {
+      fblemain_aarch64 $obj $compile $compileargs
+    } else {
+      fblemain_c $obj $compile $compileargs
     }
   }
 

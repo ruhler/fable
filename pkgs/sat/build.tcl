@@ -4,7 +4,7 @@ namespace eval "pkgs/sat" {
   pkg sat [list core] "$::b/pkgs/sat/Sat/Usage.fble" ""
 
   # /Sat/Tests% interpreted
-  testsuite $::b/pkgs/sat/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/sat/Sat/Tests.fble.d" \
+  testsuite $::b/pkgs/sat/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/sat/libfble-sat$::lext" \
     "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/sat -I $::b/pkgs/sat -m /Sat/Tests% --prefix Interpreted."
 
   # /Sat/Tests% compiled

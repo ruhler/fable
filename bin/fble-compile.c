@@ -12,6 +12,7 @@
 #include <fble/fble-generate.h>      // for FbleGenerate*
 #include <fble/fble-compile.h>       // for FbleCompile, etc.
 #include <fble/fble-module-path.h>   // for FbleParseModulePath.
+#include <fble/fble-vector.h>        // for FbleInitVector.
 #include <fble/fble-version.h>       // for FBLE_VERSION
 
 #include "fble-compile.usage.h"      // for fbldUsageHelpText
@@ -42,6 +43,8 @@ int main(int argc, const char* argv[])
   const char* export = NULL;
   const char* main_ = NULL;
   const char* target_string = NULL;
+  const char* deps_file = NULL;
+  const char* deps_target = NULL;
   bool help = false;
   bool error = false;
   bool version = false;
@@ -61,6 +64,8 @@ int main(int argc, const char* argv[])
     if (FbleParseStringArg("-e", &export, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--export", &export, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--main", &main_, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--deps-file", &deps_file, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--deps-target", &deps_target, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
@@ -102,6 +107,27 @@ int main(int argc, const char* argv[])
     FbleFreeModuleArg(module_arg);
     return EX_USAGE;
   }
+
+  if (deps_file != NULL && !compile) {
+    fprintf(stderr, "--deps-file requires --compile.\n");
+    fprintf(stderr, "Try --help for usage\n");
+    FbleFreeModuleArg(module_arg);
+    return EX_USAGE;
+  }
+
+  if (deps_file != NULL && deps_target == NULL) {
+    fprintf(stderr, "--deps-file requires --deps-target.\n");
+    fprintf(stderr, "Try --help for usage\n");
+    FbleFreeModuleArg(module_arg);
+    return EX_USAGE;
+  }
+
+  if (deps_target != NULL && deps_file == NULL) {
+    fprintf(stderr, "--deps-target requires --deps-file.\n");
+    fprintf(stderr, "Try --help for usage\n");
+    FbleFreeModuleArg(module_arg);
+    return EX_USAGE;
+  }
   
   if (module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
@@ -125,11 +151,33 @@ int main(int argc, const char* argv[])
   }
 
   if (compile) {
-    FbleProgram* prgm = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, NULL);
+    FbleStringV deps;
+    FbleInitVector(deps);
+    FbleProgram* prgm = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, &deps);
     if (prgm == NULL) {
+      for (size_t i = 0; i < deps.size; ++i) {
+        FbleFreeString(deps.xs[i]);
+      }
+      FbleFreeVector(deps);
       FbleFreeModuleArg(module_arg);
       return EX_FAIL;
     }
+
+    if (deps_file != NULL) {
+      FILE* depsfile = fopen(deps_file, "w");
+      if (depsfile == NULL) {
+        fprintf(stderr, "unable to open %s for writing\n", deps_file);
+        FbleFreeProgram(prgm);
+        FbleFreeModuleArg(module_arg);
+      }
+      FbleSaveBuildDeps(depsfile, deps_target, deps);
+      fclose(depsfile);
+    }
+
+    for (size_t i = 0; i < deps.size; ++i) {
+      FbleFreeString(deps.xs[i]);
+    }
+    FbleFreeVector(deps);
 
     if (!FbleCompileModule(prgm)) {
       FbleFreeProgram(prgm);

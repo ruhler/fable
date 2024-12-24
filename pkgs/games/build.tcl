@@ -3,7 +3,7 @@ namespace eval "pkgs/games" {
 
   # /Games/Tests% interpreted
   set cflags "-I $::s/pkgs/games -I $::s/pkgs/app -I $::s/pkgs/core"
-  testsuite $::b/pkgs/games/Games/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/games/Games/Tests.fble.d" \
+  testsuite $::b/pkgs/games/Games/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/games/libfble-games$::lext" \
     "$::b/pkgs/core/fble-stdio $cflags -m /Games/Tests% --prefix Interpreted."
 
   # /Games/Tests% compiled

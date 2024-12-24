@@ -5,7 +5,7 @@ namespace eval "pkgs/pinball" {
 
   # /Pinball/Tests% interpreted
   set cflags "-I $::s/pkgs/core -I $::s/pkgs/app -I $::s/pkgs/pinball -I $::b/pkgs/pinball"
-  testsuite $::b/pkgs/pinball/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/pinball/Pinball/Tests.fble.d" \
+  testsuite $::b/pkgs/pinball/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/pinball/libfble-pinball$::lext" \
     "$::b/pkgs/core/fble-stdio $cflags -m /Pinball/Tests% --prefix Interpreted."
 
   # /Pinball/Tests% compiled

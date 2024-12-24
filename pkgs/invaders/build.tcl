@@ -5,7 +5,7 @@ namespace eval "pkgs/invaders" {
 
   # /Invaders/Tests% interpreted
   set cflags "-I $::s/pkgs/invaders -I $::b/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/core"
-  testsuite $::b/pkgs/invaders/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/invaders/Invaders/Tests.fble.d" \
+  testsuite $::b/pkgs/invaders/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/invaders/libfble-invaders$::lext" \
     "$::b/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%"
 
   # /Invaders/Tests% compiled

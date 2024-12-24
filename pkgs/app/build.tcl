@@ -18,7 +18,7 @@ namespace eval "pkgs/app" {
 
   # /App/Tests% interpreted
   set cflags "-I $::s/pkgs/app -I $::s/pkgs/core"
-  test $::b/pkgs/app/App/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/app/App/Tests.fble.d" \
+  test $::b/pkgs/app/App/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/app/libfble-app$::lext" \
     "$::b/pkgs/core/fble-stdio $cflags -m /App/Tests%"
 
   if $::config::enable_fble_app {
@@ -50,8 +50,7 @@ namespace eval "pkgs/app" {
       }
       append nlibs " $::b/pkgs/app/libfble-app$::lext $::b/pkgs/core/libfble-core$::lext $::b/lib/libfble$::lext"
       
-      fbleobj $target.o $::b/bin/fble-compile \
-        "--main FbleAppMain -m $path"
+      fblemain $target.o $::b/bin/fble-compile "--main FbleAppMain -m $path"
       bin $target $objs $nlibs "$::config::sdl_libs $::config::gl_libs"
     }
   }

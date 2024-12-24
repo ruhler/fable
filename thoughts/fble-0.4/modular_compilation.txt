@@ -1222,3 +1222,101 @@ tedious to write these modules, and they don't satisfy -pedantic, but let's
 not worry about that right now.
 
 Next step is back to native search path. But needs some design thought still.
+
+---
+
+Native search path is messy. Two concerns that make it tricky:
+
+1. We check types at compile time. Should we also check types at runtime? What
+if they change between compile time and runtime?
+
+We don't seem to have problems with types changing between compile time and
+runtime for languages like C, so I suspect it's not a big deal in practice. In
+theory it would be nice to check types again at link time. In practice I don't
+have the infrastructure and APIs in place right now to allow describing types
+externally. I wonder if we could approximate it by hashing types to integers
+and checking for integer equality of types externally.
+
+Anyway, it doesn't matter for right now. Keep things the way they are: check
+types at compile time. Assume types don't change between compile time and
+runtime. In particular, if we have a native module with a .fble.@ file, assume
+the .fble.@ file properly describes its type.
+
+2. Static linking of modules.
+To be most general, all linking of modules would be dynamic and runtime. There
+are some nice practical advantages of static linking of modules though:
+* We get a compile time error if we forget to compile one of the modules in.
+* We get for free from the linker the feature that we only link in those
+  modules the top level program depends on.
+
+So, I vote for now we keep things the way they are. In particular, there are
+two different modes of operation:
+1. Interpreted: native search path has /Debug/Trace/Native% and any other
+native-only defined modules. You can run interpreted code that references
+these.
+
+2. Compiled: The top level module is compiled. We use native module static
+deps to link anything they need and load those modules separately. Native
+search path is not used in this case.
+
+This is not a long term solution. It doesn't allow for compiled code depending
+on interpreted code, but if you have the interpreted code you can already
+compile it. It's fine for now.
+
+In summary, add native search path, for the time being it just has
+/Debug/Trace/Native%, we look in it in Load when looking to load things
+executable that have a .fble.@ file without a .fble file. No change to
+FbleLink code for the time being, other than to pass the native search path
+through to load.
+
+---
+
+The next thing to worry about is fble-deps. The immediate concern is that
+fble-deps doesn't know about the native search path. Another concern is that
+we may be tracking more deps than we need.
+
+I think the solution will be to get rid of fble-deps entirely, and instead add
+a generic fble option to save deps to files.
+
+That way we don't have to say compile vs executable. You get whatever your
+program does. We also avoid a separate pass parsing and loading files. We
+avoid false dependencies in the case of compilation, and have accurate values
+in the case of (test) execution.
+
+I expect it should fit into the paradigm of build ninja pretty well. Just add
+"depfile = x.d" places. We can use the option: -d or --deps for generating
+the deps file? Or just "--make-deps"?
+
+Let's start with fble-compile support, and go from there? What all do I need?
+
+* fble-compile
+* fble-stdio
+
+Maybe that's all? Doesn't sound too hard. Let's start with fble-compile and
+see what we can do.
+
+Brainstorming flag name:
+* "depfile" is terminology used by build ninja
+* "dependencies" is general terminology by GCC
+* --make-deps? --depfile? 
+
+I kind of like --make-deps, short for "Make Dependencies" or the verb 'make
+dependencies'? Let's go with that.
+
+I need to pass this options through to FbleLoad* functions? No, we already
+pass that through. I just need to use it at the top level. Seems easy enough.
+
+Let's do this.
+
+---
+
+A few issues to deal with:
+1. The dependencies aren't working right. ninja keeps rebuilding the .fble.c
+files, even when they are up to date. My guess is because we specify the
+target as the .d file instead of the .c file.
+2. fbld_help_fble_usage dependencies aren't working right. I'll have to thread
+through that extra dependency.
+
+Any more natural makefile target to use for --make-deps? Unfortunately, I
+don't think so. Does that mean we need separate arguments? Maybe --deps-file
+and --deps-target? Sigh.
