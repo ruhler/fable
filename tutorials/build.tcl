@@ -44,23 +44,20 @@ namespace eval "tutorials" {
   }
 
   # HelloWorld tests
-  fbledep $::b/tutorials/HelloWorld/HelloWorld.fble.d "/HelloWorld%" \
-    "-I $::s/pkgs/core -I $::s/tutorials/HelloWorld"
-  test $::b/tutorials/HelloWorld.tr \
-    "$::b/pkgs/core/fble-stdio $::b/tutorials/HelloWorld/HelloWorld.fble.d" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/HelloWorld -m /HelloWorld%"
+  run_stdio $::b/tutorials/HelloWorld.tr.out \
+    "-I $::s/pkgs/core -I $::s/tutorials/HelloWorld -m /HelloWorld%"
+  test $::b/tutorials/HelloWorld.tr $::b/tutorials/HelloWorld.tr.out \
+    "cat $::b/tutorials/HelloWorld.tr.out"
 
   # Basics tests
-  fbledep $::b/tutorials/Basics/Basics.fble.d "/Basics%" \
-    "-I $::s/pkgs/core -I $::s/tutorials/Basics"
-  test $::b/tutorials/Basics.tr \
-    "$::b/pkgs/core/fble-stdio $::b/tutorials/Basics/Basics.fble.d" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/Basics -m /Basics%"
+  run_stdio $::b/tutorials/Basics.tr.out \
+    "-I $::s/pkgs/core -I $::s/tutorials/Basics -m /Basics%"
+  test $::b/tutorials/Basics.tr $::b/tutorials/Basics.tr.out \
+    "cat $::b/tutorials/Basics.tr.out"
 
   # Modules tests
-  fbledep $::b/tutorials/Modules/Main.fble.d "/Main%" \
-    "-I $::s/pkgs/core -I $::s/tutorials/Modules"
-  test $::b/tutorials/Modules.tr \
-    "$::b/pkgs/core/fble-stdio $::b/tutorials/Modules/Main.fble.d" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/tutorials/Modules -m /Main%"
+  run_stdio $::b/tutorials/Modules.tr.out \
+    "-I $::s/pkgs/core -I $::s/pkgs/core -I $::s/tutorials/MOdules -m /Main%"
+  test $::b/tutorials/Modules.tr $::b/tutorials/Modules.tr.out \
+    "cat $::b/tutorials/Modules.tr.out"
 }
