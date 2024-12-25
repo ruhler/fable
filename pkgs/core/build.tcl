@@ -56,6 +56,12 @@ namespace eval "pkgs/core" {
       "depfile = $target.d"
   }
 
+  # Runs an fble-stdio tests suite interpreted.
+  proc ::run_stdio_tests { target cmdargs } {
+    run_stdio $target.out "$cmdargs --prefix Interpreted."
+    testsuite $target $target.out "cat $target.out"
+  }
+
   # /Core/Stdio/Cat% interpreted test.
   run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.out \
     "-I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld"
@@ -81,8 +87,10 @@ namespace eval "pkgs/core" {
   install $::b/pkgs/core/fble-fast-cat $::config::bindir/fble-fast-cat
 
   # /Core/Stdio/HelloWorld% interpreted test.
-  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr $::b/pkgs/core/fble-stdio \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/HelloWorld% | grep hello"
+  run_stdio $::b/pkgs/core/Core/Stdio/fble-stdio.out \
+    "-I $::s/pkgs/core -m /Core/Stdio/HelloWorld%"
+  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr $::b/pkgs/core/Core/Stdio/fble-stdio.out \
+    "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio.out"
 
   # /Core/Stdio/HelloWorld% compiled test.
   stdio $::b/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/HelloWorld%" "" ""
@@ -93,8 +101,7 @@ namespace eval "pkgs/core" {
     "grep hello $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
 
   # Core/Tests interpreted
-  testsuite $::b/pkgs/core/Core/tests.tr $::b/pkgs/core/fble-stdio \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Tests% --prefix Interpreted."
+  run_stdio_tests $::b/pkgs/core/Core/tests.tr "-I $::s/pkgs/core -m /Core/Tests%"
 
   # Core/Tests compiled
   stdio $::b/pkgs/core/Core/core-tests "/Core/Tests%" "" ""

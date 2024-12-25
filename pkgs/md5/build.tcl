@@ -5,9 +5,8 @@ namespace eval "pkgs/md5" {
   pkg md5 [list core] $::b/pkgs/md5/Md5/Usage.fble ""
 
   # Md5/Tests interpreted
-  testsuite $::b/pkgs/md5/Md5/tests.tr \
-    "$::b/pkgs/core/fble-stdio $::b/pkgs/md5/libfble-md5$::lext" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -I $::s/pkgs/md5 -I $::b/pkgs/md5 -m /Md5/Tests% --prefix Interpreted."
+  run_stdio_tests $::b/pkgs/md5/Md5/tests.tr \
+    "-I $::s/pkgs/core -I $::s/pkgs/md5 -I $::b/pkgs/md5 -m /Md5/Tests%"
 
   # Md5/Tests compiled
   stdio $::b/pkgs/md5/md5-tests "/Md5/Tests%" "md5" ""

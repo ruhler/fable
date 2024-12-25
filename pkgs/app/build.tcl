@@ -18,8 +18,9 @@ namespace eval "pkgs/app" {
 
   # /App/Tests% interpreted
   set cflags "-I $::s/pkgs/app -I $::s/pkgs/core"
-  test $::b/pkgs/app/App/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/app/libfble-app$::lext" \
-    "$::b/pkgs/core/fble-stdio $cflags -m /App/Tests%"
+  run_stdio $::b/pkgs/app/App/tests.out "$cflags -m /App/Tests%"
+  test $::b/pkgs/app/App/tests.tr $::b/pkgs/app/App/tests.out \
+    "cat $::b/pkgs/app/App/tests.out"
 
   if $::config::enable_fble_app {
     # fble-app program.

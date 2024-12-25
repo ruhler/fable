@@ -5,8 +5,7 @@ namespace eval "pkgs/pinball" {
 
   # /Pinball/Tests% interpreted
   set cflags "-I $::s/pkgs/core -I $::s/pkgs/app -I $::s/pkgs/pinball -I $::b/pkgs/pinball"
-  testsuite $::b/pkgs/pinball/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/pinball/libfble-pinball$::lext" \
-    "$::b/pkgs/core/fble-stdio $cflags -m /Pinball/Tests% --prefix Interpreted."
+  run_stdio_tests $::b/pkgs/pinball/tests-interpreted.tr "$cflags -m /Pinball/Tests%"
 
   # /Pinball/Tests% compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the

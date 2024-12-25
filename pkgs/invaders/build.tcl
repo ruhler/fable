@@ -5,8 +5,7 @@ namespace eval "pkgs/invaders" {
 
   # /Invaders/Tests% interpreted
   set cflags "-I $::s/pkgs/invaders -I $::b/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/core"
-  testsuite $::b/pkgs/invaders/tests-interpreted.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/invaders/libfble-invaders$::lext" \
-    "$::b/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%"
+  run_stdio_tests $::b/pkgs/invaders/tests-interpreted.tr "$cflags -m /Invaders/Tests%"
 
   # /Invaders/Tests% compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the
