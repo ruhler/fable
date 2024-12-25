@@ -138,7 +138,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module)
   // profiling turned on.
   FbleProfile* profile = FbleNewProfile(true);
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path);
+  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
   FbleFreeModuleArg(module_arg);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);

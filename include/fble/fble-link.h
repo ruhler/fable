@@ -24,15 +24,21 @@
  *   The search path to use for locating .fble files.
  *  @arg[FbleModulePath*] module_path
  *   The module path for the main module to load.
+ *  @arg[FbleStringV*] build_deps
+ *   Output to store list of files the load depended on. This should be a
+ *   preinitialized vector, or NULL.
  *
  *  @returns FbleValue*
  *   A zero-argument fble function that computes the value of the program when
  *   executed, or NULL in case of error.
  *
  *  @sideeffects
- *   Allocates a value on the heap.
+ *   @i Allocates a value on the heap.
+ *   @item
+ *    The user should free strings added to build_deps when no longer
+ *    needed, including in the case when program loading fails.
  */
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path);
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.

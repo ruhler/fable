@@ -105,7 +105,7 @@ int FbleTestMain(int argc, const char** argv, FbleNativeModule* module)
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path);
+  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
   FbleFreeModuleArg(module_arg);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);

@@ -483,7 +483,7 @@ int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module)
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* stdio = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path);
+  FbleValue* stdio = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
   FbleFreeModuleArg(module_arg);
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);

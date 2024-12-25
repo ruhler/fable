@@ -4,7 +4,8 @@ Things to consider doing for the fble-0.4 release.
 
 * Figure out a nicer way for interpreted tests to depend on required .fble
   files?
-  Currently I'm using the compiled code to track the dependency. Feels like a hack.
+  - Currently I'm using the compiled code to track the dependency. Feels like a hack.
+  - Currently I'm missing the required dependency for tutorials.
 * Fix missing build dependency on generated usage files for .fble
   In particular: all fbleobjs in pkgs/build.tcl should depend on all gens.
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble

@@ -1320,3 +1320,10 @@ through that extra dependency.
 Any more natural makefile target to use for --make-deps? Unfortunately, I
 don't think so. Does that mean we need separate arguments? Maybe --deps-file
 and --deps-target? Sigh.
+
+---
+
+Before I can get rid of fble-deps, I need a better story for dependencies of
+interpreted tests. I guess I should add those deps options to fble-stdio too?
+That's a bit tedious.
+
