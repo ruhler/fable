@@ -17,6 +17,15 @@
    @opt[@l[--profile] @a[FILE]]
    @ writes a profile of the test run to @a[FILE]
 
+  @subsection Build Dependency Options
+   @opt[@l[--deps-file] @a[FILE]]
+   @ write compilation dependencies in makefile syntax to @a[FILE].
+
+   @opt[@l[--deps-target] @a[FILE]]
+   @ use @a[FILE] as the makefile target for @l[--deps-file].
+  
+   The @l[--deps-file] and @l[--deps-target] options must be used together.
+
   @subsection Other Options
    @opt[@l[--]] indicates end of options
  

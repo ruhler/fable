@@ -398,6 +398,8 @@ int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module)
 
   FbleModuleArg module_arg = FbleNewModuleArg();
   const char* profile_file = NULL;
+  const char* deps_file = NULL;
+  const char* deps_target = NULL;
   bool end_of_options = false;
   bool help = false;
   bool error = false;
@@ -425,6 +427,8 @@ int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module)
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--deps-file", &deps_file, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--deps-target", &deps_target, &argc, &argv, &error)) continue;
 
     end_of_options = true;
     if (strcmp(argv[0], "--") == 0) {
@@ -470,6 +474,20 @@ int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module)
     }
   }
 
+  if (deps_file != NULL && deps_target == NULL) {
+    fprintf(stderr, "--deps-file requires --deps-target.\n");
+    fprintf(stderr, "Try --help for usage\n");
+    FbleFreeModuleArg(module_arg);
+    return EX_USAGE;
+  }
+
+  if (deps_target != NULL && deps_file == NULL) {
+    fprintf(stderr, "--deps-target requires --deps-file.\n");
+    fprintf(stderr, "Try --help for usage\n");
+    FbleFreeModuleArg(module_arg);
+    return EX_USAGE;
+  }
+
   FbleNativeModuleV native_search_path = { .xs = NULL, .size = 0 };
   if (module != NULL) {
     native_search_path.xs = &module;
@@ -482,14 +500,41 @@ int FbleStdioMain(int argc, const char** argv, FbleNativeModule* module)
 
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
+  FbleStringV deps;
+  FbleInitVector(deps);
 
-  FbleValue* stdio = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
+  FbleValue* stdio = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, &deps);
   FbleFreeModuleArg(module_arg);
   if (stdio == NULL) {
+    for (size_t i = 0; i < deps.size; ++i) {
+      FbleFreeString(deps.xs[i]);
+    }
+    FbleFreeVector(deps);
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAILURE;
   }
+
+  if (deps_file != NULL) {
+    FILE* depsfile = fopen(deps_file, "w");
+    if (depsfile == NULL) {
+      fprintf(stderr, "unable to open %s for writing\n", deps_file);
+      for (size_t i = 0; i < deps.size; ++i) {
+        FbleFreeString(deps.xs[i]);
+      }
+      FbleFreeVector(deps);
+      FbleFreeValueHeap(heap);
+      FbleFreeProfile(profile);
+      return EX_FAILURE;
+    }
+    FbleSaveBuildDeps(depsfile, deps_target, deps);
+    fclose(depsfile);
+  }
+
+  for (size_t i = 0; i < deps.size; ++i) {
+    FbleFreeString(deps.xs[i]);
+  }
+  FbleFreeVector(deps);
 
   FbleValueV stdio_args;
   FbleInitVector(stdio_args);

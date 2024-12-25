@@ -47,18 +47,25 @@ namespace eval "pkgs/core" {
     bin $target $objs $nlibs $lflags
   }
 
+  # Runs an fble-stdio command with proper dependency tracking.
+  #   target - where to put the output of the fble-stdio command.
+  #   cmdargs - arguments to fble-stdio
+  proc ::run_stdio { target cmdargs } {
+    build $target $::b/pkgs/core/fble-stdio \
+      "$::b/pkgs/core/fble-stdio --deps-file $target.d --deps-target $target $cmdargs > $target" \
+      "depfile = $target.d"
+  }
+
   # /Core/Stdio/Cat% interpreted test.
-  build $::b/pkgs/core/Core/Stdio/fble-cat.out \
-    "$::b/pkgs/core/fble-stdio" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.out"
+  run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.out \
+    "-I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
     "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% interpreted test 2.
-  build $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
-    "$::b/pkgs/core/fble-stdio" \
-    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% $::s/README.fbld > $::b/pkgs/core/Core/Stdio/fble-cat.2.out"
+  run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
+    "-I $::s/pkgs/core -m /Core/Stdio/Cat% $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
     "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
