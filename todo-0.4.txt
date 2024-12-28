@@ -5,8 +5,6 @@ Things to consider doing for the fble-0.4 release.
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble
   binaries.
   Remove use of fbledeps in spec tests?
-* Fix missing build dependency on generated usage files for .fble
-  In particular: all fbleobjs in pkgs/build.tcl should depend on all gens.
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
 * Factor out common code for --deps-file option?
 
