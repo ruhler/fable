@@ -10,14 +10,11 @@
 #include <stdio.h>    // for FILE, fprintf, stderr
 
 #include <fble/fble-alloc.h>       // for FbleFree
-#include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-link.h>        // for FbleLink
-#include <fble/fble-main.h>        // for FblePrintCompiledHeaderLine.
+#include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-name.h>        // for FbleName.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-program.h>     // for FbleNativeModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
 
 #include "fble-profiles-test.usage.h"    // for fbldUsageHelpText
 
@@ -106,83 +103,27 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 // FbleProfilesTestMain -- see documentation in profiles-test.h
 int FbleProfilesTestMain(int argc, const char** argv, FbleNativeModule* module)
 {
-  const char* arg0 = argv[0];
-
-  FbleModuleArg module_arg = FbleNewModuleArg();
-  bool help = false;
-  bool error = false;
-  bool version = false;
-
-  argc--;
-  argv++;
-  while (!(help || error || version) && argc > 0) {
-    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
-    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
-  }
-
-  if (version) {
-    FblePrintCompiledHeaderLine(stdout, "fble-profiles-test", arg0, module);
-    FblePrintVersion(stdout, "fble-profiles-test");
-    FbleFreeModuleArg(module_arg);
-    return EX_SUCCESS;
-  }
-
-  if (help) {
-    FblePrintCompiledHeaderLine(stdout, "fble-profiles-test", arg0, module);
-    fprintf(stdout, "%s", fbldUsageHelpText);
-    FbleFreeModuleArg(module_arg);
-    return EX_SUCCESS;
-  }
-
-  if (error) {
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  if (!module && module_arg.module_path == NULL) {
-    fprintf(stderr, "missing required --module option.\n");
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  FbleNativeModuleV native_search_path = { .xs = NULL, .size = 0 };
-  if (module != NULL) {
-    native_search_path.xs = &module;
-    native_search_path.size = 1;
-  }
-
-  if (module_arg.module_path == NULL) {
-    module_arg.module_path = FbleCopyModulePath(module->path);
-  }
-
   FbleProfile* profile = FbleNewProfile(true);
   FbleValueHeap* heap = FbleNewValueHeap();
+  FILE* profile_output_file = NULL;
+  FbleValue* result = NULL;
 
-  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
-  FbleFreeModuleArg(module_arg);
-  if (linked == NULL) {
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return EX_FAIL;
-  }
+  FbleMainStatus status = FbleMain(NULL, NULL, "fble-profiles-test", fbldUsageHelpText,
+      argc, argv, module, heap, profile, &profile_output_file, &result);
 
-  FbleValue* result = FbleEval(heap, linked, profile);
   FbleFreeValueHeap(heap);
 
   if (result == NULL) {
     FbleFreeProfile(profile);
-    return EX_FAIL;
+    return status;
   }
 
   // Dump the profile to make it easier to develop and debug the tests that
   // follow.
-  FbleGenerateProfileReport(stdout, profile);
+  if (profile_output_file == NULL) {
+    profile_output_file = stdout;
+  }
+  FbleGenerateProfileReport(profile_output_file, profile);
 
   // Each of these top level let bindings were executed once when the main
   // program ran.
@@ -213,5 +154,5 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleNativeModule* module)
   }
 
   FbleFreeProfile(profile);
-  return EX_SUCCESS;
+  return FBLE_MAIN_SUCCESS;
 }
