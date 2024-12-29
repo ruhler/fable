@@ -46,6 +46,9 @@ namespace eval "include" {
       FbleNewLoc FbleCopyLoc FbleFreeLoc
       FbleReportWarning FbleReportError
     }
+    fble-main.h {
+      FbleMainArgs FbleNewMainArgs FbleFreeMainArgs FbleParseMainArg
+    }
     fble-module-path.h {
       FbleModulePath FbleModulePathV
       FbleNewModulePath

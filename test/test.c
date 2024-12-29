@@ -12,6 +12,7 @@
 
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-link.h>        // for FbleLink
+#include <fble/fble-main.h>        // for FbleMainArgs, etc.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-program.h>     // for FbleNativeModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
@@ -30,64 +31,56 @@ int FbleTestMain(int argc, const char** argv, FbleNativeModule* module)
 {
   const char* arg0 = argv[0];
 
-  FbleModuleArg module_arg = FbleNewModuleArg();
-  const char* profile_file = NULL;
-  bool help = false;
+  FbleMainArgs main_args = FbleNewMainArgs();
   bool error = false;
-  bool version = false;
 
   argc--;
   argv++;
-  while (!(help || error || version) && argc > 0) {
-    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
+  while (!(main_args.help || error || main_args.version) && argc > 0) {
+    if (FbleParseMainArg(module != NULL, &main_args, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
-  if (version) {
+  if (main_args.version) {
     FblePrintCompiledHeaderLine(stdout, "fble-test", arg0, module);
     FblePrintVersion(stdout, "fble-test");
-    FbleFreeModuleArg(module_arg);
+    FbleFreeMainArgs(main_args);
     return EX_SUCCESS;
   }
 
-  if (help) {
+  if (main_args.help) {
     FblePrintCompiledHeaderLine(stdout, "fble-test", arg0, module);
     fprintf(stdout, "%s", fbldUsageHelpText);
-    FbleFreeModuleArg(module_arg);
+    FbleFreeMainArgs(main_args);
     return EX_SUCCESS;
   }
 
   if (error) {
     fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
+    FbleFreeMainArgs(main_args);
     return EX_USAGE_ERROR;
   }
 
-  if (!module && !module_arg.module_path) {
+  if (!module && !main_args.module.module_path) {
     fprintf(stderr, "Error: missing required --module option.\n");
     fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
+    FbleFreeMainArgs(main_args);
     return EX_USAGE_ERROR;
   }
 
-  if (module && module_arg.module_path) {
+  if (module && main_args.module.module_path) {
     fprintf(stderr, "Error: --module not allowed for fble-compiled binary.\n");
     fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
+    FbleFreeMainArgs(main_args);
     return EX_USAGE_ERROR;
   }
 
   FILE* fprofile = NULL;
-  if (profile_file != NULL) {
-    fprofile = fopen(profile_file, "w");
+  if (main_args.profile_file != NULL) {
+    fprofile = fopen(main_args.profile_file, "w");
     if (fprofile == NULL) {
-      fprintf(stderr, "Error: unable to open %s for writing.\n", profile_file);
-      FbleFreeModuleArg(module_arg);
+      fprintf(stderr, "Error: unable to open %s for writing.\n", main_args.profile_file);
+      FbleFreeMainArgs(main_args);
       return EX_OTHER_ERROR;
     }
   }
@@ -98,15 +91,15 @@ int FbleTestMain(int argc, const char** argv, FbleNativeModule* module)
     native_search_path.size = 1;
   }
 
-  if (module_arg.module_path == NULL) {
-    module_arg.module_path = FbleCopyModulePath(module->path);
+  if (main_args.module.module_path == NULL) {
+    main_args.module.module_path = FbleCopyModulePath(module->path);
   }
 
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
-  FbleFreeModuleArg(module_arg);
+  FbleValue* linked = FbleLink(heap, profile, native_search_path, main_args.module.search_path, main_args.module.module_path, NULL);
+  FbleFreeMainArgs(main_args);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

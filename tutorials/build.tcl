@@ -57,7 +57,7 @@ namespace eval "tutorials" {
 
   # Modules tests
   run_stdio $::b/tutorials/Modules.tr.out \
-    "-I $::s/pkgs/core -I $::s/pkgs/core -I $::s/tutorials/MOdules -m /Main%"
+    "-I $::s/pkgs/core -I $::s/pkgs/core -I $::s/tutorials/Modules -m /Main%"
   test $::b/tutorials/Modules.tr $::b/tutorials/Modules.tr.out \
     "cat $::b/tutorials/Modules.tr.out"
 }

@@ -2,8 +2,9 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Write reuseable .fbld for main args.
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble
-  binaries.
+  binaries?
   Remove use of fbledeps in spec tests?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
 * Factor out common code for --deps-file option?

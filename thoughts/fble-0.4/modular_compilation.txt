@@ -1327,3 +1327,135 @@ Before I can get rid of fble-deps, I need a better story for dependencies of
 interpreted tests. I guess I should add those deps options to fble-stdio too?
 That's a bit tedious.
 
+---
+
+I don't know how to get rid of fble-deps for spec tests. We don't run them at
+build time, so we can't generate a .d file from the run. Let me keep fble-deps
+around for now and worry about how to clean it up later.
+
+Next step: add native search path to ...
+
+ FbleLink, FbleLoadForExecution?
+
+But, we already have a native search path argument to FbleLink. Use that?
+
+Sigh. This is so messy. Is there no clean way to do this that makes sense
+practically and in theory? In the short term, assuming dynamic loading is not
+an option?
+
+---
+
+Cleanup proposal, with points in no particular order:
+
+1. Rename FbleNativeModule to FblePreloadedModule
+The idea being that FblePreloadedModule has its dependencies hard coded in
+(preloaded). This is to support the use case of statically linking all the
+code needed for compiled modules, but just pulling in the code you need for
+the main program and nothing else.
+
+2. Change FblePreloadedModule into FbleModule + FblePreloadedModule* deps.
+So it's easy to use an FblePreloadedModule wherever an FbleModule is expected.
+The compiler will generate an FblePreloadedModule. We may want to use it as an
+FbleModule when passing builtin modules such as /Debug/Trace/Native%.
+
+3. FbleLoadForExecution takes an additional FbleModuleV* builtins argument.
+It will search for modules in builtins as well as the search path. Note that
+we pass FbleModuleV, not FblePreloadedModuleV. That way there is no confusion
+about mixing of preloaded or not preloaded dependencies. In practice I expect
+builtins to be hand written modules that have no dependencies.
+
+4. Export the currently internal Link function as FbleLink.
+This is the pure link function, nothing fancy on top. You give the program,
+profile, and heap, it links everything into a value. Better to use this for
+linking, because it's focused on just linking, and will composes much better
+with all the various use cases.
+
+5. Implement an FbleNewPreloadedProgram function, it takes a single
+FblePreloadedModule and returns an FbleProgram*. For loading a preloaded
+program.
+
+6. Don't worry about fble-deps.
+It is still useful to have fble-deps, even in the case of builtins. Because
+you never depend on a builtin: it's built in. So the output of fble-deps
+should be fine, even if it can't find a builtin module. It's slightly annoying
+that it prints an error message, and I may want to double check loading loads
+as much as it can even if it can't find a builtin module. I assume builtin
+modules don't have dependencies that need to be loaded... Is that a bad
+assumption? Anyway, for now, don't worry about fble-deps. Keep it or not.
+Support --deps-file and --deps-target or not on other fble-* functions.
+
+7. Factor out high level code used for main programs.
+Right now its in FbleLink. Move that to something else, maybe FbleLinkMain?
+Some function that tries to factor out as much code as possible to be shared
+by: fble-app, fble-stdio, fble-test, fble-profiles-test, and fble-mem-test.
+Tip: if I do this first, it will be less of a pain to do all the other
+refactoring underneath it.
+
+8. Miscellaneous other points:
+* Fble*Main functions take argc, argv, and optional single
+  FblePreloadedModule.
+* The builtins list is ignored in the case of FblePreloadedModule, it can
+  directly refer to the builtin module.
+* fble-compile doesn't care about builtins.
+* Each platform you run on needs to supply its own builtins, e.g. fble-stdio,
+  fble-app, something that supports app and socket, etc.
+
+I think that's fairly clear. First step is hardest unfortunately: figuring out
+what the API should be for shared code for main programs.
+
+---
+
+Thinking about the API for shared main programs. I would like to share as much
+code as I can, because it's annoying to duplicate so much boiler plate. Let's
+error on the side of sharing too much and see what we learn from it.
+
+Candidate things to include:
+* parsing of module arg
+* parsing of -h, --help, -v, --version, --profile
+* parsing loop?
+* handling of version, help, error, module arg
+* handling of profile.
+...
+
+Maybe better to start with FbleTestMain, and see everything that needs to
+change to support something else. Things that need to change:
+* Custom command line options.
+* The name "fble-test" used in version and compiled header line.
+* The usage text.
+* Eventually: builtin modules to include.
+* What to do with the result of FbleEval.
+* Ability to force profiling enabled but not output any profile or output to
+  stdout.
+* Optional support for '--' end of options handling.
+
+So, we need flexibility around command line option parsing, and profile
+reporting. Otherwise, the goal is clear: given command line options and
+optional preloaded module, load, link, and evaluate the program.
+
+Straw proposal:
+* FbleMainArgs structure for standard main args
+* FbleParseMainArgs function to parse a single main argument.
+* FbleMainEval - processes main arguments, loads, links, and evaluates main
+  module.
+
+The other option would be to have as single FbleMain(...) function that takes
+a custom arg parser. Everything can go inside there. That seems easier to use,
+if less flexible. Let me try that approach first.
+
+FbleMain takes:
+* argc, argv, preloaded module
+* app name, usage text.
+* eventually: list of builtin modules.
+* option to force enable profiling.
+
+FbleMain returns status code:
+* EX_USAGE, EX_FAIL, or EX_SUCCESS.
+
+FbleMain outputs (via out parameter):
+* FbleProfile*, FbleValueHeap*, FbleValue*, FILE* profile file
+
+No. Too much work. Let's go with the first proposal. Helper functions only,
+not the main thing. So, helper to parse common args, and helper to load and
+evaluate.
+
+Here we go.
