@@ -11,19 +11,32 @@
 
 #include <fble/fble-alloc.h>       // for FbleMaxTotalBytesAllocated, etc.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-link.h>        // for FbleLink.
-#include <fble/fble-main.h>        // for FblePrintCompiledHeaderLine.
+#include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-program.h>     // for FbleNativeModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
-#include <fble/fble-version.h>     // for FBLE_VERSION, FbleBuildStamp.
 
 #include "fble-mem-test.usage.h"   // for fbldUsageHelpText
 
-#define EX_SUCCESS 0
-#define EX_FAIL 1
-#define EX_USAGE 2
+typedef struct {
+  bool growth;
+  bool debug;
+} Args;
 
+static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error);
 static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n);
+
+/**
+ * @func[ParseArg] Arg parser for mem-tests.
+ *  See documentation of FbleArgParser in fble-arg-parse.h for more info.
+ */
+static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
+{
+  Args* args = (Args*)dest;
+  if (FbleParseBoolArg("--growth", &args->growth, argc, argv, error)) return true;
+  if (FbleParseBoolArg("--debug", &args->debug, argc, argv, error)) return true;
+
+  return false;
+}
 
 /**
  * @func[Run] Runs the program for f[n].
@@ -76,82 +89,22 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
 // FbleMemTestMain -- see documentation in mem-test.h.
 int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module)
 {
-  const char* arg0 = argv[0];
-
-  FbleModuleArg module_arg = FbleNewModuleArg();
-  bool help = false;
-  bool error = false;
-  bool version = false;
-  bool growth = false;
-  bool debug = false;
-
-  argc--;
-  argv++;
-  while (!(help || error || version) && argc > 0) {
-    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--growth", &growth, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--debug", &debug, &argc, &argv, &error)) continue;
-    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
-  }
-
-  if (version) {
-    FblePrintCompiledHeaderLine(stdout, "fble-mem-test", arg0, module);
-    FblePrintVersion(stdout, "fble-mem-test");
-    FbleFreeModuleArg(module_arg);
-    return EX_SUCCESS;
-  }
-
-  if (help) {
-    FblePrintCompiledHeaderLine(stdout, "fble-mem-test", arg0, module);
-    fprintf(stdout, "%s", fbldUsageHelpText);
-    FbleFreeModuleArg(module_arg);
-    return EX_SUCCESS;
-  }
-
-  if (error) {
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  if (!module && module_arg.module_path == NULL) {
-    fprintf(stderr, "missing required --module option.\n");
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  FbleNativeModuleV native_search_path = { .xs = NULL, .size = 0 };
-  if (module != NULL) {
-    native_search_path.xs = &module;
-    native_search_path.size = 1;
-  }
-
-  if (module_arg.module_path == NULL) {
-    module_arg.module_path = FbleCopyModulePath(module->path);
-  }
+  Args args = { .growth = false, .debug = false };
 
   // Use a profile during tests to ensure memory behavior works properly with
   // profiling turned on.
   FbleProfile* profile = FbleNewProfile(true);
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
-  FbleFreeModuleArg(module_arg);
-  if (linked == NULL) {
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return EX_FAIL;
-  }
+  FILE* profile_output_file = NULL;
+  FbleValue* func = NULL;
 
-  FbleValue* func = FbleEval(heap, linked, profile);
+  FbleMainStatus status = FbleMain(&ParseArg, &args, "fble-mem-test", fbldUsageHelpText,
+      argc, argv, module, heap, profile, &profile_output_file, &func);
+
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return EX_FAIL;
+    return status;
   }
 
   // Pick sufficiently large values for n to overcome any small constant memory
@@ -159,7 +112,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module)
   size_t small_n = 1000;
   size_t large_n = 2000;
 
-  if (debug) {
+  if (args.debug) {
     for (size_t i = 0; i <= large_n; i++) {
       size_t max_n = Run(heap, func, profile, i, large_n);
       fprintf(stderr, "% 4zi: %zi\n", i, max_n);
@@ -177,17 +130,17 @@ int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module)
   // less than the increase in N, it's very unlikely to be a memory leak.
   size_t margin = (large_n - small_n) / 4;
 
-  if (!growth && max_large_n > max_small_n + margin) {
+  if (!args.growth && max_large_n > max_small_n + margin) {
     fprintf(stderr, "memory growth of %zi (%zi -> %zi)\n",
         max_large_n - max_small_n, max_small_n, max_large_n);
-    return EX_FAIL;
+    return FBLE_MAIN_OTHER_ERROR;
   }
 
-  if (growth && max_large_n <= max_small_n + margin) {
+  if (args.growth && max_large_n <= max_small_n + margin) {
     fprintf(stderr, "memory constant: M(%zi) = %zi, M(%zi) = %zi\n",
         small_n, max_small_n, large_n, max_large_n);
-    return EX_FAIL;
+    return FBLE_MAIN_OTHER_ERROR;
   }
 
-  return EX_SUCCESS;
+  return FBLE_MAIN_SUCCESS;
 }

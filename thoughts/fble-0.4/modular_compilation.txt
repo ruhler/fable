@@ -1474,3 +1474,13 @@ FbleTestMain could return:
 
 We can use consistent support for '--' end of options handling. No need to do
 it sometimes but not others. Can I try this approach instead please?
+
+---
+
+Trouble with consistent support for '--' end of options handling. I don't
+really want it. A couple of reasons:
+* fble-mem-test doesn't want to have to do '--growth --' for compiled tests.
+* fble-test, fble-mem-test, etc. don't want to allow arbitrary options.
+
+I think we want some other mechanism for returning unparsed command line
+options? Let's wait until fble-stdio to figure this out.

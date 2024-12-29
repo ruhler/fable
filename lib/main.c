@@ -32,27 +32,13 @@ FbleMainStatus FbleMain(
   const char* profile_file = NULL;
   const char* deps_file = NULL;
   const char* deps_target = NULL;
-  bool end_of_options = false;
   bool help = false;
   bool error = false;
   bool version = false;
 
-  // If the module is precompiled and '--' isn't present, skip to end of
-  // options right away. That way preloaded programs can go straight to
-  // application args if they want.
-  if (preloaded != NULL) {
-    end_of_options = true;
-    for (int i = 0; i < argc; ++i) {
-      if (strcmp(argv[i], "--") == 0) {
-        end_of_options = false;
-        break;
-      }
-    }
-  }
-
   argc--;
   argv++;
-  while (!(help || error || version) && !end_of_options && argc > 0) {
+  while (!(help || error || version) && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
@@ -62,12 +48,7 @@ FbleMainStatus FbleMain(
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--deps-file", &deps_file, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--deps-target", &deps_target, &argc, &argv, &error)) continue;
-
-    end_of_options = true;
-    if (strcmp(argv[0], "--") == 0) {
-      argc--;
-      argv++;
-    }
+    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
   if (version) {
