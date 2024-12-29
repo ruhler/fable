@@ -11,6 +11,31 @@
 #include "fble-load.h"  // for FbleSearchPath
 
 /**
+ * @func[FbleArgParser] Generic interface for argument parsing.
+ *  Parses a command line argument.
+ *
+ *  @arg[void*] dest
+ *   value to update with the contents of the parsed arg.
+ *  @arg[int*] argc
+ *   pointer to number of arguments remaining.
+ *  @arg[const char***] argv
+ *   pointer to arguments remaining.
+ *  @arg[bool*] error
+ *   boolean value to set in case of error.
+ *
+ *  @returns bool
+ *   true if the next argument was consumed by the parser, false otherwise.
+ *
+ *  @sideeffects
+ *   @i There will only be side effects if the function returns true.
+ *   @i Updates dest with the value of the parsed argument.
+ *   @i Advances argc and argv to the next argument.
+ *   @i Sets error to true in case of error parsing the matched argument.
+ *   @i Prints an error message to stderr in case of error.
+ */
+typedef bool FbleArgParser(void* dest, int* argc, const char*** argv, bool* error);
+
+/**
  * @func[FbleParseBoolArg] Parse a boolean flag command line argument.
  *  Sample argument usage:
  *  

@@ -1459,3 +1459,18 @@ not the main thing. So, helper to parse common args, and helper to load and
 evaluate.
 
 Here we go.
+
+---
+
+This feels really tedious. There's so much stuff to pass to FbleMainEval. Can
+we move as much of it as we can into a single function instead?
+
+FbleTestMain could return:
+* status code
+* FbleValue*
+* FbleProfile*
+* FbleValueHeap* 
+* FILE* profile_file;
+
+We can use consistent support for '--' end of options handling. No need to do
+it sometimes but not others. Can I try this approach instead please?

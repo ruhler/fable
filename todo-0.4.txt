@@ -2,6 +2,7 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Make FblePrintCompiledHeaderLine internal once everyone is using FbleMain?
 * Write reuseable .fbld for main args.
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble
   binaries?

@@ -40,27 +40,4 @@
  */
 FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
-/**
- * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.
- *  This is a convenience function for providing more information to users as
- *  part of a fble compiled main function. It prints a header line if the
- *  compiled module is not NULL, of the form something like:
- *
- *  @code[txt] @
- *   fble-debug-test: fble-test -m /DebugTest% (compiled)
- *
- *  @arg[FILE*] stream
- *   The output stream to print to.
- *  @arg[const char*] tool
- *   Name of the underlying tool, e.g. "fble-test".
- *  @arg[const char*] arg0
- *   argv[0] from the main function.
- *  @arg[FbleNativeModule*] module
- *   Optional native module to get the module name from.
- *
- *  @sideeffects
- *   Prints a header line to the given stream.
- */
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleNativeModule* module);
-
 #endif // FBLE_LINK_H_

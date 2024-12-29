@@ -168,19 +168,3 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV
   FbleFreeProgram(program);
   return linked;
 }
-// See documentation in fble-link.h
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleNativeModule* module)
-{
-  if (module != NULL) {
-    const char* binary_name = strrchr(arg0, '/');
-    if (binary_name == NULL) {
-      binary_name = arg0;
-    } else {
-      binary_name++;
-    }
-
-    fprintf(stream, "%s: %s -m ", binary_name, tool);
-    FblePrintModulePath(stream, module->path);
-    fprintf(stream, " (compiled)\n");
-  }
-}

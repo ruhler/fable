@@ -10,67 +10,89 @@
 #include "fble-arg-parse.h"   // for FbleMainArg
 
 /**
- * @struct[FbleMainArgs] Describes common arguments to a main program.
- *  @field[FbleModuleArg][module] The main module to run.
- *  @field[const char*][profile_file] Filename to write the profile to.
- *  @field[const char*][deps_file] Filename to write the deps file to.
- *  @field[const char*][deps_target] Target to write to the deps file.
- *  @field[bool][help] True to output help info.
- *  @field[bool][version] True to output version info.
+ * Status codes used by FbleMain.
  */
-typedef struct {
-  FbleModuleArg module;
-  const char* profile_file;
-  const char* deps_file;
-  const char* deps_target;
-  bool help;
-  bool version;
-} FbleMainArgs;
+typedef enum {
+  FBLE_MAIN_SUCCESS,
+  FBLE_MAIN_COMPILE_ERROR,
+  FBLE_MAIN_RUNTIME_ERROR,
+  FBLE_MAIN_USAGE_ERROR,
+  FBLE_MAIN_OTHER_ERROR,
+} FbleMainStatus;
 
 /**
- * @func[FbleNewMainArgs] Creates a new FbleMainArgs structure.
- *  @returns FbleMainArgs
- *   A newly allocated FbleMainArgs structure.
+ * @func[FbleMain] Load, link, and evaluate an Fble Main function.
+ *  This is a helper function for doing standard stuff to convert a set of
+ *  command line arguments into an evaluated main fble program.
+ *
+ *  Probably best to look at the source code for a detailed explanation of how
+ *  this works.
+ *
+ *  When FBLE_MAIN_SUCCESS is returned and result is NULL, that indicates the
+ *  program should exit immediately with success. For example, the --help
+ *  option was passed on the command line.
+ *
+ *  @arg[FbleArgParser*][arg_parser] Optional custom arg parser.
+ *  @arg[void*][data] User data for custom arg parser.
+ *  @arg[const char*][tool] Name of the underlying tool, e.g. "fble-test".
+ *  @arg[const unsigned char*][usage] Usage help text to output for --help.
+ *  @arg[int][argc] Number of command line arguments.
+ *  @arg[const char**][argv] The command line arguments.
+ *  @arg[FbleNativeModule*][preloaded] Optional preloaded module to run.
+ *  @arg[FbleValueHeap*][heap] Heap to use for allocating values.
+ *  @arg[FbleProfile*][profile] Profile for evaluating the main program.
+ *  @arg[FILE**][profile_output_file]
+ *   Output parameter for the profile output file.
+ *  @arg[FbleValue**][result]
+ *   Output parameter for the result of evaluation.
+ *
+ *  @returns[FbleMainStatus] Status result code.
  *
  *  @sideeffects
- *   Allocates resources that should be freed using FbleFreeMainArgs when no
- *   longer needed.
+ *   @i Generates build dependency file if requested.
+ *   @i Outputs messages to stderr and stdout in case of error or for --help.
+ *   @item
+ *    Evaluates the main module, with whatever side effects that has on heap
+ *    and profile.
+ *   @i Enables the profile if requested.
+ *   @i Sets profile_output_file and result based on results.
  */
-FbleMainArgs FbleNewMainArgs();
+FbleMainStatus FbleMain(
+    FbleArgParser* user_arg_parser,
+    void* user_data,
+    const char* tool,
+    const unsigned char* usage,
+    int argc,
+    const char** argv,
+    FbleNativeModule* preloaded,
+    FbleValueHeap* heap,
+    FbleProfile* profile,
+    FILE** profile_output_file,
+    FbleValue** result);
 
 /**
- * @func[FbleFreeMainArgs] Frees resources associated with an FbleMainArgs.
- *  @arg[FbleMainArgs][arg] The main args to free.
+ * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.
+ *  This is a convenience function for providing more information to users as
+ *  part of a fble compiled main function. It prints a header line if the
+ *  compiled module is not NULL, of the form something like:
+ *
+ *  @code[txt] @
+ *   fble-debug-test: fble-test -m /DebugTest% (compiled)
+ *
+ *  @arg[FILE*] stream
+ *   The output stream to print to.
+ *  @arg[const char*] tool
+ *   Name of the underlying tool, e.g. "fble-test".
+ *  @arg[const char*] arg0
+ *   argv[0] from the main function.
+ *  @arg[FbleNativeModule*] module
+ *   Optional native module to get the module name from.
  *
  *  @sideeffects
- *   Frees resources associated with the main args.
+ *   Prints a header line to the given stream.
  */
-void FbleFreeMainArgs(FbleMainArgs args);
+void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleNativeModule* module);
 
-/**
- * @func[FbleParseMainArg] Parse a command line options for FbleMainArgs.
- *  @arg[bool] preloaded
- *   True if the main module is preloaded. False otherwise.
- *  @arg[FbleMainArgs*] dest
- *   The main args to populate from the command line.
- *  @arg[int*] argc
- *   pointer to number of arguments remaining.
- *  @arg[const char***] argv
- *   pointer to arguments remaining.
- *  @arg[bool*] error
- *   boolean value to set in case of error.
- *
- *  @returns bool
- *   true if the next argument was consumed, false otherwise.
- *
- *  @sideeffects
- *   @i There will only be side effects if the function returns true.
- *   @i Updates arg with the value of the parsed arguments.
- *   @i Advances argc and argv to the next argument.
- *   @i Sets error to true in case of error parsing the matched argument.
- *   @i Prints an error message to stderr in case of error.
- */
-bool FbleParseMainArg(bool preloaded, FbleMainArgs* dest, int* argc, const char*** argv, bool* error);
 
 #endif // FBLE_MAIN_H_
 

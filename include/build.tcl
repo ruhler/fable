@@ -12,6 +12,7 @@ namespace eval "include" {
       FbleMaxTotalBytesAllocated FbleResetMaxTotalBytesAllocated
     }
     fble-arg-parse.h {
+      FbleArgParser
       FbleParseBoolArg FbleParseStringArg
       FbleModuleArg FbleNewModuleArg FbleFreeModuleArg FbleParseModuleArg
       FbleParseInvalidArg
@@ -31,7 +32,6 @@ namespace eval "include" {
     }
     fble-link.h {
       FbleLink
-      FblePrintCompiledHeaderLine
     }
     fble-load.h {
       FbleParse
@@ -47,7 +47,7 @@ namespace eval "include" {
       FbleReportWarning FbleReportError
     }
     fble-main.h {
-      FbleMainArgs FbleNewMainArgs FbleFreeMainArgs FbleParseMainArg
+      FbleMain FblePrintCompiledHeaderLine
     }
     fble-module-path.h {
       FbleModulePath FbleModulePathV

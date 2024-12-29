@@ -12,6 +12,7 @@
 #include <fble/fble-alloc.h>       // for FbleFree
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-link.h>        // for FbleLink
+#include <fble/fble-main.h>        // for FblePrintCompiledHeaderLine.
 #include <fble/fble-name.h>        // for FbleName.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-program.h>     // for FbleNativeModule
