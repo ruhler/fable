@@ -8,11 +8,13 @@
 #include <string.h>                 // for strcmp
 
 #include <fble/fble-arg-parse.h>    // for FbleNewMainArg, etc.
+#include <fble/fble-compile.h>      // for FbleCompileProgram.
 #include <fble/fble-link.h>         // for FbleLink
 #include <fble/fble-version.h>      // for FblePrintVersion
 #include <fble/fble-vector.h>       // for FbleInitVector, etc.
 
 static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded);
+static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModule* preloaded, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * @func[PrintCompiledHeaderLine] Prints an information line about a preloaded module.
@@ -49,6 +51,55 @@ static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* 
     FblePrintModulePath(stream, preloaded->path);
     fprintf(stream, " (compiled)\n");
   }
+}
+
+/**
+ * @func[Link] Load and link an optionally preloaded program.
+ *  @arg[FbleValueHeap*] heap
+ *   Heap to use for allocations.
+ *  @arg[FbleProfile*] profile
+ *   Profile to populate with blocks. May be NULL.
+ *  @arg[FblePreloadedModule*] preloaded
+ *   Optional preloaded module to load from.
+ *  @arg[FbleSearchPath*] search_path
+ *   The search path to use for locating .fble files.
+ *  @arg[FbleModulePath*] module_path
+ *   The module path for the main module to load.
+ *  @arg[FbleStringV*] build_deps
+ *   Output to store list of files the load depended on. This should be a
+ *   preinitialized vector, or NULL.
+ *
+ *  @returns FbleValue*
+ *   A zero-argument fble function that computes the value of the program when
+ *   executed, or NULL in case of error.
+ *
+ *  @sideeffects
+ *   @i Allocates a value on the heap.
+ *   @item
+ *    The user should free strings added to build_deps when no longer
+ *    needed, including in the case when program loading fails.
+ */
+static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModule* preloaded, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+{
+  FbleProgram* program = NULL;
+
+  if (preloaded != NULL) {
+    program = FbleNewPreloadedProgram(preloaded);
+  } else {
+    program = FbleLoadForExecution(search_path, module_path, build_deps);
+    if (program == NULL) {
+      return NULL;
+    }
+
+    if (!FbleCompileProgram(program)) {
+      FbleFreeProgram(program);
+      return NULL;
+    }
+  }
+
+  FbleValue* linked = FbleLink(heap, profile, program);
+  FbleFreeProgram(program);
+  return linked;
 }
 
 // See documentation in fble-main.h
@@ -146,12 +197,6 @@ FbleMainStatus FbleMain(
     return FBLE_MAIN_USAGE_ERROR;
   }
 
-  FblePreloadedModuleV native_search_path = { .xs = NULL, .size = 0 };
-  if (preloaded != NULL) {
-    native_search_path.xs = &preloaded;
-    native_search_path.size = 1;
-  }
-
   if (module_arg.module_path == NULL) {
     module_arg.module_path = FbleCopyModulePath(preloaded->path);
   }
@@ -163,7 +208,7 @@ FbleMainStatus FbleMain(
   FbleStringV deps;
   FbleInitVector(deps);
 
-  FbleValue* linked = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, &deps);
+  FbleValue* linked = Link(heap, profile, preloaded, module_arg.search_path, module_arg.module_path, &deps);
   FbleFreeModuleArg(module_arg);
 
   if (linked == NULL) {

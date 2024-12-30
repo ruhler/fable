@@ -14,25 +14,8 @@
 #include "code.h"       // for FbleCode
 #include "interpret.h"  // for FbleNewInterpretedFuncValue
 
-static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program);
-
-/**
- * @func[Link] Links together modules from a program into an FbleValue*.
- *  @arg[FbleValueHeap*] heap
- *   Heap to use for allocations.
- *  @arg[FbleProfile*] profile
- *   Profile to populate with blocks. May be NULL.
- *  @arg[FbleProgram*] program
- *   The program of modules to link together.
- *
- *  @returns FbleValue*
- *   A zero-argument fble function that computes the value of the program when
- *   executed, or NULL in case of error.
- *
- *  @sideeffects
- *   Allocates a value on the heap.
- */
-static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program)
+// See documentation in fble-link.h
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program)
 {
   // Write some code to call each of module functions in turn with the
   // appropriate module arguments. The function for module i will be static
@@ -92,34 +75,5 @@ static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* p
   // Wrap that all up into an FbleFuncValue.
   FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs);
   FbleFreeCode(code);
-  return linked;
-}
-
-// FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
-{
-  FbleProgram* program = NULL;
-
-  for (size_t i = 0; i < native_search_path.size; ++i) {
-    if (FbleModulePathsEqual(native_search_path.xs[i]->path, module_path)) {
-      program = FbleNewPreloadedProgram(native_search_path.xs[i]);
-      break;
-    }
-  }
-
-  if (program == NULL) {
-    program = FbleLoadForExecution(search_path, module_path, build_deps);
-    if (program == NULL) {
-      return NULL;
-    }
-
-    if (!FbleCompileProgram(program)) {
-      FbleFreeProgram(program);
-      return NULL;
-    }
-  }
-
-  FbleValue* linked = Link(heap, profile, program);
-  FbleFreeProgram(program);
   return linked;
 }
