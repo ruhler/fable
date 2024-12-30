@@ -10,6 +10,7 @@
 #include <fble/fble-arg-parse.h>    // for FbleNewMainArg, etc.
 #include <fble/fble-compile.h>      // for FbleCompileProgram.
 #include <fble/fble-link.h>         // for FbleLink
+#include <fble/fble-load.h>         // for FbleLoadPreloaded
 #include <fble/fble-version.h>      // for FblePrintVersion
 #include <fble/fble-vector.h>       // for FbleInitVector, etc.
 
@@ -84,7 +85,7 @@ static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedM
   FbleProgram* program = NULL;
 
   if (preloaded != NULL) {
-    program = FbleNewPreloadedProgram(preloaded);
+    program = FbleLoadPreloaded(preloaded);
   } else {
     program = FbleLoadForExecution(search_path, module_path, build_deps);
     if (program == NULL) {

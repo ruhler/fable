@@ -155,6 +155,16 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
 FbleProgram* FbleLoadForModuleCompilation(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
+ * @func[FbleLoadPreloaded] Loads a program from a preloaded module.
+ *  @arg[FblePreloadedModule*][main] The main module of the program.
+ *  @returns[FbleProgram*] A new program formed from the main module.
+ *  @sideeffects
+ *   The caller should call FbleFreeProgram on the returned program when done
+ *   with it.
+ */
+FbleProgram* FbleLoadPreloaded(FblePreloadedModule* main);
+
+/**
  * @func[FbleSaveBuildDeps] Saves a depfile.
  *  Save the list of build dependencies to a depfile suitable for use with
  *  ninja or make.

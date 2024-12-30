@@ -1364,7 +1364,7 @@ we pass FbleModuleV, not FblePreloadedModuleV. That way there is no confusion
 about mixing of preloaded or not preloaded dependencies. In practice I expect
 builtins to be hand written modules that have no dependencies.
 
-4. Export the currently internal Link function as FbleLink.
+4. (DONE) Export the currently internal Link function as FbleLink.
 This is the pure link function, nothing fancy on top. You give the program,
 profile, and heap, it links everything into a value. Better to use this for
 linking, because it's focused on just linking, and will composes much better
@@ -1384,7 +1384,7 @@ modules don't have dependencies that need to be loaded... Is that a bad
 assumption? Anyway, for now, don't worry about fble-deps. Keep it or not.
 Support --deps-file and --deps-target or not on other fble-* functions.
 
-7. Factor out high level code used for main programs.
+7. (DONE) Factor out high level code used for main programs.
 Right now its in FbleLink. Move that to something else, maybe FbleLinkMain?
 Some function that tries to factor out as much code as possible to be shared
 by: fble-app, fble-stdio, fble-test, fble-profiles-test, and fble-mem-test.
@@ -1576,3 +1576,24 @@ like? The only extra arguments to return are those after '--'. Those will be
 consecutive. So we always parse up to '--', update argv to point to the first
 argument after '--'. Allow '--' in non program argument cases? Sounds worth a
 try.
+
+---
+
+Next stage of the cleanup: add builtins arg to FbleMain and
+FbleLoadForExecution.
+
+Am I sure I want to use FbleModule* here instead of FblePreloadedModule*?
+
+I think FblePreloadedModule* is okay. It makes sense to have it be preloaded.
+We already check if a module is in the program before preloading it,
+regardless of how we load it. No worries.
+
+And if we are okay using preloaded module, we can pass our compiled preloaded
+module in there too. Call it builtins. Okay? Let's go with that. Specifically:
+* Rename FbleNewPreloadedProgram to FbleLoadPreloaded and move to load.c
+* Add FblePreloadedModuleV builtins to FbleLoadForExecution.
+* Pass FbleMain preloaded module via FbleLoadForExecution builtins instead of
+  FbleLoadPreloaded. Remove FbleLoadPreloaded function.
+
+Once that's working, I'm all set to try adding builtins arg to FbleMain.
+

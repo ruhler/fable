@@ -137,14 +137,4 @@ struct FblePreloadedModule {
   FbleNameV profile_blocks;
 };
 
-/**
- * @func[FbleNewPreloadedProgram] Creates a program from a preloaded module.
- *  @arg[FblePreloadedModule*][main] The main module of the program.
- *  @returns[FbleProgram*] A new program formed from the main module.
- *  @sideeffects
- *   The caller should call FbleFreeProgram on the returned program when done
- *   with it.
- */
-FbleProgram* FbleNewPreloadedProgram(FblePreloadedModule* main);
-
 #endif // FBLE_PROGRAM_H_

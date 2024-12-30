@@ -48,7 +48,9 @@ typedef struct Stack {
 static FbleString* FindPackageAt(const char* package, const char* package_dir);
 static FbleString* FindAt(const char* root, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
 static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
+static void Preload(FbleProgram* program, FblePreloadedModule* preloaded);
 static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps);
+
 
 // See documentation in fble-load.h.
 FbleSearchPath* FbleNewSearchPath()
@@ -242,6 +244,43 @@ static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleMod
 }
 
 /**
+ * @func[Preload] Add a preloaded module to a program.
+ *  @arg[FbleProgram*][program] The program to add the module to.
+ *  @arg[FblePreloadedModule*][preloaded] The module to add.
+ *  @sideeffects
+ *   Recursively adds the module and all its dependencies to the program.
+ */
+static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
+{
+  // Check if we've already loaded the module.
+  for (size_t i = 0; i < program->modules.size; ++i) {
+    if (FbleModulePathsEqual(program->modules.xs[i].path, preloaded->path)) {
+      return;
+    }
+  }
+
+  // Load the dependencies.
+  for (size_t i = 0; i < preloaded->deps.size; ++i) {
+    Preload(program, preloaded->deps.xs[i]);
+  }
+
+  FbleModule* module = FbleExtendVector(program->modules);
+  module->path = FbleCopyModulePath(preloaded->path);
+  FbleInitVector(module->deps);
+  for (size_t i = 0; i < preloaded->deps.size; ++i) {
+    FbleAppendToVector(module->deps, FbleCopyModulePath(preloaded->deps.xs[i]->path));
+  }
+  module->type = NULL;
+  module->value = NULL;
+  module->code = NULL;
+  module->exe = preloaded->executable;
+  FbleInitVector(module->profile_blocks);
+  for (size_t i = 0; i < preloaded->profile_blocks.size; ++i) {
+    FbleAppendToVector(module->profile_blocks, FbleCopyName(preloaded->profile_blocks.xs[i]));
+  }
+}
+
+/**
  * @func[Load] Loads an fble program.
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for location .fble files. Borrowed.
@@ -411,6 +450,15 @@ static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_pat
     FbleFreeProgram(program);
     return NULL;
   }
+  return program;
+}
+
+// See documentation in fble-load.h
+FbleProgram* FbleLoadPreloaded(FblePreloadedModule* main)
+{
+  FbleProgram* program = FbleAlloc(FbleProgram);
+  FbleInitVector(program->modules);
+  Preload(program, main);
   return program;
 }
 
