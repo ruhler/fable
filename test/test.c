@@ -26,7 +26,7 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleValue* result = NULL;
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-test", fbldUsageHelpText,
-      argc, argv, preloaded, heap, profile, &profile_output_file, &result);
+      &argc, &argv, preloaded, heap, profile, &profile_output_file, &result);
 
   FbleFreeValueHeap(heap);
 

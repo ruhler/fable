@@ -58,7 +58,7 @@ namespace eval "pkgs/core" {
 
   # Runs an fble-stdio tests suite interpreted.
   proc ::run_stdio_tests { target cmdargs } {
-    run_stdio $target.out "$cmdargs --prefix Interpreted."
+    run_stdio $target.out "$cmdargs -- --prefix Interpreted."
     testsuite $target $target.out "cat $target.out"
   }
 
@@ -71,7 +71,7 @@ namespace eval "pkgs/core" {
 
   # /Core/Stdio/Cat% interpreted test 2.
   run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
-    "-I $::s/pkgs/core -m /Core/Stdio/Cat% $::s/README.fbld"
+    "-I $::s/pkgs/core -m /Core/Stdio/Cat% -- $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
     "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"

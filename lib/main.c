@@ -18,15 +18,15 @@ FbleMainStatus FbleMain(
     void* data,
     const char* tool,
     const unsigned char* usage,
-    int argc,
-    const char** argv,
+    int* argc,
+    const char*** argv,
     FblePreloadedModule* preloaded,
     FbleValueHeap* heap,
     FbleProfile* profile,
     FILE** profile_output_file,
     FbleValue** result)
 {
-  const char* arg0 = argv[0];
+  const char* arg0 = (*argv)[0];
 
   FbleModuleArg module_arg = FbleNewModuleArg();
   const char* profile_file = NULL;
@@ -36,19 +36,24 @@ FbleMainStatus FbleMain(
   bool error = false;
   bool version = false;
 
-  argc--;
-  argv++;
-  while (!(help || error || version) && argc > 0) {
-    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (!preloaded && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
-    if (arg_parser && arg_parser(data, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--deps-file", &deps_file, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--deps-target", &deps_target, &argc, &argv, &error)) continue;
-    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
+  (*argc)--;
+  (*argv)++;
+  while (!(help || error || version) && *argc > 0) {
+    if (FbleParseBoolArg("-h", &help, argc, argv, &error)) continue;
+    if (FbleParseBoolArg("--help", &help, argc, argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, argc, argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, argc, argv, &error)) continue;
+    if (!preloaded && FbleParseModuleArg(&module_arg, argc, argv, &error)) continue;
+    if (arg_parser && arg_parser(data, argc, argv, &error)) continue;
+    if (FbleParseStringArg("--profile", &profile_file, argc, argv, &error)) continue;
+    if (FbleParseStringArg("--deps-file", &deps_file, argc, argv, &error)) continue;
+    if (FbleParseStringArg("--deps-target", &deps_target, argc, argv, &error)) continue;
+    if (strcmp((*argv)[0], "--") == 0) {
+      (*argc)--;
+      (*argv)++;
+      break;
+    }
+    if (FbleParseInvalidArg(argc, argv, &error)) continue;
   }
 
   if (version) {

@@ -10,24 +10,16 @@
 #include <string.h>     // for strcmp
 
 #include <fble/fble-alloc.h>       // for FbleFree
-#include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-link.h>        // for FbleLink
-#include <fble/fble-main.h>        // for FblePrintCompiledHeaderLine.
+#include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-program.h>     // for FblePreloadedModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleInitVector.
-#include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "fble-stdio.usage.h"      // for fbldUsageHelpText
 
 #include "char.fble.h"        // for FbleCharValueAccess
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
-
-#define EX_TRUE 0
-#define EX_FALSE 1
-#define EX_USAGE 2
-#define EX_FAILURE 3
 
 static void OnFree(void* data);
 static FbleValue* IStreamImpl(
@@ -389,157 +381,46 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
 // FbleStdioMain -- See documentation in stdio.fble.h
 int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
-  const char* arg0 = argv[0];
-
   // To ease debugging of FbleStdioMain programs, cause the following useful
   // functions to be linked in:
   (void)(FbleCharValueAccess);
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  FbleModuleArg module_arg = FbleNewModuleArg();
-  const char* profile_file = NULL;
-  const char* deps_file = NULL;
-  const char* deps_target = NULL;
-  bool end_of_options = false;
-  bool help = false;
-  bool error = false;
-  bool version = false;
-
   // If the module is compiled and '--' isn't present, skip to end of options
   // right away. That way precompiled programs can go straight to application
   // args if they want.
+  bool end_of_options = true;
   if (preloaded != NULL) {
-    end_of_options = true;
     for (int i = 0; i < argc; ++i) {
       if (strcmp(argv[i], "--") == 0) {
         end_of_options = false;
         break;
       }
     }
-  }
 
-  argc--;
-  argv++;
-  while (!(help || error || version) && !end_of_options && argc > 0) {
-    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (!preloaded && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--deps-file", &deps_file, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--deps-target", &deps_target, &argc, &argv, &error)) continue;
-
-    end_of_options = true;
-    if (strcmp(argv[0], "--") == 0) {
-      argc--;
-      argv++;
+    if (end_of_options) {
+      argc = 1;
     }
   }
 
-  if (version) {
-    FblePrintCompiledHeaderLine(stdout, "fble-stdio", arg0, preloaded);
-    FblePrintVersion(stdout, "fble-stdio");
-    FbleFreeModuleArg(module_arg);
-    return EX_TRUE;
-  }
-
-  if (help) {
-    FblePrintCompiledHeaderLine(stdout, "fble-stdio", arg0, preloaded);
-    fprintf(stdout, "%s", fbldUsageHelpText);
-    FbleFreeModuleArg(module_arg);
-    return EX_TRUE;
-  }
-
-  if (error) {
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  if (!preloaded && module_arg.module_path == NULL) {
-    fprintf(stderr, "missing required --module option.\n");
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  FILE* fprofile = NULL;
-  if (profile_file != NULL) {
-    fprofile = fopen(profile_file, "w");
-    if (fprofile == NULL) {
-      fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFreeModuleArg(module_arg);
-      return EX_FAILURE;
-    }
-  }
-
-  if (deps_file != NULL && deps_target == NULL) {
-    fprintf(stderr, "--deps-file requires --deps-target.\n");
-    fprintf(stderr, "Try --help for usage\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  if (deps_target != NULL && deps_file == NULL) {
-    fprintf(stderr, "--deps-target requires --deps-file.\n");
-    fprintf(stderr, "Try --help for usage\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  FblePreloadedModuleV native_search_path = { .xs = NULL, .size = 0 };
-  if (preloaded != NULL) {
-    native_search_path.xs = &preloaded;
-    native_search_path.size = 1;
-  }
-
-  if (module_arg.module_path == NULL) {
-    module_arg.module_path = FbleCopyModulePath(preloaded->path);
-  }
-
-  FbleProfile* profile = FbleNewProfile(fprofile != NULL);
+  FbleProfile* profile = FbleNewProfile(false);
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleStringV deps;
-  FbleInitVector(deps);
+  FILE* profile_output_file = NULL;
+  FbleValue* stdio = NULL;
 
-  FbleValue* stdio = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, &deps);
-  FbleFreeModuleArg(module_arg);
+  FbleMainStatus status = FbleMain(NULL, NULL, "fble-stdio", fbldUsageHelpText,
+      &argc, &argv, preloaded, heap, profile, &profile_output_file, &stdio);
+
   if (stdio == NULL) {
-    for (size_t i = 0; i < deps.size; ++i) {
-      FbleFreeString(deps.xs[i]);
-    }
-    FbleFreeVector(deps);
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return EX_FAILURE;
+    return status;
   }
-
-  if (deps_file != NULL) {
-    FILE* depsfile = fopen(deps_file, "w");
-    if (depsfile == NULL) {
-      fprintf(stderr, "unable to open %s for writing\n", deps_file);
-      for (size_t i = 0; i < deps.size; ++i) {
-        FbleFreeString(deps.xs[i]);
-      }
-      FbleFreeVector(deps);
-      FbleFreeValueHeap(heap);
-      FbleFreeProfile(profile);
-      return EX_FAILURE;
-    }
-    FbleSaveBuildDeps(depsfile, deps_target, deps);
-    fclose(depsfile);
-  }
-
-  for (size_t i = 0; i < deps.size; ++i) {
-    FbleFreeString(deps.xs[i]);
-  }
-  FbleFreeVector(deps);
 
   FbleValueV stdio_args;
   FbleInitVector(stdio_args);
-  for (int i = 0; i < argc; ++i) {
+  for (int i = 0; argv[i] != NULL; ++i) {
     FbleAppendToVector(stdio_args, FbleNewStringValue(heap, argv[i]));
   }
 
@@ -547,14 +428,14 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   FbleFreeVector(stdio_args);
 
-  size_t result = EX_FAILURE;
+  size_t result = FBLE_MAIN_OTHER_ERROR;
   if (value != NULL) {
     result = FbleUnionValueTag(value);
   }
 
   FbleFreeValueHeap(heap);
 
-  FbleGenerateProfileReport(fprofile, profile);
+  FbleGenerateProfileReport(profile_output_file, profile);
   FbleFreeProfile(profile);
   return result;
 }

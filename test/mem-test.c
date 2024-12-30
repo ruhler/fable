@@ -99,7 +99,7 @@ int FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleValue* func = NULL;
 
   FbleMainStatus status = FbleMain(&ParseArg, &args, "fble-mem-test", fbldUsageHelpText,
-      argc, argv, preloaded, heap, profile, &profile_output_file, &func);
+      &argc, &argv, preloaded, heap, profile, &profile_output_file, &func);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);

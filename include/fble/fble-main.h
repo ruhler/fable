@@ -36,8 +36,8 @@ typedef enum {
  *  @arg[void*][data] User data for custom arg parser.
  *  @arg[const char*][tool] Name of the underlying tool, e.g. "fble-test".
  *  @arg[const unsigned char*][usage] Usage help text to output for --help.
- *  @arg[int][argc] Number of command line arguments.
- *  @arg[const char**][argv] The command line arguments.
+ *  @arg[int*][argc] Number of command line arguments.
+ *  @arg[const char***][argv] The command line arguments.
  *  @arg[FblePreloadedModule*][preloaded] Optional preloaded module to run.
  *  @arg[FbleValueHeap*][heap] Heap to use for allocating values.
  *  @arg[FbleProfile*][profile] Profile for evaluating the main program.
@@ -49,6 +49,7 @@ typedef enum {
  *  @returns[FbleMainStatus] Status result code.
  *
  *  @sideeffects
+ *   @i Advances argc and argv past the parsed arguments.
  *   @i Generates build dependency file if requested.
  *   @i Outputs messages to stderr and stdout in case of error or for --help.
  *   @item
@@ -58,12 +59,12 @@ typedef enum {
  *   @i Sets profile_output_file and result based on results.
  */
 FbleMainStatus FbleMain(
-    FbleArgParser* user_arg_parser,
-    void* user_data,
+    FbleArgParser* arg_parser,
+    void* data,
     const char* tool,
     const unsigned char* usage,
-    int argc,
-    const char** argv,
+    int* argc,
+    const char*** argv,
     FblePreloadedModule* preloaded,
     FbleValueHeap* heap,
     FbleProfile* profile,

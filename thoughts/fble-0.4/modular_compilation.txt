@@ -1484,3 +1484,95 @@ really want it. A couple of reasons:
 
 I think we want some other mechanism for returning unparsed command line
 options? Let's wait until fble-stdio to figure this out.
+
+---
+
+Rethinking some of the proposed cleanup steps:
+
+2. Maybe better to write a function to convert between them. Mostly I'm
+worried about ownership. FbleModule needs to be freed by the program. Can we
+have a static FbleModule we pass to a program? Probably not without some
+helper function to manage references. In which case, just use the helper
+function for the full conversion.
+
+Let's get back to (7). How to handle args between fble-test vs fble-stdio?
+
+First, what behavior do I want?
+
+For fble-stdio, fble-app:
+* '--' is separator for args to fble vs args to the program.
+* If '--' isn't present and the module is preloaded, we assume it is
+  implicitly before the first argument.
+* If '--' isn't present and the module is not preloaded, we assume '--'
+  implicitly after the last argument.
+
+For fble-test, etc.:
+* There is no such thing as '--'. All options are to fble. 
+
+Can we simplify the logic to get better consistency? For example, for
+fble-stdio and fble-app, always assume '--' before the first argument if it
+isn't explicitly given?
+
+So, instead of:
+ 
+  fble-stdio -p core -m /Core/Stdio/HelloWorld%
+
+You would need:
+
+  fble-stdio -p core -m /Core/Stdio/HelloWorld% --
+
+I don't really like that. What if we flip it the other way around? Any args to
+the program have to be passed with '--'?
+
+So, instead of:
+
+  fble-md5 foo.txt
+
+We need:
+ 
+  fble-md5 -- foo.txt
+
+No. No good at all. The current behavior seems desirable: interpreter defaults
+to args to interpreter, use -- to pass explicit additional args. The compiled
+code defaults args to program, use -- to pass explicit interpreter args.
+
+So, we have the following cases:
+* program args, interpreted
+* program args, preloaded
+* no program args
+
+In the case of program args, how do we pass those back to the caller of
+FbleMain? Part of me wants a generic way to leave unconsumed arguments and use
+that both for program args and custom args. Is that reasonable?
+
+Or, could we move this arg logic outside of FbleMain? For example:
+* Have FbleMain stop arg parsing if/when it encounters '--'.
+* Check before calling FbleMain if preloaded with program args, in which case,
+  pass argc as 1.
+* Check after calling FbleMain for unconsumed args. Anything after '--' is
+  program args if those are supported. Anything before is custom args. We have
+  a separate round of parsing.
+
+The downside of this approach is we evaluate the main function before
+validating tool specific command line arguments. Slightly annoying? Probably
+okay though. Worth a try?
+
+The idea then would be that FbleMain removes any ...
+
+Oh. No. The real problem is we can't parse args we don't know about. As soon
+as we get some --foo thing, we don't know if the next arg is an option or a
+new command line. Not unless we want to make assumptions about command line
+args starting with '-'?
+
+If we make some assumptions about command line arguments, we could parse out
+custom command line arguments before calling into FbleMain. That sounds
+worthwhile, right?
+
+The challenge is having a way to pass a value such as '--foo' to an option
+and recognize it as a value, not a new argument. That's the hard part.
+
+What if we keep the custom arg parser option. What does the interface look
+like? The only extra arguments to return are those after '--'. Those will be
+consecutive. So we always parse up to '--', update argv to point to the first
+argument after '--'. Allow '--' in non program argument cases? Sounds worth a
+try.
