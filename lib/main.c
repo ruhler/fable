@@ -10,7 +10,7 @@
 #include <fble/fble-arg-parse.h>    // for FbleNewMainArg, etc.
 #include <fble/fble-compile.h>      // for FbleCompileProgram.
 #include <fble/fble-link.h>         // for FbleLink
-#include <fble/fble-load.h>         // for FbleLoadPreloaded
+#include <fble/fble-load.h>         // for FbleLoadForExecution
 #include <fble/fble-version.h>      // for FblePrintVersion
 #include <fble/fble-vector.h>       // for FbleInitVector, etc.
 
@@ -82,20 +82,20 @@ static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* 
  */
 static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModule* preloaded, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
-  FbleProgram* program = NULL;
-
+  FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
   if (preloaded != NULL) {
-    program = FbleLoadPreloaded(preloaded);
-  } else {
-    program = FbleLoadForExecution(search_path, module_path, build_deps);
-    if (program == NULL) {
-      return NULL;
-    }
+    builtins.size = 1;
+    builtins.xs = &preloaded;
+  }
 
-    if (!FbleCompileProgram(program)) {
-      FbleFreeProgram(program);
-      return NULL;
-    }
+  FbleProgram* program = FbleLoadForExecution(builtins, search_path, module_path, build_deps);
+  if (program == NULL) {
+    return NULL;
+  }
+
+  if (!FbleCompileProgram(program)) {
+    FbleFreeProgram(program);
+    return NULL;
   }
 
   FbleValue* linked = FbleLink(heap, profile, program);

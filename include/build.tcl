@@ -38,7 +38,7 @@ namespace eval "include" {
       FbleNewSearchPath FbleFreeSearchPath
       FbleAppendToSearchPath FbleAppendStringToSearchPath
       FbleFindPackage
-      FbleLoadForExecution FbleLoadForModuleCompilation FbleLoadPreloaded
+      FbleLoadForExecution FbleLoadForModuleCompilation
       FbleSaveBuildDeps
     }
     fble-loc.h {

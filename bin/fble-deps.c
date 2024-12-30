@@ -85,9 +85,10 @@ int main(int argc, const char* argv[])
     return EX_USAGE;
   }
 
+  FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
   FbleStringV deps;
   FbleInitVector(deps);
-  FbleProgram* prgm = FbleLoadForExecution(module_arg.search_path, module_arg.module_path, &deps);
+  FbleProgram* prgm = FbleLoadForExecution(builtins, module_arg.search_path, module_arg.module_path, &deps);
   FbleFreeModuleArg(module_arg);
   FbleFreeProgram(prgm);
 

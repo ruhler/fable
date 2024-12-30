@@ -105,6 +105,8 @@ FbleString* FbleFindPackage(const char* package);
  *  Loads code sufficient for executing the main module and all other modules
  *  it depends on.
  *
+ *  @arg[FblePreloadedModuleV] builtins
+ *   List of builtin modules to search.
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for location .fble files. Borrowed.
  *  @arg[FbleModulePath*] module_path
@@ -125,7 +127,7 @@ FbleString* FbleFindPackage(const char* package);
  *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
-FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+FbleProgram* FbleLoadForExecution(FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * @func[FbleLoadForModuleCompilation]
@@ -153,16 +155,6 @@ FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* m
  *    needed, including in the case when program loading fails.
  */
 FbleProgram* FbleLoadForModuleCompilation(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
-
-/**
- * @func[FbleLoadPreloaded] Loads a program from a preloaded module.
- *  @arg[FblePreloadedModule*][main] The main module of the program.
- *  @returns[FbleProgram*] A new program formed from the main module.
- *  @sideeffects
- *   The caller should call FbleFreeProgram on the returned program when done
- *   with it.
- */
-FbleProgram* FbleLoadPreloaded(FblePreloadedModule* main);
 
 /**
  * @func[FbleSaveBuildDeps] Saves a depfile.

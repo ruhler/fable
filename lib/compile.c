@@ -1381,6 +1381,12 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
  */
 static void CompileModule(FbleModule* module, FbleTc* tc)
 {
+  if (module->value == NULL) {
+    // There's nothing to compile. This can happen for builtin modules, for
+    // example.
+    return;
+  }
+
   assert(module->code == NULL && "module already compiled?");
   assert(module->profile_blocks.size == 0 && "module already compiled?");
 

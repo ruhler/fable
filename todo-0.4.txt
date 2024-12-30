@@ -8,6 +8,10 @@ Things to consider doing for the fble-0.4 release.
   Remove use of fbledeps in spec tests?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
 
+* Test case where an interpreted module depends on a builtin module.
+  I suspect we'll fail to get and check the type of the builtin module in the
+  current implementation.
+
 * Add test for .fble vs. .fble.@ type for main module as well as dependant
   module.
 * Test for .fble.@ of dependant file present but with bad syntax.

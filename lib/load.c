@@ -49,7 +49,7 @@ static FbleString* FindPackageAt(const char* package, const char* package_dir);
 static FbleString* FindAt(const char* root, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
 static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
 static void Preload(FbleProgram* program, FblePreloadedModule* preloaded);
-static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps);
+static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps);
 
 
 // See documentation in fble-load.h.
@@ -282,6 +282,8 @@ static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
 
 /**
  * @func[Load] Loads an fble program.
+ *  @arg[FblePreloadedModuleV] builtins
+ *   List of builtin modules to search.
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for location .fble files. Borrowed.
  *  @arg[FbleModulePath*] module_path
@@ -305,11 +307,21 @@ static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
  *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
-static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps)
+static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps)
 {
   if (module_path == NULL) {
     fprintf(stderr, "no module path specified\n");
     return NULL;
+  }
+
+  FbleProgram* program = FbleAlloc(FbleProgram);
+  FbleInitVector(program->modules);
+
+  for (size_t i = 0; i < builtins.size; ++i) {
+    if (FbleModulePathsEqual(module_path, builtins.xs[i]->path)) {
+      Preload(program, builtins.xs[i]);
+      return program;
+    }
   }
 
   FbleString* filename = Find(search_path, ".fble", module_path, build_deps);
@@ -317,11 +329,9 @@ static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_pat
     FbleReportError("module ", module_path->loc);
     FblePrintModulePath(stderr, module_path);
     fprintf(stderr, " not found\n");
+    FbleFreeProgram(program);
     return NULL;
   }
-
-  FbleProgram* program = FbleAlloc(FbleProgram);
-  FbleInitVector(program->modules);
 
   bool error = false;
   Stack* stack = FbleAlloc(Stack);
@@ -379,6 +389,15 @@ static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_pat
       continue;
     }
 
+    // See if the module is available as a builtin.
+    for (size_t i = 0; i < builtins.size; ++i) {
+      if (FbleModulePathsEqual(ref, builtins.xs[i]->path)) {
+        Preload(program, builtins.xs[i]);
+        continue;
+      }
+    }
+
+    // Make sure we aren't trying to load a module recursively.
     bool recursive = false;
     for (Stack* s = stack; s != NULL; s = s->tail) {
       if (FbleModulePathsEqual(ref, s->module.path)) {
@@ -453,25 +472,17 @@ static FbleProgram* Load(FbleSearchPath* search_path, FbleModulePath* module_pat
   return program;
 }
 
-// See documentation in fble-load.h
-FbleProgram* FbleLoadPreloaded(FblePreloadedModule* main)
-{
-  FbleProgram* program = FbleAlloc(FbleProgram);
-  FbleInitVector(program->modules);
-  Preload(program, main);
-  return program;
-}
-
 // See documentation in fble-load.h.
-FbleProgram* FbleLoadForExecution(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+FbleProgram* FbleLoadForExecution(FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
-  return Load(search_path, module_path, true, build_deps);
+  return Load(builtins, search_path, module_path, true, build_deps);
 }
 
 // See documentation in fble-load.h.
 FbleProgram* FbleLoadForModuleCompilation(FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
-  return Load(search_path, module_path, false, build_deps);
+  FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
+  return Load(builtins, search_path, module_path, false, build_deps);
 }
 
 // See documentation in fble-load.h.

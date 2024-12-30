@@ -2389,6 +2389,14 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
     FbleModule* module = program->modules.xs + i;
     FbleType* deps[module->deps.size];
 
+    // Skip typecheck for builtin modules with no type information.
+    if (module->type == NULL && module->value == NULL) {
+      types[i] = NULL;
+      tcs[i] = NULL;
+      continue;
+    }
+
+    // Skip typecheck of any modules whose dependencies failed to typecheck.
     bool skip = false;
     for (size_t d = 0; d < module->deps.size; ++d) {
       deps[d] = NULL;
