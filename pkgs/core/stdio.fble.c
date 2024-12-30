@@ -21,6 +21,8 @@
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
 
+extern FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Native_25_;
+
 static void OnFree(void* data);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -409,8 +411,14 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FILE* profile_output_file = NULL;
   FbleValue* stdio = NULL;
 
+  FblePreloadedModuleV builtins;
+  FbleInitVector(builtins);
+  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Native_25_);
+
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-stdio", fbldUsageHelpText,
-      &argc, &argv, preloaded, heap, profile, &profile_output_file, &stdio);
+      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &stdio);
+
+  FbleFreeVector(builtins);
 
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);

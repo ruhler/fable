@@ -15,7 +15,7 @@
 #include <fble/fble-vector.h>       // for FbleInitVector, etc.
 
 static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded);
-static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModule* preloaded, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 /**
  * @func[PrintCompiledHeaderLine] Prints an information line about a preloaded module.
@@ -60,8 +60,8 @@ static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* 
  *   Heap to use for allocations.
  *  @arg[FbleProfile*] profile
  *   Profile to populate with blocks. May be NULL.
- *  @arg[FblePreloadedModule*] preloaded
- *   Optional preloaded module to load from.
+ *  @arg[FblePreloadedModuleV] builtins
+ *   The list of builtin modules.
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for locating .fble files.
  *  @arg[FbleModulePath*] module_path
@@ -80,14 +80,8 @@ static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* 
  *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
-static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModule* preloaded, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
-  FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
-  if (preloaded != NULL) {
-    builtins.size = 1;
-    builtins.xs = &preloaded;
-  }
-
   FbleProgram* program = FbleLoadForExecution(builtins, search_path, module_path, build_deps);
   if (program == NULL) {
     return NULL;
@@ -112,6 +106,7 @@ FbleMainStatus FbleMain(
     int* argc,
     const char*** argv,
     FblePreloadedModule* preloaded,
+    FblePreloadedModuleV builtins,
     FbleValueHeap* heap,
     FbleProfile* profile,
     FILE** profile_output_file,
@@ -209,7 +204,17 @@ FbleMainStatus FbleMain(
   FbleStringV deps;
   FbleInitVector(deps);
 
-  FbleValue* linked = Link(heap, profile, preloaded, module_arg.search_path, module_arg.module_path, &deps);
+  FblePreloadedModuleV preloaded_and_builtins;
+  FbleInitVector(preloaded_and_builtins);
+  if (preloaded != NULL) {
+    FbleAppendToVector(preloaded_and_builtins, preloaded);
+  }
+  for (size_t i = 0; i < builtins.size; ++i) {
+    FbleAppendToVector(preloaded_and_builtins, builtins.xs[i]);
+  }
+
+  FbleValue* linked = Link(heap, profile, preloaded_and_builtins, module_arg.search_path, module_arg.module_path, &deps);
+  FbleFreeVector(preloaded_and_builtins);
   FbleFreeModuleArg(module_arg);
 
   if (linked == NULL) {

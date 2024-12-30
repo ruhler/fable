@@ -107,9 +107,10 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
   FbleValueHeap* heap = FbleNewValueHeap();
   FILE* profile_output_file = NULL;
   FbleValue* result = NULL;
+  FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-profiles-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, heap, profile, &profile_output_file, &result);
+      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &result);
 
   FbleFreeValueHeap(heap);
 

@@ -15,6 +15,7 @@
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-vector.h>      // for FbleInitVector, etc.
 #include <fble/fble-version.h>     // for FblePrintVersion
 
 #include "char.fble.h"             // for FbleCharValueAccess
@@ -23,6 +24,8 @@
 #include "stdio.fble.h"            // for FbleNewStdioIO
 
 #include "fble-app.usage.h"        // for fbldUsageHelpText
+
+extern FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Native_25_;
 
 typedef struct {
   bool fps;
@@ -464,8 +467,14 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FILE* profile_output_file = NULL;
   FbleValue* func = NULL;
 
+  FblePreloadedModuleV builtins;
+  FbleInitVector(builtins);
+  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Native_25_);
+
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
-      &argc, &argv, preloaded, heap, profile, &profile_output_file, &func);
+      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &func);
+
+  FbleFreeVector(builtins);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
