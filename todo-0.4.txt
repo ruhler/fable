@@ -2,13 +2,11 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Make FblePrintCompiledHeaderLine internal once everyone is using FbleMain?
-* Write reuseable .fbld for main args.
+* Write reuseable .fbld for FbleMain.
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble
   binaries?
   Remove use of fbledeps in spec tests?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
-* Factor out common code for --deps-file option?
 
 * Add test for .fble vs. .fble.@ type for main module as well as dependant
   module.

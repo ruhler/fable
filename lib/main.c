@@ -12,6 +12,45 @@
 #include <fble/fble-version.h>      // for FblePrintVersion
 #include <fble/fble-vector.h>       // for FbleInitVector, etc.
 
+static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded);
+
+/**
+ * @func[PrintCompiledHeaderLine] Prints an information line about a preloaded module.
+ *  This is a convenience function for providing more information to users as
+ *  part of a fble compiled main function. It prints a header line if the
+ *  preloaded module is not NULL, of the form something like:
+ *
+ *  @code[txt] @
+ *   fble-debug-test: fble-test -m /DebugTest% (compiled)
+ *
+ *  @arg[FILE*] stream
+ *   The output stream to print to.
+ *  @arg[const char*] tool
+ *   Name of the underlying tool, e.g. "fble-test".
+ *  @arg[const char*] arg0
+ *   argv[0] from the main function.
+ *  @arg[FblePreloadedModule*] preloaded
+ *   Optional preloaded module to get the module name from.
+ *
+ *  @sideeffects
+ *   Prints a header line to the given stream.
+ */
+static void PrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded)
+{
+  if (preloaded != NULL) {
+    const char* binary_name = strrchr(arg0, '/');
+    if (binary_name == NULL) {
+      binary_name = arg0;
+    } else {
+      binary_name++;
+    }
+
+    fprintf(stream, "%s: %s -m ", binary_name, tool);
+    FblePrintModulePath(stream, preloaded->path);
+    fprintf(stream, " (compiled)\n");
+  }
+}
+
 // See documentation in fble-main.h
 FbleMainStatus FbleMain(
     FbleArgParser arg_parser,
@@ -57,14 +96,14 @@ FbleMainStatus FbleMain(
   }
 
   if (version) {
-    FblePrintCompiledHeaderLine(stdout, tool, arg0, preloaded);
+    PrintCompiledHeaderLine(stdout, tool, arg0, preloaded);
     FblePrintVersion(stdout, tool);
     FbleFreeModuleArg(module_arg);
     return FBLE_MAIN_SUCCESS;
   }
 
   if (help) {
-    FblePrintCompiledHeaderLine(stdout, tool, arg0, preloaded);
+    PrintCompiledHeaderLine(stdout, tool, arg0, preloaded);
     fprintf(stdout, "%s", usage);
     FbleFreeModuleArg(module_arg);
     return FBLE_MAIN_SUCCESS;
@@ -162,21 +201,4 @@ FbleMainStatus FbleMain(
   *profile_output_file = fprofile;
   *result = func;
   return FBLE_MAIN_SUCCESS;
-}
-
-// See documentation in fble-main.h
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded)
-{
-  if (preloaded != NULL) {
-    const char* binary_name = strrchr(arg0, '/');
-    if (binary_name == NULL) {
-      binary_name = arg0;
-    } else {
-      binary_name++;
-    }
-
-    fprintf(stream, "%s: %s -m ", binary_name, tool);
-    FblePrintModulePath(stream, preloaded->path);
-    fprintf(stream, " (compiled)\n");
-  }
 }

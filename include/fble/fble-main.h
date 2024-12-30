@@ -71,29 +71,6 @@ FbleMainStatus FbleMain(
     FILE** profile_output_file,
     FbleValue** result);
 
-/**
- * @func[FblePrintCompiledHeaderLine] Prints an information line about a preloaded module.
- *  This is a convenience function for providing more information to users as
- *  part of a fble compiled main function. It prints a header line if the
- *  preloaded module is not NULL, of the form something like:
- *
- *  @code[txt] @
- *   fble-debug-test: fble-test -m /DebugTest% (compiled)
- *
- *  @arg[FILE*] stream
- *   The output stream to print to.
- *  @arg[const char*] tool
- *   Name of the underlying tool, e.g. "fble-test".
- *  @arg[const char*] arg0
- *   argv[0] from the main function.
- *  @arg[FblePreloadedModule*] preloaded
- *   Optional preloaded module to get the module name from.
- *
- *  @sideeffects
- *   Prints a header line to the given stream.
- */
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded);
-
 
 #endif // FBLE_MAIN_H_
 

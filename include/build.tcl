@@ -47,7 +47,7 @@ namespace eval "include" {
       FbleReportWarning FbleReportError
     }
     fble-main.h {
-      FbleMain FblePrintCompiledHeaderLine
+      FbleMain
     }
     fble-module-path.h {
       FbleModulePath FbleModulePathV
