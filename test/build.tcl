@@ -4,9 +4,9 @@ namespace eval "test" {
   set libs_cov "$::b/test/libfbletest$::lext"
 
   set lib_sources {
-    test.c
     mem-test.c
     profiles-test.c
+    test.c
   }
 
   set bin_sources {
@@ -26,6 +26,8 @@ namespace eval "test" {
     obj $::b/test/$base.o $::s/test/$base.c $cflags $::b/test/fble-$base.usage.h
     lappend objs $::b/test/$base.o
   }
+  obj $::b/test/builtin.o $::s/test/builtin.c $cflags
+  lappend objs $::b/test/builtin.o
   lib $::b/test/libfbletest$::lext $objs
 
   # test binaries

@@ -14,8 +14,11 @@
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
 #include <fble/fble-program.h>     // for FblePreloadedModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-vector.h>      // for FbleInitVector, etc.
 
 #include "fble-test.usage.h"       // for fbldUsageHelpText
+
+extern FblePreloadedModule _Fble_2f_SpecTests_2f_Builtin_25_;
 
 // FbleTestMain -- see documentation in test.h
 int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
@@ -24,14 +27,20 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleValueHeap* heap = FbleNewValueHeap();
   FILE* profile_output_file = NULL;
   FbleValue* result = NULL;
-  FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
+
+  FblePreloadedModuleV builtins;
+  FbleInitVector(builtins);
+  FbleAppendToVector(builtins, &_Fble_2f_SpecTests_2f_Builtin_25_);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-test", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &result);
 
+  FbleFreeVector(builtins);
   FbleFreeValueHeap(heap);
 
-  FbleGenerateProfileReport(profile_output_file, profile);
+  if (profile_output_file != NULL) {
+    FbleGenerateProfileReport(profile_output_file, profile);
+  }
   FbleFreeProfile(profile);
   return status;
 }

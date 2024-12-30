@@ -1,0 +1,7 @@
+# @@fble-test@@ none
+# Builtin module to aid in testing builtin modules.
+
+# Identify function: returns its input.
+<@ A@>(A@) { A@; } Id = +(Unit@ u, @<Id> undef)(u: Unit).undef;
+
+@(Id);

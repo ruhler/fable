@@ -1,0 +1,10 @@
+# @@fble-test@@ no-error
+# Basic use of a module that uses a builtin module.
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ False = Bool@(false: Unit);
+
+/SpecTests/Builtin%.Id(False).false;

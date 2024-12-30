@@ -7,10 +7,6 @@ Things to consider doing for the fble-0.4 release.
   Remove use of fbledeps in spec tests?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
 
-* Test case where an interpreted module depends on a builtin module.
-  I suspect we'll fail to get and check the type of the builtin module in the
-  current implementation.
-
 * Fix exit status in fble-stdio.fbld
   And maybe others since changing to FbleMain?
 
