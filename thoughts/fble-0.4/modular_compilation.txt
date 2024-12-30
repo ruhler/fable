@@ -1597,3 +1597,10 @@ module in there too. Call it builtins. Okay? Let's go with that. Specifically:
 
 Once that's working, I'm all set to try adding builtins arg to FbleMain.
 
+---
+
+I need to fix loading so that it loads the .fble.@ for the type if needed. If
+we are loading a dependency, it's possible we have already loaded the module
+or builtin but not the type info. I need to handle that case somehow. Sounds
+hard.
+

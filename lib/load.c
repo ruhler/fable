@@ -393,8 +393,12 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     for (size_t i = 0; i < builtins.size; ++i) {
       if (FbleModulePathsEqual(ref, builtins.xs[i]->path)) {
         Preload(program, builtins.xs[i]);
-        continue;
+        found = true;
+        break;
       }
+    }
+    if (found) {
+      continue;
     }
 
     // Make sure we aren't trying to load a module recursively.

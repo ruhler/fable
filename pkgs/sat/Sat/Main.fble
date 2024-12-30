@@ -60,6 +60,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   };
 
   (List@<String@> args) {
+    Unit@ _ = /Core/Debug/Native%.Trace|'hello';
+
     Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
       Unit@ _ <- m.do(O.PutStr(stdio.out, /Sat/Usage%));
       m.return(True);
