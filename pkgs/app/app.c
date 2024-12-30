@@ -13,8 +13,7 @@
 
 #include <fble/fble-alloc.h>       // for FbleFree.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
-#include <fble/fble-link.h>        // for FbleLink
-#include <fble/fble-main.h>        // for FblePrintCompiledHeaderLine.
+#include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-version.h>     // for FblePrintVersion
 
@@ -25,9 +24,12 @@
 
 #include "fble-app.usage.h"        // for fbldUsageHelpText
 
-#define EX_SUCCESS 0
-#define EX_USAGE 2
-#define EX_FAILURE 3
+typedef struct {
+  bool fps;
+  const char* driver;
+} Args;
+
+static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error);
 
 /**
  * @struct[App] Application state.
@@ -55,6 +57,19 @@ static FbleValue* EffectImpl(
     FbleFunction* function, FbleValue** args);
 
 static Uint32 OnTimer(Uint32 interval, void* param);
+
+/**
+ * @func[ParseArg] Arg parser for mem-tests.
+ *  See documentation of FbleArgParser in fble-arg-parse.h for more info.
+ */
+static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
+{
+  Args* args = (Args*)dest;
+  if (FbleParseBoolArg("--fps", &args->fps, argc, argv, error)) return true;
+  if (FbleParseStringArg("--driver", &args->driver, argc, argv, error)) return true;
+
+  return false;
+}
 
 /**
  * @func[Draw] Draws a drawing to the screen of type @l{/Drawing%.Drawing@}.
@@ -419,124 +434,48 @@ static Uint32 OnTimer(Uint32 interval, void* param)
 // FbleAppMain -- See documentation in app.fble.h
 int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 {
-  const char* arg0 = argv[0];
-
   // To ease debugging of FbleAppMain programs, cause the following useful
   // functions to be linked in:
   (void)(FbleCharValueAccess);
   (void)(FbleIntValueAccess);
   (void)(FbleStringValueAccess);
 
-  FbleModuleArg module_arg = FbleNewModuleArg();
-  const char* profile_file = NULL;
-  bool end_of_options = false;
-  bool help = false;
-  bool error = false;
-  bool version = false;
-  bool fps = false;
-  const char* driver = NULL;
-
   // If the module is compiled and '--' isn't present, skip to end of options
   // right away. That way precompiled programs can go straight to application
   // args if they want.
+  bool end_of_options = true;
   if (preloaded != NULL) {
-    end_of_options = true;
     for (int i = 0; i < argc; ++i) {
       if (strcmp(argv[i], "--") == 0) {
         end_of_options = false;
         break;
       }
     }
-  }
 
-  argc--;
-  argv++;
-  while (!(help || error || version) && !end_of_options && argc > 0) {
-    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--fps", &fps, &argc, &argv, &error)) continue;
-    if (!preloaded && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("--driver", &driver, &argc, &argv, &error)) continue;
-
-    end_of_options = true;
-    if (strcmp(argv[0], "--") == 0) {
-      argc--;
-      argv++;
+    if (end_of_options) {
+      argc = 1;
     }
   }
 
-  if (version) {
-    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, preloaded);
-    FblePrintVersion(stdout, "fble-app");
-    FbleFreeModuleArg(module_arg);
-    return EX_SUCCESS;
-  }
+  Args app_args = { .fps = false, .driver = NULL };
 
-  if (help) {
-    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, preloaded);
-    fprintf(stdout, "%s", fbldUsageHelpText);
-    FbleFreeModuleArg(module_arg);
-    return EX_SUCCESS;
-  }
-
-  if (error) {
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  if (!preloaded && module_arg.module_path == NULL) {
-    fprintf(stderr, "missing required --module option.\n");
-    fprintf(stderr, "Try --help for usage info.\n");
-    FbleFreeModuleArg(module_arg);
-    return EX_USAGE;
-  }
-
-  FILE* fprofile = NULL;
-  if (profile_file != NULL) {
-    fprofile = fopen(profile_file, "w");
-    if (fprofile == NULL) {
-      fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFreeModuleArg(module_arg);
-      return EX_FAILURE;
-    }
-  }
-
-  FblePreloadedModuleV native_search_path = { .xs = NULL, .size = 0 };
-  if (preloaded != NULL) {
-    native_search_path.xs = &preloaded;
-    native_search_path.size = 1;
-  }
-
-  if (module_arg.module_path == NULL) {
-    module_arg.module_path = FbleCopyModulePath(preloaded->path);
-  }
-
-  FbleProfile* profile = FbleNewProfile(fprofile != NULL);
+  FbleProfile* profile = FbleNewProfile(false);
   FbleValueHeap* heap = FbleNewValueHeap();
+  FILE* profile_output_file = NULL;
+  FbleValue* func = NULL;
 
-  FbleValue* app_main = FbleLink(heap, profile, native_search_path, module_arg.search_path, module_arg.module_path, NULL);
-  FbleFreeModuleArg(module_arg);
-  if (app_main == NULL) {
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return EX_FAILURE;
-  }
-
-  FbleValue* func = FbleEval(heap, app_main, profile);
+  FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
+      &argc, &argv, preloaded, heap, profile, &profile_output_file, &func);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return EX_FAILURE;
+    return status;
   }
 
-  if (driver != NULL) {
-    SDL_setenv("SDL_VIDEODRIVER", driver, 1);
-    SDL_setenv("SDL_VIDEO_DRIVER", driver, 1);
+  if (app_args.driver != NULL) {
+    SDL_setenv("SDL_VIDEODRIVER", app_args.driver, 1);
+    SDL_setenv("SDL_VIDEO_DRIVER", app_args.driver, 1);
   }
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
@@ -550,7 +489,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return EX_FAILURE;
+    return FBLE_MAIN_OTHER_ERROR;
   }
 
   SDL_Window* window = SDL_CreateWindow(
@@ -607,6 +546,11 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
+  argc = 0;
+  while (argv[argc] != NULL) {
+    argc++;
+  }
+
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* argValue = FbleNewStringValue(heap, argv[argc - i - 1]);
     FbleValue* argP = FbleNewStructValue_(heap, 2, argValue, argS);
@@ -626,14 +570,14 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     FbleFreeProfile(profile);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return EX_FAILURE;
+    return FBLE_MAIN_RUNTIME_ERROR;
   }
 
   // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
   FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, 1, &world, profile);
 
-  if (fps) {
+  if (app_args.fps) {
     fprintf(stderr, "FPS Histogram:\n");
     for (size_t i = 0; i < 61; ++i) {
       if (app.fpsHistogram[i] > 0) {
@@ -642,14 +586,14 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     }
   }
 
-  int exit_status = EX_FAILURE;
+  int exit_status = FBLE_MAIN_OTHER_ERROR;
   if (result != NULL) {
     exit_status = FbleUnionValueTag(FbleStructValueField(result, 1));
   }
 
   FbleFreeValueHeap(heap);
 
-  FbleGenerateProfileReport(fprofile, profile);
+  FbleGenerateProfileReport(profile_output_file, profile);
   FbleFreeProfile(profile);
 
   SDL_GL_DeleteContext(glctx);
