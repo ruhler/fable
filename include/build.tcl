@@ -81,6 +81,7 @@ namespace eval "include" {
       FbleModule FbleModuleV FbleProgram
       FbleFreeModule FbleFreeProgram
       FblePreloadedModule FblePreloadedModuleV
+      FbleNewPreloadedProgram
     }
     fble-string.h {
       FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString

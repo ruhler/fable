@@ -14,51 +14,8 @@
 #include "code.h"       // for FbleCode
 #include "interpret.h"  // for FbleNewInterpretedFuncValue
 
-static void LoadNative(FbleProgram* program, FblePreloadedModule* native);
 static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program);
 
-
-/**
- * @func[LoadNative] Loads a program from native modules.
- *  Loads the module and all its dependencies in topological order, such that
- *  later modules in the list depend on earlier modules, but not the other way
- *  around.
- *
- *  @arg[FbleProgram*][program] The modules loaded so far.
- *  @arg[FblePreloadedModule*][native] The module to load.
- *  @sideeffects
- *   Adds the module and all dependencies to the program.
- */
-static void LoadNative(FbleProgram* program, FblePreloadedModule* native)
-{
-  // Check if we've already loaded the module.
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    if (FbleModulePathsEqual(program->modules.xs[i].path, native->path)) {
-      return;
-    }
-  }
-
-  // Load the dependencies.
-  for (size_t i = 0; i < native->deps.size; ++i) {
-    LoadNative(program, native->deps.xs[i]);
-  }
-
-  FbleModule* module = FbleExtendVector(program->modules);
-  module->path = FbleCopyModulePath(native->path);
-  FbleInitVector(module->deps);
-  for (size_t i = 0; i < native->deps.size; ++i) {
-    FbleAppendToVector(module->deps, FbleCopyModulePath(native->deps.xs[i]->path));
-  }
-  module->type = NULL;
-  module->value = NULL;
-  module->code = NULL;
-  module->exe = native->executable;
-  FbleInitVector(module->profile_blocks);
-  for (size_t i = 0; i < native->profile_blocks.size; ++i) {
-    FbleAppendToVector(module->profile_blocks, FbleCopyName(native->profile_blocks.xs[i]));
-  }
-}
-
 /**
  * @func[Link] Links together modules from a program into an FbleValue*.
  *  @arg[FbleValueHeap*] heap
@@ -145,9 +102,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModu
 
   for (size_t i = 0; i < native_search_path.size; ++i) {
     if (FbleModulePathsEqual(native_search_path.xs[i]->path, module_path)) {
-      program = FbleAlloc(FbleProgram);
-      FbleInitVector(program->modules);
-      LoadNative(program, native_search_path.xs[i]);
+      program = FbleNewPreloadedProgram(native_search_path.xs[i]);
       break;
     }
   }

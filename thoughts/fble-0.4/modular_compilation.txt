@@ -1347,7 +1347,7 @@ an option?
 
 Cleanup proposal, with points in no particular order:
 
-1. Rename FbleNativeModule to FblePreloadedModule
+1. (DONE) Rename FbleNativeModule to FblePreloadedModule
 The idea being that FblePreloadedModule has its dependencies hard coded in
 (preloaded). This is to support the use case of statically linking all the
 code needed for compiled modules, but just pulling in the code you need for
@@ -1370,7 +1370,7 @@ profile, and heap, it links everything into a value. Better to use this for
 linking, because it's focused on just linking, and will composes much better
 with all the various use cases.
 
-5. Implement an FbleNewPreloadedProgram function, it takes a single
+5. (DONE) Implement an FbleNewPreloadedProgram function, it takes a single
 FblePreloadedModule and returns an FbleProgram*. For loading a preloaded
 program.
 
