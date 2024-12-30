@@ -102,23 +102,23 @@ void FbleFreeModule(FbleModule* module);
  */
 void FbleFreeProgram(FbleProgram* program);
 
-// Forward declaration of FbleNativeModule.
-typedef struct FbleNativeModule FbleNativeModule;
+// Forward declaration of FblePreloadedModule.
+typedef struct FblePreloadedModule FblePreloadedModule;
 
 /**
- * @struct[FbleNativeModuleV] A vector of FbleNativeModule.
+ * @struct[FblePreloadedModuleV] A vector of FblePreloadedModule.
  *  @field[size_t][size] Number of elements.
- *  @field[FbleNativeModule**][xs] Elements.
+ *  @field[FblePreloadedModule**][xs] Elements.
  */
 typedef struct {
   size_t size;
-  FbleNativeModule** xs;
-} FbleNativeModuleV;
+  FblePreloadedModule** xs;
+} FblePreloadedModuleV;
 
 /**
- * @struct[FbleNativeModule] A native compiled module implementation.
+ * @struct[FblePreloadedModule] A preloaded module implementation.
  *  @field[FbleModulePath*][path] The path to the module.
- *  @field[FbleNativeModuleV][deps]
+ *  @field[FblePreloadedModuleV][deps]
  *   List of modules this module depends on.
  *  @field[FbleExecutable*][executable]
  *   Code to compute the value of the module, suitable for use in the body of
@@ -130,9 +130,9 @@ typedef struct {
  *  @field[FbleNameV][profile_blocks]
  *   Profile blocks used by functions in the module.
  */
-struct FbleNativeModule {
+struct FblePreloadedModule {
   FbleModulePath* path;
-  FbleNativeModuleV deps;
+  FblePreloadedModuleV deps;
   FbleExecutable* executable;
   FbleNameV profile_blocks;
 };

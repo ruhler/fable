@@ -14,7 +14,7 @@
 #include "code.h"       // for FbleCode
 #include "interpret.h"  // for FbleNewInterpretedFuncValue
 
-static void LoadNative(FbleProgram* program, FbleNativeModule* native);
+static void LoadNative(FbleProgram* program, FblePreloadedModule* native);
 static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* program);
 
 
@@ -25,11 +25,11 @@ static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* p
  *  around.
  *
  *  @arg[FbleProgram*][program] The modules loaded so far.
- *  @arg[FbleNativeModule*][native] The module to load.
+ *  @arg[FblePreloadedModule*][native] The module to load.
  *  @sideeffects
  *   Adds the module and all dependencies to the program.
  */
-static void LoadNative(FbleProgram* program, FbleNativeModule* native)
+static void LoadNative(FbleProgram* program, FblePreloadedModule* native)
 {
   // Check if we've already loaded the module.
   for (size_t i = 0; i < program->modules.size; ++i) {
@@ -139,7 +139,7 @@ static FbleValue* Link(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* p
 }
 
 // FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps)
 {
   FbleProgram* program = NULL;
 

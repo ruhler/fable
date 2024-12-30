@@ -417,7 +417,7 @@ static Uint32 OnTimer(Uint32 interval, void* param)
 }
 
 // FbleAppMain -- See documentation in app.fble.h
-int FbleAppMain(int argc, const char* argv[], FbleNativeModule* module)
+int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 {
   const char* arg0 = argv[0];
 
@@ -439,7 +439,7 @@ int FbleAppMain(int argc, const char* argv[], FbleNativeModule* module)
   // If the module is compiled and '--' isn't present, skip to end of options
   // right away. That way precompiled programs can go straight to application
   // args if they want.
-  if (module != NULL) {
+  if (preloaded != NULL) {
     end_of_options = true;
     for (int i = 0; i < argc; ++i) {
       if (strcmp(argv[i], "--") == 0) {
@@ -457,7 +457,7 @@ int FbleAppMain(int argc, const char* argv[], FbleNativeModule* module)
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--fps", &fps, &argc, &argv, &error)) continue;
-    if (!module && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
+    if (!preloaded && FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--driver", &driver, &argc, &argv, &error)) continue;
 
@@ -469,14 +469,14 @@ int FbleAppMain(int argc, const char* argv[], FbleNativeModule* module)
   }
 
   if (version) {
-    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, module);
+    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, preloaded);
     FblePrintVersion(stdout, "fble-app");
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
   }
 
   if (help) {
-    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, module);
+    FblePrintCompiledHeaderLine(stdout, "fble-app", arg0, preloaded);
     fprintf(stdout, "%s", fbldUsageHelpText);
     FbleFreeModuleArg(module_arg);
     return EX_SUCCESS;
@@ -488,7 +488,7 @@ int FbleAppMain(int argc, const char* argv[], FbleNativeModule* module)
     return EX_USAGE;
   }
 
-  if (!module && module_arg.module_path == NULL) {
+  if (!preloaded && module_arg.module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     fprintf(stderr, "Try --help for usage info.\n");
     FbleFreeModuleArg(module_arg);
@@ -505,14 +505,14 @@ int FbleAppMain(int argc, const char* argv[], FbleNativeModule* module)
     }
   }
 
-  FbleNativeModuleV native_search_path = { .xs = NULL, .size = 0 };
-  if (module != NULL) {
-    native_search_path.xs = &module;
+  FblePreloadedModuleV native_search_path = { .xs = NULL, .size = 0 };
+  if (preloaded != NULL) {
+    native_search_path.xs = &preloaded;
     native_search_path.size = 1;
   }
 
   if (module_arg.module_path == NULL) {
-    module_arg.module_path = FbleCopyModulePath(module->path);
+    module_arg.module_path = FbleCopyModulePath(preloaded->path);
   }
 
   FbleProfile* profile = FbleNewProfile(fprofile != NULL);

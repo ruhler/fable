@@ -5,13 +5,13 @@
 #ifndef FBLE_TEST_MEM_TEST_H_
 #define FBLE_TEST_MEM_TEST_H_
 
-#include <fble/fble-program.h>    // for FbleNativeModule
+#include <fble/fble-program.h>    // for FblePreloadedModule
 
 /**
  * @func[FbleMemTestMain] A main function for running an fble memory test.
  *  @arg[int][argc] The number of args.
  *  @arg[const char**][argv] The args.
- *  @arg[FbleNativeModule*][module]
+ *  @arg[FblePreloadedModule*][preloaded]
  *   The native module to run, or NULL to determine the module based on
  *   command line options.
  *
@@ -20,6 +20,6 @@
  *  @sideeffects
  *   Prints an error to stderr and exits the program in the case of error.
  */
-int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module);
+int FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded);
 
 #endif // FBLE_TEST_MEM_TEST_H_

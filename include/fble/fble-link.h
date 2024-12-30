@@ -18,7 +18,7 @@
  *   Heap to use for allocations.
  *  @arg[FbleProfile*] profile
  *   Profile to populate with blocks. May be NULL.
- *  @arg[FbleNativeModuleV] native_search_path
+ *  @arg[FblePreloadedModuleV] native_search_path
  *   The search path to use for locating native modules.
  *  @arg[FbleSearchPath*] search_path
  *   The search path to use for locating .fble files.
@@ -38,6 +38,6 @@
  *    The user should free strings added to build_deps when no longer
  *    needed, including in the case when program loading fails.
  */
-FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleNativeModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
+FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FblePreloadedModuleV native_search_path, FbleSearchPath* search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 #endif // FBLE_LINK_H_

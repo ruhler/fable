@@ -12,7 +12,7 @@
 #include <fble/fble-alloc.h>       // for FbleMaxTotalBytesAllocated, etc.
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-main.h>        // for FbleMain.
-#include <fble/fble-program.h>     // for FbleNativeModule
+#include <fble/fble-program.h>     // for FblePreloadedModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
 
 #include "fble-mem-test.usage.h"   // for fbldUsageHelpText
@@ -87,7 +87,7 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
 }
 
 // FbleMemTestMain -- see documentation in mem-test.h.
-int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module)
+int FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
   Args args = { .growth = false, .debug = false };
 
@@ -99,7 +99,7 @@ int FbleMemTestMain(int argc, const char** argv, FbleNativeModule* module)
   FbleValue* func = NULL;
 
   FbleMainStatus status = FbleMain(&ParseArg, &args, "fble-mem-test", fbldUsageHelpText,
-      argc, argv, module, heap, profile, &profile_output_file, &func);
+      argc, argv, preloaded, heap, profile, &profile_output_file, &func);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);

@@ -12,7 +12,7 @@
 
 /**
  * @func[FbleGenerateAArch64] Generates aarch64 for a compiled module.
- *  The generated code exports an FbleNativeModule named based on the
+ *  The generated code exports an FblePreloadedModule named based on the
  *  module path.
  *  
  *  @arg[FILE*] fout
@@ -27,13 +27,13 @@ void FbleGenerateAArch64(FILE* fout, FbleModule* module);
 
 /**
  * @func[FbleGenerateAArch64Export] Generates aarch64 to export a compiled module.
- *  The generated code will export an FbleNativeModule* with the given
+ *  The generated code will export an FblePreloadedModule* with the given
  *  name.
  *
  *  @arg[FILE*] fout
  *   The output stream to write the C code to.
  *  @arg[const char*] name
- *   The name of the FbleNativeModule* to generate.
+ *   The name of the FblePreloadedModule* to generate.
  *  @arg[FbleModulePath*] path
  *   The path to the module to export.
  *
@@ -45,7 +45,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
 /**
  * @func[FbleGenerateAArch64Main] Generates aarch64 code for main.
  *  Generate aarch64 code for a main function that invokes an
- *  FbleNativeModule* with the given wrapper function.
+ *  FblePreloadedModule* with the given wrapper function.
  *
  *  The generated code will export a main function of the following form:
  *
@@ -54,7 +54,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
  *     return _main_(argc, argv, _compiled_);
  *   }
  *
- *  Where _compiled_ is the FbleNativeModule* corresponding to the given
+ *  Where _compiled_ is the FblePreloadedModule* corresponding to the given
  *  module path.
  *
  *  @arg[FILE*] fout
@@ -71,7 +71,7 @@ void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
 
 /**
  * @func[FbleGenerateC] Generates C code for a compiled module.
- *  The generated code exports an FbleNativeModule named based on the
+ *  The generated code exports an FblePreloadedModule named based on the
  *  module path.
  *
  *  @arg[FILE*] fout
@@ -86,7 +86,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module);
 
 /**
  * @func[FbleGenerateCExport] Generates C code to export a compiled module.
- *  The generated code will export an FbleNativeModule* with the given
+ *  The generated code will export an FblePreloadedModule* with the given
  *  name.
  *
  *  @arg[FILE*] fout
@@ -103,7 +103,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
 
 /**
  * @func[FbleGenerateCMain] Generates C code for main.
- *  Generate C code for a main function that invokes an FbleNativeModule*
+ *  Generate C code for a main function that invokes an FblePreloadedModule*
  *  with the given wrapper function.
  *  The generated code will export a main function of the following form:
  *  
@@ -112,7 +112,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
  *     return _main_(argc, argv, _compiled_);
  *   }
  *
- *  Where _compiled_ is the FbleNativeModule* corresponding to the given
+ *  Where _compiled_ is the FblePreloadedModule* corresponding to the given
  *  module path.
  *
  *  @arg[FILE*] fout

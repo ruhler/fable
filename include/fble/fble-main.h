@@ -38,7 +38,7 @@ typedef enum {
  *  @arg[const unsigned char*][usage] Usage help text to output for --help.
  *  @arg[int][argc] Number of command line arguments.
  *  @arg[const char**][argv] The command line arguments.
- *  @arg[FbleNativeModule*][preloaded] Optional preloaded module to run.
+ *  @arg[FblePreloadedModule*][preloaded] Optional preloaded module to run.
  *  @arg[FbleValueHeap*][heap] Heap to use for allocating values.
  *  @arg[FbleProfile*][profile] Profile for evaluating the main program.
  *  @arg[FILE**][profile_output_file]
@@ -64,17 +64,17 @@ FbleMainStatus FbleMain(
     const unsigned char* usage,
     int argc,
     const char** argv,
-    FbleNativeModule* preloaded,
+    FblePreloadedModule* preloaded,
     FbleValueHeap* heap,
     FbleProfile* profile,
     FILE** profile_output_file,
     FbleValue** result);
 
 /**
- * @func[FblePrintCompiledHeaderLine] Prints an information line about a compiled module.
+ * @func[FblePrintCompiledHeaderLine] Prints an information line about a preloaded module.
  *  This is a convenience function for providing more information to users as
  *  part of a fble compiled main function. It prints a header line if the
- *  compiled module is not NULL, of the form something like:
+ *  preloaded module is not NULL, of the form something like:
  *
  *  @code[txt] @
  *   fble-debug-test: fble-test -m /DebugTest% (compiled)
@@ -85,13 +85,13 @@ FbleMainStatus FbleMain(
  *   Name of the underlying tool, e.g. "fble-test".
  *  @arg[const char*] arg0
  *   argv[0] from the main function.
- *  @arg[FbleNativeModule*] module
- *   Optional native module to get the module name from.
+ *  @arg[FblePreloadedModule*] preloaded
+ *   Optional preloaded module to get the module name from.
  *
  *  @sideeffects
  *   Prints a header line to the given stream.
  */
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleNativeModule* module);
+void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded);
 
 
 #endif // FBLE_MAIN_H_

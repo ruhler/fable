@@ -80,7 +80,7 @@ namespace eval "include" {
     fble-program.h {
       FbleModule FbleModuleV FbleProgram
       FbleFreeModule FbleFreeProgram
-      FbleNativeModule FbleNativeModuleV
+      FblePreloadedModule FblePreloadedModuleV
     }
     fble-string.h {
       FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString

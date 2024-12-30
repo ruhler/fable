@@ -64,7 +64,7 @@ static FbleExecutable Executable = {
   .run = &Run,
 };
 
-FbleNativeModule _Fble_2f_Core_2f_Debug_2f_Native_25_ = {
+FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Native_25_ = {
   .path = &Path,
   .deps = { .size = 0, .xs = NULL},
   .executable = &Executable,

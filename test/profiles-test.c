@@ -13,7 +13,7 @@
 #include <fble/fble-main.h>        // for FbleMain.
 #include <fble/fble-name.h>        // for FbleName.
 #include <fble/fble-profile.h>     // for FbleNewProfile, etc.
-#include <fble/fble-program.h>     // for FbleNativeModule
+#include <fble/fble-program.h>     // for FblePreloadedModule
 #include <fble/fble-value.h>       // for FbleValue, etc.
 
 #include "fble-profiles-test.usage.h"    // for fbldUsageHelpText
@@ -101,7 +101,7 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 }
 
 // FbleProfilesTestMain -- see documentation in profiles-test.h
-int FbleProfilesTestMain(int argc, const char** argv, FbleNativeModule* module)
+int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
   FbleProfile* profile = FbleNewProfile(true);
   FbleValueHeap* heap = FbleNewValueHeap();
@@ -109,7 +109,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleNativeModule* module)
   FbleValue* result = NULL;
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-profiles-test", fbldUsageHelpText,
-      argc, argv, module, heap, profile, &profile_output_file, &result);
+      argc, argv, preloaded, heap, profile, &profile_output_file, &result);
 
   FbleFreeValueHeap(heap);
 

@@ -20,7 +20,7 @@ FbleMainStatus FbleMain(
     const unsigned char* usage,
     int argc,
     const char** argv,
-    FbleNativeModule* preloaded,
+    FblePreloadedModule* preloaded,
     FbleValueHeap* heap,
     FbleProfile* profile,
     FILE** profile_output_file,
@@ -102,7 +102,7 @@ FbleMainStatus FbleMain(
     return FBLE_MAIN_USAGE_ERROR;
   }
 
-  FbleNativeModuleV native_search_path = { .xs = NULL, .size = 0 };
+  FblePreloadedModuleV native_search_path = { .xs = NULL, .size = 0 };
   if (preloaded != NULL) {
     native_search_path.xs = &preloaded;
     native_search_path.size = 1;
@@ -160,9 +160,9 @@ FbleMainStatus FbleMain(
 }
 
 // See documentation in fble-main.h
-void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FbleNativeModule* module)
+void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg0, FblePreloadedModule* preloaded)
 {
-  if (module != NULL) {
+  if (preloaded != NULL) {
     const char* binary_name = strrchr(arg0, '/');
     if (binary_name == NULL) {
       binary_name = arg0;
@@ -171,7 +171,7 @@ void FblePrintCompiledHeaderLine(FILE* stream, const char* tool, const char* arg
     }
 
     fprintf(stream, "%s: %s -m ", binary_name, tool);
-    FblePrintModulePath(stream, module->path);
+    FblePrintModulePath(stream, preloaded->path);
     fprintf(stream, " (compiled)\n");
   }
 }

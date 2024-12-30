@@ -29,7 +29,7 @@ static void StringLit(FILE* fout, const char* string);
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string);
 static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
-static void StaticNativeModule(FILE* fout, LabelId* label_id, FbleModule* module);
+static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* module);
 
 static void ReturnAbort(FILE* fout, const char* lmsg, FbleLoc loc);
 
@@ -198,8 +198,8 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
 }
 
 /**
- * @func[StaticNativeModule]
- * @ Generates code to declare a static FbleNativeModule value.
+ * @func[StaticPreloadedModule]
+ * @ Generates code to declare a static FblePreloadedModule value.
  *  @arg[FILE*][fout] The output stream to write the code to.
  *  @arg[LabelId*][label_id] Pointer to next available label id for use.
  *  @arg[FbleModule*][module] The FbleModule to generate code for.
@@ -208,18 +208,18 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
  *   @i Outputs code to fout.
  *   @i Increments label_id based on the number of internal labels used.
  */
-static void StaticNativeModule(FILE* fout, LabelId* label_id, FbleModule* module)
+static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* module)
 {
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
 
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = LabelForPath(module->deps.xs[i]);
-    fprintf(fout, "extern FbleNativeModule %s;\n", dep_name->str);
+    fprintf(fout, "extern FblePreloadedModule %s;\n", dep_name->str);
     FbleFreeString(dep_name);
   }
 
   LabelId deps_xs_id = (*label_id)++;
-  fprintf(fout, "static FbleNativeModule* " LABEL "[] = {\n", deps_xs_id);
+  fprintf(fout, "static FblePreloadedModule* " LABEL "[] = {\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = LabelForPath(module->deps.xs[i]);
     fprintf(fout, "  &%s,\n", dep_name->str);
@@ -241,7 +241,7 @@ static void StaticNativeModule(FILE* fout, LabelId* label_id, FbleModule* module
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
   FbleString* module_name = LabelForPath(module->path);
-  fprintf(fout, "FbleNativeModule %s = {\n", module_name->str);
+  fprintf(fout, "FblePreloadedModule %s = {\n", module_name->str);
   fprintf(fout, "  .path = &" LABEL ",\n", path_id);
   fprintf(fout, "  .deps = { .size = %zi, .xs = " LABEL "},\n",
       module->deps.size, deps_xs_id);
@@ -723,7 +723,7 @@ void FbleGenerateC(FILE* fout, FbleModule* module)
   }
 
   LabelId label_id = 0;
-  StaticNativeModule(fout, &label_id, module);
+  StaticPreloadedModule(fout, &label_id, module);
 
   FbleFreeVector(blocks);
 }
@@ -733,8 +733,8 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
   fprintf(fout, "#include <fble/fble-link.h>\n");   // for FbleExecutableProgram
-  fprintf(fout, "extern FbleNativeModule %s;\n", module_name->str);
-  fprintf(fout, "FbleNativeModule* %s = &%s;\n", name, module_name->str);
+  fprintf(fout, "extern FblePreloadedModule %s;\n", module_name->str);
+  fprintf(fout, "FblePreloadedModule* %s = &%s;\n", name, module_name->str);
   FbleFreeString(module_name);
 }
 
@@ -744,8 +744,8 @@ void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
   FbleString* module_name = LabelForPath(path);
 
   fprintf(fout, "#include <fble/fble-link.h>\n");
-  fprintf(fout, "extern FbleNativeModule %s;\n", module_name->str);
-  fprintf(fout, "int %s(int argc, const char** argv, FbleNativeModule* module);\n", main);
+  fprintf(fout, "extern FblePreloadedModule %s;\n", module_name->str);
+  fprintf(fout, "int %s(int argc, const char** argv, FblePreloadedModule* module);\n", main);
   fprintf(fout, "int main(int argc, const char** argv)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  return %s(argc, argv, &%s);\n", main, module_name->str);
