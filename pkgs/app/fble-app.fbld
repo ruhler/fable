@@ -10,12 +10,7 @@
   does not have type @l{/App/IO%.Main@}.
  
  @options
-  @GenericProgramInfo
-  @ModuleInput
- 
-  @subsection Profiling Options
-   @opt[@l[--profile] @a[FILE]]
-   @ writes a profile of the test run to @a[FILE]
+  @StandardMainOptions
 
   @subsection Other Options
    @opt[@l[--driver] @a[DRIVER]]

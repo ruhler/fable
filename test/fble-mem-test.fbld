@@ -11,8 +11,7 @@
   specified, tests for greater than O(1) memory use.
  
  @options
-  @GenericProgramInfo
-  @ModuleInput
+  @StandardMainOptions
  
   @subsection Test Options
    @opt[@l[--growth]]

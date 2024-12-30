@@ -6,8 +6,7 @@
   Runs the fble-profiles-test.
  
  @options
-  @GenericProgramInfo
-  @ModuleInput
+  @StandardMainOptions
  
  @exitstatus
   @def[0] Test Passes.
