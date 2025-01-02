@@ -377,46 +377,38 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     FbleModulePath* ref = stack->module.deps.xs[stack->deps_loaded];
 
     // Check to see if we have already loaded this path.
-    bool found = false;
-    for (size_t i = 0; i < program->modules.size; ++i) {
-      if (FbleModulePathsEqual(ref, program->modules.xs[i].path)) {
-        stack->deps_loaded++;
-        found = true;
-        break;
+    {
+      bool found = false;
+      for (size_t i = 0; i < program->modules.size; ++i) {
+        if (FbleModulePathsEqual(ref, program->modules.xs[i].path)) {
+          stack->deps_loaded++;
+          found = true;
+          break;
+        }
       }
-    }
-    if (found) {
-      continue;
-    }
-
-    // See if the module is available as a builtin.
-    for (size_t i = 0; i < builtins.size; ++i) {
-      if (FbleModulePathsEqual(ref, builtins.xs[i]->path)) {
-        Preload(program, builtins.xs[i]);
-        found = true;
-        break;
+      if (found) {
+        continue;
       }
-    }
-    if (found) {
-      continue;
     }
 
     // Make sure we aren't trying to load a module recursively.
-    bool recursive = false;
-    for (Stack* s = stack; s != NULL; s = s->tail) {
-      if (FbleModulePathsEqual(ref, s->module.path)) {
-        FbleReportError("module ", ref->loc);
-        FblePrintModulePath(stderr, ref);
-        fprintf(stderr, " recursively depends on itself\n");
-        error = true;
-        recursive = true;
-        stack->deps_loaded = stack->module.deps.size;
-        break;
+    {
+      bool recursive = false;
+      for (Stack* s = stack; s != NULL; s = s->tail) {
+        if (FbleModulePathsEqual(ref, s->module.path)) {
+          FbleReportError("module ", ref->loc);
+          FblePrintModulePath(stderr, ref);
+          fprintf(stderr, " recursively depends on itself\n");
+          error = true;
+          recursive = true;
+          stack->deps_loaded = stack->module.deps.size;
+          break;
+        }
       }
-    }
 
-    if (recursive) {
-      continue;
+      if (recursive) {
+        continue;
+      }
     }
 
     // Parse the new module, placing it on the stack for processing.
@@ -433,6 +425,7 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     stack->module.profile_blocks.xs = NULL;
     stack->tail = tail;
 
+    // Try to get the type of the dependency from its .fble.@ file.
     FbleString* header_str = Find(search_path, ".fble.@", stack->module.path, build_deps);
     if (header_str != NULL) {
       stack->module.type = FbleParse(header_str, &stack->module.deps);
@@ -440,10 +433,35 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
       if (stack->module.type == NULL) {
         error = true;
         stack->deps_loaded = stack->module.deps.size;
+        continue;
       }
     }
 
-    if (for_execution || header_str == NULL) {
+    // Try loading the implementation from builtins if we have the type info.
+    if (for_execution && stack->module.type != NULL) {
+      for (size_t i = 0; i < builtins.size; ++i) {
+        if (FbleModulePathsEqual(ref, builtins.xs[i]->path)) {
+          FblePreloadedModule* preloaded = builtins.xs[i];
+          for (size_t j = 0; j < preloaded->deps.size; ++j) {
+            Preload(program, preloaded->deps.xs[j]);
+          }
+
+          for (size_t j = 0; j < preloaded->deps.size; ++j) {
+            FbleAppendToVector(stack->module.deps, FbleCopyModulePath(preloaded->deps.xs[j]->path));
+          }
+          stack->module.exe = preloaded->executable;
+          FbleInitVector(stack->module.profile_blocks);
+          for (size_t j = 0; j < preloaded->profile_blocks.size; ++j) {
+            FbleAppendToVector(stack->module.profile_blocks, FbleCopyName(preloaded->profile_blocks.xs[j]));
+          }
+          break;
+        }
+      }
+    }
+
+    // Fall back to .fble file if we need it for the type or execution.
+    if (stack->module.type == NULL
+        || (for_execution && stack->module.exe == NULL)) {
       FbleString* filename_str = Find(search_path, ".fble", stack->module.path, build_deps);
       if (filename_str == NULL) {
         FbleReportError("module ", stack->module.path->loc);

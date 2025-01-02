@@ -1604,3 +1604,44 @@ we are loading a dependency, it's possible we have already loaded the module
 or builtin but not the type info. I need to handle that case somehow. Sounds
 hard.
 
+---
+
+How to load a dependant module? We always need the type. That can come from
+.fble.@ or .fble. In the case of for_execution, we always need an
+implementation. That can come from builtin or .fble.
+
+Not for execution:
+* Try .fble.@. If nothing, try .fble. If nothing, fail.
+
+For execution:
+* Try .fble.@. If nothing, try .fble. If nothing, fail.
+* Try .fble.@. If something,  try builtin. If nothing, try .fble. If nothing, fial.
+
+So, in general, the order is: .fble.@, builtin, .fble, fail. Seems reasonable
+enough.
+
+---
+
+Trouble: My builtin module's .fble.@ file has dependencies. I need to have
+dependencies listed in the builtin module for the types to match properly. But
+I don't need those dependencies at compile time, and I don't have preloaded
+things to depend on.
+
+The other trouble I in implementation is this case where a builtin depends on
+another builtin, then later on a .fble depends on that other builtin. It's not
+clear when we should load the type information. The first time we load the
+module, it's for a builtin, so no need for type. The second time we depend on
+the module, we need the type, but it's already been loaded. It's too late to
+load any new type dependencies.
+
+Both troubles seem vaguely related to builtin dependencies.
+
+---
+
+I think I can solve at least the first of my troubles by having separate deps
+and type_deps fields in FbleModule. Conceptually the type of a module can have
+different dependencies than the implementation. They are used two different
+ways (ish), for type checking and for linking.
+
+Let me see how hard it would be to keep track of the dependencies separately.
+
