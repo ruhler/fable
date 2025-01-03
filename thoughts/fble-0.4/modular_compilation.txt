@@ -1645,3 +1645,19 @@ ways (ish), for type checking and for linking.
 
 Let me see how hard it would be to keep track of the dependencies separately.
 
+Everything is straight forward except for load and typecheck.
+
+To load:
+* I need to keep track of whether we are loading the type deps or the link
+  deps for a module, and advance the appropriate one. Not complicated, just
+  tedious.
+
+To Typecheck:
+* I need to run have two separate scopes for typechecking, and make sure I use
+  the write dependencies depending on whether we are typechecking the 'type'
+  or the 'value'. Slightly complicated, but should also be doable.
+
+I think it should work. I just need the patience to code it up.
+
+It wasn't too bad. I like this. I think it helps clarify things. And it fixes
+interpreter depending on builtin trace in the Sat example. Awesome.

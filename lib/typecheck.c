@@ -198,7 +198,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
-static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps);
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_deps, FbleType** link_deps);
 
 
 /**
@@ -2279,9 +2279,12 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
  * @func[TypeCheckModule] Typechecks a module.
  *  @arg[FbleTypeHeap*][th] Heap to use for allocations.
  *  @arg[FbleModule*][module] The module to check.
- *  @arg[FbleType**][deps]
- *   The type of each module this module depends on, in the same order as
- *   module->deps. size is module->deps.size.
+ *  @arg[FbleType**][type_deps]
+ *   The type of each module this module's type depends on, in the same order
+ *   as module->type_deps. size is module->type_deps.size.
+ *  @arg[FbleType**][link_deps]
+ *   The type of each module this module's value depends on, in the same order
+ *   as module->link_deps. size is module->link_deps.size.
  *
  *  @returns[Tc]
  *   Returns the type, and optionally value of the module as the body of a
@@ -2299,41 +2302,51 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
  *    needed and FbleReleaseType when the returned FbleType is no longer
  *    needed.
  */
-static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps)
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_deps, FbleType** link_deps)
 {
-  Arg args_xs[module->deps.size];
-  for (size_t i = 0; i < module->deps.size; ++i) {
-    args_xs[i].name.module = module->deps.xs[i];
-    args_xs[i].type = FbleRetainType(th, deps[i]);
-  }
-  ArgV args = { .size = module->deps.size, .xs = args_xs };
-
-  Scope scope;
-  InitScope(&scope, NULL, args, module->path, NULL);
-
   assert(module->type || module->value);
 
   FbleType* type = NULL;
   if (module->type) {
+    Arg args_xs[module->type_deps.size];
+    for (size_t i = 0; i < module->type_deps.size; ++i) {
+      args_xs[i].name.module = module->type_deps.xs[i];
+      args_xs[i].type = FbleRetainType(th, type_deps[i]);
+    }
+    ArgV args = { .size = module->type_deps.size, .xs = args_xs };
+
+    Scope scope;
+    InitScope(&scope, NULL, args, module->path, NULL);
     type = TypeCheckExprForType(th, &scope, module->type);
+    FreeScope(th, &scope);
+
     if (type == NULL) {
-      FreeScope(th, &scope);
       return TC_FAILED;
     }
+
+    FbleWarnAboutUnusedVars(module->type);
   }
 
   Tc tc = TC_FAILED;
   if (module->value) {
+    Arg args_xs[module->link_deps.size];
+    for (size_t i = 0; i < module->link_deps.size; ++i) {
+      args_xs[i].name.module = module->link_deps.xs[i];
+      args_xs[i].type = FbleRetainType(th, link_deps[i]);
+    }
+    ArgV args = { .size = module->link_deps.size, .xs = args_xs };
+
+    Scope scope;
+    InitScope(&scope, NULL, args, module->path, NULL);
     tc = TypeCheckExpr(th, &scope, module->value);
+    FreeScope(th, &scope);
+
     if (tc.type == NULL) {
-      FreeScope(th, &scope);
       FbleReleaseType(th, type);
       return TC_FAILED;
     }
     FbleWarnAboutUnusedVars(module->value);
   }
-
-  FreeScope(th, &scope);
 
   if (type && tc.type) {
     if (!FbleTypesEqual(th, type, tc.type)) {
@@ -2387,7 +2400,8 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleModule* module = program->modules.xs + i;
-    FbleType* deps[module->deps.size];
+    FbleType* type_deps[module->type_deps.size];
+    FbleType* link_deps[module->link_deps.size];
 
     // Skip typecheck for builtin modules with no type information.
     if (module->type == NULL && module->value == NULL) {
@@ -2398,22 +2412,36 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
 
     // Skip typecheck of any modules whose dependencies failed to typecheck.
     bool skip = false;
-    for (size_t d = 0; d < module->deps.size; ++d) {
-      deps[d] = NULL;
+    for (size_t d = 0; d < module->type_deps.size; ++d) {
+      type_deps[d] = NULL;
       for (size_t t = 0; t < i; ++t) {
-        if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[t].path)) {
-          deps[d] = types[t];
+        if (FbleModulePathsEqual(module->type_deps.xs[d], program->modules.xs[t].path)) {
+          type_deps[d] = types[t];
           break;
         }
       }
 
-      if (deps[d] == NULL) {
+      if (type_deps[d] == NULL) {
+        skip = true;
+        break;
+      }
+    }
+    for (size_t d = 0; d < module->link_deps.size; ++d) {
+      link_deps[d] = NULL;
+      for (size_t t = 0; t < i; ++t) {
+        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[t].path)) {
+          link_deps[d] = types[t];
+          break;
+        }
+      }
+
+      if (link_deps[d] == NULL) {
         skip = true;
         break;
       }
     }
 
-    Tc tc = skip ? TC_FAILED : TypeCheckModule(th, module, deps);
+    Tc tc = skip ? TC_FAILED : TypeCheckModule(th, module, type_deps, link_deps);
     if (tc.type == NULL) {
       error = true;
       types[i] = NULL;

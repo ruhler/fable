@@ -52,16 +52,16 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
     call->func.tag = FBLE_STATIC_VAR;
     call->func.index = i;
     FbleInitVector(call->args);
-    for (size_t d = 0; d < module->deps.size; ++d) {
+    for (size_t d = 0; d < module->link_deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
-        if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[v].path)) {
+        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[v].path)) {
           FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
           FbleAppendToVector(call->args, var);
           break;
         }
       }
     }
-    assert(call->args.size == module->deps.size);
+    assert(call->args.size == module->link_deps.size);
 
     call->dest = i;
     FbleAppendToVector(code->instrs, &call->_base);

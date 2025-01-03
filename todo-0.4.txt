@@ -10,8 +10,10 @@ Things to consider doing for the fble-0.4 release.
 * Revisit idea of having an 'undefined' declaration in fble syntax, to
   simplify writing header files.
 
-* Add test case for when builtin module implementation dependencies don't
-  match dependencies from the .fble.@ file?
+* Add test case for when the number of builtin module implementation
+  dependencies don't match dependencies from the .fble.@ file
+  For example, have /SpecTests/Builtin% depend on Nat for one of is functions
+  in the .fble.@.
 
 * Add test for this case:
  1. We load builtin A, which loads dependent builtin B

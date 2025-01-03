@@ -31,28 +31,40 @@ typedef struct FbleCode FbleCode;
  *  @a[profile_blocks] fields are populated by loading a generated module.
  *
  *  @field[FbleModulePath*][path] The path to the module.
- *  @field[FbleModulePathV][deps] List of modules this module depends on.
+ *  @field[FbleModulePathV][type_deps]
+ *   List of modules the @a[type] field depends on.
+ *  @field[FbleModulePathV][link_deps]
+ *   List of modules the implementation depends on.
  *  @field[FbleExpr*][type]
  *   Abstract syntax of an expression whose type is the module type. May be
  *   NULL.
+ *
+ *   The expression describes the body of a function that takes the computed
+ *   module values for each module listed in 'type_deps' as arguments to the
+ *   function
  *  @field[FbleExpr*][value]
  *   Abstract syntax of the module implementation. May be NULL.
+ *
+ *   The expression describes the body of a function that takes the computed
+ *   module values for each module listed in 'link_deps' as arguments to the
+ *   function
  *  @field[FbleCode*][code]
  *   Compiled bytecode to compute the module's value. May be NULL.
  *
  *   The code describes the body of a function that takes the computed module
- *   values for each module listed in 'deps' as arguments to the function
+ *   values for each module listed in 'link_deps' as arguments to the function
  *  @field[FbleExecutable*][exe]
  *   Executable code to compute the module's value. May be NULL.
  *
  *   The code describes the body of a function that takes the computed module
- *   values for each module listed in 'deps' as arguments to the function
+ *   values for each module listed in 'link_deps' as arguments to the function
  *  @field[FbleNameV][profile_blocks]
  *   Profiling blocks used by the compiled code for the module.
  */
 typedef struct {
   FbleModulePath* path;
-  FbleModulePathV deps;
+  FbleModulePathV type_deps;
+  FbleModulePathV link_deps;
   FbleExpr* type;
   FbleExpr* value;
   FbleCode* code;

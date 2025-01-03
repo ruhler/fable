@@ -351,8 +351,8 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", deps_xs_id);
-  for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
+  for (size_t i = 0; i < module->link_deps.size; ++i) {
+    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]);
     fprintf(fout, "  .xword %s\n", dep_name->str);
     FbleFreeString(dep_name);
   }
@@ -380,7 +380,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   fprintf(fout, "  .size %s, %zi\n", module_name->str, sizeof(FblePreloadedModule));
   fprintf(fout, "%s:\n", module_name->str);
   fprintf(fout, "  .xword " LABEL "\n", path_id);                 // .path
-  fprintf(fout, "  .xword %zi\n", module->deps.size);
+  fprintf(fout, "  .xword %zi\n", module->link_deps.size);
   fprintf(fout, "  .xword " LABEL "\n", deps_xs_id);
   fprintf(fout, "  .xword " LABEL "\n", executable_id);
   fprintf(fout, "  .xword %zi\n", module->profile_blocks.size);

@@ -1392,8 +1392,8 @@ static void CompileModule(FbleModule* module, FbleTc* tc)
 
   FbleNameV args;
   FbleInitVector(args);
-  for (size_t d = 0; d < module->deps.size; ++d) {
-    FbleAppendToVector(args, FbleModulePathName(module->deps.xs[d]));
+  for (size_t d = 0; d < module->link_deps.size; ++d) {
+    FbleAppendToVector(args, FbleModulePathName(module->link_deps.xs[d]));
   }
 
   FbleName label = FbleModulePathName(module->path);

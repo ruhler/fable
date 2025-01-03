@@ -219,16 +219,26 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
   fprintf(fout, "\n");
   fprintf(fout, "Source: %s\n\n", module->path->loc.source->str);
 
-  fprintf(fout, "Dependencies:\n");
-  if (module->deps.size == 0) {
+  fprintf(fout, "Type Dependencies:\n");
+  if (module->type_deps.size == 0) {
     fprintf(fout, "  (none)\n");
   }
-  for (size_t i = 0; i < module->deps.size; ++i) {
+  for (size_t i = 0; i < module->type_deps.size; ++i) {
     fprintf(fout, "  ");
-    FblePrintModulePath(fout, module->deps.xs[i]);
+    FblePrintModulePath(fout, module->type_deps.xs[i]);
     fprintf(fout, "\n");
   }
+  fprintf(fout, "\n");
 
+  fprintf(fout, "Link Dependencies:\n");
+  if (module->link_deps.size == 0) {
+    fprintf(fout, "  (none)\n");
+  }
+  for (size_t i = 0; i < module->link_deps.size; ++i) {
+    fprintf(fout, "  ");
+    FblePrintModulePath(fout, module->link_deps.xs[i]);
+    fprintf(fout, "\n");
+  }
   fprintf(fout, "\n");
 
   struct { size_t size; FbleCode** xs; } blocks;
