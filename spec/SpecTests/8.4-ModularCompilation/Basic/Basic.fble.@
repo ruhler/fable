@@ -2,13 +2,11 @@
 # Basic use of a module with corresponding .fble.@ file.
 
 @ Unit@ = *();
-Unit@ Unit = Unit@();
-
 @ Bool@ = +(Unit@ true, Unit@ false);
 
 @ Foo@ = *(Bool@ x, Bool@ y);
 
 # In the header, the value of Foo is undefined.
-Foo@ Foo = +(Unit@ u, Foo@ undef)(u: Unit).undef;
+Foo@ Foo;
 
 Foo;

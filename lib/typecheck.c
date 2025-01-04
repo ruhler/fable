@@ -1231,6 +1231,34 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       return MkTc(body.type, &let_tc->_base);
     }
 
+    case FBLE_UNDEF_EXPR: {
+      FbleUndefExpr* undef_expr = (FbleUndefExpr*)expr;
+
+      FbleType* type = TypeCheckType(th, scope, undef_expr->type);
+      bool error = (type == NULL);
+      if (type != NULL && !CheckNameSpace(undef_expr->name, type)) {
+        error = true;
+      }
+
+      VarName name = { .normal = undef_expr->name, .module = NULL };
+      PushLocalVar(scope, name, type);
+      Tc body = TC_FAILED;
+      if (!error) {
+        body = TypeCheckExpr(th, scope, undef_expr->body);
+        error = (body.type == NULL);
+      }
+      PopLocalVar(th, scope);
+
+      if (error) {
+        return TC_FAILED;
+      }
+
+      FbleUndefTc* undef_tc = FbleNewTc(FbleUndefTc, FBLE_UNDEF_TC, expr->loc);
+      undef_tc->name = FbleCopyName(undef_expr->name);
+      undef_tc->body = body.tc;
+      return MkTc(body.type, &undef_tc->_base);
+    }
+
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
 
@@ -2240,6 +2268,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
+    case FBLE_UNDEF_EXPR:
     case FBLE_DATA_ACCESS_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_STRUCT_COPY_EXPR:

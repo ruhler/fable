@@ -1661,3 +1661,40 @@ I think it should work. I just need the patience to code it up.
 
 It wasn't too bad. I like this. I think it helps clarify things. And it fixes
 interpreter depending on builtin trace in the Sat example. Awesome.
+
+---
+
+I decided to add nice syntax for declaring undefined variables. It's so much
+nicer than /Core/Undef<@<Foo>>.undefined.
+
+Some design thoughts for the record:
+* We use the let syntax without = ..., because it's the nicest syntax for the
+  use case.
+* We only support a single variable defined this way, not multiple, because
+  there is a parser reduce/reduce conflict otherwise. You don't need recursive
+  undefined variables anyway, so no loss.
+* Treat this as a separate abstract syntax construct rather than a special
+  case of let
+  - So we can describe it separately.
+  - Because it doesn't support multiple variable declarations at once.
+  - To keep the implementation separate from the let implementation.
+* Rather than have it error out at the declaration, have it error out at the
+  use. That helps justify why we have a variable name declaration and body as
+  part of the abstract syntax, instead of just having a generic undefined
+  expression.
+* The treatment of undefined giving an error at use instead of declaration has
+  precedence: that's how we treat values of recursive lets in their bindings.
+  You can always do something like: { Foo@ x; x } if you want to force an
+  error. We can put that behind a helper function too if desired.
+* Giving an error at use instead of declaration is also potentially useful for
+  my existing uses of /Core/Undef. I imagine declaring a bunch of undefined
+  error values at global level and referencing them in the cases of undefined.
+* I'm slightly concerned it could be hard to track down the source of the
+  undefined variable if you actually use it. But that's no worse than we have
+  today for undefined values in recursive let.
+* I thought about naming this 'prototype' instead of 'undef', but I like the
+  slightly more general use of 'undef'. Call this 'undef' instead of
+  'undefined' as a slight hint to suggest its not an 'undefined expression',
+  but rather, a 'evaluation of an expression with an undefined variable in the
+  context'.
+

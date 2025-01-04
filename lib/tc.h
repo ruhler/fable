@@ -39,6 +39,7 @@ typedef enum {
   FBLE_TYPE_VALUE_TC,
   FBLE_VAR_TC,
   FBLE_LET_TC,
+  FBLE_UNDEF_TC,
   FBLE_STRUCT_VALUE_TC,
   FBLE_STRUCT_COPY_TC,
   FBLE_UNION_VALUE_TC,
@@ -155,6 +156,20 @@ typedef struct {
   FbleTcBindingV bindings;
   FbleTc* body;
 } FbleLetTc;
+
+/**
+ * @struct[FbleUndefTc] FBLE_UNDEF_TC
+ *  An undef expression.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleName][name] Name of the undefined variable.
+ *  @field[FbleTc*][body] The body of the let
+ */
+typedef struct {
+  FbleTc _base;
+  FbleName name;
+  FbleTc* body;
+} FbleUndefTc;
 
 /**
  * @struct[FbleStructValueTc] FBLE_STRUCT_VALUE_TC

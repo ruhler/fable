@@ -49,6 +49,15 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_UNDEF_EXPR: {
+      FbleUndefExpr* e = (FbleUndefExpr*)expr;
+      FbleFreeExpr(e->type);
+      FbleFreeName(e->name);
+      FbleFreeExpr(e->body);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_DATA_TYPE_EXPR: {
       FbleDataTypeExpr* e = (FbleDataTypeExpr*)expr;
       for (size_t i = 0; i < e->fields.size; ++i) {

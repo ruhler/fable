@@ -146,6 +146,11 @@ void FbleFreeInstr(FbleInstr* instr)
       FbleFree(instr);
       return;
     }
+
+    case FBLE_UNDEF_INSTR: {
+      FbleFree(instr);
+      return;
+    }
   }
 
   FbleUnreachable("invalid instruction");
@@ -508,6 +513,13 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
 
         case FBLE_NOP_INSTR: {
           fprintf(fout, "%4zi.  nop;\n", i);
+          break;
+        }
+
+        case FBLE_UNDEF_INSTR: {
+          FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
+          fprintf(fout, "%4zi.  ", i);
+          fprintf(fout, "l%zi = undef;\n", undef_instr->dest);
           break;
         }
       }

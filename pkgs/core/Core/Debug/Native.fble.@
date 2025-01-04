@@ -3,6 +3,6 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 # Trace function for printf-like debugging.
-(String@) { Unit@; } Trace = /Core/Undef%.Undef<@<Trace>>.undefined;
+(String@) { Unit@; } Trace;
 
 @(Trace);

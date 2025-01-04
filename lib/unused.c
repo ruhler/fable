@@ -107,6 +107,24 @@ static void Expr(FbleExpr* expr, Vars* vars)
       return;
     }
 
+    case FBLE_UNDEF_EXPR: {
+      FbleUndefExpr* undef_expr = (FbleUndefExpr*)expr;
+      Expr(undef_expr->type, vars);
+
+      Vars nvars = {
+        .name = undef_expr->name,
+        .used = undef_expr->name.name->str[0] == '_',
+        .next = vars
+      };
+      Expr(undef_expr->body, &nvars);
+      if (!nvars.used) {
+        FbleReportWarning("variable '", nvars.name.loc);
+        FblePrintName(stderr, nvars.name);
+        fprintf(stderr, "' is unused\n");
+      }
+      return;
+    }
+
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
       for (size_t i = 0; i < struct_expr->args.size; ++i) {

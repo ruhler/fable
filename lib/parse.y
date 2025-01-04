@@ -536,6 +536,15 @@ stmt:
       let_expr->body = $3;
       $$ = &let_expr->_base;
     }  
+  | expr name ';' stmt {
+      FbleUndefExpr* undef_expr = FbleAlloc(FbleUndefExpr);
+      undef_expr->_base.tag = FBLE_UNDEF_EXPR;
+      undef_expr->_base.loc = FbleCopyLoc(@$);
+      undef_expr->type = $1;
+      undef_expr->name = $2;
+      undef_expr->body = $4;
+      $$ = &undef_expr->_base;
+    }
   | tagged_type_p '<' '-' expr ';' stmt {
       FbleExpr* expr = $6;
       for (size_t i = 0; i < $1.size; ++i) {

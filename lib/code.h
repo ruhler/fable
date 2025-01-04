@@ -110,6 +110,7 @@ typedef enum {
   FBLE_LIST_INSTR,
   FBLE_LITERAL_INSTR,
   FBLE_NOP_INSTR,
+  FBLE_UNDEF_INSTR,
 } FbleInstrTag;
 
 /**
@@ -466,7 +467,7 @@ typedef struct {
 } FbleLiteralInstr;
 
 /**
- * @struct[FbleNopInstruction] FBLE_NOP_INSTRUCTION: Does nothing.
+ * @struct[FbleNopInstr] FBLE_NOP_INSTR: Does nothing.
  *  This is used for a particular case where we need to force profiling
  *  operations to run at a certain point in the code.
  *
@@ -475,6 +476,19 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
 } FbleNopInstr;
+
+/**
+ * @struct[FbleUndefInstr] FBLE_UNDEF_INSTR: Creates an undefined value.
+ *  @code[txt] @
+ *   *dest = NULL
+ *
+ *  @field[FbleInstr][_base] FbleInstr base clsas.
+ *  @field[FbleLocalIndex][dest] Where to store the undefined value.
+ */
+typedef struct {
+  FbleInstr _base;
+  FbleLocalIndex dest;
+} FbleUndefInstr;
 
 /**
  * @func[FbleRawAllocInstr]

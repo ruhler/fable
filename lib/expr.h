@@ -20,6 +20,7 @@ typedef enum {
   FBLE_TYPEOF_EXPR,
   FBLE_VAR_EXPR,
   FBLE_LET_EXPR,
+  FBLE_UNDEF_EXPR,
 
   FBLE_DATA_TYPE_EXPR,    // struct and union types.
   FBLE_DATA_ACCESS_EXPR,  // struct and union field access.
@@ -277,6 +278,22 @@ typedef struct {
   FbleBindingV bindings;
   FbleExpr* body;
 } FbleLetExpr;
+
+/**
+ * @struct[FbleUndefExpr] FBLE_UNDEF_EXPR
+ *  An undef expression.
+ *
+ *  @field[FbleTypeExpr][_base] FbleExpr base class.
+ *  @field[FbleTypeExpr*][type] The variable type.
+ *  @field[FbleName][name] The variable name.
+ *  @field[FbleExpr*][body] The body of the undef.
+ */
+typedef struct {
+  FbleExpr _base;
+  FbleTypeExpr* type;
+  FbleName name;
+  FbleExpr* body;
+} FbleUndefExpr;
 
 /**
  * @struct[FbleModulePathExpr] FBLE_MODULE_PATH_EXPR

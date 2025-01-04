@@ -3,15 +3,12 @@
 
 @ Nat@ = /SpecTests/Nat%.Nat@;
 
-@ Unit@ = *();
-Unit@ Unit = Unit@();
-
 # Identity function: returns its input.
-<@ A@>(A@) { A@; } Id = +(Unit@ u, @<Id> undef)(u: Unit).undef;
+<@ A@>(A@) { A@; } Id;
 
 # Identity function on type Nat@
 # For the purposes of having a type dependency on a different module without a
 # corresponding implementation dependency on that module.
-(Nat@) { Nat@; } NatId = +(Unit@ u, @<NatId> undef)(u: Unit).undef;
+(Nat@) { Nat@; } NatId;
 
 @(Id, NatId);

@@ -304,6 +304,13 @@ static FbleValue* Interpret(
         pc++;
         break;
       }
+
+      case FBLE_UNDEF_INSTR: {
+        FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
+        locals[undef_instr->dest] = NULL;
+        pc++;
+        break;
+      }
     }
   }
 }

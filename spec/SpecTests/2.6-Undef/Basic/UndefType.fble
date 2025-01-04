@@ -1,0 +1,16 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+
+(Bool@) { Bool@; } F = (Bool@ _ignored) { True; };
+
+# An undefined variable whose type should check out, but if otherwise unused
+# is fine.
+Bool@ undef;
+Bool@ x = undef;
+
+F(x).true;

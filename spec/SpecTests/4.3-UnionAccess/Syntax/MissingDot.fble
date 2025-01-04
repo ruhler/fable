@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 11:7
+# @@fble-test@@ compile-error 11:13
 @ Unit@ = *();
 @ Bool@ = +(Unit@ true, Unit@ false);
 Bool@ true = Bool@(true: Unit@());
@@ -8,4 +8,5 @@ Bool@ false = Bool@(false: Unit@());
 Maybe@ x = Maybe@(just: true);
 
 # The dot is missing.
-x just;
+Bool@ y = x just;
+y;

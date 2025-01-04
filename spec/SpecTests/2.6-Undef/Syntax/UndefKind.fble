@@ -1,0 +1,11 @@
+# @@fble-test@@ compile-error 9:7
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# You can't use kinds in undef expressions.
+% True;
+
+True;

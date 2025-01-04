@@ -379,6 +379,14 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       return &ntc->_base;
     }
 
+    case FBLE_UNDEF_TC: {
+      FbleUndefTc* undef_tc = (FbleUndefTc*)tc;
+      FbleUndefTc* ntc = FbleNewTc(FbleUndefTc, FBLE_UNDEF_TC, tc->loc);
+      undef_tc->name = FbleCopyName(undef_tc->name);
+      undef_tc->body = RewriteVars(statics, arg_offset, undef_tc->body);
+      return &ntc->_base;
+    }
+
     case FBLE_STRUCT_VALUE_TC: {
       FbleStructValueTc* sv = (FbleStructValueTc*)tc;
       FbleStructValueTc* ntc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, tc->loc);
@@ -954,6 +962,19 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         PopVar(scope, exit);
       }
 
+      return body;
+    }
+
+    case FBLE_UNDEF_TC: {
+      FbleUndefTc* undef_tc = (FbleUndefTc*)v;
+
+      Local* var = NewLocal(scope);
+      FbleUndefInstr* undef_instr = FbleAllocInstr(FbleUndefInstr, FBLE_UNDEF_INSTR);
+      undef_instr->dest = var->var.index;
+      AppendInstr(scope, &undef_instr->_base);
+      PushVar(scope, undef_tc->name, var);
+      Local* body = CompileExpr(blocks, true, exit, scope, undef_tc->body);
+      PopVar(scope, exit);
       return body;
     }
 

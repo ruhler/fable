@@ -255,7 +255,7 @@
    the convention that no warnings should be produced for variables starting
    with @L{_} in their name. This allows the programmer to annotate a variable
    as intentionally unused, which is occasionally useful in practice.
-  
+
    Runtime is O(N log(M)) plus the runtimes of the bindings and the runtime of
    the body, where N is the number of bindings and M is the number of
    variables in scope.
@@ -264,6 +264,36 @@
    Variables are in scope until the body of the let expression has finished
    evaluation or, as a special case, until the body of the let expression
    makes a tail recursive call.
+
+  @subsection 2.6 Undef
+   @AbstractSyntax @
+    Expr: undef (name: Name) (type: Type) (body: Expr)
+  
+   @ConcreteSyntax @
+    stmt = type, name, ';', stmt
+  
+   @Example @
+    Bool@ True; @(Bool@, True);
+
+   The undef expression evaluates an expression in a context with an undefined
+   value. It allows you to assign a type to a value that will never be used.
+
+   The primary intent of the undef expression is to facilitate writing header
+   files for modular compilation of fble programs. In that case, the undef
+   expression allows you to declare a variable or function without a
+   corresponding implementation. See the section on modular compilation for
+   more details.
+
+   The type of the expression is the type of the body of the expression. The
+   defined variable is visible in the body of the undef expression. It may be
+   referenced in the body of the expression, but the value of the variable is
+   undefined.
+
+   As with let expressions, implementations are encouraged to emit warnings
+   for unused variables, with the convention that no warnings should be
+   produced for variables starting with @L{_} in their name.
+
+   Runtime is the runtime of evaluating the body of the expression.
  
  @section @label[structs][3. Structs]
   A struct value is a grouping of other values. The items of a struct are
@@ -1177,6 +1207,20 @@
 
    The @l{Foo.fble.@} file is optional. If it is not provided, the type of a
    module should be determined from the @l{Foo.fble} file for the module.
+
+   The undef expression is particularly useful for writing header files. For
+   example, a header file for a module defining a boolean type might look
+   like:
+
+   @code[fble] @
+    @ Bool@ = +(Unit@ true, Unit@ false);
+    Bool@ True;
+    Bool@ False;
+    (Bool@) { Bool@; } Not;
+    (Bool@, Bool@) { Bool@; } And;
+    (Bool@, Bool@) { Bool@; } Or;
+
+    @(Bool@, True, False, Not, And, Or)
  
  @section @label[abstract][9. Abstract Types]
   Abstract types provide a mechanism to define types of values that can only
@@ -1410,6 +1454,7 @@
       typeof (expr : Expr)
     | var (name : Name)
     | let (bindings : [(Spec, Name, Expr)]) (body : Expr)
+    | undef (name: Name) (type: Type) (body: Expr)
     | module_path (path : Path)
    
     | struct_type (fields : [(Type, Name)])
@@ -1554,6 +1599,7 @@
        expr, ';'
      | spec, name, '=', expr,                          (* let *)
        {',', spec, name, '=', expr}, ';', stmt       
+     | stmt = type, name, ';', stmt                    (* undef *)
      | expr, '.?(', name, ':', expr,                   (* union_select *)
                 {',', name, ':', expr} ')', ';', stmt
      | type, name,                                     (* bind *)

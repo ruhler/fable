@@ -86,6 +86,14 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
+    case FBLE_UNDEF_TC: {
+      FbleUndefTc* undef_tc = (FbleUndefTc*)tc;
+      FbleFreeName(undef_tc->name);
+      FbleFreeTc(undef_tc->body);
+      FbleFree(tc);
+      return;
+    }
+
     case FBLE_STRUCT_VALUE_TC: {
       FbleStructValueTc* sv = (FbleStructValueTc*)tc;
       for (size_t i = 0; i < sv->fields.size; ++i) {

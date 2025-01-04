@@ -4,10 +4,8 @@
 @ Unit@ = *();
 Unit@ Unit = Unit@();
 
-<@ T@> { T@; } Undefined = <@ T@> { +(T@ undef, Unit@ u)(u: Unit).undef; };
-
 @ Bool@ = +(Unit@ true, Unit@ false);
-Bool@ True = Undefined<Bool@>;
-Bool@ False = Undefined<Bool@>;
+Bool@ True;
+Bool@ False;
 
 @(Unit@, Unit, Bool@, True, False);

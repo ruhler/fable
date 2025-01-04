@@ -76,6 +76,7 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
       case FBLE_NOP_INSTR: break;
+      case FBLE_UNDEF_INSTR: break;
     }
   }
 }
@@ -569,6 +570,12 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       }
 
       case FBLE_NOP_INSTR: {
+        break;
+      }
+
+      case FBLE_UNDEF_INSTR: {
+        FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
+        fprintf(fout, "  l[%zi] = NULL;\n", undef_instr->dest);
         break;
       }
     }

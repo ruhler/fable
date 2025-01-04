@@ -212,6 +212,7 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       case FBLE_LIST_INSTR: break;
       case FBLE_LITERAL_INSTR: break;
       case FBLE_NOP_INSTR: break;
+      case FBLE_UNDEF_INSTR: break;
     }
   }
 }
@@ -919,6 +920,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       // Nothing to do.
       return;
     }
+
+    case FBLE_UNDEF_INSTR: {
+      FbleUndefInstr* undef_instr = (FbleUndefInstr*)instr;
+      SetFrameVar(fout, "xzr", undef_instr->dest);
+      return;
+    }
   }
 }
 
@@ -1040,6 +1047,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_LIST_INSTR: return;
     case FBLE_LITERAL_INSTR: return;
     case FBLE_NOP_INSTR: return;
+    case FBLE_UNDEF_INSTR: return;
   }
 }
 

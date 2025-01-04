@@ -1,0 +1,10 @@
+# @@fble-test@@ runtime-error 10:6
+
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# Basic use of an undefined expression.
+Bool@ True;
+
+# It's a runtime error to try and use this.
+True.true;

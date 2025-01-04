@@ -2,15 +2,17 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Rename /Debug/Native% to /Debug/Builtin%?
+
+* Add spec tests for full coverage.
+
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble
   binaries?
   Remove use of fbledeps in spec tests?
+* Add --compile option to fble-deps?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
 
-* Revisit idea of having an 'undefined' declaration in fble syntax, to
-  simplify writing header files.
-
-* Add test for this case:
+* Add test and fix for this case:
  1. We load builtin A, which loads dependent builtin B
  2. We load .fble C, which depends on builtin B
  At what point do we check and load the type information for B?
@@ -26,8 +28,6 @@ Things to consider doing for the fble-0.4 release.
 
 * Install the C version of fbld, not the fble version.
 * Clean up stray reference to FbleExecutableModule in aarch64.c or c.c
-* Move FblePrintCompiledHeaderLine to fble-generate.h
-  And the impl to generate.c? And rename to FblePrintGeneratedHeaderLine?
 
 * http profiler server
  - Add support for HEAD method.
