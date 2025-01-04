@@ -49,7 +49,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
   };
 
   FbleValue* id = FbleNewFuncValue(heap, &id_exe, 1, NULL);
-  FbleValue* builtin = FbleNewStructValue_(heap, 1, id);
+  FbleValue* builtin = FbleNewStructValue_(heap, 2, id, id);
   return FblePopFrame(heap, builtin);
 }
 
