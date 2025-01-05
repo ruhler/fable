@@ -1698,3 +1698,12 @@ Some design thoughts for the record:
   but rather, a 'evaluation of an expression with an undefined variable in the
   context'.
 
+---
+
+That's it! Modular compilation is basically done. All that's left is some
+minor cleanup to do before the next release. All the goals have been met.
+
+For next release we can think more about support for loading modules
+dynamically.
+
+

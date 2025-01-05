@@ -103,3 +103,43 @@ loading.
 
 See modular_compilation.txt. Revised proposal is to implement module by hand
 instead of via compiler.
+
+---
+
+Modular compilation is now supported. Let's get to work implementing the
+module by hand.
+
+Reminder of how things work:
+
+/Core/Stdio%.Main@ is the abstract monadic type people write their programs
+against.
+
+/Core/Stdio/IO%.Run converts between that and the native stdio interface,
+which is of type /Core/Stdio/IO%.Main@. It takes a StdioIO@.
+
+My plan will be to move the StdioIO@ implementation into a builtin module.
+Change /Core/Stdio/IO%.Main from
+
+   @ Main@ = (StdioIO@, List@<String@>) { IO@<Bool@>; };
+
+To
+
+   @ Main@ = (List@<String@>) { IO@<Bool@>; };
+
+And change the Run function to use the builtin StdioIO@ implementation.
+
+---
+
+I need to clarify how to do profile blocks properly. When I call
+FbleNewFuncValue, I should pass an offset relative to something, right?
+
+Link calls FbleAddBlocksToProfile to get the profile_block_id. We pass that to
+FbleNewFuncValue for the module function. That allocates a function value with
+that profile block id. When our Run function runs, it can get the
+profile_block_id associated with the module. Everything ought to be relative
+to that. Makes sense.
+
+Let me pass the base block id to each of my helper functions. I think I should
+always have that info. They can apply the offset themselves to get the right
+final block id.
+

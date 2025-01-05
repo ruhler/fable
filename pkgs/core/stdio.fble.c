@@ -46,6 +46,35 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id);
 static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id);
 
 
+// -Wpedantic doesn't like our initialization of flexible array members when
+// defining static FbleString values.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+
+static FbleString Filename = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = __FILE__, };
+static FbleString StrCore = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Core", };
+static FbleString StrStdio = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Stdio", };
+static FbleString StrIO = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "IO", };
+static FbleString StrBuiltin = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Builtin", };
+
+static FbleString StrModuleBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/IO/Builtin%", };
+static FbleString StrIStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/IO/Builtin%.IStream", };
+static FbleString StrOStreamBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/IO/Builtin%.OStream", };
+static FbleString StrReadBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/IO/Builtin%.Read", };
+static FbleString StrWriteBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/IO/Builtin%.Write", };
+static FbleString StrGetEnvBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Core/Stdio/IO/Builtin%.GetEnv", };
+
+#pragma GCC diagnostic pop
+
+static FbleName ProfileBlocks[] = {
+  { .name = &StrModuleBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrIStreamBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrOStreamBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrReadBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrWriteBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrGetEnvBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+};
+
 /**
  * @func[OnFree] OnFree function for FILE* native values.
  *  @arg[void*][data] FILE* pointer to close.
@@ -143,7 +172,9 @@ static FbleValue* ReadImpl(
   if (fin == NULL) {
     mstream = FbleNewEnumValue(heap, 1); // Nothing
   } else {
-    FbleValue* stream = IStream(heap, fin, function->profile_block_id - 2);
+    // The Read block id is index 3 from the main block id
+    FbleBlockId module_block_id = function->profile_block_id - 3;
+    FbleValue* stream = IStream(heap, fin, module_block_id);
     mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
   }
 
@@ -174,7 +205,9 @@ static FbleValue* WriteImpl(
   if (fin == NULL) {
     mstream = FbleNewEnumValue(heap, 1); // Nothing
   } else {
-    FbleValue* stream = OStream(heap, fin, function->profile_block_id - 2);
+    // The Write block id is index 4 from the main block id
+    FbleBlockId module_block_id = function->profile_block_id - 4;
+    FbleValue* stream = OStream(heap, fin, module_block_id);
     mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
   }
 
@@ -216,15 +249,15 @@ static FbleValue* GetEnvImpl(
  * @func[IStream] Allocates an @l{IStream@} for a file.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FILE*][file] The FILE to allocate the @l{IStream@} for.
- *  @arg[FbleBlockId][profile_block_id]
- *   The profile_block_id of the function to allocate.
+ *  @arg[FbleBlockId][module_block_id]
+ *   The block_id of the /Core/Stdio/IO/Builtin% block.
  *
  *  @returns[FbleValue*] An fble @l{IStream@} function value.
  *
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
+static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_block_id)
 {
   FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
 
@@ -234,22 +267,22 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
     .run = &IStreamImpl,
   };
 
-  return FbleNewFuncValue(heap, &exe, profile_block_id, &native);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 1, &native);
 }
 
 /**
  * @func[OStream] Allocates an @l{OStream@} for a file.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FILE*][file] The FILE to allocate the @l{OStream@} for.
- *  @arg[FbleBlockId][profile_block_id]
- *   The profile_block_id of the function to allocate.
+ *  @arg[FbleBlockId][module_block_id]
+ *   The block_id of the /Core/Stdio/IO/Builtin% block.
  *
  *  @returns[FbleValue*] An fble @l{OStream@} function value.
  *
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_block_id)
+static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_block_id)
 {
   FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
 
@@ -259,86 +292,120 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId profile_b
     .run = &OStreamImpl,
   };
 
-  return FbleNewFuncValue(heap, &exe, profile_block_id, &native);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 2, &native);
 }
 
 /**
  * @func[Read] Allocates an fble read function.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleBlockId][profile_block_id] The profile block id for the function.
+ *  @arg[FbleBlockId][module_block_id]
+ *   The block_id of the /Core/Stdio/IO/Builtin% block.
  *  @returns[FbleValue*] The allocated function.
  *  @sideeffects Allocates an fble value.
  */
-static FbleValue* Read(FbleValueHeap* heap, FbleBlockId profile_block_id)
+static FbleValue* Read(FbleValueHeap* heap, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
     .run = &ReadImpl,
   };
-  return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 3, NULL);
 }
 
 /**
  * @func[Write] Allocates an fble write function.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleBlockId][profile_block_id] The profile block id for the function.
+ *  @arg[FbleBlockId][module_block_id]
+ *   The block_id of the /Core/Stdio/IO/Builtin% block.
  *  @returns[FbleValue*] The allocated function.
  *  @sideeffects Allocates an fble value.
  */
-static FbleValue* Write(FbleValueHeap* heap, FbleBlockId profile_block_id)
+static FbleValue* Write(FbleValueHeap* heap, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
     .run = &WriteImpl,
   };
-  return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 4, NULL);
 }
 
 /**
  * @func[GetEnv] Allocates an fble getenv function.
  *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleBlockId][profile_block_id] The profile block id for the function.
+ *  @arg[FbleBlockId][module_block_id]
+ *   The block_id of the /Core/Stdio/IO/Builtin% block.
  *  @returns[FbleValue*] The allocated function.
  *  @sideeffects Allocates an fble value.
  */
-static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId profile_block_id)
+static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
     .run = &GetEnvImpl,
   };
-  return FbleNewFuncValue(heap, &exe, profile_block_id, NULL);
+  return FbleNewFuncValue(heap, &exe, module_block_id + 5, NULL);
 }
+
+
+static FbleName Core_Stdio_IO_Builtin_PathEntries[] = {
+  { .name = &StrCore, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrStdio, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrIO, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrBuiltin, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+};
+
+static FbleModulePath Core_Stdio_IO_Builtin_Path = {
+  .refcount = 1,
+  .magic = FBLE_MODULE_PATH_MAGIC,
+  .loc = { .source = &Filename, .line = __LINE__, .col = 1 },
+  .path = { .size = 4, .xs = Core_Stdio_IO_Builtin_PathEntries},
+};
+
+static FbleValue* Core_Stdio_IO_Builtin_Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
+{
+  FbleBlockId block_id = function->profile_block_id;
+
+  FblePushFrame(heap);
+  FbleValue* fble_stdin = IStream(heap, stdin, block_id);
+  FbleValue* fble_stdout = OStream(heap, stdout, block_id);
+  FbleValue* fble_stderr = OStream(heap, stderr, block_id);
+  FbleValue* fble_read = Read(heap, block_id);
+  FbleValue* fble_write = Write(heap, block_id);
+  FbleValue* fble_getenv = GetEnv(heap, block_id);
+  FbleValue* fble_stdio = FbleNewStructValue_(heap, 6,
+      fble_stdin, fble_stdout, fble_stderr,
+      fble_read, fble_write, fble_getenv);
+  return FblePopFrame(heap, fble_stdio);
+}
+
+static FbleExecutable Core_Stdio_IO_Builtin_Executable = {
+  .num_args = 0, 
+  .num_statics = 0,
+  .run = &Core_Stdio_IO_Builtin_Run,
+};
+
+FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_ = {
+  .path = &Core_Stdio_IO_Builtin_Path,
+  .deps = { .size = 0, .xs = NULL },
+  .executable = &Core_Stdio_IO_Builtin_Executable,
+  .profile_blocks = { .size = 6, .xs = ProfileBlocks },
+};
 
 // FbleNewStdioIO -- see documentation in stdio.fble.h
 FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile)
 {
-  FbleName block_names[5];
-  block_names[0].name = FbleNewString("istream");
-  block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[1].name = FbleNewString("ostream");
-  block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[2].name = FbleNewString("read");
-  block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[3].name = FbleNewString("write");
-  block_names[3].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[4].name = FbleNewString("getenv");
-  block_names[4].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  FbleNameV names = { .size = 5, .xs = block_names };
-  FbleBlockId block_id = FbleAddBlocksToProfile(profile, names);
-  for (size_t i = 0; i < 5; ++i) {
-    FbleFreeName(block_names[i]);
-  }
+  FbleNameV blocks = { .size = 6, .xs = ProfileBlocks };
+  FbleBlockId block_id = FbleAddBlocksToProfile(profile, blocks);
 
   FbleValue* fble_stdin = IStream(heap, stdin, block_id);
-  FbleValue* fble_stdout = OStream(heap, stdout, block_id + 1);
-  FbleValue* fble_stderr = OStream(heap, stderr, block_id + 1);
-  FbleValue* fble_read = Read(heap, block_id + 2);
-  FbleValue* fble_write = Write(heap, block_id + 3);
-  FbleValue* fble_getenv = GetEnv(heap, block_id + 4);
+  FbleValue* fble_stdout = OStream(heap, stdout, block_id);
+  FbleValue* fble_stderr = OStream(heap, stderr, block_id);
+  FbleValue* fble_read = Read(heap, block_id);
+  FbleValue* fble_write = Write(heap, block_id);
+  FbleValue* fble_getenv = GetEnv(heap, block_id);
   FbleValue* fble_stdio = FbleNewStructValue_(heap, 6,
       fble_stdin, fble_stdout, fble_stderr,
       fble_read, fble_write, fble_getenv);
@@ -414,6 +481,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Native_25_);
+  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-stdio", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &stdio);

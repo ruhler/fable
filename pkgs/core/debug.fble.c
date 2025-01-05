@@ -10,6 +10,8 @@
 
 #include "string.fble.h"             // For FbleDebugTrace
 
+// -Wpedantic doesn't like our initialization of flexible array members when
+// defining static FbleString values.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 
@@ -19,6 +21,8 @@ static FbleString StrDebug = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str =
 static FbleString StrNative = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Native", };
 static FbleString StrModuleBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Debug/Core/Native%" };
 static FbleString StrTraceBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Debug/Core/Native%.Trace" };
+
+#pragma GCC diagnostic pop
 
 static FbleName PathEntries[] = {
   { .name = &StrCore, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
@@ -71,4 +75,3 @@ FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Native_25_ = {
   .profile_blocks = { .size = 2, .xs = ProfileBlocks },
 };
 
-#pragma GCC diagnostic pop

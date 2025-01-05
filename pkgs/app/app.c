@@ -26,6 +26,7 @@
 #include "fble-app.usage.h"        // for fbldUsageHelpText
 
 extern FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Native_25_;
+extern FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_;
 
 typedef struct {
   bool fps;
@@ -470,6 +471,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FblePreloadedModuleV builtins;
   FbleInitVector(builtins);
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Debug_2f_Native_25_);
+  FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
 
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
       &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &func);

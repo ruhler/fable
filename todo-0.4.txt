@@ -4,7 +4,14 @@ Things to consider doing for the fble-0.4 release.
 
 * Rename /Debug/Native% to /Debug/Builtin%?
 
+* Make sure we are using the right profile block id for /SpecTests/Builtin%
+  and /Core/Debug/Native%. It should be function->profile_block_id + X, not X.
+  I think.
+
 * Add spec tests for full coverage.
+
+* Update tutorials for changes since last release
+ - modular compilation in particular
 
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble
   binaries?

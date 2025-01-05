@@ -21,6 +21,8 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+% Builtin = /Core/Stdio/IO/Builtin%;
+
 @ StdioIO@ = *(
   IO@<Maybe@<Int@>> stdin,
   (Int@, World@) { R@<Unit@>; } stdout,
@@ -30,18 +32,18 @@
   (String@, World@) { R@<Maybe@<String@>>; } getenv
 );
 
-(StdioIO@) { Stdio@<IO@>; } StdioIO = (StdioIO@ stdio) {
+(StdioIO@) { Stdio@<IO@>; } StdioIO = (StdioIO@ _unused) {
   @(
-    in: stdio.stdin,
-    out: (Int@ s, World@ w) { stdio.stdout(s, w); },
-    err: (Int@ s, World@ w) { stdio.stderr(s, w); },
-    read: (String@ s, World@ w) { stdio.read(s, w); },
+    in: Builtin.Stdin,
+    out: (Int@ s, World@ w) { Builtin.Stdout(s, w); },
+    err: (Int@ s, World@ w) { Builtin.Stderr(s, w); },
+    read: (String@ s, World@ w) { Builtin.Read(s, w); },
     write: (String@ s, World@ w) {
-      R@<Maybe@<(Int@, World@) { R@<Unit@>; }>> r = stdio.write(s, w);
+      R@<Maybe@<(Int@, World@) { R@<Unit@>; }>> r = Builtin.Write(s, w);
       r.x.?(nothing: @(s: r.s, x: Nothing<OStream@<IO@>>));
       @(s: r.s, x: Just((Int@ s, World@ w) { r.x.just(s, w); }));
     },
-    getenv: (String@ s, World@ w) { stdio.getenv(s, w); }
+    getenv: (String@ s, World@ w) { Builtin.GetEnv(s, w); }
    );
 };
 
