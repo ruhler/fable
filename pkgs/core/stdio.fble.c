@@ -1,6 +1,7 @@
 /**
  * @file stdio.fble.c
- *  Implementation of FbleStdio and FbleStdioMain functions.
+ *  Implementation of /Core/Stdio/IO/Builtin%, FbleStdio and FbleStdioMain
+ *  functions.
  */
 
 #include "stdio.fble.h"
@@ -394,24 +395,6 @@ FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_ = {
   .profile_blocks = { .size = 6, .xs = ProfileBlocks },
 };
 
-// FbleNewStdioIO -- see documentation in stdio.fble.h
-FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile)
-{
-  FbleNameV blocks = { .size = 6, .xs = ProfileBlocks };
-  FbleBlockId block_id = FbleAddBlocksToProfile(profile, blocks);
-
-  FbleValue* fble_stdin = IStream(heap, stdin, block_id);
-  FbleValue* fble_stdout = OStream(heap, stdout, block_id);
-  FbleValue* fble_stderr = OStream(heap, stderr, block_id);
-  FbleValue* fble_read = Read(heap, block_id);
-  FbleValue* fble_write = Write(heap, block_id);
-  FbleValue* fble_getenv = GetEnv(heap, block_id);
-  FbleValue* fble_stdio = FbleNewStructValue_(heap, 6,
-      fble_stdin, fble_stdout, fble_stderr,
-      fble_read, fble_write, fble_getenv);
-  return fble_stdio;
-}
-
 // FbleStdio -- see documentation in stdio.fble.h
 FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
 {
@@ -421,15 +404,14 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   }
 
   FblePushFrame(heap);
-  FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* argP = FbleNewStructValue_(heap, 2, argv[argc - i -1], argS);
     argS = FbleNewUnionValue(heap, 0, argP);
   }
 
-  FbleValue* args[2] = { fble_stdio, argS };
-  FbleValue* computation = FbleApply(heap, func, 2, args, profile);
+  FbleValue* args[1] = { argS };
+  FbleValue* computation = FbleApply(heap, func, 1, args, profile);
 
   if (computation == NULL) {
     return FblePopFrame(heap, NULL);

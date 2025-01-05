@@ -8,6 +8,8 @@ Things to consider doing for the fble-0.4 release.
   and /Core/Debug/Native%. It should be function->profile_block_id + X, not X.
   I think.
 
+* Add helper macros for defining static FbleString and FbleModulePath?
+
 * Add spec tests for full coverage.
 
 * Update tutorials for changes since last release
@@ -18,6 +20,7 @@ Things to consider doing for the fble-0.4 release.
   Remove use of fbledeps in spec tests?
 * Add --compile option to fble-deps?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
+  - FbleString static initialization is one issue.
 
 * Add test and fix for this case:
  1. We load builtin A, which loads dependent builtin B

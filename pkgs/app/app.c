@@ -554,8 +554,6 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
 
-  FbleValue* fble_stdio = FbleNewStdioIO(heap, profile);
-
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   argc = 0;
   while (argv[argc] != NULL) {
@@ -571,10 +569,10 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* fble_width = FbleNewIntValue(heap, width);
   FbleValue* fble_height = FbleNewIntValue(heap, height);
 
-  FbleValue* args[6] = {
-    fble_stdio, fble_event, fble_effect, fble_width, fble_height, argS
+  FbleValue* args[5] = {
+    fble_event, fble_effect, fble_width, fble_height, argS
   };
-  FbleValue* computation = FbleApply(heap, func, 6, args, profile);
+  FbleValue* computation = FbleApply(heap, func, 5, args, profile);
 
   if (computation == NULL) {
     FbleFreeValueHeap(heap);

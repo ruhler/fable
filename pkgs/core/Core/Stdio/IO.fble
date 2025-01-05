@@ -32,28 +32,26 @@
   (String@, World@) { R@<Maybe@<String@>>; } getenv
 );
 
-(StdioIO@) { Stdio@<IO@>; } StdioIO = (StdioIO@ _unused) {
-  @(
-    in: Builtin.Stdin,
-    out: (Int@ s, World@ w) { Builtin.Stdout(s, w); },
-    err: (Int@ s, World@ w) { Builtin.Stderr(s, w); },
-    read: (String@ s, World@ w) { Builtin.Read(s, w); },
-    write: (String@ s, World@ w) {
-      R@<Maybe@<(Int@, World@) { R@<Unit@>; }>> r = Builtin.Write(s, w);
-      r.x.?(nothing: @(s: r.s, x: Nothing<OStream@<IO@>>));
-      @(s: r.s, x: Just((Int@ s, World@ w) { r.x.just(s, w); }));
-    },
-    getenv: (String@ s, World@ w) { Builtin.GetEnv(s, w); }
-   );
-};
+Stdio@<IO@> StdioIO = @(
+  in: Builtin.Stdin,
+  out: (Int@ s, World@ w) { Builtin.Stdout(s, w); },
+  err: (Int@ s, World@ w) { Builtin.Stderr(s, w); },
+  read: (String@ s, World@ w) { Builtin.Read(s, w); },
+  write: (String@ s, World@ w) {
+    R@<Maybe@<(Int@, World@) { R@<Unit@>; }>> r = Builtin.Write(s, w);
+    r.x.?(nothing: @(s: r.s, x: Nothing<OStream@<IO@>>));
+    @(s: r.s, x: Just((Int@ s, World@ w) { r.x.just(s, w); }));
+  },
+  getenv: (String@ s, World@ w) { Builtin.GetEnv(s, w); }
+);
 
-@ Main@ = (StdioIO@, List@<String@>) { IO@<Bool@>; };
+@ Main@ = (List@<String@>) { IO@<Bool@>; };
 
 # Run --
 #   A top-level IO implementation for running a Stdio Main@ program.
 (/Core/Stdio%.Main@) { Main@; }
-Run = (/Core/Stdio%.Main@ main, StdioIO@ stdio, List@<String@> args) {
-  main<IO@>(/Core/Monad/IO%.Monad, StdioIO(stdio), args);
+Run = (/Core/Stdio%.Main@ main, List@<String@> args) {
+  main<IO@>(/Core/Monad/IO%.Monad, StdioIO, args);
 };
 
 @(StdioIO@, Main@, StdioIO, Run);

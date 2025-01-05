@@ -11,20 +11,6 @@
 #include <fble/fble-value.h>
 
 /**
- * @func[FbleNewStdioIO] Allocates a @l{/Core/Stdio/IO%.StdioIO@} instance.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleProfile*][profile] Profile to store execution results to.
- *
- *  @returns[FbleValue*]
- *   The newly allocated @l{StdioIO@} instance.
- *
- *  @sideeffects
- *   @i Adds blocks to the profile.
- *   @i Allocates a value on the heap.
- */
-FbleValue* FbleNewStdioIO(FbleValueHeap* heap, FbleProfile* profile);
-
-/**
  * @func[FbleStdio]
  * @ Executes a @l{/Core/Stdio/IO%.Run(/Core/Stdio%.Main@)} function.
  *  @arg[FbleValueHeap*][heap] The value heap.
