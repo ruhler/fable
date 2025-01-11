@@ -2,6 +2,10 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Reorder /Core/Stdio%.Main@ function args to: Stdio, List, Monad@?
+  Seems more natural to compose by adding extra things to the front.
+  See /Network/Sockets/Hello% for example.
+
 * Rename /Debug/Native% to /Debug/Builtin%?
 
 * Make sure we are using the right profile block id for /SpecTests/Builtin%
@@ -21,6 +25,9 @@ Things to consider doing for the fble-0.4 release.
 * Add --compile option to fble-deps?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
   - FbleString static initialization is one issue.
+
+* export builtin modules in a header file somewhere?
+  Instead of having users export themselves?
 
 * Add test and fix for this case:
  1. We load builtin A, which loads dependent builtin B

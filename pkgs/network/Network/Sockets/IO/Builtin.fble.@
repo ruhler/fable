@@ -1,0 +1,20 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<@>@ IO@ = /Core/Monad/IO%.IO@;
+@ World@ = /Core/Monad/IO%.World@;
+<@>@ R@ = /Core/Monad/IO%.R@;
+
+<<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
+
+@ String@ = /Core/String%.String@;
+
+
+@ Server@ = (World@) { R@<IOStream@<IO@>>; };
+
+(String@, Int@, World@) { R@<Maybe@<IOStream@<IO@>>>; } Client;
+(String@, Int@, World@) { R@<Maybe@<Server@>>; } Server;
+
+@(Client, Server, Server@);

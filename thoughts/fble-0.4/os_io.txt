@@ -143,3 +143,20 @@ Let me pass the base block id to each of my helper functions. I think I should
 always have that info. They can apply the offset themselves to get the right
 final block id.
 
+---
+
+The switch for stdio went great. Now there are two parts to the native code
+for stdio: the builtin module that provides StdioIO, and the main runner that
+supplies string args and interprets the result.
+
+For app, next step would be to move the event and effect functions to a
+builtin: IO@<Event@> and (Effect@, World@) { R@<Unit@>; }.
+
+Any issue with passing state to those functions?
+
+Yes. The Effect function has a static argument which is the App. Let's just
+leave app as is then. We need some way to pass the App state in. Separating
+out Event into a builtin doesn't seem worth it.
+
+Cool. That means next step is to proof of concept an fble package with a
+builtin module to provide a sockets API. Let's discuss that in sockets.txt.

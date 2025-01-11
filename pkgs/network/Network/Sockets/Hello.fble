@@ -1,0 +1,58 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
+<<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+<<@>@>@ Main@ = /Network/Sockets%.Main@;
+<<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
+
+# Client program that connects to given host and port, says 'hello', then
+# returns whatever was written back.
+Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+  % O = /Core/Stream/OStream%(m);
+
+  (IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
+  ForwardAll = (IStream@<M@> in, OStream@<M@> out) {
+    Maybe@<Int@> mb <- m.do(in);
+    mb.?(nothing: m.return(Unit));
+    Unit@ _ <- m.do(out(mb.just));
+    ForwardAll(in, out);
+  };
+
+  String@ host = args.cons.head;
+  Int@ port = /Core/Int/Show%.Read(args.cons.tail.cons.head);
+
+  Maybe@<IOStream@<M@>> mios <- m.do(sockets.client(host, port));
+  mios.?(nothing: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to conect'));
+    m.return(False);
+  });
+
+  IOStream@<M@> ios = mios.just;
+
+  Unit@ _ <- m.do(O.PutLine(ios.out, StrE|'hello\n'));
+  Unit@ _ <- m.do(ForwardAll(ios.in, stdio.out));
+  m.return(True);
+};
+
+/Network/Sockets/IO%.Run(Main);

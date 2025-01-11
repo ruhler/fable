@@ -1,0 +1,39 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
+
+@ String@ = /Core/String%.String@;
+
+# Server@ --
+#  A server can be used to repeatedly accept connections from clients.
+#  The accept operation blocks until a client connects, returning an iostream
+#  connection to the client.
+<<@>@>@ Server@ = <<@>@ M@> { M@<IOStream@<M@>>; };
+
+# Sockets@ --
+#   Interface for TCP sockets.
+<<@>@>@ Sockets@ = <<@>@ M@> { *(
+  # @func[client] Creates a client connection to a server
+  #  @arg[String@][host] The host or ip address of the server.
+  #  @arg[Int@][port] The port to connect to.
+  #  @returns[M@<Maybe@<IOStream@<M@>>>]
+  #   An IOStream connected to the server. Returns Nothing if it was unable to
+  #   connect to the server.
+  (String@, Int@) { M@<Maybe@<IOStream@<M@>>>; } client,
+
+  # @func[server] Creates a TCP server.
+  #  @arg[String@][host] The host or ip address of the server to bind.
+  #  @arg[Int@][port] The port to listen for connections on.
+  #  @returns[M@<Maybe@<Server@<M@>>>]
+  #   A server object for accepting connections. Returns Nothing if it was
+  #   unable to set up the server.
+  (String@, Int@) { M@<Maybe@<Server@<M@>>>; } server
+); };
+
+# A main program that uses the sockets API.
+<<@>@>@ Main@ = <<@>@ M@>(Sockets@<M@>) { /Core/Stdio%.Main@<M@>; };
+
+@(Sockets@, Server@, Main@);

@@ -13,4 +13,7 @@
 # The type Int@ is used for describing a byte.
 <<@>@>@ OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
 
-@(IStream@, OStream@);
+# A pair of input and output streams.
+<<@>@>@ IOStream@ = <<@>@ M@> { *(IStream@<M@> in, OStream@<M@> out); };
+
+@(IStream@, OStream@, IOStream@);

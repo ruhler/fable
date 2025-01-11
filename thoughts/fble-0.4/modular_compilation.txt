@@ -1706,4 +1706,18 @@ minor cleanup to do before the next release. All the goals have been met.
 For next release we can think more about support for loading modules
 dynamically.
 
+---
+
+Can we use macros to simplify coding builtin modules? In an ideal world, I
+have something like:
+
+FBLE_BUILTIN_MODULE_PATH(Path, "Core", "Debug", "Native");
+
+FBLE_BUILTIN_PROFILE_BLOCKS(ProfileBlocks,
+  "/Debug/Core/Native%",
+  "/Debug/Core/Native%.Trace"
+);
+
+An individual string should be easy. Can we do varargs somehow? C99 says only
+for arguments that will end up being passed to a varargs function. Guess not.
 

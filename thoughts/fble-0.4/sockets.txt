@@ -1,0 +1,179 @@
+Fble Sockets API
+================
+I want to write a new fble pkg which provides a sockets API. Let's come up
+with a good API.
+
+There are two parts of the API to come up with:
+1. The abstract polymorphic monadic one.
+2. The builtin implementation for that.
+
+At the very least I want an http server:
+* Bind to a port, accept connections, read/write over that connection.
+
+I may as well have a client API while I'm there:
+* Connect to an ip address, read/write over that connection.
+
+First step: review of existing APIs.
+
+Here's what it looks like in C:
+
+Server:
+* socket function creates a socket
+* bind takes socket and address to bind to.
+* listen sets socket to listening, specifies connection limit
+* accept blocks waiting for a connection, returns a new socket descriptor.
+* You can read and write over the socket descriptor.
+
+Client:
+* socket function creates a socket
+* connect takes a socket and address to connect to.
+* You can read and write over the original socket descriptor 
+
+There are a lot of different options and things you can do, like specify the
+protocol, number of backlog entries, etc. For my API, I'm tempted to err on
+the side of much more restricted and simple. I think it's fine to focus on TCP
+to start.
+
+What API would I want?
+Server:
+* The tricky part is dealing with the asynchronous nature of accepting
+  connections. If I'm fine with everything blocking, I would almost say:
+* Listen - You give an address / port, it returns a function that can accept a
+  connection.
+* Accept - function returned by listen. Whenever you call it, it blocks
+  waiting for the next connection and gives you back a read/write stream.
+  
+Client:
+* Connect: Just like opening a file, but you give an IP address / hostname and
+  port number instead of a file name. It gives you back a read/write stream.
+
+Here's what socket looks like in python:
+
+* They support AF_UNIX and AF_INET
+* They support STREAM and DGRAM
+* Also: gethostname
+
+Server: Create a socket. Call bind, listen, and accept method.
+Client: Create a socket. Call connection method.
+
+Basically a wrapper over the same approach used by C.
+
+The DGRAM API is basically direct sendto and recv. I vote not to consider them
+at all for now for fble. If we want to add them, it probably makes sense to
+have a separate API for them later.
+
+Here's how things look in TCL:
+* Only TCP is supported.
+* Client: socket host port, returns a stream supporting read/write
+  With options to specify local interface, local port, and block/noblock
+* Server: socket -server command port
+  The command is called with read/write stream, client host, and client port
+  when a connection is made.
+  With option to specify local interface.
+* host can be a hostname or IP address. Both specified as strings.
+
+Note: we need a way to close the server. That's one reason server APIs involve
+two different sockets.
+
+The high level API sounds pretty clear to me. Just some details to work out:
+* Do I want an option to choose the local interface?
+ - Yes. Because I want to allow loopback for my profile server.
+* For special options, do we want to always require them all explicitly, or
+  have a generic Options arg with a default value people can use?
+ - Use a generic Options arg, for now with just local interface option for
+   server.
+* How should people close the server? Rely on GC, or explicitly close it?
+ - Close the server using GC.
+* What API to use for read/write streams? A pair of IStream and OStream? Some
+  special kind of IOStream?
+ - Define IOStream as a pair of IStream and OStream.
+* Should read be blocking?
+ - Yes.
+* Should we treat ip address different from hostname?
+ - No. Pass it all as a string. We can convert internally as needed. Like how
+   getaddrinfo does.
+
+Straw proposal, purposely leaning towards overly simple. We can add more
+options later.
+
+The proposed API seems clear to me to start. Let me draft up some .fble files
+with the interface.
+
+The builtin interface will correspond directly with the user interface. Two
+exposed functions: Connect and Server.
+
+---
+
+What's the first thing I want to implement?
+
+How about a server you can connect to over TCP that says 'hello' and exits?
+And a client that connects to a server and says 'hello' and returns the
+reply?
+
+Maybe better for the server to read and modify the data? For example, it
+converts everything to upper case. Or just says: "hello. Here's what I got:"
+and then gives back verbatim. Sounds reasonable.
+
+I should be able to implement and test these before using real sockets.
+
+I drafted up my client program. Next step is to write a pure test case for it.
+
+---
+
+What's the idea behind the test I want to write?
+
+Eventually I'll want to be able to write tests for my http server. I would
+like to send sample requests and verify I get an expected result? Not clear.
+It might be easier to test at an internal interface level, like the internal
+function compute the result of a given request.
+
+---
+
+I want to write a test for the native sockets implementation, so we make sure
+it works on both Linux and Windows. The test case I have in mind is to write a
+client and a server, find a free port on the machine, start the server,
+connect with the client, send some messages back and forth, and verify they
+got where they needed to go.
+
+In an ideal world we could implement client and server and run the test as a
+pure test. But that gets into the territory of concurrency and non-determinism
+within fble, which I don't want or need to deal with right now. Remember the
+main goal right now is to test out modularity of IO.
+
+Honestly I don't see much value to pure tests at the moment. Making sure it
+compiles perhaps. Otherwise it's just a few lines of fble code which I'm not
+worried about.
+
+I suggest the following:
+1. Implement my client with native tcp support on linux. Test it manually with
+netcat.
+2. Implement my server with native tcp support on linux. Test it manually with
+netcat.
+3. Write my real test case in linux, automated.
+4. Get the test to work on Windows.
+
+Review of what my client and server should do:
+* Probably server should support multiple connections. How does it know when
+  to stop?
+* The client can just send a string to the server, read the result back, and
+  print what it got back.
+
+How about the server waits for a connection, keeps track of how many
+connections it has, for each line sent by the client, print the connection
+number followed by the line content back to the client. Have a command line
+arg for how many client connections to accept before quitting.
+
+Sample test:
+
+  server -n 2 -p 8910 &
+  client -p 8910 -m "hello" > c1.txt &
+  client -p 8910 -m "there" > c2.txt
+
+Expected c1.txt:
+  1. hello
+
+Expected c2.txt:
+  2. there
+
+But how does the server know how much to read? There's no way for the client
+to say end of file. Read a single line perhaps? Sure.

@@ -1,0 +1,38 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<@>@ IO@ = /Core/Monad/IO%.IO@;
+@ World@ = /Core/Monad/IO%.World@;
+<@>@ R@ = /Core/Monad/IO%.R@;
+
+@ String@ = /Core/String%.String@;
+
+<<@>@>@ Server@ = /Network/Sockets%.Server@;
+<<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
+
+% Builtin = /Network/Sockets/IO/Builtin%;
+
+Sockets@<IO@> SocketsIO = @(
+  client: (String@ host, Int@ port, World@ w) {
+    Builtin.Client(host, port, w);
+  },
+
+  server: (String@ host, Int@ port, World@ w) {
+    R@<Maybe@<Builtin.Server@>> r = Builtin.Server(host, port, w);
+    r.x.?(nothing: @(s: r.s, x: Nothing<Server@<IO@>>));
+    @(s: r.s, x: Just((World@ w) { r.x.just(w); }));
+  }
+);
+
+# Run --
+#   A top-level IO implementation for running a Sockets Main@ progrma.
+(/Network/Sockets%.Main@) { /Core/Stdio/IO%.Main@; }
+Run = (/Network/Sockets%.Main@ main) {
+  /Core/Stdio/IO%.RunIO(main<IO@>(SocketsIO));
+};
+
+@(Run);
