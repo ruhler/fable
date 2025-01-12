@@ -14,6 +14,11 @@ namespace eval "pkgs/app" {
     fbld_check_dc $::b/pkgs/network/$x.dc $::s/pkgs/network/$x
   }
 
-  # fble-hello program.
+  # fble-hello-client program.
+  # TODO: Rename this fble-network-client or some such and install it.
   stdio $::b/pkgs/network/fble-hello-client "/Network/Sockets/Hello%" "network" ""
+
+  # fble-network-echo program.
+  stdio $::b/pkgs/network/fble-network-echo "/Network/Echo%" "network" ""
+  install $::b/pkgs/network/fble-network-echo $::config::bindir/fble-network-echo
 }

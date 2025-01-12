@@ -1,0 +1,69 @@
+
+
+# Implementation of RFC 862 TCP-based Echo Protocol
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Int@ = /Core/Int%.Int@;
+% Decr = /Core/Int%.Decr;
+% IsZero = /Core/Int/Eq%.IsZero;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
+<<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+<<@>@>@ Main@ = /Network/Sockets%.Main@;
+<<@>@>@ Server@ = /Network/Sockets%.Server@;
+<<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
+
+Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+  % O = /Core/Stream/OStream%(m);
+
+  (IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
+  ForwardAll = (IStream@<M@> in, OStream@<M@> out) {
+    Maybe@<Int@> mb <- m.do(in);
+    mb.?(nothing: m.return(Unit));
+    Unit@ _ <- m.do(out(mb.just));
+    ForwardAll(in, out);
+  };
+
+  String@ host = args.cons.head;
+  Int@ port = /Core/Int/Show%.Read(args.cons.tail.cons.head);
+
+  Maybe@<Server@<M@>> ms <- m.do(sockets.server(host, port));
+  ms.?(nothing: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to serve'));
+    m.return(False);
+  });
+
+  Server@<M@> s = ms.just;
+
+  (Int@) { M@<Unit@>; } Serve = (Int@ n) {
+    IsZero(n).?(true: m.return(Unit));
+    IOStream@<M@> ios <- m.do(s);
+    Unit@ _ <- m.do(ForwardAll(ios.in, ios.out));
+    Serve(Decr(n));
+  };
+
+  # TODO: make number of iterations a command line argument.
+  Unit@ _ <- m.do(Serve(Int|2));
+  m.return(True);
+};
+
+/Network/Sockets/IO%.Run(Main);

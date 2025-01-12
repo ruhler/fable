@@ -2,6 +2,15 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Install fble-network-echo, clean up and document command line options.
+* Install fble-network-client, clean up and document command line options.
+  Replaces /Network/Sockets/Hello%.
+* Write fble-network-discard, fble-network-chargen servers.
+* Add test case for TCP client/server connection.
+* Test and fix windows TCP sockets support.
+
+* Return error messages in Sockets interface on failure to connect, serve, accept?
+
 * Reorder /Core/Stdio%.Main@ function args to: Stdio, List, Monad@?
   Seems more natural to compose by adding extra things to the front.
   See /Network/Sockets/Hello% for example.
@@ -49,6 +58,7 @@ Things to consider doing for the fble-0.4 release.
 * http profiler server
  - Add support for HEAD method.
  - Return (501) NOT IMPLEMENTED for any method other than GET, HEAD.
+ - port to fble
 
 * Fbld C rewrite
  - Separate out loc.h, text.h, markup.h, etc?

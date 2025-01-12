@@ -210,3 +210,22 @@ Anyway, cool idea to think about after I get the basics working. Maybe I can
 base my test around these protocols instead of an arbitrary one that I make
 up.
 
+I suppose we could implement those three servers: echo, discard, chargen. What
+client would I use to test this?
+
+echo and chargen respond back until the connection is closed, but by the time
+the connection is closed, I can't read more any way. So connection closed by
+the server shouldn't be the indicator for when to stop the client.
+
+Maybe: client sends a given message to the server, then reads up to N bytes of
+responds, then exits. This gives us:
+* echo - Make N as many characters as we sent, verify we get back what we sent.
+* discard - Make N as many characters as we sent, verify we get back nothing.
+* chargen - Make N as many characters as we want, verify we got back what we
+  want.
+
+Anyway, next thing is to implement a server and get that up and running.
+
+Hmm... Concern: when do we stop these servers? They run forever, right? Maybe
+add a number of connections as an option for my server to accept. For the
+first draft, don't worry about it.
