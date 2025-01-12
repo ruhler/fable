@@ -177,3 +177,21 @@ Expected c2.txt:
 
 But how does the server know how much to read? There's no way for the client
 to say end of file. Read a single line perhaps? Sure.
+
+---
+
+Question: The C api for getaddrinfo takes the port number as a string. That
+way you could, for example, pass "http" as the port number, and it gets
+translated to 80. Do we want to expose that in the fble sockets API? I kind of
+feel like no. It doesn't feel portable to me? What does tcl do? TCL says it
+can be a service name, where supported. So maybe better just use that? Sure.
+
+Actually, no. Let me keep it as Int@. If we really want a registry based on
+service name, we can implement that at the fble level and have it consistent
+across OS.
+
+---
+
+I sketched out the implementation for the client. For some reason I'm getting
+SIGPIPE when I try to write to the connection. Needs debug.
+
