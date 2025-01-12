@@ -5,12 +5,15 @@
 
 #define _POSIX_C_SOURCE 200112L  // for getaddrinfo
 
+#include <assert.h>       // for assert
+#include <stdio.h>        // for perror
 #include <string.h>       // for memset
 #include <sys/types.h>    // for socket
 #include <sys/socket.h>   // for socket
 #include <netdb.h>        // for getaddrinfo
 #include <unistd.h>       // for read, write, close
 
+#include <fble/fble-alloc.h>      // for FbleFree
 #include <fble/fble-function.h>
 #include <fble/fble-loc.h>
 #include <fble/fble-module-path.h>
@@ -190,7 +193,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId modul
 static FbleValue* OStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
-    .num_args = 1,
+    .num_args = 2,
     .num_statics = 1,
     .run = &OStreamImpl,
   };
@@ -227,15 +230,28 @@ static FbleValue* ClientImpl(
   hints.ai_protocol = 0;
 
   struct addrinfo* result = NULL;
-  getaddrinfo(host, portstr, &hints, &result);
+  if (getaddrinfo(host, portstr, &hints, &result) != 0) {
+    // For debug. TODO: return the error message instead?
+    perror("getaddrinfo");
+    assert(result == NULL);
+  }
+  FbleFree(host);
 
   int sfd = -1;
   for (struct addrinfo* rp = result; sfd == -1 && rp != NULL; rp = rp->ai_next) {
     sfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sfd < 0 && connect(sfd, rp->ai_addr, rp->ai_addrlen) == -1) {
+    if (sfd == -1) {
+      // For debug. TODO: return the error message instead?
+      perror("socket");
+      continue;
+    }
+
+    if (connect(sfd, rp->ai_addr, rp->ai_addrlen) == -1) {
       sfd = -1;
+      continue;
     }
   }
+
   freeaddrinfo(result);
 
   FbleValue* mios;

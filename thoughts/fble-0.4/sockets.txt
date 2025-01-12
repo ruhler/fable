@@ -195,3 +195,18 @@ across OS.
 I sketched out the implementation for the client. For some reason I'm getting
 SIGPIPE when I try to write to the connection. Needs debug.
 
+---
+
+Maybe for my test program I can use a standard protocol, like the echo
+protocol? The way that works is: any data sent is received back until the
+connection is closed. Sounds reasonable I suppose.
+
+Other options:
+* discard, chargen
+
+chargen has a standard pattern that repeats until the connection is closed.
+
+Anyway, cool idea to think about after I get the basics working. Maybe I can
+base my test around these protocols instead of an arbitrary one that I make
+up.
+
