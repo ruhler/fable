@@ -6,12 +6,19 @@
 #define _POSIX_C_SOURCE 200112L  // for getaddrinfo
 
 #include <assert.h>       // for assert
+#include <inttypes.h>     // for PRIx64
 #include <stdio.h>        // for perror
 #include <string.h>       // for memset
+#include <unistd.h>       // for read, write, close
+
+#ifdef __WIN32
+#include <winsock2.h>     // for socket
+#include <ws2tcpip.h>     // for getaddrinfo
+#else
 #include <sys/types.h>    // for socket
 #include <sys/socket.h>   // for socket
 #include <netdb.h>        // for getaddrinfo
-#include <unistd.h>       // for read, write, close
+#endif
 
 #include <fble/fble-alloc.h>      // for FbleFree
 #include <fble/fble-function.h>
@@ -42,8 +49,8 @@ static FbleValue* ServerImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
 
-static FbleValue* IStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
-static FbleValue* OStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
+static FbleValue* NewIStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
+static FbleValue* NewOStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
 static FbleValue* Client(FbleValueHeap* heap, FbleBlockId module_block_id);
 static FbleValue* Accept(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id);
 static FbleValue* Server(FbleValueHeap* heap, FbleBlockId module_block_id);
@@ -170,7 +177,7 @@ static FbleValue* OStreamImpl(
 }
 
 /**
- * @func[IStream] Allocates an @l{IStream@} for a socket.
+ * @func[NewIStream] Allocates an @l{IStream@} for a socket.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleValue*][sfd] The socket to allocate the @l{IStream@} for.
  *  @arg[FbleBlockId][module_block_id]
@@ -181,7 +188,7 @@ static FbleValue* OStreamImpl(
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-static FbleValue* IStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
+static FbleValue* NewIStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
     .num_args = 1,
@@ -192,7 +199,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId modul
 }
 
 /**
- * @func[OStream] Allocates an @l{OStream@} for a socket.
+ * @func[NewOStream] Allocates an @l{OStream@} for a socket.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[FbleValue*][sfd] The socket to allocate the @l{OStream@} for.
  *  @arg[FbleBlockId][module_block_id]
@@ -203,7 +210,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId modul
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-static FbleValue* OStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
+static FbleValue* NewOStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
     .num_args = 2,
@@ -233,7 +240,7 @@ static FbleValue* ClientImpl(
   FbleValue* world = args[2];
 
   char portstr[10];
-  snprintf(portstr, 10, "%ld", port);
+  snprintf(portstr, 10, "%" PRIx64, port);
 
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
@@ -273,8 +280,8 @@ static FbleValue* ClientImpl(
   } else {
     FbleBlockId module_block_id = function->profile_block_id - CLIENT_BLOCK_OFFSET;
     FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, &OnFree);
-    FbleValue* istream = IStream(heap, sfd_value, module_block_id);
-    FbleValue* ostream = OStream(heap, sfd_value, module_block_id);
+    FbleValue* istream = NewIStream(heap, sfd_value, module_block_id);
+    FbleValue* ostream = NewOStream(heap, sfd_value, module_block_id);
     FbleValue* ios = FbleNewStructValue_(heap, 2, istream, ostream);
     mios = FbleNewUnionValue(heap, 0, ios);  // Just(ios);
   }
@@ -327,8 +334,8 @@ static FbleValue* AcceptImpl(
 
   FbleBlockId module_block_id = function->profile_block_id - ACCEPT_BLOCK_OFFSET;
   FbleValue* cfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)cfd, &OnFree);
-  FbleValue* istream = IStream(heap, cfd_value, module_block_id);
-  FbleValue* ostream = OStream(heap, cfd_value, module_block_id);
+  FbleValue* istream = NewIStream(heap, cfd_value, module_block_id);
+  FbleValue* ostream = NewOStream(heap, cfd_value, module_block_id);
   FbleValue* ios = FbleNewStructValue_(heap, 2, istream, ostream);
   return FbleNewStructValue_(heap, 2, world, ios);
 }
@@ -353,7 +360,7 @@ static FbleValue* ServerImpl(
   FbleValue* world = args[2];
 
   char portstr[10];
-  snprintf(portstr, 10, "%ld", port);
+  snprintf(portstr, 10, "%" PRIx64, port);
 
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
@@ -449,6 +456,14 @@ static FbleValue* Server(FbleValueHeap* heap, FbleBlockId module_block_id)
 
 static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunction* function, FbleValue** args)
 {
+#ifdef __WIN32
+  WSADATA wsaData;
+  if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    // Uh... what to do here?
+    assert(false && "couldn't initialize windows sockets?");
+  }
+#endif // __WIN32
+
   FbleBlockId module_block_id = function->profile_block_id;
 
   FblePushFrame(heap);
