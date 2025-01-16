@@ -1,0 +1,138 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Int@ = /Core/Int%.Int@;
+% Neg = /Core/Int%.Neg;
+% Decr = /Core/Int%.Decr;
+% IsZero = /Core/Int/Eq%.IsZero;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
+<<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+<<@>@>@ Main@ = /Network/Sockets%.Main@;
+<<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
+
+@ Args@ = *(
+  Bool@ help,
+  String@ error,
+  String@ hostname,
+  Int@ port,
+  String@ message,
+  Int@ num_bytes
+);
+
+Args@ DefaultArgs = @(
+  help: False,
+  error: Str|'',
+  hostname: Str|'localhost',
+  port: Int|7,
+  message: Str|'hello',
+  num_bytes: Neg(Int|1)
+);
+
+(List@<String@>, Args@) { Args@; }
+GetArgs = (List@<String@> args, Args@ default) {
+  args.?(nil: default);
+
+  String@ arg = args.cons.head;
+  /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+    List[Str|'-h', Str|'--help'], arg).?(true: {
+    default.@(help: True);
+  });
+
+  args.cons.tail.?(nil: {
+    default.@(error: Strs[Str|'missing arg to option ', arg]);
+  });
+
+  String@ value = args.cons.tail.cons.head;
+  List@<String@> nargv = args.cons.tail.cons.tail;
+
+  Args@ nargs = {
+    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+      List[Str|'--host'], arg).?(true: {
+        default.@(hostname: value);
+      });
+
+    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+      List[Str|'-p', Str|'--port'], arg).?(true: {
+        default.@(port: /Core/Int/Show%.Read(value));
+      });
+
+    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+      List[Str|'-m', Str|'--message'], arg).?(true: {
+        default.@(message: value);
+      });
+
+    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+      List[Str|'-n', Str|'--num-bytes'], arg).?(true: {
+        default.@(num_bytes: /Core/Int/Show%.Read(value));
+      });
+
+    default.@(error: Strs[Str|'unrecognized option ', arg]);
+  };
+
+  nargs.error.?(cons: nargs);
+  GetArgs(nargv, nargs);
+};
+
+Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Monad@<M@> m, Stdio@<M@> stdio, List@<String@> argv) {
+  % O = /Core/Stream/OStream%(m);
+
+  (Int@, IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
+  ForwardN = (Int@ n, IStream@<M@> in, OStream@<M@> out) {
+    IsZero(n).?(true: m.return(Unit));
+    Int@ nn = /Core/Int/Eq%.Gt(n, Int|0).?(true: Decr(n), false: n);
+
+    Maybe@<Int@> mb <- m.do(in);
+    mb.?(nothing: m.return(Unit));
+    Unit@ _ <- m.do(out(mb.just));
+    ForwardN(nn, in, out);
+  };
+
+  Args@ args = GetArgs(argv, DefaultArgs);
+  args.help.?(true: {
+    Unit@ _ <- m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
+    m.return(True);
+  });
+
+  args.error.?(cons: {
+    Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
+    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    m.return(False);
+  });
+
+  Maybe@<IOStream@<M@>> mios <- m.do(sockets.client(args.hostname, args.port));
+  mios.?(nothing: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to conect'));
+    m.return(False);
+  });
+
+  IOStream@<M@> ios = mios.just;
+
+  Unit@ _ <- m.do(O.PutStr(ios.out, args.message));
+  Unit@ _ <- m.do(ForwardN(args.num_bytes, ios.in, stdio.out));
+  m.return(True);
+};
+
+/Network/Sockets/IO%.Run(Main);

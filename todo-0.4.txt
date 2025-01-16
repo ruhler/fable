@@ -2,9 +2,6 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Install fble-network-echo, clean up and document command line options.
-* Install fble-network-client, clean up and document command line options.
-  Replaces /Network/Sockets/Hello%.
 * Write fble-network-discard, fble-network-chargen servers.
 * Add test case for TCP client/server connection.
 * Test and fix windows TCP sockets support.

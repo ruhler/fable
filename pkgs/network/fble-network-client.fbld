@@ -1,0 +1,30 @@
+@usage[fble-network-client] sockets test client
+ @synopsis
+ @ @l[fble-network-client] \[@a[OPTION]...\]
+
+ @description
+  Connects to a server, sends a message, and reads some bytes of the response.
+
+ @options
+  @opt[@l[-h], @l[--help]]
+  @ print usage help and exit
+
+  @opt[@l[--host] \[@l[host]\]]
+  @ host to connect to (default: localhost)
+
+  @opt[@l[-p], @l[--port] \[@l[port]\]]
+  @ the port to connect to (default: 7)
+
+  @opt[@l[-m], @l[--message] \[@l[MESSAGE]\]]
+  @ message to send to the server
+
+  @opt[@l[-n], @l[--num-bytes] \[@l[count]\]]
+  @ number of bytes of response to read, -1 for unlimited (default: -1)
+
+ @exitstatus
+  @def[0] Success.
+  @def[1] Error of some sort or another.
+
+ @examples
+  @ex fble-network-client --host localhost -p 8007 -m hello -n 5
+   Connects to localhost:8007, says hello, and reads five bytes back.

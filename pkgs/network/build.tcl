@@ -7,7 +7,13 @@ namespace eval "pkgs/app" {
     obj $::b/pkgs/network/$x.o $::s/pkgs/network/$x.c \
       "-I $::s/include -I $::s/pkgs/core"
   }
-  pkg network [list core] $::b/pkgs/network/Network/Apps/Echo/Usage.fble $objs
+
+  set usages [list \
+    $::b/pkgs/network/Network/Apps/Client/Usage.fble \
+    $::b/pkgs/network/Network/Apps/Echo/Usage.fble \
+  ]
+
+  pkg network [list core] $usages $objs
 
   # Check doc comments
   foreach {x} [build_glob $::s/pkgs/network -tails "*.h" "*.c"] {
@@ -20,9 +26,12 @@ namespace eval "pkgs/app" {
     set ldflags "-lWs2_32"
   }
 
-  # fble-hello-client program.
-  # TODO: Rename this fble-network-client or some such and install it.
-  stdio $::b/pkgs/network/fble-hello-client "/Network/Sockets/Hello%" "network" $ldflags
+  # fble-network-client program.
+  fbld_help_fble_usage $::b/pkgs/network/Network/Apps/Client/Usage.fble $::s/pkgs/network/fble-network-client.fbld
+  fbld_man_usage $::b/pkgs/network/fble-network-client.1 $::s/pkgs/network/fble-network-client.fbld
+  install $::b/pkgs/network/fble-network-client.1 $::config::mandir/man1/fble-network-client.1
+  stdio $::b/pkgs/network/fble-network-client "/Network/Apps/Client%" "network" $ldflags
+  install $::b/pkgs/network/fble-network-client $::config::bindir/fble-network-client
 
   # fble-network-echo program.
   fbld_help_fble_usage $::b/pkgs/network/Network/Apps/Echo/Usage.fble $::s/pkgs/network/fble-network-echo.fbld
