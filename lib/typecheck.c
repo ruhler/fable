@@ -1355,13 +1355,17 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       for (size_t i = 0; i < fieldc; ++i) {
         FbleTaggedExpr* arg = struct_expr->args.xs + a;
         if (a < struct_expr->args.size && FbleNamesEqual(arg->name, struct_type->fields.xs[i].name)) {
-          // Take the field value from the provided argument.
-          FbleAppendToVector(struct_copy->fields, FbleCopyTc(args[a].tc));
-          if (!FbleTypesEqual(th, struct_type->fields.xs[i].type, args[a].type)) {
-            ReportError(args[a].tc->loc,
-                "expected type %t, but found %t\n",
-                struct_type->fields.xs[i].type, args[a].type);
-            error = true;
+          if (args[a].tc != NULL) {
+            // Take the field value from the provided argument.
+            FbleAppendToVector(struct_copy->fields, FbleCopyTc(args[a].tc));
+            if (!FbleTypesEqual(th, struct_type->fields.xs[i].type, args[a].type)) {
+              ReportError(args[a].tc->loc,
+                  "expected type %t, but found %t\n",
+                  struct_type->fields.xs[i].type, args[a].type);
+              error = true;
+            }
+          } else {
+            FbleAppendToVector(struct_copy->fields, NULL);
           }
           a++;
         } else {

@@ -1,0 +1,12 @@
+# @@fble-test@@ compile-error 12:17
+@ Unit@ = *();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+@ Triple@ = *(Bool@ x, Bool@ y, Bool@ z);
+Triple@ a = @(x: True, y: False, z: False);
+
+# The value for 'z' is maltyped.
+a.@(y: True, z: zz);
