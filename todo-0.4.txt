@@ -2,6 +2,8 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Something is broken about build dependencies for /Network/Echo/Usage.fble
+
 * Install fble-network-echo, clean up and document command line options.
 * Install fble-network-client, clean up and document command line options.
   Replaces /Network/Sockets/Hello%.
@@ -9,7 +11,13 @@ Things to consider doing for the fble-0.4 release.
 * Add test case for TCP client/server connection.
 * Test and fix windows TCP sockets support.
 
+* Better error location/message for missing close brace to argument.
+  For example, in fble-network-echo.fbld, missing the close brace after
+  @l[--help] gives an error message saying unexpected end of file. It was hard
+  to track down the real error location.
+
 * Return error messages in Sockets interface on failure to connect, serve, accept?
+  Yes, definitely needed.
 
 * Reorder /Core/Stdio%.Main@ function args to: Stdio, List, Monad@?
   Seems more natural to compose by adding extra things to the front.

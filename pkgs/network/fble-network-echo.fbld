@@ -1,0 +1,27 @@
+@usage[fble-network-echo] echo protocol server
+ @synopsis
+ @ @l[fble-network-echo] \[@a[OPTION]...\]
+
+ @description
+  Runs an RFC 862 TCP-based Echo Protocol
+
+ @options
+  @opt[@l[-h], @l[--help]]
+  @ print usage help and exit
+
+  @opt[@l[--host] \[@l[host]\]]
+  @ the host interface to bind to (default: localhost)
+
+  @opt[@l[-p], @l[--port] \[@l[port]\]]
+  @ the port to bind to (default: 7)
+
+  @opt[@l[-n], @l[--num-clients] \[@l[count]\]]
+  @ exit after @a[count] clients have connected, -1 for unlimited (default: -1)
+
+ @exitstatus
+  @def[0] Success.
+  @def[1] Error of some sort or another.
+
+ @examples
+  @ex fble-network-echo -p 8007 -n 4
+   Runs Echo protocol on port 8007, exiting after 4 clients connect.

@@ -236,23 +236,24 @@ static FbleValue* ClientImpl(
   (void)profile;
 
   char* host = FbleStringValueAccess(args[0]);
-  int64_t port = FbleIntValueAccess(args[1]);
+  int port = (int)FbleIntValueAccess(args[1]);
   FbleValue* world = args[2];
 
   char portstr[10];
-  snprintf(portstr, 10, "%" PRIx64, port);
+  snprintf(portstr, 10, "%d", port);
 
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = 0;
+  hints.ai_flags = AI_NUMERICSERV;
   hints.ai_protocol = 0;
 
   struct addrinfo* result = NULL;
-  if (getaddrinfo(host, portstr, &hints, &result) != 0) {
+  int s = getaddrinfo(host, portstr, &hints, &result);
+  if (s != 0) {
     // For debug. TODO: return the error message instead?
-    perror("getaddrinfo");
+    fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(s));
     assert(result == NULL);
   }
   FbleFree(host);
@@ -356,23 +357,25 @@ static FbleValue* ServerImpl(
   (void)profile;
 
   char* host = FbleStringValueAccess(args[0]);
-  int64_t port = FbleIntValueAccess(args[1]);
+  int port = (int)FbleIntValueAccess(args[1]);
   FbleValue* world = args[2];
 
   char portstr[10];
-  snprintf(portstr, 10, "%" PRIx64, port);
+  snprintf(portstr, 10, "%d", port);
 
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_flags = 0;
+  hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
   hints.ai_protocol = 0;
 
   struct addrinfo* result = NULL;
-  if (getaddrinfo(host, portstr, &hints, &result) != 0) {
+
+  int s = getaddrinfo(host, portstr, &hints, &result);
+  if (s != 0) {
     // For debug. TODO: return the error message instead?
-    perror("getaddrinfo");
+    fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(s));
     assert(result == NULL);
   }
   FbleFree(host);
