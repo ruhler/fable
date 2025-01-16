@@ -106,7 +106,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Monad@<M@> m, Stdio@<M@> stdio, Lis
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, /Network/Echo/Usage%));
+    Unit@ _ <- m.do(O.PutStr(stdio.out, /Network/Apps/Echo/Usage%));
     m.return(True);
   });
 

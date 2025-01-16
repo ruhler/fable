@@ -54,7 +54,7 @@ namespace eval "pkgs" {
       set target $::config::datadir/fble/$name/$x
       install $gen $target
 
-      fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath"
+      fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $gens
       lappend objs $::b/pkgs/$name/$x.o
     }
 

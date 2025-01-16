@@ -7,7 +7,7 @@ namespace eval "pkgs/app" {
     obj $::b/pkgs/network/$x.o $::s/pkgs/network/$x.c \
       "-I $::s/include -I $::s/pkgs/core"
   }
-  pkg network [list core] $::b/pkgs/network/Network/Echo/Usage.fble $objs
+  pkg network [list core] $::b/pkgs/network/Network/Apps/Echo/Usage.fble $objs
 
   # Check doc comments
   foreach {x} [build_glob $::s/pkgs/network -tails "*.h" "*.c"] {
@@ -25,9 +25,9 @@ namespace eval "pkgs/app" {
   stdio $::b/pkgs/network/fble-hello-client "/Network/Sockets/Hello%" "network" $ldflags
 
   # fble-network-echo program.
-  fbld_help_fble_usage $::b/pkgs/network/Network/Echo/Usage.fble $::s/pkgs/network/fble-network-echo.fbld
+  fbld_help_fble_usage $::b/pkgs/network/Network/Apps/Echo/Usage.fble $::s/pkgs/network/fble-network-echo.fbld
   fbld_man_usage $::b/pkgs/network/fble-network-echo.1 $::s/pkgs/network/fble-network-echo.fbld
   install $::b/pkgs/network/fble-network-echo.1 $::config::mandir/man1/fble-network-echo.1
-  stdio $::b/pkgs/network/fble-network-echo "/Network/Echo%" "network" $ldflags
+  stdio $::b/pkgs/network/fble-network-echo "/Network/Apps/Echo%" "network" $ldflags
   install $::b/pkgs/network/fble-network-echo $::config::bindir/fble-network-echo
 }

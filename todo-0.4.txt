@@ -2,8 +2,6 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Something is broken about build dependencies for /Network/Echo/Usage.fble
-
 * Install fble-network-echo, clean up and document command line options.
 * Install fble-network-client, clean up and document command line options.
   Replaces /Network/Sockets/Hello%.
