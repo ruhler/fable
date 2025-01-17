@@ -39,4 +39,9 @@ namespace eval "pkgs/app" {
   install $::b/pkgs/network/fble-network-echo.1 $::config::mandir/man1/fble-network-echo.1
   stdio $::b/pkgs/network/fble-network-echo "/Network/Apps/Echo%" "network" $ldflags
   install $::b/pkgs/network/fble-network-echo $::config::bindir/fble-network-echo
+
+  # Sockets test
+  test $::b/pkgs/network/sockets-test.tr \
+    "$::s/pkgs/network/sockets-test.tcl $::b/pkgs/network/fble-network-echo $::b/pkgs/network/fble-network-client" \
+    "tclsh8.6 $::s/pkgs/network/sockets-test.tcl $::b/pkgs/network/fble-network-echo $::b/pkgs/network/fble-network-client"
 }

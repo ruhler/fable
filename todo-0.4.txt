@@ -2,8 +2,7 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Write fble-network-discard, fble-network-chargen servers.
-* Add test case for TCP client/server connection.
+* Write fble-network-discard, fble-network-chargen servers?
 * Test and fix windows TCP sockets support.
 
 * Better error location/message for missing close brace to argument.
@@ -12,7 +11,7 @@ Things to consider doing for the fble-0.4 release.
   to track down the real error location.
 
 * Return error messages in Sockets interface on failure to connect, serve, accept?
-  Yes, definitely needed.
+  Yes, definitely needed. Or an error code?
 
 * Reorder /Core/Stdio%.Main@ function args to: Stdio, List, Monad@?
   Seems more natural to compose by adding extra things to the front.
