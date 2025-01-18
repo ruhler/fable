@@ -23,6 +23,7 @@
 #   \\ - backslash
 #   \n - newline
 #   \t - tab
+#   \r - carriage return
 # 
 # Any other use of \ is undefined.
 (List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
@@ -33,6 +34,7 @@
     Char@ head = chars.cons.tail.cons.head.?(
       '\': Chars.'\',
       'n': Chars.nl,
+      'r': Chars.cr,
       't': Chars.tab,
       : /Core/Undef%.Undef<Char@>.undefined);
     Cons(head, tail);

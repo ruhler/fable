@@ -12,7 +12,9 @@
 
 # Ascii codes for each character.
 % Ascii = @(
-  nl: Int|10, tab: Int|9, '	': Int|9, ' ': Int|32,
+  nl: Int|10, tab: Int|9, cr: Int|13,
+
+  '	': Int|9,  '': Int|13, ' ': Int|32,
 
   '!': Int|33, '"': Int|34, '#': Int|35, '$': Int|36,
   '%': Int|37, '&': Int|38, '''': Int|39, '(': Int|40,
@@ -47,7 +49,7 @@
 # Converts a character to its ascii code value.
 (Char@) { Int@; } Ord = (Char@ c) {
   c.?('
-': Ascii.nl, '	': Ascii.tab, ' ': Ascii.' ',
+': Ascii.nl, '	': Ascii.tab, '': Ascii.cr, ' ': Ascii.' ',
     '!': Ascii.'!', '"': Ascii.'"', '#': Ascii.'#', '$': Ascii.'$',
     '%': Ascii.'%', '&': Ascii.'&', '''': Ascii.'''', '(': Ascii.'(',
     ')': Ascii.')', '*': Ascii.'*', '+': Ascii.'+', ',': Ascii.',',
@@ -92,7 +94,7 @@
     Insert(m, Ord(c), c);
   };
 
-  List@<Char@> chars = List[Chars.nl, Chars.tab,
+  List@<Char@> chars = List[Chars.nl, Chars.tab, Chars.cr,
     Chars.' ', Chars.'!', Chars.'"', Chars.'#', Chars.'$', Chars.'%',
     Chars.'&', Chars.'''', Chars.'(', Chars.')', Chars.'*', Chars.'+',
     Chars.',', Chars.'-', Chars.'.', Chars.'/',

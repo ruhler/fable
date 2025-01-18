@@ -2,10 +2,9 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Write fble-network-discard, fble-network-chargen servers?
 * Test and fix windows TCP sockets support.
 
-* Better error location/message for missing close brace to argument.
+* [fbld] Better error location/message for missing close brace to argument.
   For example, in fble-network-echo.fbld, missing the close brace after
   @l[--help] gives an error message saying unexpected end of file. It was hard
   to track down the real error location.
@@ -13,9 +12,13 @@ Things to consider doing for the fble-0.4 release.
 * Return error messages in Sockets interface on failure to connect, serve, accept?
   Yes, definitely needed. Or an error code?
 
+* Need a way to explicitly close sockets connection?
+  For example, elinks seems to think fble-pprof isn't done writing its
+  response. Or is there some other issue going on there?
+
 * Reorder /Core/Stdio%.Main@ function args to: Stdio, List, Monad@?
   Seems more natural to compose by adding extra things to the front.
-  See /Network/Sockets/Hello% for example.
+  See /Network/Sockets/Apps/Client% for example.
 
 * Rename /Debug/Native% to /Debug/Builtin%?
 
@@ -56,11 +59,6 @@ Things to consider doing for the fble-0.4 release.
 
 * Install the C version of fbld, not the fble version.
 * Clean up stray reference to FbleExecutableModule in aarch64.c or c.c
-
-* http profiler server
- - Add support for HEAD method.
- - Return (501) NOT IMPLEMENTED for any method other than GET, HEAD.
- - port to fble
 
 * Fbld C rewrite
  - Separate out loc.h, text.h, markup.h, etc?

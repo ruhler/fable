@@ -11,7 +11,7 @@
   Unit@ '
 ',
 
-  Unit@ '	', Unit@ ' ', Unit@ '!', Unit@ '"', Unit@ '#', Unit@ '$', Unit@ '%',
+  Unit@ '	', Unit@ '', Unit@ ' ', Unit@ '!', Unit@ '"', Unit@ '#', Unit@ '$', Unit@ '%',
   Unit@ '&', Unit@ '''', Unit@ '(', Unit@ ')', Unit@ '*', Unit@ '+', Unit@ ',',
   Unit@ '-', Unit@ '.', Unit@ '/',
 
@@ -43,6 +43,7 @@ Char@ newline = Char@('
 ': Unit);
 
 Char@ tab = Char@('	': Unit);
+Char@ cr = Char@('': Unit);
 
 # Chars --
 #   A collection of characters that can be referenced more easily than
@@ -50,6 +51,7 @@ Char@ tab = Char@('	': Unit);
 % Chars = @(
   nl: newline,
   tab: tab,
+  cr: cr,
 
   '	': tab,
 

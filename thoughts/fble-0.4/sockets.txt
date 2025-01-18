@@ -229,3 +229,8 @@ Anyway, next thing is to implement a server and get that up and running.
 Hmm... Concern: when do we stop these servers? They run forever, right? Maybe
 add a number of connections as an option for my server to accept. For the
 first draft, don't worry about it.
+
+---
+
+The initial API is there. Not having a way to report back errors is a
+problem, but otherwise it works well enough for a first go.

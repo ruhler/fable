@@ -1,0 +1,157 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Char@ = /Core/Char%.Char@;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Split = /Core/List/Eq%.Split;
+<@>% Get = /Core/List/Length%.Get;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+
+@ String@ = /Core/String%.String@;
+% Lines = /Core/String%.Lines;
+% Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+<<@>@>@ Main@ = /Network/Sockets%.Main@;
+<<@>@>@ Server@ = /Network/Sockets%.Server@;
+<<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
+
+@ Args@ = *(
+  Bool@ help,
+  String@ error,
+  String@ hostname,
+  Int@ port
+);
+
+Args@ DefaultArgs = @(
+  help: False,
+  error: Str|'',
+  hostname: Str|'localhost',
+  port: Int|8123
+);
+
+(List@<String@>, Args@) { Args@; }
+GetArgs = (List@<String@> args, Args@ default) {
+  args.?(nil: default);
+
+  String@ arg = args.cons.head;
+  /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+    List[Str|'-h', Str|'--help'], arg).?(true: {
+    default.@(help: True);
+  });
+
+  args.cons.tail.?(nil: {
+    default.@(error: Strs[Str|'missing arg to option ', arg]);
+  });
+
+  String@ value = args.cons.tail.cons.head;
+  List@<String@> nargv = args.cons.tail.cons.tail;
+
+  Args@ nargs = {
+    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+      List[Str|'--host'], arg).?(true: {
+        default.@(hostname: value);
+      });
+
+    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+      List[Str|'-p', Str|'--port'], arg).?(true: {
+        default.@(port: /Core/Int/Show%.Read(value));
+      });
+
+    default.@(error: Strs[Str|'unrecognized option ', arg]);
+  };
+
+  nargs.error.?(cons: nargs);
+  GetArgs(nargv, nargs);
+};
+
+Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Monad@<M@> m, Stdio@<M@> stdio, List@<String@> argv) {
+  % I = /Core/Stream/IStream%(m);
+  % O = /Core/Stream/OStream%(m);
+
+  (IOStream@<M@>) { M@<Unit@>; }
+  HandleConnection = (IOStream@<M@> ios) {
+    # Get the start line
+    String@ start <- m.do(I.GetLine(ios.in));
+    Unit@ _ <- m.do(O.PutStr(stdio.out, Strs[Str|'start-line: ', start]));
+
+    # Skip past the request headers. We don't care about those.
+    M@<Unit@> SkipHeaders = {
+      String@ line <- m.do(I.GetLine(ios.in));
+      /Core/String/Eq%.Eq(StrE|'\r\n', line).?(true: m.return(Unit));
+      SkipHeaders;
+    };
+    Unit@ _ <- m.do(SkipHeaders);
+
+    List@<String@> start_split = Split(start, (Char@ c) { c.?(' ': True, : False); });
+    String@ method = Get(start_split, Int|0);
+    String@ uri = Get(start_split, Int|1);
+    String@ version = Get(start_split, Int|2);
+
+    List@<String@> uri_split = Split(uri, (Char@ c) { c.?('?': True, : False); });
+    String@ path = uri_split.cons.head;
+    String@ query = {
+      uri_split.cons.tail.?(nil: Str|'');
+      uri_split.cons.tail.cons.head;
+    };
+
+    O.PutStr(ios.out, Lines[
+      StrE|'HTTP/1.1 200 OK',
+      StrE|'Content-Type: text/html\r',
+      StrE|'\r',
+      StrE|'<h1>Request Info</h1>',
+      Strs[StrE|'Method: ', method, StrE|' <br/>'],
+      Strs[StrE|'Path: ', path, StrE|' <br/>'],
+      Strs[StrE|'Query: ', query, StrE|' <br/>'],
+      Strs[StrE|'Version: ', version, StrE|' <br/>']]);
+  };
+
+  Args@ args = GetArgs(argv, DefaultArgs);
+  args.help.?(true: {
+    Unit@ _ <- m.do(O.PutStr(stdio.out, StrE|'<TODO: usage info here>\n'));
+    m.return(True);
+  });
+
+  args.error.?(cons: {
+    Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
+    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    m.return(False);
+  });
+
+  Maybe@<Server@<M@>> ms <- m.do(sockets.server(args.hostname, args.port));
+  ms.?(nothing: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to serve'));
+    m.return(False);
+  });
+
+  Server@<M@> s = ms.just;
+
+  M@<Unit@> Serve = {
+    IOStream@<M@> ios <- m.do(s);
+    Unit@ _ <- m.do(HandleConnection(ios));
+    Serve;
+  };
+
+  Unit@ _ <- m.do(Serve);
+  m.return(True);
+};
+
+/Network/Sockets/IO%.Run(Main);

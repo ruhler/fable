@@ -39,7 +39,7 @@
 
 (Char@) { Bool@; } IsSpace = (Char@ c) {
   /Core/Char/Eq%.Eq(c, Chars.nl).?(true: True);
-  c.?('	': True, ' ': True, : False);
+  c.?('	': True, '': True, ' ': True, : False);
 };
 
 (Char@) { Bool@; } IsNewline = (Char@ c) {

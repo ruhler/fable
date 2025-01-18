@@ -1,4 +1,4 @@
-namespace eval "pkgs/app" {
+namespace eval "pkgs/network" {
 
   # .c library files
   set objs [list]

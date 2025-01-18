@@ -228,3 +228,11 @@ Remember what my goals are.
 
 Perhaps it's time to take a detour from our detour of a detour from improving
 fble performance.
+
+---
+
+Okay, back from the long detour. I can use sockets in fble now. Let's port the
+scratch server over to fble. First goal is to accept an HTTP get request and
+return a page printing the method, path, query, and HTTP version.
+
+What should we call this effort? How about profui? ProfUi?

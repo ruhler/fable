@@ -184,7 +184,7 @@ be fine there.
 
 The last part is how to present the information. I vote for a web server so
 you can use browser as a UI. The variety of information  we may want to
-present is to big to have a single static text file.
+present is too big to have a single static text file.
 
 Each page has the following options:
 * List of 'selected' profile blocks. Removes from the profile tree any paths
@@ -271,7 +271,7 @@ Do!. -> Eval!.sequence!, then you should see only the inputs Eval!.sequence
 into Do! when you look at it.
 
 This is slightly different from before, where we said we would limit all
-traces to, say, onces containing Eval!.sequence!. Now I'm saying as I explore
+traces to, say, ones containing Eval!.sequence!. Now I'm saying as I explore
 up (or down?) from a node, add the path being followed as a filter.
 
 2. Continuation/Dispatch functions showing up high in list.

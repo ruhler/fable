@@ -12,7 +12,7 @@
 // Chars --
 //   The list of characters (in tag order) supported by the /Core/Char%.Char@ type.
 static const char* Chars =
-    "\n\t !\"#$%&'()*+,-./0123456789:;<=>?@"
+    "\n\t\r !\"#$%&'()*+,-./0123456789:;<=>?@"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "[\\]^_`"
     "abcdefghijklmnopqrstuvwxyz"

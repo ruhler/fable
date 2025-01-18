@@ -5,6 +5,7 @@ namespace eval "pkgs" {
     network
     fbld
     md5
+    pprof
     sat
     satgame
     hwdg
