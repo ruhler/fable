@@ -3,8 +3,9 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * pprof viewer with fble profiling report feature parity
-  Get it to work on linux perf profiles.
-  No need to use pprof format yet.
+ - Give short IDs to locations instead of using their names.
+ - Figure out why it's so slow.
+ - Finish the missing sections of the profile report.
 
 * Output profiling samples instead of report from fble.
   Changing how we track/deal with recursion.

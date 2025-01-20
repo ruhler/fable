@@ -37,6 +37,12 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
     Str|'Profile Report',
     Str|'==============',
     Strs[Str|'blocks executed: ?? of ', /Core/Int/Show%.Show(num_locs)]]));
+
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
+    Str|'Block Locations',
+    Str|'---------------',
+    Lines(/Core/List%.Map(profile.locations, /Pprof/Profile/Show%.Location))]));
+
   m.return(True);
 };
 

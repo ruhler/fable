@@ -743,3 +743,11 @@ output with my pprof report.
 ---
 
 Parse implemented in theory. What's next?
+
+I can parse the output from perf. It's just really really slow and uses absurd
+amounts of memory. So we'll need to fix that.
+
+Maybe let's go back and forth. Add a section to the report, improve
+performance, and so on.
+
+Easy section to add: locations.
