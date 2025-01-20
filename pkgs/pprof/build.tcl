@@ -9,4 +9,8 @@ namespace eval "pkgs/pprof" {
   # fble-pprof program.
   stdio $::b/pkgs/pprof/fble-pprof "/Pprof/Server/Main%" "network pprof" ""
   install $::b/pkgs/pprof/fble-pprof $::config::bindir/fble-pprof
+
+  # fble-pprof-report program.
+  stdio $::b/pkgs/pprof/fble-pprof-report "/Pprof/Report%" "network pprof" ""
+  install $::b/pkgs/pprof/fble-pprof-report $::config::bindir/fble-pprof-report
 }

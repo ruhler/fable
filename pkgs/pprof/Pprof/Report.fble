@@ -1,0 +1,43 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+% Lines = /Core/String%.Lines;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+
+<<@>@>% Parse = /Pprof/Perf%.Parse;
+
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
+  % O = /Core/Stream/OStream%(m);
+
+  Maybe@<Profile@> mprofile <- m.do(Parse(m, stdio.in));
+  mprofile.?(nothing: m.return(False));
+  Profile@ profile = mprofile.just;
+
+  Int@ num_locs = /Core/List/Length%.Length(profile.locations);
+
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
+    Str|'Profile Report',
+    Str|'==============',
+    Strs[Str|'blocks executed: ?? of ', /Core/Int/Show%.Show(num_locs)]]));
+  m.return(True);
+};
+
+/Core/Stdio/IO%.Run(Main);

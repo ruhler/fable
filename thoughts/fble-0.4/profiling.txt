@@ -739,3 +739,7 @@ Let's do it.
 To try it out, though, it would be nice if I could read a profile from a file.
 Let's start with parsing perf output. Then I can compare fble-perf-profile
 output with my pprof report.
+
+---
+
+Parse implemented in theory. What's next?
