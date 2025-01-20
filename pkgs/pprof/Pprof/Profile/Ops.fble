@@ -1,7 +1,4 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
 <@>@ List@ = /Core/List%.List@;
@@ -16,6 +13,8 @@
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
 % LocEq = /Pprof/Profile%.LocEq;
+
+% IsSubsequenceOf = /Pprof/Profile/Sequence%.IsSubsequenceOf;
 
 # Remove references to the given location from the profile.
 # 
@@ -39,23 +38,6 @@
   });
 
   p.@(samples, locations);
-};
-
-# Test if the needle is a prefix of the haystack.
-(Sequence@, Sequence@) { Bool@; }
-IsPrefixOf = (Sequence@ needle, Sequence@ haystack) {
-  needle.?(nil: True);
-  haystack.?(nil: False);
-  LocEq(needle.cons.head, haystack.cons.head).?(false: False);
-  IsPrefixOf(needle.cons.tail, haystack.cons.tail);
-};
-
-# Test if the needle is a subsequence of the haystack.
-(Sequence@, Sequence@) { Bool@; }
-IsSubsequenceOf = (Sequence@ needle, Sequence@ haystack) {
-  IsPrefixOf(needle, haystack).?(true: True);
-  haystack.?(nil: False);
-  IsSubsequenceOf(needle, haystack.cons.tail);
 };
 
 # Remove any samples from the profile that do not include the given sequence.

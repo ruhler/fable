@@ -681,3 +681,31 @@ to generate a profile report just like I have today when running -profile.
 That puts me at parity with the fble profile report. Which means I can
 transition over to re-implementing fble profiling to output in my new proposed
 format.
+
+---
+
+How to implement location search?
+* Use a special LocId for the hole? For example, empty string.
+* Allow the special location to appear multiple times in the sequence?
+  I can't think of a use case, but it seems easier to support than worry about
+  handling the case reasonably otherwise.
+
+Hmm... In theory, a single sample could match multiple different locations. I
+feel like to start maybe just do a single subsequence search at a time?
+
+For example, consider:
+  a -> b -> a -> c
+
+I search for: a -> *. That is, I want to count how much time we would save by
+removing calls to location X from a. In this case, this sample shows how much
+we would save by removing b, and how much we would save by removing c.
+
+That simplifies the interface. Don't worry about performance to start. I can
+worry about that plenty soon enough later.
+
+So, what we want is: given a subsequence, compute the self and overall metric
+values from the samples in the profile. Easy, no?
+
+What do I call this? /Pprof/Profile/Summarize? Before I called it a location
+search. That doesn't quite fit now. How about Count?
+
