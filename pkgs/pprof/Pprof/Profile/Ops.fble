@@ -12,7 +12,8 @@
 @ Profile@ = /Pprof/Profile%.Profile@;
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
-% LocEq = /Pprof/Profile%.LocEq;
+
+% LocEq = /Pprof/Profile/Eq%.LocId;
 
 % IsSubsequenceOf = /Pprof/Profile/Sequence%.IsSubsequenceOf;
 

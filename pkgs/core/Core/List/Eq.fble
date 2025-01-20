@@ -19,6 +19,15 @@ Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
   Eq(eq, a.cons.tail, b.cons.tail);
 };
 
+# Has --
+#   Return true if the list contains an element satisfying the given property.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Bool@; }
+Has = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(nil: False);
+  p(l.cons.head).?(true: True);
+  Has(l.cons.tail, p);
+};
+
 # Contains --
 #   Return true if the list contains the given element, false otherwise.
 <@ T@>(Eq@<T@>, List@<T@>, T@) { Bool@; }
@@ -74,4 +83,4 @@ RemoveAll = <@ T@>((T@) { Bool@; } p, List@<T@> l) {
   Cons(l.cons.head, tail);
 };
 
-@(Eq, Contains, Split, RemoveFirst, RemoveAll);
+@(Eq, Has, Contains, Split, RemoveFirst, RemoveAll);

@@ -728,6 +728,14 @@ tests.
 40: 1,2,4
 31: 1,3
 
+---
 
+I have the pure tests setup. What's next? Do we have everything we need to try
+and replace fble profile report?
 
-@(Tests);
+I'm tempted to hack up an fble profile report, worry about cleanup later.
+Let's do it.
+
+To try it out, though, it would be nice if I could read a profile from a file.
+Let's start with parsing perf output. Then I can compare fble-perf-profile
+output with my pprof report.

@@ -1,6 +1,4 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
@@ -43,8 +41,5 @@
   List@<Location@> locations
 );
 
-(LocId@, LocId@) { Bool@; } LocEq = /Core/String/Eq%.Eq;
-
-@(LocId@, Location@, Sequence@, Sample@, Profile@,
-  LocEq);
+@(LocId@, Location@, Sequence@, Sample@, Profile@);
 

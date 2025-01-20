@@ -51,7 +51,7 @@ World';
 Test@ Tests = TestSuite(Str|Stdio, List[
   Test(Str|Return, (Unit@ _) {
     List@<Int@> inputs = HelloWorld;
-    PureResult@<Bool@> wnt = PureResult@<Bool@>(
+    PureResult@<Bool@> wnt = PureResult@(
       PureState@(inputs, Nil<Int@>, Nil<Int@>), True);
     PureResult@<Bool@> got = Run(Monad.return(True), inputs);
     AssertEquals(

@@ -1,0 +1,38 @@
+
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ LocId@ = /Pprof/Profile%.LocId@;
+@ Location@ = /Pprof/Profile%.Location@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+
+Show@<LocId@> LocId = (LocId@ x) { x; };
+
+Show@<Sequence@> Sequence = /Core/List/Show%.Show(LocId);
+
+Show@<Sample@> Sample = (Sample@ x) {
+  Strs[
+    Str|'@(metrics: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, x.metrics),
+    Str|', path: ', Sequence(x.path), Str|')'];
+};
+
+Show@<Location@> Location = (Location@ x) {
+  Strs[
+    x.name, Str|'[', x.id, Str|']: ', x.file, Str|':',
+    /Core/Int/Show%.Show(x.line), Str|':',
+    /Core/Int/Show%.Show(x.col)];
+};
+
+Show@<Profile@> Profile = (Profile@ x) {
+  Strs[
+    Str|'@(metrics: ', /Core/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
+    Str|', samples: ', /Core/List/Show%.Show(Sample, x.samples),
+    Str|', locations: ', /Core/List/Show%.Show(Location, x.locations),
+    Str|')'];
+};
+
+@(Profile, Sample, Sequence, Location, LocId);

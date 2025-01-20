@@ -1,0 +1,80 @@
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+
+<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
+% Monad = /Core/Stdio/Pure%.Monad;
+% Stdio = /Core/Stdio/Pure%.Stdio;
+<@>% Run = /Core/Stdio/Pure%.Run;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Lines = /Core/String%.Lines;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Location@ = /Pprof/Profile%.Location@;
+
+<<@>@>% Parse = /Pprof/Perf%.Parse;
+
+String@ BasicStr = Lines[
+  Str|'    97.80%     0.00%  foo     foo              [.] 0x005567307360',
+  Str|'10 1',
+  Str|'20 1;2',
+  Str|'30 1;2;3',
+  Str|'40 1;2;4',
+  Str|'31 1;3',
+  Str|'    96.14%     0.00%  foo     foo              [.] 0x005567306ff4',
+  Str|'',
+  Str|''
+];
+
+Profile@ BasicProfile = @(
+  metrics: List[Str|'samples'],
+
+  samples: List[
+    @(metrics: List[Int|31], path: List[Str|1, Str|3]),
+    @(metrics: List[Int|40], path: List[Str|1, Str|2, Str|4]),
+    @(metrics: List[Int|30], path: List[Str|1, Str|2, Str|3]),
+    @(metrics: List[Int|20], path: List[Str|1, Str|2]),
+    @(metrics: List[Int|10], path: List[Str|1])
+  ],
+
+  locations: List[
+    Location@(Str|'4', Str|'4', Str|'???', Int|0, Int|0),
+    Location@(Str|'3', Str|'3', Str|'???', Int|0, Int|0),
+    Location@(Str|'2', Str|'2', Str|'???', Int|0, Int|0),
+    Location@(Str|'1', Str|'1', Str|'???', Int|0, Int|0)
+  ]
+);
+
+(String@) { List@<Int@>; } Bytes = (String@ str) {
+  /Core/List%.Map(str, /Core/Char/Ascii%.Ord);
+};
+
+Test@ Tests = TestSuite(Str|Perf, List[
+  Test(Str|Parse, (Unit@ _) {
+    List@<Int@> inputs = Bytes(BasicStr);
+    Maybe@<Profile@> wnt = Just(BasicProfile);
+    Maybe@<Profile@> got = Run(Parse<Pure@>(Monad, Stdio.in), inputs).x;
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(/Pprof/Profile/Eq%.Profile),
+      /Core/Maybe/Show%.Show(/Pprof/Profile/Show%.Profile),
+      wnt, got);
+  })
+]);
+
+@(Tests);

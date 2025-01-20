@@ -1,0 +1,99 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Char@ = /Core/Char%.Char@;
+% IsSpace = /Core/Char/Type%.IsSpace;
+
+@ Int@ = /Core/Int%.Int@;
+% Lt = /Core/Int/Eq%.Lt;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Has = /Core/List/Eq%.Has;
+<@>% Split = /Core/List/Eq%.Split;
+<@>% Get = /Core/List/Length%.Get;
+<@>% Length = /Core/List/Length%.Length;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Location@ = /Pprof/Profile%.Location@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+
+# Parse a profile from the output of running:
+#   perf report -q -g folded,count,0 
+#
+# For use with linux perf profiles.
+<<@>@ M@>(Monad@<M@>, IStream@<M@>) { M@<Maybe@<Profile@>>; }
+Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
+  % I = /Core/Stream/IStream%(m);
+
+  # Adds locations to the profile if needed.
+  (List@<String@>, Profile@) { Profile@; }
+  AddLocs = (List@<String@> locs, Profile@ p) {
+    locs.?(nil: p);
+
+    String@ loc = locs.cons.head;
+    Has(p.locations, (Location@ l) {
+      /Pprof/Profile/Eq%.LocId(l.id, loc);
+    }).?(true: AddLocs(locs.cons.tail, p));
+
+    Location@ l = @(
+      id: loc, name: loc,
+      file: Str|'???', line: Int|0, col: Int|0);
+    AddLocs(locs.cons.tail, p.@(locations: Cons(l, p.locations)));
+  };
+
+  # Adds a sample to the profile.
+  # Fabricates locations on the fly as needed.
+  (Int@, List@<String@>, Profile@) { Profile@; }
+  AddSample = (Int@ value, List@<String@> path, Profile@ p) {
+    AddLocs(path, p.@(samples: Cons(Sample@(List[value], path), p.samples)));
+  };
+
+  (Profile@) { M@<Maybe@<Profile@>>; } ParseInto = (Profile@ p) {
+    String@ line <- m.do(I.GetLine(in));
+
+    # We're done once we reach the next line of the form:
+    #    100.00%     0.00%  <cmd>  <ex>      [.] __libc_start_main
+    line.?(nil: m.return(Just(p)));
+    line.cons.head.?(' ': m.return(Just(p)));
+
+    # We expect a line of the form:
+    # 3694 foo;bar;sludge\n
+    List@<String@> split = Split(line, IsSpace);
+    Lt(Int|2, Length(split)).?(true: m.return(Nothing<Profile@>));
+
+    Int@ value = /Core/Int/Show%.Read(Get(split, Int|0));
+    List@<String@> path = Split(Get(split, Int|1), (Char@ c) {
+      c.?(';': True, : False);
+    });
+
+    ParseInto(AddSample(value, path, p));
+  };
+
+  # Skip the first line of the form:
+  #   100.00%     0.00%  <cmd>  <exe>        [.] _start
+  String@ _ <- m.do(I.GetLine(in));
+
+  ParseInto(@(
+      metrics: List[Str|'samples'],
+      samples: Nil<Sample@>,
+      locations: Nil<Location@>));
+};
+
+@(Parse);

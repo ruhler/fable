@@ -37,6 +37,8 @@
 <@>% Length = /Core/List/Length%.Length;
 
 <@>% Split = /Core/List/Eq%.Split;
+<@>% Has = /Core/List/Eq%.Has;
+<@>% Contains = /Core/List/Eq%.Contains;
 <@>% RemoveFirst = /Core/List/Eq%.RemoveFirst;
 <@>% RemoveAll = /Core/List/Eq%.RemoveAll;
 
@@ -201,6 +203,34 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> wnt = EL|'ACCDDE';
     List@<Elem@> got = RemoveAll((Elem@ e) { ElemEq(Elems.B, e); }, l);
     AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Has, (Unit@ _) {
+    List@<Elem@> l = EL|'BDBB';
+    Bool@ wnt = True;
+    Bool@ got = Has(l, (Elem@ e) { e.?(D: True, : False); });
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|HasNot, (Unit@ _) {
+    List@<Elem@> l = EL|'BDBB';
+    Bool@ wnt = False;
+    Bool@ got = Has(l, (Elem@ e) { e.?(C: True, : False); });
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Contains, (Unit@ _) {
+    List@<Elem@> l = EL|'BDBB';
+    Bool@ wnt = True;
+    Bool@ got = Contains(ElemEq, l, Elems.D);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|ContainsNot, (Unit@ _) {
+    List@<Elem@> l = EL|'BDBB';
+    Bool@ wnt = False;
+    Bool@ got = Contains(ElemEq, l, Elems.C);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })
 ]);
 

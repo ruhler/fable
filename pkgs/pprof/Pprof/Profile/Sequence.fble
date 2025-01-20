@@ -6,7 +6,6 @@
 <@>% Reverse = /Core/List%.Reverse;
 
 @ Sequence@ = /Pprof/Profile%.Sequence@;
-% LocEq = /Pprof/Profile%.LocEq;
 
 
 # Test if the needle is a prefix of the haystack.
@@ -14,7 +13,7 @@
 IsPrefixOf = (Sequence@ needle, Sequence@ haystack) {
   needle.?(nil: True);
   haystack.?(nil: False);
-  LocEq(needle.cons.head, haystack.cons.head).?(false: False);
+  /Pprof/Profile/Eq%.LocId(needle.cons.head, haystack.cons.head).?(false: False);
   IsPrefixOf(needle.cons.tail, haystack.cons.tail);
 };
 
