@@ -49,3 +49,9 @@ We'll punt the following to a later release:
 
 Cool. So, some more explanation to do to see how far I want to go with the
 experimental profile viewer. The rest is cleanup and burndown.
+
+Question: do I want to re-write profiling for this release? How about: give it
+a try. If it turns out to be too difficult, we can punt to next release. Try
+enough to get decent enough experience writing fble for the experimental
+profile viewer. That's the most important part: using the language and
+learning from that experience.

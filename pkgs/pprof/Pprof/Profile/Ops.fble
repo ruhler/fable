@@ -1,0 +1,82 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% Not = /Core/Bool%.Not;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Map = /Core/List%.Map;
+
+<@>% RemoveAll = /Core/List/Eq%.RemoveAll;
+<@>% RemoveFirst = /Core/List/Eq%.RemoveFirst;
+
+@ LocId@ = /Pprof/Profile%.LocId@;
+@ Location@ = /Pprof/Profile%.Location@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
+% LocEq = /Pprof/Profile%.LocEq;
+
+# Remove references to the given location from the profile.
+# 
+# For example, if we fold 'B' out of the profile, then the path
+#   
+#   A -> B -> C
+#
+# Turns into:
+#   
+#   A -> C
+#
+# This is useful, for example, if B is a trampoline or helper function we
+# don't want to worry about.
+(LocId@, Profile@) { Profile@; } Fold = (LocId@ id, Profile@ p) {
+  List@<Location@> locations = RemoveFirst(
+    (Location@ l) { LocEq(l.id, id); }, p.locations
+  );
+
+  List@<Sample@> samples = Map(p.samples, (Sample@ s) {
+    s.@(path: RemoveAll(LocEq(id), s.path));
+  });
+
+  p.@(samples, locations);
+};
+
+# Test if the needle is a prefix of the haystack.
+(Sequence@, Sequence@) { Bool@; }
+IsPrefixOf = (Sequence@ needle, Sequence@ haystack) {
+  needle.?(nil: True);
+  haystack.?(nil: False);
+  LocEq(needle.cons.head, haystack.cons.head).?(false: False);
+  IsPrefixOf(needle.cons.tail, haystack.cons.tail);
+};
+
+# Test if the needle is a subsequence of the haystack.
+(Sequence@, Sequence@) { Bool@; }
+IsSubsequenceOf = (Sequence@ needle, Sequence@ haystack) {
+  IsPrefixOf(needle, haystack).?(true: True);
+  haystack.?(nil: False);
+  IsSubsequenceOf(needle, haystack.cons.tail);
+};
+
+# Remove any samples from the profile that do not include the given sequence.
+#
+# This is useful for focusing in on a given set of samples.
+(Sequence@, Profile@) { Profile@; } Include = (Sequence@ seq, Profile@ p) {
+  List@<Sample@> samples = RemoveAll((Sample@ s) {
+      Not(IsSubsequenceOf(seq, s.path));
+    }, p.samples);
+  p.@(samples);
+};
+
+# Remove any samples from the profile that include the given sequence.
+#
+# This is useful for ignoring a given set of samples, for example because
+# you already understand what's going on in them.
+(Sequence@, Profile@) { Profile@; } Exclude = (Sequence@ seq, Profile@ p) {
+  List@<Sample@> samples = RemoveAll((Sample@ s) {
+      IsSubsequenceOf(seq, s.path);
+    }, p.samples);
+  p.@(samples);
+};
+
+@(Fold, Include, Exclude);

@@ -55,4 +55,23 @@ Split = <@ T@>(List@<T@> list, (T@) { Bool@; } sep) {
   Cons(Cons(head, tail.cons.head), tail.cons.tail);
 };
 
-@(Eq, Contains, Split);
+# RemoveFirst --
+#   Removes the first element of the list matching the given predicate.
+<@ T@>((T@) { Bool@; }, List@<T@>) { List@<T@>; }
+RemoveFirst = <@ T@>((T@) { Bool@; } p, List@<T@> l) {
+  l.?(nil: l);
+  p(l.cons.head).?(true: l.cons.tail);
+  Cons(l.cons.head, RemoveFirst(p, l.cons.tail));
+};
+
+# RemoveAll --
+#   Removes all elements of the list matching the given predicate.
+<@ T@>((T@) { Bool@; }, List@<T@>) { List@<T@>; }
+RemoveAll = <@ T@>((T@) { Bool@; } p, List@<T@> l) {
+  l.?(nil: l);
+  List@<T@> tail = RemoveAll(p, l.cons.tail);
+  p(l.cons.head).?(true: tail);
+  Cons(l.cons.head, tail);
+};
+
+@(Eq, Contains, Split, RemoveFirst, RemoveAll);

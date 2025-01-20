@@ -419,3 +419,265 @@ Cool. Next step is to draft the data structure / library for representing my
 profiles in C. I can add code to load from linux perf directly to start rather
 than have a separate file syntax to go through.
 
+---
+
+Re-hashing the same algorithm I think I described above for compressing and
+computing traces:
+
+We build a tree of locations with the property that no forward path from root
+to leaf in the tree has the same location twice. Nodes are allows to have
+back edges to ancestors in the tree. The children of a node are sorted in
+order they were first encountered.
+
+Start at a special root node. When you enter a new location:
+* If a child already exists for that location, go to the existing child.
+* If that location already exists as an ancestor, there is exactly 1 ancestor
+  with the same location. Add a back edge to that ancestor and go there.
+* Otherwise create a new child at this node to the new location.
+
+That tracks our current location. I guess we'll need some way to 'pop' back as
+well when leaving stack frames. That's doable.
+
+A sample is listed as an unrolled version of the tree which you get starting
+at the root, following first children... Hmm... Maybe there are multiple
+backedges possible. Maybe we can track the sample as we go in a single path
+separately. We might need that for popping the stack too? Sounds hard.
+
+But my previous attempt to explain the algorithm appears to have a way to deal
+with that. It stores the sample counts in the tree. I'm a little bit worried
+about how to extract the samples from that though.
+
+Anyway, I would love to have fble profiling output pprof or similar format, so
+long as we have a decent way to view it. Let me try pprof viewer, see if it
+works well enough for my use case. If so, we can update fble profiling first.
+If not, I should write my own pprof viewer first.
+
+---
+
+I give up on trying to use pprof. The install dependency stack is too high:
+pprof ==> perf_data_converter ==> bazel ==> ???
+
+Let me write my own viewer first. If I'm going to write my own viewer and not
+have pprof to play around with, let me use my own format to start. Something
+that should be easily convertible to and from pprof later.
+
+The plan to use pprof suggests we should collapse paths rather than keep my
+internal tree representation. That could lead to duplication, but don't worry
+about it.
+
+So, basic data structure is:
+* List of samples. Each sample is a list of metric values and a list of
+  location ids.
+* Mapping from location id to location info: name, file, line, column
+
+Let's say location id is an integer into the location mapping table.
+Let's say we have a text format to start with, for ease of debug during
+development. Somewhere we need to define the metrics.
+
+Let's think about how I'll deal with metrics. Time is a thing. What about
+count? Yeah, that should be easy too. To start, we can track both and put them
+in. I like the idea of not treating count specially. But that means we
+probably want to define the name of the metric in my output file. Maybe:
+
+First line is a whitespace separated list of metric names.
+Or use ';' for the separator character? Or ','?
+
+metrics: count,time
+
+How human readable do I want this to be?
+
+A sample is: List of metric values followed by list of location ids, all space
+separated? Or list of metric values followed by list of location ids, where
+the location ids are comma separated. I like space separated for metric values
+to simplify sorting by metric value.
+
+3 5 x,y,... 
+
+Finally we have the location definitions:
+
+x: name file:line:col
+
+
+So, for example:
+
+metrics: count,time
+3 5 0000X,0001X
+0000X: <root> :0:0
+0001X: <main> ../lib/link.c:23:12
+0002X: /SpecTests/Nat% ../spec/SpecTests/Builtin.fble.@:4:10
+...
+
+How do we know when samples start and locations end? Should we put locations
+first?
+
+Maybe the first line is:
+
+<num_locations> <metric1> <metric2> ...
+loc1: ...
+loc2: ...
+...
+sample1
+sample2
+...
+
+But it would be nice to be a little more human navigable. And I'm used to
+having locations at the end. Locations at the start might be nicer for a tool?
+Not sure.
+
+m: ... ...           A list of metric names.
+l: ... ...           A location definition.
+s: ... ... l,l,...   A sample definition.
+
+Metrics is a whitespace separated list of metrics names.
+Location is whitespace separated: id name file:line:col
+Sample is whitespace, where last element is comma separated locations, first
+elements are metrics.
+
+Easy to parse. Okay to read. Has all the info we care about to start.
+
+I would like to start with perf profiles, to take generation of the profiles
+out of the picture. Perf profiles don't need to worry about recursion stuff to
+start. I can assume they don't do any abstraction of that sort and not worry
+about it. If we want, I can add a pass to do that kind of abstraction in the
+viewer and see what we see.
+
+Okay? Then plan is:
+1. Write converter from perf raw data to my format.
+Actually, to start, we can just read perf raw data directly into the internal
+data structures for the profile viewer. Which means no need to worry about a
+custom format to start, right?
+
+2. Implement viewer for internal format.
+
+Internal format is:
+List of metric names.
+List of sample traces.
+Hash map from location id to name, file.
+
+Do I want to start with an html viewer, or there's something I can do with
+text to start? Anything to get feature parity with current text output?
+
+Coverage is easy: % of locations referenced in some sample.
+
+Flat profile... needs to be by count and by time? Like, a flat profile for
+each different metric?
+
+Locations is easy.
+
+How to do the call graph?
+
+I want to avoid having a whole bunch of magic options you have to remember to
+specify to get something meaningful. That's why a website is nicer. It shows
+you all the options you can explore from.
+
+Whatever I end up with will be based on a set of queries. Maybe the output of
+a query is formatted for text or html. Maybe a page is a collection of
+queries. Let's think about the queries first.
+
+* Locations: returns the list of locations in the trace.
+* Coverage: Returns list of uncovered blocks. And/or percent of blocks
+  covered.
+* Flat profile - lists locations sorted by some value.
+  The value assigned to a location could be self or overall, and any
+  combination of the metrics. Maybe we want to show multiple metric values.
+  Maybe we want to sort and subsort various ways.
+
+Ugh, I'm spoiled by SQL now. Flat profile request could be described in SQL
+pretty easily, right?
+  
+How about call graph? Is call graph like a variation on a flat profile? For
+example:
+ * Value is time we called into a location from a particular node.
+
+What if I came up with my own query language, a subset of SQL? The start by
+letting you issue queries on the command line, it outputs the result of your
+query. Everything is based around individual locations to start. What options
+do we have?
+
+"Columns":
+ - Metric values: metric * {self, overall}
+ - Location info: id, name, file
+  
+Once I have a table with those columns, we could do standard SQL operations on
+them: select the columns of interest, allow some math, filter rows.
+
+Let's put aside that part of the problem then. That is, given a table with
+metric values and location info, one row per location, how to present the data
+to the user.
+
+That leaves us with: given a profile, how to generate a table. Sample things
+to generate:
+* The global table.
+  Gives us:
+  - Flat Profile by Overall Time
+  - Flat Profile by Self Time
+  - Block Locations
+  - Coverage
+
+How do we do a call graph entry? I want a way to say something like:
+
+Do a count over samples containing A -> x, for given location A. Do it for all
+locations x. Then our filter is a sequence of locations with a single hole
+where some location would be.
+
+We could think of it as, given some sequence A -> B, compute the self and
+retained metric info for that sequence (not sure what 'self' means in this
+context though?). Then have a loop to produce the table, for each location x,
+compute value for A -> x.
+
+What does self time mean for a sequence A -> B? Self time means when the trace
+ends with A -> B. That's meaningful. If the trace doesn't end with A -> B, it
+counts towards overall time, not self time.
+
+What kind of filters can we do with this? From before, the kind I want are:
+* fold: remove location A from all samples. More general, remove a sequence.
+* include: remove samples not containing the given sequence.
+* exclude: remove samples containing the given sequence.
+
+How does call stacks make sense here? I want to look at all traces A -> x. I
+need a sequence with a hole for that. This is independent of folding. We want
+folding to happen first. It gives you 'include', but maybe you want include
+done separately.
+
+I'm thinking three different phases of the query:
+1. Profile manipulation. Given a list of sequences to fold, include and
+exclude, gives you a different set of samples to consider.
+
+2. Location search. Given a single sequence containing a hole, produces a flat
+table by location with self and overall time for all metrics. Self time counts
+for those samples that end with the given sequence. Overall time is for those
+samples that contain the given sequence.
+
+3. Display query. Use a SQL query like expression to select what parts of the
+table in (2) to show in what order.
+
+A useful UI will guide us in selecting what queries to execute next. Which
+unfortunately complicates things a little bit in terms of presentation. But I
+think I can come up with a general solution. For example, you start with (1).
+Your next query is going to be a single step away from (1). And it's
+optionally going to be modified by a specific location selected to based on
+the row in (2). And you can modify the display query in (3).
+
+Profile format is well defined. Profile manipulation is well defined. Location
+search is well defined, except I'm not sure how to specify the hole. Display
+query I'm not sure how much we want to support. I'm thinking:
+* select the set and order of columns (metrics or location info). 
+* choose which column to sort by.
+* filter out or in certain values?
+
+But there's the question of whether we want to sort or filter by arbitrary
+expressions, and if so what kinds of expressions are supported. And there's
+the question of things like grouping. Maybe skip grouping for now. And what
+about columns making up your own expression values?
+
+Anyway, what this all means for my implementation is, I think, that I can get
+started writing some functions and test cases:
+* Representation of a profile.
+* Apply a fold, exclude, or include on a profile to get a new profile.
+* Apply a location search on a profile to get a table.
+
+Once I have that as part of the library, I ought to be able to write fble code
+to generate a profile report just like I have today when running -profile.
+That puts me at parity with the fble profile report. Which means I can
+transition over to re-implementing fble profiling to output in my new proposed
+format.

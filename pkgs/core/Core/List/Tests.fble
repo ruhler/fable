@@ -35,7 +35,11 @@
 <@>% Join = /Core/List%.Join;
 
 <@>% Length = /Core/List/Length%.Length;
+
 <@>% Split = /Core/List/Eq%.Split;
+<@>% RemoveFirst = /Core/List/Eq%.RemoveFirst;
+<@>% RemoveAll = /Core/List/Eq%.RemoveAll;
+
 <@>% Sort = /Core/List/Sort%.Sort;
 
 @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
@@ -182,6 +186,20 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   Test(Str|Join, (Unit@ _) {
     List@<Elem@> wnt = EL|'AABBCBBDE';
     List@<Elem@> got = Join(List[EL|'AA', EL|'C', EL|'DE'], EL|'BB');
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|RemoveFirst, (Unit@ _) {
+    List@<Elem@> l = EL|'ABBCCDDE';
+    List@<Elem@> wnt = EL|'ABCCDDE';
+    List@<Elem@> got = RemoveFirst((Elem@ e) { ElemEq(Elems.B, e); }, l);
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|RemoveAll, (Unit@ _) {
+    List@<Elem@> l = EL|'ABBCCDDE';
+    List@<Elem@> wnt = EL|'ACCDDE';
+    List@<Elem@> got = RemoveAll((Elem@ e) { ElemEq(Elems.B, e); }, l);
     AssertEquals(Eq, Show, wnt, got);
   })
 ]);

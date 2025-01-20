@@ -1,0 +1,50 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+@ String@ = /Core/String%.String@;
+
+
+@ LocId@ = String@;
+
+@ Location@ = *(
+  LocId@ id,
+  String@ name,
+  String@ file,
+  Int@ line,
+  Int@ col
+);
+
+@ Sequence@ = List@<LocId@>;
+
+# @struct[Sample@] A sampled path.
+#  @field[List@<Int@>][metrics]
+#   The value of each metric in the profile associated with this path.
+#  @field[List@<LocId@>][path]
+#   Sequence of locations describing this sample path. For example, this could
+#   be a stack trace. The root of the path comes first, the leaf comes last.
+@ Sample@ = *(
+  List@<Int@> metrics,
+  Sequence@ path
+); 
+
+# @struct[Profile@] A pprof-like profile.
+#  @field[List@<String@>][metrics]
+#   The names of the metrics included in the profile. The order of names here
+#   corresponds to the order of metric values associated with each sample.
+#  @field[List@<Sample@>][samples]
+#   The list of profile samples.
+@ Profile@ = *(
+  List@<String@> metrics,
+  List@<Sample@> samples,
+  List@<Location@> locations
+);
+
+(LocId@, LocId@) { Bool@; } LocEq = /Core/String/Eq%.Eq;
+
+@(LocId@, Location@, Sequence@, Sample@, Profile@,
+  LocEq);
+
