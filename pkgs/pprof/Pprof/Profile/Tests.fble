@@ -1,0 +1,59 @@
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+% Int = /Core/Int/Lit%.Int;
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Location@ = /Pprof/Profile%.Location@;
+
+@ Count@ = /Pprof/Profile/Count%.Count@;
+% Count = /Pprof/Profile/Count%.Count;
+
+
+# P_Basic
+#   10: 1 
+#   20: 1,2
+#   30: 1,2,3
+#   40: 1,2,4
+#   31: 1,3
+Profile@ P_Basic = @(
+  metrics: List[Str|'time'],
+
+  samples: List[
+    @(metrics: List[Int|10], path: List[Str|1]),
+    @(metrics: List[Int|20], path: List[Str|1, Str|2]),
+    @(metrics: List[Int|30], path: List[Str|1, Str|2, Str|3]),
+    @(metrics: List[Int|40], path: List[Str|1, Str|2, Str|4]),
+    @(metrics: List[Int|31], path: List[Str|1, Str|3])
+  ],
+
+  locations: List[
+    Location@(Str|'1', Str|'_1', Str|'foo.txt', Int|1, Int|1),
+    Location@(Str|'2', Str|'_2', Str|'foo.txt', Int|2, Int|1),
+    Location@(Str|'3', Str|'_3', Str|'foo.txt', Int|3, Int|1),
+    Location@(Str|'4', Str|'_4', Str|'foo.txt', Int|4, Int|1)
+  ]
+);
+
+Test@ Tests = TestSuite(Str|Profile, List[
+  Test(Str|Count, (Unit@ _) {
+    Count@ wnt = @(self: List[Int|20], total: List[Int|90]);
+    Count@ got = Count(List[Str|2], P_Basic);
+    AssertEquals(
+      /Pprof/Profile/Count/Eq%.Eq,
+      /Pprof/Profile/Count/Show%.Show,
+      wnt, got);
+  })
+]);
+
+@(Tests);

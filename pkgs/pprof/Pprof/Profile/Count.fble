@@ -55,4 +55,4 @@ Count = (Sequence@ s, Profile@ p) {
   CountSamples(s, p.samples);
 };
 
-@(Count);
+@(Count@, Count);

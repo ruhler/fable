@@ -709,3 +709,25 @@ values from the samples in the profile. Easy, no?
 What do I call this? /Pprof/Profile/Summarize? Before I called it a location
 search. That doesn't quite fit now. How about Count?
 
+---
+
+I have Count implemented. Can I start to write queries now and see how it
+looks?
+
+I really ought to start writing pure tests to give me confidence things are
+working. I should be able to reuse test cases from the existing fble profile
+tests.
+
+    // <root> -> 1 -> 2 -> 3
+    //                  -> 4
+    //             -> 3
+
+10: 1 
+20: 1,2
+30: 1,2,3
+40: 1,2,4
+31: 1,3
+
+
+
+@(Tests);
