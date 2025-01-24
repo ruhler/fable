@@ -3,12 +3,8 @@
 % Chars = /Core/Char%.Chars;
 
 @ Int@ = /Core/Int%.Int@;
+@ IntP@ = /Core/Int/IntP%.IntP@;
 % Int = /Core/Int/Lit%.Int;
-
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 # Ascii codes for each character.
 % Ascii = @(
@@ -83,48 +79,517 @@
 };
 
 # Converts an ascii value to its corresponding character.
-# Returns '?' for characters that cannot be converted.
-(Int@) { Char@; } Chr = {
-  @ Map@ = /Core/Map%.Map@<Int@, Char@>;
-  % Empty = /Core/Map%.Empty<Int@, Char@>;
-  % Insert = /Core/Map%.Insert<Int@>(/Core/Int/Ord%.Ord)<Char@>;
-  % Lookup = /Core/Map%.Lookup<Int@>(/Core/Int/Ord%.Ord)<Char@>;
-
-  (Char@, Map@) { Map@; } Put = (Char@ c, Map@ m) {
-    Insert(m, Ord(c), c);
-  };
-
-  List@<Char@> chars = List[Chars.nl, Chars.tab, Chars.cr,
-    Chars.' ', Chars.'!', Chars.'"', Chars.'#', Chars.'$', Chars.'%',
-    Chars.'&', Chars.'''', Chars.'(', Chars.')', Chars.'*', Chars.'+',
-    Chars.',', Chars.'-', Chars.'.', Chars.'/',
-
-    Chars.0, Chars.1, Chars.2, Chars.3, Chars.4, Chars.5, Chars.6, Chars.7,
-    Chars.8, Chars.9,
-
-    Chars.':', Chars.';', Chars.'<', Chars.'=', Chars.'>', Chars.'?',
-    Chars.'@',
-
-    Chars.A, Chars.B, Chars.C, Chars.D, Chars.E, Chars.F, Chars.G, Chars.H,
-    Chars.I, Chars.J, Chars.K, Chars.L, Chars.M, Chars.N, Chars.O, Chars.P,
-    Chars.Q, Chars.R, Chars.S, Chars.T, Chars.U, Chars.V, Chars.W, Chars.X,
-    Chars.Y, Chars.Z,
-
-    Chars.'[', Chars.'\', Chars.']', Chars.'^', Chars.'_', Chars.'`',
-
-    Chars.a, Chars.b, Chars.c, Chars.d, Chars.e, Chars.f, Chars.g, Chars.h,
-    Chars.i, Chars.j, Chars.k, Chars.l, Chars.m, Chars.n, Chars.o, Chars.p,
-    Chars.q, Chars.r, Chars.s, Chars.t, Chars.u, Chars.v, Chars.w, Chars.x,
-    Chars.y, Chars.z,
-
-    Chars.'{', Chars.'|', Chars.'}', Chars.'~'];
-
-  Map@ map = /Core/List%.ForEach(chars, Empty, Put);
-
-  (Int@ i) {
-    Maybe@<Char@> mc = Lookup(map, i);
-    mc.?(just: mc.just, nothing: Char@(unknown: i));
-  };
+(Int@) { Char@; } Chr = (Int@ i) {
+  i.?(n: Char@(unknown: i), 0: Char@(unknown: i), p: {
+    # Code generated using Ascii.py script.
+    # TODO: Fix performance of fble so we don't have to do silly things like
+    # this.
+    IntP@ p = i.p;
+    p.?(
+      1: Char@(unknown: i),
+      2p0: {
+        IntP@ p0 = p.2p0;
+        p0.?(
+          1: Char@(unknown: i),
+          2p0: {
+            IntP@ p00 = p0.2p0;
+            p00.?(
+              1: Char@(unknown: i),
+              2p0: {
+                IntP@ p000 = p00.2p0;
+                p000.?(
+                  1: Char@(unknown: i),
+                  2p0: {
+                    IntP@ p0000 = p000.2p0;
+                    p0000.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p00000 = p0000.2p0;
+                        p00000.?(
+                          1: Chars.' ',
+                          2p0: {
+                            Chars.'@';
+                          },
+                          2p1: {
+                            Chars.'`';
+                          });
+                      },
+                      2p1: {
+                        IntP@ p00001 = p0000.2p1;
+                        p00001.?(
+                          1: Chars.'0',
+                          2p0: {
+                            Chars.P;
+                          },
+                          2p1: {
+                            Chars.p;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p0001 = p000.2p1;
+                    p0001.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p00010 = p0001.2p0;
+                        p00010.?(
+                          1: Chars.'(',
+                          2p0: {
+                            Chars.H;
+                          },
+                          2p1: {
+                            Chars.h;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p00011 = p0001.2p1;
+                        p00011.?(
+                          1: Chars.'8',
+                          2p0: {
+                            Chars.X;
+                          },
+                          2p1: {
+                            Chars.x;
+                          });
+                      });
+                  });
+              },
+              2p1: {
+                IntP@ p001 = p00.2p1;
+                p001.?(
+                  1: Char@(unknown: i),
+                  2p0: {
+                    IntP@ p0010 = p001.2p0;
+                    p0010.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p00100 = p0010.2p0;
+                        p00100.?(
+                          1: Chars.'$',
+                          2p0: {
+                            Chars.D;
+                          },
+                          2p1: {
+                            Chars.d;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p00101 = p0010.2p1;
+                        p00101.?(
+                          1: Chars.'4',
+                          2p0: {
+                            Chars.T;
+                          },
+                          2p1: {
+                            Chars.t;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p0011 = p001.2p1;
+                    p0011.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p00110 = p0011.2p0;
+                        p00110.?(
+                          1: Chars.',',
+                          2p0: {
+                            Chars.L;
+                          },
+                          2p1: {
+                            Chars.l;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p00111 = p0011.2p1;
+                        p00111.?(
+                          1: Chars.'<',
+                          2p0: {
+                            Chars.'\';
+                          },
+                          2p1: {
+                            Chars.'|';
+                          });
+                      });
+                  });
+              });
+          },
+          2p1: {
+            IntP@ p01 = p0.2p1;
+            p01.?(
+              1: Char@(unknown: i),
+              2p0: {
+                IntP@ p010 = p01.2p0;
+                p010.?(
+                  1: Chars.nl,
+                  2p0: {
+                    IntP@ p0100 = p010.2p0;
+                    p0100.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p01000 = p0100.2p0;
+                        p01000.?(
+                          1: Chars.'"',
+                          2p0: {
+                            Chars.B;
+                          },
+                          2p1: {
+                            Chars.b;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p01001 = p0100.2p1;
+                        p01001.?(
+                          1: Chars.'2',
+                          2p0: {
+                            Chars.R;
+                          },
+                          2p1: {
+                            Chars.r;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p0101 = p010.2p1;
+                    p0101.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p01010 = p0101.2p0;
+                        p01010.?(
+                          1: Chars.'*',
+                          2p0: {
+                            Chars.J;
+                          },
+                          2p1: {
+                            Chars.j;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p01011 = p0101.2p1;
+                        p01011.?(
+                          1: Chars.':',
+                          2p0: {
+                            Chars.Z;
+                          },
+                          2p1: {
+                            Chars.z;
+                          });
+                      });
+                  });
+              },
+              2p1: {
+                IntP@ p011 = p01.2p1;
+                p011.?(
+                  1: Char@(unknown: i),
+                  2p0: {
+                    IntP@ p0110 = p011.2p0;
+                    p0110.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p01100 = p0110.2p0;
+                        p01100.?(
+                          1: Chars.'&',
+                          2p0: {
+                            Chars.F;
+                          },
+                          2p1: {
+                            Chars.f;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p01101 = p0110.2p1;
+                        p01101.?(
+                          1: Chars.'6',
+                          2p0: {
+                            Chars.V;
+                          },
+                          2p1: {
+                            Chars.v;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p0111 = p011.2p1;
+                    p0111.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p01110 = p0111.2p0;
+                        p01110.?(
+                          1: Chars.'.',
+                          2p0: {
+                            Chars.N;
+                          },
+                          2p1: {
+                            Chars.n;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p01111 = p0111.2p1;
+                        p01111.?(
+                          1: Chars.'>',
+                          2p0: {
+                            Chars.'^';
+                          },
+                          2p1: {
+                            Chars.'~';
+                          });
+                      });
+                  });
+              });
+          });
+      },
+      2p1: {
+        IntP@ p1 = p.2p1;
+        p1.?(
+          1: Char@(unknown: i),
+          2p0: {
+            IntP@ p10 = p1.2p0;
+            p10.?(
+              1: Char@(unknown: i),
+              2p0: {
+                IntP@ p100 = p10.2p0;
+                p100.?(
+                  1: Chars.tab,
+                  2p0: {
+                    IntP@ p1000 = p100.2p0;
+                    p1000.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p10000 = p1000.2p0;
+                        p10000.?(
+                          1: Chars.'!',
+                          2p0: {
+                            Chars.A;
+                          },
+                          2p1: {
+                            Chars.a;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p10001 = p1000.2p1;
+                        p10001.?(
+                          1: Chars.'1',
+                          2p0: {
+                            Chars.Q;
+                          },
+                          2p1: {
+                            Chars.q;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p1001 = p100.2p1;
+                    p1001.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p10010 = p1001.2p0;
+                        p10010.?(
+                          1: Chars.')',
+                          2p0: {
+                            Chars.I;
+                          },
+                          2p1: {
+                            Chars.i;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p10011 = p1001.2p1;
+                        p10011.?(
+                          1: Chars.'9',
+                          2p0: {
+                            Chars.Y;
+                          },
+                          2p1: {
+                            Chars.y;
+                          });
+                      });
+                  });
+              },
+              2p1: {
+                IntP@ p101 = p10.2p1;
+                p101.?(
+                  1: Chars.cr,
+                  2p0: {
+                    IntP@ p1010 = p101.2p0;
+                    p1010.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p10100 = p1010.2p0;
+                        p10100.?(
+                          1: Chars.'%',
+                          2p0: {
+                            Chars.E;
+                          },
+                          2p1: {
+                            Chars.e;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p10101 = p1010.2p1;
+                        p10101.?(
+                          1: Chars.'5',
+                          2p0: {
+                            Chars.U;
+                          },
+                          2p1: {
+                            Chars.u;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p1011 = p101.2p1;
+                    p1011.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p10110 = p1011.2p0;
+                        p10110.?(
+                          1: Chars.'-',
+                          2p0: {
+                            Chars.M;
+                          },
+                          2p1: {
+                            Chars.m;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p10111 = p1011.2p1;
+                        p10111.?(
+                          1: Chars.'=',
+                          2p0: {
+                            Chars.']';
+                          },
+                          2p1: {
+                            Chars.'}';
+                          });
+                      });
+                  });
+              });
+          },
+          2p1: {
+            IntP@ p11 = p1.2p1;
+            p11.?(
+              1: Char@(unknown: i),
+              2p0: {
+                IntP@ p110 = p11.2p0;
+                p110.?(
+                  1: Char@(unknown: i),
+                  2p0: {
+                    IntP@ p1100 = p110.2p0;
+                    p1100.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p11000 = p1100.2p0;
+                        p11000.?(
+                          1: Chars.'#',
+                          2p0: {
+                            Chars.C;
+                          },
+                          2p1: {
+                            Chars.c;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p11001 = p1100.2p1;
+                        p11001.?(
+                          1: Chars.'3',
+                          2p0: {
+                            Chars.S;
+                          },
+                          2p1: {
+                            Chars.s;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p1101 = p110.2p1;
+                    p1101.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p11010 = p1101.2p0;
+                        p11010.?(
+                          1: Chars.'+',
+                          2p0: {
+                            Chars.K;
+                          },
+                          2p1: {
+                            Chars.k;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p11011 = p1101.2p1;
+                        p11011.?(
+                          1: Chars.';',
+                          2p0: {
+                            Chars.'[';
+                          },
+                          2p1: {
+                            Chars.'{';
+                          });
+                      });
+                  });
+              },
+              2p1: {
+                IntP@ p111 = p11.2p1;
+                p111.?(
+                  1: Char@(unknown: i),
+                  2p0: {
+                    IntP@ p1110 = p111.2p0;
+                    p1110.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p11100 = p1110.2p0;
+                        p11100.?(
+                          1: Chars.'''',
+                          2p0: {
+                            Chars.G;
+                          },
+                          2p1: {
+                            Chars.g;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p11101 = p1110.2p1;
+                        p11101.?(
+                          1: Chars.'7',
+                          2p0: {
+                            Chars.W;
+                          },
+                          2p1: {
+                            Chars.w;
+                          });
+                      });
+                  },
+                  2p1: {
+                    IntP@ p1111 = p111.2p1;
+                    p1111.?(
+                      1: Char@(unknown: i),
+                      2p0: {
+                        IntP@ p11110 = p1111.2p0;
+                        p11110.?(
+                          1: Chars.'/',
+                          2p0: {
+                            Chars.O;
+                          },
+                          2p1: {
+                            Chars.o;
+                          });
+                      },
+                      2p1: {
+                        IntP@ p11111 = p1111.2p1;
+                        p11111.?(
+                          1: Chars.'?',
+                          2p0: {
+                            Chars.'_';
+                          },
+                          2p1: {
+                            Char@(unknown: i);
+                          });
+                      });
+                  });
+              });
+          });
+      });
+  });
 };
 
 @(Ascii, Ord, Chr);

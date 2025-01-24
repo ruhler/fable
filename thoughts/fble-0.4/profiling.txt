@@ -751,3 +751,82 @@ Maybe let's go back and forth. Add a section to the report, improve
 performance, and so on.
 
 Easy section to add: locations.
+
+---
+
+Current profiling of the profile viewer:
+* 50% of time calling GetLine to read the file.
+* 37% of time checking to see if we need to add a location again.
+* 7% of time splitting count from path
+* 5% of time splitting path entries
+
+That about adds up to everything.
+
+To fix getline: The bulk of this is integer comparison for looking up in the
+map to convert the integer value to ascii. Sadness.
+
+To fix location checking: add a map from name to LocId, use that for the
+lookup and conversion.
+
+To fix splitting: avoid building up lots of copies of the list if nothing
+needs to be split out?
+
+Do we see the same thing if we look at a perf profile?
+* 32% GetLine from Ascii char conversion.
+* 25% Seeing if we need to add locations.
+* 25% in Split.
+* The rest is overhead from the fble runtime I guess.
+
+I could believe that.
+
+---
+
+The performance story is not pretty here.
+
+1. GetLine is all in converting Int@ to Char@.
+C code doesn't have to deal with this, because it uses the same representation
+for both. We can't use an array map from Int@ to Char@, because we don't
+support arrays. In theory, I think both are reasonable choices of fble. In
+practice it puts us at a big disadvantage.
+
+2. Checking whether to add new locations, clearly we want to use a map from
+name to location id. I wonder if perf can be used to print that information
+separately? Like use the address for the id and get the name separately?
+
+Anyway, I think I should change the location id to an Int@, and store
+locations as a map from location id to location info in the first place. That
+should help here.
+
+3. This is the worst case scenario for Split: a two element split with a small
+first element and big second element. If fble was fast enough, I wouldn't have
+to worry about it. I could write things the convenient way: using split. But
+fble isn't fast enough. It probably makes sense to parse a different way.
+
+Aside from (2), it's a lot of the question of: if fble was fast enough, I
+would rather write it the way I did. It's too bad I have to write it
+differently because fble isn't fast enough (yet?).
+
+I could get rid of all three issues at once if I parsed Int@ directly, and
+build up a prefix tree of names (by Int@ rather than Char@). As soon as I
+encounter the semicolon or newline (can test as Int@), I use the id in the
+tree, or add a new id to the tree. At the end, I can do a single pass of the
+tree to convert everything to characters. That way we do minimal Int@ to Char@
+conversion.
+
+That's more complicated. Should I do it? Is it worth it? It seems a pain to
+have to work at the level of Int@ instead of Char@ just because that's the
+representation I chose for the Stdio@ API.
+
+---
+
+/usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.short.txt
+
+Elapsed (wall clock) time (h:mm:ss or m:ss): 0:54.93
+Maximum resident set size (kbytes): 320156
+
+There are many possible optimizations, but none of them are pleasant, and I'm
+not convinced I want any of them long term. I wish function call overhead
+wasn't so expensive. I feel like a lot of the performance issues bottom out
+there: IntP.Ord is a tight recursive loop. Map.Lookup is a tight recursive
+loop.
+

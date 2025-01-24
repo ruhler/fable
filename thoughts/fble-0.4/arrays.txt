@@ -1,0 +1,31 @@
+Arrays
+======
+We have a good case study here about arrays.
+
+pprof parsing is super slow, in large part due to high cost of converting
+ascii Int@ to Char@. It's spending a lot of time in Int Ord used to lookup in
+my map.
+
+Feels like a perfect use case for arrays in fble, if we had such a thing.
+Let's experiment.
+
+Baseline use of Map with Int ord:
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.short.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:54.93
+  Maximum resident set size (kbytes): 320156
+
+Rewriting the lookup to be a single large function (600 lines of tedious to
+write fble code):
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.short.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:54.93 ==> 0:40.61
+  Maximum resident set size (kbytes): 320156 ==> 328104
+
+That's a pretty nice improvement. 15 seconds saved.
+
+The next thing to try is writing a custom Int@ map that organizes by 1,2p0,2p1
+and see how that compares.
+
