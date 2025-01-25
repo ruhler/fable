@@ -1,10 +1,15 @@
 
 @ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+
+@ IntP@ = /Core/Int/IntP%.IntP@;
 
 <@>@ MapP@ = /Core/Int/IntP/Map%.Map@;
 <@>% EmptyP = /Core/Int/IntP/Map%.Empty;
 <@>% LookupP = /Core/Int/IntP/Map%.Lookup;
 <@>% InsertP = /Core/Int/IntP/Map%.Insert;
+<@>% DeleteP = /Core/Int/IntP/Map%.Delete;
+<@>% ForEachP = /Core/Int/IntP/Map%.ForEach;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -26,12 +31,35 @@ Lookup = <@ V@>(Map@<V@> map, Int@ key) {
 };
 
 <@ V@>(Map@<V@>, Int@, V@) { Map@<V@>; }
-Insert = <@ V@> (Map@<V@> map, Int@ key, V@ value) {
+Insert = <@ V@>(Map@<V@> map, Int@ key, V@ value) {
   key.?(
     n: map.@(n: InsertP(map.n, key.n, value)),
     0: map.@(0: Just(value)),
     p: map.@(p: InsertP(map.p, key.p, value)));
 };
 
-@(Map@, Empty, Insert, Lookup);
+<@ V@>(Map@<V@>, Int@) { Map@<V@>; }
+Delete = <@ V@>(Map@<V@> map, Int@ key) {
+  key.?(
+    n: map.@(n: DeleteP(map.n, key.n)),
+    0: map.@(0: Nothing<V@>),
+    p: map.@(p: DeleteP(map.p, key.p)));
+};
+
+<@ V@>(Map@<V@>)<@ B@>(B@, (Int@, V@, B@) { B@; }) { B@; }
+ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Int@, V@, B@) { B@; } body) {
+  B@ b1 = base;
+
+  B@ b2 = ForEachP(map.n, b1, (IntP@ i, V@ v, B@ b) {
+    body(Int@(n: i), v, b);
+  });
+
+  B@ b3 = map.0.?(just: body(0, map.0.just, b2), nothing: b2);
+
+  ForEachP(map.p, b3, (IntP@ i, V@ v, B@ b) {
+    body(Int@(p: i), v, b);
+  });
+};
+
+@(Map@, Empty, Insert, Delete, Lookup, ForEach);
 

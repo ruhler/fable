@@ -127,7 +127,7 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
   }),
 
   Test(Str|'delete', (Unit@ _) {
-    Map@<Bool@> map = Delete(Insert<Bool@>(Empty<Bool@>, B, False), B);
+    Map@<Bool@> map = Delete(Insert(Empty<Bool@>, B, False), B);
     Maybe@<Bool@> wnt = Nothing<Bool@>;
     Maybe@<Bool@> got = Lookup(map, B);
     AssertEquals(

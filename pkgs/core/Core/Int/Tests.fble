@@ -1,8 +1,19 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% And = /Core/Bool%.And;
 % Not = /Core/Bool%.Not;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 % Ord = /Core/Ord%;
 @ Ordering@ = Ord.Ordering@;
@@ -52,6 +63,13 @@
 % Max = /Core/Int/Eq%.Max;
 
 % Int = /Core/Int/Lit%.Int;
+
+<@>@ Map@ = /Core/Int/Map%.Map@;
+<@>% Insert = /Core/Int/Map%.Insert;
+<@>% Lookup = /Core/Int/Map%.Lookup;
+<@>% Delete = /Core/Int/Map%.Delete;
+<@>% Empty = /Core/Int/Map%.Empty;
+<@>% ForEach = /Core/Int/Map%.ForEach;
 
 % IOrd = /Core/Int/Ord%.Ord;
 
@@ -253,6 +271,74 @@ Test@ Tests = TestSuite(Str|Int, List[
     String@ wnt = Str|'1234567890';
     String@ got = /Core/Int/Show%.Show(Int|1234567890);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'Map_Lookup_found', (Unit@ _) {
+    Map@<Bool@> map = Insert(Empty<Bool@>, Int|5, False);
+    Maybe@<Bool@> wnt = Just(False);
+    Maybe@<Bool@> got = Lookup(map, Int|5);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+      /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|'Map_Lookup_not_found', (Unit@ _) {
+    Map@<Bool@> map = Insert(Empty<Bool@>, Int|5, False);
+    Maybe@<Bool@> wnt = Nothing<Bool@>;
+    Maybe@<Bool@> got = Lookup(map, Int|4);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+      /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|'Map_Delete', (Unit@ _) {
+    Map@<Bool@> map = Delete(Insert(Empty<Bool@>, Int|5, False), Int|5);
+    Maybe@<Bool@> wnt = Nothing<Bool@>;
+    Maybe@<Bool@> got = Lookup(map, Int|5);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+      /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|'Map_Delete_nothing', (Unit@ _) {
+    Map@<Bool@> map = Delete(Insert(Empty<Bool@>, Int|5, False), Int|4);
+    Maybe@<Bool@> wnt = Just(False);
+    Maybe@<Bool@> got = Lookup(map, Int|5);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+      /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|'Map_ForEach', (Unit@ _) {
+    Map@<Bool@> map = Insert(Insert(Insert(Empty<Bool@>,
+      Int|5, True),
+      Neg(Int|4), True),
+      Int|7, False);
+
+    @ Entry@ = *(Int@ key, Bool@ value);
+    List@<Entry@> wnt = List[
+      Entry@(Int|7, False),
+      Entry@(Int|5, True),
+      Entry@(Neg(Int|4), True)];
+
+    List@<Entry@> got = ForEach(map, Nil<Entry@>,
+      (Int@ k, Bool@ v, List@<Entry@> l) {
+        Cons(Entry@(k, v), l);
+      });
+
+    AssertEquals(
+      /Core/List/Eq%.Eq((Entry@ a, Entry@ b) {
+        And(Eq(a.key, b.key), /Core/Bool/Eq%.Eq(a.value, b.value));
+      }),
+      /Core/List/Show%.Show((Entry@ e) {
+        /Core/String%.Strs[
+          /Core/Int/Show%.Show(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
+      }),
+      wnt, got);
   })
 ]);
 

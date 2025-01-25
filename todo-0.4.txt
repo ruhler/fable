@@ -2,8 +2,7 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Add tests for /Core/Int/Map%
-* Switch to /Core/Int/Map% everywhere we can.
+* Move tests for /Core/Int/Map% into a submodule.
 
 * pprof viewer with fble profiling report feature parity
  - Give Int@ IDs to locations instead of using their names.

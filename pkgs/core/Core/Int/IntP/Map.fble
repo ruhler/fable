@@ -1,5 +1,10 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
 @ IntP@ = /Core/Int/IntP%.IntP@;
+% 1 = /Core/Int/IntP%.1;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -26,8 +31,22 @@ Map@ Empty = <@ V@> {
   Map@<V@>(empty: Unit);
 };
 
+<@ V@>(Map@<V@>) { Bool@; }
+IsEmpty = <@ V@>(Map@<V@> map) {
+  map.?(empty: True);
+  False;
+};
+
 MapP@ EmptyP = <@ V@> {
   MapP@(Nothing<V@>, Empty<V@>, Empty<V@>);
+};
+
+<@ V@>(MapP@<V@>) { Bool@; }
+IsEmptyP = <@ V@>(MapP@<V@> map) {
+  map.1.?(just: False);
+  map.2p0.?(p: False);
+  map.2p1.?(p: False);
+  True;
 };
 
 <@ V@>(Map@<V@>, IntP@) { Maybe@<V@>; }
@@ -50,5 +69,34 @@ Insert = <@ V@> (Map@<V@> map, IntP@ key, V@ value) {
     2p1: p.@(2p1: Insert(p.2p1, key.2p1, value))));
 };
 
-@(Map@, Empty, Insert, Lookup);
+<@ V@>(Map@<V@>, IntP@) { Map@<V@>; }
+Delete = <@ V@>(Map@<V@> map, IntP@ key) {
+  map.?(empty: map);
+
+  # TODO: delete should use map.p here, not p!
+  MapP@<V@> p = key.?(
+    1: map.p.@(1: Nothing<V@>),
+    2p0: map.p.@(2p0: Delete(map.p.2p0, key.2p0)),
+    2p1: map.p.@(2p1: Delete(map.p.2p1, key.2p1)));
+  IsEmptyP(p).?(true: Empty<V@>, false: Map@(p: p));
+};
+
+<@ V@>(Map@<V@>)<@ B@>(B@, (IntP@, V@, B@) { B@; }) { B@; }
+ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (IntP@, V@, B@) { B@; } body) {
+  map.?(empty: base);
+  MapP@<V@> p = map.p;
+
+  B@ b1 = base;
+  B@ b2 = p.1.?(just: body(1, p.1.just, b1), nothing: base);
+
+  B@ b3 = ForEach(p.2p0, b2, (IntP@ i, V@ v, B@ b) {
+    body(IntP@(2p0: i), v, b);
+  });
+
+  ForEach(p.2p1, b3, (IntP@ i, V@ v, B@ b) {
+    body(IntP@(2p1: i), v, b);
+  });
+};
+
+@(Map@, Empty, IsEmpty, Delete, Insert, Lookup, ForEach);
 
