@@ -42,3 +42,12 @@ good.
 And performance is not too bad at all. That's awesome. No need to implement
 support for builtin arrays yet. I can code them up by hand as needed.
 
+---
+
+This is interesting actually. The same technique I used to optimize Int Map I
+could use, for example, for maps with String keys or List keys. Let's see how
+things shape up. If I end up re-implementing the same kind of logic over and
+over for maps, maybe it's worth adding sugar for that in the language. For
+now, let me treat it like Show, Eq, Ord, etc. Where we have common structures
+for how to write these things, but no builtin language support (yet?).
+

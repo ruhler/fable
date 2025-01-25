@@ -10,7 +10,7 @@
 @ Sequence@ = /Pprof/Profile%.Sequence@;
 @ Sample@ = /Pprof/Profile%.Sample@;
 
-Eq@<LocId@> LocId = /Core/String/Eq%.Eq;
+Eq@<LocId@> LocId = /Core/Int/Eq%.Eq;
 
 Eq@<Sequence@> Sequence = /Core/List/Eq%.Eq(LocId);
 

@@ -10,7 +10,7 @@
 @ Sequence@ = /Pprof/Profile%.Sequence@;
 @ Sample@ = /Pprof/Profile%.Sample@;
 
-Show@<LocId@> LocId = (LocId@ x) { x; };
+Show@<LocId@> LocId = /Core/Int/Show%.Show;
 
 Show@<Sequence@> Sequence = /Core/List/Show%.Show(LocId);
 
@@ -22,7 +22,7 @@ Show@<Sample@> Sample = (Sample@ x) {
 
 Show@<Location@> Location = (Location@ x) {
   Strs[
-    x.name, Str|'[', x.id, Str|']: ', x.file, Str|':',
+    x.name, Str|'[', LocId(x.id), Str|']: ', x.file, Str|':',
     /Core/Int/Show%.Show(x.line), Str|':',
     /Core/Int/Show%.Show(x.col)];
 };

@@ -5,7 +5,6 @@ Things to consider doing for the fble-0.4 release.
 * Move tests for /Core/Int/Map% into a submodule.
 
 * pprof viewer with fble profiling report feature parity
- - Give Int@ IDs to locations instead of using their names.
  - Store locations as a map instead of a list.
  - Improve the performance enough to be useful.
  - Finish the missing sections of the profile report.
