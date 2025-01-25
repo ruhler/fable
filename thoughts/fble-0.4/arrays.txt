@@ -24,8 +24,21 @@ write fble code):
   Elapsed (wall clock) time (h:mm:ss or m:ss): 0:54.93 ==> 0:40.61
   Maximum resident set size (kbytes): 320156 ==> 328104
 
-That's a pretty nice improvement. 15 seconds saved.
+That's a pretty nice improvement. 15 seconds saved. The time to do the
+conversion has basically gone to zero with this change.
 
 The next thing to try is writing a custom Int@ map that organizes by 1,2p0,2p1
 and see how that compares.
+
+It was very easy to implement an Int@ map. The code is quite simple. That's
+good.
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.short.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:41.58
+  Maximum resident set size (kbytes): 341292
+
+
+And performance is not too bad at all. That's awesome. No need to implement
+support for builtin arrays yet. I can code them up by hand as needed.
 

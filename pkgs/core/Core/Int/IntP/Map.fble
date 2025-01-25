@@ -1,0 +1,54 @@
+
+@ IntP@ = /Core/Int/IntP%.IntP@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+# A Map from IntP@ to V@.
+<@>@ Map@ = <@ V@> {
+  @ M@ = +(Unit@ empty, P@ p),
+  @ P@ = *(Maybe@<V@> 1, M@ 2p0, M@ 2p1);
+  M@;
+};
+
+# A non-empty map from IntP@ to V@.
+<@>@ MapP@ = <@ V@> {
+  @ M@ = +(Unit@ empty, P@ p),
+  @ P@ = *(Maybe@<V@> 1, M@ 2p0, M@ 2p1);
+  P@;
+};
+
+Map@ Empty = <@ V@> {
+  Map@<V@>(empty: Unit);
+};
+
+MapP@ EmptyP = <@ V@> {
+  MapP@(Nothing<V@>, Empty<V@>, Empty<V@>);
+};
+
+<@ V@>(Map@<V@>, IntP@) { Maybe@<V@>; }
+Lookup = <@ V@>(Map@<V@> map, IntP@ key) {
+  map.?(empty: Nothing<V@>);
+
+  key.?(
+    1: map.p.1,
+    2p0: Lookup(map.p.2p0, key.2p0),
+    2p1: Lookup(map.p.2p1, key.2p1));
+};
+
+<@ V@>(Map@<V@>, IntP@, V@) { Map@<V@>; }
+Insert = <@ V@> (Map@<V@> map, IntP@ key, V@ value) {
+  MapP@<V@> p = map.?(empty: EmptyP<V@>, p: map.p);
+
+  Map@(p: key.?(
+    1: p.@(1: Just(value)),
+    2p0: p.@(2p0: Insert(p.2p0, key.2p0, value)),
+    2p1: p.@(2p1: Insert(p.2p1, key.2p1, value))));
+};
+
+@(Map@, Empty, Insert, Lookup);
+
