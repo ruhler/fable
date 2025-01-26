@@ -1,0 +1,43 @@
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+# Map@ -- A map interface.
+#  M@<V@> is the type of a map from K@ to V@.
+<<@>@,@>@ Map@ = @< <<@>@ M@, @ K@> {
+  # The empty map.
+  <@ V@> { M@<V@>; } Empty;
+
+  # Lookup a value in a map. Returns the value if present, Nothing otherwise.
+  <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup;
+
+  # Insert a value into a map.
+  <@ V@>(M@<V@>, K@, V@) { M@<V@>; } Insert;
+
+  # Remove a value from the map if it is present.
+  <@ V@>(M@<V@>, K@) { M@<V@>; } Delete;
+
+  # Iterate over elements of the map.
+  # Type Parameters:
+  #   V@ - the type of values in the map.
+  #   B@ - The type of value updated and returned by the foreach loop.
+  #
+  # Inputs:
+  #   map - the map to iterate over.
+  #   base - the initial value to update and return from the loop.
+  #   body - the body of the loop.
+  #
+  # Returns:
+  #   The result of applying the body consecutively to the base value, once for
+  #   each entry in the map.
+  #
+  # Conceptually:
+  #   B@ b = base
+  #   foreach (k, v) in map:
+  #     b = body(k, v, b)
+  #   return b
+  <@ V@>(M@<V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach;
+
+  @(Map@: M@, Empty, Insert, Delete, Lookup, ForEach);
+}>;
+
+@(Map@);
