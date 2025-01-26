@@ -5,7 +5,6 @@
 % Or = /Core/Bool%.Or;
 
 @ Char@ = /Core/Char%.Char@;
-% Chars = /Core/Char%.Chars;
 
 (Char@) { Bool@; } IsUpper = (Char@ c) {
   c.?(
@@ -37,14 +36,14 @@
   Or(IsAlpha(c), IsDigit(c));
 };
 
-(Char@) { Bool@; } IsSpace = (Char@ c) {
-  /Core/Char/Eq%.Eq(c, Chars.nl).?(true: True);
-  c.?('	': True, '': True, ' ': True, : False);
-};
-
 (Char@) { Bool@; } IsNewline = (Char@ c) {
   c.?('
 ': True, : False);
+};
+
+(Char@) { Bool@; } IsSpace = (Char@ c) {
+  c.?('
+': True, '	': True, '': True, ' ': True, : False);
 };
 
 @(IsUpper, IsLower, IsAlpha, IsDigit, IsAlNum, IsSpace, IsNewline);
