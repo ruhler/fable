@@ -868,3 +868,14 @@ Ord@, and Show@? That's a bit tedious, because there are a lot more functions
 involved, but we can define a default implementation based on Ord using the
 balanced tree, so maybe it's not so bad?
 
+---
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.short.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:37.73 ==> 0:34.88
+  Maximum resident set size (kbytes): 37296 ==> 42036
+
+Not quite the improvement I was hoping for. Seems like it's still a lot of
+work to do the lookup, even with this new approach. Anyway, according to
+--profile, we cut the time to AddSample in half, which is nice.
+

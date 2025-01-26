@@ -1,0 +1,43 @@
+
+@ Char@ = /Core/Char%.Char@;
+
+% Ord = /Core/Char/Ascii%.Ord;
+% Chr = /Core/Char/Ascii%.Chr;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+# Char@ to V@ map implemented as Int@ to V@ using ascii value for the Int@.
+% M = /Core/Int/Map%;
+
+<@>@ Map@ = M.Map@;
+Map@ Empty = M.Empty;
+
+<@ V@>(Map@<V@>, Char@) { Maybe@<V@>; }
+Lookup = <@ V@>(Map@<V@> map, Char@ key) {
+  M.Lookup(map, Ord(key));
+};
+
+<@ V@>(Map@<V@>, Char@, V@) { Map@<V@>; }
+Insert = <@ V@>(Map@<V@> map, Char@ key, V@ value) {
+  M.Insert(map, Ord(key), value);
+};
+
+<@ V@>(Map@<V@>, Char@) { Map@<V@>; }
+Delete = <@ V@>(Map@<V@> map, Char@ key) {
+  M.Delete(map, Ord(key));
+};
+
+<@ V@>(Map@<V@>)<@ B@>(B@, (Char@, V@, B@) { B@; }) { B@; }
+ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Char@, V@, B@) { B@; } body) {
+  M.ForEach(map, base, (Int@ i, V@ v, B@ b) {
+    body(Chr(i), v, b);
+  });
+};
+
+/Core/Map%.Map@<Map@, Char@> Map = @(
+  Map@, Empty, Insert, Delete, Lookup, ForEach
+);
+
+Map;
