@@ -5,7 +5,7 @@
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 
-<@,@>@ Map@ = /Core/Map%.Map@;
+<@,@>@ Map@ = /Core/Map/Tree%.Map@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -16,7 +16,7 @@
 
 # Empty -- 
 #   The empty set.
-Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
+Set@ Empty = <@ T@> { /Core/Map/Tree%.Empty<T@, Unit@>; };
 
 # IsEmpty --
 #   Check if a set is empty.
@@ -30,7 +30,7 @@ Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
 # Returns:
 #   True if the set is empty, false otherwise.
 <@ T@>(Set@<T@>) { Bool@; } IsEmpty = <@ T@>(Set@<T@> set) {
-  /Core/Map%.IsEmpty(set);
+  /Core/Map/Tree%.IsEmpty(set);
 };
 
 # Contains --
@@ -52,7 +52,7 @@ Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
 #   Contains(set, value);
 <@ T@>(Ord@<T@>, Set@<T@>, T@) { Bool@; }
 Contains = <@ T@>(Ord@<T@> ord, Set@<T@> set, T@ element) {
-  /Core/Map%.Lookup(ord, set, element).?(just: True, nothing: False);
+  /Core/Map/Tree%.Lookup(ord, set, element).?(just: True, nothing: False);
 };
 
 # Insert --
@@ -71,7 +71,7 @@ Contains = <@ T@>(Ord@<T@> ord, Set@<T@> set, T@ element) {
 #   Insert(set, Str(Chars|foo));
 <@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; }
 Insert = <@ T@>(Ord@<T@> ord) {
-  % insert = /Core/Map%.Insert<T@>(ord)<Unit@>;
+  % insert = /Core/Map/Tree%.Insert<T@>(ord)<Unit@>;
   (Set@<T@> set, T@ element) {
     insert(set, element, Unit);
   };
@@ -95,7 +95,7 @@ Insert = <@ T@>(Ord@<T@> ord) {
 #   Delete(set, Str(Chars|foo));
 <@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; }
 Delete = <@ T@>(Ord@<T@> ord) {
-  % delete = /Core/Map%.Delete<T@>(ord)<Unit@>;
+  % delete = /Core/Map/Tree%.Delete<T@>(ord)<Unit@>;
   (Set@<T@> set, T@ element) {
     delete(set, element);
   };
@@ -124,7 +124,7 @@ Delete = <@ T@>(Ord@<T@> ord) {
 #   return b
 <@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; }
 ForEach = <@ T@>(Set@<T@> set)<@ B@>(B@ base, (T@, B@) { B@; } body) {
-  /Core/Map%.ForEach(set, base, (T@ x, Unit@ _, B@ b) { body(x, b); });
+  /Core/Map/Tree%.ForEach(set, base, (T@ x, Unit@ _, B@ b) { body(x, b); });
 };
 
 @(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach);

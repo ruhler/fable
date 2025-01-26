@@ -8,16 +8,16 @@
 % OrdId = /Core/Int/Ord%.Ord;
 
 <@>% Map = <@ T@> {
-  @ Map@ = /Core/Map%.Map@<Id@, T@>;
-  % Empty = /Core/Map%.Empty<Id@, T@>;
-  % Insert = /Core/Map%.Insert(OrdId)<T@>;
-  % InsertWith = /Core/Map%.InsertWith(OrdId)<T@>;
-  % Lookup = /Core/Map%.Lookup(OrdId)<T@>;
-  % Delete = /Core/Map%.Delete(OrdId)<T@>;
-  % ForEach = /Core/Map%.ForEach<Id@, T@>;
+  @ Map@ = /Core/Map/Tree%.Map@<Id@, T@>;
+  % Empty = /Core/Map/Tree%.Empty<Id@, T@>;
+  % Insert = /Core/Map/Tree%.Insert(OrdId)<T@>;
+  % InsertWith = /Core/Map/Tree%.InsertWith(OrdId)<T@>;
+  % Lookup = /Core/Map/Tree%.Lookup(OrdId)<T@>;
+  % Delete = /Core/Map/Tree%.Delete(OrdId)<T@>;
+  % ForEach = /Core/Map/Tree%.ForEach<Id@, T@>;
 
   % Show = (Show@<T@> show) {
-    /Core/Map/Show%.Show(/Core/Int/Show%.Show, show);
+    /Core/Map/Tree/Show%.Show(/Core/Int/Show%.Show, show);
   };
 
   @(Map@, Empty, Insert, InsertWith, Lookup, Delete, ForEach, Show);

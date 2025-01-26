@@ -854,3 +854,17 @@ After switching LocId to be Int@ instead of String@:
   Maximum resident set size (kbytes): 341292 ==> 37296
 
 Cool. 10x memory improvement. A little performance improvement.
+
+What's the next performance issue to tackle? Not surprisingly, it's the
+location name to id lookup.
+
+Can I use the same trick as for Int@ maps? In this case, we could define a
+List@ map. Slightly more interesting now, because the implementation of List@
+map needs to take a Map implementation as input for elements, rather than Eq,
+Ord, or the like.
+
+It's starting to look like I should define Map@ as an interface like Eq@,
+Ord@, and Show@? That's a bit tedious, because there are a lot more functions
+involved, but we can define a default implementation based on Ord using the
+balanced tree, so maybe it's not so bad?
+

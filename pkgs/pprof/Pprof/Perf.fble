@@ -35,10 +35,10 @@
 @ LocId@ = /Pprof/Profile%.LocId@;
 @ Sample@ = /Pprof/Profile%.Sample@;
 
-@ Map@ = /Core/Map%.Map@<String@, LocId@>;
-% Empty = /Core/Map%.Empty<String@, LocId@>;
-% Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<LocId@>;
-% Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<LocId@>;
+@ Map@ = /Core/Map/Tree%.Map@<String@, LocId@>;
+% Empty = /Core/Map/Tree%.Empty<String@, LocId@>;
+% Lookup = /Core/Map/Tree%.Lookup<String@>(/Core/String/Ord%.Ord)<LocId@>;
+% Insert = /Core/Map/Tree%.Insert<String@>(/Core/String/Ord%.Ord)<LocId@>;
 
 
 # Parse a profile from the output of running:

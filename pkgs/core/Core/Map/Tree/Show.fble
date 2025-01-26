@@ -4,8 +4,8 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Reverse = /Core/List%.Reverse;
 
-<@,@>@ Map@ = /Core/Map%.Map@;
-<@,@>% ForEach = /Core/Map%.ForEach;
+<@,@>@ Map@ = /Core/Map/Tree%.Map@;
+<@,@>% ForEach = /Core/Map/Tree%.ForEach;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

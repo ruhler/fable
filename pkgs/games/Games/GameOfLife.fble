@@ -88,11 +88,11 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 };
 
 # Map from Coord to the status of the cell.
-@ Cand@ = /Core/Map%.Map@<Coord@, Status@>;
+@ Cand@ = /Core/Map/Tree%.Map@<Coord@, Status@>;
 % C = @(
-  Empty: /Core/Map%.Empty<Coord@, Status@>,
-  InsertWith: /Core/Map%.InsertWith(OrdCoord)<Status@>,
-  ForEach: /Core/Map%.ForEach<Coord@, Status@>
+  Empty: /Core/Map/Tree%.Empty<Coord@, Status@>,
+  InsertWith: /Core/Map/Tree%.InsertWith(OrdCoord)<Status@>,
+  ForEach: /Core/Map/Tree%.ForEach<Coord@, Status@>
 );
 
 # Advance the world by one unit of time.

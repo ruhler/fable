@@ -1,7 +1,7 @@
 
-# Public API for Map@ type.
+# Implementation of a balanced binary tree-based map.
 
-% Map = /Core/Map/Map%;
+% Map = /Core/Map/Tree/Map%;
 
 @ Bool@ = /Core/Bool%.Bool@;
 
@@ -10,7 +10,7 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 # _@ -- Package type for access to internals of Map@ abstract type.
-@ _@ = %(/Core/Map%);
+@ _@ = %(/Core/Map/Tree%);
 
 # Map@ --
 #   A map from K@ to V@, using the Structure@ of K@ to locate the key value
@@ -66,10 +66,10 @@ IsEmpty = _@.<@<IsEmpty>>(Map.IsEmpty);
 #   does not contain any such value.
 #
 # Example Use:
-#   % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord)<Foo@>;
+#   % Lookup = /Core/Map/Tree%.Lookup<String@>(/Core/String/Ord%.Ord)<Foo@>;
 #   Lookup(map, key);
 #
-#   % Lookup = /Core/Map%.Lookup<String@>(/Core/String/Ord%.Ord);
+#   % Lookup = /Core/Map/Tree%.Lookup<String@>(/Core/String/Ord%.Ord);
 #   Lookup<Foo@>(mapToFoo, key);
 #   Lookup<Bar@>(mapToBar, key);
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
@@ -90,7 +90,7 @@ Lookup = _@.<@<Lookup>>(Map.Lookup);
 #   value - the value to insert.
 #
 # Example Use:
-#   % Insert = /Core/Map%.Insert<String@>(/Core/String/Ord%.Ord)<Int@>;
+#   % Insert = /Core/Map/Tree%.Insert<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Insert(map, Str(Chars|foo), 4);
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Insert = _@.<@<Insert>>(Map.Insert);
@@ -111,7 +111,7 @@ Insert = _@.<@<Insert>>(Map.Insert);
 #          value in the map.
 #
 # Example Use:
-#   % InsertWith = /Core/Map%.InsertWith<String@>(/Core/String/Ord%.Ord)<Int@>;
+#   % InsertWith = /Core/Map/Tree%.InsertWith<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   InsertWith(map, Str(Chars|foo), (Maybe@<Int@> mv) {
 #     mv.?(just: Add(mv, value), nothing: value);
 #   };
@@ -127,7 +127,7 @@ InsertWith = _@.<@<InsertWith>>(Map.InsertWith);
 #   key - the key of the value to delete from the map.
 #
 # Example Use:
-#   % Delete = /Core/Map%.Delete<String@>(/Core/String/Ord%.Ord)<Int@>;
+#   % Delete = /Core/Map/Tree%.Delete<String@>(/Core/String/Ord%.Ord)<Int@>;
 #   Delete(map, Str(Chars|foo));
 <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
 Delete = _@.<@<Delete>>(Map.Delete);

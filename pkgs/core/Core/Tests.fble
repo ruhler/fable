@@ -21,7 +21,7 @@ Test@ Tests = TestSuite(Str|Core, List[
   /Core/List/Tests%.Tests,
   /Core/LFSR/Tests%.Tests,
   /Core/Maybe/Tests%.Tests,
-  /Core/Map/Tests%.Tests,
+  /Core/Map/Tree/Tests%.Tests,
   /Core/Set/Tests%.Tests,
   /Core/Stdio/Tests%.Tests,
   /Core/String/Tests%.Tests,

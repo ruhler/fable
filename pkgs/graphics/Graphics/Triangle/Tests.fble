@@ -309,7 +309,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List[
     Drawn@ drawn = Draw(drawing);
 
     # Verify we don't have a hole in the lower left corner.
-    Maybe@<Color@> got = /Core/Map%.Lookup(OrdPoint, 
+    Maybe@<Color@> got = /Core/Map/Tree%.Lookup(OrdPoint, 
       drawn, Point@(Neg(Int|32), Neg(Int|24)));
     Maybe@<Color@> wnt = Just(Color.Green);
       
