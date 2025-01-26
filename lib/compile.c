@@ -382,8 +382,8 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
     case FBLE_UNDEF_TC: {
       FbleUndefTc* undef_tc = (FbleUndefTc*)tc;
       FbleUndefTc* ntc = FbleNewTc(FbleUndefTc, FBLE_UNDEF_TC, tc->loc);
-      undef_tc->name = FbleCopyName(undef_tc->name);
-      undef_tc->body = RewriteVars(statics, arg_offset, undef_tc->body);
+      ntc->name = FbleCopyName(undef_tc->name);
+      ntc->body = RewriteVars(statics, arg_offset, undef_tc->body);
       return &ntc->_base;
     }
 

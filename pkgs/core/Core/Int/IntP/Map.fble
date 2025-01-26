@@ -67,7 +67,6 @@ Insert = <@ V@> (Map@<V@> map, IntP@ key, V@ value) {
 Delete = <@ V@>(Map@<V@> map, IntP@ key) {
   map.?(empty: map);
 
-  # TODO: delete should use map.p here, not p!
   MapP@<V@> p = key.?(
     1: map.p.@(1: Nothing<V@>),
     2p0: map.p.@(2p0: Delete(map.p.2p0, key.2p0)),

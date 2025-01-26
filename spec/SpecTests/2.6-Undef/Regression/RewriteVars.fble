@@ -1,0 +1,12 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# Regression test for a bug we had where we improperly rewrote variable
+# references an undef expression, leading to segfault at compile time.
+(Bool@ _x) {
+  Bool@ undef;
+  undef.true;
+};
+
