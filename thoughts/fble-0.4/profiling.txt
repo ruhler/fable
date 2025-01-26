@@ -894,3 +894,33 @@ from the path. Let's just write custom code for that.
 Not as much improvement as I was hoping for. Interesting. The extra IsSpace
 call is apparently expensive. Switch to IsNewline makes no difference though.
 Oh well.
+
+---
+
+At this point I'm ready for the performance issues to just go away so I can
+move on with the pprof UI.
+
+How about I implement a GetDelim function for IStream that reads up until a
+given character is encountered. I can use that to get the word, then I can use
+it to get each part of the path at a time. Careful of the trailing newline and
+how to end the path though. Maybe implement the parsing directly in pprof for
+now so I can know when to end the paths.
+
+That way we avoid GetLine and Split. Should save a few seconds a least. The
+hypothesis is it's expensive to allocate and return large data structures from
+functions due to gc realloc?
+
+---
+
+Reading path directly into List<String> instead of using GetLine + Split:
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.short.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:29.47 ==> 0:17.39
+  Maximum resident set size (kbytes): 42824 ==> 29112
+
+That's a decent improvement.
+
+Now profiling shows:
+  62% GetLocs
+  38% AddSample
