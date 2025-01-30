@@ -5,6 +5,8 @@
 @ Int@ = /Core/Int%.Int@;
 % Incr = /Core/Int%.Incr;
 % Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Div = /Core/Int/Div%.Div;
 % Gt = /Core/Int/Eq%.Gt;
 % Int = /Core/Int/Lit%.Int;
 
@@ -48,13 +50,14 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
       Int@ total = /Core/List%.ForEach(c.total, Int|0, Add);
       Gt(total, Int|0).?(true: Incr(sum), false: sum);
     });
+  Int@ percent = Div(Mul(Int|100, num_exec), num_locs).q;
 
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Profile Report',
     Str|'==============',
     Strs[
-      Str|'blocks executed: ', /Core/Int/Show%.Show(num_exec),
-      Str|' of ', /Core/Int/Show%.Show(num_locs)]]));
+      Str|'blocks executed: ', /Core/Int/Show%.Show(percent),
+      Str|'% of ', /Core/Int/Show%.Show(num_locs)]]));
 
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Block Locations',
