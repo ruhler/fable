@@ -4,6 +4,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
 
 % Str = /Core/String%.Str;
 
@@ -15,9 +16,13 @@
 
 @ Profile@ = /Pprof/Profile%.Profile@;
 @ Location@ = /Pprof/Profile%.Location@;
+@ LocId@ = /Pprof/Profile%.LocId@;
+
+% LM = /Pprof/Profile/LocationMap%;
 
 @ Count@ = /Pprof/Profile/Count%.Count@;
 % Count = /Pprof/Profile/Count%.Count;
+% Counts = /Pprof/Profile/Count%.Counts;
 
 
 # P_Basic
@@ -52,6 +57,19 @@ Test@ Tests = TestSuite(Str|Profile, List[
     AssertEquals(
       /Pprof/Profile/Count/Eq%.Eq,
       /Pprof/Profile/Count/Show%.Show,
+      wnt, got);
+  }),
+
+  Test(Str|Counts, (Unit@ _) {
+    LM.Map@<Count@> wnt = LM.Insert(LM.Insert(LM.Insert(LM.Insert(LM.Empty<Count@>,
+      Int|1, @(self: List[Int|10], total: List[Int|131])),
+      Int|2, @(self: List[Int|20], total: List[Int|90])),
+      Int|3, @(self: List[Int|61], total: List[Int|61])),
+      Int|4, @(self: List[Int|40], total: List[Int|40]));
+    LM.Map@<Count@> got = Counts(Nil<LocId@>, Nil<LocId@>, P_Basic);
+    AssertEquals(
+      /Core/Int/Map/Eq%.Eq(/Pprof/Profile/Count/Eq%.Eq),
+      /Core/Map/Show%.Show<LM.Map@, LocId@>(LM, /Core/Int/Show%.Show, /Pprof/Profile/Count/Show%.Show),
       wnt, got);
   })
 ]);

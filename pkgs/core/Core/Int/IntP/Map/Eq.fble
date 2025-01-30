@@ -1,0 +1,20 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ Map@ = /Core/Int/IntP/Map%.Map@;
+
+<@ V@>(Eq@<V@>) { Eq@<Map@<V@>>; }
+Eq = <@ V@>(Eq@<V@> eq, Map@<V@> a, Map@<V@> b) {
+  a.?(empty: b.?(empty: True, : False));
+  b.?(empty: False);
+
+  /Core/Maybe/Eq%.Eq(eq, a.p.1, b.p.1).?(false: False);
+  Eq(eq, a.p.2p0, b.p.2p0).?(false: False);
+  Eq(eq, a.p.2p1, b.p.2p1).?(false: False);
+  True;
+};
+
+@(Eq);

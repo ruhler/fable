@@ -3,8 +3,13 @@
 % False = /Core/Bool%.False;
 
 @ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
+% Add = /Core/Int%.Add;
+% Gt = /Core/Int/Eq%.Gt;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Nil = /Core/List%.Nil;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -21,6 +26,11 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Profile@ = /Pprof/Profile%.Profile@;
+@ LocId@ = /Pprof/Profile%.LocId@;
+
+@ Count@ = /Pprof/Profile/Count%.Count@;
+% Counts = /Pprof/Profile/Count%.Counts;
+% LM = /Pprof/Profile/LocationMap%;
 
 <<@>@>% Parse = /Pprof/Perf%.Parse;
 
@@ -31,12 +41,20 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
   mprofile.?(nothing: m.return(False));
   Profile@ profile = mprofile.just;
 
+  LM.Map@<Count@> flat = Counts(Nil<LocId@>, Nil<LocId@>, profile);
+
   Int@ num_locs = /Core/List/Length%.Length(profile.locations);
+  Int@ num_exec = LM.ForEach(flat, Int|0, (LocId@ _k, Count@ c, Int@ sum) {
+      Int@ total = /Core/List%.ForEach(c.total, Int|0, Add);
+      Gt(total, Int|0).?(true: Incr(sum), false: sum);
+    });
 
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Profile Report',
     Str|'==============',
-    Strs[Str|'blocks executed: ?? of ', /Core/Int/Show%.Show(num_locs)]]));
+    Strs[
+      Str|'blocks executed: ', /Core/Int/Show%.Show(num_exec),
+      Str|' of ', /Core/Int/Show%.Show(num_locs)]]));
 
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Block Locations',

@@ -924,3 +924,30 @@ That's a decent improvement.
 Now profiling shows:
   62% GetLocs
   38% AddSample
+
+Of those, 25% is Int map lookup related to Ascii.Chr, and 25% is Int map
+lookup related to GetLocs.
+
+I really need to improve my profile viewer. I'm feeling more and more like the
+current profile report is making it difficult for me to see where time is
+actually being spent.
+
+Maybe let's do another round of trying to install pprof for real.
+
+---
+
+I give up again on pprof for real. Instead let's play around with adding
+functionality to my pprof.
+
+Question: How to support Eq and Show for maps?
+A. Have a generic Eq and Show implementations that convert to a list, for
+example, and use Eq and Show on that.
+B. Have Eq and Show as part of the Map@ interface?
+C. Let specific map types implement their own Eq and Show, outside the Map@
+interface.
+
+The benefit of (A) is one implementation, the downside is maybe performance
+isn't as good as it could be. I don't expect Eq and Show to be fast, it's
+mostly for testing anyway.
+
+Let's start with (A) and see how that goes for now.

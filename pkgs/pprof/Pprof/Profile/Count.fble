@@ -3,12 +3,18 @@
 % Add = /Core/Int%.Add;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
+<@>% Concat = /Core/List%.Concat;
+<@>% ForEach = /Core/List%.ForEach;
 
+@ Location@ = /Pprof/Profile%.Location@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
+
+% LM = /Pprof/Profile/LocationMap%;
 
 % IsSuffixOf = /Pprof/Profile/Sequence%.IsSuffixOf;
 % IsSubsequenceOf = /Pprof/Profile/Sequence%.IsSubsequenceOf;
@@ -55,4 +61,13 @@ Count = (Sequence@ s, Profile@ p) {
   CountSamples(s, p.samples);
 };
 
-@(Count@, Count);
+# Returns a count for every location L for the sequence prefix, L, suffix.
+(Sequence@, Sequence@, Profile@) { LM.Map@<Count@>; }
+Counts = (Sequence@ prefix, Sequence@ suffix, Profile@ profile) {
+  ForEach(profile.locations, LM.Empty<Count@>,
+    (Location@ loc, LM.Map@<Count@> m) {
+      LM.Insert(m, loc.id, Count(Concat[prefix, List[loc.id], suffix], profile));
+    });
+};
+
+@(Count@, Count, Counts);
