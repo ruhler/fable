@@ -135,6 +135,30 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
         /Core/List%.Map(sorted, PrintRow))))));
   });
 
+  # Flat by overall time
+  Unit@ _ <- m.do({
+    List@<Row@> entries = LM.ForEach(flat, Nil<Row@>,
+      (LocId@ id, Count@ count, List@<Row@> es) {
+        Location@ loc = Search(profile.locations, (Location@ l) {
+          /Pprof/Profile/Eq%.LocId(l.id, id);
+        }).just;
+        Cons(@(loc, value: count.self), es);
+      });
+
+    List@<Row@> sorted = /Core/List/Sort%.Sort(
+      (Row@ a, Row@ b) {
+        b.value.?(nil: True);
+        a.value.?(nil: False);
+        Le(b.value.cons.head, a.value.cons.head);
+      }, entries);
+
+    O.PutLine(stdio.out, Lines(
+        Cons(Str|'Flat Profile by Self Time',
+        Cons(Str|'-------------------------',
+        Cons(MetricsHeader(profile.metrics),
+        /Core/List%.Map(sorted, PrintRow))))));
+  });
+
   # Locations
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Block Locations',
