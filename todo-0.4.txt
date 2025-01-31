@@ -2,16 +2,17 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* pprof viewer with fble profiling report feature parity
+ - Only show file name in final locations report.
+ - Highlight main callgraph entry at the beginning of the line.
+ - Show percentage with each value.
+ - Improve the performance enough to be useful.
+
 * Move tests for /Core/Int/Map% into a submodule.
 * Add tests for /Core/String/Map%.
 
 * Remove /Core/Map/Tree%.
  - Port everyone over to /Core/Map instead.
-
-* pprof viewer with fble profiling report feature parity
- - Add call graph section.
- - Add percentage with each value?
- - Improve the performance enough to be useful.
 
 * Output profiling samples instead of report from fble.
   Changing how we track/deal with recursion.

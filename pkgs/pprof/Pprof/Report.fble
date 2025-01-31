@@ -12,6 +12,7 @@
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
 % Div = /Core/Int/Div%.Div;
+% IsZero = /Core/Int/Eq%.IsZero;
 % Gt = /Core/Int/Eq%.Gt;
 % Le = /Core/Int/Eq%.Le;
 % Int = /Core/Int/Lit%.Int;
@@ -112,6 +113,9 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
 
   (LocId@, Count@, List@<Row@>) { List@<Row@>; }
   FoldOverallRows = (LocId@ id, Count@ count, List@<Row@> es) {
+    Int@ sum = /Core/List%.ForEach(count.total, Int|0, Add);
+    IsZero(sum).?(true: es);
+
     Location@ loc = Search(profile.locations, (Location@ l) {
       /Pprof/Profile/Eq%.LocId(l.id, id);
       }).just;
@@ -152,10 +156,13 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
         /Core/List%.Map(by_overall, PrintRow))))));
   });
 
-  # Flat by overall time
+  # Flat by self time
   Unit@ _ <- m.do({
     List@<Row@> entries = LM.ForEach(flat, Nil<Row@>,
       (LocId@ id, Count@ count, List@<Row@> es) {
+        Int@ sum = /Core/List%.ForEach(count.self, Int|0, Add);
+        IsZero(sum).?(true: es);
+
         Location@ loc = Search(profile.locations, (Location@ l) {
           /Pprof/Profile/Eq%.LocId(l.id, id);
         }).just;
