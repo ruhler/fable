@@ -2,16 +2,24 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+% Chars = /Core/Char%.Chars;
+
 @ Int@ = /Core/Int%.Int@;
 % Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
 % Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
 % Div = /Core/Int/Div%.Div;
 % Gt = /Core/Int/Eq%.Gt;
+% Le = /Core/Int/Eq%.Le;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
+<@>% Search = /Core/List/Eq%.Search;
+<@>% Length = /Core/List/Length%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -28,6 +36,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Profile@ = /Pprof/Profile%.Profile@;
+@ Location@ = /Pprof/Profile%.Location@;
 @ LocId@ = /Pprof/Profile%.LocId@;
 
 @ Count@ = /Pprof/Profile/Count%.Count@;
@@ -35,6 +44,45 @@
 % LM = /Pprof/Profile/LocationMap%;
 
 <<@>@>% Parse = /Pprof/Perf%.Parse;
+
+# Add n spaces to the left of the string.
+(Int@, String@) { String@; }
+Pad = (Int@ n, String@ str) {
+  Le(n, Int|0).?(true: str);
+  Pad(Decr(n), Cons(Chars.' ', str));
+};
+
+# Add spaces on the left to meet the target width.
+(Int@, String@) { String@; }
+MinWidth = (Int@ width, String@ str) {
+  Pad(Sub(width, Length(str)), str);
+};
+
+# Prints a header line for a table show metrics and block.
+(List@<String@>) { String@; }
+MetricsHeader = (List@<String@> metrics) {
+  # Format is "   %8s ... %8s  %s" on: "m1", ..., "mN", "block"
+  Strs[
+    Str|'   ',
+    Strs(/Core/List%.Map(metrics, (String@ metric) {
+      Cons(Chars.' ', MinWidth(Int|8, metric));
+      })),
+    Str|'  block'];
+};
+
+@ Row@ = *(Location@ loc, List@<Int@> value);
+
+# Prints a header line for a table show metrics and block.
+(Row@) { String@; }
+PrintRow = (Row@ row) {
+  Strs[
+    Str|'   ',
+    Strs(/Core/List%.Map(row.value, (Int@ value) {
+      Cons(Chars.' ', MinWidth(Int|8, /Core/Int/Show%.Show(value)));
+      })),
+    Str|'  ',
+    /Pprof/Profile/Show%.Location(row.loc)];
+};
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
   % O = /Core/Stream/OStream%(m);
@@ -45,20 +93,49 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
 
   LM.Map@<Count@> flat = Counts(Nil<LocId@>, Nil<LocId@>, profile);
 
-  Int@ num_locs = /Core/List/Length%.Length(profile.locations);
-  Int@ num_exec = LM.ForEach(flat, Int|0, (LocId@ _k, Count@ c, Int@ sum) {
-      Int@ total = /Core/List%.ForEach(c.total, Int|0, Add);
-      Gt(total, Int|0).?(true: Incr(sum), false: sum);
-    });
-  Int@ percent = Div(Mul(Int|100, num_exec), num_locs).q;
-
+  # Header
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Profile Report',
-    Str|'==============',
-    Strs[
-      Str|'blocks executed: ', /Core/Int/Show%.Show(percent),
-      Str|'% of ', /Core/Int/Show%.Show(num_locs)]]));
+    Str|'==============']));
 
+  # Blocks Executed
+  Unit@ _ <- m.do({
+    Int@ num_locs = /Core/List/Length%.Length(profile.locations);
+    Int@ num_exec = LM.ForEach(flat, Int|0, (LocId@ _k, Count@ c, Int@ sum) {
+        Int@ total = /Core/List%.ForEach(c.total, Int|0, Add);
+        Gt(total, Int|0).?(true: Incr(sum), false: sum);
+      });
+    Int@ percent = Div(Mul(Int|100, num_exec), num_locs).q;
+
+    O.PutLine(stdio.out, Lines[
+      Strs[
+        Str|'blocks executed: ', /Core/Int/Show%.Show(percent),
+        Str|'% of ', /Core/Int/Show%.Show(num_locs)]]);
+  });
+
+  # Flat by overall time
+  Unit@ _ <- m.do({
+    List@<Row@> entries = LM.ForEach(flat, Nil<Row@>,
+      (LocId@ id, Count@ count, List@<Row@> es) {
+        Location@ loc = Search(profile.locations, (Location@ l) {
+          /Pprof/Profile/Eq%.LocId(l.id, id);
+        }).just;
+        Cons(@(loc, value: count.total), es);
+      });
+
+    List@<Row@> sorted = /Core/List/Sort%.Sort(
+      (Row@ a, Row@ b) {
+        Le(b.value.cons.head, a.value.cons.head);
+      }, entries);
+
+    O.PutLine(stdio.out, Lines(
+        Cons(Str|'Flat Profile by Overall Time',
+        Cons(Str|'----------------------------',
+        Cons(MetricsHeader(profile.metrics),
+        /Core/List%.Map(sorted, PrintRow))))));
+  });
+
+  # Locations
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Block Locations',
     Str|'---------------',

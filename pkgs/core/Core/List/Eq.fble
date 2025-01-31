@@ -5,6 +5,10 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
@@ -26,6 +30,15 @@ Has = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   l.?(nil: False);
   p(l.cons.head).?(true: True);
   Has(l.cons.tail, p);
+};
+
+# Search --
+#   Return the first element of the list satisfying the given property.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Maybe@<T@>; }
+Search = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(nil: Nothing<T@>);
+  p(l.cons.head).?(true: Just(l.cons.head));
+  Search(l.cons.tail, p);
 };
 
 # Contains --
@@ -83,4 +96,4 @@ RemoveAll = <@ T@>((T@) { Bool@; } p, List@<T@> l) {
   Cons(l.cons.head, tail);
 };
 
-@(Eq, Has, Contains, Split, RemoveFirst, RemoveAll);
+@(Eq, Has, Search, Contains, Split, RemoveFirst, RemoveAll);
