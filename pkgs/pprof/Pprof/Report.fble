@@ -1,4 +1,5 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
@@ -16,6 +17,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 <@>% Search = /Core/List/Eq%.Search;
@@ -34,6 +36,7 @@
 % Lines = /Core/String%.Lines;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Profile@ = /Pprof/Profile%.Profile@;
 @ Location@ = /Pprof/Profile%.Location@;
@@ -72,6 +75,20 @@ MetricsHeader = (List@<String@> metrics) {
 
 @ Row@ = *(Location@ loc, List@<Int@> value);
 
+(Row@, Row@) { Bool@; }
+RowAscending = (Row@ a, Row@ b) {
+  a.value.?(nil: True);
+  b.value.?(nil: False);
+  Gt(b.value.cons.head, a.value.cons.head);
+};
+
+(Row@, Row@) { Bool@; }
+RowDescending = (Row@ a, Row@ b) {
+  b.value.?(nil: True);
+  a.value.?(nil: False);
+  Le(b.value.cons.head, a.value.cons.head);
+};
+
 # Prints a header line for a table show metrics and block.
 (Row@) { String@; }
 PrintRow = (Row@ row) {
@@ -92,6 +109,19 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
   Profile@ profile = mprofile.just;
 
   LM.Map@<Count@> flat = Counts(Nil<LocId@>, Nil<LocId@>, profile);
+
+  (LocId@, Count@, List@<Row@>) { List@<Row@>; }
+  FoldOverallRows = (LocId@ id, Count@ count, List@<Row@> es) {
+    Location@ loc = Search(profile.locations, (Location@ l) {
+      /Pprof/Profile/Eq%.LocId(l.id, id);
+      }).just;
+    Cons(@(loc, value: count.total), es);
+  };
+
+  List@<Row@> by_overall = {
+    List@<Row@> entries = LM.ForEach(flat, Nil<Row@>, FoldOverallRows);
+    /Core/List/Sort%.Sort(RowDescending, entries);
+  };
 
   # Header
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
@@ -115,24 +145,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
 
   # Flat by overall time
   Unit@ _ <- m.do({
-    List@<Row@> entries = LM.ForEach(flat, Nil<Row@>,
-      (LocId@ id, Count@ count, List@<Row@> es) {
-        Location@ loc = Search(profile.locations, (Location@ l) {
-          /Pprof/Profile/Eq%.LocId(l.id, id);
-        }).just;
-        Cons(@(loc, value: count.total), es);
-      });
-
-    List@<Row@> sorted = /Core/List/Sort%.Sort(
-      (Row@ a, Row@ b) {
-        Le(b.value.cons.head, a.value.cons.head);
-      }, entries);
-
     O.PutLine(stdio.out, Lines(
         Cons(Str|'Flat Profile by Overall Time',
         Cons(Str|'----------------------------',
         Cons(MetricsHeader(profile.metrics),
-        /Core/List%.Map(sorted, PrintRow))))));
+        /Core/List%.Map(by_overall, PrintRow))))));
   });
 
   # Flat by overall time
@@ -145,19 +162,51 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
         Cons(@(loc, value: count.self), es);
       });
 
-    List@<Row@> sorted = /Core/List/Sort%.Sort(
-      (Row@ a, Row@ b) {
-        b.value.?(nil: True);
-        a.value.?(nil: False);
-        Le(b.value.cons.head, a.value.cons.head);
-      }, entries);
+    List@<Row@> sorted = /Core/List/Sort%.Sort(RowDescending, entries);
 
-    O.PutLine(stdio.out, Lines(
-        Cons(Str|'Flat Profile by Self Time',
-        Cons(Str|'-------------------------',
-        Cons(MetricsHeader(profile.metrics),
-        /Core/List%.Map(sorted, PrintRow))))));
+    Unit@ _ <- m.do(O.PutStr(stdio.out, Lines[
+        Str|'Flat Profile by Self Time',
+        Str|'-------------------------',
+        MetricsHeader(profile.metrics)]));
+
+    O.PutLine(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow)));
   });
+
+  # Call Graph
+  Unit@ _ <- m.do(O.PutStr(stdio.out, Lines[
+      Str|'Call Graph',
+      MetricsHeader(profile.metrics)]));
+
+  (Row@) { M@<Unit@>; }
+  CallGraphRow = (Row@ row) {
+    Unit@ _ <- m.do(O.PutLine(stdio.out,
+        Str|'-------------------------------'));
+
+    Unit@ _ <- m.do({
+      LM.Map@<Count@> into = Counts(Nil<LocId@>, List[row.loc.id], profile);
+      List@<Row@> entries = LM.ForEach(into, Nil<Row@>, FoldOverallRows);
+      List@<Row@> sorted = /Core/List/Sort%.Sort(RowAscending, entries);
+      O.PutStr(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow)));
+    });
+
+    Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[PrintRow(row), Str|' **']));
+
+    {
+      LM.Map@<Count@> outof = Counts(List[row.loc.id], Nil<LocId@>, profile);
+      List@<Row@> entries = LM.ForEach(outof, Nil<Row@>, FoldOverallRows);
+      List@<Row@> sorted = /Core/List/Sort%.Sort(RowDescending, entries);
+      O.PutStr(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow)));
+    };
+  };
+
+  (List@<Row@>) { M@<Unit@>; }
+  CallGraph = (List@<Row@> rows) {
+    rows.?(nil: m.return(Unit));
+    Unit@ _ <- m.do(CallGraphRow(rows.cons.head));
+    CallGraph(rows.cons.tail);
+  };
+
+  Unit@ _ <- m.do(CallGraph(by_overall));
 
   # Locations
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[

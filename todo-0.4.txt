@@ -9,9 +9,9 @@ Things to consider doing for the fble-0.4 release.
  - Port everyone over to /Core/Map instead.
 
 * pprof viewer with fble profiling report feature parity
- - Store locations as a map instead of a list.
+ - Add call graph section.
+ - Add percentage with each value?
  - Improve the performance enough to be useful.
- - Finish the missing sections of the profile report.
 
 * Output profiling samples instead of report from fble.
   Changing how we track/deal with recursion.
