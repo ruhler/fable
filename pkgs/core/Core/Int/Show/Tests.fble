@@ -1,0 +1,72 @@
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+<@>% List = /Core/List%.List;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Int@ = /Core/Int%.Int@;
+% Neg = /Core/Int%.Neg;
+% Int = /Core/Int/Lit%.Int;
+
+% Read = /Core/Int/Show%.Read;
+% Show = /Core/Int/Show%.Show;
+
+Test@ Tests = TestSuite(Str|Show, List[
+  Test(Str|Read_Positive, (Unit@ _) {
+    Int@ wnt = Int|49113;
+    Int@ got = Read(Str|49113);
+    AssertEquals(/Core/Int/Eq%.Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Read_Negative, (Unit@ _) {
+    Int@ wnt = Neg(Int|49113);
+    Int@ got = Read(Str|'-49113');
+    AssertEquals(/Core/Int/Eq%.Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Read_AllDigits, (Unit@ _) {
+    Int@ wnt = Int|1234567890;
+    Int@ got = Read(Str|1234567890);
+    AssertEquals(/Core/Int/Eq%.Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Read_empty, (Unit@ _) {
+    Int@ wnt = Int|0;
+    Int@ got = Read(Str|'');
+    AssertEquals(/Core/Int/Eq%.Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Show_Positive, (Unit@ _) {
+    String@ wnt = Str|'10325487960';
+    String@ got = Show(Int|10325487960);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Show_Zero, (Unit@ _) {
+    String@ wnt = Str|'0';
+    String@ got = Show(Int|0);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Show_Negative, (Unit@ _) {
+    String@ wnt = Str|'-42';
+    String@ got = Show(Neg(Int|42));
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Show_AllDigits, (Unit@ _) {
+    String@ wnt = Str|'1234567890';
+    String@ got = Show(Int|1234567890);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  })
+]);
+
+@(Tests);

@@ -205,54 +205,7 @@ Test@ Tests = TestSuite(Str|Int, List[
   TOrd(Str|Ord_0_m5, Ord.Gt, (Unit@ _) { IOrd(0, Neg(5)); }),
   TOrd(Str|Ord_m5_0, Ord.Lt, (Unit@ _) { IOrd(Neg(5), 0); }),
 
-  Test(Str|Read_Positive, (Unit@ _) {
-    Int@ wnt = Int|49113;
-    Int@ got = /Core/Int/Show%.Read(Str|49113);
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Read_Negative, (Unit@ _) {
-    Int@ wnt = Neg(Int|49113);
-    Int@ got = /Core/Int/Show%.Read(Str|'-49113');
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Read_AllDigits, (Unit@ _) {
-    Int@ wnt = Int|1234567890;
-    Int@ got = /Core/Int/Show%.Read(Str|1234567890);
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Read_empty, (Unit@ _) {
-    Int@ wnt = Int|0;
-    Int@ got = /Core/Int/Show%.Read(Str|'');
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Show_Positive, (Unit@ _) {
-    String@ wnt = Str|'10325487960';
-    String@ got = /Core/Int/Show%.Show(Int|10325487960);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Show_Zero, (Unit@ _) {
-    String@ wnt = Str|'0';
-    String@ got = /Core/Int/Show%.Show(Int|0);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Show_Negative, (Unit@ _) {
-    String@ wnt = Str|'-42';
-    String@ got = /Core/Int/Show%.Show(Neg(Int|42));
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Show_AllDigits, (Unit@ _) {
-    String@ wnt = Str|'1234567890';
-    String@ got = /Core/Int/Show%.Show(Int|1234567890);
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }),
-
+  /Core/Int/Show/Tests%.Tests,
   /Core/Int/Map/Tests%.Tests
 ]);
 

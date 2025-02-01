@@ -4,7 +4,6 @@ Things to consider doing for the fble-0.4 release.
 
 * pprof viewer: show percentage with each value?
 
-* Move tests for /Core/Int/Show% into a submodule.
 * Add tests for /Core/String/Map%.
 
 * Remove /Core/Map/Tree%.
