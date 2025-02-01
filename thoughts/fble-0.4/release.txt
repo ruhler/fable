@@ -55,3 +55,9 @@ a try. If it turns out to be too difficult, we can punt to next release. Try
 enough to get decent enough experience writing fble for the experimental
 profile viewer. That's the most important part: using the language and
 learning from that experience.
+
+---
+
+I hereby consider the release feature complete. Let's punt the profiling
+rewrite to the next release. This one is big enough as is. The draft of my
+pprof viewer in fble is good enough experience writing fble for this release.

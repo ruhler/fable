@@ -1,0 +1,11 @@
+Fble 0.5 Release
+================
+Proposed focus area: performance.
+
+Goal: Make fble pprof viewer fast enough to be useful in practice.
+
+Possible features:
+* Re-implement profiling in fble to generate samples.
+* Optimize fble pprof viewer.
+* Optimize function calls in runtime.
+

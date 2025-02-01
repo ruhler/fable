@@ -1,0 +1,58 @@
+Fble 0.5 TODO
+=============
+Things to consider doing for the fble-0.5 release.
+
+* Improve performance of fble pprof viewer enough to be useful.
+
+* Output profiling samples instead of report from fble.
+  Changing how we track/deal with recursion.
+
+* Fbld Language
+ - modularity
+ - Better support for structs in fbld language, so its easier to write decent
+   performing fbld code.
+ - Have an 'if' primitive instead of 'ifeq' and 'ifneq'?
+ - The @plain builtin is really strange. I had trouble coming up with a test
+   case for it. Consider if there's some way we can get rid of that or make it
+   more sensible.
+ - Clarify in spec if @if[a@x][b@x] ... is an error or not.
+   Or redesign semantics of fbld to avoid that question entirely.
+
+* Implement a custom debugger for fble
+ - That works on all backends.
+ - That supports single step through code.
+ - That supports field access.
+
+* Make programs run twice as fast.
+
+* Improving packing support for data values.
+ - Taking advantage of explicit type info to pack and unpack.
+
+* Modular compilation
+ - Add option for loading modules from .so files?
+ - Have fble-stdio check that the function has the right type?
+
+* Add fble to rosettacode.org?
+  Or at least implement all the tasks, perhaps in a separate RosettaCode
+  package to start.
+  Probably start with all the 'Simple' tasks.
+
+* Design a standard library?
+ - Separate modules as appropriate to reduce false dependencies.
+ - Document all functions.
+ - Add tests for full code coverage of all functions.
+ - Proper support for unicode characters in /Core/Char%.
+
+* New apps
+ - IEEE floating point support.
+ - More benchmark games.
+ - Implement an image viewer.
+
+* Fble Language Features
+ - Add some way to catch or recover from errors at runtime?
+
+* Fble Debugger
+ - Add support for all backends.
+
+* Consider removing higher order kinds from the language.
+  Make everything either kind @ or %. What would we lose?

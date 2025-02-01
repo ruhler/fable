@@ -951,3 +951,36 @@ isn't as good as it could be. I don't expect Eq and Show to be fast, it's
 mostly for testing anyway.
 
 Let's start with (A) and see how that goes for now.
+
+---
+
+I have enough of profile reporting working now that I'm confident I can
+replace the existing profile reporting functionality. It's just a bit tedious
+detail wise, particularly given how I'm not super happy with the current
+reporting.
+
+Let's do another round of performance investigation. Because it's really
+really really slow. There is no question it is unusably slow.
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.supershort.txt 
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 2:55.12
+  Maximum resident set size (kbytes): 15120
+
+The supershort raw profile is 64 lines long. The real one is 46,600 lines
+long. If we assume it scales linearly, which I think is quite generous, we are
+looking at 36 hours to process a real profile.
+
+Not surprisingly, the problem is spending all this time looking for matching
+samples. Clearly we could pick a better algorithm. The right algorithm kind of
+depends on how I want to view the data though. Otherwise I would just
+duplicate the algorithm inside of fble itself. But that's more restrictive
+than I want to be.
+
+Let me think about what I really want to see from my profile viewer. The kind
+of journey that I set out on. The kind of queries I want to ask.
+
+Otherwise, this feels like a decent stopping point for this fble release. We
+can make the next release about getting the profiler fast enough to be useful
+in practice.
+
