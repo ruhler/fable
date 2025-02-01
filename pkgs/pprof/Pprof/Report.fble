@@ -99,7 +99,7 @@ PrintRow = (Row@ row) {
       Cons(Chars.' ', MinWidth(Int|8, /Core/Int/Show%.Show(value)));
       })),
     Str|'  ',
-    /Pprof/Profile/Show%.Location(row.loc)];
+    row.loc.name, Str|'[', /Pprof/Profile/Show%.LocId(row.loc.id), Str|'X]'];
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
@@ -219,7 +219,11 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
   Unit@ _ <- m.do(O.PutLine(stdio.out, Lines[
     Str|'Block Locations',
     Str|'---------------',
-    Lines(/Core/List%.Map(profile.locations, /Pprof/Profile/Show%.Location))]));
+    Lines(/Core/List%.Map(profile.locations, (Location@ loc) {
+        Strs[loc.name, Str|'[', /Pprof/Profile/Show%.LocId(loc.id), Str|'X]: ',
+        loc.file, Str|':', /Core/Int/Show%.Show(loc.line), Str|':',
+        /Core/Int/Show%.Show(loc.col)];
+      }))]));
 
   m.return(True);
 };
