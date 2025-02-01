@@ -1,6 +1,6 @@
 /**
  * @file debug.fble.c
- *  Implementation of /Core/Debug/Native% module.
+ *  Implementation of /Core/Debug/Builtin% module.
  */
 
 #include <fble/fble-function.h>
@@ -18,16 +18,16 @@
 static FbleString Filename = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = __FILE__, };
 static FbleString StrCore = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Core", };
 static FbleString StrDebug = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Debug", };
-static FbleString StrNative = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Native", };
-static FbleString StrModuleBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Debug/Core/Native%" };
-static FbleString StrTraceBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Debug/Core/Native%.Trace" };
+static FbleString StrBuiltin = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Builtin", };
+static FbleString StrModuleBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Debug/Core/Builtin%" };
+static FbleString StrTraceBlock = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "/Debug/Core/Builtin%.Trace" };
 
 #pragma GCC diagnostic pop
 
 static FbleName PathEntries[] = {
   { .name = &StrCore, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrDebug, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
-  { .name = &StrNative, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
+  { .name = &StrBuiltin, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
 };
 
 static FbleModulePath Path = {
@@ -68,7 +68,7 @@ static FbleExecutable Executable = {
   .run = &Run,
 };
 
-FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Native_25_ = {
+FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Builtin_25_ = {
   .path = &Path,
   .deps = { .size = 0, .xs = NULL},
   .executable = &Executable,

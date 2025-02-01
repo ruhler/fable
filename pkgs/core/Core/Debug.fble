@@ -12,18 +12,8 @@
 % Unit = /Core/Unit%.Unit;
 
 # Trace function for printf-like debugging.
-# To automatically print strings passed to Trace from gdb, when compiling with
-# debug info, use the following gdb commands:
-#
-#  break /Core/Debug%.Trace!
-#  commands
-#  silent
-#  call FbleDebugTrace(_)
-#  continue
-#  end
-(String@) { Unit@; } Trace = (String@ _) {
-  Unit;
-};
+# The string argument is printed to stderr.
+(String@) { Unit@; } Trace = /Core/Debug/Builtin%.Trace;
 
 # Trace with a newline added at the end of the string.
 (String@) { Unit@; } TraceLn = (String@ s) {
@@ -53,6 +43,12 @@ TraceLnDisabled = ((Unit@) { String@; } _f) {
 # Variations on Trace and TraceLn that can be more easily disabled.
 # To prevent overheads of generating the trace strings when tracing is
 # disabled.
+#
+# Sample use:
+#   % Trace = /Core/Debug%.Enable(True);
+#   ...
+#   Unit@ _ <- Trace;
+#   Str|'There is something you should know...';
 % Enable = (Bool@ enable) {
   enable.?(
     true: @(Trace: TraceEnabled, TraceLn: TraceLnEnabled),

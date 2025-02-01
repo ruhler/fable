@@ -88,3 +88,24 @@ from, all if you don't want to implement your own custom map.
 It seems a shame we would have to implement two identical versions of map for
 *(Int@ x, Int@ y) and *(Int@ row, Int@ col).
 
+---
+
+* Rename /Debug/Native% to /Debug/Builtin%?
+
+There's no point in having the gdb based trace anymore, now that we can use
+builtin based trace. I think best to have people continue to use the
+/Core/Debug% interface rather than access the raw underlying implementation.
+Builtin is a better name than Native.
+
+My biggest concern here is we don't give any choice over where the debugging
+output goes. Changing the name doesn't make that better or worse. Before trace
+was only implemented explicitly via gdb though. This change would make it
+always on.
+
+Who is using /Core/Debug today?
+
+Nobody. Nobody is using it.
+
+Let's do this: ditch the gdb part. Update the debugging guide. Add a test
+case that things don't crash?
+

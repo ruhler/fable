@@ -29,24 +29,28 @@
    break fprintf
 
  @definition For printf like debugging
-  Use the @l{/Core/Debug%.Trace} function for the strings to print.
+  Use the @l{/Core/Debug%.Trace} functions for the strings to print.
 
-  In gdb, run the following sequence of commands:
+  For example:
+  
+  @code[fble] @
+   Unit@ _ = /Core/Debug%.Trace(Strs[Str|'x is: ', /Core/Int/Show%.Show(x)]);
+   ...
 
-  @code[gdb] @
-   break /Core/Debug%.Trace!
-   commands
-   silent
-   call FbleDebugTrace(_)
-   continue
-   end
+  To more easily enable or disable tracing, and avoid the costs of computing
+  the trace message when disabled, you can use a style like this:
 
-  Now you should see Trace values printed as the program executes.
+  @code[fble] @
+   % Trace = /Core/Debug%.Enable(True);  # Change to False to disable tracing.
 
-  Or, to automatically run those same commands:
+   Unit@ _ = {
+     Unit@ _ <- Trace.TraceLn;
+     String@ debugDump = ExpensiveDebugFunction(x);
+     Strs[Str|'x is: ', debugDump];
+   };
 
-  @code[sh] @
-   gdb -x pkgs/core/trace.gdb ...
+  You should see Trace values printed to stderr as the program executes.
+
 
  @definition To avoid stepping into runtime implementation code
   @code[gdb] @

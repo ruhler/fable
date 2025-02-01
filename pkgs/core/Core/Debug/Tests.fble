@@ -1,0 +1,53 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+% StrE = /Core/String%.StrE;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+% TraceLn = /Core/Debug%.TraceLn;
+
+# Tests --
+#  A test suite to test the /Core/Bool% module.
+Test@ Tests = TestSuite(Str|Debug, List[
+  Test(Str|'Trace', (Unit@ _) {
+    # All we can really do is test that it doesn't crash. There's no way
+    # to observe the traced output from within fble.
+    Unit@ u = TraceLn|'hello trace!';
+    AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, u);
+  }),
+
+  Test(Str|'Enable', (Unit@ _) {
+    # Test syntax for easy enable/disable of tracing.
+    % Trace = /Core/Debug%.Enable(True);
+    Unit@ u = {
+      Unit@ _ <- Trace.TraceLn;
+      StrE|'easy enable/disable trace message';
+    };
+    AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, u);
+  }),
+
+  Test(Str|'Disable', (Unit@ _) {
+    # Assuming we run this in a testsuite that looks specially for @FAILED,
+    # this should at least test we aren't printing that out.
+    % Trace = /Core/Debug%.Enable(False);
+    Unit@ u = {
+      Unit@ _ <- Trace.TraceLn;
+      StrE|'@FAILED';
+    };
+    AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, u);
+  })
+]);
+
+@(Tests);

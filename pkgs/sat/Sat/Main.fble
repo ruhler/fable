@@ -18,7 +18,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% StrE = /Core/String%.StrE;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -61,8 +60,6 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
   };
 
   (List@<String@> args) {
-    Unit@ _ = /Core/Debug/Native%.Trace(StrE|'hello\n');
-
     Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
       Unit@ _ <- m.do(O.PutStr(stdio.out, /Sat/Usage%));
       m.return(True);
