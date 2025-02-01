@@ -1,4 +1,3 @@
-
 #include <assert.h>   // for assert
 #include <ctype.h>    // for isalnum
 #include <stdbool.h>  // for false
@@ -409,7 +408,8 @@ static FbldMarkup* ParseInline(Lex* lex, InlineContext context)
     }
 
     if (context == INLINE_ARG && IsEnd(lex)) {
-      FbldReportError("unexpected end of file\n", lex->loc);
+      FbldReportError("unterminated inline arg\n", lex->loc);
+      FbldReportError("(inline args starts here)\n", loc);
       FbldFree(chars.xs);
       FbldFreeMarkup(markup);
       return NULL;

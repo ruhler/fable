@@ -11,11 +11,6 @@ Things to consider doing for the fble-0.4 release.
 
 * Test and fix windows TCP sockets support.
 
-* [fbld] Better error location/message for missing close brace to argument.
-  For example, in fble-network-echo.fbld, missing the close brace after
-  @l[--help] gives an error message saying unexpected end of file. It was hard
-  to track down the real error location.
-
 * Return error messages in Sockets interface on failure to connect, serve, accept?
   Yes, definitely needed. Or an error code?
 
