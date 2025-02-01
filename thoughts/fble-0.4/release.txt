@@ -61,3 +61,30 @@ learning from that experience.
 I hereby consider the release feature complete. Let's punt the profiling
 rewrite to the next release. This one is big enough as is. The draft of my
 pprof viewer in fble is good enough experience writing fble for this release.
+
+---
+
+* Remove /Core/Map/Tree%.
+
+Who all is still using the original implementation?
+* /Invaders/Aliens%, with Alient@ coordinates as the key.
+* /Hwdg/Memory%, with Coord@ as the key.
+* /App/Drawing/Test%, with Point@ as the key.
+* /Games/GameOfLife%, with Coord@ as the key.
+* /Games/TicTacToe/AI%, with Board@ as the key.
+* /Sat/Id% with Int@ as the key. Provides an InsertWith function.
+* (DONE) /SatGame/Generate% with Int@ as the key.
+* /Core/Set%, with IsEmpty function.
+
+Note: we have a Union function implemented for Tree Map, but apparently nobody
+is using it?
+
+I would say there's value to keeping a /Core/Map/Tree% implementation around,
+because it's presumably easier to implement Ord@ for your custom type than it
+is to implement Map@. If you don't care about performance, then TreeMap is
+good enough. Maybe we also want ListMap and HashMap libraries you can choose
+from, all if you don't want to implement your own custom map.
+
+It seems a shame we would have to implement two identical versions of map for
+*(Int@ x, Int@ y) and *(Int@ row, Int@ col).
+
