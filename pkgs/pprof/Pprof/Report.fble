@@ -91,15 +91,16 @@ RowDescending = (Row@ a, Row@ b) {
 };
 
 # Prints a header line for a table show metrics and block.
-(Row@) { String@; }
-PrintRow = (Row@ row) {
+(Bool@, Row@) { String@; }
+PrintRow = (Bool@ highlight, Row@ row) {
   Strs[
-    Str|'   ',
+    highlight.?(true: Str|'** ', false: Str|'   '),
     Strs(/Core/List%.Map(row.value, (Int@ value) {
       Cons(Chars.' ', MinWidth(Int|8, /Core/Int/Show%.Show(value)));
       })),
     Str|'  ',
-    row.loc.name, Str|'[', /Pprof/Profile/Show%.LocId(row.loc.id), Str|'X]'];
+    row.loc.name, Str|'[', /Pprof/Profile/Show%.LocId(row.loc.id), Str|'X]',
+    highlight.?(true: Str|' **', false: Str|'')];
 };
 
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
@@ -153,7 +154,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
         Cons(Str|'Flat Profile by Overall Time',
         Cons(Str|'----------------------------',
         Cons(MetricsHeader(profile.metrics),
-        /Core/List%.Map(by_overall, PrintRow))))));
+        /Core/List%.Map(by_overall, PrintRow(False)))))));
   });
 
   # Flat by self time
@@ -176,7 +177,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
         Str|'-------------------------',
         MetricsHeader(profile.metrics)]));
 
-    O.PutLine(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow)));
+    O.PutLine(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow(False))));
   });
 
   # Call Graph
@@ -193,16 +194,16 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
       LM.Map@<Count@> into = Counts(Nil<LocId@>, List[row.loc.id], profile);
       List@<Row@> entries = LM.ForEach(into, Nil<Row@>, FoldOverallRows);
       List@<Row@> sorted = /Core/List/Sort%.Sort(RowAscending, entries);
-      O.PutStr(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow)));
+      O.PutStr(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow(False))));
     });
 
-    Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[PrintRow(row), Str|' **']));
+    Unit@ _ <- m.do(O.PutLine(stdio.out, PrintRow(True, row)));
 
     {
       LM.Map@<Count@> outof = Counts(List[row.loc.id], Nil<LocId@>, profile);
       List@<Row@> entries = LM.ForEach(outof, Nil<Row@>, FoldOverallRows);
       List@<Row@> sorted = /Core/List/Sort%.Sort(RowDescending, entries);
-      O.PutStr(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow)));
+      O.PutStr(stdio.out, Lines(/Core/List%.Map(sorted, PrintRow(False))));
     };
   };
 

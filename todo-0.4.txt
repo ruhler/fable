@@ -3,7 +3,6 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 * pprof viewer with fble profiling report feature parity
- - Highlight main callgraph entry at the beginning of the line.
  - Show percentage with each value.
  - Improve the performance enough to be useful.
 
