@@ -113,6 +113,10 @@ namespace eval "fbld" {
   bin_cov $::b/fbld/fbld.cov $objs_cov "" ""
   set ::fbld_objs_cov $objs_cov
 
+  install $::b/fbld/fbld $::config::bindir/fbld
+  fbld_man_usage $::b/fbld/fbld.1 $::s/fbld/fbld.1.fbld
+  install $::b/fbld/fbld.1 $::config::mandir/man1/fbld.1
+
   # Fbld spec tests.
   set fbld_spec_tests [list]
   foreach {x} [build_glob $::s/fbld/SpecTests -tails -nocomplain -type f *.fbld] {

@@ -1000,3 +1000,123 @@ A lot of these views of blocks will be very similar. For example, Foo
 basically only calls Foo.x, maybe and a little extra. The Foo and Foo.x look
 alike. No need to distinguish between them.
 
+Another way to look at profiling is store samples as a tree, sharing common
+prefix. What I tend to do when looking at a profile report is start at the
+root, trace down until it splits in a meaningful way.
+
+For example, start with the full tree. Then prune the tree as follows:
+* Remove a child node if it contributes to less than, say, 1% of time of the
+  parent node. Or 3%, or 5%.
+
+Then we can take the next step, which is:
+* Merge a parent with its child if here is only one child node.
+
+The result of this should be a compact tree where every node is of interest.
+Every node divides up the time of the program in a meaningful way. That's what
+you want to see, right?
+
+For example:
+
+      count     time  block
+          1       27           <root>[0000X]   
+**        5  1766779        0  <root>[0000X] **
+          1  1766725           /Core/Monad/State%.Monad![06e6X]   
+          1       27           <root>[0000X]   
+          1       26           /Core/Char/Ascii%[051bX]   
+          1        1           /Pprof/Perf%[064fX]   
+          1        0           /Core/Unit%[0002X]   
+          1        0           /Core/Bool%[0005X]   
+          1        0           /Core/Int/IntP%[0017X]   
+          1        0           /Core/Undef%[0048X]   
+          1        0           /Core/Int%[004dX]   
+          1        0           /Core/Char%[00b6X]   
+          1        0           /Core/Int/IntP/Div%[00beX]   
+          1        0           /Core/Int/Div%[00e8X]   
+          1        0           /Core/Int/IntP/Eq%[00feX]   
+          1        0           /Core/Int/Eq%[0143X]   
+          1        0           /Core/Digits%[019fX]   
+          1        0           /Core/List%[01a8X]   
+          1        0           /Core/Int/Lit%[01d4X]   
+          1        0           /Core/Eq%[01f7X]   
+          1        0           /Core/Maybe%[01f9X]   
+          1        0           /Core/List/Eq%[020eX]   
+          1        0           /Core/List/Length%[024eX]   
+          1        0           /Core/Monad%[026cX]   
+          1        0           /Core/Stream%[026eX]   
+          1        0           /Core/String%[0275X]   
+          1        0           /Core/Stdio%[0294X]   
+          1        0           /Pprof/Profile%[029eX]   
+          1        0           /Core/Map%[02a7X]   
+          1        0           /Core/Int/IntP/Map%[02aaX]   
+          1        0           /Core/Int/Map%[02ebX]   
+          1        0           /Pprof/Profile/LocationMap%[0313X]   
+          1        0           /Core/Char/Eq%[0314X]   
+          1        0           /Core/String/Eq%[0444X]   
+          1        0           /Pprof/Profile/Eq%[045bX]   
+          1        0           /Pprof/Profile/Sequence%[0480X]   
+          1        0           /Pprof/Profile/Count%[0496X]   
+          1        0           /Core/Char/Type%[04bfX]   
+          1        0           /Core/Char/Map%[0596X]   
+          1        0           /Core/List/Map%[05a9X]   
+          1        0           /Core/String/Map%[05d3X]   
+          1        0           /Core/Stream/IStream%[05d6X]   
+          1        0           /Core/Show%[05f8X]   
+          1        0           /Core/Int/IntP/Show%[05faX]   
+          1        0           /Core/Int/Show%[0628X]   
+          1        0           /Core/List/Show%[0696X]   
+          1        0           /Core/String/Show%[06a3X]   
+          1        0           /Pprof/Profile/Show%[06aaX]   
+          1        0           /Core/Stream/OStream%[06bbX]   
+          1        0           /Core/List/Sort%[06cfX]   
+          1        0           /Core/Monad/State%[06deX]   
+          1        0           /Core/Monad/IO%[06eeX]   
+          1        0           /Core/Stdio/IO/Builtin%[06f5X]   
+          1        0           /Core/Stdio/IO%[06fbX]   
+          1        0           /Core/Stdio/IO%.RunIO![0718X]   
+          1        0           /Pprof/Report%[071bX]   
+
+What I really care about is:
+
+**        5  1766779        0  <root>[0000X] **
+          1  1766725           /Core/Monad/State%.Monad![06e6X]   
+
+So drop the rest. But now <root> is basically equal to Monad!, so merge them
+into a single node.
+
+I bet my call graph looks really nice and simple if I do this pruning and
+merging. I bet it shows exactly what I'm interested in seeing.
+
+Now consider a block that shows up in two different places in the tree. It's
+in two different places, because it was reached via two different paths. Think
+of these two different paths as two different contexts in which the block was
+called.
+
+In some cases context makes a big difference in behavior of the block. For
+example, FbleCall: the behavior is almost completely determined by who called
+it. In other cases, not so much: for example Integer addition. Could we
+recognize this automatically somehow? For example, if two trees look very
+similar, then merge them into a single node? That would turn our pruned tree
+of samples into a DAG. Perhaps that relates to why we want to pivot on nodes.
+
+Consider another view: say I pivot on some block. If I can see clearly that it
+partitions into distinct sets of child behavior based on callers, then ideally
+we treat it as distinct nodes. If the child behavior is the same for all
+callers, then treat it as a single node.
+
+The next step I want to get to is recursion: where a node looks like itself,
+so we can group them together. For example, normally I should care whether we
+are on the 4th, 5th or 100th recursive call. They all look the same ish, so
+treat them as a single node to consider.
+
+Anyway, that's a lot to think about all at once. It would be good if I can
+make incremental progress.
+
+For example, start by pruning and reducing the tree of samples, then display
+that somehow.
+
+What's the most convenient way to render a tree in text form? My current
+approach is give each node a label, then for each node, show incoming edges
+and outgoing edges, sort by size. That avoids issues with lots of levels of
+nesting. If it's true every node has a single parent, that just means incoming
+edges list will be very short. This approach supports DAGs as well as trees.
+

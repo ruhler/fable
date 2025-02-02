@@ -260,3 +260,28 @@ I can't really change the implementation of Monad@ without changing the
 implementation of Stdio@. But you could imagine different implementations of
 Stdio@ with the same implementation of Monad@. That's reason to suggest Stdio
 comes first too I think.
+
+Turned out to be not too difficult. Done.
+
+---
+
+* Install the C version of fbld, not the fble version.
+
+C implementation:
+* $::b/fbld/fbld.
+
+Fble implementation:
+* $::b/pkgs/fbld/bin/fbld
+* $bindir/fbld
+* $mandir/man1/fbld.1
+
+I need a man page for the C version. Is it the same interface?
+
+Well, it doesn't have any usage info at all. It doesn't accept --help. It
+takes a list of input files is all.
+
+It is the same interface though. Where should the man page live? Probably in
+the fbld directory.
+
+Neither of them accept help arguments. I should fix that eventually.
+

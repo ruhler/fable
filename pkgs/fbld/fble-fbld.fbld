@@ -1,0 +1,19 @@
+@usage[fble-fbld] fbld document processor
+ @synopsis
+ @ @l[fble-fbld] \[@a[FILE]\]...
+
+ @description
+  Concatenates the given files together and processes the result as an fbld
+  document. The result is output to standard output.
+
+  See the fbld language specification for more information about fbld document
+  processing.
+ 
+ @exitstatus
+  @def[0] Success.
+  @def[1] An error occured when processing the files.
+
+ @examples
+  @ex[fble-fbld html.fbld foo.fbld > foo.html]
+   Processes the document @l[foo.fbld] as an html document and outputs the
+   result to @l[foo.html].
