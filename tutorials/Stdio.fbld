@@ -18,13 +18,13 @@
  following type:
 
  @code[fble] @
-  <<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
+  <<@>@>@ Main@ = <<@>@ M@>(Stdio@<M@>, Monad@<M@>, List@<String@>) { M@<Bool@>; };
 
  Here is an example hello world program using this more general interface:
 
  @code[fble] @
   # A hello world program using the Stdio@ interface.
-  Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
+  Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
     % O = /Core/Stream/OStream%(m);
     
     Unit@ _ <- m.do(O.PutLine(stdio.out, Str|'hello, world'));

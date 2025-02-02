@@ -14,7 +14,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 # A hello world program using the Stdio@ interface.
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
   % O = /Core/Stream/OStream%(m);
   
   Unit@ _ <- m.do(O.PutLine(stdio.out, Str|'hello, world'));

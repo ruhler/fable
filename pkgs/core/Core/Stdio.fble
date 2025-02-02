@@ -40,13 +40,13 @@
 #
 # Inputs:
 #   M@ - The abstract computation type.
-#   m - A Monad@ interface M@.
 #   stdio - A Stdio@ interface for M@.
+#   m - A Monad@ interface M@.
 #   args - The list of arguments to the application.
 #
 # Results:
 #   True if the program ran successfully and should exit zero. False if the
 #   program failed and should exit non-zero.
-<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
+<<@>@>@ Main@ = <<@>@ M@>(Stdio@<M@>, Monad@<M@>, List@<String@>) { M@<Bool@>; };
 
 @(Stdio@, Main@);

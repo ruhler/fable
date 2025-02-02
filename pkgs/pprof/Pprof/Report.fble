@@ -103,7 +103,7 @@ PrintRow = (Bool@ highlight, Row@ row) {
     highlight.?(true: Str|' **', false: Str|'')];
 };
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
+Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
   % O = /Core/Stream/OStream%(m);
 
   Maybe@<Profile@> mprofile <- m.do(Parse(m, stdio.in));

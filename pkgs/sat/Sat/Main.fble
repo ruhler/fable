@@ -35,7 +35,7 @@
 % ParseLines = /Sat/Dimacs%.ParseLines;
 % ShowResult = /Sat/Show%.ShowResult;
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 

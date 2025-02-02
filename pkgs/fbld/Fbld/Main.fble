@@ -39,7 +39,7 @@
 
 # Main --
 #   Main function for fbld program.
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 

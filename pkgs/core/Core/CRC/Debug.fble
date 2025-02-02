@@ -24,7 +24,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 
-Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
   
   (List@<String@> _args) {

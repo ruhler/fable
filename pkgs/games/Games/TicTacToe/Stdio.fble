@@ -97,7 +97,7 @@
 };
 
 # Play a game of tic-tac-toe.
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 

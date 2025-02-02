@@ -109,3 +109,154 @@ Nobody. Nobody is using it.
 Let's do this: ditch the gdb part. Update the debugging guide. Add a test
 case that things don't crash?
 
+---
+
+* Add helper macros for defining static FbleString and FbleModulePath?
+
+Specific to static strings, so we set refcount to 1. The user needs to provide
+the name of the thing and the value of the string. I can think of two
+approaches.
+
+What we have today:
+
+  static FbleString Filename = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = __FILE__, };
+  static FbleString StrCore = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Core", };
+  static FbleString StrDebug = { .refcount = 1, .magic = FBLE_STRING_MAGIC, .str = "Debug", };
+
+Option 1:
+
+  static FbleString Filename = FBLE_STATIC_STRING(__FILE__);
+  static FbleString StrCore = FBLE_STATIC_STRING("Core");
+  static FbleString StrDebug = FBLE_STATIC_STRING("Debug");
+
+Option 2:
+
+  FBLE_STATIC_STRING(Filename, __FILE__);
+  FBLE_STATIC_STRING(StrCore, "Core");
+  FBLE_STATIC_STRING(StrDebug, "Debug");
+
+
+Honestly I prefer option 1. You don't have to know the implementation of
+FBLE_STATIC_STRING to understand what its doing.
+
+How about FbleModulePath?
+
+static FbleModulePath Path = {
+  .refcount = 1,
+  .magic = FBLE_MODULE_PATH_MAGIC,
+  .loc = { .source = &Filename, .line = __LINE__, .col = 1 },
+  .path = { .size = 3, .xs = PathEntries},
+};
+
+Ideally I would like something like:
+
+static FbleModulePath Path = FBLE_STATIC_MODULE_PATH("/Debug/Core/Builtin%");
+
+That's not going to happen in practice. We can't deal with the variable length
+arguments, and it doesn't let us define the intermediate things we need.
+
+So much of these builtin module implementations is boiler plate. How nice
+would it be if the compiler generated all that for us? And if we did that, no
+need to make static strings easier to define, right?
+
+I'm not sure what I want to do for this right now.
+
+---
+
+* Reorder /Core/Stdio%.Main@ function args to: Stdio, List, Monad@?
+  Seems more natural to compose by adding extra things to the front.
+  See /Network/Apps/Client% for example.
+
+<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
+
+Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Monad@<M@> m, Stdio@<M@> stdio, List@<String@> argv) { ... }
+
+The idea is, Stdio@<M@> is an extra interface, just like Sockets@<M@> is an
+extra interface. If you think about it, List@<String@> args is an extra
+interface. And returning Bool@ is an interface. So we are combining 4 things:
+
+* Return status
+* Command line args
+* stdio
+* sockets
+
+The monad is just a way to glue all those things together. It seems like the
+status code being part of the return type is difficult to move, but command
+line, stdio, and sockets can all easily be made optional.
+
+Right now, Stdio and sockets are provided as builtin modules. The real top
+level type is:
+
+@ Main@ = (List@<String@>) { IO@<Bool@>; };
+
+Notice there is no Monad@ there, it's implicit. So, if we were to start there,
+I would say:
+
+1.  @ Main@ = (List@<String@>) { IO@<Bool@>; };
+The actual top level interface.
+
+2.  <<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, List@<String@>) { M@<Bool@>; };
+Generalizing (1) to abstract monadic type.
+
+3.  <<@>@>@ Main@ = <<@>@ M@>(Stdio@<M@>, Monad@<M@>, List@<String@>) { M@<Bool@>; };
+Adding optional stdio interface.
+
+4.  <<@>@>@ Main@ = <<@>@ M@>(Sockets@<M@>, Stdio@<M@>, Monad@<M@>, List@<String@>) { M@<Bool@>; };
+Adding optional sockets interface.
+
+Sounds reasonable to me. This suggests: Stdio, then Monad, then List. Shall I
+give it a try?
+
+While I'm at it, I think I should change the return type to Int@ to match
+status code?
+
+Here's what's part of C99:
+
+  int main(void)
+  int main(int argc, char* argv[])
+
+That suggests Int@.
+
+Returning int is equivalent to ending your program call with exit();
+EXIT_SUCCESS and EXIT_FAILURE are options, otherwise it's all undefined. You
+can't assume 0 / non-zero, etc.
+
+In that case, honestly, I think Bool@ makes more sense. True for EXIT_SUCCESS,
+False for EXIT_FAILURE. If nothing else is portable, why give more options?
+
+An alternative approach I could take is make an exit builtin.
+
+Exit@<M@>:
+  (Bool@) { M@<Unit@>; }
+
+That way we could remove it from the return value. Call it from within fble
+code. I'm not sure how I feel about that. Is it better? It's certainly more
+modular. What happens if you don't return anything though? Yeah, you need to
+return something. This forces you to do that. Makes sense.
+
+Anyway, proposal then is to switch to:
+
+<<@>@>@ Main@ = <<@>@ M@>(Stdio@<M@>, Monad@<M@>, List@<String@>) { M@<Bool@>; };
+
+The only real practical impact, besides having to reorder arguments in a bunch
+of places, is ... nothing.
+
+Based on all that, I don't think it's worth the churn at this point.
+
+It would only really matter if I were to provide an option to run a program as
+<<@>@ M@>(Monad@<M@>, List@<String@>) { M@<Bool@>; }
+
+Then it would simplify the implementation of Run for the Stdio@ type.
+
+Well, I have reason to believe it's better this way, let's try it. If it's too
+painful, ditch the attempt. If it isn't, we've made things a little bit nicer.
+Don't forget to update tutorials!
+
+Another way to think about it: are we more likely to change the stdio
+interface or the monad interface? Like how with Map@ we are more likely to
+change the value type than the key type.
+
+I can't really change the implementation of Monad@ without changing the
+implementation of Stdio@. But you could imagine different implementations of
+Stdio@ with the same implementation of Monad@. That's reason to suggest Stdio
+comes first too I think.

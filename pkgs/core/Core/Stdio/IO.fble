@@ -51,7 +51,7 @@ Stdio@<IO@> StdioIO = @(
 #   A top-level IO implementation for running a Stdio IO Main@ program.
 (/Core/Stdio%.Main@<IO@>) { Main@; }
 RunIO = (/Core/Stdio%.Main@<IO@> main, List@<String@> args) {
-  main(/Core/Monad/IO%.Monad, StdioIO, args);
+  main(StdioIO, /Core/Monad/IO%.Monad, args);
 };
 
 # Run --

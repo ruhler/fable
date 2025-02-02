@@ -96,7 +96,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   GetArgs(nargv, nargs);
 };
 
-Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Monad@<M@> m, Stdio@<M@> stdio, List@<String@> argv) {
+Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
   % O = /Core/Stream/OStream%(m);
 
   (Int@, IStream@<M@>, OStream@<M@>) { M@<Unit@>; }

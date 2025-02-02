@@ -22,7 +22,7 @@
 % Unit = /Core/Unit%.Unit;
 
 # The 'cat' program.
-Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 

@@ -20,7 +20,7 @@
 @ Fannkuch@ = /Games/BenchmarkGame/FannkuchRedux%.Fannkuch@;
 % FannkuchRedux = /Games/BenchmarkGame/FannkuchRedux%.FannkuchRedux;
 
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
   (List@<String@>) { M@<Unit@>; } PutL = (List@<String@> strs) {

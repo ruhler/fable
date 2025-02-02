@@ -16,7 +16,7 @@
 # StringO --
 #   A stdio main function that outputs a single string.
 (String@) { Main@; } StringO = (String@ str) {
-  <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> _args) {
+  <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
     % O = /Core/Stream/OStream%(m);
     Unit@ _ <- m.do(O.PutLine(stdio.out, str));
     m.return(True);

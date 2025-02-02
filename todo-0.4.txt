@@ -18,9 +18,8 @@ Things to consider doing for the fble-0.4 release.
   For example, elinks seems to think fble-pprof isn't done writing its
   response. Or is there some other issue going on there?
 
-* Reorder /Core/Stdio%.Main@ function args to: Stdio, List, Monad@?
-  Seems more natural to compose by adding extra things to the front.
-  See /Network/Sockets/Apps/Client% for example.
+* EXIT_SUCCESS and EXIT_FAILURE with /Core/Stdio%.Main@ True/False rather than
+  zero and non-zero? Is that more portable?
 
 * Add helper macros for defining static FbleString and FbleModulePath?
 

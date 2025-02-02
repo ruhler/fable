@@ -26,7 +26,7 @@
 
 (Main@, String@, Unit@) { TestResult@; }
 RunBench = (Main@ game, String@ n, Unit@ _) {
-  Bool@ got = Run(game<Pure@>(Monad, Stdio, List[n]));
+  Bool@ got = Run(game<Pure@>(Stdio, Monad, List[n]));
   AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, got);
 };
 

@@ -102,7 +102,7 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
-Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio) {
+Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
   (String@) { M@<Unit@>; } PutS = (String@ str) {
