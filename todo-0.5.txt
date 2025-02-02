@@ -31,6 +31,7 @@ Things to consider doing for the fble-0.5 release.
 * Modular compilation
  - Add option for loading modules from .so files?
  - Have fble-stdio check that the function has the right type?
+ - Load minimum dependencies needed for type checking when possible?
 
 * Add fble to rosettacode.org?
   Or at least implement all the tasks, perhaps in a separate RosettaCode

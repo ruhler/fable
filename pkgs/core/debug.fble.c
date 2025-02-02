@@ -37,6 +37,9 @@ static FbleModulePath Path = {
   .path = { .size = 3, .xs = PathEntries},
 };
 
+#define TRACE_BLOCK_OFFSET 1
+#define NUM_PROFILE_BLOCKS 2
+
 static FbleName ProfileBlocks[] = {
   { .name = &StrModuleBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrTraceBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
@@ -57,7 +60,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
     .run = &TraceImpl,
   };
 
-  FbleValue* trace = FbleNewFuncValue(heap, &trace_exe, 1, NULL);
+  FbleValue* trace = FbleNewFuncValue(heap, &trace_exe, function->profile_block_id + TRACE_BLOCK_OFFSET, NULL);
   FbleValue* native = FbleNewStructValue_(heap, 1, trace);
   return FblePopFrame(heap, native);
 }
@@ -72,6 +75,6 @@ FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Builtin_25_ = {
   .path = &Path,
   .deps = { .size = 0, .xs = NULL},
   .executable = &Executable,
-  .profile_blocks = { .size = 2, .xs = ProfileBlocks },
+  .profile_blocks = { .size = NUM_PROFILE_BLOCKS, .xs = ProfileBlocks },
 };
 

@@ -984,3 +984,19 @@ Otherwise, this feels like a decent stopping point for this fble release. We
 can make the next release about getting the profiler fast enough to be useful
 in practice.
 
+---
+
+Exploring more ideas for an ideal profile viewer.
+
+There are a finite number of blocks. For each block, we can pivot on the
+block, which limits us to the samples containing the block, lets us look at
+where you can get from the block as if it were the root node, and lets us look
+at how you got to the block.
+
+So, in theory, we can look at this view for each block in turn and break down
+the problem into smaller pieces that way.
+
+A lot of these views of blocks will be very similar. For example, Foo
+basically only calls Foo.x, maybe and a little extra. The Foo and Foo.x look
+alike. No need to distinguish between them.
+

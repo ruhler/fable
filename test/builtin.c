@@ -33,7 +33,10 @@ static FbleModulePath Path = {
   .path = { .size = 2, .xs = PathEntries},
 };
 
-static FbleName ProfileBlocks[] = {
+#define ID_BLOCK_OFFSET 1
+#define NUM_PROFILE_BLOCKS 2
+
+static FbleName ProfileBlocks[NUM_PROFILE_BLOCKS] = {
   { .name = &StrModuleBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
   { .name = &StrIdBlock, .space = 0, .loc = { .source = &Filename, .line = __LINE__, .col = 1 }},
 };
@@ -52,7 +55,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
     .run = &IdImpl,
   };
 
-  FbleValue* id = FbleNewFuncValue(heap, &id_exe, 1, NULL);
+  FbleValue* id = FbleNewFuncValue(heap, &id_exe, function->profile_block_id + ID_BLOCK_OFFSET, NULL);
   FbleValue* builtin = FbleNewStructValue_(heap, 2, id, id);
   return FblePopFrame(heap, builtin);
 }
@@ -67,5 +70,5 @@ FblePreloadedModule _Fble_2f_SpecTests_2f_Builtin_25_ = {
   .path = &Path,
   .deps = { .size = 0, .xs = NULL },
   .executable = &Executable,
-  .profile_blocks = { .size = 2, .xs = ProfileBlocks },
+  .profile_blocks = { .size = NUM_PROFILE_BLOCKS, .xs = ProfileBlocks },
 };

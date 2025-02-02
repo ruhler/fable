@@ -22,10 +22,6 @@ Things to consider doing for the fble-0.4 release.
   Seems more natural to compose by adding extra things to the front.
   See /Network/Sockets/Apps/Client% for example.
 
-* Make sure we are using the right profile block id for /SpecTests/Builtin%
-  and /Core/Debug/Native%. It should be function->profile_block_id + X, not X.
-  I think.
-
 * Add helper macros for defining static FbleString and FbleModulePath?
 
 * Add spec tests for full coverage.
