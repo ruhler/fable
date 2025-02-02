@@ -24,6 +24,11 @@ Things to consider doing for the fble-0.4 release.
 * Add helper macros for defining static FbleString and FbleModulePath?
 
 * Add spec tests for full coverage.
+ - Try all the funny non-printable characters in identifier names?
+ - Test fble-disassemble with type dependencies?
+ - Test FbleCompileModule where typecheck of module fails?
+   Why isn't that covered already by basically every compile-error test?
+ - Test error parsing a .fble.@ file (load.c)
 
 * Update tutorials for changes since last release
  - modular compilation in particular

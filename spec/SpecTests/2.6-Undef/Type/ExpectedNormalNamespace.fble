@@ -1,6 +1,8 @@
-# @@fble-test@@ compile-error 5:8
+# @@fble-test@@ compile-error 7:7
 
-# Unit@ has kind %, so it should be in the normal namespace, not the type
-# namespace. e.g. it should be named Unit instead.
-% Unit@;
-Unit@;
+@ Unit@ = *();
+
+# Foo@ has kind %, so it should be in the normal namespace, not the type
+# namespace. e.g. it should be named Foo instead.
+Unit@ Foo@;
+Foo@;
