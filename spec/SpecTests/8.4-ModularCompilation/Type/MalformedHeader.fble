@@ -1,0 +1,3 @@
+# @@fble-test@@ compile-error 8:14
+# Test use of a module whose header file has a parse error.
+/SpecTests/'8.4-ModularCompilation'/Type/MalformedHeader/Foo%.Unit;
