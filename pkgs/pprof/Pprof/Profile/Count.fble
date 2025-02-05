@@ -1,11 +1,6 @@
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
 <@>% Concat = /Core/List%.Concat;
 <@>% ForEach = /Core/List%.ForEach;
 
@@ -13,6 +8,10 @@
 @ Profile@ = /Pprof/Profile%.Profile@;
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
+
+@ Value@ = /Pprof/Profile/Value%.Value@;
+% 0 = /Pprof/Profile/Value%.0;
+% Add = /Pprof/Profile/Value%.Add;
 
 % LM = /Pprof/Profile/LocationMap%;
 
@@ -27,31 +26,24 @@
 #   The count of metric values for samples where the sequence in question
 #   appears anywhere in the sample.
 @ Count@ = *(
-  List@<Int@> self,
-  List@<Int@> total
+  Value@ self,
+  Value@ total
 );
-
-(List@<Int@>, List@<Int@>) { List@<Int@>; }
-AddMetrics = (List@<Int@> a, List@<Int@> b) {
-  a.?(nil: b);
-  b.?(nil: a);
-  Cons(Add(a.cons.head, b.cons.head), AddMetrics(a.cons.tail, b.cons.tail));
-};
 
 (Count@, Count@) { Count@; }
 AddCount = (Count@ a, Count@ b) {
-  @(self: AddMetrics(a.self, b.self), total: AddMetrics(a.total, b.total));
+  @(self: Add(a.self, b.self), total: Add(a.total, b.total));
 };
 
 (Sequence@, Sample@) { Count@; }
 CountSample = (Sequence@ seq, Sample@ s) {
-  @(self: IsSuffixOf(seq, s.path).?(true: s.metrics, false: Nil<Int@>),
-    total: IsSubsequenceOf(seq, s.path).?(true: s.metrics, false: Nil<Int@>));
+  @(self: IsSuffixOf(seq, s.path).?(true: s.metrics, false: 0),
+    total: IsSubsequenceOf(seq, s.path).?(true: s.metrics, false: 0));
 };
 
 (Sequence@, List@<Sample@>) { Count@; }
 CountSamples = (Sequence@ seq, List@<Sample@> samples) {
-  samples.?(nil: Count@(Nil<Int@>, Nil<Int@>));
+  samples.?(nil: Count@(0, 0));
   Count@ tail = CountSamples(seq, samples.cons.tail);
   AddCount(CountSample(seq, samples.cons.head), tail);
 };

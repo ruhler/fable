@@ -1,0 +1,41 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ Value@ = /Pprof/Profile/Value%.Value@;
+% 0 = /Pprof/Profile/Value%.0;
+% Add = /Pprof/Profile/Value%.Add;
+
+% M = /Pprof/Profile/LocationMap%;
+
+@ LocId@ = Int@;
+@ Sequence@ = List@<LocId@>;
+
+@ Samples@ = *(
+  Value@ self,
+  Value@ total,   # SUM of self of all nodes in the tree, for convenience.
+  M.Map@<Samples@> children
+);
+
+Samples@ Empty = @(self: 0, total: 0, children: M.Empty<Samples@>);
+
+(Samples@, Sequence@, Value@) { Samples@; }
+Insert = (Samples@ samples, Sequence@ seq, Value@ value) {
+  Value@ total = Add(samples.total, value);
+  seq.?(nil: {
+    Value@ self = Add(samples.self, value);
+    samples.@(self, total);
+  });
+
+  LocId@ key = seq.cons.head;
+  Maybe@<Samples@> mchild = M.Lookup(samples.children, key);
+  Samples@ child = mchild.?(just: mchild.just, nothing: Empty);
+  Samples@ nchild = Insert(child, seq.cons.tail, value);
+  M.Map@<Samples@> children = M.Insert(samples.children, key, nchild);
+  samples.@(total, children);
+};
+
+@(Samples@, Empty, Insert);

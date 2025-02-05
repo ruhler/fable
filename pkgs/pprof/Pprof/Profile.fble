@@ -5,6 +5,8 @@
 
 @ String@ = /Core/String%.String@;
 
+@ Value@ = /Pprof/Profile/Value%.Value@;
+
 
 @ LocId@ = Int@;
 
@@ -25,7 +27,7 @@
 #   Sequence of locations describing this sample path. For example, this could
 #   be a stack trace. The root of the path comes first, the leaf comes last.
 @ Sample@ = *(
-  List@<Int@> metrics,
+  Value@ metrics,
   Sequence@ path
 ); 
 

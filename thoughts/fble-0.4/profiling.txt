@@ -1120,3 +1120,20 @@ and outgoing edges, sort by size. That avoids issues with lots of levels of
 nesting. If it's true every node has a single parent, that just means incoming
 edges list will be very short. This approach supports DAGs as well as trees.
 
+---
+
+I want to try implementing the tree based profiling stuff. I should be able to
+start by changing the data structure for the existing reporting. I expect that
+to improve performance there at least. It's going to be a little bit tricky
+though.
+
+I've drafted the Samples@ type and Insert implementation. What's next?
+* Maybe implement a ForEach function to iterate over each sample as a
+  sequence, reimplement Count based on that, then move everyone over to the
+  new tree?
+* After that, 'Count', or maybe profile ops for Fold, Include, Exclude.
+
+I don't use any of the profile ops yet. Focus on Count first then. But maybe
+wait to move everyone over until we've had a chance to implement Fold,
+Include, Exclude? Or just mark those as TODO?
+
