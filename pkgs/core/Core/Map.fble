@@ -1,4 +1,6 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 # Map@ -- A map interface.
@@ -6,6 +8,9 @@
 <<@>@,@>@ Map@ = @< <<@>@ M@, @ K@> {
   # The empty map.
   <@ V@> { M@<V@>; } Empty;
+
+  # Returns true if the map is empty.
+  <@ V@>(M@<V@>) { Bool@; } IsEmpty;
 
   # Lookup a value in a map. Returns the value if present, Nothing otherwise.
   <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup;
@@ -37,7 +42,7 @@
   #   return b
   <@ V@>(M@<V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach;
 
-  @(Map@: M@, Empty, Insert, Delete, Lookup, ForEach);
+  @(Map@: M@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach);
 }>;
 
 @(Map@);

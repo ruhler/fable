@@ -31,6 +31,12 @@ Map@ Empty = <@ V@> {
   Map@<V@>(empty: Unit);
 };
 
+<@ V@>(Map@<V@>) { Bool@; }
+IsEmpty = <@ V@>(Map@<V@> map) {
+  map.?(empty: True);
+  False;
+};
+
 MapP@ EmptyP = <@ V@> {
   MapP@(Nothing<V@>, Empty<V@>, Empty<V@>);
 };
@@ -92,7 +98,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (IntP@, V@, B@) { B@; } body) {
 };
 
 /Core/Map%.Map@<Map@, IntP@> Map = @(
-  Map@, Empty, Insert, Delete, Lookup, ForEach
+  Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
 );
 
 Map;

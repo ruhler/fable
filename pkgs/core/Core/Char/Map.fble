@@ -1,4 +1,6 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+
 @ Char@ = /Core/Char%.Char@;
 
 % Ord = /Core/Char/Ascii%.Ord;
@@ -13,6 +15,8 @@
 
 <@>@ Map@ = M.Map@;
 Map@ Empty = M.Empty;
+
+<@ V@>(Map@<V@>) { Bool@; } IsEmpty = M.IsEmpty;
 
 <@ V@>(Map@<V@>, Char@) { Maybe@<V@>; }
 Lookup = <@ V@>(Map@<V@> map, Char@ key) {
@@ -37,7 +41,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Char@, V@, B@) { B@; } body) {
 };
 
 /Core/Map%.Map@<Map@, Char@> Map = @(
-  Map@, Empty, Insert, Delete, Lookup, ForEach
+  Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
 );
 
 Map;

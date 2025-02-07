@@ -1,4 +1,8 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
 <@>@ List@ = /Core/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -28,6 +32,12 @@
 
   Map@ Empty = <@ V@> {
     Map@<V@>(empty: Unit);
+  };
+
+  <@ V@>(Map@<V@>) { Bool@; }
+  IsEmpty = <@ V@>(Map@<V@> map) {
+    map.?(empty: True);
+    False;
   };
 
   MapP@ EmptyP = <@ V@> {
@@ -76,7 +86,7 @@
   };
 
   /Core/Map%.Map@<Map@, List@<T@>> Map = @(
-    Map@, Empty, Insert, Delete, Lookup, ForEach
+    Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
   );
 
   Map;
