@@ -3,6 +3,7 @@
 
 % Int = /Core/Int/Lit%.Int;
 
+<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 
@@ -17,12 +18,28 @@
 @ Profile@ = /Pprof/Profile%.Profile@;
 @ Location@ = /Pprof/Profile%.Location@;
 @ LocId@ = /Pprof/Profile%.LocId@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
 
 % LM = /Pprof/Profile/LocationMap%;
 
 @ Count@ = /Pprof/Profile/Count%.Count@;
 % Count = /Pprof/Profile/Count%.Count;
 % Counts = /Pprof/Profile/Count%.Counts;
+
+@ Samples@ = /Pprof/Profile/Samples%.Samples@;
+% Empty = /Pprof/Profile/Samples%.Empty;
+% Insert = /Pprof/Profile/Samples%.Insert;
+
+@ Value@ = /Pprof/Profile/Value%.Value@;
+
+
+@ Sample@ = *(Value@ metrics, Sequence@ path);
+
+(List@<Sample@>) { Samples@; }
+Inserts = (List@<Sample@> xs) {
+  xs.?(nil: Empty);
+  Insert(Inserts(xs.cons.tail), xs.cons.head.path,xs.cons.head.metrics);
+};
 
 
 # P_Basic
@@ -34,7 +51,7 @@
 Profile@ P_Basic = @(
   metrics: List[Str|'time'],
 
-  samples: List[
+  samples: Inserts[
     @(metrics: List[Int|10], path: List[Int|1]),
     @(metrics: List[Int|20], path: List[Int|1, Int|2]),
     @(metrics: List[Int|30], path: List[Int|1, Int|2, Int|3]),

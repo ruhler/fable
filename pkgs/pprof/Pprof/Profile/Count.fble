@@ -1,22 +1,19 @@
 
-<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;
 <@>% ForEach = /Core/List%.ForEach;
 
 @ Location@ = /Pprof/Profile%.Location@;
 @ Profile@ = /Pprof/Profile%.Profile@;
-@ Sample@ = /Pprof/Profile%.Sample@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
 
+@ Samples@ = /Pprof/Profile/Samples%.Samples@;
+% CountSelf = /Pprof/Profile/Samples%.CountSelf;
+% CountTotal = /Pprof/Profile/Samples%.CountTotal;
+
 @ Value@ = /Pprof/Profile/Value%.Value@;
-% 0 = /Pprof/Profile/Value%.0;
-% Add = /Pprof/Profile/Value%.Add;
 
 % LM = /Pprof/Profile/LocationMap%;
-
-% IsSuffixOf = /Pprof/Profile/Sequence%.IsSuffixOf;
-% IsSubsequenceOf = /Pprof/Profile/Sequence%.IsSubsequenceOf;
 
 # @struct[Result@] Result of a profile count.
 #  @field[List@<Int@>][self]
@@ -30,22 +27,11 @@
   Value@ total
 );
 
-(Count@, Count@) { Count@; }
-AddCount = (Count@ a, Count@ b) {
-  @(self: Add(a.self, b.self), total: Add(a.total, b.total));
-};
-
-(Sequence@, Sample@) { Count@; }
-CountSample = (Sequence@ seq, Sample@ s) {
-  @(self: IsSuffixOf(seq, s.path).?(true: s.metrics, false: 0),
-    total: IsSubsequenceOf(seq, s.path).?(true: s.metrics, false: 0));
-};
-
-(Sequence@, List@<Sample@>) { Count@; }
-CountSamples = (Sequence@ seq, List@<Sample@> samples) {
-  samples.?(nil: Count@(0, 0));
-  Count@ tail = CountSamples(seq, samples.cons.tail);
-  AddCount(CountSample(seq, samples.cons.head), tail);
+(Sequence@, Samples@) { Count@; }
+CountSamples = (Sequence@ seq, Samples@ samples) {
+  Value@ self = CountSelf(samples, seq);
+  Value@ total = CountTotal(samples, seq);
+  @(self, total);
 };
 
 (Sequence@, Profile@) { Count@; }

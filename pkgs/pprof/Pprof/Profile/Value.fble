@@ -1,4 +1,6 @@
 
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
@@ -22,4 +24,16 @@ Add = (Value@ a, Value@ b) {
   Cons(head, tail);
 };
 
-@(Value@, 0, Add);
+(Value@, Value@) { Value@; }
+Sub = (Value@ a, Value@ b) {
+  b.?(nil: a);
+  Int@ head = /Core/Int%.Sub(a.cons.head, b.cons.head);
+  Value@ tail = Sub(a.cons.tail, b.cons.tail);
+  Cons(head, tail);
+};
+
+Eq@<Value@> Eq = (Value@ a, Value@ b) {
+  /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq, a, b);
+};
+
+@(Value@, 0, Add, Sub, Eq);

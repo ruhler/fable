@@ -8,17 +8,10 @@
 @ LocId@ = /Pprof/Profile%.LocId@;
 @ Location@ = /Pprof/Profile%.Location@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
-@ Sample@ = /Pprof/Profile%.Sample@;
 
 Eq@<LocId@> LocId = /Core/Int/Eq%.Eq;
 
 Eq@<Sequence@> Sequence = /Core/List/Eq%.Eq(LocId);
-
-Eq@<Sample@> Sample = (Sample@ a, Sample@ b) {
-  /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq, a.metrics, b.metrics).?(false: False);
-  Sequence(a.path, b.path).?(false: False);
-  True;
-};
 
 Eq@<Location@> Location = (Location@ a, Location@ b) {
   LocId(a.id, b.id).?(false: False);
@@ -31,9 +24,9 @@ Eq@<Location@> Location = (Location@ a, Location@ b) {
 
 Eq@<Profile@> Profile = (Profile@ a, Profile@ b) {
   /Core/List/Eq%.Eq(/Core/String/Eq%.Eq, a.metrics, b.metrics).?(false: False);
-  /Core/List/Eq%.Eq(Sample, a.samples, b.samples).?(false: False);
+  /Pprof/Profile/Samples%.Eq(a.samples, b.samples).?(false: False);
   /Core/List/Eq%.Eq(Location, a.locations, b.locations).?(false: False);
   True;
 };
 
-@(Profile, Sample, Sequence, Location, LocId);
+@(Profile, Sequence, Location, LocId);

@@ -5,8 +5,7 @@
 
 @ String@ = /Core/String%.String@;
 
-@ Value@ = /Pprof/Profile/Value%.Value@;
-
+@ Samples@ = /Pprof/Profile/Samples%.Samples@;
 
 @ LocId@ = Int@;
 
@@ -20,17 +19,6 @@
 
 @ Sequence@ = List@<LocId@>;
 
-# @struct[Sample@] A sampled path.
-#  @field[List@<Int@>][metrics]
-#   The value of each metric in the profile associated with this path.
-#  @field[List@<LocId@>][path]
-#   Sequence of locations describing this sample path. For example, this could
-#   be a stack trace. The root of the path comes first, the leaf comes last.
-@ Sample@ = *(
-  Value@ metrics,
-  Sequence@ path
-); 
-
 # @struct[Profile@] A pprof-like profile.
 #  @field[List@<String@>][metrics]
 #   The names of the metrics included in the profile. The order of names here
@@ -39,9 +27,9 @@
 #   The list of profile samples.
 @ Profile@ = *(
   List@<String@> metrics,
-  List@<Sample@> samples,
+  Samples@ samples,
   List@<Location@> locations
 );
 
-@(LocId@, Location@, Sequence@, Sample@, Profile@);
+@(LocId@, Location@, Sequence@, Profile@);
 

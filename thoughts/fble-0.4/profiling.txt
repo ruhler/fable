@@ -1137,3 +1137,13 @@ I don't use any of the profile ops yet. Focus on Count first then. But maybe
 wait to move everyone over until we've had a chance to implement Fold,
 Include, Exclude? Or just mark those as TODO?
 
+---
+
+Switched to a tree for storing samples.
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.supershort.txt 
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 2:55.12 ==> 3:11.29
+  Maximum resident set size (kbytes): 15120 ==> 14928
+
+Oh well. So much for that idea. I want to stick with the tree anyway.

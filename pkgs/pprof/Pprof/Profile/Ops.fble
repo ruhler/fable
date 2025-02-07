@@ -1,21 +1,9 @@
 
-% Not = /Core/Bool%.Not;
-
-<@>@ List@ = /Core/List%.List@;
-<@>% Map = /Core/List%.Map;
-
-<@>% RemoveAll = /Core/List/Eq%.RemoveAll;
-<@>% RemoveFirst = /Core/List/Eq%.RemoveFirst;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ LocId@ = /Pprof/Profile%.LocId@;
-@ Location@ = /Pprof/Profile%.Location@;
 @ Profile@ = /Pprof/Profile%.Profile@;
-@ Sample@ = /Pprof/Profile%.Sample@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
-
-% LocEq = /Pprof/Profile/Eq%.LocId;
-
-% IsSubsequenceOf = /Pprof/Profile/Sequence%.IsSubsequenceOf;
 
 # Remove references to the given location from the profile.
 # 
@@ -29,37 +17,26 @@
 #
 # This is useful, for example, if B is a trampoline or helper function we
 # don't want to worry about.
-(LocId@, Profile@) { Profile@; } Fold = (LocId@ id, Profile@ p) {
-  List@<Location@> locations = RemoveFirst(
-    (Location@ l) { LocEq(l.id, id); }, p.locations
-  );
-
-  List@<Sample@> samples = Map(p.samples, (Sample@ s) {
-    s.@(path: RemoveAll(LocEq(id), s.path));
-  });
-
-  p.@(samples, locations);
+(LocId@, Profile@) { Profile@; } Fold = (LocId@ _id, Profile@ _p) {
+  Maybe@<Profile@> TODO;
+  TODO.just;
 };
 
 # Remove any samples from the profile that do not include the given sequence.
 #
 # This is useful for focusing in on a given set of samples.
-(Sequence@, Profile@) { Profile@; } Include = (Sequence@ seq, Profile@ p) {
-  List@<Sample@> samples = RemoveAll((Sample@ s) {
-      Not(IsSubsequenceOf(seq, s.path));
-    }, p.samples);
-  p.@(samples);
+(Sequence@, Profile@) { Profile@; } Include = (Sequence@ _seq, Profile@ _p) {
+  Maybe@<Profile@> TODO;
+  TODO.just;
 };
 
 # Remove any samples from the profile that include the given sequence.
 #
 # This is useful for ignoring a given set of samples, for example because
 # you already understand what's going on in them.
-(Sequence@, Profile@) { Profile@; } Exclude = (Sequence@ seq, Profile@ p) {
-  List@<Sample@> samples = RemoveAll((Sample@ s) {
-      IsSubsequenceOf(seq, s.path);
-    }, p.samples);
-  p.@(samples);
+(Sequence@, Profile@) { Profile@; } Exclude = (Sequence@ _seq, Profile@ _p) {
+  Maybe@<Profile@> TODO;
+  TODO.just;
 };
 
 @(Fold, Include, Exclude);

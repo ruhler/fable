@@ -8,17 +8,10 @@
 @ LocId@ = /Pprof/Profile%.LocId@;
 @ Location@ = /Pprof/Profile%.Location@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
-@ Sample@ = /Pprof/Profile%.Sample@;
 
 Show@<LocId@> LocId = /Core/Int/Show%.Show;
 
 Show@<Sequence@> Sequence = /Core/List/Show%.Show(LocId);
-
-Show@<Sample@> Sample = (Sample@ x) {
-  Strs[
-    Str|'@(metrics: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, x.metrics),
-    Str|', path: ', Sequence(x.path), Str|')'];
-};
 
 Show@<Location@> Location = (Location@ x) {
   Strs[
@@ -30,9 +23,9 @@ Show@<Location@> Location = (Location@ x) {
 Show@<Profile@> Profile = (Profile@ x) {
   Strs[
     Str|'@(metrics: ', /Core/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
-    Str|', samples: ', /Core/List/Show%.Show(Sample, x.samples),
+    Str|', samples: ', /Pprof/Profile/Samples%.Show(x.samples),
     Str|', locations: ', /Core/List/Show%.Show(Location, x.locations),
     Str|')'];
 };
 
-@(Profile, Sample, Sequence, Location, LocId);
+@(Profile, Sequence, Location, LocId);

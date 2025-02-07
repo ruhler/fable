@@ -26,7 +26,8 @@
 @ Profile@ = /Pprof/Profile%.Profile@;
 @ Location@ = /Pprof/Profile%.Location@;
 @ LocId@ = /Pprof/Profile%.LocId@;
-@ Sample@ = /Pprof/Profile%.Sample@;
+% InsertSample = /Pprof/Profile/Samples%.Insert;
+% EmptySamples = /Pprof/Profile/Samples%.Empty;
 
 % M = /Core/String/Map%;
 @ Map@ = M.Map@<LocId@>;
@@ -100,7 +101,7 @@ Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
   AddSample = (Int@ value, List@<String@> path, S@ s) {
     PathS@ ps = Path(path, s);
     ps.s.@(profile: ps.s.profile.@(
-        samples: Cons(Sample@(List[value], ps.path), ps.s.profile.samples)));
+        samples: InsertSample(ps.s.profile.samples, ps.path, List[value])));
   };
 
   (S@) { M@<Maybe@<Profile@>>; } ParseS = (S@ s) {
@@ -127,7 +128,7 @@ Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
       locations: Empty,
       profile: @(
         metrics: List[Str|'samples'],
-        samples: Nil<Sample@>,
+        samples: EmptySamples,
         locations: Nil<Location@>)));
 };
 
