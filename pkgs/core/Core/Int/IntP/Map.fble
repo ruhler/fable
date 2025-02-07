@@ -86,7 +86,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (IntP@, V@, B@) { B@; } body) {
   MapP@<V@> p = map.p;
 
   B@ b1 = base;
-  B@ b2 = p.1.?(just: body(1, p.1.just, b1), nothing: base);
+  B@ b2 = p.1.?(just: body(1, p.1.just, b1), nothing: b1);
 
   B@ b3 = ForEach(p.2p0, b2, (IntP@ i, V@ v, B@ b) {
     body(IntP@(2p0: i), v, b);

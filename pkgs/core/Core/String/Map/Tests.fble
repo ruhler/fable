@@ -1,0 +1,11 @@
+
+@ Test@ = /Core/Test%.Test@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+Test@ Tests = /Core/Map/Test%.Test</Core/String/Map%.Map@, String@>(
+  /Core/String/Map%, /Core/String/Eq%.Eq, /Core/String/Show%.Show, 
+  Str|'A first string', Str|'the next', Str|'the next and last');
+
+@(Tests);

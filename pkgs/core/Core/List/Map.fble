@@ -4,6 +4,8 @@
 % False = /Core/Bool%.False;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -44,6 +46,13 @@
     MapP@(M.Empty<Map@<V@>>, Nothing<V@>);
   };
 
+  <@ V@>(MapP@<V@>) { Bool@; }
+  IsEmptyP = <@ V@>(MapP@<V@> map) {
+    M.IsEmpty(map.cons).?(false: False);
+    map.nil.?(just: False);
+    True;
+  };
+
   <@ V@>(Map@<V@>, List@<T@>) { Maybe@<V@>; }
   Lookup = <@ V@>(Map@<V@> map, List@<T@> key) {
     map.?(empty: Nothing<V@>);
@@ -72,17 +81,34 @@
   };
 
   <@ V@>(Map@<V@>, List@<T@>) { Map@<V@>; }
-  Delete = <@ V@>(Map@<V@> _map, List@<T@> _key) {
-    # TODO: Implement the Delete function.
-    Maybe@<Map@<V@>> TODO;
-    TODO.just;
+  Delete = <@ V@>(Map@<V@> map, List@<T@> key) {
+    map.?(empty: map);
+
+    MapP@<V@> p = {
+      key.?(nil: map.p.@(nil: Nothing<V@>));
+
+      Maybe@<Map@<V@>> mcons = M.Lookup(map.p.cons, key.cons.head);
+      mcons.?(nothing: map.p);
+
+      Map@<V@> ncons = Delete(mcons.just, key.cons.tail);
+      map.p.@(cons: M.Insert(map.p.cons, key.cons.head, ncons));
+    };
+    IsEmptyP(p).?(true: Empty<V@>, false: Map@(p: p));
   };
 
   <@ V@>(Map@<V@>)<@ B@>(B@, (List@<T@>, V@, B@) { B@; }) { B@; }
-  ForEach = <@ V@>(Map@<V@> _map)<@ B@>(B@ _base, (List@<T@>, V@, B@) { B@; } _body) {
-    # TODO: Implement the ForEach function.
-    Maybe@<B@> TODO;
-    TODO.just;
+  ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (List@<T@>, V@, B@) { B@; } body) {
+    map.?(empty: base);
+
+    MapP@<V@> p = map.p;
+    B@ b1 = base;
+    B@ b2 = p.nil.?(just: body(Nil<T@>, p.nil.just, b1), nothing: b1);
+
+    M.ForEach(p.cons, b2, (T@ x, Map@<V@> m, B@ b) {
+      ForEach(m, b, (List@<T@> l, V@ v, B@ bb) {
+        body(Cons(x, l), v, bb);
+        });
+      });
   };
 
   /Core/Map%.Map@<Map@, List@<T@>> Map = @(

@@ -4,7 +4,7 @@ Things to consider doing for the fble-0.4 release.
 
 * pprof viewer: show percentage with each value?
 
-* Add tests for /Core/String/Map%.
+* Fix tests for /Core/String/Map%.
 
 * Avoid exporting map directly as the module value. Wrap it in a module struct
   instead.
