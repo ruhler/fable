@@ -1,0 +1,11 @@
+
+@ Test@ = /Core/Test%.Test@;
+
+@ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
+
+Test@ Tests = /Core/Map/Test%.Test</Core/Char/Map%.Map@, Char@>(
+  /Core/Char/Map%, /Core/Char/Eq%.Eq, /Core/Char/Show%.Show, 
+  Chars.'A', Chars.'B', Chars.'C');
+
+@(Tests);

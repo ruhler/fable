@@ -5,6 +5,8 @@ Things to consider doing for the fble-0.4 release.
 * pprof viewer: show percentage with each value?
 
 * Fix tests for /Core/String/Map%.
+  65, 66 is out of order for /Core/Int/Map%.
+ 
 
 * Avoid exporting map directly as the module value. Wrap it in a module struct
   instead.
