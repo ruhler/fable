@@ -1,0 +1,129 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% And = /Core/Bool%.And;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+# A test suite for a Map@ implementation.
+# You provide:
+#   - An implementation of Map@ to test.
+#   - Implementations of Eq and Show for keys of the map.
+#   - Three distinct keys in iteration order.
+# It gives you back a test suite.
+<<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@>, Eq@<K@>, Show@<K@>, K@, K@, K@) { Test@; }
+Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@ a, K@ b, K@ c) {
+  TestSuite(Str|'Map', List[
+    /Core/Test%.Test(Str|'empty', (Unit@ _) {
+      Maybe@<Unit@> wnt = Nothing<Unit@>;
+      Maybe@<Unit@> got = m.Lookup(m.Empty<Unit@>, b);
+      AssertEquals(
+        /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
+        /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),
+        wnt, got);
+    }),
+
+    /Core/Test%.Test(Str|'not found', (Unit@ _) {
+      m.Map@<Unit@> map = m.Insert<Unit@>(m.Empty<Unit@>, c, Unit);
+      Maybe@<Unit@> wnt = Nothing<Unit@>;
+      Maybe@<Unit@> got = m.Lookup(map, b);
+      AssertEquals(
+        /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
+        /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),
+        wnt, got);
+    }),
+
+    /Core/Test%.Test(Str|'found', (Unit@ _) {
+      m.Map@<Bool@> map = m.Insert(m.Insert(m.Insert(m.Empty<Bool@>,
+        a, False),
+        b, True),
+        c, False);
+      Maybe@<Bool@> wnt = Just(True);
+      Maybe@<Bool@> got = m.Lookup(map, b);
+      AssertEquals(
+        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+        wnt, got);
+    }),
+
+    /Core/Test%.Test(Str|'replace', (Unit@ _) {
+      m.Map@<Bool@> map = m.Insert(m.Insert(m.Empty<Bool@>,
+        b, False),
+        b, True);
+      Maybe@<Bool@> wnt = Just(True);
+      Maybe@<Bool@> got = m.Lookup(map, b);
+      AssertEquals(
+        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+        wnt, got);
+    }),
+
+    /Core/Test%.Test(Str|'delete', (Unit@ _) {
+      m.Map@<Bool@> map = m.Delete(m.Insert(m.Empty<Bool@>, b, False), b);
+      Maybe@<Bool@> wnt = Nothing<Bool@>;
+      Maybe@<Bool@> got = m.Lookup(map, b);
+      AssertEquals(
+        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+        wnt, got);
+    }),
+
+    /Core/Test%.Test(Str|'delete nothing', (Unit@ _) {
+      m.Map@<Bool@> map = m.Delete(m.Insert(m.Empty<Bool@>, b, False), a);
+      Maybe@<Bool@> wnt = Just(False);
+      Maybe@<Bool@> got = m.Lookup(map, b);
+      AssertEquals(
+        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
+        wnt, got);
+    }),
+
+    /Core/Test%.Test(Str|'foreach', (Unit@ _) {
+      m.Map@<Bool@> map = m.Insert(m.Insert(m.Insert(m.Empty<Bool@>,
+        b, True),
+        a, True),
+        b, False);
+
+      # Note: A < B, we expect the ForEach to iterate in the order A, B. Because
+      # we add A to the end of the list before B, we expect the resulting list
+      # to be in the order B, A.
+      @ Entry@ = *(K@ key, Bool@ value);
+      List@<Entry@> wnt = List[Entry@(b, False), Entry@(a, True)];
+      List@<Entry@> got = m.ForEach(map, Nil<Entry@>,
+        (K@ k, Bool@ v, List@<Entry@> l) {
+          Cons(Entry@(k, v), l);
+        });
+      AssertEquals(
+        /Core/List/Eq%.Eq((Entry@ a, Entry@ b) {
+          And(eq(a.key, b.key), /Core/Bool/Eq%.Eq(a.value, b.value));
+        }),
+        /Core/List/Show%.Show((Entry@ e) {
+          /Core/String%.Strs[show(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
+        }),
+        wnt, got);
+    })
+  ]);
+};
+
+@(Test);

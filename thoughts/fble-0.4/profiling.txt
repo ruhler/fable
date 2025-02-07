@@ -1147,3 +1147,9 @@ Switched to a tree for storing samples.
   Maximum resident set size (kbytes): 15120 ==> 14928
 
 Oh well. So much for that idea. I want to stick with the tree anyway.
+
+---
+
+What next? Should I try optimizing Counts? Or play around with printing the
+tree? Or clean up the code, which is really messy right now?
+

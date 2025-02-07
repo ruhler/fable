@@ -6,6 +6,9 @@ Things to consider doing for the fble-0.4 release.
 
 * Add tests for /Core/String/Map%.
 
+* Avoid exporting map directly as the module value. Wrap it in a module struct
+  instead.
+
 * Remove /Core/Map/Tree%.
  - Port everyone over to /Core/Map instead.
 

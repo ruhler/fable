@@ -285,3 +285,23 @@ the fbld directory.
 
 Neither of them accept help arguments. I should fix that eventually.
 
+---
+
+* Add tests for /Core/String/Map%.
+
+We already have some tests for /Core/Int/Map/Tests%.
+We already have some tests for /Core/Map/Tree/Tests%.
+
+It feels like there is a lot of similarities between all these tests. Can we
+implement a generic test to run over a Map@ implementation?
+
+What I need:
+* Three distinct key values in ForEach iteration order that can be compared
+  for equality and shown.
+
+That's pretty easy. Let's write that abstraction to start, reuse it for the
+existing test cases. Then it should be real easy to add tests for
+/Core/String/Map%.
+
+Nice, but this quickly revealed that I haven't finished implementing
+/Core/String/Map%. That's something that needs working on.
