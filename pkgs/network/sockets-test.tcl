@@ -11,8 +11,8 @@
 set echo [lindex $argv 0]
 set client [lindex $argv 1]
 
-exec $echo -p 8007 -n 1 &
-set output [exec $client -p 8007 -m hello -n 5]
+exec $echo -p 9007 -n 1 &
+set output [exec $client -p 9007 -m hello -n 5]
 if {![string equal $output "hello"]} {
   error "expected hello, got $output"
 }

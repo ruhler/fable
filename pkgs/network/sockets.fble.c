@@ -14,10 +14,44 @@
 #ifdef __WIN32
 #include <winsock2.h>     // for socket
 #include <ws2tcpip.h>     // for getaddrinfo
+
+int Read(SOCKET sfd)
+{
+  char c;
+  int r = recv(sfd, &c, 1, 0);
+  if (r > 0) {
+    return c;
+  }
+  return EOF;
+}
+
+void Write(SOCKET sfd, char c)
+{
+  send(sfd, &c, 1, 0);
+}
 #else
 #include <sys/types.h>    // for socket
 #include <sys/socket.h>   // for socket
 #include <netdb.h>        // for getaddrinfo
+
+// To simplify compatibilities with windows
+#define SOCKET int
+#define closesocket close
+
+int Read(SOCKET sfd)
+{
+  unsigned char c;
+  ssize_t r = read(sfd, &c, 1);
+  if (r > 0) {
+    return c;
+  }
+  return EOF;
+}
+
+void Write(SOCKET sfd, char c)
+{
+  write(sfd, &c, 1);
+}
 #endif
 
 #include <fble/fble-alloc.h>      // for FbleFree
@@ -113,8 +147,8 @@ static FbleModulePath Path = {
  */
 static void OnFree(void* data)
 {
-  int sfd = (int)(intptr_t)data;
-  close(sfd);
+  SOCKET sfd = (SOCKET)(intptr_t)data;
+  closesocket(sfd);
 }
 
 /**
@@ -132,16 +166,15 @@ static FbleValue* IStreamImpl(
 {
   (void)profile;
 
-  int sfd = (int)(intptr_t)FbleNativeValueData(function->statics[0]);
+  SOCKET sfd = (int)(intptr_t)FbleNativeValueData(function->statics[0]);
 
   FbleValue* world = args[0];
 
   // TODO: Buffer the reads for better performance?
-  unsigned char c;
-  ssize_t r = read(sfd, &c, 1);
+  int c = Read(sfd);
 
   FbleValue* ms;
-  if (r == 0) {
+  if (c == EOF) {
     ms = FbleNewEnumValue(heap, 1);
   } else {
     FbleValue* v = FbleNewIntValue(heap, c);
@@ -163,14 +196,14 @@ static FbleValue* OStreamImpl(
 {
   (void)profile;
 
-  int sfd = (int)(intptr_t)FbleNativeValueData(function->statics[0]);
+  SOCKET sfd = (int)(intptr_t)FbleNativeValueData(function->statics[0]);
 
   FbleValue* byte = args[0];
   FbleValue* world = args[1];
 
   // TODO: Buffer writes to improve performance?
-  unsigned char c = (unsigned char)FbleIntValueAccess(byte);
-  write(sfd, &c, 1);
+  char c = (char)FbleIntValueAccess(byte);
+  Write(sfd, c);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   return FbleNewStructValue_(heap, 2, world, unit);
@@ -258,17 +291,16 @@ static FbleValue* ClientImpl(
   }
   FbleFree(host);
 
-  int sfd = -1;
-  for (struct addrinfo* rp = result; sfd == -1 && rp != NULL; rp = rp->ai_next) {
+  SOCKET sfd = INVALID_SOCKET;
+  for (struct addrinfo* rp = result; sfd == INVALID_SOCKET && rp != NULL; rp = rp->ai_next) {
     sfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sfd == -1) {
+    if (sfd == INVALID_SOCKET) {
       // For debug. TODO: return the error message instead?
-      perror("socket");
       continue;
     }
 
     if (connect(sfd, rp->ai_addr, rp->ai_addrlen) == -1) {
-      sfd = -1;
+      sfd = INVALID_SOCKET;
       continue;
     }
   }
@@ -276,7 +308,7 @@ static FbleValue* ClientImpl(
   freeaddrinfo(result);
 
   FbleValue* mios;
-  if (sfd == -1) {
+  if (sfd == INVALID_SOCKET) {
     mios = FbleNewEnumValue(heap, 1); // Nothing
   } else {
     FbleBlockId module_block_id = function->profile_block_id - CLIENT_BLOCK_OFFSET;
@@ -323,11 +355,11 @@ static FbleValue* AcceptImpl(
 {
   (void)profile;
 
-  int sfd = (int)(intptr_t)FbleNativeValueData(function->statics[0]);
+  SOCKET sfd = (SOCKET)(intptr_t)FbleNativeValueData(function->statics[0]);
   FbleValue* world = args[0];
 
-  int cfd = accept(sfd, NULL, NULL);
-  if (cfd < 0) {
+  SOCKET cfd = accept(sfd, NULL, NULL);
+  if (cfd == INVALID_SOCKET) {
     // TODO: What to do here?
     perror("accept");
     assert(false);
@@ -380,35 +412,35 @@ static FbleValue* ServerImpl(
   }
   FbleFree(host);
 
-  int sfd = -1;
-  for (struct addrinfo* rp = result; sfd == -1 && rp != NULL; rp = rp->ai_next) {
+  SOCKET sfd = INVALID_SOCKET;
+  for (struct addrinfo* rp = result; sfd == INVALID_SOCKET && rp != NULL; rp = rp->ai_next) {
     sfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sfd == -1) {
+    if (sfd == INVALID_SOCKET) {
       // For debug. TODO: return the error message instead?
       perror("socket");
       continue;
     }
 
     if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == -1) {
-      sfd = -1;
+      sfd = INVALID_SOCKET;
       continue;
     }
   }
 
   freeaddrinfo(result);
 
-  if (sfd != -1) {
+  if (sfd != INVALID_SOCKET) {
     // TODO: How much backlog to use?
-    if (listen(sfd, 10) < 0) {
+    if (listen(sfd, 10) != 0) {
       // TODO: Return error instead?
       perror("listen");
-      close(sfd);
-      sfd = -1;
+      closesocket(sfd);
+      sfd = INVALID_SOCKET;
     }
   }
 
   FbleValue* ms;
-  if (sfd == -1) {
+  if (sfd == INVALID_SOCKET) {
     ms = FbleNewEnumValue(heap, 1); // Nothing
   } else {
     FbleBlockId module_block_id = function->profile_block_id - SERVER_BLOCK_OFFSET;

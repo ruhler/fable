@@ -14,8 +14,6 @@ Things to consider doing for the fble-0.4 release.
 * Remove /Core/Map/Tree%.
  - Port everyone over to /Core/Map instead.
 
-* Test and fix windows TCP sockets support.
-
 * Return error messages in Sockets interface on failure to connect, serve, accept?
   Yes, definitely needed. Or an error code?
 

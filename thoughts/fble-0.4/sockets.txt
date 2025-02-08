@@ -234,3 +234,43 @@ first draft, don't worry about it.
 
 The initial API is there. Not having a way to report back errors is a
 problem, but otherwise it works well enough for a first go.
+
+---
+
+How to get sockets to work on Windows?
+
+What's the problem at the moment? It just doesn't seem to work.
+
+Maybe let's review the documentation on it, to see what I expect needs to
+change.
+
+https://learn.microsoft.com/en-us/windows/win32/winsock/porting-socket-applications-to-winsock
+* Socket type is SOCKET, not int.
+* Use INVALID_SOCKET instead of -1 to check for error from socket, and other
+  functions? bind? connect? Accept?
+* WSAGetError for error messages, not perror/errno.
+* closesocket instead of close
+
+Let me see where things are going wrong at the moment.
+
+Okay, got something working on windows. Here's what needed changing:
+* type of socket is SOCKET, not int.
+* call closesocket instead of close.
+* Use 'recv' instead of 'read'
+* recv returns -1 (SOCKET_ERROR) if connection is forceably closed instead of
+  0.
+* Use 'send' instead of 'write'
+* Use INVALID_SOCKET instead of -1 for socket, connect, accept, and bind
+
+It's not that bad. Maybe I just define some macros to abstract away things?
+Well... types differ in some cases. Define some helper functions to abstract
+away things if needed. Specifically:
+* #define SOCKET int in linux, and use where appropriate
+* #define INVALID_SOCKET (-1) in linux, and use where appropriate
+* #define closesocket close in linux, and use where appropriate
+* Implement Read and Write wrapper functions to abstract away read/recv and
+  write/send
+
+Easy. Let's get to it.
+
+One issue: windows doesn't seem to like the port 8007 for test.
