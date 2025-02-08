@@ -31,10 +31,10 @@
 
 <<@>@>@ Random@ = /SatGame/Random%.Random@;
 
-@ Map@ = /Core/Int/Map%.Map@<Var@>;
-% Empty = /Core/Int/Map%.Empty<Var@>;
-% Lookup = /Core/Int/Map%.Lookup<Var@>;
-% Insert = /Core/Int/Map%.Insert<Var@>;
+@ Map@ = /Core/Int/Map%.Map.Map@<Var@>;
+% Empty = /Core/Int/Map%.Map.Empty<Var@>;
+% Lookup = /Core/Int/Map%.Map.Lookup<Var@>;
+% Insert = /Core/Int/Map%.Map.Insert<Var@>;
 
 # @func[Generate] Generates a random satgame puzzle.
 #  @arg[<@>@][M@] Type of monad to use for random number generation.

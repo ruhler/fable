@@ -13,7 +13,7 @@
 
 @ Value@ = /Pprof/Profile/Value%.Value@;
 
-% LM = /Pprof/Profile/LocationMap%;
+% LM = /Pprof/Profile/LocationMap%.Map;
 
 # @struct[Result@] Result of a profile count.
 #  @field[List@<Int@>][self]

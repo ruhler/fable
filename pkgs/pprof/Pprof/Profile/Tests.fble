@@ -20,7 +20,7 @@
 @ LocId@ = /Pprof/Profile%.LocId@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
 
-% LM = /Pprof/Profile/LocationMap%;
+% LM = /Pprof/Profile/LocationMap%.Map;
 
 @ Count@ = /Pprof/Profile/Count%.Count@;
 % Count = /Pprof/Profile/Count%.Count;

@@ -84,10 +84,10 @@
 
 # Converts an ascii value to its corresponding character.
 (Int@) { Char@; } Chr = {
-  @ Map@ = /Core/Int/Map%.Map@<Char@>;
-  % Empty = /Core/Int/Map%.Empty<Char@>;
-  % Insert = /Core/Int/Map%.Insert<Char@>;
-  % Lookup = /Core/Int/Map%.Lookup<Char@>;
+  @ Map@ = /Core/Int/Map%.Map.Map@<Char@>;
+  % Empty = /Core/Int/Map%.Map.Empty<Char@>;
+  % Insert = /Core/Int/Map%.Map.Insert<Char@>;
+  % Lookup = /Core/Int/Map%.Map.Lookup<Char@>;
 
   (Char@, Map@) { Map@; } Put = (Char@ c, Map@ m) {
     Insert(m, Ord(c), c);

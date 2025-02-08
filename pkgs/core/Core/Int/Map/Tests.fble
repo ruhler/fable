@@ -7,8 +7,8 @@
 
 # Note: Iteration order is not quite what you expect.
 # Negative before zero before positive, yes, but evens come before odds.
-Test@ Tests = /Core/Map/Test%.Test</Core/Int/Map%.Map@, Int@>(
-  /Core/Int/Map%, /Core/Int/Eq%.Eq, /Core/Int/Show%.Show, 
+Test@ Tests = /Core/Map/Test%.Test</Core/Int/Map%.Map.Map@, Int@>(
+  /Core/Int/Map%.Map, /Core/Int/Eq%.Eq, /Core/Int/Show%.Show, 
   Neg(Int|4), Int|5, Int|7);
 
 @(Tests);

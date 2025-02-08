@@ -45,7 +45,7 @@
 
 @ Count@ = /Pprof/Profile/Count%.Count@;
 % Counts = /Pprof/Profile/Count%.Counts;
-% LM = /Pprof/Profile/LocationMap%;
+% LM = /Pprof/Profile/LocationMap%.Map;
 
 <<@>@>% Parse = /Pprof/Perf%.Parse;
 

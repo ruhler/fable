@@ -8,7 +8,7 @@
 
 @ IntP@ = /Core/Int/IntP%.IntP@;
 
-% P = /Core/Int/IntP/Map%;
+% P = /Core/Int/IntP/Map%.Map;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -72,5 +72,5 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Int@, V@, B@) { B@; } body) {
   Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
 );
 
-Map;
+@(Map);
 

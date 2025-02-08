@@ -101,5 +101,5 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (IntP@, V@, B@) { B@; } body) {
   Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
 );
 
-Map;
+@(Map);
 

@@ -38,21 +38,21 @@ Int@ BaseY = Int|36;
 
 # Bases@ --
 #   Map from x coordinate to the slice of base, if any, at that x coordinate.
-@ Bases@ = /Core/Int/Map%.Map@<Slice@>;
+@ Bases@ = /Core/Int/Map%.Map.Map@<Slice@>;
 
 # Empty --
 #   No bases.
-Bases@ Empty = /Core/Int/Map%.Empty<Slice@>;
+Bases@ Empty = /Core/Int/Map%.Map.Empty<Slice@>;
 
 # Lookup --
 #   Look up a slice by X coordinate.
-(Bases@, Int@) { Maybe@<Slice@>; } Lookup = /Core/Int/Map%.Lookup<Slice@>;
+(Bases@, Int@) { Maybe@<Slice@>; } Lookup = /Core/Int/Map%.Map.Lookup<Slice@>;
 
 # Delete --
 #   Remove a slice by X coordinate.
-(Bases@, Int@) { Bases@; } Delete = /Core/Int/Map%.Delete<Slice@>;
+(Bases@, Int@) { Bases@; } Delete = /Core/Int/Map%.Map.Delete<Slice@>;
 
-(Bases@, Int@, Slice@) { Bases@; } Insert = /Core/Int/Map%.Insert<Slice@>;
+(Bases@, Int@, Slice@) { Bases@; } Insert = /Core/Int/Map%.Map.Insert<Slice@>;
   
 
 # BaseSpec --
@@ -154,7 +154,7 @@ BulletHit = (Int@ x, Int@ y, Bases@ bases) {
 # Draw --
 #   Draw the bases.
 (Bases@) { Drawing@; } Draw = (Bases@ bases) {
-  /Core/Int/Map%.ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
+  /Core/Int/Map%.Map.ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
     Over(d, Rect(x, s.min, 1, Sub(s.max, s.min), Color.Green));
   });
 };

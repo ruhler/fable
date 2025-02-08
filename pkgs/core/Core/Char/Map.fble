@@ -11,7 +11,7 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 # Char@ to V@ map implemented as Int@ to V@ using ascii value for the Int@.
-% M = /Core/Int/Map%;
+% M = /Core/Int/Map%.Map;
 
 <@>@ Map@ = M.Map@;
 Map@ Empty = M.Empty;
@@ -44,4 +44,4 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Char@, V@, B@) { B@; } body) {
   Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
 );
 
-Map;
+@(Map);

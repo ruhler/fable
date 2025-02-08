@@ -29,7 +29,7 @@
 % InsertSample = /Pprof/Profile/Samples%.Insert;
 % EmptySamples = /Pprof/Profile/Samples%.Empty;
 
-% M = /Core/String/Map%;
+% M = /Core/String/Map%.Map;
 @ Map@ = M.Map@<LocId@>;
 % Empty = M.Empty<LocId@>;
 % Lookup = M.Lookup<LocId@>;

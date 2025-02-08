@@ -4,7 +4,7 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-<@>@ Map@ = /Core/Int/IntP/Map%.Map@;
+<@>@ Map@ = /Core/Int/IntP/Map%.Map.Map@;
 
 <@ V@>(Eq@<V@>) { Eq@<Map@<V@>>; }
 Eq = <@ V@>(Eq@<V@> eq, Map@<V@> a, Map@<V@> b) {

@@ -17,7 +17,7 @@
 
 # /Core/Map%.Map@ implementation for List@<T@>, parameterized by the element's
 # map implementation.
-<<@>@ M@, @ T@>(/Core/Map%.Map@<M@, T@> M) {
+<<@>@, @>% Map = <<@>@ M@, @ T@>(/Core/Map%.Map@<M@, T@> M) {
   # A Map from List@<T@> to V@;
   <@>@ Map@ = <@ V@> {
     @ M@ = +(Unit@ empty, P@ p),
@@ -114,6 +114,7 @@
   /Core/Map%.Map@<Map@, List@<T@>> Map = @(
     Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
   );
-
   Map;
 };
+
+@(Map);

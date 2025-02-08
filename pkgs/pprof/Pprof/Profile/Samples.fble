@@ -20,7 +20,7 @@
 % Add = /Pprof/Profile/Value%.Add;
 % Sub = /Pprof/Profile/Value%.Sub;
 
-% M = /Pprof/Profile/LocationMap%;
+% M = /Pprof/Profile/LocationMap%.Map;
 
 @ LocId@ = Int@;
 @ Sequence@ = List@<LocId@>;
