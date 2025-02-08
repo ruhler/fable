@@ -4,8 +4,9 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
+# Note: Iteration order isn't what you expect.
 Test@ Tests = /Core/Map/Test%.Test</Core/String/Map%.Map@, String@>(
   /Core/String/Map%, /Core/String/Eq%.Eq, /Core/String/Show%.Show, 
-  Str|'A first string', Str|'the next', Str|'the next and last');
+  Str|'the string', Str|'Another string', Str|'the string that is last');
 
 @(Tests);
