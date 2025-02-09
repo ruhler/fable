@@ -69,6 +69,16 @@ Insert = <@ V@> (Map@<V@> map, IntP@ key, V@ value) {
     2p1: p.@(2p1: Insert(p.2p1, key.2p1, value))));
 };
 
+<@ V@>(Map@<V@>, IntP@, (Maybe@<V@>) { V@; }) { Map@<V@>; }
+InsertWith = <@ V@> (Map@<V@> map, IntP@ key, (Maybe@<V@>) { V@; } with) {
+  MapP@<V@> p = map.?(empty: EmptyP<V@>, p: map.p);
+
+  Map@(p: key.?(
+    1: p.@(1: Just(with(p.1))),
+    2p0: p.@(2p0: InsertWith(p.2p0, key.2p0, with)),
+    2p1: p.@(2p1: InsertWith(p.2p1, key.2p1, with))));
+};
+
 <@ V@>(Map@<V@>, IntP@) { Map@<V@>; }
 Delete = <@ V@>(Map@<V@> map, IntP@ key) {
   map.?(empty: map);
@@ -98,7 +108,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (IntP@, V@, B@) { B@; } body) {
 };
 
 /Core/Map%.Map@<Map@, IntP@> Map = @(
-  Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
+  Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
 );
 
 @(Map);

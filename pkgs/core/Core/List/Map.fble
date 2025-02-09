@@ -71,12 +71,24 @@
     Map@(p: {
       key.?(nil: p.@(nil: Just(value)));
 
-      # TODO: Support an insert with modify kind of thing on the map to avoid
-      # having to do separate lookup followed by insert here.
-      Maybe@<Map@<V@>> mcm = M.Lookup(p.cons, key.cons.head);
-      Map@<V@> cm = mcm.?(just: mcm.just, nothing: Empty<V@>);
-      Map@<V@> ncm = Insert(cm, key.cons.tail, value);
-      p.@(cons: M.Insert(p.cons, key.cons.head, ncm));
+      p.@(cons: M.InsertWith(p.cons, key.cons.head, (Maybe@<Map@<V@>> mcm) {
+          Map@<V@> cm = mcm.?(just: mcm.just, nothing: Empty<V@>);
+          Insert(cm, key.cons.tail, value);
+      }));
+    });
+  };
+
+  <@ V@>(Map@<V@>, List@<T@>, (Maybe@<V@>) { V@; }) { Map@<V@>; }
+  InsertWith = <@ V@> (Map@<V@> map, List@<T@> key, (Maybe@<V@>) { V@; } with) {
+    MapP@<V@> p = map.?(empty: EmptyP<V@>, p: map.p);
+
+    Map@(p: {
+      key.?(nil: p.@(nil: Just(with(p.nil))));
+
+      p.@(cons: M.InsertWith(p.cons, key.cons.head, (Maybe@<Map@<V@>> mcm) {
+          Map@<V@> cm = mcm.?(just: mcm.just, nothing: Empty<V@>);
+          InsertWith(cm, key.cons.tail, with);
+      }));
     });
   };
 
@@ -107,12 +119,12 @@
     M.ForEach(p.cons, b2, (T@ x, Map@<V@> m, B@ b) {
       ForEach(m, b, (List@<T@> l, V@ v, B@ bb) {
         body(Cons(x, l), v, bb);
-        });
       });
+    });
   };
 
   /Core/Map%.Map@<Map@, List@<T@>> Map = @(
-    Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
+    Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
   );
   Map;
 };

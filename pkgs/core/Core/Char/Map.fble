@@ -28,6 +28,11 @@ Insert = <@ V@>(Map@<V@> map, Char@ key, V@ value) {
   M.Insert(map, Ord(key), value);
 };
 
+<@ V@>(Map@<V@>, Char@, (Maybe@<V@>) { V@; }) { Map@<V@>; }
+InsertWith = <@ V@>(Map@<V@> map, Char@ key, (Maybe@<V@>) { V@; } with) {
+  M.InsertWith(map, Ord(key), with);
+};
+
 <@ V@>(Map@<V@>, Char@) { Map@<V@>; }
 Delete = <@ V@>(Map@<V@> map, Char@ key) {
   M.Delete(map, Ord(key));
@@ -41,7 +46,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Char@, V@, B@) { B@; } body) {
 };
 
 /Core/Map%.Map@<Map@, Char@> Map = @(
-  Map@, Empty, IsEmpty, Insert, Delete, Lookup, ForEach
+  Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
 );
 
 @(Map);

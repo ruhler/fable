@@ -2,31 +2,49 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+Pprof:
 * pprof viewer: show percentage with each value?
 
+Map:
 * Make iteration order of maps what we expect?
   IntP does evens before odds instead of smaller before larger.
-
 * Remove /Core/Map/Tree%.
  - Port everyone over to /Core/Map instead.
 
+Sockets:
 * Return error messages in Sockets interface on failure to connect, serve, accept?
   Yes, definitely needed. Or an error code?
-
 * Need a way to explicitly close sockets connection?
   For example, elinks seems to think fble-pprof isn't done writing its
   response. Or is there some other issue going on there?
 
-* Add helper macros for defining static FbleString and FbleModulePath?
-
+Tests:
 * Add spec tests for full coverage.
  - Try all the funny non-printable characters in identifier names?
  - Test fble-disassemble with type dependencies?
  - Test FbleCompileModule where typecheck of module fails?
    Why isn't that covered already by basically every compile-error test?
+* Add test for .fble vs. .fble.@ type for main module as well as dependant
+  module.
+* Test for malformed .fble of dependant file gives no error when well formed
+  .fble.@ is there and we are just compiling the module.
+* Add test and fix for this case:
+ 1. We load builtin A, which loads dependent builtin B
+ 2. We load .fble C, which depends on builtin B
+ At what point do we check and load the type information for B?
 
+
+Tutorials:
 * Update tutorials for changes since last release
  - modular compilation in particular
+* Add exercises to exercise each main point in every tutorial.
+* C API
+* /App/App%
+* /Core/Test%
+
+
+Other:
+* Add helper macros for defining static FbleString and FbleModulePath?
 
 * Get rid of fble-deps, in favor of a generic --make-deps option to fble
   binaries?
@@ -34,17 +52,6 @@ Things to consider doing for the fble-0.4 release.
 * Add --compile option to fble-deps?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
   - FbleString static initialization is one issue.
-
-* Add test and fix for this case:
- 1. We load builtin A, which loads dependent builtin B
- 2. We load .fble C, which depends on builtin B
- At what point do we check and load the type information for B?
-
-* Add test for .fble vs. .fble.@ type for main module as well as dependant
-  module.
-* Test for .fble.@ of dependant file present but with bad syntax.
-* Test for malformed .fble of dependant file gives no error when well formed
-  .fble.@ is there and we are just compiling the module.
 
 * Add --help option to fbld programs to output usage.
 
@@ -64,8 +71,3 @@ Doc Comments
  - Add support for abstract typedef struct doc comments?
  - Would be nice to have SEE ALSO section for library man pages.
 
-Tutorials
- - Add exercises to exercise each main point in every tutorial.
- - C API
- - /App/App%
- - /Core/Test%
