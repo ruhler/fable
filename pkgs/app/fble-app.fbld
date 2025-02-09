@@ -25,10 +25,12 @@
    are fble-stdio options and arguments after @l[--] are @a[ARG...].
  
  @exitstatus
-  @def[0] @l[Stdio\@] process returns @l[True].
-  @def[1] @l[Stdio\@] process returns @l[False].
-  @def[2] Usage Error
-  @def[3] Other Error.
+  @def[0] @l[App\@] Main returns @l[True].
+  @def[1] @l[App\@] Main returns @l[False].
+  @def[2] Compile error.
+  @def[3] Runtime error.
+  @def[4] Usage error.
+  @def[5] Other error.
  
  @examples
   @ex[fble-app -p core -p app -m /App/Demo% --fps]

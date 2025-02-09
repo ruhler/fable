@@ -17,9 +17,6 @@ Things to consider doing for the fble-0.4 release.
   For example, elinks seems to think fble-pprof isn't done writing its
   response. Or is there some other issue going on there?
 
-* EXIT_SUCCESS and EXIT_FAILURE with /Core/Stdio%.Main@ True/False rather than
-  zero and non-zero? Is that more portable?
-
 * Add helper macros for defining static FbleString and FbleModulePath?
 
 * Add spec tests for full coverage.
@@ -42,9 +39,6 @@ Things to consider doing for the fble-0.4 release.
  1. We load builtin A, which loads dependent builtin B
  2. We load .fble C, which depends on builtin B
  At what point do we check and load the type information for B?
-
-* Fix exit status in fble-stdio.fbld
-  And maybe others since changing to FbleMain?
 
 * Add test for .fble vs. .fble.@ type for main module as well as dependant
   module.

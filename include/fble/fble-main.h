@@ -9,15 +9,14 @@
 
 #include "fble-arg-parse.h"   // for FbleMainArg
 
-/**
- * Status codes used by FbleMain.
- */
+// Status codes used by FbleMain.
 typedef enum {
-  FBLE_MAIN_SUCCESS,
-  FBLE_MAIN_COMPILE_ERROR,
-  FBLE_MAIN_RUNTIME_ERROR,
-  FBLE_MAIN_USAGE_ERROR,
-  FBLE_MAIN_OTHER_ERROR,
+  FBLE_MAIN_SUCCESS = 0,
+  FBLE_MAIN_FAILURE = 1,
+  FBLE_MAIN_COMPILE_ERROR = 2,
+  FBLE_MAIN_RUNTIME_ERROR = 3,
+  FBLE_MAIN_USAGE_ERROR = 4,
+  FBLE_MAIN_OTHER_ERROR = 5,
 } FbleMainStatus;
 
 /**

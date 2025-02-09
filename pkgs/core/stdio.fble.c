@@ -485,9 +485,9 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   FbleFreeVector(stdio_args);
 
-  size_t result = FBLE_MAIN_OTHER_ERROR;
+  FbleMainStatus result = FBLE_MAIN_OTHER_ERROR;
   if (value != NULL) {
-    result = FbleUnionValueTag(value);
+    result = (FbleUnionValueTag(value) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
   }
 
   FbleFreeValueHeap(heap);

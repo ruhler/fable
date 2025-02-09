@@ -593,9 +593,9 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
     }
   }
 
-  int exit_status = FBLE_MAIN_OTHER_ERROR;
+  FbleMainStatus exit_status = FBLE_MAIN_OTHER_ERROR;
   if (result != NULL) {
-    exit_status = FbleUnionValueTag(FbleStructValueField(result, 1));
+    exit_status = (FbleUnionValueTag(FbleStructValueField(result, 1)) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
   }
 
   FbleFreeValueHeap(heap);

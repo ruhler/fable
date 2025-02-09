@@ -322,3 +322,53 @@ stdio.fble.h
 
 Sure, why not. Let's try it. Honestly I don't think it matters much.
 
+---
+
+* EXIT_SUCCESS and EXIT_FAILURE with /Core/Stdio%.Main@ True/False rather than
+  zero and non-zero? Is that more portable?
+* Fix exit status in fble-stdio.fbld
+  And maybe others since changing to FbleMain?
+
+If I could get away with a single exit success and exit failure, I could use
+EXiT_SuCCESS, EXiT_FAILURE. But I don't think that's enough for my use cases?
+How can I say that, though, when you literally only have two options for
+return: True and False?
+
+FbleMain returns:
+ - FBLE_MAIN_SUCCESS
+ - FBLE_MAIN_USAGE_ERROR
+ - FBLE_MAIN_OTHER_ERROR
+ - FBLE_MAIN_COMPILE_ERROR
+
+I have an enum today to list those options. If I don't assume that
+EXIT_SUCCESS is 0 and EXIT_FAILURE is 1, I can't return anything else that
+won't possibly conflict with those.
+
+FbleMain doesn't exit itself. FbleStdioMain, for example, returns the FbleMain
+exit status directly, or 0/1 depending on the returned result of the program.
+
+Spec tests make use of the error status to tell if it's a compile error or a
+runtime error. I need more than one kind of error. I also need to know the
+values of compile and runtime error codes.
+
+Here's what I think I should do:
+
+typedef enum {
+  FBLE_MAIN_SUCCESS = 0,
+  FBLE_MAIN_FAILURE = 1
+  FBLE_MAIN_COMPILE_ERROR = 2,
+  FBLE_MAIN_RUNTIME_ERROR = 3,
+  FBLE_MAIN_USAGE_ERROR = 4,
+  FBLE_MAIN_OTHER_ERROR = 5,
+} FbleMainStatus;
+
+Use 0 / 1, assuming those match to EXIT_SUCCESS and EXIT_FAILURE, to interpret
+the return value of Stdio main. Have special values for all the other errors
+from FbleMain.
+
+That way we don't have to worry about confusing between COMPILE_ERROR and a
+Stdio program returning False.
+
+I can update the code, update the documentation, update the spec test suite,
+and everything should be happy.
+ 

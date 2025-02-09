@@ -44,8 +44,8 @@ proc execv { args } {
 #   args - command to run.
 proc expect_error { type loc args } {
   switch $type {
-    compile { set es 1 }
-    runtime { set es 2 }
+    compile { set es 2 }
+    runtime { set es 3 }
     default { error "unsupported error type: $type" }
   }
 
