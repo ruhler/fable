@@ -19,10 +19,9 @@
 #include "fble-stdio.usage.h"      // for fbldUsageHelpText
 
 #include "char.fble.h"        // for FbleCharValueAccess
+#include "debug.fble.h"       // for /Core/Debug/Builtin%
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
-
-extern FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Builtin_25_;
 
 static void OnFree(void* data);
 static FbleValue* IStreamImpl(

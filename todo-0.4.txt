@@ -38,9 +38,6 @@ Things to consider doing for the fble-0.4 release.
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
   - FbleString static initialization is one issue.
 
-* export builtin modules in a header file somewhere?
-  Instead of having users export themselves?
-
 * Add test and fix for this case:
  1. We load builtin A, which loads dependent builtin B
  2. We load .fble C, which depends on builtin B

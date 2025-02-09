@@ -53,4 +53,10 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
  */
 int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded);
 
+/**
+ * @value[_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_] @l{/Core/Stdio/IO/Builtin%} implementation.
+ *  @type[FblePreloadedModule]
+ */
+extern FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_;
+
 #endif // FBLE_CORE_STDIO_FBLE_H_

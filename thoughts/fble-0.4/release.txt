@@ -305,3 +305,20 @@ existing test cases. Then it should be real easy to add tests for
 
 Nice, but this quickly revealed that I haven't finished implementing
 /Core/String/Map%. That's something that needs working on.
+
+---
+
+* export builtin modules in a header file somewhere?
+
+Specifically I'm talking about
+
+extern FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Builtin_25_;
+extern FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_;
+
+The natural place to it would be:
+
+debug.fble.h.
+stdio.fble.h
+
+Sure, why not. Let's try it. Honestly I don't think it matters much.
+

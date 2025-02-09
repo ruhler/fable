@@ -19,14 +19,12 @@
 #include <fble/fble-version.h>     // for FblePrintVersion
 
 #include "char.fble.h"             // for FbleCharValueAccess
+#include "debug.fble.h"            // for /Core/Debug/Builtin%
 #include "int.fble.h"              // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"           // for FbleStringValueAccess
 #include "stdio.fble.h"            // for FbleNewStdioIO
 
 #include "fble-app.usage.h"        // for fbldUsageHelpText
-
-extern FblePreloadedModule _Fble_2f_Core_2f_Debug_2f_Builtin_25_;
-extern FblePreloadedModule _Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_;
 
 typedef struct {
   bool fps;
