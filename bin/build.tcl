@@ -31,17 +31,6 @@ namespace eval "bin" {
     fbld_check_dc $::b/bin/$x.dc $::s/bin/$x
   }
 
-  # Generate a .d file for a .fble file.
-  #   target - the name of the .d file to generate.
-  #   module - the module path to generate it for.
-  #   flags - search path flags for the module.
-  #   args - additional dependencies for build
-  proc ::fbledep { target module flags args} {
-    build $target "$::b/bin/fble-deps $args" \
-      "$::b/bin/fble-deps $flags -t $target -m $module > $target" \
-      "depfile = $target"
-  }
-
   # Compile a .fble file to .o via aarch64.
   #
   # Inputs:

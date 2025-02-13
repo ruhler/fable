@@ -383,3 +383,29 @@ implemented with a Map@ underneath, why not just use that Map@ directly?
 Anyway, I'll keep slogging through the code changes and see where we end up,
 but a couple of things don't feel right about this. In particular, those cases
 where I have no easy way to give an explicit type for a function.
+
+---
+
+* Get rid of fble-deps, in favor of a generic --make-deps option to fble
+  binaries?
+  Remove use of fbledeps in spec tests?
+* Add --compile option to fble-deps?
+
+Three things to check here:
+1. Does fble-deps duplicate code or share? If it duplicates, that's a bit more
+code maintenance burden.
+2. Why do I still have fble-deps? Remind me. I'm sure there's some reason.
+3. Assuming we keep fble-deps, it makes sense to have a --compile option, but
+don't use that by default.
+
+(1). There is a little bit of duplication, but not much. Mostly just in
+parsing and handling the arguments. We already duplicate between FbleMain and
+fble-compile as well. This duplication is not a significant reason to remove
+fble-deps.
+
+(2).
+The spec tests use it, because it's more convenient than passing through a
+depfile option in the build than via the testsuite for spec-test.run.tcl, and
+because spec-test.run.tcl uses the generated dependency file to know which
+modules to compile for a test.
+
