@@ -36,6 +36,7 @@ void Write(SOCKET sfd, char c)
 
 // To simplify compatibilities with windows
 #define SOCKET int
+#define INVALID_SOCKET (-1)
 #define closesocket close
 
 int Read(SOCKET sfd)
