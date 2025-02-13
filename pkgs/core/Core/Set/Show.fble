@@ -4,8 +4,7 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Reverse = /Core/List%.Reverse;
 
-<@>@ Set@ = /Core/Set%.Set@;
-<@>% ForEach = /Core/Set%.ForEach;
+<<@>@,@>@ Map@ = /Core/Map%.Map@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
@@ -21,13 +20,18 @@
 #   { a; }
 #   { a; b; }
 #
-<@ T@>(Show@<T@>) { Show@<Set@<T@>>; }
-Show = <@ T@>(Show@<T@> show, Set@<T@> s) {
-  List@<String@> elems = ForEach(s, List[Str|'{ '],
-    (T@ x, List@<String@> es) {
-      Cons(Strs[show(x), Str|'; '], es);
-    });
-  Strs(Reverse(Cons(Str|'}', elems)));
+<<@>@, @>% Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key) {
+  % S = /Core/Set%(m);
+
+  Show@<S.Set@> show = (S.Set@ s) {
+    List@<String@> elems = S.ForEach(s, List[Str|'{ '],
+      (K@ x, List@<String@> es) {
+        Cons(Strs[show_key(x), Str|'; '], es);
+      });
+    Strs(Reverse(Cons(Str|'}', elems)));
+  };
+
+  show;
 };
 
 @(Show);

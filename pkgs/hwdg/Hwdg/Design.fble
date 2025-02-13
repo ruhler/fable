@@ -23,7 +23,9 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Set@ = /Core/Set%.Set@;
+% Map = /Core/Map/Tree%.Map(/Hwdg/Coord%.Ord);
+% Set = /Core/Set%<Map.Map@, Coord@>(Map);
+@ Set@ = Set.Set@;
 
 @ String@ = /Core/String%.String@;
 
@@ -163,14 +165,14 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
 #
 # Returns:
 #   The updated memory. Nothing if no changes were made to memory.
-(Design@, Memory@, Set@<Coord@>) { Maybe@<Memory@>; } StepInternal = {
-  @ B@ = *(Memory@ memory, Set@<Coord@> updated);
+(Design@, Memory@, Set@) { Maybe@<Memory@>; } StepInternal = {
+  @ B@ = *(Memory@ memory, Set@ updated);
 
   # Check if a port is blocked because its memory location has already been
   # updated.
   (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } Blocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
-    pi.?(just: /Core/Set%.Contains(/Hwdg/Coord%.Ord, b.updated, c));
-    po.?(just: /Core/Set%.Contains(/Hwdg/Coord%.Ord, b.updated, c));
+    pi.?(just: Set.Contains(b.updated, c));
+    po.?(just: Set.Contains(b.updated, c));
     False;
   };
 
@@ -196,14 +198,14 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
   (B@, Coord@, PortSpec@, PortSpec@) { B@; } Update = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
     po.?(just: @(
       memory: /Hwdg/Memory%.Set(b.memory, c, po.just),
-      updated: /Core/Set%.Insert(/Hwdg/Coord%.Ord, b.updated, c)));
+      updated: Set.Insert(b.updated, c)));
     pi.?(just: @(
       memory: /Hwdg/Memory%.Clear(b.memory, c),
-      updated: /Core/Set%.Insert(/Hwdg/Coord%.Ord, b.updated, c)));
+      updated: Set.Insert(b.updated, c)));
     b;
   };
 
-  (Design@ design, Memory@ memory, Set@<Coord@> updated) {
+  (Design@ design, Memory@ memory, Set@ updated) {
     B@ b = ForEachRule<B@>(design, B@(memory, updated), (Coord@ c, Rule@ r, B@ b) {
       # The coordinates of each port.
       Ports@<Coord@> cs = Ports@(
@@ -239,7 +241,7 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
       b_lr;
     });
 
-    /Core/Set%.IsEmpty(b.updated).?(true: Nothing<Memory@>);
+    Set.IsEmpty(b.updated).?(true: Nothing<Memory@>);
     Just(b.memory);
   };
 };
@@ -258,7 +260,7 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
 # Returns:
 #   The updated memory.
 (Design@, Memory@) { Memory@; } Step = (Design@ design, Memory@ memory) {
-  Maybe@<Memory@> m = StepInternal(design, memory, /Core/Set%.Empty<Coord@>);
+  Maybe@<Memory@> m = StepInternal(design, memory, Set.Empty);
   m.?(just: m.just, nothing: memory);
 };
 
@@ -267,7 +269,7 @@ ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body)
 #
 # It is the responsibility of the caller to make sure the design terminates.
 (Design@, Memory@) { Memory@; } Run = (Design@ design, Memory@ memory) {
-  Maybe@<Memory@> m = StepInternal(design, memory, /Core/Set%.Empty<Coord@>);
+  Maybe@<Memory@> m = StepInternal(design, memory, Set.Empty);
   m.?(just: Run(design, m.just), nothing: memory);
 };
 

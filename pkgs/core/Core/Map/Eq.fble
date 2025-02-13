@@ -1,0 +1,37 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+
+<<@>@,@>@ Map@ = /Core/Map%.Map@;
+
+<<@>@ M@, @ K@>(Map@<M@, K@>, Eq@<K@>)<@ V@>(Eq@<V@>, M@<V@>, M@<V@>) { Bool@; }
+Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq)<@ V@>(Eq@<V@> veq) {
+  @ Entry@ = *(K@ key, V@ value);
+
+  Eq@<Entry@> EqEntry = (Entry@ a, Entry@ b) {
+    keq(a.key, b.key).?(false: False);
+    veq(a.value, b.value).?(false: False);
+    True;
+  };
+
+  (M@<V@> a, M@<V@> b) {
+    List@<Entry@> as = m.ForEach(a, Nil<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
+      Cons(Entry@(k, v), b);
+    });
+
+    List@<Entry@> bs = m.ForEach(b, Nil<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
+      Cons(Entry@(k, v), b);
+    });
+
+    /Core/List/Eq%.Eq(EqEntry, as, bs);
+  };
+};
+
+@(Eq);

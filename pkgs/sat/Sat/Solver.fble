@@ -59,14 +59,14 @@
 # neg - the set of clauses this variable appears negative in.
 @ VarS@ = *(ClauseIds@ pos, ClauseIds@ neg);
 
-% Vars = /Sat/Id%.Map<VarS@>;
-@ Vars@ = Vars.Map@;
+% Vars = /Sat/Id%.Map;
+@ Vars@ = Vars.Map@<VarS@>;
 
-% Clauses = /Sat/Id%.Map<Clause@>;
-@ Clauses@ = Clauses.Map@; 
+% Clauses = /Sat/Id%.Map;
+@ Clauses@ = Clauses.Map@<Clause@>; 
 
-% Conflicts = /Sat/Id%.Map<Conflict@>;
-@ Conflicts@ = Conflicts.Map@;
+% Conflicts = /Sat/Id%.Map;
+@ Conflicts@ = Conflicts.Map@<Conflict@>;
 
 
 # Functions for working with clauses.
@@ -135,9 +135,9 @@ Why@ Pure = Why@(pure: Unit);
 Solver@ NewSolver = @(
   unsat: False,
   clause_id: Int|0,
-  vars: Vars.Empty,
-  clauses: Clauses.Empty,
-  conflicts: Conflicts.Empty,
+  vars: Vars.Empty<VarS@>,
+  clauses: Clauses.Empty<Clause@>,
+  conflicts: Conflicts.Empty<Conflict@>,
   assigns: Nil<Var@>,
   todo: Nil<Assign@>
 );
@@ -332,9 +332,9 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
     Strs[Str|'Conflict ', Id(c.a), Str|', ', Id(c.b), Str|' on ', Id(c.var)];
   };
 
+  Show@<Clauses@> Clauses = /Core/Map/Show%.Show</Sat/Id%.Map.Map@, Id@>(/Sat/Id%.Map, Id, Clause);
 
-  @(Id, Var, Clause, Why, Assign, Todo, Conflict,
-    Clauses: Clauses.Show(Clause));
+  @(Id, Var, Clause, Why, Assign, Todo, Conflict, Clauses);
 };
 
 (Solver@, Solver@) { Solver@; }

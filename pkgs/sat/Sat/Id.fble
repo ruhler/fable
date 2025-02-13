@@ -1,38 +1,11 @@
 
 @ Int@ = /Core/Int%.Int@;
 
-<@>@ Show@ = /Core/Show%.Show@;
-
 @ Id@ = Int@;
 % EqId = /Core/Int/Eq%.Eq;
 % OrdId = /Core/Int/Ord%.Ord;
 
-<@>% Map = <@ T@> {
-  @ Map@ = /Core/Map/Tree%.Map@<Id@, T@>;
-  % Empty = /Core/Map/Tree%.Empty<Id@, T@>;
-  % Insert = /Core/Map/Tree%.Insert(OrdId)<T@>;
-  % InsertWith = /Core/Map/Tree%.InsertWith(OrdId)<T@>;
-  % Lookup = /Core/Map/Tree%.Lookup(OrdId)<T@>;
-  % Delete = /Core/Map/Tree%.Delete(OrdId)<T@>;
-  % ForEach = /Core/Map/Tree%.ForEach<Id@, T@>;
-
-  % Show = (Show@<T@> show) {
-    /Core/Map/Tree/Show%.Show(/Core/Int/Show%.Show, show);
-  };
-
-  @(Map@, Empty, Insert, InsertWith, Lookup, Delete, ForEach, Show);
-};
-
-% Set = {
-  @ Set@ = /Core/Set%.Set@<Id@>;
-  % Empty = /Core/Set%.Empty<Id@>;
-  % IsEmpty = /Core/Set%.IsEmpty<Id@>;
-  % Insert = /Core/Set%.Insert(OrdId);
-  % Delete = /Core/Set%.Delete(OrdId);
-  % ForEach = /Core/Set%.ForEach<Id@>;
-  % Show = /Core/Set/Show%.Show(/Core/Int/Show%.Show);
-
-  @(Set@, Empty, IsEmpty, Insert, Delete, ForEach, Show);
-};
+% Map = /Core/Map/Tree%.Map(OrdId);
+% Set = /Core/Set%<Map.Map@, Id@>(Map);
 
 @(Id@, EqId, Map, Set);

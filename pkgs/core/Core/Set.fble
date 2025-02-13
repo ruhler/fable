@@ -3,128 +3,116 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
-
-<@,@>@ Map@ = /Core/Map/Tree%.Map@;
+<<@>@,@>@ Map@ = /Core/Map%.Map@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-# Set@ -- 
-#   A set of elements.
-<@>@ Set@ = <@ T@> { Map@<T@, Unit@>; };
+<<@>@ M@, @ K@>(Map@<M@, K@> m) {
+  # Set@ -- 
+  #   A set of elements.
+  @ Set@ = M@<Unit@>;
 
-# Empty -- 
-#   The empty set.
-Set@ Empty = <@ T@> { /Core/Map/Tree%.Empty<T@, Unit@>; };
+  # Empty -- 
+  #   The empty set.
+  Set@ Empty = m.Empty<Unit@>;
 
-# IsEmpty --
-#   Check if a set is empty.
-#
-# Type Parameters:
-#   T@ - the type of element in the set.
-#
-# Inputs:
-#   set - the map to check.
-#
-# Returns:
-#   True if the set is empty, false otherwise.
-<@ T@>(Set@<T@>) { Bool@; } IsEmpty = <@ T@>(Set@<T@> set) {
-  /Core/Map/Tree%.IsEmpty(set);
-};
+  # IsEmpty --
+  #   Check if a set is empty.
+  #
+  # Type Parameters:
+  #   T@ - the type of element in the set.
+  #
+  # Inputs:
+  #   set - the map to check.
+  #
+  # Returns:
+  #   True if the set is empty, false otherwise.
+  (Set@) { Bool@; } IsEmpty = m.IsEmpty<Unit@>;
 
-# Contains --
-#   Test whether an element exists in a set.
-#
-# Type Parameters:
-#   T@ - the type of element in the set.
-#
-# Inputs:
-#   lt - The less than operator to use for comparing elements.
-#   set - the set to check for the element in.
-#   element - the element to check for.
-#
-# Returns:
-#   True if the element belongs to the map, false otherwise.
-#
-# Example Use:
-#   % Contains = /Set%.Contains<String@>(/Core/String/Ord%.Ord);
-#   Contains(set, value);
-<@ T@>(Ord@<T@>, Set@<T@>, T@) { Bool@; }
-Contains = <@ T@>(Ord@<T@> ord, Set@<T@> set, T@ element) {
-  /Core/Map/Tree%.Lookup(ord, set, element).?(just: True, nothing: False);
-};
-
-# Insert --
-#   Insert an element into the set.
-#
-# Type Parameters:
-#   T@ - the type of element in the set.
-#
-# Inputs:
-#   lt - The less than operator to use for comparing elements.
-#   set - the set to insert an element into.
-#   element - the element to insert.
-#
-# Example Use:
-#   % Insert = /Set%.Insert<String@>(/Core/String/Ord%.Ord);
-#   Insert(set, Str(Chars|foo));
-<@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; }
-Insert = <@ T@>(Ord@<T@> ord) {
-  % insert = /Core/Map/Tree%.Insert<T@>(ord)<Unit@>;
-  (Set@<T@> set, T@ element) {
-    insert(set, element, Unit);
+  # Contains --
+  #   Test whether an element exists in a set.
+  #
+  # Type Parameters:
+  #   T@ - the type of element in the set.
+  #
+  # Inputs:
+  #   lt - The less than operator to use for comparing elements.
+  #   set - the set to check for the element in.
+  #   element - the element to check for.
+  #
+  # Returns:
+  #   True if the element belongs to the map, false otherwise.
+  #
+  # Example Use:
+  #   % Contains = /Set%.Contains<String@>(/Core/String/Ord%.Ord);
+  #   Contains(set, value);
+  (Set@, K@) { Bool@; }
+  Contains = (Set@ set, K@ element) {
+    m.Lookup(set, element).?(just: True, nothing: False);
   };
-};
 
-# Delete --
-#   Removes an element from the set.
-#
-# Has no effect if the element is not present in the set.
-#
-# Type Parameters:
-#   T@ - the type of element in the set.
-#
-# Inputs:
-#   lt - The less than operator to use for comparing elements.
-#   set - the set to remove the element from.
-#   element - the element to remove.
-#
-# Example Use:
-#   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
-#   Delete(set, Str(Chars|foo));
-<@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; }
-Delete = <@ T@>(Ord@<T@> ord) {
-  % delete = /Core/Map/Tree%.Delete<T@>(ord)<Unit@>;
-  (Set@<T@> set, T@ element) {
-    delete(set, element);
+  # Insert --
+  #   Insert an element into the set.
+  #
+  # Type Parameters:
+  #   T@ - the type of element in the set.
+  #
+  # Inputs:
+  #   lt - The less than operator to use for comparing elements.
+  #   set - the set to insert an element into.
+  #   element - the element to insert.
+  #
+  # Example Use:
+  #   % Insert = /Set%.Insert<String@>(/Core/String/Ord%.Ord);
+  #   Insert(set, Str(Chars|foo));
+  (Set@, K@) { Set@; } Insert = (Set@ set, K@ element) {
+    m.Insert(set, element, Unit);
   };
-};
 
-# ForEach --
-#   Iterates over entries of a set.
-#
-# Type Parameters:
-#   T@ - the type of element in the set.
-#   B@ - The type of value updated and returned by the foreach loop.
-#
-# Inputs:
-#   set - the set to iterate over.
-#   base - the initial value to update and return from the loop.
-#   body - the body of the loop.
-#
-# Returns:
-#   The result of applying the body consecutively to the base value, once for
-#   each entry in the map.
-#
-# Conceptually:
-#   B@ b = base
-#   foreach x in map:
-#     b = body(x, b)
-#   return b
-<@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; }
-ForEach = <@ T@>(Set@<T@> set)<@ B@>(B@ base, (T@, B@) { B@; } body) {
-  /Core/Map/Tree%.ForEach(set, base, (T@ x, Unit@ _, B@ b) { body(x, b); });
-};
+  # Delete --
+  #   Removes an element from the set.
+  #
+  # Has no effect if the element is not present in the set.
+  #
+  # Type Parameters:
+  #   T@ - the type of element in the set.
+  #
+  # Inputs:
+  #   lt - The less than operator to use for comparing elements.
+  #   set - the set to remove the element from.
+  #   element - the element to remove.
+  #
+  # Example Use:
+  #   % Delete = /Set%.Delete<String@>(/Core/String/Ord%.Ord);
+  #   Delete(set, Str(Chars|foo));
+  (Set@, K@) { Set@; } Delete = m.Delete<Unit@>;
 
-@(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach);
+  # ForEach --
+  #   Iterates over entries of a set.
+  #
+  # Type Parameters:
+  #   T@ - the type of element in the set.
+  #   B@ - The type of value updated and returned by the foreach loop.
+  #
+  # Inputs:
+  #   set - the set to iterate over.
+  #   base - the initial value to update and return from the loop.
+  #   body - the body of the loop.
+  #
+  # Returns:
+  #   The result of applying the body consecutively to the base value, once for
+  #   each entry in the map.
+  #
+  # Conceptually:
+  #   B@ b = base
+  #   foreach x in map:
+  #     b = body(x, b)
+  #   return b
+  (Set@)<@ B@>(B@, (K@, B@) { B@; }) { B@; }
+  ForEach = (Set@ set)<@ B@>(B@ base, (K@, B@) { B@; } body) {
+    m.ForEach(set, base, (K@ x, Unit@ _, B@ b) { body(x, b); });
+  };
+
+  @(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach);
+};

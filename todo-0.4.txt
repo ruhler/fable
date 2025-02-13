@@ -8,8 +8,13 @@ Pprof:
 Map:
 * Make iteration order of maps what we expect?
   IntP does evens before odds instead of smaller before larger.
-* Remove /Core/Map/Tree%.
- - Port everyone over to /Core/Map instead.
+* Move tests for Show and Eq from /Core/Map/Tree/Tests% to a separate submodule.
+* Use a module struct for /Core/Set% instead of returning a function directly.
+* Understand why type inference doesn't work on /Core/Set/Eq%.Eq, for example.
+* It's annoying that we have to define a Map to use Set?
+  Add a Map.For function and Set.For functions to apply things, so we can do,
+  like:  /Core/Map/Tree%.Map(Ord).For(/Core/Set%).For(/Core/Set/Eq%)?
+* Clean up uses of /Core/Map/Tree% in general.
 
 Sockets:
 * Return error messages in Sockets interface on failure to connect, serve, accept?
@@ -70,4 +75,3 @@ Doc Comments
  - Add support for @union and @enum doc comments?
  - Add support for abstract typedef struct doc comments?
  - Would be nice to have SEE ALSO section for library man pages.
-

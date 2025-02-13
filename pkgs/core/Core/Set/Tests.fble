@@ -70,12 +70,18 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   Append<Char@>(ShowBit1(x.h), ShowBit1(x.l));
 };
 
-@ Set@ = /Core/Set%.Set@<Bit2@>;
-% Empty = /Core/Set%.Empty<Bit2@>;
-% Contains = /Core/Set%.Contains(OrdBit2);
-% Insert = /Core/Set%.Insert(OrdBit2);
-% Delete = /Core/Set%.Delete(OrdBit2);
-% ForEach = /Core/Set%.ForEach<Bit2@>;
+% Map = /Core/Map/Tree%.Map(OrdBit2);
+% Set = /Core/Set%<Map.Map@, Bit2@>(Map);
+
+@ Set@ = Set.Set@;
+% Empty = Set.Empty;
+% Contains = Set.Contains;
+% Insert = Set.Insert;
+% Delete = Set.Delete;
+% ForEach = Set.ForEach;
+
+% Eq = /Core/Set/Eq%.Eq<Map.Map@, Bit2@>(Map, EqBit2);
+% Show = /Core/Set/Show%.Show<Map.Map@, Bit2@>(Map, ShowBit2);
 
 Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'empty', (Unit@ _) {
@@ -129,40 +135,34 @@ Test@ Tests = TestSuite(Str|Set, List[
   Test(Str|'Show empty', (Unit@ _) {
     Set@ set = Empty;
     String@ wnt = Str|'{ }';
-    String@ got = /Core/Set/Show%.Show(ShowBit2, set);
+    String@ got = Show(set);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Show single', (Unit@ _) {
     Set@ set = Insert(Empty, B);
     String@ wnt = Str|'{ 01; }';
-    String@ got = /Core/Set/Show%.Show(ShowBit2, set);
+    String@ got = Show(set);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Show multi', (Unit@ _) {
     Set@ set = Insert(Insert(Empty, B), C);
     String@ wnt = Str|'{ 01; 10; }';
-    String@ got = /Core/Set/Show%.Show(ShowBit2, set);
+    String@ got = Show(set);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Equals', (Unit@ _) {
     Set@ a = Insert(Insert(Empty, B), C);
     Set@ b = Insert(Insert(Empty, B), C);
-    AssertEquals(
-      /Core/Set/Eq%.Eq(EqBit2),
-      /Core/Set/Show%.Show(ShowBit2),
-      a, b);
+    AssertEquals(Eq, Show, a, b);
   }),
 
   Test(Str|'Not equals', (Unit@ _) {
     Set@ a = Insert(Insert(Empty, B), C);
     Set@ b = Insert(Insert(Insert(Empty, A), B), C);
-    AssertNotEquals(
-      /Core/Set/Eq%.Eq(EqBit2),
-      /Core/Set/Show%.Show(ShowBit2),
-      a, b);
+    AssertNotEquals(Eq, Show, a, b);
   })
 ]);
 

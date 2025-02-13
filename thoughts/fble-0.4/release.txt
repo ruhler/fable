@@ -372,3 +372,14 @@ Stdio program returning False.
 I can update the code, update the documentation, update the spec test suite,
 and everything should be happy.
  
+---
+
+Porting /Core/Map/Tree% over to the /Core/Map% interface is turning out to be
+more complicated than I had hoped. We have things like Show, Eq, Set built on
+top of /Core/Map/Tree%. Now I can't easily refer to the Set@ type without
+first providing a Map@ implementation. Seems silly. If you have to know its
+implemented with a Map@ underneath, why not just use that Map@ directly?
+
+Anyway, I'll keep slogging through the code changes and see where we end up,
+but a couple of things don't feel right about this. In particular, those cases
+where I have no easy way to give an explicit type for a function.

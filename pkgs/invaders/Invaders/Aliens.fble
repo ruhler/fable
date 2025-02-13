@@ -96,11 +96,6 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
   Just<Alien@>(next);
 };
 
-# Set@ --
-#   A set of aliens, to keep track of which aliens are alive or dead.
-# A set of aliens.
-@ Set@ = /Core/Map/Tree%.Map@<Alien@, Unit@>;
-
 # AlienLt, AlienLe -- 
 #   Less than comparison operations for Aliens.
 /Core/Eq%.Eq@<Alien@> AlienLt = (Alien@ a, Alien@ b) {
@@ -120,30 +115,31 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
   Ord(a.col, b.col);
 };
 
+# Set@ --
+#   A set of aliens, to keep track of which aliens are alive or dead.
+# A set of aliens.
+% Map = /Core/Map/Tree%.Map(AlienOrd);
+% Set = /Core/Set%<Map.Map@, Alien@>(Map);
+@ Set@ = Set.Set@;
+
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  % Insert = /Core/Map/Tree%.Insert<Alien@>(AlienOrd)<Unit@>;
-  DoWhile(FirstAlien, Next, /Core/Map/Tree%.Empty<Alien@, Unit@>, 
+  DoWhile(FirstAlien, Next, Set.Empty, 
     (Alien@ a, Set@ s) {
-      Insert(s, a, Unit);
+      Set.Insert(s, a);
     });
 };
 
-(Set@) { Bool@; } IsEmpty = /Core/Map/Tree%.IsEmpty<Alien@, Unit@>;
+(Set@) { Bool@; } IsEmpty = Set.IsEmpty;
 
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
-(Set@, Alien@) { Bool@; } Contains = {
-  % Lookup = /Core/Map/Tree%.Lookup(AlienOrd)<Unit@>;
-  (Set@ set, Alien@ alien) {
-    Lookup(set, alien).?(just: True, nothing: False);
-  };
-};
+(Set@, Alien@) { Bool@; } Contains = Set.Contains;
 
 # Remove --
 #   Remove an element of the set.
-(Set@, Alien@) { Set@; } Remove = /Core/Map/Tree%.Delete(AlienOrd)<Unit@>;
+(Set@, Alien@) { Set@; } Remove = Set.Delete;
 
 # NextAlive --
 #   Returns the next live alien in the given set, or Nothing if we have

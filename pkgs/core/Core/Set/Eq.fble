@@ -1,10 +1,11 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-<@>@ Set@ = /Core/Set%.Set@;
+<<@>@,@>@ Map@ = /Core/Map%.Map@;
 
-<@ T@>(Eq@<T@>) { Eq@<Set@<T@>>; } Eq = <@ T@>(Eq@<T@> eq) {
-  /Core/Map/Tree/Eq%.Eq(eq, /Core/Unit/Eq%.Eq);
+
+<<@>@, @>% Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq) {
+  /Core/Map/Eq%.Eq(m, keq, /Core/Unit/Eq%.Eq);
 };
 
 @(Eq);

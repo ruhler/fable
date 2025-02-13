@@ -7,6 +7,8 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
 % Mul = /Core/Int%.Mul;
@@ -20,6 +22,8 @@
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;
+
+<@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
 % Strs = /Core/String%.Strs;
@@ -64,16 +68,20 @@ Ord@<Point@> OrdPoint = (Point@ a, Point@ b) {
     Str|', ', /Core/Int/Show%.Show(c.b), Str|')'];
 };
 
-@ Drawn@ = /Core/Map/Tree%.Map@<Point@, Color@>;
+% Map = /Core/Map/Tree%.Map(OrdPoint);
 
-% Insert = /Core/Map/Tree%.Insert<Point@>(OrdPoint)<Color@>;
+@ Drawn@ = Map.Map@<Color@>;
+% Empty = Map.Empty<Color@>;
+% Insert = Map.Insert<Color@>;
+Eq@<Drawn@> EqDrawn = /Core/Map/Eq%.Eq<Map.Map@, Point@>(Map, EqPoint, EqColor);
+Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show<Map.Map@, Point@>(Map, ShowPoint, ShowColor);
 
 @ Pixel@ = *(Int@ x, Int@ y, Color@ color);
 
 # Drawn --
 #   Create a drawing by listing raw pixels.
 (List@<Pixel@>) { Drawn@; } Drawn = (List@<Pixel@> pixels) {
-  pixels.?(nil: /Core/Map/Tree%.Empty<Point@, Color@>);
+  pixels.?(nil: Empty);
 
   Pixel@ head = pixels.cons.head;
   Insert(Drawn(pixels.cons.tail), Point@(head.x, head.y), head.color);
@@ -126,15 +134,12 @@ Draw_ = {
 };
 
 (Drawing@) { Drawn@; } Draw = (Drawing@ d) {
-  Draw_(Point@(Int|1, Int|1), Point@(Int|0, Int|0), d, /Core/Map/Tree%.Empty<Point@, Color@>);
+  Draw_(Point@(Int|1, Int|1), Point@(Int|0, Int|0), d, Empty);
 };
 
 (Drawn@, Drawn@) { TestResult@; }
 AssertEquals = (Drawn@ expected, Drawn@ actual) {
-  /Core/Eq/Assert%.AssertEquals(
-    /Core/Map/Tree/Eq%.Eq(EqPoint, EqColor),
-    /Core/Map/Tree/Show%.Show(ShowPoint, ShowColor),
-    expected, actual);
+  /Core/Eq/Assert%.AssertEquals(EqDrawn, ShowDrawn, expected, actual);
 };
 
 @(Drawn@, Pixel@,
