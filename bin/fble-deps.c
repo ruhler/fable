@@ -39,6 +39,7 @@ int main(int argc, const char* argv[])
   bool version = false;
   bool help = false;
   bool error = false;
+  bool compile = false;
 
   argc--;
   argv++;
@@ -50,6 +51,8 @@ int main(int argc, const char* argv[])
     if (FbleParseModuleArg(&module_arg, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-t", &target, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--target", &target, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-c", &compile, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--compile", &compile, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
@@ -88,7 +91,12 @@ int main(int argc, const char* argv[])
   FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
   FbleStringV deps;
   FbleInitVector(deps);
-  FbleProgram* prgm = FbleLoadForExecution(builtins, module_arg.search_path, module_arg.module_path, &deps);
+  FbleProgram* prgm = NULL;
+  if (compile) {
+    prgm = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, &deps);
+  } else {
+    prgm = FbleLoadForExecution(builtins, module_arg.search_path, module_arg.module_path, &deps);
+  }
   FbleFreeModuleArg(module_arg);
   FbleFreeProgram(prgm);
 

@@ -5,6 +5,11 @@
  @description
   Outputs a depfile suitable for use with make and ninja specifying the
   @l[.fble] files the given module depends on.
+
+  By default includes all dependencies needed for execution of the module as
+  the main module of a program. The @l{--compile} option can be used to limit
+  to just the dependencies needed for modular compilation of the individual
+  module.
  
  @options
   @GenericProgramInfo
@@ -13,6 +18,9 @@
   @subsection Output Control
    @opt[@l[-t], @l[--target] @a[TARGET]]
    @ target name to use in generated depfile
+
+   @opt[@l[-c], @l[--compile]]
+   @ limit dependencies to those needed for modular compilation
  
  @exitstatus
   @def[0] Success.

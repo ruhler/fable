@@ -50,11 +50,6 @@ Tutorials:
 
 Other:
 * Add helper macros for defining static FbleString and FbleModulePath?
-
-* Get rid of fble-deps, in favor of a generic --make-deps option to fble
-  binaries?
-  Remove use of fbledeps in spec tests?
-* Add --compile option to fble-deps?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
   - FbleString static initialization is one issue.
 

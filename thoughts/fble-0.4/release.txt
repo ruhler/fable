@@ -409,3 +409,30 @@ depfile option in the build than via the testsuite for spec-test.run.tcl, and
 because spec-test.run.tcl uses the generated dependency file to know which
 modules to compile for a test.
 
+fble-deps is also more convenient for things like the tutorials, just
+generating the list of dependencies, ignoring compile errors, etc.
+
+My vote: keep fble-deps, add a --compile option, support the same standard
+arguments we support for fble-compile and FbleMain.
+
+Specifically, we want:
+  --deps-file (can default to stdout)
+  --deps-target
+
+Note currently we use:
+  -t, --target
+
+Maybe --deps- prefix is unnecessary since the binary is fble-deps? So we can
+keep the current command line interface? That sounds not so unreasonable.
+  
+What to call the option for switching modes? It's based on:
+  FbleLoadForExecution
+  FbleLoadForModuleCompilation
+
+Brainstorm:
+  --for "execution" | "module-compilation"
+  -c, --compilation
+  --for "execution" | "compilation"
+  -c, --compile
+  --for "program" | "module"
+ 
