@@ -26,9 +26,6 @@ Sockets:
 Tests:
 * Add spec tests for full coverage.
  - Try all the funny non-printable characters in identifier names?
- - Test fble-disassemble with type dependencies?
- - Test FbleCompileModule where typecheck of module fails?
-   Why isn't that covered already by basically every compile-error test?
 * Add test for .fble vs. .fble.@ type for main module as well as dependant
   module.
 * Test for malformed .fble of dependant file gives no error when well formed
@@ -70,3 +67,5 @@ Doc Comments
  - Add support for @union and @enum doc comments?
  - Add support for abstract typedef struct doc comments?
  - Would be nice to have SEE ALSO section for library man pages.
+
+* Update release notes with latest relevant changes.

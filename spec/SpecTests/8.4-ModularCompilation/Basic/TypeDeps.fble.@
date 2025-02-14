@@ -1,0 +1,13 @@
+# @@fble-test@@ none
+
+# This header file references another module.
+@ Unit@ = @</SpecTests/Nat%.Bit.0.0>;
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+@ Foo@ = *(Bool@ x, Bool@ y);
+
+# In the header, the value of Foo is undefined.
+Foo@ Foo;
+
+Foo;

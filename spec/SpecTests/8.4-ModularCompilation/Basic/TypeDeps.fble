@@ -1,0 +1,15 @@
+# @@fble-test@@ no-error
+# Use of a module with corresponding .fble.@ file that has its own
+# dependencies.
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(true: Unit);
+
+@ Foo@ = *(Bool@ x, Bool@ y);
+Foo@ Foo = Foo@(True, False);
+
+Foo;

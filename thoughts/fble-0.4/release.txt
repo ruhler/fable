@@ -435,4 +435,31 @@ Brainstorm:
   --for "execution" | "compilation"
   -c, --compile
   --for "program" | "module"
+
+---
  
+* Test FbleCompileModule where typecheck of module fails?
+  Why isn't that covered already by basically every compile-error test?
+
+So, we call FbleCompileModule, but have FbleTypeCheckModule return NULL.
+Apparently that never happens. What should cause it to happen?
+
+We are certainly calling FbleCompileModule.
+
+There's one place we call FbleCompileModule: fble-disassemble.c.
+
+We do not call fble-disassemble for compile-error cases. So it makes sense
+that this case is not covered. We would need to add a compile-module-error
+case, or run fble-disassemble as part of compile-error.
+
+---
+
+* Test fble-disassemble with type dependencies?
+
+Remind me again what leads to there being module->type_deps?
+It's when we have a .fble.@ file for a module that depends on other modules.
+So, the test case should be:
+
+Foo.fble, has Foo.fble.@, and Foo.fble.@, for example, imports something from
+SpecTests/Nat@.
+
