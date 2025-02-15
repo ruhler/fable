@@ -2,9 +2,10 @@
 @ Unit@ = *();
 
 # Use of variables with funny characters in the names.
-Unit@ '"' = Unit@();
-Unit@ '\' = '"';
-Unit@ '
-' = '\';
-'
+Unit@ '"\	
+' = Unit@();
+
+Unit@ u = '"\	
 ';
+
+u;
