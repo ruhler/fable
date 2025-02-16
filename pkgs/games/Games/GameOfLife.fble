@@ -51,7 +51,7 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 
 # The world is a set of Coord@ where there are live cells.
 % Map = /Core/Map/Tree%.Map(OrdCoord);
-% Set = /Core/Set%<Map.Map@, Coord@>(Map);
+% Set = /Core/Set%.Set<Map.Map@, Coord@>(Map);
 @ World@ = Set.Set@;
 % EqWorld = /Core/Set/Eq%.Eq<Map.Map@, Coord@>(Map, EqCoord);
 % ShowWorld = /Core/Set/Show%.Show<Map.Map@, Coord@>(Map, ShowCoord);

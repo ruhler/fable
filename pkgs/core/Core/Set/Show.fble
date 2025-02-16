@@ -21,7 +21,7 @@
 #   { a; b; }
 #
 <<@>@, @>% Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key) {
-  % S = /Core/Set%(m);
+  % S = /Core/Set%.Set(m);
 
   Show@<S.Set@> show = (S.Set@ s) {
     List@<String@> elems = S.ForEach(s, List[Str|'{ '],

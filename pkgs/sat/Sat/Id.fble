@@ -6,6 +6,6 @@
 % OrdId = /Core/Int/Ord%.Ord;
 
 % Map = /Core/Map/Tree%.Map(OrdId);
-% Set = /Core/Set%<Map.Map@, Id@>(Map);
+% Set = /Core/Set%.Set<Map.Map@, Id@>(Map);
 
 @(Id@, EqId, Map, Set);

@@ -8,7 +8,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-<<@>@ M@, @ K@>(Map@<M@, K@> m) {
+<<@>@, @>% Set = <<@>@ M@, @ K@>(Map@<M@, K@> m) {
   # Set@ -- 
   #   A set of elements.
   @ Set@ = M@<Unit@>;
@@ -116,3 +116,5 @@
 
   @(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach);
 };
+
+@(Set);

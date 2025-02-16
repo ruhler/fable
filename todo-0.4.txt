@@ -2,14 +2,10 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-Pprof:
-* pprof viewer: show percentage with each value?
-
 Map:
 * Make iteration order of maps what we expect?
   IntP does evens before odds instead of smaller before larger.
 * Move tests for Show and Eq from /Core/Map/Tree/Tests% to a separate submodule.
-* Use a module struct for /Core/Set% instead of returning a function directly.
 * Understand why type inference doesn't work on /Core/Set/Eq%.Eq, for example.
 * It's annoying that we have to define a Map to use Set?
   Add a Map.For function and Set.For functions to apply things, so we can do,

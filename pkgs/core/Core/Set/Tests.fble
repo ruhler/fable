@@ -71,7 +71,7 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 };
 
 % Map = /Core/Map/Tree%.Map(OrdBit2);
-% Set = /Core/Set%<Map.Map@, Bit2@>(Map);
+% Set = /Core/Set%.Set<Map.Map@, Bit2@>(Map);
 
 @ Set@ = Set.Set@;
 % Empty = Set.Empty;
