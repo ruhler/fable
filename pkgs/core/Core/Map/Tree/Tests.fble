@@ -9,15 +9,8 @@
 <@>@ Eq@ = /Core/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Append = /Core/List%.Append;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;
@@ -73,96 +66,17 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
   Append<Char@>(ShowBit1(x.h), ShowBit1(x.l));
 };
 
-% M = /Core/Map/Tree%.Map<Bit2@>(OrdBit2);
-<@>@ Map@ = M.Map@;
-<@>% Empty = M.Empty;
-<@>% Lookup = M.Lookup;
-<@>% Insert = M.Insert;
-<@>% Delete = M.Delete;
-<@>% ForEach = M.ForEach;
+% Map = /Core/Map/Tree%.Map<Bit2@>(OrdBit2);
+<@>@ Map@ = Map.Map@;
+<@>% Empty = Map.Empty;
+<@>% Insert = Map.Insert;
+<@>% Delete = Map.Delete;
 
-<@>% Show = /Core/Map/Show%.Show<M.Map@, Bit2@>(M, ShowBit2);
-<@>% Eq = /Core/Map/Eq%.Eq<M.Map@, Bit2@>(M, EqBit2);
+<@>% Show = /Core/Map/Show%.Show<Map@, Bit2@>(Map, ShowBit2);
+<@>% Eq = /Core/Map/Eq%.Eq<Map@, Bit2@>(Map, EqBit2);
 
-Test@ Tests = TestSuite(Str|Map, List[
-  Test(Str|'empty', (Unit@ _) {
-    Maybe@<Unit@> wnt = Nothing<Unit@>;
-    Maybe@<Unit@> got = Lookup(Empty<Unit@>, B);
-    AssertEquals(
-      /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
-      /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|'not found', (Unit@ _) {
-    Map@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
-    Maybe@<Unit@> wnt = Nothing<Unit@>;
-    Maybe@<Unit@> got = Lookup(map, B);
-    AssertEquals(
-      /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
-      /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|'found', (Unit@ _) {
-    Map@<Bool@> map = Insert(Insert(Insert(Empty<Bool@>,
-      A, False),
-      B, True),
-      C, False);
-    Maybe@<Bool@> wnt = Just(True);
-    Maybe@<Bool@> got = Lookup(map, B);
-    AssertEquals(
-      /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
-      /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|'replace', (Unit@ _) {
-    Map@<Bool@> map = Insert(Insert(Empty<Bool@>,
-      B, False),
-      B, True);
-    Maybe@<Bool@> wnt = Just(True);
-    Maybe@<Bool@> got = Lookup(map, B);
-    AssertEquals(
-      /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
-      /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|'delete', (Unit@ _) {
-    Map@<Bool@> map = Delete(Insert(Empty<Bool@>, B, False), B);
-    Maybe@<Bool@> wnt = Nothing<Bool@>;
-    Maybe@<Bool@> got = Lookup(map, B);
-    AssertEquals(
-      /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
-      /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
-      wnt, got);
-  }),
-
-  Test(Str|'foreach', (Unit@ _) {
-    Map@<Bool@> map = Insert(Insert(Insert(Empty<Bool@>,
-      B, True),
-      A, True),
-      B, False);
-
-    # Note: A < B, we expect the ForEach to iterate in the order A, B. Because
-    # we add A to the end of the list before B, we expect the resulting list
-    # to be in the order B, A.
-    @ Entry@ = *(Bit2@ key, Bool@ value);
-    List@<Entry@> wnt = List[Entry@(B, False), Entry@(A, True)];
-    List@<Entry@> got = ForEach(map, Nil<Entry@>,
-      (Bit2@ k, Bool@ v, List@<Entry@> l) {
-        Cons(Entry@(k, v), l);
-      });
-    AssertEquals(
-      /Core/List/Eq%.Eq((Entry@ a, Entry@ b) {
-        And(EqBit2(a.key, b.key), /Core/Bool/Eq%.Eq(a.value, b.value));
-      }),
-      /Core/List/Show%.Show((Entry@ e) {
-        /Core/String%.Strs[ShowBit2(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
-      }),
-      wnt, got);
-  }),
+Test@ Tests = TestSuite(Str|Tree, List[
+  /Core/Map/Test%.Test<Map@, Bit2@>(Map, EqBit2, ShowBit2, A, B, C),
 
   Test(Str|'eq: equal', (Unit@ _) {
     Map@<Bool@> a = Insert(Insert(Insert(
