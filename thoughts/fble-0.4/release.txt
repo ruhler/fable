@@ -463,3 +463,33 @@ So, the test case should be:
 Foo.fble, has Foo.fble.@, and Foo.fble.@, for example, imports something from
 SpecTests/Nat@.
 
+---
+
+* Add --help option to fbld programs to output usage.
+
+Yes, we need this. At least for the C implementation. We have the man page.
+Maybe just refer users to that?
+
+The annoying thing is adding support for --version, because I rather not have
+it depend on any of the fble library.
+
+Options:
+* Don't add --help.
+* Don't add --version.
+* Depend on fble library.
+* Create a separate fbld config file like we do for fble.
+* Refer people to the man page.
+
+None if it is great. Best I can think is to duplicate logic for config.h.
+Let's try that, see how I feel about it after I'm done coding it up.
+
+Hmm... version is not part of the config info. It's hard coded in
+fble-version.h. That makes this more awkward.
+
+How about, for now, I just say: see man page for usage info? Or, see man page
+for more info? Or just have --help?
+
+It's nice to have a buildstamp though... Is buildstamp enough for the version?
+I think so. Let's try that instead then.
+
+It's not the most pretty thing, but hopefully it's one and done.

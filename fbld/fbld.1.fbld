@@ -1,6 +1,6 @@
 @usage[fbld] fbld document processor
  @synopsis
- @ @l[fbld] \[@a[FILE]\]...
+ @ @l[fbld] \[@a[OPTION]...\] \[@a[FILE]\]...
 
  @description
   Concatenates the given files together and processes the result as an fbld
@@ -8,6 +8,9 @@
 
   See the fbld language specification for more information about fbld document
   processing.
+ 
+ @options
+  @GenericProgramInfo
  
  @exitstatus
   @def[0] Success.

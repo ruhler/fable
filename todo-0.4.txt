@@ -48,8 +48,6 @@ Other:
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
   - FbleString static initialization is one issue.
 
-* Add --help option to fbld programs to output usage.
-
 * Fbld C rewrite
  - Separate out loc.h, text.h, markup.h, etc?
  - Change FbldMarkup type to more explicitly distinguish between the different

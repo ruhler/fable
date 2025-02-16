@@ -109,6 +109,15 @@ namespace eval "fbld" {
     lappend objs $::b/fbld/$x.o
     lappend objs_cov $::b/fbld/$x.cov.o
   }
+
+  # buildstamp
+  build "$::b/fbld/buildstamp.c" "$::s/buildstamp $objs" \
+    "$::s/buildstamp -c FbldBuildStamp > $::b/fbld/buildstamp.c"
+  obj $::b/fbld/buildstamp.o $::b/fbld/buildstamp.c ""
+  obj_cov $::b/fbld/buildstamp.cov.o $::b/fbld/buildstamp.c ""
+  lappend objs $::b/fbld/buildstamp.o
+  lappend objs_cov $::b/fbld/buildstamp.cov.o
+
   bin $::b/fbld/fbld $objs "" ""
   bin_cov $::b/fbld/fbld.cov $objs_cov "" ""
   set ::fbld_objs_cov $objs_cov
