@@ -493,3 +493,36 @@ It's nice to have a buildstamp though... Is buildstamp enough for the version?
 I think so. Let's try that instead then.
 
 It's not the most pretty thing, but hopefully it's one and done.
+
+---
+
+* Understand why type inference doesn't work on /Core/Set/Eq%.Eq, for example.
+
+pkgs/games/Games/GameOfLife.fble|56 col 30| error: expected type Map@<M@, K@>, but found Map@<<@ V@> { +(Unit@ empty, *(Coord@ key, V@ value, Balance@ balance, M@ left, M@ right) map); }, Coord@>
+|| Inferred types:
+||   M@: <@ V@> { +(Unit@ empty, *(Coord@ key, V@ value, Balance@ balance, M@ left, M@ right) map); }
+||   K@: ???
+
+There are two type argument to derive, M@ and K@. It's able to derive M@.
+That's easy enough. But it's not able to derive K@. Makes sense, because we
+don't include K@ as part of the interface.
+
+I bet if I add a field to Map@ which is Key@, then it could derive the type
+here. Should I do it? No harm, right? Possibly useful?
+
+For the fun of it, let's try it.
+
+Okay, it's able to infer the type of K@ now. But it's still unhappy.
+
+Maybe something to do with the recursion in the type of the map?
+
+expected type Map@<M@, K@>,
+||   M@: <@ V@> { +(Unit@ empty, *(Coord@ key, V@ value, Balance@ balance, M@ left, M@ right) map); }
+||   K@: Coord@
+
+expected: Map@<<@ V@> { +(Unit@ empty, *(Coord@ key, V@ value, Balance@ balance, M@ left, M@ right) map); }, Coord@>
+found     Map@<<@ V@> { +(Unit@ empty, *(Coord@ key, V@ value, Balance@ balance, M@ left, M@ right) map); }, Coord@>
+
+It looks right, unless it can't figure out the recursive M@.
+
+I should try to minimize the test case.

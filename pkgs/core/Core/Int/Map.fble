@@ -14,6 +14,8 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
+@ Key@ = Int@;
+
 # A Map from Int@ to V@.
 <@>@ Map@ = <@ V@> { *(P.Map@<V@> n, Maybe@<V@> 0, P.Map@<V@> p); };
 
@@ -77,7 +79,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Int@, V@, B@) { B@; } body) {
 };
 
 /Core/Map%.Map@<Map@, Int@> Map = @(
-  Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
+  Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
 );
 
 @(Map);

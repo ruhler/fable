@@ -13,6 +13,8 @@
 # Char@ to V@ map implemented as Int@ to V@ using ascii value for the Int@.
 % M = /Core/Int/Map%.Map;
 
+@ Key@ = Char@;
+
 <@>@ Map@ = M.Map@;
 Map@ Empty = M.Empty;
 
@@ -46,7 +48,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Char@, V@, B@) { B@; } body) {
 };
 
 /Core/Map%.Map@<Map@, Char@> Map = @(
-  Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
+  Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
 );
 
 @(Map);

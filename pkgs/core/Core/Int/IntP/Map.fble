@@ -13,6 +13,8 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
+@ Key@ = IntP@;
+
 # A Map from IntP@ to V@.
 <@>@ Map@ = <@ V@> {
   @ M@ = +(Unit@ empty, P@ p),
@@ -108,7 +110,7 @@ ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (IntP@, V@, B@) { B@; } body) {
 };
 
 /Core/Map%.Map@<Map@, IntP@> Map = @(
-  Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
+  Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
 );
 
 @(Map);

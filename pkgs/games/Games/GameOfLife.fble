@@ -53,8 +53,8 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 % Map = /Core/Map/Tree%.Map(OrdCoord);
 % Set = /Core/Set%.Set<Map.Map@, Coord@>(Map);
 @ World@ = Set.Set@;
-% EqWorld = /Core/Set/Eq%.Eq<Map.Map@, Coord@>(Map, EqCoord);
-% ShowWorld = /Core/Set/Show%.Show<Map.Map@, Coord@>(Map, ShowCoord);
+% EqWorld = /Core/Set/Eq%.Eq<Map.Map@>(Map, EqCoord);
+% ShowWorld = /Core/Set/Show%.Show<Map.Map@>(Map, ShowCoord);
 % W = @(
   Empty: Set.Empty,
   Insert: Set.Insert,

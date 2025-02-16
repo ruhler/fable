@@ -69,6 +69,8 @@ Delta = (Balance@ delta, Balance@ balance) {
 
 # /Core/Map%.Map@ implementation for key types with an Ord@ interface.
 <@>% Map = <@ K@>(Ord@<K@> ord) {
+  @ Key@ = K@;
+
   <@>@ Map@ = <@ V@> {
     @ M@ = +(Unit@ empty, P@ map),
     @ P@ = *(K@ key, V@ value, Balance@ balance, M@ left, M@ right);
@@ -573,7 +575,7 @@ Delta = (Balance@ delta, Balance@ balance) {
   };
 
   /Core/Map%.Map@<Map@, K@> Map = @(
-    Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
+    Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
   );
   Map;
 };

@@ -18,6 +18,8 @@
 # /Core/Map%.Map@ implementation for List@<T@>, parameterized by the element's
 # map implementation.
 <<@>@, @>% Map = <<@>@ M@, @ T@>(/Core/Map%.Map@<M@, T@> M) {
+  @ Key@ = List@<T@>;
+
   # A Map from List@<T@> to V@;
   <@>@ Map@ = <@ V@> {
     @ M@ = +(Unit@ empty, P@ p),
@@ -124,7 +126,7 @@
   };
 
   /Core/Map%.Map@<Map@, List@<T@>> Map = @(
-    Map@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
+    Map@, Key@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach
   );
   Map;
 };

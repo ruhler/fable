@@ -46,7 +46,7 @@
   #   return b
   <@ V@>(M@<V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach;
 
-  @(Map@: M@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach);
+  @(Map@: M@, Key@: K@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach);
 }>;
 
 @(Map@);
