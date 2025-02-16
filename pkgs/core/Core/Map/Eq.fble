@@ -21,6 +21,7 @@ Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq)<@ V@>(Eq@<V@> veq) {
     True;
   };
 
+  # TODO: Is it safe to assume equal maps give equal orders for ForEach?
   (M@<V@> a, M@<V@> b) {
     List@<Entry@> as = m.ForEach(a, Nil<Entry@>, (K@ k, V@ v, List@<Entry@> b) {
       Cons(Entry@(k, v), b);

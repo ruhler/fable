@@ -1,0 +1,55 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>% List = /Core/List%.List;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+Int@ B = Int|2;
+Int@ C = Int|3;
+
+% Map = /Core/Int/Map%.Map;
+<@>@ Map@ = Map.Map@;
+<@>% Empty = Map.Empty;
+<@>% Insert = Map.Insert;
+
+<@>% Show = /Core/Map/Show%.Show<Map@, Int@>(Map, /Core/Int/Show%.Show);
+
+Test@ Tests = TestSuite(Str|Show, List[
+  Test(Str|'empty', (Unit@ _) {
+    Map@<Bool@> map = Empty<Bool@>;
+    String@ wnt = Str|'{ }';
+    String@ got = Show(/Core/Bool/Show%.Show, map);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'single', (Unit@ _) {
+    Map@<Bool@> map = Insert(Empty<Bool@>, B, False);
+    String@ wnt = Str|'{ 2 => False; }';
+    String@ got = Show(/Core/Bool/Show%.Show, map);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|'multi', (Unit@ _) {
+    Map@<Bool@> map = Insert(Insert(Empty<Bool@>, B, False), C, True);
+    String@ wnt = Str|'{ 2 => False; 3 => True; }';
+    String@ got = Show(/Core/Bool/Show%.Show, map);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  })
+]);
+
+@(Tests);

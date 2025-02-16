@@ -1,0 +1,15 @@
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
+
+Test@ Tests = TestSuite(Str|Map, List[
+  /Core/Map/Eq/Tests%.Tests,
+  /Core/Map/Show/Tests%.Tests,
+  /Core/Map/Tree/Tests%.Tests
+]);
+
+@(Tests);

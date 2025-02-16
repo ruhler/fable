@@ -5,7 +5,6 @@ Things to consider doing for the fble-0.4 release.
 Map:
 * Make iteration order of maps what we expect?
   IntP does evens before odds instead of smaller before larger.
-* Move tests for Show and Eq from /Core/Map/Tree/Tests% to a separate submodule.
 * Understand why type inference doesn't work on /Core/Set/Eq%.Eq, for example.
 * It's annoying that we have to define a Map to use Set?
   Add a Map.For function and Set.For functions to apply things, so we can do,
