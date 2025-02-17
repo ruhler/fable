@@ -3,8 +3,6 @@ Fble 0.4 TODO
 Things to consider doing for the fble-0.4 release.
 
 Map:
-* Make iteration order of maps what we expect?
-  IntP does evens before odds instead of smaller before larger.
 * It's annoying that we have to define a Map to use Set?
   Add a Map.For function and Set.For functions to apply things, so we can do,
   like:  /Core/Map/Tree%.Map(Ord).For(/Core/Set%).For(/Core/Set/Eq%)?

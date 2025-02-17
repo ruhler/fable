@@ -44,6 +44,10 @@
   #   foreach (k, v) in map:
   #     b = body(k, v, b)
   #   return b
+  #
+  # Note that the order in which the entries are visited depends on the
+  # underlying map implementation. It may not correspond to the natural order
+  # you would expect for the given key type.
   <@ V@>(M@<V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach;
 
   @(Map@: M@, Key@: K@, Empty, IsEmpty, Insert, InsertWith, Delete, Lookup, ForEach);
