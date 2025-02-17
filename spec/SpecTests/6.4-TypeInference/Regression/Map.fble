@@ -1,13 +1,10 @@
-# @@fble-test@@ no-error
+# @@fble-test@@ compile-error 32:3
 
 @ Unit@ = *();
 % Unit = Unit@();
 
 @ Bool@ = +(Unit@ true, Unit@ false);
 
-# Regression test for a case where type inference was failing unexpected on a
-# Map@ interface. Something about the presence of the IsEmpty method makes it
-# stop working.
 <<@>@,@>@ S@ = @< <<@>@ M1@, @ K1@> {
   <@ V1@>(M1@<V1@>) { Bool@; } IsEmpty;
   @(M@: M1@, K@: K1@, IsEmpty);
@@ -29,5 +26,7 @@
   x;
 };
 
-# Type inference on this should work? Maybe?
+# Type inference is not expected to work here, because the type system cannot
+# reasonable deduce that the abstract M1@<V1@> argument to the IsEmpty
+# function is equal to the concrete +(K3@ k, N@ n) in the S instance of S@.
 F(S);

@@ -564,3 +564,16 @@ happening here.
 The argument to the IsEmpty function, M@<V@>, is in one case being treated as
 an abstract poly apply, and in the other case as the substituted value
 resulting from the actual application.
+
+This makes sense. On the one side, it sees a poly apply, on the other, it sees
+a substituted value. We can't do the poly apply of the abstract type. To be
+able to see these types as equal, we would need to compare them before doing
+poly apply on the right hand side. But we do poly apply as part of type
+normalization.
+
+We already try to check poly apply types equal. If we aren't hitting that case
+here, I think it's perfectly reasonable for us to require explicit types here.
+
+It might be nice if we gave a better error message though... not sure. For
+example, if we said which field of the data type we aren't matching? Or
+otherwise pointed to a specific place in the types that doesn't match?
