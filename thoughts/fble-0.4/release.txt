@@ -526,3 +526,17 @@ found     Map@<<@ V@> { +(Unit@ empty, *(Coord@ key, V@ value, Balance@ balance,
 It looks right, unless it can't figure out the recursive M@.
 
 I should try to minimize the test case.
+
+Hmm... first attempt to try to minimize the test case failed. It works okay on
+the smaller test case. How can I figure out what's going wrong here?
+
+From gdb, in field 3 of Map@, it's failing due to the following differences:
+
+(gdb) print(FblePrintType(dta->fields.xs[i].type))
+<@ V@> { (M@<V@>) { Bool@; }; }$6 = void
+(gdb) print(FblePrintType(dtb->fields.xs[i].type))
+<@ V@> { (<@ V@> { +(Unit@ empty, *(Coord@ key, V@ value, Balance@ balance, M@
+left, M@ right) map); }<V@>) { Bool@; }; }$7 = void
+
+Okay, I can reproduce it now. Now I have a minimal test case, I just need to
+walk through the equality check to see what's going wrong.
