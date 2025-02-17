@@ -540,3 +540,27 @@ left, M@ right) map); }<V@>) { Bool@; }; }$7 = void
 
 Okay, I can reproduce it now. Now I have a minimal test case, I just need to
 walk through the equality check to see what's going wrong.
+
+Walking through:
+* Record S@<M@, K@> = typeof(S)
+* Set M@ = S.M@
+* Set K@ = S.K@
+* Set V@ = V@
+* Set V@ = V@
+* Set (M@<V@>) { Bool@; } = (M@<V@>) { Bool@; }
+* Set M@<V@> = M@<V@>
+
+But now we get a mismatch in tag.
+Left hand side is FBLE_POLY_APPLY_TYPE
+Right hand side is FBLE_DATA_TYPE.
+
+So, in one case we see M@ as abstract, in the other case we have applied the
+real M@ and get a data type through it. We don't see those as equal.
+
+Let me see if I can update the test case to make things more clear type name
+wise. Otherwise I think I have the information to make sense of what's
+happening here.
+
+The argument to the IsEmpty function, M@<V@>, is in one case being treated as
+an abstract poly apply, and in the other case as the substituted value
+resulting from the actual application.

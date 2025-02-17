@@ -8,26 +8,24 @@
 # Regression test for a case where type inference was failing unexpected on a
 # Map@ interface. Something about the presence of the IsEmpty method makes it
 # stop working.
-<<@>@,@>@ S@ = @< <<@>@ M@, @ K@> {
-  <@ V@> { M@<V@>; } Empty;
-  <@ V@>(M@<V@>) { Bool@; } IsEmpty;
-  @(M@, K@, Empty, IsEmpty);
+<<@>@,@>@ S@ = @< <<@>@ M1@, @ K1@> {
+  <@ V1@>(M1@<V1@>) { Bool@; } IsEmpty;
+  @(M@: M1@, K@: K1@, IsEmpty);
 }>;
 
-<<@>@,@>% F = <<@>@ M@, @ K@>(S@<M@, K@> _s) {
+<<@>@,@>% F = <<@>@ M2@, @ K2@>(S@<M2@, K2@> _s) {
   Unit;
 };
 
 % S = {
-  @ K@ = Unit@;
-  <@>@ M@ = <@ V@> {
-    @ N@ = +(K@ k, N@ n);
+  @ K3@ = Unit@;
+  <@>@ M3@ = <@ T@> {
+    @ N@ = +(K3@ k, N@ n);
     N@;
   };
-  <@ V@> { M@<V@>; } Empty;
-  <@ V@>(M@<V@>) { Bool@; } IsEmpty;
+  <@ V3@>(M3@<V3@>) { Bool@; } IsEmpty;
     
-  S@<M@, K@> x = @(M@, K@, Empty, IsEmpty);
+  S@<M3@, K3@> x = @(M@: M3@, K@: K3@, IsEmpty);
   x;
 };
 
