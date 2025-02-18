@@ -901,6 +901,8 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
 static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly)
 {
   if (poly.type == NULL) {
+    // Based on case analysis of where TypeInferArgs is used, I suspect this
+    // case is unreachable.
     return TC_FAILED;
   }
 
@@ -1437,7 +1439,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleTypeV expected = { .size = 1, .xs = &field_type };
       TcV argv = { .size = 1, .xs = &arg };
 
-      // Create a dummy tc value to pass location information to
+      // Create a fake tc value to pass location information to
       // TypeInferArgs.
       // TODO: Any cleaner way we can do this?
       FbleStructValueTc* unit_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);

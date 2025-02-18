@@ -274,3 +274,47 @@ away things if needed. Specifically:
 Easy. Let's get to it.
 
 One issue: windows doesn't seem to like the port 8007 for test.
+
+---
+
+Review of possible error codes to return.
+
+Best to return an enum of potential errors rather than a string. What enum
+would I use? What would I be able to return? What are the possible errors?
+
+Two cases: Client and Server. Start with Client, which should be simpler.
+
+Brainstorm of potential errors:
+* Any one of many potential getaddrinfo errors
+  Some errors are temporary, some permanent. Some to do with the server, some
+  to do with the arguments passed in.
+* None of the potential connections worked. 
+  Related to errors returned by 'socket' and/or 'connect'.
+  But we try a bunch and expect errors on some of them, so, not sure what
+  makes sense to return here...
+
+Server case:
+* Same getaddrinfo errors
+* Same as client, really, except 'bind' instead of 'connect'.
+* Listen can fail too.
+
+Accept:
+* Any of the 'accept' failure cases.
+
+What kind of errors does tcl return?
+* It returns a string error description.
+
+Conceptually what kind of errors do I feel like I might run into?
+* Client:
+ - destination not found (issue with hostname, service, DNS server, etc.)
+ - destination not accepting connections (no server, no permission, etc.)
+ - unexpected error (out of memory, max file descriptors, etc.)
+* Server:
+ - interface not found
+ - address/port already in use
+ - no permission to bind to address/port
+ - unexpected error
+* Accept:
+ - unexpected error
+
+I'm so tempted to punt this to next release.

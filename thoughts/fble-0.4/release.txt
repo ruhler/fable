@@ -577,3 +577,25 @@ here, I think it's perfectly reasonable for us to require explicit types here.
 It might be nice if we gave a better error message though... not sure. For
 example, if we said which field of the data type we aren't matching? Or
 otherwise pointed to a specific place in the types that doesn't match?
+
+***
+
+* Return error messages in Sockets interface on failure to connect, serve,
+  accept?
+
+Eventually we definitely need something like this. But for now? Like, even if
+I return an error code, can I figure out what's going wrong from them?
+
+Let's review possible error codes. Let's do this in sockets.txt.
+
+---
+
+* Test type inference with poly.type == NULL? typecheck.c
+
+We need type inference where poly.type is NULL.
+* union value case won't work, we bail out early if type is NULL.
+* list expression won't work, we bail out early if type is NULL.
+* misc apply won't work, we bail out early.
+
+Nope. I think it's unreachable. Shall I change it to an assert?
+
