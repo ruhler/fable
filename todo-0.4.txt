@@ -19,10 +19,6 @@ Tests:
 * Add spec tests for full coverage.
  - Test for main .fble file not found somehow? load.c
  - Test for builtin module with builtin dependencies? load.c
-* Add test for .fble vs. .fble.@ type for main module as well as dependant
-  module.
-* Test for malformed .fble of dependant file gives no error when well formed
-  .fble.@ is there and we are just compiling the module.
 * Add test and fix for this case:
  1. We load builtin A, which loads dependent builtin B
  2. We load .fble C, which depends on builtin B

@@ -1,0 +1,13 @@
+# @@fble-test@@ compile-module
+# Test compilation of a module with a well formed .fble.@ header file ignores
+# any errors in a malformed .fble file.
+% Foo = /SpecTests/'8.4-ModularCompilation'/Basic/CompileModuleIgnoresImpl/Foo%;
+
+@ Bool@ = Foo.Bool@;
+Bool@ True = Foo.True;
+Bool@ False = Foo.False;
+
+@ Pair@ = *(Bool@ x, Bool@ y);
+Pair@ x = Pair@(True, False);
+
+x;

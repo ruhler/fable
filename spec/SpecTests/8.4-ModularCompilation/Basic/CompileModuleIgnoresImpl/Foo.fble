@@ -1,0 +1,5 @@
+# @@fble-test@@ none
+# Malformed module used in CompileModuleImpl test.
+# We expect this to be ignored, since the header is well formed.
+
+@ Unit@ = *(

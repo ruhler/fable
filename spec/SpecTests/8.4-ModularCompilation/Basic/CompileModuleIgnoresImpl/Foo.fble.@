@@ -1,0 +1,11 @@
+# @@fble-test@@ none
+# Module used in CompileModule test.
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True;
+Bool@ False;
+
+@(Unit@, Unit, Bool@, True, False);
