@@ -1,0 +1,3 @@
+# @@fble-test@@ compile-error 8:1
+# Test use of a module whose header file depends on a maltyped module.
+/SpecTests/'8.4-ModularCompilation'/Type/HeaderDependsOnMaltyped/Header%.Unit;

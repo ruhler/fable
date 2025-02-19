@@ -1,0 +1,8 @@
+# @@fble-test@@ none
+
+# There are a bunch of lines of comments
+# here, just as an execuse to have type
+# type error be farther down in the file
+# so we don't confuse the error message 
+# with one from another file.
+xxx;

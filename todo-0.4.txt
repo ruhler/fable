@@ -19,7 +19,6 @@ Tests:
 * Add spec tests for full coverage.
  - Test for main .fble file not found somehow? load.c
  - Test for builtin module with builtin dependencies? load.c
- - Test header file that depends on a module with a type error. typecheck.c
 * Add test for .fble vs. .fble.@ type for main module as well as dependant
   module.
 * Test for malformed .fble of dependant file gives no error when well formed
