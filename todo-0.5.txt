@@ -48,10 +48,6 @@ Things to consider doing for the fble-0.5 release.
  - Document all functions.
  - Add tests for full code coverage of all functions.
  - Proper support for unicode characters in /Core/Char%.
- - Clean up /Core/Map% interface.
-   In particular, make it easier to convert to Set, Eq, Set/Eq, etc, possibly
-   by use of a 'with' function that knows how to apply the map type and
-   interface to polymorphic functions expecting those arguments.
  - Add error status codes to sockets interface.
 
 * New apps

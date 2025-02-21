@@ -604,3 +604,14 @@ Nope. I think it's unreachable. Shall I change it to an assert?
 Need a way to explicitly close sockets connection? Let's discuss at
 sockets.txt.
 
+---
+
+I tried implementing a With function for Map@. It doesn't work. I can't do it.
+The type system doesn't allow it I don't think?
+
+Well, I can get rid of the type inference at least, but you still have to
+supply the map twice?
+
+And it doesn't work for type inference. No, looks like I'll just have to
+swallow my dreams here.
+
