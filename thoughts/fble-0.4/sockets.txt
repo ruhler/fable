@@ -318,3 +318,24 @@ Conceptually what kind of errors do I feel like I might run into?
  - unexpected error
 
 I'm so tempted to punt this to next release.
+
+---
+
+Looking into whether we need an explicit socket close. Elinks definitely
+doesn't see the end of the connection for my pprof server. Elinks is waiting
+for something. What do I expect it to wait for?
+
+In theory we should close the socket connection by GC. But that won't happen
+right away, and in this case not at all, if GC decides not to run until you've
+backed out of a bunch of function calls.
+
+Is there any way I can force GC?
+
+---
+
+GC should not be used to close sockets or files. GC should not be relied on,
+and should have no impact on functionality. If GC is closing sockets, files,
+etc. then ... it's just not manageable. If you want to close sockets and
+files, you should do so explicitly.
+
+This is a pretty big can of worms I would like to defer to the next release.

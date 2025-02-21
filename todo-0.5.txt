@@ -2,6 +2,11 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Remove OnFree for GC native objects
+  Only allow GC to manage chunks of memory, not have sideeffects?
+  See thoughts/fble-0.5/gc_native.txt
+  - Require explicit close for files and sockets.
+
 * Improve performance of fble pprof viewer enough to be useful.
 
 * Output profiling samples instead of report from fble.
@@ -43,6 +48,11 @@ Things to consider doing for the fble-0.5 release.
  - Document all functions.
  - Add tests for full code coverage of all functions.
  - Proper support for unicode characters in /Core/Char%.
+ - Clean up /Core/Map% interface.
+   In particular, make it easier to convert to Set, Eq, Set/Eq, etc, possibly
+   by use of a 'with' function that knows how to apply the map type and
+   interface to polymorphic functions expecting those arguments.
+ - Add error status codes to sockets interface.
 
 * New apps
  - IEEE floating point support.
@@ -51,6 +61,8 @@ Things to consider doing for the fble-0.5 release.
 
 * Fble Language Features
  - Add some way to catch or recover from errors at runtime?
+ - Some way to implement a web server that can handle multiple requests
+   concurrently?
 
 * Fble Debugger
  - Add support for all backends.

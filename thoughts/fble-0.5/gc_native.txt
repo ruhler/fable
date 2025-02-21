@@ -1,0 +1,25 @@
+GC Native
+=========
+The question at hand is how GC interacts with native objects.
+
+Today we can register native objects with GC that get freed with an arbitrary
+OnFree function. We use this for files and sockets. We use OnFree to close the
+files and sockets when the object is no longer reachable.
+
+You can imagine any number of kinds of resources you might want to close when
+an object becomes unreachable.
+
+The problem is: I was relying on GC to close my socket connection to elinks.
+GC doesn't give any guarantees about when it reclaims memory though. You can't
+rely on it like this for clearly user visible functionality.
+
+My proposal:
+* Disallow OnFree from having any side effects other than freeing memory.
+
+Which basically means we should no longer support OnFree. Things need to be
+explicitly closed by the fble code. If you forget to... oops. That's bad.
+Tough luck for you.
+
+I just really hope there isn't a use case where we want to have some side
+effect after the last reference to something is removed. That will be
+difficult to deal with.

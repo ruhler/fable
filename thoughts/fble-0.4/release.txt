@@ -599,3 +599,8 @@ We need type inference where poly.type is NULL.
 
 Nope. I think it's unreachable. Shall I change it to an assert?
 
+---
+
+Need a way to explicitly close sockets connection? Let's discuss at
+sockets.txt.
+
