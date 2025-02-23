@@ -1,0 +1,112 @@
+Type Inference
+==============
+Question about whether we should change how type inference is done.
+
+Motivating example is spec/SpecTests/6.4-TypeInference/Regression/Map.fble
+
+In this case, we can correctly infer the type parameters, but we fail to say
+the types match because we try to compare an abstract poly apply with the
+results of a concrete poly apply.
+
+Question: Why not separate type inference and equal check?
+
+Benefits:
+* Cleaner code. Separation of concerns.
+* If we infer the types first, then apply types, then compare, that should
+  allow us to correctly infer and type the motivating example.
+
+Downsides:
+* ???
+
+I don't remember why I combined equality and inference in the first place.
+Let's try separating and see how that goes. I'm confident in the test suite
+to be able to make this change.
+
+The current API we have is:
+1. FbleTypesEqual - checks of two concrete types are equal.
+2. FbleTypeInfer - infers types and maybe checks if they are equal?
+
+How do I use FbleTypeInfer? Do I use it for the equality check, or just for
+the types?
+
+In TypeInferArgs, we do the following:
+1. FbleTypeInfer for each argument against what is expected.
+Infering type variables along the way. Failing if we can't match.
+2. Apply the inferred types to the poly, to make sure they have the right
+kind.
+3. Return that result of application.
+
+Where TypeInferArgs is used:
+* Union value. This relies on TypeInferArgs doing the type check of the args.
+* List expression. Inference is made against all args. Should be fine to make
+  it on just the first arg, right? As long as we check against all the args.
+* Struct value. Inference is made on all args. That's probably important,
+  because you likely need to consult all the arguments in order to properly
+  infer the types.
+* Function application. Type inference is done one arg at a time.
+
+What should I keep the same, and what should I change?
+
+Let's keep TypeInferArgs behavior the same: it infers and type checks
+everything. That's our one wrapper around FbleTypeInfer.
+
+I propose we change FbleTypeInfer to only try to infer types, not test for
+equality as well. So we call FbleTypeInfer to try and infer all the types. If
+we can't, we bail out and say which ones we were unable to infer.
+
+Note: we can't just change FbleTypeInfer to separate inference and equality
+internally, because of the Struct value case where we need all the arguments
+to the struct. FbleTypeInfer only gets a single argument at a time.
+
+After I've inferred all the types, how do I check they are equal?
+
+Can we get the expected types from the poly somehow, then get the expected
+'concretized' types from the poly and check? Or do we have to concretize all
+of the expected types and then check for equality? Let's consider the case.
+
+* Union value:
+  expected type: field type of the union based on the name.
+  actual type: actual argument to union value.
+  poly: The possibly polymorphic union type.
+
+We do not have information in TypeInferArgs about which field of the union the
+expected type comes from, so we can't rely on that.
+
+That means I need to concretize individual expected types. Can I do that?
+Given an FbleType* and FbleTypeAssignmentV, can I create a concrete type?
+
+Note that there may be no type arguments. In which case, we will skip type
+inference, but we maybe should also skip concretization to save on unnecessary
+work?
+
+The way I apply type arguments to poly is via FbleNewPolyApplyType. That won't
+work for types in general. 
+
+I want to expose a new function from type.c. Given an FbleType* and a
+TypeAssignmentV, returns a new type which applies the everything in the type
+assignment.
+
+We must already have the logic for this implemented somewhere in there. It
+should be a matter of exposing it.
+
+Subst, right? Combined with normal somehow, or we can do the normal
+separately?
+
+It takes as input: FbleType* param, FbleType* arg, FbleType* type.
+
+I think we have all the info we need. Maybe call our function
+FbleSpecializeType, given abstract type and FbleTypeAssignmentV. It calls
+subst internally, returns the non-normalized result.
+
+Okay? We have a proposal now, me thinks:
+1. Implement FbleSpecializeType function.
+2. Change TypeInferArgs to call FbleSpecializeType and FbleTypesEqual after
+infering types.
+3. Remove equality check from FbleTypeInfer.
+4. Separate code for FbleTypeInfer and FbleTypesEqual internally, now that
+they no longer need to be tied together.
+
+After (2), if we ignore the result of FbleTypeInfer, I expect the type
+motivating test case to start doing successful type inference.
+
+Let's try it and see what happens.

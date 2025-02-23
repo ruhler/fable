@@ -10,6 +10,9 @@ Tests:
  1. We load builtin A, which loads dependent builtin B
  2. We load .fble C, which depends on builtin B
  At what point do we check and load the type information for B?
+* Add test that substitutes one of multiple variables into a poly type where
+  the poly shadows one of those type variables. Make sure only the expected
+  assignment happened.
 
 
 Tutorials:

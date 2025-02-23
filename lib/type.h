@@ -565,6 +565,23 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete);
 
 /**
+ * @func[FbleSpecializeType] Apply a type assignment to a type.
+ *  Creates a specialized version of the given type by assigning types as per
+ *  the type assignment. For example, specializing @l{Maybe@<T@>} with type
+ *  assignment @l{T@ = Int@} will give you a @l{Maybe@<Int@>}.
+ * 
+ *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleTypeAssignmentV][vars] The type assignments to apply.
+ *  @arg[FbleType*][type] The type to specialize.
+ *
+ *  @returns[FbleType*] The specialized type.
+ *
+ *  @sideeffects
+ *   Allocates a new type that should be released when no longer needed.
+ */
+FbleType* FbleSpecializeType(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* type);
+
+/**
  * @func[FblePrintType] Prints an FbleType in human readable form to stderr.
  *  @arg[FbleType*][type] The type to print.
  *

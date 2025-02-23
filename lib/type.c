@@ -56,9 +56,9 @@ static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
 static void Ref(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizing);
-static bool HasParam(FbleType* type, FbleType* param);
-static bool HasParam_(FbleType* type, FbleType* param);
-static FbleType* Subst(FbleTypeHeap* heap, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
+static bool HasParam(FbleTypeAssignmentV vars, FbleType* type);
+static bool HasParam_(FbleTypeAssignmentV vars, FbleType* param);
+static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* src, TypePairs* tps);
 static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypePairs* eq);
 
 /**
@@ -283,7 +283,9 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
       }
 
       if (poly->_base.tag == FBLE_POLY_TYPE) {
-        FbleType* subst = Subst(heap, poly->body, poly->arg, pat->arg, NULL);
+        FbleTypeAssignment assign = { .var = poly->arg, .value = pat->arg };
+        FbleTypeAssignmentV vars = { .size = 1, .xs = &assign };
+        FbleType* subst = Subst(heap, vars, poly->body, NULL);
         FbleType* result = Normal(heap, subst, &nn);
         FbleReleaseType(heap, &poly->_base);
         FbleReleaseType(heap, subst);
@@ -314,34 +316,37 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
 }
 
 /**
- * @func[HasParam]
- * @ Checks whether a type has the given param as a free type variable.
+ * @func[HasParam] Check if type has any type variables in a type assignment.
+ *  @arg[FbleTypeAssignmentV][vars] The type assignment.
  *  @arg[FbleType*][type] The type to check.
- *  @arg[FbleType*][param] The abstract type to check for.
  *
  *  @returns[bool]
- *   True if the param occur in type, false otherwise.
+ *   True if any of the type variables in the assignment occur in type, false
+ *   otherwise.
  *
  *  @sideeffects
  *   None.
  */
-static bool HasParam(FbleType* type, FbleType* param)
+static bool HasParam(FbleTypeAssignmentV vars, FbleType* type)
 {
+  if (vars.size == 0) {
+    return false;
+  }
+
   // To break recursion, avoid visiting the same type twice.
   if (type->visiting) {
     return false;
   }
   type->visiting = true;
-  bool result = HasParam_(type, param);
+  bool result = HasParam_(vars, type);
   type->visiting = false;
   return result;
 }
 
 /**
- * @func[HasParam_]
- * @ Checks whether a type has the given param as a free type variable.
+ * @func[HasParam_] Check if type has any type variables in a type assignment.
+ *  @arg[FbleTypeAssignmentV][vars] The type assignment.
  *  @arg[FbleType*][type] The type to check.
- *  @arg[FbleType*][param] The abstract type to check for.
  *
  *  @returns[bool]
  *   True if the param occur in type, false otherwise.
@@ -349,13 +354,13 @@ static bool HasParam(FbleType* type, FbleType* param)
  *  @sideeffects
  *   None.
  */
-static bool HasParam_(FbleType* type, FbleType* param)
+static bool HasParam_(FbleTypeAssignmentV vars, FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
-        if (HasParam(dt->fields.xs[i].type, param)) {
+        if (HasParam(vars, dt->fields.xs[i].type)) {
           return true;
         }
       }
@@ -364,18 +369,27 @@ static bool HasParam_(FbleType* type, FbleType* param)
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
-      return HasParam(ft->arg, param) || HasParam(ft->rtype, param);
+      return HasParam(vars, ft->arg) || HasParam(vars, ft->rtype);
     }
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      return pt->arg != param && HasParam(pt->body, param);
+
+      // Remove shadowed type variables from the assignment.
+      FbleTypeAssignment xs[vars.size];
+      FbleTypeAssignmentV nvars = { .size = 0, .xs = xs };
+      for (size_t i = 0; i < vars.size; ++i) {
+        if (pt->arg != vars.xs[i].var) {
+          nvars.xs[nvars.size++] = vars.xs[i];
+        }
+      }
+
+      return HasParam(nvars, pt->body);
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      return HasParam(pat->arg, param)
-          || HasParam(pat->poly, param);
+      return HasParam(vars, pat->arg) || HasParam(vars, pat->poly);
     }
 
     case FBLE_PACKAGE_TYPE: {
@@ -384,18 +398,24 @@ static bool HasParam_(FbleType* type, FbleType* param)
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      return HasParam(abs->type, param);
+      return HasParam(vars, abs->type);
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      return (type == param)
-          || (var->value != NULL && HasParam(var->value, param));
+
+      for (size_t i = 0; i < vars.size; ++i) {
+        if (type == vars.xs[i].var) {
+          return true;
+        }
+      }
+
+      return var->value != NULL && HasParam(vars, var->value);
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* type_type = (FbleTypeType*)type;
-      return HasParam(type_type->type, param);
+      return HasParam(vars, type_type->type);
     }
   }
 
@@ -405,21 +425,20 @@ static bool HasParam_(FbleType* type, FbleType* param)
 
 /**
  * @func[Subst] Subsititues a value for a type variable.
- *  Substitute the given argument in place of the given parameter in the given
- *  type. This function does not attempt to evaluate the results of the
+ *  Substitute the type arguments for the given values in the given type.
+ *  This function does not attempt to evaluate the results of the
  *  substitution.
  *
  *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleTypeAssignmentV][vars] The types to assign.
  *  @arg[FbleType*][type] The type to substitute into.
- *  @arg[FbleType*][param] The abstract type to substitute out.
- *  @arg[FbleType*][arg] The concrete type to substitute in.
  *  @arg[TypePairs*][tps]
  *   A map of already substituted types, to avoid infinite recursion.
  *   External callers should pass NULL.
  *
  *  @returns[FbleType*]
- *   A type with all occurrences of param replaced with the arg type. The type
- *   may not be fully evaluated.
+ *   A type with all occurrences of a type assignment var with corresponding
+ *   value from the type assignments. The type may not be fully evaluated.
  *
  *  @sideeffects
  *   The caller is responsible for calling FbleReleaseType on the returned
@@ -438,9 +457,9 @@ static bool HasParam_(FbleType* type, FbleType* param)
  *  substituted @l{Unit@} for @l{T@} in @l{X@} when traversing into field 'b'
  *  of @l{X@}.
  */
-static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, FbleType* arg, TypePairs* tps)
+static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* type, TypePairs* tps)
 {
-  if (!HasParam(type, param)) {
+  if (!HasParam(vars, type)) {
     return FbleRetainType(heap, type);
   }
 
@@ -454,7 +473,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       for (size_t i = 0; i < dt->fields.size; ++i) {
         FbleTaggedType field = {
           .name = FbleCopyName(dt->fields.xs[i].name),
-          .type = Subst(heap, dt->fields.xs[i].type, param, arg, tps)
+          .type = Subst(heap, vars, dt->fields.xs[i].type, tps)
         };
         FbleAppendToVector(sdt->fields, field);
         FbleTypeAddRef(heap, &sdt->_base, field.type);
@@ -466,8 +485,8 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
 
-      FbleType* sarg = Subst(heap, ft->arg, param, arg, tps);
-      FbleType* rtype = Subst(heap, ft->rtype, param, arg, tps);
+      FbleType* sarg = Subst(heap, vars, ft->arg, tps);
+      FbleType* rtype = Subst(heap, vars, ft->rtype, tps);
 
       FbleFuncType* sft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, ft->_base.loc);
       sft->arg = sarg;
@@ -482,7 +501,13 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      FbleType* body = Subst(heap, pt->body, param, arg, tps); 
+
+      // TODO: Need to remove shadowed variables here?
+      for (size_t i = 0; i < vars.size; ++i) {
+        assert(pt->arg != vars.xs[i].var && "TODO: handle this case?");
+      }
+
+      FbleType* body = Subst(heap, vars, pt->body, tps); 
 
       FblePolyType* spt = FbleNewType(heap, FblePolyType, FBLE_POLY_TYPE, pt->_base.loc);
       spt->arg = pt->arg;
@@ -497,8 +522,8 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      FbleType* poly = Subst(heap, pat->poly, param, arg, tps);
-      FbleType* sarg = Subst(heap, pat->arg, param, arg, tps);
+      FbleType* poly = Subst(heap, vars, pat->poly, tps);
+      FbleType* sarg = Subst(heap, vars, pat->arg, tps);
 
       FblePolyApplyType* spat = FbleNewType(heap, FblePolyApplyType, FBLE_POLY_APPLY_TYPE, pat->_base.loc);
       spat->poly = poly;
@@ -520,7 +545,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
 
-      FbleType* body = Subst(heap, abs->type, param, arg, tps);
+      FbleType* body = Subst(heap, vars, abs->type, tps);
 
       FbleAbstractType* sabs = FbleNewType(heap, FbleAbstractType, FBLE_ABSTRACT_TYPE, abs->_base.loc);
       sabs->package = abs->package;
@@ -534,7 +559,12 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
-        return FbleRetainType(heap, (type == param ? arg : type));
+        for (size_t i = 0; i < vars.size; ++i) {
+          if (type == vars.xs[i].var) {
+            return FbleRetainType(heap, vars.xs[i].value);
+          }
+        }
+        return FbleRetainType(heap, type);
       }
 
       // Check to see if we've already done substitution on the value pointed
@@ -553,7 +583,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
         .next = tps
       };
 
-      FbleType* value = Subst(heap, var->value, param, arg, &ntp);
+      FbleType* value = Subst(heap, vars, var->value, &ntp);
       FbleAssignVarType(heap, svar, value);
       FbleReleaseType(heap, svar);
       return value;
@@ -562,7 +592,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tt = (FbleTypeType*)type;
 
-      FbleType* body = Subst(heap, tt->type, param, arg, tps);
+      FbleType* body = Subst(heap, vars, tt->type, tps);
 
       FbleTypeType* stt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, tt->_base.loc);
       stt->type = body;
@@ -1113,6 +1143,12 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete)
 {
   return TypesEqual(heap, vars, abstract, concrete, NULL);
+}
+
+// See documentation in type.h
+FbleType* FbleSpecializeType(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* type)
+{
+  assert(false && "TODO");
 }
 
 // See documentation in type.h
