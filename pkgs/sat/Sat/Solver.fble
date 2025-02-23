@@ -332,7 +332,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
     Strs[Str|'Conflict ', Id(c.a), Str|', ', Id(c.b), Str|' on ', Id(c.var)];
   };
 
-  Show@<Clauses@> Clauses = /Core/Map/Show%.Show</Sat/Id%.Map.Map@, Id@>(/Sat/Id%.Map, Id, Clause);
+  Show@<Clauses@> Clauses = /Core/Map/Show%.Show(/Sat/Id%.Map, Id, Clause);
 
   @(Id, Var, Clause, Why, Assign, Todo, Conflict, Clauses);
 };

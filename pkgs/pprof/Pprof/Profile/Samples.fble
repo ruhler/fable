@@ -102,7 +102,7 @@ Show@<Samples@> Show = (Samples@ x) {
   Strs[
     Str|'@(self: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, x.self),
     Str|', total: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, x.total),
-    Str|', children: ', /Core/Map/Show%.Show<M.Map@, Int@>(M, /Core/Int/Show%.Show, Show, x.children),
+    Str|', children: ', /Core/Map/Show%.Show(M, /Core/Int/Show%.Show, Show, x.children),
     Str|')'];
 };
 

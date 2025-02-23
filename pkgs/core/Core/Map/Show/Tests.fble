@@ -27,7 +27,7 @@ Int@ C = Int|3;
 <@>% Empty = Map.Empty;
 <@>% Insert = Map.Insert;
 
-<@>% Show = /Core/Map/Show%.Show<Map@, Int@>(Map, /Core/Int/Show%.Show);
+<@>% Show = /Core/Map/Show%.Show(Map, /Core/Int/Show%.Show);
 
 Test@ Tests = TestSuite(Str|Show, List[
   Test(Str|'empty', (Unit@ _) {

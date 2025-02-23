@@ -51,10 +51,10 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 
 # The world is a set of Coord@ where there are live cells.
 % Map = /Core/Map/Tree%.Map(OrdCoord);
-% Set = /Core/Set%.Set<Map.Map@, Coord@>(Map);
+% Set = /Core/Set%.Set(Map);
 @ World@ = Set.Set@;
-% EqWorld = /Core/Set/Eq%.Eq<Map.Map@>(Map, EqCoord);
-% ShowWorld = /Core/Set/Show%.Show<Map.Map@>(Map, ShowCoord);
+% EqWorld = /Core/Set/Eq%.Eq(Map, EqCoord);
+% ShowWorld = /Core/Set/Show%.Show(Map, ShowCoord);
 % W = @(
   Empty: Set.Empty,
   Insert: Set.Insert,

@@ -86,7 +86,7 @@ Test@ Tests = TestSuite(Str|Profile, List[
     LM.Map@<Count@> got = Counts(Nil<LocId@>, Nil<LocId@>, P_Basic);
     AssertEquals(
       /Core/Int/Map/Eq%.Eq(/Pprof/Profile/Count/Eq%.Eq),
-      /Core/Map/Show%.Show<LM.Map@, LocId@>(LM, /Core/Int/Show%.Show, /Pprof/Profile/Count/Show%.Show),
+      /Core/Map/Show%.Show(LM, /Core/Int/Show%.Show, /Pprof/Profile/Count/Show%.Show),
       wnt, got);
   })
 ]);

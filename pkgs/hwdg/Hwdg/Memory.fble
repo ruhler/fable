@@ -33,11 +33,11 @@ Memory@ Empty = Map.Empty<Data@>;
 # Eq --
 #   Test whether two memories contains the same contents.
 /Core/Eq%.Eq@<Memory@> Eq = {
-  /Core/Map/Eq%.Eq<Map.Map@, Coord@>(Map, /Hwdg/Coord%.Eq, /Hwdg/Data%.Eq);
+  /Core/Map/Eq%.Eq(Map, /Hwdg/Coord%.Eq, /Hwdg/Data%.Eq);
 };
 
 /Core/Show%.Show@<Memory@> Show = {
-  /Core/Map/Show%.Show<Map.Map@, Coord@>(Map, /Hwdg/Coord%.Show, /Hwdg/Data%.Show);
+  /Core/Map/Show%.Show(Map, /Hwdg/Coord%.Show, /Hwdg/Data%.Show);
 };
 
 # ForEach --

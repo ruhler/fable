@@ -26,7 +26,7 @@ String@ C = Str|C;
 <@>% Insert = Map.Insert;
 <@>% Delete = Map.Delete;
 
-<@>% Eq = /Core/Map/Eq%.Eq<Map@, String@>(Map, /Core/String/Eq%.Eq);
+<@>% Eq = /Core/Map/Eq%.Eq(Map, /Core/String/Eq%.Eq);
 
 Test@ Tests = TestSuite(Str|Eq, List[
   Test(Str|'eq: equal', (Unit@ _) {

@@ -119,7 +119,7 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
 % Map = /Core/Map/Tree%.Map(AlienOrd);
-% Set = /Core/Set%.Set<Map.Map@, Alien@>(Map);
+% Set = /Core/Set%.Set(Map);
 @ Set@ = Set.Set@;
 
 # AllAliens --

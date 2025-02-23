@@ -115,3 +115,10 @@ Let's try it and see what happens.
 
 It totally works. That's awesome. Let's go with this approach. All that's left
 is to clean up the code now, right?
+
+I don't think (4) is worth doing. It duplicates what is practically the same
+code. May as well share. We need to pass a type heap regardless to be able to
+normalize types.
+
+In other words, I'm happy now with this change. Nothing left to do here.
+

@@ -24,7 +24,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 % Map = /Core/Map/Tree%.Map(/Hwdg/Coord%.Ord);
-% Set = /Core/Set%.Set<Map.Map@, Coord@>(Map);
+% Set = /Core/Set%.Set(Map);
 @ Set@ = Set.Set@;
 
 @ String@ = /Core/String%.String@;
