@@ -23,21 +23,9 @@ Tutorials:
 * /App/App%
 * /Core/Test%
 
-
 Other:
-* Add helper macros for defining static FbleString and FbleModulePath?
 * Figure out how to make generated c for fble modules satisfy -Wpedantic?
   - FbleString static initialization is one issue.
-
-* Fbld C rewrite
- - Separate out loc.h, text.h, markup.h, etc?
- - Change FbldMarkup type to more explicitly distinguish between the different
-   kinds of markups.
- - Figure out how to associate a location with empty markup.
- - Avoid constructing markups with singleton sequences?
-
-* Fix potential GC gen overflow?
- - See thoughts/fble-0.3/stack_alloc.txt for details.
 
 Doc Comments
  - dccheck should require @type present in @value content?
@@ -46,8 +34,3 @@ Doc Comments
  - Would be nice to have SEE ALSO section for library man pages.
 
 * Update release notes with latest relevant changes.
-
-* Better error message in case of types not equal that aren't obviously
-  unequal?
- - For example, see the error message we get out of
-   spec/SpecTests/6.4-TypeInference/Regression/Map.fble
