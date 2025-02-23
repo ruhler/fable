@@ -1136,13 +1136,14 @@ FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type)
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 {
   FbleTypeAssignmentV vars = { .size = 0, .xs = NULL };
-  return FbleTypeInfer(heap, vars, a, b);
+  return TypesEqual(heap, vars, a, b, NULL);
 }
 
 // See documentation in type.h.
-bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete)
+void FbleInferTypes(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete)
 {
-  return TypesEqual(heap, vars, abstract, concrete, NULL);
+  // TODO: Separate this from TypesEqual.
+  TypesEqual(heap, vars, abstract, concrete, NULL);
 }
 
 // See documentation in type.h

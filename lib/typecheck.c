@@ -915,7 +915,7 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
   
   // Infer values for poly type variables.
   for (size_t i = 0; i < expected.size; ++i) {
-    FbleTypeInfer(th, vars, expected.xs[i], actual.xs[i].type);
+    FbleInferTypes(th, vars, expected.xs[i], actual.xs[i].type);
   }
 
   // Verify we were able to infer something for all the types.

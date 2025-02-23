@@ -538,9 +538,11 @@ FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type);
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 
 /**
- * @func[FbleTypeInfer] Infers type values.
- *  Infers type values for the given type variables to make the abstract type
- *  equal to the concrete type.
+ * @func[FbleInferTypes] Infers type values.
+ *  Attempts to infer type values for the given type variables that would make
+ *  the abstract type equal to the concrete type. This is a best effort type
+ *  inference. It picks in arbitrary assignment in case of ambiguity, and may
+ *  not find assignments for everything.
  *
  *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
  *  @arg[FbleTypeAssignmentV][vars]
@@ -553,16 +555,12 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
  *  @arg[FbleType*][concrete]
  *   The concrete type to infer the values of type variables from.
  *
- *  @returns[bool]
- *   True if the abstract type can be made equal to the concrete type with
- *   type inference, false otherwise.
- *
  *  @sideeffects
  *   Updates vars assignments based on inferred types. The caller is
  *   responsible for freeing any assignements to the type variables added to
  *   vars.
  */
-bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete);
+void FbleInferTypes(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete);
 
 /**
  * @func[FbleSpecializeType] Apply a type assignment to a type.
