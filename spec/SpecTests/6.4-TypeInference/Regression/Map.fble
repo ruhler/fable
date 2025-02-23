@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 32:3
+# @@fble-test@@ no-error
 
 @ Unit@ = *();
 % Unit = Unit@();
@@ -26,7 +26,7 @@
   x;
 };
 
-# Type inference is not expected to work here, because the type system cannot
-# reasonable deduce that the abstract M1@<V1@> argument to the IsEmpty
-# function is equal to the concrete +(K3@ k, N@ n) in the S instance of S@.
+# Regression test for a bug we had where type inference was unable to deduce 
+# that the abstract M1@<V1@> argument to the IsEmpty function is equal to the
+# concrete +(K3@ k, N@ n) in the S instance of S@.
 F(S);

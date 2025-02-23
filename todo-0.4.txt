@@ -2,6 +2,10 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
+* Remove type heap argument to FbleTypesEqual now?
+* Remove explicit types to Set, Set.Eq, Map.Eq, etc now that type inference is
+  can do it for us.
+
 Tests:
 * Add spec tests for full coverage.
  - Test for main .fble file not found somehow? load.c

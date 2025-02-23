@@ -1148,7 +1148,7 @@ bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstr
 // See documentation in type.h
 FbleType* FbleSpecializeType(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* type)
 {
-  assert(false && "TODO");
+  return Subst(heap, vars, type, NULL);
 }
 
 // See documentation in type.h

@@ -110,3 +110,8 @@ After (2), if we ignore the result of FbleTypeInfer, I expect the type
 motivating test case to start doing successful type inference.
 
 Let's try it and see what happens.
+
+---
+
+It totally works. That's awesome. Let's go with this approach. All that's left
+is to clean up the code now, right?

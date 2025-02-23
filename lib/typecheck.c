@@ -913,14 +913,31 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
     return TC_FAILED;
   }
   
-  // Check function arg types match what is expected.
-  // Infer values for poly type variables as we go.
-  bool error = false;
+  // Infer values for poly type variables.
   for (size_t i = 0; i < expected.size; ++i) {
-    if (!FbleTypeInfer(th, vars, expected.xs[i], actual.xs[i].type)) {
-      ReportError(actual.xs[i].tc->loc, "expected type %t, but found %t\n",
-          expected.xs[i], actual.xs[i].type);
+    FbleTypeInfer(th, vars, expected.xs[i], actual.xs[i].type);
+  }
+
+  // Verify we were able to infer something for all the types.
+  bool error = false;
+  for (size_t i = 0; i < vars.size; ++i) {
+    if (vars.xs[i].value == NULL) {
       error = true;
+      ReportError(loc, "unable to infer type for ");
+      FblePrintType(vars.xs[i].var);
+    }
+  }
+
+  // Check argument types match expected types.
+  if (!error) {
+    for (size_t i = 0; i < expected.size; ++i) {
+      FbleType* specialized = FbleSpecializeType(th, vars, expected.xs[i]);
+      if (!FbleTypesEqual(th, specialized, actual.xs[i].type)) {
+        ReportError(actual.xs[i].tc->loc, "expected type %t, but found %t\n",
+            specialized, actual.xs[i].type);
+        error = true;
+      }
+      FbleReleaseType(th, specialized);
     }
   }
 
@@ -928,12 +945,6 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
   // This checks that the inferred type variables have the correct kind.
   Tc result = { .type = FbleRetainType(th, poly.type), .tc = FbleCopyTc(poly.tc) };
   for (size_t i = 0; !error && i < vars.size; ++i) {
-    if (vars.xs[i].value == NULL) {
-      ReportError(loc, "unable to infer types for poly.\n");
-      error = true;
-      break;
-    }
-
     FbleTypeType* arg_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, loc);
     arg_type->type = vars.xs[i].value;
     FbleTypeAddRef(th, &arg_type->_base, arg_type->type);
