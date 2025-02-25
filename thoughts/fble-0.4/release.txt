@@ -615,3 +615,25 @@ supply the map twice?
 And it doesn't work for type inference. No, looks like I'll just have to
 swallow my dreams here.
 
+---
+
+* Figure out how to make generated c for fble modules satisfy -Wpedantic?
+
+Why? What's the motivation? I have a list of the kinds of errors we get:
+- FbleString static initializer
+- unused variables and functions
+- zero length arrays
+
+The goals could be:
+A. Maximize portability.
+B. Be alerted about potential errors/problems I'm unaware of.
+
+The effort to identify unused variables doesn't seem worth it to me. It's a
+lot of effort to track things that matter a lot more when you are writing code
+by hand than when you are generating code. Better, I think, to rely on the
+spec test suite to validate a new platform.
+
+In other words, stop worrying about supporting pedantic or removing warnings
+from generated code. I know the generated code works, because I have plenty of
+tests for it.
+
