@@ -502,12 +502,16 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* t
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
 
-      // TODO: Need to remove shadowed variables here?
+      // Remove shadowed type variables from the assignment.
+      FbleTypeAssignment xs[vars.size];
+      FbleTypeAssignmentV nvars = { .size = 0, .xs = xs };
       for (size_t i = 0; i < vars.size; ++i) {
-        assert(pt->arg != vars.xs[i].var && "TODO: handle this case?");
+        if (pt->arg != vars.xs[i].var) {
+          nvars.xs[nvars.size++] = vars.xs[i];
+        }
       }
 
-      FbleType* body = Subst(heap, vars, pt->body, tps); 
+      FbleType* body = Subst(heap, nvars, pt->body, tps); 
 
       FblePolyType* spt = FbleNewType(heap, FblePolyType, FBLE_POLY_TYPE, pt->_base.loc);
       spt->arg = pt->arg;

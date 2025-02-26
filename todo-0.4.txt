@@ -2,10 +2,6 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-* Add test that substitutes one of multiple variables into a poly type where
-  the poly shadows one of those type variables. Make sure only the expected
-  assignment happened.
-
 Tutorials:
 * Update tutorials for changes since last release
  - modular compilation in particular

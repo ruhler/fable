@@ -1,0 +1,28 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+% Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+
+# Regression test for the case where we substitute two type variables (A@ and
+# B@) into a value where one of those variables (B@) is shadowed by a poly
+# variable.
+<@,@>@ S@ = <@ A@> {
+  <@>@ SA@ = <@ B@> {
+    *(A@ a, B@ b, SA@ sa);
+  };
+
+  SA@;
+};
+
+<@>@ SA_Unit@ = <@ C@> {
+  *(Unit@ a, C@ b, SA_Unit@ sa);
+};
+
+# This is the correct type application.
+SA_Unit@ SA_Unit;
+S@<Unit@, Bool@> S = S@(Unit, True, SA_Unit);
+
+S;
