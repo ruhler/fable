@@ -637,3 +637,24 @@ In other words, stop worrying about supporting pedantic or removing warnings
 from generated code. I know the generated code works, because I have plenty of
 tests for it.
 
+---
+
+Round of summary of things included in the fble-0.4 release:
+* C implementation of fbld, and fbld spec test suite, and breaking build
+  dependency cycle that we used to have. (DONE)
+* --squash option to fble-perf-profile (not worth mentioning)
+* Modular compilation with .@ files. (DONE)
+* /Debug/Trace% printf like debug support. (DONE)
+* --depsfile options to fble-compile and friends. (DONE)
+* undef expression added to fble lang. (DONE)
+* rudimentary sockets support in network package. (DONE)
+* pprof sample package, WIP.
+* Updated /Core/Map% interface. (DONE)
+* Fix bug in type inference. (DONE)
+* double check changes to fbld, fble specs:
+  No changes to fbld, fble is undef and modular compilation. (DONE)
+* double check changes to include/fble/* APIs
+  Mostly related to modular compilation. (DONE)
+* double check changes to fble libraries, e.g. Map.
+  Map, Trace, Stdio Main@ arg order, network, pprof
+

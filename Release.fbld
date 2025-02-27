@@ -1,6 +1,32 @@
 @doc Fble Release Notes
  @@FbleVersionStamp
 
+ @section fble-0.4 Pending
+  The following list highlights the most notable changes from fble-0.3.
+
+  @subsection Fble Language
+   @item Added modular compilation support with @l{.fble.@} header files.
+   @item Added @l{undef} expression.
+
+  @subsection Fble Implementation
+   @item Support for modular compilation.
+   @item Added @l{--deps-file} options to executables.
+   @item Improved type inference.
+   @item Miscellaneous backwards incompatible API changes.
+
+  @subsection Fbld
+   @item Created a spec test suite.
+   @item Reimplemented in C with significant performance improvements.
+
+  @subsection Library
+   @item Improved @l{/Debug/Trace%} printf-like debugging support.
+   @item Made @l{/Core/Map%} into a general interface.
+   @item Reordered arguments to @l{Stdio} @l{Main@} function.
+   @item Rudimentary support for TCP sockets.
+
+  @subsection Applications
+   @item Added sample network applications.
+
  @section fble-0.3 June 2024
   The following list highlights the most notable changes from fble-0.2.
 
@@ -11,7 +37,7 @@
    @item Added support for compiling on Windows with MSYS2
    @item Complete rewrite of memory allocator for improved performance.
    @item Revamped FbleExecutable API for improved performance.
-   @item Miscellanous backwards incompatible API changes.
+   @item Miscellaneous backwards incompatible API changes.
 
   @subsection Fble Debugger
    @item Removed difficult-to-maintain support for easy single step in gdb.
@@ -36,7 +62,7 @@
   @subsection Fble Implementation
    @item Fix bug parsing fble programs with non-terminated quoted words.
    @item Fix off-by-one error in dwarf variable location info.
-   @item Miscellanous backwards incompatible API changes.
+   @item Miscellaneous backwards incompatible API changes.
    @item Performance improvements.
 
   @subsection Fbld
@@ -55,7 +81,7 @@
    @item Add getenv and file read/write to @l{Stdio}.
    @item Add @l{Stdio} interface to apps.
    @item Change @l{Map} to take order function instead of equality function.
-   @item Miscellanous backwards incompatible API changes.
+   @item Miscellaneous backwards incompatible API changes.
    @item Performance improvements.
 
   @subsection Applications

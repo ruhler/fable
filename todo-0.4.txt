@@ -16,4 +16,5 @@ Doc Comments
  - Add support for abstract typedef struct doc comments?
  - Would be nice to have SEE ALSO section for library man pages.
 
-* Update release notes with latest relevant changes.
+* Last minute updates to release notes
+ - Update the date of release.
