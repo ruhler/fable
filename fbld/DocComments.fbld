@@ -3,9 +3,10 @@
  
  @section Introduction
   Doc comments are a way of documenting functions in source code using fbld
-  document syntax. Top level fbld tags @l{@file}, @l{@struct}, @l{@value}, and
-  @l{@func} are defined for describing files, structs, values, and functions.
-  Convention is used to embed fbld markup in comments.
+  document syntax. Top level fbld tags @l{@file}, @l{@struct}, @l{@union},
+  @l{@enum} @l{@value}, and @l{@func} are defined for describing files,
+  structs, unions, enums values, and functions.  Convention is used to embed
+  fbld markup in comments.
 
  @section Example
   Here is an example of writing doc comments in C code:
@@ -76,6 +77,37 @@
   @code[fbld] @
    @field[type][name][description]
 
+ @section @l{@union}
+  The @l{@union} tag is used to describe a union type. The union command
+  takes three arguments: the name of the union type, a brief description of
+  the type, and a detailed description:
+
+  @code[fbld] @
+   @struct[name][brief][description]
+
+  The description should contain @l{@field} tags to describe the fields. Field
+  tags should list all the fields of the union. The @l{@field} tag has three
+  arguments: the type of the field, the name of the field, and a description
+  of the field.
+
+  @code[fbld] @
+   @field[type][name][description]
+
+ @section @l{@enum}
+  The @l{@enum} tag is used to describe an enum type. The enum command
+  takes three arguments: the name of the enum type, a brief description of
+  the type, and a detailed description:
+
+  @code[fbld] @
+   @struct[name][brief][description]
+
+  The description should contain @l{@field} tags to describe the fields. Field
+  tags should list all the fields of the enum. The @l{@field} tag has two
+  arguments: the name of the field and a description of the field.
+
+  @code[fbld] @
+   @field[name][description]
+
  @section @l{@value}
   The @l{@value} tag is used describe a global value. The value command takes
   three arguments: the name of the value, a brief description of the value,
@@ -132,8 +164,9 @@
  @section Embedding Doc Comments
   In C code, doc comments are embedded in @l{/** ... */} comments as in the
   example above. Specifically, they are introduced using @l{@file},
-  @l{@struct}, @l{@value} or @l{@func} on a line starting with @l{' * '} and
-  continuing as long as lines continue to start with @l{' * '}.
+  @l{@struct}, @l{@union}, @l{@struct}, @l{@value} or @l{@func} on a line
+  starting with @l{' * '} and continuing as long as lines continue to start
+  with @l{' * '}.
 
   Other languages can use similar conventions of placing doc comments in
   comments with doc comment tags up to the end of the comment.

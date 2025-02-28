@@ -20,3 +20,11 @@
  @define[field][type name desc][] @@
  @eval[@content]
 @@
+@define[union][name brief content]
+ @define[field][type name desc][] @@
+ @eval[@content]
+@@
+@define[enum][name brief content]
+ @define[field][name desc][] @@
+ @eval[@content]
+@@

@@ -126,3 +126,65 @@
   @struct_synopsis[@name][@content]
   @section[DESCRIPTION] @brief\n\n@struct_description[@content]
 @@
+@define[union_synopsis][name content]
+ @define[inline][x] @x @@
+ @section[SYNOPSIS]
+  @l{#include <fble/fble.h>}
+  @inline[\n]
+  @par[]
+
+  @define[.block][text][] @@
+  @define[field][type name desc][] @@
+
+  @inline[union @name {]
+
+  @define[.block][text][] @@
+  @define[field][type name desc][@l[@type] @a[@name];] @@
+  @let[fields] @eval[@plain[ignore][@content]] @@
+  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[\n    @fields][@l[,\n    ]]
+  @inline[\n.br\n};\n]
+@@
+@define[union_description][content]
+ @define[field][type name desc]
+  @definition[@l[@type] @a[@name]]
+   @ifeq[\n][@last[@desc]][@desc][@par[@desc]]
+ @@
+ @eval[@content]
+@@
+@define[union][name brief content]
+ @man[3][@name][@FbleVersionStamp]
+  @section[NAME] @name - @brief\n
+  @union_synopsis[@name][@content]
+  @section[DESCRIPTION] @brief\n\n@union_description[@content]
+@@
+@define[enum_synopsis][name content]
+ @define[inline][x] @x @@
+ @section[SYNOPSIS]
+  @l{#include <fble/fble.h>}
+  @inline[\n]
+  @par[]
+
+  @define[.block][text][] @@
+  @define[field][name desc][] @@
+
+  @inline[enum @name {]
+
+  @define[.block][text][] @@
+  @define[field][name desc][@a[@name];] @@
+  @let[fields] @eval[@plain[ignore][@content]] @@
+  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[\n    @fields][@l[,\n    ]]
+  @inline[\n.br\n};\n]
+@@
+@define[enum_description][content]
+ @define[field][name desc]
+  @definition[@a[@name]]
+   @ifeq[\n][@last[@desc]][@desc][@par[@desc]]
+ @@
+ @eval[@content]
+@@
+@define[enum][name brief content]
+ @man[3][@name][@FbleVersionStamp]
+  @section[NAME] @name - @brief\n
+  @enum_synopsis[@name][@content]
+  @section[DESCRIPTION] @brief\n\n@enum_description[@content]
+@@

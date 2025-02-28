@@ -11,7 +11,7 @@ Tutorials:
 * /Core/Test%
 
 Doc Comments
- - Add support for @union and @enum doc comments?
+ - Fix rendering of man page for FbleStringMagic enum.
  - Add support for abstract typedef struct doc comments?
  - Would be nice to have SEE ALSO section for library man pages.
 

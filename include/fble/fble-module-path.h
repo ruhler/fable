@@ -10,7 +10,8 @@
 #include "fble-name.h"    // for FbleName
 
 /**
- * Magic number used in FbleModulePath.
+ * @enum[FbleModulePathMagic] Magic number used in FbleModulePath.
+ *  @field[FBLE_MODULE_PATH_MAGIC] The magic path value.
  */
 typedef enum {
   FBLE_MODULE_PATH_MAGIC = 0x77806584

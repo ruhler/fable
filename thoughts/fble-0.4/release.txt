@@ -664,4 +664,19 @@ Round of summary of things included in the fble-0.4 release:
 
 I don't see examples of union in my code, so maybe skip that for now.
 
+@enum[name]
+ @field? @tag? @item? @value? @element? @enumeral? @member?
+
+I like @field. It's short, doesn't overlap with item, and is consistent with
+struct.
+
+So, @enum is just like @struct?
+
+Perfect. This should be easy.
+
+You know, I can do union at the same time.
+
+Anything difficult? Maybe how to do the man page for it? Let's copy what
+struct does and hope for the best. I have a few union types to try out.
+Remember to add them to the api doc list.
 

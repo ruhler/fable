@@ -47,10 +47,10 @@ namespace eval "include" {
       FbleReportWarning FbleReportError
     }
     fble-main.h {
-      FbleMain
+      FbleMain FbleMainStatus
     }
     fble-module-path.h {
-      FbleModulePath FbleModulePathV
+      FbleModulePathMagic FbleModulePath FbleModulePathV
       FbleNewModulePath
       FbleModulePathName
       FblePrintModulePath
@@ -61,7 +61,7 @@ namespace eval "include" {
       FbleFreeModulePath
     }
     fble-name.h {
-      FbleName FbleNameV
+      FbleNameSpace FbleName FbleNameV
       FbleCopyName FbleFreeName FbleNamesEqual FblePrintName
     }
     fble-profile.h {
@@ -83,7 +83,8 @@ namespace eval "include" {
       FblePreloadedModule FblePreloadedModuleV
     }
     fble-string.h {
-      FbleString FbleStringV FbleNewString FbleCopyString FbleFreeString
+      FbleStringMagic FbleString FbleStringV
+      FbleNewString FbleCopyString FbleFreeString
     }
     fble-value.h {
       FbleNewValueHeap FbleFreeValueHeap

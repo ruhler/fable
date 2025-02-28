@@ -9,7 +9,8 @@
 #include <sys/types.h>    // for size_t
 
 /**
- * Magic number used in FbleString.
+ * @enum[FbleStringMagic] Magic number used in FbleString.
+ *  @field[FBLE_STRING_MAGIC] The magic number value.
  */
 typedef enum {
   FBLE_STRING_MAGIC = 0x516179

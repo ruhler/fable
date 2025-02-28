@@ -9,7 +9,15 @@
 
 #include "fble-arg-parse.h"   // for FbleMainArg
 
-// Status codes used by FbleMain.
+/**
+ * @enum[FbleMainStatus] Status codes used by FbleMain.
+ *  @field[FBLE_MAIN_SUCCESS] The function completed successfully.
+ *  @field[FBLE_MAIN_FAILURE] The function returned failure.
+ *  @field[FBLE_MAIN_COMPILE_ERROR] The function failed to compile.
+ *  @field[FBLE_MAIN_RUNTIME_ERROR] The function failed to run.
+ *  @field[FBLE_MAIN_USAGE_ERROR] Error in command line options.
+ *  @field[FBLE_MAIN_OTHER_ERROR] Other kind of error.
+ */
 typedef enum {
   FBLE_MAIN_SUCCESS = 0,
   FBLE_MAIN_FAILURE = 1,

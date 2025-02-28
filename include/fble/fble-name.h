@@ -13,7 +13,11 @@
 #include "fble-loc.h"     // for FbleLoc
 #include "fble-string.h"  // for FbleString
 
-/** Enum used to distinguish among different name spaces. */
+/**
+ * @enum[FbleNameSpace] Enum used to distinguish among different name spaces.
+ *  @field[FBLE_NORMAL_NAME_SPACE] Namespace for normal values.
+ *  @field[FBLE_TYPE_NAME_SPACE] Namespace for type values.
+ */
 typedef enum {
   FBLE_NORMAL_NAME_SPACE,
   FBLE_TYPE_NAME_SPACE,
