@@ -12,8 +12,9 @@
 @@
 @define[file][name desc][] @@
 @define[value][name brief content]
- @define[type][type][] @@
- @eval[@content]
+ @define[type][type][x] @@
+ @let[t] @eval[@content] @@
+ @ifeq[][@t][@error[Missing type for \@value @name]][]
 @@
 @define[struct][name brief content]
  @define[field][type name desc][] @@

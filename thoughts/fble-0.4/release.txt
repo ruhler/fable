@@ -658,3 +658,10 @@ Round of summary of things included in the fble-0.4 release:
 * double check changes to fble libraries, e.g. Map.
   Map, Trace, Stdio Main@ arg order, network, pprof
 
+---
+
+- Add support for @union and @enum doc comments?
+
+I don't see examples of union in my code, so maybe skip that for now.
+
+
