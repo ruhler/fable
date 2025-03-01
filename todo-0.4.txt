@@ -6,12 +6,8 @@ Tutorials:
 * Update tutorials for changes since last release
  - modular compilation in particular
 * Add exercises to exercise each main point in every tutorial.
-* C API
 * /App/App%
 * /Core/Test%
-
-Doc Comments
- - Would be nice to have SEE ALSO section for library man pages.
 
 * Last minute updates to release notes
  - Update the date of release.

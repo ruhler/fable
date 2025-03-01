@@ -720,3 +720,24 @@ when I add modularity to fbld.
 How about, for now, just define the type as a struct type with no fields in
 the documentation? It's not ideal, because it looks like an empty struct. But
 fine for now.
+
+---
+
+ - Would be nice to have SEE ALSO section for library man pages.
+
+Do any examples come to mind? It seems a pain to have a bunch of @see
+everywhere in every doc comment. I vote to skip it for now. I can consider
+adding it later when I have something concrete I want to add.
+
+---
+
+Tutorial time. How should I approach this? I could read through the existing
+tutorials start to finish and make revisions as makes sense. Or I could write
+up undef and modular compilation tutorials then review?
+
+I'm not ready to add C API to tutorials yet. Wait until it has stabilized
+more. Hmm...
+
+Let me read through start to finish, and inject where I can. Maybe best to
+read it at the html level, so I can catch errors there? Sounds reasonable.
+
