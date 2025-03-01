@@ -23,10 +23,10 @@
    @ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
  
   This code defines three types, named @L{Unit@}, @L{Bit@}, and @L{Bit4@}. The
-  language requires type names to end with the @L{@} character, to distinguish
+  language requires type names to end with the @l{@} character, to distinguish
   them from normal variable names.
  
-  The @L{@} at the beginning of each line says we are defining names of types.
+  The @l{@} at the beginning of each line says we are defining names of types.
   The syntax @L{*(...)} is used for struct types and @L{+(...)} for union
   types. 
  

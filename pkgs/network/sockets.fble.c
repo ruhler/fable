@@ -51,7 +51,8 @@ int Read(SOCKET sfd)
 
 void Write(SOCKET sfd, char c)
 {
-  write(sfd, &c, 1);
+  ssize_t written = write(sfd, &c, 1);
+  (void) written;
 }
 #endif
 

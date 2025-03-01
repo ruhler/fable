@@ -4,30 +4,6 @@
  Fble has some limited support for debugging. This document explains tips and
  tricks for making the most of the currently available debug support.
 
- @definition Compile your code
-  There is debug support for compiled fble code generated using the aarch64
-  target. There is not currently debug support for compiled fble generated
-  using the c target nor for interpreted fble code. Compile your code using
-  the aarch64 target to access that debug support.
-
-  You should now be able to debug your fble code with gdb.
-
- @definition To print an @l{Int@} variable value in gdb
-  @code[gdb] @
-   print FbleIntValueAccess(foo)
-
- @definition To print a @l{String@} variable value in gdb
-  @code[gdb] @
-   print FbleStringValueAccess(foo)
-
- @definition To access a struct field
-  @code[gdb] @
-   print FbleStructValueField(foo, tag)
-
- @definition To set a breakpoint that will trigger on runtime error
-  @code[gdb] @
-   break fprintf
-
  @definition For printf like debugging
   Use the @l{/Core/Debug%.Trace} functions for the strings to print.
 
@@ -51,6 +27,29 @@
 
   You should see Trace values printed to stderr as the program executes.
 
+ @definition Compile your code
+  There is dwarf debug support for compiled fble code generated using the
+  aarch64 target. Dwarf based debug is not currently available for compiled
+  fble generated using the c target nor for interpreted fble code. Compile
+  your code using the aarch64 target to access that debug support.
+
+  You should now be able to debug your fble code with gdb.
+
+ @definition To print an @l{Int@} variable value in gdb
+  @code[gdb] @
+   print FbleIntValueAccess(foo)
+
+ @definition To print a @l{String@} variable value in gdb
+  @code[gdb] @
+   print FbleStringValueAccess(foo)
+
+ @definition To access a struct field
+  @code[gdb] @
+   print FbleStructValueField(foo, tag)
+
+ @definition To set a breakpoint that will trigger on runtime error
+  @code[gdb] @
+   break fprintf
 
  @definition To avoid stepping into runtime implementation code
   @code[gdb] @

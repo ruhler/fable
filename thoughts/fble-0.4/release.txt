@@ -741,3 +741,14 @@ more. Hmm...
 Let me read through start to finish, and inject where I can. Maybe best to
 read it at the html level, so I can catch errors there? Sounds reasonable.
 
+Review of tutorials:
+* Features.fbld references /Core/Map% as an alternative to arrays. Any need to
+  update that? For example, change to /Core/Int/Map%? No. No need to change
+  here.
+* Features.fbld says GC only does work on allocations. Technically that's no
+  longer true. It does work when you return from functions as well. Hm... is
+  that part of garbage collection, or more like automatic memory management? I
+  think it's fair to say GC only does work when you allocate. That's when it
+  does GC work.
+* Features.fbld Example of abstract type is gone. Do I use it anywhere
+  anymore? Not really.

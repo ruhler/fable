@@ -245,8 +245,8 @@
     List@ sorted = Sort((Record@ x, Record@ y) { Gt(x.id, y.id); }, list);
 
  @section Generics
-  Fble supports polymorphic data types and functions. It supports basic type
-  inference.
+  Fble supports polymorphic data types and functions with straight-forward
+  type inference.
 
   For example:
 
@@ -272,9 +272,6 @@
   For namespace management you can use fble's modules. For access controls you
   can use fble's abstract types. You can create struct values with type and
   function fields if you want.
-
-  For example, the @L{/Core/Map%} module provides a @L{Map@} type defined in
-  its own module with internal fields protected using an abstract type.
 
  @section Inheritance
   Fble is not an object oriented programming language. It does not have
@@ -310,8 +307,6 @@
     equals: /Core/Int/Eq%.Eq,
     hash: (Int@ x) { x; }
    );
-
-  It is not possible to mix interfaces of different types together.
 
  @section Type Classes
   Fble does not have builtin support for type classes. You can define an
@@ -418,7 +413,7 @@
   included in the fble release has an example of this.
 
  @section Foreign Function Interface
-  Fble does not have a foreign function interface defined yet.
+  Fble does not have a standardized foreign function interface defined yet.
   
   The reference implementation has a C API for manipulating fble values at
   runtime. This is how standard IO and graphics are implemented in fble. The C

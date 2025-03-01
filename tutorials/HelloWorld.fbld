@@ -38,10 +38,10 @@
     @ String@ = /Core/String%.String@;
     % Str = /Core/String%.Str;
    
-   Names ending in the @L{@} character are types. Names without @L{@} are
+   Names ending in the @l{@} character are types. Names without @L{@} are
    values. In this case @L{String@} is a type and @L{Str} is a value.
 
-   Names ending in @L{%} are names of modules. @L{/Core/String%} is a module
+   Names ending in @l{%} are names of modules. @L{/Core/String%} is a module
    from the core library that defines the string type and related functions.
 
    Modules are located by searching module directories of the package search
@@ -128,8 +128,9 @@
  @section Exercises
   @exercise
    Update your hello world program to output all of the different types shown
-   in a single string. Compare your hello world program with the sample one in
-   at @l{tutorials/HelloWorld/HelloWorld.fble} included with this tutorial.
+   above in a single string. Compare your hello world program with the sample
+   one in at @l{tutorials/HelloWorld/HelloWorld.fble} included with this
+   tutorial.
 
   @exercise
    Sometimes we import values from other modules, other times we use them

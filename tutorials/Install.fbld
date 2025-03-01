@@ -87,7 +87,7 @@
  
  @section Vim Syntax Highlighting
   Fble ships with syntax files for use with the Vim text editor. If you are a
-  Vim users, you can install the Vim files from the top level of the source
+  Vim user, you can install the Vim files from the top level of the source
   directory using:
  
   @code[sh] @
