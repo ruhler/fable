@@ -680,3 +680,25 @@ Anything difficult? Maybe how to do the man page for it? Let's copy what
 struct does and hope for the best. I have a few union types to try out.
 Remember to add them to the api doc list.
 
+---
+
+* Formatting issue with dc.man for FbleStringMagic.
+
+enum FbleStringMagic {\fIFBLE_STRING_MAGIC\fR
+.br
+
+versus:
+
+enum FbleNameSpace {
+    \fIFBLE_NORMAL_NAME_SPACE\fR\fB,
+    \fR\fIFBLE_TYPE_NAME_SPACE\fR
+.br
+
+What's the difference? What's going on here? Why did we lose whitespace
+somehow?
+
+What I want is:
+* All fields start with "\n    "
+* Otherwise we do a join.
+
+Easy. Maybe I should do it for struct and enum too while I'm at it?

@@ -108,9 +108,9 @@
   @inline[struct @name {]
 
   @define[.block][text][] @@
-  @define[field][type name desc][@l[@type] @a[@name];] @@
+  @define[field][type name desc][\n    @l[@type] @a[@name];] @@
   @let[fields] @eval[@plain[ignore][@content]] @@
-  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[\n    @fields][@l[,\n    ]]
+  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[@fields][@l[,]]
   @inline[\n.br\n};\n]
 @@
 @define[struct_description][content]
@@ -139,9 +139,9 @@
   @inline[union @name {]
 
   @define[.block][text][] @@
-  @define[field][type name desc][@l[@type] @a[@name];] @@
+  @define[field][type name desc][\n    @l[@type] @a[@name];] @@
   @let[fields] @eval[@plain[ignore][@content]] @@
-  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[\n    @fields][@l[,\n    ]]
+  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[@fields][@l[,]]
   @inline[\n.br\n};\n]
 @@
 @define[union_description][content]
@@ -170,9 +170,9 @@
   @inline[enum @name {]
 
   @define[.block][text][] @@
-  @define[field][name desc][@a[@name];] @@
+  @define[field][name desc][\n    @a[@name];] @@
   @let[fields] @eval[@plain[ignore][@content]] @@
-  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[\n    @fields][@l[,\n    ]]
+  @ifeq[][@ltail[@fields]][@lhead[@fields]] @ljoin[@fields][@l[,]]
   @inline[\n.br\n};\n]
 @@
 @define[enum_description][content]
