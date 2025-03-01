@@ -15,11 +15,13 @@ typedef struct FbleExecutable FbleExecutable;
 typedef struct FbleFunction FbleFunction;
 
 /**
- * Memory heap for allocating fble values.
+ * @struct[FbleValueHeap] Memory heap for allocating fble values. @@
  */
 typedef struct FbleValueHeap FbleValueHeap;
 
-/** An fble value. */
+/**
+ * @struct[FbleValue] An fble value. @@
+ */
 typedef struct FbleValue FbleValue;
 
 /**

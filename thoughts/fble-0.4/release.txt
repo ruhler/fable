@@ -702,3 +702,21 @@ What I want is:
 * Otherwise we do a join.
 
 Easy. Maybe I should do it for struct and enum too while I'm at it?
+
+---
+
+ - Add support for abstract typedef struct doc comments?
+
+For example, FbleValue. I think this is easy. Just have it be
+@type[description], etc.
+
+Trouble: We were relying on @type being abstract to have it as a field of
+@value. But if it's not abstract, it doesn't work anymore. That's pretty
+annoying.
+
+Anything temporary I can do? Because I think this should be fixed eventually
+when I add modularity to fbld.
+
+How about, for now, just define the type as a struct type with no fields in
+the documentation? It's not ideal, because it looks like an empty struct. But
+fine for now.

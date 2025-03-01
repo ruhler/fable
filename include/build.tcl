@@ -87,6 +87,7 @@ namespace eval "include" {
       FbleNewString FbleCopyString FbleFreeString
     }
     fble-value.h {
+      FbleValue FbleValueHeap
       FbleNewValueHeap FbleFreeValueHeap
       FbleValueV
       FbleGenericTypeValue
