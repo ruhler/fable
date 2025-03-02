@@ -91,3 +91,7 @@ Tests:
 
 Tutorials:
 * C API, once it is stable enough.
+* Add exercises to exercise each main point in every tutorial.
+* /App/App%
+* /Core/Test%
+

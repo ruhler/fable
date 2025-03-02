@@ -299,6 +299,67 @@
 
   You can do a lot of interesting things with fble modules by keeping in mind
   that they can describe any type of value, not just struct values.
+
+ @section Module Header Files
+  The fble language has support for modular compilation, which means you can
+  compile a module without access to the implementation of other modules that
+  it depends on. For this to work, you still need access to the type of other
+  modules that your module depends on.
+
+  You can describe the type of a module separately from its implementation
+  using a module header file. These files use the extension @l{.fble.@}. The
+  syntax for a header file is exactly the same as for a normal fble module,
+  except that its value is never used.
+
+  If you remember back to the @fbld[Variables.fbld][Variables] tutorial, it's
+  possible to declare undefined variables. Those are primarily useful for fble
+  header files. The header file can contain the same code as the module's
+  implementation, except leave all the variables undefined. The type of the
+  header file will be used during compilation.
+
+  For example, recall the implementation of our @L{/Bit%} module in
+  @l{Bit.fble}:
+
+  @code[fble] @
+   @ Unit@ = /Unit%.Unit@;
+   % Unit = /Unit%.Unit;
+   
+   @ Bit@ = +(Unit@ 0, Unit@ 1);
+   
+   Bit@ 0 = Bit@(0: Unit);
+   Bit@ 1 = Bit@(1: Unit);
+   
+   (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+     a.?(0: 0, 1: b);
+   };
+   
+   @(Bit@, 0, 1, And);
+
+  We could write a header file for @L{/Bit%} in the file @l{Bit.fble.@} as:
+ 
+  @code[fble] @
+   @ Unit@ = /Unit%.Unit@;
+   @ Bit@ = +(Unit@ 0, Unit@ 1);
+   
+   Bit@ 0;
+   Bit@ 1;
+   
+   (Bit@, Bit@) { Bit@; } And;
+   
+   @(Bit@, 0, 1, And);
+
+  Notice that we haven't provided an implementation for the @L{And} function
+  or the values @L{0} or @L{1}. What's important is that the type of the
+  header file is the same as the type of the implementation file.
+
+  Header files are optional. If a header file exists for a module, it will be
+  read instead of the implementation of the module to get its type. If a
+  header file exists for a module you are compiling, the compiler will verify
+  the module's type matches the header.
+
+  Header files make it possible to use modules implemented natively instead of
+  in fble. They make it possible to distribute compiled code for modules with
+  just the header file for type checking.
  
  @section Modules in the Language Specification
   You now know everything there is to know about modules in fble. To reinforce

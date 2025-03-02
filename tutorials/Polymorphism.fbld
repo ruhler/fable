@@ -263,7 +263,7 @@
  @section Interfaces
   Some languages have the concept of an interface. You can write a function
   that operates on any type, as long as that type implements a particular
-  interface. Interfaces can be implemented in fble as a polymorphic
+  interface. An interface can be implemented in fble as a polymorphic
   collection of functions parameterized by some type @L{T@}.
  
   For example, in another language you might define an @L{Eq} interface that
@@ -418,7 +418,7 @@
   @code[fble] @
    Maybe@<Int@> my_int = Just<Int@>(Int|42);
  
-  In some situations, the fble compiler can automatically infer the value of
+  In many situations, the fble compiler can automatically infer the value of
   the type parameter to use with the poly. In this case, the compiler knows
   the type of @L{Int|42} is @L{Int@} and that @L{Just} is a polymorphic
   function with type parameter @L{T@} and argument of type @L{T@}. Given that

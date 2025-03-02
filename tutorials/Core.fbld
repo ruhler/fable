@@ -179,36 +179,44 @@
    <@>@ Ord@ = <@ T@>(T@, T@) { Ordering@; };
 
  @section @L{/Core/Map%}
-  The @L{/Core/Map%} module defines the type @L{Map@}, which maps from keys to
-  values using a self balancing tree data structure. It provides functions for
-  inserting, looking up, and removing values from the map.
+  The @L{/Core/Map%} module defines a map interface type @L{Map@}
+  parameterized by map type @L{M@} and key type @L{K@}. Instances of the
+  @L{Map@} interface are available for a variety of different key types. This
+  gives a way to map from keys to values.
 
-  Any type can be used for the key, as long as there is an ordering relation
-  defined on the type via the @L{Ord@} interface.
+  There is a generic self balancing tree map implementation in
+  @L{/Core/Map/Tree%} which works with any key type that implements the
+  @L{Ord@} interface.
+
+  The @L{Map@} interface provides functions for inserting, looking up, and
+  removing values from the map.
 
   @code[fble] @
-   <@,@>@ Map@ = <@ K@, @ V@> { ... };
-
-   Map@ Empty = ...;
-   <@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = ...;
-   <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup = ...;
-   <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; } Insert = ...;
-   <@ K@>(Ord@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; } Delete = ...;
-   <@ K@, @ V@>(Map@<K@, V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach = ...;
+   <<@>@,@>@ Map@ = <<@>@ M@, @ K@> {
+    <@ V@> { M@<V@>; } Empty;
+    <@ V@>(M@<V@>) { Bool@; } IsEmpty;
+    <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup;
+    <@ V@>(M@<V@>, K@, V@) { M@<V@>; } Insert;
+    <@ V@>(M@<V@>, K@) { M@<V@>; } Delete;
+    <@ V@>(M@<V@>)<@ B@>(B@, (K@, V@, B@) { B@; }) { B@; } ForEach;
+    @(Empty, IsEmpty, Lookup, Insert, Delete, ForEach);
+   };
 
  @section @L{/Core/Set%}
   The @L{/Core/Set%} module defines a @L{Set@} type for describing a set of
-  values. It's a special case of the @L{Map@} type.
+  values. It provides a wrapper around instances of the @L{Map@} interface.
 
   @code[fble] @
-   <@>@ Set@ = <@ T@> { Map@<T@, Unit@>; };
-
-   Set@ Empty = ...;
-   <@ T@>(Set@<T@>) { Bool@; } IsEmpty = ...;
-   <@ T@>(Ord@<T@>, Set@<T@>, T@) { Bool@; } Contains = ...;
-   <@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; } Insert = ...;
-   <@ T@>(Ord@<T@>, Set@<T@>, T@) { Set@<T@>; } Delete = ...;
-   <@ T@>(Set@<T@>)<@ B@>(B@, (T@, B@) { B@; }) { B@; } ForEach = ...;
+   <<@>@, @>% Set = <<@>@ M@, @ K@>(Map@<M@, K@> m) {
+    @ Set@ = M@<Unit@>;
+    Set@ Empty;
+    (Set@) { Bool@; } IsEmpty;
+    (Set@, K@) { Bool@; } Contains;
+    (Set@, K@) { Set@; } Insert;
+    (Set@, K@) { Set@; } Delete;
+    (Set@)<@ B@>(B@, (K@, B@) { B@; }) { B@; } ForEach;
+    @(Set@, Empty, IsEmpty, Contains, Insert, Delete, ForEach);
+   };
 
  @section @L{/Core/Test%}
   The @L{/Core/Test%} module defines types @L{Test@}, @L{TestSuite@} and

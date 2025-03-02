@@ -31,7 +31,7 @@
  
   @item
    Field names follow the same naming conventions as variable names (see the
-   Variables tutorial for details).
+   @fbld[Variables.fbld][Variables] tutorial for details).
  
   @item
    Struct types are equal if they have the same order, types, and names of all
@@ -187,7 +187,7 @@
  @section Type Fields
   Types are values, which means types are allowed in fields of structures. The
   same naming rule applies as for variable names: type fields must be followed
-  by @L{@}.
+  by @l{@}.
  
   For example, we could add the @L{Bit@} type to our @L{Bits} bundle:
  

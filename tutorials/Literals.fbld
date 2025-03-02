@@ -191,7 +191,7 @@
    literals with too many bits.
  
   @item
-   Have a runtime error if the literal word doesn't parse correctly, but
+   Have a runtime error if the literal word doesn't parse correctly, by
    accessing the wrong field of a union value.
  
  @section Literal Expressions versus Quoted Words

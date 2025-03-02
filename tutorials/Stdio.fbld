@@ -37,11 +37,11 @@
 
  @section @L{<<@>@ M@>}
   The @L{Main@} function is polymorphic, parameterized by type @L{M@}. The
-  first two arguments to the function are @L{m} and @L{stdio}, which are
+  first two arguments to the function are @L{stdio} and @L{m}, which are
   interfaces supported by the abstract type @L{M@}.
 
   This says your main function can be used with any type @L{M@} that
-  implements the @L{Monad@} and @L{Stdio@} interfaces. The
+  implements the @L{Stdio@} and @L{Monad@} interfaces. The
   @L{/Core/Stdio/IO%.Run} function provides a concrete type of @L{M@} for use
   with the @l{fble-stdio} program.
 
@@ -49,11 +49,6 @@
   for @L{M@} provided by @L{/Core/Stdio/IO%.Run} is to make your main function
   more general than just for use with @l{fble-stdio}. For example, you can
   write test cases for your main function using a simulated environment.
-
- @section @L{Monad@<M@> m}
-  The @L{Monad@<M@>} interface @L{m} provides a way to sequence operations.
-  This is needed to have a well defined order of operations when interacting
-  with input and output streams and files.
 
  @section @L{Stdio@<M@> stdio}
   The @L{Stdio@<M@>} interface is defined as follows:
@@ -96,6 +91,11 @@
 
   The field @L{getenv} lets you access the value of an environment variable.
 
+ @section @L{Monad@<M@> m}
+  The @L{Monad@<M@>} interface @L{m} provides a way to sequence operations.
+  This is needed to have a well defined order of operations when interacting
+  with input and output streams and files.
+
  @section @L{List@<String@> args}
   The @L{args} argument is the list of command line arguments passed when
   invoking the program. For example, if you ran your program as:
@@ -130,3 +130,6 @@
   This completes this tutorial series on the fble language. You now understand
   all the fble language features and can write interesting programs that
   interact with the environment on the command line. Go forth now and program.
+
+  Or you can head back to the @fbld[Tutorials.fbld]{Tutorials} page for links
+  to debug and profiling guides.

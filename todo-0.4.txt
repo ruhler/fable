@@ -2,20 +2,5 @@ Fble 0.4 TODO
 =============
 Things to consider doing for the fble-0.4 release.
 
-Tutorials:
-* Update tutorials for changes since last release
- - Make sure to add modular compilation somewhere.
- - Update Map references.
-* Review tutorials
- - Starting from Basics.
-* Add exercises to exercise each main point in every tutorial.
-* /App/App%
-* /Core/Test%
-
-* Check out tags on github so generated documentation buildstamp can refer to
-  them?
-
-* Get github tests to pass.
-
 * Last minute updates to release notes
  - Update the date of release.
