@@ -18,12 +18,12 @@
 /**
  * Minor version number.
  */
-#define FBLE_VERSION_MINOR 4
+#define FBLE_VERSION_MINOR 5
 
 /**
  * Version string.
  */
-#define FBLE_VERSION "fble-0.4"
+#define FBLE_VERSION "fble-0.5"
 
 /**
  * @func[FblePrintVersion] Prints version info.
