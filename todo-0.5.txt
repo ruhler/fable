@@ -95,3 +95,8 @@ Tutorials:
 * /App/App%
 * /Core/Test%
 
+* Figure out why building with ninja from the source directory ends up
+  building all the tests. And fix that somehow.
+
+* Debug possible deadlock in pkgs/network/sockets-test.tr?
+  Seen when doing ninja check after clean build after ninja.

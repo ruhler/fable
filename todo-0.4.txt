@@ -1,6 +1,0 @@
-Fble 0.4 TODO
-=============
-Things to consider doing for the fble-0.4 release.
-
-* Last minute updates to release notes
- - Update the date of release.

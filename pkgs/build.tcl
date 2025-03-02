@@ -46,6 +46,16 @@ namespace eval "pkgs" {
       }
     }
 
+    # Install all .fble.2 files under the $::s/pkgs/$name directory.
+    set root $::s/pkgs/$name
+    foreach dir [dirs $root ""] {
+      foreach {y} [build_glob $root/$dir -tails -nocomplain -type f *.fble.@] {
+        set x $dir$y
+        set target $::config::datadir/fble/$name/$x
+        install $root/$x $target
+      }
+    }
+
     # Explicitly requested build-generated .fble files under the
     # $::b/pkgs/$name directory.
     foreach gen $gens {

@@ -35,7 +35,9 @@
    cd fable
    mkdir install
    INSTALL=`pwd`/install
-   ./configure --prefix=$INSTALL
+   mkdir out
+   cd out
+   ../configure --prefix=$INSTALL
    ninja && ninja install
 
   @subsection Documentation
@@ -54,7 +56,7 @@
    this:
 
    @code[txt] @
-    Test Summary: 1163 passed, 4 xfailed, 0 failed, 1167 total
+    Test Summary: 1406 passed, 4 xfailed, 0 failed, 1410 total
 
    Some tests are marked as 'xfailed', which means they are known to fail.
    Those expected failures can safely be ignored.

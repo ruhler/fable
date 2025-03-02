@@ -752,3 +752,21 @@ Review of tutorials:
   does GC work.
 * Features.fbld Example of abstract type is gone. Do I use it anywhere
   anymore? Not really.
+
+---
+
+For some reason, ninja install is running all the tests. What's going on
+there?
+
+It's because of building from the source directory seems like.
+
+Next issue:
+
+fble-stdio -p core -m /Core/Stdio/HelloWorld%
+
+/home/richard/projects/fable/install/share/fble/core/Core/Stdio/IO.fble:24:13:
+error: module /Core/Stdio/IO/Builtin% not found
+
+Is that expected? Shouldn't fble-stdio have that built into it?
+
+I bet we aren't properly installing the .fble.@ file.
