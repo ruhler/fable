@@ -14,6 +14,9 @@
 @ World@ = /Core/Monad/IO%.World@;
 % m = /Core/Monad/IO%.Monad;
 
+% Stdin = /Core/Stdio/IO/Builtin%.Stdin;
+% Stdout = /Core/Stdio/IO/Builtin%.Stdout;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
@@ -21,30 +24,16 @@
 
 <@>@ R@ = <@ T@> { *(World@ s, T@ x); };
 <@>@ IO@ = <@ T@> (World@) { R@<T@>; };
-<<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
 
 # Implementation of fble-cat for the purposes of experimenting with
 # fble performance.
-(
-  IO@<Maybe@<Int@>>,
-  (Int@, World@) { R@<Unit@>; },
-  (Int@, World@) { R@<Unit@>; },
-  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; },
-  List@<String@>
-) { IO@<Bool@>; }
-Main = (
-  IO@<Maybe@<Int@>> stdin,
-  (Int@, World@) { R@<Unit@>; } stdout,
-  (Int@, World@) { R@<Unit@>; } _stderr,
-  (String@, World@) { R@<Maybe@<IStream@<IO@>>>; } _read,
-  List@<String@> args) {
-
+/Core/Stdio/IO%.Main@ Main = (List@<String@> args) {
   (Int@) { IO@<Unit@>; } stdout_ = (Int@ s, World@ w) {
-    stdout(s, w);
+    Stdout(s, w);
   };
 
   IO@<Bool@> MCat = {
-    Maybe@<Int@> byte <- m.do(stdin);
+    Maybe@<Int@> byte <- m.do(Stdin);
     byte.?(nothing: m.return(True));
     Char@ char = /Core/Char/Ascii%.Chr(byte.just);
     Unit@ _ <- m.do(stdout_(/Core/Char/Ascii%.Ord(char)));
@@ -52,11 +41,11 @@ Main = (
   };
 
   (World@) { R@<Bool@>; } Cat = (World@ w) {
-    R@<Maybe@<Int@>> byte = stdin(w);
+    R@<Maybe@<Int@>> byte = Stdin(w);
     byte.x.?(nothing: R@(w, True));
 
     Char@ char = /Core/Char/Ascii%.Chr(byte.x.just);
-    R@<Unit@> out = stdout(/Core/Char/Ascii%.Ord(char), byte.s);
+    R@<Unit@> out = Stdout(/Core/Char/Ascii%.Ord(char), byte.s);
     Cat(out.s);
   };
 
