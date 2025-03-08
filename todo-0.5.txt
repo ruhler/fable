@@ -105,3 +105,4 @@ Tutorials:
 
 * Debug possible deadlock in pkgs/network/sockets-test.tr?
   Seen when doing ninja check after clean build after ninja.
+  Seen again doing ninja check after touching build.tcl.

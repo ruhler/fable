@@ -1574,7 +1574,11 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
       memcpy(gTailCallData.func_and_args + 1 + gTailCallData.argc, unused, num_unused * sizeof(FbleValue*));
       gTailCallData.argc += num_unused;
     } else if (num_unused > 0 && result != NULL) {
-      return FblePopFrame(heap, FbleCall(heap, profile, result, num_unused, unused));
+      // Do a tail call to the returned result with unused args applied.
+      assert(1 + num_unused <= gTailCallData.capacity);
+      gTailCallData.argc = num_unused;
+      gTailCallData.func_and_args[0] = result;
+      memcpy(gTailCallData.func_and_args + 1, unused, num_unused * sizeof(FbleValue*));
     } else {
       return FblePopFrame(heap, result);
     }

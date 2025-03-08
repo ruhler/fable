@@ -164,3 +164,104 @@ an unused argument.
 
 Can I figure out what the result of that tail call is? That's what I really
 want to know.
+
+It's PartialApplyImpl, /Core/Monad/State%.Monad!. I bet it's our MCat function
+being returned?
+
+How do I make a test case for this? The case is:
+* We are doing a tail call with over-applied args.
+* The result of that tail called function.
+
+What should happen is we continue in the TailCall loop, if we have enough
+args?
+
+Anyway, first step is to add a regression test. How do I make this? Can I
+understand where it's coming from in the first place?
+
+MCat returns a function. The state argument is presumably what's overapplied.
+Any reason the test I just wrote for partial tail call memory doesn't hit this
+case?
+
+Overapply means a function that returns a function, without being defined as a
+function itself.
+
+I need a tail call that returns a function. For it to be a call means it takes
+at least one argument. For it to return a function means it takes at least two
+arguments. The recursion has to be controlled by Nat@ to know when to end, so
+that has to be the first argument. The second argument can be Unit.
+
+So, our function takes a Nat@, and returns a function from Unit@ to Unit@.
+That's easy enough.
+
+The real question is, can I convince myself this should be doable in constant
+memory? Let's see.
+
+f(5), tail calls f(4). That's constant.
+f(4) tail calls f(3). That's constant.
+...
+f(1) returns Id function.
+Then we call the Id function.
+
+Yes. This should be constant? So long as we GC, right? We have to GC each
+partial application of f? No. There are no partial applications of f. It has a
+single argument. You can't partially apply that.
+
+Yeah, this should be clearly constant memory use.
+
+And... it is. We didn't catch the case I was hoping to apparently. Maybe
+because we aren't over-applying every step of the way? That makes sense. How
+can I overapply every step of the way?
+
+Okay, I maybe got it. Let's double check.
+  
+(Nat@, Unit@) { Unit@; } f = (Nat@ n) {
+  S@ s = S(n);
+  s.?(Z: (Unit@ u) { u; });
+  (Unit@ u) { f(s.S, u); };
+};
+
+f(4) returns a function that references f and s. We tail call that function.
+f(3, u) is our recursive overapply. It returns a new function.
+
+We are certainly allocating new functions at every iteration. But GC should
+take care of us, right?
+
+Let me get into the stack if this specifically and see what happens. Yes, the
+stack looks like the fble-fast-cat case.
+
+Now, how do I solve this one?
+
+We have a function. We have only unused arguments. Where do those unused
+arguments come from? What do we know about the function?
+
+The real fear is that the function itself or some of the unused argument
+values live in the current frame. I need to copy them out. Have we already
+copied them out? We already take care of that I think. Let me see.
+
+Looks like it's working. Awesome. Let's see if that was the last of the
+fble-fast-cat memory leak. Yup! We got it. Cool.
+
+/usr/bin/time -v ./out/pkgs/core/fble-fast-cat --monadic < scratch/pprof.input.txt > /dev/null
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 5:07.26
+  Maximum resident set size (kbytes): 1716
+
+The non-monadic took 4 minutes, so I expect at least that much time spent
+here.
+
+And for the fun of it:
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/pprof.input.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 9:23.42 ==> 9:04.10 ==> 9:19.40
+  Maximum resident set size (kbytes): 254964 ==> 253564 ==> 253444
+
+Oh well. You win some you lose some.
+
+---
+
+25% overhead for monadic version of fast cat actually isn't too bad. I think
+it's worth look at fast cat in more detail performance wise to start. See
+if/how we can optimize it.
+
+First, the non-monadic version.
+

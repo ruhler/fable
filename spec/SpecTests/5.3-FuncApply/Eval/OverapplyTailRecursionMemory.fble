@@ -1,0 +1,18 @@
+# @@fble-test@@ memory-constant
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Nat@ = /SpecTests/Nat%.Nat@;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
+
+# f should only require O(1) memory, because it is tail recursive.
+# Regression test for a case where tail recursion of an over applied
+# function wasn't done properly.
+(Nat@, Unit@) { Unit@; } f = (Nat@ n) {
+  S@ s = S(n);
+  s.?(Z: (Unit@ u) { u; });
+  (Unit@ u) { f(s.S, u); };
+};
+
+(Nat@ n) { f(n, Unit); };
