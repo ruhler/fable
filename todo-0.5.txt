@@ -2,6 +2,10 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Optimize PartialApplyImpl
+  - Can we pre-allocate space for the final args to avoid the final memcpys?
+  - Can we inline bits of FbleTailCall to avoid a duplicate memcpy?
+
 * Remove OnFree for GC native objects
   Only allow GC to manage chunks of memory, not have sideeffects?
   See thoughts/fble-0.5/gc_native.txt

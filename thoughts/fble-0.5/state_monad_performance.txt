@@ -89,3 +89,78 @@ what's happening?
 
 Well, first I need to fix fastcat, because it crashes. I should add a test for
 it too.
+
+---
+
+/usr/bin/time -v cat < scratch/pprof.input.txt > /dev/null
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.36
+  Maximum resident set size (kbytes): 1428
+
+Looks like there's a memory leak or bug in the --monadic option to fast-cat. I
+should fix that. Also, let's truncate the input file to just the relevant
+lines.
+
+/usr/bin/time -v cat < scratch/pprof.input.txt > /dev/null
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.05
+  Maximum resident set size (kbytes): 1348
+
+/usr/bin/time -v ./out/pkgs/core/fble-fast-cat < scratch/pprof.input.txt > /dev/null
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 4:04.76
+  Maximum resident set size (kbytes): 1760
+
+What's the memory leak in the --monadic case? How do I track that down?
+
+Let's do some profiling, shall we? Maybe that will tell us.
+
+Why are my stacks so deep? I don't expect that, right? Or maybe I do?
+
+(World@) { R@<Bool@>; } MCat = m.do(Stdin, (Maybe@<Int@> byte) {
+  byte.?(nothing: m.return(True));
+  Char@ char = /Core/Char/Ascii%.Chr(byte.just);
+  Unit@ _ <- m.do(stdout_(/Core/Char/Ascii%.Ord(char)));
+  MCat
+};
+
+MCat is a partial application of do, because we don't have state at this
+point. The state comes from the stdio runner. We were over-applied on the
+state though, so once we return the partial apply from the monadic.? case
+statement, we should then apply the state. What happens?
+
+We call do body:
+  r = Stdin(w)
+  tail call into (Maybe@<Int@> byte) { ...}
+
+The byte is not nothing.
+  Char@ char = /Core/Char/Ascii%.Chr(byte.just);
+  m.do(stdout_(char), MCat);
+
+But we should have over applied. And m.do should be a tail call. The stack
+shouldn't be going so deep here. What's going on? Let's step through the code
+and see?
+  
+What I see is that PartialApplyImpl isn't doing a tail call, so we end up
+smashing the stack and not cleaning other stuff up while we are at it.
+
+This is clearly a bug. I should be able to capture it in a memory test. The
+case is doing a recursion where the tail call is applied to a partially
+applied function.
+
+---
+
+Okay, that bug is tested and fixed. Unfortunately it doesn't solve the
+problem. I'm still leaking memory in fble-fast-cast --monadic.
+
+For the fun of it, let's see if that impacted the performance of pprof at all.
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/pprof.input.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 9:23.42 ==> 9:04.10
+  Maximum resident set size (kbytes): 254964 ==> 253564
+ 
+Anyway, we're still smashing the stack in fble-fast-cat. Here's the sequence:
+
+We're doing a TailCall. The result of the tail call is a function. But we have
+an unused argument.
+
+Can I figure out what the result of that tail call is? That's what I really
+want to know.

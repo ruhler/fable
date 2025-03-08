@@ -243,3 +243,60 @@ back to: I should find a solution for how to make IO monad with the pair work.
 Let's start a separate discussion on that, call it
 state_monad_performance.txt.
 
+---
+
+For pprof specifically, let's not make things harder than they have to be. The
+output I get from 'perf report' is way more verbose than it needs to be. Can I
+get it to spit out data in a much nicer format for processing?
+
+Specifically:
+* Use address instead of name in the call stacks.
+* Have a separate mapping from address to name.
+* Only return samples from the largest site, or the full program, rather than
+  per function called.
+
+My current use:
+
+perf report -q -g folded,count,0
+  -q  is quiet. Show no warnings.
+  -g  is call graph
+    
+Other options to explore:
+  -D - dump raw trace
+  -g flat
+
+Remember when I record:
+  perf record -d -g -F 301 
+    -d record virtual addresses of samples.
+    -g enable call graphs
+    -F frequency
+   
+I can't believe I can't find a way to dump just what I want: the raw sample
+stacks, grouped by stack trace.
+
+Can I try -g dwarf to get fble level things in the output?
+
+perf script ?
+
+Looks like I can write my own script. That might be best. It could give
+exactly what I want.
+
+Except my perf implementation doesn't have python support.
+
+But the output of 'perf script' looks surprisingly close to what I want?
+* We get each raw sample, in order of samples.
+* We get an address of the sample and the name, separately.
+* We don't get grouping, but I could group myself?
+
+It looks like my current conversion between linux perf and fble is wrong. It
+only gives the stack traces that start with the most common initial trace.
+
+It's not going to be easier to parse the output of perf script than it is the
+output of folded. But it would be more accurate.
+
+Honestly, I'm thinking I should define my own intermediate format, write a C
+program to quickly convert 'perf script' output to my format. Then work with
+that.
+
+Interesting that max stack is 128. So I'm only seeing the tail end of my
+stacks when they go really deep like they are.
