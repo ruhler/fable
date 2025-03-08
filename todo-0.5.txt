@@ -7,6 +7,11 @@ Things to consider doing for the fble-0.5 release.
   See thoughts/fble-0.5/gc_native.txt
   - Require explicit close for files and sockets.
 
+* Revisit abstract types in light of modular compilation.
+  Could we have a much simpler syntax and say anyone with access to the .fble
+  file can construct and deconstruct types, any with access to the .fble.@
+  file can't?
+
 * Improve performance of fble pprof viewer enough to be useful.
 
 * Output profiling samples instead of report from fble.
@@ -54,6 +59,7 @@ Things to consider doing for the fble-0.5 release.
  - IEEE floating point support.
  - More benchmark games.
  - Implement an image viewer.
+ - bitcoin miner
 
 * Fble Language Features
  - Add some way to catch or recover from errors at runtime?
@@ -65,11 +71,6 @@ Things to consider doing for the fble-0.5 release.
 
 * Consider removing higher order kinds from the language.
   Make everything either kind @ or %. What would we lose?
-
-* Revisit abstract types in light of modular compilation.
-  Could we have a much simpler syntax and say anyone with access to the .fble
-  file can construct and deconstruct types, any with access to the .fble.@
-  file can't?
 
 * Fix potential GC gen overflow?
  - See thoughts/fble-0.3/stack_alloc.txt for details.

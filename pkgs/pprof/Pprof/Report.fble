@@ -108,6 +108,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {
 
   Maybe@<Profile@> mprofile <- m.do(Parse(m, stdio.in));
   mprofile.?(nothing: m.return(False));
+
+  # Exit out early while we work on improving performance.
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Str|'Done parsing profile. Bailing out for now.'));
+  mprofile.?(just: m.return(True));
+
   Profile@ profile = mprofile.just;
 
   LM.Map@<Count@> flat = Counts(Nil<LocId@>, Nil<LocId@>, profile);

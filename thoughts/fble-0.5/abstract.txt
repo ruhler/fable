@@ -1,0 +1,84 @@
+Revisiting Abstract Types
+=========================
+The question is: can we redesign abstract types to take advantage of modular
+compilation?
+
+Because they are a pain to use, and I really don't use them anymore anywhere
+significant.
+
+What does modular compilation give me?
+
+When we ship a module, we don't have to ship the implementation as a .fble
+file. We can ship it as native code. It seems reasonable to assume the set of
+people you trust with manipulating the type corresponds to the set of people
+who have access to the .fble file.
+
+The other idea is: is there any way we can avoid the explicit conversions and
+casts? Can we please modify the type system to treat the types as equal
+otherwise?
+
+For example, I feel like what I really want is to say the set of trusted
+modules can access the type as if it were defined in terms of the plain type.
+Nobody else can.
+
+A problem with the current approach is that things are forgeable. Anyone can
+create a module under any path and use that to gain access to the type.
+
+You know? I don't think modular compilation helps at all with abstract types.
+We need access to the implementation if we want to run code in the
+interpreter. We shouldn't make compiled code a requirement for abstract types
+to work.
+
+There's still merit in trying to improve abstract types. In a dream world, the
+extreme case, I would want:
+* No casting required to use abstract types.
+* Ideally, but not a requirement, we don't have to write the implementation of
+  the type at all where it's declared for outside users.
+* Imagine we assigned a public key to every abstract type. Then say, when you
+  compile, you provide a set of private keys. You are allowed to access any
+  abstract type that you have the key for. That's the most flexible and secure
+  way to enforce things.
+
+Review of how abstract types work in other languages:
+* C: void* with casting for things.
+  You either know the secret of what real type it is or not.
+* C++ classes - only the class implementation gets access, or explicit friend
+  classes.
+  Essentially an explicit list of allowed users.
+* Java classes: subclass, class, package level granularity.
+  Predefined sets of allowed users.
+* Fble today: package says who can access or not, but need to explicitly cast.
+
+There must be some natural way to express things? Like, with a Map or Int
+interface, I want to declare it to the outside world as abstract 'Int@;', but
+the inside world knows what it really is. The inside world is allowed to use
+it directly, the outside world isn't.
+
+Again, the question is: how do you define who is inside and who is outside?
+And in this case, it seems I want two separate declarations: the 'outside'
+opaque declaration and the 'inside' actual declaration.
+
+It's kind of how like in C++ I can forward reference a class without giving an
+implementation in the public header. Then pass around a private header with
+the actual implementation. The build system enforces in that case who has
+access to the private header.
+
+Maybe modular compilation does help here? For example, imagine we have an
+abstract type thing that is different from any other type. Use that in the
+header file for a module. In the implementation file for the module, use the
+actual implementation. When distributing the code, don't share the
+implementation.... but that's where we get stuck. You need to share the
+implementation to run the code.
+
+Somehow we would need to tell those on the inside to load the real
+implementation of the type.
+
+Maybe we should start by removing the need for explicit cast.
+
+Implementation wise I could require every type to have an access list. Most
+types will be full access. That way we don't have to special case abstract
+types in type checking. Types are treated the same as long as you have full
+access to each. Otherwise they are treated different. You are allowed to
+construct and access fields from a type you have access to, otherwise you are
+not.
+

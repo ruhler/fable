@@ -66,6 +66,7 @@ Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
   };
 
   @ S@ = *(
+    Int@ parsed,
     Int@ next_id,
     Map@ locations,
     Profile@ profile
@@ -100,11 +101,14 @@ Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
   (Int@, List@<String@>, S@) { S@; }
   AddSample = (Int@ value, List@<String@> path, S@ s) {
     PathS@ ps = Path(path, s);
-    ps.s.@(profile: ps.s.profile.@(
-        samples: InsertSample(ps.s.profile.samples, ps.path, List[value])));
+    ps.s.@(
+        parsed: Incr(ps.s.parsed),
+        profile: ps.s.profile.@(
+          samples: InsertSample(ps.s.profile.samples, ps.path, List[value])));
   };
 
   (S@) { M@<Maybe@<Profile@>>; } ParseS = (S@ s) {
+    # /Core/Unit%.Unit@ _ = /Core/Debug%.TraceLn(/Core/Int/Show%.Show(s.parsed));
     String@ word <- m.do(GetWord);
 
     # We're done once we reach the next line of the form:
@@ -124,6 +128,7 @@ Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
   String@ _ <- m.do(I.GetLine(in));
 
   ParseS(@(
+      parsed: Int|0,
       next_id: Int|0,
       locations: Empty,
       profile: @(

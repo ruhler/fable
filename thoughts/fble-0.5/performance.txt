@@ -1,0 +1,245 @@
+Fble 0.5 Performance
+====================
+The big goal of fble-0.5 is to substantially improve performance.
+
+I'm thinking focus on function calls. We looked pretty deep into allocations
+in fble-0.3 timeframe, so let's avoid that for now.
+
+Use pprof for my benchmark. That's my major performance blocker app wise at
+the moment.
+
+While I'm at it, I can definitely play around with the processing and output
+of pprof to get something more useful. Start with linux perf based input to
+pprof, because that's what I can already do.
+
+What applications should we do linux perf on? Well, seems obvious, right?
+pprof itself. I'll have to bootstrap that somehow though. I suppose I could
+bootstrap it on itself and an empty profile, just iterate enough until the
+profile is interesting enough. But where would it end? No. Better to have a
+concrete profile from somewhere to start. Perhaps fbld is a reasonable place
+to start.
+
+Step 1: Acquire a decent linux perf raw output to benchmark against.
+Step 2: Play around with how I want to view the profile data.
+  Because this might let us drastically simplify what pprof needs to do,
+  bringing it more into the realm of usability.
+Step 3: Analyze and improve the fble level pprof implementation.
+  To make sure we're starting with something reasonably well optimized.
+Step 4: Analyze and improve the fble runtime implementation.
+  With particular eye and focus towards optimizing FbleCall based on static
+  knowledge.
+
+For baseline profile, using:
+
+  perf record -d -g -F 301 -- ./pkgs/fbld/fble-fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+
+For reference, fble-perf-profile can produce a profile report for this with:
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.02
+  Maximum resident set size (kbytes): 1368
+
+My target for pprof to start, let's say, is to process the same in 30 seconds
+time, say.
+
+Note that only the first 20% of the output file, around 8740 lines have
+relevant information. I expect processing to end just after that.
+
+Let's get a sense of how long it takes right now.
+
+After 10 minutes waiting with no apparent output, memory slowly grew up to:
+
+  Maximum resident set size (kbytes): 320504
+
+Let me add some tracking of progress so I can tell how close it was to doing
+something useful.
+
+The counter shows it takes just under 10 minutes to parse the 8740 lines.
+Let's focus on that to start. We need that to be much quicker, regardless of
+how we present the parsed information.
+
+Let's get a baseline time and memory use. Then get an fble profile. Then get a
+linux perf profile.
+
+Baseline time:
+
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/perf.raw.txt
+
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 9:23.42
+  Maximum resident set size (kbytes): 254964
+
+What I see in fble profile of it:
+* 51% Int map lookup.
+* 40% AddSample.
+
+The counts for how many times GetLocs is called look impressively large. What
+do we expect here? 26 million calls? Are there that many characters being
+read? Yeah, I could believe that. The file is 97MB. 20% of that is around
+20MB.
+
+The int map lookup is split between Ascii%.Chr! from the call to GetChar, and
+char lookup part of string lookup for converting a location to its
+corresponding LocId@. The AddSample is all from int map lookup: 1,532,342.
+GetChar is 1,490,087. Those two alone account for 70% of overall time.
+
+As I'm viewing the profile, I would like now to have an option to say: remove
+the GetChar and AddSample cases, focus on what's left. To help find that
+remaining 30%. Looks like the rest is all recursive loop overhead of state
+monad?
+
+Looking at the linux perf profile:
+  30% time in GcRealloc. Something pathological maybe?
+  21% in incremental GC. Excessive allocation of some sort?
+  20% in id lookup.
+  16% GetChar.
+
+Apparently IncrGc is mostly from GcRealloc? I guess that makes sense. That's
+when we do the actual allocations.
+
+Unfortunately it's all confused by FbleCall, so I can't easily see in the fble
+based reporting which thing is leading to GcRealloc calls like this.
+  
+Note that fble-perf-report uses a linked list to look up block ids instead of
+a map, in case that's relevant.
+
+I have a suspicion that I have a pathological case going on related to
+GcRealloc. If I can figure out what that is, maybe I can fix it by
+restructuring the code.
+
+It looks like the GcRealloc is all from deep chains of:
+  _2f_Core_2f_Monad_2f_State_25__2e_Monad_21_.0008
+  FbleCall
+  PartialApplyImpl
+
+Interesting. What's going on there? What exactly is 0008? Decoded:
+
+ /Core/Monad/State%.Monad!
+
+Let me try doing disassembly on that module to see more precisely what 0008 is
+about.
+
+    do: <@ A@>(State@<A@> ma)<@ B@>((A@) { State@<B@>; } f, S@ s) {
+      R@<A@> ra = ma(s);
+      f(ra.x, ra.s);
+    }
+
+It's the body of the do function, given arguments ma, f, s. It does ma(s),
+gets .x and .s, and calls the resulting function.
+
+Notice we create a result struct, return it from ma(s), then immediately throw
+it away? Any way to know what function we are passing in f, besides some
+partially applied function?
+
+Based on the fble profile, it's a bunch of nested do functions, bottoming out
+with GetLocs!, GetChar!!, and GetLocs!.:.:!
+
+For GetLocs, ra.x is a List of strings, and ra.s is Unit. When we return, we
+wrap that in a result struct, which will need to be GC allocated. We can't
+pack it. We quickly throw away that GC struct, but by then the IncrGc damage
+is done.
+
+The cost of GcRealloc is split between IncrGc and FbleAllocRaw. These come
+from calls to NewGcValueRaw.
+
+Hypothesis: The state monad is forcing us to allocate the intermediate struct
+on every iteration, which costs a lot in terms of allocation and GC overhead.
+
+Is there any way we can get rid of that allocation? Preferably entirely?
+
+Perhaps a custom implementation of IO monad not based on state? How would that
+look?
+
+We just need a Monad instance, right? How would it look?
+
+We could get away with a pure monad implementation?
+
+  <@>@ M@ = <@ T@> { T@; }
+  return: <@ A@>(A@ x) { x; }
+  do: <@ A@>(A@ ma)<@ B@>((A@) { B@; } f) { f(ma); }
+
+Except our low level IO functions expect a world to be fabricated.
+
+I think it's doable. Feels slippery though. We still have the dependency chain
+through f, right?
+
+I wish we could return multiple results from a function without incurring the
+extra allocation overhead from it every time. If we could do that in general,
+that would be awesome. Seems rather particular to special case IO for this,
+when ideally we have this work for any functions.
+
+Well, consider the do function:
+
+      R@<A@> ra = ma(s);
+      f(ra.x, ra.s);
+
+I assume ma(s) is right away going to allocate the result, which we right away
+throw away.
+
+It looks like the current logic is not to merge frames if the function is a
+REF_VALUE. In other words, in the case of recursive functions. So if you have
+a small, tight, state monad loop, you have to allocate every time around the
+loop just to be able to move data on to the next iteration.
+
+Could we change the type of State so that the ma function is responsible for
+calling f when it is done, instead of returning a result? Except, how would we
+return the final result?
+
+Maybe we could do this. Let's think.
+
+Today a state monad is a function that takes a state and returns a result and
+a state. I'm suggesting instead that a state monad should take:
+* a state
+* an (optional?) continuation
+
+It takes the state, computes the result and new state, then passes that on to
+the continuation.
+
+<@>@ State@ = <@ T@>(S@, (T@, S@) { ...
+
+We get stuck. We don't know what type of thing is eventually going to be
+returned.
+
+I wish I could just recognize that we are returning two separate values,
+return them via registers, use them from the caller as two separate things...
+
+Or, allocate space on the caller for the two separate results, and pass that
+to the callee?
+
+But it all depends on your use case. Whose to say the result isn't already
+allocated in one of the args? Then make a copy?
+
+The caller knows in this case that the struct isn't going to live past the
+caller's lifetime. Maybe we want to say: here is an optional pre-allocate
+results value you can use to return your value.
+
+But that's like, if you know you are allocating something that is going to be
+returned to the caller, for sure, then allocate it in the callers frame
+directly.
+
+I don't know. I think it would be an interesting experiment to turn IO into a
+pure monad and see how big a difference it makes. Shall I hack it up and see?
+
+---
+
+Let's look at GetChar. Or rather, Int map lookup. That should be a tight loop,
+without the state monad issue.
+
+IntP lookup. 14% of overall time.
+* Calls to FbleStructValueField, FbleUnionValueTag, FbleUnionValueField,
+  FbleTailCall, FbleFuncValueFunction, and itself.
+
+FbleTailCall has 20% of its time in memcopy. The rest is overhead. That's a lot
+of overhead, don't you think? For a single check and a few assignments? A lot
+of overhead from the pre and post amble of the function to save and restore
+from the stack?
+
+Would it be reasonable to try to inline all of these functions into the
+generated code? Maybe avoid having to moving things around registers and the
+stack so much?
+
+---
+
+Every time I think about how to change IO monad to avoid the pair, it leads me
+back to: I should find a solution for how to make IO monad with the pair work.
+Let's start a separate discussion on that, call it
+state_monad_performance.txt.
+

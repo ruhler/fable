@@ -23,3 +23,136 @@ Tough luck for you.
 I just really hope there isn't a use case where we want to have some side
 effect after the last reference to something is removed. That will be
 difficult to deal with.
+
+---
+
+Places where I use GC's OnFree, and how to address them:
+* For closing sockets.
+* For closing files, but not stderr.
+
+These are needed for:
+* Flushing the buffer associated with the file if any.
+  - But I already explicitly flush after every write, so not an issue?
+* Freeing up resources in the OS associated with the file.
+
+We can't just ignore them, though I probably wouldn't observe any major issues
+if I did. What's the alternative? Explicit close by the user. That's the only
+reasonable alternative, right?
+
+For files, currently I return them as streams. I would need to change the
+underlying API for sure, and probably the higher level API as well.
+
+For example, instead of returning a stream, return a pair of stream and close
+function. Or, if it's more convenient now, return an opaque handle to the
+object, which you can pass to Read, Write, Close methods.
+
+---
+
+I'm still not convinced GC shouldn't be involved in freeing things.
+
+Thinking about input and output streams. When reading from an input stream,
+there is a real difference between 'the stream is closed, nothing more to
+read' and 'block waiting for the next input'. That suggests pretty clearly
+that, when writing to an output stream, we need a way to explicitly say "the
+stream is closed, nothing more to read".
+
+That's clear with the socket case in question. We need to explicitly tell
+elinks the stream is closed, otherwise it thinks it's blocking waiting for the
+next input.
+
+The other direction isn't as obvious to me. Does the writer of a stream care
+about whether the stream is open or closed? With pipes we get SIGPIPE in that
+case. But you could also imagine allowing the writer to keep writing without
+concern for who is reading.
+
+I suppose the question is: should there be an explicit communication channel
+from the reader of a stream back to the writer to say the stream is closed?
+All the other information is going from writer to reader, not the other way
+around.
+
+Imagine a world where the writer literally cannot tell if there is a reader or
+not. Then, from an information flow point of view, there is no reason the
+reader should ever have to explicitly close an input stream. Unlike the other
+direction, this conveys no information to anyone.
+
+But input streams take up real resources in practice. Maybe a file descriptor
+entry in the kernel somewhere. If we don't explicitly close input streams,
+eventually we'll run out of those resources. That sounds exactly like what the
+garbage collection ought to be doing for us.
+
+Options:
+* Rely entirely on the fble program to close the stream in any direction.
+  I suggest we expose a C99 like interface based on Int@ for file descriptors,
+  with read, write, open, close functions. We can layer better abstractions on
+  top of that.
+* If a user forgets to close a stream...
+  - Might be nice if GC closes it for us?
+  - Or maybe we should check to close the stream when the next call to open is
+    done?
+  - Or maybe it would be nice to have an assert run when GC collects the
+    object, to crash the program and force the user to see the error?
+  - Or just leak and not our problem.
+
+If we go the Int@ route for file descriptors, there is no way to know who
+might try to reference the file eventually. Anyone can pull a reference to it
+out of thin air. That sounds like a bad API to me.
+
+Maybe the trick is to think of very different use cases where the question of
+GC on free would come into play. Maybe that will help to shed light on things.
+
+---
+
+GC layer options:
+A. NativeObject is pure memory. No OnFree allowed.
+ I would like to get here if possible. Maybe start here even if too
+ restrictive.
+B. As today: OnFree can have arbitrary side effects.
+ I would like to move away from this.
+C. OnFree sets some value somewhere that can be read later.
+ Possible compromise option if (A) is too strict.
+
+File API options:
+A. Current approach: return functions to operate on file.
+  No explicit handle to the open file.
+B. Return explicit abstract handle to file.
+  Which can be used with read, write, close.
+C. Return int fd.
+  And rely on higher layer to provide appropriate abstraction on top.
+
+(C) is worse than (B) in the sense that you can create an int out of thin air.
+At least (B) can track who all can still reference the object. (B) works
+better than (C) for windows sockets too.
+
+Where (A) is good depends on the higher level abstraction. One question with
+(A) vs (B) is if we have an IO stream, can we close the input stream
+separately from the output stream? How would the API for that look?
+
+Higher level stream API options:
+* Clearly input streams need an explicit end of file. A way to know we are
+  done as opposed to waiting for ever.
+* That suggests clearly output streams need an explicit way to send end of
+  file. That could be via explicit close, or explicit end of stream marker.
+
+Now here's where things get interesting.
+
+Imagine we have an explicit close. I claim we still need to rely on GC with
+side effects. Because after you close, you still have a handle to the (closed)
+file object. We can't get rid of that handle until after all references are
+gone, because we need at the very least to mark that the file is closed and we
+should return that appropriately if anyone asks.
+
+So we still need GC to have OnFree. That is different from close. Close closes
+the stream. OnFree reclaims the handle for different future use.
+
+Now imagine a pure implementation of this API. We have the same problem, but
+no native code. For example, maybe opening a file adds an entry to a map.
+Closing the file marks that entry as closed, but can't remove it from the map
+yet, because there are still outstanding references. How can we remove it from
+the map? We need to know when there are no longer outstanding references. That
+suggests we need a way for GC to invoke fble code OnFree, not just native
+code.
+
+That sounds very scary and suspicious. Maybe we need processes built into the
+language or a complete rethinking at a step back to cleanly address this
+issue.
+

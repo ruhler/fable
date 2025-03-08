@@ -1,0 +1,91 @@
+State Monad Performance
+=======================
+
+Here's the do function for state monad:
+
+  R@<A@> ra = ma(s);
+  f(ra.x, ra.s);
+
+ra is a struct. If ma is a recursive call, we allocate the struct in ma,
+GcRealloc it on return, then access its fields and throw it away. The
+GcRealloc is costing us too much. It's no good to do an allocation every
+iteration of a tightly nested loop that we are just going to throw away right
+away.
+
+Now, if we had code like:
+  
+  M@<String@> GetLine = {
+     Maybe@<Char@> mc <- m.do(I.GetChar(in));
+     mc.?(nothing: m.return(Str|'');
+     String@ tail <- m.do(GetLine);
+     m.return(Cons(mc.just, tail));
+  };
+
+We run into this, because GetLine is in the 'ma' args slot to do in the
+recursive call. If we were okay getting the reverse list, we could instead
+write this as:
+     
+  (String@) { M@<String@>; } GetLine = (String@ read) {
+     Maybe@<Char@> mc <- m.do(I.GetChar(in));
+     mc.?(nothing: m.return(read);
+     GetLine(Cons(mc.just, read));
+  };
+
+In this case, the only call to do has GetChar in the ma slot, and I assume we
+merge stacks on that because it's not a recursive call, so we don't pay
+any GC cost for the intermediate result value.
+
+Is it faster to write the code like this, and insert a Reverse call in
+m.return? Probably. I should try it. I wouldn't like it to be though.
+
+Can we come up with a better solution that doesn't require rewriting code?
+
+What we need is for the intermediate struct value to be allocated on the
+callers stack. Options:
+* merge stacks so that callee stack is shared with caller.
+  Can't do this forever, blows up memory use. But maybe we only need it one
+  layer at a time or some such?
+* ???
+
+---
+
+Options:
+A. Copy the allocated struct from the callee stack to the caller stack.
+B. Allocate the struct into the caller stack directly.
+C. Allocate the struct at the start of the callee stack, and bump the caller
+stack past that to include it on pop frame.
+
+(C) sounds pretty reasonable to me conceptually. A function hopefully knows
+what it is allocating to be returned to the caller versus what is just
+temporary. Hopefully it can reorder things or reserve space or something to
+put the object where it needs to be right away. Then, in FblePopFrame, we have
+the ability to copy back any size object on the stack to the caller.
+
+Currently we have a fairly elaborate frame structure that makes this
+challenging, because it gets in the way. You could imagine keeping the frame
+structure on a separate stack so that isn't an issue.
+
+I want to step through the code with a debugger to get a better sense of what
+it looks like. Just in case there's something going on I'm not aware of.
+
+Observations from gdb:
+* The stack is absurdly deep. What's with that? #2138 frames deep.
+* The PartialApplyImpl is happening to /Core/Monad/State%.Monad!
+  Specifically the do function. This must be us supplying the final state
+  argument.
+* The 'ma' argument is the PartialApplyImpl for Monad itself.
+* The 'f' argument is /Pprof/Perf%.Parse!.GetLocs!
+  Which is the otherwise anonymous function from Maybe@<Char@> to
+  M@<List@<String@>> in GetLocs.
+
+Note that we don't do any allocations in GetLocs directly. It's all via helper
+functions like return, Cons, Str, List. That's means for an approach where we
+allocate to the front of the frame to work, it has to be able to go through
+multiple layers of functions.
+
+Should I experiment again with FastCat to see if we see similar performance
+issues there? Or just to have something much similar to better understand
+what's happening?
+
+Well, first I need to fix fastcat, because it crashes. I should add a test for
+it too.
