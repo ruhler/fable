@@ -1,0 +1,16 @@
+Pprof
+=====
+For discussion of the UI that I want.
+
+Here's a concrete use case I feel like I want:
+1. View the list of blocks by percent of time the program spent in or under
+   that block.
+2. Maybe we could merge together similar blocks in the list so there is less
+   to look at.
+3. Be able to easily 'remove' a block from that list. Which removes any
+   samples that have that block anywhere in it.
+
+So I collect together a list of interesting blocks by removing one after the
+other. Now I have a high level summary breakdown of where time is going. Then
+I want to be able to focus at one of those blocks at a time. Rinse and repeat?
+

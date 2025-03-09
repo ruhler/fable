@@ -164,6 +164,7 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
   code->magic = FBLE_CODE_MAGIC;
   code->executable.num_args = num_args;
   code->executable.num_statics = num_statics;
+  code->executable.max_call_args = 0;
   code->executable.run = NULL;
   code->profile_block_id = profile_block_id;
   code->num_locals = num_locals;
@@ -255,9 +256,9 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
     FbleCode* block = blocks.xs[--blocks.size];
     FbleName block_name = profile_blocks.xs[block->profile_block_id];
     fprintf(fout, "%s[%04zx]\n", block_name.name->str, block->profile_block_id);
-    fprintf(fout, "  args: %zi, statics: %zi, locals: %zi\n",
+    fprintf(fout, "  args: %zi, statics: %zi, max_call_args: %zi, locals: %zi\n",
         block->executable.num_args, block->executable.num_statics,
-        block->num_locals);
+        block->executable.max_call_args, block->num_locals);
     PrintLoc(fout, block_name.loc);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];

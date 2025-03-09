@@ -265,3 +265,286 @@ if/how we can optimize it.
 
 First, the non-monadic version.
 
+Flat Profile by Self Time
+-------------------------
+    %     self  block
+19.49    14298  FbleCall[0006X]
+11.36     8336  FbleNewUnionValue[000bX]
+ 7.83     5747  FbleFuncValueFunction[000fX]
+ 7.56     5548  FbleStructValueField[0010X]
+ 6.61     4853  FbleUnionValueTag[0012X]
+ 6.42     4710  _2f_Core_2f_Int_2f_IntP_2f_Map_25__2e_Lookup_21_.0021[000cX]
+
+Breaking down into higher level chunks:
+ 47% Ascii.Chr
+ 15% IStreamImpl
+ 13% OStreamImpl
+
+Okay, let's compare now to the --monadic version. If we are interested in
+optimizing the monad performance, it's the difference between these that we
+care about.
+
+Monadic is 15% slower. Not bad actually.
+
+* We are adding another FbleCall into the stack, so we get additional overhead
+  from that.
+* More calls to FbleFuncValueFunction.
+* PartialApplyImpl is showing up. That's adding 4% of the 15% it looks like.
+* Calls to memcpy have increased noticeably, due to increase in FbleCall and
+  FbleTailCall, and the addition of PartialApplyImpl.
+* More calls to FbleTailCall, from the monad and from PartialApplyImpl.
+* Calls to FbleNewFuncValue that we don't have before. That must be from the
+  nested do.
+
+Interestingly, a lot of the data accesses seem to be faster in the monadic
+version. Maybe that's just a trick of how sampling works?
+
+Anyway, it seems not so unreasonable. If we can make things a little bit
+faster, it will help everything.
+
+Any way we can avoid the extra FbleNewFuncValue calls?
+
+I'm not seeing the big GC cost I get in pprof, but that's because we do the
+recursive call through the 'f' argument to do, never the 'ma' argument. That's
+probably the issue I really want to address here.
+
+Let's see if we can't do some small optimizations here and there. Starting
+with memcpy.
+
+Uses of memcpy:
+* PartialApplyImpl
+  Copies function statics to nargs
+  Copies args to nargs
+* PartialApply
+  Copies args into statics
+* TailCall
+  Copies gTailCallData args in to 'args'.
+  Copies unused args into gTailCallData args, 2 branches.
+* FbleCall
+  Copies unused args into gTailCallData
+* FbleTaillCall
+  Copies args into gTailCallData.
+* FbleNewFuncValue
+  Copies executable into function value.
+
+In the non-monadic version, all samples are from FbleCall, then FbleTailCall.
+The monadic version also has PartialApplyImpl.
+
+The FbleTailCall case is a little sad, because the callers start by collecting
+all the args into an array. Then we copy those straight to another array. It
+would be really nice if we could have the callers copy to the right array from
+the start.
+
+But that means breaking of abstractions. Is it worth it? You know I'm going to
+want to break abstractions for performance eventually, right?
+
+Yeah, FbleTailCall is really silly. Much better if we could get callers to do
+the right thing in the first place. We could maybe even remove any calls into
+fble? If we're willing to share the internal implementation of tail call with
+everyone...
+
+FbleTailCall is just under 4% of the pprof profile. We could get 4% savings if
+we optimized things. That's a decent amount.
+
+Can you remind me why we group func_and_args together in gTailCallData instead
+of having func as a separate field?
+* It's because of CompactFrame, so we can pass everything more easily. Fair
+  enough.
+
+Here's what callers would have to know about tail calls:
+* There is a dedicated buffer you need to use to convey function and args.
+* You have to check if the buffer is big enough and resize as needed.
+  It should almost always be big enough. But still you have to check.
+* Set the size, first arg is the func, then rest of the args.
+* Then return this magic value to indicate to the caller you are doing a tail
+  call.
+
+I should be able to get the compiler to tell me the max size of the buffer, so
+we don't have to worry about checking and resizing it. Do it based on the
+function type with most arguments seen during compilation. We could never
+apply more args than that. No need for capacity or resizing that way, which
+will be nice.
+
+FbleTailCallData can have the structure.
+FbleTailCallSentinel can be the magic value. Or FBLE_TAIL_CALL_SENTINEL?
+
+It's not that bad. Except, if we don't have an intermediate function, we break
+anyone anytime we need to change how tail calls are done.
+
+Maybe we could compromise with an FbleTailCall you call after filling in the
+FbleTailCallData elsewhere? Or at this point, it doesn't seem worth having an
+overhead. Just take the cost of everyone knowing about a tail call.
+
+It's not that bad, right?
+* C backend
+* aarch64 backend
+* interpreter
+* value itself
+
+Yeah, that seems not so bad. And it's heading more in the direction I want to
+go of inlining stuff for real performance. What do you think? Shall we try it?
+Shall we document it very clearly?
+
+The hardest part is probably computing the max size needed for the buffer. I
+can start with that separately.
+
+Conceptually it seems reasonable. We need to return the arguments to the
+caller, potentially multiple callers up the stack. We can't do that on the
+stack itself. So return the function and arguments in a global, short lived
+side channel.
+
+Technically we use the result in the following places:
+* TailCall, FbleCall
+
+So we could allocate the buffer there and pass it in. But why bother? No need
+to pass a buffer we could hard code everywhere. At least until we go to make
+a multi-threaded implementation... In which case we can turn it into a thread
+local buffer?
+
+---
+
+The compiler could store the max func type either with a function when you
+allocate the function, or with a module. We can do the capacity check when
+allocating the function or when allocating the module.
+
+The compiler can check for max func type by looking at the type of the
+function any time we do a function call. Hmm... But what about an abstract
+function call? For example, (Int@) { T@; }, where we don't know T@? Can we
+rely on the caller to know in case of overapplied args?
+
+Conceptually we could keep the tail call buffer as part of the value heap.
+Practically that's a bit tedious, because it means an extra layer of
+indirection and another violation of abstraction required. We could allocate a
+sentinel value as part of the heap too, instead of having to hard code a magic
+number for it. Maybe keep part of FbleValueHeap* public?
+
+Review of max size needed for tail call buffer:
+* Tail call instruction knows how many args are needed.
+* PartialApplyImpl does statics + args. Hmm... It's hard to know there, isn't
+  it? This comes from PartialApply, and would be limited by the function type.
+
+In other words, a function type should be sufficient, right? Or, when we
+allocate a function, it's type? Or...? I'm not sure.
+
+If we just look at calls, we'll miss the partial apply case. For example:
+
+  F@ f = foo(a, b, c);    # three args.
+  f(d, e, f);             # three args.
+
+But foo takes 6 args.
+
+Can we get into this case without knowing the type of foo? Or maybe we can
+say, allocate double the max number of args applied at any given time, because
+you are always applying to the value, and that value can worst case be a
+partially applied thing, and ...
+
+Could we create a function with an unbounded number of args?
+
+(Int@, Int@, A@) { A@; } f = (Int@ x, Int@ y, A@ a) {
+   a;
+};
+
+g = f(1, 2, f(3, 4, f(5, 6, f(7, 8, Unit))));
+
+What happens here?
+
+If we start with f(1, 2), we create a partial apply. Then ...
+
+I'm not sure. It's hard to tell what could happen at runtime.
+
+g = f(1, 2);      # PartialApply with 2 args.
+h = g(f, 3, 4);   # Apply f, over apply with 2. Total of 5 needed.
+
+Okay, so I'm thinking 2x might be good enough? Or not.
+
+(Int@, ... Int@) {...} f = ...
+
+g = f(1, 2)
+h = g(3, 4)
+i = h(5, 6)
+...
+
+We have to take the function type into account. Maybe: take function type into
+account, then double that? The double is needed to get around the poly thing.
+
+Or, we just need double the number of args expected by a function? Because
+worse case, N args can lead to a PolyApply with N-1 stored up?
+
+No, because I could still do:
+f = (Int@ x) { ... (Int@ y ... }
+
+f(1, 2, 3);
+
+Ah. Okay. So really what I want is the sum of:
+  A. Max num args expected by a function.
+  B. Max num args applied to a function.
+
+(A) represents the most we can store up in a PolyApply. (B) represents the
+most we can extend to that. No need to worry about polies or deepest size
+type. This is a straight forward calculation.
+
+Cool. I'm happy with that. Take (A) + (B). You can add an extra 1 if you want
+for the function, but really it should be (A)-1 + (B) + 1 for the function, so
+(A) + (B) should suffice.
+
+Cool. So really the questions are:
+* Where to store (A) and (B)?
+* Where to store the tail call buffer, the value heap or a global variable?
+* Whose job to expand tail call buffer based on (A) and (B)?
+  Depends where we store it. If we store with a function, then check when we
+  allocate the function. If we store with a module, check when we allocate the
+  module.
+
+Here's what I suggest:
+* Add (B) to FbleExecutable.
+  Too bad we need to make that slightly bigger, but oh well.
+* Move tail call buffer to FbleValueHeap.
+* Add fields for (A) and (B) to fble value heap too.
+* Check size of tail call buffer on allocation of new function.
+* When we are ready, expose the buffer and sentinel fields from FbleValueHeap
+  to allow direct access by backends.
+
+Ready to give it a try?
+
+On second thought, I don't need special handling for PartialApplyImpl. I know
+exactly how many args we are going to pass for that. I'm more worried about
+the unused args case. Double check that.
+
+Cases to worry about:
+* TailCall does a tail call when we have some unused arguments to the original
+  call. We know max number of args coming in and max number of args to add. So
+  no big deal, right? Just do double max_tail_call_args.
+
+  Also, That's internal for now. I can keep it internal? No special handling
+  needed on the first pass?
+* Tail call returns a function with unused args. We know unused args is
+  bounded by max_tail_call_args.
+* FbleCall does a tail call with unused.
+  This is max_tail_call_args + max_call_args, right?
+
+The real trick is coming up with upper bounds for num_unused. What say you?
+
+num_unused is argc - exe->num_args. Cases:
+* argc is from a tail call. So max_tail_call_args gives us an upper bound.
+* argc is from FbleCall.
+
+Okay, so worst case is we have an FbleCall with a whole bunch of overapplied
+args, and that returns a tail call which has its own args.
+
+For example:
+   f(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+Where f takes a single argument and returns a function. The function is a
+result of doing a tail call...
+
+Basically I need to record max call size, not max tail call size. Then we want
+to ensure the buffer is double the max call size. No need to worry about num
+args anywhere. That is apparently not relevant, because PartialApply knows how
+to properly set max_tail_call_args based on that.
+
+Careful:
+* Special handling needed for FbleApply? Yes. Add another check there.
+
+So our math is: 2x max_call_args needed, because we know num_unused is bounded
+by (max_call_args - 1) and args is bounded by max_call_args.
+

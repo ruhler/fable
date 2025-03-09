@@ -1272,6 +1272,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Local* dest = exit ? NULL : NewLocal(scope);
 
+      if (argc > scope->code->executable.max_call_args) {
+        scope->code->executable.max_call_args = argc;
+      }
+
       if (exit) {
         FbleTailCallInstr* call_instr = FbleAllocInstr(FbleTailCallInstr, FBLE_TAIL_CALL_INSTR);
         call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);

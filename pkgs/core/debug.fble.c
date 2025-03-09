@@ -57,6 +57,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
   FbleExecutable trace_exe = {
     .num_args = 1,
     .num_statics = 0,
+    .max_call_args = 0,
     .run = &TraceImpl,
   };
 
@@ -68,6 +69,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
 static FbleExecutable Executable = {
   .num_args = 0, 
   .num_statics = 0,
+  .max_call_args = 0,
   .run = &Run,
 };
 

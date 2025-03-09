@@ -364,6 +364,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   fprintf(fout, LABEL ":\n", executable_id);
   fprintf(fout, "  .xword %zi\n", module->code->executable.num_args);
   fprintf(fout, "  .xword %zi\n", module->code->executable.num_statics);
+  fprintf(fout, "  .xword %zi\n", module->code->executable.max_call_args);
 
   FbleName function_block = module->profile_blocks.xs[module->code->profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
@@ -745,6 +746,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, ".Lr.%04zx.%zi.exe:\n", func_id, pc);
       fprintf(fout, "  .xword %zi\n", func_instr->code->executable.num_args);
       fprintf(fout, "  .xword %zi\n", func_instr->code->executable.num_statics);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->executable.max_call_args);
 
       FbleName function_block = profile_blocks.xs[func_instr->code->profile_block_id];
       char function_label[SizeofSanitizedString(function_block.name->str)];

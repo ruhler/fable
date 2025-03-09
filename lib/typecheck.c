@@ -923,8 +923,7 @@ static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV ex
   for (size_t i = 0; i < vars.size; ++i) {
     if (vars.xs[i].value == NULL) {
       error = true;
-      ReportError(loc, "unable to infer type for ");
-      FblePrintType(vars.xs[i].var);
+      ReportError(loc, "unable to infer type for %t\n", vars.xs[i].var);
     }
   }
 

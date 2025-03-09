@@ -232,6 +232,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   fprintf(fout, "static FbleExecutable " LABEL " = {\n", executable_id);
   fprintf(fout, "  .num_args = %zi, \n", module->code->executable.num_args);
   fprintf(fout, "  .num_statics = %zi,\n", module->code->executable.num_statics);
+  fprintf(fout, "  .max_call_args = %zi,\n", module->code->executable.max_call_args);
 
   FbleName function_block = module->profile_blocks.xs[module->code->profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
@@ -441,6 +442,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  static FbleExecutable exe_%zi = {\n", exe_id);
         fprintf(fout, "    .num_args = %zi,\n", func_instr->code->executable.num_args);
         fprintf(fout, "    .num_statics = %zi,\n", func_instr->code->executable.num_statics);
+        fprintf(fout, "    .max_call_args = %zi,\n", func_instr->code->executable.max_call_args);
         fprintf(fout, "    .run = &%s_%04zx,\n", function_label, func_instr->code->profile_block_id);
         fprintf(fout, "  };\n");
 

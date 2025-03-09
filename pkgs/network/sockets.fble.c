@@ -228,6 +228,7 @@ static FbleValue* NewIStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId mo
   FbleExecutable exe = {
     .num_args = 1,
     .num_statics = 1,
+    .max_call_args = 0,
     .run = &IStreamImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + ISTREAM_BLOCK_OFFSET, &sfd);
@@ -250,6 +251,7 @@ static FbleValue* NewOStream(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId mo
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 1,
+    .max_call_args = 0,
     .run = &OStreamImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + OSTREAM_BLOCK_OFFSET, &sfd);
@@ -337,6 +339,7 @@ static FbleValue* Client(FbleValueHeap* heap, FbleBlockId module_block_id)
   FbleExecutable exe = {
     .num_args = 3,
     .num_statics = 0,
+    .max_call_args = 0,
     .run = &ClientImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + CLIENT_BLOCK_OFFSET, NULL);
@@ -468,6 +471,7 @@ static FbleValue* Accept(FbleValueHeap* heap, FbleValue* sfd, FbleBlockId module
   FbleExecutable exe = {
     .num_args = 1,
     .num_statics = 1,
+    .max_call_args = 0,
     .run = &AcceptImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + ACCEPT_BLOCK_OFFSET, &sfd);
@@ -486,6 +490,7 @@ static FbleValue* Server(FbleValueHeap* heap, FbleBlockId module_block_id)
   FbleExecutable exe = {
     .num_args = 3,
     .num_statics = 0,
+    .max_call_args = 0,
     .run = &ServerImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + SERVER_BLOCK_OFFSET, NULL);
@@ -513,6 +518,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleProfileThread* profile, FbleFunct
 static FbleExecutable Executable = {
   .num_args = 0, 
   .num_statics = 0,
+  .max_call_args = 0,
   .run = &Run,
 };
 

@@ -1,0 +1,33 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+# An example of a case that could require a surprisingly large tail call
+# buffer. We didn't run into bugs with this in practice, but at one point I
+# was afraid we might.
+<@>@ F@ = <@ T@>(Unit@, T@) { T@; };
+F@ F = <@ T@>(Unit@ _, T@ x) { x; };
+
+@ F0@ = F@<Unit@>; F0@ F0 = F<Unit@>;
+@ F1@ = F@<F0@>; F1@ F1 = F<F0@>;
+@ F2@ = F@<F1@>; F2@ F2 = F<F1@>;
+@ F3@ = F@<F2@>; F3@ F3 = F<F2@>;
+@ F4@ = F@<F3@>; F4@ F4 = F<F3@>;
+@ F5@ = F@<F4@>; F5@ F5 = F<F4@>;
+
+@ G0@ = F@<F5@>; G0@ G0 = F<F5@>;
+@ G1@ = F@<G0@>; G1@ G1 = F<G0@>;
+@ G2@ = F@<G1@>; G2@ G2 = F<G1@>;
+@ G3@ = F@<G2@>; G3@ G3 = F<G2@>;
+@ G4@ = F@<G3@>; G4@ G4 = F<G3@>;
+@ G5@ = F@<G4@>; G5@ G5 = F<G4@>;
+
+% H = (Unit@ _) {
+  G5(Unit, G4, Unit, G3, Unit, G2, Unit, G1, Unit, G0, Unit, F5);
+};
+
+# The call to H has 1 arg used and 12 over applied. The tail call to G5 in H
+# has 12 args. So we would need something like 24 args of space on the tail
+# call buffer to handle the overapplication to the tail call. Even though no
+# function in this code expects more than 2 arguments at a time.
+H(Unit, Unit, F4, Unit, F3, Unit, F2, Unit, F1, Unit, F0, Unit, Unit);

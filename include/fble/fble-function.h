@@ -45,12 +45,17 @@ typedef FbleValue* FbleRunFunction(
  * @struct[FbleExecutable] Information needed to execute a function.
  *  @field[size_t][num_args] Number of args to the function.
  *  @field[size_t][num_statics] Number of static values used by the function.
+ *  @field[size_t][max_call_args]
+ *   Maximum number of args used in a call or tail call by the function. The
+ *   tail call buffer is guaranteed to have space for at least this many
+ *   arguments in addition to the function to tail call.
  *  @field[FbleRunFunction*][run]
  *   How to run the function. See FbleRunFunction for more info.
  */
 struct FbleExecutable {
   size_t num_args;
   size_t num_statics;
+  size_t max_call_args;
   FbleRunFunction* run;
 };
 

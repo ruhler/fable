@@ -264,6 +264,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_bl
   FbleExecutable exe = {
     .num_args = 1,
     .num_statics = 1,
+    .max_call_args = 0,
     .run = &IStreamImpl,
   };
 
@@ -289,6 +290,7 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_bl
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 1,
+    .max_call_args = 0,
     .run = &OStreamImpl,
   };
 
@@ -308,6 +310,7 @@ static FbleValue* Read(FbleValueHeap* heap, FbleBlockId module_block_id)
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
+    .max_call_args = 0,
     .run = &ReadImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + 3, NULL);
@@ -326,6 +329,7 @@ static FbleValue* Write(FbleValueHeap* heap, FbleBlockId module_block_id)
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
+    .max_call_args = 0,
     .run = &WriteImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + 4, NULL);
@@ -344,6 +348,7 @@ static FbleValue* GetEnv(FbleValueHeap* heap, FbleBlockId module_block_id)
   FbleExecutable exe = {
     .num_args = 2,
     .num_statics = 0,
+    .max_call_args = 0,
     .run = &GetEnvImpl,
   };
   return FbleNewFuncValue(heap, &exe, module_block_id + 5, NULL);
@@ -384,6 +389,7 @@ static FbleValue* Core_Stdio_IO_Builtin_Run(FbleValueHeap* heap, FbleProfileThre
 static FbleExecutable Core_Stdio_IO_Builtin_Executable = {
   .num_args = 0, 
   .num_statics = 0,
+  .max_call_args = 0,
   .run = &Core_Stdio_IO_Builtin_Run,
 };
 

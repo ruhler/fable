@@ -532,6 +532,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleExecutable event_exe = {
     .num_args = 1,
     .num_statics = 0,
+    .max_call_args = 0,
     .run = &EventImpl,
   };
   FbleValue* fble_event = FbleNewFuncValue(heap, &event_exe, block_id, NULL);
@@ -539,6 +540,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleExecutable effect_exe = {
     .num_args = 2,
     .num_statics = 1,
+    .max_call_args = 0,
     .run = &EffectImpl,
   };
 

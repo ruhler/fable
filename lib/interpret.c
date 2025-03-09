@@ -322,6 +322,7 @@ FbleValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, FbleCode* code, size
   FbleExecutable exe = {
     .num_args = code->executable.num_args,
     .num_statics = code->executable.num_statics + 1,
+    .max_call_args = code->executable.max_call_args,
     .run = &Interpret
   };
   FbleValue* nstatics[exe.num_statics];
