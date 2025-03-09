@@ -489,17 +489,17 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (f0 == NULL) ");
         ReturnAbort(fout, "UndefinedFunctionValue", call_instr->loc);
 
-        fprintf(fout, "  FbleValue* ca%zi[%zi] = {", pc, call_instr->args.size);
+        fprintf(fout, "  heap->tail_call_buffer[0] = %s[%zi];\n",
+            var_tag[call_instr->func.tag],
+            call_instr->func.index);
+        fprintf(fout, "  heap->tail_call_argc = %zi;\n", call_instr->args.size);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, "%s[%zi],",
+          fprintf(fout, "  heap->tail_call_buffer[%zi] = %s[%zi];\n", i + 1,
               var_tag[call_instr->args.xs[i].tag],
               call_instr->args.xs[i].index);
         }
-        fprintf(fout, "};\n");
 
-        fprintf(fout, "  return FbleTailCall(heap, f0, %s[%zi], %zi, ca%zi);\n",
-            var_tag[call_instr->func.tag], call_instr->func.index,
-            call_instr->args.size, pc);
+        fprintf(fout, "  return heap->tail_call_sentinel;\n");
         break;
       }
 

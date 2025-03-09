@@ -322,7 +322,7 @@ Uses of memcpy:
   Copies unused args into gTailCallData args, 2 branches.
 * FbleCall
   Copies unused args into gTailCallData
-* FbleTaillCall
+* FbleTailCall
   Copies args into gTailCallData.
 * FbleNewFuncValue
   Copies executable into function value.
@@ -547,4 +547,32 @@ Careful:
 
 So our math is: 2x max_call_args needed, because we know num_unused is bounded
 by (max_call_args - 1) and args is bounded by max_call_args.
+
+---
+
+The tail call change is made. Backends are all using the tail call buffer
+directly now. Let's see what performance looks like.
+
+My estimates base on profiling:
+* 5% improvement on fastcat non-monadic
+* 6% improvements on fastcat monadic
+* 3.7% improvements on pprof.
+
+/usr/bin/time -v ./out/pkgs/core/fble-fast-cat < scratch/pprof.input.txt > /dev/null
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 4:04.76 ==> 4:04.69
+  Maximum resident set size (kbytes): 1760 ==> 1896
+
+/usr/bin/time -v ./out/pkgs/core/fble-fast-cat --monadic < scratch/pprof.input.txt > /dev/null
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 5:07.26 ==> 4:37.17
+  Maximum resident set size (kbytes): 1716 ==> 1900
+
+/usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/pprof.input.txt
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 9:19.40 ==> 8:36.76
+  Maximum resident set size (kbytes): 253444 ==> 253592
+
+Nice benefit from monadic fble-fast-cat. I wonder why non-monadic
+fble-fast-cat didn't benefit from this. It definitely should have. Maybe my
+baseline is wrong?
+
+Anyway, I think this is a good change.
 

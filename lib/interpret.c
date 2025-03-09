@@ -232,13 +232,13 @@ static FbleValue* Interpret(
           return NULL;
         };
 
-        size_t argc = call_instr->args.size;
-        FbleValue* call_args[argc];
-        for (size_t i = 0; i < argc; ++i) {
-          call_args[i] = GET(call_instr->args.xs[i]);
+        heap->tail_call_argc = call_instr->args.size;
+        heap->tail_call_buffer[0] = func;
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          heap->tail_call_buffer[i+1] = GET(call_instr->args.xs[i]);
         }
 
-        return FbleTailCall(heap, call_function, func, argc, call_args);
+        return heap->tail_call_sentinel;
       }
 
       case FBLE_COPY_INSTR: {

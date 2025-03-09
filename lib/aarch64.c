@@ -808,23 +808,23 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  bl FbleFuncValueFunction\n");
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
 
-      fprintf(fout, "  mov x1, x0\n");              // function
-      fprintf(fout, "  mov x0, R_HEAP\n");          // heap
-      GetFrameVar(fout, "x2", call_instr->func);    // func
+      // Set heap->tail_call_argc
+      fprintf(fout, "  mov x0, %zi\n", call_instr->args.size);
+      fprintf(fout, "  str x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_argc));
 
-      // Set up the arguments.
-      size_t sp_offset = StackBytesForCount(call_instr->args.size);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      // heap->tail_call_buffer[0] = func
+      fprintf(fout, "  ldr x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_buffer));
+      GetFrameVar(fout, "x1", call_instr->func);
+      fprintf(fout, "  str x1, [x0, #0]\n");
+
+      // heap->tail_call_buffer[1 + i] = arg[i]
       for (size_t i = 0; i < call_instr->args.size; ++i) {
-        GetFrameVar(fout, "x9", call_instr->args.xs[i]);
-        fprintf(fout, "  str x9, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+        GetFrameVar(fout, "x1", call_instr->args.xs[i]);
+        fprintf(fout, "  str x1, [x0, #%zi]\n", sizeof(FbleValue*) * (1 + i));
       }
-      fprintf(fout, "  mov x3, %zi\n", call_instr->args.size);
-      fprintf(fout, "  mov x4, SP\n");              // args
 
-      fprintf(fout, "  bl FbleTailCall\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-
+      // Return heap->tail_call_sentinel
+      fprintf(fout, "  ldr x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_sentinel));
       fprintf(fout, "  b .Lr.%04zx.exit\n", func_id);
       return;
     }

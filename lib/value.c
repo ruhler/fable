@@ -1485,15 +1485,12 @@ static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args)
 {
-  size_t s = function->executable.num_statics - 1;
+  size_t s = function->executable.num_statics;
   size_t a = function->executable.num_args;
-  size_t argc = s + a;
-  FbleValue* nargs[argc];
-  memcpy(nargs, function->statics + 1, s * sizeof(FbleValue*));
-  memcpy(nargs + s, args, a * sizeof(FbleValue*));
-  FbleFunction* f = FbleFuncValueFunction(function->statics[0]);
-  assert(f != NULL && "should have been checked in PartialApply already");
-  return FbleTailCall(heap, f, function->statics[0], argc, nargs);
+  heap->tail_call_argc = a + s - 1;
+  memcpy(heap->tail_call_buffer, function->statics, s * sizeof(FbleValue*));
+  memcpy(heap->tail_call_buffer + s, args, a * sizeof(FbleValue*));
+  return heap->tail_call_sentinel;
 }
 
 /**
