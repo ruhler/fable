@@ -15,14 +15,34 @@ typedef struct FbleExecutable FbleExecutable;
 typedef struct FbleFunction FbleFunction;
 
 /**
- * @struct[FbleValueHeap] Memory heap for allocating fble values. @@
- */
-typedef struct FbleValueHeap FbleValueHeap;
-
-/**
  * @struct[FbleValue] An fble value. @@
  */
 typedef struct FbleValue FbleValue;
+
+/**
+ * @struct[FbleValueHeap] Memory heap for allocating fble values.
+ *  Parts of the FbleValueHeap data structure are exposed for use by backends.
+ *  Other parts are not exposed.
+ *
+ *  To perform a tail call, set tail_call_argc to the number of arguments to
+ *  the call. Set tail_call_buffer[0] to the function to call. Add the
+ *  arguments to tail_call_buffer starting at index 1. Then return
+ *  tail_call_sentinel.
+ *
+ *  @field[FbleValue*][tail_call_sentinel]
+ *   Value to return to indicate a tail call should be performed.
+ *  @field[FbleValue**][tail_call_buffer]
+ *   Buffer allocated for tail calls. When used, contains the tail call
+ *   function at index 0, followed by tail_call_argc worth of arguments.
+ *  @field[size_t][tail_call_argc]
+ *   Number of tail call arguments, not including the tail call function.
+ */
+typedef struct {
+  FbleValue* tail_call_sentinel;
+  FbleValue** tail_call_buffer;
+  size_t tail_call_argc;
+  // Additional internal fields follow.
+} FbleValueHeap;
 
 /**
  * @struct[FbleValueV] Vector of FbleValue

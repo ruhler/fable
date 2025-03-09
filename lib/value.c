@@ -282,7 +282,7 @@ typedef struct {
 
 /**
  * @func[NewValue] Allocates a new value of the given type.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on
+ *  @arg[ValueHeap*][heap] The heap to allocate the value on
  *  @arg[<type>][T] The type of the value
  *  @arg[ValueTag*][tag] The tag of the value
  *
@@ -297,7 +297,7 @@ typedef struct {
 /**
  * @func[NewValueExtra]
  * @ Allocates a new value with some extra space to the stack.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on
+ *  @arg[ValueHeap*][heap] The heap to allocate the value on
  *  @arg[<type>][T] The type of the value
  *  @arg[ValueTag][tag] The tag of the value
  *  @arg[size_t][count]
@@ -314,7 +314,7 @@ typedef struct {
 
 /**
  * @func[NewGcValue] Allocates a new value of the given type on the heap.
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[ValueHeap*][heap] The heap to allocate the value on.
  *  @arg[Frame*][frame] The frame to allocate the value on.
  *  @arg[type][T] The type of the value.
  *  @arg[ValueTag][tag] The tag of the value.
@@ -344,17 +344,6 @@ typedef struct {
  */
 #define NewGcValueExtra(heap, frame, T, tag, count) ((T*) NewGcValueRaw(heap, frame, tag, sizeof(T) + count * sizeof(FbleValue*)))
 
-static void* StackAlloc(FbleValueHeap* heap, size_t size);
-static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size);
-static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag, size_t size);
-static void FreeGcValue(FbleValue* value);
-static FbleValue* GcRealloc(FbleValueHeap* heap, FbleValue* value);
-
-static bool IsPacked(FbleValue* value);
-static bool IsAlloced(FbleValue* value);
-static size_t PackedValueLength(intptr_t data);
-static FbleValue* StrictValue(FbleValue* value);
-
 // We allocate memory for the stack in 1MB chunks.
 #define CHUNK_SIZE (1024 * 1024)
 
@@ -469,14 +458,9 @@ typedef struct {
 } Gc;
 
 /**
- * @struct[FbleValueHeap] The runtime stack and heap.
- *  @field[FbleValue*][tail_call_sentinel]
- *   Value to return to indicate a tail call should be performed.
- *  @field[FbleValue**][tail_call_buffer]
- *   Buffer allocated for tail calls. When used, contains the tail call
- *   function at index 0, followed by tail_call_argc worth of arguments.
- *  @field[size_t][tail_call_argc]
- *   Number of tail call arguments, not including the tail call function.
+ * @struct[ValueHeap] The full FbleValueHeap.
+ *  @field[FbleValueHeap][_base]
+ *   The publically exposed parts of the value heap.
  *  @field[size_t][tail_call_capacity]
  *   Number of allocated slots in tail_call_buffer.
  *  @field[void*][stack] The base of the stack.
@@ -486,34 +470,43 @@ typedef struct {
  *  @field[Chunk*][chunks]
  *   Chunks of allocated stack memory not currently in use.
  */
-struct FbleValueHeap {
-  FbleValue* tail_call_sentinel;
-  FbleValue** tail_call_buffer;
-  size_t tail_call_argc;
-
+typedef struct {
+  FbleValueHeap _base;
   size_t tail_call_capacity;
 
   void* stack;
   Frame* top;
   Gc gc;
   Chunk* chunks;
-};
+} ValueHeap;
+
+static void* StackAlloc(ValueHeap* heap, size_t size);
+static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size);
+static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, size_t size);
+static void FreeGcValue(FbleValue* value);
+static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value);
+
+static bool IsPacked(FbleValue* value);
+static bool IsAlloced(FbleValue* value);
+static size_t PackedValueLength(intptr_t data);
+static FbleValue* StrictValue(FbleValue* value);
+
 
 static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst);
 static void MarkRefs(Gc* gc, FbleValue* value);
-static void IncrGc(FbleValueHeap* heap);
-static void PushFrame(FbleValueHeap* heap, bool merge);
-static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** save);
+static void IncrGc(ValueHeap* heap);
+static void PushFrame(ValueHeap* heap, bool merge);
+static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save);
 
-static void EnsureTailCallArgsSpace(FbleValueHeap* heap, size_t max_call_args);
+static void EnsureTailCallArgsSpace(ValueHeap* heap, size_t max_call_args);
 
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
-static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
+static FbleValue* PartialApply(ValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
 
-static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile);
-static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
+static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile);
+static FbleValue* Eval(ValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
 
 /**
  * @func[Clear] Initialize a list to empty.
@@ -595,13 +588,13 @@ static void MoveAllTo(List* dst, List* src)
 
 /**
  * @func[StackAlloc] Allocates memory on the stack.
- *  @arg[Heap*][heap] The heap to allocate the memory to.
+ *  @arg[ValueHeap*][heap] The heap to allocate the memory to.
  *  @arg[size_t][size] The number of bytes to allocate.
  *  @returns[void*] Pointer to the allocated memory.
  *  @sideeffects
  *   Allocates a new stack chunk if needed.
  */
-static void* StackAlloc(FbleValueHeap* heap, size_t size)
+static void* StackAlloc(ValueHeap* heap, size_t size)
 {
   Frame* frame = heap->top;
   if (frame->max < frame->top + size) {
@@ -625,14 +618,14 @@ static void* StackAlloc(FbleValueHeap* heap, size_t size)
 
 /**
  * @func[NewValueRaw] Allocates a new value on the stack.
- *  @arg[FbleValueHeap*][heap] The heap to allocate to.
+ *  @arg[ValueHeap*][heap] The heap to allocate to.
  *  @arg[ValueTag][tag] The tag of the new value.
  *  @arg[size_t][size] The number of bytes to allocate for the value.
  *  @returns[FbleValue*] The newly allocated value.
  *  @sideeffects
  *   Allocates a value to the top frame of the heap.
  */
-static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
+static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size)
 {
   FbleValue* value = StackAlloc(heap, size);
   value->h.stack.gc = NULL;
@@ -644,7 +637,7 @@ static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
 
 /**
  * @func[NewGcValueRaw] Allocates a new value on the heap.
- *  @arg[FbleValueHeap*][heap] The heap to allocate on.
+ *  @arg[ValueHeap*][heap] The heap to allocate on.
  *  @arg[Frame*][frame] The frame to allocate to.
  *  @arg[ValueTag][tag] The tag of the new value.
  *  @arg[size_t][size] The number of bytes to allocate for the value.
@@ -652,7 +645,7 @@ static FbleValue* NewValueRaw(FbleValueHeap* heap, ValueTag tag, size_t size)
  *  @sideeffects
  *   Allocates a value to the given frame of the heap.
  */
-static FbleValue* NewGcValueRaw(FbleValueHeap* heap, Frame* frame, ValueTag tag, size_t size)
+static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, size_t size)
 {
   IncrGc(heap);
 
@@ -688,14 +681,14 @@ static void FreeGcValue(FbleValue* value)
 
 /**
  * @func[GcRealloc] Reallocate a value onto the heap.
- *  @arg[FbleValueHeap*][heap] The heap to allocate to.
+ *  @arg[ValueHeap*][heap] The heap to allocate to.
  *  @arg[FbleValue*][value] The value to allocate.
  *  @returns[FbleValue*] A gc allocated value equivalent to @a[value].
  *  @sideeffects
  *   @i Allocates GC values on the heap.
  *   @i Records mapping from original value to GC value on the stack.
  */
-static FbleValue* GcRealloc(FbleValueHeap* heap, FbleValue* value)
+static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
 {
   // Packed values and NULL need not be allocated at all.
   if (!IsAlloced(value)) {
@@ -915,11 +908,11 @@ static void MarkRefs(Gc* gc, FbleValue* value)
 
 /**
  * @func[IncrGc] Performs an incremental GC.
- *  @arg[FbleValueHeap*][heap] The heap to GC on.
+ *  @arg[ValueHeap*][heap] The heap to GC on.
  *  @sideeffects
  *   Performs a constant amount of GC work on the heap.
  */
-static void IncrGc(FbleValueHeap* heap)
+static void IncrGc(ValueHeap* heap)
 {
   Gc* gc = &heap->gc;
 
@@ -973,12 +966,12 @@ static void IncrGc(FbleValueHeap* heap)
 // See documentation in fble-value.h.
 FbleValueHeap* FbleNewValueHeap()
 {
-  FbleValueHeap* heap = FbleAlloc(FbleValueHeap);
+  ValueHeap* heap = FbleAlloc(ValueHeap);
 
   heap->tail_call_capacity = 1;
-  heap->tail_call_sentinel = (FbleValue*)0x2;
-  heap->tail_call_buffer = FbleAllocArray(FbleValue*, heap->tail_call_capacity);
-  heap->tail_call_argc = 0;
+  heap->_base.tail_call_sentinel = (FbleValue*)0x2;
+  heap->_base.tail_call_buffer = FbleAllocArray(FbleValue*, heap->tail_call_capacity);
+  heap->_base.tail_call_argc = 0;
 
   heap->stack = FbleAllocRaw(CHUNK_SIZE);
 
@@ -1011,12 +1004,14 @@ FbleValueHeap* FbleNewValueHeap()
 
   heap->chunks = NULL;
 
-  return heap;
+  return &heap->_base;
 }
 
 // See documentation in fble-value.h.
-void FbleFreeValueHeap(FbleValueHeap* heap)
+void FbleFreeValueHeap(FbleValueHeap* heap_)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
+
   List values;
   Clear(&values);
   for (Frame* frame = heap->top; frame != NULL; frame = frame->caller) {
@@ -1044,14 +1039,14 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
     FreeGcValue(value);
   }
 
-  FbleFree(heap->tail_call_buffer);
+  FbleFree(heap->_base.tail_call_buffer);
 
   FbleFree(heap);
 }
 
 // See documentation of FblePushFrame in fble-value.h
 // If merge is true, reuse the same allocation space as the caller frame.
-static void PushFrame(FbleValueHeap* heap, bool merge)
+static void PushFrame(ValueHeap* heap, bool merge)
 {
   if (merge) {
     heap->top->merges++;
@@ -1082,12 +1077,14 @@ static void PushFrame(FbleValueHeap* heap, bool merge)
 // See documentation in fble-value.h
 void FblePushFrame(FbleValueHeap* heap)
 {
-  PushFrame(heap, false);
+  PushFrame((ValueHeap*)heap, false);
 }
 
 // See documentation in fble-value.h
-FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
+FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
+
   Frame* top = heap->top;
   if (top->merges > 0) {
     top->merges--;
@@ -1145,7 +1142,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
  *  Values allocated on the frame are freed except for those reachable from
  *  the given list of saved values.
  *
- *  @arg[FbleValueHeap*][heap] The heap.
+ *  @arg[ValueHeap*][heap] The heap.
  *  @arg[bool][merge] If true, skip compaction.
  *  @arg[size_t][n] The number of save values.
  *  @arg[FbleValue**][save] Values to save.
@@ -1155,7 +1152,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap, FbleValue* value)
  *   values. You must not reference any values allocated to the frame after
  *   this call except for the updated values in the save array.
  */
-static void CompactFrame(FbleValueHeap* heap, bool merge, size_t n, FbleValue** save)
+static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save)
 {
   if (merge) {
     return;
@@ -1267,7 +1264,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
     return (FbleValue*)data;
   }
 
-  StructValue* value = NewValueExtra(heap, StructValue, STRUCT_VALUE, argc);
+  StructValue* value = NewValueExtra((ValueHeap*)heap, StructValue, STRUCT_VALUE, argc);
   value->fieldc = argc;
 
   for (size_t i = 0; i < argc; ++i) {
@@ -1345,7 +1342,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
     }
   }
 
-  UnionValue* union_value = NewValue(heap, UnionValue, UNION_VALUE);
+  UnionValue* union_value = NewValue((ValueHeap*)heap, UnionValue, UNION_VALUE);
   union_value->tag = tag;
   union_value->arg = arg;
   return &union_value->_base;
@@ -1462,13 +1459,13 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
  *  assuming the maximum number of args to any call or tail call in the
  *  program is not greater than @a[max_call_args].
  *
- *  @arg[FbleValueHeap*][heap] The heap to update.
+ *  @arg[ValueHeap*][heap] The heap to update.
  *  @arg[size_t][max_call_args] The max number of args to any call.
  *  @sideeffects
  *   Resizes the tail call buffer as needed. The args array may be
  *   reallocated; the previous value should not be referenced after this call.
  */
-static void EnsureTailCallArgsSpace(FbleValueHeap* heap, size_t max_call_args)
+static void EnsureTailCallArgsSpace(ValueHeap* heap, size_t max_call_args)
 {
   // We need space for double max_call_args. In the worst case:
   // 1 for the function.
@@ -1478,7 +1475,7 @@ static void EnsureTailCallArgsSpace(FbleValueHeap* heap, size_t max_call_args)
 
   if (heap->tail_call_capacity < required) {
     heap->tail_call_capacity = required;
-    heap->tail_call_buffer = FbleReAllocArray(FbleValue*, heap->tail_call_buffer, required);
+    heap->_base.tail_call_buffer = FbleReAllocArray(FbleValue*, heap->_base.tail_call_buffer, required);
   }
 }
 
@@ -1504,7 +1501,7 @@ static FbleValue* PartialApplyImpl(
  *  Creates a thunk with the function and arguments without applying the
  *  function yet.
  *
- *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[ValueHeap*][heap] The value heap.
  *  @arg[FbleFunction*][function] The function to apply.
  *  @arg[FbleValue*][func] The function value to apply.
  *  @arg[size_t][argc] Number of args to pass.
@@ -1515,7 +1512,7 @@ static FbleValue* PartialApplyImpl(
  *  @sideeffects
  *   Allocates an FbleValue on the heap.
  */
-static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
+static FbleValue* PartialApply(ValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
   FbleExecutable exe = {
     .num_args = function->executable.num_args - argc,
@@ -1527,14 +1524,14 @@ static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, Fble
   FbleValue* statics[1 + argc];
   statics[0] = func;
   memcpy(statics + 1, args, argc * sizeof(FbleValue*));
-  return FbleNewFuncValue(heap, &exe, function->profile_block_id, statics);
+  return FbleNewFuncValue(&heap->_base, &exe, function->profile_block_id, statics);
 }
 
 /**
  * @func[TailCall] Tail calls an fble function.
  *  Calls the function and args stored in heap->tail_call data.
  *
- *  @arg[FbleValueHeap*] heap
+ *  @arg[ValueHeap*] heap
  *   The value heap.
  *  @arg[FbleProfileThread*] profile
  *   The current profile thread, or NULL if profiling is disabled.
@@ -1547,52 +1544,52 @@ static FbleValue* PartialApply(FbleValueHeap* heap, FbleFunction* function, Fble
  *   @i Executes the called function to completion, returning the result.
  *   @i Pops the current frame from the heap.
  */
-static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
+static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
 {
   while (true) {
-    FbleValue* func = heap->tail_call_buffer[0];
+    FbleValue* func = heap->_base.tail_call_buffer[0];
     FbleFunction* function = FbleFuncValueFunction(func);
     FbleExecutable* exe = &function->executable;
-    size_t argc = heap->tail_call_argc;
+    size_t argc = heap->_base.tail_call_argc;
 
     if (argc < exe->num_args) {
-      FbleValue* partial = PartialApply(heap, function, func, argc, heap->tail_call_buffer + 1);
-      return FblePopFrame(heap, partial);
+      FbleValue* partial = PartialApply(heap, function, func, argc, heap->_base.tail_call_buffer + 1);
+      return FblePopFrame(&heap->_base, partial);
     }
 
     if (profile) {
       FbleProfileReplaceBlock(profile, function->profile_block_id);
     }
 
-    CompactFrame(heap, func->tag != REF_VALUE, 1 + argc, heap->tail_call_buffer);
+    CompactFrame(heap, func->tag != REF_VALUE, 1 + argc, heap->_base.tail_call_buffer);
 
-    func = heap->tail_call_buffer[0];
+    func = heap->_base.tail_call_buffer[0];
     function = FbleFuncValueFunction(func);
     exe = &function->executable;
-    argc = heap->tail_call_argc;
+    argc = heap->_base.tail_call_argc;
 
     FbleValue* args[argc];
-    memcpy(args, heap->tail_call_buffer + 1, argc * sizeof(FbleValue*));
+    memcpy(args, heap->_base.tail_call_buffer + 1, argc * sizeof(FbleValue*));
 
-    FbleValue* result = exe->run(heap, profile, function, args);
+    FbleValue* result = exe->run(&heap->_base, profile, function, args);
 
     size_t num_unused = argc - exe->num_args;
     FbleValue** unused = args + exe->num_args;
 
-    if (result == heap->tail_call_sentinel) {
+    if (result == heap->_base.tail_call_sentinel) {
       // Add the unused args to the end of the tail call args and make that
       // our new func and args.
-      assert(heap->tail_call_argc + num_unused < heap->tail_call_capacity);
-      memcpy(heap->tail_call_buffer + 1 + heap->tail_call_argc, unused, num_unused * sizeof(FbleValue*));
-      heap->tail_call_argc += num_unused;
+      assert(heap->_base.tail_call_argc + num_unused < heap->tail_call_capacity);
+      memcpy(heap->_base.tail_call_buffer + 1 + heap->_base.tail_call_argc, unused, num_unused * sizeof(FbleValue*));
+      heap->_base.tail_call_argc += num_unused;
     } else if (num_unused > 0 && result != NULL) {
       // Do a tail call to the returned result with unused args applied.
       assert(num_unused < heap->tail_call_capacity);
-      heap->tail_call_argc = num_unused;
-      heap->tail_call_buffer[0] = result;
-      memcpy(heap->tail_call_buffer + 1, unused, num_unused * sizeof(FbleValue*));
+      heap->_base.tail_call_argc = num_unused;
+      heap->_base.tail_call_buffer[0] = result;
+      memcpy(heap->_base.tail_call_buffer + 1, unused, num_unused * sizeof(FbleValue*));
     } else {
-      return FblePopFrame(heap, result);
+      return FblePopFrame(&heap->_base, result);
     }
   }
 
@@ -1602,7 +1599,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
 
 /**
  * @func[Eval] Evaluates the given function.
- *  @arg[FbleValueHeap*][heap] The value heap.
+ *  @arg[ValueHeap*][heap] The value heap.
  *  @arg[FbleValue*][func] The function to evaluate.
  *  @arg[size_t][argc] Number of args to pass.
  *  @arg[FbleValue**][args] Args to pass to the function.
@@ -1617,7 +1614,7 @@ static FbleValue* TailCall(FbleValueHeap* heap, FbleProfileThread* profile)
  *   @i Updates profile based on the execution.
  *   @i Does not take ownership of the function or the args.
  */
-static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
+static FbleValue* Eval(ValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
 {
 #ifndef __WIN32
   // The fble spec requires we don't put an arbitrarily low limit on the stack
@@ -1635,7 +1632,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
 #endif // __WIN32
 
   FbleProfileThread* profile_thread = FbleNewProfileThread(profile);
-  FbleValue* result = FbleCall(heap, profile_thread, func, argc, args);
+  FbleValue* result = FbleCall(&heap->_base, profile_thread, func, argc, args);
   FbleFreeProfileThread(profile_thread);
 
 #ifndef __WIN32
@@ -1649,8 +1646,10 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleVa
 }
 
 // See documentation in fble-value.h
-FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* function, size_t argc, FbleValue** args)
+FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue* function, size_t argc, FbleValue** args)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
+
   FbleFunction* func = FbleFuncValueFunction(function);
   if (func == NULL) {
     FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 5);
@@ -1672,18 +1671,18 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
   FbleValue** unused = args + executable->num_args;
 
   PushFrame(heap, function->tag != REF_VALUE);
-  FbleValue* result = executable->run(heap, profile, func, args);
+  FbleValue* result = executable->run(&heap->_base, profile, func, args);
 
-  if (result == heap->tail_call_sentinel) {
-    assert(heap->tail_call_argc + num_unused < heap->tail_call_capacity);
-    memcpy(heap->tail_call_buffer + 1 + heap->tail_call_argc, unused, num_unused * sizeof(FbleValue*));
-    heap->tail_call_argc += num_unused;
+  if (result == heap->_base.tail_call_sentinel) {
+    assert(heap->_base.tail_call_argc + num_unused < heap->tail_call_capacity);
+    memcpy(heap->_base.tail_call_buffer + 1 + heap->_base.tail_call_argc, unused, num_unused * sizeof(FbleValue*));
+    heap->_base.tail_call_argc += num_unused;
     result = TailCall(heap, profile);
   } else if (num_unused > 0 && result != NULL) {
-    FbleValue* new_func = FblePopFrame(heap, result);
-    result = FbleCall(heap, profile, new_func, num_unused, unused);
+    FbleValue* new_func = FblePopFrame(&heap->_base, result);
+    result = FbleCall(&heap->_base, profile, new_func, num_unused, unused);
   } else {
-    result = FblePopFrame(heap, result);
+    result = FblePopFrame(&heap->_base, result);
   }
 
   if (profile != NULL) {
@@ -1694,14 +1693,16 @@ FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* 
 }
 
 // See documentation in fble-function.h
-FbleValue* FbleTailCall(FbleValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
+FbleValue* FbleTailCall(FbleValueHeap* heap_, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
+
   assert(argc < heap->tail_call_capacity);
 
-  heap->tail_call_argc = argc;
-  heap->tail_call_buffer[0] = func;
-  memcpy(heap->tail_call_buffer + 1, args, argc * sizeof(FbleValue*));
-  return heap->tail_call_sentinel;
+  heap->_base.tail_call_argc = argc;
+  heap->_base.tail_call_buffer[0] = func;
+  memcpy(heap->_base.tail_call_buffer + 1, args, argc * sizeof(FbleValue*));
+  return heap->_base.tail_call_sentinel;
 }
 
 // See documentation in fble-value.h.
@@ -1711,15 +1712,17 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
+FbleValue* FbleApply(FbleValueHeap* heap_, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
   EnsureTailCallArgsSpace(heap, argc);
   return Eval(heap, func, argc, args, profile);
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics)
+FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
   EnsureTailCallArgsSpace(heap, executable->max_call_args);
 
   FuncValue* v = NewValueExtra(heap, FuncValue, FUNC_VALUE, executable->num_statics);
@@ -1785,16 +1788,19 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewRefValue(FbleValueHeap* heap)
+FbleValue* FbleNewRefValue(FbleValueHeap* heap_)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
   RefValue* rv = NewGcValue(heap, heap->top, RefValue, REF_VALUE);
   rv->value = NULL;
   return &rv->_base;
 }
 
 // See documentation in fble-value.h.
-bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
+bool FbleAssignRefValue(FbleValueHeap* heap_, FbleValue* ref, FbleValue* value)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
+
   assert(ref->h.gc.gen >= heap->top->min_gen
       && "FbleAssignRefValue must be called with ref on top of stack");
 
@@ -1817,9 +1823,11 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 }
 
 // See documentation in fble-value.h
-FbleValue* FbleNewNativeValue(FbleValueHeap* heap,
+FbleValue* FbleNewNativeValue(FbleValueHeap* heap_,
     void* data, void (*on_free)(void* data))
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
+
   NativeValue* value = NewGcValue(heap, heap->top, NativeValue, NATIVE_VALUE);
   value->data = data;
   value->on_free = on_free;
@@ -1835,8 +1843,10 @@ void* FbleNativeValueData(FbleValue* value)
 }
 
 // See documentation in fble-value.h
-void FbleValueFullGc(FbleValueHeap* heap)
+void FbleValueFullGc(FbleValueHeap* heap_)
 {
+  ValueHeap* heap = (ValueHeap*)heap_;
+
   while (!(heap->gc.next == NULL
       && IsEmpty(&heap->gc.frame->marked)
       && IsEmpty(&heap->gc.frame->unmarked))) {
