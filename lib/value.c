@@ -38,6 +38,40 @@
 // Allocated values are allocated in memory. They are passed around by
 // reference.
 //
+// Values are packed as follows on a 64-bit pointer architecture:
+// * Bit 0 is set to 1 to indicate it is a packed value.
+// * Bits [6:1] indicate the length of the packed content in bits.
+// * The remaining bits are packed content depending on if it's a struct or
+//   union.
+// * Packed content for a union is binary encoded tag bits, using sufficient
+//   number of bits to represent all possible tags of that particular union
+//   type. That's least significant bits of content, followed by the packed
+//   content of the argument.
+// * Packed content for a struct is a list of N-1 6-bit sizes giving the
+//   number of bits past the end of the struct to reach the packed content for
+//   the ith field of the struct.
+// * The unused most significant bits of the packed value are always 0.
+//
+// For example:
+//   Octal@ = +(Unit@ 0, Unit@ 1, Unit@ 2, ... Unit@ 7)
+//   Str@ = +(*(Octal@ head, Str@ tail) cons, Unit@ nil)
+//   Str@ x = Str|'162'
+//
+// The value x is packed as the following 64 bit value, with more significant
+// bits on the left and least significant bit on the right:
+//   Decimal:  1   2      3 0   6      3 0   1      3 0     31 1
+//   Binary:   1 011 000011 0 110 000011 0 001 000011 0 011111 1
+//   Label:    t ooo OOOOOO t ooo OOOOOO t ooo OOOOOO t LLLLLL P
+//
+// o: tag bits for an octal element.
+// O: number of bits offset to tail field of cons struct.
+// t: list tag: 0 for cons, 1 for nil.
+// L: length of packed content
+// P: pack bit
+//
+// A 32-bit pointer architecture uses 5 bit length and offset instead of 6
+// bit length and offset.
+//
 // Stack Allocation
 // ----------------
 // An allocated value is owned by a particular frame of the stack.
@@ -109,6 +143,18 @@
 // happening on that frame, we say GC is interrupted. We let GC finish its
 // work and give responsibility for transferring returned objects to the
 // caller stack frame to GC when it finishes.
+
+#if INTPTR_WIDTH == 64
+#define PACKED_OFFSET_WIDTH 6
+#else
+#define PACKED_OFFSET_WIDTH 5
+#endif
+
+#define PACKED_OFFSET_MASK ((1 << PACKED_OFFSET_WIDTH) - 1)
+
+// If this fails, add support for whatever crazy architecture you are trying
+// to use. 32 and 64 bit architectures should be supported.
+static_assert((1 << PACKED_OFFSET_WIDTH) == 8 * sizeof(FbleValue*));
 
 /**
  * @struct[List] Circular, doubly linked list of values.
@@ -198,12 +244,7 @@ struct FbleValue {
  * @struct[StructValue] STRUCT_VALUE
  *  An fble struct value.
  *
- *  Struct values may be packed. If so, read in order from the least
- *  significant bits:
- *  '0' - to indicate it is a struct value instead of a union value.
- *  'num_args' - unary encoded number of arguments in the struct.
- *    e.g. "0" for 0 args, "10" for 1 arg, "110" for 2 args, and so on.
- *  'args' in order of argument arg0, arg1, etc.
+ *  Struct values may be packed. See above for the packed encoding.
  *
  *  @field[FbleValue][_base] FbleValue base class.
  *  @field[size_t][fieldc] Number of fields.
@@ -219,12 +260,7 @@ typedef struct {
  * @struct[UnionValue] UNION_VALUE
  *  An fble union value.
  *
- *  Union values may be packed. If so, read in order from the least
- *  significant bit:
- *  '1' - to indicate it is a union value instead of a struct value.
- *  'tag' - the tag, using a unary encoding terminated with 0.
- *    e.g. "0" for 0, "10" for 1, "110" for 2, and so on.
- *  'arg' - the argument.
+ *  Union values may be packed. See above for the packed encoding.
  *
  *  @field[FbleValue][_base] FbleValue base class.
  *  @field[size_t][tag] Union tag value.
@@ -488,7 +524,6 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value);
 
 static bool IsPacked(FbleValue* value);
 static bool IsAlloced(FbleValue* value);
-static size_t PackedValueLength(intptr_t data);
 static FbleValue* StrictValue(FbleValue* value);
 
 
@@ -773,49 +808,6 @@ static bool IsPacked(FbleValue* value)
 static bool IsAlloced(FbleValue* value)
 {
   return !IsPacked(value) && value != NULL;
-}
-
-/**
- * @func[PackedValueLength] Computes bits needed for a packed value.
- *  Compute the number of bits needed for the value packed into the least
- *  significat bits of @a[data]. @a[data] should not include the pack marker.
- *
- *  @arg[intptr_t][data]
- *   Raw data bits for a packed value without the pack marker.
- *
- *  @returns[size_t]
- *   The number of bits of the data used to describe that value.
- *
- *  @sideeffects
- *   None.
- */
-static size_t PackedValueLength(intptr_t data)
-{
-  size_t len = 0;
-  if ((data & 0x1) == 0) {
-    // Struct value
-    data >>= 1; len++;     // struct value marker
-    size_t argc = 0;
-    while (data & 0x1) {
-      data >>= 1; len++;   // unary encoding of number of fields.
-      argc++;
-    }
-    data >>= 1; len++;   // number of fields terminator.
-
-    for (size_t i = 0; i < argc; ++i) {
-      size_t arglen = PackedValueLength(data);
-      data >>= arglen; len += arglen;
-    }
-    return len;
-  } else {
-    // Union value
-    data >>= 1; len++;      // union value marker
-    while (data & 0x1) {
-      data >>= 1; len++;    // unary encoding of tag.
-    };
-    data >>= 1; len++;      // tag terminator.
-    return len + PackedValueLength(data);
-  }
 }
 
 /**
@@ -1237,30 +1229,37 @@ FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   // Try packing optimistically.
+  intptr_t header_length = (argc == 0) ? 0 : (argc * PACKED_OFFSET_WIDTH);
+  intptr_t length = 0;
+  intptr_t header = 0;
   intptr_t data = 0;
-  size_t num_bits = 0;
+
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* arg = args[argc-i-1];
+    FbleValue* arg = args[i];
     if (IsPacked(arg)) {
-      intptr_t argdata = (intptr_t)arg;
-      argdata >>= 1;   // skip past pack marker.
-      size_t arglen = PackedValueLength(argdata);
-      num_bits += arglen;
-      intptr_t mask = ((intptr_t)1 << arglen) - 1;
-      data = (data << arglen) | (mask & argdata);
+      intptr_t adata = (intptr_t)arg;
+      adata >>= 1;
+      intptr_t alength = adata & PACKED_OFFSET_MASK;
+      adata &= ~ PACKED_OFFSET_MASK;
+      data |= adata;
+      header |= (length << (i * PACKED_OFFSET_WIDTH));
+      length += alength;
     } else {
-      num_bits += 8 * sizeof(FbleValue*);
+      length += 8 * sizeof(FbleValue*);
       break;
     }
   }
 
-  if (num_bits + argc + 1 < 8 * sizeof(FbleValue*)) {
-    // We have enough space to pack the struct value.
-    data <<= 1;   // num args '0' terminator.
-    for (size_t i = 0; i < argc; ++i) {
-      data = (data << 1) | 1;     // unary encoding of number of args.
-    }
-    data = (data << 2) | 1;       // struct value and pack marks.
+  length += header_length;
+
+  if (length + PACKED_OFFSET_WIDTH + 1 <= 8 * sizeof(FbleValue*)) {
+    header &= ((1 << header_length) - 1);
+    data <<= header_length;
+    data |= header;
+    data <<= PACKED_OFFSET_WIDTH;
+    data |= length;
+    data <<= 1;
+    data |= 1;
     return (FbleValue*)data;
   }
 
@@ -1289,7 +1288,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleStructValueField(FbleValue* object, size_t field)
+FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
 {
   object = StrictValue(object);
 
@@ -1299,23 +1298,24 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field)
 
   if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
-
-    // Skip past the pack bit and the bit saying this is a struct value.
-    data >>= 2;
-
-    // Skip past the number of args.
-    while (data & 0x1) {
-      data >>= 1;
-    }
     data >>= 1;
 
-    // Skip past any args before the field we want.
-    for (size_t i = 0; i < field; ++i) {
-      data >>= PackedValueLength(data);
-    }
+    intptr_t length = data & PACKED_OFFSET_MASK;
+    data >>= PACKED_OFFSET_WIDTH;
 
-    // Pack the result.
-    data = (data << 1) | 1;
+    intptr_t header_length = (fieldc == 0) ? 0 : (PACKED_OFFSET_WIDTH * (fieldc - 1));
+    intptr_t offset = (field == 0) ? 0 : (data >> (PACKED_OFFSET_WIDTH * (field - 1)));
+    intptr_t end = (field + 1 == fieldc) ? (length - header_length) : (data >> (PACKED_OFFSET_WIDTH * field));
+    data >>= header_length;
+
+    length = end - offset;
+    data >>= offset;
+    data &= (1 << length) - 1;
+
+    data <<= PACKED_OFFSET_WIDTH;
+    data |= length;
+    data <<= 1;
+    data |= 1;
     return (FbleValue*)data;
   }
 
@@ -1326,18 +1326,23 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
+FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, FbleValue* arg)
 {
   if (IsPacked(arg)) {
     intptr_t data = (intptr_t)arg;
     data >>= 1;
 
-    if (PackedValueLength(data) + tag + 1 < 8*sizeof(FbleValue*)) {
-      data <<= 1;   // tag '0' terminator.
-      for (size_t i = 0; i < tag; ++i) {
-        data = (data << 1) | 1; // unary encoded tag
-      }
-      data = (data << 2) | 3;   // union value and packed markers.
+    intptr_t length = data & PACKED_OFFSET_MASK;
+    data >>= PACKED_OFFSET_MASK;
+
+    length += tagwidth;
+    if (length + PACKED_OFFSET_WIDTH + 1 <= 8 * sizeof(FbleValue*)) {
+      data <<= tagwidth;
+      data |= (intptr_t)tag;
+      data <<= PACKED_OFFSET_WIDTH;
+      data |= length;
+      data <<= 1;
+      data |= 1;
       return (FbleValue*)data;
     }
   }
@@ -1356,7 +1361,7 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 }
 
 // See documentation in fble-value.h.
-size_t FbleUnionValueTag(FbleValue* object)
+size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
 {
   object = StrictValue(object);
 
@@ -1366,17 +1371,9 @@ size_t FbleUnionValueTag(FbleValue* object)
 
   if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
-
-    // Skip past the pack bit and the bit saying this is a union value.
-    data >>= 2;
-
-    // Read the tag.
-    size_t tag = 0;
-    while (data & 0x1) {
-      tag++;
-      data >>= 1;
-    }
-    return tag;
+    data >>= (1 + PACKED_OFFSET_WIDTH);
+    data &= (1 << tagwidth) - 1;
+    return data;
   }
 
   assert(object->tag == UNION_VALUE);
@@ -1395,18 +1392,17 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
 
   if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
-
-    // Skip past the pack bit and the bit saying this is a union value.
-    data >>= 2;
-
-    // Skip passed the tag.
-    while (data & 0x1) {
-      data >>= 1;
-    }
     data >>= 1;
 
-    // Pack the result
-    data = (data << 1) | 1;  // packed marker
+    intptr_t length = data & PACKED_VALUE_MASK;
+    length -= tagwidth;
+
+    data >>= (PACKED_VALUE_MASK + tagwidth);
+
+    data <<= PACKED_VALUE_MASK;
+    data |= length;
+    data <<= 1;
+    data |= 1;
     return (FbleValue*)data;
   }
 
@@ -1416,7 +1412,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
+FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
 {
   object = StrictValue(object);
 
@@ -1426,25 +1422,23 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t field)
 
   if (IsPacked(object)) {
     intptr_t data = (intptr_t)object;
+    data >>= 1;
 
-    // Skip past the pack bit and the bit saying this is a union value.
-    data >>= 2;
+    intptr_t length = data & PACKED_VALUE_MASK;
+    length -= tagwidth;
 
-    // Read the tag.
-    size_t tag = 0;
-    while (data & 0x1) {
-      tag++;
-      data >>= 1;
-    }
+    data >>= PACKED_VALUE_WIDTH;
 
+    intptr_t tag = data & ((1 << tagwidth) - 1);
     if (tag != field) {
       return FbleWrongUnionTag;
     }
 
-    data >>= 1;
-
-    // Pack the result
-    data = (data << 1) | 1;  // packed marker
+    data >>= tagwidth;
+    data <<= PACKED_VALUE_MASK;
+    data |= length;
+    data <<= 1;
+    data |= 1;
     return (FbleValue*)data;
   }
 

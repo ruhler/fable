@@ -1,0 +1,155 @@
+Data
+====
+Goal is to come up with a nicer packing for packed data values.
+
+Concerns:
+* It would be nice to have optimal packing, with binary representation for
+  tags.
+* It would be nice if packed struct/union field/tag access was a simple
+  constant operation.
+
+The reason for wanting better packing is to be able to pack more things, so we
+end up GC-allocating less and can safe on allocation performance because of
+that.
+
+The reason for wanting simpler access is to be able to inline the logic for
+access into the backends everywhere access happens. To avoid the runtime cost
+of the function call into the library.
+
+Miscellaneous thoughts:
+* If we can separate the structure of a type from a particular value, then we
+  potentially can know the structure statically in non-polymorphic code. That
+  means we wouldn't have to pass around the structure everywhere like we do now.
+* It's harder to represent the structure of a type than the structure of a
+  particular value, because we would need to provide structures for all union
+  tag variants and have some way to treat unbounded recursion.
+* If we have to do a function call or pointer lookups to traverse a type
+  structure, it's probably not worth the memory savings by packing that
+  information separately from the value.
+* We know the type info statically for the outer most access of a value. It's
+  only fields within the value that could differ in terms of size. If we have
+  some way to fix the size of inner fields, that could make access much
+  simpler.
+
+For example, we could say at the top level, a struct with N fields gives 32/N
+bits per field. Now you know exactly what bits to use for the ith field. We
+could say a union with N tag bits gives 32 - N bits for the argument. You know
+exactly what bits to use for the argument.
+
+Then we have the notion of deflating or inflating a field. Hmm... a little bit
+tricky.
+
+Or we could say a union is a 4 bit tag followed by a 60 bit value. We could
+say a struct is a 4 bit length followed by... or put raw data separately and
+give pointers? For example, a struct could be a 4 bit number of fields,
+followed by, for each field, a 3 bit pointer into the 'data' section of the
+value. A union could be ...
+
+It's all a bit tricky. Try to keep track of whether my goal is to pack more
+data in or to make it simpler to access field values.
+
+---
+
+I think I figured out how to pack data fairly densely with constant time
+access.
+
+Packed value:
+ 1 bit packed bit: 1 to indicate it's a packed value.
+ 6 bit length: number of bits of data value
+ N bits of content, where N is the length.
+
+Union content:
+ T bits of tag, followed by N-T bits of arg content.
+ Where T is the number of bits needed for the tag for that type of union,
+ which we should know statically at time of construction and access.
+
+Struct content:
+ F-1 * 6 bit offset
+   Describes the number of bits relative to the end of the struct header for
+   field i-1. Field 0 is implicitly 0 bits relative to the end of the struct
+   header.
+ arg 0 content
+ arg 1 content
+ ...
+ arg F-1 content
+
+ Where F is the number of fields in the struct, which we should know
+ statically at the time of construction and access.
+ 
+Note: You can freely shift arg content right or left by some number of bits
+and preserve its meaning.
+
+Union construction:
+  Add size of tag to arg length to see if there is enough room to pack.
+  If so, shift arg content by tag bits, insert tag, update length.
+
+Union access:
+  Direct access to tag. Shift content and decrement length to get arg.
+
+Struct construction:
+  Add sizes of all args plus size needed for struct header to see if enough
+  room. If so, shift arg contents appropriately, build arg header, and update
+  length.
+
+Struct access:
+  Compute bit offset for field from struct header. Shift to get content.
+  Update length based on difference between field offset and subsequent field
+  offset.
+  Special case for field 0: assume offset 0
+  Special case for last field:
+   Use adjusted packed value length to determine length.
+
+Pure union types, such as IntP@ and Char@ are packed ideally. Struct types
+aren't quite as ideal, but they are pretty close to as dense a packing as we
+get today, depending on your assumptions. Constant time construction and
+access.
+
+You can play around with how to represent things a little. For example,
+mini-words of 4 bits each with only a 4 bit offset, or pack offset into 4 bits
+with a special case extension of an additional 5 bits if needed. Stuff like
+that. But I think the proposal above is a good, simple starting point that may
+not need any additional optimization.
+
+Random interesting observation: Under this packing, there is a notable
+difference between a Bit4 as a pure union versus a struct of bits:
+
+Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0)
+Bit4@ = +(Bit3@ 1, Bit3@ 0);
+
+Maybe for md5 we want to switch to the later? Or is that overly tedious? I
+don't know. Don't worry about it for now.
+
+To make this work, we need additional information when constructing and
+accessing a union, and when accessing a field. Namely, number of bits of union
+value tag and number of struct fields.
+
+I want a slight layer of abstraction for the user I think, so maybe define an
+FbleTypeDescriptor type, which tells us exactly the info we want, with helper
+functions for FbleStructTypeDescriptor(num_fields) and
+FbleUnionTypeDescriptor(num_fields) API.
+
+We should pass this info through instructions, and it will need to be manually
+constructed for direct API users.
+
+Or I could, for now, just take taglen and num_fields arguments. Easier, right?
+Seems overly tied to the implementation and harder to change, but I can worry
+about that later if/when I go to change things? Sure. Let's do that.
+
+Note: for packing values into 32 bits, we can use a 5 bit field and offset
+instead of 6 bits. How do I deal with that difference today? We check against
+8 * sizeof(FbleValue*).
+
+Is there an easy way to get number of bits in a pointer in the C preprocessor?
+Do we have to hardcode 32 or 64? I'd really prefer not to hard code if
+possible, to get better test coverage.
+
+We can do this in two steps:
+1. Add required args to Fble* APIs. Thread the info through FbleCode as
+needed.
+2. Change the packing scheme.
+
+Based on what takes time in perf profiling, I could easily see this giving us
+a 30% performance improvement.
+
+Looks like there are machine instructions to get the highest set bit in an
+integer: bsr, clz, ctz. For gcc: __builtin_clz?
