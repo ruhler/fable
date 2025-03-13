@@ -150,6 +150,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
 /**
  * @func[FbleStructValueField] Gets a field of a struct value.
  *  @arg[FbleValue*][object] The struct value object to get the field value of.
+ *  @arg[size_t    ][fieldc] The number of fields in the type for this struct.
  *  @arg[size_t    ][field ] The field to access.
  *
  *  @returns FbleValue*
@@ -161,11 +162,13 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
  *   Behavior is undefined if the object is not a struct value or the field
  *   is invalid.
  */
-FbleValue* FbleStructValueField(FbleValue* object, size_t field);
+FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field);
 
 /**
  * @func[FbleNewUnionValue] Creates a new union value.
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[size_t        ][tagwidth]
+ *   The number of bits needed to store a tag of this union type.
  *  @arg[size_t        ][tag ] The tag of the union value.
  *  @arg[FbleValue*    ][arg ] The argument of the union value. Borrowed.
  *
@@ -175,13 +178,14 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t field);
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
+FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, FbleValue* arg);
 
 /**
  * @func[FbleNewEnumValue] Creates a new enum value.
  *  Convenience function for creating unions with value of type *().
  *
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[size_t        ][tagwidth ] The number of bits needed for the tag.
  *  @arg[size_t        ][tag ] The tag of the union value.
  *
  *  @returns FbleValue*
@@ -190,11 +194,12 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
+FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tagwidth, size_t tag);
 
 /**
  * @func[FbleUnionValueTag] Gets the tag of a union value.
  *  @arg[FbleValue*][object] The union value object to get the tag of.
+ *  @arg[size_t][tagwidth] The number of bits needed for the tag.
  *
  *  @returns size_t
  *   The tag of the union value object. Returns -1 if the union value is
@@ -203,11 +208,12 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
  *  @sideeffects
  *   Behavior is undefined if the object is not a union value.
  */
-size_t FbleUnionValueTag(FbleValue* object);
+size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth);
 
 /**
  * @func[FbleUnionValueArg] Gets the argument of a union value.
  *  @arg[FbleValue*][object] The union value object to get the argument of.
+ *  @arg[size_t][tagwidth] Number of bits for the tag.
  *
  *  @returns FbleValue*
  *   The argument of the union value object. Returns NULL if the union value
@@ -216,7 +222,7 @@ size_t FbleUnionValueTag(FbleValue* object);
  *  @sideeffects
  *   Behavior is undefined if the object is not a union value.
  */
-FbleValue* FbleUnionValueArg(FbleValue* object);
+FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth);
 
 /**
  * Sentinel value indicating wrong field in FbleUnionValueField function.
@@ -228,6 +234,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object);
 /**
  * @func[FbleUnionValueField] Gets a field of a union value.
  *  @arg[FbleValue*][object] The union value object to get the field of.
+ *  @arg[size_t][tagwidth] The number of bits for the union tag.
  *  @arg[size_t][field] The field to get.
  *
  *  @returns FbleValue*
@@ -238,7 +245,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object);
  *  @sideeffects
  *   Behavior is undefined if the object is not a union value.
  */
-FbleValue* FbleUnionValueField(FbleValue* object, size_t field);
+FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field);
 
 /**
  * @func[FbleNewListValue] Creates an fble list value.
@@ -272,6 +279,7 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
 /**
  * @func[FbleNewLiteralValue] Creates an fble literal value.
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[size_t        ][tagwidth] The number of bits for the tag of a letter.
  *  @arg[size_t        ][argc] The number of letters in the literal.
  *  @arg[size_t*       ][args] The tags of the letters in the literal.
  *
@@ -281,7 +289,7 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t argc, size_t* args);
 
 /**
  * @func[FbleNewFuncValue] Creates an fble function value.

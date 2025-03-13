@@ -2,6 +2,14 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* New data packing scheme
+ - Add tagwidth to union instructions as needed
+ - Add fieldc to struct instructions as needed
+
+* Split AccessTc and AccessInstr into Struct and Union variants
+ - Struct needs fieldc, Union needs tagwidth.
+ 
+
 * Optimize PartialApplyImpl
   - Can we pre-allocate space for the final args to avoid the final memcpys?
   - Can we inline bits of FbleTailCall to avoid a duplicate memcpy?

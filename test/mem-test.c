@@ -70,14 +70,14 @@ static size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, si
   // @ Bit@ = +(Unit@ 0, Unit@ 1);
   // @ BitS@ = +(BitP@ cons, Unit@ nil),
   // @ BitP@ = *(Bit@ msb, BitS@ tail);
-  FbleValue* zero = FbleNewEnumValue(heap, 0);
-  FbleValue* one = FbleNewEnumValue(heap, 1);
-  FbleValue* tail = FbleNewEnumValue(heap, 1);
+  FbleValue* zero = FbleNewEnumValue(heap, 1, 0);
+  FbleValue* one = FbleNewEnumValue(heap, 1, 1);
+  FbleValue* tail = FbleNewEnumValue(heap, 1, 1);
   for (size_t i = 0; i < num_bits; ++i) {
     FbleValue* bit = (use_n % 2 == 0) ? zero : one;
     use_n /= 2;
     FbleValue* cons = FbleNewStructValue_(heap, 2, bit, tail);
-    tail = FbleNewUnionValue(heap, 0, cons);
+    tail = FbleNewUnionValue(heap, 1, 0, cons);
   }
 
   FbleResetMaxTotalBytesAllocated();

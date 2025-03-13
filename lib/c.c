@@ -366,8 +366,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-        fprintf(fout, "  l[%zi] = FbleNewUnionValue(heap, %zi, %s[%zi]);\n",
-            union_instr->dest, union_instr->tag,
+        fprintf(fout, "  l[%zi] = FbleNewUnionValue(heap, %zi, %zi, %s[%zi]);\n",
+            union_instr->dest, union_instr->tagwidth, union_instr->tag,
             var_tag[union_instr->arg.tag],
             union_instr->arg.index);
         break;
@@ -375,9 +375,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        fprintf(fout, "  l[%zi] = FbleStructValueField(%s[%zi], %zi);\n",
+        fprintf(fout, "  l[%zi] = FbleStructValueField(%s[%zi], %zi, %zi);\n",
             access_instr->dest, var_tag[access_instr->obj.tag],
-            access_instr->obj.index, access_instr->tag);
+            access_instr->obj.index, access_instr->fieldc, access_instr->tag);
         fprintf(fout, "  if (l[%zi] == NULL) ", access_instr->dest);
         ReturnAbort(fout, "UndefinedStructValue", access_instr->loc);
         break;
@@ -385,9 +385,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        fprintf(fout, "  l[%zi] = FbleUnionValueField(%s[%zi], %zi);\n",
+        fprintf(fout, "  l[%zi] = FbleUnionValueField(%s[%zi], %zi, %zi);\n",
             access_instr->dest, var_tag[access_instr->obj.tag],
-            access_instr->obj.index, access_instr->tag);
+            access_instr->obj.index, access_instr->tagwidth, access_instr->tag);
 
         fprintf(fout, "  if (l[%zi] == NULL) ", access_instr->dest);
         ReturnAbort(fout, "UndefinedUnionValue", access_instr->loc);
@@ -402,9 +402,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
-        fprintf(fout, "  switch (FbleUnionValueTag(%s[%zi])) {\n",
+        fprintf(fout, "  switch (FbleUnionValueTag(%s[%zi], %zi)) {\n",
             var_tag[select_instr->condition.tag],
-            select_instr->condition.index);
+            select_instr->condition.index,
+            select_instr->tagwidth);
         fprintf(fout, "    case -1:");
         ReturnAbort(fout, "UndefinedUnionSelect", select_instr->loc);
 
@@ -565,8 +566,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
           fprintf(fout, " %zi,", literal_instr->letters.xs[i]);
         }
         fprintf(fout, " };\n");
-        fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, lit_%zi);\n",
-            literal_instr->dest, argc, lit_id);
+        fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, %zi, lit_%zi);\n",
+            literal_instr->dest, literal_instr->tagwidth, argc, lit_id);
         lit_id++;
         break;
       }

@@ -415,6 +415,7 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
     case FBLE_UNION_VALUE_TC: {
       FbleUnionValueTc* uv = (FbleUnionValueTc*)tc;
       FbleUnionValueTc* ntc = FbleNewTc(FbleUnionValueTc, FBLE_UNION_VALUE_TC, tc->loc);
+      ntc->tagwidth = uv->tagwidth;
       ntc->tag = uv->tag;
       ntc->arg = RewriteVars(statics, arg_offset, uv->arg);
       return &ntc->_base;
@@ -445,6 +446,8 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       FbleDataAccessTc* ntc = FbleNewTc(FbleDataAccessTc, FBLE_DATA_ACCESS_TC, tc->loc);
       ntc->datatype = v->datatype;
       ntc->obj = RewriteVars(statics, arg_offset, v->obj);
+      ntc->fieldc = v->fieldc;
+      ntc->tagwidth = v->tagwidth;
       ntc->tag = v->tag;
       ntc->loc = FbleCopyLoc(v->loc);
       return &ntc->_base;
@@ -1009,13 +1012,22 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       size_t argc = struct_copy->fields.size;
       Local* args[argc];
+
+      size_t tagwidth = 0;
+      while ((1 << tagwidth) < argc) {
+        tagwidth++;
+      }
+
       for (size_t i = 0; i < argc; ++i) {
         if (struct_copy->fields.xs[i]) {
           args[i] = CompileExpr(blocks, false, false, scope, struct_copy->fields.xs[i]);
         } else {
           args[i] = NewLocal(scope);
+
           FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
           access->obj = source->var;
+          access->fieldc = argc;
+          access->tagwidth = tagwidth;
           access->tag = i;
           access->loc = FbleCopyLoc(struct_copy->_base.loc);
           access->dest = args[i]->var.index;
@@ -1045,6 +1057,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Local* local = NewLocal(scope);
       FbleUnionValueInstr* union_instr = FbleAllocInstr(FbleUnionValueInstr, FBLE_UNION_VALUE_INSTR);
+      union_instr->tagwidth = union_tc->tagwidth;
       union_instr->tag = union_tc->tag;
       union_instr->arg = arg->var;
       union_instr->dest = local->var.index;
@@ -1058,9 +1071,15 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)v;
       Local* condition = CompileExpr(blocks, false, false, scope, select_tc->condition);
 
+      size_t tagwidth = 0;
+      while ((1 << tagwidth) < select_tc->num_tags) {
+        tagwidth++;
+      }
+
       FbleUnionSelectInstr* select_instr = FbleAllocInstr(FbleUnionSelectInstr, FBLE_UNION_SELECT_INSTR);
       select_instr->loc = FbleCopyLoc(select_tc->_base.loc);
       select_instr->condition = condition->var;
+      select_instr->tagwidth = tagwidth;
       select_instr->num_tags = select_tc->num_tags;
       FbleInitVector(select_instr->targets);
       AppendInstr(scope, &select_instr->_base);
@@ -1155,6 +1174,8 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, tag);
       access->obj = obj->var;
+      access->fieldc = access_tc->fieldc;
+      access->tagwidth = access_tc->tagwidth;
       access->tag = access_tc->tag;
       access->loc = FbleCopyLoc(access_tc->loc);
       AppendInstr(scope, &access->_base);
@@ -1337,6 +1358,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope);
       FbleLiteralInstr* literal_instr = FbleAllocInstr(FbleLiteralInstr, FBLE_LITERAL_INSTR);
       literal_instr->dest = local->var.index;
+      literal_instr->tagwidth = literal_tc->tagwidth;
       FbleInitVector(literal_instr->letters);
       AppendInstr(scope, &literal_instr->_base);
       CompileExit(exit, scope, local);

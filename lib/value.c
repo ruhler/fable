@@ -152,10 +152,6 @@
 
 #define PACKED_OFFSET_MASK ((1 << PACKED_OFFSET_WIDTH) - 1)
 
-// If this fails, add support for whatever crazy architecture you are trying
-// to use. 32 and 64 bit architectures should be supported.
-static_assert((1 << PACKED_OFFSET_WIDTH) == 8 * sizeof(FbleValue*));
-
 /**
  * @struct[List] Circular, doubly linked list of values.
  *  @field[List*][next] The next element in the list.
@@ -958,6 +954,10 @@ static void IncrGc(ValueHeap* heap)
 // See documentation in fble-value.h.
 FbleValueHeap* FbleNewValueHeap()
 {
+  // If this fails, add support for whatever crazy architecture you are trying
+  // to use. 32 and 64 bit architectures should be supported.
+  assert((1 << PACKED_OFFSET_WIDTH) == 8 * sizeof(FbleValue*));
+
   ValueHeap* heap = FbleAlloc(ValueHeap);
 
   heap->tail_call_capacity = 1;
@@ -1353,10 +1353,10 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, F
   return &union_value->_base;
 }
 // See documentation in fble-value.h.
-FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
+FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tagwidth, size_t tag)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
-  FbleValue* result = FbleNewUnionValue(heap, tag, unit);
+  FbleValue* result = FbleNewUnionValue(heap, tagwidth, tag, unit);
   return result;
 }
 
@@ -1382,7 +1382,7 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleUnionValueArg(FbleValue* object)
+FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
 {
   object = StrictValue(object);
 
@@ -1394,12 +1394,12 @@ FbleValue* FbleUnionValueArg(FbleValue* object)
     intptr_t data = (intptr_t)object;
     data >>= 1;
 
-    intptr_t length = data & PACKED_VALUE_MASK;
+    intptr_t length = data & PACKED_OFFSET_MASK;
     length -= tagwidth;
 
-    data >>= (PACKED_VALUE_MASK + tagwidth);
+    data >>= (PACKED_OFFSET_MASK + tagwidth);
 
-    data <<= PACKED_VALUE_MASK;
+    data <<= PACKED_OFFSET_MASK;
     data |= length;
     data <<= 1;
     data |= 1;
@@ -1424,10 +1424,10 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
     intptr_t data = (intptr_t)object;
     data >>= 1;
 
-    intptr_t length = data & PACKED_VALUE_MASK;
+    intptr_t length = data & PACKED_OFFSET_MASK;
     length -= tagwidth;
 
-    data >>= PACKED_VALUE_WIDTH;
+    data >>= PACKED_OFFSET_WIDTH;
 
     intptr_t tag = data & ((1 << tagwidth) - 1);
     if (tag != field) {
@@ -1435,7 +1435,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
     }
 
     data >>= tagwidth;
-    data <<= PACKED_VALUE_MASK;
+    data <<= PACKED_OFFSET_MASK;
     data |= length;
     data <<= 1;
     data |= 1;
@@ -1741,12 +1741,12 @@ FbleFunction* FbleFuncValueFunction(FbleValue* value)
 FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
-  FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
+  FbleValue* tail = FbleNewUnionValue(heap, 1, 1, unit);
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[argc - i - 1];
     FbleValue* cons = FbleNewStructValue_(heap, 2, arg, tail);
 
-    tail = FbleNewUnionValue(heap, 0, cons);
+    tail = FbleNewUnionValue(heap, 1, 0, cons);
   }
   return tail;
 }
@@ -1765,15 +1765,15 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t argc, size_t* args)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
-  FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
+  FbleValue* tail = FbleNewUnionValue(heap, 1, 1, unit);
   for (size_t i = 0; i < argc; ++i) {
     size_t letter = args[argc - i - 1];
-    FbleValue* arg = FbleNewUnionValue(heap, letter, unit);
+    FbleValue* arg = FbleNewUnionValue(heap, tagwidth, letter, unit);
     FbleValue* cons = FbleNewStructValue_(heap, 2, arg, tail);
-    tail = FbleNewUnionValue(heap, 0, cons);
+    tail = FbleNewUnionValue(heap, 1, 0, cons);
   }
   return tail;
 }

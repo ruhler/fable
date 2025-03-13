@@ -197,12 +197,14 @@ typedef struct {
  *   *dest = union(arg)
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[size_t][tagwidth] The number of bits needed to hold the tag.
  *  @field[size_t][tag] The tag of the value to create.
  *  @field[FbleVar][arg] The argument to the value to create.
  *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
   FbleInstr _base;
+  size_t tagwidth;
   size_t tag;
   FbleVar arg;
   FbleLocalIndex dest;
@@ -218,6 +220,8 @@ typedef struct {
  *  @field[FbleInstr][_base] FbleInstr base class.
  *  @field[FbleLoc][loc] Location of the access, for error reporting.
  *  @field[FbleVar][obj] The object whose field to access.
+ *  @field[size_t][fieldc] The number of fields in the type.
+ *  @field[size_t][tagwidth] The number of bits needed for the tag.
  *  @field[size_t][tag] The field to access.
  *  @field[FbleLocalIndex][dest] Where to store the result.
  */
@@ -225,6 +229,8 @@ typedef struct {
   FbleInstr _base;
   FbleLoc loc;
   FbleVar obj;
+  size_t fieldc;
+  size_t tagwidth;
   size_t tag;
   FbleLocalIndex dest;
 } FbleAccessInstr;
@@ -275,6 +281,7 @@ typedef struct {
  *  @field[FbleInstr][_base] FbleInstr base class.
  *  @field[FbleLoc][loc] Location to use for error reporting.
  *  @field[FbleVar][condition] The object to branch based on.
+ *  @field[size_t][tagwidth] Number of bits needed for the tag.
  *  @field[size_t][num_tags] Number of possible tag values.
  *  @field[FbleBranchTargetV][targets]
  *   Non-default branch targets. Sorted in increasing order of tag.
@@ -284,6 +291,7 @@ typedef struct {
   FbleInstr _base;
   FbleLoc loc;
   FbleVar condition;
+  size_t tagwidth;
   size_t num_tags;
   FbleBranchTargetV targets;
   size_t default_;
@@ -457,11 +465,13 @@ typedef struct {
  *   *dest = "xxx"
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[size_t][tagwidth] The number of bits needed for the tag of a letter.
  *  @field[FbleTagV][letters] The letters to create the literal from.
  *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
   FbleInstr _base;
+  size_t tagwidth;
   FbleTagV letters;
   FbleLocalIndex dest;
 } FbleLiteralInstr;

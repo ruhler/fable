@@ -675,8 +675,9 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_UNION_VALUE_INSTR: {
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", union_instr->tag);
-      GetFrameVar(fout, "x2", union_instr->arg);
+      fprintf(fout, "  mov x1, %zi\n", union_instr->tagwidth);
+      fprintf(fout, "  mov x2, %zi\n", union_instr->tag);
+      GetFrameVar(fout, "x3", union_instr->arg);
       fprintf(fout, "  bl FbleNewUnionValue\n");
       SetFrameVar(fout, "x0", union_instr->dest);
       return;
@@ -685,7 +686,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       GetFrameVar(fout, "x0", access_instr->obj);
-      fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
+      fprintf(fout, "  mov x1, #%zi\n", access_instr->fieldc);
+      fprintf(fout, "  mov x2, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueField\n");
       SetFrameVar(fout, "x0", access_instr->dest);
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
@@ -696,7 +698,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
       GetFrameVar(fout, "x0", access_instr->obj);
-      fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
+      fprintf(fout, "  mov x1, #%zi\n", access_instr->tagwidth);
+      fprintf(fout, "  mov x2, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleUnionValueField\n");
       SetFrameVar(fout, "x0", access_instr->dest);
 
@@ -714,6 +717,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Get the union value tag.
       GetFrameVar(fout, "x0", select_instr->condition);
+      fprintf(fout, "  mov x1, %zi\n", select_instr->tagwidth);
       fprintf(fout, "  bl FbleUnionValueTag\n");
 
       // Abort if the union object is undefined.
@@ -911,8 +915,9 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", argc);
-      Adr(fout, "x2", ".Lr.%04zx.%zi.letters", func_id, pc);
+      fprintf(fout, "  mov x1, %zi\n", literal_instr->tagwidth);
+      fprintf(fout, "  mov x2, %zi\n", argc);
+      Adr(fout, "x3", ".Lr.%04zx.%zi.letters", func_id, pc);
       fprintf(fout, "  bl FbleNewLiteralValue\n");
       SetFrameVar(fout, "x0", literal_instr->dest);
       return;

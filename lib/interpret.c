@@ -111,9 +111,10 @@ static FbleValue* Interpret(
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
+        size_t tagwidth = union_value_instr->tagwidth;
         size_t tag = union_value_instr->tag;
         FbleValue* arg = GET(union_value_instr->arg);
-        locals[union_value_instr->dest] = FbleNewUnionValue(heap, tag, arg);
+        locals[union_value_instr->dest] = FbleNewUnionValue(heap, tagwidth, tag, arg);
         pc++;
         break;
       }
@@ -122,7 +123,7 @@ static FbleValue* Interpret(
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
         FbleValue* obj = GET(access_instr->obj);
-        locals[access_instr->dest] = FbleStructValueField(obj, access_instr->tag);
+        locals[access_instr->dest] = FbleStructValueField(obj, access_instr->fieldc, access_instr->tag);
 
         if (locals[access_instr->dest] == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
@@ -137,7 +138,7 @@ static FbleValue* Interpret(
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
         FbleValue* obj = GET(access_instr->obj);
-        locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tag);
+        locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tagwidth, access_instr->tag);
 
         if (locals[access_instr->dest] == NULL) {
           FbleReportError("undefined union value access\n", access_instr->loc);
@@ -157,7 +158,7 @@ static FbleValue* Interpret(
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
         FbleValue* obj = GET(select_instr->condition);
-        size_t tag = FbleUnionValueTag(obj);
+        size_t tag = FbleUnionValueTag(obj, select_instr->tagwidth);
 
         if (tag == (size_t)(-1)) {
           FbleReportError("undefined union value select\n", select_instr->loc);
@@ -295,7 +296,7 @@ static FbleValue* Interpret(
 
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-        locals[literal_instr->dest] = FbleNewLiteralValue(heap, literal_instr->letters.size, literal_instr->letters.xs);
+        locals[literal_instr->dest] = FbleNewLiteralValue(heap, literal_instr->tagwidth, literal_instr->letters.size, literal_instr->letters.xs);
         pc++;
         break;
       }

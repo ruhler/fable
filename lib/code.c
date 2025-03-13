@@ -330,9 +330,9 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
         case FBLE_UNION_VALUE_INSTR: {
           FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "l%zi = union(%zi: %s%zi);\n",
+          fprintf(fout, "l%zi = union(%zi/%zi: %s%zi);\n",
               union_value_instr->dest,
-              union_value_instr->tag,
+              union_value_instr->tag, union_value_instr->tagwidth,
               var_tags[union_value_instr->arg.tag],
               union_value_instr->arg.index);
           break;

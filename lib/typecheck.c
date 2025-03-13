@@ -1464,7 +1464,13 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
+      size_t tagwidth = 0;
+      while ((1 << tagwidth) < union_type->fields.size) {
+        tagwidth++;
+      }
+
       FbleUnionValueTc* union_tc = FbleNewTc(FbleUnionValueTc, FBLE_UNION_VALUE_TC, expr->loc);
+      union_tc->tagwidth = tagwidth;
       union_tc->tag = tag;
       union_tc->arg = FbleCopyTc(arg.tc);
       return MkTc(FbleRetainType(th, poly.type), &union_tc->_base);
@@ -1845,7 +1851,13 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleType* result_type = FbleRetainType(th, func_type->rtype);
 
+      size_t tagwidth = 0;
+      while ((1 << tagwidth) < elem_data_type->fields.size) {
+        tagwidth++;
+      }
+
       FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
+      literal_tc->tagwidth = tagwidth;
       FbleInitVector(literal_tc->letters);
       for (size_t i = 0; i < argc; ++i) {
         FbleAppendToVector(literal_tc->letters, args[i]);
@@ -1966,6 +1978,11 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleTaggedTypeV* fields = &normal->fields;
+      size_t tagwidth = 0;
+      while ((1 << tagwidth) < fields->size)  {
+        tagwidth++;
+      }
+
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
           FbleType* rtype = FbleRetainType(th, fields->xs[i].type);
@@ -1973,6 +1990,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           FbleDataAccessTc* access_tc = FbleNewTc(FbleDataAccessTc, FBLE_DATA_ACCESS_TC, expr->loc);
           access_tc->datatype = normal->datatype;
           access_tc->obj = FbleCopyTc(obj.tc);
+          access_tc->fieldc = fields->size;
+          access_tc->tagwidth = tagwidth;
           access_tc->tag = i;
           access_tc->loc = FbleCopyLoc(access_expr->field.loc);
           return MkTc(rtype, &access_tc->_base);

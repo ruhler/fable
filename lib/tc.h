@@ -203,11 +203,13 @@ typedef struct {
  *  A union value expression.
  *
  *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[size_t][tagwidth] Number of bits needed for the tag.
  *  @field[size_t][tag] Tag of the union value to create.
  *  @field[FbleTc*][arg] Argument to the union valu to create.
  */
 typedef struct {
   FbleTc _base;
+  size_t tagwidth;
   size_t tag;
   FbleTc* arg;
 } FbleUnionValueTc;
@@ -261,6 +263,8 @@ typedef struct {
  *  @field[FbleTc][_base] FbleTc base class.
  *  @field[FbleDataTypeTag][datatype] Whether this is struct or union access.
  *  @field[FbleTc*][obj] The object to access a field of.
+ *  @field[size_t][fieldc] The number of fields in the type.
+ *  @field[size_t][tagwidth] The number of bits needed for the tag.
  *  @field[size_t][tag] The field to access.
  *  @field[FbleLoc][loc] Location to use for error reporting.
  */
@@ -268,6 +272,8 @@ typedef struct {
   FbleTc _base;
   FbleDataTypeTag datatype;
   FbleTc* obj;
+  size_t fieldc;
+  size_t tagwidth;
   size_t tag;
   FbleLoc loc;
 } FbleDataAccessTc;
@@ -329,11 +335,13 @@ typedef struct {
  *  function as part of a literal expression.
  *
  *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[size_t][tagwidth] Number of bits in the tag of a letter.
  *  @field[FbleTagV][letters] Tag values for letters in the literal.
  */
 typedef struct {
-  FbleTc _base;       /**< FbleTc base class. */
-  FbleTagV letters;   /**< Tag values for letters in the literal. */
+  FbleTc _base;
+  size_t tagwidth;
+  FbleTagV letters;
 } FbleLiteralTc;
 
 /**
