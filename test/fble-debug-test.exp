@@ -78,10 +78,10 @@ eval {
   require "(gdb) "
 
   # The values of the locals are packed values.
-  # 0x1 for Unit, 0x3 for tag 0 of a union.
+  # 0x1 for Unit, 0x5 for tag 0 of a union with 2-bit tag.
   send "info locals\n"
   require "True = 0x3"
-  require "light = 0x3"
+  require "light = 0x5"
   require "u = 0x1"
   require "(gdb)"
 

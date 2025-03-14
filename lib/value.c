@@ -144,13 +144,8 @@
 // work and give responsibility for transferring returned objects to the
 // caller stack frame to GC when it finishes.
 
-#if INTPTR_WIDTH == 64
-#define PACKED_OFFSET_WIDTH 6
-#else
-#define PACKED_OFFSET_WIDTH 5
-#endif
-
-#define PACKED_OFFSET_MASK ((1 << PACKED_OFFSET_WIDTH) - 1)
+const static intptr_t PACKED_OFFSET_WIDTH = (sizeof(FbleValue*) == 8) ? 6 : 5;
+const static intptr_t PACKED_OFFSET_MASK = (1 << PACKED_OFFSET_WIDTH) - 1;
 
 /**
  * @struct[List] Circular, doubly linked list of values.
@@ -1229,10 +1224,10 @@ FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   // Try packing optimistically.
-  intptr_t header_length = (argc == 0) ? 0 : (argc * PACKED_OFFSET_WIDTH);
+  intptr_t header_length = (argc == 0) ? 0 : ((argc - 1) * PACKED_OFFSET_WIDTH);
   intptr_t length = 0;
-  intptr_t header = 0;
-  intptr_t data = 0;
+  intptr_t header = 0;  // Struct header listing offsets for the fields.
+  intptr_t data = 0;    // Field data following the struct header.
 
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[i];
@@ -1240,10 +1235,10 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
       intptr_t adata = (intptr_t)arg;
       adata >>= 1;
       intptr_t alength = adata & PACKED_OFFSET_MASK;
-      adata &= ~ PACKED_OFFSET_MASK;
-      data |= adata;
-      header |= (length << (i * PACKED_OFFSET_WIDTH));
+      adata >>= PACKED_OFFSET_WIDTH;
+      data |= (adata << length);
       length += alength;
+      header |= (length << (i * PACKED_OFFSET_WIDTH));
     } else {
       length += 8 * sizeof(FbleValue*);
       break;
@@ -1253,7 +1248,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   length += header_length;
 
   if (length + PACKED_OFFSET_WIDTH + 1 <= 8 * sizeof(FbleValue*)) {
-    header &= ((1 << header_length) - 1);
+    header &= ((1 << header_length) - 1); // Drop last field offset from header.
     data <<= header_length;
     data |= header;
     data <<= PACKED_OFFSET_WIDTH;
@@ -1304,8 +1299,8 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
     data >>= PACKED_OFFSET_WIDTH;
 
     intptr_t header_length = (fieldc == 0) ? 0 : (PACKED_OFFSET_WIDTH * (fieldc - 1));
-    intptr_t offset = (field == 0) ? 0 : (data >> (PACKED_OFFSET_WIDTH * (field - 1)));
-    intptr_t end = (field + 1 == fieldc) ? (length - header_length) : (data >> (PACKED_OFFSET_WIDTH * field));
+    intptr_t offset = (field == 0) ? 0 : ((data >> (PACKED_OFFSET_WIDTH * (field - 1))) & PACKED_OFFSET_MASK);
+    intptr_t end = (field + 1 == fieldc) ? (length - header_length) : ((data >> (PACKED_OFFSET_WIDTH * field)) & PACKED_OFFSET_MASK);
     data >>= header_length;
 
     length = end - offset;
@@ -1333,7 +1328,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, F
     data >>= 1;
 
     intptr_t length = data & PACKED_OFFSET_MASK;
-    data >>= PACKED_OFFSET_MASK;
+    data >>= PACKED_OFFSET_WIDTH;
 
     length += tagwidth;
     if (length + PACKED_OFFSET_WIDTH + 1 <= 8 * sizeof(FbleValue*)) {
@@ -1397,9 +1392,9 @@ FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
     intptr_t length = data & PACKED_OFFSET_MASK;
     length -= tagwidth;
 
-    data >>= (PACKED_OFFSET_MASK + tagwidth);
+    data >>= (PACKED_OFFSET_WIDTH + tagwidth);
 
-    data <<= PACKED_OFFSET_MASK;
+    data <<= PACKED_OFFSET_WIDTH;
     data |= length;
     data <<= 1;
     data |= 1;
@@ -1435,7 +1430,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
     }
 
     data >>= tagwidth;
-    data <<= PACKED_OFFSET_MASK;
+    data <<= PACKED_OFFSET_WIDTH;
     data |= length;
     data <<= 1;
     data |= 1;
