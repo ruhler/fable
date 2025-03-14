@@ -17,7 +17,7 @@ static const char* Chars =
     "[\\]^_`"
     "abcdefghijklmnopqrstuvwxyz"
     "{|}~";
-static const size_t CharsTagWidth = 7;
+#define CHARS_TAGWIDTH 7
 
 // FbleNewCharValue -- see documentation in char.fble.h
 FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c)
@@ -29,11 +29,11 @@ FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c)
   }
   assert(p >= Chars);
   size_t tag = p - Chars;
-  return FbleNewEnumValue(heap, CharsTagWidth, tag);
+  return FbleNewEnumValue(heap, CHARS_TAGWIDTH, tag);
 }
 
 // FbleCharValueAccess -- see documentation in char.fble.h
 char FbleCharValueAccess(FbleValue* c)
 {
-  return Chars[FbleUnionValueTag(c, CharsTagWidth)];
+  return Chars[FbleUnionValueTag(c, CHARS_TAGWIDTH)];
 }

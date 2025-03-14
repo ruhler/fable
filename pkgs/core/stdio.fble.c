@@ -23,6 +23,11 @@
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
 
+#define MAYBE_TAGWIDTH 1
+#define BOOL_TAGWIDTH 1
+#define LIST_TAGWIDTH 1
+#define RESULT_FIELDC 2
+
 static void OnFree(void* data);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -114,10 +119,10 @@ static FbleValue* IStreamImpl(
   int c = fgetc(file);
   FbleValue* ms;
   if (c == EOF) {
-    ms = FbleNewEnumValue(heap, 1);
+    ms = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
   } else {
     FbleValue* v = FbleNewIntValue(heap, c);
-    ms = FbleNewUnionValue(heap, 0, v);
+    ms = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
   }
 
   return FbleNewStructValue_(heap, 2, world, ms);
@@ -170,12 +175,12 @@ static FbleValue* ReadImpl(
 
   FbleValue* mstream;
   if (fin == NULL) {
-    mstream = FbleNewEnumValue(heap, 1); // Nothing
+    mstream = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   } else {
     // The Read block id is index 3 from the main block id
     FbleBlockId module_block_id = function->profile_block_id - 3;
     FbleValue* stream = IStream(heap, fin, module_block_id);
-    mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
+    mstream = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, stream); // Just(stream)
   }
 
   return FbleNewStructValue_(heap, 2, world, mstream);
@@ -203,12 +208,12 @@ static FbleValue* WriteImpl(
 
   FbleValue* mstream;
   if (fin == NULL) {
-    mstream = FbleNewEnumValue(heap, 1); // Nothing
+    mstream = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   } else {
     // The Write block id is index 4 from the main block id
     FbleBlockId module_block_id = function->profile_block_id - 4;
     FbleValue* stream = OStream(heap, fin, module_block_id);
-    mstream = FbleNewUnionValue(heap, 0, stream); // Just(stream)
+    mstream = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, stream); // Just(stream)
   }
 
   return FbleNewStructValue_(heap, 2, world, mstream);
@@ -236,10 +241,10 @@ static FbleValue* GetEnvImpl(
 
   FbleValue* mstr;
   if (value == NULL) {
-    mstr = FbleNewEnumValue(heap, 1); // Nothing
+    mstr = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   } else {
     FbleValue* str = FbleNewStringValue(heap, value);
-    mstr = FbleNewUnionValue(heap, 0, str); // Just(str)
+    mstr = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, str); // Just(str)
   }
 
   return FbleNewStructValue_(heap, 2, world, mstr);
@@ -409,10 +414,10 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   }
 
   FblePushFrame(heap);
-  FbleValue* argS = FbleNewEnumValue(heap, 1);
+  FbleValue* argS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* argP = FbleNewStructValue_(heap, 2, argv[argc - i -1], argS);
-    argS = FbleNewUnionValue(heap, 0, argP);
+    argS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, argP);
   }
 
   FbleValue* args[1] = { argS };
@@ -430,7 +435,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   }
 
   // result has type R@<Bool@>, which is *(s, x)
-  FbleValue* value = FbleStructValueField(result, 1);
+  FbleValue* value = FbleStructValueField(result, RESULT_FIELDC, 1);
   return FblePopFrame(heap, value);
 }
 
@@ -493,7 +498,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   FbleMainStatus result = FBLE_MAIN_OTHER_ERROR;
   if (value != NULL) {
-    result = (FbleUnionValueTag(value) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
+    result = (FbleUnionValueTag(value, BOOL_TAGWIDTH) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
   }
 
   FbleFreeValueHeap(heap);

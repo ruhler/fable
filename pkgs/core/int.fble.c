@@ -9,6 +9,9 @@
 
 #include <fble/fble-value.h>   // for FbleValue, etc.
 
+#define INTP_TAGWIDTH 2
+#define INT_TAGWIDTH 2
+
 static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x);
 static int64_t ReadIntP(FbleValue* num);
 
@@ -27,11 +30,11 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
 {
   assert(x > 0);
   if (x == 1) {
-    return FbleNewEnumValue(heap, 0);
+    return FbleNewEnumValue(heap, INTP_TAGWIDTH, 0);
   }
 
   FbleValue* p = MakeIntP(heap, x / 2);
-  return FbleNewUnionValue(heap, 1 + (x % 2), p);
+  return FbleNewUnionValue(heap, INTP_TAGWIDTH, 1 + (x % 2), p);
 }
 
 /**
@@ -47,10 +50,10 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int64_t x)
  */
 static int64_t ReadIntP(FbleValue* x)
 {
-  switch (FbleUnionValueTag(x)) {
+  switch (FbleUnionValueTag(x, INTP_TAGWIDTH)) {
     case 0: return 1;
-    case 1: return 2 * ReadIntP(FbleUnionValueArg(x));
-    case 2: return 2 * ReadIntP(FbleUnionValueArg(x)) + 1;
+    case 1: return 2 * ReadIntP(FbleUnionValueArg(x, INTP_TAGWIDTH));
+    case 2: return 2 * ReadIntP(FbleUnionValueArg(x, INTP_TAGWIDTH)) + 1;
     default: assert(false && "Invalid IntP@ tag"); abort();
   }
 }
@@ -60,25 +63,25 @@ FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x)
 {
   if (x < 0) {
     FbleValue* p = MakeIntP(heap, -x);
-    FbleValue* result = FbleNewUnionValue(heap, 0, p);
+    FbleValue* result = FbleNewUnionValue(heap, INT_TAGWIDTH, 0, p);
     return result;
   }
 
   if (x == 0) {
-    return FbleNewEnumValue(heap, 1);
+    return FbleNewEnumValue(heap, INT_TAGWIDTH, 1);
   }
 
   FbleValue* p = MakeIntP(heap, x);
-  return FbleNewUnionValue(heap, 2, p);
+  return FbleNewUnionValue(heap, INT_TAGWIDTH, 2, p);
 }
 
 // FbleIntValueAccess -- see documentation in int.fble.h
 int64_t FbleIntValueAccess(FbleValue* x)
 {
-  switch (FbleUnionValueTag(x)) {
-    case 0: return -ReadIntP(FbleUnionValueArg(x));
+  switch (FbleUnionValueTag(x, INT_TAGWIDTH)) {
+    case 0: return -ReadIntP(FbleUnionValueArg(x, INT_TAGWIDTH));
     case 1: return 0;
-    case 2: return ReadIntP(FbleUnionValueArg(x));
+    case 2: return ReadIntP(FbleUnionValueArg(x, INT_TAGWIDTH));
     default: assert(false && "Invalid Int@ tag"); abort();
   }
 }

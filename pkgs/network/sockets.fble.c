@@ -39,6 +39,8 @@ void Write(SOCKET sfd, char c)
 #define INVALID_SOCKET (-1)
 #define closesocket close
 
+#define MAYBE_TAGWIDTH 1
+
 int Read(SOCKET sfd)
 {
   unsigned char c;
@@ -177,10 +179,10 @@ static FbleValue* IStreamImpl(
 
   FbleValue* ms;
   if (c == EOF) {
-    ms = FbleNewEnumValue(heap, 1);
+    ms = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1);
   } else {
     FbleValue* v = FbleNewIntValue(heap, c);
-    ms = FbleNewUnionValue(heap, 0, v);
+    ms = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, v);
   }
 
   return FbleNewStructValue_(heap, 2, world, ms);
@@ -313,14 +315,14 @@ static FbleValue* ClientImpl(
 
   FbleValue* mios;
   if (sfd == INVALID_SOCKET) {
-    mios = FbleNewEnumValue(heap, 1); // Nothing
+    mios = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   } else {
     FbleBlockId module_block_id = function->profile_block_id - CLIENT_BLOCK_OFFSET;
     FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, &OnFree);
     FbleValue* istream = NewIStream(heap, sfd_value, module_block_id);
     FbleValue* ostream = NewOStream(heap, sfd_value, module_block_id);
     FbleValue* ios = FbleNewStructValue_(heap, 2, istream, ostream);
-    mios = FbleNewUnionValue(heap, 0, ios);  // Just(ios);
+    mios = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, ios);  // Just(ios);
   }
 
   return FbleNewStructValue_(heap, 2, world, mios);
@@ -446,12 +448,12 @@ static FbleValue* ServerImpl(
 
   FbleValue* ms;
   if (sfd == INVALID_SOCKET) {
-    ms = FbleNewEnumValue(heap, 1); // Nothing
+    ms = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   } else {
     FbleBlockId module_block_id = function->profile_block_id - SERVER_BLOCK_OFFSET;
     FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, &OnFree);
     FbleValue* accept = Accept(heap, sfd_value, module_block_id);
-    ms = FbleNewUnionValue(heap, 0, accept);  // Just(accept);
+    ms = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, accept);  // Just(accept);
   }
 
   return FbleNewStructValue_(heap, 2, world, ms);

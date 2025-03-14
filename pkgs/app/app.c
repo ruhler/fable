@@ -26,6 +26,21 @@
 
 #include "fble-app.usage.h"        // for fbldUsageHelpText
 
+#define DRAWING_TAGWIDTH 3
+#define POINT_FIELDC 2
+#define COLOR_FIELDC 3
+#define TRIANGLE_FIELDC 4
+#define RECT_FIELDC 5
+#define TRANSFORMED_FIELDC 3
+#define OVER_FIELDC 2
+#define KEY_TAGWIDTH 4
+#define BUTTON_TAGWIDTH 1
+#define EVENT_TAGWIDTH 3
+#define EFFECT_TAGWIDTH 1
+#define LIST_TAGWIDTH 1
+#define RESULT_FIELDC 2
+#define BOOL_TAGWIDTH 1
+
 typedef struct {
   bool fps;
   const char* driver;
@@ -86,7 +101,7 @@ static bool ParseArg(void* dest, int* argc, const char*** argv, bool* error)
  */
 static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing)
 {
-  switch (FbleUnionValueTag(drawing)) {
+  switch (FbleUnionValueTag(drawing, DRAWING_TAGWIDTH)) {
     case 0: {
       // Blank. Do nothing.
       return;
@@ -94,23 +109,23 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 1: {
       // Triangle
-      FbleValue* v = FbleUnionValueArg(drawing);
+      FbleValue* v = FbleUnionValueArg(drawing, DRAWING_TAGWIDTH);
 
-      FbleValue* a = FbleStructValueField(v, 0);
-      FbleValue* b = FbleStructValueField(v, 1);
-      FbleValue* c = FbleStructValueField(v, 2);
-      FbleValue* color = FbleStructValueField(v, 3);
+      FbleValue* a = FbleStructValueField(v, TRIANGLE_FIELDC, 0);
+      FbleValue* b = FbleStructValueField(v, TRIANGLE_FIELDC, 1);
+      FbleValue* c = FbleStructValueField(v, TRIANGLE_FIELDC, 2);
+      FbleValue* color = FbleStructValueField(v, TRIANGLE_FIELDC, 3);
 
-      int x0 = ax * FbleIntValueAccess(FbleStructValueField(a, 0)) + bx;
-      int y0 = ay * FbleIntValueAccess(FbleStructValueField(a, 1)) + by;
-      int x1 = ax * FbleIntValueAccess(FbleStructValueField(b, 0)) + bx;
-      int y1 = ay * FbleIntValueAccess(FbleStructValueField(b, 1)) + by;
-      int x2 = ax * FbleIntValueAccess(FbleStructValueField(c, 0)) + bx;
-      int y2 = ay * FbleIntValueAccess(FbleStructValueField(c, 1)) + by;
+      int x0 = ax * FbleIntValueAccess(FbleStructValueField(a, POINT_FIELDC, 0)) + bx;
+      int y0 = ay * FbleIntValueAccess(FbleStructValueField(a, POINT_FIELDC, 1)) + by;
+      int x1 = ax * FbleIntValueAccess(FbleStructValueField(b, POINT_FIELDC, 0)) + bx;
+      int y1 = ay * FbleIntValueAccess(FbleStructValueField(b, POINT_FIELDC, 1)) + by;
+      int x2 = ax * FbleIntValueAccess(FbleStructValueField(c, POINT_FIELDC, 0)) + bx;
+      int y2 = ay * FbleIntValueAccess(FbleStructValueField(c, POINT_FIELDC, 1)) + by;
 
-      int red = FbleIntValueAccess(FbleStructValueField(color, 0));
-      int green = FbleIntValueAccess(FbleStructValueField(color, 1));
-      int blue = FbleIntValueAccess(FbleStructValueField(color, 2));
+      int red = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 0));
+      int green = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 1));
+      int blue = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 2));
       glColor3f(red/256.0, green/256.0, blue/256.0);
       glBegin(GL_TRIANGLES);
       glVertex2i(x0, y0);
@@ -122,13 +137,13 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 2: {
       // Rect
-      FbleValue* rv = FbleUnionValueArg(drawing);
+      FbleValue* rv = FbleUnionValueArg(drawing, DRAWING_TAGWIDTH);
 
-      FbleValue* x = FbleStructValueField(rv, 0);
-      FbleValue* y = FbleStructValueField(rv, 1);
-      FbleValue* w = FbleStructValueField(rv, 2);
-      FbleValue* h = FbleStructValueField(rv, 3);
-      FbleValue* color = FbleStructValueField(rv, 4);
+      FbleValue* x = FbleStructValueField(rv, RECT_FIELDC, 0);
+      FbleValue* y = FbleStructValueField(rv, RECT_FIELDC, 1);
+      FbleValue* w = FbleStructValueField(rv, RECT_FIELDC, 2);
+      FbleValue* h = FbleStructValueField(rv, RECT_FIELDC, 3);
+      FbleValue* color = FbleStructValueField(rv, RECT_FIELDC, 4);
 
       SDL_Rect r = {
         ax * FbleIntValueAccess(x) + bx,
@@ -147,9 +162,9 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
         r.h = -r.h;
       }
 
-      int red = FbleIntValueAccess(FbleStructValueField(color, 0));
-      int green = FbleIntValueAccess(FbleStructValueField(color, 1));
-      int blue = FbleIntValueAccess(FbleStructValueField(color, 2));
+      int red = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 0));
+      int green = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 1));
+      int blue = FbleIntValueAccess(FbleStructValueField(color, COLOR_FIELDC, 2));
       glColor3f(red/256.0, green/256.0, blue/256.0);
       glRecti(r.x, r.y, r.x + r.w, r.y + r.h);
       return;
@@ -157,15 +172,15 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 3: {
       // Transformed.
-      FbleValue* transformed = FbleUnionValueArg(drawing);
-      FbleValue* a = FbleStructValueField(transformed, 0);
-      FbleValue* b = FbleStructValueField(transformed, 1);
-      FbleValue* d = FbleStructValueField(transformed, 2);
+      FbleValue* transformed = FbleUnionValueArg(drawing, DRAWING_TAGWIDTH);
+      FbleValue* a = FbleStructValueField(transformed, TRANSFORMED_FIELDC, 0);
+      FbleValue* b = FbleStructValueField(transformed, TRANSFORMED_FIELDC, 1);
+      FbleValue* d = FbleStructValueField(transformed, TRANSFORMED_FIELDC, 2);
 
-      int axi = FbleIntValueAccess(FbleStructValueField(a, 0));
-      int ayi = FbleIntValueAccess(FbleStructValueField(a, 1));
-      int bxi = FbleIntValueAccess(FbleStructValueField(b, 0));
-      int byi = FbleIntValueAccess(FbleStructValueField(b, 1));
+      int axi = FbleIntValueAccess(FbleStructValueField(a, POINT_FIELDC, 0));
+      int ayi = FbleIntValueAccess(FbleStructValueField(a, POINT_FIELDC, 1));
+      int bxi = FbleIntValueAccess(FbleStructValueField(b, POINT_FIELDC, 0));
+      int byi = FbleIntValueAccess(FbleStructValueField(b, POINT_FIELDC, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
       Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
@@ -174,9 +189,9 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 
     case 4: {
       // Over.
-      FbleValue* over = FbleUnionValueArg(drawing);
-      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, 0));
-      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, 1));
+      FbleValue* over = FbleUnionValueArg(drawing, DRAWING_TAGWIDTH);
+      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 0));
+      Draw(surface, ax, ay, bx, by, FbleStructValueField(over, OVER_FIELDC, 1));
       return;
     }
 
@@ -223,7 +238,7 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
   }
 
   if (k >= 0) {
-    return FbleNewEnumValue(heap, k);
+    return FbleNewEnumValue(heap, KEY_TAGWIDTH, k);
   }
   return NULL;
 }
@@ -250,7 +265,7 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
   }
 
   if (k >= 0) {
-    return FbleNewEnumValue(heap, k);
+    return FbleNewEnumValue(heap, BUTTON_TAGWIDTH, k);
   }
   return NULL;
 }
@@ -258,7 +273,7 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 /**
  * @func[EventImpl] FbleRunFunction Implementation of @l{App@.event} function.
  *  See documentation of FbleRunFunction in fble-function.h.
- *  Has fble type @l{IO@<Event}.
+ *  Has fble type @l{IO@<Event>}.
  *  Gets the next input event.
  */
 static FbleValue* EventImpl(
@@ -274,14 +289,14 @@ static FbleValue* EventImpl(
     SDL_WaitEvent(&event);
     switch (event.type) {
       case SDL_USEREVENT: {
-        value = FbleNewEnumValue(heap, 0);
+        value = FbleNewEnumValue(heap, EVENT_TAGWIDTH, 0);
         break;
       }
 
       case SDL_KEYDOWN: {
         FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
         if (key != NULL) {
-          value = FbleNewUnionValue(heap, 1, key);
+          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 1, key);
         }
         break;
       }
@@ -289,7 +304,7 @@ static FbleValue* EventImpl(
       case SDL_KEYUP: {
         FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
         if (key != NULL) {
-          value = FbleNewUnionValue(heap, 2, key);
+          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 2, key);
         }
         break;
       }
@@ -300,7 +315,7 @@ static FbleValue* EventImpl(
           FbleValue* x = FbleNewIntValue(heap, event.button.x);
           FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
-          value = FbleNewUnionValue(heap, 3, mouse_button);
+          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 3, mouse_button);
         }
         break;
       }
@@ -311,7 +326,7 @@ static FbleValue* EventImpl(
           FbleValue* x = FbleNewIntValue(heap, event.button.x);
           FbleValue* y = FbleNewIntValue(heap, event.button.y);
           FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
-          value = FbleNewUnionValue(heap, 4, mouse_button);
+          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 4, mouse_button);
         }
         break;
       }
@@ -327,7 +342,7 @@ static FbleValue* EventImpl(
           FbleValue* width = FbleNewIntValue(heap, event.window.data1);
           FbleValue* height = FbleNewIntValue(heap, event.window.data2);
           FbleValue* resized = FbleNewStructValue_(heap, 2, width, height);
-          value = FbleNewUnionValue(heap, 5, resized);
+          value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 5, resized);
         }
         break;
       }
@@ -338,7 +353,7 @@ static FbleValue* EventImpl(
         FbleValue* dx = FbleNewIntValue(heap, event.motion.xrel);
         FbleValue* dy = FbleNewIntValue(heap, event.motion.yrel);
         FbleValue* motion = FbleNewStructValue_(heap, 4, x, y, dx, dy);
-        value = FbleNewUnionValue(heap, 6, motion);
+        value = FbleNewUnionValue(heap, EVENT_TAGWIDTH, 6, motion);
         break;
       }
     }
@@ -364,9 +379,9 @@ static FbleValue* EffectImpl(
   FbleValue* effect = args[0];
   FbleValue* world = args[1];
 
-  switch (FbleUnionValueTag(effect)) {
+  switch (FbleUnionValueTag(effect, EFFECT_TAGWIDTH)) {
     case 0: {
-      int tick = FbleIntValueAccess(FbleUnionValueArg(effect));
+      int tick = FbleIntValueAccess(FbleUnionValueArg(effect, EFFECT_TAGWIDTH));
 
       Uint32 now = SDL_GetTicks();
       app->time += tick;
@@ -379,7 +394,7 @@ static FbleValue* EffectImpl(
 
     case 1: {
       SDL_Surface* surface = SDL_GetWindowSurface(app->window);
-      Draw(surface, 1, 1, 0, 0, FbleUnionValueArg(effect));
+      Draw(surface, 1, 1, 0, 0, FbleUnionValueArg(effect, EFFECT_TAGWIDTH));
       SDL_GL_SwapWindow(app->window);
 
       // Collect status on frame rate.
@@ -554,7 +569,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleValue* app_value = FbleNewNativeValue(heap, &app, NULL);
   FbleValue* fble_effect = FbleNewFuncValue(heap, &effect_exe, block_id + 1, &app_value);
 
-  FbleValue* argS = FbleNewEnumValue(heap, 1);
+  FbleValue* argS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
   argc = 0;
   while (argv[argc] != NULL) {
     argc++;
@@ -563,7 +578,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* argValue = FbleNewStringValue(heap, argv[argc - i - 1]);
     FbleValue* argP = FbleNewStructValue_(heap, 2, argValue, argS);
-    argS = FbleNewUnionValue(heap, 0, argP);
+    argS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, argP);
   }
 
   FbleValue* fble_width = FbleNewIntValue(heap, width);
@@ -597,7 +612,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   FbleMainStatus exit_status = FBLE_MAIN_OTHER_ERROR;
   if (result != NULL) {
-    exit_status = (FbleUnionValueTag(FbleStructValueField(result, 1)) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
+    exit_status = (FbleUnionValueTag(FbleStructValueField(result, RESULT_FIELDC, 1), BOOL_TAGWIDTH) == 0) ? FBLE_MAIN_SUCCESS : FBLE_MAIN_FAILURE;
   }
 
   FbleFreeValueHeap(heap);

@@ -11,15 +11,18 @@
 
 #include "char.fble.h" // for FbleCharValueAccess, FbleNewCharValue
 
+#define LIST_TAGWIDTH 1
+#define CONS_FIELDC 2
+
 // FbleStringValueAccess -- see documentation in string.fble.h
 char* FbleStringValueAccess(FbleValue* str)
 {
   struct { size_t size; char* xs; } chars;
   FbleInitVector(chars);
-  while (FbleUnionValueTag(str) == 0) {
-    FbleValue* charP = FbleUnionValueArg(str);
-    FbleValue* charV = FbleStructValueField(charP, 0);
-    str = FbleStructValueField(charP, 1);
+  while (FbleUnionValueTag(str, LIST_TAGWIDTH) == 0) {
+    FbleValue* charP = FbleUnionValueArg(str, LIST_TAGWIDTH);
+    FbleValue* charV = FbleStructValueField(charP, CONS_FIELDC, 0);
+    str = FbleStructValueField(charP, CONS_FIELDC, 1);
 
     char c = FbleCharValueAccess(charV);
     FbleAppendToVector(chars, c);
@@ -32,11 +35,11 @@ char* FbleStringValueAccess(FbleValue* str)
 FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
 {
   size_t length = strlen(str);
-  FbleValue* charS = FbleNewEnumValue(heap, 1);
+  FbleValue* charS = FbleNewEnumValue(heap, LIST_TAGWIDTH, 1);
   for (size_t i = 0; i < length; ++i) {
     FbleValue* charV = FbleNewCharValue(heap, str[length - i - 1]);
     FbleValue* charP = FbleNewStructValue_(heap, 2, charV, charS);
-    charS = FbleNewUnionValue(heap, 0, charP);
+    charS = FbleNewUnionValue(heap, LIST_TAGWIDTH, 0, charP);
   }
   return charS;
 }
