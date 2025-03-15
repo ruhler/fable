@@ -144,8 +144,9 @@
 // work and give responsibility for transferring returned objects to the
 // caller stack frame to GC when it finishes.
 
+const static uintptr_t ONE = 1;
 const static uintptr_t PACKED_OFFSET_WIDTH = (sizeof(FbleValue*) == 8) ? 6 : 5;
-const static uintptr_t PACKED_OFFSET_MASK = (1 << PACKED_OFFSET_WIDTH) - 1;
+const static uintptr_t PACKED_OFFSET_MASK = (ONE << PACKED_OFFSET_WIDTH) - 1;
 
 /**
  * @struct[List] Circular, doubly linked list of values.
@@ -951,7 +952,7 @@ FbleValueHeap* FbleNewValueHeap()
 {
   // If this fails, add support for whatever crazy architecture you are trying
   // to use. 32 and 64 bit architectures should be supported.
-  assert((1 << PACKED_OFFSET_WIDTH) == 8 * sizeof(FbleValue*));
+  assert((ONE << PACKED_OFFSET_WIDTH) == 8 * sizeof(FbleValue*));
 
   ValueHeap* heap = FbleAlloc(ValueHeap);
 
@@ -1248,7 +1249,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   length += header_length;
 
   if (length + PACKED_OFFSET_WIDTH + 1 <= 8 * sizeof(FbleValue*)) {
-    header &= ((1 << header_length) - 1); // Drop last field offset from header.
+    header &= ((ONE << header_length) - 1); // Drop last field offset from header.
     data <<= header_length;
     data |= header;
     data <<= PACKED_OFFSET_WIDTH;
@@ -1305,7 +1306,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
 
     length = end - offset;
     data >>= offset;
-    data &= (1 << length) - 1;
+    data &= (ONE << length) - 1;
 
     data <<= PACKED_OFFSET_WIDTH;
     data |= length;
@@ -1367,7 +1368,7 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
   if (IsPacked(object)) {
     uintptr_t data = (uintptr_t)object;
     data >>= (1 + PACKED_OFFSET_WIDTH);
-    data &= (1 << tagwidth) - 1;
+    data &= (ONE << tagwidth) - 1;
     return data;
   }
 
@@ -1424,7 +1425,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
 
     data >>= PACKED_OFFSET_WIDTH;
 
-    uintptr_t tag = data & ((1 << tagwidth) - 1);
+    uintptr_t tag = data & ((ONE << tagwidth) - 1);
     if (tag != field) {
       return FbleWrongUnionTag;
     }

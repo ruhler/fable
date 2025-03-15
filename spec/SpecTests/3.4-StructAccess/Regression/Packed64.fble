@@ -1,0 +1,34 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+# Regression test for a bug we had with data packing when accessing a field of
+# a struct that was packed in more than 32 bits. The upper bits of that field
+# were zeroed out accidentally due to 32 bit vs. 64 bit number type mismatch.
+
+# Enum has a 3 bit tag.
+@ Enum@ = +(
+  Unit@ A, Unit@ B, Unit@ C, Unit@ D,
+  Unit@ E, Unit@ F, Unit@ G, Unit@ H);
+
+# Each element of the list takes 3 bit tag + 6 bit offset + 1 bit tag.
+# A 5 element list should be plenty to show the issue.
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit@ _x0 = l.cons.head.G;
+  L@ l1 = l.cons.tail;
+  Unit@ _x1 = l1.cons.head.H;
+  L@ l2 = l1.cons.tail;
+  Unit@ _x2 = l2.cons.head.F;
+  L@ l3 = l2.cons.tail;
+  Unit@ _x3 = l3.cons.head.E;
+  L@ l4 = l3.cons.tail;
+  Unit@ _x4 = l4.cons.head.H;
+  L@ l5 = l4.cons.tail;
+  Unit@ _n = l5.nil;
+  Unit;
+};
+
+Unit@ _ = f|GHFEH;
+Unit;

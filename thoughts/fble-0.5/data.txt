@@ -199,3 +199,87 @@ debug.
 ---
 
 I got a test case and a fix. We still have some bugs though, so keep looking.
+
+Apparently that wasn't the issue with fble-cat. Let's keep looking there then.
+
+Minimal test case:
+* debug print the string "abcd". It comes out garbled. Let's figure out why.
+
+It's packing that as:
+
+  0xc71d187451d10773
+
+I would expect it to pack as...
+
+  a: 0x43
+  b: 0x44
+  c: 0x45
+  d: 0x46
+
+n     'd'      7 c     'c'      7 c     'b'      7  c     'a'      7 c length
+1 1000110 000111 0 1000101 000111 0 1000100 000111  0 1000011 000111 0 111001 1
+
+Which is:
+
+1100 0110 0001 1101 0001 0100 0111 0100 0100 0001 1101 0000 1100 0111 0111 0011
+
+Which is:
+
+  0xc61d147441d0c773
+
+So I think packing is wrong. Let's see if I can trace just the packing I'm
+interested in somehow. I think I can do it direct in C and step through. That
+might be easiest.
+
+For some reason it thinks d is 0x47, not 0x46? Okay, let's go with that then.
+I trust that slightly more than my counting. That's easy to update:
+
+
+n     'd'      7 c     'c'      7 c     'b'      7  c     'a'      7 c length
+1 1000111 000111 0 1000110 000111 0 1000101 000111  0 1000100 000111 0 111001 1
+
+1100 0111 0001 1101 0001 1000 0111 0100 0101 0001 1101 0001 0000 0111 0111 0011
+
+Which is:
+  0xc71d187451d10773
+  0xc71d187451d10773
+
+Which is correct. It's what we want. Good. That suggests things packed just
+fine. The problem must be the unpacking.
+
+Let's go one step at a time to access it then.
+
+1. CharP:
+
+n     'd'      7 c     'c'      7 c     'b'      7  c     'a'      7 length
+1 1000111 000111 0 1000110 000111 0 1000101 000111  0 1000100 000111 111000 1
+
+110 0011 1000 1110 1000 1100 0011 1010 0010 1000 1110 1000 1000 0011 1111 0001
+
+want: 0x638e8c3a28e883f1
+ got: 0x638e8c3a28e883f1  Good.
+
+First value:
+  10 0010 0000 1111 Good.
+
+Tail:
+
+n     'd'      7 c     'c'      7 c     'b'      7  c length
+1 1000111 000111 0 1000110 000111 0 1000101 000111  0 101011 1
+
+11 0001 1100 0111 0100 0110 0001 1101 0001 0100 0111 0101 0111
+
+str updated to:
+want: 0x31c7461d14757
+ got: 0x14757  That looks very wrong.
+
+Something is broken in FbleStructValueField. Let's step through it.
+
+Ugh. :(
+
+  (1 << length)
+
+The 1 is not uint64_t, this counts as a 32 bit shift. It's turning into 0.
+I should be able to reproduce this by building a list of things whose tail is
+at least 32 bits long, and verifying the tail isn't all zeros or something
+silly like that. Let's try to write the test.
