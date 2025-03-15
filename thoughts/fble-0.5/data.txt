@@ -153,3 +153,49 @@ a 30% performance improvement.
 
 Looks like there are machine instructions to get the highest set bit in an
 integer: bsr, clz, ctz. For gcc: __builtin_clz?
+
+---
+
+Draft of code is done. It compiles. I've debugged the packing functions. It
+seems to almost, but not quite work. Time to debug.
+
+First question: do spec tests work? Any easy way for me to build just those?
+
+It looks like all the spec tests pass. It's not clear if that's because it's
+working or we just have lack of coverage. What's next?
+
+Let's debug the core tests. Or, even easier, the cat function, or hello world
+if I have it.
+
+Yes, pkgs/core/Core/Stdio/fble-cat.tr is failing.
+
+It's reading through things okay, just that some of the lines are truncated
+and replaced with empty lines?
+
+  @doc Fable README$
+   @@...
+
+Turns into:
+
+  @doc Fable READ$
+  $
+
+Things to double check:
+* Conversion to and from character.
+* What happens if string is too long, we just barely fit.
+
+Let's try fast-cat, which should rule out the string length thing I hope.
+
+fast-cat works fine. That suggests the problem is when we are making a list,
+purely from within fble code. I assume this is a boundary case right around
+where values can just fit or not into the packed word.
+
+I bet the problem is that right shift on intptr_t, which is signed, will shift
+in 1 bits instead of 0 bits? Maybe something to check.
+
+I should at least try to write a spec test case for this first, for easier
+debug.
+
+---
+
+I got a test case and a fix. We still have some bugs though, so keep looking.

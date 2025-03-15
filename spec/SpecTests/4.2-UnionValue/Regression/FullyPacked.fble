@@ -1,0 +1,34 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ true = Bool@(true: Unit@());
+
+# Regression test for a bug where we packed a data value into exactly the
+# available bits, then ended up clobbering things when right shifting with a
+# signed type instead of unsigned.
+
+# Recursive union type with 3-bit tag.
+@ Choice@ = +(
+  Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3,
+  Unit@ 4, Choice@ 5, Unit@ 6, Unit@ 7
+);
+
+Choice@ Z = Choice@(7: Unit);
+(Choice@) { Choice@; } S = (Choice@ c) { Choice@(5: c); };
+
+# Pack 19 of those units together, which takes 57 + 6 + 1 = 64 bits exactly.
+Choice@ v = S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(S(Z))))))))))))))))));
+
+# Extract the Z value. In the buggy case, this would shift in a bunch of 1
+# bits in the higher order bits.
+Choice@ z = v.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5.5;
+
+# Put that in a struct with a zero-tagged union.
+# In the buggy case, it would be overwritten with 1s from the first arg.
+@ Pair@ = *(Choice@ a, Bool@ b);
+Pair@ p = Pair@(z, true);
+
+# Make sure the value of that bool is still true.
+p.b.true;
