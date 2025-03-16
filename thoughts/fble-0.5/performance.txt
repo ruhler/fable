@@ -300,3 +300,17 @@ that.
 
 Interesting that max stack is 128. So I'm only seeing the tail end of my
 stacks when they go really deep like they are.
+
+---
+
+We made good progress on performance with the new data packing. I think the
+next steps can be straight forward ones:
+
+1. Figure out how to get rid of the need to call StrictValue by getting rid of
+REF_VALUE somehow when we do the assignment.
+2. Inline code for struct, union, and function access to the backends.
+
+I expect pretty noticeable savings if we can do these two things. Get that out
+of the way first before worrying more about state monad return allocation
+function inlining whatever complication comes after.
+

@@ -283,3 +283,17 @@ The 1 is not uint64_t, this counts as a 32 bit shift. It's turning into 0.
 I should be able to reproduce this by building a list of things whose tail is
 at least 32 bits long, and verifying the tail isn't all zeros or something
 silly like that. Let's try to write the test.
+
+---
+
+Okay, all the tests are passing now with the new data packing. Let's check how
+performance looks on the pprof benchmark.
+
+/usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/pprof.input.txt
+  Elapsed (wall clock) time (h:mm:ss or m:ss): 8:36.76 ==> 7:41.18
+  Maximum resident set size (kbytes): 253592 ==> 250704
+
+Awesome. That looks about right to me. 12% performance improvement. Not bad.
+
+And this is just the first part. Wait until I inline all the code in the
+backend.

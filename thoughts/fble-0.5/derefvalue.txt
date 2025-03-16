@@ -1,0 +1,74 @@
+De-RefValue
+===========
+Goal is to remove the need for calling StrictValue every time we access a
+value. The primary motivation is to simplify access logic so we can easily
+inline it into backends at the call sites. It will be nice to get a little
+performance improvement from not having to do the check all the time as well.
+
+It's not rocket science I don't think. A few approaches we could consider:
+1. Have FbleAssignRefValue traverse the value, replacing any references to the
+original ref value.
+2. Any time we take a reference to a RefValue, add it to a list tracked by the
+RefValue. In FbleAssignRefValue, traverse that list.
+3. Use some crazy signal handler and memory protection to detect access to ref
+values and replace them on the fly with their use.
+4. Preallocate a large enough space for the allocated value and overwrite the
+   contents of the RefValue on assignment.
+
+Note that we need some way still to check for undefined values. Whatever
+approach we use should ideally work with undef expressions and, if necessary,
+stack unwinding.
+
+Where ref values happen most often in practice is the definition of recursive
+functions. Can I think of any other places? Certainly we could make up things
+like infinite lists, but I think that's very rare in practice.
+
+Which means, in the normal use case, we would only have to traverse the static
+fields of a struct value to do the assignment. Approach (1) sounds like the
+way to go. Don't worry about the rare pathological case. Sure someone can
+create a really long circular list, and that would be expensive to traverse.
+So what?
+
+Sketch of proposal:
+* Change RefValue to a new kind of packed value, with least significant bits
+  10. The most significant bits are a unique id for the ref value.
+* To assign: traverse the value and update references to the RefValue in
+  place. GC should have enough info to avoid traversing previously allocated
+  objects. We should only have to traverse new allocated objects.
+* Check for RefValue in data access. If we see it, it's undefined. Throw an
+  error.
+
+I don't think we can get away without some kind of check during data access.
+Not unless we want to do silly things with signal handlers. My proposal sounds
+reasonable.
+
+Concerns:
+* Today we use ref value to know when to merge frames. We won't have that info
+  anymore.
+* Does anywhere in the code rely on there being ref values to detect cycles? I
+  think it shouldn't, but I wouldn't be surprised if it did.
+
+That means the first step is to remove use of ref value for deciding when to
+merge frames. Either make something more explicit to detect recursive
+functions, or find some other scheme.
+
+I want to think a little bit about proposal (4). Could we pre-allocate
+for the RefValue assignment and simply overwrite the RefValue on assignment? I
+think not. It's possible we have no type information about the RefValue. For
+example:
+
+ <@ T@>((T@) { T@; } f) {
+   T@ x = f(x);
+   x;
+ };
+
+We need a RefValue for x in this case, but we have no idea what the type is.
+
+Okay, let's continue on with proposal (1). First step: find an alternate to
+RefValue for deciding on frame merges.
+
+I probably want to have a more comprehensive benchmark suite when evaluating
+this change. md5sum for sure, to cover the case of deep non-recursive
+functions.
+
+
