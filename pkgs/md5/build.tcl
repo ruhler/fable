@@ -14,7 +14,7 @@ namespace eval "pkgs/md5" {
     "$::b/pkgs/md5/md5-tests --prefix Compiled."
 
   # Md5/Bench compiled
-  stdio $::b/pkgs/md5/md5-bench "/Md5/Bench%" "md5" ""
+  stdio $::b/pkgs/md5/md5-bench "/Md5/Bench/Main%" "md5" ""
 
   # fble-md5 program.
   fbld_man_usage $::b/pkgs/md5/fble-md5.1 $::s/pkgs/md5/fble-md5.fbld

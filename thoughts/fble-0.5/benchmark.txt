@@ -1,0 +1,121 @@
+Benchmark
+=========
+I'm doing a lot of performance work, it would be nice to have a more
+comprehensive set of benchmarks to see the impact of the changes I'm making.
+
+In the past I've had benchmark suites. I certainly have a bunch of sample apps
+I could be using. Let's figure out what the current state of things is and if
+there's a convenient way to combine them all together and run them.
+
+Brainstorm of benchmarks I can run:
+* md5
+* pprof
+* cat, fast-cat and variations
+* benchmark game
+* sat
+* fbld
+
+Be a little careful. If we combine them together into a single benchmark, it's
+easier to run, but it also biases towards whatever benchmark we bias it
+towards. Maybe best to run them each separately to avoid baking that bias into
+the benchmark suite.
+
+Other notes:
+* The fble code can change over time. Best to re-run the suite right before
+  and after a change to see the impact of the change, rather than try to keep
+  a running history of the benchmark times.
+* I rather have more complex realistic benchmarks than small micro-benchmarks.
+
+Collection of benchmark commands:
+
+pprof:
+  /usr/bin/time -v ./out/pkgs/pprof/fble-pprof-report < scratch/pprof.input.txt
+  Requires input scratch/pprof.input.txt
+
+fble-cat:
+  /usr/bin/time -v ./out/pkgs/core/fble-fast-cat < scratch/pprof.input.txt > /dev/null
+  Or fble-cat, or fble-fast-cat --monadic
+  Requires any input of sufficient length.
+
+fbld:
+  /usr/bin/time -v ./pkgs/fbld/bin/fbld ../fbld/nobuildstamp.fbld ./fbld/version.fbld ../fbld/html.fbld ../spec/fble.lib.fbld ../spec/fble.fbld > /dev/null
+
+md5:
+  yes | head -n 60000 | /usr/bin/time -v ./pkgs/md5/fble-md5
+
+sat:
+  time ./pkgs/sat/fble-sat < ../pkgs/sat/bench/easy/rope_0002.shuffled.cnf
+  Requires that particular input.
+
+We also have fble benchmarks:
+  /Invaders/Bench%
+  /Graphics/Bench%
+  /Games/Sudoku/Tests%.Bench
+  /Games/Snake/Bench%
+  /Games/GameOfLife/Bench%
+  /Games/TicTacToe/Bench%
+  /Games/BenchmarkGame/Bench% - not including ReverseComplement?
+  /Md5/Bench%
+  /Pinball/Bench%
+
+I used to have something called fble-bench that collects together all the
+benchmarks. I remember making a change that obsoleted some of the benchmarking
+stuff, but I don't recall the details.
+
+It would be nice to maintain a collection of benchmarks so I don't have to dig
+through them all every time I want to run them. The thing is, it will be
+expensive to run them every time by definition. How are we supposed to keep
+them up and running if we don't run them all constantly?
+
+I like the use of /usr/bin/time -v to collect elapsed time and max memory for
+each benchmark.
+
+I think it would be nice if each package provided a standalone binary for
+running a benchmark suitable for that package. Something that takes on the
+order of 1 to 5 minutes to finish and doesn't require external files or things
+like that.
+
+fbld and pprof are real examples of things that are too slow. md5 is a unique
+way of writing an fble program, so I would like to include it too. Cat and
+benchmark games are less interesting to me. The sat solver probably has
+something good.
+
+It could be tricky to make pprof and fbld benchmarks standalone. There's a lot
+of fbld inputs needed to make an interesting benchmark. Is there a reasonable
+way to bundle those inputs with the benchmark directly?
+
+Honestly I don't mind if all the benchmarks are compiled code. I don't care
+too much about performance of interpreted code. In particular, I expect
+improvements in runtime and compiler to show up in compiled code. It's not
+like we are missing much coverage if we skip the interpreter.
+
+Let's say I have a *-bench program for many of the packages. It would be nice
+to have a convenient way to run them all. Honestly, it would be nice if it was
+a single binary. I wouldn't have to remember what to run. If it's all
+standalone, it can all be done in fble code. We can have a separate benchmark
+package that depends on all the other packages that implement benchmarks.
+
+I can organize it in such a way that we get separate frames in the call stack
+for each benchmark, so we can breakdown improvements by benchmark. I suppose
+we would miss a memory breakdown by benchmark, which is sad. Maybe it could
+take a command line argument to select a specific benchmark to run, or do all
+benchmarks by default.
+
+If it's all within fble code, we won't exercise any of the IO code. Is that
+okay? Probably okay, unless I notice issues with the code in practice?
+
+Could I write a builtin library to measure the time and memory use of a
+particular function call? That way I could write fble code to run and format
+the output however I want.
+
+Let's try it. See how far I can get trying to write a single fble-bench
+program that incorporates benchmarks from the various packages. Push that as
+far as we can go and see if it's good enough. Call it the 'bench' package.
+/Bench/...
+
+Steps:
+* Set up initial benchmark package. Can start by including md5 bench.
+* Add all of the existing fble based benchmarks to that.
+* Add fble based benchmarks for pprof, fbld, and maybe sat and cat.
+* Try using it for thoughts/fble-0.5/stacks.txt analysis and see if it's good
+  enough.

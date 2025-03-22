@@ -1,0 +1,13 @@
+
+<@>% List = /Core/List%.List;
+
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
+
+% Str = /Core/String%.Str;
+
+Test@ Benchmarks = TestSuite(Str|Benchmarks, List[
+  /Md5/Bench%.Bench
+]);
+
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Benchmarks));

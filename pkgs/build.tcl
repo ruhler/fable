@@ -13,6 +13,7 @@ namespace eval "pkgs" {
     invaders
     pinball
     graphics
+    benchmark
   }
 
   # pkg --

@@ -1,0 +1,46 @@
+Stack
+=====
+Revisiting how we manage the stack.
+
+The primary goal is to avoid use of ref value for deciding when to merge
+frames. But it seems worthwhile to think more about how we lay out the stack.
+
+Approaches:
+
+A. PushFrame / PopFrame every time, without merging.
+Best use of memory. Costly, due to the need to GcRealloc objects when
+returning from frames. This would be a good baseline to measure against.
+
+B. Merge on non-ref function.
+This is a hack. It doesn't make sense. You could have recursive calls where it
+makes sense to merge and you could have non-recursive calls where it doesn't
+make sense to merge. For example, you could implement an exponential behaving
+non-recursive function that takes exponentially more memory than it should
+with this case. This would be a good baseline to measure against, but
+otherwise I want to move away from it.
+
+C. Merge on frame size.
+The idea is we should be able to use not more than a constant amount of extra
+memory per frame to reduce the cost of PushFrame / PopFrame. That's easy: if
+we haven't used up that much memory in the frame yet, merge the next call. If
+we have, don't merge the next call. That will guarantee us we aren't using
+more than a constant amount of extra memory per frame. It lets us do some
+merging for recursive functions and makes sure we don't over-merge for
+non-recursive functions. I don't know what size to pick. Maybe 4K extra per
+frame? I'm interested in seeing how this compares to approach (B).
+
+D. Something smarter?
+I have this feeling that it would be great if the compiler could be smart
+about how objects are allocated initially. Like, what if we say we allocate
+objects to be returned at the front of the frame, then when we pop the frame,
+instead of having to GcRealloc or copy the returned values, we bump the caller
+frame size to include what's returned. I'm not sure how well this can
+generalize though.
+
+Other miscellaneous ideas:
+* We can copy stack data from a callee stack frame to a caller stack frame.
+  Just so long as we don't pathologically copy it. So maybe limit to 5 copies
+  before switching to a GcRealloc?
+
+Let's start by benchmarking A, B, and C. If (C) isn't too much of a
+regression, let's go that route. That's enough to unblock reference values.
