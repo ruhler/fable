@@ -2,9 +2,7 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* New data packing scheme
- - Add tagwidth to union instructions as needed
- - Add fieldc to struct instructions as needed
+* Add way to run an individual benchmark by name.
 
 * Split AccessTc and AccessInstr into Struct and Union variants
  - Struct needs fieldc, Union needs tagwidth.

@@ -29,6 +29,7 @@ namespace eval "pkgs" {
     set cflags "-I $::s/pkgs/$name -I $::b/pkgs/$name"
     foreach dep $deps {
       append cflags " -I $::s/pkgs/$dep"
+      append cflags " -I $::b/pkgs/$dep"
     }
 
     # Automatically include all .fble files under the $::s/pkgs/$name

@@ -13,7 +13,7 @@
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a
-# second.
+# second. If we can beat 1 minute for this, great.
 Test@ Bench = Test(Str|Invaders, /App/Benchmark%.Benchmark(
   /Invaders/App%, Int|3600, Event@(key_down: Key@(q: Unit))));
 
