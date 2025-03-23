@@ -7,7 +7,7 @@ namespace eval "pkgs/fbld" {
     "$::b/pkgs/fbld/fbld-tests"
 
   # fbld
-  stdio $::b/pkgs/fbld/fble-fbld "/Fbld/Main%" "fbld" ""
+  stdio $::b/pkgs/fbld/fble-fbld "/Fbld/Main/IO%" "fbld" ""
   install $::b/pkgs/fbld/fble-fbld $::config::bindir/fble-fbld
   fbld_man_usage $::b/pkgs/fbld/fble-fbld.1 $::s/pkgs/fbld/fble-fbld.fbld
   install $::b/pkgs/fbld/fble-fbld.1 $::config::mandir/man1/fble-fbld.1

@@ -1,0 +1,446 @@
+/Core/String%.Str|'
+@let[BuildStamp][] @@
+@let[FbleVersion][fble-0.5] @@
+@let[FbleVersionStamp][@FbleVersion (@BuildStamp)] @@
+@define[par][text] <p>@text</p>\n @@
+@define[.block][text] @par[@text] @@
+
+@define[doc][title body]
+ @define[.block][text][@text] @@
+ <head>
+ <style>
+ body {
+ color: #333333;
+ font-family: sans-serif;
+ max-width: 50em;
+ }
+ h1 { font-size: 2.0em; }
+ h2 { font-size: 1.6em; }
+ h3 { font-size: 1.4em; }
+ h4 { font-size: 1.2em; }
+ p { font-size: 1em; }
+ .comment { color: #000099; }
+ .constant { color: #990099; }
+ .statement { color: #999900; }
+ .preproc { color: #009999; }
+ .type { color: #009900; }
+ .identifier { color: #000099; }
+ .special { color: #990000; }
+ .normal { color: #333333; }
+ </style>
+ <title>@title</title>
+ </head><body>
+ <h1>@title</h1>
+ @body</body>
+@@
+
+@define[section][title body] <h2>@title</h2>\n@body @@
+@define[subsection][title body] <h3>@title</h3>\n@body @@
+@define[subsubsection][title body] <h4>@title</h4>\n@body @@
+
+@define[DefLabel][def label]
+ @ifeq[][@label][@def][@label]
+@@
+
+@define[url][url label] <a href="@url">@DefLabel[@url][@label]</a> @@
+
+@define[Drop][prefix str]
+ @ifeq[][@prefix][@str] @@
+ @ifeq[][@str][] @@
+ @ifeq[@head[@prefix]][@head[@str]]
+  @Drop[@tail[@prefix]][@tail[@str]]
+ @[]
+@@
+
+@define[ReplaceExt][str]
+ @ifeq[][@str][] @@
+ @ifeq[.fbld][@str] .html @@
+ @let[t][@Drop[.fbld][@str]] @@
+ @ifeq[][@t] @head[@str]@ReplaceExt[@tail[@str]]
+ @ .html@ReplaceExt[@t]
+@@
+
+@define[fbld][file label]
+@ <a href="@ReplaceExt[@file]"><code>@DefLabel[@file][@label]</code></a>
+@@
+
+@define[label][id text] <a id="@id">@text</a> @@
+@define[ref][id caption] <a href="#@id">@caption</a> @@
+@define[def][name value] <dl><dt>@name</dt><dd>@value</dd></dl>\n @@
+@define[definition][name value] @def[@name][@value] @@
+@define[item][text] <ul><li>@text</li></ul>\n @@
+
+@define[EscHtmlChar][char]
+ @ifeq[&][@char] &amp; @@
+ @ifeq[<][@char] &lt; @@
+ @ifeq[>][@char] &gt; @@
+ @char
+@@
+
+@define[EscHtml][str]
+ @ifeq[][@str][] @@
+ @EscHtmlChar[@head[@str]]
+ @EscHtml[@tail[@str]]
+@@
+
+@define[Take][count str]
+ @ifeq[][@count][] @@
+ @head[@str]
+ @Take[@tail[@count]][@tail[@str]]
+@@
+
+@define[Drop][count str]
+ @ifeq[][@count] @str
+ @ @Drop[@tail[@count]][@tail[@str]]
+@@
+
+@define[TakeUpTo][needle str]
+ @ifeq[][@str][] @@
+ @ifeq[@needle][@Take[@needle][@str]] @needle @@
+ @head[@str]
+ @TakeUpTo[@needle][@tail[@str]]
+@@
+
+@define[IsFbldEscape][str]
+ @ifeq[\\\]][@str] yes @@
+ @ifeq[\\\[][@str] yes @@
+ @ifeq[\\\@][@str] yes @@
+ @ifeq[\\\\][@str] yes @@
+ @ifeq[\\n][@str] yes @@
+ no
+@@
+
+@define[ContainsChar][list c]
+ @ifeq[][@list] no @@
+ @ifeq[@c][@head[@list]] yes @@
+ @ContainsChar[@tail[@list]][@c]
+@@
+
+@define[IsFbldPunct][c]
+ @ContainsChar[\]\[\@{}][@c]
+@@
+
+@define[IsFbldCommandNameChar][c]
+ @ifeq[yes][@ContainsChar[abcdefghijklmnopqrstuvwxyz][@c]] yes @@
+ @ifeq[yes][@ContainsChar[ABCDEFGHIJKLMNOPQRSTUVWXYZ][@c]] yes @@
+ @ifeq[yes][@ContainsChar[0123456789_][@c]] yes @@
+ no
+@@
+
+@define[FbldCommandName][str]
+ @ifeq[][@str][] @@
+ @ifeq[yes][@IsFbldCommandNameChar[@head[@str]]]
+  @head[@str]
+  @FbldCommandName[@tail[@str]]
+ @[]
+@@
+
+@define[FbldTag][str]
+ @ifeq[\@][@head[@str]]
+  @let[name] @FbldCommandName[@tail[@str]] @@
+  @ifeq[][@name][] \@@name
+ @[]
+@@
+
+@define[HighlightFbld][str]
+ @ifeq[][@str][] @@
+
+ @let[tag] @FbldTag[@str] @@
+ @ifneq[][@tag]
+ @ <span class="identifier">@tag</span>@HighlightFbld[@Drop[@tag][@str]] @@
+
+ @let[esc] @Take[xx][@str] @@
+ @ifeq[yes][@IsFbldEscape[@esc]]
+ @ <span class="constant">@esc</span>@HighlightFbld[@Drop[xx][@str]] @@
+
+ @let[punct] @head[@str] @@
+ @ifeq[yes][@IsFbldPunct[@punct]]
+ @ <span class="special">@punct</span>@HighlightFbld[@tail[@str]] @@
+
+ @head[@str]
+ @HighlightFbld[@tail[@str]]
+@@
+
+@define[IsFbleNonWord][c]
+ @ContainsChar[(){|};,:?=.&+*-!$\@~''\\\[\]%/^ \n	#][@c]
+@@
+
+@define[FblePlainWord][str]
+ @ifeq[][@str][] @@
+ @ifeq[yes][@IsFbleNonWord[@head[@str]]][] @@
+ @head[@str]
+ @FblePlainWord[@tail[@str]]
+@@
+
+@define[FbleQuoted][str]
+ @ifeq[][@str][] @@
+ @ifeq[''''][@Take[''''][@str]]
+ @ ''''@FbleQuoted[@Drop[''''][@str]] @@
+ @ifeq[''][@head[@str]] '' @@
+ @head[@str]
+ @FbleQuoted[@tail[@str]]
+@@
+
+@define[FbleWord][str]
+ @ifeq[][@str][] @@
+ @ifeq[''][@head[@str]] ''@FbleQuoted[@tail[@str]] @@
+ @FblePlainWord[@str]
+@@
+
+@define[FbleModulePath][str]
+ @ifeq[][@str][] @@
+ @ifeq[%][@head[@str]] % @@
+ @head[@str]
+ @FbleModulePath[@tail[@str]]
+@@
+
+@define[HighlightFble][str]
+ @ifeq[][@str][] @@
+
+ @ifeq[#][@head[@str]]
+  @let[line] @TakeUpTo[\n][@str]
+  @ <span class="comment">@line</span>@HighlightFble[@Drop[@line][@str]]
+ @@
+
+ @let[word] @FbleWord[@str] @@
+ @ifneq[][@word]
+  @let[wordtail] @Drop[@word][@str] @@
+
+  @ifeq[\@][@head[@wordtail]]
+  @ <span class="type">@word\@</span>@HighlightFble[@tail[@wordtail]] @@
+
+  @ifeq[:][@head[@wordtail]]
+  @ <span class="statement">@word:</span>@HighlightFble[@tail[@wordtail]] @@
+
+  @ifeq[''][@head[@word]]
+  @ <span class=''identifier''>@word</span>@HighlightFble[@wordtail] @@
+
+  @word
+  @HighlightFble[@wordtail]
+ @@
+
+ @ifeq[/][@head[@str]]
+  @let[path] /@FbleModulePath[@tail[@str]]
+  @ <span class=''preproc''>@path</span>@HighlightFble[@Drop[@path][@str]]
+ @@
+
+ @ifeq[|][@head[@str]]
+  @let[lit] |@FbleWord[@tail[@str]]
+  @ <span class=''constant''>@lit</span>@HighlightFble[@Drop[@lit][@str]]
+ @@
+
+ @ifeq[&lt;-][@Take[&lt;-][@str]]
+ @ &lt;-@HighlightFble[@Drop[&lt;-][@str]] @@
+
+ @ifeq[&lt;][@Take[&lt;][@str]]
+ @ <span class="special">&lt;</span>@HighlightFble[@Drop[&lt;][@str]] @@
+
+ @ifeq[&gt;][@Take[&gt;][@str]]
+ @ <span class="special">&gt;</span>@HighlightFble[@Drop[&gt;][@str]] @@
+
+ @ifeq[\@][@head[@str]]
+ @ <span class="special">\@</span>@HighlightFble[@tail[@str]] @@
+
+ @ifeq[:][@head[@str]]
+ @ <span class="statement">:</span>@HighlightFble[@tail[@str]] @@
+
+ @ifeq[%][@head[@str]]
+ @ <span class="special">%</span>@HighlightFble[@tail[@str]] @@
+
+ @head[@str]
+ @HighlightFble[@tail[@str]]
+@@
+
+@define[IsEbnfPunct][c]
+ @ContainsChar{][{}}[@c]
+@@
+
+@define[HighlightEbnf][str]
+ @ifeq[][@str][] @@
+
+ @ifeq[(*][@Take[(*][@str]]
+  @let[comment] @TakeUpTo[*)][@str]
+  @ <span class="comment">@comment</span>@HighlightEbnf[@Drop[@comment][@str]]
+ @@
+
+ @ifeq[''][@head[@str]]
+  @let[literal] @TakeUpTo[''][@tail[@str]]
+  @ <span class="constant">''@literal</span>@HighlightEbnf[@Drop[''@literal][@str]]
+ @@
+
+ @let[punct] @head[@str] @@
+ @ifeq[yes][@IsEbnfPunct[@punct]]
+ @ <span class="special">@punct</span>@HighlightEbnf[@tail[@str]] @@
+
+ @head[@str]
+ @HighlightEbnf[@tail[@str]]
+@@
+
+@define[code][lang text]
+ @let[escaped] @EscHtml[@text] @@
+ @let[highlighted]
+  @ifeq[fbld][@lang] @HighlightFbld[@escaped] @@
+  @ifeq[fble][@lang] @HighlightFble[@escaped] @@
+  @ifeq[ebnf][@lang] @HighlightEbnf[@escaped] @@
+  @escaped
+ @ <pre>@highlighted</pre>\n
+@@
+
+@define[c][lang text]
+ @let[escaped] @EscHtml[@text] @@
+ @let[highlighted]
+  @ifeq[fbld][@lang] @HighlightFbld[@escaped] @@
+  @ifeq[fble][@lang] @HighlightFble[@escaped] @@
+  @ifeq[ebnf][@lang] @HighlightEbnf[@escaped] @@
+  @escaped
+ @ <code>@highlighted</code>
+@@
+
+@define[l][text] <code>@EscHtml[@text]</code> @@
+@define[a][text] <i>@EscHtml[@text]</i> @@
+
+@define[AbstractSyntax][content]
+ @definition[Abstract Syntax]
+  @code[txt][@content]
+@@
+
+@define[ConcreteSyntax][content]
+ @definition[Concrete Syntax]
+  @code[ebnf][@content]
+@@
+
+@define[Example][content]
+ @definition[Example]
+  @code[fble][@content]
+@@
+
+@define[L][content] @c[fble][@content] @@
+
+@doc Fble
+ @@FbleVersionStamp
+
+ @section 1. Introduction
+  Fble is a general purpose functional programming language with support for
+  polymorphism and modularity.
+  
+  @subsection 1.1 Goals
+   The primary design goals of fble are:
+   
+   @item
+    Fble should be as simple a language as possible while still being useful.
+    A simple language will hopefully be simple to specify, simple to learn,
+    simple to understand, simple to program, powerful, and low cost to develop
+    high quality tools for.
+   
+   @item
+    Fble should support high performance, low overhead computing. This is
+    achieved by using a static type system and having a very clear performance
+    model that a developer can optimize for.
+   
+   @item
+    Fble should be a joy to program in. It should be easy to describe the
+    majority of programs we want to describe, not tediously difficult. To
+    accomplish this, fble allows functions to be declared locally with access
+    to variables in the context where they are declared, and fble supports
+    polymorphic types and functions.
+   
+   @item
+    Fble should support programming at scale. That is, namespace control and
+    composition of modules developed by different individual developers or
+    organizations.
+  
+  @subsection 1.2 Overview
+   Fble is based around the primitive data types of structs, unions, and
+   functions. It is a strongly and statically typed language supporting
+   polymorphic types and values. Recursive types and values are supported
+   through a recursive let construct. Types are treated as another kind of
+   value in fble, which allows us to reuse the constructs of variables, lets,
+   polymorphism, and structs for types in addition to normal values.
+   Additional syntax is provided to make structs suitable for describing and
+   manipulating namespaces.
+
+ @section @label[variables][2. Types, Kinds, and Variables]
+  @subsection 2.1 Types
+   Data values and the expressions that describe them are strongly typed. A
+   value''s type describes the kinds of operations that can legally be
+   performed on that value. Types are used to check that an fble program is
+   well formed statically. Types do not take meaningful part in the dynamic
+   execution of an fble program after it has been statically checked.
+  
+   Types are themselves treated as data values in fble, which allows us to
+   reuse variables, lets, polymorphism, and structs for types in addition to
+   normal values. This means an expression can be used to describe either a
+   normal value or a type and that types themselves have types.
+  
+   To ensure all type information is available at compile time, there is a
+   one-to-one mapping between a type and the type of that type. As a
+   consequence, you can determine the value of a type if you know the type of
+   that type.
+  
+   For example, the boolean value @L{True} is a normal value. The type of
+   @L{True} is the type @L{Bool@}, which is a union type. @L{Bool@} is a type
+   value. The type of @L{Bool@} is known only as the type of @L{Bool@},
+   expressed using the syntax: @L{@<Bool@>}. @L{@<Bool@>} is also a type
+   value, and the type of that value is @L{@<@<Bool@>>}. If you have an
+   expression of type @L{@<Bool@>}, you know statically that the value of that
+   expression must be @L{Bool@}, so the expression need not be evaluated at
+   runtime.
+  
+   Type information is stripped away at runtime. The value of a type at
+   runtime is a special unit value. Without the type information, there is no
+   way to distinguish between the special unit value for different types. For
+   this reason we say types do not take meaningful part in the dynamic
+   execution of an fble program after it has been statically checked, though
+   the special unit value for types may exist at runtime when using an fble
+   native interface.
+
+  @subsection 2.2 Kinds
+   @AbstractSyntax @
+    Kind: basic_normal_kind
+    Kind: basic_type_kind
+  
+   @ConcreteSyntax @
+    kind = ''%''    (* normal_kind *)
+    kind = ''@''    (* type_kind *)
+  
+   @Example @
+    %
+    @
+  
+   Kinds are used to classify whether a value is a normal value, a type value,
+   or something else. Using the example in the previous section:
+  
+   @item @L{True} is a normal value. It is of normal kind.
+   @item @L{Bool@} is a type value. It is of type kind.
+   @item @L{@<Bool@>} is a type of a type value. It is of higher kind.
+   @item @L{@<@<Bool@>>} is also of higher kind.
+  
+   Kinds are analogous to types in that they describe what operations are
+   supported by a particular value, but they are much more restricted in the
+   operations they allow. A value of normal kind cannot be used where a type
+   is expected, for example. Unlike types, kinds do not act as values and
+   cannot be described using expressions.
+  
+   The kind of a value is uniquely determined by the type of the value.
+  
+   It is useful to be able to recognize immediately whether a variable refers
+   to a normal value, a type value, or something else. For that reason, we
+   require different namespaces be used for different kinds of values. In the
+   concrete syntax, names of normal variables are unadorned, while names of
+   type variables must be followed with the character @L{@}. So, for example,
+   @L{True} is a normal value, and @L{Bool@} is a type value.
+  
+   The @L{@} character is not considered part of the variable, but rather is
+   an indicator of the namespace of the variable. So, for example @L{''Foo''@}
+   is a type variable named @L{Foo}, and @L{''Foo@''} is a normal variable named
+   @L{Foo@}.
+  
+   You are not allowed to use a variable to refer to a higher kinded value,
+   because then using @L{@} in variable names to distinguish between normal
+   variables and type variables would be insufficient. In practice this should
+   not be a significant limitation because you should be able to use a type
+   variable for the value of the type and use the typeof operator to get the
+   type of the type as needed. For this reason, there is no syntax for
+   describing a higher kind, though it is possible to describe types and
+   expressions of higher kind.
+';
