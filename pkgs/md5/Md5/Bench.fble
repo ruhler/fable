@@ -41,7 +41,7 @@ M@<Maybe@<Bit8@>> Get = {
     
 # Benchmark for md5 sum that takes about 1 minute to run.
 Test@ Bench = Test(Str|Md5, (Unit@ _) {
-  R@<Hash@> md5 = Md5<M@>(Monad, Get, Int|240000);
+  R@<Hash@> md5 = Md5<M@>(Monad, Get, Int|60000);
   AssertEquals(/Md5/Hash%.Eq, /Md5/Hash%.Show, md5.x, md5.x);
 });
 

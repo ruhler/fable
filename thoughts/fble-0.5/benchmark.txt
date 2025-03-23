@@ -119,3 +119,32 @@ Steps:
 * Add fble based benchmarks for pprof, fbld, and maybe sat and cat.
 * Try using it for thoughts/fble-0.5/stacks.txt analysis and see if it's good
   enough.
+
+---
+
+The pprof benchmark runs out of memory. Maybe it's not surprising. Let's do
+some math.
+
+Length of input: around 26 million characters.
+
+Space to represent that as a list of Char@:
+* Each element of the list has a 2-field union and a 2-argument struct. That's
+  maybe 5 words each, or 10 words per element, or 80 bytes per element, or a
+  total of: 2080GB. No surprise it doesn't fit.
+
+And we need the same thing as both Int@ and Char@ in memory at the same time.
+That brings us up to at least 4GB. If I want to stay under 50% of my 1GB
+memory, I need at least 1/8th the length. Sadness.
+
+This approach isn't scaling well. Any alternatives? I guess I need to generate
+the input line by line on the fly somehow?
+
+Let's try 10% of the original input size, see if there's any chance of us
+getting something in.
+
+If I make the input small enough to not use up all the memory, it only takes 3
+seconds to parse. That's not the benchmark I want. I need a better approach.
+
+Either generate the input on the fly, or have some way to incrementally read
+the file instead of reading it all into a big array first.
+
