@@ -44,3 +44,29 @@ Other miscellaneous ideas:
 
 Let's start by benchmarking A, B, and C. If (C) isn't too much of a
 regression, let's go that route. That's enough to unblock reference values.
+
+---
+
+If we remove merging of frames entirely:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:   4:46.72 ==> 5:08.26
+  Memory:  609396 ==> 528920
+
+Seems like less of a performance impact than I expected?
+
+If we use 4K frame alloc as limit:
+  Time:   4:46.72 ==> 5:08.26 ==> 4:50.23
+  Memory:  609396 ==> 528920 ==> 504192
+
+That's nice.
+
+If we use 16K frame alloc as limit:
+  Time:   4:46.72 ==> 5:08.26 ==> 4:50.23 ==> 4:51.69
+  Memory:  609396 ==> 528920 ==> 504192 ==> 504372
+
+Let's stick to 4K frame alloc limit.
+
+Clearly we can get rid of basing this in ref value. Cool.
+
+Let me call this line of discussion done for now, since the goal is achieved.

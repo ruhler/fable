@@ -157,3 +157,26 @@ How can I add sat and fbld benchmarks?
 I can try the following for nicer output than -v:
 
   /usr/bin/time -f "Time: %E\nMemory: %M" 
+
+---
+
+Okay, I think I have a decent collection of benchmarks now as pure fble code.
+Let's do some measurements!
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 4:46.72
+  Memory: 609396
+
+perf record -d -g -F 101 -- ./out/pkgs/benchmark/fble-benchmark
+
+Flat Profile by Self Time
+-------------------------
+    %     self  block
+13.42     3876  FbleCall[0001X]
+13.23     3821  IncrGc[0006X]
+ 8.34     2409  FblePopFrame[0003X]
+ 8.29     2395  FbleStructValueField[0004X]
+ 6.36     1836  FbleUnionValueTag[0007X]
+ 5.14     1484  FbleFuncValueFunction[0010X]
+ 5.00     1443  FbleUnionValueField[0008X]
+ 

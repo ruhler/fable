@@ -95,7 +95,8 @@
 //
 // We can merge as many stack frames as we want, so long as we don't incur
 // more than constant memory overhead from doing so. In practice we merge 
-// all stack frames until we encounter a recursive function recursive call.
+// stack frames as long as we haven't allocated too many bytes on the frame so
+// far.
 //
 // Garbage Collection
 // ------------------
@@ -374,6 +375,10 @@ typedef struct {
 
 // We allocate memory for the stack in 1MB chunks.
 #define CHUNK_SIZE (1024 * 1024)
+
+// How many bytes we can allocate on a frame before we should stop merging
+// frames. Chosen fairly arbitrarily.
+#define MERGE_LIMIT (4 * 1024)
 
 /**
  * @struct[Chunk] A chunk of allocated stack space.
@@ -1657,7 +1662,7 @@ FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue*
   size_t num_unused = argc - executable->num_args;
   FbleValue** unused = args + executable->num_args;
 
-  PushFrame(heap, function->tag != REF_VALUE);
+  PushFrame(heap, heap->top->caller != NULL && heap->top->max - heap->top->caller->max < MERGE_LIMIT);
   FbleValue* result = executable->run(&heap->_base, profile, func, args);
 
   if (result == heap->_base.tail_call_sentinel) {

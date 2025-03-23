@@ -71,4 +71,26 @@ I probably want to have a more comprehensive benchmark suite when evaluating
 this change. md5sum for sure, to cover the case of deep non-recursive
 functions.
 
+---
+
+We are no longer using RefValue for deciding on frame merges.
+
+Let's proceed with the update to RefValue. Here's how it will work:
+* RefValue becomes packed {<id>, 'b10}
+  We'll need some way to generate unique ids for RefValues. Needs thought.
+* StrictValue turns all ref values to NULL (as a first step).
+* FbleAssignRefValue does a traversal of value, replacing references to the
+  ref value with the actual value. Check for vacuous value here still.
+
+I think that's it. Even if we just do that, I'm hoping we'll see a noticeable
+performance improvement.
+
+How to assign ids for ref values? It should be a proper stack, right? I always
+do assignment for the most recent ref value? Close. Double check the ordering
+logic when we have multiple ref values defined in the same statement.
+
+Assuming that's the case, we can have a single counter which keeps track of
+the number of ref values allocated so far. Assert when we do a ref value
+assignment it's of the top counter value, then decrement that top counter
+value.
 
