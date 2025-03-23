@@ -80,4 +80,4 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 };
 
-/Core/Stdio/IO%.Run(Main);
+@(Main);

@@ -148,3 +148,12 @@ seconds to parse. That's not the benchmark I want. I need a better approach.
 Either generate the input on the fly, or have some way to incrementally read
 the file instead of reading it all into a big array first.
 
+Maybe for now I can shrink the benchmark like I have and see how it goes?
+
+How can I add sat and fbld benchmarks?
+
+---
+
+I can try the following for nicer output than -v:
+
+  /usr/bin/time -f "Time: %E\nMemory: %M" 

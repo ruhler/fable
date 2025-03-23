@@ -1,0 +1,39 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
+<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
+% Monad = /Core/Stdio/Pure%.Monad;
+% Stdio = /Core/Stdio/Pure%.Stdio;
+<@>% Run = /Core/Stdio/Pure%.Run;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+(String@) { List@<Int@>; } Bytes = (String@ str) {
+  /Core/List%.Map(str, /Core/Char/Ascii%.Ord);
+};
+
+Test@ Bench = Test(Str|Sat, (Unit@ _) {
+  List@<Int@> input = Bytes(/Sat/Bench/Input%);
+  Pure@<Bool@> go = /Sat/Main%.Main<Pure@>(Stdio, Monad)[];
+  PureResult@<Bool@> result = Run(go, input);
+  AssertEquals(
+    /Core/Bool/Eq%.Eq,
+    /Core/Bool/Show%.Show,
+    True, result.x);
+});
+
+@(Bench);
