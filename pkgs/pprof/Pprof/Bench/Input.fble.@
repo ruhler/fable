@@ -1,0 +1,4 @@
+# The implementation is a big string literal. We keep the header file around
+# so we only need to read in the string literal when compiling the module
+# itself.
+/Core/String%.Str|'';

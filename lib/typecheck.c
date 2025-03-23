@@ -184,6 +184,7 @@ static FbleTcBinding CopyTcBinding(FbleTcBinding binding);
 
 static Cleaner* NewCleaner();
 static void CleanType(Cleaner* cleaner, FbleType* type);
+static void CleanFbleTc(Cleaner* cleaner, FbleTc* tc);
 static void CleanTc(Cleaner* cleaner, Tc tc);
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
 static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding vars);
@@ -659,6 +660,19 @@ static Cleaner* NewCleaner()
 static void CleanType(Cleaner* cleaner, FbleType* type)
 {
   FbleAppendToVector(cleaner->types, type);
+}
+
+/**
+ * @func[CleanFbleTc] Adds an FbleTc* for automatic cleanup.
+ *  @arg[Cleaner*][cleaner] The cleaner to add the type to.
+ *  @arg[FbleTc*][tc] The tc to track.
+ *
+ *  @sideeffects
+ *   The tc will be automatically released when the cleaner is cleaned up.
+ */
+static void CleanFbleTc(Cleaner* cleaner, FbleTc* tc)
+{
+  FbleAppendToVector(cleaner->tcs, tc);
 }
 
 /**
@@ -1803,13 +1817,21 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleInitVector(unit_type->fields);
       CleanType(cleaner, &unit_type->_base);
 
+      size_t tagwidth = 0;
+      while ((1 << tagwidth) < elem_data_type->fields.size) {
+        tagwidth++;
+      }
+
+      FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
+      literal_tc->tagwidth = tagwidth;
+      FbleInitVector(literal_tc->letters);
+      CleanFbleTc(cleaner, &literal_tc->_base);
+
       bool error = false;
       FbleLoc loc = literal_expr->word_loc;
-      size_t maxargc = strlen(literal_expr->word);
-      size_t args[maxargc];
-      size_t argc = 0;
+      size_t wordlen = strlen(literal_expr->word);
       const char* word = literal_expr->word;
-      size_t wordlen = maxargc;
+      size_t letter = 0;
       while (wordlen > 0) {
         size_t maxlen = 0;
         for (size_t j = 0; j < elem_data_type->fields.size; ++j) {
@@ -1818,7 +1840,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           if (fieldnamelen > maxlen && fieldnamelen <= wordlen &&
               strncmp(word, fieldname, fieldnamelen) == 0) {
             maxlen = fieldnamelen;
-            args[argc] = j;
+            letter = j;
           }
         }
 
@@ -1826,14 +1848,16 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           ReportError(loc, "next letter of literal '%s' not found in type %t\n", word, elem_type);
           error = true;
           break;
-        } else if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[args[argc]].type)) {
+        }
+        
+        FbleAppendToVector(literal_tc->letters, letter);
+        if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[letter].type)) {
           ReportError(loc, "expected field type %t, but '%s' has field type %t\n",
-              unit_type, elem_data_type->fields.xs[args[argc]].name.name->str, elem_data_type->fields.xs[args[argc]].type);
+              unit_type, elem_data_type->fields.xs[letter].name.name->str, elem_data_type->fields.xs[letter].type);
           error = true;
           break;
         }
 
-        argc++;
         for (size_t i = 0; i < maxlen; ++i) {
           if (word[i] == '\n') {
             loc.line++;
@@ -1851,21 +1875,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleType* result_type = FbleRetainType(th, func_type->rtype);
 
-      size_t tagwidth = 0;
-      while ((1 << tagwidth) < elem_data_type->fields.size) {
-        tagwidth++;
-      }
-
-      FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
-      literal_tc->tagwidth = tagwidth;
-      FbleInitVector(literal_tc->letters);
-      for (size_t i = 0; i < argc; ++i) {
-        FbleAppendToVector(literal_tc->letters, args[i]);
-      }
-
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
       apply->func = FbleCopyTc(func.tc);
-      apply->arg = &literal_tc->_base;
+      apply->arg = FbleCopyTc(&literal_tc->_base);
       return MkTc(result_type, &apply->_base);
     }
 

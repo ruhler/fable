@@ -78,6 +78,7 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
 
 static size_t StackBytesForCount(size_t count);
 
+static void Mov(FILE* fout, const char* r_dst, size_t x);
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 static void GAdr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
@@ -444,8 +445,8 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
   SanitizeString(loc.source->str, label);
   Adr(fout, "x2", ".L.loc.%s", label);
 
-  fprintf(fout, "  mov x3, %zi\n", loc.line);
-  fprintf(fout, "  mov x4, %zi\n", loc.col);
+  Mov(fout, "x3", loc.line);
+  Mov(fout, "x4", loc.col);
   Adr(fout, "x5", "%s", lmsg);
   fprintf(fout, "  bl fprintf\n");
 
@@ -470,6 +471,29 @@ static void DoAbort(FILE* fout, size_t func_id, size_t pc, const char* lmsg, Fbl
 static size_t StackBytesForCount(size_t count)
 {
   return 16 * ((count + 1) / 2);
+}
+
+/**
+ * @func[Mov] Emits a mov instruction to load a constant into a register.
+ *  @arg[FILE*][fout] The output stream
+ *  @arg[const char*][r_dst] The name of the register to load the constant into
+ *  @arg[size_t][x] The constant to load.
+ *
+ *  @sideeffects
+ *   Emits a sequence of instructions to load the constant into the register.
+ */
+static void Mov(FILE* fout, const char* r_dst, size_t x)
+{
+  // TODO: handle all the other variations on loading a constant into a
+  // register.
+  if (x >= (1 << 16)) {
+    size_t a = x % (1 << 16);
+    size_t b = x >> 16;
+    fprintf(fout, "  mov %s, %zi\n", r_dst, a);
+    fprintf(fout, "  movk %s, %zi, lsl 16\n", r_dst, b);
+  } else {
+    fprintf(fout, "  mov %s, %zi\n", r_dst, x);
+  }
 }
 
 /**
@@ -663,7 +687,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       };
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", argc);
+      Mov(fout, "x1", argc);
       fprintf(fout, "  mov x2, SP\n");
       fprintf(fout, "  bl FbleNewStructValue\n");
       SetFrameVar(fout, "x0", struct_instr->dest);
@@ -675,8 +699,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_UNION_VALUE_INSTR: {
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", union_instr->tagwidth);
-      fprintf(fout, "  mov x2, %zi\n", union_instr->tag);
+      Mov(fout, "x1", union_instr->tagwidth);
+      Mov(fout, "x2", union_instr->tag);
       GetFrameVar(fout, "x3", union_instr->arg);
       fprintf(fout, "  bl FbleNewUnionValue\n");
       SetFrameVar(fout, "x0", union_instr->dest);
@@ -686,8 +710,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       GetFrameVar(fout, "x0", access_instr->obj);
-      fprintf(fout, "  mov x1, #%zi\n", access_instr->fieldc);
-      fprintf(fout, "  mov x2, #%zi\n", access_instr->tag);
+      Mov(fout, "x1", access_instr->fieldc);
+      Mov(fout, "x2", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueField\n");
       SetFrameVar(fout, "x0", access_instr->dest);
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
@@ -698,8 +722,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
       GetFrameVar(fout, "x0", access_instr->obj);
-      fprintf(fout, "  mov x1, #%zi\n", access_instr->tagwidth);
-      fprintf(fout, "  mov x2, #%zi\n", access_instr->tag);
+      Mov(fout, "x1", access_instr->tagwidth);
+      Mov(fout, "x2", access_instr->tag);
       fprintf(fout, "  bl FbleUnionValueField\n");
       SetFrameVar(fout, "x0", access_instr->dest);
 
@@ -717,7 +741,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Get the union value tag.
       GetFrameVar(fout, "x0", select_instr->condition);
-      fprintf(fout, "  mov x1, %zi\n", select_instr->tagwidth);
+      Mov(fout, "x1", select_instr->tagwidth);
       fprintf(fout, "  bl FbleUnionValueTag\n");
 
       // Abort if the union object is undefined.
@@ -794,7 +818,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, R_PROFILE\n");
       GetFrameVar(fout, "x2", call_instr->func);
-      fprintf(fout, "  mov x3, %zi\n", call_instr->args.size);
+      Mov(fout, "x3", call_instr->args.size);
       fprintf(fout, "  mov x4, SP\n");          // args
 
       fprintf(fout, "  bl FbleCall\n");
@@ -813,7 +837,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
 
       // Set heap->tail_call_argc
-      fprintf(fout, "  mov x0, %zi\n", call_instr->args.size);
+      Mov(fout, "x0", call_instr->args.size);
       fprintf(fout, "  str x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_argc));
 
       // heap->tail_call_buffer[0] = func
@@ -892,7 +916,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", argc);
+      Mov(fout, "x1", argc);
       fprintf(fout, "  mov x2, SP\n");
       fprintf(fout, "  bl FbleNewListValue\n");
 
@@ -915,8 +939,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, %zi\n", literal_instr->tagwidth);
-      fprintf(fout, "  mov x2, %zi\n", argc);
+      Mov(fout, "x1", literal_instr->tagwidth);
+      Mov(fout, "x2", argc);
       Adr(fout, "x3", ".Lr.%04zx.%zi.letters", func_id, pc);
       fprintf(fout, "  bl FbleNewLiteralValue\n");
       SetFrameVar(fout, "x0", literal_instr->dest);
@@ -980,7 +1004,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
 
         case FBLE_PROFILE_SAMPLE_OP: {
           fprintf(fout, "  mov x0, R_PROFILE\n");
-          fprintf(fout, "  mov x1, #%zi\n", op->arg);
+          Mov(fout, "x1", op->arg);
           fprintf(fout, "  bl FbleProfileRandomSample\n");
           break;
         }

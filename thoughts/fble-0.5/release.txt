@@ -9,3 +9,36 @@ Possible features:
 * Optimize fble pprof viewer.
 * Optimize function calls in runtime.
 
+---
+
+Bug: If we allocate a literal with 25746910 characters, it looks like we smash
+the stack. That corresponds to 196MB allocation on the stack for the args.
+
+Ugh. Any easy way around that? Do I need to make this a dynamic allocation?
+
+We already end up using a vector for this. Why not use the vector from the
+start? Regardless, I should probably write a test for this. But what limit is
+reasonable? Sigh.
+
+Let's write a test case, see if I can fix it. If no easy fix, leave it as a
+todo for now and work around in the short term.
+
+It's a bit tedious that we need a 1.2MB fble file to reproduce the error. Is
+that really reasonable? Should we be supporting such large literals? What's
+the alternative for my benchmark?
+
+Anyway, see if we can get it to work. Then decide if I want to check it in.
+
+I can get rid of the stack smashing issue. I need to figure out the aarch64
+mov instruction to load a larger number into a register. What does GCC do?
+
+  mov x0, 62977
+  movk  x0, 0x11, lsl 16
+
+Sigh. Looks like I'll have to fix that everywhere.
+
+Let's read up on the details of mov and movk:
+* mov takes a 16 bit number.
+* movk moves a 16 bit shifted number in a register, keeping whatever else was
+  already there.
+

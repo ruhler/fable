@@ -2,6 +2,11 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* It takes too long to compile /Pprof/Bench/Input%
+  Find some better alternative.
+
+* Create fble-based benchmarks for:
+ - pprof, fbld, sat, core
 * Add way to run an individual benchmark by name.
 
 * Split AccessTc and AccessInstr into Struct and Union variants

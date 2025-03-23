@@ -1,0 +1,34 @@
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
+<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
+% Monad = /Core/Stdio/Pure%.Monad;
+% Stdio = /Core/Stdio/Pure%.Stdio;
+<@>% Run = /Core/Stdio/Pure%.Run;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+
+(String@) { List@<Int@>; } Bytes = (String@ str) {
+  /Core/List%.Map(str, /Core/Char/Ascii%.Ord);
+};
+
+Test@ Bench = Test(Str|Pprof, (Unit@ _) {
+  List@<Int@> input = Bytes(/Pprof/Bench/Input%);
+  Pure@<Maybe@<Profile@>> go = /Pprof/Perf%.Parse<Pure@>(Monad, Stdio.in);
+  PureResult@<Maybe@<Profile@>> _ = Run(go, input);
+  /Core/Test%.Pass;
+});
+
+@(Bench);
