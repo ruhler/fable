@@ -94,3 +94,68 @@ the number of ref values allocated so far. Assert when we do a ref value
 assignment it's of the top counter value, then decrement that top counter
 value.
 
+---
+
+I need to change the API for ref values, because we need to do the
+substitution in all values of a let. For example, if we have 3 recursively
+defined variables, we have 3 ref values, we have 3 values to assign to, and we
+have 3 values to traverse to do all 3 substitutions.
+
+Proposal:
+* void FbleNewRefValues(FbleValueHeap* heap, size_t n, FbleValue** dest);
+  Allocates n new ref values, storing them continuously in dest.
+* bool FbleAssignRefValues(FbleValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values);
+  Assigns n ref values at once. The ref values are stored continuously and the
+  values to assign them to are stored continuously.
+
+If we have this API, it's also easier to require ref values are assigned in
+last in first out order, which is convenient for assigning unique ids to ref
+values.
+
+I can do the implementation in phases:
+1. Switch to the new API.
+2. Implement the traverse and replace on existing RefValue datatype.
+3. Allocate and manage unique ids for ref values.
+4. Pack ref values.
+
+This idea of allocating continuous values in the compiler is new. I don't
+think it's too hard, but something different. Let's review where and how we
+use ref values today.
+
+In let, we allocate n ref values in a row. Then we compute n definitions in a
+row. Then we do n assignments in a row and call SetVar to update the
+definitions.
+
+Shouldn't be too hard? The most awkward part is having continuous allocations
+for things. It means we may have to move memory around we otherwise wouldn't
+need to. Is there a better way?
+
+Struct value takes FbleVarV args. Let's do the same?
+
+FbleNewRefValues can take an FbleLocalIndexV. It fills in each of the
+individual indices. FBLE_REF_DEF can take FbleVarV and FbleLocalIndexV. That's
+easy. That should be quite doable. Okay? Let's try that.
+
+---
+
+We don't need to change FbleNewRefValue to start. That's fine to split up.
+We'll end up inlining that anyway. We just need to change FbleAssignRefValue
+to do it all at once.
+
+The annoying part is that we need to report vacuous value errors per
+assignment. A vacuous value is currently defined as a variable being set to
+itself.
+
+For example:
+
+a = b, b = a;
+
+We can assign a = b. But then when we try b = a, we'll see it a vacuous. Do we
+need location at the specific variable, or is the let in general okay? The
+specific variable is probably important information.
+
+Sigh. For now, let's include a list of locations with the instruction. Really,
+I think best to have a vector of: loc, ref, value. Okay? First step is to get
+the instruction updated. Second step is to change FbleAssignRefValue to
+FbleAssignRefValues.
+

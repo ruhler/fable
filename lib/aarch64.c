@@ -204,7 +204,9 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* instr = (FbleRefDefInstr*)code->instrs.xs[i];
-        AddLoc(instr->loc.source->str, locs);
+        for (size_t j = 0; j < instr->assigns.size; ++j) {
+          AddLoc(instr->assigns.xs[j].loc.source->str, locs);
+        }
         break;
       }
 
@@ -875,16 +877,17 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-      FbleVar ref = {
-        .tag = FBLE_LOCAL_VAR,
-        .index = ref_instr->ref
-      };
+      FbleVar ref = { .tag = FBLE_LOCAL_VAR };
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      GetFrameVar(fout, "x1", ref);
-      GetFrameVar(fout, "x2", ref_instr->value);
-      fprintf(fout, "  bl FbleAssignRefValue\n");
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.v\n", func_id, pc);
+      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+        FbleRefAssign* assign = ref_instr->assigns.xs + i;
+        ref.index = assign->ref;
+        fprintf(fout, "  mov x0, R_HEAP\n");
+        GetFrameVar(fout, "x1", ref);
+        GetFrameVar(fout, "x2", assign->value);
+        fprintf(fout, "  bl FbleAssignRefValue\n");
+        fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.%zi.v\n", func_id, pc, i);
+      }
       return;
     }
 
@@ -1068,8 +1071,10 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-      fprintf(fout, ".Lo.%04zx.%zi.v:\n", func_id, pc);
-      DoAbort(fout, func_id, pc, ".L.VacuousValue", ref_instr->loc);
+      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+        fprintf(fout, ".Lo.%04zx.%zi.%zi.v:\n", func_id, pc, i);
+        DoAbort(fout, func_id, pc, ".L.VacuousValue", ref_instr->assigns.xs[i].loc);
+      }
       return;
     }
 

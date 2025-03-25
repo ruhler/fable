@@ -76,7 +76,10 @@ void FbleFreeInstr(FbleInstr* instr)
 
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
-      FbleFreeLoc(i->loc);
+      for (size_t j = 0; j < i->assigns.size; ++j) {
+        FbleFreeLoc(i->assigns.xs[j].loc);
+      }
+      FbleFreeVector(i->assigns);
       FbleFree(instr);
       return;
     }
@@ -450,7 +453,6 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
           break;
         }
 
-
         case FBLE_REF_VALUE_INSTR: {
           FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
@@ -461,11 +463,16 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
         case FBLE_REF_DEF_INSTR: {
           FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "l%zi ~= %s%zi;",
-              ref_def_instr->ref,
-              var_tags[ref_def_instr->value.tag],
-              ref_def_instr->value.index);
-          PrintLoc(fout, ref_def_instr->loc);
+          const char* comma = "";
+          for (size_t j = 0; j < ref_def_instr->assigns.size; ++j) {
+            FbleRefAssign* assign = ref_def_instr->assigns.xs + j;
+            fprintf(fout, "%sl%zi ~= %s%zi, ", comma,
+                assign->ref,
+                var_tags[assign->value.tag],
+                assign->value.index);
+            PrintLoc(fout, assign->loc);
+            comma = "       ";
+          }
           break;
         }
 

@@ -948,14 +948,19 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         ExitBlock(blocks, scope, false);
       }
 
-      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        if (let_tc->recursive) {
-          FbleRefDefInstr* ref_def_instr = FbleAllocInstr(FbleRefDefInstr, FBLE_REF_DEF_INSTR);
-          ref_def_instr->loc = FbleCopyLoc(let_tc->bindings.xs[i].name.loc);
-          ref_def_instr->ref = vars[i]->var.index;
-          ref_def_instr->value = defs[i]->var;
-          AppendInstr(scope, &ref_def_instr->_base);
+      if (let_tc->recursive) {
+        FbleRefDefInstr* ref_def_instr = FbleAllocInstr(FbleRefDefInstr, FBLE_REF_DEF_INSTR);
+        FbleInitVector(ref_def_instr->assigns);
+        for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+          FbleRefAssign* assign = FbleExtendVector(ref_def_instr->assigns);
+          assign->loc = FbleCopyLoc(let_tc->bindings.xs[i].name.loc);
+          assign->ref = vars[i]->var.index;
+          assign->value = defs[i]->var;
         }
+        AppendInstr(scope, &ref_def_instr->_base);
+      }
+
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         SetVar(scope, base_index + i, let_tc->bindings.xs[i].name, defs[i]);
       }
 

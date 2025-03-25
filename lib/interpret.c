@@ -258,11 +258,14 @@ static FbleValue* Interpret(
 
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-        FbleValue* ref = locals[ref_def_instr->ref];
-        FbleValue* value = GET(ref_def_instr->value);
-        if (!FbleAssignRefValue(heap, ref, value)) {
-          FbleReportError("vacuous value\n", ref_def_instr->loc);
-          return NULL;
+        for (size_t i = 0; i < ref_def_instr->assigns.size; ++i) {
+          FbleRefAssign* assign = ref_def_instr->assigns.xs + i;
+          FbleValue* ref = locals[assign->ref];
+          FbleValue* value = GET(assign->value);
+          if (!FbleAssignRefValue(heap, ref, value)) {
+            FbleReportError("vacuous value\n", assign->loc);
+            return NULL;
+          }
         }
 
         pc++;

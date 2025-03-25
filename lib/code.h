@@ -401,22 +401,41 @@ typedef struct {
 } FbleRefValueInstr;
 
 /**
- * @struct[FbleRefDefInstr] FBLE_REF_DEF_INSTR
- *  Sets the value of a reference.
- *
- *  @code[txt] @
- *   ref->value = value
- *
- *  @field[FbleInstr][_base] FbleInstr base class.
+ * @struct[FbleRefAssign] A references value assignment.
  *  @field[FbleLoc][loc] Location to use for error reporting.
  *  @field[FbleLocalIndex][ref] The ref value to update.
  *  @field[FbleVar][value] The updated target for the ref value.
  */
 typedef struct {
-  FbleInstr _base;
   FbleLoc loc;
   FbleLocalIndex ref;
   FbleVar value;
+} FbleRefAssign;
+
+/**
+ * @struct[FbleRefAssignV] Vector of FbleRefAssign.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleRefAssign*][xs] The elements.
+ */
+typedef struct {
+  size_t size;
+  FbleRefAssign* xs;
+} FbleRefAssignV;
+
+/**
+ * @struct[FbleRefDefInstr] FBLE_REF_DEF_INSTR
+ *  Assigns values to reference values.
+ *
+ *  @code[txt] @
+ *   foreach i in assigns:
+ *     ref[i]->value = value[i]
+ *
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleRefAssignV][assigns] The assignments to make.
+ */
+typedef struct {
+  FbleInstr _base;
+  FbleRefAssignV assigns;
 } FbleRefDefInstr;
 
 /**

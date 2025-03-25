@@ -522,11 +522,14 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-        fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) ",
-            ref_instr->ref,
-            var_tag[ref_instr->value.tag],
-            ref_instr->value.index);
-        ReturnAbort(fout, "VacuousValue", ref_instr->loc);
+        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+          FbleRefAssign* assign = ref_instr->assigns.xs + i;
+          fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) ",
+              assign->ref,
+              var_tag[assign->value.tag],
+              assign->value.index);
+          ReturnAbort(fout, "VacuousValue", assign->loc);
+        }
         break;
       }
 
