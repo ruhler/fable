@@ -98,7 +98,7 @@ namespace eval "include" {
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
       FbleNewFuncValue FbleFuncValueFunction
       FbleEval FbleApply
-      FbleNewRefValue FbleAssignRefValue
+      FbleNewRefValue FbleAssignRefValues
     }
     fble-vector.h {
       FbleInitVector FbleFreeVector

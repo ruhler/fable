@@ -381,21 +381,22 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValu
 FbleValue* FbleNewRefValue(FbleValueHeap* heap);
 
 /**
- * @func[FbleAssignRefValue] Sets the value pointed to by a ref value.
- *  The ref value must be allocated on the top frame of the stack when calling
- *  this function, otherwise behavior is undefined.
+ * @func[FbleAssignRefValues] Sets the values pointed to by ref values.
+ *  The ref values must be allocated on the top frame of the stack when
+ *  calling this function, otherwise behavior is undefined.
  *
- *  @arg[FbleValueHeap*][heap ] The heap to use for allocations
- *  @arg[FbleValue*    ][ref  ] The reference to assign to
- *  @arg[FbleValue*    ][value] The value to assign to the reference.
+ *  @arg[FbleValueHeap*][heap  ] The heap to use for allocations
+ *  @arg[size_t        ][n     ] The number of ref values to assign.
+ *  @arg[FbleValue**   ][refs  ] The references to assign to
+ *  @arg[FbleValue**   ][values] The values to assign.
  *
- *  @returns bool
- *   True on success. False if the assignment would produce a vacuous value.
+ *  @returns size_t
+ *   0 on success. i+1 if the ith assignment would produce a vacuous value.
  *
  *  @sideeffects
- *   Updates ref to point to value.
+ *   Updates refs to point to their values.
  */
-bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
+size_t FbleAssignRefValues(FbleValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values);
 
 /**
  * @func[FbleNewNativeValue] Creates a GC managed native allocation.

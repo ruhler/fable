@@ -877,17 +877,31 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-      FbleVar ref = { .tag = FBLE_LOCAL_VAR };
+      // Allocate space for the refs on the stack.
+      size_t sp_offset = StackBytesForCount(ref_instr->assigns.size);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
 
+      FbleVar ref = { .tag = FBLE_LOCAL_VAR };
       for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-        FbleRefAssign* assign = ref_instr->assigns.xs + i;
-        ref.index = assign->ref;
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        GetFrameVar(fout, "x1", ref);
-        GetFrameVar(fout, "x2", assign->value);
-        fprintf(fout, "  bl FbleAssignRefValue\n");
-        fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.%zi.v\n", func_id, pc, i);
+        ref.index = ref_instr->assigns.xs[i].ref;
+        GetFrameVar(fout, "x0", ref);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
+      fprintf(fout, "  mov x2, SP\n");      // refs arg
+
+      // Allocate space for the values on the stack.
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+        GetFrameVar(fout, "x0", ref_instr->assigns.xs[i].value);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+      }
+      fprintf(fout, "  mov x3, SP\n");            // values arg
+      fprintf(fout, "  mov x0, R_HEAP\n");        // heap arg
+      Mov(fout, "x1", ref_instr->assigns.size);   // n arg
+
+      fprintf(fout, "  bl FbleAssignRefValues\n");
+      fprintf(fout, "  add SP, SP, #%zi\n", 2 * sp_offset);
+      fprintf(fout, "  cbnz x0, .Lo.%04zx.%zi.v\n", func_id, pc);
       return;
     }
 
@@ -1071,9 +1085,12 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
+      fprintf(fout, ".Lo.%04zx.%zi.v:\n", func_id, pc);
       for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-        fprintf(fout, ".Lo.%04zx.%zi.%zi.v:\n", func_id, pc, i);
+        fprintf(fout, "  sub x0, x0, 1\n"); 
+        fprintf(fout, "  cbnz x0, .Lo.%04zx.%zi.%zi.v\n", func_id, pc, i);
         DoAbort(fout, func_id, pc, ".L.VacuousValue", ref_instr->assigns.xs[i].loc);
+        fprintf(fout, ".Lo.%04zx.%zi.%zi.v:\n", func_id, pc, i);
       }
       return;
     }

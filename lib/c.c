@@ -297,10 +297,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
   fprintf(fout, "  FbleBlockId profile_block_id = function->profile_block_id;\n");
 
-  // x0, f0 are temporary variables individual instructions can use however
-  // they wish.
+  // x0, f0, r0 are temporary variables individual instructions can use
+  // however they wish.
   fprintf(fout, "  FbleValue* x0 = NULL;\n");
   fprintf(fout, "  FbleFunction* f0 = NULL;\n");
+  fprintf(fout, "  size_t r0 = 0;\n");
 
   // Emit code for each fble instruction
   bool jump_target[code->instrs.size];
@@ -522,14 +523,30 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
+        fprintf(fout, "  FbleValue* rdr%zi[%zi] = {", pc, ref_instr->assigns.size);
         for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-          FbleRefAssign* assign = ref_instr->assigns.xs + i;
-          fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) ",
-              assign->ref,
-              var_tag[assign->value.tag],
-              assign->value.index);
-          ReturnAbort(fout, "VacuousValue", assign->loc);
+          fprintf(fout, "l[%zi],", ref_instr->assigns.xs[i].ref);
         }
+        fprintf(fout, "};\n");
+
+        fprintf(fout, "  FbleValue* rdv%zi[%zi] = {", pc, ref_instr->assigns.size);
+        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+          fprintf(fout, "%s[%zi],",
+              var_tag[ref_instr->assigns.xs[i].value.tag],
+              ref_instr->assigns.xs[i].value.index);
+        }
+        fprintf(fout, "};\n");
+
+        fprintf(fout, "  r0 = FbleAssignRefValues(heap, %zi, rdr%zi, rdv%zi);\n",
+            ref_instr->assigns.size, pc, pc);
+
+        fprintf(fout, "  switch (r0) {\n");
+        fprintf(fout, "    case 0: break;\n");
+        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+          fprintf(fout, "    case %zi: ", i+1);
+          ReturnAbort(fout, "VacuousValue", ref_instr->assigns.xs[i].loc);
+        }
+        fprintf(fout, "  }\n");
         break;
       }
 

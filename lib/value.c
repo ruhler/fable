@@ -1789,29 +1789,34 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap_)
 }
 
 // See documentation in fble-value.h.
-bool FbleAssignRefValue(FbleValueHeap* heap_, FbleValue* ref, FbleValue* value)
+size_t FbleAssignRefValues(FbleValueHeap* heap_, size_t n, FbleValue** refs, FbleValue** values)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
 
-  assert(ref->h.gc.gen >= heap->top->min_gen
-      && "FbleAssignRefValue must be called with ref on top of stack");
+  for (size_t i = 0; i < n; ++i) {
+    FbleValue* ref = refs[i];
+    FbleValue* value = values[i];
 
-  // Unwrap any accumulated layers of references on the value and make sure we
-  // aren't forming a vacuous value.
-  RefValue* unwrap = (RefValue*)value;
-  while (!IsPacked(value) && value->tag == REF_VALUE && unwrap->value != NULL) {
-    value = unwrap->value;
-    unwrap = (RefValue*)value;
+    assert(ref->h.gc.gen >= heap->top->min_gen
+        && "FbleAssignRefValue must be called with ref on top of stack");
+
+    // Unwrap any accumulated layers of references on the value and make sure we
+    // aren't forming a vacuous value.
+    RefValue* unwrap = (RefValue*)value;
+    while (!IsPacked(value) && value->tag == REF_VALUE && unwrap->value != NULL) {
+      value = unwrap->value;
+      unwrap = (RefValue*)value;
+    }
+
+    if (value == ref) {
+      return i+1;
+    }
+
+    RefValue* rv = (RefValue*)ref;
+    assert(rv->_base.tag == REF_VALUE);
+    rv->value = GcRealloc(heap, value);
   }
-
-  if (value == ref) {
-    return false;
-  }
-
-  RefValue* rv = (RefValue*)ref;
-  assert(rv->_base.tag == REF_VALUE);
-  rv->value = GcRealloc(heap, value);
-  return true;
+  return 0;
 }
 
 // See documentation in fble-value.h
