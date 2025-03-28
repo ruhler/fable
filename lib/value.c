@@ -1894,8 +1894,24 @@ size_t FbleAssignRefValues(FbleValueHeap* heap_, size_t n, FbleValue** refs, Fbl
   for (size_t i = 0; i < n; ++i) {
     assert(refs[i]->h.gc.gen >= heap->top->min_gen
         && "FbleAssignRefValue must be called with ref on top of stack");
+  }
 
-    // TODO: How do we detect vacuous values?
+  // Eliminate any occurences of refs in the values array.
+  for (size_t i = 0; i < n; ++i) {
+    if (refs[i] == values[i]) {
+      // vacuous value.
+      return i+1;
+    }
+
+    for (size_t j = i+1; j < n; ++j) {
+      if (refs[i] == values[j]) {
+        values[j] = values[i];
+      }
+    }
+  }
+
+  // Do assignments inside of all the values.
+  for (size_t i = 0; i < n; ++i) {
     RefsAssign(heap, n, refs, values, values[i]);
   }
   return 0;

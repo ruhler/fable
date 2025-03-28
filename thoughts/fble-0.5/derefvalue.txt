@@ -231,6 +231,43 @@ pack together the values. It also lets us easily do the allocation in batch.
 Anyway, let me save that idea for later. It won't change the fundamentals I
 don't think.
 
+---
 
-  
-  
+How to deal with vacuous values? How to deal with updating the original
+values? They are sort of related. Think about it conceptually.
+
+We have N ref values.
+We have N assignments to them.
+Those assignments might themselves refer to the original N ref values, either
+directly or indirectly.
+
+I only care about the case of directly. If it goes through a func, struct, or
+union constructor, we're fine.
+
+Each value is either one of the N ref values, or its constant. We want to
+propagate one at a time, right?
+
+Going from i = 0, increasing. Maintain the invariant that for any values
+before index i, we've removed all references to any ref values.
+
+Or maybe we want to remove ref values one at a time?
+
+How about, first step: remove right hand side references to ref value 0. If
+the value for 0 is ref value 0, that's vacuous, return error. Otherwise we can
+in place update any values pointing to ref value 0 to point to value 0. Easy.
+
+Next, remove right hand side references to ref value 1. If the value for 1 is
+ref value 1, that's vacuous, otherwise we can kick the can down the road.
+
+Yeah, this seems like the right approach to use. Just at the top level. No
+deeper traversal yet. Eliminate all right hand references to ref values. If
+we can't, then it's vacuous.
+
+What test case do we have that covers this, to help me zoom in on it?
+
+spec/SpecTests/2.5-Let/Type/VacuousValue.fble.tr
+
+Probably we want to add more advanced cases to test? Anyway, let's get this to
+pass first.
+
+Turns out it's pretty easy to implement. Cool.
