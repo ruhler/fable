@@ -2,6 +2,11 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Use bitfields for FbleValue.tag, FbleValue.loc?
+
+* Add test for vacuous value in 1 of multiple ref value assignments.
+ - If we don't already have such a thing.
+
 * Get rid of r0 temp variable in lib/c.c
  - It's not really needed.
 

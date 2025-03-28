@@ -224,6 +224,7 @@ typedef union {
  *  @field[Header][h] The object header.
  *  @field[ValueTag][tag] The kind of value.
  *  @field[AllocLoc][loc] Where the object is allocated.
+ *  @field[bool][traversing] True if we are currently traversing this object.
  */
 struct FbleValue {
   // Note: Header.gc.list must be the first thing in FbleValue so we can map
@@ -231,6 +232,7 @@ struct FbleValue {
   Header h;
   ValueTag tag;
   AllocLoc loc;
+  bool traversing;
 };
 
 /**
@@ -519,6 +521,9 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
 static void FreeGcValue(FbleValue* value);
 static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value);
 
+static void RefAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue** r);
+static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue* x);
+
 static bool IsPacked(FbleValue* value);
 static bool IsAlloced(FbleValue* value);
 static FbleValue* StrictValue(FbleValue* value);
@@ -664,6 +669,7 @@ static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size)
   value->h.stack.frame = heap->top;
   value->tag = tag;
   value->loc = STACK_ALLOC;
+  value->traversing = false;
   return value;
 }
 
@@ -684,6 +690,7 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
   FbleValue* value = (FbleValue*)FbleAllocRaw(size);
   value->tag = tag;
   value->loc = GC_ALLOC;
+  value->traversing = false;
   value->h.gc.gen = frame->gen;
 
   Clear(&value->h.gc.list);
@@ -785,6 +792,97 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
   }
 
   FbleUnreachable("should never get here");
+}
+
+/**
+ * @func[RefAssign] Update a reference value assignment.
+ *  @arg[ValueHeap*][heap] The value heap.
+ *  @arg[size_t][n] The number of refs.
+ *  @arg[FbleValue**][refs] The ref values to assign to.
+ *  @arg[FbleValue**][values] The values to be assigned.
+ *  @arg[FbleValue**][x] Pointer to value to check assignment on.
+ *  @sideeffects
+ *   Updates refs assignments to the given reference as appropriate.
+ */
+static void RefAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue** r)
+{
+  FbleValue* x = *r;
+
+  // See if this is one of the ref values for us to substitute in.
+  for (size_t i = 0; i < n; ++i) {
+    if (x == refs[i]) {
+      *r = values[i];
+      return;
+    }
+  }
+
+  // Do substitution inside this value.
+  RefsAssign(heap, n, refs, values, x);
+}
+
+/**
+ * @func[RefsAssign] Perform ref value assignments on x.
+ *  @arg[ValueHeap*][heap] The value heap.
+ *  @arg[size_t][n] The number of refs.
+ *  @arg[FbleValue**][refs] The ref values to assign to.
+ *  @arg[FbleValue**][values] The values to be assigned.
+ *  @arg[FbleValue*][x] The value to do the assignments in.
+ *  @sideeffects
+ *   Replaces all references to ref values in x with their corresponding
+ *   values.
+ */
+static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue* x)
+{
+  // Nothing to do for packed values or NULL.
+  if (!IsAlloced(x)) {
+    return;
+  }
+
+  // Nothing to do for values currently being traversed.
+  if (x->traversing) {
+    return;
+  }
+
+  // Avoid traversing objects from older generations.
+  if (x->loc == GC_ALLOC && x->h.gc.gen < heap->gc.gen) {
+    return;
+  }
+
+  x->traversing = true;
+  switch (x->tag) {
+    case STRUCT_VALUE: {
+      StructValue* sv = (StructValue*)x;
+      for (size_t i = 0; i < sv->fieldc; ++i) {
+        RefAssign(heap, n, refs, values, sv->fields + i);
+      }
+      break;
+    }
+
+    case UNION_VALUE: {
+      UnionValue* uv = (UnionValue*)x;
+      RefAssign(heap, n, refs, values, &uv->arg);
+      break;
+    }
+
+    case FUNC_VALUE: {
+      FuncValue* fv = (FuncValue*)x;
+      for (size_t i = 0; i < fv->function.executable.num_statics; ++i) {
+        RefAssign(heap, n, refs, values, fv->statics + i);
+      }
+      break;
+    }
+
+    case REF_VALUE: {
+      // Nothing to do.
+      break;
+    }
+
+    case NATIVE_VALUE: {
+      // Nothing to do.
+      break;
+    }
+  }
+  x->traversing = false;
 }
 
 /**
@@ -1794,27 +1892,11 @@ size_t FbleAssignRefValues(FbleValueHeap* heap_, size_t n, FbleValue** refs, Fbl
   ValueHeap* heap = (ValueHeap*)heap_;
 
   for (size_t i = 0; i < n; ++i) {
-    FbleValue* ref = refs[i];
-    FbleValue* value = values[i];
-
-    assert(ref->h.gc.gen >= heap->top->min_gen
+    assert(refs[i]->h.gc.gen >= heap->top->min_gen
         && "FbleAssignRefValue must be called with ref on top of stack");
 
-    // Unwrap any accumulated layers of references on the value and make sure we
-    // aren't forming a vacuous value.
-    RefValue* unwrap = (RefValue*)value;
-    while (!IsPacked(value) && value->tag == REF_VALUE && unwrap->value != NULL) {
-      value = unwrap->value;
-      unwrap = (RefValue*)value;
-    }
-
-    if (value == ref) {
-      return i+1;
-    }
-
-    RefValue* rv = (RefValue*)ref;
-    assert(rv->_base.tag == REF_VALUE);
-    rv->value = GcRealloc(heap, value);
+    // TODO: How do we detect vacuous values?
+    RefsAssign(heap, n, refs, values, values[i]);
   }
   return 0;
 }

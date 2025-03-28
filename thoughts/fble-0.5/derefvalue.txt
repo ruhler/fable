@@ -159,3 +159,57 @@ I think best to have a vector of: loc, ref, value. Okay? First step is to get
 the instruction updated. Second step is to change FbleAssignRefValue to
 FbleAssignRefValues.
 
+---
+
+Next step is to try doing the traversal to update the ref values when we call
+FbleAssignRefValues. Careful: we need to be able to handle traversal of
+cycles.
+
+I'm also slightly concerned about having to traverse a lot of objects when
+defining recursive functions at the top level of complex modules, because you
+might have to end up traversing everything defined in the module, in some
+cases (exponentially?) repeatedly, which would be bad. But let's not worry
+about this performance issue to start. Wait to see if it's a problem in
+practice, or that I can force it to be a problem.
+
+How to handle traversal of cycles? We need a way to mark if we have done a
+traversal of the object or not. Some bit somewhere in the stack or GC
+allocated object we can set during traversal? Or do we need to maintain a
+separate data structure?
+
+GcRealloc takes advantage of value->loc to tell if it has been traversed. We
+don't have that luxury here.
+
+In terms of info about an FbleValue:
+* ValueTag - needs 3 bits for 5 different kinds of values.
+* Header - 2 words: gc value and frame, or gc list and generation.
+* AllocLoc - needs 1 bit for 2 different kinds of values.
+
+Let's just add a bit saying if it's traversing or not. We can pack ValueTag,
+AllocLoc, and this extra bit into a single word easily enough.
+
+Can I use bitfields for these things? Should I not worry about that yet, worry
+about it later? Let's worry about it later.
+
+---
+
+4 problems with the refvalue traversal code:
+1. It doesn't handle vacuous values.
+But this should be easy enough to fix. Use RefAssign to assign values in place
+in their array. Then check that the assigned value isn't the same as the ref
+value itself. Go one by one. That should let us check vacuous value.
+
+2. If one of the values is a ref value that's being assigned, we'll fail to
+update the value on the stack frame. I should add a test case for that and
+figure out how to fix it. Maybe we need to pass pointers (to pointers) to the
+original values instead of the values themselves.
+
+3. Memory leak. I fear it may be because we violate some GC invariants saying
+that an older dimension object will not point to a younger generation object.
+Needs debug.
+
+4. Infinite loop or slow performance on md5 and some other tests.
+Needs debug to figure out if it's just slow due to some pathological case or
+an infinite loop related to cycles. Don't work on this until the previous 3
+issues are addressed, in case the fixes there fix this.
+
