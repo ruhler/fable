@@ -1,0 +1,14 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# Recursive let where some of the top level values depend on other top level
+# values.
+Bool@ x = y, Bool@ y = Bool@(false: Unit), Bool@ z = y;
+
+Unit@ _x = x.false;
+Unit@ _y = y.false;
+Unit@ _z = z.false;
+Unit;
+

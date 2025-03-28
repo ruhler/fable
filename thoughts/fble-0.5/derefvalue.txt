@@ -213,3 +213,24 @@ Needs debug to figure out if it's just slow due to some pathological case or
 an infinite loop related to cycles. Don't work on this until the previous 3
 issues are addressed, in case the fixes there fix this.
 
+---
+
+Idea on a simpler api:
+  FbleValue* FbleRefValues(heap, n);
+    Allocates a struct value with n fields, one for each ref value. To get to
+    the individual ref values, call FbleStructValueAccess. The compiler will
+    generate those calls for you.
+
+  size_t FbleRefValuesAssign(heap, FbleValue* r, FbleValue* v);
+    You give it the struct of ref values and the struct of assignments. It
+    does everything all at once.
+
+Slightly simpler this way because we can reuse struct value instruction to
+pack together the values. It also lets us easily do the allocation in batch.
+
+Anyway, let me save that idea for later. It won't change the fundamentals I
+don't think.
+
+
+  
+  
