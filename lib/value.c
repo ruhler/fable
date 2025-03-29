@@ -1903,7 +1903,7 @@ size_t FbleAssignRefValues(FbleValueHeap* heap_, size_t n, FbleValue** refs, Fbl
       return i+1;
     }
 
-    for (size_t j = i+1; j < n; ++j) {
+    for (size_t j = 0; j < n; ++j) {
       if (refs[i] == values[j]) {
         values[j] = values[i];
       }

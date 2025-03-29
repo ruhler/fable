@@ -958,10 +958,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
           assign->value = defs[i]->var;
         }
         AppendInstr(scope, &ref_def_instr->_base);
-      }
-
-      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        SetVar(scope, base_index + i, let_tc->bindings.xs[i].name, defs[i]);
+      } else {
+        for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+          SetVar(scope, base_index + i, let_tc->bindings.xs[i].name, defs[i]);
+        }
       }
 
       Local* body = CompileExpr(blocks, true, exit, scope, let_tc->body);

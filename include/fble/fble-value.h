@@ -394,7 +394,12 @@ FbleValue* FbleNewRefValue(FbleValueHeap* heap);
  *   0 on success. i+1 if the ith assignment would produce a vacuous value.
  *
  *  @sideeffects
- *   Updates refs to point to their values.
+ *   @i Updates refs to point to their values.
+ *   @i Updates values to point to resolved values.
+ *   @item
+ *    The caller should update the original references to refs to the
+ *    corresponding value after calling this function.
+ *
  */
 size_t FbleAssignRefValues(FbleValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values);
 

@@ -2,6 +2,11 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Update ref value instructions and APIs to return a struct of ref values and
+  take a struct of ref values and a struct of value values.
+  So that the compiler does the bulk of the work to ensure correctness instead
+  of the backend.
+
 * Use bitfields for FbleValue.tag, FbleValue.loc?
 
 * Add test for vacuous value in 1 of multiple ref value assignments.

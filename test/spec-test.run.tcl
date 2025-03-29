@@ -168,7 +168,7 @@ proc compile {target main} {
 
     switch $target {
       aarch64 { exec as -o $obj $out }
-      c { exec gcc -c -o $obj -I $::s/include -I $::s/lib $out }
+      c { exec gcc -gdwarf-3 -ggdb -c -o $obj -I $::s/include -I $::s/lib $out }
     }
     lappend objs $obj
   }

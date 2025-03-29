@@ -274,6 +274,10 @@ static FbleValue* Interpret(
           return NULL;
         }
 
+        for (size_t i = 0; i < n; ++i) {
+          locals[ref_def_instr->assigns.xs[i].ref] = values[i];
+        }
+
         pc++;
         break;
       }

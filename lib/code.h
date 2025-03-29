@@ -429,6 +429,8 @@ typedef struct {
  *  @code[txt] @
  *   foreach i in assigns:
  *     ref[i]->value = value[i]
+ *   foreach i in assigns:
+ *     ref[i] = value[i]
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
  *  @field[FbleRefAssignV][assigns] The assignments to make.

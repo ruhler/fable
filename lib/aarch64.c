@@ -902,6 +902,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  bl FbleAssignRefValues\n");
       fprintf(fout, "  add SP, SP, #%zi\n", 2 * sp_offset);
       fprintf(fout, "  cbnz x0, .Lo.%04zx.%zi.v\n", func_id, pc);
+
+      // Write back updated values to the original refs locations.
+      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+        fprintf(fout, "  ldr x0, [SP, #%zi]\n",
+            i * sizeof(FbleValue*) - 2*sp_offset);
+        SetFrameVar(fout, "x0", ref_instr->assigns.xs[i].ref);
+      }
       return;
     }
 

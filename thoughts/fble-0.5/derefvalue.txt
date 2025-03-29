@@ -271,3 +271,41 @@ Probably we want to add more advanced cases to test? Anyway, let's get this to
 pass first.
 
 Turns out it's pretty easy to implement. Cool.
+
+---
+
+Next issue to tackle, spec/SpecTests/2.5-Let/Regression/DeRefIssue.fble.
+
+We have to write back our updates to the values when doing vacuous value
+elimination. Here's what I'm thinking, based on the proposed new API above:
+
+  r = FbleNewRefValues(heap, n);
+  v0 = r.0
+  v1 = r.1
+  ...
+  v = StructValue(<compute v0>, <compute v1>, ...)
+  FbleRefValueAssigns(heap, r, v);
+  v0 = v.0
+  v1 = v.1
+  ...
+
+I think that should work. Basically we pass the modified values back through
+the struct.
+
+We should be able to accomplish the same thing without the API change, right?
+The idea is, if we update a value, it must have been ref value initially,
+which means it must have been allocated on the stack?
+
+Why don't I just write back the values to the original ref locals? That way we
+don't even need this SetVar thing in the compiler.
+
+Cool. Let's try that.
+  
+---
+
+We still net SetVar for the non-recursive let case. The backend code for
+REF_DEF instruction is a little tedious. I had bugs in both c and aarch64
+backend. Switching to an API where the compiler generates all the code to
+bundle up ref values, result values, and do writebacks sounds like a good
+plan.
+

@@ -547,6 +547,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
           ReturnAbort(fout, "VacuousValue", ref_instr->assigns.xs[i].loc);
         }
         fprintf(fout, "  }\n");
+
+        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+          fprintf(fout, "  l[%zi] = rdv%zi[%zi];\n",
+              ref_instr->assigns.xs[i].ref, pc, i);
+        }
         break;
       }
 
