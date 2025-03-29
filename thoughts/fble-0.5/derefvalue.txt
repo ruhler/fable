@@ -309,3 +309,95 @@ backend. Switching to an API where the compiler generates all the code to
 bundle up ref values, result values, and do writebacks sounds like a good
 plan.
 
+---
+
+Next step is to debug the memory leak.
+
+Some things to look into:
+* Do the failing tests to a single call to REF_DEF and the leak is elsewhere
+  (presumably a result of having a cycle in the graph), or do they repeatedly
+  do REF_DEFs and the leak is related to the REF_DEF implementation somehow?
+* Review all the invariants on the garbage collector.
+  Maybe we need to GcRealloc the values because GC values aren't allowed to
+  point to stack allocated values?
+
+It seems strange to me that I'm getting a memory leak rather than lingering
+pointer access. I would have thought I fail to hold on to memory, not that I
+hold on too much to the memory.
+
+---
+
+Looking at /spec/SpecTests/5.3-FuncApply/Eval/TailRecursionMemory.fble.
+
+The function 'f' is the only recursive declaration. It happens once. This is
+not a case of more than one ref value assignment. It seems to have something
+to do with tail recursion. Somehow we are failing to clean up after compact
+frame or some such?
+
+  memory growth of 1048656 (1074230 -> 2122886)
+
+Note: there is no allocation here at all. It's purely tail recursive. That
+means we must be smashing the stack or some thing?
+
+GC invariants:
+* Unmarked objects are reachable if and only if they are reachable from a
+  marked object. But we aren't reclaiming early, so I don't think that's a
+  problem.
+
+Hm... It's tricky. There are a bunch of subtle GC invariants. 
+* Some objects are 'currently undergoing gc', others are not.
+
+The behavior before was to assign to REF_VALUE's value field:
+* Do we have any special handling for REF_VALUE in the GC code?
+* Before I remember GcReallocing the value. Do we need that for some reason?
+
+Here's one issue:
+* If the value is stack allocated, the ref is GC allocated. If we try to
+  GcAlloc the ref when returning, it ends up skipping GC realloc? But we
+  shouldn't ever return the ref. After the assignment, there should be no more
+  references to the ref.
+
+Question:
+* Do we need to do RefsAssign into a substituted value? Answer should be no,
+  we've already ensured it doesn't contain any ref values.
+
+There must be something to do with marking references, right?
+
+So we have a reference value, which is the function. It has a static value
+which points to itself. In this case, the function value is allocated on the
+stack and is supposed to survive the entire time. But at some point it should
+be moved to GcAllocated when we compact the frame, right?
+
+So, here's my hypothesis: every time we call compact frame, we end up
+re-GcAllocating the function. Because we didn't GcAlloc the value in the first
+place, so the function passed in the recursion always points to the original
+value of that function on the stack?
+
+Okay, so claim is, I just need to GcRealloc the values before doing any
+substitution on them. Let's try that?
+
+Didn't work. Maybe I should figure out what's really going on first.
+
+But I'm sure it's a problem if we don't GcRealloc. So let me put that in
+place, see if it changes behavior anywhere else.
+
+For example, we could end up with:
+  Assign(r1, sa1 -> ga1 -> r1)
+
+After substitution:
+   sa1 -> ga1 -> sa1
+
+If we gc realloc that, we end up with:
+   ga_sa1 -> ga1 -> sa1
+
+Notice ga1 still points to the stack allocated sa1, which is wrong. That could
+get clobbered.
+
+Uh... it would be good for me to write a test case for this. But it will be
+difficult, because I don't have easy control over when things get GC versus
+stack allocated?
+
+Doesn't look like that magically fixed anything. Oh well. I can probably get
+rid of it when I make ref value no longer be a gc allocated value? Maybe not.
+We could always end up with a gc allocated value pointing to the ref value,
+and end up trying to substitute in a stack allocated value.

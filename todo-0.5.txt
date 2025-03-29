@@ -2,6 +2,13 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Add test that would catch the bug if we failed to GcRealloc a value before
+  ref assignment.
+  - ref assign to a value which is stack alloc -> gc alloc -> ref.
+
+* Remove 'value' field of RefValue.
+  Since it is never used anymore.
+
 * Update ref value instructions and APIs to return a struct of ref values and
   take a struct of ref values and a struct of value values.
   So that the compiler does the bulk of the work to ensure correctness instead

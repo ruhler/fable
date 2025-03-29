@@ -1894,6 +1894,10 @@ size_t FbleAssignRefValues(FbleValueHeap* heap_, size_t n, FbleValue** refs, Fbl
   for (size_t i = 0; i < n; ++i) {
     assert(refs[i]->h.gc.gen >= heap->top->min_gen
         && "FbleAssignRefValue must be called with ref on top of stack");
+
+    // GcRealloc the values to make sure we don't end up with a GcAllocated
+    // value pointing to a stack allocated value.
+    values[i] = GcRealloc(heap, values[i]);
   }
 
   // Eliminate any occurences of refs in the values array.
