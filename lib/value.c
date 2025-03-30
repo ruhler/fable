@@ -844,7 +844,7 @@ static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** 
   }
 
   // Avoid traversing objects from older generations.
-  if (x->loc == GC_ALLOC && x->h.gc.gen < heap->gc.gen) {
+  if (x->loc == GC_ALLOC && x->h.gc.gen < heap->top->gen) {
     return;
   }
 

@@ -459,3 +459,68 @@ Seems like the errors related to undefined access must be from a function
 that's allocated on the stack that we don't manage to re-allocate properly
 to GC?
 
+---
+
+Debugging with this:
+
+./pkgs/core/fble-stdio -I ../pkgs/games -I ../pkgs/app -I ../pkgs/core -m /Games/Tests%
+
+The ForDepth function refers to itself from s0. We've failed to turn that s0
+from the ref value into the pointer to the real value. Seems like a ref value
+traversal bug.
+
+Note that we have two separate layers here, in case that matters. At first:
+
+l1 = ref
+l2 = func ... [statics[14] = l1]
+l1 ~= l2
+
+It's when we call that func later on (right?) that it instantiates another
+func with statics[0] = s14. In the debugger, it's that statics[0] I see as a
+ref value.
+
+I suspect this will be easiest if I compile to C code, so I can easily set a
+breakpoint on RefValue assign code in question and step through to see what's
+happening.
+
+---
+
+What's happening is the function after GcRealloc is getting gc generation
+4023, but the current gc generation is 4024? What?
+
+gen is 4024, min_gen is 4024, max_gen is 4088.
+
+Why did I GcRealloc to 4023?
+
+Stepping through again:
+* min_gen = 2313, gen = 4023, max_gen = 4151, gc.gen is 4024
+* We do an incremental gc as part of GcRealloc.
+  We are marking an object of gen 4025. It's moving to 4024.
+  gc was interrupted during the previous pop frame or compact.
+* We assign new generation of value as 4023.
+
+Now, gc is at 4024, but we allocated the value to 4023, the frame generation.
+And I'm comparing against 4024. That sounds wrong.
+
+Okay, what do I want to compare against?
+  heap->top->gen, not gc->gen. I think that's what I had intended originally
+  anyway.
+
+I should be able to write a spec test case for this. Let's see how the fix
+looks first though?
+
+The spec test might be tricky actually. We need gc to have been interrupted,
+which means allocating a lot on a stack somewhere and then popping back while
+gc is working at that level of the stack?
+
+Anyway, that fixed the issue. Let's run tests. Maybe that was the last bug?
+
+Looks like it fixed the md5 performance issue. But there are still two failing
+tests:
+* memory growth in spec/SpecTests/5.3-FuncApply/Regression/MemoryLeak2.fble.tr
+* @[Fbld.Builtin.Define]: fbld-tests: ../lib/value.c:1478: FbleUnionValueTag:
+  Assertion `object->tag == UNION_VALUE' failed.
+
+I recall Fbld/Builtin/Define being a complicated case of recursive def.
+Probably it's revealing a new bug. The memory leak test is so small, I wonder
+if it's just noise?

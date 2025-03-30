@@ -55,7 +55,7 @@ namespace eval "bin" {
   proc ::fbleobj_c { obj compile compileargs args } {
     set c [string map {.o .c} $obj]
     build $c "$compile $args" "$compile --deps-file $c.d --deps-target $c -t c $compileargs > $c" "depfile = $c.d"
-    set cmd "gcc -c -o $obj -I $::s/include $c"
+    set cmd "gcc -gdwarf-3 -ggdb -c -o $obj -I $::s/include $c"
     build $obj $c $cmd
   }
 
@@ -98,7 +98,7 @@ namespace eval "bin" {
   proc ::fblemain_c { obj compile compileargs } {
     set c [string map {.o .c} $obj]
     build $c $compile "$compile -t c $compileargs > $c"
-    set cmd "gcc -c -o $obj -I $::s/include $c"
+    set cmd "gcc -gdwarf-3 -ggdb -c -o $obj -I $::s/include $c"
     build $obj $c $cmd
   }
 
