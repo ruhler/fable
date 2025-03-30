@@ -1651,7 +1651,9 @@ static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
       FbleProfileReplaceBlock(profile, function->profile_block_id);
     }
 
-    CompactFrame(heap, func->tag != REF_VALUE, 1 + argc, heap->_base.tail_call_buffer);
+    // bool should_merge = heap->top->caller != NULL && heap->top->max - heap->top->caller->max < MERGE_LIMIT;
+    bool should_merge = false;
+    CompactFrame(heap, should_merge, 1 + argc, heap->_base.tail_call_buffer);
 
     func = heap->_base.tail_call_buffer[0];
     function = FbleFuncValueFunction(func);
@@ -1760,7 +1762,9 @@ FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue*
   size_t num_unused = argc - executable->num_args;
   FbleValue** unused = args + executable->num_args;
 
-  PushFrame(heap, heap->top->caller != NULL && heap->top->max - heap->top->caller->max < MERGE_LIMIT);
+  // bool should_merge = heap->top->caller != NULL && heap->top->max - heap->top->caller->max < MERGE_LIMIT;
+  bool should_merge = false;
+  PushFrame(heap, should_merge);
   FbleValue* result = executable->run(&heap->_base, profile, func, args);
 
   if (result == heap->_base.tail_call_sentinel) {

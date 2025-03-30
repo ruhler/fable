@@ -401,3 +401,61 @@ Doesn't look like that magically fixed anything. Oh well. I can probably get
 rid of it when I make ref value no longer be a gc allocated value? Maybe not.
 We could always end up with a gc allocated value pointing to the ref value,
 and end up trying to substitute in a stack allocated value.
+
+---
+
+Can I simplify? Write a trivially infinite tail recursive function and see if
+that grows the heap? Seems like a good next thing to try. Minimize the
+problem.
+
+---
+
+Update on "4. Infinite loop or slow performance on md5 and some other tests."
+
+Looks like it's just md5 taking a long time to run. It finishes after 112
+minutes if you wait long enough.
+
+Let's get back to that memory leak first.
+
+Try minimizing the test case. Careful not to run my computer out of memory. Is
+there a way to run a program with a memory quota?
+
+Internet suggests:
+
+  systemd-run --scope -p MemoryMax=500M --user <command>
+
+Let's try that.
+
+Pure tail recursion does not appear to leak memory.
+
+We are definitely allocating new stack chunks, which means we are filling up
+frames somehow. With what?
+
+Let's get rid of the frame memory limit and always use push/pop.
+* We still leak, as expected.
+
+I should be able to understand what's going on here, right? Can we log pushes
+and pops and compacts somehow?
+
+Found it. Silly bug. I got rid of use of ref value for merging in PushFrame,
+but forgot to do the same for CompactFrame merging. So we were merging all
+frame compactions.
+
+Cool. Let's clean this up.
+
+First: removing all merging from CompactFrame, because the naive merging
+doesn't seem to work. Let me work out how to merge after, and see what the
+performance impact is.
+
+---
+
+Maybe I should disable merging entirely for the time being. Just to have one
+less thing to worry about.
+
+Because now all the spec tests pass, but we are getting errors related to
+undefined access on real programs and md5 is still running slow.
+
+Seems like the errors related to undefined access must be from a function
+that's allocated on the stack that we don't manage to re-allocate properly
+to GC?
+
