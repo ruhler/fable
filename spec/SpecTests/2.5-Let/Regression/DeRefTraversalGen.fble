@@ -1,0 +1,58 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+# Regression test for a bug where we were using the wrong generation id to
+# limit reference value assignment traversal, which meant we didn't end up
+# doing a full reference value assignment.
+#
+# This happened when gc was interrupted by a PopFrame, and then we did a
+# recursive value declaration.
+
+@ N@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5, Unit@ 6, Unit@ 7);
+
+@ F@ = (Unit@) { Unit@; };
+@ Buffer@ = *(F@ a, F@ b, F@ c, F@ d);
+
+(N@) { Buffer@; } Alloc = (N@ n) {
+  # Make a bunch of GC allocations to keep GC busy.
+  Buffer@ b = Buffer@(
+    (Unit@ _) { Unit; },
+    (Unit@ _) { Unit; },
+    (Unit@ _) { Unit; },
+    (Unit@ _) { Unit; });
+
+  # Do that exponentially recursively.
+  n.?(0: b);
+
+  N@ s = n.?(
+    0: N@(0: Unit@()),
+    1: N@(0: Unit@()),
+    2: N@(1: Unit@()),
+    3: N@(2: Unit@()),
+    4: N@(3: Unit@()),
+    5: N@(4: Unit@()),
+    6: N@(5: Unit@()),
+    7: N@(6: Unit@())
+  );
+  Buffer@ _ = Alloc(s);
+  Buffer@ _ = Alloc(s);
+  b;
+};
+
+@ R@ = +(Unit@ nothing, R@ just);
+
+(Unit@) { Unit@; } F = (Unit@ u) {
+  # Allocate a bunch of GC objects on the stack.
+  Buffer@ _ = Alloc(N@(7: Unit@()));
+
+  # Define a recursive value.
+  R@ r = R@(just: r);
+
+  # Make sure we can access it a little ways down.
+  R@ _ = r.just.just.just.just.just;
+  
+  u;
+};
+
+F(Unit);
