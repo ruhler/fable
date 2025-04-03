@@ -524,3 +524,288 @@ tests:
 I recall Fbld/Builtin/Define being a complicated case of recursive def.
 Probably it's revealing a new bug. The memory leak test is so small, I wonder
 if it's just noise?
+
+---
+
+Debugging the fbld test assert failure:
+* The object in question is a GC-allocated struct value.
+* It's the first argument passed to _2f_Fbld_2f_Markup_25__2e_Append_21__001b,
+  we're getting a two bit tag. It's a Markup@ object.
+* It's called from /Fbld/Parse/Block%.!!.:!.true!! [0072]
+
+Backtrace:
+* _2f_Fbld_2f_Markup_25__2e_Append_21__001b
+* _2f_Fbld_2f_Parse_2f_Block_25__2e_Block_21__21__2e__3a__21__2e_true_21__21__0072 
+* _2f_Fbld_2f_Parse_2f_M_25__2e_Run_21__0049 
+* _2f_Fbld_2f_Builtin_2f_Tests_25__2e_Run_21__0017 
+* _2f_Fbld_2f_Builtin_2f_Tests_25__2e_Tests_21__001c 
+* _2f_Core_2f_Test_2f_Run_25__21__2e_RunTests_21__2e_Run
+* _2f_Core_2f_Monad_2f_State_25__2e_Monad_21__0008 
+* _2f_Core_2f_Monad_2f_State_25__2e_Monad_21__0008 
+* ...
+
+Let me try to minimize the test case. See if that helps.
+
+Minimizing doesn't help much. This does hit the code where we have a pretty
+big recursive definition:
+
+  Impl@ impl = (Env@ e, Command@ c) {
+    Unit@ _ <- r.do(AssertArgCount(Length(params), c));
+
+    List@<Markup@> args <- r.do(Evals(e, c.args));
+    Eval(DefArgs(nenv, params, args), prepped);
+  },
+  Env@ nenv = Insert(env, name, impl),
+  Markup@ prepped = PreLookup(DelArgs(Insert(env, name, impl), params), def);
+
+It has to be a case of gc collecting the union value markup
+
+Interesting. It doesn't need to involve that code at all in the test case.
+Don't get distracted by that.
+
+Anyway, must be a case of gc collecting the union value markup object, then
+reallocating a new struct value there. Which means gc is freeing something it
+shouldn't, which means some invariant of gc is being violated, probably
+related to the gc traversal invariant. That is, we aren't marking something we
+should be, because the generation is wrong.
+
+I bet that's it. Imagine we already marked some object, then we do a ref
+assignment to it. How will we ever go back to remember we need to mark that
+ref assignment?
+
+Maybe we need a test to be able to interrupt GC if we do ref assign of the gen
+while doing gc of that gen, like how we do for pop frame and compact frame?
+
+---
+
+Thoughts:
+* Try to minimize the test case even more.
+* Understand where the object in question is originally allocated and how it
+  is at all related to ref values.
+* I don't think there is any issue with pop-frame here or other interruption.
+  We aren't modifying any gc data structures and you can allocate new objects
+  during GC no problem, right?
+* Double check it's okay to call GcRealloc when you aren't about to
+  compact/pop frame.
+* I feel like there should be a bug if we traverse whoever holds the ref value
+  before we traverse the referent, then do the assignment, then never see any
+  other references to the referent. But if that's the case, that would have
+  been an existing bug, right?
+
+Minimal test case is parsing the following:
+
+  @define[foo][a b] a: @a @@
+  @foo[hello][there]
+
+I should be able to step through that pretty easily.
+
+Reminder of stack trace:
+* _2f_Fbld_2f_Markup_25__2e_Append_21__001b
+* _2f_Fbld_2f_Parse_2f_Block_25__2e_Block_21__21__2e__3a__21__2e_true_21__21__0072 
+* _2f_Fbld_2f_Parse_2f_M_25__2e_Run_21__0049 
+
+Which corresponds to the append here:
+
+  # Block Command
+  Bool@ cmd <- Do(Try_(String|'@'));
+  cmd.?(true: {
+    Markup@ command <- Do(Command);
+    Markup@ tail <- Do(Block);
+    Return(Append(command, tail));
+  });
+
+Let me step through aarch64, so I can see what command starts as and then what
+it dies as. Or try to anyway.
+
+  command = 0x5555691e18
+(gdb) print *(FbleValue*)command
+$1 = {h = {gc = {list = {next = 0x5555690e08, prev = 0x5555685fa8},
+      gen = 3987}, stack = {gc = 0x5555690e08, frame = 0x5555685fa8}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+Looks good at this point.
+
+On the next line:
+
+(gdb) print *(FbleValue*)command
+$2 = {h = {gc = {list = {next = 0x5555685fa8, prev = 0x5555685ee8},
+      gen = 3992}, stack = {gc = 0x5555685fa8, frame = 0x5555685ee8}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+Odd that the header changed. I'm hoping it's still the same good value?
+
+(gdb) print *(FbleValue*)a
+$3 = {h = {gc = {list = {next = 0x5555685fa8, prev = 0x5555685ee8},
+      gen = 3992}, stack = {gc = 0x5555685fa8, frame = 0x5555685ee8}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+Oh. That wasn't the one that broke. Let me find the one that breaks. It's the
+second one.
+
+Original value for 'command':
+
+ (gdb) print *(FbleValue*)command
+$5 = {h = {gc = {list = {next = 0x5555689a38, prev = 0x5555681ed8},
+      gen = 4016}, stack = {gc = 0x5555689a38, frame = 0x5555681ed8}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+Corrupted value for 'command':
+
+(gdb) print *(FbleValue*)command
+$6 = {h = {gc = {list = {next = 0x555568f958, prev = 0x555568fd18},
+      gen = 4035}, stack = {gc = 0x555568f958, frame = 0x555568fd18}},
+  tag = STRUCT_VALUE, loc = GC_ALLOC, traversing = false}
+
+Note that at no point during the lifetime of this command object do we
+allocate or assign to a ref value. This could be an unrelated GC bug that we
+happen to expose, probably related to getting rid of stack merging?
+
+I should be able to track where the object is freed.
+
+It's a call to PopFrame.
+
+print value
+$11 = (FbleValue *) 0x5555683448
+print *value
+$9 = {h = {gc = {list = {next = 0x5555683448, prev = 0x5555683448},
+      gen = 4016}, stack = {gc = 0x5555683448, frame = 0x5555683448}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+(gdb) print *gc
+$10 = {gen = 4034, min_gen = 4033, max_gen = 4035, frame = 0x7ff7d4a370,
+  next = 0x7ff7d4a370, marked = {next = 0x5555690478, prev = 0x5555690478},
+  unmarked = {next = 0x5555690428, prev = 0x555568f958}, interrupted = true,
+  save = {size = 6, xs = 0x55556973e8}, free = {next = 0x5555689a38,
+    prev = 0x5555685f48}}
+
+(gdb) print *frame
+$12 = {caller = 0x7ff7d4a370, merges = 0, min_gen = 4032, gen = 4032,
+  max_gen = 4033, unmarked = {next = 0x7ff7d4a408, prev = 0x7ff7d4a408},
+  marked = {next = 0x7ff7d4a418, prev = 0x7ff7d4a418}, alloced = {
+    next = 0x7ff7d4a428, prev = 0x7ff7d4a428}, top = 549618754696,
+  max = 549619789848, chunks = 0x0}
+
+Unfortunately this means we decided the object was free earlier, and only now
+are we getting around to freeing it.
+
+My proposal:
+* Modify gc to free all objects immediately.
+* Use gdb to track down the state of GC when the object in question was freed.
+* See if the object ought to have been reachable at that point.
+
+---
+
+Interesting. If I free objects right away, I get a slightly different error.
+Maybe that's expected because it changes the reallocation order. Let's see
+where we are failing now.
+
+* /Fbld/Text/Eq%.Eq! () ../pkgs/fbld/Fbld/Text/Eq.fble:9
+* /Fbld/Markup/Eq%.Command! ()
+* /Core/Eq/Assert%.AssertEquals! ()
+
+Now we are failing in the equality check. Hmm... That sounds like a completely
+different failure maybe?
+
+Let me run spec tests with this change. Maybe there's already a smaller test
+that I can use to debug. No, it's till just the memory leak.
+
+Text@ value, expected to be a struct, but seen as a union:
+
+$2 = (FbleValue *) 0x55556900d8
+$1 = {h = {gc = {list = {next = 0x555568b0e8, prev = 0x5555698208},
+      gen = 4038}, stack = {gc = 0x555568b0e8, frame = 0x5555698208}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+Let's step through the code, to see how we got there. Looks tricky.
+
+Instead, let's try not actually freeing objects, but scribbling over them and
+keeping them alive. Then it should be obvious the first thing we do wrong,
+right?
+
+Yeah. It's very clear now we have a use after free, which means we have a gc
+bug where it's freeing something reachable. How do I figure out what? How do I
+stop at the point where the free happens? Can valgrind help us here somehow,
+to track the use after free?
+
+Okay, good. Scribbling after free shows us the same location for the error as
+originally.
+
+$9 = (struct FbleValue *) 0x5555766fe8
+$10 = {h = {gc = {list = {next = 0x55557448f8, prev = 0x55557671e8},
+      gen = 3987}, stack = {gc = 0x55557448f8, frame = 0x55557671e8}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+We see that gets clobbered. I have a clear point when the object is supposed
+to be live. I can step through GC to see when it gets reclaimed. I can try to
+understand at that point where the object is reachable from and why it wasn't
+considered reachable.
+
+Though honestly this should be easy. The object is supposed to be reachable
+because it is on the stack? Well, not exactly. There maybe some tail calls in
+between.
+
+---
+
+Something looks wrong here. We are doing a tail call, we've just compacted the
+frame. The command is one of the arguments to the call. Notice how the
+generation of the command object is equal to max_gen of the heap. That
+looks wrong, doesn't it?
+
+command: 
+$24 = {h = {gc = {list = {next = 0x555570ea48, prev = 0x555576cfa8},
+      gen = 4016}, stack = {gc = 0x555570ea48, frame = 0x555576cfa8}},
+  tag = UNION_VALUE, loc = GC_ALLOC, traversing = false}
+
+heap->top:
+$20 = {caller = 0x7ff7d49e00, merges = 0, min_gen = 1193, gen = 4015,
+  max_gen = 4016, unmarked = {next = 0x555570e9e8, prev = 0x555576c808},
+  marked = {next = 0x555576cfa8, prev = 0x555570ea48}, alloced = {
+    next = 0x7ff7d4a0c8, prev = 0x7ff7d4a0c8}, top = 549618753776,
+  max = 549619789848, chunks = 0x0}
+
+I have to remember the invariant, is it that max_gen is the greatest
+generation of a frame? If so, I would expect that when we pop a frame, we have
+to update max_gen for the caller, because it is getting objects back from
+max_gen. No?
+
+* When we allocate a value, we allocate it to frame->gen.
+* I assume frame->max_gen is always greater than frame->gen.
+* Aha. I see, heap->top->max_gen = top->max_gen when we pop a frame.
+  But why is it that conditioned on the return value of the object? Just to
+  save some gen id? Because what if what we are returning is a gc allocated
+  object that has a reference to ...
+
+Aha. I think this could be it.
+
+PopFrame assumes the top level value you return has the greatest gen of all
+returned values. Seems like that's wrong. And seems like RefValues could have
+something to do with it: if we return the ref value instead of the value, the
+ref value ...?
+
+I'm not sure. Seems like a bug regardless though. What do you think?
+
+  if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
+    heap->top->max_gen = top->max_gen;
+    MoveTo(&heap->top->marked, value);
+  }
+
+Should instead be:
+
+  heap->top->max_gen = top->max_gen;
+  if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
+    MoveTo(&heap->top->marked, value);
+  }
+
+Maybe?
+
+Or does max_gen really mean something about gc? Like, it's fine to have values
+allocated with gen greater than max_gen, we just ... what? Won't traverse
+them?
+
+No. We clearly assume max_gen means what it suggests: no objects have
+generation equal (?) or greater than this on the heap. This looks like a gc
+bug to me: assuming an object doesn't point to another object with greater
+generation after calling PopFrame?
+
+Actually wait, it looks okay. The condition is to see if we are allocating
+some new value. That looks okay, right?

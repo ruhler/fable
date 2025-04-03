@@ -714,7 +714,8 @@ static void FreeGcValue(FbleValue* value)
         v->on_free(v->data);
       }
     }
-    FbleFree(value);
+    memset(value, 0xa5, sizeof(FbleValue));
+    // FbleFree(value);
   }
 }
 
@@ -842,6 +843,8 @@ static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** 
   if (x->traversing) {
     return;
   }
+
+  assert(x->loc == GC_ALLOC && "I think this is expected?");
 
   // Avoid traversing objects from older generations.
   if (x->loc == GC_ALLOC && x->h.gc.gen < heap->top->gen) {
@@ -1004,8 +1007,11 @@ static void IncrGc(ValueHeap* heap)
   Gc* gc = &heap->gc;
 
   // Free a couple objects on the free list.
-  FreeGcValue(Get(&gc->free));
-  FreeGcValue(Get(&gc->free));
+  // FreeGcValue(Get(&gc->free));
+  // FreeGcValue(Get(&gc->free));
+  for (FbleValue* value = Get(&gc->free); value != NULL; value = Get(&gc->free)) {
+    FreeGcValue(value);
+  }
 
   // Traverse an object on the heap.
   FbleValue* marked = Get(&gc->marked);
