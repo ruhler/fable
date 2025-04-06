@@ -1,0 +1,143 @@
+Garbage Collection
+==================
+Continued from derefvalue.txt discussion.
+
+My goals here are:
+* Write down in detail the invariants for GC.
+* Fix whatever GC bug I'm currently running into.
+* Fix the generation id leak issue.
+
+Question: should max_gen be inclusive or not? 'max_gen' sounds like inclusive,
+but current implementation is exclusive. If we want it to be exclusive, feels
+like it should be named something like 'next_gen_id', or 'free_gen_id'?
+'max_gen' sounds more descriptive. Let's change it to be inclusive.
+
+We have a stack of frames. Each frame has:
+* min_gen (inclusive)
+  Objects with obj.gen < frame.min_gen are owned by the caller frame. Used to
+  prevent traversal of objects owned by callers.
+* reserved_gen (exclusive)
+  A generation id x in [min_gen, reserved_gen) is gauranteed to be unused by
+  any object reachable from this frame. Used to pick a generation id
+  gauranteed to be different from all object.gen ids on the current frame.
+* gen
+  Objects with obj.gen = frame.gen are owned by the frame and belong on the
+  'alloced' list for the frame. Used to track which objects have been visited
+  by GC traversal so far.
+* max_gen (inclusive)
+  An upper bound on the largest generation id reachable from this frame. Used
+  to pick a generation id gauranteed to be different from all object.gen ids on
+  the current frame.
+
+We have: min_gen <= reserved_gen <= gen <= max_gen
+
+A frame has three lists of objects:
+* alloced
+  Objects owned by the frame that have been traversed by gc. They have
+  object.gen = frame.gen.
+* marked
+  Objects that have been visited, but not yet traversed by GC.
+  obj.gen is in [min_gen, max_gen], but not equal to gen and not in
+  [min_gen, reserved_gen).
+* unmarked
+  Objects that have not yet been visited by GC.
+  obj.gen is in [min_gen, max_gen], but not equal to gen and not in
+  [min_gen, reserved_gen).
+
+An object in unmarked is reachable if and only if it is reachable from an
+object in 'marked' without going through an object in 'alloced'. If 'marked'
+is empty, then all objects in 'unmarked' are unreachable.
+
+Initial state:
+  Single frame with min_gen = reserved_gen = gen = max_gen = 0.
+
+Push Frame:
+  Push a new frame with min_gen = reserved_gen = gen = max_gen = caller.gen + 1.
+  We can use caller.gen + 1 instead of caller.max_gen + 1 because GC happens
+  in caller frames before callee frames.
+
+Pop Frame:
+  Move return value to caller.marked.
+  Move callee.alloced, callee.marked, and callee.unmarked to caller.unmarked.
+  Set caller.max_gen = MAX(caller.max_gen, callee.max_gen).
+
+Compact Frame:
+  Pick a free gen_id. If reserved_gen > min_gen, use reserved_gen and
+  decrement it. Otherwies use max_gen + 1 and increment max_gen.
+
+  Move save objects to marked, everything else to unmarked.
+
+Ref Value Assigment:
+  No special anything is needed for handling of ref value assignments.
+  At the time of assignment, both the ref and value are independently
+  reachable. When PopFrame or CompactFrame is called, a new gen will be used
+  different from any in the cycle of the assigned value. No worries about
+  failure to traverse anything.
+
+GC:
+  At the start of GC, take a snapshot of marked and unmarked from the frame.
+  Set frame.max_gen to frame.gen, and frame.reserved_gen to frame.gen-1.
+ 
+Corner cases, and why we don't have to worry about them:
+
+1. GC snapshot between RefValue create and RefValue assign
+  The concern is we could end up pulling the RefValue's value from a new gen
+  to whatever stale gen GC is pulling things to. But that's fine, because the
+  RefValue's value is reachable from somewhere independent of the RefValue. It
+  will stay alive due to that and whatever traversal ends up visiting it there.
+
+2. Somehow GC traversal gets a reference to a current callee frame.
+  I don't think this is possible, but even if it was, if we can reference a
+  value in a callee frame from a caller frame, there's no harm pulling that
+  value directly into the caller frame. It will need to end up there
+  eventually.
+
+3. Interrupted GC returns a value allocated after GC started.
+  Maybe there were multiple compactions that have happened since GC started,
+  for example. The important thing is if there are any objects on gc
+  'unmarked' that are reachable only from this value, we need to make sure we
+  keep this value in the GC. That should be fine.
+  
+Sounds like a plan. Let's try implementing it and see what all goes horribly
+wrong.
+
+First thing gone wrong: We've freed an object that is still reachable. Bummer.
+How did that happen? I have to check my 'marked' and 'unmarked' list for GC?
+Or maybe we polluted the generation id?
+
+There are a few ways to go about debugging this:
+1. Review the code. See where I might be violating the invariant that if an
+object in unmarked is reachable, it's reachable through some marked object in
+that same frame.
+2. Look in the debugger at what the state of GC and frames and ids, etc.
+
+Let's start with (1).
+
+Invariant: If an object in unmarked is reachable, it's reachable through some
+marked object in that same frame.
+
+* MarkRef - Moves dst from unmarked to marked. Sounds safe.
+* IncrGc - Takes a ref off of marked, but marks all outgoing references from
+  it. That should be safe.
+* IncrGc if gc was interrupted - Moves to unmarked. It might not be reachable
+  anymore, right? What happens in that case?
+  TODO: Review interupted GC case.
+* Resurrection: If we resurrect an object from one frame to another, is that
+  bad? Again, it's the interrupted GC case, right?
+
+Here's the object pointing to the prematurely freed object:
+
+$2 = {h = {gc = {list = {next = 0x40541778, prev = 0x40541778}, gen = 4},
+stack = {
+      gc = 0x40541778, frame = 0x40541778}}, tag = STRUCT_VALUE, loc =
+GC_ALLOC,
+  traversing = false}
+
+And the GC:
+
+$3 = {min_gen = 3, gen = 4, frame = 0x404201d8, next = 0x40420250, marked =
+{next = 0x405304c8,
+    prev = 0x405304c8}, unmarked = {next = 0x405304d8, prev = 0x405304d8},
+interrupted = false,
+  save = {size = 5, xs = 0x40541cc8}, free = {next = 0x40530500, prev =
+0x40530500}}

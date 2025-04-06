@@ -809,3 +809,78 @@ generation after calling PopFrame?
 
 Actually wait, it looks okay. The condition is to see if we are allocating
 some new value. That looks okay, right?
+
+---
+
+Summary of GC theory, as constructed from my mind:
+
+We have a stack of frames. We assign GC generations to objects on frames.
+Looking at a particular frame on the stack, we have:
+
+* obj.gen < frame.min_gen
+  The object is owned by a calling frame.
+* obj.gen in [frame.min_gen, frame.gen)
+  The object was owned by this frame before compaction. It is reachable only
+  if it is reachable from an objected in the 'marked' list of this frame
+  through a path of objects not owned by a calling frame.
+* obj.gen = frame.gen
+  The object is owned by this frame and is on the 'alloced' list.
+* obj.gen in (frame.gen, frame.max_gen]
+  The object was allocated in a callee. It is reachable only if it is
+  reachable from an object in the 'marked' list of this frame through a path
+  of objects not owned by a calling frame.
+* obj.gen > frame.max_gen
+  Allocated in a callee frame, either from a previous call or a currently
+  running call. Must not be reachable from this frame. For the purposes of
+  allocating a gen that no reachable object on this frame has, so we can know
+  if we have marked the object as part of the current gc or not.
+
+Initial state:
+  frame.min_gen = 0, frame.gen = 0, frame.max_gen = 0
+
+GC Alloc:
+  Allocate to object to frame.gen.
+
+Push Frame:
+  callee.min_gen = caller.max_gen + 1
+  callee.gen = callee.min_gen
+  callee.max_gen = callee.gen
+
+Pop Frame:
+  Move all callee alloced, marked to caller unmarked.
+  Mark the return value.
+  caller.max_gen = callee.max_gen
+
+Compact Frame:
+  Move all alloced, marked to unmarked.
+  Mark the save values.
+  frame.gen = frame.max_gen + 1
+
+GC:
+  while there is a marked object X:
+    set X.gen to frame.gen
+    for any reference from X with gen >= frame.min_gen and gen != frame.gen,
+    move that object to 'marked'.
+  free all unmarked objects.
+
+Main concern is: how to avoid running out of generations? Can we reclaim them
+at all?
+
+Can we assume that we do GC on frames in order from caller to callee, and take
+advantage of that to reclaim generation ids? For example, after GC runs in a
+frame, or when we start gc, or something, we can reset max_gen to gen? It's
+definately worth thinking about.
+
+
+This is slightly different from the current implementation I think. I'll try
+to reconcile that next.
+
+Current implementation differences:
+* Interrupted GC: GC is in charge of 'returning' objects to caller when done.
+  Which maybe messes up this idea of 'gc happens in caller before callee'?
+* max_gen is exclusive, not inclusive. Maybe better called 'next_gen'?
+* Possible bug in ref assign traversal gc.gen filter? Double check that.
+* Need to track gc.max_gen for interrupted gcs to know if an object belongs to
+  the current gc or not. Possibly bugs around that to think about.
+
+Let's move this discussion to gc.txt.

@@ -401,11 +401,14 @@ typedef struct Chunk {
  *  @field[uint64_t][min_gen]
  *   Objects allocated before entering this stack frame have generation less
  *   than min_gen.
+ *  @field[uint64_t][reserved_gen]
+ *   There are no objects reachable from this frame with object gen in
+ *   [min_gen, reserved_gen).
  *  @field[uint64_t][gen]
- *   Objects allocated before the most recent compaction on the frame have
- *   generation less than gen.
+ *   Objects are allocated on this frame with gen. Objects already traversed by
+ *   GC on this frame have generation gen.
  *  @field[uint64_t][max_gen]
- *   Objects in marked,unmarked have generation less than max_gen.
+ *   Objects reachable from this frame have have generation <= max_gen.
  *  @field[List][unmarked]
  *   Potential garbage GC objects on the frame not yet seen in traversal.
  *   These are either from objects allocated to callee frames that have since
@@ -429,6 +432,7 @@ struct Frame {
   size_t merges;
 
   uint64_t min_gen;
+  uint64_t reserved_gen;
   uint64_t gen;
   uint64_t max_gen;
 
@@ -444,15 +448,12 @@ struct Frame {
 
 /**
  * @struct[Gc] Information about the current set of objects undergoing GC.
+ *  @field[uint64_t][min_gen]
+ *   Objects with generation < min_gen are owned by the caller and should not
+ *   be traversed.
  *  @field[uint64_t][gen]
  *   The generation to move objects to when they survive GC. Guaranteed to be
  *   distinct from the generation of any object currently in GC.
- *  @field[uint64_t][min_gen]
- *   An object is currently undergoing GC if its generation is in the interval
- *   [min_gen, max_gen), but not equal to gen.
- *  @field[uint64_t][max_gen]
- *   An object is currently undergoing GC if its generation is in the interval
- *   [min_gen, max_gen), but not equal to gen.
  *  @field[Frame*][frame] The frame that GC is currently running on.
  *  @field[Frame*][next]
  *   The next frame to run garbage collection on. This is the frame closest to
@@ -475,10 +476,8 @@ struct Frame {
  *  @field[List][free] A list of garbage objects to be freed.
  */
 typedef struct {
-  uint64_t gen;
-
   uint64_t min_gen;
-  uint64_t max_gen;
+  uint64_t gen;
 
   Frame* frame;
   Frame* next;
@@ -714,6 +713,8 @@ static void FreeGcValue(FbleValue* value)
         v->on_free(v->data);
       }
     }
+    // TODO: Free the object, don't leak it like this. This is just for
+    // debugging.
     memset(value, 0xa5, sizeof(FbleValue));
     // FbleFree(value);
   }
@@ -1048,11 +1049,13 @@ static void IncrGc(ValueHeap* heap)
 
     gc->min_gen = gc->frame->min_gen;
     gc->gen = gc->frame->gen;
-    gc->max_gen = gc->frame->max_gen;
     MoveAllTo(&gc->marked, &gc->frame->marked);
     MoveAllTo(&gc->unmarked, &gc->frame->unmarked);
     gc->interrupted = false;
     gc->save.xs[0] = NULL;
+
+    gc->frame->reserved_gen = gc->frame->gen;
+    gc->frame->max_gen = gc->frame->gen;
   }
 }
 
@@ -1077,8 +1080,9 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top->caller = NULL;
   heap->top->merges = 0;
   heap->top->min_gen = 0;
+  heap->top->reserved_gen = 0;
   heap->top->gen = 0;
-  heap->top->max_gen = 1;
+  heap->top->max_gen = 0;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
@@ -1088,7 +1092,6 @@ FbleValueHeap* FbleNewValueHeap()
 
   heap->gc.min_gen = heap->top->min_gen;
   heap->gc.gen = heap->top->gen;
-  heap->gc.max_gen = heap->top->max_gen;
   heap->gc.frame = heap->top;
   heap->gc.next = NULL;
   Clear(&heap->gc.marked);
@@ -1156,17 +1159,13 @@ static void PushFrame(ValueHeap* heap, bool merge)
   Clear(&callee->marked);
   Clear(&callee->alloced);
   callee->merges = 0;
-  callee->min_gen = heap->top->max_gen;
-  callee->gen = heap->top->max_gen;
-  callee->max_gen = callee->gen + 1;
+  callee->min_gen = heap->top->gen + 1;
+  callee->reserved_gen = heap->top->gen + 1;
+  callee->gen = heap->top->gen + 1;
+  callee->max_gen = heap->top->gen + 1;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
-
-  // If a program runs for a really long time (like over 100 years), it's
-  // possible we could overflow the GC gen value and GC would break. Hopefully
-  // that never happens.
-  assert(callee->gen > 0 && "GC gen overflow!");
   
   heap->top = callee;
 }
@@ -1196,8 +1195,11 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
   MoveAllTo(&heap->top->unmarked, &top->marked);
   MoveAllTo(&heap->top->unmarked, &top->alloced);
 
-  if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
+  if (top->max_gen > heap->top->max_gen) {
     heap->top->max_gen = top->max_gen;
+  }
+
+  if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
     MoveTo(&heap->top->marked, value);
   }
 
@@ -1210,8 +1212,7 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
     // until GC has a chance to finish.
     if (IsAlloced(value)
         && value->h.gc.gen >= heap->gc.min_gen
-        && value->h.gc.gen != heap->gc.gen
-        && value->h.gc.gen < heap->gc.max_gen) {
+        && value->h.gc.gen != heap->gc.gen) {
       MoveTo(&heap->gc.marked, value);
       heap->gc.save.xs[0] = value;
       heap->gc.save.xs[1] = NULL;
@@ -1267,13 +1268,13 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
     save[i] = GcRealloc(heap, save[i]);
   }
 
-  heap->top->gen = heap->top->max_gen;
-  heap->top->max_gen = heap->top->gen + 1;
-
-  // If a program runs for a really long time (like over 100 years), it's
-  // possible we could overflow the GC gen value and GC would break. Hopefully
-  // that never happens.
-  assert(heap->top->max_gen > 0 && "GC gen overflow!");
+  if (heap->top->reserved_gen > heap->top->min_gen) {
+    heap->top->gen = heap->top->reserved_gen;
+    heap->top->reserved_gen--;
+  } else {
+    heap->top->gen = heap->top->max_gen + 1;
+    heap->top->max_gen++;
+  }
 
   heap->top->top = (intptr_t)(heap->top + 1);
   heap->top->max = heap->top->caller->max;
@@ -1308,8 +1309,7 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
     for (size_t i = 0; i < n; ++i) {
       if (IsAlloced(save[i])
           && save[i]->h.gc.gen >= heap->gc.min_gen
-          && save[i]->h.gc.gen != heap->gc.gen
-          && save[i]->h.gc.gen < heap->gc.max_gen) {
+          && save[i]->h.gc.gen != heap->gc.gen) {
         MoveTo(&heap->gc.marked, save[i]);
         heap->gc.save.xs[s] = save[i];
         s++;
