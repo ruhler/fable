@@ -944,6 +944,7 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst)
 {
+  fprintf(stderr, "%p -> %p\n", (void*)src, (void*)dst);
   if (IsAlloced(dst)
       && dst->h.gc.gen >= gc->min_gen
       && dst->h.gc.gen != gc->gen) {
@@ -1007,13 +1008,6 @@ static void IncrGc(ValueHeap* heap)
 {
   Gc* gc = &heap->gc;
 
-  // Free a couple objects on the free list.
-  // FreeGcValue(Get(&gc->free));
-  // FreeGcValue(Get(&gc->free));
-  for (FbleValue* value = Get(&gc->free); value != NULL; value = Get(&gc->free)) {
-    FreeGcValue(value);
-  }
-
   // Traverse an object on the heap.
   FbleValue* marked = Get(&gc->marked);
   if (marked != NULL) {
@@ -1035,7 +1029,13 @@ static void IncrGc(ValueHeap* heap)
 
   // Resurrect anything that needs saving due to interrupted GC.
   for (size_t i = 0; gc->save.xs[i] != NULL; ++i) {
+    fprintf(stderr, "ressurect %p\n", (void*)gc->save.xs[i]);
     MoveTo(&gc->frame->marked, gc->save.xs[i]);
+  }
+
+  for (FbleValue* value = Get(&gc->free); value != NULL; value = Get(&gc->free)) {
+    fprintf(stderr, "free %p\n", (void*)value);
+    FreeGcValue(value);
   }
 
   // Set up next gc
@@ -1055,7 +1055,8 @@ static void IncrGc(ValueHeap* heap)
     gc->save.xs[0] = NULL;
 
     gc->frame->reserved_gen = gc->frame->gen;
-    gc->frame->max_gen = gc->frame->gen;
+
+    fprintf(stderr, "gc %p, %i, %i\n", (void*)gc->frame, (int)gc->min_gen, (int)gc->gen);
   }
 }
 
@@ -1159,15 +1160,18 @@ static void PushFrame(ValueHeap* heap, bool merge)
   Clear(&callee->marked);
   Clear(&callee->alloced);
   callee->merges = 0;
-  callee->min_gen = heap->top->gen + 1;
-  callee->reserved_gen = heap->top->gen + 1;
-  callee->gen = heap->top->gen + 1;
-  callee->max_gen = heap->top->gen + 1;
+  uint64_t gen = heap->top->max_gen + 1;
+  callee->min_gen = gen;
+  callee->reserved_gen = gen;
+  callee->gen = gen;
+  callee->max_gen = gen;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
   
   heap->top = callee;
+  fprintf(stderr, "push %i\n", (int)gen);
+
 }
 
 // See documentation in fble-value.h
@@ -1199,12 +1203,15 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
     heap->top->max_gen = top->max_gen;
   }
 
+  fprintf(stderr, "pop %i %p\n", (int)top->min_gen, (void*)value);
+
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
     MoveTo(&heap->top->marked, value);
   }
 
   if (heap->gc.frame == top) {
     // We are popping the frame currently being GC'd.
+    fprintf(stderr, "interrupted\n");
     heap->gc.interrupted = true;
     heap->gc.frame = heap->top;
 
@@ -1288,13 +1295,18 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
 
+  fprintf(stderr, "compact %i, %i", (int)heap->top->min_gen, (int)heap->top->max_gen);
   for (size_t i = 0; i < n; ++i) {
+    fprintf(stderr, " %p", (void*)save[i]);
     if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
+      fprintf(stderr, "(save)");
       MoveTo(&heap->top->marked, save[i]);
     }
   }
+  fprintf(stderr, "\n");
 
   if (heap->gc.frame == heap->top) {
+    fprintf(stderr, "interrupted\n");
     // We are compacting the frame currently being GC'd.
     heap->gc.interrupted = true;
 
@@ -1310,6 +1322,7 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
       if (IsAlloced(save[i])
           && save[i]->h.gc.gen >= heap->gc.min_gen
           && save[i]->h.gc.gen != heap->gc.gen) {
+        fprintf(stderr, "do save %p.%i\n", (void*)save[i], (int)save[i]->h.gc.gen);
         MoveTo(&heap->gc.marked, save[i]);
         heap->gc.save.xs[s] = save[i];
         s++;
@@ -1841,6 +1854,9 @@ FbleFunction* FbleFuncValueFunction(FbleValue* value)
   FuncValue* func = (FuncValue*)StrictValue(value);
   if (func == NULL) {
     return NULL;
+  }
+  if (func->_base.tag != FUNC_VALUE) {
+    fprintf(stderr, "func %p\n", (void*)value);
   }
   assert(func->_base.tag == FUNC_VALUE);
   return &func->function;

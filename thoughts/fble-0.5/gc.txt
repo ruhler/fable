@@ -141,3 +141,126 @@ $3 = {min_gen = 3, gen = 4, frame = 0x404201d8, next = 0x40420250, marked =
 interrupted = false,
   save = {size = 5, xs = 0x40541cc8}, free = {next = 0x40530500, prev =
 0x40530500}}
+
+This is interesting:
+
+gc 4, 6
+0000019264669C48 -> 000001926462E778
+000001926462E778 -> 0000000000000083
+000001926462E778 -> 0000491B00D081EB
+000001926462E778 -> 0000000000000003
+gc 3, 3
+gc 3, 4
+free 000001926462E778
+free 0000019264669C48
+000001926462E598 -> 0000000000000003
+000001926462E598 -> 0000000000000083
+000001926462E598 -> 0000019264669C48
+
+When we were doing gc 4, 6, we clearly thought 0000019264669C48 was
+reachable, because we are marking it. We gc 3, 3 and get nothing? But then we
+do gc 3, 4, traverse nothing, and 0000019264669C48 is unmarked?
+
+Okay, with more debugging, I think we can start to make sense of what's
+going on here.
+
+We are prematurely freeing 000001BA95B6A418, which is reachable from
+000001BA95B2EA18. 000001BA95B2EA18 was saved from compaction which interrupted
+gc. Then we compacted again. We never once tried traversing that object. We
+freed what it pointed to. Then we resurrected it.
+
+If I'm calling compact saving an object, that object is clearly reachable. I
+definately should be traversing it before collecting things. Is it that the
+compaction pulled it off the 'marked' list for the ongoing GC, so we didn't
+have a chance to traverse it?
+
+What should have happened here is I should have moved 000001BA95B2EA18 to
+gc.marked when we compacted the frame, but it looks like I didn't. Can I
+figure out why?
+
+Okay, I see the problem. CompactFrame happens, saving 0000023DDC80E898. This
+interrupts the current GC. We pull 0000023DDC80E898 to gc.marked. Then compact
+frame is called again on that same value. That pulls the object out from
+gc.marked to heap->top->marked. But you can't do that, because now the
+gc.unmarked objects aren't reachable anymore.
+
+I feel like this wouldn't be an issue if we didn't have gc operate on a
+different copy of marked/unmarked. Because of having different copies, we have
+no way to know when compacting or returning a value which marked list to go
+on. Can I avoid that copy somehow?
+
+We make a copy and have special support for interrupted GC to avoid throwing
+away GC work. Are there any decent alternatives? The fear is that GC will grow
+and grow and will kept getting interupted by compact frame in a tight loop.
+
+Either I get rid of the copy, or I have a good way of tracking which copy the
+object is on when we pop/compact it.
+
+---
+
+A few thoughts here:
+* Why didn't the second compaction in the example above count as interrupted
+  GC? Wasn't it supposed to? Shouldn't that have saved us?
+* I should be able to write a spec memory test that shows what happens when GC
+  is constantly interrupted.
+* If we can't properly tell which objects are on the frame marked/unmarked
+  versus the GC marked/unmarked, GC might never be able to finish because we
+  keep adding more work to it any time we compact.
+
+Maybe there's a more basic problem here. Pop frame compares value->h.gc.gen
+against top->min_gen. But the way I'm doing things now, value could be from an
+older generation. We haven't done GC on it yet to move it to the right place,
+but we are deciding when we do the pop if we own it or not.
+
+Okay. Yes. That's a clear bug. Nothing to do with interrupted GC. Seems like
+my generation handling is messed up. We need to maintain at all times, not
+just at time of GC, that all objects owned by caller have gen less than
+callees min_gen.
+
+What does this mean for recovering generation ids? I think we are okay there.
+Because it happens on compact, we can't mix up objects from different frames.
+
+---
+
+I think the big issue with GC is if we unintentionally remove an object from
+its marked/unmarked set. If it was marked and references anything from
+unmarked, we are screwed.
+
+The only real way I see to properly track which marked/unmarked set an object
+belongs to is by tracking min/max gen for every marked/unmarked set, and have
+those be disjoint (with some special handling for the GC marked/unmarked set).
+
+I propose the following:
+* For frame marked/unmarked sets, we say an object can only exist in the
+  marked/unmarked set if its generation is >= min_gen and < max_gen for the
+  frame.
+* Every frame must have disjoint min/max gens.
+* The GC marked/unmarked set has its own min/max gen, which has priority over
+  the frame it is doing GC for.
+
+To uniquely determine the marked/unmarked set for an object:
+1. Check if it is in the GC min/max range. If so, it's in the GC
+marked/unmarked set.
+2. Find the frame whose min/max range it belongs to. It's in that frame's
+marked/unmarkedset.
+
+All of which feels more like my original GC algorithm. I think this was a
+valient effort to improve GC, and I learned a lot, but I want to go back to
+how things were before, fix the bugs with my new understanding, then consider
+making minor tweaks and improvements to see if we can claim back some gen ids.
+
+The key ideas for claiming back gen ids:
+* At the end of gc for a frame, you know the GC min/max range, except for
+  GC.gen, is unused. You can freely reallocate parts of range to the caller or
+  callee. For example, maybe we did GC on gen 20 to 24, caller owns 20 to 24,
+  callee owns 25 to 30. At the end of GC, if gen is '20', then we could make
+  it so that caller owns 20 to 20, callee owns 21 to 30.
+* If callee returns a packed value or a GC value that the caller owns, then
+  there is no need to charge its max gen to the caller.
+* If we wanted to, we could re-label the alloc gen by moving all alloc to
+  marked and setting a new gen.
+
+But worry about that later. Let's get things working first.
+
+Step 1: revert the GC logic back to how it was before.
+
