@@ -442,6 +442,10 @@ struct Frame {
   Chunk* chunks;
 };
 
+static void MoveToAlloced(Frame* frame, FbleValue* value);
+static void MoveToMarked(Frame* frame, FbleValue* value);
+static void MoveToUnmarked(Frame* frame, FbleValue* value);
+
 /**
  * @struct[Gc] Information about the current set of objects undergoing GC.
  *  @field[uint64_t][gen]
@@ -623,6 +627,28 @@ static void MoveAllTo(List* dst, List* src)
   }
 }
 
+static void MoveToAlloced(Frame* frame, FbleValue* value)
+{
+  assert(value->h.gc.gen == frame->gen);
+  MoveTo(&frame->alloced, value);
+}
+
+static void MoveToMarked(Frame* frame, FbleValue* value)
+{
+  assert(value->h.gc.gen != frame->gen);
+  assert(value->h.gc.gen >= frame->min_gen);
+  assert(value->h.gc.gen < frame->max_gen);
+  MoveTo(&frame->marked, value);
+}
+
+static void MoveToUnmarked(Frame* frame, FbleValue* value)
+{
+  assert(value->h.gc.gen != frame->gen);
+  assert(value->h.gc.gen >= frame->min_gen);
+  assert(value->h.gc.gen < frame->max_gen);
+  MoveTo(&frame->unmarked, value);
+}
+
 /**
  * @func[StackAlloc] Allocates memory on the stack.
  *  @arg[ValueHeap*][heap] The heap to allocate the memory to.
@@ -694,7 +720,7 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
   value->h.gc.gen = frame->gen;
 
   Clear(&value->h.gc.list);
-  MoveTo(&frame->alloced, value);
+  MoveToAlloced(frame, value);
   return value;
 }
 
@@ -945,11 +971,12 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst)
 {
-  fprintf(stderr, "%p -> %p\n", (void*)src, (void*)dst);
-  if (IsAlloced(dst)
-      && dst->h.gc.gen >= gc->min_gen
-      && dst->h.gc.gen != gc->gen) {
-    MoveTo(&gc->marked, dst);
+  if (IsAlloced(dst)) {
+    fprintf(stderr, "%p -> %p %llu\n", (void*)src, (void*)dst, dst->h.gc.gen);
+    if (dst->h.gc.gen >= gc->min_gen && dst->h.gc.gen != gc->gen) {
+      assert(dst->h.gc.gen < gc->max_gen);
+      MoveTo(&gc->marked, dst);
+    }
   }
 }
 
@@ -1010,21 +1037,22 @@ static void IncrGc(ValueHeap* heap)
   Gc* gc = &heap->gc;
 
   // Free a couple objects on the free list.
-  FreeGcValue(Get(&gc->free));
-  FreeGcValue(Get(&gc->free));
+  // FreeGcValue(Get(&gc->free));
+  // FreeGcValue(Get(&gc->free));
 
   // Traverse an object on the heap.
   FbleValue* marked = Get(&gc->marked);
   if (marked != NULL) {
+    fprintf(stderr, "mark%s %p %llu -> %llu\n", gc->interrupted ? "i" : "", (void*)marked, marked->h.gc.gen, gc->gen);
     marked->h.gc.gen = gc->gen;
     MarkRefs(gc, marked);
 
     if (gc->interrupted) {
       // GC was interrupted during pop frame or compact, so this object should
       // be moved to 'unmarked'.
-      MoveTo(&gc->frame->unmarked, marked);
+      MoveToUnmarked(gc->frame, marked);
     } else {
-      MoveTo(&gc->frame->alloced, marked);
+      MoveToAlloced(gc->frame, marked);
     }
     return;
   }
@@ -1035,7 +1063,7 @@ static void IncrGc(ValueHeap* heap)
   // Resurrect anything that needs saving due to interrupted GC.
   for (size_t i = 0; gc->save.xs[i] != NULL; ++i) {
     fprintf(stderr, "ressurect %p\n", (void*)gc->save.xs[i]);
-    MoveTo(&gc->frame->marked, gc->save.xs[i]);
+    MoveToMarked(gc->frame, gc->save.xs[i]);
   }
 
   // Free objects right away to surface use
@@ -1063,7 +1091,7 @@ static void IncrGc(ValueHeap* heap)
     gc->interrupted = false;
     gc->save.xs[0] = NULL;
 
-    fprintf(stderr, "gc %p, %i, %i\n", (void*)gc->frame, (int)gc->min_gen, (int)gc->gen);
+    fprintf(stderr, "gc %p, %llu, %llu, %llu\n", (void*)gc->frame, gc->min_gen, gc->gen, gc->max_gen);
   }
 }
 
@@ -1180,7 +1208,7 @@ static void PushFrame(ValueHeap* heap, bool merge)
   assert(callee->gen > 0 && "GC gen overflow!");
   
   heap->top = callee;
-  fprintf(stderr, "push %i\n", (int)callee->gen);
+  fprintf(stderr, "push %llu\n", callee->gen);
 
 }
 
@@ -1205,13 +1233,15 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
 
   heap->top = heap->top->caller;
 
+  heap->top->max_gen = top->max_gen;
   MoveAllTo(&heap->top->unmarked, &top->unmarked);
   MoveAllTo(&heap->top->unmarked, &top->marked);
   MoveAllTo(&heap->top->unmarked, &top->alloced);
 
+  fprintf(stderr, "pop %p from %llu, %llu\n", (void*)value, top->min_gen, top->max_gen);
+
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
-    heap->top->max_gen = top->max_gen;
-    MoveTo(&heap->top->marked, value);
+    MoveToMarked(heap->top, value);
   }
 
   if (heap->gc.frame == top) {
@@ -1301,12 +1331,12 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
 
-  fprintf(stderr, "compact %i, %i", (int)heap->top->min_gen, (int)heap->top->max_gen);
+  fprintf(stderr, "compact %llu, %llu", heap->top->min_gen, heap->top->max_gen);
   for (size_t i = 0; i < n; ++i) {
     fprintf(stderr, " %p", (void*)save[i]);
     if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
       fprintf(stderr, "(save)");
-      MoveTo(&heap->top->marked, save[i]);
+      MoveToMarked(heap->top, save[i]);
     }
   }
   fprintf(stderr, "\n");
@@ -1329,7 +1359,7 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
           && save[i]->h.gc.gen >= heap->gc.min_gen
           && save[i]->h.gc.gen != heap->gc.gen
           && save[i]->h.gc.gen < heap->gc.max_gen) {
-        fprintf(stderr, "do save %p.%i\n", (void*)save[i], (int)save[i]->h.gc.gen);
+        fprintf(stderr, "do save %p.%llu\n", (void*)save[i], save[i]->h.gc.gen);
         MoveTo(&heap->gc.marked, save[i]);
         heap->gc.save.xs[s] = save[i];
         s++;
@@ -1501,6 +1531,9 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
     return data;
   }
 
+  if (object->tag != UNION_VALUE) {
+    fprintf(stderr, "union %p\n", (void*)object);
+  }
   assert(object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->tag;

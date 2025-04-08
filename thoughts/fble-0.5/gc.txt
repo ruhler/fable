@@ -264,3 +264,48 @@ But worry about that later. Let's get things working first.
 
 Step 1: revert the GC logic back to how it was before.
 
+---
+
+Debugging the original GC logic now.
+
+Relevant log entries:
+
+  gc 000001E511C1E0B0, 1193, 4016
+  mark 000001E511D30578 4016 -> 4016
+  000001E511D30578 -> 000001E511B07C78 0
+  000001E511D30578 -> 000001E511B713D8 0
+  000001E511D30578 -> 000001E511D354E8 4016
+  mark 000001E511D2C668 1261 -> 4016
+  000001E511D2C668 -> 000001E511B7B558 1052
+  free 000001E511D35498
+  ...
+  free 000001E511D354E8
+  ...
+  union 000001E511D354E8
+  Assertion failed: object->tag == UNION_VALUE, file ../lib/value.c, line 1508
+
+Somehow we are marking an object who already has the target gen. We don't
+traverse to its children, because we think they are already alloced. But in
+reality they are unmarked in the GC set and we end up freeing them.
+
+That suggests the bug happens earlier in the trace?
+
+Maybe I can figure this out with some code review, knowing the invariants I
+have?
+
+---
+
+Okay. Added more assertions. Found the bug.
+
++  heap->top->max_gen = top->max_gen;
+   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
+-    heap->top->max_gen = top->max_gen;
+
+We always have to update heap->top->max_gen when calling PopFrame, even if
+aren't returning a newly allocated object. Because there are still unmarked
+objects being returned to the caller frame that potentially have that
+generation.
+
+Wow. Okay. A lot of work for a simple change. Let's clean up and see if
+everything is working now.
+
