@@ -54,7 +54,7 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -O0"
+  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -O3"
   set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
@@ -169,7 +169,7 @@ proc libsflags { bin libs } {
 #   lflags - additional library flags, e.g. "-L foo/ -lfoo".
 #   args - additional dependencies
 proc bin { bin objs libs lflags args } {
-  set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -O0"
+  set cflags "-std=c99 $::config::ldflags -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -O3"
   build $bin "$objs $libs $args" "gcc $cflags -o $bin $objs [::libsflags $bin $libs] $lflags"
 }
 

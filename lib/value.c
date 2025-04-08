@@ -740,10 +740,7 @@ static void FreeGcValue(FbleValue* value)
         v->on_free(v->data);
       }
     }
-    // TODO: Free the object, don't leak it like this. This is just for
-    // debugging.
-    memset(value, 0xa5, sizeof(FbleValue));
-    // FbleFree(value);
+    FbleFree(value);
   }
 }
 
@@ -971,12 +968,11 @@ static FbleValue* StrictValue(FbleValue* value)
  */
 static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst)
 {
-  if (IsAlloced(dst)) {
-    fprintf(stderr, "%p -> %p %llu\n", (void*)src, (void*)dst, dst->h.gc.gen);
-    if (dst->h.gc.gen >= gc->min_gen && dst->h.gc.gen != gc->gen) {
-      assert(dst->h.gc.gen < gc->max_gen);
-      MoveTo(&gc->marked, dst);
-    }
+  if (IsAlloced(dst)
+      && dst->h.gc.gen >= gc->min_gen
+      && dst->h.gc.gen != gc->gen) {
+    assert(dst->h.gc.gen < gc->max_gen);
+    MoveTo(&gc->marked, dst);
   }
 }
 
@@ -1037,13 +1033,12 @@ static void IncrGc(ValueHeap* heap)
   Gc* gc = &heap->gc;
 
   // Free a couple objects on the free list.
-  // FreeGcValue(Get(&gc->free));
-  // FreeGcValue(Get(&gc->free));
+  FreeGcValue(Get(&gc->free));
+  FreeGcValue(Get(&gc->free));
 
   // Traverse an object on the heap.
   FbleValue* marked = Get(&gc->marked);
   if (marked != NULL) {
-    fprintf(stderr, "mark%s %p %llu -> %llu\n", gc->interrupted ? "i" : "", (void*)marked, marked->h.gc.gen, gc->gen);
     marked->h.gc.gen = gc->gen;
     MarkRefs(gc, marked);
 
@@ -1062,16 +1057,7 @@ static void IncrGc(ValueHeap* heap)
 
   // Resurrect anything that needs saving due to interrupted GC.
   for (size_t i = 0; gc->save.xs[i] != NULL; ++i) {
-    fprintf(stderr, "ressurect %p\n", (void*)gc->save.xs[i]);
     MoveToMarked(gc->frame, gc->save.xs[i]);
-  }
-
-  // Free objects right away to surface use
-  // after free sooner.
-  // TODO: Remove this when done debugging.
-  for (FbleValue* value = Get(&gc->free); value != NULL; value = Get(&gc->free)) {
-    fprintf(stderr, "free %p\n", (void*)value);
-    FreeGcValue(value);
   }
 
   // Set up next gc
@@ -1090,8 +1076,6 @@ static void IncrGc(ValueHeap* heap)
     MoveAllTo(&gc->unmarked, &gc->frame->unmarked);
     gc->interrupted = false;
     gc->save.xs[0] = NULL;
-
-    fprintf(stderr, "gc %p, %llu, %llu, %llu\n", (void*)gc->frame, gc->min_gen, gc->gen, gc->max_gen);
   }
 }
 
@@ -1208,8 +1192,6 @@ static void PushFrame(ValueHeap* heap, bool merge)
   assert(callee->gen > 0 && "GC gen overflow!");
   
   heap->top = callee;
-  fprintf(stderr, "push %llu\n", callee->gen);
-
 }
 
 // See documentation in fble-value.h
@@ -1238,15 +1220,12 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
   MoveAllTo(&heap->top->unmarked, &top->marked);
   MoveAllTo(&heap->top->unmarked, &top->alloced);
 
-  fprintf(stderr, "pop %p from %llu, %llu\n", (void*)value, top->min_gen, top->max_gen);
-
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
     MoveToMarked(heap->top, value);
   }
 
   if (heap->gc.frame == top) {
     // We are popping the frame currently being GC'd.
-    fprintf(stderr, "interrupted\n");
     heap->gc.interrupted = true;
     heap->gc.frame = heap->top;
 
@@ -1331,18 +1310,13 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
   MoveAllTo(&heap->top->unmarked, &heap->top->marked);
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
 
-  fprintf(stderr, "compact %llu, %llu", heap->top->min_gen, heap->top->max_gen);
   for (size_t i = 0; i < n; ++i) {
-    fprintf(stderr, " %p", (void*)save[i]);
     if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
-      fprintf(stderr, "(save)");
       MoveToMarked(heap->top, save[i]);
     }
   }
-  fprintf(stderr, "\n");
 
   if (heap->gc.frame == heap->top) {
-    fprintf(stderr, "interrupted\n");
     // We are compacting the frame currently being GC'd.
     heap->gc.interrupted = true;
 
@@ -1359,7 +1333,6 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
           && save[i]->h.gc.gen >= heap->gc.min_gen
           && save[i]->h.gc.gen != heap->gc.gen
           && save[i]->h.gc.gen < heap->gc.max_gen) {
-        fprintf(stderr, "do save %p.%llu\n", (void*)save[i], save[i]->h.gc.gen);
         MoveTo(&heap->gc.marked, save[i]);
         heap->gc.save.xs[s] = save[i];
         s++;
@@ -1531,9 +1504,6 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
     return data;
   }
 
-  if (object->tag != UNION_VALUE) {
-    fprintf(stderr, "union %p\n", (void*)object);
-  }
   assert(object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->tag;
@@ -1894,9 +1864,6 @@ FbleFunction* FbleFuncValueFunction(FbleValue* value)
   FuncValue* func = (FuncValue*)StrictValue(value);
   if (func == NULL) {
     return NULL;
-  }
-  if (func->_base.tag != FUNC_VALUE) {
-    fprintf(stderr, "func %p\n", (void*)value);
   }
   assert(func->_base.tag == FUNC_VALUE);
   return &func->function;

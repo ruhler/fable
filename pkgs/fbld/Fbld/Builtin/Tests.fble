@@ -40,179 +40,179 @@
 Test@ Tests = TestSuite(Str|Builtin, List[
   Test(Str|Define, (Unit@ _) {
     Result@<String@> got = Run[
-      Str|'@definxe[foo][a b] a: @a @@',
+      Str|'@define[foo][a b] a: @a, b: @b @@',
       Str|'@foo[hello][there]'
     ];
     Result@<String@> wnt = Ok<String@>|'a: hello, b: there';
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-  })
+  }),
 
-# Test(Str|DefineArgEval, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@define[a][] AAAA @@',
-#     Str|'@define[c][] CCCC @@',
-#     Str|'@define[foo][a b] @a,@b,@c @@',
-#     Str|'@foo[hello][@a]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'hello,AAAA,CCCC';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|DefineSameArgEval, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@define[a][] AAAA @@',
-#     Str|'@define[a][a] @a @@',
-#     Str|'@a[hello]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'hello';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|Let, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@let[x] a @@',
-#     Str|'@let[y] @x@x @@',
-#     Str|'@let[z] @y@y @@',
-#     Str|'@z'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'aaaa';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|IfEq, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@ifeq[foo][bar][hello][there]',
-#     Str|'@ifeq[foo][foo][whats][up]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'therewhats';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|IfNEq, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@ifneq[foo][bar][hello][there]',
-#     Str|'@ifneq[foo][foo][whats][up]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'helloup';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|DefineRecursive, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@define[foo][x]',
-#     Str|' @ifeq[@x][a][done][@foo[a]]',
-#     Str|'@@',
-#     Str|'@foo[hello]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'done';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|Head, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@head[foo]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'f';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|Tail, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@tail[foo]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'oo';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|Eval, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@define[foo][x]',
-#     Str|' @define[cmd][y] hi @y @@',
-#     Str|' @eval[@x]',
-#     Str|' @define[cmd][y] bye @y @@',
-#     Str|' @eval[@x]',
-#     Str|'@@',
-#     Str|'@foo[a@cmd[b]c]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'ahi bcabye bc';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|Plain, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@define[foo][x]',
-#     Str|' @define[keep][y] @y @@',
-#     Str|' @eval[@x]',
-#     Str|'@@',
-#     Str|'@define[ignore][x][] @@',
-#     Str|'@foo[@plain[ignore][a@keep[b]c@keep[d]e]]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'bd';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|PlainEvalArg, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@define[foo][x]',
-#     Str|' @define[keep][y] @y @@',
-#     Str|' @eval[@x]',
-#     Str|'@@',
-#     Str|'@define[ignore][x][] @@',
-#     Str|'@define[arg][][a@keep[b]c@keep[d]e] @@',
-#     Str|'@foo[@plain[ignore][@arg]]'
-#   ];
-#   Result@<String@> wnt = Ok<String@>|'bd';
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|Error, (Unit@ _) {
-#   Result@<String@> got = Run[
-#     Str|'@error[Oh no!]'
-#   ];
-#   Result@<String@> wnt = Error<String@>(
-#     Loc@(Str|'foo.fbld', Int|1, Int|2),
-#     Str|'Oh no!'
-#   );
-#   AssertEquals(
-#     /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
-#     /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
-# }),
-#
-# Test(Str|MultiError, (Unit@ _) {
-#   String@ got = ShowErrors(Run[
-#     Str|'@error[Oh no!]',
-#     Str|'@error[Not good.]'
-#   ]);
-#
-#   String@ wnt = Lines[
-#     Str|'foo.fbld:1:2: error: Oh no!',
-#     Str|'foo.fbld:2:2: error: Not good.'];
-#   AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-# })
+  Test(Str|DefineArgEval, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[a][] AAAA @@',
+      Str|'@define[c][] CCCC @@',
+      Str|'@define[foo][a b] @a,@b,@c @@',
+      Str|'@foo[hello][@a]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'hello,AAAA,CCCC';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|DefineSameArgEval, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[a][] AAAA @@',
+      Str|'@define[a][a] @a @@',
+      Str|'@a[hello]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'hello';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Let, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@let[x] a @@',
+      Str|'@let[y] @x@x @@',
+      Str|'@let[z] @y@y @@',
+      Str|'@z'
+    ];
+    Result@<String@> wnt = Ok<String@>|'aaaa';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|IfEq, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@ifeq[foo][bar][hello][there]',
+      Str|'@ifeq[foo][foo][whats][up]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'therewhats';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|IfNEq, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@ifneq[foo][bar][hello][there]',
+      Str|'@ifneq[foo][foo][whats][up]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'helloup';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|DefineRecursive, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][x]',
+      Str|' @ifeq[@x][a][done][@foo[a]]',
+      Str|'@@',
+      Str|'@foo[hello]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'done';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Head, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@head[foo]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'f';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Tail, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@tail[foo]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'oo';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Eval, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][x]',
+      Str|' @define[cmd][y] hi @y @@',
+      Str|' @eval[@x]',
+      Str|' @define[cmd][y] bye @y @@',
+      Str|' @eval[@x]',
+      Str|'@@',
+      Str|'@foo[a@cmd[b]c]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'ahi bcabye bc';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Plain, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][x]',
+      Str|' @define[keep][y] @y @@',
+      Str|' @eval[@x]',
+      Str|'@@',
+      Str|'@define[ignore][x][] @@',
+      Str|'@foo[@plain[ignore][a@keep[b]c@keep[d]e]]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'bd';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|PlainEvalArg, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@define[foo][x]',
+      Str|' @define[keep][y] @y @@',
+      Str|' @eval[@x]',
+      Str|'@@',
+      Str|'@define[ignore][x][] @@',
+      Str|'@define[arg][][a@keep[b]c@keep[d]e] @@',
+      Str|'@foo[@plain[ignore][@arg]]'
+    ];
+    Result@<String@> wnt = Ok<String@>|'bd';
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|Error, (Unit@ _) {
+    Result@<String@> got = Run[
+      Str|'@error[Oh no!]'
+    ];
+    Result@<String@> wnt = Error<String@>(
+      Loc@(Str|'foo.fbld', Int|1, Int|2),
+      Str|'Oh no!'
+    );
+    AssertEquals(
+      /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
+  }),
+
+  Test(Str|MultiError, (Unit@ _) {
+    String@ got = ShowErrors(Run[
+      Str|'@error[Oh no!]',
+      Str|'@error[Not good.]'
+    ]);
+
+    String@ wnt = Lines[
+      Str|'foo.fbld:1:2: error: Oh no!',
+      Str|'foo.fbld:2:2: error: Not good.'];
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  })
 ]);
 
 @(Tests);

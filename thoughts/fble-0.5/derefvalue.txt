@@ -884,3 +884,18 @@ Current implementation differences:
   the current gc or not. Possibly bugs around that to think about.
 
 Let's move this discussion to gc.txt.
+
+---
+
+So it turns out it was a pre-existing GC bug that now should be fixed. Nothing
+wrong with the deref value approach. I don't see a feasible way to catch this
+as part of a spec test. Hopefully that assertions I added to GC will help
+catch in the future.
+
+What's next for deref value?
+* Debug that still failing memory leak test.
+* Change API again so that REF_VALUE returns a struct and REF_DEF takes two
+  structs.
+  So that the invariants live in the compiler instead of the backends.
+* Pack the ref values into values.
+  ID allocation should be easy with the above API change.

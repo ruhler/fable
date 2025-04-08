@@ -39,8 +39,6 @@ void Write(SOCKET sfd, char c)
 #define INVALID_SOCKET (-1)
 #define closesocket close
 
-#define MAYBE_TAGWIDTH 1
-
 int Read(SOCKET sfd)
 {
   unsigned char c;
@@ -69,6 +67,8 @@ void Write(SOCKET sfd, char c)
 
 #include "int.fble.h"         // for FbleNewIntValue, FbleIntValueAccess
 #include "string.fble.h"      // for FbleNewStringValue, FbleStringValueAccess
+
+#define MAYBE_TAGWIDTH 1
 
 static void OnFree(void* data);
 static FbleValue* IStreamImpl(

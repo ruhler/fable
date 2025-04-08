@@ -7,8 +7,8 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|Fbld, List[
-  /Fbld/Parse/Tests%.Tests
-  #/Fbld/Builtin/Tests%.Tests
+  /Fbld/Parse/Tests%.Tests,
+  /Fbld/Builtin/Tests%.Tests
 ]);
 
 /Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));
