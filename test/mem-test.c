@@ -129,7 +129,7 @@ int FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   // Be a little lenient with memory usage, because there can be small
   // variations from run to run. If the total number of bytes increased is
   // less than the increase in N, it's very unlikely to be a memory leak.
-  size_t margin = (large_n - small_n) / 4;
+  size_t margin = large_n - small_n - 1;
 
   if (!args.growth && max_large_n > max_small_n + margin) {
     fprintf(stderr, "memory growth of %zi (%zi -> %zi)\n",

@@ -899,3 +899,9 @@ What's next for deref value?
   So that the invariants live in the compiler instead of the backends.
 * Pack the ref values into values.
   ID allocation should be easy with the above API change.
+
+---
+
+The memory leak: it's clearly not a memory leak. Increase N by 1000, the
+memory use increase by 500 bytes. We've just managed to step over some
+threshold somewhere, maybe in terms of chunk allocations?
