@@ -401,14 +401,11 @@ typedef struct Chunk {
  *  @field[uint64_t][min_gen]
  *   Objects allocated before entering this stack frame have generation less
  *   than min_gen.
- *  @field[uint64_t][reserved_gen]
- *   There are no objects reachable from this frame with object gen in
- *   [min_gen, reserved_gen).
  *  @field[uint64_t][gen]
- *   Objects are allocated on this frame with gen. Objects already traversed by
- *   GC on this frame have generation gen.
+ *   Objects allocated before the most recent compaction on the frame have
+ *   generation less than gen.
  *  @field[uint64_t][max_gen]
- *   Objects reachable from this frame have have generation <= max_gen.
+ *   Objects in marked,unmarked have generation less than max_gen.
  *  @field[List][unmarked]
  *   Potential garbage GC objects on the frame not yet seen in traversal.
  *   These are either from objects allocated to callee frames that have since
@@ -432,7 +429,6 @@ struct Frame {
   size_t merges;
 
   uint64_t min_gen;
-  uint64_t reserved_gen;
   uint64_t gen;
   uint64_t max_gen;
 
@@ -448,12 +444,15 @@ struct Frame {
 
 /**
  * @struct[Gc] Information about the current set of objects undergoing GC.
- *  @field[uint64_t][min_gen]
- *   Objects with generation < min_gen are owned by the caller and should not
- *   be traversed.
  *  @field[uint64_t][gen]
  *   The generation to move objects to when they survive GC. Guaranteed to be
  *   distinct from the generation of any object currently in GC.
+ *  @field[uint64_t][min_gen]
+ *   An object is currently undergoing GC if its generation is in the interval
+ *   [min_gen, max_gen), but not equal to gen.
+ *  @field[uint64_t][max_gen]
+ *   An object is currently undergoing GC if its generation is in the interval
+ *   [min_gen, max_gen), but not equal to gen.
  *  @field[Frame*][frame] The frame that GC is currently running on.
  *  @field[Frame*][next]
  *   The next frame to run garbage collection on. This is the frame closest to
@@ -476,8 +475,10 @@ struct Frame {
  *  @field[List][free] A list of garbage objects to be freed.
  */
 typedef struct {
-  uint64_t min_gen;
   uint64_t gen;
+
+  uint64_t min_gen;
+  uint64_t max_gen;
 
   Frame* frame;
   Frame* next;
@@ -1008,6 +1009,10 @@ static void IncrGc(ValueHeap* heap)
 {
   Gc* gc = &heap->gc;
 
+  // Free a couple objects on the free list.
+  FreeGcValue(Get(&gc->free));
+  FreeGcValue(Get(&gc->free));
+
   // Traverse an object on the heap.
   FbleValue* marked = Get(&gc->marked);
   if (marked != NULL) {
@@ -1033,6 +1038,9 @@ static void IncrGc(ValueHeap* heap)
     MoveTo(&gc->frame->marked, gc->save.xs[i]);
   }
 
+  // Free objects right away to surface use
+  // after free sooner.
+  // TODO: Remove this when done debugging.
   for (FbleValue* value = Get(&gc->free); value != NULL; value = Get(&gc->free)) {
     fprintf(stderr, "free %p\n", (void*)value);
     FreeGcValue(value);
@@ -1049,12 +1057,11 @@ static void IncrGc(ValueHeap* heap)
 
     gc->min_gen = gc->frame->min_gen;
     gc->gen = gc->frame->gen;
+    gc->max_gen = gc->frame->max_gen;
     MoveAllTo(&gc->marked, &gc->frame->marked);
     MoveAllTo(&gc->unmarked, &gc->frame->unmarked);
     gc->interrupted = false;
     gc->save.xs[0] = NULL;
-
-    gc->frame->reserved_gen = gc->frame->gen;
 
     fprintf(stderr, "gc %p, %i, %i\n", (void*)gc->frame, (int)gc->min_gen, (int)gc->gen);
   }
@@ -1081,9 +1088,8 @@ FbleValueHeap* FbleNewValueHeap()
   heap->top->caller = NULL;
   heap->top->merges = 0;
   heap->top->min_gen = 0;
-  heap->top->reserved_gen = 0;
   heap->top->gen = 0;
-  heap->top->max_gen = 0;
+  heap->top->max_gen = 1;
   Clear(&heap->top->unmarked);
   Clear(&heap->top->marked);
   Clear(&heap->top->alloced);
@@ -1093,6 +1099,7 @@ FbleValueHeap* FbleNewValueHeap()
 
   heap->gc.min_gen = heap->top->min_gen;
   heap->gc.gen = heap->top->gen;
+  heap->gc.max_gen = heap->top->max_gen;
   heap->gc.frame = heap->top;
   heap->gc.next = NULL;
   Clear(&heap->gc.marked);
@@ -1160,17 +1167,20 @@ static void PushFrame(ValueHeap* heap, bool merge)
   Clear(&callee->marked);
   Clear(&callee->alloced);
   callee->merges = 0;
-  uint64_t gen = heap->top->max_gen + 1;
-  callee->min_gen = gen;
-  callee->reserved_gen = gen;
-  callee->gen = gen;
-  callee->max_gen = gen;
+  callee->min_gen = heap->top->max_gen;
+  callee->gen = heap->top->max_gen;
+  callee->max_gen = callee->gen + 1;
   callee->top = (intptr_t)(callee + 1);
   callee->max = heap->top->max;
   callee->chunks = NULL;
+
+  // If a program runs for a really long time (like over 100 years), it's
+  // possible we could overflow the GC gen value and GC would break. Hopefully
+  // that never happens.
+  assert(callee->gen > 0 && "GC gen overflow!");
   
   heap->top = callee;
-  fprintf(stderr, "push %i\n", (int)gen);
+  fprintf(stderr, "push %i\n", (int)callee->gen);
 
 }
 
@@ -1199,13 +1209,8 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
   MoveAllTo(&heap->top->unmarked, &top->marked);
   MoveAllTo(&heap->top->unmarked, &top->alloced);
 
-  if (top->max_gen > heap->top->max_gen) {
-    heap->top->max_gen = top->max_gen;
-  }
-
-  fprintf(stderr, "pop %i %p\n", (int)top->min_gen, (void*)value);
-
   if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
+    heap->top->max_gen = top->max_gen;
     MoveTo(&heap->top->marked, value);
   }
 
@@ -1219,7 +1224,8 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
     // until GC has a chance to finish.
     if (IsAlloced(value)
         && value->h.gc.gen >= heap->gc.min_gen
-        && value->h.gc.gen != heap->gc.gen) {
+        && value->h.gc.gen != heap->gc.gen
+        && value->h.gc.gen < heap->gc.max_gen) {
       MoveTo(&heap->gc.marked, value);
       heap->gc.save.xs[0] = value;
       heap->gc.save.xs[1] = NULL;
@@ -1275,13 +1281,13 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
     save[i] = GcRealloc(heap, save[i]);
   }
 
-  if (heap->top->reserved_gen > heap->top->min_gen) {
-    heap->top->gen = heap->top->reserved_gen;
-    heap->top->reserved_gen--;
-  } else {
-    heap->top->gen = heap->top->max_gen + 1;
-    heap->top->max_gen++;
-  }
+  heap->top->gen = heap->top->max_gen;
+  heap->top->max_gen = heap->top->gen + 1;
+
+  // If a program runs for a really long time (like over 100 years), it's
+  // possible we could overflow the GC gen value and GC would break. Hopefully
+  // that never happens.
+  assert(heap->top->max_gen > 0 && "GC gen overflow!");
 
   heap->top->top = (intptr_t)(heap->top + 1);
   heap->top->max = heap->top->caller->max;
@@ -1321,7 +1327,8 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
     for (size_t i = 0; i < n; ++i) {
       if (IsAlloced(save[i])
           && save[i]->h.gc.gen >= heap->gc.min_gen
-          && save[i]->h.gc.gen != heap->gc.gen) {
+          && save[i]->h.gc.gen != heap->gc.gen
+          && save[i]->h.gc.gen < heap->gc.max_gen) {
         fprintf(stderr, "do save %p.%i\n", (void*)save[i], (int)save[i]->h.gc.gen);
         MoveTo(&heap->gc.marked, save[i]);
         heap->gc.save.xs[s] = save[i];
