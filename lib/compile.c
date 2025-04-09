@@ -980,7 +980,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         defn_instr->defn = defn->var.index;
         FbleInitVector(defn_instr->locs);
         for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-          FbleAppendToVector(defn_instr->locs, FbleCopyLoc(FbleCopyLoc(let_tc->bindings.xs[i].name.loc)));
+          FbleAppendToVector(defn_instr->locs, FbleCopyLoc(let_tc->bindings.xs[i].name.loc));
         }
         AppendInstr(scope, &defn_instr->_base);
         ReleaseLocal(scope, defn, exit);

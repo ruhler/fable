@@ -524,7 +524,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_REC_DEFN_INSTR: {
         FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
 
-        fprintf(fout, "  r0 = FbleDefineRecursiveValues(heap, l[%zi], l[%zi])\n",
+        fprintf(fout, "  r0 = FbleDefineRecursiveValues(heap, l[%zi], l[%zi]);\n",
             defn_instr->decl, defn_instr->defn);
 
         fprintf(fout, "  switch (r0) {\n");
