@@ -72,6 +72,11 @@
 // A 32-bit pointer architecture uses 5 bit length and offset instead of 6
 // bit length and offset.
 //
+// Ref Values
+// ----------
+// Ref values are packed specially as {id, 'b10}, with id 0 reserved for 
+// use as a generic undefined value.
+//
 // Stack Allocation
 // ----------------
 // An allocated value is owned by a particular frame of the stack.
@@ -172,7 +177,6 @@ typedef enum {
   STRUCT_VALUE,
   UNION_VALUE,
   FUNC_VALUE,
-  REF_VALUE,
   NATIVE_VALUE,
 } ValueTag;
 
@@ -280,20 +284,6 @@ typedef struct {
   FbleFunction function;
   FbleValue* statics[];
 } FuncValue;
-
-/**
- * @struct[RefValue] A reference value.
- *  An implementation-specific value introduced to support recursive values
- *  and not yet computed values.
- *
- *  A ref value holds a reference to another value. All values must be
- *  dereferenced before being otherwise accessed in case they are ref values.
- *
- *  @field[FbleValue][_base] FbleValue base class.
- */
-typedef struct {
-  FbleValue _base;
-} RefValue;
 
 /**
  * @struct[NativeValue] NATIVE_VALUE
@@ -506,6 +496,7 @@ typedef struct {
  *  @field[Gc][gc] Info about currently running GC.
  *  @field[Chunk*][chunks]
  *   Chunks of allocated stack memory not currently in use.
+ *  @field[uintptr_t][ref_id] The next available ref_id.
  */
 typedef struct {
   FbleValueHeap _base;
@@ -515,6 +506,7 @@ typedef struct {
   Frame* top;
   Gc gc;
   Chunk* chunks;
+  uintptr_t ref_id;
 } ValueHeap;
 
 static void* StackAlloc(ValueHeap* heap, size_t size);
@@ -523,8 +515,11 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
 static void FreeGcValue(FbleValue* value);
 static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value);
 
-static void RefAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue** r);
-static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue* x);
+static FbleValue* RefValue(uintptr_t id);
+static bool IsRefValue(FbleValue* value);
+static uintptr_t RefValueId(FbleValue* value);
+static void RefAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, FbleValue** r);
+static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, FbleValue* x);
 
 static bool IsPacked(FbleValue* value);
 static bool IsAlloced(FbleValue* value);
@@ -804,11 +799,6 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
       return &nv->_base;
     }
 
-    case REF_VALUE: {
-      FbleUnreachable("ref value should already be GC allocated.");
-      return NULL;
-    }
-
     case NATIVE_VALUE: {
       FbleUnreachable("native value should already be GC allocated.");
       return NULL;
@@ -819,43 +809,80 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
 }
 
 /**
+ * @func[RefValue] Construct a reference value.
+ *  @arg[uintptr_t][id] The id of the value.
+ *  @returns[FbleValue*] The constructed reference value.
+ */
+static FbleValue* RefValue(uintptr_t id)
+{
+  uintptr_t data = (id << 2) | 0x2;
+  return (FbleValue*)data;
+}
+
+/**
+ * @func[IsRefValue] Check if a value is a reference value.
+ *  @arg[FbleValue*][value] The value to check.
+ *  @returns[bool] True if it is a reference value, false otherwise.
+ */
+static bool IsRefValue(FbleValue* value)
+{
+  uintptr_t data = (uintptr_t)value;
+  return (data & 0x3) == 0x2;
+}
+
+/**
+ * @func[RefValueId] Gets the id of a reference value.
+ *  @arg[FbleValue*][value] The reference value to get the id of.
+ *  @returns[uintptr_t] The id of the reference value.
+ *  @sideeffects
+ *   Behavior is undefined if the value is not a reference value.
+ */
+static uintptr_t RefValueId(FbleValue* value)
+{
+  uintptr_t data = (uintptr_t)value;
+  return data >> 2;
+}
+
+/**
  * @func[RefAssign] Update a reference value assignment.
  *  @arg[ValueHeap*][heap] The value heap.
- *  @arg[size_t][n] The number of refs.
- *  @arg[FbleValue**][refs] The ref values to assign to.
+ *  @arg[uintptr_t][refs] The id of the first of the refs.
  *  @arg[FbleValue**][values] The values to be assigned.
  *  @arg[FbleValue**][x] Pointer to value to check assignment on.
  *  @sideeffects
- *   Updates refs assignments to the given reference as appropriate.
+ *   @i Updates refs assignments to the given reference as appropriate.
+ *   @item
+ *    Behavior is undefined if the number of values does not match the number
+ *    of currently allocated ref ids >= refs.
  */
-static void RefAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue** r)
+static void RefAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, FbleValue** r)
 {
   FbleValue* x = *r;
 
   // See if this is one of the ref values for us to substitute in.
-  for (size_t i = 0; i < n; ++i) {
-    if (x == refs[i]) {
-      *r = values[i];
+  if (IsRefValue(x)) {
+    uintptr_t id = RefValueId(x);
+    if (id >= refs) {
+      *r = values[id - refs];
       return;
     }
   }
 
   // Do substitution inside this value.
-  RefsAssign(heap, n, refs, values, x);
+  RefsAssign(heap, refs, values, x);
 }
 
 /**
  * @func[RefsAssign] Perform ref value assignments on x.
  *  @arg[ValueHeap*][heap] The value heap.
- *  @arg[size_t][n] The number of refs.
- *  @arg[FbleValue**][refs] The ref values to assign to.
+ *  @arg[uintptr_t][refs] The id of the first of the refs.
  *  @arg[FbleValue**][values] The values to be assigned.
  *  @arg[FbleValue*][x] The value to do the assignments in.
  *  @sideeffects
  *   Replaces all references to ref values in x with their corresponding
  *   values.
  */
-static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values, FbleValue* x)
+static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, FbleValue* x)
 {
   // Nothing to do for packed values or NULL.
   if (!IsAlloced(x)) {
@@ -879,27 +906,22 @@ static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** 
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)x;
       for (size_t i = 0; i < sv->fieldc; ++i) {
-        RefAssign(heap, n, refs, values, sv->fields + i);
+        RefAssign(heap, refs, values, sv->fields + i);
       }
       break;
     }
 
     case UNION_VALUE: {
       UnionValue* uv = (UnionValue*)x;
-      RefAssign(heap, n, refs, values, &uv->arg);
+      RefAssign(heap, refs, values, &uv->arg);
       break;
     }
 
     case FUNC_VALUE: {
       FuncValue* fv = (FuncValue*)x;
       for (size_t i = 0; i < fv->function.executable.num_statics; ++i) {
-        RefAssign(heap, n, refs, values, fv->statics + i);
+        RefAssign(heap, refs, values, fv->statics + i);
       }
-      break;
-    }
-
-    case REF_VALUE: {
-      // Nothing to do.
       break;
     }
 
@@ -913,12 +935,14 @@ static void RefsAssign(ValueHeap* heap, size_t n, FbleValue** refs, FbleValue** 
 
 /**
  * @func[IsPacked] Tests whether a value is packed into an FbleValue* pointer.
+ *  Not including RefValues.
+ *
  *  @arg[FbleValue*][value] The value to test.
  *  @returns[bool] True if the value is a packed value, false otherwise.
  */
 static bool IsPacked(FbleValue* value)
 {
-  return (((uintptr_t)value) & 1);
+  return (((uintptr_t)value) & 0x1) == 0x1;
 }
 
 /**
@@ -928,7 +952,7 @@ static bool IsPacked(FbleValue* value)
  */
 static bool IsAlloced(FbleValue* value)
 {
-  return !IsPacked(value) && value != NULL;
+  return !IsPacked(value) && !IsRefValue(value) && value != NULL;
 }
 
 /**
@@ -948,10 +972,7 @@ static bool IsAlloced(FbleValue* value)
  */
 static FbleValue* StrictValue(FbleValue* value)
 {
-  if (IsAlloced(value) && value->tag == REF_VALUE) {
-    return NULL;
-  }
-  return value;
+  return IsRefValue(value) ? NULL : value;
 }
 
 /**
@@ -1002,10 +1023,6 @@ static void MarkRefs(Gc* gc, FbleValue* value)
       for (size_t i = 0; i < v->function.executable.num_statics; ++i) {
         MarkRef(gc, value, v->statics[i]);
       }
-      break;
-    }
-
-    case REF_VALUE: {
       break;
     }
 
@@ -1116,6 +1133,7 @@ FbleValueHeap* FbleNewValueHeap()
   heap->gc.save.xs[0] = NULL;
 
   heap->chunks = NULL;
+  heap->ref_id = 1;
 
   return &heap->_base;
 }
@@ -1910,9 +1928,9 @@ FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap_, size_t n)
 
   FbleValue* args[n];
   for (size_t i = 0; i < n; ++i) {
-    RefValue* rv = NewGcValue(heap, heap->top, RefValue, REF_VALUE);
-    args[i] = &rv->_base;
+    args[i] = RefValue(heap->ref_id + i);
   }
+  heap->ref_id += n;
   return FbleNewStructValue(heap_, n, args);
 }
 
@@ -1926,11 +1944,17 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValu
   size_t n = sv->fieldc;
   FbleValue** refs = sv->fields;
 
+  heap->ref_id -= n;
+  uintptr_t refs_id = heap->ref_id;
   FbleValue* values[n];
   for (size_t i = 0; i < n; ++i) {
     // GcRealloc the values to make sure we don't end up with a GcAllocated
     // value pointing to a stack allocated value.
     values[i] = GcRealloc(heap, FbleStructValueField(defn, n, i));
+
+    // Double check the ref values are as expected while we are at it.
+    assert(IsRefValue(refs[i]));
+    assert(RefValueId(refs[i]) == refs_id + i); 
   }
 
   // Eliminate any occurences of refs in the values array.
@@ -1949,7 +1973,7 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValu
 
   // Do assignments inside of all the values.
   for (size_t i = 0; i < n; ++i) {
-    RefsAssign(heap, n, refs, values, values[i]);
+    RefsAssign(heap, refs_id, values, values[i]);
   }
 
   // Write back the final assignments.

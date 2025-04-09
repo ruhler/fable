@@ -905,3 +905,16 @@ What's next for deref value?
 The memory leak: it's clearly not a memory leak. Increase N by 1000, the
 memory use increase by 500 bytes. We've just managed to step over some
 threshold somewhere, maybe in terms of chunk allocations?
+
+---
+
+API rewrite is done. We ought to be able to pack ref values now.
+
+---
+
+Ref values are now packed. No issues at all encountered (a little
+worrying...).
+
+So, what do you think? Is it safe to declare this derefvalue project done? The
+StrictValue function still exists, but it is constant time based on the
+pointer value. It doesn't need a loop or to dereference the pointer.

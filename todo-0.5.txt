@@ -8,9 +8,6 @@ Things to consider doing for the fble-0.5 release.
   ref assignment.
   - ref assign to a value which is stack alloc -> gc alloc -> ref.
 
-* Remove 'value' field of RefValue.
-  Since it is never used anymore.
-
 * Use bitfields for FbleValue.tag, FbleValue.loc?
 
 * Add test for vacuous value in 1 of multiple ref value assignments.
@@ -25,7 +22,6 @@ Things to consider doing for the fble-0.5 release.
 
 * Split AccessTc and AccessInstr into Struct and Union variants
  - Struct needs fieldc, Union needs tagwidth.
- 
 
 * Optimize PartialApplyImpl
   - Can we pre-allocate space for the final args to avoid the final memcpys?

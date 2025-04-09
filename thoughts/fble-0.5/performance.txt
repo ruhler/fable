@@ -314,3 +314,7 @@ I expect pretty noticeable savings if we can do these two things. Get that out
 of the way first before worrying more about state monad return allocation
 function inlining whatever complication comes after.
 
+---
+
+derefvalue.txt project is done. That's the last of the blockers for starting
+to inline code for struct, union, and function access to the backends.
