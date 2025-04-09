@@ -42,7 +42,7 @@ namespace eval "include" {
       FbleSaveBuildDeps
     }
     fble-loc.h {
-      FbleLoc
+      FbleLoc FbleLocV
       FbleNewLoc FbleCopyLoc FbleFreeLoc
       FbleReportWarning FbleReportError
     }
@@ -98,7 +98,7 @@ namespace eval "include" {
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
       FbleNewFuncValue FbleFuncValueFunction
       FbleEval FbleApply
-      FbleNewRefValue FbleAssignRefValues
+      FbleDeclareRecursiveValues FbleDefineRecursiveValues
     }
     fble-vector.h {
       FbleInitVector FbleFreeVector

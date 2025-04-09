@@ -200,12 +200,12 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       }
 
       case FBLE_COPY_INSTR: break;
-      case FBLE_REF_VALUE_INSTR: break;
+      case FBLE_REC_DECL_INSTR: break;
 
-      case FBLE_REF_DEF_INSTR: {
-        FbleRefDefInstr* instr = (FbleRefDefInstr*)code->instrs.xs[i];
-        for (size_t j = 0; j < instr->assigns.size; ++j) {
-          AddLoc(instr->assigns.xs[j].loc.source->str, locs);
+      case FBLE_REC_DEFN_INSTR: {
+        FbleRecDefnInstr* instr = (FbleRecDefnInstr*)code->instrs.xs[i];
+        for (size_t j = 0; j < instr->locs.size; ++j) {
+          AddLoc(instr->locs.xs[j].source->str, locs);
         }
         break;
       }
@@ -866,49 +866,33 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       return;
     }
 
-    case FBLE_REF_VALUE_INSTR: {
-      FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+    case FBLE_REC_DECL_INSTR: {
+      FbleRecDeclInstr* decl_instr = (FbleRecDeclInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  bl FbleNewRefValue\n");
-      SetFrameVar(fout, "x0", ref_instr->dest);
+      Mov(fout, "x1", decl_instr->n);
+      fprintf(fout, "  bl FbleDeclareRecursiveValues\n");
+      SetFrameVar(fout, "x0", decl_instr->dest);
       return;
     }
 
-    case FBLE_REF_DEF_INSTR: {
-      FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
+    case FBLE_REC_DEFN_INSTR: {
+      FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
 
-      // Allocate space for the refs on the stack.
-      size_t sp_offset = StackBytesForCount(ref_instr->assigns.size);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      FbleVar decl = {
+        .tag = FBLE_LOCAL_VAR,
+        .index = defn_instr->decl
+      };
 
-      FbleVar ref = { .tag = FBLE_LOCAL_VAR };
-      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-        ref.index = ref_instr->assigns.xs[i].ref;
-        GetFrameVar(fout, "x0", ref);
-        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
-      }
-      fprintf(fout, "  mov x2, SP\n");      // refs arg
+      FbleVar defn = {
+        .tag = FBLE_LOCAL_VAR,
+        .index = defn_instr->defn
+      };
 
-      // Allocate space for the values on the stack.
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
-      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-        GetFrameVar(fout, "x0", ref_instr->assigns.xs[i].value);
-        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
-      }
-      fprintf(fout, "  mov x3, SP\n");            // values arg
-      fprintf(fout, "  mov x0, R_HEAP\n");        // heap arg
-      Mov(fout, "x1", ref_instr->assigns.size);   // n arg
-
-      fprintf(fout, "  bl FbleAssignRefValues\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", 2 * sp_offset);
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      GetFrameVar(fout, "x1", decl);
+      GetFrameVar(fout, "x2", defn);
+      fprintf(fout, "  bl FbleDefineRecursiveValues\n");
       fprintf(fout, "  cbnz x0, .Lo.%04zx.%zi.v\n", func_id, pc);
-
-      // Write back updated values to the original refs locations.
-      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-        fprintf(fout, "  ldr x0, [SP, #%zi]\n",
-            i * sizeof(FbleValue*) - 2*sp_offset);
-        SetFrameVar(fout, "x0", ref_instr->assigns.xs[i].ref);
-      }
       return;
     }
 
@@ -1087,16 +1071,16 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     }
 
     case FBLE_COPY_INSTR: return;
-    case FBLE_REF_VALUE_INSTR: return;
+    case FBLE_REC_DECL_INSTR: return;
 
-    case FBLE_REF_DEF_INSTR: {
-      FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
+    case FBLE_REC_DEFN_INSTR: {
+      FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
 
       fprintf(fout, ".Lo.%04zx.%zi.v:\n", func_id, pc);
-      for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+      for (size_t i = 0; i < defn_instr->locs.size; ++i) {
         fprintf(fout, "  sub x0, x0, 1\n"); 
         fprintf(fout, "  cbnz x0, .Lo.%04zx.%zi.%zi.v\n", func_id, pc, i);
-        DoAbort(fout, func_id, pc, ".L.VacuousValue", ref_instr->assigns.xs[i].loc);
+        DoAbort(fout, func_id, pc, ".L.VacuousValue", defn_instr->locs.xs[i]);
         fprintf(fout, ".Lo.%04zx.%zi.%zi.v:\n", func_id, pc, i);
       }
       return;

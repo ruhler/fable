@@ -928,14 +928,28 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       size_t base_index = scope->vars.size;
 
+      Local* decl = NULL;
+      if (let_tc->recursive) {
+        decl = NewLocal(scope);
+        FbleRecDeclInstr* decl_instr = FbleAllocInstr(FbleRecDeclInstr, FBLE_REC_DECL_INSTR);
+        decl_instr->dest = decl->var.index;
+        decl_instr->n = let_tc->bindings.size;
+        AppendInstr(scope, &decl_instr->_base);
+      }
+
       Local* vars[let_tc->bindings.size];
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         vars[i] = NULL;
         if (let_tc->recursive) {
           vars[i] = NewLocal(scope);
-          FbleRefValueInstr* ref_instr = FbleAllocInstr(FbleRefValueInstr, FBLE_REF_VALUE_INSTR);
-          ref_instr->dest = vars[i]->var.index;
-          AppendInstr(scope, &ref_instr->_base);
+
+          FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+          access->obj = decl->var;
+          access->fieldc = let_tc->bindings.size;
+          access->tag = i;
+          access->loc = FbleCopyLoc(let_tc->bindings.xs[i].loc);
+          access->dest = vars[i]->var.index;
+          AppendInstr(scope, &access->_base);
         }
         PushVar(scope, let_tc->bindings.xs[i].name, vars[i]);
       }
@@ -949,15 +963,39 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       }
 
       if (let_tc->recursive) {
-        FbleRefDefInstr* ref_def_instr = FbleAllocInstr(FbleRefDefInstr, FBLE_REF_DEF_INSTR);
-        FbleInitVector(ref_def_instr->assigns);
+        // Assemble all the definitions into a single struct value.
+        Local* defn = NewLocal(scope);
+        FbleStructValueInstr* struct_instr = FbleAllocInstr(FbleStructValueInstr, FBLE_STRUCT_VALUE_INSTR);
+        struct_instr->dest = defn->var.index;
+        FbleInitVector(struct_instr->args);
+        AppendInstr(scope, &struct_instr->_base);
+
         for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-          FbleRefAssign* assign = FbleExtendVector(ref_def_instr->assigns);
-          assign->loc = FbleCopyLoc(let_tc->bindings.xs[i].name.loc);
-          assign->ref = vars[i]->var.index;
-          assign->value = defs[i]->var;
+          FbleAppendToVector(struct_instr->args, defs[i]->var);
         }
-        AppendInstr(scope, &ref_def_instr->_base);
+
+        // Call FbleDefineRecursiveValues.
+        FbleRecDefnInstr* defn_instr = FbleAllocInstr(FbleRecDefnInstr, FBLE_REC_DEFN_INSTR);
+        defn_instr->decl = decl->var.index;
+        defn_instr->defn = defn->var.index;
+        FbleInitVector(defn_instr->locs);
+        for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+          FbleAppendToVector(defn_instr->locs, FbleCopyLoc(FbleCopyLoc(let_tc->bindings.xs[i].name.loc)));
+        }
+        AppendInstr(scope, &defn_instr->_base);
+        ReleaseLocal(scope, defn, exit);
+
+        // Write back the final results.
+        for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+          FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+          access->obj = decl->var;
+          access->fieldc = let_tc->bindings.size;
+          access->tag = i;
+          access->loc = FbleCopyLoc(let_tc->bindings.xs[i].loc);
+          access->dest = vars[i]->var.index;
+          AppendInstr(scope, &access->_base);
+        }
+        ReleaseLocal(scope, decl, exit);
       } else {
         for (size_t i = 0; i < let_tc->bindings.size; ++i) {
           SetVar(scope, base_index + i, let_tc->bindings.xs[i].name, defs[i]);

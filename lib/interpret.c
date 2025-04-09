@@ -249,33 +249,22 @@ static FbleValue* Interpret(
         break;
       }
 
-      case FBLE_REF_VALUE_INSTR: {
-        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-        locals[ref_instr->dest] = FbleNewRefValue(heap);
+      case FBLE_REC_DECL_INSTR: {
+        FbleRecDeclInstr* decl_instr = (FbleRecDeclInstr*)instr;
+        locals[decl_instr->dest] = FbleDeclareRecursiveValues(heap, decl_instr->n);
         pc++;
         break;
       }
 
-      case FBLE_REF_DEF_INSTR: {
-        FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
+      case FBLE_REC_DEFN_INSTR: {
+        FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
+        FbleValue* decl = locals[defn_instr->decl];
+        FbleValue* defn = locals[defn_instr->defn];
+        size_t r = FbleDefineRecursiveValues(heap, decl, defn);
 
-        size_t n = ref_def_instr->assigns.size;
-        FbleValue* refs[n];
-        FbleValue* values[n];
-        for (size_t i = 0; i < n; ++i) {
-          FbleRefAssign* assign = ref_def_instr->assigns.xs + i;
-          refs[i] = locals[assign->ref];
-          values[i] = GET(assign->value);
-        }
-
-        size_t r = FbleAssignRefValues(heap, n, refs, values);
         if (r != 0) {
-          FbleReportError("vacuous value\n", ref_def_instr->assigns.xs[r - 1].loc);
+          FbleReportError("vacuous value\n", defn_instr->locs.xs[r - 1]);
           return NULL;
-        }
-
-        for (size_t i = 0; i < n; ++i) {
-          locals[ref_def_instr->assigns.xs[i].ref] = values[i];
         }
 
         pc++;

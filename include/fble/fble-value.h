@@ -366,42 +366,45 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
 
 /**
- * @func[FbleNewRefValue] Creates a reference value.
- *  Used internally for recursive let declarations. A reference value is a
- *  possibly as-of-yet undefined pointer to another value.
+ * @func[FbleDeclareRecursiveValues] Declare values intended to be recursive.
+ *  Used for recursive let declarations. This allocates and returns a struct
+ *  value with a separate field for each recursive value to declare. The caller
+ *  can access the field values to get a handle to the value to use in its
+ *  recursive definition. The FbleDefineRecursiveValues function should be
+ *  called to complete the definition of the recursive values.
  *
- *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
+ *  @arg[FbleValueHeap*][heap] The heap to allocate values on.
+ *  @arg[size_t][n] The number of values to declare.
  *
  *  @returns FbleValue*
- *   A newly allocated reference value.
+ *   A newly allocated struct value with n fields corresponding to the n
+ *   declared values.
  *
  *  @sideeffects
  *   Allocates a value on the heap.
  */
-FbleValue* FbleNewRefValue(FbleValueHeap* heap);
+FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap, size_t n);
 
 /**
- * @func[FbleAssignRefValues] Sets the values pointed to by ref values.
- *  The ref values must be allocated on the top frame of the stack when
- *  calling this function, otherwise behavior is undefined.
+ * @func[FbleDefineRecursiveValues] Define values intended to be recursive.
+ *  Calls to FbleDeclareRecursiveValues and FbleDefineRecursiveValues should be
+ *  done in last in first out order. The @a[decl] argument should be the value
+ *  returned from FbleDeclareRecursiveValues. The @a[defn] argument should be
+ *  a struct values whose fields hold the definitions of the recursive values.
  *
  *  @arg[FbleValueHeap*][heap  ] The heap to use for allocations
- *  @arg[size_t        ][n     ] The number of ref values to assign.
- *  @arg[FbleValue**   ][refs  ] The references to assign to
- *  @arg[FbleValue**   ][values] The values to assign.
+ *  @arg[FbleValue*   ][decl] The declaration of the reference values.
+ *  @arg[FbleValue*   ][defn] The definition of the reference values.
  *
  *  @returns size_t
  *   0 on success. i+1 if the ith assignment would produce a vacuous value.
  *
  *  @sideeffects
- *   @i Updates refs to point to their values.
- *   @i Updates values to point to resolved values.
- *   @item
- *    The caller should update the original references to refs to the
- *    corresponding value after calling this function.
- *
+ *   @i Binds the recursive values into loops.
+ *   @i Updates the fields of @a[decl] to have the finalized values.
+ *   @i Invalidates all handles to the original declared value standins.
  */
-size_t FbleAssignRefValues(FbleValueHeap* heap, size_t n, FbleValue** refs, FbleValue** values);
+size_t FbleDefineRecursiveValues(FbleValueHeap* heap, FbleValue* decl, FbleValue* defn);
 
 /**
  * @func[FbleNewNativeValue] Creates a GC managed native allocation.

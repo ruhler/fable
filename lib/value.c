@@ -290,11 +290,9 @@ typedef struct {
  *  dereferenced before being otherwise accessed in case they are ref values.
  *
  *  @field[FbleValue][_base] FbleValue base class.
- *  @field[FbleValue*][value] The referenced value, or NULL.
  */
 typedef struct {
   FbleValue _base;
-  FbleValue* value;
 } RefValue;
 
 /**
@@ -950,9 +948,8 @@ static bool IsAlloced(FbleValue* value)
  */
 static FbleValue* StrictValue(FbleValue* value)
 {
-  while (IsAlloced(value) && value->tag == REF_VALUE) {
-    RefValue* ref = (RefValue*)value;
-    value = ref->value;
+  if (IsAlloced(value) && value->tag == REF_VALUE) {
+    return NULL;
   }
   return value;
 }
@@ -1009,10 +1006,6 @@ static void MarkRefs(Gc* gc, FbleValue* value)
     }
 
     case REF_VALUE: {
-      RefValue* v = (RefValue*)value;
-      if (v->value != NULL) {
-        MarkRef(gc, value, v->value);
-      }
       break;
     }
 
@@ -1911,26 +1904,33 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t argc
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewRefValue(FbleValueHeap* heap_)
+FbleValue* FbleDeclareRecursiveValues(FbleValueHeap* heap_, size_t n)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
-  RefValue* rv = NewGcValue(heap, heap->top, RefValue, REF_VALUE);
-  rv->value = NULL;
-  return &rv->_base;
+
+  FbleValue* args[n];
+  for (size_t i = 0; i < n; ++i) {
+    RefValue* rv = NewGcValue(heap, heap->top, RefValue, REF_VALUE);
+    args[i] = &rv->_base;
+  }
+  return FbleNewStructValue(heap_, n, args);
 }
 
 // See documentation in fble-value.h.
-size_t FbleAssignRefValues(FbleValueHeap* heap_, size_t n, FbleValue** refs, FbleValue** values)
+size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValue* defn)
 {
   ValueHeap* heap = (ValueHeap*)heap_;
+  assert(IsAlloced(decl) && "decl should have been alloced");
+  assert(decl->tag == STRUCT_VALUE);
+  StructValue* sv = (StructValue*)decl;
+  size_t n = sv->fieldc;
+  FbleValue** refs = sv->fields;
 
+  FbleValue* values[n];
   for (size_t i = 0; i < n; ++i) {
-    assert(refs[i]->h.gc.gen >= heap->top->min_gen
-        && "FbleAssignRefValue must be called with ref on top of stack");
-
     // GcRealloc the values to make sure we don't end up with a GcAllocated
     // value pointing to a stack allocated value.
-    values[i] = GcRealloc(heap, values[i]);
+    values[i] = GcRealloc(heap, FbleStructValueField(defn, n, i));
   }
 
   // Eliminate any occurences of refs in the values array.
@@ -1950,6 +1950,11 @@ size_t FbleAssignRefValues(FbleValueHeap* heap_, size_t n, FbleValue** refs, Fbl
   // Do assignments inside of all the values.
   for (size_t i = 0; i < n; ++i) {
     RefsAssign(heap, n, refs, values, values[i]);
+  }
+
+  // Write back the final assignments.
+  for (size_t i = 0; i < n; ++i) {
+    refs[i] = values[i];
   }
   return 0;
 }

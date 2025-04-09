@@ -103,8 +103,8 @@ typedef enum {
   FBLE_CALL_INSTR,
   FBLE_TAIL_CALL_INSTR,
   FBLE_COPY_INSTR,
-  FBLE_REF_VALUE_INSTR,
-  FBLE_REF_DEF_INSTR,
+  FBLE_REC_DECL_INSTR,
+  FBLE_REC_DEFN_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_LIST_INSTR,
@@ -388,57 +388,39 @@ typedef struct {
 } FbleCopyInstr;
 
 /**
- * @struct[FbleRefValueInstr] FBLE_REF_VALUE_INSTR: Creates a ref value.
+ * @struct[FbleRecDeclInstr] FBLE_REC_DECL_INSTR: Declares recursive values.
  *  @code[txt] @
- *   *dest = new ref
+ *   *dest = FbleDeclareRecursiveValues(n);
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
- *  @field[FbleLocalIndex][dest] Where to put the created value.
+ *  @field[size_t][n] The number of values to declare.
+ *  @field[FbleLocalIndex][dest] Where to put the created declaration.
  */
 typedef struct {
   FbleInstr _base;
+  size_t n;
   FbleLocalIndex dest;
-} FbleRefValueInstr;
+} FbleRecDeclInstr;
 
 /**
- * @struct[FbleRefAssign] A references value assignment.
- *  @field[FbleLoc][loc] Location to use for error reporting.
- *  @field[FbleLocalIndex][ref] The ref value to update.
- *  @field[FbleVar][value] The updated target for the ref value.
- */
-typedef struct {
-  FbleLoc loc;
-  FbleLocalIndex ref;
-  FbleVar value;
-} FbleRefAssign;
-
-/**
- * @struct[FbleRefAssignV] Vector of FbleRefAssign.
- *  @field[size_t][size] Number of elements.
- *  @field[FbleRefAssign*][xs] The elements.
- */
-typedef struct {
-  size_t size;
-  FbleRefAssign* xs;
-} FbleRefAssignV;
-
-/**
- * @struct[FbleRefDefInstr] FBLE_REF_DEF_INSTR
- *  Assigns values to reference values.
+ * @struct[FbleRecDefnInstr] FBLE_REC_DEFN_INSTR
+ *  Defines recursive values.
  *
  *  @code[txt] @
- *   foreach i in assigns:
- *     ref[i]->value = value[i]
- *   foreach i in assigns:
- *     ref[i] = value[i]
+ *   FbleDefineRecursiveValues(decl, defn)
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
- *  @field[FbleRefAssignV][assigns] The assignments to make.
+ *  @field[FbleLocalIndex][decl] The declaration.
+ *  @field[FbleLocalIndex][defn] The definition.
+ *  @field[FbleLocV][locs]
+ *   Location associated with each defined variable, for error reporting.
  */
 typedef struct {
   FbleInstr _base;
-  FbleRefAssignV assigns;
-} FbleRefDefInstr;
+  FbleLocalIndex decl;
+  FbleLocalIndex defn;
+  FbleLocV locs;
+} FbleRecDefnInstr;
 
 /**
  * @struct[FbleReturnInstr] FBLE_RETURN_INSTR

@@ -68,18 +68,18 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_GOTO_INSTR:
     case FBLE_COPY_INSTR:
-    case FBLE_REF_VALUE_INSTR:
+    case FBLE_REC_DECL_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
       FbleFree(instr);
       return;
 
-    case FBLE_REF_DEF_INSTR: {
-      FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
-      for (size_t j = 0; j < i->assigns.size; ++j) {
-        FbleFreeLoc(i->assigns.xs[j].loc);
+    case FBLE_REC_DEFN_INSTR: {
+      FbleRecDefnInstr* i = (FbleRecDefnInstr*)instr;
+      for (size_t j = 0; j < i->locs.size; ++j) {
+        FbleFreeLoc(i->locs.xs[j]);
       }
-      FbleFreeVector(i->assigns);
+      FbleFreeVector(i->locs);
       FbleFree(instr);
       return;
     }
@@ -453,26 +453,17 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
           break;
         }
 
-        case FBLE_REF_VALUE_INSTR: {
-          FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+        case FBLE_REC_DECL_INSTR: {
+          FbleRecDeclInstr* decl_instr = (FbleRecDeclInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          fprintf(fout, "l%zi = ref;\n", ref_instr->dest);
+          fprintf(fout, "l%zi = decl %zi;\n", decl_instr->dest, decl_instr->n);
           break;
         }
 
-        case FBLE_REF_DEF_INSTR: {
-          FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
+        case FBLE_REC_DEFN_INSTR: {
+          FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
-          const char* comma = "";
-          for (size_t j = 0; j < ref_def_instr->assigns.size; ++j) {
-            FbleRefAssign* assign = ref_def_instr->assigns.xs + j;
-            fprintf(fout, "%sl%zi ~= %s%zi, ", comma,
-                assign->ref,
-                var_tags[assign->value.tag],
-                assign->value.index);
-            PrintLoc(fout, assign->loc);
-            comma = "       ";
-          }
+          fprintf(fout, "defn l%zi = l%zi\n", defn_instr->decl, defn_instr->defn);
           break;
         }
 

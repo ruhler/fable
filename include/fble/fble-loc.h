@@ -27,6 +27,16 @@ typedef struct {
 } FbleLoc;
 
 /**
+ * @struct[FbleLocV] Vector of FbleLoc.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleLoc*][xs] The elements.
+ */
+typedef struct {
+  size_t size;
+  FbleLoc* xs;
+} FbleLocV;
+
+/**
  * @func[FbleNewLoc] Creates a new FbleLoc.
  *  Convenience function for creating an FbleLoc from a char* source name.
  *

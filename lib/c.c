@@ -69,8 +69,8 @@ static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
       case FBLE_CALL_INSTR: break;
       case FBLE_TAIL_CALL_INSTR: break;
       case FBLE_COPY_INSTR: break;
-      case FBLE_REF_VALUE_INSTR: break;
-      case FBLE_REF_DEF_INSTR: break;
+      case FBLE_REC_DECL_INSTR: break;
+      case FBLE_REC_DEFN_INSTR: break;
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
       case FBLE_LIST_INSTR: break;
@@ -514,44 +514,26 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         break;
       }
 
-      case FBLE_REF_VALUE_INSTR: {
-        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-        fprintf(fout, "  l[%zi] = FbleNewRefValue(heap);\n", ref_instr->dest);
+      case FBLE_REC_DECL_INSTR: {
+        FbleRecDeclInstr* decl_instr = (FbleRecDeclInstr*)instr;
+        fprintf(fout, "  l[%zi] = FbleDeclareRecursiveValues(heap, %zi);\n",
+            decl_instr->dest, decl_instr->n);
         break;
       }
 
-      case FBLE_REF_DEF_INSTR: {
-        FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
+      case FBLE_REC_DEFN_INSTR: {
+        FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
 
-        fprintf(fout, "  FbleValue* rdr%zi[%zi] = {", pc, ref_instr->assigns.size);
-        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-          fprintf(fout, "l[%zi],", ref_instr->assigns.xs[i].ref);
-        }
-        fprintf(fout, "};\n");
-
-        fprintf(fout, "  FbleValue* rdv%zi[%zi] = {", pc, ref_instr->assigns.size);
-        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-          fprintf(fout, "%s[%zi],",
-              var_tag[ref_instr->assigns.xs[i].value.tag],
-              ref_instr->assigns.xs[i].value.index);
-        }
-        fprintf(fout, "};\n");
-
-        fprintf(fout, "  r0 = FbleAssignRefValues(heap, %zi, rdr%zi, rdv%zi);\n",
-            ref_instr->assigns.size, pc, pc);
+        fprintf(fout, "  r0 = FbleDefineRecursiveValues(heap, l[%zi], l[%zi])\n",
+            defn_instr->decl, defn_instr->defn);
 
         fprintf(fout, "  switch (r0) {\n");
         fprintf(fout, "    case 0: break;\n");
-        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
+        for (size_t i = 0; i < defn_instr->locs.size; ++i) {
           fprintf(fout, "    case %zi: ", i+1);
-          ReturnAbort(fout, "VacuousValue", ref_instr->assigns.xs[i].loc);
+          ReturnAbort(fout, "VacuousValue", defn_instr->locs.xs[i]);
         }
         fprintf(fout, "  }\n");
-
-        for (size_t i = 0; i < ref_instr->assigns.size; ++i) {
-          fprintf(fout, "  l[%zi] = rdv%zi[%zi];\n",
-              ref_instr->assigns.xs[i].ref, pc, i);
-        }
         break;
       }
 
