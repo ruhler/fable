@@ -88,8 +88,7 @@
 // the caller frame, we re-allocate the value on the heap before returning it.
 // The value is now and forever more 'GC allocated'.
 //
-// Reference values and native values are GC allocated up front, they are
-// never stack allocated.
+// Native values are GC allocated up front, they are never stack allocated.
 //
 // Stack Frame Merging
 // -------------------
@@ -1691,8 +1690,9 @@ static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
       FbleProfileReplaceBlock(profile, function->profile_block_id);
     }
 
-    // bool should_merge = heap->top->caller != NULL && heap->top->max - heap->top->caller->max < MERGE_LIMIT;
-    bool should_merge = false;
+    bool should_merge = heap->top->caller != NULL
+      && heap->top->max == heap->top->caller->max
+      && heap->top->top - heap->top->caller->top < MERGE_LIMIT;
     CompactFrame(heap, should_merge, 1 + argc, heap->_base.tail_call_buffer);
 
     func = heap->_base.tail_call_buffer[0];
@@ -1802,8 +1802,9 @@ FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue*
   size_t num_unused = argc - executable->num_args;
   FbleValue** unused = args + executable->num_args;
 
-  // bool should_merge = heap->top->caller != NULL && heap->top->max - heap->top->caller->max < MERGE_LIMIT;
-  bool should_merge = false;
+  bool should_merge = heap->top->caller != NULL
+    && heap->top->max == heap->top->caller->max
+    && heap->top->top - heap->top->caller->top < MERGE_LIMIT;
   PushFrame(heap, should_merge);
   FbleValue* result = executable->run(&heap->_base, profile, func, args);
 

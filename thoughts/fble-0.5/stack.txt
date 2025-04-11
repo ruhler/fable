@@ -70,3 +70,69 @@ Let's stick to 4K frame alloc limit.
 Clearly we can get rid of basing this in ref value. Cool.
 
 Let me call this line of discussion done for now, since the goal is achieved.
+
+---
+
+The numbers above don't include changes to merging of compact frame, I later
+discovered. After getting rid of ref values for real, it seems I can't merge
+frames like I used to.
+
+Specifically:
+A. If we try to merge PushFrame and Compact with a 4K alloc limit, we get a
+   memory leak.
+B. If we try to merge PushFrame only with a 4K alloc limit, md5 runtime blows
+   up.
+C. If we don't try to merge frame at all, things run fine, but we spend an
+   excessive amount of time in GcRealloc.
+
+I would like to understand (A) and (B) a little better. At the same time, I
+feel like it's worth exploring the idea of deciding at PopFrame and
+CompactFrame whether to merge after the fact instead of deciding in advance. I
+think that could avoid the issues with (A) and (B).
+
+To get the most out of post merging, we'll want to split the stack into three
+parts:
+1. The native stack.
+2. The managed stack frames.
+3. Stack allocated data.
+
+That way way I can pop from the manage stack frame without popping from the
+stack allocated data. We can chose to pay for GcRealloc or for stack allocated
+data growth.
+
+Hack to get an idea if post merging could get us anything: try post merging
+without splitting the stack yet. It's not an efficient use of space, but
+should show us if correctness stuff will work out, right?
+
+The code for PopFrame to do post-merge looks pretty straight forward to me.
+One funny thing: why do we store Frame* as part of the stack header?
+
+It's because we need to know when we GcRealloc a value what frame owns it. We
+can have stack allocated values up frame.
+
+This is where the tricky part of post merging happens: I don't have an easy
+way to update the frame point for all the stack allocated values in a callee
+frame when reassigning those values to the caller.
+
+Specifically I need to know the right 'gen' and 'alloced' list to GcAlloc the
+object to.
+
+---
+
+Here's how I could make post merging work: scribble over part of the callee
+frame when we merge. Then when I GcRealloc, check if the frame was scribbled
+over. If so, use 'top' instead of the given frame?
+
+That might not be right though. We could have popped a bunch of frames, then
+pushed a bunch of frames. I need to allocate to the right caller frame, right?
+
+Anyway, let's go back to understand (A) and (B) a little better.
+
+A. pre-merge push and compact.
+
+There was a bug in the merge condition. I updated it. Let's see how it looks
+now. All the tests pass.
+
+If pre-merging works, I suppose go with that? Somehow I feel like post-merging
+is a 'better' way to go, but given I don't know how to implement it, and I
+can't explain why it would be a better way to go...

@@ -318,3 +318,36 @@ function inlining whatever complication comes after.
 
 derefvalue.txt project is done. That's the last of the blockers for starting
 to inline code for struct, union, and function access to the backends.
+
+---
+
+But first, frame merging... It looks like frame merging doesn't work anymore.
+Or maybe it never really worked based on a size limit instead of ref / not
+ref. For compact frame, if I try to merge frames I get memory leaks. For push
+frame, if I try to merge frames, md5 runtime explodes.
+
+Without that, it looks like I've taken a 30s step back performance wise on
+fble-bench. I think it's probably worth it given the simplifications to
+StrictValue and the ability to start inlining much more into backends, but
+still...
+
+From the perf profile, it's clear lack of frame merging is having a big
+impact. We spend a significantly increased amount of time in IncrGc and
+FblePopFrame.
+
+Let's take discussion of frame merging back to stack.txt. Let's also start
+discussions at inline.txt and undef.txt to see what makes sense there.
+
+---
+
+The frame merging is restored after fixing a bug in the implementation.
+
+Here's where we are at now fble-bench wise:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 4:25.20
+  Memory: 533864
+
+That's nice, because we were hovering around 4:45s and 609M before.
+
+Profiling still shows lots of time in IncrGc. Hmm...
