@@ -14,9 +14,7 @@ Things to consider doing for the fble-0.5 release.
 * Get rid of r0 temp variable in lib/c.c
  - It's not really needed.
 
-* Remove need for StrictValue() everywhere.
- - Traverse the value and update in place instead of using indirection.
- - Use a special ref value instead of NULL to represent undefined values?
+* Use a special ref value instead of NULL to represent undefined values?
 
 * Split AccessTc and AccessInstr into Struct and Union variants
  - Struct needs fieldc, Union needs tagwidth.

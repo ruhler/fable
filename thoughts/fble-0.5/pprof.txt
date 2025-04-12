@@ -14,3 +14,19 @@ So I collect together a list of interesting blocks by removing one after the
 other. Now I have a high level summary breakdown of where time is going. Then
 I want to be able to focus at one of those blocks at a time. Rinse and repeat?
 
+---
+
+I'm concerned that my perf approach is truncating stacks and not including all
+the samples. Is it possible for me to write my own perf that does exactly what
+I want? Anyway I can review how perf is implemented?
+
+The implementation looks tough. But maybe I can figure out enough to parse the
+output of 'perf script' directly. It looks like it is a sequence of traces. We
+clearly have the timestamp. I'm just not sure what 'cycles' means. Looks like
+it's a timestamp of some sort rather than a sample count. I think it's safe to
+ignore for performance purposes.
+
+Yes, so best opportunity at the moment would appear to be to parse each record
+from the output of 'perf script'. Read and process the thing however I
+prefer. Don't worry about the 128 frame limit for now.
+

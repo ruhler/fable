@@ -522,7 +522,6 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
 
 static bool IsPacked(FbleValue* value);
 static bool IsAlloced(FbleValue* value);
-static FbleValue* StrictValue(FbleValue* value);
 
 
 static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst);
@@ -952,26 +951,6 @@ static bool IsPacked(FbleValue* value)
 static bool IsAlloced(FbleValue* value)
 {
   return !IsPacked(value) && !IsRefValue(value) && value != NULL;
-}
-
-/**
- * @func[StrictValue] Removes layers of refs from a value.
- *  Gets the strict value associated with the given value, which will either
- *  be the value itself, or the dereferenced value if the value is a
- *  reference.
- *
- *  @arg[FbleValue*][value] The value to get the strict version of.
- *
- *  @returns FbleValue*
- *   The value with all layers of reference indirection removed. NULL if the
- *   value is a reference that has no value yet.
- *
- *  @sideeffects
- *   None.
- */
-static FbleValue* StrictValue(FbleValue* value)
-{
-  return IsRefValue(value) ? NULL : value;
 }
 
 /**
@@ -1428,9 +1407,7 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
 // See documentation in fble-value.h.
 FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
 {
-  object = StrictValue(object);
-
-  if (object == NULL) {
+  if (object == NULL || IsRefValue(object)) {
     return NULL;
   }
 
@@ -1501,9 +1478,7 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tagwidth, size_t tag)
 // See documentation in fble-value.h.
 size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
 {
-  object = StrictValue(object);
-
-  if (object == NULL) {
+  if (object == NULL || IsRefValue(object)) {
     return (size_t)(-1);
   }
 
@@ -1522,9 +1497,7 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
 // See documentation in fble-value.h.
 FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
 {
-  object = StrictValue(object);
-
-  if (object == NULL) {
+  if (object == NULL || IsRefValue(object)) {
     return NULL;
   }
 
@@ -1552,9 +1525,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
 // See documentation in fble-value.h.
 FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
 {
-  object = StrictValue(object);
-
-  if (object == NULL) {
+  if (object == NULL || IsRefValue(object)) {
     return NULL;
   }
 
@@ -1873,10 +1844,11 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
 // See documentation in fble-value.h
 FbleFunction* FbleFuncValueFunction(FbleValue* value)
 {
-  FuncValue* func = (FuncValue*)StrictValue(value);
-  if (func == NULL) {
+  if (value == NULL || IsRefValue(value)) {
     return NULL;
   }
+
+  FuncValue* func = (FuncValue*)value;
   assert(func->_base.tag == FUNC_VALUE);
   return &func->function;
 }
@@ -1999,7 +1971,6 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap_,
 // See documentation in fble-value.h
 void* FbleNativeValueData(FbleValue* value)
 {
-  value = StrictValue(value);
   assert(value->tag == NATIVE_VALUE);
   return ((NativeValue*)value)->data;
 }
