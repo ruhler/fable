@@ -1,0 +1,26 @@
+Undefined Values
+================
+Since we have removed REF_VALUE values from the implementation, it's
+worth reconsidering how we treat undefined values.
+
+Today we have two kinds of undefined values:
+1. NULL
+2. IsRefValue - packed ending in 'b10.
+
+Wouldn't it be great if we could get away with just 'b10 to denote undefined
+values? No need to check for both that and NULL?
+
+We can reserve the value 0x2 as the thing to use instead of NULL. All the
+checks for IsRefValue would then work to cover that and normal undefined
+values.
+
+Sounds good to me in theory. In practice, how can I track down all those
+potential NULL cases? Where do they come from?
+
+* undef expression?
+* unwinding
+
+Any place else? Do they leak out of the fble value API any place? Should they?
+Shouldn't they? The trouble is, NULL seems like a pretty good thing to use for
+an error value. It will take some convincing to change that to 0x2 and have
+support for checking anything that ends with 'b10 as a potential null.

@@ -30,3 +30,20 @@ Yes, so best opportunity at the moment would appear to be to parse each record
 from the output of 'perf script'. Read and process the thing however I
 prefer. Don't worry about the 128 frame limit for now.
 
+---
+
+Let's figure out the nicest output we can get from perf script.
+
+Today it looks like:
+
+<exe> <pid> <timestamp>.<nanos>:    <n> cycles:u:
+              <addr> <name>+<offset> (<so>)
+              ...
+
+Any easy way to simplify timestamp perhaps? Or it doesn't matter? We don't
+care about the header line anyway, aside from being able to recognize it.
+
+Any way to get rid of the .so? I don't care about that, right?
+
+I don't see any options to turn things off. Let's just parse what we get by
+default. That's simplest, right?

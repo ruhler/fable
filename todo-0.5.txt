@@ -11,9 +11,6 @@ Things to consider doing for the fble-0.5 release.
 * Add test for vacuous value in 1 of multiple ref value assignments.
  - If we don't already have such a thing.
 
-* Get rid of r0 temp variable in lib/c.c
- - It's not really needed.
-
 * Use a special ref value instead of NULL to represent undefined values?
 
 * Split AccessTc and AccessInstr into Struct and Union variants

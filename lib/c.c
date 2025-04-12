@@ -297,11 +297,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
   fprintf(fout, "  FbleBlockId profile_block_id = function->profile_block_id;\n");
 
-  // x0, f0, r0 are temporary variables individual instructions can use
-  // however they wish.
+  // x0, f0 are temporary variables individual instructions can use however
+  // they wish.
   fprintf(fout, "  FbleValue* x0 = NULL;\n");
   fprintf(fout, "  FbleFunction* f0 = NULL;\n");
-  fprintf(fout, "  size_t r0 = 0;\n");
 
   // Emit code for each fble instruction
   bool jump_target[code->instrs.size];
@@ -523,11 +522,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_REC_DEFN_INSTR: {
         FbleRecDefnInstr* defn_instr = (FbleRecDefnInstr*)instr;
-
-        fprintf(fout, "  r0 = FbleDefineRecursiveValues(heap, l[%zi], l[%zi]);\n",
+        fprintf(fout, "  switch (FbleDefineRecursiveValues(heap, l[%zi], l[%zi])) {\n",
             defn_instr->decl, defn_instr->defn);
-
-        fprintf(fout, "  switch (r0) {\n");
         fprintf(fout, "    case 0: break;\n");
         for (size_t i = 0; i < defn_instr->locs.size; ++i) {
           fprintf(fout, "    case %zi: ", i+1);
