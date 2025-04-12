@@ -47,3 +47,7 @@ Any way to get rid of the .so? I don't care about that, right?
 
 I don't see any options to turn things off. Let's just parse what we get by
 default. That's simplest, right?
+
+We only care about function names, or do we care about where in the function?
+Where in the function sounds nice, doesn't it? Or is that too much detail?
+Unless I'm going to look into the address, let's strip it for now.
