@@ -3,12 +3,12 @@ import sys
 
 class Node:
     def __init__(self, name):
+        self.total = 0
         self.self = 0
         self.name = name
         self.children = {}
                      
-
-def Traverse(node, entry):
+def InsertInto(node, entry):
     if entry in node.children:
         child = node.children[entry]
         return child
@@ -16,10 +16,18 @@ def Traverse(node, entry):
     node.children[entry] = child
     return child
 
-def Dump(node, indent):
-    print("%s%s %d" % (indent, node.name, node.self))
+def Total(node):
+    total = node.self
     for entry in node.children:
-        Dump(node.children[entry], indent + "  ")
+        total += Total(node.children[entry])
+    node.total = total
+    return total
+
+def Dump(node, indent):
+    print("%s%s %d %d" % (indent, node.name, node.total, node.self))
+    children = sorted(node.children.values(), key=lambda x: -x.total)
+    for child in children:
+        Dump(child, indent + "  ")
 
 root = Node("<root>")
 
@@ -33,8 +41,9 @@ for line in sys.stdin:
         samples.reverse()
         node = root
         for entry in samples:
-            node = Traverse(node, entry)
+            node = InsertInto(node, entry)
         node.self += 1
         samples = []
 
+Total(root)
 Dump(root, "")
