@@ -371,3 +371,17 @@ And for the fun of it, what if we do -O2 instead of -O3?
   Memory: 524676
 
 So, a bit better memory, a bit worse performance.
+
+---
+
+Reviewing the fble-benchmark profiles, I think time is being dominated by a
+quadratic blowup of List append the way we collect output from pure Stdio
+Monad. That's not very interesting to test as part of the benchmark. Maybe I
+can fix that.
+
+Yes, looks like we made good improvements here:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 4:25.20  ==> 2:18.62
+  Memory: 533864 ==> 553172
+

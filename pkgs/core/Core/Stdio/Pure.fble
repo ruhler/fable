@@ -2,9 +2,8 @@
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
-<@>% Append = /Core/List%.Append;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -23,8 +22,8 @@
 
 @ PureState@ = *(
   List@<Int@> in,
-  List@<Int@> out,
-  List@<Int@> err
+  List@<Int@> out,  # built up in reverse order
+  List@<Int@> err   # built up in reverse order
 );
 
 % State = /Core/Monad/State%<PureState@>;
@@ -43,17 +42,13 @@ Pure@<Maybe@<Int@>> In = {
 };
 
 (Int@) { Pure@<Unit@>; } Out = (Int@ b) {
-  # TODO: Prepend instead of append string, and fix up later for improved
-  # performance?
   PureState@ s <- Monad.do(State.Get);
-  State.Set(PureState@(s.in, Append(s.out, List[b]), s.err));
+  State.Set(PureState@(s.in, Cons(b, s.out), s.err));
 };
 
 (Int@) { Pure@<Unit@>; } Err = (Int@ b) {
-  # TODO: Prepend instead of append string, and fix up later for improved
-  # performance?
   PureState@ s <- Monad.do(State.Get);
-  State.Set(PureState@(s.in, s.out, Append(s.err, List[b])));
+  State.Set(PureState@(s.in, s.out, Cons(b, s.err)));
 };
 
 (String@) { Pure@<Maybe@<IStream@<Pure@>>>; } Read = (String@ _filename) {
@@ -84,7 +79,10 @@ Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err, Read, Write, GetEnv);
 #   in - List of bytes to use for stdin.
 <@ A@>(Pure@<A@>, List@<Int@>) { PureResult@<A@>; }
 Run = <@ A@>(Pure@<A@> m, List@<Int@> in) {
-  State.Run(m, PureState@(in, Nil<Int@>, Nil<Int@>));
+  PureResult@<A@> result = State.Run(m, PureState@(in, Nil<Int@>, Nil<Int@>));
+  result.@(s: result.s.@(
+      out: /Core/List%.Reverse(result.s.out),
+      err: /Core/List%.Reverse(result.s.err)));
 };
 
 @(Pure@, PureState@, PureResult@, Monad, Stdio, Run);
