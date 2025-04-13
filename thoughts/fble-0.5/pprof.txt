@@ -51,3 +51,114 @@ default. That's simplest, right?
 We only care about function names, or do we care about where in the function?
 Where in the function sounds nice, doesn't it? Or is that too much detail?
 Unless I'm going to look into the address, let's strip it for now.
+
+---
+
+The truncated stacks are bothering me. Let's try:
+
+  --call-graph dwarf,65528 
+
+Option to perf record. See if that does anything interesting.
+
+It's still truncating the stacks. Looks like I'm getting 256 at most.
+
+Oh well. I'll have to find some other way to work around that annoyance.
+
+---
+
+Showing the lists by overall time and by self times is a really useful entry
+point.
+
+Here's the start of the overall time list:
+
+   60.43%    15997 FbleCall
+   45.77%    12116 TailCall
+   45.49%    12040 _2f_Core_2f_List_25__2e_Append_21_.001f
+   36.54%     9671 FblePopFrame
+   34.69%     9183 GcRealloc
+   32.32%     8556 NewGcValueRaw
+   23.57%     6239 IncrGc
+    9.04%     2393 FbleStructValueField
+
+* FbleCall and TailCall should be ignored here
+* /Core/List/Append points to a big chunk of time worth investigating.
+* FblePopFrame, GcRealloc, NewGcValueRaw, IncrGc all point to same chunk
+  of code being run.
+* FbleStructValueField points to an interesting thing to look into.
+
+Here's the start of the self time list:
+
+    9.04%     2392 FbleStructValueField
+    8.47%     2242 FbleCall
+    6.67%     1766 FbleUnionValueTag
+    6.21%     1643 Get
+    5.26%     1392 FbleUnionValueField
+    5.12%     1355 TailCall
+    4.91%     1301 _int_free
+    4.36%     1155 _2f_Core_2f_List_25__2e_Append_21_.001f
+    4.20%     1112 _int_malloc
+    3.60%      952 MoveTo
+
+All of these are worth looking into individually. I wonder what 'Get' is?
+
+Anyway, that's really useful top level info. What do we want next level to be
+able to better understand? Let's look at /List/Core/Append% for example.
+
+It would be nice to see:
+1. Who is calling this. Is it one big path, a single benchmark? Or multiple? If
+   it's multiple, how is the time divided between the callers?
+2. If I focus on calls starting here, how does time break down into callees?
+   What's the expensive part of this call?
+
+For (1), I can break down by stack trace leading up to the append call, but
+it's not very enlightening: all except three start in append, because of the
+truncated stacks. I really need to get rid of those somehow. It messes
+everything up.
+
+The other three are:
+* Fbld Result Do
+* FannkuchRedux Flips
+* Md5 Bits Lit
+
+With no real indication of how much is contributing to each. We should be able
+to tell from an fble profile run of the benchmark, because it doesn't truncate
+stacks.
+
+For (2), is it a straight up recursive problem? Filter out samples that
+include the append call, drop all entries leading up to the first, then show
+overall and by self?
+
+* The overall tells us we spend 54% of the time calling FblePopFrame here.
+* The self tells us 12% FbleStructValueField, 10% 'Get',
+  etc.
+
+I think it would be nice to count sample stacks and show all those too?
+Assuming they don't get too long?
+
+I feel like it would be awesome if I could compact a single trace by
+recognizing cycles. For example:
+  a(bc)*de*f
+
+To cover any kind of trace like:
+  abcbcbcdeeeeef
+
+Then list the traces by count.
+
+Thus I propose a single, useful view that you can then zoom in and filter on:
+* by overall breakdown
+* by self breakdown
+* List of sample traces going into.
+* List of sample traces starting from.
+
+We can start by looking at the 'root' page.
+If you click on an overall entry, it filters to traces with that entry and
+focuses there. Multiple subsequent selections filter down more and more.
+
+I would be interested in trying to compress and report all the samples as a
+big list. See if anything interesting comes up. How do we do that?
+
+---
+
+Note: the --call-graph dwarf,65528 let me see inside of inlined functions,
+which is kind of nice.
+

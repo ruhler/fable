@@ -351,3 +351,23 @@ Here's where we are at now fble-bench wise:
 That's nice, because we were hovering around 4:45s and 609M before.
 
 Profiling still shows lots of time in IncrGc. Hmm...
+
+---
+
+Perf is showing a lot of samples in FbleStructValueField, due to an assertion
+we have there. If I remove the assertion, the self time from
+FbleStructValueField goes way down, but I'm not convinced overall time
+improves. Let's test:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 4:25.20  ==> 4:30.37
+  Memory: 533864 ==> 533888
+
+Hmm... No improvement. Interesting.
+
+And for the fun of it, what if we do -O2 instead of -O3?
+
+  Time: 4:41.13
+  Memory: 524676
+
+So, a bit better memory, a bit worse performance.
