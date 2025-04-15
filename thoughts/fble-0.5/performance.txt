@@ -428,3 +428,62 @@ Just for the record, here's the performance implications:
 
 Note that because we don't have the union of headers anymore, stack allocated
 values take one fewer 8 byte word.
+
+---
+
+Next step: I want to pack stuff more compactly into FbleValue:
+* 32 bits for fieldc/tag
+* 2 bits for value tag: struct/union/func/native
+* 1 bit for loc: gc/stack
+* 1 bit for traversing
+* eventually: 1 bit for frame vs. gc field on stack header.
+
+The 32 bits is easy to keep separate. What's the best way to represent the
+other things? Bit fields? Can I use those with enums?
+
+It looks like I can't portably mix enums and bit fields. Bit fields in
+general look a bit scary. I kind of want to pack things myself.
+
+On the other hand, I only have 4 different fields. I could back each in a
+single byte and still fit in 32 bits? That just means we can't easily extend
+later on.
+
+Remind me again why we need to store the value tag? Probably just mark refs,
+right? Oh, and GCRealloc, things like that.
+
+So, what will I call these fields?
+* union { uint32_t tag; uint32_t fieldc; } ?
+* uint32_t field?
+* uint32_t meta
+* uint32_t header
+* uint32_t head_word
+* uint32_t field_word
+* uint32_t flags;
+* uint32_t n;
+* uint32_t tag_fields;
+* uint32_t data;
+* uint64_t data;
+
+Note, currently sizeof(FbleValue) is 12 bytes. Must be 4 bytes for tag, 4 for
+loc, and 4 for traversing. Which is silly.
+
+uint64_t data is interesting. It lets us use all the rest of the unused bits
+for the tag/fields. That's kind of appealing.
+
+---
+
+I don't need more than 32 bits for tag / fieldc. Let's just have:
+  uint32_t data;
+  uint32_t flags;
+
+Where 'data' is the tag from a union value, every other use of data and flags
+is internal.
+
+---
+
+Merging stack allocated objects frame/gc pointer to save another word of
+space:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 2:18.62 ==> 2:18.77 ==> 2:17.77
+  Memory: 553172 ==> 543656 ==> 535444

@@ -273,15 +273,21 @@ typedef struct {
 
 /**
  * @struct[StackAllocatedValue] An FbleValue allocated on the stack.
- *  @field[FbleValue*][gc]
- *   The equivalent GC value allocated for this value, or NULL if this value
- *   has not been GC allocated yet.
- *  @field[Frame*][frame] The frame this value is allocated to.
+ *  The stack allocated value header is either a pointer to the frame the
+ *  object was allocated to, or, after the object has been gc reallocated, a
+ *  pointer to the gc reallocated value. If the least significant bit of
+ *  gcframe is 1, the object hasn't been gc allocated yet and gcframe XORED
+ *  with 1 is the Frame* pointer. Otherwise the object has been gc allocated
+ *  and gc is the FbleValue* gc allocated object.
+ *
+ *  @field[intptr_t][gcframe]
+ *   The Frame* or gc allocated FbleValue* pointer, depending on whether the
+ *   least significant bit is set.
+ *  @field[Frame*][frame] The frame this value is allocated to, XORED with 1.
  *  @field[FbleValue][value] The contents of the value.
  */
 typedef struct {
-  FbleValue* gc;
-  Frame* frame;
+  uintptr_t gcframe;
   FbleValue value;
 } StackAllocatedValue;
 
@@ -710,8 +716,7 @@ static void* StackAlloc(ValueHeap* heap, size_t size)
 static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size)
 {
   StackAllocatedValue* value = StackAlloc(heap, size + offsetof(StackAllocatedValue, value));
-  value->gc = NULL;
-  value->frame = heap->top;
+  value->gcframe = ((uintptr_t)heap->top) ^ ONE;
   value->value.tag = tag;
   value->value.loc = STACK_ALLOC;
   value->value.traversing = false;
@@ -786,15 +791,16 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
   // If the value has already been GC allocated, return the associated GC
   // allocated value.
   StackAllocatedValue* svalue = StackAllocatedValueOf(value);
-  if (svalue->gc != NULL) {
-    return svalue->gc;
+  if ((svalue->gcframe & ONE) == 0) {
+    return (FbleValue*)svalue->gcframe;
   }
 
+  Frame* frame = (Frame*)(svalue->gcframe ^ ONE);
   switch (value->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
-      StructValue* nv = NewGcValueExtra(heap, svalue->frame, StructValue, STRUCT_VALUE, sv->fieldc);
-      svalue->gc = &nv->_base;
+      StructValue* nv = NewGcValueExtra(heap, frame, StructValue, STRUCT_VALUE, sv->fieldc);
+      svalue->gcframe = (uintptr_t)&nv->_base;
       
       nv->fieldc = sv->fieldc;
       for (size_t i = 0; i < sv->fieldc; ++i) {
@@ -805,8 +811,8 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
 
     case UNION_VALUE: {
       UnionValue* uv = (UnionValue*)value;
-      UnionValue* nv = NewGcValue(heap, svalue->frame, UnionValue, UNION_VALUE);
-      svalue->gc = &nv->_base;
+      UnionValue* nv = NewGcValue(heap, frame, UnionValue, UNION_VALUE);
+      svalue->gcframe = (uintptr_t)&nv->_base;
       nv->tag = uv->tag;
       nv->arg = GcRealloc(heap, uv->arg);
       return &nv->_base;
@@ -814,8 +820,8 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
 
     case FUNC_VALUE: {
       FuncValue* fv = (FuncValue*)value;
-      FuncValue* nv = NewGcValueExtra(heap, svalue->frame, FuncValue, FUNC_VALUE, fv->function.executable.num_statics);
-      svalue->gc = &nv->_base;
+      FuncValue* nv = NewGcValueExtra(heap, frame, FuncValue, FUNC_VALUE, fv->function.executable.num_statics);
+      svalue->gcframe = (uintptr_t)&nv->_base;
       memcpy(&nv->function.executable, &fv->function.executable, sizeof(FbleExecutable));
       nv->function.profile_block_id = fv->function.profile_block_id;
       nv->function.statics = nv->statics;
