@@ -11,6 +11,7 @@
 
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end
+#include <stddef.h>   // for offsetof
 #include <stdlib.h>   // for NULL
 #include <string.h>   // for memcpy
 
@@ -163,10 +164,13 @@ typedef struct List {
   struct List* prev;
 } List;
 
+// Forward reference to GcAllocatedValue.
+typedef struct GcAllocatedValue GcAllocatedValue;
+
 static void Clear(List* list);
 static bool IsEmpty(List* list);
-static FbleValue* Get(List* list);
-static void MoveTo(List* dst, FbleValue* value);
+static GcAllocatedValue* Get(List* list);
+static void MoveTo(List* dst, GcAllocatedValue* value);
 static void MoveAllTo(List* dst, List* src);
 
 typedef struct Frame Frame;
@@ -179,39 +183,11 @@ typedef enum {
   NATIVE_VALUE,
 } ValueTag;
 
-/**
- * @struct[StackHeader] Object header for values allocated to the stack.
- *  @field[FbleValue*][gc]
- *   The equivalent GC value allocated for this value, or NULL if this value
- *   has not been GC allocated yet.
- *  @field[Frame*][frame] The frame this value is allocated to.
- */
-typedef struct {
-  FbleValue* gc;
-  Frame* frame;
-} StackHeader;
-
-/**
- * @struct[GcHeader] Object header for GC allocated values.
- *  @field[List][list] A list of values this value belongs to.
- *  @field[uint64_t][gen] Generation this object is allocated in.
- */
-typedef struct {
-  List list;
-  uint64_t gen;
-} GcHeader;
-
 // Where an object is allocated.
 typedef enum {
   GC_ALLOC,
   STACK_ALLOC
 } AllocLoc;
-
-// Value header depending on a value's AllocLoc.
-typedef union {
-  GcHeader gc;
-  StackHeader stack;
-} Header;
 
 /**
  * @struct[FbleValue] Base class for fble values.
@@ -230,9 +206,6 @@ typedef union {
  *  @field[bool][traversing] True if we are currently traversing this object.
  */
 struct FbleValue {
-  // Note: Header.gc.list must be the first thing in FbleValue so we can map
-  // from GC list pointers back to FbleValue. 
-  Header h;
   ValueTag tag;
   AllocLoc loc;
   bool traversing;
@@ -297,6 +270,32 @@ typedef struct {
   void* data;
   void (*on_free)(void* data);
 } NativeValue;
+
+/**
+ * @struct[StackAllocatedValue] An FbleValue allocated on the stack.
+ *  @field[FbleValue*][gc]
+ *   The equivalent GC value allocated for this value, or NULL if this value
+ *   has not been GC allocated yet.
+ *  @field[Frame*][frame] The frame this value is allocated to.
+ *  @field[FbleValue][value] The contents of the value.
+ */
+typedef struct {
+  FbleValue* gc;
+  Frame* frame;
+  FbleValue value;
+} StackAllocatedValue;
+
+/**
+ * @struct[GcAllocatedValue] An FbleValue allocated on the heap.
+ *  @field[List][list] A list of values this value belongs to.
+ *  @field[uint64_t][gen] Generation this object is allocated in.
+ *  @field[FbleValue][value] The contents of the value.
+ */
+struct GcAllocatedValue {
+  List list;
+  uint64_t gen;
+  FbleValue value;
+};
 
 /**
  * @func[NewValue] Allocates a new value of the given type.
@@ -429,9 +428,9 @@ struct Frame {
   Chunk* chunks;
 };
 
-static void MoveToAlloced(Frame* frame, FbleValue* value);
-static void MoveToMarked(Frame* frame, FbleValue* value);
-static void MoveToUnmarked(Frame* frame, FbleValue* value);
+static void MoveToAlloced(Frame* frame, GcAllocatedValue* value);
+static void MoveToMarked(Frame* frame, GcAllocatedValue* value);
+static void MoveToUnmarked(Frame* frame, GcAllocatedValue* value);
 
 /**
  * @struct[Gc] Information about the current set of objects undergoing GC.
@@ -508,10 +507,13 @@ typedef struct {
   uintptr_t ref_id;
 } ValueHeap;
 
+static StackAllocatedValue* StackAllocatedValueOf(FbleValue* value);
+static GcAllocatedValue* GcAllocatedValueOf(FbleValue* value);
+
 static void* StackAlloc(ValueHeap* heap, size_t size);
 static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size);
 static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, size_t size);
-static void FreeGcValue(FbleValue* value);
+static void FreeGcValue(GcAllocatedValue* value);
 static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value);
 
 static FbleValue* RefValue(uintptr_t id);
@@ -565,38 +567,37 @@ static bool IsEmpty(List* list)
 /**
  * @func[Get] Take a value off of a list.
  *  @arg[List*][list] The list to get a value from.
- *  @returns[FbleValue*] A value from the list. NULL if the list is empty.
- *  @sideeffects
- *   Removes the value from the list.
+ *  @returns[GcAllocatedValue*] A value from the list. NULL if the list is empty.
+ *  @sideeffects Removes the value from the list.
  */
-static FbleValue* Get(List* list)
+static GcAllocatedValue* Get(List* list)
 {
   if (list->next == list) {
     return NULL;
   }
 
-  FbleValue* got = (FbleValue*)list->next;
-  got->h.gc.list.prev->next = got->h.gc.list.next;
-  got->h.gc.list.next->prev = got->h.gc.list.prev;
-  Clear(&got->h.gc.list);
+  GcAllocatedValue* got = (GcAllocatedValue*)list->next;
+  got->list.prev->next = got->list.next;
+  got->list.next->prev = got->list.prev;
+  Clear(&got->list);
   return got;
 }
 
 /**
- * @func[MoveTo] Moves an value from one list to another.
+ * @func[MoveTo] Moves a value from one list to another.
  *  @arg[List*][dst] The list to move the value to.
  *  @arg[FbleValue*][value] The value to move.
  *  @sideeffects
  *   Moves the value from its current list to @a[dst].
  */
-static void MoveTo(List* dst, FbleValue* value)
+static void MoveTo(List* dst, GcAllocatedValue* value)
 {
-  value->h.gc.list.prev->next = value->h.gc.list.next;
-  value->h.gc.list.next->prev = value->h.gc.list.prev;
-  value->h.gc.list.next = dst->next;
-  value->h.gc.list.prev = dst;
-  dst->next->prev = &value->h.gc.list;
-  dst->next = &value->h.gc.list;
+  value->list.prev->next = value->list.next;
+  value->list.next->prev = value->list.prev;
+  value->list.next = dst->next;
+  value->list.prev = dst;
+  dst->next->prev = &value->list;
+  dst->next = &value->list;
 }
 
 /**
@@ -618,26 +619,54 @@ static void MoveAllTo(List* dst, List* src)
   }
 }
 
-static void MoveToAlloced(Frame* frame, FbleValue* value)
+static void MoveToAlloced(Frame* frame, GcAllocatedValue* value)
 {
-  assert(value->h.gc.gen == frame->gen);
+  assert(value->gen == frame->gen);
   MoveTo(&frame->alloced, value);
 }
 
-static void MoveToMarked(Frame* frame, FbleValue* value)
+static void MoveToMarked(Frame* frame, GcAllocatedValue* value)
 {
-  assert(value->h.gc.gen != frame->gen);
-  assert(value->h.gc.gen >= frame->min_gen);
-  assert(value->h.gc.gen < frame->max_gen);
+  assert(value->gen != frame->gen);
+  assert(value->gen >= frame->min_gen);
+  assert(value->gen < frame->max_gen);
   MoveTo(&frame->marked, value);
 }
 
-static void MoveToUnmarked(Frame* frame, FbleValue* value)
+static void MoveToUnmarked(Frame* frame, GcAllocatedValue* value)
 {
-  assert(value->h.gc.gen != frame->gen);
-  assert(value->h.gc.gen >= frame->min_gen);
-  assert(value->h.gc.gen < frame->max_gen);
+  assert(value->gen != frame->gen);
+  assert(value->gen >= frame->min_gen);
+  assert(value->gen < frame->max_gen);
   MoveTo(&frame->unmarked, value);
+}
+
+/**
+ * @func[StackAllocatedValueOf] Gets the StackAllocatedValue for this value.
+ *  @arg[FbleValue*][value] The value to get the StackAllocatedValue* of.
+ *  @returns[StackAllocatedValue*] The StackAllocatedValue* for this value.
+ *  @sideeffects
+ *   Behavior is undefined if the given value is not stack allocated.
+ */
+static StackAllocatedValue* StackAllocatedValueOf(FbleValue* value)
+{
+  intptr_t ptr = (intptr_t)value;
+  ptr -= offsetof(StackAllocatedValue, value);
+  return (StackAllocatedValue*)ptr;
+}
+
+/**
+ * @func[GcAllocatedValueOf] Gets the GcAllocatedValue for this value.
+ *  @arg[FbleValue*][value] The value to get the GcAllocatedValue* of.
+ *  @returns[GcAllocatedValue*] The GcAllocatedValue* for this value.
+ *  @sideeffects
+ *   Behavior is undefined if the given value is not stack allocated.
+ */
+static GcAllocatedValue* GcAllocatedValueOf(FbleValue* value)
+{
+  intptr_t ptr = (intptr_t)value;
+  ptr -= offsetof(GcAllocatedValue, value);
+  return (GcAllocatedValue*)ptr;
 }
 
 /**
@@ -676,18 +705,17 @@ static void* StackAlloc(ValueHeap* heap, size_t size)
  *  @arg[ValueTag][tag] The tag of the new value.
  *  @arg[size_t][size] The number of bytes to allocate for the value.
  *  @returns[FbleValue*] The newly allocated value.
- *  @sideeffects
- *   Allocates a value to the top frame of the heap.
+ *  @sideeffects Allocates a value to the top frame of the heap.
  */
 static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size)
 {
-  FbleValue* value = StackAlloc(heap, size);
-  value->h.stack.gc = NULL;
-  value->h.stack.frame = heap->top;
-  value->tag = tag;
-  value->loc = STACK_ALLOC;
-  value->traversing = false;
-  return value;
+  StackAllocatedValue* value = StackAlloc(heap, size + offsetof(StackAllocatedValue, value));
+  value->gc = NULL;
+  value->frame = heap->top;
+  value->value.tag = tag;
+  value->value.loc = STACK_ALLOC;
+  value->value.traversing = false;
+  return &value->value;
 }
 
 /**
@@ -704,29 +732,28 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
 {
   IncrGc(heap);
 
-  FbleValue* value = (FbleValue*)FbleAllocRaw(size);
-  value->tag = tag;
-  value->loc = GC_ALLOC;
-  value->traversing = false;
-  value->h.gc.gen = frame->gen;
+  GcAllocatedValue* value = (GcAllocatedValue*)FbleAllocRaw(size + offsetof(GcAllocatedValue, value));
+  value->value.tag = tag;
+  value->value.loc = GC_ALLOC;
+  value->value.traversing = false;
+  value->gen = frame->gen;
 
-  Clear(&value->h.gc.list);
+  Clear(&value->list);
   MoveToAlloced(frame, value);
-  return value;
+  return &value->value;
 }
 
 /**
  * @func[FreeGcValue] Frees a GC allocated value.
- *  @arg[FbleValue*][value] The value to free. May be NULL.
+ *  @arg[GcAllocatedValue*][value] The value to free. May be NULL.
  *  @sideeffects
- *   @i Frees any resources outside of the heap that this value holds on to.
- *   @i Behavior is undefined if the value is not GC allocated.
+ *   Frees any resources outside of the heap that this value holds on to.
  */
-static void FreeGcValue(FbleValue* value)
+static void FreeGcValue(GcAllocatedValue* value)
 {
   if (value != NULL) {
-    if (value->tag == NATIVE_VALUE) {
-      NativeValue* v = (NativeValue*)value;
+    if (value->value.tag == NATIVE_VALUE) {
+      NativeValue* v = (NativeValue*)&value->value;
       if (v->on_free != NULL) {
         v->on_free(v->data);
       }
@@ -758,15 +785,16 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
 
   // If the value has already been GC allocated, return the associated GC
   // allocated value.
-  if (value->h.stack.gc != NULL) {
-    return value->h.stack.gc;
+  StackAllocatedValue* svalue = StackAllocatedValueOf(value);
+  if (svalue->gc != NULL) {
+    return svalue->gc;
   }
 
   switch (value->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
-      StructValue* nv = NewGcValueExtra(heap, value->h.stack.frame, StructValue, STRUCT_VALUE, sv->fieldc);
-      value->h.stack.gc = &nv->_base;
+      StructValue* nv = NewGcValueExtra(heap, svalue->frame, StructValue, STRUCT_VALUE, sv->fieldc);
+      svalue->gc = &nv->_base;
       
       nv->fieldc = sv->fieldc;
       for (size_t i = 0; i < sv->fieldc; ++i) {
@@ -777,8 +805,8 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
 
     case UNION_VALUE: {
       UnionValue* uv = (UnionValue*)value;
-      UnionValue* nv = NewGcValue(heap, value->h.stack.frame, UnionValue, UNION_VALUE);
-      value->h.stack.gc = &nv->_base;
+      UnionValue* nv = NewGcValue(heap, svalue->frame, UnionValue, UNION_VALUE);
+      svalue->gc = &nv->_base;
       nv->tag = uv->tag;
       nv->arg = GcRealloc(heap, uv->arg);
       return &nv->_base;
@@ -786,8 +814,8 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
 
     case FUNC_VALUE: {
       FuncValue* fv = (FuncValue*)value;
-      FuncValue* nv = NewGcValueExtra(heap, value->h.stack.frame, FuncValue, FUNC_VALUE, fv->function.executable.num_statics);
-      value->h.stack.gc = &nv->_base;
+      FuncValue* nv = NewGcValueExtra(heap, svalue->frame, FuncValue, FUNC_VALUE, fv->function.executable.num_statics);
+      svalue->gc = &nv->_base;
       memcpy(&nv->function.executable, &fv->function.executable, sizeof(FbleExecutable));
       nv->function.profile_block_id = fv->function.profile_block_id;
       nv->function.statics = nv->statics;
@@ -894,8 +922,10 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
 
   assert(x->loc == GC_ALLOC && "I think this is expected?");
 
+  GcAllocatedValue* gx = GcAllocatedValueOf(x);
+
   // Avoid traversing objects from older generations.
-  if (x->loc == GC_ALLOC && x->h.gc.gen < heap->top->gen) {
+  if (x->loc == GC_ALLOC && gx->gen < heap->top->gen) {
     return;
   }
 
@@ -964,11 +994,12 @@ static bool IsAlloced(FbleValue* value)
  */
 static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst)
 {
+  GcAllocatedValue* gdst = GcAllocatedValueOf(dst);
   if (IsAlloced(dst)
-      && dst->h.gc.gen >= gc->min_gen
-      && dst->h.gc.gen != gc->gen) {
-    assert(dst->h.gc.gen < gc->max_gen);
-    MoveTo(&gc->marked, dst);
+      && gdst->gen >= gc->min_gen
+      && gdst->gen != gc->gen) {
+    assert(gdst->gen < gc->max_gen);
+    MoveTo(&gc->marked, gdst);
   }
 }
 
@@ -1025,10 +1056,10 @@ static void IncrGc(ValueHeap* heap)
   FreeGcValue(Get(&gc->free));
 
   // Traverse an object on the heap.
-  FbleValue* marked = Get(&gc->marked);
+  GcAllocatedValue* marked = Get(&gc->marked);
   if (marked != NULL) {
-    marked->h.gc.gen = gc->gen;
-    MarkRefs(gc, marked);
+    marked->gen = gc->gen;
+    MarkRefs(gc, &marked->value);
 
     if (gc->interrupted) {
       // GC was interrupted during pop frame or compact, so this object should
@@ -1045,7 +1076,7 @@ static void IncrGc(ValueHeap* heap)
 
   // Resurrect anything that needs saving due to interrupted GC.
   for (size_t i = 0; gc->save.xs[i] != NULL; ++i) {
-    MoveToMarked(gc->frame, gc->save.xs[i]);
+    MoveToMarked(gc->frame, GcAllocatedValueOf(gc->save.xs[i]));
   }
 
   // Set up next gc
@@ -1144,7 +1175,7 @@ void FbleFreeValueHeap(FbleValueHeap* heap_)
     FbleFree(chunk);
   }
 
-  for (FbleValue* value = Get(&values); value != NULL; value = Get(&values)) {
+  for (GcAllocatedValue* value = Get(&values); value != NULL; value = Get(&values)) {
     FreeGcValue(value);
   }
 
@@ -1209,8 +1240,9 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
   MoveAllTo(&heap->top->unmarked, &top->marked);
   MoveAllTo(&heap->top->unmarked, &top->alloced);
 
-  if (IsAlloced(value) && value->h.gc.gen >= top->min_gen) {
-    MoveToMarked(heap->top, value);
+  GcAllocatedValue* gvalue = GcAllocatedValueOf(value);
+  if (IsAlloced(value) && gvalue->gen >= top->min_gen) {
+    MoveToMarked(heap->top, gvalue);
   }
 
   if (heap->gc.frame == top) {
@@ -1221,10 +1253,10 @@ FbleValue* FblePopFrame(FbleValueHeap* heap_, FbleValue* value)
     // If the value we are returning is currently undergoing GC, keep it there
     // until GC has a chance to finish.
     if (IsAlloced(value)
-        && value->h.gc.gen >= heap->gc.min_gen
-        && value->h.gc.gen != heap->gc.gen
-        && value->h.gc.gen < heap->gc.max_gen) {
-      MoveTo(&heap->gc.marked, value);
+        && gvalue->gen >= heap->gc.min_gen
+        && gvalue->gen != heap->gc.gen
+        && gvalue->gen < heap->gc.max_gen) {
+      MoveTo(&heap->gc.marked, gvalue);
       heap->gc.save.xs[0] = value;
       heap->gc.save.xs[1] = NULL;
     } else {
@@ -1300,8 +1332,9 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
   MoveAllTo(&heap->top->unmarked, &heap->top->alloced);
 
   for (size_t i = 0; i < n; ++i) {
-    if (IsAlloced(save[i]) && save[i]->h.gc.gen >= heap->top->min_gen) {
-      MoveToMarked(heap->top, save[i]);
+    GcAllocatedValue* gsave = GcAllocatedValueOf(save[i]);
+    if (IsAlloced(save[i]) && gsave->gen >= heap->top->min_gen) {
+      MoveToMarked(heap->top, gsave);
     }
   }
 
@@ -1318,11 +1351,12 @@ static void CompactFrame(ValueHeap* heap, bool merge, size_t n, FbleValue** save
 
     size_t s = 0;
     for (size_t i = 0; i < n; ++i) {
+      GcAllocatedValue* gsave = GcAllocatedValueOf(save[i]);
       if (IsAlloced(save[i])
-          && save[i]->h.gc.gen >= heap->gc.min_gen
-          && save[i]->h.gc.gen != heap->gc.gen
-          && save[i]->h.gc.gen < heap->gc.max_gen) {
-        MoveTo(&heap->gc.marked, save[i]);
+          && gsave->gen >= heap->gc.min_gen
+          && gsave->gen != heap->gc.gen
+          && gsave->gen < heap->gc.max_gen) {
+        MoveTo(&heap->gc.marked, gsave);
         heap->gc.save.xs[s] = save[i];
         s++;
       }

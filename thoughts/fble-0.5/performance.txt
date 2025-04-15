@@ -385,3 +385,46 @@ Yes, looks like we made good improvements here:
   Time: 4:25.20  ==> 2:18.62
   Memory: 533864 ==> 553172
 
+---
+
+Let's try inlining things like FbleFuncValueFunction next, get that out of the
+way. To do this, first I need to expose the data types somewhere. Including:
+
+* FuncValue, UnionValue, StructValue,
+* FbleValue
+* Header, ValueTag, AllocLoc
+* GcHeader, StackHeader
+* List
+
+Do we want to start by bit packing tag, loc, traversing fields? Or otherwise
+compacting value headers? What do we have today?
+
+StackHeader is 2 pointers: frame, gc.
+- Honestly, a single pointer + 1 bit should be enough, because once we have
+  gc, we don't need frame anymore.
+
+GcHeader is 3 pointers: list.next, list.prev, gen.
+
+We never change the header of an object in place. But we do need to know where
+to find the contents of the value, which changes depending on how the value is
+allocated. Any way I can turn things around? Like, have the FbleValue* point
+at the start of the interesting bits, and have the header come before that?
+
+I'm tempted to try this. Also, limit size and tag to 32 bits each, for
+example. Then value is a 64 bit header which contains tag, size, ValueTag,
+AllocLoc, Traversing, and any other miscellaneous required bits.
+
+---
+
+Pulling StackHeader and GcHeader outside of FbleValue turned out not to be
+hard at all.
+
+Just for the record, here's the performance implications:
+
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 2:18.62 ==> 2:18.77
+  Memory: 553172 ==> 543656
+
+Note that because we don't have the union of headers anymore, stack allocated
+values take one fewer 8 byte word.
