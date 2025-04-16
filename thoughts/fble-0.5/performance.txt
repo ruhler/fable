@@ -487,3 +487,16 @@ space:
 /usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
   Time: 2:18.62 ==> 2:18.77 ==> 2:17.77
   Memory: 553172 ==> 543656 ==> 535444
+
+---
+
+Moving all the miscellaneous value fields into data, flags:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time: 2:18.62 ==> 2:18.77 ==> 2:17.77 ==> 2:13.90
+  Memory: 553172 ==> 543656 ==> 535444 ==> 470492
+
+Nice.
+
+Now we should be set to expose FbleValue in a header and start inlining into
+backends. Start with trying to get rid of FbleFuncValueFunction.

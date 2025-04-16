@@ -177,10 +177,10 @@ typedef struct Frame Frame;
 
 /** Different kinds of FbleValue. */
 typedef enum {
-  STRUCT_VALUE,
-  UNION_VALUE,
-  FUNC_VALUE,
-  NATIVE_VALUE,
+  STRUCT_VALUE = 0,
+  UNION_VALUE = 1,
+  FUNC_VALUE = 2,
+  NATIVE_VALUE = 3,
 } ValueTag;
 
 const uint32_t FbleValueFlagTagBits = 0x3;
@@ -190,25 +190,22 @@ const uint32_t FbleValueFlagTraversingBit = 0x8;
 /**
  * @struct[FbleValue] Base class for fble values.
  *  A tagged union of value types. All values have the same initial layout as
- *  FbleValue. The tag can be used to determine what kind of value this is to
- *  get access to additional fields of the value by first casting to that
- *  specific type of value.
+ *  FbleValue. The tag bits in the flags field can be used to determine what
+ *  kind of value this is to get access to additional fields of the value by
+ *  first casting to that specific type of value.
  *
  *  IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
  *  to save space. An FbleValue* only points to an FbleValue if the least
  *  significant bit of the pointer is 0.
  *
- *  @field[Header][h] The object header.
- *  @field[ValueTag][tag] The kind of value.
  *  @field[uint32_t][data] The tag of a union, number of fields of a struct.
  *  @field[uint32_t][flags]
  *   Additional value metadata: {traversing, is_gc_alloc, value_tag}. The
  *   traversing bit is used to limit recursion in RefAssigns. The is_gc_alloc
  *   bit is used to indicate the value is gc allocated rather than stack
- *   allocated.
+ *   allocated. The value_tag bits hold the ValueTag of the value.
  */
 struct FbleValue {
-  ValueTag tag;
   uint32_t data;
   uint32_t flags;
 };
@@ -715,8 +712,7 @@ static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size)
 {
   StackAllocatedValue* value = StackAlloc(heap, size + offsetof(StackAllocatedValue, value));
   value->gcframe = ((uintptr_t)heap->top) ^ ONE;
-  value->value.tag = tag;
-  value->value.flags = 0;
+  value->value.flags = tag;
   return &value->value;
 }
 
@@ -735,8 +731,7 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
   IncrGc(heap);
 
   GcAllocatedValue* value = (GcAllocatedValue*)FbleAllocRaw(size + offsetof(GcAllocatedValue, value));
-  value->value.tag = tag;
-  value->value.flags = FbleValueFlagIsGcAllocBit;
+  value->value.flags = tag | FbleValueFlagIsGcAllocBit;
   value->gen = frame->gen;
 
   Clear(&value->list);
@@ -753,7 +748,7 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
 static void FreeGcValue(GcAllocatedValue* value)
 {
   if (value != NULL) {
-    if (value->value.tag == NATIVE_VALUE) {
+    if ((value->value.flags & FbleValueFlagTagBits) == NATIVE_VALUE) {
       NativeValue* v = (NativeValue*)&value->value;
       if (v->on_free != NULL) {
         v->on_free(v->data);
@@ -792,7 +787,7 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
   }
 
   Frame* frame = (Frame*)(svalue->gcframe ^ ONE);
-  switch (value->tag) {
+  switch ((ValueTag)(value->flags & FbleValueFlagTagBits)) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
       StructValue* nv = NewGcValueExtra(heap, frame, StructValue, STRUCT_VALUE, value->data);
@@ -923,17 +918,17 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
     return;
   }
 
-  assert(x->flags == FbleValueFlagIsGcAllocBit && "I think this is expected?");
+  assert((x->flags & FbleValueFlagIsGcAllocBit) && "I think this is expected?");
 
   GcAllocatedValue* gx = GcAllocatedValueOf(x);
 
   // Avoid traversing objects from older generations.
-  if (x->flags == FbleValueFlagIsGcAllocBit && gx->gen < heap->top->gen) {
+  if ((x->flags & FbleValueFlagIsGcAllocBit) && gx->gen < heap->top->gen) {
     return;
   }
 
   x->flags ^= FbleValueFlagTraversingBit;
-  switch (x->tag) {
+  switch ((ValueTag)(x->flags & FbleValueFlagTagBits)) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)x;
       for (size_t i = 0; i < x->data; ++i) {
@@ -1015,7 +1010,7 @@ static void MarkRef(Gc* gc, FbleValue* src, FbleValue* dst)
  */
 static void MarkRefs(Gc* gc, FbleValue* value)
 {
-  switch (value->tag) {
+  switch ((ValueTag)(value->flags & FbleValueFlagTagBits)) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
       for (size_t i = 0; i < value->data; ++i) {
@@ -1471,7 +1466,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
     return (FbleValue*)data;
   }
 
-  assert(object->tag == STRUCT_VALUE);
+  assert((object->flags & FbleValueFlagTagBits) == STRUCT_VALUE);
   StructValue* value = (StructValue*)object;
   assert(field < value->_base.data);
   return value->fields[field];
@@ -1526,7 +1521,7 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
     return data;
   }
 
-  assert(object->tag == UNION_VALUE);
+  assert((object->flags & FbleValueFlagTagBits) == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->_base.data;
 }
@@ -1554,7 +1549,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
     return (FbleValue*)data;
   }
 
-  assert(object->tag == UNION_VALUE);
+  assert((object->flags & FbleValueFlagTagBits) == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->arg;
 }
@@ -1588,7 +1583,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
     return (FbleValue*)data;
   }
 
-  assert(object->tag == UNION_VALUE);
+  assert((object->flags & FbleValueFlagTagBits) == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return (value->_base.data == field) ? value->arg : FbleWrongUnionTag;
 }
@@ -1886,7 +1881,7 @@ FbleFunction* FbleFuncValueFunction(FbleValue* value)
   }
 
   FuncValue* func = (FuncValue*)value;
-  assert(func->_base.tag == FUNC_VALUE);
+  assert((value->flags & FbleValueFlagTagBits) == FUNC_VALUE);
   return &func->function;
 }
 
@@ -1949,7 +1944,7 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValu
 {
   ValueHeap* heap = (ValueHeap*)heap_;
   assert(IsAlloced(decl) && "decl should have been alloced");
-  assert(decl->tag == STRUCT_VALUE);
+  assert((decl->flags & FbleValueFlagTagBits) == STRUCT_VALUE);
   StructValue* sv = (StructValue*)decl;
   size_t n = decl->data;
   FbleValue** refs = sv->fields;
@@ -2008,7 +2003,7 @@ FbleValue* FbleNewNativeValue(FbleValueHeap* heap_,
 // See documentation in fble-value.h
 void* FbleNativeValueData(FbleValue* value)
 {
-  assert(value->tag == NATIVE_VALUE);
+  assert((value->flags & FbleValueFlagTagBits) == NATIVE_VALUE);
   return ((NativeValue*)value)->data;
 }
 
