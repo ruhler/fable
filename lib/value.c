@@ -189,6 +189,10 @@ typedef enum {
   STACK_ALLOC
 } AllocLoc;
 
+const uint32_t FbleValueFlagTagBits = 0x3;
+const uint32_t FbleValueFlagIsGcAllocBit = 0x4;
+const uint32_t FbleValueFlagTraversingBit = 0x8;
+
 /**
  * @struct[FbleValue] Base class for fble values.
  *  A tagged union of value types. All values have the same initial layout as
@@ -203,14 +207,16 @@ typedef enum {
  *  @field[Header][h] The object header.
  *  @field[ValueTag][tag] The kind of value.
  *  @field[AllocLoc][loc] Where the object is allocated.
- *  @field[bool][traversing] True if we are currently traversing this object.
  *  @field[uint32_t][data] The tag of a union, number of fields of a struct.
+ *  @field[uint32_t][flags]
+ *   Additional value metadata: {traversing, is_gc_alloc, value_tag}. The
+ *   traversing bit is used to limit recursion in RefAssigns.
  */
 struct FbleValue {
   ValueTag tag;
   AllocLoc loc;
-  bool traversing;
   uint32_t data;
+  uint32_t flags;
 };
 
 /**
@@ -717,7 +723,7 @@ static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size)
   value->gcframe = ((uintptr_t)heap->top) ^ ONE;
   value->value.tag = tag;
   value->value.loc = STACK_ALLOC;
-  value->value.traversing = false;
+  value->value.flags = 0;
   return &value->value;
 }
 
@@ -738,7 +744,7 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
   GcAllocatedValue* value = (GcAllocatedValue*)FbleAllocRaw(size + offsetof(GcAllocatedValue, value));
   value->value.tag = tag;
   value->value.loc = GC_ALLOC;
-  value->value.traversing = false;
+  value->value.flags = 0;
   value->gen = frame->gen;
 
   Clear(&value->list);
@@ -921,7 +927,7 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
   }
 
   // Nothing to do for values currently being traversed.
-  if (x->traversing) {
+  if (x->flags & FbleValueFlagTraversingBit) {
     return;
   }
 
@@ -934,7 +940,7 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
     return;
   }
 
-  x->traversing = true;
+  x->flags ^= FbleValueFlagTraversingBit;
   switch (x->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)x;
@@ -963,7 +969,7 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
       break;
     }
   }
-  x->traversing = false;
+  x->flags ^= FbleValueFlagTraversingBit;
 }
 
 /**
