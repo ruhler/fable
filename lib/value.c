@@ -204,11 +204,13 @@ typedef enum {
  *  @field[ValueTag][tag] The kind of value.
  *  @field[AllocLoc][loc] Where the object is allocated.
  *  @field[bool][traversing] True if we are currently traversing this object.
+ *  @field[uint32_t][data] The tag of a union, number of fields of a struct.
  */
 struct FbleValue {
   ValueTag tag;
   AllocLoc loc;
   bool traversing;
+  uint32_t data;
 };
 
 /**
@@ -218,12 +220,10 @@ struct FbleValue {
  *  Struct values may be packed. See above for the packed encoding.
  *
  *  @field[FbleValue][_base] FbleValue base class.
- *  @field[size_t][fieldc] Number of fields.
- *  @field[FbleValue**][fields] Field values.
+ *  @field[FbleValue**][fields] Field values. _base.data elements in length.
  */
 typedef struct {
   FbleValue _base;
-  size_t fieldc;
   FbleValue* fields[];
 } StructValue;
 
@@ -234,12 +234,10 @@ typedef struct {
  *  Union values may be packed. See above for the packed encoding.
  *
  *  @field[FbleValue][_base] FbleValue base class.
- *  @field[size_t][tag] Union tag value.
  *  @field[FbleValue*][arg] Union argument value.
  */
 typedef struct {
   FbleValue _base;
-  size_t tag;
   FbleValue* arg;
 } UnionValue;
 
@@ -799,11 +797,12 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
   switch (value->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
-      StructValue* nv = NewGcValueExtra(heap, frame, StructValue, STRUCT_VALUE, sv->fieldc);
+      StructValue* nv = NewGcValueExtra(heap, frame, StructValue, STRUCT_VALUE, value->data);
+      nv->_base.data = sv->_base.data;
       svalue->gcframe = (uintptr_t)&nv->_base;
       
-      nv->fieldc = sv->fieldc;
-      for (size_t i = 0; i < sv->fieldc; ++i) {
+      nv->_base.data = sv->_base.data;
+      for (size_t i = 0; i < sv->_base.data; ++i) {
         nv->fields[i] = GcRealloc(heap, sv->fields[i]);
       }
       return &nv->_base;
@@ -813,7 +812,7 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
       UnionValue* uv = (UnionValue*)value;
       UnionValue* nv = NewGcValue(heap, frame, UnionValue, UNION_VALUE);
       svalue->gcframe = (uintptr_t)&nv->_base;
-      nv->tag = uv->tag;
+      nv->_base.data = uv->_base.data;
       nv->arg = GcRealloc(heap, uv->arg);
       return &nv->_base;
     }
@@ -939,7 +938,7 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
   switch (x->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)x;
-      for (size_t i = 0; i < sv->fieldc; ++i) {
+      for (size_t i = 0; i < x->data; ++i) {
         RefAssign(heap, refs, values, sv->fields + i);
       }
       break;
@@ -1021,7 +1020,7 @@ static void MarkRefs(Gc* gc, FbleValue* value)
   switch (value->tag) {
     case STRUCT_VALUE: {
       StructValue* sv = (StructValue*)value;
-      for (size_t i = 0; i < sv->fieldc; ++i) {
+      for (size_t i = 0; i < value->data; ++i) {
         MarkRef(gc, value, sv->fields[i]);
       }
       break;
@@ -1421,7 +1420,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
   }
 
   StructValue* value = NewValueExtra((ValueHeap*)heap, StructValue, STRUCT_VALUE, argc);
-  value->fieldc = argc;
+  value->_base.data = argc;
 
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[i];
@@ -1476,7 +1475,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
 
   assert(object->tag == STRUCT_VALUE);
   StructValue* value = (StructValue*)object;
-  assert(field < value->fieldc);
+  assert(field < value->_base.data);
   return value->fields[field];
 }
 
@@ -1503,7 +1502,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, F
   }
 
   UnionValue* union_value = NewValue((ValueHeap*)heap, UnionValue, UNION_VALUE);
-  union_value->tag = tag;
+  union_value->_base.data = tag;
   union_value->arg = arg;
   return &union_value->_base;
 }
@@ -1531,7 +1530,7 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
 
   assert(object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
-  return value->tag;
+  return value->_base.data;
 }
 
 // See documentation in fble-value.h.
@@ -1593,7 +1592,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
 
   assert(object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
-  return (value->tag == field) ? value->arg : FbleWrongUnionTag;
+  return (value->_base.data == field) ? value->arg : FbleWrongUnionTag;
 }
 
 /**
@@ -1954,7 +1953,7 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValu
   assert(IsAlloced(decl) && "decl should have been alloced");
   assert(decl->tag == STRUCT_VALUE);
   StructValue* sv = (StructValue*)decl;
-  size_t n = sv->fieldc;
+  size_t n = decl->data;
   FbleValue** refs = sv->fields;
 
   heap->ref_id -= n;
