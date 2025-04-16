@@ -183,12 +183,6 @@ typedef enum {
   NATIVE_VALUE,
 } ValueTag;
 
-// Where an object is allocated.
-typedef enum {
-  GC_ALLOC,
-  STACK_ALLOC
-} AllocLoc;
-
 const uint32_t FbleValueFlagTagBits = 0x3;
 const uint32_t FbleValueFlagIsGcAllocBit = 0x4;
 const uint32_t FbleValueFlagTraversingBit = 0x8;
@@ -206,15 +200,15 @@ const uint32_t FbleValueFlagTraversingBit = 0x8;
  *
  *  @field[Header][h] The object header.
  *  @field[ValueTag][tag] The kind of value.
- *  @field[AllocLoc][loc] Where the object is allocated.
  *  @field[uint32_t][data] The tag of a union, number of fields of a struct.
  *  @field[uint32_t][flags]
  *   Additional value metadata: {traversing, is_gc_alloc, value_tag}. The
- *   traversing bit is used to limit recursion in RefAssigns.
+ *   traversing bit is used to limit recursion in RefAssigns. The is_gc_alloc
+ *   bit is used to indicate the value is gc allocated rather than stack
+ *   allocated.
  */
 struct FbleValue {
   ValueTag tag;
-  AllocLoc loc;
   uint32_t data;
   uint32_t flags;
 };
@@ -722,7 +716,6 @@ static FbleValue* NewValueRaw(ValueHeap* heap, ValueTag tag, size_t size)
   StackAllocatedValue* value = StackAlloc(heap, size + offsetof(StackAllocatedValue, value));
   value->gcframe = ((uintptr_t)heap->top) ^ ONE;
   value->value.tag = tag;
-  value->value.loc = STACK_ALLOC;
   value->value.flags = 0;
   return &value->value;
 }
@@ -743,8 +736,7 @@ static FbleValue* NewGcValueRaw(ValueHeap* heap, Frame* frame, ValueTag tag, siz
 
   GcAllocatedValue* value = (GcAllocatedValue*)FbleAllocRaw(size + offsetof(GcAllocatedValue, value));
   value->value.tag = tag;
-  value->value.loc = GC_ALLOC;
-  value->value.flags = 0;
+  value->value.flags = FbleValueFlagIsGcAllocBit;
   value->gen = frame->gen;
 
   Clear(&value->list);
@@ -788,7 +780,7 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
   }
 
   // If the value is already a GC value, there's nothing to do.
-  if (value->loc == GC_ALLOC) {
+  if (value->flags & FbleValueFlagIsGcAllocBit) {
     return value;
   }
 
@@ -931,12 +923,12 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
     return;
   }
 
-  assert(x->loc == GC_ALLOC && "I think this is expected?");
+  assert(x->flags == FbleValueFlagIsGcAllocBit && "I think this is expected?");
 
   GcAllocatedValue* gx = GcAllocatedValueOf(x);
 
   // Avoid traversing objects from older generations.
-  if (x->loc == GC_ALLOC && gx->gen < heap->top->gen) {
+  if (x->flags == FbleValueFlagIsGcAllocBit && gx->gen < heap->top->gen) {
     return;
   }
 
