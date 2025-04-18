@@ -524,3 +524,13 @@ To check if IsPacked, looks like we can use the instruction:
 
 That tests that a bit is not zero. We can also test that a bit is zero.
 
+This is nice, actually. We can do a sequence of tests:
+  1. cbz to see if it's NULL
+  2. tbnz x0, #1 to see if it's packed.
+  3. tbnz x0, #2 to see if it's undefined
+
+Using tbnz for the undef check in aarch64 backend:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:  2:05.66 ==> 2:03.98
+  Memory: 470500 ==> 470360

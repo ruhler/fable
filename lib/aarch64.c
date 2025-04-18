@@ -837,9 +837,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Verify the function isn't undefined.
       fprintf(fout, "  cbz x1, .Lo.%04zx.%zi.u\n", func_id, pc);
-      fprintf(fout, "  and x0, x1, 3\n");
-      fprintf(fout, "  cmp x0, 2\n");
-      fprintf(fout, "  beq .Lo.%04zx.%zi.u\n", func_id, pc);
+      fprintf(fout, "  tbnz x1, #1, .Lo.%04zx.%zi.u\n", func_id, pc);
 
       // Set heap->tail_call_argc
       Mov(fout, "x0", call_instr->args.size);
