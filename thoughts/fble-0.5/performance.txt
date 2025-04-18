@@ -542,3 +542,16 @@ Inlining the code in switch statement to get a union value tag:
 /usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
   Time:  2:03.98 ==> 1:58.30
   Memory: 470360 ==> 470496
+
+---
+
+Inlining the code for FbleUnionValueAccess:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:  1:58.30 ==> 1:57.44
+  Memory: 470496 ==> 470644
+
+Not so much improvement. Interesting.
+
+Maybe review the instructions I'm using, see if we can't do things more
+efficiently for the packed arg extraction.

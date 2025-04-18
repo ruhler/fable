@@ -725,17 +725,42 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
       GetFrameVar(fout, "x0", access_instr->obj);
-      Mov(fout, "x1", access_instr->tagwidth);
-      Mov(fout, "x2", access_instr->tag);
-      fprintf(fout, "  bl FbleUnionValueField\n");
+
+      // Check if the value is NULL, packed, or undefined.
+      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);            // NULL
+      fprintf(fout, "  tbnz x0, #0, .Lr.%04zx.%zi.packed\n", func_id, pc);  // Packed
+      fprintf(fout, "  tbnz x0, #1, .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
+
+      // Get and check the tag from a non-packed value.
+      fprintf(fout, "  ldr w1, [x0, #%zi]\n", offsetof(FbleValue, data));
+      fprintf(fout, "  cmp x1, #%zi\n", access_instr->tag);
+      fprintf(fout, "  b.ne .Lo.%04zx.%zi.bt\n", func_id, pc);
+
+      // Get the argument from the non-packed value.
+      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleUnionValue, arg));
       SetFrameVar(fout, "x0", access_instr->dest);
+      fprintf(fout, "  b .Lr.%04zx.%zi\n", func_id, pc + 1);
 
-      // Check for undefined
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
+      // Packed value case:
+      fprintf(fout, ".Lr.%04zx.%zi.packed:\n", func_id, pc);
+      fprintf(fout, "  lsr x0, x0, 1\n");         // drop pack bit.
+      fprintf(fout, "  and x1, x0, %i\n", 0x3f);  // x1 = length
+      fprintf(fout, "  lsr x0, x0, 6\n");         // drop length
 
-      // Check for wrong tag
-      fprintf(fout, "  cmp x0, %p\n", (void*)FbleWrongUnionTag);
-      fprintf(fout, "  b.eq .Lo.%04zx.%zi.bt\n", func_id, pc);
+      // Get and check the tag is as expected.
+      fprintf(fout, "  and x2, x0, %i\n", (1 << access_instr->tagwidth) - 1);
+      fprintf(fout, "  cmp x2, #%zi\n", access_instr->tag);
+      fprintf(fout, "  b.ne .Lo.%04zx.%zi.bt\n", func_id, pc);
+
+      // Extract the argument.
+      // TODO: Maybe there are fancier instructions we can use here?
+      fprintf(fout, "  lsr x0, x0, %zi\n", access_instr->tagwidth); // drop tag
+      fprintf(fout, "  lsl x0, x0, 6\n");   // data <<= PACKED_OFFSET_WIDTH
+      fprintf(fout, "  sub x1, x1, %zi\n", access_instr->tagwidth);
+      fprintf(fout, "  orr x0, x0, x1\n");  // data |= length
+      fprintf(fout, "  lsl x0, x0, 1\n");   // data <<= 1
+      fprintf(fout, "  orr x0, x0, 1\n");   // data |= 1
+      SetFrameVar(fout, "x0", access_instr->dest);
       return;
     }
 
