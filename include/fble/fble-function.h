@@ -21,7 +21,10 @@ typedef struct FbleFunction FbleFunction;
  *  Type of a C function that implements an fble function.
  *
  *  To perform a tail call, the implementation of the run function should
- *  call and return the result of FbleTailCall.
+ *  set heap->tail_call_argc to the number of arguments,
+ *  set heap->tail_call_buffer[0] to the function to call, set
+ *  heap->tail_call_buffer[i+1] to the ith argument, and return
+ *  heap->tail_call_sentinel.
  *
  *  @arg[FbleValueHeap*] heap
  *   The value heap.
@@ -36,7 +39,7 @@ typedef struct FbleFunction FbleFunction;
  *  @returns FbleValue*
  *   @i The result of executing the function.
  *   @i NULL if the function aborts.
- *   @i The result of calling FbleTailCall.
+ *   @i heap->tail_call_sentinel in to request a tail call.
  *
  *  @sideeffects
  *   Executes the fble function, with whatever side effects that may have.
@@ -105,24 +108,5 @@ struct FbleFunction {
  *   @i Executes the called function to completion, returning the result.
  */
 FbleValue* FbleCall(FbleValueHeap* heap, FbleProfileThread* profile, FbleValue* func, size_t argc, FbleValue** args);
-
-/**
- * @func[FbleTailCall] Creates a tail call.
- *  @arg[FbleValueHeap*][heap] The value heap.
- *  @arg[FbleFunction*][function] The function to execute.
- *  @arg[FbleValue*][func] The function value to execute.
- *  @arg[size_t][argc] Number of arguments passed to the function.
- *  @arg[FbleValue**][args] Arguments to pass to the function. Borrowed.
- *
- *  @returns FbleValue*
- *   The result of the function call, or NULL in case of abort.
- *
- *  @sideeffects
- *   @i Allocates an opaque object representing a tail call.
- */
-FbleValue* FbleTailCall(
-    FbleValueHeap* heap,
-    FbleFunction* function, FbleValue* func,
-    size_t argc, FbleValue** args);
 
 #endif // FBLE_FUNCTION_H_

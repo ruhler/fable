@@ -2,7 +2,6 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Remove FbleFunction* arg to FbleTailCall.
 * Get rid of FbleFunction.
 
 * Add test that would catch the bug if we failed to GcRealloc a value before

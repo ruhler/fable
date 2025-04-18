@@ -1736,19 +1736,6 @@ FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue*
   return result;
 }
 
-// See documentation in fble-function.h
-FbleValue* FbleTailCall(FbleValueHeap* heap_, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
-{
-  ValueHeap* heap = (ValueHeap*)heap_;
-
-  assert(argc < heap->tail_call_capacity);
-
-  heap->_base.tail_call_argc = argc;
-  heap->_base.tail_call_buffer[0] = func;
-  memcpy(heap->_base.tail_call_buffer + 1, args, argc * sizeof(FbleValue*));
-  return heap->_base.tail_call_sentinel;
-}
-
 // See documentation in fble-value.h.
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
