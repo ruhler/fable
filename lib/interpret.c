@@ -11,6 +11,7 @@
 
 #include <fble/fble-alloc.h>    // for FbleAlloc, FbleFree
 #include <fble/fble-function.h> // For FbleFunction, etc.
+#include <fble/fble-value.h>    // for FbleNativeValueData, etc.
 #include <fble/fble-vector.h>   // for FbleInitVector, etc.
 
 #include "code.h"

@@ -8,7 +8,13 @@
 
 #include "fble-module-path.h" // for FbleModulePath
 #include "fble-profile.h"     // for FbleProfileThread
-#include "fble-value.h"       // for FbleValue
+
+// Forward references from fble-value.h
+typedef struct FbleValueHeap FbleValueHeap;
+typedef struct FbleValue FbleValue;
+
+// Forward references from fble-function.h
+typedef struct FbleFunction FbleFunction;
 
 /**
  * @func[FbleRunFunction] Implementation of fble function logic.
@@ -52,12 +58,12 @@ typedef FbleValue* FbleRunFunction(
  *  @field[FbleRunFunction*][run]
  *   How to run the function. See FbleRunFunction for more info.
  */
-struct FbleExecutable {
+typedef struct {
   size_t num_args;
   size_t num_statics;
   size_t max_call_args;
   FbleRunFunction* run;
-};
+} FbleExecutable;
 
 /**
  * @struct[FbleFunction] Information about an fble function.

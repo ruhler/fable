@@ -39,40 +39,6 @@
 // Allocated values are allocated in memory. They are passed around by
 // reference.
 //
-// Values are packed as follows on a 64-bit pointer architecture:
-// * Bit 0 is set to 1 to indicate it is a packed value.
-// * Bits [6:1] indicate the length of the packed content in bits.
-// * The remaining bits are packed content depending on if it's a struct or
-//   union.
-// * Packed content for a union is binary encoded tag bits, using sufficient
-//   number of bits to represent all possible tags of that particular union
-//   type. That's least significant bits of content, followed by the packed
-//   content of the argument.
-// * Packed content for a struct is a list of N-1 6-bit sizes giving the
-//   number of bits past the end of the struct to reach the packed content for
-//   the ith field of the struct.
-// * The unused most significant bits of the packed value are always 0.
-//
-// For example:
-//   Octal@ = +(Unit@ 0, Unit@ 1, Unit@ 2, ... Unit@ 7)
-//   Str@ = +(*(Octal@ head, Str@ tail) cons, Unit@ nil)
-//   Str@ x = Str|'162'
-//
-// The value x is packed as the following 64 bit value, with more significant
-// bits on the left and least significant bit on the right:
-//   Decimal:  1   2      3 0   6      3 0   1      3 0     31 1
-//   Binary:   1 011 000011 0 110 000011 0 001 000011 0 011111 1
-//   Label:    t ooo OOOOOO t ooo OOOOOO t ooo OOOOOO t LLLLLL P
-//
-// o: tag bits for an octal element.
-// O: number of bits offset to tail field of cons struct.
-// t: list tag: 0 for cons, 1 for nil.
-// L: length of packed content
-// P: pack bit
-//
-// A 32-bit pointer architecture uses 5 bit length and offset instead of 6
-// bit length and offset.
-//
 // Ref Values
 // ----------
 // Ref values are packed specially as {id, 'b10}, with id 0 reserved for 
@@ -183,74 +149,16 @@ typedef enum {
   NATIVE_VALUE = 3,
 } ValueTag;
 
+// uint32_t FbleValue.data field is the tag of a union and the number of
+// fields of a struct.
+
+// uint32_t FbleValue.flags field is {traversing, is_gc_alloc, value_tag}. The
+// traversing bit is used to limit recursion in RefAssigns. The is_gc_alloc
+// bit is used to indicate the value is gc allocated rather than stack
+// allocated. The value_tag bits hold the ValueTag of the value.
 const uint32_t FbleValueFlagTagBits = 0x3;
 const uint32_t FbleValueFlagIsGcAllocBit = 0x4;
 const uint32_t FbleValueFlagTraversingBit = 0x8;
-
-/**
- * @struct[FbleValue] Base class for fble values.
- *  A tagged union of value types. All values have the same initial layout as
- *  FbleValue. The tag bits in the flags field can be used to determine what
- *  kind of value this is to get access to additional fields of the value by
- *  first casting to that specific type of value.
- *
- *  IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
- *  to save space. An FbleValue* only points to an FbleValue if the least
- *  significant bit of the pointer is 0.
- *
- *  @field[uint32_t][data] The tag of a union, number of fields of a struct.
- *  @field[uint32_t][flags]
- *   Additional value metadata: {traversing, is_gc_alloc, value_tag}. The
- *   traversing bit is used to limit recursion in RefAssigns. The is_gc_alloc
- *   bit is used to indicate the value is gc allocated rather than stack
- *   allocated. The value_tag bits hold the ValueTag of the value.
- */
-struct FbleValue {
-  uint32_t data;
-  uint32_t flags;
-};
-
-/**
- * @struct[StructValue] STRUCT_VALUE
- *  An fble struct value.
- *
- *  Struct values may be packed. See above for the packed encoding.
- *
- *  @field[FbleValue][_base] FbleValue base class.
- *  @field[FbleValue**][fields] Field values. _base.data elements in length.
- */
-typedef struct {
-  FbleValue _base;
-  FbleValue* fields[];
-} StructValue;
-
-/**
- * @struct[UnionValue] UNION_VALUE
- *  An fble union value.
- *
- *  Union values may be packed. See above for the packed encoding.
- *
- *  @field[FbleValue][_base] FbleValue base class.
- *  @field[FbleValue*][arg] Union argument value.
- */
-typedef struct {
-  FbleValue _base;
-  FbleValue* arg;
-} UnionValue;
-
-/**
- * @struct[FuncValue] FUNC_VALUE
- *  An fble function value.
- *
- *  @field[FbleValue][_base] FbleValue base class.
- *  @field[FbleFunction][function] Function information.
- *  @field[FbleValue**][statics] Storage location for static variables.
- */
-typedef struct {
-  FbleValue _base;
-  FbleFunction function;
-  FbleValue* statics[];
-} FuncValue;
 
 /**
  * @struct[NativeValue] NATIVE_VALUE
@@ -789,8 +697,8 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
   Frame* frame = (Frame*)(svalue->gcframe ^ ONE);
   switch ((ValueTag)(value->flags & FbleValueFlagTagBits)) {
     case STRUCT_VALUE: {
-      StructValue* sv = (StructValue*)value;
-      StructValue* nv = NewGcValueExtra(heap, frame, StructValue, STRUCT_VALUE, value->data);
+      FbleStructValue* sv = (FbleStructValue*)value;
+      FbleStructValue* nv = NewGcValueExtra(heap, frame, FbleStructValue, STRUCT_VALUE, value->data);
       nv->_base.data = sv->_base.data;
       svalue->gcframe = (uintptr_t)&nv->_base;
       
@@ -802,8 +710,8 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
     }
 
     case UNION_VALUE: {
-      UnionValue* uv = (UnionValue*)value;
-      UnionValue* nv = NewGcValue(heap, frame, UnionValue, UNION_VALUE);
+      FbleUnionValue* uv = (FbleUnionValue*)value;
+      FbleUnionValue* nv = NewGcValue(heap, frame, FbleUnionValue, UNION_VALUE);
       svalue->gcframe = (uintptr_t)&nv->_base;
       nv->_base.data = uv->_base.data;
       nv->arg = GcRealloc(heap, uv->arg);
@@ -811,8 +719,8 @@ static FbleValue* GcRealloc(ValueHeap* heap, FbleValue* value)
     }
 
     case FUNC_VALUE: {
-      FuncValue* fv = (FuncValue*)value;
-      FuncValue* nv = NewGcValueExtra(heap, frame, FuncValue, FUNC_VALUE, fv->function.executable.num_statics);
+      FbleFuncValue* fv = (FbleFuncValue*)value;
+      FbleFuncValue* nv = NewGcValueExtra(heap, frame, FbleFuncValue, FUNC_VALUE, fv->function.executable.num_statics);
       svalue->gcframe = (uintptr_t)&nv->_base;
       memcpy(&nv->function.executable, &fv->function.executable, sizeof(FbleExecutable));
       nv->function.profile_block_id = fv->function.profile_block_id;
@@ -930,7 +838,7 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
   x->flags ^= FbleValueFlagTraversingBit;
   switch ((ValueTag)(x->flags & FbleValueFlagTagBits)) {
     case STRUCT_VALUE: {
-      StructValue* sv = (StructValue*)x;
+      FbleStructValue* sv = (FbleStructValue*)x;
       for (size_t i = 0; i < x->data; ++i) {
         RefAssign(heap, refs, values, sv->fields + i);
       }
@@ -938,13 +846,13 @@ static void RefsAssign(ValueHeap* heap, uintptr_t refs, FbleValue** values, Fble
     }
 
     case UNION_VALUE: {
-      UnionValue* uv = (UnionValue*)x;
+      FbleUnionValue* uv = (FbleUnionValue*)x;
       RefAssign(heap, refs, values, &uv->arg);
       break;
     }
 
     case FUNC_VALUE: {
-      FuncValue* fv = (FuncValue*)x;
+      FbleFuncValue* fv = (FbleFuncValue*)x;
       for (size_t i = 0; i < fv->function.executable.num_statics; ++i) {
         RefAssign(heap, refs, values, fv->statics + i);
       }
@@ -1012,7 +920,7 @@ static void MarkRefs(Gc* gc, FbleValue* value)
 {
   switch ((ValueTag)(value->flags & FbleValueFlagTagBits)) {
     case STRUCT_VALUE: {
-      StructValue* sv = (StructValue*)value;
+      FbleStructValue* sv = (FbleStructValue*)value;
       for (size_t i = 0; i < value->data; ++i) {
         MarkRef(gc, value, sv->fields[i]);
       }
@@ -1020,13 +928,13 @@ static void MarkRefs(Gc* gc, FbleValue* value)
     }
 
     case UNION_VALUE: {
-      UnionValue* uv = (UnionValue*)value;
+      FbleUnionValue* uv = (FbleUnionValue*)value;
       MarkRef(gc, value, uv->arg);
       break;
     }
 
     case FUNC_VALUE: {
-      FuncValue* v = (FuncValue*)value;
+      FbleFuncValue* v = (FbleFuncValue*)value;
       for (size_t i = 0; i < v->function.executable.num_statics; ++i) {
         MarkRef(gc, value, v->statics[i]);
       }
@@ -1412,7 +1320,7 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args
     return (FbleValue*)data;
   }
 
-  StructValue* value = NewValueExtra((ValueHeap*)heap, StructValue, STRUCT_VALUE, argc);
+  FbleStructValue* value = NewValueExtra((ValueHeap*)heap, FbleStructValue, STRUCT_VALUE, argc);
   value->_base.data = argc;
 
   for (size_t i = 0; i < argc; ++i) {
@@ -1467,7 +1375,7 @@ FbleValue* FbleStructValueField(FbleValue* object, size_t fieldc, size_t field)
   }
 
   assert((object->flags & FbleValueFlagTagBits) == STRUCT_VALUE);
-  StructValue* value = (StructValue*)object;
+  FbleStructValue* value = (FbleStructValue*)object;
   assert(field < value->_base.data);
   return value->fields[field];
 }
@@ -1494,7 +1402,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tagwidth, size_t tag, F
     }
   }
 
-  UnionValue* union_value = NewValue((ValueHeap*)heap, UnionValue, UNION_VALUE);
+  FbleUnionValue* union_value = NewValue((ValueHeap*)heap, FbleUnionValue, UNION_VALUE);
   union_value->_base.data = tag;
   union_value->arg = arg;
   return &union_value->_base;
@@ -1522,7 +1430,7 @@ size_t FbleUnionValueTag(FbleValue* object, size_t tagwidth)
   }
 
   assert((object->flags & FbleValueFlagTagBits) == UNION_VALUE);
-  UnionValue* value = (UnionValue*)object;
+  FbleUnionValue* value = (FbleUnionValue*)object;
   return value->_base.data;
 }
 
@@ -1550,7 +1458,7 @@ FbleValue* FbleUnionValueArg(FbleValue* object, size_t tagwidth)
   }
 
   assert((object->flags & FbleValueFlagTagBits) == UNION_VALUE);
-  UnionValue* value = (UnionValue*)object;
+  FbleUnionValue* value = (FbleUnionValue*)object;
   return value->arg;
 }
 
@@ -1584,7 +1492,7 @@ FbleValue* FbleUnionValueField(FbleValue* object, size_t tagwidth, size_t field)
   }
 
   assert((object->flags & FbleValueFlagTagBits) == UNION_VALUE);
-  UnionValue* value = (UnionValue*)object;
+  FbleUnionValue* value = (FbleUnionValue*)object;
   return (value->_base.data == field) ? value->arg : FbleWrongUnionTag;
 }
 
@@ -1863,7 +1771,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
   ValueHeap* heap = (ValueHeap*)heap_;
   EnsureTailCallArgsSpace(heap, executable->max_call_args);
 
-  FuncValue* v = NewValueExtra(heap, FuncValue, FUNC_VALUE, executable->num_statics);
+  FbleFuncValue* v = NewValueExtra(heap, FbleFuncValue, FUNC_VALUE, executable->num_statics);
   v->function.profile_block_id = profile_block_id;
   memcpy(&v->function.executable, executable, sizeof(FbleExecutable));
   v->function.statics = v->statics;
@@ -1880,7 +1788,7 @@ FbleFunction* FbleFuncValueFunction(FbleValue* value)
     return NULL;
   }
 
-  FuncValue* func = (FuncValue*)value;
+  FbleFuncValue* func = (FbleFuncValue*)value;
   assert((value->flags & FbleValueFlagTagBits) == FUNC_VALUE);
   return &func->function;
 }
@@ -1945,7 +1853,7 @@ size_t FbleDefineRecursiveValues(FbleValueHeap* heap_, FbleValue* decl, FbleValu
   ValueHeap* heap = (ValueHeap*)heap_;
   assert(IsAlloced(decl) && "decl should have been alloced");
   assert((decl->flags & FbleValueFlagTagBits) == STRUCT_VALUE);
-  StructValue* sv = (StructValue*)decl;
+  FbleStructValue* sv = (FbleStructValue*)decl;
   size_t n = decl->data;
   FbleValue** refs = sv->fields;
 

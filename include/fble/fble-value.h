@@ -8,16 +8,113 @@
 
 #include <stdbool.h>    // for bool
 
+#include "fble-function.h"  // for FbleExecutable, FbleFunction
 #include "fble-profile.h"   // for FbleProfile
 
-// Forward references for types defined in fble-function.h
-typedef struct FbleExecutable FbleExecutable;
-typedef struct FbleFunction FbleFunction;
+/**
+ * @struct[FbleValue] An fble value.
+ *  A union of value types. All values have the same initial layout as
+ *  FbleValue. You can access additional fields of the value by first casting
+ *  to the specific type of value, which you should know based on context.
+ *
+ *  Internal access to FbleValue should be limited to the runtime and backend
+ *  generated code. The data layout is subject to change without notice.
+ *
+ *  IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
+ *  to save space. An FbleValue* only points to an FbleValue if the least
+ *  significant two bits of the pointer are 0.
+ *
+ *  Struct and union values are packed as follows on a 64-bit pointer
+ *  architecture. The type value is packed as a zero argument struct value.
+ *
+ *  @i Bit 0 is set to 1 to indicate it is a packed value.
+ *  @i Bits [6:1] indicate the length of the packed content in bits.
+ *  @item
+ *   The remaining bits are packed content depending on if it's a struct or
+ *   union.
+ *  @item
+ *   Packed content for a union is binary encoded tag bits, using sufficient
+ *   number of bits to represent all possible tags of that particular union
+ *   type. That's least significant bits of content, followed by the packed
+ *   content of the argument.
+ *  @item
+ *   Packed content for a struct is a list of N-1 6-bit sizes giving the
+ *   number of bits past the end of the struct to reach the packed content for
+ *   the ith field of the struct.
+ *  @i The unused most significant bits of the packed value are always 0.
+ * 
+ *  For example:
+ *
+ *  @code[fble] @
+ *   Octal@ = +(Unit@ 0, Unit@ 1, Unit@ 2, ... Unit@ 7)
+ *   Str@ = +(*(Octal@ head, Str@ tail) cons, Unit@ nil)
+ *   Str@ x = Str|'162'
+ * 
+ *  The value x is packed as the following 64 bit value, with more significant
+ *  bits on the left and least significant bit on the right:
+ *
+ *  @code[txt] @
+ *   Decimal:  1   2      3 0   6      3 0   1      3 0     31 1
+ *   Binary:   1 011 000011 0 110 000011 0 001 000011 0 011111 1
+ *   Label:    t ooo OOOOOO t ooo OOOOOO t ooo OOOOOO t LLLLLL P
+ * 
+ *   o: tag bits for an octal element.
+ *   O: number of bits offset to tail field of cons struct.
+ *   t: list tag: 0 for cons, 1 for nil.
+ *   L: length of packed content
+ *   P: pack bit
+ * 
+ *  A 32-bit pointer architecture uses 5 bit length and offset instead of 6
+ *  bit length and offset.
+ *
+ *  Before recursive values are defined, they are represented as a packed
+ *  undefined value with the least two significant bits set to 'b10. Any value
+ *  packed with least significant bits set to 'b10 should be considered an
+ *  undefined value.
+ *
+ *  @field[uint32_t][data] The tag of a union. Otherwise don't touch.
+ *  @field[uint32_t][flags] Internal flags. Don't touch.
+ */
+struct FbleValue {
+  uint32_t data;
+  uint32_t flags;
+};
 
 /**
- * @struct[FbleValue] An fble value. @@
+ * @struct[FbleStructValue] An fble struct value.
+ *  Struct values may be packed. See above for the packed encoding.
+ *
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[FbleValue**][fields] Field values. _base.data elements in length.
  */
-typedef struct FbleValue FbleValue;
+typedef struct {
+  FbleValue _base;
+  FbleValue* fields[];
+} FbleStructValue;
+
+/**
+ * @struct[FbleUnionValue] An fble union value.
+ *  Union values may be packed. See above for the packed encoding.
+ *
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[FbleValue*][arg] Union argument value.
+ */
+typedef struct {
+  FbleValue _base;
+  FbleValue* arg;
+} FbleUnionValue;
+
+/**
+ * @struct[FbleFuncValue] An fble function value.
+ *  @field[FbleValue][_base] FbleValue base class.
+ *  @field[FbleFunction][function] Function information.
+ *  @field[FbleValue**][statics] Storage location for static variables.
+ */
+typedef struct {
+  FbleValue _base;
+  FbleFunction function;
+  FbleValue* statics[];
+} FbleFuncValue;
 
 /**
  * @struct[FbleValueHeap] Memory heap for allocating fble values.
@@ -37,12 +134,12 @@ typedef struct FbleValue FbleValue;
  *  @field[size_t][tail_call_argc]
  *   Number of tail call arguments, not including the tail call function.
  */
-typedef struct {
+struct FbleValueHeap {
   FbleValue* tail_call_sentinel;
   FbleValue** tail_call_buffer;
   size_t tail_call_argc;
   // Additional internal fields follow.
-} FbleValueHeap;
+};
 
 /**
  * @struct[FbleValueV] Vector of FbleValue
