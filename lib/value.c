@@ -446,7 +446,7 @@ static void EnsureTailCallArgsSpace(ValueHeap* heap, size_t max_call_args);
 static FbleValue* PartialApplyImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
-static FbleValue* PartialApply(ValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args);
+static FbleValue* PartialApply(ValueHeap* heap, FbleFuncValue* function, size_t argc, FbleValue** args);
 
 static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile);
 static FbleValue* Eval(ValueHeap* heap, FbleValue* func, size_t argc, FbleValue** args, FbleProfile* profile);
@@ -1542,8 +1542,7 @@ static FbleValue* PartialApplyImpl(
  *  function yet.
  *
  *  @arg[ValueHeap*][heap] The value heap.
- *  @arg[FbleFunction*][function] The function to apply.
- *  @arg[FbleValue*][func] The function value to apply.
+ *  @arg[FbleFuncValue*][function] The function to apply.
  *  @arg[size_t][argc] Number of args to pass.
  *  @arg[FbleValue**][args] Args to pass to the function.
  *
@@ -1552,19 +1551,19 @@ static FbleValue* PartialApplyImpl(
  *  @sideeffects
  *   Allocates an FbleValue on the heap.
  */
-static FbleValue* PartialApply(ValueHeap* heap, FbleFunction* function, FbleValue* func, size_t argc, FbleValue** args)
+static FbleValue* PartialApply(ValueHeap* heap, FbleFuncValue* function, size_t argc, FbleValue** args)
 {
   FbleExecutable exe = {
-    .num_args = function->executable.num_args - argc,
+    .num_args = function->function.executable.num_args - argc,
     .num_statics = 1 + argc,
-    .max_call_args = function->executable.num_args,
+    .max_call_args = function->function.executable.num_args,
     .run = &PartialApplyImpl
   };
 
   FbleValue* statics[1 + argc];
-  statics[0] = func;
+  statics[0] = &function->_base;
   memcpy(statics + 1, args, argc * sizeof(FbleValue*));
-  return FbleNewFuncValue(&heap->_base, &exe, function->profile_block_id, statics);
+  return FbleNewFuncValue(&heap->_base, &exe, function->function.profile_block_id, statics);
 }
 
 /**
@@ -1593,7 +1592,7 @@ static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
     size_t argc = heap->_base.tail_call_argc;
 
     if (argc < exe->num_args) {
-      FbleValue* partial = PartialApply(heap, function, func, argc, heap->_base.tail_call_buffer + 1);
+      FbleValue* partial = PartialApply(heap, (FbleFuncValue*)func, argc, heap->_base.tail_call_buffer + 1);
       return FblePopFrame(&heap->_base, partial);
     }
 
@@ -1702,7 +1701,7 @@ FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue*
   FbleFunction* func = &((FbleFuncValue*)function)->function;
   FbleExecutable* executable = &func->executable;
   if (argc < executable->num_args) {
-    return PartialApply(heap, func, function, argc, args);
+    return PartialApply(heap, (FbleFuncValue*)function, argc, args);
   }
 
   if (profile) {

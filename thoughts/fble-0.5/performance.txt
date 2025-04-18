@@ -511,5 +511,7 @@ Getting rid of calls to FbleFuncValueFunction:
 
 Nice.
 
-Can I get rid of FbleFunction too?
+Can I get rid of FbleFunction too? Yes, but it means changing the prototype
+for executable run function, which is slightly tedious. Basically we pass the
+three fields as args directly. I think it's worth doing.
 
