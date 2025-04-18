@@ -228,8 +228,7 @@ static FbleValue* Interpret(
       case FBLE_TAIL_CALL_INSTR: {
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
         FbleValue* func = GET(call_instr->func);
-        FbleFunction* call_function = FbleFuncValueFunction(func);
-        if (call_function == NULL) {
+        if (func == NULL || ((uintptr_t)func & 0x3) == 0x2) {
           FbleReportError("called undefined function\n", call_instr->loc);
           return NULL;
         };

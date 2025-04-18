@@ -1588,7 +1588,7 @@ static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
 {
   while (true) {
     FbleValue* func = heap->_base.tail_call_buffer[0];
-    FbleFunction* function = FbleFuncValueFunction(func);
+    FbleFunction* function = &((FbleFuncValue*)func)->function;
     FbleExecutable* exe = &function->executable;
     size_t argc = heap->_base.tail_call_argc;
 
@@ -1607,7 +1607,7 @@ static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
     CompactFrame(heap, should_merge, 1 + argc, heap->_base.tail_call_buffer);
 
     func = heap->_base.tail_call_buffer[0];
-    function = FbleFuncValueFunction(func);
+    function = &((FbleFuncValue*)func)->function;
     exe = &function->executable;
     argc = heap->_base.tail_call_argc;
 
@@ -1693,14 +1693,13 @@ FbleValue* FbleCall(FbleValueHeap* heap_, FbleProfileThread* profile, FbleValue*
 {
   ValueHeap* heap = (ValueHeap*)heap_;
 
-  FbleFunction* func = FbleFuncValueFunction(function);
-  if (func == NULL) {
+  if (function == NULL || IsRefValue(function)) {
     FbleLoc loc = FbleNewLoc(__FILE__, __LINE__ + 1, 5);
     FbleReportError("called undefined function\n", loc);
     FbleFreeLoc(loc);
     return NULL;
   }
-
+  FbleFunction* func = &((FbleFuncValue*)function)->function;
   FbleExecutable* executable = &func->executable;
   if (argc < executable->num_args) {
     return PartialApply(heap, func, function, argc, args);
@@ -1779,18 +1778,6 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap_, FbleExecutable* executable, si
     v->statics[i] = statics[i];
   }
   return &v->_base;
-}
-
-// See documentation in fble-value.h
-FbleFunction* FbleFuncValueFunction(FbleValue* value)
-{
-  if (value == NULL || IsRefValue(value)) {
-    return NULL;
-  }
-
-  FbleFuncValue* func = (FbleFuncValue*)value;
-  assert((value->flags & FbleValueFlagTagBits) == FUNC_VALUE);
-  return &func->function;
 }
 
 // See documentation in fble-value.h.

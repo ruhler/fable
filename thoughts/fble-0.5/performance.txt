@@ -500,3 +500,16 @@ Nice.
 
 Now we should be set to expose FbleValue in a header and start inlining into
 backends. Start with trying to get rid of FbleFuncValueFunction.
+
+---
+
+Getting rid of calls to FbleFuncValueFunction:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:  2:13.90 ==> 2:05.66
+  Memory: 470492 ==> 470500
+
+Nice.
+
+Can I get rid of FbleFunction too?
+

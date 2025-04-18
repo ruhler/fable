@@ -409,19 +409,6 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t argc
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_id, FbleValue** statics);
 
 /**
- * @func[FbleFuncValueFunction] Gets the info from a function value.
- *  @arg[FbleValue*][value] The value to get the function info of.
- *
- *  @returns FbleFunction*
- *   The function info, or NULL if the function is undefined. The returned
- *   function info is only valid for as long as the value stays alive.
- *
- *  @sideeffects
- *   Behavior is undefined if the value is not a function.
- */
-FbleFunction* FbleFuncValueFunction(FbleValue* value);
-
-/**
  * @func[FbleEval] Evaluates a linked program.
  *  The program is assumed to be a zero argument function as returned by
  *  FbleLink.

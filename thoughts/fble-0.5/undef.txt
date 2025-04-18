@@ -24,3 +24,22 @@ Any place else? Do they leak out of the fble value API any place? Should they?
 Shouldn't they? The trouble is, NULL seems like a pretty good thing to use for
 an error value. It will take some convincing to change that to 0x2 and have
 support for checking anything that ends with 'b10 as a potential null.
+
+---
+
+aarch64 code to check for undefined:
+ and x0, x0, 3
+ cmp x0, 2
+ beq ...
+
+Too bad. That's three instructions instead of just cbz?
+
+Is it worth doing that everywhere instead of having NULL checks here and
+there? I'm not sure.
+
+It feels pretty annoying to use FbleUndefinedValue instead of NULL everywhere.
+Hmm...
+
+Let me hold off for now until we have more of the code inlined. For now we can
+just check for NULL or undefined. Hope for the best. Once we have the double
+check everywhere, then it will be a clear improvement to remove that.

@@ -484,10 +484,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_TAIL_CALL_INSTR: {
         FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
 
-        fprintf(fout, "  f0 = FbleFuncValueFunction(%s[%zi]);\n",
+        fprintf(fout, "  if (%s[%zi] == NULL || (((uintptr_t)%s[%zi] & 0x3) == 0x2)) ",
+            var_tag[call_instr->func.tag],
+            call_instr->func.index,
             var_tag[call_instr->func.tag],
             call_instr->func.index);
-        fprintf(fout, "  if (f0 == NULL) ");
         ReturnAbort(fout, "UndefinedFunctionValue", call_instr->loc);
 
         fprintf(fout, "  heap->tail_call_buffer[0] = %s[%zi];\n",

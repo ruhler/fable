@@ -833,11 +833,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
     case FBLE_TAIL_CALL_INSTR: {
       FbleTailCallInstr* call_instr = (FbleTailCallInstr*)instr;
-      GetFrameVar(fout, "x0", call_instr->func);
+      GetFrameVar(fout, "x1", call_instr->func);
 
       // Verify the function isn't undefined.
-      fprintf(fout, "  bl FbleFuncValueFunction\n");
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
+      fprintf(fout, "  cbz x1, .Lo.%04zx.%zi.u\n", func_id, pc);
+      fprintf(fout, "  and x0, x1, 3\n");
+      fprintf(fout, "  cmp x0, 2\n");
+      fprintf(fout, "  beq .Lo.%04zx.%zi.u\n", func_id, pc);
 
       // Set heap->tail_call_argc
       Mov(fout, "x0", call_instr->args.size);
@@ -845,7 +847,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // heap->tail_call_buffer[0] = func
       fprintf(fout, "  ldr x0, [R_HEAP, #%zi]\n", offsetof(FbleValueHeap, tail_call_buffer));
-      GetFrameVar(fout, "x1", call_instr->func);
       fprintf(fout, "  str x1, [x0, #0]\n");
 
       // heap->tail_call_buffer[1 + i] = arg[i]

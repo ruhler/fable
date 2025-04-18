@@ -97,7 +97,7 @@ namespace eval "include" {
       FbleNewUnionValue FbleNewEnumValue
       FbleUnionValueTag FbleUnionValueArg FbleUnionValueField
       FbleNewListValue FbleNewListValue_ FbleNewLiteralValue
-      FbleNewFuncValue FbleFuncValueFunction
+      FbleNewFuncValue
       FbleEval FbleApply
       FbleDeclareRecursiveValues FbleDefineRecursiveValues
     }
