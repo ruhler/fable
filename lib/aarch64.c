@@ -744,14 +744,25 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Get the union value tag.
       GetFrameVar(fout, "x0", select_instr->condition);
-      Mov(fout, "x1", select_instr->tagwidth);
-      fprintf(fout, "  bl FbleUnionValueTag\n");
 
-      // Abort if the union object is undefined.
-      fprintf(fout, "  cmp x0, -1\n");
-      fprintf(fout, "  b.eq .Lo.%04zx.%zi.u\n", func_id, pc);
+      // Check if the value is NULL, packed, or undefined.
+      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);            // NULL
+      fprintf(fout, "  tbnz x0, #0, .Lr.%04zx.%zi.packed\n", func_id, pc);  // Packed
+      fprintf(fout, "  tbnz x0, #1, .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
+
+      // Get the tag from a non-packed value.
+      fprintf(fout, "  ldr w0, [x0, #%zi]\n", offsetof(FbleValue, data));
+      fprintf(fout, "  b .Lr.%04zx.%zi.switch\n", func_id, pc);
+
+      // Get the tag from a packed value:
+      //   data >>= (1 + PACKED_OFFSET_WIDTH);
+      //   data &= (1 << tagwidth) - 1;
+      fprintf(fout, ".Lr.%04zx.%zi.packed:\n", func_id, pc);
+      fprintf(fout, "  lsr x0, x0, 7\n"); 
+      fprintf(fout, "  and x0, x0, %i\n", (1 << select_instr->tagwidth) - 1);
 
       // Binary search for the jump target based on the tag in x0.
+      fprintf(fout, ".Lr.%04zx.%zi.switch:\n", func_id, pc);
       Context context = { .fout = fout, .func_id = func_id, .pc = pc, .label = 0 };
       Interval interval = {
         .lo = 0, .hi = select_instr->num_tags - 1,

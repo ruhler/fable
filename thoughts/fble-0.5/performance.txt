@@ -534,3 +534,11 @@ Using tbnz for the undef check in aarch64 backend:
 /usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
   Time:  2:05.66 ==> 2:03.98
   Memory: 470500 ==> 470360
+
+---
+
+Inlining the code in switch statement to get a union value tag:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:  2:03.98 ==> 1:58.30
+  Memory: 470360 ==> 470496
