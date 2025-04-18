@@ -515,3 +515,12 @@ Can I get rid of FbleFunction too? Yes, but it means changing the prototype
 for executable run function, which is slightly tedious. Basically we pass the
 three fields as args directly. I think it's worth doing.
 
+Actually, not clear. Maybe it's useful to keep the struct around.
+
+---
+
+To check if IsPacked, looks like we can use the instruction:
+  tbnz    w0, #0, 2ea630 <FbleUnionValueTag+0x2c>
+
+That tests that a bit is not zero. We can also test that a bit is zero.
+

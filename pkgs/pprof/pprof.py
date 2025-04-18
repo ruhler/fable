@@ -34,11 +34,29 @@ def Dump(node, indent):
     for child in children:
         Dump(child, indent + "  ")
 
+# Removes cycles of length n from the given trace
+def RemoveCycles(trace, n):
+    i = 0
+    while i < len(trace):
+        if trace[i:i+n] == trace[i+n:i+2*n]:
+            for k in range(0, n):
+                trace.pop(i+n)
+        else:
+            i += 1
+
+def Canonicalize(trace):
+    # To canonocalize a stack trace, any time we see a repeated subsequence
+    # abc,abc in the trace, drop the second occurence.
+    for i in range(1, len(trace)):
+        RemoveCycles(trace, i)
+
+
 root = Node("<root>")
 overalls = {}    # Count 'overall' sample appearence of each entry.
 selfs = {}      # Count 'self' sample apparence of each entry.
 total = 0       # Total number of samples.
 
+canon = {}
 focus = None
 samples = []
 appends = {}
@@ -56,6 +74,14 @@ for line in sys.stdin:
                 samples = samples[i:]
             except ValueError:
                 continue
+
+        Canonicalize(samples)
+        canonized = ';'.join(samples)
+        if canonized in canon:
+            canon[canonized].count += 1
+        else:
+            canon[canonized] = Entry(canonized)
+            canon[canonized].count += 1
 
         total += 1
         node = root
@@ -92,3 +118,9 @@ for entry in sorted(selfs.values(), key=lambda x: -x.count):
     print("%8.2f%% % 8d %s" % (100.0 * entry.count / float(total),
         entry.count, entry.name))
 
+print("")
+print("By Canonical")
+print("============")
+for entry in sorted(canon.values(), key=lambda x: -x.count):
+    print("%8.2f%% % 8d %s" % (100.0 * entry.count / float(total),
+        entry.count, entry.name))
