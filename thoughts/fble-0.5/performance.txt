@@ -643,3 +643,154 @@ Case field x of n. Middle field of multi field struct:
 Seems like the last two cases can be treated them same in terms of generated
 instructions, we just have a different set of known bits to select for
 'offi +1'.
+
+So, assuming we have an argument where we have the length in a register, how
+do I truncate the bits to that length? Any fancy instructions for that, or we
+need to do X & ((1 << length) - 1)?
+
+I think maybe better to do left shift followed by right shift to zero out the
+fields?
+
+For example:
+  { 0, ..., arg1, arg0, ... off1, length, 1 } ==> { 0, arg0, off1, 1}
+
+If the value is in x0, I can put the new length, off1, into x1. Now I want to
+say: shift x0 left by (64 - (x1 + 7)), aka x0 << (57 - x1). Then shift right
+by ... some other funny number. This seems complicated.
+
+Looks like gcc does:
+
+    mov     x0, #0xffffffffffffffff         // #-1
+    lsl     x0, x0, x2
+    bic     x0, x6, x0
+
+Three instructions. I suppose not too bad?
+
+  { 0, ..., arg1, arg0, ... off1, length, 1 } ==> { 0, arg0, off1, 1}
+
+1. Shift arg0 into the right place.
+  a = { 0, ..., arg1, arg0, XXXXXXXXXX}
+  1 instruction.
+2. Extract offset.
+  b = off1
+  1 instruction
+3. Insert off1 into a.
+  1 instruction.
+4. Insert 1 into a.
+  1 instruction.
+5. Do the mov, lsl, bic sequence to put zeroes at the top.
+  3 instructions.
+
+Total: 7 instructions.
+
+I don't know. Let's just brute force it, get something going to start. Worry
+about improving it later. The simplest approach, brute force?
+* shift arg0 to the right spot.
+* extract offset
+* put offset in place
+* put pack bit in place.
+* Do the mov, lsl, bic sequence to zero out the top bits.
+
+---
+
+How about the general case? Maybe I can use that everywhere?
+
+I think we want:
+  x1 = offset: either 0, or can get from bit extract known position.
+  x2 = end: can get from bit extract known position.
+  x0 = x0 >> x1. Puts arg0 in the right place.
+  x2 = x2 - x1.  Gets us the new length.
+  bfi in the length. orr in the pack bit.
+  mov, lsl, bic away any outside bits.
+
+Code is drafted. I don't think it's worth special casing tag 0 at this point.
+Just have an extra mov instruction.
+
+Trouble:
+* Structs with too many fields are not packable. We should avoid even trying.
+  Otherwise we generate bogus instructions.
+
+Specifically: 7 + 6 * fieldc has to be less than 63, right?
+
+The most number of packed fields we could have is 9. If we had 10, the header
+wouldn't fit in 64 bits: 6 * 9 + 7 = ... Or is it 10? Something like that.
+
+---
+
+Trouble: tbnz is giving errors 'Error: conditional branch out of range'. I
+guess the extra instructions for struct access are putting us over the edge.
+Presumably it would have been a problem before anyway if I had a big enough
+function. What should we do?
+
+This is for the undefined check. +- 32KB is the limit :(.
+
+Seems like tbnz is not safe for that in general. It's okay to use for the
+'packed' case, because that's all within a single instruction.
+
+If we have a special instruction for undef, maybe we can get away with it by
+putting the outline code inline and jumping over. It would be something like:
+  cbz x0, .Lo... // NULL
+  tbnz x0, #0 .Lr pc+1 // packed
+  tbz x0, #1 .Lr pc+1 // not undefined
+  b .Lo...      // undefined
+
+Otherwise, I suppose for now, change the check to:
+
+  tst x0, #2
+  b.ne .Lo...
+ 
+---
+
+With the first draft of inlined FbleStructFieldAccess inlined, and the
+required update to use tst instead of tbnz for undef check:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:   1:54.03 ==> 1:49.31
+  Memory:  470680 ==> 470952
+
+Nice.
+
+---
+
+Where am I now performance wise? Remember what we've done:
+* Improved data packing.
+* Improved (?) frame merging.
+* Removal of ref values at runtime.
+* Inlined function, union and struct value access into aarch64.
+
+That's a lot, right? How far have we come? Have I reached 2x performance
+improvement yet? Let's do a spot check on md5.
+
+Today:
+
+yes | head -n 200000 | /usr/bin/time -f "%E" ./out/pkgs/md5/fble-md5
+c2938b130a1d2db9597a9c9a8ea2a5cf  -
+1:06.46
+
+At fble-0.4 release time:
+
+yes | head -n 200000 | /usr/bin/time -f "%E" ./out/pkgs/md5/fble-md5
+c2938b130a1d2db9597a9c9a8ea2a5cf  -
+2:27.64
+
+That is more that 2x performance improvement!
+
+What other ideas do I have at the moment for improving performance more?
+* Make undef check a separate instruction, see if I can statically recognize
+  and avoid the need for those checks.
+* Track statically the exact number of arguments a function expects and
+  optimize the call in that case.
+* Apply value access inlining optimizations to C and interpreter.
+* Avoid use of NULL entirely as a runtime FbleValue.
+ 
+I don't want to do static analysis stuff this release. Save that for a
+subsequent release. Let's hold off on the undef value testing as a separate
+instruction until then. I don't want to apply value access inlining
+optimizations to C and the interpreter yet. I don't care about performance in
+those cases that much right now. I'd rather do a lot of iterations improving
+performance on aarch64 before making any changes to C and interpreter.
+
+My vote is to declare performance improvements done for this release. Save my
+current ideas for the next release. Sound good?
+
+Good. I here-by declare this discussion complete.

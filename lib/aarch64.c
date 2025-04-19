@@ -712,12 +712,69 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+
       GetFrameVar(fout, "x0", access_instr->obj);
-      Mov(fout, "x1", access_instr->fieldc);
-      Mov(fout, "x2", access_instr->tag);
-      fprintf(fout, "  bl FbleStructValueField\n");
+
+      size_t header_length = (access_instr->fieldc == 0) ? 0 : (6 * (access_instr->fieldc - 1));
+      bool packable = header_length + 7 <= 64;
+
+      // Check if the value is NULL, packed, or undefined.
+      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);            // NULL
+      if (packable) {
+        fprintf(fout, "  tbnz x0, #0, .Lr.%04zx.%zi.packed\n", func_id, pc);  // Packed
+      }
+      fprintf(fout, "  tst x0, #2\n");
+      fprintf(fout, "  b.ne .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
+
+      // Get the argument from the non-packed value.
+      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleStructValue, fields) + sizeof(FbleValue*) * access_instr->tag);
+
+      // Packed value case
+      if (packable) {
+        fprintf(fout, "  b .Lr.%04zx.%zi.save\n", func_id, pc);
+        fprintf(fout, ".Lr.%04zx.%zi.packed:\n", func_id, pc);
+
+        if (access_instr->fieldc == 1) {
+          // Single arg struct access, there is nothing to do. The packed
+          // representation of the field is exactly the same as the packed
+          // representation of the single element struct.
+          // { 0, arg, length, 1 } ==> { 0, arg, length, 1 }
+          assert(access_instr->tag == 0);
+        } else {
+
+          // x1: bit offset of start of arg relative to the start of header.
+          if (access_instr->tag == 0) {
+            fprintf(fout, "  mov x1, %zi\n", header_length);
+          } else {
+            fprintf(fout, "  ubfx x1, x0, %zi, #6\n", 7 + 6 * (access_instr->tag - 1));
+            fprintf(fout, "  add x1, x1, %zi\n", header_length);
+          }
+
+          // x2: bit offset of end of arg relative to the start of header.
+          if (access_instr->tag + 1 == access_instr->fieldc) {
+            fprintf(fout, "  ubfx x2, x0, #1, #6\n");
+          } else {
+            fprintf(fout, "  ubfx x2, x0, %zi, #6\n", 7 + 6 * access_instr->tag);
+            fprintf(fout, "  add x2, x2, %zi\n", header_length);
+          }
+
+          // Shift arg to its final position.
+          fprintf(fout, "  lsr x0, x0, x1\n");
+
+          // Compute and insert the length and pack bit.
+          fprintf(fout, "  sub x1, x2, x1\n");
+          fprintf(fout, "  bfi x0, x1, #1, #6\n");
+          fprintf(fout, "  orr x0, x0, #1\n");
+
+          // Zero out any bits beyond the length.
+          fprintf(fout, "  mov x2, -1\n");
+          fprintf(fout, "  lsl x2, x2, x1\n");
+          fprintf(fout, "  bic x0, x0, x2, lsl #7\n");
+        }
+
+        fprintf(fout, ".Lr.%04zx.%zi.save:\n", func_id, pc);
+      }
       SetFrameVar(fout, "x0", access_instr->dest);
-      fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);
       return;
     }
 
@@ -729,7 +786,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       // Check if the value is NULL, packed, or undefined.
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);            // NULL
       fprintf(fout, "  tbnz x0, #0, .Lr.%04zx.%zi.packed\n", func_id, pc);  // Packed
-      fprintf(fout, "  tbnz x0, #1, .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
+      fprintf(fout, "  tst x0, #2\n");
+      fprintf(fout, "  b.ne .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
 
       // Get and check the tag from a non-packed value.
       fprintf(fout, "  ldr w1, [x0, #%zi]\n", offsetof(FbleValue, data));
@@ -767,7 +825,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       // Check if the value is NULL, packed, or undefined.
       fprintf(fout, "  cbz x0, .Lo.%04zx.%zi.u\n", func_id, pc);            // NULL
       fprintf(fout, "  tbnz x0, #0, .Lr.%04zx.%zi.packed\n", func_id, pc);  // Packed
-      fprintf(fout, "  tbnz x0, #1, .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
+      fprintf(fout, "  tst x0, #2\n");
+      fprintf(fout, "  b.ne .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
 
       // Get the tag from a non-packed value.
       fprintf(fout, "  ldr w0, [x0, #%zi]\n", offsetof(FbleValue, data));
@@ -864,7 +923,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Verify the function isn't undefined.
       fprintf(fout, "  cbz x1, .Lo.%04zx.%zi.u\n", func_id, pc);
-      fprintf(fout, "  tbnz x1, #1, .Lo.%04zx.%zi.u\n", func_id, pc);
+      fprintf(fout, "  tst x1, #2\n");
+      fprintf(fout, "  b.ne .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
 
       // Set heap->tail_call_argc
       Mov(fout, "x0", call_instr->args.size);

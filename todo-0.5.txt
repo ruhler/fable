@@ -2,11 +2,12 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Optimize C and interpreter backends like we did aarch64?
-  By inlining logic to access fble values instead of calling library
-  functions.
+* Pull undef check into separate instruction?
+  So we can remove the check entirely if the compiler knows about it?
 
-* Get rid of FbleFunction.
+* Add spec test to catch case of tbnz not having enough limit for undef check.
+
+* Get rid of FbleFunction?
 
 * Add test that would catch the bug if we failed to GcRealloc a value before
   ref assignment.
@@ -19,10 +20,6 @@ Things to consider doing for the fble-0.5 release.
 
 * Split AccessTc and AccessInstr into Struct and Union variants
  - Struct needs fieldc, Union needs tagwidth.
-
-* Optimize PartialApplyImpl
-  - Can we pre-allocate space for the final args to avoid the final memcpys?
-  - Can we inline bits of FbleTailCall to avoid a duplicate memcpy?
 
 * Remove OnFree for GC native objects
   Only allow GC to manage chunks of memory, not have sideeffects?
@@ -54,11 +51,6 @@ Things to consider doing for the fble-0.5 release.
  - That works on all backends.
  - That supports single step through code.
  - That supports field access.
-
-* Make programs run twice as fast.
-
-* Improving packing support for data values.
- - Taking advantage of explicit type info to pack and unpack.
 
 * Modular compilation
  - Add option for loading modules from .so files?
@@ -94,9 +86,6 @@ Things to consider doing for the fble-0.5 release.
 * Consider removing higher order kinds from the language.
   Make everything either kind @ or %. What would we lose?
 
-* Fix potential GC gen overflow?
- - See thoughts/fble-0.3/stack_alloc.txt for details.
-
 * Fbld C implementation
  - Change FbldMarkup type to more explicitly distinguish between the different
    kinds of markups.
@@ -121,6 +110,7 @@ Tutorials:
 * Figure out why building with ninja from the source directory ends up
   building all the tests. And fix that somehow.
 
-* Debug possible deadlock in pkgs/network/sockets-test.tr?
+* Debug occasional deadlock in pkgs/network/sockets-test.tr?
   Seen when doing ninja check after clean build after ninja.
   Seen again doing ninja check after touching build.tcl.
+  Seen pretty regularly when doing full builds, to be honest.

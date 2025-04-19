@@ -42,3 +42,21 @@ Let's read up on the details of mov and movk:
 * movk moves a 16 bit shifted number in a register, keeping whatever else was
   already there.
 
+---
+
+I declare the performance improvement goal of this release met. What do I want
+to shift my focus to next? I think to pprof. Figure out what UI I want. I can
+prototype it in python. Then try implementing in fble. We can see how
+performance is there.
+
+When I have something I'm happy with, revisit the profiling implementation in
+fble runtime itself. See if I can simplify and generalize it at the same time.
+Though honestly it's hard to believe I can make it go faster by recording a
+lot more detail in the profile...
+
+I would like to make a decision on GC native values. That's a separate kind of
+track to follow. Of course we'll want to do release cleanup/burndown when I
+feel like I've finished with the meat of things. I do feel like I've finished
+with the meat of the runtime changes, but plenty of other areas still worth
+exploring.
+
