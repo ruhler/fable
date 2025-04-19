@@ -590,3 +590,56 @@ FbleUnionValueAccess and using ubfx to extract the tag:
   Memory: 470496 ==> 470644 ==> 470500
 
 Much nicer now. Cool.
+
+---
+
+Minor optimization of md5 benchmark to avoid repeated construction of 0xA5
+byte:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:   1:54.85 ==> 1:54.03
+  Memory:  470500 ==> 470680
+
+---
+
+What's the struct access operation in terms of bits? How would I do it in
+assembly?
+
+Current approach in C, there are a few cases.
+
+Case field 0 of 1. Only field of single field struct:
+  There is no header in this case. The data is packed as:
+  { 0, arg, length, 1 }
+  Just return the value as is. No change needed. That's cool.
+
+Case field 0 of 2+. First field of multi field struct:
+  There are N-1 * 6 bits of header.
+  { 0, ..., arg2, arg1, arg0, ... off2, off1, length, 1 }
+
+  We want it to turn into:
+  { 0, arg0, off1, 1 }
+ 
+  Where arg0 is at a known position, it's length is read from a know set of
+  bits. off1 has a known position and width.
+
+Case field n-1 of n. Last field of multi field struct:
+  { 0, ..., arg2, arg1, arg0, ... off2, off1, length, 1 }
+
+  We want it to turn into:
+  { 0, argN-1, length - offN-1, 1 }
+ 
+  Where the position argN-1 is read from a known set of bits. The length
+  is the difference between two known sets of bits.
+
+Case field x of n. Middle field of multi field struct:
+  { 0, ..., arg2, arg1, arg0, ... off2, off1, length, 1 }
+
+  We want it to turn into:
+  { 0, argi, offi+1 - offi, 1 }
+
+  Where the position is read from a known set of bits. The length is the
+  difference between two known sets of bits.
+
+Seems like the last two cases can be treated them same in terms of generated
+instructions, we just have a different set of known bits to select for
+'offi +1'.

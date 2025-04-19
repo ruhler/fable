@@ -32,11 +32,13 @@ Int@ 1 = Int|1;
 <@>@ R@ = State.R@;
 Monad@<M@> Monad = State.Monad;
 
+Maybe@<Bit8@> A5 = Just(H8|A5);
+
 M@<Maybe@<Bit8@>> Get = {
   Int@ n <- Monad.do(State.Get);
   n.?(0: Monad.return(Nothing<Bit8@>));
   Unit@ _ <- Monad.do(State.Set(Sub(n, 1)));
-  Monad.return(Just(H8|A5));
+  Monad.return(A5);
 };
     
 # Benchmark for md5 sum that takes about 1 minute to run.

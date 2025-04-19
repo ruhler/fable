@@ -39,8 +39,8 @@
  *   content of the argument.
  *  @item
  *   Packed content for a struct is a list of N-1 6-bit sizes giving the
- *   number of bits past the end of the struct to reach the packed content for
- *   the ith field of the struct.
+ *   number of bits past the end of the struct header to reach the packed
+ *   content for the ith field of the struct.
  *  @i The unused most significant bits of the packed value are always 0.
  * 
  *  For example:
