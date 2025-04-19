@@ -1,0 +1,14 @@
+Fble 0.6 TODO
+=============
+Things to consider doing for the fble-0.6 release.
+
+* Optimize C and interpreter backends like we did aarch64?
+  By inlining logic to access fble values instead of calling library
+  functions.
+
+* Make programs run twice as fast.
+
+* Fix potential GC gen overflow?
+ - See thoughts/fble-0.3/stack_alloc.txt for details.
+ - See thoughts/fble-0.5/gc.txt for more thoughts.
+

@@ -28,17 +28,30 @@ def Total(node):
     node.total = total
     return total
 
+total = 0       # Total number of samples.
+
 def Dump(node, indent):
-    print("%s%s %d %d" % (indent, node.name, node.total, node.self))
+    print("%s%8.2f%% % 8d %8.2f%%  % 8d %s" % (
+        indent,
+        100.0 * node.total / total, node.total,
+        100.0 * node.self / total, node.self,
+        node.name))
     children = sorted(node.children.values(), key=lambda x: -x.total)
     for child in children:
         Dump(child, indent + "  ")
+
+canon_stats = {}
 
 # Removes cycles of length n from the given trace
 def RemoveCycles(trace, n):
     i = 0
     while i < len(trace):
         if trace[i:i+n] == trace[i+n:i+2*n]:
+            if n in canon_stats:
+                canon_stats[n].count += 1
+            else:
+                canon_stats[n] = Entry("% 8d" % n)
+                canon_stats[n].count = 1
             for k in range(0, n):
                 trace.pop(i+n)
         else:
@@ -54,7 +67,6 @@ def Canonicalize(trace):
 root = Node("<root>")
 overalls = {}    # Count 'overall' sample appearence of each entry.
 selfs = {}      # Count 'self' sample apparence of each entry.
-total = 0       # Total number of samples.
 
 canon = {}
 focus = None
@@ -103,8 +115,6 @@ for line in sys.stdin:
             selfs[node.name].count += 1
         samples = []
 
-#Total(root)
-#Dump(root, "")
 print("By Overall")
 print("==========")
 for entry in sorted(overalls.values(), key=lambda x: -x.count):
@@ -124,3 +134,16 @@ print("============")
 for entry in sorted(canon.values(), key=lambda x: -x.count):
     print("%8.2f%% % 8d %s" % (100.0 * entry.count / float(total),
         entry.count, entry.name))
+
+print("")
+print("Canon Tree")
+print("==========")
+Total(root)
+Dump(root, "")
+
+print("")
+print("Canonicalization Stats")
+print("======================")
+for entry in sorted(canon_stats.values(), key=lambda x: -x.count):
+    print("%s: % 8d" % (entry.name, entry.count))
+
