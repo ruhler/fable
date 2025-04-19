@@ -738,28 +738,22 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
       // Get the argument from the non-packed value.
       fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleUnionValue, arg));
-      SetFrameVar(fout, "x0", access_instr->dest);
-      fprintf(fout, "  b .Lr.%04zx.%zi\n", func_id, pc + 1);
+      fprintf(fout, "  b .Lr.%04zx.%zi.save\n", func_id, pc);
 
       // Packed value case:
       fprintf(fout, ".Lr.%04zx.%zi.packed:\n", func_id, pc);
-      fprintf(fout, "  lsr x0, x0, 1\n");         // drop pack bit.
-      fprintf(fout, "  and x1, x0, %i\n", 0x3f);  // x1 = length
-      fprintf(fout, "  lsr x0, x0, 6\n");         // drop length
 
       // Get and check the tag is as expected.
-      fprintf(fout, "  and x2, x0, %i\n", (1 << access_instr->tagwidth) - 1);
+      fprintf(fout, "  ubfx x2, x0, #7, #%zi\n", access_instr->tagwidth);
       fprintf(fout, "  cmp x2, #%zi\n", access_instr->tag);
       fprintf(fout, "  b.ne .Lo.%04zx.%zi.bt\n", func_id, pc);
 
       // Extract the argument.
-      // TODO: Maybe there are fancier instructions we can use here?
-      fprintf(fout, "  lsr x0, x0, %zi\n", access_instr->tagwidth); // drop tag
-      fprintf(fout, "  lsl x0, x0, 6\n");   // data <<= PACKED_OFFSET_WIDTH
-      fprintf(fout, "  sub x1, x1, %zi\n", access_instr->tagwidth);
-      fprintf(fout, "  orr x0, x0, x1\n");  // data |= length
-      fprintf(fout, "  lsl x0, x0, 1\n");   // data <<= 1
-      fprintf(fout, "  orr x0, x0, 1\n");   // data |= 1
+      fprintf(fout, "  sub x1, x0, %zi\n", 2 * access_instr->tagwidth);
+      fprintf(fout, "  lsr x0, x0, %zi\n", access_instr->tagwidth);
+      fprintf(fout, "  bfi x0, x1, #0, #7\n");
+
+      fprintf(fout, ".Lr.%04zx.%zi.save:\n", func_id, pc);
       SetFrameVar(fout, "x0", access_instr->dest);
       return;
     }
@@ -780,11 +774,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  b .Lr.%04zx.%zi.switch\n", func_id, pc);
 
       // Get the tag from a packed value:
-      //   data >>= (1 + PACKED_OFFSET_WIDTH);
-      //   data &= (1 << tagwidth) - 1;
       fprintf(fout, ".Lr.%04zx.%zi.packed:\n", func_id, pc);
-      fprintf(fout, "  lsr x0, x0, 7\n"); 
-      fprintf(fout, "  and x0, x0, %i\n", (1 << select_instr->tagwidth) - 1);
+      fprintf(fout, "  ubfx x0, x0, #7, #%zi\n", select_instr->tagwidth);
 
       // Binary search for the jump target based on the tag in x0.
       fprintf(fout, ".Lr.%04zx.%zi.switch:\n", func_id, pc);

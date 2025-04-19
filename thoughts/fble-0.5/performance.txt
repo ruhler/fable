@@ -555,3 +555,38 @@ Not so much improvement. Interesting.
 
 Maybe review the instructions I'm using, see if we can't do things more
 efficiently for the packed arg extraction.
+
+---
+
+Instructions to understand better:
+* bic x4, x5, x4
+  Bitwise clear. I think this is:
+      x4 = AND(x5, ~x4)
+  With options for a post shift.
+  So, if x4 is a bit mask, you can use it to clear out those bits?
+
+* ubfx x0, x3, #1, #6
+  Unsigned bitfield extract.
+  Extracts 6 bits starting from bit 1 from x3 and stores in x0. Sounds useful.
+  Or, more generally, UBFM: unsigned bit field move.
+
+* orr x0, x3, x5, lsl #6
+  Let's you do an or and then shift the result.
+
+So, for example, I'm thinking:
+* read length into x1 directly, no need to drop pack bit.
+* left shift by 1 as part of data |= length?
+
+I don't know. It feels like there's a bunch of stuff we could do if I
+understood all the options, but without that, not too much to save. Oh well.
+
+---
+
+Optimizing the aarch64 code down to just a few instructions for
+FbleUnionValueAccess and using ubfx to extract the tag:
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/benchmark/fble-benchmark
+  Time:  1:58.30 ==> 1:57.44 ==> 1:54.85
+  Memory: 470496 ==> 470644 ==> 470500
+
+Much nicer now. Cool.
