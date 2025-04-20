@@ -104,6 +104,14 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
+    case FBLE_STRUCT_ACCESS_TC: {
+      FbleStructAccessTc* v = (FbleStructAccessTc*)tc;
+      FbleFreeLoc(v->loc);
+      FbleFreeTc(v->obj);
+      FbleFree(tc);
+      return;
+    }
+
     case FBLE_STRUCT_COPY_TC: {
       FbleStructCopyTc* s = (FbleStructCopyTc*)tc;
       FbleFreeTc(s->source);
@@ -122,6 +130,14 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
+    case FBLE_UNION_ACCESS_TC: {
+      FbleUnionAccessTc* v = (FbleUnionAccessTc*)tc;
+      FbleFreeLoc(v->loc);
+      FbleFreeTc(v->obj);
+      FbleFree(tc);
+      return;
+    }
+
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* v = (FbleUnionSelectTc*)tc;
       FbleFreeTc(v->condition);
@@ -130,14 +146,6 @@ void FbleFreeTc(FbleTc* tc)
       }
       FbleFreeVector(v->targets);
       FreeTcBinding(v->default_);
-      FbleFree(tc);
-      return;
-    }
-
-    case FBLE_DATA_ACCESS_TC: {
-      FbleDataAccessTc* v = (FbleDataAccessTc*)tc;
-      FbleFreeLoc(v->loc);
-      FbleFreeTc(v->obj);
       FbleFree(tc);
       return;
     }

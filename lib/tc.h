@@ -9,7 +9,6 @@
 #include <fble/fble-loc.h>
 #include <fble/fble-name.h>
 
-#include "kind.h"       // for FbleDataTypeTag
 #include "tag.h"        // for FbleTagV
 #include "var.h"        // for FbleVar
 
@@ -41,10 +40,11 @@ typedef enum {
   FBLE_LET_TC,
   FBLE_UNDEF_TC,
   FBLE_STRUCT_VALUE_TC,
+  FBLE_STRUCT_ACCESS_TC,
   FBLE_STRUCT_COPY_TC,
   FBLE_UNION_VALUE_TC,
+  FBLE_UNION_ACCESS_TC,
   FBLE_UNION_SELECT_TC,
-  FBLE_DATA_ACCESS_TC,
   FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
   FBLE_LIST_TC,
@@ -184,6 +184,24 @@ typedef struct {
 } FbleStructValueTc;
 
 /**
+ * @struct[FbleStructAccessTc] FBLE_STRUCT_ACCESS_TC
+ *  Struct access expression.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTc*][obj] The object to access a field of.
+ *  @field[size_t][fieldc] The number of fields in the type.
+ *  @field[size_t][field] The field to access.
+ *  @field[FbleLoc][loc] Location to use for error reporting.
+ */
+typedef struct {
+  FbleTc _base;
+  FbleTc* obj;
+  size_t fieldc;
+  size_t field;
+  FbleLoc loc;
+} FbleStructAccessTc;
+
+/**
  * @struct[FbleStructCopyTc] FBLE_STRUCT_COPY_TC
  *  A struct copy expression.
  *
@@ -213,6 +231,25 @@ typedef struct {
   size_t tag;
   FbleTc* arg;
 } FbleUnionValueTc;
+
+/**
+ * @struct[FbleUnionAccessTc] FBLE_UNION_ACCESS_TC
+ *  Union access expression.
+ *
+ *  @field[FbleTc][_base] FbleTc base class.
+ *  @field[FbleTc*][obj] The object to access a field of.
+ *  @field[size_t][tagwidth] The number of bits needed for the tag.
+ *  @field[size_t][tag] The field to access.
+ *  @field[FbleLoc][loc] Location to use for error reporting.
+ */
+typedef struct {
+  FbleTc _base;
+  FbleTc* obj;
+  size_t tagwidth;
+  size_t tag;
+  FbleLoc loc;
+} FbleUnionAccessTc;
+
 
 /**
  * @struct[FbleTcBranchTarget] Target of a union select branch.
@@ -255,28 +292,6 @@ typedef struct {
   FbleTcBranchTargetV targets;
   FbleTcBinding default_;
 } FbleUnionSelectTc;
-
-/**
- * @struct[FbleDataAccessTc] FBLE_DATA_ACCESS_TC
- *  Struct and union access expressions.
- *
- *  @field[FbleTc][_base] FbleTc base class.
- *  @field[FbleDataTypeTag][datatype] Whether this is struct or union access.
- *  @field[FbleTc*][obj] The object to access a field of.
- *  @field[size_t][fieldc] The number of fields in the type.
- *  @field[size_t][tagwidth] The number of bits needed for the tag.
- *  @field[size_t][tag] The field to access.
- *  @field[FbleLoc][loc] Location to use for error reporting.
- */
-typedef struct {
-  FbleTc _base;
-  FbleDataTypeTag datatype;
-  FbleTc* obj;
-  size_t fieldc;
-  size_t tagwidth;
-  size_t tag;
-  FbleLoc loc;
-} FbleDataAccessTc;
 
 /**
  * @struct[FbleFuncValueTc] FBLE_FUNC_VALUE_TC

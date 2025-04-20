@@ -2,7 +2,8 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Split AccessTc into separate StructAccessTc and UnionAccessTc?
+* Split FbleDataType into FbleStructType and FbleUnionType?
+  Get rid of FbleDataTypeTag?
 
 * Pull undef check into separate instruction?
   So we can remove the check entirely if the compiler knows about it?

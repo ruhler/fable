@@ -1999,14 +1999,25 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
           FbleType* rtype = FbleRetainType(th, fields->xs[i].type);
 
-          FbleDataAccessTc* access_tc = FbleNewTc(FbleDataAccessTc, FBLE_DATA_ACCESS_TC, expr->loc);
-          access_tc->datatype = normal->datatype;
-          access_tc->obj = FbleCopyTc(obj.tc);
-          access_tc->fieldc = fields->size;
-          access_tc->tagwidth = tagwidth;
-          access_tc->tag = i;
-          access_tc->loc = FbleCopyLoc(access_expr->field.loc);
-          return MkTc(rtype, &access_tc->_base);
+          switch (normal->datatype) {
+            case FBLE_STRUCT_DATATYPE: {
+              FbleStructAccessTc* access_tc = FbleNewTc(FbleStructAccessTc, FBLE_STRUCT_ACCESS_TC, expr->loc);
+              access_tc->obj = FbleCopyTc(obj.tc);
+              access_tc->fieldc = fields->size;
+              access_tc->field = i;
+              access_tc->loc = FbleCopyLoc(access_expr->field.loc);
+              return MkTc(rtype, &access_tc->_base);
+            }
+
+            case FBLE_UNION_DATATYPE: {
+              FbleUnionAccessTc* access_tc = FbleNewTc(FbleUnionAccessTc, FBLE_UNION_ACCESS_TC, expr->loc);
+              access_tc->obj = FbleCopyTc(obj.tc);
+              access_tc->tagwidth = tagwidth;
+              access_tc->tag = i;
+              access_tc->loc = FbleCopyLoc(access_expr->field.loc);
+              return MkTc(rtype, &access_tc->_base);
+            }
+          }
         }
       }
 

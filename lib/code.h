@@ -10,7 +10,6 @@
 #include <fble/fble-function.h>  // for FbleExecutable.
 #include <fble/fble-profile.h>   // for FbleBlockId.
 
-#include "kind.h"           // for FbleDataTypeTag.
 #include "tag.h"            // for FbleTagV
 #include "var.h"            // for FbleVar, FbleLocalIndex
 

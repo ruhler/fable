@@ -397,6 +397,16 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       return &ntc->_base;
     }
 
+    case FBLE_STRUCT_ACCESS_TC: {
+      FbleStructAccessTc* v = (FbleStructAccessTc*)tc;
+      FbleStructAccessTc* ntc = FbleNewTc(FbleStructAccessTc, FBLE_STRUCT_ACCESS_TC, tc->loc);
+      ntc->obj = RewriteVars(statics, arg_offset, v->obj);
+      ntc->fieldc = v->fieldc;
+      ntc->field = v->field;
+      ntc->loc = FbleCopyLoc(v->loc);
+      return &ntc->_base;
+    }
+
     case FBLE_STRUCT_COPY_TC: {
       FbleStructCopyTc* sv = (FbleStructCopyTc*)tc;
       FbleStructCopyTc* ntc = FbleNewTc(FbleStructCopyTc, FBLE_STRUCT_COPY_TC, tc->loc);
@@ -421,6 +431,16 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       return &ntc->_base;
     }
 
+    case FBLE_UNION_ACCESS_TC: {
+      FbleUnionAccessTc* v = (FbleUnionAccessTc*)tc;
+      FbleUnionAccessTc* ntc = FbleNewTc(FbleUnionAccessTc, FBLE_UNION_ACCESS_TC, tc->loc);
+      ntc->obj = RewriteVars(statics, arg_offset, v->obj);
+      ntc->tagwidth = v->tagwidth;
+      ntc->tag = v->tag;
+      ntc->loc = FbleCopyLoc(v->loc);
+      return &ntc->_base;
+    }
+
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* v = (FbleUnionSelectTc*)tc;
       FbleUnionSelectTc* ntc = FbleNewTc(FbleUnionSelectTc, FBLE_UNION_SELECT_TC, tc->loc);
@@ -438,18 +458,6 @@ static FbleTc* RewriteVars(FbleVarV statics, size_t arg_offset, FbleTc* tc)
       ntc->default_.name = FbleCopyName(v->default_.name);
       ntc->default_.loc = FbleCopyLoc(v->default_.loc);
       ntc->default_.tc = RewriteVars(statics, arg_offset, v->default_.tc);
-      return &ntc->_base;
-    }
-
-    case FBLE_DATA_ACCESS_TC: {
-      FbleDataAccessTc* v = (FbleDataAccessTc*)tc;
-      FbleDataAccessTc* ntc = FbleNewTc(FbleDataAccessTc, FBLE_DATA_ACCESS_TC, tc->loc);
-      ntc->datatype = v->datatype;
-      ntc->obj = RewriteVars(statics, arg_offset, v->obj);
-      ntc->fieldc = v->fieldc;
-      ntc->tagwidth = v->tagwidth;
-      ntc->tag = v->tag;
-      ntc->loc = FbleCopyLoc(v->loc);
       return &ntc->_base;
     }
 
@@ -1048,6 +1056,25 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       return local;
     }
 
+    case FBLE_STRUCT_ACCESS_TC: {
+      FbleStructAccessTc* access_tc = (FbleStructAccessTc*)v;
+      Local* obj = CompileExpr(blocks, false, false, scope, access_tc->obj);
+
+      Local* local = NewLocal(scope);
+
+      FbleStructAccessInstr* access = FbleAllocInstr(FbleStructAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+      access->obj = obj->var;
+      access->fieldc = access_tc->fieldc;
+      access->field = access_tc->field;
+      access->loc = FbleCopyLoc(access_tc->loc);
+      access->dest = local->var.index;
+      AppendInstr(scope, &access->_base);
+
+      CompileExit(exit, scope, local);
+      ReleaseLocal(scope, obj, exit);
+      return local;
+    }
+
     case FBLE_STRUCT_COPY_TC: {
       FbleStructCopyTc* struct_copy = (FbleStructCopyTc*)v;
 
@@ -1106,6 +1133,25 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       AppendInstr(scope, &union_instr->_base);
       CompileExit(exit, scope, local);
       ReleaseLocal(scope, arg, exit);
+      return local;
+    }
+
+    case FBLE_UNION_ACCESS_TC: {
+      FbleUnionAccessTc* access_tc = (FbleUnionAccessTc*)v;
+      Local* obj = CompileExpr(blocks, false, false, scope, access_tc->obj);
+
+      Local* local = NewLocal(scope);
+
+      FbleUnionAccessInstr* access = FbleAllocInstr(FbleUnionAccessInstr, FBLE_UNION_ACCESS_INSTR);
+      access->obj = obj->var;
+      access->tagwidth = access_tc->tagwidth;
+      access->tag = access_tc->tag;
+      access->loc = FbleCopyLoc(access_tc->loc);
+      access->dest = local->var.index;
+      AppendInstr(scope, &access->_base);
+
+      CompileExit(exit, scope, local);
+      ReleaseLocal(scope, obj, exit);
       return local;
     }
 
@@ -1200,35 +1246,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       // branch.
       ReleaseLocal(scope, condition, exit);
       return select_result;
-    }
-
-    case FBLE_DATA_ACCESS_TC: {
-      FbleDataAccessTc* access_tc = (FbleDataAccessTc*)v;
-      Local* obj = CompileExpr(blocks, false, false, scope, access_tc->obj);
-
-      Local* local = NewLocal(scope);
-
-      if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
-        FbleStructAccessInstr* access = FbleAllocInstr(FbleStructAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
-        access->obj = obj->var;
-        access->fieldc = access_tc->fieldc;
-        access->field = access_tc->tag;
-        access->loc = FbleCopyLoc(access_tc->loc);
-        access->dest = local->var.index;
-        AppendInstr(scope, &access->_base);
-      } else {
-        FbleUnionAccessInstr* access = FbleAllocInstr(FbleUnionAccessInstr, FBLE_UNION_ACCESS_INSTR);
-        access->obj = obj->var;
-        access->tagwidth = access_tc->tagwidth;
-        access->tag = access_tc->tag;
-        access->loc = FbleCopyLoc(access_tc->loc);
-        access->dest = local->var.index;
-        AppendInstr(scope, &access->_base);
-      }
-
-      CompileExit(exit, scope, local);
-      ReleaseLocal(scope, obj, exit);
-      return local;
     }
 
     case FBLE_FUNC_VALUE_TC: {

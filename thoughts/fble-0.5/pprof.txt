@@ -185,3 +185,9 @@ Where I'm at right now with pprof.py:
 So I know how to identify frames of interest. The difficulty comes from there.
 Things I want to know after I have a frame of interest:
 
+* Who calls the frame. Are there different cases to consider? If so, which
+  case is the biggest case I should consider first.
+ - Note that looking a single frame back is not always enough, but looking too
+   far back also makes things difficult. Somehow we want to see just enough
+   context for the caller to distinguish between interesting cases.
+
