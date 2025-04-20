@@ -374,17 +374,17 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       }
 
       case FBLE_STRUCT_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        FbleStructAccessInstr* access_instr = (FbleStructAccessInstr*)instr;
         fprintf(fout, "  l[%zi] = FbleStructValueField(%s[%zi], %zi, %zi);\n",
             access_instr->dest, var_tag[access_instr->obj.tag],
-            access_instr->obj.index, access_instr->fieldc, access_instr->tag);
+            access_instr->obj.index, access_instr->fieldc, access_instr->field);
         fprintf(fout, "  if (l[%zi] == NULL) ", access_instr->dest);
         ReturnAbort(fout, "UndefinedStructValue", access_instr->loc);
         break;
       }
 
       case FBLE_UNION_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        FbleUnionAccessInstr* access_instr = (FbleUnionAccessInstr*)instr;
         fprintf(fout, "  l[%zi] = FbleUnionValueField(%s[%zi], %zi, %zi);\n",
             access_instr->dest, var_tag[access_instr->obj.tag],
             access_instr->obj.index, access_instr->tagwidth, access_instr->tag);

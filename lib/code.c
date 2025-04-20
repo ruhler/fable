@@ -84,9 +84,15 @@ void FbleFreeInstr(FbleInstr* instr)
       return;
     }
 
-    case FBLE_STRUCT_ACCESS_INSTR:
+    case FBLE_STRUCT_ACCESS_INSTR: {
+      FbleStructAccessInstr* i = (FbleStructAccessInstr*)instr;
+      FbleFreeLoc(i->loc);
+      FbleFree(instr);
+      return;
+    }
+
     case FBLE_UNION_ACCESS_INSTR: {
-      FbleAccessInstr* i = (FbleAccessInstr*)instr;
+      FbleUnionAccessInstr* i = (FbleUnionAccessInstr*)instr;
       FbleFreeLoc(i->loc);
       FbleFree(instr);
       return;
@@ -341,10 +347,19 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
           break;
         }
 
-        case FBLE_STRUCT_ACCESS_INSTR:
+        case FBLE_STRUCT_ACCESS_INSTR: {
+          FbleStructAccessInstr* access_instr = (FbleStructAccessInstr*)instr;
+          fprintf(fout, "%4zi.  ", i);
+          fprintf(fout, "l%zi = %s%zi.%zi;",
+              access_instr->dest, var_tags[access_instr->obj.tag],
+              access_instr->obj.index,
+              access_instr->field);
+          PrintLoc(fout, access_instr->loc);
+          break;
+        }
+
         case FBLE_UNION_ACCESS_INSTR: {
-          // TODO: Include in the output whether this is struct/union
-          FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+          FbleUnionAccessInstr* access_instr = (FbleUnionAccessInstr*)instr;
           fprintf(fout, "%4zi.  ", i);
           fprintf(fout, "l%zi = %s%zi.%zi;",
               access_instr->dest, var_tags[access_instr->obj.tag],

@@ -211,18 +211,17 @@ typedef struct {
 } FbleUnionValueInstr;
 
 /**
- * @struct[FbleAccessInstr] Accesses a tagged field from an object.
- *  Used for both FBLE_STRUCT_ACCESS_INSTR and FBLE_UNION_ACCESS_INSTR.
+ * @struct[FbleStructAccessInstr] Accesses a field from a struct value.
+ *  Used for FBLE_STRUCT_ACCESS_INSTR.
  *
  *  @code[txt] @
- *   *dest = obj.tag
+ *   *dest = obj.field
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
  *  @field[FbleLoc][loc] Location of the access, for error reporting.
  *  @field[FbleVar][obj] The object whose field to access.
  *  @field[size_t][fieldc] The number of fields in the type.
- *  @field[size_t][tagwidth] The number of bits needed for the tag.
- *  @field[size_t][tag] The field to access.
+ *  @field[size_t][field] The field to access.
  *  @field[FbleLocalIndex][dest] Where to store the result.
  */
 typedef struct {
@@ -230,10 +229,32 @@ typedef struct {
   FbleLoc loc;
   FbleVar obj;
   size_t fieldc;
+  size_t field;
+  FbleLocalIndex dest;
+} FbleStructAccessInstr;
+
+/**
+ * @struct[FbleUnionAccessInstr] Accesses the field from a union value.
+ *  Used for FBLE_UNION_ACCESS_INSTR.
+ *
+ *  @code[txt] @
+ *   *dest = obj.tag
+ *
+ *  @field[FbleInstr][_base] FbleInstr base class.
+ *  @field[FbleLoc][loc] Location of the access, for error reporting.
+ *  @field[FbleVar][obj] The object whose field to access.
+ *  @field[size_t][tagwidth] The number of bits needed for the tag.
+ *  @field[size_t][tag] The tag of the field to access.
+ *  @field[FbleLocalIndex][dest] Where to store the result.
+ */
+typedef struct {
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleVar obj;
   size_t tagwidth;
   size_t tag;
   FbleLocalIndex dest;
-} FbleAccessInstr;
+} FbleUnionAccessInstr;
 
 /**
  * @struct[FbleOffsetV] Vector of offsets.

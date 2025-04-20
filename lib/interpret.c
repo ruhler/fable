@@ -121,10 +121,10 @@ static FbleValue* Interpret(
       }
 
       case FBLE_STRUCT_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        FbleStructAccessInstr* access_instr = (FbleStructAccessInstr*)instr;
 
         FbleValue* obj = GET(access_instr->obj);
-        locals[access_instr->dest] = FbleStructValueField(obj, access_instr->fieldc, access_instr->tag);
+        locals[access_instr->dest] = FbleStructValueField(obj, access_instr->fieldc, access_instr->field);
 
         if (locals[access_instr->dest] == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
@@ -136,7 +136,7 @@ static FbleValue* Interpret(
       }
 
       case FBLE_UNION_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        FbleUnionAccessInstr* access_instr = (FbleUnionAccessInstr*)instr;
 
         FbleValue* obj = GET(access_instr->obj);
         locals[access_instr->dest] = FbleUnionValueField(obj, access_instr->tagwidth, access_instr->tag);

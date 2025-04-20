@@ -2,8 +2,11 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Split AccessTc into separate StructAccessTc and UnionAccessTc?
+
 * Pull undef check into separate instruction?
   So we can remove the check entirely if the compiler knows about it?
+  Downside is the need for an extra GetFrameVar call on the value?
 
 * Add spec test to catch case of tbnz not having enough limit for undef check.
 
@@ -17,9 +20,6 @@ Things to consider doing for the fble-0.5 release.
  - If we don't already have such a thing.
 
 * Use a special ref value instead of NULL to represent undefined values?
-
-* Split AccessTc and AccessInstr into Struct and Union variants
- - Struct needs fieldc, Union needs tagwidth.
 
 * Remove OnFree for GC native objects
   Only allow GC to manage chunks of memory, not have sideeffects?

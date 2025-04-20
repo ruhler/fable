@@ -167,9 +167,14 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       case FBLE_STRUCT_VALUE_INSTR: break;
       case FBLE_UNION_VALUE_INSTR: break;
 
-      case FBLE_STRUCT_ACCESS_INSTR:
+      case FBLE_STRUCT_ACCESS_INSTR: {
+        FbleStructAccessInstr* instr = (FbleStructAccessInstr*)code->instrs.xs[i];
+        AddLoc(instr->loc.source->str, locs);
+        break;
+      }
+
       case FBLE_UNION_ACCESS_INSTR: {
-        FbleAccessInstr* instr = (FbleAccessInstr*)code->instrs.xs[i];
+        FbleUnionAccessInstr* instr = (FbleUnionAccessInstr*)code->instrs.xs[i];
         AddLoc(instr->loc.source->str, locs);
         break;
       }
@@ -711,7 +716,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     }
 
     case FBLE_STRUCT_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      FbleStructAccessInstr* access_instr = (FbleStructAccessInstr*)instr;
 
       GetFrameVar(fout, "x0", access_instr->obj);
 
@@ -727,7 +732,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
       fprintf(fout, "  b.ne .Lo.%04zx.%zi.u\n", func_id, pc);       // Undefined
 
       // Get the argument from the non-packed value.
-      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleStructValue, fields) + sizeof(FbleValue*) * access_instr->tag);
+      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleStructValue, fields) + sizeof(FbleValue*) * access_instr->field);
 
       // Packed value case
       if (packable) {
@@ -739,22 +744,22 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
           // representation of the field is exactly the same as the packed
           // representation of the single element struct.
           // { 0, arg, length, 1 } ==> { 0, arg, length, 1 }
-          assert(access_instr->tag == 0);
+          assert(access_instr->field == 0);
         } else {
 
           // x1: bit offset of start of arg relative to the start of header.
-          if (access_instr->tag == 0) {
+          if (access_instr->field == 0) {
             fprintf(fout, "  mov x1, %zi\n", header_length);
           } else {
-            fprintf(fout, "  ubfx x1, x0, %zi, #6\n", 7 + 6 * (access_instr->tag - 1));
+            fprintf(fout, "  ubfx x1, x0, %zi, #6\n", 7 + 6 * (access_instr->field - 1));
             fprintf(fout, "  add x1, x1, %zi\n", header_length);
           }
 
           // x2: bit offset of end of arg relative to the start of header.
-          if (access_instr->tag + 1 == access_instr->fieldc) {
+          if (access_instr->field + 1 == access_instr->fieldc) {
             fprintf(fout, "  ubfx x2, x0, #1, #6\n");
           } else {
-            fprintf(fout, "  ubfx x2, x0, %zi, #6\n", 7 + 6 * access_instr->tag);
+            fprintf(fout, "  ubfx x2, x0, %zi, #6\n", 7 + 6 * access_instr->field);
             fprintf(fout, "  add x2, x2, %zi\n", header_length);
           }
 
@@ -779,7 +784,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
     }
 
     case FBLE_UNION_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      FbleUnionAccessInstr* access_instr = (FbleUnionAccessInstr*)instr;
 
       GetFrameVar(fout, "x0", access_instr->obj);
 
@@ -1112,14 +1117,14 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
     case FBLE_STRUCT_VALUE_INSTR: return;
     case FBLE_UNION_VALUE_INSTR: return;
     case FBLE_STRUCT_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      FbleStructAccessInstr* access_instr = (FbleStructAccessInstr*)instr;
       fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
       DoAbort(fout, func_id, pc, ".L.UndefinedStructValue", access_instr->loc);
       return;
     }
 
     case FBLE_UNION_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      FbleUnionAccessInstr* access_instr = (FbleUnionAccessInstr*)instr;
       fprintf(fout, ".Lo.%04zx.%zi.u:\n", func_id, pc);
       DoAbort(fout, func_id, pc, ".L.UndefinedUnionValue", access_instr->loc);
 

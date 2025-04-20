@@ -943,10 +943,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         if (let_tc->recursive) {
           vars[i] = NewLocal(scope);
 
-          FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+          FbleStructAccessInstr* access = FbleAllocInstr(FbleStructAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
           access->obj = decl->var;
           access->fieldc = let_tc->bindings.size;
-          access->tag = i;
+          access->field = i;
           access->loc = FbleCopyLoc(let_tc->bindings.xs[i].loc);
           access->dest = vars[i]->var.index;
           AppendInstr(scope, &access->_base);
@@ -987,10 +987,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
         // Write back the final results.
         for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-          FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+          FbleStructAccessInstr* access = FbleAllocInstr(FbleStructAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
           access->obj = decl->var;
           access->fieldc = let_tc->bindings.size;
-          access->tag = i;
+          access->field = i;
           access->loc = FbleCopyLoc(let_tc->bindings.xs[i].loc);
           access->dest = vars[i]->var.index;
           AppendInstr(scope, &access->_base);
@@ -1067,11 +1067,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         } else {
           args[i] = NewLocal(scope);
 
-          FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+          FbleStructAccessInstr* access = FbleAllocInstr(FbleStructAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
           access->obj = source->var;
           access->fieldc = argc;
-          access->tagwidth = tagwidth;
-          access->tag = i;
+          access->field = i;
           access->loc = FbleCopyLoc(struct_copy->_base.loc);
           access->dest = args[i]->var.index;
           AppendInstr(scope, &access->_base);
@@ -1207,24 +1206,25 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleDataAccessTc* access_tc = (FbleDataAccessTc*)v;
       Local* obj = CompileExpr(blocks, false, false, scope, access_tc->obj);
 
-      FbleInstrTag tag;
-      if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
-        tag = FBLE_STRUCT_ACCESS_INSTR;
-      } else {
-        assert(access_tc->datatype == FBLE_UNION_DATATYPE);
-        tag = FBLE_UNION_ACCESS_INSTR;
-      }
-
-      FbleAccessInstr* access = FbleAllocInstr(FbleAccessInstr, tag);
-      access->obj = obj->var;
-      access->fieldc = access_tc->fieldc;
-      access->tagwidth = access_tc->tagwidth;
-      access->tag = access_tc->tag;
-      access->loc = FbleCopyLoc(access_tc->loc);
-      AppendInstr(scope, &access->_base);
-
       Local* local = NewLocal(scope);
-      access->dest = local->var.index;
+
+      if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
+        FbleStructAccessInstr* access = FbleAllocInstr(FbleStructAccessInstr, FBLE_STRUCT_ACCESS_INSTR);
+        access->obj = obj->var;
+        access->fieldc = access_tc->fieldc;
+        access->field = access_tc->tag;
+        access->loc = FbleCopyLoc(access_tc->loc);
+        access->dest = local->var.index;
+        AppendInstr(scope, &access->_base);
+      } else {
+        FbleUnionAccessInstr* access = FbleAllocInstr(FbleUnionAccessInstr, FBLE_UNION_ACCESS_INSTR);
+        access->obj = obj->var;
+        access->tagwidth = access_tc->tagwidth;
+        access->tag = access_tc->tag;
+        access->loc = FbleCopyLoc(access_tc->loc);
+        access->dest = local->var.index;
+        AppendInstr(scope, &access->_base);
+      }
 
       CompileExit(exit, scope, local);
       ReleaseLocal(scope, obj, exit);
