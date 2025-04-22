@@ -191,3 +191,114 @@ Things I want to know after I have a frame of interest:
    far back also makes things difficult. Somehow we want to see just enough
    context for the caller to distinguish between interesting cases.
 
+Let's say I magically solve the context question. Is there anything else I
+need? Anything else I want?
+* I suspect the ability to recursively investigate:
+  We start at the root.
+  Then we say we are interested in A.
+  Within A, we want to say we are interesting in B, but still show that
+  relative to A, not too root.
+
+  This should be easy. We just specify a sequence of frames of interest. Each
+  frame in tern filters out samples.
+* Do we want a breakdown going out of a frame like we want a breakdown going
+  into a frame? Or is Overall / Self focused on a frame sufficient for that?
+
+It seems like there are two different ways to view incoming or outcoming
+edges:
+* The Overall/Self breakdown, doesn't look at direct edges, but focuses on the
+  biggest cuts.
+* Context traces looks at specific edges.
+
+If both are useful, presumably both are useful both directions: incoming and
+outgoing.
+
+I know that just having 'overall/self' doesn't give me information about who
+immediately calls a function, which I think is useful in some cases.
+
+---
+
+Idea: Focus on sequences of frames rather than individual frames.
+* Keep canonicalization of samples. I see no loss of information there.
+* Count occurrences of every observed subsequence of frames.
+  Make sure to count each subsequence at most once per sample.
+* We can do Overall, Self based on that if we wanted.
+  Though I assume the longer the subsequence, the smaller the overall value.
+  So we can skip this if it's too expensive.
+* We can do a graph view based on that.
+  A mini section for each subsequence.
+  It shows frames leading into the subsequence, broken down by frame.
+  It shows frames going out of the subsequence, broken down by frame.
+
+One more thing we want is filtering. You can partition any profile by a
+subsequence into samples with the subsequence and samples without. So, your
+filter is a list of subsequence of samples to keep and a list of subsequences
+of samples to reject.
+
+The graph might be expensive. If samples are limited to 128 in length, that's
+O(128^2) * N possible subsequences (though we expect much less in practice I
+hope).
+
+An implementation approach we can try:
+1. For each sample:
+ i.   Canonicalize the sample.
+ ii.  Compute the set of subsequences of the sample.
+ iii. Increment overall count of subsequence ==> count mapping by one for each
+      subsequence in the set from the sample.
+2. For each subsequence in the overall set:
+  incoming[subsequence[1:]][subsequence[0]] = count
+  outgoing[subsequence[:-2]][subsequence[-1]] = count
+
+Sort subsequences by overall count.
+
+Now we can show:
+* Overall by subsequence. Optionally limiting to length 1 subsequences
+  depending on what's useful. Maybe better would be limiting to subsequences
+  taking up more than 1% of overall time?
+* Self by subsequence (meaning when the subsequence is the tail). Maybe
+  limiting to subsequences with self time greater than 1%?
+* Graph of subsequences like how we do current profile report.
+
+Basically the same as our current profile report, except:
+* We canonicalize samples first.
+* We track based on subsequence instead of frame.
+* We add the option for filtering based on a set of subsequences to accept or
+  not.
+
+To get a feel for how useful it is, no need to add filtering to start.
+
+Now, how I expect this to be used:
+* Go down list of overall or self to find a subsequence of interest.
+* To see who is calling into that subsequence, search in the graph for the
+  subsequence, traverse up it. We have as much context available to use as we
+  want.
+* To see what the subsequence is doing, search the graph for the subsequence,
+  traverse down it. Or, consider filtering on the subsequence first, then
+  repeat the flow from the beginning.
+
+I think this will be good. I think it will be expensive. We can limit in
+various ways based on needs. For example, choose a subsequence first, then
+only show graph for nodes starting or ending in that subsequence.
+
+Note that this removes the need for separate canonicalized sample section:
+that will show up in 'overall' and 'self' views with subsequences. I think
+it's an improvement over the tree view, because it focuses on a single level
+at a time in the graph view, which is what I really care about, and it let's
+you view the tree from the root, the leafs, or anywhere in between you may be
+interested in.
+
+Next step: draft the pprof.py code for this in a small sample profile and see
+how it looks.
+
+---
+
+Apparently it's very expensive to do all these subsequences in python. That's
+concerning. Except it's not the sequences that are super expensive, it seems
+like it's something else. I'm a little confused, because I don't think it was
+this slow before.
+
+Yeah, something is definitely wrong. I was able to do the same thing way
+faster before.
+
+I see what I did wrong. I forgot to clear the frames after each sample. Okay.
+Let's try again then.

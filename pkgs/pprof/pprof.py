@@ -1,57 +1,11 @@
 
 import sys
 
-class Node:
-    def __init__(self, name):
-        self.total = 0
-        self.self = 0
-        self.name = name
-        self.children = {}
-
-class Entry:
-    def __init__(self, name):
-        self.name = name
-        self.count = 0
-                     
-def InsertInto(node, entry):
-    if entry in node.children:
-        child = node.children[entry]
-        return child
-    child = Node(entry)
-    node.children[entry] = child
-    return child
-
-def Total(node):
-    total = node.self
-    for entry in node.children:
-        total += Total(node.children[entry])
-    node.total = total
-    return total
-
-total = 0       # Total number of samples.
-
-def Dump(node, indent):
-    print("%s%8.2f%% % 8d %8.2f%%  % 8d %s" % (
-        indent,
-        100.0 * node.total / total, node.total,
-        100.0 * node.self / total, node.self,
-        node.name))
-    children = sorted(node.children.values(), key=lambda x: -x.total)
-    for child in children:
-        Dump(child, indent + "  ")
-
-canon_stats = {}
-
 # Removes cycles of length n from the given trace
 def RemoveCycles(trace, n):
     i = 0
     while i < len(trace):
         if trace[i:i+n] == trace[i+n:i+2*n]:
-            if n in canon_stats:
-                canon_stats[n].count += 1
-            else:
-                canon_stats[n] = Entry("% 8d" % n)
-                canon_stats[n].count = 1
             for k in range(0, n):
                 trace.pop(i+n)
         else:
@@ -63,87 +17,56 @@ def Canonicalize(trace):
     for i in range(1, len(trace)):
         RemoveCycles(trace, i)
 
+# Returns the set of all non-empty subsequences of a given list of elements.
+# Subsequences are returned as strings, which are the elements joined by ';',
+# because lists aren't hashable...
+def SubseqsOf(sequence):
+    x = set()
+    for i in range(0, len(sequence) - 1):
+        for j in range(i+1, len(sequence)):
+            x.add(';'.join(sequence[i:j]))
+    return x
 
-root = Node("<root>")
-overalls = {}    # Count 'overall' sample appearence of each entry.
-selfs = {}      # Count 'self' sample apparence of each entry.
+total = 0       # Total number of samples.
+subseqs = {}    # Count 'overall' sample appearence of each frame.
+selfs = {}      # Count 'self' sample apparence of each frame.
+seqs = {}       # Full sequence to count of occurences.
 
-canon = {}
-focus = None
-samples = []
-appends = {}
+frames = []
 for line in sys.stdin:
     if line.startswith('\t'):
         [addr, name, so] = line.split()
         entry = name.split('+')[0]
-        samples.append(entry)
+        frames.append(entry)
     elif len(line.strip()) == 0:
-        samples.reverse()
+        frames.reverse()
+        Canonicalize(frames)
+        seq = ';'.join(frames)
+        seqs[seq] = 1 + seqs.get(seq, 0)
 
-        if focus:
-            try:
-                i = samples.index(focus)
-                samples = samples[i:]
-            except ValueError:
-                continue
-
-        Canonicalize(samples)
-        canonized = ';'.join(samples)
-        if canonized in canon:
-            canon[canonized].count += 1
-        else:
-            canon[canonized] = Entry(canonized)
-            canon[canonized].count += 1
-
+        for seq in SubseqsOf(frames):
+            subseqs[seq] = 1 + subseqs.get(seq, 0)
+        last = frames[-1]
+        selfs[last] = 1 + selfs.get(last, 0)
+        frames = []
         total += 1
-        node = root
-        entries = {}
-        for entry in samples:
-            node = InsertInto(node, entry)
-            entries[entry] = True
-        for entry in entries:
-            if entry in overalls:
-                overalls[entry].count += 1
-            else:
-                overalls[entry] = Entry(entry)
-                overalls[entry].count += 1
-        node.self += 1
-        if node.name in selfs:
-            selfs[node.name].count += 1
-        else:
-            selfs[node.name] = Entry(node.name)
-            selfs[node.name].count += 1
-        samples = []
 
 print("By Overall")
 print("==========")
-for entry in sorted(overalls.values(), key=lambda x: -x.count):
-    print("%8.2f%% % 8d %s" % (100.0 * entry.count / float(total),
-        entry.count, entry.name))
+for seq in sorted(subseqs.keys(), key=lambda x: -subseqs[x]):
+    count = subseqs[seq]
+    print("%8.2f%% % 8d %s" % (100.0 * count / float(total), count, seq))
 
 print("")
 print("By Self")
 print("=======")
-for entry in sorted(selfs.values(), key=lambda x: -x.count):
-    print("%8.2f%% % 8d %s" % (100.0 * entry.count / float(total),
-        entry.count, entry.name))
+for frame in sorted(selfs.keys(), key=lambda x: -selfs[x]):
+    count = selfs[frame]
+    print("%8.2f%% % 8d %s" % (100.0 * count / float(total), count, frame))
 
 print("")
 print("By Canonical")
 print("============")
-for entry in sorted(canon.values(), key=lambda x: -x.count):
-    print("%8.2f%% % 8d %s" % (100.0 * entry.count / float(total),
-        entry.count, entry.name))
-
-print("")
-print("Canon Tree")
-print("==========")
-Total(root)
-Dump(root, "")
-
-print("")
-print("Canonicalization Stats")
-print("======================")
-for entry in sorted(canon_stats.values(), key=lambda x: -x.count):
-    print("%s: % 8d" % (entry.name, entry.count))
-
+for seq in sorted(seqs.keys(), key=lambda x: -seqs[x]):
+    count = seqs[seq]
+    print("%8.2f%% % 8d %s" % (100.0 * count / float(total), count, seq))
