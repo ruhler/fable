@@ -302,3 +302,7 @@ faster before.
 
 I see what I did wrong. I forgot to clear the frames after each sample. Okay.
 Let's try again then.
+
+Yes, now performance is okay getting counts of all the subsequences.
+
+Next step is to try producing the graph view.

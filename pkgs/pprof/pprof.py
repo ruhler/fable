@@ -53,20 +53,24 @@ for line in sys.stdin:
 
 print("By Overall")
 print("==========")
+n = 0
 for seq in sorted(subseqs.keys(), key=lambda x: -subseqs[x]):
+    n += 1
     count = subseqs[seq]
-    print("%8.2f%% % 8d %s" % (100.0 * count / float(total), count, seq))
+    percent = 100.0 * count / float(total)
+    if n > 10 and percent < 1.0:
+        print("   ...")
+        break
+    print("%8.2f%% % 8d %s" % (percent, count, seq))
 
 print("")
 print("By Self")
 print("=======")
 for frame in sorted(selfs.keys(), key=lambda x: -selfs[x]):
+    n += 1
     count = selfs[frame]
-    print("%8.2f%% % 8d %s" % (100.0 * count / float(total), count, frame))
-
-print("")
-print("By Canonical")
-print("============")
-for seq in sorted(seqs.keys(), key=lambda x: -seqs[x]):
-    count = seqs[seq]
-    print("%8.2f%% % 8d %s" % (100.0 * count / float(total), count, seq))
+    percent = 100.0 * count / float(total)
+    if n > 10 and percent < 1.0:
+        print("   ...")
+        break
+    print("%8.2f%% % 8d %s" % (percent, count, frame))
