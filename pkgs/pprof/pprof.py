@@ -51,10 +51,32 @@ for line in sys.stdin:
         frames = []
         total += 1
 
-print("By Overall")
-print("==========")
+# Compute incoming / outgoing graph.
+incoming = {}   # subseq -> frame -> count
+outgoing = {}   # subseq -> frame -> count
+for seq in subseqs:
+    split = seq.split(';')
+    if len(split) <= 1:
+        continue
+
+    head = ';'.join(split[:-2])
+    if head not in outgoing:
+        outgoing[head] = {}
+    outgoing[head][split[-1]] = subseqs[seq]
+
+    tail = ';'.join(split[1:])
+    if tail not in incoming:
+        incoming[tail] = {}
+    incoming[tail][split[0]] = subseqs[seq]
+
+print("Overall")
+print("=======")
+by_overall = sorted(subseqs.keys(), key=lambda x: -subseqs[x])
 n = 0
-for seq in sorted(subseqs.keys(), key=lambda x: -subseqs[x]):
+for seq in by_overall:
+    if seq.find(';') >= 0:
+        continue
+
     n += 1
     count = subseqs[seq]
     percent = 100.0 * count / float(total)
@@ -64,8 +86,9 @@ for seq in sorted(subseqs.keys(), key=lambda x: -subseqs[x]):
     print("%8.2f%% % 8d %s" % (percent, count, seq))
 
 print("")
-print("By Self")
-print("=======")
+print("Self")
+print("====")
+n = 0
 for frame in sorted(selfs.keys(), key=lambda x: -selfs[x]):
     n += 1
     count = selfs[frame]
@@ -74,3 +97,33 @@ for frame in sorted(selfs.keys(), key=lambda x: -selfs[x]):
         print("   ...")
         break
     print("%8.2f%% % 8d %s" % (percent, count, frame))
+
+print("")
+print("Graph")
+print("====")
+n = 0
+for seq in by_overall:
+    seq_total = subseqs[seq]
+    percent = 100.0 * seq_total / float(total)
+
+    n += 1
+    if n > 10 and percent < 1.0:
+        print("   ...")
+        break
+
+    print("")
+    seq_incoming = incoming.get(seq, {})
+    by_in = sorted(seq_incoming.keys(), key=lambda x: seq_incoming[x])
+    for frame in by_in:
+        count = seq_incoming[frame]
+        print("%8.2f%% % 8d %s" % (100.0 * count / float(seq_total), count, frame))
+
+    print("----")
+    print("%8.2f%% % 8d %s" % (percent, seq_total, seq))
+    print("----")
+
+    seq_outgoing = outgoing.get(seq, {})
+    by_out = sorted(seq_outgoing.keys(), key=lambda x: -seq_outgoing[x])
+    for frame in by_out:
+        count = seq_outgoing[frame]
+        print("%8.2f%% % 8d %s" % (100.0 * count / float(seq_total), count, frame))

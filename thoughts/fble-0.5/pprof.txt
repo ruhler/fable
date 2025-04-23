@@ -306,3 +306,13 @@ Let's try again then.
 Yes, now performance is okay getting counts of all the subsequences.
 
 Next step is to try producing the graph view.
+
+---
+
+The graph view is going to be good I think. Some requested improvements:
+* Need an easier way to link to a specific sequence.
+* Figure out a better way to highlight the sequence in the graph entry.
+* Consider limiting incoming and outgoing edges with N, % like elsewhere?
+
+Honestly, if I can turn this into a webserver with links that shows a single
+graph entry at a time, that would be awesome I think.
