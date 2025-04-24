@@ -316,3 +316,37 @@ The graph view is going to be good I think. Some requested improvements:
 
 Honestly, if I can turn this into a webserver with links that shows a single
 graph entry at a time, that would be awesome I think.
+
+---
+
+I see three directions I can take this profiling stuff:
+1. pprof.py as a webserver. Iron out the interface to make it useful.
+2. pprof implementation in fble. Move towards what we have in pprof.py.
+3. profiling in runtime. Collect samples instead of aggregated counts.
+
+(1) is presumably most important, because it tells us exactly what we need.
+(2) is interesting because it gives us a more meaningful case study to try (1)
+out with. (3) can wait. So let's go in order.
+
+---
+
+Proposal for pprof.py website:
+* /overall page - gives the list broken down by overall frame.
+  Each frame links to the graph node for that single frame.
+
+* /self page - gives list broken down by self frame.
+  Each frame links to the graph node for that single frame.
+
+* /graph&id=... - gives a single graph node
+  List the stack trace to that point.
+  List the incoming edges. Edge links to trace with that incoming added.
+  List the outgoing edges. Edge links to trace with that outgoing added.
+
+Try that. See how useful it is.
+
+Oh, also, I feel like I want a kind of self time for a sequence. That would
+be: time spent in the sequence not covered by incoming or outgoing? Not sure
+that makes sense. Don't worry about it for now.
+
+Step 1: overall page. How do we do http server in python?
+

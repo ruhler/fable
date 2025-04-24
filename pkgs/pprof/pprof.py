@@ -1,4 +1,5 @@
 
+import http.server
 import sys
 
 # Removes cycles of length n from the given trace
@@ -68,6 +69,20 @@ for seq in subseqs:
     if tail not in incoming:
         incoming[tail] = {}
     incoming[tail][split[0]] = subseqs[seq]
+
+class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        print("GET " + self.path)
+        self.send_response(200, "OK")
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+        self.wfile.write(b'You want ???? Okay.')
+        self.close_connection = True
+
+if len(sys.argv) > 1 and sys.argv[1] == "--http":
+    addr = ('localhost', 8123)
+    httpd = http.server.HTTPServer(addr, PprofRequestHandler)
+    httpd.serve_forever()
 
 print("Overall")
 print("=======")
