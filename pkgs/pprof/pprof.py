@@ -71,13 +71,76 @@ for seq in subseqs:
     incoming[tail][split[0]] = subseqs[seq]
 
 class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        print("GET " + self.path)
+    def write(self, text):
+        self.wfile.write(text.encode())
+
+    def Overview(self):
         self.send_response(200, "OK")
         self.send_header("Content-Type", "text/html")
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(b'You want ???? Okay.')
+
+        self.write("<h1>Overview</h1>\n")
+        self.write("Samples: %d<br />\n" % total)
+        self.write("Stacks: %d<br />\n" % len(seqs))
+        self.write("Frames: %d<br />\n" % len(selfs))
+        self.write("<br />\n")
+        self.write("<a href=\"/overall\">Frames by overall time</a><br />\n")
+        self.write("<a href=\"/self\">Frames by self time</a><br />\n")
         self.close_connection = True
+
+    def Overall(self):
+        self.send_response(200, "OK")
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.write("<h1>Frames by overall time</h1>\n")
+
+        self.write("<table>\n<tr><th>%</th><th>Count</th><th>Frame</th></tr>\n")
+
+        by_overall = sorted(subseqs.keys(), key=lambda x: -subseqs[x])
+        for seq in by_overall:
+            if seq.find(';') >= 0:
+                continue
+            count = subseqs[seq]
+            percent = 100.0 * count / float(total)
+            self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
+            self.write("<td><a href=\"/seqs/%s\">%s</a></td></tr>\n" % (seq, seq))
+        self.write("</table>\n")
+        self.close_connection = True
+
+    def Self(self):
+        self.send_response(200, "OK")
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+
+        self.write("<h1>Frames by self time</h1>\n")
+        self.write("<table>\n<tr><th>%</th><th>Count</th><th>Frame</th></tr>\n")
+
+        for frame in sorted(selfs.keys(), key=lambda x: -selfs[x]):
+            count = selfs[frame]
+            percent = 100.0 * count / float(total)
+            self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
+            self.write("<td><a href=\"/seqs/%s\">%s</a></td></tr>\n" % (frame, frame))
+        self.write("</table>\n")
+
+        self.close_connection = True
+
+    def do_GET(self):
+        if self.path == "/":
+            self.Overview()
+            return
+
+        if self.path == "/overall":
+            self.Overall()
+            return
+
+        if self.path == "/self":
+            self.Self()
+            return
+
+        self.send_error(404, "invalid request")
 
 if len(sys.argv) > 1 and sys.argv[1] == "--http":
     addr = ('localhost', 8123)
