@@ -2,6 +2,12 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Add progress bar to pprof.py.
+
+* Have pprof.py say when it's ready to server.
+  Ideally we start the server right away and block the connection to finish
+  loading. But worst case, just print a line saying it's ready.
+
 * Split FbleDataType into FbleStructType and FbleUnionType?
   Get rid of FbleDataTypeTag?
 

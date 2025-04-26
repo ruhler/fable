@@ -350,3 +350,39 @@ that makes sense. Don't worry about it for now.
 
 Step 1: overall page. How do we do http server in python?
 
+---
+
+I got the http server going now, with Overview, Overall, Self, and graph
+views. I think this is good. There are some navigation issues to work out,
+where I want to go to a specific subsequence without an easy way, and there
+are opportunities to provide more information. But it feels good.
+
+I can pretty easily see the tree view I was hoping for, the breakdown by
+benchmark within fble-benchmark. Maintaining the context of traversal is what
+makes that work, because we can go through FbleCalls without losing the
+context.
+
+Cool. It's in good enough shape now to try using it for something for real
+before making more changes.
+
+Two things next:
+1. Re-implementing pprof in fble.
+2. Updating fble profiling to track and output samples instead of aggregated
+report.
+
+(1) should be pretty straight forward. I assume we'll instantly run into
+performance issues, but that's fine. That's what we need to figure out how to
+fix.
+
+(2) is going to be tricky. I think it's doable. The main challenge is I think
+we need to support on-the-fly canonicalization in order to handle potentially
+unbounded tail recursion. Single frame canonicalization isn't hard. But
+multi-frame loops need some way to track where we came from and where we
+should go back to when popping frames.
+
+The good news is, (2) isn't blocked on (1). I can switch over entirely to
+pprof.py now. Or, at least, once I've used it enough to verify it's not
+missing something major we used to have. But, honestly, it's not, right? It
+has all the same information we had before in the graph, just more of it.
+
+So, what say you? Time to rewrite pkgs/pprof?

@@ -23,8 +23,8 @@ def Canonicalize(trace):
 # because lists aren't hashable...
 def SubseqsOf(sequence):
     x = set()
-    for i in range(0, len(sequence) - 1):
-        for j in range(i+1, len(sequence)):
+    for i in range(0, len(sequence)):
+        for j in range(i+1, len(sequence)+1):
             x.add(';'.join(sequence[i:j]))
     return x
 
@@ -32,24 +32,26 @@ total = 0       # Total number of samples.
 subseqs = {}    # Count 'overall' sample appearence of each frame.
 selfs = {}      # Count 'self' sample apparence of each frame.
 seqs = {}       # Full sequence to count of occurences.
+frames = set()  # Set of frames.
 
-frames = []
+sample = []
 for line in sys.stdin:
     if line.startswith('\t'):
         [addr, name, so] = line.split()
         entry = name.split('+')[0]
-        frames.append(entry)
+        sample.append(entry)
+        frames.add(entry)
     elif len(line.strip()) == 0:
-        frames.reverse()
-        Canonicalize(frames)
-        seq = ';'.join(frames)
+        sample.reverse()
+        Canonicalize(sample)
+        seq = ';'.join(sample)
         seqs[seq] = 1 + seqs.get(seq, 0)
 
-        for seq in SubseqsOf(frames):
+        for seq in SubseqsOf(sample):
             subseqs[seq] = 1 + subseqs.get(seq, 0)
-        last = frames[-1]
+        last = sample[-1]
         selfs[last] = 1 + selfs.get(last, 0)
-        frames = []
+        sample = []
         total += 1
 
 # Compute incoming / outgoing graph.
@@ -60,7 +62,7 @@ for seq in subseqs:
     if len(split) <= 1:
         continue
 
-    head = ';'.join(split[:-2])
+    head = ';'.join(split[:-1])
     if head not in outgoing:
         outgoing[head] = {}
     outgoing[head][split[-1]] = subseqs[seq]
@@ -74,26 +76,33 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
     def write(self, text):
         self.wfile.write(text.encode())
 
+    def Menu(self):
+        self.write("<table><tr>")
+        self.write("<td><a href=\"/\">Overview</a></td>")
+        self.write("<td><a href=\"/overall\">Overall</a></td>")
+        self.write("<td><a href=\"/self\">Self</a></td>")
+        self.write("</tr></table><br />\n");
+
     def Overview(self):
         self.send_response(200, "OK")
         self.send_header("Content-Type", "text/html")
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", "no-cache")
         self.end_headers()
 
+        self.Menu()
         self.write("<h1>Overview</h1>\n")
         self.write("Samples: %d<br />\n" % total)
         self.write("Stacks: %d<br />\n" % len(seqs))
-        self.write("Frames: %d<br />\n" % len(selfs))
-        self.write("<br />\n")
-        self.write("<a href=\"/overall\">Frames by overall time</a><br />\n")
-        self.write("<a href=\"/self\">Frames by self time</a><br />\n")
+        self.write("Frames: %d<br />\n" % len(frames))
         self.close_connection = True
 
     def Overall(self):
         self.send_response(200, "OK")
         self.send_header("Content-Type", "text/html")
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", "no-cache")
         self.end_headers()
+
+        self.Menu()
         self.write("<h1>Frames by overall time</h1>\n")
 
         self.write("<table>\n<tr><th>%</th><th>Count</th><th>Frame</th></tr>\n")
@@ -105,16 +114,17 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
             count = subseqs[seq]
             percent = 100.0 * count / float(total)
             self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
-            self.write("<td><a href=\"/seqs/%s\">%s</a></td></tr>\n" % (seq, seq))
+            self.write("<td><a href=\"/seq/%s\">%s</a></td></tr>\n" % (seq, seq))
         self.write("</table>\n")
         self.close_connection = True
 
     def Self(self):
         self.send_response(200, "OK")
         self.send_header("Content-Type", "text/html")
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", "no-cache")
         self.end_headers()
 
+        self.Menu()
         self.write("<h1>Frames by self time</h1>\n")
         self.write("<table>\n<tr><th>%</th><th>Count</th><th>Frame</th></tr>\n")
 
@@ -122,8 +132,56 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
             count = selfs[frame]
             percent = 100.0 * count / float(total)
             self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
-            self.write("<td><a href=\"/seqs/%s\">%s</a></td></tr>\n" % (frame, frame))
+            self.write("<td><a href=\"/seq/%s\">%s</a></td></tr>\n" % (frame, frame))
         self.write("</table>\n")
+
+        self.close_connection = True
+
+    def Seq(self, seq):
+        if seq not in subseqs:
+            self.send_error(404, "No such sequence.")
+            return
+
+        self.send_response(200, "OK")
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+
+        seq_total = subseqs[seq]
+        percent = 100.0 * seq_total / float(total)
+
+        self.Menu()
+        self.write("<h1>Sequence</h1>\n")
+        self.write("Samples: %8.2f%% % 8d\n" % (percent, seq_total))
+
+        self.write("<table>\n")
+        for frame in seq.split(';'):
+            self.write("<tr><td>%s</td></tr>\n" % frame)
+        self.write("</table><br />\n")
+
+        if seq in incoming:
+            self.write("<h1>Incoming</h1>\n")
+            self.write("<table>\n<tr><th>%</th><th>Count</th><th>Frame</th></tr>\n")
+            seq_incoming = incoming[seq]
+            by_in = sorted(seq_incoming.keys(), key=lambda x: -seq_incoming[x])
+            for frame in by_in:
+                count = seq_incoming[frame]
+                percent = 100.0 * count / float(seq_total)
+                self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
+                self.write("<td><a href=\"/seq/%s;%s\">%s</a></td></tr>\n" % (frame, seq, frame))
+            self.write("</table>\n")
+
+        if seq in outgoing:
+            self.write("<h1>Outgoing</h1>\n")
+            self.write("<table>\n<tr><th>%</th><th>Count</th><th>Frame</th></tr>\n")
+            seq_outgoing = outgoing[seq]
+            by_in = sorted(seq_outgoing.keys(), key=lambda x: -seq_outgoing[x])
+            for frame in by_in:
+                count = seq_outgoing[frame]
+                percent = 100.0 * count / float(seq_total)
+                self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
+                self.write("<td><a href=\"/seq/%s;%s\">%s</td></tr>\n" % (seq, frame, frame))
+            self.write("</table>\n")
 
         self.close_connection = True
 
@@ -138,6 +196,10 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
 
         if self.path == "/self":
             self.Self()
+            return
+
+        if self.path.startswith("/seq/"):
+            self.Seq(self.path[5:])
             return
 
         self.send_error(404, "invalid request")
