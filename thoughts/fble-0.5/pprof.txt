@@ -416,3 +416,72 @@ Remember how to parse perf script:
 
 Let's go the getline then parse route, okay?
 
+---
+
+I can parse perf script now. Let's see how terribly slow it goes. Because if I
+can't even get through parsing, there's really no point in working on anything
+else.
+
+Time to parse my 11K sample perf script input, without any canonicalization:
+
+We run out of memory after 2 minutes. Why is this running out of memory? There
+shouldn't be a memory leak anywhere I don't think? Did I mess something up?
+
+The only thing it could be is the map of samples. Let me try fake
+canonicalizing and see if we avoid storing the samples that fixes the memory
+leak, and how long it takes to record all the samples in that case.
+
+For baseline, it takes pprof.py 90 seconds to parse and process the input.
+
+The memory growth goes away in fble if we don't save any of the sequence in
+the map. It must be that the map takes a lot of space. Hopefully
+canonicalization of frames will help. But before we get there, baseline,
+performance is looking like: ... not good. Let me let it run for a while.
+
+It got through after just under 12 minutes.
+
+---
+
+First attempt at using pprof.py to debug performance of fble pprof:
+
+Self:
+* 20% FbleCall
+* 17% IncrGc
+* 6% Int Map lookup
+* 4% new func value. Is that expected?
+
+Overall:
+* 37% in GcRealloc
+* 20% GetChar
+
+Nice to see that ParseFrame is really cheap.
+
+I'm thinking we have a slightly pathological case with GcRealloc it would be
+good to understand in detail.
+
+Looking at FbleNewFuncValue, that comes from:
+* FbleCall? That must be from PartialApply. Which is coming from GetLine
+  apparently.
+
+The problematic path looks like GetLine + GetChar + State monad.
+
+So, maybe I should play around with cat and fast cat, and go back to trying to
+optimize for performance.
+
+Or, implement canonicalization. See if that fixes the memory issue. Wait out
+the slow parse. I mean, 10 minutes isn't too terrible, right?
+
+---
+
+My gut feeling is the problem is with recursive GetLine. Two things I want to
+try:
+
+1. Don't use GetLine. Parse char by char.
+2. Understand in detail how GetLine looks at runtime.
+
+Trying (1)... I'm hoping it goes twice as fast because we have at least half
+as much string being built up and read from the input stream.
+
+5:39.58
+
+That's good. That's twice as fast. Cool.

@@ -23,6 +23,9 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
 @ Frame@ = /Pprof/Frame%.Frame@;
 
 @ Seq@ = /Pprof/Seq%.Seq@;
@@ -30,35 +33,14 @@
 
 @ Samples@ = M.Map@<Int@>;
 
+(Seq@) { Seq@; } Canonicalize = (Seq@ s) {
+  # TODO: Actually canonicalize.
+  #/Core/List%.Nil<Frame@>;
+  s;
+};
+
 (Char@) { Bool@; } IsTab = (Char@ c) {
   c.?('	': True, : False);
-};
-
-# Drop space from the front of a string.
-(String@) { String@; } DropSpace = (String@ s) {
-  s.?(nil: s);
-  IsSpace(s.cons.head).?(false: s);
-  DropSpace(s.cons.tail);
-};
-
-# Drop everything up to the first space in the string.
-(String@) { String@; } DropWord = (String@ s) {
-  s.?(nil: s);
-  IsSpace(s.cons.head).?(true: s);
-  DropWord(s.cons.tail);
-};
-
-# Read all characters at the start of the string up until '+' is seen.
-(String@) { String@; } GetToPlus = (String@ s) {
-  s.?(nil: s);
-  s.cons.head.?('+': Str|'');
-  Cons(s.cons.head, GetToPlus(s.cons.tail));
-};
-
-# Parse the frame name from a line of the form:
-#          1140 _start+0x0 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
-(String@) { Frame@; } ParseFrame = (String@ s) {
-  GetToPlus(DropSpace(DropWord(DropSpace(s))));
 };
 
 # Parse a profile from the output of running
@@ -67,15 +49,55 @@
 Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
   % I = /Core/Stream/IStream%(m);
 
+  M@<Unit@> SkipSpace = {
+    Maybe@<Char@> mc <- m.do(I.GetChar(in));
+    mc.?(nothing: m.return(Unit));
+    IsSpace(mc.just).?(false: m.return(Unit));
+    SkipSpace;
+  };
+
+  M@<Unit@> SkipWord = {
+    Maybe@<Char@> mc <- m.do(I.GetChar(in));
+    mc.?(nothing: m.return(Unit));
+    IsSpace(mc.just).?(true: m.return(Unit));
+    SkipWord;
+  };
+
+  M@<String@> GetToPlus = {
+    Maybe@<Char@> mc <- m.do(I.GetChar(in));
+    mc.?(nothing: m.return(Str|''));
+    mc.just.?('+': m.return(Str|''));
+    String@ tail <- m.do(GetToPlus);
+    m.return(Cons(mc.just, tail));
+  };
+
+  M@<Unit@> SkipLine = {
+    Maybe@<Char@> mc <- m.do(I.GetChar(in));
+    mc.?(nothing: m.return(Unit));
+    IsNewline(mc.just).?(true: m.return(Unit));
+    SkipLine;
+  };
+
+  M@<Frame@> ParseFrame = {
+    Unit@ _ <- m.do(SkipSpace);
+    Unit@ _ <- m.do(SkipWord);
+    GetToPlus;
+  };
+
   # Parse the rest of a single sample from the input file.
   (Seq@) { M@<Seq@>; } ParseSample = (Seq@ s) {
-    String@ line <- m.do(I.GetLine(in));
+    Maybe@<Char@> mc <- m.do(I.GetChar(in));
 
-    line.?(nil: m.return(s));
-    IsNewline(line.cons.head).?(true: m.return(s));
-    IsTab(line.cons.head).?(false: ParseSample(s));
+    mc.?(nothing: m.return(s));
+    IsNewline(mc.just).?(true: m.return(s));
 
-    Frame@ frame = ParseFrame(line);
+    IsTab(mc.just).?(false: {
+      Unit@ _ <- m.do(SkipLine);
+      ParseSample(s);
+    });
+
+    Frame@ frame <- m.do(ParseFrame);
+    Unit@ _ <- m.do(SkipLine);
     ParseSample(Cons(frame, s));
   };
 
@@ -83,7 +105,7 @@ Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
     Seq@ sample <- m.do(ParseSample[]);
     sample.?(nil: m.return(s));
 
-    ParseSamples(M.InsertWith(s, sample, (Maybe@<Int@> mv) {
+    ParseSamples(M.InsertWith(s, Canonicalize(sample), (Maybe@<Int@> mv) {
         mv.?(nothing: 1);
         Incr(mv.just);
       }));
