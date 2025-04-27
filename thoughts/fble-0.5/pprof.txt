@@ -386,3 +386,22 @@ missing something major we used to have. But, honestly, it's not, right? It
 has all the same information we had before in the graph, just more of it.
 
 So, what say you? Time to rewrite pkgs/pprof?
+
+---
+
+I kind of want to throw away everything that's there and start from scratch.
+What say you? Shall we?
+
+It's hard to design with such a big fear of performance issues. I propose we
+parse a perf script into a map from sequence to number of occurrences of that
+sequence. I can output a canonical format basic report, for example, which is
+<count> <sequence>, one sequence per line.
+
+I honestly don't believe I'll be able to do that much without running into
+significant performance issues. We can play around with different
+canonicalizations: none, actual canonicalization, or always return a single
+sequence. Just to see what makes a difference for performance.
+
+Okay, so let's think of this, to start, as a conversion tool to convert perf
+script output into my text based pprof format. Don't worry about multiple
+metrics at this point, just one metric for now.

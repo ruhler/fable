@@ -1,0 +1,24 @@
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Frame@ = /Pprof/Frame%.Frame@;
+
+@ Seq@ = List@<Frame@>;
+Eq@<Seq@> Eq = /Core/List/Eq%.Eq(/Pprof/Frame%.Eq);
+
+Show@<Seq@> Show = (Seq@ s) {
+  s.?(nil: Str|'');
+  s.cons.tail.?(nil: /Pprof/Frame%.Show(s.cons.head));
+  Strs[/Pprof/Frame%.Show(s.cons.head), Str|', ', Show(s.cons.tail)];
+};
+
+% Map = /Core/List/Map%.Map(/Core/String/Map%.Map);
+
+@(Seq@, Eq, Show, Map);

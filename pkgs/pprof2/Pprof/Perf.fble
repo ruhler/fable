@@ -1,0 +1,21 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+% M = /Pprof/Seq%.Map;
+
+# Parse a profile from the output of running
+#   perf script
+<<@>@ M@>(Monad@<M@>, IStream@<M@>) { M@<Maybe@<M.Map@<Int@>>>; }
+Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> _in) {
+  # TODO: Implement something useful here.
+  m.return(Just(M.Empty<Int@>));
+};
+
+@(Parse);

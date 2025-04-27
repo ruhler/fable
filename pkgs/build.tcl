@@ -6,6 +6,7 @@ namespace eval "pkgs" {
     fbld
     md5
     pprof
+    pprof2
     sat
     satgame
     hwdg
