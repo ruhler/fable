@@ -405,3 +405,14 @@ sequence. Just to see what makes a difference for performance.
 Okay, so let's think of this, to start, as a conversion tool to convert perf
 script output into my text based pprof format. Don't worry about multiple
 metrics at this point, just one metric for now.
+
+---
+
+Remember how to parse perf script:
+* If line starts with tab, read the frame
+  Of the form:  <space><word><space><name>+<addr>...
+* If line is empty, save the sample.
+* Ignore all other lines.
+
+Let's go the getline then parse route, okay?
+

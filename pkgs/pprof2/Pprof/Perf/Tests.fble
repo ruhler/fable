@@ -29,8 +29,7 @@
 
 <<@>@>% Parse = /Pprof/Perf%.Parse;
 
-String@ Input = Str|'
-ls 1687358 464282.541169:          1 cycles:u: 
+String@ Input = Str|'ls 1687358 464282.541169:          1 cycles:u: 
 	            1140 _start+0x0 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
 
 ls 1687358 464282.541189:          1 cycles:u: 

@@ -1,5 +1,17 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+@ Char@ = /Core/Char%.Char@;
+% IsSpace = /Core/Char/Type%.IsSpace;
+% IsNewline = /Core/Char/Type%.IsNewline;
+
 @ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
+% 1 = /Core/Int%.1;
+
+<@>% Cons = /Core/List%.Cons;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -8,14 +20,77 @@
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Frame@ = /Pprof/Frame%.Frame@;
+
+@ Seq@ = /Pprof/Seq%.Seq@;
 % M = /Pprof/Seq%.Map;
+
+@ Samples@ = M.Map@<Int@>;
+
+(Char@) { Bool@; } IsTab = (Char@ c) {
+  c.?('	': True, : False);
+};
+
+# Drop space from the front of a string.
+(String@) { String@; } DropSpace = (String@ s) {
+  s.?(nil: s);
+  IsSpace(s.cons.head).?(false: s);
+  DropSpace(s.cons.tail);
+};
+
+# Drop everything up to the first space in the string.
+(String@) { String@; } DropWord = (String@ s) {
+  s.?(nil: s);
+  IsSpace(s.cons.head).?(true: s);
+  DropWord(s.cons.tail);
+};
+
+# Read all characters at the start of the string up until '+' is seen.
+(String@) { String@; } GetToPlus = (String@ s) {
+  s.?(nil: s);
+  s.cons.head.?('+': Str|'');
+  Cons(s.cons.head, GetToPlus(s.cons.tail));
+};
+
+# Parse the frame name from a line of the form:
+#          1140 _start+0x0 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+(String@) { Frame@; } ParseFrame = (String@ s) {
+  GetToPlus(DropSpace(DropWord(DropSpace(s))));
+};
 
 # Parse a profile from the output of running
 #   perf script
 <<@>@ M@>(Monad@<M@>, IStream@<M@>) { M@<Maybe@<M.Map@<Int@>>>; }
-Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> _in) {
-  # TODO: Implement something useful here.
-  m.return(Just(M.Empty<Int@>));
+Parse = <<@>@ M@>(Monad@<M@> m, IStream@<M@> in) {
+  % I = /Core/Stream/IStream%(m);
+
+  # Parse the rest of a single sample from the input file.
+  (Seq@) { M@<Seq@>; } ParseSample = (Seq@ s) {
+    String@ line <- m.do(I.GetLine(in));
+
+    line.?(nil: m.return(s));
+    IsNewline(line.cons.head).?(true: m.return(s));
+    IsTab(line.cons.head).?(false: ParseSample(s));
+
+    Frame@ frame = ParseFrame(line);
+    ParseSample(Cons(frame, s));
+  };
+
+  (Samples@) { M@<Samples@>; } ParseSamples = (Samples@ s) {
+    Seq@ sample <- m.do(ParseSample[]);
+    sample.?(nil: m.return(s));
+
+    ParseSamples(M.InsertWith(s, sample, (Maybe@<Int@> mv) {
+        mv.?(nothing: 1);
+        Incr(mv.just);
+      }));
+  };
+
+  Samples@ samples <- m.do(ParseSamples(M.Empty<Int@>));
+  m.return(Just(samples));
 };
 
 @(Parse);
