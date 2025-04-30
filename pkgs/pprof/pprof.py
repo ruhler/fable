@@ -53,6 +53,9 @@ for line in sys.stdin:
         selfs[last] = 1 + selfs.get(last, 0)
         sample = []
         total += 1
+        print("\rsamples: %d" % total, end='', flush=True)
+
+print("")
 
 # Compute incoming / outgoing graph.
 incoming = {}   # subseq -> frame -> count
@@ -207,6 +210,7 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
 if len(sys.argv) > 1 and sys.argv[1] == "--http":
     addr = ('localhost', 8123)
     httpd = http.server.HTTPServer(addr, PprofRequestHandler)
+    print("Serving on http://localhost:8123")
     httpd.serve_forever()
 
 print("Overall")

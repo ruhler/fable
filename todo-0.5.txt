@@ -3,14 +3,12 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 pprof.py:
-* Add progress bar.
 * Say when it's ready to serve, or better yet, accept and block connection until then.
 * In stack, show % and count for each entry somehow?
 
 pkgs/Pprof
 * Debug bug in parser that's getting things like '77cb0 _int_malloc' printed.
   From having frames like: ffffffea1bb64d10 [unknown] ([unknown])
-* Add unit tests for canonicalization.
 * Reenable a reasonable benchmark.
 
 * Split FbleDataType into FbleStructType and FbleUnionType?
