@@ -1,0 +1,50 @@
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ Char@ = /Core/Char%.Char@;
+
+<@>% List = /Core/List%.List;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Seq@ = /Pprof/Seq%.Seq@;
+% Canonicalize = /Pprof/Canonicalize%.Canonicalize;
+
+(String@) { Seq@; } TestSeq = (String@ frames) {
+  /Core/List%.Map(frames, (Char@ c) { Str[c]; });
+};
+
+Test@ Tests = TestSuite(Str|Canonicalize, List[
+  Test(Str|Basic, (Unit@ _) {
+    Seq@ input = TestSeq|'abcccde';
+    Seq@ wnt = TestSeq|'abcde';
+    Seq@ got = Canonicalize(input);
+
+    AssertEquals(/Pprof/Seq%.Eq, /Pprof/Seq%.Show, wnt, got);
+  }),
+
+  Test(Str|Nested, (Unit@ _) {
+    Seq@ input = TestSeq|'abcabbc';
+    Seq@ wnt = TestSeq|'abc';
+    Seq@ got = Canonicalize(input);
+
+    AssertEquals(/Pprof/Seq%.Eq, /Pprof/Seq%.Show, wnt, got);
+  }),
+
+  Test(Str|Mixed, (Unit@ _) {
+    Seq@ input = TestSeq|'abccdedefff';
+    Seq@ wnt = TestSeq|'abcdef';
+    Seq@ got = Canonicalize(input);
+
+    AssertEquals(/Pprof/Seq%.Eq, /Pprof/Seq%.Show, wnt, got);
+  })
+]);
+
+@(Tests);

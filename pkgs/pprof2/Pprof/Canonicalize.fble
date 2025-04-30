@@ -1,0 +1,54 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>% Cons = /Core/List%.Cons;
+% Drop = /Core/List/Length%.Drop;
+
+@ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
+% IsZero = /Core/Int/Eq%.IsZero;
+% Int = /Core/Int/Lit%.Int;
+
+@ Seq@ = /Pprof/Seq%.Seq@;
+
+# Check if the first n frames of given sequences are the same.
+(Seq@, Seq@, Int@) { Bool@; }
+EqN = (Seq@ a, Seq@ b, Int@ n) {
+  IsZero(n).?(true: True);
+  a.?(nil: False);
+  b.?(nil: False);
+  /Pprof/Frame%.Eq(a.cons.head, b.cons.head).?(false: False);
+  EqN(a.cons.tail, b.cons.tail,Decr(n));
+};
+
+# Remove cycles of length n from the given input sequence.
+# x is the sequence to canonicalize. shifted is the same sequence shifted left
+# by n frames.
+(Seq@, Seq@, Int@) { Seq@; }
+CanonN = (Seq@ x, Seq@ shifted, Int@ n) {
+  x.?(nil: x);
+  shifted.?(nil: x);
+
+  EqN(x, shifted, n).?(true: CanonN(Drop(n, x), Drop(n, shifted), n));
+  Cons(x.cons.head, CanonN(x.cons.tail, shifted.cons.tail, n));
+};
+
+# Perform canonicalization of a trace starting with length n cycles and going
+# up. x is the sequence to canonicalize.
+(Seq@, Int@) { Seq@; }
+CanonFromN = (Seq@ x, Int@ n) {
+  Seq@ shifted = Drop(n, x);
+  shifted.?(nil: x);
+  CanonFromN(CanonN(x, shifted, n), Incr(n));
+};
+
+# Remove cycles from the given sequence.
+(Seq@) { Seq@; } Canonicalize = (Seq@ s) {
+  s.?(nil: s);
+  CanonFromN(s, Int|1);
+};
+
+@(Canonicalize);

@@ -30,14 +30,9 @@
 
 @ Seq@ = /Pprof/Seq%.Seq@;
 % M = /Pprof/Seq%.Map;
+% Canonicalize = /Pprof/Canonicalize%.Canonicalize;
 
 @ Samples@ = M.Map@<Int@>;
-
-(Seq@) { Seq@; } Canonicalize = (Seq@ s) {
-  # TODO: Actually canonicalize.
-  #/Core/List%.Nil<Frame@>;
-  s;
-};
 
 (Char@) { Bool@; } IsTab = (Char@ c) {
   c.?('	': True, : False);

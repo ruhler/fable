@@ -485,3 +485,8 @@ as much string being built up and read from the input stream.
 5:39.58
 
 That's good. That's twice as fast. Cool.
+
+---
+
+With canonicalization implemented, we can process my input file in 13 minutes
+23 seconds. Awesome. It uses maybe 50% memory on my computer.
