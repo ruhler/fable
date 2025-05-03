@@ -1,0 +1,168 @@
+Cat Performance
+===============
+A piece of the pprof performance problem is how long it takes to read in the
+lines of the `perf script` output. I want to really understand what's going on
+there, what's expensive about GetLine. Digging into performance of fble-cat
+seems like a good way to do that.
+
+scratch/bench.perf.1.script.txt has 809019 lines and is 87M large.
+
+  /usr/bin/time -f "%E" cat < scratch/bench.perf.1.script.txt > /dev/null
+  00:02.09
+
+  Monad + GetLine:
+  /usr/bin/time -f "%E" ./out/pkgs/core/fble-cat < scratch/bench.perf.1.script.txt > /dev/null
+  19:09.17
+
+  Monad + GetChar
+  /usr/bin/time -f "%E" ./out/pkgs/core/fble-fast-cat --monadic < scratch/bench.perf.1.script.txt > /dev/null
+  15:00.18
+  
+  GetChar
+  /usr/bin/time -f "%E" ./out/pkgs/core/fble-fast-cat < scratch/bench.perf.1.script.txt > /dev/null
+  13:11.60
+
+
+The 2 seconds is from the first time I ran the cat command. After that, it
+takes just 0.1 seconds to complete. Suggesting most of the cost was bringing
+the file into memory from ssd.
+
+While waiting for any of my fble variants of cat to finish, let me try to
+understand in detail what's going on with GetLine.
+
+Here is the relevant code:
+
+  Monad@<State@> Monad = @(
+    return: <@ A@>(A@ x, S@ s) { R@<A@>(s, x); },
+    do: <@ A@>(State@<A@> ma)<@ B@>((A@) { State@<B@>; } f, S@ s) {
+      R@<A@> ra = ma(s);
+      f(ra.x, ra.s);
+    }
+  );
+
+  (IStream@) { M@<Maybe@<Char@>>; } GetChar = (IStream@ in) {
+    Maybe@<Int@> byte <- m.do(in);
+    byte.?(nothing: m.return(Nothing<Char@>));
+    m.return(Just(/Core/Char/Ascii%.Chr(byte.just)));
+  };
+
+  (IStream@) { M@<String@>; } GetLine = (IStream@ in) {
+    Maybe@<Char@> c <- m.do(GetChar(in));
+    c.?(nothing: m.return(Str|''));
+    IsNewline(c.just).?(true: m.return(Str[c.just]));
+
+    String@ tail <- m.do(GetLine(in));
+    m.return(Cons(c.just, tail));
+  };
+
+  (I.IStream@) { M@<Unit@>; } cat = (I.IStream@ input) {
+    String@ line <- m.do(I.GetLine(input));
+    line.?(nil: m.return(Unit));
+
+    Unit@ _ <- m.do(O.PutStr(stdio.out, line));
+    cat(input);
+  };
+
+Let's trace through from the top then.
+
+GetChar is a single argument function. When called, it does:
+1. m.do(in, \byte -> ...).
+
+Does it return a partial apply function, or it's able to make use of the extra
+arg? It gets called with just the one argument it expects. It returns a
+PartialApply function. We would then call that PartialApply function right
+away with the unused arg.
+
+GetLine is a single argument function. When call, it does:
+1. m.do(GetChar(in), \c -> ...)
+
+This is where we call GetChar. We don't have the state to apply to it right
+away. Instead, again, we create a PartialFunction for do. It looks like:
+
+  m.do(m.do(in, \byte -> ...), \c -> ...)
+
+We cannot apply either of the 'do' yet, because we don't have the state yet.
+
+cat is a function with a single argument, when called:
+1. m.do(GetLine(input), \line -> ...)
+
+It results in a partial application.
+
+Let's start to collapse everything by providing the state via some top level
+'Run' function.
+
+---
+
+Actually, this may not be a partial application. Maybe it's a tail call, and
+we add the overapplied arguments in there?
+
+How about I stop speculating and just gdb step through the GetLine code?
+
+Starting in cat, I see:
+* Allocating a new function value. Presumably \line -> ...
+  We capture 4 or 5 statics there. Everything the function might need,
+  including local captures and global variables.
+* We call GetLine(input), which allocates the \c -> ... function.
+  Which again captures a bunch of statics.
+* We call GetChar(in), which allocates the \byte -> ... function.
+* That returns a TailCall, presumably m.do with in and \byte -> ... as args.
+* We have 2 args in the call, m.do expects 3, so we allocate a PartialApply
+  function.
+* That returns a TailCall, presumably m.do with GetChar(in) and \c -> ...
+  We have 2 args in the call, m.do expects 3, so we allocate a PartialApply.
+
+Note: unused args aren't being passed through exe->run, which is why even
+though we have an unused arg up the stack, it isn't accessible at this point
+in the code. It's like: g(x, y) = { f(x)(y); }, where g is a 2 arg function,
+but f is a 1 arg function that returns a function. It's just unfortunate in
+this case that the 1 arg function f returns is a partial application.
+
+* That returns a TailCall, presumably m.do with GetLine(input), \line -> ...
+  And in this case we have the state as an unused argument.
+* We continue the TailCall with all three args to m.do.
+* We do a single argument call ma(s), which calls into our PartialApplyImpl.
+* That returns a TailCall into m.do.
+* We do a single argument call ma(s). which calls into our PartialApplyImpl.
+* That returns a TailCall into m.do, calls ma(s).
+* Now finally we are calling into IStreamImpl.
+* We get the next input character. We allocate a struct to hold that and the
+  world.
+* We popframe that packed struct and return it.
+* We then return a tail call into f(ra.x, ra.s)
+  Which calls into the \byte -> ... function.
+* We call into /Core/Char/Ascii%.Chr(byte.just);
+  Which does a bunch of recursive tail calls into Map.lookup.
+* Eventually we call PopFrame and return the Char@ result.
+* We call into Just(...) and return that result.
+* We return a tail call into m.return(...)
+  In this case we have the unused ra.s argument added to the tail call args,
+  so we don't have to make a PartialApply out of it first.
+* We return the resulting struct.
+* We then return a tail call into f(ra.x, ra.s)
+  Which calls into the \c -> ... function.
+* This allocates a new function for \tail -> ...
+  Copying over a few statics along the way.
+* We then return a tail call into m.do
+* That calls ma(s), which calls into the PartialApplyImpl.
+  Which returns a tail call.
+
+And then I hit the wrong key and lost my place in the whole thing.
+
+I'm kind of interested in what happens if we profile with -O0. Maybe I get
+more insight into FbleCall vs. TailCall vs. etc.
+
+Anyway, stepping back, what do I see?
+* A whole lot of FbleNewFuncValue.
+  Basically anywhere I use monadic bind in a function.
+  It copies a bunch of static variables as we go.
+  Presumably this is mostly done on stack, not GC.
+  But still, that's a lot of copying and moving data around.
+* Unused args sitting there while we make a PartialFunction for something
+  because it doesn't have enough args, because that unused arg can't get
+  passed through an FbleCall to a function that doesn't know about that unused
+  arg. Seems a bit of a shame to have the arg, allocate the partial function,
+  then call into the partial apply, which tail calls back before we can
+  actually apply the function.
+* Small tail call recursive functions like map lookup feel like they spend a
+  lot of time in the TailCall library function relative to time spent in the
+  function itself. Maybe opportunity for substantial improvements there?

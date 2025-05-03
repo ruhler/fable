@@ -150,17 +150,21 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
 
-        seq_total = subseqs[seq]
-        percent = 100.0 * seq_total / float(total)
 
         self.Menu()
         self.write("<h1>Sequence</h1>\n")
-        self.write("Samples: %8.2f%% % 8d\n" % (percent, seq_total))
 
         self.write("<table>\n")
+        subseq = []
         for frame in seq.split(';'):
-            self.write("<tr><td>%s</td></tr>\n" % frame)
+            subseq.append(frame)
+            ss_total = subseqs[';'.join(subseq)]
+            percent = 100.0 * ss_total / float(total)
+            self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, ss_total))
+            self.write("<td>%s</td></tr>\n" % frame)
         self.write("</table><br />\n")
+
+        seq_total = subseqs[seq]
 
         if seq in incoming:
             self.write("<h1>Incoming</h1>\n")

@@ -490,3 +490,30 @@ That's good. That's twice as fast. Cool.
 
 With canonicalization implemented, we can process my input file in 13 minutes
 23 seconds. Awesome. It uses maybe 50% memory on my computer.
+
+---
+
+Feature request: when I show a sequence, show cost per frame. But in a
+specific way. For example: take the sequence a->b->c->d.
+
+Next to 'd', I want to show number of samples with the sequence a->b->c->d.
+That's easy.
+
+But that doesn't show as much time as I expect for the overall sequence. I
+think next to c and want to show total time in a->b->c, and next to b all time
+from a->b and next to a, all time in a.
+
+That should be pretty easy, right?
+
+Yeah, that's super useful. For example:
+
+   21.45% 7757 _2f_Core_2f_Char_2f_Ascii_25__2e_Chr_21_.0077
+   21.03% 7605 FbleCall
+   18.56% 6711 TailCall
+   4.54%  1641 _2f_Core_2f_Int_2f_IntP_2f_Map_25__2e_Lookup_21_.0021
+
+This is the entire sequence from the Chr function. It tells us of the 21% time
+spent in the overall program due to Chr, it's almost entirely dominated by
+TailCall. Imagine what we could do if we could somehow directly tail call from
+within the Lookup function?
+
