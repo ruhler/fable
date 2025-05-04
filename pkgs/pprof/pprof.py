@@ -84,6 +84,7 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
         self.write("<td><a href=\"/\">Overview</a></td>")
         self.write("<td><a href=\"/overall\">Overall</a></td>")
         self.write("<td><a href=\"/self\">Self</a></td>")
+        self.write("<td><a href=\"/seqs\">Sequences</a></td>")
         self.write("</tr></table><br />\n");
 
     def Overview(self):
@@ -136,6 +137,25 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
             percent = 100.0 * count / float(total)
             self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
             self.write("<td><a href=\"/seq/%s\">%s</a></td></tr>\n" % (frame, frame))
+        self.write("</table>\n")
+
+        self.close_connection = True
+
+    def Seqs(self):
+        self.send_response(200, "OK")
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+
+        self.Menu()
+        self.write("<h1>Full Sequences</h1>\n")
+        self.write("<table>\n<tr><th>%</th><th>Count</th><th>Frame</th></tr>\n")
+
+        for seq in sorted(seqs.keys(), key=lambda x: -seqs[x]):
+            count = seqs[seq]
+            percent = 100.0 * count / float(total)
+            self.write("<tr><td>%.2f%%</td><td>%d</td>" % (percent, count))
+            self.write("<td><a href=\"/seq/%s\">%s</a></td></tr>\n" % (seq, seq))
         self.write("</table>\n")
 
         self.close_connection = True
@@ -203,6 +223,10 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
 
         if self.path == "/self":
             self.Self()
+            return
+
+        if self.path == "/seqs":
+            self.Seqs()
             return
 
         if self.path.startswith("/seq/"):
