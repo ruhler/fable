@@ -1586,18 +1586,16 @@ static FbleValue* PartialApply(ValueHeap* heap, FbleFuncValue* function, size_t 
 static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
 {
   while (true) {
-    FbleValue* func = heap->_base.tail_call_buffer[0];
-    FbleFunction* function = &((FbleFuncValue*)func)->function;
-    FbleExecutable* exe = &function->executable;
+    FbleFuncValue* func = (FbleFuncValue*)heap->_base.tail_call_buffer[0];
     size_t argc = heap->_base.tail_call_argc;
 
-    if (argc < exe->num_args) {
+    if (argc < func->function.executable.num_args) {
       FbleValue* partial = PartialApply(heap, (FbleFuncValue*)func, argc, heap->_base.tail_call_buffer + 1);
       return FblePopFrame(&heap->_base, partial);
     }
 
     if (profile) {
-      FbleProfileReplaceBlock(profile, function->profile_block_id);
+      FbleProfileReplaceBlock(profile, func->function.profile_block_id);
     }
 
     bool should_merge = heap->top->caller != NULL
@@ -1605,18 +1603,16 @@ static FbleValue* TailCall(ValueHeap* heap, FbleProfileThread* profile)
       && heap->top->top - heap->top->caller->top < MERGE_LIMIT;
     CompactFrame(heap, should_merge, 1 + argc, heap->_base.tail_call_buffer);
 
-    func = heap->_base.tail_call_buffer[0];
-    function = &((FbleFuncValue*)func)->function;
-    exe = &function->executable;
+    func = (FbleFuncValue*)heap->_base.tail_call_buffer[0];
     argc = heap->_base.tail_call_argc;
 
     FbleValue* args[argc];
     memcpy(args, heap->_base.tail_call_buffer + 1, argc * sizeof(FbleValue*));
 
-    FbleValue* result = exe->run(&heap->_base, profile, function, args);
+    FbleValue* result = func->function.executable.run(&heap->_base, profile, &func->function, args);
 
-    size_t num_unused = argc - exe->num_args;
-    FbleValue** unused = args + exe->num_args;
+    size_t num_unused = argc - func->function.executable.num_args;
+    FbleValue** unused = args + func->function.executable.num_args;
 
     if (result == heap->_base.tail_call_sentinel) {
       // Add the unused args to the end of the tail call args and make that

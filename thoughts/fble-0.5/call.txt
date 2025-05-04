@@ -21,4 +21,49 @@ Random brainstorm:
   a tail call request.
 
 Is there any way I could do a direct tail call from aarch64 code? Say I know
-I'm calling the function I'm currently in, so I know everything about it.
+I'm calling the function I'm currently in, so I know everything about it:
+* We know the run function to call. We could branch directly there in theory.
+* We have the heap, profile, func we can reuse.
+* We would need to overwrite args. I think we can get away with saying the run
+  function is allowed to clobber the memory used to pass the arguments.
+* We can skip the PartialApply check. We'll know exactly if that's needed or
+  not.
+* We can call into profile replace block if needed.
+* How to deal with CompactFrame? That could be important if we have stack
+  allocations.
+
+Could we move the check for PartialApply and over application to aarch64 code
+or the backend code, and then force us to always do an exact call? That way,
+if we know statically, we can do that check at compile time?
+
+We can do the check for arg size in the backends now. How would that look, in
+general, if we didn't know what function we're calling? Any way to extract
+that out of FbleCall and TailCall?
+
+If PartialApply, we can detect that and compute the result immediately. I'm
+confident we can pull that out of FbleCall and TailCall.
+
+If over application... who holds onto the result until we're ready to use it?
+Let's say over application of FbleCall. Hmm... Well, if we know, we can tell
+FbleCall directly. How about that?
+
+If the result is a tail call, we append unused to the buffer before returning.
+Otherwise we do the call, which might result in more arg checking and
+recursion of some sort. That doesn't feel inlineable.
+
+Maybe I should start with getting rid of the undef check and the PartialApply
+check. Just keep in mind, that for TailCall, we need to call FblePopFrame too?
+
+We could start with the undef check in FbleCall. Who calls FbleCall that might
+not be checking for undef function already?
+* The interpreter calls without checking. Seems like a bug?
+* Eval calls without checking. It would be easy to move the check there.
+* FbleCall recursively calls without checking in case of unused args.
+* The C backend calls without checking.
+* The aarch64 backend calls without checking.
+
+So basically, today, everyone calls without checking. Hmm...
+
+This seems like another example where having an explicit UNDEF_CHECK
+instruction could help us?
+
