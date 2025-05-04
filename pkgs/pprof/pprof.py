@@ -33,51 +33,16 @@ subseqs = {}    # Count 'overall' sample appearence of each frame.
 selfs = {}      # Count 'self' sample apparence of each frame.
 seqs = {}       # Full sequence to count of occurences.
 frames = set()  # Set of frames.
-
-sample = []
-for line in sys.stdin:
-    if line.startswith('\t'):
-        [addr, name, so] = line.split()
-        entry = name.split('+')[0]
-        sample.append(entry)
-        frames.add(entry)
-    elif len(line.strip()) == 0:
-        sample.reverse()
-        Canonicalize(sample)
-        seq = ';'.join(sample)
-        seqs[seq] = 1 + seqs.get(seq, 0)
-
-        for seq in SubseqsOf(sample):
-            subseqs[seq] = 1 + subseqs.get(seq, 0)
-        last = sample[-1]
-        selfs[last] = 1 + selfs.get(last, 0)
-        sample = []
-        total += 1
-        print("\rsamples: %d" % total, end='', flush=True)
-
-print("")
-
-# Compute incoming / outgoing graph.
 incoming = {}   # subseq -> frame -> count
 outgoing = {}   # subseq -> frame -> count
-for seq in subseqs:
-    split = seq.split(';')
-    if len(split) <= 1:
-        continue
-
-    head = ';'.join(split[:-1])
-    if head not in outgoing:
-        outgoing[head] = {}
-    outgoing[head][split[-1]] = subseqs[seq]
-
-    tail = ';'.join(split[1:])
-    if tail not in incoming:
-        incoming[tail] = {}
-    incoming[tail][split[0]] = subseqs[seq]
 
 class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
     def write(self, text):
         self.wfile.write(text.encode())
+
+    def log_message(self, format, *args):
+        # don't log.
+        None
 
     def Menu(self):
         self.write("<table><tr>")
@@ -238,6 +203,47 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
 if len(sys.argv) > 1 and sys.argv[1] == "--http":
     addr = ('localhost', 8123)
     httpd = http.server.HTTPServer(addr, PprofRequestHandler)
+
+sample = []
+for line in sys.stdin:
+    if line.startswith('\t'):
+        [addr, name, so] = line.split()
+        entry = name.split('+')[0]
+        sample.append(entry)
+        frames.add(entry)
+    elif len(line.strip()) == 0:
+        sample.reverse()
+        Canonicalize(sample)
+        seq = ';'.join(sample)
+        seqs[seq] = 1 + seqs.get(seq, 0)
+
+        for seq in SubseqsOf(sample):
+            subseqs[seq] = 1 + subseqs.get(seq, 0)
+        last = sample[-1]
+        selfs[last] = 1 + selfs.get(last, 0)
+        sample = []
+        total += 1
+        print("\rsamples: %d" % total, end='', flush=True)
+
+print("")
+
+for seq in subseqs:
+    split = seq.split(';')
+    if len(split) <= 1:
+        continue
+
+    head = ';'.join(split[:-1])
+    if head not in outgoing:
+        outgoing[head] = {}
+    outgoing[head][split[-1]] = subseqs[seq]
+
+    tail = ';'.join(split[1:])
+    if tail not in incoming:
+        incoming[tail] = {}
+    incoming[tail][split[0]] = subseqs[seq]
+
+
+if len(sys.argv) > 1 and sys.argv[1] == "--http":
     print("Serving on http://localhost:8123")
     httpd.serve_forever()
 

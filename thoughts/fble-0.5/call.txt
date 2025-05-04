@@ -1,0 +1,24 @@
+Fble Call
+=========
+It seems a lot of time is being spent in FbleCall, TailCall, etc. Is there
+anything I can do about this?
+
+For example, could I figure out how to inline FbleCall/TailCall into the
+aarch64 backend, and take advantage of static knowledge to make it
+substantially faster?
+
+Sounds hard, but let's take a look and see if we can come up with anything
+anyway.
+
+Random brainstorm:
+* Have a version of FbleCall that assumes the function is defined?
+  Seems like we do an extra undefined check in some cases.
+* If we know number of args expected by the function, we turn the PartialApply
+  check into static code.
+* If we know the function we are calling, the profile enter block can be hard
+  coded.
+* I don't think we can tell in general if the result of a call is going to be
+  a tail call request.
+
+Is there any way I could do a direct tail call from aarch64 code? Say I know
+I'm calling the function I'm currently in, so I know everything about it.

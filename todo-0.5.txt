@@ -2,9 +2,6 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-pprof.py:
-* Accept and block connection until ready to serve?
-
 pkgs/Pprof
 * Debug bug in parser that's getting things like '77cb0 _int_malloc' printed.
   From having frames like: ffffffea1bb64d10 [unknown] ([unknown])
