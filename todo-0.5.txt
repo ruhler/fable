@@ -9,11 +9,8 @@ GC OnFree cleanup
 
 * Document pprof text format somewhere.
 
-pprof.py:
-* Remove text based output.
-* Change to read from pprof text format.
-
 pkgs/Pprof
+* Add test case for converting perf script to pprof.
 * Debug bug in parser that's getting things like '77cb0 _int_malloc' printed.
   From having frames like: ffffffea1bb64d10 [unknown] ([unknown])
 * Reenable a reasonable benchmark.

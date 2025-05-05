@@ -2,22 +2,6 @@
 import http.server
 import sys
 
-# Removes cycles of length n from the given trace
-def RemoveCycles(trace, n):
-    i = 0
-    while i < len(trace):
-        if trace[i:i+n] == trace[i+n:i+2*n]:
-            for k in range(0, n):
-                trace.pop(i+n)
-        else:
-            i += 1
-
-def Canonicalize(trace):
-    # To canonocalize a stack trace, any time we see a repeated subsequence
-    # abc,abc in the trace, drop the second occurence.
-    for i in range(1, len(trace)):
-        RemoveCycles(trace, i)
-
 # Returns the set of all non-empty subsequences of a given list of elements.
 # Subsequences are returned as strings, which are the elements joined by ';',
 # because lists aren't hashable...
@@ -200,30 +184,21 @@ class PprofRequestHandler(http.server.BaseHTTPRequestHandler):
 
         self.send_error(404, "invalid request")
 
-if len(sys.argv) > 1 and sys.argv[1] == "--http":
-    addr = ('localhost', 8123)
-    httpd = http.server.HTTPServer(addr, PprofRequestHandler)
+addr = ('localhost', 8123)
+httpd = http.server.HTTPServer(addr, PprofRequestHandler)
 
-sample = []
 for line in sys.stdin:
-    if line.startswith('\t'):
-        [addr, name, so] = line.split()
-        entry = name.split('+')[0]
-        sample.append(entry)
-        frames.add(entry)
-    elif len(line.strip()) == 0:
-        sample.reverse()
-        Canonicalize(sample)
-        seq = ';'.join(sample)
-        seqs[seq] = 1 + seqs.get(seq, 0)
-
-        for seq in SubseqsOf(sample):
-            subseqs[seq] = 1 + subseqs.get(seq, 0)
-        last = sample[-1]
-        selfs[last] = 1 + selfs.get(last, 0)
-        sample = []
-        total += 1
-        print("\rsamples: %d" % total, end='', flush=True)
+    [count, seq] = line.split()
+    count = int(count)
+    sample = seq.split(';')
+    seqs[seq] = count + seqs.get(seq, 0)
+    for seq in SubseqsOf(sample):
+        subseqs[seq] = count + subseqs.get(seq, 0)
+    last = sample[-1]
+    selfs[last] = count + selfs.get(last, 0)
+    sample = []
+    total += count
+    print("\rsamples: %d" % total, end='', flush=True)
 
 print("")
 
@@ -243,65 +218,5 @@ for seq in subseqs:
     incoming[tail][split[0]] = subseqs[seq]
 
 
-if len(sys.argv) > 1 and sys.argv[1] == "--http":
-    print("Serving on http://localhost:8123")
-    httpd.serve_forever()
-
-print("Overall")
-print("=======")
-by_overall = sorted(subseqs.keys(), key=lambda x: -subseqs[x])
-n = 0
-for seq in by_overall:
-    if seq.find(';') >= 0:
-        continue
-
-    n += 1
-    count = subseqs[seq]
-    percent = 100.0 * count / float(total)
-    if n > 10 and percent < 1.0:
-        print("   ...")
-        break
-    print("%8.2f%% % 8d %s" % (percent, count, seq))
-
-print("")
-print("Self")
-print("====")
-n = 0
-for frame in sorted(selfs.keys(), key=lambda x: -selfs[x]):
-    n += 1
-    count = selfs[frame]
-    percent = 100.0 * count / float(total)
-    if n > 10 and percent < 1.0:
-        print("   ...")
-        break
-    print("%8.2f%% % 8d %s" % (percent, count, frame))
-
-print("")
-print("Graph")
-print("====")
-n = 0
-for seq in by_overall:
-    seq_total = subseqs[seq]
-    percent = 100.0 * seq_total / float(total)
-
-    n += 1
-    if n > 10 and percent < 1.0:
-        print("   ...")
-        break
-
-    print("")
-    seq_incoming = incoming.get(seq, {})
-    by_in = sorted(seq_incoming.keys(), key=lambda x: seq_incoming[x])
-    for frame in by_in:
-        count = seq_incoming[frame]
-        print("%8.2f%% % 8d %s" % (100.0 * count / float(seq_total), count, frame))
-
-    print("----")
-    print("%8.2f%% % 8d %s" % (percent, seq_total, seq))
-    print("----")
-
-    seq_outgoing = outgoing.get(seq, {})
-    by_out = sorted(seq_outgoing.keys(), key=lambda x: -seq_outgoing[x])
-    for frame in by_out:
-        count = seq_outgoing[frame]
-        print("%8.2f%% % 8d %s" % (100.0 * count / float(seq_total), count, frame))
+print("Serving on http://localhost:8123")
+httpd.serve_forever()
