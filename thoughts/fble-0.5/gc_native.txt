@@ -156,3 +156,111 @@ That sounds very scary and suspicious. Maybe we need processes built into the
 language or a complete rethinking at a step back to cleanly address this
 issue.
 
+---
+
+It's been a while since I last thought about this. Let me write down my
+thoughts and see how it compares with what I wrote down before:
+
+* The input stream interface has a notion of observable end of stream.
+* That means the output stream interface needs a notion of explicit end of
+  stream.
+* So we'll need an API change, for sure.
+* If you don't explicitly end the output stream, it must remain unended.
+* Regardless of whether you are still holding a reference to the output stream
+  or not, if you don't explicitly end the output stream, it must remain
+  unended.
+
+Consider the case of input stream. Two things can happen:
+1. We read end of input before we GC the stream: Then we should close the
+underlying FILE* on reading end of input and put NULL in its place in the GC
+object. Subsequent attempts to read should see NULL and return Nothing.
+2. We GC the object before reaching end of file.
+Assuming closing an input stream is not observable, it doesn't matter if we
+explicitly close it. Or we could detect if it's been closed and throw an error
+saying the programmer messed up, because they forgot to close the stream. Or
+we treat it as the user saying they want to keep the stream open forever and
+do nothing.
+
+Consider the case of output stream. Two things can happen:
+1. We close the stream before we GC the stream: Then close the underlying
+FILE* and replace with NULL.
+2. We GC the object before explicitly closing. I claim we must not close the
+stream, because it wasn't explicitly closed.
+
+So at least for the input/output stream example, seems to me like it makes
+sense to require explicitly closing the stream from a programmatic point of
+view.
+
+Is there some other use case or example where it's much less obvious? Where we
+might have a bunch of shared users of a resource and we want to wait until the
+last user is done with it before closing?
+
+Let's review what I wrote before and see if I have reason not to remove
+on_free from GC.
+
+Two interesting things from earlier discussion:
+1. The question of whether there needs to be explicit close of an input stream
+by the reader.
+2. How we might implement the FILE api with explicit close in pure code.
+
+Let me review what I'm proposing:
+1. Input streams read until the end. No explicit close required. If you don't
+read until the end, the stream stays open??? But what if you are reading a
+file, you don't want to read to the end, but you don't want to leak resources?
+
+2. Output streams have an explicit close.
+
+For GC implementation, close the underlying FILE* on end of stream, replace
+the stored data with NULL. Easy.
+
+For a pure implementation, where the file handle is represented by an int or
+string or some such that points into a map, we can't re-use the handle?
+
+We would have to have a sequence number with the handle. Also known as: we
+can't re-use the handle. But it's a pretty big space of handles we can use, so
+don't worry about it, right?
+
+Anyway, all of which is to say, I have fear there is a reason we need OnFree
+for native objects, but I don't have a clear compelling reason right now. So
+let's get rid of OnFree and wait until we have a compelling need for it again,
+then revisit the discussion then. Easy.
+
+If I run into problems removing OnFree, then that should give me my compelling
+need and we can revisit the discussion.
+
+Summary of current uses of OnFree:
+* The interpreter uses a native value to store the code for an interpreted
+  function. We want to free the code when there are no more references to the
+  function.
+* app uses a native value for the App*. No OnFree used.
+* sockets use a native value for the socket. OnFree is used to close the
+  socket. Note that the socket is shared by input and output stream.
+* sockets has a couple other similar use cases for sockets with OnFree, like
+  for accept and for client sockets.
+* stdio uses a native value for FILE*.
+ 
+Two challenges here:
+1. The interpreter! How will I handle the interpreter use case?
+2. sockets: you can't close just the istream or the ostream, you have to close
+both at once. Weird. What if you want to close the output stream so the other
+end knows you have nothing more to say, but you want to read more from them?
+
+Let's focus on the interpreter to start, because that sounds like the much
+more challenging and interesting case.
+
+Well, seems like the answer is obvious now:
+* Yes, we want GC to support OnFree, for use cases like the interpreter.
+* GC OnFree should not be used to close a FILE. That is not an appropriate use
+  of OnFree.
+* The output stream interface needs a way to explicitly close.
+* When you close a socket, it's via the output stream interfaces explicit
+  close, that implicitly closes the associated input stream as well.
+
+Clear? Sounds clear to me.
+
+Plan of action:
+1. Define new API for files and sockets with explicit close of output streams.
+2. Switch to new API for files and sockets.
+3. Remove use of 'close' in OnFree for files and sockets.
+
+No changes to the GC implementation or APIs are required.

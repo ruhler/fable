@@ -2,10 +2,25 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+GC OnFree cleanup
+* Add explicit close to OStream API.
+* Don't close files or sockets in GC OnFree. Close them when asked to
+  explicitly.
+
+* Document pprof text format somewhere.
+
+pprof.py:
+* Remove text based output.
+* Change to read from pprof text format.
+
 pkgs/Pprof
 * Debug bug in parser that's getting things like '77cb0 _int_malloc' printed.
   From having frames like: ffffffea1bb64d10 [unknown] ([unknown])
 * Reenable a reasonable benchmark.
+* Use correct output format to perf-pprof.
+* Replace pkgs/pprof with pkgs/pprof2.
+* Add parser for pprof text format.
+* Implement server binary that reads from pprof text format.
 
 * Split FbleDataType into FbleStructType and FbleUnionType?
   Get rid of FbleDataTypeTag?
@@ -26,11 +41,6 @@ pkgs/Pprof
  - If we don't already have such a thing.
 
 * Use a special ref value instead of NULL to represent undefined values?
-
-* Remove OnFree for GC native objects
-  Only allow GC to manage chunks of memory, not have sideeffects?
-  See thoughts/fble-0.5/gc_native.txt
-  - Require explicit close for files and sockets.
 
 * Revisit abstract types in light of modular compilation.
   Could we have a much simpler syntax and say anyone with access to the .fble

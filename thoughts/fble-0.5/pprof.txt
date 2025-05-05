@@ -517,3 +517,13 @@ spent in the overall program due to Chr, it's almost entirely dominated by
 TailCall. Imagine what we could do if we could somehow directly tail call from
 within the Lookup function?
 
+---
+
+Decision is to stop worrying about performance for this release, clean up the
+rest:
+* Switch things to work on a simple pprof text format.
+* Add conversion from perf script to pprof text in python and fble.
+* Change pprof.py and fble pprof to load from pprof text format.
+* Set up a benchmark for fble pprof.
+* Replace pkgs/pprof with pkgs/pprof2.
+* Write the server implementation for fble pprof.
