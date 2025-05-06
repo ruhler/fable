@@ -81,6 +81,8 @@
 // The average period of time between random samples.
 #define RANDOM_SAMPLE_PERIOD 1024
 
+const FbleBlockId RootBlockId = 0;
+
 /**
  * @struct[Call] Representation of a call in the current call stack.
  *  @field[FbleBlockId][id] The id of the current block.
@@ -529,7 +531,7 @@ FbleProfile* FbleNewProfile(bool enabled)
     .loc = { .source = FbleNewString(""), .line = 0, .col = 0 }
   };
   FbleBlockId root_id = FbleAddBlockToProfile(profile, root);
-  assert(root_id == FBLE_ROOT_BLOCK_ID);
+  assert(root_id == RootBlockId);
 
   return profile;
 }
@@ -589,7 +591,7 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
   thread->calls->next = NULL;
   thread->calls->top = thread->calls->data;
   thread->calls->end = thread->calls->data + 8;
-  thread->calls->top->id = FBLE_ROOT_BLOCK_ID;
+  thread->calls->top->id = RootBlockId;
   thread->calls->top->exit = 0;
 
   thread->sample.capacity = 8;
@@ -602,7 +604,7 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 
   thread->ttrs = rand() % (2 * RANDOM_SAMPLE_PERIOD);
 
-  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
+  thread->profile->blocks.xs[RootBlockId]->block.count++;
   return thread;
 }
 
@@ -656,7 +658,7 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
     data->time += time;
   }
 
-  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time += time;
+  thread->profile->blocks.xs[RootBlockId]->block.time += time;
 }
 
 // See documentation in fble-profile.h.

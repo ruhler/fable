@@ -1,0 +1,55 @@
+Fble Profiling
+==============
+Goal is to update fble runtime implementation of profiling to output in a form
+suitable for consumption by pprof. See pprof.txt for context.
+
+Actually, I think it's totally doable and simpler than what we have today.
+Here's the proposal:
+
+We keep to data structures:
+1. The stack.
+2. The profile.
+
+The profile is a tree of nodes, where the path from the root to the node is a
+compacted sample path. But we allow there to be back edges in case adding a
+frame to a stack would cause us to compact and drop nodes. Each node keeps
+track of time and entry counts.
+
+The stack is a stack of pointers into the profile that tracks the current
+position. When you enter a frame, you update the pointer in the profile based
+on that frame and push it on the stack. When you tail call, you update the
+pointer in the profile based on that frame and update the top of the stack.
+When you exit a frame, you pop the stack and go back to whatever pointer into
+the profile is left.
+
+Really the only difficult operation is given a profile, a pointer into the
+profile, and a new frame, traversing to the right next place into that profile
+with compaction accounted for.
+
+The general idea is:
+* If the new frame is already a child node of this node, follow it and you're
+  done. Easy. Fast. We can do binary search for child nodes. Most nodes will
+  have only a few children, but some of the 'FbleCall' variety could have
+  lots, so best to do binary search.
+* Otherwise see if we can compact:
+  If the current node matches. That's a 1 compaction.
+  Else try a 2 compaction: 2 nodes up matches for two nodes.
+  Else try a 3 compaction: ...
+  Until we run out of possibilities.
+  If you find a compaction, add a back edge to the start of that.
+* If you can't compact, add a new node.
+
+Our tree nodes will need a pointer to their parent to check for compaction. I
+think we should also keep track of the depth of the tree node, so we can
+quickly identify back edges so we traverse the tree.
+
+It's going to be messy. Tests will need to be updated. But I think this will
+be good. Let's give it a try and see how goes.
+
+---
+
+I'll need to change the FbleProfile data type. Can we make it not be public to
+start? That seems like a decent first step?
+
+It will mess up test cases, but I'll have to rewrite those anyway.
+

@@ -16,13 +16,6 @@
 typedef size_t FbleBlockId;
 
 /**
- * FbleBlockId of the root block.
- *
- * The root block is the initial block for new threads.
- */
-#define FBLE_ROOT_BLOCK_ID 0
-
-/**
  * @struct[FbleBlockIdV] A vector of BlockId.
  *  @field[size_t][size] Number of elements.
  *  @field[FbleBlockid*][xs] Elements.
