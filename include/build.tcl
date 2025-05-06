@@ -66,10 +66,8 @@ namespace eval "include" {
     }
     fble-profile.h {
       FbleBlockIdV
-      FbleCallData FbleCallDataV
-      FbleBlockProfile FbleBlockProfileV
       FbleProfile
-      FbleNewProfile
+      FbleNewProfile FbleEnableProfiling FbleDisableProfiling
       FbleAddBlockToProfile FbleAddBlocksToProfile
       FbleFreeProfile
       FbleNewProfileThread FbleFreeProfileThread

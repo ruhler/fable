@@ -53,3 +53,11 @@ start? That seems like a decent first step?
 
 It will mess up test cases, but I'll have to rewrite those anyway.
 
+Can I use NULL instead of having an enabled flag? No. We want people to be
+able to use the APIs not knowing if profiling is enabled or not. Best to make
+that enabled flag internal and provide a function to manipulate it.
+
+How will I update profiles-test.c? Should I add an API to be able to query the
+profile? Anything more than just outputting a profiling report?
+
+profiles-test.c at least would be useful to keep around.

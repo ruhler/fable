@@ -81,6 +81,72 @@
 // The average period of time between random samples.
 #define RANDOM_SAMPLE_PERIOD 1024
 
+/**
+ * @struct[FbleCallData] Info about calls to a block.
+ *  Represents the number of calls and time spent when calling into or from
+ *  another block.
+ *
+ *  @field[FbleBlockId][id] Id of the caller/callee block.
+ *  @field[uint64_t][count] Number of times the call was made.
+ *  @field[uint64_t][time] Amount of time spent in the call.
+ */
+typedef struct {
+  FbleBlockId id;
+  uint64_t count;
+  uint64_t time;
+} FbleCallData;
+
+/**
+ * @struct[FbleCallDataV] A vector of FbleCallData.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleCallData**][xs] Elements.
+ */
+typedef struct {
+  size_t size;
+  FbleCallData** xs;
+} FbleCallDataV;
+
+/**
+ * @struct[FbleBlockProfile] Profile information for a particular block.
+ *  @field[FbleName][name] Name of the block.
+ *  @field[uint64_t][self]
+ *   Time spent in the block. Not including callees of this block.
+ *  @field[FbleCallData][block]
+ *   Id, summary count, and time spent in this block.
+ *  @field[FbleCallDataV][callees]
+ *   Info about calls from this block into other blocks. Sorted in increasing
+ *   order of callee. Only callees that have been called from this block are
+ *   included.
+ */
+typedef struct {
+  FbleName name;
+  uint64_t self;
+  FbleCallData block;
+  FbleCallDataV callees;
+} FbleBlockProfile;
+
+/**
+ * @struct[FbleBlockProfileV] A vector of FbleBlockProfile.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleBlockProfile**][xs] Elements.
+ */
+typedef struct {
+  size_t size;
+  FbleBlockProfile** xs;
+} FbleBlockProfileV;
+
+/**
+ * @struct[FbleProfile] Profiling data collected for a program.
+ *  @field[FbleBlockProfileV][blocks]
+ *   Profiling blocks. blocks.xs[i] contains block and callee information for
+ *   block i.
+ *  @field[bool][enabled] Indicates whether profiling is enabled or not.
+ */
+struct FbleProfile {
+  FbleBlockProfileV blocks;
+  bool enabled;
+};
+
 const FbleBlockId RootBlockId = 0;
 
 /**
@@ -534,6 +600,18 @@ FbleProfile* FbleNewProfile(bool enabled)
   assert(root_id == RootBlockId);
 
   return profile;
+}
+
+// See documentation in fble-profile.h
+void FbleEnableProfiling(FbleProfile* profile)
+{
+  profile->enabled = true;
+}
+
+// See documentation in fble-profile.h
+void FbleDisableProfiling(FbleProfile* profile)
+{
+  profile->enabled = false;
 }
 
 // See documentation in fble-profile.h.

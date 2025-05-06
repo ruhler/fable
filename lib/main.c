@@ -198,7 +198,7 @@ FbleMainStatus FbleMain(
   }
 
   if (fprofile != NULL) {
-    profile->enabled = true;
+    FbleEnableProfiling(profile);
   }
 
   FbleStringV deps;

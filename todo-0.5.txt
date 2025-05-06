@@ -2,6 +2,13 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+Profile Rewrite
+* Re-enable test/profiles-test.c, fble-profiles-test, and fble-profile-test
+  Check version history to see how they used to be hooked up.
+* Remove enabled argument to FbleNewProfile?
+ - Have a sane default and let callers overwrite with explicit enable/disable
+   function calls instead?
+
 GC OnFree cleanup
 * Add explicit close to OStream API.
 * Don't close files or sockets in GC OnFree. Close them when asked to
