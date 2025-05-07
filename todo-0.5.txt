@@ -3,8 +3,16 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 Profile Rewrite
-* Re-enable test/profiles-test.c, fble-profiles-test, and fble-profile-test
+* Re-enable fble-profiles-test and fble-profile-test
   Check version history to see how they used to be hooked up.
+  Remove commented out code from profiles-test.c
+* See if we can get away without random sampling, now that sampling is so
+  cheap.
+  Remember to remove ttrs.
+* Simplify sorted insert in EnterBlock.
+  Copy direct to destination without transferring everything via tmp.
+* Figure out how to deal with count and time metrics.
+* Figure out how to print block info.
 * Remove enabled argument to FbleNewProfile?
  - Have a sane default and let callers overwrite with explicit enable/disable
    function calls instead?

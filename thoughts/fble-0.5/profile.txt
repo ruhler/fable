@@ -61,3 +61,57 @@ How will I update profiles-test.c? Should I add an API to be able to query the
 profile? Anything more than just outputting a profiling report?
 
 profiles-test.c at least would be useful to keep around.
+
+---
+
+I have two kinds of profile tests:
+1. fble-profiles-test checks expected number of calls in /ProfilesTest%
+2. fble-profile-test is unit test for the FbleProfile APIs.
+
+Let's not worry about them for now. Revisit after I switch to the new API.
+
+---
+
+Sketching out the new implementation, the code looks pretty nice and easy so
+far. I just need to do a few bits:
+* EnterBlock is the fun one: binary search in the profile, if nothing found,
+  search for compaction and insert a new node sorted.
+* FreeNode should be straight forward.
+* GenerateReport: Maybe just traverse the tree, and at each node, print the
+  count (?), time, and then walk up the tree to figure out the sample path (in
+  reverse order). Or pass the sample path prefix down as an arg.
+
+---
+
+Looks like the new implementation works now?
+
+Let's compare performance and results before/after.
+
+Here's the new implementation:
+
+yes | head -n 200000 | /usr/bin/time -f "%E" ./out/pkgs/md5/fble-md5 --profile
+md5.new.prof.txt --
+c2938b130a1d2db9597a9c9a8ea2a5cf  -
+2:37.36
+
+Here's the old implementation:
+
+yes | head -n 200000 | /usr/bin/time -f "%E" ./out/pkgs/md5/fble-md5 --profile
+md5.old.prof.txt --
+c2938b130a1d2db9597a9c9a8ea2a5cf  -
+3:32.20
+
+So definately performnace is improved. 2.5x overhead instead of 3.5x overhead.
+
+Looking at the results themselves:
+* Um, there are an absurd number of samples. Is canonicalization not working?
+
+It's got the expected number of samples based on md5.old.prof.txt. But
+pprof.py runs out of memory processing those all.
+
+Let me see if I can hack up a script to canonicalize and see if we are
+under-canonicalizing.
+
+It doesn't look like we are missing any canonicalizations. I think md5 just
+happens to have a large number of different paths with all the rounds and
+stuff. Let me try a simpler program to compare results on.

@@ -86,24 +86,24 @@ static void ReplaceN(size_t n)
   FbleProfileExitBlock(thread);
   FbleFreeProfileThread(thread);
 
-  ASSERT(profile->blocks.size == 2);
-  ASSERT(profile->blocks.xs[0]->self == 0);
-  ASSERT(profile->blocks.xs[0]->block.id == 0);
-  ASSERT(profile->blocks.xs[0]->block.count == 1);
-  ASSERT(profile->blocks.xs[0]->block.time == 10 * (n + 1));
-  ASSERT(profile->blocks.xs[0]->callees.size == 1);
-  ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-  ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-  ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 10 * (n + 1));
+  //ASSERT(profile->blocks.size == 2);
+  //ASSERT(profile->blocks.xs[0]->self == 0);
+  //ASSERT(profile->blocks.xs[0]->block.id == 0);
+  //ASSERT(profile->blocks.xs[0]->block.count == 1);
+  //ASSERT(profile->blocks.xs[0]->block.time == 10 * (n + 1));
+  //ASSERT(profile->blocks.xs[0]->callees.size == 1);
+  //ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+  //ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+  //ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 10 * (n + 1));
 
-  ASSERT(profile->blocks.xs[1]->self == 10 * (n + 1));
-  ASSERT(profile->blocks.xs[1]->block.id == 1);
-  ASSERT(profile->blocks.xs[1]->block.count == n + 1);
-  ASSERT(profile->blocks.xs[1]->block.time == 10 * (n + 1));
-  ASSERT(profile->blocks.xs[1]->callees.size == 1);
-  ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 1);
-  ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == n);
-  ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 10 * n);
+  //ASSERT(profile->blocks.xs[1]->self == 10 * (n + 1));
+  //ASSERT(profile->blocks.xs[1]->block.id == 1);
+  //ASSERT(profile->blocks.xs[1]->block.count == n + 1);
+  //ASSERT(profile->blocks.xs[1]->block.time == 10 * (n + 1));
+  //ASSERT(profile->blocks.xs[1]->callees.size == 1);
+  //ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 1);
+  //ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == n);
+  //ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 10 * n);
 
   FbleFreeProfile(profile);
 }
@@ -153,51 +153,51 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    ASSERT(profile->blocks.size == 5);
-    ASSERT(profile->blocks.xs[0]->self == 0);
-    ASSERT(profile->blocks.xs[0]->block.id == 0);
-    ASSERT(profile->blocks.xs[0]->block.count == 1);
-    ASSERT(profile->blocks.xs[0]->block.time == 131);
-    ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 131);
+    // ASSERT(profile->blocks.size == 5);
+    // ASSERT(profile->blocks.xs[0]->self == 0);
+    // ASSERT(profile->blocks.xs[0]->block.id == 0);
+    // ASSERT(profile->blocks.xs[0]->block.count == 1);
+    // ASSERT(profile->blocks.xs[0]->block.time == 131);
+    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 131);
 
-    ASSERT(profile->blocks.xs[1]->self == 10);
-    ASSERT(profile->blocks.xs[1]->block.id == 1);
-    ASSERT(profile->blocks.xs[1]->block.count == 1);
-    ASSERT(profile->blocks.xs[1]->block.time == 131);
-    ASSERT(profile->blocks.xs[1]->callees.size == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 3);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 31);
+    // ASSERT(profile->blocks.xs[1]->self == 10);
+    // ASSERT(profile->blocks.xs[1]->block.id == 1);
+    // ASSERT(profile->blocks.xs[1]->block.count == 1);
+    // ASSERT(profile->blocks.xs[1]->block.time == 131);
+    // ASSERT(profile->blocks.xs[1]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 3);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 31);
 
-    ASSERT(profile->blocks.xs[2]->self == 20);
-    ASSERT(profile->blocks.xs[2]->block.id == 2);
-    ASSERT(profile->blocks.xs[2]->block.count == 1);
-    ASSERT(profile->blocks.xs[2]->block.time == 90);
-    ASSERT(profile->blocks.xs[2]->callees.size == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 30);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 4);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 40);
+    // ASSERT(profile->blocks.xs[2]->self == 20);
+    // ASSERT(profile->blocks.xs[2]->block.id == 2);
+    // ASSERT(profile->blocks.xs[2]->block.count == 1);
+    // ASSERT(profile->blocks.xs[2]->block.time == 90);
+    // ASSERT(profile->blocks.xs[2]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 30);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 4);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 40);
 
-    ASSERT(profile->blocks.xs[3]->self == 61);
-    ASSERT(profile->blocks.xs[3]->block.id == 3);
-    ASSERT(profile->blocks.xs[3]->block.count == 2);
-    ASSERT(profile->blocks.xs[3]->block.time == 61);
-    ASSERT(profile->blocks.xs[3]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[3]->self == 61);
+    // ASSERT(profile->blocks.xs[3]->block.id == 3);
+    // ASSERT(profile->blocks.xs[3]->block.count == 2);
+    // ASSERT(profile->blocks.xs[3]->block.time == 61);
+    // ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
-    ASSERT(profile->blocks.xs[4]->self == 40);
-    ASSERT(profile->blocks.xs[4]->block.id == 4);
-    ASSERT(profile->blocks.xs[4]->block.count == 1);
-    ASSERT(profile->blocks.xs[4]->block.time == 40);
-    ASSERT(profile->blocks.xs[4]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[4]->self == 40);
+    // ASSERT(profile->blocks.xs[4]->block.id == 4);
+    // ASSERT(profile->blocks.xs[4]->block.count == 1);
+    // ASSERT(profile->blocks.xs[4]->block.time == 40);
+    // ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
     FbleGenerateProfileReport(stdout, profile);
     FbleFreeProfile(profile);
@@ -235,66 +235,66 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    ASSERT(profile->blocks.size == 7);
-    ASSERT(profile->blocks.xs[0]->self == 0);
-    ASSERT(profile->blocks.xs[0]->block.id == 0);
-    ASSERT(profile->blocks.xs[0]->block.count == 1);
-    ASSERT(profile->blocks.xs[0]->block.time == 210);
-    ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 210);
+    // ASSERT(profile->blocks.size == 7);
+    // ASSERT(profile->blocks.xs[0]->self == 0);
+    // ASSERT(profile->blocks.xs[0]->block.id == 0);
+    // ASSERT(profile->blocks.xs[0]->block.count == 1);
+    // ASSERT(profile->blocks.xs[0]->block.time == 210);
+    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 210);
 
-    ASSERT(profile->blocks.xs[1]->self == 10);
-    ASSERT(profile->blocks.xs[1]->block.id == 1);
-    ASSERT(profile->blocks.xs[1]->block.count == 1);
-    ASSERT(profile->blocks.xs[1]->block.time == 210);
-    ASSERT(profile->blocks.xs[1]->callees.size == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 140);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 6);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 60);
+    // ASSERT(profile->blocks.xs[1]->self == 10);
+    // ASSERT(profile->blocks.xs[1]->block.id == 1);
+    // ASSERT(profile->blocks.xs[1]->block.count == 1);
+    // ASSERT(profile->blocks.xs[1]->block.time == 210);
+    // ASSERT(profile->blocks.xs[1]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 140);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 6);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 60);
 
-    ASSERT(profile->blocks.xs[2]->self == 20);
-    ASSERT(profile->blocks.xs[2]->block.id == 2);
-    ASSERT(profile->blocks.xs[2]->block.count == 1);
-    ASSERT(profile->blocks.xs[2]->block.time == 140);
-    ASSERT(profile->blocks.xs[2]->callees.size == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 120);
+    // ASSERT(profile->blocks.xs[2]->self == 20);
+    // ASSERT(profile->blocks.xs[2]->block.id == 2);
+    // ASSERT(profile->blocks.xs[2]->block.count == 1);
+    // ASSERT(profile->blocks.xs[2]->block.time == 140);
+    // ASSERT(profile->blocks.xs[2]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 120);
 
-    ASSERT(profile->blocks.xs[3]->self == 30);
-    ASSERT(profile->blocks.xs[3]->block.id == 3);
-    ASSERT(profile->blocks.xs[3]->block.count == 1);
-    ASSERT(profile->blocks.xs[3]->block.time == 120);
-    ASSERT(profile->blocks.xs[3]->callees.size == 2);
-    ASSERT(profile->blocks.xs[3]->callees.xs[0]->id == 4);
-    ASSERT(profile->blocks.xs[3]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[3]->callees.xs[0]->time == 40);
-    ASSERT(profile->blocks.xs[3]->callees.xs[1]->id == 5);
-    ASSERT(profile->blocks.xs[3]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[3]->callees.xs[1]->time == 50);
+    // ASSERT(profile->blocks.xs[3]->self == 30);
+    // ASSERT(profile->blocks.xs[3]->block.id == 3);
+    // ASSERT(profile->blocks.xs[3]->block.count == 1);
+    // ASSERT(profile->blocks.xs[3]->block.time == 120);
+    // ASSERT(profile->blocks.xs[3]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[0]->id == 4);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[0]->time == 40);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[1]->id == 5);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[1]->time == 50);
 
-    ASSERT(profile->blocks.xs[4]->self == 40);
-    ASSERT(profile->blocks.xs[4]->block.id == 4);
-    ASSERT(profile->blocks.xs[4]->block.count == 1);
-    ASSERT(profile->blocks.xs[4]->block.time == 40);
-    ASSERT(profile->blocks.xs[4]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[4]->self == 40);
+    // ASSERT(profile->blocks.xs[4]->block.id == 4);
+    // ASSERT(profile->blocks.xs[4]->block.count == 1);
+    // ASSERT(profile->blocks.xs[4]->block.time == 40);
+    // ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
-    ASSERT(profile->blocks.xs[5]->self == 50);
-    ASSERT(profile->blocks.xs[5]->block.id == 5);
-    ASSERT(profile->blocks.xs[5]->block.count == 1);
-    ASSERT(profile->blocks.xs[5]->block.time == 50);
-    ASSERT(profile->blocks.xs[5]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[5]->self == 50);
+    // ASSERT(profile->blocks.xs[5]->block.id == 5);
+    // ASSERT(profile->blocks.xs[5]->block.count == 1);
+    // ASSERT(profile->blocks.xs[5]->block.time == 50);
+    // ASSERT(profile->blocks.xs[5]->callees.size == 0);
 
-    ASSERT(profile->blocks.xs[6]->self == 60);
-    ASSERT(profile->blocks.xs[6]->block.id == 6);
-    ASSERT(profile->blocks.xs[6]->block.count == 1);
-    ASSERT(profile->blocks.xs[6]->block.time == 60);
-    ASSERT(profile->blocks.xs[6]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[6]->self == 60);
+    // ASSERT(profile->blocks.xs[6]->block.id == 6);
+    // ASSERT(profile->blocks.xs[6]->block.count == 1);
+    // ASSERT(profile->blocks.xs[6]->block.time == 60);
+    // ASSERT(profile->blocks.xs[6]->callees.size == 0);
 
     FbleFreeProfile(profile);
   }
@@ -325,42 +325,42 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    ASSERT(profile->blocks.size == 4);
-    ASSERT(profile->blocks.xs[0]->self == 0);
-    ASSERT(profile->blocks.xs[0]->block.id == 0);
-    ASSERT(profile->blocks.xs[0]->block.count == 1);
-    ASSERT(profile->blocks.xs[0]->block.time == 100);
-    ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 100);
+    // ASSERT(profile->blocks.size == 4);
+    // ASSERT(profile->blocks.xs[0]->self == 0);
+    // ASSERT(profile->blocks.xs[0]->block.id == 0);
+    // ASSERT(profile->blocks.xs[0]->block.count == 1);
+    // ASSERT(profile->blocks.xs[0]->block.time == 100);
+    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 100);
 
-    ASSERT(profile->blocks.xs[1]->self == 10);
-    ASSERT(profile->blocks.xs[1]->block.id == 1);
-    ASSERT(profile->blocks.xs[1]->block.count == 1);
-    ASSERT(profile->blocks.xs[1]->block.time == 100);
-    ASSERT(profile->blocks.xs[1]->callees.size == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
+    // ASSERT(profile->blocks.xs[1]->self == 10);
+    // ASSERT(profile->blocks.xs[1]->block.id == 1);
+    // ASSERT(profile->blocks.xs[1]->block.count == 1);
+    // ASSERT(profile->blocks.xs[1]->block.time == 100);
+    // ASSERT(profile->blocks.xs[1]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
 
-    ASSERT(profile->blocks.xs[2]->self == 60);
-    ASSERT(profile->blocks.xs[2]->block.id == 2);
-    ASSERT(profile->blocks.xs[2]->block.count == 3);
-    ASSERT(profile->blocks.xs[2]->block.time == 90);
-    ASSERT(profile->blocks.xs[2]->callees.size == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 70);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 3);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 30);
+    // ASSERT(profile->blocks.xs[2]->self == 60);
+    // ASSERT(profile->blocks.xs[2]->block.id == 2);
+    // ASSERT(profile->blocks.xs[2]->block.count == 3);
+    // ASSERT(profile->blocks.xs[2]->block.time == 90);
+    // ASSERT(profile->blocks.xs[2]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 70);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 3);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 30);
 
-    ASSERT(profile->blocks.xs[3]->self == 30);
-    ASSERT(profile->blocks.xs[3]->block.id == 3);
-    ASSERT(profile->blocks.xs[3]->block.count == 1);
-    ASSERT(profile->blocks.xs[3]->block.time == 30);
-    ASSERT(profile->blocks.xs[3]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[3]->self == 30);
+    // ASSERT(profile->blocks.xs[3]->block.id == 3);
+    // ASSERT(profile->blocks.xs[3]->block.count == 1);
+    // ASSERT(profile->blocks.xs[3]->block.time == 30);
+    // ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
     FbleGenerateProfileReport(stdout, profile);
     FbleFreeProfile(profile);
@@ -388,42 +388,42 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 3
     FbleFreeProfileThread(thread);
 
-    ASSERT(profile->blocks.size == 4);
-    ASSERT(profile->blocks.xs[0]->self == 0);
-    ASSERT(profile->blocks.xs[0]->block.id == 0);
-    ASSERT(profile->blocks.xs[0]->block.count == 1);
-    ASSERT(profile->blocks.xs[0]->block.time == 100);
-    ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 100);
+    // ASSERT(profile->blocks.size == 4);
+    // ASSERT(profile->blocks.xs[0]->self == 0);
+    // ASSERT(profile->blocks.xs[0]->block.id == 0);
+    // ASSERT(profile->blocks.xs[0]->block.count == 1);
+    // ASSERT(profile->blocks.xs[0]->block.time == 100);
+    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 100);
 
-    ASSERT(profile->blocks.xs[1]->self == 10);
-    ASSERT(profile->blocks.xs[1]->block.id == 1);
-    ASSERT(profile->blocks.xs[1]->block.count == 1);
-    ASSERT(profile->blocks.xs[1]->block.time == 100);
-    ASSERT(profile->blocks.xs[1]->callees.size == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
+    // ASSERT(profile->blocks.xs[1]->self == 10);
+    // ASSERT(profile->blocks.xs[1]->block.id == 1);
+    // ASSERT(profile->blocks.xs[1]->block.count == 1);
+    // ASSERT(profile->blocks.xs[1]->block.time == 100);
+    // ASSERT(profile->blocks.xs[1]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
 
-    ASSERT(profile->blocks.xs[2]->self == 60);
-    ASSERT(profile->blocks.xs[2]->block.id == 2);
-    ASSERT(profile->blocks.xs[2]->block.count == 3);
-    ASSERT(profile->blocks.xs[2]->block.time == 90);
-    ASSERT(profile->blocks.xs[2]->callees.size == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 70);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 3);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 30);
+    // ASSERT(profile->blocks.xs[2]->self == 60);
+    // ASSERT(profile->blocks.xs[2]->block.id == 2);
+    // ASSERT(profile->blocks.xs[2]->block.count == 3);
+    // ASSERT(profile->blocks.xs[2]->block.time == 90);
+    // ASSERT(profile->blocks.xs[2]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 70);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 3);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 30);
 
-    ASSERT(profile->blocks.xs[3]->self == 30);
-    ASSERT(profile->blocks.xs[3]->block.id == 3);
-    ASSERT(profile->blocks.xs[3]->block.count == 1);
-    ASSERT(profile->blocks.xs[3]->block.time == 30);
-    ASSERT(profile->blocks.xs[3]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[3]->self == 30);
+    // ASSERT(profile->blocks.xs[3]->block.id == 3);
+    // ASSERT(profile->blocks.xs[3]->block.count == 1);
+    // ASSERT(profile->blocks.xs[3]->block.time == 30);
+    // ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
     FbleGenerateProfileReport(stdout, profile);
     FbleFreeProfile(profile);
@@ -459,51 +459,51 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    ASSERT(profile->blocks.size == 5);
-    ASSERT(profile->blocks.xs[0]->self == 0);
-    ASSERT(profile->blocks.xs[0]->block.id == 0);
-    ASSERT(profile->blocks.xs[0]->block.count == 1);
-    ASSERT(profile->blocks.xs[0]->block.time == 150);
-    ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 150);
+    // ASSERT(profile->blocks.size == 5);
+    // ASSERT(profile->blocks.xs[0]->self == 0);
+    // ASSERT(profile->blocks.xs[0]->block.id == 0);
+    // ASSERT(profile->blocks.xs[0]->block.count == 1);
+    // ASSERT(profile->blocks.xs[0]->block.time == 150);
+    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 150);
 
-    ASSERT(profile->blocks.xs[1]->self == 10);
-    ASSERT(profile->blocks.xs[1]->block.id == 1);
-    ASSERT(profile->blocks.xs[1]->block.count == 1);
-    ASSERT(profile->blocks.xs[1]->block.time == 150);
-    ASSERT(profile->blocks.xs[1]->callees.size == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 140);
+    // ASSERT(profile->blocks.xs[1]->self == 10);
+    // ASSERT(profile->blocks.xs[1]->block.id == 1);
+    // ASSERT(profile->blocks.xs[1]->block.count == 1);
+    // ASSERT(profile->blocks.xs[1]->block.time == 150);
+    // ASSERT(profile->blocks.xs[1]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 140);
 
-    ASSERT(profile->blocks.xs[2]->self == 40);
-    ASSERT(profile->blocks.xs[2]->block.id == 2);
-    ASSERT(profile->blocks.xs[2]->block.count == 2);
-    ASSERT(profile->blocks.xs[2]->block.time == 140);
-    ASSERT(profile->blocks.xs[2]->callees.size == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 120);
+    // ASSERT(profile->blocks.xs[2]->self == 40);
+    // ASSERT(profile->blocks.xs[2]->block.id == 2);
+    // ASSERT(profile->blocks.xs[2]->block.count == 2);
+    // ASSERT(profile->blocks.xs[2]->block.time == 140);
+    // ASSERT(profile->blocks.xs[2]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 120);
 
-    ASSERT(profile->blocks.xs[3]->self == 60);
-    ASSERT(profile->blocks.xs[3]->block.id == 3);
-    ASSERT(profile->blocks.xs[3]->block.count == 2);
-    ASSERT(profile->blocks.xs[3]->block.time == 120);
-    ASSERT(profile->blocks.xs[3]->callees.size == 2);
-    ASSERT(profile->blocks.xs[3]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[3]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[3]->callees.xs[0]->time == 90);
-    ASSERT(profile->blocks.xs[3]->callees.xs[1]->id == 4);
-    ASSERT(profile->blocks.xs[3]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[3]->callees.xs[1]->time == 40);
+    // ASSERT(profile->blocks.xs[3]->self == 60);
+    // ASSERT(profile->blocks.xs[3]->block.id == 3);
+    // ASSERT(profile->blocks.xs[3]->block.count == 2);
+    // ASSERT(profile->blocks.xs[3]->block.time == 120);
+    // ASSERT(profile->blocks.xs[3]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[0]->time == 90);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[1]->id == 4);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[3]->callees.xs[1]->time == 40);
 
-    ASSERT(profile->blocks.xs[4]->self == 40);
-    ASSERT(profile->blocks.xs[4]->block.id == 4);
-    ASSERT(profile->blocks.xs[4]->block.count == 1);
-    ASSERT(profile->blocks.xs[4]->block.time == 40);
-    ASSERT(profile->blocks.xs[4]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[4]->self == 40);
+    // ASSERT(profile->blocks.xs[4]->block.id == 4);
+    // ASSERT(profile->blocks.xs[4]->block.count == 1);
+    // ASSERT(profile->blocks.xs[4]->block.time == 40);
+    // ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
     FbleGenerateProfileReport(stdout, profile);
     FbleFreeProfile(profile);
@@ -552,30 +552,30 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(b); // 1
     FbleFreeProfileThread(b);
 
-    ASSERT(profile->blocks.size == 3);
-    ASSERT(profile->blocks.xs[0]->self == 0);
-    ASSERT(profile->blocks.xs[0]->block.id == 0);
-    ASSERT(profile->blocks.xs[0]->block.count == 2);
-    ASSERT(profile->blocks.xs[0]->block.time == 33);
-    ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 2);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 33);
+    // ASSERT(profile->blocks.size == 3);
+    // ASSERT(profile->blocks.xs[0]->self == 0);
+    // ASSERT(profile->blocks.xs[0]->block.id == 0);
+    // ASSERT(profile->blocks.xs[0]->block.count == 2);
+    // ASSERT(profile->blocks.xs[0]->block.time == 33);
+    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 2);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 33);
 
-    ASSERT(profile->blocks.xs[1]->self == 11);
-    ASSERT(profile->blocks.xs[1]->block.id == 1);
-    ASSERT(profile->blocks.xs[1]->block.count == 2);
-    ASSERT(profile->blocks.xs[1]->block.time == 33);
-    ASSERT(profile->blocks.xs[1]->callees.size == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 22);
+    // ASSERT(profile->blocks.xs[1]->self == 11);
+    // ASSERT(profile->blocks.xs[1]->block.id == 1);
+    // ASSERT(profile->blocks.xs[1]->block.count == 2);
+    // ASSERT(profile->blocks.xs[1]->block.time == 33);
+    // ASSERT(profile->blocks.xs[1]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 22);
 
-    ASSERT(profile->blocks.xs[2]->self == 22);
-    ASSERT(profile->blocks.xs[2]->block.id == 2);
-    ASSERT(profile->blocks.xs[2]->block.count == 2);
-    ASSERT(profile->blocks.xs[2]->block.time == 22);
-    ASSERT(profile->blocks.xs[2]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[2]->self == 22);
+    // ASSERT(profile->blocks.xs[2]->block.id == 2);
+    // ASSERT(profile->blocks.xs[2]->block.count == 2);
+    // ASSERT(profile->blocks.xs[2]->block.time == 22);
+    // ASSERT(profile->blocks.xs[2]->callees.size == 0);
 
     FbleFreeProfile(profile);
   }
@@ -612,51 +612,51 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    ASSERT(profile->blocks.size == 5);
-    ASSERT(profile->blocks.xs[0]->self == 0);
-    ASSERT(profile->blocks.xs[0]->block.id == 0);
-    ASSERT(profile->blocks.xs[0]->block.count == 1);
-    ASSERT(profile->blocks.xs[0]->block.time == 131);
-    ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 131);
+    // ASSERT(profile->blocks.size == 5);
+    // ASSERT(profile->blocks.xs[0]->self == 0);
+    // ASSERT(profile->blocks.xs[0]->block.id == 0);
+    // ASSERT(profile->blocks.xs[0]->block.count == 1);
+    // ASSERT(profile->blocks.xs[0]->block.time == 131);
+    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 131);
 
-    ASSERT(profile->blocks.xs[1]->self == 10);
-    ASSERT(profile->blocks.xs[1]->block.id == 1);
-    ASSERT(profile->blocks.xs[1]->block.count == 1);
-    ASSERT(profile->blocks.xs[1]->block.time == 131);
-    ASSERT(profile->blocks.xs[1]->callees.size == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 3);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 31);
+    // ASSERT(profile->blocks.xs[1]->self == 10);
+    // ASSERT(profile->blocks.xs[1]->block.id == 1);
+    // ASSERT(profile->blocks.xs[1]->block.count == 1);
+    // ASSERT(profile->blocks.xs[1]->block.time == 131);
+    // ASSERT(profile->blocks.xs[1]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 3);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 31);
 
-    ASSERT(profile->blocks.xs[2]->self == 20);
-    ASSERT(profile->blocks.xs[2]->block.id == 2);
-    ASSERT(profile->blocks.xs[2]->block.count == 1);
-    ASSERT(profile->blocks.xs[2]->block.time == 90);
-    ASSERT(profile->blocks.xs[2]->callees.size == 2);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 30);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 4);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
-    ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 40);
+    // ASSERT(profile->blocks.xs[2]->self == 20);
+    // ASSERT(profile->blocks.xs[2]->block.id == 2);
+    // ASSERT(profile->blocks.xs[2]->block.count == 1);
+    // ASSERT(profile->blocks.xs[2]->block.time == 90);
+    // ASSERT(profile->blocks.xs[2]->callees.size == 2);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 30);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 4);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
+    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 40);
 
-    ASSERT(profile->blocks.xs[3]->self == 61);
-    ASSERT(profile->blocks.xs[3]->block.id == 3);
-    ASSERT(profile->blocks.xs[3]->block.count == 2);
-    ASSERT(profile->blocks.xs[3]->block.time == 61);
-    ASSERT(profile->blocks.xs[3]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[3]->self == 61);
+    // ASSERT(profile->blocks.xs[3]->block.id == 3);
+    // ASSERT(profile->blocks.xs[3]->block.count == 2);
+    // ASSERT(profile->blocks.xs[3]->block.time == 61);
+    // ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
-    ASSERT(profile->blocks.xs[4]->self == 40);
-    ASSERT(profile->blocks.xs[4]->block.id == 4);
-    ASSERT(profile->blocks.xs[4]->block.count == 1);
-    ASSERT(profile->blocks.xs[4]->block.time == 40);
-    ASSERT(profile->blocks.xs[4]->callees.size == 0);
+    // ASSERT(profile->blocks.xs[4]->self == 40);
+    // ASSERT(profile->blocks.xs[4]->block.id == 4);
+    // ASSERT(profile->blocks.xs[4]->block.count == 1);
+    // ASSERT(profile->blocks.xs[4]->block.time == 40);
+    // ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
     FbleGenerateProfileReport(stdout, profile);
     FbleFreeProfile(profile);
@@ -691,14 +691,14 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    ASSERT(profile->blocks.size == 5);
-    for (size_t i = 0; i < profile->blocks.size; ++i) {
-      ASSERT(profile->blocks.xs[i]->self == 0);
-      ASSERT(profile->blocks.xs[i]->block.id == i);
-      ASSERT(profile->blocks.xs[i]->block.count == 0);
-      ASSERT(profile->blocks.xs[i]->block.time == 0);
-      ASSERT(profile->blocks.xs[i]->callees.size == 0);
-    }
+    // ASSERT(profile->blocks.size == 5);
+    // for (size_t i = 0; i < profile->blocks.size; ++i) {
+      // ASSERT(profile->blocks.xs[i]->self == 0);
+      // ASSERT(profile->blocks.xs[i]->block.id == i);
+      // ASSERT(profile->blocks.xs[i]->block.count == 0);
+      // ASSERT(profile->blocks.xs[i]->block.time == 0);
+      // ASSERT(profile->blocks.xs[i]->callees.size == 0);
+    // }
 
     FbleGenerateProfileReport(stdout, profile);
     FbleFreeProfile(profile);

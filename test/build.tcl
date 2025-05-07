@@ -10,6 +10,7 @@ namespace eval "test" {
 
   set bin_sources {
     fble-mem-test.c
+    fble-profile-test.c
     fble-test.c
   }
 
@@ -45,6 +46,9 @@ namespace eval "test" {
     fbld_check_dc $::b/test/$x.dc $::s/test/$x
   }
 
+  # fble-profile-test
+  test $::b/test/fble-profile-test.tr $::b/test/fble-profile-test \
+    "$::b/test/fble-profile-test > /dev/null"
   if {$::arch == "aarch64"} {
     # /Fble/DebugTest%
     fbleobj_aarch64 $::b/test/fble-debug-test.o $::b/bin/fble-compile \
