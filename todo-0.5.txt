@@ -6,6 +6,9 @@ Profile Rewrite
 * Re-enable fble-profiles-test and fble-profile-test
   Check version history to see how they used to be hooked up.
   Remove commented out code from profiles-test.c
+* Bring back some form of fble-perf-profile.
+* Decide on terminology for trace/stack/sequence/sample.
+* Document better in code comments how profile.c works.
 * See if we can get away without random sampling, now that sampling is so
   cheap.
   Remember to remove ttrs.
@@ -16,6 +19,8 @@ Profile Rewrite
 * Remove enabled argument to FbleNewProfile?
  - Have a sane default and let callers overwrite with explicit enable/disable
    function calls instead?
+
+* Update all the user documentation (book, profiling guide) on how to profile.
 
 GC OnFree cleanup
 * Add explicit close to OStream API.
@@ -60,9 +65,6 @@ pkgs/Pprof
   file can't?
 
 * Improve performance of fble pprof viewer enough to be useful.
-
-* Output profiling samples instead of report from fble.
-  Changing how we track/deal with recursion.
 
 * Fbld Language
  - modularity

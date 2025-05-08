@@ -115,3 +115,30 @@ under-canonicalizing.
 It doesn't look like we are missing any canonicalizations. I think md5 just
 happens to have a large number of different paths with all the rounds and
 stuff. Let me try a simpler program to compare results on.
+
+Yeah, on core tests, the profiling info matches what we had before. Looks
+good.
+
+Awesome. I'm happy about this. Just a bunch of things to clean up now.
+
+---
+
+I need to get tests back in place. Which means I need a way to query the
+profile.
+
+For fble-profile-test, I want to be able to write what would be printed out
+for the profile. But also I want to check counts as well as time?
+
+The most general API would be something that can iterate over all the
+sequences and get count and time for them. From that I could implement queries
+for specific samples. Hmm... Yeah, maybe that's the way to go. It could be
+slow to start, but I could implement queries like: count number of different
+samples, assert count and time for a given sample. Etc. Worst case, I could
+convert into some different structure that I can explicitly traverse.
+
+How about:
+
+FbleName FbleProfileBlockName(FbleProfile* profile, FbleBlockId block);
+void (*FbleProfileQuery)(FbleProfile* profile, FbleBlockIdV sequence, uint64_t
+count, uint64_t time, void* userdata);
+void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery query, void* userdata);

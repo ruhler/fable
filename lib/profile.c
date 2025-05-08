@@ -104,10 +104,11 @@ static void FreeNode(ProfileNode* node);
 static void Push(FbleProfileThread* thread, ProfileNode* node, bool replace);
 static void Pop(FbleProfileThread* thread);
 
-static void PrintSamples(FILE* fout, FbleNameV blocks, FbleNameV* prefix, ProfileNode* node);
-
 static ProfileNode* Canonical(ProfileNode* node, FbleBlockId block);
 static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace);
+
+static void QuerySamples(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node);
+static void ReportQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
 
 /**
  * @func[FreeNode] Frees resources associated with a profile node.
@@ -165,44 +166,6 @@ static void Pop(FbleProfileThread* thread)
 {
   assert(thread->stack.size > 0);
   thread->stack.size--;
-}
-
-/**
- * @func[PrintSamples] Prints sample times.
- *  @arg[FILE*][fout] Where to print to.
- *  @arg[FbleNameV][blocks] Block names.
- *  @arg[FbleNameV*][prefix] Prefix to the samples in the node.
- *  @arg[ProfileNode*][node] Profile tree node to print samples for.
- *
- *  @sideeffects
- *   @i Prints samples out in pprof txt format.
- *   @i May temporarily expand prefix, causing it to be resized.
- */
-static void PrintSamples(FILE* fout, FbleNameV blocks, FbleNameV* prefix, ProfileNode* node)
-{
-  FbleName frame = blocks.xs[node->id];
-  FbleAppendToVector(*prefix, frame);
-
-  // Print out the time for this sample.
-  // TODO: Print count too?
-  if (node->time > 0) {
-    fprintf(fout, "%" PRIu64 " ", node->time);
-    const char* sep = "";
-    for (size_t i = 0; i < prefix->size; ++i) {
-      fprintf(fout, "%s%s", sep, prefix->xs[i].name->str);
-      sep = ";";
-    }
-    fprintf(fout, "\n");
-  }
-
-  // Print out all child samples.
-  for (size_t i = 0; i < node->children.size; ++i) {
-    if (node->children.xs[i]->depth > node->depth) {
-      PrintSamples(fout, blocks, prefix, node->children.xs[i]);
-    }
-  }
-
-  prefix->size--;
 }
 
 /**
@@ -307,6 +270,54 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   }
   FbleAppendToVector(node->children, data);
   Push(thread, dest, replace);
+}
+
+/**
+ * @func[QuerySamples] Runs a query over samples.
+ *  @arg[FbleProfile*][profile] The profile being queried.
+ *  @arg[FbleProfileQuery*][query] The query to run.
+ *  @arg[void*][data] User data.
+ *  @arg[FbleBlockIdV*][prefix] Prefix to the samples in the node.
+ *  @arg[ProfileNode*][node] Profile tree node to query samples for.
+ *
+ *  @sideeffects
+ *   @i Calls query function on sample and children.
+ *   @i May temporarily expand prefix, causing it to be resized.
+ */
+static void QuerySamples(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node)
+{
+  FbleAppendToVector(*prefix, node->id);
+  query(profile, data, *prefix, node->count, node->time);
+
+  // Traverse child samples.
+  for (size_t i = 0; i < node->children.size; ++i) {
+    if (node->children.xs[i]->depth > node->depth) {
+      QuerySamples(profile, query, data, prefix, node->children.xs[i]);
+    }
+  }
+
+  prefix->size--;
+}
+
+/**
+ * @func[ReportQuery] Query to use for profiling report.
+ *  See documentation of FbleProfileQuery in fble-profile.h
+ */
+static void ReportQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+{
+  FILE* fout = (FILE*)userdata;
+
+  // TODO: Print count too?
+  if (time > 0) {
+    fprintf(fout, "%" PRIu64 " ", time);
+    const char* sep = "";
+    for (size_t i = 0; i < seq.size; ++i) {
+      FbleName name = profile->blocks.xs[seq.xs[i]];
+      fprintf(fout, "%s%s", sep, name.name->str);
+      sep = ";";
+    }
+    fprintf(fout, "\n");
+  }
 }
 
 // See documentation in fble-profile.h.
@@ -459,6 +470,19 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
   Pop(thread);
 }
 
+// See documentation in fble-profile.h
+void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userdata)
+{
+  if (!profile->enabled) {
+    return;
+  }
+
+  FbleBlockIdV prefix;
+  FbleInitVector(prefix);
+  QuerySamples(profile, query, userdata, &prefix, profile->root);
+  FbleFreeVector(prefix);
+}
+
 // See documentation in fble-profile.h.
 void FbleGenerateProfileReport(FILE* fout, FbleProfile* profile)
 {
@@ -467,8 +491,5 @@ void FbleGenerateProfileReport(FILE* fout, FbleProfile* profile)
   }
 
   // TODO: Print block info?
-  FbleNameV prefix;
-  FbleInitVector(prefix);
-  PrintSamples(fout, profile->blocks, &prefix, profile->root);
-  FbleFreeVector(prefix);
+  FbleQueryProfile(profile, &ReportQuery, (void*)fout);
 }

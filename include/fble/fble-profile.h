@@ -222,6 +222,33 @@ void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 void FbleProfileExitBlock(FbleProfileThread* thread);
 
 /**
+ * @func[FbleProfileQuery] Callback function for profile queries.
+ *  The FbleQueryProfile function will call this function once for each unique
+ *  canonical trace in the profile.
+ *
+ *  @arg[FbleProfile*][profile] The profile being queried.
+ *  @arg[void*][userdata] User data passed to FbleQueryProfile.
+ *  @arg[FbleBlockIdV][seq]
+ *   A canonical trace in the profile. This memory will not last beyond the
+ *   call to the query function, make copies if needed.
+ *  @arg[uint64_t][count] The number of times called into this trace.
+ *  @arg[uint64_t][time] The total time spent at this trace.
+ *  @sideeffects Updates fields of userdata as desired to query the profile.
+ */
+typedef void FbleProfileQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+
+/**
+ * @func[FbleQueryProfile] Query the profile for trace counts and time.
+ *  @arg[FbleProfile*][profile] The profile to query.
+ *  @arg[FbleProfileQuery*][query] The profile query function.
+ *  @arg[void*][userdata] User data to pass to the query function.
+ *  @sideeffects
+ *   Calls the query function repeatedly, once for each canonical trace in the
+ *   profile.
+ */
+void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userdata);
+
+/**
  * @func[FbleGenerateProfileReport] Generates a profiling report.
  *  Has no effect if profiling is disabled.
  *
