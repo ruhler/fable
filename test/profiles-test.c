@@ -22,35 +22,45 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-// static FbleBlockProfile* Block(FbleProfile* profile, const char* name);
-// static size_t Count(FbleProfile* profile, const char* name);
-// static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
+/**
+ * @struct[CountQueryData] User data for CountQuery.
+ *  @field[FbleBlockId][id] Id of the block to count.
+ *  @field[size_t][count] Count.
+ */
+typedef struct {
+  FbleBlockId id;
+  size_t count;
+} CountQueryData;
+
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static size_t Count(FbleProfile* profile, const char* name);
+
+/**
+ * @struct[CallsQueryData] User data for CallsQuery.
+ *  @field[FbleBlockId][caller] Id of the caller block.
+ *  @field[FbleBlockId][callee] Id of the callee block.
+ *  @field[size_t][count] Count of calls.
+ */
+typedef struct {
+  FbleBlockId caller;
+  FbleBlockId callee;
+  size_t count;
+} CallsQueryData;
+
+static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
 
 /**
- * @func[Block] Looks up information for the given named block.
- *  @arg[FbleProfile*][profile] The profile to get the block info for.
- *  @arg[const char*][name] The name of the block to get.
- *
- *  @returns[FbleBlockProfile*]
- *   The block.
- *
- *  @sideeffects
- *   Asserts with failure if there are no blocks with the given name or there
- *   is more than one block with the given name.
+ * @func[CountQuery] FbleProfileQuery for the Count function.
+ *  See documentation of FbleProfileQuery in fble-profile.h.
  */
-// static FbleBlockProfile* Block(FbleProfile* profile, const char* name)
-// {
-//   FbleBlockProfile* result = NULL;
-//   for (size_t i = 0; i < profile->blocks.size; ++i) {
-//     FbleBlockProfile* block = profile->blocks.xs[i];
-//     if (strcmp(block->name.name->str, name) == 0) {
-//       assert(result == NULL && "duplicate entries with name");
-//       result = block;
-//     }
-//   }
-//   assert(result != NULL && "no block found with given name");
-//   return result;
-// }
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+{
+  CountQueryData* data = (CountQueryData*)userdata;
+  if (seq.size > 0 && seq.xs[seq.size-1] == data->id) {
+    data->count += count;
+  }
+}
 
 /**
  * @func[Count] Gets the count for a profile block.
@@ -67,10 +77,30 @@
  *   Asserts with failure if there are no blocks with the given name or there
  *   is more than one block with the given name.
  */
-// static size_t Count(FbleProfile* profile, const char* name)
-// {
-//   return Block(profile,name)->block.count;
-// }
+static size_t Count(FbleProfile* profile, const char* name)
+{
+  CountQueryData data;
+  data.id = FbleLookupProfileBlockId(profile, name);
+  assert(data.id != 0 && "Block id not found?");
+
+  data.count = 0;
+  FbleQueryProfile(profile, &CountQuery, &data);
+  return data.count;
+}
+
+/**
+ * @func[CallsQuery] FbleProfileQuery for the Calls function.
+ *  See documentation of FbleProfileQuery in fble-profile.h.
+ */
+static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+{
+  CallsQueryData* data = (CallsQueryData*)userdata;
+  if (seq.size > 1
+      && seq.xs[seq.size-1] == data->callee
+      && seq.xs[seq.size-2] == data->caller) {
+    data->count += count;
+  }
+}
 
 /**
  * @func[Calls] Gets the number of times a caller calls a callee.
@@ -79,26 +109,25 @@
  *  @arg[const char*][callee] The name of the callee block.
  *
  *  @returns[size_t]
- *   The number of times the callee directly called the caller.
+ *   The number of times the caller directly called the callee.
  *
  *  @sideeffects
  *   Asserts with failure if there are no blocks matching the names of callee
- *   and caller or if there are multiple blocks matching the names.
+ *   and caller.
  */
-// static size_t Calls(FbleProfile* profile, const char* caller, const char* callee)
-// {
-//   FbleBlockProfile* caller_block = Block(profile, caller);
-//   FbleBlockProfile* callee_block = Block(profile, callee);
-// 
-//   FbleBlockId callee_id = callee_block->block.id;
-//   for (size_t i = 0; i < caller_block->callees.size; ++i) {
-//     FbleCallData* call = caller_block->callees.xs[i];
-//     if (call->id == callee_id) {
-//       return call->count;
-//     }
-//   }
-//   return 0;
-// }
+static size_t Calls(FbleProfile* profile, const char* caller, const char* callee)
+{
+  CallsQueryData data;
+  data.caller = FbleLookupProfileBlockId(profile, caller);
+  assert(data.caller != 0 && "Caller id not found");
+
+  data.callee = FbleLookupProfileBlockId(profile, callee);
+  assert(data.callee != 0 && "Callee id not found");
+
+  data.count = 0;
+  FbleQueryProfile(profile, &CallsQuery, &data);
+  return data.count;
+}
 
 // FbleProfilesTestMain -- see documentation in profiles-test.h
 int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
@@ -128,31 +157,34 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
 
   // Each of these top level let bindings were executed once when the main
   // program ran.
-  // assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.Not"));
-  // assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.t"));
-  // assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f"));
-  // assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f2"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.Not"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.t"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f2"));
 
   // The Not function was executed three times, once from each of t, f, and
   // f2.
-  // assert(1 == Calls(profile, "/ProfilesTest%.t", "/ProfilesTest%.Not!"));
-  // assert(1 == Calls(profile, "/ProfilesTest%.f", "/ProfilesTest%.Not!"));
-  // assert(1 == Calls(profile, "/ProfilesTest%.f2", "/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/ProfilesTest%.t", "/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/ProfilesTest%.f", "/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/ProfilesTest%.f2", "/ProfilesTest%.Not!"));
 
   // In total, we created Not once and executed three times. 
-  // assert(1 == Count(profile, "/ProfilesTest%.Not"));
-  // assert(3 == Count(profile, "/ProfilesTest%.Not!"));
+  assert(1 == Count(profile, "/ProfilesTest%.Not"));
+  assert(3 == Count(profile, "/ProfilesTest%.Not!"));
 
   // The true branch of Not was executed twice, the false branch once.
-  // assert(2 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.true"));
-  // assert(1 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.false"));
+  assert(2 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.true"));
+  assert(1 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.false"));
 
   // Regression test for a bug where the location for the top level profile
   // block was a module path instead of a file path.
-  // {
-    // FbleBlockProfile* block = Block(profile, "/ProfilesTest%");
-    // assert(strstr(block->name.loc.source->str, "test/ProfilesTest.fble"));
-  // }
+  {
+    FbleBlockId block = FbleLookupProfileBlockId(profile, "/ProfilesTest%");
+    assert(block != 0);
+
+    FbleName* name = FbleProfileBlockName(profile, block);
+    assert(strstr(name->loc.source->str, "test/ProfilesTest.fble"));
+  }
 
   FbleFreeProfile(profile);
   return FBLE_MAIN_SUCCESS;

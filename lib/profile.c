@@ -472,6 +472,15 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
 }
 
 // See documentation in fble-profile.h
+FbleName* FbleProfileBlockName(FbleProfile* profile, FbleBlockId id)
+{
+  if (id < profile->blocks.size) {
+    return profile->blocks.xs + id;
+  }
+  return NULL;
+}
+
+// See documentation in fble-profile.h
 FbleBlockId FbleLookupProfileBlockId(FbleProfile* profile, const char* name)
 {
   for (size_t i = 0; i < profile->blocks.size; ++i) {

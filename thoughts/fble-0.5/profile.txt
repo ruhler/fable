@@ -142,3 +142,22 @@ FbleName FbleProfileBlockName(FbleProfile* profile, FbleBlockId block);
 void (*FbleProfileQuery)(FbleProfile* profile, FbleBlockIdV sequence, uint64_t
 count, uint64_t time, void* userdata);
 void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery query, void* userdata);
+
+---
+
+Trouble with fble-profiles-test:
+* How to implement calls with this query interface?
+
+If we have a -> b -> c, then a calls b 1 time, but the profile report is going
+to look like:
+
+1 a
+1 a -> b
+1 a -> b -> c
+
+How can I tell the count for a -> b should be ignored for a -> b -> c? I guess
+it's safe to look at sequences that end with a -> b?
+
+Okay, it works out for calls, as long as I look at the end of the sequence,
+under the assumption that if a -> b -> c, then there must be a count for 
+the a -> b in a sequence ending with a->b.

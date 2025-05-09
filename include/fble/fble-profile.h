@@ -222,6 +222,18 @@ void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 void FbleProfileExitBlock(FbleProfileThread* thread);
 
 /**
+ * @func[FbleProfileBlockName] Gets the name for a profile block.
+ *  @arg[FbleProfile*][profile] The profile.
+ *  @arg[FbleBlockId][id] The id of the block.
+ *  @returns[FbleName*]
+ *   The name of the block with given id, NULL if not found. The returned name
+ *   is a pointer into the profile that may be invalidated when adding blocks
+ *   to the profile and will be invalidated when freeing the profile.
+ *  @sideeffects None
+ */
+FbleName* FbleProfileBlockName(FbleProfile* profile, FbleBlockId id);
+
+/**
  * @func[FbleLookupProfileBlockId] Looks up the block id of a named block.
  *  @arg[FbleProfile*][profile] The profile to look in.
  *  @arg[const char*][name] The name of the block to look up.

@@ -3,9 +3,7 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 Profile Rewrite
-* Re-enable fble-profiles-test and fble-profile-test
-  Check version history to see how they used to be hooked up.
-  Remove commented out code from profiles-test.c
+* Remove commented out code assertions from fble-profile-test.c
 * Chang fble-perf-profile to take 'perf script' instead of 'perf record' as input.
 * Decide on terminology for trace/stack/sequence/sample.
 * Document better in code comments how profile.c works.
@@ -21,6 +19,8 @@ Profile Rewrite
    function calls instead?
 * Is FbleLookupProfileBlockId a bad API?
   Like, passing const char* to lookup instead of an FbleName?
+  Maybe don't provide it as an API, have the tests iterate over block ids
+  instead?
 
 * Update all the user documentation (book, profiling guide) on how to profile.
 
