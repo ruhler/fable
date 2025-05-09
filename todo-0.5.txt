@@ -6,7 +6,7 @@ Profile Rewrite
 * Re-enable fble-profiles-test and fble-profile-test
   Check version history to see how they used to be hooked up.
   Remove commented out code from profiles-test.c
-* Bring back some form of fble-perf-profile.
+* Chang fble-perf-profile to take 'perf script' instead of 'perf record' as input.
 * Decide on terminology for trace/stack/sequence/sample.
 * Document better in code comments how profile.c works.
 * See if we can get away without random sampling, now that sampling is so
@@ -19,6 +19,8 @@ Profile Rewrite
 * Remove enabled argument to FbleNewProfile?
  - Have a sane default and let callers overwrite with explicit enable/disable
    function calls instead?
+* Is FbleLookupProfileBlockId a bad API?
+  Like, passing const char* to lookup instead of an FbleName?
 
 * Update all the user documentation (book, profiling guide) on how to profile.
 

@@ -73,6 +73,7 @@ namespace eval "include" {
       FbleNewProfileThread FbleFreeProfileThread
       FbleProfileSample FbleProfileRandomSample
       FbleProfileEnterBlock FbleProfileReplaceBlock FbleProfileExitBlock
+      FbleLookupProfileBlockId
       FbleProfileQuery FbleQueryProfile
       FbleGenerateProfileReport
     }

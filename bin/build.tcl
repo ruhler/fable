@@ -4,6 +4,7 @@ namespace eval "bin" {
     fble-compile.c
     fble-deps.c
     fble-disassemble.c
+    fble-perf-profile.c
   }
 
   foreach {x} $bin_sources {
@@ -116,4 +117,16 @@ namespace eval "bin" {
       fblemain_c $obj $compile $compileargs
     }
   }
+
+  # Test for fble-perf-profile.c
+  # The input file is designed to match the first "Test a simple call profile"
+  # in test/fble-profile-test.c. The target output will need to be updated any
+  # time the output format of FbleGenerateProfileReport changes.
+  build $::b/bin/fble-perf-profile.test.got \
+    "$::b/bin/fble-perf-profile $::s/bin/fble-perf-profile.test.in" \
+    "$::b/bin/fble-perf-profile < $::s/bin/fble-perf-profile.test.in > $::b/bin/fble-perf-profile.test.got"
+  test $::b/bin/fble-perf-profile.tr \
+    "$::s/bin/fble-perf-profile.test.want $::b/bin/fble-perf-profile.test.got" \
+    "diff --strip-trailing-cr $::s/bin/fble-perf-profile.test.want $::b/bin/fble-perf-profile.test.got"
+
 }

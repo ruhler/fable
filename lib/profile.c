@@ -9,6 +9,7 @@
 #include <stdbool.h>  // for bool
 #include <string.h>   // for memset
 #include <stdlib.h>   // for rand
+#include <string.h>   // for strcmp
 
 #include <fble/fble-alloc.h>
 #include <fble/fble-name.h>
@@ -468,6 +469,17 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
   }
 
   Pop(thread);
+}
+
+// See documentation in fble-profile.h
+FbleBlockId FbleLookupProfileBlockId(FbleProfile* profile, const char* name)
+{
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    if (strcmp(name, profile->blocks.xs[i].name->str) == 0) {
+      return i;
+    }
+  }
+  return 0;
 }
 
 // See documentation in fble-profile.h

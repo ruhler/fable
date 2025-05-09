@@ -222,6 +222,18 @@ void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 void FbleProfileExitBlock(FbleProfileThread* thread);
 
 /**
+ * @func[FbleLookupProfileBlockId] Looks up the block id of a named block.
+ *  @arg[FbleProfile*][profile] The profile to look in.
+ *  @arg[const char*][name] The name of the block to look up.
+ *  @returns[FbleBlockId] The id of the block, 0 if not found.
+ *  @sideeffects
+ *   This is an expensive function intended for use in test code. Avoid using
+ *   it in performance sensitive code, but it will have the side effect of
+ *   making your code run very slowly.
+ */
+FbleBlockId FbleLookupProfileBlockId(FbleProfile* profile, const char* name);
+
+/**
  * @func[FbleProfileQuery] Callback function for profile queries.
  *  The FbleQueryProfile function will call this function once for each unique
  *  canonical trace in the profile.
