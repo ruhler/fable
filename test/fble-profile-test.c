@@ -3,14 +3,34 @@
  *  A program that runs unit tests for the FbleProfile APIs.
  */
 
+#include <stdarg.h>   // for va_list, va_start, va_end
 #include <string.h>   // for strcpy
 #include <stdlib.h>   // for rand
 
 #include <fble/fble-alloc.h>     // for FbleResetMaxTotalBytesAllocated, etc.
 #include <fble/fble-profile.h>
+#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 
 static bool sTestsFailed = false;
+
+static void Fail(const char* file, int line, const char* msg);
+static FbleName Name(const char* name);
+
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void AssertCount(FbleProfile* profile, size_t count);
+
+typedef struct {
+  FbleBlockIdV seq;
+  uint64_t count;
+  uint64_t time;
+  bool found;
+} SeqData;
+
+static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void AssertSeq(FbleProfile* profile, uint64_t count, uint64_t time, ...);
+
+static void ReplaceN(size_t n);
 
 /**
  * @func[ASSERT] Test assertion function.
@@ -58,6 +78,83 @@ static FbleName Name(const char* name)
     .loc = { .source = FbleNewString(__FILE__), .line = rand(), .col = rand() }
   };
   return nm;
+}
+
+/**
+ * @func[CountQuery] FbleProfileQuery for the CountSeqs function.
+ *  See documentation of FbleProfileQuery in fble-profile.h.
+ */
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+{
+  size_t* ptr = (size_t*)userdata;
+  (*ptr)++;
+}
+
+/**
+ * @func[AssertCount] Check the number of unique sequences in a profile.
+ *  @arg[FbleProfile*][profile] The profile to check.
+ *  @arg[size_t][count] The expected number of unique sequences.
+ *  @sideeffects Fails with an assertion if the count doesn't match.
+ */
+static void AssertCount(FbleProfile* profile, size_t count)
+{
+  size_t actual = 0;
+  FbleQueryProfile(profile, &CountQuery, &actual);
+  ASSERT(count == actual);
+}
+
+/**
+ * @func[SeqQuery] FbleProfileQuery for the AssertSeq function.
+ *  See documentation of FbleProfileQuery in fble-profile.h.
+ */
+static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+{
+  SeqData* data = (SeqData*)userdata;
+  if (data->seq.size != seq.size) {
+    return;
+  }
+
+  for (size_t i = 0; i < seq.size; ++i) {
+    if (data->seq.xs[i] != seq.xs[i]) {
+      return;
+    }
+  }
+
+  ASSERT(count == data->count);
+  ASSERT(time == data->time);
+  ASSERT(!data->found);
+  data->found = true;
+}
+
+/**
+ * @func[AssertSeq] Asserts the values of a sequence.
+ *  @arg[FbleProfile*][profile] The profile to check.
+ *  @arg[uint64_t][count] The expected count.
+ *  @arg[uint64_t][time] The expected time.
+ *  @arg[...][] The block ids of the sequence, terminated with -1.
+ *  @sideeffects None.
+ */
+static void AssertSeq(FbleProfile* profile, uint64_t count, uint64_t time, ...)
+{
+  SeqData data;
+  FbleInitVector(data.seq);
+  data.count = count;
+  data.time = time;
+  data.found = false;
+
+  va_list ap;
+  va_start(ap, time);
+  while (true) {
+    int i = va_arg(ap, int);
+    if (i < 0) {
+      break;
+    }
+    FbleAppendToVector(data.seq, i);
+  }
+
+  FbleQueryProfile(profile, &SeqQuery, &data);
+  ASSERT(data.found);
+  FbleFreeVector(data.seq);
 }
 
 /**
@@ -153,53 +250,17 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    // ASSERT(profile->blocks.size == 5);
-    // ASSERT(profile->blocks.xs[0]->self == 0);
-    // ASSERT(profile->blocks.xs[0]->block.id == 0);
-    // ASSERT(profile->blocks.xs[0]->block.count == 1);
-    // ASSERT(profile->blocks.xs[0]->block.time == 131);
-    // ASSERT(profile->blocks.xs[0]->callees.size == 1);
-    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->id == 1);
-    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->count == 1);
-    // ASSERT(profile->blocks.xs[0]->callees.xs[0]->time == 131);
-
-    // ASSERT(profile->blocks.xs[1]->self == 10);
-    // ASSERT(profile->blocks.xs[1]->block.id == 1);
-    // ASSERT(profile->blocks.xs[1]->block.count == 1);
-    // ASSERT(profile->blocks.xs[1]->block.time == 131);
-    // ASSERT(profile->blocks.xs[1]->callees.size == 2);
-    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->id == 2);
-    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == 1);
-    // ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 90);
-    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->id == 3);
-    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->count == 1);
-    // ASSERT(profile->blocks.xs[1]->callees.xs[1]->time == 31);
-
-    // ASSERT(profile->blocks.xs[2]->self == 20);
-    // ASSERT(profile->blocks.xs[2]->block.id == 2);
-    // ASSERT(profile->blocks.xs[2]->block.count == 1);
-    // ASSERT(profile->blocks.xs[2]->block.time == 90);
-    // ASSERT(profile->blocks.xs[2]->callees.size == 2);
-    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->id == 3);
-    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->count == 1);
-    // ASSERT(profile->blocks.xs[2]->callees.xs[0]->time == 30);
-    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->id == 4);
-    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->count == 1);
-    // ASSERT(profile->blocks.xs[2]->callees.xs[1]->time == 40);
-
-    // ASSERT(profile->blocks.xs[3]->self == 61);
-    // ASSERT(profile->blocks.xs[3]->block.id == 3);
-    // ASSERT(profile->blocks.xs[3]->block.count == 2);
-    // ASSERT(profile->blocks.xs[3]->block.time == 61);
-    // ASSERT(profile->blocks.xs[3]->callees.size == 0);
-
-    // ASSERT(profile->blocks.xs[4]->self == 40);
-    // ASSERT(profile->blocks.xs[4]->block.id == 4);
-    // ASSERT(profile->blocks.xs[4]->block.count == 1);
-    // ASSERT(profile->blocks.xs[4]->block.time == 40);
-    // ASSERT(profile->blocks.xs[4]->callees.size == 0);
-
     FbleGenerateProfileReport(stdout, profile);
+
+    AssertSeq(profile, 1, 0, 0, -1);
+    AssertSeq(profile, 1, 10, 0, 1, -1);
+    AssertSeq(profile, 1, 10, 0, 1, -1);
+    AssertSeq(profile, 1, 20, 0, 1, 2, -1);
+    AssertSeq(profile, 1, 30, 0, 1, 2, 3, -1);
+    AssertSeq(profile, 1, 40, 0, 1, 2, 4, -1);
+    AssertSeq(profile, 1, 31, 0, 1, 3, -1);
+    AssertCount(profile, 6);
+
     FbleFreeProfile(profile);
   }
 
