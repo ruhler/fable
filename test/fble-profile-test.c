@@ -555,5 +555,52 @@ int main(int argc, char* argv[])
     FbleFreeProfile(profile);
   }
 
+  {
+    // Test to exercise node sorted insertion.
+    // <root> -> 1 -> 4, 3, 5, 2, 6, 1
+    //             -> 1, 2, 3, 5, 6
+    FbleProfile* profile = FbleNewProfile(true);
+    FbleAddBlockToProfile(profile, Name("_1")); 
+    FbleAddBlockToProfile(profile, Name("_2")); 
+    FbleAddBlockToProfile(profile, Name("_3")); 
+    FbleAddBlockToProfile(profile, Name("_4")); 
+    FbleAddBlockToProfile(profile, Name("_5")); 
+    FbleAddBlockToProfile(profile, Name("_6")); 
+
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+
+    FbleBlockId blocks[] = {4, 3, 5, 2, 6, 1};
+    for (size_t i = 0; i < 6; ++i) {
+      FbleProfileEnterBlock(thread, blocks[i]);
+      FbleProfileSample(thread, blocks[i] * 10);
+      FbleProfileExitBlock(thread);
+    }
+
+    for (FbleBlockId i = 1; i <= 6; ++i) {
+      FbleProfileEnterBlock(thread, i);
+      FbleProfileSample(thread, i * 100);
+      FbleProfileExitBlock(thread);
+    }
+
+    FbleProfileExitBlock(thread); // 1
+    FbleFreeProfileThread(thread);
+
+    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
+    FbleGenerateProfileReport(stdout, profile);
+
+    AssertSeq(profile, 1, 0, 0, -1);
+    AssertSeq(profile, 3, 120, 0, 1, -1);
+    AssertSeq(profile, 2, 220, 0, 1, 2, -1);
+    AssertSeq(profile, 2, 330, 0, 1, 3, -1);
+    AssertSeq(profile, 2, 440, 0, 1, 4, -1);
+    AssertSeq(profile, 2, 550, 0, 1, 5, -1);
+    AssertSeq(profile, 2, 660, 0, 1, 6, -1);
+    AssertCount(profile, 7);
+
+    FbleFreeProfile(profile);
+  }
+
   return sTestsFailed ? 1 : 0;
 }

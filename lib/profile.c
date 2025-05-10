@@ -255,16 +255,15 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
     dest->depth = node->depth + 1;
     FbleInitVector(dest->children);
   }
-  dest->count++;
 
   // Insert into the children list, preserving the sort order.
-  ProfileNode* data = dest;
-  for (size_t i = lo; i < node->children.size; ++i) {
-    ProfileNode* tmp = node->children.xs[i];
-    node->children.xs[i] = data;
-    data = tmp;
+  FbleAppendToVector(node->children, NULL);
+  for (size_t i = node->children.size - 1; i > lo; --i) {
+    node->children.xs[i] = node->children.xs[i-1];
   }
-  FbleAppendToVector(node->children, data);
+  node->children.xs[lo] = dest;
+
+  dest->count++;
   Push(thread, dest, replace);
 }
 
