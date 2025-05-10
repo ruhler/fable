@@ -6,9 +6,6 @@ Profile Rewrite
 * Chang fble-perf-profile to take 'perf script' instead of 'perf record' as input.
 * Decide on terminology for trace/stack/sequence/sample.
 * Document better in code comments how profile.c works.
-* See if we can get away without random sampling, now that sampling is so
-  cheap.
-  Remember to remove ttrs.
 * Simplify sorted insert in EnterBlock.
   Copy direct to destination without transferring everything via tmp.
 * Figure out how to deal with count and time metrics.

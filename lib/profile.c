@@ -8,16 +8,12 @@
 #include <math.h>     // for sqrt
 #include <stdbool.h>  // for bool
 #include <string.h>   // for memset
-#include <stdlib.h>   // for rand
 #include <string.h>   // for strcmp
 
 #include <fble/fble-alloc.h>
 #include <fble/fble-name.h>
 #include <fble/fble-profile.h>
 #include <fble/fble-vector.h>
-
-// The average period of time between random samples.
-#define RANDOM_SAMPLE_PERIOD 1024
 
 // Forward reference for ProfileNode.
 typedef struct ProfileNode ProfileNode;
@@ -93,11 +89,9 @@ typedef struct {
 /**
  * @struct[FbleProfileThread] Profiling state for a thread of execution.
  *  @field[Stack][stack] The current call stack.
- *  @field[int32_t][ttrs] Time to next random sample.
  */
 struct FbleProfileThread {
   Stack stack;
-  int32_t ttrs;
 };
 
 static void FreeNode(ProfileNode* node);
@@ -402,8 +396,6 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
   thread->stack.size = 0;
   thread->stack.xs = FbleAllocArray(ProfileNode*, thread->stack.capacity);
 
-  thread->ttrs = rand() % (2 * RANDOM_SAMPLE_PERIOD);
-
   Push(thread, profile->root, false);
   profile->root->count++;
   return thread;
@@ -428,20 +420,6 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
   }
 
   thread->stack.xs[thread->stack.size - 1]->time += time;
-}
-
-// See documentation in fble-profile.h.
-void FbleProfileRandomSample(FbleProfileThread* profile, size_t count)
-{
-  if (profile == NULL) {
-    return;
-  }
-
-  profile->ttrs -= count;
-  while (profile->ttrs <= 0) {
-    FbleProfileSample(profile, 1);
-    profile->ttrs += rand() % (2 * RANDOM_SAMPLE_PERIOD);
-  }
 }
 
 // See documentation in fble-profile.h.

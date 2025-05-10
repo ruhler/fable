@@ -1105,7 +1105,7 @@ static void EmitOutlineCode(FILE* fout, size_t func_id, size_t pc, FbleInstr* in
         case FBLE_PROFILE_SAMPLE_OP: {
           fprintf(fout, "  mov x0, R_PROFILE\n");
           Mov(fout, "x1", op->arg);
-          fprintf(fout, "  bl FbleProfileRandomSample\n");
+          fprintf(fout, "  bl FbleProfileSample\n");
           break;
         }
       }

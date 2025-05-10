@@ -338,7 +338,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
           }
 
           case FBLE_PROFILE_SAMPLE_OP: {
-            fprintf(fout, "    FbleProfileRandomSample(profile, %zi);\n", op->arg);
+            fprintf(fout, "    FbleProfileSample(profile, %zi);\n", op->arg);
             break;
           }
         }

@@ -90,7 +90,7 @@ static FbleValue* Interpret(
             break;
 
           case FBLE_PROFILE_SAMPLE_OP:
-            FbleProfileRandomSample(profile, op->arg);
+            FbleProfileSample(profile, op->arg);
             break;
         }
       }
