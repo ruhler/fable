@@ -4,13 +4,12 @@
  */
 
 #include <assert.h>     // for assert
-#include <stdlib.h>     // for realloc, free
-#include <string.h>     // for strcmp, strchr
+#include <ctype.h>      // for isspace
 
+#include <fble/fble-alloc.h>     // for FbleArrayAlloc, etc.
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg
 #include <fble/fble-profile.h>   // for FbleProfile, etc.
 #include <fble/fble-version.h>   // for FBLE_VERSION, FbleBuildStamp
-#include <fble/fble-vector.h>    // for FbleInitVector, etc.
 
 #include "fble-perf-profile.usage.h"   // for fbldUsageHelpText
 
@@ -18,46 +17,8 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-typedef struct {
-  size_t size;
-  size_t capacity;
-  char* chars;
-} String;
-
-typedef struct {
-  size_t size;
-  const char** xs;
-} StringV;
-
-static bool GetLine(FILE* file, String* line);
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
-static void Sample(FbleProfile* profile, FbleProfileThread* thread, StringV* squashes, int count, char* s);
 int main(int argc, const char* argv[]);
-
-/**
- * @func[GetLine] Reads a line of input from a file.
- *  @arg[FILE*][file] The file to read from.
- *  @arg[String*][line] String to store the line to.
- *  @returns[bool] True if a newline was read, false if end of file reached.
- *  @sideeffects
- *   Reads the next line of @a[file] into @a[line].
- */
-static bool GetLine(FILE* file, String* line)
-{
-  line->size = 0;
-
-  int c = fgetc(file);
-  while (c != EOF && c != '\n') {
-    if (line->size == line->capacity) {
-      line->capacity = 2 * (line->capacity + 1);
-      line->chars = realloc(line->chars, line->capacity * sizeof(char));
-    }
-    line->chars[line->size++] = c;
-    c = fgetc(file);
-  }
-  line->chars[line->size] = '\0';
-  return c == '\n';
-}
 
 /**
  * @func[GetBlockId] Get or create a block id for the given name.
@@ -85,48 +46,6 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
 }
 
 /**
- * @func[Sample] Process a profiling sample.
- *  @arg[FbleProfile*][profile] The profile.
- *  @arg[FbleProfileThread*][thread] The profiling thread.
- *  @arg[int][count] The count corresponding to this sample.
- *  @arg[char*][s] The sample path, of the form "foo;bar;sludge".
- *
- *  @sideeffects
- *   @i May modify the contents of s by replacing ';' with nuls.
- *   @i Adds the sample to the profile.
- */
-static void Sample(FbleProfile* profile, FbleProfileThread* thread, StringV* squashes, int count, char* s)
-{
-  char* end = strchr(s, ';');
-  if (end != NULL) {
-    *end = '\0';
-  }
-
-  bool squash = false;
-  for (size_t i = 0; i < squashes->size; ++i) {
-    if (strcmp(s, squashes->xs[i]) == 0) {
-      squash = true;
-      break;
-    }
-  }
-
-  if (!squash) {
-    FbleBlockId block = GetBlockId(profile, s);
-    FbleProfileEnterBlock(thread, block);
-  }
-
-  if (end == NULL) {
-    FbleProfileSample(thread, count);
-  } else {
-    Sample(profile, thread, squashes, count, end + 1);
-  }
-
-  if (!squash) {
-    FbleProfileExitBlock(thread);
-  }
-}
-
-/**
  * @func[main] The main entry point for the fble-perf-profile program.
  *  @arg[int][argc] The number of command line arguments.
  *  @arg[const char**][argv] The command line arguments.
@@ -142,79 +61,109 @@ int main(int argc, const char* argv[])
   bool help = false;
   bool error = false;
 
-  const char* squash = NULL;
-  StringV squashes;
-  FbleInitVector(squashes);
-
   argc--;
   argv++;
   while (!(help || version || error) && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseStringArg("-s", &squash, &argc, &argv, &error)) {
-      FbleAppendToVector(squashes, squash);
-      squash = NULL;
-      continue;
-    }
-    if (FbleParseStringArg("--squash", &squash, &argc, &argv, &error)) {
-      FbleAppendToVector(squashes, squash);
-      squash = NULL;
-      continue;
-    }
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
   }
 
   if (version) {
     FblePrintVersion(stdout, "fble-perf-profile");
-    FbleFree(squashes.xs);
     return EX_SUCCESS;
   }
 
   if (help) {
     fprintf(stdout, "%s", fbldUsageHelpText);
-    FbleFree(squashes.xs);
     return EX_SUCCESS;
   }
 
   if (error) {
     fprintf(stderr, "Try --help for usage\n");
-    FbleFree(squashes.xs);
     return EX_USAGE;
   }
 
-  String line = { .capacity = 0, .size = 0, .chars = NULL };
+  // Blocks stores the current sample stack, from inner most call to outer
+  // most call.
+  size_t blocks_size = 0;
+  size_t blocks_capacity = 8;
+  FbleBlockId* blocks = FbleAllocArray(FbleBlockId, blocks_capacity);
 
-  // Skip the first line of the form:
-  //   100.00%     0.00%  <cmd>  <exe>        [.] _start
-  GetLine(stdin, &line);
+  size_t name_size = 0;
+  size_t name_capacity = 8;
+  char* name = FbleAllocArray(char, name_capacity);
 
   FbleProfile* profile = FbleNewProfile(true);
   FbleProfileThread* thread = FbleNewProfileThread(profile);
-  while (GetLine(stdin, &line)) {
-    // We're done once we reach the next line of the form:
-    //    100.00%     0.00%  <cmd>  <ex>      [.] __libc_start_main
-    char* space = strchr(line.chars, ' ');
-    if (space == line.chars || space == NULL) {
-      break;
-    }
 
-    // We expect a line of the form:
-    // 3694 foo;bar;sludge\n
-    int count;
-    if (sscanf(line.chars, "%i", &count) != 1) {
-      fprintf(stderr, "Unable to parse profile report.\n");
-      FbleFree(squashes.xs);
-      return EX_FAIL;
-    }
+  FILE* fin = stdin;
 
-    Sample(profile, thread, &squashes, count, space+1);
+  int c;
+  while ((c = fgetc(fin)) != EOF) {
+    switch (c) {
+      case '\n': {
+        // Record the current sample.
+        for (size_t i = 0; i < blocks_size; ++i) {
+          FbleBlockId block = blocks[blocks_size - i - 1];
+          FbleProfileEnterBlock(thread, block);
+        }
+        FbleProfileSample(thread, 1);
+        for (size_t i = 0; i < blocks_size; ++i) {
+          FbleProfileExitBlock(thread);
+        }
+        blocks_size = 0;
+        break;
+      }
+
+      case '\t': {
+        // Push the next block into the stack.
+        // The line is of the form:
+        // 	     be9c _dl_relocate_object+0x6cc (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+        // But may also be something like:
+        //       ffffffea1bb64d10 [unknown] ([unknown])
+
+        // Skip past initial space, the addess, and subsequent space.
+        while (c != EOF && isspace(c)) c = fgetc(fin);
+        while (c != EOF && !isspace(c)) c = fgetc(fin);
+        while (c != EOF && isspace(c)) c = fgetc(fin);
+
+        // Parse the name.
+        name_size = 0;
+        while (c != EOF && !isspace(c) && c != '+') {
+          if (name_size + 1 > name_capacity) {
+            name_capacity *= 2;
+            name = FbleReAllocArray(char, name, name_capacity);
+          }
+          name[name_size++] = c;
+          c = fgetc(fin);
+        }
+        name[name_size] = '\0';
+
+        // Save the block on the stack.
+        if (blocks_size == blocks_capacity) {
+          blocks_capacity *= 2;
+          blocks = FbleReAllocArray(FbleBlockId, blocks, blocks_capacity);
+        }
+        blocks[blocks_size++] = GetBlockId(profile, name);
+
+        // Skip past the end of the line.
+        while (c != EOF && c != '\n') c = fgetc(fin);
+      }
+
+      default: {
+        // Skip past the end of the line.
+        while (c != EOF && c != '\n') c = fgetc(fin);
+      }
+    }
   }
-  free(line.chars);
 
   FbleFreeProfileThread(thread);
+  FbleFree(name);
+  FbleFree(blocks);
+
   FbleGenerateProfileReport(stdout, profile);
   FbleFreeProfile(profile);
-  FbleFree(squashes.xs);
   return EX_SUCCESS;
 }

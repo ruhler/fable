@@ -161,3 +161,77 @@ it's safe to look at sequences that end with a -> b?
 Okay, it works out for calls, as long as I look at the end of the sequence,
 under the assumption that if a -> b -> c, then there must be a count for 
 the a -> b in a sequence ending with a->b.
+
+---
+
+How to update fble-perf-profile to take perf script input instead of perf
+report? It should be easy, right?
+
+How we do it in python:
+* If line starts with tab:
+  Whitespace split into [addr, name, so]
+  Strip everything after + from name.
+  Push that into sample stack.
+* If line is empty:
+  The sample stack has the stack in reverse order.
+
+How we do it in fble:
+* If line starts with newline, add the sample.
+* If line starts with tab:
+  Skip space, skip word, get to plus (needs to be or ' ')
+* Else: skip to end of line.
+
+What do I prefer? It would be nice not to need a GetLine function. Maybe let's
+go more the fble approach, inlining as is convenient.
+
+---
+
+Looks like I have a bug in compaction somewhere. It's rare. Most things work
+just fine. But in some cases, seems like I'm marking something as canonical
+that I shouldn't be. Like an off-by-one in the sequence check or something.
+
+I have 122 sample traces that perf-pprof.py says all canonicalize to the same
+sequence, but fble-perf-profile says can be one of two different canonical
+sequences. I should be able to write a unit test for this once I come up with
+the example sequence that I'm incorrectly compacting. Hopefully it reproduces
+in isolation and isn't a bug with insertion order or something messy like
+that.
+
+Okay, so really I have 27 sequences.
+
+And here's the one that canonicalizes differently:
+
+   A;B;C;A;D;C;E;C;E;C;E;C;E;C;E;C;E;C;E;C;A;B;C;A;D;C;E;C;E;C;E;C;E;C;E;C;E;C;E;C;A;B;C;A;D;C;E;C;E;C;E;C;E;C;E;C;E;C;E;C;A;B;C;A;D;C;E;C;E;C;E;C;E;C;E;C;E;C;E;C;A;B;C;A;D;C;E;C;E;C;E;C;E;C;E;C;E;C;E;C;A;B;C;A;D;C;E;C;E;C;E;C;E;C;E;C;E;C;A;B;C;A;D;C;E;C;C;E
+
+I bet it's because in one case we canonicalize from the front, in the other we
+canonicalize shortest first. Let me try both ways and see what I get.
+
+First, from the front:
+
+   A;B;C;A;D;C;E
+
+I notice when doing that by hand that we have a lot of skips back: drop
+something, and the result exposes something more to drop.
+
+Second, from smaller up:
+
+   A;B;C;A;D;C;E;C;A;B;C;A;D;C;E;
+
+Yeah. So when doing smaller up, we drop things in a slightly different order.
+
+Does it matter? I don't think either implementation has a bug.
+
+Let's minimize the test case:
+
+   A;B;C;A;D;C;E;C;A;B;C;A;D;C;E;C;C;E
+
+Yeah. If you go from the back, shortest first, you drop the C at the end, so
+you can't combine ABCADCEC at the front.
+
+I think I prefer how fble-perf-profile does it. So stick with that. It's too
+bad there isn't a canonical version. I should probably add a unit test for
+this anyway.
+
+Even shorter:
+
+   A;C;E;C;A;C;E;C;C;E

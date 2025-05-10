@@ -5,7 +5,7 @@
  @description
   Produces an fble profile report for a linux perf profile passed on stdin.
  
-  To collect perf data:
+  To collect perf data, e.g.:
  
   @code[sh] @
    perf record -F 997 -d -g <cmd>
@@ -13,7 +13,7 @@
   To report perf data:
  
   @code[sh] @
-   perf report -q -g folded,count,0 | fble-perf-profile
+   perf script | fble-perf-profile
  
   The output @l[count] field is mostly meaningless. It is the number of
   different sample traces the function appeared in.
@@ -21,14 +21,10 @@
  @options
   @GenericProgramInfo
 
-  @subsection Other Options
-   @opt[@l[-s], @l[--squash] @a[NAME]]
-   @ attribute the costs of frame @a[NAME] to its caller.
-  
  @exitstatus
   @def[0] Success.
   @def[1] Failure.
   @def[2] Usage error.
  
  @examples
-  @ex[perf report -q -g folded,count,0 | fble-perf-profile][]
+  @ex[perf script | fble-perf-profile][]

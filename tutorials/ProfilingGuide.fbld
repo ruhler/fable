@@ -25,7 +25,7 @@
   You can then convert to an fble profile report with, for example:
 
   @code[sh] @
-   perf report -q -g folded,count,0 | ./out/bin/fble-perf-profile > bench.perf.txt
+   perf script | ./out/bin/fble-perf-profile > bench.perf.txt
 
   The counts listed in the profile is not meaningful. The time listed
   correspond to the number of perf samples taken for the block.

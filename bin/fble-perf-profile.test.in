@@ -1,10 +1,20 @@
-    95.00%     0.00%  foo   foo            [.] q
-40 _1;_2;_4
-31 _1;_3
-30 _1;_2;_3
-20 _1;_2
-10 _1
-    55.55%     0.00%  foo   libfoo.so      [.] b
-2 b;c;d
-1 b;l
-1 b;o;p
+ls 1687358 464282.541169:          1 cycles:u: 
+	            1140 a+0x0 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+
+ls 1687358 464282.541283:       7603 cycles:u: 
+	            1f94 c+0x300 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+	            1152 b+0x0 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+	            1148 a+0x8 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+
+ls 1687358 464282.541283:       7603 cycles:u: 
+	            1f94 c+0x300 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+	            1152 b+0x0 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+	            1148 a+0x8 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+
+ls 1687358 464282.541283:       7603 cycles:u: 
+	            1148 a+0x0 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+
+ls 1687358 464282.541283:       7603 cycles:u: 
+	            ffffffea1bb64d10 [unknown] ([unknown])
+	            1148 a+0x10 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+

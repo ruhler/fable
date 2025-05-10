@@ -3,11 +3,10 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 Profile Rewrite
-* Chang fble-perf-profile to take 'perf script' instead of 'perf record' as input.
 * Decide on terminology for trace/stack/sequence/sample.
 * Document better in code comments how profile.c works.
 * Figure out how to deal with count and time metrics.
-* Figure out how to print block info.
+* Figure out how to print block file and line info.
 * Remove enabled argument to FbleNewProfile?
  - Have a sane default and let callers overwrite with explicit enable/disable
    function calls instead?
@@ -29,6 +28,7 @@ GC OnFree cleanup
 
 pkgs/Pprof
 * Add test case for converting perf script to pprof.
+* Add test for that funny canonicalization case?
 * Debug bug in parser that's getting things like '77cb0 _int_malloc' printed.
   From having frames like: ffffffea1bb64d10 [unknown] ([unknown])
 * Reenable a reasonable benchmark.

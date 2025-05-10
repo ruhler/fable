@@ -602,5 +602,44 @@ int main(int argc, char* argv[])
     FbleFreeProfile(profile);
   }
 
+  {
+    // Test a profile with a sequence with a somewhat ambiguous
+    // canonicalization: ABCBABCBBC
+    FbleProfile* profile = FbleNewProfile(true);
+    FbleAddBlockToProfile(profile, Name("A")); 
+    FbleAddBlockToProfile(profile, Name("B")); 
+    FbleAddBlockToProfile(profile, Name("C")); 
+
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 10);
+
+    FbleFreeProfileThread(thread);
+
+    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
+    FbleGenerateProfileReport(stdout, profile);
+
+    AssertSeq(profile, 1, 0, 0, -1);
+    AssertSeq(profile, 1, 0, 0, 1, -1);
+    AssertSeq(profile, 1, 0, 0, 1, 2, -1);
+    AssertSeq(profile, 2, 10, 0, 1, 2, 3, -1);
+    AssertSeq(profile, 3, 0, 0, 1, 2, 3, 2, -1);
+    AssertSeq(profile, 1, 0, 0, 1, 2, 3, 2, 1, -1);
+    AssertSeq(profile, 1, 0, 0, 1, 2, 3, 2, 1, 2, -1);
+    AssertSeq(profile, 1, 0, 0, 1, 2, 3, 2, 1, 2, 3, -1);
+    AssertCount(profile, 8);
+
+    FbleFreeProfile(profile);
+  }
+
   return sTestsFailed ? 1 : 0;
 }
