@@ -3,7 +3,6 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 Profile Rewrite
-* Remove commented out code assertions from fble-profile-test.c
 * Chang fble-perf-profile to take 'perf script' instead of 'perf record' as input.
 * Decide on terminology for trace/stack/sequence/sample.
 * Document better in code comments how profile.c works.
@@ -23,6 +22,8 @@ Profile Rewrite
   instead?
 
 * Update all the user documentation (book, profiling guide) on how to profile.
+
+* Figure out a nicer way to switch between -O0 and -O3 as needed for debug.
 
 GC OnFree cleanup
 * Add explicit close to OStream API.

@@ -255,12 +255,13 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   if (dest == NULL) {
     dest = FbleAlloc(ProfileNode);
     dest->id = block;
-    dest->count = 1;
+    dest->count = 0;
     dest->time = 0;
     dest->parent = node;
     dest->depth = node->depth + 1;
     FbleInitVector(dest->children);
   }
+  dest->count++;
 
   // Insert into the children list, preserving the sort order.
   ProfileNode* data = dest;
