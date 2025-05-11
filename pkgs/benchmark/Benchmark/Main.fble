@@ -16,7 +16,6 @@ Test@ Benchmarks = TestSuite(Str|Benchmarks, List[
   /Graphics/Bench%.Bench,
   /Invaders/Bench%.Bench,
   /Pinball/Bench%.Bench,
-  /Pprof/Bench%.Bench,
   /Md5/Bench%.Bench,
   /Sat/Bench%.Bench
 ]);

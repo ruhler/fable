@@ -6,7 +6,6 @@ Profile Rewrite
 * Write a test case for pprof generation.
 * Remove unnecessary FbleProfile apis now that blocks and enabled fields are
   public again.
-* Use a custom output format in fble-profile-test instead of pprof.
 * Change FbleOutputProfile function to take a file name instead of FILE*?
 * Remove enabled argument to FbleNewProfile?
  - Have a sane default and let callers overwrite with explicit enable/disable
@@ -18,6 +17,8 @@ Profile Rewrite
   instead?
 * Consider outputting pprof gzip compressed?
 
+* Add an fble-pprof benchmark to fble-benchmark?
+
 * Update all the user documentation (book, profiling guide) on how to profile.
 
 * Figure out a nicer way to switch between -O0 and -O3 as needed for debug.
@@ -27,18 +28,9 @@ GC OnFree cleanup
 * Don't close files or sockets in GC OnFree. Close them when asked to
   explicitly.
 
-* Document pprof text format somewhere.
-
 pkgs/Pprof
-* Add test case for converting perf script to pprof.
-* Add test for that funny canonicalization case?
-* Debug bug in parser that's getting things like '77cb0 _int_malloc' printed.
-  From having frames like: ffffffea1bb64d10 [unknown] ([unknown])
-* Reenable a reasonable benchmark.
-* Use correct output format to perf-pprof.
-* Replace pkgs/pprof with pkgs/pprof2. And call it 'profile' instead of 'pprof'.
-* Add parser for pprof text format.
-* Implement server binary that reads from pprof text format.
+* Implement server binary that reads pprof format.
+* Consider updating pprof.py to work on pprof format.
 
 * Split FbleDataType into FbleStructType and FbleUnionType?
   Get rid of FbleDataTypeTag?

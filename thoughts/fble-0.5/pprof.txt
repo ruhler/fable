@@ -1229,3 +1229,10 @@ If I used those, it looks like it wouldn't be bad at all.
 Debian packages: zlib1g, zlib1g-dev. Maybe worth a try. Let's worry about that
 later though, for when I get my reader going. The reader will surely be easier
 to start without the decompress step.
+
+---
+
+Next step is to write a test case for pprof generation. After that, I think
+it's worth diving into the viewer side of things. Don't worry about
+miscellaneous API cleanup at this point. I need to make the profile viewer
+work in practice, otherwise I'm stuck.
