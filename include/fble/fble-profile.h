@@ -40,8 +40,15 @@ typedef struct {
  *  Thus a profile keeps track of the count and time spent in every call
  *  sequences. It includes information about the names and locations of frames
  *  in the call sequence, which are called blocks.
+ *
+ *  @field[FbleNameV][blocks] The names of the profiling blocks.
+ *  @field[bool][enabled] Indicates whether profiling is enabled or not.
  */
-typedef struct FbleProfile FbleProfile;
+typedef struct {
+  FbleNameV blocks;
+  bool enabled;
+  // Internal fields follow.
+}  FbleProfile;
 
 /**
  * @func[FbleNewProfile] Creates a new profile.

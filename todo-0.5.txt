@@ -3,7 +3,10 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 Profile Rewrite
-* Decide on terminology for trace/stack/sequence/sample.
+* Remove unnecessary FbleProfile apis now that blocks and enabled fields are
+  public again.
+* Change FbleOutputProfile function to take a file name instead of FILE*
+  Write custom queries for output for test cases where appropriate.
 * Document better in code comments how profile.c works.
 * Figure out how to deal with count and time metrics.
 * Figure out how to print block file and line info.

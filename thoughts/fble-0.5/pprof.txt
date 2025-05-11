@@ -1045,3 +1045,17 @@ implementation. We can resurrect pprof.py later if needed for performance, if
 fble can't keep up. I think there's a decent change fble can keep up, but also
 would not be at all surprised if it can't.
 
+---
+
+Sketch for how pprof.c implementation might look:
+
+* Add helpers for things as needed. Like outputting a varint, outputting a
+  string, outputting a record. No need to plan ahead on those.
+* hard code the two sample types.
+* location id = block id, or plus 1 if needed.
+* function_id = block id, or plus 1 if needed.
+* strings are: "", metrics, followed by block strings: 2 per block: name and
+  filename.
+
+It really sounds quite straight forward with that mapping.
+

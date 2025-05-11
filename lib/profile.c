@@ -56,16 +56,14 @@ struct ProfileNode {
 };
 
 /**
- * @struct[FbleProfile] Profiling data collected for a program.
+ * @struct[Profile] Internal implementation of FbleProfile.
+ *  @field[FbleProfile][_base] The base FbleProfile instance.
  *  @field[ProfileNode*][root] The root of the profiling tree.
- *  @field[FbleNameV][blocks] The names of the profiling blocks.
- *  @field[bool][enabled] Indicates whether profiling is enabled or not.
  */
-struct FbleProfile {
+typedef struct {
+  FbleProfile _base;
   ProfileNode* root;
-  FbleNameV blocks;
-  bool enabled;
-};
+} Profile;
 
 const FbleBlockId RootBlockId = 0;
 
@@ -311,7 +309,7 @@ static void OutputSequencesQuery(FbleProfile* profile, void* userdata, FbleBlock
 // See documentation in fble-profile.h.
 FbleProfile* FbleNewProfile(bool enabled)
 {
-  FbleProfile* profile = FbleAlloc(FbleProfile);
+  Profile* profile = FbleAlloc(Profile);
 
   profile->root = FbleAlloc(ProfileNode);
   profile->root->id = RootBlockId;
@@ -321,18 +319,18 @@ FbleProfile* FbleNewProfile(bool enabled)
   profile->root->depth = 0;
   FbleInitVector(profile->root->children);
 
-  FbleInitVector(profile->blocks);
-  profile->enabled = enabled;
+  FbleInitVector(profile->_base.blocks);
+  profile->_base.enabled = enabled;
 
   FbleName root = {
     .name = FbleNewString("<root>"),
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = { .source = FbleNewString(__FILE__), .line = __LINE__, .col = 0 }
   };
-  FbleBlockId root_id = FbleAddBlockToProfile(profile, root);
+  FbleBlockId root_id = FbleAddBlockToProfile(&profile->_base, root);
   assert(root_id == RootBlockId);
 
-  return profile;
+  return &profile->_base;
 }
 
 // See documentation in fble-profile.h
@@ -365,20 +363,22 @@ FbleBlockId FbleAddBlocksToProfile(FbleProfile* profile, FbleNameV names)
 }
 
 // See documentation in fble-profile.h.
-void FbleFreeProfile(FbleProfile* profile)
+void FbleFreeProfile(FbleProfile* profile_)
 {
+  Profile* profile = (Profile*)profile_;
+
   FreeNode(profile->root);
-  for (size_t i = 0; i < profile->blocks.size; ++i) {
-    FbleFreeName(profile->blocks.xs[i]);
+  for (size_t i = 0; i < profile->_base.blocks.size; ++i) {
+    FbleFreeName(profile->_base.blocks.xs[i]);
   }
-  FbleFreeVector(profile->blocks);
+  FbleFreeVector(profile->_base.blocks);
   FbleFree(profile);
 }
 
 // See documentation in fble-profile.h.
-FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
+FbleProfileThread* FbleNewProfileThread(FbleProfile* profile_)
 {
-  if (!profile->enabled) {
+  if (!profile_->enabled) {
     return NULL;
   }
 
@@ -387,6 +387,8 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
   thread->stack.capacity = 8;
   thread->stack.size = 0;
   thread->stack.xs = FbleAllocArray(ProfileNode*, thread->stack.capacity);
+
+  Profile* profile = (Profile*)profile_;
 
   Push(thread, profile->root, false);
   profile->root->count++;
@@ -463,15 +465,17 @@ FbleBlockId FbleLookupProfileBlockId(FbleProfile* profile, const char* name)
 }
 
 // See documentation in fble-profile.h
-void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userdata)
+void FbleQueryProfile(FbleProfile* profile_, FbleProfileQuery* query, void* userdata)
 {
-  if (!profile->enabled) {
+  if (!profile_->enabled) {
     return;
   }
 
+  Profile* profile = (Profile*)profile_;
+
   FbleBlockIdV prefix;
   FbleInitVector(prefix);
-  QuerySequences(profile, query, userdata, &prefix, profile->root);
+  QuerySequences(profile_, query, userdata, &prefix, profile->root);
   FbleFreeVector(prefix);
 }
 
