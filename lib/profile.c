@@ -305,7 +305,7 @@ FbleProfile* FbleNewProfile(bool enabled)
   profile->_base.enabled = enabled;
 
   FbleName root = {
-    .name = FbleNewString("<root>"),
+    .name = FbleNewString("[root]"),
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = { .source = FbleNewString(__FILE__), .line = __LINE__, .col = 0 }
   };

@@ -1148,3 +1148,13 @@ Next step is to open it in pprof I guess?
 Looks like it reads something, but the contents are wrong. Something's wrong
 with the block ids. Yeah, I forgot to use them. Also, I need the leaf at index
 0, so it's a reversed sample from my point of view.
+
+---
+
+Something weird is going on with <root>. Is pprof interpreting the braces
+somehow?
+
+Yes. That's silly. Why would it do that? What should I use instead?
+
+Let's go with "[root]" instead of "<root>". It matches "[unknown]" output by
+perf at least.
