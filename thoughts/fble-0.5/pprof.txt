@@ -1059,3 +1059,57 @@ Sketch for how pprof.c implementation might look:
 
 It really sounds quite straight forward with that mapping.
 
+Step 1, figure out how to output sample_type:
+* field id is 1
+* value is ValueType
+* it's a repeated field.
+* ValueType is int64 type = 1, int64 unit = 2
+
+How to express this as a sequence of records? Let's try to figure it out on my
+own first, then we can see what protoc does for comparison.
+
+I would guess:
+
+  sample_type { type: 1 unit: 2 }
+  sample_type { type: 3 unit: 4 }
+
+Turns into:
+
+(1, ???)  to say this is the sample type value.
+(1, count_sample_type_string_id) to give the type of the first
+(2, count_sample_unit_string_id)
+
+(1, ???)  to say this is the next sample type value.
+(1, time_sample_type_string_id)
+(2, time_sample_unit_string_id)
+
+What goes into that ???. It must be the length of the next two records, to
+make that easy to skip over. Yes. The slightly annoying bit will be to keep
+track of that length. Especially with my varint and record helper functions.
+
+The length in this case is the sum of:
+* varint length of '1' << 3.
+* varint length of sample type string id
+* varint length of '2' << 3.
+* varint length of sample unit string id.
+
+Maybe easiest would be to write a helper function that I pass a list of
+varints, and it tells me how much space they take up. Or tell me the length of
+a varint, tell me the length of a tag, etc. And I just some it all up to
+start, then output. Okay?
+
+Sounds reasonable. Let's get going.
+
+---
+
+Okay! Draft of the code is done and compiling. Let's see what I got and where
+I messed up.
+
+First step, try decoding with protoc.
+
+protoc --decode=perftools.profiles.Profile -I ~/scratch/pprof proto/profile.proto < fble-perf-profile.test.got 
+
+Well, it got the string table entries okay. Nothing else though. I wonder why.
+
+Maybe let's comment out code and generate little by little to see where I'm
+going wrong.

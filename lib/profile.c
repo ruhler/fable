@@ -5,9 +5,7 @@
 
 #include <assert.h>   // for assert
 #include <inttypes.h> // for PRIu64
-#include <math.h>     // for sqrt
 #include <stdbool.h>  // for bool
-#include <string.h>   // for memset
 #include <string.h>   // for strcmp
 
 #include <fble/fble-alloc.h>
@@ -101,7 +99,6 @@ static ProfileNode* Canonical(ProfileNode* node, FbleBlockId block);
 static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace);
 
 static void QuerySequences(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node);
-static void OutputSequencesQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
 
 /**
  * @func[FreeNode] Frees resources associated with a profile node.
@@ -291,21 +288,6 @@ static void QuerySequences(FbleProfile* profile, FbleProfileQuery* query, void* 
   prefix->size--;
 }
 
-/**
- * @func[OutputSequencesQuery] Query to use for profiling output.
- *  See documentation of FbleProfileQuery in fble-profile.h
- */
-static void OutputSequencesQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
-{
-  FILE* fout = (FILE*)userdata;
-
-  fprintf(fout, "%" PRIu64 " %" PRIu64, count, time);
-  for (size_t i = 0; i < seq.size; ++i) {
-    fprintf(fout, " %zi", seq.xs[i]);
-  }
-  fprintf(fout, "\n");
-}
-
 // See documentation in fble-profile.h.
 FbleProfile* FbleNewProfile(bool enabled)
 {
@@ -477,23 +459,4 @@ void FbleQueryProfile(FbleProfile* profile_, FbleProfileQuery* query, void* user
   FbleInitVector(prefix);
   QuerySequences(profile_, query, userdata, &prefix, profile->root);
   FbleFreeVector(prefix);
-}
-
-// See documentation in fble-profile.h.
-void FbleOutputProfile(FILE* fout, FbleProfile* profile)
-{
-  if (!profile->enabled) {
-    return;
-  }
-
-  fprintf(fout, "# Blocks: id name file line column\n");
-  for (size_t i = 0; i < profile->blocks.size; ++i) {
-    FbleName name = profile->blocks.xs[i];
-    fprintf(fout, "%zi %s %s %zi %zi\n", i, name.name->str,
-        name.loc.source->str, name.loc.line, name.loc.col);
-  }
-
-  fprintf(fout, "\n");
-  fprintf(fout, "# Call sequences: count time [block...]\n"); 
-  FbleQueryProfile(profile, &OutputSequencesQuery, (void*)fout);
 }

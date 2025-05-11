@@ -3,6 +3,8 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 Profile Rewrite
+* Add a unit name to the FbleProfileOutput function so we can output, e.g.
+  "samples" or "instructions" for the time unit as appropriate?
 * Remove unnecessary FbleProfile apis now that blocks and enabled fields are
   public again.
 * Change FbleOutputProfile function to take a file name instead of FILE*
