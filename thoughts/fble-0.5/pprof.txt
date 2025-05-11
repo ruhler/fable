@@ -990,3 +990,58 @@ Where string is: { uint64_t length; char[length] }
 
 Let's see what that looks like?
 
+It takes up more space if I'm using uint64_t for everything. May as well just
+use ascii. That way people at least can see what's there.
+
+I suppose I can see why gzip makes sense for pprof proto format: lots of call
+stacks will share similar sequences. And string names of things too. I don't
+want to take a dependency on gzip though.
+
+Let's stick with my proposed text based fble profile format. It may not look
+pretty, but it is decipherable just by looking at the file in question.
+
+Oh, but what do I do about whitespace in names? That's going to mess
+everything up.
+
+Sigh. I'm feeling more like I should try pprof format. It doesn't have these
+issues. I can special case fble-profile-test to output things pretty like.
+
+Blarg. Let's sleep on things. See how I feel.
+
+---
+
+I want to try generating pprof output. This is exploratory. Things may get a
+little messy for a while. That's okay. We have everything it revision control
+and can go back as needed.
+
+Focus on generating pprof output first. Do not worry about reading it. Focus
+on implementing the code, don't worry about API or testing so much. The
+primary goal at this point is to figure out if it's feasible to go the pprof
+route. Worry about the rest later.
+
+Proposed plan of attack:
+1. Make blocks a public field of FbleProfile. It will just make everything
+easier.
+2. Add a todo to remove no longer needed APIs for accessing the blocks data of
+a profile.
+3. Add a todo to change the FbleOutputProfile function to take a file name
+instead of a FILE*. We will not be wanting to concatenate or output to stdout
+these pprof files.
+4. Draft the implementation of the pprof.c.
+
+At this point I should be able to run the fble-perf-profile test to generate a
+simple profile with known values. Check if I can decode it with protoc. Check
+if pprof can handle it.
+
+Once we get that working, we can move on to the next phase:
+* Implement the todos from the first phase.
+* Ditch the old pkgs/pprof code.
+* Start working on the new pkgs/pprof code based on the pprof format.
+
+I think I don't care about pprof.py anymore. It would need to be rewritten for
+both input format and performance sake. I don't fancy parsing pprof in python
+or using the generated python from protoc. I say go straight to fble for the
+implementation. We can resurrect pprof.py later if needed for performance, if
+fble can't keep up. I think there's a decent change fble can keep up, but also
+would not be at all surprised if it can't.
+
