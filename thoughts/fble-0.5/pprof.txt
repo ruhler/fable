@@ -1113,3 +1113,32 @@ Well, it got the string table entries okay. Nothing else though. I wonder why.
 
 Maybe let's comment out code and generate little by little to see where I'm
 going wrong.
+
+Here's what it is reading for the SampleType fields:
+
+1: 4      (sample_type, length 4)
+1: 1      (type, string_id 1)
+2: 2      (unit, string_id 2)
+1: 4      (sample_type, length 4)
+1: 3      (type, string_id 3)
+2: 4      (unit, string_id 4)
+
+Looks like what I would expect, no?
+
+The raw bytes are:
+
+  08 04 08 01 10 02 08 04 08 03 10 04
+
+Which I read as:
+
+  1, 4, 1, 1, 2, 2, 1, 4, 1, 3, 2, 4
+
+Just like it did.
+
+Let's compare to what protoc would generate for this sequence.
+
+  0a 04 08 01 10 02 0a 04 08 03 10 04
+
+It's using 0a instead of 08. That makes sense. It should for length, right?
+
+Cool. That was it. In terms of the proto encoding it looks good now.

@@ -28,9 +28,11 @@
 static uint64_t VarIntLength(uint64_t x);
 static uint64_t TagLength(uint64_t x);
 static uint64_t TaggedVarIntLength(uint64_t field, uint64_t value);
+static uint64_t TaggedLenLength(uint64_t field, uint64_t length);
 
 static void VarInt(FILE* fout, uint64_t value);
 static void TaggedVarInt(FILE* fout, uint64_t field, uint64_t value);
+static void TaggedLen(FILE* fout, uint64_t field, uint64_t len);
 
 static void SampleType(FILE* fout, uint64_t type, uint64_t unit);
 static void Location(FILE* fout, uint64_t location_id, uint64_t func_id, uint64_t line, uint64_t col);
@@ -73,6 +75,16 @@ static uint64_t TaggedVarIntLength(uint64_t field, uint64_t value) {
 }
 
 /**
+ * @func[TaggedLenLength] Returns the length of a tagged len.
+ *  @arg[uint64_t][field] The id of the field in the tag.
+ *  @arg[uint64_t][value] The value of the length.
+ *  @returns[uint64_t] The number of bytes needed for the record.
+ */
+static uint64_t TaggedLenLength(uint64_t field, uint64_t value) {
+  return TagLength(field) + VarIntLength(value);
+}
+
+/**
  * @func[VarInt] Output a varint to the file.
  *  @arg[FILE*][fout] The file to output it to.
  *  @arg[uint64_t][value] The value to output.
@@ -105,6 +117,19 @@ static void TaggedVarInt(FILE* fout, uint64_t field, uint64_t value)
 }
 
 /**
+ * @func[TaggedLen] Outputs a tagged length to the file.
+ *  @arg[FILE*][fout] The file to output to
+ *  @arg[uint64_t][field] The field value to put in the tag.
+ *  @arg[uint64_t][length] The length value to output.
+ *  @sideeffects Writes a tagged length record to fout.
+ */
+static void TaggedLen(FILE* fout, uint64_t field, uint64_t len)
+{
+  VarInt(fout, (field << 3) | 2);   // LEN = 2
+  VarInt(fout, len);
+}
+
+/**
  * @func[SampleType] Emits a ValueType sample_type field record.
  *  @arg[FILE*][fout] The output file.
  *  @arg[uint64_t][type] String id of the type field.
@@ -117,7 +142,7 @@ static void SampleType(FILE* fout, uint64_t type, uint64_t unit)
   len += TaggedVarIntLength(1, type); // .type = 1
   len += TaggedVarIntLength(2, unit); // .unit = 2
 
-  TaggedVarInt(fout, 1, len);   // .sample_type = 1
+  TaggedLen(fout, 1, len);      // .sample_type = 1
   TaggedVarInt(fout, 1, type);  // .type = 1
   TaggedVarInt(fout, 2, unit);  // .unit = 2
 }
@@ -140,13 +165,13 @@ static void Location(FILE* fout, uint64_t location_id, uint64_t func_id, uint64_
 
   uint64_t len = 0;
   len += TaggedVarIntLength(1, location_id);  // .id = 1
-  len += TaggedVarIntLength(4, line_len);     // .line = 4
+  len += TaggedLenLength(4, line_len);        // .line = 4
   len += line_len;
 
-  TaggedVarInt(fout, 4, len);           // .location = 4
+  TaggedLen(fout, 4, len);              // .location = 4
   TaggedVarInt(fout, 1, location_id);   // .id = 1
 
-  TaggedVarInt(fout, 4, line_len);      // .line = 4
+  TaggedLen(fout, 4, line_len);         // .line = 4
   TaggedVarInt(fout, 1, func_id);       // .function_id = 1
   TaggedVarInt(fout, 2, line);          // .line = 2
   TaggedVarInt(fout, 3, col);           // .column = 3
@@ -170,7 +195,7 @@ static void Function(FILE* fout, uint64_t func_id, uint64_t name_string_id, uint
   len += TaggedVarIntLength(4, file_string_id);   // .filename = 4
   len += TaggedVarIntLength(5, line);             // .start_line = 5
 
-  TaggedVarInt(fout, 5, len);             // .function = 5
+  TaggedLen(fout, 5, len);                // .function = 5
   TaggedVarInt(fout, 1, func_id);         // .id = 1
   TaggedVarInt(fout, 2, name_string_id);  // .name = 2
   TaggedVarInt(fout, 3, name_string_id);  // .system_name = 3
@@ -208,7 +233,7 @@ static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, 
   len += TaggedVarIntLength(2, count);    // .value = 2
   len += TaggedVarIntLength(2, time);     // .value = 2
 
-  TaggedVarInt(fout, 2, len);  // .sample = 2
+  TaggedLen(fout, 2, len);        // .sample = 2
   for (size_t i = 0; i < seq.size; ++i) {
     TaggedVarInt(fout, 1, i + 1); // .location_id = 1;
   }
@@ -253,4 +278,6 @@ void FbleOutputProfile(FILE* fout, FbleProfile* profile)
     StringTable(fout, name.name->str);
     StringTable(fout, name.loc.source->str);
   }
+
+  fflush(fout);
 }
