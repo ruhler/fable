@@ -228,14 +228,16 @@ static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, 
 
   uint64_t len = 0;
   for (size_t i = 0; i < seq.size; ++i) {
-    len += TaggedVarIntLength(1, i + 1);  // .location_id = 1
+    FbleBlockId id = seq.xs[seq.size - i -1];
+    len += TaggedVarIntLength(1, id + 1); // .location_id = 1
   }
   len += TaggedVarIntLength(2, count);    // .value = 2
   len += TaggedVarIntLength(2, time);     // .value = 2
 
   TaggedLen(fout, 2, len);        // .sample = 2
   for (size_t i = 0; i < seq.size; ++i) {
-    TaggedVarInt(fout, 1, i + 1); // .location_id = 1;
+    FbleBlockId id = seq.xs[seq.size - i -1];
+    TaggedVarInt(fout, 1, id + 1);  // .location_id = 1;
   }
   TaggedVarInt(fout, 2, count);   // .value = 2
   TaggedVarInt(fout, 2, time);    // .value = 2

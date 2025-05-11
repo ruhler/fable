@@ -1142,3 +1142,9 @@ Let's compare to what protoc would generate for this sequence.
 It's using 0a instead of 08. That makes sense. It should for length, right?
 
 Cool. That was it. In terms of the proto encoding it looks good now.
+
+Next step is to open it in pprof I guess?
+
+Looks like it reads something, but the contents are wrong. Something's wrong
+with the block ids. Yeah, I forgot to use them. Also, I need the leaf at index
+0, so it's a reversed sample from my point of view.
