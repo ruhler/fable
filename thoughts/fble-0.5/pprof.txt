@@ -1220,3 +1220,12 @@ option? Just output time; name samples. To test the parsing.
 
 How hard would it be to output gzip compressed? What's the API for that look
 like? I'm just curious.
+
+Looks like what I want is from zlib:
+* gzopen, gzfwrite
+
+If I used those, it looks like it wouldn't be bad at all.
+
+Debian packages: zlib1g, zlib1g-dev. Maybe worth a try. Let's worry about that
+later though, for when I get my reader going. The reader will surely be easier
+to start without the decompress step.

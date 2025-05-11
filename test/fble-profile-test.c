@@ -3,6 +3,7 @@
  *  A program that runs unit tests for the FbleProfile APIs.
  */
 
+#include <inttypes.h> // for PRIu64 
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <string.h>   // for strcpy
 #include <stdlib.h>   // for rand
@@ -30,7 +31,11 @@ typedef struct {
 static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 static void AssertSeq(FbleProfile* profile, uint64_t calls, uint64_t samples, ...);
 
+static void DumpQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
+static void DumpProfile(FbleProfile* profile, int line);
+
 static void ReplaceN(size_t n);
+
 
 /**
  * @func[ASSERT] Test assertion function.
@@ -158,6 +163,33 @@ static void AssertSeq(FbleProfile* profile, uint64_t calls, uint64_t samples, ..
 }
 
 /**
+ * @func[DumpQuery] Query to use for dumping profile samples.
+ *  See documentation of FbleProfileQuery in fble-profile.h
+ */
+static void DumpQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
+{
+  printf("%" PRIu64 " %" PRIu64, calls, samples);
+  for (size_t i = 0; i < seq.size; ++i) {
+    printf(" %zi", seq.xs[i]);
+  }
+  printf("\n");
+}
+
+/**
+ * @func[DumpProfile] Dump the profile to stdout.
+ *  For debugging purposes.
+ *
+ *  @arg[FbleProfile*][profile] The profile to dump
+ *  @arg[int][line] The line number of this file the dump is for: __LINE__.
+ *  @sideeffects Prints the profile in human readable form to standard out.
+ */
+void DumpProfile(FbleProfile* profile, int line)
+{
+  printf("%s:%i:\n", __FILE__, line);
+  FbleQueryProfile(profile, &DumpQuery, NULL);
+}
+
+/**
  * @func[ReplaceN] Performs an N deep replace self recursive call.
  *  For the purposes of testing that tail calls can be done using O(1) memory.
  *
@@ -183,8 +215,7 @@ static void ReplaceN(size_t n)
   FbleProfileExitBlock(thread);
   FbleFreeProfileThread(thread);
 
-  fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-  FbleOutputProfile(stdout, profile);
+  DumpProfile(profile, __LINE__);
 
   AssertSeq(profile, 1, 0, 0, -1);
   AssertSeq(profile, n + 1, 10 * (n + 1), 0, 1, -1);
@@ -238,8 +269,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -285,8 +315,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -326,8 +355,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -360,8 +388,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 3
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -402,8 +429,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -459,8 +485,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(b); // 1
     FbleFreeProfileThread(b);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 2, 0, 0, -1);
     AssertSeq(profile, 2, 11, 0, 1, -1);
@@ -502,8 +527,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -513,8 +537,6 @@ int main(int argc, char* argv[])
     AssertSeq(profile, 1, 31, 0, 1, 3, -1);
     AssertCount(profile, 6);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
     FbleFreeProfile(profile);
   }
 
@@ -547,8 +569,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertCount(profile, 0);
 
@@ -587,8 +608,7 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(thread); // 1
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 3, 120, 0, 1, -1);
@@ -625,8 +645,7 @@ int main(int argc, char* argv[])
 
     FbleFreeProfileThread(thread);
 
-    fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleOutputProfile(stdout, profile);
+    DumpProfile(profile, __LINE__);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 0, 0, 1, -1);
