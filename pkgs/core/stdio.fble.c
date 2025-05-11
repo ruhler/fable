@@ -503,7 +503,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   FbleFreeValueHeap(heap);
 
-  FbleGenerateProfileReport(profile_output_file, profile);
+  FbleOutputProfile(profile_output_file, profile);
   FbleFreeProfile(profile);
   return result;
 }

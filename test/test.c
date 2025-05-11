@@ -39,7 +39,7 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleFreeValueHeap(heap);
 
   if (profile_output_file != NULL) {
-    FbleGenerateProfileReport(profile_output_file, profile);
+    FbleOutputProfile(profile_output_file, profile);
   }
   FbleFreeProfile(profile);
   return status;

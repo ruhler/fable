@@ -102,8 +102,8 @@ static void Pop(FbleProfileThread* thread);
 static ProfileNode* Canonical(ProfileNode* node, FbleBlockId block);
 static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace);
 
-static void QuerySamples(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node);
-static void ReportQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void QuerySequences(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node);
+static void OutputSequencesQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
 
 /**
  * @func[FreeNode] Frees resources associated with a profile node.
@@ -268,26 +268,25 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
 }
 
 /**
- * @func[QuerySamples] Runs a query over samples.
+ * @func[QuerySequences] Runs a query over call sequences.
  *  @arg[FbleProfile*][profile] The profile being queried.
  *  @arg[FbleProfileQuery*][query] The query to run.
  *  @arg[void*][data] User data.
- *  @arg[FbleBlockIdV*][prefix] Prefix to the samples in the node.
- *  @arg[ProfileNode*][node] Profile tree node to query samples for.
+ *  @arg[FbleBlockIdV*][prefix] Prefix to the sequence in the node.
+ *  @arg[ProfileNode*][node] Profile tree node to query sequences for.
  *
  *  @sideeffects
  *   @i Calls query function on sample and children.
  *   @i May temporarily expand prefix, causing it to be resized.
  */
-static void QuerySamples(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node)
+static void QuerySequences(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node)
 {
   FbleAppendToVector(*prefix, node->id);
   query(profile, data, *prefix, node->count, node->time);
 
-  // Traverse child samples.
   for (size_t i = 0; i < node->children.size; ++i) {
     if (node->children.xs[i]->depth > node->depth) {
-      QuerySamples(profile, query, data, prefix, node->children.xs[i]);
+      QuerySequences(profile, query, data, prefix, node->children.xs[i]);
     }
   }
 
@@ -295,24 +294,18 @@ static void QuerySamples(FbleProfile* profile, FbleProfileQuery* query, void* da
 }
 
 /**
- * @func[ReportQuery] Query to use for profiling report.
+ * @func[OutputSequencesQuery] Query to use for profiling output.
  *  See documentation of FbleProfileQuery in fble-profile.h
  */
-static void ReportQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+static void OutputSequencesQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
 {
   FILE* fout = (FILE*)userdata;
 
-  // TODO: Print count too?
-  if (time > 0) {
-    fprintf(fout, "%" PRIu64 " ", time);
-    const char* sep = "";
-    for (size_t i = 0; i < seq.size; ++i) {
-      FbleName name = profile->blocks.xs[seq.xs[i]];
-      fprintf(fout, "%s%s", sep, name.name->str);
-      sep = ";";
-    }
-    fprintf(fout, "\n");
+  fprintf(fout, "%" PRIu64 " %" PRIu64, count, time);
+  for (size_t i = 0; i < seq.size; ++i) {
+    fprintf(fout, " %zi", seq.xs[i]);
   }
+  fprintf(fout, "\n");
 }
 
 // See documentation in fble-profile.h.
@@ -334,7 +327,7 @@ FbleProfile* FbleNewProfile(bool enabled)
   FbleName root = {
     .name = FbleNewString("<root>"),
     .space = FBLE_NORMAL_NAME_SPACE,
-    .loc = { .source = FbleNewString(""), .line = 0, .col = 0 }
+    .loc = { .source = FbleNewString(__FILE__), .line = __LINE__, .col = 0 }
   };
   FbleBlockId root_id = FbleAddBlockToProfile(profile, root);
   assert(root_id == RootBlockId);
@@ -478,17 +471,25 @@ void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userd
 
   FbleBlockIdV prefix;
   FbleInitVector(prefix);
-  QuerySamples(profile, query, userdata, &prefix, profile->root);
+  QuerySequences(profile, query, userdata, &prefix, profile->root);
   FbleFreeVector(prefix);
 }
 
 // See documentation in fble-profile.h.
-void FbleGenerateProfileReport(FILE* fout, FbleProfile* profile)
+void FbleOutputProfile(FILE* fout, FbleProfile* profile)
 {
   if (!profile->enabled) {
     return;
   }
 
-  // TODO: Print block info?
-  FbleQueryProfile(profile, &ReportQuery, (void*)fout);
+  fprintf(fout, "# Blocks: id name file line column\n");
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    FbleName name = profile->blocks.xs[i];
+    fprintf(fout, "%zi %s %s %zi %zi\n", i, name.name->str,
+        name.loc.source->str, name.loc.line, name.loc.col);
+  }
+
+  fprintf(fout, "\n");
+  fprintf(fout, "# Call sequences: count time [block...]\n"); 
+  FbleQueryProfile(profile, &OutputSequencesQuery, (void*)fout);
 }

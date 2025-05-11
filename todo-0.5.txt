@@ -33,7 +33,7 @@ pkgs/Pprof
   From having frames like: ffffffea1bb64d10 [unknown] ([unknown])
 * Reenable a reasonable benchmark.
 * Use correct output format to perf-pprof.
-* Replace pkgs/pprof with pkgs/pprof2.
+* Replace pkgs/pprof with pkgs/pprof2. And call it 'profile' instead of 'pprof'.
 * Add parser for pprof text format.
 * Implement server binary that reads from pprof text format.
 

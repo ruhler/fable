@@ -527,3 +527,466 @@ rest:
 * Set up a benchmark for fble pprof.
 * Replace pkgs/pprof with pkgs/pprof2.
 * Write the server implementation for fble pprof.
+
+---
+
+I think it's time to sit down and have a serious discussion about the pprof
+file format.
+
+Today I have a list of lines of <time> <name>;<name>;...;<name>.
+
+The problem with this:
+* No way to output count in addition to time.
+  - Which is certainly useful for the fble-profile-test.c debugging output.
+  - Which may or may not be useful for an actual user.
+* No way to output extra info about blocks.
+  - Namely line and file number.
+
+Non-problems with this:
+* For long names, it's not very compact. Honestly, I don't see that being a
+  problem in practice at this point. Maybe some day, but it's not a compelling
+  reason for me to do something now.
+
+Possible output formats:
+* The one I have now.
+* A custom text-based format with support for count and block info.
+* google/pprof text proto format.
+* google/pprof binary proto format.
+
+It bothers me that I can't figure out any way to generate a google/pprof file.
+
+It looks like there are some sample google/pprof files as testdata when you
+check it out, along with a text representation of the contents. That text
+representation does not use text proto format.
+
+The google/pprof format is more general than what I need. That's fine for
+outputting to that format. But it makes it harder for implementing a viewer
+for the format, because there could be things I don't want to support.
+
+Benefits of using google/pprof format:
+* I don't have to design my own format. Just go with what's there.
+* I could in theory view the profiles with google/pprof implementation for
+  comparison. Not that I would, but other people certainly might prefer that.
+* I could in theory view google/pprofs from elsewhere with my viewer.
+  Depending on how fully featured my viewer is.
+
+Downsides of using google/pprof format:
+* I have no control over changes to the format in the future.
+* It's more complicated than I need: 
+  - Having to generate and parse proto format sounds hard?
+  - Supporting additional features in my viewer sounds annoying.
+* It's hard for me to test that my interpretation of the google/pprof format
+  matches the rest of the world, because I can't figure out how to generate a
+  reference pprof.
+* It adds a dependency on google/pprof, if only in terms of specification.
+* If google/pprof doesn't official support a text format, that means I can't
+  generate a text format file, which I much prefer to have so I can view and
+  debug things in a text editor.
+
+Let's be honest. The real immediate concern here is how hard it is to generate
+and parse google/pprof files. How about we try that. If it's not too hard, use
+it. If it's too hard, make up my own format.
+
+To try that...
+
+1. Figure out how to run google/pprof to show something useful.
+2. Get google/pprof to show something useful on a text based profile.
+3. Try to generate a text based google/pprof from fble and open it in
+google/pprof.
+
+I don't mind saying that fble profiles are a subset of google/pprof to start,
+to simplify implementation.
+
+Okay? Let's try it.
+
+Well, wait. Let's say I had my own format. It's as easy as I want to generate
+and parse. But I keep it aligned with the kind of information google/pprof
+needs. Then anyone who wants could write a converter between my format and
+google/pprof, and that converter is as hard as dealing with the google/pprof
+format. How about that? I get everything I want, without the headache of being
+tied in any way to google/pprof?
+
+Both approaches seem worth exploring.
+
+There's a debian package called google-perftools. Is that related? Looks like
+it. That installs something called google-pprof. That's cool.
+
+Sample pprof file to try running it on:
+  pprof/profile/testdata/java.cpu
+
+It just says 'Did not specify a profile file'. I have to assume my sample
+profile is bogus.
+
+Maybe I need gperftools package instead of pprof?
+  github.com/gperftools/gperftools
+
+Maybe apt install libgoogle-perftools-dev?
+
+Yeah, that looks like the same as gperftools.
+* link with -lprofiler
+* run with CPUPROFILE=foo.prof
+
+Doesn't work for me. Hmm...
+
+Okay, manually call ProfilerStart and ProfilerStop, including
+gperftools/profiler.h works.
+
+And I can view that with google-pprof. Good. Now, what's the format? How can I
+get a text output format?
+
+It's odd that the cpu profiler output format description is completely
+different from the pprof format description.
+
+Ah. I see. The cpu profiler generates a legacy format. pprof knows how to
+convert that to its proto format if needed. Which is not really useful for me
+being able to view proto format pprofs.
+
+I think I need to figure out how to run pprof directly, not google-pprof,
+which I assume runs on the old format files?
+
+Cool. I got it:
+
+  ~/go/bin/pprof -text ./profile/testdata/java.cpu
+
+So yeah, can't use google-pprof. Oh well.
+
+pprof -raw generates text output in what looks like legacy format. pprof can't
+read that in.
+
+pprof -proto outputs in compressed proto format. How do I convert that to
+text? Does pprof take text proto input?
+
+So, not only does pprof expect binary encoded protobuf, it expects gzipped
+binary encoded protobuf. Based on looking at the code. It also supports some
+legacy formats, but doesn't promise to continue doing so.
+
+No, none of those legacy formats are really what I want, and it seems
+pointless if pprof is going to drop support for those. I definitely don't want
+to output in compressed encoded binary format.
+
+Which leads me to my own format.
+
+There are two different use cases to consider:
+1. fble --profile, where we have counts and file and line number info.
+2. fble-perf-profile, where we don't have meaningful counts or file and line
+number.
+
+How important are counts? Seems like things could be simplified a bunch if we
+didn't have to deal with them. I know they are useful for testing counts, but
+we wouldn't need to test them if we didn't have them.
+
+I feel like I very rarely look at counts. Like they are useful in theory, but
+not as much in practice. Use cases:
+* Code coverage. Just need to know 1 or 0.
+  I could probably use time for that, now that I no longer random sample?
+* Telling the difference between lots of calls versus one long call.
+  Like, is FbleNewFuncValue called a ton of times, or does it just take
+  forever? That really ought to be useful information.
+
+If we had counts, how would we want to view them? I think differently from
+time. For example, 'overall' counts is not meaningful. You don't want the
+number of calls that happened within a function recursively. Counts are only
+useful for counting in 'self' mode. Basically counts of suffixes of a
+sequence.
+
+So I would want a different view. Not 'seqs' in general, but ends of
+sequences. Or have an option to say '$' as the next element in the sequence to
+specify the end, so I can force that, then look at counts.
+
+I think counts are useful in theory. I want to give them a chance.
+
+Now, pprof.py could either know about counts and display them along side time,
+or treat count as just some other kind of thing that was sampled that you can
+switch between.
+
+The information I want in my output format:
+* If generalized to counts of all sorts of different things, the names of the
+  metrics. e.g. 'time', 'samples', 'count'.
+* For each sample:
+  The values of the metrics.
+  The sequence of blocks.
+* For each block:
+  The name of the block.
+  If available, the file, line number, and column number of the block.
+
+I probably should not call my profile format pprof, to avoid confusion. Maybe
+fblp instead? Sounds reasonable, no? Or "fble profile"?
+
+Let's play around with some possibilities.
+
+  metrics: count time
+  
+Hmm... I still wonder if I could use pprof format, but do a text proto? It has
+nice things like units.
+
+Let's try to convert the sample profile I have to text format somehow.
+Manually if I need to, worst case.
+
+Looks like protoc can decode into text format. Let me get that installed.
+Package: protobuf-compiler?
+
+Yes. Got it:
+
+protoc --decode=perftools.profiles.Profile proto/profile.proto < java.cpu.proto  > java.cpu.proto.txt
+
+Note, this has to be done on the uncompressed proto file, not the compressed
+proto file.
+
+Good news is, now I can test generation of profiles, converting into binary
+proto, converting into gzipped, opening with pprof.
+
+Let's see a sample of how text proto might look.
+
+  sample_type { type: 1 unit: 2 }
+  sample_type { type: 3 unit: 4 }
+  sample { location_id: 1 location_id: 3 location_id: 2 value: 1 value: 20 }
+  sample { location_id: 1 location_id: 3 location_id: 3 value: 1 value: 30 }
+  location { id: 1 line { function_id: 1 line: 12 column: 4 } }
+  location { id: 2 line { function_id: 2 line: 13 column: 5 } }
+  location { id: 3 line { function_id: 3 line: 14 column: 6 } }
+  function { id: 1 name: 5 system_name: 5 filename: 6 }
+  function { id: 2 name: 7 system_name: 7 filename: 8 }
+  function { id: 3 name: 9 system_name: 9 filename: 10 }
+  string_table: ""
+  string_table: "count"
+  string_table: "count"
+  string_table: "time"
+  string_table: "instructions"
+  string_table: "foo"
+  string_table: "Foo.fble"
+  string_table: "bar"
+  string_table: "Bar.fble"
+  string_table: "sludge"
+  string_table: "Sludge.fble"
+
+I'm not sure why functions and locations both have line numbers associated
+with them.
+
+Yeah, so text based is pretty verbose here. How bad would it be to generate
+encoded protobuf directly?
+
+Things involved in protobuf encoding:
+* Variable length int representation: uses 7 of 8 bits, with 8th bit saying if
+  there is continuation. Sounds straight forward enough.
+* Records are: field name + type + value. With a straight forward enough
+  encoding.
+* Signed integers are packed around 0 rather than use 2's complement. But I
+  don't think I need to use signed integers for anything.
+
+So, actually, not that bad. I think that's doable. We'll want a helper for
+outputting varints. I'll need to hard code the message field ids. I can have
+conventions around how I assign indices to the string table.
+
+I think I would want a separate source file to implement this. Maybe call it
+pprof.c. It would be a glorified query over the profile.
+
+Where does this leave us? I think generating uncompressed binary encoded
+.pprof format is feasible. The pprof proto format certainly supports
+everything I need.
+
+Sounds like we should use absolute line number in location, it's in the file
+for the function. The function line number will be set to the same thing in
+this case.
+
+If I generate uncompressed pprof encoded proto files...
+* You could gzip them and then view in pprof easily.
+* I need some way to parse them.
+
+For python code, I could use protoc maybe to generate the proto parser part.
+For fble... shouldn't be too hard. Might be a useful utility in general.
+
+So, I guess the proposal is to try to use uncompressed pprof binary encoded
+proto as my profile format:
+* Implement a pprof.c file to output the proto format. It can handle both the
+  pprof and proto parts.
+* In pprof.py, probably want to use the output of protoc for parsing. I can
+  check in the generated code and inline it maybe? Sounds messy. Or try to
+  parse what I need to by hand.
+* In fble-pprof, parse by hand. Shouldn't be too bad.
+
+Sounds like a plan. How do we get there?
+
+1. Hack up pprof.py to support proto format making use of protoc generated
+code.
+2. Try it out on my above hand generated text proto, which I encode with protoc.
+3. I can try out pprof on my sample too, after doing gzip of the encoded
+value.
+4. Implement pprof.c to generate in pprof format.
+
+I should now be able to generate and view profiles usefully. Try it out with
+some pprof something or other. For now, don't worry about multiple metrics or
+location info in pprof.py. We can extract the 'time' metric explicitly.
+
+Note: this isn't going to be useful for debugging fble-profiles-test. I should
+use a custom report generator for that. It doesn't care about blocks.
+
+Otherwise, if I was just going to do a simple text format, I guess I may as
+well assume it always has count and time and output a list of samples and a
+list of blocks. Something like:
+
+1 20: 1 3 2
+1 30: 1 3 3 
+1: Foo Foo.fble 12 4
+2: Bar Bar.fble 13 5
+3: Sludge Sludge.fble 14 6
+
+Basically it's a list of sample lines followed by a list of location lines.
+You tell the difference by the number of numbers before the ':'. The file
+names and line and column info is optional.
+
+Any more obvious way to write the sample values?
+
+I would say, don't worry about it.
+
+Okay, so now I have a proposal for a simple text format. It's useful for debug
+output. It's text readable. It's super easy to generate. It's super easy to
+parse. It's fairly compact.
+
+Why would I go to all that trouble of supporting pprof if I can just use this?
+
+The key assumption here is we have 2 metric values to output: count and time.
+Is that a bad assumption?
+
+What if we said block definitions come first, samples second? Seems more
+useful for the parser if we want one pass, right?
+
+I could require the ids be packed, so we don't need to enumerate them that
+way. Except explicit enumeration really helps when looking at the file
+manually. Or... we could just use line number? That sounds reasonable. Block 4
+is output on line 4. Don't output block 0, because? Well, that's slightly
+tedious.
+
+I think it's fine to put the explicit block numbers.
+
+How do we denote end of the list of blocks?
+
+Oh, you know what else is useful to have? Total number of samples / sequences
+and number of blocks? I can track total number of samples (not total number of
+sequences? though I could track that too) in the profile easily enough. But
+total count? Total time? Dunno.
+
+  1 Foo Foo.fble 12 4
+  2 Bar Bar.fble 13 5
+  3 Sludge Sludge.fble 14 6
+
+  1 20 1 3 2
+  1 30 1 3 3 
+
+Aha. That's it. Blocks, with explicit id. Let's say the id could be anything,
+doesn't have to be 1, 2, 3, ... if we don't want to. It just has to be unique.
+
+Then a blank line. Then samples.
+
+I just wish it were more obvious where the stack starts and what is count
+versus time. Add a header? Add some header lines? As comments perhaps?
+
+  # Blocks: id name file line column
+  1 Foo Foo.fble 12 4
+  2 Bar Bar.fble 13 5
+  3 Sludge Sludge.fble 14 6
+
+  # Samples: count time <block>
+  # From outer most to inner most.
+  1 20 1 3 2
+  1 30 1 3 3 
+
+Yes. I like that. That's nice. Document with comments. Now it's human
+readable, we know what's there. Super easy to parse. Super easy to generate.
+We keep all information.
+
+Let's say no difference for fble profile versus fble-perf-profile. Use ???:0:0
+for file and line and column. Output a count.
+
+Now, do I want to output a bunch of sequences with 0 time? Because every
+sub sequence has a non-zero count. The output file could get big, right? Too
+big? Let's see. Try on md5.
+
+It's a 34M file, with 34K lines. Since we don't do random sampling, there is
+no such thing as a 0 time entry anymore anyway.
+
+I think it's fine. It will be even better when we list block ids instead of
+the full names.
+
+So, great. I have everything I need. A nice, compact format that works in all
+cases, is clearly documented, easy to generate and parse.
+
+I probably shouldn't call it pprof. I like 'fble profile'. fble-perf-profile
+makes sense. fble --profile option makes sense. So what should I call my
+profile viewer? pkgs/profile?
+
+What does pprof stand for, anyway? "Performance Profiles".
+
+How about fprof?  fble-profile? Or, simply, pkgs/profile? fblp? Naw. Just call
+it 'profile', that's fine. We can do renames later when that becomes
+confusing.
+
+Cool. I have a plan. Steps:
+
+1. Update lib/profile.c to generate the new output format.
+2. Update pprof.py to parse the new format. Focus on time.
+3. Update pkgs/pprof2 to parse the new format. Focus on time.
+
+That's it. Easy.
+
+I suppose one other thing is to decide on my terminology. 'sample' isn't
+really right for --profile option to fble.
+
+pprof uses 'Sample', or 'call stack'.
+gdb has backtrace.
+wikipedia redirects backtrace to stack trace.
+ alias: stack backtrace, stack traceback
+man backtrace: is what libc uses.
+
+Perhaps 'back' refers to the order of the trace: inner most to outer most?
+
+So I shouldn't use 'back'. But 'trace' is not at all obvious. Maybe 'site'?
+Like, call site? I use 'sequence' some times. I dunno. Think on it.
+
+---
+
+I think call stack is a good term. Because this isn't a sample, or a back
+anything. I don't like the word trace. That leaves us with call stack.
+
+What do you call a partial call stack though? Like an intermediate? How about
+a call sequence? "Call sequence" is an interesting term. Maybe it makes more
+sense than 'stack' in the case of canonicalization?
+
+I like call sequence. We can have a full call sequence or a call subsequence.
+How can I shorten that for variable names though? 'calls'? 'seqs'? 'call'?
+'seq'?
+
+I don't know. Maybe let it stew some more.
+
+Onwards now to my new fble profile format.
+
+---
+
+Well, it's not very human readable, to be honest. The indirection for blocks
+makes it just a bunch of data.
+
+There are problems with whitespace in names too. Hmm...
+
+Maybe we want a binary format instead? What would that look like?
+
+uint64_t num_blocks;
+for each num_blocks:
+{
+  string name;
+  string file;
+  uint64_t line;
+  uint64_t column;
+}
+for each sequence:
+{
+  uint64_t count;
+  uint64_t time;
+  uint64_t length;
+  for each length {
+    uint64_t block;
+  }
+}
+
+Where string is: { uint64_t length; char[length] }
+
+Let's see what that looks like?
+

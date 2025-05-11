@@ -74,8 +74,7 @@ namespace eval "include" {
       FbleProfileSample
       FbleProfileEnterBlock FbleProfileReplaceBlock FbleProfileExitBlock
       FbleProfileBlockName FbleLookupProfileBlockId
-      FbleProfileQuery FbleQueryProfile
-      FbleGenerateProfileReport
+      FbleProfileQuery FbleQueryProfile FbleOutputProfile
     }
     fble-program.h {
       FbleModule FbleModuleV FbleProgram

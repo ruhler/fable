@@ -184,7 +184,7 @@ static void ReplaceN(size_t n)
   FbleFreeProfileThread(thread);
 
   fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-  FbleGenerateProfileReport(stdout, profile);
+  FbleOutputProfile(stdout, profile);
 
   AssertSeq(profile, 1, 0, 0, -1);
   AssertSeq(profile, n + 1, 10 * (n + 1), 0, 1, -1);
@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -327,7 +327,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -361,7 +361,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -403,7 +403,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -460,7 +460,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(b);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 2, 0, 0, -1);
     AssertSeq(profile, 2, 11, 0, 1, -1);
@@ -503,7 +503,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 10, 0, 1, -1);
@@ -514,7 +514,7 @@ int main(int argc, char* argv[])
     AssertCount(profile, 6);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
     FbleFreeProfile(profile);
   }
 
@@ -548,7 +548,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertCount(profile, 0);
 
@@ -588,7 +588,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 3, 120, 0, 1, -1);
@@ -626,7 +626,7 @@ int main(int argc, char* argv[])
     FbleFreeProfileThread(thread);
 
     fprintf(stdout, "%s:%i:\n", __FILE__, __LINE__);
-    FbleGenerateProfileReport(stdout, profile);
+    FbleOutputProfile(stdout, profile);
 
     AssertSeq(profile, 1, 0, 0, -1);
     AssertSeq(profile, 1, 0, 0, 1, -1);

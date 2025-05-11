@@ -153,7 +153,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
   if (profile_output_file == NULL) {
     profile_output_file = stdout;
   }
-  FbleGenerateProfileReport(profile_output_file, profile);
+  FbleOutputProfile(profile_output_file, profile);
 
   // Each of these top level let bindings were executed once when the main
   // program ran.

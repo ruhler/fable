@@ -163,7 +163,7 @@ int main(int argc, const char* argv[])
   FbleFree(name);
   FbleFree(blocks);
 
-  FbleGenerateProfileReport(stdout, profile);
+  FbleOutputProfile(stdout, profile);
   FbleFreeProfile(profile);
   return EX_SUCCESS;
 }

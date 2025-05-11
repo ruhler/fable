@@ -120,7 +120,7 @@ namespace eval "bin" {
 
   # Test for fble-perf-profile.c
   # The target output will need to be updated any time the output format of
-  # FbleGenerateProfileReport changes.
+  # FbleOutputProfile changes.
   build $::b/bin/fble-perf-profile.test.got \
     "$::b/bin/fble-perf-profile $::s/bin/fble-perf-profile.test.in" \
     "$::b/bin/fble-perf-profile < $::s/bin/fble-perf-profile.test.in > $::b/bin/fble-perf-profile.test.got"

@@ -26,7 +26,20 @@ typedef struct {
 } FbleBlockIdV;
 
 /**
- * @struct[FbleProfile] Profiling data collected for a program. @@
+ * @struct[FbleProfile] Profiling data collected for a program.
+ *  A profile keeps track of the count of occurences and time spent in every
+ *  call stack of the program. Because call stacks can be very long,
+ *  particulary in the case of unbounded tail and non-tail recursion, call
+ *  stacks are grouped together into a canonical form with cycles removed. We
+ *  refer to these canonical form call stacks as call sequences.
+ *
+ *  For example, consider the call stack abcccdedef. The canonical form
+ *  removes the cycles of c and the cycles of de, shortening to the call
+ *  sequence abcdef.
+ *
+ *  Thus a profile keeps track of the count and time spent in every call
+ *  sequences. It includes information about the names and locations of frames
+ *  in the call sequence, which are called blocks.
  */
 typedef struct FbleProfile FbleProfile;
 
@@ -259,17 +272,30 @@ typedef void FbleProfileQuery(FbleProfile* profile, void* userdata, FbleBlockIdV
 void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userdata);
 
 /**
- * @func[FbleGenerateProfileReport] Generates a profiling report.
+ * @func[FbleOutputProfile] Outputs the profile in the fble profiling format.
  *  Has no effect if profiling is disabled.
  *
- *  @arg[FILE*] fout
- *   The file to output the profile report to.
- *  @arg[FbleProfile*] profile
- *   The profile to generate a report for.
+ *  The profile output format consists of lines describing the program blocks,
+ *  followed by lines describing call sequence counts and times. For example:
  *
- *  @sideeffects
- *   Writes a profile report to the given file.
+ *  @code[txt] @
+ *   # Blocks: id name file line column
+ *   1 Foo Foo.fble 12 4
+ *   2 Bar Bar.fble 13 5
+ *   3 Sludge Sludge.fble 14 6
+ *
+ *   # Call sequences: count time [block...]
+ *   1 20 1 3 2
+ *   1 30 1 3 3 
+ *
+ *  Comments in the file start with @l{#} and go to end of line and are
+ *  otherwise ignored. An empty line separates the list of blocks from the
+ *  list of call sequences.
+ *
+ *  @arg[FILE*][fout] The file to output the profile to.
+ *  @arg[FbleProfile*][profile] The profile to output
+ *  @sideeffects Outputs the profile to the given file.
  */
-void FbleGenerateProfileReport(FILE* fout, FbleProfile* profile);
+void FbleOutputProfile(FILE* fout, FbleProfile* profile);
 
 #endif // FBLE_PROFILE_H_

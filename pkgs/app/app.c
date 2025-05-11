@@ -617,7 +617,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   FbleFreeValueHeap(heap);
 
-  FbleGenerateProfileReport(profile_output_file, profile);
+  FbleOutputProfile(profile_output_file, profile);
   FbleFreeProfile(profile);
 
   SDL_GL_DeleteContext(glctx);
