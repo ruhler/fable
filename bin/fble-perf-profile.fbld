@@ -1,19 +1,19 @@
-@usage[fble-perf-profile] produces fble profile report for linux perf profile
+@usage[fble-perf-profile] converts linux perf profile to fble profile format
  @synopsis
  @ @l[fble-perf-profile] \[@a[OPTION]...\]
  
  @description
-  Produces an fble profile report for a linux perf profile passed on stdin.
+  Converts a linux perf profile passed on stdin into the fble profile format.
  
   To collect perf data, e.g.:
  
   @code[sh] @
    perf record -F 997 -d -g <cmd>
  
-  To report perf data:
+  To generate fble profile format for the perf data:
  
   @code[sh] @
-   perf script | fble-perf-profile
+   perf script | fble-perf-profile > foo.prof
  
   The output @l[count] field is mostly meaningless. It is the number of
   different sample traces the function appeared in.
@@ -21,10 +21,15 @@
  @options
   @GenericProgramInfo
 
+  @subsection Output Control
+   @opt[@l[--test]]
+   @ output the profile in human readable format to facilitate testing
+
  @exitstatus
   @def[0] Success.
   @def[1] Failure.
   @def[2] Usage error.
  
  @examples
-  @ex[perf script | fble-perf-profile][]
+  @ex[perf script | fble-perf-profile > foo.prof][]
+  @ex[perf script | fble-perf-profile --test][]

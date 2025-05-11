@@ -3,8 +3,8 @@
  *  A program that displays a linux perf tool profile in fble profile format.
  */
 
-#include <assert.h>     // for assert
 #include <ctype.h>      // for isspace
+#include <inttypes.h>   // for PRIu64 
 
 #include <fble/fble-alloc.h>     // for FbleArrayAlloc, etc.
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg
@@ -18,6 +18,7 @@
 #define EX_USAGE 2
 
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
+static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
 int main(int argc, const char* argv[]);
 
 /**
@@ -46,6 +47,22 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
 }
 
 /**
+ * @func[TestOutputQuery] Query to use for outputting samples in case of --test.
+ *  See documentation of FbleProfileQuery in fble-profile.h
+ */
+static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+{
+  if (time > 0) {
+    printf("%" PRIu64, time);
+    for (size_t i = 0; i < seq.size; ++i) {
+      FbleName name = profile->blocks.xs[seq.xs[i]];
+      printf(" %s", name.name->str);
+    }
+    printf("\n");
+  }
+}
+
+/**
  * @func[main] The main entry point for the fble-perf-profile program.
  *  @arg[int][argc] The number of command line arguments.
  *  @arg[const char**][argv] The command line arguments.
@@ -60,6 +77,7 @@ int main(int argc, const char* argv[])
   bool version = false;
   bool help = false;
   bool error = false;
+  bool test = false;
 
   argc--;
   argv++;
@@ -68,6 +86,7 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--test", &test, &argc, &argv, &error)) continue;
   }
 
   if (version) {
@@ -163,7 +182,14 @@ int main(int argc, const char* argv[])
   FbleFree(name);
   FbleFree(blocks);
 
-  FbleOutputProfile(stdout, profile);
+  if (test) {
+    // If the --test option is passed, output the samples in a human readable
+    // format with just the info we care about.
+    FbleQueryProfile(profile, &TestOutputQuery, NULL);
+  } else {
+    FbleOutputProfile(stdout, profile);
+  }
+
   FbleFreeProfile(profile);
   return EX_SUCCESS;
 }

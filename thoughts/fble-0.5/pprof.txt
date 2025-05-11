@@ -1158,3 +1158,60 @@ Yes. That's silly. Why would it do that? What should I use instead?
 
 Let's go with "[root]" instead of "<root>". It matches "[unknown]" output by
 perf at least.
+
+---
+
+Okay! We have it. Easy enough. Done.
+
+Where does this put us?
+* The code to generate pprof proto format is not bad.
+* I have test and API cleanup to do.
+
+Let's get the test cases to pass first? Do a massive round of cleanup before
+worrying about how to parse and view the profile?
+
+---
+
+My md5 profile, which was 34MB, 30K? It comes out as 4MB uncompressed and 256K
+compressed now.
+
+---
+
+How to test fble-perf-profile now?
+* I could check in a 'golden' reference, but that feels pretty arbitrary.
+
+I can I instead write a small program to generate the reference file with
+manual C api calls? That's what we want to test, right? That parsing is
+correct. We don't care about profile generation itself. That's not what I want
+to test.
+
+---
+
+Miscellaneous thoughts:
+* I should call the sample types ["samples", "count"] for time, and
+  ["calls", "count"] for calls. Everywhere in the code. "samples" corresponds
+  to FbleProfileSample function, and technically it is right for sampling
+  every instruction.
+
+* To test fble-perf-profile, compare the output against a test program that
+  generates the profile with explicit FbleProfile* calls and outputs the
+  result. Debugging test failures will be a pain, but fble-perf-profile only
+  outputs pprof format now, so what can I do? Unless I want to add an option
+  to output in a more human readable form and use that only for test? That
+  might be worth doing actually.
+
+* I need to test pprof generation. I vote for writing a test app to generate a
+  profile with known values and compare that against a pprof file generated
+  manually via protoc from a text based proto input file. Unfortunately we
+  probably better not reuse this same profile for fble-perf-profile, because
+  it should have file and line number info.
+
+* Passing FILE* instead of filename might still be desirable, for things like
+  fble-perf-profile where it's just way more convenient to output to stdout
+  and redirect on the shell than have to parse arguments. Not sure how to deal
+  with opening the FILE* in binary format in that case. Worry about it later
+  when something fails, presumably on windows?
+
+Let me get the existing test passing first. Hmm... Honestly, a custom output
+format might be nice, even if for test. It could be --test as the command line
+option? Just output time; name samples. To test the parsing.
