@@ -27,8 +27,8 @@ typedef struct {
 
 /**
  * @struct[FbleProfile] Profiling data collected for a program.
- *  A profile keeps track of the count of occurences and time spent in every
- *  call stack of the program. Because call stacks can be very long,
+ *  A profile keeps track of the number of calls into and samples recorded
+ *  in every call stack of the program. Because call stacks can be very long,
  *  particulary in the case of unbounded tail and non-tail recursion, call
  *  stacks are grouped together into a canonical form with cycles removed. We
  *  refer to these canonical form call stacks as call sequences.
@@ -167,15 +167,15 @@ void FbleFreeProfileThread(FbleProfileThread* thread);
 
 /**
  * @func[FbleProfileSample] Takes a profiling sample.
- *  @arg[FbleProfileThread*] thread
- *   The profile thread to sample. May be NULL.
- *  @arg[uint64_t] time
- *   The amount of profile time to advance.
+ *  @arg[FbleProfileThread*][thread] The profile thread to sample. May be NULL.
+ *  @arg[uint64_t][count]
+ *   The count of samples to charge against the current call sequence.
  *
  *  @sideeffects
- *   Charges calls on the current thread with the given time.
+ *   Charges the call sequence on the given thread with the given number of
+ *   samples.
  */
-void FbleProfileSample(FbleProfileThread* thread, uint64_t time);
+void FbleProfileSample(FbleProfileThread* thread, size_t count);
 
 /**
  * @func[FbleProfileEnterBlock] Enters a profiling block.
@@ -261,11 +261,11 @@ FbleBlockId FbleLookupProfileBlockId(FbleProfile* profile, const char* name);
  *  @arg[FbleBlockIdV][seq]
  *   A canonical trace in the profile. This memory will not last beyond the
  *   call to the query function, make copies if needed.
- *  @arg[uint64_t][count] The number of times called into this trace.
- *  @arg[uint64_t][time] The total time spent at this trace.
+ *  @arg[uint64_t][calls] The number of calls into this sequence.
+ *  @arg[uint64_t][samples] The number of samples charged to this sequence.
  *  @sideeffects Updates fields of userdata as desired to query the profile.
  */
-typedef void FbleProfileQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+typedef void FbleProfileQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 
 /**
  * @func[FbleQueryProfile] Query the profile for trace counts and time.
@@ -279,25 +279,15 @@ typedef void FbleProfileQuery(FbleProfile* profile, void* userdata, FbleBlockIdV
 void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userdata);
 
 /**
- * @func[FbleOutputProfile] Outputs the profile in the fble profiling format.
+ * @func[FbleOutputProfile] Outputs the profile to a file.
  *  Has no effect if profiling is disabled.
  *
- *  The profile output format consists of lines describing the program blocks,
- *  followed by lines describing call sequence counts and times. For example:
+ *  The profile is output in uncompressed binary encoded google/pprof proto
+ *  format. See https://github.com/google/pprof/blob/main/proto/profile.proto
+ *  for the proto format. See https://protobuf.dev/programming-guides/encoding/
+ *  for the wire format.
  *
- *  @code[txt] @
- *   # Blocks: id name file line column
- *   1 Foo Foo.fble 12 4
- *   2 Bar Bar.fble 13 5
- *   3 Sludge Sludge.fble 14 6
- *
- *   # Call sequences: count time [block...]
- *   1 20 1 3 2
- *   1 30 1 3 3 
- *
- *  Comments in the file start with @l{#} and go to end of line and are
- *  otherwise ignored. An empty line separates the list of blocks from the
- *  list of call sequences.
+ *  To view in google/pprof, you'll need to gzip the output file first.
  *
  *  @arg[FILE*][fout] The file to output the profile to.
  *  @arg[FbleProfile*][profile] The profile to output

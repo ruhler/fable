@@ -17,10 +17,10 @@
 // We use a straight forward mapping from FbleBlockId to other ids:
 //   location_id = FbleBlockId + 1
 //   function_id = FbleBlockId + 1
-//   string_id for count sample type = 1
-//   string_id for count sample unit = 2
-//   string_id for time sample type = 3
-//   string_id for time sample unit = 4
+//   string_id for samples sample type = 1
+//   string_id for samples sample unit = 2
+//   string_id for calls sample type = 3
+//   string_id for calls sample unit = 4
 //   string_id for block name = 2 * FbleBlockId + 5
 //   string_id for file name = 2 * FbleBlockId + 6
 
@@ -39,7 +39,7 @@ static void Location(FILE* fout, uint64_t location_id, uint64_t func_id, uint64_
 static void Function(FILE* fout, uint64_t func_id, uint64_t name_string_id, uint64_t file_string_id, uint64_t line);
 static void StringTable(FILE* fout, const char* str);
 
-static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 
 /**
  * @func[VarIntLength] Returns the length of a varint.
@@ -222,7 +222,7 @@ static void StringTable(FILE* fout, const char* str)
  * @func[SampleQuery] Query to use for outputting samples.
  *  See documentation of FbleProfileQuery in fble-profile.h
  */
-static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
 {
   FILE* fout = (FILE*)userdata;
 
@@ -231,16 +231,16 @@ static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, 
     FbleBlockId id = seq.xs[seq.size - i -1];
     len += TaggedVarIntLength(1, id + 1); // .location_id = 1
   }
-  len += TaggedVarIntLength(2, count);    // .value = 2
-  len += TaggedVarIntLength(2, time);     // .value = 2
+  len += TaggedVarIntLength(2, calls);    // .value = 2
+  len += TaggedVarIntLength(2, samples);  // .value = 2
 
-  TaggedLen(fout, 2, len);        // .sample = 2
+  TaggedLen(fout, 2, len);          // .sample = 2
   for (size_t i = 0; i < seq.size; ++i) {
     FbleBlockId id = seq.xs[seq.size - i -1];
     TaggedVarInt(fout, 1, id + 1);  // .location_id = 1;
   }
-  TaggedVarInt(fout, 2, count);   // .value = 2
-  TaggedVarInt(fout, 2, time);    // .value = 2
+  TaggedVarInt(fout, 2, calls);     // .value = 2
+  TaggedVarInt(fout, 2, samples);   // .value = 2
 }
 
 // See documentation in fble-profile.h.
@@ -252,7 +252,7 @@ void FbleOutputProfile(FILE* fout, FbleProfile* profile)
 
   // sample_type fields
   SampleType(fout, 1, 2); // ["calls", "count"]
-  SampleType(fout, 3, 4); // ["time", "time"]
+  SampleType(fout, 3, 4); // ["samples", "count"]
 
   // sample fields.
   FbleQueryProfile(profile, &SampleQuery, (void*)fout);
@@ -273,8 +273,8 @@ void FbleOutputProfile(FILE* fout, FbleProfile* profile)
   StringTable(fout, "");
   StringTable(fout, "calls");
   StringTable(fout, "count");
-  StringTable(fout, "time");
-  StringTable(fout, "time");
+  StringTable(fout, "samples");
+  StringTable(fout, "count");
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleName name = profile->blocks.xs[i];
     StringTable(fout, name.name->str);

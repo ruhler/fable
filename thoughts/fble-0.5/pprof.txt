@@ -1215,3 +1215,8 @@ Miscellaneous thoughts:
 Let me get the existing test passing first. Hmm... Honestly, a custom output
 format might be nice, even if for test. It could be --test as the command line
 option? Just output time; name samples. To test the parsing.
+
+---
+
+How hard would it be to output gzip compressed? What's the API for that look
+like? I'm just curious.

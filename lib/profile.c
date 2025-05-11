@@ -29,10 +29,11 @@ typedef struct {
 /**
  * @struct[ProfileNode] A node in the profile graph.
  *  @field[FbleBlockId][id] The block id associated with this node.
- *  @field[uint64_t][count]
- *   Number of times the trace from the root to this node was entered.
- *  @field[uint64_t][time]
- *   Amount of time spent in the trace from the root to this node.
+ *  @field[uint64_t][calls]
+ *   Number of times the call sequence from the root to this node was entered.
+ *  @field[uint64_t][samples]
+ *   Number of samples charged to the call sequence from the root to this
+ *   node.
  *  @field[ProfileNode*][parent] The parent of this node.
  *  @field[uint64_t][depth]
  *   The depth of this node in the tree. You can use this to determine which
@@ -44,8 +45,8 @@ typedef struct {
  */
 struct ProfileNode {
   FbleBlockId id;
-  uint64_t count;
-  uint64_t time;
+  uint64_t calls;
+  uint64_t samples;
 
   struct ProfileNode* parent;
   size_t depth;
@@ -230,7 +231,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
       lo = mid + 1;
     } else if (here == block) {
       ProfileNode* dest = xs[mid];
-      dest->count++;
+      dest->calls++;
       Push(thread, dest, replace);
       return;
     } else {
@@ -244,8 +245,8 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   if (dest == NULL) {
     dest = FbleAlloc(ProfileNode);
     dest->id = block;
-    dest->count = 0;
-    dest->time = 0;
+    dest->calls = 0;
+    dest->samples = 0;
     dest->parent = node;
     dest->depth = node->depth + 1;
     FbleInitVector(dest->children);
@@ -258,7 +259,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
   }
   node->children.xs[lo] = dest;
 
-  dest->count++;
+  dest->calls++;
   Push(thread, dest, replace);
 }
 
@@ -277,7 +278,7 @@ static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replac
 static void QuerySequences(FbleProfile* profile, FbleProfileQuery* query, void* data, FbleBlockIdV* prefix, ProfileNode* node)
 {
   FbleAppendToVector(*prefix, node->id);
-  query(profile, data, *prefix, node->count, node->time);
+  query(profile, data, *prefix, node->calls, node->samples);
 
   for (size_t i = 0; i < node->children.size; ++i) {
     if (node->children.xs[i]->depth > node->depth) {
@@ -295,8 +296,8 @@ FbleProfile* FbleNewProfile(bool enabled)
 
   profile->root = FbleAlloc(ProfileNode);
   profile->root->id = RootBlockId;
-  profile->root->count = 0;
-  profile->root->time = 0;
+  profile->root->calls = 0;
+  profile->root->samples = 0;
   profile->root->parent = NULL;
   profile->root->depth = 0;
   FbleInitVector(profile->root->children);
@@ -373,7 +374,7 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile_)
   Profile* profile = (Profile*)profile_;
 
   Push(thread, profile->root, false);
-  profile->root->count++;
+  profile->root->calls++;
   return thread;
 }
 
@@ -389,13 +390,13 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
 }
 
 // See documentation in fble-profile.h.
-void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
+void FbleProfileSample(FbleProfileThread* thread, size_t count)
 {
   if (thread == NULL) {
     return;
   }
 
-  thread->stack.xs[thread->stack.size - 1]->time += time;
+  thread->stack.xs[thread->stack.size - 1]->samples += count;
 }
 
 // See documentation in fble-profile.h.

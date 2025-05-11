@@ -25,40 +25,40 @@
 /**
  * @struct[CountQueryData] User data for CountQuery.
  *  @field[FbleBlockId][id] Id of the block to count.
- *  @field[size_t][count] Count.
+ *  @field[size_t][calls] Count of calls.
  */
 typedef struct {
   FbleBlockId id;
-  size_t count;
+  size_t calls;
 } CountQueryData;
 
-static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 static size_t Count(FbleProfile* profile, const char* name);
 
 /**
  * @struct[CallsQueryData] User data for CallsQuery.
  *  @field[FbleBlockId][caller] Id of the caller block.
  *  @field[FbleBlockId][callee] Id of the callee block.
- *  @field[size_t][count] Count of calls.
+ *  @field[size_t][calls] Count of calls.
  */
 typedef struct {
   FbleBlockId caller;
   FbleBlockId callee;
-  size_t count;
+  size_t calls;
 } CallsQueryData;
 
-static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
 
 /**
  * @func[CountQuery] FbleProfileQuery for the Count function.
  *  See documentation of FbleProfileQuery in fble-profile.h.
  */
-static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
 {
   CountQueryData* data = (CountQueryData*)userdata;
   if (seq.size > 0 && seq.xs[seq.size-1] == data->id) {
-    data->count += count;
+    data->calls += calls;
   }
 }
 
@@ -83,22 +83,22 @@ static size_t Count(FbleProfile* profile, const char* name)
   data.id = FbleLookupProfileBlockId(profile, name);
   assert(data.id != 0 && "Block id not found?");
 
-  data.count = 0;
+  data.calls = 0;
   FbleQueryProfile(profile, &CountQuery, &data);
-  return data.count;
+  return data.calls;
 }
 
 /**
  * @func[CallsQuery] FbleProfileQuery for the Calls function.
  *  See documentation of FbleProfileQuery in fble-profile.h.
  */
-static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
 {
   CallsQueryData* data = (CallsQueryData*)userdata;
   if (seq.size > 1
       && seq.xs[seq.size-1] == data->callee
       && seq.xs[seq.size-2] == data->caller) {
-    data->count += count;
+    data->calls += calls;
   }
 }
 
@@ -124,9 +124,9 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
   data.callee = FbleLookupProfileBlockId(profile, callee);
   assert(data.callee != 0 && "Callee id not found");
 
-  data.count = 0;
+  data.calls = 0;
   FbleQueryProfile(profile, &CallsQuery, &data);
-  return data.count;
+  return data.calls;
 }
 
 // FbleProfilesTestMain -- see documentation in profiles-test.h

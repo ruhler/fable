@@ -17,18 +17,18 @@ static bool sTestsFailed = false;
 static void Fail(const char* file, int line, const char* msg);
 static FbleName Name(const char* name);
 
-static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 static void AssertCount(FbleProfile* profile, size_t count);
 
 typedef struct {
   FbleBlockIdV seq;
-  uint64_t count;
-  uint64_t time;
+  uint64_t calls;
+  uint64_t samples;
   bool found;
 } SeqData;
 
-static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
-static void AssertSeq(FbleProfile* profile, uint64_t count, uint64_t time, ...);
+static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
+static void AssertSeq(FbleProfile* profile, uint64_t calls, uint64_t samples, ...);
 
 static void ReplaceN(size_t n);
 
@@ -84,7 +84,7 @@ static FbleName Name(const char* name)
  * @func[CountQuery] FbleProfileQuery for the CountSeqs function.
  *  See documentation of FbleProfileQuery in fble-profile.h.
  */
-static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
 {
   size_t* ptr = (size_t*)userdata;
   (*ptr)++;
@@ -107,7 +107,7 @@ static void AssertCount(FbleProfile* profile, size_t count)
  * @func[SeqQuery] FbleProfileQuery for the AssertSeq function.
  *  See documentation of FbleProfileQuery in fble-profile.h.
  */
-static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
 {
   SeqData* data = (SeqData*)userdata;
   if (data->seq.size != seq.size) {
@@ -120,8 +120,8 @@ static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uin
     }
   }
 
-  ASSERT(count == data->count);
-  ASSERT(time == data->time);
+  ASSERT(calls == data->calls);
+  ASSERT(samples == data->samples);
   ASSERT(!data->found);
   data->found = true;
 }
@@ -129,21 +129,21 @@ static void SeqQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uin
 /**
  * @func[AssertSeq] Asserts the values of a sequence.
  *  @arg[FbleProfile*][profile] The profile to check.
- *  @arg[uint64_t][count] The expected count.
- *  @arg[uint64_t][time] The expected time.
+ *  @arg[uint64_t][calls] The expected number of calls.
+ *  @arg[uint64_t][samples] The expected number of samples.
  *  @arg[...][] The block ids of the sequence, terminated with -1.
  *  @sideeffects None.
  */
-static void AssertSeq(FbleProfile* profile, uint64_t count, uint64_t time, ...)
+static void AssertSeq(FbleProfile* profile, uint64_t calls, uint64_t samples, ...)
 {
   SeqData data;
   FbleInitVector(data.seq);
-  data.count = count;
-  data.time = time;
+  data.calls = calls;
+  data.samples = samples;
   data.found = false;
 
   va_list ap;
-  va_start(ap, time);
+  va_start(ap, samples);
   while (true) {
     int i = va_arg(ap, int);
     if (i < 0) {

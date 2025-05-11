@@ -18,7 +18,7 @@
 #define EX_USAGE 2
 
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
-static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time);
+static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 int main(int argc, const char* argv[]);
 
 /**
@@ -50,10 +50,10 @@ static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
  * @func[TestOutputQuery] Query to use for outputting samples in case of --test.
  *  See documentation of FbleProfileQuery in fble-profile.h
  */
-static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t count, uint64_t time)
+static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
 {
-  if (time > 0) {
-    printf("%" PRIu64, time);
+  if (samples > 0) {
+    printf("%" PRIu64, samples);
     for (size_t i = 0; i < seq.size; ++i) {
       FbleName name = profile->blocks.xs[seq.xs[i]];
       printf(" %s", name.name->str);

@@ -2,33 +2,32 @@
  @@FbleVersionStamp
 
  @section Fble Based Profiling
-  Most fble binaries accept a @l{--profile} option to generate a profiling
-  report at the end of a run. For example:
+  Most fble binaries accept a @l{--profile} option to generate a profile at
+  the end of a run. For example:
 
   @code[sh] @
    fble-stdio --profile foo.prof -p core -m /Core/Stdio/HelloWorld%
 
-  This will generate a file @l{foo.prof} after the run. The profile report
-  lists code blocks by overall time and self time. It provides a detailed
-  breakdown for each code block of where it was called from and what other
-  code blocks it called. The end of the file lists the source code locations
-  of blocks.
+  This will generate a file @l{foo.prof} after the run. The generated file is
+  an uncompressed binary encoded google/pprof proto file. To use it with
+  google/pprof tools, gzip the file first.
 
  @section Using Linux Perf
-  You can reuse the fble profiling reporting logic with linux perf profiles.
+  You can reuse the fble profiling logic with linux perf profiles.
   To do so, run you program with the @l{-d} and @l{-g} flags to
   @l{perf record}. For example:
 
   @code[sh] @
    perf record -F 997 -d -g ./out/bin/fble-bench
 
-  You can then convert to an fble profile report with, for example:
+  You can then convert to an fble profile with, for example:
 
   @code[sh] @
-   perf script | ./out/bin/fble-perf-profile > bench.perf.txt
+   perf script | ./out/bin/fble-perf-profile > bench.prof
 
-  The counts listed in the profile is not meaningful. The time listed
-  correspond to the number of perf samples taken for the block.
+  The call counts included in the profile are not meaningful. The sample
+  counts included in the profile correspond to the number of perf samples
+  taken for the block.
 
   @item
    You can adjust -F up or down if it ends up with too many samples to process.
