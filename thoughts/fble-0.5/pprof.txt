@@ -1323,3 +1323,5 @@ The reference:
 
 So, probably due to default for VarInt being zero. If we have a tagged var int
 with value 0, just skip it maybe? Let's try it.
+
+Cool. That's it. The test passes now.

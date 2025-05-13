@@ -3,7 +3,6 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 Profile Rewrite
-* Write a test case for pprof generation.
 * Remove unnecessary FbleProfile apis now that blocks and enabled fields are
   public again.
 * Change FbleOutputProfile function to take a file name instead of FILE*?
@@ -16,6 +15,10 @@ Profile Rewrite
   Maybe don't provide it as an API, have the tests iterate over block ids
   instead?
 * Consider outputting pprof gzip compressed?
+
+* Having the line number 311 for [root] node in test/fble-pprof-test.want.txt
+  is going to be annoying. Mark my words. Any way we can make the test less
+  likely to break when we make any change to profile.c?
 
 * Add an fble-pprof benchmark to fble-benchmark?
 

@@ -71,6 +71,9 @@ static uint64_t TagLength(uint64_t x) {
  *  @returns[uint64_t] The number of bytes needed for the record.
  */
 static uint64_t TaggedVarIntLength(uint64_t field, uint64_t value) {
+  if (value == 0) {
+    return 0;
+  }
   return TagLength(field) + VarIntLength(value);
 }
 
@@ -112,8 +115,10 @@ static void VarInt(FILE* fout, uint64_t value)
  */
 static void TaggedVarInt(FILE* fout, uint64_t field, uint64_t value)
 {
-  VarInt(fout, (field << 3) | 0);   // VARINT = 0
-  VarInt(fout, value);
+  if (value != 0) {
+    VarInt(fout, (field << 3) | 0);   // VARINT = 0
+    VarInt(fout, value);
+  }
 }
 
 /**
