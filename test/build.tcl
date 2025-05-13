@@ -13,6 +13,7 @@ namespace eval "test" {
     fble-mem-test.c
     fble-profiles-test.c
     fble-profile-test.c
+    fble-pprof-test.c
     fble-test.c
   }
 
@@ -56,6 +57,14 @@ namespace eval "test" {
   test $::b/test/fble-profiles-test.tr \
     "$::b/test/fble-profiles-test $::s/test/ProfilesTest.fble" \
     "$::b/test/fble-profiles-test -I $::s/test -m /ProfilesTest% > $::b/test/fble-profiles-test.prof"
+
+  # fble-pprof-test
+  build $::b/test/fble-pprof-test.got \
+    "$::b/test/fble-pprof-test" \
+    "$::b/test/fble-pprof-test > $::b/test/fble-pprof-test.got"
+  test $::b/test/fble-pprof-test.tr \
+    "$::s/test/fble-pprof-test.want $::b/test/fble-pprof-test.got" \
+    "cmp $::s/test/fble-pprof-test.want $::b/test/fble-pprof-test.got"
 
   # fble-compiled-profiles-test-c
   fbleobj_c $::b/test/ProfilesTest.c.o $::b/bin/fble-compile \

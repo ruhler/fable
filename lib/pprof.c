@@ -226,21 +226,31 @@ static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, 
 {
   FILE* fout = (FILE*)userdata;
 
-  uint64_t len = 0;
+  uint64_t location_ids_len = 0;
   for (size_t i = 0; i < seq.size; ++i) {
     FbleBlockId id = seq.xs[seq.size - i -1];
-    len += TaggedVarIntLength(1, id + 1); // .location_id = 1
+    location_ids_len += VarIntLength(id + 1);
   }
-  len += TaggedVarIntLength(2, calls);    // .value = 2
-  len += TaggedVarIntLength(2, samples);  // .value = 2
 
-  TaggedLen(fout, 2, len);          // .sample = 2
+  uint64_t values_len = 0;
+  values_len += VarIntLength(calls);
+  values_len += VarIntLength(samples);
+
+  uint64_t len = 0;
+  len += TaggedLenLength(1, location_ids_len);  // .location_id = 1
+  len += location_ids_len;
+  len += TaggedLenLength(2, values_len);        // .value = 2
+  len += values_len;
+
+  TaggedLen(fout, 2, len);                // .sample = 2
+  TaggedLen(fout, 1, location_ids_len);   // .location_id = 1
   for (size_t i = 0; i < seq.size; ++i) {
     FbleBlockId id = seq.xs[seq.size - i -1];
-    TaggedVarInt(fout, 1, id + 1);  // .location_id = 1;
+    VarInt(fout, id + 1);
   }
-  TaggedVarInt(fout, 2, calls);     // .value = 2
-  TaggedVarInt(fout, 2, samples);   // .value = 2
+  TaggedLen(fout, 2, values_len);         // .value = 2
+  VarInt(fout, calls);     // .value = 2
+  VarInt(fout, samples);   // .value = 2
 }
 
 // See documentation in fble-profile.h.

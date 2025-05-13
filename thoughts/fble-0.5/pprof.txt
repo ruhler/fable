@@ -1236,3 +1236,90 @@ Next step is to write a test case for pprof generation. After that, I think
 it's worth diving into the viewer side of things. Don't worry about
 miscellaneous API cleanup at this point. I need to make the profile viewer
 work in practice, otherwise I'm stuck.
+
+---
+
+The test approach not working. There is some difference when I decode and then
+re encode the proto.
+
+Here are the first bytes of the initial value:
+
+  0a 04 08 01 10 02 0a 04 08 03 10 04 12 06 08 01
+
+Here are the first bytes of the re-encoded value:
+
+  0a 04 08 01 10 02 0a 04 08 03 10 04 12 07 0a 01
+
+I have a suspicion the difference has to do with encoding of default values.
+Let's decode manually and see.
+
+SampleType entries match:
+  0a 04: sample_type, length 4
+  08 01: type: 1
+  10 02: unit: 2
+  0a 04: sample_type, length 4
+  08 03: type: 3
+  10 04: unit 4
+
+First sample entry does not match:
+  12 06: sample, length 6
+  08 01: location_id, 1
+  10 01: value, 1
+  10 00: value, 0
+
+Versus:
+  12 07: sample, length 7
+  0a 01: location_id, length 1
+  01:    location_id: 1
+
+  12 02: value, length 2
+  01     value: 1
+  00     value: 0
+
+  12 08: sample, length 8
+  0a 02: location_id, length 2
+  02     location_id 2
+  01     location_id 1
+
+  12 02  value, length 2
+  01     value: 1
+  00     value: 0
+
+Yes. So the issue is with packed fields. I should fix this. Any time we have
+repeated of a primitive type, I should use the packed format.
+
+Where this is relevant for me:
+* location_id in Sample
+* value in Sample
+
+That's it. Just those two. Okay? Let's implement that, see if it gets the test
+to pass.
+
+Okay, so it makes progress. Then we run into a different issue. Let me see if
+I can track that down. It may be harder, because it's further into the file.
+
+It's after all the Sample entries.
+
+I'm outputting:
+
+   22 0b 08 01 22 07 08 01 10 b7 02 18 00 22 0a
+08 02 22 06 08 02 10 0a 18 0e 22 0b 08 03 22 07
+
+The reference has:
+   22 09 08 01 22 05 08 01 10 b7 02 22 0a 08 02
+22 06 08 02 10 0a 18 0e 22 0b 08 03 22 07 08 03
+
+This is for the encoding of location. Let's parse it out.
+
+The reference:
+  22 09  location, length 9
+  08 01  id 1
+  22 05  line, length 5
+  08 01  function_id 1
+  10 b7 02  line 311
+  Note: No column
+
+  22 ...
+
+So, probably due to default for VarInt being zero. If we have a tagged var int
+with value 0, just skip it maybe? Let's try it.
