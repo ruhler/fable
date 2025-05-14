@@ -1,0 +1,26 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+@ String@ = /Core/String%.String@;
+
+
+@ BlockId@ = Int@;
+
+@ Block@ = *(String@ name, String@ file, Int@ line, Int@ column);
+
+% Blocks = /Core/Int/Map%.Map;
+@ Blocks@ = Blocks.Map@<Block@>;
+
+@ Sequence@ = List@<BlockId@>;
+@ Metrics@ = List@<Int@>;
+@ Sample@ = *(Sequence@ sequence, Metrics@ values);
+
+@ Profile@ = *(
+  List@<String@> metrics,
+  Blocks@ blocks,
+  List@<Sample@> samples
+);
+
+@(BlockId@, Block@, Blocks@, Sequence@, Metrics@, Sample@, Profile@, Blocks);

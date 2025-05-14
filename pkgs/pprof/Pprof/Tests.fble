@@ -1,0 +1,13 @@
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
+
+Test@ Tests = TestSuite(Str|Pprof, List[
+  /Pprof/Parser/Tests%.Tests
+]);
+
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));

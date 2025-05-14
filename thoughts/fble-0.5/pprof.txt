@@ -1325,3 +1325,126 @@ So, probably due to default for VarInt being zero. If we have a tagged var int
 with value 0, just skip it maybe? Let's try it.
 
 Cool. That's it. The test passes now.
+
+---
+
+Last bit to make all this profiling stuff feature complete: implement the
+pprof viewer. I want to start in fble. How should I approach it?
+
+An important architectural question is if I want to limit myself to fble
+generated pprof, or I want to support pprof format in general. The big
+difference in practice: fble pprof is, for now, always going to have 'calls'
+and 'samples' SampleTypes. A general pprof will have other stuff, and who
+knows what it is.
+
+How does google/pprof deal with that? Which does it display? Based on what
+I've seen, it looks like it displays the last SampleType in the list? I assume
+it provides ui (but apparently not command line?) options to select the sample
+type. Ah, I see. The command line option sample_index takes and index or name.
+But what is the default? The last one in the report, stated explicitly in the
+doc/README.md file.
+
+Okay, let's go with that. I would still like to see call info, but not sure
+how best to approach that at this point. Think about it.
+
+Overall idea:
+* We have an fble representation of the profile.
+* We implement parser from pprof to the fble representation.
+* For each page, we have a query function that gets the raw results from the
+  profile data. We can test these separate from questions of UI. These
+  include:
+  - Frames by overall time
+  - Frames by self time
+  - Full sequences
+  - A particular (sub)sequence
+* For each page, we have a UI layer that renders the page in html. This is
+  harder to test.
+
+That's it. I think it's pretty straight forward. I would love for things to be
+useful from the start, so maybe order it as: implement parser, then frames by
+overall time: impl, test, ui. Hook that up to the server. Now I have my basic
+pprof viewer. Add additional pages one at a time.
+  
+How do I want to represent the profile in fble?
+* List of (sequence, value(s)) pairs?
+* Probably want to use location_ids for the sequences.
+* Then include a separate map from location_id to name, file, line, col info.
+* And, depending on how I want to deal with multiple values, a list of value
+  names and units.
+* And maybe some high level stats as we find useful: number of samples, number
+  of full stacks, number of frames.
+
+Sounds pretty easy. Sounds pretty straight forward. Think about what I want to
+do with 'calls' and/or alternate SampleTypes to start.
+
+---
+
+Thoughts on calls versus samples:
+* It's not unreasonable to interpret calls the same as you do samples. Just
+  think of calls as sampling once per function call, compared to samples which
+  sample once per instruction. When you use this interpretation, everything
+  you might want to do with samples you might want to do with calls in the same
+  way. Personally if I had both calls and samples, I would only ever want to
+  look at samples for this kind of thing. It feels way more accurate than
+  calls.
+
+* The other way to interpret calls is you only care about self time. How many
+  times was 'a' called, not how many calls were done under 'a'. This can be
+  seen usefully in the same view as samples, but only if we add a way to
+  anchor a subsequence at the end. I could see this as useful in general.
+  For example, add a '[self]' block to the end of every full stack. Now if
+  your subsequence includes the [self] block, it shows self times for the
+  sequence instead of cumulative times.
+
+* In theory the list of self frames is the same as would show up for blocks
+  incoming to the sequence with just [self]. I think it's still worth having a
+  dedicated 'self' page in the viewer. Maybe if you click on a frame in the
+  self page, it brings you to the sequence [x, [self]] instead of [x] like it
+  does in the overall section.
+
+* One way you could encode time in a profile would be to track it as counts
+  into [self] from the node. Then we just need a 'calls' metric, and 'samples'
+  could be derived from that. That would mess up the 'calls' metric though
+  without special handling, so I don't think we should do that.
+
+* The way I naturally want to look at calls is self mode. The way I naturally
+  want to look at samples is cumulative mode. I see pretty much no value ever
+  of showing both calls and samples on the same row of a table in the UI
+  unless they have special handling to make calls show the self time and
+  samples show the cumulative time.
+
+* We can't fake up calls to show self time in a cumulative view without having
+  the option for negative calls. But maybe that's doable? Basically we would
+  subtract out the sum of the child calls from X from the count of X, and make
+  the result the new count of X.
+
+All of this leaves open a lot of the questions I was trying to answer about
+how to implement the UI. I suggest the following to start:
+* Show one SampleType at a time in the UI. Don't bother showing multiple in
+  one page.
+* Make it easy to switch between SampleTypes in the UI. This means parsing and
+  storing all the SampleType values in the fble representation of the profile,
+  and the names of them.
+* Add an option to anchor a subsequence at [self].
+
+Anyway, I see no reason to block on this for implementing parsing and an
+initial viewer: parse all values, view the last value to start.
+
+It would be useful to see a [self] block in outgoing of subsequence calls, so
+you can easily see how much time was spent in self.
+
+Does our interpretation of descending values in a subsequence stack make sense
+when anchored at self? If we have: a -> b -> c -> d, we would show values for:
+a, a->b, a->b->c, a->b->c->d. For self, would we want: a -> [tail],
+a->b->[tail], a->b->c->[tail], ...? That almost suggests we want a separate
+'self subsequences' page. Maybe the 'subsequences' page has an option to
+switch between 'self' and cumulative modes? Maybe the 'by node' page should
+have that option too?
+
+Anyway, don't worry about all that stuff now.
+
+Next step:
+1. Define my Profile@ representation in fble.
+2. Set up a test case for parsing from pprof.
+3. Implement the parser so that the test case passes.
+

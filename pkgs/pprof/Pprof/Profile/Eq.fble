@@ -1,0 +1,45 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Block@ = /Pprof/Profile%.Block@;
+@ Blocks@ = /Pprof/Profile%.Blocks@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
+@ Metrics@ = /Pprof/Profile%.Metrics@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+
+Eq@<BlockId@> BlockId = /Core/Int/Eq%.Eq;
+
+Eq@<Block@> Block = (Block@ a, Block@ b) {
+  /Core/String/Eq%.Eq(a.name, b.name).?(false: False);
+  /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
+  /Core/Int/Eq%.Eq(a.line, b.line).?(false: False);
+  /Core/Int/Eq%.Eq(a.column, b.column).?(false: False);
+  True;
+};
+
+Eq@<Blocks@> Blocks = /Core/Int/Map/Eq%.Eq(Block);
+
+Eq@<Sequence@> Sequence = /Core/List/Eq%.Eq(BlockId);
+
+Eq@<Metrics@> Metrics = /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq);
+
+Eq@<Sample@> Sample = (Sample@ a, Sample@ b) {
+  Sequence(a.sequence, b.sequence).?(false: False);
+  Metrics(a.values, b.values).?(false: False);
+  True;
+};
+
+Eq@<Profile@> Profile = (Profile@ a, Profile@ b) {
+  /Core/List/Eq%.Eq(/Core/String/Eq%.Eq, a.metrics, b.metrics).?(false: False);
+  Blocks(a.blocks, b.blocks).?(false: False);
+  /Core/List/Eq%.Eq(Sample, a.samples, b.samples).?(false: False);
+  True;
+};
+
+@(BlockId, Block, Blocks, Sequence, Metrics, Sample, Profile);
+

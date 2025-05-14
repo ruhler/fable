@@ -2,7 +2,8 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-Profile Rewrite
+* Hook up new pprof tests into the build.
+
 * Remove unnecessary FbleProfile apis now that blocks and enabled fields are
   public again.
 * Change FbleOutputProfile function to take a file name instead of FILE*?
@@ -21,6 +22,7 @@ Profile Rewrite
   likely to break when we make any change to profile.c?
 
 * Add an fble-pprof benchmark to fble-benchmark?
+* Make use of /Core/Stream/IStream/Pure%.Run more places where it makes sense.
 
 * Update all the user documentation (book, profiling guide) on how to profile.
 

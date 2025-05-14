@@ -1,0 +1,43 @@
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Block@ = /Pprof/Profile%.Block@;
+@ Blocks@ = /Pprof/Profile%.Blocks@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
+@ Metrics@ = /Pprof/Profile%.Metrics@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+
+Show@<BlockId@> BlockId = /Core/Int/Show%.Show;
+
+Show@<Block@> Block = (Block@ x) {
+  Strs[x.name, Str|'@', x.file, Str|':', 
+    /Core/Int/Show%.Show(x.line), Str|':',
+    /Core/Int/Show%.Show(x.column)];
+};
+
+Show@<Blocks@> Blocks = /Core/Map/Show%.Show(
+  /Pprof/Profile%.Blocks, /Core/Int/Show%.Show, Block);
+
+Show@<Sequence@> Sequence = /Core/List/Show%.Show(BlockId);
+
+Show@<Metrics@> Metrics = /Core/List/Show%.Show(/Core/Int/Show%.Show);
+
+Show@<Sample@> Sample = (Sample@ x) {
+  Strs[Str|'(', Sequence(x.sequence), Str|', ', Metrics(x.values), Str|')'];
+};
+
+Show@<Profile@> Profile = (Profile@ x) {
+  Strs[
+    Str|'(', /Core/List/Show%.Show(/Core/String/Show%.Show, x.metrics),
+    Str|', ', Blocks(x.blocks),
+    Str|', ', /Core/List/Show%.Show(Sample, x.samples),
+    Str|')'];
+};
+
+@(BlockId, Block, Blocks, Sequence, Metrics, Sample, Profile);
+

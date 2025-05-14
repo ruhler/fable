@@ -1,0 +1,35 @@
+
+<@>@ List@ = /Core/List%.List@;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+% State = /Core/Monad/State%<List@<Int@>>;
+
+<@>@ Pure@ = State.State@;
+
+Monad@<Pure@> Monad = State.Monad;
+
+Pure@<Maybe@<Int@>> In = {
+  List@<Int@> s <- Monad.do(State.Get);
+  s.?(nil: Monad.return(Nothing<Int@>));
+  Unit@ _ <- Monad.do(State.Set(s.cons.tail));
+  Monad.return(Just(s.cons.head));
+};
+
+# Runs a monadic computation involving an IStream as a pure function.
+<@ A@>(<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<A@>; }, List@<Int@>) { A@; }
+Run = <@ A@>(<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<A@>; } f, List@<Int@> input) {
+  State.Run(f<Pure@>(In, Monad), input).x;
+};
+
+@(Run);

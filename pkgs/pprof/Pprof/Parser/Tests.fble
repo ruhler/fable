@@ -1,0 +1,120 @@
+
+@ Char@ = /Core/Char%.Char@;
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+
+<@>% Run = /Core/Stream/IStream/Pure%.Run;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Block@ = /Pprof/Profile%.Block@;
+@ Blocks@ = /Pprof/Profile%.Blocks@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+% Blocks = /Pprof/Profile%.Blocks;
+
+# Hex byte encoding of the fble-pprof-test output profile.
+String@ HexEncoded = Str|'
+  0a 04 08 01 10 02 0a 04 08 03 10 04 12 07 0a 01
+  01 12 02 01 00 12 08 0a 02 02 01 12 02 01 00 12
+  09 0a 03 03 02 01 12 02 01 00 12 0a 0a 04 04 03
+  02 01 12 02 01 0a 12 09 0a 03 04 02 01 12 02 01
+  14 22 09 08 01 22 05 08 01 10 b7 02 22 0a 08 02
+  22 06 08 02 10 0a 18 0e 22 0b 08 03 22 07 08 03
+  10 8c 01 18 02 22 0b 08 04 22 07 08 04 10 f8 0a
+  18 03 2a 0b 08 01 10 05 18 05 20 06 28 b7 02 2a
+  0a 08 02 10 07 18 07 20 08 28 0a 2a 0b 08 03 10
+  09 18 09 20 0a 28 8c 01 2a 0b 08 04 10 0b 18 0b
+  20 0c 28 f8 0a 32 00 32 05 63 61 6c 6c 73 32 05
+  63 6f 75 6e 74 32 07 73 61 6d 70 6c 65 73 32 05
+  63 6f 75 6e 74 32 06 5b 72 6f 6f 74 5d 32 10 2e
+  2e 2f 6c 69 62 2f 70 72 6f 66 69 6c 65 2e 63 32
+  03 66 6f 6f 32 08 46 6f 6f 2e 66 62 6c 65 32 03
+  62 61 72 32 08 42 61 72 2e 66 62 6c 65 32 06 73
+  6c 75 64 67 65 32 0b 53 6c 75 64 67 65 2e 66 62
+  6c 65';
+
+(Char@) { Int@; }
+HexToInt = (Char@ c) {
+  c.?(
+    '0': Int|0, '1': Int|1, '2': Int|2, '3': Int|3,
+    '4': Int|4, '5': Int|5, '6': Int|6, '7': Int|7,
+    '8': Int|8, '9': Int|9, 'a': Int|10, 'b': Int|11,
+    'c': Int|12, 'd': Int|13, 'e': Int|14, 'f': Int|15);
+
+  Int@ undefined;
+  undefined;
+};
+
+(String@) { List@<Int@>; }
+FromHex = (String@ s) {
+  s.?(nil: Nil<Int@>);
+  /Core/Char/Type%.IsSpace(s.cons.head).?(true: FromHex(s.cons.tail));
+  Char@ h = s.cons.head;
+  Char@ l = s.cons.tail.cons.head;
+  Int@ byte = Add(Mul(Int|16, HexToInt(h)), HexToInt(l));
+  Cons(byte, FromHex(s.cons.tail.cons.tail));
+};
+
+List@<Int@> Encoded = FromHex(HexEncoded); 
+
+@ Entry@ = *(BlockId@ id, Block@ block);
+
+(BlockId@, String@, String@, Int@, Int@) { Entry@; }
+B = (BlockId@ id, String@ name, String@ file, Int@ line, Int@ column) {
+  Entry@(id, Block@(name, file, line, column));
+};
+
+(List@<Entry@>) { Blocks@; }
+Inserts = (List@<Entry@> xs) {
+  xs.?(nil: Blocks.Empty<Block@>);
+  Entry@ entry = xs.cons.head;
+  Blocks.Insert(Inserts(xs.cons.tail), entry.id, entry.block);
+};
+
+Profile@ Parsed = @(
+  metrics: List[Str|'calls', Str|'samples'],
+  blocks: Inserts[
+    B(Int|1, Str|'[root]', Str|'../lib/profile.c', Int|311, Int|0),
+    B(Int|2, Str|'foo', Str|'Foo.fble', Int|10, Int|14),
+    B(Int|3, Str|'bar', Str|'Bar.fble', Int|140, Int|2),
+    B(Int|4, Str|'sludge', Str|'Sludge.fble', Int|1400, Int|3)],
+  samples: List[
+    @(sequence: List[Int|1], values: List[Int|1, Int|0]),
+    @(sequence: List[Int|1, Int|2], values: List[Int|1, Int|0]),
+    @(sequence: List[Int|1, Int|2, Int|3], values: List[Int|1, Int|0]),
+    @(sequence: List[Int|1, Int|2, Int|3, Int|4], values: List[Int|1, Int|10]),
+    @(sequence: List[Int|1, Int|2, Int|4], values: List[Int|1, Int|20])]);
+
+Test@ Tests = TestSuite(Str|Parser, List[
+  Test(Str|Basic, (Unit@ _) {
+    Maybe@<Profile@> got = Run(/Pprof/Parser%.Parse, Encoded);
+    Maybe@<Profile@> wnt = Just(Parsed);
+    AssertEquals(
+      /Core/Maybe/Eq%.Eq(/Pprof/Profile/Eq%.Profile),
+      /Core/Maybe/Show%.Show(/Pprof/Profile/Show%.Profile),
+      wnt, got);
+  })
+]);
+
+@(Tests);

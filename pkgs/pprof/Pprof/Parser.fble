@@ -1,0 +1,17 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+
+<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Maybe@<Profile@>>; }
+Parse = <<@>@ M@>(IStream@<M@> _in, Monad@<M@> m) {
+  # TODO: Implement me.
+  m.return(Nothing<Profile@>);
+};
+
+@(Parse);
