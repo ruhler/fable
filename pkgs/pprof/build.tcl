@@ -10,4 +10,9 @@ namespace eval "pkgs/pprof" {
   # fble-pprof program.
   stdio $::b/pkgs/pprof/fble-pprof "/Pprof/Server/Main%" "network pprof" "$ldflags"
   install $::b/pkgs/pprof/fble-pprof $::config::bindir/fble-pprof
+
+  # Pprof/Tests compiled
+  stdio $::b/pkgs/pprof/pprof-tests "/Pprof/Tests%" "pprof" ""
+  testsuite $::b/pkgs/pprof/pprof-tests.tr $::b/pkgs/pprof/pprof-tests \
+    "$::b/pkgs/pprof/pprof-tests"
 }
