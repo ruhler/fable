@@ -1,17 +1,108 @@
 
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Nothing = /Core/Maybe%.Nothing;
+<@>% Just = /Core/Maybe%.Just;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
+@ String@ = /Core/String%.String@;
+
+% Map = /Core/Int/Map%.Map;
+
+@ Block@ = /Pprof/Profile%.Block@;
+@ Blocks@ = /Pprof/Profile%.Blocks@;
+@ Sample@ = /Pprof/Profile%.Sample@;
 @ Profile@ = /Pprof/Profile%.Profile@;
+
+@ StringId@ = Int@;
+@ LocationId@ = Int@;
+@ FunctionId@ = Int@;
+
+@ ParsedLocation@ = *(LocationId@ id, FunctionId@ func_id, Int@ line, Int@ col);
+@ ParsedFunction@ = *(FunctionId@ id, StringId@ name, StringId@ file);
+
+@ Parsed@ = *(
+  List@<StringId@> sample_types,          # reverse order
+  List@<Sample@> samples,                 # reverse order
+  Map.Map@<ParsedLocation@> locations,
+  Map.Map@<ParsedFunction@> functions,
+  Map.Map@<String@> strings,
+  StringId@ next_string_id
+);
+
+Parsed@ EmptyParsed = Parsed@(
+  Nil<StringId@>,
+  Nil<Sample@>,
+  Map.Empty<ParsedLocation@>,
+  Map.Empty<ParsedFunction@>,
+  Map.Empty<String@>,
+  Int|0
+);
+
+# @func[Metrics] Extracts list of metrics names from parsed profile
+#  @arg[Map@<String@>][strings] The string table
+#  @arg[List@<StringId@>][sample_types]
+#   List of parsed sample types to extract from.
+#  @arg[List@<String@>][metrics] List of already extracted metrics.
+#  @returns[List@<String@>] The complete list of extracted metrics.
+(Map.Map@<String@>, List@<StringId@>, List@<String@>) { List@<String@>; }
+Metrics = (
+  Map.Map@<String@> strings,
+  List@<StringId@> sample_types,
+  List@<String@> metrics) {
+  sample_types.?(nil: metrics);
+
+  StringId@ sample_type = sample_types.cons.head;
+  String@ metric = Map.Lookup(strings, sample_type).just;
+  Metrics(strings, sample_types.cons.tail, Cons(metric, metrics));
+};
+
+# Extracts info about a block from the profile.
+(Parsed@, ParsedLocation@) { Block@; }
+Block = (Parsed@ parsed, ParsedLocation@ location) {
+  ParsedFunction@ function = Map.Lookup(parsed.functions, location.func_id).just;
+
+  String@ name = Map.Lookup(parsed.strings, function.name).just;
+  String@ file = Map.Lookup(parsed.strings, function.file).just;
+  Int@ line = location.line;
+  Int@ column = location.col;
+  @(name, file, line, column);
+};
+
+(Parsed@) { Blocks@; }
+Blocks = (Parsed@ parsed) {
+  Map.ForEach(parsed.locations, Map.Empty<Block@>,
+    (LocationId@ id, ParsedLocation@ location, Blocks@ blocks) {
+       Map.Insert(blocks, id, Block(parsed, location));
+    });
+};
+
+(Parsed@) { Profile@; }
+Profile = (Parsed@ parsed) {
+  List@<String@> metrics = Metrics(parsed.strings, parsed.sample_types)[];
+  Blocks@ blocks = Blocks(parsed); 
+  List@<Sample@> samples = /Core/List%.Reverse(parsed.samples);
+
+  @(metrics, blocks, samples);
+};
 
 <<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Maybe@<Profile@>>; }
 Parse = <<@>@ M@>(IStream@<M@> _in, Monad@<M@> m) {
-  # TODO: Implement me.
-  m.return(Nothing<Profile@>);
+  (Parsed@) { M@<Parsed@>; } ParseRecords = (Parsed@ parsed) {
+    # TODO: Implement me.
+    m.return(parsed);
+  };
+
+  Parsed@ parsed <- m.do(ParseRecords(EmptyParsed));
+  m.return(Just(Profile(parsed)));
 };
 
 @(Parse);
