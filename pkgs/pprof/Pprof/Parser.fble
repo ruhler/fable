@@ -1,6 +1,17 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
 @ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Sub = /Core/Int%.Sub;
+% Decr = /Core/Int%.Decr;
 % Int = /Core/Int/Lit%.Int;
+
+@ QR@ = /Core/Int/Div%.QR@;
+% Div = /Core/Int/Div%.Div;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -10,10 +21,14 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
 @ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 % Map = /Core/Int/Map%.Map;
 
@@ -86,7 +101,7 @@ Blocks = (Parsed@ parsed) {
 };
 
 (Parsed@) { Profile@; }
-Profile = (Parsed@ parsed) {
+ProfileFromParsed = (Parsed@ parsed) {
   List@<String@> metrics = Metrics(parsed.strings, parsed.sample_types)[];
   Blocks@ blocks = Blocks(parsed); 
   List@<Sample@> samples = /Core/List%.Reverse(parsed.samples);
@@ -94,15 +109,113 @@ Profile = (Parsed@ parsed) {
   @(metrics, blocks, samples);
 };
 
+Int@ 8 = Int|8;
+Int@ 128 = Int|128;
+
+@ WireType@ = +(
+  Unit@ varint, Unit@ i64, Unit@ len,
+  Unit@ sgroup, Unit@ egroup, Unit@ i32,
+  Unit@ unknown
+);
+
+% WireTypes = @(
+  varint: WireType@(varint: Unit),
+  i64: WireType@(i64: Unit),
+  len: WireType@(len: Unit),
+  sgroup: WireType@(sgroup: Unit),
+  egroup: WireType@(egroup: Unit),
+  i32: WireType@(i32: Unit),
+  unknown: WireType@(unknown: Unit)
+);
+
+(Int@) { WireType@; } WireType = (Int@ id) {
+  /Core/Int/Eq%.Eq(id, Int|0).?(true: WireTypes.varint);
+  /Core/Int/Eq%.Eq(id, Int|1).?(true: WireTypes.i64);
+  /Core/Int/Eq%.Eq(id, Int|2).?(true: WireTypes.len);
+  /Core/Int/Eq%.Eq(id, Int|3).?(true: WireTypes.sgroup);
+  /Core/Int/Eq%.Eq(id, Int|4).?(true: WireTypes.egroup);
+  /Core/Int/Eq%.Eq(id, Int|5).?(true: WireTypes.i32);
+  WireTypes.unknown;
+};
+
+@ Tag@ = *(Int@ field, WireType@ wire_type);
+
 <<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Maybe@<Profile@>>; }
-Parse = <<@>@ M@>(IStream@<M@> _in, Monad@<M@> m) {
-  (Parsed@) { M@<Parsed@>; } ParseRecords = (Parsed@ parsed) {
-    # TODO: Implement me.
-    m.return(parsed);
+Parse = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
+
+  M@<Maybe@<Int@>> VarInt = {
+    Maybe@<Int@> mbyte <- m.do(in);
+    mbyte.?(nothing: m.return(Nothing<Int@>));
+
+    Int@ byte = mbyte.just;
+    /Core/Int/Eq%.Lt(byte, 128).?(true: m.return(Just(byte)));
+    Maybe@<Int@> mtail <- m.do(VarInt);
+    mtail.?(nothing: m.return(Nothing<Int@>));
+
+    m.return(Just(Add(Sub(byte, 128), Mul(128, mtail.just))));
   };
 
-  Parsed@ parsed <- m.do(ParseRecords(EmptyParsed));
-  m.return(Just(Profile(parsed)));
+  M@<Maybe@<Tag@>> Tag = {
+    Maybe@<Int@> mx <- m.do(VarInt);
+    mx.?(nothing: m.return(Nothing<Tag@>));
+
+    Int@ x = mx.just;
+    QR@ qr = Div(x, 8);
+    m.return(Just(Tag@(qr.q, WireType(qr.r))));
+  };
+
+  # Skip past n bytes in the input.
+  # Returns true if there were n bytes to skip, false otherwise.
+  (Int@) { M@<Bool@>; } SkipBytes = (Int@ n) {
+    /Core/Int/Eq%.IsZero(n).?(true: m.return(True));
+    Maybe@<Int@> mbyte <- m.do(in);
+    mbyte.?(nothing: m.return(False));
+    SkipBytes(Decr(n));
+  };
+
+  # Parse past a field we don't care about. 
+  # Returns true on success, false if something unexpected was encountered.
+  (WireType@) { M@<Bool@>; } Ignore = (WireType@ wire_type) {
+    wire_type.?(
+      varint: {
+        Maybe@<Int@> mx <- m.do(VarInt);
+        m.return(mx.?(just: True, nothing: False));
+      },
+      i64: SkipBytes(Int|8),
+      len: {
+        Maybe@<Int@> mlen <- m.do(VarInt);
+        mlen.?(nothing: m.return(False));
+        SkipBytes(mlen.just);
+      },
+      sgroup: m.return(True),
+      egroup: m.return(True),
+      i32: SkipBytes(Int|4),
+      unknown: m.return(False));
+  };
+
+  (Parsed@) { M@<Maybe@<Parsed@>>; } Profile = (Parsed@ parsed) {
+    Maybe@<Tag@> mtag <- m.do(Tag);
+    mtag.?(nothing: m.return(Just(parsed)));
+
+    Tag@ tag = mtag.just;
+    Maybe@<Parsed@> mparsed <- m.do({
+      # /Core/Int/Eq%.Eq(tag.field, Int|1).?(true: SampleType(parsed));
+      # /Core/Int/Eq%.Eq(tag.field, Int|2).?(true: Sample(parsed));
+      # /Core/Int/Eq%.Eq(tag.field, Int|4).?(true: Location(parsed));
+      # /Core/Int/Eq%.Eq(tag.field, Int|5).?(true: Function(parsed));
+      # /Core/Int/Eq%.Eq(tag.field, Int|6).?(true: String(parsed));
+
+      Bool@ ignorable <- m.do(Ignore(tag.wire_type));
+      m.return(ignorable.?(true: Just(parsed), false: Nothing<Parsed@>));
+    });
+
+    mparsed.?(nothing: m.return(Nothing<Parsed@>));
+    Profile(mparsed.just);
+  };
+
+  Maybe@<Parsed@> mparsed <- m.do(Profile(EmptyParsed));
+  mparsed.?(nothing: m.return(Nothing<Profile@>));
+  m.return(Just(ProfileFromParsed(mparsed.just)));
 };
 
 @(Parse);
