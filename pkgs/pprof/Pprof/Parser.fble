@@ -3,11 +3,15 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+@ Char@ = /Core/Char%.Char@;
+
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
 % Mul = /Core/Int%.Mul;
 % Sub = /Core/Int%.Sub;
+% Incr = /Core/Int%.Incr;
 % Decr = /Core/Int%.Decr;
+
 % Int = /Core/Int/Lit%.Int;
 
 @ QR@ = /Core/Int/Div%.QR@;
@@ -173,6 +177,18 @@ Parse = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     SkipBytes(Decr(n));
   };
 
+  # Read n characters from the input.
+  (Int@) { M@<Maybe@<String@>>; } GetChars = (Int@ n) {
+    /Core/Int/Eq%.IsZero(n).?(true: m.return(Just(Nil<Char@>)));
+
+    Maybe@<Int@> mbyte <- m.do(in);
+    mbyte.?(nothing: m.return(Nothing<String@>));
+
+    Maybe@<String@> mtail <- m.do(GetChars(Decr(n)));
+    mtail.?(nothing: m.return(Nothing<String@>));
+    m.return(Just(Cons(/Core/Char/Ascii%.Chr(mbyte.just), mtail.just)));
+  };
+
   # Parse past a field we don't care about. 
   # Returns true on success, false if something unexpected was encountered.
   (WireType@) { M@<Bool@>; } Ignore = (WireType@ wire_type) {
@@ -193,17 +209,45 @@ Parse = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
       unknown: m.return(False));
   };
 
+  (Parsed@) { M@<Maybe@<Parsed@>>; } SampleType = (Parsed@ parsed) {
+    # TODO: Don't assume the records are in order and only appear once!
+    Maybe@<Int@> _mlength <- m.do(VarInt);
+    Maybe@<Tag@> _ <- m.do(Tag);
+    Maybe@<Int@> mtype <- m.do(VarInt);
+    mtype.?(nothing: m.return(Nothing<Parsed@>));
+
+    Maybe@<Tag@> _ <- m.do(Tag);
+    Maybe@<Int@> _ <- m.do(VarInt);
+
+    List@<StringId@> sample_types = Cons(mtype.just, parsed.sample_types);
+    m.return(Just(parsed.@(sample_types)));
+  };
+
+  # Parses a string table entry and add it to parsed.
+  (Parsed@) { M@<Maybe@<Parsed@>>; } String = (Parsed@ parsed) {
+    Maybe@<Int@> mlen <- m.do(VarInt);
+    mlen.?(nothing: m.return(Nothing<Parsed@>));
+
+    Maybe@<String@> mstr <- m.do(GetChars(mlen.just));
+    mstr.?(nothing: m.return(Nothing<Parsed@>));
+
+    Map.Map@<String@> strings = Map.Insert(parsed.strings,
+      parsed.next_string_id, mstr.just);
+    Int@ next_string_id = Incr(parsed.next_string_id);
+    m.return(Just(parsed.@(strings, next_string_id)));
+  };
+
   (Parsed@) { M@<Maybe@<Parsed@>>; } Profile = (Parsed@ parsed) {
     Maybe@<Tag@> mtag <- m.do(Tag);
     mtag.?(nothing: m.return(Just(parsed)));
 
     Tag@ tag = mtag.just;
     Maybe@<Parsed@> mparsed <- m.do({
-      # /Core/Int/Eq%.Eq(tag.field, Int|1).?(true: SampleType(parsed));
+      /Core/Int/Eq%.Eq(tag.field, Int|1).?(true: SampleType(parsed));
       # /Core/Int/Eq%.Eq(tag.field, Int|2).?(true: Sample(parsed));
       # /Core/Int/Eq%.Eq(tag.field, Int|4).?(true: Location(parsed));
       # /Core/Int/Eq%.Eq(tag.field, Int|5).?(true: Function(parsed));
-      # /Core/Int/Eq%.Eq(tag.field, Int|6).?(true: String(parsed));
+      /Core/Int/Eq%.Eq(tag.field, Int|6).?(true: String(parsed));
 
       Bool@ ignorable <- m.do(Ignore(tag.wire_type));
       m.return(ignorable.?(true: Just(parsed), false: Nothing<Parsed@>));
