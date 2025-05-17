@@ -6,6 +6,8 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
+<@>% Append = /Core/List%.Append;
+<@>% Reverse = /Core/List%.Reverse;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -18,6 +20,7 @@
 % Map = /Core/Int/Map%.Map;
 
 @ Sample@ = /Pprof/Profile%.Sample@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
 
 <<@>@>@ Proto@ = /Pprof/Parser/Proto%.Proto@;
 @ FieldId@ = /Pprof/Parser/Proto%.FieldId@;
@@ -123,6 +126,44 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
     m.return(location);
   };
 
+  (Record@, Sample@) { M@<Sample@>; }
+  SampleFields = (Record@ record, Sample@ sample) {
+    /Core/Int/Eq%.Eq(record.field, Int|1).?(true: {
+      record.payload.?(int: {
+        Sequence@ sequence = Cons(record.payload.int, sample.sequence);
+        m.return(sample.@(sequence));
+      });
+
+      Int@ length <- m.do(LengthFor(record.payload, Str|'Location.id'));
+      List@<Int@> locs <- m.do(p.Ints(length));
+      Sequence@ sequence = Append(Reverse(locs), sample.sequence);
+      m.return(sample.@(sequence));
+    });
+
+    /Core/Int/Eq%.Eq(record.field, Int|2).?(true: {
+      record.payload.?(int: {
+        Sequence@ values = Cons(record.payload.int, sample.values);
+        m.return(sample.@(values));
+      });
+
+      Int@ length <- m.do(LengthFor(record.payload, Str|'Location.id'));
+      List@<Int@> locs <- m.do(p.Ints(length));
+      Sequence@ values = Append(Reverse(locs), sample.values);
+      m.return(sample.@(values));
+    });
+
+    Unit@ _ <- m.do(p.Skip(record.payload));
+    m.return(sample);
+  };
+
+  (Profile@, Payload@) { M@<Profile@>; }
+  SampleField = (Profile@ profile, Payload@ payload) {
+    Int@ length <- m.do(LengthFor(payload, Str|'sample'));
+    Sample@ sample <- m.do(p.Message(Sample@(Nil<Int@>, Nil<Int@>), SampleFields, length));
+    List@<Sample@> samples = Cons(sample, profile.samples);
+    m.return(profile.@(samples));
+  };
+
   (Profile@, Payload@) { M@<Profile@>; }
   LocationField = (Profile@ profile, Payload@ payload) {
     Int@ length <- m.do(LengthFor(payload, Str|'location'));
@@ -175,7 +216,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
     FieldId@ field = record.field;
     Payload@ payload = record.payload;
     /Core/Int/Eq%.Eq(field, Int|1).?(true: SampleTypeField(profile, payload));
-    #/Core/Int/Eq%.Eq(field, Int|2).?(true: SampleField(profile, payload));
+    /Core/Int/Eq%.Eq(field, Int|2).?(true: SampleField(profile, payload));
     /Core/Int/Eq%.Eq(field, Int|4).?(true: LocationField(profile, payload));
     /Core/Int/Eq%.Eq(field, Int|5).?(true: FunctionField(profile, payload));
     /Core/Int/Eq%.Eq(field, Int|6).?(true: StringField(profile, payload));

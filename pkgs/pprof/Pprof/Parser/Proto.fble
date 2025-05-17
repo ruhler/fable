@@ -88,6 +88,11 @@ Int@ 128 = Int|128;
   #  @returns[M@<String@>] The string parser.
   (Int@) { M@<String@>; } String;
 
+  # @func[Ints] Parses packed ints.
+  #  @arg[Int@][length] The length in bytes of packed ints to parse.
+  #  @returns[M@<List@<Int@>>] The parsed ints.
+  (Int@) { M@<List@<Int@>>; } Ints;
+
   # @func[Message] Parse an embedded message.
   #  @arg[@][A@] Type to represent the parsed message.
   #  @arg[A@][default] The default value of the parsed message. 
@@ -110,7 +115,7 @@ Int@ 128 = Int|128;
   #  @returns[M@<A@>] A parser for the embedded message.
   <@ A@>(A@, (Record@, A@) { M@<A@>; }) { M@<A@>; } Proto;
 
-  @<@(Fail, Skip, String, Message, Proto)>;
+  @<@(Fail, Skip, String, Ints, Message, Proto)>;
 };
 
 <@, <@>@>@ Parser@ = <@ A@> {
@@ -209,6 +214,22 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
       FinishVarInt(byte);
     };
 
+    (Int@) { PM@<List@<Int@>>; }
+    Ints = (Int@ length) {
+      IsZero(length).?(true: Return(Nil<Int@>));
+
+      Int@ int_start <- Do(BytesRead);
+      Int@ int <- Do(VarInt);
+      Int@ int_end <- Do(BytesRead);
+      Int@ int_length = Sub(int_end, int_start);
+      Gt(int_length, length).?(true: {
+        Fail<List@<Int@>>|'length exceeded on packed int read';
+      });
+
+      List@<Int@> tail <- Do(Ints(Sub(length, int_length)));
+      Return(Cons(int, tail));
+    };
+
     # Parse a Record, given the first byte read.
     (Int@) { PM@<Record@>; }
     FinishRecord = (Int@ byte) {
@@ -286,7 +307,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
       Proto(updated, field);
     };
 
-    @(Fail, Skip, String, Message, Proto);
+    @(Fail, Skip, String, Ints, Message, Proto);
   };
 
   Result@<R@<A@>> result <- m.do(parser<PM@>(proto, Monad, 0));
