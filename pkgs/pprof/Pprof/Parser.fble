@@ -1,38 +1,14 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-
-@ Char@ = /Core/Char%.Char@;
-
 @ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Mul = /Core/Int%.Mul;
-% Sub = /Core/Int%.Sub;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-
-% Int = /Core/Int/Lit%.Int;
-
-@ QR@ = /Core/Int/Div%.QR@;
-% Div = /Core/Int/Div%.Div;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
 @ String@ = /Core/String%.String@;
-
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 % Map = /Core/Int/Map%.Map;
 
@@ -41,30 +17,16 @@
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 
-@ StringId@ = Int@;
-@ LocationId@ = Int@;
-@ FunctionId@ = Int@;
+@ Function@ = /Pprof/Parser/Profile%.Function@;
+@ Location@ = /Pprof/Parser/Profile%.Location@;
+@ LocationId@ = /Pprof/Parser/Profile%.LocationId@;
+@ StringId@ = /Pprof/Parser/Profile%.StringId@;
+@ ProtoProfile@ = /Pprof/Parser/Profile%.Profile@;
+<<@>@>% ProfileParser = /Pprof/Parser/Profile%.Profile;
 
-@ ParsedLocation@ = *(LocationId@ id, FunctionId@ func_id, Int@ line, Int@ col);
-@ ParsedFunction@ = *(FunctionId@ id, StringId@ name, StringId@ file);
+<@>% Run = /Pprof/Parser/Proto%.Run;
 
-@ Parsed@ = *(
-  List@<StringId@> sample_types,          # reverse order
-  List@<Sample@> samples,                 # reverse order
-  Map.Map@<ParsedLocation@> locations,
-  Map.Map@<ParsedFunction@> functions,
-  Map.Map@<String@> strings,
-  StringId@ next_string_id
-);
-
-Parsed@ EmptyParsed = Parsed@(
-  Nil<StringId@>,
-  Nil<Sample@>,
-  Map.Empty<ParsedLocation@>,
-  Map.Empty<ParsedFunction@>,
-  Map.Empty<String@>,
-  Int|0
-);
+<@>@ Result@ = /Pprof/Result%.Result@;
 
 # @func[Metrics] Extracts list of metrics names from parsed profile
 #  @arg[Map@<String@>][strings] The string table
@@ -85,9 +47,9 @@ Metrics = (
 };
 
 # Extracts info about a block from the profile.
-(Parsed@, ParsedLocation@) { Block@; }
-Block = (Parsed@ parsed, ParsedLocation@ location) {
-  ParsedFunction@ function = Map.Lookup(parsed.functions, location.func_id).just;
+(ProtoProfile@, Location@) { Block@; }
+Block = (ProtoProfile@ parsed, Location@ location) {
+  Function@ function = Map.Lookup(parsed.functions, location.func_id).just;
 
   String@ name = Map.Lookup(parsed.strings, function.name).just;
   String@ file = Map.Lookup(parsed.strings, function.file).just;
@@ -96,16 +58,16 @@ Block = (Parsed@ parsed, ParsedLocation@ location) {
   @(name, file, line, column);
 };
 
-(Parsed@) { Blocks@; }
-Blocks = (Parsed@ parsed) {
+(ProtoProfile@) { Blocks@; }
+Blocks = (ProtoProfile@ parsed) {
   Map.ForEach(parsed.locations, Map.Empty<Block@>,
-    (LocationId@ id, ParsedLocation@ location, Blocks@ blocks) {
+    (LocationId@ id, Location@ location, Blocks@ blocks) {
        Map.Insert(blocks, id, Block(parsed, location));
     });
 };
 
-(Parsed@) { Profile@; }
-ProfileFromParsed = (Parsed@ parsed) {
+(ProtoProfile@) { Profile@; }
+ProfileFromParsed = (ProtoProfile@ parsed) {
   List@<String@> metrics = Metrics(parsed.strings, parsed.sample_types)[];
   Blocks@ blocks = Blocks(parsed); 
   List@<Sample@> samples = /Core/List%.Reverse(parsed.samples);
@@ -113,153 +75,10 @@ ProfileFromParsed = (Parsed@ parsed) {
   @(metrics, blocks, samples);
 };
 
-Int@ 8 = Int|8;
-Int@ 128 = Int|128;
-
-@ WireType@ = +(
-  Unit@ varint, Unit@ i64, Unit@ len,
-  Unit@ sgroup, Unit@ egroup, Unit@ i32,
-  Unit@ unknown
-);
-
-% WireTypes = @(
-  varint: WireType@(varint: Unit),
-  i64: WireType@(i64: Unit),
-  len: WireType@(len: Unit),
-  sgroup: WireType@(sgroup: Unit),
-  egroup: WireType@(egroup: Unit),
-  i32: WireType@(i32: Unit),
-  unknown: WireType@(unknown: Unit)
-);
-
-(Int@) { WireType@; } WireType = (Int@ id) {
-  /Core/Int/Eq%.Eq(id, Int|0).?(true: WireTypes.varint);
-  /Core/Int/Eq%.Eq(id, Int|1).?(true: WireTypes.i64);
-  /Core/Int/Eq%.Eq(id, Int|2).?(true: WireTypes.len);
-  /Core/Int/Eq%.Eq(id, Int|3).?(true: WireTypes.sgroup);
-  /Core/Int/Eq%.Eq(id, Int|4).?(true: WireTypes.egroup);
-  /Core/Int/Eq%.Eq(id, Int|5).?(true: WireTypes.i32);
-  WireTypes.unknown;
-};
-
-@ Tag@ = *(Int@ field, WireType@ wire_type);
-
-<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Maybe@<Profile@>>; }
+<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Result@<Profile@>>; }
 Parse = <<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
-
-  M@<Maybe@<Int@>> VarInt = {
-    Maybe@<Int@> mbyte <- m.do(in);
-    mbyte.?(nothing: m.return(Nothing<Int@>));
-
-    Int@ byte = mbyte.just;
-    /Core/Int/Eq%.Lt(byte, 128).?(true: m.return(Just(byte)));
-    Maybe@<Int@> mtail <- m.do(VarInt);
-    mtail.?(nothing: m.return(Nothing<Int@>));
-
-    m.return(Just(Add(Sub(byte, 128), Mul(128, mtail.just))));
-  };
-
-  M@<Maybe@<Tag@>> Tag = {
-    Maybe@<Int@> mx <- m.do(VarInt);
-    mx.?(nothing: m.return(Nothing<Tag@>));
-
-    Int@ x = mx.just;
-    QR@ qr = Div(x, 8);
-    m.return(Just(Tag@(qr.q, WireType(qr.r))));
-  };
-
-  # Skip past n bytes in the input.
-  # Returns true if there were n bytes to skip, false otherwise.
-  (Int@) { M@<Bool@>; } SkipBytes = (Int@ n) {
-    /Core/Int/Eq%.IsZero(n).?(true: m.return(True));
-    Maybe@<Int@> mbyte <- m.do(in);
-    mbyte.?(nothing: m.return(False));
-    SkipBytes(Decr(n));
-  };
-
-  # Read n characters from the input.
-  (Int@) { M@<Maybe@<String@>>; } GetChars = (Int@ n) {
-    /Core/Int/Eq%.IsZero(n).?(true: m.return(Just(Nil<Char@>)));
-
-    Maybe@<Int@> mbyte <- m.do(in);
-    mbyte.?(nothing: m.return(Nothing<String@>));
-
-    Maybe@<String@> mtail <- m.do(GetChars(Decr(n)));
-    mtail.?(nothing: m.return(Nothing<String@>));
-    m.return(Just(Cons(/Core/Char/Ascii%.Chr(mbyte.just), mtail.just)));
-  };
-
-  # Parse past a field we don't care about. 
-  # Returns true on success, false if something unexpected was encountered.
-  (WireType@) { M@<Bool@>; } Ignore = (WireType@ wire_type) {
-    wire_type.?(
-      varint: {
-        Maybe@<Int@> mx <- m.do(VarInt);
-        m.return(mx.?(just: True, nothing: False));
-      },
-      i64: SkipBytes(Int|8),
-      len: {
-        Maybe@<Int@> mlen <- m.do(VarInt);
-        mlen.?(nothing: m.return(False));
-        SkipBytes(mlen.just);
-      },
-      sgroup: m.return(True),
-      egroup: m.return(True),
-      i32: SkipBytes(Int|4),
-      unknown: m.return(False));
-  };
-
-  (Parsed@) { M@<Maybe@<Parsed@>>; } SampleType = (Parsed@ parsed) {
-    # TODO: Don't assume the records are in order and only appear once!
-    Maybe@<Int@> _mlength <- m.do(VarInt);
-    Maybe@<Tag@> _ <- m.do(Tag);
-    Maybe@<Int@> mtype <- m.do(VarInt);
-    mtype.?(nothing: m.return(Nothing<Parsed@>));
-
-    Maybe@<Tag@> _ <- m.do(Tag);
-    Maybe@<Int@> _ <- m.do(VarInt);
-
-    List@<StringId@> sample_types = Cons(mtype.just, parsed.sample_types);
-    m.return(Just(parsed.@(sample_types)));
-  };
-
-  # Parses a string table entry and add it to parsed.
-  (Parsed@) { M@<Maybe@<Parsed@>>; } String = (Parsed@ parsed) {
-    Maybe@<Int@> mlen <- m.do(VarInt);
-    mlen.?(nothing: m.return(Nothing<Parsed@>));
-
-    Maybe@<String@> mstr <- m.do(GetChars(mlen.just));
-    mstr.?(nothing: m.return(Nothing<Parsed@>));
-
-    Map.Map@<String@> strings = Map.Insert(parsed.strings,
-      parsed.next_string_id, mstr.just);
-    Int@ next_string_id = Incr(parsed.next_string_id);
-    m.return(Just(parsed.@(strings, next_string_id)));
-  };
-
-  (Parsed@) { M@<Maybe@<Parsed@>>; } Profile = (Parsed@ parsed) {
-    Maybe@<Tag@> mtag <- m.do(Tag);
-    mtag.?(nothing: m.return(Just(parsed)));
-
-    Tag@ tag = mtag.just;
-    Maybe@<Parsed@> mparsed <- m.do({
-      /Core/Int/Eq%.Eq(tag.field, Int|1).?(true: SampleType(parsed));
-      # /Core/Int/Eq%.Eq(tag.field, Int|2).?(true: Sample(parsed));
-      # /Core/Int/Eq%.Eq(tag.field, Int|4).?(true: Location(parsed));
-      # /Core/Int/Eq%.Eq(tag.field, Int|5).?(true: Function(parsed));
-      /Core/Int/Eq%.Eq(tag.field, Int|6).?(true: String(parsed));
-
-      Bool@ ignorable <- m.do(Ignore(tag.wire_type));
-      m.return(ignorable.?(true: Just(parsed), false: Nothing<Parsed@>));
-    });
-
-    mparsed.?(nothing: m.return(Nothing<Parsed@>));
-    Profile(mparsed.just);
-  };
-
-  Maybe@<Parsed@> mparsed <- m.do(Profile(EmptyParsed));
-  mparsed.?(nothing: m.return(Nothing<Profile@>));
-  m.return(Just(ProfileFromParsed(mparsed.just)));
+  Result@<ProtoProfile@> parsed <- m.do(Run(ProfileParser, in, m));
+  m.return(/Pprof/Result%.Apply(ProfileFromParsed, parsed));
 };
 
 @(Parse);

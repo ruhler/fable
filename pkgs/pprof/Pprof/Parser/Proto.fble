@@ -1,0 +1,279 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Mul = /Core/Int%.Mul;
+% Incr = /Core/Int%.Incr;
+% Decr = /Core/Int%.Decr;
+
+% IsZero = /Core/Int/Eq%.IsZero;
+% Eq = /Core/Int/Eq%.Eq;
+% Lt = /Core/Int/Eq%.Lt;
+% Gt = /Core/Int/Eq%.Gt;
+
+% Int = /Core/Int/Lit%.Int;
+
+@ QR@ = /Core/Int/Div%.QR@;
+% Div = /Core/Int/Div%.Div;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+<@>@ Result@ = /Pprof/Result%.Result@;
+<@>% Okay = /Pprof/Result%.Okay;
+<@>% Error = /Pprof/Result%.Error;
+
+Int@ 0 = Int|0;
+Int@ 4 = Int|4;
+Int@ 8 = Int|8;
+Int@ 128 = Int|128;
+
+@ FieldId@ = Int@;
+
+# @union[Payload@] Stores the payload of a record.
+#  @field[Int@][int] The integer value for a VARINT record.
+#  @field[Int@][length]
+#   The length for a LEN record. The remaining @a[length] bytes of the payload
+#   have yet to be parsed from the input stream.
+#  @field[List@<Int@>[bytes] Raw bytes from an I64 or I32 record.
+@ Payload@ = +(Int@ int, Int@ length, List@<Int@> bytes, Unit@ empty);
+
+@ Record@ = *(FieldId@ field, Payload@ payload);
+
+<<@>@>@ Proto@ = <<@>@ M@> {
+  # @func[Fail] Reports an error to parse.
+  #  @arg[@][A@] Type of the parser.
+  #  @arg[String@][msg] The error message.
+  #  @returns[M@<A@>] A parser that fails with the given error message.
+  <@ A@>(String@) { M@<A@>; } Fail;
+
+  # @func[Skip] Skip over the given payload.
+  #  @arg[Payload@][payload] The payload to skip over.
+  #  @returns[M@<Unit@>]
+  #   A parser that skips past the given bytes of the payload. This skips past
+  #   length bytes in the case of a LEN payload, otherwise it does nothing
+  #   because the full contents of the payload have already been read from the
+  #   input stream.
+  (Payload@) { M@<Unit@>; } Skip;
+
+  # @func[String] Parses a string.
+  #  @arg[Int@][n] The number of characters in the string.
+  #  @returns[M@<String@>] The string parser.
+  (Int@) { M@<String@>; } String;
+
+  # @func[Message] Parse an embedded message.
+  #  @arg[@][A@] Type to represent the parsed message.
+  #  @arg[A@][default] The default value of the parsed message. 
+  #  @arg[(Record@, A@) { M@<A@>; }][field]
+  #   A function that will be called for record of the message. It should
+  #   finish parsing the record payload and update the state of the parsed
+  #   message based on the record parsed.
+  #  @arg[Int@][length]
+  #   The length of the embedded message in bytes.
+  #  @returns[M@<A@>] A parser for the embedded message.
+  <@ A@>(A@, (Record@, A@) { M@<A@>; }, Int@) { M@<A@>; } Message;
+
+  # @func[Proto] Parse a top level message.
+  #  @arg[@][A@] Type to represent the parsed message.
+  #  @arg[A@][default] The default value of the parsed message. 
+  #  @arg[(Record@, A@) { M@<A@>; }][field]
+  #   A function that will be called for record of the message. It should
+  #   finish parsing the record payload and update the state of the parsed
+  #   message based on the record parsed.
+  #  @returns[M@<A@>] A parser for the embedded message.
+  <@ A@>(A@, (Record@, A@) { M@<A@>; }) { M@<A@>; } Proto;
+
+  @<@(Fail, Skip, String, Message, Proto)>;
+};
+
+<@, <@>@>@ Parser@ = <@ A@> {
+  <<@>@ M@>(Proto@<M@>, Monad@<M@>) { M@<A@>; };
+};
+
+<@ A@>(Parser@<A@>)<<@>@ M@>(IStream@<M@>, Monad@<M@>) { M@<Result@<A@>>; }
+Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
+  @ S@ = Int@;  # Bytes read so far.
+  <@>@ R@ = <@ T@> { *(S@ s, T@ x); };
+  <@>@ PM@ = <@ T@>(S@) { M@<Result@<R@<T@>>>; };
+
+  <@ T@>(T@) { PM@<T@>; }
+  Return = <@ T@>(T@ x, S@ s) {
+    m.return(Okay(R@(s, x)));
+  };
+
+  <@ A@>(PM@<A@>)<@ B@>((A@) { PM@<B@>; }) { PM@<B@>; }
+  Do = <@ A@>(PM@<A@> ma)<@ B@>((A@) { PM@<B@>; } f, S@ s) {
+    Result@<R@<A@>> r <- m.do(ma(s));
+    r.?(error: m.return(Error<R@<B@>>(r.error)));
+    f(r.ok.x, r.ok.s);
+  };
+
+  Monad@<PM@> Monad = Monad@<PM@>(Return, Do);
+
+  Proto@<PM@> proto = {
+    <@ A@>(String@) { PM@<A@>; }
+    Fail = <@ A@>(String@ msg, S@ s) {
+      m.return(Error<R@<A@>>(Strs[
+          Str|'error:', /Core/Int/Show%.Show(s),
+          Str|': ', msg]));
+    };
+
+    # Returns number of bytes read so far.
+    PM@<Int@> BytesRead = (S@ s) {
+      Return(s, s);
+    };
+
+    # Gets a byte from the input stream.
+    # Returns Nothing if we reach end of input.
+    PM@<Maybe@<Int@>> MaybeGet = (S@ s) {
+      Maybe@<Int@> mbyte <- m.do(in);
+      Return(mbyte, mbyte.?(just: Incr(s), nothing: s));
+    };
+
+    # Gets a byte from the input stream.
+    # Fails if we reach end of input.
+    PM@<Int@> Get = {
+      Maybe@<Int@> mbyte <- Do(MaybeGet);
+      mbyte.?(nothing: Fail<Int@>|'unexpected end of input');
+      Return(mbyte.just);
+    };
+
+    # Gets N bytes from the input stream.
+    (Int@) { PM@<List@<Int@>>; } GetN = (Int@ n) {
+      IsZero(n).?(true: Return(Nil<Int@>));
+      Int@ head <- Do(Get);
+      List@<Int@> tail <- Do(GetN(Decr(n)));
+      Return(Cons(head, tail));
+    };
+
+    (Int@) { PM@<Unit@>; }
+    SkipN = (Int@ n) {
+      IsZero(n).?(true: Return(Unit));
+      Int@ _ <- Do(Get);
+      SkipN(Decr(n));
+    };
+
+    (Payload@) { PM@<Unit@>; }
+    Skip = (Payload@ payload) {
+      payload.?(length: SkipN(payload.length));
+      Return(Unit);
+    };
+
+    (Int@) { PM@<String@>; }
+    String = (Int@ n) {
+      IsZero(n).?(true: Return(Str|''));
+
+      Int@ byte <- Do(Get);
+      String@ tail <- Do(String(Decr(n)));
+      Return(Cons(/Core/Char/Ascii%.Chr(byte), tail));
+    };
+
+    # Parse a VarInt, given the first byte read.
+    (Int@) { PM@<Int@>; }
+    FinishVarInt = (Int@ byte) {
+      Lt(byte, 128).?(true: Return(byte));
+      Int@ tail <- Do(VarInt);
+      Return(Add(Sub(byte, 128), Mul(128, tail)));
+    },
+
+    # Parse a VarInt.
+    PM@<Int@> VarInt = {
+      Int@ byte <- Do(Get);
+      FinishVarInt(byte);
+    };
+
+    # Parse a Record, given the first byte read.
+    (Int@) { PM@<Record@>; }
+    FinishRecord = (Int@ byte) {
+      Int@ tag <- Do(FinishVarInt(byte));
+      QR@ qr = Div(tag, 8);
+      FieldId@ field = qr.q;
+      Int@ wire_type = qr.r;
+
+      Payload@ payload <- Do({
+        Eq(wire_type, Int|0).?(true: {
+          # VARINT
+          Int@ int <- Do(VarInt);
+          Return(Payload@(int: int));
+        });
+
+        Eq(wire_type, Int|1).?(true: {
+          # I64
+          List@<Int@> bytes <- Do(GetN(8));
+          Return(Payload@(bytes: bytes));
+        });
+
+        Eq(wire_type, Int|2).?(true: {
+          # LEN
+          Int@ length <- Do(VarInt);
+          Return(Payload@(length: length));
+        });
+
+        Eq(wire_type, Int|3).?(true: Return(Payload@(empty: Unit))); # SGROUP
+        Eq(wire_type, Int|4).?(true: Return(Payload@(empty: Unit))); # EGROUP
+
+        Eq(wire_type, Int|5).?(true: {
+          # I32
+          List@<Int@> bytes <- Do(GetN(4));
+          Return(Payload@(bytes: bytes));
+        });
+
+        Fail<Payload@>|'invalid wire_type in record';
+      });
+
+      Return(Record@(field, payload));
+    };
+
+    # Parse a Record, given the first byte read.
+    PM@<Record@> Record = {
+      Int@ byte <- Do(Get);
+      FinishRecord(byte);
+    };
+
+    # Parse records from a message until reaching the target number of
+    # BytesRead.
+    <@ A@>(A@, (Record@, A@) { PM@<A@>; }, Int@) { PM@<A@>; }
+    Message = <@ A@>(A@ default, (Record@, A@) { PM@<A@>; } field, Int@ target_bytes_read) {
+      Int@ bytes_read <- Do(BytesRead);
+      Gt(bytes_read, target_bytes_read).?(true: {
+        Fail<A@>|'message length exceeded on record read';
+      });
+
+      Eq(bytes_read, target_bytes_read).?(true: Return(default));
+      Record@ record <- Do(Record);
+      A@ updated <- Do(field(record, default));
+      Message(updated, field, target_bytes_read);
+    };
+
+    # Parse records from a message until reaching the end of the input.
+    <@ A@>(A@, (Record@, A@) { PM@<A@>; }) { PM@<A@>; }
+    Proto = <@ A@>(A@ default, (Record@, A@) { PM@<A@>; } field) {
+      Maybe@<Int@> mbyte <- Do(MaybeGet);
+      mbyte.?(nothing: Return(default));
+      Record@ record <- Do(FinishRecord(mbyte.just));
+      A@ updated <- Do(field(record, default));
+      Proto(updated, field);
+    };
+
+    @(Fail, Skip, String, Message, Proto);
+  };
+
+  Result@<R@<A@>> result <- m.do(parser<PM@>(proto, Monad, 0));
+  m.return(/Pprof/Result%.Apply((R@<A@> x) { x.x; }, result));
+};
+
+@(FieldId@, Payload@, Record@, Proto@, Run);

@@ -1,0 +1,115 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Incr = /Core/Int%.Incr;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+% Map = /Core/Int/Map%.Map;
+
+@ Sample@ = /Pprof/Profile%.Sample@;
+
+<<@>@>@ Proto@ = /Pprof/Parser/Proto%.Proto@;
+@ FieldId@ = /Pprof/Parser/Proto%.FieldId@;
+@ Payload@ = /Pprof/Parser/Proto%.Payload@;
+@ Record@ = /Pprof/Parser/Proto%.Record@;
+
+@ StringId@ = Int@;
+@ LocationId@ = Int@;
+@ FunctionId@ = Int@;
+
+@ Location@ = *(LocationId@ id, FunctionId@ func_id, Int@ line, Int@ col);
+@ Function@ = *(FunctionId@ id, StringId@ name, StringId@ file);
+
+@ Profile@ = *(
+  List@<StringId@> sample_types,          # reverse order
+  List@<Sample@> samples,                 # reverse order
+  Map.Map@<Location@> locations,
+  Map.Map@<Function@> functions,
+  Map.Map@<String@> strings,
+  StringId@ next_string_id
+);
+
+Profile@ EmptyProfile = Profile@(
+  Nil<StringId@>,
+  Nil<Sample@>,
+  Map.Empty<Location@>,
+  Map.Empty<Function@>,
+  Map.Empty<String@>,
+  Int|0
+);
+
+# @func[Profile] A profile proto parser.
+<<@>@ M@>(Proto@<M@>, Monad@<M@>) { M@<Profile@>; }
+Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
+
+  (Payload@, String@) { M@<Int@>; }
+  LengthFor = (Payload@ payload, String@ field_name) {
+    payload.?(length: m.return(payload.length));
+    p.Fail<Int@>(Strs[field_name, Str|' field is not of wire_type LEN']);
+  };
+
+  (Payload@, String@) { M@<Int@>; }
+  IntFor = (Payload@ payload, String@ field_name) {
+    payload.?(int: m.return(payload.int));
+    p.Fail<Int@>(Strs[field_name, Str|' field is not of wire_type VARINT']);
+  };
+
+  (Record@, StringId@) { M@<StringId@>; }
+  SampleTypeFields = (Record@ record, StringId@ type) {
+    /Core/Int/Eq%.Eq(record.field, Int|1).?(true: {
+      IntFor(record.payload, Str|'ValueType.type');
+    });
+
+    Unit@ _ <- m.do(p.Skip(record.payload));
+    m.return(type);
+  };
+
+  (Int@) { M@<StringId@>; } SampleType = p.Message(Int|0, SampleTypeFields);
+
+  (Profile@, Payload@) { M@<Profile@>; }
+  SampleTypeField = (Profile@ profile, Payload@ payload) {
+    Int@ length <- m.do(LengthFor(payload, Str|'sample_type'));
+    StringId@ type <- m.do(SampleType(length));
+    List@<StringId@> sample_types = Cons(type, profile.sample_types);
+    m.return(profile.@(sample_types));
+  };
+
+  (Profile@, Payload@) { M@<Profile@>; }
+  StringField = (Profile@ profile, Payload@ payload) {
+    Int@ length <- m.do(LengthFor(payload, Str|'string_table'));
+    String@ str <- m.do(p.String(length));
+    Map.Map@<String@> strings = Map.Insert(profile.strings,
+      profile.next_string_id, str);
+    Int@ next_string_id = Incr(profile.next_string_id);
+    m.return(profile.@(strings, next_string_id));
+  };
+
+  (Record@, Profile@) { M@<Profile@>; }
+  ProfileFields = (Record@ record, Profile@ profile) {
+    FieldId@ field = record.field;
+    Payload@ payload = record.payload;
+    /Core/Int/Eq%.Eq(field, Int|1).?(true: SampleTypeField(profile, payload));
+    #/Core/Int/Eq%.Eq(field, Int|2).?(true: SampleField(profile, payload));
+    #/Core/Int/Eq%.Eq(field, Int|4).?(true: LocationField(profile, payload));
+    #/Core/Int/Eq%.Eq(field, Int|5).?(true: FunctionField(profile, payload));
+    /Core/Int/Eq%.Eq(field, Int|6).?(true: StringField(profile, payload));
+
+    Unit@ _ <- m.do(p.Skip(payload));
+    m.return(profile);
+  };
+
+  p.Proto(EmptyProfile, ProfileFields);
+};
+
+@(Profile@, StringId@, LocationId@, FunctionId@, Function@, Location@, Profile);

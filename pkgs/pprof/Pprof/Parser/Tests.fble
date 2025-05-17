@@ -13,9 +13,6 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-
 <@>% Run = /Core/Stream/IStream/Pure%.Run;
 
 @ String@ = /Core/String%.String@;
@@ -32,6 +29,9 @@
 @ Blocks@ = /Pprof/Profile%.Blocks@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 % Blocks = /Pprof/Profile%.Blocks;
+
+<@>@ Result@ = /Pprof/Result%.Result@;
+<@>% Okay = /Pprof/Result%.Okay;
 
 # Hex byte encoding of the fble-pprof-test output profile.
 String@ HexEncoded = Str|'
@@ -108,11 +108,11 @@ Profile@ Parsed = @(
 
 Test@ Tests = TestSuite(Str|Parser, List[
   Test(Str|Basic, (Unit@ _) {
-    Maybe@<Profile@> got = Run(/Pprof/Parser%.Parse, Encoded);
-    Maybe@<Profile@> wnt = Just(Parsed);
+    Result@<Profile@> got = Run(/Pprof/Parser%.Parse, Encoded);
+    Result@<Profile@> wnt = Okay(Parsed);
     AssertEquals(
-      /Core/Maybe/Eq%.Eq(/Pprof/Profile/Eq%.Profile),
-      /Core/Maybe/Show%.Show(/Pprof/Profile/Show%.Profile),
+      /Pprof/Result%.Eq(/Pprof/Profile/Eq%.Profile),
+      /Pprof/Result%.Show(/Pprof/Profile/Show%.Profile),
       wnt, got);
   })
 ]);

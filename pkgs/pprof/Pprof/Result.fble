@@ -1,0 +1,46 @@
+
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+
+<@>@ Result@ = <@ A@> {
+  +(A@ ok, String@ error);
+};
+
+<@ A@>(A@) { Result@<A@>; }
+Okay = <@ A@>(A@ x) {
+  Result@(ok: x);
+};
+
+<@ A@>(String@) { Result@<A@>; }
+Error = <@ A@>(String@ msg) {
+  Result@<A@>(error: msg);
+};
+
+<@ A@, @ B@>((A@) { B@; }, Result@<A@>) { Result@<B@>; }
+Apply = <@ A@, @ B@>((A@) { B@; } f, Result@<A@> r) {
+  r.?(error: Error<B@>(r.error));
+  Okay(f(r.ok));
+};
+
+<@ A@>(Eq@<A@>) { Eq@<Result@<A@>>; }
+Eq = <@ A@>(Eq@<A@> eq, Result@<A@> a, Result@<A@> b) {
+  a.?(ok: b.?(ok: eq(a.ok, b.ok), : False));
+  b.?(ok: False);
+  /Core/String/Eq%.Eq(a.error, b.error);
+};
+
+<@ A@>(Show@<A@>) { Show@<Result@<A@>>; }
+Show = <@ A@>(Show@<A@> show, Result@<A@> x) {
+  x.?(ok: show(x.ok));
+  Strs[Str|'error: ', x.error];
+};
+
+@(Result@, Okay, Error, Apply, Eq, Show);

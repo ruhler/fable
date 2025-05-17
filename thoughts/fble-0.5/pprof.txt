@@ -1448,3 +1448,33 @@ Next step:
 2. Set up a test case for parsing from pprof.
 3. Implement the parser so that the test case passes.
 
+---
+
+I need a fancier monad for parsing protos. It has to support:
+* Failure with error messages.
+* Tracking of length left in current message.
+
+The main APIs should be:
+* Fail - report an error.
+* Ignore(WireType@) - ignore a message of given wire type.
+* Message - parse a message, inputs are:
+ - @ T@ - the representation of the parsed message
+ - T@ default - default value of parsed message
+ - (Record@, T@) { M@<T@>; } - update the parsed message for a given record.
+   Where Record is: VarInt FieldId@ Int@, Len FieldId@ Int@, etc.
+ - length - the length of the message to parse. Optionally infinite.
+* String - parse a string of given length.
+* Run - takes a parser implemented via the API and an input stream, returns
+  the result of running the parser.
+
+To implement the parser:
+ Profile - uses Message with infinite length.
+   Consume records one at a time.
+   Make use of 'Message' recursively for submessages.
+   Consume Int@ values
+
+The infrastructure will be messy, but once we have it, I bet it's super easy
+to define the higher level parser. My proposal:
+* Parser/Proto.fble for the general infrastructure.
+* Parser/Profile.fble for the Profile specific proto parsing.
+* Parser.fble for conversion from Parsed@ to Profile@.
