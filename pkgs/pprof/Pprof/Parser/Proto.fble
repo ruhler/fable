@@ -52,7 +52,20 @@ Int@ 128 = Int|128;
 #  @field[List@<Int@>[bytes] Raw bytes from an I64 or I32 record.
 @ Payload@ = +(Int@ int, Int@ length, List@<Int@> bytes, Unit@ empty);
 
+(Payload@) { String@; } ShowPayload = (Payload@ a) {
+  a.?(
+    int: Strs[Str|'int ', /Core/Int/Show%.Show(a.int)],
+    length: Strs[Str|'length ', /Core/Int/Show%.Show(a.length)],
+    bytes: Str|'bytes',
+    empty: Str|'empty');
+};
+
 @ Record@ = *(FieldId@ field, Payload@ payload);
+
+(Record@) { String@; } _ShowRecord = (Record@ a) {
+  Strs[Str|'(', /Core/Int/Show%.Show(a.field), Str|':',
+    ShowPayload(a.payload), Str|')'];
+};
 
 <<@>@>@ Proto@ = <<@>@ M@> {
   # @func[Fail] Reports an error to parse.
@@ -247,16 +260,20 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     # Parse records from a message until reaching the target number of
     # BytesRead.
     <@ A@>(A@, (Record@, A@) { PM@<A@>; }, Int@) { PM@<A@>; }
-    Message = <@ A@>(A@ default, (Record@, A@) { PM@<A@>; } field, Int@ target_bytes_read) {
-      Int@ bytes_read <- Do(BytesRead);
-      Gt(bytes_read, target_bytes_read).?(true: {
+    Message = <@ A@>(A@ default, (Record@, A@) { PM@<A@>; } field, Int@ length) {
+      IsZero(length).?(true: Return(default));
+
+      Int@ record_start <- Do(BytesRead);
+      Record@ record <- Do(Record);
+      A@ updated <- Do(field(record, default));
+      Int@ record_end <- Do(BytesRead);
+      Int@ record_length = Sub(record_end, record_start);
+
+      Gt(record_length, length).?(true: {
         Fail<A@>|'message length exceeded on record read';
       });
 
-      Eq(bytes_read, target_bytes_read).?(true: Return(default));
-      Record@ record <- Do(Record);
-      A@ updated <- Do(field(record, default));
-      Message(updated, field, target_bytes_read);
+      Message(updated, field, Sub(length, record_length));
     };
 
     # Parse records from a message until reaching the end of the input.
