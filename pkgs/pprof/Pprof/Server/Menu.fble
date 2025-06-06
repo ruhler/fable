@@ -1,0 +1,16 @@
+
+@ String@ = /Core/String%.String@;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
+String@ Menu = Strs[
+  Str|'<table><tr>',
+  Str|'<td><a href="/">Overview</a></td>',
+  Str|'<td><a href="/overall">Overall</a></td>',
+  Str|'<td><a href="/self">Self</a></td>',
+  Str|'<td><a href="/seqs">Sequences</a></td>',
+  Str|'<tr></table><br />'
+];
+
+@(Menu);
+

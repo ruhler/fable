@@ -113,11 +113,20 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       uri_split.cons.tail.cons.head;
     };
 
-    O.PutStr(ios.out, Lines[
+    Unit@ _ <- m.do(O.PutStr(ios.out, Lines[
       StrE|'HTTP/1.1 200 OK',
       StrE|'Content-Type: text/html\r',
-      StrE|'\r',
-      StrE|'<h1>Request Info</h1>',
+      StrE|'\r']));
+
+    Unit@ _ <- m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));
+
+    /Core/String/Eq%.Eq(Str|'/', path).?(true: {
+      m.return(Unit);
+    });
+
+    O.PutStr(ios.out, Lines[
+      StrE|'<h1>Unsupported Request</h1>',
+      StrE|'<h2>Request Info</h2>',
       Strs[StrE|'Method: ', method, StrE|' <br/>'],
       Strs[StrE|'Path: ', path, StrE|' <br/>'],
       Strs[StrE|'Query: ', query, StrE|' <br/>'],
@@ -143,6 +152,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   });
 
   Server@<M@> s = ms.just;
+  
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+    Str|'serving at http://',
+    args.hostname,
+    Str|':',
+    /Core/Int/Show%.Show(args.port)]));
 
   M@<Unit@> Serve = {
     IOStream@<M@> ios <- m.do(s);
