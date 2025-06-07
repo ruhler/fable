@@ -1,9 +1,16 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+% False = /Core/Bool%.False;
+% True = /Core/Bool%.True;
+
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
 % Int = /Core/Int/Lit%.Int;
 
+<@>% StartsWith = /Core/List/Eq%.StartsWith;
+
 @ Sample@ = /Pprof/Profile%.Sample@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 
 % MetricOf = /Pprof/Query/Util%.MetricOf;
@@ -16,4 +23,20 @@ Total = (Profile@ profile) {
   });
 };
 
-@(Total);
+# Returns the number of samples containing the given subsequence.
+(Profile@, Sequence@) { Int@; }
+Contains = (Profile@ profile, Sequence@ needle) {
+  (Sequence@, Sequence@) { Bool@; }
+  Find = (Sequence@ haystack, Sequence@ needle) {
+    StartsWith(/Pprof/Profile/Eq%.BlockId, haystack, needle).?(true: True);
+    haystack.?(nil: False);
+    Find(haystack.cons.tail, needle);
+  };
+
+  /Core/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
+    Find(sample.sequence, needle).?(false: sum);
+    Add(sum, MetricOf(sample.values));
+  });
+};
+
+@(Total, Contains);

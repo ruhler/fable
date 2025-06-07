@@ -5,6 +5,9 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
+<@>% List = /Core/List%.List;
+<@>% Last = /Core/List%.Last;
+<@>% Init = /Core/List%.Init;
 
 <@>% StartsWith = /Core/List/Eq%.StartsWith;
 
@@ -13,10 +16,30 @@
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
+@ Profile@ = /Pprof/Profile%.Profile@;
 
+@ Entry@ = /Pprof/Query%.Entry@;
+@ Table@ = /Pprof/Query%.Table@;
 @ Query@ = /Pprof/Query%.Query@;
 
+% Total = /Pprof/Query/Total%;
+
 % Eq = /Pprof/Profile/Eq%.BlockId;
+
+
+(Sequence@) { Query@; }
+Sequence = (Sequence@ target, Profile@ profile) {
+  (Sequence@, Table@) { Table@; }
+  Helper = (Sequence@ seq, Table@ tail) {
+    seq.?(nil: tail);
+
+    BlockId@ last = Last(seq);
+    Int@ value = Total.Contains(profile, seq);
+    Helper(Init(seq), Cons(Entry@(List[last], value), tail));
+  };
+
+  Helper(target, Nil<Entry@>);
+};
 
 (Sequence@) { Query@; } Incoming = (Sequence@ target) {
   (Sequence@) { List@<BlockId@>; }
@@ -46,4 +69,4 @@
   /Pprof/Query/ByFrame%.Query(Frames);
 };
 
-@(Incoming, Outgoing);
+@(Sequence, Incoming, Outgoing);
