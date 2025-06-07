@@ -2,10 +2,13 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* --profile memory use blows up on PiDigits benchmark.
+
 fble-pprof:
 * add pprof filename to overview.
 * test case of multiple different samples with the same sequence.
   Where is deduping done?
+* Remove 'start-line' logging?
 
 * Remove duplicate code for String StartsWith and List StartsWith?
   Same with Contains?
@@ -28,6 +31,7 @@ fble-pprof:
   likely to break when we make any change to profile.c?
 
 * Add an fble-pprof benchmark to fble-benchmark?
+  One based on md5 --profile is probably good, for parsing.
 * Make use of /Core/Stream/IStream/Pure%.Run more places where it makes sense.
 
 * Update all the user documentation (book, profiling guide) on how to profile.
@@ -39,9 +43,8 @@ GC OnFree cleanup
 * Don't close files or sockets in GC OnFree. Close them when asked to
   explicitly.
 
-pkgs/Pprof
-* Implement server binary that reads pprof format.
 * Consider updating pprof.py to work on pprof format.
+* Consider updating pprof.py to work on --test format of fble-perf-profile?
 
 * Split FbleDataType into FbleStructType and FbleUnionType?
   Get rid of FbleDataTypeTag?

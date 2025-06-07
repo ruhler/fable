@@ -20,6 +20,7 @@
 <@>% Concat = /Core/List%.Concat;
 <@>% Get = /Core/List/Length%.Get;
 % Drop = /Core/List/Length%.Drop;
+<@>% Length = /Core/List/Length%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -219,7 +220,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Int@ total = Total.Total(profile);
       O.PutStr(ios.out, Lines[
         Str|'<h1>Overview</h1>',
-        Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />']);
+        Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />',
+        Str|'Sequences: ', /Core/Int/Show%.Show(Length(profile.samples)), Str|'<br />']);
     });
 
     /Core/String/Eq%.Eq(Str|'/overall', path).?(true: {

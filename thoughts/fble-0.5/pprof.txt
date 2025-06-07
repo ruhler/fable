@@ -1491,3 +1491,16 @@ profile based. Linux perf based should be easier.
 Let's try it out on fble-benchmark, see how the performance feels with that.
 Starting with linux perf based.
 
+Looks like md5 with --profile is a good stressor. It takes 2 minutes to parse
+the profile and a bunch of memory. UI is noticeably sluggish, but still
+totally useable. Maybe a few seconds per query.
+
+After it's parsed, performance should be proportional to number of sequences,
+so maybe that's what we should report in the overview.
+
+Anyway, I think fble pprof implementation is better in every way than pprof.py
+at the moment, so maybe lets ditch pprof.py. We can bring it back later if
+needed.
+
+Okay, frames by overall time is a bit slow on md5. A little too long for
+convenience, but works if you wait.
