@@ -1,0 +1,49 @@
+
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+
+<@>% StartsWith = /Core/List/Eq%.StartsWith;
+
+% Drop = /Core/List/Length%.Drop;
+<@>% Length = /Core/List/Length%.Length;
+
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
+
+@ Query@ = /Pprof/Query%.Query@;
+
+% Eq = /Pprof/Profile/Eq%.BlockId;
+
+(Sequence@) { Query@; } Incoming = (Sequence@ target) {
+  (Sequence@) { List@<BlockId@>; }
+  Frames = (Sequence@ seq) {
+    seq.?(nil: Nil<BlockId@>);
+    StartsWith(Eq, seq.cons.tail, target).?(false: Frames(seq.cons.tail));
+    Cons(seq.cons.head, Frames(seq.cons.tail));
+  };
+
+  /Pprof/Query/ByFrame%.Query(Frames);
+};
+
+(Sequence@) { Query@; } Outgoing = (Sequence@ target) {
+  Int@ length = Length(target);
+
+  (Sequence@) { List@<BlockId@>; }
+  Frames = (Sequence@ seq) {
+    seq.?(nil: Nil<BlockId@>);
+    StartsWith(Eq, seq, target).?(false: Frames(seq.cons.tail));
+
+    Sequence@ suffix = Drop(length, seq);
+    suffix.?(nil: Nil<BlockId@>);
+
+    Cons(suffix.cons.head, Frames(seq.cons.tail));
+  };
+
+  /Pprof/Query/ByFrame%.Query(Frames);
+};
+
+@(Incoming, Outgoing);

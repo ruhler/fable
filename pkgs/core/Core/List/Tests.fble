@@ -41,6 +41,7 @@
 <@>% Contains = /Core/List/Eq%.Contains;
 <@>% RemoveFirst = /Core/List/Eq%.RemoveFirst;
 <@>% RemoveAll = /Core/List/Eq%.RemoveAll;
+<@>% StartsWith = /Core/List/Eq%.StartsWith;
 
 <@>% Sort = /Core/List/Sort%.Sort;
 
@@ -230,6 +231,30 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> l = EL|'BDBB';
     Bool@ wnt = False;
     Bool@ got = Contains(ElemEq, l, Elems.C);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|StartsWith, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'ABBC';
+    Bool@ got = StartsWith(ElemEq, haystack, needle);
+    Bool@ wnt = True;
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|StartsWith_Mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'ABC';
+    Bool@ got = StartsWith(ElemEq, haystack, needle);
+    Bool@ wnt = False;
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|StartsWith_EndOfString, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBC';
+    List@<Elem@> needle = EL|'ABBCD';
+    Bool@ got = StartsWith(ElemEq, haystack, needle);
+    Bool@ wnt = False;
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })
 ]);

@@ -96,4 +96,14 @@ RemoveAll = <@ T@>((T@) { Bool@; } p, List@<T@> l) {
   Cons(l.cons.head, tail);
 };
 
-@(Eq, Has, Search, Contains, Split, RemoveFirst, RemoveAll);
+# StartsWith --
+#   Return true if the list starts the given sequence, false otherwise.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
+StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  needle.?(nil: True);
+  haystack.?(nil: False);
+  eq(haystack.cons.head, needle.cons.head).?(false: False);
+  StartsWith(eq, haystack.cons.tail, needle.cons.tail);
+};
+
+@(Eq, Has, Search, Contains, Split, RemoveFirst, RemoveAll, StartsWith);
