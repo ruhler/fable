@@ -3,8 +3,9 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 fble-pprof:
-* add by overall query and page
-* add seq query and page
+* add sequences query and page.
+* add seq query and page.
+* add pprof filename to overview.
 
 * Remove unnecessary FbleProfile apis now that blocks and enabled fields are
   public again.

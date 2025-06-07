@@ -212,7 +212,10 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));
 
     /Core/String/Eq%.Eq(Str|'/', path).?(true: {
-      m.return(Unit);
+      Int@ total = Total(profile);
+      O.PutStr(ios.out, Lines[
+        Str|'<h1>Overview</h1>',
+        Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />']);
     });
 
     /Core/String/Eq%.Eq(Str|'/overall', path).?(true: {
