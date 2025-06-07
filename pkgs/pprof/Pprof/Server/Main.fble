@@ -7,6 +7,12 @@
 % Chars = /Core/Char%.Chars;
 
 @ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+
+@ QR@ = /Core/Int/Div%.QR@;
+% Div = /Core/Int/Div%.Div;
+
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -101,6 +107,14 @@ GetArgs = (List@<String@> args, Args@ default) {
   GetArgs(nargv, nargs);
 };
 
+(Int@, Int@) { String@; }
+Percent = (Int@ numerator, Int@ denominator) {
+  Int@ s = Div(Mul(Int|10000, numerator), denominator).q;
+  QR@ qr = Div(s, Int|100);
+  Strs[/Core/Int/Show%.Show(qr.q), Str|'.',
+    /Core/Int/Show%.Show(Add(Int|100, qr.r)).cons.tail, Str|'%'];
+};
+
 Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
@@ -146,26 +160,34 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Unit@ _ <- m.do(O.PutStr(ios.out, Lines[
         Str|'<h1>Frames by self time</h1>',
         Str|'<table>',
-        Str|'<tr><th>Count</th><th>Frame</th></tr>']));
+        Str|'<tr><th>%</th><th>Count</th><th>Frame</th></tr>']));
 
-      (Self.Entry@) { M@<Unit@>; }
-      Row = (Self.Entry@ entry) {
+      (Self.Entry@, Int@) { M@<Unit@>; }
+      Row = (Self.Entry@ entry, Int@ total) {
         String@ name = Blocks.Lookup(profile.blocks, entry.block).just.name;
         O.PutLine(ios.out, Strs[
-          Str|'<tr><td>', /Core/Int/Show%.Show(entry.value),
+          Str|'<tr><td>', Percent(entry.value, total),
+          Str|'</td><td>', /Core/Int/Show%.Show(entry.value),
           Str|'</td><td><a href="/seq/', /Core/Int/Show%.Show(entry.block),
           Str|'">', name,
           Str|'</a></td></tr>']);
       };
 
-      (List@<Self.Entry@>) { M@<Unit@>; }
-      Rows = (List@<Self.Entry@> entries) {
+      (List@<Self.Entry@>, Int@) { M@<Unit@>; }
+      Rows = (List@<Self.Entry@> entries, Int@ total) {
         entries.?(nil: m.return(Unit));
-        Unit@ _ <- m.do(Row(entries.cons.head));
-        Rows(entries.cons.tail);
+        Unit@ _ <- m.do(Row(entries.cons.head, total));
+        Rows(entries.cons.tail, total);
       };
 
-      Unit@ _ <- m.do(Rows(Self.Query(profile)));
+      List@<Self.Entry@> entries = Self.Query(profile);
+
+      Int@ total = /Core/List%.ForEach(entries, Int|0,
+        (Self.Entry@ e, Int@ b) {
+          Add(e.value, b);
+        });
+
+      Unit@ _ <- m.do(Rows(entries, total));
       O.PutLine(ios.out, Str|'</table>');
     });
 
