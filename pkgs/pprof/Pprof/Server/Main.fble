@@ -212,6 +212,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[
       StrE|'HTTP/1.1 200 OK',
       StrE|'Content-Type: text/html\r',
+      StrE|'Cache-Control: no-cache\r',
       StrE|'\r']));
 
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));

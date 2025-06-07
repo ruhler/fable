@@ -60,3 +60,16 @@ feel like I've finished with the meat of things. I do feel like I've finished
 with the meat of the runtime changes, but plenty of other areas still worth
 exploring.
 
+---
+
+Profiling work is feature complete. I'm happy with it. We now generate
+google/pprof format (uncompressed) and can view it nicely in the fble-pprof
+viewer. Performance of fble-pprof could certainly be improved, but it is
+definitely useable.
+
+We have a decision on gc native values: keep general OnFree support, but don't
+use it for streams.
+
+The fble-pprof viewer covers my fble application work for the release.
+
+That means we can start the release burndown.

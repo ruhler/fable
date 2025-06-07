@@ -24,7 +24,6 @@ fble-pprof:
   Like, passing const char* to lookup instead of an FbleName?
   Maybe don't provide it as an API, have the tests iterate over block ids
   instead?
-* Consider outputting pprof gzip compressed?
 
 * Having the line number 311 for [root] node in test/fble-pprof-test.want.txt
   is going to be annoying. Mark my words. Any way we can make the test less
@@ -42,9 +41,6 @@ GC OnFree cleanup
 * Add explicit close to OStream API.
 * Don't close files or sockets in GC OnFree. Close them when asked to
   explicitly.
-
-* Consider updating pprof.py to work on pprof format.
-* Consider updating pprof.py to work on --test format of fble-perf-profile?
 
 * Split FbleDataType into FbleStructType and FbleUnionType?
   Get rid of FbleDataTypeTag?

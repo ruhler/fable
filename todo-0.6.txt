@@ -8,6 +8,11 @@ Things to consider doing for the fble-0.6 release.
 
 * Make programs run twice as fast.
 
+* Implement deflate algorithm.
+ - Change --profile to produce gzip compressed profiles (doesn't need to be
+   compressed yet, can use uncompressed blocks).
+ - Change fble-pprof to decompress profiles.
+
 * Fix potential GC gen overflow?
  - See thoughts/fble-0.3/stack_alloc.txt for details.
  - See thoughts/fble-0.5/gc.txt for more thoughts.
