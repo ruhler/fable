@@ -1,0 +1,21 @@
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+
+@ Entry@ = /Pprof/Query%.Entry@;
+@ Query@ = /Pprof/Query%.Query@;
+
+% MetricOf = /Pprof/Query/Util%.MetricOf;
+% Sort = /Pprof/Query/Util%.Sort;
+
+# @func[Query] Get sequences by time.
+#  @arg[Profile@][profile] The profile to query.
+#  @returns[List@<Entry@>]
+#   The time of each sequence in descending order
+Query@ Query = (Profile@ profile) {
+  Sort(/Core/List%.Map(profile.samples, (Sample@ sample) {
+    Entry@(sample.sequence, MetricOf(sample.values));
+  }));
+};
+
+@(Query);

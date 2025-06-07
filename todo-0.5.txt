@@ -3,9 +3,10 @@ Fble 0.5 TODO
 Things to consider doing for the fble-0.5 release.
 
 fble-pprof:
-* add sequences query and page.
 * add seq query and page.
 * add pprof filename to overview.
+* test case of multiple different samples with the same sequence.
+  Where is deduping done?
 
 * Remove unnecessary FbleProfile apis now that blocks and enabled fields are
   public again.

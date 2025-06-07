@@ -26,6 +26,7 @@
 
 % Overall = /Pprof/Query/Overall%;
 % Self = /Pprof/Query/Self%;
+% Sequences = /Pprof/Query/Sequences%;
 % Total = /Pprof/Query/Total%.Total;
 
 @ Entry@ = *(BlockId@ id, Block@ block);
@@ -85,6 +86,22 @@ Test@ Tests = TestSuite(Str|Query, List[
       @(seq: List[Int|2], value: Int|47),
       @(seq: List[Int|4], value: Int|43),
       @(seq: List[Int|3], value: Int|25)
+    ];
+
+    AssertEquals(
+      /Pprof/Query/Eq%.Table,
+      /Pprof/Query/Show%.Table,
+      wnt, got);
+  }),
+
+  Test(Str|Sequences, (Unit@ _) {
+    Table@ got = Sequences.Query(Profile);
+    Table@ wnt = List[
+      @(seq: List[Int|1, Int|2, Int|4], value: Int|25),
+      @(seq: List[Int|1, Int|4, Int|3, Int|4], value: Int|18),
+      @(seq: List[Int|1, Int|2], value: Int|15),
+      @(seq: List[Int|1, Int|2, Int|3], value: Int|7),
+      @(seq: List[Int|1], value: Int|1)
     ];
 
     AssertEquals(
