@@ -4,6 +4,7 @@
 % False = /Core/Bool%.False;
 
 @ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
 
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
@@ -21,6 +22,8 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
+<<@>@>@ IStream@ = /Core/Stream%.IStream@;
+
 @ String@ = /Core/String%.String@;
 % Lines = /Core/String%.Lines;
 % Str = /Core/String%.Str;
@@ -34,18 +37,26 @@
 <<@>@>@ Server@ = /Network/Sockets%.Server@;
 <<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;
 
+<<@>@>% Parse = /Pprof/Parser%.Parse;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+
+<@>@ Result@ = /Pprof/Result%.Result@;
+
 @ Args@ = *(
   Bool@ help,
   String@ error,
   String@ hostname,
-  Int@ port
+  Int@ port,
+  String@ file
 );
 
 Args@ DefaultArgs = @(
   help: False,
   error: Str|'',
   hostname: Str|'localhost',
-  port: Int|8123
+  port: Int|8123,
+  file: Str|''
 );
 
 (List@<String@>, Args@) { Args@; }
@@ -56,6 +67,10 @@ GetArgs = (List@<String@> args, Args@ default) {
   /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
     List[Str|'-h', Str|'--help'], arg).?(true: {
     default.@(help: True);
+  });
+
+  /Core/Char/Eq%.Eq(arg.cons.head, Chars.'-').?(false: {
+    GetArgs(args.cons.tail, default.@(file: arg));
   });
 
   args.cons.tail.?(nil: {
@@ -139,6 +154,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     m.return(True);
   });
 
+  args.file.?(nil: {
+    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'missing input file'));
+    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    m.return(False);
+  });
+
   args.error.?(cons: {
     Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
     Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
@@ -152,12 +173,33 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   });
 
   Server@<M@> s = ms.just;
+
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+    Str|'parsing ', args.file, Str|'...'
+  ]));
+
+  Maybe@<IStream@<M@>> fin <- m.do(stdio.read(args.file));
+  fin.?(nothing: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
+        Str|'unable to open ''', args.file, Str|''''
+    ]));
+    m.return(False);
+  });
+
+  Result@<Profile@> parsed <- m.do(Parse(fin.just, m));
+  parsed.?(error: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
+        Str|'error:', parsed.error
+    ]));
+    m.return(False);
+  });
   
   Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
     Str|'serving at http://',
     args.hostname,
     Str|':',
-    /Core/Int/Show%.Show(args.port)]));
+    /Core/Int/Show%.Show(args.port)
+  ]));
 
   M@<Unit@> Serve = {
     IOStream@<M@> ios <- m.do(s);
