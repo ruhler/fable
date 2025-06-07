@@ -3,7 +3,6 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 
 @ Int@ = /Core/Int%.Int@;
@@ -17,9 +16,10 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
 <@>% Concat = /Core/List%.Concat;
-<@>% Split = /Core/List/Eq%.Split;
 <@>% Get = /Core/List/Length%.Get;
+% Drop = /Core/List/Length%.Drop;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -27,6 +27,8 @@
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
+
+% Split = /Core/String/Eq%.Split;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
@@ -60,7 +62,8 @@
 % Overall = /Pprof/Query/Overall%;
 % Self = /Pprof/Query/Self%;
 % Sequences = /Pprof/Query/Sequences%;
-% Total = /Pprof/Query/Total%.Total;
+% Sequence = /Pprof/Query/Sequence%;
+% Total = /Pprof/Query/Total%;
 
 @ Args@ = *(
   Bool@ help,
@@ -193,12 +196,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     };
     Unit@ _ <- m.do(SkipHeaders);
 
-    List@<String@> start_split = Split(start, (Char@ c) { c.?(' ': True, : False); });
+    List@<String@> start_split = Split(start, Chars.' ');
     String@ method = Get(start_split, Int|0);
     String@ uri = Get(start_split, Int|1);
     String@ version = Get(start_split, Int|2);
 
-    List@<String@> uri_split = Split(uri, (Char@ c) { c.?('?': True, : False); });
+    List@<String@> uri_split = Split(uri, Chars.'?');
     String@ path = uri_split.cons.head;
     String@ query = {
       uri_split.cons.tail.?(nil: Str|'');
@@ -213,7 +216,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));
 
     /Core/String/Eq%.Eq(Str|'/', path).?(true: {
-      Int@ total = Total(profile);
+      Int@ total = Total.Total(profile);
       O.PutStr(ios.out, Lines[
         Str|'<h1>Overview</h1>',
         Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />']);
@@ -222,22 +225,43 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     /Core/String/Eq%.Eq(Str|'/overall', path).?(true: {
       Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Frames by overall time</h1>'));
       Table@ table = Overall.Query(profile);
-      Int@ total = Total(profile);
+      Int@ total = Total.Total(profile);
       Table(ios.out, profile, table, total, (Sequence@ s) { s; });
     });
 
     /Core/String/Eq%.Eq(Str|'/self', path).?(true: {
       Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Frames by self time</h1>'));
       Table@ table = Self.Query(profile);
-      Int@ total = Total(profile);
+      Int@ total = Total.Total(profile);
       Table(ios.out, profile, table, total, (Sequence@ s) { s; });
     });
 
     /Core/String/Eq%.Eq(Str|'/seqs', path).?(true: {
       Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Full Sequences</h1>'));
       Table@ table = Sequences.Query(profile);
-      Int@ total = Total(profile);
+      Int@ total = Total.Total(profile);
       Table(ios.out, profile, table, total, (Sequence@ s) { s; });
+    });
+
+    /Core/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
+      List@<String@> ids = Split(Drop(Int|5, path), Chars.',');
+      Sequence@ seq = /Core/List%.Map(ids, /Core/Int/Show%.Read);
+
+      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Sequence</h1>'));
+      Int@ total = Total.Total(profile);
+      Table@ sequence = Sequence.Sequence(seq, profile);
+      Unit@ _ <- m.do(Table(ios.out, profile, sequence, total, (Sequence@ s) { s; }));
+
+      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Incoming</h1>'));
+      Int@ ss_total = Total.Contains(profile, seq);
+      Table@ incoming = Sequence.Incoming(seq, profile);
+      Unit@ _ <- m.do(Table(ios.out, profile, incoming, ss_total,
+          (Sequence@ s) { Append(s, seq); }));
+
+      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Outgoing</h1>'));
+      Table@ outgoing = Sequence.Outgoing(seq, profile);
+      Table(ios.out, profile, outgoing, ss_total,
+          (Sequence@ s) { Append(seq, s); });
     });
 
     O.PutStr(ios.out, Lines[

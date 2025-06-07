@@ -7,6 +7,7 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
+<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 
 @ String@ = /Core/String%.String@;
@@ -15,6 +16,8 @@
 % Strs = /Core/String%.Strs;
 % Join = /Core/String%.Join;
 % Lines = /Core/String%.Lines;
+
+% Split = /Core/String/Eq%.Split;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -139,6 +142,15 @@ Test@ Tests = TestSuite(Str|String, List[
     String@ wnt = Str|'"hello"';
     String@ got = /Core/String/Show%.Show(Str|hello);
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Split, (Unit@ _) {
+    List@<String@> wnt = List[Str|'hello', Str|'there', Str|'how', Str|'are', Str|'you?'];
+    List@<String@> got = Split(Str|'hello there how are you?', Chars.' ');
+    AssertEquals(
+      /Core/List/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/String/Show%.Show),
+      wnt, got);
   }),
 
   /Core/String/Map/Tests%.Tests

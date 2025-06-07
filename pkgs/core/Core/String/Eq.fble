@@ -3,6 +3,10 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
+@ Char@ = /Core/Char%.Char@;
+
+<@>@ List@ = /Core/List%.List@;
+
 <@>@ Eq@ = /Core/Eq%.Eq@;
 @ String@ = /Core/String%.String@;
 
@@ -28,4 +32,9 @@ Eq@<String@> Eq = /Core/List/Eq%.Eq(/Core/Char/Eq%.Eq);
   Contains(str.cons.tail, sub);
 };
 
-@(Eq, StartsWith, Contains);
+(String@, Char@) { List@<String@>; }
+Split = (String@ str, Char@ ch) {
+  /Core/List/Eq%.Split(str, /Core/Char/Eq%.Eq(ch));
+};
+
+@(Eq, StartsWith, Contains, Split);

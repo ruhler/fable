@@ -1478,3 +1478,16 @@ to define the higher level parser. My proposal:
 * Parser/Proto.fble for the general infrastructure.
 * Parser/Profile.fble for the Profile specific proto parsing.
 * Parser.fble for conversion from Parsed@ to Profile@.
+
+---
+
+Fble pprof based viewer is implemented. Minimum viable product. It works well
+on a small profile. The question is, how will performance look like on more
+realistic profiles?
+
+There are two kinds of profiles to try it on: linux perf based and fble
+profile based. Linux perf based should be easier.
+
+Let's try it out on fble-benchmark, see how the performance feels with that.
+Starting with linux perf based.
+
