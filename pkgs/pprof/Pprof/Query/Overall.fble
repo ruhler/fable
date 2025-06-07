@@ -1,0 +1,66 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% List = /Core/List%.List;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+
+@ Entry@ = /Pprof/Query%.Entry@;
+@ Query@ = /Pprof/Query%.Query@;
+
+% MetricOf = /Pprof/Query/Util%.MetricOf;
+% Sort = /Pprof/Query/Util%.Sort;
+
+% M = /Core/Int/Map%.Map;
+% S = /Core/Set%.Set(M);
+
+# @func[Query] Get blocks by overall time.
+#  @arg[Profile@][profile] The profile to query.
+#  @returns[Table@]
+#   The overall time of each block in descending order
+Query@ Query = (Profile@ profile) {
+  (Sequence@) { S.Set@; }
+  Set = (Sequence@ seq) {
+    seq.?(nil: S.Empty);
+    S.Insert(Set(seq.cons.tail), seq.cons.head);
+  };
+
+  (Sample@, M.Map@<Int@>) { M.Map@<Int@>; }
+  Sample = (Sample@ sample, M.Map@<Int@> map) {
+    sample.sequence.?(nil: map);
+
+    S.Set@ set = Set(sample.sequence);
+    Int@ count = MetricOf(sample.values);
+
+    S.ForEach(set, map, (BlockId@ block, M.Map@<Int@> m) {
+      M.InsertWith(m, block, (Maybe@<Int@> mx) {
+        mx.?(just: Add(mx.just, count));
+        count;
+      });
+    });
+  };
+
+  (List@<Sample@>, M.Map@<Int@>) { M.Map@<Int@>; }
+  Samples = (List@<Sample@> samples, M.Map@<Int@> map) {
+    samples.?(nil: map);
+    Samples(samples.cons.tail, Sample(samples.cons.head, map));
+  };
+
+  M.Map@<Int@> counts = Samples(profile.samples, M.Empty<Int@>);
+
+  Sort(M.ForEach(counts, Nil<Entry@>,
+    (BlockId@ block, Int@ value, List@<Entry@> l) {
+      Cons(Entry@(List[block], value), l);
+    }));
+};
+
+@(Query);
