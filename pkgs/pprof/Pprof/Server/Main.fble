@@ -40,8 +40,11 @@
 <<@>@>% Parse = /Pprof/Parser%.Parse;
 
 @ Profile@ = /Pprof/Profile%.Profile@;
+% Blocks = /Pprof/Profile%.Blocks;
 
 <@>@ Result@ = /Pprof/Result%.Result@;
+
+% Self = /Pprof/Query/Self%;
 
 @ Args@ = *(
   Bool@ help,
@@ -102,8 +105,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 
-  (IOStream@<M@>) { M@<Unit@>; }
-  HandleConnection = (IOStream@<M@> ios) {
+  (Profile@, IOStream@<M@>) { M@<Unit@>; }
+  HandleConnection = (Profile@ profile, IOStream@<M@> ios) {
     # Get the start line
     String@ start <- m.do(I.GetLine(ios.in));
     Unit@ _ <- m.do(O.PutStr(stdio.out, Strs[Str|'start-line: ', start]));
@@ -137,6 +140,33 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     /Core/String/Eq%.Eq(Str|'/', path).?(true: {
       m.return(Unit);
+    });
+
+    /Core/String/Eq%.Eq(Str|'/self', path).?(true: {
+      Unit@ _ <- m.do(O.PutStr(ios.out, Lines[
+        Str|'<h1>Frames by self time</h1>',
+        Str|'<table>',
+        Str|'<tr><th>Count</th><th>Frame</th></tr>']));
+
+      (Self.Entry@) { M@<Unit@>; }
+      Row = (Self.Entry@ entry) {
+        String@ name = Blocks.Lookup(profile.blocks, entry.block).just.name;
+        O.PutLine(ios.out, Strs[
+          Str|'<tr><td>', /Core/Int/Show%.Show(entry.value),
+          Str|'</td><td><a href="/seq/', /Core/Int/Show%.Show(entry.block),
+          Str|'">', name,
+          Str|'</a></td></tr>']);
+      };
+
+      (List@<Self.Entry@>) { M@<Unit@>; }
+      Rows = (List@<Self.Entry@> entries) {
+        entries.?(nil: m.return(Unit));
+        Unit@ _ <- m.do(Row(entries.cons.head));
+        Rows(entries.cons.tail);
+      };
+
+      Unit@ _ <- m.do(Rows(Self.Query(profile)));
+      O.PutLine(ios.out, Str|'</table>');
     });
 
     O.PutStr(ios.out, Lines[
@@ -203,7 +233,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   M@<Unit@> Serve = {
     IOStream@<M@> ios <- m.do(s);
-    Unit@ _ <- m.do(HandleConnection(ios));
+    Unit@ _ <- m.do(HandleConnection(parsed.ok, ios));
     Serve;
   };
 
