@@ -1,7 +1,4 @@
 
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Core/Int%.Int@;
@@ -12,7 +9,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -25,6 +21,8 @@
 @ Blocks@ = /Pprof/Profile%.Blocks@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 % Blocks = /Pprof/Profile%.Blocks;
+
+@ Table@ = /Pprof/Query%.Table@;
 
 % Self = /Pprof/Query/Self%;
 
@@ -58,30 +56,17 @@ Profile@ Profile = @(
 
 Test@ Tests = TestSuite(Str|Query, List[
   Test(Str|Self, (Unit@ _) {
-    List@<Self.Entry@> got = Self.Query(Profile);
-    List@<Self.Entry@> wnt = List[
-      @(block: Int|4, value: Int|43),
-      @(block: Int|2, value: Int|15),
-      @(block: Int|3, value: Int|7),
-      @(block: Int|1, value: Int|1)
+    Table@ got = Self.Query(Profile);
+    Table@ wnt = List[
+      @(seq: List[Int|4], value: Int|43),
+      @(seq: List[Int|2], value: Int|15),
+      @(seq: List[Int|3], value: Int|7),
+      @(seq: List[Int|1], value: Int|1)
     ];
 
-    % EqEntry = (Self.Entry@ a, Self.Entry@ b) {
-      /Core/Int/Eq%.Eq(a.block, b.block).?(false: False);
-      /Core/Int/Eq%.Eq(a.value, b.value).?(false: False);
-      True;
-    };
-
-    % ShowEntry = (Self.Entry@ x) {
-      Strs[
-        /Core/Int/Show%.Show(x.block),
-        Str|':',
-        /Core/Int/Show%.Show(x.value)];
-    };
-
     AssertEquals(
-      /Core/List/Eq%.Eq(EqEntry),
-      /Core/List/Show%.Show(ShowEntry),
+      /Pprof/Query/Eq%.Table,
+      /Pprof/Query/Show%.Table,
       wnt, got);
   })
 ]);

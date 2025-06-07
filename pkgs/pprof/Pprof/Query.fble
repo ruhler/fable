@@ -1,0 +1,14 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
+
+@ Entry@ = *(Sequence@ seq, Int@ value);
+@ Table@ = List@<Entry@>;
+
+@ Query@ = (Profile@) { Table@; };
+
+@(Entry@, Table@, Query@);

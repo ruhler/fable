@@ -1,0 +1,24 @@
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>% Last = /Core/List%.Last;
+
+@ Metrics@ = /Pprof/Profile%.Metrics@;
+
+@ Entry@ = /Pprof/Query%.Entry@;
+@ Table@ = /Pprof/Query%.Table@;
+
+# Get's the default metric value.
+# Currently hard coded to the last.
+# TODO: Take some argument as input to let the user choose which metric they
+# are interested in.
+(Metrics@) { Int@; } MetricOf = Last<Int@>;
+
+# Sort a query results table.
+(Table@) { Table@; } Sort = /Core/List/Sort%.Sort(
+  (Entry@ a, Entry@ b) {
+    /Core/Int/Eq%.Le(b.value, a.value);
+  });
+
+@(MetricOf, Sort);
+

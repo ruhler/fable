@@ -1,0 +1,18 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+@ Entry@ = /Pprof/Query%.Entry@;
+@ Table@ = /Pprof/Query%.Table@;
+
+Eq@<Entry@> Entry = (Entry@ a, Entry@ b) {
+  /Pprof/Profile/Eq%.Sequence(a.seq, b.seq).?(false: False);
+  /Core/Int/Eq%.Eq(a.value, b.value).?(false: False);
+  True;
+};
+
+Eq@<Table@> Table = /Core/List/Eq%.Eq(Entry);
+
+@(Entry, Table);

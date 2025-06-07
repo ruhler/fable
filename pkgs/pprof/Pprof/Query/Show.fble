@@ -1,0 +1,19 @@
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
+
+@ Entry@ = /Pprof/Query%.Entry@;
+@ Table@ = /Pprof/Query%.Table@;
+
+Show@<Entry@> Entry = (Entry@ x) {
+  Strs[
+    /Pprof/Profile/Show%.Sequence(x.seq),
+    Str|': ',
+    /Core/Int/Show%.Show(x.value)];
+};
+
+Show@<Table@> Table = /Core/List/Show%.Show(Entry);
+
+@(Entry, Table);

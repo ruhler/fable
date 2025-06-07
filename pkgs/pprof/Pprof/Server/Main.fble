@@ -17,6 +17,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
+<@>% Concat = /Core/List%.Concat;
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Get = /Core/List/Length%.Get;
 
@@ -25,6 +26,7 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <<@>@>@ IOStream@ = /Core/Stream%.IOStream@;
+<<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
@@ -45,10 +47,15 @@
 
 <<@>@>% Parse = /Pprof/Parser%.Parse;
 
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Sequence@ = /Pprof/Profile%.Sequence@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 % Blocks = /Pprof/Profile%.Blocks;
 
 <@>@ Result@ = /Pprof/Result%.Result@;
+
+@ Entry@ = /Pprof/Query%.Entry@;
+@ Table@ = /Pprof/Query%.Table@;
 
 % Self = /Pprof/Query/Self%;
 
@@ -119,6 +126,56 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   % I = /Core/Stream/IStream%(m);
   % O = /Core/Stream/OStream%(m);
 
+  (OStream@<M@>, Profile@, Table@, Int@, (Sequence@) { Sequence@; }) { M@<Unit@>; }
+  Table = (OStream@<M@> out, Profile@ profile, Table@ table, Int@ total,
+    (Sequence@) { Sequence@; } link) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<table>'));
+
+    (Sequence@) { String@; }
+    SeqNames = (Sequence@ seq) {
+      seq.?(nil: Str|'');
+
+      BlockId@ block = seq.cons.head;
+      String@ name = Blocks.Lookup(profile.blocks, block).just.name;
+      seq.cons.tail.?(nil: name);
+
+      String@ tail = SeqNames(seq.cons.tail);
+      Concat[name, Str|';', tail];
+    };
+
+    (Sequence@) { String@; }
+    SeqBlocks = (Sequence@ seq) {
+      seq.?(nil: Str|'');
+
+      BlockId@ block = seq.cons.head;
+      String@ name = /Core/Int/Show%.Show(block);
+      seq.cons.tail.?(nil: name);
+
+      String@ tail = SeqBlocks(seq.cons.tail);
+      Concat[name, Str|',', tail];
+    };
+
+    (Entry@) { M@<Unit@>; }
+    Row = (Entry@ entry) {
+      O.PutLine(out, Strs[
+        Str|'<tr><td>', Percent(entry.value, total),
+        Str|'</td><td>', /Core/Int/Show%.Show(entry.value),
+        Str|'</td><td><a href="/seq/', SeqBlocks(link(entry.seq)),
+        Str|'">', SeqNames(entry.seq),
+        Str|'</a></td></tr>']);
+    };
+
+    (List@<Entry@>) { M@<Unit@>; }
+    Rows = (List@<Entry@> entries) {
+      entries.?(nil: m.return(Unit));
+      Unit@ _ <- m.do(Row(entries.cons.head));
+      Rows(entries.cons.tail);
+    };
+
+    Unit@ _ <- m.do(Rows(table));
+    O.PutLine(out, Str|'</table>');
+  };
+
   (Profile@, IOStream@<M@>) { M@<Unit@>; }
   HandleConnection = (Profile@ profile, IOStream@<M@> ios) {
     # Get the start line
@@ -157,38 +214,16 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     });
 
     /Core/String/Eq%.Eq(Str|'/self', path).?(true: {
-      Unit@ _ <- m.do(O.PutStr(ios.out, Lines[
-        Str|'<h1>Frames by self time</h1>',
-        Str|'<table>',
-        Str|'<tr><th>%</th><th>Count</th><th>Frame</th></tr>']));
+      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Frames by self time</h1>'));
 
-      (Self.Entry@, Int@) { M@<Unit@>; }
-      Row = (Self.Entry@ entry, Int@ total) {
-        String@ name = Blocks.Lookup(profile.blocks, entry.block).just.name;
-        O.PutLine(ios.out, Strs[
-          Str|'<tr><td>', Percent(entry.value, total),
-          Str|'</td><td>', /Core/Int/Show%.Show(entry.value),
-          Str|'</td><td><a href="/seq/', /Core/Int/Show%.Show(entry.block),
-          Str|'">', name,
-          Str|'</a></td></tr>']);
-      };
+      Table@ table = Self.Query(profile);
 
-      (List@<Self.Entry@>, Int@) { M@<Unit@>; }
-      Rows = (List@<Self.Entry@> entries, Int@ total) {
-        entries.?(nil: m.return(Unit));
-        Unit@ _ <- m.do(Row(entries.cons.head, total));
-        Rows(entries.cons.tail, total);
-      };
-
-      List@<Self.Entry@> entries = Self.Query(profile);
-
-      Int@ total = /Core/List%.ForEach(entries, Int|0,
-        (Self.Entry@ e, Int@ b) {
+      Int@ total = /Core/List%.ForEach(table, Int|0,
+        (Entry@ e, Int@ b) {
           Add(e.value, b);
         });
 
-      Unit@ _ <- m.do(Rows(entries, total));
-      O.PutLine(ios.out, Str|'</table>');
+      Table(ios.out, profile, table, total, (Sequence@ s) { s; });
     });
 
     O.PutStr(ios.out, Lines[
