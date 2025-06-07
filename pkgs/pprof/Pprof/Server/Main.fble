@@ -57,7 +57,9 @@
 @ Entry@ = /Pprof/Query%.Entry@;
 @ Table@ = /Pprof/Query%.Table@;
 
+% Overall = /Pprof/Query/Overall%;
 % Self = /Pprof/Query/Self%;
+% Total = /Pprof/Query/Total%.Total;
 
 @ Args@ = *(
   Bool@ help,
@@ -213,16 +215,17 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       m.return(Unit);
     });
 
+    /Core/String/Eq%.Eq(Str|'/overall', path).?(true: {
+      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Frames by overall time</h1>'));
+      Table@ table = Overall.Query(profile);
+      Int@ total = Total(profile);
+      Table(ios.out, profile, table, total, (Sequence@ s) { s; });
+    });
+
     /Core/String/Eq%.Eq(Str|'/self', path).?(true: {
       Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Frames by self time</h1>'));
-
       Table@ table = Self.Query(profile);
-
-      Int@ total = /Core/List%.ForEach(table, Int|0,
-        (Entry@ e, Int@ b) {
-          Add(e.value, b);
-        });
-
+      Int@ total = Total(profile);
       Table(ios.out, profile, table, total, (Sequence@ s) { s; });
     });
 

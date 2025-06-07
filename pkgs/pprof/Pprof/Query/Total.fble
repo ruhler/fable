@@ -1,0 +1,19 @@
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Int = /Core/Int/Lit%.Int;
+
+@ Sample@ = /Pprof/Profile%.Sample@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+
+% MetricOf = /Pprof/Query/Util%.MetricOf;
+
+# Returns the total number of samples in a profile.
+(Profile@) { Int@; }
+Total = (Profile@ profile) {
+  /Core/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
+    Add(sum, MetricOf(sample.values));
+  });
+};
+
+@(Total);

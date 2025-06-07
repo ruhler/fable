@@ -26,6 +26,7 @@
 
 % Overall = /Pprof/Query/Overall%;
 % Self = /Pprof/Query/Self%;
+% Total = /Pprof/Query/Total%.Total;
 
 @ Entry@ = *(BlockId@ id, Block@ block);
 
@@ -56,6 +57,12 @@ Profile@ Profile = @(
     @(sequence: List[Int|1, Int|2, Int|4], values: List[Int|1, Int|25])]);
 
 Test@ Tests = TestSuite(Str|Query, List[
+  Test(Str|Total, (Unit@ _) {
+    Int@ got = Total(Profile);
+    Int@ wnt = Int|66;
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+  }),
+
   Test(Str|Self, (Unit@ _) {
     Table@ got = Self.Query(Profile);
     Table@ wnt = List[
