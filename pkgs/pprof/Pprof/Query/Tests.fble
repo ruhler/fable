@@ -1,0 +1,89 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Block@ = /Pprof/Profile%.Block@;
+@ Blocks@ = /Pprof/Profile%.Blocks@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+% Blocks = /Pprof/Profile%.Blocks;
+
+% Self = /Pprof/Query/Self%;
+
+@ Entry@ = *(BlockId@ id, Block@ block);
+
+(BlockId@, String@, String@, Int@, Int@) { Entry@; }
+B = (BlockId@ id, String@ name, String@ file, Int@ line, Int@ column) {
+  Entry@(id, Block@(name, file, line, column));
+};
+
+(List@<Entry@>) { Blocks@; }
+Inserts = (List@<Entry@> xs) {
+  xs.?(nil: Blocks.Empty<Block@>);
+  Entry@ entry = xs.cons.head;
+  Blocks.Insert(Inserts(xs.cons.tail), entry.id, entry.block);
+};
+
+Profile@ Profile = @(
+  metrics: List[Str|'calls', Str|'samples'],
+  blocks: Inserts[
+    B(Int|1, Str|'[root]', Str|'../lib/profile.c', Int|311, Int|0),
+    B(Int|2, Str|'foo', Str|'Foo.fble', Int|10, Int|14),
+    B(Int|3, Str|'bar', Str|'Bar.fble', Int|140, Int|2),
+    B(Int|4, Str|'sludge', Str|'Sludge.fble', Int|1400, Int|3)],
+  samples: List[
+    @(sequence: List[Int|1], values: List[Int|1, Int|1]),
+    @(sequence: List[Int|1, Int|2], values: List[Int|1, Int|15]),
+    @(sequence: List[Int|1, Int|2, Int|3], values: List[Int|1, Int|7]),
+    @(sequence: List[Int|1, Int|2, Int|3, Int|4], values: List[Int|1, Int|18]),
+    @(sequence: List[Int|1, Int|2, Int|4], values: List[Int|1, Int|25])]);
+
+Test@ Tests = TestSuite(Str|Query, List[
+  Test(Str|Self, (Unit@ _) {
+    List@<Self.Entry@> got = Self.Query(Profile);
+    List@<Self.Entry@> wnt = List[
+      @(block: Int|4, value: Int|43),
+      @(block: Int|2, value: Int|15),
+      @(block: Int|3, value: Int|7),
+      @(block: Int|1, value: Int|1)
+    ];
+
+    % EqEntry = (Self.Entry@ a, Self.Entry@ b) {
+      /Core/Int/Eq%.Eq(a.block, b.block).?(false: False);
+      /Core/Int/Eq%.Eq(a.value, b.value).?(false: False);
+      True;
+    };
+
+    % ShowEntry = (Self.Entry@ x) {
+      Strs[
+        /Core/Int/Show%.Show(x.block),
+        Str|':',
+        /Core/Int/Show%.Show(x.value)];
+    };
+
+    AssertEquals(
+      /Core/List/Eq%.Eq(EqEntry),
+      /Core/List/Show%.Show(ShowEntry),
+      wnt, got);
+  })
+]);
+
+@(Tests);

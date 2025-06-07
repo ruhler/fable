@@ -1,0 +1,67 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Last = /Core/List%.Last;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Metrics@ = /Pprof/Profile%.Metrics@;
+@ Profile@ = /Pprof/Profile%.Profile@;
+@ Sample@ = /Pprof/Profile%.Sample@;
+
+% M = /Core/Int/Map%.Map;
+
+
+@ Entry@ = *(BlockId@ block, Int@ value);
+
+# Get's the default metric value.
+# Currently hard coded to the last.
+# TODO: Take some argument as input to let the user choose which metric they
+# are interested in.
+(Metrics@) { Int@; } MetricOf = Last<Int@>;
+
+# @func[Query] Get blocks by self time.
+#  @arg[Profile@][profile] The profile to query.
+#  @returns[List@<Entry@>]
+#   The self time of each block in descending order
+(Profile@) { List@<Entry@>; } Query = (Profile@ profile) {
+  (Sample@, M.Map@<Int@>) { M.Map@<Int@>; }
+  Sample = (Sample@ sample, M.Map@<Int@> map) {
+    sample.sequence.?(nil: map);
+
+    BlockId@ block = Last(sample.sequence);
+    Int@ count = MetricOf(sample.values);
+    M.InsertWith(map, block, (Maybe@<Int@> mx) {
+      mx.?(just: Add(mx.just, count));
+      count;
+    });
+  };
+
+  (List@<Sample@>, M.Map@<Int@>) { M.Map@<Int@>; }
+  Samples = (List@<Sample@> samples, M.Map@<Int@> map) {
+    samples.?(nil: map);
+    Samples(samples.cons.tail, Sample(samples.cons.head, map));
+  };
+
+  M.Map@<Int@> counts = Samples(profile.samples, M.Empty<Int@>);
+
+  List@<Entry@> entries = M.ForEach(counts, Nil<Entry@>,
+    (BlockId@ block, Int@ value, List@<Entry@> l) {
+      Cons(@(block, value), l);
+    });
+
+  (Entry@, Entry@) { Bool@; } Le = (Entry@ a, Entry@ b) {
+    /Core/Int/Eq%.Le(b.value, a.value);
+  };
+
+  /Core/List/Sort%.Sort(Le, entries);
+};
+
+@(Entry@, Query);

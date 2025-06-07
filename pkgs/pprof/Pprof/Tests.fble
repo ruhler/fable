@@ -7,7 +7,8 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|Pprof, List[
-  /Pprof/Parser/Tests%.Tests
+  /Pprof/Parser/Tests%.Tests,
+  /Pprof/Query/Tests%.Tests
 ]);
 
 /Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));
