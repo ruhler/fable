@@ -27,7 +27,9 @@
   @definition Sequences
    Shows a breakdown of full (possibly canonicalized) callstacks by time
    spent. Gives a rough sense of what parts of the code are taking a lot of
-   time to focus optimization efforts on.
+   time to focus optimization efforts on. This view assumes that sequences are
+   already deduplicated in the profile, which is always the case for fble
+   generated profiles, but may not be the case in general.
 
   @definition Sequence
    Viewed when selecting a frame or specific sequence of frames. Shows a

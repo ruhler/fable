@@ -2,12 +2,6 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-fble-pprof:
-* encode sequence using sequence id instead of list of block ids?
-* test case of multiple different samples with the same sequence.
-  Where is deduping done?
-* add progress bar for pprof parsing?
-
 * Remove duplicate code for String StartsWith and List StartsWith?
   Same with Contains?
 
@@ -63,8 +57,6 @@ GC OnFree cleanup
   Could we have a much simpler syntax and say anyone with access to the .fble
   file can construct and deconstruct types, any with access to the .fble.@
   file can't?
-
-* Improve performance of fble pprof viewer enough to be useful.
 
 * Fbld Language
  - modularity

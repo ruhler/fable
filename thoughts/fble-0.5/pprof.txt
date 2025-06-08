@@ -1504,3 +1504,60 @@ needed.
 
 Okay, frames by overall time is a bit slow on md5. A little too long for
 convenience, but works if you wait.
+
+---
+
+How to encode sequences in the URL? What I'm using today is a comma separated
+list of block ids. The concern with that is:
+* Maybe we exceed the max url length? Is there such a thing?
+* Maybe it hurts performance to write out those long lists?
+* The URLs could be clunky for copy/paste.
+
+An alternative would be to represent a sequence as an offset and length into
+one of the full sequences. You only need three numbers for that. I think I
+could manage it efficiently if we tracked and generated the sequence ids
+through the queries. I don't want to deal with that now.
+
+So, I think this is a decent idea, but let's wait until there is a more
+compelling need to follow up on it. We could end up with a situation where URL
+links aren't compatible between versions of fble-pprof if we ever want to
+change, but it's so early days with fble-pprof, I can't imagine a real cost to
+a switch later on at this point.
+
+---
+
+fble-pprof currently assumes sequences are deduped and canonicalized. If
+that's not the case, then the 'full sequences' page doesn't give very useful
+information. All the other pages should work just fine.
+
+I don't think it's worth worrying about. Profiles today are primarily expected
+to be generated from fble, where they are already deduped and canonicalized.
+The extra cost of deduping is not worth the rare case of someone generating a
+pprof elsewhere and wanting to get an accurate view of full sequences.
+
+Let me put a note in the documentation, and otherwise leave things as is.
+
+---
+
+Do we want a progress bar?
+* We don't currently have a way to get file size. I could consider adding that
+  to stdio? Then we could accurately track how far into the file we are.
+* We could count sequences and show that count. No clear end, but you at least
+  get a sense of progress, and maybe you happen to know how many samples there
+  are from the start.
+* Implementation would be something like adding a progress output function to
+  the proto parsing monad? Or at a higher level. Best is probably to check
+  current bytes offset after every top level record.
+
+I think it would be easy to implement, not too bad an api, and probably not
+too expensive. If we could get the file size in advance. If it's compressed,
+we would want the uncompressed file size in advance?
+
+Let me hold off for now. If it becomes an issue, and performance optimization
+of fble-pprof doesn't help, then I can reconsider.
+
+---
+
+fble-pprof performance good enough to be useful? Yes. Especially for linux
+perf profiles, which I can scale up or down easily as needed.
+
