@@ -235,3 +235,47 @@ this anyway.
 Even shorter:
 
    A;C;E;C;A;C;E;C;C;E
+
+---
+
+PiDigits with --profile is blowing up memory use. Is this expected or a bug?
+It's hard for me to believe it would be expected. Surely we have a small
+number of repeated canonicalized traces, right?
+
+Review of the code:
+* It looks simple enough. Hard to believe anything crazy would be going on?
+
+Let's isolate the issue to PiDigits. Yes, I can easily reproduce with just
+PiDigits.
+
+Next step? Trace the profiling logic maybe?
+
+The stack depth is fine. On the order of 200 frames worst case.
+
+So we must be inserting lots of nodes somewhere. Let me see if I can track
+that down.
+
+This must be a canonicalization failure. I bet if I look at the sequences,
+we'll see clear failure of canonicalization.
+
+Canonicalization looks okay to me. It must be overwriting or replacing
+existing nodes? Binary search failure?
+
+Except I've managed to get hundreds of thousands of uniq, and apparently
+canonical sequences. Maybe this is a pathological case for profiling?
+
+Let me shrink the size of the benchmark, see if I can get a profile out of it
+and look at what I see.
+
+You know what I wonder? In Div, we have different branches for 1, 2p0, 2p1.
+That means there is a different path through Div for each different input
+argument. And that can easily blow up.
+
+I suspect things are working as intended, and we just have a blowup in number
+of different sequences because we trace all paths through functions like Div
+separately. For example, if we only had function level blocks instead of
+condition level blocks, the profiles wouldn't blow up like this.
+
+Or, put another way, increasing number of cases though which a recursive call
+is done beyond 1 can lead to an exponential blowup in profiling sequences,
+even with canonicalization.

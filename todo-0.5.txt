@@ -9,6 +9,7 @@ Things to consider doing for the fble-0.5 release.
 
 fble-pprof:
 * add pprof filename to overview.
+* encode sequence using sequence id instead of list of block ids?
 * test case of multiple different samples with the same sequence.
   Where is deduping done?
 * add progress bar for pprof parsing?
