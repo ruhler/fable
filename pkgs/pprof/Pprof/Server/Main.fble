@@ -183,8 +183,63 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     O.PutLine(out, Str|'</table>');
   };
 
-  (Profile@, IOStream@<M@>) { M@<Unit@>; }
-  HandleConnection = (Profile@ profile, IOStream@<M@> ios) {
+  Args@ args = GetArgs(argv, DefaultArgs);
+  args.help.?(true: {
+    Unit@ _ <- m.do(O.PutStr(stdio.out, /Pprof/Usage%));
+    m.return(True);
+  });
+
+  args.file.?(nil: {
+    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'missing input file'));
+    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    m.return(False);
+  });
+
+  args.error.?(cons: {
+    Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
+    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
+    m.return(False);
+  });
+
+  Maybe@<Server@<M@>> ms <- m.do(sockets.server(args.hostname, args.port));
+  ms.?(nothing: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to serve'));
+    m.return(False);
+  });
+
+  Server@<M@> s = ms.just;
+
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+    Str|'parsing ', args.file, Str|'...'
+  ]));
+
+  Maybe@<IStream@<M@>> fin <- m.do(stdio.read(args.file));
+  fin.?(nothing: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
+        Str|'unable to open ''', args.file, Str|''''
+    ]));
+    m.return(False);
+  });
+
+  Result@<Profile@> parsed <- m.do(Parse(fin.just, m));
+  parsed.?(error: {
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
+        Str|'error:', parsed.error
+    ]));
+    m.return(False);
+  });
+  
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+    Str|'serving at http://',
+    args.hostname,
+    Str|':',
+    /Core/Int/Show%.Show(args.port)
+  ]));
+
+  Profile@ profile = parsed.ok;
+
+  (IOStream@<M@>) { M@<Unit@>; }
+  HandleConnection = (IOStream@<M@> ios) {
     # Get the start line
     String@ start <- m.do(I.GetLine(ios.in));
 
@@ -220,6 +275,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Int@ total = Total.Total(profile);
       O.PutStr(ios.out, Lines[
         Str|'<h1>Overview</h1>',
+        Str|'Profile: ', args.file, Str|'<br />',
         Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />',
         Str|'Sequences: ', /Core/Int/Show%.Show(Length(profile.samples)), Str|'<br />']);
     });
@@ -275,62 +331,9 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Strs[StrE|'Version: ', version, StrE|' <br/>']]);
   };
 
-  Args@ args = GetArgs(argv, DefaultArgs);
-  args.help.?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, /Pprof/Usage%));
-    m.return(True);
-  });
-
-  args.file.?(nil: {
-    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'missing input file'));
-    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
-    m.return(False);
-  });
-
-  args.error.?(cons: {
-    Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
-    Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
-    m.return(False);
-  });
-
-  Maybe@<Server@<M@>> ms <- m.do(sockets.server(args.hostname, args.port));
-  ms.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to serve'));
-    m.return(False);
-  });
-
-  Server@<M@> s = ms.just;
-
-  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
-    Str|'parsing ', args.file, Str|'...'
-  ]));
-
-  Maybe@<IStream@<M@>> fin <- m.do(stdio.read(args.file));
-  fin.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
-        Str|'unable to open ''', args.file, Str|''''
-    ]));
-    m.return(False);
-  });
-
-  Result@<Profile@> parsed <- m.do(Parse(fin.just, m));
-  parsed.?(error: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
-        Str|'error:', parsed.error
-    ]));
-    m.return(False);
-  });
-  
-  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
-    Str|'serving at http://',
-    args.hostname,
-    Str|':',
-    /Core/Int/Show%.Show(args.port)
-  ]));
-
   M@<Unit@> Serve = {
     IOStream@<M@> ios <- m.do(s);
-    Unit@ _ <- m.do(HandleConnection(parsed.ok, ios));
+    Unit@ _ <- m.do(HandleConnection(ios));
     Serve;
   };
 

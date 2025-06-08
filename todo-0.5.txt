@@ -2,13 +2,7 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Can we clean up the old Run API for Stdio Pure?
-  Make it easier to use somehow?
-
-* --profile memory use blows up on PiDigits benchmark.
-
 fble-pprof:
-* add pprof filename to overview.
 * encode sequence using sequence id instead of list of block ids?
 * test case of multiple different samples with the same sequence.
   Where is deduping done?
@@ -150,3 +144,6 @@ Tutorials:
   Seen when doing ninja check after clean build after ninja.
   Seen again doing ninja check after touching build.tcl.
   Seen pretty regularly when doing full builds, to be honest.
+
+* --profile memory use blows up on PiDigits benchmark.
+
