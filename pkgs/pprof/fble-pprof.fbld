@@ -1,0 +1,58 @@
+@usage[fble-pprof] pprof viewer
+ @synopsis
+ @ @l[fble-pprof] \[@a[OPTION]...\] @a[FILE]
+ 
+ @description
+  Launches an http server for viewing the contents of pprof @a[FILE]. The
+  pprof file should be an uncompressed, binary encoded proto/profile.proto
+  format as specified in the @l{github.com/google/pprof} project and
+  @l{https://protobuf.dev/programming-guides/encoding/}.
+
+  The following views are available from the http server once launched:
+
+  @definition Overview
+   Shows high level information about the profile, such as number of samples
+   and number of sequences. Page loading performance scales with the number of
+   sequences.
+
+  @definition Overall
+   Shows a breakdown of frames by overall time spent with the frame somewhere
+   in the call stack. Typical usage is to identify any frames with
+   unexpectedly large overall time spent and focus on optimization there.
+
+  @definition Self
+   Shows a breakdown of frames by self time spent in the frame. Typical usage
+   is to focus on optimization of the frames with most self time.
+
+  @definition Sequences
+   Shows a breakdown of full (possibly canonicalized) callstacks by time
+   spent. Gives a rough sense of what parts of the code are taking a lot of
+   time to focus optimization efforts on.
+
+  @definition Sequence
+   Viewed when selecting a frame or specific sequence of frames. Shows a
+   breakdown of frames going into this sequence and leading from the sequence.
+   Typical usage is to identify the most relevant callers and callees of a
+   sequence to focus efforts on reducing those calls and/or optimizing the
+   callees.
+
+ @options
+  @subsection[Generic Program Information]
+   @opt[@l[-h], @l[--help]]
+   @ display this help text and exit
+
+  @subsection[Http Server Options]
+   @opt[@l[--host] @a[hostname]]
+   @ the hostname to use for the http server. Defaults to localhost.
+
+   @opt[@l[--port] @a[port]]
+   @ the port to use for the http server. Defaults to 8123.
+ 
+ @exitstatus
+  @def[0] Success.
+  @def[1] Error.
+ 
+ @examples
+  @ex fble-pprof foo.prof
+   Starts an http server for viewing the uncompressed pprof profile
+   @l{foo.prof}.

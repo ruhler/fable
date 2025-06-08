@@ -2,13 +2,16 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Change Stdio Pure Run API to match /Core/Stream/IStream/Pure%.Run API.
+  Where the API provides the monad itself?
+
 * --profile memory use blows up on PiDigits benchmark.
 
 fble-pprof:
-* write usage, use it for man page and help text.
 * add pprof filename to overview.
 * test case of multiple different samples with the same sequence.
   Where is deduping done?
+* add progress bar for pprof parsing?
 
 * Remove duplicate code for String StartsWith and List StartsWith?
   Same with Contains?
@@ -31,7 +34,6 @@ fble-pprof:
 
 * Add an fble-pprof benchmark to fble-benchmark?
   One based on md5 --profile is probably good, for parsing.
-* Make use of /Core/Stream/IStream/Pure%.Run more places where it makes sense.
 
 * Update all the user documentation (book, profiling guide) on how to profile.
 

@@ -277,7 +277,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   Args@ args = GetArgs(argv, DefaultArgs);
   args.help.?(true: {
-    Unit@ _ <- m.do(O.PutStr(stdio.out, StrE|'<TODO: usage info here>\n'));
+    Unit@ _ <- m.do(O.PutStr(stdio.out, /Pprof/Usage%));
     m.return(True);
   });
 

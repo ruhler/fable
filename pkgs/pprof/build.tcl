@@ -1,5 +1,8 @@
 namespace eval "pkgs/pprof" {
-  pkg pprof [list core network] "" ""
+
+  fbld_help_fble_usage $::b/pkgs/pprof/Pprof/Usage.fble $::s/pkgs/pprof/fble-pprof.fbld
+
+  pkg pprof [list core network] $::b/pkgs/pprof/Pprof/Usage.fble ""
 
   set ldflags ""
   if {[string first "_NT" [exec uname -s]] != -1} {
@@ -8,6 +11,8 @@ namespace eval "pkgs/pprof" {
   }
 
   # fble-pprof program.
+  fbld_man_usage $::b/pkgs/pprof/fble-pprof.1 $::s/pkgs/pprof/fble-pprof.fbld
+  install $::b/pkgs/pprof/fble-pprof.1 $::config::mandir/man1/fble-pprof.1
   stdio $::b/pkgs/pprof/fble-pprof "/Pprof/Server/Main%" "network pprof" "$ldflags"
   install $::b/pkgs/pprof/fble-pprof $::config::bindir/fble-pprof
 
