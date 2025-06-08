@@ -5,10 +5,10 @@ Things to consider doing for the fble-0.5 release.
 * --profile memory use blows up on PiDigits benchmark.
 
 fble-pprof:
+* write usage, use it for man page and help text.
 * add pprof filename to overview.
 * test case of multiple different samples with the same sequence.
   Where is deduping done?
-* Remove 'start-line' logging?
 
 * Remove duplicate code for String StartsWith and List StartsWith?
   Same with Contains?

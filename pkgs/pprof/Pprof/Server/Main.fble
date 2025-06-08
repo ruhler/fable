@@ -187,7 +187,6 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   HandleConnection = (Profile@ profile, IOStream@<M@> ios) {
     # Get the start line
     String@ start <- m.do(I.GetLine(ios.in));
-    Unit@ _ <- m.do(O.PutStr(stdio.out, Strs[Str|'start-line: ', start]));
 
     # Skip past the request headers. We don't care about those.
     M@<Unit@> SkipHeaders = {
