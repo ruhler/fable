@@ -16,8 +16,8 @@
 % Monad = /Core/Stdio/Pure%.Monad;
 % Stdio = /Core/Stdio/Pure%.Stdio;
 <@>% Run = /Core/Stdio/Pure%.Run;
-<@>% PureResultEq = /Core/Stdio/Pure/Eq%.PureResultEq;
-<@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResultShow;
+<@>% PureResultEq = /Core/Stdio/Pure/Eq%.PureResult;
+<@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResult;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

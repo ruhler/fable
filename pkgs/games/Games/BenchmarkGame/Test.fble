@@ -1,6 +1,4 @@
 
-
-@ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
@@ -13,14 +11,8 @@
 
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
-<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
-@ PureState@ = /Core/Stdio/Pure%.PureState@;
-% Monad = /Core/Stdio/Pure%.Monad;
-% Stdio = /Core/Stdio/Pure%.Stdio;
-<@>% Run = /Core/Stdio/Pure%.Run;
-<@>% PureResultEq = /Core/Stdio/Pure/Eq%.PureResultEq;
-<@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResultShow;
+@ MainResult@ = /Core/Stdio/Pure%.MainResult@;
+% RunMain = /Core/Stdio/Pure%.RunMain;
 
 @ String@ = /Core/String%.String@;
 
@@ -34,16 +26,18 @@ Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {
   List@<Int@> expected_bytes = /Core/List%.Map(expected, /Core/Char/Ascii%.Ord);
 
   /Core/Test%.Test(name, (Unit@ _) {
-    PureResult@<Bool@> want = PureResult@<Bool@>(
-      PureState@(Nil<Int@>, expected_bytes, Nil<Int@>), True);
+    MainResult@ want = @(
+      exit: True,
+      in: Nil<Int@>,
+      out: expected_bytes,
+      err: Nil<Int@>
+    );
 
-    PureResult@<Bool@> got = Run(
-      game<Pure@>(Stdio, Monad, List[n]),
-      input_bytes);
+    MainResult@ got = RunMain(game, List[n], input_bytes);
 
     AssertEquals(
-      PureResultEq(/Core/Bool/Eq%.Eq),
-      PureResultShow(/Core/Bool/Show%.Show),
+      /Core/Stdio/Pure/Eq%.MainResult,
+      /Core/Stdio/Pure/Show%.MainResult,
       want, got);
   });
 };

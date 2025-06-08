@@ -10,21 +10,30 @@
 
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
 @ PureState@ = /Core/Stdio/Pure%.PureState@;
+@ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 
-Eq@<List@<Int@>> IntsEq = /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq);
+Eq@<List@<Int@>> Ints = /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq);
 
-Eq@<PureState@> PureStateEq = (PureState@ a, PureState@ b) {
-  IntsEq(a.in, b.in).?(false: False);
-  IntsEq(a.out, b.out).?(false: False);
-  IntsEq(a.err, b.err).?(false: False);
+Eq@<PureState@> PureState = (PureState@ a, PureState@ b) {
+  Ints(a.in, b.in).?(false: False);
+  Ints(a.out, b.out).?(false: False);
+  Ints(a.err, b.err).?(false: False);
   True;
 };
 
 <@ A@>(Eq@<A@>) { Eq@<PureResult@<A@>>; }
-PureResultEq = <@ A@>(Eq@<A@> eq, PureResult@<A@> a, PureResult@<A@> b) {
-  PureStateEq(a.s, b.s).?(false: False);
+PureResult = <@ A@>(Eq@<A@> eq, PureResult@<A@> a, PureResult@<A@> b) {
+  PureState(a.s, b.s).?(false: False);
   eq(a.x, b.x).?(false: False);
   True;
 };
 
-@(PureStateEq, PureResultEq);
+Eq@<MainResult@> MainResult = (MainResult@ a, MainResult@ b) {
+  /Core/Bool/Eq%.Eq(a.exit, b.exit).?(false: False);
+  Ints(a.in, b.in).?(false: False);
+  Ints(a.out, b.out).?(false: False);
+  Ints(a.err, b.err).?(false: False);
+  True;
+};
+
+@(PureState, PureResult, MainResult);

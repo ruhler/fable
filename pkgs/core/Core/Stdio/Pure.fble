@@ -1,4 +1,6 @@
 
+@ Bool@ = /Core/Bool%.Bool@;
+
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
@@ -12,6 +14,7 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
@@ -85,5 +88,24 @@ Run = <@ A@>(Pure@<A@> m, List@<Int@> in) {
       err: /Core/List%.Reverse(result.s.err)));
 };
 
-@(Pure@, PureState@, PureResult@, Monad, Stdio, Run);
+# @struct[MainResult@] Result of running a pure Main@ program.
+#  @field[Bool@][exit] The exit status.
+#  @field[List@<Int@>][in] The remaining unconsumed input bytes.
+#  @field[List@<Int@>][out] Bytes output to stdout.
+#  @field[List@<Int@>][err] Bytes output to stderr.
+@ MainResult@ = *(
+  Bool@ exit,
+  List@<Int@> in,
+  List@<Int@> out,
+  List@<Int@> err
+);
+
+(Main@, List@<String@>, List@<Int@>) { MainResult@; }
+RunMain = (Main@ main, List@<String@> args, List@<Int@> in) {
+  PureResult@<Bool@> got = Run(main<Pure@>(Stdio, Monad, args), in);
+  @(exit: got.x, in: got.s.in, out: got.s.out, err: got.s.err);
+};
+
+@(Pure@, PureState@, PureResult@, Monad, Stdio, Run,
+  MainResult@, RunMain);
 

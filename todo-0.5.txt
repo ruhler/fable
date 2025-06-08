@@ -2,8 +2,8 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Change Stdio Pure Run API to match /Core/Stream/IStream/Pure%.Run API.
-  Where the API provides the monad itself?
+* Use Stdio Pure RunMain in more places.
+  Remove use of the old 'Run' API if it's no longer needed?
 
 * --profile memory use blows up on PiDigits benchmark.
 

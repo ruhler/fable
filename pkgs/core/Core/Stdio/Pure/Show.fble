@@ -1,13 +1,14 @@
 
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
 @ PureState@ = /Core/Stdio/Pure%.PureState@;
+@ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
-Show@<PureState@> PureStateShow = (PureState@ a) {
+Show@<PureState@> PureState = (PureState@ a) {
   Strs[
     Str|'In: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
     Str|', Out: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
@@ -15,8 +16,16 @@ Show@<PureState@> PureStateShow = (PureState@ a) {
 };
 
 <@ A@>(Show@<A@>) { Show@<PureResult@<A@>>; }
-PureResultShow = <@ A@>(Show@<A@> show, PureResult@<A@> a) {
-  Strs[PureStateShow(a.s), Str|', Result: ', show(a.x)];
+PureResult = <@ A@>(Show@<A@> show, PureResult@<A@> a) {
+  Strs[PureState(a.s), Str|', Result: ', show(a.x)];
 };
 
-@(PureStateShow, PureResultShow);
+Show@<MainResult@> MainResult = (MainResult@ a) {
+  Strs[
+    Str|'Exit: ', /Core/Bool/Show%.Show(a.exit),
+    Str|'In: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.in),
+    Str|', Out: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.out),
+    Str|', Err: ', /Core/List/Show%.Show(/Core/Int/Show%.Show, a.err)];
+};
+
+@(PureState, PureResult, MainResult);
