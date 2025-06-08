@@ -10,12 +10,10 @@
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;
 
-<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
-<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
-% Monad = /Core/Stdio/Pure%.Monad;
-% Stdio = /Core/Stdio/Pure%.Stdio;
-<@>% Run = /Core/Stdio/Pure%.Run;
+@ MainResult@ = /Core/Stdio/Pure%.MainResult@;
+% RunMain = /Core/Stdio/Pure%.RunMain;
 
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -25,11 +23,10 @@
 % Fail = /Core/Test%.Fail;
 % ExpectedFail = /Core/Test%.ExpectedFail;
 
+% Run = /Core/Test/Stdio%.Run;
+
 @ Unit@ = /Core/Unit%.Unit@;
 
-% Stdout = Stdio.out;
-
-% RunTests = /Core/Test/Run%<Pure@>(Monad, Stdout).RunTests;
 
 Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });
 Test@ fail = Test(Str|fail, (Unit@ _) { Fail|Failed; });
@@ -37,26 +34,26 @@ Test@ xfail = Test(Str|xfail, (Unit@ _) { ExpectedFail; });
 
 Test@ Tests = TestSuite(Str|'Test', List[
   Test(Str|'RunTest.pass_passes', (Unit@ _) {
-    PureResult@<Bool@> result = Run(RunTests(Str|'', pass), Nil<Int@>);
+    MainResult@ result = RunMain(Run(pass), Nil<String@>, Nil<Int@>);
 
     Bool@ wnt = True;
-    Bool@ got = result.x;
+    Bool@ got = result.exit;
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'RunTest.fail_fails', (Unit@ _) {
-    PureResult@<Bool@> result = Run(RunTests(Str|'', fail), Nil<Int@>);
+    MainResult@ result = RunMain(Run(fail), Nil<String@>, Nil<Int@>);
 
     Bool@ wnt = False;
-    Bool@ got = result.x;
+    Bool@ got = result.exit;
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'RunTest.xfail_passes', (Unit@ _) {
-    PureResult@<Bool@> result = Run(RunTests(Str|'', xfail), Nil<Int@>);
+    MainResult@ result = RunMain(Run(xfail), Nil<String@>, Nil<Int@>);
 
     Bool@ wnt = True;
-    Bool@ got = result.x;
+    Bool@ got = result.exit;
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
@@ -67,10 +64,10 @@ Test@ Tests = TestSuite(Str|'Test', List[
       Test(Str|c, (Unit@ _) { ExpectedFail; }),
       Test(Str|c, (Unit@ _) { Pass; })]);
 
-    PureResult@<Bool@> result = Run(RunTests(Str|'', suite), Nil<Int@>);
+    MainResult@ result = RunMain(Run(suite), Nil<String@>, Nil<Int@>);
 
     Bool@ wnt = True;
-    Bool@ got = result.x;
+    Bool@ got = result.exit;
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
@@ -81,10 +78,10 @@ Test@ Tests = TestSuite(Str|'Test', List[
       Test(Str|c, (Unit@ _) { ExpectedFail; }),
       Test(Str|c, (Unit@ _) { Pass; })]);
 
-    PureResult@<Bool@> result = Run(RunTests(Str|'', suite), Nil<Int@>);
+    MainResult@ result = RunMain(Run(suite), Nil<String@>, Nil<Int@>);
 
     Bool@ wnt = False;
-    Bool@ got = result.x;
+    Bool@ got = result.exit;
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })
 ]);

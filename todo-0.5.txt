@@ -2,8 +2,8 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Use Stdio Pure RunMain in more places.
-  Remove use of the old 'Run' API if it's no longer needed?
+* Can we clean up the old Run API for Stdio Pure?
+  Make it easier to use somehow?
 
 * --profile memory use blows up on PiDigits benchmark.
 
