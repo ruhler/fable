@@ -151,7 +151,7 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 // FbleProfilesTestMain -- see documentation in profiles-test.h
 int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
-  FbleProfile* profile = FbleNewProfile(true);
+  FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   FILE* profile_output_file = NULL;
   FbleValue* result = NULL;
@@ -167,12 +167,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
     return status;
   }
 
-  // Dump the profile to make it easier to develop and debug the tests that
-  // follow.
-  if (profile_output_file == NULL) {
-    profile_output_file = stdout;
-  }
-  FbleOutputProfile(profile_output_file, profile);
+  assert(profile->enabled && "--profile must be passed for this test");
 
   // Each of these top level let bindings were executed once when the main
   // program ran.

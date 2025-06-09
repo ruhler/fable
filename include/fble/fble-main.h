@@ -64,7 +64,7 @@ typedef enum {
  *   @item
  *    Evaluates the main module, with whatever side effects that has on heap
  *    and profile.
- *   @i Enables the profile if requested.
+ *   @i Enables or disables profiling as requested.
  *   @i Sets profile_output_file and result based on results.
  */
 FbleMainStatus FbleMain(

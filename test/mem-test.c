@@ -93,7 +93,7 @@ int FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   // Use a profile during tests to ensure memory behavior works properly with
   // profiling turned on.
-  FbleProfile* profile = FbleNewProfile(true);
+  FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   FILE* profile_output_file = NULL;
   FbleValue* func = NULL;

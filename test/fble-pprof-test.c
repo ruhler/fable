@@ -19,7 +19,7 @@
  */
 int main(int argc, char* argv[])
 {
-  FbleProfile* profile = FbleNewProfile(true);
+  FbleProfile* profile = FbleNewProfile();
 
   FbleName a_name = {
     .name = FbleNewString("foo"),

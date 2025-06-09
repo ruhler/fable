@@ -289,7 +289,7 @@ static void QuerySequences(FbleProfile* profile, FbleProfileQuery* query, void* 
 }
 
 // See documentation in fble-profile.h.
-FbleProfile* FbleNewProfile(bool enabled)
+FbleProfile* FbleNewProfile()
 {
   Profile* profile = FbleAlloc(Profile);
 
@@ -302,7 +302,7 @@ FbleProfile* FbleNewProfile(bool enabled)
   FbleInitVector(profile->root->children);
 
   FbleInitVector(profile->_base.blocks);
-  profile->_base.enabled = enabled;
+  profile->_base.enabled = true;
 
   FbleName root = {
     .name = FbleNewString("[root]"),
@@ -313,18 +313,6 @@ FbleProfile* FbleNewProfile(bool enabled)
   assert(root_id == RootBlockId);
 
   return &profile->_base;
-}
-
-// See documentation in fble-profile.h
-void FbleEnableProfiling(FbleProfile* profile)
-{
-  profile->enabled = true;
-}
-
-// See documentation in fble-profile.h
-void FbleDisableProfiling(FbleProfile* profile)
-{
-  profile->enabled = false;
 }
 
 // See documentation in fble-profile.h.

@@ -23,7 +23,7 @@ extern FblePreloadedModule _Fble_2f_SpecTests_2f_Builtin_25_;
 // FbleTestMain -- see documentation in test.h
 int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
-  FbleProfile* profile = FbleNewProfile(false);
+  FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   FILE* profile_output_file = NULL;
   FbleValue* result = NULL;

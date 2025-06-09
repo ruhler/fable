@@ -476,7 +476,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   Args app_args = { .fps = false, .driver = NULL };
 
-  FbleProfile* profile = FbleNewProfile(false);
+  FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   FILE* profile_output_file = NULL;
   FbleValue* func = NULL;

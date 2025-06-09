@@ -201,7 +201,7 @@ void DumpProfile(FbleProfile* profile, int line)
 static void ReplaceN(size_t n)
 {
   // <root> -> 1 -> 1 -> ... -> 1
-  FbleProfile* profile = FbleNewProfile(true);
+  FbleProfile* profile = FbleNewProfile();
   FbleAddBlockToProfile(profile, Name("_1")); 
 
   FbleProfileThread* thread = FbleNewProfileThread(profile);
@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 -> 3
     //                  -> 4
     //             -> 3
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
     FbleAddBlockToProfile(profile, Name("_3")); 
@@ -288,7 +288,7 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 => 3 -> 4
     //                       => 5
     //             -> 6
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
     FbleAddBlockToProfile(profile, Name("_3")); 
@@ -332,7 +332,7 @@ int main(int argc, char* argv[])
   {
     // Test a profile with self recursion
     // <root> -> 1 -> 2 -> 2 -> 2 -> 3
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
     FbleAddBlockToProfile(profile, Name("_3")); 
@@ -369,7 +369,7 @@ int main(int argc, char* argv[])
   {
     // Test a profile with self recursion and tail calls
     // <root> -> 1 => 2 => 2 => 2 => 3
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
     FbleAddBlockToProfile(profile, Name("_3")); 
@@ -402,7 +402,7 @@ int main(int argc, char* argv[])
   {
     // Test a profile with mutual recursion
     // <root> -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
     FbleAddBlockToProfile(profile, Name("_3")); 
@@ -458,7 +458,7 @@ int main(int argc, char* argv[])
     // Test multithreaded profiling.
     // a: <root> -> 1 -> 2
     // b: <root> -> 1 -> 2
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
 
@@ -500,7 +500,7 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 -> 3
     //                  -> 4
     //             -> 3
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleProfileThread* thread = FbleNewProfileThread(profile);
 
     FbleAddBlockToProfile(profile, Name("_1")); 
@@ -545,7 +545,8 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 -> 3
     //                  -> 4
     //             -> 3
-    FbleProfile* profile = FbleNewProfile(false);
+    FbleProfile* profile = FbleNewProfile();
+    profile->enabled = false;
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
     FbleAddBlockToProfile(profile, Name("_3")); 
@@ -580,7 +581,7 @@ int main(int argc, char* argv[])
     // Test to exercise node sorted insertion.
     // <root> -> 1 -> 4, 3, 5, 2, 6, 1
     //             -> 1, 2, 3, 5, 6
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("_1")); 
     FbleAddBlockToProfile(profile, Name("_2")); 
     FbleAddBlockToProfile(profile, Name("_3")); 
@@ -625,7 +626,7 @@ int main(int argc, char* argv[])
   {
     // Test a profile with a sequence with a somewhat ambiguous
     // canonicalization: ABCBABCBBC
-    FbleProfile* profile = FbleNewProfile(true);
+    FbleProfile* profile = FbleNewProfile();
     FbleAddBlockToProfile(profile, Name("A")); 
     FbleAddBlockToProfile(profile, Name("B")); 
     FbleAddBlockToProfile(profile, Name("C")); 

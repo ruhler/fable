@@ -117,7 +117,7 @@ int main(int argc, const char* argv[])
   size_t name_capacity = 8;
   char* name = FbleAllocArray(char, name_capacity);
 
-  FbleProfile* profile = FbleNewProfile(true);
+  FbleProfile* profile = FbleNewProfile();
   FbleProfileThread* thread = FbleNewProfileThread(profile);
 
   FILE* fin = stdin;

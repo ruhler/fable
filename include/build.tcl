@@ -67,7 +67,7 @@ namespace eval "include" {
     fble-profile.h {
       FbleBlockIdV
       FbleProfile
-      FbleNewProfile FbleEnableProfiling FbleDisableProfiling
+      FbleNewProfile
       FbleAddBlockToProfile FbleAddBlocksToProfile
       FbleFreeProfile
       FbleNewProfileThread FbleFreeProfileThread

@@ -197,9 +197,7 @@ FbleMainStatus FbleMain(
     module_arg.module_path = FbleCopyModulePath(preloaded->path);
   }
 
-  if (fprofile != NULL) {
-    FbleEnableProfiling(profile);
-  }
+  profile->enabled = (fprofile != NULL);
 
   FbleStringV deps;
   FbleInitVector(deps);

@@ -54,17 +54,17 @@ typedef struct {
  * @func[FbleNewProfile] Creates a new profile.
  *  Users are encouraged to create new profiles regardless of whether
  *  profiling is enabled or disabled, so that profiling will be available
- *  later if desired.
+ *  later if desired. Profiling on a profile can be disabled by setting the
+ *  enabled field to falls.
  *
- *  @arg[bool][enabled] True to enable profiling, false to disable profiling.
  *  @returns FbleProfile*
- *   A new profile with a single root block.
+ *   A new profile with a single root block and profiling enabled.
  *
  *  @sideeffects
  *   Allocates a new profile that should be freed with FbleFreeProfile() when
  *   no longer in use.
  */
-FbleProfile* FbleNewProfile(bool enabled);
+FbleProfile* FbleNewProfile();
 
 /**
  * @func[FbleAddBlockToProfile] Adds a block to the profile.
@@ -103,22 +103,6 @@ FbleBlockId FbleAddBlockToProfile(FbleProfile* profile, FbleName name);
  *   Adds blocks to the profile.
  */
 FbleBlockId FbleAddBlocksToProfile(FbleProfile* profile, FbleNameV names);
-
-/**
- * @func[FbleEnableProfiling] Turn on profiling for the given profile.
- *  @arg[FbleProfile*][profile] The profile to enable profiling on.
- *  @sideeffects Enables profiling on the profile.
- */
-void FbleEnableProfiling(FbleProfile* profile);
-
-/**
- * @func[FbleDisableProfiling] Turn off profiling for the given profile.
- *  @arg[FbleProfile*][profile] The profile to disable profiling on.
- *  @sideeffects
- *   Turns off profiling on the profile. Profiling operations involving the
- *   given profile will turn into no-ops.
- */
-void FbleDisableProfiling(FbleProfile* profile);
 
 /**
  * @func[FbleFreeProfile] Frees a profile.

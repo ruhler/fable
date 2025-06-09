@@ -140,3 +140,13 @@ Cases for enable/disable:
 There is a single use of FbleEnableProfiling. It could easily be inlined.
 There are no uses of FbleDisableProfiling.
 
+We have disable by default, enable implicitly. Could we switch to enable by
+default, disable implicitly? Yes. I think we could. Then no need to pass an
+argument to new profile.
+
+I think that makes the most sense. No need for enable/disable APIs, and always
+enable by default.
+
+The one tricky bit is test/profiles-test, which uses FbleMain, but doesn't
+currently explicitly enable profiling.
+
