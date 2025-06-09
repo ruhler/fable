@@ -2,8 +2,12 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Remove duplicate code for String StartsWith and List StartsWith?
-  Same with Contains?
+* Improve performance of fble-pprof?
+
+* Add an fble-pprof benchmark to fble-benchmark?
+  One based on md5 --profile is probably good, for parsing.
+
+* Fix github windows failures.
 
 * Remove unnecessary FbleProfile apis now that blocks and enabled fields are
   public again.
@@ -12,17 +16,10 @@ Things to consider doing for the fble-0.5 release.
  - Have a sane default and let callers overwrite with explicit enable/disable
    function calls instead?
 * Avoid emitting 'call' counts in pprof for fble-perf-profile?
-* Is FbleLookupProfileBlockId a bad API?
-  Like, passing const char* to lookup instead of an FbleName?
-  Maybe don't provide it as an API, have the tests iterate over block ids
-  instead?
 
 * Having the line number 311 for [root] node in test/fble-pprof-test.want.txt
   is going to be annoying. Mark my words. Any way we can make the test less
   likely to break when we make any change to profile.c?
-
-* Add an fble-pprof benchmark to fble-benchmark?
-  One based on md5 --profile is probably good, for parsing.
 
 * Update all the user documentation (book, profiling guide) on how to profile.
 
@@ -96,6 +93,7 @@ GC OnFree cleanup
  - More benchmark games.
  - Implement an image viewer.
  - bitcoin miner
+ - gzip, gunzip.
 
 * Fble Language Features
  - Add some way to catch or recover from errors at runtime?

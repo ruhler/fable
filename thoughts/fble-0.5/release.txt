@@ -73,3 +73,56 @@ use it for streams.
 The fble-pprof viewer covers my fble application work for the release.
 
 That means we can start the release burndown.
+
+---
+
+* Add an fble-pprof benchmark to fble-benchmark?
+
+The hardest part to deal with is embedding so much data as the input file for
+use in pure fble code.
+
+The md5.prof file I have that takes about 2 minutes to parse is 3.1M large.
+And we take up like half the memory on my raspberri pi. It's 8M in hex. gzip
+compressed and then put in hex it goes to 630K.
+
+It's too much data to be easily used in a benchmark, and I suspect stdio IO
+monad contributes a fair amount to the performance cost. Pulling it into pure
+computation seems unfair in that case?
+
+All the other benchmarks have relatively small inputs and run a while.
+
+I don't see a feasible way to implement a pure fble-pprof benchmark. The
+quantity of input data needed to get decently long runtimes is too high.
+
+As it stands, I can't easily look at a --profile for fble-pprof, because
+there's no clean way to exit the server. Maybe I could compromise: add a
+--benchmark option to the server that runs a few fixed queries and then exits?
+It would be a shame not to have that as part of fble-bench though.
+
+---
+
+* Remove duplicate code for String StartsWith and List StartsWith?
+
+Don't bother. The costs/benefits of sharing or duplicating the code are small.
+We have test cases for them both, we can leave it however we want. I don't see
+sufficient motivation to spend the effort to change it one way or the other.
+
+---
+
+* Remove unnecessary FbleProfile apis now that blocks and enabled fields are
+  public again.
+
+A function API has more value than direct access to FbleProfile, because it
+is less likely to have to change in the future. Any FbleProfile API I have
+today that makes sense I should keep, even if it isn't necessary.
+
+Specifically:
+* FbleEnableProfiling, FbleDisableProfiling - keep
+* FbleProfileBlockName - 
+  I'm inclined to drop, because the lifetime of the return result is unclear.
+* FbleLookupProfileBlockId - drop
+  It doesn't make sense to look up by char*, we need to lookup by name, right?
+  Although, I'm not sure we could distinguish by name in the output profile.
+
+Let's see how much work it will be to drop the last two APIs.
+

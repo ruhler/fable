@@ -7,6 +7,10 @@ Things to consider doing for the fble-0.6 release.
   functions.
 
 * Make programs run twice as fast.
+ - Use native stack for stack allocations.
+ - Inline FbleCall into aarch64 backend.
+ - Specialize call logic based on what we can figure out statically in terms
+   of number of args expected and tail/non-tail possibilities.
 
 * Implement deflate algorithm.
  - Change --profile to produce gzip compressed profiles (doesn't need to be

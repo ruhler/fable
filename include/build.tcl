@@ -73,7 +73,7 @@ namespace eval "include" {
       FbleNewProfileThread FbleFreeProfileThread
       FbleProfileSample
       FbleProfileEnterBlock FbleProfileReplaceBlock FbleProfileExitBlock
-      FbleProfileBlockName FbleLookupProfileBlockId
+      FbleProfileBlockName
       FbleProfileQuery FbleQueryProfile FbleOutputProfile
     }
     fble-program.h {

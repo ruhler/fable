@@ -6,7 +6,6 @@
 #include <assert.h>   // for assert
 #include <inttypes.h> // for PRIu64
 #include <stdbool.h>  // for bool
-#include <string.h>   // for strcmp
 
 #include <fble/fble-alloc.h>
 #include <fble/fble-name.h>
@@ -308,7 +307,7 @@ FbleProfile* FbleNewProfile(bool enabled)
   FbleName root = {
     .name = FbleNewString("[root]"),
     .space = FBLE_NORMAL_NAME_SPACE,
-    .loc = { .source = FbleNewString(__FILE__), .line = __LINE__, .col = 0 }
+    .loc = { .source = FbleNewString(__FILE__), .line = 311, .col = 0 }
   };
   FbleBlockId root_id = FbleAddBlockToProfile(&profile->_base, root);
   assert(root_id == RootBlockId);
@@ -434,17 +433,6 @@ FbleName* FbleProfileBlockName(FbleProfile* profile, FbleBlockId id)
     return profile->blocks.xs + id;
   }
   return NULL;
-}
-
-// See documentation in fble-profile.h
-FbleBlockId FbleLookupProfileBlockId(FbleProfile* profile, const char* name)
-{
-  for (size_t i = 0; i < profile->blocks.size; ++i) {
-    if (strcmp(name, profile->blocks.xs[i].name->str) == 0) {
-      return i;
-    }
-  }
-  return 0;
 }
 
 // See documentation in fble-profile.h

@@ -22,6 +22,8 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
+static FbleBlockId LookupBlockId(FbleProfile* profile, const char* name);
+
 /**
  * @struct[CountQueryData] User data for CountQuery.
  *  @field[FbleBlockId][id] Id of the block to count.
@@ -49,6 +51,23 @@ typedef struct {
 
 static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
+
+/**
+ * @func[LookupBlockId] Looks up the block id of a named block.
+ *  @arg[FbleProfile*][profile] The profile to look in.
+ *  @arg[const char*][name] The name of the block to look up.
+ *  @returns[FbleBlockId] The id of the block, 0 if not found.
+ *  @sideeffects None
+ */
+FbleBlockId LookupBlockId(FbleProfile* profile, const char* name)
+{
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    if (strcmp(name, profile->blocks.xs[i].name->str) == 0) {
+      return i;
+    }
+  }
+  return 0;
+}
 
 /**
  * @func[CountQuery] FbleProfileQuery for the Count function.
@@ -80,7 +99,7 @@ static void CountQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, u
 static size_t Count(FbleProfile* profile, const char* name)
 {
   CountQueryData data;
-  data.id = FbleLookupProfileBlockId(profile, name);
+  data.id = LookupBlockId(profile, name);
   assert(data.id != 0 && "Block id not found?");
 
   data.calls = 0;
@@ -118,10 +137,10 @@ static void CallsQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, u
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee)
 {
   CallsQueryData data;
-  data.caller = FbleLookupProfileBlockId(profile, caller);
+  data.caller = LookupBlockId(profile, caller);
   assert(data.caller != 0 && "Caller id not found");
 
-  data.callee = FbleLookupProfileBlockId(profile, callee);
+  data.callee = LookupBlockId(profile, callee);
   assert(data.callee != 0 && "Callee id not found");
 
   data.calls = 0;
@@ -179,7 +198,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
   // Regression test for a bug where the location for the top level profile
   // block was a module path instead of a file path.
   {
-    FbleBlockId block = FbleLookupProfileBlockId(profile, "/ProfilesTest%");
+    FbleBlockId block = LookupBlockId(profile, "/ProfilesTest%");
     assert(block != 0);
 
     FbleName* name = FbleProfileBlockName(profile, block);

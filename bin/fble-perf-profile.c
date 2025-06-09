@@ -5,6 +5,7 @@
 
 #include <ctype.h>      // for isspace
 #include <inttypes.h>   // for PRIu64 
+#include <string.h>     // for strcmp
 
 #include <fble/fble-alloc.h>     // for FbleArrayAlloc, etc.
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg
@@ -34,16 +35,18 @@ int main(int argc, const char* argv[]);
  */
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
 {
-  FbleBlockId id = FbleLookupProfileBlockId(profile, name);
-  if (id == 0) {
-    FbleName n = {
-      .name = FbleNewString(name),
-      .space = FBLE_NORMAL_NAME_SPACE,
-      .loc = FbleNewLoc("???", 0, 0),
-    };
-    id = FbleAddBlockToProfile(profile, n);
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    if (strcmp(name, profile->blocks.xs[i].name->str) == 0) {
+      return i;
+    }
   }
-  return id;
+
+  FbleName n = {
+    .name = FbleNewString(name),
+    .space = FBLE_NORMAL_NAME_SPACE,
+    .loc = FbleNewLoc("???", 0, 0),
+  };
+  return FbleAddBlockToProfile(profile, n);
 }
 
 /**
