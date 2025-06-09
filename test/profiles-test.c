@@ -201,8 +201,8 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
     FbleBlockId block = LookupBlockId(profile, "/ProfilesTest%");
     assert(block != 0);
 
-    FbleName* name = FbleProfileBlockName(profile, block);
-    assert(strstr(name->loc.source->str, "test/ProfilesTest.fble"));
+    FbleName name = profile->blocks.xs[block];
+    assert(strstr(name.loc.source->str, "test/ProfilesTest.fble"));
   }
 
   FbleFreeProfile(profile);

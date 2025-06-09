@@ -120,9 +120,23 @@ Specifically:
 * FbleEnableProfiling, FbleDisableProfiling - keep
 * FbleProfileBlockName - 
   I'm inclined to drop, because the lifetime of the return result is unclear.
+  Also, turns out there is only a single use in a test case, so it's easy to
+  drop.
 * FbleLookupProfileBlockId - drop
   It doesn't make sense to look up by char*, we need to lookup by name, right?
   Although, I'm not sure we could distinguish by name in the output profile.
 
 Let's see how much work it will be to drop the last two APIs.
+
+---
+
+* Remove enabled argument to FbleNewProfile?
+
+Cases for enable/disable:
+* test.c, stdio.fble.c, app.c - disables by default, enabled implicitly via FbleMain.
+* fble-perf-profile.c - enabled by default.
+* profile tests - mostly enabled by default.
+
+There is a single use of FbleEnableProfiling. It could easily be inlined.
+There are no uses of FbleDisableProfiling.
 

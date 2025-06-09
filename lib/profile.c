@@ -427,15 +427,6 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
 }
 
 // See documentation in fble-profile.h
-FbleName* FbleProfileBlockName(FbleProfile* profile, FbleBlockId id)
-{
-  if (id < profile->blocks.size) {
-    return profile->blocks.xs + id;
-  }
-  return NULL;
-}
-
-// See documentation in fble-profile.h
 void FbleQueryProfile(FbleProfile* profile_, FbleProfileQuery* query, void* userdata)
 {
   if (!profile_->enabled) {
