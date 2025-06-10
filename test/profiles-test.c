@@ -6,6 +6,7 @@
 #include "profiles-test.h"
 
 #include <assert.h>   // for assert
+#include <inttypes.h> // for PRIu64 
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
@@ -23,6 +24,8 @@
 #define EX_USAGE 2
 
 static FbleBlockId LookupBlockId(FbleProfile* profile, const char* name);
+static void OutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
+static void Output(FbleProfile* profile);
 
 /**
  * @struct[CountQueryData] User data for CountQuery.
@@ -67,6 +70,30 @@ FbleBlockId LookupBlockId(FbleProfile* profile, const char* name)
     }
   }
   return 0;
+}
+
+/**
+ * @func[OutputQuery] Query to use for outputting samples for debug.
+ *  See documentation of FbleProfileQuery in fble-profile.h
+ */
+static void OutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
+{
+  printf("%" PRIu64, calls);
+  for (size_t i = 0; i < seq.size; ++i) {
+    FbleName name = profile->blocks.xs[seq.xs[i]];
+    printf(" %s", name.name->str);
+  }
+  printf("\n");
+}
+
+/**
+ * @func[Output] Outputs a profile for debug purposes.
+ *  @arg[FbleProfile*][profile] The profile to output.
+ *  @sideeffects Outputs the profile in text form to stdout.
+ */
+static void Output(FbleProfile* profile)
+{
+  FbleQueryProfile(profile, &OutputQuery, NULL);
 }
 
 /**
@@ -168,6 +195,9 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
   }
 
   assert(profile->enabled && "--profile must be passed for this test");
+
+  // Output the profile to stdout to help with debug.
+  Output(profile);
 
   // Each of these top level let bindings were executed once when the main
   // program ran.

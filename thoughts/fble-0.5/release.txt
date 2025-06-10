@@ -150,3 +150,31 @@ enable by default.
 The one tricky bit is test/profiles-test, which uses FbleMain, but doesn't
 currently explicitly enable profiling.
 
+---
+
+* Change FbleOutputProfile function to take a file name instead of FILE*?
+
+FILE* can do more than filename. In particular, it can do stdout.
+
+Reasons to suggest we use a filename:
+* The output needs to be binary
+* It doesn't make sense to interleave with other stuff.
+
+Reasons to use FILE*:
+* You can output to stdout.
+
+Reasons you might want to use stdout:
+* For use with redirection, e.g. fble-perf-profile.
+
+Alternatives to stdout for fble-perf-profile:
+* --output, -o flag
+
+Surely 'fble-perf-profile -o foo.prof' isn't that much worse than 
+'fble-perf-profile > foo.prof'? Worst case you could manually do
+'fble-perf-profile -o /dev/stdout'?
+
+When it comes time to support gzip compression and we want to use zlib, maybe
+it's better to have the file name format?
+
+I don't see good enough motivation to change this right now. Let's hold off
+until we have better motivation. It will be easy enough to change then.

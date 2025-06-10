@@ -9,10 +9,6 @@ Things to consider doing for the fble-0.5 release.
 
 * Fix github windows failures.
 
-* Dump profile in text form to stdout to make debugging test/profiles-test.c
-  easier?
-
-* Change FbleOutputProfile function to take a file name instead of FILE*?
 * Avoid emitting 'call' counts in pprof for fble-perf-profile?
 
 * Having the line number 311 for [root] node in test/fble-pprof-test.want.txt
