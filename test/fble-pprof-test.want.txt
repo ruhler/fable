@@ -11,11 +11,11 @@ sample { location_id: 2 location_id: 1 value: 1 value: 0 }
 sample { location_id: 3 location_id: 2 location_id: 1 value: 1 value: 0 }
 sample { location_id: 4 location_id: 3 location_id: 2 location_id: 1 value: 1 value: 10 }
 sample { location_id: 4 location_id: 2 location_id: 1 value: 1 value: 20 }
-location { id: 1 line { function_id: 1 line: 311 column: 0 } }
+location { id: 1 line { function_id: 1 line: 0 column: 0 } }
 location { id: 2 line { function_id: 2 line: 10 column: 14 } }
 location { id: 3 line { function_id: 3 line: 140 column: 2 } }
 location { id: 4 line { function_id: 4 line: 1400 column: 3 } }
-function { id: 1 name: 5 system_name: 5 filename: 6 start_line: 311 }
+function { id: 1 name: 5 system_name: 5 filename: 6 start_line: 0 }
 function { id: 2 name: 7 system_name: 7 filename: 8 start_line: 10 }
 function { id: 3 name: 9 system_name: 9 filename: 10 start_line: 140 }
 function { id: 4 name: 11 system_name: 11 filename: 12 start_line: 1400 }

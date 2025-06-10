@@ -307,7 +307,7 @@ FbleProfile* FbleNewProfile()
   FbleName root = {
     .name = FbleNewString("[root]"),
     .space = FBLE_NORMAL_NAME_SPACE,
-    .loc = { .source = FbleNewString(__FILE__), .line = 311, .col = 0 }
+    .loc = { .source = FbleNewString(__FILE__), .line = 0, .col = 0 }
   };
   FbleBlockId root_id = FbleAddBlockToProfile(&profile->_base, root);
   assert(root_id == RootBlockId);

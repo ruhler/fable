@@ -11,10 +11,6 @@ Things to consider doing for the fble-0.5 release.
 
 * Avoid emitting 'call' counts in pprof for fble-perf-profile?
 
-* Having the line number 311 for [root] node in test/fble-pprof-test.want.txt
-  is going to be annoying. Mark my words. Any way we can make the test less
-  likely to break when we make any change to profile.c?
-
 * Update all the user documentation (book, profiling guide) on how to profile.
 
 * Figure out a nicer way to switch between -O0 and -O3 as needed for debug.
