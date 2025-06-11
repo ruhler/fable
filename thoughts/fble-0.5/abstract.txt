@@ -82,3 +82,18 @@ access to each. Otherwise they are treated different. You are allowed to
 construct and access fields from a type you have access to, otherwise you are
 not.
 
+---
+
+Yes, the above proposal sounds good. Much simpler syntax. Nothing to do with
+modular compilation. Doesn't solve the forgeable issue. But it would be a
+great improvement over what we have today.
+
+In terms of forgeability, I feel like what we need is a way to identify
+provenance of a module. You can access an abstract type if you are under the
+proper module path and of the same provenance.
+
+Examples of provenance: Maybe it's some secret string you provide at compile
+time that gets hashed into the module. If you can provide the string key that
+hashes to the right value and you are from the right module hierarchy, you can
+access that type. Otherwise you can't.
+

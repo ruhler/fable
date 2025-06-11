@@ -178,3 +178,56 @@ it's better to have the file name format?
 
 I don't see good enough motivation to change this right now. Let's hold off
 until we have better motivation. It will be easy enough to change then.
+
+---
+
+* Avoid emitting 'call' counts in pprof for fble-perf-profile?
+
+Not worth doing.
+
+Pros:
+* Save a small amount of space in generated profile. Probably less than 10 or
+  20%.
+* Avoid potential confusion looking at call counts in fble-perf-profile.
+* Avoid need to document potential confusion looking at call counts in
+  fble-perf-profile.
+
+Cons:
+* Small added complexity in implementation.
+* Added complexity in API for generating a profile.
+* Added complexity in test coverage to cover cases with and without.
+
+The cons outweigh the pros in my mind.
+
+---
+
+* Figure out a nicer way to switch between -O0 and -O3 as needed for debug.
+
+I should set up rules in the build system to provide .dbg variants of binaries
+I want to debug. Don't build those by default, but make it so they can be
+built on demand. I bet it's not too complicated to set up.
+
+But also, let's hold off until next time I have a concrete use case. We can
+add support for this in a lazy fashion.
+
+If we don't build as part of 'ninja check', it's likely to bit rot. That's
+okay with me. Better to figure out how to fix it when it rots than deal with
+the tedium of modifying -O switch back and forth for debug.
+
+---
+
+* Add explicit close to OStream API.
+
+I think it will be easiest to change OStream to output a stream of
+Maybe@<Int@> rather than be a struct with a pair of putting Int@ and closing.
+Maybe there are minor performance implications, but let's not worry about that
+for now. We can change later if need be.
+
+This type change is pretty tedious. What if I instead define an Int@ value for
+EOF and use that? And maybe we should update the input stream to match too?
+
+How about I hack up a thing where if you send -1, it closes the socket, and
+see if it fixes elinks on fble-pprof?
+
+Yeah, that fixes the elinks issue. I should think about this some more, then
+do a proper job of it.

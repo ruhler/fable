@@ -279,3 +279,20 @@ condition level blocks, the profiles wouldn't blow up like this.
 Or, put another way, increasing number of cases though which a recursive call
 is done beyond 1 can lead to an exponential blowup in profiling sequences,
 even with canonicalization.
+
+---
+
+You can't have all sequences of 2p0/2p1 in canonical form. We can only have:
+  0, 1, 01, 10, 010, 101
+
+That would give a 6x blowup in number of traces. You would have 6x traces with
+some one of those strings as infix. There is exponential growth as the number
+of options grows and if you nest calls with sequences.
+
+I'd like to nail down what specific sequences we are seeing in the PiDigits
+blowup. Proposal: For each new node added to the profile, dump its sequence in
+order. Count occurrences of each frame. The top occurring frames, I think,
+ought to be those involved in sequences. Is it Div calling into Sub? Something
+else? How many choices.
+
+That's the next step here.

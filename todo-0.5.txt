@@ -2,18 +2,16 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Improve performance of fble-pprof?
+* --profile memory use blows up on PiDigits benchmark.
 
 * Add an fble-pprof benchmark to fble-benchmark?
   One based on md5 --profile is probably good, for parsing.
 
+* Improve performance of fble-pprof?
+
 * Fix github windows failures.
 
-* Avoid emitting 'call' counts in pprof for fble-perf-profile?
-
 * Update all the user documentation (book, profiling guide) on how to profile.
-
-* Figure out a nicer way to switch between -O0 and -O3 as needed for debug.
 
 GC OnFree cleanup
 * Add explicit close to OStream API.
@@ -40,10 +38,8 @@ GC OnFree cleanup
 
 * Use a special ref value instead of NULL to represent undefined values?
 
-* Revisit abstract types in light of modular compilation.
-  Could we have a much simpler syntax and say anyone with access to the .fble
-  file can construct and deconstruct types, any with access to the .fble.@
-  file can't?
+* Revise abstract types feature of fble.
+  See thoughts/fble-0.5/abstract.txt.
 
 * Fbld Language
  - modularity
@@ -124,6 +120,4 @@ Tutorials:
   Seen when doing ninja check after clean build after ninja.
   Seen again doing ninja check after touching build.tcl.
   Seen pretty regularly when doing full builds, to be honest.
-
-* --profile memory use blows up on PiDigits benchmark.
 
