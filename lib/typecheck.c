@@ -853,41 +853,7 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
   }
   FbleFreeKind(&poly_kind->_base);
 
-  FbleType* poly_value = FbleValueOfType(th, poly.type);
-  if (poly_value != NULL) {
-    FblePackageType* package = (FblePackageType*)FbleNormalType(th, poly_value);
-    FbleReleaseType(th, poly_value);
-    if (package->_base.tag == FBLE_PACKAGE_TYPE) {
-      // abstract_type
-      FbleType* arg = FbleValueOfType(th, arg_type);
-      if (arg == NULL) {
-        ReportError(arg_loc,
-            "expected type, but found something of kind %%\n");
-        FbleReleaseType(th, &package->_base);
-        return TC_FAILED;
-      }
-
-      FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr_loc);
-      abs_type->package = package;
-      abs_type->type = arg;
-      FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
-      FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-      FbleReleaseType(th, &abs_type->package->_base);
-      FbleReleaseType(th, abs_type->type);
-
-      FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr_loc);
-      type_type->type = &abs_type->_base;
-      FbleTypeAddRef(th, &type_type->_base, type_type->type);
-      FbleReleaseType(th, &abs_type->_base);
-
-      FbleTypeValueTc* type_tc = FbleNewTc(FbleTypeValueTc, FBLE_TYPE_VALUE_TC, expr_loc);
-      return MkTc(&type_type->_base, &type_tc->_base);
-    }
-    FbleReleaseType(th, &package->_base);
-  }
-
-  ReportError(expr_loc,
-      "type application requires a poly or package type\n");
+  ReportError(expr_loc, "type application requires a poly type\n");
   return TC_FAILED;
 }
 
@@ -1047,7 +1013,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
   switch (expr->tag) {
     case FBLE_DATA_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
-    case FBLE_PACKAGE_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
     {
       FbleType* type = TypeCheckType(th, scope, expr);
@@ -1881,81 +1846,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       return MkTc(result_type, &apply->_base);
     }
 
-    case FBLE_ABSTRACT_CAST_EXPR: {
-      FbleAbstractCastExpr* cast_expr = (FbleAbstractCastExpr*)expr;
-
-      FbleType* package_type = TypeCheckType(th, scope, cast_expr->package);
-      CleanType(cleaner, package_type);
-      if (package_type == NULL) {
-        return TC_FAILED;
-      }
-
-      FblePackageType* package = (FblePackageType*)FbleNormalType(th, package_type);
-      CleanType(cleaner, &package->_base);
-      if (package->_base.tag != FBLE_PACKAGE_TYPE) {
-        ReportError(cast_expr->package->loc,
-          "expected package type, but found %t\n", package_type);
-        return TC_FAILED;
-      }
-
-      FbleType* target = TypeCheckType(th, scope, cast_expr->target);
-      CleanType(cleaner, target);
-      if (target == NULL) {
-        return TC_FAILED;
-      }
-
-      Tc value = TypeCheckExpr(th, scope, cast_expr->value);
-      CleanTc(cleaner, value);
-      if (value.type == NULL) {
-        return TC_FAILED;
-      }
-
-      if (!FbleModuleBelongsToPackage(scope->module, package->path)) {
-        ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
-            scope->module, package->path);
-        return TC_FAILED;
-      }
-
-      assert(package->opaque);
-      package->opaque = false;
-      bool legal = FbleTypesEqual(th, target, value.type);
-      package->opaque = true;
-
-      if (!legal) {
-        ReportError(expr->loc, "cannot cast value of type %t to %t\n", value.type, target);
-        return TC_FAILED;
-      }
-
-      return MkTc(FbleRetainType(th, target), FbleCopyTc(value.tc));
-    }
-
-    case FBLE_ABSTRACT_ACCESS_EXPR: {
-      FbleAbstractAccessExpr* access_expr = (FbleAbstractAccessExpr*)expr;
-
-      Tc value = TypeCheckExpr(th, scope, access_expr->value);
-      CleanTc(cleaner, value);
-      if (value.type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleAbstractType* abstract_type = (FbleAbstractType*)FbleNormalType(th, value.type);
-      CleanType(cleaner, &abstract_type->_base);
-      if (abstract_type->_base.tag != FBLE_ABSTRACT_TYPE) {
-        ReportError(expr->loc, "expected value of abstract type, but found some of type %t\n",
-            value.type);
-        return TC_FAILED;
-      }
-
-      if (!FbleModuleBelongsToPackage(scope->module, abstract_type->package->path)) {
-        ReportError(expr->loc, "Module %m is not allowed to access package %m\n",
-            scope->module, abstract_type->package->path);
-        return TC_FAILED;
-      }
-
-      FbleType* type = FbleRetainType(th, abstract_type->type);
-      return MkTc(type, FbleCopyTc(value.tc));
-    }
-
     case FBLE_MODULE_PATH_EXPR: {
       FbleModulePathExpr* path_expr = (FbleModulePathExpr*)expr;
 
@@ -2058,30 +1948,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
         FbleType* vnorm = FbleNormalType(th, vtype);
         CleanType(cleaner, vnorm);
-
-        // Typecheck for abstract type expression.
-        FblePackageType* pkg_type = (FblePackageType*)vnorm;
-        if (pkg_type->_base.tag == FBLE_PACKAGE_TYPE) {
-          // abstract_value
-          if (argc != 1) {
-            ReportError(expr->loc, "expected 1 argument, but %i provided\n", argc);
-            return TC_FAILED;
-          }
-
-          if (!FbleModuleBelongsToPackage(scope->module, pkg_type->path)) {
-            ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
-                scope->module, pkg_type->path);
-            return TC_FAILED;
-          }
-
-          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
-          abs_type->package = pkg_type;
-          abs_type->type = args[0].type;
-          FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
-          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-
-          return MkTc(&abs_type->_base, FbleCopyTc(args[0].tc));
-        }
 
         // Typecheck for possibly polymorphic struct value expression.
         FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
@@ -2316,14 +2182,6 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
       return &ft->_base;
     }
 
-    case FBLE_PACKAGE_TYPE_EXPR: {
-      FblePackageTypeExpr* e = (FblePackageTypeExpr*)type;
-      FblePackageType* t = FbleNewType(th, FblePackageType, FBLE_PACKAGE_TYPE, type->loc);
-      t->path = FbleCopyModulePath(e->path);
-      t->opaque = true;
-      return &t->_base;
-    }
-
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
     case FBLE_UNDEF_EXPR:
@@ -2338,8 +2196,6 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:
-    case FBLE_ABSTRACT_CAST_EXPR:
-    case FBLE_ABSTRACT_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;

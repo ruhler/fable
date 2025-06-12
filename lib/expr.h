@@ -44,12 +44,6 @@ typedef enum {
 
   FBLE_MODULE_PATH_EXPR,
 
-  FBLE_PACKAGE_TYPE_EXPR,
-  // FBLE_ABSTRACT_TYPE_EXPR = FBLE_POLY_APPLY_EXPR
-  FBLE_ABSTRACT_CAST_EXPR,
-  FBLE_ABSTRACT_ACCESS_EXPR,
-  // FBLE_ABSTRACT_VALUE_EXPR = FBLE_MISC_APPLY_EXPR
-
   FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
 
@@ -357,7 +351,7 @@ typedef struct {
 
 /**
  * @struct[FblePolyApplyExpr] FBLE_POLY_APPLY_EXPR
- *  A poly application expression. Also used for FBLE_ABSTRACT_TYPE_EXPR.
+ *  A poly application expression.
  *
  *  @field[FbleTypeExpr][_base] FbleExpr base class.
  *  @field[FbleExpr*][poly] The poly to apply.
@@ -368,46 +362,6 @@ typedef struct {
   FbleExpr* poly;
   FbleTypeExpr* arg;
 } FblePolyApplyExpr;
-
-/**
- * @struct[FblePackageTypeExpr] FBLE_PACKAGE_TYPE_EXPR
- *  A package type expression.
- *
- *  @field[FbleTypeExpr][_base] FbleExpr base class.
- *  @field[FbleModulePath*][path] The package path.
- */
-typedef struct {
-  FbleTypeExpr _base;
-  FbleModulePath* path;
-} FblePackageTypeExpr;
-
-/**
- * @struct[FbleAbstractCastExpr] FBLE_ABSTRACT_CAST_EXPR
- *  An abstract cast expression.
- *  
- *  @field[FbleTypeExpr][_base] FbleExpr base class.
- *  @field[FbleTypeExpr*][package] The package type.
- *  @field[FbleTypeExpr*][target] The target type.
- *  @field[FbleExpr*][value] The value to cast.
- */
-typedef struct {
-  FbleExpr _base;
-  FbleTypeExpr* package;
-  FbleTypeExpr* target;
-  FbleExpr* value;
-} FbleAbstractCastExpr;
-
-/**
- * @struct[FbleAbstractAccessExpr] FBLE_ABSTRACT_ACCESS_EXPR
- *  An abstract access expression.
- *
- *  @field[FbleTypeExpr][_base] FbleExpr base class.
- *  @field[FbleExpr*][value] The abstract value to access.
- */
-typedef struct {
-  FbleExpr _base;     /**< FbleExpr base class. */
-  FbleExpr* value;    /**< The abstract value to access. */
-} FbleAbstractAccessExpr;
 
 /**
  * @struct[FbleListExpr] FBLE_LIST_EXPR
@@ -446,7 +400,6 @@ typedef struct {
  *
  *  @i FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR
  *  @i FBLE_FUNC_APPLY_EXPR
- *  @i FBLE_ABSTRACT_VALUE_EXPR
  *
  *  @field[FbleTypeExpr][_base] FbleExpr base class.
  *  @field[FbleExpr*][misc] The function or type to apply.

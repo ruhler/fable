@@ -185,29 +185,6 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
-    case FBLE_PACKAGE_TYPE_EXPR: {
-      FblePackageTypeExpr* e = (FblePackageTypeExpr*)expr;
-      FbleFreeModulePath(e->path);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_ABSTRACT_CAST_EXPR: {
-      FbleAbstractCastExpr* e = (FbleAbstractCastExpr*)expr;
-      FbleFreeExpr(e->package);
-      FbleFreeExpr(e->target);
-      FbleFreeExpr(e->value);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_ABSTRACT_ACCESS_EXPR: {
-      FbleAbstractAccessExpr* e = (FbleAbstractAccessExpr*)expr;
-      FbleFreeExpr(e->value);
-      FbleFree(expr);
-      return;
-    }
-
     case FBLE_MISC_APPLY_EXPR: {
       FbleApplyExpr* e = (FbleApplyExpr*)expr;
       FbleFreeExpr(e->misc);

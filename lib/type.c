@@ -163,15 +163,6 @@ void FbleTypeRefs(FbleTypeHeap* heap, FbleType* type)
       break;
     }
 
-    case FBLE_PACKAGE_TYPE: break;
-
-    case FBLE_ABSTRACT_TYPE: {
-      FbleAbstractType* abs = (FbleAbstractType*)type;
-      Ref(heap, type, &abs->package->_base);
-      Ref(heap, type, abs->type);
-      break;
-    }
-
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       Ref(heap, type, var->value);
@@ -203,14 +194,6 @@ void FbleTypeOnFree(FbleType* type)
     case FBLE_FUNC_TYPE: return;
     case FBLE_POLY_TYPE: return;
     case FBLE_POLY_APPLY_TYPE: return;
-
-    case FBLE_PACKAGE_TYPE: {
-      FblePackageType* package = (FblePackageType*)type;
-      FbleFreeModulePath(package->path);
-      return;
-    }
-
-    case FBLE_ABSTRACT_TYPE: return;
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
@@ -296,9 +279,6 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
       FbleReleaseType(heap, &poly->_base);
       return FbleRetainType(heap, type);
     }
-
-    case FBLE_PACKAGE_TYPE: return FbleRetainType(heap, type);
-    case FBLE_ABSTRACT_TYPE: return FbleRetainType(heap, type);
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
@@ -390,15 +370,6 @@ static bool HasParam_(FbleTypeAssignmentV vars, FbleType* type)
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
       return HasParam(vars, pat->arg) || HasParam(vars, pat->poly);
-    }
-
-    case FBLE_PACKAGE_TYPE: {
-      return false;
-    }
-
-    case FBLE_ABSTRACT_TYPE: {
-      FbleAbstractType* abs = (FbleAbstractType*)type;
-      return HasParam(vars, abs->type);
     }
 
     case FBLE_VAR_TYPE: {
@@ -541,25 +512,6 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* t
       return &spat->_base;
     }
 
-    case FBLE_PACKAGE_TYPE: {
-      FbleUnreachable("package type does not have params");
-      return NULL;
-    }
-
-    case FBLE_ABSTRACT_TYPE: {
-      FbleAbstractType* abs = (FbleAbstractType*)type;
-
-      FbleType* body = Subst(heap, vars, abs->type, tps);
-
-      FbleAbstractType* sabs = FbleNewType(heap, FbleAbstractType, FBLE_ABSTRACT_TYPE, abs->_base.loc);
-      sabs->package = abs->package;
-      sabs->type = body;
-      FbleTypeAddRef(heap, &sabs->_base, &sabs->package->_base);
-      FbleTypeAddRef(heap, &sabs->_base, sabs->type);
-      FbleReleaseType(heap, body);
-      return &sabs->_base;
-    }
-
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
@@ -662,28 +614,6 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
     .next = eq,
   };
 
-  // For abstract cast, compare underlying types if the package types aren't
-  // opaque.
-  if (a->tag == FBLE_ABSTRACT_TYPE) {
-    FbleAbstractType* aa = (FbleAbstractType*)a;
-    if (!aa->package->opaque) {
-      bool equal = TypesEqual(heap, vars, aa->type, b, &neq);
-      FbleReleaseType(heap, a);
-      FbleReleaseType(heap, b);
-      return equal;
-    }
-  }
-
-  if (b->tag == FBLE_ABSTRACT_TYPE) {
-    FbleAbstractType* ab = (FbleAbstractType*)b;
-    if (!ab->package->opaque) {
-      bool equal = TypesEqual(heap, vars, a, ab->type, &neq);
-      FbleReleaseType(heap, a);
-      FbleReleaseType(heap, b);
-      return equal;
-    }
-  }
-
   if (a->tag != b->tag) {
     FbleReleaseType(heap, a);
     FbleReleaseType(heap, b);
@@ -769,25 +699,6 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
       return result;
     }
 
-    case FBLE_PACKAGE_TYPE: {
-      FblePackageType* pa = (FblePackageType*)a;
-      FblePackageType* pb = (FblePackageType*)b;
-      bool result = FbleModulePathsEqual(pa->path, pb->path);
-      FbleReleaseType(heap, a);
-      FbleReleaseType(heap, b);
-      return result;
-    }
-
-    case FBLE_ABSTRACT_TYPE: {
-      FbleAbstractType* aa = (FbleAbstractType*)a;
-      FbleAbstractType* ab = (FbleAbstractType*)b;
-      bool result = TypesEqual(heap, vars, &aa->package->_base, &ab->package->_base, &neq)
-                 && TypesEqual(heap, vars, aa->type, ab->type, &neq);
-      FbleReleaseType(heap, a);
-      FbleReleaseType(heap, b);
-      return result;
-    };
-
     case FBLE_VAR_TYPE: {
       FbleVarType* va = (FbleVarType*)a;
       FbleVarType* vb = (FbleVarType*)b;
@@ -819,9 +730,7 @@ FbleKind* FbleGetKind(FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE:
-    case FBLE_FUNC_TYPE:
-    case FBLE_PACKAGE_TYPE:
-    case FBLE_ABSTRACT_TYPE: {
+    case FBLE_FUNC_TYPE: {
       return FbleNewBasicKind(type->loc, 0);
     }
 
@@ -1240,23 +1149,6 @@ void FblePrintType(FbleType* type)
       }
       fprintf(stderr, ">");
       FbleFreeVector(args);
-      return;
-    }
-
-    case FBLE_PACKAGE_TYPE: {
-      FblePackageType* package = (FblePackageType*)type;
-      fprintf(stderr, "%s", "%(");
-      FblePrintModulePath(stderr, package->path);
-      fprintf(stderr, ")");
-      return;
-    }
-
-    case FBLE_ABSTRACT_TYPE: {
-      FbleAbstractType* abs = (FbleAbstractType*)type;
-      FblePrintType(&abs->package->_base);
-      fprintf(stderr, "<");
-      FblePrintType(abs->type);
-      fprintf(stderr, ">");
       return;
     }
 

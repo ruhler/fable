@@ -50,8 +50,6 @@ static void Expr(FbleExpr* expr, Vars* vars)
       return;
     }
 
-    case FBLE_PACKAGE_TYPE_EXPR: return;
-
     case FBLE_TYPEOF_EXPR:
     {
       FbleTypeofExpr* e = (FbleTypeofExpr*)expr;
@@ -209,20 +207,6 @@ static void Expr(FbleExpr* expr, Vars* vars)
     case FBLE_LITERAL_EXPR: {
       FbleLiteralExpr* literal_expr = (FbleLiteralExpr*)expr;
       Expr(literal_expr->func, vars);
-      return;
-    }
-
-    case FBLE_ABSTRACT_CAST_EXPR: {
-      FbleAbstractCastExpr* cast_expr = (FbleAbstractCastExpr*)expr;
-      Expr(cast_expr->package, vars);
-      Expr(cast_expr->target, vars);
-      Expr(cast_expr->value, vars);
-      return;
-    }
-
-    case FBLE_ABSTRACT_ACCESS_EXPR: {
-      FbleAbstractAccessExpr* access_expr = (FbleAbstractAccessExpr*)expr;
-      Expr(access_expr->value, vars);
       return;
     }
 

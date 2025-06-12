@@ -22,8 +22,6 @@ typedef enum {
   FBLE_FUNC_TYPE,
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
-  FBLE_PACKAGE_TYPE,
-  FBLE_ABSTRACT_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
 } FbleTypeTag;
@@ -100,36 +98,6 @@ typedef struct {
   FbleType* arg;
   FbleType* rtype;
 } FbleFuncType;
-
-/**
- * @struct[FblePackageType] A package type.
- *  @field[FbleType][_base] FbleType base class.
- *  @field[FbleMOdulePath*][path] The package path.
- *  @field[bool][opaque]
- *   Helper flag. Used to control whether or not an abstract type associated
- *   with this package type is considered equal to its underlying type. It is
- *   temporarily set to false while testing type equality for abstract cast
- *   expressions.
- */
-typedef struct {
-  FbleType _base;
-  FbleModulePath* path;
-  bool opaque;
-} FblePackageType;
-
-/**
- * @struct[FbleAbstractType] An abstract type.
- *  A type protected by a package type.
- *
- *  @field[FbleType][_base] FbleType base class.
- *  @field[FblePackageType*][package] The package with access.
- *  @field[FbleType*][type] The underlying type.
- */
-typedef struct {
-  FbleType _base;
-  FblePackageType* package;
-  FbleType* type;
-} FbleAbstractType;
 
 /**
  * @struct[FbleVarType] A type variable.

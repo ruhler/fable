@@ -4,14 +4,15 @@ Things to consider doing for the fble-0.5 release.
 
 * Replace abstract types with private types
   See thoughts/fble-0.5/abstract.txt.
- - Remove old code for abstract types.
-   FblePackateTypeExpr, FBLE_PACKAGE_TYPE_EXPR
-   FbleAbstractCastExpr, FBLE_ABSTRACT_CAST_EXPR
- - Update spec tests.
+ - Write spec tests for private types.
  - Implement support for private types.
- - Add back use of abstract types for
+ - Add back use of private types for
    /Core/Monad/IO%.World@;
+   /Pinball/Num%.Num@;
+ - Update the abstract types tutorial to be about private types.
 
+* More clearly distinguish between the term 'package' used for private types
+  and for package paths?
 
 * --profile memory use blows up on PiDigits benchmark.
 
