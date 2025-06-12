@@ -247,3 +247,58 @@ Now that I have the draft of the new spec, next step I think is to update the
 parser, make sure my syntax is okay.
 
 No issues with the parser syntax. Looks good.
+
+---
+
+Writing tests for private types, I wish there was a way to define a package as
+an fble value. That way we could use fble variables for describing packages
+instead of having to hard code potentially long module path names. Remember I
+used to use _@ for the name of the package type, as short as possible?
+
+Even writing the basic access test case feels too tedious without that.
+
+In other words, I want to bring back the notion of a package type and use that
+in place of a module path.
+
+  @ _@ = %(/Foo/Bar%);
+  PrivateBool@ = Bool@.%(_@);
+
+If we did that, is there a different syntax that makes more sense?
+
+  PrivateBool@ = _@<Bool@>;
+  PrivateBool@ = _@<+(Unit@ true, Unit@ false)>;
+  PrivateTrue = _@(True);
+
+  True.%(Pkg@);
+  Pkg@.(True);
+  Pkg@.(Bool@);
+
+  Pkg@(True), Pkgs@<Bool@>;
+  True.%(Pkg@), Bool@.%(Pkg);
+
+For type definitions, I like putting the underlying type first. It feels
+more natural.
+
+  True.%(%(/Foo/Bar%));
+  +(Unit@ true, Unit@ false).%(%(/Foo/Bar%));
+
+There should be no need for parens around a module path. Maybe:
+ 
+  @ Pkg@ = /Foo/Bar%@;
+  @ Pkg@ = @/Foo/Bar%;
+
+  True.%(@/Foo/Bar%)  True.%(Pkg@)   True.%(_@)
+  Bool@.%(@/Foo/Bar%)  Bool@.%(Pkg@)  Bool@.%(_@)
+
+Let's see if that would work.
+
+In summary:
+  package type: '@' path
+  private type: <expr> '.%(' <type> ')', where the type must be a package type.
+
+Or maybe we could let the .%(...) part be any expression, and we return use
+the same type as restricted by that expression? Overly general? Yes. Overly
+general.
+
+Okay. Let's try out the new syntax. See if there are any issues. Then update
+the spec.

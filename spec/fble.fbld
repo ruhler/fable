@@ -1233,34 +1233,51 @@
   application, and so on. A private type is a type whose access is restricted
   based on module path. Modules that have not been granted access to the type
   can only interact with it using publicly available functions.
-  
-  @subsection 9.1 Private Type
+
+  @subsection 9.1 Package Type
    @AbstractSyntax @
-    Type: private_type (type : Type, path : Path)
+    Expr: package_type (path : Path)
   
    @ConcreteSyntax @
-    type = type, '.%(', path, ')'
+    expr = '@', path
   
    @Example @
-    @ PrivateBool@ = +(Unit@ true, Unit@ false).%(/Foo/Bar%);
+    @ FooBar@ = @/Foo/Bar%;
+  
+   The package type describes the set of modules whose module path prefix
+   matches the given path. For example, the type @L{@/Foo/Bar%} includes
+   modules @L{/Foo/Bar%}, @L{/Foo/Bar/Sludge%}, and @L{/Foo/Bar/A/B%}, but not
+   @L{/Foo%} or @L{/Bar%}.
+
+   The path for a package type need not refer to an existing module. There
+   need not be any modules that satisfy the package path. A module need not be
+   a member of whatever package type it constructs.
+  
+   A package type has kind @L{@}. Two package types are considered equal if
+   they have the same path.
+   
+   Specifying the module path for a private type via a package type instead of
+   directly as a module path allows fble language abstactions like variables
+   and structs to be used for describing package types.
+  
+  @subsection 9.2 Private Type
+   @AbstractSyntax @
+    Type: private_type (type : Type, package : Type)
+  
+   @ConcreteSyntax @
+    type = type, '.%(', type, ')'
+  
+   @Example @
+    @ PrivateBool@ = +(Unit@ true, Unit@ false).%(@/Foo/Bar%);
 
    The private type behaves exactly like the given underlying type for
-   modules with access, and as an abstract non-polymorphic type otherwise.
-
-   The path describes the set of modules granted access to the private type:
-   any module whose module path prefix matches the given path is granted
-   access. For example, the path @L{/Foo/Bar%} used in the @L{AbstractBool@}
-   example grants access to modules @L{/Foo/Bar%}, @L{/Foo/Bar/Sludge%}, and
-   @L{/Foo/Bar/A/B%}, but not @L{/Foo%} or @L{/Bar%}.
-
-   The path for a private type need not refer to an existing module. There
-   need not be any modules that satisfy the path. A module need not be a
-   member of the set of allowed modules for whatever private type it
-   constructs.
+   modules with access, and as an abstract non-polymorphic type otherwise. The
+   package type argument to the private type is used to determine which
+   modules are granted access to the type.
 
    Normal types are a special case of private types with no restriction on
    access. Two private types are considered equal if their underlying types
-   are equal and either their module paths are equal or the module where the
+   are equal and either their package types are equal or the module where the
    equality check is being performed is granted access to both types.
 
    For example, the following assignments are well typed in the module
@@ -1268,7 +1285,7 @@
 
    @code[fble] @
     @ Bool@ = +(Unit@ true, Unit@ false);
-    @ PrivateBool@ = Bool@.%(/Foo/Bar%);
+    @ PrivateBool@ = Bool@.%(@/Foo/Bar%);
     
     Bool@ true = Bool@(true: Unit);
     PrivateBool@ private_true = true;
@@ -1279,41 +1296,41 @@
    @L{PrivateBool@} and @L{Bool@} are considered unequal types.
 
    The underlying type of a private type could itself be a private type, as
-   long as one of the module paths is a prefix of the other. Otherwise it is a
+   long as one of the package types is a prefix of the other. Otherwise it is a
    type error. For example, the following three types are equivalent:
 
    @code[fble] @
-    Bool@.%(/Foo/Bar%)
-    Bool@.%(/Foo%).%(/Foo/Bar%)
-    Bool@.%(/Foo/Bar%).%(/Foo%)
+    Bool@.%(@/Foo/Bar%)
+    Bool@.%(@/Foo%).%(@/Foo/Bar%)
+    Bool@.%(@/Foo/Bar%).%(@/Foo%)
 
-   In contrast, @L{Bool@.%(/Foo%).%(/Bar%)} is considered a type error because
-   no module could ever access it.
+   In contrast, @L{Bool@.%(@/Foo%).%(@/Bar%)} is considered a type error
+   because no module could ever access it.
 
-  @subsection 9.2 Private Value
+  @subsection 9.3 Private Value
    @AbstractSyntax @
-    Expr: private_value (expr : Expr, path : Path)
+    Expr: private_value (expr : Expr, package : Type)
   
    @ConcreteSyntax @
     expr = expr, '.%(', path, ')'
   
    @Example @
-    PrivateBool@ private_true = True.%(/Foo/Bar%);
+    PrivateBool@ private_true = True.%(@/Foo/Bar%);
 
    The private value expression can be used to cast the type of a value to a
    private type. In the example here, if the type of @L{True} is @L{Bool@},
-   then @L{True.%(/Foo/Bar%)} has the same value as @L{True}, but is of
-   private type @L{Bool@.%(/Foo/Bar%)}.
+   then @L{True.%(@/Foo/Bar%)} has the same value as @L{True}, but is of
+   private type @L{Bool@.%(@/Foo/Bar%)}.
 
    The restriction on nested private types applies the same way to tested
    private values: one of the module paths has to be a prefix of the other.
 
-  @subsection 9.3 Private Type Example
+  @subsection 9.4 Private Type Example
    The following example shows how to define a three element enum type that
    can only be accessed externally using the provided methods.
   
    @code[fble] @
-    @ Enum@ = +(Unit@ a, Unit@ b, Unit@ c).%(/MyPackage%);
+    @ Enum@ = +(Unit@ a, Unit@ b, Unit@ c).%(@/MyPackage%);
     
     Enum@ A = Enum@(a: Unit));
     Enum@ B = Enum@(b: Unit));
@@ -1331,7 +1348,7 @@
    use the provided values @L{A}, @L{B}, @L{C} and functions @L{IsA}, @L{IsB},
    and @L{IsC}.
   
-  @subsection 9.4 Private Module Example
+  @subsection 9.5 Private Module Example
    Private values can be used to effectively mark modules or parts of modules
    private. For example, consider a module @L{/Foo/Internal%}:
   
@@ -1341,7 +1358,7 @@
     X@ X = ...;
     Y@ Y = ...;
     
-    @(X@, Y@, X, Y).%(/Foo%);
+    @(X@, Y@, X, Y).%(@/Foo%);
 
    Any attempt to use the value of @L{/Foo/Internal%} from a module not
    starting with @L{/Foo%} will result in a type error.
@@ -1350,12 +1367,13 @@
    module. For example, consider a module @L{/Foo%}:
   
    @code[fble] @
-    @ X@ = ...;
-    @ Y@ = ...;
-    X@ X = ...;
-    Y@ Y = ...;
+    @ Pkg@ = @/Foo%;
+
+    T@ X = ...;
+    T@ Y = ...;
+    T@ Z = ...;
     
-    @(X@, Y@, X, Y.%(/Foo%));
+    @(X, Y.%(Pkg@), Z.%(Pkg@));
   
    In this case, the @L{X} field is publicly accessible. The @L{Y} field can
    only be used by modules starting with @L{/Foo%}.
@@ -1416,8 +1434,9 @@
     | literal (func : Expr) (letters : word)
     | bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
    
-    | private_type (type : Type) (path : Path)
-    | private_value (value : Expr) (path : Path)
+    | package_type (path : Path)
+    | private_type (type : Type) (package : Type)
+    | private_value (value : Expr) (package : Type)
     ;
    
    Module: (value : Expr) (modules : [Module])
@@ -1513,6 +1532,7 @@
      | expr, '[', [expr, {',', expr}], ']'             (* list *)
      | expr, '|', word                                 (* literal *)
     
+     | '@', path                                       (* package_type *)
      | type, '.%', '(', path, ')'                      (* private_type *)
      | expr, '.%', '(', path, ')'                      (* private_value *)
     

@@ -315,6 +315,18 @@ expr:
      typeof->expr = $3;
      $$ = &typeof->_base;
    }
+ | '@' module_path {
+     // TODO: Do something useful with this. For now treat it like
+     // an empty struct type.
+     FbleFreeModulePath($2);
+
+     FbleDataTypeExpr* struct_type = FbleAlloc(FbleDataTypeExpr);
+     struct_type->_base.tag = FBLE_DATA_TYPE_EXPR;
+     struct_type->_base.loc = FbleCopyLoc(@$);
+     struct_type->datatype = FBLE_STRUCT_DATATYPE;
+     FbleInitVector(struct_type->fields);
+     $$ = &struct_type->_base;
+   }
  | name {
       FbleVarExpr* var_expr = FbleAlloc(FbleVarExpr);
       var_expr->_base.tag = FBLE_VAR_EXPR;
@@ -427,10 +439,10 @@ expr:
       }
       FbleFreeVector($3);
    }
- | expr '.' '%' '(' module_path ')' {
+ | expr '.' '%' '(' expr ')' {
      // TODO: Implement this properly. For now just pass through the
      // expression.
-     FbleFreeModulePath($5);
+     FbleFreeExpr($5);
      $$ = $1;
    }
  | expr '[' expr_s ']' {
