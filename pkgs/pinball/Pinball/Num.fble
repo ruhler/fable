@@ -31,8 +31,7 @@
 #
 # The integer x is used to represent the number x/S.
 # TODO: Make this a private type:
-# @ Num@ = Int@.%(/Pinball/Num%);
-@ Num@ = Int@;
+@ Num@ = Int@.%(/Pinball/Num%);
 
 # S -- 
 #   Scale factor for converting Int@ to Num@.

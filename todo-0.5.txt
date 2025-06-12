@@ -6,9 +6,6 @@ Things to consider doing for the fble-0.5 release.
   See thoughts/fble-0.5/abstract.txt.
  - Write spec tests for private types.
  - Implement support for private types.
- - Add back use of private types for
-   /Core/Monad/IO%.World@;
-   /Pinball/Num%.Num@;
  - Update the abstract types tutorial to be about private types.
 
 * More clearly distinguish between the term 'package' used for private types

@@ -428,10 +428,10 @@ expr:
       FbleFreeVector($3);
    }
  | expr '.' '%' '(' module_path ')' {
-     FbleReportError("todo: support for private types\n", @5);
-     FbleFreeExpr($1);
+     // TODO: Implement this properly. For now just pass through the
+     // expression.
      FbleFreeModulePath($5);
-     YYERROR;
+     $$ = $1;
    }
  | expr '[' expr_s ']' {
       FbleListExpr* list_expr = FbleAlloc(FbleListExpr);
