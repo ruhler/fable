@@ -388,20 +388,6 @@ expr:
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
- | '%' '(' module_path ')' {
-      FblePackageTypeExpr* package_expr = FbleAlloc(FblePackageTypeExpr);
-      package_expr->_base.tag = FBLE_PACKAGE_TYPE_EXPR;
-      package_expr->_base.loc = FbleCopyLoc(@$);
-      package_expr->path = $3;
-      $$ = &package_expr->_base;
-   }
- | '%' '(' ')' {
-      FblePackageTypeExpr* package_expr = FbleAlloc(FblePackageTypeExpr);
-      package_expr->_base.tag = FBLE_PACKAGE_TYPE_EXPR;
-      package_expr->_base.loc = FbleCopyLoc(@$);
-      package_expr->path = FbleNewModulePath(@$);
-      $$ = &package_expr->_base;
-   }
  | expr '(' name ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
@@ -441,21 +427,11 @@ expr:
       }
       FbleFreeVector($3);
    }
- | expr '.' '%' {
-     FbleAbstractAccessExpr* access_expr = FbleAlloc(FbleAbstractAccessExpr);
-     access_expr->_base.tag = FBLE_ABSTRACT_ACCESS_EXPR;
-     access_expr->_base.loc = FbleCopyLoc(@$);
-     access_expr->value = $1;
-     $$ = &access_expr->_base;
-   }
- | expr '.' '<' expr '>' '(' expr ')' {
-     FbleAbstractCastExpr* cast_expr = FbleAlloc(FbleAbstractCastExpr);
-     cast_expr->_base.tag = FBLE_ABSTRACT_CAST_EXPR;
-     cast_expr->_base.loc = FbleCopyLoc(@$);
-     cast_expr->package = $1;
-     cast_expr->target = $4;
-     cast_expr->value = $7;
-     $$ = &cast_expr->_base;
+ | expr '.' '%' '(' module_path ')' {
+     FbleReportError("todo: support for private types\n", @5);
+     FbleFreeExpr($1);
+     FbleFreeModulePath($5);
+     YYERROR;
    }
  | expr '[' expr_s ']' {
       FbleListExpr* list_expr = FbleAlloc(FbleListExpr);

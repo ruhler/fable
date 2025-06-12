@@ -26,54 +26,53 @@
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
-# _@ -- Package type to prevent internal access to Num@ abstract type.
-@ _@ = %(/Pinball/Num%);
-
 # Num@ -- 
 #   A number with sufficient precision for the pinball game.
 #
 # The integer x is used to represent the number x/S.
-@ Num@ = _@<Int@>;
+# TODO: Make this a private type:
+# @ Num@ = Int@.%(/Pinball/Num%);
+@ Num@ = Int@;
 
 # S -- 
 #   Scale factor for converting Int@ to Num@.
 Int@ S = IntI|128;
 
-(Num@, Num@) { Num@; } Add = _@.<@<Add>>(AddI);
-(Num@, Num@) { Num@; } Sub = _@.<@<Sub>>(SubI);
-(Num@) { Num@; } Neg = _@.<@<Neg>>(NegI);
-(Num@) { Num@; } Abs = _@.<@<Abs>>(AbsI);
+(Num@, Num@) { Num@; } Add = AddI;
+(Num@, Num@) { Num@; } Sub = SubI;
+(Num@) { Num@; } Neg = NegI;
+(Num@) { Num@; } Abs = AbsI;
 
-(Num@, Num@) { Num@; } Mul = _@.<@<Mul>>((Int@ a, Int@ b) {
+(Num@, Num@) { Num@; } Mul = (Int@ a, Int@ b) {
   DivI(MulI(a, b), S).q;
-});
+};
 
-(Num@, Num@) { Num@; } Div = _@.<@<Div>>((Int@ a, Int@ b) {
+(Num@, Num@) { Num@; } Div = (Int@ a, Int@ b) {
   DivI(MulI(a, S), b).q;
-});
+};
 
-(Num@, Num@) { Bool@; } Eq = _@.<@<Eq>>(EqI);
-(Num@, Num@) { Bool@; } Gt = _@.<@<Gt>>(GtI);
-(Num@, Num@) { Bool@; } Ge = _@.<@<Ge>>(GeI);
-(Num@, Num@) { Bool@; } Lt = _@.<@<Lt>>(LtI);
-(Num@, Num@) { Bool@; } Le = _@.<@<Le>>(LeI);
+(Num@, Num@) { Bool@; } Eq = EqI;
+(Num@, Num@) { Bool@; } Gt = GtI;
+(Num@, Num@) { Bool@; } Ge = GeI;
+(Num@, Num@) { Bool@; } Lt = LtI;
+(Num@, Num@) { Bool@; } Le = LeI;
 
-Show@<Num@> Show = _@.<@<Show>>((Int@ a) {
+Show@<Num@> Show = (Int@ a) {
   Strs[ShowI(a), Str|'/', ShowI(S)];
-});
+};
 
 # Int --
 #   Integer literal.
 (List@<Decimal@>) { Num@; } Int = (List@<Decimal@> ds) {
-  _@.<Num@>(MulI(IntI(ds), S));
+  MulI(IntI(ds), S);
 };
 
-(Num@) { Int@; } Floor = _@.<@<Floor>>((Int@ a) {
+(Num@) { Int@; } Floor = (Int@ a) {
   DivI(a, S).q;
-});
+};
 
-(Num@) { Num@; } Sqrt = _@.<@<Sqrt>>((Int@ a) {
+(Num@) { Num@; } Sqrt = (Int@ a) {
   SqrtI(MulI(a, S)).q;
-});
+};
 
 @(Num@, Add, Sub, Neg, Abs, Mul, Div, Eq, Gt, Ge, Lt, Le, Show, Int, Floor, Sqrt);

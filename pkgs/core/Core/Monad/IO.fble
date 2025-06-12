@@ -3,7 +3,9 @@
 
 # World@ --
 #   An abstract type representing the state of the world.
-@ World@ = %(/Core/Monad/IO%)<*()>;
+# TODO: Make this private to /Core/Monad/IO%:
+# @ World@ = *().%(/Core/Monad/IO%);
+@ World@ = *();
 
 % State = /Core/Monad/State%<World@>;
 

@@ -1222,207 +1222,144 @@
 
     @(Bool@, True, False, Not, And, Or)
  
- @section @label[abstract][9. Abstract Types]
-  Abstract types provide a mechanism to define types of values that can only
+ @section @label[private][9. Private Types]
+  Private types provide a mechanism to define types of values that can only
   be accessed by modules in the same package. This makes it possible to hide
   implementation details from users and enforce invariants on how values are
   constructed.
   
   By default, anyone can use any operation supported by the type of a value,
   including construction, field access, conditional access, function
-  application, and so on. Abstract types introduce the concept of a package
-  type that can be used to restrict access to types based on module path.
-  Modules that do not have restricted access can only interact with a type
-  using publicly available functions.
+  application, and so on. A private type is a type whose access is restricted
+  based on module path. Modules that have not been granted access to the type
+  can only interact with it using publicly available functions.
   
-  @subsection 9.1 Package Type
+  @subsection 9.1 Private Type
    @AbstractSyntax @
-    Expr: package_type (path : Path)
+    Type: private_type (type : Type, path : Path)
   
    @ConcreteSyntax @
-    expr = '%', '(', [path], ')'
+    type = type, '.%(', path, ')'
   
    @Example @
-    @ FooBar@ = %(/Foo/Bar%);
-    @ All@ = %();
-    ...
-  
-   The package type describes the set of modules whose module path prefix
-   matches the given path. For example, the type @L{%(/Foo/Bar%)} includes
-   modules @L{/Foo/Bar%}, @L{/Foo/Bar/Sludge%}, and @L{/Foo/Bar/A/B%}, but not
-   @L{/Foo%} or @L{/Bar%}.
+    @ PrivateBool@ = +(Unit@ true, Unit@ false).%(/Foo/Bar%);
 
-   As a special case, if the module path is ommitted in the concrete syntax,
-   the package type describes the set of all modules.
-  
-   The path for a package type need not refer to an existing module. There
-   need not be any modules that satisfy the package path. A module need not be
-   a member of whatever package type it constructs.
-  
-   A package type has kind @L{@}. Two package types are considered equal if
-   they have the same path.
-  
-  @subsection 9.2 Abstract Type
-   @AbstractSyntax @
-    Type: abstract_type (package : Type) (type : Type)
-  
-   @ConcreteSyntax @
-    type = type, '<', type, '>'
-  
-   @Example @
-    @ FooBar@ = %(/Foo/Bar%);
-    @ AbstractBool = FooBar@<Bool@>;
+   The private type behaves exactly like the given underlying type for
+   modules with access, and as an abstract non-polymorphic type otherwise.
+
+   The path describes the set of modules granted access to the private type:
+   any module whose module path prefix matches the given path is granted
+   access. For example, the path @L{/Foo/Bar%} used in the @L{AbstractBool@}
+   example grants access to modules @L{/Foo/Bar%}, @L{/Foo/Bar/Sludge%}, and
+   @L{/Foo/Bar/A/B%}, but not @L{/Foo%} or @L{/Bar%}.
+
+   The path for a private type need not refer to an existing module. There
+   need not be any modules that satisfy the path. A module need not be a
+   member of the set of allowed modules for whatever private type it
+   constructs.
+
+   Normal types are a special case of private types with no restriction on
+   access. Two private types are considered equal if their underlying types
+   are equal and either their module paths are equal or the module where the
+   equality check is being performed is granted access to both types.
+
+   For example, the following assignments are well typed in the module
+   @L{/Foo/Bar/Sludge%}:
+
+   @code[fble] @
+    @ Bool@ = +(Unit@ true, Unit@ false);
+    @ PrivateBool@ = Bool@.%(/Foo/Bar%);
     
-   Forms an abstract type by combining the given package type with an
-   underlying type. Abstract types are considered equal if both their package
-   type and underlying types are equal.
-  
-   The package type must be a package type. The underlying type can be any
-   type of any kind. The resulting abstract type has kind @L{@}.
-  
-  @subsection 9.3 Abstract Cast
+    Bool@ true = Bool@(true: Unit);
+    PrivateBool@ private_true = true;
+    Bool@ true2 = private_true;
+
+   The same code would fail to type check in the module @L{/Bar%} because
+   @L{/Bar%} doesn't have access to @L{PrivateBool@}, and so
+   @L{PrivateBool@} and @L{Bool@} are considered unequal types.
+
+   The underlying type of a private type could itself be a private type, as
+   long as one of the module paths is a prefix of the other. Otherwise it is a
+   type error. For example, the following three types are equivalent:
+
+   @code[fble] @
+    Bool@.%(/Foo/Bar%)
+    Bool@.%(/Foo%).%(/Foo/Bar%)
+    Bool@.%(/Foo/Bar%).%(/Foo%)
+
+   In contrast, @L{Bool@.%(/Foo%).%(/Bar%)} is considered a type error because
+   no module could ever access it.
+
+  @subsection 9.2 Private Value
    @AbstractSyntax @
-    Expr: abstract_cast (package : Type) (target : Type) (value : Expr)
+    Expr: private_value (expr : Expr, path : Path)
   
    @ConcreteSyntax @
-    expr = type, '.', '<', type, '>', '(', expr, ')'
+    expr = expr, '.%(', path, ')'
   
    @Example @
-    @ FooBar@ = %(/Foo/Bar%);
-    @ AbstractBool@ = FooBar@<Bool@>;
-    AbstractBool@ AbstractTrue = FooBar@.<AbstractBool@>(True);
-    Bool@ OriginalTrue = FooBar@.<Bool@>(AbstractTrue);
-  
-   Casts a value between two types that are equal under the assumption that
-   for all types @L{T@}, the type @L{FooBar@<T@>} is equal to @L{T@}.
-  
-   The type of the resulting value is the target type. It is a type error if
-   the current module is not a member of the package described by the package
-   type.
-  
-  @subsection 9.4 Abstract Value
-   @AbstractSyntax @
-    Expr: abstract_value (package : Type) (value : Expr)
-  
-   @ConcreteSyntax @
-    expr = type, '(', expr, ')'
-  
-   @Example @
-    @ FooBar@ = %(/Foo/Bar%);
-    @ AbstractBool@ = FooBar@<Bool@>;
-    AbstractBool@ AbstractTrue = FooBar@(True);
-  
-   Casts a value of type @L{T@} to type @L{FooBar@<T@>}. This is a convenience
-   syntax equivalent to:
-  
-   @code[txt] @
-    abstract_cast package (abstract_type package type) value
-  
-   It is a type error if the current module does not belong to the package
-   described by the package type.
-  
-   This special syntax is provided to simplify the syntax for the common case
-   of casting directly to an abstract value. It's not possible in general to
-   use a standard function for this case given the package restriction applies
-   to where the cast operation occurs.
-  
-  @subsection 9.5 Abstract Access
-   @AbstractSyntax @
-    Expr: abstract_access (value : Expr)
-  
-   @ConcreteSyntax @
-    expr = expr, '.', '%'
-  
-   @Example @
-    @ FooBar@ = %(/Foo/Bar%);
-    @ AbstractBool@ = FooBar@<Bool@>;
-    AbstractBool@ AbstractTrue = FooBar@(True);
-    Bool@ true = AbstractTrue.%;
-  
-   Casts a value of type @L{FooBar@<T@>} to type @L{T@}. This is a convenience
-   syntax equivalent to:
-  
-   @code[txt] @
-    abstract_cast package type value
-  
-   It is a type error if the current module does not belong to the package
-   described by the package type.
-  
-   This special syntax is provided to simplify the syntax for the common case
-   of casting directly from an abstract value. It's not possible in general to
-   use a standard function for this case given the package restriction applies
-   to where the cast operation occurs.
-  
-  @subsection 9.6 Abstract Type Example
-   The follow example shows how to define a three element enum type that can
-   only be accessed externally using the provided methods.
+    PrivateBool@ private_true = True.%(/Foo/Bar%);
+
+   The private value expression can be used to cast the type of a value to a
+   private type. In the example here, if the type of @L{True} is @L{Bool@},
+   then @L{True.%(/Foo/Bar%)} has the same value as @L{True}, but is of
+   private type @L{Bool@.%(/Foo/Bar%)}.
+
+   The restriction on nested private types applies the same way to tested
+   private values: one of the module paths has to be a prefix of the other.
+
+  @subsection 9.3 Private Type Example
+   The following example shows how to define a three element enum type that
+   can only be accessed externally using the provided methods.
   
    @code[fble] @
-    @ Impl@ = +(Unit@ a, Unit@ b, Unit@ c);
+    @ Enum@ = +(Unit@ a, Unit@ b, Unit@ c).%(/MyPackage%);
     
-    @ Pkg@ = %(/MyPackage%);
-    @ Enum@ = Pkg@<Impl@>;
+    Enum@ A = Enum@(a: Unit));
+    Enum@ B = Enum@(b: Unit));
+    Enum@ C = Enum@(c: Unit));
     
-    Enum@ A = Pkg@.<Enum@>(Impl@(a: Unit));
-    Enum@ B = Pkg@.<Enum@>(Impl@(b: Unit));
-    Enum@ C = Pkg@.<Enum@>(Impl@(c: Unit));
-    
-    (Enum@) { Bool@; } IsA = Pkg@.<@<IsA>>((Impl@ e) { e.?(a: True, : False); });
-    (Enum@) { Bool@; } IsB = Pkg@.<@<IsB>>((Impl@ e) { e.?(b: True, : False); });
-    (Enum@) { Bool@; } IsC = Pkg@.<@<IsC>>((Impl@ e) { e.?(c: True, : False); });
+    (Enum@) { Bool@; } IsA = (Enum@ e) { e.?(a: True, : False); };
+    (Enum@) { Bool@; } IsB = (Enum@ e) { e.?(b: True, : False); };
+    (Enum@) { Bool@; } IsC = (Enum@ e) { e.?(c: True, : False); };
     
     @(Enum@, A, B, C, IsA, IsB, IsC);
   
-   The @L{Pkg@} type restricts access to the internals of the @L{Enum@} type
-   to modules starting with @L{/MyPackage} in their path. Other users are
-   unable to construct or access fields of the @L{Enum@} type directly; they
-   can only use the provided values @L{A}, @L{B}, @L{C} and functions @L{IsA},
-   @L{IsB}, and @L{IsC}.
+   The @L{Enum@} type restricts access to internals of the type to modules
+   starting with @L{/MyPackage} in their path. Other users are unable to
+   construct or access fields of the @L{Enum@} type directly; they can only
+   use the provided values @L{A}, @L{B}, @L{C} and functions @L{IsA}, @L{IsB},
+   and @L{IsC}.
   
-  @subsection 9.7 Private Module Example
-   Abstract types can be used to effectively mark modules or parts of modules
+  @subsection 9.4 Private Module Example
+   Private values can be used to effectively mark modules or parts of modules
    private. For example, consider a module @L{/Foo/Internal%}:
   
    @code[fble] @
-    @ Pkg@ = %(/Foo%);
-    
     @ X@ = ...;
     @ Y@ = ...;
     X@ X = ...;
     Y@ Y = ...;
     
-    Pkg@(@(X@, Y@, X, Y));
-  
-   Users can import the module with:
-  
-   @code[fble] @
-    % M = /Foo/Internal%.%;
-  
-   This will result in a type error if the user does not belong to the package
-   @L{/Foo%}.
+    @(X@, Y@, X, Y).%(/Foo%);
+
+   Any attempt to use the value of @L{/Foo/Internal%} from a module not
+   starting with @L{/Foo%} will result in a type error.
   
    The same approach can be used to restrict access to individual fields of a
    module. For example, consider a module @L{/Foo%}:
   
    @code[fble] @
-    @ Pkg@ = %(/Foo%);
-    
     @ X@ = ...;
     @ Y@ = ...;
     X@ X = ...;
     Y@ Y = ...;
     
-    @(X@, Y@, X, Pkg@(Y));
+    @(X@, Y@, X, Y.%(/Foo%));
   
    In this case, the @L{X} field is publicly accessible. The @L{Y} field can
-   only be accessed by modules in the package @L{/Foo%}. For example:
+   only be used by modules starting with @L{/Foo%}.
   
-   @code[fble] @
-    % Y = /Foo%.Y.%;
-  
-   This will result in a type error if the user does not belong to the package
-   @L{/Foo%}.
- 
  @section 10. Abstract Syntax Reference
   @code[txt] @
    NormalName: A string of characters.
@@ -1479,11 +1416,8 @@
     | literal (func : Expr) (letters : word)
     | bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
    
-    | package_type (path : Path)
-    | abstract_type (package : Type) (type : Type)
-    | abstract_cast (package : Type) (target : Type) (value : Expr)
-    | abstract_value (package : Type) (value : Expr)
-    | abstract_access (package : Type) (value : Expr)
+    | private_type (type : Type) (path : Path)
+    | private_value (value : Expr) (path : Path)
     ;
    
    Module: (value : Expr) (modules : [Module])
@@ -1579,11 +1513,8 @@
      | expr, '[', [expr, {',', expr}], ']'             (* list *)
      | expr, '|', word                                 (* literal *)
     
-     | '%', '(', [path], ')'                           (* package_type *)
-     | type, '<', type, '>'                            (* abstract_type *) 
-     | type, '.', '<', type, '>', '(', expr, ')'       (* abstract_cast *) 
-     | type, '(', expr, ')'                            (* abstract_value *) 
-     | expr, '.', '%'                                  (* abstract_access *) 
+     | type, '.%', '(', path, ')'                      (* private_type *)
+     | expr, '.%', '(', path, ')'                      (* private_value *)
     
      | block
      ;
@@ -1616,13 +1547,13 @@
     used to distinguish between the two kinds of expressions.
 
    @item
-    Explicit type struct value, function apply, and abstract value share the
-    same form. The type of the expr is used to distinguish between these kinds
-    of expressions.
+    Explicit type struct value, and function apply share the same form. The
+    type of the expr is used to distinguish between these kinds of
+    expressions.
 
    @item
-    Polymorphic application and abstract type share the same form. The type of
-    the argument is used to distinguish between these kinds of expressions.
+    The concrete syntax for private type and private value are identical. The
+    type of the argument is used to distinguish between the two cases.
 
    @item
     The module value for module @L{/Foo/Bar%} is stored in @l{Foo/Bar.fble}.

@@ -97,3 +97,153 @@ time that gets hashed into the module. If you can provide the string key that
 hashes to the right value and you are from the right module hierarchy, you can
 access that type. Otherwise you can't.
 
+---
+
+Implementation proposal:
+* Add a field to FbleType for access control: "open", or a module path
+  restriction.
+* Check for access control in typecheck on all types before using them for
+  struct value, access, etc...
+* Pass a module path to the type eqs function for use during type equality.
+
+To help the user understand what access control went bad, print access
+controls as part of the type when we print them? Or have a way, after type
+equality check fails, to re-run the check without access controls. If that
+passes, then we know its an access control issue and can report that to the
+user.
+
+For type equality, the access control part is:
+* If the access restrictions for normal types a and b are different and you
+  don't have full access to both of them, report the types as not equal.
+  Otherwise treat them as equal.
+
+Syntax proposal:
+* Expr: abstract_type (type : Type, path : Path)
+* concrete syntax ??? Maybe: <type> .%(path) ?
+
+We just need that one syntactic construct. No cast, package types, etc.
+
+For example:
+
+@ Int@ = +(
+  IntP@ n,
+  Unit@ 0,
+  IntP@ p
+).%(/Core/Int%);
+
+Implementation plan of attack:
+* Maybe try implementing it first. Keeping the existing abstract type stuff
+  around. Once I have a proof of concept and clear concrete syntax, update
+  docs, tests, etc?
+
+Let's see what the parser thinks is an acceptable syntax here.
+
+.% Should work fine on an expression. We already make use of that syntax for
+abstract types.
+
+How would poly types look? I want to have a way to distinguish between:
+  abstract(<@ T@> { ...}) and <@ T@> { abstract(...) }, right?
+
+  @ Int@ = %(/Core/Int%, +(
+    IntP@ n,
+    Unit@ 0,
+    IntP@ p
+  ));
+
+  @ Int@ = %(+(
+    IntP@ n,
+    Unit@ 0,
+    IntP@ p
+  ), /Core/Int%);
+
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing).%(/Core/Maybe%); };
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); }.%(/Core/Maybe%);
+
+Yeah, I like the <type> '.%(' <path> ')' syntax.
+
+Where do we use abstract type support today?
+* /Pinball/Num%
+
+I think that's the only place right now. That's a good test case.
+
+Here's my vote for a development plan:
+1. Add support in type.h, to derisk that.
+* FbleNewAbstractType(FbleTypeHeap*, FbleLoc loc, FbleType* type, FbleModulePath* access)
+  Creates a copy of 'type' with restricted access.
+* Add a field to FbleType with FbleModulePath*;
+* Implement the access check in type equality check.
+2. Add some support in typecheck.c, to derisk that.
+* Don't allow struct construction or access without access to the type, for
+  example.
+3. Add temporary syntax.
+* FBLE_ABSTRACT_TYPE_EXPR
+* ...
+4. Start writing spec tests.
+5. Phase out old impl?
+
+The other option would be to get rid of existing abstract type support
+entirely first? Honestly that sounds reasonable to me. We need to update
+Pinball in that direction anyway. As long as I have the spec tests behind me,
+it should be okay in the end.
+
+Yeah. Let's go that route:
+1. Remove existing support for abstract types from impl, spec tests, spec.
+2. Draft new spec for abstract types.
+3. Draft new spec tests for abstract types.
+4. Implement new support for abstract types.
+5. Update Pinball/Num to use new abstract types.
+
+---
+
+What is the kind of an abstract type? It should be '@' if abstract. It should
+always be @, right? It doesn't matter. The base is '@'. But not if you know
+about it?
+
+---
+
+I think it could be cool to support abstract values as well as types. For
+example, given a value x, of type X@, the abstract value x.%(/Foo%) is the
+same value as x but with type X@.%(/Foo%).
+
+That way we can easily make private modules and private fields of modules. But
+we need to be careful here? Maybe, maybe not?
+
+  <expr> .% (<path>)
+
+We should know if <expr> is a type or not based on its type. So we can apply
+things appropriately. Sounds reasonable to me. Let's try it.
+
+You know? I think maybe 'private' is a better word than 'abstract' here. The
+type isn't abstract to the owner, right? Yes. I like that.
+
+Cool. Updated spec is drafted. It will need a few rounds to clarify details,
+but the gist is there and I like how it looks.
+
+---
+
+For the record, I don't think I should worry about forgeability. The goal of
+private types is to specify a clear, finite set of modules that are allowed to
+access a particular type or value. Specifically, to allow a developer to
+change details of the type or value without fear of breaking anything other
+than the explicitly specified modules.
+
+Since private types are enforced at type check, not at runtime, there is
+nothing we can do in general to prevent security violations. Think of private
+types as a way of clearly documenting intent on code changes and what things
+may break in the future, along with type checking support to help developer
+and user of a library to understand that.
+
+Users can circumvent the check with sufficient investment. If they are willing
+to do so, they ought to be willing to deal with any breakage caused down the
+line.
+
+The feature is useful as long as we don't end up in a situation where a
+developer is afraid to make changes to a type because they think enough (or
+significant enough) users are hacking around the private type.
+
+---
+
+Now that I have the draft of the new spec, next step I think is to update the
+parser, make sure my syntax is okay.
+
+No issues with the parser syntax. Looks good.

@@ -1,5 +1,0 @@
-# @@fble-test@@ no-error
-% AbsTrue = /SpecTests/'9.5-AbstractAccess'/Type/AllModules/A%;
-
-# All modules have access when using the all-module package type.
-AbsTrue.%;

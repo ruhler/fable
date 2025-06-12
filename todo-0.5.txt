@@ -2,6 +2,17 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Replace abstract types with private types
+  See thoughts/fble-0.5/abstract.txt.
+ - Remove old code for abstract types.
+   FblePackateTypeExpr, FBLE_PACKAGE_TYPE_EXPR
+   FbleAbstractCastExpr, FBLE_ABSTRACT_CAST_EXPR
+ - Update spec tests.
+ - Implement support for private types.
+ - Add back use of abstract types for
+   /Core/Monad/IO%.World@;
+
+
 * --profile memory use blows up on PiDigits benchmark.
 
 * Add an fble-pprof benchmark to fble-benchmark?
@@ -37,9 +48,6 @@ GC OnFree cleanup
  - If we don't already have such a thing.
 
 * Use a special ref value instead of NULL to represent undefined values?
-
-* Revise abstract types feature of fble.
-  See thoughts/fble-0.5/abstract.txt.
 
 * Fbld Language
  - modularity

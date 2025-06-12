@@ -1,7 +1,0 @@
-# @@fble-test@@ compile-error 7:1
-% AbsTrue = /SpecTests/'9.5-AbstractAccess'/Type/UnpermittedCast/A%;
-
-# Module /Spectests/10.5-AbstractAccess/Type/UnpermittedCast% does not have
-# permission to access an abstract value restricted with package type
-# /SpecTests/10.5-AbstractAccess/Type/UnpermittedCast/A%.
-AbsTrue.%;

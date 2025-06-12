@@ -1,9 +1,0 @@
-# @@fble-test@@ compile-error 9:1
-@ Unit@ = *();
-Unit@ Unit = Unit@();
-
-@ Bool@ = +(Unit@ true, Unit@ false);
-
-# The value must be of abstract type.
-Bool@ t = Bool@(true: Unit);
-t.%.true;
