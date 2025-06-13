@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 8:26
+
+@ Unit@ = *();
+% Unit = Unit@();
+
+(@/Foo/Bar% x) {
+  # The package types are not equal because they have different paths.
+  @/Foo/Bar/Sludge% _y = x;
+  Unit;
+};

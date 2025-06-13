@@ -302,3 +302,32 @@ general.
 
 Okay. Let's try out the new syntax. See if there are any issues. Then update
 the spec.
+
+---
+
+Trouble with private types of polymorphic abstract types:
+
+  <@>@ Private@ = <@ A@> { A@.%(@/Foo%); }
+
+Is that well typed? You could pass any type A@. Including a private type
+restricted to, say @/Bar%.
+
+  Private@<Int@.%(@/Bar%)>.
+
+Options:
+* Don't allow use of abstract type in forming a private type.
+* Allow any type in forming a private type.
+  Meaning, in general, we need to support ANDED lists of module path
+  restrictions? Or have TOP and BOTTOM types.
+
+Are there more serious issues here? We don't know the type of A@, so we can't
+access it. Good.
+
+Another option could be to say:
+  Foo@.%(Pkg@) gives a type with the same underlying type as Foo@, but sets
+  access to Pkg@ type. 
+
+Basically ignore whatever restriction is on Foo@ to start. Because what does
+it mean to have a private private type? Normally I expect users to know what
+the type restriction on a type is.
+

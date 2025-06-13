@@ -44,6 +44,7 @@ typedef enum {
 
   FBLE_MODULE_PATH_EXPR,
 
+  FBLE_PACKAGE_TYPE_EXPR,
   FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
 
@@ -362,6 +363,18 @@ typedef struct {
   FbleExpr* poly;
   FbleTypeExpr* arg;
 } FblePolyApplyExpr;
+
+/**
+ * @struct[FblePackageTypeExpr] FBLE_PACKAGE_TYPE_EXPR
+ *  A package type expression.
+ *
+ *  @field[FbleTypeExpr][_base] FbleExpr base class.
+ *  @field[FbleModulePath*][path] The package path.
+ */
+typedef struct {
+  FbleTypeExpr _base;
+  FbleModulePath* path;
+} FblePackageTypeExpr;
 
 /**
  * @struct[FbleListExpr] FBLE_LIST_EXPR

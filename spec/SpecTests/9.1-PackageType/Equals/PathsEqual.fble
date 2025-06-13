@@ -1,0 +1,10 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+% Unit = Unit@();
+
+(@/Foo/Bar% x) {
+  # Packages types are equal if their paths are equal.
+  @/Foo/Bar% _y = x;
+  Unit;
+};

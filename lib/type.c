@@ -163,6 +163,7 @@ void FbleTypeRefs(FbleTypeHeap* heap, FbleType* type)
       break;
     }
 
+    case FBLE_PACKAGE_TYPE: break;
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       Ref(heap, type, var->value);
@@ -194,6 +195,12 @@ void FbleTypeOnFree(FbleType* type)
     case FBLE_FUNC_TYPE: return;
     case FBLE_POLY_TYPE: return;
     case FBLE_POLY_APPLY_TYPE: return;
+
+    case FBLE_PACKAGE_TYPE: {
+      FblePackageType* package = (FblePackageType*)type;
+      FbleFreeModulePath(package->path);
+      return;
+    }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
@@ -280,6 +287,7 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
       return FbleRetainType(heap, type);
     }
 
+    case FBLE_PACKAGE_TYPE: return FbleRetainType(heap, type);
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
@@ -370,6 +378,10 @@ static bool HasParam_(FbleTypeAssignmentV vars, FbleType* type)
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
       return HasParam(vars, pat->arg) || HasParam(vars, pat->poly);
+    }
+
+    case FBLE_PACKAGE_TYPE: {
+      return false;
     }
 
     case FBLE_VAR_TYPE: {
@@ -510,6 +522,11 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* t
       FbleReleaseType(heap, poly);
       FbleReleaseType(heap, sarg);
       return &spat->_base;
+    }
+
+    case FBLE_PACKAGE_TYPE: {
+      FbleUnreachable("package type does not have params");
+      return NULL;
     }
 
     case FBLE_VAR_TYPE: {
@@ -699,6 +716,15 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
       return result;
     }
 
+    case FBLE_PACKAGE_TYPE: {
+      FblePackageType* pa = (FblePackageType*)a;
+      FblePackageType* pb = (FblePackageType*)b;
+      bool result = FbleModulePathsEqual(pa->path, pb->path);
+      FbleReleaseType(heap, a);
+      FbleReleaseType(heap, b);
+      return result;
+    }
+
     case FBLE_VAR_TYPE: {
       FbleVarType* va = (FbleVarType*)a;
       FbleVarType* vb = (FbleVarType*)b;
@@ -730,7 +756,8 @@ FbleKind* FbleGetKind(FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE:
-    case FBLE_FUNC_TYPE: {
+    case FBLE_FUNC_TYPE:
+    case FBLE_PACKAGE_TYPE: {
       return FbleNewBasicKind(type->loc, 0);
     }
 
@@ -1149,6 +1176,13 @@ void FblePrintType(FbleType* type)
       }
       fprintf(stderr, ">");
       FbleFreeVector(args);
+      return;
+    }
+
+    case FBLE_PACKAGE_TYPE: {
+      FblePackageType* package = (FblePackageType*)type;
+      fprintf(stderr, "@");
+      FblePrintModulePath(stderr, package->path);
       return;
     }
 

@@ -316,16 +316,11 @@ expr:
      $$ = &typeof->_base;
    }
  | '@' module_path {
-     // TODO: Do something useful with this. For now treat it like
-     // an empty struct type.
-     FbleFreeModulePath($2);
-
-     FbleDataTypeExpr* struct_type = FbleAlloc(FbleDataTypeExpr);
-     struct_type->_base.tag = FBLE_DATA_TYPE_EXPR;
-     struct_type->_base.loc = FbleCopyLoc(@$);
-     struct_type->datatype = FBLE_STRUCT_DATATYPE;
-     FbleInitVector(struct_type->fields);
-     $$ = &struct_type->_base;
+     FblePackageTypeExpr* package_expr = FbleAlloc(FblePackageTypeExpr);
+     package_expr->_base.tag = FBLE_PACKAGE_TYPE_EXPR;
+     package_expr->_base.loc = FbleCopyLoc(@$);
+     package_expr->path = $2;
+     $$ = &package_expr->_base;
    }
  | name {
       FbleVarExpr* var_expr = FbleAlloc(FbleVarExpr);

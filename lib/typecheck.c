@@ -1013,6 +1013,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
   switch (expr->tag) {
     case FBLE_DATA_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
+    case FBLE_PACKAGE_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
     {
       FbleType* type = TypeCheckType(th, scope, expr);
@@ -2180,6 +2181,13 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
       FbleTypeAddRef(th, &ft->_base, arg);
       FbleTypeAddRef(th, &ft->_base, rtype);
       return &ft->_base;
+    }
+
+    case FBLE_PACKAGE_TYPE_EXPR: {
+      FblePackageTypeExpr* e = (FblePackageTypeExpr*)type;
+      FblePackageType* t = FbleNewType(th, FblePackageType, FBLE_PACKAGE_TYPE, type->loc);
+      t->path = FbleCopyModulePath(e->path);
+      return &t->_base;
     }
 
     case FBLE_VAR_EXPR:

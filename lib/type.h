@@ -22,6 +22,7 @@ typedef enum {
   FBLE_FUNC_TYPE,
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
+  FBLE_PACKAGE_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
 } FbleTypeTag;
@@ -98,6 +99,16 @@ typedef struct {
   FbleType* arg;
   FbleType* rtype;
 } FbleFuncType;
+
+/**
+ * @struct[FblePackageType] A package type.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleModulePath*][path] The package path.
+ */
+typedef struct {
+  FbleType _base;
+  FbleModulePath* path;
+} FblePackageType;
 
 /**
  * @struct[FbleVarType] A type variable.

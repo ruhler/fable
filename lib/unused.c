@@ -50,6 +50,8 @@ static void Expr(FbleExpr* expr, Vars* vars)
       return;
     }
 
+    case FBLE_PACKAGE_TYPE_EXPR: return;
+
     case FBLE_TYPEOF_EXPR:
     {
       FbleTypeofExpr* e = (FbleTypeofExpr*)expr;

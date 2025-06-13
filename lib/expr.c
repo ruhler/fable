@@ -185,6 +185,13 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_PACKAGE_TYPE_EXPR: {
+      FblePackageTypeExpr* e = (FblePackageTypeExpr*)expr;
+      FbleFreeModulePath(e->path);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_MISC_APPLY_EXPR: {
       FbleApplyExpr* e = (FbleApplyExpr*)expr;
       FbleFreeExpr(e->misc);
