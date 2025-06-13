@@ -45,6 +45,8 @@ typedef enum {
   FBLE_MODULE_PATH_EXPR,
 
   FBLE_PACKAGE_TYPE_EXPR,
+  FBLE_PRIVATE_EXPR,
+
   FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
 
@@ -375,6 +377,21 @@ typedef struct {
   FbleTypeExpr _base;
   FbleModulePath* path;
 } FblePackageTypeExpr;
+
+/**
+ * @struct[FblePrivateExpr] FBLE_PRIVATE_EXPR
+ *  A private type or private value expression.
+ *
+ *  @field[FbleTypeExpr][_base] FbleExpr base class.
+ *  @field[FbleExpr*][arg] The value or type to make private.
+ *  @field[FbleTypeExpr*][package] The package type.
+ *
+ */
+typedef struct {
+  FbleTypeExpr _base;
+  FbleExpr* arg;
+  FbleTypeExpr* package;
+} FblePrivateExpr;
 
 /**
  * @struct[FbleListExpr] FBLE_LIST_EXPR

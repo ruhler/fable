@@ -435,10 +435,12 @@ expr:
       FbleFreeVector($3);
    }
  | expr '.' '%' '(' expr ')' {
-     // TODO: Implement this properly. For now just pass through the
-     // expression.
-     FbleFreeExpr($5);
-     $$ = $1;
+     FblePrivateExpr* private_expr = FbleAlloc(FblePrivateExpr);
+     private_expr->_base.tag = FBLE_PRIVATE_EXPR;
+     private_expr->_base.loc = FbleCopyLoc(@$);
+     private_expr->arg = $1;
+     private_expr->package = $5;
+     $$ = &private_expr->_base;
    }
  | expr '[' expr_s ']' {
       FbleListExpr* list_expr = FbleAlloc(FbleListExpr);

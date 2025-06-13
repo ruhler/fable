@@ -1847,6 +1847,13 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       return MkTc(result_type, &apply->_base);
     }
 
+    case FBLE_PRIVATE_EXPR: {
+      FblePrivateExpr* private_expr = (FblePrivateExpr*)expr;
+
+      // TODO: Return the arg with restricted type.
+      return TypeCheckExpr(th, scope, private_expr->arg);
+    }
+
     case FBLE_MODULE_PATH_EXPR: {
       FbleModulePathExpr* path_expr = (FbleModulePathExpr*)expr;
 
@@ -2204,6 +2211,7 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:
+    case FBLE_PRIVATE_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;

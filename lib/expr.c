@@ -192,6 +192,14 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_PRIVATE_EXPR: {
+      FblePrivateExpr* e = (FblePrivateExpr*)expr;
+      FbleFreeExpr(e->arg);
+      FbleFreeExpr(e->package);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_MISC_APPLY_EXPR: {
       FbleApplyExpr* e = (FbleApplyExpr*)expr;
       FbleFreeExpr(e->misc);
