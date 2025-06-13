@@ -1,0 +1,16 @@
+# @@fble-test@@ compile-error 16:1
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+# If a module doesn't access to a private struct type, it should not be able
+# to construct a value of that type.
+@ Pkg@ = @/Foo/Bar%;
+
+@ Struct@ = *(Bool@ a, Bool@ b);
+@ PrivateStruct@ = Struct@.%(Pkg@);
+
+PrivateStruct@(True, False);

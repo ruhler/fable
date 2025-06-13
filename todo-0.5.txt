@@ -5,6 +5,9 @@ Things to consider doing for the fble-0.5 release.
 * Replace abstract types with private types
   See thoughts/fble-0.5/abstract.txt.
  - Write spec tests for private types.
+   WithAccess: assignment, functions, unions, poly types, lists, literals
+   WithoutAccess: assignment, structs, functions, unions, poly types, lists, literals
+   Nesting of private types.
  - Implement support for private types.
  - Update the abstract types tutorial to be about private types.
 

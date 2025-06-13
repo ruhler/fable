@@ -1,0 +1,22 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+# If a module has access to a private struct type, the private type should
+# behave exactly as the underlying struct type.
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Basic/Access%;
+
+@ Struct@ = *(Bool@ a, Bool@ b);
+@ PrivateStruct@ = Struct@.%(Pkg@);
+
+Struct@ s1 = Struct@(True, False);
+PrivateStruct@ p1 = PrivateStruct@(True, s1.b);
+PrivateStruct@ p2 = s1;
+PrivateStruct@ p3 = @(a: p1.a, b: p2.b);
+Struct@ s2 = p3;
+s2.a;

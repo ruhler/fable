@@ -1275,6 +1275,8 @@
    package type argument to the private type is used to determine which
    modules are granted access to the type.
 
+   It is a type error if the package argument is not of package type.
+
    Normal types are a special case of private types with no restriction on
    access. Two private types are considered equal if their underlying types
    are equal and either their package types are equal or the module where the
@@ -1295,17 +1297,10 @@
    @L{/Bar%} doesn't have access to @L{PrivateBool@}, and so
    @L{PrivateBool@} and @L{Bool@} are considered unequal types.
 
-   The underlying type of a private type could itself be a private type, as
-   long as one of the package types is a prefix of the other. Otherwise it is a
-   type error. For example, the following three types are equivalent:
-
-   @code[fble] @
-    Bool@.%(@/Foo/Bar%)
-    Bool@.%(@/Foo%).%(@/Foo/Bar%)
-    Bool@.%(@/Foo/Bar%).%(@/Foo%)
-
-   In contrast, @L{Bool@.%(@/Foo%).%(@/Bar%)} is considered a type error
-   because no module could ever access it.
+   If the underlying type of a private type is itself a private type, the
+   package type of the outer most private type is used to determine access.
+   For example, @L{Bool@.%(@/Foo%).%(@/Bar%)} is equivalent to 
+   @L{Bool@.%(@/Bar%)}, with the original restriction on @L{@/Foo%} dropped.
 
   @subsection 9.3 Private Value
    @AbstractSyntax @
@@ -1323,7 +1318,7 @@
    private type @L{Bool@.%(@/Foo/Bar%)}.
 
    The restriction on nested private types applies the same way to tested
-   private values: one of the module paths has to be a prefix of the other.
+   private values: the outer most package path is used.
 
   @subsection 9.4 Private Type Example
    The following example shows how to define a three element enum type that
