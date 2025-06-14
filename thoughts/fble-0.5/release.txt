@@ -231,3 +231,17 @@ see if it fixes elinks on fble-pprof?
 
 Yeah, that fixes the elinks issue. I should think about this some more, then
 do a proper job of it.
+
+---
+
+I'm thinking in circles on the OStream issue. I don't know the 'perfect' way
+to do it. For now, let's just do something that lets us explicitly close an
+output stream and stop using GC for that.
+
+Easiest thing: Passing -1 to existing output stream closes. No need to change
+types everywhere that way.
+
+Here's a new issue that maybe I want to not worry about now: how can we close
+an input stream? For example, maybe we want to open a bunch of files in a loop
+and read the first 10 bytes. How do we avoid leaking file descriptors? The API
+has no way to close the file descriptors. Should we rely on GC here? Sigh.

@@ -334,6 +334,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   M@<Unit@> Serve = {
     IOStream@<M@> ios <- m.do(s);
     Unit@ _ <- m.do(HandleConnection(ios));
+    Unit@ _ <- m.do(O.Close(ios.out));
     Serve;
   };
 

@@ -99,7 +99,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   (IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
   ForwardAll = (IStream@<M@> in, OStream@<M@> out) {
     Maybe@<Int@> mb <- m.do(in);
-    mb.?(nothing: m.return(Unit));
+    mb.?(nothing: O.Close(out));
     Unit@ _ <- m.do(out(mb.just));
     ForwardAll(in, out);
   };

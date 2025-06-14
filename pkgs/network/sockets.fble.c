@@ -70,7 +70,6 @@ void Write(SOCKET sfd, char c)
 
 #define MAYBE_TAGWIDTH 1
 
-static void OnFree(void* data);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
@@ -144,18 +143,6 @@ static FbleModulePath Path = {
 };
 
 /**
- * @func[OnFree] OnFree function for int fd native values.
- *  @arg[void*][sfd] int fd to close.
- *  @sideeffects
- *   Closes the @a[sfd] socket.
- */
-static void OnFree(void* data)
-{
-  SOCKET sfd = (SOCKET)(intptr_t)data;
-  closesocket(sfd);
-}
-
-/**
  * @func[IStreamImpl] FbleRunFunction to read a byte from a socket.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -206,8 +193,12 @@ static FbleValue* OStreamImpl(
   FbleValue* world = args[1];
 
   // TODO: Buffer writes to improve performance?
-  char c = (char)FbleIntValueAccess(byte);
-  Write(sfd, c);
+  int64_t x = FbleIntValueAccess(byte);
+  if (x == -1) {
+    closesocket(sfd);
+  } else {
+    Write(sfd, (char)x);
+  }
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   return FbleNewStructValue_(heap, 2, world, unit);
@@ -318,7 +309,7 @@ static FbleValue* ClientImpl(
     mios = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   } else {
     FbleBlockId module_block_id = function->profile_block_id - CLIENT_BLOCK_OFFSET;
-    FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, &OnFree);
+    FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
     FbleValue* istream = NewIStream(heap, sfd_value, module_block_id);
     FbleValue* ostream = NewOStream(heap, sfd_value, module_block_id);
     FbleValue* ios = FbleNewStructValue_(heap, 2, istream, ostream);
@@ -373,7 +364,7 @@ static FbleValue* AcceptImpl(
   }
 
   FbleBlockId module_block_id = function->profile_block_id - ACCEPT_BLOCK_OFFSET;
-  FbleValue* cfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)cfd, &OnFree);
+  FbleValue* cfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)cfd, NULL);
   FbleValue* istream = NewIStream(heap, cfd_value, module_block_id);
   FbleValue* ostream = NewOStream(heap, cfd_value, module_block_id);
   FbleValue* ios = FbleNewStructValue_(heap, 2, istream, ostream);
@@ -451,7 +442,7 @@ static FbleValue* ServerImpl(
     ms = FbleNewEnumValue(heap, MAYBE_TAGWIDTH, 1); // Nothing
   } else {
     FbleBlockId module_block_id = function->profile_block_id - SERVER_BLOCK_OFFSET;
-    FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, &OnFree);
+    FbleValue* sfd_value = FbleNewNativeValue(heap, (void*)(intptr_t)sfd, NULL);
     FbleValue* accept = Accept(heap, sfd_value, module_block_id);
     ms = FbleNewUnionValue(heap, MAYBE_TAGWIDTH, 0, accept);  // Just(accept);
   }

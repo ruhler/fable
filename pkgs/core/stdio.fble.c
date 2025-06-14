@@ -28,7 +28,6 @@
 #define LIST_TAGWIDTH 1
 #define RESULT_FIELDC 2
 
-static void OnFree(void* data);
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
     FbleFunction* function, FbleValue** args);
@@ -81,23 +80,6 @@ static FbleName ProfileBlocks[] = {
 };
 
 /**
- * @func[OnFree] OnFree function for FILE* native values.
- *  @arg[void*][data] FILE* pointer to close.
- *  @sideeffects
- *   Closes the @a[data] file.
- */
-static void OnFree(void* data)
-{
-  FILE* file = (FILE*)data;
-
-  // Don't close stderr, because that could prevent us from seeing runtime
-  // errors printed to stderr.
-  if (file != stderr) {
-    fclose(file);
-  }
-}
-
-/**
  * @func[IStreamImpl] FbleRunFunction to read a byte from a file.
  *  See documentation of FbleRunFunction in fble-function.h
  *
@@ -146,8 +128,12 @@ static FbleValue* OStreamImpl(
   FbleValue* world = args[1];
 
   int64_t c = FbleIntValueAccess(byte);
-  fputc(c, file);
-  fflush(file);
+  if (c == -1) {
+    fclose(file);
+  } else {
+    fputc(c, file);
+    fflush(file);
+  }
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   return FbleNewStructValue_(heap, 2, world, unit);
@@ -264,7 +250,7 @@ static FbleValue* GetEnvImpl(
  */
 static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_block_id)
 {
-  FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
+  FbleValue* native = FbleNewNativeValue(heap, file, NULL);
 
   FbleExecutable exe = {
     .num_args = 1,
@@ -290,7 +276,7 @@ static FbleValue* IStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_bl
  */
 static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_block_id)
 {
-  FbleValue* native = FbleNewNativeValue(heap, file, &OnFree);
+  FbleValue* native = FbleNewNativeValue(heap, file, NULL);
 
   FbleExecutable exe = {
     .num_args = 2,

@@ -1,5 +1,8 @@
 
 @ Int@ = /Core/Int%.Int@;
+% Neg = /Core/Int%.Neg;
+% Int = /Core/Int/Lit%.Int;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -8,12 +11,17 @@
 # The type Int@ is used for describing a byte.
 <<@>@>@ IStream@ = <<@>@ M@> { M@<Maybe@<Int@>>; };
 
+# Special value to write to an output stream to close the stream.
+Int@ End = Neg(Int|1);
+
 # An output stream of bytes.
 # The bytes are written out to a monadic type M@.
 # The type Int@ is used for describing a byte.
+# Outputting 'End' will close the stream, causing all subsequence writes to be
+# ignored.
 <<@>@>@ OStream@ = <<@>@ M@>(Int@) { M@<Unit@>; };
 
 # A pair of input and output streams.
 <<@>@>@ IOStream@ = <<@>@ M@> { *(IStream@<M@> in, OStream@<M@> out); };
 
-@(IStream@, OStream@, IOStream@);
+@(IStream@, OStream@, IOStream@, End);

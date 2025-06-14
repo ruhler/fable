@@ -1,5 +1,7 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 
 @ Int@ = /Core/Int%.Int@;
 
@@ -22,6 +24,7 @@
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ PureState@ = *(
   List@<Int@> in,
@@ -44,13 +47,21 @@ Pure@<Maybe@<Int@>> In = {
   Monad.return(Just(s.in.cons.head));
 };
 
+(List@<Int@>) { Bool@; } Closed = (List@<Int@> bytes) {
+  bytes.?(nil: False);
+  /Core/Int/Eq%.Eq(/Core/Stream%.End, bytes.cons.head).?(true: True);
+  False;
+};
+
 (Int@) { Pure@<Unit@>; } Out = (Int@ b) {
   PureState@ s <- Monad.do(State.Get);
+  Closed(s.out).?(true: Monad.return(Unit));
   State.Set(PureState@(s.in, Cons(b, s.out), s.err));
 };
 
 (Int@) { Pure@<Unit@>; } Err = (Int@ b) {
   PureState@ s <- Monad.do(State.Get);
+  Closed(s.err).?(true: Monad.return(Unit));
   State.Set(PureState@(s.in, s.out, Cons(b, s.err)));
 };
 

@@ -142,7 +142,8 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename));
     ostream.?(nothing: m.return(Unit));
 
-    O.PutStr(ostream.just, /Core/Int/Show%.Show(new_high_score));
+    Unit@ _ <- m.do(O.PutStr(ostream.just, /Core/Int/Show%.Show(new_high_score)));
+    O.Close(ostream.just);
   });
 
   m.return(True);
