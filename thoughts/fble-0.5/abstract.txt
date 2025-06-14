@@ -385,3 +385,21 @@ Next step is to test it all the different ways.
 I tried making Int@ private. It looks like it totally works. It immediately
 points me to everyone who is taking advantage of the internals of Int@. That's
 awesome.
+
+---
+
+Concern with private value construct: we need to disallow people from turning
+a value they have access to into a value they don't have access to. Otherwise
+that would defeat the purpose.
+
+Same way other way around, though that should be taken care of by nested
+private types I expect.
+
+Spec tests are showing issues with my implementation:
+* We can't do: @(Foo.%(...)) for module export, it would have to be @(Foo: Foo.%(...))
+  Revisit that use case and what I want to do there.
+* I can use private value to construct a private value for a type I don't have
+  access to. I need to prevent that at type check somehow.
+* For some reason I'm able to access a nested private type when I don't have
+  access to all the layers of it. What's going on there?
+

@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 10:1
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Pkg@ = @/Foo/Bar%;
+
+# You cannot construct a union value for a private union type you don't have
+# access to.
+@ Bool@ = +(Unit@ true, Unit@ false).%(Pkg@);
+Bool@(true: Unit);

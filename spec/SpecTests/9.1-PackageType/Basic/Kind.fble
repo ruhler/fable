@@ -1,0 +1,6 @@
+# @@fble-test@@ no-error
+
+# The kind of a package type is '@'
+@ Package@ = @/Foo/Bar%;
+
+Package@;

@@ -1,0 +1,15 @@
+# @@fble-test@@ compile-error 13:10
+@ Unit@ = *();
+
+@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Type/AbstractNonPackageType%;
+@ PkgB@ = @/Foo/Bar%;
+
+@ A@ = Unit@.%(PkgA@);
+@ B@ = Unit@.%(PkgB@);
+
+(A@ x) {
+  # Type B@ is not equal to A@, because we don't have access to B@ to be able
+  # to confirm if they are equal or not.
+  B@ y = x;
+  y;
+};

@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 6:1
+
+# You can't re-privatize a private value of a module to gain access to it.
+% PrivateTrue = /SpecTests/'9.3-PrivateValue'/Basic/PrivatizeWithAccess/Module%.True;
+% PublicTrue = PrivateTrue.%(@/SpecTests%);
+PublicTrue.true;

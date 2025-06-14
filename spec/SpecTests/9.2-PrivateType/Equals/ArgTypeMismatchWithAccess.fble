@@ -1,0 +1,15 @@
+# @@fble-test@@ compile-error 13:10
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Equals/ArgTypeMismatchWithAccess%;
+
+@ A@ = Unit@.%(Pkg@);
+@ B@ = Bool@.%(Pkg@);
+
+(A@ x) {
+  # Type B@ is not equal to A@, because they don't have the same underlying
+  # type.
+  B@ y = x;
+  y;
+};

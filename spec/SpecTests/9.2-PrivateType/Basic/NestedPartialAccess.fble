@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 10:1
+@ Unit@ = *();
+
+@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Type/AbstractNonPackageType%;
+@ PkgB@ = @/Foo/Bar%;
+
+# You can't access a nested private type if you don't have access to all
+# layers of the nesting.
+@ A@ = Unit@.%(PkgA@).%(PkgB@);
+A@();

@@ -1,0 +1,12 @@
+# @@fble-test@@ none
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Pkg@ = @/SpecTests/'9.3-PrivateValue'/Basic/PrivatizeWithAccess/Module%;
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+
+# Bool@ is public, but restrict access to 'True' to the module itself.
+@(Bool@, True: True.%(Pkg@));

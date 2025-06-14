@@ -1,0 +1,12 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+
+@ A@ = Unit@.%(@/Foo/Bar%);
+@ B@ = Unit@.%(@/Foo/Bar%);
+
+(A@ x) {
+  # Types A@ and B@ are equal, and we can tell that even if we don't have
+  # access to them.
+  B@ y = x;
+  y;
+};

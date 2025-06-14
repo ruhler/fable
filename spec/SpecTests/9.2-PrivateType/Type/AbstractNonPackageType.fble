@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 8:40
+@ Unit@ = *();
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Type/AbstractNonPackageType%;
+
+# The package part of a private type must be of package type, which means you
+# can't use an abstract type.
+<@>@ PrivatizeUnit@ = <@ T@> { Unit@.%(T@); };
+@ Private@ = PrivatizeUnit@<Pkg@>;
+Private@();

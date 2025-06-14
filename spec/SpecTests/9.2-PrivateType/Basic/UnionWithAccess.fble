@@ -1,0 +1,12 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'%;
+
+# If a module has access to a private union type, the private type should
+# behave exactly as the underlying union type.
+@ Bool@ = +(Unit@ true, Unit@ false).%(Pkg@);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+False.?(true: False, false: True).true;

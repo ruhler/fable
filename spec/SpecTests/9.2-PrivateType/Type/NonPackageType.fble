@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 5:22
+@ Unit@ = *();
+
+# The package part of a private type must be of package type.
+@ Private@ = Unit@.%(Unit@);
+Private@();

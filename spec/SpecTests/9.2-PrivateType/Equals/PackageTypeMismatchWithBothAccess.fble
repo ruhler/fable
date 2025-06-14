@@ -1,0 +1,15 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+
+@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Equals/PackageTypeMismatchWithBothAccess%;
+@ PkgB@ = @/SpecTests/'9.2-PrivateType'%;
+
+@ A@ = Unit@.%(PkgA@);
+@ B@ = Unit@.%(PkgB@);
+
+(A@ x) {
+  # Type B@ is equal to A@, even though the package types mismatch, because we
+  # have full access to both types.
+  B@ y = x;
+  y;
+};

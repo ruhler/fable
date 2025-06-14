@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:1
+
+# You can't access a private value of a module.
+% True = /SpecTests/'9.3-PrivateValue'/Basic/PrivatizeWithAccess/Module%.True;
+True.true;
