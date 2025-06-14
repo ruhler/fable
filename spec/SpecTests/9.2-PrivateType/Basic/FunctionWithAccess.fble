@@ -1,0 +1,16 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+# If a module has access to a private function type, the private type should
+# behave exactly as the underlying function type.
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Basic/FunctionWithAccess%;
+
+@ Function@ = (Bool@) { Bool@; }.%(Pkg@);
+
+Function@ Not = (Bool@ x) { x.?(true: False, false: True); };
+Not(True).false;

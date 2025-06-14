@@ -2,9 +2,13 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Add explicit close to OStream API.
+* Don't close files or sockets in GC OnFree. Close them when asked to
+  explicitly.
+
 * Write spec tests for private types.
- WithAccess: functions, poly types, lists, literals
- WithoutAccess: assignment, structs, functions, unions, poly types, lists, literals
+ WithAccess: poly types, lists, literals
+ WithoutAccess: poly types, lists, literals
 
 * --profile memory use blows up on PiDigits benchmark.
 
@@ -16,11 +20,6 @@ Things to consider doing for the fble-0.5 release.
 * Fix github windows failures.
 
 * Update all the user documentation (book, profiling guide) on how to profile.
-
-GC OnFree cleanup
-* Add explicit close to OStream API.
-* Don't close files or sockets in GC OnFree. Close them when asked to
-  explicitly.
 
 * Split FbleDataType into FbleStructType and FbleUnionType?
   Get rid of FbleDataTypeTag?

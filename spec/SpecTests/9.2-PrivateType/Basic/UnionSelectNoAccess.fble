@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 9:1
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+% True = /SpecTests/'9.2-PrivateType'/Private%.True;
+
+# If a module doesn't access to a private union type, it should not be able
+# to do a union select on that value.
+True.?(true: Unit, false: Unit);

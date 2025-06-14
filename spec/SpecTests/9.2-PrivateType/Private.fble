@@ -1,0 +1,21 @@
+# @@fble-test@@ none
+
+# Module defining various values of private types for use in other spec tests.
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Private%;
+
+@ Unit@ = *().%(Pkg@);
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false).%(Pkg@);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+(Bool@) { Bool@; }.%(Pkg@) Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+@ Pair@ = *(Bool@ a, Bool@ b).%(Pkg@);
+Pair@ Pair = Pair@(True, True);
+
+@(Unit@, Unit, Bool@, True, False, Not, Pair@, Pair);

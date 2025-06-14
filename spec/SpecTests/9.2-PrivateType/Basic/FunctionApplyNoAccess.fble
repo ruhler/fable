@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 7:1
+% Not = /SpecTests/'9.2-PrivateType'/Private%.Not;
+% True = /SpecTests/'9.2-PrivateType'/Private%.True;
+
+# If a module doesn't access to a private function type, it should not be able
+# to apply that function value.
+Not(True);

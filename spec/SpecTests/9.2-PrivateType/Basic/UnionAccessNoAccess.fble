@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 7:1
+
+% True = /SpecTests/'9.2-PrivateType'/Private%.True;
+
+# If a module doesn't access to a private union type, it should not be able
+# to access a field of that type.
+True.true;

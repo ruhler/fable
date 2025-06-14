@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 7:1
+
+% Pair = /SpecTests/'9.2-PrivateType'/Private%.Pair;
+
+# If a module doesn't access to a private struct type, it should not be able
+# to access a field of that type.
+Pair.a;
