@@ -164,6 +164,13 @@ void FbleTypeRefs(FbleTypeHeap* heap, FbleType* type)
     }
 
     case FBLE_PACKAGE_TYPE: break;
+
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* t = (FblePrivateType*)type;
+      Ref(heap, type, t->arg);
+      break;
+    }
+
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       Ref(heap, type, var->value);
@@ -199,6 +206,12 @@ void FbleTypeOnFree(FbleType* type)
     case FBLE_PACKAGE_TYPE: {
       FblePackageType* package = (FblePackageType*)type;
       FbleFreeModulePath(package->path);
+      return;
+    }
+
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* private = (FblePrivateType*)type;
+      FbleFreeModulePath(private->package);
       return;
     }
 
@@ -288,6 +301,15 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
     }
 
     case FBLE_PACKAGE_TYPE: return FbleRetainType(heap, type);
+
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* private = (FblePrivateType*)type;
+
+      // TODO: Return the private type directly if the user doesn't have
+      // access based on the package field.
+      return Normal(heap, private->arg, &nn);
+    }
+
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
@@ -382,6 +404,11 @@ static bool HasParam_(FbleTypeAssignmentV vars, FbleType* type)
 
     case FBLE_PACKAGE_TYPE: {
       return false;
+    }
+
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* pt = (FblePrivateType*)type;
+      return HasParam(vars, pt->arg);
     }
 
     case FBLE_VAR_TYPE: {
@@ -527,6 +554,18 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* t
     case FBLE_PACKAGE_TYPE: {
       FbleUnreachable("package type does not have params");
       return NULL;
+    }
+
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* pt = (FblePrivateType*)type;
+      FbleType* sarg = Subst(heap, vars, pt->arg, tps);
+
+      FblePrivateType* spt = FbleNewType(heap, FblePrivateType, FBLE_PRIVATE_TYPE, pt->_base.loc);
+      spt->package = FbleCopyModulePath(pt->package);
+      spt->arg = sarg;
+      FbleTypeAddRef(heap, &spt->_base, spt->arg);
+      FbleReleaseType(heap, spt->arg);
+      return &spt->_base;
     }
 
     case FBLE_VAR_TYPE: {
@@ -725,6 +764,18 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
       return result;
     }
 
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* pa = (FblePrivateType*)a;
+      FblePrivateType* pb = (FblePrivateType*)b;
+
+      bool result = FbleModulePathsEqual(pa->package, pb->package)
+        && TypesEqual(heap, vars, pa->arg, pb->arg, &neq);
+
+      FbleReleaseType(heap, a);
+      FbleReleaseType(heap, b);
+      return result;
+    }
+
     case FBLE_VAR_TYPE: {
       FbleVarType* va = (FbleVarType*)a;
       FbleVarType* vb = (FbleVarType*)b;
@@ -759,6 +810,13 @@ FbleKind* FbleGetKind(FbleType* type)
     case FBLE_FUNC_TYPE:
     case FBLE_PACKAGE_TYPE: {
       return FbleNewBasicKind(type->loc, 0);
+    }
+
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* private = (FblePrivateType*)type;
+
+      // TODO: Kind should be @ if the user doesn't have access.
+      return FbleGetKind(private->arg);
     }
 
     case FBLE_POLY_TYPE: {
@@ -991,6 +1049,26 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
 }
 
 // See documentation in type.h.
+FbleType* FbleNewPrivateType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleModulePath* package)
+{
+  if (arg->tag == FBLE_TYPE_TYPE) {
+    FbleTypeType* ttarg = (FbleTypeType*)arg;
+    FbleType* body_type = FbleNewPrivateType(heap, loc, ttarg->type, package);
+    FbleTypeType* tt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, loc);
+    tt->type = body_type;
+    FbleTypeAddRef(heap, &tt->_base, tt->type);
+    FbleReleaseType(heap, tt->type);
+    return &tt->_base;
+  }
+
+  FblePrivateType* private = FbleNewType(heap, FblePrivateType, FBLE_PRIVATE_TYPE, loc);
+  private->package = FbleCopyModulePath(package);
+  private->arg = arg;
+  FbleTypeAddRef(heap, &private->_base, private->arg);
+  return &private->_base;
+}
+
+// See documentation in type.h.
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
   FbleType* normal = Normal(heap, type, NULL);
@@ -1183,6 +1261,15 @@ void FblePrintType(FbleType* type)
       FblePackageType* package = (FblePackageType*)type;
       fprintf(stderr, "@");
       FblePrintModulePath(stderr, package->path);
+      return;
+    }
+
+    case FBLE_PRIVATE_TYPE: {
+      FblePrivateType* private = (FblePrivateType*)type;
+      FblePrintType(private->arg);
+      fprintf(stderr, ".%%(@");
+      FblePrintModulePath(stderr, private->package);
+      fprintf(stderr, ")");
       return;
     }
 

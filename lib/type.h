@@ -23,6 +23,7 @@ typedef enum {
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
   FBLE_PACKAGE_TYPE,
+  FBLE_PRIVATE_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
 } FbleTypeTag;
@@ -109,6 +110,18 @@ typedef struct {
   FbleType _base;
   FbleModulePath* path;
 } FblePackageType;
+
+/**
+ * @struct[FblePrivateType] A private type.
+ *  @field[FbleType][_base] FbleType base class.
+ *  @field[FbleType*][arg] The argument type.
+ *  @field[FbleModulePath*][path] The package path.
+ */
+typedef struct {
+  FbleType _base;
+  FbleType* arg;
+  FbleModulePath* package;
+} FblePrivateType;
 
 /**
  * @struct[FbleVarType] A type variable.
@@ -435,6 +448,26 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
  *   passed poly or arg types.
  */
 FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg);
+
+/**
+ * @func[FbleNewPrivateType] Constructs a private type.
+ *  We maintain an invariant when constructing FblePrivateTypes that the value
+ *  is not an FBLE_TYPE_TYPE. In other words, the kind must have kind level 0.
+ *  Construct private types using FbleNewPrivateType to enforce this
+ *  invariant.
+ *
+ *  @arg[FbleTypeHeap*][heap] The heap to use for allocations.
+ *  @arg[FbleLoc][loc] The location for the type.
+ *  @arg[FbleType*][arg] The underlying type argument.
+ *  @arg[FbleModulePath*][package] The package to restrict the type to.
+ *
+ *  @returns[FbleType*] A newly allocated private type.
+ *
+ *  @sideeffects
+ *   The caller is responsible for calling FbleReleaseType on the returned type
+ *   when it is no longer needed.
+ */
+FbleType* FbleNewPrivateType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleModulePath* package);
 
 /**
  * @func[FbleTypeIsVacuous] Checks if a type will reduce to normal form.

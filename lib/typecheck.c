@@ -1850,8 +1850,29 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
     case FBLE_PRIVATE_EXPR: {
       FblePrivateExpr* private_expr = (FblePrivateExpr*)expr;
 
-      // TODO: Return the arg with restricted type.
-      return TypeCheckExpr(th, scope, private_expr->arg);
+      FbleType* package = TypeCheckType(th, scope, private_expr->package);
+      CleanType(cleaner, package);
+      if (package == NULL) {
+        return TC_FAILED;
+      }
+
+      FblePackageType* normal = (FblePackageType*)FbleNormalType(th, package);
+      CleanType(cleaner, &normal->_base);
+      if (normal->_base.tag != FBLE_PACKAGE_TYPE) {
+        ReportError(private_expr->package->loc,
+            "expected a package type, but found something of type %t\n",
+            package);
+        return TC_FAILED;
+      }
+
+      Tc arg = TypeCheckExpr(th, scope, private_expr->arg);
+      CleanTc(cleaner, arg);
+      if (arg.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleType* ntype = FbleNewPrivateType(th, expr->loc, arg.type, normal->path);
+      return MkTc(ntype, FbleCopyTc(arg.tc));
     }
 
     case FBLE_MODULE_PATH_EXPR: {

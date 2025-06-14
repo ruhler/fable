@@ -331,3 +331,47 @@ Basically ignore whatever restriction is on Foo@ to start. Because what does
 it mean to have a private private type? Normally I expect users to know what
 the type restriction on a type is.
 
+---
+
+I'm worried about my implementation approach, that evaluation/normalization of
+types could lose package info, or require us to join package info.
+
+Here's a different idea for how to implement it:
+* Have a 'private type', which stores the module path and underlying type.
+* Pass the module path whenever we normalize a type or ask for its kind.
+* Normalization goes through the private type if you have access, otherwise it
+  gets stuck there.
+
+Benefits:
+* Nicer separation between private types and other types.
+* Matches the description in the spec pretty well.
+* We get all the various use cases for free.
+* You can have nested private types that give you AND capability exactly as
+  you would expect.
+* No need to special case between private type and private value, assuming we
+  turn private(typeof) into typeof(private).
+
+Let me try this. If it works, I can update the spec on nested types.
+
+I'll need to be careful on how this interacts with other types. Let's review:
+* data type, func type, package type: no concerns
+* typeof:
+* poly apply: note: poly is not a typeof
+* poly type: note: must not have typeof in the body
+* var type: note: must not be var of a typeof.
+
+So I think we just need to make sure the body isn't a typeof? What about:
+
+  @<Foo@>.%(@/Bar%)?
+
+I'm claiming that's the same as:
+  @<Foo@.%(@/Bar%)>
+
+Whatever. Who cares. Worry about that weirdness later.
+
+Conceptually:
+  Foo@.%(@/Bar%) is a Foo@ restricted to certain modules.
+  @<Foo@.%(@/Bar%)> is the type of that. I'm fine saying that's a private
+  type. That works for me.
+
+
