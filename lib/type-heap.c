@@ -131,6 +131,10 @@ typedef struct {
  *  
  *   These objects have been determined to be unreachable. They have not yet
  *   had their on_free callbacks called.
+ *
+ *  @field[FbleModulePath*][context]
+ *   The module currently being compiled. Stored with the type heap for
+ *   convenience only, it really has nothing to do with allocating objects.
  */
 struct FbleTypeHeap {
   Gen* old;
@@ -140,6 +144,7 @@ struct FbleTypeHeap {
   Gen* new;
   Gen* next;
   ObjList free;
+  FbleModulePath* context;
 };
 
 static void MoveToFront(ObjList* dest, Obj* obj);
@@ -364,6 +369,7 @@ static bool IncrGc(FbleTypeHeap* heap)
 FbleTypeHeap* FbleNewTypeHeap()
 {
   FbleTypeHeap* heap = FbleAlloc(FbleTypeHeap);
+  heap->context = NULL;
 
   heap->old = NewGen(0);
   heap->mark = NewGen(MARK_ID);
@@ -397,6 +403,10 @@ void FbleFreeTypeHeap(FbleTypeHeap* heap)
 
   FbleFree(heap->save);
   FbleFree(heap->new);
+
+  if (heap->context != NULL) {
+    FbleFreeModulePath(heap->context);
+  }
 
   FbleFree(heap);
 }
@@ -552,4 +562,17 @@ void FullGc(FbleTypeHeap* heap)
       FbleFree(obj);
     }
   } while (!done);
+}
+
+void FbleTypeHeapSetContext(FbleTypeHeap* heap, FbleModulePath* context)
+{
+  if (heap->context != NULL) {
+    FbleFreeModulePath(heap->context);
+  }
+  heap->context = FbleCopyModulePath(context);
+}
+
+FbleModulePath* FbleTypeHeapGetContext(FbleTypeHeap* heap)
+{
+  return heap->context;
 }

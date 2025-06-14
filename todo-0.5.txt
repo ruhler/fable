@@ -18,6 +18,7 @@ Things to consider doing for the fble-0.5 release.
    Add check for access in type equality check.
    Add check for access in all the various type operations.
  - Update the abstract types tutorial to be about private types.
+ - have Var(Private) go to Private(Var) to improve error messages?
 
 * More clearly distinguish between the term 'package' used for private types
   and for package paths?

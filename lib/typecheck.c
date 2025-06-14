@@ -566,7 +566,7 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
  */
 static bool CheckNameSpace(FbleName name, FbleType* type)
 {
-  FbleKind* kind = FbleGetKind(type);
+  FbleKind* kind = FbleGetKind(NULL, type);
   size_t kind_level = FbleGetKindLevel(kind);
   FbleFreeKind(kind);
 
@@ -825,11 +825,11 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
     return TC_FAILED;
   }
 
-  FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(poly.type);
+  FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(FbleTypeHeapGetContext(th), poly.type);
   if (poly_kind->_base.tag == FBLE_POLY_KIND) {
     // poly_apply
     FbleKind* expected_kind = poly_kind->arg;
-    FbleKind* actual_kind = FbleGetKind(arg_type);
+    FbleKind* actual_kind = FbleGetKind(FbleTypeHeapGetContext(th), arg_type);
     if (!FbleKindsEqual(expected_kind, actual_kind)) {
       ReportError(arg_loc,
           "expected kind %k, but found something of kind %k\n",
@@ -1137,7 +1137,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           ReportError(defs[i].type->loc, "(%t from here)\n", defs[i].type);
         } else if (!error && binding->type == NULL) {
           FbleKind* expected_kind = FbleCopyKind(binding->kind);
-          FbleKind* actual_kind = FbleGetKind(defs[i].type);
+          FbleKind* actual_kind = FbleGetKind(scope->module, defs[i].type);
           if (!FbleKindsEqual(expected_kind, actual_kind)) {
             ReportError(binding->expr->loc,
                 "expected kind %k, but found something of kind %k\n",
@@ -2285,6 +2285,8 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_deps, FbleType** link_deps)
 {
   assert(module->type || module->value);
+
+  FbleTypeHeapSetContext(th, module->path);
 
   FbleType* type = NULL;
   if (module->type) {

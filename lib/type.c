@@ -305,9 +305,10 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeList* normalizin
     case FBLE_PRIVATE_TYPE: {
       FblePrivateType* private = (FblePrivateType*)type;
 
-      // TODO: Return the private type directly if the user doesn't have
-      // access based on the package field.
-      return Normal(heap, private->arg, &nn);
+      if (FbleModuleBelongsToPackage(FbleTypeHeapGetContext(heap), private->package)) {
+        return Normal(heap, private->arg, &nn);
+      }
+      return FbleRetainType(heap, type);
     }
 
     case FBLE_VAR_TYPE: {
@@ -722,8 +723,8 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
       FblePolyType* pta = (FblePolyType*)a;
       FblePolyType* ptb = (FblePolyType*)b;
 
-      FbleKind* ka = FbleGetKind(pta->arg);
-      FbleKind* kb = FbleGetKind(ptb->arg);
+      FbleKind* ka = FbleGetKind(FbleTypeHeapGetContext(heap), pta->arg);
+      FbleKind* kb = FbleGetKind(FbleTypeHeapGetContext(heap), ptb->arg);
       if (!FbleKindsEqual(ka, kb)) {
         FbleFreeKind(ka);
         FbleFreeKind(kb);
@@ -803,7 +804,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
 }
 
 // See documentation in type.h.
-FbleKind* FbleGetKind(FbleType* type)
+FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE:
@@ -815,8 +816,10 @@ FbleKind* FbleGetKind(FbleType* type)
     case FBLE_PRIVATE_TYPE: {
       FblePrivateType* private = (FblePrivateType*)type;
 
-      // TODO: Kind should be @ if the user doesn't have access.
-      return FbleGetKind(private->arg);
+      if (context == NULL || FbleModuleBelongsToPackage(context, private->package)) {
+        return FbleGetKind(context, private->arg);
+      }
+      return FbleNewBasicKind(type->loc, 0);
     }
 
     case FBLE_POLY_TYPE: {
@@ -836,17 +839,17 @@ FbleKind* FbleGetKind(FbleType* type)
       //
       // In short, we have to increment the level of the argument kind to get
       // the proper kind for the poly.
-      FbleKind* arg_kind = FbleGetKind(poly->arg);
+      FbleKind* arg_kind = FbleGetKind(context, poly->arg);
       kind->arg = LevelAdjustedKind(arg_kind, 1);
       FbleFreeKind(arg_kind);
 
-      kind->rkind = FbleGetKind(poly->body);
+      kind->rkind = FbleGetKind(context, poly->body);
       return &kind->_base;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      FblePolyKind* kind = (FblePolyKind*)FbleGetKind(pat->poly);
+      FblePolyKind* kind = (FblePolyKind*)FbleGetKind(context, pat->poly);
       assert(kind->_base.tag == FBLE_POLY_KIND);
 
       FbleKind* rkind = FbleCopyKind(kind->rkind);
@@ -862,7 +865,7 @@ FbleKind* FbleGetKind(FbleType* type)
     case FBLE_TYPE_TYPE: {
       FbleTypeType* type_type = (FbleTypeType*)type;
 
-      FbleKind* arg_kind = FbleGetKind(type_type->type);
+      FbleKind* arg_kind = FbleGetKind(context, type_type->type);
       FbleKind* kind = LevelAdjustedKind(arg_kind, 1);
       FbleFreeKind(arg_kind);
       return kind;
@@ -992,7 +995,7 @@ void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
 
   assert(var->tag == FBLE_VAR_TYPE && "non-var type passed to FbleAssignVarType");
   FbleVarType* var_type = (FbleVarType*)var;
-  FbleKind* kind = FbleGetKind(value);
+  FbleKind* kind = FbleGetKind(FbleTypeHeapGetContext(heap), value);
   FbleFreeKind(var_type->kind);
   var_type->kind = kind;
   var_type->value = value;
@@ -1217,7 +1220,7 @@ void FblePrintType(FbleType* type)
         FblePolyType* pt = (FblePolyType*)type;
         fprintf(stderr, "%s", prefix);
 
-        FbleKind* value_kind = FbleGetKind(pt->arg);
+        FbleKind* value_kind = FbleGetKind(NULL, pt->arg);
         FbleKind* type_kind = LevelAdjustedKind(value_kind, 1);
         FblePrintKind(type_kind);
         FbleFreeKind(type_kind);

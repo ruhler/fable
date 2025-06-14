@@ -219,6 +219,9 @@ typedef struct {
 
 /**
  * @func[FbleGetKind] Gets the kind of a value with the given type.
+ *  @arg[FbleModulePath*][context]
+ *   The context to use for resolution of private types. NULL can be used for
+ *   cases where private access doesn't matter.
  *  @arg[FbleType*][type] The type of the value to get the kind of.
  *
  *  @returns[FbleKind*]
@@ -228,7 +231,7 @@ typedef struct {
  *   The caller is responsible for calling FbleFreeKind on the returned
  *   kind when it is no longer needed.
  */
-FbleKind* FbleGetKind(FbleType* type);
+FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type);
 
 /**
  * @func[FbleGetKindLevel]
@@ -283,6 +286,31 @@ typedef struct FbleTypeHeap FbleTypeHeap;
  *   calling FbleFreeTypeHeap when the heap is no longer needed.
  */
 FbleTypeHeap* FbleNewTypeHeap();
+
+/**
+ * @func[FbleTypeHeapSetContext] Set the module context for type operations.
+ *  Many of the operations involving types depend on the module being compiled
+ *  to determine how to treat private types. For convenience, we store the
+ *  context along with the type heap so you only have to pass one thing
+ *  around everywhere all the time.
+ *
+ *  @arg[FbleTypeHeap*][heap] The type heap.
+ *  @arg[FbleModulePath*][context] The module being compiled.
+ *  @sideeffects
+ *   Subsequent type operations will use the provided module to determine
+ *   access to private types.
+ */
+void FbleTypeHeapSetContext(FbleTypeHeap* heap, FbleModulePath* context);
+
+/**
+ * @func[FbleTypeHeapGetContext] Gets the most recently set context.
+ *  @arg[FbleTypeHeap*][heap] The type heap.
+ *  @returns[FbleModulePath*]
+ *   The context previously passed to FbleTypeHeapSetContext, owned by the
+ *   type heap. Make a copy of the returned path if needed.
+ *  @sideeffects None.
+ */
+FbleModulePath* FbleTypeHeapGetContext(FbleTypeHeap* heap);
 
 /**
  * @func[FbleFreeTypeHeap] Frees a heap that is no longer in use.
