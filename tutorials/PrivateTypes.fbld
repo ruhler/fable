@@ -70,13 +70,14 @@
   @L{MyPackage@} type, @L{MyBool@} is an opaque abstract type, in no apparent
   way related to @L{Bool@}. Attempts to construct values of @L{MyBool@} or
   assign from a @L{Bool@} will be met with a type error.
-
-  It's as simple as that.
   
  @section Private Values
-  The same syntax used to define a private type can be used to case a value
+  The same syntax used to define a private type can be used to cast a value
   into a private type. For example, assuming @L{True} is of type @L{Bool@},
   @L{True.%(MyPackage@)} has the same value but is of type @L{MyBool@}.
+
+  This is useful for creating implicit type struct values and function values
+  of private types.
 
   You can use private values to export data or functions from a module that
   can only be used by modules belonging to the specified package.

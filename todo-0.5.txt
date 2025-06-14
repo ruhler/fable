@@ -2,9 +2,6 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Revise example private module field, which will not compile.
-  We need: @(Foo: Foo.%(...)). @(Foo.%(...)) is not enough.
-
 * Write spec tests for private types.
  WithAccess: functions, poly types, lists, literals
  WithoutAccess: assignment, structs, functions, unions, poly types, lists, literals

@@ -425,3 +425,12 @@ non-struct type?
 For example, Bool@()? Or A@() for abstract type A@?
 
 Let me add a test for those cases.
+
+---
+
+Trouble: if we don't allow Foo.%(@/Bar%), we won't allow Foo@.%(@/Bar%) by the
+same logic. Feels a little bit funny to me.
+
+I can certainly hack around it based on whether the arg is a type or not. Any
+issues with that?
+

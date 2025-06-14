@@ -1872,7 +1872,19 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleType* ntype = FbleNewPrivateType(th, expr->loc, arg.type, normal->path);
-      return MkTc(ntype, FbleCopyTc(arg.tc));
+      CleanType(cleaner, ntype);
+
+      FbleKind* kind = FbleGetKind(NULL, arg.type);
+      size_t kind_level = FbleGetKindLevel(kind);
+      FbleFreeKind(kind);
+
+      if (kind_level == 0 && !FbleTypesEqual(th, arg.type, ntype)) {
+        ReportError(expr->loc, "Unable to cast %t to %t from module %m\n",
+            arg.type, ntype, scope->module);
+        return TC_FAILED;
+      }
+
+      return MkTc(FbleRetainType(th, ntype), FbleCopyTc(arg.tc));
     }
 
     case FBLE_MODULE_PATH_EXPR: {
