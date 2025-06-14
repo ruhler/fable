@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 6:15
+@ Unit@ = *();
+
+# If a module doesn't access to a poly type, it should look like an abstract
+# non-poly type that you cannot apply.
+<@>@ Maybe@ = /SpecTests/'9.2-PrivateType'/Private%.Maybe@;
+Maybe@<Unit@>;

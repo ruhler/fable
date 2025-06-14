@@ -2,9 +2,7 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Write spec tests for private types.
- WithAccess: poly types, lists, literals
- WithoutAccess: poly types, lists, literals
+* Debug failing private poly spec test.
 
 * How to 'close' a partially read stdio file to avoid resource leaks?
 

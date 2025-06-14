@@ -1,0 +1,23 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Basic/LiteralWithAccess%;
+
+@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C).%(Pkg@);
+
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil).%(Pkg@);
+
+(L@) { Unit@; }.%(Pkg@) f = (L@ l) {
+  Unit@ _b = l.cons.head.B;
+  Unit@ _a = l.cons.tail.cons.head.A;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit;
+};
+
+# Lists and literals for private types you have access to should behave just
+# like normal literals.
+Unit@ _ = f|BAC;
+Unit@ _ = f[Enum@(B: Unit), Enum@(A: Unit), Enum@(C: Unit)];
+Unit;

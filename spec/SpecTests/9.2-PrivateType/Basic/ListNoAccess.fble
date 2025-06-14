@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 10:1
+
+@ Unit@ = /SpecTests/'9.2-PrivateType'/Private%.Unit@;
+% F = /SpecTests/'9.2-PrivateType'/Private%.F;
+% A = /SpecTests/'9.2-PrivateType'/Private%.A;
+% B = /SpecTests/'9.2-PrivateType'/Private%.B;
+% C = /SpecTests/'9.2-PrivateType'/Private%.C;
+
+# The type of F is private, so we can't use it as a list literal.
+F[B, A, C];

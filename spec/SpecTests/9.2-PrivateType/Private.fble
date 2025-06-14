@@ -18,4 +18,24 @@ Bool@ False = Bool@(false: Unit);
 @ Pair@ = *(Bool@ a, Bool@ b).%(Pkg@);
 Pair@ Pair = Pair@(True, True);
 
-@(Unit@, Unit, Bool@, True, False, Not, Pair@, Pair);
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); }.%(Pkg@);
+Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
+<@ T@>(T@) { Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@<T@>(just: x); };
+
+@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C).%(Pkg@);
+Enum@ A = Enum@(A: Unit);
+Enum@ B = Enum@(B: Unit);
+Enum@ C = Enum@(C: Unit);
+
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil).%(Pkg@);
+
+(L@) { Unit@; }.%(Pkg@) F = (L@ l) {
+  Unit@ _b = l.cons.head.B;
+  Unit@ _a = l.cons.tail.cons.head.A;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit;
+};
+
+@(Unit@, Unit, Bool@, True, False, Not, Pair@, Pair, Maybe@, Nothing, Just,
+  Enum@, L@, F, A, B, C);

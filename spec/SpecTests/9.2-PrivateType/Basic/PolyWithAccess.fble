@@ -1,0 +1,12 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Basic/PolyWithAccess%;
+
+# If a module has access to a poly type, the private type should behave
+# exactly as the underlying poly type.
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); }.%(Pkg@);
+Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
+Maybe@<Unit@> Just = Maybe@<Unit@>(just: Nothing<Unit@>.nothing);
+Just;
