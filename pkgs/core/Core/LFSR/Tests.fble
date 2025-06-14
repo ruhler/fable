@@ -6,6 +6,7 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Sub = /Core/Int%.Sub;
+% IsZero = /Core/Int/Eq%.IsZero;
 % Int = /Core/Int/Lit%.Int;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
@@ -27,7 +28,7 @@
 
 (LFSR@, Int@) { List@<Bit@>; }
 ShiftN = (LFSR@ lfsr, Int@ n) {
-  n.?(0: Nil<Bit@>);
+  IsZero(n).?(true: Nil<Bit@>);
   Shifted@<Bit@> shifted = Shift(lfsr);
   Cons(shifted.output, ShiftN(shifted.lfsr, Sub(n, Int|1)));
 };

@@ -3,6 +3,7 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Sub = /Core/Int%.Sub;
+% IsZero = /Core/Int/Eq%.IsZero;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -36,7 +37,7 @@ Maybe@<Bit8@> A5 = Just(H8|A5);
 
 M@<Maybe@<Bit8@>> Get = {
   Int@ n <- Monad.do(State.Get);
-  n.?(0: Monad.return(Nothing<Bit8@>));
+  IsZero(n).?(true: Monad.return(Nothing<Bit8@>));
   Unit@ _ <- Monad.do(State.Set(Sub(n, 1)));
   Monad.return(A5);
 };

@@ -15,6 +15,10 @@
   x.?(0: True, : False);
 };
 
+(Int@) { Bool@; } IsNegative = (Int@ x) {
+  x.?(n: True, : False);
+};
+
 (Int@, Int@){ Bool@; } Eq = (Int@ a, Int@ b) {
   a.?(
     n: b.?(n: EqP(a.n, b.n),  0: False, p: False),
@@ -58,5 +62,5 @@
   Lt(a, b).?(true: a, false: b);
 };
 
-@(IsZero, Eq, Lt, Le, Gt, Ge, Max, Min);
+@(IsZero, IsNegative, Eq, Lt, Le, Gt, Ge, Max, Min);
 

@@ -7,6 +7,7 @@
 @ Int@ = /Core/Int%.Int@;
 % Decr = /Core/Int%.Decr;
 
+% IsNegative = /Core/Int/Eq%.IsNegative;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% Nil = /Core/List%.Nil;
@@ -49,7 +50,7 @@ Benchmark = (Main@ app, Int@ n, Event@ quit, Unit@ _) {
 
   M@<Event@> Event = {
     Int@ n <- Monad.do(State.Get);
-    n.?(n: Monad.return(quit));
+    IsNegative(n).?(true: Monad.return(quit));
     Unit@ _ <- Monad.do(State.Set(Decr(n)));
     Monad.return(Event@(tick: Unit));
   };

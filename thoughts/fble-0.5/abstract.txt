@@ -381,3 +381,7 @@ passes around the context everywhere, and the error messages aren't great, but
 functionality is there I think.
 
 Next step is to test it all the different ways.
+
+I tried making Int@ private. It looks like it totally works. It immediately
+points me to everyone who is taking advantage of the internals of Int@. That's
+awesome.
