@@ -1,0 +1,8 @@
+# @@fble-test@@ compile-error 8:1
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# Regression test for a bug in type checking where we allowed zero argument
+# application to any kind of type.
+Bool@();

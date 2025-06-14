@@ -1317,6 +1317,13 @@
    then @L{True.%(@/Foo/Bar%)} has the same value as @L{True}, but is of
    private type @L{Bool@.%(@/Foo/Bar%)}.
 
+   This is mostly useful for constructing values where the type of the value
+   is not mentioned expicitly during construction, such as implicit struct
+   values and function values.
+
+   It is a type error if you don't have access to the type of value you are
+   casting to.
+
    Private values can be nested the same way as private types.
 
   @subsection 9.4 Private Type Example
@@ -1343,8 +1350,8 @@
    and @L{IsC}.
   
   @subsection 9.5 Private Module Example
-   Private values can be used to effectively mark modules or parts of modules
-   private. For example, consider a module @L{/Foo/Internal%}:
+   Private values can be used to effectively mark a module as private private.
+   For example, consider a module @L{/Foo/Internal%}:
   
    @code[fble] @
     @ X@ = ...;
@@ -1356,21 +1363,6 @@
 
    Any attempt to use the value of @L{/Foo/Internal%} from a module not
    starting with @L{/Foo%} will result in a type error.
-  
-   The same approach can be used to restrict access to individual fields of a
-   module. For example, consider a module @L{/Foo%}:
-  
-   @code[fble] @
-    @ Pkg@ = @/Foo%;
-
-    T@ X = ...;
-    T@ Y = ...;
-    T@ Z = ...;
-    
-    @(X, Y.%(Pkg@), Z.%(Pkg@));
-  
-   In this case, the @L{X} field is publicly accessible. The @L{Y} field can
-   only be used by modules starting with @L{/Foo%}.
   
  @section 10. Abstract Syntax Reference
   @code[txt] @

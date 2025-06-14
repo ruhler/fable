@@ -1,7 +1,7 @@
 # @@fble-test@@ compile-error 13:10
 @ Unit@ = *();
 
-@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Type/AbstractNonPackageType%;
+@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Equals/PackageTypeMismatchWithSingleAccess%;
 @ PkgB@ = @/Foo/Bar%;
 
 @ A@ = Unit@.%(PkgA@);

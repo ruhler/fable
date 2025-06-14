@@ -403,3 +403,25 @@ Spec tests are showing issues with my implementation:
 * For some reason I'm able to access a nested private type when I don't have
   access to all the layers of it. What's going on there?
 
+---
+
+Instead of @(Foo.%(...))...
+
+Do:
+
+Foo@.%(...) Foo = ...;
+
+Let me remove/update that example from the tutorial and spec.
+
+To prevent construction of something you don't have access to, we just need to
+check the types before and after privatization are equal, right?
+
+So, the real concerning question here is why nested private type isn't working
+as expected.
+
+Looks like a broader bug in typechecking: we can apply zero arguments to any
+non-struct type?
+
+For example, Bool@()? Or A@() for abstract type A@?
+
+Let me add a test for those cases.

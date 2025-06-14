@@ -2013,6 +2013,12 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         }
       }
 
+      if (argc == 0) {
+        ReportError(expr->loc,
+            "cannot apply arguments to something of type %t\n", misc.type);
+        return TC_FAILED;
+      }
+
       // Typecheck for possibly polymorphic function application.
       // We do type inference and application one argument at a time.
       Tc result = misc;

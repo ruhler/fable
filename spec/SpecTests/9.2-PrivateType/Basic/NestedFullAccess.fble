@@ -1,7 +1,7 @@
 # @@fble-test@@ no-error
 @ Unit@ = *();
 
-@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Type/AbstractNonPackageType%;
+@ PkgA@ = @/SpecTests/'9.2-PrivateType'/Basic/NestedFullAccess%;
 @ PkgB@ = @/SpecTests/'9.2-PrivateType'%;
 
 # You can work with nested private types as long as you have access to
