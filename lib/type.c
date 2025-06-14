@@ -1279,6 +1279,15 @@ void FblePrintType(FbleType* type)
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       FblePrintName(stderr, var->name);
+
+      // Special case to make error messages nicer for failed private type
+      // access.
+      if (var->value != NULL && var->value->tag == FBLE_PRIVATE_TYPE) {
+        FblePrivateType* private = (FblePrivateType*)var->value;
+        fprintf(stderr, ".%%(@");
+        FblePrintModulePath(stderr, private->package);
+        fprintf(stderr, ")");
+      }
       return;
     }
 

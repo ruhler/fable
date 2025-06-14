@@ -1224,9 +1224,9 @@
  
  @section @label[private][9. Private Types]
   Private types provide a mechanism to define types of values that can only
-  be accessed by modules in the same package. This makes it possible to hide
-  implementation details from users and enforce invariants on how values are
-  constructed.
+  be accessed by modules under the same location in the module hierarchy. This
+  makes it possible to hide implementation details from users and enforce
+  invariants on how values are constructed.
   
   By default, anyone can use any operation supported by the type of a value,
   including construction, field access, conditional access, function
@@ -1244,14 +1244,16 @@
    @Example @
     @ FooBar@ = @/Foo/Bar%;
   
-   The package type describes the set of modules whose module path prefix
-   matches the given path. For example, the type @L{@/Foo/Bar%} includes
-   modules @L{/Foo/Bar%}, @L{/Foo/Bar/Sludge%}, and @L{/Foo/Bar/A/B%}, but not
+   The package type describes a set of modules under the same location in the
+   module hierarchy by using what is called a package path. A module belongs
+   to the package if the package path is a prefix of the module path.
+   For example, the package type @L{@/Foo/Bar%} includes modules
+   @L{/Foo/Bar%}, @L{/Foo/Bar/Sludge%}, and @L{/Foo/Bar/A/B%}, but not
    @L{/Foo%} or @L{/Bar%}.
 
-   The path for a package type need not refer to an existing module. There
-   need not be any modules that satisfy the package path. A module need not be
-   a member of whatever package type it constructs.
+   The package path for a package type need not refer to an existing module.
+   There need not be any modules that satisfy the package path. A module need
+   not be a member of whatever package type it constructs.
   
    A package type has kind @L{@}. Two package types are considered equal if
    they have the same path.
@@ -1277,10 +1279,9 @@
 
    It is a type error if the package argument is not of package type.
 
-   Normal types are a special case of private types with no restriction on
-   access. Two private types are considered equal if their underlying types
-   are equal and either their package types are equal or the module where the
-   equality check is being performed is granted access to both types.
+   Two private types are considered equal if their underlying types are equal
+   and either their package types are equal or the module where the equality
+   check is being performed is granted access to both types.
 
    For example, the following assignments are well typed in the module
    @L{/Foo/Bar/Sludge%}:
@@ -1298,9 +1299,8 @@
    @L{PrivateBool@} and @L{Bool@} are considered unequal types.
 
    If the underlying type of a private type is itself a private type, the
-   package type of the outer most private type is used to determine access.
-   For example, @L{Bool@.%(@/Foo%).%(@/Bar%)} is equivalent to 
-   @L{Bool@.%(@/Bar%)}, with the original restriction on @L{@/Foo%} dropped.
+   module will need to have access to both layers of private type to access
+   the underlying value.
 
   @subsection 9.3 Private Value
    @AbstractSyntax @
@@ -1317,8 +1317,7 @@
    then @L{True.%(@/Foo/Bar%)} has the same value as @L{True}, but is of
    private type @L{Bool@.%(@/Foo/Bar%)}.
 
-   The restriction on nested private types applies the same way to tested
-   private values: the outer most package path is used.
+   Private values can be nested the same way as private types.
 
   @subsection 9.4 Private Type Example
    The following example shows how to define a three element enum type that

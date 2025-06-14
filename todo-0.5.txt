@@ -2,26 +2,12 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Replace abstract types with private types
-  See thoughts/fble-0.5/abstract.txt.
- - Write spec tests for private types.
-   WithAccess: assignment, functions, unions, poly types, lists, literals
-   WithoutAccess: assignment, structs, functions, unions, poly types, lists, literals
-   Nesting of private types.
- - Implement support for private types.
-   Add package field to FbleType.
-   Add FbleNewPrivateType function in type.{h,c}
-   Typecheck FBLE_PRIVATE_EXPR to use FbleNewPrivateType to return the updated type.
-   Could normalization of a type cause access restrictions to be dropped?
-   Should a private type type turn into a type type of private type?
+* Write spec tests for private types.
+ WithAccess: assignment, functions, unions, poly types, lists, literals
+ WithoutAccess: assignment, structs, functions, unions, poly types, lists, literals
+ Nesting of private types.
 
-   Add check for access in type equality check.
-   Add check for access in all the various type operations.
- - Update the abstract types tutorial to be about private types.
- - have Var(Private) go to Private(Var) to improve error messages?
-
-* More clearly distinguish between the term 'package' used for private types
-  and for package paths?
+* Update the abstract types tutorial to be about private types.
 
 * --profile memory use blows up on PiDigits benchmark.
 

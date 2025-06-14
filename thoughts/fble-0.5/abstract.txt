@@ -374,4 +374,10 @@ Conceptually:
   @<Foo@.%(@/Bar%)> is the type of that. I'm fine saying that's a private
   type. That works for me.
 
+---
 
+Okay! I think it works. The implementation is a little hacky in the way it
+passes around the context everywhere, and the error messages aren't great, but
+functionality is there I think.
+
+Next step is to test it all the different ways.
