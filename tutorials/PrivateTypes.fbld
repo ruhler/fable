@@ -1,0 +1,111 @@
+@tutorial Private Types
+ This tutorial does a deep dive into private types in fble. By the end of
+ this tutorial, you'll be fully versed in section 9 of the fble language spec
+ on private types.
+ 
+ @section Motivation
+  The way types work in fble, anyone can describe any type. You don't need to
+  have access to a type declaration to refer to a type. One of the downsides
+  of this approach to types is it makes it harder to protect internal data
+  structures.
+  
+  For example, imagine you want to define an auto-balancing tree structure for
+  use as a map data type. The internal structure of the tree may be
+  complicated and rely on invariants about how the tree is balanced. As long
+  as users only interact with the tree through provided functions like
+  @L{Empty}, @L{Lookup}, @L{Insert}, and @L{Delete}, those invariants can be
+  maintained. But technically there is nothing stopping a user from
+  constructing their own tree value directly and in a way that violates the
+  expected invariants.
+  
+  Private types are a way to restrict access to types to a set of modules.
+  This way, for example, you can say only the @L{/Core/Map%} module is allowed
+  to construct a map directly; everyone else has to use the functions provided
+  by @L{/Core/Map%} to construct maps.
+ 
+ @section Basics
+  A private type is a guarded wrapper around a normal type that can only be
+  accessed by modules in a specified subtree of the module hierarchy. For
+  modules granted access to the type, the private type behaves exactly the
+  same as the type it is wrapping. For modules not granted access to the type,
+  the private type behaves like an abstract type.
+  
+  For example, the normal type @L{Bool@} is accessible to everyone. Anyone can
+  test if a boolean value is true or false or construct their own boolean
+  value using @L{Bool@(true: Unit)} and @L{Bool@(false: Unit)}.
+  
+  We can define a private type @L{MyBool@} that wraps the @L{Bool@} type,
+  and make it so only modules in the @L{/Mine/} part of the module hierarchy
+  can teset if the boolean value is true or false or construct their own.
+  
+  @code[fble] @
+   @ MyPackage@ = @/Mine%;
+   @ MyBool@ = Bool@.%(MyPackage@);
+  
+  The syntax @L{@} followed by a module path is used to describe a package
+  type. Package types represent sets of modules. In this case, because it is
+  given @L{/Mine%} as an argument to the package type, it includes modules
+  like @L{/Mine%}, @L{/Mine/A%}, @L{/Mine/A/B%}, and @L{/Mine/C%}, but
+  excludes modules like @L{/Yours%}.
+  
+  Once you have the package type @L{MyPackage@}, you can create
+  package-specific wrappers around other types. In this case, the type
+  @L{MyBool@} is created as a wrapper around @L{Bool@}.
+
+  To create a value of @L{MyBool@}, you could use a constructor directly:
+  
+  @code[fble] @
+   MyBool@ MyTrue = MyBool@(true: Unit);
+
+  Or you could assign a value directly from the @L{Bool@} type:
+
+  @code[fble] @
+   MyBool@ MyTrue = Bool@(true: Unit);
+
+  The types @L{MyBool@} and @L{Bool@} are one and the same from the point of
+  view of modules with access to @L{MyBool@}, they can be used
+  interchangeably.
+
+  From the point of view of modules that aren't in the set described by the
+  @L{MyPackage@} type, @L{MyBool@} is an opaque abstract type, in no apparent
+  way related to @L{Bool@}. Attempts to construct values of @L{MyBool@} or
+  assign from a @L{Bool@} will be met with a type error.
+
+  It's as simple as that.
+  
+ @section Private Values
+  The same syntax used to define a private type can be used to case a value
+  into a private type. For example, assuming @L{True} is of type @L{Bool@},
+  @L{True.%(MyPackage@)} has the same value but is of type @L{MyBool@}.
+
+  You can use private values to export data or functions from a module that
+  can only be used by modules belonging to the specified package.
+
+ @section Example
+  The typical approach for using private types is simply to mark your type of
+  interest as private. Everything else is unchanged.
+
+  For example, here is how you could define a three element enum type that can
+  only be accessed externally using the provided methods:
+ 
+  @code[fble] @
+   @ Enum@ = +(Unit@ a, Unit@ b, Unit@ c).%(@/MyPackage%);
+   
+   Enum@ A = Enum@(a: Unit));
+   Enum@ B = Enum@(b: Unit));
+   Enum@ C = Enum@(c: Unit));
+   
+   (Enum@) { Bool@; } IsA = (Enum@ e) { e.?(a: True, : False); };
+   (Enum@) { Bool@; } IsB = (Enum@ e) { e.?(b: True, : False); };
+   (Enum@) { Bool@; } IsC = (Enum@ e) { e.?(c: True, : False); };
+   
+   @(Enum@, A, B, C, IsA, IsB, IsC);
+ 
+ @section Private Types in the Language Specification
+  Private types are described in @fbld[../spec/fble.fbld#private][section 9
+  of the fble language specification].
+ 
+ @section Next Steps
+  You've now learned about all of the fble language features. Continue on to
+  the @fbld[Core.fbld][Core Library] tutorial to learn about some common types
+  and functions defined in the core library.

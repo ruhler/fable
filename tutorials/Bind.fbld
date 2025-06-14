@@ -347,5 +347,5 @@
   specification] for the specification of the bind syntax.
  
  @section Next Steps
-  Head over to the @fbld[AbstractTypes.fbld][Abstract Types] tutorial to learn
-  about abstract types in fble.
+  Head over to the @fbld[PrivateTypes.fbld][Private Types] tutorial to learn
+  about private types in fble.

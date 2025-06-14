@@ -7,8 +7,6 @@ Things to consider doing for the fble-0.5 release.
  WithoutAccess: assignment, structs, functions, unions, poly types, lists, literals
  Nesting of private types.
 
-* Update the abstract types tutorial to be about private types.
-
 * --profile memory use blows up on PiDigits benchmark.
 
 * Add an fble-pprof benchmark to fble-benchmark?

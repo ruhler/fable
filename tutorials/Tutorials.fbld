@@ -46,8 +46,8 @@
  @def @fbld[Bind.fbld][Bind]
   Learn about function bind syntax and monad computations in fble.
 
- @def @fbld[AbstractTypes.fbld][Abstract Types]
-  Learn about support for abstract types in fble.
+ @def @fbld[PrivateTypes.fbld][Private Types]
+  Learn about support for private types in fble.
  
  @def @fbld[Core.fbld][Core]
   Learn about useful core library types and functions.

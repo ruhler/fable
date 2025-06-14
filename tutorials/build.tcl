@@ -1,6 +1,5 @@
 namespace eval "tutorials" {
   set tutorials {
-    AbstractTypes.fbld
     Basics.fbld
     Bind.fbld
     Core.fbld
@@ -13,6 +12,7 @@ namespace eval "tutorials" {
     Literals.fbld
     Modules.fbld
     Polymorphism.fbld
+    PrivateTypes.fbld
     Structs.fbld
     Stdio.fbld
     Unions.fbld

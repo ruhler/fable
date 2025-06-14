@@ -270,7 +270,7 @@
   classes.
   
   For namespace management you can use fble's modules. For access controls you
-  can use fble's abstract types. You can create struct values with type and
+  can use fble's private types. You can create struct values with type and
   function fields if you want.
 
  @section Inheritance
@@ -350,8 +350,8 @@
   Fble has a notion of modules, which allows you to group together and define
   related types and functions in separate files.
 
-  Fble has a separate abstract type feature that can be used to restrict
-  access to internals of a module or a group of modules.
+  Fble has a separate private type feature that can be used to restrict access
+  to internals of a module or a group of modules.
 
   For example, here's part of the @L{/Core/String%} module, which re-uses code
   from the @L{/Core/Char%} and @L{/Core/String%} modules in its

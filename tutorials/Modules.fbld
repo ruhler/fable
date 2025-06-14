@@ -267,7 +267,7 @@
   The idea behind the directory structure is that modules in the same
   directory are developed by the same organization. That organization is
   responsible for ensuring you don't have two modules in the same directory
-  with the same name. There is a language feature for abstract types that
+  with the same name. There is a language feature for private types that
   grants or restricts access to modules based on the directory structure.
  
   Think of modules as dependency units. Break up code into modules to avoid
