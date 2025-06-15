@@ -15,6 +15,10 @@ Bool@ False = Bool@(false: Unit);
   x.?(true: False, false: True);
 };
 
+% Not2 = (Bool@ x) {
+  x.?(true: False, false: True);
+}.%(Pkg@);
+
 @ Pair@ = *(Bool@ a, Bool@ b).%(Pkg@);
 Pair@ Pair = Pair@(True, True);
 
@@ -37,5 +41,5 @@ Enum@ C = Enum@(C: Unit);
   Unit;
 };
 
-@(Unit@, Unit, Bool@, True, False, Not, Pair@, Pair, Maybe@, Nothing, Just,
+@(Unit@, Unit, Bool@, True, False, Not, Not2, Pair@, Pair, Maybe@, Nothing, Just,
   Enum@, L@, F, A, B, C);

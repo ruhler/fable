@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:1
+% M = /SpecTests/'9.3-PrivateValue'/Basic/Module/Internal%;
+
+# You can't access a field of a private valued module.
+M.Unit;

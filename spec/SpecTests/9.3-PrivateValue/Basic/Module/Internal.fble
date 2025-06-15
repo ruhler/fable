@@ -1,0 +1,4 @@
+# @@fble-test@@ none
+@ Pkg@ = @/SpecTests/'9.3-PrivateValue'/Basic/Module/Internal%;
+@ Unit@ = *();
+@(Unit@).%(Pkg@);

@@ -1,0 +1,9 @@
+# @@fble-test@@ no-error
+@ Bool@ = /SpecTests/'9.2-PrivateType'/Private%.Bool@;
+
+@ Pkg@ = @/SpecTests/'9.2-PrivateType'/Private%;
+
+# Not2 was produced using a private value expression. It should 
+# have produced something of the expected type.
+(Bool@) { Bool@; }.%(Pkg@) Not2 = /SpecTests/'9.2-PrivateType'/Private%.Not2;
+Not2;
