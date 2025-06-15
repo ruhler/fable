@@ -330,3 +330,22 @@ Something we could do related to both PiDigits and generating too large a
 profile would be only profile at function boundaries. Stop emitting internal
 sub-blocks. Let me try that, just for the fun of it.
 
+It seems to fix the PiDigits blowup. I think it helps focus in on the
+functions we care about. I don't really need all the rest, unless I want
+detailed info about code coverage. Which, so far, I haven't really wanted.
+
+Honestly? I think I should do it. Who cares about code coverage for now?
+
+But note: limiting to functions is not enough. I would still want the option
+to downsample.
+
+The trouble is, there seems to be some issue with fble-pprof crashing, so I
+wonder if I'm doing something wrong.
+
+The idea is: runtime is solely responsible for enter/replace/exit profiling
+calls. Only have blocks per function. But we need to keep the block stack to
+keep track of function names.
+
+Yeah. I'll need to look more closely how to properly implement it. It's going
+to need some rearrange of the code to track current location separately from
+block ids.

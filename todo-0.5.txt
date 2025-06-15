@@ -2,7 +2,11 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Add --profile-sample-period option to downsample profiles?
+* Change compiler to only emit profiling blocks for functions.
+  Not subblocks of functions.
+
+* Add --profile-sample-period option to downsample profiles
+  Do geometric distribution downsampling at profile generation time.
 
 * --profile memory use blows up on PiDigits benchmark.
 

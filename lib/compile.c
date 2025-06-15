@@ -96,7 +96,7 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg);
 /**
  * @struct[Blocks] Stack of block frames for the current profiling block.
  *  @field[FbleBlockIdV][stack]
- *   The stack of black frames representing the current location.
+ *   The stack of block frames representing the current location.
  *  @field[FbleNameV][profile] The names of profile blocks to append to.
  */
 typedef struct {
@@ -767,8 +767,8 @@ static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
 
 /**
  * @func[PushBodyBlock] Adds a new body profiling block to the block stack.
- *  This is used for the body of functions and processes that are executed
- *  when they are called, not when they are defined.
+ *  This is used for the body of functions that are executed when they are
+ *  called, not when they are defined.
  *
  *  @arg[Blocks*][blocks] The blocks stack.
  *  @arg[FbleLoc][loc] The location of the new block.
