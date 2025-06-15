@@ -101,12 +101,12 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg);
  *   The list of blocks to include in the profile.
  */
 typedef struct {
-  FbleNameV stack;
+  FbleStringV stack;
   FbleNameV profile;
 } Blocks;
 
-static void PushBlock(Blocks* blocks, FbleName name, FbleLoc loc);
-static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc);
+static void PushBlock(Blocks* blocks, FbleName name);
+static FbleBlockId GetBlock(Blocks* blocks, FbleLoc loc);
 static void PopBlock(Blocks* blocks);
 
 static void CompileExit(bool exit, Scope* scope, Local* result);
@@ -720,7 +720,6 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
  *  @arg[Blocks*][blocks] The blocks stack.
  *  @arg[FbleName][name]
  *   Name to add to the current block path for naming the new block.
- *  @arg[FbleLoc][loc] The location of the block.
  *
  *  @sideeffects
  *   @i Pushes a new block to the blocks stack.
@@ -728,37 +727,23 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, size_t arg)
  *    The block should be popped from the stack using PopBlock or one of the
  *    other functions that exit a block when no longer needed.
  */
-static void PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
+static void PushBlock(Blocks* blocks, FbleName name)
 {
-  const char* curr = NULL;
-  size_t currlen = 0;
-  if (blocks->stack.size > 0) {
-    curr = blocks->stack.xs[blocks->stack.size-1].name->str;
-    currlen = strlen(curr);
-  }
-
-  // Append ".name" to the current block name to figure out the new block
-  // name.
-  FbleString* str = FbleAllocExtra(FbleString, currlen + strlen(name.name->str) + 3);
+  FbleString* str = FbleAllocExtra(FbleString, strlen(name.name->str) + 2);
   str->refcount = 1;
   str->magic = FBLE_STRING_MAGIC;
   str->str[0] = '\0';
-  if (currlen > 0) {
-    strcat(str->str, curr);
-    strcat(str->str, ".");
-  }
   strcat(str->str, name.name->str);
   switch (name.space) {
     case FBLE_NORMAL_NAME_SPACE: break;
     case FBLE_TYPE_NAME_SPACE: strcat(str->str, "@"); break;
   }
 
-  FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
-  FbleAppendToVector(blocks->stack, nm);
+  FbleAppendToVector(blocks->stack, str);
 }
 
 /**
- * @func[PushBodyBlock] Adds a new body profiling block to the block stack.
+ * @func[GetBlock] Gets a block id for the current location.
  *  This is used for the body of functions that are executed when they are
  *  called, not when they are defined.
  *
@@ -769,28 +754,29 @@ static void PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
  *   The id of the newly pushed block.
  *
  *  @sideeffects
- *   @i Adds a new block to the blocks stack.
- *   @item
- *    The block should be popped from the stack using PopBlock or one of the
- *    other functions that exit a block when no longer needed.
+ *   Adds a new block to the list of blocks in the profile.
  */
-static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
+static FbleBlockId GetBlock(Blocks* blocks, FbleLoc loc)
 {
-  const char* curr = "";
-  if (blocks->stack.size > 0) {
-    curr = blocks->stack.xs[blocks->stack.size-1].name->str;
+  size_t len = 1;
+  for (size_t i = 0; i < blocks->stack.size; ++i) {
+    len += strlen(blocks->stack.xs[i]->str) + 1;
   }
 
-  FbleString* str = FbleAllocExtra(FbleString, strlen(curr) + 2);
+  FbleString* str = FbleAllocExtra(FbleString, len);
   str->refcount = 1;
   str->magic = FBLE_STRING_MAGIC;
   str->str[0] = '\0';
-  strcat(str->str, curr);
+  for (size_t i = 0; i < blocks->stack.size; ++i) {
+    if (i > 0) {
+      strcat(str->str, ".");
+    }
+    strcat(str->str, blocks->stack.xs[i]->str);
+  }
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
   size_t id = blocks->profile.size;
   FbleAppendToVector(blocks->profile, nm);
-  FbleAppendToVector(blocks->stack, FbleCopyName(nm));
   return id;
 }
 
@@ -805,7 +791,7 @@ static void PopBlock(Blocks* blocks)
 {
   assert(blocks->stack.size > 0);
   blocks->stack.size--;
-  FbleFreeName(blocks->stack.xs[blocks->stack.size]);
+  FbleFreeString(blocks->stack.xs[blocks->stack.size]);
 }
 
 /**
@@ -914,7 +900,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       // Compile the values of the variables.
       Local* defs[let_tc->bindings.size];
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        PushBlock(blocks, let_tc->bindings.xs[i].name, let_tc->bindings.xs[i].loc);
+        PushBlock(blocks, let_tc->bindings.xs[i].name);
         defs[i] = CompileExpr(blocks, false, false, scope, let_tc->bindings.xs[i].tc);
         PopBlock(blocks);
       }
@@ -1248,14 +1234,13 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       }
 
       Scope func_scope;
-      FbleBlockId scope_block = PushBodyBlock(blocks, body_loc);
+      FbleBlockId scope_block = GetBlock(blocks, body_loc);
       instr->profile_block_offset = scope_block - scope->code->profile_block_id;
       assert(func_tc->scope.size == func_tc->statics.size);
       InitScope(&func_scope, &instr->code, args, func_tc->statics, scope_block, scope);
       FbleFreeVector(args);
 
       Local* func_result = CompileExpr(blocks, true, true, &func_scope, body);
-      PopBlock(blocks);
       ReleaseLocal(&func_scope, func_result, true);
       FreeScope(&func_scope);
 
@@ -1408,13 +1393,12 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
 
   FbleCode* code;
   Scope scope;
-  PushBlock(&blocks, name, name.loc);
-  FbleBlockId scope_block = PushBodyBlock(&blocks, name.loc);
+  PushBlock(&blocks, name);
+  FbleBlockId scope_block = GetBlock(&blocks, name.loc);
   FbleNameV statics = { .size = 0, .xs = NULL };
   InitScope(&scope, &code, args, statics, scope_block, NULL);
 
   CompileExpr(&blocks, true, true, &scope, tc);
-  PopBlock(&blocks);
   PopBlock(&blocks);
 
   FreeScope(&scope);

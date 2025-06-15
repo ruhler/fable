@@ -124,7 +124,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   Maybe@<IOStream@<M@>> mios <- m.do(sockets.client(args.hostname, args.port));
   mios.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to conect'));
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Str|'unable to connect'));
     m.return(False);
   });
 
