@@ -49,6 +49,10 @@
 
    @opt[@l[--port] @a[port]]
    @ the port to use for the http server. Defaults to 8123.
+
+  @subsection[Benchmarking Options]
+   @opt[@l[--benchmark]]
+   @ run some queries and exit automatically for use in benchmarking fble-pprof
  
  @exitstatus
   @def[0] Success.

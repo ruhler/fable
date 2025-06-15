@@ -2,12 +2,9 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* How to 'close' a partially read stdio file to avoid resource leaks?
-
 * --profile memory use blows up on PiDigits benchmark.
 
-* Add an fble-pprof benchmark to fble-benchmark?
-  One based on md5 --profile is probably good, for parsing.
+* Figure out how to add an fble-pprof benchmark to fble-benchmark?
 
 * Improve performance of fble-pprof?
 

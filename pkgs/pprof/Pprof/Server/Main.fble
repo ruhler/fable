@@ -16,6 +16,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
+<@>% Last = /Core/List%.Last;
 <@>% Append = /Core/List%.Append;
 <@>% Concat = /Core/List%.Concat;
 <@>% Get = /Core/List/Length%.Get;
@@ -71,7 +72,8 @@
   String@ error,
   String@ hostname,
   Int@ port,
-  String@ file
+  String@ file,
+  Bool@ benchmark
 );
 
 Args@ DefaultArgs = @(
@@ -79,7 +81,8 @@ Args@ DefaultArgs = @(
   error: Str|'',
   hostname: Str|'localhost',
   port: Int|8123,
-  file: Str|''
+  file: Str|'',
+  benchmark: False
 );
 
 (List@<String@>, Args@) { Args@; }
@@ -90,6 +93,11 @@ GetArgs = (List@<String@> args, Args@ default) {
   /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
     List[Str|'-h', Str|'--help'], arg).?(true: {
     default.@(help: True);
+  });
+
+  /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
+    List[Str|'--benchmark'], arg).?(true: {
+    GetArgs(args.cons.tail, default.@(benchmark: True));
   });
 
   /Core/Char/Eq%.Eq(arg.cons.head, Chars.'-').?(false: {
@@ -238,6 +246,59 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   Profile@ profile = parsed.ok;
 
+  (OStream@<M@>) { M@<Unit@>; }
+  OverviewPage = (OStream@<M@> out) {
+    Int@ total = Total.Total(profile);
+    O.PutStr(out, Lines[
+      Str|'<h1>Overview</h1>',
+      Str|'Profile: ', args.file, Str|'<br />',
+      Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />',
+      Str|'Sequences: ', /Core/Int/Show%.Show(Length(profile.samples)), Str|'<br />']);
+  };
+
+  (OStream@<M@>) { M@<Unit@>; }
+  OverallPage = (OStream@<M@> out) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Frames by overall time</h1>'));
+    Table@ table = Overall.Query(profile);
+    Int@ total = Total.Total(profile);
+    Table(out, profile, table, total, (Sequence@ s) { s; });
+  };
+
+  (OStream@<M@>) { M@<Unit@>; }
+  SelfPage = (OStream@<M@> out) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Frames by self time</h1>'));
+    Table@ table = Self.Query(profile);
+    Int@ total = Total.Total(profile);
+    Table(out, profile, table, total, (Sequence@ s) { s; });
+  };
+
+  (OStream@<M@>) { M@<Unit@>; }
+  SeqsPage = (OStream@<M@> out) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Full Sequences</h1>'));
+    Table@ table = Sequences.Query(profile);
+    Int@ total = Total.Total(profile);
+    Table(out, profile, table, total, (Sequence@ s) { s; });
+  };
+
+  (OStream@<M@>, Sequence@) { M@<Unit@>; }
+  SeqPage = (OStream@<M@> out, Sequence@ seq) {
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Sequence</h1>'));
+    Int@ total = Total.Total(profile);
+    Table@ sequence = Sequence.Sequence(seq, profile);
+    Unit@ _ <- m.do(Table(out, profile, sequence, total, (Sequence@ s) { s; }));
+
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Incoming</h1>'));
+    Int@ ss_total = Total.Contains(profile, seq);
+    Table@ incoming = Sequence.Incoming(seq, profile);
+    Unit@ _ <- m.do(Table(out, profile, incoming, ss_total,
+        (Sequence@ s) { Append(s, seq); }));
+
+    Unit@ _ <- m.do(O.PutLine(out, Str|'<h1>Outgoing</h1>'));
+    Table@ outgoing = Sequence.Outgoing(seq, profile);
+    Table(out, profile, outgoing, ss_total,
+      (Sequence@ s) { Append(seq, s); });
+  };
+
   (IOStream@<M@>) { M@<Unit@>; }
   HandleConnection = (IOStream@<M@> ios) {
     # Get the start line
@@ -271,55 +332,14 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[/Pprof/Server/Menu%.Menu]));
 
-    /Core/String/Eq%.Eq(Str|'/', path).?(true: {
-      Int@ total = Total.Total(profile);
-      O.PutStr(ios.out, Lines[
-        Str|'<h1>Overview</h1>',
-        Str|'Profile: ', args.file, Str|'<br />',
-        Str|'Samples: ', /Core/Int/Show%.Show(total), Str|'<br />',
-        Str|'Sequences: ', /Core/Int/Show%.Show(Length(profile.samples)), Str|'<br />']);
-    });
-
-    /Core/String/Eq%.Eq(Str|'/overall', path).?(true: {
-      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Frames by overall time</h1>'));
-      Table@ table = Overall.Query(profile);
-      Int@ total = Total.Total(profile);
-      Table(ios.out, profile, table, total, (Sequence@ s) { s; });
-    });
-
-    /Core/String/Eq%.Eq(Str|'/self', path).?(true: {
-      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Frames by self time</h1>'));
-      Table@ table = Self.Query(profile);
-      Int@ total = Total.Total(profile);
-      Table(ios.out, profile, table, total, (Sequence@ s) { s; });
-    });
-
-    /Core/String/Eq%.Eq(Str|'/seqs', path).?(true: {
-      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Full Sequences</h1>'));
-      Table@ table = Sequences.Query(profile);
-      Int@ total = Total.Total(profile);
-      Table(ios.out, profile, table, total, (Sequence@ s) { s; });
-    });
+    /Core/String/Eq%.Eq(Str|'/', path).?(true: OverviewPage(ios.out));
+    /Core/String/Eq%.Eq(Str|'/overall', path).?(true: OverallPage(ios.out));
+    /Core/String/Eq%.Eq(Str|'/self', path).?(true: SelfPage(ios.out));
+    /Core/String/Eq%.Eq(Str|'/seqs', path).?(true: SeqsPage(ios.out));
 
     /Core/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
       List@<String@> ids = Split(Drop(Int|5, path), Chars.',');
-      Sequence@ seq = /Core/List%.Map(ids, /Core/Int/Show%.Read);
-
-      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Sequence</h1>'));
-      Int@ total = Total.Total(profile);
-      Table@ sequence = Sequence.Sequence(seq, profile);
-      Unit@ _ <- m.do(Table(ios.out, profile, sequence, total, (Sequence@ s) { s; }));
-
-      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Incoming</h1>'));
-      Int@ ss_total = Total.Contains(profile, seq);
-      Table@ incoming = Sequence.Incoming(seq, profile);
-      Unit@ _ <- m.do(Table(ios.out, profile, incoming, ss_total,
-          (Sequence@ s) { Append(s, seq); }));
-
-      Unit@ _ <- m.do(O.PutLine(ios.out, Str|'<h1>Outgoing</h1>'));
-      Table@ outgoing = Sequence.Outgoing(seq, profile);
-      Table(ios.out, profile, outgoing, ss_total,
-          (Sequence@ s) { Append(seq, s); });
+      SeqPage(ios.out, /Core/List%.Map(ids, /Core/Int/Show%.Read));
     });
 
     O.PutStr(ios.out, Lines[
@@ -330,6 +350,19 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Strs[StrE|'Query: ', query, StrE|' <br/>'],
       Strs[StrE|'Version: ', version, StrE|' <br/>']]);
   };
+
+  args.benchmark.?(true: {
+    # Run through a few different queries to act as a benchmark.
+    Unit@ _ <- m.do(OverviewPage(stdio.out));
+    Unit@ _ <- m.do(OverallPage(stdio.out));
+    Unit@ _ <- m.do(SelfPage(stdio.out));
+    Unit@ _ <- m.do(SeqsPage(stdio.out));
+
+    profile.samples.?(nil: m.return(True));
+    Sequence@ seq = List[Last(profile.samples.cons.head.sequence)];
+    Unit@ _ <- m.do(SeqPage(stdio.out, seq));
+    m.return(True);
+  });
 
   M@<Unit@> Serve = {
     IOStream@<M@> ios <- m.do(s);

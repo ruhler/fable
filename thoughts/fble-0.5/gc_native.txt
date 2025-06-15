@@ -264,3 +264,25 @@ Plan of action:
 3. Remove use of 'close' in OnFree for files and sockets.
 
 No changes to the GC implementation or APIs are required.
+
+---
+
+Another question though: do we need explicit close of input streams? For
+example, maybe we read partially through a bunch of input streams in a row. We
+can't rely on reading end of file to close the stream, because we haven't read
+that far.
+
+That suggests we want a way to explicitly close input streams. Then input
+streams have three related conditions to consider:
+* Have we read to end of file.
+* Have we explicitly closed it.
+* Have we dropped the last reference to it.
+
+It's hard. Think about implementing a pure implementation of streams. I keep
+feeling like we want to have GC run some fble code when we drop the last
+reference. Like a weak reference or some such.
+
+Anyway, I'm not going to worry about this for now. Save it for when we do a
+round of standard library clean up. I think it's still a hard problem without
+an obvious solution.
+
