@@ -13,9 +13,21 @@ Bool@ False = Bool@(false: Unit);
   x.?(true: False, false: True);
 };
 
-Bool@ t = Not(False);
-Bool@ f = Not(True);
-Bool@ f2 = Not(True);
+(Unit@) { Bool@; } T = (Unit@ _) {
+  Not(False);
+};
+
+(Unit@) { Bool@; } F = (Unit@ _) {
+  Not(True);
+};
+
+(Unit@) { Bool@; } F2 = (Unit@ _) {
+  Not(True);
+};
+
+Bool@ t = T(Unit);
+Bool@ f = F(Unit);
+Bool@ f2 = F2(Unit);
 
 # Make sure we don't output blocks per field here, which we used to do in the
 # past.

@@ -199,26 +199,18 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
   // Output the profile to stdout to help with debug.
   Output(profile);
 
-  // Each of these top level let bindings were executed once when the main
-  // program ran.
-  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.Not"));
-  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.t"));
-  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f"));
-  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f2"));
+  // Calls from the main module:
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.T"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.F"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.F2"));
 
-  // The Not function was executed three times, once from each of t, f, and
-  // f2.
-  assert(1 == Calls(profile, "/ProfilesTest%.t", "/ProfilesTest%.Not!"));
-  assert(1 == Calls(profile, "/ProfilesTest%.f", "/ProfilesTest%.Not!"));
-  assert(1 == Calls(profile, "/ProfilesTest%.f2", "/ProfilesTest%.Not!"));
+  // The Not function was called from each of T, F, F2:
+  assert(1 == Calls(profile, "/ProfilesTest%.T", "/ProfilesTest%.Not"));
+  assert(1 == Calls(profile, "/ProfilesTest%.F", "/ProfilesTest%.Not"));
+  assert(1 == Calls(profile, "/ProfilesTest%.F2", "/ProfilesTest%.Not"));
 
-  // In total, we created Not once and executed three times. 
-  assert(1 == Count(profile, "/ProfilesTest%.Not"));
-  assert(3 == Count(profile, "/ProfilesTest%.Not!"));
-
-  // The true branch of Not was executed twice, the false branch once.
-  assert(2 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.true"));
-  assert(1 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.false"));
+  // In total, we called Not three times.
+  assert(3 == Count(profile, "/ProfilesTest%.Not"));
 
   // Regression test for a bug where the location for the top level profile
   // block was a module path instead of a file path.

@@ -349,3 +349,19 @@ keep track of function names.
 Yeah. I'll need to look more closely how to properly implement it. It's going
 to need some rearrange of the code to track current location separately from
 block ids.
+
+---
+
+The problem with fble-pprof was a bug from when I optimized it: ';' versus
+','. Easily fixed.
+
+I decided to remove case branches and execution nesting level from the block
+names. In practice we could end up with multiple different blocks with the
+same name. People can use location information to tell them apart.
+
+We lose the ability to do code coverage, but I don't have any real tooling
+support for that today anyway. If we decide to add it in the future, we can.
+At that time, perhaps we decide to have --coverage as a runtime option to
+enable profiling of all blocks. Or perhaps we do some other special thing
+where we only keep track of whether a subblock was covered or not.
+

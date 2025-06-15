@@ -2,13 +2,12 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Change compiler to only emit profiling blocks for functions.
-  Not subblocks of functions.
+* Clean up implementation of compiler block tracking
+  Have the stack be a stack of parts of names, not a stack of full names.
+  Change PushBodyBlock into GetBlock.
 
 * Add --profile-sample-period option to downsample profiles
   Do geometric distribution downsampling at profile generation time.
-
-* --profile memory use blows up on PiDigits benchmark.
 
 * Figure out how to add an fble-pprof benchmark to fble-benchmark?
 

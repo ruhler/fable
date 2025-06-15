@@ -51,6 +51,7 @@
 <<@>@>% Parse = /Pprof/Parser%.Parse;
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
+@ Block@ = /Pprof/Profile%.Block@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 % Blocks = /Pprof/Profile%.Blocks;
@@ -150,7 +151,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       seq.?(nil: m.return(Unit));
 
       BlockId@ block = seq.cons.head;
-      String@ name = Blocks.Lookup(profile.blocks, block).just.name;
+      Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
+      String@ name = { 
+        mname.?(just: mname.just.name);
+        Unit@ _ = /Core/Debug%.TraceLn(Strs[Str|'block ', /Core/Int/Show%.Show(block), Str|' not found']);
+        Strs[Str|'??', /Core/Int/Show%.Show(block), Str|'??'];
+      };
       Unit@ _ <- m.do(O.PutStr(out, name));
       seq.cons.tail.?(nil: m.return(Unit));
 
@@ -167,7 +173,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Unit@ _ <- m.do(O.PutStr(out, name));
       seq.cons.tail.?(nil: m.return(Unit));
 
-      Unit@ _ <- m.do(O.PutChar(out, Chars.';'));
+      Unit@ _ <- m.do(O.PutChar(out, Chars.','));
       SeqBlocks(seq.cons.tail);
     };
 
