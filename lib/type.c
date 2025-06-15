@@ -859,7 +859,10 @@ FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      return FbleCopyKind(var->kind);
+      if (var->value == NULL) {
+        return FbleCopyKind(var->kind);
+      }
+      return FbleGetKind(context, var->value);
     }
 
     case FBLE_TYPE_TYPE: {
