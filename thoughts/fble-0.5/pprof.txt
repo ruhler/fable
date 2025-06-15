@@ -1561,3 +1561,65 @@ of fble-pprof doesn't help, then I can reconsider.
 fble-pprof performance good enough to be useful? Yes. Especially for linux
 perf profiles, which I can scale up or down easily as needed.
 
+---
+
+Let's take a quick look at performance using fble-pprof --benchmark, see if
+there are any obvious opportunities to improve.
+
+/usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/pprof/fble-pprof --benchmark scratch/md5.prof > /dev/null
+ 
+It runs out of memory and is killed. :(
+
+Let's try something easier
+
+  /usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/pprof/fble-pprof --benchmark scratch/pi.prof > /dev/null
+  Time: 6:55.51
+  Memory: 381628
+
+Now running with --profile profiling. Hopefully it doesn't run out of memory.
+
+Actually, --profile overhead is pretty low:
+Time: 8:42.39
+Memory: 419904
+
+Umm... The generated profile is 63M. I don't think I'll be able to view that
+in fble-pprof. Nope. I run out of memory. Sadness.
+
+I almost wish I could ignore calls and skip anything that has relatively few
+samples.
+
+Running on x.prof instead, which I think is much faster.
+
+Even x.prof generates a 38M profile. This is unfortunate.
+
+We can try a linux perf profile. That probably works fine. It's not really
+what I'm looking for though.
+
+---
+
+The time is dominated by list append. Unfortunately linux perfs stack limit
+makes it really hard to tell the context where things are called from.
+
+Can I hack something up where I randomly subsample and only output traces with
+non-zero samples, ignoring counts?
+
+For 1024 subsample (though the math technically isn't right), that got me down
+to 3.2M. Is that small enough, or I need to subsample more?
+
+Same ish as before:
+   71.13% 21999 [8]/Pprof/Server/Main%.Main!.Table!!.SeqNames!.:.:
+   17.76% 5493  [9]/Pprof/Server/Main%.Main!.Table!!.Row!
+   10.51% 3251  [10]/Pprof/Server/Main%.Main!.Table!!.SeqBlocks!.:.:
+
+In this case, dominated by the 'SeqsPage'.
+
+Well, we have a stream. Why am I bothering with concatenating first? Just
+output directly to the stream.
+
+After that optimization, we have
+
+  /usr/bin/time -f "Time: %E\nMemory: %M"  ./out/pkgs/pprof/fble-pprof --benchmark scratch/pi.prof > /dev/null
+  Time: 6:55.51 ==> 1:07.03
+  Memory: 381628 ==> 404520
+
+Pretty good, eh?

@@ -296,3 +296,37 @@ ought to be those involved in sequences. Is it Div calling into Sub? Something
 else? How many choices.
 
 That's the next step here.
+
+---
+
+Trying to use the new profiling approach for fble-pprof, it seems we are just
+generating too large a profile. This is a different case from PiDigits. In
+this case, the runtime memory for generating the profile is fine, it's just
+too much information for fble-pprof to handle. Like, 60M .prof file, or 30M
+.prof file is too big. A 3M prof file is about what fble-pprof can handle
+today.
+
+The hack I used to work around this was to randomly sample and only output
+the sequences with (random) samples greater than 0. That way we can tune how
+big the output is to some extent based on random sampling.
+
+Should I formalize this? Maybe have a --profile-sample-rate XXX option you can
+pass. When set, it automatically down samples? Or, --profile-sample-period N
+to make it an integer, meaning sample every N bytes? Or, should it be randomly
+sampled approximately every N bytes to avoid pathological cases?
+
+I bet it isn't hard to implement. If it makes things actually useful in
+practice, isn't that worth doing?
+
+On the other hand, I could down-sample at time of profile generation. Surely
+that's much more efficient. And then, perhaps, we could auto downsample until
+the number of sequences drops below a certain count?
+
+I think --profile-sample-period is a little better than auto downsampling,
+because it lets us keep the same sampling frequency between two different runs
+to compare for improvements.
+ 
+Something we could do related to both PiDigits and generating too large a
+profile would be only profile at function boundaries. Stop emitting internal
+sub-blocks. Let me try that, just for the fun of it.
+

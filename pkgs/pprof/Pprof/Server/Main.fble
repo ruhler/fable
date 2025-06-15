@@ -18,7 +18,6 @@
 <@>% List = /Core/List%.List;
 <@>% Last = /Core/List%.Last;
 <@>% Append = /Core/List%.Append;
-<@>% Concat = /Core/List%.Concat;
 <@>% Get = /Core/List/Length%.Get;
 % Drop = /Core/List/Length%.Drop;
 <@>% Length = /Core/List/Length%.Length;
@@ -146,38 +145,42 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     (Sequence@) { Sequence@; } link) {
     Unit@ _ <- m.do(O.PutLine(out, Str|'<table>'));
 
-    (Sequence@) { String@; }
+    (Sequence@) { M@<Unit@>; }
     SeqNames = (Sequence@ seq) {
-      seq.?(nil: Str|'');
+      seq.?(nil: m.return(Unit));
 
       BlockId@ block = seq.cons.head;
       String@ name = Blocks.Lookup(profile.blocks, block).just.name;
-      seq.cons.tail.?(nil: name);
+      Unit@ _ <- m.do(O.PutStr(out, name));
+      seq.cons.tail.?(nil: m.return(Unit));
 
-      String@ tail = SeqNames(seq.cons.tail);
-      Concat[name, Str|';', tail];
+      Unit@ _ <- m.do(O.PutChar(out, Chars.';'));
+      SeqNames(seq.cons.tail);
     };
 
-    (Sequence@) { String@; }
+    (Sequence@) { M@<Unit@>; }
     SeqBlocks = (Sequence@ seq) {
-      seq.?(nil: Str|'');
+      seq.?(nil: m.return(Unit));
 
       BlockId@ block = seq.cons.head;
       String@ name = /Core/Int/Show%.Show(block);
-      seq.cons.tail.?(nil: name);
+      Unit@ _ <- m.do(O.PutStr(out, name));
+      seq.cons.tail.?(nil: m.return(Unit));
 
-      String@ tail = SeqBlocks(seq.cons.tail);
-      Concat[name, Str|',', tail];
+      Unit@ _ <- m.do(O.PutChar(out, Chars.';'));
+      SeqBlocks(seq.cons.tail);
     };
 
     (Entry@) { M@<Unit@>; }
     Row = (Entry@ entry) {
-      O.PutLine(out, Strs[
+      Unit@ _ <- m.do(O.PutStr(out, Strs[
         Str|'<tr><td>', Percent(entry.value, total),
         Str|'</td><td>', /Core/Int/Show%.Show(entry.value),
-        Str|'</td><td><a href="/seq/', SeqBlocks(link(entry.seq)),
-        Str|'">', SeqNames(entry.seq),
-        Str|'</a></td></tr>']);
+        Str|'</td><td><a href="/seq/']));
+      Unit@ _ <- m.do(SeqBlocks(link(entry.seq)));
+      Unit@ _ <- m.do(O.PutStr(out, Str|'">'));
+      Unit@ _ <- m.do(SeqNames(entry.seq));
+      O.PutLine(out, Str|'</a></td></tr>');
     };
 
     (List@<Entry@>) { M@<Unit@>; }

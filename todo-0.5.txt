@@ -2,6 +2,8 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Add --profile-sample-period option to downsample profiles?
+
 * --profile memory use blows up on PiDigits benchmark.
 
 * Figure out how to add an fble-pprof benchmark to fble-benchmark?
