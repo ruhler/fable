@@ -109,13 +109,12 @@ FbleMainStatus FbleMain(
     FblePreloadedModuleV builtins,
     FbleValueHeap* heap,
     FbleProfile* profile,
-    FILE** profile_output_file,
+    const char** profile_output_file,
     FbleValue** result)
 {
   const char* arg0 = (*argv)[0];
 
   FbleModuleArg module_arg = FbleNewModuleArg();
-  const char* profile_file = NULL;
   const char* deps_file = NULL;
   const char* deps_target = NULL;
   bool help = false;
@@ -131,7 +130,7 @@ FbleMainStatus FbleMain(
     if (FbleParseBoolArg("--version", &version, argc, argv, &error)) continue;
     if (!preloaded && FbleParseModuleArg(&module_arg, argc, argv, &error)) continue;
     if (arg_parser && arg_parser(data, argc, argv, &error)) continue;
-    if (FbleParseStringArg("--profile", &profile_file, argc, argv, &error)) continue;
+    if (FbleParseStringArg("--profile", profile_output_file, argc, argv, &error)) continue;
     if (FbleParseStringArg("--deps-file", &deps_file, argc, argv, &error)) continue;
     if (FbleParseStringArg("--deps-target", &deps_target, argc, argv, &error)) continue;
     if (strcmp((*argv)[0], "--") == 0) {
@@ -169,16 +168,6 @@ FbleMainStatus FbleMain(
     return FBLE_MAIN_USAGE_ERROR;
   }
 
-  FILE* fprofile = NULL;
-  if (profile_file != NULL) {
-    fprofile = fopen(profile_file, "w");
-    if (fprofile == NULL) {
-      fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFreeModuleArg(module_arg);
-      return FBLE_MAIN_OTHER_ERROR;
-    }
-  }
-
   if (deps_file != NULL && deps_target == NULL) {
     fprintf(stderr, "--deps-file requires --deps-target.\n");
     fprintf(stderr, "Try --help for usage\n");
@@ -197,7 +186,7 @@ FbleMainStatus FbleMain(
     module_arg.module_path = FbleCopyModulePath(preloaded->path);
   }
 
-  profile->enabled = (fprofile != NULL);
+  profile->enabled = (*profile_output_file != NULL);
 
   FbleStringV deps;
   FbleInitVector(deps);
@@ -247,7 +236,6 @@ FbleMainStatus FbleMain(
     return FBLE_MAIN_RUNTIME_ERROR;
   }
 
-  *profile_output_file = fprofile;
   *result = func;
   return FBLE_MAIN_SUCCESS;
 }

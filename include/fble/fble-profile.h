@@ -8,7 +8,6 @@
 
 #include <stdbool.h>  // for bool
 #include <stdint.h>   // for uint64_t
-#include <stdio.h>    // for FILE
 
 #include "fble-name.h"
 
@@ -249,10 +248,10 @@ void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userd
  *
  *  To view in google/pprof, you'll need to gzip the output file first.
  *
- *  @arg[FILE*][fout] The file to output the profile to.
+ *  @arg[const char*][path] The path to the file to output the profile to.
  *  @arg[FbleProfile*][profile] The profile to output
  *  @sideeffects Outputs the profile to the given file.
  */
-void FbleOutputProfile(FILE* fout, FbleProfile* profile);
+void FbleOutputProfile(const char* path, FbleProfile* profile);
 
 #endif // FBLE_PROFILE_H_

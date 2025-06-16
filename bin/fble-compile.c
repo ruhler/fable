@@ -13,7 +13,7 @@
 #include <fble/fble-compile.h>       // for FbleCompile, etc.
 #include <fble/fble-module-path.h>   // for FbleParseModulePath.
 #include <fble/fble-vector.h>        // for FbleInitVector.
-#include <fble/fble-version.h>       // for FBLE_VERSION
+#include <fble/fble-version.h>       // for FblePrintVersion.
 
 #include "fble-compile.usage.h"      // for fbldUsageHelpText
 

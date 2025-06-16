@@ -180,7 +180,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FblePreloadedModule* prelo
 {
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FILE* profile_output_file = NULL;
+  const char* profile_output_file = NULL;
   FbleValue* result = NULL;
   FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
 

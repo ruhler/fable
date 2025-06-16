@@ -95,7 +95,7 @@ int FbleMemTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   // profiling turned on.
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FILE* profile_output_file = NULL;
+  const char* profile_output_file = NULL;
   FbleValue* func = NULL;
   FblePreloadedModuleV builtins = { .size = 0, .xs = NULL };
 

@@ -13,7 +13,7 @@
   To generate fble profile format for the perf data:
  
   @code[sh] @
-   perf script | fble-perf-profile > foo.prof
+   perf script | fble-perf-profile -o foo.prof
  
   The output @l[count] field is mostly meaningless. It is the number of
   different sample traces the function appeared in.
@@ -22,6 +22,9 @@
   @GenericProgramInfo
 
   @subsection Output Control
+   @opt[@l[-o], @l[--profile] @a[FILE]]
+   @ output the profile to the given file.
+
    @opt[@l[--test]]
    @ output the profile in human readable format to facilitate testing
 
@@ -31,5 +34,5 @@
   @def[2] Usage error.
  
  @examples
-  @ex[perf script | fble-perf-profile > foo.prof][]
+  @ex[perf script | fble-perf-profile -o foo.prof][]
   @ex[perf script | fble-perf-profile --test][]

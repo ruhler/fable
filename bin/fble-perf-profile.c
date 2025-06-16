@@ -77,6 +77,7 @@ static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV s
  */
 int main(int argc, const char* argv[])
 {
+  const char* profile_output_file = NULL;
   bool version = false;
   bool help = false;
   bool error = false;
@@ -90,6 +91,8 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--test", &test, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("-o", &profile_output_file, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--profile", &profile_output_file, &argc, &argv, &error)) continue;
   }
 
   if (version) {
@@ -100,6 +103,12 @@ int main(int argc, const char* argv[])
   if (help) {
     fprintf(stdout, "%s", fbldUsageHelpText);
     return EX_SUCCESS;
+  }
+
+  if (!test && profile_output_file == NULL) {
+    fprintf(stderr, "Missing output file\n");
+    fprintf(stderr, "Try --help for usage\n");
+    return EX_USAGE;
   }
 
   if (error) {
@@ -190,7 +199,7 @@ int main(int argc, const char* argv[])
     // format with just the info we care about.
     FbleQueryProfile(profile, &TestOutputQuery, NULL);
   } else {
-    FbleOutputProfile(stdout, profile);
+    FbleOutputProfile(profile_output_file, profile);
   }
 
   FbleFreeProfile(profile);

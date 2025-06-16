@@ -9,8 +9,6 @@ Things to consider doing for the fble-0.5 release.
 
 * Improve performance of fble-pprof?
 
-* Fix github windows failures.
-
 * Update all the user documentation (book, profiling guide) on how to profile.
 
 * Split FbleDataType into FbleStructType and FbleUnionType?

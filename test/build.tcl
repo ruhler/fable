@@ -61,7 +61,7 @@ namespace eval "test" {
   # fble-pprof-test
   build $::b/test/fble-pprof-test.got \
     "$::b/test/fble-pprof-test" \
-    "$::b/test/fble-pprof-test > $::b/test/fble-pprof-test.got"
+    "$::b/test/fble-pprof-test -o $::b/test/fble-pprof-test.got"
   test $::b/test/fble-pprof-test.tr \
     "$::s/test/fble-pprof-test.want $::b/test/fble-pprof-test.got" \
     "cmp $::s/test/fble-pprof-test.want $::b/test/fble-pprof-test.got"

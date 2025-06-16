@@ -259,9 +259,15 @@ static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, 
 }
 
 // See documentation in fble-profile.h.
-void FbleOutputProfile(FILE* fout, FbleProfile* profile)
+void FbleOutputProfile(const char* path, FbleProfile* profile)
 {
   if (!profile->enabled) {
+    return;
+  }
+
+  FILE* fout = fopen(path, "wb");
+  if (fout == NULL) {
+    fprintf(stderr, "unable to open %s for writing the profile\n", path);
     return;
   }
 
@@ -296,5 +302,5 @@ void FbleOutputProfile(FILE* fout, FbleProfile* profile)
     StringTable(fout, name.loc.source->str);
   }
 
-  fflush(fout);
+  fclose(fout);
 }

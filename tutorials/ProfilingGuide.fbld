@@ -23,7 +23,7 @@
   You can then convert to an fble profile with, for example:
 
   @code[sh] @
-   perf script | ./out/bin/fble-perf-profile > bench.prof
+   perf script | ./out/bin/fble-perf-profile -o bench.prof
 
   The call counts included in the profile are not meaningful. The sample
   counts included in the profile correspond to the number of perf samples

@@ -25,7 +25,7 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 {
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FILE* profile_output_file = NULL;
+  const char* profile_output_file = NULL;
   FbleValue* result = NULL;
 
   FblePreloadedModuleV builtins;

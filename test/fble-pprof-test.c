@@ -4,7 +4,9 @@
  *  generation.
  */
 
-#include <fble/fble-profile.h>
+#include <fble/fble-arg-parse.h>     // for FbleParseBoolArg, etc.
+#include <fble/fble-profile.h>       // for FbleProfile, etc.
+#include <fble/fble-version.h>       // for FblePrintVersion
 
 /**
  * @func[main] The main entry point for the fble-pprof-test program.
@@ -17,8 +19,45 @@
  *  @sideeffects
  *   Outputs a profile to stdout.
  */
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
+  const char* profile_output_file = NULL;
+  bool help = false;
+  bool error = false;
+  bool version = false;
+
+  argc--;
+  argv++;
+  while (!(help || error || version)  && argc > 0) {
+    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("-o", &profile_output_file, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--profile", &profile_output_file, &argc, &argv, &error)) continue;
+    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
+  }
+
+  if (version) {
+    FblePrintVersion(stdout, "fble-pprof-test");
+    return 0;
+  }
+
+  if (help) {
+    fprintf(stdout, "usage: fble-pprof-test --profile FILE.\n");
+    return 0;
+  }
+
+  if (error) {
+    fprintf(stderr, "Try --help for usage.\n");
+    return 1;
+  }
+
+  if (profile_output_file == NULL) {
+    fprintf(stderr, "Missing profile output path. Try --help for usage.\n");
+    return 1;
+  }
+
   FbleProfile* profile = FbleNewProfile();
 
   FbleName a_name = {
@@ -49,7 +88,7 @@ int main(int argc, char* argv[])
   FbleProfileSample(thread, 20);
   FbleFreeProfileThread(thread);
 
-  FbleOutputProfile(stdout, profile);
+  FbleOutputProfile(profile_output_file, profile);
   FbleFreeProfile(profile);
 
   return 0;
