@@ -26,6 +26,7 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   const char* profile_output_file = NULL;
+  uint64_t profile_sample_period = 0;
   FbleValue* result = NULL;
 
   FblePreloadedModuleV builtins;
@@ -33,13 +34,13 @@ int FbleTestMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleAppendToVector(builtins, &_Fble_2f_SpecTests_2f_Builtin_25_);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-test", fbldUsageHelpText,
-      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &result);
+      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &result);
 
   FbleFreeVector(builtins);
   FbleFreeValueHeap(heap);
 
   if (profile_output_file != NULL) {
-    FbleOutputProfile(profile_output_file, profile);
+    FbleOutputProfile(profile_output_file, profile, 0);
   }
   FbleFreeProfile(profile);
   return status;

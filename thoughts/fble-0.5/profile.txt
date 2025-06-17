@@ -365,3 +365,45 @@ At that time, perhaps we decide to have --coverage as a runtime option to
 enable profiling of all blocks. Or perhaps we do some other special thing
 where we only keep track of whether a subblock was covered or not.
 
+---
+
+On profiling downsampling: in theory I should randomize it based on a binomial
+distribution, which I could generate using a geometric distribution. But
+that's O(np) where n is the number of samples and p is the sampling rate. That
+feels expensive to me.
+
+What if we start with an approximation. For a sequence with a large number of
+samples n, np is a good approximation to how many we sample. For a sequence
+with a small number of samples, who cares? Right? The goal is to shrink the
+profiling by getting rid of the ones with a small number of samples.
+
+Except for the pathological case where every sequence has a small number of
+samples, in which case we could end up getting rid of all the samples. The key
+is to make sure the total number of samples, N, turns into Np.
+
+Proposed implementation: keep a running overflow counter as you dump profile
+sequences. Call it 'overflow'.
+ 
+For a sequence with n samples:
+
+   Output n+overflow / period samples.
+   Set overflow = n+overflow % period;
+
+Easy, fast.
+
+Because we traverse in depth first, overflow is likely to redistribute to a
+similar sequence.
+
+Another thought: we collect count information and output it to the generated
+profile, but we don't yet make use of it for anything. Maybe I should remove
+it from the output profile until we can do something useful with it? Because
+count feels a bit meaningless for fble-perf-profile and downsampled profiles.
+That also makes it easier to justify not outputting anything for sequences
+with 0 samples (but non-zero counts).
+
+---
+
+* Remove counts from generated profile?
+
+No, don't bother. I confirmed it doesn't save any space to remove the counts.
+Lets hold off on making changes until after we have a way to view the counts.

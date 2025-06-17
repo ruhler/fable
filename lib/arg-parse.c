@@ -6,6 +6,7 @@
 #include <fble/fble-arg-parse.h>
 
 #include <stdio.h>    // for fprintf
+#include <stdlib.h>   // for atoi
 #include <string.h>   // for strcmp
 
 #include <fble/fble-load.h>      // for FbleSearchPath, etc.
@@ -19,6 +20,23 @@ bool FbleParseBoolArg(const char* name, bool* dest, int* argc, const char*** arg
     *dest = true;
     (*argc)--;
     (*argv)++;
+    return true;
+  }
+  return false;
+}
+
+bool FbleParseIntArg(const char* name, int* dest, int* argc, const char*** argv, bool* error)
+{
+  if (strcmp(name, (*argv)[0]) == 0) {
+    if (*argc < 2) {
+      fprintf(stderr, "Error: missing argument to %s option.\n", name);
+      *error = true;
+      return true;
+    }
+
+    *dest = atoi((*argv)[1]);
+    (*argc) -= 2;
+    (*argv) += 2;
     return true;
   }
   return false;

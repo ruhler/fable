@@ -454,6 +454,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   const char* profile_output_file = NULL;
+  uint64_t profile_sample_period = 0;
   FbleValue* stdio = NULL;
 
   FblePreloadedModuleV builtins;
@@ -462,7 +463,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
 
   FbleMainStatus status = FbleMain(NULL, NULL, "fble-stdio", fbldUsageHelpText,
-      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &stdio);
+      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &stdio);
 
   FbleFreeVector(builtins);
 
@@ -489,7 +490,7 @@ int FbleStdioMain(int argc, const char** argv, FblePreloadedModule* preloaded)
 
   FbleFreeValueHeap(heap);
 
-  FbleOutputProfile(profile_output_file, profile);
+  FbleOutputProfile(profile_output_file, profile, profile_sample_period);
   FbleFreeProfile(profile);
   return result;
 }

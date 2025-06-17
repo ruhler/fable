@@ -110,6 +110,7 @@ FbleMainStatus FbleMain(
     FbleValueHeap* heap,
     FbleProfile* profile,
     const char** profile_output_file,
+    uint64_t* profile_sample_period,
     FbleValue** result)
 {
   const char* arg0 = (*argv)[0];
@@ -120,6 +121,7 @@ FbleMainStatus FbleMain(
   bool help = false;
   bool error = false;
   bool version = false;
+  int profile_sample_period_int = *profile_sample_period;
 
   (*argc)--;
   (*argv)++;
@@ -131,6 +133,7 @@ FbleMainStatus FbleMain(
     if (!preloaded && FbleParseModuleArg(&module_arg, argc, argv, &error)) continue;
     if (arg_parser && arg_parser(data, argc, argv, &error)) continue;
     if (FbleParseStringArg("--profile", profile_output_file, argc, argv, &error)) continue;
+    if (FbleParseIntArg("--profile-sample-period", &profile_sample_period_int, argc, argv, &error)) continue;
     if (FbleParseStringArg("--deps-file", &deps_file, argc, argv, &error)) continue;
     if (FbleParseStringArg("--deps-target", &deps_target, argc, argv, &error)) continue;
     if (strcmp((*argv)[0], "--") == 0) {
@@ -187,6 +190,12 @@ FbleMainStatus FbleMain(
   }
 
   profile->enabled = (*profile_output_file != NULL);
+  if ((uint64_t)profile_sample_period_int != *profile_sample_period) {
+    if (profile_sample_period_int < 0) {
+      *profile_sample_period = 0;
+    }
+    *profile_sample_period = (uint64_t)profile_sample_period_int;
+  }
 
   FbleStringV deps;
   FbleInitVector(deps);

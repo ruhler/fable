@@ -2,14 +2,14 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Add --profile-sample-period option to downsample profiles
-  Do geometric distribution downsampling at profile generation time.
+* fble-pprof doesn't work on windows because read isn't binary by default.
 
 * Figure out how to add an fble-pprof benchmark to fble-benchmark?
 
 * Improve performance of fble-pprof?
 
 * Update all the user documentation (book, profiling guide) on how to profile.
+  Including --profile-sample-period option.
 
 * Split FbleDataType into FbleStructType and FbleUnionType?
   Get rid of FbleDataTypeTag?
@@ -76,9 +76,6 @@ Things to consider doing for the fble-0.5 release.
  - Some way to implement a web server that can handle multiple requests
    concurrently?
 
-* Fble Debugger
- - Add support for all backends.
-
 * Consider removing higher order kinds from the language.
   Make everything either kind @ or %. What would we lose?
 
@@ -114,4 +111,6 @@ Tutorials:
     hung around?
   - Manually running the client command in this state led to successful manual
     run, the script initiated one return 'unable to connect'.
+  - Yes: client connects before echo is ready, client fails right away, the
+    test isn't failed in that case, it just hangs.
 

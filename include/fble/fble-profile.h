@@ -248,10 +248,17 @@ void FbleQueryProfile(FbleProfile* profile, FbleProfileQuery* query, void* userd
  *
  *  To view in google/pprof, you'll need to gzip the output file first.
  *
+ *  The @a[period] option can be used to cause smaller profiles to be output.
+ *  It scales the number of samples reported down by @a[period] and omits
+ *  sequences whose downsampled sample count is 0. The period can be set to 0
+ *  to include full data in the reported profile, including sequences with 0
+ *  samples.
+ *
  *  @arg[const char*][path] The path to the file to output the profile to.
  *  @arg[FbleProfile*][profile] The profile to output
+ *  @arg[uint64_t][period] Downsampling period to use in reported profile.
  *  @sideeffects Outputs the profile to the given file.
  */
-void FbleOutputProfile(const char* path, FbleProfile* profile);
+void FbleOutputProfile(const char* path, FbleProfile* profile, uint64_t period);
 
 #endif // FBLE_PROFILE_H_

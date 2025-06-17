@@ -50,8 +50,10 @@ typedef enum {
  *   List of builtin modules to search.
  *  @arg[FbleValueHeap*][heap] Heap to use for allocating values.
  *  @arg[FbleProfile*][profile] Profile for evaluating the main program.
- *  @arg[const char*][profile_output_file]
+ *  @arg[const char**][profile_output_file]
  *   Output parameter for the profile output file.
+ *  @arg[uint64_t][profile_sample_period]
+ *   Downsampling period to use when outputting the profile.
  *  @arg[FbleValue**][result]
  *   Output parameter for the result of evaluation.
  *
@@ -79,6 +81,7 @@ FbleMainStatus FbleMain(
     FbleValueHeap* heap,
     FbleProfile* profile,
     const char** profile_output_file,
+    uint64_t* profile_sample_period,
     FbleValue** result);
 
 

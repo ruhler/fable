@@ -479,6 +479,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   const char* profile_output_file = NULL;
+  uint64_t profile_sample_period = 0;
   FbleValue* func = NULL;
 
   FblePreloadedModuleV builtins;
@@ -487,7 +488,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
   FbleAppendToVector(builtins, &_Fble_2f_Core_2f_Stdio_2f_IO_2f_Builtin_25_);
 
   FbleMainStatus status = FbleMain(&ParseArg, &app_args, "fble-app", fbldUsageHelpText,
-      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &func);
+      &argc, &argv, preloaded, builtins, heap, profile, &profile_output_file, &profile_sample_period, &func);
 
   FbleFreeVector(builtins);
 
@@ -617,7 +618,7 @@ int FbleAppMain(int argc, const char* argv[], FblePreloadedModule* preloaded)
 
   FbleFreeValueHeap(heap);
 
-  FbleOutputProfile(profile_output_file, profile);
+  FbleOutputProfile(profile_output_file, profile, profile_sample_period);
   FbleFreeProfile(profile);
 
   SDL_GL_DeleteContext(glctx);

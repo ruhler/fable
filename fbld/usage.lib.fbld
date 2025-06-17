@@ -38,6 +38,9 @@
   @opt[@l[--profile] @a[FILE]]
   @ writes a profile of the test run to @a[FILE]
 
+  @opt[@l[--profile-sample-period] @a[PERIOD]]
+  @ downsample by @a[PERIOD] in the reported profile to save space
+
  @subsection Build Dependency Options
   @opt[@l[--deps-file] @a[FILE]]
   @ write compilation dependencies in makefile syntax to @a[FILE].

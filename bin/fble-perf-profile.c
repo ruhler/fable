@@ -199,7 +199,7 @@ int main(int argc, const char* argv[])
     // format with just the info we care about.
     FbleQueryProfile(profile, &TestOutputQuery, NULL);
   } else {
-    FbleOutputProfile(profile_output_file, profile);
+    FbleOutputProfile(profile_output_file, profile, 0);
   }
 
   FbleFreeProfile(profile);

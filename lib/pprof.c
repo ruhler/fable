@@ -39,6 +39,18 @@ static void Location(FILE* fout, uint64_t location_id, uint64_t func_id, uint64_
 static void Function(FILE* fout, uint64_t func_id, uint64_t name_string_id, uint64_t file_string_id, uint64_t line);
 static void StringTable(FILE* fout, const char* str);
 
+/**
+ * @struct[SampleQueryData] Data used during the SampleQuery.
+ *  @field[FILE*][fout] The file to write the profile to.
+ *  @field[uint64_t][period] The downsampling period.
+ *  @field[uint64_t][overflow] Running accumulation of unreported samples.
+ */
+typedef struct {
+  FILE* fout;
+  uint64_t period;
+  uint64_t overflow;
+} SampleQueryData;
+
 static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 
 /**
@@ -229,7 +241,18 @@ static void StringTable(FILE* fout, const char* str)
  */
 static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples)
 {
-  FILE* fout = (FILE*)userdata;
+  SampleQueryData* data = (SampleQueryData*)userdata;
+
+  if (data->period != 0) {
+    // Adjust number of samples based on period.
+    samples += data->overflow;
+    data->overflow = samples % data->period;
+    samples /= data->period;
+
+    if (samples == 0) {
+      return;
+    }
+  }
 
   uint64_t location_ids_len = 0;
   for (size_t i = 0; i < seq.size; ++i) {
@@ -247,19 +270,19 @@ static void SampleQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, 
   len += TaggedLenLength(2, values_len);        // .value = 2
   len += values_len;
 
-  TaggedLen(fout, 2, len);                // .sample = 2
-  TaggedLen(fout, 1, location_ids_len);   // .location_id = 1
+  TaggedLen(data->fout, 2, len);                // .sample = 2
+  TaggedLen(data->fout, 1, location_ids_len);   // .location_id = 1
   for (size_t i = 0; i < seq.size; ++i) {
     FbleBlockId id = seq.xs[seq.size - i -1];
-    VarInt(fout, id + 1);
+    VarInt(data->fout, id + 1);
   }
-  TaggedLen(fout, 2, values_len);         // .value = 2
-  VarInt(fout, calls);     // .value = 2
-  VarInt(fout, samples);   // .value = 2
+  TaggedLen(data->fout, 2, values_len);         // .value = 2
+  VarInt(data->fout, calls);     // .value = 2
+  VarInt(data->fout, samples);   // .value = 2
 }
 
 // See documentation in fble-profile.h.
-void FbleOutputProfile(const char* path, FbleProfile* profile)
+void FbleOutputProfile(const char* path, FbleProfile* profile, uint64_t period)
 {
   if (!profile->enabled) {
     return;
@@ -276,7 +299,8 @@ void FbleOutputProfile(const char* path, FbleProfile* profile)
   SampleType(fout, 3, 4); // ["samples", "count"]
 
   // sample fields.
-  FbleQueryProfile(profile, &SampleQuery, (void*)fout);
+  SampleQueryData data = { .fout = fout, .period = period, .overflow = 0 };
+  FbleQueryProfile(profile, &SampleQuery, (void*)&data);
 
   // location fields.
   for (size_t i = 0; i < profile->blocks.size; ++i) {

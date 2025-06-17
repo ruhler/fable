@@ -68,6 +68,38 @@ typedef bool FbleArgParser(void* dest, int* argc, const char*** argv, bool* erro
 bool FbleParseBoolArg(const char* name, bool* dest, int* argc, const char*** argv, bool* error);
 
 /**
+ * @func[FbleParseIntArg] Parse an int command line argument.
+ *  Sample argument usage:
+ *  
+ *  @code[sh] @
+ *   --foo 123
+ *
+ *  The flag may be specified at most once on the command line.
+ *
+ *  @arg[const char*] name
+ *   the name of the flag to parse, such as "--foo".
+ *  @arg[int*] dest
+ *   int value to update based on the flag setting.
+ *  @arg[int*] argc
+ *   pointer to number of arguments remaining.
+ *  @arg[const char***] argv
+ *   pointer to arguments remaining.
+ *  @arg[bool*] error
+ *   boolean value to set in case of error.
+ *
+ *  @returns bool
+ *   true if the next argument matches the given name, false otherwise.
+ *
+ *  @sideeffects
+ *   @i There will only be side effects if the function returns true.
+ *   @i Updates dest with the value of the parsed argument.
+ *   @i Advances argc and argv to the next argument.
+ *   @i Sets error to true in case of error parsing the matched argument.
+ *   @i Prints an error message to stderr in case of error.
+ */
+bool FbleParseIntArg(const char* name, int* dest, int* argc, const char*** argv, bool* error);
+
+/**
  * @func[FbleParseStringArg] Parse a string command line argument.
  *  Sample argument usage:
  *

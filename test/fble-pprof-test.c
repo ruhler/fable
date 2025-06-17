@@ -88,7 +88,7 @@ int main(int argc, const char* argv[])
   FbleProfileSample(thread, 20);
   FbleFreeProfileThread(thread);
 
-  FbleOutputProfile(profile_output_file, profile);
+  FbleOutputProfile(profile_output_file, profile, 0);
   FbleFreeProfile(profile);
 
   return 0;
