@@ -245,3 +245,16 @@ Here's a new issue that maybe I want to not worry about now: how can we close
 an input stream? For example, maybe we want to open a bunch of files in a loop
 and read the first 10 bytes. How do we avoid leaking file descriptors? The API
 has no way to close the file descriptors. Should we rely on GC here? Sigh.
+
+---
+
+* Split FbleDataType into FbleStructType and FbleUnionType?
+  Get rid of FbleDataTypeTag?
+
+There is a lot of identical code between them though. I don't want to have to
+duplicate that all. Maybe we do part way, encode the data type tag in the tag
+for the type, but share the common structure.
+
+I don't see the benefit of splitting the types here. The code for them is
+identical except for printing as '+' versus '*'.
+

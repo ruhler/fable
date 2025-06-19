@@ -2,17 +2,12 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* fble-pprof doesn't work on windows because read isn't binary by default.
-
-* Figure out how to add an fble-pprof benchmark to fble-benchmark?
-
 * Improve performance of fble-pprof?
+  Currently dominated by the time to generate seq block and seq name lists for
+  the full sequences.
 
 * Update all the user documentation (book, profiling guide) on how to profile.
   Including --profile-sample-period option.
-
-* Split FbleDataType into FbleStructType and FbleUnionType?
-  Get rid of FbleDataTypeTag?
 
 * Pull undef check into separate instruction?
   So we can remove the check entirely if the compiler knows about it?
@@ -103,14 +98,9 @@ Tutorials:
 * Figure out why building with ninja from the source directory ends up
   building all the tests. And fix that somehow.
 
-* Debug occasional deadlock in pkgs/network/sockets-test.tr?
-  - fble-network-echo is stuck at 'accept'
-  - The client doesn't seem to be running.
-  - Could it be the client tried to connect before echo was ready, the client
-    failed without raising an obvious error, and then fble-network-echo just
-    hung around?
-  - Manually running the client command in this state led to successful manual
-    run, the script initiated one return 'unable to connect'.
-  - Yes: client connects before echo is ready, client fails right away, the
-    test isn't failed in that case, it just hangs.
+* fble-pprof doesn't work on windows because read isn't binary by default.
+  Add an option to open? Coerce everything to binary, including stdio?
+
+* Figure out how to add an fble-pprof benchmark to fble-benchmark?
+  Either via support for pure embedded files, or IO in the benchmarks.
 
