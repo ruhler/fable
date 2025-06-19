@@ -12,22 +12,86 @@
   an uncompressed binary encoded google/pprof proto file. To use it with
   google/pprof tools, gzip the file first.
 
+ @section Generating Smaller Profiles
+  The generated profiles can be quite large depending on the program you ran.
+  You can reduce the size of the generated samples using the
+  @l{--profile-sample-period} option in addition to @l{--profile}. For
+  example:
+
+  @code[sh] @
+   fble-stdio --profile foo.prof --profile-sample-period 1000 -p core -m /Core/Stdio/HelloWorld%
+
+  This behaves as if only 1 in 1000 samples was actually recorded. Increase
+  the sample period to decrease the size of the generated profile, at the
+  expense of some lost information for rarely exercised traces in the program.
+
+  You may need some trial and error for your use case to find a good choice of
+  sample period that balances profile size against information loss in the
+  profile.
+
+ @section Viewing Profiles in @l{fble-pprof}
+  The @l{fble-pprof} tool can be used to view fble generated profiles. You provide
+  the path to the profile and it launches a simple http server you can use to
+  browse the profile.
+
+  For example:
+
+  @code[sh] @
+   fble-pprof foo.prof
+
+  Which outputs something like:
+
+  @code[txt] @
+   parsing foo.prof...
+   serving at http://localhost:8123
+
+  Visit the URL using your favorite web browser. The following different views
+  of the profile are available from there:
+
+  @definition Overview
+   Shows high level information about the profile, such as number of samples
+   and number of sequences. Page loading performance scales with the number of
+   sequences.
+
+  @definition Overall
+   Shows a breakdown of frames by overall time spent with the frame somewhere
+   in the call stack. Typical usage is to identify any frames with
+   unexpectedly large overall time spent and focus on optimization there.
+
+  @definition Self
+   Shows a breakdown of frames by self time spent in the frame. Typical usage
+   is to focus on optimization of the frames with most self time.
+
+  @definition Sequences
+   Shows a breakdown of full (possibly canonicalized) callstacks by time
+   spent. Gives a rough sense of what parts of the code are taking a lot of
+   time to focus optimization efforts on. This view assumes that sequences are
+   already deduplicated in the profile, which is always the case for fble
+   generated profiles, but may not be the case in general.
+
+  @definition Sequence
+   Viewed when selecting a frame or specific sequence of frames. Shows a
+   breakdown of frames going into this sequence and leading from the sequence.
+   Typical usage is to identify the most relevant callers and callees of a
+   sequence to focus efforts on reducing those calls and/or optimizing the
+   callees.
+
+  See the man page for @l{fble-pprof} for more details.
+
  @section Using Linux Perf
   You can reuse the fble profiling logic with linux perf profiles.
   To do so, run you program with the @l{-d} and @l{-g} flags to
   @l{perf record}. For example:
 
   @code[sh] @
-   perf record -F 997 -d -g ./out/bin/fble-bench
+   perf record -F 997 -d -g fble-bench
 
   You can then convert to an fble profile with, for example:
 
   @code[sh] @
-   perf script | ./out/bin/fble-perf-profile -o bench.prof
+   perf script | fble-perf-profile -o bench.prof
 
-  The call counts included in the profile are not meaningful. The sample
-  counts included in the profile correspond to the number of perf samples
-  taken for the block.
+  See the man page for @l{fble-perf-profile} for more details.
 
   @item
    You can adjust -F up or down if it ends up with too many samples to process.

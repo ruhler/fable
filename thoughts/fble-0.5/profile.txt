@@ -407,3 +407,28 @@ with 0 samples (but non-zero counts).
 
 No, don't bother. I confirmed it doesn't save any space to remove the counts.
 Lets hold off on making changes until after we have a way to view the counts.
+
+---
+
+How to update book/Profiler.fbld for the new strategy? I think I need to shift
+the orientation. It shouldn't be a user guide. We already have the profiling
+guide and man pages for that.
+
+I think it should include:
+* My personal opinion of a good profiling format (pprof).
+* fble specific challenges related to producing profiles in that format
+ - Giving names to functions, all of which are anonymous.
+ - Dealing with tail recursion, deep recursion, potentially unbounded stack
+   traces.
+* My personal opinion of how best to view pprof files.
+* Other topics to maybe include somewhere
+ - The need for deeper context for the foo -> FbleCall -> bar case.
+ - The need for not too much context, else things blow up? PiDigits case?
+ - Code coverage versus profiling.
+
+Do I want to deal with this now? It's a lot of work to write this stuff. On
+the other hand, maybe future me will be happy I got started early.
+
+Let's try. See how far I get before I give up. I can't make things worse than
+they are now.
+

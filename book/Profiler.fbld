@@ -11,6 +11,41 @@
  particular places in their source code to consider changing to improve
  performance.
 
+ @section Source Code Places
+  There are various levels of granularity you can use to refer to a place in
+  source code. The most specific is a file name with line and column numbers.
+  A less specific approach is to use a function name.
+
+  An important use case of profiling is to compare profiles of a program
+  before and after an attempted optimization. You want to see the expected
+  improvement in the profile both to validate the optimization was implemented
+  as intended and to evaluate how effective it was. If you use line numbers
+  for locations reported in the profile, it is much harder to compare two
+  profiles after making a change to the program. Line numbers often don't
+  survive changes to programs.
+
+  Using function names to identify source code places is more effective in
+  that sense. They are much more intuitive to work with than line numbers when
+  viewing profiles, and they are much more stable under revision to the
+  program.
+
+  Code coverage tools are closely related to profiling tools. If your
+  locations are sufficiently fine grain, you can use it to evaluate code
+  coverage of test cases. Function level granularity is not quite fine grain
+  enough for code coverage, because it may miss many subbranches within a
+  function.
+
+  Another option is to allow programmer defined granularity. That is under
+  full control of the programmer and can be as fine or course grain as
+  desired, but requires extra effort on the programmer's part to maintain.
+
+  The initial profiling implementation in fble used block-level locations,
+  where a block was identified by function name, let definition name, and case
+  branch name. We later switched back to just using function names for
+  profiling locations, because the extra block-level granularity made it
+  tedious to navigate profiles and in some cases significantly increased the
+  cost of generating and storing the profile data.
+
  Much of the source code for a program may contribute very little to the
  overall runtime of a program. If a program takes 60 seconds to run, 1 second
  of which is spent in some function Foo, the most you can possibly save by
@@ -18,9 +53,114 @@
  on those parts of the program that contribute most to the run time.
 
  Let's say we look at the performance of our program at the granularity of
- functions. Functions are called by other functions and can call other
+ functions. A natural starting point for a profiler is to tell you how much
+ time your program is spending in each function and surface those functions
+ where you are spending the most time. Those are the functions you should
+ spend efforts to optimize.
+
+ @section The Meaning of Time
+  When we talk about performance, we often mean runtime performance and care
+  about wall clock time. Profiling can be applied to other kinds of
+  performance, such as allocation performance too.
+
+  At the end of the day, for runtime performance we care about wall clock
+  time. But wall clock time depends on the environment you run your program
+  in. The same program run on the same inputs could take very different
+  wall clock time to run on a fast computer compared to a slow computer. Even
+  on the same computer, wall clock time will vary depending on what else the
+  computer is doing when you run the program.
+
+  The performance philosophy of fble is that the programmer is responsible for
+  optimizing the algorithmic complexity of their program, the fble
+  implementation is responsible for optimizing the constant overheads. This is
+  often a difficult distinction to make in practice, but suggests we use
+  something other than wall clock time in our profiles.
+
+  For example, we could count how much time each function is executed. The
+  total time attributed to a function is the number of times it is executed
+  plus the sum of the times of all functions it calls. Essentially we are
+  treating the constant time of execution of a function (not including
+  subcalls) as 1.
+
+  The benefit of this approach is that profiles are deterministic: you get the
+  same results every time you run the same program, regardless of where you
+  run the program. It also avoid biasing you towards one platform or another,
+  in case some platforms optimize certain parts of fble code differently from
+  others.
+
+  The downside of this approach is if there are any substantial constant
+  overheads for one function compared to another, you could fail to see
+  surfaced functions that are important for wall clock performance in
+  practice.
+
+  The fble compiler counts internal bytecode instructions rather than function
+  calls. This is still deterministic for implementations of fble that generate
+  the same byte code, but takes more account of how expensive various fble
+  expressions are to evaluate with respect to each other.
+
+  As a fallback, you can do linux perf profiling of fble programs to get a
+  wall clock profile. Often in practice it's useful to consider both: use wall
+  clock profiling to identify functions that are important to optimize in
+  practice. Analyze and optimize those functions from the view of the abstract
+  time profile, and confirm the improvements there lead to actual performance
+  improvements in the environment you care about.
+
+ Functions are called by other functions and can call other
  functions. To improve the performance of a program with respect to some
  function Foo, you can either reduce the number of times the function Foo is
  called, reduce the amount of time the function spends calling other
  functions, or optimize the function itself.
 
+ The original fble profiler focused in on exactly these three things: time
+ spent in a function, a breakdown of callers of the function by time spent in
+ the function, and a breakdown of callees of the function by time spent in the
+ function. This suffered in practice from lack of context.
+
+ For example, imagine you have a @l{Call} function that all your function calls
+ go through. Instead of a profile where you see @l{X} calls @l{Y} calls @l{Z},
+ you would see @l{X} and @l{Y} both call @l{Call} and @l{Call} calls both
+ @l{Y} and @l{Z}. You lose the context entirely that @l{X} calls @l{Y} via
+ @l{Call}.
+
+ To get back this context, you can record longer sequences of calls, not just
+ immediate callers and callees. Conceptually you can record the full sequence
+ of all call stacks that appear while the program runs. In practice that would
+ be too much information to record and store and not very useful to the
+ developer, particularly in the case of recursive calls.
+
+ For example, consider a recursive function @l{X} that calls itself repeatedly
+ depending on the input argument. You would see sequences like @l{X},
+ @l{X -> X}, @l{X -> X -> X}, @l{X -> X -> X -> X}, need I go on? No, because
+ you know the behavior of all of these sequences is essentially the same. Fble
+ recognizes that to canonicalize sequences with cycles. The above infinite
+ list of sequences would be canonicalized to just two: @l{X} and @l{X->X},
+ where all the sequences with more than a single call to @l{X} are grouped
+ together and counted as @l{X->X}.
+
+ This canonicalization of sequences provides a natural way to handle the deep
+ recursion and unbounded tail recursion allowed in fble programs. The fble
+ profiler collects timing information for all canonical sequences executed by
+ the program. It does this by keeping track of the current canonical sequence
+ every time a new block is entered, caching the next canonical sequence by
+ block id so that it runs efficiently. In most cases a block calls a small
+ number of subsequence blocks and there are relatively few canonical
+ sequences, resulting in a small constant time overhead every time a block is
+ entered to track and record profiling data.
+
+ In practice there are still cases where a program executes too many different
+ canonical sequences to record and save practically. The chances of this are
+ reduced by using function level granularity rather than block level
+ granularity. Even still, a developer isn't going to look at all those
+ sequences in practice. For that reason, fble provides an option to restrict
+ the sequences reported in a profile to those with the most time samples.
+
+ An fble profile consists of the time spent in each canonical sequence, with
+ information about the file, line, and column number and function name
+ associated with each block in a sequence. This is almost exactly the
+ information that can be represented in the existing @l{google/pprof} format,
+ so we fble reuses that format for output.
+
+ @section Viewing Pprof Files
+  You could use existing @l{google/pprof} viewers for fble generated profiles,
+  but I prefer a different approach to consuming the information in a pprof
+  file. See the man page for @l{fble-pprof} for more info.
