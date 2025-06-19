@@ -18,3 +18,7 @@ ls 1687358 464282.541283:       7603 cycles:u:
 	            ffffffea1bb64d10 [unknown] ([unknown])
 	            1148 a+0x10 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
 
+ls 3841224 3362274.568621:      10158 cycles:u: 
+	           16050 SixteenCharName_+0x110 (/usr/lib/aarch64-linux-gnu/ld-2.31.so)
+	           b9d94 LongerThanSixteenChars+0x44 (/home/richard/projects/fable/out/pkgs/pprof/fble-pprof)
+

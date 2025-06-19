@@ -23,7 +23,10 @@
 
   @subsection Output Control
    @opt[@l[-o], @l[--profile] @a[FILE]]
-   @ output the profile to the given file.
+   @ output the profile to the given @a[FILE]
+
+   @opt[@l[--profile-sample-period] @a[PERIOD]]
+   @ downsample by @a[PERIOD] in the reported profile to save space
 
    @opt[@l[--test]]
    @ output the profile in human readable format to facilitate testing

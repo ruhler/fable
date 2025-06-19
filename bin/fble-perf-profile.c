@@ -18,7 +18,7 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
+static FbleBlockId GetBlockId(FbleProfile* profile, const char* name);
 static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV seq, uint64_t calls, uint64_t samples);
 int main(int argc, const char* argv[]);
 
@@ -33,7 +33,7 @@ int main(int argc, const char* argv[]);
  *   Allocates a new block id if there isn't already a block with the given
  *   name.
  */
-static FbleBlockId GetBlockId(FbleProfile* profile, char* name)
+static FbleBlockId GetBlockId(FbleProfile* profile, const char* name)
 {
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     if (strcmp(name, profile->blocks.xs[i].name->str) == 0) {
@@ -78,6 +78,7 @@ static void TestOutputQuery(FbleProfile* profile, void* userdata, FbleBlockIdV s
 int main(int argc, const char* argv[])
 {
   const char* profile_output_file = NULL;
+  int profile_sample_period = 0;
   bool version = false;
   bool help = false;
   bool error = false;
@@ -93,6 +94,8 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("--test", &test, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-o", &profile_output_file, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_output_file, &argc, &argv, &error)) continue;
+    if (FbleParseIntArg("--profile-sample-period", &profile_sample_period, &argc, &argv, &error)) continue;
+    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
   if (version) {
@@ -107,6 +110,12 @@ int main(int argc, const char* argv[])
 
   if (!test && profile_output_file == NULL) {
     fprintf(stderr, "Missing output file\n");
+    fprintf(stderr, "Try --help for usage\n");
+    return EX_USAGE;
+  }
+
+  if (profile_sample_period < 0) {
+    fprintf(stderr, "Invalid negative sample period: %i\n", profile_sample_period);
     fprintf(stderr, "Try --help for usage\n");
     return EX_USAGE;
   }
@@ -163,7 +172,7 @@ int main(int argc, const char* argv[])
         // Parse the name.
         name_size = 0;
         while (c != EOF && !isspace(c) && c != '+') {
-          if (name_size + 1 > name_capacity) {
+          if (name_size + 2 > name_capacity) {
             name_capacity *= 2;
             name = FbleReAllocArray(char, name, name_capacity);
           }
@@ -199,7 +208,7 @@ int main(int argc, const char* argv[])
     // format with just the info we care about.
     FbleQueryProfile(profile, &TestOutputQuery, NULL);
   } else {
-    FbleOutputProfile(profile_output_file, profile, 0);
+    FbleOutputProfile(profile_output_file, profile, profile_sample_period);
   }
 
   FbleFreeProfile(profile);

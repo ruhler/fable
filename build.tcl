@@ -69,7 +69,7 @@ proc obj { obj src iflags args } {
 #   args - optional additional dependencies.
 proc obj_cov { obj src iflags args } {
   set gcda [string map {.o .gcda} $obj]
-  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb --coverage"
+  set cflags "-fPIC -std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb --coverage -O0"
   set cmd "rm -f $gcda ; gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
@@ -182,7 +182,7 @@ proc bin { bin objs libs lflags args } {
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - additional dependencies
 proc bin_cov { bin objs libs lflags args } {
-  set cflags "-std=c99 $::config::ldflags --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb --coverage"
+  set cflags "-std=c99 $::config::ldflags --pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb --coverage -O0"
   build $bin "$objs $libs $args" "gcc $cflags -o $bin $objs [::libsflags $bin $libs] $lflags"
 }
 
