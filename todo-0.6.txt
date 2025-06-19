@@ -2,6 +2,12 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Revamp the standard library.
+ - Redesign from the ground up, looking at existing standard libraries for
+   guidance.
+ - Test and document all functions.
+ - Implement rosettacode.org tasks under pkgs/rosetta to test it out.
+
 * Optimize C and interpreter backends like we did aarch64?
   By inlining logic to access fble values instead of calling library
   functions.
@@ -11,6 +17,7 @@ Things to consider doing for the fble-0.6 release.
  - Inline FbleCall into aarch64 backend.
  - Specialize call logic based on what we can figure out statically in terms
    of number of args expected and tail/non-tail possibilities.
+ - Avoid redundant undef checks on values based on static info.
 
 * Implement deflate algorithm.
  - Change --profile to produce gzip compressed profiles (doesn't need to be
@@ -20,4 +27,16 @@ Things to consider doing for the fble-0.6 release.
 * Fix potential GC gen overflow?
  - See thoughts/fble-0.3/stack_alloc.txt for details.
  - See thoughts/fble-0.5/gc.txt for more thoughts.
+
+* New apps
+ - IEEE floating point support.
+ - More benchmark games.
+ - Implement an image viewer.
+ - bitcoin miner
+ - gzip, gunzip.
+
+* Fble Language Features
+ - Add some way to catch or recover from errors at runtime?
+ - Some way to implement a web server that can handle multiple requests
+   concurrently?
 

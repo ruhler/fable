@@ -2,16 +2,8 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Improve performance of fble-pprof?
-  Currently dominated by the time to generate seq block and seq name lists for
-  the full sequences.
-
 * Update all the user documentation (book, profiling guide) on how to profile.
   Including --profile-sample-period option.
-
-* Pull undef check into separate instruction?
-  So we can remove the check entirely if the compiler knows about it?
-  Downside is the need for an extra GetFrameVar call on the value?
 
 * Add spec test to catch case of tbnz not having enough limit for undef check.
 
@@ -46,30 +38,6 @@ Things to consider doing for the fble-0.5 release.
  - Add option for loading modules from .so files?
  - Have fble-stdio check that the function has the right type?
  - Load minimum dependencies needed for type checking when possible?
-
-* Add fble to rosettacode.org?
-  Or at least implement all the tasks, perhaps in a separate RosettaCode
-  package to start.
-  Probably start with all the 'Simple' tasks.
-
-* Design a standard library?
- - Separate modules as appropriate to reduce false dependencies.
- - Document all functions.
- - Add tests for full code coverage of all functions.
- - Proper support for unicode characters in /Core/Char%.
- - Add error status codes to sockets interface.
-
-* New apps
- - IEEE floating point support.
- - More benchmark games.
- - Implement an image viewer.
- - bitcoin miner
- - gzip, gunzip.
-
-* Fble Language Features
- - Add some way to catch or recover from errors at runtime?
- - Some way to implement a web server that can handle multiple requests
-   concurrently?
 
 * Consider removing higher order kinds from the language.
   Make everything either kind @ or %. What would we lose?

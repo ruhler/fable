@@ -258,3 +258,38 @@ for the type, but share the common structure.
 I don't see the benefit of splitting the types here. The code for them is
 identical except for printing as '+' versus '*'.
 
+---
+
+* Improve performance of fble-pprof?
+  Currently dominated by the time to generate seq block and seq name lists for
+  the full sequences.
+
+I say don't bother. I could encode sequences as views on full sequences. That
+wouldn't help seq name lists, and would be pretty involved. Performance is
+plenty good enough when I use --profile-sample-period. Save this for another
+time if/as performance of fble-pprof starts to bother me more.
+
+---
+
+* Pull undef check into separate instruction?
+  So we can remove the check entirely if the compiler knows about it?
+  Downside is the need for an extra GetFrameVar call on the value?
+
+We've done enough performance optimizations for this release. This is low down
+on the list. It won't buy us anything if we have to call GetFrameVar twice.
+Another option would be to put extra info in each instruction about whether it
+can assume something is strict or not.
+
+Let me punt this into a slightly more general performance improvement to
+consider down the line.
+
+---
+
+* Add fble to rosettacode.org?
+  Or at least implement all the tasks, perhaps in a separate RosettaCode
+  package to start.
+  Probably start with all the 'Simple' tasks.
+
+The tasks pretty heavily depend on the standard library. I think it would be
+good to sketch them out, but I'd rather wait until after revamping the
+standard library.
