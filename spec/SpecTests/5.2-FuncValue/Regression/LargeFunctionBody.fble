@@ -1,0 +1,220 @@
+# @@fble-test@@ no-error
+
+# Regression test for a bug we had on aarch64 backend where there were too
+# many instructions between a check whether a value was undefined and the code
+# to handle that. In other words, lots of instructions needed for a single
+# function.
+@ Unit@ = *();
+@ Enum@ = +(Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e);
+@ Triple@ = *(Enum@ 0, Enum@ 1, Enum@ 2);
+
+(Enum@) { Enum@; } F = (Enum@ x) {
+  # Initial access that should check if x is defined or not.
+  Unit@ u = x.?(a: Unit@(), b: Unit@(), c: Unit@(), d: Unit@(), e: Unit@());
+
+  # Logic that needs lots of instructions.
+  Triple@ t0 = Triple@(Enum@(a: u), Enum@(b: Unit@()), Enum@(c: Unit@()));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  Triple@ t1 = Triple@(
+    t0.0.?(a: Enum@(b: t0.0.a), b: Enum@(c: t0.0.b), c: Enum@(d: t0.0.c), d: Enum@(e: t0.0.d), e: Enum@(a: t0.0.e)),
+    t0.1.?(a: Enum@(c: t0.1.a), b: Enum@(d: t0.1.b), c: Enum@(e: t0.1.c), d: Enum@(a: t0.1.d), e: Enum@(b: t0.1.e)),
+    t0.2.?(a: Enum@(d: t0.2.a), b: Enum@(e: t0.2.b), c: Enum@(a: t0.2.c), d: Enum@(b: t0.2.d), e: Enum@(c: t0.2.e)));
+  Triple@ t0 = Triple@(
+    t1.0.?(a: Enum@(b: t1.0.a), b: Enum@(c: t1.0.b), c: Enum@(d: t1.0.c), d: Enum@(e: t1.0.d), e: Enum@(a: t1.0.e)),
+    t1.1.?(a: Enum@(c: t1.1.a), b: Enum@(d: t1.1.b), c: Enum@(e: t1.1.c), d: Enum@(a: t1.1.d), e: Enum@(b: t1.1.e)),
+    t1.2.?(a: Enum@(d: t1.2.a), b: Enum@(e: t1.2.b), c: Enum@(a: t1.2.c), d: Enum@(b: t1.2.d), e: Enum@(c: t1.2.e)));
+
+  t0.1;
+};
+
+F(Enum@(c: Unit@()));
+
