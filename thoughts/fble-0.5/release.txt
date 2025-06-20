@@ -316,3 +316,60 @@ text section. I need to somehow generate super big code. Like, lots of
 instructions. Maybe lots of nested case expressions? Or function calls?
 
 Let me try a bunch of case expressions.
+
+---
+
+* Get rid of FbleFunction?
+
+FbleFunction is an executable with profile block and pointer to static
+arguments.
+
+FbleFuncValue is an FbleFunction with value header and space allocated for the
+actual static values.
+
+Where we use FbleFunction:
+* In prototype for FbleRunFunction, the function to run.
+
+That's pretty much it. It's the FbleRunFunction interface.
+
+FbleFuncValue has an FbleFunction which we can always get from it.
+
+The alternative would be to use FbleFuncValue everywhere instead of
+FbleFunction. Honestly... I kind of like FbleFunction interface. It's just a
+bit of separation.
+
+Let's keep it separate for now. If it turns out to be a big performance
+opportunity later on, we can revisit.
+
+---
+
+* Add test that would catch the bug if we failed to GcRealloc a value before
+  ref assignment.
+  - ref assign to a value which is stack alloc -> gc alloc -> ref.
+
+First let's try reintroducing the bug, see what happens. This goes into
+FbleDefineRecursiveValues.
+
+Seems like the case is covered by
+SpecTests/8.4-ModularCompilation/Basic/Builtin.fble, but only because I have
+an assert for that case in the code. Otherwise all the spec tests pass. Let's
+see if all the other tests pass too.
+
+fbld/SpecTests/stack-smash.fbld.fble.tr fails with an invariant violation in
+GC. That's the only test I have that fails. fble-benchmark fails pretty
+quickly too.
+
+So yeah, that's the error I want to catch in the spec tests somehow. Sounds
+hard. Let me think about it.
+
+---
+
+* Add test for vacuous value in 1 of multiple ref value assignments.
+ - If we don't already have such a thing.
+
+We don't already have a such a thing. We have VacuousValue and
+IndirectVacuousValue tests. But why do I want to test this specific thing?
+What makes me concerned about this situation?
+
+Oh. I misread. This is easy, yeah. I should definitely test this. This is to
+make sure we return and report the error for the correct value of the bunch.

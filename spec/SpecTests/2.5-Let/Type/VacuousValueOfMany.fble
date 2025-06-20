@@ -1,0 +1,13 @@
+# @@fble-test@@ runtime-error 9:36
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# The value y must not be vacuously defined like this, even if it is one of
+# multiple assignments going on here.
+Bool@ x = Bool@(true: Unit), Bool@ y = y, Bool@ z = Bool@(false: Unit);
+Unit@ _ = x.true;
+Unit@ _ = y.true;
+Unit@ _ = z.false;
+Unit;

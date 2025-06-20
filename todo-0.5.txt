@@ -2,14 +2,28 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Get rid of FbleFunction?
+* Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs?
+
+* Add man page for FbleParseIntArg?
 
 * Add test that would catch the bug if we failed to GcRealloc a value before
   ref assignment.
   - ref assign to a value which is stack alloc -> gc alloc -> ref.
 
-* Add test for vacuous value in 1 of multiple ref value assignments.
- - If we don't already have such a thing.
+Tests:
+* Add spec tests for full coverage.
+ - Test HasParam_ for package type in type.c
+ - Test Subst for private type in type.c.
+ - Test For maltyped package type argument to private type in typecheck.c.
+ - Test for Maltyped arg type to private type in typecheck.c.
+ - Test for funny characters in StringLit in c.c
+ - Test for main .fble file not found somehow? load.c
+ - Test for builtin module with builtin dependencies? load.c
+* Add test and fix for this case:
+ 1. We load builtin A, which loads dependent builtin B
+ 2. We load .fble C, which depends on builtin B
+ At what point do we check and load the type information for B?
+
 
 * Use a special ref value instead of NULL to represent undefined values?
 
@@ -42,15 +56,6 @@ Things to consider doing for the fble-0.5 release.
    kinds of markups.
  - Figure out how to associate a location with empty markup.
  - Avoid constructing markups with singleton sequences?
-
-Tests:
-* Add spec tests for full coverage.
- - Test for main .fble file not found somehow? load.c
- - Test for builtin module with builtin dependencies? load.c
-* Add test and fix for this case:
- 1. We load builtin A, which loads dependent builtin B
- 2. We load .fble C, which depends on builtin B
- At what point do we check and load the type information for B?
 
 Tutorials:
 * C API, once it is stable enough.
