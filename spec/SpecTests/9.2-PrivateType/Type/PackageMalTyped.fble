@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 5:22
+@ Unit@ = *();
+
+# The package part of the private type as maltyped.
+@ Private@ = Unit@.%(Foo@);
+Private@();

@@ -1,0 +1,13 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+@ Maybe@ = +(Bool@ just, Unit@ nothing);
+
+# Use of functions with funny characters in the names.
+# This particularly exercises the profiling use case, where we often base
+# profiling block names on function names.
+(Bool@) { Maybe@; } '"\	
+' = (Bool@ x) { Maybe@(just: x); };
+
+'"\	
+'(Bool@(true: Unit@()));

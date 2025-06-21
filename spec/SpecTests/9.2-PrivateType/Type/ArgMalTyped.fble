@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 4:1
+
+# The arg part of the private type as maltyped.
+Foo@.%(@/SpecTests%);

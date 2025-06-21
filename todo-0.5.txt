@@ -10,11 +10,7 @@ Things to consider doing for the fble-0.5 release.
 
 Tests:
 * Add spec tests for full coverage.
- - Test HasParam_ for package type in type.c
- - Test Subst for private type in type.c.
- - Test For maltyped package type argument to private type in typecheck.c.
- - Test for Maltyped arg type to private type in typecheck.c.
- - Test for funny characters in StringLit in c.c
+ - Test for unmatched subst of var type in type.c?
  - Test for main .fble file not found somehow? load.c
  - Test for builtin module with builtin dependencies? load.c
 * Add test and fix for this case:

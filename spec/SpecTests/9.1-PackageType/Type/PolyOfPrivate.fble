@@ -1,0 +1,6 @@
+# @@fble-test@@ no-error
+# Code coverage for a polymorphic package type.
+<@>@ Package@ = <@ T@> { @/Foo/Bar%; };
+
+@ Unit@ = *();
+Unit@.%(Package@<Unit@>);
