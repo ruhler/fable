@@ -13,7 +13,7 @@ namespace eval "include" {
     }
     fble-arg-parse.h {
       FbleArgParser
-      FbleParseBoolArg FbleParseStringArg
+      FbleParseBoolArg FbleParseIntArg FbleParseStringArg
       FbleModuleArg FbleNewModuleArg FbleFreeModuleArg FbleParseModuleArg
       FbleParseInvalidArg
     }

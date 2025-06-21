@@ -4,8 +4,6 @@ Things to consider doing for the fble-0.5 release.
 
 * Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs?
 
-* Add man page for FbleParseIntArg?
-
 * Add test that would catch the bug if we failed to GcRealloc a value before
   ref assignment.
   - ref assign to a value which is stack alloc -> gc alloc -> ref.
