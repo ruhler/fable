@@ -1,6 +1,21 @@
 @doc Fble Release Notes
  @@FbleVersionStamp
 
+ @section fble-0.5 Pending
+  The following list highlights the most notable changes from fble-0.4.
+
+  @subsection Fble Language
+   @item Replaced abstract types feature with a new private types feature.
+
+  @subsection Fble Implementation
+   @item Completely revamped profiling support. We now generate pprof profiles.
+   @item Substantial performance improvements.
+   @item Miscellaneous backwards incompatible API changes.
+
+  @subsection Applications
+   @item Implemented @l{fble-pprof} application for viewing pprof profiles.
+   @item Added an @l{fble-benchmark} benchmark suite.
+
  @section fble-0.4 March 2025
   The following list highlights the most notable changes from fble-0.3.
 

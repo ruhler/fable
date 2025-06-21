@@ -373,3 +373,20 @@ What makes me concerned about this situation?
 
 Oh. I misread. This is easy, yeah. I should definitely test this. This is to
 make sure we return and report the error for the correct value of the bunch.
+
+---
+
+* Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs?
+
+I should remove them eventually, because they aren't tested. But I think there
+is a decent chance I'll want to reuse the code for code coverage early in the
+next release, so let me keep it around one more release before removing.
+
+---
+
+Draft release notes. Things included in this release:
+* fble-pprof
+* revamp profiling
+* revamp abstract types
+* performance improvements
+

@@ -28,6 +28,8 @@ Things to consider doing for the fble-0.6 release.
  - See thoughts/fble-0.3/stack_alloc.txt for details.
  - See thoughts/fble-0.5/gc.txt for more thoughts.
 
+* Remove now unused FBLE_PROFILE_ENTER_OP, EXIT_OP, and REPLACE_OPs
+
 * New apps
  - IEEE floating point support.
  - More benchmark games.
