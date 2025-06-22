@@ -5,10 +5,13 @@ Things to consider doing for the fble-0.5 release.
 * Add spec test that would catch the bug if we failed to GcRealloc a value
   before ref assignment.
   - ref assign to a value which is stack alloc -> gc alloc -> ref.
+  - The issue being, after substitution, we would end up with:
+    stack -> gc -> stack, and when we return that, we would gc allocate it
+    into: gc -> gc -> stack, and that stack value would then be dangling and
+    likely to get overwritten.
 
 Tests:
 * Add spec tests for full coverage.
- - Test for unmatched subst of var type in type.c?
  - Test for main .fble file not found somehow? load.c
  - Test for builtin module with builtin dependencies? load.c
 * Add test and fix for this case:

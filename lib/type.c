@@ -577,7 +577,8 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* t
             return FbleRetainType(heap, vars.xs[i].value);
           }
         }
-        return FbleRetainType(heap, type);
+        FbleUnreachable("unmatched var type does not have params");
+        return NULL;
       }
 
       // Check to see if we've already done substitution on the value pointed

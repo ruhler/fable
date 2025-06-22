@@ -1,0 +1,15 @@
+# @@fble-test@@ no-error
+# Test a nested poly type, for code coverage of the case when substitution
+# happens over a variable without substituting that variable.
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+
+<@>@ Poly@ = <@ T@> { *(<@ A@>(A@) { *(T@ t, A@ a); } p); };
+
+@ PP@ = Poly@<Unit@>;
+PP@ pp = @(p: <@ A@>(A@ x) { @(t: Unit, a: x); });
+pp.p(True).a.true;
+
