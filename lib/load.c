@@ -254,7 +254,7 @@ static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
 {
   // Check if we've already loaded the module.
   for (size_t i = 0; i < program->modules.size; ++i) {
-    if (FbleModulePathsEqual(program->modules.xs[i].path, preloaded->path)) {
+    if (FbleModulePathsEqual(program->modules.xs[i]->path, preloaded->path)) {
       return;
     }
   }
@@ -264,7 +264,7 @@ static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
     Preload(program, preloaded->deps.xs[i]);
   }
 
-  FbleModule* module = FbleExtendVector(program->modules);
+  FbleModule* module = FbleAlloc(FbleModule);
   module->path = FbleCopyModulePath(preloaded->path);
   FbleInitVector(module->type_deps);
   FbleInitVector(module->link_deps);
@@ -279,6 +279,7 @@ static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
   for (size_t i = 0; i < preloaded->profile_blocks.size; ++i) {
     FbleAppendToVector(module->profile_blocks, FbleCopyName(preloaded->profile_blocks.xs[i]));
   }
+  FbleAppendToVector(program->modules, module);
 }
 
 /**
@@ -376,7 +377,9 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
   while (stack != NULL) {
     if (stack->pending_deps.size == 0) {
       // We have loaded all the dependencies for this module.
-      FbleAppendToVector(program->modules, stack->module);
+      FbleModule* module = FbleAlloc(FbleModule);
+      *module = stack->module;
+      FbleAppendToVector(program->modules, module);
       Stack* tail = stack->tail;
       FbleFreeVector(stack->pending_deps);
       FbleFree(stack);
@@ -391,7 +394,7 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     {
       bool found = false;
       for (size_t i = 0; i < program->modules.size; ++i) {
-        if (FbleModulePathsEqual(ref, program->modules.xs[i].path)) {
+        if (FbleModulePathsEqual(ref, program->modules.xs[i]->path)) {
           found = true;
           break;
         }

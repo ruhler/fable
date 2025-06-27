@@ -30,7 +30,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
   FbleCode* code = FbleNewCode(0, modulec, modulec, main_id);
   FbleValue* funcs[modulec];
   for (size_t i = 0; i < modulec; ++i) {
-    FbleModule* module = program->modules.xs + i;
+    FbleModule* module = program->modules.xs[i];
 
     size_t profile_block_id = FbleAddBlocksToProfile(profile, module->profile_blocks);
 
@@ -54,7 +54,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
     FbleInitVector(call->args);
     for (size_t d = 0; d < module->link_deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
-        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[v].path)) {
+        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[v]->path)) {
           FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
           FbleAppendToVector(call->args, var);
           break;

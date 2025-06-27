@@ -2399,7 +2399,7 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
   FbleType* types[program->modules.size];
 
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleModule* module = program->modules.xs + i;
+    FbleModule* module = program->modules.xs[i];
     FbleType* type_deps[module->type_deps.size];
     FbleType* link_deps[module->link_deps.size];
 
@@ -2415,7 +2415,7 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
     for (size_t d = 0; d < module->type_deps.size; ++d) {
       type_deps[d] = NULL;
       for (size_t t = 0; t < i; ++t) {
-        if (FbleModulePathsEqual(module->type_deps.xs[d], program->modules.xs[t].path)) {
+        if (FbleModulePathsEqual(module->type_deps.xs[d], program->modules.xs[t]->path)) {
           type_deps[d] = types[t];
           break;
         }
@@ -2429,7 +2429,7 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
     for (size_t d = 0; d < module->link_deps.size; ++d) {
       link_deps[d] = NULL;
       for (size_t t = 0; t < i; ++t) {
-        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[t].path)) {
+        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[t]->path)) {
           link_deps[d] = types[t];
           break;
         }

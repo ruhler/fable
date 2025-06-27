@@ -12,7 +12,6 @@ Things to consider doing for the fble-0.5 release.
 
 Tests:
 * Add spec tests for full coverage.
- - Test for main .fble file not found somehow? load.c
  - Test for builtin module with builtin dependencies? load.c
 * Add test and fix for this case:
  1. We load builtin A, which loads dependent builtin B

@@ -1,0 +1,436 @@
+Modular Compilation Review
+==========================
+We added modular compilation to fble-0.4. It was a messy discussion. It seems
+to work in practice, but has a hole around the case when builtins and
+non-builtins depend on the same builtin module.
+
+Goal here is to review things at a high level, describing how they ended up
+looking today, what does or does not make sense about that, and what the
+vision is for how things should ultimately look.
+
+If we can make sense of the behavior today, we'll want to add spec tests for
+the corner cases if we can and get things implemented properly.
+
+Let's start with a summary of the vision for how things should work today.
+
+There are two important topics:
+1. Type checking of dependent modules. When it needs to be done, when not.
+2. Can builtin modules depend on modules that non-builtin modules cannot?
+
+If we answer those questions, does that get to the bottom of everything of
+interest?
+
+1. Type checking of dependent modules.
+To compile a module, we need to know the types of modules it depends on. That
+means any time a non-builtin module depends on some other module (builtin or
+not), we need to get the type of the module it depends on. We do that via
+either .fble or .fble.@ files.
+
+We don't need to know the type of a pre-compiled module's dependencies to use
+it. We already compiled the module. We got the type of its dependencies at
+compile time. Can we trust that the type of its dependencies hasn't changed
+since then?
+
+Kinds of trust:
+* Given .fble and .fble.@ files, we can get type from both. No extra trust
+  needed.
+* Given .fble.@ and a compiled module, we trust that the .fble.@ matches the
+  type of the compiled module. If we stored the actual type of the module with
+  the compiled module, we could check against the .fble.@ file. But in that
+  case, we could just use that type directly, no need for a .fble.@ file. And
+  there's nothing stopping us from generated a compiled module with a broken
+  type.
+* Given a compiled module and another compiled module it depends on, we trust
+  that the module it depends on has the type we expect. We could store the
+  type with the compiled module instead of with a separate .fble.@ file. We
+  could recheck the type if we wanted to at load time.
+
+A compiled module could be stored with or without its type. A compiled module
+could be stored with or without a human readable .fble.@ description of its
+type. We have to take a leap of faith regardless that the type stored with a
+compiled module is accurate. If there are two types stored with the compiled
+module, binary and human readable, we could check them against each other. But
+that doesn't really add much.
+
+It would be difficult to make use of type errors in reference to a module
+whose type is not available in a .fble.@ form that a user could read.
+
+So, option to consider: do we rely solely on .fble.@ for describing the type
+of a pre-compiled module, or do we also have some way to encode it with the
+compiled module itself. For now, the approach is having just .fble.@. I could
+imagine a future where we add some encoding in the compiled module itself.
+
+My gut feeling is that it will be useful to store the type with a module and
+double check the type is what we expect at link time. If the types don't match
+at link time, give an error. Maybe we don't even need a type, maybe a hash of
+the type is fine, because there's not much actionable you can do in this case.
+You can't change either of the pre-compiled modules. You just get the sanity
+check that something is wrong. It's like getting a version mismatch error. But
+this also feels like a 'nice to have' feature, not something we need right
+now.
+
+2. Can builtin modules depend on modules that non-builtin modules cannot?
+That would be nice. It would allow for completely hidden internal modules. I
+vote yes. Like, maybe I have a library of modules I use internally at compile
+time. I ship the compiled code for all my modules, including the private
+internal ones, but I only supply .fble.@ files for the public interface. In
+that case, a user should not be allowed direct access to the private internal
+modules.
+
+Builtin modules can depend on modules that non-builtin modules can also depend
+on. Think of public interface A% and B%, where A% depends on B%, and some user
+module depends on both A% and B%. Now B% is used both from A% and from C%.
+Nothing out of the ordinary about that.
+
+That's the groundwork. I should be able to answer all my questions now.
+
+FbleLoadForExecution takes a list of public builtin modules, a module search
+path, and a target module path to load. Builtin modules can directly depend on
+other builtin modules without putting those in the public list.
+
+Important questions:
+1. Can a builtin module depend on a non-builtin module?
+2. Can a builtin module depend on another public builtin module?
+
+For (1), you could imagine either way, but I have a hard time trusting the
+type dependency for a builtin module depending on a non-builtin module. It's
+too easy to change the non-builtin module and cause things to break because it
+has the wrong type. Though you could imagine use cases where you swap out an
+existing pre-compiled module by searching for a non-builtin module first.
+
+For (2), I should think yes, absolutely. But we could have the option of
+having two separate copies of that module: one for the builtin reference and
+one for the non-builtin reference. If needed to make things easier. Ideally
+they both share the same module.
+
+I feel close, but not quite there yet. I think I have all the pieces, I just
+need to make some decisions and be resigned to the fact that my current loader
+is buggy and will need fixes.
+
+Summary of considerations:
+* We have three types of modules: public builtin, private builtin, non-builtin.
+* What combination of the three module types are allowed to depend on what
+  combination of the three module types? And what type checking is done? There
+  should be a 3x3 matrix I can fill in.
+
+Come up with my 3x3 matrix for what is allowed, implement support for that. In
+some cases what is allowed and what is possible will likely depend on whether
+we can embed a type with a compiled module.
+
+---
+
+The question is: what happens if a module is referred to privately and
+publicly? What if it is referred to multiple separate times privately? How
+confident are we that those different instances with the same module path name
+are the same? Could they not be different versions of the same named module?
+
+It's difficult to say when I don't have a clear use case. Today we have two
+use cases: 1. list of builtins that don't have dependencies, for public use.
+2. Pre-compiled modules where the list of builtins has a single module and
+that's the module we are running. We don't have the case of a list of multiple
+builtins with dependencies and where the main module might be something
+different in addition.
+
+It's possible to check at runtime if two builtin modules are pointer
+equivalent.
+
+Imagine we have a common library Foo, with different versions. Then two
+different packages A and B that depend on Foo, but they depend on different
+versions of Foo. Can we use A and B from the same program? Assuming the types
+are compatible? We ought to be able to, I think. That means two separate
+instances of the modules in Foo in the program. If an external module depends
+on Foo, which version does it get?
+
+We could require that the builtins list does not have the same module path
+more than once. That top level builtin module can then be the canonical one
+used when requested. Internal references can be to different versions of the
+module with the same module name. Then the linker can go based on pointer
+equivalence of modules rather than name equivalence. But it also means keeping
+track of whether a loaded module is public or private.
+
+How does this relate to dll/dependency hell?
+
+From wikipedia, issues seem to be:
+* Having a single global registry mapping module name to implementation.
+* Having a single loaded instance of a given module at runtime.
+* Having multiple packages want to load the same named module, but at
+  different versions.
+
+So yeah, seems like this is a form of that. I should be careful to get things
+right.
+
+---
+
+It's too soon to work out all the details of how packages and versions are
+going to work. I don't have a single use case today of builtins depending on
+other builtins while an external module depends on a builtin.
+
+I think it's safe to say at this point that we want to support multiple
+versions of the same named module to co-exist in the same program. For the
+time being, we can use FblePreloadedModule* as a proxy for version.
+
+Thus, proposal: Each unique FblePreloadedModule* is included at most once in
+every program.
+
+Add that to our existing: each .fble file is included at most once in every
+program.
+
+If we have the same name module in FblePreloadedModule* form and .fble form,
+we can load both into the same program, using whichever form is appropriate
+for the dependency in question.
+
+The current search order is:
+1. Search for main module in builtins.
+2. Search for main module as .fble.
+3. Search for dependant module in already loaded.
+4. Search for dependant module type in .fble.@
+5. Search for dependant module in builtins (if we have .fble.@)
+6. Search for dependant module in .fble
+
+That's fine. The key difference I want is to keep track of which of the loaded
+modules are public and which are private. In step (3), only consider the
+publicly loaded modules. A module is 'public' if it is in the top level list
+of builtins or was loaded via .fble.@/.fble.
+
+Any reason to prefer builtin over .fble file? With the new public/private
+logic I have, I can see it making sense to prefer .fble first.
+
+Anyway, the key idea is made: have a notion of publicly vs privately loaded
+module, and avoid reuse of a privately loaded module (unless the pointer
+matches). That leaves open a future where we can load modules with the same
+path but different versions.
+
+That's enough of an answer for now. What's left is:
+
+* Review the search order. See if I would prefer something different.
+* Document the search order clearly somewhere.
+* Write some spec test cases to test that search order?
+* Figure out how to implement the updated logic
+ - That avoids making use of an already loaded private module inappropriately.
+ - That loads type information for a builtin module appropriately.
+
+Search order is either one of:
+* Look for .fble before builtin.
+* Look for builtin before .fble.
+
+The benefit to .fble first would be you could 'patch' the builtin. On the
+other hand, that means your could 'corrupt' the builtin too. .fble first seems
+more flexible: you can chose to have the .fble present or not. But might also
+break things. If we have compiled code and interpreted available, wouldn't you
+prefer to use the compiled code? Or maybe interpreted can be made more up to
+date?
+
+My gut tells me .fble first is the right way to go, even though it's riskier
+and harder to manage. Hmm... If you're going to go with .fble first, what is
+the point of having builtin?
+
+Maybe read more about things like gcc and standard include paths: does
+standard come first or second? Surely it comes second, right?
+
+---
+
+Deciding whether builtin or non-builtin comes first on the search path isn't
+enough to resolve concerns about two different packages depending on two
+different versions of the same module. Not if those two packages are
+distributed as .fble files rather than builtins.
+
+What if I try to limit the problem for now. Assume each module path shows up
+exactly once in the search path. No confusion about version.
+
+This implies:
+* There is never a builtin with the same module path as a .fble file.
+* There are never two builtins with the same module path that are different.
+* If there is a .fble.@ for a module path that is provided as a builtin, that
+  .fble.@ file describes the type of that builtin module.
+
+Under these restrictive assumptions, what's broken today in the loader is we
+fail to load the .fble.@ file with type information for a builtin module used
+by a non-builtin module, if it was first used by a builtin module.
+
+I'm torn. On the one hand, it would be really nice to have clearly specified
+loading behavior and implement that. On the other hand, I don't think I'm
+ready to solve the problem for different versions of modules today, and
+I think that's an important part to deal with in the specification.
+
+Example: Say I should package A in .fble form, and A depends on some common
+package C. Then I ship package B in .fble form, and B depends on some common
+package C, but a different version. Then I want to run at runtime, given A, B,
+C1, and C2. We need some way for A and B to indicate which version of C they
+refer to.
+
+If we had that, then the problem reduces to: when I look up a reference to
+another module, it depends on the context of the module I'm looking up from.
+And then, at that point, assume it's uniquely determined.
+
+For example, maybe every module belongs to a single package, and modules are
+identified by package and module path, and somehow we can enforce that you
+can't have two of the same package or two of the same modules within a
+package.
+
+It seems like, regardless, we need a uniqueness assumption at some point
+during the loading process. And we need an identification function. I don't
+know what those are or should be, but I should be able to make loading work
+right today assuming we have those. In other words, today we can assume module
+paths are unique and there is a trivial identification function, but that
+module name is not sufficient to determine these things. Get everything else
+to work reasonably under those assumptions.
+
+I think I should try to do at least this much, even if we don't have a spec
+yet. Maybe even if we don't have any test cases yet. Get the implementation in
+a decent enough state so that it works in theory, even if untested on weird
+cases.
+
+---
+
+The FbleProgram data structure today does not allow to distinguish between two
+different (version) modules with the same path. I'll need to fix that to
+support that in general.
+
+Idea: What if we treated the .fble.@ for a module as a separate module from
+the .fble file? For example, we could say Foo.fble depends on Foo.fble.@
+(optionally). If Bar.fble refers to /Foo%, it depends on Foo.fble.@.
+
+The potential upsides are:
+* No need for type_deps versus link_deps
+* The type of a module can appear at a different point in the program load
+  list than the value of the module.
+* Clear explanation for why loading a builtin module doesn't require loading
+  its .fble.@ file, even if one exists.
+
+I think it's worth considering. If we split them out, it's pretty natural to
+say we load a builtin via builtin first, then want to load it via non-builtin,
+we already see the builtin loaded, but not the type. At that point we can
+simply load the type. No need to have already loaded the type, or load the
+type at the same place in the program.
+
+In terms of long term vision, I think we need to talk about packages.
+
+Let's say packages are versioned, not modules within a package. Makes more
+sense. Packages depend on other packages, potentially specific versions of
+other packages.
+
+A module path within a package is mentioned as unversioned. The version
+dependencies on the package determine the actual module you resolve to. That
+way you can update package dependencies in the package specification without
+having to modify any of the modules inside.
+
+To load a program, you specify a package and module path. The package is
+loaded first thing, it gives the location of all the modules inside. It also
+gives the other packages it depends on and their versions. Those are used to
+resolve the right version of modules references from the package.
+
+I'm not convinced packages should be part of the language spec. But there
+should be a convention people follow and that is supported by the fble
+implementation.
+
+So there you have it. The three key things:
+1. FbleProgram data structure needs to change eventually.
+2. Consider treating modules and their types as separate modules.
+3. I have a long term vision for dealing with versioned packages.
+
+Which brings us to the next question: what do I want to accomplish with
+respect to all of this in this release?
+
+---
+
+My vote for this release is not to change or come up with any specifications
+or anything to do with package formats and versions. But to make an attempt at
+cleaning up the internals in preparation. In other words, try (1) and (2) from
+above, don't worry about (3).
+
+In terms of FbleProgram data structure, what if we loaded directly into what
+is today called FblePreloadedModule? Or rather, the idea would be to directly
+point to the other loaded/typed/compiled modules instead of going via list of
+module path dependencies.
+
+That way the loader can do what ever magic it wants to figure out exactly is
+meant by a module path.
+
+FbleLoadForExecution
+ - returns the main module with pointers to what it depends on.
+ - ... or an array of them, that has deduplicated already?
+
+FbleTypeCheckProgram
+ - recursively type checks a module's dependencies, then the module?
+ - ... or goes through the program array in order, searching dependencies by
+   pointer instead of module path?
+
+FbleCompileProgram
+ - Compiles each module in turn, or as requested. Doesn't care about
+   dependencies between them, just counts.
+
+FbleLink
+ - Walks through each module in order, linking them together.
+
+Given that loading, type checking, and linking modules all want a flattened
+list of all the modules, I think it would be useful to do that as part of
+FbleLoad and make the program be that full list of modules in topological
+order.
+
+Module state to keep track of:
+* path, list of dependencies (by pointer),
+* expr - type or value depending
+* code - filled in after compile.
+* exe - filled in after linking.
+* profile_blocks.
+
+It's pretty close to what we have now. And then FblePreloadedModule turns into
+FbleModule directly and can be reused that way.
+
+We can do the change incrementally. I think via the following steps:
+1. Separate type and value versions of modules.
+ - Merge .type and .value fields into a single field.
+ - Merge .type_deps and .link_deps into a single field.
+ - Add some way to distinguish between the type and the value of a specific
+   module path. Needs some details worked out.
+2. Change FbleModulePath to FbleModule* in the list of dependencies.
+
+This feels like it will be nice cleanup. Nice de-duplication of code in
+multiple places.
+
+---
+
+Here's my proposed path forward:
+
+1. Change type_deps and link_deps fields of FbleModule from FbleModulePathV to
+FbleModuleV.
+ - Allows us to distinguish in theory between two modules from different
+   packages with the same name.
+ - Allows us to distinguish between the .fble.@ and the .fble for the same
+   module path.
+2. Change FbleProgram to be a synonym for FbleModule.
+ - In other words, get rid of the topological sort/flattening of program
+   during load time. Let loading, typecheck, compile, and link all traverse
+   the DAG with logic to avoid duplication.
+ - Probably need to add reference counting to modules at this point.
+ - Will be a bit tedious, but I think worth it.
+ - Makes module/program composition nicer conceptually. A module is a program.
+   No need for 'the last module in the list is main'. Avoids the need for an
+   FbleProgram separate from an FbleModule to make sense of the meaning of the
+   FbleModule. Sounds nice for a future world where maybe we want to
+   dynamically load and unload portions of a program.
+ - After step (3), makes it easier for compilation to ignore whole parts of
+   the graph used only for typecheck.
+ - Discourages the hack of using a flat array of modules with flat arrays of
+   side data and linear search for mapping module to side data. More incentive
+   to switch to a proper data structure for that map later on.
+3. Separate the .fble and .fble.@ for a given module path into two different
+   FbleModules.
+ - Add optional 'type' dependency from a module to its type.
+ - Clears up semantics of when the .fble.@ does or does not need to be loaded.
+   For example, a builtin referenced from a builtin and from a non-builtin,
+   both load the .fble, but only the non-builtin depends on the .fble.@ as
+   well.
+ - Makes it easy to fix this bug of loading a builtin from a builtin first and
+   then from a non-builtin. When you load from the non-builtin, just add the
+   .fble.@ later. No need to contort or reorder things to make it work.
+4. Reuse FbleModule for FblePreloadedModule.
+ - Avoids the need for a separate type for prebuilts.
+ - Loading of builtin modules is now as easy as taking a reference count.
+
+It's going to be a little painful to get there. A little bit tedious. But look
+at all the good stuff we get? My proposal for this release is to make the (4)
+changes above and call it. We can save test and spec changes/updates for
+another time.
+
+Let's get going, see how things go.

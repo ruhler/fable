@@ -31,6 +31,7 @@ void FbleFreeModule(FbleModule* module)
     FbleFreeName(module->profile_blocks.xs[i]);
   }
   FbleFreeVector(module->profile_blocks);
+  FbleFree(module);
 }
 
 // See documentation in fble-program.h.
@@ -38,7 +39,7 @@ void FbleFreeProgram(FbleProgram* program)
 {
   if (program != NULL) {
     for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleFreeModule(program->modules.xs + i);
+      FbleFreeModule(program->modules.xs[i]);
     }
     FbleFreeVector(program->modules);
     FbleFree(program);

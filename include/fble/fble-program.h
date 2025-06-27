@@ -79,7 +79,7 @@ typedef struct {
  */
 typedef struct {
   size_t size;
-  FbleModule* xs;
+  FbleModule** xs;
 } FbleModuleV;
 
 /**
@@ -98,7 +98,7 @@ typedef struct {
 
 /**
  * @func[FbleFreeModule] Frees an FbleModule.
- *  @arg[FbleModule*][module] The module to free. May be NULL.
+ *  @arg[FbleModule*][module] The module to free.
  *
  *  @sideeffects
  *   Frees resources associated with the given module.

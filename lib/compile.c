@@ -1452,7 +1452,7 @@ bool FbleCompileModule(FbleProgram* program)
   }
 
   assert(program->modules.size > 0);
-  FbleModule* module = program->modules.xs + program->modules.size - 1;
+  FbleModule* module = program->modules.xs[program->modules.size - 1];
   CompileModule(module, tc);
 
   FbleFreeTc(tc);
@@ -1468,7 +1468,7 @@ bool FbleCompileProgram(FbleProgram* program)
   }
 
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleModule* module = program->modules.xs + i;
+    FbleModule* module = program->modules.xs[i];
     CompileModule(module, typechecked[i]);
     FbleFreeTc(typechecked[i]);
   }

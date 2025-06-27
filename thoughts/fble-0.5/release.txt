@@ -390,3 +390,85 @@ Draft release notes. Things included in this release:
 * revamp abstract types
 * performance improvements
 
+---
+
+ - Spec test for main .fble file not found somehow? load.c
+
+This currently falls outside of what spec tests can support. For spec tests
+you give the .fble file as input, it derives the main module from that. The
+only way I could support this is with a change to spec test infrastructure.
+
+How might that look?
+
+Either I need to totally revise how we discover tests, or we need to add a
+special case just for testing this thing. I don't think it's worth it in
+either case. There are a class of tests that fall outside of spec testing.
+
+Is it worth adding this as a test elsewhere? Is it likely to break? Either
+way, if it's outside of spec tests, I won't get code coverage.
+
+Do we want to add some way for non-spec test code coverage tests? No. I don't
+think so. I don't see the value just yet. It would be a pretty big change not
+worth doing so late in the release.
+
+Let me drop this todo item. If test coverage becomes a problem later on down
+the line, we'll learn about it and can take action to deal with it then.
+
+---
+
+ - Spec test for builtin module with builtin dependencies? load.c
+
+Normally I would say builtin modules are outside of the spec. Not suitable for
+spec test coverage. But looks like I already have /SpecTests/Builtin%. The
+spec says nothing about builtin modules though, does it? Nothing about how
+they should behave.
+
+The spec talks about: Foo.fble.@ files, what is the source of truth. It
+doesn't say anything about Foo.fble.@ dependencies on other modules.
+
+Can we think of a reasonable case where a builtin module depends on other
+modules? Is the desired behavior clear in that case?
+
+If I can't think of a reasonable case, or behavior isn't clear, then I suggest
+putting an assert in the loading code saying TODO, and deal with that case
+if/when it arises.
+
+Builtin modules are primarily for things that need access to native functions.
+They are a bit sketch to start with in that sense. I currently use them for:
+stdio IO, networking, and debug print. When would you imagine builtins
+depending on other builtin modules? Or, maybe the question: when would you
+imagine builtins depending on other modules at all, builtin or not?
+
+Hmm... are builtins indistinguishable from compiled modules from the point of
+view of the loader?
+
+Current behavior of the loader:
+* If you ask to load a 'builtins' module, it loads that and all its internal
+  dependencies. Done.
+* Otherwise look for .fble file and .fble.@ files, look for dependencies
+  recursively.
+  - Where we try loading from builtins.
+
+Perhaps the most practical use case is if you want to fble-compile .fble code
+into a custom binary, where you treat the compiled code as builtin. Then use
+that to load somebody else's possibly interpreted code. As soon as you
+reference a builtin module, it pulls in all the other modules it depends on.
+
+Then my concern is real. Say we have a /User% module that references builtin
+modules /Builtin/A% and /Builtin/B%, and that /Builtin/A% references
+/Builtin/B%. Loading A% loads B% without type info. Loading /User% loads B%,
+but sees it was already loaded, but we never got the type info for B%.
+
+And what if type type info for B% doesn't match the builtin? That's a problem
+in general.
+
+Anything in my notes from before about all this? Yes. From what I can see by
+skimming it says "this sounds hard".
+
+I should revisit this wholistically at some point. Maybe now. Maybe later.
+Another part of the discussion sitting on my todo list is adding an option for
+loading modules from .so files.
+
+If it's just thoughts, let's have those thoughts now. Moving to
+thoughts/fble-0.5/modular_compilation.txt.
+

@@ -83,7 +83,7 @@ int main(int argc, const char* argv[])
     return EX_FAIL;
   }
 
-  FbleModule* compiled = prgm->modules.xs + prgm->modules.size - 1;
+  FbleModule* compiled = prgm->modules.xs[prgm->modules.size - 1];
   FbleDisassemble(stdout, compiled);
 
   FbleFreeProgram(prgm);
