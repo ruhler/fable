@@ -113,6 +113,7 @@ static void CompileExit(bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* tc);
 static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* profile_blocks);
 static void CompileModule(FbleModule* module, FbleTc* tc);
+static void CompileProgram(FbleModule* main, FbleModuleMap* tcs);
 
 /**
  * @func[FreeLocal] Frees memory assicoated with a local.
@@ -1443,6 +1444,32 @@ static void CompileModule(FbleModule* module, FbleTc* tc)
   FbleFreeName(label);
 }
 
+/**
+ * @func[CompileProgram] Compiles all modules in a module graph.
+ *  @arg[FbleModule*][program] The root of the program to compile.
+ *  @arg[FbleModuleMap*][tcs] The type checked expressions for each module.
+ */
+static void CompileProgram(FbleModule* program, FbleModuleMap* tcs)
+{
+  // Assume we've already compiled the entire program if there's nothing to
+  // compile for the main module.
+  if (program->value == NULL || program->code != NULL) {
+    return;
+  }
+
+  // Compile all the modules we depend on.
+  for (size_t i = 0; i < program->link_deps.size; ++i) {
+    CompileProgram(program->link_deps.xs[i], tcs);
+  }
+
+  // Compile the main module.
+  FbleTc* tc = NULL;
+  if (!FbleModuleMapLookup(tcs, program, (void**)&tc)) {
+    FbleUnreachable("Modules must be typechecked before compiling");
+  }
+  CompileModule(program, tc);
+}
+
 // See documentation in fble-compile.h.
 bool FbleCompileModule(FbleProgram* program)
 {
@@ -1462,16 +1489,12 @@ bool FbleCompileModule(FbleProgram* program)
 // See documentation in fble-compile.h.
 bool FbleCompileProgram(FbleProgram* program)
 {
-  FbleTc** typechecked = FbleTypeCheckProgram(program);
+  FbleModuleMap* typechecked = FbleTypeCheckProgram(program);
   if (!typechecked) {
     return false;
   }
 
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleModule* module = program->modules.xs[i];
-    CompileModule(module, typechecked[i]);
-    FbleFreeTc(typechecked[i]);
-  }
-  FbleFree(typechecked);
+  CompileProgram(program->modules.xs[program->modules.size-1], typechecked);
+  FbleFreeModuleMap(typechecked, (FbleModuleMapFreeFunction)FbleFreeTc);
   return true;
 }

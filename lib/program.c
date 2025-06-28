@@ -53,7 +53,7 @@ FbleModuleMap* FbleNewModuleMap()
 }
 
 // See documentation in program.h
-void FbleFreeModuleMap(FbleModuleMap* map, void (*free_value)(void*))
+void FbleFreeModuleMap(FbleModuleMap* map, FbleModuleMapFreeFunction free_value)
 {
   if (free_value != NULL) {
     for (size_t i = 0; i < map->entries.size; ++i)  {

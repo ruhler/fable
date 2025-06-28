@@ -6,9 +6,10 @@
 #ifndef FBLE_INTERNAL_TYPECHECK_H_
 #define FBLE_INTERNAL_TYPECHECK_H_
 
-#include <fble/fble-load.h>
+#include <fble/fble-program.h>  // for FbleModule, FbleProgram
 
-#include "tc.h"
+#include "program.h"    // for FbleModuleMap
+#include "tc.h"         // for FbleTc
 
 /**
  * @func[FbleTypeCheckModule] Typechecks the main module of the given program.
@@ -40,16 +41,16 @@ FbleTc* FbleTypeCheckModule(FbleProgram* program);
  *
  *  @arg[FbleProgram*][program] The program to typecheck
  *
- *  @returns[FbleTc**]
- *   An array of FbleTc, one for each module in the program, or NULL in case
- *   of error to typecheck.
+ *  @returns[FbleModuleMap*]
+ *   An map from FbleModule* to FbleTc* for each module in the program.
+ *   NULL in case of error to typecheck.
  *
  *  @sideeffects
  *   @i Prints messages to stderr in case of failure to type check.
  *   @item
- *    The user is responsible for freeing the returned array and all FbleTc*
+ *    The user is responsible for freeing the returned map and all FbleTc*
  *    values contained therein when no longer needed.
  */
-FbleTc** FbleTypeCheckProgram(FbleProgram* program);
+FbleModuleMap* FbleTypeCheckProgram(FbleProgram* program);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_

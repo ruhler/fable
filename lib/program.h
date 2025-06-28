@@ -21,14 +21,20 @@ typedef struct FbleModuleMap FbleModuleMap;
 FbleModuleMap* FbleNewModuleMap();
 
 /**
+ * @type[FbleModuleMapFreefunction] Type to free values on the map.
+ */
+typedef void(*FbleModuleMapFreeFunction)(void*);
+
+/**
  * @func[FbleFreeModuleMap] Frees resources associated with an FbleModuleMap.
  *  @arg[FbleModuleMap*][map] The map to free.
- *  @arg[void (*)(void*)][free_value] Function to free values on the map.
+ *  @arg[FbleModuleMapFreeFunction][free_value]
+ *   Function to free values on the map.
  *  @sideeffects
  *   @i Calls free_value on each map value, if free_value is not NULL.
  *   @i Frees resources associated with the map.
  */
-void FbleFreeModuleMap(FbleModuleMap* map, void (*free_value)(void*));
+void FbleFreeModuleMap(FbleModuleMap* map, FbleModuleMapFreeFunction free_value);
 
 /**
  * @func[FbleModuleMapInsert] Adds an entry into the map.

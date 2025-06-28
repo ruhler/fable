@@ -2376,23 +2376,25 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_
 // See documentation in typecheck.h.
 FbleTc* FbleTypeCheckModule(FbleProgram* program)
 {
-  FbleTc** tcs = FbleTypeCheckProgram(program);
+  FbleModuleMap* tcs = FbleTypeCheckProgram(program);
   if (tcs == NULL) {
     return NULL;
   }
 
-  FbleTc* tc = tcs[program->modules.size - 1];
-  for (size_t i = 0; i < program->modules.size-1; ++i) {
-    FbleFreeTc(tcs[i]);
+  FbleModule* main = program->modules.xs[program->modules.size-1];
+  FbleTc* tc = NULL;
+  if (!FbleModuleMapLookup(tcs, main, (void**)&tc)) {
+    FbleUnreachable("main module not typechecked?");
   }
-  FbleFree(tcs);
+  tc = FbleCopyTc(tc);
+  FbleFreeModuleMap(tcs, (FbleModuleMapFreeFunction)FbleFreeTc);
   return tc;
 }
 
 // See documentation in typecheck.h.
-FbleTc** FbleTypeCheckProgram(FbleProgram* program)
+FbleModuleMap* FbleTypeCheckProgram(FbleProgram* program)
 {
-  FbleTc** tcs = FbleAllocArray(FbleTc*, program->modules.size);
+  FbleModuleMap* tcs = FbleNewModuleMap();
 
   bool error = false;
   FbleTypeHeap* th = FbleNewTypeHeap();
@@ -2406,7 +2408,6 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
     // Skip typecheck for builtin modules with no type information.
     if (module->type == NULL && module->value == NULL) {
       types[i] = NULL;
-      tcs[i] = NULL;
       continue;
     }
 
@@ -2445,10 +2446,9 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
     if (tc.type == NULL) {
       error = true;
       types[i] = NULL;
-      tcs[i] = NULL;
     } else {
       types[i] = tc.type;
-      tcs[i] = tc.tc;
+      FbleModuleMapInsert(tcs, module, tc.tc);
     }
   }
 
@@ -2458,10 +2458,7 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
   FbleFreeTypeHeap(th);
 
   if (error) {
-    for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleFreeTc(tcs[i]);
-    }
-    FbleFree(tcs);
+    FbleFreeModuleMap(tcs, (FbleModuleMapFreeFunction)FbleFreeTc);
     return NULL;
   }
 
