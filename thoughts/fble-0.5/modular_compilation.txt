@@ -434,3 +434,44 @@ changes above and call it. We can save test and spec changes/updates for
 another time.
 
 Let's get going, see how things go.
+
+---
+
+Step (1) is done. It wasn't bad. Now for step (2) I can go incrementally.
+Slowly phase out use of program->modules. Once it's all gone, it should be an
+easy swap-out (ish, aside from having to add reference counting).
+
+Step (2) is tedious...
+
+For typecheck.c:
+* I want to return a map from FbleModule* to FbleTc*.
+* But I also want some way to distinguish between is something present in the
+  map and NULL, or not present in the map. We can't use NULL for both 'type
+  check failed' and 'I haven't tried doing type check yet'.
+
+For compile.c:
+* We assume everything type checks. I just need the map from FbleModule* to
+  FbleTc* to get the FbleTc of the module to compile.
+* We can check of module->code exists to know if we have compiled yet or not.
+* I need to decide if I want to use recursion, or I need to manage an explicit
+  stack data structure for the traversal.
+
+For link.c:
+* Things don't fail. So that's easier.
+* I need to keep track of a map from FbleModule* to FbleValue* and decide if I
+  want to use recursion or iteration for the traversal.
+
+Is this really worth it? It's so convenient to have a traversal order laid out
+in the program with perfect hashing of modules based on their index.
+
+Can I just bite the bullet?  Rewrite the code once and be done with it? Start
+with recursive implementations, switch to iterative sometime later when stacks
+start getting smashed?
+
+How about a helper data structure. Call it an FbleModuleMap. It maps from
+FbleModule* to void*, with a method to check if an entry is present separately
+from whether the value is NULL. I can reuse that for typecheck, compile, and
+link, and do recursive traversal otherwise.
+
+Maybe I can use #define macros to make it type safe. Or maybe that's not
+needed. I can implement it in program.h, program.c. I think it's worth a try.
