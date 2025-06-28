@@ -240,7 +240,7 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
   }
   for (size_t i = 0; i < module->type_deps.size; ++i) {
     fprintf(fout, "  ");
-    FblePrintModulePath(fout, module->type_deps.xs[i]);
+    FblePrintModulePath(fout, module->type_deps.xs[i]->path);
     fprintf(fout, "\n");
   }
   fprintf(fout, "\n");
@@ -251,7 +251,7 @@ void FbleDisassemble(FILE* fout, FbleModule* module)
   }
   for (size_t i = 0; i < module->link_deps.size; ++i) {
     fprintf(fout, "  ");
-    FblePrintModulePath(fout, module->link_deps.xs[i]);
+    FblePrintModulePath(fout, module->link_deps.xs[i]->path);
     fprintf(fout, "\n");
   }
   fprintf(fout, "\n");

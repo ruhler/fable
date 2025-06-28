@@ -368,7 +368,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", deps_xs_id);
   for (size_t i = 0; i < module->link_deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]);
+    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]->path);
     fprintf(fout, "  .xword %s\n", dep_name->str);
     FbleFreeString(dep_name);
   }

@@ -16,13 +16,7 @@
 void FbleFreeModule(FbleModule* module)
 {
   FbleFreeModulePath(module->path);
-  for (size_t i = 0; i < module->type_deps.size; ++i) {
-    FbleFreeModulePath(module->type_deps.xs[i]);
-  }
   FbleFreeVector(module->type_deps);
-  for (size_t i = 0; i < module->link_deps.size; ++i) {
-    FbleFreeModulePath(module->link_deps.xs[i]);
-  }
   FbleFreeVector(module->link_deps);
   FbleFreeExpr(module->type);
   FbleFreeExpr(module->value);

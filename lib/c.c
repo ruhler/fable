@@ -214,7 +214,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   LabelId path_id = StaticModulePath(fout, label_id, module->path);
 
   for (size_t i = 0; i < module->link_deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]);
+    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]->path);
     fprintf(fout, "extern FblePreloadedModule %s;\n", dep_name->str);
     FbleFreeString(dep_name);
   }
@@ -222,7 +222,7 @@ static void StaticPreloadedModule(FILE* fout, LabelId* label_id, FbleModule* mod
   LabelId deps_xs_id = (*label_id)++;
   fprintf(fout, "static FblePreloadedModule* " LABEL "[] = {\n", deps_xs_id);
   for (size_t i = 0; i < module->link_deps.size; ++i) {
-    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]);
+    FbleString* dep_name = LabelForPath(module->link_deps.xs[i]->path);
     fprintf(fout, "  &%s,\n", dep_name->str);
     FbleFreeString(dep_name);
   }

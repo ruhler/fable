@@ -2310,7 +2310,7 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_
   if (module->type) {
     Arg args_xs[module->type_deps.size];
     for (size_t i = 0; i < module->type_deps.size; ++i) {
-      args_xs[i].name.module = module->type_deps.xs[i];
+      args_xs[i].name.module = module->type_deps.xs[i]->path;
       args_xs[i].type = FbleRetainType(th, type_deps[i]);
     }
     ArgV args = { .size = module->type_deps.size, .xs = args_xs };
@@ -2331,7 +2331,7 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_
   if (module->value) {
     Arg args_xs[module->link_deps.size];
     for (size_t i = 0; i < module->link_deps.size; ++i) {
-      args_xs[i].name.module = module->link_deps.xs[i];
+      args_xs[i].name.module = module->link_deps.xs[i]->path;
       args_xs[i].type = FbleRetainType(th, link_deps[i]);
     }
     ArgV args = { .size = module->link_deps.size, .xs = args_xs };
@@ -2415,7 +2415,7 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
     for (size_t d = 0; d < module->type_deps.size; ++d) {
       type_deps[d] = NULL;
       for (size_t t = 0; t < i; ++t) {
-        if (FbleModulePathsEqual(module->type_deps.xs[d], program->modules.xs[t]->path)) {
+        if (module->type_deps.xs[d] == program->modules.xs[t]) {
           type_deps[d] = types[t];
           break;
         }
@@ -2429,7 +2429,7 @@ FbleTc** FbleTypeCheckProgram(FbleProgram* program)
     for (size_t d = 0; d < module->link_deps.size; ++d) {
       link_deps[d] = NULL;
       for (size_t t = 0; t < i; ++t) {
-        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[t]->path)) {
+        if (module->link_deps.xs[d] == program->modules.xs[t]) {
           link_deps[d] = types[t];
           break;
         }

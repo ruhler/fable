@@ -35,22 +35,26 @@ struct FbleSearchPath {
 /**
  * @struct[Stack] A stack of modules in the process of being loaded.
  *  @field[FbleModule][module] The value of the module.
- *  @field[FbleModulePathV][pending_deps]
- *   Dependencies for the module that haven't been processed yet.
+ *  @field[FbleModulePathV][pending_type_deps]
+ *   Type dependencies for the module that haven't been processed yet.
+ *  @field[FbleModulePathV][pending_link_deps]
+ *   Link dependencies for the module that haven't been processed yet.
  *  @field[Stack*][tail] The rest of the stack of modules.
  */
 typedef struct Stack {
   FbleModule module;
-  FbleModulePathV pending_deps;
+  FbleModulePathV pending_type_deps;
+  FbleModulePathV pending_link_deps;
   struct Stack* tail;
 } Stack;
 
 static FbleString* FindPackageAt(const char* package, const char* package_dir);
 static FbleString* FindAt(const char* root, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
 static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
-static void Preload(FbleProgram* program, FblePreloadedModule* preloaded);
+static FbleModule* Preload(FbleProgram* program, FblePreloadedModule* preloaded);
+static FbleModule* LookupModule(FbleProgram* program, FbleModulePath* path);
+static bool ModuleIsOnStack(Stack* stack, FbleModulePath* path);
 static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_path, FbleModulePath* module_path, bool for_execution, FbleStringV* build_deps);
-
 
 // See documentation in fble-load.h.
 FbleSearchPath* FbleNewSearchPath()
@@ -249,19 +253,16 @@ static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleMod
  *  @arg[FblePreloadedModule*][preloaded] The module to add.
  *  @sideeffects
  *   Recursively adds the module and all its dependencies to the program.
+ *  @returns[FbleModule*]
+ *   The module that was added to the program.
  */
-static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
+static FbleModule* Preload(FbleProgram* program, FblePreloadedModule* preloaded)
 {
   // Check if we've already loaded the module.
   for (size_t i = 0; i < program->modules.size; ++i) {
     if (FbleModulePathsEqual(program->modules.xs[i]->path, preloaded->path)) {
-      return;
+      return program->modules.xs[i];
     }
-  }
-
-  // Load the dependencies.
-  for (size_t i = 0; i < preloaded->deps.size; ++i) {
-    Preload(program, preloaded->deps.xs[i]);
   }
 
   FbleModule* module = FbleAlloc(FbleModule);
@@ -269,7 +270,8 @@ static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
   FbleInitVector(module->type_deps);
   FbleInitVector(module->link_deps);
   for (size_t i = 0; i < preloaded->deps.size; ++i) {
-    FbleAppendToVector(module->link_deps, FbleCopyModulePath(preloaded->deps.xs[i]->path));
+    FbleModule* dep = Preload(program, preloaded->deps.xs[i]);
+    FbleAppendToVector(module->link_deps, dep);
   }
   module->type = NULL;
   module->value = NULL;
@@ -280,6 +282,41 @@ static void Preload(FbleProgram* program, FblePreloadedModule* preloaded)
     FbleAppendToVector(module->profile_blocks, FbleCopyName(preloaded->profile_blocks.xs[i]));
   }
   FbleAppendToVector(program->modules, module);
+  return module;
+}
+
+/**
+ * @func[LookupModule] Looks up a module in a program.
+ *  @arg[FbleProgram*][program] The program to look in.
+ *  @arg[FbleModulePath*][path] The path of the module to find.
+ *  @returns[FbleModule] The module, or NULL if not found.
+ *  @sideeffects None
+ */
+static FbleModule* LookupModule(FbleProgram* program, FbleModulePath* path)
+{
+  for (size_t i = 0; i < program->modules.size; ++i) {
+    if (FbleModulePathsEqual(path, program->modules.xs[i]->path)) {
+      return program->modules.xs[i];
+    }
+  }
+  return NULL;
+}
+
+/**
+ * @func[ModuleIsOnStack] Checks of a module is pending on the stack.
+ *  @arg[Stack*][stack] The stack to check.
+ *  @arg[FbleModulePath*][path] The path of the module to search for.
+ *  @returns[bool] True if the module is found on the stack, false otherwise.
+ *  @sideeffects None.
+ */
+static bool ModuleIsOnStack(Stack* stack, FbleModulePath* path)
+{
+  for (Stack* s = stack; s != NULL; s = s->tail) {
+    if (FbleModulePathsEqual(path, s->module.path)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -337,7 +374,8 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
 
   bool error = false;
   Stack* stack = FbleAlloc(Stack);
-  FbleInitVector(stack->pending_deps);
+  FbleInitVector(stack->pending_type_deps);
+  FbleInitVector(stack->pending_link_deps);
 
   FbleLoc loc = { .source = FbleCopyString(filename), .line = 1, .col = 0 };
   stack->module.path = FbleCopyModulePath(module_path);
@@ -352,82 +390,90 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
   stack->module.exe = NULL;
   stack->module.profile_blocks.size = 0;
   stack->module.profile_blocks.xs = NULL;
-  stack->module.value = FbleParse(filename, &stack->module.link_deps);
+  stack->module.value = FbleParse(filename, &stack->pending_link_deps);
 
   FbleString* header = Find(search_path, ".fble.@", module_path, build_deps);
   if (header != NULL) {
-    stack->module.type = FbleParse(header, &stack->module.type_deps);
+    stack->module.type = FbleParse(header, &stack->pending_type_deps);
     FbleFreeString(header);
-  }
-
-  for (size_t i = 0; i < stack->module.link_deps.size; ++i) {
-    FbleAppendToVector(stack->pending_deps, stack->module.link_deps.xs[i]);
-  }
-  for (size_t i = 0; i < stack->module.type_deps.size; ++i) {
-    FbleAppendToVector(stack->pending_deps, stack->module.type_deps.xs[i]);
   }
 
   if (stack->module.value == NULL
       || (header != NULL && stack->module.type == NULL)) {
     error = true;
-    stack->pending_deps.size = 0;
+    stack->pending_type_deps.size = 0;
+    stack->pending_link_deps.size = 0;
   }
   FbleFreeString(filename);
 
   while (stack != NULL) {
-    if (stack->pending_deps.size == 0) {
+    if (error) {
+      // Drain the stack by pretending the current module doesn't have any
+      // dependencies.
+      for (size_t i = 0; i < stack->pending_type_deps.size; ++i) {
+        FbleFreeModulePath(stack->pending_type_deps.xs[i]);
+      }
+      stack->pending_type_deps.size = 0;
+      for (size_t i = 0; i < stack->pending_link_deps.size; ++i) {
+        FbleFreeModulePath(stack->pending_link_deps.xs[i]);
+      }
+      stack->pending_link_deps.size = 0;
+    }
+
+    // Remove any pending dependencies that are already loaded, or find the
+    // next one that hasn't been loaded yet.
+    FbleModulePath* ref = NULL;
+    while (ref == NULL && stack->pending_type_deps.size > 0) {
+      ref = stack->pending_type_deps.xs[0];
+      FbleModule* dep = LookupModule(program, ref);
+      if (dep != NULL) {
+        FbleAppendToVector(stack->module.type_deps, dep);
+        stack->pending_type_deps.size--;
+        stack->pending_type_deps.xs[0] = stack->pending_type_deps.xs[stack->pending_type_deps.size];
+        FbleFreeModulePath(ref);
+        ref = NULL;
+      }
+    }
+
+    while (ref == NULL && stack->pending_link_deps.size > 0) {
+      ref = stack->pending_link_deps.xs[0];
+      FbleModule* dep = LookupModule(program, ref);
+      if (dep != NULL) {
+        FbleAppendToVector(stack->module.link_deps, dep);
+        stack->pending_link_deps.size--;
+        stack->pending_link_deps.xs[0] = stack->pending_link_deps.xs[stack->pending_link_deps.size];
+        FbleFreeModulePath(ref);
+        ref = NULL;
+      }
+    }
+
+    if (ref == NULL) {
       // We have loaded all the dependencies for this module.
       FbleModule* module = FbleAlloc(FbleModule);
       *module = stack->module;
       FbleAppendToVector(program->modules, module);
       Stack* tail = stack->tail;
-      FbleFreeVector(stack->pending_deps);
+      FbleFreeVector(stack->pending_type_deps);
+      FbleFreeVector(stack->pending_link_deps);
       FbleFree(stack);
       stack = tail;
       continue;
     }
     
-    stack->pending_deps.size--;
-    FbleModulePath* ref = stack->pending_deps.xs[stack->pending_deps.size];
-      
-    // Check to see if we have already loaded this path.
-    {
-      bool found = false;
-      for (size_t i = 0; i < program->modules.size; ++i) {
-        if (FbleModulePathsEqual(ref, program->modules.xs[i]->path)) {
-          found = true;
-          break;
-        }
-      }
-      if (found) {
-        continue;
-      }
-    }
-
     // Make sure we aren't trying to load a module recursively.
-    {
-      bool recursive = false;
-      for (Stack* s = stack; s != NULL; s = s->tail) {
-        if (FbleModulePathsEqual(ref, s->module.path)) {
-          FbleReportError("module ", ref->loc);
-          FblePrintModulePath(stderr, ref);
-          fprintf(stderr, " recursively depends on itself\n");
-          error = true;
-          recursive = true;
-          stack->pending_deps.size = 0;
-          break;
-        }
-      }
-
-      if (recursive) {
-        continue;
-      }
+    if (ModuleIsOnStack(stack, ref)) {
+      FbleReportError("module ", ref->loc);
+      FblePrintModulePath(stderr, ref);
+      fprintf(stderr, " recursively depends on itself\n");
+      error = true;
+      continue;
     }
 
     // Parse the new module, placing it on the stack for processing.
     Stack* tail = stack;
     stack = FbleAlloc(Stack);
-    FbleInitVector(stack->pending_deps);
+    FbleInitVector(stack->pending_type_deps);
+    FbleInitVector(stack->pending_link_deps);
     stack->module.path = FbleCopyModulePath(ref);
     FbleInitVector(stack->module.type_deps);
     FbleInitVector(stack->module.link_deps);
@@ -440,14 +486,12 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     stack->tail = tail;
 
     // Try to get the type of the dependency from its .fble.@ file.
-    bool load_succeeded = true;
     FbleString* header_str = Find(search_path, ".fble.@", stack->module.path, build_deps);
     if (header_str != NULL) {
-      stack->module.type = FbleParse(header_str, &stack->module.type_deps);
+      stack->module.type = FbleParse(header_str, &stack->pending_type_deps);
       FbleFreeString(header_str);
       if (stack->module.type == NULL) {
         error = true;
-        load_succeeded = false;
         continue;
       }
     }
@@ -458,11 +502,8 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
         if (FbleModulePathsEqual(ref, builtins.xs[i]->path)) {
           FblePreloadedModule* preloaded = builtins.xs[i];
           for (size_t j = 0; j < preloaded->deps.size; ++j) {
-            Preload(program, preloaded->deps.xs[j]);
-          }
-
-          for (size_t j = 0; j < preloaded->deps.size; ++j) {
-            FbleAppendToVector(stack->module.link_deps, FbleCopyModulePath(preloaded->deps.xs[j]->path));
+            FbleModule* dep = Preload(program, preloaded->deps.xs[j]);
+            FbleAppendToVector(stack->module.link_deps, dep);
           }
           stack->module.exe = preloaded->executable;
           FbleInitVector(stack->module.profile_blocks);
@@ -483,13 +524,11 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
         FblePrintModulePath(stderr, stack->module.path);
         fprintf(stderr, " not found\n");
         error = true;
-        load_succeeded = false;
       } else {
         FbleExpr* parsed = FbleParse(filename_str,
-            for_execution ? &stack->module.link_deps : &stack->module.type_deps);
+            for_execution ? &stack->pending_link_deps : &stack->pending_type_deps);
         if (parsed == NULL) {
           error = true;
-          load_succeeded = false;
         }
 
         if (for_execution) {
@@ -499,15 +538,6 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
           stack->module.type = parsed;
         }
         FbleFreeString(filename_str);
-      }
-    }
-
-    if (load_succeeded) {
-      for (size_t i = 0; i < stack->module.link_deps.size; ++i) {
-        FbleAppendToVector(stack->pending_deps, stack->module.link_deps.xs[i]);
-      }
-      for (size_t i = 0; i < stack->module.type_deps.size; ++i) {
-        FbleAppendToVector(stack->pending_deps, stack->module.type_deps.xs[i]);
       }
     }
   }

@@ -54,7 +54,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
     FbleInitVector(call->args);
     for (size_t d = 0; d < module->link_deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
-        if (FbleModulePathsEqual(module->link_deps.xs[d], program->modules.xs[v]->path)) {
+        if (module->link_deps.xs[d] == program->modules.xs[v]) {
           FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
           FbleAppendToVector(call->args, var);
           break;

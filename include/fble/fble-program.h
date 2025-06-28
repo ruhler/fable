@@ -18,6 +18,19 @@ typedef struct FbleExpr FbleExpr;
 /** Compiled Fble bytecode. */
 typedef struct FbleCode FbleCode;
 
+/** Forward reference for FbleModule. */
+typedef struct FbleModule FbleModule;
+
+/**
+ * @struct[FbleModuleV] Vector of FbleModule.
+ *  @field[size_t][size] Number of elements.
+ *  @field[FbleModule*][xs] Elements.
+ */
+typedef struct {
+  size_t size;
+  FbleModule** xs;
+} FbleModuleV;
+
 /**
  * @struct[FbleModule] Contents of an fble module.
  *  Either one or both of 'type' and 'value' fields may be supplied. The
@@ -31,9 +44,9 @@ typedef struct FbleCode FbleCode;
  *  @a[profile_blocks] fields are populated by loading a generated module.
  *
  *  @field[FbleModulePath*][path] The path to the module.
- *  @field[FbleModulePathV][type_deps]
+ *  @field[FbleModuleV][type_deps]
  *   List of modules the @a[type] field depends on.
- *  @field[FbleModulePathV][link_deps]
+ *  @field[FbleModuleV][link_deps]
  *   List of modules the implementation depends on.
  *  @field[FbleExpr*][type]
  *   Abstract syntax of an expression whose type is the module type. May be
@@ -61,26 +74,16 @@ typedef struct FbleCode FbleCode;
  *  @field[FbleNameV][profile_blocks]
  *   Profiling blocks used by the compiled code for the module.
  */
-typedef struct {
+struct FbleModule {
   FbleModulePath* path;
-  FbleModulePathV type_deps;
-  FbleModulePathV link_deps;
+  FbleModuleV type_deps;
+  FbleModuleV link_deps;
   FbleExpr* type;
   FbleExpr* value;
   FbleCode* code;
   FbleExecutable* exe;
   FbleNameV profile_blocks;
-} FbleModule;
-
-/**
- * @struct[FbleModuleV] Vector of FbleModule.
- *  @field[size_t][size] Number of elements.
- *  @field[FbleModule*][xs] Elements.
- */
-typedef struct {
-  size_t size;
-  FbleModule** xs;
-} FbleModuleV;
+};
 
 /**
  * @struct[FbleProgram] Contents for a full fble program.
