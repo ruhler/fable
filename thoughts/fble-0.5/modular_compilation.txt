@@ -475,3 +475,9 @@ link, and do recursive traversal otherwise.
 
 Maybe I can use #define macros to make it type safe. Or maybe that's not
 needed. I can implement it in program.h, program.c. I think it's worth a try.
+
+---
+
+I decided to special case link.c, because it needs to form a separate array of
+function values to pass as statics anyway. That means I can special case the
+map for typechecking too.

@@ -10,6 +10,9 @@ Things to consider doing for the fble-0.5 release.
     into: gc -> gc -> stack, and that stack value would then be dangling and
     likely to get overwritten.
 
+* Is it a problem that we use O(n) lookups in link.c?
+  Won't that blow up if there are lots of modules being linked?
+
 Tests:
 * Add spec tests for full coverage.
  - Test for builtin module with builtin dependencies? load.c

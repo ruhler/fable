@@ -14,25 +14,50 @@
 #include "code.h"       // for FbleCode
 #include "interpret.h"  // for FbleNewInterpretedFuncValue
 
-static void LinkModule(FbleValueHeap* heap, FbleProfile* profile,
+static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
     FbleModuleV* linked, FbleValueV* funcs, FbleCode* code, FbleModule* module);
 
 /**
- * @func[LinkModule] Links a module into the given code.
+ * @func[LinkedModule] Get or link a module into the given code.
  *  @arg[FbleValueHeap*][heap] Heap to use to allocate value.s.
  *  @arg[FbleProfile*][profile] Profile to add block info to.
  *  @arg[FbleModuleV*][linked] List of linked modules.
  *  @arg[FbleValueV*][funcs] Values of linked modules.
  *  @arg[FbleCode*][code] The linking code.
  *  @arg[FbleModule*][module] The module to link into the given code.
+ *  @returns[size_t] The index of the linked module.
  *  @sideeffects
- *   @i Adds the module to @a[linked].
- *   @i Adds the value of the module to @a[funcs].
+ *   @i Adds modules to @a[linked].
+ *   @i Adds values of modules to @a[funcs].
  *   @i Adds instructions to call the module function to @a[code].
  */
-static void LinkModule(FbleValueHeap* heap, FbleProfile* profile,
+static size_t LinkedModule(FbleValueHeap* heap, FbleProfile* profile,
     FbleModuleV* linked, FbleValueV* funcs, FbleCode* code, FbleModule* module)
 {
+  // Avoid linking a module that has already been linked into the code.
+  for (size_t i = 0; i < linked->size; ++i) {
+    if (module == linked->xs[i]) {
+      return i;
+    }
+  }
+
+  FbleCallInstr* call = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
+  call->loc.source = FbleNewString(__FILE__);
+  call->loc.line = __LINE__ - 1;
+  call->loc.col = 5;
+  call->func.tag = FBLE_STATIC_VAR;
+  FbleInitVector(call->args);
+  for (size_t i = 0; i < module->link_deps.size; ++i) {
+    size_t v = LinkedModule(heap, profile, linked, funcs, code, module->link_deps.xs[i]);
+    FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
+    FbleAppendToVector(call->args, var);
+  }
+
+  assert(funcs->size == linked->size);
+  size_t index = funcs->size;
+  call->func.index = index;
+  call->dest = index;
+
   size_t profile_block_id = FbleAddBlocksToProfile(profile, module->profile_blocks);
 
   FbleValue* func = NULL;
@@ -46,28 +71,10 @@ static void LinkModule(FbleValueHeap* heap, FbleProfile* profile,
     assert(false && "Attempt to link uncompiled module");
   }
 
-  FbleCallInstr* call = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
-  call->loc.source = FbleNewString(__FILE__);
-  call->loc.line = __LINE__ - 1;
-  call->loc.col = 5;
-  call->func.tag = FBLE_STATIC_VAR;
-  call->func.index = funcs->size;
-  FbleInitVector(call->args);
-  for (size_t d = 0; d < module->link_deps.size; ++d) {
-    for (size_t v = 0; v < linked->size; ++v) {
-      if (module->link_deps.xs[d] == linked->xs[v]) {
-        FbleVar var = { .tag = FBLE_LOCAL_VAR, .index = v };
-        FbleAppendToVector(call->args, var);
-        break;
-      }
-    }
-  }
-  assert(call->args.size == module->link_deps.size);
-  call->dest = funcs->size;
-
   FbleAppendToVector(*linked, module);
   FbleAppendToVector(*funcs, func);
   FbleAppendToVector(code->instrs, &call->_base);
+  return index;
 }
 
 // See documentation in fble-link.h
@@ -87,15 +94,15 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
   FbleInitVector(funcs);
   FbleModuleV linked_modules;
   FbleInitVector(linked_modules);
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    LinkModule(heap, profile, &linked_modules, &funcs, code, program->modules.xs[i]);
-  }
+  FbleModule* main_module = program->modules.xs[program->modules.size - 1];
+  size_t main_index = LinkedModule(heap, profile, &linked_modules, &funcs, code, main_module);
+
   code->executable.num_statics = linked_modules.size;
   code->num_locals = linked_modules.size;
 
   FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
   return_instr->result.tag = FBLE_LOCAL_VAR;
-  return_instr->result.index = linked_modules.size - 1;
+  return_instr->result.index = main_index;
   FbleAppendToVector(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
