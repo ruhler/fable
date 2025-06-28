@@ -76,6 +76,8 @@ typedef struct Scope {
   struct Scope* parent;
 } Scope;
 
+static void TcFreer(void* data, void* tc);
+
 static void FreeLocal(Local* local);
 static Local* NewLocal(Scope* scope);
 static void ReleaseLocal(Scope* scope, Local* local, bool exit);
@@ -114,6 +116,16 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* profile_blocks);
 static void CompileModule(FbleModule* module, FbleTc* tc);
 static void CompileProgram(FbleModule* main, FbleModuleMap* tcs);
+
+/**
+ * @func[TcFreer] FbleModuleMapFreeFunction for FbleTc*.
+ *  @arg[void*][data] Unused.
+ *  @arg[FbleTc*][tc] The tc to free.
+ */
+static void TcFreer(void* data, void* tc)
+{
+  FbleFreeTc((FbleTc*)tc);
+}
 
 /**
  * @func[FreeLocal] Frees memory assicoated with a local.
@@ -1495,6 +1507,6 @@ bool FbleCompileProgram(FbleProgram* program)
   }
 
   CompileProgram(program->modules.xs[program->modules.size-1], typechecked);
-  FbleFreeModuleMap(typechecked, (FbleModuleMapFreeFunction)FbleFreeTc);
+  FbleFreeModuleMap(typechecked, TcFreer, NULL);
   return true;
 }

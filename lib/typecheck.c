@@ -156,6 +156,9 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
 
+static void TcsFreer(void* userdata, void* tc);
+static void TypesFreer(void* heap, void* type);
+
 /**
  * @struct[TypeAssignmentVV] A vector of FbleTypeAssignmentV.
  *  @field[size_t][size] Number of elements.
@@ -200,6 +203,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
 static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_deps, FbleType** link_deps);
+static FbleType* TypeCheckProgram(FbleTypeHeap* th, FbleModule* program, FbleModuleMap* types, FbleModuleMap* tcs);
 
 
 /**
@@ -609,6 +613,26 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 {
   FbleReleaseType(th, tc.type);
   FbleFreeTc(tc.tc);
+}
+
+/**
+ * @func[TcsFreer] FbleModuleMapFreeFunction for FbleTc*.
+ *  @arg[void*][userdata] unused
+ *  @arg[FbleTc*][tc] The value to free.
+ */
+static void TcsFreer(void* userdata, void* tc)
+{
+  FbleFreeTc((FbleTc*)tc);
+}
+
+/**
+ * @func[TypesFreer] FbleModuleMapFreeFunction for FbleTc*.
+ *  @arg[FbleTypeHeap*][heap] The type heap.
+ *  @arg[FbleType*][type] The type to free.
+ */
+static void TypesFreer(void* heap, void* type)
+{
+  FbleReleaseType((FbleTypeHeap*)heap, (FbleType*)type);
 }
 
 /**
@@ -2373,6 +2397,49 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_
   return tc;
 }
 
+/**
+ * @func[TypeCheckProgram] Type checks all the modules in a program.
+ *  @arg[FbleTypeHeap*][th] The type heap.
+ *  @arg[FbleModule*][program] The main module of the program.
+ *  @arg[FbleModuleMap*][types] Types of modules already type checked.
+ *  @arg[FbleModuleMap*][tcs] Results of modules already type checked.
+ *  @returns[FbleType*] The type of this module, NULL on type error.
+ *  @sideeffects
+ *   Adds entries to types and tcs for this module and any thing it depends on
+ *   that hasn't already been type checked.
+ */
+static FbleType* TypeCheckProgram(FbleTypeHeap* th, FbleModule* program, FbleModuleMap* types, FbleModuleMap* tcs)
+{
+  // Check if we already type checked this program.
+  FbleType* result = NULL;
+  if (FbleModuleMapLookup(types, program, (void**)&result)) {
+    return result;
+  }
+
+  // Let's assume this function is only called with programs that we actually
+  // have a hope of type checking.
+  assert(program->type != NULL || program->value != NULL);
+
+  // Type check the modules we depend on.
+  bool failed_dependency = false;
+  FbleType* type_deps[program->type_deps.size];
+  FbleType* link_deps[program->link_deps.size];
+  for (size_t i = 0; i < program->type_deps.size; ++i) {
+    type_deps[i] = TypeCheckProgram(th, program->type_deps.xs[i], types, tcs);
+    failed_dependency = failed_dependency || type_deps[i] == NULL;
+  }
+  for (size_t i = 0; i < program->link_deps.size; ++i) {
+    link_deps[i] = TypeCheckProgram(th, program->link_deps.xs[i], types, tcs);
+    failed_dependency = failed_dependency || link_deps[i] == NULL;
+  }
+
+  // Type check this module.
+  Tc tc = failed_dependency ? TC_FAILED : TypeCheckModule(th, program, type_deps, link_deps);
+  FbleModuleMapInsert(types, program, tc.type);
+  FbleModuleMapInsert(tcs, program, tc.tc);
+  return tc.type;
+}
+
 // See documentation in typecheck.h.
 FbleTc* FbleTypeCheckModule(FbleProgram* program)
 {
@@ -2387,7 +2454,7 @@ FbleTc* FbleTypeCheckModule(FbleProgram* program)
     FbleUnreachable("main module not typechecked?");
   }
   tc = FbleCopyTc(tc);
-  FbleFreeModuleMap(tcs, (FbleModuleMapFreeFunction)FbleFreeTc);
+  FbleFreeModuleMap(tcs, TcsFreer, NULL);
   return tc;
 }
 
@@ -2395,70 +2462,22 @@ FbleTc* FbleTypeCheckModule(FbleProgram* program)
 FbleModuleMap* FbleTypeCheckProgram(FbleProgram* program)
 {
   FbleModuleMap* tcs = FbleNewModuleMap();
+  FbleModule* main = program->modules.xs[program->modules.size-1];
 
-  bool error = false;
+  // There's nothing to do for builtin programs. We assume builtin modules
+  // can't depend on non-builtin modules.
+  if (main->type == NULL && main->value == NULL) {
+    return tcs;
+  }
+
   FbleTypeHeap* th = FbleNewTypeHeap();
-  FbleType* types[program->modules.size];
-
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleModule* module = program->modules.xs[i];
-    FbleType* type_deps[module->type_deps.size];
-    FbleType* link_deps[module->link_deps.size];
-
-    // Skip typecheck for builtin modules with no type information.
-    if (module->type == NULL && module->value == NULL) {
-      types[i] = NULL;
-      continue;
-    }
-
-    // Skip typecheck of any modules whose dependencies failed to typecheck.
-    bool skip = false;
-    for (size_t d = 0; d < module->type_deps.size; ++d) {
-      type_deps[d] = NULL;
-      for (size_t t = 0; t < i; ++t) {
-        if (module->type_deps.xs[d] == program->modules.xs[t]) {
-          type_deps[d] = types[t];
-          break;
-        }
-      }
-
-      if (type_deps[d] == NULL) {
-        skip = true;
-        break;
-      }
-    }
-    for (size_t d = 0; d < module->link_deps.size; ++d) {
-      link_deps[d] = NULL;
-      for (size_t t = 0; t < i; ++t) {
-        if (module->link_deps.xs[d] == program->modules.xs[t]) {
-          link_deps[d] = types[t];
-          break;
-        }
-      }
-
-      if (link_deps[d] == NULL) {
-        skip = true;
-        break;
-      }
-    }
-
-    Tc tc = skip ? TC_FAILED : TypeCheckModule(th, module, type_deps, link_deps);
-    if (tc.type == NULL) {
-      error = true;
-      types[i] = NULL;
-    } else {
-      types[i] = tc.type;
-      FbleModuleMapInsert(tcs, module, tc.tc);
-    }
-  }
-
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleReleaseType(th, types[i]);
-  }
+  FbleModuleMap* types = FbleNewModuleMap();
+  FbleType* result = TypeCheckProgram(th, main, types, tcs);
+  FbleFreeModuleMap(types, TypesFreer, th);
   FbleFreeTypeHeap(th);
 
-  if (error) {
-    FbleFreeModuleMap(tcs, (FbleModuleMapFreeFunction)FbleFreeTc);
+  if (result == NULL) {
+    FbleFreeModuleMap(tcs, TcsFreer, NULL);
     return NULL;
   }
 

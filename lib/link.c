@@ -106,7 +106,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
   // Wrap that all up into an FbleFuncValue.
   FbleValue* linked = FbleNewInterpretedFuncValue(heap, code, 0, funcs.xs);
   FbleFreeVector(funcs);
-  FbleFreeModuleMap(map, NULL);
+  FbleFreeModuleMap(map, NULL, NULL);
   FbleFreeCode(code);
   return linked;
 }
