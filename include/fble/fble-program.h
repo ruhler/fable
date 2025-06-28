@@ -24,7 +24,7 @@ typedef struct FbleModule FbleModule;
 /**
  * @struct[FbleModuleV] Vector of FbleModule.
  *  @field[size_t][size] Number of elements.
- *  @field[FbleModule*][xs] Elements.
+ *  @field[FbleModule**][xs] Elements.
  */
 typedef struct {
   size_t size;

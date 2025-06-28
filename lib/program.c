@@ -3,6 +3,8 @@
  *  Routines for dealing with programs.
  */
 
+#include "program.h"
+
 #include <fble/fble-program.h>
 
 #include <fble/fble-alloc.h>
@@ -12,6 +14,75 @@
 #include "code.h"
 #include "expr.h"
 
+/**
+ * @struct[Entry] An FbleModuleMap entry.
+ *  @field[FbleModule*][key] The key.
+ *  @field[void*][value] the value.
+ */
+typedef struct {
+  FbleModule* key;
+  void* value;
+} Entry;
+
+/**
+ * @struct[EntryV] Vector of Entry.
+ *  @field[size_t][size] Number of elements.
+ *  @field[Entry*][xs] Elements.
+ */
+typedef struct {
+  size_t size;
+  Entry* xs;
+} EntryV;
+
+/**
+ * @struct[FbleModuleMap] 
+ *  See documentation in program.h
+ *
+ *  @field[EntryV][entries] The entries of the map.
+ */
+struct FbleModuleMap {
+  EntryV entries;
+};
+
+// See documentation in program.h
+FbleModuleMap* FbleNewModuleMap()
+{
+  FbleModuleMap* map = FbleAlloc(FbleModuleMap);
+  FbleInitVector(map->entries);
+  return map;
+}
+
+// See documentation in program.h
+void FbleFreeModuleMap(FbleModuleMap* map, void (*free_value)(void*))
+{
+  if (free_value != NULL) {
+    for (size_t i = 0; i < map->entries.size; ++i)  {
+      free_value(map->entries.xs[i].value);
+    }
+  }
+  FbleFreeVector(map->entries);
+  FbleFree(map);
+}
+
+// See documentation in program.h
+void FbleModuleMapInsert(FbleModuleMap* map, FbleModule* key, void* value)
+{
+  Entry entry = { .key = key, .value = value };
+  FbleAppendToVector(map->entries, entry);
+}
+
+// See documentation in program.h
+bool FbleModuleMapLookup(FbleModuleMap* map, FbleModule* key, void** value)
+{
+  for (size_t i = 0; i < map->entries.size; ++i) {
+    if (map->entries.xs[i].key == key) {
+      *value = map->entries.xs[i].value;
+      return true;
+    }
+  }
+  return false;
+}
+
 // See documentation in fble-program.h.
 void FbleFreeModule(FbleModule* module)
 {

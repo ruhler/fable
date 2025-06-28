@@ -479,5 +479,35 @@ needed. I can implement it in program.h, program.c. I think it's worth a try.
 ---
 
 I decided to special case link.c, because it needs to form a separate array of
-function values to pass as statics anyway. That means I can special case the
-map for typechecking too.
+function values to pass as statics anyway.
+
+typecheck.c wants to record, use, and then free the types of each module. And it
+wants to record and return the FbleTcs of each module. compile.c just wants to
+consume the FbleTcs of each module.
+
+I wish we had better generic support in C. That way I could just write a map
+implementation from FbleModule* to anything and use it in three different
+places: typecheck.c (FbleType*, FbleTc*), compile.c (FbleTc*), and link.c
+(size_t).
+
+Let me try brute forcing again, using FbleModule* to void*, single insert,
+NULL for not present. But, NULL for not present conflicts with size_t 0 value.
+
+Sigh. Okay, have helper functions for link to convert size_t to and from
+void*, using -1 as not found?
+
+If I want 0 to be a valid value for both link and typecheck, why don't I
+design the map that way? Return a hard coded -1 value for not present, or
+return a boolean on lookup with an out parameter to get the value.
+
+Sample expected uses:
+
+FbleModuleMapInsert(map, module, type);
+FbleModuleMapInsert(map, module, tc);
+FbleModuleMapInsert(map, module, (void*)(intptr_t)index);
+if (FbleModuleMapLookup(map, module, (void**)&type)) ...
+if (FbleModuleMapLookup(map, module, (void**)&tc)) ...
+if (FbleModuleMapLookup(map, module, (void**)(intptr_t*)&tc)) ...
+
+It's not too bad, right? Yeah.
+
