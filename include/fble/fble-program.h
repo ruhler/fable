@@ -32,7 +32,17 @@ typedef struct {
 } FbleModuleV;
 
 /**
+ * @enum[FbleModuleMagic] Magic number used in FbleModule.
+ *  @field[FBLE_MODULE_MAGIC] The magic value.
+ */
+typedef enum {
+  FBLE_MODULE_MAGIC = 0x9881432
+} FbleModuleMagic;
+
+/**
  * @struct[FbleModule] Contents of an fble module.
+ *  Reference counted, pass by pointer, explicitly copy and free required.
+ *
  *  Either one or both of 'type' and 'value' fields may be supplied. The
  *  'value' field is required to run or generate code for the module. The type
  *  of the module can be determined either from the 'type' field or the type
@@ -43,6 +53,8 @@ typedef struct {
  *  FbleCompileModule or FbleCompileProgram. Alternatively the @a[exe] and
  *  @a[profile_blocks] fields are populated by loading a generated module.
  *
+ *  @field[size_t][refcount] Current reference count.
+ *  @field[FbleModuleMagic][magic] FBLE_MODULE_MAGIC.
  *  @field[FbleModulePath*][path] The path to the module.
  *  @field[FbleModuleV][type_deps]
  *   List of modules the @a[type] field depends on.
@@ -75,6 +87,8 @@ typedef struct {
  *   Profiling blocks used by the compiled code for the module.
  */
 struct FbleModule {
+  size_t refcount;
+  FbleModuleMagic magic;
   FbleModulePath* path;
   FbleModuleV type_deps;
   FbleModuleV link_deps;
@@ -100,11 +114,22 @@ typedef struct {
 } FbleProgram;
 
 /**
+ * @func[FbleCopyModule] Makes a reference counted copy of a module.
+ *  @arg[FbleModule*][module] The module to copy.
+ *  @returns[FbleModule*] The copy of the module.
+ *  @sideeffects
+ *   Increments the reference count on a module. Call FbleFreeModule on the
+ *   returned result when done using it.
+ */
+FbleModule* FbleCopyModule(FbleModule* module);
+
+/**
  * @func[FbleFreeModule] Frees an FbleModule.
  *  @arg[FbleModule*][module] The module to free.
  *
  *  @sideeffects
- *   Frees resources associated with the given module.
+ *   Decrements the reference count on a module and frees resources associated
+ *   with it as appropriate.
  */
 void FbleFreeModule(FbleModule* module);
 

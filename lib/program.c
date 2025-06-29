@@ -7,6 +7,8 @@
 
 #include <fble/fble-program.h>
 
+#include <assert.h>             // for assert
+
 #include <fble/fble-alloc.h>
 #include <fble/fble-name.h>
 #include <fble/fble-vector.h>
@@ -83,20 +85,35 @@ bool FbleModuleMapLookup(FbleModuleMap* map, FbleModule* key, void** value)
   return false;
 }
 
+FbleModule* FbleCopyModule(FbleModule* module)
+{
+  module->refcount++;
+  return module;
+}
+
 // See documentation in fble-program.h.
 void FbleFreeModule(FbleModule* module)
 {
-  FbleFreeModulePath(module->path);
-  FbleFreeVector(module->type_deps);
-  FbleFreeVector(module->link_deps);
-  FbleFreeExpr(module->type);
-  FbleFreeExpr(module->value);
-  FbleFreeCode(module->code);
-  for (size_t i = 0; i < module->profile_blocks.size; ++i) {
-    FbleFreeName(module->profile_blocks.xs[i]);
+  assert(module->magic == FBLE_MODULE_MAGIC && "corrupt FbleModule");
+  if (--module->refcount == 0) {
+    FbleFreeModulePath(module->path);
+    for (size_t i = 0; i < module->type_deps.size; ++i) {
+      FbleFreeModule(module->type_deps.xs[i]);
+    }
+    FbleFreeVector(module->type_deps);
+    for (size_t i = 0; i < module->link_deps.size; ++i) {
+      FbleFreeModule(module->link_deps.xs[i]);
+    }
+    FbleFreeVector(module->link_deps);
+    FbleFreeExpr(module->type);
+    FbleFreeExpr(module->value);
+    FbleFreeCode(module->code);
+    for (size_t i = 0; i < module->profile_blocks.size; ++i) {
+      FbleFreeName(module->profile_blocks.xs[i]);
+    }
+    FbleFreeVector(module->profile_blocks);
+    FbleFree(module);
   }
-  FbleFreeVector(module->profile_blocks);
-  FbleFree(module);
 }
 
 // See documentation in fble-program.h.

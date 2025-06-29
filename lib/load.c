@@ -361,7 +361,11 @@ static bool ReadRequired(FbleSearchPath* search_path, const char* suffix, FbleMo
  *  @arg[FbleProgram*][program] The program to add the module to.
  *  @arg[FblePreloadedModule*][preloaded] The module to add.
  *  @sideeffects
- *   Recursively adds the module and all its dependencies to the program.
+ *   @i Recursively adds the module and all its dependencies to the program.
+ *   @item
+ *    The caller should call FbleFreeModule on the returned module when no
+ *    longer needed.
+ *
  *  @returns[FbleModule*]
  *   The module that was added to the program.
  */
@@ -370,11 +374,13 @@ static FbleModule* Preload(FbleProgram* program, FblePreloadedModule* preloaded)
   // Check if we've already loaded the module.
   for (size_t i = 0; i < program->modules.size; ++i) {
     if (FbleModulePathsEqual(program->modules.xs[i]->path, preloaded->path)) {
-      return program->modules.xs[i];
+      return FbleCopyModule(program->modules.xs[i]);
     }
   }
 
   FbleModule* module = FbleAlloc(FbleModule);
+  module->magic = FBLE_MODULE_MAGIC;
+  module->refcount = 1;
   module->path = FbleCopyModulePath(preloaded->path);
   FbleInitVector(module->type_deps);
   FbleInitVector(module->link_deps);
@@ -391,7 +397,7 @@ static FbleModule* Preload(FbleProgram* program, FblePreloadedModule* preloaded)
     FbleAppendToVector(module->profile_blocks, FbleCopyName(preloaded->profile_blocks.xs[i]));
   }
   FbleAppendToVector(program->modules, module);
-  return module;
+  return FbleCopyModule(module);
 }
 
 /**
@@ -467,7 +473,8 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
 
   for (size_t i = 0; i < builtins.size; ++i) {
     if (FbleModulePathsEqual(module_path, builtins.xs[i]->path)) {
-      Preload(program, builtins.xs[i]);
+      FbleModule* main = Preload(program, builtins.xs[i]);
+      FbleFreeModule(main);
       return program;
     }
   }
@@ -518,7 +525,7 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
       ref = stack->pending_type_deps.xs[0];
       FbleModule* dep = LookupModule(program, ref);
       if (dep != NULL) {
-        FbleAppendToVector(stack->module.type_deps, dep);
+        FbleAppendToVector(stack->module.type_deps, FbleCopyModule(dep));
         stack->pending_type_deps.size--;
         stack->pending_type_deps.xs[0] = stack->pending_type_deps.xs[stack->pending_type_deps.size];
         FbleFreeModulePath(ref);
@@ -530,7 +537,7 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
       ref = stack->pending_link_deps.xs[0];
       FbleModule* dep = LookupModule(program, ref);
       if (dep != NULL) {
-        FbleAppendToVector(stack->module.link_deps, dep);
+        FbleAppendToVector(stack->module.link_deps, FbleCopyModule(dep));
         stack->pending_link_deps.size--;
         stack->pending_link_deps.xs[0] = stack->pending_link_deps.xs[stack->pending_link_deps.size];
         FbleFreeModulePath(ref);
@@ -542,6 +549,8 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
       // We have loaded all the dependencies for this module.
       FbleModule* module = FbleAlloc(FbleModule);
       *module = stack->module;
+      module->magic = FBLE_MODULE_MAGIC;
+      module->refcount = 1;
 
       // The module path location is currently pointing at whoever happened to
       // be depending on the module first. Fix that up if we can to point to
