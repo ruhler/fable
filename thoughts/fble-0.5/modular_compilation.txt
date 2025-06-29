@@ -523,3 +523,61 @@ the program module list.
 Next step is to add reference counts to FbleModule and ditch the program
 module list.
 
+---
+
+How would I implement load in my new vision, using recursion instead of
+iteration?
+
+To load the main module:
+* if for execution: see if it's builtin. If so, return that. Done.
+* Parse the .fble.
+* If it has a .fble.@, parse that...
+
+Basically I want a helper function that takes a module path and a flag for
+whether it is .fble or .fble.@ I'm trying to load. It returns the either
+already loaded value for that module, or loads it.
+
+Variations: for execution or not. Loading from builtin or .fble or .fble.@?
+
+In all cases, the result is either: The loaded module, not found, or failed. I
+need a way to distinguish between not found and failed.
+
+For the main module:
+* if for execution and builtin found: return result from builtin.
+* Load the .fble: return the result, error if not found or failed.
+
+For a builtin:
+* search the list of builtins. Return if found, otherwise not found.
+
+For a .fble:
+* Parse the .fble. If not found, return not found.
+* Recursively load the .fble.@: if found, add a 'type' dependency.
+* Recursively load all dependencies
+  Either for type or for execution...
+
+Let me go through the cases again, assuming input is a module path.
+
+1. main or submodule for execution
+ Load from builtin if we can.
+ Load from .fble otherwise, checking type against .fble.@ if available.
+ Load all dependencies for execution (1)
+
+2. main module for single compilation
+ Load from .fble, checking type against .fble.@ if available.
+ Load all dependencies for type (3)
+
+3. module for type
+ Load from .fble.@ if available.
+ Load from .fble otherwise.
+ Load all dependencies for type. (3)
+
+The helper I want is given a module path and optional '.@', try to find and
+parse that file. Tell us if found, if error, or if successful.
+
+---
+
+While trying to make the helper function for finding and parsing a file, I see
+we have a special case for the location of a module path. I think a module's
+module path should be set consistently to the modules .fble or .fble.@ file,
+first line and column. Not the file where it was referenced from.
+

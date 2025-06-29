@@ -20,6 +20,9 @@ Tests:
  1. We load builtin A, which loads dependent builtin B
  2. We load .fble C, which depends on builtin B
  At what point do we check and load the type information for B?
+* Add test for what happens if we try to fble-compile a builtin module?
+ Or add an assertion if that's not possible because we never use builtins with
+ fble-compile?
 
 
 * Use a special ref value instead of NULL to represent undefined values?

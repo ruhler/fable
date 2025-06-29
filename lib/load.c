@@ -51,6 +51,10 @@ typedef struct Stack {
 static FbleString* FindPackageAt(const char* package, const char* package_dir);
 static FbleString* FindAt(const char* root, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
 static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleStringV* build_deps);
+static bool Read(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleExpr** parsed, FbleModulePathV* deps, FbleStringV* build_deps);
+static bool ReadOptional(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleExpr** parsed, FbleModulePathV* deps, FbleStringV* build_deps);
+static bool ReadRequired(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleExpr** parsed, FbleModulePathV* deps, FbleStringV* build_deps);
+
 static FbleModule* Preload(FbleProgram* program, FblePreloadedModule* preloaded);
 static FbleModule* LookupModule(FbleProgram* program, FbleModulePath* path);
 static bool ModuleIsOnStack(Stack* stack, FbleModulePath* path);
@@ -248,6 +252,111 @@ static FbleString* Find(FbleSearchPath* search_path, const char* suffix, FbleMod
 }
 
 /**
+ * @func[Read] Search for and parse the expression for a module.
+ *  @arg[FbleSearchPath*][search_path] The module search path.
+ *  @arg[const char*][suffix]
+ *   The suffix of the file to look for, @l{.fble} or @l{.fble.@}.
+ *  @arg[FbleModulePath*][path] The module path to find the source file for.
+ *  @arg[FbleExpr**][parsed]
+ *   Output set to the parsed value. Set to NULL on failure to parse.
+ *  @arg[FbleModulePathV*][deps]
+ *   A list of the modules that the parsed expression references. Modules will
+ *   appear at most once in the list.
+ *  @arg[FbleStringV*][build_deps]
+ *   Preinitialized output vector to store list of files searched in. May be
+ *   NULL.
+ *  @returns[bool] True if the module was found, false otherwise.
+ *  @sideeffects
+ *   @i Sets parsed to the parsed value if found.
+ *   @i Sets parsed to NULL if found but failed to parse.
+ *   @i Appends to deps and build_deps as appropriate.
+ *   @i Reports an error to stderr on failure to parse.
+ *   @i Does not report an error on failure to find.
+ *   @item
+ *    The user is responsible for freeing the parsed result when no longer
+ *    needed
+ */
+static bool Read(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleExpr** parsed, FbleModulePathV* deps, FbleStringV* build_deps)
+{
+  FbleString* filename = Find(search_path, suffix, path, build_deps);
+  if (filename == NULL) {
+    return false;
+  }
+
+  *parsed = FbleParse(filename, deps);
+  FbleFreeString(filename);
+  return true;
+}
+
+/**
+ * @func[ReadOptional] Try reading an optional file.
+ *  @arg[FbleSearchPath*][search_path] The module search path.
+ *  @arg[const char*][suffix]
+ *   The suffix of the file to look for, @l{.fble} or @l{.fble.@}.
+ *  @arg[FbleModulePath*][path] The module path to find the source file for.
+ *  @arg[FbleExpr**][parsed]
+ *   Output set to the parsed value. Set to NULL on failure to parse.
+ *  @arg[FbleModulePathV*][deps]
+ *   A list of the modules that the parsed expression references. Modules will
+ *   appear at most once in the list.
+ *  @arg[FbleStringV*][build_deps]
+ *   Preinitialized output vector to store list of files searched in. May be
+ *   NULL.
+ *  @returns[bool]
+ *   False if the module was found and failed to parse. True otherwise.
+ *  @sideeffects
+ *   @i Sets parsed to the parsed value if found.
+ *   @i Sets parsed to NULL if found but failed to parse.
+ *   @i Appends to deps and build_deps as appropriate.
+ *   @i Reports an error to stderr on failure to parse.
+ *   @i Does not report an error on failure to find.
+ *   @item
+ *    The user is responsible for freeing the parsed result when no longer
+ *    needed
+ */
+static bool ReadOptional(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleExpr** parsed, FbleModulePathV* deps, FbleStringV* build_deps)
+{
+  return !Read(search_path, suffix, path, parsed, deps, build_deps) || *parsed;
+}
+
+/**
+ * @func[ReadRequired] Reading a required file.
+ *  @arg[FbleSearchPath*][search_path] The module search path.
+ *  @arg[const char*][suffix]
+ *   The suffix of the file to look for, @l{.fble} or @l{.fble.@}.
+ *  @arg[FbleModulePath*][path] The module path to find the source file for.
+ *  @arg[FbleExpr**][parsed]
+ *   Output set to the parsed value. Set to NULL on failure to parse.
+ *  @arg[FbleModulePathV*][deps]
+ *   A list of the modules that the parsed expression references. Modules will
+ *   appear at most once in the list.
+ *  @arg[FbleStringV*][build_deps]
+ *   Preinitialized output vector to store list of files searched in. May be
+ *   NULL.
+ *  @returns[bool]
+ *   True if the module was found and parsed successfully. False otherwise.
+ *  @sideeffects
+ *   @i Sets parsed to the parsed value if found.
+ *   @i Sets parsed to NULL if found but failed to parse.
+ *   @i Appends to deps and build_deps as appropriate.
+ *   @i Reports an error to stderr on failure to find.
+ *   @i Reports an error to stderr on failure to parse.
+ *   @item
+ *    The user is responsible for freeing the parsed result when no longer
+ *    needed
+ */
+static bool ReadRequired(FbleSearchPath* search_path, const char* suffix, FbleModulePath* path, FbleExpr** parsed, FbleModulePathV* deps, FbleStringV* build_deps)
+{
+  if (!Read(search_path, suffix, path, parsed, deps, build_deps)) {
+    FbleReportError("module ", path->loc);
+    FblePrintModulePath(stderr, path);
+    fprintf(stderr, " not found\n");
+    return false;
+  }
+  return *parsed != NULL;
+}
+
+/**
  * @func[Preload] Add a preloaded module to a program.
  *  @arg[FbleProgram*][program] The program to add the module to.
  *  @arg[FblePreloadedModule*][preloaded] The module to add.
@@ -363,48 +472,30 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     }
   }
 
-  FbleString* filename = Find(search_path, ".fble", module_path, build_deps);
-  if (filename == NULL) {
-    FbleReportError("module ", module_path->loc);
-    FblePrintModulePath(stderr, module_path);
-    fprintf(stderr, " not found\n");
-    FbleFreeProgram(program);
-    return NULL;
-  }
-
   bool error = false;
   Stack* stack = FbleAlloc(Stack);
   FbleInitVector(stack->pending_type_deps);
   FbleInitVector(stack->pending_link_deps);
-
-  FbleLoc loc = { .source = FbleCopyString(filename), .line = 1, .col = 0 };
-  stack->module.path = FbleCopyModulePath(module_path);
-  FbleFreeLoc(stack->module.path->loc);
-  stack->module.path->loc = loc;
-
   FbleInitVector(stack->module.type_deps);
   FbleInitVector(stack->module.link_deps);
   stack->tail = NULL;
+  stack->module.path = FbleCopyModulePath(module_path);
   stack->module.type = NULL;
+  stack->module.value = NULL;
   stack->module.code = NULL;
   stack->module.exe = NULL;
   stack->module.profile_blocks.size = 0;
   stack->module.profile_blocks.xs = NULL;
-  stack->module.value = FbleParse(filename, &stack->pending_link_deps);
 
-  FbleString* header = Find(search_path, ".fble.@", module_path, build_deps);
-  if (header != NULL) {
-    stack->module.type = FbleParse(header, &stack->pending_type_deps);
-    FbleFreeString(header);
-  }
-
-  if (stack->module.value == NULL
-      || (header != NULL && stack->module.type == NULL)) {
+  if (!ReadRequired(search_path, ".fble", module_path,
+        &stack->module.value, &stack->pending_link_deps, build_deps)) {
     error = true;
-    stack->pending_type_deps.size = 0;
-    stack->pending_link_deps.size = 0;
   }
-  FbleFreeString(filename);
+
+  if (!ReadOptional(search_path, ".fble.@", module_path,
+        &stack->module.type, &stack->pending_type_deps, build_deps)) {
+    error = true;
+  }
 
   while (stack != NULL) {
     if (error) {
@@ -451,6 +542,17 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
       // We have loaded all the dependencies for this module.
       FbleModule* module = FbleAlloc(FbleModule);
       *module = stack->module;
+
+      // The module path location is currently pointing at whoever happened to
+      // be depending on the module first. Fix that up if we can to point to
+      // the .fble file the module was actually implemented in.
+      if (module->value != NULL || module->type != NULL) {
+         FbleExpr* body = module->value != NULL ? module->value : module->type;
+         FbleLoc loc = { .source = FbleCopyString(body->loc.source), .line = 1, .col = 0 };
+         FbleFreeLoc(module->path->loc);
+         module->path->loc = loc;
+      }
+
       FbleAppendToVector(program->modules, module);
       Stack* tail = stack->tail;
       FbleFreeVector(stack->pending_type_deps);
@@ -486,14 +588,10 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     stack->tail = tail;
 
     // Try to get the type of the dependency from its .fble.@ file.
-    FbleString* header_str = Find(search_path, ".fble.@", stack->module.path, build_deps);
-    if (header_str != NULL) {
-      stack->module.type = FbleParse(header_str, &stack->pending_type_deps);
-      FbleFreeString(header_str);
-      if (stack->module.type == NULL) {
-        error = true;
-        continue;
-      }
+    if (!ReadOptional(search_path, ".fble.@", stack->module.path,
+          &stack->module.type, &stack->pending_type_deps, build_deps)) {
+      error = true;
+      continue;
     }
 
     // Try loading the implementation from builtins if we have the type info.
@@ -516,28 +614,13 @@ static FbleProgram* Load(FblePreloadedModuleV builtins, FbleSearchPath* search_p
     }
 
     // Fall back to .fble file if we need it for the type or execution.
-    if (stack->module.type == NULL
-        || (for_execution && stack->module.exe == NULL)) {
-      FbleString* filename_str = Find(search_path, ".fble", stack->module.path, build_deps);
-      if (filename_str == NULL) {
-        FbleReportError("module ", stack->module.path->loc);
-        FblePrintModulePath(stderr, stack->module.path);
-        fprintf(stderr, " not found\n");
+    if (stack->module.type == NULL || (for_execution && stack->module.exe == NULL)) {
+      if (!ReadRequired(search_path, ".fble", stack->module.path,
+            for_execution ? &stack->module.value : &stack->module.type,
+            for_execution ? &stack->pending_link_deps : &stack->pending_type_deps,
+            build_deps)) {
         error = true;
-      } else {
-        FbleExpr* parsed = FbleParse(filename_str,
-            for_execution ? &stack->pending_link_deps : &stack->pending_type_deps);
-        if (parsed == NULL) {
-          error = true;
-        }
-
-        if (for_execution) {
-          stack->module.value = parsed;
-        } else {
-          assert(stack->module.type == NULL);
-          stack->module.type = parsed;
-        }
-        FbleFreeString(filename_str);
+        continue;
       }
     }
   }
