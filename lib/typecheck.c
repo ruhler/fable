@@ -2448,9 +2448,8 @@ FbleTc* FbleTypeCheckModule(FbleProgram* program)
     return NULL;
   }
 
-  FbleModule* main = program->modules.xs[program->modules.size-1];
   FbleTc* tc = NULL;
-  if (!FbleModuleMapLookup(tcs, main, (void**)&tc)) {
+  if (!FbleModuleMapLookup(tcs, program, (void**)&tc)) {
     FbleUnreachable("main module not typechecked?");
   }
   tc = FbleCopyTc(tc);
@@ -2462,17 +2461,16 @@ FbleTc* FbleTypeCheckModule(FbleProgram* program)
 FbleModuleMap* FbleTypeCheckProgram(FbleProgram* program)
 {
   FbleModuleMap* tcs = FbleNewModuleMap();
-  FbleModule* main = program->modules.xs[program->modules.size-1];
 
   // There's nothing to do for builtin programs. We assume builtin modules
   // can't depend on non-builtin modules.
-  if (main->type == NULL && main->value == NULL) {
+  if (program->type == NULL && program->value == NULL) {
     return tcs;
   }
 
   FbleTypeHeap* th = FbleNewTypeHeap();
   FbleModuleMap* types = FbleNewModuleMap();
-  FbleType* result = TypeCheckProgram(th, main, types, tcs);
+  FbleType* result = TypeCheckProgram(th, program, types, tcs);
   FbleFreeModuleMap(types, TypesFreer, th);
   FbleFreeTypeHeap(th);
 

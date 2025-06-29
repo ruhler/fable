@@ -120,10 +120,6 @@ void FbleFreeModule(FbleModule* module)
 void FbleFreeProgram(FbleProgram* program)
 {
   if (program != NULL) {
-    for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleFreeModule(program->modules.xs[i]);
-    }
-    FbleFreeVector(program->modules);
-    FbleFree(program);
+    FbleFreeModule(program);
   }
 }

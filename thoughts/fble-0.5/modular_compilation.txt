@@ -581,3 +581,346 @@ we have a special case for the location of a module path. I think a module's
 module path should be set consistently to the modules .fble or .fble.@ file,
 first line and column. Not the file where it was referenced from.
 
+---
+
+Pre step (3), if I want to switch to recursive implementation, I could do it
+with one function that takes 'for_exe' and 'for_main' boolean arguments. The
+three cases are:
+* Load for execution: for_exe, don't care about for_main
+* Load for compilation: !for_exe, for_main on main.
+* Load for type: !for_exe, !for_main.
+
+We pass through for_exe to dependency loads, we pass false for for_main for
+dependency loads.
+
+Our logic then becomes:
+
+  if already loaded:
+    Return what was previously loaded.
+
+  if for_exe:
+    Load from builtin if we can.
+
+  Try load from .fble.@.
+
+  if for_exe or for_main or no .fble.@:
+    Require load from .fble
+
+This suffers from the issue that we need to load the .fble.@ for a builtin if
+!for_main. And if we have already loaded the builtin without the .fble.@,
+we're screwed.
+
+I suppose the hacky solution would be:
+* Always try to load .fble.@, .fble, and builtin.
+* If for_exe: require .fble or builtin
+* If for_main: require .fble...
+
+I guess there is a matrix: the three kinds of load, the 2^3 combinations of
+.fble.@, .fble, and builtin.
+
+General guidelines:
+* If !for_main - always try to get the type?
+
+No. The bug is there. I'm just spinning now.
+
+How would things look after I split out exe and type modules?
+
+* You load either an exe or a type.
+* When loading an exe, if it's from .fble:
+  Recursively try to load the type, but only from the .fble.@.
+* When loading for type: try to load from .fble, fall back to .fble.@.
+
+Maybe it works like this:
+* When loading an exe, if it's from .fble:
+  Recursively try to load the pure type.
+* When loading an exe from builtin, don't worry about the type.
+* When loading a dependency from a .fble:
+  If for exe, load for exe. Don't worry about types? But what if it's builtin?
+  If for type, load from type.
+
+Sigh. It's complicated. We might have a link dependency on a builtin and a
+type dependency on a .fble.@. We need some way to make it so at type check
+type we use the .fble.@ for the dependency, while at execution time we use the
+builtin for the dependency. There's no way to do that without tracking type
+dependencies and execution dependencies separately for each module.
+
+In other words, I still need to distinguish between type_deps and link_deps in
+a module. We can still treat .fble and .fble.@ and builtin as separate
+FbleModule*, but, for example, if you depend on a builtin, the builtin
+FbleModule* will be on the link_deps list and its corresponding .fble.@ will
+be on the type_deps list.
+
+Back to the loading strategy. We load a module either for exe or for type. We
+cache .fble -> FbleModule*, .fble.@ -> FbleModule*, and builtin ->
+FbleModule*?
+
+When I walk through dependencies, always load it for type. If for_exe, also,
+separately, load it for execution. It may be both type and execution are .fble
+file, so the same FbleModule* will end up being reused.
+
+Loading for execution:
+* Try loading from builtin. On success, return that.
+* Else, try loading from .fble. On success, return that.
+  Part of loading the .fble will subsequently load the module for type, which
+  will return itself if we don't have .fble.@.
+* Otherwise fail.
+
+Loading for type:
+* Try loading from .fble.@. On success, return that.
+* Else, try loading from .fble.
+* Otherwise fail.
+
+When we load a .fble.@, we only fill in type_deps, not load_deps.
+
+When we load a .fble, we always fill in type_deps. If for_exe, we also fill in
+load_deps?
+
+The funny case is when we have a builtin and a .fble but no .fble.@. We then
+need the type from the .fble, but none of the load_deps for the .fble.
+
+---
+
+Claim:
+* We must either have separate type_deps and link_deps or be willing to have
+  types as part of builtin modules.
+
+Say we have some module Foo that depends on a builtin module Bar. To typecheck
+Foo, we have to have the type of Bar. To link Foo, we have to have the builtin
+for Bar. If type_deps and link_deps are not separate, then a single
+FbleModule* for Bar must have both the builtin and the type. QED.
+
+Let's say I really want to have a single deps. That means we need a way to
+load an FbleExpr* for the type of a builtin and store it with the FbleModule*
+for that builtin.
+
+Options:
+A. We the builtin module to have a builtin type.
+ - I worry about error reporting in this case.
+B. We allow the loader to add a type to an existing builtin.
+ - If the existing builtin is defined as a static FbleModule*, this feels
+   really sketch.
+C. Keep FblePrebuiltModule* and FbleModule* as separate types.
+ - Allow the loader to update the FbleModule* type for a builtin. Nothing
+   sketch here.
+ - But we no longer get the magic of being able to take a reference to a
+   builtin module.
+
+Here's another, different puzzle.
+
+Let's say module Foo depends on builtin Bar and we have a Bar.fble, but not a
+Bar.fble.@. Let's say Bar.fble depends on another module Sludge, which has
+Sludge.fble and Sludge.fble.@. Say Sludge.fble is malformed, but Sludge.fble.@
+is not.
+
+Is it an error to load Foo?
+
+For execution, we have Foo and Bar. Done. No errors.
+For type, we have Foo -> Bar.fble -> Sludge.fble.@. No errors.
+But mix them together, and ???
+
+You could argue it doesn't make sense to have builtin Bar and Bar.fble. Just
+rename Bar.fble to Bar.fble.@ in that case, because you will always use the
+builtin implementation anyway?
+
+All of which is to say, this is entirely too complicated. Why? Why can't it be
+simple? Simple is better for the user and the implementation.
+
+What's awkward here?
+* Having a builtin and a .fble file for the same module path.
+* Having different dependency lists for a .fble vs .fble.@ file for the same
+  module path.
+* Builtins having direct access to other private builtins without type info.
+* Allow a .fble to stand in for a .fble.@.
+
+Let's imagine some alternate universes.
+
+Let's say there is always a separate .fble and .fble.@ file. Copy them
+manually or symlink if you like. Be willing to load the same FbleExpr twice.
+
+Case: loading a builtin for execution
+ - No need to worry about types. Use the builtin and its builtin dependencies
+   directly.
+
+Case: loading a .fble for compilation
+ - Load its .fble.@ type to check against.
+ - Load the .fble.@ for each of its dependencies, recursively for type
+   checking.
+ - No chance of duplicate loading (not counting symlink case). Clearly defined
+   which files you load and check.
+
+Case: loading a non-builtin for execution
+ - Load .fble for the main module.
+ - Load the .fble.@ for the main module? Why? What for?
+ - Load .fble.@ for all dependencies, recursively for use in type check of the
+   main module.
+ - Load builtin/.fble for all dependencies, recursively for use in linking the
+   main module.
+ We have sharing of loaded .fble.@ files and .fble files where the same module
+ is referenced from multiple other modules.
+
+Conceptually I can think of it as having an FbleModuleImpl* and an
+FbleModuleType*. An FbleModuleType* has only type dependencies on other
+FbleModuleType*. An FbleModuleImpl* has link dependencies on other
+FbleModuleImpl* if being loaded for execution rather than compilation. And it
+has type dependencies on other FbleModuleType*. A builtin module is an
+FbleModuleImpl* that happens to have no type dependencies at all.
+
+That's clear, right? No magic? No craziness?
+
+Back to our question from before:
+
+Let's say module Foo depends on builtin Bar and we have a Bar.fble, but not a
+Bar.fble.@. Let's say Bar.fble depends on another module Sludge, which has
+Sludge.fble and Sludge.fble.@. Say Sludge.fble is malformed, but Sludge.fble.@
+is not.
+
+Is it an error to load Foo?
+
+FooImpl depends on BuiltinBarImpl for link.
+FooImpl depends on BarType via Bar.fble for type.
+FooType depends on BarType via Bar.fble for type.
+BarType depends on SludgeType via Sludge.fble.@ for type.
+
+There is no path to Sludge.fble.
+
+So no, there is no error to load Foo.
+
+How about the other case: we load a builtin that loads another builtin and
+then later try to load that other builtin from a non-builtin?
+
+BuiltinAImpl depends on BuiltinBImpl for link.
+X depends on BuiltinBImpl for link.
+X depends on BuiltinBType for type.
+
+No issue, since BuiltinBImpl and BuiltinBType are two separate FbleModule*
+instances.
+
+Now then, take a step back to where we came from. Say we use Foo.fble if there
+is no Foo.fble.@ file for the type. Then we end up in a situation of:
+
+FooImpl depends on BarImpl for link.
+FooImpl depends on BarType for type.
+FooType depends on BarType for type.
+
+Which is, apparently, consistent. We can use the same FbleModule* for
+FooImpl and FooType. No need to reload the file.
+
+---
+
+There are three sources of module information:
+* builtin, .fble, and .fble.@.
+
+There are two kinds of dependencies:
+* link dependencies and type dependencies.
+
+That gives us six combinations, two of which are invalid:
+* builtin for link - valid. Only has link deps.
+* builtin for type - not valid. builtins don't have type info.
+* .fble for link - valid. Has link and type deps.
+* .fble for type - valid. Only has type deps.
+* .fble.@ for link - not valid. We don't use .fble.@ for execution.
+* .fble.@ for type - valid. Only has type deps.
+
+Semantically speaking, we should behave as if we treated these 4 valid
+combinations separately. In particular:
+* If Foo.fble depends on Bar, Bar is builtin and has Bar.fble.@ as its type, 
+  Bar.fble.@ depends on Sludge, and there is both Sludge.fble and
+  Sludge.fble.@, we must read Sludge.fble.@, not Sludge.fble. That is, we must
+  not see errors in Sludge.fble.
+
+Notably, .fble for link has separate link and type deps. For example, if it
+depends on Bar and Bar has a builtin and a Bar.fble.@, then it depends on the
+builtin for link deps and it depends on the .fble.@ for type deps.
+
+Now we can ask which of these four combinations could share the same
+FbleModule* data structure, if we had any desire to:
+* builtin for link + .fble for link: no, conflicting link dependencies.
+* builtin for link + .fble for type: yes, no overlap between link & type deps.
+* builtin for link + .fble.@ for type: yes, no overlap between link & type deps.
+* .fble for link + .fble for type: yes. type dependencies match.
+* .fble for link + .fble.@ for type: maybe. I think yes.
+  These have conflicting type dependencies: one might reference Foo, the other
+  might reference Bar. But you could take the union of the type dependencies.
+  Unlike for linking, it's okay to include unused type arguments during
+  typecheck.
+* .fble for type + .fble.@ for type: maybe. I think yes.
+  Same argument as above: type dependencies may conflict, but you can take the
+  union. If the same module is depended on by both, well, it will point to the
+  same place.
+
+Today I share everything, because we never get in case where you want both
+builtin and .fble for link.
+
+What makes sense to share:
+* .fble for link and .fble for type.
+
+Because otherwise we end up duplicating the FbleExpr* and the typechecking of
+it.
+
+What doesn't necessarily make sense to share:
+* Anything else.
+
+In particular, if we didn't share .fble and .fble.@, we could avoid duplicate
+code in TypeCheckModule that is run for both the .type and the .value field.
+
+Note that .fble for link will want to depend on .fble.@ for type checking if
+it's available.
+
+The last piece is: you can't know a-priori when loading a .fble file if you
+need it both for link and for type. It depends on what you are loading it for.
+You can have for_execution loading that loads a .fble file only for type. For
+example: if Bar is builtin, Bar.fble.@ depends on Foo.fble, and nothing else
+depends on Foo.fble for execution. And Foo depends on Sludge, which has
+Sludge.fble and Sludge.fble.@.
+
+Those are all the pieces. What's left is to put them together.
+
+---
+
+API first, assuming everything memoizes to avoid duplicate work.
+
+LoadModuleForLink - top level entry into execution use case
+ - Tries LoadBuiltin.
+ - Tries LoadFble. On success, LoadModuleForLink on all dependencies.
+LoadModuleForType - called to get type_deps for a module.
+ - Calls LoadHeader to get .fble.@.
+ - If none, calls LoadFble to get .fble.
+ - Calls LoadModuleForType on all dependencies.
+LoadBuiltin - called to load a builtin module + dependencies.
+LoadFbleForType - top level entry into compilation use case
+ - Tries LoadFble. On success, LoadModuleForType on all dependencies.
+ - Tries LoadHeaderForType.
+LoadHeaderForType
+ - Tries LoadHeader. On success, LoadModuleForType on all dependencies.
+LoadHeader
+ - Tries to read a .fble.@ file: FbleExpr* and module path dependencies.
+LoadFble
+ - Tries to read a .fble file: FbleExpr* and module path dependencies.
+
+So, an FbleModule* can be gotten from ModuleForType, ModuleForLink,
+FbleForType, HeaderForType. And a raw file can be opened and parsed with
+LoadHeader and LoadFble. Some are optional, some are required.
+
+It's messy. There are corner cases I'm not handling. I need to keep track of
+what we've tried before or not. I need to keep track of what we've succeeded
+at before or not. Can I simplify?
+
+When we load a builtin, it's easy. We do it recursively. We're done. We reuse
+what we already tried or not. There is no failure.
+
+When we load a header, we need to keep track of whether we tried and failed,
+whether we tried and succeeded, or whether we haven't tried yet. And we can
+always load all the type dependencies for it in one go, right?
+
+When we load a .fble, we first load it for type. Then, if asked, we add on
+link dependencies? But where would I keep track of the module paths for the
+link dependencies? I would have to do it via the type dependencies, and make
+sure those aren't polluted by header type dependencies?
+
+Feels like from that I need to have separate FbleModule* for .fble and
+.fble.@, so that I can keep track of dependencies on the .fble and later load
+... But if we have a .fble.@, then we'll never load .fble for type, right?
+Which means we will never be in a situation where we need to append to the
+module?
+
+So we could share .fble and .fble.@ module? Blah.

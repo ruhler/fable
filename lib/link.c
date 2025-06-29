@@ -92,8 +92,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleProfile* profile, FbleProgram* prog
   FbleValueV funcs;
   FbleInitVector(funcs);
   FbleModuleMap* map = FbleNewModuleMap();
-  FbleModule* main_module = program->modules.xs[program->modules.size - 1];
-  size_t main_index = LinkedModule(heap, profile, map, &funcs, code, main_module);
+  size_t main_index = LinkedModule(heap, profile, map, &funcs, code, program);
 
   code->executable.num_statics = funcs.size;
   code->num_locals = funcs.size;

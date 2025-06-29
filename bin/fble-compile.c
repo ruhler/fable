@@ -153,8 +153,8 @@ int main(int argc, const char* argv[])
   if (compile) {
     FbleStringV deps;
     FbleInitVector(deps);
-    FbleProgram* prgm = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, &deps);
-    if (prgm == NULL) {
+    FbleProgram* program = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, &deps);
+    if (program == NULL) {
       for (size_t i = 0; i < deps.size; ++i) {
         FbleFreeString(deps.xs[i]);
       }
@@ -167,7 +167,7 @@ int main(int argc, const char* argv[])
       FILE* depsfile = fopen(deps_file, "w");
       if (depsfile == NULL) {
         fprintf(stderr, "unable to open %s for writing\n", deps_file);
-        FbleFreeProgram(prgm);
+        FbleFreeProgram(program);
         FbleFreeModuleArg(module_arg);
       }
       FbleSaveBuildDeps(depsfile, deps_target, deps);
@@ -179,23 +179,18 @@ int main(int argc, const char* argv[])
     }
     FbleFreeVector(deps);
 
-    if (!FbleCompileModule(prgm)) {
-      FbleFreeProgram(prgm);
+    if (!FbleCompileModule(program)) {
+      FbleFreeProgram(program);
       FbleFreeModuleArg(module_arg);
       return EX_FAIL;
     }
 
-    FbleModule* module = prgm->modules.xs[prgm->modules.size - 1];
-
-    FbleFreeModulePath(module->path);
-    module->path = FbleCopyModulePath(module_arg.module_path);
-
     switch (target) {
-      case TARGET_AARCH64: FbleGenerateAArch64(stdout, module); break;
-      case TARGET_C: FbleGenerateC(stdout, module); break;
+      case TARGET_AARCH64: FbleGenerateAArch64(stdout, program); break;
+      case TARGET_C: FbleGenerateC(stdout, program); break;
     }
 
-    FbleFreeProgram(prgm);
+    FbleFreeProgram(program);
   }
 
   FbleFreeModuleArg(module_arg);

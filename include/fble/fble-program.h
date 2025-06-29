@@ -100,18 +100,9 @@ struct FbleModule {
 };
 
 /**
- * @struct[FbleProgram] Contents for a full fble program.
- *  The program is represented as a list of dependant module in topological
- *  dependancy order. Later modules in the list may depend on earlier modules
- *  in the list, but not the other way around.
- *
- *  The last module in the list is the main program.
- *
- *  @field[FbleModuleV][modules] Program modules.
+ * @struct[FbleProgram] Alias for FbleModule. @@
  */
-typedef struct {
-  FbleModuleV modules;
-} FbleProgram;
+typedef FbleModule FbleProgram;
 
 /**
  * @func[FbleCopyModule] Makes a reference counted copy of a module.

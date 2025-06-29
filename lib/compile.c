@@ -1490,9 +1490,7 @@ bool FbleCompileModule(FbleProgram* program)
     return false;
   }
 
-  assert(program->modules.size > 0);
-  FbleModule* module = program->modules.xs[program->modules.size - 1];
-  CompileModule(module, tc);
+  CompileModule(program, tc);
 
   FbleFreeTc(tc);
   return true;
@@ -1506,7 +1504,7 @@ bool FbleCompileProgram(FbleProgram* program)
     return false;
   }
 
-  CompileProgram(program->modules.xs[program->modules.size-1], typechecked);
+  CompileProgram(program, typechecked);
   FbleFreeModuleMap(typechecked, TcFreer, NULL);
   return true;
 }

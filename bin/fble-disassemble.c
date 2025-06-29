@@ -72,20 +72,19 @@ int main(int argc, const char* argv[])
     return EX_USAGE;
   }
 
-  FbleProgram* prgm = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, NULL);
+  FbleProgram* program = FbleLoadForModuleCompilation(module_arg.search_path, module_arg.module_path, NULL);
   FbleFreeModuleArg(module_arg);
-  if (prgm == NULL) {
+  if (program == NULL) {
     return EX_FAIL;
   }
 
-  if (!FbleCompileModule(prgm)) {
-    FbleFreeProgram(prgm);
+  if (!FbleCompileModule(program)) {
+    FbleFreeProgram(program);
     return EX_FAIL;
   }
 
-  FbleModule* compiled = prgm->modules.xs[prgm->modules.size - 1];
-  FbleDisassemble(stdout, compiled);
+  FbleDisassemble(stdout, program);
 
-  FbleFreeProgram(prgm);
+  FbleFreeProgram(program);
   return EX_SUCCESS;
 }

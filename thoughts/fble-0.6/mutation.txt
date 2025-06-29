@@ -1,0 +1,57 @@
+Mutation
+========
+
+Scenario: I want to implement an fble program that counts the number of
+occurrences of each character in a file. I use a map from character to Int@
+value. I read character by character, incrementing the corresponding map entry
+as we go.
+
+I could implement this in C allocating O(1) memory, because we update integer
+values in place.
+
+I can't implement this in fble without allocating O(N) memory, where N is
+proportional to the number of characters in the input file.
+
+That's really bad from a performance point of view, wouldn't you say? Unless
+you think allocation cost basically nothing and that what we really care about
+is how much we are using at any one time. But you don't believe that, right? I
+don't believe that, right?
+
+So, idea is: add support for in-place mutation of data structures to the fble
+language. Do it this way:
+* Allow the user to express that they require in-place mutation to happen.
+* The compiler reports an error if your in-place mutation is unsafe.
+  That is, you aren't the sole owner of whatever you are requiring to be
+  mutated.
+* It composes well with everything else in fble.
+
+That last requirement gives us a good starting point. You should be able to
+write a function, such as a list map, that can be used both for in-place
+mutation and copy-on-write mutation without change.
+
+I claim we can express 'mutation' in the language and interpret it as
+copy-on-write. So we could get the syntax in place, and it's probably nice and
+useful syntax to have for fble, even if we never really do things in place.
+
+Real quickly:
+
+A mutator is:
+* An arbitrary function of type T -> T
+* A struct field mutation: struct type + field name + mutator
+  That turns a mutator on a field into a mutator on the struct value.
+* A union field mutation: union type + field name + mutator
+  That turns a mutator on an arg into a mutator on the union value.
+
+A mutation expression is:
+* An object + a mutator. It applies the mutation function to the object to get
+  a new object and returns the result. Initially a copy, but eventually,
+  hopefully, with some way to reuse memory in place.
+
+A variable mutation statement is:
+* A variable name in scope + a mutator. It applies the mutation function to
+  the variable value, then resets the variable to refer to the new value.
+
+And some mechanism for enforcement:
+* The requirement is you are applying mutation to the last use of an
+  expression. Sounds tricky. But that's the idea.
+
