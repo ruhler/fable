@@ -55,3 +55,43 @@ And some mechanism for enforcement:
 * The requirement is you are applying mutation to the last use of an
   expression. Sounds tricky. But that's the idea.
 
+---
+
+Proposed syntax for mutation:
+
+Assignment:
+ <expr> ~(<path>: <expr>)
+
+Transformation:
+ <expr> ~(<path>:= <expr>)
+
+This replaces the existing struct copy syntax. Instead of '.@', use '~'. And
+let's say you can add a list of assignments. So, generalization is instead of
+a name, you pass a field path of 1 or more fields.
+
+We don't have direct in place mutation. Just use normal function application?
+f(x), or, if you really want: f~(x)?
+
+Map = (List@<T@> xs) {
+  xs.?(nil: xs);
+  xs~(cons.head := F, cons.tail := Map);
+};
+
+Um. xs~(cons.head: F(xs.cons.head))
+ ==> xs~(cons.head := F). Sounds reasonable enough to me.
+
+It doesn't feel intuitive to me though. What would be intuitive?
+
+  xs.cons.head = F(xs.cons.head);
+  xs.cons.tail = Map(xs.cons.tail);
+
+Maybe you get used to the shorter version?
+
+  xs~(cons.head.= F, cons.tail.= Map);
+  xs~(cons.head := F, cons.tail := Map);
+  xs~(cons.head: Foo);
+  xs~(cons.head : Foo);
+  xs~(cons.head:= F, cons.tail:= Map);
+
+I think I like .= more than :=? Either way I suppose.
+
