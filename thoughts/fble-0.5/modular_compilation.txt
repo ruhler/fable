@@ -924,3 +924,18 @@ Which means we will never be in a situation where we need to append to the
 module?
 
 So we could share .fble and .fble.@ module? Blah.
+
+---
+
+To move things forward, I started by switching to a recursive load
+implementation. It seems to work and feels a little cleaner, though I'm sure
+I'll regret it at some point in the future when we smash the stack due to long
+module dependency chains.
+
+Otherwise, I should just brute force it. Maintain a list of loaded entries
+where an entry has a module path and whatever other information I could
+possibly need to keep track of the current state of things: FbleModule* for
+type, for execution, for fble, for header, flags indicating whether we have
+tried it or not, or maybe sentinel FbleModule* pointers for 'failed' and 'not
+yet attempted'.
+
