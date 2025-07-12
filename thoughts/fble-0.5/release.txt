@@ -556,3 +556,17 @@ I feel like the build specification should be:
 * It puts build.ninja and configure file in your build directory.
 * It puts generated outputs in the out/ subdirectory of your build directory.
 
+See thoughts/fble-0.5/build.txt.
+
+---
+
+* fble-pprof doesn't work on windows because read isn't binary by default.
+  Add an option to open? Coerce everything to binary, including stdio?
+
+Here's my proposal: have 'Read' and 'Write' stdio functions read and write in
+binary mode. Leave stdio and stdin as their default text mode.
+
+That fixes the fble-pprof test error, and I feel like mostly works as you
+want. I can think of contrived problems with it, but I don't really care too
+much about things working great on windows right now, as long as the tests
+pass.

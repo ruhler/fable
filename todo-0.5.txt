@@ -4,10 +4,7 @@ Things to consider doing for the fble-0.5 release.
 
 * ./pkgs/graphics/Graphics/App.fble:133:41: error: module /Graphics/Usage% not
   found
-  From clean build. What's up?
-
-* Clean up how build works.
-  See thoughts/fble-0.5/build.txt.
+  Fix the missing dependency. For Md5 too, and maybe others.
 
 * Add spec test that would catch the bug if we failed to GcRealloc a value
   before ref assignment.
@@ -16,9 +13,6 @@ Things to consider doing for the fble-0.5 release.
     stack -> gc -> stack, and when we return that, we would gc allocate it
     into: gc -> gc -> stack, and that stack value would then be dangling and
     likely to get overwritten.
-
-* fble-pprof doesn't work on windows because read isn't binary by default.
-  Add an option to open? Coerce everything to binary, including stdio?
 
 * Figure out how to add an fble-pprof benchmark to fble-benchmark?
   Either via support for pure embedded files, or IO in the benchmarks.

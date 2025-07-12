@@ -156,7 +156,7 @@ static FbleValue* ReadImpl(
 
   char* filename = FbleStringValueAccess(args[0]);
   FbleValue* world = args[1];
-  FILE* fin = fopen(filename, "r");
+  FILE* fin = fopen(filename, "rb");
   FbleFree(filename);
 
   FbleValue* mstream;
@@ -189,7 +189,7 @@ static FbleValue* WriteImpl(
 
   char* filename = FbleStringValueAccess(args[0]);
   FbleValue* world = args[1];
-  FILE* fin = fopen(filename, "w");
+  FILE* fin = fopen(filename, "wb");
   FbleFree(filename);
 
   FbleValue* mstream;
