@@ -1,0 +1,84 @@
+Fble Build
+==========
+Some miscellaneous things to clean up with the build as part of this release.
+
+Issues:
+
+1. If you build from source directory, plain 'ninja' builds spec tests.
+I think because spec tests output to source directory, and build depends on
+spec test directories, so plain build depends on result of running the spec
+tests.
+
+2. If you build from source directory, the build dirties itself. Which means
+if you keep running build, without changing anything, it keeps rebuilding
+stuff unnecessarily.
+
+3. If you build in source directory, it pollutes the directory.
+
+This can all be cleaned up pretty simply by always building in a subdirectory.
+
+Here is what I propose:
+* You can build in any directory you want, including the source directory.
+* build.ninja, .ninja_log, config.tcl live in the build directory.
+* All other build artifacts are always placed in an out/ subdirectory of your
+  build directory.
+
+No chance of pollution with source, easy cleanup. I can even add things to
+.gitignore assuming you build from the top level directory, and suggest that
+you build to the top level directory. Much simpler than requiring the user to
+build from a subdirectory every time manually.
+
+Let's figure out how to make this work. We know have three directories of
+interest to track in the ninja files:
+* ::s - the source directory
+* ::b - the build directory.
+* ::o - the out directory?
+
+Except, it would be really nice if I didn't have to chance ::b everywhere. So
+have ::b correspond to the out directory. Maybe call ::br the build root
+directory?
+
+---
+
+It seems to not be working like I expect. For some reason we are still trying
+to run spec tests for plain 'ninja'. What's up?
+
+I can't see any path from all to fble-pprof-test.tr in the dependency graph
+listed by ninja. Why is it trying to build that? And all the other spec tests
+too?
+
+It seems to have something to do with building from the source directory, but
+I assumed building everything in the out/ subdirectory would fix that for us.
+What is going on here?
+
+It must be an implicit dependency. Let's see what it says if I query the
+'ninja check' graph after having it already build.
+
+It's because we have implicit dependencies, it would seem. Based on it trying
+to build those things regardless of what target I give to ninja.
+
+Oh, you know what I bet it is? The use of 'test' as a phony?
+
+build.ninja.d puts './test' in its list of dependencies, and 'test' the phony
+depends on spec tests.
+
+Ugh. Seems like a bunch of our phony rules are messed up when building from
+the source directory.
+
+Let's consult our gnu coding standards and think about how much I care about
+the names of the phony targets. Maybe a prefix or something, like:
+
+ninja build-all
+ninja build-test
+ninja build-www
+ninja build-check
+ninja build-install
+
+Maybe I can rename 'test' directory to 'test-bin' directory? Not quite right,
+but that would let us still use the phony from ninja?
+
+Gnu coding conventions, standard targets:
+* 'all', 'install', 'check'
+
+Note that 'test' is not one of them. So perhaps a better approach here is
+change the 'test' phony to, e.g. 'tests'?

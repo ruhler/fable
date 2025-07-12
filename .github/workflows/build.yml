@@ -23,15 +23,13 @@ jobs:
 
       - name: Build WWW
         run: |
-          mkdir build
-          cd build
-          ../configure --prefix=${{github.workspace}}/install
+          ./configure --prefix=${{github.workspace}}/install
           ninja www
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{github.workspace}}/build/www/
+          path: ${{github.workspace}}/out/www/
           retention-days: 0
 
   deploy:
@@ -64,9 +62,7 @@ jobs:
 
       - name: Build and Test
         run: |
-          mkdir build
-          cd build
-          ../configure --prefix=${{github.workspace}}/install
+          ./configure --prefix=${{github.workspace}}/install
           ninja check
           ninja install
 
@@ -90,7 +86,5 @@ jobs:
       - name: Build and Test
         run: |
           export MSYS2_ARG_CONV_EXCL='*'
-          mkdir build
-          cd build
-          ../configure
+          ./configure
           ninja check

@@ -1,7 +1,7 @@
 namespace eval "fbld" {
   # config.fbld
   build $::b/fbld/config.fbld \
-    "$::s/fbld/config.fbld.tcl $::b/config.tcl" \
+    "$::s/fbld/config.fbld.tcl $::br/config.tcl" \
     "tclsh8.6 $::s/fbld/config.fbld.tcl > $::b/fbld/config.fbld"
 
   # version.fbld

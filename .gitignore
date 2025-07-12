@@ -1,0 +1,7 @@
+
+# Artifacts of building from the source directory:
+.ninja_deps
+.ninja_log
+build.ninja
+config.tcl
+out/

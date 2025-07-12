@@ -2,6 +2,17 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* ./pkgs/graphics/Graphics/App.fble:133:41: error: module /Graphics/Usage% not
+  found
+  From clean build. What's up?
+
+* test/fble-pprof-test.tr depends on build directory.
+  Because it hard codes the path to profile.c.
+  Don't do this.
+
+* Clean up how build works.
+  See thoughts/fble-0.5/build.txt.
+
 * Add spec test that would catch the bug if we failed to GcRealloc a value
   before ref assignment.
   - ref assign to a value which is stack alloc -> gc alloc -> ref.
@@ -9,15 +20,6 @@ Things to consider doing for the fble-0.5 release.
     stack -> gc -> stack, and when we return that, we would gc allocate it
     into: gc -> gc -> stack, and that stack value would then be dangling and
     likely to get overwritten.
-
-Tutorials:
-* C API, once it is stable enough.
-* Add exercises to exercise each main point in every tutorial.
-* /App/App%
-* /Core/Test%
-
-* Figure out why building with ninja from the source directory ends up
-  building all the tests. And fix that somehow.
 
 * fble-pprof doesn't work on windows because read isn't binary by default.
   Add an option to open? Coerce everything to binary, including stdio?

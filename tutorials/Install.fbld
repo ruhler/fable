@@ -35,9 +35,7 @@
    cd fable
    mkdir install
    INSTALL=`pwd`/install
-   mkdir out
-   cd out
-   ../configure --prefix=$INSTALL
+   ./configure --prefix=$INSTALL
    ninja && ninja install
 
   @subsection Documentation

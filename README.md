@@ -118,7 +118,7 @@ To build and install:
 
 Additional ninja targets:
 
-* **test**: Runs tests on uninstalled binaries.
+* **tests**: Runs tests on uninstalled binaries.
 
 * **www**: Builds html documentation.
 

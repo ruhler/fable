@@ -5,7 +5,7 @@ Things to consider doing for the fble-0.6 release.
 * Revamp the standard library.
  - Redesign from the ground up, looking at existing standard libraries for
    guidance.
- - Test and document all functions.
+ - Test and document (and tutorialize?) all functions.
  - Implement rosettacode.org tasks under pkgs/rosetta to test it out.
 
 * Optimize C and interpreter backends like we did aarch64?

@@ -87,7 +87,7 @@
 
   Additional ninja targets:
 
-  @def[test] Runs tests on uninstalled binaries.
+  @def[tests] Runs tests on uninstalled binaries.
   @def[www] Builds html documentation.
   @def[check] Builds and tests everything without installing anything.
 

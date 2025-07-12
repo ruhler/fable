@@ -12,7 +12,8 @@
 source config.tcl
 
 set ::s $::config::srcdir
-set ::b $::config::builddir
+set ::br $::config::builddir
+set ::b $::br/out
 
 set ::build_ninja_filename [lindex $argv 0]
 set ::build_ninja [open "$::build_ninja_filename.tmp" "w"]
@@ -324,22 +325,23 @@ proc phony { target dependencies } {
 }
 
 phony "all" $::all
-phony "test" $::b/summary.tr
+phony "tests" $::b/summary.tr
 phony "www" $::www
-phony "check" [list all test www]
+phony "check" [list all tests www]
 phony "install" $::install
 puts $::build_ninja "default all"
 
 # build.ninja
-build "$::b/build.ninja" \
-  "$::s/build.tcl $::b/config.tcl" \
-  "tclsh8.6 $::s/build.tcl $::b/build.ninja" \
+build "$::br/build.ninja" \
+  "$::s/build.tcl $::br/config.tcl" \
+  "tclsh8.6 $::s/build.tcl $::br/build.ninja" \
   "depfile = $::b/build.ninja.d" \
   "generator = 1"
 
 # build.ninja.d implicit dependency file.
+exec mkdir -p $::b
 set ::build_ninja_d [open "$::b/build.ninja.d" "w"]
-puts $::build_ninja_d "$::b/build.ninja: $::build_ninja_deps"
+puts $::build_ninja_d "$::br/build.ninja: $::build_ninja_deps"
 
 # Now that we've completed successfully, copy over the generated ninja file.
 # We wait until the end to do this to ensure we don't generate a partial

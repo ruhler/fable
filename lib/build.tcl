@@ -6,7 +6,7 @@ namespace eval "lib" {
 
   # config.h
   build $::b/lib/config.h \
-    "$::s/lib/config.h.tcl $::b/config.tcl" \
+    "$::s/lib/config.h.tcl $::br/config.tcl" \
     "tclsh8.6 $::s/lib/config.h.tcl > $::b/lib/config.h"
 
   # parse.tab.c

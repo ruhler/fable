@@ -513,3 +513,46 @@ the language or abandon this. If I decide to change the language, figure out
 how, but leave the changes for the next release.
 
 See thoughts/fble-0.5/kinds.txt for discussion and resolution.
+
+---
+
+Tutorials: ...
+
+C API isn't stable yet, and also I don't think it should be the focus of my
+priorities in terms of documentation. I think this is left over from when the
+tutorials were about the C API and I switched to pure fble language focus. I
+vote drop this.
+
+/App/App%, /Core/Test%... wait until I revamp the standard library.
+Documentation will be a core part of that revamp. So no need to tutorialize
+it now.
+
+Exercises for each main point in every tutorial... it's hard to give myself
+feedback on doing the tutorials. There will always be opportunity to improve
+them. But I think better to wait a while to avoid getting too deep into the
+tutorial, and give myself a chance to step back and rethink how to teach the
+language.
+
+In other words, I don't want to deal with this now. Let me worry about it
+later, where later, I assume, will naturally arise without the need to keep
+reminding myself release after release.
+
+---
+
+* Figure out why building with ninja from the source directory ends up
+  building all the tests. And fix that somehow.
+
+It ought not to be difficult to understand. We build in place, that adds new
+directories, I glob directories as a build dependency. No?
+
+Let me verify the details. Regardless, why not always build in an out/
+subdirectory at the top level? That way people don't have to go out of their
+way to know to do that. You could run configure top level always. How
+convenient would that be for me? No need to keep changing to the out directory
+for ninja to run okay?
+
+I feel like the build specification should be:
+* You can build from whatever directory you like.
+* It puts build.ninja and configure file in your build directory.
+* It puts generated outputs in the out/ subdirectory of your build directory.
+
