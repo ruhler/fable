@@ -875,9 +875,8 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
     // supplied the generic type when creating the poly value.
     return MkTc(pat, FbleCopyTc(poly.tc));
   }
+  ReportError(expr_loc, "unable to poly apply a type to something of kind %k\n", &poly_kind->_base);
   FbleFreeKind(&poly_kind->_base);
-
-  ReportError(expr_loc, "type application requires a poly type\n");
   return TC_FAILED;
 }
 

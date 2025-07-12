@@ -12,12 +12,33 @@ Things to consider doing for the fble-0.6 release.
   By inlining logic to access fble values instead of calling library
   functions.
 
+* Design a package management / versioning scheme?
+ - see thoughts/fble-0.5/modular_compilation.txt for context.
+
+* Clean up program loading
+ - see thoughts/fble-0.5/modular_compilation.txt for context.
+ - Clarify the spec with respect to builtins referring to other builtins and
+   the recursive module requirements in case of difference between builtins,
+   .fble files, and header files.
+ - Add tests for:
+   a. Try to compile a builtin module.
+   b. builtin A -> builtin B, .fble C -> builtin B.
+   c. builtin A, A.fble.@ -> B.fble, B.fble -> /C%,
+      C.fble has bugs, C.fble.@ doesn't. This should not fail to execute.
+ - Update the implementation to pass the tests.
+ - Consider separating the FbleModule* for execution and for type for a given
+   module path.
+ - Add option for loading modules from .so files?
+ - Have fble-stdio check that the function has the right type?
+ - Load minimum dependencies needed for type checking when possible?
+  
 * Make programs run twice as fast.
  - Use native stack for stack allocations.
  - Inline FbleCall into aarch64 backend.
  - Specialize call logic based on what we can figure out statically in terms
    of number of args expected and tail/non-tail possibilities.
  - Avoid redundant undef checks on values based on static info.
+ - Use a special ref value instead of NULL to represent undefined values?
 
 * Implement deflate algorithm.
  - Change --profile to produce gzip compressed profiles (doesn't need to be
@@ -38,7 +59,29 @@ Things to consider doing for the fble-0.6 release.
  - gzip, gunzip.
 
 * Fble Language Features
+ - Add support for mutable data structures?
  - Add some way to catch or recover from errors at runtime?
  - Some way to implement a web server that can handle multiple requests
    concurrently?
 
+* Fbld Language
+ - modularity
+ - Better support for structs in fbld language, so its easier to write decent
+   performing fbld code.
+ - Have an 'if' primitive instead of 'ifeq' and 'ifneq'?
+ - The @plain builtin is really strange. I had trouble coming up with a test
+   case for it. Consider if there's some way we can get rid of that or make it
+   more sensible.
+ - Clarify in spec if @if[a@x][b@x] ... is an error or not.
+   Or redesign semantics of fbld to avoid that question entirely.
+
+* Fbld C implementation
+ - Change FbldMarkup type to more explicitly distinguish between the different
+   kinds of markups.
+ - Figure out how to associate a location with empty markup.
+ - Avoid constructing markups with singleton sequences?
+
+* Implement a custom debugger for fble
+ - That works on all backends.
+ - That supports single step through code.
+ - That supports field access.

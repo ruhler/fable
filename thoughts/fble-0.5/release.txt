@@ -472,3 +472,42 @@ loading modules from .so files.
 If it's just thoughts, let's have those thoughts now. Moving to
 thoughts/fble-0.5/modular_compilation.txt.
 
+---
+
+* Is it a problem that we use O(n) lookups in link.c?
+
+The real point here is I should probably update FbleModuleMap to use a hash
+table instead of an array. But if it's not a problem now, let's not worry
+about it now. Some time in the future I can see what the real bottlenecks are
+for large scale programs, and this will show up if it's really a problem.
+
+---
+
+* Use a special ref value instead of NULL to represent undefined values?
+
+I know it's messy. I tried before. There is some boundary we want NULL values
+at. The purported purpose of this is to improve performance. But I already
+improved performance enough this release. This certainly won't make the code
+any cleaner. I'm not convinced it will make much difference performance wise.
+Skip it. Come back later if so motivated.
+
+---
+
+* Fbld Language
+
+This is a big task. This is a feature all its own. The fbld language isn't
+causing me trouble at the moment.
+
+I'll need to figure out some way to fit these large tasks into my workflow.
+But not now. Focus effort where it has the most value. Right now, that's not
+fbld.
+
+Same goes for custom fble debugger.
+
+---
+
+* Consider removing higher order kinds from the language.
+
+This is worth thinking about now. Let's make a decision this release to change
+the language or abandon this. If I decide to change the language, figure out
+how, but leave the changes for the next release.

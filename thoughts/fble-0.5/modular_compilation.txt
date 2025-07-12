@@ -939,3 +939,15 @@ type, for execution, for fble, for header, flags indicating whether we have
 tried it or not, or maybe sentinel FbleModule* pointers for 'failed' and 'not
 yet attempted'.
 
+---
+
+I don't want to fix bugs with loading before I have regression tests in place.
+I don't want to put regression tests in place before I have a spec. I don't
+want to write a spec, because I'm lazy and it sounds messy. Where does that
+leave me?
+
+Here's what I think:
+* Call this done for this release.
+* Clearly document next steps for future releases and suspected bugs.
+
+I made an effort. I made some progress. That's what matters at this point.

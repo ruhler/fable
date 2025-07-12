@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 7:24
+@ Unit@ = *();
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+# Are we allowed to apply to a poly kinded value in its own binding?
+# The spec says no.
+<@>% X = <@ A@> { @(a: X<Unit@>); };
+
+X.a;

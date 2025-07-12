@@ -76,6 +76,8 @@ void FbleModuleMapInsert(FbleModuleMap* map, FbleModule* key, void* value)
 // See documentation in program.h
 bool FbleModuleMapLookup(FbleModuleMap* map, FbleModule* key, void** value)
 {
+  // TODO: Consider switching to a hash table implementation to avoid
+  // O(n) lookup cost if this becomes a performance bottleneck.
   for (size_t i = 0; i < map->entries.size; ++i) {
     if (map->entries.xs[i].key == key) {
       *value = map->entries.xs[i].value;

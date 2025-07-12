@@ -1,0 +1,25 @@
+# @@fble-test@@ compile-error 17:8
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+# Test storing polymorphic values on a generic container type.
+# TODO: Should this be allowed? The spec says no technically, but I think it
+# should be changed to yes.
+<@>@ Maybe@ = <@ T@> { +(Unit@ nothing, T@ just); };
+
+<@>@ Poly@ = <@ A@>(A@, A@) { A@; };
+Poly@ First = <@ A@>(A@ a, A@ b) { a; };
+
+Maybe@<Poly@> mx = Maybe@(just: First);
+
+Bool@ true = mx.just(True, False);
+Unit@ _ = true.true;
+
+Maybe@<Bool@> nothing = mx.just(Maybe@(nothing: Unit), Maybe@(just: True));
+Unit@ _ = nothing.nothing;
+
+Unit;

@@ -222,7 +222,9 @@
    ensure type checking is possible, the kind of the variable is treated as a
    basic kind in the bindings expressions. This restricts the set of recursive
    types that can be described to ones that the type checker can handle
-   without difficulty.
+   without difficulty. The rationale for requiring the full kind of the
+   variable instead of just whether it is a type or a value is that it helps
+   to document the kinds of values being defined in a machine checkable way.
   
    If a type is used when defining a variable, that type is used for the type
    of the variable in the binding expressions. It must match the type of the

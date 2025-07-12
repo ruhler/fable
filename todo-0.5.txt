@@ -2,6 +2,8 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
+* Change poly apply to accept higher order poly args?
+
 * Add spec test that would catch the bug if we failed to GcRealloc a value
   before ref assignment.
   - ref assign to a value which is stack alloc -> gc alloc -> ref.
@@ -9,53 +11,6 @@ Things to consider doing for the fble-0.5 release.
     stack -> gc -> stack, and when we return that, we would gc allocate it
     into: gc -> gc -> stack, and that stack value would then be dangling and
     likely to get overwritten.
-
-* Is it a problem that we use O(n) lookups in link.c?
-  Won't that blow up if there are lots of modules being linked?
-
-Tests:
-* Add spec tests for full coverage.
- - Test for builtin module with builtin dependencies? load.c
-* Add test and fix for this case:
- 1. We load builtin A, which loads dependent builtin B
- 2. We load .fble C, which depends on builtin B
- At what point do we check and load the type information for B?
-* Add test for what happens if we try to fble-compile a builtin module?
- Or add an assertion if that's not possible because we never use builtins with
- fble-compile?
-
-
-* Use a special ref value instead of NULL to represent undefined values?
-
-* Fbld Language
- - modularity
- - Better support for structs in fbld language, so its easier to write decent
-   performing fbld code.
- - Have an 'if' primitive instead of 'ifeq' and 'ifneq'?
- - The @plain builtin is really strange. I had trouble coming up with a test
-   case for it. Consider if there's some way we can get rid of that or make it
-   more sensible.
- - Clarify in spec if @if[a@x][b@x] ... is an error or not.
-   Or redesign semantics of fbld to avoid that question entirely.
-
-* Implement a custom debugger for fble
- - That works on all backends.
- - That supports single step through code.
- - That supports field access.
-
-* Modular compilation
- - Add option for loading modules from .so files?
- - Have fble-stdio check that the function has the right type?
- - Load minimum dependencies needed for type checking when possible?
-
-* Consider removing higher order kinds from the language.
-  Make everything either kind @ or %. What would we lose?
-
-* Fbld C implementation
- - Change FbldMarkup type to more explicitly distinguish between the different
-   kinds of markups.
- - Figure out how to associate a location with empty markup.
- - Avoid constructing markups with singleton sequences?
 
 Tutorials:
 * C API, once it is stable enough.

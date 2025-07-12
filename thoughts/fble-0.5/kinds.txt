@@ -1,0 +1,207 @@
+Kinds
+=====
+Let's go over some issues with kinds.
+
+1. It's annoying and weird to have to know the kind of a function like List
+Drop when importing it.
+
+Intuitively it's not obvious if Drop is polymorphic or not. It could be a
+function that returns a poly, or a poly that returns a function.
+
+  (Int@)<@ A>(List@<A@>) { List@<A@>; }
+  <@ A@>(List@<A@>){ (Int@) { List@<A@>; }; };
+
+Because of type inference, we don't use it differently. So why do we have to
+write down its kind properly?
+
+2. Can we have a list of polys?
+For example? A list of different Monad@ implementations of an object? Or, more
+pedagogically, a list of Nothing?
+
+  List@<Maybe@> l = List[Nothing];
+  Maybe@<Int@> = l.cons.head<Int@>;
+  Maybe@<Bool@> = l.cons.head<Bool@>;
+
+It seems weird that we wouldn't be able to, doesn't it?
+
+3. We can wrap a poly in a struct value to turn it into a non-poly. If the two
+are basically the same, again, then why do we care about the kind?
+
+4. When we define a polymorphic type, we give the type kind '@' in its own
+definition.
+
+Where kinds show up in the syntax:
+* Tells you what name you can use for something: type or basic. Poly doesn't
+  matter.
+* Describing the arg type of a poly.
+* Describing the kind in a let.
+
+So basically, for our purposes, only two places.
+
+For the arg type of a poly, it's limited to a type, right? You can't pass a
+'%' kind? Yes. That's in the spec.
+
+I need to know the kind to know if I can apply it to types. When do we use
+this in practice?
+
+In Map@, I take <@>@ M@ as an argument and then use M@<V@> in the body. That
+wouldn't be safe to do unless I know the kind of M@ is polymorphic.
+
+But! What we really require is that, when you specify <@>@ as the kind, you
+can at least do a single poly apply to the type. It's fine if you can do
+more than that too, right? That is, wherever an abstract non-poly type is
+expected, I ought to be allowed to provide a poly type. That should clear up
+the concerns in (2), (3), and (4).
+
+For the kind in a let...  When a kind is used, the type variable is abstract
+in its binding. In the bindings of the let, the basic kind is used. Afterwards
+we know the type. Why specify anything at all here beyond '@' or '%'?
+
+We need to know if we are defining a type or a value in the definition.
+
+Do I never do something like:
+
+  <@>% F = <@ A@>(A@) {
+     F<A@>(x);
+  };
+
+That is, I know we restrict the kind in the definition for types. Do we do it
+for values too? That would be weird, right?
+
+Why the kind is useful here:
+* We need to know type vs. value to know how to name the variable and to be
+  able to use it as a type or not in the binding.
+
+Like, this is totally bogus:
+
+  % F@ = (F@ x) { x; };
+
+We are assigning a type to a value. We need the kind to rule out this kind of
+absurdity.
+
+I would say we want the kind also to know how much poly we can apply in the
+binding, but that's not true for types. Is it true for values?
+
+If we restrict the kind of values to basic kinds in their bindings, then
+there's no point distinguishing between poly and non-poly for the purposes of
+defining a variable.
+
+Which leaves only one other purpose: to help document the type of the value
+being assigned. But the whole point of using a kind is to not have to use a
+type?
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+I know Bool@ is a type. But I also know it is a union, because I know how it
+is implemented, and I can do things based on that. Which suggests we may as
+well specify as either a type or a value, but not care about poly levels, when
+using a let expression with implicit type.
+
+It all depends on whether we need that poly info in the binding of a value.
+
+Okay, so here is what I propose:
+
+* Try writing the sample code above for a list of polys. What happens?
+* Try writing an example of a poly value with implicit type that does
+  application to itself in the body.
+* Propose a change to kinds to allow a higher order kind where a lower order
+  kind is expected. That should fix the list of polys example.
+* If we can't make use of polyness of an implicit type value in its binding,
+  then propose to change the let syntax to use either '%' or '@', not a kind,
+  in the implicit type case.
+
+And think about whether we lose something by writing things like:
+
+  @ Bool@ = /Core/Bool%.Bool@;
+  @ List@ = /Core/List%.List@;
+  @ Monad@ = /Core/Monad%.Monad@;
+  @ Maybe@ = /Core/Maybe%.Maybe@;
+  @ IStream@ = /Core/Stream%.IStream@;
+  @ OStream@ = /Core/Stream%.OStream@;
+  @ String@ = /Core/String%.String@;
+
+Instead of:
+
+  @ Bool@ = /Core/Bool%.Bool@;
+  <@>@ List@ = /Core/List%.List@;
+  <<@>@>@ Monad@ = /Core/Monad%.Monad@;
+  <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+  <<@>@>@ IStream@ = /Core/Stream%.IStream@;
+  <<@>@>@ OStream@ = /Core/Stream%.OStream@;
+  @ String@ = /Core/String%.String@;
+
+And doing things like:
+
+  @ List@ = ...;
+  @ IntList@ = List@<Int@>;
+
+Yeah. The real question is why we want to make the kind explicit but we are
+okay not making the type explicit. Is there some balance here? Not requiring
+an explicit type is pragmatic, but not requiring an explicit kind takes it
+just a bit too far?
+
+---
+
+For the implicit type poly let expression, the most you could do with the
+value is poly apply it. You couldn't function apply it, because you don't know
+if it's a struct, union, function, etc. So I can still test it, but it's going
+to be much harder to come up with a meaningful use case than I thought. Which
+is maybe why I never ran into issues with it before?
+
+If we change poly apply to accept arguments of any kind consistent with (but
+not necessarily equal to) the argument kind, then we have three options for
+how to handle implicit type let expressions:
+
+1. Use only '@' or '%' for the kind specification.
+* Minimum required for the compiler to do its job.
+* Easy for programmer, because you don't have to remember if something is poly
+  or not.
+* But doesn't provide any kind of documentation on the kind of the variable
+  being defined.
+
+2. Require the actual kind to be consistent with (but not necessarily equal
+   to) the specified kind.
+* Consistent with how poly is applied.
+* The programmer can choose if they want to be lazy or provide documentation
+  on the kind of the variable being used.
+* Doesn't really make sense though, to specify a kind and know the actual type
+  and have those not match in the body of the let.
+
+3. Require the actual kind to be exactly equal to the specified kind.
+* Slightly less easy for programmer, because you have to remember if something
+  is poly or not. But if you mess up, the compiler will tell you exactly how
+  you can fix it, so not really difficult in practice, just tedious.
+* Provides clear documentation on the kind of the variable being defined.
+
+In light of that, my vote is (3). It's what I'm already doing. It's really not
+that hard. Worse case you mess up, the compiler teaches you something. It
+reinforces everywhere you import something how to think about it in terms of
+polymorphism. If we can provide this extra documentation in code without much
+effort, let's do so. That's consistent with the idea of a language that
+takes advantage of the computer to help you write your code.
+
+When I go with (3), I think it's worth adding a sentence to the specification
+noting that the compiler doesn't really need the full kind, but we like to
+have it for documentation purposes.
+
+Next steps:
+1. Add spec test for a list of polys.
+Like, <@ A@>(A@, A@) { A@; } as the element type, with First and Second
+functions as two elements on the list.
+- I expect it to fail to start, because the kind of the list type doesn't
+  match the expected kind.
+2. Try writing an example of a poly value with implicit type that does
+application to itself in the body.
+- It should fail according to the spec and implementation, right?
+3. Update language for spec to say we don't need full kind for let, but we
+want it anyway.
+4. Try changing the implementation to accept high kinds than required in poly
+apply.
+- That should fix the list of polys spec test.
+5. Update the spec to accept higher kinds than required in poly apply.
+
+If (4) turns out to be too involved, then punt that to the next release.
+
+---
+
+(1) and (2) behave as I expected. I updated the spec for (3).
