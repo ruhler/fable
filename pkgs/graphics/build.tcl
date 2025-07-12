@@ -5,7 +5,7 @@ namespace eval "pkgs/graphics" {
 
   # /Graphics/Tests% interpreted
   set cflags "-I $::s/pkgs/graphics -I $::b/pkgs/graphics -I $::s/pkgs/app -I $::s/pkgs/core"
-  run_stdio_tests $::b/pkgs/graphics/tests-interpreted.tr "$cflags -m /Graphics/Tests%"
+  run_stdio_tests $::b/pkgs/graphics/tests-interpreted.tr "$cflags -m /Graphics/Tests%" $::b/pkgs/graphics/Graphics/Usage.fble
 
   if $::config::enable_fble_app {
     fbld_man_usage $::b/pkgs/graphics/fble-graphics.1 $::s/pkgs/graphics/fble-graphics.fbld

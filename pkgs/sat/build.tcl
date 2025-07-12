@@ -5,7 +5,8 @@ namespace eval "pkgs/sat" {
 
   # /Sat/Tests% interpreted
   run_stdio_tests $::b/pkgs/sat/tests-interpreted.tr \
-    "-I $::s/pkgs/core -I $::s/pkgs/sat -I $::b/pkgs/sat -m /Sat/Tests%"
+    "-I $::s/pkgs/core -I $::s/pkgs/sat -I $::b/pkgs/sat -m /Sat/Tests%" \
+    $::b/pkgs/sat/Sat/Usage.fble
 
   # /Sat/Tests% compiled
   stdio $::b/pkgs/sat/sat-tests "/Sat/Tests%" "sat" ""

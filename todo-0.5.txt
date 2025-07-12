@@ -2,10 +2,6 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* ./pkgs/graphics/Graphics/App.fble:133:41: error: module /Graphics/Usage% not
-  found
-  Fix the missing dependency. For Md5 too, and maybe others.
-
 * Add spec test that would catch the bug if we failed to GcRealloc a value
   before ref assignment.
   - ref assign to a value which is stack alloc -> gc alloc -> ref.
@@ -13,9 +9,6 @@ Things to consider doing for the fble-0.5 release.
     stack -> gc -> stack, and when we return that, we would gc allocate it
     into: gc -> gc -> stack, and that stack value would then be dangling and
     likely to get overwritten.
-
-* Figure out how to add an fble-pprof benchmark to fble-benchmark?
-  Either via support for pure embedded files, or IO in the benchmarks.
 
 * Write release notes.
  - Add update to treatment of kinds.

@@ -3,7 +3,7 @@ namespace eval "pkgs/games" {
 
   # /Games/Tests% interpreted
   set cflags "-I $::s/pkgs/games -I $::s/pkgs/app -I $::s/pkgs/core"
-  run_stdio_tests $::b/pkgs/games/Games/tests.tr "$cflags -m /Games/Tests%"
+  run_stdio_tests $::b/pkgs/games/Games/tests.tr "$cflags -m /Games/Tests%" ""
 
   # /Games/Tests% compiled
   # --allow-shlib-undefined because we know this doesn't use the part of the

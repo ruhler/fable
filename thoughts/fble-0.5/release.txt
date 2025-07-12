@@ -570,3 +570,42 @@ That fixes the fble-pprof test error, and I feel like mostly works as you
 want. I can think of contrived problems with it, but I don't really care too
 much about things working great on windows right now, as long as the tests
 pass.
+
+---
+
+* Figure out how to add an fble-pprof benchmark to fble-benchmark?
+  Either via support for pure embedded files, or IO in the benchmarks.
+
+Here's the deal. IO in benchmarks is not enough for me, because I don't want
+to have to depend on an external file for the input to the benchmark. That
+means what I want is to have the bytes as part of the executable file and read
+them from there.
+
+If we had a reasonable way to do that, then we could generate an fble function
+that takes the byte number as argument and returns the result. You could then
+turn that into pure execution.
+
+I don't think it's worth the trouble right now.
+
+The alternative would be to generate a profile on the fly, as part of the
+benchmark. That might be cool. But I don't want to go to the effort of
+implementing code to generate proper pprof format in fble right now.
+
+So, in summary, the answer is no. Don't figure this out in this release.
+
+Out of curiosity though, could I implement this in C using a big, constant
+array of bytes? What's the limit on file size? Where would the data end up?
+Maybe I'll play around a little.
+
+If I generate a C file with a const char data[] = { ... }, I see it showing up
+in the .rodata section of my executable. That could work, maybe? The generated
+C will be rather larger than I would like, but maybe that's a portable way to
+get the data into an executable?
+
+Anyway, something to think about another time.
+
+---
+
+Okay! Last thing before the release. That annoying GcRealloc bug that we don't
+have spec test coverage for.
+
