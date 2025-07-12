@@ -1,0 +1,7 @@
+# @@fble-test@@ compile-error 5:11
+#
+# The kind <@>@ is different from @
+@ Unit@ = *();
+<@>@ B@ = Unit@;
+
+B@;

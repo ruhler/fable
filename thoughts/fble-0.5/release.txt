@@ -511,3 +511,5 @@ Same goes for custom fble debugger.
 This is worth thinking about now. Let's make a decision this release to change
 the language or abandon this. If I decide to change the language, figure out
 how, but leave the changes for the next release.
+
+See thoughts/fble-0.5/kinds.txt for discussion and resolution.

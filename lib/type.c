@@ -925,6 +925,30 @@ bool FbleKindsEqual(FbleKind* a, FbleKind* b)
 }
 
 // See documentation in type.h
+bool FbleKindCompatible(FbleKind* expected, FbleKind* actual)
+{
+  switch (expected->tag) {
+    case FBLE_BASIC_KIND: {
+      return FbleGetKindLevel(expected) == FbleGetKindLevel(actual);
+    }
+
+    case FBLE_POLY_KIND: {
+      if (actual->tag != FBLE_POLY_KIND) {
+        return false;
+      }
+
+      FblePolyKind* pe = (FblePolyKind*)expected;
+      FblePolyKind* pa = (FblePolyKind*)actual;
+      return FbleKindCompatible(pe->arg, pa->arg)
+          && FbleKindCompatible(pe->rkind, pa->rkind);
+    }
+  }
+
+  FbleUnreachable("Should never get here");
+  return false;
+}
+
+// See documentation in type.h
 void FblePrintKind(FbleKind* kind)
 {
   switch (kind->tag) {

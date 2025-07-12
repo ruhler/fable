@@ -1,0 +1,12 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+# Test whether we can supply something of kind <<@>@>@ where something of kind
+# <@>@ is expected. Seems like we should be allowed to, given that we can
+# supply something of kind <@>@ where something of kind @ is expected.
+<<@>@>@ M@ = <<@>@ T@> { +(Unit@ nothing, T@ just); };
+M@ Nothing = <<@>@ T@> { M@<T@>(nothing: Unit); };
+
+M@<M@> m = Nothing<M@>;
+m.nothing;

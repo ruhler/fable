@@ -854,7 +854,7 @@ static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_
     // poly_apply
     FbleKind* expected_kind = poly_kind->arg;
     FbleKind* actual_kind = FbleGetKind(FbleTypeHeapGetContext(th), arg_type);
-    if (!FbleKindsEqual(expected_kind, actual_kind)) {
+    if (!FbleKindCompatible(expected_kind, actual_kind)) {
       ReportError(arg_loc,
           "expected kind %k, but found something of kind %k\n",
           expected_kind, actual_kind);

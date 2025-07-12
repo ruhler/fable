@@ -260,6 +260,20 @@ size_t FbleGetKindLevel(FbleKind* kind);
 bool FbleKindsEqual(FbleKind* a, FbleKind* b);
 
 /**
+ * @func[FbleKindCompatible] Tests if a kind is compatible with what's expected
+ *  @arg[FbleKind*][expected] The expected kind
+ *  @arg[FbleKind*][actual] The actual kind
+ *
+ *  @returns[bool]
+ *   True if the an object of actual kind can be used where an object of
+ *   expected kind is expected.
+ *
+ *  @sideeffects
+ *   None.
+ */
+bool FbleKindCompatible(FbleKind* expected, FbleKind* actual);
+
+/**
  * @func[FblePrintKind] Prints an FbleKind in human readable form to stderr.
  *  @arg[FbleKind*][kind] The kind to print.
  *

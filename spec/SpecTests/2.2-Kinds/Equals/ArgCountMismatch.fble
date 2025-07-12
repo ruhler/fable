@@ -1,5 +1,0 @@
-# @@fble-test@@ compile-error 5:17
-#
-# The kind <@>@ is different from @
-<@>@ Id@ = <@ A@> { A@; };
-<<@>@ B@> { Id@<B@>; };

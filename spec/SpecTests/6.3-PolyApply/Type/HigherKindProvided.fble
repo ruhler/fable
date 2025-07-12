@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 17:8
+# @@fble-test@@ no-error
 @ Unit@ = *();
 Unit@ Unit = Unit@();
 
@@ -7,19 +7,19 @@ Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);
 
 # Test storing polymorphic values on a generic container type.
-# TODO: Should this be allowed? The spec says no technically, but I think it
-# should be changed to yes.
+# The spec says we can do this based on compatibility (as opposed to equality)
+# of kinds in poly application.
 <@>@ Maybe@ = <@ T@> { +(Unit@ nothing, T@ just); };
 
 <@>@ Poly@ = <@ A@>(A@, A@) { A@; };
-Poly@ First = <@ A@>(A@ a, A@ b) { a; };
+Poly@ First = <@ A@>(A@ a, A@ _b) { a; };
 
 Maybe@<Poly@> mx = Maybe@(just: First);
 
 Bool@ true = mx.just(True, False);
 Unit@ _ = true.true;
 
-Maybe@<Bool@> nothing = mx.just(Maybe@(nothing: Unit), Maybe@(just: True));
+Maybe@<Bool@> nothing = mx.just(Maybe@<Bool@>(nothing: Unit), Maybe@(just: True));
 Unit@ _ = nothing.nothing;
 
 Unit;

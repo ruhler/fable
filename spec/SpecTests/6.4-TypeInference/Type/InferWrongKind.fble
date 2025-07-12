@@ -1,11 +1,9 @@
-# @@fble-test@@ compile-error 11:1
+# @@fble-test@@ compile-error 9:1
 @ Unit@ = *();
+Unit@ Unit = Unit@();
 
-<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
-Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
+<<@>@ T@> (T@) { T@; } Poly = <<@>@ T@> (T@ x) { x; };
 
-<@ T@> (T@) { T@; } Poly = <@ T@> (T@ x) { x; };
-
-# Inference would infer the type T@ as Maybe@, but that has the wrong kind for
+# Inference would infer the type T@ as Unit@, but that has the wrong kind for
 # Poly.
-Poly(Nothing);
+Poly(Unit);

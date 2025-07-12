@@ -218,13 +218,17 @@
   
    If a kind is used, the type of the variable is abstract in the bindings
    expressions. The actual type of the variable will be inferred from its
-   definition for use in the body of the let expression. As a restriction to
-   ensure type checking is possible, the kind of the variable is treated as a
-   basic kind in the bindings expressions. This restricts the set of recursive
-   types that can be described to ones that the type checker can handle
-   without difficulty. The rationale for requiring the full kind of the
-   variable instead of just whether it is a type or a value is that it helps
-   to document the kinds of values being defined in a machine checkable way.
+   definition for use in the body of the let expression. It is a type error if
+   the kind of the value of the variable is not equal to the kind specified
+   for the variable. As a restriction to ensure type checking is possible, the
+   kind of the variable is treated as a basic kind in the bindings
+   expressions. This restricts the set of recursive types that can be
+   described to ones that the type checker can handle without difficulty. The
+   rationale for requiring the full kind of the variable instead of just
+   whether it is a type or a value, and for requiring the kind of the value be
+   equal to the kind specified for the variable instead of compatible with, is
+   that it helps to document the kinds of values being defined in a machine
+   checkable way.
   
    If a type is used when defining a variable, that type is used for the type
    of the variable in the binding expressions. It must match the type of the
@@ -582,7 +586,6 @@
   function, and a type, specifying the type of value that can be supplied for
   the argument. A function has a return type, specifying the type of value
   that will result when applying the function.
-
   
   Functions are described using the fble expression language. A function can
   be applied to an argument of appropriate type to produce a value with the
@@ -713,6 +716,12 @@
    kinds of values can be used as arguments to polymorphic values.
   
    Two poly kinds are equal if they have the same argument and return kinds.
+
+   A kind is compatible with another kind if it is at least as polymorphic as
+   the other kind. For example, something of kind @L{<@>@} is compatible for
+   use when something of kind @L{@} is expected, but not the other way around.
+   A poly kind is compatible with another poly kind if both its argument and
+   return kinds are compatible with the other argument and return.
   
    A poly kind is considered a normal kind if its result kind is a normal
    kind, and a type kind of its result kind is a type kind.
@@ -720,7 +729,7 @@
    The argument kind of a poly kind must be a type kind.
   
    The concrete syntax allows you to specify multiple arguments in a poly
-   kind.  This is syntactic sugar for nested single argument poly kinds. For
+   kind. This is syntactic sugar for nested single argument poly kinds. For
    example, the following two expressions describe the same kind:
   
    @code[fble] @
@@ -775,6 +784,9 @@
    The type of a poly application is the type of the body of the poly value,
    with the abstract type variables substituted for the corresponding concrete
    type values provided as argument to the poly application.
+
+   It is a type error if the kind of the type argument is not compatible with
+   the kind of the argument expected by the poly.
   
    The runtime of a poly application is linear in the number of arguments plus
    the runtime of the poly. Unlike function application, poly application does

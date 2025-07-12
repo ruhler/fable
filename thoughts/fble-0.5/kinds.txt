@@ -205,3 +205,36 @@ If (4) turns out to be too involved, then punt that to the next release.
 ---
 
 (1) and (2) behave as I expected. I updated the spec for (3).
+
+Now, question about kind compatibility.
+
+I say we can use something of kind <@>@ where something of kind @ is expected.
+Fine.
+
+Now, can I use something of kind <<@>@>@ where something of kind <@>@ is
+expected? Should be able to, right? I should add a test for that.
+
+---
+
+The implementation to support use of higher poly kinds where lesser poly kinds
+are expected isn't bad at all. My real concern is... isn't this a little
+sketchy? It feels like it complicates the language.
+
+Sure, it let's you do something you couldn't before without a hacky
+workaround. But is it worth it? Does it make the kind system sufficiently
+harder to understand for sufficiently not valuable use cases that we shouldn't
+do it?
+
+Remember, a language doesn't have to do everything. It should do most of what
+we want well.
+
+On the other hand, one of the goals of my language is not to have any sharp
+corners or hard edges. This feels like the kind of thing that someone in the
+future will be like: why can't I do this? What kind of arbitrary restricting
+is this?
+
+---
+
+Let me go ahead with the change. If it causes major problems with language
+complexity and understanding or what not, worry about it later. If not, better
+to remove the hard edge, right?
