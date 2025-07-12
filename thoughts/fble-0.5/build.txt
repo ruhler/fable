@@ -82,3 +82,20 @@ Gnu coding conventions, standard targets:
 
 Note that 'test' is not one of them. So perhaps a better approach here is
 change the 'test' phony to, e.g. 'tests'?
+
+---
+
+* ./pkgs/graphics/Graphics/App.fble:133:41: error: module /Graphics/Usage% not
+  found
+  From clean build. What's up?
+
+Reproducible via clean build with:
+  ninja ./out/pkgs/graphics/tests-interpreted.tr
+
+Same thing with out/pkgs/md5/Md5/tests.tr, and maybe others.
+
+I see we don't have an explicit dependency in place. Where should it be going?
+
+We can't rely on implicit dependencies for fble scanning includes, because the
+file isn't generated yet. I need an explicit dependency. Which needs to go
+through run_stdio_test and run_stdio I guess.

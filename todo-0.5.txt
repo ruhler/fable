@@ -6,10 +6,6 @@ Things to consider doing for the fble-0.5 release.
   found
   From clean build. What's up?
 
-* test/fble-pprof-test.tr depends on build directory.
-  Because it hard codes the path to profile.c.
-  Don't do this.
-
 * Clean up how build works.
   See thoughts/fble-0.5/build.txt.
 
