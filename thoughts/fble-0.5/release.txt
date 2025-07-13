@@ -627,3 +627,14 @@ stack, and finally reference that final 'X' and see it isn't what we expect.
 Maybe it's doable. Let me play around.
 
 Hey! I got it. Cool.
+
+---
+
+Let's update the release notes, then start putting out some release
+candidates.
+
+Things to add to the release notes:
+* Binary mode for stdio Read and Write?
+* Allow higher poly kinds where less high poly kinds expected?
+
+Those are the only two potentially worthwhile entries to add.

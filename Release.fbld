@@ -6,11 +6,16 @@
 
   @subsection Fble Language
    @item Replaced abstract types feature with a new private types feature.
+   @item Allow poly kinded values to be used where basic kinds are expected.
 
   @subsection Fble Implementation
    @item Completely revamped profiling support. We now generate pprof profiles.
    @item Substantial performance improvements.
+   @item Fix support for building in the source directory.
    @item Miscellaneous backwards incompatible API changes.
+
+  @subsection Library
+   @item Open files for read and write in binary mode.
 
   @subsection Applications
    @item Implemented @l{fble-pprof} application for viewing pprof profiles.

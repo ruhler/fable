@@ -1,6 +1,0 @@
-Fble 0.5 TODO
-=============
-Things to consider doing for the fble-0.5 release.
-
-* Write release notes.
- - Add update to treatment of kinds.
