@@ -68,14 +68,14 @@ namespace eval "pkgs/core" {
     "-I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld" \
-    "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
+    "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% interpreted test 2.
   run_stdio $::b/pkgs/core/Core/Stdio/fble-cat.2.out \
     "-I $::s/pkgs/core -m /Core/Stdio/Cat% -- $::s/README.fbld"
   test $::b/pkgs/core/Core/Stdio/fble-cat.2.tr \
     "$::b/pkgs/core/Core/Stdio/fble-cat.2.out" \
-    "diff --strip-trailing-cr $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
+    "diff -Z $::b/pkgs/core/Core/Stdio/fble-cat.2.out $::s/README.fbld"
 
   # /Core/Stdio/Cat% compiled.
   stdio $::b/pkgs/core/fble-cat "/Core/Stdio/Cat%" "" ""
@@ -93,7 +93,7 @@ namespace eval "pkgs/core" {
     "$::b/pkgs/core/fble-fast-cat < $::s/README.fbld > $::b/pkgs/core/fble-fast-cat.out"
   test $::b/pkgs/core/fble-fast-cat.tr \
     "$::b/pkgs/core/fble-fast-cat.out $::s/README.fbld" \
-    "diff --strip-trailing-cr $::b/pkgs/core/fble-fast-cat.out $::s/README.fbld"
+    "diff -Z $::b/pkgs/core/fble-fast-cat.out $::s/README.fbld"
 
   # /Core/Stdio/HelloWorld% interpreted test.
   run_stdio $::b/pkgs/core/Core/Stdio/fble-stdio.out \
