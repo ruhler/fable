@@ -609,3 +609,21 @@ Anyway, something to think about another time.
 Okay! Last thing before the release. That annoying GcRealloc bug that we don't
 have spec test coverage for.
 
+To test it, the scenario I want is something like:
+
+List@ X = List@(cons: @(head: a, tail: Append(long_list, X)));
+
+The key points being:
+* The value for X is stack allocated, because it's a union_value expression.
+* The value for X refers to a GC allocated value: the tail, which consists of
+  a long list, which ought to have turned into a GC allocated value by now.
+* The GC value refers to the recursive value X, because we appended X to the
+  end.
+
+Then we have to GC allocate the resulting reference value, which leaves a
+dangling pointer in the tail to the final 'X'. Then we have to smash the
+stack, and finally reference that final 'X' and see it isn't what we expect.
+
+Maybe it's doable. Let me play around.
+
+Hey! I got it. Cool.

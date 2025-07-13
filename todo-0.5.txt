@@ -2,13 +2,5 @@ Fble 0.5 TODO
 =============
 Things to consider doing for the fble-0.5 release.
 
-* Add spec test that would catch the bug if we failed to GcRealloc a value
-  before ref assignment.
-  - ref assign to a value which is stack alloc -> gc alloc -> ref.
-  - The issue being, after substitution, we would end up with:
-    stack -> gc -> stack, and when we return that, we would gc allocate it
-    into: gc -> gc -> stack, and that stack value would then be dangling and
-    likely to get overwritten.
-
 * Write release notes.
  - Add update to treatment of kinds.

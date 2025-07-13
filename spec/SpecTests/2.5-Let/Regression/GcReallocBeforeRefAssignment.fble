@@ -1,0 +1,49 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+@ Nat@ = /SpecTests/Nat%.Nat@;
+% Nat = /SpecTests/Nat%.Nat;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
+
+# Regression test for a hypothetical bug where we forget to GcRealloc a value
+# before ref value assignment.
+@ Value@ = +(Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f);
+@ List@ = *(Value@ head, List@ tail);
+
+(Nat@, List@) { List@; } MakeLongList = (Nat@ n, List@ tail) {
+  S@ s = S(n);
+  s.?(Z: tail, S: List@(Value@(a: Unit), MakeLongList(s.S, tail)));
+};
+
+(Nat@, List@) { List@; } Drop = (Nat@ n, List@ l) {
+  S@ s = S(n);
+  s.?(Z: l, S: Drop(s.S, l.tail));
+};
+
+Nat@ N = Nat|1000000;
+
+(Nat@, Bool@, List@) { List@; } MakeRecursives = (Nat@ n, Bool@ first, List@ result) {
+  # Make a long large recursive value whose first node is on the stack, which
+  # points to GC allocated values, which point back to the original reference.
+  List@ x = List@(Value@(f: Unit), MakeLongList(N, x));
+  List@ r = first.?(true: x, false: result);
+
+  # Overwrite anything remaining on the stack by doing tail recursion a bunch
+  # of times.
+  S@ s = S(n);
+  s.?(Z: r, S: MakeRecursives(s.S, False, r));
+};
+
+List@ undef;
+List@ smashed = MakeRecursives(Nat|100000, True, undef);
+
+# When we had the bug, the second occurence of that special 'f' value on the
+# list will have been clobbered and overwritten. Otherwise it should still be
+# there.
+Drop(N, smashed).tail.head.f;
