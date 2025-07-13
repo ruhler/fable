@@ -15,7 +15,7 @@
    @item Miscellaneous backwards incompatible API changes.
 
   @subsection Library
-   @item Open files for read and write in binary mode.
+   @item Add mode option for reading and writing files.
 
   @subsection Applications
    @item Implemented @l{fble-pprof} application for viewing pprof profiles.

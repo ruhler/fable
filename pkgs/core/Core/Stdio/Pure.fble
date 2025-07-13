@@ -17,6 +17,7 @@
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
+@ Mode@ = /Core/Stdio%.Mode@;
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
@@ -65,13 +66,15 @@ Pure@<Maybe@<Int@>> In = {
   State.Set(PureState@(s.in, s.out, Cons(b, s.err)));
 };
 
-(String@) { Pure@<Maybe@<IStream@<Pure@>>>; } Read = (String@ _filename) {
+(String@, Mode@) { Pure@<Maybe@<IStream@<Pure@>>>; }
+Read = (String@ _filename, Mode@ _mode) {
   # TODO: Add a map from file name to List@<Int@> to allow modeling of the
   # filesystem.
   Monad.return(Nothing<IStream@<Pure@>>);
 };
 
-(String@) { Pure@<Maybe@<OStream@<Pure@>>>; } Write = (String@ _filename) {
+(String@, Mode@) { Pure@<Maybe@<OStream@<Pure@>>>; }
+Write = (String@ _filename, Mode@ _mode) {
   # TODO: Add a map from file name to List@<Int@> to allow modeling of the
   # filesystem.
   Monad.return(Nothing<OStream@<Pure@>>);

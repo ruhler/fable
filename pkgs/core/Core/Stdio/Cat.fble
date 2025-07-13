@@ -40,7 +40,7 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
     Maybe@<I.IStream@> istream <- m.do({
       /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
-      stdio.read(filename);
+      stdio.read(filename, /Core/Stdio%.Text);
     });
 
     istream.?(nothing: {

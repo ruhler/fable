@@ -52,7 +52,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     String@ filename = filenames.cons.head;
     Maybe@<IStream@<M@>> fin <- m.do({
       /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
-      stdio.read(filename);
+      stdio.read(filename, /Core/Stdio%.Text);
     });
 
     fin.?(nothing: {

@@ -9,6 +9,8 @@
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
+@ Mode@ = /Core/Stdio%.Mode@;
+
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -16,8 +18,8 @@
 IO@<Maybe@<Int@>> Stdin;
 (Int@, World@) { R@<Unit@>; } Stdout;
 (Int@, World@) { R@<Unit@>; } Stderr;
-(String@, World@) { R@<Maybe@<IStream@<IO@>>>; } Read;
-(String@, World@) { R@<Maybe@<(Int@, World@) { R@<Unit@>; }>>; } Write;
+(String@, Mode@, World@) { R@<Maybe@<IStream@<IO@>>>; } Read;
+(String@, Mode@, World@) { R@<Maybe@<(Int@, World@) { R@<Unit@>; }>>; } Write;
 (String@, World@) { R@<Maybe@<String@>>; } GetEnv;
 
 @(Stdin, Stdout, Stderr, Read, Write, GetEnv);

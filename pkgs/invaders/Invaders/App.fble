@@ -112,7 +112,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Strs[home.just, Str|'/.fble-invaders'];
-    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename));
+    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename, /Core/Stdio%.Text));
     istream.?(nothing: m.return(Int|0));
 
     String@ text <- m.do(I.GetText(istream.just));
@@ -139,7 +139,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     home.?(nothing: m.return(Unit));
 
     String@ filename = Strs[home.just, Str|'/.fble-invaders'];
-    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename));
+    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));
     ostream.?(nothing: m.return(Unit));
 
     Unit@ _ <- m.do(O.PutStr(ostream.just, /Core/Int/Show%.Show(new_high_score)));

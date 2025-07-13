@@ -11,6 +11,13 @@
 
 @ String@ = /Core/String%.String@;
 
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Mode@ = +(Unit@ text, Unit@ binary);
+Mode@ Text = Mode@(text: Unit);
+Mode@ Binary = Mode@(binary: Unit);
+
 # Stdio@ --
 #   Interface for standard input and output operations.
 <<@>@>@ Stdio@ = <<@>@ M@> { *(
@@ -25,11 +32,11 @@
 
   # Open the named file for reading.
   # Returns an input stream for reading. Nothing if unable to open the file.
-  (String@) { M@<Maybe@<IStream@<M@>>>; } read,
+  (String@, Mode@) { M@<Maybe@<IStream@<M@>>>; } read,
 
   # Open the named file for writing.
   # Returns an output stream for writing. Nothing if unable to open the file.
-  (String@) { M@<Maybe@<OStream@<M@>>>; } write,
+  (String@, Mode@) { M@<Maybe@<OStream@<M@>>>; } write,
 
   # Gets an environment variable value.
   (String@) { M@<Maybe@<String@>>; } getenv
@@ -49,4 +56,4 @@
 #   program failed and should exit non-zero.
 <<@>@>@ Main@ = <<@>@ M@>(Stdio@<M@>, Monad@<M@>, List@<String@>) { M@<Bool@>; };
 
-@(Stdio@, Main@);
+@(Stdio@, Main@, Mode@, Text, Binary);

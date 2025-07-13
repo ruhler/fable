@@ -39,7 +39,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (String@) { M@<Bool@>; } md5 = (String@ filename) {
     Maybe@<IStream@<M@>> istream <- m.do({
       /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
-      stdio.read(filename);
+      stdio.read(filename, /Core/Stdio%.Binary);
     });
 
     istream.?(nothing: {

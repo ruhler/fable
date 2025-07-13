@@ -638,3 +638,41 @@ Things to add to the release notes:
 * Allow higher poly kinds where less high poly kinds expected?
 
 Those are the only two potentially worthwhile entries to add.
+
+---
+
+Trouble with line endings on windows.
+
+What's happening, I suspect, is that when github checks out fble, it does so
+in windows using native line endings, so, e.g., fbld/SpecTests.fbld is checked
+out with \r\n line endings instead of \n line endings. Now fble-fbld reads it
+as a binary file, we see the \r\n line endings, but the fbld parser only
+checks for \n line endings and we fail to parse.
+
+What's the right solution here? There are lots of hacks we could use.
+
+Add support for parsing \r\n directly in fbld?
+* Sounds like the wrong approach. We should be allowed to rely on \n only
+  coming in from the file we read. That's how everyone else does it.
+
+Provide a way to open the file in text mode?
+* That's what the rest of the world does. I don't like that we need to
+  identify and treat text files differently from binary files.
+
+Configure git to always check out files with \n?
+* But some people probably want to have them checked out with \r\n if working
+  on things on windows, and it seems unfair not to allow them to.
+
+All of which means, apparently, I need to bow down, take the hit, and require
+users to specify text versus binary when opening a file to read or write.
+  
+  (String@) { M@<Maybe@<IStream@<M@>>>; } read,
+  (String@) { M@<Maybe@<OStream@<M@>>>; } write,
+
+Become:
+
+  (String@, Mode@) { M@<Maybe@<IStream@<M@>>>; } read,
+  (String@, Mode@) { M@<Maybe@<OStream@<M@>>>; } write,
+
+Ugh. Annoying, but it should solve all my problems. Let's try it.
+

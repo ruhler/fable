@@ -27,6 +27,7 @@
 #define BOOL_TAGWIDTH 1
 #define LIST_TAGWIDTH 1
 #define RESULT_FIELDC 2
+#define MODE_TAGWIDTH 1
 
 static FbleValue* IStreamImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -146,7 +147,7 @@ static FbleValue* OStreamImpl(
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (String@, World@) { R@<Maybe@<IStream@<R@>>>; }
+ *   (String@, Mode@, World@) { R@<Maybe@<IStream@<R@>>>; }
  */
 static FbleValue* ReadImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -155,8 +156,10 @@ static FbleValue* ReadImpl(
   (void)profile;
 
   char* filename = FbleStringValueAccess(args[0]);
-  FbleValue* world = args[1];
-  FILE* fin = fopen(filename, "rb");
+  const char* mode = FbleUnionValueTag(args[1], MODE_TAGWIDTH) ? "rb" : "r";
+
+  FbleValue* world = args[2];
+  FILE* fin = fopen(filename, mode);
   FbleFree(filename);
 
   FbleValue* mstream;
@@ -179,7 +182,7 @@ static FbleValue* ReadImpl(
  *  The fble type of the function is:
  *
  *  @code[fble] @
- *   (String@, World@) { R@<Maybe@<OStream@<R@>>>; }
+ *   (String@, Mode@, World@) { R@<Maybe@<OStream@<R@>>>; }
  */
 static FbleValue* WriteImpl(
     FbleValueHeap* heap, FbleProfileThread* profile,
@@ -188,8 +191,10 @@ static FbleValue* WriteImpl(
   (void)profile;
 
   char* filename = FbleStringValueAccess(args[0]);
-  FbleValue* world = args[1];
-  FILE* fin = fopen(filename, "wb");
+  const char* mode = FbleUnionValueTag(args[1], MODE_TAGWIDTH) ? "wb" : "w";
+
+  FbleValue* world = args[2];
+  FILE* fin = fopen(filename, mode);
   FbleFree(filename);
 
   FbleValue* mstream;
@@ -299,7 +304,7 @@ static FbleValue* OStream(FbleValueHeap* heap, FILE* file, FbleBlockId module_bl
 static FbleValue* Read(FbleValueHeap* heap, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
-    .num_args = 2,
+    .num_args = 3,
     .num_statics = 0,
     .max_call_args = 0,
     .run = &ReadImpl,
@@ -318,7 +323,7 @@ static FbleValue* Read(FbleValueHeap* heap, FbleBlockId module_block_id)
 static FbleValue* Write(FbleValueHeap* heap, FbleBlockId module_block_id)
 {
   FbleExecutable exe = {
-    .num_args = 2,
+    .num_args = 3,
     .num_statics = 0,
     .max_call_args = 0,
     .run = &WriteImpl,

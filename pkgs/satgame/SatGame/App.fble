@@ -123,7 +123,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     home.?(nothing: m.return(Int|0));
 
     String@ filename = Strs[home.just, Str|'/.fble-satgame'];
-    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename));
+    Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename, /Core/Stdio%.Text));
 
     Int@ seed <- m.do({
       istream.?(nothing: m.return(Int|0));
@@ -131,7 +131,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
       m.return(/Core/Int/Show%.Read(text));
     });
 
-    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename));
+    Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));
     Unit@ _ <- m.do({
       ostream.?(nothing: m.return(Unit));
       O.PutStr(ostream.just, /Core/Int/Show%.Show(Incr(seed)));

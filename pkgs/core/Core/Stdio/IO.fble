@@ -16,6 +16,7 @@
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+@ Mode@ = /Core/Stdio%.Mode@;
 
 @ String@ = /Core/String%.String@;
 
@@ -36,9 +37,9 @@ Stdio@<IO@> StdioIO = @(
   in: Builtin.Stdin,
   out: (Int@ s, World@ w) { Builtin.Stdout(s, w); },
   err: (Int@ s, World@ w) { Builtin.Stderr(s, w); },
-  read: (String@ s, World@ w) { Builtin.Read(s, w); },
-  write: (String@ s, World@ w) {
-    R@<Maybe@<(Int@, World@) { R@<Unit@>; }>> r = Builtin.Write(s, w);
+  read: (String@ s, Mode@ m, World@ w) { Builtin.Read(s, m, w); },
+  write: (String@ s, Mode@ m, World@ w) {
+    R@<Maybe@<(Int@, World@) { R@<Unit@>; }>> r = Builtin.Write(s, m, w);
     r.x.?(nothing: @(s: r.s, x: Nothing<OStream@<IO@>>));
     @(s: r.s, x: Just((Int@ s, World@ w) { r.x.just(s, w); }));
   },
