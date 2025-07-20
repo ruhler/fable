@@ -194,3 +194,36 @@ If we made the Unit@ type abstract, it would be nice if the header was:
 
 And the implementation was that actual implementation. And we put all the
 documentation on the header file.
+
+---
+
+dcget.tcl already supports extracting all the dc comments from a .c file.
+That's what you get if you don't specify an id explicitly.
+
+So what would be nice is to generalize dcget.tcl to work for either ' * ' or
+'# ' as the prefix.
+
+Done. Easy.
+
+I would like it if I could write @module for fble modules rather than @file.
+Give the module name, not the file name.
+
+Done. Easy.
+
+Next step is generating html from doc comments for a file. This is slightly
+tricky in that we don't have entities nested within @file or @module. It's
+just a flat list of entities where hopefully @file or @module is present and
+comes first.
+
+Anyway, what I would like to generate in html output is:
+
+<module/file name>
+<module/file description>
+<list of entities with their summaries>
+for each entity:
+  <entity name>
+  <entity summary>
+  <entity description>
+
+And have the initial list of entities link to the corresponding detailed
+entry.

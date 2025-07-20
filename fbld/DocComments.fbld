@@ -3,10 +3,10 @@
  
  @section Introduction
   Doc comments are a way of documenting functions in source code using fbld
-  document syntax. Top level fbld tags @l{@file}, @l{@struct}, @l{@union},
-  @l{@enum} @l{@value}, and @l{@func} are defined for describing files,
-  structs, unions, enums values, and functions.  Convention is used to embed
-  fbld markup in comments.
+  document syntax. Top level fbld tags @l{@file}, @l{@module}, @l{@struct},
+  @l{@union}, @l{@enum} @l{@value}, and @l{@func} are defined for describing
+  files, modules, structs, unions, enums values, and functions. Convention is
+  used to embed fbld markup in comments.
 
  @section Example
   Here is an example of writing doc comments in C code:
@@ -60,6 +60,13 @@
 
   @code[fbld] @
    @file[name][description]
+
+ @section @l{@module}
+  The @l{@module} tag is used to describe the contents of an fble module. The
+  module command takes two arguments: the module path and a description.
+
+  @code[fbld] @
+   @module[path][description]
  
  @section @l{@struct}
   The @l{@struct} tag is used to describe a struct type. The struct command
@@ -168,12 +175,16 @@
   starting with @l{' * '} and continuing as long as lines continue to start
   with @l{' * '}.
 
+  In fble code and other languages with @l{#} as the comment line character,
+  doc comments are placed in comments with a single space after the @l{#}
+  character.
+
   Other languages can use similar conventions of placing doc comments in
   comments with doc comment tags up to the end of the comment.
 
   Technically it doesn't matter where in the source code the doc comment is
-  placed. It's recommended to put @l{@file} at the start of the file and
-  other tags just before the corresponding entity is defined.
+  placed. It's recommended to put @l{@file} and @l{@module} at the start of
+  the file and other tags just before the corresponding entity is defined.
 
  @section Use of Doc Comments
   Doc comments can be used for the following purposes:

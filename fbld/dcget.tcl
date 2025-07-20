@@ -1,8 +1,8 @@
-# Extracts a document comment from a C file.
+# Extracts a document comment from a source file.
 #
 # Usage: tclsh8.6 dcget.tcl ID < FILE
 #  Where ID is the name of an identifier whose doc comment to extract.
-#    and FILE is a C header or implementation file.
+#    and FILE is a header or implementation file.
 #
 #  If no ID is provided, all doc comments are extracted.
 #
@@ -13,14 +13,19 @@
 #  * ...
 #  */
 #
+# Or of the form:
+# # @func[ID] ...
+# # ...
+# # ...
+#
 # Which is extracted as:
 # @func[ID] ...
 # ...
 # ...
 #
 # The following document tags are currently supported:
-#  @file, @func, @struct, @union, @enum, @value
-set tags [list "func" "file" "struct" "union" "enum" "value"]
+#  @file, @func, @module, @struct, @union, @enum, @value
+set tags [list "func" "file" "module" "struct" "union" "enum" "value"]
 
 lappend argv "*"
 set id [lindex $argv 0]
@@ -30,7 +35,7 @@ set lines [split $input_text "\n"]
 set in_doc_comment false
 set found [string equal $id "*"]
 foreach line [split $input_text "\n"] {
-  if {[string first " * " "$line "] != 0} {
+  if {[string first " * " "$line "] != 0 && [string first "# " "$line "] != 0} {
     set in_doc_comment false
   }
 
@@ -38,16 +43,30 @@ foreach line [split $input_text "\n"] {
     if {[string match " \* @$tag\\\[$id\\\]*" $line] == 1} {
       set in_doc_comment true
       set found true
+      set offset 3
+    }
+
+    if {[string match "# @$tag\\\[$id\\\]*" $line] == 1} {
+      set in_doc_comment true
+      set found true
+      set offset 2
     }
 
     if {[string match " \* @$tag $id" $line] == 1} {
       set in_doc_comment true
       set found true
+      set offset 3
+    }
+
+    if {[string match "# @$tag $id" $line] == 1} {
+      set in_doc_comment true
+      set found true
+      set offset 2
     }
   }
 
   if {$in_doc_comment} {
-    puts [string range $line 3 end]
+    puts [string range $line $offset end]
   }
 }
 
