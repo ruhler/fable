@@ -1,0 +1,10 @@
+Unit
+====
+
+Fble Existing API:
+* Unit@ type.
+* Unit constructor.
+* Standard interfaces: Eq, Show
+
+I don't see anything of interest in existing standard libraries that I'm
+missing, standard interfaces excluded.

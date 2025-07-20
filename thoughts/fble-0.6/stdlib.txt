@@ -1,0 +1,100 @@
+Standard Library
+================
+Goal this release: revamp the standard library.
+
+But in what sense?
+
+Completeness:
+  Add support for all the kinds of functions people expect in a standard
+  library. At least for the data types I already have some support for in my
+  library.
+
+Test coverage:
+  Full test coverage might be nice?
+
+Documentation:
+  Consistent, full, fbld based documentation of all the types and functions in
+  the standard library. Maybe also with tutorials or similar style
+  documentation.
+
+Goodness:
+  Express the library in a good way. In the sense that it composes well and
+  generalizes well, so you can reuse it easily for your task.
+
+Performance:
+  Consider optimizing the implementation, or understanding any implications of
+  API decisions on the performance.
+
+How do I know what's good?
+* Compare with other standard libraries for completeness.
+* Maybe review changes to other standard libraries over time to see the kinds
+  of issues to watch out for?
+* Test coverage and documentation should be easy.
+* Implementing rosetta code tasks might be a good way to evaluate the library
+  once I have a decent first draft of it.
+
+Existing standard library support:
+* Booleans
+* Characters
+* Random (LFSR)
+* Hashing (CRC, MD5)
+* Integers
+* Lists
+* Strings
+* Maps, Sets
+* Maybe
+* Monad
+* Unit
+* IO, Files
+* Networking
+* Fifo (is this used by anything?)
+* Unit testing
+* Applications: Drawing, Events, Effects.
+
+I vote to start with the easy(?) stuff:
+* Unit, Bool, Char, Maybe
+* Integers
+* List, String, Map, Set
+
+See what the experience is working on those before moving on to the harder
+stuff like IO and applications.
+
+Existing libraries to use for reference and inspiration:
+* C, C++, Java, python, Haskell, go
+
+How about we start with Unit and Bool?
+
+---
+
+Something that has become clear right away is there are a set of standard
+interfaces which all types ought to support if they can. Things like Eq, Ord,
+Show. I'll want to identify what standard interfaces make sense in fble.
+Presumably standard interfaces don't make sense in a vacuum, but rather come
+out of other APIs. For example, a Sort API may suggest we want a compare
+interface that is standard. Keep an eye out for where those show up.
+
+Anyway, Unit and Boolean have pretty clear APIs. Basically what I already
+have. How should I document them and/or test them to make it 'officially'
+clean?
+
+* A specification for the library, not necessarily tied to an implementation.
+
+Seems like I should leverage all the kinds of documentation I can:
+* On types, on functions, on modules.
+
+Perhaps one approach to start with would be set up infrastructure for
+generating documentation for the standard library.
+
+What else is there, besides that? Tutorial-like documentation would be good.
+
+Do we want separate header files for everything, or only where that makes
+sense? Should the header file be the specification, then the implementation
+can be whatever you want?
+
+So:
+* Reference documentation (entity and file level?).
+* Tutorial documentation (as file level reference documentation?).
+* Header?
+* Implementation.
+* Test suite.
+

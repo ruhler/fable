@@ -63,6 +63,7 @@ Things to consider doing for the fble-0.6 release.
  - Add some way to catch or recover from errors at runtime?
  - Some way to implement a web server that can handle multiple requests
    concurrently?
+ - Think seriously about compatibility as the language and libraries evolve.
 
 * Fbld Language
  - modularity

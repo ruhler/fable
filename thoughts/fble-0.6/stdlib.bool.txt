@@ -1,0 +1,35 @@
+Bool
+====
+
+Fble Existing API:
+* Bool@, True, False,
+* And, Or, Not
+* Standard interfaces: Eq, Show, Ord
+
+C stdbool:
+* bool, true, false.
+* inherits !, &&, ||
+
+Anything have anything besides those things?
+
+Java has:
+* comparison, equality, hashcode, to string, parsing
+* xor
+
+Haskell has instances for:
+* Bounded, Enum, Eq, Data, Ord, Read, Show, Ix, Generic, ...
+
+Haskell also has:
+* otherwise as another name for True.
+
+So, aside from 'standard interfaces', bool is straight forward. I'm not sure
+if we need Xor or not, but it can't hurt to have.
+
+How, then, do I go about making this official?
+
+---
+
+What do I think about making the type abstract or not?
+
+Uh, it can't be abstract to support conditional behavior in any reasonable
+way.
