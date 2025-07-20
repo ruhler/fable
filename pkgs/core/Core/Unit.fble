@@ -1,15 +1,20 @@
-# Unit@ --
-#  The unit type that has a single inhabitant.
+# @struct[Unit@] A type with a single inhabitant.
+#  Useful for building more complex types and when the value being passed to
+#  or returned by a function doesn't matter.
 #
-# Example Use:
-#   ABC@ = +(Unit@ a, Unit@ b, Unit@ c);
+#  Example Use:
+#
+#  @code[fble] @
+#   Bool@ = +(Unit@ true, Unit@ false);
 @ Unit@ = *();
 
-# Unit --
-#   The single inhabitant of the unit type.
+# @value[Unit] The single inhabitant of the @l{Unit@} type.
+#  @type[Unit@]
 #
-# Example Use:
-#   ABC@(a: Unit);
+#  Example Use:
+#
+#  @code[fble] @
+#   Bool(true: Unit);
 Unit@ Unit = Unit@();
 
 @(Unit@, Unit);

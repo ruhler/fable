@@ -1,0 +1,10 @@
+
+# https://rosettacode.org/wiki/Empty_program
+#
+# Task
+#
+# Create the simplest possible program that is still considered "correct."
+
+# This program evalutes to the zero-argument struct type, commonly referred to
+# as Unit@.
+*();

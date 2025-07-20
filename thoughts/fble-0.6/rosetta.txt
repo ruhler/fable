@@ -1,0 +1,16 @@
+Rosetta Code for Fble
+=====================
+
+This is a good test of the standard library. Let's look at some of the
+problems we might start with and what standard library modules they would
+depend on.
+
+Category Simple:
+ A+B:
+  Int@, Stdio@
+
+ Boolean Values:
+  Bool@
+
+ Halt and Catch Fire:
+  Undef@

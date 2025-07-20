@@ -98,3 +98,99 @@ So:
 * Implementation.
 * Test suite.
 
+---
+
+What is a standard library?
+* Packages shipped with the language that you can assume will be installed
+  anywhere the language is installed?
+* Packages owned by the language developers?
+* Packages that have matured enough to be generally useful and stable,
+  regardless of who develops them?
+
+There is a clear cost to writing code that depends on something other than the
+standard library. Users have to download what it depends on. It feels less
+trustworthy. So there is a clear benefit of having a comprehensive standard
+library people can rely on.
+
+When I was originally organizing code into packages, I was thinking in terms
+of minimizing unnecessary dependencies. 'Core' was the minimal set of modules
+needed to have a self testing module. Except then I wanted to add more things
+like Map and other utilities not needed for testing.
+
+Of the existing packages I have, the following could be reasonable to include
+in a standard library:
+* Core
+* App
+* Md5
+* Network
+
+The rest are fairly obviously overly specific and not generally useful to
+include in a standard library. Though potentially they could be if they
+matured and were rewritten with library use in mind.
+
+Should the standard library be a single package, or should we allow it to
+include multiple packages? How should the packages of the standard library be
+named, and what package path should they use?
+
+For example:
+* /Core/Unit%, or /StdLib/Unit%, or /StdLib/Core/Unit%?
+
+I'm tempted to say /StdLib/Unit%, and all of core goes directly into /StdLib,
+but that app is a separate package using /StdLib/App%? Except, that would give
+App access to std-lib private stuff, which I'd prefer not to have.
+
+So I don't have a good answer for this right now. Which suggests I keep things
+as they were.
+
+Another question: should tests of the standard library be included in the
+standard library? I don't expect anyone to want to reuse those tests. Seems
+like it makes sense to separate those out into another package to help
+minimize dependencies?
+
+I like the idea of reserving a part of the module path to designate 'trusted,
+stable, standard' library, separate from packages.
+
+* /Std/Core/Unit%? /Standard/Core/Unit%?
+* /Std/Unit%?
+  This seems like the nicest to use of all I've shown so far.
+
+In theory Unit could be a separate package from Bool. Unless we want to say
+/Std/Unit/Eq% has to belong to Unit package, but that depends on Bool. That's
+the common interfaces case. We could put that into /Std/Eq/Unit% as well
+though. If instead we had some abstract type Foo%, though, like Int%,
+/Std/Eq/Int% might not be possible if it needs internal access to the Int%
+type.
+
+---
+
+I want to leverage documentation to feel like I'm making progress on the
+standard library. Each module of the standard library should produce a single
+.html page from fbld doc comments, which I can bundle together as part of
+www.
+
+Needs:
+* Decide on how to indicate fbld doc comment in fble.
+  Is it just: # @..., or double #, or something else?
+* Implement a doc comment file -> html .fbld conversion.
+* Add a build rule listing the modules to include documented in the standard
+  library. Only public modules should be used, not internal.
+
+It seems like it would be nice to have header files for all the public
+modules, and none of the internal modules. Which suggests we document the
+header files, not the implementation files. I wish I didn't have to duplicate
+code though.
+
+Hmm... Here's an interesting question. Should the Unit type be abstract?
+There's no need to construct something of unit type when you have 'Unit'.
+There's no reason to try to deconstruct something of unit type, except as a
+hack to see if something is undefined?
+
+If we made the Unit@ type abstract, it would be nice if the header was:
+
+  @ Unit@;
+  Unit@ Unit;
+
+  @(Unit@, Unit);
+
+And the implementation was that actual implementation. And we put all the
+documentation on the header file.
