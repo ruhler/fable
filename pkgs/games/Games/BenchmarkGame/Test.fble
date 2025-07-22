@@ -18,7 +18,7 @@
 
 @ Test@ = /Core/Test%.Test@;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 (String@, Main@, String@, String@, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {

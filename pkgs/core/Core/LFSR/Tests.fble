@@ -24,7 +24,7 @@
 % TestSuite = /Core/Test%.TestSuite;
 % Test = /Core/Test%.Test;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 (LFSR@, Int@) { List@<Bit@>; }
 ShiftN = (LFSR@ lfsr, Int@ n) {

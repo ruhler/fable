@@ -11,7 +11,7 @@
 
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 % State = /Core/Monad/State%<List@<Int@>>;
 

@@ -4,7 +4,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 # An input stream of bytes.
 # The bytes are read out of a monadic type M@.

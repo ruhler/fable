@@ -5,8 +5,8 @@
 
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 # Debug@ is a function to print something to a debug stream if a 
 # certain debug level is enabled. For example, to print something at debug

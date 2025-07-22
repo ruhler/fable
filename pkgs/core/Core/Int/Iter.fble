@@ -11,7 +11,7 @@
 <@>% Has = /Core/Iter%.Has;
 <@>% End = /Core/Iter%.End;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

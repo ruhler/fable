@@ -21,7 +21,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 
 Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {

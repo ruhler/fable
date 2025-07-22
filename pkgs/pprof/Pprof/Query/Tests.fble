@@ -14,7 +14,7 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
 @ Block@ = /Pprof/Profile%.Block@;

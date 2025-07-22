@@ -52,8 +52,8 @@
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 <@>% For = /Core/Maybe%.For;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

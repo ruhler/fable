@@ -19,7 +19,7 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 <<@>@>% Debug = /Sat/Debug%.Debug;
 

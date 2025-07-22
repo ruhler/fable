@@ -11,7 +11,7 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 # A hello world program using the Stdio@ interface.
 Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _args) {

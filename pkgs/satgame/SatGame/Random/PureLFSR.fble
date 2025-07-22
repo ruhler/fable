@@ -22,7 +22,7 @@
 
 % State = /Core/Monad/State%<LFSR@>;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 <<@>@>@ Random@ = /SatGame/Random%.Random@;
 

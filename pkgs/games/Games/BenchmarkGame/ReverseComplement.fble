@@ -25,8 +25,8 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 # Header includes the initial '>' character, for convenience.
 @ Seq@ = *(String@ header, String@ codes);

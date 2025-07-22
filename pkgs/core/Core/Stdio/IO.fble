@@ -20,7 +20,7 @@
 
 @ String@ = /Core/String%.String@;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 % Builtin = /Core/Stdio/IO/Builtin%;
 

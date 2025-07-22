@@ -1,7 +1,7 @@
 
 % True = /Core/Bool%.True;
 <@>@ Eq@ = /Core/Eq%.Eq@;
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 # Eq --
 #   Instance of Eq@ for Unit@.

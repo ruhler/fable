@@ -1,4 +1,4 @@
-# @module[/Core/Unit%] 
+# @module[/Std/Unit%] 
 #  The @l{Unit@} type is a zero argument struct type with a single inhabitant
 #  @l{Unit}. It is used as a basic building block for more complex types and
 #  when the value being passed to or returned by a function doesn't matter.

@@ -20,7 +20,7 @@ Int@ 4 = /Core/Int%.4;
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Impl@ = /Fbld/Markup%.Impl@;
 % Append = /Fbld/Markup%.Append;

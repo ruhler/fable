@@ -24,7 +24,7 @@
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
 @ Hash@ = /Md5/Hash%.Hash@;

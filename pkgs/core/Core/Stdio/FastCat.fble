@@ -20,7 +20,7 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 <@>@ R@ = <@ T@> { *(World@ s, T@ x); };
 <@>@ IO@ = <@ T@> (World@) { R@<T@>; };

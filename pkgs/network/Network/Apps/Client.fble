@@ -27,8 +27,8 @@
 % StrE = /Core/String%.StrE;
 % Strs = /Core/String%.Strs;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 <<@>@>@ Main@ = /Network/Sockets%.Main@;
 <<@>@>@ Sockets@ = /Network/Sockets%.Sockets@;

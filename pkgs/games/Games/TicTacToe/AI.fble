@@ -12,7 +12,7 @@
 % Eq = /Core/Ord%.Eq;
 % Gt = /Core/Ord%.Gt;
 
-% Unit = /Core/Unit%.Unit;
+% Unit = /Std/Unit%.Unit;
 
 @ Board@ = /Games/TicTacToe/Board%.Board@;
 @ Player@ = /Games/TicTacToe/Board%.Player@;

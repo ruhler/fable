@@ -14,7 +14,7 @@
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
-% Unit = /Core/Unit%.Unit;
+% Unit = /Std/Unit%.Unit;
 
 % H8 = /Md5/Bits/Bit8%.H8;
 

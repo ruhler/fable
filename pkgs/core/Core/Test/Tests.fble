@@ -25,7 +25,7 @@
 
 % Run = /Core/Test/Stdio%.Run;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 
 Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });

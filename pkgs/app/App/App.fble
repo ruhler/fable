@@ -13,7 +13,7 @@
 
 @ String@ = /Core/String%.String@;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Key@ = +(
   Unit@ a, Unit@ d, Unit@ h, Unit@ j, Unit@ k, Unit@ l,

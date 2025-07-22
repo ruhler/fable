@@ -14,7 +14,7 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
   Test(Str|'Unrotated Q1', (Unit@ _) {

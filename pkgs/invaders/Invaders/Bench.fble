@@ -9,7 +9,7 @@
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 
-% Unit = /Core/Unit%.Unit;
+% Unit = /Std/Unit%.Unit;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a

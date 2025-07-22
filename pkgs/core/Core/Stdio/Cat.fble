@@ -18,8 +18,8 @@
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 # The 'cat' program.
 Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {

@@ -16,7 +16,7 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Game@ = /SatGame/Game%.Game@;
 % Game = /SatGame/Game%.Game;

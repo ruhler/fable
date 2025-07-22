@@ -5,8 +5,8 @@
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 @ TestResult@ = +(Unit@ pass, String@ fail, Unit@ xfail);
 @ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);

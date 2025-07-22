@@ -22,8 +22,8 @@
 
 @ String@ = /Core/String%.String@;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 
 @ LFT@ = *(Int@ q, Int@ r, Int@ s, Int@ t);

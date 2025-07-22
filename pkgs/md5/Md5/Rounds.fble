@@ -13,8 +13,8 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 @ Hash@ = /Md5/Hash%.Hash@;
 

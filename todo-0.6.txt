@@ -2,6 +2,9 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Separate out /Std into a different package from /Core.
+* Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.
+
 * Revamp the standard library.
  - Redesign from the ground up, looking at existing standard libraries for
    guidance.

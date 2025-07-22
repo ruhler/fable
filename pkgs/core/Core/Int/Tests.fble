@@ -18,7 +18,7 @@
 % Pass = /Core/Test%.Pass;
 % Fail = /Core/Test%.Fail;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;

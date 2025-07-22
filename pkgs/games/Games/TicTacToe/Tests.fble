@@ -10,8 +10,8 @@
 % Test = /Core/Test%.Test;
 % Pass = /Core/Test%.Pass;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 @ AIR@ = /Games/TicTacToe/AI%.AIR@;
 % AI = /Games/TicTacToe/AI%;

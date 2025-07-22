@@ -1,7 +1,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 % Str = /Core/String%.Str;
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 # Show --
 #   Instance of Show@ for Unit@.

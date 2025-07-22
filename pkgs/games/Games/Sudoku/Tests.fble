@@ -26,7 +26,7 @@
 % TestSuite = /Core/Test%.TestSuite;
 % Pass = /Core/Test%.Pass;
 
-@ Unit@ = /Core/Unit%.Unit@;
+@ Unit@ = /Std/Unit%.Unit@;
 
 @ Symbol@ = /Games/Sudoku%.Symbol@;
 @ Input@ = /Games/Sudoku%.Input@;

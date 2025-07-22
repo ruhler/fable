@@ -1,8 +1,8 @@
 # @module[/Core/Bool%]
 #  The boolean type and utilities.
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
 
 # @union[Bool@] The boolean type.
 #  @field[Unit@][true] The true value.
