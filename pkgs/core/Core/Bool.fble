@@ -1,45 +1,47 @@
+# @module[/Core/Bool%]
+#  The boolean type and utilities.
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-# Bool@ --
-#  The boolean type.
+# @union[Bool@] The boolean type.
+#  @field[Unit@][true] The true value.
+#  @field[Unit@][false] The false value.
 @ Bool@ = +(Unit@ true, Unit@ false);
 
-# True --
-#  The true value of the boolean type.
+# @value[True] The true value of the boolean type.
+#  @type[Bool@]
 Bool@ True = Bool@(true: Unit);
 
-# False --
-#  The false value of the boolean type.
+# @value[False] The false value of the boolean type.
+#  @type[Bool@]
 Bool@ False = Bool@(false: Unit);
 
-# Not --
-#  Logical not. ¬a
-#
-# Returns True if the argument is False. Returns False otherwise.
+# @func[Not] Logical not. ¬a
+#  @arg[Bool@][a] The argument to the function.
+#  @returns[Bool@] True if the argument is False, False otherwise.
 (Bool@) { Bool@; } Not = (Bool@ a) {
   a.?(true: False, false: True);
 };
 
-# And --
-#  Logical AND. Conjunction. a ∧ b
+# @func[And] Logical AND. Conjunction. a ∧ b
+#  @arg[Bool@][a] The first operand
+#  @arg[Bool@][b] The second operand.
+#  @returns[Bool@] True if both arguments are True, False otherwise.
 #
-# Returns True if both arguments are True. Returns False othewise.
-#
-# Note: This is not a short circuiting AND operation. Both arguments are
-# evaluated fully when applying this function.
+#  This is not a short circuiting AND operation. Both arguments are evaluated
+#  fully when applying this function.
 (Bool@, Bool@) { Bool@; } And = (Bool@ a, Bool@ b) {
   a.?(true: b, false: False);
 };
 
-# Or --
-#  Logical OR. Disjunction. a ∨ b
+# @func[Or] Logical OR. Disjunction. a ∨ b
+#  @arg[Bool@][a] The first operand
+#  @arg[Bool@][b] The second operand.
+#  @returns[Bool@] True if either argument is True,  False otherwise.
 #
-# Returns True if either argument is True. Returns False othewise.
-#
-# Note: This is not a short circuiting OR operation. Both arguments are
-# evaluated fully when applying this function.
+#  This is not a short circuiting OR operation. Both arguments are evaluated
+#  fully when applying this function.
 (Bool@, Bool@) { Bool@; } Or = (Bool@ a, Bool@ b) {
   a.?(true: True, false: b);
 };

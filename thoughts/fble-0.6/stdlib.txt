@@ -227,3 +227,13 @@ for each entity:
 
 And have the initial list of entities link to the corresponding detailed
 entry.
+
+---
+
+Next step is to manually convert the Bool% doc comments into a fbld doc, so I
+know what I'm trying to arrive at before expressing that in .fbld code.
+
+It would be nice if I could put tables in docs, don't you think? For example,
+that way I could do a three column <type> <name> <desc> for describing fields
+of a struct or union?
+
