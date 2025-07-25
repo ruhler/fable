@@ -1,6 +1,6 @@
 
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
 @ Bit@ = /Core/Digits%.Bit@;

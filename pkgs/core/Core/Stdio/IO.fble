@@ -1,4 +1,4 @@
-@ Bool@ = /Core/Bool%.Bool@;
+@ Bool@ = /Std/Bool%.Bool@;
 
 @ Int@ = /Core/Int%.Int@;
 

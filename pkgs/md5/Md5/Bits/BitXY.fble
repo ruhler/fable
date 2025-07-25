@@ -1,5 +1,5 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
+@ Bool@ = /Std/Bool%.Bool@;
 
 <@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
 <@>@ Overflow@ = /Md5/Bits/Bits%.Overflow@;
@@ -51,11 +51,11 @@
   BitXY@ 0 = BitXY@(X.0, Y.0);
 
   (BitXY@) { Bool@; } IsZero = (BitXY@ a) {
-    /Core/Bool%.And(X.IsZero(a.hi), Y.IsZero(a.lo));
+    /Std/Bool%.And(X.IsZero(a.hi), Y.IsZero(a.lo));
   };
 
   (BitXY@, BitXY@) { Bool@; } Eq = (BitXY@ a, BitXY@ b) {
-    /Core/Bool%.And(X.Eq(a.hi, b.hi), Y.Eq(a.lo, b.lo));
+    /Std/Bool%.And(X.Eq(a.hi, b.hi), Y.Eq(a.lo, b.lo));
   };
 
   (BitXY@) { /Md5/Bits/Bit1%.Bit1@; } Msb = (BitXY@ a) {

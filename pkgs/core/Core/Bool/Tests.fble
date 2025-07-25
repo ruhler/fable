@@ -1,10 +1,10 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-% Not = /Core/Bool%.Not;
-% And = /Core/Bool%.And;
-% Or = /Core/Bool%.Or;
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+% Not = /Std/Bool%.Not;
+% And = /Std/Bool%.And;
+% Or = /Std/Bool%.Or;
 % Eq = /Core/Bool/Eq%.Eq;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;

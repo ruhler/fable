@@ -13,8 +13,8 @@
  
  The following sections highlight various useful parts of the core library.
 
- @section @L{/Core/Unit%}
-  The @L{/Core/Unit%} module defines type @L{Unit@} and value @L{Unit}
+ @section @L{/Std/Unit%}
+  The @L{/Std/Unit%} module defines type @L{Unit@} and value @L{Unit}
   that we have seen many times in this series of tutorials:
  
   @code[fble] @
@@ -25,8 +25,8 @@
   By itself @L{Unit@} is not very interesting, but it's a building block used
   in all other data types.
  
- @section @L{/Core/Bool%}
-  The @L{/Core/Bool%} module defines a boolean type @L{Bool@}, values @L{True}
+ @section @L{/Std/Bool%}
+  The @L{/Std/Bool%} module defines a boolean type @L{Bool@}, values @L{True}
   and @L{False}, and a few functions that operate on booleans, such as
   @L{And}, @L{Or}, and @L{Not}:
  
@@ -45,7 +45,7 @@
   compared for equality or other kinds of relationships.
 
   @code[fble] @
-   <@>@ Eq@ = <@ T@>(T@, T@) { /Core/Bool%.Bool@; };
+   <@>@ Eq@ = <@ T@>(T@, T@) { /Std/Bool%.Bool@; };
 
  @section @L{/Core/Maybe%}
   The @L{/Core/Maybe%} module defines a @L{Maybe@} type for representing

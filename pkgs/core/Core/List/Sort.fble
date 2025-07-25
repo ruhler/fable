@@ -1,4 +1,4 @@
-@ Bool@ = /Core/Bool%.Bool@;
+@ Bool@ = /Std/Bool%.Bool@;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Nil = /Core/List%.Nil;

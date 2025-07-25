@@ -1,5 +1,5 @@
 
-% True = /Core/Bool%.True;
+% True = /Std/Bool%.True;
 
 @ Int@ = /Core/Int%.Int@;
 

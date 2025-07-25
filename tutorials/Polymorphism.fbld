@@ -167,7 +167,7 @@
   The following shows how you might import different kinds of values:
 
   @code[fble] @
-   % True = /Core/Bool%.True;
+   % True = /Std/Bool%.True;
    @ Char@ = /Core/Char%.Char@;
    <@>@ List@ = /Core/List%.List@;
    <@>% Concat = /Core/List%.Concat;

@@ -1,7 +1,7 @@
 
 
-% False = /Core/Bool%.False;
-% True = /Core/Bool%.True;
+% False = /Std/Bool%.False;
+% True = /Std/Bool%.True;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 

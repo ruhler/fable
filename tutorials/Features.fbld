@@ -13,7 +13,7 @@
  @section Primitive Data Types
   Fble does not have builtin primitive data types such as bool, char, int, or
   float. These data types can be implemented without special language support;
-  they are available in the core library modules @L{/Core/Bool%},
+  they are available in the core library modules @L{/Std/Bool%},
   @L{/Core/Char%}, and @L{/Core/Int%}. Library support for floating point
   numbers has not yet been implemented.
 

@@ -1,6 +1,6 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
 
 # Eq -- see documentation of /Eq%.Eq@.
 /Core/Eq%.Eq@<Bool@> Eq = (Bool@ a, Bool@ b) {

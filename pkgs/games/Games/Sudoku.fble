@@ -1,7 +1,7 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% False = /Core/Bool%.False;
-% True = /Core/Bool%.True;
+@ Bool@ = /Std/Bool%.Bool@;
+% False = /Std/Bool%.False;
+% True = /Std/Bool%.True;
 
 <@>@ List@ = /Core/List%.List@;
 

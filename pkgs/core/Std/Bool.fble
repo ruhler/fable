@@ -1,4 +1,4 @@
-# @module[/Core/Bool%]
+# @module[/Std/Bool%]
 #  The boolean type and utilities.
 
 @ Unit@ = /Std/Unit%.Unit@;

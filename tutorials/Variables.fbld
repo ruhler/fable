@@ -55,7 +55,7 @@
   from other modules. For example:
  
   @code[fble] @
-   % True = /Core/Bool%.True;
+   % True = /Std/Bool%.True;
  
   In this case, instead of writing the type of @L{True}, we write the kind of
   the variable, @L{%} (more on kinds in just a second). The compiler
@@ -73,8 +73,8 @@
   example, the following two variable declarations are equivalent:
  
   @code[fble] @
-   % True = /Core/Bool%.True;
-   /Core/Bool%.Bool@ True = /Core/Bool%.True;
+   % True = /Std/Bool%.True;
+   /Std/Bool%.Bool@ True = /Std/Bool%.True;
  
  @section Type Values
   Variables can be used for types as well as normal values, because a type is

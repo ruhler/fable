@@ -98,9 +98,9 @@
 
   @subsection Booleans
    @code[fble] @
-    @ Bool@ = /Core/Bool%.Bool@;
-    Bool@ True = /Core/Bool%.True;
-    Bool@ False = /Core/Bool%.False;
+    @ Bool@ = /Std/Bool%.Bool@;
+    Bool@ True = /Std/Bool%.True;
+    Bool@ False = /Std/Bool%.False;
 
     String@ output = Strs[Str|'A boolean: ', /Core/Bool/Show%.Show(True)];
 

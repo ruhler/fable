@@ -1,10 +1,10 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-% Not = /Core/Bool%.Not;
-% Or = /Core/Bool%.Or;
-% And = /Core/Bool%.And;
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+% Not = /Std/Bool%.Not;
+% Or = /Std/Bool%.Or;
+% And = /Std/Bool%.And;
 
 @ Int@ = /Core/Int%.Int@;
 % Decr = /Core/Int%.Decr;

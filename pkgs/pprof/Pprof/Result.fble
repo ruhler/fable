@@ -1,5 +1,5 @@
 
-% False = /Core/Bool%.False;
+% False = /Std/Bool%.False;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 

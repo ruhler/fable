@@ -1,5 +1,5 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
+@ Bool@ = /Std/Bool%.Bool@;
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 % Lt = /Core/Ord%.Lt;

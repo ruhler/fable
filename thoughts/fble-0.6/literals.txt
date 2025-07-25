@@ -1,0 +1,229 @@
+Literals
+========
+
+The way literals work in fble is going to cause problems for the standard
+library I expect, so let's think about them some more.
+
+Current primary use of literals: strings and integers.
+
+Problems with literals
+
+The structure problem:
+* The type for a literal has to be a single flat list of all possible options,
+  which means we can't express structured desired in the type. For example, I
+  can't say Char@ is a union of Digit@ and Upper@ and Lower@, even though that
+  would be nice for organization purposes. It doesn't scale to require a type
+  with millions of fields to support unicode character literals.
+
+The performance problem:
+* It's natural to use integer literals inline as if they had no cost, but
+  something like Int|42 is expensive in practice to re-execute on every
+  function call. I have to spot these in profiles and pull out a separate
+  definition like Int@ 42 = Int|42, which is a bit tedious.
+
+The validity problem:
+* The only thing a compiler can do to validate your literal is make sure it
+  is limited to a specific subset of characters. For example, if I want a
+  literal for floating points, the compiler couldn't tell us that 1.1.4 is
+  invalid.
+
+Here's a possible solution to the structure problem:
+* Generalize the literal element type to allow nested literal element types.
+
+For example, say Char@ = +(Digit@ digit, Letter@ letter). When looking for a
+value to match '4', for example, we don't see it at the level of Char@, so
+check in Digit@ and Letter@. Since we find the Unit@ field '4' in Digit@, we
+can automatically form Char@(digit: Digit@(4: Unit)). We just have to figure
+how to handle the case where there are multiple matches. For example:
+Foo@ = +(Digit@ a, Digit@ b). Do we chose '4' from 'a' or from 'b'?
+
+The performance problem is, I think, not something to worry about now. It's
+not specific to literals, profiling will show you when it is an issue, and
+it's pretty easy to work around when you care about performance. Let's not say
+anything more there.
+
+The validity problem, I fear, is fundamental. It's the fundamental tradeoff
+between allowing for custom literals. Either you don't have custom literals
+and you build knowledge of your literals into the compiler, or you allow
+custom literals and then the compiler can't help you out.
+
+In practice, I don't think it's so bad to detect literal errors at runtime. A
+decent test suite with code coverage should do the trick.
+
+Let's imagine we come up with some way to tell the compiler how to precisely
+validate a literal at compile time. To compose well, we really ought to be
+able to reuse fble code for that, and be able to define literals on the fly
+nested in functions, where we are not allowed to evaluate that code at
+runtime.
+
+My current approach for the specification is a list of subsequences.
+
+Let's think about unicode string literals now, or more broadly the space of
+literals.
+
+Conceptually I think it's right to say a literal is a packed sequence of flat
+values. It doesn't have internal structure beyond that, that's the whole
+point. Because otherwise you would express the structure using normal function
+calls in fble.
+
+I like the idea of expressing a literal in the same encoding as the source
+code. Then we can define the literal and break it apart into pieces without
+having to rely on any particular encoding for the source file. But for unicode
+that feels painful.
+
+If we can treat a word in the source code as representing encoded data, and
+then directly operate on the data, then we could make a string literal by
+assuming utf8 (say) and not have to know the names of all the unicode
+characters. We just parse into code points in a general way and be done with
+it. That is, I want to leverage more structure than just 'unicode character',
+because there are a lot of those.
+
+Slight digression, but I might mention I sometimes have a desire for 'file
+literals', where an entire literal is specified in a separate file. I'm not
+sure how practical that is, but it would be pleasing to just point to a file
+and say its contents are the literal value.
+
+Can I magically come up with a way to pull everything together and deliver a
+beautiful, perfect strategy for literals in fble?
+
+---
+
+A literal can be:
+A. a sequence of bytes.
+B. a sequence of unicode characters.
+C. a sequence of word prefixes.
+D. a sequence of bits.
+
+Because that's how we are expressing it. Specifically, it is getting encoded
+as a sequence of bytes in a word, where a word is clearly defined according to
+the fble spec, and defined in such a way that a sequence of bytes that form a
+single utf8 character doesn't get split up.
+
+Except that's not true, right? Because we use single quote as a delimiter, and
+we don't check if the single quote is part of a multibyte character. Same for
+any other whitespace and punctuation that comes at the end of a non-quoted
+word. We don't check if it's actually inside some unicode character.
+
+In other words, even though I thought the lex spec was unicode independent,
+it's not.
+
+Or, the spec is fine if we interpret it with respect to a sequence of
+characters. It could work for any encoding: ascii, utf8, utf16, etc. But in
+that case the implementation works for a (strange) subset of utf8. That is,
+most, but not all of utf8, which seems like a bad idea.
+
+I see no reason to introduce the notion of a byte into the fble lexer spec.
+The only thing we care about are characters. That suggests to me that it's up
+to the implementation to decide how to interpret a file: as ascii, utf8,
+utf16, etc. In practice, on linux, we ought to be using utf8.
+
+If the spec is about characters and not about bytes, then the literal should
+not be about bytes. It should not be about bits.
+
+That leaves two options: characters or prefixes of words. But, since a prefix
+of a word is a sequence of characters in this new interpretation, doesn't seem
+like there is any difference to me. Aside from the practical difference: if
+I'm storing my words internally as a utf8 sequence of bytes representing
+characters, then expressing things more generally as a sequence of characters
+let's me interpret a sequence of characters as a sequence of utf8 bytes, do
+the matching internally based on a sequence of utf8 bytes, and have everything
+work out.
+
+Sounds like I need to think more carefully about fble source file encodings.
+
+Fble source file encodings today:
+* ascii works.
+* utf8 mostly works.
+
+Let's look at what some other languages specify.
+
+C99:
+* Says there is some possibly multibyte character set for source files, which
+  may differ from the character set used during execution. With some minimal
+  requirements on the source character set.
+
+  Maybe this is a bit old of a spec to use as reference. Check more recent
+  specs and other languages before deciding based on this example.
+
+---
+
+Some more thoughts on literals, in case I haven't already said it:
+
+* I want the language spec to describe source code in terms of characters,
+  without any particular encoding. The user describes a literal as a sequence
+  of these characters.
+
+* The implementation has to know the source character encoding. It definitely
+  ought not to make any assumptions about whatever representation or encoding
+  for characters is used by library code.
+
+* The library code knows what representation it wants for characters. It also
+  knows the character encoding its source code is written in, but maybe it
+  doesn't know the character encoding used by users of the library.
+
+The two most reasonable options here are:
+1. Continue with the current approach: the only way to decode a literal is
+via matching against explicit source code character sequences.
+
+2. Define as part of the language spec how literal characters are encoded.
+
+If we do (2), we could say: utf8, code points, etc. I'm a little inclined to
+say it should be a sequence of bits, because literal already has a notion of
+sequence, it seems silly to specify a literal as a sequence of sequence of
+bits when it could just be a sequence of bits.
+
+Another idea is to have a special type for literals. This could go with
+approach (1) or (2). The potential advantage here is we don't have to make any
+assumptions about list types in the language spec or implementation.
+
+---
+
+Questions about character encodings: can you open a file in linux or windows
+with character encodings other than ascii and UTF8?
+
+Read about: setlocale LC_CTYPE options.
+
+man charmaps, /usr/share/i18n/charmaps has a bunch of different specifications
+for character maps? The UTF8 file has an explicit list of around 50K
+characters. But sounds like a lot of these different charmaps may be legacy,
+and everyone uses unicode now? See man charsets.
+
+Looks like python has an option to specify different encodings when opening a 
+file. Check out the python codecs module for options. Looks like it pulls from
+LC_CTYPE by default.
+
+The sense I'm getting is that there are a lot of different ways to encode
+characters in text that you might want to chose, unicode or not.
+
+---
+
+javac has a -encoding option to specify the source file encoding when you
+compile it, defaulting to the platform default.
+
+From what I've read, it makes sense to me to specify the source file encoding
+as whatever your platform supports via standard methods. As long as we can
+interpret as a sequence of characters and identify the punctuation characters.
+
+There is a question about what character set is used internally for
+representing words. Unicode seems like the obvious option, or some explicit
+subset. But then you could name variables and fields using some obscure
+characters in your character set that people can't express in their character
+sets.
+
+Those people could always use utf8, or another unicode source encoding. Or we
+could provide unicode escape sequences for words to allow those. So I don't
+think this is too big a deal in practice. But we do have to specify in the
+spec that words, internally, are limited to unicode characters? Not sure.
+
+Coming back to literals and Char@. I would like to be able to (even if I chose
+not to) represent Char@ as a unicode codepoint Int@. Which means I don't want
+it to be restricted by its use as a literal. But I still would like it to be
+usable as a literal.
+
+It's fairly natural. We just need to specify a map from word to Char@ value of
+our choice. But I want to make that map composable: Char = Digit + Letter. The
+nicest thing for composition is to reuse fble functions. Which suggests we
+have some explicit literal type in fble. It's very doable, but the slight
+overlap with standard library strings and characters is concerning, and I
+haven't found an approach I like yet for that route.
+

@@ -1,6 +1,6 @@
 
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

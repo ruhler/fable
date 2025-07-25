@@ -1,8 +1,8 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-% Not = /Core/Bool%.Not;
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+% Not = /Std/Bool%.Not;
 
 % Incr = /Core/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;

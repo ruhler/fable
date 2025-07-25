@@ -1,5 +1,5 @@
-% And = /Core/Bool%.And;
-% Or = /Core/Bool%.Or;
+% And = /Std/Bool%.And;
+% Or = /Std/Bool%.Or;
 
 @ Int@ = /Core/Int%.Int@;
 

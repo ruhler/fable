@@ -1,5 +1,5 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
+@ Bool@ = /Std/Bool%.Bool@;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 

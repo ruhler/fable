@@ -3,9 +3,9 @@
 @ Color@ = /App/Drawing%.Color@;
 @ Point@ = /App/Drawing%.Point@;
 
-@ Bool@ = /Core/Bool%.Bool@;
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 

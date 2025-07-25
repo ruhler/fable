@@ -1,6 +1,6 @@
-% True = /Core/Bool%.True;
-% False = /Core/Bool%.False;
-% And = /Core/Bool%.And;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+% And = /Std/Bool%.And;
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;

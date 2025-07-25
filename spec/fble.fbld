@@ -1461,7 +1461,7 @@
    
    Whitespace is treated as a delimiter of words. The comment character and
    any following characters on the same line are treated as a delimiter of
-   words.  Whitespace and comments are otherwise ignored.
+   words. Whitespace and comments are otherwise ignored.
    
    A sequence of continuous word characters is grouped together into a word.
    

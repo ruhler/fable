@@ -1,8 +1,8 @@
 
 # Import boolean type and values.
-@ Bool@ = /Core/Bool%.Bool@;
-Bool@ True = /Core/Bool%.True;
-Bool@ False = /Core/Bool%.False;
+@ Bool@ = /Std/Bool%.Bool@;
+Bool@ True = /Std/Bool%.True;
+Bool@ False = /Std/Bool%.False;
 
 # Import character type and values.
 @ Char@ = /Core/Char%.Char@;
