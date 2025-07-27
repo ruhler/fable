@@ -227,3 +227,701 @@ have some explicit literal type in fble. It's very doable, but the slight
 overlap with standard library strings and characters is concerning, and I
 haven't found an approach I like yet for that route.
 
+---
+
+Another round of thoughts.
+
+A word is a sequence of source encoded characters. A literal is a sequence of
+source encoded characters. I see no reason for a literal to be anything else.
+It's not a sequence of prefixes. It's not a sequence of ascii characters, or
+of bytes. It's a sequence of characters.
+
+The implementation should have a way to guess or be told the character
+encoding for the source file when it is read. The implementation has to know
+how to interpret from those characters which are the punctuation, whitespace,
+end of line, or other from the concrete syntax of the language. Anything that
+is 'other', it doesn't need to know about, it just needs some way of
+representing, checking for equality or lack thereof.
+
+In practice, my implementation will use utf8 or wchar_t as the internal
+character representation, essentially supporting any unicode character.
+
+Let's say we have some arbitrary source encoding that the implementation
+supports. That means the implementation can distinguish between every
+different character in the source encoding. Now imagine the implementation
+supports two different source encodings with some characters expressible in
+one encoding but not the other.
+
+Then the implementation needs to support the union of both encodings. Which
+means I can express the implementation character set as the union of the all
+encodings the implementation supports. Let's think of some options here: ascii
+only, unicode, charmaps (as a translation layer from the source encoding to
+the implementation character set), some future encoding that includes all
+languages used by all aliens in the universe. If taking the charmap approach,
+in general a character is represented as a (variable width) sequence of bytes.
+That's how we should represent characters internally: a variable width
+sequence of bytes using multibyte functions to see when one character ends and
+the next starts.
+
+The way I map from a users source character encoding to the specific
+punctuation characters we care about in the language is via the
+implementation's source and execution character encodings. I guess it
+technically goes: '.' in the implementation source gets mapped to the
+implementation's execution character set. '.' in the fble source gets
+mapped to the implementation's execution character set. We can do
+comparison at the level of the implementation's execution character set. Thus
+the implementation's execution character set must support at least the
+punctuation and other required characters of the fble concrete syntax. It
+should support enough more to write reasonable names.
+
+Okay? So fble implementation has a supported execution character set that
+includes the fundamental syntax characters of the fble language. Every other
+character in the implementation is represented as as sequence of bytes and
+interpreted for equality checks via charmaps and locale setup when the
+implementation is reading the fble file in question. No need to say anything
+about unicode at this point for the fble language.
+
+Thus, internally we store words/literals as a sequence of bytes. Not
+necessarily unicode. Now I need to bridge the gap and somehow make a sequence
+of source characters, which is encoded as a sequence of bytes, into fble at
+runtime.
+
+We can deal with bringing sequences into fble at runtime. Using a list type.
+It's simple enough. I'm not worried about that. So let's focus on individual
+characters.
+
+Consider three different options: Unicode, Bytes, or existing Char@.
+
+There are too many unicode characters. It seems impractical to have to list
+them all down somewhere in the library to be able to use them all in the same
+literal. We need more structure.
+
+But the discussion above, somehow, led me exactly where we need to go: bytes.
+Now I don't like hard coding bytes into the language. Characters maybe,
+because you clearly have to have characters in your source file. Bits maybe,
+because it's the simplest type for representing information. But bytes? How
+arbitrary. Why 8 bits at a time?
+
+Anyway, we could hard code a byte type in the language. Where would that leave
+us in terms of literals? You get a sequence of bytes per letter, yes, but you
+need to interpret that sequence of bytes somehow. For my stdlib Unicode Char@
+library, how could I interpret that sequence of bytes? Well... you would have
+to specify an encoding? What encoding makes sense?
+
+I've missed something here. The source file is a sequence of bytes. We
+preserve that sequence of bytes in the implementation. We preserve that
+sequence of bytes at runtime (e.g. in compiled code). Which we then need to
+compare against a sequence of bytes from a different source file?
+
+No. We have to canonicalize. We can't just leave the original source sequence
+of bytes in the implementation. The charmap mapping between wchar_t (execution
+character set code points) and source encoding bytes is only valid with
+respect to the specific source file being read. As soon as we get out of that
+context, that sequence of bytes becomes meaningless.
+
+Every sequence of bytes I carry around has to have an encoding specified for
+it. We could leave it as the original source encoding, or we could map
+everything into a common, generic encoding (utf8?) and know that everything is
+encoded with the common encoding.
+
+Let's assume the implementation has a sequence of bytes and known encoding for
+a literal. That pair, sequence of bytes + encoding, can describe any possible
+character in any possible character set supported by the implementation. It is
+the union of all character sets. If we chose to limit that to utf8 in the
+implementation, well, that's an implementation choice. 
+
+Now then, how do we turn that sequence of bytes + encoding into an fble
+runtime value? Options are:
+* Bring both the sequence of bytes and encoding name into the fble world.
+* Pick a standard encoding (utf8?), canonicalize all literals into that
+  encoding (presumably at the time we parse the literal), and return the
+  sequence of bytes in that encoding.
+
+Unicode is pretty good. If I'm going to limit things to a standard encoding,
+may as well pick unicode as the character set, and whatever encoding of that
+is easiest to bring into an fble value. Otherwise we need some external
+registry of character encoding to consult, which effectively limits us anyway.
+Unicode is that external registry.
+
+Straw proposal: a builtin character type. You can do union-select like switch
+on builtin character values using your source encoding so you don't have to
+know how it is encoded internally. But we additionally say this is a unicode
+character, and provide a way to convert between the character and some
+specific encoding of that as a standard fble struct/union data structure.
+
+Now we get a decent mix of both worlds: if you don't want to know anything
+about unicode or how it is encoded, you can deconstruct characters solely via
+your source character encoding. But if you want, you can also read the
+character's unicode code point programmatically, without having to express the
+character in source code anywhere. That's the key.
+
+Let's review potential encodings of unicode for me to use:
+* Raw structure: 128 groups * 256 planes * 256 rows * 256 cols: 256 ^ 4
+* Hex encoded: [16], if variable, or 16 ^ 8 if fixed width
+* UTF-8: [256]
+* UTF-16, UTF-32, but I would prefer UTF-8 over those for sure.
+
+I don't see a standard encoding based on bits, but presumably I could come up
+with one that is well defined. If a bit tedious to use. I like the idea of
+variable length. Seems more efficient to me. So, either variable length Bit,
+Hex, or Byte.
+
+In practice, the only use I imagine for this encoding will be getting
+character literals into my unicode Char@ representation, which will be an
+Int@. It may as well be specified as a variable length sequence of Bit@, from
+least significant bit to most significant bit. Note, this is not UTF8
+converted into a bit stream.
+
+You know what? I'm really tempted to have a builtin library function that can
+convert a builtin letter to Char@. We can do whatever conversion we want there
+in native. No need to bring in any specific character encoding into the fble
+language spec. The builtin is tied to the combination of implementation +
+library, which is exactly what we need.
+
+Cool. That helps to clarify. In summary, I'm saying a character literal is a
+list of characters from an arbitrary execution character set chosen by the
+implementation. I'll provide a way to deconstruct a character via source
+character encoding. Any library that wants to access the internal structure of
+the implementation for characters can use a builtin for that.
+
+---
+
+Now to discuss how to represent builtin lists and characters in fble for the
+purposes of list and character literals. I know the abstract interface I want.
+I just need to decide on the syntax and how to encode things.
+
+Let's start with sequence. We have:
+* A polymorphic type representing a sequence of elements of type X@.
+* A way to construct a list of values.
+* A way to test of the list is empty or not.
+* If the list is not empty, a way to get the first value and the rest of the
+  list.
+
+That assumes a streaming list, not a random access list. There are lots of
+different ways you could represent it in theory. Maybe we bias it so it's
+easier to get at the last element first, or some element in the middle first.
+
+Things to chose:
+* The structure of the list.
+* The names of fields of the list.
+
+Let me leave it there for now and move on to characters. We have:
+* A basic type representing a character.
+* A way to construct a character via source file character encoding.
+* A way to switch on the character via source file character encoding.
+* Might be nice to be able to test if two characters are equal?
+  Which is slightly more general than testing if a character is a specific
+  values. But what for?
+
+I think a special type and syntax for character makes more sense than trying
+to put it into a struct/union? I guess there are two options:
+* Represent a character as an arbitrary list of bits.
+* Have a builtin type.
+
+Let's compare. If I have an arbitrary list of bits and a way to turn a
+character literal into an list of bits, that gives me a way to check for
+equality, which gives a way to switch on a character via if/else. No fancy
+syntax needed.
+
+If I have special syntax, it doesn't really help anything syntactically.
+Though it does prevent you from constructing your own sequences of bits, but
+who cares? We never have to go back from sequence of bits to characters.
+
+I'm going to be honest, that's pretty tempting. I could even, if I want,
+recommend a variable bit-length unicode encoding as part of fble, and avoid
+the need for a builtin? Or say it's an implementation defined sequence of
+bits: fine as long as two different implementations don't mix. We can
+standardize that as part of whatever implementation standardization we need
+when we have more than one implementation of fble.
+   
+Let's consider the other approach though, just to get a feel. It wouldn't be
+too hard to have a builtin syntax for a character. For example:
+
+  |@ x = |h; # but is |... a single character or a list?
+  x.?(h: ...);
+
+Equality is not natural to express with a builtin.
+
+I would also want a builtin list type then, to be consistent?
+  []@ l = [a, b, c];
+  l.?(...)
+
+No. It's weird. It's odd. It's different. I have a way to express data
+structures, let's re-use it. I already know how to make it generic to field
+names.
+
+  Foo[...]
+
+Foo is a function with a data type matching the pattern:
+
+  @L = +(*(T@, L@), *()), for some type T@.
+
+  Foo|...
+
+Foo is a function with a data type matching the pattern above, where T@
+matches the pattern itself, with it's own T@ as +(*(), *()).
+
+We could use Bit@, we could use Bool@.
+
+Question: what do you think about representing a word as a raw sequence of
+bits, rather than a sequence of characters where characters are represented as
+bits?
+  
+No. I don't think that works. We wouldn't be able to clearly distinguish
+between separate characters.
+
+What do I think about hard coding the field names for the list and bit types
+used here? If I did that, then [...] could be a list, and |... could be a
+string directly in the language. Though application is slightly more tedious:
+Foo([...]) and Foo(|...) compared to Foo[...] and Foo|....
+
+It would be easier to explain the language spec, perhaps. But I think this
+it's fine to require the user to provide the type information via their
+function.
+
+Cool! I think, in theory, I now have a complete proposal for how to update
+literals to support unicode in the standard library. Let's summarize.
+
+* Canonicalize character set encoding of words in implementation
+ - Either by using wchar_t* instead of char* for words,
+ - Or by translating input words into utf-8 encoding,
+ - Or by forcing (for now) utf8 encoded source files and using utf8 encoding.
+* Update lexer to respect the character encoding specified in locale.
+ - e.g. don't look into the middle of a multibyte character for an ascii
+   punctuation.
+ - Add spec tests to verify it does this properly.
+* Update the spec for literals to require a list of bits for letters.
+ - In the spec, the specific sequence of bits for each letter is left
+   implementation defined.
+* In the /Std/Char% library, make an assumption about the implementation
+  defined sequence of bits for a letter to convert to unicode.
+ - We can do this in a builtin rather than .fble source if that makes things
+   more comfortable.
+* Str function now takes a list of bits rather than a list of chars.
+ - Anywhere we assume |'...' gives a list of chars will need to be changed to
+   use Str literal explicitly for conversion.
+* Update Int function to use List<Bit> equality for |'0', etc. rather than
+  switch on digit.
+* Char@ uses Int@ unicode codepoint internally.
+
+Let's take a step back and evaluate.
+
+One more high level concern with literals I want to note down:
+* It seems a pain to have to convert the internal representation to an fble
+  list for things like Int@, where we could otherwise avoid the intermediate
+  list allocation.
+
+The answer to that, for now, is I shouldn't be micro-optimizing performance
+that way. Don't assume conversion to and from a list of bits is expensive.
+Perhaps the implementation can do that all for you at compile time so it is
+completely free.
+
+First discussion topic: Validation in the new scheme does not exist.
+Second discussion topic: List of List of Bit versus List of Bit.
+
+---
+
+Down the rabbit hole we go.
+
+First discussion topic: Validation in the new scheme does not exist.
+
+There are a subset of syntaxes where all possible sequences are valid. Int as
+a sequence of digits, Char as a sequence of characters are sort-of examples.
+But in practice, and in general, that's not the case. Consider the following
+examples of common use of literals in languages:
+* int x = 34L;
+* char c = '\x003';
+* int y = -3;
+* float x = 2e13;
+
+In all of those cases, there are invalid sequences. In practice there are
+invalid sequences, and we need a way to handle that. Rather than sort of
+hackishly support some limited subset of validation at compile time, let's not
+do any validation at compile time. People will have to get used to validate on
+their own, presumably via test suites.
+
+So, no worries on the validation front.
+  
+Second discussion topic: List of List of Bit versus List of Bit.
+
+Let's say we specified as part of fble that an implementation must support
+exactly the set of unicode characters, no more no less (more on that in a
+bit?).
+
+Let's say we specified that literal character strings are UTF8 encoded, and
+the resulting sequence of bytes turned into a sequence of bits using least
+significant bit first in each byte. Now there is no need to talk in terms of
+characters, literals can be thought of entirely in terms of strings.
+
+What's nice about this:
+* Spec is simpler. A function supports literals if it takes a list of bits.
+  Rather than a list of list of bits.
+* We standardize the representation of literals, rather than saying it is
+  implementation defined. We can legitimately write standard library fble code
+  to convert a literal to a sequence of unicode code points with resorting to
+  assumptions about the implementation.
+* No need for the awkward '|x' can be a character but '|xy' cannot.
+
+This means we would go back to prefix matching on literals, but it is
+legitimate now, because we can break it down into corresponding character
+sequences via our knowledge of UTF8 encoding.
+
+You wouldn't have to know about UTF8 to make use of literals, but you could.
+
+Next topic: do we have to define the implementation character set in practice?
+
+Uh, I think what I said before still stands: there is an implementation
+character set. Anything you can convert into that is allowed...
+
+So really there are two different things I'm thinking about here:
+
+1. Cross-implementation compatibility. Wouldn't it be nice for you to be able
+to write implementation independent library code and have it work? That
+requires that the character sets used by all implementations are the same.
+Otherwise you could write something that works in one implementation but not
+another. Thus: for standardization, unicode would be nice to specify as part
+of the concrete syntax of the language.
+
+2. Should we require a unicode based source encoding?
+Let's imagine some library uses UTF-8 and names its functions and fields using
+a weird mix of UTF-8 characters. Now say someone wants to use a limited
+character encoding, but they want to use those library functions. They have no
+way to use those library functions in their encoding. So they are forced into,
+in general, a unicode character encoding. Not so nice?
+
+We could address this by adding support for unicode escape characters in the
+syntax for words. For example, in a quoted word, we say you can write:
+
+  'foo\u1331bar', or some such.
+
+We decode the escape sequence to a unicode character. We say in the spec that
+your source character encoding must be able to represent '\', 'u', and digits.
+As long as that's the case, you can refer to any entity. It's standardized. I
+like that.
+
+The next concern: my implementation doesn't care about word names, as long as
+it can tell where bytes start, what the punctuation characters are, and if two
+words are equal. Is it the case that you could have two different sequences of
+unicode characters that refer to the same string? If so, that sounds
+unpleasant. Would I allow them to be used interchangeably for a field? Would I
+have them generate the same UTF8 string of bits if used in a literal?
+
+I need to learn more about unicode to answer that question.
+
+Anyway, summary of latest straw proposal:
+* Add unicode as name encoding to language spec.
+* Add unicode escape sequence to quoted word in concrete syntax.
+* Fix lexer for arbitrary source character encodings.
+* Type for literal is now list of bits, which are 
+  unicode UTF8 encoding of the word, in least significant bit to most
+  significant bit order.
+
+---
+
+Exploration of syntax for unicode escapes in quoted words.
+
+In go, you have either: \uXXXX, or \UXXXXXXXX.
+
+I think I prefer variable width. So my proposal is, within a quoted word:
+
+  ' [hex] '
+
+With no space inside.
+
+For example:
+  'Hello. Here is a unicode char: '1234', and another: '10ffd'' x = ...
+
+Hex digits can be upper or lower? Sounds reasonable to me.
+
+If you have this, the no need to escape single quote. You could express it as
+unicode instead. It's hex 27. So:
+
+  'I can'27't seem to put it directly, you know?'
+
+Sounds reasonable to me. Not any worse than
+
+  'I cant''t seem to put it directly, you know?'
+
+Decent proposal. How do I feel about it? The syntax is fine. I can try it. I
+can live with it. How do I feel about the need for it? It's really a question
+of how I feel about having the fble spec depend on unicode at all.
+
+If we are going to hard code unicode into the spec, then:
+* We could require a specific unicode source character encoding. Seems unfair?
+* We can use unicode code point literals to allow any source character
+  encoding with hex digits and punctuation.
+* We can clearly specify character literals as sequences of bits.
+  And easily implement a unicode Char@ in the standard library.
+
+If we want to avoid unicode entirely in the spec, make pretty much no
+assumptions, then...
+
+It's interesting that C99 says execution character set is implementation
+defined, but it still supports unicode character literals. If the
+implementation doesn't support the unicode character in question? Oh well? Or
+illegal? Or sequence of bytes?
+
+Even if we didn't have unicode, we could define any character set in terms of
+code points. The implementation has an execution character set, that could be
+different from the source encoding. In practice, my implementation will use...
+utf8? Or wchar_t? wchar_t is part of C99, so sounds reasonable to use.
+
+So, how can we share code between two different implementations?
+
+It's two stages, just like before:
+* The option to support different source encodings implies we need an
+  execution character set that can handle all (implementation supported)
+  source encodings.
+* That gives the need for representing an execution character that you can't
+  express in your source encoding. The best you can do is give a code point
+  integer number.
+* Now we can use an explicit code point in a source file that supports
+  encoding the character directly. The behavior of the program depends on
+  whether a given code point matches a particular encoded character or not.
+* To be portable within a given implementation, that behavior must be the
+  same, regardless of the source encoding of characters. This is based on the
+  idea we should be able to convert any source file to a different character
+  encoding without changing its meaning. For example, 0x27 must always be
+  single quote, regardless of the source level encoding.
+* To be portable across different implementations, the same thing applies.
+
+Imagine a non-unicode world, where we just have numbers for characters. We
+have platform specific character encodings. The implementation knows how to
+convert a source character to an execution character. An execution character
+has a well defined number. We can use 'XXXX' style escapes to provide the
+number directly, no need to say anything about unicode at this point.
+
+You can't meaningfully use 'XXXX' style escapes unless you know the
+implementation's character set. Even if the implementation treats weird
+characters as abstract entities, it still needs to do equality comparison.
+
+So you need to know the implementation's character set, and to be portable,
+all the different implementations need to use the same character set, and so
+we ought to specify that in the language spec. And unicode is the clear and
+natural choice.
+
+I could not specify the character set, and say it's implicit. Just like how I
+am planning to treat charmaps and locale and platform depending encodings
+implicitly. And hope everyone picks the right thing.
+
+Except, if we want to do unicode character literals from structure, as a
+sequence of bits, we can only do it if we know the execution's character set
+and can map from that to unicode.
+
+Let's be honest, regardless of how I deal with character literals in the
+language, I require the implementation to use unicode internally to be able to
+implement a unicode Char@ type in the standard library. If I give access to
+code points in the language, I have to know what they are and that means they
+ought to be unicode. If I do pattern matching, I have to list all the possible
+characters, and that means the implementation ought to support unicode.
+
+The only other option is to limit the standard library character literal
+support to a small subset of unicode (even if the library itself supports full
+unicode).
+
+Two approaches being weighed:
+A. Existing approach, no mention of unicode in language. Execution character
+set is implementation defined. No universal character encoding. Character
+literals limited to small subset of unicode. Some subsets of character
+literals are supported in some implementations but not others.
+B. Unicode approach. Language spec depends on unicode. We can have universal
+character support, and can use structured character literals.
+
+Is there another option? Because unicode is pretty arbitrary. The important
+thing about unicode is that it is the widely used standard. If there was some
+other widely used standard, we could just as well use that. If, in 100 years
+from now, there's a completely different standard that everyone uses, I would
+want the language to depend on that.
+
+Can we substitute 'widely standardized extended character set' in the spec in
+place of unicode?
+
+We could, if we didn't say that Char@ in the standard library was unicode. But
+in that case, we don't want it to be unicode, we want it to match the 'widely
+standardized extended character set'.
+
+Yes. I like this. Assume the existence of a common widely supported extended
+character set (e.g. unicode). Say the implementation should support that. Have
+support for universal characters. Implement the Char@ library in terms of
+that. Define literals as......
+
+Literals should not be defined in terms of utf8. They should be defined as an
+abstract encoding of a list of universal character descriptions.
+
+Then everything works great.
+
+Now, given a literal as a sequence of characters, where each character
+corresponds to a non-negative integer, how shall I represent that in an fble
+data type?
+
+From before, it would be nice if we can do it as a flat list, where we have a
+prefix encoding so we can distinguish between individual elements of the list.
+
+We would want three tokens: 0, 1, D, where 'D' stands for delimiter.
+
+For example, the sequence [4, 1, 2, 5], can be represented as:
+
+  100D1D10D101D
+
+Remind me how we encode lists again in practice. If this was a list, it would
+be: 'C' for cons, 'N' for nil:
+
+  C4C1C2C5N
+
+And encoding each number as a list of bits using 'c' and 'n' for cons and nil:
+
+  Cc1c0c0nCc1nCc1c0nCc1c0c1nN
+
+Or... why not match source code? Define a type with hex digits and a separator
+(single quote).
+
+ '4'1'2'5
+
+Or do we need to double quote it?
+
+ ''4''1''2''5''
+
+In other words, I take your character literal, I convert it into a fully
+universalized string, and I give you that string. The character set and
+specification for universalized is a well defined part of the language spec.
+
+That's nice.
+
+Should we let people pick their own name, or hard code the type? I think we
+should hard code the type. This is different from lists. Should we hard code
+the type for lists?
+
+How would I hardcode the type for list, based solely on the list literal
+syntax?
+
+  [4, 1, 2, 5] in the syntax becomes...
+
+  ']' for nil
+  ',' for cons
+  '[' for head?
+  ??? for tail?
+
+  '[]' for nil
+
+No, I don't see nearly so natural a way of doing it. Let's keep list as is.
+Anyway, list is likely something to be a library, universal character sequence
+not so much.
+
+Can I generalize the universal character syntax to be more compact for this
+case? For example, maybe we say: single quote followed by one or more hex digits,
+followed by an optional single quote. So we could do:
+
+  'I can'27t seem to right this'
+
+  'Double encoded: '27'27'
+
+Then we can use:
+
+ '4'1'2'5
+
+Where ' signals there is another value coming up, then you get the sequence.
+And we can say that's precisely how we represent it for literals. I like that.
+
+Summary of where we are now:
+* Add widely supported character set to language spec (unicode in practice
+  today)
+* Add universal character encoding to quoted word syntax.
+  single quote, one or more hex digits, optional single quote.
+* Fix lexer for arbitrary source character encodings.
+* Type for literal is now list of [0-9,a-f,']
+* Standard library Char@ is for widely supported character set, not
+  necessarily unicode.
+
+Some lingering issues still though.
+
+How do we define ToUpper and ToLower, or any of the char type things? Don't we
+need to assume unicode?
+
+We should put those in separate libraries organized by locale. And maybe we
+can give a 'default local' builtin choice of them.
+
+Interesting. man 5 locale gives locale definitions to define these things. So
+maybe we have a builtin that gives you access.
+
+Is my syntax spec for universal characters legitimate? Can I parse it in
+general?
+
+So I'm lexing a word. I see a single quote, so we go inside.
+
+I read up until the next single quote. Easy.
+
+Now we get a single quote, there are two cases: this is the end, or this is an
+escape. How do we tell the difference? Read the next character. If the next
+character is not a hex digit, it's the end.
+
+Now, we are parsing hex digits. We go until we are done with hex digits.
+
+Now we have either:
+* A non-single quote character. Continue from normal state.
+* A single quote character...
+
+The issue is how to know if we hit the end or not.
+
+That is, I want to be able to put a universal character before a hex digit and
+before the end of the word.
+
+Okay. This isn't hard. To put it before the end of the word, require it to end
+with a single quote. Examples:
+
+  'foo'27'bar'   inside, explicit quotes on both sides.
+  'foo'27there'  inside, no need for explicit quotes.
+  'foo'27''      end, explicit quote required.
+  'foo'27' x'    inside, 
+
+Basically I'm saying, the single quote after a hex digit is always dropped?
+But that doesn't help, because I can't do: '1'5'2'6 if we do it that way.
+
+The 'foo'27'bar' case is telling. Is that 'b' interpreted in hex? It's not at
+all obvious. I should be explicit I think. Don't implicitly drop stuff. Which
+means double single quoting all the time? '1''5''2''6'. Now, I don't need to
+use that for literals. I can have a special syntax there, which is: sequence
+of hex single quote terminated. 1'5'2'6'.
+
+Or... just do a list of list of hex. Make everyone's life easier.
+
+Good. So, require single quote to terminate universal character in input, a
+literal is a list of list of hex, where list has to match as per the
+definition we already have, but hex type is hard coded field names 0-9a-f.
+
+Cool. I like this. Let's sit on it a day or so to give a chance for any
+concerns, and then move ahead and be done with it.
+
+---
+
+Meanwhile, assuming utf8, what's a good unicode character to make embedded
+newline, single quote or other punctuation?
+
+Newline: 0x0A
+Single quote: 0x27
+Dot: 0x2e
+
+Take single quote, for example, encode that in unicode, have the second byte
+set. So I want a 2-byte utf8 character that ends with 0x27.
+
+There aren't any! Awesome. So nothing to worry about here? That's assuming
+utf8. We could have issue with different encodings though. I'm not sure how to
+test use of a different encoding.
+
+How would I fix the implementation? Still represent things as a sequence of
+bytes internally? Makes sense to me. Let's say strcmp still works for string
+equality. I'll want to go via wchar_t for literals once I update those. Don't
+worry about literals before then, since they are going to change soon anyway.
+
+Which leaves everything in yylex? How about just updating ReadNextChar to skip
+over an entire multibyte character? Is that doable? Not quite. It's going to
+be painful I fear.
+
+I think, maybe, I can just not worry about it for now? Mark it down as a known
+potential issue, and just never do anything about it? I don't have an easy way
+to test it.
+
+Except... I could generate malformed utf8? What value is that?
+
+Let's be honest, I'm not going to get around to fixing this anytime soon, and
+I don't think it's going to be a problem any time soon. So let's not worry
+about it, okay? Future me can worry about it when it becomes a problem.

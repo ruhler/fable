@@ -1,0 +1,52 @@
+Char@
+=====
+
+This will be a fun one.
+
+It makes sense to support unicode characters in the standard library. So Char@
+represents a unicode character.
+
+Expected operations:
+* Construct a character from a literal or unicode code point.
+* Check for character equality, or ordering based on unicode code point.
+* Get the unicode code point for the character.
+* Standard character type classification: isspace, isupper, etc.
+* Perhaps standard toupper, tolower kinds of transformations.
+
+Existing fble API:
+* Char@, with most of printable latin chars, and 'unknown' byte.
+* Chars collection of literals.
+* Standard interfaces: Eq, Show, etc.
+* Conversion to/from ASCII integer value.
+* Character types: IsUpper, IsLower, IsAlpha, IsDigit, IsAlNum, IsSpace,
+  IsNewline
+* Char@ can currently be used as a literal, implicitly.
+
+I'll want to generalize to support all of unicode presumably.
+
+C99:
+* Character literal: source file encoded character literal.
+  "mapped in an implementation defined manner to the execution character set".
+* Escape sequences for ', ", ?, \, octal, hex
+* Escape sequences for \a, \b, \f, \n, \r, \t, \v
+* Conversions between char* and wchar_t (mbtowc)
+* ctype.h:
+  - behavior depends on current locale
+  - isalnum, isalpha, isblank, iscntrl, isdigit, isgraph, islower, isprint,
+    ispunct, isspace, isupper, isxdigit,
+  - tolower, toupper
+  - corresponding wide character versions of the above.
+
+Unicode:
+* Characters have code points.
+* Major category: Letter/Mark/Number/Punctuation/Symbol/Separator/Other
+* Minor category: uppercase/lowercase/titlecase/modifier/other
+                  spacing/nonspacing/combining/enclosing
+                  decimal/digit
+                  connector
+  etc.
+* Basic type: Graphic
+* Character: Character
+* It's pretty complicated in general. I'm not sure standard library for
+  Char@ is the right place to deal with these complexities a Unicode specific
+  library would be better suited. Just pick the basics for Char@.

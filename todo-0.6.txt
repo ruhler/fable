@@ -2,12 +2,14 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Spec tests for unicode in source files
- - Comments terminated with non-newline end of line characters.
- - Quoted and unquoted words containing a multi-byte character where the last
-   byte of that character looks like a delimiter.
- - Clarify character encoding of source files in the spec.
- - Clarify character set used internal for words in fble.
+* Clarify character encoding in spec. 
+ - Implementations can support user specific source encodings
+ - Implementation uses widely supported char set internally, e.g. unicode.
+
+* Add universal character encoding to quoted word syntax.
+ - single quote, one or more hex files, single quote.
+
+* Change runtime type for literal to list of list of hex digits.
 
 * Separate out /Std into a different package from /Core.
 * Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.

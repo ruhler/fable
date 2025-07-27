@@ -805,6 +805,8 @@ static void ReadNextChar(Lex* lex)
  *  Returns the next token in the input stream for the given lex context.
  *  This is the lexer for the bison generated parser.
  *
+ *  TODO: Don't assume an ascii compatible character encoding?
+ *
  *  @arg[YYSTYPE*][lvalp] Output parameter for returned token value.
  *  @arg[YYLTYPE*][llocp] Output parameter for the returned token's location.
  *  @arg[Lex*][lex] The lex context to parse the next token from.
