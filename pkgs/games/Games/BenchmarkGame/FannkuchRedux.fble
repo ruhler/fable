@@ -7,6 +7,7 @@
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 % Eq = /Core/Int/Eq%.Eq;
+% IsZero = /Core/Int/Eq%.IsZero;
 % Max = /Core/Int/Eq%.Max;
 % Int = /Core/Int/Lit%.Int;
 
@@ -84,7 +85,7 @@ Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f
 
 # Returns the list of integers [N, N-1, ..., 1].
 (Int@) { List@<Int@>; } CountDown = (Int@ n) {
-  n.?(0: Nil<Int@>);
+  IsZero(n).?(true: Nil<Int@>);
   Cons(n, CountDown(Sub(n, Int|1)));
 };
 

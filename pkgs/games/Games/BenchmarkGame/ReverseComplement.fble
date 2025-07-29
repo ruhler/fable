@@ -8,6 +8,7 @@
 @ Int@ = /Core/Int%.Int@;
 % Sub = /Core/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
+% IsZero = /Core/Int/Eq%.IsZero;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -67,7 +68,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
   (Int@, String@) { M@<Unit@>; } PrintCodes = (Int@ n, String@ codes) {
     codes.?(nil: O.PutChar(stdio.out, Chars.nl));
 
-    n.?(0: {
+    IsZero(n).?(true: {
       Unit@ _ <- m.do(O.PutChar(stdio.out, Chars.nl));
       PrintCodes(Int|60, codes);
     });

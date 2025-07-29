@@ -1,26 +1,29 @@
 
+@ Bit@ = /Core/Digits%.Bit@;
 % Bit = /Core/Digits%.Bit;
 
 @ Int@ = /Core/Int%.Int@;
-@ IntP@ = /Core/Int/IntP%.IntP@;
+% IsNegative = /Core/Int/Eq%.IsNegative;
+% IsZero = /Core/Int/Eq%.IsZero;
+@ QR@ = /Core/Int/Div%.QR@;
+% Div = /Core/Int/Div%.Div;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
 
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
 
 # Converts an Int@ to a fixed-width bit vector.
 # Assumes the Int@ is non-negative. Truncates if needed to fit in the bit
 # vector.
-<@ T@>(Bits@<T@>, Int@) { T@; } ToBits = <@ T@>(Bits@<T@> b) {
-  (IntP@) { T@; } P = (IntP@ i) {
-    i.?(
-      1: b.Inc(b.0),
-      2p0: b.Shlx(P(i.2p0), Bit.0).x,
-      2p1: b.Shlx(P(i.2p1), Bit.1).x);
-  };
+<@ T@>(Bits@<T@>, Int@) { T@; } ToBits = <@ T@>(Bits@<T@> b, Int@ i) {
+  IsNegative(i).?(true: /Core/Undef%.Undef<T@>.undefined);
+  IsZero(i).?(true: b.0);
 
-  (Int@ i) {
-    i.?(n: /Core/Undef%.Undef<T@>.undefined, 0: b.0, p: P(i.p));
-  };
+  QR@ qr = Div(i, 2);
+  Bit@ bit = /Core/Int/Eq%.Eq(1, qr.r).?(true: Bit.1, false: Bit.0);
+  b.Shlx(ToBits(b, qr.q), bit).x;
 };
 
 @(ToBits);

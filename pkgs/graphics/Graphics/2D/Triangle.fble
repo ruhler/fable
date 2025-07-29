@@ -13,6 +13,7 @@
 % Le = /Core/Int/Eq%.Le;
 % Max = /Core/Int/Eq%.Max;
 % Min = /Core/Int/Eq%.Min;
+% IsNegative = /Core/Int/Eq%.IsNegative;
 % Range = /Core/Int/Iter%.Range;
 
 <@>% For = /Core/Iter%.For;
@@ -51,10 +52,10 @@ SortByY = (Point@ a, Point@ b, Point@ c) {
 #
 # s must be greater than 0.
 (Int@, Int@, Int@) { Fixed@; } Fixed = (Int@ x, Int@ r, Int@ s) {
-  r.?(n: Fixed(Sub(x, 1), Add(r, s), s));
+  IsNegative(r).?(true: Fixed(Sub(x, 1), Add(r, s), s));
 
   Int@ r_minus_s = Sub(r, s);
-  r_minus_s.?(n: Fixed@(x, r));
+  IsNegative(r_minus_s).?(true: Fixed@(x, r));
 
   Fixed(Add(x, 1), r_minus_s, s);
 };

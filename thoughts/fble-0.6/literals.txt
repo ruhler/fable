@@ -925,3 +925,20 @@ Except... I could generate malformed utf8? What value is that?
 Let's be honest, I'm not going to get around to fixing this anytime soon, and
 I don't think it's going to be a problem any time soon. So let's not worry
 about it, okay? Future me can worry about it when it becomes a problem.
+
+---
+
+I really wish I could avoid saying anything about unicode, or 0x27 in the
+language spec.
+
+Anyway, what would I need to make things really work in practice, not just for
+my utf8 use case?
+
+* Avoid assuming ascii compatible in lexer
+ - Read character into wchar_t.
+ - Store into vector as either list of wchar_t, or manually utf8 encoded.
+   Some representation we can compare across wildly different source character
+   encodings.
+ - Error out if source file is not properly encoded in its character set.
+* 
+
