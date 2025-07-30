@@ -940,5 +940,72 @@ my utf8 use case?
    Some representation we can compare across wildly different source character
    encodings.
  - Error out if source file is not properly encoded in its character set.
-* 
+
+---
+
+I'm flipping. Here's my rationale:
+
+In bytecode we record literals as sequences of tags, not as sequences of
+characters. That's nice. The runtime doesn't have to know anything about
+characters at all. It's all in terms of tags. It would be really nice to keep
+it that way.
+
+From that point of view, it seems better not to support 'structured' character
+literals. Keep it as a sequence of tags. Keep everything as is from the
+language point of view.
+
+This feels right. This feels better. No need to talk about unicode. No need to
+tie the language, or literals, to any particular character encoding.
+
+Now, my original concerns still remain. We've already disposed of the
+performance concern and the validity concern. Here's how I'm thinking about
+the structure concern. Specific to unicode character string support, which is
+sure to be the worst case scenario.
+
+1. We can compose different subsets by breaking the literal into parts. For
+example, maybe we want to mix some weird language A with some weird language
+B. You could do that as, for example: Strs[A|xyz, B|wrt]. In other words,
+worst case, we can do composition in use of literals. It's just a little more
+tedious to do really big literals that mix a bunch of things this way.
+
+2. We can allow escape sequences in the character literals at the user level,
+like I already do with StrE. So if the goal is to generate the string without
+too much pain, and there are only a few places that need special characters,
+use a literal that supports a \uXXXX escape sequence.
+
+3. If you want to bring in a bunch more text, maybe that's better as a file.
+It might be nice to support file literals, but that needs a different story,
+because files could be sequences of bytes rather than sequences of characters.
+
+4. We can go with standard subsets of characters for the standard library
+literals, rather than try to list all possible unicode characters.
+
+For example:
+* MES-1: 335 characters.
+* WGL-4: 657 characters. Tedious, but entirely practical I think.
+* ANSI C? Probably too limiting, but serves as a reasonable example.
+
+Um... it's going to be fun to decide what subsets to make available. But worst
+case, a user could define their own if it's missing.
+
+Basic approach will be to have an fble module for a specific subset. That
+defines the literal type and a function mapping literal type to unicode Char@.
+
+What does this mean for moving forward?
+
+1. In theory the lexer ought to support parsing of character encodings not
+compatible with ascii: in other words, character encodings with multibyte
+characters where some bytes in the sequence look like ascii. I already punted
+that as not worth worrying about now, and presumably easy to fix later.
+
+2. I claim we can continue to do prefix matching and not have to worry about
+two different source files having different character encodings. Because we
+read all of the necessary files for type checking in a single invocation of
+the compiler. That means all source files are interpreted using the same
+character set, whatever that is, and prefix matching ought to work.
+
+3. No need for any spec updates. Spec is still good.
+
+Okay? Reasonable? I feel better about this approach for sure, if we can make
+it work.
 
