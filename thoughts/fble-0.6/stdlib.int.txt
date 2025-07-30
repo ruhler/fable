@@ -1,0 +1,46 @@
+Stdlib Int
+==========
+
+Existing:
+* Int@, 0 through 10
+* Incr, Decr, Add, Sub, Neg, Mul, Exp2, Abs
+* Eq, Show, Map, Ord, etc.
+* Lt, Gt, Le, Ge, IsZero, IsNegative
+* Max, Min
+* Lit
+* Div, Sqrt
+
+C99:
+* int, fixed width
+* limits on values.
+* literals
+* operators: * / % + - ++ -- ! ~ >> << ^ | &
+*  <=, ==, != >=, <, >
+
+I'm providing unbounded integers rather than fixed width, so the bitwise
+operations don't seem appropriate for me.
+
+Haskell:
+* Integer
+* Enum, Eq, Ord, Show, Read, etc.
+* Num is: + * abs signum fromInteger negate
+
+Go:
+* literals: decimal, octal, hex, binary, 
+* all your typical operators.
+
+My vote is basically what I have, just reorganize and abstract things a bit.
+
+* Int@ private type.
+* Literals: decimal, hex, binary, octal
+* Operators: Incr, Decr, Add, Sub, Neg, Mul, Div, Mod, Sqrt, Exp2
+* Equality: Eq, Ne, Gt, Ge, Lt, Le
+* Abs, Max, Min, 
+* IsZero, IsNegative, IsPositive, or just SigNum?
+* Read, Show
+* I don't think we need 0 through 10 anymore.
+* No need for exposing IntP@.
+
+Reading about SigNum, it seems like it goes well with Abs?
+
+ x = |x| * sgn(x)
