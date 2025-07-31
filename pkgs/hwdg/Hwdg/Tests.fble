@@ -1,10 +1,8 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-% 0 = /Core/Int%.0;
-% 1 = /Core/Int%.1;
-% 2 = /Core/Int%.2;
-% 3 = /Core/Int%.3;
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
 
@@ -41,6 +39,11 @@
 
 # Import to test compilation.
 % _ = /Hwdg/App%;
+
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
+Int@ 3 = Int|3;
 
 Test@ Tests = TestSuite(Str|Hwdg, List[
   Test(Str|'empty no data', (Unit@ _) {

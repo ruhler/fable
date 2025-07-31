@@ -18,9 +18,6 @@
 <@>% ForEach = /Core/List%.ForEach;
 
 @ Int@ = /Core/Int%.Int@;
-% 0 = /Core/Int%.0;
-% 1 = /Core/Int%.1;
-% 2 = /Core/Int%.2;
 % Incr = /Core/Int%.Incr;
 % Decr = /Core/Int%.Decr;
 % Add = /Core/Int%.Add;
@@ -61,6 +58,9 @@
 % Over = /App/Drawing%.Over;
 % Affine = /App/Drawing%.Affine;
 
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
 
 Int@ MinRow = Int|0;    # Inclusive. This is a legal row.
 Int@ MaxRow = Int|20;   # Inclusive. This is a legal row.

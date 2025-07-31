@@ -21,15 +21,6 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 @ Int@ = /Core/Int%.Int@;
-% 0 = /Core/Int%.0;
-% 1 = /Core/Int%.1;
-% 2 = /Core/Int%.2;
-% 3 = /Core/Int%.3;
-% 4 = /Core/Int%.4;
-% 5 = /Core/Int%.5;
-% 6 = /Core/Int%.6;
-% 7 = /Core/Int%.7;
-% 8 = /Core/Int%.8;
 % Neg = /Core/Int%.Neg;
 % Incr = /Core/Int%.Incr;
 % Decr = /Core/Int%.Decr;
@@ -52,6 +43,16 @@
 % Max = /Core/Int/Eq%.Max;
 % Int = /Core/Int/Lit%.Int;
 % IOrd = /Core/Int/Ord%.Ord;
+
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
+Int@ 3 = Int|3;
+Int@ 4 = Int|4;
+Int@ 5 = Int|5;
+Int@ 6 = Int|6;
+Int@ 7 = Int|7;
+Int@ 8 = Int|8;
 
 (String@, (Unit@) { Bool@; }) { Test@; }
 T = (String@ name, (Unit@) { Bool@; } p) {

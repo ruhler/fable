@@ -44,3 +44,81 @@ My vote is basically what I have, just reorganize and abstract things a bit.
 Reading about SigNum, it seems like it goes well with Abs?
 
  x = |x| * sgn(x)
+
+---
+
+Int is the first somewhat complex library to provide. It's worth taking some
+time to plan it out in more detail. And compare more with other, existing
+libraries.
+
+High level: I want an unbounded, signed integer type. Don't include bitwise
+operations.
+
+Minimum needed to work with ints in practice:
+* Int@ type, abstract.
+* Some way to construct any Int@ value:
+ - 0, Neg, Add1, Mul2
+* Some way to deconstruct any Int@ value:
+ - IsZero, IsNegative, IsPositive, Div2
+
+What are the questions / decisions to make here?
+* Int@ type is clear.
+* Literals: how many to define in the language?
+  - Just 0? -1, 0, 1? 0 through 10?
+* Unary operators: Incr, Decr, Neg, Abs, Sgn?, Sqrt, Div2?, Exp2
+  - Sgn is an interesting one. Options:
+    a. Have IsZero, IsNegative, IsPositive, only. No Sgn.
+    b. Have Sgn go to '-1', '0', or '1' only. No Is...
+    c. Have Eq, Lt, Gt, etc. only, no IsZero, IsNegative, IsPositive, Sgn.
+  - Should we have Div2? Corresponds to shift?
+    Or Div 2^n? For more general shift right?
+    Or Mul 2^n? For more general shift left?
+* Binary operators: Add, Sub, Mul, Max, Min, Div, 
+  - Do we want general a^b exponentiation? Why not?
+* Comparison operators: Lt, Gt, Le, Ge, Eq, Ne
+  - Do we need Ne if we have Eq?
+* Show: Read, Show. But that's an add on I would say. I can consider that
+  later.
+
+Additional things Java has that may be worth considering:
+* Nothing relevant. The above catches it all.
+
+Let's assume I've at least mentioned here all the relevant functions to
+include for integer to start. How to decide on some of these things?
+
+Example: Incr.
+  Incr is the same as Add(x, 1). I think it's worth having still, because it's
+  a common operation, and Incr as a function is simpler, and potentially more
+  efficient.
+
+Literals:
+  I know eventually I'm going to support literals via Digit@, Char@.
+  I expect most people to use those forms.
+  
+I want general literals for: Decimal and Hex for sure. Binary and Octal too?
+But I can iron out those details later. The question is, what do we want to
+provide outside the context of those literals?
+
+I like: 0, 1, 2^n, -x. So, yes for 0 and 1. But no for anything else.
+
+More on which kinds of literals:
+* Decimal and Hex for sure. No question. That matches C99.
+* Octal is in C99, but I personally have never used it. Is it obsolete?
+* Binary seems useful, but pretty rare? It's not in C99.
+
+Go supports octal and binary. It can't hurt. Let's just have Oct and Bin as
+well.
+
+We can decide later the precise syntax for the literals to support. +-? _ for
+groupings? I vote we support '-' to negate, and some sort of separator,
+because I don't see how adding those can hurt anything.
+
+---
+
+Summary of proposal so far:
+/Std/Int%:
+ Int@, 0, 1
+
+/Std/Int/Lit%:
+ Int, Hex, Bin, Oct
+ 

@@ -25,15 +25,6 @@ Int@ 0 = Int@(0: Unit);
 };
 
 Int@ 1 = P(IntP.1);
-Int@ 2 = P(IntP.2);
-Int@ 3 = P(IntP.3);
-Int@ 4 = P(IntP.4);
-Int@ 5 = P(IntP.5);
-Int@ 6 = P(IntP.6);
-Int@ 7 = P(IntP.7);
-Int@ 8 = P(IntP.8);
-Int@ 9 = P(IntP.9);
-Int@ 10 = P(IntP.10);
 
 # Sub1(x) = x - 1
 (IntP@) { Int@; } Sub1 = (IntP@ x) {
@@ -134,6 +125,6 @@ Int@ 10 = P(IntP.10);
   a.?(n: P(a.n), : a);
 };
 
-@(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+@(Int@, 0, 1,
   Incr, Decr, Add, Sub, Neg, Mul, Exp2,
   Abs);

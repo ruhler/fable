@@ -4,8 +4,6 @@
 % And = /Std/Bool%.And;
 
 @ Int@ = /Core/Int%.Int@;
-% 1 = /Core/Int%.1;
-% 2 = /Core/Int%.2;
 % Decr = /Core/Int%.Decr;
 % Neg = /Core/Int%.Neg;
 % Add = /Core/Int%.Add;
@@ -50,6 +48,8 @@
 % ForWorld = /Games/GameOfLife%.ForWorld;
 % Step = /Games/GameOfLife%.Step;
 
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 
