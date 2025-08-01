@@ -4,6 +4,10 @@ Things to consider doing for the fble-0.6 release.
 
 * Clean up Int@ library.
 
+* Clarify in spec whether poly apply to an undefined value results in an error
+  or not.
+  And add spec tests for that case.
+
 * Separate out /Std into a different package from /Core.
 * Rename /Core/Unit% to /Std/Unit% in tutorials, if there are any references.
 

@@ -19,12 +19,12 @@ Int@ 4 = Int|4;
 # This type is the same as used for division, because why not?
 @ QR@ = *(Int@ q, Int@ r);
 
-% Imaginary = /Core/Undef%.Undef<QR@>;
+/Core/Undef%.Undef@ Imaginary;
 
 # Sqrt --
 #   a = q*q + r, r < 2q + 1
 (Int@) { QR@; } Sqrt = (Int@ a) {
-  a.?(n: Imaginary.undefined, 0: @(q: 0, r: 0));
+  a.?(n: Imaginary.undef<QR@>, 0: @(q: 0, r: 0));
   QR@ qr = a.p.?(
     1: @(q: 1, r: 0),
     2p0: {

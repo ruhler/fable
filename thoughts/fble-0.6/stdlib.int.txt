@@ -115,10 +115,75 @@ because I don't see how adding those can hurt anything.
 
 ---
 
-Summary of proposal so far:
+Summary of proposal (post filled based on following discussion):
 /Std/Int%:
- Int@, 0, 1
+ Int@, 0, 1,
+ Incr, Decr, Neg, Add, Sub, Mul
 
 /Std/Int/Lit%:
  Int, Hex, Bin, Oct
  
+---
+
+Next, let's see if we can clean up naming and population of operators.
+
+* Incr - Worth having, but what to call it?
+  Incr, Add1, '++'
+  I like Incr. I use it a bunch, definitely worth having.
+
+* Neg - worth having, anything else to call it?
+  Minus? I guess Neg is short for negate?
+
+Math calls negation: additive inverse, because when added to a number, it
+results in the additive identity. Opposite, negative, arithmetic negation.
+
+Let's go with 'Neg', it's natural to me.
+
+To what extent do we want to divide up the type into different modules?
+
+Existing division:
+  /Core/Int%
+  /Core/Int/Div%
+  /Core/Int/Sqrt%
+  /Core/Int/Eq%
+  /Core/Int/Lit%
+
+I like dividing things up for implementation purposes for sure, to have
+smaller context to work with. But we can divide things up for implementation
+and then combine them all together for public export.
+
+Previously I would have said we should separate Eq% because it depends on
+Bool% while the others don't. Do I still buy that argument?
+
+  /Core/Int%: Unit, 
+  /Core/Int/Div%: Int, Undef
+  /Core/Int/Sqrt%: Int, Lit
+  /Core/Int/Eq%: Int, Bool
+  /Core/Int/Lit%: Digits
+
+Digits, Undef, Bool, and Unit are all really small. But that's because we are
+at the base of things. Digits I'll probably inline.
+
+Presumably Div and Sqrt and Eq are a bit hefty, and if we want to use Int
+without those, we could save space by not having to compute them during
+program startup and not having to store them in memory.
+
+When we standardize an Eq class, we might want to naturally have a separate
+/Core/Int/Eq% module like we will for /Core/Bool/Eq%, and /Core/Bool/Show%,
+and /Core/Int/Show%, because Show depends on Char depends on Int.
+
+It can be hard to find where to look for things if we have all these
+submodules. Like, I want to know if a particular method exists, say String
+split. I don't know which file to look for that necessarily of there are a
+bunch of different files per conceptual type.
+
+We could also chose to specify a breakdown of modules, and a higher level
+module that contains everything in the breakdown.
+
+Separating into submodules is kind of like saying we have an optional module.
+It also would allow for optional modules. You don't get this by default, but
+you can add it extra if you like.
+
+Practically speaking, the competing considerations are:
+* How hard to remember which module defines what you want?
+* How much extra unused stuff do you end up pulling into your program?

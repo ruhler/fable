@@ -49,8 +49,8 @@
   Le(params.num_vars, params.num_literals_per_clause).?(true: {
     # We can't generate a puzzle unless we have more vars to work with than
     # literals per clause.
-    % TooFewVars = /Core/Undef%.Undef<M@<Puzzle@>>;
-    TooFewVars.undefined;
+    /Core/Undef%.Undef@ TooFewVars;
+    TooFewVars.undef<M@<Puzzle@>>;
   });
 
   Map@ vars <- m.do({

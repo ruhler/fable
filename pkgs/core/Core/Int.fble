@@ -117,7 +117,7 @@ Int@ 1 = P(IntP.1);
 # 2^a
 (Int@) { Int@; } Exp2 = (Int@ a) {
   a.?(0: 1, p: P(Exp2P(a.p)));
-  /Core/Undef%.Undef<Int@>.undefined;
+  /Core/Undef%.Undef.undef<Int@>;
 };
 
 # |a|

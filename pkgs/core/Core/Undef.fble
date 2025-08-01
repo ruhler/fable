@@ -1,7 +1,4 @@
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
-
 # Undef@ --
 #   Type used for indicating undefined values.
 #
@@ -10,24 +7,21 @@
 #
 # Fields: 
 #   undefined - Value to use for undefined.
-#   unit - The actual undefined value.
-<@>@ Undef@ = <@ T@> { +(T@ undefined, Unit@ unit); };
+@ Undef@ = *(<@ T@> { T@; } undef);
 
 # Undef --
 #   The undefined value.
 #
 # This can be used to indicate in source code that a value is undefined, in
-# such a way that an invalid union access error is reported at the location of
-# the undefined value.
-#
-# Type Parameters:
-#   T@ - The type of undefined value.
+# such a way that an undefined access error is reported at the location of the
+# undefined value.
 #
 # Example Use:
 #   % InvalidArgumentError = /Core/Undef%.Undef;
 #
-#   ... InvalidArgumentError<Foo@>.undefined ...
-Undef@ Undef = <@ T@> { Undef@<T@>(unit: Unit); };
+# Where an value of type Foo@ is expected:
+#   InvalidArgumentError.undef<Foo@>
+Undef@ Undef;
 
 @(Undef@, Undef);
 

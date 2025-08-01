@@ -1,0 +1,237 @@
+Undefined
+=========
+I want some standard library way of saying the equivalent of 'error'.
+
+It causes the program to terminate, ideally with a stack trace. And ideally
+you have a decent way in the code to explain the error.
+
+For example:
+
+  Error<Foo@>|'divide by zero';
+
+Here's my current approach:
+
+% DivideByZero = /Core/Undef%.Undef<QR@>;
+
+...
+   DivideByZero.undefined
+
+Let's assume we panic, and don't seriously consider at this point the idea of
+adding exceptions to fble. What we want is to specify the type, say something
+is undefined, and ideally give a explanation of some sort in the code of why
+it is undefined, all in some compact way.
+
+If we do an undefined access at the level of code, that could be useful for
+debug without a stack trace if you have the location at the point of the
+error. If you have a full stack trace, you could call out to another function
+that does the undefined access.
+
+How about this though: /Core/Undef%.Undef<X@> returns an undefined polymorphic
+function from any type to X@. Then we could use it something like:
+
+   0: Undef<Int@>(Str|'DivideByZero);
+
+It looks just like a function call, but the undefined location is the location
+of the function application. We can give any argument we want. So, if you are
+okay with string literals, give it one. If not, you could do something like:
+
+  Undef<Int@>(@(DivideByZero: Unit));
+
+Seems ... annoyingly round about to give an indication of the problem though.
+
+Maybe:
+
+  Undef@<Int@> DivideByZero;
+  DivideByZero(Unit);
+
+  Undef@<Int@> DivideByZero;
+  DivideByZero.undefined;
+
+Or:
+  # Divide by zero
+  Undef<Int@>.undefined
+
+Or perhaps something like:
+  Int@ divide_by_zero <- Undef<Int@>;
+  divide_by_zero;
+
+Honestly, of all of these, my existing approach seems nicest to me.
+
+  Undef@<Int@> DivideByZero;
+  DivideByZero.undefined;
+
+  Undef@ DivideByZero;
+  ...
+
+  DivideByZero<Int@>.undefined;
+
+We don't even need an Undef value. Just the type is enough.
+
+  Undefined@ DivideByZero;    # defined at top level.
+  ...
+
+  DivideByZero<Int@>.undefined;   # defined at use.
+
+It's nicer to spell out fully maybe?
+
+  /Std/Undefined%.Undefined@ DivideByZero;  # No value needed here.
+
+Here's an interesting question. Does poly apply count as failing on
+application? Could we do, like:
+
+  DivideByZero<Int@>;
+
+No, that's must less obviously about being something undefined.
+
+  Undefined<Int@>.undefined;
+
+  Undefined<Int@>;
+
+That's also nice, if it could work, but doesn't have any name associated with
+it. Maybe that's for the better? Let me see if it works.
+
+No, apparently it doesn't. I know why internally, but that's a little funny,
+don't you think?
+
+We could be a little silly and make the undefined module value undefined?
+
+ /Std/Undefined%.Undefined;
+
+But that doesn't really help much.
+
+ /Std/Undef%.Undefined;
+
+No, I still like this approach best:
+
+  Undefined@ DivideByZero;    # at top level.
+  ...
+
+  DivideByZero<Int@>.undefined;   # at use.
+
+Error feels better though, right? Like, we are defining errors. Should it be
+instead:
+
+/Std/Undef%.Error@ DivideByZero;
+
+DivideByZero<Int@>.raise?
+
+It's nice calling it an error and treating the access like a call.
+
+/Std/Error%.Error@ DivideByZero;
+
+  DivideByZero<Int@>.panic;
+
+/Std/Error%.Error.panic;
+
+/Std/Error%.Panic;
+
+Or:
+
+  DivideByZero<Int@>.abort;
+
+  Error@ DivideByZero;
+  DivideByZero.abort;
+
+
+  Undefined.abort;
+
+Or...
+
+  @ DivideByZero@ = /Std/Undef%.Error@;
+
+  /Std/Undef%.Error<DivideByZero@>
+
+...
+
+  /Std/Undef%.Error@ DivideByZero;
+  DivideByZero<Int@>.abort;
+  DivideByZero.abort<Int@>;
+
+  /Std/Abort%.Abort<Int@>;
+
+  /Std/Undef%.Undef@ DivideByZero;
+  DivideByZero.abort<Int@>;
+
+Hmmm...
+
+So I like this idea of:
+  Type@ Name;
+  Name.Field<X@>;
+
+I just need to pick names for Type@, Field, and whatever module they belong
+to.
+
+---
+
+I lean towards 'undefined'. Here's how to read it:
+
+  # The undefined value.
+  Undefined@ Undefined;
+
+  # Define a named undefined value. It's value really is undefined from the
+  # language standard point of view
+  Undefined@ DivideByZero;
+
+  # Perform undefined access. This will abort the program.
+  DivideByZero.undefined;
+
+The only confusion about the naming conceptually is that DivideByZero is
+an undefined value, but DivideByZero.undefined is an undefined behavior.
+
+Maybe Undefined.abort? DivideByZero.abort? DivideByZero.undefined?
+
+How do I feel about 'undef' versus 'undefined'?
+
+% DivideByZero = /Std/Undef%.Undef;
+% DivideByZero = /Std/Undef%.Undefined;
+% DivideByZero = /Std/Undefined%.Undefined;
+
+Undef@ DivideByZero;
+Undefined@ DivideByZero;
+Undef@<Int@> DivideByZero;
+
+DivideByZero.undef;
+DivideByZero.undefined;
+
+There is precedent for shortening names in the library: Int, Char, Bool. They
+all do it. Undef seems reasonable to me. But use it for the field name as
+well.
+
+Okay? Cool. Sounds like a plan, and we have three clear use cases:
+
+1. Direct use of undefined:
+  /Std/Undef%.Undef<Int@>.undef;
+
+2. Reuse of Undef value:
+  % DivideByZero = /Std/Undef%.Undef;
+  DivideByZero<Int@>.undef;
+
+3. Reuse of Undef@ type:
+  Undef@ DivideByZero;
+  /Std/Undef%.Undef@ DivideByZero;
+
+One more question: should the return type go with the field or with the error
+itself?
+
+  DivideByZero<Int@>.undef;
+  DivideByZero.undef<Int@>;
+
+The first one allows us to encapulate that type if we want. E.g.
+
+  % DivideByZero = /Std/Undef%.Undef<Int@>;
+  DivideByZero.undef;
+
+The second feels a little more natural to express things, but a bit more
+sketch too. Hmm... I kind of lean towards the second. The undef field is a
+poly <@ A@> { A@; } rather than undefined having a type. Makes more sense for
+how we expect things to be used.
+
+Let's try this, see how it goes, see if I regret the decision in the future.
+
+---
+
+I'm impressed by how many different places I make use of Undef already. The
+one case where it might be nice to factor out the type is when I have a bunch
+of calls to undef in the same function with the same return type: conversion
+from Int@ to Decimal@. It's not too big a deal though.
+

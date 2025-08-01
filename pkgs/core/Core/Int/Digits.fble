@@ -6,10 +6,9 @@
 % Int = /Core/Int/Lit%.Int;
 % Div = /Core/Int/Div%.Div;
 
-<@>@ Undef@ = /Core/Undef%.Undef@;
-<@>% Undef = /Core/Undef%.Undef;
+@ Undef@ = /Core/Undef%.Undef@;
 
-Undef@<Decimal@> NotADigit = Undef<Decimal@>;
+Undef@ NotADigit;
 
 # Digit --
 #   Converts an integer in the range [0-9] to a decimal digit.
@@ -17,7 +16,7 @@ Undef@<Decimal@> NotADigit = Undef<Decimal@>;
 # Behavior is undefined if the integer is not in the range [0-9].
 (Int@) { Decimal@; } Digit = {
   (Int@ d) {
-    d.?(n: NotADigit.undefined, 0: Decimal.0, p: d.p.?(
+    d.?(n: NotADigit.undef<Decimal@>, 0: Decimal.0, p: d.p.?(
         1: Decimal.1,
         2p0: d.p.2p0.?( 
           1: Decimal.2,
@@ -25,22 +24,22 @@ Undef@<Decimal@> NotADigit = Undef<Decimal@>;
             1: Decimal.4,
             2p0: d.p.2p0.2p0.2p0.?(
               1: Decimal.8,
-              : NotADigit.undefined),
-            : NotADigit.undefined),
+              : NotADigit.undef<Decimal@>),
+            : NotADigit.undef<Decimal@>),
           2p1: d.p.2p0.2p1.?(
             1: Decimal.6,
-            : NotADigit.undefined)),
+            : NotADigit.undef<Decimal@>)),
         2p1: d.p.2p1.?( 
           1: Decimal.3,
           2p0: d.p.2p1.2p0.?(
             1: Decimal.5,
             2p0: d.p.2p1.2p0.2p0.?(
               1: Decimal.9,
-              : NotADigit.undefined),
-            : NotADigit.undefined),
+              : NotADigit.undef<Decimal@>),
+            : NotADigit.undef<Decimal@>),
           2p1: d.p.2p1.2p1.?(
             1: Decimal.7,
-            : NotADigit.undefined))));
+            : NotADigit.undef<Decimal@>))));
   };
 };
 

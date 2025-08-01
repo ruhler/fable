@@ -18,7 +18,7 @@ Int@ 2 = Int|2;
 # Assumes the Int@ is non-negative. Truncates if needed to fit in the bit
 # vector.
 <@ T@>(Bits@<T@>, Int@) { T@; } ToBits = <@ T@>(Bits@<T@> b, Int@ i) {
-  IsNegative(i).?(true: /Core/Undef%.Undef<T@>.undefined);
+  IsNegative(i).?(true: /Core/Undef%.Undef.undef<T@>);
   IsZero(i).?(true: b.0);
 
   QR@ qr = Div(i, 2);
