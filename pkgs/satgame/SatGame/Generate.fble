@@ -49,7 +49,7 @@
   Le(params.num_vars, params.num_literals_per_clause).?(true: {
     # We can't generate a puzzle unless we have more vars to work with than
     # literals per clause.
-    /Core/Undef%.Undef@ TooFewVars;
+    /Std/Undef%.Undef@ TooFewVars;
     TooFewVars.undef<M@<Puzzle@>>;
   });
 

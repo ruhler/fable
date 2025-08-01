@@ -19,7 +19,7 @@ Int@ 4 = Int|4;
 # This type is the same as used for division, because why not?
 @ QR@ = *(Int@ q, Int@ r);
 
-/Core/Undef%.Undef@ Imaginary;
+/Std/Undef%.Undef@ Imaginary;
 
 # Sqrt --
 #   a = q*q + r, r < 2q + 1

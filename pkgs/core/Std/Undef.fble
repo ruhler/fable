@@ -1,0 +1,54 @@
+# @module[/Std/Undef%]
+#  Provides a standard and convenient way to explicitly express undefined
+#  behavior in code.
+#
+#  For example, imagine you are implementing integer division and need to do
+#  something in case of divide by zero, but the specification for that case is
+#  undefined.
+#
+#  @code[fble@]
+#   divisor.?(0: ???);
+#
+#  @l{/Std/Undef%} defines an @l{Undef@} type with a single @l{undef} field
+#  and undefined value @l{Undef} of that type. If you try to access the
+#  @l{undef} field of @l{Undef}, the program will crash with an undefined
+#  struct access error.
+#
+#  Here are three ways you can use /Std/Undef% to explicitly express undefined
+#  behavior in your code, using the divide by zero case as an example.
+#
+#  You can directly access the @l{undef} field. The type argument for the
+#  field is the type of value to produce to satisfy the compiler. For example:
+#
+#  @code[fble@]
+#   divisor.?(0: /Std/Undef%.Undef.undef<Int@>)
+#
+#  You can define a named undefined value, typically at module level scope,
+#  where the name serves to document what about the behavior is undefined. For
+#  example:
+#
+#  @code[fble@]
+#   % DivideByZero = /Std/Undef%.Undef;
+#   ...
+#   divisor.?(0: DivideByZero.undef<Int@>)
+#
+#  Or you can define your own undefined value of @l{Undef@} type. For example:
+#
+#  @code[fble@]
+#   /Std/Undef%.Undef@ DivideByZero;
+#   ...
+#   divisor.?(0: DivideByZero.undef<Int@>)
+
+# @struct[Undef@] Type used for indicating undefined behavior.
+#  @field[<@ T@> { T@; }][undef]
+#   Field access which results in undefined behavior. 
+@ Undef@ = *(<@ T@> { T@; } undef);
+
+# @value[Undef] An undefined value.
+#  @type[Undef@]
+#
+#  Any attempt to access the @l{undef} field of this value will result in an
+#  undefined struct access error.
+Undef@ Undef;
+
+@(Undef@, Undef);

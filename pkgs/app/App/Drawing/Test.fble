@@ -99,7 +99,7 @@ Draw_ = {
   (Point@ a, Point@ b, Drawing@ drawing, Drawn@ drawn) {
     drawing.?(
       blank: drawn,
-      triangle: /Core/Undef%.Undef.undef<Drawn@>,  # TODO
+      triangle: /Std/Undef%.Undef.undef<Drawn@>,  # TODO
       rect: {
         Int@ x = Add(Mul(a.x, drawing.rect.x), b.x);
         Int@ y = Add(Mul(a.y, drawing.rect.y), b.y);

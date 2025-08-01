@@ -6,7 +6,7 @@
 % Int = /Core/Int/Lit%.Int;
 % Div = /Core/Int/Div%.Div;
 
-@ Undef@ = /Core/Undef%.Undef@;
+@ Undef@ = /Std/Undef%.Undef@;
 
 Undef@ NotADigit;
 

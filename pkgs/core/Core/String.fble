@@ -29,14 +29,14 @@
 (List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
   chars.?(nil: chars);
   chars.cons.head.?('\': {
-    chars.cons.tail.?(nil: /Core/Undef%.Undef.undef<String@>);
+    chars.cons.tail.?(nil: /Std/Undef%.Undef.undef<String@>);
     String@ tail = StrE(chars.cons.tail.cons.tail);
     Char@ head = chars.cons.tail.cons.head.?(
       '\': Chars.'\',
       'n': Chars.nl,
       'r': Chars.cr,
       't': Chars.tab,
-      : /Core/Undef%.Undef.undef<Char@>);
+      : /Std/Undef%.Undef.undef<Char@>);
     Cons(head, tail);
   });
   Cons(chars.cons.head, StrE(chars.cons.tail));
