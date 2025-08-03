@@ -28,7 +28,6 @@
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
 % Exp2 = /Core/Int%.Exp2;
-% Abs = /Core/Int%.Abs;
 
 % Div = /Core/Int/Div%.Div;
 % Sqrt = /Core/Int/Sqrt%.Sqrt;
@@ -41,6 +40,7 @@
 % IsZero = /Core/Int/Eq%.IsZero;
 % Min = /Core/Int/Eq%.Min;
 % Max = /Core/Int/Eq%.Max;
+% Abs = /Core/Int/Eq%.Abs;
 % Int = /Core/Int/Lit%.Int;
 % IOrd = /Core/Int/Ord%.Ord;
 

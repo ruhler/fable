@@ -120,11 +120,23 @@ Int@ 1 = P(IntP.1);
   /Std/Undef%.Undef.undef<Int@>;
 };
 
-# |a|
-(Int@) { Int@; } Abs = (Int@ a) {
-  a.?(n: P(a.n), : a);
+# a^b
+# TODO: implement me.
+# TODO: how to behave for b < 0 and 0^0?
+(Int@, Int@) { Int@; } Exp;
+
+# a*2^b, or a << b
+(Int@, Int@) { Int@; }
+Shl = (Int@ a, Int@ b) {
+  Mul(a, Exp2(b));
 };
 
-@(Int@, 0, 1,
-  Incr, Decr, Add, Sub, Neg, Mul, Exp2,
-  Abs);
+# a >> b
+# TODO: implement me.
+(Int@, Int@) { Int@; } Shr;
+
+@(
+  Int@, 0, 1,
+  Incr, Decr, Add, Sub, Neg,
+  Mul, Mul2, Exp, Exp2, Shl, Shr
+);

@@ -237,3 +237,127 @@ It would be nice if I could put tables in docs, don't you think? For example,
 that way I could do a three column <type> <name> <desc> for describing fields
 of a struct or union?
 
+---
+
+I'm struggling with how to organize the Int module. I think it ties back to
+the question of what my goal is here, now, with the standard library.
+
+Clear goals:
+* Flesh out obviously missing functions from the library.
+* Clean up existing functions if/as needed with a little thought.
+* Remove things that probably shouldn't be there anymore.
+* Document all the standard functions.
+* Be able to meaningfully write rosetta code examples based on the library.
+
+Beyond that is less clear. What is the end vision for this library?
+* The library of useful stuff for me written by me?
+* An abstract interface that every implementation and distribution of fble
+  must support from here on out?
+* A collection of de-facto standard types for interoperability between
+  packages?
+* A collection of everything you might practically need but don't want to
+  write yourself to make writing your own code in fble easy?
+
+In particular I'm struggling with:
+* How to organize things into packages, the module hierarchy, and whether they
+  ought to be pre-installed or not.
+
+Fble doesn't need to have any builtin library, in theory. In practice you
+could argue whether things like Stdio count: it needs to be builtin, does it
+also need to be tied to a particular implementation of fble? Depends on
+whether I standardize a native interface.
+
+There's also the question of versioning. Any time you have multiple packages
+which depend on each other, they have separate versioning, things get tricky.
+
+There's also the issue of things like: String depends on Char depends on Int,
+but we want /Int/Show% to depend on /String% while still being grouped
+together in the module hierarchy with /Int%. If we say each part of the module
+hierarchy is owned by a single package, that would require us to have String
+and Int belong to the same package.
+
+Imagine you had a package manager that made it really easy to install fble
+packages. In that case, I would want the core datatypes to be in a different
+package than 'app' or 'network'. Possibly 'stdio' too, to be honest. At a high
+level, we might have:
+
+* core - common data types standardized for use between different packages.
+  Unit@, Bool@, Int@, List@, Maybe@, Map@, Char@, String@, Monad@,
+  Eq@, Show@, Ord@
+* test - test infrastructure.
+* random - stuff having to do with random number generation.
+* network - stuff having to do with networking.
+* app - stuff having to do with applications.
+* stdio - stuff having to do with standard input/output.
+* md5 - md5 hash, or maybe group into a crypto package.
+
+This makes sense to me. It seems logical. In terms of dependencies between
+packages:
+* Everything depends on core.
+* test depends on stdio
+
+In terms of mapping packages to module paths, we could treat 'core' as a
+special case: don't have 'core' in the path. Everything else hosted at
+/Std/<name>. Thus:
+* /Std/Unit%, /Std/Int%, /Std/Test%, /Std/Random%, /Std/App%, ...
+
+That feels like a good way of doing things.
+
+In terms of what is standard / ships with every implementation of fble...
+maybe don't worry or care about that now? We can wait until after we have
+package management in place?
+
+That's all good, except now for the question of tests. I would like to write
+tests for core and stdio, but those don't depend on the test package. Which
+suggests we separate things out:
+
+* core, core-tests
+* stdio, stdio-tests
+
+Questions:
+* What module path should be used for core-tests modules?
+* Should md5-tests be separate from md5 package?
+
+It's nice to organize tests next to the modules themselves: /Std/Bool/Tests%,
+/Std/Stdio/Tests%. We shouldn't need to include the tests with the package,
+but on the other hand, we assume you won't depend on those in your program, so
+no real cost if we do. I don't think tests would need internal access, but
+maybe you want them to, in which case, they should go with the implementation.
+
+Which brings us back to the original solution: include 'tests' and 'stdio' as
+part of core package. Not because they are common interface types for
+packages, but so we can bootstrap the core package. Don't have a separate
+md5-tests package. Put test cases alongside the relevant code they are
+testing.
+
+Good. That helps answer the higher level package and module hierarchy
+organization question. The core package has 2 purposes: self hosted testing
+and common interface types. That's consistent with how I use it in practice.
+
+I'm still left with questions about submodule organization. There are two, I
+suppose:
+1. How should we organize, say Int, into submodules?
+2. What should be the criteria for including something for Int?
+
+For (2), we can think about Bool instead. We have And, Or, Not. We don't have
+Xor, Nand, Nor, Xnor. I think we can reasonably categorize functions into ones
+that you would expect to have in the standard library, and ones that are rare.
+
+For example, integer division definitely expected. Integer square root,
+definitely not. I've never heard of anyone providing that kind of thing. But I
+have implemented integer square root, maybe it's useful elsewhere, it seems
+natural to have it live in the core library with the rest of Int. Perhaps in a
+separate submodule to avoid pulling it in when not needed. Same could go for
+Xnor.
+
+Note: I use Sqrt in the pinball package to solve for roots of a quadratic
+equation and otherwise do things you might normal use with a floating point
+type instead of an integer type.
+
+I think it's reasonable for me to say: I will have all the functions you
+reasonably expect to have in the standard library: And, Or, Not. I will
+optionally have additional functions I personally have found useful: Sqrt, and
+I will put them in separate submodules where makes sense so you don't pay the
+cost for them when you don't use them.
+
+Is that enough for me to go on in terms of int module organization?

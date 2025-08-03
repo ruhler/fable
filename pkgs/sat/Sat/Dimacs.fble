@@ -4,8 +4,8 @@
 % IsSpace = /Core/Char/Type%.IsSpace;
 
 @ Int@ = /Core/Int%.Int@;
+% Abs = /Core/Int/Eq%.Abs;
 % Int = /Core/Int/Lit%.Int;
-% Abs = /Core/Int%.Abs;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;

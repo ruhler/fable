@@ -24,11 +24,11 @@
 % Neg = /Core/Int%.Neg;
 % Mul = /Core/Int%.Mul;
 % Sub = /Core/Int%.Sub;
-% Abs = /Core/Int%.Abs;
 
 % Eq = /Core/Int/Eq%.Eq;
 % Lt = /Core/Int/Eq%.Lt;
 % Gt = /Core/Int/Eq%.Gt;
+% Abs = /Core/Int/Eq%.Abs;
 
 % Int = /Core/Int/Lit%.Int;
 

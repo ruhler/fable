@@ -187,3 +187,297 @@ you can add it extra if you like.
 Practically speaking, the competing considerations are:
 * How hard to remember which module defines what you want?
 * How much extra unused stuff do you end up pulling into your program?
+
+---
+
+What about using operators for function names?
+
+Add: '+' Sub: '-' Mul: '*'
+Incr: '++' Decr: '--'
+LE: '<=', '>=', etc.
+EQ: '==', '!=', 
+
+Exp2: '2^'
+Shift: '*2^'
+
+I wonder how that sort of thing would feel.
+
+  Alien@ next = Alien@(a.row, Incr(a.col));
+  Alien@ next = Alien@(a.row, '++'(a.col));
+
+I'll be honest, it looks pretty funny to me.
+
+    Lt(next.col, NumCols).?(true: next);
+    '<'(next.col, NumCols).?(true: next);
+
+  Eq(NumRows, next.row).?(true: Nothing<Alien@>);
+  '=='(NumRows, next.row).?(true: Nothing<Alien@>);
+
+But maybe it's one of those things you would get used to?
+
+---
+
+Anyway, back to the question of module organization.
+
+  /Core/Int%
+  /Core/Int/Div%
+  /Core/Int/Sqrt%
+  /Core/Int/Eq%
+  /Core/Int/Lit%
+
+Lit depends on List@, which ought to be separate. That I feel like I can
+justify fairly well.
+
+Sqrt seems like a really special case thing. Division is sort of special case.
+It's harder to justify splitting those up based on dependencies: Undef% and
+Bool% are very lightweight. Hmm... honestly List@ is pretty lightweight too,
+except it has a bunch of functions. I wonder.
+
+/Std/Bool.fble.o: 8.1K
+/Core/List.fble.o: 48K
+/Core/Int.fble.o: 82K
+
+I could kind of see how these things add up.
+
+What I'm getting to is, I really would like to keep the modules split up like
+the already are. Can I justify that from a standard library point of view?
+Sqrt can be treated as an add-on, who uses it? But division? Division is
+pretty common, no? Modulo is very common. Well, I use it maybe twice in the
+fble implementation, for profile sample overflow tracking and aarch64
+instruction choice.
+
+Let's go back to what I said before.
+
+Practically speaking, the competing considerations are:
+* How hard to remember which module defines what you want?
+* How much extra unused stuff do you end up pulling into your program?
+
+You have to know that list is in List%, int is in Int%, and so on. That's not
+hard.
+
+But why would you think to look for integer division in /Int/Div% rather than
+/Int%? Well, because that's where the docs say it is defined.
+
+The story is harder for List I think. Int has a fairly natural way to break
+things down. But butting things like Take, Drop, Length, Get into
+/List/Length% to separate from /List% feels much harder to me to predict.
+Maybe I would need to pick better names?
+
+Or, we could imagine a 'Drop' function with two variations: Drop a number of
+characters, or drop a list-length's worth of elements. The first requires
+Int@, the second doesn't, but they are both doing the same thing. Wouldn't you
+expect them to be defined together?
+
+I would feel better if I could come up with a reasonable name for the module
+that has List + Int dependency that's based on something other than List + Int
+dependency. /List/Index%? /List/Int%? Because certainly it's not intuitive to
+find a Drop function in /List/Length% rather than /List%.
+
+How about this: should we have separate /Std/Int/Lit/Hex, /Std/Int/Lit/Dec,
+... modules? That feels excessive to me, but realistically should they share
+code?
+
+On the other hand, how am I supposed to keep track that malloc is in stdlib.h,
+memset is in string.h, PRIu64 is in inttypes.h, rand is in stdlib.h, offset is
+in stddef.h.
+
+Maybe the issue is that clearly Drop, Take, Get are part of the List category
+of methods, but they don't naturally fall into a separate subcategory.
+
+I really want to split up into submodules the way I already have. I just can't
+convince myself there is a natural breakdown into submodules we can use to
+motivate it for a standard library.
+
+Char% and Char/Types% are pretty natural. Should I have /Int% and /Int/Type%
+for +, -, 0? Why does IsZero go in the same place as LessThan?
+
+I wonder if I can find a textbook on integers, math focused rather than
+programming, and see how it organizes integer operations?
+
+Group: Integer and Add operation
+Group: Integer and Mul operation
+
+Ring: Integer and Add and Mul operation.
+
+Field: Integer with Add, Sub, Mul, Div, except technically Integer is not a
+field because division doesn't given you an integer result?
+
+I don't think the math route will help here. It's too precise. Too many corner
+cases to confuse the argument.
+
+---
+
+Maybe math can help with identifying and grouping together relevant functions?
+
+Group for Integer Addition: Int@, Add, 0, Neg.
+Group for Integer Multiplication: Int@, Mul, 1, Div ??
+
+Where does this all leave us?
+* I don't know how to organize integer functions.
+* I don't know what all integer functions should be part of the standard,
+  though I have a fairly decent set to chose from.
+* I don't know what to name the integer functions.
+
+I don't have a clear idea of how to derive these things in a unique way from
+some common procedure I can apply uniformly across the standard library.
+
+---
+
+Trying again to propose a submodule hierarchy:
+* /Std/Int% - Int@ type, minimal required functions to access, and commonly
+  expected integer functions.
+* /Std/Int/Lit% - Integer literals, separated because they depend on list.
+* /Std/Int/Sqrt% - Separated because it's an unusual function most people
+  don't need.
+* /Std/Int/Eq% - for equalities and inequalities.
+  Include 'types': IsZero, IsNegative, IsPositive as special cases of
+  inequalities.
+
+That leaves us with questions on:
+* Div - separate because it's slightly less common, depends on Undef@, and
+  defines its own QR@ type.
+* Sgn - should go with common operators or equalities?
+* Div2 - should go with common operators or division?
+  It seems like a fundamentally different thing. I could call it Shift and not
+  mention division at all I guess.
+* Max, Min - go with equalities? common operators?
+
+I like thinking of Div2 in terms of Shift, so it doesn't need to go with
+normal division.
+
+Sgn is Int@ to '-1', '0', or '1'. I think better to go into Eq if we are
+defining a special type for it. Seems more like an equality, and that avoids
+defining the separate Sign@ type?
+
+I guess I'm thinking more like: common operators are Int to Int
+transformations. If you want to get out of the Int world to inspect an Int,
+that goes into /Std/Int/Eq%.
+
+Let's consider a concrete straw proposal. Best I can do so far.
+
+  /Std/Int%:
+   Int@, 0, 1,
+   Incr, Decr, Neg, Add, Sub, Mul
+   Shl, Shr, Mul2, Exp, Exp2
+
+  /Std/Int/Eq%:
+   Sign@, Sgn,
+   Eq, Ne, Lt, Gt, Le, Ge,
+   IsZero, IsNegative, IsPositive,
+   Abs, Min, Max
+
+  /Std/Int/Div%:
+   QR@, Div, Quot, Mod
+
+  /Std/Int/Sqrt%:
+   Sqrt
+
+  /Std/Int/Lit%:
+   Int, Hex, Bin, Oct
+
+Good. I like that. I like the organization. It also helps to clarify the
+outstanding questions:
+* What name to use for 'Shift'?
+* Which special cases of Shift are worth having as separate functions?
+* What to call 'Exp' general purpose exponentiation function?
+* Should we have separate Div and Mod, or Div.q and Div.r is fine?
+
+Special cases of Shift to explore...
+* General case is: a * 2^b, where b can be positive or negative.
+* Exp2 is special case where 'a' is 1.
+* Div2 is special case where 'a' is 1 and 'b' is -1
+* Mul2 is special case where 'a' is 1 and 'b' is 1
+
+Is the division side of the shift well defined? Do we round up, round down?
+
+The idea is if we have a sign and a sequence of bits, we drop the least
+significant bits. For positive shift, we add a bunch of 0 bits. Why would we
+have these be the same function? They do totally different things it feels
+like.
+
+Thinking in terms of C, I would use << in one case, >> in the other. I would
+do 2*x, not x<<1. I would do x/2, not x >> 1. Though I do feel worried anytime
+I do division by a power of two that the compiler won't realize it could just
+do it as a shift.
+
+We don't have a compiler to do those kinds of optimizations for us in fble.
+Div is going to give you long division. If you really mean shift, you should
+use shift instead.
+
+How common is double? I see it a fair amount in my existing code.
+
+How much more efficient would a Mul2 be over generic multiplication?
+
+It basically says: double it, then recursively go in, see 1, and stop. Or, if
+we did it in terms of shift instead of mul, which makes more sense, it would
+be constructing without looking at the exponent at all.
+
+If I can come up with a decent name for it, I think I should provide a Mul2
+function. Division by 2 is less obvious to me.
+
+---
+
+Proposal:
+* Div returns QR@, as today. Euclidean division.
+* Mod for Div(...).r, because integer modulus is the remainder of euclidean
+  division, and this matches how I normally think of mod.
+* Quot for Div(...).q, for quotient, which is what it is called.
+* Exp for a^b, for 'exponentiate'
+* Exp2 for 2^b, for 'exponentiate 2'
+* Shl for a * 2^b, for shift left.
+* Shr for shift right, which has a specific meaning in terms of division
+  different from euclidean division? Specifically, shift right of a negative
+  number is the same as negative of shift right of the positive number.
+* Mul2 for the name of the function to double a number.
+* No Div2, use explicit shift right instead. The meaning of 'Div' is too
+  ambiguous otherwise.
+
+Okay, one last question about division. How do I do division of negative
+numbers?
+
+Normally I would think, for example, -5 / 2 is ... -2.5 which is -2? Doesn't
+matter. I have a clearly defined form of division. If you want something
+else...?
+
+Let me review what I wrote when I decided on my current implementation of
+division in the first place. What I wrote before
+(thoughts/fble-0.1/fble.lib.txt) is the quotient is the floor of a/b, so
+rounding towards -infinity. That means -5 / 2 is -3. Specifically:
+  -5 = -2 * -3 + 1, remainder is positive. I like that.
+
+Cool! I have my proposal for Int now. The names, what's included and what not,
+and where things live.
+
+Next step: Update the library as proposed, document, and move over to /Std
+path.
+
+Actually, I think I want to move Abs, Min, and Max over to Eq, because they
+are naturally associated with extracting info from a value and doing
+comparisons.
+
+TODO:
+* move Abs /Int/Eq%
+* Expose and test Mul2.
+* Implement and test Shl, Shr. 
+* Implement and test Exp.
+* Implement and test Ne.
+* Implement and test Sign@, Sgn, and start to use it more.
+* Implement and test Quot, Mod. And make use of those more.
+* Implement and test Hex, Oct, Bin literals.
+
+This is probably a good opportunity to review all current use of Int@ and
+update it to the best choice. And also probably a good time to review and
+clean up the unit tests for bool and int.
+
+More questions:
+* Exp - how to handle 0^0, and negative exponents?
+* Exp2 - how to handle negative exponent?
+* Shl - how to handle negative shift?
+* Shr - how to handle negative shift?
+
+From wikipedia, seems like there's plenty of good reason to say 0^0 is 1.
+Particularly considering this is integer exponentiation. I'll go with that.
+
+For negative exponent, let's leave that as undefined. In theory a^(-b) =
+1/(x^b), but there isn't a clear multiplicative inverse or division to use
+here otherwise. For Shl and Shr, say negative is undefined behavior.

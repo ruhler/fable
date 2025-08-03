@@ -1,0 +1,134 @@
+Explicit Type Struct Value Removal
+==================================
+
+Crazy idea: what if we remove struct_value from the fble language?
+
+On the one hand, it seems absurd. The struct_value expression is so core to
+the language. It's been there from early days.
+
+On the other hand, if you step back and think about it, it seems like a pretty
+obvious decision.
+
+Remember the philosophy: "Remove as many corner cases and redundancies as
+possible". It's in the tutorials introduction.
+
+I would argue that explicit type struct value is entirely redundant and
+doesn't provide much value.
+
+Any place we use a struct value expression, we could instead use an implicit
+type struct value expression or a function call around an implicit type struct
+value expression. Thus it is redundant.
+
+From a use point of view, functions give you the same syntax and convenience
+of struct value expressions for construction.
+
+Here are the potential concerns/implications of this change:
+
+* Struct value syntax shows clearly that the operation is fast, which may not
+  be the case for a function call. If you care about those things, you'll have
+  to switch to implicit type struct value now. But honestly, it's hard for me
+  to imagine anyone cares, and if they do, it's not hard to use implicit type
+  struct value.
+
+* It's tedious to have to define a function wrapper everywhere for struct
+  construction. But is it really? Probably it's better practice, because it's
+  easier to control access to a function and to change the internal data
+  structure in a compatible way if everyone is using a function. I wouldn't be
+  surprised if we mostly provide and use functions for constructing structs
+  already anyway. A good test for this will be to remove explicit type struct
+  value from the language, because that will give me all the tediousness at
+  once.
+
+* You could change field names without changing struct construction before,
+  but now you can't. Except that's not true: if you use a function call
+  wrapper, you can still change field names, and even add or remove fields.
+
+* I'll have to update the language spec. This feels tedious, especially
+  removing an important section in the middle, updating tutorials and all
+  that. But that's a silly reason not to make a change to improve the
+  language, particularly at this relatively early stage of language
+  development. Think how nice it will be to only have to explain one way to
+  construct struct values?
+
+* I think the simplicity and consistency that comes with only using implicit
+  type struct value will be nice. The struct type becomes more like a function
+  type: it's really just a holder for a type, the type itself doesn't provide
+  you with any operations you can perform.
+
+* This opens the door for allowing us to make struct value fields order
+  agnostic, in case that is useful for compatibility.
+
+Lots of upsides, no real downsides? Let's try it and see what happens.
+
+---
+
+Experience:
+
+* No need to special case bind syntax away from struct values now. That's a
+  nice simplification.
+
+* It feels a bit harder to map implicit type struct value to a type in your
+  mind than explicit. For example, Entry@(key, value) tells me very clearly
+  right there that the type is Entry@. Using @(key, value) isn't nearly so
+  obvious. In fact, there is no way for me to tell what type this is without
+  searching the list of all types to find something that matches.
+
+* It's not consistent with union value in terms of <type>(...) syntax.
+
+* The tedium of defining a constructor function feels similar to the tedium of
+  defining Eq and Show for a type.
+
+* Notable uses of struct values in the library:
+  PureState@ for Stdio testing.
+
+* LFSR@ is an interesting case, because there is already an LFSR constructor
+  function, but it does more than simple construction of the LFSR. A good
+  example of 'simple' vs 'complex' that syntax could previously guarantee for
+  you if you cared.
+
+* Yeah, so this change is pretty tedious. Somehow it feels really nice to me
+  to use explicit type struct value: it reinforces the definition of the type
+  every time you use it, because you see the type name and the order of the
+  arguments, and you know it is simple. Somehow everything starts to feel more
+  nebulous when we remove that.
+
+---
+
+I wonder if we should optionally allow a type name in implicit type struct
+value syntax?
+
+For example:
+
+  Entry@(key, value)
+
+Or @(key, value);
+
+Say if you provide a struct type name, it will double check it has the same
+value as that. That gives you a way to check your construction, and prevent
+harder to decipher type errors otherwise.
+
+I wonder if that gives a syntax issue? Like it's hard to distinguish
+syntactically between union and struct creation?
+
+  Foo@(a: x);
+
+That could be a struct or a union, you would have to know what Foo@ is. Or
+maybe it's better to have consistent syntax?
+
+But also, careful about: Entry@(key, value) versus @(key, value). In the first
+case historically key and value are positional for whatever named fields there
+are of Entry@, but in the later, and proposed update, they would be for
+specific fields named 'key' and 'value' and fail if the type of Entry@ didn't
+align?
+
+---
+
+I'm going to back out of this. I'm not ready to drop struct value expressions
+yet. The key reason being how much harder it makes it to associate an implicit
+type struct value expression with its explicit type name.
+
+For function types that's not an issue, because we very rarely give names to
+function types. For struct types, the name takes on the identity of the type,
+it's a core part of how we think about the type. I feel like it's nice to keep
+that.
+

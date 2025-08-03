@@ -4,6 +4,7 @@
 % False = /Std/Bool%.False;
 
 @ Int@ = /Core/Int%.Int@;
+% Neg = /Core/Int%.Neg;
 
 % EqP = /Core/Int/IntP/Eq%.Eq;
 % LtP = /Core/Int/IntP/Eq%.Lt;
@@ -62,5 +63,9 @@
   Lt(a, b).?(true: a, false: b);
 };
 
-@(IsZero, IsNegative, Eq, Lt, Le, Gt, Ge, Max, Min);
+# |a|
+(Int@) { Int@; } Abs = (Int@ a) {
+  a.?(n: Neg(a), : a);
+};
 
+@(IsZero, IsNegative, Eq, Lt, Le, Gt, Ge, Max, Min, Abs);
