@@ -27,12 +27,19 @@
 % Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 % Mul = /Core/Int%.Mul;
+% Mul2 = /Core/Int%.Mul2;
 % Exp2 = /Core/Int%.Exp2;
+% Exp = /Core/Int%.Exp;
+% Shl = /Core/Int%.Shl;
+% Shr = /Core/Int%.Shr;
 
 % Div = /Core/Int/Div%.Div;
+% Quot = /Core/Int/Div%.Quot;
+% Mod = /Core/Int/Div%.Mod;
 % Sqrt = /Core/Int/Sqrt%.Sqrt;
 
 % Eq = /Core/Int/Eq%.Eq;
+% Ne = /Core/Int/Eq%.Ne;
 % Lt = /Core/Int/Eq%.Lt;
 % Le = /Core/Int/Eq%.Le;
 % Gt = /Core/Int/Eq%.Gt;
@@ -57,7 +64,14 @@ Int@ 8 = Int|8;
 (String@, (Unit@) { Bool@; }) { Test@; }
 T = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
-    p(u).?(true: Pass, false: Fail|failed);
+    p(u).?(true: Pass, : Fail|failed);
+  });
+};
+
+(String@, (Unit@) { Bool@; }) { Test@; }
+F = (String@ name, (Unit@) { Bool@; } p) {
+  Test(name, (Unit@ u) {
+    p(u).?(false: Pass, : Fail|failed);
   });
 };
 
@@ -77,25 +91,33 @@ TOrd = (String@ name, Ordering@ a, (Unit@) { Ordering@; } b) {
 
 Test@ Tests = TestSuite(Str|Int, List[
   T(Str|Eq_0_0, (Unit@ _ ) { Eq(0, 0); }),
-  T(Str|Eq_0_1, (Unit@ _ ) { Not(Eq(0, 1)); }),
+  F(Str|Eq_0_1, (Unit@ _ ) { Eq(0, 1); }),
   T(Str|Eq_4_4, (Unit@ _ ) { Eq(4, 4); }),
   T(Str|Eq_5_5, (Unit@ _ ) { Eq(5, 5); }),
-  T(Str|Eq_4_5, (Unit@ _ ) { Not(Eq(4, 5)); }),
-  T(Str|Eq_5_m5, (Unit@ _) { Not(Eq(5, Neg(5))); }),
+  F(Str|Eq_4_5, (Unit@ _ ) { Eq(4, 5); }),
+  F(Str|Eq_5_m5, (Unit@ _) { Eq(5, Neg(5)); }),
   T(Str|Eq_m1_m1, (Unit@ _) { Eq(Neg(5), Neg(5)); }),
 
-  T(Str|IsZero_0, (Unit@ _) { IsZero(0); }),
-  T(Str|IsZero_3, (Unit@ _) { Not(IsZero(3)); }),
+  F(Str|Ne_0_0, (Unit@ _ ) { Ne(0, 0); }),
+  T(Str|Ne_0_1, (Unit@ _ ) { Ne(0, 1); }),
+  F(Str|Ne_4_4, (Unit@ _ ) { Ne(4, 4); }),
+  F(Str|Ne_5_5, (Unit@ _ ) { Ne(5, 5); }),
+  T(Str|Ne_4_5, (Unit@ _ ) { Ne(4, 5); }),
+  T(Str|Ne_5_m5, (Unit@ _) { Ne(5, Neg(5)); }),
+  F(Str|Ne_m1_m1, (Unit@ _) { Ne(Neg(5), Neg(5)); }),
 
-  T(Str|Lt_4_2, (Unit@ _) { Not(Lt(4, 2)); }),
-  T(Str|Lt_4_3, (Unit@ _) { Not(Lt(4, 3)); }),
-  T(Str|Lt_4_4, (Unit@ _) { Not(Lt(4, 4)); }),
+  T(Str|IsZero_0, (Unit@ _) { IsZero(0); }),
+  F(Str|IsZero_3, (Unit@ _) { IsZero(3); }),
+
+  F(Str|Lt_4_2, (Unit@ _) { Lt(4, 2); }),
+  F(Str|Lt_4_3, (Unit@ _) { Lt(4, 3); }),
+  F(Str|Lt_4_4, (Unit@ _) { Lt(4, 4); }),
   T(Str|Lt_4_5, (Unit@ _) { Lt(4, 5); }),
   T(Str|Lt_4_6, (Unit@ _) { Lt(4, 6); }),
 
-  T(Str|Lt_5_3, (Unit@ _) { Not(Lt(5, 3)); }),
-  T(Str|Lt_5_4, (Unit@ _) { Not(Lt(5, 4)); }),
-  T(Str|Lt_5_5, (Unit@ _) { Not(Lt(5, 5)); }),
+  F(Str|Lt_5_3, (Unit@ _) { Lt(5, 3); }),
+  F(Str|Lt_5_4, (Unit@ _) { Lt(5, 4); }),
+  F(Str|Lt_5_5, (Unit@ _) { Lt(5, 5); }),
   T(Str|Lt_5_6, (Unit@ _) { Lt(5, 6); }),
   T(Str|Lt_5_7, (Unit@ _) { Lt(5, 7); }),
 
@@ -150,7 +172,7 @@ Test@ Tests = TestSuite(Str|Int, List[
   T(Str|Ge_m5_1, (Unit@ _) { Not(Ge(Neg(5), 1)); }),
 
   TEq(Str|Incr_3, 4, (Unit@ _) { Incr(3); }),
-  TEq(Str|Incr_3, 2, (Unit@ _) { Decr(3); }),
+  TEq(Str|Decr_3, 2, (Unit@ _) { Decr(3); }),
   TEq(Str|Add_2_3, 5, (Unit@ _) { Add(2, 3); }),
   TEq(Str|Add_3_m5, Neg(2), (Unit@ _) { Add(3, Neg(5)); }),
   TEq(Str|Sub_5_3, 2, (Unit@ _) { Sub(5, 3); }),
@@ -174,14 +196,28 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Mul_0_5, Int|0, (Unit@ _) { Mul(0, 5); }),
   TEq(Str|Mul_3_0, Int|0, (Unit@ _) { Mul(3, 0); }),
 
-  TEq(Str|Div_11_4, Int|2, (Unit@ _) { Div(Int|11, Int|4).q; }),
-  TEq(Str|Mod_11_4, Int|3, (Unit@ _) { Div(Int|11, Int|4).r; }),
-  TEq(Str|Div_m11_4, Neg(Int|3), (Unit@ _) { Div(Neg(Int|11), Int|4).q; }),
-  TEq(Str|Mod_m11_4, Int|1, (Unit@ _) { Div(Neg(Int|11), Int|4).r; }),
-  TEq(Str|Div_11_m4, Neg(Int|3), (Unit@ _) { Div(Int|11, Neg(Int|4)).q; }),
-  TEq(Str|Mod_11_m4, Neg(Int|1), (Unit@ _) { Div(Int|11, Neg(Int|4)).r; }),
-  TEq(Str|Div_m11_m4, Int|2, (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).q; }),
-  TEq(Str|Mod_m11_m4, Neg(Int|3), (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).r; }),
+  TEq(Str|Mul2_3, Int|6, (Unit@ _) { Mul2(3); }),
+  TEq(Str|Mul2_0, Int|0, (Unit@ _) { Mul2(0); }),
+  TEq(Str|Mul2_m3, Neg(Int|6), (Unit@ _) { Mul2(Neg(3)); }),
+
+  TEq(Str|DivQ_11_4, Int|2, (Unit@ _) { Div(Int|11, Int|4).q; }),
+  TEq(Str|DivR_11_4, Int|3, (Unit@ _) { Div(Int|11, Int|4).r; }),
+  TEq(Str|DivQ_m11_4, Neg(Int|3), (Unit@ _) { Div(Neg(Int|11), Int|4).q; }),
+  TEq(Str|DivR_m11_4, Int|1, (Unit@ _) { Div(Neg(Int|11), Int|4).r; }),
+  TEq(Str|DivQ_11_m4, Neg(Int|3), (Unit@ _) { Div(Int|11, Neg(Int|4)).q; }),
+  TEq(Str|DivR_11_m4, Neg(Int|1), (Unit@ _) { Div(Int|11, Neg(Int|4)).r; }),
+  TEq(Str|DivQ_m11_m4, Int|2, (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).q; }),
+  TEq(Str|DivR_m11_m4, Neg(Int|3), (Unit@ _) { Div(Neg(Int|11), Neg(Int|4)).r; }),
+
+  TEq(Str|Quot_11_4, Int|2, (Unit@ _) { Quot(Int|11, Int|4); }),
+  TEq(Str|Quot_m11_4, Neg(Int|3), (Unit@ _) { Quot(Neg(Int|11), Int|4); }),
+  TEq(Str|Quot_11_m4, Neg(Int|3), (Unit@ _) { Quot(Int|11, Neg(Int|4)); }),
+  TEq(Str|Quot_m11_m4, Int|2, (Unit@ _) { Quot(Neg(Int|11), Neg(Int|4)); }),
+
+  TEq(Str|Mod_11_4, Int|3, (Unit@ _) { Mod(Int|11, Int|4); }),
+  TEq(Str|Mod_m11_4, Int|1, (Unit@ _) { Mod(Neg(Int|11), Int|4); }),
+  TEq(Str|Mod_11_m4, Neg(Int|1), (Unit@ _) { Mod(Int|11, Neg(Int|4)); }),
+  TEq(Str|Mod_m11_m4, Neg(Int|3), (Unit@ _) { Mod(Neg(Int|11), Neg(Int|4)); }),
 
   TEq(Str|Sqrt_0_q, Int|0, (Unit@ _) { Sqrt(Int|0).q; }),
   TEq(Str|Sqrt_0_r, Int|0, (Unit@ _) { Sqrt(Int|0).r; }),
@@ -193,6 +229,17 @@ Test@ Tests = TestSuite(Str|Int, List[
   TEq(Str|Exp2_0, Int|1, (Unit@ _) { Exp2(0); }),
   TEq(Str|Exp2_8, Int|256, (Unit@ _) { Exp2(8); }),
   TEq(Str|Exp2_7, Int|128, (Unit@ _) { Exp2(7); }),
+
+  TEq(Str|Exp_3_4, Int|81, (Unit@ _) { Exp(3, 4); }),
+  TEq(Str|Exp_0_0, Int|1, (Unit@ _) { Exp(0, 0); }),
+
+  TEq(Str|Shl_3_4, Int|48, (Unit@ _) { Shl(3, 4); }),
+  TEq(Str|Shl_0_4, Int|0, (Unit@ _) { Shl(0, 4); }),
+  TEq(Str|Shl_m3_4, Neg(Int|48), (Unit@ _) { Shl(Neg(3), 4); }),
+
+  TEq(Str|Shr_48_4, Int|3, (Unit@ _) { Shr(Int|48, 4); }),
+  TEq(Str|Shr_0_4, Int|0, (Unit@ _) { Shr(0, 4); }),
+  TEq(Str|Shr_m48_4, Neg(Int|3), (Unit@ _) { Shr(Neg(Int|48), 4); }),
 
   TOrd(Str|Ord_3_5, Ord.Lt, (Unit@ _) { IOrd(3, 5); }),
   TOrd(Str|Ord_5_3, Ord.Gt, (Unit@ _) { IOrd(5, 3); }),

@@ -35,4 +35,14 @@
       });
 };
 
-@(QR@, Div);
+# Quot -- Quotient of division.
+(Int@, Int@) { Int@; } Quot = (Int@ a, Int@ b) {
+  Div(a, b).q;
+};
+
+# Mod -- Remainder of division.
+(Int@, Int@) { Int@; } Mod = (Int@ a, Int@ b) {
+  Div(a, b).r;
+};
+
+@(QR@, Div, Quot, Mod);

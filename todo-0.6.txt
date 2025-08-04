@@ -3,6 +3,7 @@ Fble 0.6 TODO
 Things to consider doing for the fble-0.6 release.
 
 * Clean up Int@ library.
+* Double check expected result of 11 % -4. Should it be negative?
 
 * Clarify in spec whether poly apply to an undefined value results in an error
   or not.

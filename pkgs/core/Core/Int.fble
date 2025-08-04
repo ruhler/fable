@@ -121,9 +121,12 @@ Int@ 1 = P(IntP.1);
 };
 
 # a^b
-# TODO: implement me.
-# TODO: how to behave for b < 0 and 0^0?
-(Int@, Int@) { Int@; } Exp;
+(Int@, Int@) { Int@; } Exp = (Int@ a, Int@ b) {
+  b.?(n: /Std/Undef%.Undef.undef<Int@>);
+  b.?(0: 1);
+
+  Mul(a, Exp(a, Decr(b)));
+};
 
 # a*2^b, or a << b
 (Int@, Int@) { Int@; }
@@ -131,9 +134,20 @@ Shl = (Int@ a, Int@ b) {
   Mul(a, Exp2(b));
 };
 
+# a >> 1
+(Int@) { Int@; } Shr1 = (Int@ a) {
+  a.?(
+    n: a.n.?(1: 0, 2p0: N(a.n.2p0), 2p1: N(a.n.2p1)),
+    0: 0,
+    p: a.p.?(1: 0, 2p0: P(a.p.2p0), 2p1: P(a.p.2p1)));
+};
+
 # a >> b
-# TODO: implement me.
-(Int@, Int@) { Int@; } Shr;
+(Int@, Int@) { Int@; } Shr = (Int@ a, Int@ b) {
+  b.?(n: /Std/Undef%.Undef.undef<Int@>);
+  b.?(0: a);
+  Shr(Shr1(a), Decr(b));
+};
 
 @(
   Int@, 0, 1,
