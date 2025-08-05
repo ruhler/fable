@@ -6,10 +6,10 @@
 % Chars = /Core/Char%.Chars;
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-% IsZero = /Core/Int/Eq%.IsZero;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% IsZero = /Std/Int/Eq%.IsZero;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;

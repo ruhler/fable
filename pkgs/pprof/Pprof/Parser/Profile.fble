@@ -1,6 +1,6 @@
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -72,7 +72,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
 
   (Record@, StringId@) { M@<StringId@>; }
   SampleTypeFields = (Record@ record, StringId@ type) {
-    /Core/Int/Eq%.Eq(record.field, Int|1).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
       IntFor(record.payload, Str|'ValueType.type');
     });
 
@@ -90,17 +90,17 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
 
   (Record@, Location@) { M@<Location@>; }
   LineFields = (Record@ record, Location@ location) {
-    /Core/Int/Eq%.Eq(record.field, Int|1).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
       Int@ func_id <- m.do(IntFor(record.payload, Str|'Line.function_id'));
       m.return(location.@(func_id));
     });
 
-    /Core/Int/Eq%.Eq(record.field, Int|2).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|2).?(true: {
       Int@ line <- m.do(IntFor(record.payload, Str|'Line.line'));
       m.return(location.@(line));
     });
 
-    /Core/Int/Eq%.Eq(record.field, Int|3).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|3).?(true: {
       Int@ col <- m.do(IntFor(record.payload, Str|'Line.column'));
       m.return(location.@(col));
     });
@@ -112,12 +112,12 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
 
   (Record@, Location@) { M@<Location@>; }
   LocationFields = (Record@ record, Location@ location) {
-    /Core/Int/Eq%.Eq(record.field, Int|1).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
       Int@ id <- m.do(IntFor(record.payload, Str|'Location.id'));
       m.return(location.@(id));
     });
 
-    /Core/Int/Eq%.Eq(record.field, Int|4).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|4).?(true: {
       Int@ length <- m.do(LengthFor(record.payload, Str|'Location.line'));
       p.Message(location, LineFields, length);
     });
@@ -128,7 +128,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
 
   (Record@, Sample@) { M@<Sample@>; }
   SampleFields = (Record@ record, Sample@ sample) {
-    /Core/Int/Eq%.Eq(record.field, Int|1).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
       record.payload.?(int: {
         Sequence@ sequence = Cons(record.payload.int, sample.sequence);
         m.return(sample.@(sequence));
@@ -140,7 +140,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
       m.return(sample.@(sequence));
     });
 
-    /Core/Int/Eq%.Eq(record.field, Int|2).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|2).?(true: {
       record.payload.?(int: {
         Sequence@ values = Cons(record.payload.int, sample.values);
         m.return(sample.@(values));
@@ -174,17 +174,17 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
 
   (Record@, Function@) { M@<Function@>; }
   FunctionFields = (Record@ record, Function@ function) {
-    /Core/Int/Eq%.Eq(record.field, Int|1).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
       Int@ id <- m.do(IntFor(record.payload, Str|'Function.id'));
       m.return(function.@(id));
     });
 
-    /Core/Int/Eq%.Eq(record.field, Int|2).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|2).?(true: {
       Int@ name <- m.do(IntFor(record.payload, Str|'Function.name'));
       m.return(function.@(name));
     });
 
-    /Core/Int/Eq%.Eq(record.field, Int|4).?(true: {
+    /Std/Int/Eq%.Eq(record.field, Int|4).?(true: {
       Int@ file <- m.do(IntFor(record.payload, Str|'Function.filename'));
       m.return(function.@(file));
     });
@@ -215,11 +215,11 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   ProfileFields = (Record@ record, Profile@ profile) {
     FieldId@ field = record.field;
     Payload@ payload = record.payload;
-    /Core/Int/Eq%.Eq(field, Int|1).?(true: SampleTypeField(profile, payload));
-    /Core/Int/Eq%.Eq(field, Int|2).?(true: SampleField(profile, payload));
-    /Core/Int/Eq%.Eq(field, Int|4).?(true: LocationField(profile, payload));
-    /Core/Int/Eq%.Eq(field, Int|5).?(true: FunctionField(profile, payload));
-    /Core/Int/Eq%.Eq(field, Int|6).?(true: StringField(profile, payload));
+    /Std/Int/Eq%.Eq(field, Int|1).?(true: SampleTypeField(profile, payload));
+    /Std/Int/Eq%.Eq(field, Int|2).?(true: SampleField(profile, payload));
+    /Std/Int/Eq%.Eq(field, Int|4).?(true: LocationField(profile, payload));
+    /Std/Int/Eq%.Eq(field, Int|5).?(true: FunctionField(profile, payload));
+    /Std/Int/Eq%.Eq(field, Int|6).?(true: StringField(profile, payload));
 
     Unit@ _ <- m.do(p.Skip(payload));
     m.return(profile);

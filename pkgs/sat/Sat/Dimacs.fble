@@ -3,8 +3,8 @@
 % Chars = /Core/Char%.Chars;
 % IsSpace = /Core/Char/Type%.IsSpace;
 
-@ Int@ = /Core/Int%.Int@;
-% Abs = /Core/Int/Eq%.Abs;
+@ Int@ = /Std/Int%.Int@;
+% Abs = /Std/Int/Eq%.Abs;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -79,9 +79,9 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
   words.?(nil: Error<Clause@>(Str|'missing clause terminator'));
 
   Int@ x = /Core/Int/Show%.Read(words.cons.head);
-  /Core/Int/Eq%.Eq(x, Int|0).?(true: Return(List<Var@>[]));
+  /Std/Int/Eq%.Eq(x, Int|0).?(true: Return(List<Var@>[]));
 
-  Var@ v = Var@(Abs(x), /Core/Int/Eq%.Gt(x, Int|0));
+  Var@ v = Var@(Abs(x), /Std/Int/Eq%.Gt(x, Int|0));
 
   Clause@ tail <- Do(ParseVars(words.cons.tail));
   Return(Cons(v, tail));
@@ -104,7 +104,7 @@ ParseM@<Unit@> ParseClauses = {
 (String@) { ParseM@<Unit@>; } ParseFromHeader = (String@ header) {
   List@<String@> words = Split(header, IsSpace);
   Int@ num_words = Length(words);
-  /Core/Int/Eq%.Eq(num_words, Int|4).?(false: {
+  /Std/Int/Eq%.Eq(num_words, Int|4).?(false: {
     Error<Unit@>(Strs[Str|'invalid header line: ', header]);
   });
 

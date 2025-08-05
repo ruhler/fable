@@ -17,22 +17,22 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% ForEach = /Core/List%.ForEach;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-% Add = /Core/Int%.Add;
-% Neg = /Core/Int%.Neg;
-% Mul = /Core/Int%.Mul;
-% Sub = /Core/Int%.Sub;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% Add = /Std/Int%.Add;
+% Neg = /Std/Int%.Neg;
+% Mul = /Std/Int%.Mul;
+% Sub = /Std/Int%.Sub;
 
-% Eq = /Core/Int/Eq%.Eq;
-% Lt = /Core/Int/Eq%.Lt;
-% Gt = /Core/Int/Eq%.Gt;
-% Abs = /Core/Int/Eq%.Abs;
+% Eq = /Std/Int/Eq%.Eq;
+% Lt = /Std/Int/Eq%.Lt;
+% Gt = /Std/Int/Eq%.Gt;
+% Abs = /Std/Int/Eq%.Abs;
 
 % Int = /Core/Int/Lit%.Int;
 
-% Div = /Core/Int/Div%.Div;
+% Div = /Std/Int/Div%.Div;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

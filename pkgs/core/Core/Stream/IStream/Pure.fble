@@ -1,7 +1,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

@@ -9,7 +9,7 @@
 
 Eq@<Entry@> Entry = (Entry@ a, Entry@ b) {
   /Pprof/Profile/Eq%.Sequence(a.seq, b.seq).?(false: False);
-  /Core/Int/Eq%.Eq(a.value, b.value).?(false: False);
+  /Std/Int/Eq%.Eq(a.value, b.value).?(false: False);
   True;
 };
 

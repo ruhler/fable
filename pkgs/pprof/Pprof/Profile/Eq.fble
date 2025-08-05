@@ -12,13 +12,13 @@
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Profile@ = /Pprof/Profile%.Profile@;
 
-Eq@<BlockId@> BlockId = /Core/Int/Eq%.Eq;
+Eq@<BlockId@> BlockId = /Std/Int/Eq%.Eq;
 
 Eq@<Block@> Block = (Block@ a, Block@ b) {
   /Core/String/Eq%.Eq(a.name, b.name).?(false: False);
   /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
-  /Core/Int/Eq%.Eq(a.line, b.line).?(false: False);
-  /Core/Int/Eq%.Eq(a.column, b.column).?(false: False);
+  /Std/Int/Eq%.Eq(a.line, b.line).?(false: False);
+  /Std/Int/Eq%.Eq(a.column, b.column).?(false: False);
   True;
 };
 
@@ -26,7 +26,7 @@ Eq@<Blocks@> Blocks = /Core/Int/Map/Eq%.Eq(Block);
 
 Eq@<Sequence@> Sequence = /Core/List/Eq%.Eq(BlockId);
 
-Eq@<Metrics@> Metrics = /Core/List/Eq%.Eq(/Core/Int/Eq%.Eq);
+Eq@<Metrics@> Metrics = /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Eq@<Sample@> Sample = (Sample@ a, Sample@ b) {
   Sequence(a.sequence, b.sequence).?(false: False);

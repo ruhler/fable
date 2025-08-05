@@ -1,10 +1,10 @@
 
 % True = /Std/Bool%.True;
 
-@ Int@ = /Core/Int%.Int@;
-% Neg = /Core/Int%.Neg;
-% Mul = /Core/Int%.Mul;
-% Div = /Core/Int/Div%.Div;
+@ Int@ = /Std/Int%.Int@;
+% Neg = /Std/Int%.Neg;
+% Mul = /Std/Int%.Mul;
+% Div = /Std/Int/Div%.Div;
 
 % Int = /Core/Int/Lit%.Int;
 

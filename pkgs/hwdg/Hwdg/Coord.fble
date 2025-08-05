@@ -1,7 +1,7 @@
 % And = /Std/Bool%.And;
 % Or = /Std/Bool%.Or;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;
@@ -20,13 +20,13 @@
 # Add --
 #   Add two coordinates together.
 (Coord@, Coord@) { Coord@; } Add = (Coord@ a, Coord@ b) {
-  Coord@(/Core/Int%.Add(a.x, b.x), /Core/Int%.Add(a.y, b.y));
+  Coord@(/Std/Int%.Add(a.x, b.x), /Std/Int%.Add(a.y, b.y));
 };
 
 # Eq --
 #   Equality operator for Coord@.
 /Core/Eq%.Eq@<Coord@> Eq = {
-  % IntEq = /Core/Int/Eq%.Eq;
+  % IntEq = /Std/Int/Eq%.Eq;
   (Coord@ a, Coord@ b) {
     And(IntEq(a.x, b.x), IntEq(a.y, b.y));
   };
@@ -35,8 +35,8 @@
 # Lt --
 #   Less than operator for Coord@.
 /Core/Eq%.Eq@<Coord@> Lt = {
-  % IntEq = /Core/Int/Eq%.Eq;
-  % IntLt = /Core/Int/Eq%.Lt;
+  % IntEq = /Std/Int/Eq%.Eq;
+  % IntLt = /Std/Int/Eq%.Lt;
   (Coord@ a, Coord@ b) {
     Or(IntLt(a.x, b.x), And(IntEq(a.x, b.x), IntLt(a.y, b.y)));
   };

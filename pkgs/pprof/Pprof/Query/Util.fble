@@ -1,5 +1,5 @@
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>% Last = /Core/List%.Last;
 
@@ -17,7 +17,7 @@
 # Sort a query results table.
 (Table@) { Table@; } Sort = /Core/List/Sort%.Sort(
   (Entry@ a, Entry@ b) {
-    /Core/Int/Eq%.Le(b.value, a.value);
+    /Std/Int/Eq%.Le(b.value, a.value);
   });
 
 @(MetricOf, Sort);

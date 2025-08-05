@@ -6,10 +6,10 @@
 @ Bit@ = /Core/Digits%.Bit@;
 % Bit = /Core/Digits%.Bit;
 
-@ Int@ = /Core/Int%.Int@;
-@ QR@ = /Core/Int/Div%.QR@;
-% Div = /Core/Int/Div%.Div;
-% IsZero = /Core/Int/Eq%.IsZero;
+@ Int@ = /Std/Int%.Int@;
+@ QR@ = /Std/Int/Div%.QR@;
+% Div = /Std/Int/Div%.Div;
+% IsZero = /Std/Int/Eq%.IsZero;
 % Int = /Core/Int/Lit%.Int;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
@@ -43,7 +43,7 @@ Random@<M@> Random = Random@<M@>(RandBool);
 IntToBits = (Int@ x, List@<Bit@> bits) {
   IsZero(x).?(true: bits);
   QR@ qr = Div(x, Int|2);
-  Bit@ bit = /Core/Int/Eq%.Eq(Int|0, qr.r).?(true: Bit.0, false: Bit.1);
+  Bit@ bit = /Std/Int/Eq%.Eq(Int|0, qr.r).?(true: Bit.0, false: Bit.1);
   IntToBits(qr.q, Cons(bit, bits));
 };
 

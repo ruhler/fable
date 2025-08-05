@@ -1,14 +1,14 @@
 
 @ Point@ = /App/Drawing%.Point@;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Mul = /Core/Int%.Mul;
-% Neg = /Core/Int%.Neg;
-% Lt = /Core/Int/Eq%.Lt;
-% Ge = /Core/Int/Eq%.Ge;
-% Div = /Core/Int/Div%.Div;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Mul = /Std/Int%.Mul;
+% Neg = /Std/Int%.Neg;
+% Lt = /Std/Int/Eq%.Lt;
+% Ge = /Std/Int/Eq%.Ge;
+% Div = /Std/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;
 
 @ Mat@ = /Graphics/3D%.Mat@;

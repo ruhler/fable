@@ -9,11 +9,11 @@
 % Over = /App/Drawing%.Over;
 % Rect = /App/Drawing%.Rect;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Lt = /Core/Int/Eq%.Lt;
-% Ge = /Core/Int/Eq%.Ge;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Lt = /Std/Int/Eq%.Lt;
+% Ge = /Std/Int/Eq%.Ge;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;

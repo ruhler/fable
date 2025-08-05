@@ -2,8 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Clean up Int@ library.
+* Add documentation to all /Std/Int* modules.
 * Double check expected result of 11 % -4. Should it be negative?
+* Restrict Int@ type internals to /Std/Int%.
+* Restrict /Std/Int/IntP* modules to /Std/Int%.
+* Update references to /Core/Int in tutorials.
 
 * Clarify in spec whether poly apply to an undefined value results in an error
   or not.

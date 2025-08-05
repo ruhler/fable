@@ -25,7 +25,7 @@ Test@ Tests = TestSuite(Str|Char, List[
   }),
 
   Test(Str|'Ord', (Unit@ _) {
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show,
+    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show,
       Int|65, Ord(Chars.'A'));
   }),
 

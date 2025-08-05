@@ -5,7 +5,7 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>% List = /Core/List%.List;
 <@>% Nil = /Core/List%.Nil;

@@ -1,13 +1,13 @@
 
 % True = /Std/Bool%.True;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Mul = /Core/Int%.Mul;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
-% Eq = /Core/Int/Eq%.Eq;
-% Gt = /Core/Int/Eq%.Gt;
+% Eq = /Std/Int/Eq%.Eq;
+% Gt = /Std/Int/Eq%.Gt;
 
 <@>@ List@ = /Core/List%.List@;
 

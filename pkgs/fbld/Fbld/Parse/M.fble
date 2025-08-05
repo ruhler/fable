@@ -6,8 +6,8 @@
 @ Char@ = /Core/Char%.Char@;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -145,7 +145,7 @@ M@<CharL@> GetL = {
   CharL@ cl <- Do(GetL_);
   Int@ indent <- Do(GetIndent);
 
-  /Core/Int/Eq%.Le(cl.l.col, indent).?(true: {
+  /Std/Int/Eq%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
     cl.c.?(' ': GetL);
     Unit@ _ <- Error<CharL@>;

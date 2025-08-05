@@ -6,7 +6,7 @@
 
 % OrdP = /Core/Int/IntP/Ord%.Ord;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 Ord@<Int@> Ord = (Int@ a, Int@ b) {
   a.?(

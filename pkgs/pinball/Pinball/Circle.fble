@@ -8,14 +8,14 @@
 % Rect = /App/Drawing%.Rect;
 % Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-% Neg = /Core/Int%.Neg;
-% Mul = /Core/Int%.Mul;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% Neg = /Std/Int%.Neg;
+% Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
-% Lt = /Core/Int/Eq%.Lt;
+% Lt = /Std/Int/Eq%.Lt;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

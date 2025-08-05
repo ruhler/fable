@@ -8,11 +8,11 @@
 % Over = /App/Drawing%.Over;
 % Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Lt = /Core/Int/Eq%.Lt;
-% Gt = /Core/Int/Eq%.Gt;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Lt = /Std/Int/Eq%.Lt;
+% Gt = /Std/Int/Eq%.Gt;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;

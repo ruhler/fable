@@ -1,5 +1,5 @@
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
 

@@ -20,34 +20,34 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
 
-@ Int@ = /Core/Int%.Int@;
-% Neg = /Core/Int%.Neg;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Mul = /Core/Int%.Mul;
-% Mul2 = /Core/Int%.Mul2;
-% Exp2 = /Core/Int%.Exp2;
-% Exp = /Core/Int%.Exp;
-% Shl = /Core/Int%.Shl;
-% Shr = /Core/Int%.Shr;
+@ Int@ = /Std/Int%.Int@;
+% Neg = /Std/Int%.Neg;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Mul = /Std/Int%.Mul;
+% Mul2 = /Std/Int%.Mul2;
+% Exp2 = /Std/Int%.Exp2;
+% Exp = /Std/Int%.Exp;
+% Shl = /Std/Int%.Shl;
+% Shr = /Std/Int%.Shr;
 
-% Div = /Core/Int/Div%.Div;
-% Quot = /Core/Int/Div%.Quot;
-% Mod = /Core/Int/Div%.Mod;
-% Sqrt = /Core/Int/Sqrt%.Sqrt;
+% Div = /Std/Int/Div%.Div;
+% Quot = /Std/Int/Div%.Quot;
+% Mod = /Std/Int/Div%.Mod;
+% Sqrt = /Std/Int/Sqrt%.Sqrt;
 
-% Eq = /Core/Int/Eq%.Eq;
-% Ne = /Core/Int/Eq%.Ne;
-% Lt = /Core/Int/Eq%.Lt;
-% Le = /Core/Int/Eq%.Le;
-% Gt = /Core/Int/Eq%.Gt;
-% Ge = /Core/Int/Eq%.Ge;
-% IsZero = /Core/Int/Eq%.IsZero;
-% Min = /Core/Int/Eq%.Min;
-% Max = /Core/Int/Eq%.Max;
-% Abs = /Core/Int/Eq%.Abs;
+% Eq = /Std/Int/Eq%.Eq;
+% Ne = /Std/Int/Eq%.Ne;
+% Lt = /Std/Int/Eq%.Lt;
+% Le = /Std/Int/Eq%.Le;
+% Gt = /Std/Int/Eq%.Gt;
+% Ge = /Std/Int/Eq%.Ge;
+% IsZero = /Std/Int/Eq%.IsZero;
+% Min = /Std/Int/Eq%.Min;
+% Max = /Std/Int/Eq%.Max;
+% Abs = /Std/Int/Eq%.Abs;
 % Int = /Core/Int/Lit%.Int;
 % IOrd = /Core/Int/Ord%.Ord;
 
@@ -78,7 +78,7 @@ F = (String@ name, (Unit@) { Bool@; } p) {
 (String@, Int@, (Unit@) { Int@; }) { Test@; }
 TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
   Test(name, (Unit@ u) {
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, a, b(u));
+    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show, a, b(u));
   });
 };
 

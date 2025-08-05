@@ -8,8 +8,8 @@
 
 Eq@<Loc@> Eq = (Loc@ a, Loc@ b) {
   /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
-  /Core/Int/Eq%.Eq(a.line, b.line).?(false: False);
-  /Core/Int/Eq%.Eq(a.col, b.col).?(false: False);
+  /Std/Int/Eq%.Eq(a.line, b.line).?(false: False);
+  /Std/Int/Eq%.Eq(a.col, b.col).?(false: False);
   True;
 };
 

@@ -1,6 +1,6 @@
 
-@ Int@ = /Core/Int%.Int@;
-% Neg = /Core/Int%.Neg;
+@ Int@ = /Std/Int%.Int@;
+% Neg = /Std/Int%.Neg;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;

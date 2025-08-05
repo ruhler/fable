@@ -4,14 +4,14 @@
 
 % Chars = /Core/Char%.Chars;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Neg = /Core/Int%.Neg;
-% Mul = /Core/Int%.Mul;
-% Div = /Core/Int/Div%.Div;
-% Eq = /Core/Int/Eq%.Eq;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Neg = /Std/Int%.Neg;
+% Mul = /Std/Int%.Mul;
+% Div = /Std/Int/Div%.Div;
+% Eq = /Std/Int/Eq%.Eq;
 % Int = /Core/Int/Lit%.Int;
-% Incr = /Core/Int%.Incr;
+% Incr = /Std/Int%.Incr;
 
 <@>@ List@ = /Core/List%.List@;
 

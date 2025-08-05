@@ -6,7 +6,7 @@
 % Ord = /Core/Char/Ascii%.Ord;
 % Chr = /Core/Char/Ascii%.Chr;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

@@ -9,11 +9,11 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Mul = /Core/Int%.Mul;
-% Eq = /Core/Int/Eq%.Eq;
-% Lt = /Core/Int/Eq%.Lt;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Mul = /Std/Int%.Mul;
+% Eq = /Std/Int/Eq%.Eq;
+% Lt = /Std/Int/Eq%.Lt;
 % Int = /Core/Int/Lit%.Int;
 % Range = /Core/Int/Iter%.Range;
 % Ord = /Core/Int/Ord%.Ord;

@@ -1,9 +1,9 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ Int@ = /Core/Int%.Int@;
-Int@ 0 = /Core/Int%.0;
-Int@ 1 = /Core/Int%.1;
+@ Int@ = /Std/Int%.Int@;
+Int@ 0 = /Std/Int%.0;
+Int@ 1 = /Std/Int%.1;
 
 <@>% Get = /Core/List/Length%.Get;
 

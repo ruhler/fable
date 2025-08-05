@@ -4,9 +4,9 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Core/Int%.Int@;
-% Sub = /Core/Int%.Sub;
-% IsZero = /Core/Int/Eq%.IsZero;
+@ Int@ = /Std/Int%.Int@;
+% Sub = /Std/Int%.Sub;
+% IsZero = /Std/Int/Eq%.IsZero;
 % Int = /Core/Int/Lit%.Int;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;

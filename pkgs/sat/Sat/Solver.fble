@@ -4,7 +4,7 @@
 % False = /Std/Bool%.False;
 % Not = /Std/Bool%.Not;
 
-% Incr = /Core/Int%.Incr;
+% Incr = /Std/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -382,7 +382,7 @@ GetConflictFromSorted = (List@<Assign@> todo)
 GetConflict = (List@<Assign@> todo)
 {
   GetConflictFromSorted(/Core/List/Sort%.Sort(
-      (Assign@ a, Assign@ b) { /Core/Int/Eq%.Le(a.var.id, b.var.id); },
+      (Assign@ a, Assign@ b) { /Std/Int/Eq%.Le(a.var.id, b.var.id); },
       todo));
 };
 

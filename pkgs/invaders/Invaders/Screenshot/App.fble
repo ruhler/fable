@@ -2,9 +2,9 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 
-% Neg = /Core/Int%.Neg;
+% Neg = /Std/Int%.Neg;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;

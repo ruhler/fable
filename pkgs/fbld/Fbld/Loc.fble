@@ -2,8 +2,8 @@
 @ Char@ = /Core/Char%.Char@;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 Int@ 1 = Int|1;
 

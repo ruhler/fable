@@ -2,9 +2,9 @@
 @ Decimal@ = /Core/Digits%.Decimal@;
 % Decimal = /Core/Digits%.Decimal;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
-% Div = /Core/Int/Div%.Div;
+% Div = /Std/Int/Div%.Div;
 
 @ Undef@ = /Std/Undef%.Undef@;
 

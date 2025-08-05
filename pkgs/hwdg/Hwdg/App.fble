@@ -3,15 +3,15 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-% Neg = /Core/Int%.Neg;
-% Sub = /Core/Int%.Sub;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% Neg = /Std/Int%.Neg;
+% Sub = /Std/Int%.Sub;
 
-% Div = /Core/Int/Div%.Div;
+% Div = /Std/Int/Div%.Div;
 
-% IsZero = /Core/Int/Eq%.IsZero;
+% IsZero = /Std/Int/Eq%.IsZero;
 
 % Int = /Core/Int/Lit%.Int;
 Int@ 0 = Int|0;

@@ -4,9 +4,9 @@
 % False = /Std/Bool%.False;
 % Not = /Std/Bool%.Not;
 
-@ Int@ = /Core/Int%.Int@;
-% Decr = /Core/Int%.Decr;
-% IsZero = /Core/Int/Eq%.IsZero;
+@ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
+% IsZero = /Std/Int/Eq%.IsZero;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

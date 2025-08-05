@@ -1,10 +1,10 @@
 
-@ Int@ = /Core/Int%.Int@;
-% 0 = /Core/Int%.0;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-% IsZero = /Core/Int/Eq%.IsZero;
-% Le = /Core/Int/Eq%.Le;
+@ Int@ = /Std/Int%.Int@;
+% 0 = /Std/Int%.0;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% IsZero = /Std/Int/Eq%.IsZero;
+% Le = /Std/Int/Eq%.Le;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

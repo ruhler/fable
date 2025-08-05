@@ -1,13 +1,13 @@
 
 % True = /Std/Bool%.True;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
-% Sub = /Core/Int%.Sub;
-% Mul = /Core/Int%.Mul;
-% Div = /Core/Int/Div%.Div;
-% Max = /Core/Int/Eq%.Max;
-% Min = /Core/Int/Eq%.Min;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Sub = /Std/Int%.Sub;
+% Mul = /Std/Int%.Mul;
+% Div = /Std/Int/Div%.Div;
+% Max = /Std/Int/Eq%.Max;
+% Min = /Std/Int/Eq%.Min;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;

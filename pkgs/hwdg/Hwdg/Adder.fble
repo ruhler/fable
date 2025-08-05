@@ -1,5 +1,5 @@
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 @ Coord@ = /Hwdg/Coord%.Coord@;

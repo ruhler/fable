@@ -1,12 +1,12 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ IntP@ = /Core/Int/IntP%.IntP@;
-% 10 = /Core/Int/IntP%.10;
-@ QR@ = /Core/Int/IntP/Div%.QR@;
-% Div = /Core/Int/IntP/Div%.Div;
+@ IntP@ = /Std/Int/IntP%.IntP@;
+% 10 = /Std/Int/IntP%.10;
+@ QR@ = /Std/Int/IntP/Div%.QR@;
+% Div = /Std/Int/IntP/Div%.Div;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>% Append = /Core/List%.Append;
 <@>% Nil = /Core/List%.Nil;

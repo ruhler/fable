@@ -6,12 +6,12 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
 
-% IsZero = /Core/Int/Eq%.IsZero;
-% Eq = /Core/Int/Eq%.Eq;
+% IsZero = /Std/Int/Eq%.IsZero;
+% Eq = /Std/Int/Eq%.Eq;
 % Ord = /Core/Int/Ord%.Ord;
 
 <@>@ List@ = /Core/List%.List@;

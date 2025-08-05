@@ -3,7 +3,7 @@
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

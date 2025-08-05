@@ -5,7 +5,7 @@
 % Eq = /Core/Ord%.Eq;
 % Gt = /Core/Ord%.Gt;
 
-@ IntP@ = /Core/Int/IntP%.IntP@;
+@ IntP@ = /Std/Int/IntP%.IntP@;
 
 (Ordering@) { Ordering@; } RoundLt = (Ordering@ x) {
   x.?(eq: Lt, : x);

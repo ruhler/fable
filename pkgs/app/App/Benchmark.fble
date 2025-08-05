@@ -4,10 +4,10 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Core/Int%.Int@;
-% Decr = /Core/Int%.Decr;
+@ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
 
-% IsNegative = /Core/Int/Eq%.IsNegative;
+% IsNegative = /Std/Int/Eq%.IsNegative;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% Nil = /Core/List%.Nil;

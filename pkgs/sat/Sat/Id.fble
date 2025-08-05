@@ -1,8 +1,8 @@
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 @ Id@ = Int@;
-% EqId = /Core/Int/Eq%.Eq;
+% EqId = /Std/Int/Eq%.Eq;
 % OrdId = /Core/Int/Ord%.Ord;
 
 % Map = /Core/Map/Tree%.Map(OrdId);

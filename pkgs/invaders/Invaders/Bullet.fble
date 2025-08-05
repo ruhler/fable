@@ -7,9 +7,9 @@
 % Blank = /App/Drawing%.Blank;
 % Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Lt = /Core/Int/Eq%.Lt;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Lt = /Std/Int/Eq%.Lt;
 % Int = /Core/Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;

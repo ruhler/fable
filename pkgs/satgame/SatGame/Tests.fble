@@ -5,7 +5,7 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
@@ -54,7 +54,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
     );
     Int@ seed = Int|0;
     Puzzle@ puzzle = PureLFSR.Run(Generate(params), seed);
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show,
+    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show,
       Int|6, /Core/List/Length%.Length(puzzle));
   }),
 

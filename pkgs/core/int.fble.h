@@ -9,7 +9,7 @@
 #include <fble/fble-value.h>
 
 /**
- * @func[FbleNewIntValue] Creates a new @l{/Core/Int%.Int@} value.
+ * @func[FbleNewIntValue] Creates a new @l{/Std/Int%.Int@} value.
  *  @arg[FbleValueHeap*][heap] The value heap.
  *  @arg[int64_t][x] The integer value to create.
  *  @returns[FbleValue*] An newly allocated fble integer value.
@@ -19,7 +19,7 @@
 FbleValue* FbleNewIntValue(FbleValueHeap* heap, int64_t x);
 
 /**
- * @func[FbleIntValueAccess] Read a number of type @l{/Core/Int%.Int@}.
+ * @func[FbleIntValueAccess] Read a number of type @l{/Std/Int%.Int@}.
  *  @arg[FbleValue*][x] The FbleValue value of the number.
  *
  *  @returns[int64_t]

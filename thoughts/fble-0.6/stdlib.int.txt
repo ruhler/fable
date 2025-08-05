@@ -508,3 +508,17 @@ Double checking the interface on the /Std/Int/* modules:
 * They look good. As prescribed.
 
 Looking at the IntP interfaces now.
+* Okay, cleaned up.
+
+Next step is go through from the top, document, clean up the code.
+
+In terms of restricting access, I might not be able to do that until after
+moving over things like Show, which is awkward. Either we remove the access
+restriction for the time being, or keep it in /Core? Or move a wrapper module
+and documentation over to /Std that references the one in /Core for now, then
+clean it up later?
+
+Let's just skip the restricted access for now, mark it as todo.
+
+Trouble: Integer literal depends on List, which I kind of don't like? For
+example, for Sqrt it depends on literals which depend on List unnecessarily?

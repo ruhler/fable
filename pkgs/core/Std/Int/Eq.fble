@@ -4,14 +4,14 @@
 % False = /Std/Bool%.False;
 % Not = /Std/Bool%.Not;
 
-@ Int@ = /Core/Int%.Int@;
-% Neg = /Core/Int%.Neg;
+@ Int@ = /Std/Int%.Int@;
+% Neg = /Std/Int%.Neg;
 
-% EqP = /Core/Int/IntP/Eq%.Eq;
-% LtP = /Core/Int/IntP/Eq%.Lt;
-% LeP = /Core/Int/IntP/Eq%.Le;
-% GtP = /Core/Int/IntP/Eq%.Gt;
-% GeP = /Core/Int/IntP/Eq%.Ge;
+% EqP = /Std/Int/IntP/Eq%.Eq;
+% LtP = /Std/Int/IntP/Eq%.Lt;
+% LeP = /Std/Int/IntP/Eq%.Le;
+% GtP = /Std/Int/IntP/Eq%.Gt;
+% GeP = /Std/Int/IntP/Eq%.Ge;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

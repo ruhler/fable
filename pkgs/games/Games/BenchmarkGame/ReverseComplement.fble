@@ -5,10 +5,10 @@
 % Chars = /Core/Char%.Chars;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
-@ Int@ = /Core/Int%.Int@;
-% Sub = /Core/Int%.Sub;
+@ Int@ = /Std/Int%.Int@;
+% Sub = /Std/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
-% IsZero = /Core/Int/Eq%.IsZero;
+% IsZero = /Std/Int/Eq%.IsZero;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

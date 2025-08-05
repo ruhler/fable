@@ -1,11 +1,11 @@
 
 @ Bit@ = /Core/Digits%.Bit@;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Mul = /Core/Int%.Mul;
-% Ge = /Core/Int/Eq%.Ge;
-% Lt = /Core/Int/Eq%.Lt;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Mul = /Std/Int%.Mul;
+% Ge = /Std/Int/Eq%.Ge;
+% Lt = /Std/Int/Eq%.Lt;
 % Int = /Core/Int/Lit%.Int;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;

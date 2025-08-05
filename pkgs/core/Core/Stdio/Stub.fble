@@ -1,5 +1,5 @@
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 <@>% Nothing = /Core/Maybe%.Nothing;
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;

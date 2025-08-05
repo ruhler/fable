@@ -1,5 +1,5 @@
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -61,7 +61,7 @@ Evals = (Env@ env, List@<Markup@> markups) {
 (Int@, Command@) { Result@<Unit@>; }
 AssertArgCount = (Int@ expected, Command@ cmd) {
   Int@ num_args = Length(cmd.args);
-  /Core/Int/Eq%.Eq(num_args, expected).?(false: {
+  /Std/Int/Eq%.Eq(num_args, expected).?(false: {
     Error<Unit@>(cmd.name.loc, Strs[
       Str|'Expected ', /Core/Int/Show%.Show(expected),
       Str|' arguments to ', cmd.name.text,

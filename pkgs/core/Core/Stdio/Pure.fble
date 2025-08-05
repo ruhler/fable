@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -50,7 +50,7 @@ Pure@<Maybe@<Int@>> In = {
 
 (List@<Int@>) { Bool@; } Closed = (List@<Int@> bytes) {
   bytes.?(nil: False);
-  /Core/Int/Eq%.Eq(/Core/Stream%.End, bytes.cons.head).?(true: True);
+  /Std/Int/Eq%.Eq(/Core/Stream%.End, bytes.cons.head).?(true: True);
   False;
 };
 

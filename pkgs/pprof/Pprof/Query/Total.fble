@@ -3,8 +3,8 @@
 % False = /Std/Bool%.False;
 % True = /Std/Bool%.True;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% StartsWith = /Core/List/Eq%.StartsWith;

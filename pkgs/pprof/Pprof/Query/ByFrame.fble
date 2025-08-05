@@ -1,8 +1,8 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

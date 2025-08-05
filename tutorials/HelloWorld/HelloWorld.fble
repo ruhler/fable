@@ -9,7 +9,7 @@ Bool@ False = /Std/Bool%.False;
 % Chars = /Core/Char%.Chars;
 
 # Import integer type and literal.
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 # Import string type and functions.

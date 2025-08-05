@@ -1,8 +1,8 @@
 
 % True = /Std/Bool%.True;
 
-@ Int@ = /Core/Int%.Int@;
-% Sub = /Core/Int%.Sub;
+@ Int@ = /Std/Int%.Int@;
+% Sub = /Std/Int%.Sub;
 
 % Int = /Core/Int/Lit%.Int;
 

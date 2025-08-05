@@ -1,10 +1,10 @@
 
 % True = /Std/Bool%.True;
 
-@ Int@ = /Core/Int%.Int@;
-% 0 = /Core/Int%.0;
-% Neg = /Core/Int%.Neg;
-% Max = /Core/Int/Eq%.Max;
+@ Int@ = /Std/Int%.Int@;
+% 0 = /Std/Int%.0;
+% Neg = /Std/Int%.Neg;
+% Max = /Std/Int/Eq%.Max;
 
 % Int = /Core/Int/Lit%.Int;
 

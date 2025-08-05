@@ -2,7 +2,7 @@
 @ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

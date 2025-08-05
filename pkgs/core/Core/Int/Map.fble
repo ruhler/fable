@@ -3,10 +3,10 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Int@ = /Core/Int%.Int@;
-% 0 = /Core/Int%.0;
+@ Int@ = /Std/Int%.Int@;
+% 0 = /Std/Int%.0;
 
-@ IntP@ = /Core/Int/IntP%.IntP@;
+@ IntP@ = /Std/Int/IntP%.IntP@;
 
 % P = /Core/Int/IntP/Map%.Map;
 

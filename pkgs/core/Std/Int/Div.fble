@@ -1,11 +1,11 @@
 
-@ Int@ = /Core/Int%.Int@;
-% Decr = /Core/Int%.Decr;
-% Neg = /Core/Int%.Neg;
-% Sub = /Core/Int%.Sub;
-% 0 = /Core/Int%.0;
+@ Int@ = /Std/Int%.Int@;
+% Decr = /Std/Int%.Decr;
+% Neg = /Std/Int%.Neg;
+% Sub = /Std/Int%.Sub;
+% 0 = /Std/Int%.0;
 
-% P = /Core/Int/IntP/Div%;
+% P = /Std/Int/IntP/Div%;
 
 # QR@ --
 #   Quotient and remainder from integer division.

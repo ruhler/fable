@@ -1,5 +1,5 @@
 
-% IntP = /Core/Int/IntP%;
+% IntP = /Std/Int/IntP%;
 @ IntP@ = IntP.IntP@;
 % AddP = IntP.Add;
 % MulP = IntP.Mul;
@@ -12,7 +12,7 @@
   IntP@ n,   # Negative integers
   Unit@ 0,
   IntP@ p    # Positive integers
-).%(@/Core/Int%);
+);  # TODO: Restrict to .%(@/Std/Int%);
 
 Int@ 0 = Int@(0: Unit);
 

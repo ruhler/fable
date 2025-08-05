@@ -1,10 +1,10 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Neg = /Core/Int%.Neg;
-% Mul = /Core/Int%.Mul;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Neg = /Std/Int%.Neg;
+% Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% Append = /Core/List%.Append;

@@ -3,7 +3,7 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 
 <@>% Cons = /Core/List%.Cons;
 <@>% Reverse = /Core/List%.Reverse;

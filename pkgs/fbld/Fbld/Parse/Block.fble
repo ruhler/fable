@@ -3,8 +3,8 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -52,7 +52,7 @@
 M@<Unit@> BlankLine = {
   Loc@ l <- Do(Loc);
   Int@ indent <- Do(GetIndent);
-  /Core/Int/Eq%.Lt(Incr(indent), l.col).?(true: {
+  /Std/Int/Eq%.Lt(Incr(indent), l.col).?(true: {
     Unit@ _ <- Error<Unit@>;
     Text@(l, Str|'not a blank line');
   });

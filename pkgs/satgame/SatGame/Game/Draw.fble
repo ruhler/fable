@@ -1,14 +1,14 @@
 
-@ Int@ = /Core/Int%.Int@;
-% Incr = /Core/Int%.Incr;
-% Decr = /Core/Int%.Decr;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Mul = /Core/Int%.Mul;
-% Gt = /Core/Int/Eq%.Gt;
-% Lt = /Core/Int/Eq%.Lt;
-@ QR@ = /Core/Int/Div%.QR@;
-% Div = /Core/Int/Div%.Div;
+@ Int@ = /Std/Int%.Int@;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Mul = /Std/Int%.Mul;
+% Gt = /Std/Int/Eq%.Gt;
+% Lt = /Std/Int/Eq%.Lt;
+@ QR@ = /Std/Int/Div%.QR@;
+% Div = /Std/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;

@@ -1,7 +1,7 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-@ Int@ = /Core/Int%.Int@;
+@ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
@@ -62,7 +62,7 @@ Test@ Tests = TestSuite(Str|Query, List[
   Test(Str|Total, (Unit@ _) {
     Int@ got = Total(Profile);
     Int@ wnt = Int|66;
-    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   }),
 
   Test(Str|Self, (Unit@ _) {

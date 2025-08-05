@@ -8,9 +8,9 @@
 % Blank = /App/Drawing%.Blank;
 % Translate = /App/Drawing%.Translate;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Mul = /Core/Int%.Mul;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
 % CountUpTo = /Core/Int/Iter%.CountUpTo;
 

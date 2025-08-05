@@ -3,12 +3,12 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Eq = /Core/Int/Eq%.Eq;
-% IsZero = /Core/Int/Eq%.IsZero;
-% Max = /Core/Int/Eq%.Max;
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Sub = /Std/Int%.Sub;
+% Eq = /Std/Int/Eq%.Eq;
+% IsZero = /Std/Int/Eq%.IsZero;
+% Max = /Std/Int/Eq%.Max;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
