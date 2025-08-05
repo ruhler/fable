@@ -11,13 +11,7 @@
 
 IntP@ 1 = IntP@(1: Unit);
 IntP@ 2 = IntP@(2p0: 1);
-IntP@ 3 = IntP@(2p1: 1);
-IntP@ 4 = IntP@(2p0: 2);
 IntP@ 5 = IntP@(2p1: 2);
-IntP@ 6 = IntP@(2p0: 3);
-IntP@ 7 = IntP@(2p1: 3);
-IntP@ 8 = IntP@(2p0: 4);
-IntP@ 9 = IntP@(2p1: 4);
 IntP@ 10 = IntP@(2p0: 5);
 
 # Add1(x) = x + 1
@@ -60,8 +54,4 @@ IntP@ 10 = IntP@(2p0: 5);
     2p1: Mul(2, Exp2(IntP@(2p0: a.2p1))));
 };
 
-(IntP@, IntP@){IntP@;} Lit2 = (IntP@ a, IntP@ b) {
-  Add(Mul(10, a), b);
-};
-
-@(IntP@, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Mul, Exp2, Lit2);
+@(IntP@, 1, 10, Add, Add1, Mul, Exp2);

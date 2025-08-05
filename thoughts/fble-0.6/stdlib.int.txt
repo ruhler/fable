@@ -481,3 +481,30 @@ Particularly considering this is integer exponentiation. I'll go with that.
 For negative exponent, let's leave that as undefined. In theory a^(-b) =
 1/(x^b), but there isn't a clear multiplicative inverse or division to use
 here otherwise. For Shl and Shr, say negative is undefined behavior.
+
+---
+
+Cleanup path: goal is to identify the initial modules to go into /Std/Int,
+including internal ones, and clean those up. We know the top level ones. We
+can go from there.
+
+  /Std/Int%
+  /Std/Int/Eq%
+  /Std/Int/Div%
+  /Std/Int/Sqrt%
+  /Std/Int/Lit%
+
+  /Core/Int/IntP%
+  /Core/Int/IntP/Eq%
+  /Core/Int/IntP/Div%
+
+  /Core/Digits%
+  /Core/List%
+
+Let's wait until later to worry about Lit. Because that depends on list, which
+I'm not ready to bring into Std yet.
+
+Double checking the interface on the /Std/Int/* modules:
+* They look good. As prescribed.
+
+Looking at the IntP interfaces now.

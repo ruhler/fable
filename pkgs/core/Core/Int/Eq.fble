@@ -86,4 +86,9 @@
   a.?(n: Neg(a), : a);
 };
 
-@(Sign@, Sgn, IsZero, IsNegative, IsPositive, Eq, Ne, Lt, Le, Gt, Ge, Max, Min, Abs);
+@(
+  Sign@, Sgn,
+  IsZero, IsNegative, IsPositive,
+  Eq, Ne, Lt, Le, Gt, Ge,
+  Max, Min, Abs
+);
