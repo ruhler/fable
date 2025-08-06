@@ -1,24 +1,48 @@
+# @module[/Std/Int/IntP%]
+#  Positive unbounded integers
+#
+#  This module is for internal use only.
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-# Positive Integers.
+# @union[IntP@] Type of positive integers.
+#  @field[Unit@][1] The value 1.
+#  @field[IntP@][2p0] The value 2*x.
+#  @field[IntP@][2p1] The value 2*x+1.
 @ IntP@ = +(
   Unit@ 1, 
   IntP@ 2p0,
   IntP@ 2p1
 );
 
+# @value[1] The value 1.
+#  @type[IntP@]
 IntP@ 1 = IntP@(1: Unit);
+
+# @value[2] The value 2.
+#  @type[IntP@]
 IntP@ 2 = IntP@(2p0: 1);
+
+# @value[5] The value 5.
+#  @type[IntP@]
 IntP@ 5 = IntP@(2p1: 2);
+
+# @value[10] The value 10.
+#  @type[IntP@]
 IntP@ 10 = IntP@(2p0: 5);
 
-# Add1(x) = x + 1
+# @func[Add1] Adds 1 to a value. x + 1.
+#  @arg[IntP@][x] The value to add 1 to.
+#  @returns[IntP@] One more than @a[x].
 (IntP@) { IntP@; } Add1 = (IntP@ x) {
   x.?(1: 2, 2p0: IntP@(2p1: x.2p0), 2p1: IntP@(2p0: Add1(x.2p1)));
 };
 
+# @func[Add] Integer addition. a + b.
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[IntP@] The sum of @a[a] and @a[b].
 (IntP@, IntP@) { IntP@; } Add = (IntP@ a, IntP@ b) {
   a.?(
     1: Add1(b),
@@ -32,7 +56,10 @@ IntP@ 10 = IntP@(2p0: 5);
       2p1: IntP@(2p0: Add1(Add(a.2p1, b.2p1)))));
 };
 
-# Mul(a, b) = a * b
+# @func[Mul] Integer multiplication. a * b.
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[IntP@] The product of @a[a] and @a[b].
 (IntP@, IntP@) { IntP@; } Mul = (IntP@ a, IntP@ b) {
   a.?(
       1: b,
@@ -46,7 +73,9 @@ IntP@ 10 = IntP@(2p0: 5);
         2p1: IntP@(2p1: Add(IntP@(2p0: Mul(a.2p1, b.2p1)), Add(a.2p1, b.2p1)))));
 };
 
-# Exp2(a) = 2^a
+# @func[Exp2] Integer exponentiation with base 2. 2 ^ a.
+#  @arg[IntP@][a] The exponent.
+#  @returns[IntP@] The @a[a]th power of 2.
 (IntP@) { IntP@; } Exp2 = (IntP@ a) {
   a.?(
     1: 2,
@@ -54,4 +83,4 @@ IntP@ 10 = IntP@(2p0: 5);
     2p1: Mul(2, Exp2(IntP@(2p0: a.2p1))));
 };
 
-@(IntP@, 1, 10, Add, Add1, Mul, Exp2);
+@(IntP@, 1, 10, Add, Add1, Mul, Exp2); # TODO: .%(@/Std/Int%);

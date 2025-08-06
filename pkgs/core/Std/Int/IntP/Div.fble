@@ -1,3 +1,5 @@
+# @module[/Std/Int/IntP/Div%]
+#  Division of positive integers.
 
 @ IntP@ = /Std/Int/IntP%.IntP@;
 
@@ -6,10 +8,14 @@
 % 0 = /Std/Int%.0;
 % 1 = /Std/Int%.1;
 
-# QR@ --
-#   Quotient and remainder.
+# @struct[QR@] Quotient and remainder.
+#  @field[Int@][q] The quotient of division.
+#  @field[Int@][r] The remainder of division.
 @ QR@ = *(Int@ q, Int@ r);
 
+# @func[IntP] Converts an IntP@ to positive Int@.
+#  @arg[IntP@][x] The integer to convert.
+#  @returns[Int@] The value as a positive Int@.
 (IntP@) { Int@; } IntP = (IntP@ x) {
   Int@(p: x);
 };
