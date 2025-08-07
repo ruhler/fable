@@ -62,4 +62,4 @@
       2p1: b.?(1: True, 2p0: Ge(a.2p1, b.2p0), 2p1: Ge(a.2p1, b.2p1)));
 };
 
-@(Eq, Lt, Le, Gt, Ge); # TODO: .%(@/Std/Int%);
+@(Eq, Lt, Le, Gt, Ge).%(@/Std/Int%);

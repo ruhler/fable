@@ -522,3 +522,46 @@ Let's just skip the restricted access for now, mark it as todo.
 
 Trouble: Integer literal depends on List, which I kind of don't like? For
 example, for Sqrt it depends on literals which depend on List unnecessarily?
+
+---
+
+I need to review integer division again to understand what the options are and
+what choice I'm using.
+
+Options (from wikipedia 'Modulo'):
+* Euclidean:  a = b*q + r, 0 <= r < |b|
+  Common mathematical definition, number theory.
+* Truncated:  a = b*q +r , q = trunc(a/b)
+  Remainder has same sign as 'q'.
+* Floor:      a = b*q +r , q = floor(a/b)
+  Remainder has same sign as 'b'.
+* Rounded:    a = b*q +r , q = round(a/b)
+  IEEE 754
+* Ceiling:    a = b*q +r , q = ceil(a/b)
+
+What was my argument before?
+
+My argument there was fairly convincing. Use 'floor' so that sign of remainder
+has the same sign as the divisor. I think if modulo n as giving a number
+between 0 and n, so that makes sense. It avoids 'singularity' like behavior
+around 0.
+
+   5 =  2 * 2 + 1
+  -5 =  2 * -3 + 1
+  -5 = -2 * 2 - 1
+   5 = -2 * -3 - 1
+
+Euclidean would instead say:
+  -5 = -2 * 3 + 1
+   5 = -2 * -2 + 1
+
+So, interesting cases are:
+   5 /  2 = 2 remainder 1
+  -5 / -2 = 2 remainder -1 or 3 remainder 1
+   5 / -2 = 3 remainder -1 or 2 remainder 1
+  -5 /  2 = -3 remainder 1
+
+Honestly, I rather have that a / -b = -b / a, and that 
+a % -b != -a % b. The modulo makes sense to be different to me, the division
+does not. Floor gives us that. So I vote we go with floor. Good.
+

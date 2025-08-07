@@ -1,5 +1,7 @@
 # @module[/Std/Int/IntP/Div%]
 #  Division of positive integers.
+#
+#  For internal use only.
 
 @ IntP@ = /Std/Int/IntP%.IntP@;
 
@@ -20,17 +22,32 @@
   Int@(p: x);
 };
 
+# @func[2P0] 2*x
+#  @arg[IntP@][x] The operand.
+#  @returns[Int@] Double the operand.
 (Int@) { Int@; } 2P0 = (Int@ x) {
   x.?(0: 0);
   Int@(p: IntP@(2p0: x.p));
 };
 
+# @func[2P1] 2*x+1
+#  @arg[IntP@][x] The operand.
+#  @returns[Int@] One more than double the operand.
 (Int@) { Int@; } 2P1 = (Int@ x) {
   x.?(0: 1);
   Int@(p: IntP@(2p1: x.p));
 };
 
-# a = b*q + r, r < b, where q = floor(a/b)
+# @func[Div] Division.
+#  @code[txt] @
+#   a = b*q + r, r < b, where q = floor(a/b)
+#
+#  The remainder r has the same sign as the divisor b. Behavior is undefined
+#  if the divisor b is 0.
+#
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[QR@] The quotient and remainder of division.
 (IntP@, IntP@) { QR@; } Div = (IntP@ a, IntP@ b) {
   b.?(1: @(q: IntP(a), r: 0),
       2p0: a.?(1: @(q: 0, r: IntP(a)),
@@ -65,4 +82,4 @@
                }));
 };
 
-@(QR@, Div);
+@(QR@, Div); # TODO: .%(@/Std/Int%);
