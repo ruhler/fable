@@ -1,3 +1,5 @@
+# @module[/Std/Int/Div%]
+#  Division of integers.
 
 @ Int@ = /Std/Int%.Int@;
 % Decr = /Std/Int%.Decr;
@@ -7,14 +9,26 @@
 
 % P = /Std/Int/IntP/Div%;
 
-# QR@ --
-#   Quotient and remainder from integer division.
+# @struct[QR@] Quotient and remainder.
+#  @field[Int@][q] The quotient of division.
+#  @field[Int@][r] The remainder of division.
 @ QR@ = *(Int@ q, Int@ r);
 
 /Std/Undef%.Undef@ DivideByZero;
 
-# Div --
-#   a = q*b + r, |r| < |b|, where q = floor(a/b)
+# @func[Div] Integer (floored) division.
+#  @code[txt] @
+#   a = b*q + r, r < b, where q = floor(a/b)
+#
+#  The remainder r has the same sign as the divisor b, which has the nice
+#  property that a/-b = -a/b and the remainder is always between 0 (inclusive)
+#  and b (exclusive).
+#
+#  Behavior is undefined if the divisor b is 0.
+#
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[QR@] The quotient and remainder of division.
 (Int@, Int@) { QR@; } Div = (Int@ a, Int@ b) {
   b.?(
     n: {
@@ -35,12 +49,30 @@
       });
 };
 
-# Quot -- Quotient of division.
+# @func[Quot] The quotient of integer (floored) division.
+#  @code[txt] @
+#   floor(a/b)
+#
+#  Behavior is undefined if the divisor b is 0.
+#
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[QR@] The quotient of floored division of a by b.
 (Int@, Int@) { Int@; } Quot = (Int@ a, Int@ b) {
   Div(a, b).q;
 };
 
-# Mod -- Remainder of division.
+# @func[Mod] The modulus, or remainder of integer (floored) division.
+#  @code[txt] @
+#   a = b*q + r, r < b, where q = floor(a/b)
+#
+#  The remainder r has the same sign as the divisor b.
+#
+#  Behavior is undefined if the divisor b is 0.
+#
+#  @arg[IntP@][a] The first operand.
+#  @arg[IntP@][b] The second operand.
+#  @returns[QR@] The remainder @a[r] of floored division of a by b.
 (Int@, Int@) { Int@; } Mod = (Int@ a, Int@ b) {
   Div(a, b).r;
 };

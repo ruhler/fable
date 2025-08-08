@@ -2,7 +2,6 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
-* Add documentation to all /Std/Int* modules.
 * Restrict Int@ type internals to /Std/Int%.
 * Restrict /Std/Int/IntP* modules to /Std/Int%.
 * Update references to /Core/Int in tutorials.

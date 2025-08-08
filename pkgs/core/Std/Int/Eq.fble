@@ -1,4 +1,7 @@
 
+# @module[/Std/Int/Eq%]
+#  Equalities, inequalities, and related operations on integers.
+
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
@@ -16,24 +19,50 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
+# @union[Sign@] The sign of an integer.
+#  @field[Unit@]['-'] Negative sign.
+#  @field[Unit@][0] Zero.
+#  @field[Unit@]['+'] Positive sign.
 @ Sign@ = +(Unit@ '-', Unit@ '0', Unit@ '+');
 
+# @func[Sgn] Gets the sign of an integer.
+#  This can be handy for changing behavior depending on the sign of the
+#  integer. For example:
+#
+#  @code[fble] @
+#   Sgn(x).?(0: DivideByZero);
+#
+#  @arg[Int@][x] The integer to get the sign of.
+#  @returns[Sign@] The sign of the integer.
 (Int@) { Sign@; } Sgn = (Int@ x) {
   x.?(n: Sign@('-': Unit), 0: Sign@('0': Unit), p: Sign@('+': Unit));
 };
 
+# @func[IsZero] Tests if an integer is 0. x == 0.
+#  @arg[Int@][x] The integer to test.
+#  @returns[Bool@] True if the integer is 0, false otherwise.
 (Int@) { Bool@; } IsZero = (Int@ x) {
   x.?(0: True, : False);
 };
 
+# @func[IsNegative] Tests if an integer is negative. x < 0.
+#  @arg[Int@][x] The integer to test.
+#  @returns[Bool@] True if the integer is less than 0, false otherwise.
 (Int@) { Bool@; } IsNegative = (Int@ x) {
   x.?(n: True, : False);
 };
 
+# @func[IsPositive] Tests if an integer is positive. x > 0.
+#  @arg[Int@][x] The integer to test.
+#  @returns[Bool@] True if the integer is greater than 0, false otherwise.
 (Int@) { Bool@; } IsPositive = (Int@ x) {
   x.?(p: True, : False);
 };
 
+# @func[Eq] Tests if two integers are equal. a == b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Bool@] True if the operands are equal, false otherwise.
 (Int@, Int@) { Bool@; } Eq = (Int@ a, Int@ b) {
   a.?(
     n: b.?(n: EqP(a.n, b.n),  0: False, p: False),
@@ -41,10 +70,19 @@
     p: b.?(n: False, 0: False, p: EqP(a.p, b.p)));
 };
 
+# @func[Ne] Tests if two integers are unequal. a != b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Bool@] True if the operands are unequal, false otherwise.
 (Int@, Int@) { Bool@; } Ne = (Int@ a, Int@ b) {
   Not(Eq(a, b));
 };
 
+# @func[Lt] Tests if an integer is less than another. a < b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Bool@]
+#   True if the first operand is less than the second, false otherwise.
 (Int@, Int@) { Bool@; } Lt = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: LtP(b.n, a.n), 0: True, p: True),
@@ -52,6 +90,12 @@
       p: b.?(n: False, 0: False, p: LtP(a.p, b.p)));
 };
 
+# @func[Le] Tests if an integer is less than or equal to another. a <= b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Bool@]
+#   True if the first operand is less than or equal to the second, false
+#   otherwise.
 (Int@, Int@){ Bool@; } Le = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: LeP(b.n, a.n), 0: True, p: True),
@@ -59,6 +103,11 @@
       p: b.?(n: False, 0: False, p: LeP(a.p, b.p)));
 };
 
+# @func[Gt] Tests if an integer is greater than another. a > b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Bool@]
+#   True if the first operand is greater than the second, false otherwise.
 (Int@, Int@){ Bool@; } Gt = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: GtP(b.n, a.n), 0: False, p: False),
@@ -66,6 +115,12 @@
       p: b.?(n: True, 0: True, p: GtP(a.p, b.p)));
 };
 
+# @func[Ge] Tests if an integer is greater than or equal to another. a >= b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Bool@]
+#   True if the first operand is greater than or equal to the second, false
+#   otherwise.
 (Int@, Int@){ Bool@; } Ge = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: GeP(b.n, a.n), 0: False, p: False),
@@ -73,15 +128,25 @@
       p: b.?(n: True, 0: True, p: GeP(a.p, b.p)));
 };
 
+# @func[Max] Returns the greater of two integers.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] The larger of the two operands.
 (Int@, Int@) { Int@; } Max = (Int@ a, Int@ b) {
   Lt(a, b).?(true: b, false: a);
 };
 
+# @func[Min] Returns the lesser of two integers.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] The smaller of the two operands.
 (Int@, Int@) { Int@; } Min = (Int@ a, Int@ b) {
   Lt(a, b).?(true: a, false: b);
 };
 
-# |a|
+# @func[Abs] Absolute value. |a|.
+#  @arg[Int@][a] The operand.
+#  @returns[Int@] The absolute value of the operand.
 (Int@) { Int@; } Abs = (Int@ a) {
   a.?(n: Neg(a), : a);
 };

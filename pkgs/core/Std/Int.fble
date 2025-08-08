@@ -1,3 +1,5 @@
+# @module[/Std/Int%]
+#  Signed unbounded integer type and basic operations.
 
 % IntP = /Std/Int/IntP%;
 @ IntP@ = IntP.IntP@;
@@ -8,25 +10,28 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
+# @type[Int@] The integer type.
+#  A type for abitrarily sized signed integers.
 @ Int@ = +(
   IntP@ n,   # Negative integers
   Unit@ 0,
   IntP@ p    # Positive integers
 );  # TODO: .%(@/Std/Int%);
 
+# Helper functions for constructing positive and negative integers.
+(IntP@) { Int@; } N = (IntP@ x) { Int@(n: x); };
+(IntP@) { Int@; } P = (IntP@ x) { Int@(p: x); };
+
+# @value[0] The value 0.
+#  @type[Int@]
 Int@ 0 = Int@(0: Unit);
 
-(IntP@) { Int@; } N = (IntP@ x) {
-  Int@(n: x);
-};
-
-(IntP@) { Int@; } P = (IntP@ x) {
-  Int@(p: x);
-};
-
+# @value[1] The value 1.
+#  @type[Int@]
 Int@ 1 = P(IntP.1);
 
-# Sub1(x) = x - 1
+# Helper function to subtract 1 from a positive integer, the result of which
+# may be zero.
 (IntP@) { Int@; } Sub1 = (IntP@ x) {
   x.?(1: 0,
       2p0: {
@@ -37,7 +42,9 @@ Int@ 1 = P(IntP.1);
       2p1: Int@(p: IntP@(2p0: x.2p1)));
 };
 
-# a + 1
+# @func[Incr] Increment. a + 1.
+#  @arg[Int@][a] The operand.
+#  @returns[Int@] One greater than the operand.
 (Int@){ Int@; } Incr = (Int@ a) {
   a.?( 
       n: {
@@ -49,7 +56,9 @@ Int@ 1 = P(IntP.1);
       p: P(IntP.Add1(a.p)));
 };
 
-# a - 1
+# @func[Decr] Decrement. a - 1.
+#  @arg[Int@][a] The operand.
+#  @returns[Int@] One less than the operand.
 (Int@){ Int@; } Decr = (Int@ a) {
   a.?(
       n: N(IntP.Add1(a.n)),
@@ -61,11 +70,15 @@ Int@ 1 = P(IntP.1);
       });
 };
 
-# 2 * a
+# @func[Mul2] Double function. a * 2.
+#  @arg[Int@][a] The operand.
+#  @returns[Int@] Two times the operand.
 (Int@) { Int@; } Mul2 = (Int@ a) {
   a.?(n: N(IntP@(2p0: a.n)), 0: a, p: P(IntP@(2p0: a.p)));
 };
 
+# Helper function to subtract two positive integers, the result of which may
+# not be positive.
 (IntP@, IntP@) { Int@; } SubP = (IntP@ a, IntP@ b) {
   a.?(1: {
          Int@ s = Sub1(b);
@@ -80,7 +93,10 @@ Int@ 1 = P(IntP.1);
                 2p1: Mul2(SubP(a.2p1, b.2p1))));
 };
 
-# a + b
+# @func[Add] Integer addition. a + b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] The sum of the two operands.
 (Int@, Int@) { Int@; } Add = (Int@ a, Int@ b) {
   a.?(n: b.?(n: N(AddP(a.n, b.n)),
              0: a,
@@ -91,18 +107,26 @@ Int@ 1 = P(IntP.1);
               p: P(AddP(a.p, b.p))));
 };
 
-# -a 
+# @func[Neg] Integer negation. -a.
+#  @arg[Int@][a] The operand.
+#  @returns[Int@] The additive inverse of the operand.
 (Int@) { Int@; } Neg = (Int@ a) {
   a.?(n: P(a.n), 0: a, p: N(a.p));
 };
 
-# a - b 
+# @func[Sub] Integer subtraction. a - b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] The difference between the two operands.
 (Int@, Int@) { Int@; } Sub = (Int@ a, Int@ b) {
   # a - b = a + (-b)
   Add(a, Neg(b));
 };
 
-# a * b
+# @func[Mul] Integer multiplication. a * b.
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] The product of the operands.
 (Int@, Int@) { Int@; } Mul = (Int@ a, Int@ b) {
   a.?(
     n: b.?(n: P(MulP(a.n, b.n)),
@@ -114,13 +138,18 @@ Int@ 1 = P(IntP.1);
             p: P(MulP(a.p, b.p))));
 };
 
-# 2^a
+# @func[Exp2] Base-2 exponentiation. 2^a
+#  @arg[Int@][a] The operand.
+#  @returns[Int@] Two to the power of @a[a].
 (Int@) { Int@; } Exp2 = (Int@ a) {
   a.?(0: 1, p: P(Exp2P(a.p)));
   /Std/Undef%.Undef.undef<Int@>;
 };
 
-# a^b
+# @func[Exp] Exponentiation. a^b
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] The first operand raised to the power of the second operand.
 (Int@, Int@) { Int@; } Exp = (Int@ a, Int@ b) {
   b.?(n: /Std/Undef%.Undef.undef<Int@>);
   b.?(0: 1);
@@ -128,7 +157,17 @@ Int@ 1 = P(IntP.1);
   Mul(a, Exp(a, Decr(b)));
 };
 
-# a*2^b, or a << b
+# @func[Shl] Left shift. a << b, or a * 2^b.
+#  We aren't using fixed width integers or specifying their internal
+#  implementation, but it's still useful to use the notation for left shift
+#  from fixed-width binary representations of integers to refer to this
+#  operation.
+#
+#  Behavior is undefined if @a[b] is negative.
+#
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] a * 2^b.
 (Int@, Int@) { Int@; }
 Shl = (Int@ a, Int@ b) {
   Mul(a, Exp2(b));
@@ -142,7 +181,19 @@ Shl = (Int@ a, Int@ b) {
     p: a.p.?(1: 0, 2p0: P(a.p.2p0), 2p1: P(a.p.2p1)));
 };
 
-# a >> b
+# @func[Shr] Right shift. a >> b. a / 2^b.
+#  We aren't using fixed width integers or specifying their internal
+#  implementation, but it's still useful to use the notation for right shift
+#  from fixed-width binary representations of integers to refer to this
+#  operation.
+#
+#  Divides a by 2^b, truncating the result towards zero.
+#
+#  Behavior is undefined if @a[b] is negative.
+#
+#  @arg[Int@][a] The first operand.
+#  @arg[Int@][b] The second operand.
+#  @returns[Int@] a / 2^b.
 (Int@, Int@) { Int@; } Shr = (Int@ a, Int@ b) {
   b.?(n: /Std/Undef%.Undef.undef<Int@>);
   b.?(0: a);

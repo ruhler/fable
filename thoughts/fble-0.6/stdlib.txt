@@ -361,3 +361,11 @@ I will put them in separate submodules where makes sense so you don't pay the
 cost for them when you don't use them.
 
 Is that enough for me to go on in terms of int module organization?
+
+---
+
+Slightly annoying thing I've encountered working on /Std/Int%: the difference
+between doc comments and standard library documentation. I want to be able to
+doc comment helper functions that aren't exposed in the standard library.
+What's the best approach to distinguish between the two cases?
+
