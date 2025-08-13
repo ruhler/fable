@@ -8,7 +8,7 @@
 @ Int@ = /Std/Int%.Int@;
 
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
+<@>% Empty = /Core/List%.Empty;
 
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 % RunMain = /Core/Stdio/Pure%.RunMain;
@@ -34,7 +34,7 @@ Test@ xfail = Test(Str|xfail, (Unit@ _) { ExpectedFail; });
 
 Test@ Tests = TestSuite(Str|'Test', List[
   Test(Str|'RunTest.pass_passes', (Unit@ _) {
-    MainResult@ result = RunMain(Run(pass), Nil<String@>, Nil<Int@>);
+    MainResult@ result = RunMain(Run(pass), Empty<String@>, Empty<Int@>);
 
     Bool@ wnt = True;
     Bool@ got = result.exit;
@@ -42,7 +42,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
   }),
 
   Test(Str|'RunTest.fail_fails', (Unit@ _) {
-    MainResult@ result = RunMain(Run(fail), Nil<String@>, Nil<Int@>);
+    MainResult@ result = RunMain(Run(fail), Empty<String@>, Empty<Int@>);
 
     Bool@ wnt = False;
     Bool@ got = result.exit;
@@ -50,7 +50,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
   }),
 
   Test(Str|'RunTest.xfail_passes', (Unit@ _) {
-    MainResult@ result = RunMain(Run(xfail), Nil<String@>, Nil<Int@>);
+    MainResult@ result = RunMain(Run(xfail), Empty<String@>, Empty<Int@>);
 
     Bool@ wnt = True;
     Bool@ got = result.exit;
@@ -64,7 +64,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
       Test(Str|c, (Unit@ _) { ExpectedFail; }),
       Test(Str|c, (Unit@ _) { Pass; })]);
 
-    MainResult@ result = RunMain(Run(suite), Nil<String@>, Nil<Int@>);
+    MainResult@ result = RunMain(Run(suite), Empty<String@>, Empty<Int@>);
 
     Bool@ wnt = True;
     Bool@ got = result.exit;
@@ -78,7 +78,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
       Test(Str|c, (Unit@ _) { ExpectedFail; }),
       Test(Str|c, (Unit@ _) { Pass; })]);
 
-    MainResult@ result = RunMain(Run(suite), Nil<String@>, Nil<Int@>);
+    MainResult@ result = RunMain(Run(suite), Empty<String@>, Empty<Int@>);
 
     Bool@ wnt = False;
     Bool@ got = result.exit;

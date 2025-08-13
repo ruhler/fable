@@ -7,8 +7,8 @@
 % Le = /Std/Int/Eq%.Le;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 
 # Drop --
 #   Remove the first n elements from the list.
@@ -17,8 +17,8 @@
 (Int@)<@ T@>(List@<T@>) { List@<T@>; }
 Drop = (Int@ n)<@ T@>(List@<T@> l) {
   Le(n, 0).?(true: l);
-  l.?(nil: l);
-  Drop(Decr(n), l.cons.tail);
+  l.?(empty: l);
+  Drop(Decr(n), l.items.tail);
 };
 
 # Take --
@@ -27,9 +27,9 @@ Drop = (Int@ n)<@ T@>(List@<T@> l) {
 # Returns fewer than n elements if there are less than n elements on the list.
 (Int@)<@ T@>(List@<T@>) { List@<T@>; }
 Take = (Int@ n)<@ T@>(List@<T@> l) {
-  Le(n, 0).?(true: Nil<T@>);
-  l.?(nil: Nil<T@>);
-  Cons(l.cons.head, Take(Decr(n), l.cons.tail));
+  Le(n, 0).?(true: Empty<T@>);
+  l.?(empty: Empty<T@>);
+  Items(l.items.head, Take(Decr(n), l.items.tail));
 };
 
 # Length --
@@ -44,15 +44,15 @@ Take = (Int@ n)<@ T@>(List@<T@> l) {
 # Returns:
 #   The length of the list.
 <@ T@>(List@<T@>) { Int@; } Length = <@ T@>(List@<T@> l) {
-  l.?(nil: 0);
-  Incr(Length(l.cons.tail));
+  l.?(empty: 0);
+  Incr(Length(l.items.tail));
 };
 
 # Gets the element of the list with the given index.
 # Behavior is undefined if there is no such elemnet.
 <@ T@>(List@<T@>, Int@) { T@; } Get = <@ T@>(List@<T@> l, Int@ n) {
-  IsZero(n).?(true: l.cons.head);
-  Get(l.cons.tail, Decr(n));
+  IsZero(n).?(true: l.items.head);
+  Get(l.items.tail, Decr(n));
 };
 
 @(Take, Drop, Length, Get);

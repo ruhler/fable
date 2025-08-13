@@ -2,7 +2,7 @@
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 <@>% Length = /Core/List/Length%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -50,10 +50,10 @@ Eval = (Env@ env, Markup@ markup) {
 
 (Env@, List@<Markup@>) { Result@<List@<Markup@>>; }
 Evals = (Env@ env, List@<Markup@> markups) {
-  markups.?(nil: r.return(markups));
-  Markup@ head <- r.do(Eval(env, markups.cons.head));
-  List@<Markup@> tail <- r.do(Evals(env, markups.cons.tail));
-  r.return(Cons(head, tail));
+  markups.?(empty: r.return(markups));
+  Markup@ head <- r.do(Eval(env, markups.items.head));
+  List@<Markup@> tail <- r.do(Evals(env, markups.items.tail));
+  r.return(Items(head, tail));
 };
 
 # Helper function to assert that a command has been provided with the given

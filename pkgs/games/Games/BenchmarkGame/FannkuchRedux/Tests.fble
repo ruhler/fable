@@ -6,7 +6,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
+<@>% Empty = /Core/List%.Empty;
 <@>% Append = /Core/List%.Append;
 
 % Str = /Core/String%.Str;
@@ -29,7 +29,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
   Test(Str|Flip, (Unit@ _) {
     List@<Int@> input = List[Int|4, Int|2, Int|1, Int|5, Int|3];
     List@<Int@> wnt = List[Int|5, Int|1, Int|2, Int|4, Int|3];
-    List@<Int@> got = Flip(Int|4, Nil<Int@>, input);
+    List@<Int@> got = Flip(Int|4, Empty<Int@>, input);
     AssertEquals(
       /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Core/List/Show%.Show(/Core/Int/Show%.Show),
@@ -71,7 +71,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     };
 
     P.State@<Unit@> permutes = Permutes<P.State@>(P.Monad, input, F);
-    List@<List@<Int@>> got = P.Run(permutes, Nil<List@<Int@>>).s;
+    List@<List@<Int@>> got = P.Run(permutes, Empty<List@<Int@>>).s;
     AssertEquals(
       /Core/List/Eq%.Eq(/Core/List/Eq%.Eq(/Std/Int/Eq%.Eq)),
       /Core/List/Show%.Show(/Core/List/Show%.Show(/Core/Int/Show%.Show)),

@@ -28,7 +28,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 
   (List@<String@> args) {
-    Int@ n = args.?(cons: /Core/Int/Show%.Read(args.cons.head), nil: Int|7);
+    Int@ n = args.?(items: /Core/Int/Show%.Read(args.items.head), empty: Int|7);
     Fannkuch@ result = FannkuchRedux(n);
     Unit@ _ <- m.do(PutL[/Core/Int/Show%.Show(result.checksum)]);
     Unit@ _ <- m.do(PutL[

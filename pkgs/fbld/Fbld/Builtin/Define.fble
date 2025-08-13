@@ -11,7 +11,7 @@ Int@ 3 = Int|3;
 Int@ 4 = Int|4;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Length = /Core/List/Length%.Length;
 <@>% Get = /Core/List/Length%.Get;
@@ -48,15 +48,15 @@ Int@ 4 = Int|4;
 
 (Env@, List@<String@>, List@<Markup@>) { Env@; }
 DefArgs = (Env@ env, List@<String@> params, List@<Markup@> args) {
-  params.?(nil: env);
-  DefArgs(Insert(env, params.cons.head, VarImpl(args.cons.head)),
-    params.cons.tail, args.cons.tail);
+  params.?(empty: env);
+  DefArgs(Insert(env, params.items.head, VarImpl(args.items.head)),
+    params.items.tail, args.items.tail);
 };
 
 (Env@, List@<String@>) { Env@; }
 DelArgs = (Env@ env, List@<String@> params) {
-  params.?(nil: env);
-  DelArgs(Delete(env, params.cons.head), params.cons.tail);
+  params.?(empty: env);
+  DelArgs(Delete(env, params.items.head), params.items.tail);
 };
 
 (Env@, Markup@) { Markup@; }
@@ -92,10 +92,10 @@ PreLookup = (Env@ env, Markup@ markup) {
 },
 (Env@, List@<Markup@>) { List@<Markup@>; }
 PreLookups = (Env@ env, List@<Markup@> markups) {
-  markups.?(nil: markups);
-  Markup@ head = PreLookup(env, markups.cons.head);
-  List@<Markup@> tail = PreLookups(env, markups.cons.tail);
-  Cons(head, tail);
+  markups.?(empty: markups);
+  Markup@ head = PreLookup(env, markups.items.head);
+  List@<Markup@> tail = PreLookups(env, markups.items.tail);
+  Items(head, tail);
 };
 
 Impl@ Define = (Env@ env, Command@ cmd) {

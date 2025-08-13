@@ -79,18 +79,18 @@
   };
 
   (String@ s) {
-    Char@ i0 = s.cons.head; String@ s1 = s.cons.tail;
-    Char@ i1 = s1.cons.head; String@ s2 = s1.cons.tail;
-    Char@ i2 = s2.cons.head; String@ s3 = s2.cons.tail;
-    Char@ i3 = s3.cons.head; String@ s4 = s3.cons.tail;
-    Char@ _ = s4.cons.head; String@ s5 = s4.cons.tail;
-    Char@ _ = s5.cons.head; String@ s6 = s5.cons.tail;
-    Char@ _ = s6.cons.head; String@ s7 = s6.cons.tail;
-    Char@ _ = s7.cons.head; String@ s8 = s7.cons.tail;
-    Char@ o0 = s8.cons.head; String@ s9 = s8.cons.tail;
-    Char@ o1 = s9.cons.head; String@ s10 = s9.cons.tail;
-    Char@ o2 = s10.cons.head; String@ s11 = s10.cons.tail;
-    Char@ o3 = s11.cons.head;
+    Char@ i0 = s.items.head; String@ s1 = s.items.tail;
+    Char@ i1 = s1.items.head; String@ s2 = s1.items.tail;
+    Char@ i2 = s2.items.head; String@ s3 = s2.items.tail;
+    Char@ i3 = s3.items.head; String@ s4 = s3.items.tail;
+    Char@ _ = s4.items.head; String@ s5 = s4.items.tail;
+    Char@ _ = s5.items.head; String@ s6 = s5.items.tail;
+    Char@ _ = s6.items.head; String@ s7 = s6.items.tail;
+    Char@ _ = s7.items.head; String@ s8 = s7.items.tail;
+    Char@ o0 = s8.items.head; String@ s9 = s8.items.tail;
+    Char@ o1 = s9.items.head; String@ s10 = s9.items.tail;
+    Char@ o2 = s10.items.head; String@ s11 = s10.items.tail;
+    Char@ o3 = s11.items.head;
     Rule@(
       Inputs@(FromChar(i0), FromChar(i1), FromChar(i2), FromChar(i3)),
       Outputs@(FromChar(o0), FromChar(o1), FromChar(o2), FromChar(o3)));

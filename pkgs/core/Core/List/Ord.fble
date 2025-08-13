@@ -10,11 +10,11 @@
 <@ A@>(Ord@<A@>) { Ord@<List@<A@>>; }
 Ord = <@ A@>(Ord@<A@> ord) {
   Ord@<List@<A@>> Ord_ = (List@<A@> a, List@<A@> b) {
-    a.?(nil: b.?(cons: Lt, nil: Eq));
-    b.?(nil: Gt);
+    a.?(empty: b.?(items: Lt, empty: Eq));
+    b.?(empty: Gt);
 
-    Ordering@ ordering = ord(a.cons.head, b.cons.head);
-    ordering.?(eq: Ord_(a.cons.tail, b.cons.tail));
+    Ordering@ ordering = ord(a.items.head, b.items.head);
+    ordering.?(eq: Ord_(a.items.tail, b.items.tail));
     ordering;
   };
   Ord_;

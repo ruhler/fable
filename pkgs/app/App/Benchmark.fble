@@ -10,7 +10,7 @@
 % IsNegative = /Std/Int/Eq%.IsNegative;
 % Int = /Core/Int/Lit%.Int;
 
-<@>% Nil = /Core/List%.Nil;
+<@>% Empty = /Core/List%.Empty;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -60,7 +60,7 @@ Benchmark = (Main@ app, Int@ n, Event@ quit, Unit@ _) {
   };
 
   Stdio@<M@> stdio = /Core/Stdio/Stub%.Stdio<M@>(Monad);
-  M@<Bool@> m = app<M@>(Monad, stdio, App@<M@>(Event, Effect), w, h, Nil<String@>);
+  M@<Bool@> m = app<M@>(Monad, stdio, App@<M@>(Event, Effect), w, h, Empty<String@>);
   R@<Bool@> r = m(n);
   AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, r.x);
 };

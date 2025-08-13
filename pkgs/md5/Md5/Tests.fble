@@ -8,8 +8,8 @@
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% List = /Core/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -39,38 +39,38 @@
 
 # A Hash literal. It should consist of 32 hex digits.
 (List@<Hex@>) { Hash@; } Hash = (List@<Hex@> s00) {
-  Hex@ h00 = s00.cons.head; List@<Hex@> s01 = s00.cons.tail;
-  Hex@ h01 = s01.cons.head; List@<Hex@> s02 = s01.cons.tail;
-  Hex@ h02 = s02.cons.head; List@<Hex@> s03 = s02.cons.tail;
-  Hex@ h03 = s03.cons.head; List@<Hex@> s04 = s03.cons.tail;
-  Hex@ h04 = s04.cons.head; List@<Hex@> s05 = s04.cons.tail;
-  Hex@ h05 = s05.cons.head; List@<Hex@> s06 = s05.cons.tail;
-  Hex@ h06 = s06.cons.head; List@<Hex@> s07 = s06.cons.tail;
-  Hex@ h07 = s07.cons.head; List@<Hex@> s08 = s07.cons.tail;
-  Hex@ h08 = s08.cons.head; List@<Hex@> s09 = s08.cons.tail;
-  Hex@ h09 = s09.cons.head; List@<Hex@> s10 = s09.cons.tail;
-  Hex@ h10 = s10.cons.head; List@<Hex@> s11 = s10.cons.tail;
-  Hex@ h11 = s11.cons.head; List@<Hex@> s12 = s11.cons.tail;
-  Hex@ h12 = s12.cons.head; List@<Hex@> s13 = s12.cons.tail;
-  Hex@ h13 = s13.cons.head; List@<Hex@> s14 = s13.cons.tail;
-  Hex@ h14 = s14.cons.head; List@<Hex@> s15 = s14.cons.tail;
-  Hex@ h15 = s15.cons.head; List@<Hex@> s16 = s15.cons.tail;
-  Hex@ h16 = s16.cons.head; List@<Hex@> s17 = s16.cons.tail;
-  Hex@ h17 = s17.cons.head; List@<Hex@> s18 = s17.cons.tail;
-  Hex@ h18 = s18.cons.head; List@<Hex@> s19 = s18.cons.tail;
-  Hex@ h19 = s19.cons.head; List@<Hex@> s20 = s19.cons.tail;
-  Hex@ h20 = s20.cons.head; List@<Hex@> s21 = s20.cons.tail;
-  Hex@ h21 = s21.cons.head; List@<Hex@> s22 = s21.cons.tail;
-  Hex@ h22 = s22.cons.head; List@<Hex@> s23 = s22.cons.tail;
-  Hex@ h23 = s23.cons.head; List@<Hex@> s24 = s23.cons.tail;
-  Hex@ h24 = s24.cons.head; List@<Hex@> s25 = s24.cons.tail;
-  Hex@ h25 = s25.cons.head; List@<Hex@> s26 = s25.cons.tail;
-  Hex@ h26 = s26.cons.head; List@<Hex@> s27 = s26.cons.tail;
-  Hex@ h27 = s27.cons.head; List@<Hex@> s28 = s27.cons.tail;
-  Hex@ h28 = s28.cons.head; List@<Hex@> s29 = s28.cons.tail;
-  Hex@ h29 = s29.cons.head; List@<Hex@> s30 = s29.cons.tail;
-  Hex@ h30 = s30.cons.head; List@<Hex@> s31 = s30.cons.tail;
-  Hex@ h31 = s31.cons.head;
+  Hex@ h00 = s00.items.head; List@<Hex@> s01 = s00.items.tail;
+  Hex@ h01 = s01.items.head; List@<Hex@> s02 = s01.items.tail;
+  Hex@ h02 = s02.items.head; List@<Hex@> s03 = s02.items.tail;
+  Hex@ h03 = s03.items.head; List@<Hex@> s04 = s03.items.tail;
+  Hex@ h04 = s04.items.head; List@<Hex@> s05 = s04.items.tail;
+  Hex@ h05 = s05.items.head; List@<Hex@> s06 = s05.items.tail;
+  Hex@ h06 = s06.items.head; List@<Hex@> s07 = s06.items.tail;
+  Hex@ h07 = s07.items.head; List@<Hex@> s08 = s07.items.tail;
+  Hex@ h08 = s08.items.head; List@<Hex@> s09 = s08.items.tail;
+  Hex@ h09 = s09.items.head; List@<Hex@> s10 = s09.items.tail;
+  Hex@ h10 = s10.items.head; List@<Hex@> s11 = s10.items.tail;
+  Hex@ h11 = s11.items.head; List@<Hex@> s12 = s11.items.tail;
+  Hex@ h12 = s12.items.head; List@<Hex@> s13 = s12.items.tail;
+  Hex@ h13 = s13.items.head; List@<Hex@> s14 = s13.items.tail;
+  Hex@ h14 = s14.items.head; List@<Hex@> s15 = s14.items.tail;
+  Hex@ h15 = s15.items.head; List@<Hex@> s16 = s15.items.tail;
+  Hex@ h16 = s16.items.head; List@<Hex@> s17 = s16.items.tail;
+  Hex@ h17 = s17.items.head; List@<Hex@> s18 = s17.items.tail;
+  Hex@ h18 = s18.items.head; List@<Hex@> s19 = s18.items.tail;
+  Hex@ h19 = s19.items.head; List@<Hex@> s20 = s19.items.tail;
+  Hex@ h20 = s20.items.head; List@<Hex@> s21 = s20.items.tail;
+  Hex@ h21 = s21.items.head; List@<Hex@> s22 = s21.items.tail;
+  Hex@ h22 = s22.items.head; List@<Hex@> s23 = s22.items.tail;
+  Hex@ h23 = s23.items.head; List@<Hex@> s24 = s23.items.tail;
+  Hex@ h24 = s24.items.head; List@<Hex@> s25 = s24.items.tail;
+  Hex@ h25 = s25.items.head; List@<Hex@> s26 = s25.items.tail;
+  Hex@ h26 = s26.items.head; List@<Hex@> s27 = s26.items.tail;
+  Hex@ h27 = s27.items.head; List@<Hex@> s28 = s27.items.tail;
+  Hex@ h28 = s28.items.head; List@<Hex@> s29 = s28.items.tail;
+  Hex@ h29 = s29.items.head; List@<Hex@> s30 = s29.items.tail;
+  Hex@ h30 = s30.items.head; List@<Hex@> s31 = s30.items.tail;
+  Hex@ h31 = s31.items.head;
   Hash@(
     h00, h01, h02, h03, h04, h05, h06, h07,
     h08, h09, h10, h11, h12, h13, h14, h15,
@@ -85,9 +85,9 @@ Monad@<M@> Monad = State.Monad;
 
 M@<Maybe@<Bit8@>> Get = {
   List@<Bit8@> bytes <- Monad.do(State.Get);
-  bytes.?(nil: Monad.return(Nothing<Bit8@>));
-  Unit@ _ <- Monad.do(State.Set(bytes.cons.tail));
-  Monad.return(Just(bytes.cons.head));
+  bytes.?(empty: Monad.return(Nothing<Bit8@>));
+  Unit@ _ <- Monad.do(State.Set(bytes.items.tail));
+  Monad.return(Just(bytes.items.head));
 };
 
 # Compute the md5 hash for a string of bytes.
@@ -97,10 +97,10 @@ M@<Maybe@<Bit8@>> Get = {
 
 (List@<Hex@>) { List@<Bit8@>; } Hex2Bytes = (List@<Hex@> hex) {
   hex.?(
-    cons: Cons(
-      H8[hex.cons.head, hex.cons.tail.cons.head],
-      Hex2Bytes(hex.cons.tail.cons.tail)),
-    nil: Nil<Bit8@>);
+    items: Items(
+      H8[hex.items.head, hex.items.tail.items.head],
+      Hex2Bytes(hex.items.tail.items.tail)),
+    empty: Empty<Bit8@>);
 };
       
 (String@, Hash@, List@<Hex@>) { Test@; } TestStr = (String@ name, Hash@ wnt, List@<Hex@> bytes) {

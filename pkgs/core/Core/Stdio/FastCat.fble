@@ -50,8 +50,8 @@
   };
 
   Bool@ monadic = {
-    args.?(nil: False);
-    /Core/String/Eq%.Eq(Str|'--monadic', args.cons.head);
+    args.?(empty: False);
+    /Core/String/Eq%.Eq(Str|'--monadic', args.items.head);
   };
 
   monadic.?(true: MCat, false: Cat);

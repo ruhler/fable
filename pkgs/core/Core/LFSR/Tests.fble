@@ -15,8 +15,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 
 % Str = /Core/String%.Str;
 
@@ -28,9 +28,9 @@
 
 (LFSR@, Int@) { List@<Bit@>; }
 ShiftN = (LFSR@ lfsr, Int@ n) {
-  IsZero(n).?(true: Nil<Bit@>);
+  IsZero(n).?(true: Empty<Bit@>);
   Shifted@<Bit@> shifted = Shift(lfsr);
-  Cons(shifted.output, ShiftN(shifted.lfsr, Sub(n, Int|1)));
+  Items(shifted.output, ShiftN(shifted.lfsr, Sub(n, Int|1)));
 };
 
 Test@ Tests = TestSuite(Str|LFSR, List[

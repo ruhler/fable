@@ -87,9 +87,9 @@ Args@ DefaultArgs = @(
 
 (List@<String@>, Args@) { Args@; }
 GetArgs = (List@<String@> args, Args@ default) {
-  args.?(nil: default);
+  args.?(empty: default);
 
-  String@ arg = args.cons.head;
+  String@ arg = args.items.head;
   /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
     List[Str|'-h', Str|'--help'], arg).?(true: {
     default.@(help: True);
@@ -97,19 +97,19 @@ GetArgs = (List@<String@> args, Args@ default) {
 
   /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
     List[Str|'--benchmark'], arg).?(true: {
-    GetArgs(args.cons.tail, default.@(benchmark: True));
+    GetArgs(args.items.tail, default.@(benchmark: True));
   });
 
-  /Core/Char/Eq%.Eq(arg.cons.head, Chars.'-').?(false: {
-    GetArgs(args.cons.tail, default.@(file: arg));
+  /Core/Char/Eq%.Eq(arg.items.head, Chars.'-').?(false: {
+    GetArgs(args.items.tail, default.@(file: arg));
   });
 
-  args.cons.tail.?(nil: {
+  args.items.tail.?(empty: {
     default.@(error: Strs[Str|'missing arg to option ', arg]);
   });
 
-  String@ value = args.cons.tail.cons.head;
-  List@<String@> nargv = args.cons.tail.cons.tail;
+  String@ value = args.items.tail.items.head;
+  List@<String@> nargv = args.items.tail.items.tail;
 
   Args@ nargs = {
     /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
@@ -125,7 +125,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     default.@(error: Strs[Str|'unrecognized option ', arg]);
   };
 
-  nargs.error.?(cons: nargs);
+  nargs.error.?(items: nargs);
   GetArgs(nargv, nargs);
 };
 
@@ -134,7 +134,7 @@ Percent = (Int@ numerator, Int@ denominator) {
   Int@ s = Div(Mul(Int|10000, numerator), denominator).q;
   QR@ qr = Div(s, Int|100);
   Strs[/Core/Int/Show%.Show(qr.q), Str|'.',
-    /Core/Int/Show%.Show(Add(Int|100, qr.r)).cons.tail, Str|'%'];
+    /Core/Int/Show%.Show(Add(Int|100, qr.r)).items.tail, Str|'%'];
 };
 
 Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, List@<String@> argv) {
@@ -148,9 +148,9 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     (Sequence@) { M@<Unit@>; }
     SeqNames = (Sequence@ seq) {
-      seq.?(nil: m.return(Unit));
+      seq.?(empty: m.return(Unit));
 
-      BlockId@ block = seq.cons.head;
+      BlockId@ block = seq.items.head;
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
       String@ name = { 
         mname.?(just: mname.just.name);
@@ -158,23 +158,23 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
         Strs[Str|'??', /Core/Int/Show%.Show(block), Str|'??'];
       };
       Unit@ _ <- m.do(O.PutStr(out, name));
-      seq.cons.tail.?(nil: m.return(Unit));
+      seq.items.tail.?(empty: m.return(Unit));
 
       Unit@ _ <- m.do(O.PutChar(out, Chars.';'));
-      SeqNames(seq.cons.tail);
+      SeqNames(seq.items.tail);
     };
 
     (Sequence@) { M@<Unit@>; }
     SeqBlocks = (Sequence@ seq) {
-      seq.?(nil: m.return(Unit));
+      seq.?(empty: m.return(Unit));
 
-      BlockId@ block = seq.cons.head;
+      BlockId@ block = seq.items.head;
       String@ name = /Core/Int/Show%.Show(block);
       Unit@ _ <- m.do(O.PutStr(out, name));
-      seq.cons.tail.?(nil: m.return(Unit));
+      seq.items.tail.?(empty: m.return(Unit));
 
       Unit@ _ <- m.do(O.PutChar(out, Chars.','));
-      SeqBlocks(seq.cons.tail);
+      SeqBlocks(seq.items.tail);
     };
 
     (Entry@) { M@<Unit@>; }
@@ -191,9 +191,9 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     (List@<Entry@>) { M@<Unit@>; }
     Rows = (List@<Entry@> entries) {
-      entries.?(nil: m.return(Unit));
-      Unit@ _ <- m.do(Row(entries.cons.head));
-      Rows(entries.cons.tail);
+      entries.?(empty: m.return(Unit));
+      Unit@ _ <- m.do(Row(entries.items.head));
+      Rows(entries.items.tail);
     };
 
     Unit@ _ <- m.do(Rows(table));
@@ -206,13 +206,13 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     m.return(True);
   });
 
-  args.file.?(nil: {
+  args.file.?(empty: {
     Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'missing input file'));
     Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
     m.return(False);
   });
 
-  args.error.?(cons: {
+  args.error.?(items: {
     Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
     Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
     m.return(False);
@@ -327,10 +327,10 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     String@ version = Get(start_split, Int|2);
 
     List@<String@> uri_split = Split(uri, Chars.'?');
-    String@ path = uri_split.cons.head;
+    String@ path = uri_split.items.head;
     String@ query = {
-      uri_split.cons.tail.?(nil: Str|'');
-      uri_split.cons.tail.cons.head;
+      uri_split.items.tail.?(empty: Str|'');
+      uri_split.items.tail.items.head;
     };
 
     Unit@ _ <- m.do(O.PutStr(ios.out, Lines[
@@ -367,8 +367,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     Unit@ _ <- m.do(SelfPage(stdio.out));
     Unit@ _ <- m.do(SeqsPage(stdio.out));
 
-    profile.samples.?(nil: m.return(True));
-    Sequence@ seq = List[Last(profile.samples.cons.head.sequence)];
+    profile.samples.?(empty: m.return(True));
+    Sequence@ seq = List[Last(profile.samples.items.head.sequence)];
     Unit@ _ <- m.do(SeqPage(stdio.out, seq));
     m.return(True);
   });

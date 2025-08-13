@@ -43,8 +43,8 @@
 % ShiftInt = /Core/LFSR/Int%.ShiftInt;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -286,21 +286,21 @@ Int@ DyingTime = Int|10;
     phase: Phase@(b: Unit),
     next: Just(FirstAlien),
     turn: False,
-    dying: Nil<Dying@>,
+    dying: Empty<Dying@>,
     lfsr: LFSR(Polynomials.8, Polynomials.8));
 };
 
 # TickDying --
 #   Advance the dying aliens by one unit of time tick.
 (List@<Dying@>) { List@<Dying@>; } TickDying = (List@<Dying@> dying) {
-  dying.?(nil: dying);
+  dying.?(empty: dying);
 
-  Dying@ head = dying.cons.head;
-  List@<Dying@> tail = TickDying(dying.cons.tail);
+  Dying@ head = dying.items.head;
+  List@<Dying@> tail = TickDying(dying.items.tail);
 
   Int@ nwait = Sub(head.wait, Int|1);
   Eq(Int|0, nwait).?(true: tail);
-  Cons(Dying@(head.x, head.y, nwait), tail);
+  Items(Dying@(head.x, head.y, nwait), tail);
 };
 
 # Vanguard --
@@ -434,7 +434,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 
   aliens.@(
     alive: Remove(aliens.alive, alien),
-    dying: Cons(dying, aliens.dying));
+    dying: Items(dying, aliens.dying));
 };
 
 # Points --

@@ -10,7 +10,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
+<@>% Empty = /Core/List%.Empty;
 <@>% Append = /Core/List%.Append;
 
 @ String@ = /Core/String%.String@;
@@ -37,7 +37,7 @@
 };
 
 <@ T@>(T@) { Result@<T@>; } Ok = <@ T@>(T@ x) {
-  Result@(Nil<Text@>, False, Just(x));
+  Result@(Empty<Text@>, False, Just(x));
 };
 
 # Indicate an error with text error message. 
@@ -55,7 +55,7 @@ Error = <@ T@>(Loc@ l, String@ msg) {
 # Indicate an error with no error message.
 <@ T@> { Result@<T@>; }
 Fail = <@ T@> {
-  Result@(Nil<Text@>, True, Nothing<T@>);
+  Result@(Empty<Text@>, True, Nothing<T@>);
 };
 
 # Assuming the given result is an error, change its type.

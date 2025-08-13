@@ -258,12 +258,12 @@ Drawing@ Digit9 = Drawings[
 # Digits --
 #   Draw a string of decimal digits.
 (List@<Decimal@>) { Drawing@; } Digits = (List@<Decimal@> digits) {
-  digits.?(nil: Blank);
-  Drawing@ first = digits.cons.head.?(
+  digits.?(empty: Blank);
+  Drawing@ first = digits.items.head.?(
     0: Digit0, 1: Digit1, 2: Digit2, 3: Digit3,
     4: Digit4, 5: Digit5, 6: Digit6, 7: Digit7,
     8: Digit8, 9: Digit9);
-  Over(first, Translate(Int|8, Int|0, Digits(digits.cons.tail)));
+  Over(first, Translate(Int|8, Int|0, Digits(digits.items.tail)));
 };
 
 Drawing@ LetterA = Drawings[
@@ -362,14 +362,14 @@ Drawing@ LetterV = Drawings[
 # String --
 #   Draw a string of letters.
 (String@) { Drawing@; } String = (String@ str) {
-  str.?(nil: Blank);
-  Drawing@ first = str.cons.head.?(
+  str.?(empty: Blank);
+  Drawing@ first = str.items.head.?(
     '0': Digit0, '1': Digit1, '2': Digit2, '3': Digit3, '4': Digit4,
     '5': Digit5, '6': Digit6, '7': Digit7, '8': Digit8, '9': Digit9,
     'A': LetterA, 'C': LetterC, 'E': LetterE, 'G': LetterG, 'H': LetterH,
     'I': LetterI, 'L': LetterL, 'M': LetterM, 'O': LetterO, 'R': LetterR,
     'S': LetterS, 'V': LetterV, : Blank);
-  Over(first, Translate(Int|8, Int|0, String(str.cons.tail)));
+  Over(first, Translate(Int|8, Int|0, String(str.items.tail)));
 };
 
 Drawing@ Bullet = Rect(Int|0, Int|0, Int|1, Int|4, white);

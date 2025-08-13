@@ -4,7 +4,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 <@>% Append = /Core/List%.Append;
 
 # String@ --
@@ -27,19 +27,19 @@
 # 
 # Any other use of \ is undefined.
 (List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
-  chars.?(nil: chars);
-  chars.cons.head.?('\': {
-    chars.cons.tail.?(nil: /Std/Undef%.Undef.undef<String@>);
-    String@ tail = StrE(chars.cons.tail.cons.tail);
-    Char@ head = chars.cons.tail.cons.head.?(
+  chars.?(empty: chars);
+  chars.items.head.?('\': {
+    chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
+    String@ tail = StrE(chars.items.tail.items.tail);
+    Char@ head = chars.items.tail.items.head.?(
       '\': Chars.'\',
       'n': Chars.nl,
       'r': Chars.cr,
       't': Chars.tab,
       : /Std/Undef%.Undef.undef<Char@>);
-    Cons(head, tail);
+    Items(head, tail);
   });
-  Cons(chars.cons.head, StrE(chars.cons.tail));
+  Items(chars.items.head, StrE(chars.items.tail));
 };
 
 # Strs --
@@ -59,9 +59,9 @@
 #   Concatenates a list of strings together, adding newlines after each
 #   string.
 (List@<String@>) { String@; } Lines = (List@<String@> strs) {
-  strs.?(nil: Str|'');
-  String@ tail = Lines(strs.cons.tail);
-  Append(strs.cons.head, Cons(Chars.nl, tail));
+  strs.?(empty: Str|'');
+  String@ tail = Lines(strs.items.tail);
+  Append(strs.items.head, Items(Chars.nl, tail));
 };
 
 @(String@, Str, StrE, Strs, Join, Lines);

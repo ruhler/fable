@@ -9,8 +9,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Empty = /Core/List%.Empty;
+<@>% Items = /Core/List%.Items;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -110,9 +110,9 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       # to be in the order B, A.
       @ Entry@ = *(K@ key, Bool@ value);
       List@<Entry@> wnt = List[Entry@(b, False), Entry@(a, True)];
-      List@<Entry@> got = m.ForEach(map, Nil<Entry@>,
+      List@<Entry@> got = m.ForEach(map, Empty<Entry@>,
         (K@ k, Bool@ v, List@<Entry@> l) {
-          Cons(Entry@(k, v), l);
+          Items(Entry@(k, v), l);
         });
       AssertEquals(
         /Core/List/Eq%.Eq((Entry@ a, Entry@ b) {

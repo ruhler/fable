@@ -190,14 +190,14 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
 };
 
 (Num@, World@) { World@; } SetLeftPaddleVelocity = (Num@ v, World@ w) {
-  Paddle@ l = w.paddles.cons.head;
-  Paddle@ r = w.paddles.cons.tail.cons.head;
+  Paddle@ l = w.paddles.items.head;
+  Paddle@ r = w.paddles.items.tail.items.head;
   World@(w.gravity, w.ball, w.edges, List[LeftPaddle(v, l.pos), r]);
 };
 
 (Num@, World@) { World@; } SetRightPaddleVelocity = (Num@ v, World@ w) {
-  Paddle@ l = w.paddles.cons.head;
-  Paddle@ r = w.paddles.cons.tail.cons.head;
+  Paddle@ l = w.paddles.items.head;
+  Paddle@ r = w.paddles.items.tail.items.head;
   World@(w.gravity, w.ball, w.edges, List[l, RightPaddle(v, r.pos)]);
 };
 

@@ -25,9 +25,9 @@
 #
 # Behavior is undefined if the given list is empty.
 (List@<Event@>) { Event@; } Events = (List@<Event@> events) {
-  events.cons.tail.?(nil: events.cons.head);
-  Event@ tail = Events(events.cons.tail);
-  Event@ head = events.cons.head;
+  events.items.tail.?(empty: events.items.head);
+  Event@ tail = Events(events.items.tail);
+  Event@ head = events.items.head;
   Lt(tail.time, head.time).?(true: tail);
   Lt(head.time, tail.time).?(true: head);
   tail.ball.?(just: tail);

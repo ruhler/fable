@@ -1,8 +1,8 @@
 @ Bool@ = /Std/Bool%.Bool@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Empty = /Core/List%.Empty;
+<@>% Items = /Core/List%.Items;
 
 # Insert --
 #   Inserts the element 'x' into 'l' at the sorted position based on the
@@ -21,9 +21,9 @@
 #   the comparison operation.
 <@ T@>((T@, T@) { Bool@; }, T@, List@<T@>) { List@<T@>; }
 Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
-  l.?(nil: Cons(x, Nil<T@>));
-  le(x, l.cons.head).?(true: Cons(x, l));
-  Cons(l.cons.head, Insert(le, x, l.cons.tail));
+  l.?(empty: Items(x, Empty<T@>));
+  le(x, l.items.head).?(true: Items(x, l));
+  Items(l.items.head, Insert(le, x, l.items.tail));
 };
 
 # Sort --
@@ -45,8 +45,8 @@ Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
 #   Use something more efficient than an insertion sort.
 <@ T@>((T@, T@) { Bool@; }, List@<T@>) { List@<T@>; }
 Sort = <@ T@>((T@, T@) { Bool@; } le, List@<T@> l) {
-  l.?(nil: l);
-  Insert(le, l.cons.head, Sort(le, l.cons.tail));
+  l.?(empty: l);
+  Insert(le, l.items.head, Sort(le, l.items.tail));
 };
 
 @(Sort);

@@ -6,8 +6,8 @@
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -43,27 +43,27 @@ Monad@<Pure@> Monad = State.Monad;
 
 Pure@<Maybe@<Int@>> In = {
   PureState@ s <- Monad.do(State.Get);
-  s.in.?(nil: Monad.return(Nothing<Int@>));
-  Unit@ _ <- Monad.do(State.Set(PureState@(s.in.cons.tail, s.out, s.err)));
-  Monad.return(Just(s.in.cons.head));
+  s.in.?(empty: Monad.return(Nothing<Int@>));
+  Unit@ _ <- Monad.do(State.Set(PureState@(s.in.items.tail, s.out, s.err)));
+  Monad.return(Just(s.in.items.head));
 };
 
 (List@<Int@>) { Bool@; } Closed = (List@<Int@> bytes) {
-  bytes.?(nil: False);
-  /Std/Int/Eq%.Eq(/Core/Stream%.End, bytes.cons.head).?(true: True);
+  bytes.?(empty: False);
+  /Std/Int/Eq%.Eq(/Core/Stream%.End, bytes.items.head).?(true: True);
   False;
 };
 
 (Int@) { Pure@<Unit@>; } Out = (Int@ b) {
   PureState@ s <- Monad.do(State.Get);
   Closed(s.out).?(true: Monad.return(Unit));
-  State.Set(PureState@(s.in, Cons(b, s.out), s.err));
+  State.Set(PureState@(s.in, Items(b, s.out), s.err));
 };
 
 (Int@) { Pure@<Unit@>; } Err = (Int@ b) {
   PureState@ s <- Monad.do(State.Get);
   Closed(s.err).?(true: Monad.return(Unit));
-  State.Set(PureState@(s.in, s.out, Cons(b, s.err)));
+  State.Set(PureState@(s.in, s.out, Items(b, s.err)));
 };
 
 (String@, Mode@) { Pure@<Maybe@<IStream@<Pure@>>>; }
@@ -96,7 +96,7 @@ Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err, Read, Write, GetEnv);
 #   in - List of bytes to use for stdin.
 <@ A@>(Pure@<A@>, List@<Int@>) { PureResult@<A@>; }
 Run = <@ A@>(Pure@<A@> m, List@<Int@> in) {
-  PureResult@<A@> result = State.Run(m, PureState@(in, Nil<Int@>, Nil<Int@>));
+  PureResult@<A@> result = State.Run(m, PureState@(in, Empty<Int@>, Empty<Int@>));
   result.@(s: result.s.@(
       out: /Core/List%.Reverse(result.s.out),
       err: /Core/List%.Reverse(result.s.err)));

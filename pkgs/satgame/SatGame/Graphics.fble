@@ -14,8 +14,8 @@
 % CountUpTo = /Core/Int/Iter%.CountUpTo;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Empty = /Core/List%.Empty;
+<@>% Items = /Core/List%.Items;
 <@>% List = /Core/List%.List;
 
 @ ImagePair@ = *(Drawing@ a, Drawing@ b);
@@ -94,16 +94,16 @@ Drawing@ Background = Rect(Int|0, Int|0, Int|640, Int|480, Color.Black);
 # For the purposes of displaying all the drawings in a single screenshot.
 (List@<ImagePair@>) { List@<List@<Drawing@>>; }
 Split12 = (List@<ImagePair@> pairs) {
-  pairs.?(nil: Nil<List@<Drawing@>>);
+  pairs.?(empty: Empty<List@<Drawing@>>);
 
   List@<Drawing@> head = /Core/List%.ForEach(
-    /Core/List/Length%.Take(Int|6, pairs), Nil<Drawing@>,
+    /Core/List/Length%.Take(Int|6, pairs), Empty<Drawing@>,
     (ImagePair@ p, List@<Drawing@> l) {
-      Cons(p.a, Cons(p.b, l));
+      Items(p.a, Items(p.b, l));
     });
     
   List@<List@<Drawing@>> tail = Split12(/Core/List/Length%.Drop(Int|6, pairs));
-  Cons(head, tail);
+  Items(head, tail);
 };
       
 Drawing@ Screenshot = {

@@ -26,10 +26,10 @@ Table@ Table = {
 
   (Table@, List@<Entry@>) { Table@; }
   Inserts = (Table@ table, List@<Entry@> entries) {
-    entries.?(nil: table);
+    entries.?(empty: table);
     Inserts(
-      Insert(table, entries.cons.head.angle, entries.cons.head.sincos),
-      entries.cons.tail);
+      Insert(table, entries.items.head.angle, entries.items.head.sincos),
+      entries.items.tail);
   };
 
   # The following table is based on the angle being represented in units of

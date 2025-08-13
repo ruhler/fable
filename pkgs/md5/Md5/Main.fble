@@ -61,9 +61,9 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (Bool@, List@<String@>) { M@<Bool@>; }
   md5s = (Bool@ all_pass, List@<String@> files) {
-    files.?(nil: m.return(all_pass));
-    Bool@ pass <- m.do(md5(files.cons.head));
-    md5s(And(all_pass, pass), files.cons.tail);
+    files.?(empty: m.return(all_pass));
+    Bool@ pass <- m.do(md5(files.items.head));
+    md5s(And(all_pass, pass), files.items.tail);
   };
 
   (List@<String@> args) {
@@ -72,7 +72,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
       m.return(True);
     });
 
-    md5s(True, args.?(nil: List[Str|'-'], : args));
+    md5s(True, args.?(empty: List[Str|'-'], : args));
   };
 };
 

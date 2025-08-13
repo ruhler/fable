@@ -5,7 +5,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 
 # LFSR@ --
 #   State for a linear feedback shift register using xor as the linear
@@ -20,18 +20,18 @@
 #   Compute the element wise product of bits in the given lists.
 (List@<Bit@>, List@<Bit@>) { List@<Bit@>; }
 Prod = (List@<Bit@> a, List@<Bit@> b) {
-  a.?(nil: a);
+  a.?(empty: a);
 
-  List@<Bit@> tail = Prod(a.cons.tail, b.cons.tail);
-  Cons(a.cons.head.?(0: Bit.0, 1: b.cons.head), tail);
+  List@<Bit@> tail = Prod(a.items.tail, b.items.tail);
+  Items(a.items.head.?(0: Bit.0, 1: b.items.head), tail);
 };
 
 # Sum --
 #   Compute the sum over all bits in the given list.
 (List@<Bit@>) { Bit@; } Sum = (List@<Bit@> xs) {
-  xs.?(nil: Bit.0);
-  Bit@ head = xs.cons.head;
-  Bit@ tail = Sum(xs.cons.tail);
+  xs.?(empty: Bit.0);
+  Bit@ head = xs.items.head;
+  Bit@ tail = Sum(xs.items.tail);
   head.?(0: tail, 1: tail.?(0: Bit.1, 1: Bit.0));
 };
 
@@ -39,9 +39,9 @@ Prod = (List@<Bit@> a, List@<Bit@> b) {
 #   Shift bit i into the given state.
 (List@<Bit@>, Bit@) { List@<Bit@>; }
 ShiftIn = (List@<Bit@> s, Bit@ i) {
-  List@<Bit@> tail = s.cons.tail;
-  tail.?(nil: List[i]);
-  Cons(tail.cons.head, ShiftIn(tail, i));
+  List@<Bit@> tail = s.items.tail;
+  tail.?(empty: List[i]);
+  Items(tail.items.head, ShiftIn(tail, i));
 };
 
 <@>@ Shifted@ = <@ T@> { *(LFSR@ lfsr, T@ output); };
@@ -49,9 +49,9 @@ ShiftIn = (List@<Bit@> s, Bit@ i) {
 # Shift --
 #   Shift the LFSR.
 (LFSR@) { Shifted@<Bit@>; } Shift = (LFSR@ lfsr) {
-  List@<Bit@> bits = Cons(Bit.1, Prod(lfsr.c, lfsr.s));
+  List@<Bit@> bits = Items(Bit.1, Prod(lfsr.c, lfsr.s));
   @(lfsr: LFSR@(lfsr.c, ShiftIn(lfsr.s, Sum(bits))),
-    output: lfsr.s.cons.head);
+    output: lfsr.s.items.head);
 };
 
 # Creates an LFSR from the given coefficients and initial seed.
@@ -60,13 +60,13 @@ ShiftIn = (List@<Bit@> s, Bit@ i) {
 LFSR = (List@<Bit@> coefficients, List@<Bit@> seed) {
   (List@<Bit@>, List@<Bit@>, List@<Bit@>) { List@<Bit@>; }
   Resize = (List@<Bit@> c, List@<Bit@> s, List@<Bit@> sd) {
-    c.?(nil: {
-      s.?(nil: sd); # The sizes match. We're all set.
-      Resize(c, s.cons.tail, sd.cons.tail); # Drop the MSB from the seed.
+    c.?(empty: {
+      s.?(empty: sd); # The sizes match. We're all set.
+      Resize(c, s.items.tail, sd.items.tail); # Drop the MSB from the seed.
     });
 
-    s.?(nil: Resize(c.cons.tail, s, Cons(Bit.0, sd))); # Pad the seed with 0.
-    Resize(c.cons.tail, s.cons.tail, sd);
+    s.?(empty: Resize(c.items.tail, s, Items(Bit.0, sd))); # Pad the seed with 0.
+    Resize(c.items.tail, s.items.tail, sd);
   };
 
   LFSR@(coefficients, Resize(coefficients, seed, seed));

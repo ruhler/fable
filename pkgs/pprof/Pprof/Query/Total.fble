@@ -29,8 +29,8 @@ Contains = (Profile@ profile, Sequence@ needle) {
   (Sequence@, Sequence@) { Bool@; }
   Find = (Sequence@ haystack, Sequence@ needle) {
     StartsWith(/Pprof/Profile/Eq%.BlockId, haystack, needle).?(true: True);
-    haystack.?(nil: False);
-    Find(haystack.cons.tail, needle);
+    haystack.?(empty: False);
+    Find(haystack.items.tail, needle);
   };
 
   /Core/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {

@@ -23,9 +23,9 @@
   % Runners = /Core/Test/Run%(m, stdio.out);
 
   String@ prefix = {
-    args.?(nil: Str|'');
-    /Core/String/Eq%.Eq(Str|'--prefix', args.cons.head).?(false: Str|'');
-    args.cons.tail.cons.head;
+    args.?(empty: Str|'');
+    /Core/String/Eq%.Eq(Str|'--prefix', args.items.head).?(false: Str|'');
+    args.items.tail.items.head;
   };
 
   Runners.RunTests(prefix, tests);

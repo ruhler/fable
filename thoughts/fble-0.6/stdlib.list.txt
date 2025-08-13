@@ -1,0 +1,432 @@
+Std List Library
+================
+
+Existing List API:
+* List@, List, Cons, Nil
+* Append, Concat, Join
+* Last, Init
+* Map, ForEach
+* Reverse
+* Eq, Has, Search, Contains, StartsWith
+* Split
+* RemoveFirst, RemoveAll
+* Length, Get, Take, Drop
+* Sort
+* And standard interfaces: show, order, etc.
+
+Let's look at some existing standard libraries, both at list and string
+operations, which I suspect are both applicable to what I want for my list
+library.
+
+C99 doesn't have lists I guess. So that's easy.
+
+C++ std::list
+* Iteration: begin, end 
+* Front, Back
+* empty, size
+* clear, insert, insert_range, erase, push_back, pop_back
+* merge, remove_if, reverse, unique, sort
+
+Java List
+* add, add_at, add_all, clear
+* contains, contains_all,
+* equals, get, set, hashCode,
+* indexOf, lastIndexOf, 
+* isempty
+* iterator
+* remove, removeIf, removeAll, replaceAll, retainAll, 
+* size, sort
+* sublist
+
+Java String
+* literal, compare, concat, contains, equals
+* startsWith, endsWith,  indexOf, isEmpty,
+* join, lastIndexOf, replace, replaceAll,
+* length, split, substring, trim
+
+Haskell List
+* map, ++, filter
+* head, last, tail, init
+* null, length, get, reverse
+* foldl, foldl1, foldr
+* and, or, any, all, sum, product, maximum, minimum
+* concat, concatMap
+* scanl, scanl1, scanr
+* iterate, repeat, replicate, cycle
+* take, drop, splitAt, takeWhile, dropWhile, span, break
+* elem, notElem, lookup
+* zip, zip3, zipWith, zipWith3, unzip, unzip3
+
+Haskell String
+* lines, words, unlines, unwords
+
+Python List
+* append, clear, copy, count, extend, index
+* insert, pop, remove, reverse, sort
+* 'in', '+', '*', len, min, max, slice
+* list comprehension, list literal
+
+Go List
+* iterator: Front, Back
+* InsertAfter, InsertBefore, Len, MoveAfter, MoveBefore,
+* MoveToBack, MoveToFront, PushBack, PushBackList
+* PushFront, PushFrontList, Remove
+
+Keep in mind that my list implementation is 'singly linked' and we don't have
+an array or vector type that provides random access by index (use a map for
+that?).
+
+Straw proposal:
+
+  /Std/List%
+    List@, List, Cons, Nil
+    Append, Concat, Join, Split,
+    Head, Tail, Last, Init
+    IsNil (?)
+    Reverse
+    Map, ForEach
+
+  /Std/List/Eq%
+    Eq, Uniq
+
+  /Std/List/Index%
+    Length, Get, Set(?), Take, Drop, Sub(?), IndexOf
+
+  /Std/List/Sort%
+    Sort
+    
+* Join takes a list separator, not a single element separator.
+* ForEach is in place of iteration, but no way to break out of iteration?
+* Has, Search, Contains are all slight variations:
+ - find a specific element, or one satisfying a predicate?
+ - return bool if it's found, or int position, or element value?
+ - similar questions for remove functions, and split, and replace.
+* I'd like StartsWith, EndsWith, and HasInsideWith
+ - Except pick better names. These are all about subsequences.
+* RemoveFirst, RemoveAll also suffers from exact element or general predicate.
+* Append adds a list. Do we want a way to add a single element to the end?
+* Do we want a 'null' function? aka IsEmpty.
+ - Yes we do, just not sure what to call it.
+* Do we want ability to insert or delete at an indexed position?
+
+List is also the first place we have a clear desire for some standard
+interfaces:
+* Eq for many of the operations... assuming they are based on equality rather
+  than generic predicate.
+* Ord for sort.
+
+What would it look like to support iteration though a list that we can break
+out of? For example, maybe I want to implement my own Get function on top of a
+generic list iteration. How would I express it?
+
+Sounds easy enough, just like 'ForEach', except returns a maybe value to tell
+us when to continue? Or it has continue or break?
+
+Conceptually:
+  B@ b = base
+  foreach x in list:
+    case body(x, b):
+      RETURN r: return r
+      CONTINUE b: b = b
+  return ???
+
+We need to return something when we reach the end. Maybe stuff the return
+value into 'b'? Which suggests at each step of the iteration we return the
+accumulated state along with a flag to tell us if we should break out early.
+
+  B@ b = base
+  foreach x in list:
+    (c, b) = body(x, b)
+    c.?(return: return b);
+  return b;
+
+Our magic type could be a bool and a base type. Or it could be:
+  @I = +(B@ continue, B@ return);
+
+Should we instead offer general iterator support? Iterators are pretty easy to
+define and give full flexibility, right?
+
+ Iter@ = <@ T@> { Maybe@<*(T@ head, (Unit@) { Iter@<T@>; } tail); };
+
+Basically it becomes a kind of list where you have to call a function
+explicitly before you can advance to the next element. I suppose that would
+be, instead of:
+
+  @ L@ = +(*(T@ head, L@ tail) cons, Unit@ nil);
+
+You have:
+ 
+  @ I@ = +(*(T@ head, (Unit@) { T@; } tail) cons, Unit@ nil);
+
+Now, even if you have an iterator, that doesn't naturally solve the 'for loop
+with break' use case. We would want a similar, separate api for iterator. You
+could write your own now, as a function, I suppose.
+
+For example, for get, I might implement it in terms of iterators as...
+
+But I don't need to use an iterator for list. I can use the list itself.
+Particularly if I'm controlling the iteration. Iterators are useful when we
+start to have other structures we want to make look like lists without having
+to construct a full list for them, and then we want a way to break out early.
+
+Anything fancy we can do with 'bind' to make ForEach look cooler? I suppose
+instead of:
+
+  Int@ sum = ForEach(xs, 0, (Int@ x, Int@ b)  {
+    Add(x, b);
+  });
+
+We would be writing:
+
+  Int@ sum = {
+    Int@ x, Int@ b <- ForEach(xs, 0);
+    Add(x, b);
+  };
+
+Not sure that's any better.
+
+With some way to do continuation versus early return:
+
+  Int@ sum = {
+    Int@ x, Int@ b <- ForEach(xs, 0);
+    Sgn(x).?(0: Return(0));
+    Continue(Add(x, b));
+  };
+
+Or, maybe we squeeze all the arguments into a single type?
+
+  Int@ sum = {
+    S@<Int@> s <- ForEach(xs, 0);
+    Sgn(s.x).?(0: s.return(0));
+    s.continue(Add(s.x, s.b));
+  };
+
+Not sure why we would want to do that though.
+
+Written as a function instead:
+
+  Sum = (Int@ b, List@<Int@> l) {
+    l.?(nil: b);
+    Int@ x = l.cons.head;
+    Sgn(x).?(0: 0);
+    Sum(Add(x, b));
+  }
+
+So we could always break out early via explicit use of functions if we wanted
+to.
+
+What if we had an iteration that did something like:
+
+  Sum = {
+    Int@ s, Int@ x, List@<Int@> t <- ForEach(xs, 0);
+    Sign(x).?(0: 0);
+    Sum(s, x);
+  };
+
+You know, this is interesting as a way to do pattern matching. Like:
+
+  (List@<T@>, B@, (T@, List@<T@>) { B@; }) On;
+
+  Sum = {
+    Int@ head, List@<Int@> tail <- On(xs, 0);
+    Add(head, Sum(tail));
+  };
+  
+---
+
+Things you can do without knowing anything about the elements of a list:
+
+  List construction:
+  * List@, List, Cons, Nil (names to be reviewed?)
+  * Append, Concat, Join
+
+  List deconstruction:
+  * IsCons, IsNil (names to be decided)
+  * Head, Tail, Last, Init
+
+  List reordering:
+  * Reverse
+
+List subsequencing:
+  Requires you to have element by element comparison.
+
+  * IsPrefixOf, IsInfixOf, IsSuffixOf (names to be discussed)
+  * Eq (for full sequence match)
+  * Maybe you want to skip to/past a prefix, infix, or remove a suffix?
+  * You could split on a sequence.
+
+  These seem like specialized use cases, worth pulling into a separate module.
+
+List element search/access:
+  * Has: Ask if any element satisfies a predicate.
+  * Count: Count how many elements satisfy a predicate (general case of Length?)
+  * GetFirst element that satisfies a predicate.
+  * GetLast element that satisfies a predicate.
+  * GetAll elements that satisfy a predicate (aka 'filter', 'remove_if')
+  
+  For GetFirst, GetLast, we could return a Maybe... or, what if we just return
+  the point in the list with the element? If there is no such element, return
+  empty list. If there is, you can easily access the element, but also easily
+  jump into where in the list the element is. No need to return an index. So
+  these can really be like 'strchr' style functions?
+
+  GetFirst is like DropWhile(Not(l)).
+
+  Split based on single element predicate sounds reasonable too. Not sure what
+  to call it. There are two variations on split: split into 'prefix' and
+  'rest', or split the full length of the list. We probably want to have both
+  of them.
+
+Indexing operations:
+  * Length, Get, Set, Take, Drop.
+
+  Note that Take + Drop together effectively give you a sublist. Maybe we want
+  to provide that helper function: SubList(...);
+  
+I think a good guidance for the standard library functions is:
+* They should actually be convenient to use.
+  For example, Contains(eq, xs, x) isn't notably easier to use than
+  Contains(xs, eq(x)), so reasonable to take the predicate form always.
+  But maybe we want a nice compose function so we could do things like:
+  
+  HasChar = Contains
+
+  No. Not sure what order to put the args in.
+  
+Let's consider the variations of take, drop, splitAt, takeWhile, dropWhile,
+span, and break that Haskell has.
+
+Take, Drop are the substring operations. Easy.
+
+SplitAt returns back the pair with 'Take' and 'Drop'. That could be useful,
+honestly.
+
+takeWhile, dropWhile, and span are the analogous element predicate based
+operations. As mentioned, dropWhile is related to GetFirst if we return the
+position in the list rather than the individual list element. Seems worth
+having both of these.
+
+So, honestly, I think it's fairly clear what all functions I want to have and
+how to organize them. I'm just not sure on naming. Let me do a straw pass.
+
+List construction: /Std/List%
+* List@, List, Cons, Nil
+* Append, Concat, Join
+
+List deconstruction: /Std/List%
+* IsCons, IsNil
+* Head, Tail, Last, Init
+
+List reordering: /Std/List%
+* Reverse
+
+List search: /Std/List/Search%
+* Has, GetFirst, GetLast, GetAll
+* TakeWhile, DropWhile, Span (?), Split
+* Count (?) (adds Int@ dependency, otherwise makes sense to have here)
+* DropAll? DropFirst? DropLast?
+
+List indexing: /Std/List/Index%
+* Length, Get, Set, Take, Drop, SplitAt, SubList
+
+List traversal: /Std/List%
+* ForEach, Map
+
+List sort: /Std/List/Sort%
+* Sort (wants 'Ord' standard class?)
+
+List sequencing: /Std/List/Eq%
+* IsInfixOf, IsPrefixOf, IsSublistOf, Split
+* Uniq (here only because of Eq?)
+
+Yeah, I think that covers everything. The slightly unfortunate bits:
+* Count is the only one of list search that pulls in Int@.
+  Not sure what to do about this. Better to avoid pulling in the dependency on
+  Int@ here if we can. But it doesn't also make sense in list indexing.
+  Maybe: /Std/List/Search/Count%?
+
+* Uniq is only one besides list sequencing that needs Eq, but it doesn't feel
+  like a list sequencing thing. Well, we can group it all into 'Eq', where
+  'Eq' is both used for sublist equality and element equality.
+
+---
+
+On to the question of names.
+
+Why 'Cons' and 'Nil'?
+
+'cons' comes from lisp, meaning construct. It's nice and short, but in no way
+obvious or intuitive. Do I have any better ideas?
+
+How about for nil?
+* nil means a quantity of no importance.
+* null means of no binding force or utility.
+* Empty is the obvious name to use, but it's a bit long.
+
+I like 'head' and 'tail' and 'last'. Those make sense to me. 'init' is a bit
+more of a stretch.
+
+We could use 'Empty' and 'NonEmpty'. It's clear from a descriptive point of
+view, but it's pretty wordy. I think I could deal with 'Empty', but it would
+be nice to have a verb to replace 'Cons'/'NonEmpty'. 'Prepend'? 'Prefix'?
+Prefix sounds more like adding a string of elements to the front rather than a
+single element. Prepend is apparently jargon as opposite of append.
+
+If we think of the list as a stack, then Cons is the same as Push, or
+PushFont. Head is like Pop. Or, Insert? InsertFront? Or, 'Put'? Like, put onto
+a list?
+
+Here's an example to play with:
+
+  Cons(Dying@(head.x, head.y, nwait), tail);
+  Put(Dying@(head.x, head.y, nwait), tail);
+  Prepend(Dying@(head.x, head.y, nwait), tail);
+  Push(Dying@(head.x, head.y, nwait), tail);
+
+    dying: Empty<Dying@>,
+    dying: Nil<Dying@>,
+    dying: None<Dying@>,
+ 
+  dying.?(empty: ...);    # works well I think.
+  dying.?(some: ...);
+
+That's interesting to use 'some' instead of 'cons'. It reads fairly well. It's
+a list with some elements. "composed of a quantity or number which is not
+stated;" sounds like an accurate description. I like that.
+
+'head' and 'tail' could be replaced with 'first' and 'rest'?
+
+  dying.some.first
+  dying.some.rest
+
+Except 'rest' is a little bit easy to confuse with resting.
+
+  dying.some.head
+  dying.some.tail
+
+---
+
+Here's what I'm thinking:
+  'empty'
+  'items': *('head', 'tail')
+
+Empty<...>
+Items(head, tail)
+List[...]
+
+Let's give that a try, see how it feels to me. It's a bit of a tedious change,
+so we'll see how far I get.
+
+Reactions:
+* So far everything feels nice except 'Items' is a little weird.
+* 'elems' might be a good alternative to 'items', but why? 'items' is at least
+  a complete word.
+* 'items' feels slightly weird in a union select. It doesn't have the
+  immediate implication to me of 'non-empty'. Maybe I'll get used to it?
+* 'Empty' might have name conflicts with an empty map. Annoying?
+  Maybe use List<...>[] in that case? Or empty string? Maybe EmptyList<...>?
+  But then, may as well use the literal instead?
+* I feel like 'Items' is growing on me, but 'Empty' not so much. Because
+  Empty<Foo@> reads like it's making an Empty Foo@, not an empty list of Foo@.
+  There's nothing about 'Empty' that suggests 'list'.
+  I have existing 'Empty' for: Env@, Fifo@, Markup@.

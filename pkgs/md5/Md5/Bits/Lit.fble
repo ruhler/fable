@@ -12,8 +12,8 @@
   # B_helper --
   #   Helper function for binary literals.
   (T@, List@<Bit@>) { T@; } B_helper = (T@ t, List@<Bit@> bs) {
-    bs.?(nil: t);
-    B_helper(T.Shlx(t, bs.cons.head).x, bs.cons.tail);
+    bs.?(empty: t);
+    B_helper(T.Shlx(t, bs.items.head).x, bs.items.tail);
   };
 
   # B --

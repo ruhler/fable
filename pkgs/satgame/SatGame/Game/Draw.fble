@@ -82,23 +82,23 @@ Tile = (Tile@ tile) {
 
 (List@<Tile@>) { Drawing@; }
 Group = (List@<Tile@> tiles) {
-  tiles.?(nil: Blank);
-  Drawing@ head = Tile(tiles.cons.head);
-  Drawing@ tail = Group(tiles.cons.tail);
+  tiles.?(empty: Blank);
+  Drawing@ head = Tile(tiles.items.head);
+  Drawing@ tail = Group(tiles.items.tail);
   Drawings[head, Translate(TileWidth, Int|0, tail)];
 };
 
 (Layout@, List@<Group@>) { Drawing@; }
 Row = (Layout@ layout, List@<Group@> groups) {
-  groups.?(nil: Blank);
-  Drawing@ head = Translate(GroupPad, Int|0, Group(groups.cons.head));
-  Drawing@ tail = Row(layout, groups.cons.tail);
+  groups.?(empty: Blank);
+  Drawing@ head = Translate(GroupPad, Int|0, Group(groups.items.head));
+  Drawing@ tail = Row(layout, groups.items.tail);
   Drawings[head, Translate(layout.group_width, Int|0, tail)];
 };
 
 (Layout@, Game@) { Drawing@; }
 Rows = (Layout@ layout, Game@ game) {
-  game.?(nil: Blank);
+  game.?(empty: Blank);
   Drawing@ head = Translate(Int|0, GroupPad, Row(layout, Take(layout.cols, game)));
   Drawing@ tail = Rows(layout, Drop(layout.cols, game));
   Drawings[head, Translate(Int|0, Add(TileWidth, GroupPad), tail)];

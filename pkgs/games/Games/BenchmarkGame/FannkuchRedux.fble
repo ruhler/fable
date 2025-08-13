@@ -13,8 +13,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% Append = /Core/List%.Append;
 <@>% Last = /Core/List%.Last;
 <@>% Init = /Core/List%.Init;
@@ -32,33 +32,33 @@
 (Int@, List@<Int@>, List@<Int@>) { List@<Int@>; }
 Flip = (Int@ n, List@<Int@> pre, List@<Int@> l) {
   Eq(Int|0, n).?(true: Append(pre, l));
-  Flip(Sub(n, Int|1), Cons(l.cons.head, pre), l.cons.tail);
+  Flip(Sub(n, Int|1), Items(l.items.head, pre), l.items.tail);
 };
 
 # Counts the number of flips needed for the given list.
 # @param n  The number of flips so far.
 # @param l  The list to flip.
 (Int@, List@<Int@>) { Int@; } Flips = (Int@ n, List@<Int@> l) {
-  Eq(Int|1, l.cons.head).?(true: n);
-  Flips(Add(n, Int|1), Flip(l.cons.head, Nil<Int@>, l));
+  Eq(Int|1, l.items.head).?(true: n);
+  Flips(Add(n, Int|1), Flip(l.items.head, Empty<Int@>, l));
 };
 
 # Rotates elements in a list around to the right.
 # For example: [1, 2, 3, 4] ==> [4, 1, 2, 3]
 (List@<Int@>) { List@<Int@>; } RotateRight = (List@<Int@> l) {
-  Cons(Last(l), Init(l));
+  Items(Last(l), Init(l));
 };
 
 # Calls a function for each permutation of the reverse of a list in
 # permutation order.
 <<@>@ M@>(Monad@<M@>, List@<Int@>, (List@<Int@>) { M@<Unit@>; }) { M@<Unit@>; }
 Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f) {
-  l.cons.tail.?(nil: f(l));
+  l.items.tail.?(empty: f(l));
   List@<Int@> _ <- m.do(ForEach(l, m.return(l),
       (Int@ _, M@<List@<Int@>> ml) {
         List@<Int@> rotated <- m.do(ml);
-        Int@ head = rotated.cons.head;
-        Unit@ _ <- m.do(Permutes(m, rotated.cons.tail, (List@<Int@> permuted) {
+        Int@ head = rotated.items.head;
+        Unit@ _ <- m.do(Permutes(m, rotated.items.tail, (List@<Int@> permuted) {
           f(Append(permuted, List[head]));
         }));
         m.return(RotateRight(rotated));
@@ -85,8 +85,8 @@ Permutes = <<@>@ M@>(Monad@<M@> m, List@<Int@> l, (List@<Int@>) { M@<Unit@>; } f
 
 # Returns the list of integers [N, N-1, ..., 1].
 (Int@) { List@<Int@>; } CountDown = (Int@ n) {
-  IsZero(n).?(true: Nil<Int@>);
-  Cons(n, CountDown(Sub(n, Int|1)));
+  IsZero(n).?(true: Empty<Int@>);
+  Items(n, CountDown(Sub(n, Int|1)));
 };
 
 (Int@) { Fannkuch@; } FannkuchRedux = (Int@ n) {

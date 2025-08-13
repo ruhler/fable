@@ -17,8 +17,8 @@
 % Div = /Std/Int/Div%.Div;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Empty = /Core/List%.Empty;
+<@>% Items = /Core/List%.Items;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -172,10 +172,10 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
     # Gets N bytes from the input stream.
     (Int@) { PM@<List@<Int@>>; } GetN = (Int@ n) {
-      IsZero(n).?(true: Return(Nil<Int@>));
+      IsZero(n).?(true: Return(Empty<Int@>));
       Int@ head <- Do(Get);
       List@<Int@> tail <- Do(GetN(Decr(n)));
-      Return(Cons(head, tail));
+      Return(Items(head, tail));
     };
 
     (Int@) { PM@<Unit@>; }
@@ -197,7 +197,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
       Int@ byte <- Do(Get);
       String@ tail <- Do(String(Decr(n)));
-      Return(Cons(/Core/Char/Ascii%.Chr(byte), tail));
+      Return(Items(/Core/Char/Ascii%.Chr(byte), tail));
     };
 
     # Parse a VarInt, given the first byte read.
@@ -216,7 +216,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
     (Int@) { PM@<List@<Int@>>; }
     Ints = (Int@ length) {
-      IsZero(length).?(true: Return(Nil<Int@>));
+      IsZero(length).?(true: Return(Empty<Int@>));
 
       Int@ int_start <- Do(BytesRead);
       Int@ int <- Do(VarInt);
@@ -227,7 +227,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
       });
 
       List@<Int@> tail <- Do(Ints(Sub(length, int_length)));
-      Return(Cons(int, tail));
+      Return(Items(int, tail));
     };
 
     # Parse a Record, given the first byte read.

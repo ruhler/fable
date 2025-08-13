@@ -81,10 +81,10 @@ Show@<Drawn@> ShowDrawn = /Core/Map/Show%.Show(Map, ShowPoint, ShowColor);
 # Drawn --
 #   Create a drawing by listing raw pixels.
 (List@<Pixel@>) { Drawn@; } Drawn = (List@<Pixel@> pixels) {
-  pixels.?(nil: Empty);
+  pixels.?(empty: Empty);
 
-  Pixel@ head = pixels.cons.head;
-  Insert(Drawn(pixels.cons.tail), Point@(head.x, head.y), head.color);
+  Pixel@ head = pixels.items.head;
+  Insert(Drawn(pixels.items.tail), Point@(head.x, head.y), head.color);
 };
 
 # Draw --

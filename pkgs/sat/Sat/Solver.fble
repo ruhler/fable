@@ -9,8 +9,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Empty = /Core/List%.Empty;
+<@>% Items = /Core/List%.Items;
 <@>% Append = /Core/List%.Append;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -77,15 +77,15 @@
   #
   # Returns Nothing if the clause contains both x and x' after the insertion.
   (Var@, Clause@) { Maybe@<Clause@>; } AddVar = (Var@ v, Clause@ c) {
-    c.?(nil: Just(List[v]));
-    Var@ head = c.cons.head;
+    c.?(empty: Just(List[v]));
+    Var@ head = c.items.head;
     EqId(v.id, head.id).?(true: {
       /Core/Bool/Eq%.Eq(v.pos, head.pos).?(true: Just(c));
       Nothing<Clause@>;
     });
-    Maybe@<Clause@> tail = AddVar(v, c.cons.tail);
+    Maybe@<Clause@> tail = AddVar(v, c.items.tail);
     tail.?(nothing: Nothing<Clause@>);
-    Just(Cons(head, tail.just));
+    Just(Items(head, tail.just));
   };
 
   # Adds a list of variables to a clause, preserving the invariant that each
@@ -94,17 +94,17 @@
   # Returns Nothing if the clause contains both x and x' after the insertion.
   (List@<Var@>, Clause@) { Maybe@<Clause@>; }
   AddVars = (List@<Var@> vs, Clause@ c) {
-    vs.?(nil: Just(c));
-    Maybe@<Clause@> mc = AddVar(vs.cons.head, c);
+    vs.?(empty: Just(c));
+    Maybe@<Clause@> mc = AddVar(vs.items.head, c);
     mc.?(nothing: Nothing<Clause@>);
-    AddVars(vs.cons.tail, mc.just);
+    AddVars(vs.items.tail, mc.just);
   };
 
   # Removes a variable from a clause.
   (VarId@, Clause@) { Clause@; } RemoveVar = (VarId@ vid, Clause@ c) {
-    /Core/List%.ForEach(c, Nil<Var@>, (Var@ v, List@<Var@> vars) {
+    /Core/List%.ForEach(c, Empty<Var@>, (Var@ v, List@<Var@> vars) {
       EqId(vid, v.id).?(true: vars);
-      Cons(v, vars);
+      Items(v, vars);
     });
   };
 
@@ -138,33 +138,33 @@ Solver@ NewSolver = @(
   vars: Vars.Empty<VarS@>,
   clauses: Clauses.Empty<Clause@>,
   conflicts: Conflicts.Empty<Conflict@>,
-  assigns: Nil<Var@>,
-  todo: Nil<Assign@>
+  assigns: Empty<Var@>,
+  todo: Empty<Assign@>
 );
 
 # Adds a new entry to the list of todos.
 (Var@, Why@, List@<Assign@>) { List@<Assign@>; }
 Todo = (Var@ v, Why@ w, List@<Assign@> s) {
-  Cons(Assign@(v, w), s);
+  Items(Assign@(v, w), s);
 };
 
 # Add a new clause with the given clause id.
 (Solver@, ClauseId@, List@<Var@>) { Solver@; }
 AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
-  Maybe@<Clause@> mc = Clause.AddVars(vars, Nil<Var@>);
+  Maybe@<Clause@> mc = Clause.AddVars(vars, Empty<Var@>);
 
   # Ignore trivial clauses.
   mc.?(nothing: s);
   Clause@ clause = mc.just;
 
   # Check for empty clause.
-  clause.?(nil: {
-    s.@(unsat: True, clauses: Clauses.Insert(s.clauses, id, Nil<Var@>));
+  clause.?(empty: {
+    s.@(unsat: True, clauses: Clauses.Insert(s.clauses, id, Empty<Var@>));
   });
 
   List@<Assign@> todo = {
     # Check for unit clause.
-    clause.cons.tail.?(nil: Todo(clause.cons.head, Inferred(id), s.todo));
+    clause.items.tail.?(empty: Todo(clause.items.head, Inferred(id), s.todo));
     s.todo;
   };
 
@@ -210,13 +210,13 @@ AddClauses = (Solver@ solver, List@<Clause@> clauses) {
 AddConflictClause = (ClauseId@ id, Conflict@ conflict, Solver@ s) {
   Maybe@<Clause@> ma = Clauses.Lookup(s.clauses, conflict.a);
   Clause@ a = Clause.RemoveVar(conflict.var, {
-    ma.?(nothing: Nil<Var@>);
+    ma.?(nothing: Empty<Var@>);
     ma.just;
   });
 
   Maybe@<Clause@> mb = Clauses.Lookup(s.clauses, conflict.b);
   Clause@ b = Clause.RemoveVar(conflict.var, {
-    mb.?(nothing: Nil<Var@>);
+    mb.?(nothing: Empty<Var@>);
     mb.just;
   });
 
@@ -268,8 +268,8 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
   # Assertion: nvars must not be empty, because caller ensures we won't
   # encounter a conflict.
   List@<Assign@> todo = {
-    nvars.cons.tail.?(cons: s.todo);
-    Todo(nvars.cons.head, Inferred(clause), s.todo);
+    nvars.items.tail.?(items: s.todo);
+    Todo(nvars.items.head, Inferred(clause), s.todo);
   };
 
   s.@(clauses: Clauses.Insert(s.clauses, clause, nvars), todo);
@@ -288,7 +288,7 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
 
   Solver@ ns = s.@(
     vars: Vars.Delete(s.vars, var.id),
-    assigns: Cons(var, s.assigns));
+    assigns: Items(var, s.assigns));
 
   ClauseIds@ match = var.pos.?(true: vs.pos, false: vs.neg);
   Solver@ match_s = ClauseIds.ForEach(match, ns, RemoveClause);
@@ -366,15 +366,15 @@ AssignsAreConflicting = (Assign@ a, Assign@ b) {
 (List@<Assign@>) { Maybe@<Conflict@>; }
 GetConflictFromSorted = (List@<Assign@> todo)
 {
-  todo.?(nil: Nothing<Conflict@>);
-  todo.cons.tail.?(nil: Nothing<Conflict@>);
-  Assign@ a = todo.cons.head;
-  Assign@ b = todo.cons.tail.cons.head;
+  todo.?(empty: Nothing<Conflict@>);
+  todo.items.tail.?(empty: Nothing<Conflict@>);
+  Assign@ a = todo.items.head;
+  Assign@ b = todo.items.tail.items.head;
   AssignsAreConflicting(a, b).?(true: {
     Just(Conflict@(a.why.inferred, b.why.inferred, a.var.id));
   });
 
-  GetConflictFromSorted(todo.cons.tail);
+  GetConflictFromSorted(todo.items.tail);
 };
 
 # Find and return a conflicting assignment in the todo list, if any.
@@ -397,7 +397,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     }));
 
     s.unsat.?(true: m.return(s));
-    s.todo.?(nil: m.return(s));
+    s.todo.?(empty: m.return(s));
 
     # Check for conflicts in the todo list.
     Unit@ _ <- m.do(debug(Int|1, (OStream@<M@> dbg) {
@@ -419,11 +419,11 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
     });
 
     # Apply the next assignment in the todo list.
-    Assign@ assign = s.todo.cons.head;
+    Assign@ assign = s.todo.items.head;
     Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
       O.PutLine(dbg, Show.Assign(assign));
     }));
-    Solver@ ns = s.@(todo: s.todo.cons.tail);
+    Solver@ ns = s.@(todo: s.todo.items.tail);
     Solver@ result = Assign(assign.var, ns);
 
     # If the assignment succeeded, but further simplification failed, apply

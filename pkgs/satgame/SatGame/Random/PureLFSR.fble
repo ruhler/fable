@@ -17,8 +17,8 @@
 % LFSR = /Core/LFSR%.LFSR;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 
 % State = /Core/Monad/State%<LFSR@>;
 
@@ -44,12 +44,12 @@ IntToBits = (Int@ x, List@<Bit@> bits) {
   IsZero(x).?(true: bits);
   QR@ qr = Div(x, Int|2);
   Bit@ bit = /Std/Int/Eq%.Eq(Int|0, qr.r).?(true: Bit.0, false: Bit.1);
-  IntToBits(qr.q, Cons(bit, bits));
+  IntToBits(qr.q, Items(bit, bits));
 };
 
 <@ T@>(M@<T@>, Int@) { T@; }
 Run = <@ T@>(M@<T@> mr, Int@ seed) {
-  LFSR@ lfsr = LFSR(/Core/LFSR%.Polynomials.24, IntToBits(seed, Nil<Bit@>));
+  LFSR@ lfsr = LFSR(/Core/LFSR%.Polynomials.24, IntToBits(seed, Empty<Bit@>));
   State.Run(mr, lfsr).x;
 };
 

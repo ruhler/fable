@@ -369,3 +369,11 @@ between doc comments and standard library documentation. I want to be able to
 doc comment helper functions that aren't exposed in the standard library.
 What's the best approach to distinguish between the two cases?
 
+Options:
+* Header has standard library documentation, impl has internal implementation
+  with links to 'see header for documentation'.
+* /Std/Int/Int% for internal implementation, /Std/Int% just imports that.
+* My current approach, just document the standard library ones formally in
+  /Std/Int%.
+
+

@@ -71,8 +71,8 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 # drawing on top of the previous drawing.
 (List@<Drawing@>) { Drawing@; } Drawings = (List@<Drawing@> drawings) {
   drawings.?(
-    cons: Over(drawings.cons.head, Drawings(drawings.cons.tail)),
-    nil: Blank);
+    items: Over(drawings.items.head, Drawings(drawings.items.tail)),
+    empty: Blank);
 };
 
 # Transform the drawing using an affine transform. Each point p will be

@@ -1,8 +1,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
 <@>% Reverse = /Core/List%.Reverse;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -20,18 +19,18 @@
 #  empty.
 <@>@ Fifo@ = <@ T@> { *(List@<T@> front, List@<T@> back); };
 
-Fifo@ Empty = <@ T@> { Fifo@(Nil<T@>, Nil<T@>); };
+Fifo@ Empty = <@ T@> { Fifo@(/Core/List%.Empty<T@>, /Core/List%.Empty<T@>); };
 
 # @func[First] Returns the first element of the fifo.
 #  @arg[Fifo@<T@>][fifo] The fifo to get the first element for.
 #  @returns[Maybe@<T@>]
 #   The oldest element on the fifo, Nothing if the fifo is empty.
 <@ T@>(Fifo@<T@>) { Maybe@<T@>; } First = <@ T@>(Fifo@<T@> fifo) {
-  fifo.front.?(nil: {
-    Unit@ _ = fifo.back.nil;  # invariant assertion.
+  fifo.front.?(empty: {
+    Unit@ _ = fifo.back.empty;  # invariant assertion.
     Nothing<T@>;
   });
-  Just(fifo.front.cons.head);
+  Just(fifo.front.items.head);
 };
 
 # @func[Put] Puts an element on the fifo.
@@ -39,11 +38,11 @@ Fifo@ Empty = <@ T@> { Fifo@(Nil<T@>, Nil<T@>); };
 #  @arg[Fifo@<T@>][fifo] The fifo to put the element onto.
 #  @returns[Fifo@<T@>] The fifo with the element on it.
 <@ T@>(T@, Fifo@<T@>) { Fifo@<T@>; } Put = <@ T@>(T@ x, Fifo@<T@> fifo) {
-  fifo.front.?(nil: {
-    Unit@ _ = fifo.back.nil;  # invariant assertion.
-    Fifo@(List[x], Nil<T@>);
+  fifo.front.?(empty: {
+    Unit@ _ = fifo.back.empty;  # invariant assertion.
+    Fifo@(List[x], /Core/List%.Empty<T@>);
   });
-  Fifo@(fifo.front, Cons(x, fifo.back));
+  Fifo@(fifo.front, Items(x, fifo.back));
 };
 
 # @func[Next] Removes the oldest element from the fifo.
@@ -52,9 +51,9 @@ Fifo@ Empty = <@ T@> { Fifo@(Nil<T@>, Nil<T@>); };
 #  @arg[Fifo@<T@>][fifo] The fifo to remove the oldest element from.
 #  @returns[Fifo@<T@>] The fifo with the element removed.
 <@ T@>(Fifo@<T@>) { Fifo@<T@>; } Next = <@ T@>(Fifo@<T@> fifo) {
-  fifo.front.?(nil: fifo);
-  List@<T@> tail = fifo.front.cons.tail;
-  tail.?(nil: Fifo@(Reverse(fifo.back), Nil<T@>));
+  fifo.front.?(empty: fifo);
+  List@<T@> tail = fifo.front.items.tail;
+  tail.?(empty: Fifo@(Reverse(fifo.back), /Core/List%.Empty<T@>));
   Fifo@(tail, fifo.back);
 };
 

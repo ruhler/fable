@@ -17,19 +17,19 @@ Eq@<String@> Eq = /Core/List/Eq%.Eq(/Core/Char/Eq%.Eq);
 # StartsWith --
 #   Returns true if the string str starts with sub.
 (String@, String@) { Bool@; } StartsWith = (String@ str, String@ sub) {
-  sub.?(nil: True);
-  str.?(nil: False);
-  /Core/Char/Eq%.Eq(str.cons.head, sub.cons.head).?(false: False);
-  StartsWith(str.cons.tail, sub.cons.tail);
+  sub.?(empty: True);
+  str.?(empty: False);
+  /Core/Char/Eq%.Eq(str.items.head, sub.items.head).?(false: False);
+  StartsWith(str.items.tail, sub.items.tail);
 };
 
 # Contains --
 #   Returns true if the string str contains sub as a substring.
 (String@, String@) { Bool@; } Contains = (String@ str, String@ sub) {
-  sub.?(nil: True);
-  str.?(nil: False);
+  sub.?(empty: True);
+  str.?(empty: False);
   StartsWith(str, sub).?(true: True);
-  Contains(str.cons.tail, sub);
+  Contains(str.items.tail, sub);
 };
 
 (String@, Char@) { List@<String@>; }

@@ -36,7 +36,7 @@ Markup@ Empty = Markup@(empty: Unit);
 
 (Loc@, String@) { Markup@; }
 Plain = (Loc@ l, String@ str) {
-  str.?(nil: Empty);
+  str.?(empty: Empty);
   Markup@(plain: Text@(l, str));
 };
 
@@ -54,9 +54,9 @@ Append = (Markup@ a, Markup@ b) {
 
 (List@<Markup@>) { Markup@; }
 Markups = (List@<Markup@> xs) {
-  xs.?(nil: Empty);
-  xs.cons.tail.?(nil: xs.cons.head);
-  Append(xs.cons.head, Markups(xs.cons.tail));
+  xs.?(empty: Empty);
+  xs.items.tail.?(empty: xs.items.head);
+  Append(xs.items.head, Markups(xs.items.tail));
 };
 
 (Markup@, String@) { Result@<String@>; }

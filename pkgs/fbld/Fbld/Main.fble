@@ -3,8 +3,8 @@
 % False = /Std/Bool%.False;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -45,11 +45,11 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (List@<String@>) { M@<Result@<List@<Text@>>>; }
   ReadInputs = (List@<String@> filenames) {
-    filenames.?(nil: m.return(Ok(Nil<Text@>)));
-    Result@<List@<Text@>> tail <- m.do(ReadInputs(filenames.cons.tail));
+    filenames.?(empty: m.return(Ok(Empty<Text@>)));
+    Result@<List@<Text@>> tail <- m.do(ReadInputs(filenames.items.tail));
     tail.failed.?(true: m.return(tail));
 
-    String@ filename = filenames.cons.head;
+    String@ filename = filenames.items.head;
     Maybe@<IStream@<M@>> fin <- m.do({
       /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
       stdio.read(filename, /Core/Stdio%.Text);
@@ -62,7 +62,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
     String@ contents <- m.do(I.GetText(fin.just));
     Text@ text = Text(Start(filename), contents);
-    m.return(Ok(Cons(text, tail.value.just)));
+    m.return(Ok(Items(text, tail.value.just)));
   };
 
   (List@<String@> args) {

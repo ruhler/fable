@@ -11,7 +11,7 @@
 % IsZero = /Std/Int/Eq%.IsZero;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 <@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
 <@>% Map = /Core/List%.Map;
@@ -61,20 +61,20 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
     IsNewline(c.just).?(true: m.return(Str|''));
 
     String@ tail <- m.do(GetLine);
-    m.return(Cons(c.just, tail));
+    m.return(Items(c.just, tail));
   };
 
   # Prints codes to stdout, breaking lines every 60 characters.
   (Int@, String@) { M@<Unit@>; } PrintCodes = (Int@ n, String@ codes) {
-    codes.?(nil: O.PutChar(stdio.out, Chars.nl));
+    codes.?(empty: O.PutChar(stdio.out, Chars.nl));
 
     IsZero(n).?(true: {
       Unit@ _ <- m.do(O.PutChar(stdio.out, Chars.nl));
       PrintCodes(Int|60, codes);
     });
 
-    Unit@ _ <- m.do(O.PutChar(stdio.out, codes.cons.head));
-    PrintCodes(Sub(n, Int|1), codes.cons.tail);
+    Unit@ _ <- m.do(O.PutChar(stdio.out, codes.items.head));
+    PrintCodes(Sub(n, Int|1), codes.items.tail);
   };
 
   # Prints a sequence to stdout.
@@ -92,12 +92,12 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
   # partial is the current reversed sequence built up so far.
   (Seq@) { M@<Unit@>; } GenSeqs = (Seq@ partial) {
     String@ line <- m.do(GetLine);
-    line.?(nil: DoSeq(partial));
+    line.?(empty: DoSeq(partial));
 
-    line.cons.head.?('>': {
+    line.items.head.?('>': {
       Unit@ _ <- m.do(partial.codes.?(
-        cons: DoSeq(partial),
-        nil: m.return(Unit)));
+        items: DoSeq(partial),
+        empty: m.return(Unit)));
       GenSeqs(Seq@(line, Str|''));
     });
 

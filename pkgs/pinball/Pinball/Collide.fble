@@ -96,10 +96,10 @@ BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
 
 BallCollider@<List@<Edge@>>
 BallEdgeS = (Ball@ ball, List@<Edge@> edges, Num@ tmax) {
-  edges.?(nil: TimeEvent(tmax));
+  edges.?(empty: TimeEvent(tmax));
   Events[
-    BallEdge(ball, edges.cons.head, tmax),
-    BallEdgeS(ball, edges.cons.tail, tmax)
+    BallEdge(ball, edges.items.head, tmax),
+    BallEdgeS(ball, edges.items.tail, tmax)
   ];
 };
 
@@ -200,10 +200,10 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
 
 BallCollider@<List@<Paddle@>>
 BallPaddleS = (Ball@ ball, List@<Paddle@> paddles, Num@ tmax) {
-  paddles.?(nil: TimeEvent(tmax));
+  paddles.?(empty: TimeEvent(tmax));
   Events[
-    BallPaddle(ball, paddles.cons.head, tmax),
-    BallPaddleS(ball, paddles.cons.tail, tmax)
+    BallPaddle(ball, paddles.items.head, tmax),
+    BallPaddleS(ball, paddles.items.tail, tmax)
   ];
 };
 
@@ -224,10 +224,10 @@ BallPaddleS = (Ball@ ball, List@<Paddle@> paddles, Num@ tmax) {
 #   Check for an event where a paddle reaches the end of its range.
 (List@<Paddle@>, Num@) { Event@; }
 PaddleRangeS = (List@<Paddle@> paddles, Num@ tmax) {
-  paddles.?(nil: TimeEvent(tmax));
+  paddles.?(empty: TimeEvent(tmax));
   Events[
-    PaddleRange(paddles.cons.head, tmax),
-    PaddleRangeS(paddles.cons.tail, tmax)
+    PaddleRange(paddles.items.head, tmax),
+    PaddleRangeS(paddles.items.tail, tmax)
   ];
 };
 

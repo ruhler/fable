@@ -4,8 +4,7 @@
 % False = /Std/Bool%.False;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -23,14 +22,14 @@
   # A Map from List@<T@> to V@;
   <@>@ Map@ = <@ V@> {
     @ M@ = +(Unit@ empty, P@ p),
-    @ P@ = *(M.Map@<M@> cons, Maybe@<V@> nil);
+    @ P@ = *(M.Map@<M@> items, Maybe@<V@> empty);
     M@;
   };
 
   # A non-empty Map from List@<T@> to V@;
   <@>@ MapP@ = <@ V@> {
     @ M@ = +(Unit@ empty, P@ p),
-    @ P@ = *(M.Map@<M@> cons, Maybe@<V@> nil);
+    @ P@ = *(M.Map@<M@> items, Maybe@<V@> empty);
     P@;
   };
 
@@ -50,20 +49,20 @@
 
   <@ V@>(MapP@<V@>) { Bool@; }
   IsEmptyP = <@ V@>(MapP@<V@> map) {
-    M.IsEmpty(map.cons).?(false: False);
-    map.nil.?(just: False);
+    M.IsEmpty(map.items).?(false: False);
+    map.empty.?(just: False);
     True;
   };
 
   <@ V@>(Map@<V@>, List@<T@>) { Maybe@<V@>; }
   Lookup = <@ V@>(Map@<V@> map, List@<T@> key) {
     map.?(empty: Nothing<V@>);
-    key.?(nil: map.p.nil);
+    key.?(empty: map.p.empty);
 
-    Maybe@<Map@<V@>> cm = M.Lookup(map.p.cons, key.cons.head);
+    Maybe@<Map@<V@>> cm = M.Lookup(map.p.items, key.items.head);
     cm.?(nothing: Nothing<V@>);
 
-    Lookup(cm.just, key.cons.tail);
+    Lookup(cm.just, key.items.tail);
   };
 
   <@ V@>(Map@<V@>, List@<T@>, V@) { Map@<V@>; }
@@ -71,11 +70,11 @@
     MapP@<V@> p = map.?(empty: EmptyP<V@>, p: map.p);
 
     Map@(p: {
-      key.?(nil: p.@(nil: Just(value)));
+      key.?(empty: p.@(empty: Just(value)));
 
-      p.@(cons: M.InsertWith(p.cons, key.cons.head, (Maybe@<Map@<V@>> mcm) {
+      p.@(items: M.InsertWith(p.items, key.items.head, (Maybe@<Map@<V@>> mcm) {
           Map@<V@> cm = mcm.?(just: mcm.just, nothing: Empty<V@>);
-          Insert(cm, key.cons.tail, value);
+          Insert(cm, key.items.tail, value);
       }));
     });
   };
@@ -85,11 +84,11 @@
     MapP@<V@> p = map.?(empty: EmptyP<V@>, p: map.p);
 
     Map@(p: {
-      key.?(nil: p.@(nil: Just(with(p.nil))));
+      key.?(empty: p.@(empty: Just(with(p.empty))));
 
-      p.@(cons: M.InsertWith(p.cons, key.cons.head, (Maybe@<Map@<V@>> mcm) {
+      p.@(items: M.InsertWith(p.items, key.items.head, (Maybe@<Map@<V@>> mcm) {
           Map@<V@> cm = mcm.?(just: mcm.just, nothing: Empty<V@>);
-          InsertWith(cm, key.cons.tail, with);
+          InsertWith(cm, key.items.tail, with);
       }));
     });
   };
@@ -99,13 +98,13 @@
     map.?(empty: map);
 
     MapP@<V@> p = {
-      key.?(nil: map.p.@(nil: Nothing<V@>));
+      key.?(empty: map.p.@(empty: Nothing<V@>));
 
-      Maybe@<Map@<V@>> mcons = M.Lookup(map.p.cons, key.cons.head);
-      mcons.?(nothing: map.p);
+      Maybe@<Map@<V@>> mitems = M.Lookup(map.p.items, key.items.head);
+      mitems.?(nothing: map.p);
 
-      Map@<V@> ncons = Delete(mcons.just, key.cons.tail);
-      map.p.@(cons: M.Insert(map.p.cons, key.cons.head, ncons));
+      Map@<V@> nitems = Delete(mitems.just, key.items.tail);
+      map.p.@(items: M.Insert(map.p.items, key.items.head, nitems));
     };
     IsEmptyP(p).?(true: Empty<V@>, false: Map@(p: p));
   };
@@ -116,11 +115,11 @@
 
     MapP@<V@> p = map.p;
     B@ b1 = base;
-    B@ b2 = p.nil.?(just: body(Nil<T@>, p.nil.just, b1), nothing: b1);
+    B@ b2 = p.empty.?(just: body(/Core/List%.Empty<T@>, p.empty.just, b1), nothing: b1);
 
-    M.ForEach(p.cons, b2, (T@ x, Map@<V@> m, B@ b) {
+    M.ForEach(p.items, b2, (T@ x, Map@<V@> m, B@ b) {
       ForEach(m, b, (List@<T@> l, V@ v, B@ bb) {
-        body(Cons(x, l), v, bb);
+        body(Items(x, l), v, bb);
       });
     });
   };

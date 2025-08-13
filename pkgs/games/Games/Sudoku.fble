@@ -186,8 +186,8 @@ XS@ EmptyXS = XS@(empty: Unit);
 
 # CatXS --
 (List@<XS@>) { XS@; } CatXS = (List@<XS@> xs) {
-  xs.?(nil: EmptyXS);
-  AppendXS(xs.cons.head, CatXS(xs.cons.tail));
+  xs.?(empty: EmptyXS);
+  AppendXS(xs.items.head, CatXS(xs.items.tail));
 };
 
 # Generate the set of constraints that result from setting the value of the

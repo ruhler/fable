@@ -39,9 +39,9 @@ B = (BlockId@ id, String@ name, String@ file, Int@ line, Int@ column) {
 
 (List@<Entry@>) { Blocks@; }
 Inserts = (List@<Entry@> xs) {
-  xs.?(nil: Blocks.Empty<Block@>);
-  Entry@ entry = xs.cons.head;
-  Blocks.Insert(Inserts(xs.cons.tail), entry.id, entry.block);
+  xs.?(empty: Blocks.Empty<Block@>);
+  Entry@ entry = xs.items.head;
+  Blocks.Insert(Inserts(xs.items.tail), entry.id, entry.block);
 };
 
 Profile@ Profile = @(

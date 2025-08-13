@@ -24,8 +24,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% Append = /Core/List%.Append;
 <@>% Init = /Core/List%.Init;
 <@>% Concat = /Core/List%.Concat;
@@ -143,8 +143,8 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> l = EL|ABCDE;
     List@<Elem@> wnt = EL|EDCBA;
     List@<Elem@> got =
-      ForEach(l, Nil<Elem@>, (Elem@ e, List@<Elem@> b) {
-        Cons(e, b);
+      ForEach(l, Empty<Elem@>, (Elem@ e, List@<Elem@> b) {
+        Items(e, b);
       });
     AssertEquals(Eq, Show, wnt, got);
   }),

@@ -2,7 +2,7 @@
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 <@>% Reverse = /Core/List%.Reverse;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
@@ -40,11 +40,11 @@ Metrics = (
   Map.Map@<String@> strings,
   List@<StringId@> sample_types,
   List@<String@> metrics) {
-  sample_types.?(nil: metrics);
+  sample_types.?(empty: metrics);
 
-  StringId@ sample_type = sample_types.cons.head;
+  StringId@ sample_type = sample_types.items.head;
   String@ metric = Map.Lookup(strings, sample_type).just;
-  Metrics(strings, sample_types.cons.tail, Cons(metric, metrics));
+  Metrics(strings, sample_types.items.tail, Items(metric, metrics));
 };
 
 # Extracts info about a block from the profile.

@@ -9,8 +9,8 @@
 % IsZero = /Std/Int/Eq%.IsZero;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% Contains = /Core/List/Eq%.Contains;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -87,15 +87,15 @@ Toggle = (Toggle@ toggle) {
   };
 
   (Int@, Group@) { Group@; } Group = (Int@ tile, Group@ group) {
-    group.?(nil: group);
-    IsZero(tile).?(true: Cons(Tile(group.cons.head), group.cons.tail));
-    Cons(group.cons.head, Group(Decr(tile), group.cons.tail));
+    group.?(empty: group);
+    IsZero(tile).?(true: Items(Tile(group.items.head), group.items.tail));
+    Items(group.items.head, Group(Decr(tile), group.items.tail));
   };
 
   (Int@ group, Int@ tile, Game@ game) {
-    game.?(nil: game);
-    IsZero(group).?(true: Cons(Group(tile, game.cons.head), game.cons.tail));
-    Cons(game.cons.head, Toggle(toggle, Decr(group), tile, game.cons.tail));
+    game.?(empty: game);
+    IsZero(group).?(true: Items(Group(tile, game.items.head), game.items.tail));
+    Items(game.items.head, Toggle(toggle, Decr(group), tile, game.items.tail));
   };
 };
 
@@ -103,10 +103,10 @@ Toggle = (Toggle@ toggle) {
   # Removes all dismissed tiles from a group.
   (Group@) { Group@; }
   Dismiss = (Group@ group) {
-    group.?(nil: group);
-    Group@ tail = Dismiss(group.cons.tail);
-    group.cons.head.state.?(dismissed: tail);
-    Cons(group.cons.head, tail);
+    group.?(empty: group);
+    Group@ tail = Dismiss(group.items.tail);
+    group.items.head.state.?(dismissed: tail);
+    Items(group.items.head, tail);
   };
 
   # Checks if an individual group is 'solved'.
@@ -114,9 +114,9 @@ Toggle = (Toggle@ toggle) {
   (Group@) { Maybe@<Literal@>; }
   Group = (Group@ group) {
     Group@ remaining = Dismiss(group);
-    remaining.?(nil: Nothing<Literal@>);
-    remaining.cons.tail.?(cons: Nothing<Literal@>);
-    Tile@ tile = remaining.cons.head;
+    remaining.?(empty: Nothing<Literal@>);
+    remaining.items.tail.?(items: Nothing<Literal@>);
+    Tile@ tile = remaining.items.head;
     tile.state.?(normal: Nothing<Literal@>);
     Just(Literal@(tile.var, tile.pos));
   };
@@ -126,18 +126,18 @@ Toggle = (Toggle@ toggle) {
   #  @arg[groups] rest of groups to check.
   (List@<Literal@>, List@<Group@>) { Bool@; }
   Groups = (List@<Literal@> lits, List@<Group@> groups) {
-    groups.?(nil: True);
+    groups.?(empty: True);
 
-    Maybe@<Literal@> mlit = Group(groups.cons.head);
+    Maybe@<Literal@> mlit = Group(groups.items.head);
     mlit.?(nothing: False);
 
     Literal@ lit = mlit.just;
     Literal@ complement = lit.@(pos: Not(lit.pos));
     Contains(/SatGame/Puzzle/Eq%.Literal, lits, complement).?(true: False);
-    Groups(Cons(lit, lits), groups.cons.tail);
+    Groups(Items(lit, lits), groups.items.tail);
   };
 
-  Groups(Nil<Literal@>);
+  Groups(Empty<Literal@>);
 };
 
 @(

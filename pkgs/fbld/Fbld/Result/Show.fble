@@ -11,9 +11,9 @@
 
 <@ T@> { Show@<Result@<T@>>; }
 ShowErrors = <@ T@>(Result@<T@> r) {
-  r.errors.?(nil: Str|'');
-  Text@ message = r.errors.cons.head;
-  String@ tail = ShowErrors(r.@(errors: r.errors.cons.tail));
+  r.errors.?(empty: Str|'');
+  Text@ message = r.errors.items.head;
+  String@ tail = ShowErrors(r.@(errors: r.errors.items.tail));
   String@ head = /Fbld/Loc%.Report(message.loc,
     Strs[Str|'error: ', message.text, StrE|'\n']);
   Strs[head, tail];

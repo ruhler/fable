@@ -6,8 +6,8 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% Reverse = /Core/List%.Reverse;
 <@>% Contains = /Core/List/Eq%.Contains;
 
@@ -42,21 +42,21 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   (List@<String@>) { M@<List@<String@>>; }
   PrependReversedLines = (List@<String@> lines) {
     String@ next <- m.do(I.GetLine(stdio.in));
-    next.?(nil: m.return(lines));
-    PrependReversedLines(Cons(next, lines));
+    next.?(empty: m.return(lines));
+    PrependReversedLines(Items(next, lines));
   };
 
   M@<List@<String@>> GetLines = {
-    List@<String@> reversed <- m.do(PrependReversedLines(Nil<String@>));
+    List@<String@> reversed <- m.do(PrependReversedLines(Empty<String@>));
     m.return(Reverse(reversed));
   };
 
   (List@<String@>) { Int@; } GetDebugArg = (List@<String@> args) {
-    args.?(nil: Int|0);
-    /Core/String/Eq%.Eq(args.cons.head, Str|'--debug').?(false: {
-      GetDebugArg(args.cons.tail);
+    args.?(empty: Int|0);
+    /Core/String/Eq%.Eq(args.items.head, Str|'--debug').?(false: {
+      GetDebugArg(args.items.tail);
     });
-    /Core/Int/Show%.Read(args.cons.tail.cons.head);
+    /Core/Int/Show%.Read(args.items.tail.items.head);
   };
 
   (List@<String@> args) {

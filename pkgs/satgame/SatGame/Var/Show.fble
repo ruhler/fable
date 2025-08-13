@@ -19,8 +19,8 @@ Show@<Var@> Show = {
   };
 
   (Int@, List@<Bool@>) { Int@; } Shifts = (Int@ x, List@<Bool@> ps) {
-    ps.?(nil: x);
-    Shifts(Shift(x, ps.cons.head), ps.cons.tail);
+    ps.?(empty: x);
+    Shifts(Shift(x, ps.items.head), ps.items.tail);
   };
   
   (Var@ x) {

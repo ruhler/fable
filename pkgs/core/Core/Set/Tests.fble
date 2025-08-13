@@ -13,8 +13,7 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Append = /Core/List%.Append;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;
@@ -125,7 +124,7 @@ Test@ Tests = TestSuite(Str|Set, List[
     # we add A to the end of the list before B, we expect the resulting list
     # to be in the order B, A.
     List@<Bit2@> wnt = List[B, A];
-    List@<Bit2@> got = ForEach(set, Nil<Bit2@>, Cons<Bit2@>);
+    List@<Bit2@> got = ForEach(set, /Core/List%.Empty<Bit2@>, Items<Bit2@>);
     AssertEquals<List@<Bit2@>>(
       /Core/List/Eq%.Eq(EqBit2),
       /Core/List/Show%.Show(ShowBit2),

@@ -9,7 +9,7 @@
 @ Int@ = /Std/Int%.Int@;
 
 <@>% Append = /Core/List%.Append;
-<@>% Nil = /Core/List%.Nil;
+<@>% Empty = /Core/List%.Empty;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
@@ -54,7 +54,7 @@ Show@<IntP@> Show = (IntP@ x) {
   QR@ qr = Div(x, 10);
   String@ tail = ShowDigit(qr.r);
   String@ head = {
-    qr.q.?(0: Nil<Char@>);
+    qr.q.?(0: Empty<Char@>);
     Show(qr.q.p);
   };
   Append(head, tail);

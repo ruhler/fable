@@ -13,8 +13,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -60,7 +59,7 @@ M@<String@> Name = {
 
   Char@ _ <- Do(Get);
   String@ tail <- Do(Name);
-  Return(Cons(mc.just, tail));
+  Return(Items(mc.just, tail));
 };
 
 # Parses raw text up to and including '}' for literal args.
@@ -70,7 +69,7 @@ M@<String@> Name = {
   IsZero(nnest).?(true: Return(Str|''));
 
   String@ tail <- Do(Literal(nnest));
-  Return(Cons(head, tail));
+  Return(Items(head, tail));
 };
 
 @ Markup_@ = *(String@ plain, Markup@ markup);
@@ -88,7 +87,7 @@ M@<List@<Markup@>> Args = {
     };
     Markup@ head <- Do(Inline(end));
     List@<Markup@> tail <- Do(Args);
-    Return(Cons(head, tail));
+    Return(Items(head, tail));
   });
 
   # LiteralArg: { ... }
@@ -98,17 +97,17 @@ M@<List@<Markup@>> Args = {
     String@ text <- Do(Literal(Int|1));
     Markup@ head = Plain(l, text);
     List@<Markup@> tail <- Do(Args);
-    Return(Cons(head, tail));
+    Return(Items(head, tail));
   });
 
-  Return(Nil<Markup@>);
+  Return(/Core/List%.Empty<Markup@>);
 },
 
 # Parses an inline command, starting just after the '@' character.
 M@<Markup@> Command = {
   Loc@ l <- Do(Loc);
   String@ name <- Do(Name);
-  name.?(nil: {
+  name.?(empty: {
     Unit@ _ <- Error<Markup@>;
     Text@(l, Str|'missing command name');
   });
@@ -145,7 +144,7 @@ M@<Markup@> Command = {
     Return(c);
   });
   Markup_@ tail <- Do(Inline_(end));
-  Return(@(plain: Cons(h, tail.plain), markup: tail.markup));
+  Return(@(plain: Items(h, tail.plain), markup: tail.markup));
 },
 
 # Parses inline text.
@@ -154,7 +153,7 @@ M@<Markup@> Command = {
 (M@<Unit@>) { M@<Markup@>; } Inline = (M@<Unit@> end) {
   Loc@ l <- Do(Loc);
   Markup_@ result <- Do(Inline_(end));
-  result.plain.?(nil: Return(result.markup));
+  result.plain.?(empty: Return(result.markup));
   Return(Append(Plain(l, result.plain), result.markup));
 };
 

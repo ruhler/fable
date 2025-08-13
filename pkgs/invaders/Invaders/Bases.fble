@@ -79,11 +79,11 @@ List@<Slice@> BaseSpec = List[
 (Int@, List@<Slice@>, Bases@) { Bases@; }
 AddSlices = {
   (Int@ x, List@<Slice@> slices, Bases@ bases) {
-    slices.?(nil: bases);
-    Slice@ head = slices.cons.head;
+    slices.?(empty: bases);
+    Slice@ head = slices.items.head;
     Slice@ slice = Slice@(Add(BaseY, head.min), Add(BaseY, head.max));
     Bases@ inserted = Insert(bases, x, slice);
-    AddSlices(Add(x, Int|1), slices.cons.tail, inserted);
+    AddSlices(Add(x, Int|1), slices.items.tail, inserted);
   };
 };
 

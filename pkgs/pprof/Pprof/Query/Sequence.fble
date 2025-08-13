@@ -3,8 +3,8 @@
 @ Int@ = /Std/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% List = /Core/List%.List;
 <@>% Last = /Core/List%.Last;
 <@>% Init = /Core/List%.Init;
@@ -31,22 +31,22 @@
 Sequence = (Sequence@ target, Profile@ profile) {
   (Sequence@, Table@) { Table@; }
   Helper = (Sequence@ seq, Table@ tail) {
-    seq.?(nil: tail);
+    seq.?(empty: tail);
 
     BlockId@ last = Last(seq);
     Int@ value = Total.Contains(profile, seq);
-    Helper(Init(seq), Cons(Entry@(List[last], value), tail));
+    Helper(Init(seq), Items(Entry@(List[last], value), tail));
   };
 
-  Helper(target, Nil<Entry@>);
+  Helper(target, Empty<Entry@>);
 };
 
 (Sequence@) { Query@; } Incoming = (Sequence@ target) {
   (Sequence@) { List@<BlockId@>; }
   Frames = (Sequence@ seq) {
-    seq.?(nil: Nil<BlockId@>);
-    StartsWith(Eq, seq.cons.tail, target).?(false: Frames(seq.cons.tail));
-    Cons(seq.cons.head, Frames(seq.cons.tail));
+    seq.?(empty: Empty<BlockId@>);
+    StartsWith(Eq, seq.items.tail, target).?(false: Frames(seq.items.tail));
+    Items(seq.items.head, Frames(seq.items.tail));
   };
 
   /Pprof/Query/ByFrame%.Query(Frames);
@@ -57,13 +57,13 @@ Sequence = (Sequence@ target, Profile@ profile) {
 
   (Sequence@) { List@<BlockId@>; }
   Frames = (Sequence@ seq) {
-    seq.?(nil: Nil<BlockId@>);
-    StartsWith(Eq, seq, target).?(false: Frames(seq.cons.tail));
+    seq.?(empty: Empty<BlockId@>);
+    StartsWith(Eq, seq, target).?(false: Frames(seq.items.tail));
 
     Sequence@ suffix = Drop(length, seq);
-    suffix.?(nil: Nil<BlockId@>);
+    suffix.?(empty: Empty<BlockId@>);
 
-    Cons(suffix.cons.head, Frames(seq.cons.tail));
+    Items(suffix.items.head, Frames(seq.items.tail));
   };
 
   /Pprof/Query/ByFrame%.Query(Frames);

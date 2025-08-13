@@ -117,10 +117,10 @@ State@ Dying = State@(dying: DyingWait);
     GameOver@(over.hidden, over.visible, Sub(over.wait, Int|1));
   });
 
-  over.hidden.?(nil: over);
+  over.hidden.?(empty: over);
 
-  GameOver@(over.hidden.cons.tail,
-    Strs[over.visible, Str[over.hidden.cons.head]],
+  GameOver@(over.hidden.items.tail,
+    Strs[over.visible, Str[over.hidden.items.head]],
     GameOverWait);
 };
 

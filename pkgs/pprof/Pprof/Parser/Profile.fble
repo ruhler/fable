@@ -4,8 +4,8 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Nil = /Core/List%.Nil;
-<@>% Cons = /Core/List%.Cons;
+<@>% Empty = /Core/List%.Empty;
+<@>% Items = /Core/List%.Items;
 <@>% Append = /Core/List%.Append;
 <@>% Reverse = /Core/List%.Reverse;
 
@@ -46,8 +46,8 @@ Int@ 0 = Int|0;
 );
 
 Profile@ EmptyProfile = Profile@(
-  Nil<StringId@>,
-  Nil<Sample@>,
+  Empty<StringId@>,
+  Empty<Sample@>,
   Map.Empty<Location@>,
   Map.Empty<Function@>,
   Map.Empty<String@>,
@@ -84,7 +84,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   SampleTypeField = (Profile@ profile, Payload@ payload) {
     Int@ length <- m.do(LengthFor(payload, Str|'sample_type'));
     StringId@ type <- m.do(p.Message(0, SampleTypeFields, length));
-    List@<StringId@> sample_types = Cons(type, profile.sample_types);
+    List@<StringId@> sample_types = Items(type, profile.sample_types);
     m.return(profile.@(sample_types));
   };
 
@@ -130,7 +130,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   SampleFields = (Record@ record, Sample@ sample) {
     /Std/Int/Eq%.Eq(record.field, Int|1).?(true: {
       record.payload.?(int: {
-        Sequence@ sequence = Cons(record.payload.int, sample.sequence);
+        Sequence@ sequence = Items(record.payload.int, sample.sequence);
         m.return(sample.@(sequence));
       });
 
@@ -142,7 +142,7 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
 
     /Std/Int/Eq%.Eq(record.field, Int|2).?(true: {
       record.payload.?(int: {
-        Sequence@ values = Cons(record.payload.int, sample.values);
+        Sequence@ values = Items(record.payload.int, sample.values);
         m.return(sample.@(values));
       });
 
@@ -159,8 +159,8 @@ Profile = <<@>@ M@>(Proto@<M@> p, Monad@<M@> m) {
   (Profile@, Payload@) { M@<Profile@>; }
   SampleField = (Profile@ profile, Payload@ payload) {
     Int@ length <- m.do(LengthFor(payload, Str|'sample'));
-    Sample@ sample <- m.do(p.Message(Sample@(Nil<Int@>, Nil<Int@>), SampleFields, length));
-    List@<Sample@> samples = Cons(sample, profile.samples);
+    Sample@ sample <- m.do(p.Message(Sample@(Empty<Int@>, Empty<Int@>), SampleFields, length));
+    List@<Sample@> samples = Items(sample, profile.samples);
     m.return(profile.@(samples));
   };
 

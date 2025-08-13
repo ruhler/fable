@@ -11,8 +11,8 @@
 % IsZero = /Std/Int/Eq%.IsZero;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% Contains = /Core/List/Eq%.Contains;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
@@ -74,10 +74,10 @@ DistinctVar = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, List@<Var@> vars) {
 # Generate N distinct random variables.
 <<@>@ M@>(Monad@<M@>, Random@<M@>, Int@) { M@<List@<Var@>>; }
 Vars = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, Int@ n) {
-  IsZero(n).?(true: m.return(Nil<Var@>));
+  IsZero(n).?(true: m.return(Empty<Var@>));
   List@<Var@> tail <- m.do(Vars(m, rand, Decr(n)));
   Var@ head <- m.do(DistinctVar(m, rand, tail));
-  m.return(Cons(head, tail));
+  m.return(Items(head, tail));
 };
 
 @(Var, Vars);

@@ -36,7 +36,7 @@ Int@ 1 = /Std/Int%.1;
 (Markup@) { Result@<Maybe@<Char@>>; } HeadOf = (Markup@ markup) {
   markup.?(
     empty: r.return(Nothing<Char@>),
-    plain: r.return(Just(markup.plain.text.cons.head)),
+    plain: r.return(Just(markup.plain.text.items.head)),
     command: {
       Error<Maybe@<Char@>>(markup.command.name.loc, Strs[
           Str|'expected plain text, but found command @',
@@ -60,7 +60,7 @@ Impl@ Head = (Env@ env, Command@ cmd) {
     empty: r.return(markup),
     plain: {
       # TODO: What to use for the location of the result?
-      r.return(Plain(markup.plain.loc, markup.plain.text.cons.tail));
+      r.return(Plain(markup.plain.loc, markup.plain.text.items.tail));
     },
     command: {
       Error<Markup@>(markup.command.name.loc, Strs[

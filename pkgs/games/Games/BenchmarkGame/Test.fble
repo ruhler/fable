@@ -7,7 +7,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Nil = /Core/List%.Nil;
+<@>% Empty = /Core/List%.Empty;
 
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
 
@@ -28,9 +28,9 @@ Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {
   /Core/Test%.Test(name, (Unit@ _) {
     MainResult@ want = @(
       exit: True,
-      in: Nil<Int@>,
+      in: Empty<Int@>,
       out: expected_bytes,
-      err: Nil<Int@>
+      err: Empty<Int@>
     );
 
     MainResult@ got = RunMain(game, List[n], input_bytes);

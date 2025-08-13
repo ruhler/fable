@@ -25,9 +25,9 @@
 
   # Outputs a string to the given output stream.
   (OStream@, String@) { M@<Unit@>; } PutStr = (OStream@ out, String@ str) {
-    str.?(nil: m.return(Unit));
-    Unit@ _ <- m.do(PutChar(out, str.cons.head));
-    PutStr(out, str.cons.tail);
+    str.?(empty: m.return(Unit));
+    Unit@ _ <- m.do(PutChar(out, str.items.head));
+    PutStr(out, str.items.tail);
   };
 
   # Outputs a line to the given output stream.

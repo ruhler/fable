@@ -55,20 +55,20 @@ Args@ DefaultArgs = @(
 
 (List@<String@>, Args@) { Args@; }
 GetArgs = (List@<String@> args, Args@ default) {
-  args.?(nil: default);
+  args.?(empty: default);
 
-  String@ arg = args.cons.head;
+  String@ arg = args.items.head;
   /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
     List[Str|'-h', Str|'--help'], arg).?(true: {
     default.@(help: True);
   });
 
-  args.cons.tail.?(nil: {
+  args.items.tail.?(empty: {
     default.@(error: Strs[Str|'missing arg to option ', arg]);
   });
 
-  String@ value = args.cons.tail.cons.head;
-  List@<String@> nargv = args.cons.tail.cons.tail;
+  String@ value = args.items.tail.items.head;
+  List@<String@> nargv = args.items.tail.items.tail;
 
   Args@ nargs = {
     /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
@@ -89,7 +89,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     default.@(error: Strs[Str|'unrecognized option ', arg]);
   };
 
-  nargs.error.?(cons: nargs);
+  nargs.error.?(items: nargs);
   GetArgs(nargv, nargs);
 };
 
@@ -110,7 +110,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     m.return(True);
   });
 
-  args.error.?(cons: {
+  args.error.?(items: {
     Unit@ _ <- m.do(O.PutStr(stdio.err, args.error));
     Unit@ _ <- m.do(O.PutStr(stdio.err, StrE|'\ntry --help for help\n'));
     m.return(False);

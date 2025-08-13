@@ -16,8 +16,8 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% ForEach = /Core/List%.ForEach;
 <@>% Length = /Core/List/Length%.Length;
 
@@ -39,12 +39,12 @@ Int@ MaxBombs = Int|20;
 
 @ Bombs@ = List@<Bomb@>;
 
-Bombs@ Initial = Nil<Bomb@>;
+Bombs@ Initial = Empty<Bomb@>;
 
 (Int@, Int@, Kind@, Bombs@) { Bombs@; }
 Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   Lt(Length(bombs), MaxBombs).?(false: bombs);
-  Cons(Bomb@(x, y, kind), bombs);
+  Items(Bomb@(x, y, kind), bombs);
 };
 
 # HitResult@ --
@@ -61,19 +61,19 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
 (Bombs@, Int@) { HitResult@; } HitShip = (Bombs@ bombs, Int@ ship_x) {
   HitResult@ miss = @(hit: False, bombs: bombs);
 
-  bombs.?(nil: miss);
+  bombs.?(empty: miss);
 
-  HitResult@ tail_hit = HitShip(bombs.cons.tail, ship_x);
+  HitResult@ tail_hit = HitShip(bombs.items.tail, ship_x);
   tail_hit.hit.?(true: {
-    @(hit: True, bombs: Cons(bombs.cons.head, tail_hit.bombs));
+    @(hit: True, bombs: Items(bombs.items.head, tail_hit.bombs));
   });
 
-  Bomb@ bomb = bombs.cons.head;
+  Bomb@ bomb = bombs.items.head;
   Lt(bomb.y, /Invaders/Ship%.ShipY).?(true: miss);
   Lt(bomb.x, ship_x).?(true: miss);
   Gt(bomb.y, Add(Int|8, /Invaders/Ship%.ShipY)).?(true: miss);
   Gt(bomb.x, Add(ship_x, Int|15)).?(true: miss);
-  @(hit: True, bombs: bombs.cons.tail);
+  @(hit: True, bombs: bombs.items.tail);
 };
 
 @ HitBasesResult@ = *(Bombs@ bombs, Bases@ bases);
@@ -82,24 +82,24 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
 #   Update Bombs@ and Bases@ for any collisions between the two.
 (Bombs@, Bases@) { HitBasesResult@; }
 HitBases = (Bombs@ bombs, Bases@ bases) {
-  bombs.?(nil: @(bombs, bases));
+  bombs.?(empty: @(bombs, bases));
 
-  HitBasesResult@ tail_hit = HitBases(bombs.cons.tail, bases);
+  HitBasesResult@ tail_hit = HitBases(bombs.items.tail, bases);
 
-  Bomb@ bomb = bombs.cons.head;
+  Bomb@ bomb = bombs.items.head;
   Bases.HitResult@ hit = Bases.BombHit(bomb.x, bomb.y, tail_hit.bases);
   Bombs@ nbombs = hit.hit.?(
     true: tail_hit.bombs,
-    false: Cons(bomb, tail_hit.bombs));
+    false: Items(bomb, tail_hit.bombs));
   @(bombs: nbombs, bases: hit.bases);
 };
 
 (Bombs@) { Bombs@; } Tick = (Bombs@ bombs) {
-  ForEach(bombs, Nil<Bomb@>, (Bomb@ b, Bombs@ bs) {
+  ForEach(bombs, Empty<Bomb@>, (Bomb@ b, Bombs@ bs) {
     Int@ v = b.kind.?(bomb: BombVelocity, squiggle: SquiggleVelocity);
     Bomb@ nb = Bomb@(b.x, Sub(b.y, v), b.kind);
     Lt(nb.y, MinY).?(true: bs);
-    Cons(nb, bs);
+    Items(nb, bs);
   });
 };
 

@@ -12,7 +12,7 @@
 % ShowBits = /Core/Digits/Show%.ShowBits;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 
 @ String@ = /Core/String%.String@;
 
@@ -29,14 +29,14 @@ Main@ Debug = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   
   (List@<String@> _args) {
     (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
-      bits.?(nil: m.return(crc));
+      bits.?(empty: m.return(crc));
 
-      CRC@ ncrc = Feed(crc, bits.cons.head);
+      CRC@ ncrc = Feed(crc, bits.items.head);
       Unit@ _ <- m.do(O.PutLine(stdio.out, ShowBits(ncrc.checksum)));
-      DFeeds(ncrc, bits.cons.tail);
+      DFeeds(ncrc, bits.items.tail);
     };
 
-    List@<Bit@> poly = Cons(Bit.1, HexToBits|04C11DB7);
+    List@<Bit@> poly = Items(Bit.1, HexToBits|04C11DB7);
     List@<Bit@> init = HexToBits|00000000;
     CRC@ crc = CRC@(poly, init);
     CRC@ _result <- m.do(DFeeds(crc, HexToBits|31323334353637383900000000));

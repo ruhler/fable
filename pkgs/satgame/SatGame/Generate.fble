@@ -18,8 +18,7 @@
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
 <@>% List = /Core/List%.List;
 % Take = /Core/List/Length%.Take;
 
@@ -76,9 +75,9 @@
 
   (Clause@, Var@) { Bool@; }
   ContainsVar = (Clause@ c, Var@ var) {
-    c.?(nil: False);
-    /SatGame/Var/Eq%.Eq(c.cons.head.var, var).?(true: True);
-    ContainsVar(c.cons.tail, var);
+    c.?(empty: False);
+    /SatGame/Var/Eq%.Eq(c.items.head.var, var).?(true: True);
+    ContainsVar(c.items.tail, var);
   };
 
   # Generates a random clause with variable v and other variables with index
@@ -90,7 +89,7 @@
 
       Literal@ literal <- m.do(RandLiteral(max));
       ContainsVar(c, literal.var).?(true: AddLiterals(n, c));
-      AddLiterals(Decr(n), Cons(literal, c));
+      AddLiterals(Decr(n), Items(literal, c));
     };
 
     Clause@ clause <- m.do(AddLiterals(Decr(params.num_literals_per_clause), List[v]));
@@ -101,7 +100,7 @@
   Int@ clauses_per_variable = Div(Decr(Add(params.num_clauses, num_free_vars)), num_free_vars).q;
 
   Puzzle@ puzzle <- m.do(/Core/Iter%.For(
-    Range(params.num_literals_per_clause, params.num_vars), m.return(Nil<Clause@>),
+    Range(params.num_literals_per_clause, params.num_vars), m.return(/Core/List%.Empty<Clause@>),
     (Int@ i, M@<Puzzle@> mp) {
       Bool@ pos <- m.do(rand.bool);
       Literal@ var = Literal@(Lookup(vars, i).just, pos);
@@ -109,7 +108,7 @@
         (Int@ _, M@<Puzzle@> mp) {
           Puzzle@ tail <- m.do(mp);
           Clause@ clause <- m.do(GenClause(params, i, var));
-          m.return(Cons(clause, tail));
+          m.return(Items(clause, tail));
         });
     }));
   Puzzle@ shuffled <- m.do(Shuffle(puzzle));

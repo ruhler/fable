@@ -10,8 +10,8 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 
 <@>% Run = /Core/Stream/IStream/Pure%.Run;
 
@@ -68,12 +68,12 @@ HexToInt = (Char@ c) {
 
 (String@) { List@<Int@>; }
 FromHex = (String@ s) {
-  s.?(nil: Nil<Int@>);
-  /Core/Char/Type%.IsSpace(s.cons.head).?(true: FromHex(s.cons.tail));
-  Char@ h = s.cons.head;
-  Char@ l = s.cons.tail.cons.head;
+  s.?(empty: Empty<Int@>);
+  /Core/Char/Type%.IsSpace(s.items.head).?(true: FromHex(s.items.tail));
+  Char@ h = s.items.head;
+  Char@ l = s.items.tail.items.head;
   Int@ byte = Add(Mul(Int|16, HexToInt(h)), HexToInt(l));
-  Cons(byte, FromHex(s.cons.tail.cons.tail));
+  Items(byte, FromHex(s.items.tail.items.tail));
 };
 
 List@<Int@> Encoded = FromHex(HexEncoded); 
@@ -87,9 +87,9 @@ B = (BlockId@ id, String@ name, String@ file, Int@ line, Int@ column) {
 
 (List@<Entry@>) { Blocks@; }
 Inserts = (List@<Entry@> xs) {
-  xs.?(nil: Blocks.Empty<Block@>);
-  Entry@ entry = xs.cons.head;
-  Blocks.Insert(Inserts(xs.cons.tail), entry.id, entry.block);
+  xs.?(empty: Blocks.Empty<Block@>);
+  Entry@ entry = xs.items.head;
+  Blocks.Insert(Inserts(xs.items.tail), entry.id, entry.block);
 };
 
 Profile@ Parsed = @(

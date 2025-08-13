@@ -63,8 +63,8 @@ Show@<Coord@> ShowCoord = (Coord@ a) {
 
 # Create a world from a list of coordinates of live cells.
 (List@<Coord@>){ World@; } World = (List@<Coord@> mkCells) {
-  mkCells.?(nil: W.Empty);
-  W.Insert(World(mkCells.cons.tail), mkCells.cons.head);
+  mkCells.?(empty: W.Empty);
+  W.Insert(World(mkCells.items.tail), mkCells.items.head);
 };
 
 # A count of neighboring cells. 4p stands for anything greater than or equal

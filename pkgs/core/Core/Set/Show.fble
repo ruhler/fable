@@ -1,7 +1,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 <@>% Reverse = /Core/List%.Reverse;
 
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
@@ -26,9 +26,9 @@
   Show@<S.Set@> show = (S.Set@ s) {
     List@<String@> elems = S.ForEach(s, List[Str|'{ '],
       (K@ x, List@<String@> es) {
-        Cons(Strs[show_key(x), Str|'; '], es);
+        Items(Strs[show_key(x), Str|'; '], es);
       });
-    Strs(Reverse(Cons(Str|'}', elems)));
+    Strs(Reverse(Items(Str|'}', elems)));
   };
 
   show;

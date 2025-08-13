@@ -5,8 +5,8 @@
 % Add = /Std/Int%.Add;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% List = /Core/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -29,10 +29,10 @@ ContainsBlock = /Core/List/Eq%.Contains(/Pprof/Profile/Eq%.BlockId);
 
 (List@<BlockId@>) { List@<BlockId@>; }
 DeDup = (List@<BlockId@> xs) {
-  xs.?(nil: xs);
+  xs.?(empty: xs);
 
-  ContainsBlock(xs.cons.tail, xs.cons.head).?(true: DeDup(xs.cons.tail));
-  Cons(xs.cons.head, DeDup(xs.cons.tail));
+  ContainsBlock(xs.items.tail, xs.items.head).?(true: DeDup(xs.items.tail));
+  Items(xs.items.head, DeDup(xs.items.tail));
 };
 
 # @func[Query] Helper function for common form of by-frame query.
@@ -49,7 +49,7 @@ DeDup = (List@<BlockId@> xs) {
 Query = ((Sequence@) { List@<BlockId@>; } frames, Profile@ profile) {
   (Sample@, M.Map@<Int@>) { M.Map@<Int@>; }
   Sample = (Sample@ sample, M.Map@<Int@> map) {
-    sample.sequence.?(nil: map);
+    sample.sequence.?(empty: map);
 
     List@<BlockId@> set = DeDup(frames(sample.sequence));
     Int@ count = MetricOf(sample.values);
@@ -64,15 +64,15 @@ Query = ((Sequence@) { List@<BlockId@>; } frames, Profile@ profile) {
 
   (List@<Sample@>, M.Map@<Int@>) { M.Map@<Int@>; }
   Samples = (List@<Sample@> samples, M.Map@<Int@> map) {
-    samples.?(nil: map);
-    Samples(samples.cons.tail, Sample(samples.cons.head, map));
+    samples.?(empty: map);
+    Samples(samples.items.tail, Sample(samples.items.head, map));
   };
 
   M.Map@<Int@> counts = Samples(profile.samples, M.Empty<Int@>);
 
-  Sort(M.ForEach(counts, Nil<Entry@>,
+  Sort(M.ForEach(counts, Empty<Entry@>,
     (BlockId@ block, Int@ value, List@<Entry@> l) {
-      Cons(Entry@(List[block], value), l);
+      Items(Entry@(List[block], value), l);
     }));
 };
 

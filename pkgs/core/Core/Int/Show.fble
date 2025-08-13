@@ -23,13 +23,13 @@
   };
 
   (Int@, String@) { Int@; } ReadP = (Int@ x, String@ s) {
-    s.?(nil: x);
-    ReadP(Add(Mul(Int|10, x), Digit(s.cons.head)), s.cons.tail);
+    s.?(empty: x);
+    ReadP(Add(Mul(Int|10, x), Digit(s.items.head)), s.items.tail);
   };
   
   (String@ s) {
-    s.?(nil: Int|0);
-    s.cons.head.?('-': Neg(ReadP(Int|0, s.cons.tail)), : ReadP(Int|0, s));
+    s.?(empty: Int|0);
+    s.items.head.?('-': Neg(ReadP(Int|0, s.items.tail)), : ReadP(Int|0, s));
   };
 };
 

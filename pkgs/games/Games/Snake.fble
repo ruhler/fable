@@ -14,7 +14,7 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Init = /Core/List%.Init;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 <@>% ForEach = /Core/List%.ForEach;
 
 @ Int@ = /Std/Int%.Int@;
@@ -170,18 +170,18 @@ State@ InitialState = {
 (State@) { MoveResultM@; } Move = (State@ s) {
   LFSR@ nrand = StepRand(s.dir, s.rand);
   PosM@ pm = s.dir.?(
-    up: Eq(s.snake.cons.head.row, MaxRow).?(
+    up: Eq(s.snake.items.head.row, MaxRow).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(Incr(s.snake.cons.head.row), s.snake.cons.head.col))),
-    down: Eq(s.snake.cons.head.row, MinRow).?(
+      false: PosM@(pos: Pos@(Incr(s.snake.items.head.row), s.snake.items.head.col))),
+    down: Eq(s.snake.items.head.row, MinRow).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(Decr(s.snake.cons.head.row), s.snake.cons.head.col))),
-    left: Eq(s.snake.cons.head.col, MinCol).?(
+      false: PosM@(pos: Pos@(Decr(s.snake.items.head.row), s.snake.items.head.col))),
+    left: Eq(s.snake.items.head.col, MinCol).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(s.snake.cons.head.row, Decr(s.snake.cons.head.col)))),
-    right: Eq(s.snake.cons.head.col, MaxCol).?(
+      false: PosM@(pos: Pos@(s.snake.items.head.row, Decr(s.snake.items.head.col)))),
+    right: Eq(s.snake.items.head.col, MaxCol).?(
       true: PosM@(dead: Unit),
-      false: PosM@(pos: Pos@(s.snake.cons.head.row, Incr(s.snake.cons.head.col)))));
+      false: PosM@(pos: Pos@(s.snake.items.head.row, Incr(s.snake.items.head.col)))));
 
   pm.?(
     dead: MoveResultM@(dead: Unit),
@@ -189,7 +189,7 @@ State@ InitialState = {
       true: {
         # TODO: Properly handle the case where the snake eats food at its
         # tail.
-        List@<Pos@> nsnake = Cons(s.food, s.snake);
+        List@<Pos@> nsnake = Items(s.food, s.snake);
         Pos@ nfood = GetNextFood(nrand, nsnake);
         Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
         State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
@@ -200,7 +200,7 @@ State@ InitialState = {
         false: {
           # TODO: Combine calls to Init and Last so we only have to
           # iterate over the list of elements once instead of twice?
-          List@<Pos@> nsnake = Cons(pm.pos, Init(s.snake));
+          List@<Pos@> nsnake = Items(pm.pos, Init(s.snake));
           State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
           MoveResultM@(state: ns);
          })));
@@ -222,10 +222,10 @@ State@ InitialState = {
 
   (Dir@) { Choice@; } Choice = (Dir@ dir) {
     Pos@ pos = dir.?(
-      up: Pos@(Incr(s.snake.cons.head.row), s.snake.cons.head.col),
-      down: Pos@(Decr(s.snake.cons.head.row), s.snake.cons.head.col),
-      left: Pos@(s.snake.cons.head.row, Decr(s.snake.cons.head.col)),
-      right: Pos@(s.snake.cons.head.row, Incr(s.snake.cons.head.col)));
+      up: Pos@(Incr(s.snake.items.head.row), s.snake.items.head.col),
+      down: Pos@(Decr(s.snake.items.head.row), s.snake.items.head.col),
+      left: Pos@(s.snake.items.head.row, Decr(s.snake.items.head.col)),
+      right: Pos@(s.snake.items.head.row, Incr(s.snake.items.head.col)));
 
     Bool@ dead = {
       Lt(pos.row, MinRow).?(true: True);

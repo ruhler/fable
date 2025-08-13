@@ -28,15 +28,15 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
   (I.IStream@) { M@<Unit@>; } cat = (I.IStream@ input) {
     String@ line <- m.do(I.GetLine(input));
-    line.?(nil: m.return(Unit));
+    line.?(empty: m.return(Unit));
 
     Unit@ _ <- m.do(O.PutStr(stdio.out, line));
     cat(input);
   };
 
   (List@<String@>) { M@<Bool@>; } cats = (List@<String@> inputs) {
-    inputs.?(nil: m.return(True));
-    String@ filename = inputs.cons.head;
+    inputs.?(empty: m.return(True));
+    String@ filename = inputs.items.head;
 
     Maybe@<I.IStream@> istream <- m.do({
       /Core/String/Eq%.Eq(Str|'-', filename).?(true: m.return(Just(stdio.in)));
@@ -50,11 +50,11 @@ Main@ Cat = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     });
 
     Unit@ _ <- m.do(cat(istream.just));
-    cats(inputs.cons.tail);
+    cats(inputs.items.tail);
   };
 
   (List@<String@> args) {
-    cats(args.?(nil: List[Str|'-'], : args));
+    cats(args.?(empty: List[Str|'-'], : args));
   };
 };
 

@@ -15,8 +15,8 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
+<@>% Items = /Core/List%.Items;
+<@>% Empty = /Core/List%.Empty;
 <@>% Last = /Core/List%.Last;
 
 @ String@ = /Core/String%.String@;
@@ -81,8 +81,8 @@ M@<Int@> GetIndent = (R@ r) {
 # appropriate. Fails if there are no more characters in the input stream.
 M@<CharL@> GetL_ = (R@ r) {
   List@<CharL@> in = r.s;
-  in.?(nil: /Fbld/Result%.Error<SM@<CharL@>>(r.end_of_input_loc, Str|'unexpected end of input'));
-  Ok(SM@(in.cons.tail, in.cons.head));
+  in.?(empty: /Fbld/Result%.Error<SM@<CharL@>>(r.end_of_input_loc, Str|'unexpected end of input'));
+  Ok(SM@(in.items.tail, in.items.head));
 };
 
 # Parse an indented block of text.
@@ -112,25 +112,25 @@ Test = <@ T@>(M@<T@> mx, R@ r) {
 
 (Loc@, String@, List@<CharL@>) { List@<CharL@>; }
 PreProcessInput = (Loc@ l, String@ s, List@<CharL@> tail) {
-  s.?(nil: tail);
-  Char@ c = s.cons.head;
-  Cons(CharL@(c, l), PreProcessInput(Advance(l, c), s.cons.tail, tail));
+  s.?(empty: tail);
+  Char@ c = s.items.head;
+  Items(CharL@(c, l), PreProcessInput(Advance(l, c), s.items.tail, tail));
 };
 
 (List@<Text@>, List@<CharL@>) { List@<CharL@>; }
 PreProcessInputs = (List@<Text@> inputs, List@<CharL@> tail) {
-  inputs.?(nil: tail);
-  PreProcessInput(inputs.cons.head.loc, inputs.cons.head.text,
-    PreProcessInputs(inputs.cons.tail, tail));
+  inputs.?(empty: tail);
+  PreProcessInput(inputs.items.head.loc, inputs.items.head.text,
+    PreProcessInputs(inputs.items.tail, tail));
 };
 
 # Runs a parser monad on the given input string.
 <@ T@>(M@<T@>, List@<Text@>) { Result@<T@>; }
 Run = <@ T@>(M@<T@> m, List@<Text@> input) {
-  List@<CharL@> s = PreProcessInputs(input, Nil<CharL@>);
+  List@<CharL@> s = PreProcessInputs(input, Empty<CharL@>);
   CharL@ last = Last(s);
   Loc@ end_of_input_loc = {
-    s.?(nil: Unknown);
+    s.?(empty: Unknown);
     Advance(last.l, last.c);
   };
   Result@<SM@<T@>> r = m(R@(s, Int|0, True, end_of_input_loc));
@@ -205,13 +205,13 @@ M@<Unit@> EndOfInput = {
 # does not match that string.
 (String@) { M@<Unit@>; }
 String = (String@ s) {
-  s.?(nil: Return(Unit));
+  s.?(empty: Return(Unit));
   CharL@ c <- Do(GetL);
-  /Core/Char/Eq%.Eq(s.cons.head, c.c).?(
-    true: String(s.cons.tail),
+  /Core/Char/Eq%.Eq(s.items.head, c.c).?(
+    true: String(s.items.tail),
     false: {
       Unit@ _ <- Error<Unit@>;
-      Text@(c.l, Strs[ Str|'Expected ''', Str[s.cons.head], Str|'''']);
+      Text@(c.l, Strs[ Str|'Expected ''', Str[s.items.head], Str|'''']);
     });
 };
 

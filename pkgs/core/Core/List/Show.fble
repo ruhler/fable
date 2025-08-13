@@ -21,8 +21,8 @@
 #   [1, 2, 3] is shown as ", 1, 2, 3]"
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 ShowTail = <@ T@>(Show@<T@> show, List@<T@> l) {
-  l.?(nil: Str|']');
-  Strs[Str|', ', show(l.cons.head), ShowTail(show, l.cons.tail)];
+  l.?(empty: Str|']');
+  Strs[Str|', ', show(l.items.head), ShowTail(show, l.items.tail)];
 };
 
 # Show --
@@ -41,8 +41,8 @@ ShowTail = <@ T@>(Show@<T@> show, List@<T@> l) {
 #   be shown as "[1, 2, 3]"
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show, List@<T@> l) {
-  l.?(nil: Str|'[]');
-  Strs[Str|'[', show(l.cons.head), ShowTail(show, l.cons.tail)];
+  l.?(empty: Str|'[]');
+  Strs[Str|'[', show(l.items.head), ShowTail(show, l.items.tail)];
 };
 
 @(Show);

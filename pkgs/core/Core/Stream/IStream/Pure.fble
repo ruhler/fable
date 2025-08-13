@@ -21,9 +21,9 @@ Monad@<Pure@> Monad = State.Monad;
 
 Pure@<Maybe@<Int@>> In = {
   List@<Int@> s <- Monad.do(State.Get);
-  s.?(nil: Monad.return(Nothing<Int@>));
-  Unit@ _ <- Monad.do(State.Set(s.cons.tail));
-  Monad.return(Just(s.cons.head));
+  s.?(empty: Monad.return(Nothing<Int@>));
+  Unit@ _ <- Monad.do(State.Set(s.items.tail));
+  Monad.return(Just(s.items.head));
 };
 
 # Runs a monadic computation involving an IStream as a pure function.

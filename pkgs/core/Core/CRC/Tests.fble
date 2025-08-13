@@ -12,7 +12,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
+<@>% Items = /Core/List%.Items;
 
 % Str = /Core/String%.Str;
 
@@ -43,7 +43,7 @@ Test@ Tests = TestSuite(Str|CRC, List[
   }),
 
   Test(Str|'cksum', (Unit@ _) {
-    List@<Bit@> poly = Cons(Bit.1, HexToBits|04C11DB7);
+    List@<Bit@> poly = Items(Bit.1, HexToBits|04C11DB7);
     List@<Bit@> init = HexToBits|00000000;
     CRC@ crc = CRC@(poly, init);
 

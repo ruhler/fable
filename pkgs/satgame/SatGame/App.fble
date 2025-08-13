@@ -72,11 +72,11 @@ Args@ DefaultArgs = @(
 
 (List@<String@>, Args@) { Args@; }
 GetArgs = (List@<String@> args, Args@ default) {
-  args.?(nil: default);
-  args.cons.tail.?(nil: default);
+  args.?(empty: default);
+  args.items.tail.?(empty: default);
 
-  String@ arg = args.cons.head;
-  Int@ value = /Core/Int/Show%.Read(args.cons.tail.cons.head);
+  String@ arg = args.items.head;
+  Int@ value = /Core/Int/Show%.Read(args.items.tail.items.head);
 
   Args@ nargs = {
     /Core/String/Eq%.Eq(arg, Str|'--vars').?(true: {
@@ -97,7 +97,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 
     default;
   };
-  GetArgs(args.cons.tail.cons.tail, nargs);
+  GetArgs(args.items.tail.items.tail, nargs);
 };
 
 @ Transform@ = *(Int@ x, Int@ y, Int@ s);
