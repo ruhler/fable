@@ -1,5 +1,5 @@
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 @ Markup@ = /Fbld/Markup%.Markup@;
 <@>@ Result@ = /Fbld/Result%.Result@;

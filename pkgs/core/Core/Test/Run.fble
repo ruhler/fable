@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>% ForEach = /Core/List%.ForEach;
+<@>% ForEach = /Std/List%.ForEach;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

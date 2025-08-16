@@ -6,8 +6,8 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 <@>% Contains = /Core/List/Eq%.Contains;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;

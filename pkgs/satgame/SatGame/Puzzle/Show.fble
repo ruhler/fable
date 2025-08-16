@@ -18,11 +18,11 @@ Show@<Literal@> Literal = (Literal@ literal) {
 };
 
 Show@<Clause@> Clause = (Clause@ clause) {
-  Join(/Core/List%.Map(clause, Literal), Str|' ');
+  Join(/Std/List%.Map(clause, Literal), Str|' ');
 };
 
 Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
-  Lines(/Core/List%.Map(puzzle, Clause));
+  Lines(/Std/List%.Map(puzzle, Clause));
 };
 
 Show@<Params@> Params = (Params@ params) {

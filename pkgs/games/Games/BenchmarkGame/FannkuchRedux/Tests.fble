@@ -4,10 +4,10 @@
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Empty = /Core/List%.Empty;
-<@>% Append = /Core/List%.Append;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
+<@>% Append = /Std/List%.Append;
 
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;

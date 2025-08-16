@@ -9,8 +9,8 @@
 <@>@ Eq@ = /Core/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>% List = /Core/List%.List;
-<@>% Concat = /Core/List%.Concat;
+<@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

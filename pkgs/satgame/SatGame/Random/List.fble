@@ -1,9 +1,9 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% Append = /Core/List%.Append;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

@@ -1,8 +1,8 @@
 @ Bool@ = /Std/Bool%.Bool@;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Empty = /Core/List%.Empty;
-<@>% Items = /Core/List%.Items;
+<@>@ List@ = /Std/List%.List@;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
 
 # Insert --
 #   Inserts the element 'x' into 'l' at the sorted position based on the

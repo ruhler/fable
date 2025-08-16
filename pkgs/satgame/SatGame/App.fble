@@ -10,7 +10,7 @@
 % Min = /Std/Int/Eq%.Min;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

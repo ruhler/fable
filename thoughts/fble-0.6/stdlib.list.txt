@@ -832,7 +832,7 @@ Cool. I think I have my full list proposal now. Here it is:
   * Count
 
   /Std/List/Index%:
-  * Length, Get, Set, Take, Drop, Span, Range
+  * Length, Get, Set, Take, Drop, Range, Span@, Span
 
   /Std/List/Sort%:
   * Sort
@@ -841,7 +841,7 @@ Cool. I think I have my full list proposal now. Here it is:
   * HasItems, IsEmpty
   * StartsWith, EndsWith, Contains, Split, Uniq
   * Eq, Ne
-  * Skip, Trim, Strip, Break
+  * Skip, Trim, Strip, Span@, Break
   * Replace
 
 Upon review: 'replace' is the only thing missing here?
@@ -864,3 +864,26 @@ right? Into Eq% module, no? Or Search%?
 
 Question: Take and Drop should take the index as the second argument, right?
 Not the first?
+
+---
+
+Trouble: how do document list, which has a nested type? It's a mix of @struct
+and @union, without a separate name for the different parts. Hmm...
+
+How to document the type parameter? Tricky.
+
+Should Empty be documented as a value or a function, given it depends on type
+parameter T@?
+
+---
+
+Does it make more sense for ForEach to go (A@, B@) { B@; },
+or (B@, A@) { B@; }?
+
+Somehow, writing my example, it feels better to me to put the base as the
+first argument.
+
+That will be a tedious change to make though.
+
+I think I should make the change. But then we can ask if we should base the
+base element before the list, for consistency?

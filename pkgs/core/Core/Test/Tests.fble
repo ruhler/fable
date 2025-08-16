@@ -7,8 +7,8 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>% List = /Core/List%.List;
-<@>% Empty = /Core/List%.Empty;
+<@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
 
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 % RunMain = /Core/Stdio/Pure%.RunMain;

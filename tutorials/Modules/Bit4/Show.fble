@@ -1,5 +1,5 @@
 
-<@>% Concat = /Core/List%.Concat;
+<@>% Concat = /Std/List%.Concat;
 
 @ String@ = /Core/String%.String@;
 

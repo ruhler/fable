@@ -4,7 +4,7 @@
 
 % HexToBits = /Core/Digits/String%.HexToBits;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
 

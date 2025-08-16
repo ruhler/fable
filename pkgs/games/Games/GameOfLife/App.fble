@@ -16,8 +16,8 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

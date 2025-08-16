@@ -10,7 +10,7 @@
 % IsNegative = /Std/Int/Eq%.IsNegative;
 % Int = /Core/Int/Lit%.Int;
 
-<@>% Empty = /Core/List%.Empty;
+<@>% Empty = /Std/List%.Empty;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

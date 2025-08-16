@@ -7,7 +7,7 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 

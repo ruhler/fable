@@ -17,9 +17,9 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% List = /Std/List%.List;
 <@>% Take = /Core/List/Index%.Take;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
@@ -55,7 +55,7 @@
   Map@ vars <- m.do({
     List@<Var@> list <- m.do(/SatGame/Var/Rand%.Vars(m, rand, params.num_vars));
     @ S@ = *(Int@ i, Map@ map);
-    Map@ map = /Core/List%.ForEach(list, S@(Int|0, Empty),
+    Map@ map = /Std/List%.ForEach(list, S@(Int|0, Empty),
       (Var@ vid, S@ s) {
         S@(Incr(s.i), Insert(s.map, s.i, vid));
       }).map;
@@ -100,7 +100,7 @@
   Int@ clauses_per_variable = Div(Decr(Add(params.num_clauses, num_free_vars)), num_free_vars).q;
 
   Puzzle@ puzzle <- m.do(/Core/Iter%.For(
-    Range(params.num_literals_per_clause, params.num_vars), m.return(/Core/List%.Empty<Clause@>),
+    Range(params.num_literals_per_clause, params.num_vars), m.return(/Std/List%.Empty<Clause@>),
     (Int@ i, M@<Puzzle@> mp) {
       Bool@ pos <- m.do(rand.bool);
       Literal@ var = Literal@(Lookup(vars, i).just, pos);

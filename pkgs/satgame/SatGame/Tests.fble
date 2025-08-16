@@ -8,7 +8,7 @@
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
-<@>% List = /Core/List%.List;
+<@>% List = /Std/List%.List;
 
 % Str = /Core/String%.Str;
 

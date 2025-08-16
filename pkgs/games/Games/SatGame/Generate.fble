@@ -3,7 +3,7 @@
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
 
-<@>% Empty = /Core/List%.Empty;
+<@>% Empty = /Std/List%.Empty;
 
 @ Clause@ = /Games/SatGame/Puzzle%.Clause@;
 @ Puzzle@ = /Games/SatGame/Puzzle%.Puzzle@;

@@ -10,8 +10,8 @@ Int@ 2 = Int|2;
 Int@ 3 = Int|3;
 Int@ 4 = Int|4;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Length = /Core/List/Index%.Length;
 <@>% Get = /Core/List/Index%.Get;

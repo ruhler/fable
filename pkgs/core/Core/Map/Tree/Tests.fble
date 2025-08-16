@@ -7,8 +7,8 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-<@>% List = /Core/List%.List;
-<@>% Append = /Core/List%.Append;
+<@>% List = /Std/List%.List;
+<@>% Append = /Std/List%.Append;
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;

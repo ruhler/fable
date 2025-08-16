@@ -5,8 +5,8 @@
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -118,7 +118,7 @@
 
     Chars.'{', Chars.'|', Chars.'}', Chars.'~'];
 
-  Map@ map = /Core/List%.ForEach(chars, Empty, Put);
+  Map@ map = /Std/List%.ForEach(chars, Empty, Put);
 
   (Int@ i) {
     Maybe@<Char@> mc = Lookup(map, i);

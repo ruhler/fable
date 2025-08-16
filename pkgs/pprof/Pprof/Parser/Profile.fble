@@ -3,11 +3,11 @@
 % Incr = /Std/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Empty = /Core/List%.Empty;
-<@>% Items = /Core/List%.Items;
-<@>% Append = /Core/List%.Append;
-<@>% Reverse = /Core/List%.Reverse;
+<@>@ List@ = /Std/List%.List@;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
+<@>% Reverse = /Std/List%.Reverse;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

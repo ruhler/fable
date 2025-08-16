@@ -13,7 +13,7 @@
 % Int = /Core/Int/Lit%.Int;
 % Incr = /Std/Int%.Incr;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

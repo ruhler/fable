@@ -6,7 +6,7 @@
 % Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

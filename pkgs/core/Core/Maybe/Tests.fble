@@ -6,7 +6,7 @@
 <@>@ Eq@ = /Core/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>% List = /Core/List%.List;
+<@>% List = /Std/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

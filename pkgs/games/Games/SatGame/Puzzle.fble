@@ -2,7 +2,7 @@
 @ Bool@ = /Std/Bool%.Bool@;
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 @ VarId@ = Int@;
 @ Var@ = *(VarId@ id, Bool@ pos);

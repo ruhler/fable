@@ -7,10 +7,10 @@
 <@>@ Eq@ = /Core/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Empty = /Core/List%.Empty;
-<@>% Items = /Core/List%.Items;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

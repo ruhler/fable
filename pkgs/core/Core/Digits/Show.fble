@@ -2,8 +2,8 @@
 @ Bit@ = /Core/Digits%.Bit@;
 @ Hex@ = /Core/Digits%.Hex@;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Map = /Core/List%.Map;
+<@>@ List@ = /Std/List%.List@;
+<@>% Map = /Std/List%.Map;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

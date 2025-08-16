@@ -10,9 +10,9 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Items = /Core/List%.Items;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
 
 % Str = /Core/String%.Str;
 

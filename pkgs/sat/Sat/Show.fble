@@ -1,7 +1,7 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-<@>% Append = /Core/List%.Append;
+<@>% Append = /Std/List%.Append;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

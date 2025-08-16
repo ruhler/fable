@@ -1,8 +1,8 @@
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Items = /Core/List%.Items;
-<@>% Reverse = /Core/List%.Reverse;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+<@>% Reverse = /Std/List%.Reverse;
 
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
 

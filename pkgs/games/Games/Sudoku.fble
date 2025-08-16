@@ -3,7 +3,7 @@
 % False = /Std/Bool%.False;
 % True = /Std/Bool%.True;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

@@ -7,7 +7,7 @@
 % Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
 
-<@>% Append = /Core/List%.Append;
+<@>% Append = /Std/List%.Append;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

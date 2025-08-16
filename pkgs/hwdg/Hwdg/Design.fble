@@ -17,7 +17,7 @@
 % Incr = /Std/Int%.Incr;
 % 0 = /Std/Int%.0;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -128,7 +128,7 @@ ForEachRulePlaced = (Placed@ placed)<@ B@>(B@ base, (Coord@, Rule@, B@) { B@; } 
   placed.design.?(
     rule: body(placed.coord, placed.design.rule, base),
     designs: {
-      /Core/List%.ForEach(placed.design.designs, base,
+      /Std/List%.ForEach(placed.design.designs, base,
         (Placed@ p, B@ b) {
           Placed@ np = @(
             coord: /Hwdg/Coord%.Add(placed.coord, p.coord),

@@ -7,7 +7,7 @@
 % Ord = /Core/Ord%;
 @ Ordering@ = Ord.Ordering@;
 
-<@>% List = /Core/List%.List;
+<@>% List = /Std/List%.List;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

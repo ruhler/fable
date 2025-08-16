@@ -16,9 +16,9 @@
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Empty = /Core/List%.Empty;
-<@>% Items = /Core/List%.Items;
+<@>@ List@ = /Std/List%.List@;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

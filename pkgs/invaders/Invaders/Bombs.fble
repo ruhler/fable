@@ -15,10 +15,10 @@
 % Gt = /Std/Int/Eq%.Gt;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% Empty = /Core/List%.Empty;
-<@>% ForEach = /Core/List%.ForEach;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+<@>% ForEach = /Std/List%.ForEach;
 <@>% Length = /Core/List/Index%.Length;
 
 % Bases = /Invaders/Bases%;

@@ -3,7 +3,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ IO@ = /Core/Monad/IO%.IO@;
 <@>@ R@ = /Core/Monad/IO%.R@;

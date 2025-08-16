@@ -18,7 +18,7 @@
 # Returns the total number of samples in a profile.
 (Profile@) { Int@; }
 Total = (Profile@ profile) {
-  /Core/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
+  /Std/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
     Add(sum, MetricOf(sample.values));
   });
 };
@@ -33,7 +33,7 @@ Contains = (Profile@ profile, Sequence@ needle) {
     Find(haystack.items.tail, needle);
   };
 
-  /Core/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
+  /Std/List%.ForEach(profile.samples, Int|0, (Sample@ sample, Int@ sum) {
     Find(sample.sequence, needle).?(false: sum);
     Add(sum, MetricOf(sample.values));
   });

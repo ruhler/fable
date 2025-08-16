@@ -6,10 +6,10 @@
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% List = /Core/List%.List;
-<@>% Concat = /Core/List%.Concat;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -91,7 +91,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 
   List@<Markup@> same_line <- Do({
     Bool@ none <- Do(Test_(EndOfSameLine));
-    none.?(true: Return(/Core/List%.Empty<Markup@>));
+    none.?(true: Return(/Std/List%.Empty<Markup@>));
 
     Unit@ _ <- Do(String|' ');
     Markup@ m <- Do(Inline({
@@ -113,7 +113,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 
   List@<Markup@> literal <- Do({
     Bool@ none <- Do(Try_(String(StrE|'\n')));
-    none.?(true: Return(/Core/List%.Empty<Markup@>));
+    none.?(true: Return(/Std/List%.Empty<Markup@>));
 
     Unit@ _ <- Do(String(StrE|' @\n'));
     Markup@ e <- Do(Indented({
@@ -126,7 +126,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 
   List@<Markup@> next <- Do({
     Bool@ present <- Do(Try_(String|' '));
-    present.?(false: Return(/Core/List%.Empty<Markup@>));
+    present.?(false: Return(/Std/List%.Empty<Markup@>));
     Markup@ m <- Do(Indented(Block));
     Return(List[m]);
   });
@@ -161,7 +161,7 @@ M@<Markup@> Command = {
     Text@(l, Str|'missing command name');
   });
 
-  Args(l, name, /Core/List%.Empty<Markup@>);
+  Args(l, name, /Std/List%.Empty<Markup@>);
 },
 
 # Parses block structured text.

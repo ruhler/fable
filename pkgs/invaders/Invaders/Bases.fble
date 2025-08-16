@@ -16,8 +16,8 @@
 % Ge = /Std/Int/Eq%.Ge;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

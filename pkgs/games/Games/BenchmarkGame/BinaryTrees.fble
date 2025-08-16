@@ -9,7 +9,7 @@
 % Eq = /Std/Int/Eq%.Eq;
 % Gt = /Std/Int/Eq%.Gt;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

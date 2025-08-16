@@ -1,5 +1,5 @@
 
-<@>% Append = /Core/List%.Append;
+<@>% Append = /Std/List%.Append;
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>@ Show@ = /Core/Show%.Show@;
 % Str = /Core/String%.Str;

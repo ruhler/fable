@@ -11,7 +11,7 @@
 % Div = /Std/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 <@>% Take = /Core/List/Index%.Take;
 <@>% Drop = /Core/List/Index%.Drop;
 

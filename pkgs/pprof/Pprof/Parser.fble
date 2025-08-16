@@ -1,9 +1,9 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% Reverse = /Core/List%.Reverse;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Reverse = /Std/List%.Reverse;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -72,7 +72,7 @@ ProfileFromParsed = (ProtoProfile@ parsed) {
   List@<String@> metrics = Metrics(parsed.strings, parsed.sample_types)[];
   Blocks@ blocks = Blocks(parsed); 
   List@<Sample@> samples = {
-    Sample@ s <- /Core/List%.Map(Reverse(parsed.samples));
+    Sample@ s <- /Std/List%.Map(Reverse(parsed.samples));
     List@<Int@> values = Reverse(s.values);
     s.@(values);
   };

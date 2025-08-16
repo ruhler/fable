@@ -3,10 +3,10 @@
 @ Bit@ = /Core/Digits%.Bit@;
 % Bit = /Core/Digits%.Bit;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% List = /Core/List%.List;
-<@>% Append = /Core/List%.Append;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% List = /Std/List%.List;
+<@>% Append = /Std/List%.Append;
 
 # CRC@ --
 #   State for a cyclic redundancy check.

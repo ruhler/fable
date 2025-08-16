@@ -9,7 +9,7 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>% List = /Core/List%.List;
+<@>% List = /Std/List%.List;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

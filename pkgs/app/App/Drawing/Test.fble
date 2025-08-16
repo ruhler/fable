@@ -18,7 +18,7 @@
 % Range = /Core/Int/Iter%.Range;
 % Ord = /Core/Int/Ord%.Ord;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;

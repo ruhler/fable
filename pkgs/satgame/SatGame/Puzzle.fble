@@ -3,7 +3,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 @ Var@ = /SatGame/Var%.Var@;
 

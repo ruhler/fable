@@ -1,7 +1,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>% Last = /Core/List%.Last;
+<@>% Last = /Std/List%.Last;
 
 @ Metrics@ = /Pprof/Profile%.Metrics@;
 

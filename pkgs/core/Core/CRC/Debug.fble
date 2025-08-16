@@ -11,8 +11,8 @@
 
 % ShowBits = /Core/Digits/Show%.ShowBits;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
 
 @ String@ = /Core/String%.String@;
 

@@ -1,6 +1,6 @@
 
-<@>% List = /Core/List%.List;
-<@>% Last = /Core/List%.Last;
+<@>% List = /Std/List%.List;
+<@>% Last = /Std/List%.Last;
 
 @ Sequence@ = /Pprof/Profile%.Sequence@;
 

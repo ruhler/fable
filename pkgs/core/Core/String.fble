@@ -2,10 +2,10 @@
 @ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Items = /Core/List%.Items;
-<@>% Append = /Core/List%.Append;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
 
 # String@ --
 #   A character string.
@@ -47,13 +47,13 @@
 #
 # Example Use:
 #   String@ s = Strs[Str|'x is ', Show(x), Str|'.']
-(List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
+(List@<String@>) { String@; } Strs = /Std/List%.Concat<Char@>;
 
 # @func[Join] Joins a list of strings together.
 #  @arg[List@<String@>][strings] The list of strings to join.
 #  @arg[String@][separator] Separator to put between the joined strings.
 #  @returns[String@] The joined string.
-(List@<String@>, String@) { String@; } Join = /Core/List%.Join<Char@>;
+(List@<String@>, String@) { String@; } Join = /Std/List%.Join<Char@>;
 
 # Lines --
 #   Concatenates a list of strings together, adding newlines after each

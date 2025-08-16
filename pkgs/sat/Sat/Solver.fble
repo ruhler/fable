@@ -7,11 +7,11 @@
 % Incr = /Std/Int%.Incr;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Empty = /Core/List%.Empty;
-<@>% Items = /Core/List%.Items;
-<@>% Append = /Core/List%.Append;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -102,7 +102,7 @@
 
   # Removes a variable from a clause.
   (VarId@, Clause@) { Clause@; } RemoveVar = (VarId@ vid, Clause@ c) {
-    /Core/List%.ForEach(c, Empty<Var@>, (Var@ v, List@<Var@> vars) {
+    /Std/List%.ForEach(c, Empty<Var@>, (Var@ v, List@<Var@> vars) {
       EqId(vid, v.id).?(true: vars);
       Items(v, vars);
     });
@@ -169,7 +169,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
   };
 
   # Update Vars@ data structure.
-  Vars@ vars = /Core/List%.ForEach(clause, s.vars,
+  Vars@ vars = /Std/List%.ForEach(clause, s.vars,
     (Var@ v, Vars@ vs) {
       Vars.InsertWith(vs, v.id, (Maybe@<VarS@> mx) {
           VarS@ x = mx.?(
@@ -200,7 +200,7 @@ AddClauseAt = (Solver@ s, ClauseId@ id, List@<Var@> vars) {
 
 (Solver@, List@<Clause@>) { Solver@; }
 AddClauses = (Solver@ solver, List@<Clause@> clauses) {
-  /Core/List%.ForEach(clauses, solver, (Clause@ c, Solver@ s) {
+  /Std/List%.ForEach(clauses, solver, (Clause@ c, Solver@ s) {
     AddClause(s, c);
   });
 };
@@ -252,7 +252,7 @@ RemoveClause = (ClauseId@ id, Solver@ s) {
   mcs.?(nothing: s);
 
   Clause@ cs = mcs.just;
-  Solver@ ns = /Core/List%.ForEach(cs, s, RemoveClauseFromVar(id));
+  Solver@ ns = /Std/List%.ForEach(cs, s, RemoveClauseFromVar(id));
   ns.@(clauses: Clauses.Delete(ns.clauses, id));
 };
 

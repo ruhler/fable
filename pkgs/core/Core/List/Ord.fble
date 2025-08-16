@@ -5,7 +5,7 @@
 % Eq = /Core/Ord%.Eq;
 % Gt = /Core/Ord%.Gt;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@ A@>(Ord@<A@>) { Ord@<List@<A@>>; }
 Ord = <@ A@>(Ord@<A@> ord) {

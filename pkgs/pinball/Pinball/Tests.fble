@@ -1,8 +1,8 @@
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
-<@>% List = /Core/List%.List;
-<@>% Empty = /Core/List%.Empty;
+<@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Neg = /Pinball/Num%.Neg;

@@ -3,8 +3,8 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

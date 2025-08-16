@@ -1,7 +1,7 @@
 
 % True = /Std/Bool%.True;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

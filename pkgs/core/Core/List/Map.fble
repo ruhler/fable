@@ -3,8 +3,8 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -115,7 +115,7 @@
 
     MapP@<V@> p = map.p;
     B@ b1 = base;
-    B@ b2 = p.empty.?(just: body(/Core/List%.Empty<T@>, p.empty.just, b1), nothing: b1);
+    B@ b2 = p.empty.?(just: body(/Std/List%.Empty<T@>, p.empty.just, b1), nothing: b1);
 
     M.ForEach(p.items, b2, (T@ x, Map@<V@> m, B@ b) {
       ForEach(m, b, (List@<T@> l, V@ v, B@ bb) {

@@ -6,9 +6,9 @@
 % IsZero = /Std/Int/Eq%.IsZero;
 % Le = /Std/Int/Eq%.Le;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% Empty = /Core/List%.Empty;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
 
 # Length --
 #   Returns the length of a list.

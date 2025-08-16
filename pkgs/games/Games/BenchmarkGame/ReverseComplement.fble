@@ -10,11 +10,11 @@
 % Int = /Core/Int/Lit%.Int;
 % IsZero = /Std/Int/Eq%.IsZero;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Items = /Core/List%.Items;
-<@>% Append = /Core/List%.Append;
-<@>% Reverse = /Core/List%.Reverse;
-<@>% Map = /Core/List%.Map;
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
+<@>% Reverse = /Std/List%.Reverse;
+<@>% Map = /Std/List%.Map;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

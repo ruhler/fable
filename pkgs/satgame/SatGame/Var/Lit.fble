@@ -10,8 +10,8 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% Append = /Core/List%.Append;
+<@>@ List@ = /Std/List%.List@;
+<@>% Append = /Std/List%.Append;
 <@>% Take = /Core/List/Index%.Take;
 
 @ Var@ = /SatGame/Var%.Var@;

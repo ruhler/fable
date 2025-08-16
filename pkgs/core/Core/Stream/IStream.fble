@@ -5,8 +5,8 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>% Items = /Core/List%.Items;
-<@>% Reverse = /Core/List%.Reverse;
+<@>% Items = /Std/List%.Items;
+<@>% Reverse = /Std/List%.Reverse;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

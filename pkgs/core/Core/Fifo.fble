@@ -1,8 +1,8 @@
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Items = /Core/List%.Items;
-<@>% Reverse = /Core/List%.Reverse;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+<@>% Reverse = /Std/List%.Reverse;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -19,7 +19,7 @@
 #  empty.
 <@>@ Fifo@ = <@ T@> { *(List@<T@> front, List@<T@> back); };
 
-Fifo@ Empty = <@ T@> { Fifo@(/Core/List%.Empty<T@>, /Core/List%.Empty<T@>); };
+Fifo@ Empty = <@ T@> { Fifo@(/Std/List%.Empty<T@>, /Std/List%.Empty<T@>); };
 
 # @func[First] Returns the first element of the fifo.
 #  @arg[Fifo@<T@>][fifo] The fifo to get the first element for.
@@ -40,7 +40,7 @@ Fifo@ Empty = <@ T@> { Fifo@(/Core/List%.Empty<T@>, /Core/List%.Empty<T@>); };
 <@ T@>(T@, Fifo@<T@>) { Fifo@<T@>; } Put = <@ T@>(T@ x, Fifo@<T@> fifo) {
   fifo.front.?(empty: {
     Unit@ _ = fifo.back.empty;  # invariant assertion.
-    Fifo@(List[x], /Core/List%.Empty<T@>);
+    Fifo@(List[x], /Std/List%.Empty<T@>);
   });
   Fifo@(fifo.front, Items(x, fifo.back));
 };
@@ -53,7 +53,7 @@ Fifo@ Empty = <@ T@> { Fifo@(/Core/List%.Empty<T@>, /Core/List%.Empty<T@>); };
 <@ T@>(Fifo@<T@>) { Fifo@<T@>; } Next = <@ T@>(Fifo@<T@> fifo) {
   fifo.front.?(empty: fifo);
   List@<T@> tail = fifo.front.items.tail;
-  tail.?(empty: Fifo@(Reverse(fifo.back), /Core/List%.Empty<T@>));
+  tail.?(empty: Fifo@(Reverse(fifo.back), /Std/List%.Empty<T@>));
   Fifo@(tail, fifo.back);
 };
 

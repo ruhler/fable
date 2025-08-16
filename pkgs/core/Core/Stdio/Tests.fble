@@ -6,9 +6,9 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Empty = /Core/List%.Empty;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Empty = /Std/List%.Empty;
 
 <@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
@@ -40,7 +40,7 @@
 % PutStr = OStream.PutStr;
 
 (String@) { List@<Int@>; } Bytes = (String@ str) {
-  /Core/List%.Map(str, /Core/Char/Ascii%.Ord);
+  /Std/List%.Map(str, /Core/Char/Ascii%.Ord);
 };
 
 List@<Int@> HelloWorld = Bytes|'Hello

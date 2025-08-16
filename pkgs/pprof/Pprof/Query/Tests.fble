@@ -4,8 +4,8 @@
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

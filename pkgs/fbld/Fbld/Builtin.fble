@@ -1,5 +1,5 @@
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -13,7 +13,7 @@
 @ Builtin@ = *(String@ name, Impl@ impl);
 
 (List@<Builtin@>) { Env@; } Builtins = (List@<Builtin@> builtins) {
-  /Core/List%.ForEach(builtins, Empty, (Builtin@ x, Env@ e) {
+  /Std/List%.ForEach(builtins, Empty, (Builtin@ x, Env@ e) {
     Insert(e, x.name, x.impl);
   });
 };

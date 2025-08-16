@@ -1,0 +1,214 @@
+# @module[/Std/List%]
+#  List type and basic operations.
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# @type[List@] A list of items.
+#  The data structure layout provides constant time access to the first
+#  element, linear access to later elements in the list.
+#
+#  @arg[@][T@] The type of element on the list.
+#
+#  @field[T@][head] The first item in a non-empty list.
+#  @field[List@<T@>][tail]
+#   Everything after the first item in a non-empty list.
+#
+#  @field[@][items] A non-empty list.
+#  @field[Unit@][empty] An empty list.
+<@>@ List@ = <@ T@> {
+  @ L@ = +(*(T@ head, L@ tail) items, Unit@ empty);
+  L@;
+};
+
+# @func[List] The list literal.
+#  The identity function on lists, which can be used for list literals. For
+#  example:
+#
+#  @code[fble] @
+#   List@<ABC@> x = List[A, B, A, C];
+#
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The contents of the list.
+#  @returns[List@<T@>] The given list.
+<@ T@>(List@<T@>) { List@<T@>; }
+List = <@ T@>(List@<T@> list) {
+  list;
+};
+
+# @func[Items] Prepend an item to a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[T@][head] The element to prepend to the list.
+#  @arg[List@<T@>][tail] The list to prepend the element to.
+#  @returns[List@<T>]
+#   A new list consisting of the element @a[head] followed by the elements
+#   from the list @a[tail].
+<@ T@>(T@, List@<T@>) { List@<T@>; }
+Items = <@ T@>(T@ head, List@<T@> tail) {
+  List@(items: @(head, tail));
+};
+
+# @func[Empty] The empty list.
+#  @arg[@][T@] The type of element of the list.
+#  @returns[List@<T@>] An empty list.
+#
+#  Example:
+#
+#  @code[fble] @
+#   List@<Foo@> empty = Empty<Foo@>;
+List@ Empty = <@ T@> {
+  List@<T@>(empty: Unit);
+};
+
+# @func[Append] Appends one list to another.
+#  @arg[@][T@] The type of elements in the list.
+#  @arg[List@<T@>][a] The first list.
+#  @arg[List@<T@>][b] The second list.
+#  @returns[List@<T>]
+#   A list containing the elements of @a[a] followed by the elements of @a[b].
+#
+#  Example:
+#
+#  @code[fble] @
+#   List@<Planet@> terrestrial = List[Mercury, Venus, Earth, Mars];
+#   List@<Planet@> giant = List[Jupiter, Saturn, Uranus, Neptune];
+#   List@<Planet@> planets = Append(terrestrial, giant);
+<@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
+Append = <@ T@>(List@<T@> a, List@<T@> b) {
+  a.?(empty: b);
+  Items(a.items.head, Append(a.items.tail, b));
+};
+
+# @func[Concat] Concatenates a list of lists together into a single list.
+#  @arg[@][T@] The type of elements on the list.
+#  @arg[List@<List@<T@>>][lists] A list of lists to concatenate.
+#  @returns[List@<T@>] The elements of all the list of lists in order.
+#
+#  Example:
+#
+#  @code[fble] @
+#   List@<Planet@> terrestrial = List[Mercury, Venus, Earth, Mars];
+#   List@<Planet@> giant = List[Jupiter, Saturn, Uranus, Neptune];
+#   List@<Planet@> planets = Concat(List[terrestrial, giant]);
+<@ T@>(List@<List@<T@>>) { List@<T@>; }
+Concat = <@ T@>(List@<List@<T@>> lists) {
+  lists.?(empty: Empty<T@>);
+  Append(lists.items.head, Concat(lists.items.tail));
+};
+
+# @func[Join] Joins a list of lists together.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<List@<T@>>][lists] The list of lists to join.
+#  @arg[List@<T@>][separator] Separator to put between the joined lists.
+#  @returns[List@<T@>] The joined list.
+<@ T@>(List@<List@<T@>>, List@<T@>) { List@<T@>; }
+Join = <@ T@>(List@<List@<T@>> lists, List@<T@> separator) {
+  lists.?(empty: Empty<T@>);
+  lists.items.tail.?(empty: lists.items.head);
+  Concat[lists.items.head, separator, Join(lists.items.tail, separator)];
+};
+
+# @func[Head] Returns the first element in a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to get the first element of.
+#  @returns[T@] The first element on the list.
+#  @sideeffects Behavior is undefined if the list is empty.
+<@ T@>(List@<T@>) { T@; }
+Head = <@ T@>(List@<T@> list) {
+  list.items.head;
+};
+
+# @func[Tail] Returns all but the first element of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to get all but the first element of.
+#  @returns[List@<T@>] All but the first element in the list.
+#  @sideeffects Behavior is undefined if the list is empty.
+<@ T@>(List@<T@>) { List@<T@>; }
+Tail = <@ T@>(List@<T@> list) {
+  list.items.tail;
+};
+
+# @func[Last] Returns the last element in a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to get the last element of.
+#  @returns[T@] The last element in the list.
+#  @sideeffects Behavior is undefined if the list is empty.
+<@ T@>(List@<T@>) { T@; }
+Last = <@ T@>(List@<T@> list) {
+  list.items.tail.?(empty: list.items.head);
+  Last(list.items.tail);
+};
+
+# @func[Init] Returns all but the last element in a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to get the all but the last element of.
+#  @returns[List@<T@>] All but the last element of the list.
+#  @sideeffects Behavior is undefined if the list is empty.
+<@ T@>(List@<T@>) { List@<T@>; }
+Init = <@ T@>(List@<T@> list) {
+  list.items.tail.?(empty: Empty<T@>);
+  Items(list.items.head, Init(list.items.tail));
+};
+
+# @func[ForEach] Iterate over elements of a list.
+#  @arg[@][A@] The type of element on the list.
+#  @arg[List@<A@>][list] The list to iterate over.
+#  @arg[@][B@] The type of data to return.
+#  @arg[B@][base] The value to return for an empty list.
+#  @arg[(A@, B@) { B@; }][body]
+#   A function to update the value to return given the next element on the
+#   list.
+#  @returns[B@]
+#   The result of applying the body consecutively to the base value, once for
+#   each element in the list in list order.
+#
+# Conceptually the behavior is like:
+#
+# @code[txt] @
+#  B@ b = base
+#  foreach x in list:
+#    b = body(x, b)
+#  return b
+#
+# For example, to sum the elements of a list:
+#
+# @code[fble] @
+#  List@<Int@> nums = List[2, 5, 3, 6, 9];
+#  Int@ sum = ForEach(nums, 0, (Int@ num, Int@ sum) {
+#    Add(num, sum);
+#  });
+<@ A@>(List@<A@>)<@ B@>(B@, (A@, B@) { B@; }) { B@; }
+ForEach = <@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body) {
+  list.?(empty: base);
+  ForEach(list.items.tail, body(list.items.head, base), body);
+};
+
+# @func[Map] Applies a function to every element of a list.
+#  @arg[@][A@] The type of element on the given list.
+#  @arg[List@<A@>][list] The list to map over.
+#  @arg[@][B@] The type of element on the returned list.
+#  @arg[(A@) { B@; }][f] The function to apply.
+#  @returns[List@<B@>]
+#   The list of elements f(a_i) for each a_i in the input list.
+<@ A@>(List@<A@>)<@ B@>((A@) { B@; }) { List@<B@>; }
+Map = <@ A@>(List@<A@> list)<@ B@>((A@) { B@; } f) {
+  list.?(empty: Empty<B@>);
+  Items(f(list.items.head), Map(list.items.tail, f));
+};
+
+# @func[Reverse] Reverses the elements of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to reverse.
+#  @returns[List@<T@>] The elements of the given list in reverse order.
+<@ T@>(List@<T@>) { List@<T@>; }
+Reverse = <@ T@>(List@<T@> list) {
+  ForEach(list, Empty<T@>, Items<T@>);
+};
+
+@(
+  List@, List, Items, Empty,
+  Append, Concat, Join,
+  Head, Tail, Last, Init,
+  ForEach, Map,
+  Reverse
+);

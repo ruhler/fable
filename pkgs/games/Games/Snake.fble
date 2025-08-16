@@ -11,11 +11,11 @@
 % Shift = /Core/LFSR%.Shift;
 % ShiftInt = /Core/LFSR/Int%.ShiftInt;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Init = /Core/List%.Init;
-<@>% Items = /Core/List%.Items;
-<@>% ForEach = /Core/List%.ForEach;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Init = /Std/List%.Init;
+<@>% Items = /Std/List%.Items;
+<@>% ForEach = /Std/List%.ForEach;
 
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;

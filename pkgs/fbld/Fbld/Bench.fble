@@ -6,7 +6,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
@@ -23,7 +23,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 (String@) { List@<Int@>; } Bytes = (String@ str) {
-  /Core/List%.Map(str, /Core/Char/Ascii%.Ord);
+  /Std/List%.Map(str, /Core/Char/Ascii%.Ord);
 };
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {

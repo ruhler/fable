@@ -6,7 +6,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
 @ PureState@ = /Core/Stdio/Pure%.PureState@;

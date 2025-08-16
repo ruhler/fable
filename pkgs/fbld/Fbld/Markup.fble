@@ -1,5 +1,5 @@
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
@@ -63,7 +63,7 @@ Markups = (List@<Markup@> xs) {
 ToString_ = (Markup@ m, String@ s) {
   m.?(
     empty: r.return(s),
-    plain: r.return(/Core/List%.Append(m.plain.text, s)),
+    plain: r.return(/Std/List%.Append(m.plain.text, s)),
     command: {
       Error<String@>(m.command.name.loc, Strs[
           Str|'expected plain text, but found command @',

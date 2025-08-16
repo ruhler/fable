@@ -13,7 +13,7 @@
 #  @returns[List@<Entry@>]
 #   The time of each sequence in descending order
 Query@ Query = (Profile@ profile) {
-  Sort(/Core/List%.Map(profile.samples, (Sample@ sample) {
+  Sort(/Std/List%.Map(profile.samples, (Sample@ sample) {
     Entry@(sample.sequence, MetricOf(sample.values));
   }));
 };

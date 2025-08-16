@@ -3,8 +3,8 @@
 % Neg = /Std/Int%.Neg;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 
 # SinCos@ --
 #   Stores a pair of Sin and Cos values for a particular angle, scaled by the

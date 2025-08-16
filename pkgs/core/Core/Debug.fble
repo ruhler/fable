@@ -3,7 +3,7 @@
 
 % Chars = /Core/Char%.Chars;
 
-<@>% Append = /Core/List%.Append;
+<@>% Append = /Std/List%.Append;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

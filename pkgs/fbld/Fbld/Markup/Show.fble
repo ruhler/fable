@@ -20,7 +20,7 @@ Show@<Markup@> Markup = (Markup@ m) {
     empty: Str|'{}',
     plain: /Fbld/Text/Show%.Show(m.plain),
     command: Command(m.command),
-    sequence: /Core/List%.Append(Markup(m.sequence.a), Markup(m.sequence.b)));
+    sequence: /Std/List%.Append(Markup(m.sequence.a), Markup(m.sequence.b)));
 
 };
 

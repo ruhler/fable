@@ -1,5 +1,5 @@
 
-<@>@ List@ = /Core/List%.List@;
+<@>@ List@ = /Std/List%.List@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
