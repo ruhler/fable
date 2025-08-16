@@ -12,7 +12,7 @@
 <@>% Items = /Core/List%.Items;
 <@>% Reverse = /Core/List%.Reverse;
 <@>% Split = /Core/List/Eq%.Split;
-<@>% Length = /Core/List/Length%.Length;
+<@>% Length = /Core/List/Index%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

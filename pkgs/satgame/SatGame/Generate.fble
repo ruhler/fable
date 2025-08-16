@@ -20,7 +20,7 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% Items = /Core/List%.Items;
 <@>% List = /Core/List%.List;
-% Take = /Core/List/Length%.Take;
+% Take = /Core/List/Index%.Take;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
 @ Clause@ = /SatGame/Puzzle%.Clause@;

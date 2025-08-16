@@ -12,8 +12,8 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
-% Take = /Core/List/Length%.Take;
-% Drop = /Core/List/Length%.Drop;
+% Take = /Core/List/Index%.Take;
+% Drop = /Core/List/Index%.Drop;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

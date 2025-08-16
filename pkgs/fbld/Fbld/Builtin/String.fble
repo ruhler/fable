@@ -5,7 +5,7 @@
 Int@ 0 = /Std/Int%.0;
 Int@ 1 = /Std/Int%.1;
 
-<@>% Get = /Core/List/Length%.Get;
+<@>% Get = /Core/List/Index%.Get;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

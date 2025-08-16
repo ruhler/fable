@@ -1,7 +1,7 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>% Get = /Core/List/Length%.Get;
+<@>% Get = /Core/List/Index%.Get;
 
 @ String@ = /Core/String%.String@;
 

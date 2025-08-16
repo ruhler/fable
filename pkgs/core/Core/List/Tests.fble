@@ -34,7 +34,7 @@
 <@>% Reverse = /Core/List%.Reverse;
 <@>% Join = /Core/List%.Join;
 
-<@>% Length = /Core/List/Length%.Length;
+<@>% Length = /Core/List/Index%.Length;
 
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Has = /Core/List/Eq%.Has;

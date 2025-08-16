@@ -19,7 +19,7 @@
 <@>% Items = /Core/List%.Items;
 <@>% Empty = /Core/List%.Empty;
 <@>% ForEach = /Core/List%.ForEach;
-<@>% Length = /Core/List/Length%.Length;
+<@>% Length = /Core/List/Index%.Length;
 
 % Bases = /Invaders/Bases%;
 @ Bases@ = Bases.Bases@;

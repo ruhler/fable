@@ -13,8 +13,8 @@ Int@ 4 = Int|4;
 <@>@ List@ = /Core/List%.List@;
 <@>% Items = /Core/List%.Items;
 <@>% Split = /Core/List/Eq%.Split;
-<@>% Length = /Core/List/Length%.Length;
-<@>% Get = /Core/List/Length%.Get;
+<@>% Length = /Core/List/Index%.Length;
+<@>% Get = /Core/List/Index%.Get;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
