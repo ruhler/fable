@@ -12,6 +12,16 @@
   L@;
 };
 
+# List --
+#   A function to use for writing list literals.
+#
+# Type Parameters:
+#   T@ - The type of element on the list.
+#
+# Example Use:
+#   List@<ABC@> x = List<ABC@>[A, B, A, C];
+<@ T@>(List@<T@>) { List@<T@>; } List = <@ T@>(List@<T@> l) { l; };
+
 # Items -- 
 #   Prepends an element to a list.
 #
@@ -37,15 +47,67 @@ List@ Empty = <@ T@> {
   List@<T@>(empty: Unit);
 };
 
-# List --
-#   A function to use for writing list literals.
+# Append --
+#   Appends one list to another.
 #
 # Type Parameters:
-#   T@ - The type of element on the list.
+#   T@ - The type of elements in the list.
 #
-# Example Use:
-#   List@<ABC@> x = List<ABC@>[A, B, A, C];
-<@ T@>(List@<T@>) { List@<T@>; } List = <@ T@>(List@<T@> l) { l; };
+# Arguments:
+#   a - the first list
+#   b - the second list
+#
+# Returns:
+#   A list that contains the elements of 'a' followed by the elements of 'b'.
+<@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
+Append = <@ T@>(List@<T@> a, List@<T@> b) {
+  a.?(empty: b);
+  Items(a.items.head, Append(a.items.tail, b));
+};
+
+# Concat --
+#   Flattens a list of lists into a single list of all the elements.
+#
+# Type Parameters:
+#   T@ - The type of element in the resulting list.
+#
+# Arguments:
+#   x - The list to flatten.
+#
+# Returns:
+#   A list with all elements from the list of lists x, in order.
+<@ T@>(List@<List@<T@>>) { List@<T@>; } Concat = <@ T@>(List@<List@<T@>> x) {
+  x.?(empty: Empty<T@>);
+  Append(x.items.head, Concat(x.items.tail));
+};
+
+# @func[Join] Joins a list of lists together.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<List@<T@>>][lists] The list of lists to join.
+#  @arg[List@<T@>][separator] Separator to put between the joined lists.
+#  @returns[List@<T@>] The joined list.
+<@ T@>(List@<List@<T@>>, List@<T@>) { List@<T@>; }
+Join = <@ T@>(List@<List@<T@>> lists, List@<T@> separator) {
+  lists.?(empty: Empty<T@>);
+  lists.items.tail.?(empty: lists.items.head);
+  Concat[lists.items.head, separator, Join(lists.items.tail, separator)];
+};
+
+# Head -- 
+#   Returns the first element in a list.
+#
+# Behavior is undefined if the list is empty.
+<@ T@>(List@<T@>) { T@; } Head = <@ T@>(List@<T@> list) {
+  list.items.head;
+};
+
+# Tail -- 
+#   Returns all but the first element in a list.
+#
+# Behavior is undefined if the list is empty.
+<@ T@>(List@<T@>) { List@<T@>; } Tail = <@ T@>(List@<T@> list) {
+  list.items.tail;
+};
 
 # Last --
 #   Returns the last element in a list.
@@ -111,11 +173,6 @@ ForEach = <@ A@>(List@<A@> list)<@ B@>(B@ base, (A@, B@) { B@; } body) {
   ForEach(list.items.tail, body(list.items.head, base), body);
 };
 
-# Reverses elements of a list.
-<@ T@>(List@<T@>) { List@<T@>; } Reverse = <@ T@>(List@<T@> l) {
-  ForEach(l, Empty<T@>, Items<T@>);
-};
-
 # Map --
 #   Applies a function to every element of a list.
 #
@@ -135,51 +192,15 @@ Map = <@ A@>(List@<A@> a)<@ B@>((A@) { B@; } f) {
   Items(f(a.items.head), Map(a.items.tail, f));
 };
 
-# Append --
-#   Appends one list to another.
-#
-# Type Parameters:
-#   T@ - The type of elements in the list.
-#
-# Arguments:
-#   a - the first list
-#   b - the second list
-#
-# Returns:
-#   A list that contains the elements of 'a' followed by the elements of 'b'.
-<@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
-Append = <@ T@>(List@<T@> a, List@<T@> b) {
-  a.?(empty: b);
-  Items(a.items.head, Append(a.items.tail, b));
+# Reverses elements of a list.
+<@ T@>(List@<T@>) { List@<T@>; } Reverse = <@ T@>(List@<T@> l) {
+  ForEach(l, Empty<T@>, Items<T@>);
 };
 
-# Concat --
-#   Flattens a list of lists into a single list of all the elements.
-#
-# Type Parameters:
-#   T@ - The type of element in the resulting list.
-#
-# Arguments:
-#   x - The list to flatten.
-#
-# Returns:
-#   A list with all elements from the list of lists x, in order.
-<@ T@>(List@<List@<T@>>) { List@<T@>; } Concat = <@ T@>(List@<List@<T@>> x) {
-  x.?(empty: Empty<T@>);
-  Append(x.items.head, Concat(x.items.tail));
-};
-
-# @func[Join] Joins a list of lists together.
-#  @arg[@][T@] The type of element on the list.
-#  @arg[List@<List@<T@>>][lists] The list of lists to join.
-#  @arg[List@<T@>][separator] Separator to put between the joined lists.
-#  @returns[List@<T@>] The joined list.
-<@ T@>(List@<List@<T@>>, List@<T@>) { List@<T@>; }
-Join = <@ T@>(List@<List@<T@>> lists, List@<T@> separator) {
-  lists.?(empty: Empty<T@>);
-  lists.items.tail.?(empty: lists.items.head);
-  Concat[lists.items.head, separator, Join(lists.items.tail, separator)];
-};
-
-@(List@, List, Items, Empty, Append, Last, Init, Concat, Map, ForEach, Reverse,
-  Join);
+@(
+  List@, List, Items, Empty,
+  Append, Concat, Join,
+  Head, Tail, Last, Init,
+  ForEach, Map,
+  Reverse
+);

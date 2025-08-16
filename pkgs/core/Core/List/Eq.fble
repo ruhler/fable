@@ -30,7 +30,7 @@ Has = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   l.?(empty: False);
   p(l.items.head).?(true: True);
   Has(l.items.tail, p);
-};
+}.%(@/Core/List%);
 
 # Search --
 #   Return the first element of the list satisfying the given property.
@@ -39,7 +39,7 @@ Search = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   l.?(empty: Nothing<T@>);
   p(l.items.head).?(true: Just(l.items.head));
   Search(l.items.tail, p);
-};
+}.%(@/Core/List%);
 
 # Contains --
 #   Return true if the list contains the given element, false otherwise.

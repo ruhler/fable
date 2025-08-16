@@ -1,0 +1,162 @@
+Ord@
+====
+
+A standard interface for things that can be compared.
+
+For use in:
+* List sort.
+* Generic tree map.
+
+From experience I know it's better to use GT/LT/EQ than it is to implement in
+terms of just Lt function. That way we can do a single call to the compare
+operation instead of having to call it twice.
+
+Today I define Ordering@ as lt, eq, or gt. But it also looks pretty similar to
+the Sign@ type I added for Int@: -, 0, +.
+
+Does it make sense to try and align these? What reads better?
+
+ord(a, b):
+  '-': a is less than b
+  '0': a equals b
+  '+': a is greater than b.
+
+It's like of like: Ord(a, b) = Sgn(Sub(a, b));
+
+Does it make sense to change Sgn to return an Ordering?
+
+Sgn(x).?(Eq: ...);
+
+Ord(x, 0).?(Eq: ..., Lt: ..., Gt: ...);
+Ord(a, b).?('-': ...)
+Ord(a, b).?('<': ..., '==', ... '>': ...);
+
+
+Ugh. It seems like, even though these are basically the same type, it's not
+intuitive to use them interchangeably.
+
+Anyway, I like it how I have it currently.
+
+I suppose mathematically, (T@, T@) { Bool@; } is an 'order'. There isn't a
+notion of 'lt', 'eq', or 'gt' from math's point of view. We just have <=.
+
+lt: a <= b and NOT(b <= a)
+eq: a <= b and b <= a
+gt: NOT(a <= b) and (b <= a)
+??: NOT(a <= b) and NOT(b <= a)  (partial order case)
+
+Haskell uses 'Ord' for the class and 'Ordering' for the enum LT/EQ/GT. I feel
+like in java and other places, an int value is used for the ordering, where
+sign of the int corresponds to the order. For example, strcmp.
+
+Let me see where I use ord today, and whether Sign@ makes sense for that.
+
+In defining orders:
+
+  /Core/Ord%.Ord@<Alien@> AlienOrd = (Alien@ a, Alien@ b) {
+    Ord(a.row, b.row).?(lt: /Core/Ord%.Lt, gt: /Core/Ord%.Gt);
+    Ord(a.col, b.col);
+  };
+
+  /Core/Ord%.Ord@<Alien@> AlienOrd = (Alien@ a, Alien@ b) {
+    Ord(a.row, b.row).?('-': /Core/Ord%.'-', '+': /Core/Ord%.'+');
+    Ord(a.col, b.col);
+  };
+
+
+  Ordering@ ordering = ord(key, map.map.key);
+  ordering.?('-': { ... });
+  ordering.?('+': { ... });
+
+No, Sign@ doesn't feel right to me for that.
+
+I doubt we'll be doing much conversions between Sign@ and Ordering@, so don't
+really need to worry about that.
+
+How about using Order@ instead of Ordering@? What's the difference? Since I
+know I want to use the short form Ord@...
+
+What if I called it Relation@ instead of Ordering@?
+
+Because 'Eq' is a relation. 'Lt' is a relation. And 'Gt' is a relation. And
+when I compare two things, I want to get their relation. No?
+
+<@>@ Order@ = <@ T@> { +(Unit@ lt, Unit@ eq, Unit@ gt); }
+
+Where:
+
+Relation@ = +(...);
+
+Yeah. I like that.
+
+Call it Order@ or Ord@? We shorten everything. May as well here too. Call it
+Ord@.
+
+Though Ordering@ is more suggestive of Ord@ than Relation@. So maybe it's
+worth using that anyway. Like, I know if I see a type called Ordering@, it's
+probably related to Ord. It's much less obvious that a type called
+Relation@ is related to Ord@, as opposed to, say, equality, or sets, or
+functions.
+
+Okay. Good enough. Keep it as Ord@ and Ordering@. Maybe we say Ordering@ is
+short for 'Order relationship'? I don't know. Probably doesn't matter much.
+
+Order is short enough and used rarely enough. Why not spell it out? Order@ and
+Ordering@? /Std/Order%. Much shorter than Equality compared to Eq.
+
+Ord could be confused for 'Ordinal'. Order couldn't?
+
+I find it interesting that Haskell includes <=, >=, ==, max, min in the Ord
+class. That suggests, for example, we might want to define those functions in
+Ord% specifically. And then there is no need to define them in Int@ say. Or
+the Int@ definitions can reuse the ones from /Std/Ord%?
+
+Similar for Eq I suppose. /Std/Eq% could define Eq and Ne functions, which
+Int@ could reuse if it wanted to?
+
+Now, does 'Lt' refer to the relation less than, or is it the function that
+tests that relation? They are the same though, right?
+
+Or, if you have an Ord@ function, just ... dunno.
+
+Now is where Sign@ starts to look good again?
+
+Lt, Gt, Eq for the functions.
+'-', '+', '0' for the relationship?
+'<', '=', '>' for the relationship?
+
+  /Core/Ord%.Ord@<Alien@> AlienOrd = (Alien@ a, Alien@ b) {
+    Ord(a.row, b.row).?('<': /Core/Ord%.'<', '>': /Core/Ord%.'>');
+    Ord(a.col, b.col);
+  };
+
+  Ordering@ ordering = ord(key, map.map.key);
+  ordering.?('<': { ... });
+  ordering.?('>': { ... });
+
+But we could just as well say:
+
+  '<'(0, 3).?(true: ...);
+
+Though honestly, that doesn't feel terribly natural.
+
+If we did provide Lt, Gt, Eq, Ne, Le, Max, Min, etc. in Ord%, I don't expect
+people would use it directly. It would mainly be useful for things like
+Int/Ord% to define Max, Min etc. in a shared way.
+
+Which asks the question, do we really want:
+
+Ord@ = *(
+  (T@, T@) { Bool@; } Lt,
+  (T@, T@) { Bool@; } Le,
+  (T@, T@) { Bool@; } Eq,
+  ...,
+  (T@, T@) { T@; } Max,
+  (T@, T@) { T@; } Min);
+
+Maybe I need to think and understand more about the difference between:
+* A module implementing some specifically named functions for a given type.
+* A module interface type (e.g. Map@) representing the set of common functions
+  for an interface.
+* Minimal required for a module interface versus full set of things you can do
+  based on that minimal definition.

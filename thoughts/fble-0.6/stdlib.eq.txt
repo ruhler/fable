@@ -1,0 +1,67 @@
+Equality
+========
+
+Today I have Eq@, which is a binary predicate on two items of the same type.
+The suggestion is that we are looking specifically for an equality relation,
+but in general it could be used for other things like inequalities.
+
+The proposal is pretty simple:
+
+  /Std/Eq%:
+   Eq@
+
+And we ask that most data types provide implementations called, Eq in a
+/.../Eq% submodule.
+
+Is there anything else worth discussing here?
+
+Use cases:
+* Test infra for assertions.
+* List methods StartsWith, EndsWith, etc...
+* Naturally implemented for Int@ type.
+* Presumably others.
+
+The type for Eq@ more generally describes a relation. I don't need to imply
+any particular properties, but maybe it's useful to. For example, maybe we
+want to use the convention that Eq@ is used for equivalence relations, as
+opposed to more generic partial orderings of things.
+
+Does it make sense to define things like:
+ <@>@ P@ = <@ T@> { (T@) { Bool@; }; };
+ <@>@ R@ = <@ T@> { (T@, T@) { Bool@; }; };
+
+And then use R@ everywhere?
+
+Well, except, R@ isn't nearly as descriptive as Eq@. I prefer Eq@ for my use
+cases. We could always define R@ later if it would be useful.
+
+Seems simple enough to me.
+
+If you wanted to be more explicit, we could do something like:
+
+<@>@ Eq@ = <@ T@> {
+  *((T@, T@) { Bool@; } eq, (T@, T@) { Bool@; } ne);
+};
+
+Now we are saying you need to support both == and !=, and we are giving them
+very specific names.
+
+Why would you need to provide both eq and ne when you could always derive one
+from the other? I don't know. You might say one is more efficient to implement
+than the other, but I don't buy that. The implementations can be identical but
+for swapping True with False in everything that is returned?
+
+This seems like unnecessary indirection to me. Why ask everyone to write
+eq.eq(...) instead of directly using eq(...)?
+
+Mathematically equivalence is reflexive, symmetric, transitive. That doesn't
+tell me anything about what I should call it or what properties it should
+support.
+
+---
+
+Discussion on stdlib.ord.txt suggests maybe we want to define:
+
+<@ T@>(Eq@<T@>, T@, T@) Eq = <@ T@>(Eq@<T@> eq, T@ a, T@ b) { eq(a, b); };
+<@ T@>(Eq@<T@>, T@, T@) Ne = <@ T@>(Eq@<T@> eq, T@ a, T@ b) { Not(eq(a, b)); };
+

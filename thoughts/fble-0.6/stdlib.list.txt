@@ -430,3 +430,432 @@ Reactions:
   Empty<Foo@> reads like it's making an Empty Foo@, not an empty list of Foo@.
   There's nothing about 'Empty' that suggests 'list'.
   I have existing 'Empty' for: Env@, Fifo@, Markup@.
+
+---
+
+Empty, EmptyList, List.Empty, NoItems, List<>[].
+
+Items. Insert?
+
+Insert sounds like a decent generic name for forming a list. Analogous to Map
+Insert. If I don't mind having overlapping names for things, maybe I should
+Have List.Empty and List.Insert?
+
+I don't know. Maybe let's move ahead for now and revisit this later.
+
+* IsCons, IsNil
+  Rename to IsEmpty and IsItems? Again, 'items' feels weird in this context.
+
+'NonEmpty'? List.NonEmpty(head, tail). List.IsNotEmpty. NotEmpty?
+
+
+List search: /Std/List/Search%
+* Has, GetFirst, GetLast, GetAll
+* TakeWhile, DropWhile, Span (?), Split
+* Count (?) (adds Int@ dependency, otherwise makes sense to have here)
+* DropAll? DropFirst? DropLast?
+
+Has: given a predicate, check if the list has anything that satisfies the
+predicate, without returning whatever does or does not satisfy it.
+
+I don't currently have any uses of my existing 'has' function.
+
+Here's an example with 'Contains':
+
+  Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
+    Unit@ _ <- m.do(O.PutStr(stdio.out, /Invaders/Usage%));
+    m.return(True);
+  });
+
+Which would be rewritten to...
+
+  Has(/Core/String/Eq%.Eq(Str|'--help'), args)
+
+(List@<Pos@>, Pos@) { Bool@; } InPosS = /Core/List/Eq%.Contains(EqPos);
+
+(List@<Pos@>, Pos@) { Bool@; } InPosS = (List@<Pos@> l, Pos@ x) {
+  /Core/List/Eq%.Has(EqPos(x), l);
+};
+
+Both seem reasonable to me. Now, which argument comes first, the list or the
+predicate?
+
+If we put the predicate second, we can use it with bind syntax: uh...
+
+(List@<X@>, (X@) { Bool@; }) ...
+
+{
+  Pos@ p <- Has(list);
+  Eq(Pos, x);
+}
+
+Hard to imagine that being useful for much.
+
+  Has(/Core/String/Eq%.Eq(Str|'--help'), args)
+  Has(args, /Core/String/Eq%.Eq(Str|'--help'))
+
+If we had a flip function:
+  
+{
+  Pos@ p <- Flip(Has, list);
+  Eq(Pos, x);
+}
+
+Which may not work with type inference.
+
+---
+
+I don't imagine much of a use of bind syntax for predicate functions. I think
+it's much more natural to put the predicate before the list in these cases.
+Though I suppose when we get to 'ForEach' and 'Map' it might be different, and
+we may want to be more consistent.
+
+I propose we call 'Has': 'Any'.
+
+  Any(Eq(3), nums);
+  Any(IsOdd, xs);
+
+For searching for an element:
+  Search(IsOdd, xs);
+  SearchR(IsOdd, xs);
+
+Returns the list at the point of the element found, or empty list if not
+found. Search goes forward, SearchR goes from the back.
+
+Filtering:
+  KeepIf(IsOdd, xs);
+  RemoveIf(IsOdd, xs);
+
+Feels most natural to me. Because I never remember if 'filter' keeps elements
+or gets rid of them.
+
+Apparently I have no existing uses of 'Has', or 'Search'. No use of
+'RemoveAll', not use of 'RemoveFirst'. Maybe those were there from a time when
+I was using list for Set, and then I switched to a specific Set API?
+
+
+How about TakeWhile, DropWhile? Those sound like reasonable names to me.
+
+For Count, we could use CountIf? But again, I want to separate this to avoid
+the potential false dependency on Int@.
+
+How about 'span' and 'break'? Those are just TakeWhile, DropWhile/Search
+combined into a single function. It's only for performance, to avoid double
+traversing the list. I don't know. Not sure.
+
+Split is useful, the name makes sense. But I like it to be a full split of the
+list, reverse of join. What would we call a partial split? And note, our
+partial split would want to include the delimiter element presumably, unlike
+our full Split.
+
+List search: /Std/List/Search%
+* Has -> Any, GetFirst -> Search, GetLast -> SearchR, GetAll -> KeepIf
+* TakeWhile -> TakeWhile, DropWhile -> DropWhile, Span (?), Split -> Split
+* Count -> CountIf (?) (adds Int@ dependency, otherwise makes sense to have here)
+* DropAll -> RemoveIf, DropFirst? DropLast?
+
+How do we feel about location of the predicate in general? First or second
+argument?
+
+Places I put it first today:
+* RemoveFirst, RemoveAll,
+
+Places I put it second today:
+* Map, ForEach, Has, Search
+
+Motivations for having it first: it reads better to me(?). For example:
+  Any(Eq(4), xs) vs. Any(xs, Eq(4));
+  Search(xs, IsOdd);
+  Map(Mul2, xs); Map(xs, Mul2);
+
+Okay, not so convinced to put it first based on that.
+
+Motivation for having it first: the predicate is more general than the list
+  For example, seems more likely we would want to say:
+   AnyIsOdd = Any(IsOdd);
+   Mul2s = Map(Mul2);
+
+  Less likely to say:
+   F = Any(xs);
+
+Motivation for having it second:
+  We can use it with bind syntax:
+     Int@ x <- Map(list);
+     Add(x, 5);
+
+  The map function at least introduces a type argument?
+    But that shouldn't really matter here.
+
+  Nicer to call directly, like in for loops:
+    ForEach(0, xs, (Int@ i, B@ b) { 
+      ...
+      });
+
+Thus the big conflict is between partial function application on one hand and
+use of bind syntax on the other.
+
+I'm leaning towards having the predicate be second?
+
+I don't know.
+
+   AnyIsOdd = Any(IsOdd);
+   Mul2s = Map(Mul2);
+
+   AnyIsOdd = (List@ l) { Any(l, IsOdd); };
+   AnyIsOdd = Flip(Any<Bool@>, IsOdd);
+
+If we put the predicate second, what makes sense and what doesn't?
+* Any(l, IsOdd), Search(l, IsOdd), SearchR(l, IsOdd)
+* KeepIf(l, IsOdd), RemoveIf(l, IsOdd)
+
+Like, KeepIf should be KeepFrom? KeepFrom(l, IsOdd), RemoveFrom(l, IsOdd);
+
+Keep(l, IsOdd); Remove(l, IsOdd)? Yeah, why not just have the short names?
+
+Split is tricky. Should it take a subsequence or an individual character? Tcl
+takes individual characters. Python takes a subsequence. Java takes a regex.
+Go takes a subsequence.
+
+My current use of Split is all by character property: IsSpace or equal to a
+certain character. Maybe it's worth having both? We could put them in two
+different submodules.
+
+* TakeWhile -> TakeWhile, DropWhile -> DropWhile, Span (?), Break (?)
+* DropFirst? DropLast?
+
+TakeWhile is a mouthful. Any simpler name we could use? DropWhile too. They
+are related to Search and SearchR. In that...
+
+  Search(l, p) = DropWhile(l, Not(p))
+
+Better to just use Search(l, Not(p))? What's an example of when I would use
+DropWhile? Maybe... DropWhile(l, IsSpace); Then Search(l, Not(IsSpace)) seems
+reasonable to me. But it reads differently. It's extra indirection.
+
+Skip(l, IsSpace)? That sounds nice. Skip any leading characters satisfying the
+predicate. aka. DropWhile.
+
+TakeWhile... would be like trying to get a word. TakeWhile(l, Not(IsSpace)).
+How would I say that? Maybe... TakeUntil(l, IsSpace)? Or just...
+Until(l, IsSpace); And While(l, IsSpace)?
+
+What does that leave? The DropWhileNot, but that's search.
+
+In other words, think of it like this:
+* take while: While
+* take while not: Until
+* drop while: Skip
+* drop while not: Search
+
+Then what is SearchR about? That's take back while not? Or, reverse take while
+not? Not sure.
+
+Anyway, the remaining ones to consider for search:
+* Span, Break, DropLast
+
+Span and Break sound good to me. Span splits the string into what satisfies
+your predicate and everything that follows. Break splits the string into what
+doesn't satisfy your predicate and everything that follows. I just need a data
+structure to return the two values:
+
+  <@ T@> { *(List@<T@> ???, List@<T@> ???); }
+
+Three names are needed:
+* Name for the data type.
+* Name for the first field.
+* Name for the second field.
+
+How would I describe these things? Let's see. Span and break are splitting the
+string into a 'prefix'... well, actually a 'head' and a 'tail'? Or a 'prefix'
+and a 'tail'?
+
+When would you use something like this in practice? Probably GetWord:
+
+  Span(input, IsWord).span and .tail. 
+
+Or:
+ 
+  Break(input, IsSpace).span and .tail.
+
+So, proposal is:
+  @<@> Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+
+Good. Swell.
+
+That leaves us with DropLast, or anything else we might want to do at the end
+of the list.
+
+We have SearchR, which is a kind of 'drop while not', but searching for the
+last occurrence of a string instead of the first. Or, working backwards, take
+from the end up to *and including* the first item seen from the back.
+
+We have 6 variations for working on the front. How about the back? SearchR
+already is something new in those regards...
+* Take everything at the tail that satisfies a predicate.
+  Like SearchR.tail. Not sure how it would be used?
+* Drop everything at the tail that satisfies a predicate.
+  Like trimming whitespace from the end of a string. We should provide a
+  function for this.
+* Drop everything at the tail up to an element that satisfies a predicate.
+  Not sure what the use case would be.
+* Take everything at the tail that goes up to an element that satisfies a
+  predicate.
+  Like SearchR, but exclusive of the element instead of inclusive. Not sure
+  what the use case would be.
+* The Span/Break analogies which split the list and provide both the front and
+  the back.
+
+Honestly I don't know the use case for SearchR. The only use case that makes a
+lot of sense to me for working at the back of lists is trimming whitespace
+from the end.
+
+Apparently python has:
+* rpartition: you give the separator, it gives you the before, middle, and
+  after, searching from the back.
+* rsplit - split, but reverses the results.
+* rstrip - remove trailing whitespace.
+* strip - remove leading and trailing whitespace.
+
+I'm thinking:
+* Trim - remove anything satisfying a predicate from the end
+* Strip - remove anything satisfying a predicate from beginning and end
+
+See how far we get with those.
+
+Otherwise it would be things like:
+* SkipR - skip over the last occurrence of something in a string?
+* UntilR - take up to but excluding the last occurrence of something?
+* WhileR - take up to and including the last occurrence of something?
+
+I don't see those as worth having. How important is SearchR? It's like strrchr
+in c. They have it, so seems reasonable for us to have it too.
+
+Thus I complete my proposed list searching functions:
+ 
+List search: /Std/List/Search%
+* Any, Keep, Remove, Split
+* Count (not 'Length', so plain word should be fine)
+* Search, SearchR, Skip, Until, While
+* Trim, Strip,
+* Span@, Span, Break
+
+---
+
+List indexing: /Std/List/Index%
+* Length, Get, Set, Take, Drop, SplitAt, SubList
+
+These are similar to search, but using indices.
+
+Length, Get, Set are all fine.
+Take and Drop sound like fine names to me.
+
+Instead of SplitAt, how about Split? Oh. No. That's not good.
+
+How about Break? Reuse the same name and Span@ from list search? Or Span.
+
+And for SubList, I like Range? Yeah. I like that.
+
+Anything we want in terms of dropping or taking from the end? We could allow
+negative indices to say from the back? I dunno.
+
+List indexing: /Std/List/Index%
+* Length, Get, Set, Take, Drop, Span, Range
+
+---
+
+* IsCons, IsNil ==> HasItems, IsEmpty.
+
+---
+
+List sequencing: /Std/List/Eq%
+* IsInfixOf, IsPrefixOf, IsSublistOf, Split
+* Uniq (here only because of Eq?)
+
+Uniq is fine.
+
+Actually, seems easy to me:
+* StartsWith, EndsWith, Contains, Split, Uniq.
+
+We could also have the search variations:
+* Search, SearchR, Until
+* Span@, Span, Break make sense if you are thinking of it as a string
+  delimiter. Like: Span(Eq, l, Str|', '); Seems a little more far fetched to
+  me. But also no harm, right?
+
+While - doesn't make any sense. It's more of a 'drop prefix', which would make
+    sense. How about: Drop? Or.. actually, Skip makes sense here.
+Trim - is basically drop the end if it matches. That makes sense to me.
+Strip - drop the front and the end. A little odd, but okay?
+
+List sequencing: /Std/List/Eq%
+* StartsWith, EndsWith, Contains, Split, Uniq
+* Eq, Ne
+* Skip, Trim, Strip, Break
+
+In this case, I feel like 'Eq' should come as the first argument, because it's
+more likely to be associated with the type. Unlike the predicate previously,
+which is more likely to be associated with the call.
+
+Do we put the needle first or the haystack, as it were? Let's do haystack.
+That's consistent with strstr and putting the list arg before the predicate.
+
+So, some examples:
+  StartsWith(Eq, l, Str|'hello');
+  Contains(Eq, l, Str|'hello');
+  Skip(Eq, l, Str|'hello');
+  Skip(Trim, l, StrE|'\r\n');
+
+Sounds reasonable. Does 'Eq' still make sense for the module? I don't think
+this requires an Eq@ class quite yet, to be honest. Eq@ is not anything more
+special than a plain predicate. Hmm... Makes sense to standardize though? But
+there's nothing to standardize here. It's not like Int@ or List@ where
+everyone has to agree. There is literally only one way you could describe Eq@.
+
+---
+
+Cool. I think I have my full list proposal now. Here it is:
+
+  /Std/List%:
+  * List@, List, Items, Empty
+  * Append, Concat, Join
+  * Head, Tail, Last, Init
+  * Reverse
+  * ForEach, Map
+
+  /Std/List/Search%:
+  * Any, Keep, Remove, Split
+  * Search, SearchR, Skip, Until, While
+  * Trim, Strip,
+  * Span@, Span, Break
+
+  /Std/List/Count%:
+  * Count
+
+  /Std/List/Index%:
+  * Length, Get, Set, Take, Drop, Span, Range
+
+  /Std/List/Sort%:
+  * Sort
+
+  /Std/List/Eq%:
+  * HasItems, IsEmpty
+  * StartsWith, EndsWith, Contains, Split, Uniq
+  * Eq, Ne
+  * Skip, Trim, Strip, Break
+  * Replace
+
+Upon review: 'replace' is the only thing missing here?
+* Eq could have a Replace function easily enough. Done.
+* Do we want to replace elements as well as substrings? You can do that with
+  Map more easily than if we had a Replace function.
+  Map(... { P(x).?(true: y, false: x); });
+
+Good. Good improvement over what we have today anyway. Let's move forward with
+this. I'm adding a fair bit, so I'll want to expand the test coverage.
+
+Also, maybe worth thinking about Eq@ and Ord@ briefly.
+
+---
+
+Uh, IsEmpty and HasItems depend on Bool@. So they should be moved elsewhere,
+right? Into Eq% module, no? Or Search%?

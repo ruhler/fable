@@ -2,6 +2,11 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add a 'function' standard library?
+ - compose, flip
+
+* Add tests for Head, Tail, Last, Init
+
 * Restrict Int@ type internals to /Std/Int%.
 * Restrict /Std/Int/IntP* modules to /Std/Int%.
 * Update references to /Core/Int in tutorials.
