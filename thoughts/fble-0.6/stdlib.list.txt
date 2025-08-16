@@ -859,3 +859,8 @@ Also, maybe worth thinking about Eq@ and Ord@ briefly.
 
 Uh, IsEmpty and HasItems depend on Bool@. So they should be moved elsewhere,
 right? Into Eq% module, no? Or Search%?
+
+---
+
+Question: Take and Drop should take the index as the second argument, right?
+Not the first?

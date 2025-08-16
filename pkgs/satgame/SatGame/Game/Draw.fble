@@ -12,8 +12,8 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
-% Take = /Core/List/Index%.Take;
-% Drop = /Core/List/Index%.Drop;
+<@>% Take = /Core/List/Index%.Take;
+<@>% Drop = /Core/List/Index%.Drop;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -99,8 +99,8 @@ Row = (Layout@ layout, List@<Group@> groups) {
 (Layout@, Game@) { Drawing@; }
 Rows = (Layout@ layout, Game@ game) {
   game.?(empty: Blank);
-  Drawing@ head = Translate(Int|0, GroupPad, Row(layout, Take(layout.cols, game)));
-  Drawing@ tail = Rows(layout, Drop(layout.cols, game));
+  Drawing@ head = Translate(Int|0, GroupPad, Row(layout, Take(game, layout.cols)));
+  Drawing@ tail = Rows(layout, Drop(game, layout.cols));
   Drawings[head, Translate(Int|0, Add(TileWidth, GroupPad), tail)];
 };
 

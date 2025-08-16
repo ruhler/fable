@@ -11,7 +11,7 @@
 
 <@>% StartsWith = /Core/List/Eq%.StartsWith;
 
-% Drop = /Core/List/Index%.Drop;
+<@>% Drop = /Core/List/Index%.Drop;
 <@>% Length = /Core/List/Index%.Length;
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
@@ -60,7 +60,7 @@ Sequence = (Sequence@ target, Profile@ profile) {
     seq.?(empty: Empty<BlockId@>);
     StartsWith(Eq, seq, target).?(false: Frames(seq.items.tail));
 
-    Sequence@ suffix = Drop(length, seq);
+    Sequence@ suffix = Drop(seq, length);
     suffix.?(empty: Empty<BlockId@>);
 
     Items(suffix.items.head, Frames(seq.items.tail));

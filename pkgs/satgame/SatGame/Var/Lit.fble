@@ -12,7 +12,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Append = /Core/List%.Append;
-% Take = /Core/List/Index%.Take;
+<@>% Take = /Core/List/Index%.Take;
 
 @ Var@ = /SatGame/Var%.Var@;
 
@@ -24,7 +24,7 @@
 (List@<Hex@>) { Var@; } Var = (List@<Hex@> hex) {
   List@<Bit@> bits = HexToBits(hex);
 
-  List@<Bit@> 9 = Take(Int|9, Append(bits, BitStr|000000000));
+  List@<Bit@> 9 = Take(Append(bits, BitStr|000000000), Int|9);
   List@<Bit@> 8 = 9.items.tail;
   List@<Bit@> 7 = 8.items.tail;
   List@<Bit@> 6 = 7.items.tail;

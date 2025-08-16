@@ -10,28 +10,6 @@
 <@>% Items = /Core/List%.Items;
 <@>% Empty = /Core/List%.Empty;
 
-# Drop --
-#   Remove the first n elements from the list.
-#
-# Returns an empty list if there are less than n elements on the list.
-(Int@)<@ T@>(List@<T@>) { List@<T@>; }
-Drop = (Int@ n)<@ T@>(List@<T@> l) {
-  Le(n, 0).?(true: l);
-  l.?(empty: l);
-  Drop(Decr(n), l.items.tail);
-};
-
-# Take --
-#   Returns the first n elements on the list.
-#
-# Returns fewer than n elements if there are less than n elements on the list.
-(Int@)<@ T@>(List@<T@>) { List@<T@>; }
-Take = (Int@ n)<@ T@>(List@<T@> l) {
-  Le(n, 0).?(true: Empty<T@>);
-  l.?(empty: Empty<T@>);
-  Items(l.items.head, Take(Decr(n), l.items.tail));
-};
-
 # Length --
 #   Returns the length of a list.
 #
@@ -55,4 +33,52 @@ Take = (Int@ n)<@ T@>(List@<T@> l) {
   Get(l.items.tail, Decr(n));
 };
 
-@(Take, Drop, Length, Get);
+# Sets the element of the list with the given index to the given value.
+# Behavior is undefined if there is no such element.
+<@ T@>(List@<T@>, Int@, T@) { List@<T@>; } Set = <@ T@>(List@<T@> l, Int@ n, T@ v) {
+  IsZero(n).?(true: Items(v, l.items.tail));
+  Items(l.items.head, Set(l.items.tail, Decr(n), v));
+};
+
+# Take --
+#   Returns the first n elements on the list.
+#
+# Returns fewer than n elements if there are less than n elements on the list.
+<@ T@>(List@<T@>, Int@) { List@<T@>; }
+Take = <@ T@>(List@<T@> l, Int@ n) {
+  Le(n, 0).?(true: Empty<T@>);
+  l.?(empty: Empty<T@>);
+  Items(l.items.head, Take(l.items.tail, Decr(n)));
+};
+
+# Drop --
+#   Remove the first n elements from the list.
+#
+# Returns an empty list if there are less than n elements on the list.
+<@ T@>(List@<T@>, Int@) { List@<T@>; }
+Drop = <@ T@>(List@<T@> l, Int@ n) {
+  Le(n, 0).?(true: l);
+  l.?(empty: l);
+  Drop(l.items.tail, Decr(n));
+};
+
+# Range --
+#   Return a range of elements in the list given initial index and length.
+<@ T@>(List@<T@>, Int@, Int@) { List@<T@>; }
+Range = <@ T@>(List@<T@> l, Int@ i, Int@ len) {
+  Take(Drop(l, i), len);
+};
+
+# Span@ --
+#   Return value for Span function.
+<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+
+<@ T@>(List@<T@>, Int@) { Span@<T@>; }
+Span = <@ T@>(List@<T@> l, Int@ n) {
+  Le(n, 0).?(true: Span@(Empty<T@>, l));
+  l.?(empty: Span@(Empty<T@>, Empty<T@>));
+  Span@<T@> span = Span(l.items.tail, Decr(n));
+  span.@(span: Items(l.items.head, span.span));
+};
+
+@(Length, Get, Set, Take, Drop, Range, Span@, Span);

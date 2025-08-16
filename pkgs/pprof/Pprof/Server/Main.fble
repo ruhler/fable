@@ -19,7 +19,7 @@
 <@>% Last = /Core/List%.Last;
 <@>% Append = /Core/List%.Append;
 <@>% Get = /Core/List/Index%.Get;
-% Drop = /Core/List/Index%.Drop;
+<@>% Drop = /Core/List/Index%.Drop;
 <@>% Length = /Core/List/Index%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -347,7 +347,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     /Core/String/Eq%.Eq(Str|'/seqs', path).?(true: SeqsPage(ios.out));
 
     /Core/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
-      List@<String@> ids = Split(Drop(Int|5, path), Chars.',');
+      List@<String@> ids = Split(Drop(path, Int|5), Chars.',');
       SeqPage(ios.out, /Core/List%.Map(ids, /Core/Int/Show%.Read));
     });
 

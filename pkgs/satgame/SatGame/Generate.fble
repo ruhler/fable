@@ -20,7 +20,7 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% Items = /Core/List%.Items;
 <@>% List = /Core/List%.List;
-% Take = /Core/List/Index%.Take;
+<@>% Take = /Core/List/Index%.Take;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
 @ Clause@ = /SatGame/Puzzle%.Clause@;
@@ -112,5 +112,5 @@
         });
     }));
   Puzzle@ shuffled <- m.do(Shuffle(puzzle));
-  m.return(Take(params.num_clauses, shuffled));
+  m.return(Take(shuffled, params.num_clauses));
 };
