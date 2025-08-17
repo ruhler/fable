@@ -34,7 +34,7 @@ Eq@<String@> Eq = /Core/List/Eq%.Eq(/Core/Char/Eq%.Eq);
 
 (String@, Char@) { List@<String@>; }
 Split = (String@ str, Char@ ch) {
-  /Core/List/Eq%.Split(str, /Core/Char/Eq%.Eq(ch));
+  /Core/List/Search%.Split(str, /Core/Char/Eq%.Eq(ch));
 };
 
 @(Eq, StartsWith, Contains, Split);

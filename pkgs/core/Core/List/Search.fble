@@ -4,7 +4,9 @@
 % False = /Std/Bool%.False;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
 
 # Any --
 #   Return true if the list contains an element satisfying the given property.
@@ -13,6 +15,16 @@ Any = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   l.?(empty: False);
   p(l.items.head).?(true: True);
   Any(l.items.tail, p);
+};
+
+# Keep --
+#   Keeps all elements of the list matching the given predicate.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Keep = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  List@<T@> tail = Keep(l.items.tail, p);
+  p(l.items.head).?(false: tail);
+  Items(l.items.head, tail);
 };
 
 # Remove --
@@ -25,6 +37,33 @@ Remove = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   Items(l.items.head, tail);
 };
 
+# Split --
+#   Split a list into a list of lists, with boundaries determined by the given
+#   predicate.
+#
+# Inputs:
+#   T@ - The type of element on the list.
+#   list - The list to split.
+#   sep - Predicate specifying separate elements.
+#
+# Occurences of sep elements at the start and back of the list are removed.
+# Sequences of sep elements are treated as a single separator.
+#
+# For example, Split('  hello  there now. ', IsSpace) would result in
+#   ['hello', 'there', 'now.']
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<List@<T@>>; }
+Split = <@ T@>(List@<T@> list, (T@) { Bool@; } sep) {
+  list.?(empty: List<List@<T@>>[]);
+
+  List@<List@<T@>> tail = Split(list.items.tail, sep);
+  sep(list.items.head).?(true: tail);
+
+  T@ head = list.items.head;
+  list.items.tail.?(empty: List[List[head]]);
+  sep(list.items.tail.items.head).?(true: Items(List[head], tail));
+  Items(Items(head, tail.items.head), tail.items.tail);
+};
+
 # Search --
 #   Search for the first element of the list satisfying the given property.
 <@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
@@ -34,4 +73,92 @@ Search = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   Search(l.items.tail, p);
 };
 
-@(Any, Remove, Search);
+# SearchR --
+#   Search for the last element of the list satisfying the given property.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+SearchR = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  List@<T@> tail = SearchR(l.items.tail, p);
+  tail.?(items: tail);
+  p(l.items.head).?(true: l);
+  Empty<T@>;
+};
+
+# Skip --
+#   Drop any elements at the front of the list matching the given predicate.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Skip = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  p(l.items.head).?(true: Skip(l.items.tail, p));
+  l;
+};
+
+# Until --
+#   Take elements from the list until the given predicate is satisfied.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Until = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  p(l.items.head).?(true: Empty<T@>);
+  Items(l.items.head, Until(l.items.tail, p));
+};
+
+# While --
+#   Take elements from the list as long as the given predicate is satisfied.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+While = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  p(l.items.head).?(false: Empty<T@>);
+  Items(l.items.head, While(l.items.tail, p));
+};
+
+# Trim --
+#   Remove elements from the the end of the list that satisfy the given
+#   predicate.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Trim = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  List@<T@> tail = Trim(l.items.tail, p);
+  tail.?(items: Items(l.items.head, tail));
+  p(l.items.head).?(true: Empty<T@>);
+  Items(l.items.head, Empty<T@>);
+};
+
+# Strip --
+#  Remove matching elements from the front and end of the list.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Strip = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  Skip(Trim(l, p), p);
+};
+
+# Span@ --
+#   Return value for Span and Break functions.
+<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+
+# Span --
+#  Return the span of elements matching the predicate along with what
+#  followed.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Span@<T@>; }
+Span = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: Span@(Empty<T@>, Empty<T@>));
+  p(l.items.head).?(false: Span@(Empty<T@>, l));
+  Span@<T@> span = Span(l.items.tail, p);
+  span.@(span: Items(l.items.head, span.span));
+};
+
+# Break --
+#  Return the span of elements not matching the predicate along with what
+#  followed.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Span@<T@>; }
+Break = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: Span@(Empty<T@>, Empty<T@>));
+  p(l.items.head).?(true: Span@(Empty<T@>, l));
+  Span@<T@> span = Break(l.items.tail, p);
+  span.@(span: Items(l.items.head, span.span));
+};
+
+@(
+  Any, Keep, Remove, Split,
+  Search, SearchR, Skip, Until, While,
+  Trim, Strip,
+  Span@, Span, Break
+);

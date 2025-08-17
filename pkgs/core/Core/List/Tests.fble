@@ -43,13 +43,22 @@
 <@>% Take = /Core/List/Index%.Take;
 <@>% Drop = /Core/List/Index%.Drop;
 <@>% Range = /Core/List/Index%.Range;
-<@>% Span = /Core/List/Index%.Span;
+<@>% Index_Span = /Core/List/Index%.Span;
 
 <@>% Any = /Core/List/Search%.Any;
+<@>% Keep = /Core/List/Search%.Keep;
 <@>% Remove = /Core/List/Search%.Remove;
+<@>% Split = /Core/List/Search%.Split;
 <@>% Search = /Core/List/Search%.Search;
+<@>% SearchR = /Core/List/Search%.SearchR;
+<@>% Skip = /Core/List/Search%.Skip;
+<@>% Until = /Core/List/Search%.Until;
+<@>% While = /Core/List/Search%.While;
+<@>% Trim = /Core/List/Search%.Trim;
+<@>% Strip = /Core/List/Search%.Strip;
+<@>% Search_Span = /Core/List/Search%.Span;
+<@>% Break = /Core/List/Search%.Break;
 
-<@>% Split = /Core/List/Eq%.Split;
 <@>% StartsWith = /Core/List/Eq%.StartsWith;
 
 
@@ -76,6 +85,10 @@
       C: b.?(A: False, B: False, : True),
       D: b.?(A: False, B: False, C: False, : True),
       E: b.?(A: False, B: False, C: False, D: False, E: True));
+};
+
+(Elem@, Elem@) { Bool@; } ElemGe = (Elem@ a, Elem@ b) {
+  ElemLe(b, a);
 };
 
 (Elem@, Elem@) { Bool@; } ElemEq = (Elem@ a, Elem@ b) {
@@ -202,6 +215,13 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     AssertEquals(Eq, Show, wnt, got);
   }),
 
+  Test(Str|Keep, (Unit@ _) {
+    List@<Elem@> l = EL|'ABBCDDBCCADEBA';
+    List@<Elem@> wnt = EL|'ABBBABA';
+    List@<Elem@> got = Keep(l, ElemGe(Elems.B));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
   Test(Str|Remove, (Unit@ _) {
     List@<Elem@> l = EL|'ABBCCDDE';
     List@<Elem@> wnt = EL|'ACCDDE';
@@ -224,8 +244,8 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   }),
 
   Test(Str|Search, (Unit@ _) {
-    List@<Elem@> l = EL|'ABBCCDDE';
-    List@<Elem@> wnt = EL|'CCDDE';
+    List@<Elem@> l = EL|'ABCBDCDE';
+    List@<Elem@> wnt = EL|'CBDCDE';
     List@<Elem@> got = Search(l, ElemEq(Elems.C));
     AssertEquals(Eq, Show, wnt, got);
   }),
@@ -234,6 +254,76 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> l = EL|'ABBDDE';
     List@<Elem@> wnt = EL|'';
     List@<Elem@> got = Search(l, ElemEq(Elems.C));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|SearchR, (Unit@ _) {
+    List@<Elem@> l = EL|'ABCBDCDE';
+    List@<Elem@> wnt = EL|'CDE';
+    List@<Elem@> got = SearchR(l, ElemEq(Elems.C));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Skip, (Unit@ _) {
+    List@<Elem@> l = EL|'AABCBDCDE';
+    List@<Elem@> wnt = EL|'BCBDCDE';
+    List@<Elem@> got = Skip(l, ElemEq(Elems.A));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Until, (Unit@ _) {
+    List@<Elem@> l = EL|'AABCBDCDE';
+    List@<Elem@> wnt = EL|'AAB';
+    List@<Elem@> got = Until(l, ElemEq(Elems.C));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|While, (Unit@ _) {
+    List@<Elem@> l = EL|'AABCBDCDE';
+    List@<Elem@> wnt = EL|'AAB';
+    List@<Elem@> got = While(l, ElemGe(Elems.B));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Trim, (Unit@ _) {
+    List@<Elem@> l = EL|'EAABCEBDCDEE';
+    List@<Elem@> wnt = EL|'EAABCEBDCD';
+    List@<Elem@> got = Trim(l, ElemEq(Elems.E));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Strip, (Unit@ _) {
+    List@<Elem@> l = EL|'EAABCEBDCDEE';
+    List@<Elem@> wnt = EL|'AABCEBDCD';
+    List@<Elem@> got = Strip(l, ElemEq(Elems.E));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Search_Span_span, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Search_Span(list, ElemGe(Elems.B)).span;
+    List@<Elem@> wnt = EL|'AB';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Search_Span_tail, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Search_Span(list, ElemGe(Elems.B)).tail;
+    List@<Elem@> wnt = EL|'CADBE';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Break_span, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Break(list, ElemEq(Elems.C)).span;
+    List@<Elem@> wnt = EL|'AB';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Break_tail, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Break(list, ElemEq(Elems.C)).tail;
+    List@<Elem@> wnt = EL|'CADBE';
     AssertEquals(Eq, Show, wnt, got);
   }),
 
@@ -317,16 +407,16 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     AssertEquals(Eq, Show, wnt, got);
   }),
 
-  Test(Str|Span_span, (Unit@ _) {
+  Test(Str|Index_Span_span, (Unit@ _) {
     List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Span(list, Int|2).span;
+    List@<Elem@> got = Index_Span(list, Int|2).span;
     List@<Elem@> wnt = EL|'AB';
     AssertEquals(Eq, Show, wnt, got);
   }),
 
-  Test(Str|Span_tail, (Unit@ _) {
+  Test(Str|Index_Span_tail, (Unit@ _) {
     List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Span(list, Int|2).tail;
+    List@<Elem@> got = Index_Span(list, Int|2).tail;
     List@<Elem@> wnt = EL|'CDE';
     AssertEquals(Eq, Show, wnt, got);
   })

@@ -12,9 +12,9 @@ Int@ 4 = Int|4;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
-<@>% Split = /Core/List/Eq%.Split;
 <@>% Length = /Core/List/Index%.Length;
 <@>% Get = /Core/List/Index%.Get;
+<@>% Split = /Core/List/Search%.Split;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

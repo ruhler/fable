@@ -6,8 +6,6 @@
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-<@>% Items = /Std/List%.Items;
 
 # Eq --
 #   Implementation of Eq@ for List@. See documentation of /Eq%.Eq@.
@@ -17,33 +15,6 @@ Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
   b.?(empty: False);
   eq(a.items.head, b.items.head).?(false: False);
   Eq(eq, a.items.tail, b.items.tail);
-};
-
-# Split --
-#   Split a list into a list of lists, with boundaries determined by the given
-#   predicate.
-#
-# Inputs:
-#   T@ - The type of element on the list.
-#   list - The list to split.
-#   sep - Predicate specifying separate elements.
-#
-# Occurences of sep elements at the start and back of the list are removed.
-# Sequences of sep elements are treated as a single separator.
-#
-# For example, Split('  hello  there now. ', IsSpace) would result in
-#   ['hello', 'there', 'now.']
-<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<List@<T@>>; }
-Split = <@ T@>(List@<T@> list, (T@) { Bool@; } sep) {
-  list.?(empty: List<List@<T@>>[]);
-
-  List@<List@<T@>> tail = Split(list.items.tail, sep);
-  sep(list.items.head).?(true: tail);
-
-  T@ head = list.items.head;
-  list.items.tail.?(empty: List[List[head]]);
-  sep(list.items.tail.items.head).?(true: Items(List[head], tail));
-  Items(Items(head, tail.items.head), tail.items.tail);
 };
 
 # StartsWith --
@@ -56,4 +27,4 @@ StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
   StartsWith(eq, haystack.items.tail, needle.items.tail);
 };
 
-@(Eq, Split, StartsWith);
+@(Eq, StartsWith);
