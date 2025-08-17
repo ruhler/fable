@@ -47,6 +47,7 @@
 
 <@>% Any = /Core/List/Search%.Any;
 <@>% Remove = /Core/List/Search%.Remove;
+<@>% Search = /Core/List/Search%.Search;
 
 <@>% Split = /Core/List/Eq%.Split;
 <@>% StartsWith = /Core/List/Eq%.StartsWith;
@@ -220,6 +221,20 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     Bool@ wnt = False;
     Bool@ got = Any(l, (Elem@ e) { e.?(C: True, : False); });
     AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Search, (Unit@ _) {
+    List@<Elem@> l = EL|'ABBCCDDE';
+    List@<Elem@> wnt = EL|'CCDDE';
+    List@<Elem@> got = Search(l, ElemEq(Elems.C));
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|SearchNotFound, (Unit@ _) {
+    List@<Elem@> l = EL|'ABBDDE';
+    List@<Elem@> wnt = EL|'';
+    List@<Elem@> got = Search(l, ElemEq(Elems.C));
+    AssertEquals(Eq, Show, wnt, got);
   }),
 
   Test(Str|StartsWith, (Unit@ _) {
