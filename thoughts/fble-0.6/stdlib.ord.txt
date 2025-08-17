@@ -160,3 +160,285 @@ Maybe I need to think and understand more about the difference between:
   for an interface.
 * Minimal required for a module interface versus full set of things you can do
   based on that minimal definition.
+
+---
+
+For something like Eq@, Ord@, etc. I think we can categorize methods into:
+minimal, core, and other. How exactly to organize is unclear, but for example:
+
+minimal: Ord
+core: Ord, Lt, Le, Eq, Gt, Ne, etc.
+extended: Sort, maybe Max, Min?
+
+We'll always want extended, and those should always be implemented by taking
+an Ord@ instance as an argument.
+
+We'll always need minimal. It could be different for different things though.
+Something might have Le as minimal, something else Ord.
+
+What matters for real?
+* What we pass to extended functions: minimal or core?
+ - Performance implications: if there are some core functions that we want to
+   specialize for performance reasons, extended functions can only get access
+   to those if we pass core rather than minimal.
+* Whether we call a generic function like Min passing Ord, or whether we have
+  a specialized version for a particular type, e.g. Int Min, or both.
+ - This doesn't care about minimal vs. core vs. extended. You can easily have
+   a generic implementation and provide a type specific specialized
+   implementation.
+* Whether we define a group of functions all at once with a single minimal (or
+  core?) arg, or we pass the Ord@ arg to each individual function.
+ - For example, we could have a single function to produce the set of core ord
+   functions from the minimal ord function, and have that be much easier to
+   reuse than having to pass the same minimal ord thing to all the individual
+   functions.
+
+Things will get more interesting with the Map@ interface, which parameterizes
+both the element type and the container type. In that case there is no clear
+'minimal' implementation, it really depends heavily on the element and
+container types.
+
+Here is what I'm leaning towards:
+* Have an interface for the core methods of something.
+* Have helper functions to implement the interface from the minimal methods of
+  something.
+* Group together other methods as feels reasonable, taking the interface value
+  for a group of methods at a time rather than one by one.
+
+What this means for Ord@ specifically? Brainstorm:
+* Eq, Ne, Lt, Le, Gt, Ge, Max, Min all come from Ord.
+* Let's have Ord@ be that entire set of methods.
+* Let's have /Std/Int/Ord%.Ord be the instance of Ord@ for Int@.
+
+Is it a little painful to have to write /Std/Int/Ord%.Ord.lt instead of, say,
+/Std/Int/Ord%.Lt? Slightly tedious, but not really a big deal. We could easily
+support both.
+
+It feels like adding an interface such as Ord@ shouldn't change the decision
+on what to support at the high level. That suggests to me that we should
+export Int/Ord%.Ord as well as Int/Ord%.Lt, Int/Ord%.Max, etc.
+
+How do we relate Ord@ to Eq@?
+
+Composition would suggest Ord@ contains an implementation of Eq@. We want that
+so we can pass it to things that just need Eq@. This is assuming a general
+approach of Eq@ being eq and ne functions.
+
+But now it's pretty tedious to have to write things like:
+ 
+  % Eq = /Std/Int/Ord%.Ord.eq.eq;
+  % Ne = /Std/Int/Ord%.Ord.eq.ne;
+
+Similar to how, for Eq, we have to write things like:
+  (Eq@ eq) { eq.eq(...); }
+
+Or, we could pretend Ord@ and Eq@ are completely unrelated, but have a helper
+function to get one from the other, so we don't have to pass around both
+everywhere?
+
+Maybe the hard part there is distinguishing between 'Eq' as the == operator
+function and 'Eq' as the instance of the Eq@ interface. If I could pick names
+to clearly distinguish between them...
+
+For example, maybe Order@ for the interface, and .compare for the comparison
+function. If we were doing '==', then we could say Eq@ or Equality@ for the
+interface, and .'==', or .equals and .distinct for the functions.
+
+order.equality.eq
+order.equality.ne
+
+That sort of works. In this case, using a longer name for the interface and a
+shorter name for the methods.
+
+The only thing really to worry about is how tedious it is to write out the
+longer names everywhere. For example:
+
+  <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
+  StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+    needle.?(empty: True);
+    haystack.?(empty: False);
+    eq(haystack.items.head, needle.items.head).?(false: False);
+    StartsWith(eq, haystack.items.tail, needle.items.tail);
+  };
+
+  <@ T@>(Equality@<T@>, List@<T@>, List@<T@>) { Bool@; }
+  StartsWith = <@ T@>(Equality@<T@> equality, List@<T@> haystack, List@<T@> needle) {
+    needle.?(empty: True);
+    haystack.?(empty: False);
+    equality.eq(haystack.items.head, needle.items.head).?(false: False);
+    StartsWith(equality, haystack.items.tail, needle.items.tail);
+  };
+
+Pushes us past 80 characters in one case, but otherwise, honestly, doesn't
+feel so bad.
+
+Perhaps of more concern is use of /Std/Int/Eq%.Eq.
+
+  % Eq = /Std/Int/Eq%.Eq;
+  ...
+  Eq(NumRows, next.row).?(true: Nothing<Alien@>);
+
+Now looks something like:
+ 
+  % Eq = /Std/Int/Equality%.Equality.eq;
+  ...
+  Eq(NumRows, next.row).?(true: Nothing<Alien@>);
+
+Or:
+
+  Eq@<Metrics@> Metrics = /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq);
+
+Now looks like:
+
+  Equality@<Metrics@> Metrics = /Core/List/Equality%.Equality(
+    /Std/Int/Equality%.equality
+  );
+
+Not so bad actually. But still a bit tedious.
+
+Which suggests some new things for Eq@, Ord@, and Int@.
+
+Here I'm using the idea of 'core' to be anything we might define in the top
+level module for an interface. So, anything that doesn't have a separate
+module dependency or reason to subcategorize elsewhere.
+
+  /Std/Equality%:
+    Equality@(.eq, .ne)
+
+  /Std/Order%:
+    Ordering@(.lt, .eq, .gt), Lt?, Eq?, Gt?
+    Order@(.equality, .cmp, .lt, .le, .gt, .ge, min, max);
+    Order (function from 'cmp' to Order@)
+
+  /Std/Int/Equality%
+    Sign@, Sgn, IsZero, IsNegative (?), Is Positive (?),
+    Eq, Ne
+    Equality (instance of Equality@)
+
+  /Std/Int/Order%
+    Order (instance of Order@),
+    Lt, Le, Gt, Ge, Max, Min, Abs
+
+Honestly, that sounds reasonable to me. All except the confusion between Lt as
+an operator and Lt as a result of comparison.
+
+  Lt  Eq  Gt
+  '<' '=' '>'
+  '-' '0' '+'
+
+  order.cmp(a, b).?(
+    '<': ...
+    '=': ...
+    '>': ...
+  );
+
+  order.cmp(a, b).?(
+    lt: ...
+    eq: ...
+    gt: ...
+  );
+
+  Ord@<IntP@> Ord = (IntP@ a, IntP@ b) {
+    a.?(1: b.?(1: Eq, 2p0: Lt, 2p1: Lt),
+        2p0: b.?(1: Gt, 2p0: Ord(a.2p0, b.2p0), 2p1: RoundLt(Ord(a.2p0, b.2p1))),
+        2p1: b.?(1: Gt, 2p0: RoundGt(Ord(a.2p1, b.2p0)), 2p1: Ord(a.2p1, b.2p1)));
+  };
+
+  Ord@<IntP@> Ord = (IntP@ a, IntP@ b) {
+    a.?(1: b.?(1: '=', 2p0: '<', 2p1: '<'),
+        2p0: b.?(1: '>', 2p0: Ord(a.2p0, b.2p0), 2p1: RoundLt(Ord(a.2p0, b.2p1))),
+        2p1: b.?(1: '>', 2p0: RoundGt(Ord(a.2p1, b.2p0)), 2p1: Ord(a.2p1, b.2p1)));
+  };
+
+  (Ordering@) { Ordering@; } RoundLt = (Ordering@ x) {
+    x.?(eq: Lt, : x);
+  };
+
+  (Ordering@) { Ordering@; } RoundGt = (Ordering@ x) {
+    x.?(eq: Gt, : x);
+  };
+
+  (Ordering@) { Ordering@; } RoundLt = (Ordering@ x) {
+    x.?('=': '<', : x);
+  };
+
+  (Ordering@) { Ordering@; } RoundGt = (Ordering@ x) {
+    x.?('=': '>', : x);
+  };
+
+I don't like the symbols. It's too hard to parse, with all the quotes and what
+look like they could be angle brackets and colons in between.
+
+  LessThan  Equal  GreaterThan?
+
+  Ord@<IntP@> Ord = (IntP@ a, IntP@ b) {
+    a.?(1: b.?(1: Equal, 2p0: LessThan, 2p1: LessThan),
+        2p0: b.?(1: GreaterThan, 2p0: Ord(a.2p0, b.2p0), 2p1: RoundLt(Ord(a.2p0, b.2p1))),
+        2p1: b.?(1: GreaterThan, 2p0: RoundGt(Ord(a.2p1, b.2p0)), 2p1: Ord(a.2p1, b.2p1)));
+  };
+
+  (Ordering@) { Ordering@; } RoundLt = (Ordering@ x) {
+    x.?(eq: LessThan, : x);
+  };
+
+  Less Equal Greater?
+
+To distinguish between:
+
+  (Is)LessThan, Equals or IsEqual, and (Is)GreaterThan?
+
+We say, when comparing a and b, the result is that a is Less (Lesser?), or the
+result is that a is Greater (More?), or that a is Equal to b.
+
+  order.cmp(a, b).?(
+    less: ...
+    equal: ...
+    greater: ...
+  );
+
+  Ord@<Int@> Ord = (Int@ a, Int@ b) {
+    a.?(
+        n: b.?(n: OrdP(b.n, a.n), 0: Less, p: Less),
+        0: b.?(n: Greater, 0: Equal, p: Less),
+        p: b.?(n: Greater, 0: Greater, p: OrdP(a.p, b.p)));
+  };
+
+  Ord@<Int@> Ord = (Int@ a, Int@ b) {
+    a.?(
+        n: b.?(n: OrdP(b.n, a.n), : Less),
+        0: b.?(n: Greater, 0: Equal, p: Less),
+        p: b.?(p: OrdP(a.p, b.p), : Greater));
+  };
+
+Which brings us to:
+
+  /Std/Equality%:
+    Equality@(.eq, .ne)
+
+  /Std/Order%:
+    Ordering@(.less, .equal, .greater), Less, Equal, Greater
+    Order@(.equality, .cmp, .lt, .le, .gt, .ge, min, max);
+    Order (function from 'cmp' to Order@)
+
+  /Std/Int/Equality%
+    Sign@, Sgn, IsZero, IsNegative (?), Is Positive (?),
+    Eq, Ne
+    Equality (instance of Equality@)
+
+  /Std/Int/Order%
+    Order (instance of Order@),
+    Lt, Le, Gt, Ge, Max, Min, Abs
+
+Cool. Sounds good to me. Sounds like a step in the right direction?
+
+How do I get there? Changing the definition of Eq@ is going to be... painful.
+
+---
+
+What if we kept Eq@ as is: a single function, rather than a class of
+functions.
+
+    Order@(.eq, ne, .cmp, .lt, .le, .gt, .ge, min, max);
+
+That seems simpler to me, honestly. Avoids gratuitous indirection and what is
+essentially singleton group of the equals function into an equals class.

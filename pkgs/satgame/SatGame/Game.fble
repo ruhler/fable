@@ -11,7 +11,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
-<@>% Contains = /Core/List/Eq%.Contains;
+<@>% Any = /Core/List/Eq%.Any;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -133,7 +133,7 @@ Toggle = (Toggle@ toggle) {
 
     Literal@ lit = mlit.just;
     Literal@ complement = lit.@(pos: Not(lit.pos));
-    Contains(/SatGame/Puzzle/Eq%.Literal, lits, complement).?(true: False);
+    Any(lits, /SatGame/Puzzle/Eq%.Literal(complement)).?(true: False);
     Groups(Items(lit, lits), groups.items.tail);
   };
 

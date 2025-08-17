@@ -25,7 +25,9 @@
 % M = /Core/Int/Map%.Map;
 
 (List@<BlockId@>, BlockId@) { Bool@; }
-ContainsBlock = /Core/List/Eq%.Contains(/Pprof/Profile/Eq%.BlockId);
+ContainsBlock = (List@<BlockId@> l, BlockId@ id) {
+  /Core/List/Eq%.Any(l, /Pprof/Profile/Eq%.BlockId(id));
+};
 
 (List@<BlockId@>) { List@<BlockId@>; }
 DeDup = (List@<BlockId@> xs) {

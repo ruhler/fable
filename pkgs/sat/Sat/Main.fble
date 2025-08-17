@@ -9,7 +9,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% Reverse = /Std/List%.Reverse;
-<@>% Contains = /Core/List/Eq%.Contains;
+<@>% Any = /Core/List/Eq%.Any;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -60,7 +60,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 
   (List@<String@> args) {
-    Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
+    Any(args, /Core/String/Eq%.Eq|'--help').?(true: {
       Unit@ _ <- m.do(O.PutStr(stdio.out, /Sat/Usage%));
       m.return(True);
     });

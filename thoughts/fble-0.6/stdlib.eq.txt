@@ -65,3 +65,61 @@ Discussion on stdlib.ord.txt suggests maybe we want to define:
 <@ T@>(Eq@<T@>, T@, T@) Eq = <@ T@>(Eq@<T@> eq, T@ a, T@ b) { eq(a, b); };
 <@ T@>(Eq@<T@>, T@, T@) Ne = <@ T@>(Eq@<T@> eq, T@ a, T@ b) { Not(eq(a, b)); };
 
+---
+
+Discussion on stdlib.eq.txt suggests we want:
+
+ /Std/Equality%:
+   Equality@(.eq, .ne)
+   Equality(function from 'eq' to Equality@?)
+
+To get there is going to be tedious because of how much we define and use Eq@
+everywhere. What's the best way to migrate things?
+
+Let's think about how to define a random Equality instance.
+
+For example:
+
+  Eq@<Block@> Block = (Block@ a, Block@ b) {
+    /Core/String/Eq%.Eq(a.name, b.name).?(false: False);
+    /Core/String/Eq%.Eq(a.file, b.file).?(false: False);
+    /Std/Int/Eq%.Eq(a.line, b.line).?(false: False);
+    /Std/Int/Eq%.Eq(a.column, b.column).?(false: False);
+    True;
+  };
+
+Becomes:
+
+  Equality@<Block@> Block = {
+    Block@ a, Block@ b <- Equality;
+    /Core/String/Equality%.Equality.eq(a.name, b.name).?(false: False);
+    /Core/String/Equality%.Equality.eq(a.file, b.file).?(false: False);
+    /Std/Int/Equality%.Equality.eq(a.line, b.line).?(false: False);
+    /Std/Int/Equality%.Equality.eq(a.column, b.column).?(false: False);
+    True;
+  };
+
+It's not too bad. But do I really want to use 'Equality' everywhere instead of
+'Eq'? Surely /Std/Int/Eq%.Eq.eq ...
+
+Well, I want to distinguish between the equality instance and the equals
+function.
+
+  /Std/Int/Eq%.Eq(...) would still work.
+
+It would be a pain to have to define Eq the function and Eq the instance
+everwhere, no?
+
+  /Core/String/Eq%.Eq as a function
+  /Core/String/Eq%.Equals as the instance? Equal@, Equals@, Equality@ as the
+interface?
+
+Honestly, it doesn't feel worth it to me to distinguish between the equals
+function and Eq@ interface. If the only difference is a not equals function,
+which we can always really trivially get from the equals function, why bother?
+
+Ord@ is a different case. There there are lots of different core functions we
+could be interested in: Lt, Gt, Eq, Ne, Le, Ge, Min, Max, Cmp. It's much more
+a class of operations. Equality is just equality. So just use equality for it.
+That's part of the naming challenge too.
+

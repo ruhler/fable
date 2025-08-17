@@ -23,13 +23,13 @@ Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
   Eq(eq, a.items.tail, b.items.tail);
 };
 
-# Has --
+# Any --
 #   Return true if the list contains an element satisfying the given property.
 <@ T@>(List@<T@>, (T@) { Bool@; }) { Bool@; }
-Has = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+Any = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   l.?(empty: False);
   p(l.items.head).?(true: True);
-  Has(l.items.tail, p);
+  Any(l.items.tail, p);
 };
 
 # Search --
@@ -39,15 +39,6 @@ Search = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   l.?(empty: Nothing<T@>);
   p(l.items.head).?(true: Just(l.items.head));
   Search(l.items.tail, p);
-};
-
-# Contains --
-#   Return true if the list contains the given element, false otherwise.
-<@ T@>(Eq@<T@>, List@<T@>, T@) { Bool@; }
-Contains = <@ T@>(Eq@<T@> eq, List@<T@> l, T@ e) {
-  l.?(empty: False);
-  eq(l.items.head, e).?(true: True);
-  Contains(eq, l.items.tail, e);
 };
 
 # Split --
@@ -77,21 +68,12 @@ Split = <@ T@>(List@<T@> list, (T@) { Bool@; } sep) {
   Items(Items(head, tail.items.head), tail.items.tail);
 };
 
-# RemoveFirst --
-#   Removes the first element of the list matching the given predicate.
-<@ T@>((T@) { Bool@; }, List@<T@>) { List@<T@>; }
-RemoveFirst = <@ T@>((T@) { Bool@; } p, List@<T@> l) {
-  l.?(empty: l);
-  p(l.items.head).?(true: l.items.tail);
-  Items(l.items.head, RemoveFirst(p, l.items.tail));
-};
-
-# RemoveAll --
+# Remove --
 #   Removes all elements of the list matching the given predicate.
-<@ T@>((T@) { Bool@; }, List@<T@>) { List@<T@>; }
-RemoveAll = <@ T@>((T@) { Bool@; } p, List@<T@> l) {
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Remove = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
   l.?(empty: l);
-  List@<T@> tail = RemoveAll(p, l.items.tail);
+  List@<T@> tail = Remove(l.items.tail, p);
   p(l.items.head).?(true: tail);
   Items(l.items.head, tail);
 };
@@ -106,4 +88,8 @@ StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
   StartsWith(eq, haystack.items.tail, needle.items.tail);
 };
 
-@(Eq, Has, Search, Contains, Split, RemoveFirst, RemoveAll, StartsWith);
+@(
+  Any, Remove,
+  Search,
+  Eq, Split, StartsWith
+);

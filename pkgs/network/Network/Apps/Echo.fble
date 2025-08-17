@@ -14,6 +14,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
+<@>% Any = /Core/List/Eq%.Any;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -58,8 +59,12 @@ GetArgs = (List@<String@> args, Args@ default) {
   args.?(empty: default);
 
   String@ arg = args.items.head;
-  /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-    List[Str|'-h', Str|'--help'], arg).?(true: {
+
+  (List@<String@>) { Bool@; } ArgAnyOf = (List@<String@> options) {
+    Any(options, /Core/String/Eq%.Eq(arg));
+  };
+
+  ArgAnyOf(List[Str|'-h', Str|'--help']).?(true: {
     default.@(help: True);
   });
 
@@ -71,20 +76,17 @@ GetArgs = (List@<String@> args, Args@ default) {
   List@<String@> nargv = args.items.tail.items.tail;
 
   Args@ nargs = {
-    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-      List[Str|'--host'], arg).?(true: {
-        default.@(hostname: value);
-      });
+    ArgAnyOf[Str|'--host'].?(true: {
+      default.@(hostname: value);
+    });
 
-    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-      List[Str|'-p', Str|'--port'], arg).?(true: {
-        default.@(port: /Core/Int/Show%.Read(value));
-      });
+    ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
+      default.@(port: /Core/Int/Show%.Read(value));
+    });
 
-    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-      List[Str|'-n', Str|'--num-clients'], arg).?(true: {
-        default.@(num_clients: /Core/Int/Show%.Read(value));
-      });
+    ArgAnyOf[Str|'-n', Str|'--num-clients'].?(true: {
+      default.@(num_clients: /Core/Int/Show%.Read(value));
+    });
 
     default.@(error: Strs[Str|'unrecognized option ', arg]);
   };

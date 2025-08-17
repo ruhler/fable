@@ -13,7 +13,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
-<@>% Contains = /Core/List/Eq%.Contains;
+<@>% Any = /Core/List/Eq%.Any;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Random@ = /SatGame/Random%.Random@;
@@ -67,7 +67,7 @@ Var = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand) {
 <<@>@ M@>(Monad@<M@>, Random@<M@>, List@<Var@>) { M@<Var@>; }
 DistinctVar = <<@>@ M@>(Monad@<M@> m, Random@<M@> rand, List@<Var@> vars) {
   Var@ x <- m.do(Var(m, rand));
-  Contains(/SatGame/Var/Eq%.Eq, vars, x).?(false: m.return(x));
+  Any(vars, /SatGame/Var/Eq%.Eq(x)).?(false: m.return(x));
   DistinctVar(m, rand, vars);
 };
 

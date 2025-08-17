@@ -9,7 +9,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% Contains = /Core/List/Eq%.Contains;
+<@>% Any = /Core/List/Eq%.Any;
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -53,7 +53,7 @@ Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
 
-  Contains(/Core/String/Eq%.Eq, args, Str|'--help').?(true: {
+  Any(args, /Core/String/Eq%.Eq|'--help').?(true: {
     Unit@ _ <- m.do(O.PutStr(stdio.out, /Invaders/Usage%));
     m.return(True);
   });
@@ -125,7 +125,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   # Check for --test mode, where we draw something to the screen and exit
   # right away.
-  Contains(/Core/String/Eq%.Eq, args, Str|'--test').?(true: {
+  Any(args, /Core/String/Eq%.Eq|'--test').?(true: {
     Unit@ _ <- m.do(Draw(game));
     m.return(True); 
   });

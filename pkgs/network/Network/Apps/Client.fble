@@ -10,7 +10,6 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -56,8 +55,12 @@ GetArgs = (List@<String@> args, Args@ default) {
   args.?(empty: default);
 
   String@ arg = args.items.head;
-  /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-    List[Str|'-h', Str|'--help'], arg).?(true: {
+
+  (List@<String@>) { Bool@; } ArgAnyOf = (List@<String@> option) {
+    /Core/List/Eq%.Any(option, /Core/String/Eq%.Eq(arg));
+  };
+
+  ArgAnyOf[Str|'-h', Str|'--help'].?(true: {
     default.@(help: True);
   });
 
@@ -69,25 +72,21 @@ GetArgs = (List@<String@> args, Args@ default) {
   List@<String@> nargv = args.items.tail.items.tail;
 
   Args@ nargs = {
-    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-      List[Str|'--host'], arg).?(true: {
-        default.@(hostname: value);
-      });
+    ArgAnyOf[Str|'--host'].?(true: {
+      default.@(hostname: value);
+    });
 
-    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-      List[Str|'-p', Str|'--port'], arg).?(true: {
-        default.@(port: /Core/Int/Show%.Read(value));
-      });
+    ArgAnyOf[Str|'-p', Str|'--port'].?(true: {
+      default.@(port: /Core/Int/Show%.Read(value));
+    });
 
-    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-      List[Str|'-m', Str|'--message'], arg).?(true: {
-        default.@(message: value);
-      });
+    ArgAnyOf[Str|'-m', Str|'--message'].?(true: {
+      default.@(message: value);
+    });
 
-    /Core/List/Eq%.Contains(/Core/String/Eq%.Eq,
-      List[Str|'-n', Str|'--num-bytes'], arg).?(true: {
-        default.@(num_bytes: /Core/Int/Show%.Read(value));
-      });
+    ArgAnyOf[Str|'-n', Str|'--num-bytes'].?(true: {
+      default.@(num_bytes: /Core/Int/Show%.Read(value));
+    });
 
     default.@(error: Strs[Str|'unrecognized option ', arg]);
   };
