@@ -5,7 +5,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Any = /Core/List/Eq%.Any;
+<@>% Any = /Core/List/Search%.Any;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;

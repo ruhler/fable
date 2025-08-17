@@ -57,7 +57,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   String@ arg = args.items.head;
 
   (List@<String@>) { Bool@; } ArgAnyOf = (List@<String@> option) {
-    /Core/List/Eq%.Any(option, /Core/String/Eq%.Eq(arg));
+    /Core/List/Search%.Any(option, /Core/String/Eq%.Eq(arg));
   };
 
   ArgAnyOf[Str|'-h', Str|'--help'].?(true: {

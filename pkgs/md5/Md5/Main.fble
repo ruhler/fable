@@ -8,7 +8,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
-<@>% Any = /Core/List/Eq%.Any;
+<@>% Any = /Core/List/Search%.Any;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

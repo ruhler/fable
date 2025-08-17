@@ -45,10 +45,12 @@
 <@>% Range = /Core/List/Index%.Range;
 <@>% Span = /Core/List/Index%.Span;
 
+<@>% Any = /Core/List/Search%.Any;
+<@>% Remove = /Core/List/Search%.Remove;
+
 <@>% Split = /Core/List/Eq%.Split;
-<@>% Any = /Core/List/Eq%.Any;
-<@>% Remove = /Core/List/Eq%.Remove;
 <@>% StartsWith = /Core/List/Eq%.StartsWith;
+
 
 <@>% Sort = /Core/List/Sort%.Sort;
 

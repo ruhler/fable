@@ -1,0 +1,37 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+
+# Any --
+#   Return true if the list contains an element satisfying the given property.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Bool@; }
+Any = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: False);
+  p(l.items.head).?(true: True);
+  Any(l.items.tail, p);
+};
+
+# Remove --
+#   Removes all elements of the list matching the given predicate.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Remove = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  List@<T@> tail = Remove(l.items.tail, p);
+  p(l.items.head).?(true: tail);
+  Items(l.items.head, tail);
+};
+
+# Search --
+#   Search for the first element of the list satisfying the given property.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Search = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
+  l.?(empty: l);
+  p(l.items.head).?(true: l);
+  Search(l.items.tail, p);
+};
+
+@(Any, Remove, Search);

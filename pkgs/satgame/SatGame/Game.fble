@@ -11,7 +11,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
-<@>% Any = /Core/List/Eq%.Any;
+<@>% Any = /Core/List/Search%.Any;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

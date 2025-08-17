@@ -5,10 +5,6 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
-
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
@@ -21,24 +17,6 @@ Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
   b.?(empty: False);
   eq(a.items.head, b.items.head).?(false: False);
   Eq(eq, a.items.tail, b.items.tail);
-};
-
-# Any --
-#   Return true if the list contains an element satisfying the given property.
-<@ T@>(List@<T@>, (T@) { Bool@; }) { Bool@; }
-Any = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
-  l.?(empty: False);
-  p(l.items.head).?(true: True);
-  Any(l.items.tail, p);
-};
-
-# Search --
-#   Return the first element of the list satisfying the given property.
-<@ T@>(List@<T@>, (T@) { Bool@; }) { Maybe@<T@>; }
-Search = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
-  l.?(empty: Nothing<T@>);
-  p(l.items.head).?(true: Just(l.items.head));
-  Search(l.items.tail, p);
 };
 
 # Split --
@@ -68,16 +46,6 @@ Split = <@ T@>(List@<T@> list, (T@) { Bool@; } sep) {
   Items(Items(head, tail.items.head), tail.items.tail);
 };
 
-# Remove --
-#   Removes all elements of the list matching the given predicate.
-<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
-Remove = <@ T@>(List@<T@> l, (T@) { Bool@; } p) {
-  l.?(empty: l);
-  List@<T@> tail = Remove(l.items.tail, p);
-  p(l.items.head).?(true: tail);
-  Items(l.items.head, tail);
-};
-
 # StartsWith --
 #   Return true if the list starts the given sequence, false otherwise.
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
@@ -88,8 +56,4 @@ StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
   StartsWith(eq, haystack.items.tail, needle.items.tail);
 };
 
-@(
-  Any, Remove,
-  Search,
-  Eq, Split, StartsWith
-);
+@(Eq, Split, StartsWith);

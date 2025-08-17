@@ -26,7 +26,7 @@
 
 (List@<BlockId@>, BlockId@) { Bool@; }
 ContainsBlock = (List@<BlockId@> l, BlockId@ id) {
-  /Core/List/Eq%.Any(l, /Pprof/Profile/Eq%.BlockId(id));
+  /Core/List/Search%.Any(l, /Pprof/Profile/Eq%.BlockId(id));
 };
 
 (List@<BlockId@>) { List@<BlockId@>; }

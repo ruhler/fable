@@ -9,7 +9,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% Reverse = /Std/List%.Reverse;
-<@>% Any = /Core/List/Eq%.Any;
+<@>% Any = /Core/List/Search%.Any;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
