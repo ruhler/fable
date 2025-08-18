@@ -45,19 +45,19 @@
 <@>% Range = /Core/List/Index%.Range;
 <@>% Index_Span = /Core/List/Index%.Span;
 
-<@>% Any = /Core/List/Search%.Any;
-<@>% Keep = /Core/List/Search%.Keep;
-<@>% Remove = /Core/List/Search%.Remove;
-<@>% Split = /Core/List/Search%.Split;
-<@>% Search = /Core/List/Search%.Search;
-<@>% SearchR = /Core/List/Search%.SearchR;
-<@>% Skip = /Core/List/Search%.Skip;
-<@>% Until = /Core/List/Search%.Until;
-<@>% While = /Core/List/Search%.While;
-<@>% Trim = /Core/List/Search%.Trim;
-<@>% Strip = /Core/List/Search%.Strip;
-<@>% Search_Span = /Core/List/Search%.Span;
-<@>% Break = /Core/List/Search%.Break;
+<@>% Any = /Std/List/Search%.Any;
+<@>% Keep = /Std/List/Search%.Keep;
+<@>% Remove = /Std/List/Search%.Remove;
+<@>% Split = /Std/List/Search%.Split;
+<@>% Search = /Std/List/Search%.Search;
+<@>% SearchR = /Std/List/Search%.SearchR;
+<@>% Skip = /Std/List/Search%.Skip;
+<@>% Until = /Std/List/Search%.Until;
+<@>% While = /Std/List/Search%.While;
+<@>% Trim = /Std/List/Search%.Trim;
+<@>% Strip = /Std/List/Search%.Strip;
+<@>% Search_Span = /Std/List/Search%.Span;
+<@>% Break = /Std/List/Search%.Break;
 
 <@>% StartsWith = /Core/List/Eq%.StartsWith;
 

@@ -13,7 +13,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
-<@>% Any = /Core/List/Search%.Any;
+<@>% Any = /Std/List/Search%.Any;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Random@ = /SatGame/Random%.Random@;

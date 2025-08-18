@@ -1,0 +1,232 @@
+# @module[/Std/List/Search%]
+#  Utilities for finding elements of a list that satisfy a given condition.
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+
+# @func[Any] Check if any element in the list satisfies a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[Bool@]
+#   True if the list contains an element satisfying the given condition, false
+#   otherwise.
+#
+#  A common use of this function is to check if a list contains a particular
+#  element. For example, to check if the number @l[5] is in the list @l[xs]:
+#
+#  @code[fble] @
+#   Bool@ found = Any(xs, Eq(5));
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Bool@; }
+Any = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: False);
+  p(list.items.head).?(true: True);
+  Any(list.items.tail, p);
+};
+
+# @func[Keep] Keeps all elements of the list that satisfy a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[List@<T>] All elements on the list that satisfy the condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Keep = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  List@<T@> tail = Keep(list.items.tail, p);
+  p(list.items.head).?(false: tail);
+  Items(list.items.head, tail);
+};
+
+# @func[Remove] Removes all elements of the list that satisfy a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[List@<T>]
+#   All elements on the list except those that satisfy the condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Remove = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  List@<T@> tail = Remove(list.items.tail, p);
+  p(list.items.head).?(true: tail);
+  Items(list.items.head, tail);
+};
+
+# @func[Split] Split a list into pieces.
+#  Split a list into a list of lists, with boundaries determined by the given
+#  condition.
+#
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p]
+#   Condition specifying which list elements should be considered delimeters.
+#  @returns[List@<T@>]
+#   A list of lists containing the elements of the original list in order,
+#   with delimeters removed and used to partition the remaining elements.
+#
+#   Delimeter elements at the start and back of the list are removed.
+#   Sequences of delimeter elements are treated as a single delimeter.
+#
+#  For example, @code[fble]{Split(Str|'  hello  there now. ', IsSpace)} would
+#  result in @code[fble]{List[Str|'hello', Str|'there', Str|'now.']}.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<List@<T@>>; }
+Split = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: List<List@<T@>>[]);
+
+  List@<List@<T@>> tail = Split(list.items.tail, p);
+  p(list.items.head).?(true: tail);
+
+  T@ head = list.items.head;
+  list.items.tail.?(empty: List[List[head]]);
+  p(list.items.tail.items.head).?(true: Items(List[head], tail));
+  Items(Items(head, tail.items.head), tail.items.tail);
+};
+
+# @func[Search] Finds the first element of a list satisfying a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[List@<T@>]
+#   The longest suffix of the list whose first element satisfies the given
+#   condition, or an empty list if no element satisfies the condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Search = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  p(list.items.head).?(true: list);
+  Search(list.items.tail, p);
+};
+
+# @func[SearchR] Finds the last element of a list satisfying a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[List@<T@>]
+#   The shortest suffix of the list whose first element satisfies the given
+#   condition, or an empty list if no element satisfies the condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+SearchR = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  List@<T@> tail = SearchR(list.items.tail, p);
+  tail.?(items: tail);
+  p(list.items.head).?(true: list);
+  Empty<T@>;
+};
+
+# @func[Skip] Skips over elements at the front of the list matching a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @return[List@<T@>]
+#   The longest suffix of the list that begins with an element which does not
+#   satisfy the given condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Skip = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  p(list.items.head).?(true: Skip(list.items.tail, p));
+  list;
+};
+
+# @func[Until] Takes elements from the list until a condition is satisfied.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @return[List@<T@>]
+#   The longest prefix of the list containing no elements satisfying the given
+#   condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Until = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  p(list.items.head).?(true: Empty<T@>);
+  Items(list.items.head, Until(list.items.tail, p));
+};
+
+# @func[While] Takes elements from the list as long as a condition is satisfied.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @return[List@<T@>]
+#   The longest prefix of the list containing only elements satisfying the
+#   given condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+While = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  p(list.items.head).?(false: Empty<T@>);
+  Items(list.items.head, While(list.items.tail, p));
+};
+
+# @func[Trim] Removes elements from the end of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The kind of elements to remove.
+#  @return[List@<T@>]
+#   The longest prefix of the list ending an an element that does not satisfy
+#   the given condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Trim = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: list);
+  List@<T@> tail = Trim(list.items.tail, p);
+  tail.?(items: Items(list.items.head, tail));
+  p(list.items.head).?(true: Empty<T@>);
+  Items(list.items.head, Empty<T@>);
+};
+
+# @func[Strip] Removes elements from the front and end of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The kind of elements to remove.
+#  @return[List@<T@>]
+#   The longest sublist of the list starting and ending in elements that do
+#   not satisfy the given condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<T@>; }
+Strip = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  Skip(Trim(list, p), p);
+};
+
+# @struct[Span@]
+#  The return type of the @l{Span} and @l{Break} functions.
+#
+#  @field[List@<T@>][span] A prefix of a list.
+#  @field[List@<T@>][tail] The remainder of the list.
+<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+
+# @func[Span] Gets the span of elements satisfying a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[Span@]
+#   The longest prefix of the list containing only elements that satisfy the
+#   condition, along with the remainder of the list.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Span@<T@>; }
+Span = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: Span@(Empty<T@>, Empty<T@>));
+  p(list.items.head).?(false: Span@(Empty<T@>, list));
+  Span@<T@> span = Span(list.items.tail, p);
+  span.@(span: Items(list.items.head, span.span));
+};
+
+# @func[Break] Gets span of elements up to an element satisfying a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[Span@]
+#   The longest prefix of the list containing only elements that don't satisfy
+#   the condition, along with the remainder of the list.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Span@<T@>; }
+Break = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: Span@(Empty<T@>, Empty<T@>));
+  p(list.items.head).?(true: Span@(Empty<T@>, list));
+  Span@<T@> span = Break(list.items.tail, p);
+  span.@(span: Items(list.items.head, span.span));
+};
+
+@(
+  Any, Keep, Remove, Split,
+  Search, SearchR, Skip, Until, While,
+  Trim, Strip,
+  Span@, Span, Break
+);

@@ -14,7 +14,7 @@ Int@ 4 = Int|4;
 <@>% Items = /Std/List%.Items;
 <@>% Length = /Core/List/Index%.Length;
 <@>% Get = /Core/List/Index%.Get;
-<@>% Split = /Core/List/Search%.Split;
+<@>% Split = /Std/List/Search%.Split;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

@@ -146,7 +146,7 @@ State@ InitialState = {
 
 # Return true if the given position is found in the list of positions.
 (List@<Pos@>, Pos@) { Bool@; } InPosS = (List@<Pos@> l, Pos@ p) {
-  /Core/List/Search%.Any(l, EqPos(p));
+  /Std/List/Search%.Any(l, EqPos(p));
 };
 
 # Update the random number for where the next food will be generate.
