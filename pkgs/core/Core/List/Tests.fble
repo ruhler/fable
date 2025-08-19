@@ -37,13 +37,13 @@
 <@>% Reverse = /Std/List%.Reverse;
 <@>% Join = /Std/List%.Join;
 
-<@>% Length = /Core/List/Index%.Length;
-<@>% Get = /Core/List/Index%.Get;
-<@>% Set = /Core/List/Index%.Set;
-<@>% Take = /Core/List/Index%.Take;
-<@>% Drop = /Core/List/Index%.Drop;
-<@>% Range = /Core/List/Index%.Range;
-<@>% Index_Span = /Core/List/Index%.Span;
+<@>% Length = /Std/List/Index%.Length;
+<@>% Get = /Std/List/Index%.Get;
+<@>% Set = /Std/List/Index%.Set;
+<@>% Take = /Std/List/Index%.Take;
+<@>% Drop = /Std/List/Index%.Drop;
+<@>% Range = /Std/List/Index%.Range;
+<@>% Index_Span = /Std/List/Index%.Span;
 
 <@>% Any = /Std/List/Search%.Any;
 <@>% Keep = /Std/List/Search%.Keep;

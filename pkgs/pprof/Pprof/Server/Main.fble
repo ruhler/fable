@@ -18,9 +18,9 @@
 <@>% List = /Std/List%.List;
 <@>% Last = /Std/List%.Last;
 <@>% Append = /Std/List%.Append;
-<@>% Get = /Core/List/Index%.Get;
-<@>% Drop = /Core/List/Index%.Drop;
-<@>% Length = /Core/List/Index%.Length;
+<@>% Get = /Std/List/Index%.Get;
+<@>% Drop = /Std/List/Index%.Drop;
+<@>% Length = /Std/List/Index%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

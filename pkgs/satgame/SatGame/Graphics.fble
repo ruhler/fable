@@ -97,12 +97,12 @@ Split12 = (List@<ImagePair@> pairs) {
   pairs.?(empty: Empty<List@<Drawing@>>);
 
   List@<Drawing@> head = /Std/List%.ForEach(
-    /Core/List/Index%.Take(pairs, Int|6), Empty<Drawing@>,
+    /Std/List/Index%.Take(pairs, Int|6), Empty<Drawing@>,
     (ImagePair@ p, List@<Drawing@> l) {
       Items(p.a, Items(p.b, l));
     });
     
-  List@<List@<Drawing@>> tail = Split12(/Core/List/Index%.Drop(pairs, Int|6));
+  List@<List@<Drawing@>> tail = Split12(/Std/List/Index%.Drop(pairs, Int|6));
   Items(head, tail);
 };
       

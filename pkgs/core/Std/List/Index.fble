@@ -1,0 +1,124 @@
+# @module[/Std/List/Index%]
+#  Utilities for index based access into lists.
+
+@ Int@ = /Std/Int%.Int@;
+% 0 = /Std/Int%.0;
+% Incr = /Std/Int%.Incr;
+% Decr = /Std/Int%.Decr;
+% IsZero = /Std/Int/Eq%.IsZero;
+% Le = /Std/Int/Eq%.Le;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+
+# @func[Length] Returns the length of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to get the length of.
+#  @returns[Int@] The length of the list.
+<@ T@>(List@<T@>) { Int@; }
+Length = <@ T@>(List@<T@> list) {
+  list.?(empty: 0);
+  Incr(Length(list.items.tail));
+};
+
+# @func[Get] Gets the element of the list with the given index.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to get the element from.
+#  @arg[Int@][index]
+#   The index into the list to get the element from. The first element is at
+#   index 0, the second element at index 1, and so on.
+#  @returns[T@] The element of the list at the given index.
+#  @sideeffects
+#   Behavior is undefined if there is no element at the given index.
+<@ T@>(List@<T@>, Int@) { T@; }
+Get = <@ T@>(List@<T@> list, Int@ index) {
+  IsZero(index).?(true: list.items.head);
+  Get(list.items.tail, Decr(index));
+};
+
+# @func[Set] Sets the element of a list with the given index.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to set the element in.
+#  @arg[Int@][index]
+#   The index into the list identifying the element. The first element is at
+#   index 0, the second element at index 1, and so on.
+#  @arg[T@][value]
+#   The new value for the element.
+#  @returns[List@<T@>] The list with the given element set to the given value.
+#  @sideeffects
+#   Behavior is undefined if there is no element at the given index.
+<@ T@>(List@<T@>, Int@, T@) { List@<T@>; }
+Set = <@ T@>(List@<T@> list, Int@ index, T@ value) {
+  IsZero(index).?(true: Items(value, list.items.tail));
+  Items(list.items.head, Set(list.items.tail, Decr(index), value));
+};
+
+# @func[Take] Returns the first n elements on the list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to take the elements from.
+#  @arg[Int@][count] The number of elements to take from the list.
+#  @returns[List@<T@>]
+#   The first @a[count] elements from the list. Returns fewer than @a[count]
+#   elements if there are less than @a[count] elements in the original list.
+<@ T@>(List@<T@>, Int@) { List@<T@>; }
+Take = <@ T@>(List@<T@> list, Int@ count) {
+  Le(count, 0).?(true: Empty<T@>);
+  list.?(empty: Empty<T@>);
+  Items(list.items.head, Take(list.items.tail, Decr(count)));
+};
+
+# @func[Drop] Removes the first n elements on the list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to remove elements from.
+#  @arg[Int@][count] The number of elements to remove from the list.
+#  @returns[List@<T@>]
+#   All but the first @a[count] elements on the list. Returns an empty list
+#   if the original list has fewer than @a[count] elements.
+<@ T@>(List@<T@>, Int@) { List@<T@>; }
+Drop = <@ T@>(List@<T@> list, Int@ count) {
+  Le(count, 0).?(true: list);
+  list.?(empty: list);
+  Drop(list.items.tail, Decr(count));
+};
+
+# @func[Range] Returns a sublist of the list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to get a sublist of.
+#  @arg[Int@][index]
+#   The index of the first element to return.
+#  @arg[Int@][len] The maximum length of the list to return.
+#  @returns[List@<T@>]
+#   The sublist of @l[list] starting at the given index and of given length.
+#   The returned list may be shorter than @a[len] if sublist range goes past
+#   the end of the list. Returns an empty list if the initial index is past
+#   the end of the list.
+<@ T@>(List@<T@>, Int@, Int@) { List@<T@>; }
+Range = <@ T@>(List@<T@> list, Int@ index, Int@ len) {
+  Take(Drop(list, index), len);
+};
+
+# @struct[Span@]
+#  The return type of the @l{Span} function.
+#
+#  @field[List@<T@>][span] A prefix of a list.
+#  @field[List@<T@>][tail] The remainder of the list.
+<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+
+# @func[Span] Splits the list at a given index.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to split.
+#  @arg[Int@][index] The index to split the list at.
+#  @returns[Span@]
+#   The span of items up to but not including the element at the given index,
+#   followed by the rest of the items on the list. If the index is past the
+#   end of the list, the initial span will include the entire list.
+<@ T@>(List@<T@>, Int@) { Span@<T@>; }
+Span = <@ T@>(List@<T@> list, Int@ index) {
+  Le(index, 0).?(true: Span@(Empty<T@>, list));
+  list.?(empty: Span@(Empty<T@>, Empty<T@>));
+  Span@<T@> span = Span(list.items.tail, Decr(index));
+  span.@(span: Items(list.items.head, span.span));
+};
+
+@(Length, Get, Set, Take, Drop, Range, Span@, Span);

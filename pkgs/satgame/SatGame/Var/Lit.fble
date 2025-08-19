@@ -12,7 +12,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Append = /Std/List%.Append;
-<@>% Take = /Core/List/Index%.Take;
+<@>% Take = /Std/List/Index%.Take;
 
 @ Var@ = /SatGame/Var%.Var@;
 

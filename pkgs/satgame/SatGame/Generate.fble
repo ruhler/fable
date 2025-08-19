@@ -20,7 +20,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
 <@>% List = /Std/List%.List;
-<@>% Take = /Core/List/Index%.Take;
+<@>% Take = /Std/List/Index%.Take;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
 @ Clause@ = /SatGame/Puzzle%.Clause@;

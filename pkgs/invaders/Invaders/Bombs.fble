@@ -19,7 +19,7 @@
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% ForEach = /Std/List%.ForEach;
-<@>% Length = /Core/List/Index%.Length;
+<@>% Length = /Std/List/Index%.Length;
 
 % Bases = /Invaders/Bases%;
 @ Bases@ = Bases.Bases@;

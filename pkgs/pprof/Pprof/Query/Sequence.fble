@@ -11,8 +11,8 @@
 
 <@>% StartsWith = /Core/List/Eq%.StartsWith;
 
-<@>% Drop = /Core/List/Index%.Drop;
-<@>% Length = /Core/List/Index%.Length;
+<@>% Drop = /Std/List/Index%.Drop;
+<@>% Length = /Std/List/Index%.Length;
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;

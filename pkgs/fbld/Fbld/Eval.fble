@@ -3,7 +3,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
-<@>% Length = /Core/List/Index%.Length;
+<@>% Length = /Std/List/Index%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 

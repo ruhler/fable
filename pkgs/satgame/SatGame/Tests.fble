@@ -55,7 +55,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
     Int@ seed = Int|0;
     Puzzle@ puzzle = PureLFSR.Run(Generate(params), seed);
     AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show,
-      Int|6, /Core/List/Index%.Length(puzzle));
+      Int|6, /Std/List/Index%.Length(puzzle));
   }),
 
   Test(Str|'Game.Unsolved', (Unit@ _) {
