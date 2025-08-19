@@ -815,23 +815,23 @@ everyone has to agree. There is literally only one way you could describe Eq@.
 
 Cool. I think I have my full list proposal now. Here it is:
 
-  /Std/List%:
+  /Std/List%: (done)
   * List@, List, Items, Empty
   * Append, Concat, Join
   * Head, Tail, Last, Init
   * Reverse
   * ForEach, Map
 
-  /Std/List/Search%:
+  /Std/List/Search%: (done)
   * Any, Keep, Remove, Split
   * Search, SearchR, Skip, Until, While
   * Trim, Strip,
   * Span@, Span, Break
 
-  /Std/List/Count%:
+  /Std/List/Count%: (done)
   * Count
 
-  /Std/List/Index%:
+  /Std/List/Index%: (done)
   * Length, Get, Set, Take, Drop, Range, Span@, Span
 
   /Std/List/Sort%:

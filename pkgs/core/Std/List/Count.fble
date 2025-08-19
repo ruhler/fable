@@ -1,0 +1,28 @@
+# @module[/Std/List/Count%]
+#  Utilities for counting elements of a list that satisfy a given condition.
+#
+#  This is kept separate from @l{/Std/List/Search%} because it has an extra
+#  dependency on @l{Int@}.
+
+@ Bool@ = /Std/Bool%.Bool@;
+
+@ Int@ = /Std/Int%.Int@;
+% 0 = /Std/Int%.0;
+% Incr = /Std/Int%.Incr;
+
+<@>@ List@ = /Std/List%.List@;
+
+# @func[Count] Counts elements on the list that satisfy a condition.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[(T@) { Bool@; }][p] The condition to check for.
+#  @returns[Int@] The number of elements on the list satisfying the condition.
+<@ T@>(List@<T@>, (T@) { Bool@; }) { Int@; }
+Count = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
+  list.?(empty: 0);
+  Int@ tail = Count(list.items.tail, p);
+  p(list.items.head).?(false: tail);
+  Incr(tail);
+};
+
+@(Count);
