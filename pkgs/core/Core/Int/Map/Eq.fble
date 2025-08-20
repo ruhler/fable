@@ -2,7 +2,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>@ Map@ = /Core/Int/Map%.Map.Map@;
 

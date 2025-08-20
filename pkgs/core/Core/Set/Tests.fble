@@ -6,7 +6,7 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 <@>% AssertNotEquals = /Core/Eq/Assert%.AssertNotEquals;
 

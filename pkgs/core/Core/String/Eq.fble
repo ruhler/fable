@@ -7,7 +7,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
 @ String@ = /Core/String%.String@;
 
 # Eq --

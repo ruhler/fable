@@ -1,0 +1,13 @@
+# @module[/Std/Eq%]
+#  Defines the Eq@ interface for comparing two objects for equality.
+
+@ Bool@ = /Std/Bool%.Bool@;
+
+# @type[Eq@] Compare two values for equality.
+#  @arg[@][T@] The type of values to compare.
+#  @arg[T@][a] The first operand.
+#  @arg[T@][b] The second operand.
+#  @returns[Bool@] True if the operands are equal, false otherwise.
+<@>@ Eq@ = <@ T@>(T@, T@) { Bool@; };
+
+@(Eq@);

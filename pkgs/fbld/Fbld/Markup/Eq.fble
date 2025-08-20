@@ -3,7 +3,7 @@
 % False = /Std/Bool%.False;
 % True = /Std/Bool%.True;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
 
 @ Command@ = /Fbld/Markup%.Command@;
 @ Markup@ = /Fbld/Markup%.Markup@;

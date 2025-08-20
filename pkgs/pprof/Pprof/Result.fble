@@ -1,7 +1,7 @@
 
 % False = /Std/Bool%.False;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

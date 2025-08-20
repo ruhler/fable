@@ -123,3 +123,39 @@ could be interested in: Lt, Gt, Eq, Ne, Le, Ge, Min, Max, Cmp. It's much more
 a class of operations. Equality is just equality. So just use equality for it.
 That's part of the naming challenge too.
 
+---
+
+So /Std/Eq% is just Eq@? Nothing else? No Ne function?
+
+And once I implement Eq@, I'll want to make sure I have:
+* /Std/Unit/Eq%: Eq and Ne
+* /Std/Bool/Eq%: Eq and Ne
+* /Std/Int/Eq% (already done)
+* /Std/List/Eq% (next to be done)
+
+Sounds straight forward enough. Maybe I do want to provide /Std/Eq%.Ne
+function, if for no other reason to be more convenient for defining those for
+Unit, Bool, List, etc?
+
+Then do we want /Std/Eq%.Eq as well, for symmetry?
+
+---
+
+I vote for no 'Ne'. We can have it for Int, but otherwise I don't see a need
+for it. There are three cases:
+1. You are directly switching based on equality check. Then Eq.?(false) is
+just as easy as Ne.?(true).
+2. You are using negation in a boolean formula. Then Not(Eq(a, b)) is almost
+as easy as Ne(a, b).
+3. You are passing negation as a predicate. Well, fine. Tedious a little, but
+you can do (Foo@ a) { Not(Eq(a, X)); } if you really want to. Or, we add a
+compose function, and say you can do: Compose(Not, Eq(a)). That's easy.
+
+Don't bother making everyone define an Ne function that will be rarely used.
+
+Which means all I want for /Std/Eq% is Eq@, which is the function. And for
+most types, we just define .../Foo/Eq% with an Eq function implementing Eq@.
+Or things like I have, with .../Foo/Eq%.A .../Foo/Eq%.B, etc. to distinguish
+between EqA and EqB.
+
+Ready? Let's try it. This one could be slightly tedious to move over...

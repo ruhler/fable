@@ -4,7 +4,7 @@
 % False = /Std/Bool%.False;
 % And = /Std/Bool%.And;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 <@>@ List@ = /Std/List%.List@;

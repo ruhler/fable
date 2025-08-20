@@ -5,7 +5,7 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-<@>@ Eq@ = /Core/Eq%.Eq@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>% List = /Std/List%.List;
 <@>% Append = /Std/List%.Append;
