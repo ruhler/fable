@@ -1,0 +1,18 @@
+# @module[/Std/Unit/Eq%]
+#  The Eq@ instance for Unit@.
+
+% True = /Std/Bool%.True;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# @func[Eq] Check two units for equality.
+#  @arg[Unit@][a] The first operand.
+#  @arg[Unit@][b] The second operand.
+#  @returns[Bool@] True, because all Unit@ values are equal.
+Eq@<Unit@> Eq = (Unit@ _a, Unit@ _b) {
+  True;
+};
+
+@(Eq);

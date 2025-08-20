@@ -5,7 +5,7 @@
 
 
 <<@>@, @>% Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq) {
-  /Core/Map/Eq%.Eq(m, keq, /Core/Unit/Eq%.Eq);
+  /Core/Map/Eq%.Eq(m, keq, /Std/Unit/Eq%.Eq);
 };
 
 @(Eq);

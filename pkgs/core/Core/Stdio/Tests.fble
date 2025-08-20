@@ -89,7 +89,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(inputs, Bytes(Str|There), Empty<Int@>), Unit);
     PureResult@<Unit@> got = Run(PutStr(Stdio.out, Str|There), inputs);
     AssertEquals(
-      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultEq(/Std/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
   }),
@@ -100,7 +100,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(inputs, Empty<Int@>, Bytes(Str|There)), Unit);
     PureResult@<Unit@> got = Run(PutStr(Stdio.err, Str|There), inputs);
     AssertEquals(
-      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultEq(/Std/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
   }),
@@ -118,7 +118,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     }, inputs);
 
     AssertEquals(
-      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultEq(/Std/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
   }),
@@ -136,7 +136,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
     }, inputs);
 
     AssertEquals(
-      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultEq(/Std/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
   })

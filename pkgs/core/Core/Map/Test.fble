@@ -39,7 +39,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Unit@> wnt = Nothing<Unit@>;
       Maybe@<Unit@> got = m.Lookup(m.Empty<Unit@>, b);
       AssertEquals(
-        /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
+        /Core/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
         /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),
         wnt, got);
     }),
@@ -49,7 +49,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Unit@> wnt = Nothing<Unit@>;
       Maybe@<Unit@> got = m.Lookup(map, b);
       AssertEquals(
-        /Core/Maybe/Eq%.Eq(/Core/Unit/Eq%.Eq),
+        /Core/Maybe/Eq%.Eq(/Std/Unit/Eq%.Eq),
         /Core/Maybe/Show%.Show(/Core/Unit/Show%.Show),
         wnt, got);
     }),
