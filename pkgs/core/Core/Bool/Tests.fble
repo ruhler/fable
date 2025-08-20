@@ -5,7 +5,7 @@
 % Not = /Std/Bool%.Not;
 % And = /Std/Bool%.And;
 % Or = /Std/Bool%.Or;
-% Eq = /Core/Bool/Eq%.Eq;
+% Eq = /Std/Bool/Eq%.Eq;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 

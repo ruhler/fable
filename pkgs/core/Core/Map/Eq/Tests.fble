@@ -36,8 +36,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
           Empty<Bool@>, A, True), B, False), C, False);
 
     Bool@ wnt = True;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: value mismatch', (Unit@ _) {
@@ -47,8 +47,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
           Empty<Bool@>, A, True), B, False), C, False);
 
     Bool@ wnt = False;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: different number of elements', (Unit@ _) {
@@ -57,8 +57,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
     Map@<Bool@> b = Insert(Insert(Empty<Bool@>, A, True), B, False);
 
     Bool@ wnt = False;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: deleted to empty', (Unit@ _) {
@@ -66,8 +66,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
     Map@<Bool@> b = Empty<Bool@>;
 
     Bool@ wnt = True;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: empty from deleted', (Unit@ _) {
@@ -75,8 +75,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
     Map@<Bool@> b = Delete(Insert(Empty<Bool@>, A, True), A);
 
     Bool@ wnt = True;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: empty from deleted pair second', (Unit@ _) {
@@ -84,8 +84,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
     Map@<Bool@> b = Delete(Insert(a, B, True), B);
 
     Bool@ wnt = True;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: empty from deleted pair first', (Unit@ _) {
@@ -93,8 +93,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
     Map@<Bool@> b = Delete(Insert(a, C, True), C);
 
     Bool@ wnt = True;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'eq: equal any order', (Unit@ _) {
@@ -104,8 +104,8 @@ Test@ Tests = TestSuite(Str|Eq, List[
           Empty<Bool@>, A, True), B, False), C, False);
 
     Bool@ wnt = True;
-    Bool@ got = Eq(/Core/Bool/Eq%.Eq, a, b);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(/Std/Bool/Eq%.Eq, a, b);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })
 ]);
 

@@ -51,25 +51,25 @@ Test@ Tests = TestSuite(Str|Maybe, List[
   Test(Str|Eq_JustEq, (Unit@ _) {
     Bool@ wnt = True;
     Bool@ got = Eq(Just(A), Just(A));
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Eq_JustNe, (Unit@ _) {
     Bool@ wnt = False;
     Bool@ got = Eq(Just(A), Just(B));
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Eq_JustNothing, (Unit@ _) {
     Bool@ wnt = False;
     Bool@ got = Eq(Just(A), Nothing<AB@>);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Eq_Nothing, (Unit@ _) {
     Bool@ wnt = True;
     Bool@ got = Eq(Nothing<AB@>, Nothing<AB@>);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Just, (Unit@ _) {

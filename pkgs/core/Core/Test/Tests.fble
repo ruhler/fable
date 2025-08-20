@@ -38,7 +38,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
 
     Bool@ wnt = True;
     Bool@ got = result.exit;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'RunTest.fail_fails', (Unit@ _) {
@@ -46,7 +46,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
 
     Bool@ wnt = False;
     Bool@ got = result.exit;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'RunTest.xfail_passes', (Unit@ _) {
@@ -54,7 +54,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
 
     Bool@ wnt = True;
     Bool@ got = result.exit;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'RunTest.SuitePass', (Unit@ _) {
@@ -68,7 +68,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
 
     Bool@ wnt = True;
     Bool@ got = result.exit;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|'RunTest.SuiteFail', (Unit@ _) {
@@ -82,7 +82,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
 
     Bool@ wnt = False;
     Bool@ got = result.exit;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })
 ]);
 

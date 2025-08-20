@@ -44,7 +44,7 @@
 
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
-  And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.pos, b.pos));
+  And(EqId(a.id, b.id), /Std/Bool/Eq%.Eq(a.pos, b.pos));
 };
 
 Eq@<Clause@> EqClause = /Core/List/Eq%.Eq<Var@>(EqVar);

@@ -55,7 +55,7 @@ Test@ Tests = TestSuite(Str|Stdio, List[
       PureState@(inputs, Empty<Int@>, Empty<Int@>), True);
     PureResult@<Bool@> got = Run(Monad.return(True), inputs);
     AssertEquals(
-      PureResultEq(/Core/Bool/Eq%.Eq),
+      PureResultEq(/Std/Bool/Eq%.Eq),
       PureResultShow(/Core/Bool/Show%.Show),
       wnt, got);
   }),

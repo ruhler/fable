@@ -241,14 +241,14 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> l = EL|'BDBB';
     Bool@ wnt = True;
     Bool@ got = Any(l, (Elem@ e) { e.?(D: True, : False); });
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|AnyNot, (Unit@ _) {
     List@<Elem@> l = EL|'BDBB';
     Bool@ wnt = False;
     Bool@ got = Any(l, (Elem@ e) { e.?(C: True, : False); });
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Search, (Unit@ _) {
@@ -340,7 +340,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> needle = EL|'ABBC';
     Bool@ got = StartsWith(ElemEq, haystack, needle);
     Bool@ wnt = True;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|StartsWith_Mismatch, (Unit@ _) {
@@ -348,7 +348,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> needle = EL|'ABC';
     Bool@ got = StartsWith(ElemEq, haystack, needle);
     Bool@ wnt = False;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|StartsWith_EndOfString, (Unit@ _) {
@@ -356,7 +356,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> needle = EL|'ABBCD';
     Bool@ got = StartsWith(ElemEq, haystack, needle);
     Bool@ wnt = False;
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Head, (Unit@ _) {

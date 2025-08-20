@@ -31,7 +31,7 @@ Test@ Bench = Test(Str|Sat, (Unit@ _) {
   Pure@<Bool@> go = /Sat/Main%.Main<Pure@>(Stdio, Monad)[];
   PureResult@<Bool@> result = Run(go, input);
   AssertEquals(
-    /Core/Bool/Eq%.Eq,
+    /Std/Bool/Eq%.Eq,
     /Core/Bool/Show%.Show,
     True, result.x);
 });

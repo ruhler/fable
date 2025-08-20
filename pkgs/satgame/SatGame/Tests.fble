@@ -61,7 +61,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
   Test(Str|'Game.Unsolved', (Unit@ _) {
     Game@ game = Game(puzzle);
     Bool@ solved = Solved(game);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
   }),
 
   Test(Str|'Game.Solved', (Unit@ _) {
@@ -75,7 +75,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
       ToggleDismissed, Int|1, Int|2, start))))));
 
     Bool@ solved = Solved(finish);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, solved);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, solved);
   }),
 
   Test(Str|'Game.Incomplete', (Unit@ _) {
@@ -88,7 +88,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
       ToggleDismissed, Int|1, Int|2, start)))));
 
     Bool@ solved = Solved(finish);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
   }),
 
   Test(Str|'Game.Incorrect', (Unit@ _) {
@@ -102,7 +102,7 @@ Test@ Tests = TestSuite(Str|SatGame, List[
       ToggleSelected, Int|1, Int|2, start))))));
 
     Bool@ solved = Solved(finish);
-    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, False, solved);
   })
 ]);
 

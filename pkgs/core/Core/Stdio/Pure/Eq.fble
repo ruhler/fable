@@ -29,7 +29,7 @@ PureResult = <@ A@>(Eq@<A@> eq, PureResult@<A@> a, PureResult@<A@> b) {
 };
 
 Eq@<MainResult@> MainResult = (MainResult@ a, MainResult@ b) {
-  /Core/Bool/Eq%.Eq(a.exit, b.exit).?(false: False);
+  /Std/Bool/Eq%.Eq(a.exit, b.exit).?(false: False);
   Ints(a.in, b.in).?(false: False);
   Ints(a.out, b.out).?(false: False);
   Ints(a.err, b.err).?(false: False);

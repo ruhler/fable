@@ -7,7 +7,7 @@
 
 Eq@<Literal@> Literal = (Literal@ a, Literal@ b) {
   /SatGame/Var/Eq%.Eq(a.var, b.var).?(false: False);
-  /Core/Bool/Eq%.Eq(a.pos, b.pos);
+  /Std/Bool/Eq%.Eq(a.pos, b.pos);
 };
 
 @(Literal);

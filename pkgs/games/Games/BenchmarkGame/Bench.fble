@@ -27,7 +27,7 @@
 (Main@, String@, Unit@) { TestResult@; }
 RunBench = (Main@ game, String@ n, Unit@ _) {
   Bool@ got = Run(game<Pure@>(Stdio, Monad, List[n]));
-  AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, got);
+  AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, True, got);
 };
 
 # Benchmark for the benchmark games that takes about 1 minute to run.

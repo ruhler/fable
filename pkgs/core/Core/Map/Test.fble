@@ -62,7 +62,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> wnt = Just(True);
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
-        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
         wnt, got);
     }),
@@ -74,7 +74,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> wnt = Just(True);
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
-        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
         wnt, got);
     }),
@@ -84,7 +84,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> wnt = Nothing<Bool@>;
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
-        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
         wnt, got);
     }),
@@ -94,7 +94,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
       Maybe@<Bool@> wnt = Just(False);
       Maybe@<Bool@> got = m.Lookup(map, b);
       AssertEquals(
-        /Core/Maybe/Eq%.Eq(/Core/Bool/Eq%.Eq),
+        /Core/Maybe/Eq%.Eq(/Std/Bool/Eq%.Eq),
         /Core/Maybe/Show%.Show(/Core/Bool/Show%.Show),
         wnt, got);
     }),
@@ -116,7 +116,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
         });
       AssertEquals(
         /Core/List/Eq%.Eq((Entry@ a, Entry@ b) {
-          And(eq(a.key, b.key), /Core/Bool/Eq%.Eq(a.value, b.value));
+          And(eq(a.key, b.key), /Std/Bool/Eq%.Eq(a.value, b.value));
         }),
         /Core/List/Show%.Show((Entry@ e) {
           /Core/String%.Strs[show(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];

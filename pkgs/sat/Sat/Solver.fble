@@ -80,7 +80,7 @@
     c.?(empty: Just(List[v]));
     Var@ head = c.items.head;
     EqId(v.id, head.id).?(true: {
-      /Core/Bool/Eq%.Eq(v.pos, head.pos).?(true: Just(c));
+      /Std/Bool/Eq%.Eq(v.pos, head.pos).?(true: Just(c));
       Nothing<Clause@>;
     });
     Maybe@<Clause@> tail = AddVar(v, c.items.tail);
@@ -351,7 +351,7 @@ ApplyLearnedClauses = (Solver@ to, Solver@ from) {
 (Assign@, Assign@) { Bool@; }
 AssignsAreConflicting = (Assign@ a, Assign@ b) {
   EqId(a.var.id, b.var.id).?(false: False);
-  /Core/Bool/Eq%.Eq(a.var.pos, b.var.pos).?(true: False);
+  /Std/Bool/Eq%.Eq(a.var.pos, b.var.pos).?(true: False);
 
   # Don't consider 'pure' literals as conflicting to work around the case
   # where a variable is entirely eliminated, becoming simultaneously pure
