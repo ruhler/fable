@@ -839,9 +839,11 @@ Cool. I think I have my full list proposal now. Here it is:
 
   /Std/List/Eq%:
   * HasItems, IsEmpty
-  * StartsWith, EndsWith, Contains, Split, Uniq
-  * Eq, Ne
-  * Skip, Trim, Strip, Span@, Break
+  * Eq
+  * StartsWith, EndsWith, Contains,
+  * Skip, Trim, Strip,
+  * Span@, Break
+  * Split
   * Replace
 
 Upon review: 'replace' is the only thing missing here?
@@ -887,3 +889,20 @@ That will be a tedious change to make though.
 
 I think I should make the change. But then we can ask if we should base the
 base element before the list, for consistency?
+
+---
+
+Uniq function, couple questions:
+1. Does it only drop duplicate uniq elements, like the uniq command?
+2. Does it keep the first or the last of duplicate elements?
+
+c++ has: "Removes all except the first element from every consecutive group of
+   equivalent elements from the range"
+
+That's not what I was thinking. My intention was to remove duplicates wherever
+they showed up. Like using a List for a set. Maybe best not to have this then?
+Or to use the more traditional 'uniq' behavior? Or maybe rename it to 'Dedup'?
+We could call it 'Set' as well?
+
+I'm starting to think maybe best not to have these functions. If I don't use
+them, and nobody else has them?

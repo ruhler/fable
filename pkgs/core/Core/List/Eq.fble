@@ -7,6 +7,26 @@
 
 <@>@ List@ = /Std/List%.List@;
 
+# @func[HasItems] Check if a list is non-empty.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @returns[Bool@] True if the list is non-empty, false otherwise.
+<@ T@>(List@<T@>) { Bool@; }
+HasItems = <@ T@>(List@<T@> list) {
+  list.?(items: True);
+  False;
+};
+
+# @func[IsEmpty] Check if a list is empty.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @returns[Bool@] True if the list is empty, false otherwise.
+<@ T@>(List@<T@>) { Bool@; }
+IsEmpty = <@ T@>(List@<T@> list) {
+  list.?(empty: True);
+  False;
+};
+
 # Eq --
 #   Implementation of Eq@ for List@. See documentation of /Eq%.Eq@.
 <@ T@>(Eq@<T@>) { Eq@<List@<T@>>; }
@@ -18,7 +38,7 @@ Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
 };
 
 # StartsWith --
-#   Return true if the list starts the given sequence, false otherwise.
+#   Return true if the list starts with the given sequence, false otherwise.
 <@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
 StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
   needle.?(empty: True);
@@ -27,4 +47,41 @@ StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
   StartsWith(eq, haystack.items.tail, needle.items.tail);
 };
 
-@(Eq, StartsWith);
+# EndsWith --
+#   Return true if the list ends with the given sequence, false otherwise.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
+EndsWith = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  Eq(eq, haystack, needle).?(true: True);
+  haystack.?(empty: False);
+  EndsWith(eq, haystack.items.tail, needle);
+};
+
+# Contains --
+#   Return true if the list contains the given sequence, false otherwise.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
+Contains = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  StartsWith(eq, haystack, needle).?(true: True);
+  haystack.?(empty: False);
+  Contains(eq, haystack.items.tail, needle);
+};
+
+# Skip -- 
+#   Skips the given prefix of a list if it is present.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Skip = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  (List@<T@>, List@<T@>) { List@<T@>; }
+  skip = (List@<T@> list, List@<T@> prefix) {
+    prefix.?(empty: list);
+    list.?(empty: haystack);
+    eq(list.items.head, prefix.items.head).?(false: haystack);
+    skip(list.items.tail, prefix.items.tail);
+  };
+  skip(haystack, needle);
+};
+
+@(
+  HasItems, IsEmpty,
+  Eq,
+  StartsWith, EndsWith, Contains,
+  Skip
+);
