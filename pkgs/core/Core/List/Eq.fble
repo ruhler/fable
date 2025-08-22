@@ -6,6 +6,8 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
 
 # @func[HasItems] Check if a list is non-empty.
 #  @arg[@][T@] The type of element on the list.
@@ -79,9 +81,43 @@ Skip = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
   skip(haystack, needle);
 };
 
+# Trim -- 
+#   Removes the given suffix of a list if it is present.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Trim = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  Eq(eq, haystack, needle).?(true: Empty<T@>);
+  haystack.?(empty: haystack);
+  Items(haystack.items.head, Trim(eq, haystack.items.tail, needle));
+};
+
+# Strip -- 
+#   Removes occurences of a sublist from front and back of the list.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Strip = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  Trim(eq, Skip(eq, haystack, needle), needle);
+};
+
+# @struct[Span@]
+#  The return type of the @l{Span} and @l{Break} functions.
+#
+#  @field[List@<T@>][span] A prefix of a list.
+#  @field[List@<T@>][tail] The remainder of the list.
+<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+
+# Return the span and rest of a string where the rest of the string starts
+# with the first occurence of needle in the haystack.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Span@<T@>; }
+Break = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  StartsWith(eq, haystack, needle).?(true: Span@(Empty<T@>, haystack));
+  haystack.?(empty: Span@(Empty<T@>, Empty<T@>));
+  Span@<T@> span = Break(eq, haystack.items.tail, needle);
+  span.@(span: Items(haystack.items.head, span.span));
+};
+
 @(
   HasItems, IsEmpty,
   Eq,
   StartsWith, EndsWith, Contains,
-  Skip
+  Skip, Trim, Strip,
+  Span@, Break
 );

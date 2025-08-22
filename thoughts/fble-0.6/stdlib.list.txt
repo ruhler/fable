@@ -906,3 +906,30 @@ We could call it 'Set' as well?
 
 I'm starting to think maybe best not to have these functions. If I don't use
 them, and nobody else has them?
+
+---
+
+Question: For Eq Strip... what if there is overlap at front and back? I'm kind
+of thinking maybe we don't want strip as a function. Can you even imagine any
+use for it?
+
+Skip I can definitely imagine a use of. For example, in split? Not sure about
+trim. But Split should give us a hint as to how to treat strip, because it has
+similar challenges.
+
+For example, let's say we want our delimiter to be aba, and the string is
+'ababa'. Skip is easy: 'ba'. Trim is easy: 'ab'. What about split and Strip?
+For split, I should think it would be: aba is first delim, ba is what's left.
+That is, take the front off first. Use the same for Strip?
+
+Or just don't have this function. Let people write it themselves if they want
+to, and then they have control over the behavior. I think that's better.
+
+But I still want split. What does split do in this case in, say, python?
+Python gives back ['', 'ba'] in this case. Seems funny to me that it returns a
+leading empty string.
+
+Java docs for split are more precise. They only return leading '' when there
+is a positive width match at the beginning of the string. If python and java
+both have split with sequences as the delimiter, I feel like we ought to as
+well, even if I can't think of a good case for it.

@@ -67,6 +67,9 @@
 <@>% EndsWith = /Core/List/Eq%.EndsWith;
 <@>% Contains = /Core/List/Eq%.Contains;
 <@>% Eq_Skip = /Core/List/Eq%.Skip;
+<@>% Eq_Trim = /Core/List/Eq%.Trim;
+<@>% Eq_Strip = /Core/List/Eq%.Strip;
+<@>% Eq_Break = /Core/List/Eq%.Break;
 
 
 <@>% Sort = /Core/List/Sort%.Sort;
@@ -432,7 +435,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
-  Test(Str|Skip, (Unit@ _) {
+  Test(Str|Eq_Skip, (Unit@ _) {
     List@<Elem@> haystack = EL|'ABBCCDDE';
     List@<Elem@> needle = EL|'ABBC';
     List@<Elem@> got = Eq_Skip(ElemEq, haystack, needle);
@@ -440,11 +443,65 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     AssertEquals(Eq, Show, wnt, got);
   }),
 
-  Test(Str|Skip_mismatch, (Unit@ _) {
+  Test(Str|Eq_Skip_mismatch, (Unit@ _) {
     List@<Elem@> haystack = EL|'ABBCCDDE';
     List@<Elem@> needle = EL|'ABCD';
     List@<Elem@> got = Eq_Skip(ElemEq, haystack, needle);
     List@<Elem@> wnt = haystack;
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Eq_Trim, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'CDDE';
+    List@<Elem@> got = Eq_Trim(ElemEq, haystack, needle);
+    List@<Elem@> wnt = EL|'ABBC';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Eq_Trim_mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'EDDC';
+    List@<Elem@> got = Eq_Trim(ElemEq, haystack, needle);
+    List@<Elem@> wnt = haystack;
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Eq_Strip, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDEABBC';
+    List@<Elem@> needle = EL|'ABBC';
+    List@<Elem@> got = Eq_Strip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = EL|'CDDE';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Eq_Strip_mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'EDDC';
+    List@<Elem@> got = Eq_Strip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = haystack;
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Eq_Strip_overlap, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABABA';
+    List@<Elem@> needle = EL|'ABA';
+    List@<Elem@> got = Eq_Strip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = EL|'BA';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Eq_Break_span, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Eq_Break(ElemEq, list, EL|'AD').span;
+    List@<Elem@> wnt = EL|'ABC';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Eq_Break_tail, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Eq_Break(ElemEq, list, EL|'AD').tail;
+    List@<Elem@> wnt = EL|'ADBE';
     AssertEquals(Eq, Show, wnt, got);
   }),
 
