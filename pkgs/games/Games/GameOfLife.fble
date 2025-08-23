@@ -39,7 +39,7 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
 
 Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
   Ordering@ o = Ord(a.row, b.row);
-  o.?(eq: Ord(a.col, b.col), : o);
+  o.?(equal: Ord(a.col, b.col), : o);
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {

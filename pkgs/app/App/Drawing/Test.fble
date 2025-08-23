@@ -45,7 +45,7 @@
 
 Ord@<Point@> OrdPoint = (Point@ a, Point@ b) {
   Ordering@ r = Ord(a.x, b.x);
-  r.?(eq: Ord(a.y, b.y), : r);
+  r.?(equal: Ord(a.y, b.y), : r);
 };
 
 (Point@) { String@; } ShowPoint = (Point@ x) {

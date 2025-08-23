@@ -8,9 +8,9 @@
 
 Eq@<Ordering@> Eq = (Ordering@ a, Ordering@ b) {
   a.?(
-    lt: b.?(lt: True, : False),
-    eq: b.?(eq: True, : False),
-    gt: b.?(gt: True, : False));
+    less: b.?(less: True, : False),
+    equal: b.?(equal: True, : False),
+    greater: b.?(greater: True, : False));
 };
 
 @(Eq);

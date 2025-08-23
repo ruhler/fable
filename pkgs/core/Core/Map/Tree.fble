@@ -158,8 +158,8 @@ Delta = (Balance@ delta, Balance@ balance) {
       map.?(empty: Nothing<V@>);
 
       Ordering@ ordering = ord(key, map.map.key);
-      ordering.?(lt: L(map.map.left, key));
-      ordering.?(gt: L(map.map.right, key));
+      ordering.?(less: L(map.map.left, key));
+      ordering.?(greater: L(map.map.right, key));
       Just(map.map.value);
     };
     L;
@@ -406,7 +406,7 @@ Delta = (Balance@ delta, Balance@ balance) {
 
       Ordering@ ordering = ord(key, map.map.key);
 
-      ordering.?(lt: {
+      ordering.?(less: {
         # Recurse to left subtree.
         RebalanceLeft(
           map.map.key,
@@ -416,7 +416,7 @@ Delta = (Balance@ delta, Balance@ balance) {
           map.map.right);
       });
 
-      ordering.?(gt: {
+      ordering.?(greater: {
         # Recurse to right subtree.
         RebalanceRight(
           map.map.key,

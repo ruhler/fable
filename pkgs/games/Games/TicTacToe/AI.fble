@@ -8,9 +8,9 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 
-% Lt = /Core/Ord%.Lt;
-% Eq = /Core/Ord%.Eq;
-% Gt = /Core/Ord%.Gt;
+% Less = /Core/Ord%.Less;
+% Equal = /Core/Ord%.Equal;
+% Greater = /Core/Ord%.Greater;
 
 % Unit = /Std/Unit%.Unit;
 
@@ -24,22 +24,22 @@
 
 /Core/Ord%.Ord@<Square@> SquareOrd = (Square@ a, Square@ b) {
   a.?(
-    X: b.?(X: Eq, O: Lt, E: Lt),
-    O: b.?(X: Gt, O: Eq, E: Lt),
-    E: b.?(X: Gt, O: Gt, E: Eq));
+    X: b.?(X: Equal, O: Less, E: Less),
+    O: b.?(X: Greater, O: Equal, E: Less),
+    E: b.?(X: Greater, O: Greater, E: Equal));
 };
 
 /Core/Ord%.Ord@<Board@> BoardOrd = (Board@ a, Board@ b) {
-  SquareOrd(a.ul, b.ul).?(lt: Lt, gt: Gt);
-  SquareOrd(a.uc, b.uc).?(lt: Lt, gt: Gt);
-  SquareOrd(a.ur, b.ur).?(lt: Lt, gt: Gt);
-  SquareOrd(a.ml, b.ml).?(lt: Lt, gt: Gt);
-  SquareOrd(a.mc, b.mc).?(lt: Lt, gt: Gt);
-  SquareOrd(a.mr, b.mr).?(lt: Lt, gt: Gt);
-  SquareOrd(a.ll, b.ll).?(lt: Lt, gt: Gt);
-  SquareOrd(a.lc, b.lc).?(lt: Lt, gt: Gt);
-  SquareOrd(a.lr, b.lr).?(lt: Lt, gt: Gt);
-  Eq;
+  SquareOrd(a.ul, b.ul).?(less: Less, greater: Greater);
+  SquareOrd(a.uc, b.uc).?(less: Less, greater: Greater);
+  SquareOrd(a.ur, b.ur).?(less: Less, greater: Greater);
+  SquareOrd(a.ml, b.ml).?(less: Less, greater: Greater);
+  SquareOrd(a.mc, b.mc).?(less: Less, greater: Greater);
+  SquareOrd(a.mr, b.mr).?(less: Less, greater: Greater);
+  SquareOrd(a.ll, b.ll).?(less: Less, greater: Greater);
+  SquareOrd(a.lc, b.lc).?(less: Less, greater: Greater);
+  SquareOrd(a.lr, b.lr).?(less: Less, greater: Greater);
+  Equal;
 };
 
 (Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {

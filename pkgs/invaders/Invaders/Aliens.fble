@@ -111,7 +111,7 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 };
 
 /Core/Ord%.Ord@<Alien@> AlienOrd = (Alien@ a, Alien@ b) {
-  Ord(a.row, b.row).?(lt: /Core/Ord%.Lt, gt: /Core/Ord%.Gt);
+  Ord(a.row, b.row).?(less: /Core/Ord%.Less, greater: /Core/Ord%.Greater);
   Ord(a.col, b.col);
 };
 

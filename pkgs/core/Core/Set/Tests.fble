@@ -17,9 +17,9 @@
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
 @ Ordering@ = /Core/Ord%.Ordering@;
-% Lt = /Core/Ord%.Lt;
-% Eq = /Core/Ord%.Eq;
-% Gt = /Core/Ord%.Gt;
+% Less = /Core/Ord%.Less;
+% Equal = /Core/Ord%.Equal;
+% Greater = /Core/Ord%.Greater;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
@@ -48,8 +48,8 @@ Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
 
 Ord@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
   a.?(
-    0: b.?(0: Eq, 1: Lt),
-    1: b.?(0: Gt, 1: Eq));
+    0: b.?(0: Equal, 1: Less),
+    1: b.?(0: Greater, 1: Equal));
 };
 
 Show@<Bit1@> ShowBit1 = (Bit1@ x) {
@@ -62,7 +62,7 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
 
 Ord@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
   Ordering@ oh = OrdBit1(a.h, b.h);
-  oh.?(eq: OrdBit1(a.l, b.l), : oh);
+  oh.?(equal: OrdBit1(a.l, b.l), : oh);
 };
 
 Show@<Bit2@> ShowBit2 = (Bit2@ x) {

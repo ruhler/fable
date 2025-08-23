@@ -46,7 +46,7 @@ Ord@<Coord@> Ord = {
   % OrdInt = /Core/Int/Ord%.Ord;
   (Coord@ a, Coord@ b) {
     Ordering@ r = OrdInt(a.x, b.x);
-    r.?(eq: OrdInt(a.y, b.y), : r);
+    r.?(equal: OrdInt(a.y, b.y), : r);
   };
 };
 

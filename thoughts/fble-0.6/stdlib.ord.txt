@@ -438,7 +438,18 @@ How do I get there? Changing the definition of Eq@ is going to be... painful.
 What if we kept Eq@ as is: a single function, rather than a class of
 functions.
 
-    Order@(.eq, ne, .cmp, .lt, .le, .gt, .ge, min, max);
+    Order@(.eq, .ne, .cmp, .lt, .le, .gt, .ge, min, max);
 
 That seems simpler to me, honestly. Avoids gratuitous indirection and what is
 essentially singleton group of the equals function into an equals class.
+
+---
+
+Do I really want to add a dependency on Bool@ and make Order@ so complicated?
+Hmm...
+
+This deserves some thought, because there are some real performance
+implications here.
+
+I do like using 'Less', 'Equal', and 'Greater' instead of 'lt', 'eq', and 'gt'
+for the Ordering@ type. That's a good change.

@@ -1,8 +1,8 @@
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
-% Lt = /Core/Ord%.Lt;
-% Eq = /Core/Ord%.Eq;
-% Gt = /Core/Ord%.Gt;
+% Less = /Core/Ord%.Less;
+% Equal = /Core/Ord%.Equal;
+% Greater = /Core/Ord%.Greater;
 
 % OrdP = /Core/Int/IntP/Ord%.Ord;
 
@@ -10,9 +10,9 @@
 
 Ord@<Int@> Ord = (Int@ a, Int@ b) {
   a.?(
-      n: b.?(n: OrdP(b.n, a.n), 0: Lt, p: Lt),
-      0: b.?(n: Gt, 0: Eq, p: Lt),
-      p: b.?(n: Gt, 0: Gt, p: OrdP(a.p, b.p)));
+      n: b.?(n: OrdP(b.n, a.n), 0: Less, p: Less),
+      0: b.?(n: Greater, 0: Equal, p: Less),
+      p: b.?(n: Greater, 0: Greater, p: OrdP(a.p, b.p)));
 };
 
 @(Ord);

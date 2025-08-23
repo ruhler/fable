@@ -2,14 +2,14 @@
 @ Bool@ = /Std/Bool%.Bool@;
 
 <@>@ Ord@ = /Core/Ord%.Ord@;
-% Lt = /Core/Ord%.Lt;
-% Gt = /Core/Ord%.Gt;
-% Eq = /Core/Ord%.Eq;
+% Less = /Core/Ord%.Less;
+% Greater = /Core/Ord%.Greater;
+% Equal = /Core/Ord%.Equal;
 
 Ord@<Bool@> Ord = (Bool@ a, Bool@ b) {
   a.?(
-    true: b.?(true: Eq, false: Gt),
-    false: b.?(true: Lt, false: Eq));
+    true: b.?(true: Equal, false: Greater),
+    false: b.?(true: Less, false: Equal));
 };
 
 @(Ord);

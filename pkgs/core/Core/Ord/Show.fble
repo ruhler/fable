@@ -6,7 +6,7 @@
 % Str = /Core/String%.Str;
 
 Show@<Ordering@> Show = (Ordering@ a) {
-  a.?(lt: Str|Lt, eq: Str|Eq, gt: Str|Gt);
+  a.?(less: Str|Less, equal: Str|Equal, greater: Str|Greater);
 };
 
 @(Show);
