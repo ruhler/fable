@@ -6,8 +6,10 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
+<@>% Concat = /Std/List%.Concat;
 
 # @func[HasItems] Check if a list is non-empty.
 #  @arg[@][T@] The type of element on the list.
@@ -114,10 +116,25 @@ Break = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
   span.@(span: Items(haystack.items.head, span.span));
 };
 
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<List@<T@>>; }
+Split = <@ T@>(Eq@<T@> eq, List@<T@> haystack, List@<T@> needle) {
+  Span@<T@> span = Break(eq, haystack, needle);
+  span.tail.?(empty: List[span.span]);
+  Items(span.span, Split(eq, Skip(eq, span.tail, needle), needle));
+};
+
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Replace = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> from, List@<T@> to) {
+  Span@<T@> span = Break(eq, list, from);
+  span.tail.?(empty: span.span);
+  Concat[span.span, to, Replace(eq, Skip(eq, span.tail, from), from, to)];
+};
+
 @(
   HasItems, IsEmpty,
   Eq,
   StartsWith, EndsWith, Contains,
   Skip, Trim, Strip,
-  Span@, Break
+  Span@, Break,
+  Split, Replace
 );

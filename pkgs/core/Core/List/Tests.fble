@@ -70,7 +70,8 @@
 <@>% Eq_Trim = /Core/List/Eq%.Trim;
 <@>% Eq_Strip = /Core/List/Eq%.Strip;
 <@>% Eq_Break = /Core/List/Eq%.Break;
-
+<@>% Eq_Split = /Core/List/Eq%.Split;
+<@>% Replace = /Core/List/Eq%.Replace;
 
 <@>% Sort = /Core/List/Sort%.Sort;
 
@@ -502,6 +503,26 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> list = EL|'ABCADBE';
     List@<Elem@> got = Eq_Break(ElemEq, list, EL|'AD').tail;
     List@<Elem@> wnt = EL|'ADBE';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|'Eq_Split', (Unit@ _) {
+    List@<Elem@> list = EL|'ABCDEBCABC';
+    List@<Elem@> delim = EL|'BC';
+    List@<List@<Elem@>> wnt = List[EL|'A', EL|'DE', EL|'A', EL|''];
+    List@<List@<Elem@>> got = Eq_Split(ElemEq, list, delim);
+    AssertEquals(
+      /Core/List/Eq%.Eq(Eq),
+      /Core/List/Show%.Show(Show),
+      wnt, got);
+  }),
+
+  Test(Str|'Replace', (Unit@ _) {
+    List@<Elem@> list = EL|'ABCDEBCABC';
+    List@<Elem@> delim = EL|'BC';
+    List@<Elem@> target = EL|'EA';
+    List@<Elem@> wnt = EL|'AEADEEAAEA';
+    List@<Elem@> got = Replace(ElemEq, list, delim, target);
     AssertEquals(Eq, Show, wnt, got);
   }),
 

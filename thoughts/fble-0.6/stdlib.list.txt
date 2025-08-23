@@ -933,3 +933,8 @@ Java docs for split are more precise. They only return leading '' when there
 is a positive width match at the beginning of the string. If python and java
 both have split with sequences as the delimiter, I feel like we ought to as
 well, even if I can't think of a good case for it.
+
+---
+
+What should 'Split' on an empty list return? An empty list, or a single empty
+list? Python returns a single empty list.
