@@ -1,0 +1,201 @@
+# @module[/Std/List/Eq%]
+#  Utilities for working with list equality and sublists.
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+<@>% Concat = /Std/List%.Concat;
+
+# @func[HasItems] Check if a list is non-empty.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @returns[Bool@] True if the list is non-empty, false otherwise.
+<@ T@>(List@<T@>) { Bool@; }
+HasItems = <@ T@>(List@<T@> list) {
+  list.?(items: True);
+  False;
+};
+
+# @func[IsEmpty] Check if a list is empty.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[List@<T@>][list] The list to check.
+#  @returns[Bool@] True if the list is empty, false otherwise.
+<@ T@>(List@<T@>) { Bool@; }
+IsEmpty = <@ T@>(List@<T@> list) {
+  list.?(empty: True);
+  False;
+};
+
+# @func[Eq] Check if two lists are equal.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][a] The first list.
+#  @arg[List@<T@>][b] The second list.
+#  @returns[Bool@] True if the lists are equal, false otherwise.
+<@ T@>(Eq@<T@>) { Eq@<List@<T@>>; }
+Eq = <@ T@>(Eq@<T@> eq, List@<T@> a, List@<T@> b) {
+  a.?(empty: b.?(empty: True, : False));
+  b.?(empty: False);
+  eq(a.items.head, b.items.head).?(false: False);
+  Eq(eq, a.items.tail, b.items.tail);
+};
+
+# @func[StartsWith] Check if a list starts with a given prefix.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][prefix] The prefix to check for.
+#  @returns[Bool@]
+#   True if the list begins with the given prefix. False otherwise.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
+StartsWith = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
+  prefix.?(empty: True);
+  list.?(empty: False);
+  eq(list.items.head, prefix.items.head).?(false: False);
+  StartsWith(eq, list.items.tail, prefix.items.tail);
+};
+
+# @func[EndsWith] Check if a list ends with a given suffix
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][suffix] The suffix to check for.
+#  @returns[Bool@]
+#   True if the list ends with the given suffix. False otherwise.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
+EndsWith = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> suffix) {
+  Eq(eq, list, suffix).?(true: True);
+  list.?(empty: False);
+  EndsWith(eq, list.items.tail, suffix);
+};
+
+# @func[Contains] Check if a list contains the given sublist.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][sublist] The sublist to check for.
+#  @returns[Bool@]
+#   True if the list contains the given suffix. False otherwise.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Bool@; }
+Contains = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
+  StartsWith(eq, list, sublist).?(true: True);
+  list.?(empty: False);
+  Contains(eq, list.items.tail, sublist);
+};
+
+# @func[Skip] Skips past a prefix of the list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][prefix] The prefix to skip over.
+#  @returns[List@<T@>]
+#   The elements of the list following the given prefix. The complete list if
+#   it does not start with the given prefix.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Skip = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
+  (List@<T@>, List@<T@>) { List@<T@>; }
+  skip = (List@<T@> l, List@<T@> p) {
+    p.?(empty: l);
+    l.?(empty: list);
+    eq(l.items.head, p.items.head).?(false: list);
+    skip(l.items.tail, p.items.tail);
+  };
+  skip(list, prefix);
+};
+
+# @func[Trim] Removes a suffix from the end of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][suffix] The suffix to remove.
+#  @returns[List@<T@>]
+#   The elements of the list without the given suffix. The complete list if
+#   it does not end with the given suffix.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Trim = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> suffix) {
+  Eq(eq, list, suffix).?(true: Empty<T@>);
+  list.?(empty: list);
+  Items(list.items.head, Trim(eq, list.items.tail, suffix));
+};
+
+# @func[Strip] Removes a sublist from the front and end of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][sublist] The sublist to remove.
+#  @returns[List@<T@>]
+#   The elements of the list without the sublist prefix and sublist suffix
+#   removed if present.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Strip = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
+  Trim(eq, Skip(eq, list, sublist), sublist);
+};
+
+# @struct[Span@]
+#  The return type of the @l{Break} function.
+#
+#  @field[List@<T@>][span] A prefix of a list.
+#  @field[List@<T@>][tail] The remainder of the list.
+<@>@ Span@ = <@ T@> { *(List@<T@> span, List@<T@> tail); };
+
+# @func[Break] Splits the list in two around a given sublist.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][sublist] The sublist to break at.
+#  @returns[Span@<T@>]
+#   The elements of the list up to the first occurrence of the given sublist,
+#   followed by the remainder of the list with sublist included.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { Span@<T@>; }
+Break = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
+  StartsWith(eq, list, sublist).?(true: Span@(Empty<T@>, list));
+  list.?(empty: Span@(Empty<T@>, Empty<T@>));
+  Span@<T@> span = Break(eq, list.items.tail, sublist);
+  span.@(span: Items(list.items.head, span.span));
+};
+
+# @func[Split] Splits a list around the given delimiter.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][delim] The delimiter to split around.
+#  @returns[List@<List@<T@>>]
+#   Split the list into a sequence of lists using the delim sequence as the
+#   delimiter.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<List@<T@>>; }
+Split = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> delim) {
+  Span@<T@> span = Break(eq, list, delim);
+  span.tail.?(empty: List[span.span]);
+  Items(span.span, Split(eq, Skip(eq, span.tail, delim), delim));
+};
+
+# @func[Replace] Replaces occurrences of a sublist in a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to do the replacement in.
+#  @arg[List@<T@>][from] The sublist to replace.
+#  @arg[List@<T@>][to] The value to put in place of the sublist.
+#  @returns[List@>]
+#   Replaces all occurrence of @a[from] in @a[list] with @a[to].
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Replace = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> from, List@<T@> to) {
+  Span@<T@> span = Break(eq, list, from);
+  span.tail.?(empty: span.span);
+  Concat[span.span, to, Replace(eq, Skip(eq, span.tail, from), from, to)];
+};
+
+@(
+  HasItems, IsEmpty,
+  Eq,
+  StartsWith, EndsWith, Contains,
+  Skip, Trim, Strip,
+  Span@, Break,
+  Split, Replace
+);

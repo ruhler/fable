@@ -115,7 +115,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
           Items(Entry@(k, v), l);
         });
       AssertEquals(
-        /Core/List/Eq%.Eq((Entry@ a, Entry@ b) {
+        /Std/List/Eq%.Eq((Entry@ a, Entry@ b) {
           And(eq(a.key, b.key), /Std/Bool/Eq%.Eq(a.value, b.value));
         }),
         /Core/List/Show%.Show((Entry@ e) {

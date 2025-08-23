@@ -24,9 +24,9 @@ Eq@<Block@> Block = (Block@ a, Block@ b) {
 
 Eq@<Blocks@> Blocks = /Core/Int/Map/Eq%.Eq(Block);
 
-Eq@<Sequence@> Sequence = /Core/List/Eq%.Eq(BlockId);
+Eq@<Sequence@> Sequence = /Std/List/Eq%.Eq(BlockId);
 
-Eq@<Metrics@> Metrics = /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq);
+Eq@<Metrics@> Metrics = /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Eq@<Sample@> Sample = (Sample@ a, Sample@ b) {
   Sequence(a.sequence, b.sequence).?(false: False);
@@ -35,9 +35,9 @@ Eq@<Sample@> Sample = (Sample@ a, Sample@ b) {
 };
 
 Eq@<Profile@> Profile = (Profile@ a, Profile@ b) {
-  /Core/List/Eq%.Eq(/Core/String/Eq%.Eq, a.metrics, b.metrics).?(false: False);
+  /Std/List/Eq%.Eq(/Core/String/Eq%.Eq, a.metrics, b.metrics).?(false: False);
   Blocks(a.blocks, b.blocks).?(false: False);
-  /Core/List/Eq%.Eq(Sample, a.samples, b.samples).?(false: False);
+  /Std/List/Eq%.Eq(Sample, a.samples, b.samples).?(false: False);
   True;
 };
 

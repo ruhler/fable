@@ -13,6 +13,6 @@ Eq@<Entry@> Entry = (Entry@ a, Entry@ b) {
   True;
 };
 
-Eq@<Table@> Table = /Core/List/Eq%.Eq(Entry);
+Eq@<Table@> Table = /Std/List/Eq%.Eq(Entry);
 
 @(Entry, Table);

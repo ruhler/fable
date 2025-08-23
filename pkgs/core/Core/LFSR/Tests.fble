@@ -40,7 +40,7 @@ Test@ Tests = TestSuite(Str|LFSR, List[
     List@<Bit@> got = ShiftN(lfsr, Int|16);
     List@<Bit@> wnt = BitStr|0001101000110100;
     AssertEquals(
-      /Core/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
+      /Std/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
       /Core/Digits/Show%.ShowBits, wnt, got);
   })
 ]);

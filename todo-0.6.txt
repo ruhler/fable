@@ -10,6 +10,7 @@ Things to consider doing for the fble-0.6 release.
 * How to document a poly? @func? @value?
 * How to document methods of interface structs?
 * How to document an interface function type, like Eq@?
+* /Std/List/Eq% docs could be more precise and include examples.
 
 * Should I add @example as a doc comment field? Seems useful?
 * Reorder arguments in body function passed to ForEach?

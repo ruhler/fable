@@ -61,17 +61,17 @@
 <@>% Search_Span = /Std/List/Search%.Span;
 <@>% Break = /Std/List/Search%.Break;
 
-<@>% HasItems = /Core/List/Eq%.HasItems;
-<@>% IsEmpty = /Core/List/Eq%.IsEmpty;
-<@>% StartsWith = /Core/List/Eq%.StartsWith;
-<@>% EndsWith = /Core/List/Eq%.EndsWith;
-<@>% Contains = /Core/List/Eq%.Contains;
-<@>% Eq_Skip = /Core/List/Eq%.Skip;
-<@>% Eq_Trim = /Core/List/Eq%.Trim;
-<@>% Eq_Strip = /Core/List/Eq%.Strip;
-<@>% Eq_Break = /Core/List/Eq%.Break;
-<@>% Eq_Split = /Core/List/Eq%.Split;
-<@>% Replace = /Core/List/Eq%.Replace;
+<@>% HasItems = /Std/List/Eq%.HasItems;
+<@>% IsEmpty = /Std/List/Eq%.IsEmpty;
+<@>% StartsWith = /Std/List/Eq%.StartsWith;
+<@>% EndsWith = /Std/List/Eq%.EndsWith;
+<@>% Contains = /Std/List/Eq%.Contains;
+<@>% Eq_Skip = /Std/List/Eq%.Skip;
+<@>% Eq_Trim = /Std/List/Eq%.Trim;
+<@>% Eq_Strip = /Std/List/Eq%.Strip;
+<@>% Eq_Break = /Std/List/Eq%.Break;
+<@>% Eq_Split = /Std/List/Eq%.Split;
+<@>% Replace = /Std/List/Eq%.Replace;
 
 <@>% Sort = /Core/List/Sort%.Sort;
 
@@ -110,7 +110,7 @@
       E: b.?(E: True, : False));
 };
 
-Eq@<List@<Elem@>> Eq = /Core/List/Eq%.Eq<Elem@>(ElemEq);
+Eq@<List@<Elem@>> Eq = /Std/List/Eq%.Eq<Elem@>(ElemEq);
 Show@<List@<Elem@>> Show = /Core/List/Show%.Show<Elem@>(ElemShow);
 
 Test@ Tests = TestSuite(Str|List, List<Test@>[
@@ -221,7 +221,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<List@<T@>> want = List[List<T@>|XXX, List<T@>|X, List<T@>|XX];
     List@<List@<T@>> got = Split(list, sep);
     AssertEquals(
-      /Core/List/Eq%.Eq(/Core/List/Eq%.Eq(eq)),
+      /Std/List/Eq%.Eq(/Std/List/Eq%.Eq(eq)),
       /Core/List/Show%.Show(/Core/List/Show%.Show(show)),
       want, got);
   }),
@@ -512,7 +512,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<List@<Elem@>> wnt = List[EL|'A', EL|'DE', EL|'A', EL|''];
     List@<List@<Elem@>> got = Eq_Split(ElemEq, list, delim);
     AssertEquals(
-      /Core/List/Eq%.Eq(Eq),
+      /Std/List/Eq%.Eq(Eq),
       /Core/List/Show%.Show(Show),
       wnt, got);
   }),

@@ -9,7 +9,7 @@
 <@>% Last = /Std/List%.Last;
 <@>% Init = /Std/List%.Init;
 
-<@>% StartsWith = /Core/List/Eq%.StartsWith;
+<@>% StartsWith = /Std/List/Eq%.StartsWith;
 
 <@>% Drop = /Std/List/Index%.Drop;
 <@>% Length = /Std/List/Index%.Length;

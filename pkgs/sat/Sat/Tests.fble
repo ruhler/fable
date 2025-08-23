@@ -47,9 +47,9 @@ Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Std/Bool/Eq%.Eq(a.pos, b.pos));
 };
 
-Eq@<Clause@> EqClause = /Core/List/Eq%.Eq<Var@>(EqVar);
+Eq@<Clause@> EqClause = /Std/List/Eq%.Eq<Var@>(EqVar);
 
-Eq@<Formula@> EqFormula = /Core/List/Eq%.Eq<Clause@>(EqClause);
+Eq@<Formula@> EqFormula = /Std/List/Eq%.Eq<Clause@>(EqClause);
 
 
 Eq@<Parse@<Formula@>>
@@ -58,7 +58,7 @@ EqParsedFormula = (Parse@<Formula@> a, Parse@<Formula@> b) {
       parsed: b.?(parsed: EqFormula(a.parsed, b.parsed), : False));
 };
 
-Eq@<Assignment@> EqAssignment = /Core/List/Eq%.Eq<Var@>(EqVar);
+Eq@<Assignment@> EqAssignment = /Std/List/Eq%.Eq<Var@>(EqVar);
 
 Eq@<Result@> EqResult = (Result@ a, Result@ b) {
   a.?(

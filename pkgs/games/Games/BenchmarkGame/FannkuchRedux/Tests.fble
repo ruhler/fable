@@ -31,7 +31,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     List@<Int@> wnt = List[Int|5, Int|1, Int|2, Int|4, Int|3];
     List@<Int@> got = Flip(Int|4, Empty<Int@>, input);
     AssertEquals(
-      /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq),
+      /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Core/List/Show%.Show(/Core/Int/Show%.Show),
       wnt, got);
   }),
@@ -48,7 +48,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     List@<Int@> wnt = List[Int|5, Int|1, Int|2, Int|3, Int|4];
     List@<Int@> got = RotateRight(input);
     AssertEquals(
-      /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq),
+      /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Core/List/Show%.Show(/Core/Int/Show%.Show),
       wnt, got);
   }),
@@ -73,7 +73,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     P.State@<Unit@> permutes = Permutes<P.State@>(P.Monad, input, F);
     List@<List@<Int@>> got = P.Run(permutes, Empty<List@<Int@>>).s;
     AssertEquals(
-      /Core/List/Eq%.Eq(/Core/List/Eq%.Eq(/Std/Int/Eq%.Eq)),
+      /Std/List/Eq%.Eq(/Std/List/Eq%.Eq(/Std/Int/Eq%.Eq)),
       /Core/List/Show%.Show(/Core/List/Show%.Show(/Core/Int/Show%.Show)),
       wnt, got);
   }),
@@ -83,7 +83,7 @@ Test@ Tests = TestSuite(Str|FannkuchRedux, List[
     List@<Int@> got = List[result.checksum, result.max_flips];
     List@<Int@> wnt = List[Int|49, Int|10];
     AssertEquals(
-      /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq),
+      /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq),
       /Core/List/Show%.Show(/Core/Int/Show%.Show),
       wnt, got);
   }),

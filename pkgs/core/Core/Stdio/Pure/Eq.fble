@@ -12,7 +12,7 @@
 @ PureState@ = /Core/Stdio/Pure%.PureState@;
 @ MainResult@ = /Core/Stdio/Pure%.MainResult@;
 
-Eq@<List@<Int@>> Ints = /Core/List/Eq%.Eq(/Std/Int/Eq%.Eq);
+Eq@<List@<Int@>> Ints = /Std/List/Eq%.Eq(/Std/Int/Eq%.Eq);
 
 Eq@<PureState@> PureState = (PureState@ a, PureState@ b) {
   Ints(a.in, b.in).?(false: False);

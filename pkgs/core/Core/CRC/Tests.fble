@@ -37,7 +37,7 @@ Test@ Tests = TestSuite(Str|CRC, List[
     List@<Bit@> got = result.checksum;
 
     AssertEquals(
-      /Core/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
+      /Std/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
       /Core/Digits/Show%.ShowBits,
       want, got);
   }),
@@ -55,7 +55,7 @@ Test@ Tests = TestSuite(Str|CRC, List[
     List@<Bit@> got = result.checksum;
 
     AssertEquals(
-      /Core/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
+      /Std/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
       /Core/Digits/Show%.ShowBits,
       want, got);
   })

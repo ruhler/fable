@@ -31,7 +31,7 @@ Eq = <<@>@ M@, @ K@>(Map@<M@, K@> m, Eq@<K@> keq)<@ V@>(Eq@<V@> veq) {
       Items(Entry@(k, v), b);
     });
 
-    /Core/List/Eq%.Eq(EqEntry, as, bs);
+    /Std/List/Eq%.Eq(EqEntry, as, bs);
   };
 };
 

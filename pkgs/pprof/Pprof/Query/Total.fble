@@ -7,7 +7,7 @@
 % Add = /Std/Int%.Add;
 % Int = /Core/Int/Lit%.Int;
 
-<@>% StartsWith = /Core/List/Eq%.StartsWith;
+<@>% StartsWith = /Std/List/Eq%.StartsWith;
 
 @ Sample@ = /Pprof/Profile%.Sample@;
 @ Sequence@ = /Pprof/Profile%.Sequence@;
