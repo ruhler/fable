@@ -8,9 +8,9 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 <@>% DoWhile = /Core/Maybe%.DoWhile;
 
-% Less = /Core/Ord%.Less;
-% Equal = /Core/Ord%.Equal;
-% Greater = /Core/Ord%.Greater;
+% Less = /Std/Cmp%.Less;
+% Equal = /Std/Cmp%.Equal;
+% Greater = /Std/Cmp%.Greater;
 
 % Unit = /Std/Unit%.Unit;
 
@@ -22,14 +22,14 @@
 % BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
 % Move = /Games/TicTacToe/Board%.Move;
 
-/Core/Ord%.Cmp@<Square@> SquareOrd = (Square@ a, Square@ b) {
+/Std/Cmp%.Cmp@<Square@> SquareOrd = (Square@ a, Square@ b) {
   a.?(
     X: b.?(X: Equal, O: Less, E: Less),
     O: b.?(X: Greater, O: Equal, E: Less),
     E: b.?(X: Greater, O: Greater, E: Equal));
 };
 
-/Core/Ord%.Cmp@<Board@> BoardOrd = (Board@ a, Board@ b) {
+/Std/Cmp%.Cmp@<Board@> BoardOrd = (Board@ a, Board@ b) {
   SquareOrd(a.ul, b.ul).?(less: Less, greater: Greater);
   SquareOrd(a.uc, b.uc).?(less: Less, greater: Greater);
   SquareOrd(a.ur, b.ur).?(less: Less, greater: Greater);

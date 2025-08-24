@@ -4,7 +4,7 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-@ Compared@ = /Core/Ord%.Compared@;
+@ Compared@ = /Std/Cmp%.Compared@;
 
 Eq@<Compared@> Eq = (Compared@ a, Compared@ b) {
   a.?(

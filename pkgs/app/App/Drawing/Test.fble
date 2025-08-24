@@ -20,8 +20,8 @@
 
 <@>@ List@ = /Std/List%.List@;
 
-<@>@ Cmp@ = /Core/Ord%.Cmp@;
-@ Compared@ = /Core/Ord%.Compared@;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
+@ Compared@ = /Std/Cmp%.Compared@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

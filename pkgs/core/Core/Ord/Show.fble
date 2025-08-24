@@ -1,5 +1,5 @@
 
-@ Compared@ = /Core/Ord%.Compared@;
+@ Compared@ = /Std/Cmp%.Compared@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

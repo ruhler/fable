@@ -1,0 +1,32 @@
+# @module[/Std/Cmp%]
+#  Defines the Cmp@ interface for comparing two objects.
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+# @struct[Compared@] The result of a comparison check.
+#  @field[Unit@][less] The first value is less than the second value.
+#  @field[Unit@][equal] The first value is equal to the second value.
+#  @field[Unit@][greater] The first value is greater than the second value.
+@ Compared@ = +(Unit@ less, Unit@ equal, Unit@ greater);
+
+# @value[Less] The less compared value.
+#  @type[Compared@]
+Compared@ Less = Compared@(less: Unit);
+
+# @value[Less] The equal compared value.
+#  @type[Compared@]
+Compared@ Equal = Compared@(equal: Unit);
+
+# @value[Less] The greater compared value.
+#  @type[Compared@]
+Compared@ Greater = Compared@(greater: Unit);
+
+# @type[Cmp@] Standard interface for types supporting comparison.
+#  @arg[@][T@] The type implementing the interface.
+#  @arg[T@][a] The first value to compare.
+#  @arg[T@][b] The second value to compare.
+#  @returns[Compared@] The result of comparison.
+<@>@ Cmp@ = <@ T@>(T@, T@) { Compared@; };
+
+@(Compared@, Cmp@, Less, Equal, Greater);

@@ -3,16 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
-
-@ Compared@ = +(Unit@ less, Unit@ equal, Unit@ greater);
-
-Compared@ Less = Compared@(less: Unit);
-Compared@ Equal = Compared@(equal: Unit);
-Compared@ Greater = Compared@(greater: Unit);
-
-<@>@ Cmp@ = <@ T@>(T@, T@) { Compared@; };
+@ Compared@ = /Std/Cmp%.Compared@;
 
 <@>@ Order@ = <@ T@> { *(
   (T@, T@) { Compared@; } cmp,
@@ -39,5 +30,5 @@ Order = <@ T@>((T@, T@) { Compared@; } cmp) {
     max: (T@ a, T@ b) { cmp(a, b).?(greater: a, : b); });
 };
 
-@(Compared@, Cmp@, Order@, Order, Less, Equal, Greater);
+@(Order@, Order);
 

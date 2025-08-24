@@ -1,8 +1,8 @@
 
-<@>@ Cmp@ = /Core/Ord%.Cmp@;
-% Less = /Core/Ord%.Less;
-% Equal = /Core/Ord%.Equal;
-% Greater = /Core/Ord%.Greater;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
+% Less = /Std/Cmp%.Less;
+% Equal = /Std/Cmp%.Equal;
+% Greater = /Std/Cmp%.Greater;
 
 % OrdP = /Core/Int/IntP/Ord%.Ord;
 

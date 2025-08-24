@@ -5,8 +5,8 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>@ Cmp@ = /Core/Ord%.Cmp@;
-@ Compared@ = /Core/Ord%.Compared@;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
+@ Compared@ = /Std/Cmp%.Compared@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;

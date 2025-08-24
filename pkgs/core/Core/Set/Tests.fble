@@ -15,11 +15,11 @@
 <@>% Append = /Std/List%.Append;
 <@>% Items = /Std/List%.Items;
 
-<@>@ Cmp@ = /Core/Ord%.Cmp@;
-@ Compared@ = /Core/Ord%.Compared@;
-% Less = /Core/Ord%.Less;
-% Equal = /Core/Ord%.Equal;
-% Greater = /Core/Ord%.Greater;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
+@ Compared@ = /Std/Cmp%.Compared@;
+% Less = /Std/Cmp%.Less;
+% Equal = /Std/Cmp%.Equal;
+% Greater = /Std/Cmp%.Greater;
 
 <@>@ Show@ = /Core/Show%.Show@;
 

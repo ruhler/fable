@@ -1,5 +1,5 @@
 
-<@>@ Cmp@ = /Core/Ord%.Cmp@;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
 
 @ String@ = /Core/String%.String@;
 

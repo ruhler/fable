@@ -3,8 +3,8 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ Cmp@ = /Core/Ord%.Cmp@;
-@ Compared@ = /Core/Ord%.Compared@;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
+@ Compared@ = /Std/Cmp%.Compared@;
 
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;

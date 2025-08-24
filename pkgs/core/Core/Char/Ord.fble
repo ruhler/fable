@@ -3,7 +3,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ Cmp@ = /Core/Ord%.Cmp@;
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
 
 (Char@) { Int@; } ToAscii = /Core/Char/Ascii%.Ord;
 
