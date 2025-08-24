@@ -24,7 +24,7 @@
 <<@>@ M@>(Monad@<M@>, Int@, OStream@<M@>) { Debug@<M@>; }
 Debug = <<@>@ M@>(Monad@<M@> m, Int@ enabled_level, OStream@<M@> stream) {
   (Int@ message_level, (OStream@<M@>) { M@<Unit@>; } f) {
-    /Std/Int/Eq%.Le(message_level, enabled_level).?(
+    /Std/Int/Ord%.Le(message_level, enabled_level).?(
       true: f(stream),
       false: m.return(Unit));
   };

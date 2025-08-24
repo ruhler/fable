@@ -81,7 +81,7 @@ ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
   Int@ x = /Core/Int/Show%.Read(words.items.head);
   /Std/Int/Eq%.Eq(x, Int|0).?(true: Return(List<Var@>[]));
 
-  Var@ v = Var@(Abs(x), /Std/Int/Eq%.Gt(x, Int|0));
+  Var@ v = Var@(Abs(x), /Std/Int/Ord%.Gt(x, Int|0));
 
   Clause@ tail <- Do(ParseVars(words.items.tail));
   Return(Items(v, tail));

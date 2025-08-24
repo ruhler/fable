@@ -1,0 +1,46 @@
+Stdlib Iter
+===========
+Do we use iterators at all in practice? It feels like old stuff to me.
+
+Current uses:
+* Invaders uses it to iterate through a range of integers.
+* Drawing Triangles does the same. And rectangles.
+* Similar with Sat.
+
+So basically right now, it's only used for integer ranges of things. Maybe we
+want to add part of Int@ library for this instead of having a generic integer
+type.
+
+No point having iterators for list, you can use ForEach to iterate over the
+list.
+
+How about for things like Maps or Sets?
+
+Honestly I feel like each specific kind of thing can implement its own For
+and similar traversal functions. I don't see a real benefit to have a unified
+generic interface for iteration.
+
+Iterators are useful for traversing an unmaterialized data structure. If we
+have a list, a map, or a set, it's already materialized. Just iterate over
+that. It's only things like integer ranges where we generate things on the
+fly. Or, eventually, input streams.
+
+I suppose an input stream is an abstract iteration. Maybe we can reuse the
+same type and infrastructure for both integer iteration and IO iteration. The
+important part in both these cases is we want to be able to look at and act
+upon earlier elements in the iteration before bringing into memory any
+subsequent elements. Or, also, throwing away earlier elements before looking
+at subsequent elements. Otherwise you could say 'Range' function produces a
+list of integers, or we read an entire file into a list of bytes first.
+
+The 'For' loop is basically an interface for consuming all elements of
+something one element at a time. It gives us the one element at a time part.
+What it doesn't give us is the ability to break out of the loop early for some
+reason. For lists, things like 'Has' where we want to stop after the first
+item, currently I'm just operating directly on the list. But maybe it makes
+sense to have a generic interface.
+
+Maybe I want to be able to write a generic 'Has' function that works over any
+data structure supporting iteration and that can break out early. What
+interface would I use for that?
+

@@ -6,8 +6,8 @@
 % Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
 % Div = /Std/Int/Div%.Div;
-% Max = /Std/Int/Eq%.Max;
-% Min = /Std/Int/Eq%.Min;
+% Max = /Std/Int/Ord%.Max;
+% Min = /Std/Int/Ord%.Min;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;

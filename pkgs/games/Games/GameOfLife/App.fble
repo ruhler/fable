@@ -12,7 +12,7 @@
 % Div = /Std/Int/Div%.Div;
 
 % IsZero = /Std/Int/Sign%.IsZero;
-% Lt = /Std/Int/Eq%.Lt;
+% Lt = /Std/Int/Ord%.Lt;
 
 % Int = /Core/Int/Lit%.Int;
 

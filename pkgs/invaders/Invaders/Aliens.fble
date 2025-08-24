@@ -28,10 +28,10 @@
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
 % Eq = /Std/Int/Eq%.Eq;
-% Le = /Std/Int/Eq%.Le;
-% Lt = /Std/Int/Eq%.Lt;
-% Ge = /Std/Int/Eq%.Ge;
-% Gt = /Std/Int/Eq%.Gt;
+% Le = /Std/Int/Ord%.Le;
+% Lt = /Std/Int/Ord%.Lt;
+% Ge = /Std/Int/Ord%.Ge;
+% Gt = /Std/Int/Ord%.Gt;
 % Int = /Core/Int/Lit%.Int;
 % Ord = /Core/Int/Ord%.Ord;
 

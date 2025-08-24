@@ -14,8 +14,8 @@
 % Neg = /Std/Int%.Neg;
 % Div = /Std/Int/Div%.Div;
 % Eq = /Std/Int/Eq%.Eq;
-% Lt = /Std/Int/Eq%.Lt;
-% Gt = /Std/Int/Eq%.Gt;
+% Lt = /Std/Int/Ord%.Lt;
+% Gt = /Std/Int/Ord%.Gt;
 % Int = /Core/Int/Lit%.Int;
 % LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
 

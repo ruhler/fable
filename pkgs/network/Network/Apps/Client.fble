@@ -101,7 +101,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
   (Int@, IStream@<M@>, OStream@<M@>) { M@<Unit@>; }
   ForwardN = (Int@ n, IStream@<M@> in, OStream@<M@> out) {
     IsZero(n).?(true: m.return(Unit));
-    Int@ nn = /Std/Int/Eq%.Gt(n, Int|0).?(true: Decr(n), false: n);
+    Int@ nn = /Std/Int/Ord%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
     Maybe@<Int@> mb <- m.do(in);
     mb.?(nothing: m.return(Unit));

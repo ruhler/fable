@@ -4,8 +4,8 @@
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Mul = /Std/Int%.Mul;
-% Ge = /Std/Int/Eq%.Ge;
-% Lt = /Std/Int/Eq%.Lt;
+% Ge = /Std/Int/Ord%.Ge;
+% Lt = /Std/Int/Ord%.Lt;
 % Int = /Core/Int/Lit%.Int;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;

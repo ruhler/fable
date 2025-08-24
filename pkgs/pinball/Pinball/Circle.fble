@@ -15,7 +15,7 @@
 % Neg = /Std/Int%.Neg;
 % Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
-% Lt = /Std/Int/Eq%.Lt;
+% Lt = /Std/Int/Ord%.Lt;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

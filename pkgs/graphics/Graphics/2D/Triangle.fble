@@ -10,9 +10,9 @@
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
-% Le = /Std/Int/Eq%.Le;
-% Max = /Std/Int/Eq%.Max;
-% Min = /Std/Int/Eq%.Min;
+% Le = /Std/Int/Ord%.Le;
+% Max = /Std/Int/Ord%.Max;
+% Min = /Std/Int/Ord%.Min;
 % IsNegative = /Std/Int/Sign%.IsNegative;
 % Range = /Core/Int/Iter%.Range;
 

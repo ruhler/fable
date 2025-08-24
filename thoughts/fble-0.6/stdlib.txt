@@ -376,4 +376,17 @@ Options:
 * My current approach, just document the standard library ones formally in
   /Std/Int%.
 
+Issue came up again with /Std/List/Sort%.Insert, which I want to document for
+implementation purposes, but is not part of the public API.
+
+---
+
+The list API is now in place. What are next steps?
+* Implement Cmp@ instances for everything relevant.
+* Move Ord to standard library.
+* Move Ord specific stuff from /Std/Int/Eq% to /Std/Int/Ord%.
+* Implement Ord for List?
+
+Then move on to characters I think. Goal is to find the path to unit tests,
+so: Char, String, Show, Test should hopefully be enough to get us there.
 

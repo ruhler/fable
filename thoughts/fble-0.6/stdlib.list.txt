@@ -834,10 +834,10 @@ Cool. I think I have my full list proposal now. Here it is:
   /Std/List/Index%: (done)
   * Length, Get, Set, Take, Drop, Range, Span@, Span
 
-  /Std/List/Sort%:
+  /Std/List/Sort%: (done)
   * Sort
 
-  /Std/List/Eq%:
+  /Std/List/Eq%: (done)
   * HasItems, IsEmpty
   * Eq
   * StartsWith, EndsWith, Contains,

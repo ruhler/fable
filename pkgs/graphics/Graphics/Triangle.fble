@@ -27,8 +27,8 @@
 % Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
 % Eq = /Std/Int/Eq%.Eq;
-% Le = /Std/Int/Eq%.Le;
-% Ge = /Std/Int/Eq%.Ge;
+% Le = /Std/Int/Ord%.Le;
+% Ge = /Std/Int/Ord%.Ge;
 % Int = /Core/Int/Lit%.Int;
 
 @ Unit@ = /Std/Unit%.Unit@;

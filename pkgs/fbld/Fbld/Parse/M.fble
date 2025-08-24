@@ -145,7 +145,7 @@ M@<CharL@> GetL = {
   CharL@ cl <- Do(GetL_);
   Int@ indent <- Do(GetIndent);
 
-  /Std/Int/Eq%.Le(cl.l.col, indent).?(true: {
+  /Std/Int/Ord%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
     cl.c.?(' ': GetL);
     Unit@ _ <- Error<CharL@>;

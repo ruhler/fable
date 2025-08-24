@@ -5,7 +5,7 @@
 % 0 = /Std/Int%.0;
 % Incr = /Std/Int%.Incr;
 % Decr = /Std/Int%.Decr;
-% Le = /Std/Int/Eq%.Le;
+% Le = /Std/Int/Ord%.Le;
 % IsZero = /Std/Int/Sign%.IsZero;
 
 <@>@ List@ = /Std/List%.List@;

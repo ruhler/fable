@@ -4,7 +4,7 @@
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
 % Mul = /Std/Int%.Mul;
-% Lt = /Std/Int/Eq%.Lt;
+% Lt = /Std/Int/Ord%.Lt;
 
 Int@ 0 = /Std/Int%.0;
 Int@ 1 = /Std/Int%.1;

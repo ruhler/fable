@@ -51,7 +51,7 @@
 M@<Unit@> BlankLine = {
   Loc@ l <- Do(Loc);
   Int@ indent <- Do(GetIndent);
-  /Std/Int/Eq%.Lt(Incr(indent), l.col).?(true: {
+  /Std/Int/Ord%.Lt(Incr(indent), l.col).?(true: {
     Unit@ _ <- Error<Unit@>;
     Text@(l, Str|'not a blank line');
   });

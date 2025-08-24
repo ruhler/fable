@@ -128,7 +128,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   (Int@) { M@<Unit@>; } Serve = (Int@ n) {
     IsZero(n).?(true: m.return(Unit));
-    Int@ nn = /Std/Int/Eq%.Gt(n, Int|0).?(true: Decr(n), false: n);
+    Int@ nn = /Std/Int/Ord%.Gt(n, Int|0).?(true: Decr(n), false: n);
 
     IOStream@<M@> ios <- m.do(s);
     Unit@ _ <- m.do(ForwardAll(ios.in, ios.out));

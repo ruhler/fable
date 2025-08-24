@@ -12,8 +12,8 @@
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
-% Lt = /Std/Int/Eq%.Lt;
-% Ge = /Std/Int/Eq%.Ge;
+% Lt = /Std/Int/Ord%.Lt;
+% Ge = /Std/Int/Ord%.Ge;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;

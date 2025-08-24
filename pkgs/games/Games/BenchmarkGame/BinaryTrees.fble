@@ -7,7 +7,7 @@
 % Mul = /Std/Int%.Mul;
 % Int = /Core/Int/Lit%.Int;
 % Eq = /Std/Int/Eq%.Eq;
-% Gt = /Std/Int/Eq%.Gt;
+% Gt = /Std/Int/Ord%.Gt;
 
 <@>@ List@ = /Std/List%.List@;
 

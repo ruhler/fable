@@ -2,8 +2,8 @@
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
-% Le = /Std/Int/Eq%.Le;
-% Lt = /Std/Int/Eq%.Lt;
+% Le = /Std/Int/Ord%.Le;
+% Lt = /Std/Int/Ord%.Lt;
 
 % Int = /Core/Int/Lit%.Int;
 
