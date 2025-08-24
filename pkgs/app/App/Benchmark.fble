@@ -7,8 +7,8 @@
 @ Int@ = /Std/Int%.Int@;
 % Decr = /Std/Int%.Decr;
 
-% IsNegative = /Std/Int/Eq%.IsNegative;
 % Int = /Core/Int/Lit%.Int;
+% IsNegative = /Std/Int/Sign%.IsNegative;
 
 <@>% Empty = /Std/List%.Empty;
 

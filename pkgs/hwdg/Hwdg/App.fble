@@ -11,7 +11,7 @@
 
 % Div = /Std/Int/Div%.Div;
 
-% IsZero = /Std/Int/Eq%.IsZero;
+% IsZero = /Std/Int/Sign%.IsZero;
 
 % Int = /Core/Int/Lit%.Int;
 Int@ 0 = Int|0;

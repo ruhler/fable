@@ -9,8 +9,8 @@
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
 % Decr = /Std/Int%.Decr;
-% IsZero = /Std/Int/Eq%.IsZero;
 % Int = /Core/Int/Lit%.Int;
+% IsZero = /Std/Int/Sign%.IsZero;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;

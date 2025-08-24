@@ -6,8 +6,8 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
-% IsZero = /Std/Int/Eq%.IsZero;
 % Int = /Core/Int/Lit%.Int;
+% IsZero = /Std/Int/Sign%.IsZero;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
 <@>@ Shifted@ = /Core/LFSR%.Shifted@;

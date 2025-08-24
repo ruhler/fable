@@ -9,7 +9,7 @@
 @ Int@ = /Std/Int%.Int@;
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
-% IsZero = /Std/Int/Eq%.IsZero;
+% IsZero = /Std/Int/Sign%.IsZero;
 % Int = /Core/Int/Lit%.Int;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;

@@ -28,7 +28,7 @@
 % Eq = /Std/Int/Eq%.Eq;
 % Lt = /Std/Int/Eq%.Lt;
 % Gt = /Std/Int/Eq%.Gt;
-% Abs = /Std/Int/Eq%.Abs;
+% Abs = /Std/Int/Sign%.Abs;
 
 % Int = /Core/Int/Lit%.Int;
 

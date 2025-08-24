@@ -13,7 +13,7 @@
 % Le = /Std/Int/Eq%.Le;
 % Max = /Std/Int/Eq%.Max;
 % Min = /Std/Int/Eq%.Min;
-% IsNegative = /Std/Int/Eq%.IsNegative;
+% IsNegative = /Std/Int/Sign%.IsNegative;
 % Range = /Core/Int/Iter%.Range;
 
 <@>% For = /Core/Iter%.For;

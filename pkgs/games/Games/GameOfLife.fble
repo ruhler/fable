@@ -10,7 +10,7 @@
 % Incr = /Std/Int%.Incr;
 % Decr = /Std/Int%.Decr;
 
-% IsZero = /Std/Int/Eq%.IsZero;
+% IsZero = /Std/Int/Sign%.IsZero;
 % Eq = /Std/Int/Eq%.Eq;
 % Ord = /Core/Int/Ord%.Ord;
 

@@ -6,12 +6,12 @@
 % Incr = /Std/Int%.Incr;
 % Decr = /Std/Int%.Decr;
 
-% IsZero = /Std/Int/Eq%.IsZero;
 % Eq = /Std/Int/Eq%.Eq;
 % Lt = /Std/Int/Eq%.Lt;
 % Gt = /Std/Int/Eq%.Gt;
 
 % Int = /Core/Int/Lit%.Int;
+% IsZero = /Std/Int/Sign%.IsZero;
 
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;

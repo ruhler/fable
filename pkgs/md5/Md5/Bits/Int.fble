@@ -3,8 +3,8 @@
 % Bit = /Core/Digits%.Bit;
 
 @ Int@ = /Std/Int%.Int@;
-% IsNegative = /Std/Int/Eq%.IsNegative;
-% IsZero = /Std/Int/Eq%.IsZero;
+% IsNegative = /Std/Int/Sign%.IsNegative;
+% IsZero = /Std/Int/Sign%.IsZero;
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
 % Int = /Core/Int/Lit%.Int;

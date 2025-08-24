@@ -7,7 +7,7 @@
 % Add = /Std/Int%.Add;
 % Sub = /Std/Int%.Sub;
 % Eq = /Std/Int/Eq%.Eq;
-% IsZero = /Std/Int/Eq%.IsZero;
+% IsZero = /Std/Int/Sign%.IsZero;
 % Max = /Std/Int/Eq%.Max;
 % Int = /Core/Int/Lit%.Int;
 

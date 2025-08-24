@@ -44,12 +44,12 @@
 % Le = /Std/Int/Eq%.Le;
 % Gt = /Std/Int/Eq%.Gt;
 % Ge = /Std/Int/Eq%.Ge;
-% IsZero = /Std/Int/Eq%.IsZero;
 % Min = /Std/Int/Eq%.Min;
 % Max = /Std/Int/Eq%.Max;
-% Abs = /Std/Int/Eq%.Abs;
 % Int = /Core/Int/Lit%.Int;
 % IOrd = /Core/Int/Ord%.Ord;
+% IsZero = /Std/Int/Sign%.IsZero;
+% Abs = /Std/Int/Sign%.Abs;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
