@@ -1,4 +1,5 @@
-@ Bool@ = /Std/Bool%.Bool@;
+
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Empty = /Std/List%.Empty;
@@ -12,18 +13,20 @@
 #   T@ - The type of element on the list.
 #
 # Arguments:
-#   le - The <= comparison operation used for sorting.
+#   cmp - The comparison operation used for sorting.
 #   x - The element to insert.
 #   l - The list to insert into.
 #
 # Returns:
 #   A new list with the element x inserted at the appropriate position given
 #   the comparison operation.
-<@ T@>((T@, T@) { Bool@; }, T@, List@<T@>) { List@<T@>; }
-Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
+<@ T@>(Cmp@<T@>, T@, List@<T@>) { List@<T@>; }
+Insert = <@ T@>(Cmp@<T@> cmp, T@ x, List@<T@> l) {
   l.?(empty: Items(x, Empty<T@>));
-  le(x, l.items.head).?(true: Items(x, l));
-  Items(l.items.head, Insert(le, x, l.items.tail));
+  cmp(x, l.items.head).?(greater: {
+    Items(l.items.head, Insert(cmp, x, l.items.tail));
+  });
+  Items(x, l);
 };
 
 # Sort --
@@ -33,9 +36,7 @@ Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
 #   T@ - The type of element of the list.
 #
 # Arguments:
-#   le - A function that compares two elements of the list, returning True if
-#        the first should be before or the same as the second, False
-#        otherwise.
+#   cmp - A function that compares two elements of the list.
 #   l - The list to sort.
 #
 # Returns:
@@ -43,10 +44,10 @@ Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
 #
 # TODO:
 #   Use something more efficient than an insertion sort.
-<@ T@>((T@, T@) { Bool@; }, List@<T@>) { List@<T@>; }
-Sort = <@ T@>((T@, T@) { Bool@; } le, List@<T@> l) {
+<@ T@>(Cmp@<T@>, List@<T@>) { List@<T@>; }
+Sort = <@ T@>(Cmp@<T@> cmp, List@<T@> l) {
   l.?(empty: l);
-  Insert(le, l.items.head, Sort(le, l.items.tail));
+  Insert(cmp, l.items.head, Sort(cmp, l.items.tail));
 };
 
 @(Sort);

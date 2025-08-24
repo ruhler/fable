@@ -3,6 +3,11 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+@ Compared@ = /Std/Cmp%.Compared@;
+% Less = /Std/Cmp%.Less;
+% Equal = /Std/Cmp%.Equal;
+% Greater = /Std/Cmp%.Greater;
+
 <@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 <@>% AssertNotEquals = /Core/Eq/Assert%.AssertNotEquals;
@@ -88,6 +93,14 @@
 
 (Elem@) { String@; } ElemShow = (Elem@ e) {
   e.?(A: Str|A, B: Str|B, C: Str|C, D: Str|D, E: Str|E);
+};
+
+(Elem@, Elem@) { Compared@; } ElemCmp = (Elem@ a, Elem@ b) {
+  a.?(A: b.?(A: Equal, : Less),
+      B: b.?(A: Greater, B: Equal, : Less),
+      C: b.?(A: Greater, B: Greater, C: Equal, : Less),
+      D: b.?(A: Greater, B: Greater, C: Greater, D: Equal, E: Less),
+      E: b.?(A: Greater, B: Greater, C: Greater, D: Greater, E: Equal));
 };
 
 (Elem@, Elem@) { Bool@; } ElemLe = (Elem@ a, Elem@ b) {
@@ -193,7 +206,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   Test(Str|'Sort', (Unit@ _) {
     List@<Elem@> unsorted = EL|DABEC;
     List@<Elem@> wnt = EL|ABCDE;
-    List@<Elem@> got = Sort(ElemLe, unsorted);
+    List@<Elem@> got = Sort(ElemCmp, unsorted);
     AssertEquals(Eq, Show, wnt, got);
   }),
 
