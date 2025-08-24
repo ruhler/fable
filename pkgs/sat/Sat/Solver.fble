@@ -381,7 +381,7 @@ GetConflictFromSorted = (List@<Assign@> todo)
 (List@<Assign@>) { Maybe@<Conflict@>; }
 GetConflict = (List@<Assign@> todo)
 {
-  GetConflictFromSorted(/Core/List/Sort%.Sort(
+  GetConflictFromSorted(/Std/List/Sort%.Sort(
       (Assign@ a, Assign@ b) { /Core/Int/Ord%.Ord(a.var.id, b.var.id); },
       todo));
 };

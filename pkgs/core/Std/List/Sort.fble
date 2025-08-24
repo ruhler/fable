@@ -1,0 +1,36 @@
+# @module[/Std/List/Sort%]
+#  Utilities for sorting lists.
+
+<@>@ Cmp@ = /Std/Cmp%.Cmp@;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
+
+# @func[Insert] Insert an element into a sorted list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
+#  @arg[T@][item] The item to insert.
+#  @arg[List@<T@>][list] The list to insert it into.
+#  @returns[List@<T@>] The list with the item inserted into the sorted location.
+<@ T@>(Cmp@<T@>, T@, List@<T@>) { List@<T@>; }
+Insert = <@ T@>(Cmp@<T@> cmp, T@ item, List@<T@> list) {
+  list.?(empty: Items(item, Empty<T@>));
+  cmp(item, list.items.head).?(greater: {
+    Items(list.items.head, Insert(cmp, item, list.items.tail));
+  });
+  Items(item, list);
+};
+
+# @func[Sort] Sorts the elements of a list.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Cmp@<T@>][cmp] Function to compare two elements of the list.
+#  @arg[List@<T@>][list] The list to sort.
+#  @returns[List@<T@>] The elements of the list in increasing sorted order.
+<@ T@>(Cmp@<T@>, List@<T@>) { List@<T@>; }
+Sort = <@ T@>(Cmp@<T@> cmp, List@<T@> list) {
+  list.?(empty: list);
+  Insert(cmp, list.items.head, Sort(cmp, list.items.tail));
+};
+
+@(Sort);

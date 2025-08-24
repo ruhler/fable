@@ -5,12 +5,16 @@ Things to consider doing for the fble-0.6 release.
 * Add a 'function' standard library?
  - compose, flip
 
+* Implement Cmp@ for Unit, Bool, Int, List.
+
 * Figure out how to properly document List@ type
  - Mix of poly, struct, and union all in one.
 * How to document a poly? @func? @value?
 * How to document methods of interface structs?
 * How to document an interface function type, like Eq@?
 * /Std/List/Eq% docs could be more precise and include examples.
+* How to document internal functions, e.g. /Std/List/Sort%.Insert?
+  Make sure this doesn't get shown in reference documentation.
 
 * Should I add @example as a doc comment field? Seems useful?
 * Reorder arguments in body function passed to ForEach?

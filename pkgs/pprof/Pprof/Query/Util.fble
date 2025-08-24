@@ -15,7 +15,7 @@
 (Metrics@) { Int@; } MetricOf = Last<Int@>;
 
 # Sort a query results table.
-(Table@) { Table@; } Sort = /Core/List/Sort%.Sort(
+(Table@) { Table@; } Sort = /Std/List/Sort%.Sort(
   (Entry@ a, Entry@ b) {
     /Core/Int/Ord%.Ord(b.value, a.value);
   });

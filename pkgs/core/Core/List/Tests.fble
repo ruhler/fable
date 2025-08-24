@@ -78,7 +78,7 @@
 <@>% Eq_Split = /Std/List/Eq%.Split;
 <@>% Replace = /Std/List/Eq%.Replace;
 
-<@>% Sort = /Core/List/Sort%.Sort;
+<@>% Sort = /Std/List/Sort%.Sort;
 
 @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 
