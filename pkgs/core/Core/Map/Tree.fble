@@ -5,8 +5,8 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
-@ Ordering@ = /Core/Ord%.Ordering@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
+@ Compared@ = /Core/Ord%.Compared@;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
@@ -67,8 +67,8 @@ Delta = (Balance@ delta, Balance@ balance) {
     });
 };
 
-# /Core/Map%.Map@ implementation for key types with an Ord@ interface.
-<@>% Map = <@ K@>(Ord@<K@> ord) {
+# /Core/Map%.Map@ implementation for key types with an Cmp@ interface.
+<@>% Map = <@ K@>(Cmp@<K@> ord) {
   @ Key@ = K@;
 
   <@>@ Map@ = <@ V@> {
@@ -157,7 +157,7 @@ Delta = (Balance@ delta, Balance@ balance) {
     (Map@<V@>, K@) { Maybe@<V@>; } L = (Map@<V@> map, K@ key) {
       map.?(empty: Nothing<V@>);
 
-      Ordering@ ordering = ord(key, map.map.key);
+      Compared@ ordering = ord(key, map.map.key);
       ordering.?(less: L(map.map.left, key));
       ordering.?(greater: L(map.map.right, key));
       Just(map.map.value);
@@ -404,7 +404,7 @@ Delta = (Balance@ delta, Balance@ balance) {
         @(delta: '0', map: Empty<V@>);
       });
 
-      Ordering@ ordering = ord(key, map.map.key);
+      Compared@ ordering = ord(key, map.map.key);
 
       ordering.?(less: {
         # Recurse to left subtree.

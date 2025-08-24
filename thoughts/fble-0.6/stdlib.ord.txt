@@ -453,3 +453,88 @@ implications here.
 
 I do like using 'Less', 'Equal', and 'Greater' instead of 'lt', 'eq', and 'gt'
 for the Ordering@ type. That's a good change.
+
+Anyway, let's get down to details. The questions are:
+
+A. Ord@ as just a compare, or as a core set of cmp, eq, lt, min, max, etc?
+B. Generic implementation of eq, lt, min all bundled together at once, or
+   separate?
+
+Benefits of just compare:
+* No dependency on Bool@.
+* Easy to implement.
+
+Benefits of core set:
+* Can provided 'optimized' implementations for eq, lt, min, max, etc. rather
+  than force use of the generic implementations.
+
+Benefits of bundling generic all together at once:
+* Easy to implement the whole set with just comparison.
+
+Benefits of separating them:
+* No need to allocate a whole bunch of functions one-off if you just want one
+  of them.
+
+I kind of feel like:
+* If using just compare, we want separate implementations of generics.
+* If using core set, we want bundled implementation of generics.
+
+The real concern from a performance point of view is if we are given Ord@ as
+an argument to a generic function (e.g. list sort), and we want to use a
+different core set function in the implementation fairly heavily (e.g. le).
+Specifically:
+* If we can't use the optimized version of le, seems a shame.
+  But really how much more optimal can you make le compared to cmp?
+* If we have to recreate the generic bundled version every time the function
+  sort is called, that sounds potentially expensive?
+
+Performance suggests we want as much specializable pre-allocated functions as
+we can get. That suggests passing around the core set when implementing
+generic functions.
+
+I would say, certainly Eq can be implemented more efficiently than compare on
+average. We know right away that an odd number doesn't equal an even number,
+but we might have to do a bunch more work to tell which is greater.
+
+---
+
+Proposal:
+* /Std/Cmp%: Compared@(Less, Equal, Greater), Cmp@
+* /Std/Ord%: Ord@(Cmp, Eq, Ne, Lt, Le, Gt, Ge, Min, Max), Ord
+
+Use Cmp@ for sort and tree map, because that's all they need.
+If Eq is instead needed, for efficiency, take Eq@.
+Use Cmp@ for things that just need a Cmp@ instance.
+Use Ord for things like Char, String, where the user wants to call Lt, etc.
+directly.
+
+The only downside I see is having two functionally equivalent interfaces. The
+justifications are:
+* Avoid false dependency of Cmp@ on Bool@.
+* Have a lighter weight Cmp@ interface that's easy to implement for one-off
+  things you don't need the full Ord@ for.
+
+I don't know. Not sure the justifications are good enough. If they aren't,
+that suggests we should just use the full Ord@ for everything.
+
+What if I re-organized /Std/Int/Eq% into:
+  /Std/Int/Eq%: Eq, Ne only.
+  /Std/Int/Ord%: Cmp, Lt, Le, Gt, Ge, Max, Min
+  /Std/Int/Sign%: Sign@, Sgn, IsZero, IsNegative, IsPositive
+
+That way I don't feel so conflicted about pulling /Std/Int/Ord% out into a
+more standardized type.
+
+Now the conflict is: /Std/Int/Ord% is directly of type Ord@? Or it is a
+namespace struct with a single field named Ord of type Ord@? Because if I were
+writing it directly, I would have Cmp, Lt, Le, etc. But I've learned before
+that's troublesome if we want to add anything else specialized to
+/Std/Int/Ord%. And that it's probably a bad idea to have /Std/List/Ord% be a
+direction function.
+
+Do I want to provide /Std/Unit/Ord%? /Std/Unit/Cmp%? Separately?
+
+Okay, I think I want to separate compare and ord. Let's go that approach.
+Re-organize Int as above. Try it out, see how it feels, and move on. I may not
+get any immediate feedback. If it's too painful, be prepared to revisit.
+

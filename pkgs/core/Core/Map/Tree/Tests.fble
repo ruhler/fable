@@ -10,8 +10,8 @@
 <@>% List = /Std/List%.List;
 <@>% Append = /Std/List%.Append;
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
-@ Ordering@ = /Core/Ord%.Ordering@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
+@ Compared@ = /Core/Ord%.Compared@;
 % Less = /Core/Ord%.Less;
 % Equal = /Core/Ord%.Equal;
 % Greater = /Core/Ord%.Greater;
@@ -39,7 +39,7 @@ Eq@<Bit1@> EqBit1 = (Bit1@ a, Bit1@ b) {
     1: b.?(0: False, 1: True));
 };
 
-Ord@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
+Cmp@<Bit1@> OrdBit1 = (Bit1@ a, Bit1@ b) {
   a.?(
     0: b.?(0: Equal, 1: Less),
     1: b.?(0: Greater, 1: Equal));
@@ -53,8 +53,8 @@ Eq@<Bit2@> EqBit2 = (Bit2@ a, Bit2@ b) {
   And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
 };
 
-Ord@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
-  Ordering@ oh = OrdBit1(a.h, b.h);
+Cmp@<Bit2@> OrdBit2 = (Bit2@ a, Bit2@ b) {
+  Compared@ oh = OrdBit1(a.h, b.h);
   oh.?(equal: OrdBit1(a.l, b.l), : oh);
 };
 

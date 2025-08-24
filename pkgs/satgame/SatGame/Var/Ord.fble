@@ -1,12 +1,12 @@
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
 % Less = /Core/Ord%.Less;
 % Greater = /Core/Ord%.Greater;
 % Equal = /Core/Ord%.Equal;
 
 @ Var@ = /SatGame/Var%.Var@;
 
-Ord@<Var@> Ord = (Var@ a, Var@ b) {
+Cmp@<Var@> Ord = (Var@ a, Var@ b) {
   /Core/Bool/Ord%.Ord(a.ul, b.ul).?(less: Less, greater: Greater);
   /Core/Bool/Ord%.Ord(a.uc, b.uc).?(less: Less, greater: Greater);
   /Core/Bool/Ord%.Ord(a.ur, b.ur).?(less: Less, greater: Greater);

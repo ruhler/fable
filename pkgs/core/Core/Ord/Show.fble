@@ -1,11 +1,11 @@
 
-@ Ordering@ = /Core/Ord%.Ordering@;
+@ Compared@ = /Core/Ord%.Compared@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Core/String%.Str;
 
-Show@<Ordering@> Show = (Ordering@ a) {
+Show@<Compared@> Show = (Compared@ a) {
   a.?(less: Str|Less, equal: Str|Equal, greater: Str|Greater);
 };
 

@@ -22,14 +22,14 @@
 % BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
 % Move = /Games/TicTacToe/Board%.Move;
 
-/Core/Ord%.Ord@<Square@> SquareOrd = (Square@ a, Square@ b) {
+/Core/Ord%.Cmp@<Square@> SquareOrd = (Square@ a, Square@ b) {
   a.?(
     X: b.?(X: Equal, O: Less, E: Less),
     O: b.?(X: Greater, O: Equal, E: Less),
     E: b.?(X: Greater, O: Greater, E: Equal));
 };
 
-/Core/Ord%.Ord@<Board@> BoardOrd = (Board@ a, Board@ b) {
+/Core/Ord%.Cmp@<Board@> BoardOrd = (Board@ a, Board@ b) {
   SquareOrd(a.ul, b.ul).?(less: Less, greater: Greater);
   SquareOrd(a.uc, b.uc).?(less: Less, greater: Greater);
   SquareOrd(a.ur, b.ur).?(less: Less, greater: Greater);

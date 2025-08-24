@@ -3,11 +3,11 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
 
 (Char@) { Int@; } ToAscii = /Core/Char/Ascii%.Ord;
 
-Ord@<Char@> Ord = (Char@ a, Char@ b) {
+Cmp@<Char@> Ord = (Char@ a, Char@ b) {
   /Core/Int/Ord%.Ord(ToAscii(a), ToAscii(b));
 };
 

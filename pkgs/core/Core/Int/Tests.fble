@@ -5,7 +5,7 @@
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 % Ord = /Core/Ord%;
-@ Ordering@ = Ord.Ordering@;
+@ Compared@ = Ord.Compared@;
 
 <@>% List = /Std/List%.List;
 
@@ -82,8 +82,8 @@ TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
   });
 };
 
-(String@, Ordering@, (Unit@) { Ordering@; }) { Test@; }
-TOrd = (String@ name, Ordering@ a, (Unit@) { Ordering@; } b) {
+(String@, Compared@, (Unit@) { Compared@; }) { Test@; }
+TOrd = (String@ name, Compared@ a, (Unit@) { Compared@; } b) {
   Test(name, (Unit@ u) {
     AssertEquals(/Core/Ord/Eq%.Eq, /Core/Ord/Show%.Show, a, b(u));
   });

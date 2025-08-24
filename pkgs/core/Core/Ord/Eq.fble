@@ -4,9 +4,9 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
-@ Ordering@ = /Core/Ord%.Ordering@;
+@ Compared@ = /Core/Ord%.Compared@;
 
-Eq@<Ordering@> Eq = (Ordering@ a, Ordering@ b) {
+Eq@<Compared@> Eq = (Compared@ a, Compared@ b) {
   a.?(
     less: b.?(less: True, : False),
     equal: b.?(equal: True, : False),

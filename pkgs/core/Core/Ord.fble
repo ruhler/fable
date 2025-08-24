@@ -6,14 +6,16 @@
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
 
-@ Ordering@ = +(Unit@ less, Unit@ equal, Unit@ greater);
+@ Compared@ = +(Unit@ less, Unit@ equal, Unit@ greater);
 
-Ordering@ Less = Ordering@(less: Unit);
-Ordering@ Equal = Ordering@(equal: Unit);
-Ordering@ Greater = Ordering@(greater: Unit);
+Compared@ Less = Compared@(less: Unit);
+Compared@ Equal = Compared@(equal: Unit);
+Compared@ Greater = Compared@(greater: Unit);
+
+<@>@ Cmp@ = <@ T@>(T@, T@) { Compared@; };
 
 <@>@ Order@ = <@ T@> { *(
-  (T@, T@) { Ordering@; } cmp,
+  (T@, T@) { Compared@; } cmp,
   (T@, T@) { Bool@; } eq,
   (T@, T@) { Bool@; } ne,
   (T@, T@) { Bool@; } lt,
@@ -24,8 +26,8 @@ Ordering@ Greater = Ordering@(greater: Unit);
   (T@, T@) { T@; } max);
 };
 
-<@ T@>((T@, T@) { Ordering@; }) { Order@<T@>; }
-Order = <@ T@>((T@, T@) { Ordering@; } cmp) {
+<@ T@>((T@, T@) { Compared@; }) { Order@<T@>; }
+Order = <@ T@>((T@, T@) { Compared@; } cmp) {
   @(cmp,
     eq: (T@ a, T@ b) { cmp(a, b).?(equal: True, : False); },
     ne: (T@ a, T@ b) { cmp(a, b).?(equal: False, : True); },
@@ -37,7 +39,5 @@ Order = <@ T@>((T@, T@) { Ordering@; } cmp) {
     max: (T@ a, T@ b) { cmp(a, b).?(greater: a, : b); });
 };
 
-<@>@ Ord@ = <@ T@>(T@, T@) { Ordering@; };
-
-@(Ordering@, Order@, Ord@, Order, Less, Equal, Greater);
+@(Compared@, Cmp@, Order@, Order, Less, Equal, Greater);
 

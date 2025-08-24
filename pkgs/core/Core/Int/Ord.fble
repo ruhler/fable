@@ -1,5 +1,5 @@
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
 % Less = /Core/Ord%.Less;
 % Equal = /Core/Ord%.Equal;
 % Greater = /Core/Ord%.Greater;
@@ -8,7 +8,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-Ord@<Int@> Ord = (Int@ a, Int@ b) {
+Cmp@<Int@> Ord = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: OrdP(b.n, a.n), 0: Less, p: Less),
       0: b.?(n: Greater, 0: Equal, p: Less),

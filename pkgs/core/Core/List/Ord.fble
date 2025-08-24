@@ -1,19 +1,19 @@
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
-@ Ordering@ = /Core/Ord%.Ordering@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
+@ Compared@ = /Core/Ord%.Compared@;
 % Less = /Core/Ord%.Less;
 % Equal = /Core/Ord%.Equal;
 % Greater = /Core/Ord%.Greater;
 
 <@>@ List@ = /Std/List%.List@;
 
-<@ A@>(Ord@<A@>) { Ord@<List@<A@>>; }
-Ord = <@ A@>(Ord@<A@> ord) {
-  Ord@<List@<A@>> Ord_ = (List@<A@> a, List@<A@> b) {
+<@ A@>(Cmp@<A@>) { Cmp@<List@<A@>>; }
+Ord = <@ A@>(Cmp@<A@> ord) {
+  Cmp@<List@<A@>> Ord_ = (List@<A@> a, List@<A@> b) {
     a.?(empty: b.?(items: Less, empty: Equal));
     b.?(empty: Greater);
 
-    Ordering@ ordering = ord(a.items.head, b.items.head);
+    Compared@ ordering = ord(a.items.head, b.items.head);
     ordering.?(equal: Ord_(a.items.tail, b.items.tail));
     ordering;
   };

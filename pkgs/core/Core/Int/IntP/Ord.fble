@@ -1,21 +1,21 @@
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
-@ Ordering@ = /Core/Ord%.Ordering@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
+@ Compared@ = /Core/Ord%.Compared@;
 % Less = /Core/Ord%.Less;
 % Equal = /Core/Ord%.Equal;
 % Greater = /Core/Ord%.Greater;
 
 @ IntP@ = /Std/Int/IntP%.IntP@;
 
-(Ordering@) { Ordering@; } RoundLt = (Ordering@ x) {
+(Compared@) { Compared@; } RoundLt = (Compared@ x) {
   x.?(equal: Less, : x);
 };
 
-(Ordering@) { Ordering@; } RoundGt = (Ordering@ x) {
+(Compared@) { Compared@; } RoundGt = (Compared@ x) {
   x.?(equal: Greater, : x);
 };
 
-Ord@<IntP@> Ord = (IntP@ a, IntP@ b) {
+Cmp@<IntP@> Ord = (IntP@ a, IntP@ b) {
   a.?(1: b.?(1: Equal, 2p0: Less, 2p1: Less),
       2p0: b.?(1: Greater, 2p0: Ord(a.2p0, b.2p0), 2p1: RoundLt(Ord(a.2p0, b.2p1))),
       2p1: b.?(1: Greater, 2p0: RoundGt(Ord(a.2p1, b.2p0)), 2p1: Ord(a.2p1, b.2p1)));

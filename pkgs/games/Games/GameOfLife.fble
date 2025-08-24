@@ -20,8 +20,8 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-<@>@ Ord@ = /Core/Ord%.Ord@;
-@ Ordering@ = /Core/Ord%.Ordering@;
+<@>@ Cmp@ = /Core/Ord%.Cmp@;
+@ Compared@ = /Core/Ord%.Compared@;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
@@ -37,8 +37,8 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
   And(Eq(a.row, b.row), Eq(a.col, b.col));
 };
 
-Ord@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
-  Ordering@ o = Ord(a.row, b.row);
+Cmp@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
+  Compared@ o = Ord(a.row, b.row);
   o.?(equal: Ord(a.col, b.col), : o);
 };
 
