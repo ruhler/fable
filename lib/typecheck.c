@@ -1839,7 +1839,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           break;
         }
         
+        FbleAppendToVector(literal_tc->prgm, -1);
         FbleAppendToVector(literal_tc->prgm, letter);
+        FbleAppendToVector(literal_tc->prgm, tagwidth);
         if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[letter].type)) {
           ReportError(loc, "expected field type %t, but '%s' has field type %t\n",
               unit_type, elem_data_type->fields.xs[letter].name.name->str, elem_data_type->fields.xs[letter].type);

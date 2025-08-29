@@ -382,14 +382,21 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
  *   A mini program used to describe the contents of the literal value to
  *   construct.
  *
- *   The program is currenty defined as the list of tag values to use for each
- *   letter in the literal in order.
+ *   The program constructs a literal starting with a unit value and empty
+ *   list, then executing words from the program in reverse order as follows:
+ *
+ *   If the word is -1, prepends the current value to the list and sets the
+ *   current value to unit. Otherwise the word is treated as the tag width of
+ *   a union value, the next word is treated as the tag value of a union
+ *   value, and the value is set to the union value with given tag width, tag
+ *   value, and previous value as the argument.
  *
  *  @returns FbleValue*
  *   A newly allocated literal value.
  *
  *  @sideeffects
- *   Allocates a value on the heap.
+ *   @i Allocates a value on the heap.
+ *   @i Behavior is undefined if @a[prgm] is malformed.
  */
 FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t prgm_len, size_t* prgm);
 
