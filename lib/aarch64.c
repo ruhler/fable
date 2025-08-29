@@ -1033,21 +1033,20 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, size_t func_id, size
 
     case FBLE_LITERAL_INSTR: {
       FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      size_t argc = literal_instr->letters.size;
 
       fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
-      fprintf(fout, ".Lr.%04zx.%zi.letters:\n", func_id, pc);
-      for (size_t i = 0; i < argc; ++i) {
-        fprintf(fout, "  .xword %zi\n", literal_instr->letters.xs[i]);
+      fprintf(fout, ".Lr.%04zx.%zi.prgm:\n", func_id, pc);
+      for (size_t i = 0; i < literal_instr->prgm.size; ++i) {
+        fprintf(fout, "  .xword %zi\n", literal_instr->prgm.xs[i]);
       }
 
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
       Mov(fout, "x1", literal_instr->tagwidth);
-      Mov(fout, "x2", argc);
-      Adr(fout, "x3", ".Lr.%04zx.%zi.letters", func_id, pc);
+      Mov(fout, "x2", literal_instr->prgm.size);
+      Adr(fout, "x3", ".Lr.%04zx.%zi.prgm", func_id, pc);
       fprintf(fout, "  bl FbleNewLiteralValue\n");
       SetFrameVar(fout, "x0", literal_instr->dest);
       return;

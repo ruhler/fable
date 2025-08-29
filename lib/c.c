@@ -564,10 +564,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-        size_t argc = literal_instr->letters.size;
+        size_t argc = literal_instr->prgm.size;
         fprintf(fout, "  static size_t lit_%zi[] = {", lit_id);
         for (size_t i = 0; i < argc; ++i) {
-          fprintf(fout, " %zi,", literal_instr->letters.xs[i]);
+          fprintf(fout, " %zi,", literal_instr->prgm.xs[i]);
         }
         fprintf(fout, " };\n");
         fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, %zi, lit_%zi);\n",

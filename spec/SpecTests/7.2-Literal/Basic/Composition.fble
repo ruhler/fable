@@ -1,0 +1,26 @@
+# @@fble-test@@ xfail
+# @@fble-test@@ compile-error 25:13
+# @@fble-test@@ no-error
+#
+# This test is currently failing with a compile-error because we don't yet
+# support composite literals in the implementation.
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Letter@ = +(Unit@ A, Unit@ B, Unit@ C);
+@ Number@ = +(Unit@ 0, Unit@ 1, Unit@ 2);
+@ Char@ = +(Letter@ letter, Number@ number);
+
+@ L@ = +(*(Char@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit@ _b = l.cons.head.letter.B;
+  Unit@ _1 = l.cons.tail.cons.head.number.1;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.letter.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit;
+};
+
+# Use of a composite literal that combines two different literal types.
+Unit@ _ = f|B1C;
+Unit;

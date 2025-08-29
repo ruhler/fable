@@ -50,3 +50,146 @@ Unicode:
 * It's pretty complicated in general. I'm not sure standard library for
   Char@ is the right place to deal with these complexities a Unicode specific
   library would be better suited. Just pick the basics for Char@.
+
+---
+
+Okay! What are we doing for Char now, since it's been a while since I last
+thought about this.
+
+* Char@ will be a wrapper around Int@ with the unicode code point for the
+  character.
+* Define some literal sets:
+  - ascii, latin?
+* Create a character from a unicode code point. Get the unicode code point of
+  a character.
+* Character classes
+  - but specific to a subset of characters, or all of unicode? Or related to
+    your current locale?
+
+Is that it? Basically character literals and character classes?
+
+Java has things like:
+* Convert between digit and char, for given radix
+* Comparison, equality.
+* Unicode database info: name, code point, directionality, category, etc.
+
+Yeah, I think that's kind of it. So I need to figure out what literal sets I
+want to provide and what classes or other info I want to supply, and how to
+interpret those.
+
+---
+
+* In C99, character classes are locale specific?
+* Go refers to 'Latin1' as a code space somewhere. What's that?
+  ASCII:  U+0000..U+007F
+  LATIN1: U+0080..U+00FF
+
+I suppose we could start with 'C99' as a character set: /Std/Char/C99%, or
+Just /Std/Char/C%. The spec clearly lists the characters and defines what is
+upper or lower case. It includes almost exactly what I have for Char@ today.
+But that's also almost the same as ASCII, so why not start with ASCII, which
+is part of unicode?
+
+/Std/Char/Ascii% can define ascii character strings and literals. It can
+define character classes ... but only for ascii characters?
+
+How feasible would it be to implement character classes properly for all of
+unicode? Isn't that a whole lot of data that most people don't want or need?
+
+---
+
+Currently defined character literals:
+* Spaces: newline, space, tab, CR
+* Symbols: !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+* Digits: 0-9
+* Letters: A-Z, a-z
+
+Differences between my characters and C99:
+* C99 also has: \0, vertical tab, form feed
+* C99 also has: alert, backspace
+* C99 doesn't have '$' or '@' or '`'.
+
+What else is in ASCII:
+* SOH (start of heading)
+* STX (start of text)
+* ETX (end of text)
+* EOT (end of transmission
+* ENQ (enquiry)
+* ACK (acknowledge)
+* BEL '\a' (bell)
+* SO  (shift out)
+* SI  (shift in)
+* DLE (data link escape)
+* DC1 (device control 1)
+* DC2 (device control 2)
+* DC3 (device control 3)
+* DC4 (device control 4)
+* NAK (negative ack.)
+* SYN (synchronous idle)
+* ETB (end of trans. blk)
+* CAN (cancel)
+* EM  (end of medium)
+* SUB (substitute)
+* ESC (escape)
+* FS  (file separator)
+* GS  (group separator)
+* RS  (record separator)
+* US  (unit separator)
+* DEL
+ 
+What do I want to include in my character literal?
+* All of ascii?
+* Just printable characters?
+* Non-printable characters as raw bytes, as escape sequences (e.g. \n), or
+  both?
+* More than just ascii?
+
+What to include in my character definition:
+* The Ascii@ type, which is one big enum type.
+* Conversion from Ascii@ to unicode code point for Char@.
+* An Ascii char literal function that takes List@<Ascii@> to Char@.
+ - We could include support for parsing unicode escape sequences and other
+   escape sequences here if we wanted to.
+* Optional: conversion from Char@ to Ascii@, for use in case expressions
+  rather than force use of Eq?
+* Implementations of character class functions: IsSpace, IsUpper, etc.?
+
+What not to include in my character definition:
+* Eq, Ord, Show. Anything that would tempt people to use it for anything other
+  than character literals.
+
+If it wasn't so tedious and I wasn't worried about the memory cost at runtime,
+ideally I would have a type that supported anything you could write in
+unicode? Wait, I'm sure we've been through this discussion. It's still not
+terribly satisfying though.
+
+Limiting to ascii is good, because then if somebody wants to, they could write
+their program entirely in ascii. No unicode support required by their
+implementation. That is, use of funny characters beyond ascii in standard
+library can be restricted to specific modules you can easily avoid including
+if you want.
+
+But we still have a composability challenge. If only there was an easy way to
+say, given Ascii@ and Latin1@, form a composite string literal that
+supports characters from both ranges. If only we had that, then everything
+would be real easy:
+* Define separate modules for separate unicode code pages, lazily.
+* Have a way for a user to define a string literal given a list of types from
+  various code pages. For example, something like Str = StrFor[Ascii@,
+  Latin1@], etc.
+
+Can I consider this again? I know we had a long discussion about it, but that
+would really be very nice. Specifically what I need is:
+* Given Ascii@ and Latin1@ types, create an AsciiLatin1@ type.
+* Given ascii2Char and latin12Char, create an asciilatin12Char function.
+
+The compiler can do the first thing: create a special kind of unionized type.
+It's basically the union of fields of the two types. As long as there are no
+conflicts in the type of fields by name, this is doable. We can come up with
+some well defined way to define the tags associated with each field.
+
+The compiler could do the second too maybe? It's messy. It's hacky. But it's
+technically not difficult and could solve my problem. Consider this for real.
+Maybe I have new insight now that can get me further along than my last
+attempts.
+

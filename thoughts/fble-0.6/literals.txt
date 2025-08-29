@@ -1009,3 +1009,216 @@ character set, whatever that is, and prefix matching ought to work.
 Okay? Reasonable? I feel better about this approach for sure, if we can make
 it work.
 
+---
+
+Some time has passed. I want to try again now that I'm starting to implement
+the char standard library.
+
+Here is my dream:
+* I can define separate modules for each unicode code page. The module defines
+  the mapping from source words to Char@ and implements char classification
+  for the characters in that mapping.
+* There is a way for me to compose multiple of these modules together into a
+  new module that supports all the characters in each component.
+* It's important that users have the option to only include those specific
+  modules they want, in case their source character set doesn't support all
+  the modules.
+
+I feel like technically that shouldn't be too hard, if I can figure out the
+right way to express things in fble.
+
+Conceptually we have:
+* A mapping from (sub)words to runtime letter type. Sample letter types: Ascii@,
+  Char@, Digit@.
+* A way to turn a full word into a sequence of letters.
+* A way to turn a sequence of letters into a target type. e.g. convert a list
+  of Char@ to a String@, or a list of Digit@ to an Int@.
+
+The first two need language help, because words are not first class in fble. I
+want full words to be interpreted at compile time, because that's where we
+know the source character set and it feels bad performance wise to have to
+parse words at runtime.
+
+My requirement for use is that I should be able to specify a single named
+entity (e.g. Int, Str) that can go from a word to the target type. It's too
+much overhead syntax wise if we have to split it like Int(Chars|...);
+
+That is, I need:
+   
+  Int@ x = Int|42;
+
+I'm not happy with:
+
+  Int@ x = Int(Digits|42);
+
+Though maybe I should be, considering how much 'Int|42' costs at runtime. At
+least the extra function call makes that more clear.
+
+Either way, whatever you apply the word to, the compiler needs to know how to
+parse the word into pieces. The only thing the compiler knows at a compile
+time is the type of the entity. So we have to encode the set of words in the
+entity type.
+
+Maybe we have a special literal type. Let's start by thinking of Digits as
+going from 'word' to List@<Digit@>, and not worry about the rest of the
+transformation. We could say Digits is a literal and define it specially:
+
+  @| Digits = |(0: zero, 1: one, 2: two, ...);
+
+We can infer from the types of zero, one, two, what letter type is associated
+with Digits, as well as the set of words.
+
+What can we do with Digits?
+* Apply it to a word: Digits|'13451'. It gives us a list.
+
+If we have this form, then we could also compose two literals together.
+
+  @| Alnum = |+(Digits, Alpha);
+
+I wish we specified the letter type somewhere in the syntax. But anyway,
+straight forward. Define how to do the union in case of conflict.
+
+Can we pass a literal to a function? Well, we can't apply or combine it unless
+we know the type of the literal. The type encodes the sequence and letter
+type, but not necessarily the mapping to specific letter values.
+
+How about we use a struct type to identify the literal type? Require all
+fields to have the same type. The field names are the words. The struct value
+is the mapping.
+
+  % Digits = @(0: one, 1: two, ...);
+  @ Digits@ = @<Digits>;
+
+Maybe we can use 'Digits' to generate the sequence of characters.
+
+  Digits|100234;
+
+Then what I'm looking for is an operator that takes two struct types and
+unions them together. Straight forward enough. But also at the value level.
+
+  % Alnum = @+(Digits, Alpha);
+  % Hex = @+(Decimal, @(a: 10, b: 11, c: 12, d: 13, e: 14, F: 15));
+
+Or, could we use composition? A struct where each field is a literal gives us
+back something we could use as a literal? Sounds tricky if we don't know the
+letter type and have to infer it based on the structure of the struct value.
+And harder at runtime to keep the structure.
+
+Anyway, some open question there. But we still have the last hurdle, which is
+how to go from:
+ 
+  Int@ x = Int(Digits|100234);
+
+To:
+
+  Int@ x = Int|100234;
+
+We could do it if Int had more structure: a literal + a function. In other
+words, a special kind of struct value with certain named fields.
+
+  *(letters: *(L@ a, L@ b, ...), for: (T@ t, L@ l) { ... });
+
+Now we can infer the letter type and the target type from the 'for' function,
+so maybe we can do fancy composition to figure out the letter values?
+
+---
+
+Proposal:
+* Keep the current approach for literals as the basis: an enum type.
+* Allow composition via standard union composition:
+  +(Letters@ letters, Digits@ digits);
+* Encode the structure of a literal in a custom way in FbleLiteralInstr.
+  For example, a sequence of tags where some tags can be marked as 'nested'.
+  If the tag is nested, the next tag is the tagwidth and you plug that inside
+  whatever comes after it in the sequence. For example, for a top level union
+  with 7 fields: 5*, 6, 3, 4, 5. Is interpreted as:
+    7@(3: 6@(5: @())), 7@(4: @()), 7@(5: @())
+
+I claim this solves all my language requirement problems. Given two arbitrary
+charsets A@ and B@, with functions A from A@ to Char@ and B from B@ to Char@,
+we can easily and automatically compose them into a charset C@ and derive the
+function C from C@ to Char@:
+
+  @ C@ = +(A@ a, B@ b);
+
+  (C@) { Char@; } C = (C@ c) { c.?(a: A(c.a), b: B(c.b)); }
+
+I could easily create a module that automatically defines a string literal
+function for any combination of character sets you provide.
+
+The big insight I have now that I didn't before is that I can encode the
+structure of individual letters in the literal instruction in a custom way
+that still lets us represent literal contents as a compact sequence of bytes
+without making assumptions about character set or having to know the character
+set to interpret the literals at runtime.
+
+There is some question about how to handle ambiguity in composed literals. I
+could allow it or not. Or allow it unless we encounter it. Those are details
+that I don't think matter too much.
+
+I want to continue to match a prefix of a word, to avoid any assumptions
+internally about the character set other than that it is prefix coded. But
+maybe there's no need to allow ambiguity at all in the literal spec. For
+example, don't allow 'a' and 'ab' to both be words, because it violates prefix
+coding. Then we don't need to check for the longest match. I'm not sure. It's
+a detail that doesn't really matter right now.
+
+Let's try it and see how far I can get. Start with ironing out implementation
+details. Then update the spec. I can write a simple spec test case to test it
+out.
+
+Maybe easiest is to start with the LITERAL encoding in the instruction. I
+think everyone today uses FbleNewLiteralValue? Yes. Good.
+
+Union needs a size_t tagwidth and size_t tag. Maybe change size_t* args to
+size_t* spec?
+
+I'm tempted to optimize for the case where things are flat, but that doesn't
+seem worth doing if the main literal we have is going to be nested anyway.
+
+Idea is:
+* start with tail of the list and unit.
+* the data tells us:
+  list of (tagwidth, letter) to produce the value.
+  prepend the value to the list.
+
+All the final things should have the same tag width.
+Maybe we could encode the tag widths separately to avoid duplication?
+
+There are lots of ways I could try to encode things. Best to start with the
+simplest. Make it like a mini program. Assuming you start with value as unit
+and tail as empty, the instructions are:
+A. Wrap value in union of tagwidth, tag.
+B. Prepend value to list.
+
+It will be convenient to represent as a sequence, so sequence of size_t. The
+top level type has a common tag width. How about make things simple:
+
+  -1 for tagwidth means prepend value to list and reset value to unit.
+  Otherwise wrap the existing value in a union of tagwidth, tag.
+
+Easy. Let's try it.
+
+Do we want to reverse the list for easy construction? Say you consume from the
+back of the list? I think so. Read the list in reverse.
+
+---
+
+If I want something more packed, figure out some way to interpret the literal
+program as a sequence of bits. Then we can say:
+* bit 0: prepend value to the list.
+* bit 1, followed by 6 bit tag width, followed by <tagwidth> bits of tag:
+  Wrap the current value in a new union value with given tag width and tag.
+
+But worry about that later. First step is the simplest form described above.
+
+The special case for the simple form above for flat literals:
+
+For tagwidth W and tagsequence a, b, c, d:
+
+-1, a, W, -1, b, W, -1, c, W, -1, d, W
+
+For each letter: -1, <tag>, W
+
+Easy.
+

@@ -1790,12 +1790,12 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t argc, size_t* args)
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t prgm_len, size_t* prgm)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* tail = FbleNewUnionValue(heap, 1, 1, unit);
-  for (size_t i = 0; i < argc; ++i) {
-    size_t letter = args[argc - i - 1];
+  for (size_t i = 0; i < prgm_len; ++i) {
+    size_t letter = prgm[prgm_len - i - 1];
     FbleValue* arg = FbleNewUnionValue(heap, tagwidth, letter, unit);
     FbleValue* cons = FbleNewStructValue_(heap, 2, arg, tail);
     tail = FbleNewUnionValue(heap, 1, 0, cons);

@@ -5,6 +5,8 @@ Things to consider doing for the fble-0.6 release.
 * Add a 'function' standard library?
  - compose, flip
 
+* Fix xfailing spec/SpecTests/7.2-Literal/Basic/Composition.fble
+
 * Implement Cmp@ for Unit, Bool, Int, List.
 
 * Figure out how to properly document List@ type
