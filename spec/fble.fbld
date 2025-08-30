@@ -933,7 +933,7 @@
    In the example above, each letter corresponds to a single character. You
    can define letters to be longer field names too. In that case, the literal
    word is split up into letters by reading from left to right and selecting
-   the longest field name to match at each position.
+   the first field name to match at each position.
 
    It is a type error if the word cannot be decoded into a sequence of letters
    based on the field names of the element type @L{E@}.

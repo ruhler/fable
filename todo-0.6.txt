@@ -6,6 +6,8 @@ Things to consider doing for the fble-0.6 release.
  - compose, flip
 
 * Fix xfailing spec/SpecTests/7.2-Literal/Basic/Composition.fble
+* Update tutorial on literals.
+  - Particularly about 'longest' versus 'first' match.
 
 * Implement Cmp@ for Unit, Bool, Int, List.
 

@@ -1821,18 +1821,18 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       const char* word = literal_expr->word;
       size_t letter = 0;
       while (wordlen > 0) {
-        size_t maxlen = 0;
+        size_t len = 0;
         for (size_t j = 0; j < elem_data_type->fields.size; ++j) {
           const char* fieldname = elem_data_type->fields.xs[j].name.name->str;
-          size_t fieldnamelen = strlen(fieldname);
-          if (fieldnamelen > maxlen && fieldnamelen <= wordlen &&
-              strncmp(word, fieldname, fieldnamelen) == 0) {
-            maxlen = fieldnamelen;
+          len = strlen(fieldname);
+          if (len > 0 && strncmp(word, fieldname, len) == 0) {
             letter = j;
+            break;
           }
+          len = 0;
         }
 
-        if (maxlen == 0) {
+        if (len == 0) {
           ReportError(loc, "next letter of literal '%s' not found in type %t\n", word, elem_type);
           error = true;
           break;
@@ -1848,15 +1848,15 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           break;
         }
 
-        for (size_t i = 0; i < maxlen; ++i) {
+        for (size_t i = 0; i < len; ++i) {
           if (word[i] == '\n') {
             loc.line++;
             loc.col = 0;
           }
           loc.col++;
         }
-        word += maxlen;
-        wordlen -= maxlen;
+        word += len;
+        wordlen -= len;
       }
 
       if (error) {

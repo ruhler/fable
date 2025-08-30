@@ -8,13 +8,14 @@ Unit@ Unit = Unit@();
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _b = l.cons.head.A;
-  Unit@ _a = l.cons.tail.cons.head.AC;
+  Unit@ _a = l.cons.tail.cons.head.A;
   Unit@ _c = l.cons.tail.cons.tail.cons.head.C;
-  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit@ _d = l.cons.tail.cons.tail.cons.tail.cons.head.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.cons.tail.nil;
   Unit;
 };
 
-# If multiple prefixes of the literal match, pick the 'longest' letter. In
-# this case, we expect [A, AC, C] rather than [A, A, C, C].
+# If multiple prefixes of the literal match, pick the first match. In
+# this case, we expect [A, A, C, C] rather than [A, AC, C].
 Unit@ _ = f|AACC;
 Unit;

@@ -1252,7 +1252,113 @@ Pseudocode for my function to traverse the element type to check for a match:
 
   for each field in the union data type:
    - if the field type is unit, check for letter match against the word.
-     If found, output: the field's tag and number of characters matched?
-  
-  
+     If found, return the field's tag and number of characters matched?
+
+   - if the field type is a union, do a recursive call.
+     If found, return the sequence of field tags and number of chars matched.
+
+   - otherwise: report an error or ignore invalid fields to check.
+
+  if no matches, return match length of 0.
+
+At the top level, we append the sequence of fields to the program, advance the
+location and the word. Makes sense to me. So this API is matching a single
+prefix and telling you the length of the match found if any.
+
+It would be really nice if there were no error conditions from this function.
+It's not great to use ease of implementation as a guide for forming the
+language specification, but if I were to in this case, I would say: find the
+first valid match, ignore any fields of inappropriate type.
+
+Alternatively, and probably more generally, allow the function to return
+errors. Then we could change it to detect duplicate match and disallow
+unexpected field types. That's probably the better route to go.
+
+Either way, inputs are clear:
+* Normalized union data type.
+* Word to check for.
+* Location for error reporting.
+
+Outputs are clear:
+* Length of match found.
+* Sequence of (tagwidth, tag) to produce the matching letter.
+* Or an error status which means we already output an error.
+
+For our current literal program, what order do we want to append the
+(tagwidth, tag) values?
+
+Say I want: 6@(3: 2@(1: @()));
+
+We are reading from the back of the program. Starting with unit. So, when
+reading from the back, I want to see: (2, 1), (6, 3), -1. Which means when
+producing from the front, I want to write: -1, (6, 3), (2, 1).
+
+How about we instead return in reverse order, inside out from this function:
+(2, 1), (6, 3). Then reverse it when pushing into the program? Does that help
+at all? That way, if a match is found in the child, I can append my (tagwidth,
+tag) to populate up. Alternatively would be speculatively push to the back of
+the program. The downside of speculatively pushing is lots of unnecessary
+reallocations unless I'm willing to track capacity and size separate.
+
+Better to return to a separate data structure rather than go directly to the
+program. That way callers can do what they want. Anyway, that's a performance
+thing I can worry about later.
+
+Proposed outputs API:
+* Given an vector of size_t (or pair of size_t?) to output sequence to, inside
+  out order.
+* Return ssize_t to return length of match (including 0 for no match), or -1
+  to indicate error.
+
+Another option would be change how we interpret the program to be inside out
+order? But I feel like better to make something more natural for runtime and
+less natural for compile time.
+
+---
+
+On whether we should pick 'first' match or 'longest' match in case of
+ambiguity:
+* It's easy to change the spec and the implementation.
+* I have one test case for this case, which would also be easy to update.
+
+The question is, is there any legitimate reason I would want to allow
+ambiguity in literals, and in that case, that I would prefer a longer match to
+a shorter match? Like, honestly. Not some weird "ooh, maybe we could do this
+then" kind of thing. Like what we really want.
+
+We are matching a prefix at a time rather than a letter at a time so I don't
+have to build into the language or the compiler what the notion of a letter
+is. In other words, I can treat the input as a sequence of bytes instead of a
+sequence of characters and match a prefix there, assuming characters are
+encoding with a prefix code. Otherwise I have to start to worry about locales
+and such. In other words, a word is a sequence of characters encoded into a
+sequence of bytes. If I'm willing to compare sequences of bytes and limit to
+prefix encodings of characters, I don't have to know what the character
+encoding is as long we are consistent in reading the field names and the
+literal words in the same encoding.
+
+Honestly, requiring it to be a prefix code makes sense to me. It doesn't make
+sense to have things be ambiguous. It's just confusing.
+
+The only legitimate reason to allow ambiguity would be if it facilitates
+composition. Like, maybe it's infeasible to prevent ambiguity to show up in
+some cases, because you are combining two different types that happen to have
+some ambiguity. I can kind of imagine such a case. You have two big character
+sets, you want to take the union, there is some overlap. How do I deal with
+that?
+
+As a user, I would like some way to control the overlap. If we say 'first'
+match, then we can get into impossible situations where we want some to prefer
+from one set and some to prefer from another. The same thing with longest
+match, to be honest.
+
+I feel like you should avoid ambiguity, but if you can't easily for some
+reason, you should be prepared to handle any choice. And to make things more
+consistent, we should just do field order rather than make things completely
+undefined.
+
+It's fine for an exact match case "a" vs "a". There's no way to specify as
+part of the literal word which you would prefer. It's less obvious for "a" vs
+"ab". Maybe if we match "a", we can't match "b". On the other hand, you could
+say the same otherwise. Tricky.
 
