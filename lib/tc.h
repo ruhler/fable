@@ -350,13 +350,11 @@ typedef struct {
  *  function as part of a literal expression.
  *
  *  @field[FbleTc][_base] FbleTc base class.
- *  @field[size_t][tagwidth] Number of bits in the tag of a letter.
  *  @field[FbleTagV][prgm]
  *   The program to pass to FbleNewLiteralValue to construct the literal.
  */
 typedef struct {
   FbleTc _base;
-  size_t tagwidth;
   FbleTagV prgm;
 } FbleLiteralTc;
 

@@ -376,7 +376,6 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
 /**
  * @func[FbleNewLiteralValue] Creates an fble literal value.
  *  @arg[FbleValueHeap*][heap] The heap to allocate the value on.
- *  @arg[size_t][tagwidth] The number of bits for the tag of a letter.
  *  @arg[size_t][prgm_len] The number of words in the program.
  *  @arg[size_t*][prgm]
  *   A mini program used to describe the contents of the literal value to
@@ -398,7 +397,7 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
  *   @i Allocates a value on the heap.
  *   @i Behavior is undefined if @a[prgm] is malformed.
  */
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t tagwidth, size_t prgm_len, size_t* prgm);
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t prgm_len, size_t* prgm);
 
 /**
  * @func[FbleNewFuncValue] Creates an fble function value.

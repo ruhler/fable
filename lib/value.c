@@ -1790,7 +1790,7 @@ FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
 }
 
 // See documentation in fble-value.h.
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t _tagwidth, size_t prgm_len, size_t* prgm)
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t prgm_len, size_t* prgm)
 {
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* tail = FbleNewUnionValue(heap, 1, 1, unit);

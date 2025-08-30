@@ -1812,7 +1812,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
-      literal_tc->tagwidth = tagwidth;
       FbleInitVector(literal_tc->prgm);
       CleanFbleTc(cleaner, &literal_tc->_base);
 

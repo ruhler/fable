@@ -570,8 +570,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
           fprintf(fout, " %zi,", literal_instr->prgm.xs[i]);
         }
         fprintf(fout, " };\n");
-        fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, %zi, lit_%zi);\n",
-            literal_instr->dest, literal_instr->tagwidth, argc, lit_id);
+        fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, lit_%zi);\n",
+            literal_instr->dest, argc, lit_id);
         lit_id++;
         break;
       }

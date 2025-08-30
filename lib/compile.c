@@ -1361,7 +1361,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       Local* local = NewLocal(scope);
       FbleLiteralInstr* literal_instr = FbleAllocInstr(FbleLiteralInstr, FBLE_LITERAL_INSTR);
       literal_instr->dest = local->var.index;
-      literal_instr->tagwidth = literal_tc->tagwidth;
       FbleInitVector(literal_instr->prgm);
       AppendInstr(scope, &literal_instr->_base);
       CompileExit(exit, scope, local);

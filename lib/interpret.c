@@ -298,7 +298,7 @@ static FbleValue* Interpret(
 
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-        locals[literal_instr->dest] = FbleNewLiteralValue(heap, literal_instr->tagwidth, literal_instr->prgm.size, literal_instr->prgm.xs);
+        locals[literal_instr->dest] = FbleNewLiteralValue(heap, literal_instr->prgm.size, literal_instr->prgm.xs);
         pc++;
         break;
       }

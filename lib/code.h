@@ -488,14 +488,12 @@ typedef struct {
  *   *dest = "xxx"
  *
  *  @field[FbleInstr][_base] FbleInstr base class.
- *  @field[size_t][tagwidth] The number of bits needed for the tag of a letter.
  *  @field[FbleTagV][prgm]
  *   The program to pass to FbleNewLiteralValue to create the literal from.
  *  @field[FbleLocalIndex][dest] Where to put the created value.
  */
 typedef struct {
   FbleInstr _base;
-  size_t tagwidth;
   FbleTagV prgm;
   FbleLocalIndex dest;
 } FbleLiteralInstr;

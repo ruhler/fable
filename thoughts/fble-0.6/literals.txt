@@ -1222,3 +1222,37 @@ For each letter: -1, <tag>, W
 
 Easy.
 
+---
+
+Now to add support for composite literals in the type checker. This is
+slightly involved, because of a number of different things to worry about.
+
+I have:
+* An element data type. Initially normalized union type, but maybe we don't
+  need to do that proactively.
+* The unit type, to test for equality. Maybe better to have an FbleIsUnitType
+  function to avoid the need to allocate a unit type?
+* A location in the literal word that I am tracking for error message purposes.
+* I was keeping track of max field length, but I don't think I need to support
+  that anymore? I'm not sure I ever needed that?
+* Tracking the current position in the word to read from.
+* If we don't find a match, we give an error message pointing to where we
+  failed to match.
+* And now, for the new thing, I'll need to produce a program to construct the
+  letter value.
+* And I'll also need to worry about recursion.
+
+What API would be good for dealing with all these different moving pieces?
+
+Pseudocode for my function to traverse the element type to check for a match:
+
+  Inputs:
+  - a normalized union data type to search in.
+  - the word to match against.
+
+  for each field in the union data type:
+   - if the field type is unit, check for letter match against the word.
+     If found, output: the field's tag and number of characters matched?
+  
+  
+
