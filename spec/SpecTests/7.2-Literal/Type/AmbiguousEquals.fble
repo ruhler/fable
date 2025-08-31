@@ -1,0 +1,20 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+@ Letter@ = +(Enum@ first, Enum@ second);
+
+@ L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit@ _b = l.cons.head.first.A;
+  Unit@ _a = l.cons.tail.cons.head.first.B;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.first.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit;
+};
+
+# If multiple subfields of the literal match, pick the first match.
+Unit@ _ = f|ABC;
+Unit;

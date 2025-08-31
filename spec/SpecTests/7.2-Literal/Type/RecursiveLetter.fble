@@ -2,12 +2,11 @@
 @ Unit@ = *();
 Unit@ Unit = Unit@();
 
-@ Pair@ = *(Unit@ first, Unit@ second);
+# The letter type can be recursive. The recursive field is ignored for the
+# purposes of matching letters.
+@ Letter@ = +(Letter@ recursive, Unit@ A, Unit@ B, Unit@ C);
 
-# It's fine if letters contains a bunch of extra unrelated fields.
-@ Enum@ = +(Unit@ A, Pair@ x, Unit@ B, Unit@ C, Pair@ abc);
-
-@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+@ L@ = +(*(Letter@ head, L@ tail) cons, Unit@ nil);
 
 (L@) { Unit@; } f = (L@ l) {
   Unit@ _b = l.cons.head.B;
