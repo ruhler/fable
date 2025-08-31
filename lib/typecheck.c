@@ -1801,11 +1801,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
-      unit_type->datatype = FBLE_STRUCT_DATATYPE;
-      FbleInitVector(unit_type->fields);
-      CleanType(cleaner, &unit_type->_base);
-
       size_t tagwidth = 0;
       while ((1 << tagwidth) < elem_data_type->fields.size) {
         tagwidth++;
@@ -1841,9 +1836,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         FbleAppendToVector(literal_tc->prgm, -1);
         FbleAppendToVector(literal_tc->prgm, letter);
         FbleAppendToVector(literal_tc->prgm, tagwidth);
-        if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[letter].type)) {
-          ReportError(loc, "expected field type %t, but '%s' has field type %t\n",
-              unit_type, elem_data_type->fields.xs[letter].name.name->str, elem_data_type->fields.xs[letter].type);
+        if (!FbleIsUnitType(th, elem_data_type->fields.xs[letter].type)) {
+          ReportError(loc, "expected field type *(), but '%s' has field type %t\n",
+              elem_data_type->fields.xs[letter].name.name->str, elem_data_type->fields.xs[letter].type);
           error = true;
           break;
         }

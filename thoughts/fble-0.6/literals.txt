@@ -1362,3 +1362,13 @@ part of the literal word which you would prefer. It's less obvious for "a" vs
 "ab". Maybe if we match "a", we can't match "b". On the other hand, you could
 say the same otherwise. Tricky.
 
+---
+
+Back to the composite literal typecheck api.
+
+It would be great to put it into type.c, so we can reuse TypeList and dealing
+with recursion and all that. If I do that, though, I don't want any type
+checking or error reporting. Nice, because we don't need a location for error
+reporting. But means if we want to make things more strict later on, it's
+awkward.
+

@@ -805,6 +805,17 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
 }
 
 // See documentation in type.h.
+bool FbleIsUnitType(FbleTypeHeap* heap, FbleType* a)
+{
+  FbleDataType* dta = (FbleDataType*)FbleNormalType(heap, a);
+  bool is_unit = dta->_base.tag == FBLE_DATA_TYPE
+    && dta->datatype == FBLE_STRUCT_DATATYPE
+    && dta->fields.size == 0;
+  FbleReleaseType(heap, &dta->_base);
+  return is_unit;
+}
+
+// See documentation in type.h.
 FbleKind* FbleGetKind(FbleModulePath* context, FbleType* type)
 {
   switch (type->tag) {

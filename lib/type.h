@@ -592,6 +592,17 @@ FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type);
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 
 /**
+ * @func[FbleIsUnitType] Tests if a type is the unit type.
+ *  @arg[FbleTypeHeap*][heap] Heap to use for allocations.
+ *  @arg[FbleType*][a] The type to check.
+ *  @returns[bool]
+ *   True if the type is a zero field struct type, false otherwise.
+ *  @sideeffects
+ *   None.
+ */
+bool FbleIsUnitType(FbleTypeHeap* heap, FbleType* a);
+
+/**
  * @func[FbleInferTypes] Infers type values.
  *  Attempts to infer type values for the given type variables that would make
  *  the abstract type equal to the concrete type. This is a best effort type
