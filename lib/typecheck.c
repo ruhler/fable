@@ -203,7 +203,7 @@ typedef struct TypeList {
   struct TypeList* next;
 } TypeList;
 
-static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleLoc loc, FbleTagV* letter, TypeList* tl, Cleaner* cleaner);
+static size_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleTagV* letter, TypeList* tl);
 
 static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars);
 static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
@@ -798,28 +798,22 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
  *  @arg[FbleTypeHeap*][th] The type heap
  *  @arg[FbleType*][type] The letter type.
  *  @arg[const char*][word] The literal word to get the next letter in.
- *  @arg[FbleLoc][loc] The location of the literal word, for error reporting.
  *  @arg[FbleTagV*][letter]
  *   Output where the matched letter will be placed. This is interpreted as a
  *   sequence of (tagwidth, tag) pairs corresponding to a FbleNewLiteralValue
  *   prgm. For example, if the runtime value for the letter to construct
  *   is @code[txt]{6@(3: 2@(1: @()))}, the sequence @code[txt]{2, 1, 6, 3}.
  *  @arg[TypeList*][tl] List of type args on stack to detect recursion
- *  @arg[Cleanr*][cleaner] The cleaner object.
- *  @returns[ssize_t]
+ *  @returns[size_t]
  *   The number of chars in word that were matched. 0 if no match was found.
- *   -1 in case of error.
- *  @sideeffects
- *   @i Appends tags to letter if a match was found.
- *   @i Prints a message to stderr in case of error.
- *   @i Adds objects to cleaner that the caller should clean up.
+ *  @sideeffects Appends tags to letter if a match was found.
  */
-static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleLoc loc, FbleTagV* letter, TypeList* tl, Cleaner* cleaner)
+static size_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleTagV* letter, TypeList* tl)
 {
   FbleDataType* dt = (FbleDataType*)FbleNormalType(th, type);
-  CleanType(cleaner, &dt->_base);
   if (dt->_base.tag != FBLE_DATA_TYPE || dt->datatype != FBLE_UNION_DATATYPE) {
     // Letters can only be found in union types.
+    FbleReleaseType(th, &dt->_base);
     return 0;
   }
 
@@ -827,6 +821,7 @@ static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word,
     if (&dt->_base == l->type) {
       // We've circled back recursively to a type we've already started
       // searching in. There's nothing new we'll find this time around.
+      FbleReleaseType(th, &dt->_base);
       return 0;
     }
   }
@@ -839,23 +834,23 @@ static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word,
       if (len > 0 && strncmp(word, fieldname, len) == 0) {
         FbleAppendToVector(*letter, FbleTagWidth(dt->fields.size));
         FbleAppendToVector(*letter, i);
+        FbleReleaseType(th, &dt->_base);
         return len;
       }
     }
 
     TypeList ntl = { .type = &dt->_base, .next = tl };
-    ssize_t sub = GetNextLetter(th, dt->fields.xs[i].type, word, loc, letter, &ntl, cleaner);
-
-    if (sub == -1) {
-      return -1;
-    }
+    size_t sub = GetNextLetter(th, dt->fields.xs[i].type, word, letter, &ntl);
 
     if (sub > 0) {
       FbleAppendToVector(*letter, FbleTagWidth(dt->fields.size));
       FbleAppendToVector(*letter, i);
+      FbleReleaseType(th, &dt->_base);
       return sub;
     }
   }
+
+  FbleReleaseType(th, &dt->_base);
   return 0;
 }
 
@@ -1878,15 +1873,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleInitVector(letter);
       while (wordlen > 0) {
         letter.size = 0;
-
-        Cleaner* ncleaner = NewCleaner();
-        ssize_t len = GetNextLetter(th, elem_type, word, loc, &letter, NULL, ncleaner);
-        Cleanup(th, ncleaner);
-
-        if (len < 0) {
-          error = true;
-          break;
-        }
+        size_t len = GetNextLetter(th, elem_type, word, &letter, NULL);
 
         if (len == 0) {
           ReportError(loc, "next letter of literal '%s' not found in type %t\n", word, elem_type);
