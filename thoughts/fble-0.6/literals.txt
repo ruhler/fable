@@ -1372,3 +1372,45 @@ checking or error reporting. Nice, because we don't need a location for error
 reporting. But means if we want to make things more strict later on, it's
 awkward.
 
+I need to be able to convey error cases though. If the letter doesn't have the
+right type, if nothing else. Unless that's allowed? No, we can't have a
+matching letter have the wrong type. Let's keep it all in typecheck.c for now
+then. Duplicate TypeList. It's easy enough.
+
+Try again with:  6@(3: 2@(1: @()));
+
+The literal program for this is: -1, 3, 6, 1, 2
+
+I want to output in reverse: 2, 1, 6, 3.
+
+---
+
+Hmm... My implementation isn't reporting any errors. When should we report
+errors and when not?
+
+Potential errors:
+* If the provided letter type isn't a union type.
+* If the provided letter type has a non-union field type?
+* If there are multiple matches.
+* If the matched field isn't a unit type.
+
+Consider the last one: if the matched field isn't a unit type. But is it
+allowed to be a union type that we search in for sub letters? It certainly
+ought to be. So we shouldn't error in that case if it is and we don't find a
+match there.
+
+We've already discussed multiple matches case, though I don't have a
+definitive answer at the moment.
+
+Honestly, it sort of makes sense to me to say we are searching whatever type
+you give us. You could give us any random thing, we will only successfully
+find a letter if it is of union type.
+
+Probably the most important thing here is to help the user. Hmm... the spec is
+complicated enough now. I'm also too deep into things to know what would or
+would not be helpful to a user.
+
+For now, let's be a bit generous and allow anything? So you could, for
+example, do f|'' for a function f that takes a list of any kind of thing to
+get the empty list.
+

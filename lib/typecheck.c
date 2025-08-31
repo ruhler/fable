@@ -193,6 +193,18 @@ static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
 static void CleanTcBinding(Cleaner* cleaner, FbleTcBinding vars);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
 
+/**
+ * @struct[TypeList] Linked list of types to detect recursion.
+ *  @field[FbleType*][type] The current element.
+ *  @field[TypeList*][next] The rest of the elements.
+ */
+typedef struct TypeList {
+  FbleType* type;
+  struct TypeList* next;
+} TypeList;
+
+static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleLoc loc, FbleTagV* letter, TypeList* tl, Cleaner* cleaner);
+
 static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars);
 static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
 static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly);
@@ -204,7 +216,6 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** type_deps, FbleType** link_deps);
 static FbleType* TypeCheckProgram(FbleTypeHeap* th, FbleModule* program, FbleModuleMap* types, FbleModuleMap* tcs);
-
 
 /**
  * @func[VarNamesEqual] Tests whether two variable names are equal.
@@ -780,6 +791,57 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   }
   FbleFreeVector(cleaner->bindings);
   FbleFree(cleaner);
+}
+
+/**
+ * @func[GetNextLetter] Finds the next letter value for a literal.
+ *  @arg[FbleTypeHeap*][th] The type heap
+ *  @arg[FbleType*][type] The letter type.
+ *  @arg[const char*][word] The literal word to get the next letter in.
+ *  @arg[FbleLoc][loc] The location of the literal word, for error reporting.
+ *  @arg[FbleTagV*][letter]
+ *   Output where the matched letter will be placed. This is interpreted as a
+ *   sequence of (tagwidth, tag) pairs corresponding to a FbleNewLiteralValue
+ *   prgm. For example, if the runtime value for the letter to construct
+ *   is @code[txt]{6@(3: 2@(1: @()))}, the sequence @code[txt]{2, 1, 6, 3}.
+ *  @arg[TypeList*][tl] List of type args on stack to detect recursion
+ *  @arg[Cleanr*][cleaner] The cleaner object.
+ *  @returns[ssize_t]
+ *   The number of chars in word that were matched. 0 if no match was found.
+ *   -1 in case of error.
+ *  @sideeffects
+ *   @i Appends tags to letter if a match was found.
+ *   @i Prints a message to stderr in case of error.
+ *   @i Adds objects to cleaner that the caller should clean up.
+ */
+static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word, FbleLoc loc, FbleTagV* letter, TypeList* tl, Cleaner* cleaner)
+{
+  FbleDataType* dt = (FbleDataType*)FbleNormalType(th, type);
+  CleanType(cleaner, &dt->_base);
+  if (dt->_base.tag != FBLE_DATA_TYPE || dt->datatype != FBLE_UNION_DATATYPE) {
+    // Letters can only be found in union types.
+    return 0;
+  }
+
+  for (size_t i = 0; i < dt->fields.size; ++i) {
+    if (FbleIsUnitType(th, dt->fields.xs[i].type)) {
+      const char* fieldname = dt->fields.xs[i].name.name->str;
+      size_t len = strlen(fieldname);
+      if (len > 0 && strncmp(word, fieldname, len) == 0) {
+        size_t tagwidth = 0;
+        while ((1 << tagwidth) < dt->fields.size) {
+          tagwidth++;
+        }
+
+        FbleAppendToVector(*letter, tagwidth);
+        FbleAppendToVector(*letter, i);
+        return len;
+      }
+    }
+
+    // TODO: Search recursively in non-Unit@ fields of the union too.
+  }
+  return 0;
 }
 
 /**
@@ -1794,18 +1856,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleDataType* elem_data_type = (FbleDataType*)FbleNormalType(th, elem_type);
-      CleanType(cleaner, &elem_data_type->_base);
-      if (elem_data_type->_base.tag != FBLE_DATA_TYPE || elem_data_type->datatype != FBLE_UNION_DATATYPE) {
-        ReportError(literal_expr->func->loc, "expected union type, but element type of literal expression is %t\n", elem_type);
-        return TC_FAILED;
-      }
-
-      size_t tagwidth = 0;
-      while ((1 << tagwidth) < elem_data_type->fields.size) {
-        tagwidth++;
-      }
-
       FbleLiteralTc* literal_tc = FbleNewTc(FbleLiteralTc, FBLE_LITERAL_TC, expr->loc);
       FbleInitVector(literal_tc->prgm);
       CleanFbleTc(cleaner, &literal_tc->_base);
@@ -1814,17 +1864,18 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleLoc loc = literal_expr->word_loc;
       size_t wordlen = strlen(literal_expr->word);
       const char* word = literal_expr->word;
-      size_t letter = 0;
+      FbleTagV letter;
+      FbleInitVector(letter);
       while (wordlen > 0) {
-        size_t len = 0;
-        for (size_t j = 0; j < elem_data_type->fields.size; ++j) {
-          const char* fieldname = elem_data_type->fields.xs[j].name.name->str;
-          len = strlen(fieldname);
-          if (len > 0 && strncmp(word, fieldname, len) == 0) {
-            letter = j;
-            break;
-          }
-          len = 0;
+        letter.size = 0;
+
+        Cleaner* ncleaner = NewCleaner();
+        ssize_t len = GetNextLetter(th, elem_type, word, loc, &letter, NULL, ncleaner);
+        Cleanup(th, ncleaner);
+
+        if (len < 0) {
+          error = true;
+          break;
         }
 
         if (len == 0) {
@@ -1834,13 +1885,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         }
         
         FbleAppendToVector(literal_tc->prgm, -1);
-        FbleAppendToVector(literal_tc->prgm, letter);
-        FbleAppendToVector(literal_tc->prgm, tagwidth);
-        if (!FbleIsUnitType(th, elem_data_type->fields.xs[letter].type)) {
-          ReportError(loc, "expected field type *(), but '%s' has field type %t\n",
-              elem_data_type->fields.xs[letter].name.name->str, elem_data_type->fields.xs[letter].type);
-          error = true;
-          break;
+        for (size_t i = 0; i < letter.size; ++i) {
+          size_t tag = letter.xs[letter.size - i - 1];
+          FbleAppendToVector(literal_tc->prgm, tag);
         }
 
         for (size_t i = 0; i < len; ++i) {
@@ -1853,6 +1900,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         word += len;
         wordlen -= len;
       }
+      FbleFreeVector(letter);
 
       if (error) {
         return TC_FAILED;
