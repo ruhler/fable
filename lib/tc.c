@@ -197,3 +197,13 @@ void FbleFreeTc(FbleTc* tc)
 
   FbleUnreachable("should never get here");
 }
+
+// See documentation in tc.h
+size_t FbleTagWidth(size_t fieldc)
+{
+  size_t tagwidth = 0;
+  while ((1 << tagwidth) < fieldc) {
+    tagwidth++;
+  }
+  return tagwidth;
+}

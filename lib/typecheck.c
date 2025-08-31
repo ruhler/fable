@@ -837,12 +837,7 @@ static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word,
       const char* fieldname = dt->fields.xs[i].name.name->str;
       size_t len = strlen(fieldname);
       if (len > 0 && strncmp(word, fieldname, len) == 0) {
-        size_t tagwidth = 0;
-        while ((1 << tagwidth) < dt->fields.size) {
-          tagwidth++;
-        }
-
-        FbleAppendToVector(*letter, tagwidth);
+        FbleAppendToVector(*letter, FbleTagWidth(dt->fields.size));
         FbleAppendToVector(*letter, i);
         return len;
       }
@@ -856,11 +851,7 @@ static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word,
     }
 
     if (sub > 0) {
-      size_t tagwidth = 0;
-      while ((1 << tagwidth) < dt->fields.size) {
-        tagwidth++;
-      }
-      FbleAppendToVector(*letter, tagwidth);
+      FbleAppendToVector(*letter, FbleTagWidth(dt->fields.size));
       FbleAppendToVector(*letter, i);
       return sub;
     }
@@ -1553,13 +1544,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      size_t tagwidth = 0;
-      while ((1 << tagwidth) < union_type->fields.size) {
-        tagwidth++;
-      }
-
       FbleUnionValueTc* union_tc = FbleNewTc(FbleUnionValueTc, FBLE_UNION_VALUE_TC, expr->loc);
-      union_tc->tagwidth = tagwidth;
+      union_tc->tagwidth = FbleTagWidth(union_type->fields.size);
       union_tc->tag = tag;
       union_tc->arg = FbleCopyTc(arg.tc);
       return MkTc(FbleRetainType(th, poly.type), &union_tc->_base);
@@ -2012,11 +1998,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleTaggedTypeV* fields = &normal->fields;
-      size_t tagwidth = 0;
-      while ((1 << tagwidth) < fields->size)  {
-        tagwidth++;
-      }
-
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
           FbleType* rtype = FbleRetainType(th, fields->xs[i].type);
@@ -2034,7 +2015,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             case FBLE_UNION_DATATYPE: {
               FbleUnionAccessTc* access_tc = FbleNewTc(FbleUnionAccessTc, FBLE_UNION_ACCESS_TC, expr->loc);
               access_tc->obj = FbleCopyTc(obj.tc);
-              access_tc->tagwidth = tagwidth;
+              access_tc->tagwidth = FbleTagWidth(fields->size);
               access_tc->tag = i;
               access_tc->loc = FbleCopyLoc(access_expr->field.loc);
               return MkTc(rtype, &access_tc->_base);

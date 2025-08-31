@@ -412,4 +412,13 @@ FbleTc* FbleCopyTc(FbleTc* tc);
  */
 void FbleFreeTc(FbleTc* tc);
 
+/**
+ * @func[FbleTagWidth] Returns number of bits needed to describe a tag.
+ *  @arg[size_t][fieldc] The number of fields of the union.
+ *  @returns[size_t] The number of bits needed for the union tag.
+ *  @sideeffects None.
+ */
+size_t FbleTagWidth(size_t fieldc);
+
+
 #endif // FBLE_INTERNAL_TC_H_

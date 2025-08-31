@@ -1031,11 +1031,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       size_t argc = struct_copy->fields.size;
       Local* args[argc];
 
-      size_t tagwidth = 0;
-      while ((1 << tagwidth) < argc) {
-        tagwidth++;
-      }
-
       for (size_t i = 0; i < argc; ++i) {
         if (struct_copy->fields.xs[i]) {
           args[i] = CompileExpr(blocks, false, false, scope, struct_copy->fields.xs[i]);
@@ -1107,15 +1102,10 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)v;
       Local* condition = CompileExpr(blocks, false, false, scope, select_tc->condition);
 
-      size_t tagwidth = 0;
-      while ((1 << tagwidth) < select_tc->num_tags) {
-        tagwidth++;
-      }
-
       FbleUnionSelectInstr* select_instr = FbleAllocInstr(FbleUnionSelectInstr, FBLE_UNION_SELECT_INSTR);
       select_instr->loc = FbleCopyLoc(select_tc->_base.loc);
       select_instr->condition = condition->var;
-      select_instr->tagwidth = tagwidth;
+      select_instr->tagwidth = FbleTagWidth(select_tc->num_tags);
       select_instr->num_tags = select_tc->num_tags;
       FbleInitVector(select_instr->targets);
       AppendInstr(scope, &select_instr->_base);
