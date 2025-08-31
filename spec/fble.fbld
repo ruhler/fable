@@ -911,13 +911,17 @@
     Str|'hello there!'
   
    The literal expression is syntax that allows you to express a raw sequence
-   of data without the overhead of punctuation between data elements. It is
-   syntactic sugar for a list expression with a separate list element for each
-   individual letter of the literal expression's word.
+   of data without the overhead of punctuation between data elements.
+   Conceptually it is syntactic sugar for a list expression with a separate
+   list element for each individual letter of the literal expression's word.
   
    As with the list expression, the literal expression is used with a function
-   that has an argument of list type. The element type of the list must be a
-   union type with fields of type @L{*()} for each letter in the word.
+   that has an argument of list type. The element type of the list specifies
+   how to break down the literal word into a sequence of letters of that
+   element type.
+
+   The most basic element type for use in literals is a union type with fields
+   of type @L{*()} for each letter in the word.
   
    For example, the element type for an octal literal might look like:
   
@@ -925,23 +929,46 @@
     @Octal = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
   
    The literal expression @L{f|077}, assuming the element type for the list
-   argument to @L{f} is @L{Octal@}, is desugared to:
+   argument to @L{f} is @L{Octal@}, is conceptually desugared to:
   
    @code[fble] @
     f[Octal@(0: *()()), Octal@(7: *()()), Octal@(7: *()())];
 
    In the example above, each letter corresponds to a single character. You
-   can define letters to be longer field names too. In that case, the literal
-   word is split up into letters by reading from left to right and selecting
-   the first field name to match at each position.
+   can define letters to be longer field names too. In that case, the next
+   letter corresponds to the first field name encountered that is a prefix of
+   the remaining word. That allows the interpretation of letters to be
+   independent of the character encoding used for source files.
+
+   To support composition of letter types, the matching field for a letter can
+   belong directly or indirectly to a subfield of a union type. For example:
+
+   @code[fble] @
+    @Num = +(*() 0, *() 1, *() 2);
+    @Alpha = +(*() A, *() B, *() C);
+    @AlNum@ = +(Num@ num, Alpha@ alpha);
+
+   In this case, the literal expression @L{f|0B2}, assuming the element type
+   for the list argument to @L{f} is @L{AlNum@}, is conceptually desugared to:
+
+   @code[fble] @
+    f[AlNum@(num: Num@(0: *()())),
+      AlNum@(alpha: Alpha@(B: *()())),
+      AlNum@(num: Num@(2: *()()))];
+
+   In general a matching letter can be found in a union type if it is either a
+   field of type *() whose name matches a prefix of the rest of the literal
+   word, or a field of union type where a matching letter can be found. Fields
+   are traversed in order with the first match returned.
 
    It is a type error if the word cannot be decoded into a sequence of letters
-   based on the field names of the element type @L{E@}.
-   
-   Struct types and package types cannot be used for the function in literal
-   syntax, even though they share a similar concrete syntax to function
-   application. Type inference is not supported with literals because the word
-   provides no information about what type the function should be.
+   by repeated matching of the next letter according to the element type
+   @L{E@}.
+
+   Struct types cannot be used for the function in literal syntax, even though
+   they share a similar concrete syntax to function application. Type
+   inference is not supported with literals because the word provides no
+   information about what type the function should be.
   
    @subsubsection 7.2.1 Example
     To better illustrate the intended use of list and literal expressions,
