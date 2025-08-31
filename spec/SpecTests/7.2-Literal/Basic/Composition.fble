@@ -1,9 +1,4 @@
-# @@fble-test@@ xfail
-# @@fble-test@@ compile-error 25:13
 # @@fble-test@@ no-error
-#
-# This test is currently failing with a compile-error because we don't yet
-# support composite literals in the implementation.
 @ Unit@ = *();
 Unit@ Unit = Unit@();
 

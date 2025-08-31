@@ -823,8 +823,17 @@ static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word,
     return 0;
   }
 
+  for (TypeList* l = tl; l != NULL; l = l->next) {
+    if (&dt->_base == l->type) {
+      // We've circled back recursively to a type we've already started
+      // searching in. There's nothing new we'll find this time around.
+      return 0;
+    }
+  }
+
   for (size_t i = 0; i < dt->fields.size; ++i) {
     if (FbleIsUnitType(th, dt->fields.xs[i].type)) {
+      // See if we found our letter.
       const char* fieldname = dt->fields.xs[i].name.name->str;
       size_t len = strlen(fieldname);
       if (len > 0 && strncmp(word, fieldname, len) == 0) {
@@ -839,7 +848,22 @@ static ssize_t GetNextLetter(FbleTypeHeap* th, FbleType* type, const char* word,
       }
     }
 
-    // TODO: Search recursively in non-Unit@ fields of the union too.
+    TypeList ntl = { .type = &dt->_base, .next = tl };
+    ssize_t sub = GetNextLetter(th, dt->fields.xs[i].type, word, loc, letter, &ntl, cleaner);
+
+    if (sub == -1) {
+      return -1;
+    }
+
+    if (sub > 0) {
+      size_t tagwidth = 0;
+      while ((1 << tagwidth) < dt->fields.size) {
+        tagwidth++;
+      }
+      FbleAppendToVector(*letter, tagwidth);
+      FbleAppendToVector(*letter, i);
+      return sub;
+    }
   }
   return 0;
 }

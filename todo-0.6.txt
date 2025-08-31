@@ -2,6 +2,8 @@ Fble 0.6 TODO
 =============
 Things to consider doing for the fble-0.6 release.
 
+* Add FbleTagWidth helper function.
+
 * Add a 'function' standard library?
  - compose, flip
 
