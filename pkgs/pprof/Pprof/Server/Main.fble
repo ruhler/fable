@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-% Chars = /Core/Char%.Chars;
+% Char = /Core/Char%.Char;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
@@ -103,7 +103,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     GetArgs(args.items.tail, default.@(benchmark: True));
   });
 
-  /Core/Char/Eq%.Eq(arg.items.head, Chars.'-').?(false: {
+  /Core/Char/Eq%.Eq(arg.items.head, Char|'-').?(false: {
     GetArgs(args.items.tail, default.@(file: arg));
   });
 
@@ -161,7 +161,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Unit@ _ <- m.do(O.PutStr(out, name));
       seq.items.tail.?(empty: m.return(Unit));
 
-      Unit@ _ <- m.do(O.PutChar(out, Chars.';'));
+      Unit@ _ <- m.do(O.PutChar(out, Char|';'));
       SeqNames(seq.items.tail);
     };
 
@@ -174,7 +174,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Unit@ _ <- m.do(O.PutStr(out, name));
       seq.items.tail.?(empty: m.return(Unit));
 
-      Unit@ _ <- m.do(O.PutChar(out, Chars.','));
+      Unit@ _ <- m.do(O.PutChar(out, Char|','));
       SeqBlocks(seq.items.tail);
     };
 
@@ -322,12 +322,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     };
     Unit@ _ <- m.do(SkipHeaders);
 
-    List@<String@> start_split = Split(start, Chars.' ');
+    List@<String@> start_split = Split(start, Char|' ');
     String@ method = Get(start_split, Int|0);
     String@ uri = Get(start_split, Int|1);
     String@ version = Get(start_split, Int|2);
 
-    List@<String@> uri_split = Split(uri, Chars.'?');
+    List@<String@> uri_split = Split(uri, Char|'?');
     String@ path = uri_split.items.head;
     String@ query = {
       uri_split.items.tail.?(empty: Str|'');
@@ -348,7 +348,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     /Core/String/Eq%.Eq(Str|'/seqs', path).?(true: SeqsPage(ios.out));
 
     /Core/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
-      List@<String@> ids = Split(Drop(path, Int|5), Chars.',');
+      List@<String@> ids = Split(Drop(path, Int|5), Char|',');
       SeqPage(ios.out, /Std/List%.Map(ids, /Core/Int/Show%.Read));
     });
 

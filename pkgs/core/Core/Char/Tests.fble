@@ -1,5 +1,5 @@
 
-% Chars = /Core/Char%.Chars;
+% Char = /Core/Char%.Char;
 
 % Chr = /Core/Char/Ascii%.Chr;
 % Ord = /Core/Char/Ascii%.Ord;
@@ -21,12 +21,12 @@
 Test@ Tests = TestSuite(Str|Char, List[
   Test(Str|'Chr', (Unit@ _) {
     AssertEquals(/Core/Char/Eq%.Eq, /Core/Char/Show%.Show,
-      Chars.'A', Chr(Int|65));
+      Char|A, Chr(Int|65));
   }),
 
   Test(Str|'Ord', (Unit@ _) {
     AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show,
-      Int|65, Ord(Chars.'A'));
+      Int|65, Ord(Char|A));
   }),
 
   /Core/Char/Map/Tests%.Tests

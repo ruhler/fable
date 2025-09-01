@@ -1418,4 +1418,16 @@ If we accidentally have a unit field in a letter type we don't intend to be a
 letter, that could be bad. Seems like it would be good to discourage that kind
 of mistake? I don't know how we could though.
 
+---
+
+Okay, the spec is updated. We have spec tests in place and an implementation.
+It's well defined. The general description isn't too bad, though it really
+needs some preliminary explanation. What I have currently:
+
+   In general a matching letter can be found in a union type if it is either a
+   field of type *() whose name matches a prefix of the rest of the literal
+   word, or a field of union type where a matching letter can be found. Fields
+   are traversed in order with the first match returned.
+
+Let's proceed with this for now and see how it goes.
 

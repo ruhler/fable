@@ -3,6 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+% Char = /Core/Char%.Char;
 % Chars = /Core/Char%.Chars;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
@@ -30,10 +31,10 @@
 Test@ Tests = TestSuite(Str|String, List[
   Test(Str|StrE, (Unit@ _) {
     String@ wnt = List[
-      Chars.a, Chars.nl,
-      Chars.b, Chars.tab,
-      Chars.c, Chars.'\',
-      Chars.d];
+      Char|a, Chars.nl,
+      Char|b, Chars.tab,
+      Char|c, Char|'\',
+      Char|d];
     String@ got = StrE|'a\nb\tc\\d';
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
@@ -146,7 +147,7 @@ Test@ Tests = TestSuite(Str|String, List[
 
   Test(Str|Split, (Unit@ _) {
     List@<String@> wnt = List[Str|'hello', Str|'there', Str|'how', Str|'are', Str|'you?'];
-    List@<String@> got = Split(Str|'hello there how are you?', Chars.' ');
+    List@<String@> got = Split(Str|'hello there how are you?', Char|' ');
     AssertEquals(
       /Std/List/Eq%.Eq(/Core/String/Eq%.Eq),
       /Core/List/Show%.Show(/Core/String/Show%.Show),

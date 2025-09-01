@@ -1,5 +1,6 @@
 
 @ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
 % Chars = /Core/Char%.Chars;
 
 <@>@ List@ = /Std/List%.List@;
@@ -32,7 +33,7 @@
     chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
     String@ tail = StrE(chars.items.tail.items.tail);
     Char@ head = chars.items.tail.items.head.?(
-      '\': Chars.'\',
+      '\': Char|'\',
       'n': Chars.nl,
       'r': Chars.cr,
       't': Chars.tab,

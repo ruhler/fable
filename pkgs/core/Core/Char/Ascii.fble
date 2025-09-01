@@ -1,5 +1,6 @@
 
 @ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
 % Chars = /Core/Char%.Chars;
 
 @ Int@ = /Std/Int%.Int@;
@@ -94,29 +95,29 @@
   };
 
   List@<Char@> chars = List[Chars.nl, Chars.tab, Chars.cr,
-    Chars.' ', Chars.'!', Chars.'"', Chars.'#', Chars.'$', Chars.'%',
-    Chars.'&', Chars.'''', Chars.'(', Chars.')', Chars.'*', Chars.'+',
-    Chars.',', Chars.'-', Chars.'.', Chars.'/',
+    Char|' ', Char|'!', Char|'"', Char|'#', Char|'$', Char|'%',
+    Char|'&', Char|'''', Char|'(', Char|')', Char|'*', Char|'+',
+    Char|',', Char|'-', Char|'.', Char|'/',
 
-    Chars.0, Chars.1, Chars.2, Chars.3, Chars.4, Chars.5, Chars.6, Chars.7,
-    Chars.8, Chars.9,
+    Char|0, Char|1, Char|2, Char|3, Char|4, Char|5, Char|6, Char|7,
+    Char|8, Char|9,
 
-    Chars.':', Chars.';', Chars.'<', Chars.'=', Chars.'>', Chars.'?',
-    Chars.'@',
+    Char|':', Char|';', Char|'<', Char|'=', Char|'>', Char|'?',
+    Char|'@',
 
-    Chars.A, Chars.B, Chars.C, Chars.D, Chars.E, Chars.F, Chars.G, Chars.H,
-    Chars.I, Chars.J, Chars.K, Chars.L, Chars.M, Chars.N, Chars.O, Chars.P,
-    Chars.Q, Chars.R, Chars.S, Chars.T, Chars.U, Chars.V, Chars.W, Chars.X,
-    Chars.Y, Chars.Z,
+    Char|A, Char|B, Char|C, Char|D, Char|E, Char|F, Char|G, Char|H,
+    Char|I, Char|J, Char|K, Char|L, Char|M, Char|N, Char|O, Char|P,
+    Char|Q, Char|R, Char|S, Char|T, Char|U, Char|V, Char|W, Char|X,
+    Char|Y, Char|Z,
 
-    Chars.'[', Chars.'\', Chars.']', Chars.'^', Chars.'_', Chars.'`',
+    Char|'[', Char|'\', Char|']', Char|'^', Char|'_', Char|'`',
 
-    Chars.a, Chars.b, Chars.c, Chars.d, Chars.e, Chars.f, Chars.g, Chars.h,
-    Chars.i, Chars.j, Chars.k, Chars.l, Chars.m, Chars.n, Chars.o, Chars.p,
-    Chars.q, Chars.r, Chars.s, Chars.t, Chars.u, Chars.v, Chars.w, Chars.x,
-    Chars.y, Chars.z,
+    Char|a, Char|b, Char|c, Char|d, Char|e, Char|f, Char|g, Char|h,
+    Char|i, Char|j, Char|k, Char|l, Char|m, Char|n, Char|o, Char|p,
+    Char|q, Char|r, Char|s, Char|t, Char|u, Char|v, Char|w, Char|x,
+    Char|y, Char|z,
 
-    Chars.'{', Chars.'|', Chars.'}', Chars.'~'];
+    Char|'{', Char|'|', Char|'}', Char|'~'];
 
   Map@ map = /Std/List%.ForEach(chars, Empty, Put);
 

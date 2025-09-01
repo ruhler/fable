@@ -193,3 +193,97 @@ technically not difficult and could solve my problem. Consider this for real.
 Maybe I have new insight now that can get me further along than my last
 attempts.
 
+---
+
+The fble language now supports literals with composition of letter types. We
+should be able to proceed now.
+
+What's the approach? Maybe:
+* Char@ is a unicode code point.
+* We define something called a CharSet@ which has a literal letter type and
+  mapping from letter type to Char@. And also implementation of the IsAlpha,
+  etc. functions restricted to elements of that character set. The charset
+  will also provide a string literal function.
+* We define a way to compose two CharSet@ together into a combined charset.
+* We provide some standard subsets of unicode for charsets. Basically whatever
+  code blocks I personally use: Ascii, whatever has unicode pi symbol, that
+  kind of thing.
+* Anybody can combine and use their own combination of CharSet to define
+  string literals.
+* And we can continue to share Char@ and String@ based on unicode for
+  everyone.
+
+Sound reasonable?
+
+---
+
+Straw Proposal:
+* /Std/Char%:
+  Char@,
+  Char (construct from unicode),
+  CodePoint (get unicode code point, name tbd)
+* /Std/Char/Eq%, /Std/Char/Cmp%, maybe /Std/Char/Ord%.
+* /Std/CharSet%:
+  CharSet@ (interface type for character sets)
+   Char@ - Letter type associated with that charset. Name tbd?
+   ToChar - Convert to /Std/Char%.Char@. Name tbd.
+   Char - Character literal.
+   CharE - Character literal with escape sequences.
+   Str - String literal
+   StrE - String literal with escape sequences.
+   IsAlnum, IsAlpha, etc. to test if a character belongs to the charset and
+     satisfies the class. Maybe IsChar to test if it belongs to the character
+     set. These operate on /Std/Char%.Char@, Not the Char@ letter type.
+  CharSets - Compose two charsets together.
+* /Std/CharSet/Ascii%
+  CharSet@ instance for unicode ascii code page.
+* /Std/CharSet/Greek%
+  CharSet@ instance for unicode Greek code page. Which has unicode pi, as a
+  proof of concept for how composition would work.
+* /Std/String%
+  String@ - list of Char@
+  StrE - Converts String@ to String@ by interpreting some standard escape
+         sequences, including something for unicode characters and newline?
+  Other string specific things we can worry about separately from the Char@
+  part of the library.
+
+Potential character class APIs:
+* IsAlnum, IsAlpha, IsCntrl, IsDigit, IsGraph, IsLower, IsPrint, IsPunct,
+  IsSpace, IsUpper, IsHexDigit, IsAscii, IsBlank
+* Unicode category major / minor? Or are there too many of those?
+* ToUpper, ToLower
+
+Potential escape sequences:
+* \', \", \?, \\, octal, hex
+* \a, \b, \f, \n, \r, \t, \v
+* \u, \U
+
+Question: How does this interact with locales? Like, we want a way for the
+program to depend on a CharSet% that is passed in as an argument at runtime?
+And the user has a way to maybe set a default value to be passing in? That
+sounds reasonable to me. People should write their code to take a locale as
+input if they want to change behavior based on that.
+
+It sounds like Locale is character set plus more. So we could worry about that
+later. A locale will pick a specific character set to use.
+
+Hmm... locale is going to be pretty complicated. And maybe have some impact on
+character sets. I need to go a little at a time though. Let's say to start my
+goal is to have Char@ and the ability to write whatever character and string
+literals you may want to in the source code.
+
+Maybe unicode has more general character categories and sorting and other such
+stuff that would replace locale or these Is* functions?
+
+For the sake of making forward progress, let me start by reorganizing the
+existing Char@ functions I have to match the above proposed organization. This
+one is going to be a bit tricky.
+
+Maybe:
+
+1. Rename /Core/Char% to /Core/Ascii%.
+2. Define /Core/Char@ as unicode code point.
+3. Switch /Core/String% to use Char@ instead of Ascii@.
+
+If we can get that far, we should be in much better shape.
+

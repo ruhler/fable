@@ -6,7 +6,7 @@ Bool@ False = /Std/Bool%.False;
 
 # Import character type and values.
 @ Char@ = /Core/Char%.Char@;
-% Chars = /Core/Char%.Chars;
+% Char = /Core/Char%.Char;
 
 # Import integer type and literal.
 @ Int@ = /Std/Int%.Int@;
@@ -19,7 +19,7 @@ Bool@ False = /Std/Bool%.False;
 % Lines = /Core/String%.Lines;
 
 # Specify the output string.
-Char@ c = Chars.A;
+Char@ c = Char|A;
 Int@ x = Int|42;
 String@ output = Lines[
   Str|'hello, world',
