@@ -29,15 +29,17 @@
 # Any other use of \ is undefined.
 (List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
   chars.?(empty: chars);
-  chars.items.head.?('\': {
+  /Core/Char/Eq%.Eq(Char|'\', chars.items.head).?(true: {
     chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
     String@ tail = StrE(chars.items.tail.items.tail);
-    Char@ head = chars.items.tail.items.head.?(
-      '\': Char|'\',
-      'n': Chars.nl,
-      'r': Chars.cr,
-      't': Chars.tab,
-      : /Std/Undef%.Undef.undef<Char@>);
+    Char@ e = chars.items.tail.items.head;
+    Char@ head = {
+      /Core/Char/Eq%.Eq(Char|'\', e).?(true: Char|'\');
+      /Core/Char/Eq%.Eq(Char|'n', e).?(true: Chars.nl);
+      /Core/Char/Eq%.Eq(Char|'r', e).?(true: Chars.cr);
+      /Core/Char/Eq%.Eq(Char|'t', e).?(true: Chars.tab);
+      /Std/Undef%.Undef.undef<Char@>;
+    };
     Items(head, tail);
   });
   Items(chars.items.head, StrE(chars.items.tail));
