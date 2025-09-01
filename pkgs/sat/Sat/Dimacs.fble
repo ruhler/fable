@@ -1,5 +1,6 @@
 
 @ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
 % Chars = /Core/Char%.Chars;
 % IsSpace = /Core/Char/Type%.IsSpace;
 
@@ -132,10 +133,9 @@ ParseM@<Unit@> ParseFromStart = {
   line.just.?(empty: Error<Unit@>(Str|'empty line'));
 
   Char@ c = line.just.items.head;
-  c.?(
-    c: ParseFromStart,
-    p: ParseFromHeader(line.just),
-    : Error<Unit@>(Strs[Str|'invalid line: ', line.just]));
+  /Core/Char/Eq%.Eq(Char|c, c).?(true: ParseFromStart);
+  /Core/Char/Eq%.Eq(Char|p, c).?(true: ParseFromHeader(line.just));
+  Error<Unit@>(Strs[Str|'invalid line: ', line.just]);
 };
 
 <@>@ Parse@ = <@ T@> { +(String@ error, T@ parsed); };

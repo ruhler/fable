@@ -52,13 +52,13 @@ TestSuite = (String@ name, List@<Test@> tests) {
 (TestResult@, String@) { TestResult@; }
 ExpectFails = (TestResult@ result, String@ msg) {
   result.?(
-    pass: Fail|'Expected failure, but test passed',
+    pass: Fail(Str|'Expected failure, but test passed'),
     fail: /Core/String/Eq%.Contains(result.fail, msg).?(
       true: ExpectedFail,
       false: Fail(Strs[
         Str|'Expected failure containing "', msg,
         Str|'", but failed with "', result.fail, Str|'"'])),
-    xfail: Fail|'Expected failure, but was xfail');
+    xfail: Fail(Str|'Expected failure, but was xfail'));
 };
 
 @(TestResult@, Test@, TestSuite@, TestCase@,

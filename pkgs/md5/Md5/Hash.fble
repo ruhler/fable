@@ -4,6 +4,7 @@
 % True = /Std/Bool%.True;
 
 @ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
 
 @ Hex@ = /Core/Digits%.Hex@;
 
@@ -11,10 +12,7 @@
 <@>% ForEach = /Std/List%.ForEach;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
-
-% Unit = /Std/Unit%.Unit;
 
 % H8 = /Md5/Bits/Bit8%.H8;
 
@@ -44,22 +42,22 @@
 
 (Hex@) { Char@; } Hex2Char = (Hex@ h) {
   h.?(
-    0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
-    4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),
-    8: Char@(8: Unit), 9: Char@(9: Unit), A: Char@(a: Unit), B: Char@(b: Unit),
-    C: Char@(c: Unit), D: Char@(d: Unit), E: Char@(e: Unit), F: Char@(f: Unit));
+    0: Char|0, 1: Char|1, 2: Char|2, 3: Char|3,
+    4: Char|4, 5: Char|5, 6: Char|6, 7: Char|7,
+    8: Char|8, 9: Char|9, A: Char|a, B: Char|b,
+    C: Char|c, D: Char|d, E: Char|e, F: Char|f);
 };
 
 (Hash@){ String@; } Show = (Hash@ x) {
   Strs[
-      Str[Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)],
-      Str[Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)],
-      Str[Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)],
-      Str[Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)],
-      Str[Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)],
-      Str[Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)],
-      Str[Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.27)],
-      Str[Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)]];
+      List[Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)],
+      List[Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)],
+      List[Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)],
+      List[Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)],
+      List[Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)],
+      List[Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)],
+      List[Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.27)],
+      List[Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)]];
 };
 
 @(Hash@, Eq, Show);

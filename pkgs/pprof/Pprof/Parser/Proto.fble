@@ -166,7 +166,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
     # Fails if we reach end of input.
     PM@<Int@> Get = {
       Maybe@<Int@> mbyte <- Do(MaybeGet);
-      mbyte.?(nothing: Fail<Int@>|'unexpected end of input');
+      mbyte.?(nothing: Fail<Int@>(Str|'unexpected end of input'));
       Return(mbyte.just);
     };
 
@@ -223,7 +223,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
       Int@ int_end <- Do(BytesRead);
       Int@ int_length = Sub(int_end, int_start);
       Gt(int_length, length).?(true: {
-        Fail<List@<Int@>>|'length exceeded on packed int read';
+        Fail<List@<Int@>>(Str|'length exceeded on packed int read');
       });
 
       List@<Int@> tail <- Do(Ints(Sub(length, int_length)));
@@ -266,7 +266,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
           Return(Payload@(bytes: bytes));
         });
 
-        Fail<Payload@>|'invalid wire_type in record';
+        Fail<Payload@>(Str|'invalid wire_type in record');
       });
 
       Return(Record@(field, payload));
@@ -291,7 +291,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
       Int@ record_length = Sub(record_end, record_start);
 
       Gt(record_length, length).?(true: {
-        Fail<A@>|'message length exceeded on record read';
+        Fail<A@>(Str|'message length exceeded on record read');
       });
 
       Message(updated, field, Sub(length, record_length));

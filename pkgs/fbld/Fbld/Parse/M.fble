@@ -4,6 +4,7 @@
 % False = /Std/Bool%.False;
 
 @ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
 @ Int@ = /Std/Int%.Int@;
@@ -15,6 +16,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% Last = /Std/List%.Last;
@@ -147,7 +149,7 @@ M@<CharL@> GetL = {
 
   /Std/Int/Ord%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
-    cl.c.?(' ': GetL);
+    /Core/Char/Eq%.Eq(Char|' ', cl.c).?(true: GetL);
     Unit@ _ <- Error<CharL@>;
     Text@(cl.l, Str|'end of indented block');
   });
@@ -211,7 +213,7 @@ String = (String@ s) {
     true: String(s.items.tail),
     false: {
       Unit@ _ <- Error<Unit@>;
-      Text@(c.l, Strs[ Str|'Expected ''', Str[s.items.head], Str|'''']);
+      Text@(c.l, Strs[ Str|'Expected ''', List[s.items.head], Str|'''']);
     });
 };
 

@@ -29,11 +29,11 @@ FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c)
   }
   assert(p >= Chars);
   size_t tag = p - Chars;
-  return FbleNewEnumValue(heap, CHARS_TAGWIDTH, tag);
+  return FbleNewStructValue_(heap, 1, FbleNewEnumValue(heap, CHARS_TAGWIDTH, tag));
 }
 
 // FbleCharValueAccess -- see documentation in char.fble.h
 char FbleCharValueAccess(FbleValue* c)
 {
-  return Chars[FbleUnionValueTag(c, CHARS_TAGWIDTH)];
+  return Chars[FbleUnionValueTag(FbleStructValueField(c, 1, 0), CHARS_TAGWIDTH)];
 }

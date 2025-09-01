@@ -1,12 +1,14 @@
 
+@ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
 % Char = /Core/Char%.Char;
 % Chars = /Core/Char%.Chars;
+% FromAscii = /Core/Char%.FromAscii;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Append = /Std/List%.Append;
+<@>% Empty = /Std/List%.Empty;
 
 # String@ --
 #   A character string.
@@ -17,7 +19,9 @@
 #
 # Example Use:
 #   String@ s = Str|'hello, world'
-(List@<Char@>) { String@; } Str = List<Char@>;
+(List@<Ascii@>) { String@; } Str = (List@<Ascii@> ascii) {
+  /Std/List%.Map(ascii, FromAscii);
+};
 
 # StrE --
 #   A string literal that supports the following escape sequences:
@@ -27,12 +31,13 @@
 #   \r - carriage return
 # 
 # Any other use of \ is undefined.
-(List@<Char@>) { String@; } StrE = (List@<Char@> chars) {
-  chars.?(empty: chars);
-  /Core/Char/Eq%.Eq(Char|'\', chars.items.head).?(true: {
+(List@<Ascii@>) { String@; } StrE = (List@<Ascii@> chars) {
+  chars.?(empty: Empty<Char@>);
+  Char@ c = Char[chars.items.head];
+  /Core/Char/Eq%.Eq(Char|'\', c).?(true: {
     chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
     String@ tail = StrE(chars.items.tail.items.tail);
-    Char@ e = chars.items.tail.items.head;
+    Char@ e = Char[chars.items.tail.items.head];
     Char@ head = {
       /Core/Char/Eq%.Eq(Char|'\', e).?(true: Char|'\');
       /Core/Char/Eq%.Eq(Char|'n', e).?(true: Chars.nl);
@@ -42,7 +47,7 @@
     };
     Items(head, tail);
   });
-  Items(chars.items.head, StrE(chars.items.tail));
+  Items(c, StrE(chars.items.tail));
 };
 
 # Strs --

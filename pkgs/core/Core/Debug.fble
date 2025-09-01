@@ -3,10 +3,10 @@
 
 % Chars = /Core/Char%.Chars;
 
+<@>% List = /Std/List%.List;
 <@>% Append = /Std/List%.Append;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -17,7 +17,7 @@
 
 # Trace with a newline added at the end of the string.
 (String@) { Unit@; } TraceLn = (String@ s) {
-  Trace(Append(s, Str[Chars.nl]));
+  Trace(Append(s, List[Chars.nl]));
 };
 
 ((Unit@) { String@; }) { Unit@; }

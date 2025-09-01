@@ -93,7 +93,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
     Bool@ none <- Do(Test_(EndOfSameLine));
     none.?(true: Return(/Std/List%.Empty<Markup@>));
 
-    Unit@ _ <- Do(String|' ');
+    Unit@ _ <- Do(String(Str|' '));
     Markup@ m <- Do(Inline({
       Bool@ end <- Do(Test_(EndOfSameLine));
       end.?(true: Return(Unit));
@@ -125,7 +125,7 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
   });
 
   List@<Markup@> next <- Do({
-    Bool@ present <- Do(Try_(String|' '));
+    Bool@ present <- Do(Try_(String(Str|' ')));
     present.?(false: Return(/Std/List%.Empty<Markup@>));
     Markup@ m <- Do(Indented(Block));
     Return(List[m]);
@@ -140,10 +140,10 @@ Args = (Loc@ l, String@ name, List@<Markup@> args) {
 
   Bool@ continue <- Do(Test_(
       Or(
-        Or(String(StrE|'@\n'), String|'@ '),
-        Or(String|'@[', String|'@{'))));
+        Or(String(StrE|'@\n'), String(Str|'@ ')),
+        Or(String(Str|'@['), String(Str|'@{')))));
   continue.?(true: {
-    Unit@ _ <- Do(String|'@');
+    Unit@ _ <- Do(String(Str|'@'));
     Args(l, name, Concat[
       args, inline_args, same_line, literal, next]);
   });
@@ -169,18 +169,18 @@ M@<Markup@> Block = {
   Unit@ _ <- Do(SkipBlankLines);
 
   # Explicit Implicit Block Command
-  Bool@ explicit_inline <- Do(Test_(String|'@@'));
+  Bool@ explicit_inline <- Do(Test_(String(Str|'@@')));
   explicit_inline.?(true: {
     # Skip the first @ and parse the rest as implicit block text.
     Loc@ loc <- Do(Loc);
-    Unit@ _ <- Do(String|'@');
+    Unit@ _ <- Do(String(Str|'@'));
     Markup@ inline <- Do(Inline(Or(EndOfInput, BlankLine)));
     Markup@ tail <- Do(Block);
     Return(Append(/Fbld/Markup%.Command(loc, Str|'.block')[inline], tail));
   });
 
   # Block Command
-  Bool@ cmd <- Do(Try_(String|'@'));
+  Bool@ cmd <- Do(Try_(String(Str|'@')));
   cmd.?(true: {
     Markup@ command <- Do(Command);
     Markup@ tail <- Do(Block);

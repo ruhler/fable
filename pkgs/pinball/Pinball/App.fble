@@ -11,6 +11,7 @@
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -203,7 +204,7 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
 
-  Any(args, /Core/String/Eq%.Eq|'--help').?(true: {
+  Any(args, /Core/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ <- m.do(O.PutStr(stdio.out, /Pinball/Usage%));
     m.return(True);
   });

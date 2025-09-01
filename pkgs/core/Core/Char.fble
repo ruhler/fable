@@ -9,7 +9,7 @@
 #
 # TODO:
 #   Add more characters as needed.
-@ Char@ = +(
+@ Ascii@ = +(
   Unit@ '
 ',
 
@@ -41,21 +41,27 @@
   /Std/Int%.Int@ unknown
 );
 
-Char@ newline = Char@('
-': Unit);
+@ Char@ = *(Ascii@ ascii);
 
-Char@ tab = Char@('	': Unit);
-Char@ cr = Char@('': Unit);
+Char@ newline = @(ascii: Ascii@('
+': Unit));
+
+Char@ tab = @(ascii: Ascii@('	': Unit));
+Char@ cr = @(ascii: Ascii@('': Unit));
+
+(Ascii@) { Char@; } FromAscii = (Ascii@ ascii) {
+  @(ascii);
+};
 
 # Character literal.
 #  Behavior is undefined if thre are more or less than one character in the
 #  literal.
-(List@<Char@>) { Char@; }
-Char = (List@<Char@> str) {
+(List@<Ascii@>) { Char@; }
+Char = (List@<Ascii@> str) {
   # Assert length is 1
   Unit@ _ = str.items.tail.empty;
-  str.items.head;
-};
+  @(ascii: str.items.head);
+}.%(@/Core/Char%);
 
 # Chars --
 #   A collection of characters that can be referenced more easily than
@@ -66,4 +72,4 @@ Char = (List@<Char@> str) {
   cr: cr
 );
 
-@(Char@, Char, Chars);
+@(Ascii@, Char@, Char, Chars, FromAscii);

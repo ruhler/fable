@@ -287,3 +287,24 @@ Maybe:
 
 If we can get that far, we should be in much better shape.
 
+---
+
+Observations from splitting Char@ and Ascii@ types:
+* I fear that using Eq instead of a switch is slow. But I guess there isn't an
+  alternative if we are representing Char@ as an Int@ internally. For things
+  like converting Char@ to digit value 0-9, we could do arithmetic on the code
+  point.
+* I commonly use Str[c] to make a single element string. That switches now to
+  List[c].
+* Fail|... turns into Fail(Str|...). That makes literal functions slightly
+  less reusable than they were before. I don't want people passing around
+  ascii everywhere. String@ and Char@ should be the standard types.
+* I want to expose List@<Ascii@> as a type for use in other literals, like
+  Bytes, or, you could imagine, Int.
+
+---
+
+The difference between String@ and List@<Ascii@> feels pretty painful. Also,
+having to do Eq everywhere for linear search instead of a direct case on
+Ascii@. Maybe worth thinking more about.
+

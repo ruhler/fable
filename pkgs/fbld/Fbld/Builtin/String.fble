@@ -5,6 +5,7 @@
 Int@ 0 = /Std/Int%.0;
 Int@ 1 = /Std/Int%.1;
 
+<@>% List = /Std/List%.List;
 <@>% Get = /Std/List/Index%.Get;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -52,7 +53,7 @@ Impl@ Head = (Env@ env, Command@ cmd) {
   mc.?(nothing: r.return(arg));
 
   # TODO: What to use for the location of the result?
-  r.return(Plain(cmd.name.loc, Str[mc.just]));
+  r.return(Plain(cmd.name.loc, List[mc.just]));
 };
 
 (Markup@) { Result@<Markup@>; } TailOf = (Markup@ markup) {

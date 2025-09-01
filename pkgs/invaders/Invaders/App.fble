@@ -53,7 +53,7 @@ Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width, Int@ height, List@<String@> args) {
   % O = /Core/Stream/OStream%(m);
 
-  Any(args, /Core/String/Eq%.Eq|'--help').?(true: {
+  Any(args, /Core/String/Eq%.Eq(Str|'--help')).?(true: {
     Unit@ _ <- m.do(O.PutStr(stdio.out, /Invaders/Usage%));
     m.return(True);
   });
@@ -125,7 +125,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
 
   # Check for --test mode, where we draw something to the screen and exit
   # right away.
-  Any(args, /Core/String/Eq%.Eq|'--test').?(true: {
+  Any(args, /Core/String/Eq%.Eq(Str|'--test')).?(true: {
     Unit@ _ <- m.do(Draw(game));
     m.return(True); 
   });

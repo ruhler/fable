@@ -34,15 +34,34 @@
 @ Seq@ = *(String@ header, String@ codes);
 
 (Char@) { Char@; } ComplementCode = (Char@ c) {
-  c.?(
-    A: Char|T, B: Char|V, C: Char|G, G: Char|C,
-    H: Char|D, K: Char|M, M: Char|K, N: Char|N,
-    R: Char|Y, S: Char|S, T: Char|A, U: Char|A,
-    V: Char|B, Y: Char|R,
-    a: Char|T, b: Char|V, c: Char|G, g: Char|C,
-    h: Char|D, k: Char|M, m: Char|K, n: Char|N,
-    r: Char|Y, s: Char|S, t: Char|A, u: Char|A,
-    v: Char|B, y: Char|R);
+  /Core/Char/Eq%.Eq(c, Char|A).?(true: Char|T);
+  /Core/Char/Eq%.Eq(c, Char|B).?(true: Char|V);
+  /Core/Char/Eq%.Eq(c, Char|C).?(true: Char|G);
+  /Core/Char/Eq%.Eq(c, Char|G).?(true: Char|C);
+  /Core/Char/Eq%.Eq(c, Char|H).?(true: Char|D);
+  /Core/Char/Eq%.Eq(c, Char|K).?(true: Char|M);
+  /Core/Char/Eq%.Eq(c, Char|M).?(true: Char|K);
+  /Core/Char/Eq%.Eq(c, Char|N).?(true: Char|N);
+  /Core/Char/Eq%.Eq(c, Char|R).?(true: Char|Y);
+  /Core/Char/Eq%.Eq(c, Char|S).?(true: Char|S);
+  /Core/Char/Eq%.Eq(c, Char|T).?(true: Char|A);
+  /Core/Char/Eq%.Eq(c, Char|U).?(true: Char|A);
+  /Core/Char/Eq%.Eq(c, Char|V).?(true: Char|B);
+  /Core/Char/Eq%.Eq(c, Char|Y).?(true: Char|R);
+  /Core/Char/Eq%.Eq(c, Char|a).?(true: Char|T);
+  /Core/Char/Eq%.Eq(c, Char|b).?(true: Char|V);
+  /Core/Char/Eq%.Eq(c, Char|c).?(true: Char|G);
+  /Core/Char/Eq%.Eq(c, Char|g).?(true: Char|C);
+  /Core/Char/Eq%.Eq(c, Char|h).?(true: Char|D);
+  /Core/Char/Eq%.Eq(c, Char|k).?(true: Char|M);
+  /Core/Char/Eq%.Eq(c, Char|m).?(true: Char|K);
+  /Core/Char/Eq%.Eq(c, Char|n).?(true: Char|N);
+  /Core/Char/Eq%.Eq(c, Char|r).?(true: Char|Y);
+  /Core/Char/Eq%.Eq(c, Char|s).?(true: Char|S);
+  /Core/Char/Eq%.Eq(c, Char|t).?(true: Char|A);
+  /Core/Char/Eq%.Eq(c, Char|u).?(true: Char|A);
+  /Core/Char/Eq%.Eq(c, Char|v).?(true: Char|B);
+  /Core/Char/Eq%.Eq(c, Char|y).?(true: Char|R);
   c;
 };
 
@@ -95,7 +114,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m, List@<String@> _) {
     String@ line <- m.do(GetLine);
     line.?(empty: DoSeq(partial));
 
-    line.items.head.?('>': {
+    /Core/Char/Eq%.Eq(line.items.head, Char|'>').?(true: {
       Unit@ _ <- m.do(partial.codes.?(
         items: DoSeq(partial),
         empty: m.return(Unit)));

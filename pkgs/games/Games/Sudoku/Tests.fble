@@ -77,7 +77,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   };
 
   String@ space = spaced.?(true: Str|' ', false: Str|'');
-  String@ nl = spaced.?(true: Str[Chars.nl], false: Str|'');
+  String@ nl = spaced.?(true: List[Chars.nl], false: Str|'');
 
   (Array@<Symbol@>) { String@; } ShowRow = (Array@<Symbol@> row) {
     Concat(List[

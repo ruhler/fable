@@ -32,7 +32,7 @@
 
 (List@<String@>) { Result@<String@>; } Run = (List@<String@> lines) {
   String@ text = Lines(lines);
-  Markup@ parsed <- r.do(/Fbld/Parse%.Parse(List[Text(Start|'foo.fbld', text)]));
+  Markup@ parsed <- r.do(/Fbld/Parse%.Parse(List[Text(Start(Str|'foo.fbld'), text)]));
   Markup@ evaled <- r.do(/Fbld/Eval%.Eval(/Fbld/Builtin%.Env, parsed));
   ToString(evaled);
 };
@@ -43,7 +43,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@define[foo][a b] a: @a, b: @b @@',
       Str|'@foo[hello][there]'
     ];
-    Result@<String@> wnt = Ok<String@>|'a: hello, b: there';
+    Result@<String@> wnt = Ok(Str|'a: hello, b: there');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -56,7 +56,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@define[foo][a b] @a,@b,@c @@',
       Str|'@foo[hello][@a]'
     ];
-    Result@<String@> wnt = Ok<String@>|'hello,AAAA,CCCC';
+    Result@<String@> wnt = Ok(Str|'hello,AAAA,CCCC');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -68,7 +68,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@define[a][a] @a @@',
       Str|'@a[hello]'
     ];
-    Result@<String@> wnt = Ok<String@>|'hello';
+    Result@<String@> wnt = Ok(Str|'hello');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -81,7 +81,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@let[z] @y@y @@',
       Str|'@z'
     ];
-    Result@<String@> wnt = Ok<String@>|'aaaa';
+    Result@<String@> wnt = Ok(Str|'aaaa');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -92,7 +92,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@ifeq[foo][bar][hello][there]',
       Str|'@ifeq[foo][foo][whats][up]'
     ];
-    Result@<String@> wnt = Ok<String@>|'therewhats';
+    Result@<String@> wnt = Ok(Str|'therewhats');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -103,7 +103,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@ifneq[foo][bar][hello][there]',
       Str|'@ifneq[foo][foo][whats][up]'
     ];
-    Result@<String@> wnt = Ok<String@>|'helloup';
+    Result@<String@> wnt = Ok(Str|'helloup');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -116,7 +116,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@@',
       Str|'@foo[hello]'
     ];
-    Result@<String@> wnt = Ok<String@>|'done';
+    Result@<String@> wnt = Ok(Str|'done');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -126,7 +126,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     Result@<String@> got = Run[
       Str|'@head[foo]'
     ];
-    Result@<String@> wnt = Ok<String@>|'f';
+    Result@<String@> wnt = Ok(Str|'f');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -136,7 +136,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
     Result@<String@> got = Run[
       Str|'@tail[foo]'
     ];
-    Result@<String@> wnt = Ok<String@>|'oo';
+    Result@<String@> wnt = Ok(Str|'oo');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -152,7 +152,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@@',
       Str|'@foo[a@cmd[b]c]'
     ];
-    Result@<String@> wnt = Ok<String@>|'ahi bcabye bc';
+    Result@<String@> wnt = Ok(Str|'ahi bcabye bc');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -167,7 +167,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@define[ignore][x][] @@',
       Str|'@foo[@plain[ignore][a@keep[b]c@keep[d]e]]'
     ];
-    Result@<String@> wnt = Ok<String@>|'bd';
+    Result@<String@> wnt = Ok(Str|'bd');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);
@@ -183,7 +183,7 @@ Test@ Tests = TestSuite(Str|Builtin, List[
       Str|'@define[arg][][a@keep[b]c@keep[d]e] @@',
       Str|'@foo[@plain[ignore][@arg]]'
     ];
-    Result@<String@> wnt = Ok<String@>|'bd';
+    Result@<String@> wnt = Ok(Str|'bd');
     AssertEquals(
       /Fbld/Result/Eq%.Eq(/Core/String/Eq%.Eq),
       /Fbld/Result/Show%.Show(/Core/String/Show%.Show), wnt, got);

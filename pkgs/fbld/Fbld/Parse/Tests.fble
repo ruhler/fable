@@ -1,4 +1,6 @@
 
+@ Ascii@ = /Core/Char%.Ascii@;
+
 @ Decimal@ = /Core/Digits%.Decimal@;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
@@ -39,9 +41,9 @@ L = (List@<Decimal@> line, List@<Decimal@> col) {
   Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int(line), /Core/Int/Lit%.Int(col));
 };
 
-(List@<Decimal@>, List@<Decimal@>, String@, List@<Markup@>) { Markup@; }
-C = (List@<Decimal@> line, List@<Decimal@> col, String@ name, List@<Markup@> args) {
-  Command(L(line, col), name, args);
+(List@<Decimal@>, List@<Decimal@>, List@<Ascii@>, List@<Markup@>) { Markup@; }
+C = (List@<Decimal@> line, List@<Decimal@> col, List@<Ascii@> name, List@<Markup@> args) {
+  Command(L(line, col), Str(name), args);
 };
 
 (List@<Decimal@>, List@<Decimal@>, String@) { Text@; }
@@ -49,13 +51,18 @@ T = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
   Text@(L(line, col), text);
 };
 
-(List@<Decimal@>, List@<Decimal@>, String@) { Markup@; }
-P = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+(List@<Decimal@>, List@<Decimal@>, List@<Ascii@>) { Markup@; }
+P = (List@<Decimal@> line, List@<Decimal@> col, List@<Ascii@> text) {
   Plain(L(line, col), StrE(text));
 };
 
 (List@<Decimal@>, List@<Decimal@>, String@) { Markup@; }
-Pr = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+PrS = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+  Plain(L(line, col), text);
+};
+
+(List@<Decimal@>, List@<Decimal@>, List@<Ascii@>) { Markup@; }
+Pr = (List@<Decimal@> line, List@<Decimal@> col, List@<Ascii@> text) {
   Plain(L(line, col), Str(text));
 };
 
@@ -73,7 +80,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
     String@ want = StrE|'a \\ a[]b\ncd@';
 
     Result@<Markup@> got = Parse[T|1|1(text)];
-    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[Pr|1|1(want)]]]);
+    Result@<Markup@> wnt = Ok(M[C|1|1|'.block'[M[PrS|1|1(want)]]]);
     AssertResultEquals(wnt, got);
   }),
 
@@ -248,7 +255,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Ok(M[
       C|1|2|'foo'[
-        M[Pr|2|2(Strs[Str|'foo@bar \ blah @@ @\@\\@.', StrE|'\n'])],
+        M[PrS|2|2(Strs[Str|'foo@bar \ blah @@ @\@\\@.', StrE|'\n'])],
         M[P|3|3|'done']]]);
     AssertResultEquals(wnt, got);
   }),

@@ -1,4 +1,7 @@
 
+@ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
+
 @ Decimal@ = /Core/Digits%.Decimal@;
 
 @ Color@ = /App/Drawing%.Color@;
@@ -15,6 +18,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 Color@ white = Color.White;
 Color@ green = Color.Green;
@@ -363,12 +367,34 @@ Drawing@ LetterV = Drawings[
 #   Draw a string of letters.
 (String@) { Drawing@; } String = (String@ str) {
   str.?(empty: Blank);
-  Drawing@ first = str.items.head.?(
-    '0': Digit0, '1': Digit1, '2': Digit2, '3': Digit3, '4': Digit4,
-    '5': Digit5, '6': Digit6, '7': Digit7, '8': Digit8, '9': Digit9,
-    'A': LetterA, 'C': LetterC, 'E': LetterE, 'G': LetterG, 'H': LetterH,
-    'I': LetterI, 'L': LetterL, 'M': LetterM, 'O': LetterO, 'R': LetterR,
-    'S': LetterS, 'V': LetterV, : Blank);
+  Char@ c = str.items.head;
+  Drawing@ first = {
+    /Core/Char/Eq%.Eq(c, Char|0).?(true: Digit0);
+    /Core/Char/Eq%.Eq(c, Char|1).?(true: Digit1);
+    /Core/Char/Eq%.Eq(c, Char|2).?(true: Digit2);
+    /Core/Char/Eq%.Eq(c, Char|3).?(true: Digit3);
+    /Core/Char/Eq%.Eq(c, Char|4).?(true: Digit4);
+    /Core/Char/Eq%.Eq(c, Char|5).?(true: Digit5);
+    /Core/Char/Eq%.Eq(c, Char|6).?(true: Digit6);
+    /Core/Char/Eq%.Eq(c, Char|7).?(true: Digit7);
+    /Core/Char/Eq%.Eq(c, Char|8).?(true: Digit8);
+    /Core/Char/Eq%.Eq(c, Char|9).?(true: Digit9);
+
+    /Core/Char/Eq%.Eq(c, Char|A).?(true: LetterA);
+    /Core/Char/Eq%.Eq(c, Char|C).?(true: LetterC);
+    /Core/Char/Eq%.Eq(c, Char|E).?(true: LetterE);
+    /Core/Char/Eq%.Eq(c, Char|G).?(true: LetterG);
+    /Core/Char/Eq%.Eq(c, Char|H).?(true: LetterH);
+    /Core/Char/Eq%.Eq(c, Char|I).?(true: LetterI);
+    /Core/Char/Eq%.Eq(c, Char|L).?(true: LetterL);
+    /Core/Char/Eq%.Eq(c, Char|M).?(true: LetterM);
+    /Core/Char/Eq%.Eq(c, Char|O).?(true: LetterO);
+    /Core/Char/Eq%.Eq(c, Char|R).?(true: LetterR);
+    /Core/Char/Eq%.Eq(c, Char|S).?(true: LetterS);
+    /Core/Char/Eq%.Eq(c, Char|V).?(true: LetterV);
+
+    Blank;
+  };
   Over(first, Translate(Int|8, Int|0, String(str.items.tail)));
 };
 
@@ -440,20 +466,20 @@ Drawing@ DeadShipB = Drawings[
 ];
 
 Drawing@ Background = Drawings[
-    Translate(Int|40, Int|232, String|SCORE),
-    Translate(Int|148, Int|232, String|HIGH),
-    Translate(Int|240, Int|232, String|LIVES),
+    Translate(Int|40, Int|232, String(Str|SCORE)),
+    Translate(Int|148, Int|232, String(Str|HIGH)),
+    Translate(Int|240, Int|232, String(Str|LIVES)),
     Translate(Int|40, Int|0, Ground)
 ];
 
 Drawing@ Screenshot = Drawings[
   Background,
 
-  Translate(Int|40, Int|220, String|0123456789),
+  Translate(Int|40, Int|220, String(Str|0123456789)),
 
   Translate(Int|100, Int|200, Ufo),
 
-  Translate(Int|120, Int|184, String|'GAME OVER'),
+  Translate(Int|120, Int|184, String(Str|'GAME OVER')),
 
   Translate(Int|46, Int|176, Alien3A),
   Translate(Int|46, Int|160, Alien2A),

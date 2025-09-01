@@ -1,5 +1,6 @@
 
 @ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
@@ -16,10 +17,17 @@
 
 (String@) { Int@; } Read = {
   (Char@) { Int@; } Digit = (Char@ c) {
-    c.?(
-      '0': Int|0, '1': Int|1, '2': Int|2, '3': Int|3, '4': Int|4,
-      '5': Int|5, '6': Int|6, '7': Int|7, '8': Int|8, '9': Int|9,
-      : Int|0);
+    /Core/Char/Eq%.Eq(Char|0, c).?(true: Int|0);
+    /Core/Char/Eq%.Eq(Char|1, c).?(true: Int|1);
+    /Core/Char/Eq%.Eq(Char|2, c).?(true: Int|2);
+    /Core/Char/Eq%.Eq(Char|3, c).?(true: Int|3);
+    /Core/Char/Eq%.Eq(Char|4, c).?(true: Int|4);
+    /Core/Char/Eq%.Eq(Char|5, c).?(true: Int|5);
+    /Core/Char/Eq%.Eq(Char|6, c).?(true: Int|6);
+    /Core/Char/Eq%.Eq(Char|7, c).?(true: Int|7);
+    /Core/Char/Eq%.Eq(Char|8, c).?(true: Int|8);
+    /Core/Char/Eq%.Eq(Char|9, c).?(true: Int|9);
+    Int|0;
   };
 
   (Int@, String@) { Int@; } ReadP = (Int@ x, String@ s) {
@@ -29,7 +37,10 @@
   
   (String@ s) {
     s.?(empty: Int|0);
-    s.items.head.?('-': Neg(ReadP(Int|0, s.items.tail)), : ReadP(Int|0, s));
+    /Core/Char/Eq%.Eq(Char|'-', s.items.head).?(true: {
+      Neg(ReadP(Int|0, s.items.tail));
+    });
+    ReadP(Int|0, s);
   };
 };
 

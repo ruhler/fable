@@ -5,6 +5,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 
+<@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Reverse = /Std/List%.Reverse;
 
@@ -38,7 +39,7 @@
   (IStream@) { M@<String@>; } GetLine = (IStream@ in) {
     Maybe@<Char@> c <- m.do(GetChar(in));
     c.?(nothing: m.return(Str|''));
-    IsNewline(c.just).?(true: m.return(Str[c.just]));
+    IsNewline(c.just).?(true: m.return(List[c.just]));
 
     String@ tail <- m.do(GetLine(in));
     m.return(Items(c.just, tail));

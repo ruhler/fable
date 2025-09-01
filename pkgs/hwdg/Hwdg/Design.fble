@@ -4,7 +4,9 @@
 % False = /Std/Bool%.False;
 % Not = /Std/Bool%.Not;
 
+@ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
+% Char = /Core/Char%.Char;
 
 @ Coord@ = /Hwdg/Coord%.Coord@; 
 
@@ -28,6 +30,7 @@
 @ Set@ = Set.Set@;
 
 @ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 # Ports@ --
 #   Convenience type for capturing information about each of the 4 adjacent
@@ -70,15 +73,16 @@
 #
 # For example:
 #   Rule@ r = Rule|'10.. => ..0.';
-(String@) { Rule@; } Rule = {
+(List@<Ascii@>) { Rule@; } Rule = {
   (Char@) { PortSpec@; } FromChar = (Char@ c) {
-    c.?('0': Just<Data@>(Data.0));
-    c.?('1': Just<Data@>(Data.1));
-    c.?('.': Nothing<Data@>);
+    /Core/Char/Eq%.Eq(Char|0, c).?(true: Just(Data.0));
+    /Core/Char/Eq%.Eq(Char|1, c).?(true: Just(Data.1));
+    /Core/Char/Eq%.Eq(Char|'.', c).?(true: Nothing<Data@>);
     Nothing<Maybe@<Data@>>.just;  # Invalid PortSpec character.
   };
 
-  (String@ s) {
+  (List@<Ascii@> l) {
+    String@ s = Str(l);
     Char@ i0 = s.items.head; String@ s1 = s.items.tail;
     Char@ i1 = s1.items.head; String@ s2 = s1.items.tail;
     Char@ i2 = s2.items.head; String@ s3 = s2.items.tail;

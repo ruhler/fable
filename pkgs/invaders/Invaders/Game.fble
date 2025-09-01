@@ -16,6 +16,8 @@
 
 % Int = /Core/Int/Lit%.Int;
 
+<@>% List = /Std/List%.List;
+
 % Graphics = /Invaders/Graphics%;
 
 % Aliens = /Invaders/Aliens%;
@@ -120,7 +122,7 @@ State@ Dying = State@(dying: DyingWait);
   over.hidden.?(empty: over);
 
   GameOver@(over.hidden.items.tail,
-    Strs[over.visible, Str[over.hidden.items.head]],
+    Strs[over.visible, List[over.hidden.items.head]],
     GameOverWait);
 };
 

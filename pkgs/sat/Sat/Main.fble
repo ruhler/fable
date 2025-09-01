@@ -60,7 +60,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   };
 
   (List@<String@> args) {
-    Any(args, /Core/String/Eq%.Eq|'--help').?(true: {
+    Any(args, /Core/String/Eq%.Eq(Str|'--help')).?(true: {
       Unit@ _ <- m.do(O.PutStr(stdio.out, /Sat/Usage%));
       m.return(True);
     });

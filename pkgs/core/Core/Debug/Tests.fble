@@ -24,7 +24,7 @@ Test@ Tests = TestSuite(Str|Debug, List[
   Test(Str|'Trace', (Unit@ _) {
     # All we can really do is test that it doesn't crash. There's no way
     # to observe the traced output from within fble.
-    Unit@ u = TraceLn|'hello trace!';
+    Unit@ u = TraceLn(Str|'hello trace!');
     AssertEquals(/Std/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, u);
   }),
 

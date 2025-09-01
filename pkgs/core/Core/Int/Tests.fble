@@ -64,14 +64,14 @@ Int@ 8 = Int|8;
 (String@, (Unit@) { Bool@; }) { Test@; }
 T = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
-    p(u).?(true: Pass, : Fail|failed);
+    p(u).?(true: Pass, : Fail(Str|failed));
   });
 };
 
 (String@, (Unit@) { Bool@; }) { Test@; }
 F = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
-    p(u).?(false: Pass, : Fail|failed);
+    p(u).?(false: Pass, : Fail(Str|failed));
   });
 };
 

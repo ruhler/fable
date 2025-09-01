@@ -1,12 +1,13 @@
 
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
+@ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 # Eq --
 #   Implementation of Eq@ for Char@. See documentation of /Eq%.Eq@.
-Eq@<Char@> Eq = (Char@ a, Char@ b) {
+Eq@<Ascii@> EqAscii = (Ascii@ a, Ascii@ b) {
   a.?(
     '
 ': b.?('
@@ -116,6 +117,10 @@ Eq@<Char@> Eq = (Char@ a, Char@ b) {
     '~': b.?('~': True, : False),
     
     unknown: b.?(unknown: /Std/Int/Eq%.Eq(a.unknown, b.unknown), : False));
+};
+
+Eq@<Char@> Eq = (Char@ a, Char@ b) {
+  EqAscii(a.ascii, b.ascii);
 };
 
 @(Eq);

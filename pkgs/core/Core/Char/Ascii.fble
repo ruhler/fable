@@ -1,4 +1,5 @@
 
+@ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
 % Char = /Core/Char%.Char;
 % Chars = /Core/Char%.Chars;
@@ -49,7 +50,7 @@
 
 # Converts a character to its ascii code value.
 (Char@) { Int@; } Ord = (Char@ c) {
-  c.?('
+  c.ascii.?('
 ': Ascii.nl, '	': Ascii.tab, '': Ascii.cr, ' ': Ascii.' ',
     '!': Ascii.'!', '"': Ascii.'"', '#': Ascii.'#', '$': Ascii.'$',
     '%': Ascii.'%', '&': Ascii.'&', '''': Ascii.'''', '(': Ascii.'(',
@@ -80,7 +81,7 @@
 
     '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~',
 
-    unknown: c.unknown);
+    unknown: c.ascii.unknown);
 };
 
 # Converts an ascii value to its corresponding character.
@@ -123,7 +124,7 @@
 
   (Int@ i) {
     Maybe@<Char@> mc = Lookup(map, i);
-    mc.?(just: mc.just, nothing: Char@(unknown: i));
+    mc.?(just: mc.just, nothing: @(ascii: Ascii@(unknown: i)));
   };
 };
 

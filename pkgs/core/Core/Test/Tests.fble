@@ -29,7 +29,7 @@
 
 
 Test@ pass = Test(Str|pass, (Unit@ _) { Pass; });
-Test@ fail = Test(Str|fail, (Unit@ _) { Fail|Failed; });
+Test@ fail = Test(Str|fail, (Unit@ _) { Fail(Str|Failed); });
 Test@ xfail = Test(Str|xfail, (Unit@ _) { ExpectedFail; });
 
 Test@ Tests = TestSuite(Str|'Test', List[
@@ -74,7 +74,7 @@ Test@ Tests = TestSuite(Str|'Test', List[
   Test(Str|'RunTest.SuiteFail', (Unit@ _) {
     Test@ suite = TestSuite(Str|'Suite', List[
       Test(Str|a, (Unit@ _) { Pass; }),
-      Test(Str|b, (Unit@ _) { Fail|Oops; }),
+      Test(Str|b, (Unit@ _) { Fail(Str|Oops); }),
       Test(Str|c, (Unit@ _) { ExpectedFail; }),
       Test(Str|c, (Unit@ _) { Pass; })]);
 
