@@ -1,9 +1,9 @@
 
 @ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
-% Chars = /Core/Char%.Chars;
-% FromAscii = /Core/Char%.FromAscii;
+% Char = /Core/Char/Ascii%.Char;
+% Chars = /Core/Char/Ascii%.Chars;
+% ToChar = /Core/Char/Ascii%.ToChar;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
@@ -20,7 +20,7 @@
 # Example Use:
 #   String@ s = Str|'hello, world'
 (List@<Ascii@>) { String@; } Str = (List@<Ascii@> ascii) {
-  /Std/List%.Map(ascii, FromAscii);
+  /Std/List%.Map(ascii, ToChar);
 };
 
 # StrE --

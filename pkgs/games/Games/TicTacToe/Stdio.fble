@@ -2,8 +2,8 @@
 % True = /Std/Bool%.True;
 
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
-% Chars = /Core/Char%.Chars;
+% Char = /Core/Char/Ascii%.Char;
+% Chars = /Core/Char/Ascii%.Chars;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;

@@ -1,5 +1,5 @@
 
-% Char = /Core/Char%.Char;
+% Char = /Core/Char/Ascii%.Char;
 
 % Chr = /Core/Char/Ascii%.Chr;
 % Ord = /Core/Char/Ascii%.Ord;

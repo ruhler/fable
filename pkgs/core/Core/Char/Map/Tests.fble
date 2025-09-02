@@ -2,7 +2,7 @@
 @ Test@ = /Core/Test%.Test@;
 
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
+% Char = /Core/Char/Ascii%.Char;
 
 # Note: Iteration order isn't quite what you expect.
 Test@ Tests = /Core/Map/Test%.Test</Core/Char/Map%.Map.Map@, Char@>(

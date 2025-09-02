@@ -4,7 +4,7 @@
 % True = /Std/Bool%.True;
 
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
+% Char = /Core/Char/Ascii%.Char;
 
 @ Hex@ = /Core/Digits%.Hex@;
 

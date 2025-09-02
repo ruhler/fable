@@ -1,7 +1,7 @@
 
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
-% Chars = /Core/Char%.Chars;
+% Char = /Core/Char/Ascii%.Char;
+% Chars = /Core/Char/Ascii%.Chars;
 % IsSpace = /Core/Char/Type%.IsSpace;
 
 @ Int@ = /Std/Int%.Int@;

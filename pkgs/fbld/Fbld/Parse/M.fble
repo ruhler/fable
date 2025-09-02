@@ -4,7 +4,7 @@
 % False = /Std/Bool%.False;
 
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
+% Char = /Core/Char/Ascii%.Char;
 % IsNewline = /Core/Char/Type%.IsNewline;
 
 @ Int@ = /Std/Int%.Int@;

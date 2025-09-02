@@ -1,6 +1,6 @@
 
 @ Char@ = /Core/Char%.Char@;
-% Chars = /Core/Char%.Chars;
+% Chars = /Core/Char/Ascii%.Chars;
 
 @ Int@ = /Std/Int%.Int@;
 

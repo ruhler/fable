@@ -2,8 +2,8 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 
-% Char = /Core/Char%.Char;
-% Chars = /Core/Char%.Chars;
+% Char = /Core/Char/Ascii%.Char;
+% Chars = /Core/Char/Ascii%.Chars;
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;

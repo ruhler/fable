@@ -1,8 +1,5 @@
 
 @ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
-
-<@>@ List@ = /Std/List%.List@;
 
 # Char@ --
 #   Characters.
@@ -41,35 +38,6 @@
   /Std/Int%.Int@ unknown
 );
 
-@ Char@ = *(Ascii@ ascii);
+@ Char@ = *(Ascii@ ascii).%(@/Core/Char%);
 
-Char@ newline = @(ascii: Ascii@('
-': Unit));
-
-Char@ tab = @(ascii: Ascii@('	': Unit));
-Char@ cr = @(ascii: Ascii@('': Unit));
-
-(Ascii@) { Char@; } FromAscii = (Ascii@ ascii) {
-  @(ascii);
-};
-
-# Character literal.
-#  Behavior is undefined if thre are more or less than one character in the
-#  literal.
-(List@<Ascii@>) { Char@; }
-Char = (List@<Ascii@> str) {
-  # Assert length is 1
-  Unit@ _ = str.items.tail.empty;
-  @(ascii: str.items.head);
-}.%(@/Core/Char%);
-
-# Chars --
-#   A collection of characters that can be referenced more easily than
-#   creating character values directly.
-% Chars = @(
-  nl: newline,
-  tab: tab,
-  cr: cr
-);
-
-@(Ascii@, Char@, Char, Chars, FromAscii);
+@(Ascii@, Char@);

@@ -1,8 +1,6 @@
 
 @ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
-% Chars = /Core/Char%.Chars;
 
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
@@ -11,6 +9,34 @@
 <@>% List = /Std/List%.List;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+% Unit = /Std/Unit%.Unit;
+
+Char@ newline = @(ascii: Ascii@('
+': Unit));
+
+Char@ tab = @(ascii: Ascii@('	': Unit));
+Char@ cr = @(ascii: Ascii@('': Unit));
+
+# Chars --
+#   A collection of characters that can be referenced more easily than
+#   creating character values directly.
+% Chars = @(
+  nl: newline,
+  tab: tab,
+  cr: cr
+);
+
+# Character literal.
+#  Behavior is undefined if thre are more or less than one character in the
+#  literal.
+(List@<Ascii@>) { Char@; }
+Char = (List@<Ascii@> str) {
+  # Assert length is 1
+  Unit@ _ = str.items.tail.empty;
+  @(ascii: str.items.head);
+};
 
 # Ascii codes for each character.
 % Ascii = @(
@@ -128,4 +154,8 @@
   };
 };
 
-@(Ord, Chr);
+(Ascii@) { Char@; } ToChar = (Ascii@ ascii) {
+  @(ascii);
+};
+
+@(ToChar, Char, Chars, Ord, Chr);

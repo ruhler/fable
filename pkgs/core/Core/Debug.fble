@@ -1,7 +1,7 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-% Chars = /Core/Char%.Chars;
+% Chars = /Core/Char/Ascii%.Chars;
 
 <@>% List = /Std/List%.List;
 <@>% Append = /Std/List%.Append;

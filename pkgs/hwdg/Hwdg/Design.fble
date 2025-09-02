@@ -6,7 +6,7 @@
 
 @ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
-% Char = /Core/Char%.Char;
+% Char = /Core/Char/Ascii%.Char;
 
 @ Coord@ = /Hwdg/Coord%.Coord@; 
 
