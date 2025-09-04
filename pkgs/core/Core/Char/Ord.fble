@@ -1,14 +1,10 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ Int@ = /Std/Int%.Int@;
-
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
 
-(Char@) { Int@; } ToAscii = /Core/Char/Ascii%.Ord;
-
 Cmp@<Char@> Ord = (Char@ a, Char@ b) {
-  /Core/Int/Ord%.Ord(ToAscii(a), ToAscii(b));
+  /Core/Int/Ord%.Ord(/Core/Char%.Ord(a), /Core/Char%.Ord(b));
 };
 
 @(Ord);

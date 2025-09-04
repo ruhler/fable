@@ -5,21 +5,18 @@
 % Or = /Std/Bool%.Or;
 
 @ Char@ = /Core/Char%.Char@;
+% Ord = /Core/Char%.Ord;
+% Char = /Core/Char/Ascii%.Char;
+% Chars = /Core/Char/Ascii%.Chars;
 
 (Char@) { Bool@; } IsUpper = (Char@ c) {
-  c.ascii.?(
-    A: True, B: True, C: True, D: True, E: True, F: True, G: True,
-    H: True, I: True, J: True, K: True, L: True, M: True, N: True,
-    O: True, P: True, Q: True, R: True, S: True, T: True, U: True,
-    V: True, W: True, X: True, Y: True, Z: True, : False);
+  /Std/Int/Ord%.Lt(Ord(c), Ord(Char|'A')).?(true: False);
+  /Std/Int/Ord%.Le(Ord(c), Ord(Char|'Z'));
 };
       
 (Char@) { Bool@; } IsLower = (Char@ c) {
-  c.ascii.?(
-    a: True, b: True, c: True, d: True, e: True, f: True, g: True,
-    h: True, i: True, j: True, k: True, l: True, m: True, n: True,
-    o: True, p: True, q: True, r: True, s: True, t: True, u: True,
-    v: True, w: True, x: True, y: True, z: True, : False);
+  /Std/Int/Ord%.Lt(Ord(c), Ord(Char|'a')).?(true: False);
+  /Std/Int/Ord%.Le(Ord(c), Ord(Char|'z'));
 };
 
 (Char@) { Bool@; } IsAlpha = (Char@ c) {
@@ -27,9 +24,8 @@
 };
 
 (Char@) { Bool@; } IsDigit = (Char@ c) {
-  c.ascii.?(
-    0: True, 1: True, 2: True, 3: True, 4: True,
-    5: True, 6: True, 7: True, 8: True, 9: True, : False);
+  /Std/Int/Ord%.Lt(Ord(c), Ord(Char|'0')).?(true: False);
+  /Std/Int/Ord%.Le(Ord(c), Ord(Char|'9'));
 };
 
 (Char@) { Bool@; } IsAlNum = (Char@ c) {
@@ -37,13 +33,15 @@
 };
 
 (Char@) { Bool@; } IsNewline = (Char@ c) {
-  c.ascii.?('
-': True, : False);
+  /Core/Char/Eq%.Eq(Chars.nl, c);
 };
 
 (Char@) { Bool@; } IsSpace = (Char@ c) {
-  c.ascii.?('
-': True, '	': True, '': True, ' ': True, : False);
+  /Core/Char/Eq%.Eq(Char|' ', c).?(true: True);
+  /Core/Char/Eq%.Eq(Chars.nl, c).?(true: True);
+  /Core/Char/Eq%.Eq(Chars.cr, c).?(true: True);
+  /Core/Char/Eq%.Eq(Chars.tab, c).?(true: True);
+  False;
 };
 
 @(IsUpper, IsLower, IsAlpha, IsDigit, IsAlNum, IsSpace, IsNewline);

@@ -1,43 +1,16 @@
 
-@ Unit@ = /Std/Unit%.Unit@;
+@ Int@ = /Std/Int%.Int@;
 
-# Char@ --
-#   Characters.
-#
-# TODO:
-#   Add more characters as needed.
-@ Ascii@ = +(
-  Unit@ '
-',
+@ Char@ = *(Int@ code_point).%(@/Core/Char%);
 
-  Unit@ '	', Unit@ '', Unit@ ' ', Unit@ '!', Unit@ '"', Unit@ '#', Unit@ '$', Unit@ '%',
-  Unit@ '&', Unit@ '''', Unit@ '(', Unit@ ')', Unit@ '*', Unit@ '+', Unit@ ',',
-  Unit@ '-', Unit@ '.', Unit@ '/',
+# Char from unicode code point.
+(Int@) { Char@; } Chr = (Int@ code_point) {
+  @(code_point);
+};
 
-  Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5, Unit@ 6,
-  Unit@ 7, Unit@ 8, Unit@ 9,
+# Unicode code point of the character.
+(Char@) { Int@; } Ord = (Char@ c) {
+  c.code_point;
+};
 
-  Unit@ ':', Unit@ ';', Unit@ '<', Unit@ '=',
-  Unit@ '>', Unit@ '?', Unit@ '@',
-
-  Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E, Unit@ F, Unit@ G,
-  Unit@ H, Unit@ I, Unit@ J, Unit@ K, Unit@ L, Unit@ M, Unit@ N,
-  Unit@ O, Unit@ P, Unit@ Q, Unit@ R, Unit@ S, Unit@ T, Unit@ U,
-  Unit@ V, Unit@ W, Unit@ X, Unit@ Y, Unit@ Z,
-
-  Unit@ '[', Unit@ '\', Unit@ ']', Unit@ '^', Unit@ '_', Unit@ '`',
-
-  Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f, Unit@ g,
-  Unit@ h, Unit@ i, Unit@ j, Unit@ k, Unit@ l, Unit@ m, Unit@ n,
-  Unit@ o, Unit@ p, Unit@ q, Unit@ r, Unit@ s, Unit@ t, Unit@ u,
-  Unit@ v, Unit@ w, Unit@ x, Unit@ y, Unit@ z,
-
-  Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~',
-
-  # TODO: Come up with a better way to support things like unicode characters.
-  /Std/Int%.Int@ unknown
-);
-
-@ Char@ = *(Ascii@ ascii).%(@/Core/Char%);
-
-@(Ascii@, Char@);
+@(Char@, Chr, Ord);

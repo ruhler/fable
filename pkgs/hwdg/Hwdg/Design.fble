@@ -4,8 +4,8 @@
 % False = /Std/Bool%.False;
 % Not = /Std/Bool%.Not;
 
-@ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
+@ Ascii@ = /Core/Char/Ascii%.Ascii@;
 % Char = /Core/Char/Ascii%.Char;
 
 @ Coord@ = /Hwdg/Coord%.Coord@; 

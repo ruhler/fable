@@ -35,8 +35,8 @@
   IO@<Bool@> MCat = {
     Maybe@<Int@> byte <- m.do(Stdin);
     byte.?(nothing: m.return(True));
-    Char@ char = /Core/Char/Ascii%.Chr(byte.just);
-    Unit@ _ <- m.do(stdout_(/Core/Char/Ascii%.Ord(char)));
+    Char@ char = /Core/Char%.Chr(byte.just);
+    Unit@ _ <- m.do(stdout_(/Core/Char%.Ord(char)));
     MCat;
   };
 
@@ -44,8 +44,8 @@
     R@<Maybe@<Int@>> byte = Stdin(w);
     byte.x.?(nothing: R@(w, True));
 
-    Char@ char = /Core/Char/Ascii%.Chr(byte.x.just);
-    R@<Unit@> out = Stdout(/Core/Char/Ascii%.Ord(char), byte.s);
+    Char@ char = /Core/Char%.Chr(byte.x.just);
+    R@<Unit@> out = Stdout(/Core/Char%.Ord(char), byte.s);
     Cat(out.s);
   };
 

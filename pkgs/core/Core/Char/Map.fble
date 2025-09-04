@@ -3,8 +3,8 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-% Ord = /Core/Char/Ascii%.Ord;
-% Chr = /Core/Char/Ascii%.Chr;
+% Ord = /Core/Char%.Ord;
+% Chr = /Core/Char%.Chr;
 
 @ Int@ = /Std/Int%.Int@;
 

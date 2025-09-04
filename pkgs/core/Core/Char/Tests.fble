@@ -1,8 +1,15 @@
 
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
 % Char = /Core/Char/Ascii%.Char;
 
-% Chr = /Core/Char/Ascii%.Chr;
-% Ord = /Core/Char/Ascii%.Ord;
+% Chr = /Core/Char%.Chr;
+% Ord = /Core/Char%.Ord;
+
+% IsAlNum = /Core/Char/Type%.IsAlNum;
+% IsAlpha = /Core/Char/Type%.IsAlpha;
+% IsLower = /Core/Char/Type%.IsLower;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
@@ -27,6 +34,36 @@ Test@ Tests = TestSuite(Str|Char, List[
   Test(Str|'Ord', (Unit@ _) {
     AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show,
       Int|65, Ord(Char|A));
+  }),
+
+  Test(Str|'IsLower', (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+      True, IsLower(Char|e));
+  }),
+
+  Test(Str|'IsLower no', (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+      False, IsLower(Char|E));
+  }),
+
+  Test(Str|'IsAlpha', (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+      True, IsAlpha(Char|e));
+  }),
+
+  Test(Str|'IsAlpha no', (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+      False, IsAlpha(Char|4));
+  }),
+
+  Test(Str|'IsAlnum', (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+      True, IsAlNum(Char|e));
+  }),
+
+  Test(Str|'IsAlnum no', (Unit@ _) {
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show,
+      False, IsAlNum(Char|' '));
   }),
 
   /Core/Char/Map/Tests%.Tests

@@ -1,44 +1,44 @@
 
-@ Ascii@ = /Core/Char%.Ascii@;
 @ Char@ = /Core/Char%.Char@;
+% Unicode = /Core/Char%.Chr;
 
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
-<@>% List = /Std/List%.List;
-
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ Unit@ = /Std/Unit%.Unit@;
-% Unit = /Std/Unit%.Unit;
 
-Char@ newline = @(ascii: Ascii@('
-': Unit));
+@ Ascii@ = +(
+  Unit@ '
+',
 
-Char@ tab = @(ascii: Ascii@('	': Unit));
-Char@ cr = @(ascii: Ascii@('': Unit));
+  Unit@ '	', Unit@ '', Unit@ ' ', Unit@ '!', Unit@ '"', Unit@ '#', Unit@ '$', Unit@ '%',
+  Unit@ '&', Unit@ '''', Unit@ '(', Unit@ ')', Unit@ '*', Unit@ '+', Unit@ ',',
+  Unit@ '-', Unit@ '.', Unit@ '/',
 
-# Chars --
-#   A collection of characters that can be referenced more easily than
-#   creating character values directly.
-% Chars = @(
-  nl: newline,
-  tab: tab,
-  cr: cr
+  Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5, Unit@ 6,
+  Unit@ 7, Unit@ 8, Unit@ 9,
+
+  Unit@ ':', Unit@ ';', Unit@ '<', Unit@ '=',
+  Unit@ '>', Unit@ '?', Unit@ '@',
+
+  Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E, Unit@ F, Unit@ G,
+  Unit@ H, Unit@ I, Unit@ J, Unit@ K, Unit@ L, Unit@ M, Unit@ N,
+  Unit@ O, Unit@ P, Unit@ Q, Unit@ R, Unit@ S, Unit@ T, Unit@ U,
+  Unit@ V, Unit@ W, Unit@ X, Unit@ Y, Unit@ Z,
+
+  Unit@ '[', Unit@ '\', Unit@ ']', Unit@ '^', Unit@ '_', Unit@ '`',
+
+  Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f, Unit@ g,
+  Unit@ h, Unit@ i, Unit@ j, Unit@ k, Unit@ l, Unit@ m, Unit@ n,
+  Unit@ o, Unit@ p, Unit@ q, Unit@ r, Unit@ s, Unit@ t, Unit@ u,
+  Unit@ v, Unit@ w, Unit@ x, Unit@ y, Unit@ z,
+
+  Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~'
 );
 
-# Character literal.
-#  Behavior is undefined if thre are more or less than one character in the
-#  literal.
-(List@<Ascii@>) { Char@; }
-Char = (List@<Ascii@> str) {
-  # Assert length is 1
-  Unit@ _ = str.items.tail.empty;
-  @(ascii: str.items.head);
-};
-
-# Ascii codes for each character.
+# Unicode code points for each character.
 % Ascii = @(
   nl: Int|10, tab: Int|9, cr: Int|13,
 
@@ -74,9 +74,8 @@ Char = (List@<Ascii@> str) {
   '{': Int|123, '|': Int|124, '}': Int|125, '~': Int|126
 );
 
-# Converts a character to its ascii code value.
-(Char@) { Int@; } Ord = (Char@ c) {
-  c.ascii.?('
+(Ascii@) { Int@; } Ord = (Ascii@ c) {
+  c.?('
 ': Ascii.nl, '	': Ascii.tab, '': Ascii.cr, ' ': Ascii.' ',
     '!': Ascii.'!', '"': Ascii.'"', '#': Ascii.'#', '$': Ascii.'$',
     '%': Ascii.'%', '&': Ascii.'&', '''': Ascii.'''', '(': Ascii.'(',
@@ -105,57 +104,30 @@ Char = (List@<Ascii@> str) {
     s: Ascii.s, t: Ascii.t, u: Ascii.u, v: Ascii.v, w: Ascii.w, x: Ascii.x,
     y: Ascii.y, z: Ascii.z,
 
-    '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~',
-
-    unknown: c.ascii.unknown);
-};
-
-# Converts an ascii value to its corresponding character.
-(Int@) { Char@; } Chr = {
-  @ Map@ = /Core/Int/Map%.Map.Map@<Char@>;
-  % Empty = /Core/Int/Map%.Map.Empty<Char@>;
-  % Insert = /Core/Int/Map%.Map.Insert<Char@>;
-  % Lookup = /Core/Int/Map%.Map.Lookup<Char@>;
-
-  (Char@, Map@) { Map@; } Put = (Char@ c, Map@ m) {
-    Insert(m, Ord(c), c);
-  };
-
-  List@<Char@> chars = List[Chars.nl, Chars.tab, Chars.cr,
-    Char|' ', Char|'!', Char|'"', Char|'#', Char|'$', Char|'%',
-    Char|'&', Char|'''', Char|'(', Char|')', Char|'*', Char|'+',
-    Char|',', Char|'-', Char|'.', Char|'/',
-
-    Char|0, Char|1, Char|2, Char|3, Char|4, Char|5, Char|6, Char|7,
-    Char|8, Char|9,
-
-    Char|':', Char|';', Char|'<', Char|'=', Char|'>', Char|'?',
-    Char|'@',
-
-    Char|A, Char|B, Char|C, Char|D, Char|E, Char|F, Char|G, Char|H,
-    Char|I, Char|J, Char|K, Char|L, Char|M, Char|N, Char|O, Char|P,
-    Char|Q, Char|R, Char|S, Char|T, Char|U, Char|V, Char|W, Char|X,
-    Char|Y, Char|Z,
-
-    Char|'[', Char|'\', Char|']', Char|'^', Char|'_', Char|'`',
-
-    Char|a, Char|b, Char|c, Char|d, Char|e, Char|f, Char|g, Char|h,
-    Char|i, Char|j, Char|k, Char|l, Char|m, Char|n, Char|o, Char|p,
-    Char|q, Char|r, Char|s, Char|t, Char|u, Char|v, Char|w, Char|x,
-    Char|y, Char|z,
-
-    Char|'{', Char|'|', Char|'}', Char|'~'];
-
-  Map@ map = /Std/List%.ForEach(chars, Empty, Put);
-
-  (Int@ i) {
-    Maybe@<Char@> mc = Lookup(map, i);
-    mc.?(just: mc.just, nothing: @(ascii: Ascii@(unknown: i)));
-  };
+    '{': Ascii.'{', '|': Ascii.'|', '}': Ascii.'}', '~': Ascii.'~');
 };
 
 (Ascii@) { Char@; } ToChar = (Ascii@ ascii) {
-  @(ascii);
+  Unicode(Ord(ascii));
 };
 
-@(ToChar, Char, Chars, Ord, Chr);
+Char@ nl = Unicode(Ascii.nl);
+Char@ tab = Unicode(Ascii.tab);
+Char@ cr = Unicode(Ascii.cr);
+
+# Chars --
+#   A collection of characters that can be referenced more easily than
+#   creating character values directly.
+% Chars = @(nl, tab, cr);
+
+# Character literal.
+#  Behavior is undefined if thre are more or less than one character in the
+#  literal.
+(List@<Ascii@>) { Char@; }
+Char = (List@<Ascii@> str) {
+  # Assert length is 1
+  Unit@ _ = str.items.tail.empty;
+  ToChar(str.items.head);
+};
+
+@(Ascii@, ToChar, Char, Chars);

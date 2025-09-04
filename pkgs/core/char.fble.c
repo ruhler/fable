@@ -6,34 +6,18 @@
 #include <string.h>   // for strchr
 
 #include "char.fble.h"
+#include "int.fble.h"
 
 #include <fble/fble-value.h>   // for FbleValue, etc.
 
-// Chars --
-//   The list of characters (in tag order) supported by the /Core/Char%.Char@ type.
-static const char* Chars =
-    "\n\t\r !\"#$%&'()*+,-./0123456789:;<=>?@"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "[\\]^_`"
-    "abcdefghijklmnopqrstuvwxyz"
-    "{|}~";
-#define CHARS_TAGWIDTH 7
-
 // FbleNewCharValue -- see documentation in char.fble.h
 FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c)
 {
-  char* p = strchr(Chars, c);
-  if (p == NULL || c == '\0') {
-    assert(c != '?');
-    return FbleNewCharValue(heap, '?');
-  }
-  assert(p >= Chars);
-  size_t tag = p - Chars;
-  return FbleNewStructValue_(heap, 1, FbleNewEnumValue(heap, CHARS_TAGWIDTH, tag));
+  return FbleNewStructValue_(heap, 1, FbleNewIntValue(heap, (uint64_t)c));
 }
 
 // FbleCharValueAccess -- see documentation in char.fble.h
 char FbleCharValueAccess(FbleValue* c)
 {
-  return Chars[FbleUnionValueTag(FbleStructValueField(c, 1, 0), CHARS_TAGWIDTH)];
+  return FbleIntValueAccess(FbleStructValueField(c, 1, 0));
 }

@@ -2,7 +2,7 @@
 @ Bool@ = /Std/Bool%.Bool@;
 % True = /Std/Bool%.True;
 
-@ Ascii@ = /Core/Char%.Ascii@;
+@ Ascii@ = /Core/Char/Ascii%.Ascii@;
 % ToChar = /Core/Char/Ascii%.ToChar;
 
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
@@ -43,7 +43,7 @@
 % PutStr = OStream.PutStr;
 
 (List@<Ascii@>) { List@<Int@>; } Bytes = (List@<Ascii@> str) {
-  /Std/List%.Map(str, (Ascii@ a) { /Core/Char/Ascii%.Ord(ToChar(a)); });
+  /Std/List%.Map(str, (Ascii@ a) { /Core/Char%.Ord(ToChar(a)); });
 };
 
 List@<Int@> HelloWorld = Bytes|'Hello

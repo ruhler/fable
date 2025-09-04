@@ -1,5 +1,5 @@
 
-@ Ascii@ = /Core/Char%.Ascii@;
+@ Ascii@ = /Core/Char/Ascii%.Ascii@;
 
 @ Decimal@ = /Core/Digits%.Decimal@;
 

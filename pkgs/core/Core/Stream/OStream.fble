@@ -20,7 +20,8 @@
 
   # Outputs a single character to the given output stream.
   (OStream@, Char@) { M@<Unit@>; } PutChar = (OStream@ out, Char@ c) {
-    out(/Core/Char/Ascii%.Ord(c));
+    # TODO: Handle unicode properly?
+    out(/Core/Char%.Ord(c));
   };
 
   # Outputs a string to the given output stream.

@@ -31,7 +31,8 @@
   (IStream@) { M@<Maybe@<Char@>>; } GetChar = (IStream@ in) {
     Maybe@<Int@> byte <- m.do(in);
     byte.?(nothing: m.return(Nothing<Char@>));
-    m.return(Just(/Core/Char/Ascii%.Chr(byte.just)));
+    # TODO: Handle unicode characters.
+    m.return(Just(/Core/Char%.Chr(byte.just)));
   };
 
   # Gets everything up to and including the next newline character from stdin.
