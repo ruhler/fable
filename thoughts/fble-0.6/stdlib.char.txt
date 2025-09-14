@@ -308,3 +308,48 @@ The difference between String@ and List@<Ascii@> feels pretty painful. Also,
 having to do Eq everywhere for linear search instead of a direct case on
 Ascii@. Maybe worth thinking more about.
 
+---
+
+After reading more of the unicode spec, here's my thinking:
+* /Std/Char% is just the Char@ type with conversion to/from Int@.
+* /Std/Char/Lit% is an API for literals from some literal type T@
+  - T@ to Char@
+  - Char, CharE, Str, StrE literals, 
+  - A way to compose two literals.
+* /Std/Char/Ascii% is Ascii literal, and maybe the character classes of use.
+
+But I should review the character classes to see if they are really useful. I
+feel like in most cases specific character classes should be application specific.
+
+That leaves two things:
+* Figure out what to do with /Core/Char/Type% specifically.
+* Figure out what to name everything.
+
+Review of existing /Core/Char/Type% uses:
+* stdio GetLine uses IsNewline. Could as easily be Eq(Chars.nl).
+* Fbld @define uses IsSpace. Probably ought to be app specific?
+* Fbld Loc uses IsNewline to know when to advance line counter.
+* Fbld parse uses IsAlNum for IsNameChar.
+
+In general, seems like I use IsNewline function out of convenience. Maybe move that to /Std/Char/Eq%. The others probably ought to be app specific. Things like fbld parsing, or dimacs. Depends on the input program. If the input program is in ascii, makes sense perhaps to put the character class in ascii.
+
+Ascii standard itself doesn't say anything about character classes. I think that's from C99. Well, ascii says "Control Character" versus "Graphic Character".
+
+First names to figure out:
+* Char@ field name.
+* Functions to convert between Char@ and Int@.
+
+Influences:
+* Unicode standard clearly calls the int value 'code point'.
+* Ascii doesn't give a name for code point.
+* Mathematic codes are a mapping from strings in a source alphabet to strings
+  in a target alphabet. They use the term 'code word'.
+* Java uses 'toCodePoint'
+* go calls a code point a 'rune' because they like the shorter name. Otherwise
+  it's just a type alias for integer.
+* Haskell uses toEnum, fromEnum or chr, ord.
+
+I agree with go in that the notion of a character is not clear. Like, Char@ does not correspond to unicode's notion of an abstract character.
+
+This is complicated.
+
