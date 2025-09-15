@@ -3,7 +3,7 @@
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 Eq@<Char@> Eq = (Char@ a, Char@ b) {
-  /Std/Int/Eq%.Eq(a.code_point, b.code_point);
+  /Std/Int/Eq%.Eq(a.pos, b.pos);
 };
 
 @(Eq);

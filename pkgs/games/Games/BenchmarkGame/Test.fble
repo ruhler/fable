@@ -22,8 +22,8 @@
 
 (String@, Main@, String@, String@, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ n, String@ input, String@ expected) {
-  List@<Int@> input_bytes = /Std/List%.Map(input, /Core/Char%.Ord);
-  List@<Int@> expected_bytes = /Std/List%.Map(expected, /Core/Char%.Ord);
+  List@<Int@> input_bytes = /Std/List%.Map(input, /Core/Char%.Pos);
+  List@<Int@> expected_bytes = /Std/List%.Map(expected, /Core/Char%.Pos);
 
   /Core/Test%.Test(name, (Unit@ _) {
     MainResult@ want = @(

@@ -4,7 +4,7 @@
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
 
 Cmp@<Char@> Ord = (Char@ a, Char@ b) {
-  /Core/Int/Ord%.Ord(/Core/Char%.Ord(a), /Core/Char%.Ord(b));
+  /Core/Int/Ord%.Ord(/Core/Char%.Pos(a), /Core/Char%.Pos(b));
 };
 
 @(Ord);

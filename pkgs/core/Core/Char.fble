@@ -1,16 +1,16 @@
 
 @ Int@ = /Std/Int%.Int@;
 
-@ Char@ = *(Int@ code_point).%(@/Core/Char%);
+@ Char@ = *(Int@ pos).%(@/Core/Char%);
 
 # Char from unicode code point.
-(Int@) { Char@; } Chr = (Int@ code_point) {
-  @(code_point);
+(Int@) { Char@; } Char = (Int@ pos) {
+  @(pos);
 };
 
 # Unicode code point of the character.
-(Char@) { Int@; } Ord = (Char@ c) {
-  c.code_point;
+(Char@) { Int@; } Pos = (Char@ c) {
+  c.pos;
 };
 
-@(Char@, Chr, Ord);
+@(Char@, Char, Pos);

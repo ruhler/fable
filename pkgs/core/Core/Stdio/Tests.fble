@@ -43,7 +43,7 @@
 % PutStr = OStream.PutStr;
 
 (List@<Ascii@>) { List@<Int@>; } Bytes = (List@<Ascii@> str) {
-  /Std/List%.Map(str, (Ascii@ a) { /Core/Char%.Ord(ToChar(a)); });
+  /Std/List%.Map(str, (Ascii@ a) { /Core/Char%.Pos(ToChar(a)); });
 };
 
 List@<Int@> HelloWorld = Bytes|'Hello

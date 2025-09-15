@@ -197,7 +197,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
 
       Int@ byte <- Do(Get);
       String@ tail <- Do(String(Decr(n)));
-      Return(Items(/Core/Char%.Chr(byte), tail));
+      Return(Items(/Core/Char%.Char(byte), tail));
     };
 
     # Parse a VarInt, given the first byte read.

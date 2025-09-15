@@ -32,7 +32,7 @@
     Maybe@<Int@> byte <- m.do(in);
     byte.?(nothing: m.return(Nothing<Char@>));
     # TODO: Handle unicode characters.
-    m.return(Just(/Core/Char%.Chr(byte.just)));
+    m.return(Just(/Core/Char%.Char(byte.just)));
   };
 
   # Gets everything up to and including the next newline character from stdin.

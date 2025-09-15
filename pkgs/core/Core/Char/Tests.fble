@@ -4,8 +4,8 @@
 
 % Char = /Core/Char/Ascii%.Char;
 
-% Chr = /Core/Char%.Chr;
-% Ord = /Core/Char%.Ord;
+% Chr = /Core/Char%.Char;
+% Pos = /Core/Char%.Pos;
 
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 % IsAlpha = /Core/Char/Type%.IsAlpha;
@@ -26,14 +26,14 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 Test@ Tests = TestSuite(Str|Char, List[
-  Test(Str|'Chr', (Unit@ _) {
+  Test(Str|'Char', (Unit@ _) {
     AssertEquals(/Core/Char/Eq%.Eq, /Core/Char/Show%.Show,
       Char|A, Chr(Int|65));
   }),
 
-  Test(Str|'Ord', (Unit@ _) {
+  Test(Str|'Pos', (Unit@ _) {
     AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show,
-      Int|65, Ord(Char|A));
+      Int|65, Pos(Char|A));
   }),
 
   Test(Str|'IsLower', (Unit@ _) {

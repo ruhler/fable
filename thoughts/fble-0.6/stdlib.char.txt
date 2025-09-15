@@ -353,3 +353,47 @@ I agree with go in that the notion of a character is not clear. Like, Char@ does
 
 This is complicated.
 
+---
+
+Let's think in terms of improvement over existing library. Adding support for
+unicode is an improvement. Representing Char@ as Int@ code point is an
+improvement.
+
+Brainstorm of names:
+* Char@. Makes most sense. Let's go with that. Good enough for now. Can
+  revisit later if needed. I don't think Rune@ conveys anything meaningful.
+  CodePoint@? UnicodeCodePoint@? No. Stick with Char@ for now.
+
+For the name of the constructor, converting Int@ to Char@:
+* Char - though that is overloaded with literals.
+* Unicode? Ascii? - but we can provide literals for those if we wanted?
+  U|00a0, A|0065, for example.
+* Let's go with Char for now.
+
+For the name of the deconstructor, converting Char@ to Int@:
+* ValueOf
+* CodePoint
+* Pos
+
+The origin of the term 'code point' is interesting. They represented a code as
+a bunch of tables of values. 'point' was the coordinate in that table
+identifying a particular value.
+
+* Point
+* FromChar (contrast with ToChar?)
+* CP
+* .cp, .codepoint, .pos.
+
+Pos is interesting. Short for 'position in the unicode tables'. It's short.
+
+* Id - short for identifier.
+
+Let's go with Pos and .pos to start.
+
+Should it be public or private? If we make it public, we could use Char@ as
+well, and @(pos: ...). Any reason not to make it public? It's not like we have
+much other choice for how we want to represent it.
+
+Okay? Let's move forward with this then.
+
+

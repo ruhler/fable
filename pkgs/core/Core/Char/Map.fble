@@ -3,8 +3,8 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-% Ord = /Core/Char%.Ord;
-% Chr = /Core/Char%.Chr;
+% Pos = /Core/Char%.Pos;
+% Char = /Core/Char%.Char;
 
 @ Int@ = /Std/Int%.Int@;
 
@@ -22,28 +22,28 @@ Map@ Empty = M.Empty;
 
 <@ V@>(Map@<V@>, Char@) { Maybe@<V@>; }
 Lookup = <@ V@>(Map@<V@> map, Char@ key) {
-  M.Lookup(map, Ord(key));
+  M.Lookup(map, Pos(key));
 };
 
 <@ V@>(Map@<V@>, Char@, V@) { Map@<V@>; }
 Insert = <@ V@>(Map@<V@> map, Char@ key, V@ value) {
-  M.Insert(map, Ord(key), value);
+  M.Insert(map, Pos(key), value);
 };
 
 <@ V@>(Map@<V@>, Char@, (Maybe@<V@>) { V@; }) { Map@<V@>; }
 InsertWith = <@ V@>(Map@<V@> map, Char@ key, (Maybe@<V@>) { V@; } with) {
-  M.InsertWith(map, Ord(key), with);
+  M.InsertWith(map, Pos(key), with);
 };
 
 <@ V@>(Map@<V@>, Char@) { Map@<V@>; }
 Delete = <@ V@>(Map@<V@> map, Char@ key) {
-  M.Delete(map, Ord(key));
+  M.Delete(map, Pos(key));
 };
 
 <@ V@>(Map@<V@>)<@ B@>(B@, (Char@, V@, B@) { B@; }) { B@; }
 ForEach = <@ V@>(Map@<V@> map)<@ B@>(B@ base, (Char@, V@, B@) { B@; } body) {
   M.ForEach(map, base, (Int@ i, V@ v, B@ b) {
-    body(Chr(i), v, b);
+    body(Char(i), v, b);
   });
 };
 
