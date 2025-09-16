@@ -5,7 +5,7 @@
 
 # @type[Char@] The character type.
 #  The character type corresponds to unicode code points.
-@ Char@ = *(Int@ pos);  # TODO: .%(@/Std/Char%);
+@ Char@ = *(Int@ pos).%(@/Std/Char%);
 
 # @func[Char] Construct a character from a unicode code point.
 #  @arg[Int@][pos] The unicode code point of the character to construct.
