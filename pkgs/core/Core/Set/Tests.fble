@@ -4,7 +4,7 @@
 % False = /Std/Bool%.False;
 % And = /Std/Bool%.And;
 
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;

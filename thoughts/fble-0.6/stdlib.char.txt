@@ -396,4 +396,32 @@ much other choice for how we want to represent it.
 
 Okay? Let's move forward with this then.
 
+---
+
+We have a pretty tight loop between Char@ and String@, because character
+literals depend on strings.
+
+/Std/Char/Lit% is something like:
+  <@>@ Lit@ = <@ T@> { *(
+     (List@<T@>) { Char@; } Char,
+     (List@<T@>) { String@; } Str
+  ); };
+
+Actually, I think we can derive everything automatically as long as we have
+the function from T@ to Char@, right?
+
+  <@>@ Lit@ = <@ T@>(T@) { Char@; };
+
+I can define Char, CharE, Str, StrE all in terms of that. And also provide:
+
+  (Lit@<A@>, Lit@<B@>) { Lit@<Pair@<A@, B@>>;} Combine;
+
+That way you can get Char, CharE, Str, StrE out of any combination of
+literals.
+
+Ascii% module should provide Ascii@, Lit@ instance, and direct definitions of
+Char, CharE, Str, StrE, as well as any desired character classes.
+
+Anyway, /Std/Char/Lit% will depend on /Std/String%. Maybe rename Lit to
+Literal, since we don't expect to be naming it explicitly that often?
 

@@ -4,8 +4,8 @@
 % False = /Std/Bool%.False;
 % Or = /Std/Bool%.Or;
 
-@ Char@ = /Core/Char%.Char@;
-% Pos = /Core/Char%.Pos;
+@ Char@ = /Std/Char%.Char@;
+% Pos = /Std/Char%.Pos;
 % Char = /Core/Char/Ascii%.Char;
 % Chars = /Core/Char/Ascii%.Chars;
 

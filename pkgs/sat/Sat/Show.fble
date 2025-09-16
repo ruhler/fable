@@ -1,5 +1,5 @@
 
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 
 <@>% Append = /Std/List%.Append;
 

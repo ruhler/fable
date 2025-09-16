@@ -1,5 +1,5 @@
 
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
 Eq@<Char@> Eq = (Char@ a, Char@ b) {

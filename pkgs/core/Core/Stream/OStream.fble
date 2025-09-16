@@ -1,5 +1,5 @@
 
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 % Chars = /Core/Char/Ascii%.Chars;
 
 @ Int@ = /Std/Int%.Int@;
@@ -21,7 +21,7 @@
   # Outputs a single character to the given output stream.
   (OStream@, Char@) { M@<Unit@>; } PutChar = (OStream@ out, Char@ c) {
     # TODO: Handle unicode properly?
-    out(/Core/Char%.Pos(c));
+    out(/Std/Char%.Pos(c));
   };
 
   # Outputs a string to the given output stream.

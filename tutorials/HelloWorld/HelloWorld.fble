@@ -5,7 +5,7 @@ Bool@ True = /Std/Bool%.True;
 Bool@ False = /Std/Bool%.False;
 
 # Import character type and values.
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 % Char = /Core/Char/Ascii%.Char;
 
 # Import integer type and literal.

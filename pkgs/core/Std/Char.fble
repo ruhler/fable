@@ -1,0 +1,24 @@
+# @module[/Std/Char%]
+#  The character type.
+
+@ Int@ = /Std/Int%.Int@;
+
+# @type[Char@] The character type.
+#  The character type corresponds to unicode code points.
+@ Char@ = *(Int@ pos);  # TODO: .%(@/Std/Char%);
+
+# @func[Char] Construct a character from a unicode code point.
+#  @arg[Int@][pos] The unicode code point of the character to construct.
+#  @returns[Char@] A character with the given unicode code point.
+(Int@) { Char@; } Char = (Int@ pos) {
+  @(pos);
+};
+
+# @func[Pos] Gets the unicode code point of a character.
+#  @arg[Char@][c] The character to get the code point of.
+#  @returns[Int@] The unicode code point of the given character.
+(Char@) { Int@; } Pos = (Char@ c) {
+  c.pos;
+};
+
+@(Char@, Char, Pos);

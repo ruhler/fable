@@ -1,6 +1,6 @@
 
-@ Char@ = /Core/Char%.Char@;
-% Unicode = /Core/Char%.Char;
+@ Char@ = /Std/Char%.Char@;
+% Unicode = /Std/Char%.Char;
 
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;

@@ -1,5 +1,5 @@
 
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 
 @ IntP@ = /Std/Int/IntP%.IntP@;
 % 10 = /Std/Int/IntP%.10;

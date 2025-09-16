@@ -1,7 +1,7 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;

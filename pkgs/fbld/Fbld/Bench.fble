@@ -23,7 +23,7 @@
 @ Unit@ = /Std/Unit%.Unit@;
 
 (String@) { List@<Int@>; } Bytes = (String@ str) {
-  /Std/List%.Map(str, /Core/Char%.Pos);
+  /Std/List%.Map(str, /Std/Char%.Pos);
 };
 
 Test@ Bench = Test(Str|Fbld, (Unit@ _) {

@@ -3,7 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 % Char = /Core/Char/Ascii%.Char;
 % IsNewline = /Core/Char/Type%.IsNewline;
 

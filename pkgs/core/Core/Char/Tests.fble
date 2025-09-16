@@ -4,8 +4,8 @@
 
 % Char = /Core/Char/Ascii%.Char;
 
-% Chr = /Core/Char%.Char;
-% Pos = /Core/Char%.Pos;
+% Chr = /Std/Char%.Char;
+% Pos = /Std/Char%.Pos;
 
 % IsAlNum = /Core/Char/Type%.IsAlNum;
 % IsAlpha = /Core/Char/Type%.IsAlpha;

@@ -6,6 +6,9 @@ Things to consider doing for the fble-0.6 release.
   ComplementCode function. Maybe use a map instead?
   Similar for /Invaders/Graphics%.String.
 
+* Change FbleNewCharValue to take wchar_t.
+* Change FbleCharValueAccess to return wchar_t.
+
 * Does private type access restrict access to literals?
   Like, if Digit@ was private, could I still construct a list of Digit@ via a
   literal? Hopefully the answer is no? It probably works fine, but maybe worth
@@ -19,6 +22,7 @@ Things to consider doing for the fble-0.6 release.
 * Update tutorial on literals.
   - Particularly about 'longest' versus 'first' match.
 * Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
+* Update tutorials for character library.
 
 * Implement Cmp@ for Unit, Bool, Int, List.
 

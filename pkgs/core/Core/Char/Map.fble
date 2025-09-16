@@ -1,10 +1,9 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-@ Char@ = /Core/Char%.Char@;
-
-% Pos = /Core/Char%.Pos;
-% Char = /Core/Char%.Char;
+@ Char@ = /Std/Char%.Char@;
+% Pos = /Std/Char%.Pos;
+% Char = /Std/Char%.Char;
 
 @ Int@ = /Std/Int%.Int@;
 

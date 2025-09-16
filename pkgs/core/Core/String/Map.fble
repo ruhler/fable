@@ -1,6 +1,6 @@
 
 # Map@ instance for mapping String@ to V@.
-@ Char@ = /Core/Char%.Char@;
+@ Char@ = /Std/Char%.Char@;
 % CharMap = /Core/Char/Map%.Map;
 
 @(Map: /Core/List/Map%.Map<CharMap.Map@, Char@>(CharMap));
