@@ -133,8 +133,8 @@ ParseM@<Unit@> ParseFromStart = {
   line.just.?(empty: Error<Unit@>(Str|'empty line'));
 
   Char@ c = line.just.items.head;
-  /Core/Char/Eq%.Eq(Char|c, c).?(true: ParseFromStart);
-  /Core/Char/Eq%.Eq(Char|p, c).?(true: ParseFromHeader(line.just));
+  /Std/Char/Eq%.Eq(Char|c, c).?(true: ParseFromStart);
+  /Std/Char/Eq%.Eq(Char|p, c).?(true: ParseFromHeader(line.just));
   Error<Unit@>(Strs[Str|'invalid line: ', line.just]);
 };
 
@@ -148,7 +148,7 @@ ParseM@<Unit@> ParseFromStart = {
 
 (String@) { Parse@<Formula@>; } Parse = (String@ dimacs) {
   ParseLines(Split(dimacs, (Char@ c) {
-    /Core/Char/Eq%.Eq(c, Chars.nl);
+    /Std/Char/Eq%.Eq(c, Chars.nl);
   }));
 };
 

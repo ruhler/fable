@@ -33,14 +33,14 @@
 };
 
 (Char@) { Bool@; } IsNewline = (Char@ c) {
-  /Core/Char/Eq%.Eq(Chars.nl, c);
+  /Std/Char/Eq%.Eq(Chars.nl, c);
 };
 
 (Char@) { Bool@; } IsSpace = (Char@ c) {
-  /Core/Char/Eq%.Eq(Char|' ', c).?(true: True);
-  /Core/Char/Eq%.Eq(Chars.nl, c).?(true: True);
-  /Core/Char/Eq%.Eq(Chars.cr, c).?(true: True);
-  /Core/Char/Eq%.Eq(Chars.tab, c).?(true: True);
+  /Std/Char/Eq%.Eq(Char|' ', c).?(true: True);
+  /Std/Char/Eq%.Eq(Chars.nl, c).?(true: True);
+  /Std/Char/Eq%.Eq(Chars.cr, c).?(true: True);
+  /Std/Char/Eq%.Eq(Chars.tab, c).?(true: True);
   False;
 };
 

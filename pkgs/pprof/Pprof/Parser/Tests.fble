@@ -57,22 +57,22 @@ String@ HexEncoded = Str|'
 
 (Char@) { Int@; }
 HexToInt = (Char@ c) {
-  /Core/Char/Eq%.Eq(c, Char|0).?(true: Int|0);
-  /Core/Char/Eq%.Eq(c, Char|1).?(true: Int|1);
-  /Core/Char/Eq%.Eq(c, Char|2).?(true: Int|2);
-  /Core/Char/Eq%.Eq(c, Char|3).?(true: Int|3);
-  /Core/Char/Eq%.Eq(c, Char|4).?(true: Int|4);
-  /Core/Char/Eq%.Eq(c, Char|5).?(true: Int|5);
-  /Core/Char/Eq%.Eq(c, Char|6).?(true: Int|6);
-  /Core/Char/Eq%.Eq(c, Char|7).?(true: Int|7);
-  /Core/Char/Eq%.Eq(c, Char|8).?(true: Int|8);
-  /Core/Char/Eq%.Eq(c, Char|9).?(true: Int|9);
-  /Core/Char/Eq%.Eq(c, Char|a).?(true: Int|10);
-  /Core/Char/Eq%.Eq(c, Char|b).?(true: Int|11);
-  /Core/Char/Eq%.Eq(c, Char|c).?(true: Int|12);
-  /Core/Char/Eq%.Eq(c, Char|d).?(true: Int|13);
-  /Core/Char/Eq%.Eq(c, Char|e).?(true: Int|14);
-  /Core/Char/Eq%.Eq(c, Char|f).?(true: Int|15);
+  /Std/Char/Eq%.Eq(c, Char|0).?(true: Int|0);
+  /Std/Char/Eq%.Eq(c, Char|1).?(true: Int|1);
+  /Std/Char/Eq%.Eq(c, Char|2).?(true: Int|2);
+  /Std/Char/Eq%.Eq(c, Char|3).?(true: Int|3);
+  /Std/Char/Eq%.Eq(c, Char|4).?(true: Int|4);
+  /Std/Char/Eq%.Eq(c, Char|5).?(true: Int|5);
+  /Std/Char/Eq%.Eq(c, Char|6).?(true: Int|6);
+  /Std/Char/Eq%.Eq(c, Char|7).?(true: Int|7);
+  /Std/Char/Eq%.Eq(c, Char|8).?(true: Int|8);
+  /Std/Char/Eq%.Eq(c, Char|9).?(true: Int|9);
+  /Std/Char/Eq%.Eq(c, Char|a).?(true: Int|10);
+  /Std/Char/Eq%.Eq(c, Char|b).?(true: Int|11);
+  /Std/Char/Eq%.Eq(c, Char|c).?(true: Int|12);
+  /Std/Char/Eq%.Eq(c, Char|d).?(true: Int|13);
+  /Std/Char/Eq%.Eq(c, Char|e).?(true: Int|14);
+  /Std/Char/Eq%.Eq(c, Char|f).?(true: Int|15);
 
   Int@ undefined;
   undefined;

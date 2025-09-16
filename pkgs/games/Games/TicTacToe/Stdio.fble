@@ -76,36 +76,36 @@
   in.?(empty: Nothing<Input@>);
 
   Char@ c = in.items.head;
-  /Core/Char/Eq%.Eq(c, Char|A).?(true: {
+  /Std/Char/Eq%.Eq(c, Char|A).?(true: {
     in.items.tail.?(empty: Nothing<Input@>);
     Char@ r = in.items.tail.items.head;
-    /Core/Char/Eq%.Eq(r, Char|1).?(true: Just(Input@(move: Move@(given: Position@(UL: Unit)))));
-    /Core/Char/Eq%.Eq(r, Char|2).?(true: Just(Input@(move: Move@(given: Position@(UC: Unit)))));
-    /Core/Char/Eq%.Eq(r, Char|3).?(true: Just(Input@(move: Move@(given: Position@(UR: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|1).?(true: Just(Input@(move: Move@(given: Position@(UL: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|2).?(true: Just(Input@(move: Move@(given: Position@(UC: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|3).?(true: Just(Input@(move: Move@(given: Position@(UR: Unit)))));
     Nothing<Input@>;
   });
 
-  /Core/Char/Eq%.Eq(c, Char|B).?(true: {
+  /Std/Char/Eq%.Eq(c, Char|B).?(true: {
     in.items.tail.?(empty: Nothing<Input@>);
     Char@ r = in.items.tail.items.head;
-    /Core/Char/Eq%.Eq(r, Char|1).?(true: Just(Input@(move: Move@(given: Position@(ML: Unit)))));
-    /Core/Char/Eq%.Eq(r, Char|2).?(true: Just(Input@(move: Move@(given: Position@(MC: Unit)))));
-    /Core/Char/Eq%.Eq(r, Char|3).?(true: Just(Input@(move: Move@(given: Position@(MR: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|1).?(true: Just(Input@(move: Move@(given: Position@(ML: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|2).?(true: Just(Input@(move: Move@(given: Position@(MC: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|3).?(true: Just(Input@(move: Move@(given: Position@(MR: Unit)))));
     Nothing<Input@>;
   });
 
-  /Core/Char/Eq%.Eq(c, Char|C).?(true: {
+  /Std/Char/Eq%.Eq(c, Char|C).?(true: {
     in.items.tail.?(empty: Nothing<Input@>);
     Char@ r = in.items.tail.items.head;
-    /Core/Char/Eq%.Eq(r, Char|1).?(true: Just(Input@(move: Move@(given: Position@(LL: Unit)))));
-    /Core/Char/Eq%.Eq(r, Char|2).?(true: Just(Input@(move: Move@(given: Position@(LC: Unit)))));
-    /Core/Char/Eq%.Eq(r, Char|3).?(true: Just(Input@(move: Move@(given: Position@(LR: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|1).?(true: Just(Input@(move: Move@(given: Position@(LL: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|2).?(true: Just(Input@(move: Move@(given: Position@(LC: Unit)))));
+    /Std/Char/Eq%.Eq(r, Char|3).?(true: Just(Input@(move: Move@(given: Position@(LR: Unit)))));
     Nothing<Input@>;
   });
 
-  /Core/Char/Eq%.Eq(c, Char|P).?(true: Just(Input@(move: Move@(ai: Unit))));
-  /Core/Char/Eq%.Eq(c, Char|Q).?(true: Just(Input@(quit: Unit)));
-  /Core/Char/Eq%.Eq(c, Char|R).?(true: Just(Input@(reset: Unit)));
+  /Std/Char/Eq%.Eq(c, Char|P).?(true: Just(Input@(move: Move@(ai: Unit))));
+  /Std/Char/Eq%.Eq(c, Char|Q).?(true: Just(Input@(quit: Unit)));
+  /Std/Char/Eq%.Eq(c, Char|R).?(true: Just(Input@(reset: Unit)));
 
   Nothing<Input@>;
 };

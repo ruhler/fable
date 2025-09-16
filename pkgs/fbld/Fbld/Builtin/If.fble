@@ -35,7 +35,7 @@ Int@ 4 = Int|4;
 <@>@ Result@ = /Fbld/Result%.Result@;
 % r = /Fbld/Result%.Monad;
 
-% EqMaybeChar = /Core/Maybe/Eq%.Eq(/Core/Char/Eq%.Eq);
+% EqMaybeChar = /Core/Maybe/Eq%.Eq(/Std/Char/Eq%.Eq);
 
 (Markup@, Markup@) { Result@<Bool@>; }
 Equals = (Markup@ a, Markup@ b) {

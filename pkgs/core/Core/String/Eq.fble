@@ -12,14 +12,14 @@
 
 # Eq --
 #   Implementation of Eq@ for String@. See documentation of /Eq%.Eq@.
-Eq@<String@> Eq = /Std/List/Eq%.Eq(/Core/Char/Eq%.Eq);
+Eq@<String@> Eq = /Std/List/Eq%.Eq(/Std/Char/Eq%.Eq);
 
 # StartsWith --
 #   Returns true if the string str starts with sub.
 (String@, String@) { Bool@; } StartsWith = (String@ str, String@ sub) {
   sub.?(empty: True);
   str.?(empty: False);
-  /Core/Char/Eq%.Eq(str.items.head, sub.items.head).?(false: False);
+  /Std/Char/Eq%.Eq(str.items.head, sub.items.head).?(false: False);
   StartsWith(str.items.tail, sub.items.tail);
 };
 
@@ -34,7 +34,7 @@ Eq@<String@> Eq = /Std/List/Eq%.Eq(/Core/Char/Eq%.Eq);
 
 (String@, Char@) { List@<String@>; }
 Split = (String@ str, Char@ ch) {
-  /Std/List/Search%.Split(str, /Core/Char/Eq%.Eq(ch));
+  /Std/List/Search%.Split(str, /Std/Char/Eq%.Eq(ch));
 };
 
 @(Eq, StartsWith, Contains, Split);

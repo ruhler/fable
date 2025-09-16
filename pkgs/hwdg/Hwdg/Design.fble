@@ -75,9 +75,9 @@
 #   Rule@ r = Rule|'10.. => ..0.';
 (List@<Ascii@>) { Rule@; } Rule = {
   (Char@) { PortSpec@; } FromChar = (Char@ c) {
-    /Core/Char/Eq%.Eq(Char|0, c).?(true: Just(Data.0));
-    /Core/Char/Eq%.Eq(Char|1, c).?(true: Just(Data.1));
-    /Core/Char/Eq%.Eq(Char|'.', c).?(true: Nothing<Data@>);
+    /Std/Char/Eq%.Eq(Char|0, c).?(true: Just(Data.0));
+    /Std/Char/Eq%.Eq(Char|1, c).?(true: Just(Data.1));
+    /Std/Char/Eq%.Eq(Char|'.', c).?(true: Nothing<Data@>);
     Nothing<Maybe@<Data@>>.just;  # Invalid PortSpec character.
   };
 

@@ -48,7 +48,7 @@
 @ Text@ = /Fbld/Text%.Text@;
 
 (Char@) { Bool@; } IsNameChar = (Char@ c) {
-  /Core/Char/Eq%.Eq(Char|'_', c).?(true: True);
+  /Std/Char/Eq%.Eq(Char|'_', c).?(true: True);
   IsAlNum(c);
 };
 
@@ -68,8 +68,8 @@ M@<String@> Name = {
 (Int@) { M@<String@>; } Literal = (Int@ nest) {
   Char@ head <- Do(Get);
   Int@ nnest = {
-    /Core/Char/Eq%.Eq(Char|'{', head).?(true: Incr(nest));
-    /Core/Char/Eq%.Eq(Char|'}', head).?(true: Decr(nest));
+    /Std/Char/Eq%.Eq(Char|'{', head).?(true: Incr(nest));
+    /Std/Char/Eq%.Eq(Char|'}', head).?(true: Decr(nest));
     nest;
   };
   IsZero(nnest).?(true: Return(Str|''));
@@ -87,7 +87,7 @@ M@<List@<Markup@>> Args = {
   regular.?(true: {
     M@<Unit@> end = {
       CharL@ cl <- Do(GetL);
-      /Core/Char/Eq%.Eq(Char|']', cl.c).?(true: Return(Unit));
+      /Std/Char/Eq%.Eq(Char|']', cl.c).?(true: Return(Unit));
       Unit@ _ <- Error<Unit@>;
       Text@(cl.l, Str|'Expected '']''');
     };
@@ -129,20 +129,20 @@ M@<Markup@> Command = {
   done.?(true: Return(@(plain: Str|'', markup: Empty)));
 
   Char@ c <- Do(Get);
-  /Core/Char/Eq%.Eq(c, Char|'@').?(true: {
+  /Std/Char/Eq%.Eq(c, Char|'@').?(true: {
     Markup@ command <- Do(Command);
     Markup@ tail <- Do(Inline(end));
     Return(@(plain: Str|'', markup: Append(command, tail)));
   });
 
   Char@ h <- Do({
-    /Core/Char/Eq%.Eq(Char|'\', c).?(true: {
+    /Std/Char/Eq%.Eq(Char|'\', c).?(true: {
       CharL@ e <- Do(GetL);
-      /Core/Char/Eq%.Eq(e.c, Char|'@').?(true: Return(Char|'@'));
-      /Core/Char/Eq%.Eq(e.c, Char|'[').?(true: Return(Char|'['));
-      /Core/Char/Eq%.Eq(e.c, Char|'\').?(true: Return(Char|'\'));
-      /Core/Char/Eq%.Eq(e.c, Char|']').?(true: Return(Char|']'));
-      /Core/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(Chars.nl));
+      /Std/Char/Eq%.Eq(e.c, Char|'@').?(true: Return(Char|'@'));
+      /Std/Char/Eq%.Eq(e.c, Char|'[').?(true: Return(Char|'['));
+      /Std/Char/Eq%.Eq(e.c, Char|'\').?(true: Return(Char|'\'));
+      /Std/Char/Eq%.Eq(e.c, Char|']').?(true: Return(Char|']'));
+      /Std/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(Chars.nl));
       Unit@ _ <- Error<Char@>;
       Text@(e.l, Strs[Str|'Unsupported escape sequence: ''\', List[e.c, Char|'''']]);
     });

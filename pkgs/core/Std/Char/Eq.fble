@@ -1,0 +1,15 @@
+# @module[/Std/Char/Eq%]
+#  The Eq@ instance for Char@.
+
+@ Char@ = /Std/Char%.Char@;
+<@>@ Eq@ = /Std/Eq%.Eq@;
+
+# @func[Eq] Check two characters for equality.
+#  @arg[Char@][a] The first operand.
+#  @arg[Char@][b] The second operand.
+#  @returns[Bool@] True if the operands are equal, false otherwise.
+Eq@<Char@> Eq = (Char@ a, Char@ b) {
+  /Std/Int/Eq%.Eq(a.pos, b.pos);
+};
+
+@(Eq);

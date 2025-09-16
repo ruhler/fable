@@ -103,7 +103,7 @@ GetArgs = (List@<String@> args, Args@ default) {
     GetArgs(args.items.tail, default.@(benchmark: True));
   });
 
-  /Core/Char/Eq%.Eq(arg.items.head, Char|'-').?(false: {
+  /Std/Char/Eq%.Eq(arg.items.head, Char|'-').?(false: {
     GetArgs(args.items.tail, default.@(file: arg));
   });
 

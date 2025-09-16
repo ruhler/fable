@@ -149,7 +149,7 @@ M@<CharL@> GetL = {
 
   /Std/Int/Ord%.Le(cl.l.col, indent).?(true: {
     IsNewline(cl.c).?(true: Return(cl));
-    /Core/Char/Eq%.Eq(Char|' ', cl.c).?(true: GetL);
+    /Std/Char/Eq%.Eq(Char|' ', cl.c).?(true: GetL);
     Unit@ _ <- Error<CharL@>;
     Text@(cl.l, Str|'end of indented block');
   });
@@ -209,7 +209,7 @@ M@<Unit@> EndOfInput = {
 String = (String@ s) {
   s.?(empty: Return(Unit));
   CharL@ c <- Do(GetL);
-  /Core/Char/Eq%.Eq(s.items.head, c.c).?(
+  /Std/Char/Eq%.Eq(s.items.head, c.c).?(
     true: String(s.items.tail),
     false: {
       Unit@ _ <- Error<Unit@>;
