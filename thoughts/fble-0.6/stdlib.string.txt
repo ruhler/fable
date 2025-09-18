@@ -1,0 +1,159 @@
+String@
+=======
+
+We have Char@ as a unicode code point. String@ will be List@<Char@>. The
+question is, what other library functions should we define explicitly for
+String@?
+
+What I have today:
+* String@
+* Str, StrE
+* Strs
+* Join, Lines
+* Standard interfaces: Eq, Ord, etc.
+
+Python has a bunch:
+* capitalize, lower, upper, title, swapcase: Change capitialization of characters in the string.
+* casefold: make a version of the string suitable for caseless comparison.
+* center, ljust, rjust, zfill: pad the string to a target width.
+* count: number of non-overlapping instances of a substring in the string
+* encode: convert to sequence of bytes using given encoding scheme.
+* startswith, endswith
+* expandtabs - replace tab characters in the string with spaces.
+* find, index, partition, rfind, rindex, rpartition, split, rsplit, splitlines - list search for string
+* format, format_map - printf style string construction.
+* isalnum, isalpha, isascii, isdecimal, isdigit, isidentifier, islower,
+  isnumeric, isprintable, isspace, istitle, isupper - character class tests
+  extended to strings.
+* join
+* lstrip, strip, rstrip - remove leading/trailing characters from string.
+* removeprefix, removesuffix - remove leading/trailing seqs from a string.
+* maketrans, translate - makes a mapping from char to char for charset recoding?
+* replace
+
+Java:
+* Construction of string from bytes, chars, int code points
+* charAt, codePointAt, subSequence, substring - indexing into strings
+* codePointCount, offsetByCodePoints - counting code points in a string range.
+* compareTo, compareToIgnoreCase
+* contestEquals, equals, equalsIgnoreCase, regionMatches - equality check
+* concat - append
+* contains, endsWith, indexOf, lastIndexOf, startsWith - subsequence search
+* format - printf style string construction
+* getBytes
+* join, split
+* length
+* matches - regex
+* replace, replaceAll, replaceFirst
+* toLowerCase, toUpperCase
+* trim
+* valueOf - conversion of common data types to strings
+
+C99:
+* strcpy, strcat, strcmp, strcoll, strlen
+* strchr, strcspn, strpbrk, strrchr, strspn, strstr, strtok
+
+Go:
+* Compare, 
+* <, ==, >
+* Contains, ContainsAny, ContainsFunc, ContainsRune
+* HasPrefix, HasSuffix
+* Index, IndexAny, IndexByte, IndexFunc, IndexRune, LastIndex, LastIndexAny
+  LastIndexByte, LastIndexFunc, 
+* Count: number of non-overlapping instances of a substring in the string
+* Cut, CutPrefix, CutSuffix - like split/break
+* EqualFold - equality with unicode case folding
+* Fields, FieldsFunc, FieldsFuncSeq, FieldsSeq - split around whitespace
+* Join
+* Split, SplitAfter, SplitAfterN, SplitAfterSeq, SplitN, SplitSeq
+* Lines
+* Map, Replace, ReplaceAll
+* Repeat - string constructor
+* Title, ToLower, ToLowerSpecial, ToTitle, ToTitleSpecial
+  ToUpper, ToUpperSpecial - unicode case conversion
+* ToValidUTF8
+* Trim, TrimFunc, TrimLeft, TrimLeftFunc, TrimPrefix, TrimRight,
+  TrimRightFunc, TrimSpace, TrimSuffix
+* Builder
+
+It's a lot of random stuff. Can we organize it to make a little more sense of
+things?
+
+Categories of stuff:
+* String construction - printf like formating
+* Unicode specific stuff
+ - case conversions
+ - equality
+ - collation ordering
+* Encoding to/from different character encodings
+* Specializations of list operations
+* Regex in the case of Java
+* Conversion of things to strings
+* Equality and ordering.
+
+I explicitly want to move unicode database dependent stuff to a different
+library. Regex too. I don't see a place for encodings here, that also goes
+into unicode. Conversion to strings will go to show.
+
+So, basically we have:
+* string construction
+* specializations of list operations
+* equality and ordering
+
+The hardest part is probably deciding what all exact specializations of list
+operations we want to support. Because there appear to be many different
+options, and a lot of them feel weird to me, like does anyone actually use all
+these library things?
+
+It's probably worth having an in-depth discussion on printf like formatting
+versus string concatenation.
+
+---
+
+Straw Proposal:
+  /Std/String%:
+    String@
+    Strs - specialization of concat with shorter name.
+
+  /Std/String/Lit%:
+    Str, StrE - take CharLit@ as arguments. Don't use these directly.
+
+Question: When should we re-export something as a specialization for String as
+opposed to using it directly from the List libraries? Like, should String@ be
+treated as more of an abstract type, or should it be blatantly List@ and
+anyone who wants to do list operations on it should use the List% operations
+directly?
+
+* Maybe people don't know whether to look for a Join function in List% or
+  String%, so having both means they can get it wherever?
+* But having the same function defined two different places feels odd: don't
+  we want to standardize which one you use?
+* Some specializations are worth providing new functions for. For example, the
+  List/Eq% functions can be specialized by providing Char equality already.
+  That definitely makes sense to do.
+* Special cases like 'Lines', which do a Join with a specific character make
+  sense to provide string specific.
+
+I'm leaning towards: if you could just use the List function as is, don't
+create a special copy for String@. If some knowledge about Char@ is being
+provided to that specialization, make a specialized version for String@.
+
+Okay, so... Strs? Worth it? Or we just reuse Concat? Join?
+
+Let's see how painful it would be to use /Std/List%.Join instead of
+/Core/String%.Join.
+* We only used it one place. Certainly changing it wasn't hard.
+* Slightly awkward that you need to think of String@ as a List@ now, and
+  import Join as <@>% instead of %. That adds a little bit of complexity.
+
+But I don't want to have to copy all the list functions that can be used
+directly on strings. Better for people to get used to the idea they can reuse
+list functions on strings? I don't know. I'm not sold.
+
+Consider other similar list functions:
+* Empty, Append, Concat, Head, Tail, Last, Init, ForEach, Map, Reverse.
+
+Yeah, I don't want to make copies of all of those. Let's avoid specializing
+without good reason.
+
+ 

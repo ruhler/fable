@@ -1,8 +1,9 @@
 
+<@>% Join = /Std/List%.Join;
+
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
-% Join = /Core/String%.Join;
 % Lines = /Core/String%.Lines;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
