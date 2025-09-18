@@ -9,10 +9,10 @@
 @ Hex@ = /Core/Digits%.Hex@;
 
 <@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
 @ String@ = /Core/String%.String@;
-% Strs = /Core/String%.Strs;
 
 % H8 = /Md5/Bits/Bit8%.H8;
 
@@ -49,7 +49,7 @@
 };
 
 (Hash@){ String@; } Show = (Hash@ x) {
-  Strs[
+  Concat[
       List[Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)],
       List[Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)],
       List[Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)],

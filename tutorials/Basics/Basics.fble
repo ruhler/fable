@@ -1,8 +1,9 @@
 
 # Imports
+<@>% Concat = /Std/List%.Concat;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 # Types
 @ Unit@ = *();
@@ -35,10 +36,10 @@ Bit4@ Z = And4(X, Y);
 };
 
 (Bit4@) { String@; } ShowBit4 = (Bit4@ a) {
-  Strs[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
+  Concat[ShowBit(a.3), ShowBit(a.2), ShowBit(a.1), ShowBit(a.0)];
 };
 
-String@ output = Strs[
+String@ output = Concat[
   ShowBit4(X), Str|' AND ', ShowBit4(Y), Str|' = ', ShowBit4(Z)];
 
 /Core/Stdio/StringO%.Run(output);

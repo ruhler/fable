@@ -7,6 +7,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -20,7 +21,6 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -42,7 +42,7 @@
 
 (Board@) { String@; } ShowBoard = (Board@ b) {
   String@ _ = Str|' ';
-  Strs[
+  Concat[
     StrE|'  1 2 3\n',
     Str|'A ', ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), StrE|'\n',
     Str|'B ', ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), StrE|'\n',
@@ -55,9 +55,9 @@
 
 (GameStatus@) { String@; } ShowStatus = (GameStatus@ s) {
   s.?(
-    playing: Strs[Str|'Player ', ShowPlayer(s.playing), Str|' move:'],
+    playing: Concat[Str|'Player ', ShowPlayer(s.playing), Str|' move:'],
     ended: s.ended.?(
-      win: Strs[
+      win: Concat[
         Str|'GAME OVER: Player ',
         ShowPlayer(s.ended.win),
         Str|' wins.'],
@@ -65,7 +65,7 @@
 };
 
 (Game@) { String@; } ShowGame = (Game@ game) {
-  Strs[
+  Concat[
     ShowBoard(game.board), List[Chars.nl],
     ShowStatus(game.status), List[Chars.nl]];
 };
@@ -123,7 +123,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
 
     Maybe@<Input@> mi = ParseInput(line);
     mi.?(nothing: {
-      Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+      Unit@ _ <- m.do(O.PutLine(stdio.out, Concat[
         Str|'invalid input: ',
         Str|'expected {A,B,C}{1,2,3}, P, Q, or R']));
       TicTacToe(game);

@@ -1,4 +1,5 @@
 
+<@>% Concat = /Std/List%.Concat;
 <@>% Join = /Std/List%.Join;
 
 <@>@ Show@ = /Core/Show%.Show@;
@@ -6,7 +7,6 @@
 @ String@ = /Core/String%.String@;
 % Lines = /Core/String%.Lines;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
 @ Clause@ = /SatGame/Puzzle%.Clause@;
@@ -15,7 +15,7 @@
 
 Show@<Literal@> Literal = (Literal@ literal) {
   String@ sign = literal.pos.?(true: Str|'+', false: Str|'-');
-  Strs[sign, /SatGame/Var/Show%.Show(literal.var)];
+  Concat[sign, /SatGame/Var/Show%.Show(literal.var)];
 };
 
 Show@<Clause@> Clause = (Clause@ clause) {
@@ -27,7 +27,7 @@ Show@<Puzzle@> Puzzle = (Puzzle@ puzzle) {
 };
 
 Show@<Params@> Params = (Params@ params) {
-  Strs[
+  Concat[
     Str|'Vars: ', /Core/Int/Show%.Show(params.num_vars), Str|', ',
     Str|'Clauses: ', /Core/Int/Show%.Show(params.num_clauses), Str|', ',
     Str|'Vars Per Clause: ', /Core/Int/Show%.Show(params.num_literals_per_clause)];

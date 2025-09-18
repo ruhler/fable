@@ -6,6 +6,7 @@ Int@ 0 = /Std/Int%.0;
 Int@ 1 = /Std/Int%.1;
 
 <@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 <@>% Get = /Std/List/Index%.Get;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -14,7 +15,6 @@ Int@ 1 = /Std/Int%.1;
 
 
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -39,7 +39,7 @@ Int@ 1 = /Std/Int%.1;
     empty: r.return(Nothing<Char@>),
     plain: r.return(Just(markup.plain.text.items.head)),
     command: {
-      Error<Maybe@<Char@>>(markup.command.name.loc, Strs[
+      Error<Maybe@<Char@>>(markup.command.name.loc, Concat[
           Str|'expected plain text, but found command @',
           markup.command.name.text]);
     },
@@ -64,7 +64,7 @@ Impl@ Head = (Env@ env, Command@ cmd) {
       r.return(Plain(markup.plain.loc, markup.plain.text.items.tail));
     },
     command: {
-      Error<Markup@>(markup.command.name.loc, Strs[
+      Error<Markup@>(markup.command.name.loc, Concat[
           Str|'expected plain text, but found command @',
           markup.command.name.text]);
     },

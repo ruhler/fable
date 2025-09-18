@@ -12,6 +12,7 @@
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
 <@>% Reverse = /Std/List%.Reverse;
+<@>% Concat = /Std/List%.Concat;
 <@>% Length = /Std/List/Index%.Length;
 <@>% Split = /Std/List/Search%.Split;
 
@@ -21,7 +22,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -106,18 +106,18 @@ ParseM@<Unit@> ParseClauses = {
   List@<String@> words = Split(header, IsSpace);
   Int@ num_words = Length(words);
   /Std/Int/Eq%.Eq(num_words, Int|4).?(false: {
-    Error<Unit@>(Strs[Str|'invalid header line: ', header]);
+    Error<Unit@>(Concat[Str|'invalid header line: ', header]);
   });
 
   String@ p = words.items.head;
   String@ cnf = words.items.tail.items.head;
 
   /Core/String/Eq%.Eq(p, Str|'p').?(false: {
-    Error<Unit@>(Strs[Str|'expected ''p'', but got: ', p]);
+    Error<Unit@>(Concat[Str|'expected ''p'', but got: ', p]);
   });
 
   /Core/String/Eq%.Eq(cnf, Str|'cnf').?(false: {
-    Error<Unit@>(Strs[Str|'expected ''cnf'', but got: ', cnf]);
+    Error<Unit@>(Concat[Str|'expected ''cnf'', but got: ', cnf]);
   });
 
   # TODO: check syntax and values of nbvars and nbclauses?
@@ -135,7 +135,7 @@ ParseM@<Unit@> ParseFromStart = {
   Char@ c = line.just.items.head;
   /Std/Char/Eq%.Eq(Char|c, c).?(true: ParseFromStart);
   /Std/Char/Eq%.Eq(Char|p, c).?(true: ParseFromHeader(line.just));
-  Error<Unit@>(Strs[Str|'invalid line: ', line.just]);
+  Error<Unit@>(Concat[Str|'invalid line: ', line.just]);
 };
 
 <@>@ Parse@ = <@ T@> { +(String@ error, T@ parsed); };

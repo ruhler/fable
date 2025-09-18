@@ -6,8 +6,9 @@
 <@>@ Cmp@ = /Std/Cmp%.Cmp@;
 @ Compared@ = /Std/Cmp%.Compared@;
 
+<@>% Concat = /Std/List%.Concat;
+
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 # Coord@ --
 #   A coordinate identifying a location in the memory/design grid.
@@ -51,7 +52,7 @@ Cmp@<Coord@> Ord = {
 };
 
 /Core/Show%.Show@<Coord@> Show = (Coord@ x) {
-  Strs[Str|'(', /Core/Int/Show%.Show(x.x), Str|',', /Core/Int/Show%.Show(x.y), Str|')'];
+  Concat[Str|'(', /Core/Int/Show%.Show(x.x), Str|',', /Core/Int/Show%.Show(x.y), Str|')'];
 };
 
 @(Coord@, Add, Eq, Lt, Ord, Show);

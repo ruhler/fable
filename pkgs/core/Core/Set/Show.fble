@@ -2,6 +2,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
+<@>% Concat = /Std/List%.Concat;
 <@>% Reverse = /Std/List%.Reverse;
 
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
@@ -10,7 +11,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 # Show --
 #   Implementation of Show@ for Set@<T@>. See documentation of
@@ -26,9 +26,9 @@
   Show@<S.Set@> show = (S.Set@ s) {
     List@<String@> elems = S.ForEach(s, List[Str|'{ '],
       (K@ x, List@<String@> es) {
-        Items(Strs[show_key(x), Str|'; '], es);
+        Items(Concat[show_key(x), Str|'; '], es);
       });
-    Strs(Reverse(Items(Str|'}', elems)));
+    Concat(Reverse(Items(Str|'}', elems)));
   };
 
   show;

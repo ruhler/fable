@@ -17,6 +17,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 
 % Graphics = /Invaders/Graphics%;
 
@@ -42,7 +43,6 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -122,7 +122,7 @@ State@ Dying = State@(dying: DyingWait);
   over.hidden.?(empty: over);
 
   GameOver@(over.hidden.items.tail,
-    Strs[over.visible, List[over.hidden.items.head]],
+    Concat[over.visible, List[over.hidden.items.head]],
     GameOverWait);
 };
 

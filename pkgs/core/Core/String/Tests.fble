@@ -14,7 +14,6 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
-% Strs = /Core/String%.Strs;
 % Lines = /Core/String%.Lines;
 
 % Split = /Core/String/Eq%.Split;
@@ -35,12 +34,6 @@ Test@ Tests = TestSuite(Str|String, List[
       Char|c, Char|'\',
       Char|d];
     String@ got = StrE|'a\nb\tc\\d';
-    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }),
-
-  Test(Str|Strs, (Unit@ _) {
-    String@ wnt = Str|'hellothere';
-    String@ got = Strs[Str|'hello', Str|'there'];
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 

@@ -1,14 +1,15 @@
 
+<@>% Concat = /Std/List%.Concat;
+
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 @ Entry@ = /Pprof/Query%.Entry@;
 @ Table@ = /Pprof/Query%.Table@;
 
 Show@<Entry@> Entry = (Entry@ x) {
-  Strs[
+  Concat[
     /Pprof/Profile/Show%.Sequence(x.seq),
     Str|': ',
     /Core/Int/Show%.Show(x.value)];

@@ -119,7 +119,7 @@ Test = <<@>@ M@, @ K@>(/Core/Map%.Map@<M@, K@> m, Eq@<K@> eq, Show@<K@> show, K@
           And(eq(a.key, b.key), /Std/Bool/Eq%.Eq(a.value, b.value));
         }),
         /Core/List/Show%.Show((Entry@ e) {
-          /Core/String%.Strs[show(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
+          /Std/List%.Concat[show(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
         }),
         wnt, got);
     })

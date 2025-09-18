@@ -6,6 +6,7 @@
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 <@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -20,7 +21,6 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -38,7 +38,7 @@ Eq@<Roots@> EqRoots = (Roots@ a, Roots@ b) {
 };
 
 Show@<Roots@> ShowRoots = (Roots@ r) {
-  Strs[Str|'(', /Pinball/Num%.Show(r.first), Str|',',
+  Concat[Str|'(', /Pinball/Num%.Show(r.first), Str|',',
     /Pinball/Num%.Show(r.second), Str|')'];
 };
 

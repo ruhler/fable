@@ -50,13 +50,6 @@
   Items(c, StrE(chars.items.tail));
 };
 
-# Strs --
-#   Concatenates a list of strings together.
-#
-# Example Use:
-#   String@ s = Strs[Str|'x is ', Show(x), Str|'.']
-(List@<String@>) { String@; } Strs = /Std/List%.Concat<Char@>;
-
 # Lines --
 #   Concatenates a list of strings together, adding newlines after each
 #   string.
@@ -66,4 +59,4 @@
   Append(strs.items.head, Items(Chars.nl, tail));
 };
 
-@(String@, Str, StrE, Strs, Lines);
+@(String@, Str, StrE, Lines);

@@ -16,12 +16,12 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -144,7 +144,7 @@ M@<Markup@> Command = {
       /Std/Char/Eq%.Eq(e.c, Char|']').?(true: Return(Char|']'));
       /Std/Char/Eq%.Eq(e.c, Char|'n').?(true: Return(Chars.nl));
       Unit@ _ <- Error<Char@>;
-      Text@(e.l, Strs[Str|'Unsupported escape sequence: ''\', List[e.c, Char|'''']]);
+      Text@(e.l, Concat[Str|'Unsupported escape sequence: ''\', List[e.c, Char|'''']]);
     });
     Return(c);
   });

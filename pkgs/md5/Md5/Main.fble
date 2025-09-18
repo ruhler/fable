@@ -8,6 +8,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 <@>% Any = /Std/List/Search%.Any;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -22,7 +23,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -43,7 +43,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     });
 
     istream.?(nothing: {
-      String@ msg = Strs[Str|'fble-md5: Unable to open ', filename];
+      String@ msg = Concat[Str|'fble-md5: Unable to open ', filename];
       Unit@ _ <- m.do(O.PutLine(stdio.err, msg));
       m.return(False);
     });
@@ -54,7 +54,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
     };
 
     Hash@ hash <- m.do(/Md5/Md5%.Md5(m, in));
-    String@ line = Strs[/Md5/Hash%.Show(hash), Str|'  ', filename];
+    String@ line = Concat[/Md5/Hash%.Show(hash), Str|'  ', filename];
     Unit@ _ <- m.do(O.PutLine(stdio.out, line));
     m.return(True);
   };

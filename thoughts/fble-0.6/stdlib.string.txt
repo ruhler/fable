@@ -156,4 +156,10 @@ Consider other similar list functions:
 Yeah, I don't want to make copies of all of those. Let's avoid specializing
 without good reason.
 
+Now let's try the harder one: Strs. Because I bet I use it a bunch. How big a
+deal is the longer name? We shall see.
+* No problem at all real. Just the same issue as before: knowing to look in
+  List instead of String, and having to deal with <@>% instead of % on import.
+* Except for tutorials: now we add that complexity of polymorphism early on in
+  tutorial land. Hmm...
  

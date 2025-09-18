@@ -19,6 +19,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -28,7 +29,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -54,8 +54,8 @@ Int@ 128 = Int|128;
 
 (Payload@) { String@; } ShowPayload = (Payload@ a) {
   a.?(
-    int: Strs[Str|'int ', /Core/Int/Show%.Show(a.int)],
-    length: Strs[Str|'length ', /Core/Int/Show%.Show(a.length)],
+    int: Concat[Str|'int ', /Core/Int/Show%.Show(a.int)],
+    length: Concat[Str|'length ', /Core/Int/Show%.Show(a.length)],
     bytes: Str|'bytes',
     empty: Str|'empty');
 };
@@ -63,7 +63,7 @@ Int@ 128 = Int|128;
 @ Record@ = *(FieldId@ field, Payload@ payload);
 
 (Record@) { String@; } _ShowRecord = (Record@ a) {
-  Strs[Str|'(', /Core/Int/Show%.Show(a.field), Str|':',
+  Concat[Str|'(', /Core/Int/Show%.Show(a.field), Str|':',
     ShowPayload(a.payload), Str|')'];
 };
 
@@ -145,7 +145,7 @@ Run = <@ A@>(Parser@<A@> parser)<<@>@ M@>(IStream@<M@> in, Monad@<M@> m) {
   Proto@<PM@> proto = {
     <@ A@>(String@) { PM@<A@>; }
     Fail = <@ A@>(String@ msg, S@ s) {
-      m.return(Error<R@<A@>>(Strs[
+      m.return(Error<R@<A@>>(Concat[
           Str|'error:', /Core/Int/Show%.Show(s),
           Str|': ', msg]));
     };

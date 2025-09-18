@@ -2,6 +2,7 @@
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
 <@>% Items = /Std/List%.Items;
+<@>% Concat = /Std/List%.Concat;
 <@>% Reverse = /Std/List%.Reverse;
 
 <<@>@,@>@ Map@ = /Core/Map%.Map@;
@@ -10,15 +11,14 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 <<@>@ M@, @ K@>(Map@<M@, K@>, Show@<K@>)<@ V@>(Show@<V@>) { Show@<M@<V@>>; }
 Show = <<@>@ M@, @ K@>(Map@<M@, K@> m, Show@<K@> show_key)<@ V@>(Show@<V@> show_value, M@<V@> map) {
   List@<String@> elems = m.ForEach(map, List[Str|'{ '],
     (K@ k, V@ v, List@<String@> es) {
-      Items(Strs[show_key(k), Str|' => ', show_value(v), Str|'; '], es);
+      Items(Concat[show_key(k), Str|' => ', show_value(v), Str|'; '], es);
     });
-  Strs(Reverse(Items(Str|'}', elems)));
+  Concat(Reverse(Items(Str|'}', elems)));
 };
 
 @(Show);

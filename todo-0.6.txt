@@ -23,6 +23,7 @@ Things to consider doing for the fble-0.6 release.
   - Particularly about 'longest' versus 'first' match.
 * Update tutorials for string literals: Foo(Str|...) now instead of Foo|...;
 * Update tutorials for character library.
+* Update tutorials for use of Concat instead of Strs.
 
 * Implement Cmp@ for Unit, Bool, Int, Char, List.
 

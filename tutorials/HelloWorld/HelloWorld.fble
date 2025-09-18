@@ -12,10 +12,12 @@ Bool@ False = /Std/Bool%.False;
 @ Int@ = /Std/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
+# Important list function.
+<@>% Concat = /Std/List%.Concat;
+
 # Import string type and functions.
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 % Lines = /Core/String%.Lines;
 
 # Specify the output string.
@@ -23,11 +25,11 @@ Char@ c = Char|A;
 Int@ x = Int|42;
 String@ output = Lines[
   Str|'hello, world',
-  Strs[Str|'A boolean: ', /Core/Bool/Show%.Show(True)],
-  Strs[Str|'A character: ', /Core/Char/Show%.Show(c)],
-  Strs[Str|'A list: ',
+  Concat[Str|'A boolean: ', /Core/Bool/Show%.Show(True)],
+  Concat[Str|'A character: ', /Core/Char/Show%.Show(c)],
+  Concat[Str|'A list: ',
     /Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, False, False]],
-  Strs[Str|'An integer: ', /Core/Int/Show%.Show(x)]];
+  Concat[Str|'An integer: ', /Core/Int/Show%.Show(x)]];
 
 # Call the helper function for a main function
 # that outputs a single string value.

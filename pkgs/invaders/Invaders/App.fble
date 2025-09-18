@@ -9,7 +9,9 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% Concat = /Std/List%.Concat;
 <@>% Any = /Std/List/Search%.Any;
+
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
@@ -18,7 +20,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -111,7 +112,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
     home.?(nothing: m.return(Int|0));
 
-    String@ filename = Strs[home.just, Str|'/.fble-invaders'];
+    String@ filename = Concat[home.just, Str|'/.fble-invaders'];
     Maybe@<IStream@<M@>> istream <- m.do(stdio.read(filename, /Core/Stdio%.Text));
     istream.?(nothing: m.return(Int|0));
 
@@ -138,7 +139,7 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, App@<M@> app, Int@ width,
     Maybe@<String@> home <- m.do(stdio.getenv(Str|HOME));
     home.?(nothing: m.return(Unit));
 
-    String@ filename = Strs[home.just, Str|'/.fble-invaders'];
+    String@ filename = Concat[home.just, Str|'/.fble-invaders'];
     Maybe@<OStream@<M@>> ostream <- m.do(stdio.write(filename, /Core/Stdio%.Text));
     ostream.?(nothing: m.return(Unit));
 

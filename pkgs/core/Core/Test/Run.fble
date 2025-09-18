@@ -3,6 +3,7 @@
 % True = /Std/Bool%.True;
 % False = /Std/Bool%.False;
 
+<@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
@@ -11,7 +12,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
@@ -31,8 +31,8 @@
     Run = (Test@ test, String@ prefix, Bool@ passing) {
       test.?(
         case: {
-          String@ name = Strs[prefix, test.case.name];
-          Unit@ _ <- m.do(PutStr(out, Strs[Str|'@[', name, Str|']: ']));
+          String@ name = Concat[prefix, test.case.name];
+          Unit@ _ <- m.do(PutStr(out, Concat[Str|'@[', name, Str|']: ']));
           TestResult@ tr = test.case.test(Unit);
           tr.?(
             pass: {
@@ -40,7 +40,7 @@
               m.return(passing);
             },
             fail: {
-              Unit@ _ <- m.do(PutLine(out, Strs[Str|'@FAILED: ', tr.fail]));
+              Unit@ _ <- m.do(PutLine(out, Concat[Str|'@FAILED: ', tr.fail]));
               m.return(False);
             },
             xfail: {
@@ -49,7 +49,7 @@
             });
         },
         suite: {
-          String@ nprefix = Strs[prefix, test.suite.name, Str|'.'];
+          String@ nprefix = Concat[prefix, test.suite.name, Str|'.'];
           ForEach(test.suite.tests, m.return(passing),
             (Test@ test, M@<Bool@> mp) {
               Bool@ passing <- m.do(mp);

@@ -1,4 +1,6 @@
 
+<@>% Concat = /Std/List%.Concat;
+
 @ Num@ = /Pinball/Num%.Num@;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
@@ -8,7 +10,6 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 # Edge@ --
@@ -32,7 +33,7 @@ Edge = (Vec@ start, Vec@ end, Num@ restitution) {
 };
 
 Show@<Edge@> Show = (Edge@ e) {
-  Strs[
+  Concat[
     Str|'(start: ', /Pinball/Vec%.Show(e.start),
     Str|', end: ', /Pinball/Vec%.Show(e.end),
     Str|', restitution: ', /Pinball/Num%.Show(e.restitution),

@@ -1,14 +1,15 @@
 
+<@>% Concat = /Std/List%.Concat;
+
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Command@ = /Fbld/Markup%.Command@;
 @ Markup@ = /Fbld/Markup%.Markup@;
 
 Show@<Command@> Command = (Command@ x) {
-  Strs[
+  Concat[
     /Fbld/Text/Show%.Show(x.name),
     /Core/List/Show%.Show(Markup, x.args)
   ];

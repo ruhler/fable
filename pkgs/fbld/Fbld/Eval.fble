@@ -3,11 +3,11 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
+<@>% Concat = /Std/List%.Concat;
 <@>% Length = /Std/List/Index%.Length;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -62,7 +62,7 @@ Evals = (Env@ env, List@<Markup@> markups) {
 AssertArgCount = (Int@ expected, Command@ cmd) {
   Int@ num_args = Length(cmd.args);
   /Std/Int/Eq%.Eq(num_args, expected).?(false: {
-    Error<Unit@>(cmd.name.loc, Strs[
+    Error<Unit@>(cmd.name.loc, Concat[
       Str|'Expected ', /Core/Int/Show%.Show(expected),
       Str|' arguments to ', cmd.name.text,
       Str|', but found ', /Core/Int/Show%.Show(num_args)]);

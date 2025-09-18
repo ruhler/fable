@@ -16,6 +16,7 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
+<@>% Concat = /Std/List%.Concat;
 <@>% ForEach = /Std/List%.ForEach;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
@@ -26,7 +27,6 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -43,7 +43,7 @@ Cmp@<Coord@> OrdCoord = (Coord@ a, Coord@ b) {
 };
 
 Show@<Coord@> ShowCoord = (Coord@ a) {
-  Strs[
+  Concat[
     Str|'(', /Core/Int/Show%.Show(a.row),
     Str|', ', /Core/Int/Show%.Show(a.col),
     Str|')'];

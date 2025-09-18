@@ -4,6 +4,8 @@
 
 <@>@ Eq@ = /Std/Eq%.Eq@;
 
+<@>% Concat = /Std/List%.Concat;
+
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
 % Sub = /Pinball/Num%.Sub;
@@ -13,7 +15,6 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 # Vec@ -- 
@@ -76,7 +77,7 @@ Eq@<Vec@> Eq = (Vec@ a, Vec@ b) {
 };
 
 Show@<Vec@> Show = (Vec@ a) {
-  Strs[Str|'(',
+  Concat[Str|'(',
     /Pinball/Num%.Show(a.x), Str|', ',
     /Pinball/Num%.Show(a.y), Str|')'];
 };

@@ -7,8 +7,9 @@
 % Int = /Core/Int/Lit%.Int;
 Int@ 1 = Int|1;
 
+<@>% Concat = /Std/List%.Concat;
+
 @ String@ = /Core/String%.String@;
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 # Location information used for error messages.
@@ -29,7 +30,7 @@ Int@ 1 = Int|1;
 
 # Prefix a message with location information.
 (Loc@, String@) { String@; } Report = (Loc@ l, String@ msg) {
-  Strs[l.file, Str|':',
+  Concat[l.file, Str|':',
     /Core/Int/Show%.Show(l.line), Str|':',
     /Core/Int/Show%.Show(l.col), Str|': ',
     msg];

@@ -1,9 +1,10 @@
 
+<@>% Concat = /Std/List%.Concat;
+
 @ String@ = /Core/String%.String@;
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
-String@ Menu = Strs[
+String@ Menu = Concat[
   Str|'<table><tr>',
   Str|'<td><a href="/">Overview</a></td>',
   Str|'<td><a href="/overall">Overall</a></td>',

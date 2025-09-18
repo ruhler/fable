@@ -20,10 +20,10 @@
 <@>% Items = /Std/List%.Items;
 <@>% Empty = /Std/List%.Empty;
 <@>% Last = /Std/List%.Last;
+<@>% Concat = /Std/List%.Concat;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -213,7 +213,7 @@ String = (String@ s) {
     true: String(s.items.tail),
     false: {
       Unit@ _ <- Error<Unit@>;
-      Text@(c.l, Strs[ Str|'Expected ''', List[s.items.head], Str|'''']);
+      Text@(c.l, Concat[ Str|'Expected ''', List[s.items.head], Str|'''']);
     });
 };
 

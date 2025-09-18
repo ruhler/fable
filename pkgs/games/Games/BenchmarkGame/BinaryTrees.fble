@@ -18,7 +18,6 @@
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -53,7 +52,7 @@ Main@ Main = <<@>@ M@>(Stdio@<M@> stdio, Monad@<M@> m) {
   % O = /Core/Stream/OStream%(m);
 
   (List@<String@>) { M@<Unit@>; } PutL = (List@<String@> strs) {
-    O.PutLine(stdio.out, Strs(strs));
+    O.PutLine(stdio.out, /Std/List%.Concat(strs));
   };
 
   (List@<String@> args) {

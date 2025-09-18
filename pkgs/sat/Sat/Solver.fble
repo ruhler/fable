@@ -12,6 +12,7 @@
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
 <@>% Append = /Std/List%.Append;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -24,7 +25,6 @@
 <<@>@>@ OStream@ = /Core/Stream%.OStream@;
 
 @ String@ = /Core/String%.String@;
-% Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
@@ -319,17 +319,17 @@ RemoveVarFromClause = (VarId@ var, ClauseId@ clause, Solver@ s) {
   Show@<Clause@> Clause = /Core/List/Show%.Show(Var);
 
   Show@<Why@> Why = (Why@ w) {
-    w.?(pure: Str|'pure', inferred: Strs[Str|'inferred from ', Id(w.inferred)]);
+    w.?(pure: Str|'pure', inferred: Concat[Str|'inferred from ', Id(w.inferred)]);
   };
 
   Show@<Assign@> Assign = (Assign@ op) {
-    Strs[Str|'Assign ', Var(op.var), Str|' (', Why(op.why), Str|')'];
+    Concat[Str|'Assign ', Var(op.var), Str|' (', Why(op.why), Str|')'];
   };
 
   Show@<List@<Assign@>> Todo = /Core/List/Show%.Show(Assign);
 
   Show@<Conflict@> Conflict = (Conflict@ c) {
-    Strs[Str|'Conflict ', Id(c.a), Str|', ', Id(c.b), Str|' on ', Id(c.var)];
+    Concat[Str|'Conflict ', Id(c.a), Str|', ', Id(c.b), Str|' on ', Id(c.var)];
   };
 
   Show@<Clauses@> Clauses = /Core/Map/Show%.Show(/Sat/Id%.Map, Id, Clause);
@@ -393,7 +393,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
   # Process todos until no more remain or unsat.
   (Solver@) { M@<Solver@>; } Simplify = (Solver@ s) {
     Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Strs[Str|'Simplify: ', Show.Clauses(s.clauses)]);
+      O.PutLine(dbg, Concat[Str|'Simplify: ', Show.Clauses(s.clauses)]);
     }));
 
     s.unsat.?(true: m.return(s));
@@ -401,7 +401,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
 
     # Check for conflicts in the todo list.
     Unit@ _ <- m.do(debug(Int|1, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Strs[Str|'Todo: ', Show.Todo(s.todo)]);
+      O.PutLine(dbg, Concat[Str|'Todo: ', Show.Todo(s.todo)]);
     }));
 
     Maybe@<Conflict@> conflict = GetConflict(s.todo);
@@ -409,7 +409,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
       # Add the conflict and note that we are done here.
       ClauseId@ id = s.clause_id;
       Unit@ _ <- m.do(debug(Int|3, (OStream@<M@> dbg) {
-        O.PutLine(dbg, Strs[Show.Id(id), Str|': ', Show.Conflict(conflict.just)]);
+        O.PutLine(dbg, Concat[Show.Id(id), Str|': ', Show.Conflict(conflict.just)]);
       }));
       Solver@ rs = s.@(
         unsat: True,
@@ -450,7 +450,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
   # Sat solver with conflict driven clause learning.
   (Solver@) { M@<SearchResult@>; } Search = (Solver@ s) {
     Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Strs[Str|'Search: ', Show.Clauses(s.clauses)]);
+      O.PutLine(dbg, Concat[Str|'Search: ', Show.Clauses(s.clauses)]);
     }));
 
     Solver@ ss <- m.do(Simplify(s));
@@ -463,7 +463,7 @@ Solve = <<@>@ M@>(Monad@<M@> m, Debug@<M@> debug) {
 
     Var@ vattempt = Var@(var, True);
     Unit@ _ <- m.do(debug(Int|4, (OStream@<M@> dbg) {
-      O.PutLine(dbg, Strs[Str|'Try: ', Show.Var(vattempt)]);
+      O.PutLine(dbg, Concat[Str|'Try: ', Show.Var(vattempt)]);
     }));
     Solver@ attempt = Assign(vattempt, s);
       

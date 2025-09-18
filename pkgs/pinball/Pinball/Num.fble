@@ -20,11 +20,11 @@
 % SqrtI = /Std/Int/Sqrt%.Sqrt;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 # Num@ -- 
 #   A number with sufficient precision for the pinball game.
@@ -57,7 +57,7 @@ Int@ S = IntI|128;
 (Num@, Num@) { Bool@; } Le = LeI;
 
 Show@<Num@> Show = (Int@ a) {
-  Strs[ShowI(a), Str|'/', ShowI(S)];
+  Concat[ShowI(a), Str|'/', ShowI(S)];
 };
 
 # Int --

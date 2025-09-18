@@ -1,10 +1,10 @@
 
 <@>@ List@ = /Std/List%.List@;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 # ShowTail --
 #   Shows the tail part of a list.
@@ -22,7 +22,7 @@
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 ShowTail = <@ T@>(Show@<T@> show, List@<T@> l) {
   l.?(empty: Str|']');
-  Strs[Str|', ', show(l.items.head), ShowTail(show, l.items.tail)];
+  Concat[Str|', ', show(l.items.head), ShowTail(show, l.items.tail)];
 };
 
 # Show --
@@ -42,7 +42,7 @@ ShowTail = <@ T@>(Show@<T@> show, List@<T@> l) {
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show, List@<T@> l) {
   l.?(empty: Str|'[]');
-  Strs[Str|'[', show(l.items.head), ShowTail(show, l.items.tail)];
+  Concat[Str|'[', show(l.items.head), ShowTail(show, l.items.tail)];
 };
 
 @(Show);

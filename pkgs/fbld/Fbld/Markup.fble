@@ -1,12 +1,12 @@
 
 <@>@ List@ = /Std/List%.List@;
+<@>% Concat = /Std/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -65,7 +65,7 @@ ToString_ = (Markup@ m, String@ s) {
     empty: r.return(s),
     plain: r.return(/Std/List%.Append(m.plain.text, s)),
     command: {
-      Error<String@>(m.command.name.loc, Strs[
+      Error<String@>(m.command.name.loc, Concat[
           Str|'expected plain text, but found command @',
           m.command.name.text
           ]);

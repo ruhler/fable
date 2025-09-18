@@ -18,6 +18,7 @@
 <@>% List = /Std/List%.List;
 <@>% Last = /Std/List%.Last;
 <@>% Append = /Std/List%.Append;
+<@>% Concat = /Std/List%.Concat;
 <@>% Get = /Std/List/Index%.Get;
 <@>% Drop = /Std/List/Index%.Drop;
 <@>% Length = /Std/List/Index%.Length;
@@ -39,7 +40,6 @@
 % Lines = /Core/String%.Lines;
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
-% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;
@@ -108,7 +108,7 @@ GetArgs = (List@<String@> args, Args@ default) {
   });
 
   args.items.tail.?(empty: {
-    default.@(error: Strs[Str|'missing arg to option ', arg]);
+    default.@(error: Concat[Str|'missing arg to option ', arg]);
   });
 
   String@ value = args.items.tail.items.head;
@@ -123,7 +123,7 @@ GetArgs = (List@<String@> args, Args@ default) {
       default.@(port: /Core/Int/Show%.Read(value));
     });
 
-    default.@(error: Strs[Str|'unrecognized option ', arg]);
+    default.@(error: Concat[Str|'unrecognized option ', arg]);
   };
 
   nargs.error.?(items: nargs);
@@ -134,7 +134,7 @@ GetArgs = (List@<String@> args, Args@ default) {
 Percent = (Int@ numerator, Int@ denominator) {
   Int@ s = Div(Mul(Int|10000, numerator), denominator).q;
   QR@ qr = Div(s, Int|100);
-  Strs[/Core/Int/Show%.Show(qr.q), Str|'.',
+  Concat[/Core/Int/Show%.Show(qr.q), Str|'.',
     /Core/Int/Show%.Show(Add(Int|100, qr.r)).items.tail, Str|'%'];
 };
 
@@ -155,8 +155,8 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
       Maybe@<Block@> mname = Blocks.Lookup(profile.blocks, block);
       String@ name = { 
         mname.?(just: mname.just.name);
-        Unit@ _ = /Core/Debug%.TraceLn(Strs[Str|'block ', /Core/Int/Show%.Show(block), Str|' not found']);
-        Strs[Str|'??', /Core/Int/Show%.Show(block), Str|'??'];
+        Unit@ _ = /Core/Debug%.TraceLn(Concat[Str|'block ', /Core/Int/Show%.Show(block), Str|' not found']);
+        Concat[Str|'??', /Core/Int/Show%.Show(block), Str|'??'];
       };
       Unit@ _ <- m.do(O.PutStr(out, name));
       seq.items.tail.?(empty: m.return(Unit));
@@ -180,7 +180,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
     (Entry@) { M@<Unit@>; }
     Row = (Entry@ entry) {
-      Unit@ _ <- m.do(O.PutStr(out, Strs[
+      Unit@ _ <- m.do(O.PutStr(out, Concat[
         Str|'<tr><td>', Percent(entry.value, total),
         Str|'</td><td>', /Core/Int/Show%.Show(entry.value),
         Str|'</td><td><a href="/seq/']));
@@ -227,13 +227,13 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   Server@<M@> s = ms.just;
 
-  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Concat[
     Str|'parsing ', args.file, Str|'...'
   ]));
 
   Maybe@<IStream@<M@>> fin <- m.do(stdio.read(args.file, /Core/Stdio%.Binary));
   fin.?(nothing: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Concat[
         Str|'unable to open ''', args.file, Str|''''
     ]));
     m.return(False);
@@ -241,13 +241,13 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
 
   Result@<Profile@> parsed <- m.do(Parse(fin.just, m));
   parsed.?(error: {
-    Unit@ _ <- m.do(O.PutLine(stdio.err, Strs[
+    Unit@ _ <- m.do(O.PutLine(stdio.err, Concat[
         Str|'error:', parsed.error
     ]));
     m.return(False);
   });
   
-  Unit@ _ <- m.do(O.PutLine(stdio.out, Strs[
+  Unit@ _ <- m.do(O.PutLine(stdio.out, Concat[
     Str|'serving at http://',
     args.hostname,
     Str|':',
@@ -355,10 +355,10 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     O.PutStr(ios.out, Lines[
       StrE|'<h1>Unsupported Request</h1>',
       StrE|'<h2>Request Info</h2>',
-      Strs[StrE|'Method: ', method, StrE|' <br/>'],
-      Strs[StrE|'Path: ', path, StrE|' <br/>'],
-      Strs[StrE|'Query: ', query, StrE|' <br/>'],
-      Strs[StrE|'Version: ', version, StrE|' <br/>']]);
+      Concat[StrE|'Method: ', method, StrE|' <br/>'],
+      Concat[StrE|'Path: ', path, StrE|' <br/>'],
+      Concat[StrE|'Query: ', query, StrE|' <br/>'],
+      Concat[StrE|'Version: ', version, StrE|' <br/>']]);
   };
 
   args.benchmark.?(true: {
