@@ -37,14 +37,6 @@
 
 <@>% Count = /Std/List/Count%.Count;
 
-<@>% Length = /Std/List/Index%.Length;
-<@>% Get = /Std/List/Index%.Get;
-<@>% Set = /Std/List/Index%.Set;
-<@>% Take = /Std/List/Index%.Take;
-<@>% Drop = /Std/List/Index%.Drop;
-<@>% Range = /Std/List/Index%.Range;
-<@>% Index_Span = /Std/List/Index%.Span;
-
 <@>% Any = /Std/List/Search%.Any;
 <@>% Keep = /Std/List/Search%.Keep;
 <@>% Remove = /Std/List/Search%.Remove;
@@ -165,12 +157,6 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> wnt = EL|ABCDE;
     List@<Elem@> got = Sort(ElemCmp, unsorted);
     AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|'Length', (Unit@ _) {
-    Int@ wnt = Int|5;
-    Int@ got = Length(EL|ABCDE);
-    AssertEquals(/Std/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Count', (Unit@ _) {
@@ -517,54 +503,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     AssertEquals(ElemEq, ElemShow, wnt, got);
   }),
 
-  Test(Str|Get, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    Elem@ got = Get(list, Int|2);
-    Elem@ wnt = Elems.C;
-    AssertEquals(ElemEq, ElemShow, wnt, got);
-  }),
-
-  Test(Str|Set, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Set(list, Int|2, Elems.A);
-    List@<Elem@> wnt = EL|'ABADE';
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Take, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Take(list, Int|2);
-    List@<Elem@> wnt = EL|'AB';
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Drop, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Drop(list, Int|2);
-    List@<Elem@> wnt = EL|'CDE';
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Range, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Range(list, Int|1, Int|2);
-    List@<Elem@> wnt = EL|'BC';
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Index_Span_span, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Index_Span(list, Int|2).span;
-    List@<Elem@> wnt = EL|'AB';
-    AssertEquals(Eq, Show, wnt, got);
-  }),
-
-  Test(Str|Index_Span_tail, (Unit@ _) {
-    List@<Elem@> list = EL|'ABCDE';
-    List@<Elem@> got = Index_Span(list, Int|2).tail;
-    List@<Elem@> wnt = EL|'CDE';
-    AssertEquals(Eq, Show, wnt, got);
-  })
+  /Core/List/Index/Tests%.Tests
 ]);
 
 @(Tests);
