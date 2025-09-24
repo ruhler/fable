@@ -163,3 +163,510 @@ deal is the longer name? We shall see.
 * Except for tutorials: now we add that complexity of polymorphism early on in
   tutorial land. Hmm...
  
+Anyway, that should make things easier now.
+
+Straw Proposal:
+  /Std/String%:
+    String@
+    Lines - join with newline (or \r\n? or something else?).
+
+  /Std/String/Lit%:
+    Str, StrE - take CharLit@ as arguments. Don't use these directly.
+
+  /Std/List/Eq%:
+    Search, SearchR, Until, BreakR, SplitR
+
+  /Std/String/Eq%: /Std/List/Eq%. functions specialized for Char@
+    Eq, StartsWith, EndsWith, Contains, Skip, Trim, Strip, 
+    Break, Split, Replace,
+    Search, SearchR, Until, BreakR, SplitR
+    SplitLines? (\n, \r\n, something else?)
+
+---
+
+Are the padding functions from python useful? center, ljust, rjust, zfill? Can
+I think of a use for them? Feels like a stretch to me. Overly specific? I
+don't see that in Java or Go. Maybe let's skip for now.
+
+How about 'count'? They have it in python and go. But what's that useful for?
+Online search doesn't suggest anything compelling to me.
+
+expandtabs seems needlessly specific to include.
+
+How about the search functions?
+* find - gives the index where we find a substring.
+  Sounds like another /Std/List/Eq% function to add and specialize. Drop
+  prefix until you get to the given substring, or return empty. Why don't we
+  already have that? I had suggested Search, SearchR, and Until before. Not
+  sure why I didn't follow up on those.
+* index - same as find except different behavior if not found.
+* partition - same as Break.
+* rfind, rindex - Like a SearchR equivalent.
+* rpartition - Do I want a BreakR?
+* split - Same as Split.
+* rsplit - Do we want SplitR?
+* splitlines - Opposite of Lines, sounds reasonable?
+  Python splits on \n, \r, \r\n. Do I need a clear definition of a newline
+  here? How about in the Lines function as well?
+
+Search equivalent: find longest substring with matching prefix.
+SearchR: find shortest substring with matching prefix.
+Until: take everything up until, but not including, a given prefix. This is
+like Break(...).tail.
+
+Proposal:
+* Add to /Std/List/Eq% and /Std/String/Eq%:
+  Search, SearchR, Until
+  BreakR? SplitR?
+
+I think that covers all the python functions I'm interested in, besides
+format strings.
+
+I don't see how we can do format strings in fble. You need varargs, which only
+works in fble if they have the same type. We could have a universal type, ...
+like string? That moves the formatting with the argument rather than the main
+string. We could have a format function where the first string has '%' and
+arguments are formatted just before they are passed.
+
+Is there any fancy things we could do with functions? Like a string builder
+like thing?
+
+For example, maybe we have something like:
+
+  Format|'a: '|d|', b: '|d|'\n'(1, 3);
+
+Like, Format takes a string and returns a formatter.
+'d' is a function that when passed to a formatter returns a new formatter that
+returns a function that takes an integer argument?
+
+So a formatter is something that returns a function from an argument to a
+formatter, and in the end you can run it? And we have some composition that
+says given a formatter and a thing like 'd', return a new formatter that has
+one additional argument.
+
+Sounds messy. I would be surprised if things worked out in the right order.
+And is it worth it? Does it by us anything? My example above does not look
+pleasing at all. I like better:
+ 
+  Concat[Str|'a: ', d(1), Str|'b: ', d(3), Str|'\n']
+
+Thought honestly it's still hard to parse, and not so nice as:
+
+  Format|'a: %d, b: %d\n'(1, 3)
+
+If we pull the format out first, maybe it's feasible to have something like:
+
+  D(D(F|'a: %, b: %\n', 1, 3))
+
+The point is, for type reasons, the format options themselves can't be
+specified in the string literal.
+
+  Concat[D|'a: '(1), D|'b: '(3), S|'\n']
+
+  D|'a: %, b: %\n'[1, 3]
+
+So if they are all the same format type, we can do this kind of format string,
+which is kind of nice?
+
+  S|'a: %, b: %\n'[D(1), D(3)]
+
+That seems as reasonable as anything to me, to be honest.
+
+For the fun of it, let's review how python and Java, and go format strings
+work.
+
+Python has generic: {value:{width}.{precision}} for arbitrary value.
+Java is %[argument_index$][flags][width][.precision]conversion
+Go is like printf I guess.
+
+So, nothing new and crazy that people have figured out makes more sense.
+
+We could do format strings if we had type erasure I bet? Maybe. Maybe not.
+
+Or maybe type the arguments?
+
+  Format|'a: %s, b: %d\n'(S[str], D[one])
+
+But that doesn't get us any advantage over what we can already do.
+
+Best bet seems to be converting all the arguments to strings first. We could
+convert them to a canonical format string, and parse them back into their
+original type and reformat them based on specifies if we wanted to. That way
+we could do things like:
+
+  Format|'a: %s, b: %03d, c: %0x\n'[a, D(b), D(c)];
+
+That's not so bad, right? Runtime overhead for going to and from a string is
+annoying, but, ...
+
+Format is going to support a set number of types, right? So let's just define
+our union type and have that be the argument and helpers to put everything in
+that type.
+
+ Format|'a: %s, b: %03d, c: %0x\n'[S(a), D(b), D(c)];
+
+We can do it because we know ahead of time all the possible types we can
+interpret in the implementation of the format string: String@, Int@, Char@ are
+the main ones?
+
+String formatting like this isn't very extensible though. Except, anyone could
+implement their own format function. I suppose it's a question of whether we
+want a standard one for standard types. And maybe a way to reuse existing
+formatter with a custom format?
+
+Compare:
+
+  String@ output = Lines[
+    Str|'hello, world',
+    Concat[Str|'A boolean: ', /Core/Bool/Show%.Show(True)],
+    Concat[Str|'A character: ', /Core/Char/Show%.Show(c)],
+    Concat[Str|'A list: ',
+      /Core/List/Show%.Show(/Core/Bool/Show%.Show)[True, False, False]],
+    Concat[Str|'An integer: ', /Core/Int/Show%.Show(x)]];
+
+Versus:
+
+  String@ output = Lines
+    Str|'hello, world',
+    Format|'A boolean: %b'[B(True)]
+    Format|'A character: %c'[C(c)]
+    Format|'A list: %???'
+
+Yeah, you know what? Format strings don't compose or generalize very well at
+all.
+
+I feel like we could have something close, which is format takes all strings.
+It's just a nicer syntax for Concat where you can put the raw text up front
+and separate the args out.
+
+  String@ output = Lines
+    Str|'hello, world',
+    Format|'A boolean: %'[/Core/Bool/Show%.Show(True)]
+    Format|'A character: %'[/Core/Char/Show%.Show(c)]
+    Format|'A list: %'[/Core/List/Show5.Show(/Core/Bool/Show%.Show)[...]]
+
+Because honestly, it is much nicer to have:
+
+    F|'...'[...]
+
+Then:
+   
+    Concat[Str|'...', ...]
+
+How about this, format seems more related to a Show class. Avoid having it as
+part of the core string API, make it part of Show instead?
+
+If we had type overloading of functions we could do some crazy stuff.
+Basically have the compiler pick the function based on the type of the
+argument. Sounds very messy though and hard to justify for this one particular
+use case which regardless isn't very general or composable.
+
+And by the way, Format as described above to work just as strings makes more
+sense as part of /Std/String/Lit%, because presumably we want to support all
+the various escape sequences as well. So, no need to worry about it for
+/Std/String% to start.
+
+---
+
+I'm kind of thinking with my proposal above, we have everything we need to
+start. Reminder:
+
+  /Std/String%:
+    String@
+
+  /Std/String/Line% - line handling
+    Lines - join with \n
+    UnLines - split lines with \n
+
+  /Std/String/Lit%:
+    Str, StrE - take CharLit@ as arguments. Don't use these directly.
+    Format - all args as strings, supports StrE style escapes.
+
+  /Std/List/Eq%:
+    Search, SearchR, Until, BreakR, SplitR
+
+  /Std/String/Eq%: /Std/List/Eq%. functions specialized for Char@
+    Eq, StartsWith, EndsWith, Contains, Skip, Trim, Strip, 
+    Break, Split, Replace,
+    Search, SearchR, Until, BreakR, SplitR
+
+Things that need to be worked out:
+* How to treat newlines for Lines, UnLines 
+* It's weird that Lines and UnLines aren't defined in the same place?
+* Specific escape sequences supported by StrE.
+* Specific format options supported by Format.
+
+The rest is pretty easy, right?
+
+If StrE and Format are sharing syntax, maybe it makes sense to use % for
+escape characters instead of \? Like, %n, %08s, %u334? That sounds reasonable
+to me honestly. The % sign is easier to write than \ in my opinion?
+
+---
+
+Relevant notes on unicode's description of handling of newlines:
+* Could be: CR(\r), LF (\n), CRLF(\r\n), or NEL(u0085)
+* Looks like mac and linux us LF, windows uses CRLF.
+* Unicode introduces PS and LS for explicit paragraph and line separators.
+* When reading, treat CR, LF, CRLF, and NEL all the same. Regardless of
+  platform. For example, 'UnLines' should treat any of the 4 as line
+  separators.
+* When writing, output to the platform convention.
+
+It's ugly. What do I use the 'Lines' function for, and what would I use
+'UnLines' for?
+
+I use 'Lines' mostly for line oriented input for things that parse input as a
+sequence of lines. Some examples:
+* Outputting html
+* Outputting http (though that needs explicit \r added?)
+* Outputting lines to the terminal
+* Creating input for fbld, which uses newline heavily in the syntax.
+
+I don't currently have UnLines. If I did, I would use it for...
+* Parsing from a String to a List, and then iterating over lines in the list.
+* It's like GetLine function
+ - Used for reading http
+ - Used for reading input from user at terminal or from an input file.
+
+Changing behavior based on platform is tricky. It's different. It's like your
+code's observable behavior changes when changing platforms, which isn't
+platform agnostic or portable in any way really? It also would need some
+builtin magic to support in the library.
+
+The immediate practical concern is: should Lines use LF as the separator or
+platform convention as the separator? Should I provide a Lines function at
+all? It's terribly useful. If I don't provide one, pushing off the decision to
+users feels worse, not better.
+
+We could push it off, right? Like, don't you use \n for a newline in windows,
+even though at the platform level it converts it to \r\n? Then it makes sense
+still to use \n within fble, and only do any platform level conversion at the
+IO level. That makes sense to me.
+
+How about:
+* Within fble language, we can align on \n as the standard way to separate
+  lines in a sequence of characters.
+* When writing a sequence of characters out in 'text' mode, the (builtin)
+  library interprets \n as new line and transforms to what is expected by the
+  platform. Specifically: writing \n on windows to a text file (and terminal?)
+  will cause \r\n to actually be written.
+* When reading a sequence of characters in from a file, the (builtin) library
+  standardizes as \n from the platform conventions.
+
+If we do this, then the idea is convention in fble land is to always use \n,
+not anything else. There are some situations where you may want to work with
+data in binary mode and inspect line endings. In that case it might be useful
+to define a platform specific constant for expected line endings. But that
+doesn't mean you should use that constant when writing output text. You should
+always use \n when writing output text.
+
+What this means for a 'Lines' function:
+* Use exactly \n as the separator.
+
+What this means for the 'UnLines' function:
+* Use exactly \n as the un-separator.
+
+Because of the funniness of line handling in general, I'm tempted to put Lines
+and UnLines functions in a separate module: /Std/String/Line%. That way they
+are together and we can document the conventions internally and put other
+fancy line ending related helper things there in the future.
+
+Good. We can update the proposal for that.
+
+---
+
+Next question: what escape characters ought we to support?
+
+Potential kinds of escape characters:
+* \', \", \?, \\, octal, hex
+* \a, \b, \f, \n, \r, \t, \v
+* \u, \U
+
+Definitely I want unicode hex format. Would be nice if it could be variable
+width instead of having to distinguish between \u and \U. That's a question of
+syntax of escape characters.
+
+I want newline, based on the discussion above. Given we have a notion of a
+standard newline character for the string library.
+
+Some escapes will be needed to enable the syntax of escape characters. Do
+what's necessary there.
+
+What's left are the funny space characters: \a, \b, \f, \r, \t, \v, \0. And
+hex/octal.
+
+In practice in C I use \n and \0 all the time. I maybe very occasionally use
+\r or \t, but nothing else.
+
+Hex is just like \u, but 2 characters. Add support for that as part of unicode
+hex formatting, whatever makes sense there.
+
+I don't think I've ever used octal in my life. But everyone has it. Why? I
+kind of vote to not include it. Wikipedia claims it was useful in the time
+when bit widths were a multiple of 3. Also because it lets you use 7 segment
+displays in a binary fashion. Those reason don't seem to apply anymore today.
+But maybe it's useful still? Like, why should I make any assumptions about the
+bit width on whatever architecture you are using? Hex at least I can say comes
+from the unicode standard. Octal doesn't have that justification.
+
+The escape \0 is common is C for checking end of string. But we don't use null
+terminated strings, so that doesn't seem useful to have. Also, it's trivially
+unicode 0.
+
+One cool thing: unicode has some characters that can be used to represent
+control characters, though they aren't the same values. For example: ␀, ␇, ␤.
+Not sure how useful that is, except maybe we use those instead of '0', 'a',
+'n' etc? Except, those will be hard for (some?) people to enter on a keyboard.
+
+There is value in having a name associated with the control characters,
+because that's much easier to remember than a unicode code point. I know \t \n
+\a very well. I couldn't tell you their ascii values.
+
+Practically speaking, I think we either have support for the standard ones
+used in C99, or don't support any of them aside from newline.
+
+When thinking about syntax, I should also consider format strings. What might
+we want for format strings?
+* %s equivalent
+* Argument number: e.g. %3$s, %2$s,
+* Width: e.g. %8s 
+* Padding: left or right or centered with spaces I guess is all that makes
+  sense?
+
+So, in general talking about:
+* string format or character escape
+* string format is: optional arg number, optional width, optional padding
+  (l/r/c).
+* character escape is:
+   hex character code
+   newline
+   escape syntax escape
+   maybe additional control code escape characters
+
+Ideally we can pass numbers in variable width, which means we need a
+terminator. Using % as the start and a single character as the terminator
+seems reasonable to me. Best case we have something like '%n' or '%s'. Worst
+case, we have things like: '%4$8ls', where you have to know that $ and l are
+not terminators for this case. For unicode: '%65u' makes sense to me.
+'%2400u'. '%0u'. Using this syntax, we only need '%%' as the escape syntax
+escape. Maybe single quote would be useful too, but not as %'. For example:
+
+StrE|'Don't do that!' ==> StrE|'Don%`t do that!', or some such. As nicer than:
+StrE|'Dont''t do that!' maybe?
+
+Interesting that % is considered punctuation. Could I pick a special character
+that is allowed in words without single quotes so we can greatly reduce the
+places where you may need quoted words? That's worth thinking about.
+
+The thinking: reserve some special character to not be considered punctuation.
+Something we don't already use.
+
+Currently reserved: (){}[];,:?=.<>+*-!$@~&|%/^
+
+Currently used for things:(){}[];,:?=.<>+*-@|%/
+Reserved but not used: !$~&^
+Other symbols: \'"
+
+I feel like !$~&^ maybe all used to be used for previous features but are no
+longer used?
+
+Maybe '$' is a good one? How might things look? ... But I can't use space.
+
+No, I don't think this is worth doing. Just use the single quotes if we have
+these kinds of funny characters. May as well use '%', which I like better than
+'\' because it's must easier for me to type and I'm used to it for format
+strings?
+
+String@ lines = StrE|'hello%nthere%nwhat%qs up?';
+String@ lines = StrE|'hello\nthere\nwhat\qs up?';
+
+Syntax highlighting will be important here.
+
+Maybe it makes sense to use \ for character escape and % for format escape?
+But then we'll want ways to escape both of them, so \\ and %%?
+
+---
+
+What's hard for the escape/format syntax is encoding optional numbers. For
+character literals we just have unicode hex code point. Let's look at that.
+
+Either we do fixed width, and have \x, \u, \U to encode the length, or we need
+a terminator. The terminator can be any character that isn't hex, but what if
+you want a hex character to follow? We need a special terminator (';'?) that
+gets eaten up as well as terminating.
+
+On the other hand, we could say 'u' is the terminator and put the code first.
+But that means we can't have any of [0-9a-fA-F] be another terminator, and we
+probably want to know somehow to start that we are parsing hex rather than
+decimal.
+
+If we have a special terminator, should it be the always terminator? Like,
+require it? Or only if needed?
+
+  %u2401;%u65;
+
+Semicolon for always terminating sounds fine with me. That doesn't look too
+onerous. Let's go with that.
+
+Note that this is different than \u, \U in existing standards. So maybe worth
+being different enough to do things my way and always use %? Is % a common
+enough character on all keyboards? Is \ more common? I suppose we use % for
+printf already, so at least it's not worse than that?
+
+  %u<hex>; - universal character code
+  %n       - newline
+  %%       - escape syntax escape
+
+For string formatting?
+
+  %[argument$][lrc][width]s
+  
+It's not consistent with %u. Maybe we say optional stuff comes first,
+mandatory stuff after? I hate to have to put an explicit terminator after
+every %s without any additional options.
+
+Note that lrc only makes sense if you have a width. So maybe better to have:
+
+  %[argument$][width][lrc]s
+
+For example, we could have:
+   %2$8ls
+
+Means: 2nd argument, 8 characters wide, left aligned string.
+
+Why note have unicode put the code value in front then?
+
+  %2401u
+  %u2401;
+
+Because we wouldn't know if we are parsing decimal to start or hex to start I
+suppose? Anyway, putting the number after looks better to me.
+
+Can we put the optional numbers after for string too?
+
+  %s;
+  %s2$;
+  %s2$8l;
+
+No, I don't like that. We can try this to start:
+
+* %u<hex code>;
+* %n
+* %%
+* %[dec argument$][dec width followed by lrc]s
+
+I guess we could have %c too, where %c takes the first character from a
+string? Why would we do that though?
+
+No need to build in any specific characters except newline? That's the only
+control character we need, because we use it for things like GetLine, Lines,
+UnLines? PutString? PutLine?
+
+Sounds like a decent initial proposal to me.
+
+I guess the downside of not having something like \t is if you printed out the
+program you couldn't tell if there was space or tab there or some other kind
+of white space. Is anyone really going to copy a program by hand like that
+though?
+ 
