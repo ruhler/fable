@@ -1,0 +1,246 @@
+
+@ Bool@ = /Std/Bool%.Bool@;
+% True = /Std/Bool%.True;
+% False = /Std/Bool%.False;
+
+<@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+<@>% AssertNotEquals = /Core/Eq/Assert%.AssertNotEquals;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% List = /Std/List%.List;
+
+<@>% HasItems = /Std/List/Eq%.HasItems;
+<@>% IsEmpty = /Std/List/Eq%.IsEmpty;
+<@>% StartsWith = /Std/List/Eq%.StartsWith;
+<@>% EndsWith = /Std/List/Eq%.EndsWith;
+<@>% Contains = /Std/List/Eq%.Contains;
+<@>% Skip = /Std/List/Eq%.Skip;
+<@>% Trim = /Std/List/Eq%.Trim;
+<@>% Strip = /Std/List/Eq%.Strip;
+<@>% Break = /Std/List/Eq%.Break;
+<@>% Split = /Std/List/Eq%.Split;
+<@>% Replace = /Std/List/Eq%.Replace;
+
+@ Elem@ = /Core/List/Tests/Elem%.Elem@;
+% Eq = /Core/List/Tests/Elem%.Eq;
+% Show = /Core/List/Tests/Elem%.Show;
+% EL = /Core/List/Tests/Elem%.EL;
+% ElemEq = /Core/List/Tests/Elem%.ElemEq;
+
+Test@ Tests = TestSuite(Str|Eq, List[
+  Test(Str|'Same', (Unit@ _) {
+    List@<Elem@> a = EL|ABCDE;
+    List@<Elem@> b = EL|ABCDE;
+
+    AssertEquals(Eq, Show, a, b);
+  }),
+
+  Test(Str|'DiffElem', (Unit@ _) {
+    List@<Elem@> a = EL|ABCDE;
+    List@<Elem@> b = EL|ABDDE;
+
+    AssertNotEquals(Eq, Show, a, b);
+  }),
+
+  Test(Str|'DiffSize', (Unit@ _) {
+    List@<Elem@> a = EL|ABCDE;
+    List@<Elem@> b = EL|ABCD;
+
+    AssertNotEquals(Eq, Show, a, b);
+  }),
+
+  Test(Str|HasItems_yes, (Unit@ _) {
+    List@<Elem@> list = EL|'ABBCCDDE';
+    Bool@ got = HasItems(list);
+    Bool@ wnt = True;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|HasItems_no, (Unit@ _) {
+    List@<Elem@> list = EL|'';
+    Bool@ got = HasItems(list);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|IsEmpty_yes, (Unit@ _) {
+    List@<Elem@> list = EL|'';
+    Bool@ got = IsEmpty(list);
+    Bool@ wnt = True;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|IsEmpty_no, (Unit@ _) {
+    List@<Elem@> list = EL|'ABBCCDDE';
+    Bool@ got = IsEmpty(list);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|StartsWith, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'ABBC';
+    Bool@ got = StartsWith(ElemEq, haystack, needle);
+    Bool@ wnt = True;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|StartsWith_Mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'ABC';
+    Bool@ got = StartsWith(ElemEq, haystack, needle);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|StartsWith_EndOfString, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBC';
+    List@<Elem@> needle = EL|'ABBCD';
+    Bool@ got = StartsWith(ElemEq, haystack, needle);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|EndsWith, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'CDDE';
+    Bool@ got = EndsWith(ElemEq, haystack, needle);
+    Bool@ wnt = True;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|EndsWith_Mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'CDD';
+    Bool@ got = EndsWith(ElemEq, haystack, needle);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|EndsWith_EndOfString, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBC';
+    List@<Elem@> needle = EL|'ABBCD';
+    Bool@ got = EndsWith(ElemEq, haystack, needle);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Contains, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'BCCD';
+    Bool@ got = Contains(ElemEq, haystack, needle);
+    Bool@ wnt = True;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Contains_mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'DCCB';
+    Bool@ got = Contains(ElemEq, haystack, needle);
+    Bool@ wnt = False;
+    AssertEquals(/Std/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|Skip, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'ABBC';
+    List@<Elem@> got = Skip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = EL|'CDDE';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Skip_mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'ABCD';
+    List@<Elem@> got = Skip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = haystack;
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Trim, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'CDDE';
+    List@<Elem@> got = Trim(ElemEq, haystack, needle);
+    List@<Elem@> wnt = EL|'ABBC';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Trim_mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'EDDC';
+    List@<Elem@> got = Trim(ElemEq, haystack, needle);
+    List@<Elem@> wnt = haystack;
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Strip, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDEABBC';
+    List@<Elem@> needle = EL|'ABBC';
+    List@<Elem@> got = Strip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = EL|'CDDE';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Strip_mismatch, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABBCCDDE';
+    List@<Elem@> needle = EL|'EDDC';
+    List@<Elem@> got = Strip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = haystack;
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Strip_overlap, (Unit@ _) {
+    List@<Elem@> haystack = EL|'ABABA';
+    List@<Elem@> needle = EL|'ABA';
+    List@<Elem@> got = Strip(ElemEq, haystack, needle);
+    List@<Elem@> wnt = EL|'BA';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Break_span, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Break(ElemEq, list, EL|'AD').span;
+    List@<Elem@> wnt = EL|'ABC';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Break_tail, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Break(ElemEq, list, EL|'AD').tail;
+    List@<Elem@> wnt = EL|'ADBE';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|'Split', (Unit@ _) {
+    List@<Elem@> list = EL|'ABCDEBCABC';
+    List@<Elem@> delim = EL|'BC';
+    List@<List@<Elem@>> wnt = List[EL|'A', EL|'DE', EL|'A', EL|''];
+    List@<List@<Elem@>> got = Split(ElemEq, list, delim);
+    AssertEquals(
+      /Std/List/Eq%.Eq(Eq),
+      /Core/List/Show%.Show(Show),
+      wnt, got);
+  }),
+
+  Test(Str|'Replace', (Unit@ _) {
+    List@<Elem@> list = EL|'ABCDEBCABC';
+    List@<Elem@> delim = EL|'BC';
+    List@<Elem@> target = EL|'EA';
+    List@<Elem@> wnt = EL|'AEADEEAAEA';
+    List@<Elem@> got = Replace(ElemEq, list, delim, target);
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  /Core/List/Search/Tests%.Tests,
+  /Core/List/Index/Tests%.Tests
+]);
+
+@(Tests);
