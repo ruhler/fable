@@ -25,6 +25,7 @@
 <@>% Skip = /Std/List/Eq%.Skip;
 <@>% Trim = /Std/List/Eq%.Trim;
 <@>% Strip = /Std/List/Eq%.Strip;
+<@>% Search = /Std/List/Eq%.Search;
 <@>% Break = /Std/List/Eq%.Break;
 <@>% Split = /Std/List/Eq%.Split;
 <@>% Replace = /Std/List/Eq%.Replace;
@@ -202,6 +203,20 @@ Test@ Tests = TestSuite(Str|Eq, List[
     List@<Elem@> needle = EL|'ABA';
     List@<Elem@> got = Strip(ElemEq, haystack, needle);
     List@<Elem@> wnt = EL|'BA';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Search_found, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Search(ElemEq, list, EL|'AD');
+    List@<Elem@> wnt = EL|'ADBE';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Search_not_found, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBE';
+    List@<Elem@> got = Search(ElemEq, list, EL|'AC');
+    List@<Elem@> wnt = EL|'';
     AssertEquals(Eq, Show, wnt, got);
   }),
 
