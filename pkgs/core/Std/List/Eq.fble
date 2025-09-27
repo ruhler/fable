@@ -153,6 +153,24 @@ Search = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
   Search(eq, list.items.tail, prefix);
 };
 
+# @func[SearchR] Finds the shortest suffix of a list with the given prefix.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to check.
+#  @arg[List@<T@>][prefix] The prefix of the list to search for.
+#  @returns[List@<T@>]
+#   The shortest suffix of the list that starts with the given prefix, or an
+#   empty list if the prefix is not found anywhere in the list.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+SearchR = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
+  prefix.?(empty: Empty<T@>);
+  list.?(empty: Empty<T@>);
+  List@<T@> tail = SearchR(eq, list.items.tail, prefix);
+  tail.?(items: tail);
+  StartsWith(eq, list, prefix).?(true: list);
+  tail;
+};
+
 # @struct[Span@]
 #  The return type of the @l{Break} function.
 #
@@ -211,7 +229,7 @@ Replace = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> from, List@<T@> to) {
   Eq,
   StartsWith, EndsWith, Contains,
   Skip, Trim, Strip,
-  Search,
+  Search, SearchR,
   Span@, Break,
   Split, Replace
 );
