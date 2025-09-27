@@ -171,6 +171,21 @@ SearchR = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> prefix) {
   tail;
 };
 
+# @func[Until] Takes elements from the list until a sublist is found.
+#  @arg[@][T@] The type of element on the list.
+#  @arg[Eq@<T@>][eq] List element equality.
+#  @arg[List@<T@>][list] The list to take elements from.
+#  @arg[List@<T@>][sublist] The sublist of the list to get up to.
+#  @returns[List@<T@>]
+#   The prefix of the list up to but not including elements from the first
+#   occurence of the sublist in the list.
+<@ T@>(Eq@<T@>, List@<T@>, List@<T@>) { List@<T@>; }
+Until = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> sublist) {
+  list.?(empty: list);
+  StartsWith(eq, list, sublist).?(true: Empty<T@>);
+  Items(list.items.head, Until(eq, list.items.tail, sublist));
+};
+
 # @struct[Span@]
 #  The return type of the @l{Break} function.
 #
@@ -229,7 +244,7 @@ Replace = <@ T@>(Eq@<T@> eq, List@<T@> list, List@<T@> from, List@<T@> to) {
   Eq,
   StartsWith, EndsWith, Contains,
   Skip, Trim, Strip,
-  Search, SearchR,
+  Search, SearchR, Until,
   Span@, Break,
   Split, Replace
 );

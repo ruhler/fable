@@ -27,6 +27,7 @@
 <@>% Strip = /Std/List/Eq%.Strip;
 <@>% Search = /Std/List/Eq%.Search;
 <@>% SearchR = /Std/List/Eq%.SearchR;
+<@>% Until = /Std/List/Eq%.Until;
 <@>% Break = /Std/List/Eq%.Break;
 <@>% Split = /Std/List/Eq%.Split;
 <@>% Replace = /Std/List/Eq%.Replace;
@@ -239,6 +240,20 @@ Test@ Tests = TestSuite(Str|Eq, List[
     List@<Elem@> list = EL|'ABCADBADE';
     List@<Elem@> got = SearchR(ElemEq, list, EL|'');
     List@<Elem@> wnt = EL|'';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Until, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBADE';
+    List@<Elem@> got = Until(ElemEq, list, EL|'AD');
+    List@<Elem@> wnt = EL|'ABC';
+    AssertEquals(Eq, Show, wnt, got);
+  }),
+
+  Test(Str|Until_not_found, (Unit@ _) {
+    List@<Elem@> list = EL|'ABCADBADE';
+    List@<Elem@> got = Until(ElemEq, list, EL|'AC');
+    List@<Elem@> wnt = EL|'ABCADBADE';
     AssertEquals(Eq, Show, wnt, got);
   }),
 
