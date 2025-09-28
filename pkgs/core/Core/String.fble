@@ -7,7 +7,6 @@
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Items = /Std/List%.Items;
-<@>% Append = /Std/List%.Append;
 <@>% Empty = /Std/List%.Empty;
 
 # String@ --
@@ -50,13 +49,4 @@
   Items(c, StrE(chars.items.tail));
 };
 
-# Lines --
-#   Concatenates a list of strings together, adding newlines after each
-#   string.
-(List@<String@>) { String@; } Lines = (List@<String@> strs) {
-  strs.?(empty: Str|'');
-  String@ tail = Lines(strs.items.tail);
-  Append(strs.items.head, Items(Chars.nl, tail));
-};
-
-@(String@, Str, StrE, Lines);
+@(String@, Str, StrE);

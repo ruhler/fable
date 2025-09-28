@@ -14,7 +14,7 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
-% Lines = /Core/String%.Lines;
+% Lines = /Core/String/Lines%.Lines;
 
 % Split = /Core/String/Eq%.Split;
 

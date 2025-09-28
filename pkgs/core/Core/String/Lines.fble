@@ -1,0 +1,21 @@
+
+@ Char@ = /Std/Char%.Char@;
+% Chars = /Core/Char/Ascii%.Chars;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Append = /Std/List%.Append;
+<@>% Empty = /Std/List%.Empty;
+
+@ String@ = /Core/String%.String@;
+
+# Lines --
+#   Concatenates a list of strings together, adding newlines after each
+#   string.
+(List@<String@>) { String@; } Lines = (List@<String@> strs) {
+  strs.?(empty: Empty<Char@>);
+  String@ tail = Lines(strs.items.tail);
+  Append(strs.items.head, Items(Chars.nl, tail));
+};
+
+@(Lines);

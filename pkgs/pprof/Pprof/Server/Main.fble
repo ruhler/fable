@@ -37,7 +37,7 @@
 <<@>@>@ IStream@ = /Core/Stream%.IStream@;
 
 @ String@ = /Core/String%.String@;
-% Lines = /Core/String%.Lines;
+% Lines = /Core/String/Lines%.Lines;
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
 

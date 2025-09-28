@@ -374,7 +374,7 @@ start. Reminder:
   /Std/String%:
     String@
 
-  /Std/String/Line% - line handling
+  /Std/String/Lines% - line handling
     Lines - join with \n
     UnLines - split lines with \n
 
@@ -670,3 +670,30 @@ program you couldn't tell if there was space or tab there or some other kind
 of white space. Is anyone really going to copy a program by hand like that
 though?
  
+---
+
+BreakR and SplitR seem a little convoluted to me, and more honestly, tedious
+to implement. Let me skip those for now.
+
+What's next? Do I still believe Lines should be in /Std/String/Line%? Yes.
+Let's.
+
+Next then would be to implement:
+* BreakR and SplitR if I can convince myself to.
+* UnLines
+* CharLit@, Str, StrE, Format
+
+Once I have that all implemented and tested, I can move things over to /Std%.
+
+---
+
+Remind me again why I want Lines to be in a separate module from String@?
+* So we could put it in the same place as UnLines?
+* So we could reuse Join and Split to define them? Though Join is the list
+  function which we can already use directly. 
+* Because there is something magic about newline that is worth separating from
+  the core string definition?
+* So we have one place canonical place to document newline handling in the
+  language?
+
+Okay. Fine.

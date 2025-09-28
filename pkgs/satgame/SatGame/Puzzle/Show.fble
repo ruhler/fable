@@ -5,7 +5,7 @@
 <@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
-% Lines = /Core/String%.Lines;
+% Lines = /Core/String/Lines%.Lines;
 % Str = /Core/String%.Str;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
