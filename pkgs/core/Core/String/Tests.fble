@@ -15,6 +15,7 @@
 % Str = /Core/String%.Str;
 % StrE = /Core/String%.StrE;
 % Lines = /Core/String/Lines%.Lines;
+% SplitLines = /Core/String/Lines%.SplitLines;
 
 % Split = /Core/String/Eq%.Split;
 
@@ -41,6 +42,42 @@ Test@ Tests = TestSuite(Str|String, List[
     String@ wnt = StrE|'hello\nthere\n';
     String@ got = Lines[Str|'hello', Str|'there'];
     AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+  }),
+
+  Test(Str|SplitLines, (Unit@ _) {
+    List@<String@> wnt = List[Str|'hello', Str|'there'];
+    List@<String@> got = SplitLines(StrE|'hello\nthere\n');
+    AssertEquals(
+      /Std/List/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/String/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|SplitLines_empty, (Unit@ _) {
+    List@<String@> wnt = List<String@>[];
+    List@<String@> got = SplitLines(Str|'');
+    AssertEquals(
+      /Std/List/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/String/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|SplitLines_nonewline, (Unit@ _) {
+    List@<String@> wnt = List[Str|'hello'];
+    List@<String@> got = SplitLines(Str|'hello');
+    AssertEquals(
+      /Std/List/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/String/Show%.Show),
+      wnt, got);
+  }),
+
+  Test(Str|SplitLines_newline, (Unit@ _) {
+    List@<String@> wnt = List[Str|''];
+    List@<String@> got = SplitLines(StrE|'\n');
+    AssertEquals(
+      /Std/List/Eq%.Eq(/Core/String/Eq%.Eq),
+      /Core/List/Show%.Show(/Core/String/Show%.Show),
+      wnt, got);
   }),
 
   Test(Str|Eq, (Unit@ _) {

@@ -64,13 +64,13 @@ Remove = <@ T@>(List@<T@> list, (T@) { Bool@; } p) {
 #  @arg[@][T@] The type of element on the list.
 #  @arg[List@<T@>][list] The list to check.
 #  @arg[(T@) { Bool@; }][p]
-#   Condition specifying which list elements should be considered delimeters.
+#   Condition specifying which list elements should be considered delimiters.
 #  @returns[List@<T@>]
 #   A list of lists containing the elements of the original list in order,
-#   with delimeters removed and used to partition the remaining elements.
+#   with delimiters removed and used to partition the remaining elements.
 #
-#   Delimeter elements at the start and back of the list are removed.
-#   Sequences of delimeter elements are treated as a single delimeter.
+#   Delimiter elements at the start and back of the list are removed.
+#   Sequences of delimiter elements are treated as a single delimiter.
 #
 #  For example, @code[fble]{Split(Str|'  hello  there now. ', IsSpace)} would
 #  result in @code[fble]{List[Str|'hello', Str|'there', Str|'now.']}.

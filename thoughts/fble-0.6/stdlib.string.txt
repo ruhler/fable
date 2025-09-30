@@ -697,3 +697,43 @@ Remind me again why I want Lines to be in a separate module from String@?
   language?
 
 Okay. Fine.
+
+Note that Lines is not the same as Join, because it adds a newline at the end.
+UnLines will probably not be the same as Split for the same reason: a newline
+at the end should be ignored.
+
+Uh, trouble. In Haskell, 'unlines' means go from list to string. Seems like
+I'm using the opposite. What name should we really be using here? If it's not
+obvious what polarity the function has, maybe it's not a great name.
+
+My reading is: the Lines function constructs a string from a bunch of lines. I
+suppose you could read it as: the Lines function gets a bunch of lines from a
+string. There's no clear default direction to make it relative to.
+
+"unlines" sounds like it's undoing something. I would say, go from a single
+string to a bunch of lines. Although, I guess if you think about drawing
+lines, or organizing things into lines, the result is separated into different
+lines, not pushed together into one long thing.
+
+Join and Split make sense. But JoinLines and SplitLines feels too long to me.
+
+---
+
+Proposal:
+* 'Lines' takes a list of strings and creates a single string.
+  It's a noun because it's a constructor. It's creating a string, not doing
+  something to a string to get lines out of it.
+* 'SplitLines' takes a string and extracts it into a list of strings.
+  It's a verb, because it's acting on the string.
+
+Easy.
+
+What's the difference between SplitLines and Split(\n)? What I want for
+SplitLines: it ignores a trailing newline.
+
+What we get with split? 'Sequences of delimiter elements are treated as a
+single delimiter'. That's not what I want here. If we have a bunch of newline
+characters, we want to produce a bunch of empty lines.
+
+Is that something we should fix with split? Or have another version?
+
