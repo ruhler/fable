@@ -3,7 +3,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 # Show --
 #   Implementation of Show@ for String@. See documentation of /Show%.Show@.

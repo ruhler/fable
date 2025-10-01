@@ -10,8 +10,8 @@
 <@>% Concat = /Std/List%.Concat;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
-% StrE = /Core/String%.StrE;
+% Str = /Core/Char/Ascii%.Str;
+% StrE = /Core/Char/Ascii%.StrE;
 % Lines = /Core/String/Lines%.Lines;
 
 @ Test@ = /Core/Test%.Test@;

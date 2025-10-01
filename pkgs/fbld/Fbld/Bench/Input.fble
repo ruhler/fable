@@ -1,4 +1,4 @@
-/Core/String%.Str|'
+/Core/Char/Ascii%.Str|'
 @let[BuildStamp][] @@
 @let[FbleVersion][fble-0.5] @@
 @let[FbleVersionStamp][@FbleVersion (@BuildStamp)] @@

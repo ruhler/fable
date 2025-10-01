@@ -3,7 +3,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 Show@<Compared@> Show = (Compared@ a) {
   a.?(less: Str|Less, equal: Str|Equal, greater: Str|Greater);

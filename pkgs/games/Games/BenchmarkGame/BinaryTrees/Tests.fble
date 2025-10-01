@@ -1,5 +1,5 @@
 
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 

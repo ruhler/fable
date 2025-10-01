@@ -38,8 +38,8 @@
 
 @ String@ = /Core/String%.String@;
 % Lines = /Core/String/Lines%.Lines;
-% Str = /Core/String%.Str;
-% StrE = /Core/String%.StrE;
+% Str = /Core/Char/Ascii%.Str;
+% StrE = /Core/Char/Ascii%.StrE;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

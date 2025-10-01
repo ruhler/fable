@@ -9,8 +9,8 @@
 <@>% Empty = /Std/List%.Empty;
 <@>% Append = /Std/List%.Append;
 
-% Str = /Core/String%.Str;
-% StrE = /Core/String%.StrE;
+% Str = /Core/Char/Ascii%.Str;
+% StrE = /Core/Char/Ascii%.StrE;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

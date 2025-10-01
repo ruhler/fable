@@ -1,6 +1,6 @@
 # submitted/vangelder/RopeBench/rope_0002.shuffled.cnf from
 # https://www.cs.ubc.ca/~hoos/SATLIB/Benchmarks/SAT/New/Competition-02/sat-2002-beta.tgz
-/Core/String%.Str|'c A permuted SAT Competition 2002 formula with seed=67528866
+/Core/Char/Ascii%.Str|'c A permuted SAT Competition 2002 formula with seed=67528866
 p cnf 72 168
 10 -71 0
 2 20 17 0

@@ -18,7 +18,7 @@
 <@>@ List@ = /Std/List%.List@;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 Color@ white = Color.White;
 Color@ green = Color.Green;

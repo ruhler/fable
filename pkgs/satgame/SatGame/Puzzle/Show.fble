@@ -6,7 +6,7 @@
 
 @ String@ = /Core/String%.String@;
 % Lines = /Core/String/Lines%.Lines;
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Literal@ = /SatGame/Puzzle%.Literal@;
 @ Clause@ = /SatGame/Puzzle%.Clause@;

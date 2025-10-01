@@ -6,6 +6,10 @@
 % Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
+<@>% Items = /Std/List%.Items;
+<@>% Empty = /Std/List%.Empty;
+
+@ String@ = /Core/String%.String@;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
@@ -130,4 +134,41 @@ Char = (List@<Ascii@> str) {
   ToChar(str.items.head);
 };
 
-@(Ascii@, ToChar, Char, Chars);
+# Str --
+#   A string literal.
+#
+# Example Use:
+#   String@ s = Str|'hello, world'
+(List@<Ascii@>) { String@; } Str = (List@<Ascii@> ascii) {
+  /Std/List%.Map(ascii, ToChar);
+};
+
+# StrE --
+#   A string literal that supports the following escape sequences:
+#   \\ - backslash
+#   \n - newline
+#   \t - tab
+#   \r - carriage return
+# 
+# Any other use of \ is undefined.
+(List@<Ascii@>) { String@; } StrE = (List@<Ascii@> chars) {
+  chars.?(empty: Empty<Char@>);
+  Char@ c = Char[chars.items.head];
+  /Std/Char/Eq%.Eq(Char|'\', c).?(true: {
+    chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
+    String@ tail = StrE(chars.items.tail.items.tail);
+    Char@ e = Char[chars.items.tail.items.head];
+    Char@ head = {
+      /Std/Char/Eq%.Eq(Char|'\', e).?(true: Char|'\');
+      /Std/Char/Eq%.Eq(Char|'n', e).?(true: Chars.nl);
+      /Std/Char/Eq%.Eq(Char|'r', e).?(true: Chars.cr);
+      /Std/Char/Eq%.Eq(Char|'t', e).?(true: Chars.tab);
+      /Std/Undef%.Undef.undef<Char@>;
+    };
+    Items(head, tail);
+  });
+  Items(c, StrE(chars.items.tail));
+};
+
+
+@(Ascii@, ToChar, Char, Chars, Str, StrE);

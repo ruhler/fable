@@ -3,7 +3,7 @@
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ BlockId@ = /Pprof/Profile%.BlockId@;
 @ Block@ = /Pprof/Profile%.Block@;

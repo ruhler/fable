@@ -17,7 +17,7 @@ Bool@ False = /Std/Bool%.False;
 
 # Import string type and functions.
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 % Lines = /Core/String/Lines%.Lines;
 
 # Specify the output string.

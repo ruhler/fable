@@ -10,7 +10,7 @@ Int@ 1 = Int|1;
 <@>% Concat = /Std/List%.Concat;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 # Location information used for error messages.
 @ Loc@ = *(String@ file, Int@ line, Int@ col);

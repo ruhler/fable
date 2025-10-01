@@ -14,7 +14,7 @@ Int@ 1 = /Std/Int%.1;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 
-% Str = /Core/String%.Str;
+% Str = /Core/Char/Ascii%.Str;
 
 @ Unit@ = /Std/Unit%.Unit@;
 
