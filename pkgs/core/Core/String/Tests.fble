@@ -170,7 +170,7 @@ Test@ Tests = TestSuite(Str|String, List[
 
   Test(Str|Split, (Unit@ _) {
     List@<String@> wnt = List[Str|'hello', Str|'there', Str|'how', Str|'are', Str|'you?'];
-    List@<String@> got = Split(Str|'hello there how are you?', Char|' ');
+    List@<String@> got = Split(Str|'hello there how are you?', Str|' ');
     AssertEquals(
       /Std/List/Eq%.Eq(/Core/String/Eq%.Eq),
       /Core/List/Show%.Show(/Core/String/Show%.Show),

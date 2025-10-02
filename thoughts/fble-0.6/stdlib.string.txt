@@ -376,7 +376,7 @@ start. Reminder:
 
   /Std/String/Lines% - line handling
     Lines - join with \n
-    UnLines - split lines with \n
+    SplitLines - split lines with \n
 
   /Std/String/Lit%:
     Str, StrE - take CharLit@ as arguments. Don't use these directly.
@@ -737,3 +737,7 @@ characters, we want to produce a bunch of empty lines.
 
 Is that something we should fix with split? Or have another version?
 
+---
+
+Do I want /Std/List/Search% equivalents for String that hard code character
+equality as the predicate? No. I don't think so.

@@ -322,12 +322,12 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     };
     Unit@ _ <- m.do(SkipHeaders);
 
-    List@<String@> start_split = Split(start, Char|' ');
+    List@<String@> start_split = Split(start, Str|' ');
     String@ method = Get(start_split, Int|0);
     String@ uri = Get(start_split, Int|1);
     String@ version = Get(start_split, Int|2);
 
-    List@<String@> uri_split = Split(uri, Char|'?');
+    List@<String@> uri_split = Split(uri, Str|'?');
     String@ path = uri_split.items.head;
     String@ query = {
       uri_split.items.tail.?(empty: Str|'');
@@ -348,7 +348,7 @@ Main@ Main = <<@>@ M@>(Sockets@<M@> sockets, Stdio@<M@> stdio, Monad@<M@> m, Lis
     /Core/String/Eq%.Eq(Str|'/seqs', path).?(true: SeqsPage(ios.out));
 
     /Core/String/Eq%.StartsWith(path, Str|'/seq/').?(true: {
-      List@<String@> ids = Split(Drop(path, Int|5), Char|',');
+      List@<String@> ids = Split(Drop(path, Int|5), Str|',');
       SeqPage(ios.out, /Std/List%.Map(ids, /Core/Int/Show%.Read));
     });
 
