@@ -741,3 +741,158 @@ Is that something we should fix with split? Or have another version?
 
 Do I want /Std/List/Search% equivalents for String that hard code character
 equality as the predicate? No. I don't think so.
+
+Okay, so all the remains of the proposed string spec to implement before
+moving everything over to /Std is /Std/String/Lit%. This will be some work,
+because it depends on CharLit which hasn't been defined yet and completely
+changes the format string syntax.
+
+---
+
+How to organize CharLit and what to call it?
+
+I want it to be easy to compose things and have a uniform user interface. That
+user interface is: Char, CharE, Str, StrE, Format. The implementation is some
+type T@ and function (T@) { Char@; }.
+
+That suggests we have a type to encapsulate all that:
+
+  <@>@ Foo@ = <@> { *(@ T@, (T@) { Char@: } ... };
+
+Specifically so I can implement a compose function:
+
+  (Foo@<A@>, Foo@<B@>) { Foo@<Composed@<A@, B@>>} Compose;
+
+And then you can use the results real easy like.
+
+Let's talk about names. What I need names for:
+* The module where we put these. How about put them in /Std/String/Literal%
+  module? No need for a separate module. The literal is where the
+  implementation goes, put the type there too.
+* The name of the thing.
+
+Brainstorm of names:
+* Literal@ - but that's not obviously related to strings?
+* StrLit@
+* CharLit@
+
+What about: /Std/String/Literal% and Literal@ as the name? It should be pretty
+clear from context when you say:
+
+<@>@ Literal@ = /Std/String/Literal%.Literal@;
+
+Users won't interact with this name at all. And implementers of it should be
+obvious. For example, I expect a user might do something like:
+
+% S = Compose(Ascii, Greek);
+ 
+ S.Str(...), S.Format|'...'[...], etc.
+
+I suppose Ascii will actually be /Std/Char/Ascii%.Literal.
+
+Should this live under 'Char' or under 'String'? Should Ascii% live under
+'Char' or under 'String'? Hard to say. The way I'm implementing it, you can't
+have CharE without StrE. Literal@ feels more like a string thing, ascii feels
+more like a character thing.
+
+% S = /Std/String/Literal%.Compose(
+  /Std/Char/Ascii%.Literal,
+  /Std/Char/Greek%.Literal
+);
+
+% S = /Std/Char/Literal%.Compose(
+  /Std/Char/Ascii%.Literal,
+  /Std/Char/Greek%.Literal
+);
+
+Or...
+
+StrE = /Std/Char/Lit/Compose%.StrE(/Std/Char/Ascii%.Lit, /Std/Char/Greek%.Lit);
+Str = /Std/Char/Lit/Compose%.Str(/Std/Char/Ascii%.Lit, /Std/Char/Greek%.Lit);
+Format = /Std/Char/Lit/Compose%.Format(/Std/Char/Ascii%.Lit, /Std/Char/Greek%.Lit);
+
+Maybe it's worth offering those too, and people can chose?
+
+% Lit = /Std/Char/Lit%.Compose(/Std/Char/Ascii%.Lit, /Std/Char/Greek%.Lit);
+% StrE = /Std/Char/Lit%.StrE(Lit);
+% Str = /Std/Char/Lit%.Str(Lit);
+% Format = /Std/Char/Lit%.Format(Lit);
+
+I don't know.
+
+% Lit = /Std/String/Lit%.Compose(/Std/Char/Ascii%.Lit, /Std/Char/Greek%.Lit);
+% StrE = /Std/String/Lit%.StrE(Lit);
+% Str = /Std/String/Lit%.Str(Lit);
+% Format = /Std/String/Lit%.Format(Lit);
+
+String vs. Char. Grouped vs. ungrouped. Ungrouped feels more flexible to me.
+We could always add a group on top if we can come up with a decent name.
+
+% Lit = /Std/String/Lit%.Compose(/Std/Char/Ascii%.Lit, /Std/Char/Greek%.Lit);
+% S = /Std/String/Lit%.S(Lit);
+
+Ascii, Greek, etc. makes more sense to me under /Std/Char%.
+
+I suppose we could organize it as:
+* /Std/Char/Lit% - Defines Lit@ type as function from T@ to Char@
+* /Std/Char/Ascii% - Implements Lit@ type for Ascii%
+* /Std/String/Lit% - Defines Char, CharE, Str, StrE, Format functions
+* /Std/String/Ascii% - Defines Char, CharE, Str, StrE?
+
+Or is that unnecessary? We could just have two modules instead of 4. I claim
+Lit@ isn't useful without String@. So:
+
+* /Std/String/Lit% - Lit@, Char, CharE, Str, StrE
+* /Std/Char/Ascii% - Lit, Char, CharE, Str, StrE
+
+Or, do it all in String, nothing in Char. Because let's be honest, Ascii% is
+only for string literals? Unless we start using it for character classes too.
+
+My current use of Ascii% is exclusively for string literals. Let's go with
+that, then:
+
+* /Std/String/Lit% - Lit@, Char, CharE, Str, StrE, Format, Compose
+* /Std/String/Ascii% - Ascii@, Lit, Char, CharE, Str, StrE, Format
+* /Std/String/Greek% - Greek@, Lit, Char, CharE, Str, StrE, Format
+
+Okay?
+
+Sounds like a plan.
+
+---
+
+FYI: I'm renaming Lit@ to ToChar@, which is much more descriptive of what the
+class represents: anything that can be converted to a character.
+
+Slight awkwardness: The implementation of StrE wants to refer to some specific
+characters, namely the format characters. Those want to depend on Ascii Char
+literal. Ascii char literal wants to depend on Str?
+
+Either way, we want to go through integer literal, which wants to itself go
+back through string literal? Well, we want unicode hex character literals
+regardless of Ascii. We could use those.
+
+Maybe split between /Core/Char/Ascii% and /Core/String/Ascii%: put
+/Core/String/Literal% in between those two in the dependency chain?
+
+Next steps (not necessarily in order):
+* Figure out the right organization of Char vs. Int vs. String literal into
+  modules.
+* Switch everyone over to new escape syntax.
+* Implement string format.
+* Implement string literal composition.
+* Move everything over to /Std%
+
+Brainstorm of module dependency chain:
+* /Std/Char% defines Char@ type, conversion to/from Int@.
+* ??? somewhere to implement integer based character literals.
+* /Std/Char/Ascii% defines Ascii@, conversion to Char.
+* /Std/String/Literal% defines Char, Str only. No escape sequences.
+  Or should we just put this in /Std/String%?
+* /Std/String/Format% defines Escape, Format. Depends on /Std/Char/Ascii%.
+
+Questions:
+* Should ToChar@ go into /Std/Char%, so it can be reused by /Std/Char/Ascii%?
+
+Well, this is messy.
+

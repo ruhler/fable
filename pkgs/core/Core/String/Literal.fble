@@ -1,0 +1,89 @@
+
+@ Char@ = /Std/Char%.Char@;
+% Unicode = /Std/Char%.Char;
+
+<@>@ List@ = /Std/List%.List@;
+<@>% Empty = /Std/List%.Empty;
+<@>% Items = /Std/List%.Items;
+
+% Int = /Core/Int/Lit%.Int;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+# A character literal is anything that can be converted to a Char@.
+<@>@ ToChar@ = <@ T@>(T@) { Char@; };
+
+# Character literal.
+#  Behavior is undefined if thre are more or less than one character in the
+#  literal.
+<@ T@>(ToChar@<T@>, List@<T@>) { Char@; }
+Char = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
+  # Assert length is 1
+  Unit@ _ = str.items.tail.empty;
+  toChar(str.items.head);
+};
+
+# Str --
+#   A string literal.
+#
+# Example Use:
+#   String@ s = Str|'hello, world'
+<@ T@>(ToChar@<T@>, List@<T@>) { String@; }
+Str = <@ T@>(ToChar@<T@> toChar, List@<T@> str) {
+  /Std/List%.Map(str, toChar);
+};
+
+# Interpret escape sequences in the given string.
+# Sequences:
+#   \\ - backslash
+#   \n - newline
+#   \t - tab
+#   \r - carriage return
+# 
+# Any other use of \ is undefined.
+(String@) { String@; }
+Escape = {
+  Char@ slash = Unicode(Int|92);
+  Char@ nl = Unicode(Int|10);
+  Char@ tab = Unicode(Int|9);
+  Char@ cr = Unicode(Int|13);
+  Char@ n = Unicode(Int|110);
+  Char@ r = Unicode(Int|114);
+  Char@ t = Unicode(Int|116);
+
+  (String@ chars) {
+    chars.?(empty: Empty<Char@>);
+    Char@ c = chars.items.head;
+    /Std/Char/Eq%.Eq(slash, c).?(true: {
+      chars.items.tail.?(empty: /Std/Undef%.Undef.undef<String@>);
+      String@ tail = Escape(chars.items.tail.items.tail);
+      Char@ e = chars.items.tail.items.head;
+      Char@ head = {
+        /Std/Char/Eq%.Eq(slash, e).?(true: slash);
+        /Std/Char/Eq%.Eq(n, e).?(true: nl);
+        /Std/Char/Eq%.Eq(r, e).?(true: cr);
+        /Std/Char/Eq%.Eq(t, e).?(true: tab);
+        /Std/Undef%.Undef.undef<Char@>;
+      };
+      Items(head, tail);
+    });
+    Items(c, Escape(chars.items.tail));
+  };
+};
+
+# StrE --
+#   A string literal that supports the following escape sequences:
+#   \\ - backslash
+#   \n - newline
+#   \t - tab
+#   \r - carriage return
+# 
+# Any other use of \ is undefined.
+<@ T@>(ToChar@<T@>, List@<T@>) { String@; }
+StrE = <@ T@>(ToChar@<T@> toChar, List@<T@> chars) {
+  Escape(Str(toChar, chars));
+};
+
+@(ToChar@, Char, Str, StrE, Escape);
