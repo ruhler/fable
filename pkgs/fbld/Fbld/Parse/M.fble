@@ -9,7 +9,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Incr = /Std/Int%.Incr;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;

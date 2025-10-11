@@ -3,7 +3,7 @@
 % Unit = /Std/Unit%.Unit;
 
 @ Int@ = /Std/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 

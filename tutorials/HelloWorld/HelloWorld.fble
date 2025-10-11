@@ -10,7 +10,7 @@ Bool@ False = /Std/Bool%.False;
 
 # Import integer type and literal.
 @ Int@ = /Std/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 # Important list function.
 <@>% Concat = /Std/List%.Concat;

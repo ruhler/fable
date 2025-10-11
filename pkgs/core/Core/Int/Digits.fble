@@ -3,7 +3,7 @@
 % Decimal = /Core/Digits%.Decimal;
 
 @ Int@ = /Std/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % Div = /Std/Int/Div%.Div;
 
 @ Undef@ = /Std/Undef%.Undef@;

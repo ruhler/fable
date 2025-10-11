@@ -14,7 +14,7 @@
 % Gt = /Std/Int/Ord%.Gt;
 % LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>% List = /Std/List%.List;
 <@>% Concat = /Std/List%.Concat;

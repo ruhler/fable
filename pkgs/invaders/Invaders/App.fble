@@ -6,7 +6,7 @@
 % Neg = /Std/Int%.Neg;
 % Max = /Std/Int/Ord%.Max;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Concat = /Std/List%.Concat;

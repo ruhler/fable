@@ -4,7 +4,7 @@
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 

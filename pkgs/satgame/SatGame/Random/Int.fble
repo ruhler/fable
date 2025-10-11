@@ -6,7 +6,7 @@
 % Mul = /Std/Int%.Mul;
 % Ge = /Std/Int/Ord%.Ge;
 % Lt = /Std/Int/Ord%.Lt;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

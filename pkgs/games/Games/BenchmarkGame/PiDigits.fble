@@ -11,7 +11,7 @@
 % Mul = /Std/Int%.Mul;
 % Div = /Std/Int/Div%.Div;
 % Eq = /Std/Int/Eq%.Eq;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % Incr = /Std/Int%.Incr;
 
 <@>@ List@ = /Std/List%.List@;

@@ -2,7 +2,7 @@
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
 
 @ Int@ = /Std/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 % Str = /Core/Char/Ascii%.Str;
 

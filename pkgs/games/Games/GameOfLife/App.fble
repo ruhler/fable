@@ -14,7 +14,7 @@
 % IsZero = /Std/Int/Sign%.IsZero;
 % Lt = /Std/Int/Ord%.Lt;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;

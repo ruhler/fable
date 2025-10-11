@@ -29,7 +29,7 @@
 % Eq = /Std/Int/Eq%.Eq;
 % Le = /Std/Int/Ord%.Le;
 % Ge = /Std/Int/Ord%.Ge;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 @ Unit@ = /Std/Unit%.Unit@;
 % Unit = /Std/Unit%.Unit;

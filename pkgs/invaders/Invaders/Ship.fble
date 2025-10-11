@@ -9,7 +9,7 @@
 % Lt = /Std/Int/Ord%.Lt;
 % Gt = /Std/Int/Ord%.Gt;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 

@@ -14,7 +14,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 % Read = /Core/Int/Show%.Read;
 % Show = /Core/Int/Show%.Show;

@@ -1,7 +1,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;

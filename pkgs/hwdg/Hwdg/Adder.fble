@@ -1,6 +1,6 @@
 
 @ Int@ = /Std/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 @ Coord@ = /Hwdg/Coord%.Coord@;
 

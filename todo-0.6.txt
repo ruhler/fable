@@ -35,6 +35,7 @@ Things to consider doing for the fble-0.6 release.
 * /Std/List/Eq% docs could be more precise and include examples.
 * How to document internal functions, e.g. /Std/List/Sort%.Insert?
   Make sure this doesn't get shown in reference documentation.
+  e.g. /Std/Int/Lit% internal helper functions.
 
 * Should I add @example as a doc comment field? Seems useful?
 * Reorder arguments in body function passed to ForEach?

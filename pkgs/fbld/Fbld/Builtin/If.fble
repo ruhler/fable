@@ -6,7 +6,7 @@
 @ Char@ = /Std/Char%.Char@;
 
 @ Int@ = /Std/Int%.Int@;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

@@ -6,7 +6,7 @@
 % Add = /Std/Int%.Add;
 % Neg = /Std/Int%.Neg;
 % Mul = /Std/Int%.Mul;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>% Append = /Std/List%.Append;
 

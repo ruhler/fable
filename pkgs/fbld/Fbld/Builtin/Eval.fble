@@ -1,5 +1,5 @@
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>% Get = /Std/List/Index%.Get;
 

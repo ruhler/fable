@@ -10,7 +10,7 @@
 % Lt = /Std/Int/Ord%.Lt;
 % Gt = /Std/Int/Ord%.Gt;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % IsZero = /Std/Int/Sign%.IsZero;
 
 @ QR@ = /Std/Int/Div%.QR@;

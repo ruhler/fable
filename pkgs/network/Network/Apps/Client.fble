@@ -6,7 +6,7 @@
 @ Int@ = /Std/Int%.Int@;
 % Neg = /Std/Int%.Neg;
 % Decr = /Std/Int%.Decr;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % IsZero = /Std/Int/Sign%.IsZero;
 
 <@>@ List@ = /Std/List%.List@;

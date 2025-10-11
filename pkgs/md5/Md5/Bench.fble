@@ -3,7 +3,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Sub = /Std/Int%.Sub;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % IsZero = /Std/Int/Sign%.IsZero;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;

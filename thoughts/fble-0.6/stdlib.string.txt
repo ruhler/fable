@@ -896,3 +896,16 @@ Questions:
 
 Well, this is messy.
 
+---
+
+Next step, I believe, is to implement hex integer literal in /Std. Don't use
+Char@, use a specific hex digit literal type.
+
+/Std/Int/Lit%.Hex sounds reasonable to me. Once we have that, we can implement
+an /Std/Char%.U literal maybe? Or /Std/Char/Lit%.U literal? Not sure where it
+makes sense to put it. Honestly, /Std/Char% feels more natural, but then we
+bring in the list dependency on Char which we could otherwise avoid. Unless I
+want to avoid depending on List% for /Std/Int/Lit%.
+
+Let's move discussion of integer literals to stdlib.int.txt.
+

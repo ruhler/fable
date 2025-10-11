@@ -5,7 +5,7 @@
 
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>% StartsWith = /Std/List/Eq%.StartsWith;
 

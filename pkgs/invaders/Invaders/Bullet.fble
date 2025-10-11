@@ -10,7 +10,7 @@
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Lt = /Std/Int/Ord%.Lt;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 @ Ship@ = /Invaders/Ship%.Ship@;

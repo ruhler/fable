@@ -2,7 +2,7 @@
 @ Key@ = /App/App%.Key@;
 @ Event@ = /App/App%.Event@;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 % Str = /Core/Char/Ascii%.Str;
 

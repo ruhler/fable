@@ -6,7 +6,7 @@
 <@>% Empty = /Std/List%.Empty;
 <@>% Items = /Std/List%.Items;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 @ String@ = /Core/String%.String@;
 

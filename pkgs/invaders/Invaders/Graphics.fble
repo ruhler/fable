@@ -13,7 +13,7 @@
 % Rect = /App/Drawing%.Rect;
 % Translate = /App/Drawing%.Translate;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 

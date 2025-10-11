@@ -46,10 +46,14 @@
 % Ge = /Std/Int/Ord%.Ge;
 % Min = /Std/Int/Ord%.Min;
 % Max = /Std/Int/Ord%.Max;
-% Int = /Core/Int/Lit%.Int;
 % IOrd = /Core/Int/Ord%.Ord;
 % IsZero = /Std/Int/Sign%.IsZero;
 % Abs = /Std/Int/Sign%.Abs;
+
+% Bin = /Std/Int/Lit%.Bin;
+% Oct = /Std/Int/Lit%.Oct;
+% Int = /Std/Int/Lit%.Int;
+% Hex = /Std/Int/Lit%.Hex;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;
@@ -252,6 +256,11 @@ Test@ Tests = TestSuite(Str|Int, List[
   TOrd(Str|Ord_m5_m5, Ord.Equal, (Unit@ _) { IOrd(Neg(5), Neg(5)); }),
   TOrd(Str|Ord_0_m5, Ord.Greater, (Unit@ _) { IOrd(0, Neg(5)); }),
   TOrd(Str|Ord_m5_0, Ord.Less, (Unit@ _) { IOrd(Neg(5), 0); }),
+
+  TEq(Str|Bin, Int|151, (Unit@ _) { Bin|1001_0111; }),
+  TEq(Str|Oct, Int|151, (Unit@ _) { Oct|227; }),
+  TEq(Str|Int, Int|151, (Unit@ _) { Int|151; }),
+  TEq(Str|Hex, Int|151, (Unit@ _) { Hex|00_97; }),
 
   /Core/Int/Show/Tests%.Tests,
   /Core/Int/Map/Tests%.Tests

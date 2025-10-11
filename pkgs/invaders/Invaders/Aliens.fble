@@ -32,7 +32,7 @@
 % Lt = /Std/Int/Ord%.Lt;
 % Ge = /Std/Int/Ord%.Ge;
 % Gt = /Std/Int/Ord%.Gt;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % Ord = /Core/Int/Ord%.Ord;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;

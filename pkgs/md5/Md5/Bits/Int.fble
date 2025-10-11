@@ -7,7 +7,7 @@
 % IsZero = /Std/Int/Sign%.IsZero;
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
 

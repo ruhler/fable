@@ -1,0 +1,156 @@
+# @module[/Std/Int/Lit%]
+#  Integer literals.
+
+@ Int@ = /Std/Int%.Int@;
+% Add = /Std/Int%.Add;
+% Mul = /Std/Int%.Mul;
+% Incr = /Std/Int%.Incr;
+% 0 = /Std/Int%.0;
+% 1 = /Std/Int%.1;
+
+<@>@ List@ = /Std/List%.List@;
+
+@ Unit@ = /Std/Unit%.Unit@;
+
+Int@ 2 = Incr(1);
+Int@ 3 = Incr(2);
+Int@ 4 = Incr(3);
+Int@ 5 = Incr(4);
+Int@ 6 = Incr(5);
+Int@ 7 = Incr(6);
+Int@ 8 = Incr(7);
+Int@ 9 = Incr(8);
+Int@ 10 = Incr(9);
+Int@ 11 = Incr(10);
+Int@ 12 = Incr(11);
+Int@ 13 = Incr(12);
+Int@ 14 = Incr(13);
+Int@ 15 = Incr(14);
+Int@ 16 = Incr(15);
+
+# Binary digits.
+@ Bin@ = +(Unit@ 0, Unit@ 1);
+
+# Octal digits.
+@ Oct@ = +(
+  Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3,
+  Unit@ 4, Unit@ 5, Unit@ 6, Unit@ 7
+);
+
+# Decimal digits.
+@ Dec@ = +(Oct@ oct, Unit@ 8, Unit@ 9);
+
+# Hex digits.
+@ Hex@ = +(Dec@ dec, 
+  Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e, Unit@ f,
+  Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E, Unit@ F
+);
+
+# Adds '_' as a separator to a digits type.
+<@>@ Sep@ = <@ T@> { +(T@ t, Unit@ _); };
+
+# Converts binary to Int@.
+(Bin@) { Int@; } FromBin = (Bin@ x) {
+  x.?('0': 0, '1': 1);
+};
+
+# Converts octal to Int@.
+(Oct@) { Int@; } FromOct = (Oct@ x) {
+  x.?('0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7);
+};
+
+# Converts decimal to Int@.
+(Dec@) { Int@; } FromDec = (Dec@ x) {
+  x.?(oct: FromOct(x.oct), '8': 8, '9': 9);
+};
+
+# Converts hex to Int@.
+(Hex@) { Int@; } FromHex = (Hex@ x) {
+  x.?(dec: FromDec(x.dec),
+    'a': 10, 'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15,
+    'A': 10, 'B': 11, 'C': 12, 'D': 13, 'E': 14, 'F': 15);
+};
+
+# Helper for constructing integer literals.
+#  toInt - converts a single digit to its Int@ value.
+#  radix - the radix of the literal.
+#  x - the integer that's been constructed so far from the literal string.
+#  str - the remainder of the literal string.
+<@ T@>((T@) { Int@; }, Int@, Int@, List@<Sep@<T@>>) { Int@; }
+Literal = <@ T@>((T@) { Int@; } toInt, Int@ radix, Int@ x, List@<Sep@<T@>> str) {
+  str.?(empty: x);
+  str.items.head.?('_': Literal(toInt, radix, x, str.items.tail));
+  Literal(toInt, radix, Add(Mul(radix, x), toInt(str.items.head.t)), str.items.tail);
+};
+
+# @type[BinLit@] Type for binary integer literal strings.
+@ BinLit@ = List@<Sep@<Bin@>>;
+
+# @type[OctLit@] Type for octal integer literal strings.
+@ OctLit@ = List@<Sep@<Oct@>>;
+
+# @type[IntLit@] Type for decimal integer literal strings.
+@ IntLit@ = List@<Sep@<Dec@>>;
+
+# @type[HexLit@] Type for hexadecimal integer literal strings.
+@ HexLit@ = List@<Sep@<Hex@>>;
+
+# @func[Bin] Binary integer literal
+#  A binary integer literal consists of a sequence of binary digits '0' and
+#  '1', optionally with arbitrary '_' separators between digits.
+#
+#  For example:
+#
+#  @code[fble]
+#   Int@ 151 = Bin|1001_0111;
+#
+#  @arg[List@<Sep@<Bin@>>][str] The literal string.
+#  @returns[Int@] The parsed integer value.
+#  @sideeffects None
+(BinLit@) { Int@; } Bin = Literal(FromBin, 2, 0);
+
+# @func[Oct] Octal integer literal
+#  An octal integer literal consists of a sequence of octal digits '0' through
+#  '7', optionally with arbitrary '_' separators between digits.
+#
+#  For example:
+#
+#  @code[fble]
+#   Int@ 151 = Oct|227;
+#
+#  @arg[List@<Sep@<Oct@>>][str] The literal string.
+#  @returns[Int@] The parsed integer value.
+#  @sideeffects None
+(OctLit@) { Int@; } Oct = Literal(FromOct, 8, 0);
+
+# @func[Int] Decimal integer literal
+#  A decimal integer literal consists of a sequence of decimal digits '0'
+#  through '9', optionally with arbitrary '_' separators between digits.
+#
+#  For example:
+#
+#  @code[fble]
+#   Int@ 151 = Int|151;
+#
+#  @arg[List@<Sep@<Dec@>>][str] The literal string.
+#  @returns[Int@] The parsed integer value.
+#  @sideeffects None
+(IntLit@) { Int@; } Int = Literal(FromDec, 10, 0);
+
+# @func[Hex] Hexadecimal integer literal
+#  A hexadecimal integer literal consists of a sequence of decimal digits '0'
+#  through '9', 'a' through 'f', and 'A' through 'F' optionally with arbitrary
+#  '_' separators between digits.
+#
+#  For example:
+#
+#  @code[fble]
+#   Int@ 151 = Hex|00_97;
+#
+#  @arg[List@<Sep@<Hex@>>][str] The literal string.
+#  @returns[Int@] The parsed integer value.
+#  @sideeffects None
+(HexLit@) { Int@; } Hex = Literal(FromHex, 16, 0);
+
+@(BinLit@, OctLit@, IntLit@, HexLit@, Bin, Oct, Int, Hex);
+

@@ -565,3 +565,76 @@ Honestly, I rather have that a / -b = -b / a, and that
 a % -b != -a % b. The modulo makes sense to be different to me, the division
 does not. Floor gives us that. So I vote we go with floor. Good.
 
+---
+
+There is a desire for integer literals. I want hex specifically for unicode
+characters. I want decimal because I use that all over the place. I see no
+need for octal. Not sure about binary at this point.
+
+It makes sense to me to define them all at /Std/Int/Lit%.
+
+Maybe we want to avoid bringing in anything other than Int% as a
+dependency? I mean, is it okay to bring in /Std/List% as a dependency? Yeah,
+why not? If it becomes a problem, we could always remove that dependency
+later.
+
+What do I want to call these literals? Some options:
+* X, H, Hex
+* I, Int, D, Dec
+
+For hex, do we want 'a-f', 'A-F', either, or explicitly specified?
+
+I|123;
+D|134;
+X|1cb;
+H|1cb;
+Int|123;
+Hex|1cb;
+
+I like 'Int' and 'Hex' honestly. I think it's fair to special case 'Int' as
+decimal, because that's standard default writing notation.
+
+Currently I use upper case for hex digits. C allows them to be mixed.
+
+Do I want to allow '_' as a separator? Any limitations to put on it?
+
+When I discussed int literals before, I suggested we support binary and octal
+as well, because it's not hard. But we also said support '-' for negation and
+separators of some sort.
+
+Limitations on '_' are that it must separate successive digits. You can't have
+two in a row. You can't end with one. Probably it's okay to start with one.
+
+Int|'-123';
+
+Do I really want that? Isn't it easier to do:
+
+Neg|123.
+
+Oh, but that means Neg takes hex, not Int@.
+
+Neg(Int|123); Yeah, probably makes sense to support a single optional minus
+sign at front. Even for hex and binary? Why not?
+
+I suppose it's odd to have as part of the literal rather than a separate
+operator. Like: Bin|'-0011001' looks really weird. Much better to use
+Neg(Bin|0011001). So I vote not minus sign. Just raw string of digits, with
+optional separator.
+
+Give a runtime error if the separators aren't right? Or just allow arbitrary
+separators? Arbitrary separators is much easier to implement. I don't see why
+we wouldn't want that.
+
+ Int|123___3421__12_4
+
+Maybe it helps line things up better somehow? Yeah. I vote just ignore
+separators for our purposes.
+
+I can implement a generic literal helper function that takes a string of T@, a
+function from T@ to Maybe@<Int@>, an Int@ and returns the parsed Int@ value.
+That suggests I want Maybe@ type first to encode the separator character?
+
+Or, have the type be union of T@ and _. Yeah. I like that. We support that
+kind of union now.
+
+Let's give it a try.

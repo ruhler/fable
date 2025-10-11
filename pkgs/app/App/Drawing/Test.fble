@@ -14,7 +14,7 @@
 % Mul = /Std/Int%.Mul;
 % Eq = /Std/Int/Eq%.Eq;
 % Lt = /Std/Int/Ord%.Lt;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % Range = /Core/Int/Iter%.Range;
 % Ord = /Core/Int/Ord%.Ord;
 

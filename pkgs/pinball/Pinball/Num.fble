@@ -1,8 +1,6 @@
 
 @ Bool@ = /Std/Bool%.Bool@;
 
-@ Decimal@ = /Core/Digits%.Decimal@;
-
 @ Int@ = /Std/Int%.Int@;
 % AddI = /Std/Int%.Add;
 % SubI = /Std/Int%.Sub;
@@ -15,11 +13,12 @@
 % LeI = /Std/Int/Ord%.Le;
 % EqI = /Std/Int/Eq%.Eq;
 % AbsI = /Std/Int/Sign%.Abs;
-% IntI = /Core/Int/Lit%.Int;
 % ShowI = /Core/Int/Show%.Show;
 % SqrtI = /Std/Int/Sqrt%.Sqrt;
 
-<@>@ List@ = /Std/List%.List@;
+@ IntLit@ = /Std/Int/Lit%.IntLit@;
+% IntI = /Std/Int/Lit%.Int;
+
 <@>% Concat = /Std/List%.Concat;
 
 <@>@ Show@ = /Core/Show%.Show@;
@@ -62,7 +61,7 @@ Show@<Num@> Show = (Int@ a) {
 
 # Int --
 #   Integer literal.
-(List@<Decimal@>) { Num@; } Int = (List@<Decimal@> ds) {
+(IntLit@) { Num@; } Int = (IntLit@ ds) {
   MulI(IntI(ds), S);
 };
 

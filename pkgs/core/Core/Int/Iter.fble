@@ -5,7 +5,7 @@
 % Le = /Std/Int/Ord%.Le;
 % Lt = /Std/Int/Ord%.Lt;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ Iter@ = /Core/Iter%.Iter@;
 <@>% Has = /Core/Iter%.Has;

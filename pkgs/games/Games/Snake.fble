@@ -30,7 +30,7 @@
 % Gt = /Std/Int/Ord%.Gt;
 % Abs = /Std/Int/Sign%.Abs;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 % Div = /Std/Int/Div%.Div;
 

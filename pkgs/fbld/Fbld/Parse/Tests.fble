@@ -1,9 +1,9 @@
 
 @ Ascii@ = /Core/Char/Ascii%.Ascii@;
 
-@ Decimal@ = /Core/Digits%.Decimal@;
-
 <@>% AssertEquals = /Core/Eq/Assert%.AssertEquals;
+
+@ IntLit@ = /Std/Int/Lit%.IntLit@;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% List = /Std/List%.List;
@@ -36,33 +36,33 @@
 
 @ Text@ = /Fbld/Text%.Text@;
 
-(List@<Decimal@>, List@<Decimal@>) { Loc@; }
-L = (List@<Decimal@> line, List@<Decimal@> col) {
-  Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int(line), /Core/Int/Lit%.Int(col));
+(IntLit@, IntLit@) { Loc@; }
+L = (IntLit@ line, IntLit@ col) {
+  Loc@(Str|'foo.fbld', /Std/Int/Lit%.Int(line), /Std/Int/Lit%.Int(col));
 };
 
-(List@<Decimal@>, List@<Decimal@>, List@<Ascii@>, List@<Markup@>) { Markup@; }
-C = (List@<Decimal@> line, List@<Decimal@> col, List@<Ascii@> name, List@<Markup@> args) {
+(IntLit@, IntLit@, List@<Ascii@>, List@<Markup@>) { Markup@; }
+C = (IntLit@ line, IntLit@ col, List@<Ascii@> name, List@<Markup@> args) {
   Command(L(line, col), Str(name), args);
 };
 
-(List@<Decimal@>, List@<Decimal@>, String@) { Text@; }
-T = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+(IntLit@, IntLit@, String@) { Text@; }
+T = (IntLit@ line, IntLit@ col, String@ text) {
   Text@(L(line, col), text);
 };
 
-(List@<Decimal@>, List@<Decimal@>, List@<Ascii@>) { Markup@; }
-P = (List@<Decimal@> line, List@<Decimal@> col, List@<Ascii@> text) {
+(IntLit@, IntLit@, List@<Ascii@>) { Markup@; }
+P = (IntLit@ line, IntLit@ col, List@<Ascii@> text) {
   Plain(L(line, col), StrE(text));
 };
 
-(List@<Decimal@>, List@<Decimal@>, String@) { Markup@; }
-PrS = (List@<Decimal@> line, List@<Decimal@> col, String@ text) {
+(IntLit@, IntLit@, String@) { Markup@; }
+PrS = (IntLit@ line, IntLit@ col, String@ text) {
   Plain(L(line, col), text);
 };
 
-(List@<Decimal@>, List@<Decimal@>, List@<Ascii@>) { Markup@; }
-Pr = (List@<Decimal@> line, List@<Decimal@> col, List@<Ascii@> text) {
+(IntLit@, IntLit@, List@<Ascii@>) { Markup@; }
+Pr = (IntLit@ line, IntLit@ col, List@<Ascii@> text) {
   Plain(L(line, col), Str(text));
 };
 
@@ -324,7 +324,7 @@ Test@ Tests = TestSuite(Str|Parse, List[
 
     Result@<Markup@> got = Parse[T|1|1(text)];
     Result@<Markup@> wnt = Error<Markup@>(
-      Loc@(Str|'foo.fbld', /Core/Int/Lit%.Int|1, /Core/Int/Lit%.Int|9),
+      Loc@(Str|'foo.fbld', /Std/Int/Lit%.Int|1, /Std/Int/Lit%.Int|9),
       Str|'unexpected end of input'
     );
     AssertResultEquals(wnt, got);

@@ -13,7 +13,7 @@
 % Div = /Std/Int/Div%.Div;
 % Range = /Core/Int/Iter%.Range;
 % CountUpTo = /Core/Int/Iter%.CountUpTo;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 

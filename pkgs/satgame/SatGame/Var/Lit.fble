@@ -8,7 +8,7 @@
 % HexToBits = /Core/Digits/String%.HexToBits;
 % BitStr = /Core/Digits/String%.BitStr;
 
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 <@>@ List@ = /Std/List%.List@;
 <@>% Append = /Std/List%.Append;

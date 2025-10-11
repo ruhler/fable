@@ -10,7 +10,7 @@
 @ QR@ = /Std/Int/Div%.QR@;
 % Div = /Std/Int/Div%.Div;
 % IsZero = /Std/Int/Sign%.IsZero;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 
 @ LFSR@ = /Core/LFSR%.LFSR@;
 <@>@ Shifted@ = /Core/LFSR%.Shifted@;

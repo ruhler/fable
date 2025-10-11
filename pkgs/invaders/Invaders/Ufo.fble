@@ -16,7 +16,7 @@
 % Eq = /Std/Int/Eq%.Eq;
 % Lt = /Std/Int/Ord%.Lt;
 % Gt = /Std/Int/Ord%.Gt;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
 
 % Graphics = /Invaders/Graphics%;

@@ -11,7 +11,7 @@
 @ Int@ = /Std/Int%.Int@;
 % Add = /Std/Int%.Add;
 % Mul = /Std/Int%.Mul;
-% Int = /Core/Int/Lit%.Int;
+% Int = /Std/Int/Lit%.Int;
 % CountUpTo = /Core/Int/Iter%.CountUpTo;
 
 @ Var@ = /SatGame/Var%.Var@;
